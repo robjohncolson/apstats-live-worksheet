@@ -1,0 +1,23 @@
+{
+  "name": "apstats-live-worksheet",
+  "version": "1.0.0",
+  "description": "AP Statistics live worksheet with AI grading and class aggregation",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.0",
+    "jsdom": "^23.0.0"
+  },
+  "keywords": [
+    "ap-statistics",
+    "education",
+    "ai-grading",
+    "worksheet"
+  ],
+  "author": "",
+  "license": "MIT"
+}
