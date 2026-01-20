@@ -199,12 +199,46 @@ describe('Aggregate Drawer', () => {
   });
 
   describe('Bar Chart Rendering', () => {
+    // Updated renderBarChart function matching the production code
     const renderBarChart = (questionId, stats, blank) => {
-      const responses = stats.responses || stats.distribution || {};
-      const entries = Object.entries(responses).sort((a, b) => b[1] - a[1]);
-      const total = entries.reduce((sum, [, count]) => sum + count, 0);
-      const maxCount = entries.length > 0 ? entries[0][1] : 0;
+      let entries = [];
+      let total = 0;
+      let isPercentages = false;
 
+      if (stats.responses && Array.isArray(stats.responses)) {
+        // Format 1: Array of response objects [{answer: "foo"}, ...]
+        const groups = new Map();
+        stats.responses.forEach(r => {
+          const ans = (r.answer || '').trim();
+          if (!ans) return;
+          groups.set(ans, (groups.get(ans) || 0) + 1);
+        });
+        entries = Array.from(groups.entries()).sort((a, b) => b[1] - a[1]);
+        total = stats.responses.length;
+      } else if (stats.distribution) {
+        // Format 2: Distribution object {answer: count_or_percentage}
+        const rawEntries = Object.entries(stats.distribution).filter(([k]) => k && k !== '(blank)');
+        const sumValues = rawEntries.reduce((sum, [, v]) => sum + v, 0);
+
+        if (stats.totalResponses && stats.totalResponses > 0) {
+          total = stats.totalResponses;
+          if (sumValues > 0 && sumValues <= 101) {
+            entries = rawEntries.map(([answer, pct]) => [answer, Math.round((pct / 100) * total)]);
+          } else {
+            entries = rawEntries;
+          }
+        } else if (sumValues > 0 && sumValues <= 101 && rawEntries.length > 1) {
+          isPercentages = true;
+          total = null;
+          entries = rawEntries;
+        } else {
+          total = sumValues;
+          entries = rawEntries;
+        }
+        entries.sort((a, b) => b[1] - a[1]);
+      }
+
+      const maxValue = entries.length > 0 ? entries[0][1] : 0;
       const questionEl = blank ? blank.closest('.question') : null;
       const questionNum = questionEl ? questionEl.querySelector('.question-number')?.textContent : '';
 
@@ -214,21 +248,26 @@ describe('Aggregate Drawer', () => {
       if (questionNum) {
         html += `<span class="chart-question-num">Question ${questionNum}</span>`;
       }
-      html += `<span class="chart-total">${total} response${total !== 1 ? 's' : ''}</span>`;
+      if (isPercentages) {
+        html += `<span class="chart-total">Distribution</span>`;
+      } else if (total !== null) {
+        html += `<span class="chart-total">${total} response${total !== 1 ? 's' : ''}</span>`;
+      }
       html += `</div>`;
 
       if (entries.length === 0) {
         html += '<p class="no-responses">No responses yet</p>';
       } else {
-        entries.slice(0, 10).forEach(([answer, count]) => {
-          const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+        entries.slice(0, 10).forEach(([answer, value]) => {
+          const barWidth = maxValue > 0 ? (value / maxValue) * 100 : 0;
+          const displayValue = isPercentages ? `${Math.round(value)}%` : value;
           html += `
             <div class="bar-row">
               <span class="bar-label" title="${answer}">${answer}</span>
               <div class="bar-container">
                 <div class="bar-fill" style="width: ${barWidth}%"></div>
               </div>
-              <span class="bar-count">${count}</span>
+              <span class="bar-count">${displayValue}</span>
             </div>
           `;
         });
@@ -237,96 +276,227 @@ describe('Aggregate Drawer', () => {
       return html;
     };
 
-    it('should show total response count in header', () => {
-      const blank = document.querySelector('.blank');
-      const stats = { responses: { 'answer1': 5, 'answer2': 3 } };
+    // Tests with array of response objects (Format 1)
+    describe('with responses array format', () => {
+      it('should show total response count in header', () => {
+        const blank = document.querySelector('.blank');
+        const stats = {
+          responses: [
+            { answer: 'answer1' }, { answer: 'answer1' }, { answer: 'answer1' },
+            { answer: 'answer1' }, { answer: 'answer1' }, // 5x answer1
+            { answer: 'answer2' }, { answer: 'answer2' }, { answer: 'answer2' } // 3x answer2
+          ]
+        };
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      expect(html).toContain('8 responses');
+        expect(html).toContain('8 responses');
+      });
+
+      it('should show singular "response" for single response', () => {
+        const blank = document.querySelector('.blank');
+        const stats = { responses: [{ answer: 'answer1' }] };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        expect(html).toContain('1 response');
+        expect(html).not.toContain('1 responses');
+      });
+
+      it('should group and count duplicate answers', () => {
+        const blank = document.querySelector('.blank');
+        const stats = {
+          responses: [
+            { answer: 'foo' }, { answer: 'foo' }, { answer: 'foo' },
+            { answer: 'bar' }, { answer: 'bar' }
+          ]
+        };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        expect(html).toContain('5 responses');
+        expect(html).toContain('<span class="bar-count">3</span>'); // foo
+        expect(html).toContain('<span class="bar-count">2</span>'); // bar
+      });
     });
 
-    it('should show singular "response" for single response', () => {
-      const blank = document.querySelector('.blank');
-      const stats = { responses: { 'answer1': 1 } };
+    // Tests with distribution object containing actual counts (Format 2a)
+    // Note: Values must sum to > 101 to avoid being treated as percentages
+    describe('with distribution counts format', () => {
+      it('should show total response count from distribution values', () => {
+        const blank = document.querySelector('.blank');
+        // Sum must be > 101 to be treated as counts
+        const stats = { distribution: { 'answer1': 75, 'answer2': 35 } };
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      expect(html).toContain('1 response');
-      expect(html).not.toContain('1 responses');
+        expect(html).toContain('110 responses');
+      });
+
+      it('should display raw counts in bar-count element', () => {
+        const blank = document.querySelector('.blank');
+        // Sum must be > 101 to be treated as counts
+        const stats = { distribution: { 'answer1': 120, 'answer2': 80 } };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        expect(html).toContain('<span class="bar-count">120</span>');
+        expect(html).toContain('<span class="bar-count">80</span>');
+      });
+
+      it('should sort responses by count descending', () => {
+        const blank = document.querySelector('.blank');
+        // Sum must be > 101 to be treated as counts
+        const stats = { distribution: { 'low': 10, 'high': 100, 'mid': 50 } };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        const highPos = html.indexOf('title="high"');
+        const midPos = html.indexOf('title="mid"');
+        const lowPos = html.indexOf('title="low"');
+
+        expect(highPos).toBeLessThan(midPos);
+        expect(midPos).toBeLessThan(lowPos);
+      });
+
+      it('should filter out (blank) entries', () => {
+        const blank = document.querySelector('.blank');
+        // (blank) is filtered, leaving only answer1 as a single entry
+        const stats = { distribution: { 'answer1': 150, '(blank)': 50 } };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        expect(html).toContain('150 responses');
+        expect(html).not.toContain('200 responses');
+        expect(html).not.toContain('(blank)');
+      });
     });
 
-    it('should show question number from parent element', () => {
-      const blank = document.querySelector('.blank');
-      const stats = { responses: { 'answer1': 5 } };
+    // Tests with distribution object containing percentages (Format 2b)
+    describe('with distribution percentages format (no totalResponses)', () => {
+      it('should detect percentages and show "Distribution" instead of count', () => {
+        const blank = document.querySelector('.blank');
+        // Percentages that sum to 100
+        const stats = { distribution: { 'answer1': 60, 'answer2': 40 } };
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      expect(html).toContain('Question 1.');
+        expect(html).toContain('Distribution');
+        expect(html).not.toContain('100 responses');
+      });
+
+      it('should display percentages with % symbol', () => {
+        const blank = document.querySelector('.blank');
+        const stats = { distribution: { 'answer1': 75, 'answer2': 25 } };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        expect(html).toContain('<span class="bar-count">75%</span>');
+        expect(html).toContain('<span class="bar-count">25%</span>');
+      });
+
+      it('should handle percentages that sum to ~100 (rounding)', () => {
+        const blank = document.querySelector('.blank');
+        // Sum is 99 due to rounding
+        const stats = { distribution: { 'a': 33, 'b': 33, 'c': 33 } };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        expect(html).toContain('Distribution');
+        expect(html).toContain('33%');
+      });
+
+      it('should NOT treat single entry as percentage even if value <= 100', () => {
+        const blank = document.querySelector('.blank');
+        // Single entry with value 50 - could be a count, not percentage
+        const stats = { distribution: { 'answer1': 50 } };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        // Should treat as count since only 1 entry
+        expect(html).toContain('50 responses');
+        expect(html).not.toContain('Distribution');
+      });
     });
 
-    it('should scale bars by max count, not percentage', () => {
-      const blank = document.querySelector('.blank');
-      const stats = { responses: { 'top': 10, 'second': 5, 'third': 2 } };
+    // Tests with distribution percentages + totalResponses (Format 2c)
+    describe('with distribution percentages and totalResponses', () => {
+      it('should convert percentages to counts using totalResponses', () => {
+        const blank = document.querySelector('.blank');
+        const stats = {
+          distribution: { 'answer1': 60, 'answer2': 40 },
+          totalResponses: 50
+        };
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      // Top answer should have 100% width
-      expect(html).toContain('width: 100%');
-      // Second answer should have 50% width (5/10)
-      expect(html).toContain('width: 50%');
-      // Third answer should have 20% width (2/10)
-      expect(html).toContain('width: 20%');
+        expect(html).toContain('50 responses');
+        expect(html).toContain('<span class="bar-count">30</span>'); // 60% of 50
+        expect(html).toContain('<span class="bar-count">20</span>'); // 40% of 50
+      });
+
+      it('should round converted counts correctly', () => {
+        const blank = document.querySelector('.blank');
+        const stats = {
+          distribution: { 'answer1': 33, 'answer2': 67 },
+          totalResponses: 10
+        };
+
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+
+        expect(html).toContain('10 responses');
+        // 33% of 10 = 3.3 -> rounds to 3
+        // 67% of 10 = 6.7 -> rounds to 7
+        expect(html).toContain('<span class="bar-count">3</span>');
+        expect(html).toContain('<span class="bar-count">7</span>');
+      });
     });
 
-    it('should display raw counts in bar-count element', () => {
-      const blank = document.querySelector('.blank');
-      const stats = { responses: { 'answer1': 42, 'answer2': 17 } };
+    // General rendering tests
+    describe('general rendering', () => {
+      it('should show question number from parent element', () => {
+        const blank = document.querySelector('.blank');
+        const stats = { distribution: { 'answer1': 5 } };
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      expect(html).toContain('<span class="bar-count">42</span>');
-      expect(html).toContain('<span class="bar-count">17</span>');
-    });
+        expect(html).toContain('Question 1.');
+      });
 
-    it('should show "No responses yet" when empty', () => {
-      const blank = document.querySelector('.blank');
-      const stats = { responses: {} };
+      it('should scale bars by max value', () => {
+        const blank = document.querySelector('.blank');
+        // Sum must be > 101 to be treated as counts
+        const stats = { distribution: { 'top': 100, 'second': 50, 'third': 20 } };
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      expect(html).toContain('No responses yet');
-      expect(html).toContain('0 responses');
-    });
+        expect(html).toContain('width: 100%');
+        expect(html).toContain('width: 50%');
+        expect(html).toContain('width: 20%');
+      });
 
-    it('should sort responses by count descending', () => {
-      const blank = document.querySelector('.blank');
-      const stats = { responses: { 'low': 1, 'high': 10, 'mid': 5 } };
+      it('should show "No responses yet" when empty', () => {
+        const blank = document.querySelector('.blank');
+        const stats = { distribution: {} };
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      // Check order by finding positions
-      const highPos = html.indexOf('title="high"');
-      const midPos = html.indexOf('title="mid"');
-      const lowPos = html.indexOf('title="low"');
+        expect(html).toContain('No responses yet');
+      });
 
-      expect(highPos).toBeLessThan(midPos);
-      expect(midPos).toBeLessThan(lowPos);
-    });
+      it('should limit to 10 entries', () => {
+        const blank = document.querySelector('.blank');
+        const distribution = {};
+        for (let i = 1; i <= 15; i++) {
+          distribution[`answer${i}`] = 100 + (15 - i); // counts > 100 so not treated as percentages
+        }
+        const stats = { distribution };
 
-    it('should limit to 10 responses', () => {
-      const blank = document.querySelector('.blank');
-      const responses = {};
-      for (let i = 1; i <= 15; i++) {
-        responses[`answer${i}`] = 15 - i;
-      }
-      const stats = { responses };
+        const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
 
-      const html = renderBarChart('WS-U4L1-3-Q1', stats, blank);
-
-      // Count bar-row occurrences
-      const barRowCount = (html.match(/bar-row/g) || []).length;
-      expect(barRowCount).toBe(10);
+        const barRowCount = (html.match(/bar-row/g) || []).length;
+        expect(barRowCount).toBe(10);
+      });
     });
   });
 

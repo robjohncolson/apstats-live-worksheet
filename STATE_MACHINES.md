@@ -431,6 +431,30 @@ Slide-out panel showing class response distribution for a **single input** with 
 </div>
 ```
 
+**API Response Format Detection:**
+
+The `renderBarChart` function handles multiple API response formats:
+
+| Format | Detection | Display |
+|--------|-----------|---------|
+| `responses` array | `stats.responses` exists | Count responses directly |
+| Distribution with `totalResponses` | `stats.totalResponses > 0` | Convert percentages to counts |
+| Distribution percentages (no total) | `sumValues <= 101` and `entries > 1` | Show as "Distribution" with % |
+| Distribution counts | `sumValues > 101` | Show as "N responses" |
+
+**Percentage Detection Heuristic:**
+```javascript
+// If values sum to ~100 (allowing for rounding) and there are multiple entries,
+// treat as percentages rather than raw counts
+if (sumValues > 0 && sumValues <= 101 && rawEntries.length > 1) {
+    isPercentages = true;
+    total = null;  // Don't show "100 responses"
+    // Display values with % symbol
+}
+```
+
+This prevents the bug where percentage distributions (summing to 100) would incorrectly display as "100 responses gathered".
+
 ---
 
 ## 8. Save Indicator
