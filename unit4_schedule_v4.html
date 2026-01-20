@@ -112,17 +112,9 @@
             border-color: var(--accent);
         }
 
-        .alert-danger .alert-title {
-            color: var(--accent);
-        }
-
         .alert-warning {
             background: #fff3e0;
             border-color: var(--warning);
-        }
-
-        .alert-warning .alert-title {
-            color: var(--warning);
         }
 
         .alert-info {
@@ -135,10 +127,6 @@
             border-color: var(--success);
         }
 
-        .alert-success .alert-title {
-            color: var(--success);
-        }
-
         .alert-title {
             font-weight: 600;
             margin-bottom: 0.5rem;
@@ -149,21 +137,45 @@
             color: var(--gray-700);
         }
 
-        .alert ul, .alert ol {
-            margin-left: 1.25rem;
-            margin-top: 0.5rem;
+        .meeting-pattern {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
         }
 
-        .alert li {
-            margin-bottom: 0.25rem;
+        .meeting-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--gray-300);
         }
 
-        .alert code {
-            background: rgba(0,0,0,0.06);
-            padding: 0.15rem 0.4rem;
-            border-radius: 3px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.85em;
+        .meeting-box.period-b {
+            background: #e3f2fd;
+            border-color: var(--period-b);
+        }
+
+        .meeting-box.period-e {
+            background: #f3e5f5;
+            border-color: var(--period-e);
+        }
+
+        .meeting-box h4 {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .meeting-box .days {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .meeting-box .times {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
         }
 
         /* Schedule Table Styles */
@@ -212,6 +224,11 @@
 
         .schedule-table tr.long-block td {
             background: #e8f5e9;
+        }
+
+        .schedule-table tr.completed td {
+            background: #f5f5f5;
+            color: var(--gray-600);
         }
 
         .date-cell {
@@ -289,211 +306,15 @@
             color: var(--warning);
         }
 
+        .badge-done {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
         .time-note {
             font-size: 0.75rem;
             color: var(--gray-600);
             font-style: italic;
-        }
-
-        .daily-flow {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .flow-item {
-            display: flex;
-            align-items: center;
-            font-size: 0.8rem;
-            color: var(--gray-600);
-        }
-
-        .flow-item::after {
-            content: "→";
-            margin: 0 0.5rem;
-            color: var(--gray-400);
-        }
-
-        .flow-item:last-child::after {
-            display: none;
-        }
-
-        /* Cartridge Specs */
-        .cartridge-spec {
-            border: 1px solid var(--gray-300);
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-        }
-
-        .cartridge-spec:last-child {
-            margin-bottom: 0;
-        }
-
-        .cartridge-spec-header {
-            padding: 1rem 1.25rem;
-            background: var(--gray-50);
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .cartridge-spec-title {
-            font-weight: 600;
-            color: var(--primary);
-            font-family: 'Consolas', monospace;
-            font-size: 1.1rem;
-        }
-
-        .cartridge-spec-subtitle {
-            font-size: 0.85rem;
-            color: var(--gray-600);
-            margin-top: 0.25rem;
-        }
-
-        .cartridge-spec-body {
-            padding: 1.25rem;
-        }
-
-        .spec-section {
-            margin-bottom: 1.25rem;
-        }
-
-        .spec-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .spec-section-title {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--gray-700);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-            padding-bottom: 0.25rem;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .spec-section-content {
-            font-size: 0.9rem;
-            color: var(--gray-700);
-        }
-
-        .spec-section-content ul {
-            margin: 0;
-            padding-left: 1.25rem;
-        }
-
-        .spec-section-content li {
-            margin-bottom: 0.25rem;
-        }
-
-        .response-format {
-            background: var(--gray-50);
-            padding: 0.75rem 1rem;
-            border-radius: 4px;
-            font-family: 'Consolas', monospace;
-            font-size: 0.85rem;
-        }
-
-        .response-format div {
-            margin-bottom: 0.25rem;
-        }
-
-        .example-box {
-            background: #f5f5f5;
-            border-left: 3px solid var(--primary-light);
-            padding: 0.75rem 1rem;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .example-box strong {
-            color: var(--primary);
-        }
-
-        .feedback-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .feedback-tag {
-            background: var(--gray-200);
-            padding: 0.2rem 0.5rem;
-            border-radius: 3px;
-            font-family: 'Consolas', monospace;
-            font-size: 0.75rem;
-            color: var(--gray-700);
-        }
-
-        .code-block {
-            background: var(--gray-900);
-            color: #e0e0e0;
-            padding: 1rem;
-            border-radius: 4px;
-            overflow-x: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.8rem;
-            line-height: 1.5;
-        }
-
-        .priority-list {
-            counter-reset: priority;
-            list-style: none;
-            padding: 0;
-        }
-
-        .priority-list li {
-            counter-increment: priority;
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 0.75rem;
-            padding: 0.75rem 1rem;
-            background: var(--gray-50);
-            border-radius: 4px;
-            border-left: 3px solid var(--warning);
-        }
-
-        .priority-list li::before {
-            content: counter(priority);
-            background: var(--warning);
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.8rem;
-            margin-right: 1rem;
-            flex-shrink: 0;
-        }
-
-        .priority-list .priority-content {
-            flex: 1;
-        }
-
-        .priority-list .priority-name {
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-
-        .priority-list .priority-reason {
-            font-size: 0.85rem;
-            color: var(--gray-600);
-        }
-
-        .footer {
-            text-align: center;
-            padding: 1.5rem;
-            color: var(--gray-600);
-            font-size: 0.85rem;
         }
 
         .rhythm-box {
@@ -530,6 +351,29 @@
             color: var(--gray-400);
         }
 
+        .feedback-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .feedback-tag {
+            background: var(--gray-200);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.75rem;
+            color: var(--gray-700);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+        }
+
         @media (max-width: 768px) {
             .schedule-table {
                 font-size: 0.8rem;
@@ -537,6 +381,10 @@
             
             .schedule-table th, .schedule-table td {
                 padding: 0.5rem 0.25rem;
+            }
+
+            .meeting-pattern {
+                flex-direction: column;
             }
         }
     </style>
@@ -546,7 +394,32 @@
         <div class="header">
             <h1>Unit 4: Probability &amp; Random Variables</h1>
             <div class="subtitle">AP Statistics — Periods B &amp; E</div>
-            <div class="meta">January 20 – February 6, 2026 &nbsp;|&nbsp; 18 Videos &nbsp;|&nbsp; Lagged Quiz Structure</div>
+            <div class="meta">January 21 – February 7, 2026 &nbsp;|&nbsp; 18 Videos &nbsp;|&nbsp; Lagged Quiz Structure</div>
+        </div>
+
+        <!-- Meeting Patterns -->
+        <div class="section">
+            <div class="section-header">Class Meeting Patterns</div>
+            <div class="section-body">
+                <div class="meeting-pattern">
+                    <div class="meeting-box period-b">
+                        <h4>Period B</h4>
+                        <div class="days">Mon / Tue / Thu / Fri</div>
+                        <div class="times">
+                            Mon: 55 min &nbsp;|&nbsp; Tue: 65 min<br>
+                            Thu: 65 min &nbsp;|&nbsp; Fri: 55 min
+                        </div>
+                    </div>
+                    <div class="meeting-box period-e">
+                        <h4>Period E</h4>
+                        <div class="days">Mon / Wed / Fri</div>
+                        <div class="times">
+                            Mon: 75 min &nbsp;|&nbsp; <strong>Wed: 90 min (long)</strong><br>
+                            Fri: 75 min
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Daily Rhythm -->
@@ -566,7 +439,7 @@
                 
                 <div class="alert alert-success">
                     <div class="alert-title">Lagged Quiz System</div>
-                    <p>Quizzes are assigned <strong>after</strong> content is covered and due by the <strong>following class</strong> (or +1 day). This gives students time to process material through Blooket vocab practice and Drill reps before being assessed.</p>
+                    <p>Quizzes are assigned <strong>after</strong> content is covered and due by the <strong>following class</strong>. Students get content → Blooket → Drill reps → then quiz.</p>
                 </div>
             </div>
         </div>
@@ -578,114 +451,115 @@
                 <table class="schedule-table">
                     <thead>
                         <tr>
-                            <th style="width: 100px;">Date</th>
+                            <th style="width: 110px;">Date</th>
                             <th>Content</th>
-                            <th style="width: 140px;">Assign</th>
-                            <th style="width: 120px;">Due</th>
+                            <th style="width: 130px;">Assign</th>
+                            <th style="width: 110px;">Due</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="week-divider">
-                            <td colspan="4">Week 1</td>
+                            <td colspan="4">Week 1 (Jan 20-24)</td>
                         </tr>
-                        <tr>
-                            <td class="date-cell">Tue 1/20</td>
+                        <tr class="completed">
+                            <td class="date-cell">Tue 1/21 <span class="badge badge-done">Done</span></td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.1</span>
                                 <span class="topic-tag">4.2</span>
                                 Simulation<br>
-                                <span class="time-note">~27 min video + activities</span>
+                                <span class="time-note">65 min</span>
                             </td>
                             <td class="assign-cell">
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.1-4.2</span>
                             </td>
                             <td class="due-cell">—</td>
                         </tr>
-                        <tr class="long-block">
-                            <td class="date-cell">Thu 1/22 <span class="badge badge-long">Long</span></td>
+                        <tr>
+                            <td class="date-cell">Thu 1/23</td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.3</span>
                                 <span class="topic-tag">4.4</span>
                                 <span class="topic-tag">4.5</span>
                                 Rules Marathon<br>
-                                <span class="time-note">~27 min video</span>
+                                <span class="time-note">65 min</span>
                             </td>
                             <td class="assign-cell">
                                 <span class="quiz-tag">Quiz 4.1-4.2</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.3-4.5</span>
                             </td>
                             <td class="due-cell">—</td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Fri 1/23</td>
+                            <td class="date-cell">Fri 1/24</td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.6</span>
                                 Independence &amp; Unions<br>
-                                <span class="time-note">~27 min video (3 videos)</span>
+                                <span class="time-note">55 min</span>
                             </td>
                             <td class="assign-cell">
                                 <span class="quiz-tag">Quiz 4.3-4.5</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.6</span>
                             </td>
                             <td class="due-cell">
                                 <span class="quiz-tag due">Quiz 4.1-4.2</span>
                             </td>
                         </tr>
                         <tr class="week-divider">
-                            <td colspan="4">Week 2</td>
+                            <td colspan="4">Week 2 (Jan 27-31)</td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Mon 1/26</td>
+                            <td class="date-cell">Mon 1/27</td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.7</span>
                                 <span class="topic-tag">4.8</span>
                                 Discrete RVs<br>
-                                <span class="time-note">~27 min video</span>
+                                <span class="time-note">55 min</span>
                             </td>
                             <td class="assign-cell">
                                 <span class="quiz-tag">Quiz 4.6</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.7-4.8</span>
                             </td>
                             <td class="due-cell">
                                 <span class="quiz-tag due">Quiz 4.3-4.5</span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Tue 1/27</td>
+                            <td class="date-cell">Tue 1/28</td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.9</span>
                                 Combining RVs (Variance Trap)<br>
-                                <span class="time-note">~18 min video</span>
+                                <span class="time-note">65 min</span>
                             </td>
                             <td class="assign-cell">
                                 <span class="quiz-tag">Quiz 4.7-4.8</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.9</span>
                             </td>
                             <td class="due-cell">
                                 <span class="quiz-tag due">Quiz 4.6</span>
                             </td>
                         </tr>
-                        <tr class="long-block">
-                            <td class="date-cell">Thu 1/29 <span class="badge badge-long">Long</span></td>
+                        <tr>
+                            <td class="date-cell">Thu 1/30</td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.10</span>
                                 <span class="topic-tag">4.11</span>
                                 <span class="topic-tag">4.12</span>
                                 Binomial &amp; Geometric<br>
-                                <span class="time-note">~36 min video</span>
+                                <span class="time-note">65 min</span>
                             </td>
                             <td class="assign-cell">
                                 <span class="quiz-tag">Quiz 4.9</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.10-4.12</span>
                             </td>
                             <td class="due-cell">
                                 <span class="quiz-tag due">Quiz 4.7-4.8</span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Fri 1/30 <span class="badge badge-progress">PC</span></td>
+                            <td class="date-cell">Fri 1/31 <span class="badge badge-progress">PC</span></td>
                             <td class="content-cell">
-                                Progress Check
+                                Progress Check<br>
+                                <span class="time-note">55 min</span>
                             </td>
                             <td class="assign-cell">
                                 <span class="quiz-tag">Quiz 4.10-4.12</span>
@@ -695,12 +569,13 @@
                             </td>
                         </tr>
                         <tr class="week-divider">
-                            <td colspan="4">Week 3</td>
+                            <td colspan="4">Week 3 (Feb 3-7)</td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Mon 2/2</td>
+                            <td class="date-cell">Mon 2/3</td>
                             <td class="content-cell">
-                                FRQ Workshop
+                                FRQ Workshop<br>
+                                <span class="time-note">55 min</span>
                             </td>
                             <td class="assign-cell">—</td>
                             <td class="due-cell">
@@ -708,15 +583,16 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Tue 2/3</td>
+                            <td class="date-cell">Tue 2/4</td>
                             <td class="content-cell">
-                                Review / Casino Lab Lite
+                                Review / Casino Lab Lite<br>
+                                <span class="time-note">65 min</span>
                             </td>
                             <td class="assign-cell">—</td>
                             <td class="due-cell">—</td>
                         </tr>
                         <tr class="test-day">
-                            <td class="date-cell">Thu 2/5 <span class="badge badge-test">Test</span></td>
+                            <td class="date-cell">Thu 2/6 <span class="badge badge-test">Test</span></td>
                             <td class="content-cell">
                                 <strong>UNIT 4 TEST</strong><br>
                                 <span class="time-note">20 MC + 2 FRQ</span>
@@ -731,167 +607,130 @@
 
         <!-- Period E Schedule -->
         <div class="section">
-            <div class="section-header period-e">Period E Schedule (Mon / Wed / Thu / Fri)</div>
+            <div class="section-header period-e">Period E Schedule (Mon / Wed / Fri)</div>
             <div class="section-body" style="padding: 0;">
                 <table class="schedule-table">
                     <thead>
                         <tr>
-                            <th style="width: 100px;">Date</th>
+                            <th style="width: 110px;">Date</th>
                             <th>Content</th>
-                            <th style="width: 140px;">Assign</th>
-                            <th style="width: 120px;">Due</th>
+                            <th style="width: 130px;">Assign</th>
+                            <th style="width: 110px;">Due</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="week-divider">
-                            <td colspan="4">Week 1</td>
+                            <td colspan="4">Week 1 (Jan 20-24)</td>
                         </tr>
-                        <tr>
-                            <td class="date-cell">Wed 1/21</td>
+                        <tr class="long-block">
+                            <td class="date-cell">Wed 1/22 <span class="badge badge-long">90 min</span></td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.1</span>
                                 <span class="topic-tag">4.2</span>
-                                Simulation<br>
-                                <span class="time-note">~27 min video</span>
-                            </td>
-                            <td class="assign-cell">
-                                <span class="drill-tag">Drill</span>
-                            </td>
-                            <td class="due-cell">—</td>
-                        </tr>
-                        <tr>
-                            <td class="date-cell">Thu 1/22</td>
-                            <td class="content-cell">
                                 <span class="topic-tag">4.3</span>
-                                Probability Definitions<br>
-                                <span class="time-note">~9 min video</span>
+                                Simulation + Probability Defs<br>
+                                <span class="time-note">~36 min video</span>
                             </td>
                             <td class="assign-cell">
-                                <span class="quiz-tag">Quiz 4.1-4.2</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.1-4.3</span>
                             </td>
                             <td class="due-cell">—</td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Fri 1/23</td>
+                            <td class="date-cell">Fri 1/24</td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.4</span>
                                 <span class="topic-tag">4.5</span>
-                                Conditional &amp; Multiplication<br>
-                                <span class="time-note">~18 min video</span>
-                            </td>
-                            <td class="assign-cell">
-                                <span class="drill-tag">Drill</span>
-                            </td>
-                            <td class="due-cell">
-                                <span class="quiz-tag due">Quiz 4.1-4.2</span>
-                            </td>
-                        </tr>
-                        <tr class="week-divider">
-                            <td colspan="4">Week 2</td>
-                        </tr>
-                        <tr>
-                            <td class="date-cell">Mon 1/26</td>
-                            <td class="content-cell">
                                 <span class="topic-tag">4.6</span>
-                                Independence &amp; Unions<br>
-                                <span class="time-note">~27 min video (3 videos)</span>
+                                Conditional, Mult, Independence<br>
+                                <span class="time-note">75 min</span>
                             </td>
                             <td class="assign-cell">
-                                <span class="quiz-tag">Quiz 4.3-4.5</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="quiz-tag">Quiz 4.1-4.3</span><br>
+                                <span class="drill-tag">Drill 4.4-4.6</span>
                             </td>
                             <td class="due-cell">—</td>
                         </tr>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 2 (Jan 27-31)</td>
+                        </tr>
                         <tr>
-                            <td class="date-cell">Wed 1/28</td>
+                            <td class="date-cell">Mon 1/27</td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.7</span>
                                 <span class="topic-tag">4.8</span>
                                 Discrete RVs<br>
-                                <span class="time-note">~27 min video</span>
+                                <span class="time-note">75 min</span>
                             </td>
                             <td class="assign-cell">
-                                <span class="quiz-tag">Quiz 4.6</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="quiz-tag">Quiz 4.4-4.6</span><br>
+                                <span class="drill-tag">Drill 4.7-4.8</span>
                             </td>
                             <td class="due-cell">
-                                <span class="quiz-tag due">Quiz 4.3-4.5</span>
+                                <span class="quiz-tag due">Quiz 4.1-4.3</span>
                             </td>
                         </tr>
-                        <tr>
-                            <td class="date-cell">Thu 1/29</td>
+                        <tr class="long-block">
+                            <td class="date-cell">Wed 1/29 <span class="badge badge-long">90 min</span></td>
                             <td class="content-cell">
                                 <span class="topic-tag">4.9</span>
-                                Combining RVs (Variance Trap)<br>
-                                <span class="time-note">~18 min video</span>
+                                <span class="topic-tag">4.10</span>
+                                Combining RVs + Binomial Intro<br>
+                                <span class="time-note">~27 min video + practice</span>
                             </td>
                             <td class="assign-cell">
                                 <span class="quiz-tag">Quiz 4.7-4.8</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="drill-tag">Drill 4.9-4.10</span>
                             </td>
                             <td class="due-cell">
-                                <span class="quiz-tag due">Quiz 4.6</span>
+                                <span class="quiz-tag due">Quiz 4.4-4.6</span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Fri 1/30</td>
+                            <td class="date-cell">Fri 1/31</td>
                             <td class="content-cell">
-                                <span class="topic-tag">4.10</span>
                                 <span class="topic-tag">4.11</span>
-                                Binomial<br>
-                                <span class="time-note">~18 min video</span>
+                                <span class="topic-tag">4.12</span>
+                                Binomial Params &amp; Geometric<br>
+                                <span class="time-note">75 min</span>
                             </td>
                             <td class="assign-cell">
-                                <span class="quiz-tag">Quiz 4.9</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="quiz-tag">Quiz 4.9-4.10</span><br>
+                                <span class="drill-tag">Drill 4.11-4.12</span>
                             </td>
                             <td class="due-cell">
                                 <span class="quiz-tag due">Quiz 4.7-4.8</span>
                             </td>
                         </tr>
                         <tr class="week-divider">
-                            <td colspan="4">Week 3</td>
+                            <td colspan="4">Week 3 (Feb 3-7)</td>
                         </tr>
                         <tr>
-                            <td class="date-cell">Mon 2/2</td>
+                            <td class="date-cell">Mon 2/3 <span class="badge badge-progress">PC</span></td>
                             <td class="content-cell">
-                                <span class="topic-tag">4.12</span>
-                                Geometric<br>
-                                <span class="time-note">~18 min video</span>
+                                Progress Check<br>
+                                <span class="time-note">75 min</span>
                             </td>
                             <td class="assign-cell">
-                                <span class="quiz-tag">Quiz 4.10-4.11</span><br>
-                                <span class="drill-tag">Drill</span>
+                                <span class="quiz-tag">Quiz 4.11-4.12</span>
                             </td>
                             <td class="due-cell">
-                                <span class="quiz-tag due">Quiz 4.9</span>
+                                <span class="quiz-tag due">Quiz 4.9-4.10</span>
                             </td>
                         </tr>
-                        <tr>
-                            <td class="date-cell">Wed 2/4</td>
+                        <tr class="long-block">
+                            <td class="date-cell">Wed 2/5 <span class="badge badge-long">90 min</span></td>
                             <td class="content-cell">
-                                FRQ Workshop
-                            </td>
-                            <td class="assign-cell">
-                                <span class="quiz-tag">Quiz 4.12</span>
-                            </td>
-                            <td class="due-cell">
-                                <span class="quiz-tag due">Quiz 4.10-4.11</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="date-cell">Thu 2/5 <span class="badge badge-progress">PC</span></td>
-                            <td class="content-cell">
-                                Progress Check + Review
+                                FRQ Workshop + Review<br>
+                                <span class="time-note">90 min</span>
                             </td>
                             <td class="assign-cell">—</td>
                             <td class="due-cell">
-                                <span class="quiz-tag due">Quiz 4.12</span>
+                                <span class="quiz-tag due">Quiz 4.11-4.12</span>
                             </td>
                         </tr>
                         <tr class="test-day">
-                            <td class="date-cell">Fri 2/6 <span class="badge badge-test">Test</span></td>
+                            <td class="date-cell">Fri 2/7 <span class="badge badge-test">Test</span></td>
                             <td class="content-cell">
                                 <strong>UNIT 4 TEST</strong><br>
                                 <span class="time-note">20 MC + 2 FRQ</span>
@@ -904,149 +743,140 @@
             </div>
         </div>
 
-        <!-- Period E Advantage -->
+        <!-- Sync Note -->
         <div class="section">
             <div class="section-body">
                 <div class="alert alert-info" style="margin-bottom: 0;">
-                    <div class="alert-title">Period E Pacing Advantage</div>
-                    <p>With 4 meetings per week (Mon/Wed/Thu/Fri), Period E has more breathing room than the original 3-day schedule. Content is spread across more days with lighter video loads per session. Thursday's standalone 4.3 day (~9 min video) allows extra time for drill practice and deeper conceptual discussion.</p>
+                    <div class="alert-title">Period Sync Strategy</div>
+                    <p><strong>Period E's 90-min Wednesday blocks</strong> allow covering extra material, keeping both sections roughly aligned:</p>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>Wed 1/22: E covers 4.1-4.3 (B covered 4.1-4.2 on Tue)</li>
+                        <li>Wed 1/29: E covers 4.9-4.10 (uses long block for variance trap + binomial intro)</li>
+                        <li>Wed 2/5: E gets extra review time before Friday test</li>
+                    </ul>
                 </div>
             </div>
         </div>
 
         <!-- Global Autograder Rules -->
         <div class="section">
-            <div class="section-header">Global Autograder Rules</div>
+            <div class="section-header">Global Autograder Rules (No Naked Numbers)</div>
             <div class="section-body">
-                <div class="alert alert-danger">
-                    <div class="alert-title">Communication Gate (No Naked Numbers)</div>
+                <div class="alert alert-danger" style="margin-bottom: 0;">
+                    <div class="alert-title">Communication Gate</div>
                     <p><strong>Full credit requires:</strong></p>
-                    <ol>
-                        <li>A <strong>probability statement</strong> (e.g., <code>P(A|B)</code>, <code>P(X≤3)</code>)</li>
-                        <li>The <strong>setup structure</strong> (fraction / rule / distribution)</li>
+                    <ol style="margin-top: 0.5rem;">
+                        <li>A <strong>probability statement</strong> (e.g., P(X≤3))</li>
+                        <li>The <strong>setup structure</strong> (distribution/rule)</li>
                         <li>The <strong>final number</strong></li>
                     </ol>
-                    <p style="margin-top: 0.5rem;">Calculator syntax alone (e.g., <code>binomcdf(...)</code>) → <strong>partial credit max</strong></p>
-                </div>
-
-                <div class="alert alert-warning" style="margin-bottom: 0;">
-                    <div class="alert-title">Feedback Tags</div>
-                    <div class="feedback-tags">
+                    <p style="margin-top: 0.5rem;">Calculator syntax alone → <strong>partial credit max</strong></p>
+                    <div class="feedback-tags" style="margin-top: 0.75rem;">
                         <span class="feedback-tag">MISSING_PROB_STATEMENT</span>
-                        <span class="feedback-tag">MISSING_SETUP</span>
                         <span class="feedback-tag">CALCULATOR_SPEAK_ONLY</span>
                         <span class="feedback-tag">MISSING_PARAMS</span>
                         <span class="feedback-tag">WRONG_RULE</span>
-                        <span class="feedback-tag">NOT_IN_CONTEXT_UNITS</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Drill Cartridge Priority -->
+        <!-- Cartridge Tracker -->
         <div class="section">
-            <div class="section-header">Drill Cartridge Build Priority</div>
-            <div class="section-body">
-                <ol class="priority-list">
-                    <li>
-                        <div class="priority-content">
-                            <div class="priority-name">U4-TABLE-TREE</div>
-                            <div class="priority-reason">Conditional / Independence / Unions — biggest payoff</div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="priority-content">
-                            <div class="priority-name">U4-BINOM-GEO</div>
-                            <div class="priority-reason">Biggest "AP notation killer" protection</div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="priority-content">
-                            <div class="priority-name">U4-RV-PARAMS</div>
-                            <div class="priority-reason">Keeps mean/SD/variance from becoming mush</div>
-                        </div>
-                    </li>
-                </ol>
-                <p style="color: var(--gray-600); font-size: 0.9rem;">Then add <strong>U4-RULE-MATCH</strong> and <strong>U4-SIM</strong> for early unit days.</p>
-            </div>
-        </div>
-
-        <!-- Quiz Summary -->
-        <div class="section">
-            <div class="section-header">Quiz Inventory</div>
+            <div class="section-header">Drill Cartridges to Build</div>
             <div class="section-body" style="padding: 0;">
                 <table class="schedule-table">
                     <thead>
                         <tr>
-                            <th>Quiz</th>
-                            <th>Topics Covered</th>
-                            <th>B Assigned</th>
-                            <th>B Due</th>
-                            <th>E Assigned</th>
-                            <th>E Due</th>
+                            <th>Cartridge</th>
+                            <th>Topics</th>
+                            <th>First Used (B)</th>
+                            <th>First Used (E)</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong>Quiz 4.1-4.2</strong></td>
-                            <td>Simulation, LLN</td>
-                            <td>Thu 1/22</td>
-                            <td>Fri 1/23</td>
-                            <td>Thu 1/22</td>
-                            <td>Fri 1/23</td>
+                            <td><code>apstatu4l1l2</code></td>
+                            <td>4.1-4.2</td>
+                            <td>Tue 1/21</td>
+                            <td>Wed 1/22</td>
+                            <td><span class="badge" style="background:#e8f5e9;color:#2e7d32;">Done</span></td>
                         </tr>
                         <tr>
-                            <td><strong>Quiz 4.3-4.5</strong></td>
-                            <td>Probability Rules</td>
-                            <td>Fri 1/23</td>
-                            <td>Mon 1/26</td>
-                            <td>Mon 1/26</td>
-                            <td>Wed 1/28</td>
+                            <td><code>apstatu4l3</code></td>
+                            <td>4.3</td>
+                            <td>Thu 1/23</td>
+                            <td>Wed 1/22</td>
+                            <td><span class="badge" style="background:#fff3e0;color:#ed6c02;">Tomorrow</span></td>
                         </tr>
                         <tr>
-                            <td><strong>Quiz 4.6</strong></td>
-                            <td>Independence, Unions</td>
-                            <td>Mon 1/26</td>
-                            <td>Tue 1/27</td>
-                            <td>Wed 1/28</td>
-                            <td>Thu 1/29</td>
+                            <td><code>apstatu4l3l4l5</code></td>
+                            <td>4.3-4.5</td>
+                            <td>Thu 1/23</td>
+                            <td>Fri 1/24</td>
+                            <td><span class="badge" style="background:#fff3e0;color:#ed6c02;">Thu</span></td>
                         </tr>
                         <tr>
-                            <td><strong>Quiz 4.7-4.8</strong></td>
-                            <td>Discrete RVs, Parameters</td>
-                            <td>Tue 1/27</td>
-                            <td>Thu 1/29</td>
-                            <td>Thu 1/29</td>
-                            <td>Fri 1/30</td>
+                            <td><code>apstatu4l6</code></td>
+                            <td>4.6</td>
+                            <td>Fri 1/24</td>
+                            <td>Fri 1/24</td>
+                            <td><span class="badge" style="background:#ffebee;color:#c9302c;">Fri</span></td>
                         </tr>
                         <tr>
-                            <td><strong>Quiz 4.9</strong></td>
-                            <td>Combining RVs</td>
-                            <td>Thu 1/29</td>
-                            <td>Fri 1/30</td>
-                            <td>Fri 1/30</td>
-                            <td>Mon 2/2</td>
+                            <td><code>apstatu4l7l8</code></td>
+                            <td>4.7-4.8</td>
+                            <td>Mon 1/27</td>
+                            <td>Mon 1/27</td>
+                            <td><span class="badge" style="background:#ffebee;color:#c9302c;">Next Week</span></td>
                         </tr>
                         <tr>
-                            <td><strong>Quiz 4.10-4.11</strong></td>
-                            <td>Binomial</td>
-                            <td colspan="2" style="text-align: center;"><em>Combined below</em></td>
-                            <td>Mon 2/2</td>
-                            <td>Wed 2/4</td>
+                            <td><code>apstatu4l9</code></td>
+                            <td>4.9</td>
+                            <td>Tue 1/28</td>
+                            <td>Wed 1/29</td>
+                            <td><span class="badge" style="background:#ffebee;color:#c9302c;">Next Week</span></td>
                         </tr>
                         <tr>
-                            <td><strong>Quiz 4.10-4.12</strong></td>
-                            <td>Binomial &amp; Geometric</td>
-                            <td>Fri 1/30</td>
-                            <td>Mon 2/2</td>
-                            <td colspan="2" style="text-align: center;"><em>Split above/below</em></td>
+                            <td><code>apstatu4l10l11l12</code></td>
+                            <td>4.10-4.12</td>
+                            <td>Thu 1/30</td>
+                            <td>Wed 1/29 + Fri 1/31</td>
+                            <td><span class="badge" style="background:#ffebee;color:#c9302c;">Next Week</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Day 1 Resources -->
+        <div class="section">
+            <div class="section-header">Day 1 Resources (4.1-4.2)</div>
+            <div class="section-body" style="padding: 0;">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>Resource</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Videos</td>
+                            <td><code style="font-size:0.8rem;">https://apclassroom.collegeboard.org/33/home?apd=7vn9faj6p9&unit=4</code></td>
                         </tr>
                         <tr>
-                            <td><strong>Quiz 4.12</strong></td>
-                            <td>Geometric</td>
-                            <td colspan="2" style="text-align: center;"><em>Combined above</em></td>
-                            <td>Wed 2/4</td>
-                            <td>Thu 2/5</td>
+                            <td>Follow-Along</td>
+                            <td><code style="font-size:0.8rem;">https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html</code></td>
+                        </tr>
+                        <tr>
+                            <td>Blooket</td>
+                            <td><code style="font-size:0.8rem;">https://dashboard.blooket.com/set/696edcfa2761a89ccdaf2fdc</code></td>
+                        </tr>
+                        <tr>
+                            <td>Drill</td>
+                            <td><code style="font-size:0.8rem;">https://lrsl-driller.vercel.app/platform/app.html?c=apstatu4l1l2</code></td>
                         </tr>
                     </tbody>
                 </table>
@@ -1055,7 +885,7 @@
 
         <div class="footer">
             AP Statistics — Lynn English High School<br>
-            <span style="font-size: 0.8rem;">Period B: Mon/Tue/Thu/Fri &nbsp;|&nbsp; Period E: Mon/Wed/Thu/Fri</span>
+            <span style="font-size: 0.8rem;">Period B: Mon/Tue/Thu/Fri &nbsp;|&nbsp; Period E: Mon/Wed/Fri</span>
         </div>
     </div>
 </body>
