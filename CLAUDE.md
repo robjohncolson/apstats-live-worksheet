@@ -11,10 +11,14 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | File | Purpose |
 |------|---------|
 | `u3_lesson6-7_live.html` | Live worksheet for Topics 3.6–3.7 (Experimental Design & Inference) |
-| `ai-grading-prompts.js` | Rubrics, vocabulary, and prompt templates for AI grading |
-| `live-worksheet.skill` | Claude Code skill definition for generating new worksheets |
+| `u4_lesson1-2_live.html` | Live worksheet for Topics 4.1–4.2 (Random Patterns & Simulation) |
+| `ai-grading-prompts.js` | Rubrics for Unit 3 AI grading (keyed by `reflect53`, `exitTicket`, etc.) |
+| `ai-grading-prompts-u4.js` | Rubrics for Unit 4 AI grading (keyed by `reflect1`, `reflect2`, `exitTicket`) |
+| `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
 | `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
 | `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |
+| `tests/` | Vitest test suite (jsdom environment) |
+| `u4_l1_l2/` | Source materials (transcripts, slides, PDFs) for Unit 4 worksheet development |
 
 ## Architecture
 
@@ -42,6 +46,12 @@ npm install
 # Run tests
 npm test
 
+# Run a single test file
+npx vitest run tests/grading-prompts.test.js
+
+# Run tests matching a pattern
+npx vitest run -t "buildReflectionPrompt"
+
 # Run tests in watch mode
 npm run test:watch
 
@@ -55,7 +65,8 @@ Tests use Vitest with jsdom for DOM simulation:
 
 | Test File | Coverage |
 |-----------|----------|
-| `tests/grading-prompts.test.js` | Rubric structure, prompt building, lesson context |
+| `tests/grading-prompts.test.js` | Unit 3 rubric structure, prompt building, lesson context |
+| `tests/grading-prompts-u4.test.js` | Unit 4 rubric structure, prompt building, lesson context |
 | `tests/reflection-grader.test.js` | Grading workflow, API calls, appeal system |
 | `tests/ui-components.test.js` | DOM interactions, CSS classes, UI states |
 
@@ -100,9 +111,11 @@ Use the `live-worksheet.skill` to generate worksheets. The skill expects:
 - Timestamped video sections with fill-in-the-blank questions
 - Post-video reflection questions and exit ticket
 
-## Naming Convention
+## Naming Conventions
 
-`u{unit}_lesson{lesson-range}_live.html` (e.g., `u3_lesson6-7_live.html`)
+- Worksheets: `u{unit}_lesson{lesson-range}_live.html` (e.g., `u3_lesson6-7_live.html`, `u4_lesson1-2_live.html`)
+- Grading prompts: `ai-grading-prompts.js` (U3) and `ai-grading-prompts-u4.js` (U4) contain unit-specific rubrics keyed by textarea ID
+- Question IDs: Auto-assigned as `WS-U{unit}L{lessons}-Q{N}` for server tracking (e.g., `WS-U4L1-2-Q1`)
 
 ## Key State Machines
 

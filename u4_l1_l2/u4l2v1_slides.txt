@@ -1,0 +1,43 @@
+Below are the details and timestamps for each slide presented in the video:
+
+- **0:00 - 0:15:** TOPIC 4.2 Estimating Probabilities Using Simulation
+  - Introduction to the topic: random outcomes, events, and simulations.
+
+- **0:16 - 0:30:** What Will We Learn?
+  - Outlines the lesson goals: understanding random processes and the effectiveness of simulations in modeling real-life situations.
+
+- **0:31 - 1:33:** Random Events and Outcomes
+  - Definitions and examples for:
+    - **Random process:** Results determined by chance (e.g., rolling a die).
+    - **Outcome:** Result of a single trial (e.g., a specific number on the die).
+    - **Event:** A collection of outcomes (e.g., rolling a prime number).
+
+- **1:34 - 1:36:** LET'S LOOK AT AN EXAMPLE
+  - Transition slide to the coin-flipping demonstration.
+
+- **1:37 - 3:05:** Give It a Chance!
+  - Illustrates a sequence of 100 coin flips.
+  - Highlights a streak of 8 tails to explain probability based on a single trial vs. the need for multiple trials.
+
+- **3:06 - 3:36:** Give It (Another) Chance!
+  - Displays a second trial of 100 flips, which also happened to result in a streak of 8.
+
+- **3:37 - 4:28:** Give It (Another) Chance! (3rd trial)
+  - Shows a third trial with no streak of 8, lowering the cumulative probability.
+  - Mentions the physical difficulty of manually performing many trials, leading to the need for an easier method.
+
+- **4:29 - 4:41:** Simulation Definition
+  - Defines **Simulation** as a way to model random events to closely match real-world outcomes efficiently.
+
+- **4:42 - 5:46:** Give It a Chance! (Simulation Results)
+  - Presents a dot plot showing results from 50 computer-simulated trials of 100 flips.
+  - Calculates the estimated probability (32%) of getting a streak of 8 or more.
+
+- **5:47 - 5:49:** WHAT SHOULD WE TAKE AWAY?
+  - Transition to the summary.
+
+- **5:50 - 6:07:** Key Takeaways
+  - Summarizes the main definitions: Event as a collection of outcomes and Simulation as an effective modeling tool.
+
+- **6:08 - 6:11:** Thank you.
+  - Concluding slide of the video.

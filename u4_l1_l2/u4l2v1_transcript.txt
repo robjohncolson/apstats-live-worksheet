@@ -1,0 +1,29 @@
+The video's transcription is provided below:
+
+00:00 - 00:15: Hey, this is Joshua Soya on behalf of the College Board, and in this video, we're looking at estimating probabilities using simulation Video 1, and this is going to introduce us to random outcomes a little bit more, events, and simulations.
+
+00:15 - 00:30: So, what will we learn today? We're going to look at what a random process is. We're also going to look at why simulation is effective in modeling real-life chance situations.
+
+00:30 - 00:37: All right. Let's talk a little bit about random events and outcomes.
+
+00:37 - 01:03: As we stated in the last video, a random process generates results that are determined by chance. So, for example, if we were to roll a single die, a six-sided number cube, that would be a random process, and we remember we defined that as something where we don't know the individual outcome but we are aware of all of the possible outcomes. So if I roll a die, I do not know exactly what number will show up. All right.
+
+01:03 - 01:15: An outcome again is the result of a trial of a random process. So in this case, the number or the value that is face up on the normal cube - one, two, three, four, five, or six.
+
+01:15 - 01:34: And an event is a collection of outcomes. So for example, if I wanted to define an event that was, let's say, roll a prime number, the possible outcomes that make up that event would be the rolls two, three, or five.
+
+01:34 - 02:01: So let's look at an example. Give it a chance! I flipped a coin several times and got this sequence of heads and tails. If you go back to the 4.1 video, you'll see where this came from. We have this hundred flips. All right.
+
+02:01 - 02:28: And we asked the question: how likely is it to get a string of eight or more heads or eight or more tails within a set of 100 flips? This random process is where we flip the coin 100 times. All right. And our possible outcome was a sequence of 100 heads or tails, just like we have so far. And the event that we're looking for is to identify if we had a string of eight or more heads or eight or more tails. And in this case, yes, we did have a string of eight tails. All right.
+
+02:28 - 03:03: So according to our example, there is a 100% chance of getting a string of eight or more heads or tails, but there's an issue here in that we only performed one trial. All right. And one thing we need to learn about variability is that if we do things repeatedly, we should not expect the same thing every time. All right. If we get this same set of 100 flips every single time, then it's not random. All right.
+
+03:03 - 03:32: So instead, we need to perform many, many trials due to variability in the random process, where each set of 100 flips is still random. All right. So I went and I did another set of 100 and if you want to pause the video here, let's check through this set of 100 flips. And if you notice, we have another string of eight tails in a row. So now our count is at two out of two, so we're still at a 100% chance of getting eight or more heads or eight or more tails within a set of 100.
+
+03:32 - 04:29: But again, this is only two trials, so we need to go and maybe try it again. So I flipped yet another 100 times and we got this right here. This time we did not get a string of eight or more heads or eight or more tails. So now my count, if you will, is at two out of three, which is 66.7. All right. If we were to continue to do this, then we could get something called the empirical probability, which is found by performing the actual task many many repeated times. But my hand started hurting and I said that there must be a lot easier way. There's this a lot of flipping coins, it's got to be an easy way to do this. There's got to be an easier way of deciding what this probability is. And so is there something else that can work very, very similar to the flip of a coin but that saves time, that saves energy, and that saves my hand from cramping up?
+
+04:29 - 05:46: And so we decided to go the way of a simulation, which is a way to model random events such that the simulated outcomes closely match the real-world outcomes. All right. And so I performed a simulation. In this case, I used a random number generator and we'll talk more about that in the next video. All right. And what I did is I used a computer to simulate 50 sets of 100 coin flips, so in essence, what 50 times 100 was that 5,000, 50 hundred. Yep, that would be 5,000. All right. And within this, we counted the longest streak within each of those 50 sets of 100 coin flips. And if you notice, a string of eight or more heads or tails actually became a little more prevalent than what we may have expected, showing up out of 50 it showed up 16 times, so about 32% of the time. All right. Again, this is an example of a simulation. How can we actually plan this out? Stay tuned, come back for the next video and we're going to talk some more about how we can actually design a simulation.
+
+05:46 - 06:08: So what should we take away from today's video? An event again is a collection of outcomes, which are the results of a trial of a random process. And that simulation is a way to model a random process so that the simulated outcomes closely match the real-world outcomes.
+
+06:08 - 06:14: I hope this video was helpful. Thanks for watching and have a great day.

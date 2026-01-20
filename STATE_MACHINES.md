@@ -1,6 +1,6 @@
 # Live Worksheet State Machine Documentation
 
-This document describes the state machines governing the interactive behaviors in `u3_lesson6-7_live.html`.
+This document describes the state machines governing the interactive behaviors in the live worksheets (`u3_lesson6-7_live.html`, `u4_lesson1-2_live.html`).
 
 ---
 
@@ -19,6 +19,7 @@ This document describes the state machines governing the interactive behaviors i
 11. [AI Reflection Grading](#11-ai-reflection-grading)
 12. [Appeal System](#12-appeal-system)
 13. [Grading State Management](#13-grading-state-management)
+14. [Coin Flip Activity Grid (U4 only)](#14-coin-flip-activity-grid-u4-only)
 
 ---
 
@@ -1009,6 +1010,122 @@ state.result.score = newScore;
 
 ---
 
+## 14. Coin Flip Activity Grid (U4 only)
+
+Interactive 100-cell grid where students enter their "fake" random coin flip sequence.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    COIN FLIP ACTIVITY GRID STATE MACHINE                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                         ┌─────────────────┐
+                         │  GRID CREATED   │
+                         │  (100 cells,    │
+                         │   all empty)    │
+                         └────────┬────────┘
+                                  │
+                                  │ generateCoinGrid() on init
+                                  ▼
+                         ┌─────────────────┐
+                         │  AWAITING INPUT │◄──────────────────┐
+                         │  (cells ready)  │                   │
+                         └────────┬────────┘                   │
+                                  │                            │
+                                  │ User types in cell         │
+                                  ▼                            │
+                         ┌─────────────────┐                   │
+                         │  INPUT EVENT    │                   │
+                         │  (validate H/T) │                   │
+                         └────────┬────────┘                   │
+                                  │                            │
+                        ┌─────────┴─────────┐                  │
+                        │                   │                  │
+                   VALID (H/T)          INVALID                │
+                        │                   │                  │
+                        ▼                   ▼                  │
+              ┌─────────────────┐  ┌─────────────────┐         │
+              │  ACCEPT INPUT   │  │  CLEAR INPUT    │         │
+              │  • Uppercase    │  │  • Set to ''    │         │
+              │  • Store value  │  └────────┬────────┘         │
+              └────────┬────────┘           │                  │
+                       │                    │                  │
+                       │                    └──────────────────┘
+                       ▼
+              ┌─────────────────┐
+              │  AUTO-ADVANCE   │
+              │  Focus next     │
+              │  cell (if < 99) │
+              └────────┬────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │  UPDATE SUMMARY │
+              │  updateActivity │
+              │  Summary()      │
+              └────────┬────────┘
+                       │
+                       │ Calculate:
+                       │ • Total Heads
+                       │ • Total Tails
+                       │ • Longest Streak
+                       ▼
+              ┌─────────────────┐
+              │  DISPLAY STATS  │
+              │  #activityHeads │
+              │  #activityTails │
+              │  #activityStreak│
+              └─────────────────┘
+```
+
+**Input Validation:**
+- Only accepts: `H`, `h`, `T`, `t`, or empty
+- Auto-converts to uppercase
+- Any other character is rejected (input cleared)
+
+**Auto-Advance Logic:**
+```javascript
+if (val && i < 99) {
+    const nextInput = grid.querySelector(`input[data-index="${i + 1}"]`);
+    if (nextInput) nextInput.focus();
+}
+```
+
+**Summary Calculation:**
+```javascript
+// Streak detection algorithm
+inputs.forEach(input => {
+    const val = input.value.toUpperCase();
+    if (val === 'H') heads++;
+    if (val === 'T') tails++;
+
+    if (val && val === lastVal) {
+        currentStreak++;
+    } else if (val) {
+        currentStreak = 1;
+    }
+    if (currentStreak > maxStreak) maxStreak = currentStreak;
+    if (val) lastVal = val;
+});
+```
+
+**CSS Structure:**
+```css
+.activity-grid {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);  /* 20 columns × 5 rows */
+    gap: 2px;
+}
+.activity-cell input {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    text-transform: uppercase;
+}
+```
+
+---
+
 ## Updated State Persistence Summary
 
 | State | Storage | Key/Mechanism |
@@ -1022,3 +1139,4 @@ state.result.score = newScore;
 | **AI grading results** | JS Map | `gradingState` |
 | **Appeal history** | JS Map | `gradingState[id].history` |
 | **Appeal count** | JS Map | `gradingState[id].appealCount` |
+| **Coin flip grid (U4)** | DOM inputs | `#coinGrid input[data-index]` |

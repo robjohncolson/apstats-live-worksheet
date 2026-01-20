@@ -1,0 +1,4249 @@
+{
+  "unit": 4,
+  "questionCount": 102,
+  "questions": [
+    {
+      "id": "U4-L2-Q01",
+      "type": "multiple-choice",
+      "prompt": "An online customer service department estimates that about 15 percent of callers have to wait more than 8 minutes to have their calls answered by a person. The department conducted a simulation of 1,000 trials to estimate the probabilities that a certain number of callers out of the next 10 callers will have to wait more than 8 minutes to have their calls answered. The simulation is shown in the following histogram. Based on the simulation, what is the probability that at most 2 of the next 10 callers will have to wait more than 8 minutes to have their calls answered?",
+      "answerKey": "E",
+      "reasoning": "The phrase 'at most 2' means 0, 1, or 2 callers. To find this probability, we sum the relative frequencies for the bars corresponding to 0, 1, and 2 callers: \\(0.181 + 0.345 + 0.284 = 0.810\\).",
+      "attachments": {
+        "chartType": "histogram",
+        "xLabels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ],
+        "series": [
+          {
+            "name": "Relative Frequency",
+            "values": [
+              0.181,
+              0.345,
+              0.284,
+              0.142,
+              0.039,
+              0.008,
+              0,
+              0.001
+            ]
+          }
+        ],
+        "chartConfig": {
+          "yAxis": {
+            "min": 0,
+            "max": 0.36,
+            "tickInterval": 0.05,
+            "title": "Relative Frequency"
+          },
+          "xAxis": {
+            "title": "Number of Callers",
+            "labelType": "upperBound"
+          },
+          "gridLines": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "showPointLabels": true,
+          "description": "Histogram showing simulation results for number of callers waiting more than 8 minutes"
+        },
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.150"
+          },
+          {
+            "key": "B",
+            "value": "0.190"
+          },
+          {
+            "key": "C",
+            "value": "0.474"
+          },
+          {
+            "key": "D",
+            "value": "0.526"
+          },
+          {
+            "key": "E",
+            "value": "0.810"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L2-Q02",
+      "type": "multiple-choice",
+      "prompt": "Mateo plays on his school basketball team. From past history, he knows that his probability of making a basket on a free throw is 0.8. Suppose he wants to create a simulation using random numbers to estimate the probability of making at least 3 baskets on his next 5 free throw attempts. Which of the following assignments of the digits 0 to 9 could be used for the simulation?",
+      "answerKey": "E",
+      "reasoning": "For a proper simulation, the proportion of digits assigned to 'making a basket' must match Mateo's probability of 0.8 (or 80%). The eight digits 0 to 7 represent \\(\\frac{8}{10} = 0.8\\) or 80% of the 10 digits, which exactly matches Mateo's probability of making a basket.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Let the even digits represent making a basket and the odd digits represent not making a basket."
+          },
+          {
+            "key": "B",
+            "value": "Let the digits 0 and 1 represent making a basket and the digits from 2 to 9 represent not making a basket."
+          },
+          {
+            "key": "C",
+            "value": "Let the digits from 0 to 3 represent making a basket and the digits from 4 to 9 represent not making a basket."
+          },
+          {
+            "key": "D",
+            "value": "Let the digits from 0 to 6 represent making a basket and the digits from 7 to 9 represent not making a basket."
+          },
+          {
+            "key": "E",
+            "value": "Let the digits from 0 to 7 represent making a basket and the digits 8 and 9 represent not making a basket."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L2-Q03",
+      "type": "multiple-choice",
+      "prompt": "Joslyn performed an experiment using a die with its faces numbered from 1 to 6. She rolled the die and recorded whether the 5 landed face up. She repeated the process many times and kept a cumulative record of the total number of rolls and the total number of 5s landing face up. The following table shows part of her record. Suppose Joslyn could roll the die 10,000 times and keep a record of the total number of 5s landing face up in the 10,000 rolls. What would such a record illustrate?",
+      "answerKey": "D",
+      "reasoning": "As the number of repetitions increases, the relative frequencies of the 5 landing face up out of the total number of rolls will approach the theoretical probability of \\(\\frac{1}{6}\\). This demonstrates the law of large numbers, which states that as the sample size increases, the sample proportion approaches the true population proportion.",
+      "attachments": {
+        "table": [
+          [
+            "Total Number of Rolls",
+            "Total Number of 5s"
+          ],
+          [
+            "5",
+            "1"
+          ],
+          [
+            "10",
+            "2"
+          ],
+          [
+            "15",
+            "2"
+          ],
+          [
+            "20",
+            "3"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "The conditional probability rule"
+          },
+          {
+            "key": "B",
+            "value": "The multiplication rule"
+          },
+          {
+            "key": "C",
+            "value": "The addition rule"
+          },
+          {
+            "key": "D",
+            "value": "The law of large numbers"
+          },
+          {
+            "key": "E",
+            "value": "The property of mutually exclusive events"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L3-Q01",
+      "type": "multiple-choice",
+      "prompt": "At a sporting event, cheerleaders will throw 50 bundled T-shirts into the crowd. The T-shirt sizes consist of 10 small, 15 medium, and the remainder either large or extra large. Suppose Ana catches a T-shirt. What is the probability that she will catch a T-shirt that is not a size small?",
+      "answerKey": "E",
+      "reasoning": "There are 50 total T-shirts and 10 are small, so 40 are not small. The probability is thus \\(\\frac{40}{50} = 0.80\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.10"
+          },
+          {
+            "key": "B",
+            "value": "0.20"
+          },
+          {
+            "key": "C",
+            "value": "0.50"
+          },
+          {
+            "key": "D",
+            "value": "0.67"
+          },
+          {
+            "key": "E",
+            "value": "0.80"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L3-Q02",
+      "type": "multiple-choice",
+      "prompt": "A middle school chess club has 5 members: Adam, Bradley, Carol, Dave, and Ella. Two students from the club will be selected at random to participate in the county chess tournament. What is the probability that Adam and Ella will be selected?",
+      "answerKey": "B",
+      "reasoning": "The two players selected could be AB, AC, AD, AE, BC, BD, BE, CD, CE, or DE, so there are 10 equally likely possible outcomes. Alternatively, there are \\(\\binom{5}{2} = 10\\) outcomes when 2 people are chosen from 5 people. One of these outcomes is AE, so the probability is \\(\\frac{1}{10}\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\frac{1}{20}\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\frac{1}{10}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\frac{1}{5}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\frac{1}{4}\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\frac{1}{2}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L3-Q03",
+      "type": "multiple-choice",
+      "prompt": "A fair die with its faces numbered from 1 to 6 will be rolled. Which of the following is the best interpretation of the probability that the number landing face up will be less than 3?",
+      "answerKey": "A",
+      "reasoning": "A roll of a fair die can result in 6 possible outcomes. There are 2 outcomes with a number less than 3 (1 and 2). In the long run, the relative frequency of rolling a number less than 3 is \\(\\frac{2}{6} = \\frac{1}{3}\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "For many rolls of the die, the long-run relative frequency of a number less than 3 landing face up is \\(\\frac{1}{3}\\)."
+          },
+          {
+            "key": "B",
+            "value": "For many rolls of the die, the long-run relative frequency of a number less than 3 landing face up is \\(\\frac{1}{2}\\)."
+          },
+          {
+            "key": "C",
+            "value": "For many rolls of the die, the long-run relative frequency of a number less than 3 landing face up is \\(\\frac{2}{3}\\)."
+          },
+          {
+            "key": "D",
+            "value": "For three rolls of the die, a number less than 3 will land face up one time."
+          },
+          {
+            "key": "E",
+            "value": "It will take three rolls of the die before a number less than 3 lands face up for the first time."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L3-Q04",
+      "type": "multiple-choice",
+      "prompt": "A store owner reports that the probability that a customer who purchases a lawn mower will also purchase an extended warranty is 0.68. Which of the following is the best interpretation of the probability 0.68?",
+      "answerKey": "A",
+      "reasoning": "In the long run, the relative frequency with which a customer who purchases a lawn mower will purchase an extended warranty is 0.68.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "For all customers who purchase a lawn mower, 68% will also purchase an extended warranty."
+          },
+          {
+            "key": "B",
+            "value": "For all customers of the store, 68% will purchase a lawn mower."
+          },
+          {
+            "key": "C",
+            "value": "For all customers who purchase an extended warranty, 68% will use the warranty."
+          },
+          {
+            "key": "D",
+            "value": "From the next 25 customers, 17 will purchase an extended warranty."
+          },
+          {
+            "key": "E",
+            "value": "From the next 25 customers, 17 will purchase a lawn mower."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L3-Q05",
+      "type": "multiple-choice",
+      "prompt": "The probability that a randomly selected visitor to a certain website will be asked to participate in an online survey is 0.40. Avery claims that for the next 5 visitors to the site, 2 will be asked to participate in the survey. Is Avery interpreting the probability correctly?",
+      "answerKey": "E",
+      "reasoning": "Over many visits, the long-run relative frequency of being asked to participate is 0.40, or 2 out of 5. Such a ratio does not apply to a single observation of 5 visits.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, because 2 out of 5 is equal to 40%."
+          },
+          {
+            "key": "B",
+            "value": "Yes, because participants in the survey are selected at random."
+          },
+          {
+            "key": "C",
+            "value": "No, because there could be voluntary response bias."
+          },
+          {
+            "key": "D",
+            "value": "No, because only 40% of all people will visit the site."
+          },
+          {
+            "key": "E",
+            "value": "No, because 0.40 represents probability in the long run over many visits to the site."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L3-Q06",
+      "type": "multiple-choice",
+      "prompt": "In a parking lot with 200 cars, 50 cars are white, 30 cars are red, and 20 cars are silver. One car will be selected at random from the parking lot. If each car in the parking has only one color, which of the following cannot be the probability that the selected car will be green?",
+      "answerKey": "E",
+      "reasoning": "Of the 200 cars in the lot, at least 100 are not green (50 white + 30 red + 20 silver = 100), which means that the probability of selecting a car that is not green is at least 0.5. Selecting a car that is green and selecting a car that is not green are complements and their probabilities must sum to 1. Therefore the probability of selecting a car that is green cannot be greater than 0.5.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0"
+          },
+          {
+            "key": "B",
+            "value": "0.1"
+          },
+          {
+            "key": "C",
+            "value": "0.2"
+          },
+          {
+            "key": "D",
+            "value": "0.5"
+          },
+          {
+            "key": "E",
+            "value": "0.6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L4-Q01",
+      "type": "multiple-choice",
+      "prompt": "A high school science teacher has 78 students. Of those students, 35 are in the band and 32 are on a sports team. There are 16 students who are not in the band or on a sports team. One student from the 78 students will be selected at random. Let event \\(B\\) represent the event of selecting a student in the band, and let event \\(S\\) represent the event of selecting a student on a sports team. Are \\(B\\) and \\(S\\) mutually exclusive events?",
+      "answerKey": "A",
+      "reasoning": "The sum of 35, 32, and 16 is 83, which is 5 greater than 78. So there must be 5 students who are both in the band and on a sports team. Because the events can occur at the same time (there is overlap), they are not mutually exclusive. Two events are mutually exclusive only when \\(P(B \\cap S) = 0\\), but here \\(P(B \\cap S) = \\frac{5}{78} > 0\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "No, because \\(P(B \\cap S) = \\frac{5}{78}\\)."
+          },
+          {
+            "key": "B",
+            "value": "No, because \\(P(B \\cap S) = \\frac{48}{78}\\)."
+          },
+          {
+            "key": "C",
+            "value": "No, because \\(P(B \\cap S) = \\frac{62}{78}\\)."
+          },
+          {
+            "key": "D",
+            "value": "Yes, because \\(P(B \\cap S) = \\frac{5}{78}\\)."
+          },
+          {
+            "key": "E",
+            "value": "Yes, because \\(P(B \\cap S) = \\frac{62}{78}\\)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L4-Q02",
+      "type": "multiple-choice",
+      "prompt": "The table shows data that were collected from people who attended a certain high school basketball game and indicates the team each person rooted for and whether each of these people purchased food during the game. A person who attended the game will be selected at random. Which of the following correctly interprets mutually exclusive events represented by the table?",
+      "answerKey": "A",
+      "reasoning": "Based on the table, each person either rooted for the home team or rooted for the away team. A person cannot root for both teams simultaneously. Because these events cannot occur at the same time, the events are mutually exclusive. All other options represent events that can occur together (e.g., someone can root for the home team AND purchase food).",
+      "attachments": {
+        "table": [
+          [
+            "",
+            "Team",
+            "",
+            ""
+          ],
+          [
+            "",
+            "Home",
+            "Away",
+            "Total"
+          ],
+          [
+            "Purchased food",
+            "120",
+            "40",
+            "160"
+          ],
+          [
+            "Did not purchase food",
+            "60",
+            "30",
+            "90"
+          ],
+          [
+            "Total",
+            "180",
+            "70",
+            "250"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "Rooting for the home team and rooting for the away team"
+          },
+          {
+            "key": "B",
+            "value": "Rooting for the home team and purchasing food during the game"
+          },
+          {
+            "key": "C",
+            "value": "Rooting for the away team and purchasing food during the game"
+          },
+          {
+            "key": "D",
+            "value": "Rooting for the home team and not purchasing food during the game"
+          },
+          {
+            "key": "E",
+            "value": "Not rooting for the home team and not purchasing food during the game"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L4-Q03",
+      "type": "multiple-choice",
+      "prompt": "As a promotion, the first 50 customers who entered a certain store at a mall were asked to choose from one of two discounts. The first discount choice was 20% off all purchases made that day. The second discount choice was 10% off all purchases for the week. Of those who received the discounts, 28 chose the first discount and 22 chose the second discount. One customer will be selected at random from those who received a discount. Let \\(F\\) represent the event that the selected person chose the first discount, and let \\(S\\) represent the event that the selected person chose the second discount. Are \\(F\\) and \\(S\\) mutually exclusive events?",
+      "answerKey": "A",
+      "reasoning": "A person could choose only one discount. Each customer was required to select exactly one of the two discount options - they cannot choose both discounts simultaneously. Because the events cannot occur at the same time, the events are mutually exclusive. This means \\(P(F \\cap S) = 0\\), which is the defining characteristic of mutually exclusive events.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, because \\(P(F \\cap S) = 0\\)."
+          },
+          {
+            "key": "B",
+            "value": "Yes, because \\(P(F \\cap S) = 0.12\\)."
+          },
+          {
+            "key": "C",
+            "value": "Yes, because \\(P(F \\cap S) = 1\\)."
+          },
+          {
+            "key": "D",
+            "value": "No, because \\(P(F \\cap S) = 0\\)."
+          },
+          {
+            "key": "E",
+            "value": "No, because \\(P(F \\cap S) = 1\\)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L5-Q01",
+      "type": "multiple-choice",
+      "prompt": "One student from a high school will be selected at random. Let \\(A\\) be the event that the selected student is a student athlete, and let \\(B\\) be the event that the selected student drives to school. If \\(P(A \\cap B) = 0.08\\) and \\(P(B|A) = 0.25\\), what is the probability that the selected student will be a student athlete?",
+      "answerKey": "C",
+      "reasoning": "By the multiplication rule, \\(P(A \\cap B) = P(A) \\cdot P(B|A)\\), so \\(0.08 = P(A) \\cdot 0.25\\). Solving for \\(P(A)\\) gives \\(P(A) = \\frac{0.08}{0.25} = 0.32\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.02"
+          },
+          {
+            "key": "B",
+            "value": "0.17"
+          },
+          {
+            "key": "C",
+            "value": "0.32"
+          },
+          {
+            "key": "D",
+            "value": "0.33"
+          },
+          {
+            "key": "E",
+            "value": "3.13"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L5-Q02",
+      "type": "multiple-choice",
+      "prompt": "The seniors at three high schools were surveyed about their plans after graduation. The following table shows the responses, classified by high school. One senior from the high schools will be selected at random. What is the probability that the senior selected will not be from High School B given that the senior responded with a choice other than college?",
+      "answerKey": "E",
+      "reasoning": "There were \\(956 - 418 = 538\\) seniors who gave a response other than college. Of those, \\(99 + 49 + 63 = 211\\) were from High School A and \\(83 + 31 + 71 = 185\\) were from High School C. Thus \\(\\frac{211 + 185}{538} = \\frac{396}{538}\\) is the probability that a senior selected will not be from High School B given that the senior gave a response other than college.",
+      "attachments": {
+        "table": [
+          [
+            "",
+            "Work",
+            "Military",
+            "College",
+            "Undecided",
+            "Total"
+          ],
+          [
+            "High School A",
+            "99",
+            "49",
+            "138",
+            "63",
+            "349"
+          ],
+          [
+            "High School B",
+            "62",
+            "26",
+            "156",
+            "54",
+            "298"
+          ],
+          [
+            "High School C",
+            "83",
+            "31",
+            "124",
+            "71",
+            "309"
+          ],
+          [
+            "Total",
+            "244",
+            "106",
+            "418",
+            "188",
+            "956"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\frac{156}{418}\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\frac{538}{956}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\frac{262}{418}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\frac{658}{956}\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\frac{396}{538}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L5-Q03",
+      "type": "multiple-choice",
+      "prompt": "Students at a local elementary school were shown a painting and asked which emotion—joy, happiness, love, or anger—they felt by looking at the painting. The students were classified by their age. The following table summarizes the responses of the students by age-group. One student from the school will be selected at random. What is the probability that the student is in the age-group of 6 to 8 years given that the selected student responded joy?",
+      "answerKey": "E",
+      "reasoning": "Of the 89 students who responded joy, 28 were in the age-group of 6 to 8 years, so \\(\\frac{28}{89}\\) is the probability that a student will be in the age-group of 6 to 8 years given that the student responded joy.",
+      "attachments": {
+        "table": [
+          [
+            "",
+            "Joy",
+            "Happiness",
+            "Love",
+            "Anger",
+            "Total"
+          ],
+          [
+            "6 to 8 years",
+            "28",
+            "20",
+            "40",
+            "18",
+            "106"
+          ],
+          [
+            "9 to 11 years",
+            "61",
+            "25",
+            "80",
+            "60",
+            "226"
+          ],
+          [
+            "Total",
+            "89",
+            "45",
+            "120",
+            "78",
+            "332"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\frac{89}{332}\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\frac{28}{332}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\frac{28}{106}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\frac{106}{332}\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\frac{28}{89}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L6-Q01",
+      "type": "multiple-choice",
+      "prompt": "For which of the following probability assignments are events \\(A\\) and \\(B\\) independent?",
+      "answerKey": "C",
+      "reasoning": "Events \\(A\\) and \\(B\\) are independent if \\(P(A \\cap B) = [P(A)][P(B)]\\). Here, \\(P(A) = P(A \\cap B) + P(A \\cap B^c) = 0.1 + 0.1 = 0.2\\) and \\(P(B) = P(B \\cap A) + P(B \\cap A^c) = 0.1 + 0.4 = 0.5\\). Therefore, \\([P(A)][P(B)] = (0.2)(0.5) = 0.1\\) and \\(0.1 = P(A \\cap B)\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(P(A \\cap B^c) = 0.3\\), \\(P(A \\cap B) = 0.12\\), and \\(P(A^c \\cap B) = 0.4\\)."
+          },
+          {
+            "key": "B",
+            "value": "\\(P(A \\cap B^c) = 0.3\\), \\(P(A \\cap B) = 0.3\\), and \\(P(A^c \\cap B) = 0.3\\)."
+          },
+          {
+            "key": "C",
+            "value": "\\(P(A \\cap B^c) = 0.1\\), \\(P(A \\cap B) = 0.1\\), and \\(P(A^c \\cap B) = 0.4\\)."
+          },
+          {
+            "key": "D",
+            "value": "\\(P(A \\cap B^c) = 0.3\\), \\(P(A \\cap B) = 0.0\\), and \\(P(A^c \\cap B) = 0.2\\)."
+          },
+          {
+            "key": "E",
+            "value": "\\(P(A \\cap B^c) = 0.5\\), \\(P(A \\cap B) = 0.1\\), and \\(P(A^c \\cap B) = 0.4\\)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L6-Q02",
+      "type": "multiple-choice",
+      "prompt": "A company is considering purchasing the mineral rights to two different mountains. The probability that it will purchase the mineral rights to the first mountain is 0.55. The probability that it will purchase the mineral rights to the second mountain is 0.4. Assuming the decisions to purchase the mineral rights to each mountain are made independently, what is the probability that it will purchase the mineral rights to exactly one of the two mountains?",
+      "answerKey": "D",
+      "reasoning": "If \\(F\\) represents the event that the mineral rights to the first mountain are purchased and \\(S\\) represents the event that the mineral rights to the second mountain are purchased, then \\(P(F \\cap S^c) + P(F^c \\cap S) = [P(F)][P(S^c)] + [P(F^c)][P(S)] = (0.55)(0.6) + (0.45)(0.4) = 0.51\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.18"
+          },
+          {
+            "key": "B",
+            "value": "0.22"
+          },
+          {
+            "key": "C",
+            "value": "0.33"
+          },
+          {
+            "key": "D",
+            "value": "0.51"
+          },
+          {
+            "key": "E",
+            "value": "0.95"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L6-Q03",
+      "type": "multiple-choice",
+      "prompt": "A student is applying to two different agencies for scholarships. Based on the student's academic record, the probability that the student will be awarded a scholarship from Agency A is 0.55 and the probability that the student will be awarded a scholarship from Agency B is 0.40. Furthermore, if the student is awarded a scholarship from Agency A, the probability that the student will be awarded a scholarship from Agency B is 0.60. What is the probability that the student will be awarded at least one of the two scholarships?",
+      "answerKey": "B",
+      "reasoning": "The probability that a student will be awarded at least one of the two scholarships is \\(P(A \\cup B) = P(A) + P(B) - P(A \\cap B)\\). To find \\(P(A \\cap B)\\), use the formula for conditional probability, \\(P(B|A) = \\frac{P(A \\cap B)}{P(A)}\\), then solve \\(P(A \\cap B) = [P(A) \\cdot P(B|A)] = (0.55)(0.6) = 0.33\\). Then \\(P(A \\cup B) = 0.55 + 0.40 - 0.33 = 0.62\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.60"
+          },
+          {
+            "key": "B",
+            "value": "0.62"
+          },
+          {
+            "key": "C",
+            "value": "0.71"
+          },
+          {
+            "key": "D",
+            "value": "0.73"
+          },
+          {
+            "key": "E",
+            "value": "0.95"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L7-Q01",
+      "type": "multiple-choice",
+      "prompt": "Let random variable \\(U\\) represent the field goal percentage (percentage of shots made) for players in a basketball league. The following table shows the probability distribution of the random variable \\(U\\). Fatima claims that the distribution of \\(U\\) is uniform with a median of 0.4 field goal percentage. Is Fatima's claim supported by the table?",
+      "answerKey": "C",
+      "reasoning": "Fatima's claim is not supported by the table. A relative frequency histogram of the data will display most of the weight over the bars associated with a field goal percentage of 0.3 and 0.4 with a tail from 0.5 to 0.7, indicating a right skew. The distribution is not uniform because the probabilities are not equal (0.45 for 0.4 vs 0.10 for 0.3 and 0.6). The median is equal to 0.4 field goal percentage, because 0.4 is the middle value of the distribution when considering the cumulative probabilities.",
+      "attachments": {
+        "table": [
+          [
+            "Field Goal Percentage",
+            "Probability"
+          ],
+          [
+            "0.3",
+            "0.10"
+          ],
+          [
+            "0.4",
+            "0.45"
+          ],
+          [
+            "0.5",
+            "0.30"
+          ],
+          [
+            "0.6",
+            "0.10"
+          ],
+          [
+            "0.7",
+            "0.05"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, the distribution is uniform with a median of 0.4 field goal percentage."
+          },
+          {
+            "key": "B",
+            "value": "No, the distribution is uniform with a median of 0.5 field goal percentage."
+          },
+          {
+            "key": "C",
+            "value": "No, the distribution is skewed to the right with a median of 0.4 field goal percentage."
+          },
+          {
+            "key": "D",
+            "value": "No, the distribution is skewed to the right with a median of 0.5 field goal percentage."
+          },
+          {
+            "key": "E",
+            "value": "No, the distribution is skewed to the left with a median of 0.4 field goal percentage."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L7-Q02",
+      "type": "multiple-choice",
+      "prompt": "Let random variable \\(Y\\) represent the number of interviews conducted for job openings at a certain company. The following table shows the cumulative probability distribution of the discrete random variable \\(Y\\). Khaleed claims that the distribution of \\(Y\\) is skewed to the left with mean equal to 8 interviews. Is Khaleed's claim correct?",
+      "answerKey": "D",
+      "reasoning": "Khaleed's claim is not correct. The probabilities shown in the table are cumulative; the individual probabilities for 6, 7, 8, 9, and 10 interviews are each 0.2 (calculated by finding the differences between consecutive cumulative probabilities), indicating a uniform distribution. Each value has the same weight, so the mean is the value in the center, which is 8 interviews. The distribution is not skewed because all individual probabilities are equal.",
+      "attachments": {
+        "table": [
+          [
+            "\\(y\\)",
+            "\\(P(Y \\leq y)\\)"
+          ],
+          [
+            "5",
+            "0"
+          ],
+          [
+            "6",
+            "0.2"
+          ],
+          [
+            "7",
+            "0.4"
+          ],
+          [
+            "8",
+            "0.6"
+          ],
+          [
+            "9",
+            "0.8"
+          ],
+          [
+            "10",
+            "1.0"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, the distribution is skewed to the left with mean equal to 8 interviews."
+          },
+          {
+            "key": "B",
+            "value": "No, the distribution is skewed to the left with mean greater than 8 interviews."
+          },
+          {
+            "key": "C",
+            "value": "No, the distribution is skewed to the right with mean equal to 8 interviews."
+          },
+          {
+            "key": "D",
+            "value": "No, the distribution is uniform with mean equal to 8 interviews."
+          },
+          {
+            "key": "E",
+            "value": "No, the distribution is uniform with mean greater than 8 interviews."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L7-Q03",
+      "type": "multiple-choice",
+      "prompt": "Let random variable \\(R\\) represent the number of visitors to a certain museum during a given day. The following table shows the probability distribution of the random variable. Which of the following claims about the distribution of random variable \\(R\\) is best supported by the histogram?",
+      "answerKey": "E",
+      "reasoning": "The distribution displayed in the histogram is symmetric, which indicates values below the center and above the center are equally likely. The histogram shows that the distribution is centered around 300 visitors, and due to the symmetry, the probability of having fewer than 300 visitors equals the probability of having more than 300 visitors. This symmetry also means that the mean and median are approximately equal, not that one is much greater than the other.",
+      "attachments": {
+        "chartType": "histogram",
+        "xLabels": [
+          "100",
+          "150",
+          "200",
+          "250",
+          "300",
+          "350",
+          "400",
+          "450",
+          "500"
+        ],
+        "series": [
+          {
+            "name": "Probability",
+            "values": [
+              0.05,
+              0.1,
+              0.12,
+              0.23,
+              0.23,
+              0.12,
+              0.1,
+              0.05
+            ]
+          }
+        ],
+        "chartConfig": {
+          "yAxis": {
+            "min": 0,
+            "max": 0.25,
+            "tickInterval": 0.05,
+            "title": "Probability"
+          },
+          "xAxis": {
+            "title": "Number of Visitors",
+            "labelType": "upperBound"
+          },
+          "gridLines": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "description": "Histogram showing the probability distribution of museum visitors, displaying a symmetric distribution centered around 300 visitors"
+        },
+        "choices": [
+          {
+            "key": "A",
+            "value": "The most likely number of visitors to the museum on a given day is between 450 and 500."
+          },
+          {
+            "key": "B",
+            "value": "The mean number of visitors to the museum is much less than the median number of visitors."
+          },
+          {
+            "key": "C",
+            "value": "The mean number of visitors to the museum is much greater than the median number of visitors."
+          },
+          {
+            "key": "D",
+            "value": "On a given day, the number of visitors from 100 through 500 will occur with equal probabilities."
+          },
+          {
+            "key": "E",
+            "value": "On a given day, it is equally likely for the museum to have less than 300 visitors as it is to have more than 300 visitors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L8-Q01",
+      "type": "multiple-choice",
+      "prompt": "The following table shows the probability distribution for the number of books a student typically buys at the annual book fair held at an elementary school. Let the random variable \\(B\\) represent the number of books a student buys at the next book fair. What is the expected value of \\(B\\)?",
+      "answerKey": "C",
+      "reasoning": "The expected value of \\(B\\) is the sum of the products of the number of books and their respective probabilities. In this case, \\(E(B) = 0(0.35) + 1(0.20) + 2(0.15) + 3(0.10) + 4(0.07) + 5(0.08) + 6(0.04) + 7(0.01) = 1.79\\).",
+      "attachments": {
+        "table": [
+          [
+            "Number of Books",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          [
+            "Probability",
+            "0.35",
+            "0.20",
+            "0.15",
+            "0.10",
+            "0.07",
+            "0.08",
+            "0.04",
+            "0.01"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "0"
+          },
+          {
+            "key": "B",
+            "value": "1.00"
+          },
+          {
+            "key": "C",
+            "value": "1.79"
+          },
+          {
+            "key": "D",
+            "value": "3.50"
+          },
+          {
+            "key": "E",
+            "value": "28"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L8-Q02",
+      "type": "multiple-choice",
+      "prompt": "At a certain bakery, the price of each doughnut is $1.50. Let the random variable \\(D\\) represent the number of doughnuts a typical customer purchases each day. The expected value and variance of the probability distribution of \\(D\\) are 2.6 doughnuts and \\(3.6 \\text{ doughnuts}^2\\), respectively. Let the random variable \\(P\\) represent the price of the doughnuts that a typical customer purchases each day. Which of the following is the standard deviation, in dollars, of the probability distribution of \\(P\\)?",
+      "answerKey": "B",
+      "reasoning": "This is the price of each doughnut, $1.50, multiplied by the standard deviation of the number of doughnuts \\(\\sqrt{3.6}\\). When a random variable is multiplied by a constant, the standard deviation is also multiplied by that constant.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(1.5(3.6)\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(1.5\\sqrt{3.6}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\sqrt{1.5(3.6)}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(1.5(2.6)\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(1.5\\sqrt{2.6}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L8-Q03",
+      "type": "multiple-choice",
+      "prompt": "The quality control manager at a factory records the number of equipment breakdowns each day. Let the random variable \\(Y\\) represent the number of breakdowns in one day. The standard deviation of \\(Y\\) is 0.28. Which of the following is the best interpretation of the standard deviation?",
+      "answerKey": "D",
+      "reasoning": "The standard deviation of a random variable is, roughly speaking, the average or typical amount of variability from the mean for the population.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "The number of breakdowns on a randomly selected day is expected to be 0.28."
+          },
+          {
+            "key": "B",
+            "value": "The number of breakdowns on a randomly selected day will be 0.28 away from the mean."
+          },
+          {
+            "key": "C",
+            "value": "The average number of breakdowns per day for a random sample of days is expected to be 0.28."
+          },
+          {
+            "key": "D",
+            "value": "On average, the number of breakdowns per day varies from the mean by about 0.28."
+          },
+          {
+            "key": "E",
+            "value": "The number of breakdowns per day for a random sample of days is expected to be 0.28 away from the mean."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L8-Q04",
+      "type": "multiple-choice",
+      "prompt": "Data were collected on the number of days per week that members visit a certain fitness center. The values varied from 0 to 7, and a distribution of relative frequencies for the values was created. Let the random variable \\(X\\) represent the number of days per week that a member visits. The mean of \\(X\\) is 3.12. Which of the following statements is the best interpretation of the mean?",
+      "answerKey": "D",
+      "reasoning": "The mean of a random variable is the long-run average based on repeated sampling from the population.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Each member visits the fitness center 3 or 4 days per week."
+          },
+          {
+            "key": "B",
+            "value": "The average number of days that each member visits the fitness center is 3.12 days per week."
+          },
+          {
+            "key": "C",
+            "value": "Half the members visit the fitness center 3 days per week or less, and the other half visit 4 days per week or more."
+          },
+          {
+            "key": "D",
+            "value": "The long-run average resulting from repeated sampling of members of the fitness center will approach 3.12 days per week."
+          },
+          {
+            "key": "E",
+            "value": "For a random sample of members selected from the population, the average number of visits for the sample will be 3.12 days per week."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L8-Q05",
+      "type": "multiple-choice",
+      "prompt": "Let the random variable \\(Q\\) represent the number of students who go to a certain teacher's office hour each day. The standard deviation of \\(Q\\) is 2.2. Which of the following is the best interpretation of the standard deviation?",
+      "answerKey": "A",
+      "reasoning": "The standard deviation is, roughly speaking, the average or typical amount of variability from the mean of the population.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "On average, the number of students going to an office hour varies from the mean by about 2.2 students."
+          },
+          {
+            "key": "B",
+            "value": "For a randomly selected office hour, the number of students who will go is 2.2."
+          },
+          {
+            "key": "C",
+            "value": "For a randomly selected office hour, the number of students expected to go will vary from the mean by 2.2 students."
+          },
+          {
+            "key": "D",
+            "value": "For a random selection of office hours, the average number of students expected to go is 2.2."
+          },
+          {
+            "key": "E",
+            "value": "For a random selection of office hours, the average number of students expected to go will vary from the mean by 2.2 students."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L8-Q06",
+      "type": "multiple-choice",
+      "prompt": "For a certain dog breed, the number of puppies in a litter typically varies from 2 to 6. The following table shows the probability distribution of the random variable \\(N\\), where \\(N\\) represents the number of puppies in a litter. Also shown are the squared deviations, or distances, from the expected value of 4.5 for the distribution. What is the variance of the distribution?",
+      "answerKey": "B",
+      "reasoning": "The variance is the sum of the products of the squared deviations and the respective probabilities. In this case, \\(\\text{Var}(N) = 6.25(0.05) + 2.25(0.15) + 0.25(0.25) + 0.25(0.35) + 2.25(0.20) = 1.25\\).",
+      "attachments": {
+        "table": [
+          [
+            "Number of puppies",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          [
+            "Squared deviation",
+            "6.25",
+            "2.25",
+            "0.25",
+            "0.25",
+            "2.25"
+          ],
+          [
+            "Probability",
+            "0.05",
+            "0.15",
+            "0.25",
+            "0.35",
+            "0.20"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "1.12"
+          },
+          {
+            "key": "B",
+            "value": "1.25"
+          },
+          {
+            "key": "C",
+            "value": "1.41"
+          },
+          {
+            "key": "D",
+            "value": "1.58"
+          },
+          {
+            "key": "E",
+            "value": "2.25"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L9-Q01",
+      "type": "multiple-choice",
+      "prompt": "At a large regional collegiate women's swim meet, an official records the time it takes each swimmer to swim 100 meters for all swimmers who compete in only one stroke category. The following table shows the mean times and corresponding standard deviations for the collegiate women at the swim meet for each of the four stroke categories. For each of the 4 stroke categories, consider a random variable representing the time of a randomly selected swimmer in that category. What is the standard deviation of the sum of the 4 random variables?",
+      "answerKey": "B",
+      "reasoning": "To find the standard deviation of the sum of independent random variables, the variances are added. \\(\\sigma^2_{X+Y+Z+W} = \\sigma^2_X + \\sigma^2_Y + \\sigma^2_Z + \\sigma^2_W = 0.70^2 + 0.92^2 + 0.94^2 + 0.76^2 = 2.7976\\), so \\(\\sigma = \\sqrt{2.7976} \\approx 1.67\\).",
+      "attachments": {
+        "table": [
+          [
+            "Stroke Category",
+            "Mean 100 meter Time",
+            "Standard Deviation"
+          ],
+          [
+            "Backstroke",
+            "55.6 seconds",
+            "0.70 seconds"
+          ],
+          [
+            "Breaststroke",
+            "63.3 seconds",
+            "0.92 seconds"
+          ],
+          [
+            "Butterfly",
+            "54.4 seconds",
+            "0.94 seconds"
+          ],
+          [
+            "Freestyle",
+            "50.2 seconds",
+            "0.76 seconds"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.83 seconds"
+          },
+          {
+            "key": "B",
+            "value": "1.67 seconds"
+          },
+          {
+            "key": "C",
+            "value": "2.80 seconds"
+          },
+          {
+            "key": "D",
+            "value": "3.32 seconds"
+          },
+          {
+            "key": "E",
+            "value": "3.76 seconds"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L9-Q02",
+      "type": "multiple-choice",
+      "prompt": "A player pays $15 to play a game in which a chip is randomly selected from a bag of chips. The bag contains 10 red chips, 4 blue chips, and 6 yellow chips. The player wins $5 if a red chip is selected, $10 if a blue chip is selected, and $20 if a yellow chip is selected. Let the random variable \\(X\\) represent the amount won from the selection of the chip, and let the random variable \\(W\\) represent the total amount won, where \\(W = X - 15\\). What is the mean of \\(W\\)?",
+      "answerKey": "C",
+      "reasoning": "The expected payout is \\(E(X) = \\frac{10}{20}(\\$5) + \\frac{4}{20}(\\$10) + \\frac{6}{20}(\\$20) = \\$10.50\\). After subtracting the $15 to play the game, the result is −$4.50 expected winnings.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "$10.50"
+          },
+          {
+            "key": "B",
+            "value": "$4.50"
+          },
+          {
+            "key": "C",
+            "value": "−$4.50"
+          },
+          {
+            "key": "D",
+            "value": "−$6.50"
+          },
+          {
+            "key": "E",
+            "value": "−$10.50"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L9-Q03",
+      "type": "multiple-choice",
+      "prompt": "The distribution of random variable \\(R\\) has mean 10 and standard deviation 4. The distribution of random variable \\(S\\) has mean 7 and standard deviation 3. If \\(R\\) and \\(S\\) are independent, what are the mean and standard deviation of the distribution of \\(R - S\\)?",
+      "answerKey": "B",
+      "reasoning": "When subtracting two independent random variables, the means are subtracted and the variances are added. Thus, \\(\\mu_{R-S} = \\mu_R - \\mu_S = 10 - 7 = 3\\), and \\(\\sigma^2_{R-S} = \\sigma^2_R + \\sigma^2_S = 4^2 + 3^2 = 25\\), so \\(\\sigma_{R-S} = \\sqrt{25} = 5\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Mean 3 and standard deviation 1"
+          },
+          {
+            "key": "B",
+            "value": "Mean 3 and standard deviation 5"
+          },
+          {
+            "key": "C",
+            "value": "Mean 3 and standard deviation 7"
+          },
+          {
+            "key": "D",
+            "value": "Mean 17 and standard deviation 1"
+          },
+          {
+            "key": "E",
+            "value": "Mean 17 and standard deviation 5"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L9-Q04",
+      "type": "free-response",
+      "prompt": "Show all your work. Indicate clearly the methods you use, because you will be scored on the correctness of your methods as well as on the accuracy and completeness of your results and explanations.\n\nCompany F sells fabrics known as fat quarters, which are rectangles of fabric created by cutting a yard of fabric into four pieces. Occasionally the manufacturing process results in a fabric defect. Let the random variable \\(X\\) represent the number of defects on a fat quarter created by Company F. The following table shows the probability distribution of \\(X\\).\n\nIf a fat quarter has more than 2 defects, it cannot be sold and is discarded. Let the random variable \\(Y\\) represent the number of defects on a fat quarter that can be sold by Company F.\n\n(a) Construct the probability distribution of the random variable \\(Y\\).\n\n(b) Determine the mean and standard deviation of \\(Y\\). Show your work.\n\nCompany G also sells fat quarters. The mean and standard deviation of the number of defects on a fat quarter that can be sold by Company G are 0.40 and 0.66, respectively. The fat quarters sell for $5.00 each, but are discounted by $1.50 for each defect found.\n\n(c) What are the mean and standard deviation of the selling price for the fat quarters sold by Company G?",
+      "solution": {
+        "parts": [
+          {
+            "partId": "a",
+            "description": "Construct the probability distribution of the random variable Y.",
+            "response": "The probability that a fat quarter can be sold is equal to 0.92, or \\(P(X \\leq 2) = P(X = 0) + P(X = 1) + P(X = 2) = 0.58 + 0.23 + 0.11 = 0.92\\). Using conditional probability:\n\\(P(Y = 0) = P(X = 0|X \\leq 2) = \\frac{P(X = 0 \\cap X \\leq 2)}{P(X \\leq 2)} = \\frac{0.58}{0.92} \\approx 0.630\\)\n\\(P(Y = 1) = P(X = 1|X \\leq 2) = \\frac{P(X = 1 \\cap X \\leq 2)}{P(X \\leq 2)} = \\frac{0.23}{0.92} = 0.250\\)\n\\(P(Y = 2) = P(X = 2|X \\leq 2) = \\frac{P(X = 2 \\cap X \\leq 2)}{P(X \\leq 2)} = \\frac{0.11}{0.92} \\approx 0.120\\)",
+            "attachments": {
+              "table": [
+                [
+                  "Y",
+                  "Probability"
+                ],
+                [
+                  "0",
+                  "0.630"
+                ],
+                [
+                  "1",
+                  "0.250"
+                ],
+                [
+                  "2",
+                  "0.120"
+                ]
+              ]
+            }
+          },
+          {
+            "partId": "b",
+            "description": "Determine the mean and standard deviation of Y. Show your work.",
+            "response": "The mean number of defects is \\(\\mu_Y = 0(0.63) + 1(0.25) + 2(0.12) = 0.49\\).\n\nThe standard deviation in the number of defects is \\(\\sigma_Y = \\sqrt{0.63(0 - 0.49)^2 + 0.25(1 - 0.49)^2 + 0.12(2 - 0.49)^2} \\approx 0.70\\).",
+            "calculations": [
+              "Mean: μ_Y = 0(0.63) + 1(0.25) + 2(0.12) = 0.49",
+              "Variance: σ²_Y = 0.63(0 - 0.49)² + 0.25(1 - 0.49)² + 0.12(2 - 0.49)²",
+              "σ²_Y = 0.63(0.2401) + 0.25(0.2601) + 0.12(2.2801) ≈ 0.49",
+              "Standard deviation: σ_Y = √0.49 ≈ 0.70"
+            ]
+          },
+          {
+            "partId": "c",
+            "description": "What are the mean and standard deviation of the selling price for the fat quarters sold by Company G?",
+            "response": "The mean selling price is \\(5 - 1.5(0.40) = 4.40\\) or $4.40.\n\nThe standard deviation in the selling price is \\(|-1.5|(0.66) = 0.99\\) or $0.99.",
+            "calculations": [
+              "Price = 5 - 1.5 × (number of defects)",
+              "Mean price = 5 - 1.5 × E(defects) = 5 - 1.5(0.40) = 4.40",
+              "Standard deviation of price = |coefficient| × σ_defects = 1.5 × 0.66 = 0.99"
+            ]
+          }
+        ],
+        "scoring": {
+          "totalPoints": 4,
+          "rubric": [
+            {
+              "part": "a",
+              "maxPoints": 1,
+              "criteria": [
+                "Identifies the three values of Y as 0, 1, and 2",
+                "Gives correct conditional probabilities for the three values of Y"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response satisfies both components. Partially correct (P) if only one of the two components is satisfied. Incorrect (I) if the response does not satisfy the criteria for E or P."
+            },
+            {
+              "part": "b",
+              "maxPoints": 2,
+              "criteria": [
+                "Correct mean",
+                "Correct standard deviation",
+                "The mean and standard deviation are clearly labeled"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response satisfies all three components. Note: The components can be satisfied if they follow correctly from an incorrect, but reasonable, answer in part (a). To be reasonable, the probabilities in part (a) must sum to 1 and be nonnegative. Partially correct (P) if the response satisfies only one or two of the three components. Incorrect (I) if the response does not satisfy the criteria for E or P."
+            },
+            {
+              "part": "c",
+              "maxPoints": 1,
+              "criteria": [
+                "Correct mean",
+                "Correct standard deviation",
+                "The mean and standard deviation are clearly labeled"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response satisfies all three components. Partially correct (P) if the response satisfies only one or two of the three components. Incorrect (I) if the response does not satisfy the criteria for E or P."
+            }
+          ]
+        }
+      },
+      "reasoning": "This question assesses the ability to calculate conditional probabilities, compute mean and standard deviation of random variables, and understand the effect of linear transformations on random variable parameters. Part (a) requires understanding that Y is a conditional distribution of X given X ≤ 2. Part (b) tests computation of mean and standard deviation from a probability distribution. Part (c) applies linear transformation rules: for Y = a + bX, mean becomes a + b(mean of X) and standard deviation becomes |b|(standard deviation of X).",
+      "attachments": {
+        "table": [
+          [
+            "X",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4 or more"
+          ],
+          [
+            "Probability",
+            "0.58",
+            "0.23",
+            "0.11",
+            "0.05",
+            "0.03"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "U4-L9-Q05",
+      "type": "multiple-choice",
+      "prompt": "At a certain company, loan agents are paid based on the number of loans they close in a day. Based on company records, the number of loans that a randomly selected loan agent closes on a randomly selected day has the probability distribution below. At the company, the daily salary of a loan agent is $150 plus $50 per loan closed. Let \\(Y\\) represent the amount of money made by a randomly selected loan agent on a randomly selected day. Which of the following statements is NOT true?",
+      "answerKey": "C",
+      "reasoning": "Since the mean of \\(X\\) is \\(\\mu_x = 1(0.05) + 2(0.10) + 3(0.22) + 4(0.30) + 5(0.18) + 6(0.12) + 7(0.03) = 3.94\\), then the mean of \\(Y\\) is \\(\\mu_Y = a + b\\mu_X = 150 + 50(3.94) = \\$347\\). Since \\(\\$347 < \\$350\\), the statement is false.",
+      "attachments": {
+        "table": [
+          [
+            "x",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          [
+            "P(x)",
+            "0.05",
+            "0.10",
+            "0.22",
+            "0.30",
+            "0.18",
+            "0.12",
+            "0.03"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "The mean of \\(X\\) is less than the mean of \\(Y\\)."
+          },
+          {
+            "key": "B",
+            "value": "The standard deviation of \\(Y\\) is approximately $71."
+          },
+          {
+            "key": "C",
+            "value": "The mean daily salary is greater than $350 per day."
+          },
+          {
+            "key": "D",
+            "value": "The standard deviation of \\(X\\) is less than the standard deviation of \\(Y\\)."
+          },
+          {
+            "key": "E",
+            "value": "The shape of the probability distribution of \\(Y\\) is unimodal and roughly symmetric."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L9-Q06",
+      "type": "multiple-choice",
+      "prompt": "Data were collected on the ages, in years, of the men and women enrolled in a large sociology course. Let the random variables \\(M\\) and \\(W\\) represent the ages of the men and women, respectively. The distribution of \\(M\\) has mean 20.7 years and standard deviation 1.73 years. The distribution of \\(W\\) has mean 20.2 years and standard deviation 1.60 years. Of all of those enrolled in the course, 54 percent are men and 46 percent are women. What is the mean age of the combined distribution of both men and women in the course?",
+      "answerKey": "D",
+      "reasoning": "Since 54% of the population are men and 46% are women, the mean of the combined distribution of men and women is \\(0.54M + 0.46W\\) which is \\(0.54(20.7) + 0.46(20.2) = 20.47\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "20.2 years"
+          },
+          {
+            "key": "B",
+            "value": "20.43 years"
+          },
+          {
+            "key": "C",
+            "value": "20.45 years"
+          },
+          {
+            "key": "D",
+            "value": "20.47 years"
+          },
+          {
+            "key": "E",
+            "value": "40.9 years"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L9-Q07",
+      "type": "multiple-choice",
+      "prompt": "The random variable \\(X\\) has mean 12 and standard deviation 3. The random variable \\(W\\) is defined as \\(W = 7 + 2X\\). What are the mean and standard deviation of \\(W\\)?",
+      "answerKey": "D",
+      "reasoning": "The mean and standard deviation of \\(W\\) are \\(\\mu_W = a + b\\mu_X = 7 + 2(12) = 31\\) and \\(\\sigma_W = |b|\\sigma_X = |2|(3) = 6\\), respectively. Mean is affected by the multiplication and addition of a constant, but standard deviation is affected only by the multiplication of a constant.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "The mean is 24, and the standard deviation is 6."
+          },
+          {
+            "key": "B",
+            "value": "The mean is 24, and the standard deviation is 13."
+          },
+          {
+            "key": "C",
+            "value": "The mean is 31, and the standard deviation is 3."
+          },
+          {
+            "key": "D",
+            "value": "The mean is 31, and the standard deviation is 6."
+          },
+          {
+            "key": "E",
+            "value": "The mean is 31, and the standard deviation is 13."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L10-Q01",
+      "type": "multiple-choice",
+      "prompt": "According to a recent survey, 31 percent of the residents of a certain state who are age 25 years or older have a bachelor's degree. A random sample of 50 residents of the state, age 25 years or older, will be selected. Let the random variable \\(B\\) represent the number in the sample who have a bachelor's degree. What is the probability that \\(B\\) will equal 40?",
+      "answerKey": "A",
+      "reasoning": "This is a binomial probability problem where we define success as selecting a person with a bachelor's degree and failure as selecting a person without the degree. The random variable \\(B\\) has a binomial distribution with \\(n = 50\\) trials, probability of success \\(p = 0.31\\), and probability of failure \\(q = 0.69\\). The probability of exactly 40 out of 50 people having a degree is given by the binomial probability formula: \\(P(B = 40) = \\binom{50}{40}(0.31)^{40}(0.69)^{10}\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\binom{50}{40}(0.31)^{40}(0.69)^{10}\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\binom{50}{40}(0.69)^{40}(0.31)^{10}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\binom{40}{10}(0.31)^{40}(0.69)^{10}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\binom{40}{10}(0.69)^{40}(0.31)^{10}\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(40(0.31)^{50}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L10-Q02",
+      "type": "multiple-choice",
+      "prompt": "According to a recent survey, 81 percent of adults in a certain state have graduated from high school. If 15 adults from the state are selected at random, what is the probability that 5 of them have not graduated from high school?",
+      "answerKey": "D",
+      "reasoning": "Let \\(X\\) represent the number of adults selected who have not graduated from high school. Random variable \\(X\\) has a binomial distribution with \\(n = 15\\) trials. The probability of 'success' (not graduating) is \\(p = 1 - 0.81 = 0.19\\), and the probability of 'failure' (graduating) is \\(q = 0.81\\). The probability that exactly 5 adults have not graduated from high school is \\(P(X = 5) = \\binom{15}{5}(0.19)^{5}(0.81)^{10}\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\binom{20}{15}(0.19)^{15}(0.81)^{5}\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\binom{10}{5}(0.19)^{15}(0.81)^{15}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\binom{10}{5}(0.81)^{5}(0.19)^{10}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\binom{15}{5}(0.19)^{5}(0.81)^{10}\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\binom{15}{5}(0.81)^{5}(0.19)^{10}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L10-Q03",
+      "type": "multiple-choice",
+      "prompt": "An experiment was conducted in which planks of wood painted red and green were shown to pigeons to investigate a pigeon's ability to select a certain color. Pigeons could accurately select the color of the plank of wood 20 percent of the time. A simulation was conducted in which a trial consisted of a pigeon being shown eight planks of wood and its number of successes being recorded. This process was repeated many times, and the results are shown in the histogram. Based on the results of the simulation, which of the following is closest to the probability that there were at most three successes in a trial?",
+      "answerKey": "E",
+      "reasoning": "To find the probability of at most three successes, we need to sum the probabilities for 0, 1, 2, and 3 successes. From the histogram, these bars have heights of approximately 0.17, 0.35, 0.29, and 0.13 respectively. The sum is 0.17 + 0.35 + 0.29 + 0.13 = 0.94, which corresponds to answer choice E.",
+      "attachments": {
+        "chartType": "histogram",
+        "xLabels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "series": [
+          {
+            "name": "Probability",
+            "values": [
+              0.16,
+              0.34,
+              0.29,
+              0.15,
+              0.05,
+              0.02,
+              0,
+              0,
+              0
+            ]
+          }
+        ],
+        "chartConfig": {
+          "yAxis": {
+            "min": 0,
+            "max": 0.4,
+            "tickInterval": 0.05,
+            "title": "Probability"
+          },
+          "xAxis": {
+            "title": "Number of Successes",
+            "labelType": "upperBound"
+          },
+          "gridLines": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "description": "Histogram showing the distribution of number of successes in trials of 8 attempts"
+        },
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.06"
+          },
+          {
+            "key": "B",
+            "value": "0.15"
+          },
+          {
+            "key": "C",
+            "value": "0.21"
+          },
+          {
+            "key": "D",
+            "value": "0.79"
+          },
+          {
+            "key": "E",
+            "value": "0.94"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L11-Q01",
+      "type": "multiple-choice",
+      "prompt": "In a certain region, 94 percent of the people have a certain characteristic in their blood. Suppose a group of 45 people from the region are selected at random. Let the random variable \\(B\\) represent the number of people in the sample without the characteristic. Random variable \\(B\\) follows a binomial distribution with a mean of 2.7 people. Which of the following is the best interpretation of the mean?",
+      "answerKey": "A",
+      "reasoning": "For the random variable \\(B\\), the mean number of people without the characteristic is equal to 2.7 for all possible groups of 45 people. The mean of a binomial distribution represents the expected value across all possible samples of the same size, not what happens in every individual sample or in a sequential selection process.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "For all groups of 45 people, the average number of people without the characteristic is 2.7."
+          },
+          {
+            "key": "B",
+            "value": "Every group of 45 people will have 2.7 people with the characteristic."
+          },
+          {
+            "key": "C",
+            "value": "Every group of 45 people will have 2.7 people without the characteristic."
+          },
+          {
+            "key": "D",
+            "value": "On average, 2.7 people are selected until finding someone with the characteristic."
+          },
+          {
+            "key": "E",
+            "value": "On average, 2.7 people are selected until finding someone without the characteristic."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L11-Q02",
+      "type": "multiple-choice",
+      "prompt": "A company that ships crystal bowls claims that bowls arrive undamaged in 95 percent of the shipments. Let the random variable \\(G\\) represent the number of shipments with undamaged bowls in 25 randomly selected shipments. Random variable \\(G\\) follows a binomial distribution with a mean of 23.75 shipments and a standard deviation of approximately 1.09 shipments. Which of the following is the best interpretation of the mean?",
+      "answerKey": "E",
+      "reasoning": "For the random variable \\(G\\), the mean number of undamaged bowls is equal to 23.75 for all possible shipments of size 25. The mean represents the expected value across all possible samples, not what happens in every individual shipment.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Every shipment of 25 bowls will have 23.75 undamaged bowls."
+          },
+          {
+            "key": "B",
+            "value": "Every shipment of 25 bowls will have 23.75 damaged bowls."
+          },
+          {
+            "key": "C",
+            "value": "On average, the company receives 23.75 shipments before receiving the first shipment with a damaged bowl."
+          },
+          {
+            "key": "D",
+            "value": "For all possible shipments of size 25, the average number of damaged shipments is equal to 23.75."
+          },
+          {
+            "key": "E",
+            "value": "For all possible shipments of size 25, the average number of undamaged shipments is equal to 23.75."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L11-Q03",
+      "type": "multiple-choice",
+      "prompt": "According to 2015 census data, 42.7 percent of Colorado residents were born in Colorado. If a sample of 250 Colorado residents is selected at random, what is the standard deviation of the number of residents in the sample who were born in Colorado?",
+      "answerKey": "B",
+      "reasoning": "Let random variable \\(C\\) represent the number of people from a sample of 250 who were born in Colorado. The random variable has a binomial distribution. The standard deviation of a binomial random variable is \\(\\sqrt{np(1-p)} = \\sqrt{250(0.427)(0.573)} \\approx 7.82\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "6.75"
+          },
+          {
+            "key": "B",
+            "value": "7.82"
+          },
+          {
+            "key": "C",
+            "value": "10.33"
+          },
+          {
+            "key": "D",
+            "value": "11.97"
+          },
+          {
+            "key": "E",
+            "value": "61.17"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L11-Q04",
+      "type": "multiple-choice",
+      "prompt": "A certain factory that manufactures office chairs has a quality control process to identify defective chairs. The binomial random variable \\(D\\) represents the number of chairs in a sample of chairs that are defective. The mean of \\(D\\) is 10 chairs and the standard deviation is 3 chairs. Based on the distribution of \\(D\\), which of the following would be an accurate interpretation of the value 0.1?",
+      "answerKey": "E",
+      "reasoning": "The mean of 10 indicates \\(np = 10\\), and the standard deviation of 3 indicates \\(\\sqrt{np(1-p)} = \\sqrt{10(1-p)} = 3\\). Solving for \\(p\\) gives \\(p = 0.1\\), which is the probability of success, that is, identifying a defective chair.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "The total number of defective chairs made"
+          },
+          {
+            "key": "B",
+            "value": "The total number of non-defective chairs made"
+          },
+          {
+            "key": "C",
+            "value": "The relative frequency of the sample size to the population of chairs"
+          },
+          {
+            "key": "D",
+            "value": "The probability of identifying a non-defective chair"
+          },
+          {
+            "key": "E",
+            "value": "The probability of identifying a defective chair"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L11-Q05",
+      "type": "multiple-choice",
+      "prompt": "In 2014, 85 percent of households in the United States had a computer. For a randomly selected sample of 200 households in 2014, let the random variable \\(C\\) represent the number of households in the sample that had a computer. What are the mean and standard deviation of \\(C\\)?",
+      "answerKey": "D",
+      "reasoning": "Random variable \\(C\\) has a binomial distribution. The mean of the random variable is \\(np = 200(0.85) = 170\\), and the standard deviation of the random variable is \\(\\sqrt{np(1-p)} = \\sqrt{200(0.85)(0.15)} = 5.05\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "The mean is 85 households, and the standard deviation is 0.36 household."
+          },
+          {
+            "key": "B",
+            "value": "The mean is 144.5 households, and the standard deviation is 5.05 households."
+          },
+          {
+            "key": "C",
+            "value": "The mean is 144.5 households, and the standard deviation is 13.04 households."
+          },
+          {
+            "key": "D",
+            "value": "The mean is 170 households, and the standard deviation is 5.05 households."
+          },
+          {
+            "key": "E",
+            "value": "The mean is 170 households, and the standard deviation is 0.36 household."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L11-Q06",
+      "type": "multiple-choice",
+      "prompt": "According to a survey about how workers get to work in Wyoming, 77 percent of workers get to work by driving alone, 11 percent get to work by carpooling, 4 percent get to work by walking, and 8 percent get to work by other means of transportation. Suppose a sample of 200 Wyoming workers is selected at random. Let the random variable \\(D\\) represent the number of workers in the sample who get to work by driving alone. What is the expected value of \\(D\\)?",
+      "answerKey": "E",
+      "reasoning": "The expected value of a random variable is the mean of the distribution. \\(D\\) is a binomial random variable whose mean is \\(np = 200(0.77) = 154\\) workers.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "8"
+          },
+          {
+            "key": "B",
+            "value": "16"
+          },
+          {
+            "key": "C",
+            "value": "22"
+          },
+          {
+            "key": "D",
+            "value": "46"
+          },
+          {
+            "key": "E",
+            "value": "154"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q01",
+      "type": "multiple-choice",
+      "prompt": "In a certain board game, a player rolls two fair six-sided dice until the player rolls doubles (where the value on each die is the same). The probability of rolling doubles with one roll of two fair six-sided dice is \\(\\frac{1}{6}\\). What is the probability that it takes three rolls until the player rolls doubles?",
+      "answerKey": "D",
+      "reasoning": "Let the discrete random variable \\(X\\) represent the number of rolls it takes until the player rolls doubles. The random variable \\(X\\) has a geometric distribution, where \\(P(X = 3) = \\left(\\frac{1}{6}\\right)\\left(\\frac{5}{6}\\right)^2\\). In a geometric distribution, the probability of success on the \\(k\\)th trial is \\(p(1-p)^{k-1}\\), where \\(p = \\frac{1}{6}\\) is the probability of success (rolling doubles) and we need exactly 3 trials, so we have 2 failures followed by 1 success.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\left(\\frac{1}{6}\\right)^3\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\left(\\frac{5}{6}\\right)^3\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\left(\\frac{1}{6}\\right)\\left(\\frac{5}{6}\\right)^3\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\left(\\frac{1}{6}\\right)\\left(\\frac{5}{6}\\right)^2\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\left(\\frac{5}{6}\\right)\\left(\\frac{1}{6}\\right)^2\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q02",
+      "type": "multiple-choice",
+      "prompt": "The transaction history at an electronic goods store indicates that 21 percent of customers purchase the extended warranty when they buy an eligible item. Suppose customers who buy eligible items are chosen at random, one at a time, until one is found who purchased the extended warranty. Let the random variable \\(X\\) represent the number of customers it takes to find one who purchased the extended warranty. Assume customers' decisions on whether to purchase the extended warranty are independent. Which of the following is closest to the probability that \\(X > 3\\); that is, the probability that it takes more than 3 customers who buy an eligible item to find one who purchased the extended warranty?",
+      "answerKey": "C",
+      "reasoning": "The random variable \\(X\\) is geometric with \\(p = 0.21\\). Therefore, \\(P(X > 3) = 1 - P(X ≤ 3) = 1 - [0.21 + 0.79(0.21) + 0.79^2(0.21)] ≈ 0.493\\). This uses the complement rule and the cumulative probability formula for a geometric distribution.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.131"
+          },
+          {
+            "key": "B",
+            "value": "0.390"
+          },
+          {
+            "key": "C",
+            "value": "0.493"
+          },
+          {
+            "key": "D",
+            "value": "0.507"
+          },
+          {
+            "key": "E",
+            "value": "0.624"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q03",
+      "type": "multiple-choice",
+      "prompt": "Of all the fish in a certain river, 20 percent are salmon. Once a year, people can purchase a fishing license that allows them to catch up to 8 fish. Assume each catch is independent. Which of the following represents the probability of needing to catch 8 fish to get the first salmon?",
+      "answerKey": "D",
+      "reasoning": "Let random variable \\(X\\) represent the number of fish caught to get the first salmon. Random variable \\(X\\) has a geometric distribution with \\(p = 0.2\\). Thus, \\(P(X = 8) = 0.2(0.8)^7\\). This follows the geometric probability formula where we need 7 failures (non-salmon) followed by 1 success (salmon) on the 8th trial.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.2"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\frac{1}{0.2}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(0.2^8\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(0.2(0.8)^7\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(0.8(0.2)^7\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q04",
+      "type": "multiple-choice",
+      "prompt": "According to a recent survey, 47 percent of the people living in a certain region carry a certain genetic trait. People from the region will be selected at random one at a time until someone is found who carries the genetic trait. Let the random variable \\(G\\) represent the number of people selected to find one person who carries the genetic trait. On average, how many people from the region will need to be selected to find one person who carries the genetic trait?",
+      "answerKey": "E",
+      "reasoning": "Random variable \\(G\\) has a geometric distribution. The expected value, or mean, of random variable \\(G\\) is \\(\\mu_G = \\frac{1}{p} = \\frac{1}{0.47} ≈ 2.13\\) people. The mean of a geometric distribution is the reciprocal of the success probability.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.47"
+          },
+          {
+            "key": "B",
+            "value": "0.69"
+          },
+          {
+            "key": "C",
+            "value": "1.55"
+          },
+          {
+            "key": "D",
+            "value": "2.00"
+          },
+          {
+            "key": "E",
+            "value": "2.13"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q05",
+      "type": "multiple-choice",
+      "prompt": "Let \\(S\\) represent the number of randomly selected adults in a community surveyed to find someone with a certain genetic trait. The random variable \\(S\\) follows a geometric distribution with mean 4.66. Which of the following is a correct interpretation of the mean?",
+      "answerKey": "B",
+      "reasoning": "The mean of a probability distribution is the long-run average of the values selected from many repetitions. This is the correct interpretation of what a mean represents in probability theory - it's the expected value over many trials, not the value of any single trial or sample.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "A value randomly selected from the distribution of \\(S\\) is expected to be 4.66."
+          },
+          {
+            "key": "B",
+            "value": "In repeated sampling from the distribution of \\(S\\), the average of the values will approach 4.66."
+          },
+          {
+            "key": "C",
+            "value": "For a sample of values randomly selected from the distribution of \\(S\\), the average of the sample will be 4.66."
+          },
+          {
+            "key": "D",
+            "value": "The probability is 0.66 that a value randomly selected from the distribution of \\(S\\) will be close to the mean."
+          },
+          {
+            "key": "E",
+            "value": "For a sample of values randomly selected from the distribution of \\(S\\), the average of the sample will vary from the population mean by no more than 4.66."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q06",
+      "type": "multiple-choice",
+      "prompt": "Let \\(W\\) represent the number of attempted experiments to get one experiment that is not successful. The random variable \\(W\\) has a geometric distribution with mean 4 and standard deviation 3.5. Which of the following is the best interpretation of the standard deviation?",
+      "answerKey": "C",
+      "reasoning": "The standard deviation is a measure of typical variability about the mean, on average. In this case, the values of \\(W\\) typically vary by about 3.5, on average, from the mean of 4 attempted experiments. Standard deviation measures how much individual values typically deviate from the mean.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "A single value randomly selected from the distribution of \\(W\\) will vary from 4 by 3.5 attempted experiments."
+          },
+          {
+            "key": "B",
+            "value": "A single value randomly selected from the distribution of \\(W\\) will vary from 3.5 by 4 attempted experiments."
+          },
+          {
+            "key": "C",
+            "value": "Values of \\(W\\) typically vary from 4 by about 3.5 attempted experiments, on average."
+          },
+          {
+            "key": "D",
+            "value": "Values of \\(W\\) typically vary from 3.5 by about 4 attempted experiments, on average."
+          },
+          {
+            "key": "E",
+            "value": "The standard deviation of a random sample of values selected from the distribution of \\(W\\) will be 3.5 attempted experiments."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q07",
+      "type": "multiple-choice",
+      "prompt": "In which of the following should the random variable \\(X\\) not be modeled with a geometric distribution?",
+      "answerKey": "D",
+      "reasoning": "This is not a geometric setting. The selections are not independent because of sampling without replacement from a small population. Therefore, the probability \\(p\\) will change with each selection. For a geometric distribution, we need independent trials with constant probability of success, which is violated when sampling without replacement.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "According to a recent study, approximately 8% of adults in the country have a master's degree. Let \\(X\\) represent the number of randomly selected adults in the country surveyed to find someone with a master's degree."
+          },
+          {
+            "key": "B",
+            "value": "Suppose it is known that 5% of the light bulbs manufactured at a particular company are defective. Let \\(X\\) represent the number of randomly selected light bulbs that are inspected to find one defective light bulb."
+          },
+          {
+            "key": "C",
+            "value": "A particular basketball player is known to consistently make 90% of her free throws, and the outcomes of her free-throw attempts are independent. Let \\(X\\) represent the number of attempted free-throws to get one missed free-throw."
+          },
+          {
+            "key": "D",
+            "value": "In a bag of 30 different colored candies, about 20% are red. One candy will be selected one at a time without replacement, and its color will be recorded. Let \\(X\\) represent the number of candies selected before red is selected."
+          },
+          {
+            "key": "E",
+            "value": "It is believed that about 40% of people in the country have purchased a certain product. Let \\(X\\) represent the number of people randomly selected to find the first one who has purchased the product."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q08",
+      "type": "multiple-choice",
+      "prompt": "The random variable \\(W\\) has a geometric distribution with \\(p = 0.25\\). Approximately how far do the values of \\(W\\) typically vary, on average, from the mean of the distribution?",
+      "answerKey": "D",
+      "reasoning": "The standard deviation of random variable \\(W\\) is \\(\\sigma_W = \\frac{\\sqrt{1-p}}{p} = \\frac{\\sqrt{0.75}}{0.25} ≈ 3.46\\). For a geometric distribution, the standard deviation formula is \\(\\frac{\\sqrt{1-p}}{p}\\), which measures the typical variation from the mean.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "1.73"
+          },
+          {
+            "key": "B",
+            "value": "2.00"
+          },
+          {
+            "key": "C",
+            "value": "3.00"
+          },
+          {
+            "key": "D",
+            "value": "3.46"
+          },
+          {
+            "key": "E",
+            "value": "4.00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-L12-Q09",
+      "type": "multiple-choice",
+      "prompt": "A recent report indicated that 22 percent of the households in a certain community speak a language other than English at home. A reporter will randomly select a household from the community until the first household that speaks a language other than English at home is selected. Let random variable \\(Q\\) represent the number of attempts needed until the first household that speaks a language other than English at home is selected. The random variable \\(Q\\) has a geometric distribution with \\(p = 0.22\\). Which of the following is closest to the variance of the random variable?",
+      "answerKey": "E",
+      "reasoning": "The variance of random variable \\(Q\\) is \\((\\sigma_Q)^2 = \\left[\\frac{\\sqrt{1-p}}{p}\\right]^2 = \\left[\\frac{\\sqrt{0.78}}{0.22}\\right]^2 ≈ 16.1157\\). For a geometric distribution, the variance is \\(\\frac{1-p}{p^2}\\), which equals \\(\\frac{0.78}{(0.22)^2} ≈ 16.1157\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.0484"
+          },
+          {
+            "key": "B",
+            "value": "3.5454"
+          },
+          {
+            "key": "C",
+            "value": "4.0144"
+          },
+          {
+            "key": "D",
+            "value": "4.5455"
+          },
+          {
+            "key": "E",
+            "value": "16.1157"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-FRQ-Q01",
+      "type": "free-response",
+      "prompt": "Show all your work. Indicate clearly the methods you use, because you will be scored on the correctness of your methods as well as on the accuracy and completeness of your results and explanations.\n\nAt a financial institution, a fraud detection system identifies suspicious transactions and sends them to a specialist for review. The specialist reviews the transaction, the customer profile, and past history. If there is sufficient evidence of fraud, the transaction is blocked. Based on past history, the specialist blocks 40 percent of the suspicious transactions. Assume a suspicious transaction is independent of other suspicious transactions.\n\n(a) Suppose the specialist will review 136 suspicious transactions in one day. What is the expected number of blocked transactions by the specialist? Show your work.\n\n(b) Suppose the specialist wants to know the number of suspicious transactions that will need to be reviewed until reaching the first transaction that will be blocked.\n(i) Define the random variable of interest and state how the variable is distributed.\n(ii) Determine the expected value of the random variable and interpret the expected value in context.\n\n(c) Consider a batch of 10 randomly selected suspicious transactions. Suppose the specialist wants to know the probability that 2 of the transactions will be blocked.\n(i) Define the random variable of interest and state how the variable is distributed.\n(ii) Find the probability that 2 transactions in the batch will be blocked. Show your work.",
+      "solution": {
+        "parts": [
+          {
+            "partId": "a",
+            "description": "Calculate the expected number of blocked transactions when reviewing 136 suspicious transactions.",
+            "response": "If the fraud specialist reviews 136 transactions in a day, the expected number of blocks by the specialist is \\(np = 136(0.4) = 54.4\\) blocks",
+            "calculations": [
+              "Expected value = n × p",
+              "Expected value = 136 × 0.4 = 54.4 blocks"
+            ]
+          },
+          {
+            "partId": "b-i",
+            "description": "Define the random variable of interest and state how the variable is distributed.",
+            "response": "Let the random variable \\(X\\) represent the number of reviews until the first block is found. \\(X\\) follows a geometric distribution."
+          },
+          {
+            "partId": "b-ii",
+            "description": "Determine the expected value of the random variable and interpret the expected value in context.",
+            "response": "The expected value of \\(X\\) is its mean. The mean of a geometric distribution is given by the formula \\(\\frac{1}{p}\\), where \\(p\\) is the probability of success. In this case \\(p = 0.4\\) and \\(\\frac{1}{0.4} = 2.5\\). The specialist can expect to review 2.5 transactions per day, on average, until finding the first transaction that will be blocked.",
+            "calculations": [
+              "Mean of geometric distribution = 1/p",
+              "Mean = 1/0.4 = 2.5 transactions"
+            ]
+          },
+          {
+            "partId": "c-i",
+            "description": "Define the random variable of interest and state how the variable is distributed.",
+            "response": "Let the random variable \\(Y\\) represent the number of blocked transactions in a batch of 10 suspicious transactions. \\(Y\\) follows a binomial distribution."
+          },
+          {
+            "partId": "c-ii",
+            "description": "Find the probability that 2 transactions in the batch will be blocked. Show your work.",
+            "response": "The probability that \\(Y\\) will equal 2 is given by \\(P(Y = 2) = \\binom{10}{2}(0.4)^2(0.6)^8 ≈ 0.1209\\).",
+            "calculations": [
+              "P(Y = 2) = C(10,2) × (0.4)² × (0.6)⁸",
+              "P(Y = 2) = 45 × 0.16 × 0.01679616",
+              "P(Y = 2) ≈ 0.1209"
+            ]
+          }
+        ],
+        "scoring": {
+          "totalPoints": 4,
+          "rubric": [
+            {
+              "part": "a",
+              "maxPoints": 1,
+              "criteria": [
+                "Correctly calculates the expected 54.4 fraud blocks in context with supporting calculations and appropriate units"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response correctly calculates the expected 54.4 fraud blocks in context with supporting calculations and appropriate units. Partially correct (P) if the response provides an incorrect value for the expected number of fraud blocks in context with supporting calculations and appropriate units; OR if the response provides the correct value for the expected number of fraud blocks without context or supporting calculations or appropriate units. Incorrect (I) if the response does not satisfy the criteria for E or P. Note: The response cannot earn a score of E if the expected value is rounded to an integer value of 54 blocks or 55 blocks."
+            },
+            {
+              "part": "b",
+              "maxPoints": 1,
+              "criteria": [
+                "Defines a variable as representing the number of reviews until the first block is found (any variable name can be used) in part (b-i)",
+                "Identifies the variable as geometric in part (b-i)",
+                "Calculates the correct value for the mean, 1/0.4 = 2.5 in part (b-ii)",
+                "Interprets the value of 2.5 in context in part (b-ii)"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response satisfies all four components. Partially correct (P) if the response satisfies only two or three of the four components. Incorrect (I) if the response does not satisfy the criteria for E or P."
+            },
+            {
+              "part": "c",
+              "maxPoints": 1,
+              "criteria": [
+                "Defines a variable as representing the number of blocked transactions in a batch of 10 suspicious transactions (any variable name can be used) in part (c-i)",
+                "Identifies the variable as binomial in part (c-i)",
+                "Calculates a reasonable probability near 0.1209 in part (c-ii) with supporting work"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response satisfies all three components. Partially correct (P) if the response satisfies only two of the three components. Incorrect (I) if the response does not satisfy the criteria for E or P."
+            }
+          ]
+        }
+      },
+      "reasoning": "This problem tests understanding of expected values, geometric distributions, and binomial distributions. Part (a) uses the basic expected value formula for a binomial situation (np). Part (b) requires recognizing that waiting for the first success follows a geometric distribution with mean 1/p. Part (c) involves applying the binomial probability formula for exactly k successes in n trials."
+    },
+    {
+      "id": "U4-PC-FRQ-Q02",
+      "type": "free-response",
+      "prompt": "Show all your work. Indicate clearly the methods you use, because you will be scored on the correctness of your methods as well as on the accuracy and completeness of your results and explanations.\n\nMiguel is a golfer, and he plays on the same course each week. The following table shows the probability distribution for his score on one particular hole, known as the Water Hole.\n\nLet the random variable \\(X\\) represent Miguel's score on the Water Hole. In golf, lower scores are better.\n\n(a) Suppose one of Miguel's scores from the Water Hole is selected at random. What is the probability that Miguel's score on the Water Hole is at most 5? Show your work.\n\n(b) Calculate and interpret the expected value of \\(X\\). Show your work.\n\nThe name of the Water Hole comes from the small lake that lies between the tee, where the ball is first hit, and the hole. Miguel has two approaches to hitting the ball from the tee, the short hit and the long hit. The short hit results in the ball landing before the lake. The values of \\(X\\) in the table are based on the short hit. The long hit, if successful, results in the ball traveling over the lake and landing on the other side.\n\nA potential issue with the long hit is that the ball might land in the water, which is not a good outcome. Miguel thinks that if the long hit is successful, his expected value improves to 4.2. However, if the long hit fails and the ball lands in the water, his expected value would be worse and increases to 5.4.\n\n(c) Suppose the probability of a successful long hit is 0.4. Which approach, the short hit or the long hit, is better in terms of improving the expected value of the score? Justify your answer.\n\n(d) Let \\(p\\) represent the probability of a successful long hit. What values of \\(p\\) will make the long hit better than the short hit in terms of improving the expected value of the score? Explain your reasoning.",
+      "solution": {
+        "parts": [
+          {
+            "partId": "a",
+            "description": "Calculate the probability that Miguel's score on the Water Hole is at most 5.",
+            "response": "\\(P(X ≤ 5) = 0.15 + 0.40 + 0.25 = 0.80\\)",
+            "calculations": [
+              "P(X ≤ 5) = P(X = 3) + P(X = 4) + P(X = 5)",
+              "P(X ≤ 5) = 0.15 + 0.40 + 0.25 = 0.80"
+            ]
+          },
+          {
+            "partId": "b",
+            "description": "Calculate and interpret the expected value of X.",
+            "response": "The expected value of \\(X\\) is the mean of \\(X\\). The expected value of \\(X\\) equals, 3 times 0.15, plus, 4 times 0.40, plus, 5 times 0.25, plus, 6 times 0.15, plus, 7 times 0.05, which equals 4.55. \\(E(X) = 3(0.15) + 4(0.40) + 5(0.25) + 6(0.15) + 7(0.05) = 4.55\\). If Miguel plays the hole many times, his average score will be about 4.55.",
+            "calculations": [
+              "E(X) = Σ(x × P(x))",
+              "E(X) = 3(0.15) + 4(0.40) + 5(0.25) + 6(0.15) + 7(0.05)",
+              "E(X) = 0.45 + 1.60 + 1.25 + 0.90 + 0.35 = 4.55"
+            ]
+          },
+          {
+            "partId": "c",
+            "description": "Determine which approach is better when the probability of a successful long hit is 0.4.",
+            "response": "The new expected values each have a probability, as shown in the table. The overall expected value for the long hit is \\(4.2(0.40) + 5.4(0.60) = 4.92\\), which is greater than 4.55. Because lower scores are better in golf, Miguel should use the short hit.",
+            "calculations": [
+              "Expected value for long hit = 4.2(0.4) + 5.4(0.6)",
+              "Expected value for long hit = 1.68 + 3.24 = 4.92",
+              "Since 4.92 > 4.55, the short hit is better"
+            ],
+            "attachments": {
+              "table": [
+                [
+                  "E(X)",
+                  "4.2",
+                  "5.4"
+                ],
+                [
+                  "Probability",
+                  "0.40",
+                  "0.60"
+                ]
+              ]
+            }
+          },
+          {
+            "partId": "d",
+            "description": "Determine what values of p will make the long hit better than the short hit.",
+            "response": "The overall expected value for the long hit is \\(4.2p + 5.4(1 - p)\\). For the long hit to be a better approach, the expected value must be less than 4.55, or \\(4.2p + 5.4(1 - p) < 4.55\\). Solving the inequality for \\(p\\) gives \\(p > 0.708\\). For the long hit to be a better approach, Miguel needs a probability greater than 0.708 for a successful long hit.",
+            "calculations": [
+              "Expected value for long hit = 4.2p + 5.4(1 - p)",
+              "4.2p + 5.4(1 - p) < 4.55",
+              "4.2p + 5.4 - 5.4p < 4.55",
+              "-1.2p + 5.4 < 4.55",
+              "-1.2p < -0.85",
+              "p > 0.708"
+            ],
+            "attachments": {
+              "table": [
+                [
+                  "E(X)",
+                  "4.2",
+                  "5.4"
+                ],
+                [
+                  "Probability",
+                  "p",
+                  "1-p"
+                ]
+              ]
+            }
+          }
+        ],
+        "scoring": {
+          "totalPoints": 4,
+          "rubric": [
+            {
+              "part": "a",
+              "maxPoints": 1,
+              "criteria": [
+                "Gives the correct answer of 0.80 and shows work"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response gives the correct answer of 0.80 and shows work. Partially correct (P) if the response gives the correct answer but does not show work; OR if the response calculates P(X < 5) = 0.55 or P(X ≥ 5) = 0.45 or P(X > 5) = 0.20 with work shown. Incorrect (I) if the response does not meet the criteria for E or P."
+            },
+            {
+              "part": "b",
+              "maxPoints": 1,
+              "criteria": [
+                "Correctly calculates the expected value of 4.55",
+                "Shows correct work for the calculation",
+                "Includes the idea of many trials and context in the interpretation",
+                "Includes the concept of mean (or average) in the interpretation"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response satisfies all four components. Partially correct (P) if the response satisfies only two or three of the four components. Incorrect (I) if the response does not meet the criteria for E or P. Note: If the calculation of the expected value is incorrect, components 3 and 4 can still be satisfied using the value calculated in part (b)."
+            },
+            {
+              "part": "c",
+              "maxPoints": 1,
+              "criteria": [
+                "Correctly calculates the expected value for the long hit as 4.92",
+                "Shows work for the calculation",
+                "Concludes that the long hit is not the better approach because 4.92 > 4.55"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response includes all three components. Partially correct (P) if the response satisfies only two of the three components. Incorrect (I) if the response does not meet the criteria for E or P. Note: If the calculation of the expected value was incorrect in part (b) or part (c) or both, component 3 can still be satisfied if a correct decision is made based on a comparison of the expected values in parts (b) and (c)."
+            },
+            {
+              "part": "d",
+              "maxPoints": 1,
+              "criteria": [
+                "Correctly sets up an expression for the expected value in terms of p",
+                "States that the expected value from component 1 should be less than 4.55",
+                "Correctly calculates the value of p",
+                "States the answer as an inequality"
+              ],
+              "scoringNotes": "Essentially correct (E) if the response satisfies all four components. Partially correct (P) if the response satisfies only two or three of the four components. Incorrect (I) if the response does not meet the criteria for E or P. Note: If the calculation of the expected value was incorrect in part (b), components 2 and 3 can still be satisfied if the values are consistent with the expected value found in part (b)."
+            }
+          ]
+        }
+      },
+      "reasoning": "This problem tests understanding of probability calculations, expected value computation and interpretation, and decision-making using expected values. It involves discrete probability distributions, weighted averages, and solving inequalities in a statistical context. The golf scenario provides a real-world application where students must compare strategies using expected value analysis.",
+      "attachments": {
+        "table": [
+          [
+            "Score",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          [
+            "Probability",
+            "0.15",
+            "0.40",
+            "0.25",
+            "0.15",
+            "0.05"
+          ]
+        ],
+        "images": [
+          {
+            "image": "assets/pngs/unit4/u4_pc_frq_q2_b.png",
+            "imageAlt": "Golf course diagram showing two approaches from tee to hole: a short hit that lands before a lake, and a long hit that travels over the lake",
+            "imageCaption": "Diagram showing Miguel's two approaches to the Water Hole: short hit (lands before lake) and long hit (travels over lake)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q01",
+      "type": "multiple-choice",
+      "prompt": "A consumer group is investigating the number of flights at a certain airline that are overbooked. They conducted a simulation to estimate the probability of overbooked flights in the next 5 flights. The results of 1,000 trials are shown in the following histogram. Based on the histogram, what is the probability that at least 4 of the next 5 flights at the airline will be overbooked?",
+      "answerKey": "C",
+      "reasoning": "To find the probability that at least 4 flights will be overbooked, we need to add the relative frequencies for 4 and 5 overbooked flights. From the histogram: \\( P(X \\geq 4) = P(X = 4) + P(X = 5) = 0.332 + 0.114 = 0.446 \\).",
+      "attachments": {
+        "image": "assets/pngs/unit4/u4_pc_q1.png",
+        "imageAlt": "Histogram showing relative frequency of overbooked flights. X-axis shows Number of Overbooked Flights from 0 to 5. Y-axis shows Relative Frequency from 0 to 0.35. Bar heights are approximately: 0 flights = 0.007, 1 flight = 0.049, 2 flights = 0.181, 3 flights = 0.317, 4 flights = 0.332, 5 flights = 0.114",
+        "imageCaption": "Histogram showing the distribution of overbooked flights in simulation results",
+        "chartType": "histogram",
+        "xLabels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "series": [
+          {
+            "name": "Relative Frequency",
+            "values": [
+              0.007,
+              0.049,
+              0.181,
+              0.317,
+              0.332,
+              0.114
+            ]
+          }
+        ],
+        "chartConfig": {
+          "showPointLabels": true,
+          "yAxis": {
+            "min": 0,
+            "max": 0.35,
+            "tickInterval": 0.05,
+            "title": "Relative Frequency"
+          },
+          "xAxis": {
+            "title": "Number of Overbooked Flights",
+            "labelType": "discrete"
+          },
+          "gridLines": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "description": "Histogram showing distribution of overbooked flights with no gaps between bars"
+        },
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.114"
+          },
+          {
+            "key": "B",
+            "value": "0.332"
+          },
+          {
+            "key": "C",
+            "value": "0.446"
+          },
+          {
+            "key": "D",
+            "value": "0.500"
+          },
+          {
+            "key": "E",
+            "value": "0.886"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q02",
+      "type": "multiple-choice",
+      "prompt": "Consider rolling two number cubes, each of which has its faces numbered from 1 to 6. The cubes will be rolled and the sum of the numbers landing face up will be recorded. Let the event E represent the event of rolling a sum of 5. How many outcomes are in the collection for event E?",
+      "answerKey": "C",
+      "reasoning": "To get a sum of 5 when rolling two number cubes, we need to find all ordered pairs (first die, second die) that sum to 5. The possible outcomes are: (1,4), (2,3), (3,2), and (4,1). Therefore, there are four outcomes in event E.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "One"
+          },
+          {
+            "key": "B",
+            "value": "Two"
+          },
+          {
+            "key": "C",
+            "value": "Four"
+          },
+          {
+            "key": "D",
+            "value": "Five"
+          },
+          {
+            "key": "E",
+            "value": "Six"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q03",
+      "type": "multiple-choice",
+      "prompt": "In a certain population of birds, about 40 percent of the birds have a wingspan greater than 10 inches. Biologists studying the birds will create a simulation with random numbers to estimate the probability of finding 1 bird in a sample of 6 birds with a wingspan greater than 10 inches. Which of the following assignments of the digits 0 to 9 will model the population?",
+      "answerKey": "D",
+      "reasoning": "Since 40% of the birds have a wingspan greater than 10 inches, we need 40% of the digits (0-9) to represent this condition. The digits 0, 1, 2, and 3 represent 4 out of 10 digits, which equals \\( \\frac{4}{10} = 0.40 = 40\\% \\). This correctly models the 40% probability.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Let the even digits represent birds with a wingspan greater than 10 inches and the odd digits represent birds with a wingspan less than or equal to 10 inches."
+          },
+          {
+            "key": "B",
+            "value": "Let the digits 0 and 1 represent birds with a wingspan greater than 10 inches and the remaining digits represent birds with a wingspan less than or equal to 10 inches."
+          },
+          {
+            "key": "C",
+            "value": "Let the digits from 0 to 2 represent birds with a wingspan greater than 10 inches and the remaining digits represent birds with a wingspan less than or equal to 10 inches."
+          },
+          {
+            "key": "D",
+            "value": "Let the digits from 0 to 3 represent birds with a wingspan greater than 10 inches and the remaining digits represent birds with a wingspan less than or equal to 10 inches."
+          },
+          {
+            "key": "E",
+            "value": "Let the digits from 0 to 4 represent birds with a wingspan greater than 10 inches and the remaining digits represent birds with a wingspan less than or equal to 10 inches."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q04",
+      "type": "multiple-choice",
+      "prompt": "Each person in a group of twenty people at a hotel orders one meal chosen from oatmeal, eggs, or pancakes and one hot beverage chosen from coffee or tea. One person will be selected at random from the twenty people. What is the sample space for the meal and beverage for the person selected?",
+      "answerKey": "A",
+      "reasoning": "The sample space consists of all possible outcomes. Since each person selects one meal from 3 options and one beverage from 2 options, there are \\( 3 \\times 2 = 6 \\) possible combinations. Each outcome is an ordered pair (meal, beverage), giving us the sample space with 6 elements: all possible meal-beverage combinations.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "{(oatmeal, coffee), (oatmeal, tea), (eggs, coffee), (eggs, tea), (pancakes, coffee), (pancakes, tea)}"
+          },
+          {
+            "key": "B",
+            "value": "{(oatmeal, pancakes), (oatmeal, eggs), (eggs, pancakes), (coffee, tea)}"
+          },
+          {
+            "key": "C",
+            "value": "{(coffee, tea, oatmeal), (coffee, tea, eggs), (coffee, tea, pancakes)}"
+          },
+          {
+            "key": "D",
+            "value": "{oatmeal, coffee, pancakes, eggs, tea}"
+          },
+          {
+            "key": "E",
+            "value": "{(oatmeal, eggs, pancakes), (coffee, tea)}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q05",
+      "type": "multiple-choice",
+      "prompt": "At Mike's favorite coffee shop, the coffee of the day is either a dark roast, a medium roast, or a light roast. From past experience, Mike knows that the probability of the coffee being a light roast is 0.15 and the probability of the coffee being a dark roast is 0.25. What is the probability of the coffee of the day not being a light roast or a dark roast on the next day that Mike visits the coffee shop?",
+      "answerKey": "D",
+      "reasoning": "Since there are only three types of roast, the probability of medium roast equals \\( 1 - P(\\text{light}) - P(\\text{dark}) = 1 - 0.15 - 0.25 = 0.60 \\). The event 'not being a light roast or a dark roast' is equivalent to 'being a medium roast', so the probability is 0.60.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.15"
+          },
+          {
+            "key": "B",
+            "value": "0.25"
+          },
+          {
+            "key": "C",
+            "value": "0.40"
+          },
+          {
+            "key": "D",
+            "value": "0.60"
+          },
+          {
+            "key": "E",
+            "value": "0.85"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q06",
+      "type": "multiple-choice",
+      "prompt": "Amy has 12 brown golf tees, 8 white golf tees, 10 red golf tees, 6 blue golf tees, and 12 green golf tees in her golf bag. If she selects one of the tees from the bag at random, what is the probability that she selects a tee that is not brown or blue?",
+      "answerKey": "B",
+      "reasoning": "Total tees: \\( 12 + 8 + 10 + 6 + 12 = 48 \\). Tees that are not brown or blue: white + red + green = \\( 8 + 10 + 12 = 30 \\). Therefore, the probability is \\( \\frac{30}{48} = \\frac{5}{8} \\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\( \\frac{3}{8} \\)"
+          },
+          {
+            "key": "B",
+            "value": "\\( \\frac{5}{8} \\)"
+          },
+          {
+            "key": "C",
+            "value": "\\( \\frac{21}{32} \\)"
+          },
+          {
+            "key": "D",
+            "value": "\\( \\frac{3}{4} \\)"
+          },
+          {
+            "key": "E",
+            "value": "\\( \\frac{7}{8} \\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q07",
+      "type": "multiple-choice",
+      "prompt": "A business journal reports that the probability that Internet users in the United States will use a mobile payment app is 0.60. The journal claims this indicates that out of 5 randomly selected Internet users, 3 will use the mobile payment app. Is the business journal interpreting the probability correctly?",
+      "answerKey": "C",
+      "reasoning": "The probability 0.60 represents the long-run relative frequency of mobile payment app usage across many Internet users. It does not guarantee that exactly 3 out of any specific group of 5 users will use the app. Probability describes long-term behavior, not individual outcomes or small samples.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "No, because the Internet users are not independent of each other."
+          },
+          {
+            "key": "B",
+            "value": "No, because only 60% of all people use the Internet."
+          },
+          {
+            "key": "C",
+            "value": "No, because 0.60 represents probability in the long run for many Internet users."
+          },
+          {
+            "key": "D",
+            "value": "Yes, because Internet users are selected at random."
+          },
+          {
+            "key": "E",
+            "value": "Yes, because 3 out of 5 is equal to 60%."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q08",
+      "type": "multiple-choice",
+      "prompt": "A financial analyst reports that for people who work in the finance industry, the probability that a randomly selected person will have a tattoo is 0.20. Which of the following is the best interpretation of the probability 0.20?",
+      "answerKey": "B",
+      "reasoning": "The probability 0.20 represents the long-run relative frequency of having a tattoo among finance workers. This means that in the long run, 20% of finance workers will have a tattoo. The probability describes the conditional probability \\( P(\\text{tattoo}|\\text{finance worker}) = 0.20 \\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "For all workers in the United States, 20% will work in finance."
+          },
+          {
+            "key": "B",
+            "value": "For all finance workers, 20% will have a tattoo."
+          },
+          {
+            "key": "C",
+            "value": "For all people with tattoos, 20% will work in finance."
+          },
+          {
+            "key": "D",
+            "value": "For a specific group of 5 finance workers, 1 will have a tattoo."
+          },
+          {
+            "key": "E",
+            "value": "For a specific group of 5 people with a tattoo, 1 will work in finance."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q09",
+      "type": "multiple-choice",
+      "prompt": "A certain spinner is divided into 6 sectors of equal size, and the spinner is equally likely to land in any sector. Four of the 6 sectors are shaded, and the remaining sectors are not shaded. Which of the following is the best interpretation of the probability that one spin of the spinner will land in a shaded sector?",
+      "answerKey": "C",
+      "reasoning": "Since 4 out of 6 equally likely sectors are shaded, the probability of landing in a shaded sector is \\( \\frac{4}{6} = \\frac{2}{3} \\). This represents the long-run relative frequency, meaning that over many spins, approximately \\( \\frac{2}{3} \\) of the outcomes will be in shaded sectors.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "For many spins, the long-run relative frequency with which the spinner will land in a shaded sector is \\( \\frac{1}{3} \\)."
+          },
+          {
+            "key": "B",
+            "value": "For many spins, the long-run relative frequency with which the spinner will land in a shaded sector is \\( \\frac{1}{2} \\)."
+          },
+          {
+            "key": "C",
+            "value": "For many spins, the long-run relative frequency with which the spinner will land in a shaded sector is \\( \\frac{2}{3} \\)."
+          },
+          {
+            "key": "D",
+            "value": "For 6 spins, the spinner will land in a shaded sector 4 times."
+          },
+          {
+            "key": "E",
+            "value": "For 6 spins, the spinner will land in a shaded sector 2 times."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q10",
+      "type": "multiple-choice",
+      "prompt": "At a local elementary school, 35 percent of all students have brown eyes, 45 percent have brown hair, and 60 percent have brown hair or brown eyes. A student will be selected at random from the school. Let \\( E \\) represent the event that the selected person has brown eyes, and let \\( H \\) represent the event that the selected person has brown hair. Are \\( E \\) and \\( H \\) mutually exclusive events?",
+      "answerKey": "D",
+      "reasoning": "Using the addition rule: \\( P(E \\cup H) = P(E) + P(H) - P(E \\cap H) \\). Substituting: \\( 0.60 = 0.35 + 0.45 - P(E \\cap H) \\), so \\( P(E \\cap H) = 0.35 + 0.45 - 0.60 = 0.20 \\). Since \\( P(E \\cap H) \\neq 0 \\), the events are not mutually exclusive.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, because \\( P(E \\cap H) = 0 \\)."
+          },
+          {
+            "key": "B",
+            "value": "Yes, because \\( P(E \\cap H) = 0.2 \\)."
+          },
+          {
+            "key": "C",
+            "value": "Yes, because \\( P(E \\cap H) = 0.6 \\)."
+          },
+          {
+            "key": "D",
+            "value": "No, because \\( P(E \\cap H) = 0.2 \\)."
+          },
+          {
+            "key": "E",
+            "value": "No, because \\( P(E \\cap H) = 0.6 \\)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q11",
+      "type": "multiple-choice",
+      "prompt": "The students at a certain high school have an elective period, where each student chooses an elective from among four options. The following table shows the number of students who selected each elective for the 1,500 students at the high school. One student from the school will be selected at random. What is the probability the selected student chose the art elective and the music elective?",
+      "answerKey": "A",
+      "reasoning": "Since the total number of students in all four electives equals the total number of students (1,500), each student chose exactly one elective. Therefore, it is impossible for a student to choose both art and music. The events are mutually exclusive, so \\( P(\\text{art and music}) = 0 \\).",
+      "attachments": {
+        "table": [
+          [
+            "Art",
+            "Music",
+            "Physical Education",
+            "Engineering",
+            "Total"
+          ],
+          [
+            "385",
+            "365",
+            "380",
+            "370",
+            "1,500"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "0"
+          },
+          {
+            "key": "B",
+            "value": "\\( \\frac{385}{1,500} \\)"
+          },
+          {
+            "key": "C",
+            "value": "\\( \\frac{365}{750} \\)"
+          },
+          {
+            "key": "D",
+            "value": "\\( \\frac{750}{1,500} \\)"
+          },
+          {
+            "key": "E",
+            "value": "\\( \\frac{385}{750} \\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q12",
+      "type": "multiple-choice",
+      "prompt": "A survey of people on pizza preferences indicated that 55 percent preferred pepperoni only, 30 percent preferred mushroom only, and 15 percent preferred something other than pepperoni and mushroom. Suppose one person who was surveyed will be selected at random. Let \\( P \\) represent the event that the selected person preferred pepperoni, and let \\( M \\) represent the event that the selected person preferred mushroom. Are \\( P \\) and \\( M \\) mutually exclusive events for the people in this survey?",
+      "answerKey": "C",
+      "reasoning": "The percentages add to 100%: 55% + 30% + 15% = 100%. Since people preferred 'pepperoni only' or 'mushroom only' or 'something other', no person can prefer both pepperoni and mushroom simultaneously. Therefore, \\( P(P \\cap M) = 0 \\), making the events mutually exclusive.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, because the joint probability of \\( P \\) and \\( M \\) is greater than 0."
+          },
+          {
+            "key": "B",
+            "value": "Yes, because the joint probability of \\( P \\) and \\( M \\) is greater than 1."
+          },
+          {
+            "key": "C",
+            "value": "Yes, because the joint probability of \\( P \\) and \\( M \\) is equal to 0."
+          },
+          {
+            "key": "D",
+            "value": "No, because the joint probability of \\( P \\) and \\( M \\) is equal to 1."
+          },
+          {
+            "key": "E",
+            "value": "No, because the joint probability of \\( P \\) and \\( M \\) is equal to 0."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q13",
+      "type": "multiple-choice",
+      "prompt": "For the lunch special at a high school cafeteria, students can get either salad or french fries as a side order. The following table shows the number of each side order for the lunch specials purchased on one day, classified by the grade of the student. From those who purchased the lunch special that day, one student will be selected at random. What is the probability that the student selected will be in grade 10 given that the student ordered french fries as the side order?",
+      "answerKey": "C",
+      "reasoning": "This is a conditional probability problem. We want \\( P(\\text{Grade 10}|\\text{French fries}) \\). Of the 248 students who ordered french fries, 71 were in grade 10. Therefore, \\( P(\\text{Grade 10}|\\text{French fries}) = \\frac{71}{248} \\).",
+      "attachments": {
+        "table": [
+          [
+            "",
+            "Grade 9",
+            "Grade 10",
+            "Grade 11",
+            "Grade 12",
+            "Total"
+          ],
+          [
+            "Salad",
+            "37",
+            "34",
+            "21",
+            "28",
+            "120"
+          ],
+          [
+            "French fries",
+            "83",
+            "71",
+            "57",
+            "37",
+            "248"
+          ],
+          [
+            "Total",
+            "120",
+            "105",
+            "78",
+            "65",
+            "368"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\( \\frac{71}{368} \\)"
+          },
+          {
+            "key": "B",
+            "value": "\\( \\frac{105}{368} \\)"
+          },
+          {
+            "key": "C",
+            "value": "\\( \\frac{71}{248} \\)"
+          },
+          {
+            "key": "D",
+            "value": "\\( \\frac{248}{368} \\)"
+          },
+          {
+            "key": "E",
+            "value": "\\( \\frac{71}{105} \\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q14",
+      "type": "multiple-choice",
+      "prompt": "A high school theater club has 40 students, of whom 6 are left-handed. Two students from the club will be selected at random, one at a time without replacement. What is the probability that the 2 students selected will both be left-handed?",
+      "answerKey": "B",
+      "reasoning": "This involves conditional probability without replacement. \\( P(\\text{both left-handed}) = P(\\text{first left-handed}) \\times P(\\text{second left-handed}|\\text{first left-handed}) = \\frac{6}{40} \\times \\frac{5}{39} = \\frac{30}{1,560} \\). After selecting one left-handed student, there are 5 left-handed students remaining out of 39 total students.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\( \\frac{30}{1,600} \\)"
+          },
+          {
+            "key": "B",
+            "value": "\\( \\frac{30}{1,560} \\)"
+          },
+          {
+            "key": "C",
+            "value": "\\( \\frac{36}{1,600} \\)"
+          },
+          {
+            "key": "D",
+            "value": "\\( \\frac{6}{40} \\)"
+          },
+          {
+            "key": "E",
+            "value": "\\( \\frac{1,156}{1,600} \\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-A-Q15",
+      "type": "multiple-choice",
+      "prompt": "At a large high school 40 percent of the students walk to school, 32 percent of the students have been late to school at least once, and 37.5 percent of the students who walk to school have been late to school at least once. One student from the school will be selected at random. What is the probability that the student selected will be one who both walks to school and has been late to school at least once?",
+      "answerKey": "B",
+      "reasoning": "Let \\( W \\) = walks to school and \\( L \\) = late at least once. We're given: \\( P(W) = 0.40 \\), \\( P(L) = 0.32 \\), and \\( P(L|W) = 0.375 \\). Using the conditional probability formula: \\( P(L|W) = \\frac{P(L \\cap W)}{P(W)} \\), so \\( P(L \\cap W) = P(L|W) \\times P(W) = 0.375 \\times 0.40 = 0.15 \\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.12"
+          },
+          {
+            "key": "B",
+            "value": "0.15"
+          },
+          {
+            "key": "C",
+            "value": "0.1875"
+          },
+          {
+            "key": "D",
+            "value": "0.345"
+          },
+          {
+            "key": "E",
+            "value": "0.72"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q01",
+      "type": "multiple-choice",
+      "prompt": "Given independent events \\(A\\) and \\(B\\) such that \\(P(A) = 0.3\\) and \\(P(B) = 0.5\\), which of the following is a correct statement?",
+      "answerKey": "D",
+      "reasoning": "Since events A and B are independent, \\(P(A \\cap B) = [P(A)][P(B)] = (0.3)(0.5) = 0.15\\). Then \\(P(A \\cup B) = P(A) + P(B) - P(A \\cap B) = 0.3 + 0.5 - 0.15 = 0.65\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(P(A|B) = 0\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(P(B|A) = 0.3\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(P(A|B) = 0.5\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(P(A \\cup B) = 0.65\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(P(A \\cup B) = 0.80\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q02",
+      "type": "multiple-choice",
+      "prompt": "While investigating customer complaints, the customer relations department of Sonic Air found that 15 percent of the flights arrive early and 25 percent arrive on time. Additionally, 65 percent of the flights are overbooked, and 72 percent are late or not overbooked. One Sonic Air flight will be selected at random. What is the probability that the flight selected will be late and not overbooked?",
+      "answerKey": "B",
+      "reasoning": "If \\(B\\) represents the event that the selected flight is overbooked and \\(L\\) represents the event that the selected flight is late, then \\(P(L \\cup B^c)\\) is the probability that the flight is late or not overbooked, and \\(P(L \\cup B^c) = P(L) + P(B^c) - P(L \\cap B^c)\\). Thus, \\(0.72 = 0.60 + 0.35 - P(L \\cap B^c)\\), so the probability that the flight is late and not overbooked is \\(P(L \\cap B^c) = 0.23\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.21"
+          },
+          {
+            "key": "B",
+            "value": "0.23"
+          },
+          {
+            "key": "C",
+            "value": "0.26"
+          },
+          {
+            "key": "D",
+            "value": "0.39"
+          },
+          {
+            "key": "E",
+            "value": "0.72"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q03",
+      "type": "multiple-choice",
+      "prompt": "A hockey all-star game has the Eastern Division all-stars play against the Western Division all-stars. On the Eastern Division team there are 8 United States-born players, 14 Canadian-born players, and 2 European-born players. On the Western Division team there are 12 United States-born players, 8 Canadian-born players, and 4 European-born players. If one player is selected at random from the Eastern Division team and one player is selected at random from the Western Division team, what is the probability that neither player will be a Canadian-born player?",
+      "answerKey": "B",
+      "reasoning": "If \\(E\\) represents the event that a player selected from the Eastern team is Canadian born and \\(W\\) represents the event that a player selected from the Western team is Canadian born, then since \\(E\\) and \\(W\\) are independent, \\(P(E^c \\cap W^c) = [P(E^c)][P(W^c)] = \\left(\\frac{10}{24}\\right)\\left(\\frac{16}{24}\\right) = \\frac{160}{576}\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\frac{112}{576}\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\frac{160}{576}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\frac{676}{2304}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\frac{4}{9}\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\frac{464}{576}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q04",
+      "type": "multiple-choice",
+      "prompt": "Let random variable \\(Q\\) represent the number of employees who work at a certain restaurant on a given day. The following table shows the probability distribution of the random variable \\(Q\\).",
+      "answerKey": "D",
+      "reasoning": "This claim is best supported by the table because the distribution of random variable \\(Q\\) is skewed to the left (toward lower numbers of employees). In distributions that are skewed to the left, the mean is less than the median.",
+      "attachments": {
+        "table": [
+          [
+            "Number of Employees",
+            "Probability"
+          ],
+          [
+            "20",
+            "0.1"
+          ],
+          [
+            "21",
+            "0.1"
+          ],
+          [
+            "22",
+            "0.1"
+          ],
+          [
+            "23",
+            "0.4"
+          ],
+          [
+            "24",
+            "0.3"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "The most likely number of employees who work on a given day is 24."
+          },
+          {
+            "key": "B",
+            "value": "The mean number of employees who work on a given day is equal to the median number of employees who work on a given day."
+          },
+          {
+            "key": "C",
+            "value": "The mean number of employees who work on a given day is greater than the median number of employees who work on a given day."
+          },
+          {
+            "key": "D",
+            "value": "The mean number of employees who work on a given day is less than the median number of employees who work on a given day."
+          },
+          {
+            "key": "E",
+            "value": "On a given day, the number of employees who work at the restaurant occurs with equal probabilities."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q05",
+      "type": "multiple-choice",
+      "prompt": "Let random variable \\(S\\) represent the age of the attendees at a local concert. The following histogram shows the probability distribution of the random variable \\(S\\). Alfonso claims that the distribution of \\(S\\) is symmetric with a mean age of 36. Does the histogram support Alfonso's claim?",
+      "answerKey": "E",
+      "reasoning": "Alfonso's claim is not supported. The histogram displays a longer tail on the left, indicating a left skew. There is more weight to the right of the middle value on the scale, 36, indicating a mean age greater than 36.",
+      "attachments": {
+        "chartType": "histogram",
+        "xLabels": [
+          "32",
+          "33",
+          "34",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40"
+        ],
+        "series": [
+          {
+            "name": "Probability",
+            "values": [
+              0.02,
+              0.04,
+              0.05,
+              0.1,
+              0.12,
+              0.15,
+              0.25,
+              0.2,
+              0.08
+            ]
+          }
+        ],
+        "chartConfig": {
+          "yAxis": {
+            "min": 0,
+            "max": 0.25,
+            "tickInterval": 0.05,
+            "title": "Probability"
+          },
+          "xAxis": {
+            "title": "Age of attendee (years)",
+            "labelType": "upperBound"
+          },
+          "gridLines": {
+            "horizontal": false,
+            "vertical": false
+          },
+          "description": "Histogram showing probability distribution of concert attendee ages"
+        },
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, the distribution is symmetric with a mean age of 36."
+          },
+          {
+            "key": "B",
+            "value": "No, the distribution is skewed to the right with a mean age of 36."
+          },
+          {
+            "key": "C",
+            "value": "No, the distribution is skewed to the right with a mean age greater than 36."
+          },
+          {
+            "key": "D",
+            "value": "No, the distribution is skewed to the left with a mean age of 36."
+          },
+          {
+            "key": "E",
+            "value": "No, the distribution is skewed to the left with a mean age greater than 36."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q06",
+      "type": "multiple-choice",
+      "prompt": "Let random variable \\(X\\) represent the number of movies screening at movie theaters in a certain city. The following table shows the cumulative probability distribution of the discrete random variable \\(X\\). Andromeda claims the distribution of \\(X\\) is skewed to the right with mean equal to 4 movies. Is Andromeda's claim supported by the table?",
+      "answerKey": "E",
+      "reasoning": "Andromeda's claim is not supported. The probabilities shown in the table are cumulative; the individual probabilities are 0.2, 0.3, 0.1, 0.1, 0.1, 0.1, and 0.1, indicating a skew to the right. More weight is assigned to the values less than 4 movies, so the mean will be less than 4 movies.",
+      "attachments": {
+        "table": [
+          [
+            "x",
+            "P(X ≤ x)"
+          ],
+          [
+            "1",
+            "0.2"
+          ],
+          [
+            "2",
+            "0.5"
+          ],
+          [
+            "3",
+            "0.6"
+          ],
+          [
+            "4",
+            "0.7"
+          ],
+          [
+            "5",
+            "0.8"
+          ],
+          [
+            "6",
+            "0.9"
+          ],
+          [
+            "7",
+            "1.0"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "Yes, the distribution is skewed to the right with mean equal to 4 movies."
+          },
+          {
+            "key": "B",
+            "value": "No, the distribution is skewed to the left with mean greater than 4 movies."
+          },
+          {
+            "key": "C",
+            "value": "No, the distribution is skewed to the left with mean less than 4 movies."
+          },
+          {
+            "key": "D",
+            "value": "No, the distribution is skewed to the right with mean greater than 4 movies."
+          },
+          {
+            "key": "E",
+            "value": "No, the distribution is skewed to the right with mean less than 4 movies."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q07",
+      "type": "multiple-choice",
+      "prompt": "The following table shows the probability distribution for the prize amounts that will be awarded at a school raffle. Let the random variable \\(P\\) represent a randomly selected prize amount. What is the expected value of \\(P\\)?",
+      "answerKey": "B",
+      "reasoning": "The expected value is found by adding the products of the amounts and their probabilities. In this case, \\(1(0.6) + 5(0.3) + 10(0.05) + 20(0.04) + 50(0.01) = 3.9\\), or $3.90.",
+      "attachments": {
+        "table": [
+          [
+            "Prize",
+            "$1",
+            "$5",
+            "$10",
+            "$20",
+            "$50"
+          ],
+          [
+            "Probability",
+            "0.60",
+            "0.30",
+            "0.05",
+            "0.04",
+            "0.01"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "$1.00"
+          },
+          {
+            "key": "B",
+            "value": "$3.90"
+          },
+          {
+            "key": "C",
+            "value": "$4.00"
+          },
+          {
+            "key": "D",
+            "value": "$10.00"
+          },
+          {
+            "key": "E",
+            "value": "$17.20"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q08",
+      "type": "multiple-choice",
+      "prompt": "The random variable \\(X\\) takes on the values of 2, 5, \\(n\\), and 15. The probability distribution of \\(X\\) is shown in the following table. The expected value of \\(X\\) is 9.1. What is the value of \\(n\\)?",
+      "answerKey": "D",
+      "reasoning": "The expected value 9.1 is equal to \\(2(0.1) + 5(0.4) + n(0.2) + 15(0.3)\\). Solving the equation gives \\(n = 12\\).",
+      "attachments": {
+        "table": [
+          [
+            "X",
+            "2",
+            "5",
+            "n",
+            "15"
+          ],
+          [
+            "P(X)",
+            "0.1",
+            "0.4",
+            "0.2",
+            "0.3"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "8"
+          },
+          {
+            "key": "B",
+            "value": "8.52"
+          },
+          {
+            "key": "C",
+            "value": "10"
+          },
+          {
+            "key": "D",
+            "value": "12"
+          },
+          {
+            "key": "E",
+            "value": "14.4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q09",
+      "type": "multiple-choice",
+      "prompt": "A local amusement park has 30 rides that park visitors can go on. The following table shows the relative frequency distribution for the number of rides that a park visitor will typically go on during one day at the park. The table also shows the deviation, or difference, from 21, the mean of the distribution. Which of the following is closest to the standard deviation of the distribution?",
+      "answerKey": "A",
+      "reasoning": "The standard deviation is the square root of the sum of the products of the squared deviations and their corresponding probabilities. In this case, \\(\\sigma_x = \\sqrt{\\sum(x - \\mu_x)^2 \\cdot P(x)}\\), which is \\(\\sqrt{121(0.1) + 36(0.2) + 1(0.2) + 16(0.4) + 81(0.1)} = \\sqrt{34}\\), and \\(\\sqrt{34} \\approx 5.83\\).",
+      "attachments": {
+        "table": [
+          [
+            "Number of rides and attractions",
+            "10",
+            "15",
+            "20",
+            "25",
+            "30"
+          ],
+          [
+            "Deviation",
+            "−11",
+            "−6",
+            "−1",
+            "4",
+            "9"
+          ],
+          [
+            "Relative frequency",
+            "0.1",
+            "0.2",
+            "0.2",
+            "0.4",
+            "0.1"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "5.83"
+          },
+          {
+            "key": "B",
+            "value": "7.07"
+          },
+          {
+            "key": "C",
+            "value": "7.90"
+          },
+          {
+            "key": "D",
+            "value": "20"
+          },
+          {
+            "key": "E",
+            "value": "34"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q10",
+      "type": "multiple-choice",
+      "prompt": "The random variable \\(W\\) can take on the values of 0, 1, 2, 3, or 4. The expected value of \\(W\\) is 2.8. Which of the following is the best interpretation of the expected value of random variable \\(W\\)?",
+      "answerKey": "E",
+      "reasoning": "The expected value of a probability distribution is the long-run average resulting from repeated sampling.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "A randomly selected value of \\(W\\) must be equal to 2.8."
+          },
+          {
+            "key": "B",
+            "value": "The values of \\(W\\) vary by about 2.8 units from the mean of the distribution."
+          },
+          {
+            "key": "C",
+            "value": "The mean of a random sample of \\(W\\) values selected from the distribution will be 2.8."
+          },
+          {
+            "key": "D",
+            "value": "A value of \\(W\\) randomly selected from the distribution will be less than 2.8 units of the mean."
+          },
+          {
+            "key": "E",
+            "value": "For values of \\(W\\) repeatedly selected at random from the distribution, the mean of the selected values will approach 2.8."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q11",
+      "type": "multiple-choice",
+      "prompt": "Let the random variable \\(X\\) represent the amount of money won or lost for a player who pays $1 to play a certain carnival game. The following table shows the probability distribution of \\(X\\). Which of the following statements is the best interpretation of the mean of \\(X\\)?",
+      "answerKey": "A",
+      "reasoning": "The expected value is \\(\\sum xP(x) = −\\$1(0.80) + \\$1(0.15) + \\$10(0.05) = −\\$0.15\\), indicating average loss. So the player can expect to lose an average of $0.15 per carnival game when the game is played many times.",
+      "attachments": {
+        "table": [
+          [
+            "Amount",
+            "−$1",
+            "$1",
+            "$10"
+          ],
+          [
+            "Probability",
+            "0.80",
+            "0.15",
+            "0.05"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "In the long run, a player will lose an average of $0.15 per carnival game played."
+          },
+          {
+            "key": "B",
+            "value": "In the long run, a player will gain an average of $0.15 per carnival game played."
+          },
+          {
+            "key": "C",
+            "value": "In the long run, a player will lose an average of $0.80 per carnival game played."
+          },
+          {
+            "key": "D",
+            "value": "In the long run, a player will gain an average of $0.80 per carnival game played."
+          },
+          {
+            "key": "E",
+            "value": "In the long run, players will lose $1 about 80 percent of the time."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q12",
+      "type": "multiple-choice",
+      "prompt": "Let the random variable \\(X\\) represent the number of people living in a household in a certain town. The standard deviation of \\(X\\) is 1.8. Which of the following statements is the best interpretation of the standard deviation?",
+      "answerKey": "C",
+      "reasoning": "The standard deviation is the average amount of deviation, or distance, individual households are from the mean for the population.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "The number of people living in a randomly selected household is expected to be 1.8 people."
+          },
+          {
+            "key": "B",
+            "value": "The number of people living in a randomly selected household will be 1.8 people away from the mean."
+          },
+          {
+            "key": "C",
+            "value": "On average, the number of people living in a household varies from the mean by about 1.8 people."
+          },
+          {
+            "key": "D",
+            "value": "For a random sample of households, the average number of people per household is expected to be 1.8 people."
+          },
+          {
+            "key": "E",
+            "value": "For a random sample of households, the average number of people per household will be 1.8 people away from the mean."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q13",
+      "type": "multiple-choice",
+      "prompt": "At a large university, data were collected on the number of sisters and brothers that each student had. Let the random variable \\(X\\) represent the number of sisters and the random variable \\(Y\\) represent the number of brothers. The distribution of \\(X\\) has mean 1.00 and standard deviation 0.94. The distribution of \\(Y\\) has mean 1.07 and standard deviation 1.04. What is the mean of the distribution of \\(X + Y\\)?",
+      "answerKey": "E",
+      "reasoning": "The mean of \\(X + Y\\) is the sum of the mean of \\(X\\) and the mean of \\(Y\\), which equals \\(1.00 + 1.07 = 2.07\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "1.98"
+          },
+          {
+            "key": "B",
+            "value": "2.01"
+          },
+          {
+            "key": "C",
+            "value": "2.04"
+          },
+          {
+            "key": "D",
+            "value": "2.0528"
+          },
+          {
+            "key": "E",
+            "value": "2.07"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q14",
+      "type": "multiple-choice",
+      "prompt": "The following table shows the joint distribution of random variables \\(X\\) and \\(Y\\). Which of the following statements about the random variables \\(X\\) and \\(Y\\) is correct?",
+      "answerKey": "A",
+      "reasoning": "The ratios are the same for each value of \\(X\\) (or \\(Y\\)), and knowing one does not change the value of the other. Therefore, \\(X\\) and \\(Y\\) are independent.",
+      "attachments": {
+        "table": [
+          [
+            "",
+            "Y = 1",
+            "Y = 2",
+            "Y = 3",
+            "Y = 4"
+          ],
+          [
+            "X = 1",
+            "0.04",
+            "0.03",
+            "0.02",
+            "0.01"
+          ],
+          [
+            "X = 2",
+            "0.08",
+            "0.06",
+            "0.04",
+            "0.02"
+          ],
+          [
+            "X = 3",
+            "0.12",
+            "0.09",
+            "0.06",
+            "0.03"
+          ],
+          [
+            "X = 4",
+            "0.16",
+            "0.12",
+            "0.08",
+            "0.04"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(X\\) and \\(Y\\) are independent because knowing the value of \\(X\\) does not change the probability distribution of \\(Y\\)."
+          },
+          {
+            "key": "B",
+            "value": "\\(X\\) and \\(Y\\) are independent because knowing the value of \\(X\\) changes the probability distribution of \\(Y\\)."
+          },
+          {
+            "key": "C",
+            "value": "\\(X\\) and \\(Y\\) are not independent because knowing the value of \\(X\\) does not change the probability distribution of \\(Y\\)."
+          },
+          {
+            "key": "D",
+            "value": "\\(X\\) and \\(Y\\) are not independent because knowing the value of \\(X\\) changes the probability distribution of \\(Y\\)."
+          },
+          {
+            "key": "E",
+            "value": "The independence of \\(X\\) and \\(Y\\) cannot be determined from the table."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q15",
+      "type": "multiple-choice",
+      "prompt": "Biologists are analyzing soil to check for the number of worms and grubs in a wildlife preserve. Let the random variable \\(W\\) represent the number of worms found in 1 square foot of soil, and let the random variable \\(G\\) represent the number of grubs found in 1 square foot of soil. The following tables show the probability distributions developed by the biologists for \\(W\\) and \\(G\\). Assume that the distributions of worms and grubs are independent. What are the mean, \\(\\mu\\), and standard deviation, \\(\\sigma\\), for the total number of worms and grubs in 1 square foot of soil?",
+      "answerKey": "C",
+      "reasoning": "The mean of distribution \\(W\\), \\(\\mu_W\\), is 2.98, and the standard deviation of distribution \\(W\\), \\(\\sigma_W\\), is 1.21. The mean of distribution \\(G\\), \\(\\mu_G\\), is 2.3 and the standard deviation of distribution \\(G\\), \\(\\sigma_G\\), is 1.15. Therefore, \\(\\mu_{W+G} = \\mu_W + \\mu_G = 2.98 + 2.3 = 5.28\\), and \\(\\sigma^2_{W+G} = \\sigma^2_W + \\sigma^2_G = 1.21^2 + 1.15^2 \\approx 2.79\\), and \\(\\sqrt{2.79} \\approx 1.67\\).",
+      "attachments": {
+        "table": [
+          [
+            "W",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          [
+            "Probability",
+            "0.05",
+            "0.06",
+            "0.18",
+            "0.35",
+            "0.30",
+            "0.05",
+            "0.01"
+          ],
+          [
+            "G",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          [
+            "Probability",
+            "0.05",
+            "0.21",
+            "0.27",
+            "0.38",
+            "0.05",
+            "0.03",
+            "0.01"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\mu = 5\\) and \\(\\sigma = 1.67\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\mu = 5\\) and \\(\\sigma = 2.36\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\mu = 5.28\\) and \\(\\sigma = 1.67\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\mu = 5.28\\) and \\(\\sigma = 2.36\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\mu = 5.28\\) and \\(\\sigma = 2.79\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q16",
+      "type": "multiple-choice",
+      "prompt": "The distribution of weights of African bush elephants is skewed to the right with mean 6.42 tons and standard deviation 1.07 tons. Let the random variable \\(W\\) represent the weight, in tons, of a randomly selected elephant. The weight is converted to kilograms using the formula \\(Y = 900W\\). Which of the following best describes the distribution of \\(Y\\)?",
+      "answerKey": "E",
+      "reasoning": "The distribution would be right skewed because the original distribution was right skewed, and shape is not affected by the multiplication of a constant. Additionally, both the mean and standard deviation are multiplied by 900.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Roughly symmetric with mean 5,778 kilograms and standard deviation 1.07 kilograms"
+          },
+          {
+            "key": "B",
+            "value": "Roughly symmetric with mean 5,778 kilograms and standard deviation 963 kilograms"
+          },
+          {
+            "key": "C",
+            "value": "Skewed to the right with mean 906.42 kilograms and standard deviation 1.07 kilograms"
+          },
+          {
+            "key": "D",
+            "value": "Skewed to the right with mean 5,778 kilograms and standard deviation 1.07 kilograms"
+          },
+          {
+            "key": "E",
+            "value": "Skewed to the right with mean 5,778 kilograms and standard deviation 963 kilograms"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q17",
+      "type": "multiple-choice",
+      "prompt": "Julio sells computers at an electronics store. Let the random variable \\(C\\) represent the number of computers that Julio sells in one week. The following table shows the probability distribution of \\(C\\). Julio earns $800 per week, with a commission of $200 per computer sold. What is the expected value of Julio's earnings for one week?",
+      "answerKey": "C",
+      "reasoning": "The expected value of the number of computers Julio sells in a week is \\(\\mu_C = 3.31\\). If Julio's weekly earnings are given by \\(M = 800 + 200C\\), then \\(\\mu_M = a + b\\mu_C = 800 + 200(3.31) = 1,462\\).",
+      "attachments": {
+        "table": [
+          [
+            "c",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          [
+            "P(C = c)",
+            "0.04",
+            "0.08",
+            "0.16",
+            "0.21",
+            "0.30",
+            "0.18",
+            "0.03"
+          ]
+        ],
+        "choices": [
+          {
+            "key": "A",
+            "value": "$3.31"
+          },
+          {
+            "key": "B",
+            "value": "$662"
+          },
+          {
+            "key": "C",
+            "value": "$1,462"
+          },
+          {
+            "key": "D",
+            "value": "$2,848"
+          },
+          {
+            "key": "E",
+            "value": "$3,310"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-B-Q18",
+      "type": "multiple-choice",
+      "prompt": "Parker has a part-time job picking apples. Let the random variable \\(A\\) represent the number of baskets of apples picked each day. The distribution of \\(A\\) has mean 4.5 baskets and standard deviation 1.3 baskets. Parker is paid $65 per day plus $5 per basket. What are the mean and standard deviation of Parker's daily pay?",
+      "answerKey": "B",
+      "reasoning": "The mean daily pay is \\(65 + 5(4.5) = \\$87.50\\), and the standard deviation of the daily pay is \\(5(1.3) = \\$6.50\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\mu = \\$87.50\\) and \\(\\sigma = \\$71.50\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\mu = \\$87.50\\) and \\(\\sigma = \\$6.50\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\mu = \\$22.50\\) and \\(\\sigma = \\$6.50\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\mu = \\$87.50\\) and \\(\\sigma = \\$1.30\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\mu = \\$22.50\\) and \\(\\sigma = \\$71.50\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q01",
+      "type": "multiple-choice",
+      "prompt": "A thumbtack that is tossed can land point up or point down. The probability of a tack landing point up is 0.2. A simulation was conducted in which a trial consisted of tossing 5 thumbtacks and recording the number of thumbtacks that land point up. Many trials of the simulation were conducted and the results are shown in the histogram. Based on the results of the simulation, which of the following is closest to the probability that at least 2 thumbtacks land pointing up when 5 thumbtacks are tossed?",
+      "answerKey": "C",
+      "reasoning": "The bars corresponding to 2, 3, 4, and 5 represent at least two successes. The sum of the heights of the bars corresponds to a probability of approximately 0.28. From the histogram, P(X ≥ 2) = P(X = 2) + P(X = 3) + P(X = 4) + P(X = 5) = 0.20 + 0.05 + 0.02 + 0.01 = 0.28.",
+      "attachments": {
+        "chartType": "histogram",
+        "xLabels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "series": [
+          {
+            "name": "Relative Frequency",
+            "values": [
+              0.33,
+              0.39,
+              0.19,
+              0.05,
+              0.02,
+              0.02
+            ]
+          }
+        ],
+        "chartConfig": {
+          "yAxis": {
+            "min": 0,
+            "max": 0.45,
+            "tickInterval": 0.05,
+            "title": "Relative Frequency"
+          },
+          "xAxis": {
+            "title": "Number of Successes",
+            "labelType": "upperBound"
+          },
+          "gridLines": {
+            "horizontal": true,
+            "vertical": false
+          },
+          "description": "Histogram showing the distribution of number of thumbtacks landing point up in simulation trials"
+        },
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.09"
+          },
+          {
+            "key": "B",
+            "value": "0.19"
+          },
+          {
+            "key": "C",
+            "value": "0.28"
+          },
+          {
+            "key": "D",
+            "value": "0.72"
+          },
+          {
+            "key": "E",
+            "value": "0.91"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q02",
+      "type": "multiple-choice",
+      "prompt": "According to a 2018 survey, 74 percent of employed young adults expect to bring work on a vacation trip. A random sample of 20 employed young adults will be selected. What is the probability that 8 of the selected young adults will expect to bring work on a vacation trip?",
+      "answerKey": "B",
+      "reasoning": "Let the random variable X represent the number of young adults in a sample of 20 who expect to bring work on a vacation trip. Random variable X has a binomial distribution with success defined as selecting one who expects to take work, probability 0.74, and failure as selecting one who does not, probability 0.26. The probability of selecting 8 young adults who expect to take work on vacation is \\(P(X = 8) = \\binom{20}{8}(0.74)^8(0.26)^{12}\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(\\binom{20}{8}(0.26)^8(0.74)^{12}\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(\\binom{20}{8}(0.74)^8(0.26)^{12}\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(\\binom{12}{8}(0.26)^8(0.74)^{12}\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(\\binom{12}{8}(0.74)^8(0.26)^{12}\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(\\binom{28}{8}(0.26)^8(0.74)^{12}\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q03",
+      "type": "multiple-choice",
+      "prompt": "In the United States, 75 percent of adults wear glasses or contact lenses. A random sample of 10 adults in the United States will be selected. Which of the following is closest to the probability that fewer than 8 of the selected adults wear glasses or contact lenses?",
+      "answerKey": "C",
+      "reasoning": "Let the random variable X represent the number of adults out of 10 who wear glasses or contact lenses. The random variable has a binomial distribution. Define success as wearing glasses or contact lenses with probability 0.75, and define failure as not wearing them with probability 0.25. The probability that fewer than 8 adults wear glasses or contact lenses is \\(1 - P(X ≥ 8) = 1 - [P(X = 8) + P(X = 9) + P(X = 10)] = 1 - [\\binom{10}{8}(0.75)^8(0.25)^2 + \\binom{10}{9}(0.75)^9(0.25)^1 + \\binom{10}{10}(0.75)^{10}(0.25)^0] ≈ 0.47\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.10"
+          },
+          {
+            "key": "B",
+            "value": "0.28"
+          },
+          {
+            "key": "C",
+            "value": "0.47"
+          },
+          {
+            "key": "D",
+            "value": "0.53"
+          },
+          {
+            "key": "E",
+            "value": "0.76"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q04",
+      "type": "multiple-choice",
+      "prompt": "According to a 2016 survey, 6 percent of workers arrive to work between 6:45 A.M. and 7:00 A.M. Suppose 300 workers will be selected at random from all workers in 2016. Let the random variable W represent the number of workers in the sample who arrive to work between 6:45 A.M. and 7:00 A.M. Assuming the arrival times of workers are independent, which of the following is closest to the standard deviation of W?",
+      "answerKey": "B",
+      "reasoning": "Random variable W has a binomial distribution. The standard deviation for random variable W is \\(\\sqrt{np(1-p)} = \\sqrt{300(0.06)(0.94)} = \\sqrt{16.92} ≈ 4.11\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.24"
+          },
+          {
+            "key": "B",
+            "value": "4.11"
+          },
+          {
+            "key": "C",
+            "value": "4.24"
+          },
+          {
+            "key": "D",
+            "value": "16.79"
+          },
+          {
+            "key": "E",
+            "value": "16.92"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q05",
+      "type": "multiple-choice",
+      "prompt": "In the United States, the generation of people born between 1946 and 1964 are known as baby boomers, and the generation of people born between 1981 and 1996 are known as millennials. Currently, 18 percent of the population are baby boomers and 27 percent of the population are millennials. A random sample of 500 people will be selected. Let the random variable B represent the number of baby boomers in the sample, and let the random variable M represent the number of millennials in the sample. By how much will the mean of M exceed the mean of B?",
+      "answerKey": "B",
+      "reasoning": "The mean of B is \\(np = 500(0.18) = 90\\). The mean of M is \\(np = 500(0.27) = 135\\). The difference of the means is \\(135 - 90 = 45\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "9"
+          },
+          {
+            "key": "B",
+            "value": "45"
+          },
+          {
+            "key": "C",
+            "value": "90"
+          },
+          {
+            "key": "D",
+            "value": "135"
+          },
+          {
+            "key": "E",
+            "value": "225"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q06",
+      "type": "multiple-choice",
+      "prompt": "According to a 2015 Census Bureau survey, 75,511 of the 822,959 residents of Baltimore County, Maryland, were enrolled in college. Consider a sample of 800 residents of Baltimore County, Maryland in 2015 selected at random. Which of the following is closest to the expected value of the number in the sample enrolled in college?",
+      "answerKey": "D",
+      "reasoning": "The distribution can be modeled with a binomial variable. The expected value is the mean for a binomial distribution given by \\(np = 800 \\cdot \\frac{75,511}{822,959} ≈ 800 \\cdot 0.0918 ≈ 73.4\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "8.17"
+          },
+          {
+            "key": "B",
+            "value": "28.3"
+          },
+          {
+            "key": "C",
+            "value": "66.7"
+          },
+          {
+            "key": "D",
+            "value": "73.4"
+          },
+          {
+            "key": "E",
+            "value": "94.4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q07",
+      "type": "multiple-choice",
+      "prompt": "During a severe storm, electrical transformers that function independently are expected to operate 85 percent of the time. Suppose 20 electrical transformers are randomly selected from the population. Let the random variable T represent the number of electrical transformers operating during a severe storm. Which of the following is the best interpretation of the random variable T?",
+      "answerKey": "A",
+      "reasoning": "The variable is binomial because the selected transformer is either operating or not, there are 20 fixed trials, the probability of success (operating) is constant, and the transformers function independently. The mean is \\(20(0.85) = 17\\) and the standard deviation is \\(\\sqrt{20(0.85)(0.15)} = \\sqrt{2.55}\\). The unit associated with the mean and standard deviation is transformers.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "It is a binomial variable with mean 17 transformers and standard deviation \\(\\sqrt{2.55}\\) transformers."
+          },
+          {
+            "key": "B",
+            "value": "It is a binomial variable with mean 17 severe storms and standard deviation \\(\\sqrt{2.55}\\) severe storms."
+          },
+          {
+            "key": "C",
+            "value": "It is a binomial variable with mean 0.85 transformer and standard deviation 20 transformers."
+          },
+          {
+            "key": "D",
+            "value": "It is a variable that is not binomial with mean 17 transformers and standard deviation \\(\\sqrt{2.55}\\) transformers."
+          },
+          {
+            "key": "E",
+            "value": "It is a variable that is not binomial with mean 0.85 severe storm and standard deviation 20 severe storms."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q08",
+      "type": "multiple-choice",
+      "prompt": "A random sample of n people selected from a large population will be asked whether they have read a novel in the past year. Let the random variable R represent the number of people from the sample who answer yes. The variance of random variable R is 6. Assume the responses are independent of each other. If the proportion of people from the population who read a novel in the past year is 0.40, which of the following is the best interpretation of random variable R?",
+      "answerKey": "B",
+      "reasoning": "The variable is binomial because the selected person will answer yes or no, there are n fixed trials, the probability of success (responding yes) is constant, and responses are independent. If \\(n = 25\\), the variance is \\(np(1-p) = 25(0.4)(0.6) = 6\\), which is the correct variance.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "A binomial variable with 15 independent trials"
+          },
+          {
+            "key": "B",
+            "value": "A binomial variable with 25 independent trials"
+          },
+          {
+            "key": "C",
+            "value": "A variable that is not binomial with 25 independent trials"
+          },
+          {
+            "key": "D",
+            "value": "A binomial variable with 40 independent trials"
+          },
+          {
+            "key": "E",
+            "value": "A variable that is not binomial with 40 independent trials"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q09",
+      "type": "multiple-choice",
+      "prompt": "A local department store estimates that 10 percent of its customers return the merchandise they purchase. Let the random variable R represent the number of returns for a random sample of 40 customers. Assume that random variable R follows a binomial distribution. What is described by the value of \\(\\binom{40}{8}(0.1)^8(0.9)^{32}\\)?",
+      "answerKey": "D",
+      "reasoning": "The value represents the probability for a binomial random variable of seeing 8 successes in 40 trials, where the probability of success is 0.1.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "The mean of the random variable"
+          },
+          {
+            "key": "B",
+            "value": "The variance of the random variable"
+          },
+          {
+            "key": "C",
+            "value": "The standard deviation of the random variable"
+          },
+          {
+            "key": "D",
+            "value": "The probability that 8 customers in the sample will return merchandise"
+          },
+          {
+            "key": "E",
+            "value": "The probability of selecting a sample of 40 customers who will all return merchandise"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q10",
+      "type": "multiple-choice",
+      "prompt": "Past records indicate that 15 percent of the flights for a certain airline are delayed. Suppose flights are randomly selected one at a time from all flights. Assume each selection is independent of another. Which of the following is closest to the probability that it will take 5 selections to find one flight that is delayed?",
+      "answerKey": "A",
+      "reasoning": "Let random variable X represent the number chosen to find a delayed flight. The variable can be modeled with a geometric distribution. Thus, \\(P(X = 5) = 0.15(0.85)^4 ≈ 0.0783\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.0783"
+          },
+          {
+            "key": "B",
+            "value": "0.0921"
+          },
+          {
+            "key": "C",
+            "value": "0.4780"
+          },
+          {
+            "key": "D",
+            "value": "0.5220"
+          },
+          {
+            "key": "E",
+            "value": "0.5563"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q11",
+      "type": "multiple-choice",
+      "prompt": "A representative from a company that manufactures items for left-handed people will attend a large convention. The representative hopes to find a left-handed person at the convention to try out the items. The representative will select an attendee at random until a left-handed person is found. Assume each selection is independent of another. If 10 percent of the convention attendees are left-handed, what is the probability that the representative must select 4 attendees to find one who is left-handed?",
+      "answerKey": "A",
+      "reasoning": "Let the discrete random variable X represent the number of people chosen to find a left-handed person. The random variable has a geometric distribution and \\(P(X = 4) = 0.1(0.9)^3\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "\\(0.1(0.9)^3\\)"
+          },
+          {
+            "key": "B",
+            "value": "\\(0.1(0.9)^4\\)"
+          },
+          {
+            "key": "C",
+            "value": "\\(0.1^2(0.9)^2\\)"
+          },
+          {
+            "key": "D",
+            "value": "\\(0.9(0.1)^3\\)"
+          },
+          {
+            "key": "E",
+            "value": "\\(0.9(0.1)^4\\)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q12",
+      "type": "multiple-choice",
+      "prompt": "Approximately 9 percent of the residents of a large city have seen a certain theater production that is currently playing in the city. A marketing researcher will randomly select residents until one is found who has seen the production. What is the expected number of residents the researcher will need to ask to find someone who has seen the production?",
+      "answerKey": "E",
+      "reasoning": "Let random variable X represent the number of residents the researcher will need to ask to find someone who has seen the production. Random variable X has a geometric distribution. The expected value of random variable X is \\(E[X] = \\frac{1}{p} = \\frac{1}{0.09} ≈ 11.11\\) people.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.09"
+          },
+          {
+            "key": "B",
+            "value": "0.30"
+          },
+          {
+            "key": "C",
+            "value": "10.60"
+          },
+          {
+            "key": "D",
+            "value": "11.00"
+          },
+          {
+            "key": "E",
+            "value": "11.11"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q13",
+      "type": "multiple-choice",
+      "prompt": "The random variable K has a geometric distribution with mean 16. Which of the following is closest to the standard deviation of random variable K?",
+      "answerKey": "D",
+      "reasoning": "Since the formula for mean \\(= \\frac{1}{p}\\), rearranging the formula gives \\(p = \\frac{1}{\\mu} = \\frac{1}{16} = 0.0625\\). Thus, the standard deviation of random variable K is \\(\\sigma_K = \\frac{\\sqrt{(1-0.0625)}}{0.0625} ≈ 15.49\\).",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "0.0625"
+          },
+          {
+            "key": "B",
+            "value": "0.9375"
+          },
+          {
+            "key": "C",
+            "value": "4"
+          },
+          {
+            "key": "D",
+            "value": "15.49"
+          },
+          {
+            "key": "E",
+            "value": "240"
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q14",
+      "type": "multiple-choice",
+      "prompt": "In a certain region, 10 percent of the homes have solar panels. A city official is investigating energy consumption for homes within the region. Each week, the city official selects a random sample of homes from the region. Let random variable Y represent the number of homes selected at random from the region until a home that has solar panels is selected. The random variable Y has a geometric distribution with a mean of 10. Which of the following is the best interpretation of the mean?",
+      "answerKey": "E",
+      "reasoning": "The mean is the long-run average over repeated trials. Over time, the average number of homes that need to be selected before a home with solar panels is selected is 10.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Each week, the number of homes with solar panels increases by 10."
+          },
+          {
+            "key": "B",
+            "value": "For a randomly selected week, it will take 10 homes before a home with solar panels is selected."
+          },
+          {
+            "key": "C",
+            "value": "The average number of solar panels per home is equal to 10."
+          },
+          {
+            "key": "D",
+            "value": "Over many weeks, the average number of homes with solar panels is 10."
+          },
+          {
+            "key": "E",
+            "value": "Over many weeks, it takes 10 homes, on average, before a home with solar panels is selected."
+          }
+        ]
+      }
+    },
+    {
+      "id": "U4-PC-MCQ-C-Q15",
+      "type": "multiple-choice",
+      "prompt": "At a certain restaurant, 35 percent of the customers order the daily special each day. Assume that each day the customers arrive randomly and order independently. Let the random variable X represent the number of orders placed until the first daily special is ordered. The distribution of X is geometric and has an expected value of approximately 2.86. Which of the following is the best interpretation of the expected value?",
+      "answerKey": "C",
+      "reasoning": "The mean of a probability distribution is the expected value—that is, the long-run average over repeated trials. Over time, the average number of orders placed until the daily special is ordered is approximately 2.86.",
+      "attachments": {
+        "choices": [
+          {
+            "key": "A",
+            "value": "Each day, 3 customers will order the daily special."
+          },
+          {
+            "key": "B",
+            "value": "Over many days, the average number of customers ordering the daily special is approximately 2.86."
+          },
+          {
+            "key": "C",
+            "value": "Over many days, it takes about 2.86 orders, on average, to be placed until the first daily special is ordered."
+          },
+          {
+            "key": "D",
+            "value": "For a random sample of the days, the average number of orders of the daily special will be 2.86."
+          },
+          {
+            "key": "E",
+            "value": "Each day, the ratio of the number of orders of the daily special to the number of orders of other menu items is about 2.86 to 1."
+          }
+        ]
+      }
+    }
+  ]
+}

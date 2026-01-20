@@ -1,0 +1,21 @@
+Here is a list of the slides from the video, including their descriptions and timestamps:
+
+*   **[00:00 - 00:15] Title Slide:** Displays the topic title, "TOPIC 4.1 Introducing Statistics — Random and Non-Random Patterns?", the AP Statistics logo, and a brief summary of the video’s content.
+*   **[00:15 - 00:17] Transition Slide:** A solid blue background with the text "WHAT WILL WE LEARN?"
+*   **[00:17 - 00:30] Learning Objectives Slide:** Lists two main questions for the lesson and the core "Learning Objective," which is to identify questions suggested by patterns in data.
+*   **[00:30 - 01:00] Random Process Examples Slide:** Features several cards appearing on the screen with examples of randomness in sports, the lottery, and probability (e.g., "Man wins lottery 4 times within two weeks!").
+*   **[00:103 - 01:27] Definition Slide:** Provides a formal definition of a "random process," explaining that while possible outcomes are known, specific individual outcomes remain unpredictable.
+*   **[01:27 - 01:29] Transition Slide:** Text on a blue background reading "LET'S LOOK AT AN EXAMPLE."
+*   **[01:29 - 01:32] Illustration Slide:** An image showing a hand flipping a coin, titled "Give It a Chance!"
+*   **[01:32 - 01:55] Instructions Slide:** Asks the viewer to write down a simulated sequence of 100 fair coin flips without actually flipping a coin.
+*   **[01:55 - 02:15] Reflection Questions Slide:** Asks the viewer to tally their results and identify the longest streak of heads or tails in their simulated sequence.
+*   **[02:15 - 02:20] Data Introduction Slide:** Introduces a real sequence of 100 coin flips performed by the presenter.
+*   **[02:20 - 02:44] Data Table Slide:** Displays the results of 100 actual coin flips (H and T) in a vertical table format.
+*   **[02:44 - 03:17] Data Analysis Slide:** Analyzes the 100-flip results, noting that the 51/49 split is close to the expected 50% and that the next flip remains unpredictable.
+*   **[03:17 - 03:52] Short-Term Streak Slide:** Highlights a streak of five tails at the start of the sequence and asks if this indicates non-random activity.
+*   **[03:52 - 04:15] Long Streak Slide:** Highlights a streak of eight tails later in the sequence, questioning how likely such a run is in 100 flips.
+*   **[04:15 - 04:35] Comparison Slide:** Prompts the viewer to compare the "randomness" of their simulated sequence to the actual coin flip data.
+*   **[04:35 - 04:44] Teaser Slide:** A text box encouraging viewers to watch the next video to learn if the streak of eight should be surprising.
+*   **[04:44 - 04:46] Transition Slide:** Text on a blue background reading "WHAT SHOULD WE TAKE AWAY?"
+*   **[04:46 - 05:11] Key Takeaways Slide:** Summarizes the lesson, reiterating the definition of a random process and explaining that random occurrences can include strings that appear non-random.
+*   **[05:11 - 05:18] Closing Slide:** Displays the text "Thank you" and the College Board logo.

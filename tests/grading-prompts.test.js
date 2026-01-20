@@ -274,9 +274,9 @@ describe('Rubric Content Quality', () => {
       const rubric = REFLECTION_RUBRICS.exitTicket;
       const descriptions = rubric.expectedElements.map(e => e.description.toLowerCase()).join(' ');
 
-      expect(descriptions).toContain('assignment') || expect(descriptions).toContain('random');
-      expect(descriptions).toContain('significance') || expect(descriptions).toContain('significant');
-      expect(descriptions).toContain('causation') || expect(descriptions).toContain('cause');
+      expect(descriptions.includes('assignment') || descriptions.includes('random')).toBe(true);
+      expect(descriptions.includes('significance') || descriptions.includes('significant')).toBe(true);
+      expect(descriptions.includes('causation') || descriptions.includes('causal')).toBe(true);
     });
   });
 });
