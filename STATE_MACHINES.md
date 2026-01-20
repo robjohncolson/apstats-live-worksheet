@@ -332,7 +332,7 @@ Manages communication with Railway backend.
 
 ## 7. Aggregate Drawer
 
-Slide-out panel showing class response distributions.
+Slide-out panel showing class response distribution for a **single input** with focus-following behavior.
 
 ```
 ┌───────────────┐
@@ -341,8 +341,9 @@ Slide-out panel showing class response distributions.
 │   -380px)     │
 └───────┬───────┘
         │
-        │ Click "📊 Class" button
-        │ openDrawerForQuestion(questionEl)
+        │ Click "📊 Class" button OR
+        │ focus input while drawer open
+        │ openDrawerForBlank(blank)
         ▼
 ┌───────────────┐
 │   OPENING     │
@@ -352,36 +353,42 @@ Slide-out panel showing class response distributions.
         │
         ▼
 ┌───────────────┐
-│    OPEN       │
-│  (right: 0)   │◄───────────────────────────┐
+│    OPEN       │◄───────────────────────────┐
+│  (right: 0)   │                            │
 └───────┬───────┘                            │
         │                                    │
-        │ Set currentQuestionBlanks          │
-        │ Set title                          │
+        │ currentFocusedBlank = blank        │
+        │ Update title with question ID      │
         ▼                                    │
 ┌───────────────┐                            │
 │   LOADING     │                            │
 │  "Loading..." │                            │
-│  in content   │                            │
+│  for single   │                            │
+│  input        │                            │
 └───────┬───────┘                            │
         │                                    │
-        │ for each blank:                    │
-        │   fetchQuestionStats()             │
+        │ fetchQuestionStats(blank.id)       │
         ▼                                    │
 ┌───────────────┐                            │
 │  DISPLAYING   │                            │
-│  Bar charts   │                            │
-│  rendered     │                            │
+│  Single bar   │                            │
+│  chart with   │                            │
+│  count-scaled │                            │
+│  bars         │                            │
 └───────┬───────┘                            │
         │                                    │
         │ spawnPeerSnow()                    │
         │                                    │
+        ├─── User tabs to new input ─────────┘
+        │    handleBlankFocus() triggers
+        │    loadAggregateDataForBlank()
+        │
         ├─── User submits answer ────────────┘
-        │    while drawer open
-        │    (triggers refresh)
+        │    refreshDrawerIfOpen()
         │
         │ Click × button OR
-        │ click outside (not implemented)
+        │ Press Escape key
+        │ closeDrawer()
         ▼
 ┌───────────────┐
 │   CLOSING     │
@@ -389,12 +396,18 @@ Slide-out panel showing class response distributions.
 │   0.25s)      │
 └───────┬───────┘
         │
-        │ currentQuestionBlanks = []
         ▼
 ┌───────────────┐
 │    CLOSED     │
 └───────────────┘
 ```
+
+**Key Changes (v2):**
+- **Focus-following:** Drawer updates when user tabs between inputs
+- **Single chart:** One bar chart per input (not grouped by question)
+- **Count-scaled bars:** Bars scaled by max count, not percentage
+- **Escape key:** Closes drawer via `bindGlobalKeys()`
+- **Keyboard hint:** Header shows "Tab to change input • Esc to close"
 
 **CSS Animation:**
 ```css
@@ -407,7 +420,16 @@ Slide-out panel showing class response distributions.
 }
 ```
 
-**Global State:** `currentQuestionBlanks: Array<HTMLInputElement>`
+**Global State:** `currentFocusedBlank: HTMLInputElement | null`
+
+**Chart Header Structure:**
+```html
+<div class="chart-header">
+  <strong>WS-U4L1-3-Q5</strong>
+  <span class="chart-question-num">Question 5.</span>
+  <span class="chart-total">12 responses</span>
+</div>
+```
 
 ---
 
@@ -624,7 +646,7 @@ Top-level control buttons that orchestrate multiple state machines.
 | Answer values | Server | `POST /api/submit-answer` |
 | Validation states | DOM classes | `.correct`, `.partial`, etc. |
 | Drawer open state | DOM class | `.open` on `#aggregateDrawer` |
-| Current question context | JS variable | `currentQuestionBlanks` |
+| Current focused input | JS variable | `currentFocusedBlank` |
 | Debounce timestamps | JS Map | `debounceMap` |
 
 ---
@@ -1134,7 +1156,7 @@ inputs.forEach(input => {
 | Answer values | Server | `POST /api/submit-answer` |
 | Validation states | DOM classes | `.correct`, `.partial`, etc. |
 | Drawer open state | DOM class | `.open` on `#aggregateDrawer` |
-| Current question context | JS variable | `currentQuestionBlanks` |
+| Current focused input | JS variable | `currentFocusedBlank` |
 | Debounce timestamps | JS Map | `debounceMap` |
 | **AI grading results** | JS Map | `gradingState` |
 | **Appeal history** | JS Map | `gradingState[id].history` |

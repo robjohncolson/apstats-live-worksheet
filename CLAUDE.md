@@ -12,10 +12,12 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 |------|---------|
 | `u3_lesson6-7_live.html` | Live worksheet for Topics 3.6–3.7 (Experimental Design & Inference) |
 | `u4_lesson1-2_live.html` | Live worksheet for Topics 4.1–4.2 (Random Patterns & Simulation) |
+| `u4_lesson1-2-3_live.html` | Extended worksheet for Topics 4.1–4.3 (adds Introduction to Probability) |
 | `u4_l1_l2_blooket.csv` | Blooket quiz (34 questions) for Unit 4 vocabulary reinforcement |
 | `unit4_schedule_v4.html` | Unit 4 pacing schedule for Periods B & E with lagged quiz system |
 | `ai-grading-prompts.js` | Rubrics for Unit 3 AI grading (keyed by `reflect53`, `exitTicket`, etc.) |
-| `ai-grading-prompts-u4.js` | Rubrics for Unit 4 AI grading (keyed by `reflect1`, `reflect2`, `exitTicket`) |
+| `ai-grading-prompts-u4.js` | Rubrics for Unit 4 L1-2 AI grading (keyed by `reflect1`, `reflect2`, `exitTicket`) |
+| `ai-grading-prompts-u4-l3.js` | Rubrics for Unit 4 L1-3 AI grading (adds `reflect3` for probability interpretation) |
 | `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
 | `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
 | `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |
@@ -30,7 +32,10 @@ Each worksheet is self-contained HTML with embedded CSS and JavaScript. Key comp
 1. **Fill-in-the-blank inputs** (`<input class="blank" data-answer="...">`) with pipe-separated accepted answers
 2. **Answer validation** - Color-coded feedback (green=correct, yellow=partial, red=incorrect)
 3. **Railway sync** - Answers POST to `/api/submit-answer`; aggregates fetched from `/api/question-stats/:id`
-4. **Aggregate drawer** - Slide-out panel showing class answer distributions as bar charts
+4. **Aggregate drawer** - Focus-following slide-out panel showing class answer distributions
+   - Updates automatically when user tabs between inputs (one chart per input)
+   - Bars scaled by count (not percentage) for visual comparison
+   - Escape key closes drawer, keyboard hint shown in header
 5. **Question IDs** - Auto-assigned as `WS-{UNIT}-Q{N}` for server tracking
 
 ### AI Grading Features
@@ -72,6 +77,7 @@ Tests use Vitest with jsdom for DOM simulation:
 | `tests/reflection-grader.test.js` | Grading workflow, API calls, appeal system |
 | `tests/ui-components.test.js` | DOM interactions, CSS classes, UI states |
 | `tests/schedule.test.js` | Schedule structure, dates, topics, lagged quiz system, content coverage |
+| `tests/aggregate-drawer.test.js` | Focus-following drawer, escape key, bar chart rendering |
 
 ## External Dependencies
 
