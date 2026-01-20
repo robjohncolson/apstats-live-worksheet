@@ -12,6 +12,8 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 |------|---------|
 | `u3_lesson6-7_live.html` | Live worksheet for Topics 3.6–3.7 (Experimental Design & Inference) |
 | `u4_lesson1-2_live.html` | Live worksheet for Topics 4.1–4.2 (Random Patterns & Simulation) |
+| `u4_l1_l2_blooket.csv` | Blooket quiz (34 questions) for Unit 4 vocabulary reinforcement |
+| `unit4_schedule_v4.html` | Unit 4 pacing schedule for Periods B & E with lagged quiz system |
 | `ai-grading-prompts.js` | Rubrics for Unit 3 AI grading (keyed by `reflect53`, `exitTicket`, etc.) |
 | `ai-grading-prompts-u4.js` | Rubrics for Unit 4 AI grading (keyed by `reflect1`, `reflect2`, `exitTicket`) |
 | `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
@@ -69,6 +71,7 @@ Tests use Vitest with jsdom for DOM simulation:
 | `tests/grading-prompts-u4.test.js` | Unit 4 rubric structure, prompt building, lesson context |
 | `tests/reflection-grader.test.js` | Grading workflow, API calls, appeal system |
 | `tests/ui-components.test.js` | DOM interactions, CSS classes, UI states |
+| `tests/schedule.test.js` | Schedule structure, dates, topics, lagged quiz system, content coverage |
 
 ## External Dependencies
 
