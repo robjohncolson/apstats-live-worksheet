@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topic 4.6: Independent Events and Unions of Events</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background: #f9f9f9;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header-left { font-weight: bold; color: #003366; }
+        .header-center { font-weight: bold; }
+        .header-right { font-weight: bold; color: #003366; }
+        h1 { text-align: center; color: #003366; margin-bottom: 5px; font-size: 1.5rem; }
+        .subtitle { text-align: center; font-style: italic; color: #555; margin-bottom: 10px; }
+        .worksheet-label { text-align: center; font-weight: bold; margin-bottom: 20px; }
+        .student-info { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .student-info label { font-weight: bold; }
+        .student-info input {
+            border: none;
+            border-bottom: 1px solid #333;
+            background: transparent;
+            padding: 2px 5px;
+            font-size: 1em;
+        }
+        .objective-box {
+            border: 2px solid #003366;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        .objective-box strong { color: #003366; }
+        .vocab-box {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .vocab-box h3 { margin-top: 0; color: #003366; }
+        .vocab-table { width: 100%; }
+        .vocab-table td { padding: 5px 0; vertical-align: top; }
+        .vocab-table td:first-child { font-weight: bold; width: 180px; color: #003366; }
+        .section { margin-bottom: 28px; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+        .section-header h2 { margin: 0; color: #003366; font-size: 1.15rem; }
+        .timestamp { color: #666; font-size: 0.95rem; }
+        .question {
+            margin-bottom: 12px;
+            padding-left: 6px;
+            position: relative;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #003366;
+            margin-right: 8px;
+        }
+        .blank {
+            border: none;
+            border-bottom: 1px solid #003366;
+            background: transparent;
+            padding: 2px 4px;
+            font-size: 1em;
+            min-width: 90px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .blank:focus {
+            outline: none;
+            border-bottom: 2px solid #003366;
+            background: #f0f7ff;
+        }
+        .blank.correct { background-color: #d4edda; border-color: #28a745; }
+        .blank.partial { background-color: #fff3cd; border-color: #ffc107; }
+        .blank.incorrect { background-color: #f8d7da; border-color: #dc3545; }
+        .blank.revealed { background-color: #e2e3f3; border-color: #6c757d; }
+        .model-box, .note-box {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background: #fff;
+            margin: 10px 0 14px;
+        }
+        .note-box { background: #f7fbff; border-color: #cce0ff; }
+        .hint { color: #777; font-size: 0.92em; margin-left: 6px; }
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .exit-ticket {
+            border: 2px solid #003366;
+            border-radius: 6px;
+            padding: 12px;
+            background: #f0f4ff;
+            margin-top: 18px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .btn-check { background: #003366; color: #fff; }
+        .btn-show { background: #6c757d; color: #fff; }
+        .btn-reset { background: #dc3545; color: #fff; }
+        .btn-print { background: #28a745; color: #fff; }
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .btn-ai:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* AI Feedback Styles */
+        .ai-feedback {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9ff;
+            border: 1px solid #d0d7ff;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .ai-feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .score-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .score-badge.score-E { background: #d4edda; color: #155724; }
+        .score-badge.score-P { background: #fff3cd; color: #856404; }
+        .score-badge.score-I { background: #f8d7da; color: #721c24; }
+        .ai-feedback-body { color: #444; }
+        .ai-feedback-matched { color: #155724; margin-top: 4px; }
+        .ai-feedback-missing { color: #856404; margin-top: 4px; }
+        .ai-feedback-suggestion { color: #004085; margin-top: 4px; font-style: italic; }
+        textarea.graded-E { border-color: #28a745; background: #f8fff9; }
+        textarea.graded-P { border-color: #ffc107; background: #fffef5; }
+        textarea.graded-I { border-color: #dc3545; background: #fff8f8; }
+
+        /* Appeal system */
+        .appeal-section { margin-top: 8px; }
+        .appeal-btn {
+            background: none;
+            border: 1px solid #6c757d;
+            color: #6c757d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .appeal-btn:hover { background: #f0f0f0; }
+        .appeal-form {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .appeal-form.visible { display: block; }
+        .appeal-form textarea { min-height: 60px; margin-bottom: 8px; }
+        .appeal-form button { margin-right: 8px; }
+        .appeal-result {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .appeal-result.upgraded { background: #d4edda; color: #155724; }
+        .appeal-result.maintained { background: #fff3cd; color: #856404; }
+        .appeal-count { font-size: 0.8em; color: #666; margin-top: 4px; }
+
+        #scoreDisplay {
+            display: none;
+            padding: 10px 15px;
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        #scoreDisplay.visible { display: inline-block; }
+
+        /* Aggregate drawer */
+        .aggregate-trigger {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #1565c0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+        .aggregate-trigger:hover { background: #bbdefb; }
+        .aggregate-drawer {
+            position: fixed;
+            top: 0;
+            right: -380px;
+            width: 360px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+            transition: right 0.25s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .aggregate-drawer.open { right: 0; }
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .drawer-header h3 { margin: 0; color: #003366; }
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+        }
+        .bar-chart { margin: 10px 0; }
+        .bar-row { display: flex; align-items: center; margin: 4px 0; }
+        .bar-label { width: 100px; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .bar-container { flex: 1; height: 18px; background: #eee; border-radius: 3px; overflow: hidden; margin: 0 8px; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 3px; transition: width 0.3s ease; }
+        .bar-count { width: 35px; text-align: right; font-size: 0.85em; color: #666; }
+
+        .save-indicator {
+            font-size: 0.8em;
+            color: #28a745;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .save-indicator.visible { opacity: 1; }
+        .upload-particle {
+            position: absolute;
+            font-size: 0.9em;
+            color: #667eea;
+            pointer-events: none;
+            animation: floatUp 0.9s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-16px); }
+        }
+
+        @media print {
+            .controls, .aggregate-trigger, .aggregate-drawer, .save-indicator,
+            .appeal-section, .ai-feedback, .btn-ai { display: none !important; }
+            .blank { border-bottom: 1px solid #000 !important; background: transparent !important; }
+            body { background: white; }
+            .section { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="header-left">AP Statistics</span>
+        <span class="header-center">Unit 4</span>
+        <span class="header-right">Probability & Random Variables</span>
+    </div>
+
+    <h1>Topic 4.6: Independent Events and Unions of Events</h1>
+    <div class="subtitle">Determining Independence & Calculating P(A or B)</div>
+    <div class="worksheet-label">Video Follow-Along Worksheet</div>
+
+    <div class="student-info">
+        <div><label>Name:</label> <input type="text" id="worksheetName" style="width:160px;"></div>
+        <div><label>Period:</label> <input type="text" id="worksheetPeriod" style="width:40px;"></div>
+        <div><label>Username:</label> <input type="text" id="worksheetUsername" style="width:120px;" placeholder="for class sync"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>
+        <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
+        <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
+        <button class="btn-print" onclick="window.print()">&#128424; Print</button>
+        <button class="btn-ai" onclick="gradeAllReflections()">Grade Reflections</button>
+        <span id="scoreDisplay"></span>
+    </div>
+
+    <div class="objective-box">
+        <strong>Learning Objective:</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+            <li><strong>VAR-4.E:</strong> Calculate probabilities for independent events and for the union of two events.</li>
+        </ul>
+    </div>
+
+    <div class="vocab-box">
+        <h3>Key Vocabulary</h3>
+        <table class="vocab-table">
+            <tr>
+                <td>Independent Events</td>
+                <td>Events where knowing one occurred does not change the probability of the other</td>
+            </tr>
+            <tr>
+                <td>P(A|B) = P(A)</td>
+                <td>If A and B are independent, the conditional equals the unconditional probability</td>
+            </tr>
+            <tr>
+                <td>P(A and B) = P(A) &middot; P(B)</td>
+                <td>Multiplication rule for independent events only</td>
+            </tr>
+            <tr>
+                <td>Union of Events</td>
+                <td>The probability that event A or event B (or both) will occur: P(A &cup; B)</td>
+            </tr>
+            <tr>
+                <td>Addition Rule</td>
+                <td>P(A or B) = P(A) + P(B) &minus; P(A and B)</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- SECTION 1: Video 1 - Independence -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Video 1: Determining Independence</h2>
+            <span class="timestamp">[~9 min]</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">1.</span>
+            Events A and B are <input type="text" class="blank" data-answer="independent" style="width:110px;"> if knowing whether event A has occurred does <strong>not</strong> change the <input type="text" class="blank" data-answer="probability" style="width:100px;"> that event B will occur.
+        </div>
+
+        <div class="question">
+            <span class="question-number">2.</span>
+            If events are independent, then P(A|B) = <input type="text" class="blank" data-answer="P(A)" style="width:70px;"> and P(B|A) = <input type="text" class="blank" data-answer="P(B)" style="width:70px;">.
+        </div>
+
+        <div class="note-box">
+            <strong>Marble-ous! Example:</strong> Select a marble, <em>replace it</em>, then select again. Define A = first marble is red, B = second marble is red. Because we replace, both selections have the same probabilities.
+        </div>
+
+        <div class="question">
+            <span class="question-number">3.</span>
+            In the marble example with replacement, P(red) = 4/10 = <input type="text" class="blank" data-answer="0.4|0.40" style="width:60px;"> for each draw. The events are independent because replacing keeps probabilities <input type="text" class="blank" data-answer="the same|unchanged|constant" style="width:100px;">.
+        </div>
+
+        <div class="model-box">
+            <strong>Multiplication Rule for Independent Events:</strong><br>
+            General rule: P(A and B) = P(A) &middot; P(B|A)<br>
+            For <em>independent</em> events: P(A and B) = P(A) &middot; P(B)
+        </div>
+
+        <div class="question">
+            <span class="question-number">4.</span>
+            P(both marbles red) = P(A) &middot; P(B) = (4/10)(4/10) = <input type="text" class="blank" data-answer="0.16|16/100" style="width:70px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">5.</span>
+            Selecting 4 marbles with replacement: P(red, red, not red, not red) = 0.4 &middot; 0.4 &middot; 0.6 &middot; 0.6 = <input type="text" class="blank" data-answer="0.0576" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">6.</span>
+            P(at least one red in 10 draws) uses the <input type="text" class="blank" data-answer="complement|complement rule" style="width:110px;"> rule:<br>
+            = 1 &minus; P(no red in 10) = 1 &minus; (0.6)<sup>10</sup> = <input type="text" class="blank" data-answer="0.994" style="width:70px;">.
+        </div>
+
+        <div class="note-box">
+            <strong>Two Ways to Check Independence:</strong>
+            <ol style="margin: 5px 0; padding-left: 20px;">
+                <li>Check if P(A|B) = P(A) &nbsp;<span class="hint">(conditional = unconditional)</span></li>
+                <li>Check if P(A and B) = P(A) &middot; P(B) &nbsp;<span class="hint">(joint = product)</span></li>
+            </ol>
+        </div>
+
+        <div class="question">
+            <span class="question-number">7.</span>
+            Given P(E) = 0.40, P(F) = 0.60, P(E and F) = 0.25. Check independence:<br>
+            Method 1: P(E|F) = P(E and F) / P(F) = 0.25 / 0.60 = <input type="text" class="blank" data-answer="0.4167|0.417|0.42" style="width:70px;">.<br>
+            Since 0.4167 &ne; <input type="text" class="blank" data-answer="0.40|0.4" style="width:60px;"> = P(E), the events are <input type="text" class="blank" data-answer="not independent|dependent" style="width:120px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">8.</span>
+            Method 2: P(E) &middot; P(F) = 0.4 &middot; 0.6 = <input type="text" class="blank" data-answer="0.24" style="width:60px;">.<br>
+            Since 0.24 &ne; 0.25 = P(E and F), the events are <input type="text" class="blank" data-answer="not independent|dependent" style="width:120px;">.
+        </div>
+    </div>
+
+    <!-- SECTION 2: Video 2 - Unions -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Video 2: Unions of Events (Addition Rule)</h2>
+            <span class="timestamp">[~6 min]</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">9.</span>
+            The <input type="text" class="blank" data-answer="union" style="width:70px;"> of events A and B is the probability that A <strong>or</strong> B (or both) will occur, denoted P(A <input type="text" class="blank" data-answer="U|∪|union|or" style="width:50px;"> B).
+        </div>
+
+        <div class="model-box">
+            <strong>Addition Rule:</strong><br>
+            P(A or B) = P(A) + P(B) &minus; P(A and B)
+        </div>
+
+        <div class="question">
+            <span class="question-number">10.</span>
+            Why do we subtract P(A and B)? Because outcomes in <input type="text" class="blank" data-answer="both|the intersection|the overlap" style="width:110px;"> events would be counted <input type="text" class="blank" data-answer="twice" style="width:60px;">.
+        </div>
+
+        <div class="note-box">
+            <strong>Number Cube Example:</strong> Roll a die. A = odd {1, 3, 5}, B = prime {2, 3, 5}. The intersection {3, 5} has 2 outcomes.
+        </div>
+
+        <div class="question">
+            <span class="question-number">11.</span>
+            P(A or B) = P(odd or prime) = 3/6 + 3/6 &minus; <input type="text" class="blank" data-answer="2/6" style="width:50px;"> = <input type="text" class="blank" data-answer="4/6|2/3|0.667|0.67" style="width:70px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">12.</span>
+            Given P(E) = 0.4, P(F) = 0.6, P(E|F) = 0.25. Find P(E or F).<br>
+            First find P(E and F) = P(F) &middot; P(E|F) = 0.6 &middot; 0.25 = <input type="text" class="blank" data-answer="0.15" style="width:60px;">.<br>
+            Then P(E or F) = 0.4 + 0.6 &minus; 0.15 = <input type="text" class="blank" data-answer="0.85" style="width:60px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">13.</span>
+            From the Super Status table: P(Happy or Super Strength) = (265 + 29 &minus; 15) / 433 = <input type="text" class="blank" data-answer="279/433|0.644|0.64" style="width:90px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">14.</span>
+            If A and B are <input type="text" class="blank" data-answer="mutually exclusive|disjoint" style="width:140px;">, then P(A and B) = <input type="text" class="blank" data-answer="0" style="width:40px;">, so the formula simplifies to P(A or B) = P(A) + P(B).
+        </div>
+
+        <div class="question">
+            <span class="question-number">15.</span>
+            P(Freeze Time or Super Strength) for mutually exclusive events = 115/433 + 29/433 = <input type="text" class="blank" data-answer="144/433|0.333|0.33" style="width:90px;">.
+        </div>
+    </div>
+
+    <!-- SECTION 3: Video 3 - FRQ Practice -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Video 3: Applying Probability Rules (FRQ Practice)</h2>
+            <span class="timestamp">[~7 min]</span>
+        </div>
+
+        <div class="note-box">
+            <strong>What's the News? (2010 AP Exam)</strong><br>
+            A survey of 2,500 adults asked about education level and primary news source.
+            <ul style="margin: 5px 0; padding-left: 20px;">
+                <li>College graduates: 693</li>
+                <li>Get news from internet: 687</li>
+                <li>College graduates who get news from internet: 245</li>
+            </ul>
+        </div>
+
+        <div class="question">
+            <span class="question-number">16.</span>
+            <strong>Part A:</strong> P(college grad OR internet news)?<br>
+            Use addition rule: (693 + 687 &minus; 245) / 2500 = <input type="text" class="blank" data-answer="1135/2500|0.454" style="width:100px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">17.</span>
+            <strong>Part B:</strong> P(internet | college grad)?<br>
+            This is <input type="text" class="blank" data-answer="conditional|a conditional" style="width:100px;"> probability. Look only at college grads: 245 / 693 = <input type="text" class="blank" data-answer="0.354|0.35" style="width:70px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">18.</span>
+            <strong>Key distinction:</strong> "An adult is selected" means from the <input type="text" class="blank" data-answer="entire sample|whole sample|full sample" style="width:110px;">.<br>
+            "An adult who is a college grad is selected" means from <input type="text" class="blank" data-answer="college graduates only|just college grads" style="width:150px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">19.</span>
+            <strong>Part C:</strong> Are "college grad" and "internet news" independent?<br>
+            Compare P(internet | college) = 0.354 to P(internet) = 687/2500 = <input type="text" class="blank" data-answer="0.275|0.2748|0.27" style="width:70px;">.<br>
+            Since they are <input type="text" class="blank" data-answer="not equal|different" style="width:90px;">, the events are <input type="text" class="blank" data-answer="not independent|dependent" style="width:120px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">20.</span>
+            Alternative check: P(A) &middot; P(B) = (693/2500)(687/2500) = <input type="text" class="blank" data-answer="0.076" style="width:70px;">.<br>
+            P(A and B) = 245/2500 = <input type="text" class="blank" data-answer="0.098" style="width:70px;">.<br>
+            Since 0.076 &ne; 0.098, the events are <input type="text" class="blank" data-answer="not independent|dependent" style="width:120px;">.
+        </div>
+    </div>
+
+    <!-- REFLECTION SECTION -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Reflection Questions</h2>
+            <span class="timestamp">[AI-Graded]</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">R1.</span>
+            <strong>Explain the difference between independent events and mutually exclusive events. Can two events be both independent and mutually exclusive? Why or why not?</strong>
+            <textarea id="reflect1" placeholder="Write your response here..."></textarea>
+            <div id="reflect1-feedback"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-number">R2.</span>
+            <strong>A student says: "I checked that P(A|B) = P(A), so I know the events are independent." Is checking just one conditional probability enough? Explain what else you might verify.</strong>
+            <textarea id="reflect2" placeholder="Write your response here..."></textarea>
+            <div id="reflect2-feedback"></div>
+        </div>
+    </div>
+
+    <!-- EXIT TICKET -->
+    <div class="exit-ticket">
+        <h3 style="margin-top: 0; color: #003366;">Exit Ticket</h3>
+        <div class="question">
+            <strong>Given the following information about events A and B:</strong>
+            <ul style="margin: 5px 0;">
+                <li>P(A) = 0.3, P(B) = 0.5, P(A and B) = 0.15</li>
+            </ul>
+            <strong>Determine:</strong> (1) Are A and B independent? Show your work. (2) Find P(A or B).
+            <textarea id="exitTicket" placeholder="Show your work and explain your reasoning..."></textarea>
+            <div id="exitTicket-feedback"></div>
+        </div>
+    </div>
+
+    <!-- Aggregate Drawer -->
+    <div id="aggregateDrawer" class="aggregate-drawer">
+        <div class="drawer-header">
+            <h3>Class Responses</h3>
+            <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+        </div>
+        <div class="drawer-content" id="drawerContent">
+            <p>Click a "Class" button next to a question to see responses.</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../railway_config.js"></script>
+    <script src="../railway_client.js"></script>
+    <script src="ai-grading-prompts-u4-l6.js"></script>
+    <script>
+        // ==================== CONFIG ====================
+        const UNIT_ID = 'U4L6';
+        const DEBOUNCE_MS = 250;
+
+        // ==================== STATE ====================
+        let debounceMap = new Map();
+        let currentQuestionBlanks = [];
+        let gradingState = new Map();
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', init);
+
+        function init() {
+            ensureRailwayDefaults();
+            restoreSavedUser();
+            assignQuestionIds();
+            addSaveIndicators();
+            bindBlankEvents();
+            injectAggregateButtons();
+        }
+
+        function ensureRailwayDefaults() {
+            if (!window.RAILWAY_SERVER_URL) {
+                window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';
+            }
+        }
+
+        // ==================== USER PERSISTENCE ====================
+        function restoreSavedUser() {
+            try {
+                const saved = localStorage.getItem('worksheet-user');
+                if (saved) {
+                    const user = JSON.parse(saved);
+                    if (user.name) document.getElementById('worksheetName').value = user.name;
+                    if (user.klass) document.getElementById('worksheetPeriod').value = user.klass;
+                    if (user.username) document.getElementById('worksheetUsername').value = user.username;
+                }
+            } catch (e) { console.warn('Could not restore user', e); }
+        }
+
+        function saveUser() {
+            const user = {
+                name: document.getElementById('worksheetName').value,
+                klass: document.getElementById('worksheetPeriod').value,
+                username: document.getElementById('worksheetUsername').value
+            };
+            localStorage.setItem('worksheet-user', JSON.stringify(user));
+        }
+
+        function getUsername() {
+            return (document.getElementById('worksheetUsername').value || '').trim();
+        }
+
+        document.getElementById('worksheetUsername').addEventListener('blur', saveUser);
+        document.getElementById('worksheetName').addEventListener('blur', saveUser);
+        document.getElementById('worksheetPeriod').addEventListener('blur', saveUser);
+
+        // ==================== QUESTION IDs & EVENTS ====================
+        function assignQuestionIds() {
+            const blanks = document.querySelectorAll('.blank');
+            blanks.forEach((blank, idx) => {
+                blank.dataset.questionId = `WS-${UNIT_ID}-Q${idx + 1}`;
+            });
+        }
+
+        function addSaveIndicators() {
+            document.querySelectorAll('.question').forEach(q => {
+                if (!q.querySelector('.save-indicator')) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'save-indicator';
+                    indicator.textContent = '✓ saved';
+                    q.appendChild(indicator);
+                }
+            });
+        }
+
+        function bindBlankEvents() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.addEventListener('blur', () => handleLiveUpdate(blank));
+                blank.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleLiveUpdate(blank);
+                        focusNextBlank(blank);
+                    }
+                });
+            });
+        }
+
+        function focusNextBlank(current) {
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            const idx = blanks.indexOf(current);
+            if (idx >= 0 && idx < blanks.length - 1) {
+                blanks[idx + 1].focus();
+            }
+        }
+
+        // ==================== ANSWER CHECKING ====================
+        function normalize(str) {
+            return (str || '').toLowerCase().trim().replace(/[^\w\s]/g, '');
+        }
+
+        function checkAnswer(blank) {
+            const userAnswer = normalize(blank.value);
+            const acceptedRaw = blank.dataset.answer || '';
+            const accepted = acceptedRaw.split('|').map(normalize);
+
+            blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+            if (!userAnswer) return 'empty';
+
+            if (accepted.includes(userAnswer)) {
+                blank.classList.add('correct');
+                return 'correct';
+            }
+
+            const partialMatch = accepted.some(ans =>
+                userAnswer.includes(ans) || ans.includes(userAnswer)
+            );
+            if (partialMatch) {
+                blank.classList.add('partial');
+                return 'partial';
+            }
+
+            blank.classList.add('incorrect');
+            return 'incorrect';
+        }
+
+        function checkAnswers() {
+            const blanks = document.querySelectorAll('.blank');
+            let correct = 0, partial = 0, total = 0;
+
+            blanks.forEach(blank => {
+                if (blank.value.trim()) {
+                    total++;
+                    const result = checkAnswer(blank);
+                    if (result === 'correct') correct++;
+                    else if (result === 'partial') partial++;
+                }
+            });
+
+            const scoreEl = document.getElementById('scoreDisplay');
+            if (total > 0) {
+                const pct = Math.round((correct / total) * 100);
+                scoreEl.textContent = `Score: ${correct}/${total} (${pct}%)` + (partial > 0 ? ` +${partial} partial` : '');
+                scoreEl.classList.add('visible');
+            } else {
+                scoreEl.classList.remove('visible');
+            }
+
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function showAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                const answers = (blank.dataset.answer || '').split('|');
+                blank.value = answers[0] || '';
+                blank.classList.remove('correct', 'partial', 'incorrect');
+                blank.classList.add('revealed');
+            });
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function resetAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.value = '';
+                blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+            });
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.value = '';
+                ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+            });
+            document.querySelectorAll('.ai-feedback').forEach(fb => fb.remove());
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            gradingState.clear();
+        }
+
+        // ==================== SERVER SYNC ====================
+        function handleLiveUpdate(blank) {
+            const questionId = blank.dataset.questionId;
+            if (!questionId) return;
+
+            const now = Date.now();
+            const lastTime = debounceMap.get(questionId) || 0;
+            if (now - lastTime < DEBOUNCE_MS) return;
+            debounceMap.set(questionId, now);
+
+            sendAnswer(blank);
+        }
+
+        async function sendAnswer(blank) {
+            const username = getUsername();
+            if (!username) return;
+
+            const questionId = blank.dataset.questionId;
+            const answer = blank.value.trim();
+
+            try {
+                if (window.railwayClient && window.railwayClient.submitAnswer) {
+                    await window.railwayClient.submitAnswer(username, questionId, answer);
+                } else {
+                    await fetch(`${window.RAILWAY_SERVER_URL}/api/submit-answer`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username,
+                            question_id: questionId,
+                            answer_value: answer,
+                            timestamp: Date.now()
+                        })
+                    });
+                }
+                showSaved(blank);
+                spawnUploadParticle(blank);
+            } catch (err) {
+                console.warn('Failed to sync answer:', err);
+            }
+        }
+
+        function pushAllAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                if (blank.value.trim()) sendAnswer(blank);
+            });
+        }
+
+        function showSaved(blank) {
+            const question = blank.closest('.question');
+            if (!question) return;
+            const indicator = question.querySelector('.save-indicator');
+            if (indicator) {
+                indicator.classList.add('visible');
+                setTimeout(() => indicator.classList.remove('visible'), 2000);
+            }
+        }
+
+        function spawnUploadParticle(blank) {
+            const particle = document.createElement('span');
+            particle.className = 'upload-particle';
+            particle.textContent = '↑';
+            const rect = blank.getBoundingClientRect();
+            particle.style.left = `${rect.left + rect.width / 2}px`;
+            particle.style.top = `${rect.top - 5}px`;
+            particle.style.position = 'fixed';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 900);
+        }
+
+        // ==================== AGGREGATE DRAWER ====================
+        function injectAggregateButtons() {
+            document.querySelectorAll('.question').forEach(q => {
+                const blanks = q.querySelectorAll('.blank');
+                if (blanks.length > 0 && !q.querySelector('.aggregate-trigger')) {
+                    const btn = document.createElement('button');
+                    btn.className = 'aggregate-trigger';
+                    btn.textContent = 'Class';
+                    btn.onclick = () => openDrawerForQuestion(q);
+                    q.appendChild(btn);
+                }
+            });
+        }
+
+        function openDrawerForQuestion(questionEl) {
+            currentQuestionBlanks = Array.from(questionEl.querySelectorAll('.blank'));
+            const drawer = document.getElementById('aggregateDrawer');
+            const content = document.getElementById('drawerContent');
+
+            drawer.classList.add('open');
+            content.innerHTML = '<p>Loading...</p>';
+
+            loadAggregateData();
+        }
+
+        async function loadAggregateData() {
+            const content = document.getElementById('drawerContent');
+            let html = '';
+
+            for (const blank of currentQuestionBlanks) {
+                const questionId = blank.dataset.questionId;
+                if (!questionId) continue;
+
+                try {
+                    const stats = await fetchQuestionStats(questionId);
+                    html += renderBarChart(questionId, stats);
+                } catch (err) {
+                    html += `<p>Error loading ${questionId}</p>`;
+                }
+            }
+
+            content.innerHTML = html || '<p>No data available.</p>';
+        }
+
+        async function fetchQuestionStats(questionId) {
+            if (window.railwayClient && window.railwayClient.getStats) {
+                return await window.railwayClient.getStats(questionId);
+            }
+            const res = await fetch(`${window.RAILWAY_SERVER_URL}/api/question-stats/${questionId}`);
+            return await res.json();
+        }
+
+        function renderBarChart(questionId, stats) {
+            const responses = stats.responses || stats.distribution || {};
+            const entries = Object.entries(responses).sort((a, b) => b[1] - a[1]);
+            const total = entries.reduce((sum, [, count]) => sum + count, 0);
+
+            if (entries.length === 0) {
+                return `<div class="bar-chart"><strong>${questionId}</strong><p>No responses yet</p></div>`;
+            }
+
+            let html = `<div class="bar-chart"><strong>${questionId}</strong>`;
+            entries.slice(0, 8).forEach(([answer, count]) => {
+                const pct = total > 0 ? (count / total) * 100 : 0;
+                html += `
+                    <div class="bar-row">
+                        <span class="bar-label" title="${answer}">${answer}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <span class="bar-count">${count}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function closeDrawer() {
+            document.getElementById('aggregateDrawer').classList.remove('open');
+            currentQuestionBlanks = [];
+        }
+
+        function refreshDrawerIfOpen() {
+            if (document.getElementById('aggregateDrawer').classList.contains('open') && currentQuestionBlanks.length > 0) {
+                loadAggregateData();
+            }
+        }
+
+        // ==================== AI GRADING ====================
+        async function gradeAllReflections() {
+            const btn = document.querySelector('.btn-ai');
+            btn.disabled = true;
+            btn.textContent = 'Grading...';
+
+            const textareas = ['reflect1', 'reflect2', 'exitTicket'];
+
+            for (const id of textareas) {
+                const textarea = document.getElementById(id);
+                if (!textarea) continue;
+
+                const answer = textarea.value.trim();
+                if (answer.length < 20) {
+                    showFeedback(id, { score: 'I', feedback: 'Please write a more complete response (at least 20 characters).' });
+                    continue;
+                }
+
+                try {
+                    const result = await gradeReflection(id, answer);
+                    gradingState.set(id, {
+                        result,
+                        originalAnswer: answer,
+                        appealCount: 0,
+                        history: []
+                    });
+                    showFeedback(id, result);
+                } catch (err) {
+                    console.error('Grading error:', err);
+                    showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
+                }
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Grade Reflections';
+        }
+
+        async function gradeReflection(questionId, answer) {
+            if (!window.buildReflectionPromptU4L6) {
+                throw new Error('AI grading prompts not loaded');
+            }
+
+            const prompt = window.buildReflectionPromptU4L6(questionId, answer);
+
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'AP Statistics - Independent Events & Unions',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_U4L6
+                    },
+                    answers: { answer },
+                    prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Grading request failed');
+            return await response.json();
+        }
+
+        function showFeedback(questionId, result) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add(`graded-${result.score}`);
+
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+
+            const feedback = document.createElement('div');
+            feedback.className = 'ai-feedback';
+
+            let html = `
+                <div class="ai-feedback-header">
+                    <span class="score-badge score-${result.score}">${result.score === 'E' ? 'Essentially Correct' : result.score === 'P' ? 'Partially Correct' : 'Incorrect'}</span>
+                </div>
+                <div class="ai-feedback-body">${result.feedback || ''}</div>
+            `;
+
+            if (result.matched && result.matched.length > 0) {
+                html += `<div class="ai-feedback-matched">✓ You addressed: ${result.matched.join(', ')}</div>`;
+            }
+            if (result.missing && result.missing.length > 0) {
+                html += `<div class="ai-feedback-missing">○ Missing: ${result.missing.join(', ')}</div>`;
+            }
+            if (result.suggestion) {
+                html += `<div class="ai-feedback-suggestion">${result.suggestion}</div>`;
+            }
+
+            feedback.innerHTML = html;
+
+            const state = gradingState.get(questionId);
+            if (state && result.score !== 'E' && state.appealCount < 3) {
+                const appealSection = document.createElement('div');
+                appealSection.className = 'appeal-section';
+                appealSection.innerHTML = `
+                    <button class="appeal-btn" onclick="showAppealForm('${questionId}')">Disagree? Appeal</button>
+                    <div class="appeal-form" id="appeal-form-${questionId}">
+                        <p>Explain why your answer deserves a higher score:</p>
+                        <textarea id="appeal-text-${questionId}" placeholder="I believe my answer addresses..."></textarea>
+                        <button class="btn-check" onclick="submitAppeal('${questionId}')">Submit Appeal</button>
+                        <button class="btn-show" onclick="hideAppealForm('${questionId}')">Cancel</button>
+                    </div>
+                    <div class="appeal-count">Appeals used: ${state.appealCount}/3</div>
+                `;
+                feedback.appendChild(appealSection);
+            }
+
+            container.appendChild(feedback);
+        }
+
+        function showAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.add('visible');
+        }
+
+        function hideAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.remove('visible');
+        }
+
+        async function submitAppeal(questionId) {
+            const state = gradingState.get(questionId);
+            if (!state || state.appealCount >= 3) return;
+
+            const appealText = document.getElementById(`appeal-text-${questionId}`).value.trim();
+            if (appealText.length < 10) {
+                alert('Please provide more detail in your appeal.');
+                return;
+            }
+
+            const form = document.getElementById(`appeal-form-${questionId}`);
+            const buttons = form.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            try {
+                const rubric = window.getRubricU4L6(questionId);
+                const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/appeal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: {
+                            questionId,
+                            topic: 'AP Statistics - Independent Events & Unions',
+                            prompt: rubric.questionText,
+                            expectedElements: rubric.expectedElements.map(e => e.description),
+                            lessonContext: window.LESSON_CONTEXT_U4L6
+                        },
+                        answers: { answer: state.originalAnswer },
+                        appealText,
+                        previousResults: { answer: state.result }
+                    })
+                });
+
+                const appealResult = await response.json();
+                const previousScore = state.result.score;
+                const upgraded = appealResult.score === 'E' ||
+                    (previousScore === 'I' && appealResult.score === 'P');
+
+                state.history.push({
+                    appealText,
+                    previousScore,
+                    newScore: appealResult.score,
+                    response: appealResult.feedback,
+                    upgraded
+                });
+                state.appealCount++;
+                state.result = appealResult;
+
+                showFeedback(questionId, appealResult);
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `appeal-result ${upgraded ? 'upgraded' : 'maintained'}`;
+                resultDiv.textContent = upgraded ? 'Appeal Granted! Score upgraded.' : 'Score maintained. ' + (appealResult.feedback || '');
+                document.getElementById(`${questionId}-feedback`).appendChild(resultDiv);
+
+            } catch (err) {
+                console.error('Appeal error:', err);
+                alert('Error processing appeal. Please try again.');
+            }
+
+            buttons.forEach(b => b.disabled = false);
+        }
+    </script>
+</body>
+</html>
