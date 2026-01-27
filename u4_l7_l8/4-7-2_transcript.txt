@@ -1,0 +1,53 @@
+00:00
+Penny Smeltzer: This is Penny Smeltzer from Austin, Texas. This video shows you how to interpret or describe a probability distribution.
+
+00:08
+Smeltzer: What will we learn? How can we describe a probability distribution? What conclusions can be made from a probability distribution?
+
+00:18
+Smeltzer: Let's look at an example. Prairie dogs are a keystone species. That means they are disproportionately important to their ecosystem. Many other species of plants and animals would suffer without them.
+
+00:34
+Smeltzer: Prairie dogs only mate once a year. The number of pups in a randomly selected litter varies and can be modeled using a probability distribution.
+
+00:45
+Smeltzer: Here's a probability distribution for the number of pups in a randomly selected prairie dog litter. Generally, a prairie dog will have one to seven pups in their litter, with one, two, or three being the most common, and often—but not too often—much higher.
+
+01:08
+Smeltzer: To describe a probability distribution, we must talk about shape, center, and spread, just like you would with any distribution.
+
+01:19
+Smeltzer: The shape of the distribution can be seen easier using a histogram rather than just looking at the probability distribution. Here's a histogram. When I look at the histogram with probability being on the vertical axis and the number of pups in the litter being on the horizontal axis, I can see that the distribution is skewed to the right.
+
+01:46
+Smeltzer: For the center of the distribution, I could use the table or a graph, and I would say that the median looks like it's about two. Although we will primarily in the future use the mean for our work for center rather than the median.
+
+02:08
+Smeltzer: It is common practice to use the standard deviation of a measure of variability. But for now, the range is six pups.
+
+02:19
+Smeltzer: Now that we have that information, we can use our probability distribution to answer a question. Should a zoologist be surprised if a randomly selected female prairie dog produced a litter with six or seven pups?
+
+02:37
+Smeltzer: Yes. The probability of a litter having six or seven pups is only 0.04, which is relatively unlikely. This event would be big news in the prairie dog world.
+
+02:50
+Smeltzer: Let's practice. Thermostat settings. Proper disposal and reduction of refrigerant chemicals used to cool our homes in the heat of summer are a high priority in reducing CO2 and CO2 equivalents into the atmosphere. Toward that end, the City of Austin recommends setting thermostats to 78 degrees for air conditioning.
+
+03:13
+Smeltzer: Let's let our random variable X be the number of degrees a thermostat is set below the recommended 78 degrees. Describe the distribution. Take a moment, pause the video, and figure out what you would say about shape, center, and spread.
+
+03:35
+Smeltzer: Looking at the histogram, we can see that the shape is skewed left. The median temperature setting is about 74 degrees, and the thermostat settings have a range of 6 degrees.
+
+03:49
+Smeltzer: Would you recommend an advertising campaign to encourage citizens to set their thermostats to a higher temperature? Justify your answer using the probability distribution. Again, pause your video, think about your answer, and then hit play.
+
+04:10
+Smeltzer: Yes. The majority of citizens have their thermostats set at least 4 degrees below the recommended 78 degrees. This can be supported by the median of 4 being clearly in the 74-degree setting. Also, the probability that a randomly selected household has their thermostat set at 74 degrees or lower is 0.71. That's a lot of people not setting their thermostat at the recommended setting.
+
+04:44
+Smeltzer: What should we take away from this video? A complete description of a probability distribution requires shape, center, and spread. And conclusions may be drawn about the population of interest using a probability distribution.
+
+05:02
+Smeltzer: Thank you.

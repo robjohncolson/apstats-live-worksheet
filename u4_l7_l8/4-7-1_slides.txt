@@ -1,0 +1,104 @@
+Here is a description of each slide presented in the video, along with the corresponding timestamps.
+
+00:00 - Title Slide
+The video opens with the title slide for Topic 4.7: Introduction to Random Variables and Probability Distributions. It displays the "AP Statistics" logo and indicates this is "Daily Video 1." The presenter, Penny Smeltzer, appears in the top right corner.
+
+00:11 - What Will We Learn?
+A slide listing the three learning objectives for the lesson:
+
+How should we define a random variable?
+
+What is the difference between a discrete and a continuous random variable?
+
+How can we display a probability distribution for a discrete random variable?
+
+00:27 - Random Variables Definition
+This slide defines random variables as "numerical outcomes of random behavior." It lists examples labeled with capital letters:
+
+X: Number of children in a household.
+
+W: Time (min) it takes a person to run a mile.
+
+Y: Number of dogs with a location chip out of 10.
+
+01:23 - Random Variables (Example L)
+The previous slide updates to add a fourth example:
+
+L: Length (cm) of a randomly selected person's index finger.
+
+01:32 - Discrete Versus Continuous Random Variables (Discrete)
+This slide defines a Discrete Random Variable as one that can "only take a countable number of values." It displays a number line with blue dots placed at integers (0, 1, 2, 3, etc.) to visually demonstrate that there are "spaces between the values."
+
+02:21 - Discrete Versus Continuous Random Variables (Continuous)
+This slide defines a Continuous Random Variable as one that can take on an "infinite number of values in an interval." It shows a number line representing the time to run a mile, with an arrow indicating a continuous range of time starting at 3.43 minutes (the world record), emphasizing there are no spaces between possible values.
+
+03:07 - Classifying Random Variables
+A practice slide asking the viewer to classify variables X, W, and L. The slide highlights variable L (Length of index finger) and reveals the answer as continuous in a blue box.
+
+03:35 - Thermostat Settings Context
+An informational slide establishing the context for the upcoming problem. It describes the City of Austin's recommendation to set thermostats to 78 degrees. It includes an image of a white Carrier thermostat set to 74 degrees (actual) and 78 degrees (cool setting).
+
+03:59 - Defining Variable X (Example 1)
+This slide defines the random variable X as "the number of degrees a thermostat is set below the recommended 78 degrees." It shows an image of a thermostat set exactly at 78, meaning the difference is 0.
+
+04:18 - Defining Variable X (Example 2)
+The slide updates with a new image of a thermostat set to 72 degrees. It states the difference between the recommendation (78) and the setting (72) is 6 degrees.
+
+04:28 - Defining Variable X (Example 3)
+The slide updates with an image of a blue touchscreen thermostat set to 75 degrees. It states the difference between the recommendation (78) and the setting (75) is 3 degrees.
+
+04:42 - Probability of a Random Variable
+A text-heavy slide explaining the data context. It lists specific probabilities found by a study (e.g., the probability of a thermostat being set at 78 degrees is 0.03). It defines a probability distribution as a display of the entire set of values with their associated probabilities.
+
+05:16 - Probability Distributions Table
+This slide displays the resulting Probability Distribution Table.
+
+Top Row (Temp): Lists actual temperatures (78 down to 72).
+
+Middle Row (X): Lists the random variable values (0 to 6).
+
+Bottom Row (P(X)): Lists the probability for each value (e.g., 0.03, 0.03, 0.05, 0.18, 0.31, 0.28, 0.12).
+
+05:34 - Properties of a Probability Distribution
+A slide listing the two main rules for these distributions:
+
+Each value is associated with a probability between 0 and 1 inclusive (
+0
+≤
+𝑃
+(
+𝑥
+)
+≤
+1
+0≤P(x)≤1
+).
+
+The sum of all probabilities must be 1.
+
+05:58 - Calculating Probability with the Distribution (Question)
+The slide shows the probability table again and asks: "What is the probability that a randomly selected thermostat is set at 74 degrees or lower?"
+
+06:14 - Calculating Probability (Logic)
+Text appears below the question explaining the logic: Since 74 degrees is 4 degrees below the recommendation, "lower" means more degrees below. Therefore, the question is looking for P(X 
+≥
+≥
+ 4).
+
+06:35 - Calculating Probability (Solution)
+A red circle highlights the columns for X = 4, 5, and 6 in the table. The calculation is shown: 0.31 + 0.28 + 0.12 = 0.71.
+
+06:59 - Let's Practice (Questions)
+A slide titled "Calculating Probabilities" showing the distribution table and four numbered questions for the student to solve on their own.
+
+07:17 - Let's Practice (Answers)
+The same slide as the previous one, but now the mathematical notation and final numerical answers for all four questions are revealed in colored text below each question.
+
+07:25 - Key Takeaways
+The final summary slide listing three points:
+
+A random variable must be defined in context.
+
+A discrete probability distribution pairs all outcomes with their probabilities.
+
+The sum of probabilities for a discrete random variable is 1.

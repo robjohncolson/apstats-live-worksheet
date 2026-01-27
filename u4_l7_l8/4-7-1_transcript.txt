@@ -1,0 +1,80 @@
+00:00
+Hi. This is Penny Smeltzer from Austin, Texas. This video introduces the concept of a random variable and a probability distribution.
+
+00:11
+What will we learn?
+How should we define a random variable? What is the difference between a discrete and a continuous random variable? And how can we display a probability distribution for a discrete random variable?
+
+00:27
+Random Variables
+Random variables are numerical outcomes of random behavior. For example: All random variables are labeled with a capital letter. So here we have X equals the number of children in a randomly selected household. When I randomly select a household, I have no idea how many children will be there. Could be one, could be seven. It's random.
+
+00:55
+Let's let W equal the time in minutes it takes a randomly selected person to run a mile. Again, I don't know how long it's going to take. It's random. Let's let Y equal the number of dogs with a location chip out of 10 randomly selected dogs. In each of these cases, the outcome of an individual event is unknown.
+
+01:23
+Let's let L equal the length in centimeters of a randomly selected person's index finger.
+
+01:32
+Discrete Versus Continuous Random Variables
+Random variables can be categorized into two different categories: discrete or continuous. A discrete random variable can only take a countable number of values.
+
+01:46
+So let's take our number of children in a randomly selected household. It could be no children, or one, or two, or three, or four, or five, or more. But the big deal is that there is space between the values. There's not never going to be a 1.5. There is space on the number line between all consecutive values. I could have an infinite number of values, but there is still space between each one.
+
+02:21
+A continuous random variable can take on an infinite number of values in an interval on a number line. So our random variable, the time in minutes it takes a randomly selected person to run a mile... I've started on the number line—the arrow displaying the potential answers—at about three and three-quarter minutes because that's the current world record.
+
+02:47
+But between four and five minutes, there's an infinite number of values that that could take on depending on the accuracy of our measuring device. A continuous random variable takes on all possible values in the number line between any two values.
+
+03:07
+Take a moment, pause your video, and look at random variable L—the length of a randomly selected person's index finger—and decide if it's continuous or discrete.
+
+03:22
+It's continuous because it's a measurement of how long a person's finger is, and there's an infinite number of values in an interval on the number line.
+
+03:35
+Let's Look at an Example
+Proper disposal and reduction of refrigerant chemicals used to cool our homes in the heat of summer are a high priority in reducing CO2 and CO2 equivalents into the atmosphere. Toward that end, the City of Austin recommends setting thermostats to 78 degrees for air conditioning. A little bit warm for some people.
+
+03:58
+Let's let the random variable X be the number of degrees a thermostat is set below the recommended 78 degrees. This thermostat, as shown in the red circle, is set at 78 degrees. So the difference between the recommended setting and the actual setting is zero.
+
+04:18
+This thermostat is set at 72 degrees. The difference between the recommended setting and the actual setting is 6 degrees. This thermostat is set at 75 degrees. So the difference between the recommended setting and the actual setting is 3 degrees. So 3 would be the value of our random variable X.
+
+04:42
+Probability of a Random Variable
+If I learned the probability for each setting in the City of Austin—for instance, the probability that a randomly selected thermostat is actually set at 78 degrees is 0.03—if I could find that for all possible settings on the thermostat and display it in a distribution, in some sort of a table with the accompanying probabilities, that is called a probability distribution.
+
+05:16
+And here is what it looks like. I've put the temperatures across the top. The random variable X are the number of degrees a thermostat is set below the recommended setting. And the probability of X is listed with each random variable.
+
+05:34
+Properties of a Probability Distribution
+There are two properties of a probability distribution. The first one is that each random variable is listed with its associated probability, and all probabilities are between 0 and 1 inclusive. And the sum of all probabilities must be 1—the entire set.
+
+05:58
+Calculating Probability with the Distribution
+Now that we have the complete distribution, we can determine probabilities for defined events. For instance: What is the probability that a randomly selected thermostat is set at 74 degrees or lower?
+
+06:14
+Since 74 degrees is 4 degrees below the recommended 78 degrees, and lower would be more degrees below 78 degrees, we are looking for the probability that X (our random variable) is greater than or equal to 4.
+
+06:36
+On the number line, that would mean 4, or 5, or 6. So the probability that X is greater than or equal to 4 is going to be the probability for 4, plus the probability for 5, plus the probability for 6. And we get 0.71.
+
+06:59
+Let's Practice
+Here are four problems for you to try. Take a moment, hit pause on your computer, and determine the answers—the probabilities—for questions one through four.
+
+07:18
+Here are the answers. Hit pause again and check and see if you got it correct.
+
+07:25
+What Should We Take Away?
+A random variable must be defined in context. A discrete probability distribution gives all possible outcomes paired with each outcome's probability. And the sum of probabilities for all possible values of a discrete random variable is 1.
+
+07:48
+Thank you.

@@ -1,0 +1,360 @@
+Here is a description of all the slides presented in the video, along with their corresponding timestamps.
+
+00:00 - Introduction
+The opening slide displays the title "Topic 4.8: Mean and Standard Deviation of Random Variables" against a blue background. It includes the "AP Statistics" logo on the left and indicates this is "Daily Video 1."
+
+00:09 - Learning Objectives
+Title: "What Will We Learn?"
+The slide lists two main objectives:
+
+How can we calculate the parameters of a discrete random variable?
+
+How should we interpret the parameters?
+
+00:19 - Example Introduction: Prairie Dogs
+Title: "Prairie Dogs"
+This slide introduces the context of the problem. It features a text description explaining that prairie dogs are a keystone species and includes a photo of a prairie dog standing in a field.
+
+00:33 - Context: Prairie Dog Pups
+Title: "Prairie Dog Pups"
+The text explains that prairie dogs mate once a year and that litter sizes vary. A photo on the left shows two prairie dogs touching noses.
+
+00:42 - The Probability Distribution Table
+The slide displays a data table for the random variable 
+𝑋
+X
+ (number of pups).
+
+Top Row (X): Values 1 through 7.
+
+Bottom Row (P(x)): Respective probabilities (0.15, 0.38, 0.27, 0.11, 0.05, 0.03, 0.01).
+Text appears defining the random variable: "
+𝑋
+=
+X=
+ the number of pups in a randomly selected prairie dog litter."
+
+00:56 - Mean Formula
+Title: "Mean of a Probability Distribution"
+The slide presents the mathematical formula for the mean (
+𝜇
+𝑥
+μ
+x
+	​
+
+) or Expected Value. Blue text bubbles appear to annotate parts of the formula:
+
+𝜇
+𝑥
+μ
+x
+	​
+
+: "Expected value"
+
+𝑥
+𝑖
+x
+i
+	​
+
+: "Each individual x value"
+
+𝑃
+(
+𝑥
+𝑖
+)
+P(x
+i
+	​
+
+)
+: "The probability associated with each x value"
+
+Σ
+Σ
+: "The sum of each product"
+
+01:21 - Expected Value Formula Breakdown
+Title: "Expected Value Formula"
+The formula remains on screen. An additional text bubble explains: "This formula takes into account the different weights of each X value."
+
+01:49 - Calculating the Mean
+Title: "Expected Value"
+The slide shows the step-by-step calculation. It substitutes the values from the previous table into the formula:
+
+𝜇
+𝑥
+=
+1
+(
+0.15
+)
++
+2
+(
+0.38
+)
++
+3
+(
+0.27
+)
++
+.
+.
+.
++
+7
+(
+0.01
+)
+μ
+x
+	​
+
+=1(0.15)+2(0.38)+3(0.27)+...+7(0.01)
+
+The final result is shown as 
+𝜇
+𝑥
+=
+2.66
+μ
+x
+	​
+
+=2.66
+ pups. A picture of two prairie dogs is at the bottom.
+
+02:24 - Interpreting the Mean
+Title: "Interpret the Mean (Expected Value)"
+The calculated variable is shown: 
+𝜇
+𝑥
+=
+2.66
+μ
+x
+	​
+
+=2.66
+ pups.
+A large text block appears answering the question of how to interpret this decimal:
+"In the long run, if many prairie dog litters are randomly selected, the average number of pups per litter will be about 2.66 pups."
+
+03:03 - Standard Deviation Formula
+Title: "Standard Deviation"
+The slide shows the original probability table again. Below it, the formula for Standard Deviation (
+𝜎
+𝑥
+σ
+x
+	​
+
+) is displayed, showing the square root of the sum of squared deviations multiplied by their probabilities.
+
+03:21 - Calculating Standard Deviation
+Title: "Standard Deviation"
+The slide displays the substitution of values into the formula:
+
+(
+1
+−
+2.66
+)
+2
+⋅
+0.15
++
+(
+2
+−
+2.66
+)
+2
+⋅
+0.38
++
+.
+.
+.
+(1−2.66)
+2
+⋅0.15+(2−2.66)
+2
+⋅0.38+...
+	​
+
+
+The final result is calculated as 
+𝜎
+𝑥
+=
+1.267
+σ
+x
+	​
+
+=1.267
+ pups.
+
+03:53 - Interpreting Standard Deviation
+Title: "Interpreting the Standard Deviation"
+The slide lists the Mean (2.66) and the calculated SD (1.267).
+A text interpretation appears: "The number of prairie dog pups in randomly selected litters will generally vary from the mean of 2.66 pups by about 1.267 pups."
+
+04:11 - Variance
+Title: "Variance"
+Text explains: "Remember: The standard deviation is the square root of the variance."
+The slide shows the formula for Variance (
+𝜎
+𝑥
+2
+σ
+x
+2
+	​
+
+), which removes the radical (square root symbol) from the previous formula.
+
+04:33 - Transition Slide
+A blue slide with the text: "LET'S PRACTICE."
+
+04:35 - Practice Problem: Renter's Insurance
+Title: "Renter's Insurance"
+A word problem is presented detailing a $25,000 policy that costs 
+150
+/
+𝑦
+𝑒
+𝑎
+𝑟
+.
+𝐼
+𝑡
+𝑑
+𝑒
+𝑡
+𝑎
+𝑖
+𝑙
+𝑠
+𝑝
+𝑎
+𝑦
+𝑜
+𝑢
+𝑡
+𝑠
+𝑓
+𝑜
+𝑟
+𝑡
+ℎ
+𝑒
+𝑓
+𝑡
+(
+150/year.Itdetailspayoutsfortheft(
+3,000 with 0.0097 probability) and fire ($25,000). The goal is to construct a probability distribution for the company's profit.
+
+05:18 - Defining the Variable
+Title: "Policy Profits"
+Text defines the variable: "
+𝑋
+=
+X=
+ the insurance company profit on a randomly selected policy."
+
+05:27 - Insurance Probability Table
+The slide displays the constructed distribution table for profits:
+
+Columns: No claim, Theft or vandalism, Fire.
+
+Row X (Profit): 
+$
+150
+,
+−
+$
+2850
+,
+−
+$
+24850
+$150,−$2850,−$24850
+.
+
+Row P(x): 
+0.99
+,
+0.0097
+,
+0.0003
+0.99,0.0097,0.0003
+.
+
+05:39 - Insurance Calculation
+Title: "Expected Value"
+The calculation for the mean is shown:
+
+𝜇
+𝑥
+=
+150
+(
+0.99
+)
+−
+2850
+(
+0.0097
+)
+−
+24850
+(
+0.0003
+)
+μ
+x
+	​
+
+=150(0.99)−2850(0.0097)−24850(0.0003)
+
+Final Result: 
+$
+113.40
+$113.40
+.
+
+05:46 - Insurance Interpretation
+Title: "Expected Value"
+The interpretation text appears below the math:
+"The insurance company can expect to make, on average, about $113.40 per renter's policy from a large number of randomly selected policies."
+
+06:13 - Key Takeaways
+Title: "What Should We Take Away?" / "Key Takeaways"
+
+Formulas: The slide displays the mathematical formulas for Mean (
+𝜇
+𝑥
+μ
+x
+	​
+
+) and Standard Deviation (
+𝜎
+𝑥
+σ
+x
+	​
+
+).
+
+Context: Text states, "Interpretations of parameters of random variables should use appropriate units and include context of a specified population."
+
+06:35 - Closing Slide
+A blue background with the text "Thank you." and the CollegeBoard logo.

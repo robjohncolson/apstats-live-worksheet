@@ -1,0 +1,83 @@
+Here is the transcript of the video, including timestamps.
+
+00:00
+Penny Smeltzer: Penny Smeltzer from Austin, Texas. This video demonstrates calculating the mean and standard deviation of discrete random variables.
+
+00:09
+Penny Smeltzer: What will we learn? How can we calculate the parameters of a discrete random variable? How should we interpret the parameters?
+
+00:19
+Penny Smeltzer: Let's look at an example. Prairie dogs are a keystone species. That means they are disproportionately important to their ecosystem. Many other species of plants and animals would suffer without them.
+
+00:33
+Penny Smeltzer: Prairie dogs only mate once a year. The number of pups in a randomly selected litter varies and can be modeled using a probability distribution.
+
+00:43
+Penny Smeltzer: First, always define the random variable. Here, X equals the number of pups in a randomly selected prairie dog litter.
+
+00:53
+Penny Smeltzer: To find the mean number of pups in a prairie dog litter, we would use this formula. The Mu of X (
+𝜇
+𝑥
+μ
+x
+	​
+
+) is the expected value, or mean. The 
+𝑥
+𝑖
+x
+i
+	​
+
+ represents each individual X value. The 
+𝑃
+(
+𝑥
+𝑖
+)
+P(x
+i
+	​
+
+)
+ is the probability associated with its corresponding X value. And of course, this [
+Σ
+Σ
+] means the sum of each of those products.
+
+01:21
+Penny Smeltzer: The formula takes into account the different weights of each X value. For instance, two pups in a litter has a 38% chance of happening, which is much higher than having six pups in a litter, which only has a 3% chance of happening. When we calculate the mean, the weight of each value is important to take into account in our final answer.
+
+01:49
+Penny Smeltzer: Here is our work for finding the mean of a probability distribution. I take each of the sums of X and their corresponding probability, add them together, and I find out that the mean, or expected value, for the number of pups in a randomly selected prairie dog litter is 2.66 pups. That's what I can expect. So if I have a pregnant prairie dog and the litter is born, I would expect to see two or three prairie dog pups.
+
+02:24
+Penny Smeltzer: How could we expect 2.66 pups per litter? That's not really possible. Although I want to keep those decimals in my answer. In the long run, if many prairie dog litters are randomly selected, the average number of pups per litter will be about 2.66 pups. We can't determine how many pups are going to happen in a randomly selected litter, but in the long run, we can calculate what we would expect to be the average number of pups.
+
+03:03
+Penny Smeltzer: The standard deviation of a probability distribution is found using the formula: the square root of the sum of each of the deviation scores squared, times the probability.
+
+03:21
+Penny Smeltzer: Here is my work. It's not necessary to show every single term, but I need to show, for the AP grader, how I can change from one term to the next. And here's my answer: The standard deviation of X is 1.267 pups. There's also technology, calculators, and computer programs that can assist you with the arithmetic of finding the mean and standard deviation.
+
+03:54
+Penny Smeltzer: What does the standard deviation mean? The number of prairie dog pups in randomly selected litters will generally vary from the mean of 2.66 pups by about 1.267 pups.
+
+04:11
+Penny Smeltzer: Remember: the standard deviation is the square root of the variance. So if this is the formula for the standard deviation, if I square both sides, then the variance would be the sum of the deviation scores squared times the probability.
+
+04:33
+Penny Smeltzer: Let's practice. An insurance company offers renter's insurance for apartment dwellers. A typical $25,000 policy costs $150 per year and pays for loss due to fire and theft/vandalism. The average payout for theft/vandalism is $3,000 and has a probability of 0.0097 of happening. A fire usually pays out the entire $25,000 due to a complete loss of property. But for the most part, 99% of the time, there is no claim filed. Construct a probability distribution to represent the insurance company's profit for this type of policy.
+
+05:18
+Penny Smeltzer: We're going to let the random variable X represent the insurance company profit on a randomly selected policy. Here's our probability distribution. Pause the video and calculate and interpret the expected profit of the insurance company.
+
+05:39
+Penny Smeltzer: Using our formula for the mean, our expected value is [this many] dollars. What does that mean? The insurance company can expect to make, on average, about [this many] dollars per renter's policy from a large number of randomly selected policies.
+
+05:59
+Penny Smeltzer: On an individual policy, they will either lose money or make $150. But in the long run, with lots of policies, they will average [this many] dollars per policy.
+
+06:13
+Penny Smeltzer: What should we take away? The mean and standard deviation of a discrete random variable can be calculated using the formulas below. And, interpretations of parameters of random variables should use appropriate units and include context of a specified population. Thank you.
