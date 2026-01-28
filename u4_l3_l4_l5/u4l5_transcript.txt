@@ -1,0 +1,73 @@
+Here is a transcription of the video with timestamps.
+
+00:00
+Hi, this is Joshua Sory on behalf of College Board, and in this video, we're looking at Topic 4.5: Conditional Probability. And we're going to discuss how to calculate and interpret conditional probabilities.
+
+00:11
+All right, so what will we learn? What is conditional probability? And how does conditional probability help us find the joint probability, which is the probability of A and B occurring?
+
+00:25
+This is an example called "Marble-ous!" Suppose we select two of these marbles at random (without replacement). What is the probability that both of these marbles are fully red? All right, so I want to define two events. A is that the first marble is fully red and B that the second marble is fully red. So in essence, we want to find what's the chance of A and B.
+
+00:52
+So, the chance that the first marble is fully red is going to be 4 out of 10. But what about the second marble being fully red? It is going to depend on what the first marble was, and so because of that, then we say that the probability of the second marble is conditional on the status of whatever the first marble that was selected.
+
+01:09
+What are you talking about? All right, I want to set up a tree diagram to represent the outcome of individual trials... individual outcomes. And in the first case, we're talking about this first marble that's selected. And so this first marble that's selected could either be all red or not be all red. And on these tree diagrams, we can also put our probabilities along each of these branches of the tree.
+
+01:33
+And so for our first trial, we have a 4 out of 10... excuse me, let me back up. A 4 out of 10 chance that the outcome... that the first outcome, excuse me, will be either all red or not all red. All right, and 4 out of 10 chance that it is all red, 6 out of 10 chance that it is not all red.
+
+01:50
+So, now we get into this thing with conditional probability. What if the first marble is red? Now what's my likelihood of getting an all red? It changes to 3 out of 9. Getting a not all red marble will be 6 out of 9. And likewise, if we start off with a marble that was not all red to begin with, we have a different set of outcomes. In this case, 4 out of 9 for an all red marble, 5 out of 9 for a not all red marble.
+
+02:21
+Conditional probability: we can use this notation, B with a slash A [B | A], and we read that "B given A." And this can be thought about as: what is the probability that event B will occur given that we already know that A has occurred?
+
+02:37
+So in this case, if we know that A, which was that our first marble was fully red... we can ask ourselves, well what's the chance that our second marble is fully red given that the first one was fully red? And so this branch right here is the probability of B given A. The probability of getting an all red marble given that the first marble was also all red.
+
+03:04
+All right, so now let's go back to the question at hand. What's the probability that both marbles will be fully red? If we look at our full tree diagram, we are looking to follow this set of branches right here. Which is going to be P(A) and P(B | A).
+
+03:22
+And this sets us up to our general multiplication rule, which is used to find the intersection... the probability of the intersection of two events. So the probability of A and B is equal to the probability of A times the probability of B given A. And for our example, that gives us 4 out of 10, and we're going to multiply that by 3 out of 9, and that gives us 12 over 90, which is about... excuse me, 0.133.
+
+03:53
+All right, so let's look at the formula for conditional probability. And we want to start off by going back and looking at this general multiplication rule, which says that the probability of A and B can be found by multiplying the probability of A times the probability of B given that A is also true.
+
+04:10
+So if we were to divide both sides by the probability of A, this gives us our formula for conditional probability. Which is: the probability of B given A is equal to the probability of both A and B divided by the probability of A. Now this formula can be, I'm going to say, flip-flopped for A given B. And the thing that would change with that is that we would have the probability of B as the denominator.
+
+04:35
+All right, so let's look at an example. And we're going to go back to our "Super Status!" example. All right, high school students were asked two questions: what superpower would they like, what status would they like to describe them? And we have the table of values that we looked at before in this two-way table.
+
+04:51
+And the first question we want to ask: What is the probability that a student stated that they wanted to be rich given... let's back up. What is the probability that a randomly selected student stated that they wanted to be rich given that they also wanted to fly?
+
+05:04
+All right, and so this is going to be probability of Rich given Fly. And according to our formula, it's the probability of being Rich and Fly... or answering Rich and Fly, divided by the probability of Fly. And to find that probability of Rich and Fly, we look at that joint probability, which would be 22 out of 433. To find the probability that they chose to fly... excuse me, will be 89 over 433.
+
+05:33
+All right, and we take this ratio, 22 over 433 divided by 89 over 433. And that reduces to 22 over 89 which is about... or excuse me, just 22 over 89.
+
+05:44
+All right, now because this is a conditional probability, we can do this slightly different and a little bit easier with two-way tables. Same question: Rich given Fly. Our condition is that the student stated that they wanted to be able to fly. So in this case, the only students that we're looking at are the students who said that they wanted to fly.
+
+06:11
+So in essence, from those students who said they wanted to fly, what's the chance that a student also wanted to be rich? And so yes, we're still using the 22, but in this case, it is 22 out of 89. Which if you notice, were the same two numbers that we used before. So the chance... or excuse me, the probability of Rich given Fly is 22 out of 89.
+
+06:33
+All right, now it's important to know that the order does matter. For example, if we were to say the probability of Fly given Rich, in this case, the condition is that a student was selected that they wanted to be rich. So we're only looking at students who said they wanted to be rich and also that they wanted to fly. So in this case, it will be 22 out of 102. So the probability of Fly given Rich will be 22 out of 102.
+
+06:57
+All right, one more thing to keep in mind. Sometimes we have to look at multiple columns within the table—multiple rows or multiple columns. In this case, we want to look at the chance, or the probability, that a student said they wanted to fly given that they did not state that they wanted to be rich.
+
+07:14
+So the condition is "Not Rich," so we're going to look at every column except for the Rich column. All right, and we can add those numbers for the number of students who said they wanted to fly, which is 67. And divide that by the total number of students who did not select that they wanted to be rich, which was 331.
+
+07:33
+So what should we take away? Conditional probability is the probability that an event happens given that another event is known to have already happened. All right, and that our general multiplication rule for two events A and B is: the probability of A and B is equal to the probability of A multiplied times the probability of B given that A is also true. And also remember that this formula can be manipulated to give us our conditional probability formula as well.
+
+08:03
+So I hope this video was helpful. Thanks for watching and have a great day.

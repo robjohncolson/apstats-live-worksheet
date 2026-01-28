@@ -1,0 +1,73 @@
+Here is a transcript of the video with timestamps:
+
+00:00
+(Introductory visuals)
+
+00:06
+Joshua Sawyer: Hey, this is Joshua Sawyer on behalf of College Board, and in this video, we're looking at Topic 4.6: Independent Events and Union of Events, video 3, where we're going to review the key ideas and formulas of probability and also show how to apply them on a free-response question.
+
+00:22
+So, what will we learn? How can we distinguish questions involving conditional and unconditional probabilities? And also, how do we determine which probability formula to use when?
+
+00:39
+So I just want to take a couple minutes and go through just some things that we have to recall about probability. Remember, if all outcomes in a sample space are equally likely, then the probability of an event E occurring can be defined as: the number of outcomes in event E divided by the total number of outcomes in the sample space.
+
+00:58
+The probability of an event is always a number between 0 and 1. The probability of the complement of an event—denoted by either E prime, or E with a superscript C, or "not E"—is equal to one minus the probability that E occurs.
+
+01:14
+Probabilities can be interpreted as the long-run relative frequency that the event will occur if the random process is repeated many, many times.
+
+01:24
+Two events are mutually exclusive or disjoint if they cannot occur at the same time. And if they are mutually exclusive, then the probability of their intersection is zero.
+
+01:35
+Conditional probability is the probability that an event will occur given that another event has already occurred. And speaking to conditional probability, that formula again: probability of A given B is probability of A and B divided by the probability of B.
+
+01:53
+The probability of the intersection of two events can be found by the formula: Probability of A and B is equal to probability of A multiplied times the probability of B given that A is true.
+
+02:05
+And for the special case of independent events, then we have that: the probability of A given B is equal to the probability of A. Also, the probability of B given A is equal to the probability of B. And, probability of A and B is equal to simply the probability of A times probability of B. Again, these three formulas are only true if the two events are independent.
+
+02:28
+Alright, finally, the probability of the union of two events can be found by the formula: probability of A or B, equaling to the probability of A plus the probability of B minus the intersection of A and B.
+
+02:41
+So let's look at an example. "What's the News?" And this comes from the 2010 Form B AP exam. And if you need to, please take a minute to read this question and look at these numbers.
+
+03:00
+So part A says: If an adult is to be selected at random from this sample, what is the probability that the selected adult is a college graduate or obtains news primarily from the internet? And so with this, we want to define two events as we read through this. Event A, we're going to define as the selected adult is a college graduate. And Event B is that the selected adult obtained news primarily from the internet.
+
+03:22
+So when we read this, we see that we're looking for college graduate or obtaining news from the internet. So we want to calculate the probability of A or B. And we want to use the appropriate formula, which is the addition formula: probability of A plus probability of B minus the intersection of both A and B.
+
+03:40
+So looking at the table... the probability of selecting a college graduate is 693. Probability of selecting an adult who gets their news from the internet is 687. And all of these are over 2,500. And the joint probability, 245 over 2,500. And when we add... and apply that addition formula, we get 1,135 over 2,500, which is 0.454.
+
+04:07
+For part B, it says: If an adult who is a college graduate is to be selected at random from the sample, what is the probability that the selected adult obtains news primarily from the internet? This reads slightly different. We could still look at these two events because we're saying something about a college graduate and something about obtaining news from the internet. But this is different because of that first part. It says: "If an adult who is a college graduate is to be selected."
+
+04:29
+This is another way of saying that we want to find the probability of B given A. We're just looking at college graduates. So this will be the probability of B given A. We can either use the formula—probability of B and A divided by probability of A—or we can simply look at it from our table and realize that we're just looking at the college graduates and we can get 245 over 693.
+
+04:59
+Now, to distinguish between part A and part B, I want us to pay attention to the way that this question was asked. At the beginning, it just said "an adult is to be selected." That tells us that the adult is being selected from the entire sample. Now in part B, it's saying "adult who is a college graduate is to be selected." So that's telling us that we are selecting an adult just from the college graduates. So watch out for those words, because that's going to be a distinction between how we need to go about these problems.
+
+05:29
+Part C says: When selecting an adult at random from this sample, are the events "is a college graduate" and "obtaining news from the internet" independent? Justify the answers. And remember, we have a couple different ways that we can check for independence. One way is to see: does my conditional probability equal to the unconditional probability?
+
+05:48
+So let's check the probability of B given A—or obtaining news from the internet given that it's a college graduate. We actually calculated that in Part B and we got 0.354. Let's compare that to the probability of B all together, which is obtaining news from the internet, 687 over 2,500. It's 0.2748. We see that 0.354 is not equal to 0.2748. So we can make a conclusion that the conditional probability is not equal to the unconditional probability; therefore, the events are not independent.
+
+06:23
+Now the other way that we can check this is to see if the joint probability is equal to the product of A times B. All right, so the joint probability is 245 over 2,500... 0.098. When we multiply together probability of A times probability of B, we get 0.076. So again, we see that they're not equal. And so because they are not equal—because the intersection is not equal to the product of the individual probabilities—then the events are not independent.
+
+06:51
+So what should we take away? Conditional probabilities can be calculated from two-way tables by selecting the appropriate rows and columns. If the conditional probability P(A|B) is equal to the unconditional probability P(A), then the events A and B are independent.
+
+07:05
+And finally, the probability for the union of two events can be found by using probability of A or B, equaling to the probability of A plus the probability of B, subtracting the intersection of the two events.
+
+07:18
+It's been my pleasure sharing these videos with you. Thank you.

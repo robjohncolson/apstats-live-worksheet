@@ -1,0 +1,348 @@
+Here is a description of the slides presented in the video, organized by timestamp:
+
+00:00 - 00:03
+Title Slide (Topic 4.5): A blue slide displaying the title "TOPIC 4.5 Conditional Probability" with an AP Statistics logo. Note: This slide appears briefly before the video content switches to the correct topic title.
+
+00:04 - 00:20
+Title Slide (Topic 4.6): The correct title slide for the lesson appears: "TOPIC 4.6 Independent Events and Unions of Events." It lists this as "Daily Video 3" and summarizes the video's goal: reviewing key ideas/formulas and applying them to a free-response question.
+
+00:21 - 00:23
+Section Header: A blue slide with the text "WHAT WILL WE LEARN?"
+
+00:24 - 00:38
+Learning Objectives: A white slide listing two learning goals:
+
+Distinguishing questions involving conditional vs. unconditional probabilities.
+
+Determining which probability formula to use and when.
+
+00:39 - 00:44
+Section Header: A white slide titled "Probability Recap."
+
+00:45 - 01:13
+Probability Recap (Basic Definitions): The slide lists bullet points:
+
+The formula for probability (Number of outcomes in E / Total outcomes in sample space).
+
+The rule that probability is a number between 0 and 1.
+
+The complement rule: 
+𝑃
+(
+not 
+𝐸
+)
+=
+1
+−
+𝑃
+(
+𝐸
+)
+P(not E)=1−P(E)
+.
+
+01:14 - 01:22
+Probability Recap (Interpretation): A bullet point explaining that probability is interpreted as the long-run relative frequency of an event occurring over many repetitions.
+
+01:23 - 01:34
+Probability Recap (Mutually Exclusive): A bullet point defining mutually exclusive (disjoint) events and stating that their intersection 
+𝑃
+(
+𝐴
+∩
+𝐵
+)
+=
+0
+P(A∩B)=0
+.
+
+01:35 - 01:52
+Probability Recap (Conditional Probability): A bullet point defining conditional probability. It displays the formula:
+
+𝑃
+(
+𝐴
+∣
+𝐵
+)
+=
+𝑃
+(
+𝐴
+∩
+𝐵
+)
+𝑃
+(
+𝐵
+)
+P(A∣B)=
+P(B)
+P(A∩B)
+	​
+
+
+01:53 - 02:05
+Probability Recap (Intersection): A bullet point showing the general multiplication rule:
+
+𝑃
+(
+𝐴
+∩
+𝐵
+)
+=
+𝑃
+(
+𝐴
+)
+⋅
+𝑃
+(
+𝐵
+∣
+𝐴
+)
+P(A∩B)=P(A)⋅P(B∣A)
+
+02:06 - 02:27
+Probability Recap (Independence): Bullet points listing the rules that apply only if events are independent:
+
+𝑃
+(
+𝐴
+∣
+𝐵
+)
+=
+𝑃
+(
+𝐴
+)
+P(A∣B)=P(A)
+
+𝑃
+(
+𝐵
+∣
+𝐴
+)
+=
+𝑃
+(
+𝐵
+)
+P(B∣A)=P(B)
+
+𝑃
+(
+𝐴
+∩
+𝐵
+)
+=
+𝑃
+(
+𝐴
+)
+⋅
+𝑃
+(
+𝐵
+)
+P(A∩B)=P(A)⋅P(B)
+
+02:28 - 02:40
+Probability Recap (Union): A bullet point showing the general addition rule for the union of two events:
+
+𝑃
+(
+𝐴
+∪
+𝐵
+)
+=
+𝑃
+(
+𝐴
+)
++
+𝑃
+(
+𝐵
+)
+−
+𝑃
+(
+𝐴
+∩
+𝐵
+)
+P(A∪B)=P(A)+P(B)−P(A∩B)
+
+02:41 - 02:45
+Section Header: A blue slide with the text "LET'S LOOK AT AN EXAMPLE."
+
+02:46 - 02:58
+Example Data: A slide titled "What's the News?" displaying a two-way contingency table titled "Highest Level of Educational Achievement." It compares education levels (rows) against primary news sources (columns) for a sample of 2,500 adults.
+
+02:59 - 04:05
+Part (a) Calculation: The slide displays the data table and question (a), asking for the probability of selecting a college graduate OR someone who uses the internet.
+
+03:14: A sidebar defines Event A (College Grad) and Event B (Internet).
+
+03:30: The addition formula is displayed.
+
+03:56: The numerical calculation is shown: 
+1135
+2500
+=
+0.454
+2500
+1135
+	​
+
+=0.454
+.
+
+04:06 - 04:59
+Part (b) Calculation: The slide displays the data table and question (b), asking for the probability that a selected college graduate obtains news from the internet.
+
+04:36: The "College Graduate" column is highlighted in a blue box.
+
+04:38: The conditional formula is shown.
+
+04:59: The result is calculated: 
+245
+693
+=
+0.354
+693
+245
+	​
+
+=0.354
+.
+
+05:00 - 05:27
+Comparison of Wording: A slide contrasting the wording of question (a) and (b).
+
+(a) highlights "an adult is to be selected" (Sample space = entire sample).
+
+(b) highlights "an adult who is a college graduate is to be selected" (Sample space = college graduates only).
+
+05:28 - 06:23
+Part (c) Independence Check (Method 1): The slide asks if the events are independent.
+
+It compares 
+𝑃
+(
+𝐵
+∣
+𝐴
+)
+P(B∣A)
+ (from Part b) to 
+𝑃
+(
+𝐵
+)
+P(B)
+ (unconditional probability of using the internet).
+
+It shows that 
+0.354
+≠
+0.2748
+0.354
+
+=0.2748
+, concluding they are not independent.
+
+06:24 - 06:50
+Part (c) Independence Check (Method 2): An alternative method is shown on the slide.
+
+It compares the intersection 
+𝑃
+(
+𝐴
+∩
+𝐵
+)
+P(A∩B)
+ to the product 
+𝑃
+(
+𝐴
+)
+⋅
+𝑃
+(
+𝐵
+)
+P(A)⋅P(B)
+.
+
+It shows that 
+0.098
+≠
+0.076
+0.098
+
+=0.076
+, confirming they are not independent.
+
+06:51 - 06:52
+Section Header: A blue slide with the text "WHAT SHOULD WE TAKE AWAY?"
+
+06:53 - 07:16
+Key Takeaways: A white slide listing three summary points:
+
+Conditional probabilities can be calculated from two-way tables by selecting specific rows/columns.
+
+If 
+𝑃
+(
+𝐴
+∣
+𝐵
+)
+=
+𝑃
+(
+𝐴
+)
+P(A∣B)=P(A)
+, the events are independent.
+
+The union formula: 
+𝑃
+(
+𝐴
+∪
+𝐵
+)
+=
+𝑃
+(
+𝐴
+)
++
+𝑃
+(
+𝐵
+)
+−
+𝑃
+(
+𝐴
+∩
+𝐵
+)
+P(A∪B)=P(A)+P(B)−P(A∩B)
+.
+
+07:17 - 07:23
+Outro: A blue slide with the text "Thank you."

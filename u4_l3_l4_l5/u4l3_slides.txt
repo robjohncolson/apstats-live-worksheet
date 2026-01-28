@@ -1,0 +1,118 @@
+Here are the slide descriptions with their corresponding timestamps from the video:
+
+00:00 - Title Slide
+A blue title slide reading "Topic 4.3: Introduction to Probability." The text below reads "Daily Video 1: In this video, we will introduce probability rules for events and their complements." An icon of a bell curve distribution is on the left.
+
+00:10 - What Will We Learn?
+A slide listing two learning objectives:
+
+How can we calculate the probability of events involving equally likely outcomes?
+
+How can we interpret the probability of an event?
+
+00:26 - Sample Spaces (Definitions)
+The slide is titled "Sample Spaces." It defines a sample space (S) as the collection of all possible non-overlapping outcomes.
+
+00:41: An example appears: "Flip a single coin." The sample space is shown as S = {Heads, Tails}.
+
+00:53: A second example appears: "Roll a die (number cube)." The sample space is shown as S = {1, 2, 3, 4, 5, 6}.
+
+01:04 - Sample Spaces (Two Coins)
+A new example appears: "Flip two coins. Record the sequence of heads or tails." The sample space is listed as S = {HH, HT, TH, TT}.
+
+01:21 - Sample Spaces (Vowels)
+A new example appears: "Randomly select a vowel from the English alphabet." The sample space is listed as S = {A, E, I, O, U}.
+
+01:32 - Sample Spaces (Two Dice)
+A new example appears: "Roll two dice." The sample space is defined as 36 possible outcomes. The slide lists the set of ordered pairs ranging from (1,1) to (6,6).
+
+02:16 - Probability for Equally Likely Outcomes
+The slide defines an Event as a collection of outcomes (denoted by capital letters like A, B).
+
+02:32: The formula for the Probability of an event is displayed: P(A) = (total number of outcomes in event A) / (total number of outcomes in sample space).
+
+02:45 - Probability Rules
+Text is added to the previous slide stating:
+
+A probability will always be a number between 0 and 1, inclusive.
+
+A probability of 0 means the event is impossible.
+
+A probability of 1 means it is a certainty (it will always occur).
+
+03:19 - Let's Look At An Example
+A transition slide titled "Let's Look at an Example" with a photo titled "Listen Up!" showing a man browsing vinyl records in a store.
+
+03:24 - Listen Up! (Data)
+The slide presents the problem context: An owner of a record store keeps track of vinyl genres sold. The data is listed as:
+
+327 rock & roll albums
+
+431 jazz albums
+
+192 classical albums
+
+790 hip-hop albums
+
+276 world music albums
+
+89 pop albums
+
+03:48 - Listen Up! (Sample Space Calculation)
+The slide defines the Random Process (randomly select an album sold) and Outcomes (individual albums).
+
+04:02: The Sample Space is calculated by summing the specific genres: S = 327 + 431 + 192 + 790 + 276 + 89 = 2105 albums.
+
+04:20 - Probability for Equally Likely Outcomes (Jazz Calculation)
+The slide applies the formula to "Event A = Select a jazz album."
+
+P(A) = (total number of jazz albums sold) / (total number of albums sold)
+
+P(Jazz) = 431 / 2105 ≈ 0.205
+
+05:07 - Interpreting Probability (Definition)
+The slide defines interpretation: "Probabilities of events in repeatable situations can be interpreted as the relative frequency with which the event will occur in the long run."
+
+05:21 - Interpreting Probability (Jazz Example)
+The definition is applied to the specific problem. It states that if we randomly select many individual albums (with replacement), the relative frequency of jazz albums selected would be approximately 0.205.
+
+05:53 - Listen Up! (Data Table)
+The previous data is organized into a table with columns for Genre (Rock & Roll, Jazz, Classical, Hip-Hop, World, Pop) and a row for Probability.
+
+06:01: The probabilities are calculated for each genre (e.g., Hip-Hop = 790/2105 = 0.375).
+
+06:10: A question appears at the bottom: "Add up all of the probabilities. What do they equal to? Is this a valid probability distribution?"
+
+06:29 - Validating the Distribution
+The answer appears in blue text: "If we add the decimals, we get 0.999. This is because of rounding, but it is a valid probability distribution because the sum of all probabilities is 1 (2105/2105)."
+
+07:01 - Complements
+The slide is titled "Complements."
+
+Definition: The complement of event A is the event that A does not happen.
+
+Notation: Denoted by A' or A^c.
+
+07:22: Formula: P(A') = 1 - P(A).
+
+07:36 - Calculating Complements (Not Jazz)
+The "Listen Up!" table is shown again.
+
+The question asks for P(not Jazz).
+
+07:56: The calculation is shown using the complement rule: = 1 - P(Jazz) = 1 - 0.205 = 0.795.
+
+08:16 - What Should We Take Away?
+A blue transition slide asking "What Should We Take Away?"
+
+08:19 - Key Takeaways
+A summary slide listing three points:
+
+The probability formula (fraction of outcomes in event divided by total outcomes).
+
+Probability is a number between 0 and 1, inclusive.
+
+The probability of the complement of event E is equal to 1 - P(E).
+
+08:45 - End Slide
+A blue background with the text "Thank you."

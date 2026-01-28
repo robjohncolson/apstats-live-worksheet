@@ -1,0 +1,64 @@
+Here is a description of the slides shown in the video, organized by their respective timestamps:
+
+00:00 - 00:12: Title Slide
+The video opens with a blue title slide for "TOPIC 4.4 Mutually Exclusive Events" under the AP Statistics curriculum. It introduces the lesson's goal: explaining why two events are or are not mutually exclusive. The presenter, Joshua Soyo, appears in an inset in the top right.
+
+00:13 - 00:21: Learning Objectives
+This slide titled "What Will We Learn?" poses the central question of why some events are mutually exclusive while others are not. It lists the learning objective: explaining the nature of mutually exclusive events.
+
+00:22 - 01:05: Music Genre Example (Mutually Exclusive Categorization)
+This slide, titled "Listen Up!", displays a probability table of vinyl album sales by genre (Rock & Roll, Jazz, Classical, etc.). It explains that because an album can only be categorized into one genre in this data set, the genres are mutually exclusive. A key definition appears at 00:58: "Mutually exclusive (disjoint) events cannot occur at the same time."
+
+01:06 - 01:47: Venn Diagrams (Intersection)
+This slide introduces Venn diagrams as a visual tool for probability. It shows two overlapping circles (A and B) within a rectangular sample space. It defines the overlapping section as the intersection, represented by the notation 
+𝐴
+∩
+𝐵
+A∩B
+.
+
+01:48 - 02:05: Venn Diagrams (Mutually Exclusive)
+Building on the previous slide, this one shows a Venn diagram where the two circles (A and B) do not touch. This illustrates mutually exclusive events, where there is no intersection because the events cannot happen simultaneously.
+
+02:06 - 03:20: Number Cubes (Dice Example)
+This slide uses a standard six-sided die to demonstrate the concept. It defines three events: Event A (Odd numbers: 1, 3, 5), Event B (Prime numbers: 2, 3, 5), and Event C (Even numbers: 2, 4, 6). Through calculations, it shows that 
+𝐴
+∩
+𝐵
+A∩B
+ has a probability (
+1
+/
+3
+1/3
+), but 
+𝐴
+∩
+𝐶
+A∩C
+ has a probability of 0, concluding that A and C are mutually exclusive.
+
+03:21 - 03:24: Transition Slide
+A simple blue transition slide with the text "LET'S LOOK AT AN EXAMPLE."
+
+03:25 - 05:25: Super Status! (Two-Way Table Example)
+This section presents a study of 433 high school students regarding their desired superpower and status. It uses a two-way table to calculate various probabilities:
+
+04:04: Calculating the marginal probability of being "Happy."
+
+04:35: Calculating the joint probability of being "Happy" AND choosing "Freeze Time" (the intersection).
+
+05:03: Calculating the probability of being "Famous" AND choosing "Telepathy," which results in 0, proving these specific categories are mutually exclusive in this data set.
+
+05:26 - 05:28: Transition Slide
+A blue transition slide with the text "WHAT SHOULD WE TAKE AWAY?"
+
+05:29 - 05:46: Key Takeaways
+This summary slide reinforces two main points:
+
+Joint probability is the probability of the intersection of two events.
+
+Events are mutually exclusive (disjoint) if they cannot occur at the same time, meaning the probability of their intersection is 0.
+
+05:47 - end: Closing Slide
+A final blue slide that says "Thank you" with the College Board logo.

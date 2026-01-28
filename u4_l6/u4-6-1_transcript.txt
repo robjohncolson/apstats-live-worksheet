@@ -1,0 +1,76 @@
+Here is the transcript of the video with timestamps.
+
+00:00
+Instructor: Topic 4.6: Independent events and unions of events. And specifically in this video, we're going to look at how to determine if two events are independent, and also how to calculate probabilities for independent events.
+
+00:13
+Instructor: So, what will we learn? How can conditional probabilities be used to determine independence? And how can we use the multiplication rule to determine independence?
+
+00:26
+Instructor: So let's look at our example again, Marble-ous! Part 2. Suppose we select one marble at random, replace it, and then randomly select a second marble. What is the probability that both marbles are fully red? So, as we go into doing this, we're going to define our events A as the first marble being fully red, and B as the second marble being fully red.
+
+00:48
+Instructor: So, as we look at our tree diagram, we see that we have the probabilities for the first marble selection. We have a four out of 10 chance that the first marble is all red. Now, because in this particular example we are replacing the marble, then whether or not the first marble is red or not, the likelihood of the second marble being red is still four out of 10. And again, that's the case for selecting the all-red marble at first, or selecting the not all-red marble for the first selection.
+
+01:24
+Instructor: So that means that our events in this case are independent. And what that means for us is... Events A and B are independent if, and only if, knowing whether or not event A has occurred (or will occur) does not change the probability that event B will occur. So in this case, knowing that our first marble is red or not will not affect whether or not the second marble will be red.
+
+01:47
+Instructor: So what does that look like? Our conditional probability, A given B, is equal to probability of A. Likewise, the probability of A given not B is also equal to probability of A. And this is also true for knowing if B has occurred. The probability of B given A is equal to the probability of B. And likewise, probability of B given not A is equal to the probability of B.
+
+02:09
+Instructor: So let's go back to our example here. Um, actually before we get to our example, let's look at our General Multiplication Rule. And this, this does something for us. All right? Remember our General Multiplication Rule said that the probability of A and B is equal to the probability of A multiplied by the conditional probability of, uh, B given that A is also true.
+
+02:29
+Instructor: But because of independence, we know that our conditional probability is equal to the unconditional probability. So, just for the case of independent events, we can say that the probability of A and B is equal to the probability of A times the probability of B. And I want to stress again that this is only for independent events.
+
+02:50
+Instructor: So one way that we can determine whether or not events are independent is by checking to see if the joint probability is equal to the product of the probability of A and probability of B.
+
+03:04
+Instructor: All right, so going back to our diagram, we want to see our probability that both, um, marbles are red. And we have probability of A times probability of B given A. But we remember that the probability of B given A is actually the same as the probability of B all together. All right, so with that being said, in this particular case, because these two events are independent, we can say that probability of A and B is equal to probability of A times probability of B, which is four out of 10 multiplied by another four out of 10, which is 0.16.
+
+03:37
+Instructor: All right. So let's, let's extend this a little bit. Suppose we select four marbles one at a time with replacement. What is the probability of selecting two marbles... two fully red marbles followed by two non-red marbles? And this is in essence saying probability of red times red times non-red times non-red—excuse me, red and red and non-red and non-red—which, because of General Multiplication Rule, it can be extended to simply give us this multiplication of the probabilities: 0.4 times 0.4 times 0.6 times 0.6, which gives us 0.0576.
+
+04:13
+Instructor: And suppose we select 10 marbles one at a time with replacement. What is the probability that at least one marble is red? Now, this is a tricky kind of probability problem that you may see. And what we're going to use for this type of problem is our complement rule, because the opposite of having at least one marble being red out of this set of 10 is that none of the marbles at all are red.
+
+04:36
+Instructor: So, the probability that at least one marble is fully red is equal to one minus the probability that from those 10 marbles, none of them are fully red. And the probability that a marble is not fully red is 0.6. So this is going to be 1 minus 0.6 raised to the 10th power because of that repeated multiplication. And that gives us 1 minus, um, .006, which is equal to 0.994.
+
+05:05
+Instructor: So now let's consider two events, E and F. And we say that, we see that probability of E is point 40, probability of F is point 60, and the joint probability E and F is 0.25. And we want to know whether or not these two events are independent. Now, from what we discussed, there's a couple different ways we could check this.
+
+05:22
+Instructor: And one way that we can check is to see if our conditional probability is equal to the unconditional probability. So for this instance, we need to calculate the probability of E given F. All right? And that formula is probability of E and F divided by the probability of F. And that gives us approximately 0.4167.
+
+05:41
+Instructor: Now we can compare this conditional probability to our unconditional probability of E, which is 0.40. We see that they're not equal. So therefore, because the conditional probability is not equal to the conditional [unconditional] probability, then the two events are not independent.
+
+05:57
+Instructor: All right. Now there's another way we can check this as well. All right, the other way that we can check this is to see if our joint probability is equal to the product of the individual probabilities. All right? So let's, let's, let's multiply probability of E times probability of F and see if that equals to the joint probability of E and F, which right now we have is 0.25.
+
+06:17
+Instructor: All right. So when we multiply probability of E times probability of F, we get 0.4 times 0.6, which is 0.24. This 0.24 is not equal to the 0.25 that we have stated in our problem. So therefore, this is again indication that the two events are not independent.
+
+06:34
+Instructor: All right, with all that, let's look at... let's go back to our real-world example. You may recall our "Super Status" example if you started in, uh, video 4.4. We've been talking about, uh, this survey that was performed looking at superpowers and looking at status to describe high school students. And I want to ask a couple questions here.
+
+06:51
+Instructor: Are the events "choose invisibility" and "choose to be famous" independent? And let's justify our answer. All right? And so remember, we have a couple ways that we can justify our answer. And one way is to see if the conditional probability is equal to the unconditional probability.
+
+07:09
+Instructor: All right. So the probability of invisibility given famous. All right. Uh, if we look at the famous column, that's going to be six out of 15, which is 0.4. All together, the probability that someone stated they wanted to be invisible was 83 out of 433. If you notice, these two numbers are definitely not the same. So because the conditional probability is not equal to the unconditional probability, then the two events are not independent. All right?
+
+07:34
+Instructor: Now that's one way that we can check for that. The other way that we can check for that is to see if the probability of the intersection is equal to the product of the unconditional probabilities. All right? So we want to check to see if the prob—product of invisibility times being famous is equal to this joint probability.
+
+07:54
+Instructor: All right. And again, uh, so the joint probability, we have six out of 433: 0.014. And the product of invisibility times being famous, we get 0.007. Again, these are not the same. So again, this is indication that the two events are not independent because the probability of the intersection is not equal to the probability—excuse me—to the product of the individual probabilities.
+
+08:21
+Instructor: All right. So what should we take away? Two events A and B are independent if, and only if, the conditional probability is equal to the unconditional probability. Two events are independent if, and only if, the probab—the joint probability is equal to the product of the individual probabilities.
+
+08:40
+Instructor: I hope this video was helpful. Thank you for watching and have a great day.
