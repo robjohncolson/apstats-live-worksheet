@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 4 Schedule | AP Statistics</title>
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8b;
+            --accent: #c9302c;
+            --success: #2e7d32;
+            --warning: #ed6c02;
+            --period-b: #1565c0;
+            --period-e: #7b1fa2;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-300: #e0e0e0;
+            --gray-600: #757575;
+            --gray-700: #616161;
+            --gray-800: #424242;
+            --gray-900: #212121;
+            --snow: #b3e5fc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .header .meta {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        .section {
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .section-header.period-b {
+            background: #e3f2fd;
+            color: var(--period-b);
+        }
+
+        .section-header.period-e {
+            background: #f3e5f5;
+            color: var(--period-e);
+        }
+
+        .section-body {
+            padding: 1.5rem;
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert:last-child {
+            margin-bottom: 0;
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            border-color: var(--accent);
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            border-color: var(--warning);
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            border-color: var(--period-b);
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            border-color: var(--success);
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert p, .alert ul, .alert ol {
+            font-size: 0.95rem;
+            color: var(--gray-700);
+        }
+
+        .meeting-pattern {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .meeting-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--gray-300);
+        }
+
+        .meeting-box.period-b {
+            background: #e3f2fd;
+            border-color: var(--period-b);
+        }
+
+        .meeting-box.period-e {
+            background: #f3e5f5;
+            border-color: var(--period-e);
+        }
+
+        .meeting-box h4 {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .meeting-box .days {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .meeting-box .times {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+        }
+
+        /* Schedule Table Styles */
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .schedule-table th {
+            background: var(--gray-100);
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--gray-300);
+        }
+
+        .schedule-table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: top;
+        }
+
+        .schedule-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .schedule-table tr.week-divider td {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        .schedule-table tr.test-day td {
+            background: #ffebee;
+        }
+
+        .schedule-table tr.long-block td {
+            background: #e8f5e9;
+        }
+
+        .schedule-table tr.completed td {
+            background: #f5f5f5;
+            color: var(--gray-600);
+        }
+
+        .schedule-table tr.snow-day td {
+            background: var(--snow);
+            color: var(--gray-600);
+        }
+
+        .date-cell {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .content-cell {
+            min-width: 180px;
+        }
+
+        .topic-tag {
+            display: inline-block;
+            background: var(--gray-200);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .assign-cell, .due-cell {
+            font-size: 0.8rem;
+        }
+
+        .quiz-tag {
+            display: inline-block;
+            background: #fff3e0;
+            color: var(--warning);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .quiz-tag.due {
+            background: #e8f5e9;
+            color: var(--success);
+        }
+
+        .drill-tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: var(--period-b);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-long {
+            background: #e8f5e9;
+            color: var(--success);
+        }
+
+        .badge-test {
+            background: #ffebee;
+            color: var(--accent);
+        }
+
+        .badge-progress {
+            background: #fff3e0;
+            color: var(--warning);
+        }
+
+        .badge-done {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        .badge-snow {
+            background: var(--snow);
+            color: #0277bd;
+        }
+
+        .time-note {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            font-style: italic;
+        }
+
+        .rhythm-box {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .rhythm-box h4 {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .rhythm-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rhythm-step {
+            background: white;
+            border: 1px solid var(--gray-300);
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .rhythm-arrow {
+            color: var(--gray-400);
+        }
+
+        .feedback-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .feedback-tag {
+            background: var(--gray-200);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.75rem;
+            color: var(--gray-700);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .schedule-table {
+                font-size: 0.8rem;
+            }
+            
+            .schedule-table th, .schedule-table td {
+                padding: 0.5rem 0.25rem;
+            }
+
+            .meeting-pattern {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Unit 4: Probability &amp; Random Variables</h1>
+            <div class="subtitle">AP Statistics — Periods B &amp; E</div>
+            <div class="meta">January 21 – February 12, 2026 &nbsp;|&nbsp; 18 Videos &nbsp;|&nbsp; Lagged Quiz Structure &nbsp;|&nbsp; ❄️ Updated for Snow Days</div>
+        </div>
+
+        <!-- Snow Day Notice -->
+        <div class="section">
+            <div class="section-body">
+                <div class="alert alert-info" style="margin-bottom: 0;">
+                    <div class="alert-title">❄️ Schedule Adjusted for Snow Days</div>
+                    <p>Mon 1/27 and Tue 1/28 were snow days. Period B lost 2 class meetings, Period E lost 1. Test dates pushed back accordingly.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meeting Patterns -->
+        <div class="section">
+            <div class="section-header">Class Meeting Patterns</div>
+            <div class="section-body">
+                <div class="meeting-pattern">
+                    <div class="meeting-box period-b">
+                        <h4>Period B</h4>
+                        <div class="days">Mon / Tue / Thu / Fri</div>
+                        <div class="times">
+                            Mon: 55 min &nbsp;|&nbsp; Tue: 65 min<br>
+                            Thu: 65 min &nbsp;|&nbsp; Fri: 55 min
+                        </div>
+                    </div>
+                    <div class="meeting-box period-e">
+                        <h4>Period E</h4>
+                        <div class="days">Mon / Wed / Fri</div>
+                        <div class="times">
+                            Mon: 75 min &nbsp;|&nbsp; <strong>Wed: 90 min (long)</strong><br>
+                            Fri: 75 min
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Rhythm -->
+        <div class="section">
+            <div class="section-header">Daily Class Rhythm</div>
+            <div class="section-body">
+                <div class="rhythm-box">
+                    <h4>Each Class Period:</h4>
+                    <div class="rhythm-flow">
+                        <span class="rhythm-step">Videos + Follow-Along</span>
+                        <span class="rhythm-arrow">→</span>
+                        <span class="rhythm-step">Blooket (12 min)</span>
+                        <span class="rhythm-arrow">→</span>
+                        <span class="rhythm-step">Drill (assigned)</span>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success">
+                    <div class="alert-title">Lagged Quiz System</div>
+                    <p>Quizzes are assigned <strong>after</strong> content is covered and due by the <strong>following class</strong>. Students get content → Blooket → Drill reps → then quiz.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Period B Schedule -->
+        <div class="section">
+            <div class="section-header period-b">Period B Schedule (Mon / Tue / Thu / Fri)</div>
+            <div class="section-body" style="padding: 0;">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 110px;">Date</th>
+                            <th>Content</th>
+                            <th style="width: 130px;">Assign</th>
+                            <th style="width: 110px;">Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 1 (Jan 20-24)</td>
+                        </tr>
+                        <tr class="completed">
+                            <td class="date-cell">Tue 1/21 <span class="badge badge-done">Done</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.1</span>
+                                <span class="topic-tag">4.2</span>
+                                Simulation<br>
+                                <span class="time-note">65 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="drill-tag">Drill 4.1-4.2</span>
+                            </td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr class="completed">
+                            <td class="date-cell">Thu 1/23 <span class="badge badge-done">Done</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.3</span>
+                                <span class="topic-tag">4.4</span>
+                                <span class="topic-tag">4.5</span>
+                                Rules Marathon<br>
+                                <span class="time-note">65 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.1-4.2</span><br>
+                                <span class="drill-tag">Drill 4.3-4.5</span>
+                            </td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr class="completed">
+                            <td class="date-cell">Fri 1/24 <span class="badge badge-done">Done</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.6</span>
+                                Independence &amp; Unions<br>
+                                <span class="time-note">55 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.3-4.5</span><br>
+                                <span class="drill-tag">Drill 4.6</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.1-4.2</span>
+                            </td>
+                        </tr>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 2 (Jan 27-31)</td>
+                        </tr>
+                        <tr class="snow-day">
+                            <td class="date-cell">Mon 1/27 <span class="badge badge-snow">❄️</span></td>
+                            <td class="content-cell">
+                                Snow Day<br>
+                                <span class="time-note">No school</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr class="snow-day">
+                            <td class="date-cell">Tue 1/28 <span class="badge badge-snow">❄️</span></td>
+                            <td class="content-cell">
+                                Snow Day<br>
+                                <span class="time-note">No school</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Thu 1/30</td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.7</span>
+                                <span class="topic-tag">4.8</span>
+                                Discrete RVs<br>
+                                <span class="time-note">65 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.6</span><br>
+                                <span class="drill-tag">Drill 4.7-4.8</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.3-4.5</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Fri 1/31</td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.9</span>
+                                Combining RVs (Variance Trap)<br>
+                                <span class="time-note">55 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.7-4.8</span><br>
+                                <span class="drill-tag">Drill 4.9</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.6</span>
+                            </td>
+                        </tr>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 3 (Feb 3-7)</td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Mon 2/3</td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.10</span>
+                                <span class="topic-tag">4.11</span>
+                                <span class="topic-tag">4.12</span>
+                                Binomial &amp; Geometric<br>
+                                <span class="time-note">55 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.9</span><br>
+                                <span class="drill-tag">Drill 4.10-4.12</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.7-4.8</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Tue 2/4 <span class="badge badge-progress">PC</span></td>
+                            <td class="content-cell">
+                                Progress Check<br>
+                                <span class="time-note">65 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.10-4.12</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.9</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Thu 2/6</td>
+                            <td class="content-cell">
+                                FRQ Workshop<br>
+                                <span class="time-note">65 min</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.10-4.12</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Fri 2/7</td>
+                            <td class="content-cell">
+                                Review / Casino Lab Lite<br>
+                                <span class="time-note">55 min</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 4 (Feb 10-14)</td>
+                        </tr>
+                        <tr class="test-day">
+                            <td class="date-cell">Mon 2/10 <span class="badge badge-test">Test</span></td>
+                            <td class="content-cell">
+                                <strong>UNIT 4 TEST</strong><br>
+                                <span class="time-note">20 MC + 2 FRQ</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Period E Schedule -->
+        <div class="section">
+            <div class="section-header period-e">Period E Schedule (Mon / Wed / Fri)</div>
+            <div class="section-body" style="padding: 0;">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 110px;">Date</th>
+                            <th>Content</th>
+                            <th style="width: 130px;">Assign</th>
+                            <th style="width: 110px;">Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 1 (Jan 20-24)</td>
+                        </tr>
+                        <tr class="completed">
+                            <td class="date-cell">Wed 1/22 <span class="badge badge-done">Done</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.1</span>
+                                <span class="topic-tag">4.2</span>
+                                Simulation<br>
+                                <span class="time-note">90 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="drill-tag">Drill 4.1-4.2</span>
+                            </td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr class="completed">
+                            <td class="date-cell">Fri 1/24 <span class="badge badge-done">Done</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.3</span>
+                                <span class="topic-tag">4.4</span>
+                                <span class="topic-tag">4.5</span>
+                                Probability Rules<br>
+                                <span class="time-note">75 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.1-4.2</span><br>
+                                <span class="drill-tag">Drill 4.3-4.5</span>
+                            </td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 2 (Jan 27-31)</td>
+                        </tr>
+                        <tr class="snow-day">
+                            <td class="date-cell">Mon 1/27 <span class="badge badge-snow">❄️</span></td>
+                            <td class="content-cell">
+                                Snow Day<br>
+                                <span class="time-note">No school</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                        <tr class="long-block">
+                            <td class="date-cell">Wed 1/29 <span class="badge badge-long">90 min</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.6</span>
+                                Independence &amp; Unions<br>
+                                <span class="time-note">3 videos (~27 min)</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.3-4.5</span><br>
+                                <span class="drill-tag">Drill 4.6</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.1-4.2</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Fri 1/31</td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.7</span>
+                                <span class="topic-tag">4.8</span>
+                                Discrete RVs<br>
+                                <span class="time-note">75 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.6</span><br>
+                                <span class="drill-tag">Drill 4.7-4.8</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.3-4.5</span>
+                            </td>
+                        </tr>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 3 (Feb 3-7)</td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Mon 2/3</td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.9</span>
+                                Combining RVs (Variance Trap)<br>
+                                <span class="time-note">75 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.7-4.8</span><br>
+                                <span class="drill-tag">Drill 4.9</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.6</span>
+                            </td>
+                        </tr>
+                        <tr class="long-block">
+                            <td class="date-cell">Wed 2/5 <span class="badge badge-long">90 min</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.10</span>
+                                <span class="topic-tag">4.11</span>
+                                <span class="topic-tag">4.12</span>
+                                Binomial &amp; Geometric<br>
+                                <span class="time-note">4 videos (~36 min)</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.9</span><br>
+                                <span class="drill-tag">Drill 4.10-4.12</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.7-4.8</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Fri 2/7 <span class="badge badge-progress">PC</span></td>
+                            <td class="content-cell">
+                                Progress Check<br>
+                                <span class="time-note">75 min</span>
+                            </td>
+                            <td class="assign-cell">
+                                <span class="quiz-tag">Quiz 4.10-4.12</span>
+                            </td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.9</span>
+                            </td>
+                        </tr>
+                        <tr class="week-divider">
+                            <td colspan="4">Week 4 (Feb 10-14)</td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Mon 2/10</td>
+                            <td class="content-cell">
+                                FRQ Workshop<br>
+                                <span class="time-note">75 min</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">
+                                <span class="quiz-tag due">Quiz 4.10-4.12</span>
+                            </td>
+                        </tr>
+                        <tr class="test-day">
+                            <td class="date-cell">Wed 2/12 <span class="badge badge-test">Test</span></td>
+                            <td class="content-cell">
+                                <strong>UNIT 4 TEST</strong><br>
+                                <span class="time-note">20 MC + 2 FRQ</span>
+                            </td>
+                            <td class="assign-cell">—</td>
+                            <td class="due-cell">—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Global Autograder Rules -->
+        <div class="section">
+            <div class="section-header">Global Autograder Rules (No Naked Numbers)</div>
+            <div class="section-body">
+                <div class="alert alert-danger" style="margin-bottom: 0;">
+                    <div class="alert-title">Communication Gate</div>
+                    <p><strong>Full credit requires:</strong></p>
+                    <ol style="margin-top: 0.5rem;">
+                        <li>A <strong>probability statement</strong> (e.g., P(X≤3))</li>
+                        <li>The <strong>setup structure</strong> (distribution/rule)</li>
+                        <li>The <strong>final number</strong></li>
+                    </ol>
+                    <p style="margin-top: 0.5rem;">Calculator syntax alone → <strong>partial credit max</strong></p>
+                    <div class="feedback-tags" style="margin-top: 0.75rem;">
+                        <span class="feedback-tag">MISSING_PROB_STATEMENT</span>
+                        <span class="feedback-tag">CALCULATOR_SPEAK_ONLY</span>
+                        <span class="feedback-tag">MISSING_PARAMS</span>
+                        <span class="feedback-tag">WRONG_RULE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            AP Statistics — Lynn English High School<br>
+            <span style="font-size: 0.8rem;">Period B: Mon/Tue/Thu/Fri &nbsp;|&nbsp; Period E: Mon/Wed/Fri</span><br>
+            <span style="font-size: 0.75rem; color: #999;">v7 — Updated 1/26/26 for snow days</span>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIT 6.0001 Lecture 2 — Live Worksheet</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #222;
+            background: #f7f7f9;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #a31f34;
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+        .header-left, .header-right { font-weight: bold; color: #a31f34; }
+        .header-center { font-weight: bold; }
+        h1 {
+            text-align: center;
+            margin: 6px 0 2px;
+            color: #a31f34;
+        }
+        .subtitle {
+            text-align: center;
+            font-style: italic;
+            color: #555;
+            margin-bottom: 12px;
+        }
+        .worksheet-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #0c3c78;
+        }
+        .student-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .student-info label { font-weight: bold; color: #0c3c78; }
+        .student-info input {
+            border: none;
+            border-bottom: 1px solid #444;
+            background: transparent;
+            padding: 2px 5px;
+            font-size: 1em;
+            min-width: 140px;
+        }
+        .live-note {
+            margin: -4px 0 14px;
+            color: #444;
+            font-size: 0.95em;
+        }
+        .objective-box, .vocab-box, .exit-ticket {
+            border-radius: 6px;
+            padding: 14px;
+            background: #fff;
+            margin-bottom: 18px;
+        }
+        .objective-box { border: 2px solid #0c3c78; }
+        .objective-box strong { color: #0c3c78; }
+        .vocab-box { background: #f1f1f5; border: 1px solid #d5d5dc; }
+        .vocab-box h3 { margin-top: 0; color: #0c3c78; }
+        .vocab-table { width: 100%; }
+        .vocab-table td { padding: 5px 0; vertical-align: top; }
+        .vocab-table td:first-child { font-weight: bold; width: 190px; color: #0c3c78; }
+        .section {
+            margin-bottom: 22px;
+            background: #fff;
+            border: 1px solid #e2e2e8;
+            border-radius: 6px;
+            padding: 14px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0c3c78;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+        .section-header h2 {
+            margin: 0;
+            color: #0c3c78;
+            font-size: 1.1em;
+        }
+        .timestamp { color: #666; font-size: 0.9em; font-weight: normal; }
+        .question {
+            margin-bottom: 12px;
+            padding-left: 24px;
+            position: relative;
+        }
+        .question-number {
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #0c3c78;
+        }
+        .blank {
+            display: inline-block;
+            min-width: 90px;
+            border-bottom: 2px solid #0c3c78;
+            padding: 2px 8px;
+            margin: 0 3px;
+            background: #fff;
+            font-size: 1em;
+            transition: all 0.25s;
+        }
+        .blank:focus { outline: none; border-bottom-color: #a31f34; background: #f7f0f2; }
+        .blank.correct { background: #d4edda; border-bottom-color: #2e7d32; }
+        .blank.incorrect { background: #f8d7da; border-bottom-color: #c62828; }
+        .reflection-box textarea, .exit-ticket textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+        }
+        .controls {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 11px 22px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .check-btn { background: #0c3c78; color: #fff; }
+        .check-btn:hover { background: #0f4d94; }
+        .show-btn { background: #2e7d32; color: #fff; }
+        .show-btn:hover { background: #256428; }
+        .reset-btn { background: #6c757d; color: #fff; }
+        .reset-btn:hover { background: #5a646c; }
+        .score-display {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 12px;
+            background: #0c3c78;
+            color: #fff;
+            border-radius: 6px;
+            margin: 12px 0;
+            display: none;
+        }
+        .score-display.visible { display: block; }
+        .aggregate-drawer {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 360px;
+            max-width: 92vw;
+            background: #f8fbff;
+            border: 1px solid #cddff7;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 14px;
+            z-index: 9999;
+            display: none;
+        }
+        .aggregate-drawer.open { display: block; }
+        .aggregate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.92em;
+            color: #0c3c78;
+            margin-bottom: 8px;
+        }
+        .aggregate-meta { color: #555; font-size: 0.85em; }
+        .aggregate-trigger {
+            margin-left: 8px;
+            padding: 4px 10px;
+            font-size: 0.85em;
+            background: #e8f0ff;
+            border: 1px solid #c5d6ff;
+            border-radius: 6px;
+            color: #0c3c78;
+            cursor: pointer;
+        }
+        .aggregate-trigger:hover { background: #d7e6ff; }
+        .submit-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85em;
+            color: #2e7d32;
+            margin-left: 6px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .submit-indicator.visible { opacity: 1; }
+        .particle-up {
+            position: fixed;
+            pointer-events: none;
+            color: #2e7d32;
+            font-size: 16px;
+            animation: floatUp 0.9s ease-out forwards;
+            z-index: 9999;
+        }
+        .particle-snow {
+            position: fixed;
+            pointer-events: none;
+            color: #0c3c78;
+            font-size: 16px;
+            animation: snow 1.2s ease-out forwards;
+            z-index: 9999;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-24px); }
+        }
+        @keyframes snow {
+            0% { opacity: 0.9; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-12px); }
+        }
+        /* AI Grading Styles */
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 11px 22px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .btn-ai:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-ai:disabled { opacity: 0.6; cursor: not-allowed; }
+        .ai-feedback {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9ff;
+            border: 1px solid #d0d7ff;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        .ai-feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .score-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .score-badge.score-E { background: #d4edda; color: #155724; }
+        .score-badge.score-P { background: #fff3cd; color: #856404; }
+        .score-badge.score-I { background: #f8d7da; color: #721c24; }
+        .ai-feedback-body { color: #444; }
+        .ai-feedback-matched { color: #155724; margin-top: 4px; }
+        .ai-feedback-missing { color: #856404; margin-top: 4px; }
+        .ai-feedback-suggestion { color: #004085; margin-top: 4px; font-style: italic; }
+        textarea.graded-E { border-color: #28a745; background: #f8fff9; }
+        textarea.graded-P { border-color: #ffc107; background: #fffef5; }
+        textarea.graded-I { border-color: #dc3545; background: #fff8f8; }
+        /* Appeal system styles */
+        .appeal-section { margin-top: 8px; }
+        .appeal-btn {
+            background: none;
+            border: 1px solid #6c757d;
+            color: #6c757d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .appeal-btn:hover { background: #f0f0f0; }
+        .appeal-form {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .appeal-form.visible { display: block; }
+        .appeal-form textarea { min-height: 60px; margin-bottom: 8px; }
+        .appeal-form button { margin-right: 8px; }
+        .appeal-result {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .appeal-result.upgraded { background: #d4edda; color: #155724; }
+        .appeal-result.maintained { background: #fff3cd; color: #856404; }
+        .appeal-count { font-size: 0.8em; color: #666; margin-top: 4px; }
+        .pset-box {
+            background: #fff4e6;
+            border: 2px solid #ff9800;
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 18px;
+        }
+        .pset-box h3 { margin-top: 0; color: #e65100; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">MIT 6.0001</div>
+        <div class="header-center">Lecture 2: Branching and Iteration</div>
+        <div class="header-right">Follow-Along (Live)</div>
+    </div>
+
+    <h1>Introduction to Computer Science and Programming in Python</h1>
+    <div class="subtitle">MIT OpenCourseWare 6.0001 | Fall 2016 | Instructor: Ana Bell</div>
+    <div class="worksheet-label">Live Worksheet — responses save automatically with your username</div>
+
+    <div class="student-info">
+        <label>Name: <input id="studentName" type="text" placeholder="Your name"></label>
+        <label>Class/Period: <input id="studentClass" type="text" placeholder="e.g., Period 2"></label>
+        <label>Username (required for live sync): <input id="worksheetUsername" type="text" placeholder="quiz username"></label>
+    </div>
+    <div class="live-note">
+        Tip: Add a username first. Blanks save on blur/Enter. Use "Class answers" to see peer responses.
+    </div>
+
+    <div class="pset-box">
+        <h3>Problem Set Update</h3>
+        <p><strong>PS0 is due next week</strong> (during Lecture 3). <strong>PS1 will be assigned after this lecture.</strong></p>
+    </div>
+
+    <div id="scoreDisplay" class="score-display"></div>
+
+    <div class="objective-box">
+        <strong>Learning Objectives:</strong>
+        <ul>
+            <li>Work with strings: concatenation and repetition</li>
+            <li>Use print() with commas vs. concatenation</li>
+            <li>Get user input and cast to appropriate types</li>
+            <li>Apply comparison operators and logic operators</li>
+            <li>Implement branching with if, elif, and else</li>
+            <li>Write while loops for unknown iteration counts</li>
+            <li>Write for loops with range() for known iterations</li>
+            <li>Use break to exit loops early</li>
+        </ul>
+    </div>
+
+    <div class="vocab-box">
+        <h3>Key Vocabulary</h3>
+        <table class="vocab-table">
+            <tr><td>String</td><td>A sequence of characters enclosed in quotes</td></tr>
+            <tr><td>Concatenation</td><td>Joining strings together using the + operator</td></tr>
+            <tr><td>Casting</td><td>Converting one type to another (e.g., int("5") converts string to integer)</td></tr>
+            <tr><td>Branching</td><td>Choosing different code paths based on conditions (if/elif/else)</td></tr>
+            <tr><td>Iteration</td><td>Repeating code multiple times (loops)</td></tr>
+            <tr><td>Code block</td><td>Indented group of statements that execute together</td></tr>
+            <tr><td>Infinite loop</td><td>A loop that never terminates (condition always true)</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[0:30–1:30] Recap from Lecture 1</h2>
+            <span class="timestamp">Review</span>
+        </div>
+        <div class="question">
+            <span class="question-number">1.</span>
+            Main takeaway from Lecture 1: A computer only does <input type="text" class="blank" data-answer="what you tell it|what it is told" style="width: 180px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">2.</span>
+            The three scalar types we learned: <input type="text" class="blank" data-answer="integers|int|ints" style="width: 100px;">,
+            <input type="text" class="blank" data-answer="floats|float" style="width: 100px;">, and
+            <input type="text" class="blank" data-answer="booleans|bool|boolean" style="width: 100px;">.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[1:51–5:58] Strings</h2>
+            <span class="timestamp">New object type</span>
+        </div>
+        <div class="question">
+            <span class="question-number">3.</span>
+            Strings are <input type="text" class="blank" data-answer="sequences|sequence" style="width: 130px;"> of characters.
+        </div>
+        <div class="question">
+            <span class="question-number">4.</span>
+            You tell Python something is a string by enclosing it in <input type="text" class="blank" data-answer="quotation marks|quotes|quotations" style="width: 160px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">5.</span>
+            String concatenation uses the <input type="text" class="blank" data-answer="+|plus" style="width: 80px;"> operator to put strings together.
+        </div>
+        <div class="question">
+            <span class="question-number">6.</span>
+            If <code>hi = "hello there"</code> and <code>name = "ana"</code>, then <code>hi + name</code> produces:
+            <input type="text" class="blank" data-answer="hello thereana" style="width: 170px;"> (no space!)
+        </div>
+        <div class="question">
+            <span class="question-number">7.</span>
+            The <input type="text" class="blank" data-answer="*|star|multiplication" style="width: 100px;"> operator between a string and number
+            <input type="text" class="blank" data-answer="repeats|repeat" style="width: 100px;"> the string that many times.
+        </div>
+        <div class="question">
+            <span class="question-number">8.</span>
+            <code>"ha" * 3</code> produces: <input type="text" class="blank" data-answer="hahaha" style="width: 100px;">
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[6:02–9:16] Print Nuances</h2>
+            <span class="timestamp">Output formatting</span>
+        </div>
+        <div class="question">
+            <span class="question-number">9.</span>
+            Using <input type="text" class="blank" data-answer="commas|comma|," style="width: 100px;"> in print() automatically adds
+            <input type="text" class="blank" data-answer="spaces|space|a space" style="width: 100px;"> between values.
+        </div>
+        <div class="question">
+            <span class="question-number">10.</span>
+            Advantage of commas in print: objects don't all have to be <input type="text" class="blank" data-answer="strings|string" style="width: 100px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">11.</span>
+            Disadvantage of commas: you get <input type="text" class="blank" data-answer="spaces|extra spaces" style="width: 120px;"> everywhere.
+        </div>
+        <div class="question">
+            <span class="question-number">12.</span>
+            Using concatenation (+) in print: everything must be a <input type="text" class="blank" data-answer="string" style="width: 100px;">, but you control spacing.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[9:33–13:09] User Input</h2>
+            <span class="timestamp">Getting input</span>
+        </div>
+        <div class="question">
+            <span class="question-number">13.</span>
+            The function to get user input is <code><input type="text" class="blank" data-answer="input|input()" style="width: 100px;"></code>.
+        </div>
+        <div class="question">
+            <span class="question-number">14.</span>
+            Whatever the user types is always returned as a <input type="text" class="blank" data-answer="string" style="width: 100px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">15.</span>
+            If <code>text = input("Type: ")</code> and user types <code>5</code>, then <code>5 * text</code> produces:
+            <input type="text" class="blank" data-answer="55555" style="width: 100px;">
+        </div>
+        <div class="question">
+            <span class="question-number">16.</span>
+            To do math with input, you must <input type="text" class="blank" data-answer="cast|convert" style="width: 100px;"> it to a number type.
+        </div>
+        <div class="question">
+            <span class="question-number">17.</span>
+            <code>num = int(input("Enter: "))</code> — if user types <code>5</code>, then <code>5 * num</code> produces:
+            <input type="text" class="blank" data-answer="25" style="width: 80px;">
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[13:13–16:17] Comparison and Logic Operators</h2>
+            <span class="timestamp">Tests and conditions</span>
+        </div>
+        <div class="question">
+            <span class="question-number">18.</span>
+            Comparison operators return a <input type="text" class="blank" data-answer="boolean|bool" style="width: 100px;"> (True or False).
+        </div>
+        <div class="question">
+            <span class="question-number">19.</span>
+            You can compare: ints with ints, floats with floats, ints with floats, and
+            <input type="text" class="blank" data-answer="strings with strings|string with string" style="width: 180px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">20.</span>
+            You CANNOT compare a <input type="text" class="blank" data-answer="string|string with a number" style="width: 160px;"> with a number.
+        </div>
+        <div class="question">
+            <span class="question-number">21.</span>
+            Single <code>=</code> is for <input type="text" class="blank" data-answer="assignment|assigning" style="width: 130px;">;
+            double <code>==</code> is for <input type="text" class="blank" data-answer="equality|testing equality|comparison" style="width: 150px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">22.</span>
+            <code>!=</code> tests for <input type="text" class="blank" data-answer="inequality|not equal|not equals" style="width: 130px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">23.</span>
+            Strings are compared <input type="text" class="blank" data-answer="lexicographically|alphabetically" style="width: 170px;"> (by alphabet order).
+        </div>
+        <div class="question">
+            <span class="question-number">24.</span>
+            <code>"a" > "b"</code> is <input type="text" class="blank" data-answer="false|False" style="width: 80px;"> because 'a' comes before 'b'.
+        </div>
+        <div class="question">
+            <span class="question-number">25.</span>
+            Logic operators: <code>not</code> <input type="text" class="blank" data-answer="inverts|reverses|flips" style="width: 100px;"> a boolean.
+        </div>
+        <div class="question">
+            <span class="question-number">26.</span>
+            <code>a and b</code> is True only if <input type="text" class="blank" data-answer="both|both a and b" style="width: 140px;"> are True.
+        </div>
+        <div class="question">
+            <span class="question-number">27.</span>
+            <code>a or b</code> is False only if <input type="text" class="blank" data-answer="both|both a and b" style="width: 140px;"> are False.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[16:56–26:12] Branching (if/elif/else)</h2>
+            <span class="timestamp">Control flow</span>
+        </div>
+        <div class="question">
+            <span class="question-number">28.</span>
+            Branching lets the computer make <input type="text" class="blank" data-answer="decisions|choices" style="width: 130px;"> within a program.
+        </div>
+        <div class="question">
+            <span class="question-number">29.</span>
+            Simple <code>if</code>: executes extra code only if the condition is <input type="text" class="blank" data-answer="true|True" style="width: 80px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">30.</span>
+            <code>if-else</code>: executes <input type="text" class="blank" data-answer="one|one or the other" style="width: 120px;"> code block or the other, never both.
+        </div>
+        <div class="question">
+            <span class="question-number">31.</span>
+            <code>elif</code> is short for <input type="text" class="blank" data-answer="else if" style="width: 100px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">32.</span>
+            With <code>if-elif-else</code>, if multiple conditions are true, Python enters the
+            <input type="text" class="blank" data-answer="first|first one" style="width: 100px;"> that's true.
+        </div>
+        <div class="question">
+            <span class="question-number">33.</span>
+            Code blocks are denoted by <input type="text" class="blank" data-answer="indentation|indent" style="width: 130px;"> (typically 4 spaces).
+        </div>
+        <div class="question">
+            <span class="question-number">34.</span>
+            Using <code>=</code> instead of <code>==</code> inside an <code>if</code> causes a
+            <input type="text" class="blank" data-answer="syntax|syntax error" style="width: 130px;"> error.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[26:17–33:28] While Loops</h2>
+            <span class="timestamp">Iteration</span>
+        </div>
+        <div class="question">
+            <span class="question-number">35.</span>
+            The Lost Woods example: nested ifs could go infinitely deep, but a
+            <input type="text" class="blank" data-answer="while|while loop" style="width: 120px;"> loop solves this in 3 lines.
+        </div>
+        <div class="question">
+            <span class="question-number">36.</span>
+            A while loop executes its code block as long as the condition is <input type="text" class="blank" data-answer="true|True" style="width: 80px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">37.</span>
+            While loops are useful for <input type="text" class="blank" data-answer="user input|unpredictable|unknown" style="width: 140px;"> where you don't know the iteration count.
+        </div>
+        <div class="question">
+            <span class="question-number">38.</span>
+            When using a counter with while loops, you must: (1) <input type="text" class="blank" data-answer="initialize|init" style="width: 130px;"> the counter
+            before the loop, and (2) <input type="text" class="blank" data-answer="increment|update" style="width: 130px;"> it inside the loop.
+        </div>
+        <div class="question">
+            <span class="question-number">39.</span>
+            Forgetting to increment the counter causes an <input type="text" class="blank" data-answer="infinite|infinite loop" style="width: 130px;"> loop.
+        </div>
+        <div class="question">
+            <span class="question-number">40.</span>
+            To stop an infinite loop in the console, press <input type="text" class="blank" data-answer="Control-C|Ctrl-C|Ctrl+C|Command-C" style="width: 130px;">.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[33:51–40:37] For Loops and range()</h2>
+            <span class="timestamp">Counting loops</span>
+        </div>
+        <div class="question">
+            <span class="question-number">41.</span>
+            For loops are a shortcut when you <input type="text" class="blank" data-answer="know|know the" style="width: 100px;"> the number of iterations.
+        </div>
+        <div class="question">
+            <span class="question-number">42.</span>
+            <code>range(5)</code> creates a sequence: <input type="text" class="blank" data-answer="0, 1, 2, 3, 4|0,1,2,3,4" style="width: 130px;">
+        </div>
+        <div class="question">
+            <span class="question-number">43.</span>
+            <code>range(stop)</code> starts at <input type="text" class="blank" data-answer="0" style="width: 50px;"> and ends at
+            <input type="text" class="blank" data-answer="stop - 1|stop-1|stop minus 1" style="width: 120px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">44.</span>
+            <code>range(7, 10)</code> produces: <input type="text" class="blank" data-answer="7, 8, 9|7,8,9" style="width: 100px;">
+        </div>
+        <div class="question">
+            <span class="question-number">45.</span>
+            <code>range(start, stop, step)</code>: <code>range(5, 11, 2)</code> produces:
+            <input type="text" class="blank" data-answer="5, 7, 9|5,7,9" style="width: 100px;">
+        </div>
+        <div class="question">
+            <span class="question-number">46.</span>
+            The values in range() must be <input type="text" class="blank" data-answer="integers|ints|int" style="width: 100px;"> (not floats).
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>[40:41–43:20] Break Statement and Loop Comparison</h2>
+            <span class="timestamp">Loop control</span>
+        </div>
+        <div class="question">
+            <span class="question-number">47.</span>
+            The <code>break</code> statement immediately exits the <input type="text" class="blank" data-answer="innermost|current" style="width: 130px;"> loop.
+        </div>
+        <div class="question">
+            <span class="question-number">48.</span>
+            Use for loops when you know the <input type="text" class="blank" data-answer="number of iterations|iteration count" style="width: 180px;">.
+        </div>
+        <div class="question">
+            <span class="question-number">49.</span>
+            Use while loops when iterations are <input type="text" class="blank" data-answer="unpredictable|unknown" style="width: 140px;"> (like user input).
+        </div>
+        <div class="question">
+            <span class="question-number">50.</span>
+            A for loop can always be rewritten as a while loop, but the
+            <input type="text" class="blank" data-answer="vice versa|reverse|opposite" style="width: 130px;"> is not always true.
+        </div>
+    </div>
+
+    <div class="section reflection-box">
+        <div class="section-header">
+            <h2>Post-Video Reflection</h2>
+            <span class="timestamp">[AI-Graded]</span>
+        </div>
+        <div class="question">
+            <span class="question-number">R1.</span>
+            Why does Python treat user input as a string by default, and what problem does this create for math operations?
+            <textarea id="reflect1" placeholder="Write your reflection here..."></textarea>
+            <div id="reflect1-feedback"></div>
+        </div>
+        <div class="question">
+            <span class="question-number">R2.</span>
+            Explain why <code>if x = 5:</code> causes a syntax error but <code>if x == 5:</code> works. What's the conceptual difference?
+            <textarea id="reflect2" placeholder="Write your reflection here..."></textarea>
+            <div id="reflect2-feedback"></div>
+        </div>
+        <div class="question">
+            <span class="question-number">R3.</span>
+            In the Lost Woods example, why can't we solve the problem with just if/elif/else statements? What makes a while loop necessary?
+            <textarea id="reflect3" placeholder="Write your reflection here..."></textarea>
+            <div id="reflect3-feedback"></div>
+        </div>
+        <div class="question">
+            <span class="question-number">R4.</span>
+            When would you choose a for loop over a while loop, and vice versa? Give an example scenario for each.
+            <textarea id="reflect4" placeholder="Write your reflection here..."></textarea>
+            <div id="reflect4-feedback"></div>
+        </div>
+    </div>
+
+    <div class="exit-ticket">
+        <h3>Exit Ticket</h3>
+        Trace through this code and explain what it prints and why:
+        <pre style="margin:6px 0 8px; padding:8px; background:#f4f4f6; border-radius:6px;">total = 0
+for i in range(1, 4):
+    total = total + i
+print(total)</pre>
+        <textarea id="exitTicket" placeholder="Your answer..."></textarea>
+        <div id="exitTicket-feedback"></div>
+    </div>
+
+    <div class="controls">
+        <button class="check-btn" onclick="checkAnswers()">Check Answers</button>
+        <button class="show-btn" onclick="showAnswers()">Show Answers</button>
+        <button class="reset-btn" onclick="resetForm()">Reset</button>
+        <button class="btn-ai" onclick="gradeAllReflections()">Grade Reflections</button>
+    </div>
+
+    <div id="aggregateDrawer" class="aggregate-drawer" aria-live="polite">
+        <div class="aggregate-header">
+            <span id="aggregateTitle">Class responses</span>
+            <button type="button" id="aggregateClose" class="aggregate-trigger" style="margin-left:0;">Close</button>
+        </div>
+        <div class="aggregate-meta" id="aggregateCount"></div>
+        <canvas id="aggregateCanvas" height="180"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../railway_config.js"></script>
+    <script src="../railway_client.js"></script>
+    <script src="ai-grading-prompts-mit6001-lec2.js"></script>
+    <script>
+        function normalize(str) {
+            return str.toLowerCase().trim()
+                .replace(/[^\w\s]/g, '')
+                .replace(/\s+/g, ' ');
+        }
+
+        function isCorrect(input, answer) {
+            const userAnswer = normalize(input);
+            const correctAnswers = answer.split('|').map(a => normalize(a));
+            for (const correct of correctAnswers) {
+                if (userAnswer === correct) return true;
+                if (correct.length > 5 && userAnswer.includes(correct)) return true;
+                if (correct.length > 5 && correct.includes(userAnswer) && userAnswer.length > 3) return true;
+            }
+            return false;
+        }
+
+        function checkAnswers() {
+            const blanks = document.querySelectorAll('.blank');
+            let correct = 0;
+            let total = 0;
+            blanks.forEach(blank => {
+                const answer = blank.dataset.answer;
+                if (!answer) return;
+                total++;
+                const userValue = blank.value.trim();
+                if (userValue === '') {
+                    blank.classList.remove('correct', 'incorrect');
+                } else if (isCorrect(userValue, answer)) {
+                    blank.classList.add('correct');
+                    blank.classList.remove('incorrect');
+                    correct++;
+                } else {
+                    blank.classList.add('incorrect');
+                    blank.classList.remove('correct');
+                }
+            });
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const percentage = total ? Math.round((correct / total) * 100) : 0;
+            scoreDisplay.textContent = `Score: ${correct} / ${total} (${percentage}%)`;
+            scoreDisplay.classList.add('visible');
+        }
+
+        function showAnswers() {
+            const blanks = document.querySelectorAll('.blank');
+            blanks.forEach(blank => {
+                const answer = blank.dataset.answer;
+                if (answer) {
+                    blank.value = answer.split('|')[0];
+                    blank.classList.add('correct');
+                    blank.classList.remove('incorrect');
+                }
+            });
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            scoreDisplay.textContent = 'All answers shown';
+            scoreDisplay.classList.add('visible');
+        }
+
+        function resetForm() {
+            const blanks = document.querySelectorAll('.blank');
+            blanks.forEach(blank => {
+                blank.value = '';
+                blank.classList.remove('correct', 'incorrect');
+            });
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(ta => ta.value = '');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            scoreDisplay.classList.remove('visible');
+        }
+
+        document.querySelectorAll('.blank').forEach((blank, index, blanks) => {
+            blank.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const nextBlank = blanks[index + 1];
+                    if (nextBlank) nextBlank.focus();
+                }
+            });
+        });
+
+        const WORKSHEET_ID = 'WS-MIT6-LEC2';
+        const chartInstances = {};
+        const LOCAL_USER_KEY = 'worksheetLiveUser';
+        const debounceTimers = {};
+        let currentDrawerQuestionId = null;
+
+        function assignQuestionIds() {
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            blanks.forEach((blank, idx) => {
+                if (!blank.dataset.questionId) {
+                    blank.dataset.questionId = `${WORKSHEET_ID}-Q${idx + 1}`;
+                }
+            });
+        }
+
+        function attachLiveListeners() {
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            blanks.forEach(blank => {
+                blank.addEventListener('blur', () => handleLiveUpdate(blank));
+                blank.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleLiveUpdate(blank);
+                    }
+                });
+                ensureIndicator(blank);
+            });
+        }
+
+        function ensureIndicator(blank) {
+            if (blank.nextElementSibling && blank.nextElementSibling.classList.contains('submit-indicator')) return;
+            const indicator = document.createElement('span');
+            indicator.className = 'submit-indicator';
+            indicator.innerHTML = '&#10003; saved';
+            blank.insertAdjacentElement('afterend', indicator);
+        }
+
+        function markSubmitted(blank) {
+            const indicator = blank.nextElementSibling && blank.nextElementSibling.classList.contains('submit-indicator')
+                ? blank.nextElementSibling
+                : null;
+            if (indicator) {
+                indicator.classList.add('visible');
+                setTimeout(() => indicator.classList.remove('visible'), 2000);
+            }
+            spawnParticleUp(blank);
+        }
+
+        function spawnParticleUp(blank) {
+            const rect = blank.getBoundingClientRect();
+            const particle = document.createElement('div');
+            particle.className = 'particle-up';
+            particle.textContent = '\u2191';
+            particle.style.left = `${rect.left + rect.width / 2}px`;
+            particle.style.top = `${rect.top - 4 + window.scrollY}px`;
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 900);
+        }
+
+        function injectAggregateButtons() {
+            const questions = Array.from(document.querySelectorAll('.question'));
+            questions.forEach(q => {
+                const blank = q.querySelector('.blank');
+                if (!blank) return;
+                if (q.querySelector('.aggregate-trigger')) return;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'aggregate-trigger';
+                btn.textContent = 'Class answers';
+                btn.addEventListener('click', () => openDrawerFor(blank));
+                q.appendChild(btn);
+            });
+        }
+
+        function getUsername() {
+            const usernameField = document.getElementById('worksheetUsername');
+            const nameField = document.getElementById('studentName');
+            const username = (usernameField?.value || '').trim();
+            if (username) {
+                try {
+                    localStorage.setItem(LOCAL_USER_KEY, JSON.stringify({
+                        username,
+                        name: nameField?.value || '',
+                        klass: document.getElementById('studentClass')?.value || ''
+                    }));
+                } catch (e) {
+                    console.warn('Unable to persist username locally', e);
+                }
+                return username;
+            }
+            return '';
+        }
+
+        function restoreSavedUser() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(LOCAL_USER_KEY) || '{}');
+                if (saved.username) {
+                    const usernameField = document.getElementById('worksheetUsername');
+                    if (usernameField) usernameField.value = saved.username;
+                }
+                if (saved.name) {
+                    const nameField = document.getElementById('studentName');
+                    if (nameField) nameField.value = saved.name;
+                }
+                if (saved.klass) {
+                    const classField = document.getElementById('studentClass');
+                    if (classField) classField.value = saved.klass;
+                }
+            } catch (e) {
+                console.warn('No saved user found', e);
+            }
+        }
+
+        function normalizeForStore(str) {
+            return normalize(str) || '(blank)';
+        }
+
+        async function sendAnswer(username, questionId, answerValue) {
+            const payload = {
+                username,
+                question_id: questionId,
+                answer_value: answerValue,
+                timestamp: Date.now()
+            };
+
+            if (window.railwayClient?.submitAnswer) {
+                return window.railwayClient.submitAnswer(
+                    payload.username,
+                    payload.question_id,
+                    payload.answer_value,
+                    payload.timestamp
+                );
+            }
+
+            const baseUrl = window.RAILWAY_SERVER_URL || '';
+            if (!baseUrl) {
+                console.warn('No Railway server configured; skipping live submit');
+                return false;
+            }
+
+            try {
+                const res = await fetch(`${baseUrl}/api/submit-answer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                return !!result.success;
+            } catch (e) {
+                console.warn('Live submit failed', e);
+                return false;
+            }
+        }
+
+        async function refreshAggregate(questionId, correctAnswers) {
+            await renderAggregate(questionId, correctAnswers);
+        }
+
+        async function fetchQuestionStats(questionId) {
+            if (window.railwayClient?.getStats) {
+                const stats = await window.railwayClient.getStats(questionId);
+                if (stats) return stats;
+            }
+            const baseUrl = window.RAILWAY_SERVER_URL || '';
+            if (!baseUrl) return null;
+            try {
+                const res = await fetch(`${baseUrl}/api/question-stats/${encodeURIComponent(questionId)}`);
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (e) {
+                console.warn('Unable to fetch stats', e);
+                return null;
+            }
+        }
+
+        function ensureDrawer() {
+            const drawer = document.getElementById('aggregateDrawer');
+            const closeBtn = document.getElementById('aggregateClose');
+            if (closeBtn && !closeBtn.dataset.bound) {
+                closeBtn.dataset.bound = 'true';
+                closeBtn.addEventListener('click', () => {
+                    drawer.classList.remove('open');
+                    currentDrawerQuestionId = null;
+                });
+            }
+            return {
+                drawer,
+                titleEl: document.getElementById('aggregateTitle'),
+                countEl: document.getElementById('aggregateCount'),
+                canvas: document.getElementById('aggregateCanvas')
+            };
+        }
+
+        function ensureRailwayDefaults() {
+            if (typeof window.USE_RAILWAY === 'undefined') {
+                window.USE_RAILWAY = true;
+            }
+            if (!window.RAILWAY_SERVER_URL) {
+                window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';
+            }
+        }
+
+        async function renderAggregate(questionId, correctAnswers) {
+            const { canvas, countEl } = ensureDrawer();
+            if (!canvas) return;
+            const stats = await fetchQuestionStats(questionId);
+            if (!stats) return;
+            spawnPeerSnow();
+
+            const distribution = stats.distribution || {};
+            const labelsSet = new Set(Object.keys(distribution));
+            const labels = Array.from(labelsSet).filter(Boolean);
+            const counts = labels.map(label => distribution[label] ?? 0);
+            const colors = labels.map(() => 'rgba(54, 162, 235, 0.6)');
+
+            if (chartInstances.aggregate) {
+                chartInstances.aggregate.destroy();
+            }
+
+            chartInstances.aggregate = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Responses (%)',
+                        data: counts,
+                        backgroundColor: colors,
+                        borderColor: 'rgba(0, 51, 102, 0.8)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { callback: value => `${value}%` }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.formattedValue}% (${Math.round((ctx.parsed.y / 100) * (stats.totalResponses || 0))} of ${stats.totalResponses || 0})`
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (countEl) countEl.textContent = `${stats.totalResponses || 0} responses`;
+        }
+
+        function spawnPeerSnow() {
+            const particle = document.createElement('div');
+            particle.className = 'particle-snow';
+            particle.textContent = '\u2744';
+            const x = window.innerWidth - 80 + Math.random() * 40;
+            const y = 60 + Math.random() * 40 + window.scrollY;
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 1400);
+        }
+
+        async function refreshAllAggregates() {
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            const uniqueQuestions = new Map();
+            blanks.forEach(blank => {
+                if (blank.dataset.questionId && blank.dataset.answer) {
+                    uniqueQuestions.set(blank.dataset.questionId, blank.dataset.answer.split('|'));
+                }
+            });
+            if (currentDrawerQuestionId && uniqueQuestions.has(currentDrawerQuestionId)) {
+                await renderAggregate(currentDrawerQuestionId, uniqueQuestions.get(currentDrawerQuestionId));
+            }
+        }
+
+        function handleLiveUpdate(blank) {
+            const username = getUsername();
+            if (!username) return;
+            const questionId = blank.dataset.questionId;
+            const correctAnswers = (blank.dataset.answer || '').split('|');
+            if (!questionId) return;
+            if (debounceTimers[questionId]) {
+                clearTimeout(debounceTimers[questionId]);
+            }
+            debounceTimers[questionId] = setTimeout(async () => {
+                await sendAnswer(username, questionId, normalizeForStore(blank.value));
+                markSubmitted(blank);
+                if (currentDrawerQuestionId === questionId) {
+                    await refreshAggregate(questionId, correctAnswers);
+                }
+            }, 400);
+        }
+
+        function openDrawerFor(blank) {
+            const questionId = blank.dataset.questionId;
+            const correctAnswers = (blank.dataset.answer || '').split('|');
+            if (!questionId) return;
+            const { drawer, titleEl } = ensureDrawer();
+            currentDrawerQuestionId = questionId;
+            if (titleEl) titleEl.textContent = `Class responses for ${questionId}`;
+            drawer.classList.add('open');
+            renderAggregate(questionId, correctAnswers);
+        }
+
+        async function submitWorksheetResponses() {
+            const username = getUsername();
+            if (!username) {
+                console.warn('Username is required for live sync; skipping submit.');
+                return;
+            }
+            ensureRailwayDefaults();
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            const submissions = blanks
+                .filter(b => b.dataset.questionId)
+                .map(b => sendAnswer(username, b.dataset.questionId, normalizeForStore(b.value)));
+            await Promise.all(submissions);
+        }
+
+        const originalCheckAnswers = window.checkAnswers || function() {};
+        window.checkAnswers = async function() {
+            try { await originalCheckAnswers(); } catch (e) { console.error('checkAnswers failed:', e); }
+            await submitWorksheetResponses();
+            await refreshAllAggregates();
+        };
+
+        const originalShowAnswers = window.showAnswers || function() {};
+        window.showAnswers = async function() {
+            try { await originalShowAnswers(); } catch (e) { console.error('showAnswers failed:', e); }
+            await refreshAllAggregates();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            assignQuestionIds();
+            attachLiveListeners();
+            injectAggregateButtons();
+            restoreSavedUser();
+            ensureRailwayDefaults();
+            refreshAllAggregates();
+        });
+
+        // ==================== AI GRADING ====================
+        const gradingState = new Map();
+
+        async function gradeAllReflections() {
+            const btn = document.querySelector('.btn-ai');
+            btn.disabled = true;
+            btn.textContent = 'Grading...';
+
+            const textareas = ['reflect1', 'reflect2', 'reflect3', 'reflect4', 'exitTicket'];
+
+            for (const id of textareas) {
+                const textarea = document.getElementById(id);
+                if (!textarea) continue;
+
+                const answer = textarea.value.trim();
+                if (answer.length < 20) {
+                    showFeedback(id, { score: 'I', feedback: 'Please write a more complete response (at least 20 characters).' });
+                    continue;
+                }
+
+                try {
+                    const result = await gradeReflection(id, answer);
+                    gradingState.set(id, {
+                        result,
+                        originalAnswer: answer,
+                        appealCount: 0,
+                        history: []
+                    });
+                    showFeedback(id, result);
+                } catch (err) {
+                    console.error('Grading error:', err);
+                    showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
+                }
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Grade Reflections';
+        }
+
+        async function gradeReflection(questionId, answer) {
+            if (!window.buildReflectionPromptMIT_LEC2) {
+                throw new Error('AI grading prompts not loaded');
+            }
+
+            const prompt = window.buildReflectionPromptMIT_LEC2(questionId, answer);
+
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'MIT 6.0001 - Branching and Iteration',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_MIT6001_LEC2
+                    },
+                    answers: { answer },
+                    prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Grading request failed');
+            return await response.json();
+        }
+
+        function showFeedback(questionId, result) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add(`graded-${result.score}`);
+
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+
+            const feedback = document.createElement('div');
+            feedback.className = 'ai-feedback';
+
+            let html = `
+                <div class="ai-feedback-header">
+                    <span class="score-badge score-${result.score}">${result.score === 'E' ? 'Essentially Correct' : result.score === 'P' ? 'Partially Correct' : 'Incorrect'}</span>
+                </div>
+                <div class="ai-feedback-body">${result.feedback || ''}</div>
+            `;
+
+            if (result.matched && result.matched.length > 0) {
+                html += `<div class="ai-feedback-matched">\u2713 You addressed: ${result.matched.join(', ')}</div>`;
+            }
+            if (result.missing && result.missing.length > 0) {
+                html += `<div class="ai-feedback-missing">\u25CB Missing: ${result.missing.join(', ')}</div>`;
+            }
+            if (result.suggestion) {
+                html += `<div class="ai-feedback-suggestion">\uD83D\uDCA1 ${result.suggestion}</div>`;
+            }
+
+            feedback.innerHTML = html;
+
+            // Add appeal button if P or I and appeals remaining
+            const state = gradingState.get(questionId);
+            if (state && result.score !== 'E' && state.appealCount < 3) {
+                const appealSection = document.createElement('div');
+                appealSection.className = 'appeal-section';
+                appealSection.innerHTML = `
+                    <button class="appeal-btn" onclick="showAppealForm('${questionId}')">Disagree? Appeal</button>
+                    <div class="appeal-form" id="appeal-form-${questionId}">
+                        <p>Explain why your answer deserves a higher score:</p>
+                        <textarea id="appeal-text-${questionId}" placeholder="I believe my answer addresses..."></textarea>
+                        <button class="check-btn" onclick="submitAppeal('${questionId}')">Submit Appeal</button>
+                        <button class="show-btn" onclick="hideAppealForm('${questionId}')">Cancel</button>
+                    </div>
+                    <div class="appeal-count">Appeals used: ${state.appealCount}/3</div>
+                `;
+                feedback.appendChild(appealSection);
+            }
+
+            container.appendChild(feedback);
+        }
+
+        function showAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.add('visible');
+        }
+
+        function hideAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.remove('visible');
+        }
+
+        async function submitAppeal(questionId) {
+            const state = gradingState.get(questionId);
+            if (!state || state.appealCount >= 3) return;
+
+            const appealText = document.getElementById(`appeal-text-${questionId}`).value.trim();
+            if (appealText.length < 10) {
+                alert('Please provide more detail in your appeal.');
+                return;
+            }
+
+            const form = document.getElementById(`appeal-form-${questionId}`);
+            const buttons = form.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            try {
+                const rubric = window.getRubricMIT_LEC2(questionId);
+                const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/appeal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: {
+                            questionId,
+                            topic: 'MIT 6.0001 - Branching and Iteration',
+                            prompt: rubric.questionText,
+                            expectedElements: rubric.expectedElements.map(e => e.description),
+                            lessonContext: window.LESSON_CONTEXT_MIT6001_LEC2
+                        },
+                        answers: { answer: state.originalAnswer },
+                        appealText,
+                        previousResults: { answer: state.result }
+                    })
+                });
+
+                const appealResult = await response.json();
+                const previousScore = state.result.score;
+                const upgraded = appealResult.score === 'E' ||
+                    (previousScore === 'I' && appealResult.score === 'P');
+
+                state.history.push({
+                    appealText,
+                    previousScore,
+                    newScore: appealResult.score,
+                    response: appealResult.feedback,
+                    upgraded
+                });
+                state.appealCount++;
+                state.result = appealResult;
+
+                showFeedback(questionId, appealResult);
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `appeal-result ${upgraded ? 'upgraded' : 'maintained'}`;
+                resultDiv.textContent = upgraded ? 'Appeal Granted! Score upgraded.' : 'Score maintained. ' + (appealResult.feedback || '');
+                document.getElementById(`${questionId}-feedback`).appendChild(resultDiv);
+
+            } catch (err) {
+                console.error('Appeal error:', err);
+                alert('Error processing appeal. Please try again.');
+            }
+
+            buttons.forEach(b => b.disabled = false);
+        }
+
+        // Clear grading state on reset
+        const originalResetForm = window.resetForm;
+        window.resetForm = function() {
+            if (originalResetForm) originalResetForm();
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+            });
+            document.querySelectorAll('.ai-feedback').forEach(fb => fb.remove());
+            gradingState.clear();
+        };
+    </script>
+</body>
+</html>

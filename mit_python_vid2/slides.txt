@@ -1,0 +1,53 @@
+The video begins with introductory slides and a welcome to the second lecture of 6.0001 and 6.00. The lecture content starts with a recap of the previous session, mentioning the computer only doing what it is told, and the simple object types: integers, floats, and Booleans, along with simple operations.
+
+The speaker then introduces the new object type, **strings**, defined as a sequence of characters (letters, digits, special characters, and spaces). Strings are denoted by enclosing the sequence in single or double quotation marks.
+
+Two operations on strings are discussed:
+
+  * **Concatenation** (using the `+` operator) is introduced as a way to put strings together. The speaker demonstrates that the `+` operator does not implicitly add spaces, requiring a space to be added manually within quotation marks if desired.
+  * The **multiplication** (`*`) operator can be used between a string and a number, which Python interprets as repeating the string that number of times. The speaker shows an example using parentheses to control the order of operations.
+
+Next, the speaker discusses **nuances related to the `print` function** (06:05):
+
+  * Using **commas** inside the parentheses of `print` automatically adds a space between the values. The benefit is that the objects being printed do not all have to be strings.
+  * Using the **`+` operator** (concatenation) avoids implicit spaces, but requires everything being added to be a string object.
+
+The next topic is **getting input from the user** (09:37):
+
+  * The `input()` command is used to prompt the user for input, and the program pauses until the user types something and hits Enter.
+  * Crucially, whatever the user types in is always interpreted as a **string**.
+  * To perform mathematical operations, the string must be explicitly **cast** to a number type like `int` or `float`.
+
+The lecture then transitions to **comparison operators** for adding tests to code (13:32):
+
+  * Comparison operators return a **Boolean** value (`true` or `false`).
+  * Valid comparisons include ints with ints, floats with floats, strings with strings, and ints with floats. You cannot compare a string with a number.
+  * Standard comparisons are available: greater than (`>`), greater or equal to (`>=`), less than (`<`), and less than or equal to (`<=`).
+  * Equality is tested with **double equals** (`==`), as a single equals sign (`=`) is the assignment operator. Inequality is tested with exclamation equal (`!=`).
+  * Comparing strings is done **lexicographically** (by alphabetical order).
+  * **Logic operators** for Booleans include `not` (inverts the value), `and` (true only if both are true), and `or` (false only if both are false).
+
+The speaker introduces **branching** (16:56) as a way to have the computer make decisions within a program. Three constructs for control flow are presented:
+
+  * **Simple `if`**: Executes an extra set of expressions only if the condition evaluates to `true`.
+  * **`if-else`**: Executes one set of expressions if the condition is `true`, or a different set if the condition is `false`, but never both.
+  * **`if-elif-else`**: Allows choosing between multiple possibilities. Python checks conditions sequentially and executes the code block for the first condition that is true, then skips the rest of the choices.
+
+**Code blocks** in all these constructs are denoted by **indentation** (typically four spaces). Nested conditionals are possible.
+
+To handle tasks that may need to be repeated an unknown number of times (as demonstrated by the *Legend of Zelda: Lost Woods* game example), the concept of **loops** is introduced (28:04):
+
+  * A **`while` loop** repeatedly executes a code block as long as a condition remains true. When the condition becomes false, execution stops and continues after the loop. The condition is checked *before* each iteration.
+  * When using a `while` loop for counting, a **counter variable** must be initialized before the loop, and then explicitly incremented *within* the loop to avoid an **infinite loop**. If an infinite loop occurs in the console, it can be stopped with Control-C or Command-C.
+  * A **`for` loop** is a shortcut, primarily used when the number of iterations is known.
+      * The structure is `for [loop variable] in range([number])`.
+      * `range(5)` internally creates a sequence of numbers starting from 0 and going up to $5-1$ (i.e., 0, 1, 2, 3, 4). The loop variable takes each value in the sequence for one iteration.
+  * **Customizing `range`**:
+      * `range(stop)`: `start` defaults to 0, `step` defaults to 1.
+      * `range(start, stop)`: `step` defaults to 1.
+      * `range(start, stop, step)`: All three values are specified. The sequence goes until `stop - 1`. The values in `range` must be integers.
+
+Finally, the speaker covers the **`break` statement** (41:00):
+
+  * `break` immediately exits the innermost loop it is in.
+  * The lecture concludes with a **comparison between `for` and `while` loops** (42:14), noting that `for` loops are typically for a known number of iterations, while `while` loops are better for unpredictable events like user input. Both support the `break` statement.
