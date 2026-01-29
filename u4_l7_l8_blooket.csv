@@ -5,81 +5,81 @@ Question #,Question Text,Answer 1,Answer 2,"Answer 3
 (Optional)","Time Limit (sec)
 (Max: 300 seconds)","Correct Answer(s)
 (Only include Answer #)",,,,,,,,,,,,,,,,,,
-1,What is a random variable?,A numerical outcome of random behavior,A fixed constant,A letter of the alphabet,A probability value,20,1
-2,Random variables are labeled with which type of letters?,Capital letters (X Y W),Lowercase letters (x y w),Greek letters (α β γ),Roman numerals (I II III),20,1
-3,Which symbol represents a random variable?,X,p,n,μ,20,1
-4,A random variable assigns what to outcomes of a random process?,Numerical values,Letter grades,Colors,Rankings,20,1
-5,What does X represent in probability notation?,A random variable,The x-axis,An unknown constant,A sample size,20,1
-6,Why do we use capital letters for random variables?,To distinguish variables from specific values,Because lowercase is for Greek letters,It is just a tradition with no meaning,To indicate large numbers,20,1
-7,If X = number of heads when flipping 3 coins then X is a...,Random variable,Constant,Parameter,Sample,20,1
-8,What makes a variable a random variable?,Its value is determined by chance,Its value is always unknown,Its value changes over time,Its value is very large,20,1
-9,A discrete random variable has values that are...,Countable with gaps between them,Any value in an interval,Always whole numbers only,Impossible to list,20,1
-10,Which is an example of a discrete random variable?,Number of students absent today,Height of a randomly selected tree,Time to complete a test,Temperature at noon,20,1
-11,A continuous random variable can take...,Infinitely many values in an interval,Only whole number values,Only positive values,Exactly 10 different values,20,1
-12,Which is a continuous random variable?,Time to run a marathon,Number of cars in a parking lot,Number of pets owned,Number of text messages sent,20,1
-13,Number of siblings a person has is what type of variable?,Discrete,Continuous,Categorical,Constant,20,1
-14,Weight of a newborn baby is what type of variable?,Continuous,Discrete,Categorical,Constant,20,1
-15,Which is discrete: time to finish homework or number of problems correct?,Number of problems correct,Time to finish homework,Both are discrete,Neither is discrete,20,1
-16,Why is the number of children in a family discrete?,You cannot have 2.5 children,Children are always small,Families are countable,Numbers are discrete,20,1
-17,Distance traveled by a car is what type of variable?,Continuous,Discrete,Neither,Both,20,1
-18,Number of red cards drawn from a deck is...,Discrete,Continuous,Categorical,Constant,20,1
-19,Which cannot be a continuous random variable?,Number of correct answers on a quiz,Amount of rainfall in inches,Speed of a car,Length of a phone call,20,1
-20,The amount of time waiting in line is...,Continuous,Discrete,Neither continuous nor discrete,Always exactly 5 minutes,20,1
-21,What is a probability distribution?,A table or graph showing all values with their probabilities,A single probability value,The mean of a dataset,A random sample,20,1
-22,In a valid probability distribution all probabilities must be...,Between 0 and 1 inclusive,Greater than 0,Equal to each other,Greater than 0.5,20,1
-23,The sum of all probabilities in a distribution must equal...,1,0,100,The sample size,20,1
-24,If P(X=1)=0.3 and P(X=2)=0.5 and P(X=3)=0.2 is this a valid distribution?,Yes because probabilities sum to 1,No because 0.3 is too small,No because there are only 3 values,Yes because all values are different,20,1
-25,Which is NOT a requirement for a probability distribution?,Probabilities must be equal,All probabilities between 0 and 1,Probabilities sum to 1,Every outcome has a probability,20,1
-26,If probabilities sum to 0.95 then the distribution is...,Invalid,Valid,Approximately valid,Continuous,20,1
-27,A probability of -0.2 in a distribution means...,The distribution is invalid,The event is impossible,The event is certain,The value is negative,20,1
-28,What must be true about P(X=x) for any value x?,0 ≤ P(X=x) ≤ 1,P(X=x) > 0,P(X=x) < 1,P(X=x) = 0.5,20,1
-29,If a distribution shows P(X=0)=0.4 and P(X=1)=0.6 then P(X=2)=?,0,0.2,1,Cannot determine,20,1
-30,A probability distribution shows _______ possible values.,All,Some,Most,Random,20,1
-31,What word describes a distribution that tails off to the right?,Skewed right,Skewed left,Symmetric,Uniform,20,1
-32,A symmetric distribution has...,Equal tails on both sides,A long right tail,A long left tail,No center,20,1
-33,Skewed left means the distribution tails off toward...,Smaller values,Larger values,The middle,Both directions,20,1
-34,What measure of center is commonly used for probability distributions?,Mean (expected value),Mode only,Median only,Range,20,1
-35,The spread of a probability distribution is measured by...,Standard deviation,Mean,Probability,Sample size,20,1
-36,If most probability is concentrated at high values with a tail toward low values the shape is...,Skewed left,Skewed right,Symmetric,Uniform,20,1
-37,A uniform distribution has what shape?,Each value equally likely,Skewed right,Bell-shaped,Skewed left,20,1
-38,The center of a probability distribution tells us...,The typical or expected value,How spread out values are,The shape of the distribution,The number of outcomes,20,1
-39,Range in a probability distribution measures...,The spread from smallest to largest value,The center value,The most likely outcome,The total probability,20,1
-40,A distribution with a long tail to the right is called...,Skewed right (positively skewed),Skewed left (negatively skewed),Normal,Uniform,20,1
-41,The formula for expected value (mean) is...,μ = Σ x·P(x),μ = Σ x / n,μ = Σ P(x),μ = x · n,20,1
-42,Expected value is also called the...,Mean of the distribution,Median of the distribution,Mode of the distribution,Range of the distribution,20,1
-43,What symbol represents the mean of random variable X?,μ_X,σ_X,P(X),X̄,20,1
-44,To find expected value you multiply each value by its...,Probability,Frequency,Square,Square root,20,1
-45,If X=1 with P=0.5 and X=2 with P=0.5 then μ=?,1.5,1,2,3,20,1
-46,If X=0 with P=0.25 and X=4 with P=0.75 then μ=?,3,1,2,4,20,1
-47,Expected value is a weighted average weighted by...,Probabilities,Frequencies,Sample sizes,Standard deviations,20,1
-48,If X=10 with P=0.3 and X=20 with P=0.7 then μ=?,17,15,14,30,20,1
-49,The expected value represents the _______ average over many trials.,Long-run,Short-term,Maximum,Minimum,20,1
-50,If X=5 with P=0.4 and X=10 with P=0.6 then E(X)=?,8,7.5,6,15,20,1
-51,What symbol represents standard deviation of X?,σ_X,μ_X,P(X),Var(X),20,1
-52,Variance is the _______ of standard deviation.,Square,Square root,Half,Double,20,1
-53,Standard deviation measures...,Typical distance from the mean,The center of the distribution,The probability of each value,The number of outcomes,20,1
-54,The formula for variance involves...,Squared deviations times probabilities,Values divided by n,Sum of all values,Product of probabilities,20,1
-55,If variance σ² = 16 then standard deviation σ = ?,4,8,256,2,20,1
-56,A larger standard deviation means values are...,More spread out from the mean,Closer to the mean,More likely,Less likely,20,1
-57,Standard deviation can never be...,Negative,Zero,Large,Equal to the mean,20,1
-58,To get standard deviation from variance you take the...,Square root,Square,Logarithm,Reciprocal,20,1
-59,Which measure is in the same units as the random variable?,Standard deviation,Variance,Probability,z-score,20,1
-60,If σ = 3 then σ² = ?,9,6,1.73,3,20,1
-61,A parameter is a _______ value describing a population.,Single fixed,Variable,Sample,Random,20,1
-62,μ and σ are examples of...,Parameters,Statistics,Variables,Samples,20,1
-63,The correct interpretation of expected value includes...,Long run average and context,Just a number,The most common value,The maximum value,20,1
-64,"If μ = 2.3 children, a correct interpretation is...",On average families have about 2.3 children in the long run,Every family has 2.3 children,Most families have 2.3 children,2.3 is the most common number,20,1
-65,Standard deviation interpretation should include...,Typical variation from mean with units,Just the number,The probability value,The sample size,20,1
-66,"If μ = $45 for daily spending, this means...",The long-run average daily spending is about $45,Everyone spends exactly $45,The maximum spending is $45,$45 is most common,20,1
-67,"If σ = 12 points for test scores, this means...",Scores typically vary from the mean by about 12 points,All scores are 12 points apart,The range is 12 points,12 is the lowest score,20,1
-68,Expected value is the balance point of the...,Probability distribution,Sample data,Normal curve,Bar graph,20,1
-69,"A mean of 3.7 pets means ""in the long run""...",The average number of pets per household is 3.7,Every household has 3.7 pets,3.7 is impossible since you cannot have 0.7 pets,Most households have 4 pets,20,1
-70,Parameters describe _______ while statistics describe ________.,Populations and samples,Samples and populations,Means and medians,Variance and standard deviation,20,1
-71,A game costs $5 to play. You win $20 with probability 0.2. What is expected profit?,−$1,$4,$15,$3,20,1
-72,If X = number of heads in 2 coin flips then possible values are...,0 1 and 2,0 and 1,1 and 2,Only 1,20,1
-73,A distribution shows P(X=0)=0.1 and P(X=1)=0.3 and P(X=2)=0.4. What is P(X=3)?,0.2,0.8,0.4,0,20,1
-74,Insurance company pays $10000 with probability 0.01. Expected payout per policy is...,100,10000,1000,10,20,1
-75,If expected value is negative for a game then on average you will...,Lose money,Win money,Break even,Always lose,20,1
-76,A raffle ticket costs $2. First prize is $500 with probability 0.001. Expected value of ticket is...,−$1.50,$0.50,$498,−$0.50,20,1
-77,Number of customers arriving per hour is _______ because you count whole customers.,Discrete,Continuous,Neither,Both,20,1
-78,The exact weight of a package is _______ because it could be any value in a range.,Continuous,Discrete,Categorical,Fixed,20,1
+1,What is a random variable?,A numerical outcome of random behavior,A fixed constant,A letter of the alphabet,A probability value,20,1,,,,,,,,,,,,,,,,,,
+2,Random variables are labeled with which type of letters?,Capital letters (X Y W),Lowercase letters (x y w),Greek letters (α β γ),Roman numerals (I II III),20,1,,,,,,,,,,,,,,,,,,
+3,Which symbol represents a random variable?,X,p,n,μ,20,1,,,,,,,,,,,,,,,,,,
+4,A random variable assigns what to outcomes of a random process?,Numerical values,Letter grades,Colors,Rankings,20,1,,,,,,,,,,,,,,,,,,
+5,What does X represent in probability notation?,A random variable,The x-axis,An unknown constant,A sample size,20,1,,,,,,,,,,,,,,,,,,
+6,Why do we use capital letters for random variables?,To distinguish variables from specific values,Because lowercase is for Greek letters,It is just a tradition with no meaning,To indicate large numbers,20,1,,,,,,,,,,,,,,,,,,
+7,If X = number of heads when flipping 3 coins then X is a...,Random variable,Constant,Parameter,Sample,20,1,,,,,,,,,,,,,,,,,,
+8,What makes a variable a random variable?,Its value is determined by chance,Its value is always unknown,Its value changes over time,Its value is very large,20,1,,,,,,,,,,,,,,,,,,
+9,A discrete random variable has values that are...,Countable with gaps between them,Any value in an interval,Always whole numbers only,Impossible to list,20,1,,,,,,,,,,,,,,,,,,
+10,Which is an example of a discrete random variable?,Number of students absent today,Height of a randomly selected tree,Time to complete a test,Temperature at noon,20,1,,,,,,,,,,,,,,,,,,
+11,A continuous random variable can take...,Infinitely many values in an interval,Only whole number values,Only positive values,Exactly 10 different values,20,1,,,,,,,,,,,,,,,,,,
+12,Which is a continuous random variable?,Time to run a marathon,Number of cars in a parking lot,Number of pets owned,Number of text messages sent,20,1,,,,,,,,,,,,,,,,,,
+13,Number of siblings a person has is what type of variable?,Discrete,Continuous,Categorical,Constant,20,1,,,,,,,,,,,,,,,,,,
+14,Weight of a newborn baby is what type of variable?,Continuous,Discrete,Categorical,Constant,20,1,,,,,,,,,,,,,,,,,,
+15,Which is discrete: time to finish homework or number of problems correct?,Number of problems correct,Time to finish homework,Both are discrete,Neither is discrete,20,1,,,,,,,,,,,,,,,,,,
+16,Why is the number of children in a family discrete?,You cannot have 2.5 children,Children are always small,Families are countable,Numbers are discrete,20,1,,,,,,,,,,,,,,,,,,
+17,Distance traveled by a car is what type of variable?,Continuous,Discrete,Neither,Both,20,1,,,,,,,,,,,,,,,,,,
+18,Number of red cards drawn from a deck is...,Discrete,Continuous,Categorical,Constant,20,1,,,,,,,,,,,,,,,,,,
+19,Which cannot be a continuous random variable?,Number of correct answers on a quiz,Amount of rainfall in inches,Speed of a car,Length of a phone call,20,1,,,,,,,,,,,,,,,,,,
+20,The amount of time waiting in line is...,Continuous,Discrete,Neither continuous nor discrete,Always exactly 5 minutes,20,1,,,,,,,,,,,,,,,,,,
+21,What is a probability distribution?,A table or graph showing all values with their probabilities,A single probability value,The mean of a dataset,A random sample,20,1,,,,,,,,,,,,,,,,,,
+22,In a valid probability distribution all probabilities must be...,Between 0 and 1 inclusive,Greater than 0,Equal to each other,Greater than 0.5,20,1,,,,,,,,,,,,,,,,,,
+23,The sum of all probabilities in a distribution must equal...,1,0,100,The sample size,20,1,,,,,,,,,,,,,,,,,,
+24,If P(X=1)=0.3 and P(X=2)=0.5 and P(X=3)=0.2 is this a valid distribution?,Yes because probabilities sum to 1,No because 0.3 is too small,No because there are only 3 values,Yes because all values are different,20,1,,,,,,,,,,,,,,,,,,
+25,Which is NOT a requirement for a probability distribution?,Probabilities must be equal,All probabilities between 0 and 1,Probabilities sum to 1,Every outcome has a probability,20,1,,,,,,,,,,,,,,,,,,
+26,If probabilities sum to 0.95 then the distribution is...,Invalid,Valid,Approximately valid,Continuous,20,1,,,,,,,,,,,,,,,,,,
+27,A probability of -0.2 in a distribution means...,The distribution is invalid,The event is impossible,The event is certain,The value is negative,20,1,,,,,,,,,,,,,,,,,,
+28,What must be true about P(X=x) for any value x?,0 ≤ P(X=x) ≤ 1,P(X=x) > 0,P(X=x) < 1,P(X=x) = 0.5,20,1,,,,,,,,,,,,,,,,,,
+29,If a distribution shows P(X=0)=0.4 and P(X=1)=0.6 then P(X=2)=?,0,0.2,1,Cannot determine,20,1,,,,,,,,,,,,,,,,,,
+30,A probability distribution shows _______ possible values.,All,Some,Most,Random,20,1,,,,,,,,,,,,,,,,,,
+31,What word describes a distribution that tails off to the right?,Skewed right,Skewed left,Symmetric,Uniform,20,1,,,,,,,,,,,,,,,,,,
+32,A symmetric distribution has...,Equal tails on both sides,A long right tail,A long left tail,No center,20,1,,,,,,,,,,,,,,,,,,
+33,Skewed left means the distribution tails off toward...,Smaller values,Larger values,The middle,Both directions,20,1,,,,,,,,,,,,,,,,,,
+34,What measure of center is commonly used for probability distributions?,Mean (expected value),Mode only,Median only,Range,20,1,,,,,,,,,,,,,,,,,,
+35,The spread of a probability distribution is measured by...,Standard deviation,Mean,Probability,Sample size,20,1,,,,,,,,,,,,,,,,,,
+36,If most probability is concentrated at high values with a tail toward low values the shape is...,Skewed left,Skewed right,Symmetric,Uniform,20,1,,,,,,,,,,,,,,,,,,
+37,A uniform distribution has what shape?,Each value equally likely,Skewed right,Bell-shaped,Skewed left,20,1,,,,,,,,,,,,,,,,,,
+38,The center of a probability distribution tells us...,The typical or expected value,How spread out values are,The shape of the distribution,The number of outcomes,20,1,,,,,,,,,,,,,,,,,,
+39,Range in a probability distribution measures...,The spread from smallest to largest value,The center value,The most likely outcome,The total probability,20,1,,,,,,,,,,,,,,,,,,
+40,A distribution with a long tail to the right is called...,Skewed right (positively skewed),Skewed left (negatively skewed),Normal,Uniform,20,1,,,,,,,,,,,,,,,,,,
+41,The formula for expected value (mean) is...,μ = Σ x·P(x),μ = Σ x / n,μ = Σ P(x),μ = x · n,20,1,,,,,,,,,,,,,,,,,,
+42,Expected value is also called the...,Mean of the distribution,Median of the distribution,Mode of the distribution,Range of the distribution,20,1,,,,,,,,,,,,,,,,,,
+43,What symbol represents the mean of random variable X?,μ_X,σ_X,P(X),X̄,20,1,,,,,,,,,,,,,,,,,,
+44,To find expected value you multiply each value by its...,Probability,Frequency,Square,Square root,20,1,,,,,,,,,,,,,,,,,,
+45,If X=1 with P=0.5 and X=2 with P=0.5 then μ=?,1.5,1,2,3,20,1,,,,,,,,,,,,,,,,,,
+46,If X=0 with P=0.25 and X=4 with P=0.75 then μ=?,3,1,2,4,20,1,,,,,,,,,,,,,,,,,,
+47,Expected value is a weighted average weighted by...,Probabilities,Frequencies,Sample sizes,Standard deviations,20,1,,,,,,,,,,,,,,,,,,
+48,If X=10 with P=0.3 and X=20 with P=0.7 then μ=?,17,15,14,30,20,1,,,,,,,,,,,,,,,,,,
+49,The expected value represents the _______ average over many trials.,Long-run,Short-term,Maximum,Minimum,20,1,,,,,,,,,,,,,,,,,,
+50,If X=5 with P=0.4 and X=10 with P=0.6 then E(X)=?,8,7.5,6,15,20,1,,,,,,,,,,,,,,,,,,
+51,What symbol represents standard deviation of X?,σ_X,μ_X,P(X),Var(X),20,1,,,,,,,,,,,,,,,,,,
+52,Variance is the _______ of standard deviation.,Square,Square root,Half,Double,20,1,,,,,,,,,,,,,,,,,,
+53,Standard deviation measures...,Typical distance from the mean,The center of the distribution,The probability of each value,The number of outcomes,20,1,,,,,,,,,,,,,,,,,,
+54,The formula for variance involves...,Squared deviations times probabilities,Values divided by n,Sum of all values,Product of probabilities,20,1,,,,,,,,,,,,,,,,,,
+55,If variance σ² = 16 then standard deviation σ = ?,4,8,256,2,20,1,,,,,,,,,,,,,,,,,,
+56,A larger standard deviation means values are...,More spread out from the mean,Closer to the mean,More likely,Less likely,20,1,,,,,,,,,,,,,,,,,,
+57,Standard deviation can never be...,Negative,Zero,Large,Equal to the mean,20,1,,,,,,,,,,,,,,,,,,
+58,To get standard deviation from variance you take the...,Square root,Square,Logarithm,Reciprocal,20,1,,,,,,,,,,,,,,,,,,
+59,Which measure is in the same units as the random variable?,Standard deviation,Variance,Probability,z-score,20,1,,,,,,,,,,,,,,,,,,
+60,If σ = 3 then σ² = ?,9,6,1.73,3,20,1,,,,,,,,,,,,,,,,,,
+61,A parameter is a _______ value describing a population.,Single fixed,Variable,Sample,Random,20,1,,,,,,,,,,,,,,,,,,
+62,μ and σ are examples of...,Parameters,Statistics,Variables,Samples,20,1,,,,,,,,,,,,,,,,,,
+63,The correct interpretation of expected value includes...,Long run average and context,Just a number,The most common value,The maximum value,20,1,,,,,,,,,,,,,,,,,,
+64,"If μ = 2.3 children, a correct interpretation is...",On average families have about 2.3 children in the long run,Every family has 2.3 children,Most families have 2.3 children,2.3 is the most common number,20,1,,,,,,,,,,,,,,,,,,
+65,Standard deviation interpretation should include...,Typical variation from mean with units,Just the number,The probability value,The sample size,20,1,,,,,,,,,,,,,,,,,,
+66,"If μ = $45 for daily spending, this means...",The long-run average daily spending is about $45,Everyone spends exactly $45,The maximum spending is $45,$45 is most common,20,1,,,,,,,,,,,,,,,,,,
+67,"If σ = 12 points for test scores, this means...",Scores typically vary from the mean by about 12 points,All scores are 12 points apart,The range is 12 points,12 is the lowest score,20,1,,,,,,,,,,,,,,,,,,
+68,Expected value is the balance point of the...,Probability distribution,Sample data,Normal curve,Bar graph,20,1,,,,,,,,,,,,,,,,,,
+69,"A mean of 3.7 pets means ""in the long run""...",The average number of pets per household is 3.7,Every household has 3.7 pets,3.7 is impossible since you cannot have 0.7 pets,Most households have 4 pets,20,1,,,,,,,,,,,,,,,,,,
+70,Parameters describe _______ while statistics describe ________.,Populations and samples,Samples and populations,Means and medians,Variance and standard deviation,20,1,,,,,,,,,,,,,,,,,,
+71,A game costs $5 to play. You win $20 with probability 0.2. What is expected profit?,−$1,$4,$15,$3,20,1,,,,,,,,,,,,,,,,,,
+72,If X = number of heads in 2 coin flips then possible values are...,0 1 and 2,0 and 1,1 and 2,Only 1,20,1,,,,,,,,,,,,,,,,,,
+73,A distribution shows P(X=0)=0.1 and P(X=1)=0.3 and P(X=2)=0.4. What is P(X=3)?,0.2,0.8,0.4,0,20,1,,,,,,,,,,,,,,,,,,
+74,Insurance company pays $10000 with probability 0.01. Expected payout per policy is...,100,10000,1000,10,20,1,,,,,,,,,,,,,,,,,,
+75,If expected value is negative for a game then on average you will...,Lose money,Win money,Break even,Always lose,20,1,,,,,,,,,,,,,,,,,,
+76,A raffle ticket costs $2. First prize is $500 with probability 0.001. Expected value of ticket is...,−$1.50,$0.50,$498,−$0.50,20,1,,,,,,,,,,,,,,,,,,
+77,Number of customers arriving per hour is _______ because you count whole customers.,Discrete,Continuous,Neither,Both,20,1,,,,,,,,,,,,,,,,,,
+78,The exact weight of a package is _______ because it could be any value in a range.,Continuous,Discrete,Categorical,Fixed,20,1,,,,,,,,,,,,,,,,,,
