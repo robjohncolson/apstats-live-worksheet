@@ -1,0 +1,285 @@
+Here is a description of each slide presented in the video, including the timestamps when they appear.
+
+00:00 - Title Slide
+The video opens with a teal title card displaying "Topic 4.9: Combining Random Variables." It indicates this is "Daily Video 2" for AP Statistics. A video feed of the instructor, Penny Smeltzer, is in the top right corner.
+
+00:13 - What Will We Learn?
+A slide listing the learning objectives:
+
+How do we find the mean of a linear combination of two random variables?
+
+How do we find the standard deviation of a linear combination of two random variables?
+
+How do we determine independence of two random variables?
+
+00:29 - Let’s Look at an Example
+A blue transition slide introducing the upcoming practical application.
+
+00:31 - Gas and Hybrids
+The text introduces a scenario about a company selling vehicles online. It defines two variables:
+
+G = the number of gas cars sold on a randomly selected day.
+
+H = the number of hybrid cars sold on a randomly selected day.
+
+00:56 - Car Sales (Probability Distributions)
+Two probability distribution tables are displayed.
+
+The first table shows values for G (0 through 6) and their associated probabilities.
+
+The second table shows values for H (0 through 2) and their associated probabilities.
+
+At 01:00, the calculated parameters appear below the tables: Mean (
+𝜇
+μ
+) and Standard Deviation (
+𝜎
+σ
+) for both G and H.
+
+01:04 - Finding the Mean of a Sum
+The slide asks to find the mean of T (Total), where T = G + H.
+
+At 01:20, the calculation appears showing that 
+𝜇
+𝑇
+=
+3.92
++
+0.25
+=
+4.17
+μ
+T
+	​
+
+=3.92+0.25=4.17
+. The text notes: "Well, that just makes sense."
+
+01:36 - The Difference of Two Random Variables
+The slide defines D as the difference between gas and hybrid sales (D = G - H). It asks for the mean of D.
+
+01:44 - Finding the Mean of a Difference
+The calculation for the mean difference is revealed: 
+𝜇
+𝐷
+=
+3.92
+−
+0.25
+=
+3.67
+μ
+D
+	​
+
+=3.92−0.25=3.67
+. It reiterates that this calculation also "just makes sense."
+
+01:52 - Independent Random Variables
+The slide presents a thought experiment asking if the number of gas cars sold changes the probability of hybrid cars sold. It concludes that G and H are likely independent variables.
+
+02:12 - Independent Random Variables Definition
+A formal definition is provided: Two random variables are independent if knowing information about one of them does not change the probability distribution of the other.
+
+02:33 - Finding the Standard Deviation
+A text-only slide introducing the next section on calculating standard deviation.
+
+02:35 - Variance Formulas
+The slide displays the mathematical rules for variance. It states that if X and Y are independent:
+
+The variance of the sum (
+𝜎
+𝑋
++
+𝑌
+2
+σ
+X+Y
+2
+	​
+
+) is the sum of the variances (
+𝜎
+𝑋
+2
++
+𝜎
+𝑌
+2
+σ
+X
+2
+	​
+
++σ
+Y
+2
+	​
+
+).
+
+The variance of the difference (
+𝜎
+𝑋
+−
+𝑌
+2
+σ
+X−Y
+2
+	​
+
+) is also the sum of the variances (
+𝜎
+𝑋
+2
++
+𝜎
+𝑌
+2
+σ
+X
+2
+	​
+
++σ
+Y
+2
+	​
+
+).
+
+At 02:56, text appears emphasizing: "For a sum or difference of independent random variables, variances add. Note that standard deviations NEVER add!"
+
+03:11 - Standard Deviation of a Sum
+The slide returns to the car sales example to calculate the standard deviation of T (Total). It shows the math: squaring the individual standard deviations to get variances, adding them, and taking the square root of the result (
+0.94
+2
++
+0.56
+2
+=
+1.094
+0.94
+2
++0.56
+2
+	​
+
+=1.094
+).
+
+03:30 - Standard Deviation of a Difference
+The slide asks for the standard deviation of D (Difference). It shows the calculation is identical to the sum: variances are added, resulting in the same answer (1.094).
+
+03:41 - Linear Combinations
+The slide defines a linear combination as the expression 
+𝑎
+𝑋
++
+𝑏
+𝑌
+aX+bY
+.
+
+At 03:47, the formula for the Mean appears: 
+𝑎
+𝜇
+𝑋
++
+𝑏
+𝜇
+𝑌
+aμ
+X
+	​
+
++bμ
+Y
+	​
+
+.
+
+At 03:57, the formula for the Standard Deviation appears: 
+𝑎
+2
+𝜎
+𝑋
+2
++
+𝑏
+2
+𝜎
+𝑌
+2
+a
+2
+σ
+X
+2
+	​
+
++b
+2
+σ
+Y
+2
+	​
+
+	​
+
+.
+
+04:02 - Let's Practice
+A blue transition slide introducing a practice problem.
+
+04:04 - Holiday Sale
+The problem setup: The company awards 2 points per gas car and 3 points per hybrid car. The goal is to calculate the mean and standard deviation of the total points (
+2
+𝐺
++
+3
+𝐻
+2G+3H
+).
+
+04:30 - Holiday Sale (Calculations)
+The solution is revealed:
+
+Mean: 
+2
+(
+3.92
+)
++
+3
+(
+0.25
+)
+=
+8.59
+2(3.92)+3(0.25)=8.59
+ points.
+
+Standard Deviation: The formula is applied, squaring the coefficients (2 and 3) and the standard deviations. Result: 2.52 points.
+
+04:52 - What Should We Take Away?
+A blue transition slide leading to the summary.
+
+04:53 - Key Takeaways
+A summary slide with two main points:
+
+It displays the formulas for the mean and standard deviation of linear combinations (
+𝑎
+𝑋
++
+𝑏
+𝑌
+aX+bY
+).
+
+It reiterates the definition of independent random variables.
+
+05:14 - Thank You
+The video concludes with a blue "Thank you" slide featuring the College Board logo.

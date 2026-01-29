@@ -1,0 +1,46 @@
+Here is the transcription for the video provided, including timestamps.
+
+00:00
+Hi. This is Penny Smeltzer from Austin, Texas. This video shows how to calculate parameters for a linear combination of random variables.
+
+00:13
+What will we learn?
+How do we find the mean of a linear combination of two random variables?
+How do we find the standard deviation of a linear combination of two random variables?
+And how do we determine independence of two random variables?
+
+00:30
+Let's look at an example. A new company that sells vehicles online in a rural area records the number of cars sold each day. The data for gas cars and hybrid cars are recorded separately. So first, define the random variables. Random variables G and H can each be represented by a probability distribution.
+
+00:56
+And here they are. And for each probability distribution, we can calculate the mean and the standard deviation.
+
+01:05
+Let's let T equal the sum of G and H. So the total number of cars sold—both gas cars and hybrid cars. How would we calculate the mean of T? Well, add the mean of the gas cars and the mean of the hybrid cars to get 4.17. So the formula is as simple as adding the two means. Well, that just makes sense.
+
+01:36
+How would we find the difference of sales from the gas cars and the hybrid cars? Well, subtract the two means. That also just makes sense.
+
+01:52
+If we're told the number of gas cars sold on a randomly selected day by the online company in this area, would that change the probability of hybrid—the number of hybrid cars sold? I don't think so. People are going in to buy a particular type of car. So, two random variables are independent if knowing information about one of them doesn't change the probability distribution of another. And we're going to assume that it's fair that knowing how many of one type of car sold doesn't have any effect on the number of the other type of car sold.
+
+02:34
+Finding the standard deviation. If the two random variables are independent, then to find the standard deviation, first we must find the variance. So the variance of X + Y, or X - Y, is the sum of the two individual variances. Note that standard deviations NEVER add! And that for a sum or difference of independent random variables, the variances ALWAYS add.
+
+03:11
+So here, the standard deviation for the total number of cars sold—because our two independent random variables are independent—is we add the two variances, and then take the square root to find the standard deviation.
+
+03:30
+For a difference? Same procedure. Add the two variances, take the square root, and we have the standard deviation.
+
+03:41
+For linear combinations. If X and Y are independent, the mean is the sum of the two variables with their linear function added to it. And for the standard deviation, we use this formula here.
+
+04:03
+Let's practice. Suppose the online company awards two points to a manager for each gas car sold and three points for each hybrid car sold. Calculate the mean and standard deviation of the total points awarded to the regional manager on a randomly selected day. So we're going 2G for the gas cars and 3 points for hybrid cars.
+
+04:30
+So the formula—just like you would expect for the mean—is I would go two times the mean of the gas and three times the mean of the hybrid and get 8.59 points. For the standard deviation, using the formula, I would get 2.52 points.
+
+04:52
+What should we take away? For independent random variables X and Y and real numbers a and b, we can find the mean like this, and the standard deviation like this. Two random variables are independent if knowing information about one of them does not change the probability distribution of the other. Thank you.

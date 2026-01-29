@@ -1,0 +1,79 @@
+Here is a transcript of the video with timestamps.
+
+00:00
+Hi, this is Penny Smeltzer from Austin, Texas. This video discusses the effects of a linear transformation on the mean and standard deviation of a random variable.
+
+00:15
+What will we learn? How does a linear transformation affect the mean of a random variable? And how does a linear transformation affect the standard deviation of a random variable? Let's look at an example.
+
+00:31
+The City of Austin requires businesses with parking lots to plant trees in and around the lots. Among other requirements, the code states that no parking space can be more than 50 feet from a tree. Many cities have similar codes managed by people with titles such as Urban Forester or City Arborist.
+
+00:53
+In a large retail parking lot, this means developers must create tree islands throughout the parking area. One of the tasks of the Urban Forester is to randomly check the health of parking lot trees and report how many trees have died or have a disease. Most trees are well taken care of due to the steep fines associated with losing trees.
+
+01:19
+Let's let X represent the number of unhealthy trees in a randomly selected parking lot. The distribution of X can be modeled with a probability distribution. Pause the video and calculate the mean and standard deviation of X.
+
+01:40
+The mean of X is 0.11, and the standard deviation of X is 0.444. We have the center and the spread; let's make a histogram to see the shape. And I can see from the histogram that the distribution is skewed to the right.
+
+02:02
+Suppose a disease-spreading insect has infested many trees throughout the city. The effect on the number of unhealthy trees can be modeled by the random variable Y, which is equal to 3X + 1, where X is the number of unhealthy trees in a randomly selected parking lot before the insect infestation, and Y is the number of unhealthy trees in a randomly selected parking lot after the insect infestation.
+
+02:35
+What are the shape, center, and spread of the probability distribution of Y, after the insects have infested the trees in the city? A histogram similar to our distribution is shown here. What's a little bit different about this histogram is the vertical axis is not labeled because the bar representing zero would be so high it would come right off the screen. So I've shortened it a little bit just so that we could do this example.
+
+03:11
+To find the mean, take each X value and multiply it by 3. When I multiply it by 3, what happens is: 3 times 3 is 9, 2 times 3 is 6, 1 times 3 is 3, and 0 times 3 is 0. This changes the spread—or the standard deviation—by a factor of 3.
+
+03:42
+Now add 1 to each value. If I add 1 to each value, basically what that's going to do is shift everything up one on the number line. The variation did not change when I added 1 and made the shift, but the center increased by 1.
+
+04:08
+The shape of the distribution remains the same as the shape of our original distribution: skewed to the right. So, in my transformed distribution, with the original mean of 0.11 and a standard deviation of 0.444, to get the new mean, I'm going to put the old mean—or the previous mean, the mean of X—into our linear transformation equation and come out with a new mean of 1.33.
+
+04:46
+To find the standard deviation of the transformed distribution, I'm just going to multiply the previous standard deviation—the standard deviation of X—by the slope, 3. That will give me the new standard deviation.
+
+05:07
+Let's practice. Bowling is a sport that requires players to roll a ball down an alley to knock down pins. To make the game of bowling more competitive for league players, each player is given a handicap score to add to the final score of each game they play. This ensures that players of all abilities have an opportunity to win.
+
+05:31
+Let X equal the score of a randomly selected player in a league where the mean of X is 138 points and the standard deviation of X is 15.1 points. If the league uses the following formula to calculate the handicap, what are the mean and standard deviation of the handicap scores? Pause the video and determine the mean and standard deviation of the handicap scores.
+
+06:05
+First, always identify the random variable. We're going to let Y equal the handicap scores. The mean of Y, I would put into the equation for X and get 52.7. The standard deviation of Y, I would multiply by the slope and get 12.8 points.
+
+06:32
+What should we take away? For any random variable X, the linear transformation 
+𝑌
+=
+𝑎
++
+𝑏
+𝑋
+Y=a+bX
+ has a probability distribution with a mean of 
+𝑎
++
+𝑏
+a+b
+ times the mean of X (
+𝜇
+𝑋
+μ
+X
+	​
+
+), and a standard deviation of the absolute value of the slope—or b—times the standard deviation of X (
+𝜎
+𝑋
+σ
+X
+	​
+
+).
+
+07:00
+Thank you.

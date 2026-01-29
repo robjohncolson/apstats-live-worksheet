@@ -1,0 +1,332 @@
+Here is a description of each slide presented in the video, along with the corresponding timestamps.
+
+00:00 - 00:15
+Title Slide
+The video opens with a title card on a blue background. On the left is an icon of a bell curve inside a circle and the text "AP Statistics." The main text reads "TOPIC 4.9 Combining Random Variables." A play button icon is in the center. The bottom text reads "DAILY VIDEO 1," followed by the description: "In this video, we will discuss the effects of a linear transformation on the mean and standard deviation of a random variable." A video feed of the presenter, Penny Smeltzer, appears in the top right corner.
+
+00:15 - 00:28
+What Will We Learn?
+A list appears outlining the lesson goals:
+
+"How does a linear transformation affect the mean of a random variable?"
+
+"How does a linear transformation affect the standard deviation of a random variable?"
+The footer displays the Learning Objective: "Describe the effects of linear transformations of parameters of random variables."
+
+00:28 - 00:30
+Section Header
+A transition slide with a solid blue background and the text "LET'S LOOK AT AN EXAMPLE" in large white letters.
+
+00:30 - 00:53
+Parking Lot Trees (Context)
+The slide title is "Parking Lot Trees." It contains a text description of the City of Austin's code requiring parking spaces to be within 50 feet of a tree and mentions "Urban Forester" or "City Arborist."
+
+00:53 - 01:01
+Parking Lot Trees (Visual)
+The text is replaced by a photo of a parking lot featuring landscaped "tree islands." To the right, text explains that developers must create these islands throughout the parking area.
+
+01:01 - 01:18
+Unhealthy Trees
+The title changes to "Unhealthy Trees." The text explains the Urban Forester's task of checking tree health and reporting dead or diseased trees, noting that fines usually keep trees well-maintained.
+
+01:18 - 01:30
+Defining Variable X
+The text is replaced by a teal sentence: "Let X represent the number of unhealthy trees in a randomly selected parking lot." A black sentence below states: "The distribution of X can be modeled with a probability distribution."
+
+01:30 - 01:40
+Probability Distribution Table
+A table appears displaying the probability distribution:
+
+x (Unhealthy trees): 0, 1, 2, 3
+
+P(x) (Probability): 0.93, 0.04, 0.02, 0.01
+Below the table, the prompt reads: "Calculate the mean and standard deviation of X."
+
+01:40 - 01:50
+Calculation Results
+The slide displays the mathematical formulas and answers for the previous prompt:
+
+𝜇
+𝑋
+μ
+X
+	​
+
+ (Mean) = 0.11
+
+𝜎
+𝑋
+σ
+X
+	​
+
+ (Standard Deviation) = 0.444
+
+01:50 - 02:00
+Histogram of X
+A histogram appears on the right side of the screen. The vertical axis represents Probability (0.0 to 0.90), and the horizontal axis is the Number of Unhealthy Trees. A very tall blue bar sits at 0, with tiny bars at 1, 2, and 3. Text on the right labels the shape as "Skewed right."
+
+02:00 - 02:46
+Transforming Data (Scenario)
+The slide title is "Transforming Data." Text explains a scenario regarding a disease-spreading insect. It defines two variables:
+
+X (in blue): Number of unhealthy trees before infestation.
+
+Y (in teal): Number of unhealthy trees after infestation.
+The equation 
+𝑌
+=
+3
+𝑋
++
+1
+Y=3X+1
+ is displayed. The slide asks for the shape, center, and spread of Y.
+
+02:46 - 03:09
+Linear Transformation (Initial Histogram)
+The title is "A Linear Transformation." The equation 
+𝑌
+=
+3
+𝑋
++
+1
+Y=3X+1
+ is at the top. A histogram with red bars appears, noted as "A histogram similar to our distribution." The x-axis is labeled "Number of Unhealthy Trees" with values from 0 to 10.
+
+03:09 - 03:41
+Multiplication Step (Different Spread)
+An arrow points to the "
+3
+𝑋
+3X
+" part of the equation. Text appears on the graph: "Take each x value and multiply by 3." The labels on the x-axis change to 0, 3, 6, and 9 to reflect the multiplication. A sidebar titled "Different Spread" appears, stating: "Multiplying the values by 3 increases the center (mean) and spread (standard deviation) by a factor of 3."
+
+03:41 - 04:08
+Addition Step (Different Center)
+An arrow points to the "
++
+1
++1
+" part of the equation. Text on the graph changes to "Now add 1 to each value." The x-axis labels shift to the right to become 1, 4, 7, and 10. A sidebar titled "Different Center" states: "The variation did not change. The center (mean) increased by 1."
+
+04:08 - 04:16
+Shape Conclusion
+The title changes to "Same Shape." The text states: "The shape of the distribution remains the same—skewed right."
+
+04:16 - 05:07
+Transformed Distribution Calculations
+The slide titled "Transformed Distribution" shows the original table for X and a new table for Y with values 1, 4, 7, and 10.
+
+An arrow maps X to Y using the equation 
+𝑌
+=
+3
+𝑋
++
+1
+Y=3X+1
+.
+
+The calculation for the new mean is shown: 
+𝜇
+𝑌
+=
+3
+(
+𝜇
+𝑋
+)
++
+1
+=
+1.33
+μ
+Y
+	​
+
+=3(μ
+X
+	​
+
+)+1=1.33
+.
+
+The calculation for the new standard deviation is shown: 
+𝜎
+𝑌
+=
+3
+(
+𝜎
+𝑋
+)
+=
+1.33
+σ
+Y
+	​
+
+=3(σ
+X
+	​
+
+)=1.33
+ (Calculated as 
+3
+×
+0.444
+3×0.444
+).
+
+05:07 - 05:09
+Section Header
+A transition slide with a solid blue background and the text "LET'S PRACTICE."
+
+05:09 - 05:16
+Bowling Intro
+The slide title is "Bowling." A photo of a man bowling is on the left. Text on the right explains the basic premise of the sport.
+
+05:16 - 06:02
+Bowling Problem
+Text explains the concept of a "handicap score."
+
+Variable X is defined as the score of a randomly selected player.
+
+Parameters: 
+𝜇
+𝑋
+=
+138
+μ
+X
+	​
+
+=138
+ points, 
+𝜎
+𝑋
+=
+15.1
+σ
+X
+	​
+
+=15.1
+ points.
+
+Formula: 
+𝐻
+𝑎
+𝑛
+𝑑
+𝑖
+𝑐
+𝑎
+𝑝
+=
+(
+200
+−
+𝑋
+)
+⋅
+0.85
+Handicap=(200−X)⋅0.85
+.
+The viewer is asked to pause and calculate the mean and standard deviation of the handicap scores.
+
+06:02 - 06:32
+Handicap Solution
+The title is "Handicap Scores." The variable Y is defined as the handicap score.
+
+Mean Calculation: The formula substitutes the mean of X (138) into the handicap equation: 
+𝜇
+𝑌
+=
+(
+200
+−
+138
+)
+⋅
+0.85
+=
+52.7
+μ
+Y
+	​
+
+=(200−138)⋅0.85=52.7
+.
+
+Standard Deviation Calculation: The formula multiplies the original standard deviation (15.1) by the absolute value of the scaling factor (0.85): 
+𝜎
+𝑌
+=
+15.1
+⋅
+0.85
+=
+12.8
+σ
+Y
+	​
+
+=15.1⋅0.85=12.8
+ points.
+
+06:32 - 07:00
+Key Takeaways
+A summary slide titled "Key Takeaways."
+
+"For any random variable X, the linear transformation 
+𝑌
+=
+𝑎
++
+𝑏
+𝑋
+Y=a+bX
+ has a probability distribution with:"
+
+Mean: 
+𝜇
+𝑌
+=
+𝑎
++
+𝑏
+𝜇
+𝑋
+μ
+Y
+	​
+
+=a+bμ
+X
+	​
+
+
+Standard deviation: 
+𝜎
+𝑌
+=
+∣
+𝑏
+∣
+𝜎
+𝑋
+σ
+Y
+	​
+
+=∣b∣σ
+X
+	​
+
+
+07:00 - End
+Closing Slide
+A solid blue background with the text "Thank you."
