@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Unit 4 Lesson 9 live worksheet and Blooket quiz \\(Combining Random Variables\\)\n\n- Live worksheet covering Topic 4.9: Linear transformations and combining independent RVs\n- AI grading prompts for reflection questions emphasizing the \"Variance Trap\"\n- Blooket quiz with 60 questions on linear transformations and variance addition rules\n- Source materials \\(video transcripts and slides\\) for Lesson 9\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)"
+    ]
+  }
+}
