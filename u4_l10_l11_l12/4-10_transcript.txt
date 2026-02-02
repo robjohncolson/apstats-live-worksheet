@@ -1,0 +1,162 @@
+Here is the transcript for the AP Statistics video Topic 4.10: Introduction to the Binomial Distribution.
+
+00:00
+Hi. This is Penny Smeltzer from Austin, Texas. This video discusses how to identify a binomial random variable and how to calculate binomial probabilities.
+
+What Will We Learn?
+00:13
+
+How can we recognize a binomial random variable?
+
+How do we calculate a probability for a binomial distribution?
+
+Let’s Look at an Example
+00:23
+The weather has many examples of binomial settings. Let's take a moment to hear from an expert.
+
+00:33
+[Chikage Windler - Chief Meteorologist CBS Austin]
+Hi there, my name is Chikage Windler and I'm the Chief Meteorologist at CBS Austin News. As a meteorologist, I look at statistics and probability every day as part of my job. What is the chance it's going to rain? Probability of precipitation. And in this case, talking about hurricane statistics. This is a look at Hurricane Sally earlier in the season, and it has been an incredibly active 2020 hurricane season. In fact, so much so that it has been setting records right and left.
+
+01:05
+So, let's take a look at the averages and how statistics play into this. First things first, the Atlantic hurricane season stats from NOAA: 12.1 is the average number of tropical storms in a given year. Hurricanes? About 6.4. And around 2.7 major hurricanes—that would be category 3, 4, or 5.
+
+01:25
+This, of course, is typical, right? So, when you take it into account, how many of those tropical storms might end up being hurricanes? About 53% of them. How many of those tropical storms might end up being major hurricanes? 22%. And the possibility that a hurricane might become a major hurricane? 42%.
+
+01:50
+Now, this is in an average season. As you all know, 2020 has been anything but average. So much so that NOAA had to up its forecast. The revised forecast was for an average of 22 named storms, 9 hurricanes, and 4.5 major hurricanes.
+
+02:10
+To put this in perspective using statistics:
+
+Number of named storms: 181% higher than an average season.
+
+Number of hurricanes: 140% higher.
+
+Major hurricanes: 167% higher than average.
+
+02:28
+I'll leave you with one more statistic. The 100-year average probability of a major hurricane making landfall on the Gulf Coast is 30%. That's about 1 out of every 3 years—something that has already happened in 2020. So, enjoy your AP Statistics learning. I appreciate you for taking the challenge, and good luck.
+
+Binomial Settings
+02:51
+A binomial setting involves repeated trials of a random process, where the following conditions are met:
+
+Binary: Two possible outcomes: success or failure.
+
+Independent: Independent trials of the same random process.
+
+Number: A fixed number of trials, n.
+
+Success: Each trial has the same probability of success, p.
+
+Checking Binomial Conditions (Example)
+03:20
+The probability a tropical storm becomes a hurricane is 0.53. If the weather service predicts 6 more tropical storms, what is the probability that exactly 5 of them become hurricanes?
+
+03:39
+First, let's check the conditions:
+
+Two outcomes? Yes. A tropical storm is either going to be a hurricane (“success”) or not a hurricane (“failure”).
+
+Independent trials? According to Chikage Windler, knowing one tropical storm's outcome doesn't usually help us predict another because tropical storms don't interact with each other.
+
+Fixed number of trials? Yes, n = 6.
+
+Same probability? Yes, p = 0.53.
+We have met the conditions, and we have a binomial distribution.
+
+04:20
+Let's let our random variable X equal the number of tropical storms that become hurricanes out of the 6 storms predicted.
+
+Binomial Distributions
+04:30
+In a binomial setting, the random variable X (the number of successes) is called a binomial random variable. And a distribution of that random variable is a binomial distribution.
+
+04:44
+How can we find probabilities involving a binomial random variable?
+
+We could use simulation (shown in Topic 4.2 Video 2).
+
+Or we could use the binomial formula.
+
+04:59
+The binomial formula for the probability that the random variable X equals a particular value (k) is:
+The number of combinations of X out of n times the probability of success (p) to the power of x, times the probability of failure (1-p) to the power of n-x.
+
+Calculating Binomial Probabilities
+05:17
+Let's solve the example: The probability a tropical storm becomes a hurricane is 0.53. If the weather service predicts 6 more tropical storms, what is the probability that exactly 5 of them become hurricanes?
+
+05:32
+
+Define the random variable: Let X = the number of hurricanes that develop from 6 tropical storms.
+
+Identify the distribution: This is a binomial distribution with n = 6 and p = 0.53. We want to find P(X = 5).
+
+Find the probability: Using the formula:
+
+P(X = 5) = (6 choose 5) * (0.53)^5 * (1 - 0.53)^1
+
+P(X = 5) = 0.118
+
+06:06
+The probability that exactly 5 of 6 tropical storms will become hurricanes is 0.118.
+
+Cumulative Binomial Probabilities
+06:15
+A cumulative binomial probability is when we want more than one value of X.
+Example: The probability a tropical storm becomes a hurricane is 0.53. If the weather service predicts 22 tropical storms, what is the probability that at least 16 of them become hurricanes?
+
+06:36
+
+Define X: X = the number of hurricanes that develop from 22 tropical storms.
+
+Identify distribution: Binomial distribution with n = 22 and p = 0.53.
+
+Goal: We want to find P(X ≥ 16).
+
+06:53
+Using the binomial formula, we would need to calculate it for X = 16, 17, 18... up to 22, and add them together. I don't need to write every single term, but I need to write enough terms so that someone looking at my work can understand what I did.
+
+P(X ≥ 16) = P(X=16) + ... + P(X=22) = 0.0486
+
+Using Technology
+07:27
+There is technology to help us with calculations.
+
+For an exact value (P(X = 5)), I would use the binompdf function. You must define n, p, and x.
+
+For a cumulative value (P(X ≥ 16)), calculators use binomcdf. Note that binomcdf usually calculates P(X ≤ k). Since we want X ≥ 16, we calculate 1 - P(X ≤ 15).
+
+P(X ≥ 16) = 1 - binomcdf(n=22, p=0.53, x=15) = 0.0486
+
+07:58
+Important: We don't recommend writing "calculator speak" (like binompdf(...)) in free-response solutions. It will not earn credit. It is important that you:
+
+Identify the parameters (n, p).
+
+Identify the value you are looking for.
+
+Define the random variable and distribution.
+
+Key Takeaways
+09:07
+
+A binomial setting involves repeated trials of the same random process where four conditions are met:
+
+Binary outcomes (success/failure)
+
+Independent trials
+
+Number of trials is fixed
+
+Same probability of success
+
+The binomial probability formula can be used to solve problems.
+
+When calculating, be sure to define the random variable, identify the distribution and values of interest, calculate the correct probability, and make sure you answer the question asked.
+
+09:37
+Thank you.

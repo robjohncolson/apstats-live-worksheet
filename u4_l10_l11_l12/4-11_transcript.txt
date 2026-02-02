@@ -1,0 +1,49 @@
+Here is a transcription of the video, including timestamps for your reference.
+
+**00:00**
+**Penny Smeltzer:** Hi. This is Penny Smeltzer from Austin, Texas. This video shows how to calculate the parameters for a binomial distribution.
+
+**00:14**
+**Penny Smeltzer:** What will we learn? How do we calculate the mean of a binomial distribution? How do we calculate the standard deviation of a binomial distribution?
+
+**00:25**
+**Penny Smeltzer:** Let's look at an example. Aww, you dropped your cell phone and cracked the screen. Will you get it fixed? The Miami Herald estimates that over 5,700 cell phone screens are cracked every hour in the United States.
+
+**00:43**
+**Penny Smeltzer:** An enterprising group of high school students calling themselves "Better Than a Bandage" is researching methods and materials to provide a quick, on-the-spot fix to repair cracked cell phone screens.
+
+**00:57**
+**Penny Smeltzer:** According to Digital Trends, 21% of cell phone owners have a cracked screen. If the team randomly selects 40 people who own cell phones, what is the expected number with cracked screens?
+
+**01:09**
+**Penny Smeltzer:** Always, always, always define your random variable. Let's let C equal the number of cell phone owners with a cracked screen. Next, what kind of a distribution does C have? Well, it's a binomial distribution and we can figure that out by checking the conditions. Let's do that.
+
+**01:31**
+**Penny Smeltzer:** Are there two outcomes? Yes. The screen is cracked or not cracked. Are the trials independent? Well, if I drop my cell phone, it should have nothing to do with whether or not you drop your cell phone. The number of trials is fixed at 40, and the probability remains 21% for each trial. So, C is a binomial distribution with n equal 40 and p equal 0.21.
+
+**01:58**
+**Penny Smeltzer:** The mean of a binomial random variable—or in this case, X—is n times p. So here, when we multiply n times p, we can find that in many random samples of 40 cell phone owners, the team can expect, on average, 8.4 people to have a cracked cell phone screen out of the 40.
+
+**02:25**
+**Penny Smeltzer:** The standard deviation of a binomial distribution is found using the formula: the square root of n times p times 1 minus p. So here, when I put in our values into the equation, I get 2.58 cell phones. What does that mean?
+
+**02:46**
+**Penny Smeltzer:** Well, in many random samples of 40 cell phone owners, the numbers with cracked phones will typically vary from the mean of 8.4 by about 2.58 phones.
+
+**03:00**
+**Penny Smeltzer:** Let's practice. The team has set up a booth at a large outdoor shopping area with enough supplies to fix 25 phone screens. Recent experience has shown that 15% of people have cracked cell phone screens *and* will buy a repair. The team plans to approach a random sample of 150 people about screen repair. Would you be surprised if the Better Than a Bandage team ran out of supplies? Justify your answer.
+
+**03:34**
+**Penny Smeltzer:** Take a moment and solve the problem.
+
+**03:41**
+**Penny Smeltzer:** First, define the random variable: the number of people who have a cracked screen and will buy a repair. It's a binomial distribution with n equal 150 and p equal 0.15. We can find the mean, and we can find the standard deviation using the formulas. But how do we answer the question?
+
+**04:06**
+**Penny Smeltzer:** Well, you have your results. The question was: would you be surprised if the team ran out of supplies early? No, I would not be surprised if the team ran out of supplies early. Just one standard deviation above the mean is 26.87 phones—or customers that would get their screens fixed and pay for a repair. That would require more supplies than the team brought, since they only brought enough supplies for 25 phones. That's one option to answer the question.
+
+**04:44**
+**Penny Smeltzer:** You could also answer the question using the binomial formula and actually calculating the probability that C is greater than 25. Because they only brought supplies for 25 cracked screens. When I do that, I get a probability of 0.242. My answer? No, I would not be surprised if the team ran out of supplies early. The probability that more than 25 of a randomly selected group of 150 people would purchase screen repair is 0.242. That is a high enough probability to warrant bringing more supplies.
+
+**05:25**
+**Penny Smeltzer:** What should we take away? The mean of a random variable X with a binomial distribution is n times p. The standard deviation can be found by using this formula [square root of np(1-p)]. And probabilities and parameters for a binomial distribution should be interpreted using the appropriate units within the context of a specific situation. Thank you.

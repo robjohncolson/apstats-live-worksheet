@@ -1,0 +1,325 @@
+Here is a description of the slides presented in the video, including timestamps.
+
+00:00 - Title Slide
+The video opens with a title card featuring a blue background and a logo on the left representing AP Statistics (a bridge/graph icon).
+
+Text: "TOPIC 4.12: The Geometric Distribution" and "Daily Video 1."
+
+Inset: Penny Smeltzer appears in the top right corner.
+
+00:09 - What Will We Learn?
+A list of learning objectives for the lesson.
+
+Text:
+
+How do we calculate probabilities for a geometric random variable?
+
+How do we calculate the parameters for a geometric distribution?
+
+00:20 - Example Transition
+A transition slide with a blue background.
+
+Text: "LET'S LOOK AT AN EXAMPLE"
+
+00:22 - Developing Hurricanes (Scenario)
+The slide introduces a word problem involving NOAA predictions. An image of a hurricane is in the top right.
+
+Text: Explains that there is a 41% chance tropical storms become hurricanes. It asks: "What is the probability that the fourth tropical storm of the season will be the first hurricane?"
+
+00:45 - Defining the Random Variable
+The previous slide updates to include the mathematical definition of the variable in teal text.
+
+Text: "Let H = the number of tropical storms it takes to get the first hurricane."
+
+Statement: "H has a geometric distribution with p = 0.41."
+
+01:03 - Properties of a Geometric Setting
+A comparison slide listing conditions.
+
+Left Column: Properties of a geometric setting (Two possible outcomes, Independent trials, Each trial has the same probability of success).
+
+Right Column: Contrasts this with the Binomial setting, noting that Binomial has a fixed number of trials, while Geometric does not.
+
+01:32 - Finding Geometric Probabilities
+This slide visualizes the math behind the specific problem (finding the 4th storm is the first hurricane).
+
+Visuals: Arrows point to the probability calculation parts labeled "Failure" (for the first three storms) and "Success" (for the fourth).
+
+Equation: 
+𝑃
+(
+𝐻
+=
+4
+)
+=
+(
+1
+−
+0.41
+)
+3
+(
+0.41
+)
+=
+0.0842
+P(H=4)=(1−0.41)
+3
+(0.41)=0.0842
+
+Bottom: Displays the general formula for a geometric random variable 
+𝑋
+X
+.
+
+02:12 - Cumulative Geometric Probabilities
+The slide addresses a new question: finding the probability the first hurricane develops by the third storm.
+
+Equation: Shows the sum of three probabilities: 
+𝑃
+(
+𝐻
+≤
+3
+)
+=
+(
+1
+−
+0.41
+)
+0
+(
+0.41
+)
++
+(
+1
+−
+0.41
+)
+1
+(
+0.41
+)
++
+(
+1
+−
+0.41
+)
+2
+(
+0.41
+)
+=
+0.795
+P(H≤3)=(1−0.41)
+0
+(0.41)+(1−0.41)
+1
+(0.41)+(1−0.41)
+2
+(0.41)=0.795
+.
+
+Labels: Brackets beneath the numbers label them as "1st storm," "2nd storm," and "3rd storm."
+
+02:46 - Using Technology
+A slide warning about proper notation on the AP exam regarding calculators.
+
+Text: "Most calculators used in AP Statistics have built-in commands... However, we don't recommend writing 'calculator speak' in free response solutions."
+
+Example: Shows that writing geompdf(0.53, 4) is not enough to earn credit; students must define the variables.
+
+03:13 - Finding the Mean
+The slide returns to the Hurricane example to calculate the expected value.
+
+Text: "What is the mean number of tropical storms in a season it will take to get the first hurricane?"
+
+Formula: 
+𝜇
+𝐻
+=
+1
+0.41
+=
+2.44
+μ
+H
+	​
+
+=
+0.41
+1
+	​
+
+=2.44
+
+Interpretation: Text at the bottom explains that over many seasons, we expect 2.44 storms on average to get the first hurricane.
+
+03:40 - Finding the Standard Deviation
+The slide calculates the standard deviation for the Hurricane example.
+
+Text: "What is the standard deviation of the number of tropical storms..."
+
+Formula: Shows the formula for Geometric Standard Deviation.
+
+Calculation: 
+𝜎
+𝐻
+=
+1
+−
+0.41
+0.41
+=
+1.87
+σ
+H
+	​
+
+=
+0.41
+1−0.41
+	​
+
+	​
+
+=1.87
+ tropical storms.
+
+Interpretation: Text at the bottom explains the result in context (typically varying by 1.87 storms from the mean).
+
+04:06 - Practice Transition
+A transition slide with a blue background.
+
+Text: "LET'S PRACTICE"
+
+04:08 - Prairie Dogs (Problem)
+A practice problem is presented with a photo of a prairie dog on the left.
+
+Scenario: 20% of litters have 4 or more pups.
+
+Questions:
+a) Probability the zoologist waits until the 5th litter for a large family.
+b) How many litters expected to be born until there is a large family.
+
+04:18 - Geometric Probability (Solution A)
+The solution for part (a) of the practice problem.
+
+Text: Defines 
+𝑋
+X
+ = number of litters.
+
+Calculation: 
+𝑃
+(
+𝑋
+=
+5
+)
+=
+(
+1
+−
+0.2
+)
+4
+(
+0.2
+)
+=
+0.082
+P(X=5)=(1−0.2)
+4
+(0.2)=0.082
+.
+
+Sentence: A sentence interpreting the answer is shown in a teal box.
+
+04:30 - Mean of a Geometric Distribution (Solution B)
+The solution for part (b) of the practice problem.
+
+Calculation: 
+𝜇
+𝑥
+=
+1
+0.2
+=
+5
+μ
+x
+	​
+
+=
+0.2
+1
+	​
+
+=5
+.
+
+Sentence: A sentence interpreting the answer (expecting 5 litters on average) is shown in a teal box.
+
+04:41 - Summary Transition
+A transition slide with a blue background.
+
+Text: "WHAT SHOULD WE TAKE AWAY?"
+
+04:43 - Key Takeaways
+A summary slide with three numbered points.
+
+Text:
+
+Definition of a geometric random variable (counts trials to first success).
+
+The geometric probability formula: 
+𝑃
+(
+𝑋
+=
+𝑥
+)
+=
+(
+1
+−
+𝑝
+)
+𝑥
+−
+1
+𝑝
+P(X=x)=(1−p)
+x−1
+p
+.
+
+The parameters: Formulas for Mean (
+1
+𝑝
+p
+1
+	​
+
+) and Standard Deviation (
+1
+−
+𝑝
+𝑝
+p
+1−p
+	​
+
+	​
+
+).
+
+05:13 - End Slide
+A simple closing slide.
+
+Text: "Thank you."

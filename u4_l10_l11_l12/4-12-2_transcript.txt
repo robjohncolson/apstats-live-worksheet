@@ -1,0 +1,43 @@
+Here is the transcript for the video, including timestamps.
+
+00:00
+Hi. This is Penny Smeltzer from Austin, Texas. This video gives practice calculating and interpreting probabilities and parameters.
+
+00:10
+What will we learn? How can we distinguish between binomial and geometric distributions? How can we interpret probabilities and parameters in context?
+
+00:21
+Let's practice. Get your supplies ready. We are going to practice a free-response question. So have paper, calculator, and a formula sheet close by. You might want to have a timer set for 12 minutes, which is about how long you get on a free-response question. When the next slide comes up, hit pause and work through the problem. When you are finished, hit play to see the solution. Here we go.
+
+00:49
+[Visual: The video displays a word problem about "Major Hurricanes" with parts (a), (b), and (c). The viewer is intended to pause here.]
+
+00:52
+Part (a). First, define your random variable. Let 
+𝑋
+X
+ equal the number of tropical storms until one becomes a major hurricane. Then describe the distribution. This is geometric.
+
+01:07
+So I'm going to do a geometric calculation. And the answer: The probability of not having a major hurricane until the seventh tropical storm is 0.0495, which is fairly small. This means that going that long without seeing a major hurricane would be unusual.
+
+01:26
+Part (b). Define your random variable. And for Part (b)(i), it's a binomial random variable. Complete your calculation, and we find that the expected value or mean is 3.96.
+
+01:45
+For B sub ii [B(ii)], it's a geometric random variable. Complete your calculation, and we find that the mean or expected value is 4.55... hurricanes... tropical storms.
+
+02:01
+Part (c). The plan will be insufficient if there are more than four major hurricanes. Define your random variable. Here it's 
+𝑋
+X
+ equal the number of major hurricanes this year. Complete your calculation.
+
+02:19
+The probability that there will be more than four major hurricanes is 0.36. This is a high enough probability to suggest that the team of pilots may not be sufficiently prepared.
+
+02:34
+What should we take away? Carefully check conditions to distinguish geometric situations from binomial situations. Define any random variables. And probabilities and parameters for a distribution should be interpreted within the context of a specific population or situation.
+
+02:54
+Thank you.

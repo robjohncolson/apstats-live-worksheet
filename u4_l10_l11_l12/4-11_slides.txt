@@ -1,0 +1,77 @@
+Here is a description of each slide presented in the video, along with the corresponding timestamps:
+
+**00:00 — Title Slide**
+The video opens with the College Board AP Statistics branding. The title reads "Topic 4.11: Parameters for a Binomial Distribution," and the subtitle indicates this is "Daily Video 1."
+
+**00:14 — What Will We Learn?**
+A slide listing the two main learning objectives for the lesson:
+1. How to calculate the mean of a binomial distribution.
+2. How to calculate the standard deviation of a binomial distribution.
+
+**00:25 — Let’s Look at an Example (Cell Phone Disaster)**
+The slide features a photo of a smartphone with a shattered screen. Text explains that the Miami Herald estimates over 5,700 screens are cracked every hour in the US.
+
+**00:42 — Quick Fix**
+The slide introduces a fictional high school group called "Better Than a Bandage" (BTB). It features a stock photo of hands applying a screen protector or fix to a phone. The text explains the group is researching quick fixes for cracked screens.
+
+**00:55 — Mean of a Binomial Distribution (Problem Setup)**
+The slide presents a problem based on "Digital Trends" data: 21% of owners have cracked screens. It asks for the expected number of cracked screens in a random sample of 40 people.
+
+**01:09 — Defining the Variable**
+The previous slide updates to define the random variable in blue text: "Let C = the number of cell phone owners with a cracked screen."
+
+**01:23 — Checking Conditions**
+The slide lists the conditions required to confirm a binomial distribution:
+*   Two outcomes (cracked/not cracked).
+*   Independent trials.
+*   Fixed number of trials (n=40).
+*   Fixed probability (p=0.21).
+*   **Conclusion:** C is a binomial distribution.
+
+**01:58 — Mean Formula & Calculation**
+The slide displays the formula for the mean (expected value) of a binomial random variable: $\mu_x = np$.
+It then shows the calculation: $40(0.21) = 8.4$.
+Finally, a blue box appears at the bottom with the written interpretation of the mean (expecting 8.4 people to have cracked screens).
+
+**02:25 — Standard Deviation of a Binomial Distribution**
+The slide introduces the formula for standard deviation: $\sigma_x = \sqrt{np(1-p)}$.
+It substitutes the values from the example into the formula to calculate a result of **2.58 cell phones**.
+A blue box appears at the bottom interpreting this result: in a sample of 40, the number of cracked screens typically varies from the mean by about 2.58.
+
+**03:00 — Let’s Practice**
+A blue transition slide with the text "Let's Practice."
+
+**03:03 — Calculate the Parameters (The Problem)**
+A text-heavy slide describing the practice scenario: The BTB team has supplies for 25 screens. 15% of people have cracked screens and will buy repairs. The sample size is 150. The question asks if we should be surprised if they run out of supplies.
+
+**03:40 — Defining Parameters and Calculating Mean**
+The slide updates to define the variable **C** (people who have cracked screens and will buy a repair).
+It lists the parameters: **n = 150** and **p = 0.15**.
+It displays the calculation for the mean: $\mu_c = 150(0.15) = 22.5$ people.
+
+**03:59 — Calculating Standard Deviation**
+The slide updates to add the calculation for standard deviation using the previously established parameters, resulting in $\sigma_c = 4.37$ people.
+
+**04:05 — Interpret Your Results**
+The slide clears the calculations and places the results ($\mu_c = 22.5$ and $\sigma_c = 4.37$) at the top. The question "Would you be surprised if the BTB team ran out of supplies early?" is displayed in the center.
+
+**04:15 — Interpretation Answer (Method 1)**
+A text paragraph appears answering "No." It justifies the answer by adding one standard deviation to the mean ($22.5 + 4.37 = 26.87$). Since 26.87 is greater than the supply limit of 25, running out of supplies is not surprising.
+
+**04:45 — Another Approach (Method 2)**
+The slide title changes to "Another Approach." It shows the calculation using the specific binomial probability formula to find $P(C > 25)$. The result is **0.242**.
+
+**05:03 — Interpretation Answer (Method 2)**
+A text paragraph appears interpreting the probability. It states that because there is a 24.2% probability of needing more than 25 repairs, the team should not be surprised if they run out of supplies.
+
+**05:25 — What Should We Take Away?**
+A blue transition slide with the text "What Should We Take Away?"
+
+**05:28 — Key Takeaways**
+A summary slide listing three key points:
+1.  The formula for the mean: $\mu_x = np$.
+2.  The formula for standard deviation: $\sigma_x = \sqrt{np(1-p)}$.
+3.  A reminder that probabilities and parameters must always be interpreted with appropriate units and context.
+
+**05:54 — Thank You**
+A final blue slide reading "Thank you" with the College Board logo.

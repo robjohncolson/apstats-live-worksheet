@@ -1,0 +1,40 @@
+Here is the transcript for the video "Topic 4.12: The Geometric Distribution," including timestamps.
+
+**00:00**
+**Penny Smeltzer:** Penny Smeltzer from Austin, Texas. This video shows how to calculate probabilities and parameters for geometric distributions.
+
+**00:09**
+**Penny Smeltzer:** What will we learn? How do we calculate probabilities for a geometric random variable? How do we calculate the parameters for a geometric distribution?
+
+**00:20**
+**Penny Smeltzer:** Let's look at an example. In 2020, NOAA updated their prediction to 41% of tropical storms will become hurricanes. A hurricane is defined as a storm with sustained wind speeds of at least 74 miles per hour. What is the probability that the fourth tropical storm of the season will be the first one that develops into a hurricane?
+
+**00:46**
+**Penny Smeltzer:** First, always define the random variable. Let H equal the number of tropical storms it takes to get the first hurricane. H is geometric with p equal 0.41.
+
+**01:00**
+**Penny Smeltzer:** Let's look at the conditions or properties of a geometric distribution. Just like binomial, there's two possible outcomes. Each outcome is independent, and each trial has the same probability of success. But a binomial distribution or binomial setting has a fixed number of trials. The geometric distribution does not have a fixed number of trials. We're going to keep performing trials until we have a success.
+
+**01:32**
+**Penny Smeltzer:** To find the probability that H equals four, imagine that the first tropical storm does not turn into a hurricane. That would be considered in our probability unit a failure. The second storm, not a hurricane. The third storm, not a hurricane. The fourth tropical storm turns into a hurricane. The probability that we do not have a hurricane until the fourth tropical storm is 0.0842. So the formula for a random variable that's geometric is across the bottom of your screen.
+
+**02:12**
+**Penny Smeltzer:** For a cumulative geometric probability, a question would be like: What is the probability that the first hurricane will develop by the third tropical storm of the season? "By the third tropical storm" means it could happen on the first storm, or the second storm, or the third storm. I need to calculate the probability for each of those three events, add them together to get 0.795.
+
+**02:46**
+**Penny Smeltzer:** Most calculators have a geometric function. If I'm doing a geometric PDF function, for point density function, I need to include that it's a geometric distribution and my p-value and my x-value. If I write my answer without identifying the variables, I do not earn credit. Just like with the binomial distribution.
+
+**03:13**
+**Penny Smeltzer:** To find the mean of a geometric distribution, I want to define the random variable, identify the distribution and the p-value. And then the formula is 1 over p. So here, over many seasons, we can expect that it will take 2.44 tropical storms on average to get the first hurricane.
+
+**03:40**
+**Penny Smeltzer:** The standard deviation for the number of storms in a season it will take to get the first hurricane we find using the formula here. So, over many seasons, the number of tropical storms it will take to get the first hurricane will typically differ by about 1.87 storms from our mean of 2.44 storms.
+
+**04:06**
+**Penny Smeltzer:** Let's practice. Take a moment, pause the video, try the problem.
+
+**04:18**
+**Penny Smeltzer:** And here are the answers. The probability that the zoologist will need to wait until the fifth litter is born to have a large family to study is 0.082. For Part B, the zoologist can expect on average to require five litters of prairie dogs to be born to get the first large family.
+
+**04:41**
+**Penny Smeltzer:** What should we take away? Geometric random variable counts the number of trials it takes to get the first success in a setting where repeated, independent trials of the same chance process are performed with probability p of success on each trial. The formulas for a geometric probability and the mean and the standard deviation of the geometric distribution can be found here. Thank you very much.

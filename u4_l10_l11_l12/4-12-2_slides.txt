@@ -1,0 +1,195 @@
+Here is a description of each slide in the video, along with the corresponding timestamps:
+
+00:00 - Title Slide
+The video opens with a title card for "AP Statistics." It displays "Topic 4.12: The Geometric Distribution" alongside a logo of a distribution curve with vertical bars. The bottom of the slide identifies this as "Daily Video 2."
+
+00:09 - What Will We Learn?
+This slide lists the learning objectives for the lesson. It asks two questions:
+
+How can we distinguish between binomial and geometric distributions?
+
+How can we interpret probabilities and parameters in context?
+The bottom notes the Learning Objective: "Interpret probabilities and parameters for a geometric distribution."
+
+00:21 - Let’s Practice / Get Your Supplies Ready
+A preparatory slide for a practice exercise. It lists bullet points instructing students to:
+
+Prepare for a free-response question.
+
+Have paper, a calculator, and a formula sheet ready.
+
+Set a timer for 12 minutes.
+
+Pause the video on the next slide to work, then play to see the solution.
+
+00:49 - Major Hurricanes (The Problem)
+This slide presents the full text of the practice problem. It provides context about sustained windspeeds (111 mph) and the probability that a tropical storm becomes a major hurricane (22%). It lists three questions:
+(a) Calculating the probability of not having a major hurricane until the seventh storm.
+(b) Calculating expected values for major hurricanes in a year (18 storms) and the expected wait time for the first major hurricane.
+(c) determining if pilot preparation for four major hurricanes is sufficient.
+
+00:52 - Geometric Probability (Part A Solution)
+The slide details the solution for part (a).
+
+Variable Definition: 
+𝑋
+X
+ = the number of tropical storms until one becomes a major hurricane.
+
+Distribution: Defines 
+𝑋
+X
+ as a geometric distribution with 
+𝑝
+=
+0.22
+p=0.22
+.
+
+Calculation: It shows the formula 
+𝑃
+(
+𝑋
+=
+7
+)
+=
+(
+1
+−
+0.22
+)
+6
+(
+0.22
+)
+=
+0.0495
+P(X=7)=(1−0.22)
+6
+(0.22)=0.0495
+.
+
+Interpretation: Text in blue explains that because the probability is small, going this long without a major hurricane would be unusual.
+
+01:26 - Finding Means (Part B-i Solution)
+The slide focuses on "Finding Means (Expected Values)."
+
+Variable Definition: 
+𝑋
+X
+ = the number of major hurricanes this year.
+
+Distribution: Identifies this as a binomial random variable with 
+𝑛
+=
+18
+n=18
+ and 
+𝑝
+=
+0.22
+p=0.22
+.
+
+Calculation: Shows the expected value formula 
+𝜇
+𝑥
+=
+18
+(
+0.22
+)
+=
+3.96
+μ
+x
+	​
+
+=18(0.22)=3.96
+.
+
+01:44 - Finding Means (Part B-ii Solution)
+Staying on the "Finding Means" slide, the text updates for the second part of question (b).
+
+Variable Definition: 
+𝑌
+Y
+ = the number of tropical storms until one becomes a major hurricane.
+
+Distribution: Identifies this as a geometric random variable with 
+𝑝
+=
+0.22
+p=0.22
+.
+
+Calculation: Shows the mean formula 
+𝜇
+𝑦
+=
+1
+0.22
+=
+4.55
+μ
+y
+	​
+
+=
+0.22
+1
+	​
+
+=4.55
+ (rounded).
+
+02:00 - Cumulative Binomial Probability (Part C Solution)
+The header changes to "Cumulative Binomial Probability."
+
+Context: Discusses the team of pilots preparing for four major hurricanes.
+
+Variable Definition: 
+𝑋
+X
+ = the number of major hurricanes this year.
+
+Calculation: Shows the summation formula for calculating 
+𝑃
+(
+𝑋
+>
+4
+)
+P(X>4)
+ or 
+1
+−
+𝑃
+(
+𝑋
+≤
+4
+)
+1−P(X≤4)
+. The result is 
+0.36
+0.36
+.
+
+Conclusion: Text in blue states that because 
+0.36
+0.36
+ is a high probability, the pilots' preparation for only four hurricanes may not be sufficient.
+
+02:34 - Key Takeaways
+A summary slide listing three main points:
+
+Carefully check conditions to distinguish geometric situations from binomial situations.
+
+Define any random variables.
+
+Probabilities and parameters should be interpreted within the context of a specific population or situation.
+
+02:54 - Thank You
+A simple closing slide with a blue background and the text "Thank you" alongside the College Board logo.
