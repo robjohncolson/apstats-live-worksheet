@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 4-5 Schedule v11 | AP Statistics</title>
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --success: #2e7d32;
+            --warning: #ed6c02;
+            --period-b: #1565c0;
+            --period-e: #7b1fa2;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-300: #e0e0e0;
+            --gray-600: #757575;
+            --gray-700: #616161;
+            --gray-900: #212121;
+            --poster: #fff3e0;
+            --poster-border: #ff9800;
+            --unit5: #e0f2f1;
+            --unit5-border: #00897b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+        .header h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+        .header .subtitle { opacity: 0.9; font-size: 1rem; }
+        .header .meta { margin-top: 1rem; font-size: 0.9rem; opacity: 0.85; }
+        .section {
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+        .section-header.period-b { background: #e3f2fd; color: var(--period-b); }
+        .section-header.period-e { background: #f3e5f5; color: var(--period-e); }
+        .section-header.unit5 { background: var(--unit5); color: var(--unit5-border); }
+        .section-body { padding: 1.5rem; }
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+        .alert:last-child { margin-bottom: 0; }
+        .alert-warning { background: #fff3e0; border-color: var(--warning); }
+        .alert-success { background: #e8f5e9; border-color: var(--success); }
+        .alert-info { background: #e3f2fd; border-color: var(--period-b); }
+        .alert-title { font-weight: 600; margin-bottom: 0.5rem; }
+        .alert p { font-size: 0.95rem; color: var(--gray-700); }
+        .schedule-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .schedule-table th {
+            background: var(--gray-100);
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--gray-300);
+        }
+        .schedule-table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: top;
+        }
+        .schedule-table tr:last-child td { border-bottom: none; }
+        .schedule-table tr.week-divider td {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        .schedule-table tr.completed td { background: #f5f5f5; color: var(--gray-600); }
+        .schedule-table tr.poster-day td { background: var(--poster); }
+        .schedule-table tr.unit5-day td { background: var(--unit5); }
+        .schedule-table tr.long-block td { background: #c8e6c9; }
+        .date-cell { font-weight: 600; white-space: nowrap; }
+        .content-cell { min-width: 200px; }
+        .topic-tag {
+            display: inline-block;
+            background: var(--gray-200);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.25rem;
+        }
+        .topic-tag.unit5 {
+            background: #b2dfdb;
+            color: #00695c;
+        }
+        .video-count {
+            display: inline-block;
+            background: #e3f2fd;
+            color: var(--period-b);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.25rem;
+        }
+        .quiz-tag {
+            display: inline-block;
+            background: #fff3e0;
+            color: var(--warning);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .quiz-tag.due { background: #e8f5e9; color: var(--success); }
+        .drill-tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: var(--period-b);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .hw-tag {
+            display: inline-block;
+            background: #f3e5f5;
+            color: var(--period-e);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-done { background: var(--gray-200); color: var(--gray-600); }
+        .badge-poster { background: var(--poster); color: var(--poster-border); }
+        .badge-unit5 { background: var(--unit5); color: var(--unit5-border); }
+        .badge-long { background: #a5d6a7; color: #1b5e20; }
+        .time-note { font-size: 0.75rem; color: var(--gray-600); font-style: italic; }
+        .video-list {
+            font-size: 0.8rem;
+            color: var(--gray-700);
+            margin-top: 0.5rem;
+            padding-left: 1rem;
+            border-left: 2px solid #b2dfdb;
+        }
+        .video-list li { margin-bottom: 0.2rem; }
+        .unit5-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+        .topic-card {
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            padding: 0.75rem;
+            background: var(--gray-50);
+        }
+        .topic-card h4 {
+            font-size: 0.85rem;
+            color: var(--unit5-border);
+            margin-bottom: 0.25rem;
+        }
+        .topic-card p {
+            font-size: 0.8rem;
+            color: var(--gray-700);
+        }
+        .topic-card .video-badge {
+            display: inline-block;
+            background: var(--unit5);
+            color: var(--unit5-border);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Units 4 & 5: Probability → Sampling Distributions</h1>
+            <div class="subtitle">AP Statistics — Periods B &amp; E</div>
+            <div class="meta">Unit 4 Wrap-up + Unit 5 Launch &nbsp;|&nbsp; AP Exam: May 7, 2026</div>
+        </div>
+
+        <div class="section">
+            <div class="section-body">
+                <div class="alert alert-warning">
+                    <div class="alert-title">📱 Unit 4 Progress Check = Take-Home Test</div>
+                    <p>Due <strong>Monday 2/9</strong> for both periods. Poster activity is the in-class summative.</p>
+                </div>
+                <div class="alert alert-success">
+                    <div class="alert-title">🚀 Unit 5: Sampling Distributions (7-12% of AP Exam)</div>
+                    <p>8 topics, 15 videos, ~10-12 class periods. Foundation for all inference in Units 6-9!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Period B Schedule -->
+        <div class="section">
+            <div class="section-header period-b">Period B Schedule (Mon / Tue / Thu / Fri)</div>
+            <div class="section-body" style="padding: 0;">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">Date</th>
+                            <th>Content</th>
+                            <th style="width: 140px;">Assign</th>
+                            <th style="width: 120px;">Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="week-divider"><td colspan="4">Week of Feb 2-6 — Unit 4 Finish + Unit 5 Start</td></tr>
+                        <tr class="completed">
+                            <td class="date-cell">Mon 2/2 <span class="badge badge-done">Done</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.10</span><span class="topic-tag">4.11</span><span class="topic-tag">4.12</span>
+                                Binomial &amp; Geometric
+                            </td>
+                            <td><span class="hw-tag">HW: Progress Check</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="poster-day">
+                            <td class="date-cell">Tue 2/3 <span class="badge badge-poster">Poster</span></td>
+                            <td class="content-cell">
+                                <strong>Unit 4 Poster Activity</strong><br>
+                                <span class="time-note">65 min — 4 posters, rotating jobs (7-15 students)</span>
+                            </td>
+                            <td>—</td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Thu 2/5 <span class="badge badge-unit5">Unit 5</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.1</span><span class="topic-tag unit5">5.2</span>
+                                Normal Distribution Revisited
+                                <span class="video-count">4 videos (~33 min)</span>
+                                <ul class="video-list">
+                                    <li><strong>5.1-1:</strong> Why samples vary (intro, conceptual)</li>
+                                    <li><strong>5.2-1:</strong> Finding P from value (normalcdf)</li>
+                                    <li><strong>5.2-2:</strong> Finding value from P (invNorm)</li>
+                                    <li><strong>5.2-3:</strong> Assessing normality</li>
+                                </ul>
+                                <span class="time-note">65 min — Videos + Blooket + Drill</span>
+                            </td>
+                            <td><span class="drill-tag">Drill 5.1-5.2</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Fri 2/6</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.3</span>
+                                Central Limit Theorem
+                                <span class="video-count">2 videos (~18 min)</span>
+                                <ul class="video-list">
+                                    <li><strong>5.3-1:</strong> CLT intro / simulation concept</li>
+                                    <li><strong>5.3-2:</strong> CLT conditions / when it applies</li>
+                                </ul>
+                                <span class="time-note">55 min — Videos + Blooket + Drill</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.1-5.2</span><br>
+                                <span class="drill-tag">Drill 5.3</span>
+                            </td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="week-divider"><td colspan="4">Week of Feb 9-13</td></tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Mon 2/9</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.4</span>
+                                Biased/Unbiased Point Estimates
+                                <span class="video-count">1 video (~10 min)</span><br>
+                                <span class="time-note">55 min — Short content, extra practice time</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.3</span><br>
+                                <span class="drill-tag">Drill 5.4</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag due">Quiz 5.1-5.2</span><br>
+                                <span class="hw-tag">U4 Progress Check</span>
+                            </td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Tue 2/10</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.5</span>
+                                Sampling Dist for p̂
+                                <span class="video-count">2 videos (~18 min)</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.4</span><br>
+                                <span class="drill-tag">Drill 5.5</span>
+                            </td>
+                            <td><span class="quiz-tag due">Quiz 5.3</span></td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Thu 2/12</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.6</span>
+                                Sampling Dist for p̂₁ − p̂₂
+                                <span class="video-count">2 videos (~18 min)</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.5</span><br>
+                                <span class="drill-tag">Drill 5.6</span>
+                            </td>
+                            <td><span class="quiz-tag due">Quiz 5.4</span></td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Fri 2/13</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.7</span>
+                                Sampling Dist for x̄
+                                <span class="video-count">2 videos (~18 min)</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.6</span><br>
+                                <span class="drill-tag">Drill 5.7</span>
+                            </td>
+                            <td><span class="quiz-tag due">Quiz 5.5</span></td>
+                        </tr>
+                        <tr class="week-divider"><td colspan="4">Week of Feb 17-21 (Feb 17 = Presidents' Day?)</td></tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Tue 2/18</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.8</span>
+                                Sampling Dist for x̄₁ − x̄₂
+                                <span class="video-count">2 videos (~18 min)</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.7</span><br>
+                                <span class="drill-tag">Drill 5.8</span>
+                            </td>
+                            <td><span class="quiz-tag due">Quiz 5.6</span></td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Thu 2/20</td>
+                            <td class="content-cell">
+                                <strong>Unit 5 Review / FRQ Practice</strong>
+                            </td>
+                            <td><span class="hw-tag">HW: Progress Check</span></td>
+                            <td><span class="quiz-tag due">Quiz 5.7, 5.8</span></td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Fri 2/21</td>
+                            <td class="content-cell">
+                                <strong>Unit 6 Begins</strong> — Inference for Proportions
+                            </td>
+                            <td>—</td>
+                            <td><span class="hw-tag">U5 Progress Check</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Period E Schedule -->
+        <div class="section">
+            <div class="section-header period-e">Period E Schedule (Mon / Wed / Fri)</div>
+            <div class="section-body" style="padding: 0;">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">Date</th>
+                            <th>Content</th>
+                            <th style="width: 140px;">Assign</th>
+                            <th style="width: 120px;">Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="week-divider"><td colspan="4">Week of Feb 2-6 — Unit 4 Finish</td></tr>
+                        <tr class="completed">
+                            <td class="date-cell">Mon 2/2 <span class="badge badge-done">Done</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.9</span> Combining RVs (Variance Trap)
+                            </td>
+                            <td>—</td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="long-block">
+                            <td class="date-cell">Wed 2/4 <span class="badge badge-long">90 min</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag">4.10</span><span class="topic-tag">4.11</span><span class="topic-tag">4.12</span>
+                                Binomial &amp; Geometric
+                            </td>
+                            <td><span class="hw-tag">HW: Progress Check</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="poster-day">
+                            <td class="date-cell">Fri 2/6 <span class="badge badge-poster">Poster</span></td>
+                            <td class="content-cell">
+                                <strong>Unit 4 Poster Activity</strong><br>
+                                <span class="time-note">75 min — 4 posters, rotating jobs (7-15 students)</span>
+                            </td>
+                            <td>—</td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="week-divider"><td colspan="4">Week of Feb 9-13 — Unit 5 Start</td></tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Mon 2/9 <span class="badge badge-unit5">Unit 5</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.1</span><span class="topic-tag unit5">5.2</span>
+                                Normal Distribution Revisited
+                                <span class="video-count">4 videos (~33 min)</span>
+                                <ul class="video-list">
+                                    <li><strong>5.1-1:</strong> Why samples vary (intro, conceptual)</li>
+                                    <li><strong>5.2-1:</strong> Finding P from value (normalcdf)</li>
+                                    <li><strong>5.2-2:</strong> Finding value from P (invNorm)</li>
+                                    <li><strong>5.2-3:</strong> Assessing normality</li>
+                                </ul>
+                                <span class="time-note">75 min — Videos + Blooket + Drill</span>
+                            </td>
+                            <td><span class="drill-tag">Drill 5.1-5.2</span></td>
+                            <td><span class="hw-tag">U4 Progress Check</span></td>
+                        </tr>
+                        <tr class="unit5-day long-block">
+                            <td class="date-cell">Wed 2/11 <span class="badge badge-long">90 min</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.3</span><span class="topic-tag unit5">5.4</span>
+                                CLT + Point Estimates
+                                <span class="video-count">3 videos (~28 min)</span>
+                                <ul class="video-list">
+                                    <li><strong>5.3-1:</strong> CLT intro / simulation concept</li>
+                                    <li><strong>5.3-2:</strong> CLT conditions / when it applies</li>
+                                    <li><strong>5.4-1:</strong> Biased/unbiased estimators</li>
+                                </ul>
+                                <span class="time-note">90 min block — can cover both topics!</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.1-5.2</span><br>
+                                <span class="drill-tag">Drill 5.3-5.4</span>
+                            </td>
+                            <td>—</td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Fri 2/13</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.5</span>
+                                Sampling Dist for p̂
+                                <span class="video-count">2 videos (~18 min)</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.3-5.4</span><br>
+                                <span class="drill-tag">Drill 5.5</span>
+                            </td>
+                            <td><span class="quiz-tag due">Quiz 5.1-5.2</span></td>
+                        </tr>
+                        <tr class="week-divider"><td colspan="4">Week of Feb 17-21 (Feb 17 = Presidents' Day?)</td></tr>
+                        <tr class="unit5-day long-block">
+                            <td class="date-cell">Wed 2/19 <span class="badge badge-long">90 min</span></td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.6</span><span class="topic-tag unit5">5.7</span>
+                                Diff in Proportions + Means
+                                <span class="video-count">4 videos (~36 min)</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.5</span><br>
+                                <span class="drill-tag">Drill 5.6-5.7</span>
+                            </td>
+                            <td><span class="quiz-tag due">Quiz 5.3-5.4</span></td>
+                        </tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Fri 2/21</td>
+                            <td class="content-cell">
+                                <span class="topic-tag unit5">5.8</span>
+                                Sampling Dist for x̄₁ − x̄₂
+                                <span class="video-count">2 videos (~18 min)</span>
+                            </td>
+                            <td>
+                                <span class="quiz-tag">Quiz 5.6-5.7</span><br>
+                                <span class="drill-tag">Drill 5.8</span><br>
+                                <span class="hw-tag">HW: Progress Check</span>
+                            </td>
+                            <td><span class="quiz-tag due">Quiz 5.5</span></td>
+                        </tr>
+                        <tr class="week-divider"><td colspan="4">Week of Feb 24-28</td></tr>
+                        <tr class="unit5-day">
+                            <td class="date-cell">Mon 2/24</td>
+                            <td class="content-cell">
+                                <strong>Unit 5 Review / FRQ Practice</strong>
+                            </td>
+                            <td>—</td>
+                            <td><span class="quiz-tag due">Quiz 5.6-5.7, 5.8</span></td>
+                        </tr>
+                        <tr>
+                            <td class="date-cell">Wed 2/26</td>
+                            <td class="content-cell">
+                                <strong>Unit 6 Begins</strong> — Inference for Proportions
+                            </td>
+                            <td>—</td>
+                            <td><span class="hw-tag">U5 Progress Check</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Unit 5 Topic Overview -->
+        <div class="section">
+            <div class="section-header unit5">📊 Unit 5: Sampling Distributions — 15 Videos Total</div>
+            <div class="section-body">
+                <div class="unit5-overview">
+                    <div class="topic-card">
+                        <h4>5.1 Why Samples Vary</h4>
+                        <p>Intro — conceptual foundation</p>
+                        <span class="video-badge">1 video</span>
+                    </div>
+                    <div class="topic-card">
+                        <h4>5.2 Normal Dist Revisited</h4>
+                        <p>Z-scores, normalcdf, invNorm</p>
+                        <span class="video-badge">3 videos</span>
+                    </div>
+                    <div class="topic-card">
+                        <h4>5.3 Central Limit Theorem</h4>
+                        <p>THE big idea — large n → normal</p>
+                        <span class="video-badge">2 videos</span>
+                    </div>
+                    <div class="topic-card">
+                        <h4>5.4 Point Estimates</h4>
+                        <p>Biased vs unbiased estimators</p>
+                        <span class="video-badge">1 video</span>
+                    </div>
+                    <div class="topic-card">
+                        <h4>5.5 Sampling Dist for p̂</h4>
+                        <p>μ = p, σ = √(p(1-p)/n)</p>
+                        <span class="video-badge">2 videos</span>
+                    </div>
+                    <div class="topic-card">
+                        <h4>5.6 Diff in Proportions</h4>
+                        <p>p̂₁ − p̂₂ distribution</p>
+                        <span class="video-badge">2 videos</span>
+                    </div>
+                    <div class="topic-card">
+                        <h4>5.7 Sampling Dist for x̄</h4>
+                        <p>μ = μ, σ = σ/√n</p>
+                        <span class="video-badge">2 videos</span>
+                    </div>
+                    <div class="topic-card">
+                        <h4>5.8 Diff in Means</h4>
+                        <p>x̄₁ − x̄₂ distribution</p>
+                        <span class="video-badge">2 videos</span>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info" style="margin-top: 1rem;">
+                    <div class="alert-title">🔑 Key Formulas Preview</div>
+                    <p style="font-family: 'Cambria Math', Georgia, serif; font-size: 0.95rem;">
+                        <strong>Proportions:</strong> μ<sub>p̂</sub> = p &nbsp;|&nbsp; σ<sub>p̂</sub> = √(p(1-p)/n) &nbsp;|&nbsp; Large Counts: np ≥ 10, n(1-p) ≥ 10<br>
+                        <strong>Means:</strong> μ<sub>x̄</sub> = μ &nbsp;|&nbsp; σ<sub>x̄</sub> = σ/√n &nbsp;|&nbsp; CLT: n ≥ 30 or pop. normal
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcription Checklist -->
+        <div class="section">
+            <div class="section-header">📝 Your Transcription To-Do (Days 1-2)</div>
+            <div class="section-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div>
+                        <h4 style="color: var(--unit5-border); margin-bottom: 0.75rem;">Day 1: Topics 5.1 + 5.2 (4 videos)</h4>
+                        <ul style="margin-left: 1.25rem; font-size: 0.9rem; line-height: 1.8;">
+                            <li>☐ 5-1-1_slides.txt + transcript</li>
+                            <li>☐ 5-2-1_slides.txt + transcript</li>
+                            <li>☐ 5-2-2_slides.txt + transcript</li>
+                            <li>☐ 5-2-3_slides.txt + transcript</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--unit5-border); margin-bottom: 0.75rem;">Day 2: Topic 5.3 (2 videos)</h4>
+                        <ul style="margin-left: 1.25rem; font-size: 0.9rem; line-height: 1.8;">
+                            <li>☐ 5-3-1_slides.txt + transcript</li>
+                            <li>☐ 5-3-2_slides.txt + transcript</li>
+                        </ul>
+                        <p style="font-size: 0.85rem; color: var(--gray-600); margin-top: 1rem;">
+                            Once uploaded, I'll generate:<br>
+                            • Follow-along worksheets<br>
+                            • Blooket CSVs<br>
+                            • Drill cartridge (apstatu5)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            AP Statistics — Lynn English High School<br>
+            <span style="font-size: 0.8rem;">Period B: Mon/Tue/Thu/Fri &nbsp;|&nbsp; Period E: Mon/Wed/Fri</span><br>
+            <span style="font-size: 0.75rem; color: #999;">v11 — Updated 2/2/26 • Unit 5 video details + Day 1-2 transcription checklist</span>
+        </div>
+    </div>
+</body>
+</html>

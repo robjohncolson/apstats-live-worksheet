@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Poster 4: Binomial & Geometric Distributions</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f0f0f0;
+            padding: 1rem;
+        }
+        .poster {
+            background: #fffef0;
+            border: 4px solid #00897b;
+            border-radius: 8px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .poster-title {
+            text-align: center;
+            background: #00897b;
+            color: white;
+            padding: 1rem;
+            margin: -1.5rem -1.5rem 1rem -1.5rem;
+            border-radius: 4px 4px 0 0;
+        }
+        .poster-title h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .poster-title .topics {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        .poster-title .subtitle {
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-top: 0.5rem;
+            opacity: 0.85;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .section {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            background: white;
+        }
+        .section-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #00897b;
+            border-bottom: 2px solid #00897b;
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .bins-box {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
+            border: 3px solid #00897b;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .bins-box h2 {
+            color: #00695c;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+        .bins-letters {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .bins-letter {
+            background: white;
+            border: 2px solid #00897b;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            text-align: center;
+        }
+        .bins-letter .letter {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00897b;
+        }
+        .bins-letter .meaning {
+            font-size: 0.8rem;
+            color: #333;
+        }
+        .formula-box {
+            border: 2px solid #333;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin: 0.4rem 0;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 0.95rem;
+        }
+        .formula-box.binomial {
+            background: #e3f2fd;
+            border-color: #1565c0;
+        }
+        .formula-box.geometric {
+            background: #fce4ec;
+            border-color: #c2185b;
+        }
+        .formula-label {
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Segoe UI', sans-serif;
+            margin-top: 0.2rem;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .comparison-table th, .comparison-table td {
+            border: 2px solid #333;
+            padding: 0.4rem;
+            text-align: center;
+        }
+        .comparison-table th {
+            background: #f5f5f5;
+        }
+        .comparison-table .binomial-col {
+            background: #e3f2fd;
+        }
+        .comparison-table .geometric-col {
+            background: #fce4ec;
+        }
+        .example-section {
+            grid-column: 1 / -1;
+        }
+        .example-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .example-box {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+        .example-box.binomial {
+            background: #e3f2fd;
+            border-color: #1565c0;
+        }
+        .example-box.geometric {
+            background: #fce4ec;
+            border-color: #c2185b;
+        }
+        .example-box h4 {
+            margin-bottom: 0.5rem;
+        }
+        .work-step {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            margin: 0.5rem 0;
+        }
+        .answer-box {
+            background: #e8f5e9;
+            border: 2px solid #2e7d32;
+            border-radius: 6px;
+            padding: 0.4rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .watch-out {
+            background: #ffebee;
+            border: 3px solid #c62828;
+            border-radius: 8px;
+        }
+        .watch-out .section-title {
+            color: #c62828;
+            border-color: #c62828;
+        }
+        .watch-out ul {
+            margin-left: 1.25rem;
+            font-size: 0.85rem;
+        }
+        .watch-out li {
+            margin-bottom: 0.3rem;
+        }
+        .calculator-box {
+            font-size: 0.75rem;
+        }
+        .calc-row {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0.25rem 0;
+        }
+        .calc-row .func {
+            background: #e0e0e0;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            background: #00897b;
+            color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        <div class="poster-title">
+            <h1>🎲 BINOMIAL & GEOMETRIC DISTRIBUTIONS</h1>
+            <div class="topics">Topics 4.10 | 4.11 | 4.12</div>
+            <div class="subtitle">Counting successes — fixed trials vs. trials until success</div>
+        </div>
+
+        <div class="content-grid">
+            <!-- BINS Box -->
+            <div class="bins-box">
+                <h2>🎯 BINS — Check These Before Using Binomial!</h2>
+                <div class="bins-letters">
+                    <div class="bins-letter">
+                        <div class="letter">B</div>
+                        <div class="meaning"><strong>Binary</strong><br>2 outcomes only</div>
+                    </div>
+                    <div class="bins-letter">
+                        <div class="letter">I</div>
+                        <div class="meaning"><strong>Independent</strong><br>Trials don't affect each other</div>
+                    </div>
+                    <div class="bins-letter">
+                        <div class="letter">N</div>
+                        <div class="meaning"><strong>Number</strong><br>Fixed # of trials (n)</div>
+                    </div>
+                    <div class="bins-letter">
+                        <div class="letter">S</div>
+                        <div class="meaning"><strong>Success</strong><br>Same p each trial</div>
+                    </div>
+                </div>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem;">All 4 met → <strong>Binomial</strong> &nbsp;|&nbsp; No fixed n → might be <strong>Geometric</strong></p>
+            </div>
+
+            <!-- Binomial Formulas -->
+            <div class="section">
+                <div class="section-title" style="color: #1565c0; border-color: #1565c0;">📘 BINOMIAL FORMULAS</div>
+                
+                <div class="formula-box binomial">
+                    P(X = k) = ₙCₖ · pᵏ · (1-p)ⁿ⁻ᵏ
+                    <div class="formula-label">Probability of exactly k successes</div>
+                </div>
+                
+                <div class="formula-box binomial">
+                    μ = np
+                    <div class="formula-label">Mean (expected # of successes)</div>
+                </div>
+                
+                <div class="formula-box binomial">
+                    σ = √[np(1-p)]
+                    <div class="formula-label">Standard Deviation</div>
+                </div>
+            </div>
+
+            <!-- Geometric Formulas -->
+            <div class="section">
+                <div class="section-title" style="color: #c2185b; border-color: #c2185b;">📕 GEOMETRIC FORMULAS</div>
+                
+                <div class="formula-box geometric">
+                    P(X = k) = (1-p)ᵏ⁻¹ · p
+                    <div class="formula-label">Probability of first success on trial k</div>
+                </div>
+                
+                <div class="formula-box geometric">
+                    μ = 1/p
+                    <div class="formula-label">Mean (expected # of trials until success)</div>
+                </div>
+                
+                <div class="formula-box geometric">
+                    σ = √[(1-p)/p²]
+                    <div class="formula-label">Standard Deviation</div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="section" style="grid-column: 1 / -1;">
+                <div class="section-title">🎨 BINOMIAL vs GEOMETRIC — Quick Comparison</div>
+                <table class="comparison-table">
+                    <tr>
+                        <th></th>
+                        <th class="binomial-col">BINOMIAL</th>
+                        <th class="geometric-col">GEOMETRIC</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Question</strong></td>
+                        <td class="binomial-col">How many successes in n trials?</td>
+                        <td class="geometric-col">How many trials until 1st success?</td>
+                    </tr>
+                    <tr>
+                        <td><strong># of Trials</strong></td>
+                        <td class="binomial-col">Fixed (n)</td>
+                        <td class="geometric-col">Variable (keeps going)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>X =</strong></td>
+                        <td class="binomial-col"># of successes</td>
+                        <td class="geometric-col"># of trial when 1st success</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mean</strong></td>
+                        <td class="binomial-col">μ = np</td>
+                        <td class="geometric-col">μ = 1/p</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Calculator</strong></td>
+                        <td class="binomial-col">binompdf, binomcdf</td>
+                        <td class="geometric-col">geometpdf, geometcdf</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Examples -->
+            <div class="section example-section">
+                <div class="section-title">✏️ WORKED EXAMPLES</div>
+                <div class="example-grid">
+                    <div class="example-box binomial">
+                        <h4 style="color: #1565c0;">📘 Binomial Example</h4>
+                        <p style="font-size: 0.85rem;">Player makes 80% of free throws. Shoots 10.</p>
+                        <p style="font-size: 0.85rem;"><strong>Find P(exactly 8 makes)</strong></p>
+                        <div class="work-step">
+                            BINS: ✓B ✓I ✓N(10) ✓S(0.8)<br><br>
+                            P(X=8) = ₁₀C₈ · (0.8)⁸ · (0.2)²<br>
+                            = 45 · 0.1678 · 0.04<br>
+                            = 0.302<br><br>
+                            OR: binompdf(10, 0.8, 8)
+                        </div>
+                        <div class="answer-box">P(exactly 8 makes) = 0.302 or 30.2%</div>
+                    </div>
+                    <div class="example-box geometric">
+                        <h4 style="color: #c2185b;">📕 Geometric Example</h4>
+                        <p style="font-size: 0.85rem;">Game has 15% win rate. Play until you win.</p>
+                        <p style="font-size: 0.85rem;"><strong>Find P(first win on 4th play)</strong></p>
+                        <div class="work-step">
+                            No fixed n → Geometric!<br><br>
+                            P(X=4) = (1-0.15)³ · (0.15)<br>
+                            = (0.85)³ · (0.15)<br>
+                            = 0.614 · 0.15<br>
+                            = 0.092<br><br>
+                            OR: geometpdf(0.15, 4)
+                        </div>
+                        <div class="answer-box">P(first win on 4th play) = 0.092 or 9.2%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculator & Watch Out -->
+            <div class="section">
+                <div class="section-title">📱 CALCULATOR SYNTAX</div>
+                <div class="calculator-box">
+                    <p><strong>Path:</strong> 2nd → VARS (DISTR)</p>
+                    <div class="calc-row"><span class="func">binompdf(n,p,k)</span> = exactly k</div>
+                    <div class="calc-row"><span class="func">binomcdf(n,p,k)</span> = at most k (≤)</div>
+                    <div class="calc-row"><span class="func">geometpdf(p,k)</span> = on trial k</div>
+                    <div class="calc-row"><span class="func">geometcdf(p,k)</span> = within k trials (≤)</div>
+                    <p style="margin-top: 0.5rem;"><strong>"At least k":</strong> P(X≥k) = 1 − binomcdf(n,p,k-1)</p>
+                </div>
+            </div>
+
+            <div class="section watch-out">
+                <div class="section-title">⚠️ WATCH OUT!</div>
+                <ul>
+                    <li><strong>"At least" vs "at most"</strong> — know when to use complement!</li>
+                    <li><strong>pdf = exactly, cdf = cumulative</strong></li>
+                    <li><strong>Check BINS first!</strong> No conditions = no formulas</li>
+                    <li><strong>10% rule:</strong> n must be &lt; 10% of population</li>
+                    <li><strong>Geometric X starts at 1</strong>, not 0!</li>
+                    <li><strong>Syntax order:</strong> binompdf(n, p, k) — n first!</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.8rem;">
+            <span class="badge">EXAMPLE POSTER</span> — Your poster should look similar to this!
+        </div>
+    </div>
+</body>
+</html>
