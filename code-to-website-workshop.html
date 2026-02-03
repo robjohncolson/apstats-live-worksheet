@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Code to Website in 90 Minutes</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .worksheet {
+            background: #fff;
+            border-radius: 16px;
+            padding: 35px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #1a1a2e;
+            margin-bottom: 5px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.15em;
+            margin-bottom: 10px;
+        }
+        
+        .time-estimate {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            color: #1a1a2e;
+            margin-top: 40px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        h2 .phase {
+            background: #667eea;
+            color: white;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+        
+        h2 .time {
+            margin-left: auto;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.6em;
+            font-weight: normal;
+        }
+        
+        h3 {
+            color: #667eea;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        
+        .section {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 18px;
+            align-items: flex-start;
+        }
+        
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-content p {
+            margin: 0 0 8px 0;
+        }
+        
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .link-button {
+            display: inline-block;
+            background: #667eea;
+            color: white !important;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .link-button:hover {
+            background: #5a6fd6;
+            text-decoration: none;
+        }
+        
+        .command-box {
+            background: #1a1a2e;
+            color: #00ff88;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 1em;
+            overflow-x: auto;
+        }
+        
+        .command-box.user-input {
+            color: #ffcc00;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .tip {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        code {
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95em;
+        }
+        
+        .prompt-card {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .prompt-card h4 {
+            margin: 0 0 8px 0;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .prompt-card .emoji {
+            font-size: 1.4em;
+        }
+        
+        .prompt-template {
+            background: #f5f5f5;
+            border: 1px dashed #999;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .prompt-template .fill-in {
+            background: #ffeb3b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .example-ideas {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .project-option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .project-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .project-option h4 {
+            margin: 0 0 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .project-option p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .modification-ideas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .mod-idea {
+            background: #f0f4ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+        
+        .url-template {
+            background: #1a1a2e;
+            color: #00bcd4;
+            font-family: 'Consolas', monospace;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 1.05em;
+            word-break: break-all;
+        }
+        
+        .url-template .placeholder {
+            color: #ffcc00;
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 10px 0;
+            padding-left: 35px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        
+        .checklist li::before {
+            content: "☐";
+            position: absolute;
+            left: 5px;
+            font-size: 1.3em;
+        }
+        
+        .overview-box {
+            background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%);
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 20px 0;
+        }
+        
+        .overview-box h3 {
+            margin-top: 0;
+            color: #1a1a2e;
+        }
+        
+        .flow-diagram {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .flow-step {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .flow-arrow {
+            color: #667eea;
+            font-size: 1.2em;
+        }
+        
+        .screenshot-placeholder {
+            background: #e0e0e0;
+            border: 2px dashed #999;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px dashed #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .worksheet {
+                box-shadow: none;
+                padding: 20px;
+            }
+            .link-button {
+                background: #667eea;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .worksheet {
+                padding: 20px;
+            }
+            .project-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="worksheet">
+        <h1>🚀 From Code to Website in 90 Minutes</h1>
+        <p class="subtitle">Use AI to build a real website—no experience needed!</p>
+        <div class="time-estimate">⏱️ Total time: ~90 minutes</div>
+
+        <!-- Overview -->
+        <div class="overview-box">
+            <h3>What You'll Do Today</h3>
+            <p>By the end of this workshop, you'll have a <strong>real website on the internet</strong> that anyone can visit!</p>
+            <div class="flow-diagram">
+                <span class="flow-step">Create GitHub Repo</span>
+                <span class="flow-arrow">→</span>
+                <span class="flow-step">Ask AI to Write Code</span>
+                <span class="flow-arrow">→</span>
+                <span class="flow-step">Save & Upload</span>
+                <span class="flow-arrow">→</span>
+                <span class="flow-step">Publish Website!</span>
+            </div>
+        </div>
+
+        <!-- PHASE 1 -->
+        <h2><span class="phase">Phase 1</span> Set Up Your GitHub Repository <span class="time">~15 min</span></h2>
+        
+        <p>A "repository" (or "repo") is like a folder on GitHub that stores your project files.</p>
+
+        <h3>Step 1.1 — Create a New Repository</h3>
+        <div class="section">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>Go to GitHub and sign in:</p>
+                    <a href="https://github.com" target="_blank" class="link-button">Open GitHub →</a>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p>Click the <strong>+</strong> icon in the top-right corner, then click <strong>"New repository"</strong></p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <p>Fill in the details:</p>
+                    <ul>
+                        <li><strong>Repository name:</strong> <code>my-first-website</code> (or choose your own!)</li>
+                        <li><strong>Description:</strong> "My first website built with AI" (optional)</li>
+                        <li><strong>Public</strong> ← Select this (required for free websites)</li>
+                        <li><strong>☑️ Add a README file</strong> ← Check this box!</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <p>Click the green <strong>"Create repository"</strong> button</p>
+                </div>
+            </div>
+            
+            <div class="success">
+                <strong>✓ Checkpoint:</strong> You should now see your new repository page with a README.md file!
+            </div>
+        </div>
+
+        <h3>Step 1.2 — Create a Personal Access Token (Your Password for Git)</h3>
+        <div class="section">
+            <p>GitHub needs a special password called a "token" to let you upload code from your computer.</p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>Go to GitHub's token settings:</p>
+                    <a href="https://github.com/settings/tokens" target="_blank" class="link-button">Open Token Settings →</a>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p>Click <strong>"Generate new token"</strong> → <strong>"Generate new token (classic)"</strong></p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <p>Fill in the settings:</p>
+                    <ul>
+                        <li><strong>Note:</strong> <code>School laptop Git access</code></li>
+                        <li><strong>Expiration:</strong> 90 days (or "Custom" → end of semester)</li>
+                        <li><strong>Select scopes:</strong> Check the box for <strong>☑️ repo</strong> (this gives full access to your repositories)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <p>Scroll down and click <strong>"Generate token"</strong></p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <p><strong>IMPORTANT:</strong> Copy the token immediately! It starts with <code>ghp_</code></p>
+                    <p>Paste it somewhere safe (a text file, your notes app, etc.)</p>
+                </div>
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ You can only see this token ONCE!</strong> If you lose it, you'll have to create a new one. Save it now!
+            </div>
+        </div>
+
+        <h3>Step 1.3 — Clone Your Repository</h3>
+        <div class="section">
+            <p>"Cloning" downloads your GitHub repository to your computer so you can add files to it.</p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>On your repository page, click the green <strong>"&lt;&gt; Code"</strong> button</p>
+                    <p>Copy the HTTPS URL (it looks like <code>https://github.com/yourusername/my-first-website.git</code>)</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p>Open <strong>Git Bash</strong> (from your PortableGit folder, double-click <code>git-bash.exe</code>)</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <p>Navigate to your Documents folder:</p>
+                    <div class="command-box">cd ~/Documents</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <p>Clone your repository (replace the URL with yours):</p>
+                    <div class="command-box">git clone https://github.com/YOUR-USERNAME/my-first-website.git</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <p>Enter your project folder:</p>
+                    <div class="command-box">cd my-first-website</div>
+                </div>
+            </div>
+            
+            <div class="success">
+                <strong>✓ Checkpoint:</strong> Type <code>ls</code> and press Enter. You should see <code>README.md</code> listed!
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- PHASE 2 -->
+        <h2><span class="phase">Phase 2</span> Generate Your Website with Claude AI <span class="time">~25 min</span></h2>
+
+        <h3>Step 2.1 — Open Claude AI</h3>
+        <div class="section">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>Go to Claude and sign in (create an account if needed):</p>
+                    <a href="https://claude.ai" target="_blank" class="link-button">Open Claude AI →</a>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p>Click <strong>"New chat"</strong> to start a conversation</p>
+                </div>
+            </div>
+            
+            <div class="tip">
+                <strong>💡 Name your conversation!</strong> Click on the chat title at the top and rename it to something like "My Website Project" so you can find it later.
+            </div>
+        </div>
+
+        <h3>Step 2.2 — Choose Your Project</h3>
+        <div class="section">
+            <p>Pick ONE project that sounds fun to you! Each includes a ready-to-use prompt.</p>
+            
+            <div class="project-grid">
+                <div class="project-option">
+                    <h4><span class="emoji">🪪</span> About Me Card</h4>
+                    <p>A stylish personal profile card with your name, interests, and links</p>
+                </div>
+                <div class="project-option">
+                    <h4><span class="emoji">🎯</span> Interactive Quiz</h4>
+                    <p>"Which character are you?" style personality quiz</p>
+                </div>
+                <div class="project-option">
+                    <h4><span class="emoji">🎲</span> Random Generator</h4>
+                    <p>Generate random compliments, excuses, jokes, or ideas</p>
+                </div>
+                <div class="project-option">
+                    <h4><span class="emoji">⏱️</span> Countdown Timer</h4>
+                    <p>Count down to summer, graduation, or any event</p>
+                </div>
+                <div class="project-option">
+                    <h4><span class="emoji">🎮</span> Click Game</h4>
+                    <p>A simple reaction speed or click counter game</p>
+                </div>
+            </div>
+        </div>
+
+        <h3>Step 2.3 — Copy and Customize Your Prompt</h3>
+        <div class="section">
+            <p>Find your chosen project below. <strong>Fill in the yellow blanks</strong>, then copy the entire prompt and paste it into Claude.</p>
+
+            <!-- PROMPT 1: About Me Card -->
+            <div class="prompt-card">
+                <h4><span class="emoji">🪪</span> About Me Card — Prompt Template</h4>
+                <div class="prompt-template">
+                    Create a single HTML file with embedded CSS and JavaScript for a personal "About Me" card webpage.
+                    <br><br>
+                    <strong>About me:</strong><br>
+                    • Name: <span class="fill-in">[Your name]</span><br>
+                    • Grade/Role: <span class="fill-in">[e.g., Junior at Lincoln High]</span><br>
+                    • 3 interests/hobbies: <span class="fill-in">[e.g., basketball, anime, cooking]</span><br>
+                    • Favorite quote or motto: <span class="fill-in">[e.g., "Stay curious"]</span><br>
+                    • Color scheme: <span class="fill-in">[e.g., dark mode with purple accents]</span>
+                    <br><br>
+                    <strong>Features I want:</strong><br>
+                    • Hover effects on the card<br>
+                    • Smooth animations when the page loads<br>
+                    • Links to my social media (use # as placeholder links)<br>
+                    • Looks good on phones and computers
+                    <br><br>
+                    Put ALL code in one HTML file. Make it visually impressive!
+                </div>
+                <p class="example-ideas"><strong>Make it yours:</strong> Add your favorite emoji, change the shape of the card, request a specific font style, add a "fun facts" section!</p>
+            </div>
+
+            <!-- PROMPT 2: Quiz -->
+            <div class="prompt-card">
+                <h4><span class="emoji">🎯</span> Interactive Quiz — Prompt Template</h4>
+                <div class="prompt-template">
+                    Create a single HTML file with embedded CSS and JavaScript for a "Which <span class="fill-in">[topic]</span> Are You?" personality quiz.
+                    <br><br>
+                    <strong>Quiz details:</strong><br>
+                    • Topic: <span class="fill-in">[e.g., anime character, pizza topping, superpower, music genre]</span><br>
+                    • Number of questions: 5<br>
+                    • Number of possible results: 4<br>
+                    • Vibe/theme: <span class="fill-in">[e.g., fun and colorful, mysterious dark mode, retro arcade]</span>
+                    <br><br>
+                    <strong>Features I want:</strong><br>
+                    • One question shown at a time<br>
+                    • Progress bar showing how far along I am<br>
+                    • Animated reveal of the final result<br>
+                    • A "retake quiz" button at the end<br>
+                    • Looks good on phones
+                    <br><br>
+                    Put ALL code in one HTML file. Make the questions fun and the results entertaining!
+                </div>
+                <p class="example-ideas"><strong>Ideas:</strong> "Which School Subject Are You?", "Which Fast Food Item Matches Your Personality?", "What Season Is Your Vibe?"</p>
+            </div>
+
+            <!-- PROMPT 3: Random Generator -->
+            <div class="prompt-card">
+                <h4><span class="emoji">🎲</span> Random Generator — Prompt Template</h4>
+                <div class="prompt-template">
+                    Create a single HTML file with embedded CSS and JavaScript for a random <span class="fill-in">[thing]</span> generator.
+                    <br><br>
+                    <strong>Generator details:</strong><br>
+                    • What it generates: <span class="fill-in">[e.g., compliments, excuses for late homework, pickup lines, shower thoughts, video game ideas]</span><br>
+                    • Tone: <span class="fill-in">[e.g., funny, wholesome, sarcastic, dramatic]</span><br>
+                    • Color scheme: <span class="fill-in">[e.g., bright and playful, minimalist black and white]</span>
+                    <br><br>
+                    <strong>Features I want:</strong><br>
+                    • Big button to generate new content<br>
+                    • Satisfying animation when new content appears<br>
+                    • At least 20 different options to randomly choose from<br>
+                    • A "copy to clipboard" button<br>
+                    • Looks good on phones
+                    <br><br>
+                    Put ALL code in one HTML file. Make it fun to click over and over!
+                </div>
+                <p class="example-ideas"><strong>Ideas:</strong> Motivational quotes generator, random date ideas, "What should I draw?" prompt generator, band name generator!</p>
+            </div>
+
+            <!-- PROMPT 4: Countdown -->
+            <div class="prompt-card">
+                <h4><span class="emoji">⏱️</span> Countdown Timer — Prompt Template</h4>
+                <div class="prompt-template">
+                    Create a single HTML file with embedded CSS and JavaScript for a countdown timer to <span class="fill-in">[event]</span>.
+                    <br><br>
+                    <strong>Countdown details:</strong><br>
+                    • Event name: <span class="fill-in">[e.g., Summer Break, Graduation, My Birthday]</span><br>
+                    • Target date: <span class="fill-in">[e.g., June 15, 2025]</span><br>
+                    • Theme: <span class="fill-in">[e.g., beach vibes, space theme, party celebration]</span>
+                    <br><br>
+                    <strong>Features I want:</strong><br>
+                    • Shows days, hours, minutes, and seconds<br>
+                    • Numbers animate when they change<br>
+                    • Cool background (gradient, pattern, or subtle animation)<br>
+                    • A fun message or animation when the countdown hits zero<br>
+                    • Looks good on phones
+                    <br><br>
+                    Put ALL code in one HTML file. Make it exciting to watch!
+                </div>
+                <p class="example-ideas"><strong>Ideas:</strong> Add falling confetti, show a motivational message below the timer, change colors as it gets closer!</p>
+            </div>
+
+            <!-- PROMPT 5: Click Game -->
+            <div class="prompt-card">
+                <h4><span class="emoji">🎮</span> Click Game — Prompt Template</h4>
+                <div class="prompt-template">
+                    Create a single HTML file with embedded CSS and JavaScript for a <span class="fill-in">[game type]</span> clicking game.
+                    <br><br>
+                    <strong>Game details:</strong><br>
+                    • Game type: <span class="fill-in">[e.g., "click as fast as you can in 10 seconds", "hit the moving target", "reaction time test"]</span><br>
+                    • Visual theme: <span class="fill-in">[e.g., arcade retro, neon glow, cute animals]</span>
+                    <br><br>
+                    <strong>Features I want:</strong><br>
+                    • Score counter<br>
+                    • High score that saves during the session<br>
+                    • Sound effects or visual feedback on clicks<br>
+                    • Start and restart buttons<br>
+                    • Looks good on phones
+                    <br><br>
+                    Put ALL code in one HTML file. Make it addictive!
+                </div>
+                <p class="example-ideas"><strong>Ideas:</strong> Whack-a-mole style game, cookie clicker, speed typing test, memory card matching!</p>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Prompt Budget Reminder:</strong> You have limited free messages on Claude. Make your first prompt detailed to get good results!
+            </div>
+        </div>
+
+        <h3>Step 2.4 — Save the Code to a File</h3>
+        <div class="section">
+            <p>Claude will respond with HTML code. Now let's turn it into a real file!</p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>Look for the code block in Claude's response (it has a gray background)</p>
+                    <p>Click the <strong>"Copy"</strong> button in the top-right corner of the code block</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p>Open <strong>Notepad</strong> on your computer:</p>
+                    <ul>
+                        <li>Press the Windows key</li>
+                        <li>Type "Notepad"</li>
+                        <li>Press Enter</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <p>Paste the code into Notepad (<code>Ctrl + V</code>)</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <p><strong>Save the file correctly:</strong></p>
+                    <ul>
+                        <li>Press <code>Ctrl + S</code> (or File → Save)</li>
+                        <li>Navigate to: <code>Documents → my-first-website</code> folder</li>
+                        <li>Change "Save as type" to: <strong>All Files (*.*)</strong></li>
+                        <li>File name: <strong><code>index.html</code></strong></li>
+                        <li>Click Save</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ IMPORTANT:</strong> The file MUST be named <code>index.html</code> (not index.html.txt). Make sure "Save as type" is set to "All Files"!
+            </div>
+            
+            <div class="tip">
+                <strong>💡 Test it locally first!</strong> Open File Explorer, go to your project folder, and double-click <code>index.html</code>. It should open in your browser!
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- PHASE 3 -->
+        <h2><span class="phase">Phase 3</span> Upload to GitHub <span class="time">~10 min</span></h2>
+
+        <div class="section">
+            <p>Now let's upload your website to GitHub using the Git commands!</p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>In Git Bash, make sure you're in your project folder:</p>
+                    <div class="command-box">cd ~/Documents/my-first-website</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p><strong>Stage your files</strong> (tell Git which files to save):</p>
+                    <div class="command-box">git add .</div>
+                    <p><em>The dot means "all files in this folder"</em></p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <p><strong>Commit your changes</strong> (save a snapshot with a message):</p>
+                    <div class="command-box">git commit -m "Add my first website"</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <p><strong>Push to GitHub</strong> (upload to the internet):</p>
+                    <div class="command-box">git push</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <p><strong>When asked for credentials:</strong></p>
+                    <ul>
+                        <li><strong>Username:</strong> Type your GitHub username, press Enter</li>
+                        <li><strong>Password:</strong> Paste your Personal Access Token (right-click to paste in Git Bash), press Enter</li>
+                    </ul>
+                    <p><em>Note: You won't see the password as you paste it—that's normal!</em></p>
+                </div>
+            </div>
+            
+            <div class="success">
+                <strong>✓ Checkpoint:</strong> Go to your repository on GitHub and refresh the page. You should see <code>index.html</code> listed!
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- PHASE 4 -->
+        <h2><span class="phase">Phase 4</span> Publish with GitHub Pages <span class="time">~10 min</span></h2>
+
+        <div class="section">
+            <p>GitHub Pages turns your repository into a free website!</p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <p>On your GitHub repository page, click <strong>"Settings"</strong> (tab near the top)</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <p>In the left sidebar, click <strong>"Pages"</strong></p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <p>Under "Branch", change <strong>"None"</strong> to <strong>"main"</strong></p>
+                    <p>Leave the folder as <strong>"/ (root)"</strong></p>
+                    <p>Click <strong>"Save"</strong></p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <p><strong>Wait 1-3 minutes</strong> for GitHub to build your site</p>
+                    <p>Refresh the Settings → Pages page. You'll see a green box with your URL!</p>
+                </div>
+            </div>
+            
+            <div class="success">
+                <strong>🎉 Your website is LIVE!</strong> Your URL will look like this:
+            </div>
+            
+            <div class="url-template">
+                https://<span class="placeholder">your-username</span>.github.io/<span class="placeholder">my-first-website</span>/
+            </div>
+            
+            <div class="tip">
+                <strong>💡 While you wait:</strong> Share your URL with classmates! Ask what projects they chose. Compare your designs!
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- PHASE 5 -->
+        <h2><span class="phase">Phase 5</span> Round 2 — Customize & Improve! <span class="time">~20 min</span></h2>
+
+        <div class="section">
+            <p>Your site is live, but why stop there? Let's make it even better!</p>
+            
+            <h3>Ideas for Modifications</h3>
+            <p>Ask Claude to help you with any of these:</p>
+            
+            <div class="modification-ideas">
+                <div class="mod-idea">🎨 Change the color scheme</div>
+                <div class="mod-idea">✨ Add more animations</div>
+                <div class="mod-idea">🔤 Use a different font</div>
+                <div class="mod-idea">📱 Make buttons bigger for phones</div>
+                <div class="mod-idea">🖼️ Add an image or emoji background</div>
+                <div class="mod-idea">🔊 Add sound effects</div>
+                <div class="mod-idea">🌙 Add dark mode toggle</div>
+                <div class="mod-idea">💫 Add particle effects</div>
+                <div class="mod-idea">📊 Add a statistics section</div>
+                <div class="mod-idea">🔗 Add social share buttons</div>
+            </div>
+
+            <h3>How to Ask for Changes</h3>
+            <p>Go back to your Claude conversation and try prompts like:</p>
+            
+            <div class="prompt-template">
+                Can you modify the code to <span class="fill-in">[describe what you want]</span>?
+                <br><br>
+                Please give me the complete updated HTML file.
+            </div>
+            
+            <p><strong>Example prompts:</strong></p>
+            <ul>
+                <li>"Can you change the colors to a blue and orange theme? Please give me the complete updated HTML file."</li>
+                <li>"Can you make the buttons bigger and add a satisfying bounce animation when clicked? Please give me the complete updated HTML file."</li>
+                <li>"Can you add confetti that falls when the user gets their result? Please give me the complete updated HTML file."</li>
+            </ul>
+        </div>
+
+        <h3>Uploading Your Changes</h3>
+        <div class="section">
+            <p>After updating your <code>index.html</code> file in Notepad, push the changes:</p>
+            
+            <div class="command-box">
+git add .
+git commit -m "Updated colors and added animations"
+git push
+            </div>
+            
+            <p>Wait 1-2 minutes, then refresh your live website to see the changes!</p>
+            
+            <div class="tip">
+                <strong>💡 Pro tip:</strong> Write descriptive commit messages! Instead of "updated stuff", write "Changed background to gradient and added hover effects"
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- CHECKLIST -->
+        <h2>✅ Final Checklist</h2>
+        <div class="section">
+            <ul class="checklist">
+                <li>Created GitHub repository</li>
+                <li>Generated Personal Access Token (and saved it!)</li>
+                <li>Cloned repository to my computer</li>
+                <li>Used Claude to generate website code</li>
+                <li>Saved code as <code>index.html</code></li>
+                <li>Pushed code to GitHub (add, commit, push)</li>
+                <li>Enabled GitHub Pages</li>
+                <li>Visited my live website! 🎉</li>
+                <li>Made at least one customization</li>
+                <li>Pushed my updates</li>
+            </ul>
+        </div>
+
+        <!-- TROUBLESHOOTING -->
+        <h2>🔧 Troubleshooting</h2>
+        <div class="section">
+            <h3>My website shows a 404 error</h3>
+            <ul>
+                <li>Make sure your file is named exactly <code>index.html</code> (not <code>index.html.txt</code>)</li>
+                <li>Wait a few more minutes—GitHub Pages can be slow</li>
+                <li>Check that GitHub Pages is set to the "main" branch</li>
+            </ul>
+            
+            <h3>Git says "Permission denied"</h3>
+            <ul>
+                <li>Make sure you're using your Personal Access Token as the password, not your regular GitHub password</li>
+                <li>Try generating a new token if the old one expired</li>
+            </ul>
+            
+            <h3>My file saved as .txt instead of .html</h3>
+            <ul>
+                <li>In Notepad's Save dialog, change "Save as type" to "All Files (*.*)"</li>
+                <li>Manually type the full filename: <code>index.html</code></li>
+            </ul>
+            
+            <h3>Git says "nothing to commit"</h3>
+            <ul>
+                <li>You probably already committed! Try <code>git push</code></li>
+                <li>Or check if you saved the file in the right folder</li>
+            </ul>
+        </div>
+
+        <!-- FOOTER -->
+        <div style="text-align: center; margin-top: 40px; padding: 25px; background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%); border-radius: 12px;">
+            <h3 style="margin-top: 0;">🎉 Congratulations!</h3>
+            <p>You just built and deployed a real website using AI assistance!</p>
+            <p style="font-size: 0.95em; color: #666;">
+                <strong>Quick Links:</strong><br>
+                <a href="https://claude.ai">Claude AI</a> • 
+                <a href="https://github.com">GitHub</a> • 
+                <a href="https://git-scm.com/download/win">Download Portable Git</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
