@@ -1,0 +1,66 @@
+00:00
+What will we learn?
+How do we calculate the probability that a particular value lies within a given interval of a normal distribution?
+And how can we determine the interval associated with a given area in a normal distribution?
+
+00:16
+Here we have the standard normal distribution with a mean of 0 and a standard deviation of 1.
+In Lesson 1.10, we learned to use Z-scores to calculate the proportion of values within a given region of the normal distribution. Looking at this, we can see that about half the distribution is shaded.
+
+00:39
+In Lesson 4.7, we learned that continuous random variables can take on an infinite number of values in an interval on the number line. And the distribution of all values might be approximately normal, like in this case.
+
+00:56
+So, the shaded area, we could say, is the proportion of 0.5. So the proportion of values above zero is 0.5.
+Or we could say the percent of values above zero is 50%.
+Or, for this lesson, we could say the probability of randomly selecting a point in the shaded region is 0.5.
+Proportion, percent, probability: they all work, and they all start with P, which is kind of nice.
+
+01:30
+Let's look at an example.
+Giraffes are clearly the tallest living land animal, partly due to their lengthy necks. The lengths of adult giraffe necks can be reasonably approximated by a normal distribution with a mean of 5.9 feet and a standard deviation of 0.3 feet.
+What is the probability that a randomly selected adult giraffe has a neck greater than 6 feet long?
+
+02:00
+Well, first, define your random variable as the neck length in feet of a randomly selected adult giraffe. We were given the mean and the standard deviation. And I always like to draw the curve and put in the value of interest, 6, and shade the direction I'm going—in this case, greater than.
+Then, just like you already know, you use the Z formula to calculate the Z-score. And then using technology, or the Table A, you can find the probability is 0.37.
+Wow, over a third of the giraffes have a neck that's greater than 6 feet. I find that amazing.
+
+02:42
+What is important to include in a solution? If you're doing this question on the AP exam, what are the AP graders looking for?
+First, define the random variable clearly in the context of the problem.
+Second, you need to make it clear that you're using a normal distribution. You can do that by drawing the sketch—as long as you have scale with three standard deviations each way of the mean.
+You can do it using the Z formula, which, all alone, does not tell me that it's a normal curve, but the Z formula coupled with the probability lets the grader know that you were using the normal curve.
+Or, if you're using technology, the technology statement should clearly state that you're using the normal curve.
+
+03:36
+Next, identify the parameters. So you could just write the mean and standard deviation. It can be shown in your Z formula calculations, or it can be shown in your technology statement.
+
+03:49
+Next, the value of interest. The value of interest in this case is greater than 6. So I can show that by the shading in my sketch, by the statement coupled with my answer, or by clearly indicating the lower and upper bounds that I used with my technology.
+And finally, the correct probability.
+
+04:15
+Notice that if you're using a technology statement and you don't identify the values that you've input into your technology, there is no credit for your work.
+
+04:26
+Let's practice. When you get to the next slide, hit pause, work through the problems, and then hit play to check your answers.
+
+04:39
+For part (a), notice that I've drawn the sketch. I've clearly identified the mean and standard deviation. I have defined the random variable, shown my work, and the answer is 0.0150.
+
+04:56
+For part (b), same thing, same work, and the answer is 0.8640.
+
+05:03
+Part (c) is different. This is referred to as an inverse normal problem. We're given the area under the curve—25%—and we're asked to find the cutoff value.
+So my first task is to find the Z-score that is associated with the bottom 25%—the cutoff for the bottom 25%. In this case, it's negative 0.67.
+Then using that Z-score, I put it into the Z formula with the mean and standard deviation, use algebra, and I find out that X, or the cutoff, is 5.7 feet.
+
+05:43
+What should we take away?
+The probability a value lies within a defined interval of a normal distribution can be calculated by finding the area of the defined interval.
+And the boundaries of an interval associated with a given area in a normal distribution can be determined using a Z-score or technology. This second one is referred to as an inverse normal problem.
+
+06:11
+Thank you.
