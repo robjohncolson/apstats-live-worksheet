@@ -1,0 +1,75 @@
+Here is a description of each slide and visual change in the video, along with the corresponding timestamps:
+
+00:00 - Title Slide
+The video opens with a title card reading "TOPIC 5.3 The Central Limit Theorem" against a blue background. It identifies the subject as "AP Statistics" and labels this as "DAILY VIDEO 1." A video feed of the presenter, Penny Smeltzer, appears in the top right corner.
+
+00:12 - What Will We Learn?
+A slide titled "What Will We Learn?" lists three learning objectives:
+
+What is a sampling distribution?
+
+How can we use simulation to approximate the sampling distribution of a statistic?
+
+What does the central limit theorem say?
+
+00:24 - Sampling Distribution Definition
+The slide displays the text definition of a sampling distribution. As the presenter explains the example regarding US teenagers and heart rates, red text reading "Do it again." begins to populate and rotate around the screen to visualize the concept of repeated sampling.
+
+01:23 - Simulated Sampling Distributions
+A transitional slide titled "Simulated Sampling Distributions" appears, displaying the name "Rice University applet" and the corresponding URL used for the demonstration.
+
+01:31 - Applet: Normal Population (n=2)
+The view switches to the Rice University statistics applet.
+
+Top Graph: A normal (bell-shaped) parent population.
+
+Action: The presenter simulates dropping samples of size n=2.
+
+Bottom Graph: A blue histogram builds up, showing that even with a small sample size, the sampling distribution remains approximately normal because the population is normal. Labels appear identifying the "Population," "One Sample," and "Sampling Distribution."
+
+02:27 - Applet: Normal Population (n=25)
+The applet remains on screen, but the parameters change.
+
+Action: The sample size is increased to n=25, and 10,000 samples are simulated.
+
+Visual Result: The sampling distribution at the bottom is still normal but much narrower (smaller standard deviation) than the previous example.
+
+02:53 - Applet: Skewed Population (n=2)
+The presenter changes the "Parent Population" (top graph) to be heavily skewed to the right.
+
+Action: A simulation with a small sample size (n=2) is run.
+
+Visual Result: The sampling distribution (bottom graph) is not normal; it retains the right skew of the parent population.
+
+03:20 - Applet: Skewed Population (n=25)
+Using the same skewed parent population, the sample size is increased.
+
+Action: A simulation with a larger sample size (n=25) is run.
+
+Visual Result: Despite the skewed population, the sampling distribution (bottom graph) transforms into a symmetric, unimodal, approximately normal shape.
+
+03:50 - Applet: Custom Population (n=2)
+The presenter draws a custom "U" or "V" shaped population (high on the sides, low in the middle) to test the theorem.
+
+Action: A simulation with a small sample size (n=2) is run.
+
+Visual Result: The sampling distribution is irregular and tri-modal (three distinct peaks), clearly not normal.
+
+04:40 - Applet: Custom Population (n=25)
+Using the same custom "U" shaped population, the sample size is increased.
+
+Action: A simulation with a larger sample size (n=25) is run.
+
+Visual Result: The sampling distribution (bottom graph) becomes approximately normal again, demonstrating the robustness of the Central Limit Theorem regardless of population shape.
+
+05:18 - Key Takeaways
+A summary slide titled "What Should We Take Away?" appears. It lists three "Key Takeaways":
+
+The definition of a sampling distribution (all possible samples of the same size).
+
+That these distributions can be simulated using repeated random samples.
+
+The definition of the Central Limit Theorem (CLT): If the sample size is large enough, the sampling distribution will be approximately normal regardless of the population shape.
+
+05:53 - Closing Slide
+A blue screen with the text "Thank you." and the College Board logo.

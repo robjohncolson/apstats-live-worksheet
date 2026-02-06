@@ -23,6 +23,9 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u5_lesson1-2_live.html` | Live worksheet for Topics 5.1–5.2 (Sampling Distributions & Normal Distribution, Revisited) |
 | `ai-grading-prompts-u5-l1-2.js` | Rubrics for Unit 5 L1-2 AI grading (sampling variability, normal probability, linear combinations) |
 | `u5_l1_l2_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L1-2 conceptual reinforcement |
+| `u5_lesson3_live.html` | Live worksheet for Topic 5.3 (Central Limit Theorem & Randomization Distributions) |
+| `ai-grading-prompts-u5-l3.js` | Rubrics for Unit 5 L3 AI grading (CLT, sampling distributions via simulation, randomization distributions) |
+| `u5_l3_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L3 conceptual reinforcement (CLT, randomization tests) |
 | `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
 | `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
 | `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |
@@ -30,6 +33,7 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u4_l1_l2/` | Source materials (transcripts, slides, PDFs) for Unit 4 L1-2 worksheet development |
 | `u4_l7_l8/` | Source materials (transcripts, slides, PDFs) for Unit 4 L7-8 worksheet development |
 | `u5_l1_l2/` | Source materials (transcripts, slides, PDFs) for Unit 5 L1-2 worksheet development |
+| `u5/` | Source materials (transcripts, slides, framework) for Unit 5 worksheet development |
 
 ## Architecture
 
