@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 4 Poster - Example Problems Reference</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        h1 {
+            text-align: center;
+            color: #1e3a5f;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        .poster-section {
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        .poster-header {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: white;
+        }
+        .poster-1 .poster-header { background: #1565c0; }
+        .poster-2 .poster-header { background: #7b1fa2; }
+        .poster-3 .poster-header { background: #c62828; }
+        .poster-4 .poster-header { background: #00897b; }
+        .poster-body {
+            padding: 1rem;
+            background: white;
+        }
+        .problem-box {
+            background: #fff3e0;
+            border-left: 4px solid #e65100;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .problem-box:last-child {
+            margin-bottom: 0;
+        }
+        .find-list {
+            margin-top: 0.5rem;
+            margin-left: 1.25rem;
+        }
+        .find-list li {
+            margin-bottom: 0.25rem;
+        }
+        .answers {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .answers strong {
+            color: #2e7d32;
+        }
+        @media print {
+            .poster-section { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 Example Problems Reference Sheet</h1>
+    <p class="subtitle">Use these problems for each poster — answers included for verification!</p>
+
+    <div class="poster-section poster-1">
+        <div class="poster-header">📊 POSTER 1: Simulation & Basic Probability (4.1-4.3)</div>
+        <div class="poster-body">
+            <div class="problem-box">
+                <strong>Problem:</strong> A basketball player makes 70% of her free throws. Design a simulation to estimate the probability that she makes <u>at least 4 out of 5</u> free throws.
+            </div>
+            <strong>Show on poster:</strong>
+            <ul class="find-list">
+                <li>How to assign digits (e.g., 0-6 = make, 7-9 = miss)</li>
+                <li>What constitutes ONE trial (5 random digits)</li>
+                <li>How many trials to run (at least 30)</li>
+                <li>How to calculate estimated probability</li>
+                <li>Tree diagram for 2 free throws showing branch probabilities</li>
+            </ul>
+            <div class="answers">
+                <strong>Answers:</strong> Simulation results will vary (~0.53). Exact probability = 0.528 (can verify with binomial later)
+            </div>
+        </div>
+    </div>
+
+    <div class="poster-section poster-2">
+        <div class="poster-header">🎯 POSTER 2: Conditional Probability & Independence (4.4-4.6)</div>
+        <div class="poster-body">
+            <div class="problem-box">
+                <strong>Problem:</strong> A survey of 200 students found: 120 play sports, 90 play an instrument, 50 do both.
+            </div>
+            <strong>Find:</strong>
+            <ul class="find-list">
+                <li>(a) P(Instrument | Sports)</li>
+                <li>(b) P(Sports or Instrument)</li>
+                <li>(c) Are Sports and Instrument independent? Prove it!</li>
+            </ul>
+            <div class="answers">
+                <strong>Answers:</strong><br>
+                (a) P(I|S) = 50/120 = <strong>0.417</strong> (41.7% of athletes play instrument)<br>
+                (b) P(S or I) = 120/200 + 90/200 - 50/200 = 160/200 = <strong>0.80</strong><br>
+                (c) P(I) = 90/200 = 0.45 ≠ P(I|S) = 0.417 → <strong>NOT independent</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="poster-section poster-3">
+        <div class="poster-header">⚠️ POSTER 3: Random Variables & THE VARIANCE TRAP (4.7-4.9)</div>
+        <div class="poster-body">
+            <div class="problem-box">
+                <strong>Problem:</strong> At a coffee shop: Coffee costs μ = $4.00, σ = $0.50. Muffin costs μ = $3.00, σ = $0.75. Assume costs are independent.
+            </div>
+            <strong>Find:</strong>
+            <ul class="find-list">
+                <li>(a) Mean of total cost (Coffee + Muffin)</li>
+                <li>(b) Standard deviation of total cost — <strong>SHOW THE TRAP!</strong></li>
+                <li>Show the WRONG way crossed out, then the RIGHT way</li>
+            </ul>
+            <div class="answers">
+                <strong>Answers:</strong><br>
+                (a) μ_total = 4 + 3 = <strong>$7.00</strong><br>
+                (b) <span style="text-decoration: line-through; color: #c62828;">WRONG: 0.50 + 0.75 = $1.25</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;✓ RIGHT: σ = √(0.50² + 0.75²) = √(0.25 + 0.5625) = √0.8125 ≈ <strong>$0.90</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="poster-section poster-4">
+        <div class="poster-header">🎲 POSTER 4: Binomial & Geometric Distributions (4.10-4.12)</div>
+        <div class="poster-body">
+            <div class="problem-box">
+                <strong>Binomial Problem:</strong> A player makes 80% of free throws. She shoots 10.
+            </div>
+            <strong>Find:</strong>
+            <ul class="find-list">
+                <li>Verify BINS conditions</li>
+                <li>P(exactly 8 makes)</li>
+            </ul>
+            <div class="answers">
+                <strong>Answer:</strong> BINS: ✓B ✓I ✓N=10 ✓S=0.8<br>
+                P(X=8) = ₁₀C₈(0.8)⁸(0.2)² = 45(0.1678)(0.04) ≈ <strong>0.302</strong><br>
+                Calculator: binompdf(10, 0.8, 8) = 0.302
+            </div>
+
+            <div class="problem-box" style="margin-top: 1rem;">
+                <strong>Geometric Problem:</strong> A game has a 15% win rate. You play until you win.
+            </div>
+            <strong>Find:</strong>
+            <ul class="find-list">
+                <li>Why is this geometric, not binomial?</li>
+                <li>P(first win on exactly the 4th play)</li>
+            </ul>
+            <div class="answers">
+                <strong>Answer:</strong> No fixed n (play until win) → Geometric<br>
+                P(X=4) = (0.85)³(0.15) = (0.614)(0.15) ≈ <strong>0.092</strong><br>
+                Calculator: geometpdf(0.15, 4) = 0.092
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 1.5rem; padding: 1rem; background: #f5f5f5; border-radius: 8px;">
+        <strong>⏱️ Rotation Schedule:</strong><br>
+        15 min per poster → Teacher signals → Rotate clockwise → Do your job at ALL 4 posters
+    </div>
+</body>
+</html>

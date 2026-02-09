@@ -1,0 +1,33 @@
+Here is a transcription of the video:
+
+00:00 Hi, I'm Penny Smeltzer from Austin, Texas. This video shows how to determine the appropriateness of using the normal distribution.
+
+00:09 What will we learn? How can we decide whether a normal distribution is a good approximation for an unknown distribution? And what characteristics of a normal distribution should we check when assessing normality?
+
+00:25 Let's look at an example. Although a majority of parents disagree, 14% of young adults (18 to 29) claim their parents are doing too little for them. That doesn't sound very adult to me.
+
+00:40 What might the results of a random sample of 10 young adults look like on this issue? Could we use the normal distribution as an approximation for the number of young adults in a random sample of size 10 who think their parents are doing too little for them?
+
+00:59 Well, let's let our random variable X be the number of young adults in a random sample of 10 who think their parents do too little for them. This is a binomial situation. We can check that.
+
+01:17 If it's binomial, there's got to be two outcomes: the young adults either make the claim or they don't make the claim. The number of trials is fixed at 10. What one young adult says should be independent of what another young adult says. And the probability a young adult claims their parents are doing too little is 14% for every trial. So it's a binomial situation.
+
+01:43 We can determine the probability distribution of X using what you learned in Topic 4.10. For instance, if X equals 3 young adults out of 10 that think their parents are doing too little for them, we would use the binomial formula and find the probability is 0.115.
+
+02:03 We could make a graph of all possible values of X coupled with their probabilities to determine whether a normal distribution is an appropriate model. Here's the graph. So along the horizontal axis, we have all possible values of X, and on the vertical axis, we have the probability for each one.
+
+02:29 This distribution is unimodal, but it's not symmetric or bell-shaped. The distribution is clearly skewed to the right, which makes a normal distribution inappropriate as an approximation.
+
+02:45 But if we do the same thing with a sample size of 75... Now this distribution is also unimodal, but it looks roughly symmetric and a bit bell-shaped. Is that enough to call it an approximately normal distribution?
+
+03:03 Well, there's other things that we can check. If we look at the probability for at least some of the random variables—we can note on the curve that most of them are clustered from roughly 4 to 20-ish—here's the partial probability distribution for those values.
+
+03:25 The mean is 10.5. The standard deviation is 3. If I go one standard deviation either way from the mean, what percent of the data is in that interval? If I add the probabilities together, it comes out to 68%.
+
+03:47 If I go two standard deviations from the mean, what percent of the data is in that interval? 95%. And if I go three standard deviations from the mean, it's over 99%. It looks here like we have met the 68–95–99.7 rule for the normal distribution.
+
+04:10 When the sample size is large enough, the normal distribution is a good approximation for a binomial distribution. But when the sample size is small, the normal distribution is not a good approximation to a binomial distribution.
+
+04:30 What should we take away? There are certain characteristics you should check for for an approximately normal distribution. It should be unimodal, roughly symmetric, and bell-shaped. But even if that's the case, you might want to go on to check: does the empirical rule apply? Does the data meet the 68–95–99.7 rule?
+
+04:58 Thank you.

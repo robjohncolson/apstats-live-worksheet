@@ -1,0 +1,40 @@
+Here is the transcription of the video, including timestamps.
+
+00:00
+Penny Smeltzer: Hi, I'm Penny Smeltzer from Austin, Texas, and this video introduces the concept of a sampling distribution and the Central Limit Theorem using simulation.
+
+00:12
+Penny Smeltzer: What will we learn? What is a sampling distribution? How can we use simulation to approximate the sampling distribution of a statistic? And what does the Central Limit Theorem say?
+
+00:24
+Penny Smeltzer: Let's look at an example. A sampling distribution of a statistic is the distribution of values for the statistic for all possible samples of the same size from a given population. Just imagine you have a population... let's say all U.S. teenagers. And you are interested in the average resting heart rate of teenagers. You use a sample size of n = 28. And you take a random sample of 28 teens. Determine the sample mean resting heart rate for your sample. And then, do it again with another sample of 28 teens and find the mean resting heart rate. And then do it again. And again. And again. And again. Until you have all possible samples of 28 and their sample mean resting heart rate. The collection of all those sample means is a sampling distribution.
+
+01:23
+Penny Smeltzer: That's nearly impossible to do for most populations, but we can simulate a sampling distribution using the Rice University applet.
+
+01:32
+Penny Smeltzer: This applet allows us to take a random sample from a population. The random sampling ensures that individual observations are independent. We have our normal population, and we're going to take a random sample of two. One, two. Find the mean. Another random sample of two. Find the mean. We have the ability to take 10,000 random samples of two, find the mean of every one, and create a sampling distribution.
+
+02:03
+Penny Smeltzer: It's important to note that on top, we have the population. Then we have one sample. And here, the sampling distribution of sample means. And it appears, if the population is approximately normal, that the sampling distribution is approximately normal, even with a small sample.
+
+02:27
+Penny Smeltzer: If I increase my sample size and take 10,000 samples of size 25, my sampling distribution is approximately normal. I have my population, one sample, and my sampling distribution, which is approximately normal with a smaller standard deviation than my sampling distribution with a sample size of two.
+
+02:53
+Penny Smeltzer: If I start with a population that's skewed and take a small sample of two, find the mean, and I do that 10,000 times... my population is skewed to the right. One sample is so small there is no shape. But my sampling distribution is not approximately normal. It is skewed right like my population.
+
+03:20
+Penny Smeltzer: However, if I take a larger sample size 10,000 times, my sampling distribution is symmetric, unimodal, and appears approximately normal... ish. I have my population that's skewed, one sample that is also skewed right, and an approximately normal sampling distribution of sample means.
+
+03:50
+Penny Smeltzer: But I think we can beat the Central Limit Theorem. I'm going to create a population that is absolutely not normal. Kind of the opposite of normal. If I take a sample that's small and find the mean, and I do that 10,000 times, imagine how the sampling distribution of sample means will look. Whoa. Is that what you expected?
+
+04:20
+Penny Smeltzer: It makes sense. You could choose two values from the left side, which would average to the first cluster. Or two values from the right side, which would average to the top right cluster. Or one value from each side, which would average to the middle. Clearly not normal.
+
+04:40
+Penny Smeltzer: But if I increase the sample size to a larger sample size and take 10,000 samples, find the mean of each sample, and make a distribution of the sample means—the sampling distribution—oh my gosh. It's approximately normal. It appears that no matter what the population looks like, or one single sample, the sampling distribution of sample means will be approximately normal as long as the sample size is large enough.
+
+05:17
+Penny Smeltzer: What should we take away? A sampling distribution of a statistic is the distribution of values for the statistic for all possible samples of the same size from a given population. The sampling distribution of a statistic can be simulated by generating repeated random samples from a population. And the Central Limit Theorem—the amazing Central Limit Theorem—states that when the sample size is sufficiently large, a sampling distribution of the mean of a random variable will be approximately normally distributed. It's amazing. Thank you.

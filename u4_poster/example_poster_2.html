@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Poster 2: Conditional Probability & Independence</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f0f0f0;
+            padding: 1rem;
+        }
+        .poster {
+            background: #fffef0;
+            border: 4px solid #7b1fa2;
+            border-radius: 8px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .poster-title {
+            text-align: center;
+            background: #7b1fa2;
+            color: white;
+            padding: 1rem;
+            margin: -1.5rem -1.5rem 1rem -1.5rem;
+            border-radius: 4px 4px 0 0;
+        }
+        .poster-title h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .poster-title .topics {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        .poster-title .subtitle {
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-top: 0.5rem;
+            opacity: 0.85;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .section {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            background: white;
+        }
+        .section-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #7b1fa2;
+            border-bottom: 2px solid #7b1fa2;
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .formula-box {
+            background: #f3e5f5;
+            border: 2px solid #7b1fa2;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin: 0.4rem 0;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 1rem;
+        }
+        .formula-label {
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Segoe UI', sans-serif;
+            margin-top: 0.2rem;
+        }
+        .example-section {
+            grid-column: 1 / -1;
+        }
+        .example-problem {
+            background: #fff3e0;
+            border-left: 4px solid #e65100;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .two-way-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        .two-way-table th, .two-way-table td {
+            border: 2px solid #333;
+            padding: 0.4rem;
+            text-align: center;
+        }
+        .two-way-table th {
+            background: #f3e5f5;
+        }
+        .two-way-table .total-row {
+            background: #e8f5e9;
+            font-weight: bold;
+        }
+        .two-way-table .total-col {
+            background: #e8f5e9;
+            font-weight: bold;
+        }
+        .answer-box {
+            background: #e8f5e9;
+            border: 3px solid #2e7d32;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+        .work-step {
+            background: #fafafa;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        .watch-out {
+            background: #ffebee;
+            border: 3px solid #c62828;
+            border-radius: 8px;
+        }
+        .watch-out .section-title {
+            color: #c62828;
+            border-color: #c62828;
+        }
+        .watch-out ul {
+            margin-left: 1.25rem;
+            font-size: 0.9rem;
+        }
+        .watch-out li {
+            margin-bottom: 0.4rem;
+        }
+        .independence-test {
+            background: #e3f2fd;
+            border: 2px solid #1565c0;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .badge {
+            display: inline-block;
+            background: #7b1fa2;
+            color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        <div class="poster-title">
+            <h1>🎯 CONDITIONAL PROBABILITY & INDEPENDENCE</h1>
+            <div class="topics">Topics 4.4 | 4.5 | 4.6</div>
+            <div class="subtitle">When events affect each other — and when they don't</div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Formulas Section -->
+            <div class="section">
+                <div class="section-title">📐 KEY FORMULAS</div>
+                
+                <div class="formula-box">
+                    P(A | B) = P(A and B) / P(B)
+                    <div class="formula-label">Conditional Probability — P(A GIVEN B)</div>
+                </div>
+                
+                <div class="formula-box">
+                    P(A and B) = P(A) · P(B | A)
+                    <div class="formula-label">General Multiplication Rule</div>
+                </div>
+                
+                <div class="formula-box">
+                    P(A and B) = P(A) · P(B) <span style="color: #7b1fa2;">[if independent]</span>
+                    <div class="formula-label">Multiplication Rule for Independent Events</div>
+                </div>
+                
+                <div class="formula-box">
+                    P(A or B) = P(A) + P(B) − P(A and B)
+                    <div class="formula-label">General Addition Rule</div>
+                </div>
+
+                <div class="independence-test">
+                    <strong>🧪 Independence Test:</strong><br>
+                    If P(A | B) = P(A), then A & B are <u>independent</u><br>
+                    <span style="font-size: 0.8rem;">"Knowing B doesn't change probability of A"</span>
+                </div>
+            </div>
+
+            <!-- Visual: Two-Way Table -->
+            <div class="section">
+                <div class="section-title">🎨 TWO-WAY TABLE</div>
+                <table class="two-way-table">
+                    <tr>
+                        <th></th>
+                        <th>Instrument</th>
+                        <th>No Instrument</th>
+                        <th class="total-col">Total</th>
+                    </tr>
+                    <tr>
+                        <th>Sports</th>
+                        <td>50</td>
+                        <td>70</td>
+                        <td class="total-col">120</td>
+                    </tr>
+                    <tr>
+                        <th>No Sports</th>
+                        <td>40</td>
+                        <td>40</td>
+                        <td class="total-col">80</td>
+                    </tr>
+                    <tr class="total-row">
+                        <th>Total</th>
+                        <td>90</td>
+                        <td>110</td>
+                        <td style="background: #c8e6c9;"><strong>200</strong></td>
+                    </tr>
+                </table>
+                <p style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                    Conditional from table: Use ROW or COLUMN total, not grand total!
+                </p>
+            </div>
+
+            <!-- Example Section -->
+            <div class="section example-section">
+                <div class="section-title">✏️ WORKED EXAMPLE</div>
+                
+                <div class="example-problem">
+                    <strong>Problem:</strong> A survey of 200 students: 120 play sports, 90 play an instrument, 50 do both.<br>
+                    <strong>Find:</strong> (a) P(Instrument | Sports) &nbsp; (b) P(Sports or Instrument) &nbsp; (c) Are they independent?
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <strong>(a) P(Inst | Sports)</strong>
+                        <div class="work-step">
+                            P(I | S) = P(I and S) / P(S)<br>
+                            = 50/120<br>
+                            = <strong>0.417</strong>
+                        </div>
+                        <div class="answer-box" style="font-size: 0.85rem;">
+                            41.7% of athletes play an instrument
+                        </div>
+                    </div>
+                    <div>
+                        <strong>(b) P(Sports or Inst)</strong>
+                        <div class="work-step">
+                            P(S or I) = P(S) + P(I) − P(S and I)<br>
+                            = 120/200 + 90/200 − 50/200<br>
+                            = 160/200 = <strong>0.80</strong>
+                        </div>
+                        <div class="answer-box" style="font-size: 0.85rem;">
+                            80% do at least one activity
+                        </div>
+                    </div>
+                    <div>
+                        <strong>(c) Independence Test</strong>
+                        <div class="work-step">
+                            P(I) = 90/200 = 0.45<br>
+                            P(I | S) = 0.417<br><br>
+                            0.45 ≠ 0.417
+                        </div>
+                        <div class="answer-box" style="font-size: 0.85rem; background: #ffebee; border-color: #c62828;">
+                            ❌ NOT independent!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Watch Out Section -->
+            <div class="section watch-out" style="grid-column: 1 / -1;">
+                <div class="section-title">⚠️ WATCH OUT!</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <ul>
+                        <li><strong>P(A | B) ≠ P(B | A)!</strong> Order matters completely!</li>
+                        <li><strong>Don't forget to subtract</strong> in addition rule when events overlap</li>
+                        <li><strong>"Or" usually bigger than "And"</strong> — sanity check your answers</li>
+                    </ul>
+                    <ul>
+                        <li><strong>Don't ASSUME independence</strong> — you must TEST it!</li>
+                        <li><strong>Conditional from table:</strong> Denominator is row/column total, NOT 200</li>
+                        <li><strong>Mutually exclusive ≠ Independent</strong> — totally different concepts!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.8rem;">
+            <span class="badge">EXAMPLE POSTER</span> — Your poster should look similar to this!
+        </div>
+    </div>
+</body>
+</html>

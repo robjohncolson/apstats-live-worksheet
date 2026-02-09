@@ -1,0 +1,71 @@
+Here is a description of each slide presented in the video, along with the corresponding timestamps:
+
+00:00 - Title Slide
+The video opens with a title card for "AP Statistics" featuring a line drawing of a bridge. The text reads: "Topic 5.1 Introducing Statistics – Why Is My Sample Not Like Yours?" and indicates this is "Daily Video 1."
+
+00:05 - What Will We Learn?
+A blue slide lists two learning objectives for the lesson:
+
+Why do different samples produce different statistics when they come from the same population?
+
+How can we estimate the truth?
+
+00:16 - Transition Slide
+A simple blue slide with the text: "Let’s Look at an Example."
+
+00:18 - Dice Example
+This slide features an image of two red dice. It defines a random variable 
+𝑋
+X
+ as the sum of the rolls of 2 fair dice. As the narrator speaks, text appears describing the goal: to take a random sample of 5 rolls to find the sample mean. Examples of different sample sets and their varying means (7, 5.2, 8.4) appear at the bottom.
+
+00:50 - Sampling Variability
+The slide is titled "Sampling Variability." It retains the image of the red dice and lists three bullet points agreeing on the nature of dice rolls: they produce random sums, individual results are unknown, and the rolls are independent.
+
+01:18 - A Discrete Random Variable
+A grid chart appears showing "Die 1 Roll" (columns 1-6) and "Die 2 Roll" (rows 1-6). The intersecting cells show the sum of the dice (ranging from 2 to 12).
+
+01:28 - Snake Eyes
+The previous grid remains, but the cell containing the sum "2" is highlighted in a red circle. To the right, the slide defines "Snake eyes" and calculates the probability of rolling a sum of 2 (
+1
+/
+36
+=
+0.028
+1/36=0.028
+). It subsequently shows calculations for rolling snake eyes twice or five times in a row.
+
+01:58 - Sample Means
+The grid slide returns with the title "Sample Means." Text appears explaining that we can calculate the mean of 5 rolls, determine all possible means, and that these means will vary, with some being more likely than others.
+
+02:21 - Samples From Continuous RVs (Koalas)
+This slide features a photo of a koala. The text defines the population parameters: average weight of 15 pounds and a standard deviation of 1.8 pounds.
+
+At 02:46, a number line (10 to 18) appears at the bottom. Blue dots appear on the line to represent different sample means (
+𝑥
+ˉ
+x
+ˉ
+) calculated by researchers (e.g., 17.0, 14.7).
+
+At 03:00, an animation fills the number line with many blue dots, creating a bell-shaped distribution clustered around the number 15.
+
+03:23 - Sample Proportions (Election)
+The slide describes a close election where a candidate has 51% support. A number line ranging from 0.42 to 0.56 appears at the bottom.
+
+At 03:42, text appears describing 5 pollsters taking samples of 1,000 voters.
+
+At 03:54, blue dots appear on the number line representing the results of these polls (Wins vs. Losses). Eventually, many dots fill in to show the distribution pattern.
+
+04:23 - How Do Sample Statistics Behave?
+A white slide asks the title question. It explains that different random samples from the same population produce statistics that vary. It notes that a single statistic isn't much different than a die roll, but the distribution of the statistic is predictable.
+
+05:00 - Key Takeaways
+A summary slide lists two main points:
+
+Different samples from the same population produce different statistics.
+
+If the population distribution is known, the distribution of statistics from many samples of the same size is predictable.
+
+05:23 - Thank You
+A closing slide with a blue background and the College Board logo.

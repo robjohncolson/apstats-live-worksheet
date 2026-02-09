@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Poster 3: Random Variables & THE VARIANCE TRAP</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f0f0f0;
+            padding: 1rem;
+        }
+        .poster {
+            background: #fffef0;
+            border: 4px solid #c62828;
+            border-radius: 8px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .poster-title {
+            text-align: center;
+            background: #c62828;
+            color: white;
+            padding: 1rem;
+            margin: -1.5rem -1.5rem 1rem -1.5rem;
+            border-radius: 4px 4px 0 0;
+        }
+        .poster-title h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .poster-title .topics {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        .poster-title .subtitle {
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-top: 0.5rem;
+            opacity: 0.85;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .section {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            background: white;
+        }
+        .section-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #c62828;
+            border-bottom: 2px solid #c62828;
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .formula-box {
+            background: #ffebee;
+            border: 2px solid #c62828;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin: 0.4rem 0;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 1rem;
+        }
+        .formula-box.trap {
+            background: #fff3e0;
+            border: 3px solid #e65100;
+        }
+        .formula-label {
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Segoe UI', sans-serif;
+            margin-top: 0.2rem;
+        }
+        .trap-box {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #fff3e0, #ffecb3);
+            border: 4px solid #e65100;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .trap-box h2 {
+            color: #e65100;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .trap-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+        .wrong-box {
+            background: #ffebee;
+            border: 3px solid #c62828;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .wrong-box h3 {
+            color: #c62828;
+            font-size: 1.2rem;
+        }
+        .wrong-box .calc {
+            font-family: 'Courier New', monospace;
+            font-size: 1.3rem;
+            margin: 0.5rem 0;
+            text-decoration: line-through;
+            color: #c62828;
+        }
+        .right-box {
+            background: #e8f5e9;
+            border: 3px solid #2e7d32;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .right-box h3 {
+            color: #2e7d32;
+            font-size: 1.2rem;
+        }
+        .right-box .calc {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            margin: 0.5rem 0;
+            color: #2e7d32;
+        }
+        .example-section {
+            grid-column: 1 / -1;
+        }
+        .example-problem {
+            background: #fff3e0;
+            border-left: 4px solid #e65100;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .answer-box {
+            background: #e8f5e9;
+            border: 3px solid #2e7d32;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+        .work-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .work-step {
+            background: #fafafa;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        .watch-out {
+            background: #ffebee;
+            border: 3px solid #c62828;
+            border-radius: 8px;
+        }
+        .watch-out .section-title {
+            color: #c62828;
+            border-color: #c62828;
+        }
+        .watch-out ul {
+            margin-left: 1.25rem;
+            font-size: 0.9rem;
+        }
+        .watch-out li {
+            margin-bottom: 0.4rem;
+        }
+        .calculator-box {
+            background: #f5f5f5;
+            border: 2px dashed #666;
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+        .badge {
+            display: inline-block;
+            background: #c62828;
+            color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        <div class="poster-title">
+            <h1>⚠️ RANDOM VARIABLES & THE VARIANCE TRAP ⚠️</h1>
+            <div class="topics">Topics 4.7 | 4.8 | 4.9</div>
+            <div class="subtitle">Expected value, standard deviation, and the #1 AP Exam mistake</div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Formulas Section -->
+            <div class="section">
+                <div class="section-title">📐 KEY FORMULAS</div>
+                
+                <div class="formula-box">
+                    μₓ = E(X) = Σ xᵢ · P(xᵢ)
+                    <div class="formula-label">Expected Value (Mean)</div>
+                </div>
+                
+                <div class="formula-box">
+                    σₓ = √[Σ (xᵢ − μ)² · P(xᵢ)]
+                    <div class="formula-label">Standard Deviation</div>
+                </div>
+                
+                <div class="formula-box">
+                    μᵧ = a + b·μₓ &nbsp;|&nbsp; σᵧ = |b|·σₓ
+                    <div class="formula-label">Linear Transform Y = a + bX (constant doesn't affect SD!)</div>
+                </div>
+                
+                <div class="formula-box">
+                    μₓ₊ᵧ = μₓ + μᵧ &nbsp;|&nbsp; μₓ₋ᵧ = μₓ − μᵧ
+                    <div class="formula-label">Combining Means (works normally ✓)</div>
+                </div>
+            </div>
+
+            <!-- Calculator -->
+            <div class="section">
+                <div class="section-title">📱 TI-84 CALCULATOR</div>
+                <div class="calculator-box">
+                    <strong>For E(X) and σ from a table:</strong><br><br>
+                    1. Enter x values in L1<br>
+                    2. Enter P(x) values in L2<br>
+                    3. STAT → CALC → 1:1-Var Stats<br>
+                    4. 1-Var Stats L1, L2<br><br>
+                    x̄ = mean (μ)<br>
+                    σx = standard deviation (σ)
+                </div>
+            </div>
+
+            <!-- THE TRAP BOX - GIANT -->
+            <div class="trap-box">
+                <h2>🚨 THE VARIANCE TRAP — #1 AP EXAM MISTAKE! 🚨</h2>
+                <p style="font-size: 1rem; margin-bottom: 0.5rem;">When combining independent random variables:</p>
+                
+                <div class="formula-box trap" style="font-size: 1.2rem; text-align: center;">
+                    σₓ₊ᵧ = √(σₓ² + σᵧ²) &nbsp;&nbsp;&nbsp; AND &nbsp;&nbsp;&nbsp; σₓ₋ᵧ = √(σₓ² + σᵧ²)
+                    <div class="formula-label" style="font-size: 0.85rem;">Variances ALWAYS ADD — even for subtraction! SDs NEVER add directly!</div>
+                </div>
+
+                <div class="trap-comparison">
+                    <div class="wrong-box">
+                        <h3>❌ WRONG WAY</h3>
+                        <div class="calc">σₓ₊ᵧ = σₓ + σᵧ</div>
+                        <div class="calc">= 3 + 4 = 7</div>
+                        <p style="color: #c62828; font-weight: bold;">NEVER DO THIS!</p>
+                    </div>
+                    <div class="right-box">
+                        <h3>✓ RIGHT WAY</h3>
+                        <div class="calc">σₓ₊ᵧ = √(σₓ² + σᵧ²)</div>
+                        <div class="calc">= √(3² + 4²) = √(9+16) = √25 = 5</div>
+                        <p style="color: #2e7d32; font-weight: bold;">Square → Add → Square Root!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example Section -->
+            <div class="section example-section">
+                <div class="section-title">✏️ WORKED EXAMPLE</div>
+                
+                <div class="example-problem">
+                    <strong>Problem:</strong> At a coffee shop: Coffee costs μ = $4.00, σ = $0.50. Muffin costs μ = $3.00, σ = $0.75. Assume costs are independent. Find the mean and SD of the total cost.
+                </div>
+
+                <div class="work-grid">
+                    <div>
+                        <strong>Mean of Total (Easy!)</strong>
+                        <div class="work-step">
+                            μ_total = μ_coffee + μ_muffin<br>
+                            = $4.00 + $3.00<br>
+                            = <strong>$7.00</strong> ✓
+                        </div>
+                        <div class="answer-box">Mean total cost = $7.00</div>
+                    </div>
+                    <div>
+                        <strong>SD of Total (THE TRAP!)</strong>
+                        <div class="work-step" style="background: #ffebee; text-decoration: line-through;">
+                            ❌ WRONG: 0.50 + 0.75 = $1.25
+                        </div>
+                        <div class="work-step" style="background: #e8f5e9;">
+                            ✓ RIGHT:<br>
+                            σ = √(0.50² + 0.75²)<br>
+                            = √(0.25 + 0.5625)<br>
+                            = √0.8125 ≈ <strong>$0.90</strong>
+                        </div>
+                        <div class="answer-box">SD of total = $0.90</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Watch Out Section -->
+            <div class="section watch-out" style="grid-column: 1 / -1;">
+                <div class="section-title">⚠️ MORE TRAPS TO AVOID!</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <ul>
+                        <li><strong>For X − Y, variances STILL ADD!</strong> Don't subtract — ever!</li>
+                        <li><strong>Adding a constant (like +$0.50)</strong> changes mean but NOT SD</li>
+                        <li><strong>Multiplying by constant</strong> changes BOTH mean and SD</li>
+                    </ul>
+                    <ul>
+                        <li><strong>These formulas require INDEPENDENCE!</strong></li>
+                        <li><strong>Why does variance add for subtraction?</strong> Subtracting uncertain things makes MORE uncertainty!</li>
+                        <li><strong>σ ≠ σ² !</strong> Don't confuse SD with variance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.8rem;">
+            <span class="badge">EXAMPLE POSTER</span> — Your poster should look similar to this!
+        </div>
+    </div>
+</body>
+</html>

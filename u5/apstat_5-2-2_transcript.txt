@@ -1,0 +1,71 @@
+00:00
+Hi, I'm Penny Smeltzer from Austin, Texas. This video shows how to calculate probabilities involving a linear combination of independent, approximately normal random variables.
+
+00:13
+What will we learn?
+When can a linear combination of two random variables be modeled by a normal distribution?
+How do we calculate a probability involving such a linear combination?
+
+00:26
+Let's look at an example. The Capitol 10K is a fun run in Austin, Texas, complete with live music along the route, some runners in costumes, but also some very competitive runners. The wide variety of fitness levels creates a large standard deviation of running times for the close to 20,000 participants. Personally, I show up so I get a t-shirt.
+
+00:52
+Here are the run time parameters for the females and the males. The completion times of each gender are independent and may be reasonably approximated by a normal distribution. The time it takes for each runner to complete the course is measured by a tracking device and recorded by gender.
+
+01:15
+What is the probability that a randomly selected female finishes the race faster than a randomly selected male? Note that the mean time for males to finish the race is 70 minutes. For females, it takes them 11 minutes longer.
+
+01:35
+My first job is to find the parameters of the distribution of differences of completion times—Females minus Males. So, picture randomly selecting a female, randomly selecting a male, and subtracting their race times. And then randomly selecting another female and randomly selecting another male and subtracting their race times. Keep doing that for all possible combinations of males and females out of the 20,000 runners.
+
+02:08
+To find the mean of the differences, we would just take the difference of the means. That makes sense. So, the female mean is 81 minutes, the male mean is 70 minutes. I'm going to go 81 minus 70 and get 11 minutes. On average, the males finish the race 11 minutes faster than the females.
+
+02:36
+The standard deviation, if you remember from previous lessons, is a little bit trickier. I cannot subtract the standard deviations. I must first change them to variances, and then we always add. So because X and Y are independent, the standard deviation of the difference in race times—females minus males—is 20.576.
+
+03:03
+The shape of the distribution of X minus Y is approximately normal. This is quite an amazing thing. The distribution of differences of two independent random variables can be modeled with a normal distribution if the probability distribution of each individual random variable is approximately normal. And we were given that the male and female race times were approximately normal, so the distribution of the differences is also approximately normal.
+
+03:37
+Now, back to our problem. What is the probability that a randomly selected female finishes the race faster than a randomly selected male? If we consider this, if the male and female finish the race at exactly the same time, the difference would be zero.
+
+03:59
+If the female finishes faster, then her time would be lower, which means taking the female's lower time minus the male's larger time would make the difference negative. So what we're looking for here is the probability the difference in race times—female minus male—is less than zero, or a negative number.
+
+04:28
+Using the parameters for the distribution of differences, I would calculate the Z-score and find the probability. The probability a randomly selected female finishes the race faster than a randomly selected male is 0.2981. Almost a one out of three chance.
+
+04:50
+The shape of the distribution of X plus Y, or the sum of two independent random variables, can also be modeled with a normal distribution if the probability distribution of each random variable is approximately normal.
+
+05:08
+What? A 1.96-mile run? That's not normal. Sounds like something a bunch of statistics teachers would do. But let's go ahead and practice.
+
+05:21
+When we get to the next slide, hit pause, try the problem for a different race, and then hit play to check your answer.
+
+05:31
+Hit pause.
+
+05:35
+Remember, the first step is to find the parameters for the difference in race times. And here they are: the mean of 9 and a standard deviation of 5.19. Then, using those parameters...
+
+05:51
+...do the work with the normal distribution, because we know the distribution of differences is approximately normal here.
+
+06:00
+I would find the Z-score and calculate my probability. In this race, that has a smaller standard deviation because it's more competitive, the probability that a randomly selected female finishes the race at least 15 minutes slower than a randomly selected male is 0.124.
+
+06:22
+Note, if you had difficulties on this and you were using "less than": keep in mind that if a female is going slower, that means her time is larger, which means the female (larger time) minus the male (quicker time) would be a positive number. It's on the right-hand side of the curve.
+
+06:46
+What should we take away?
+A linear combination (including a difference or a sum) of two independent approximately normal random variables can be modeled by a normal distribution.
+
+07:00
+And the procedures learned to find probabilities using a normal distribution also apply when finding probabilities involving a linear combination of independent, approximately normal random variables.
+
+07:14
+Thank you.

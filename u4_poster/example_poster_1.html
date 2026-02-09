@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Poster 1: Simulation & Basic Probability</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f0f0f0;
+            padding: 1rem;
+        }
+        .poster {
+            background: #fffef0;
+            border: 4px solid #1565c0;
+            border-radius: 8px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .poster-title {
+            text-align: center;
+            background: #1565c0;
+            color: white;
+            padding: 1rem;
+            margin: -1.5rem -1.5rem 1rem -1.5rem;
+            border-radius: 4px 4px 0 0;
+        }
+        .poster-title h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .poster-title .topics {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        .poster-title .subtitle {
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-top: 0.5rem;
+            opacity: 0.85;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .section {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            background: white;
+        }
+        .section-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1565c0;
+            border-bottom: 2px solid #1565c0;
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .formula-box {
+            background: #e3f2fd;
+            border: 2px solid #1565c0;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 1.1rem;
+        }
+        .formula-label {
+            font-size: 0.75rem;
+            color: #666;
+            font-family: 'Segoe UI', sans-serif;
+            margin-top: 0.25rem;
+        }
+        .example-section {
+            grid-column: 1 / -1;
+        }
+        .example-problem {
+            background: #fff3e0;
+            border-left: 4px solid #e65100;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .example-work {
+            font-family: 'Courier New', monospace;
+            background: #fafafa;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .answer-box {
+            background: #e8f5e9;
+            border: 3px solid #2e7d32;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            font-weight: 600;
+        }
+        .watch-out {
+            background: #ffebee;
+            border: 3px solid #c62828;
+            border-radius: 8px;
+        }
+        .watch-out .section-title {
+            color: #c62828;
+            border-color: #c62828;
+        }
+        .watch-out ul {
+            margin-left: 1.25rem;
+        }
+        .watch-out li {
+            margin-bottom: 0.5rem;
+        }
+        .calculator-box {
+            background: #f5f5f5;
+            border: 2px dashed #666;
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        .visual-section {
+            text-align: center;
+        }
+        .tree-diagram {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            text-align: left;
+            background: #fafafa;
+            padding: 0.75rem;
+            border-radius: 4px;
+            white-space: pre;
+        }
+        .badge {
+            display: inline-block;
+            background: #1565c0;
+            color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .handwritten {
+            font-family: 'Comic Sans MS', cursive;
+        }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        <div class="poster-title">
+            <h1>📊 SIMULATION & BASIC PROBABILITY</h1>
+            <div class="topics">Topics 4.1 | 4.2 | 4.3</div>
+            <div class="subtitle">Modeling randomness & building probability models</div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Formulas Section -->
+            <div class="section">
+                <div class="section-title">📐 KEY FORMULAS</div>
+                
+                <div class="formula-box">
+                    0 ≤ P(A) ≤ 1
+                    <div class="formula-label">All probabilities between 0 and 1</div>
+                </div>
+                
+                <div class="formula-box">
+                    Σ P(x) = 1
+                    <div class="formula-label">All probabilities must sum to 1</div>
+                </div>
+                
+                <div class="formula-box">
+                    P(Aᶜ) = 1 − P(A)
+                    <div class="formula-label">Complement Rule</div>
+                </div>
+                
+                <div class="formula-box">
+                    P(A) = # favorable / # total
+                    <div class="formula-label">Equally likely outcomes</div>
+                </div>
+            </div>
+
+            <!-- Visual / Diagram -->
+            <div class="section visual-section">
+                <div class="section-title">🎨 TREE DIAGRAM (2 Free Throws)</div>
+                <div class="tree-diagram">
+                         Make (0.7)──Make (0.7)  → MM = 0.49
+                        /            \
+                       /              Miss (0.3) → MM = 0.21
+          Start ────
+                       \              Make (0.7) → MМ = 0.21
+                        \            /
+                         Miss (0.3)──Miss (0.3)  → mm = 0.09
+                                                   ─────────
+                                              Total = 1.00 ✓
+                </div>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem;">Each branch shows P(outcome). Multiply along paths!</p>
+            </div>
+
+            <!-- Example Section -->
+            <div class="section example-section">
+                <div class="section-title">✏️ WORKED EXAMPLE</div>
+                
+                <div class="example-problem">
+                    <strong>Problem:</strong> A basketball player makes 70% of her free throws. Design a simulation to estimate the probability that she makes <u>at least 4 out of 5</u> free throws.
+                </div>
+
+                <div class="example-work">
+<strong>SIMULATION DESIGN:</strong>
+━━━━━━━━━━━━━━━━━━━━━━━━
+1. Let digits 0-6 = MAKE (7 digits → 70%)
+   Let digits 7-9 = MISS (3 digits → 30%)
+
+2. ONE TRIAL = Generate 5 random digits
+   Example: 3, 8, 1, 4, 2 → M, X, M, M, M → 4 makes ✓
+
+3. REPEAT many times (at least 30 trials)
+
+4. Count trials with 4+ makes
+   Estimated P = (# with 4+ makes) / (total trials)
+
+<strong>Sample Results (30 trials):</strong>
+Trials with 4+ makes: 16
+Estimated probability = 16/30 = 0.533
+                </div>
+
+                <div class="answer-box">
+                    ✓ <strong>ANSWER:</strong> Based on this simulation, the estimated probability that the player makes at least 4 out of 5 free throws is approximately <strong>0.53 or 53%</strong>.
+                    <br><span style="font-size: 0.85rem; color: #666;">(Note: Simulation gives an ESTIMATE — results will vary!)</span>
+                </div>
+            </div>
+
+            <!-- Calculator Section -->
+            <div class="section">
+                <div class="section-title">📱 TI-84 CALCULATOR</div>
+                <div class="calculator-box">
+                    <strong>randInt(0, 9)</strong><br>
+                    Path: MATH → PRB → 5:randInt(<br><br>
+                    Generate 5 at once:<br>
+                    <strong>randInt(0, 9, 5)</strong><br><br>
+                    Count how many are ≤ 6 = makes
+                </div>
+            </div>
+
+            <!-- Watch Out Section -->
+            <div class="section watch-out">
+                <div class="section-title">⚠️ WATCH OUT!</div>
+                <ul>
+                    <li><strong>Simulation ≠ exact answer!</strong> It gives an ESTIMATE that varies each time</li>
+                    <li><strong>"At least 4"</strong> means 4 OR 5, not "more than 4"</li>
+                    <li><strong>Random assignment:</strong> 70% needs 7 digits (0-6), not digits 1-7</li>
+                    <li><strong>Invalid probability model:</strong> If probabilities don't sum to 1, it's WRONG</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.8rem;">
+            <span class="badge">EXAMPLE POSTER</span> — Your poster should look similar to this!
+        </div>
+    </div>
+</body>
+</html>

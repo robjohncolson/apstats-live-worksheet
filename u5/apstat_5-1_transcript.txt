@@ -1,0 +1,52 @@
+Here is the transcription of the video with timestamps:
+
+00:00
+This video shows the variation in statistics for samples taken from the same population. What will we learn? Why do different samples produce different statistics when they come from the same population? How can we estimate the truth?
+
+00:17
+Let's look at an example. Let the random variable X represent the sum of the rolls of two fair dice. We would like to take a random sample of five rolls and find the sample mean to determine, on average, how far a player would get in five turns during a board game.
+
+00:37
+For your five rolls, you could get a mean of seven. Or a different five rolls, you could get a mean of 5.2. Or yet another set of five rolls, you could get a mean of 8.4.
+
+00:50
+I think we can agree on a few things. Rolling two dice produces random sums. We don't know what the results we will get for any individual roll. The dice rolls are independent; knowing what we rolled on one roll has nothing to do with what we're going to roll on another. And we don't know how close our sample mean for five rolls is to the population mean of all possible rolls.
+
+01:18
+Here I have a chart showing all the combinations we could get for two rolls of the dice. Rolling two ones is called snake eyes. I don't know why. But if we roll snake eyes, the probability of that happening is .028. It only happens one out of the 36 possible rolls for two dice.
+
+01:42
+Rolling snake eyes twice in a row has even a smaller probability of happening. And rolling snake eyes five times in a row to get a mean of five rolls that's two is virtually zero.
+
+01:59
+We can easily roll two dice five times and calculate the mean. We could even determine all possible means for five rolls. And the sample means will vary from five roll sets to another five roll set. And some sample means are more likely than others.
+
+02:21
+If we do the same procedure with a continuous random variable—for instance, the average weight of adult koalas is about 15 pounds with a standard deviation of 1.8 pounds. Suppose zoo researchers are tracking koala health and they randomly select a sample of 12 koalas each month and find the mean to check for their health.
+
+02:47
+They could get a mean of 17 pounds, although the truth is 15. They could get a mean of 14.7. And each month, they're going to get a different mean.
+
+03:00
+If we continue to calculate the means of many samples of the same size from the population of all koalas, we would get a distribution of sample means that would help us draw conclusions. And notice that the sample means cluster around the true population mean of 15.
+
+03:23
+The same thing happens with proportions. Suppose we have a close election and a candidate has the support of 51% of the voters. Of course, no one knows how much support the candidate has for all voters until after the election.
+
+03:42
+Pollsters go out and take a random sample of 1,000 voters to determine whether the candidate will win or lose. Because the sample proportions vary, one pollster may say it's going to be a win, and the next one it's going to be a loss, then a win, then a loss, then too close to call.
+
+04:05
+The sample proportions will vary, but if we collect all possible sample proportions with a sample size of 1,000, we will start to see a predictable pattern of how the results could look.
+
+04:23
+How do sample statistics behave? Whether it's a mean for a discrete random variable, a continuous random variable, or a proportion? is different random samples of the same size from the same population produce statistics that vary.
+
+04:41
+A statistic from a single random sample is not much different than a roll of the dice. We just don't know what it's going to be. But the distribution of the statistic has a predictable pattern of variation that's related to the population truth.
+
+05:00
+What should we take away? Different samples from the same population produce different statistics. If the distribution of a population is known, then the distribution of statistics from many, many, many different random samples of the very same size from that population is predictable.
+
+05:23
+Thank you.

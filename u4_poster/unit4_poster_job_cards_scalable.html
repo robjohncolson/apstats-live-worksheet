@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 4 Poster - Scalable Job Cards (7-15 Students)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f5f5f5;
+            padding: 0.5rem;
+        }
+        
+        /* Teacher Guide Styles */
+        .teacher-guide {
+            max-width: 800px;
+            margin: 0 auto 1rem auto;
+            background: white;
+            border: 3px solid #1565c0;
+            border-radius: 8px;
+            padding: 1rem;
+            page-break-after: always;
+        }
+        .teacher-guide h1 {
+            color: #1565c0;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .teacher-guide .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        .config-table th, .config-table td {
+            border: 1px solid #ccc;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .config-table th {
+            background: #1565c0;
+            color: white;
+        }
+        .config-table tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+        .config-table .core {
+            background: #e8f5e9;
+        }
+        .config-table .flex {
+            background: #fff3e0;
+        }
+        .badge-core {
+            display: inline-block;
+            background: #2e7d32;
+            color: white;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .badge-flex {
+            display: inline-block;
+            background: #e65100;
+            color: white;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .scenario-box {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .scenario-box h3 {
+            margin-bottom: 0.5rem;
+            color: #1565c0;
+        }
+        .scenario-box ul {
+            margin-left: 1.25rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Card Styles */
+        .page {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            max-width: 8.5in;
+            margin: 0 auto 0.5rem auto;
+        }
+        .card {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 0.6rem;
+            background: white;
+            page-break-inside: avoid;
+            min-height: 4.5in;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header {
+            text-align: center;
+            padding-bottom: 0.4rem;
+            border-bottom: 2px dashed #ccc;
+            margin-bottom: 0.4rem;
+        }
+        .job-badge {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            color: white;
+            display: inline-block;
+            margin-bottom: 0.25rem;
+        }
+        .job-badge.core { background: #2e7d32; }
+        .job-badge.flex { background: #e65100; }
+        .job-number {
+            font-size: 1.75rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .job-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+        .card-body {
+            flex: 1;
+            font-size: 0.8rem;
+        }
+        .card-body h4 {
+            font-size: 0.85rem;
+            margin: 0.4rem 0 0.2rem 0;
+            color: #1565c0;
+        }
+        .card-body ul {
+            margin-left: 1.1rem;
+        }
+        .card-body li {
+            margin-bottom: 0.15rem;
+        }
+        .poster-checklist {
+            background: #f5f5f5;
+            border-radius: 4px;
+            padding: 0.4rem;
+            margin-top: 0.4rem;
+            font-size: 0.7rem;
+        }
+        .poster-checklist strong {
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+        .rotation-reminder {
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+            border-radius: 4px;
+            padding: 0.4rem;
+            margin-top: auto;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+        
+        /* Color coding */
+        .color-1 { border-color: #1565c0; }
+        .color-1 .job-number { color: #1565c0; }
+        .color-2 { border-color: #7b1fa2; }
+        .color-2 .job-number { color: #7b1fa2; }
+        .color-3 { border-color: #c62828; }
+        .color-3 .job-number { color: #c62828; }
+        .color-4 { border-color: #00897b; }
+        .color-4 .job-number { color: #00897b; }
+        .color-5 { border-color: #ef6c00; }
+        .color-5 .job-number { color: #ef6c00; }
+        .color-6 { border-color: #5e35b1; }
+        .color-6 .job-number { color: #5e35b1; }
+        .color-7 { border-color: #00838f; }
+        .color-7 .job-number { color: #00838f; }
+        .color-8 { border-color: #d32f2f; }
+        .color-8 .job-number { color: #d32f2f; }
+        .color-9 { border-color: #388e3c; }
+        .color-9 .job-number { color: #388e3c; }
+        .color-10 { border-color: #795548; }
+        .color-10 .job-number { color: #795548; }
+        
+        @media print {
+            body { padding: 0; }
+            .page { gap: 0.25rem; }
+            .card { border-width: 1px; }
+            .teacher-guide { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TEACHER CONFIGURATION GUIDE -->
+<div class="teacher-guide">
+    <h1>🎯 Teacher Configuration Guide</h1>
+    <p class="subtitle">Which cards to hand out based on class size</p>
+    
+    <table class="config-table">
+        <tr>
+            <th>Card #</th>
+            <th>Job Title</th>
+            <th>Type</th>
+            <th>7 Students</th>
+            <th>8-9</th>
+            <th>10-11</th>
+            <th>12-13</th>
+            <th>14-15</th>
+        </tr>
+        <tr class="core">
+            <td><strong>1</strong></td>
+            <td>Title Writer</td>
+            <td><span class="badge-core">CORE</span></td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="core">
+            <td><strong>2</strong></td>
+            <td>Formula Scribe (ALL)</td>
+            <td><span class="badge-core">CORE</span></td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>2A</strong></td>
+            <td>Formula Scribe 1</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>2B</strong></td>
+            <td>Formula Scribe 2</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="core">
+            <td><strong>3</strong></td>
+            <td>Example Writer (ALL)</td>
+            <td><span class="badge-core">CORE</span></td>
+            <td>✓</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>3A</strong></td>
+            <td>Example Setup</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>3B</strong></td>
+            <td>Example Solver</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>3C</strong></td>
+            <td>Example Finisher</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="core">
+            <td><strong>4</strong></td>
+            <td>Visual Artist</td>
+            <td><span class="badge-core">CORE</span></td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="core">
+            <td><strong>5</strong></td>
+            <td>Trap Spotter</td>
+            <td><span class="badge-core">CORE</span></td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="core">
+            <td><strong>6</strong></td>
+            <td>Calculator Guide</td>
+            <td><span class="badge-core">CORE</span></td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>7</strong></td>
+            <td>Quality Control</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>8</strong></td>
+            <td>Decorator</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+        </tr>
+        <tr class="flex">
+            <td><strong>9</strong></td>
+            <td>Visual Artist 2</td>
+            <td><span class="badge-flex">FLEX</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>✓</td>
+        </tr>
+    </table>
+
+    <div class="scenario-box">
+        <h3>📊 Quick Reference by Class Size:</h3>
+        <ul>
+            <li><strong>7 students:</strong> Cards 1, 2, 3, 4, 5, 6, 7</li>
+            <li><strong>8 students:</strong> Cards 1, 2, 3A, 3B, 4, 5, 6, 7</li>
+            <li><strong>9 students:</strong> Cards 1, 2, 3A, 3B, 4, 5, 6, 7 + (give 2 students same card OR double up QC)</li>
+            <li><strong>10 students:</strong> Cards 1, 2A, 2B, 3A, 3B, 4, 5, 6, 7 + one duplicate</li>
+            <li><strong>11 students:</strong> Cards 1, 2A, 2B, 3A, 3B, 4, 5, 6, 7 + two duplicates</li>
+            <li><strong>12-13 students:</strong> Add 3C (Example Finisher) and 8 (Decorator)</li>
+            <li><strong>14-15 students:</strong> Add 9 (Visual Artist 2)</li>
+        </ul>
+    </div>
+
+    <div class="scenario-box" style="background: #e3f2fd;">
+        <h3>💡 Pro Tips:</h3>
+        <ul>
+            <li>When duplicating cards, assign to different starting posters</li>
+            <li>Quality Control (#7) is great to duplicate — more eyes = fewer errors</li>
+            <li>If odd number, have one student be a "floater" who helps whoever needs it</li>
+        </ul>
+    </div>
+</div>
+
+<!-- PAGE 1: CORE CARDS 1-4 -->
+<div class="page">
+    <!-- Card 1: Title Writer -->
+    <div class="card color-1">
+        <div class="card-header">
+            <span class="job-badge core">CORE</span>
+            <div class="job-number">#1</div>
+            <div class="job-title">📝 TITLE WRITER</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Write <strong>poster title</strong> in LARGE letters at top</li>
+                <li>Add <strong>topic numbers</strong> (e.g., "4.1 – 4.3")</li>
+                <li>Write <strong>1-line summary</strong> of the section</li>
+                <li>Make it readable from across the room!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Titles to Write:</strong>
+                🔵 P1: "Simulation & Basic Probability" (4.1-4.3)<br>
+                🟣 P2: "Conditional Prob & Independence" (4.4-4.6)<br>
+                🔴 P3: "Random Variables & THE VARIANCE TRAP" (4.7-4.9)<br>
+                🟢 P4: "Binomial & Geometric" (4.10-4.12)
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 2: Formula Scribe (ALL) -->
+    <div class="card color-2">
+        <div class="card-header">
+            <span class="job-badge core">CORE</span>
+            <div class="job-number">#2</div>
+            <div class="job-title">🔢 FORMULA SCRIBE</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Write <strong>ALL key formulas</strong> for that topic</li>
+                <li>Draw a <strong>box</strong> around each formula</li>
+                <li><strong>Label</strong> what each formula is for</li>
+                <li>Use ruler for fraction bars!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Key Formulas (see reference sheet):</strong>
+                🔵 P1: Complement, sum to 1, basic probability<br>
+                🟣 P2: Conditional, multiplication, addition rules<br>
+                🔴 P3: E(X), σ, combining RVs — <strong>THE TRAP!</strong><br>
+                🟢 P4: Binomial + Geometric formulas
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 3: Example Writer (ALL) -->
+    <div class="card color-3">
+        <div class="card-header">
+            <span class="job-badge core">CORE</span>
+            <div class="job-number">#3</div>
+            <div class="job-title">✏️ EXAMPLE WRITER</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Write the <strong>example problem</strong></li>
+                <li>Show <strong>step-by-step work</strong></li>
+                <li><strong>Box the final answer</strong> in green</li>
+                <li>Write answer <strong>in context</strong> (sentence!)</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Problems (see reference sheet):</strong>
+                🔵 P1: Free throw simulation (70%, 5 shots)<br>
+                🟣 P2: Two-way table (sports & instruments)<br>
+                🔴 P3: Coffee + Muffin — show WRONG vs RIGHT!<br>
+                🟢 P4: Binomial (80%, 10 shots) + Geometric (15%)
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 4: Visual Artist -->
+    <div class="card color-4">
+        <div class="card-header">
+            <span class="job-badge core">CORE</span>
+            <div class="job-number">#4</div>
+            <div class="job-title">🎨 VISUAL ARTIST</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Draw the required <strong>diagram/table/chart</strong></li>
+                <li>Use <strong>RULER</strong> for straight lines</li>
+                <li><strong>Label</strong> all parts clearly</li>
+                <li>Use <strong>color</strong> to make it pop!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Required Visuals:</strong>
+                🔵 P1: Tree diagram (2 free throws)<br>
+                🟣 P2: Two-way table (filled in with numbers)<br>
+                🔴 P3: WRONG vs RIGHT comparison box<br>
+                🟢 P4: Binomial vs Geometric comparison table
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+</div>
+
+<!-- PAGE 2: CORE CARDS 5-7, FLEX 2A -->
+<div class="page">
+    <!-- Card 5: Trap Spotter -->
+    <div class="card color-5">
+        <div class="card-header">
+            <span class="job-badge core">CORE</span>
+            <div class="job-number">#5</div>
+            <div class="job-title">⚠️ TRAP SPOTTER</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Create the <strong>"WATCH OUT!"</strong> box</li>
+                <li>List <strong>2-3 common mistakes</strong></li>
+                <li>Explain <strong>why</strong> each is wrong</li>
+                <li>Use ❌ and ✓ symbols!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Key Traps:</strong>
+                🔵 P1: Simulation ≠ exact answer<br>
+                🟣 P2: P(A|B) ≠ P(B|A)!<br>
+                🔴 P3: <strong>DON'T ADD SDs DIRECTLY!!!</strong><br>
+                🟢 P4: pdf vs cdf, "at least" needs complement
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 6: Calculator Guide -->
+    <div class="card color-6">
+        <div class="card-header">
+            <span class="job-badge core">CORE</span>
+            <div class="job-number">#6</div>
+            <div class="job-title">📱 CALCULATOR GUIDE</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Write <strong>TI-84 keystrokes</strong> needed</li>
+                <li>Show <strong>menu path</strong> (e.g., MATH → PRB)</li>
+                <li>Write <strong>syntax</strong> with actual numbers</li>
+                <li>Test it on your calculator first!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Calculator Functions:</strong>
+                🔵 P1: randInt(0,9) or randInt(1,10,5)<br>
+                🟣 P2: (mostly manual calculation)<br>
+                🔴 P3: 1-Var Stats L1, L2<br>
+                🟢 P4: binompdf/cdf, geometpdf/cdf
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 7: Quality Control -->
+    <div class="card color-7">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#7</div>
+            <div class="job-title">✅ QUALITY CONTROL</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li><strong>Check all work</strong> for accuracy</li>
+                <li><strong>Fill gaps</strong> others missed</li>
+                <li>Fix <strong>spelling/notation</strong> errors</li>
+                <li>Add <strong>color/highlights</strong> where needed</li>
+                <li><strong>Initial</strong> when approved ✓</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>QC Checklist:</strong>
+                □ Title clear & visible?<br>
+                □ All formulas present & boxed?<br>
+                □ Example complete with work shown?<br>
+                □ Visual labeled correctly?<br>
+                □ Watch Out box present?
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 2A: Formula Scribe 1 (FLEX) -->
+    <div class="card color-2">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#2A</div>
+            <div class="job-title">🔢 FORMULA SCRIBE 1</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Write the <strong>FIRST HALF</strong> of formulas</li>
+                <li>Coordinate with Formula Scribe 2!</li>
+                <li>Draw boxes, add labels</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Your Formulas:</strong>
+                🔵 P1: 0≤P(A)≤1, ΣP(x)=1<br>
+                🟣 P2: P(A|B) formula, General Mult Rule<br>
+                🔴 P3: E(X), σ formulas<br>
+                🟢 P4: Binomial P(X=k), μ=np, σ=√np(1-p)
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+</div>
+
+<!-- PAGE 3: FLEX CARDS 2B, 3A, 3B, 3C -->
+<div class="page">
+    <!-- Card 2B: Formula Scribe 2 (FLEX) -->
+    <div class="card color-2">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#2B</div>
+            <div class="job-title">🔢 FORMULA SCRIBE 2</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Write the <strong>SECOND HALF</strong> of formulas</li>
+                <li>Coordinate with Formula Scribe 1!</li>
+                <li>Draw boxes, add labels</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Your Formulas:</strong>
+                🔵 P1: Complement rule, P(A) = favorable/total<br>
+                🟣 P2: Addition rule, Independence test<br>
+                🔴 P3: Combining means, <strong>VARIANCE TRAP!</strong><br>
+                🟢 P4: Geometric formulas (all 3)
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 3A: Example Setup (FLEX) -->
+    <div class="card color-3">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#3A</div>
+            <div class="job-title">📋 EXAMPLE SETUP</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Write <strong>"EXAMPLE:"</strong> header</li>
+                <li>Copy the <strong>problem</strong> word-for-word</li>
+                <li>Write <strong>"Given:"</strong> and list known values</li>
+                <li>Write <strong>"Find:"</strong> and what we need</li>
+                <li>Leave space for Solver!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>See reference sheet for all 4 problems!</strong>
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 3B: Example Solver (FLEX) -->
+    <div class="card color-3">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#3B</div>
+            <div class="job-title">✏️ EXAMPLE SOLVER</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Show <strong>step-by-step work</strong></li>
+                <li>Write formula → substitute numbers</li>
+                <li>Show arithmetic clearly</li>
+                <li>Number your steps (1, 2, 3...)</li>
+                <li>Use calculator to verify!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Tip:</strong> On Poster 3, show WRONG way crossed out, then RIGHT way!
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 3C: Example Finisher (FLEX) -->
+    <div class="card color-3">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#3C</div>
+            <div class="job-title">🎯 EXAMPLE FINISHER</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Draw <strong>GREEN BOX</strong> around final answer</li>
+                <li>Write answer <strong>IN CONTEXT</strong> (full sentence)</li>
+                <li>Include <strong>units</strong> where needed</li>
+                <li>Add ✓ checkmark to confirm complete</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Example context:</strong><br>
+                "There is a 0.302 probability that the player makes exactly 8 of her 10 free throws."<br>
+                NOT just "0.302" ❌
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+</div>
+
+<!-- PAGE 4: FLEX CARDS 8, 9 -->
+<div class="page">
+    <!-- Card 8: Decorator -->
+    <div class="card color-8">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#8</div>
+            <div class="job-title">🌟 DECORATOR</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Add <strong>color highlighting</strong> to key terms</li>
+                <li>Draw <strong>arrows</strong> connecting related parts</li>
+                <li>Add <strong>icons/symbols</strong> (⚠️ ✓ ❌ 💡)</li>
+                <li>Make <strong>borders</strong> around sections</li>
+                <li>Ensure poster is <strong>visually balanced</strong></li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Color Code Suggestions:</strong>
+                • Formulas: BLUE boxes<br>
+                • Answers: GREEN boxes<br>
+                • Warnings: RED/ORANGE<br>
+                • Key terms: YELLOW highlight
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Card 9: Visual Artist 2 -->
+    <div class="card color-9">
+        <div class="card-header">
+            <span class="job-badge flex">FLEX</span>
+            <div class="job-number">#9</div>
+            <div class="job-title">🎨 VISUAL ARTIST 2</div>
+        </div>
+        <div class="card-body">
+            <h4>Your Job at EACH Poster:</h4>
+            <ul>
+                <li>Add a <strong>SECOND visual</strong> to complement Artist 1</li>
+                <li>Draw <strong>additional diagrams</strong></li>
+                <li>Create <strong>memory aids</strong> or mnemonics</li>
+                <li>Help Artist 1 if they need it!</li>
+            </ul>
+            <div class="poster-checklist">
+                <strong>Additional Visual Ideas:</strong>
+                🔵 P1: Probability scale (0 to 1 number line)<br>
+                🟣 P2: Venn diagram for A or B<br>
+                🔴 P3: "SD ≠ add" warning graphic<br>
+                🟢 P4: BINS checklist visual
+            </div>
+        </div>
+        <div class="rotation-reminder">⏱️ ~15 min per poster → Rotate on signal → ALL 4 posters</div>
+    </div>
+
+    <!-- Blank spacer cards for printing -->
+    <div class="card" style="border: 2px dashed #ccc; background: #fafafa;">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; text-align: center;">
+            <div>
+                <strong>DUPLICATE CARD</strong><br><br>
+                If you have extra students,<br>
+                photocopy Card #7 (QC)<br>
+                or any other card needed
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border: 2px dashed #ccc; background: #fafafa;">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; text-align: center;">
+            <div>
+                <strong>FLOATER</strong><br><br>
+                Odd number of students?<br>
+                One person is a "floater"<br>
+                who helps wherever needed
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
