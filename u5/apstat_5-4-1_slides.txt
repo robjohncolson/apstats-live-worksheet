@@ -1,0 +1,99 @@
+Here is a description of each slide presented in the video, along with the corresponding timestamps.
+
+00:00
+Title Slide: A dark teal background features the title "TOPIC 5.4 Biased and Unbiased Point Estimates" under the heading "AP Statistics." On the left is a line drawing of a bell curve distribution graph inside a circle. In the top right corner, a video feed of the presenter, Penny Smeltzer, appears.
+
+00:10
+What Will We Learn?: A white slide listing two learning objectives:
+
+What is a point estimate?
+
+How do we determine if an estimator is unbiased?
+The College Board logo is in the bottom left corner.
+
+00:21
+Weimaraner Problem Setup: The title is "Weimaraner." On the left is a photo of a Weimaraner dog. The text on the right sets up the problem: A breeder has 5 dogs, a sample of 3 will be selected, and the ages are 0, 2, 5, 8, 10. The question asks if the sample mean is an unbiased estimator.
+
+00:45
+Unbiased Estimator Definition: The title reads "Unbiased Estimator." Text defines an unbiased estimator as one where the average value of the estimator equals the population parameter. Below the text, the population ages (0, 2, 5, 8, 10) are listed, showing a population mean (
+𝜇
+μ
+) of 5.
+
+01:08
+One Sample Mean (Calculation): The title is "One Sample Mean." A photo of a puppy replaces the adult dog. It lists one specific sample (0, 2, 5) and calculates the sample mean (
+𝑥
+ˉ
+x
+ˉ
+) as 2.3.
+
+01:21
+Point Estimator Terminology: The previous slide updates with red text bubbles pointing to specific terms. It identifies the "sample statistic" as the point estimator and the specific value (
+𝑥
+ˉ
+=
+2.3
+x
+ˉ
+=2.3
+) as the point estimate.
+
+01:35
+Graphing the Estimate: The title is "One Sample Mean." A number line from 0 to 10 appears at the bottom. A blue dot is placed at 2.3 to represent the first sample mean.
+
+01:47
+All Possible Sample Means: The title changes to "All Possible Sample Means." A table appears on the left listing every possible combination of 3 dogs and their calculated means. As the table populates, blue dots appear on the number line to form a dot plot. A calculation on the right shows that the mean of all sample means (
+𝜇
+𝑥
+ˉ
+μ
+x
+ˉ
+	​
+
+) equals 5.
+
+02:18
+Variability Concept: The title returns to "One Sample Mean." Text appears stating that an estimator exhibits variability that can be modeled using probability.
+
+02:27
+A Second Look: The slide shows the population ages and the calculated means again to transition into reviewing the definition.
+
+02:32
+Unbiased Estimator - Mean: The definition of an unbiased estimator appears again. The text "on average" and "estimator is equal to the population parameter" are highlighted in teal to emphasize that the sample mean met these criteria.
+
+02:41
+One Sample Range: The title is "One Sample Range." The population ages are listed, and the population range is calculated as 10 (
+10
+−
+0
+10−0
+).
+
+02:53
+Range Sample Calculation: The slide shows the sample of 0, 2, 5 again. It calculates the sample range as 5. Teal text bubbles label "range" as the point estimator and "5" as the point estimate.
+
+03:10
+Graphing the Range: A number line from 0 to 11 appears. A blue dot is placed at 5 to represent the range of the first sample.
+
+03:17
+All Possible Sample Ranges: The title is "All Possible Sample Ranges." A table lists all sample combinations and their ranges. A dot plot forms on the number line. On the right, it notes the population range is 10, but the mean of the sample ranges is calculated as 7.8.
+
+03:50
+Biased Estimator - Range: The title is "Biased Estimator - Range." The definition text is modified to show that the estimator is biased because the values are not equal. The dot plot remains visible, showing the center (7.8) is lower than the population parameter (10).
+
+04:05
+What Should We Take Away?: A transition slide with the title "WHAT SHOULD WE TAKE AWAY?" on a blue background.
+
+04:07
+Key Takeaways: A summary slide listing three points:
+
+A sample statistic is a point estimator of the population parameter.
+
+Estimators exhibit variability modeled by probability.
+
+An estimator is unbiased if the average value of the estimator equals the population parameter.
+
+04:32
+Thank You: A final slide with a solid blue background and the text "Thank you."

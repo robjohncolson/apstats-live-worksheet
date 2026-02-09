@@ -1,0 +1,55 @@
+Here is the transcript for the video, including timestamps.
+
+00:00
+Penny Smeltzer: Hi, I'm Penny Smeltzer from Austin, Texas. This video shows why an estimator is or is not biased.
+
+00:10
+Penny Smeltzer: What will we learn? What is a point estimate? And how do we determine if an estimator is unbiased?
+
+00:19
+Penny Smeltzer: Let's look at an example. A breeder has five Weimaraner dogs. A sample of three dogs will be randomly selected for a study. And we're interested in the average age of the dogs in the study. There are the ages of the population of five dogs. Is the sample mean an unbiased estimator of the mean age of the population?
+
+00:45
+Penny Smeltzer: When estimating a parameter, an estimator is unbiased if, on average, the value of the estimator is equal to the population parameter. So there's the population ages, which has a mean of five.
+
+01:01
+Penny Smeltzer: The population is small enough that we can actually investigate all possible samples of size three. So, one possible sample is if the dogs are randomly selected with the ages of zero, two, and five. The sample mean is 2.3.
+
+01:21
+Penny Smeltzer: X-bar, or the sample mean, is called a point estimator. The actual value, 2.3, is called the point estimate.
+
+01:35
+Penny Smeltzer: If I make a graph of our point estimate, and then I continue to find the sample mean for all possible samples of size three... and then I find the mean of the sample means... I check to see how related it is to the population mean.
+
+01:58
+Penny Smeltzer: In this case, the mean of all these sample means is five. So notice, although the mean of each sample varies about the population mean, the mean of the sample means is five.
+
+02:18
+Penny Smeltzer: When estimating a population parameter, an estimator exhibits variability that can be modeled using probability.
+
+02:27
+Penny Smeltzer: Let's look at the definition of an unbiased estimator again. An estimator is unbiased if, on average, the value of the estimator is equal to the population parameter. And here, it is.
+
+02:41
+Penny Smeltzer: If I do this again with another statistic, the range, I can see that the range of the population is 10. If I take a sample of size three, the range is five. The range is the point estimator, and the five is the point estimate.
+
+03:03
+Penny Smeltzer: Is the sample range an unbiased estimator of the population range? Well, let's continue to find the sample range for all possible samples of size three. If I do that, and then I take the mean of all the sample ranges, I get 7.8.
+
+03:27
+Penny Smeltzer: 7.8 is not equal to 10. Notice that the different values of the range for different samples of size three vary, but they don't vary on either side of the population range. They vary only on the left side.
+
+03:52
+Penny Smeltzer: Here, on average, the value of the estimator does not equal the population parameter. So range is a biased estimator of the population range.
+
+04:05
+Penny Smeltzer: What should we take away?
+
+A sample statistic is a point estimator of the corresponding population parameter.
+
+When estimating a population parameter, an estimator exhibits variability that can be modeled using probability.
+
+An estimator is unbiased if, on average, the value of the estimator is equal to the population parameter.
+
+04:32
+Penny Smeltzer: Thank you.
