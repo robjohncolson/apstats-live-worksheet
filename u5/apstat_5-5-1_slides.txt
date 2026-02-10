@@ -1,0 +1,369 @@
+Here is a description of the slides presented in the video, organized by timestamp:
+
+00:00 - Title Slide
+
+Header: Topic 5.5: Sampling Distributions for Sample Proportions.
+
+Sub-header: Daily Video 1.
+
+Graphic: An AP Statistics logo featuring a bell curve icon on the left.
+
+Presenter Feed: Josh Tabor appears in the top right corner.
+
+00:19 - What Will We Learn?
+
+Header: What Will We Learn?
+
+Content: A list of two learning objectives:
+
+How do we determine the parameters of a sampling distribution of a sample proportion?
+
+How do we determine if the shape of a sampling distribution of a sample proportion is approximately normal?
+
+00:39 - Example Scenario
+
+Header: Sampling From a High School.
+
+Text: A word problem describing a high school with 2,000 students where 30% have a driver’s license. It outlines the task: selecting a random sample of 
+𝑛
+=
+50
+n=50
+ and calculating the sample proportion 
+𝑝
+^
+p
+^
+	​
+
+.
+
+01:05 - Population vs. Sample Animation (Part 1)
+
+Left Side (Population): A bar graph showing the population distribution (30% Yes, 70% No).
+
+Right Side: A blank space initially, prepared for sample data.
+
+01:21 - Population vs. Sample Animation (Part 2)
+
+Right Side (One possible sample): Text appears showing a sample result of 
+𝑝
+^
+=
+12
+/
+50
+=
+0.24
+p
+^
+	​
+
+=12/50=0.24
+.
+
+Far Right: A horizontal axis appears for the "Sampling distribution of 
+𝑝
+^
+p
+^
+	​
+
+." A single blue dot is placed at 0.24.
+
+01:37 - Population vs. Sample Animation (Part 3)
+
+Right Side: The text updates to show a second sample: 
+𝑝
+^
+=
+19
+/
+50
+=
+0.38
+p
+^
+	​
+
+=19/50=0.38
+.
+
+Far Right: A second dot is added to the dot plot at 0.38.
+
+01:53 - Population vs. Sample Animation (Part 4)
+
+Right Side: The text updates to show a third sample: 
+𝑝
+^
+=
+16
+/
+50
+=
+0.32
+p
+^
+	​
+
+=16/50=0.32
+.
+
+Far Right: A third dot is added to the dot plot at 0.32.
+
+02:10 - Simulated Sampling Distribution
+
+Graphic: The simple 3-dot plot is replaced by a dense dot plot/histogram representing 500 samples of size 
+𝑛
+=
+50
+n=50
+.
+
+Text Overlay: Bullet points appear describing the distribution:
+
+Approximately normal.
+
+Centered at 0.30.
+
+Varies from about 0.15 to about 0.45.
+
+02:50 - Mean and Standard Deviation Formulas
+
+Header: Mean and Standard Deviation.
+
+Content: Definitions for 
+𝑝
+^
+p
+^
+	​
+
+, 
+𝑛
+n
+, and 
+𝑝
+p
+.
+
+Formulas:
+
+𝜇
+𝑝
+^
+=
+𝑝
+μ
+p
+^
+	​
+
+	​
+
+=p
+
+𝜎
+𝑝
+^
+=
+𝑝
+(
+1
+−
+𝑝
+)
+𝑛
+σ
+p
+^
+	​
+
+	​
+
+=
+n
+p(1−p)
+	​
+
+	​
+
+
+Note: An asterisk notes the condition that the sample size must be less than 10% of the population size.
+
+03:48 - AP Formula Sheet
+
+Header: Mean and Standard Deviation.
+
+Graphic: A screenshot of the actual AP Statistics formula sheet.
+
+Highlight: The section "Random Variable" (for One population: 
+𝑝
+^
+p
+^
+	​
+
+) and "Parameters of Sampling Distribution" are highlighted to show where the formulas are located during the exam.
+
+04:04 - Applying Formulas to Example
+
+Header: Mean and Standard Deviation.
+
+Text: Recaps the high school driver's license example (
+𝑛
+=
+50
+n=50
+, 
+𝑝
+=
+0.30
+p=0.30
+).
+
+Calculations: Shows the math for:
+
+𝜇
+𝑝
+^
+=
+0.3
+μ
+p
+^
+	​
+
+	​
+
+=0.3
+
+𝜎
+𝑝
+^
+=
+0.3
+(
+0.7
+)
+50
+=
+0.065
+σ
+p
+^
+	​
+
+	​
+
+=
+50
+0.3(0.7)
+	​
+
+	​
+
+=0.065
+
+Condition Check: Notes that the sample size (50) is less than 10% of the population size (2,000).
+
+04:39 - Shape (Large Counts Condition)
+
+Header: Shape.
+
+Content: Text explaining that the distribution is approximately normal when the expected number of successes and failures are both at least 10.
+
+Formulas:
+
+𝑛
+𝑝
+≥
+10
+np≥10
+
+𝑛
+(
+1
+−
+𝑝
+)
+≥
+10
+n(1−p)≥10
+
+05:03 - Applying Shape Condition to Example
+
+Header: Shape.
+
+Calculations:
+
+𝑛
+𝑝
+=
+50
+(
+0.3
+)
+=
+15
+≥
+10
+np=50(0.3)=15≥10
+
+𝑛
+(
+1
+−
+𝑝
+)
+=
+50
+(
+1
+−
+0.3
+)
+=
+35
+≥
+10
+n(1−p)=50(1−0.3)=35≥10
+
+Conclusion: The distribution of 
+𝑝
+^
+p
+^
+	​
+
+ will be approximately normal in this context.
+
+05:29 - Key Takeaways
+
+Header: Key Takeaways.
+
+Point 1: A summary of the formulas for Mean and Standard Deviation (with the 10% condition note).
+
+Point 2: A summary of the Large Counts condition (
+𝑛
+𝑝
+≥
+10
+np≥10
+ and 
+𝑛
+(
+1
+−
+𝑝
+)
+≥
+10
+n(1−p)≥10
+) for determining if the shape is approximately normal.
+
+06:09 - Closing Slide
+
+Text: Thank you.
+
+Graphic: College Board logo.

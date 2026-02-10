@@ -1,0 +1,41 @@
+00:00
+Josh Tabor: This is Josh Tabor. Welcome to this short video on Topic 5.5: Sampling Distributions for Sample Proportions. In this video, we'll discuss how to interpret parameters and probabilities for a sampling distribution of a sample proportion.
+
+00:15
+Josh Tabor: Let's start by taking a look at what we'll learn in this video. In this video, we're going to try to answer two questions. First, how do we interpret the parameters of a sampling distribution of a sample proportion? And two, how do we calculate and interpret probabilities involving a sampling distribution of a sample proportion?
+
+00:36
+Josh Tabor: All right, let's take a look at an example. This example might be familiar from the last video. In a high school with 2,000 students, 30% of the students have a driver's license. Suppose we randomly select a sample of 50 students from the high school, ask each student in the sample if he or she has a driver's license, and then calculate the sample proportion, p-hat, of students with a driver's license.
+
+00:59
+Josh Tabor: From the last video, here's what we learned about the sampling distribution of p-hat. We learned that it will be approximately normal in shape, with a center of around 0.3, and a standard deviation of about 0.065. Here's a quick image to help remind you of what that sampling distribution looked like. Notice it's got a normal curve to show you the model, and it's also filled with p-hats to show you that what we're modeling is the distribution of p-hat.
+
+01:26
+Josh Tabor: Now let's talk about how to interpret the mean. So, we've got the value: mu sub p-hat equals 0.30. Here's how to interpret it: For all random samples of size 50 from this population, the sample proportions of students who have a driver's license will have a mean of 0.30. Notice from the picture, you can see that about half the p-hats are bigger than 0.3 and about half the p-hats are less than 0.3. So if you were to take all of those p-hat values and average them up, you'd get exactly 0.3.
+
+01:58
+Josh Tabor: Now let's talk about interpreting the standard deviation. The value of the standard deviation is sigma sub p-hat equals 0.065. This means: For all random samples of size 50 from this population, the sample proportions of students who have a driver's license typically vary by about 0.065 from the population proportion of 0.30. So even though 0.3 is the mean, or the center, some values of p-hat are going to be close to that, and some are going to be quite far away. How far are those p-hats away from the center? About 0.065 on average. That's what it means to interpret a standard deviation.
+
+02:38
+Josh Tabor: Now, knowing how much a sample statistic typically varies from the truth is one of the most important reasons to study sampling distributions. You'll see this coming up in Units 6, 7, 8, and 9 when we talk about confidence intervals.
+
+02:52
+Josh Tabor: Now let's talk about calculating and interpreting probabilities involving a sampling distribution of p-hat. In this context, would it be unusual to get a sample proportion of p-hat equals 0.12 or less in a random sample of size 50 from this population? In earlier videos, you learned that when doing normal distribution calculations, a great first step is to draw a picture of what you're trying to calculate.
+
+03:18
+Josh Tabor: So here's that picture. We've got a normal curve that's centered at 0.3 with a standard deviation of 0.065. We also have our boundary line of 0.12 labeled, and we've shaded to the left to indicate values of p-hat that are 0.12 or less. The next step when doing a normal distribution calculation is to calculate a z-score. In this case, the z-score is 0.12 (the boundary) minus 0.3 (the mean) divided by 0.065 (the standard deviation).
+
+03:49
+Josh Tabor: That gives us a z-score, or standardized score, of negative 2.77. That is, a p-hat value of 0.12 is 2.77 standard deviations less than the mean. That's pretty unusual. To finish this calculation, you can use Table A or technology to get an area of approximately 0.0028.
+
+04:12
+Josh Tabor: Now let's think about how to interpret that number. Getting a sample proportion of 0.12 or less happens in only about 0.28% of all possible samples of size 50 from this population. This is very unusual! And that leads us to the second reason why we study sampling distributions. Knowing what values of a statistic count as unusual is one of the most important reasons we study sampling distributions. You'll see this concept showing up in Units 6, 7, 8, and 9 when we talk about significance tests.
+
+04:44
+Josh Tabor: Now let's summarize what you should have learned in this video. We asked two questions. The first question was: How do we interpret the parameters of a sampling distribution of a sample proportion? Here are some hints. You always interpret in context—that's true in this unit and every other unit in AP Statistics. Also, in your interpretations in this unit, you want to reference "all possible samples of this size from the population." That's what determines a sampling distribution. And finally, when you're interpreting standard deviation, make sure to include the phrase "typically" or "on average" when you're describing how much the values vary from the truth.
+
+05:23
+Josh Tabor: The second question was: How do we calculate and interpret probabilities involving a sampling distribution of a sample proportion? Well, for the calculations, you're going to use the normal distribution procedures from Topic 5.2, along with the parameters of the sampling distribution of a sample proportion that we learned about in Video 1. For the interpretation, make sure that they're in context, also with reference to "all possible samples of this size from the population."
+
+05:51
+Josh Tabor: This has been Josh Tabor. Thanks for tuning in.

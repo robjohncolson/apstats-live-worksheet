@@ -1,0 +1,207 @@
+Here is a description of each slide in the video with corresponding timestamps:
+
+00:00 - Title Slide
+A blue slide displaying the AP Statistics logo (a bridge icon). The text reads "Topic 5.5: Sampling Distributions for Sample Proportions" and "Daily Video 2." The instructor appears in the top right corner.
+
+00:15 - What Will We Learn?
+A white slide listing two learning objectives for the video:
+
+How do we interpret the parameters of a sampling distribution of a sample proportion?
+
+How do we calculate and interpret probabilities involving a sampling distribution of a sample proportion?
+
+00:36 - Section Header
+A blue transition slide with the text "Let's Look at an Example."
+
+00:40 - Sampling From a High School (Problem Setup)
+A white slide titled "Sampling From a High School." It presents a word problem about a high school with 2,000 students where 30% have a driver's license. It describes selecting a random sample of 
+𝑛
+=
+50
+n=50
+ to calculate the sample proportion 
+𝑝
+^
+p
+^
+	​
+
+.
+
+01:00 - Sampling From a High School (Distribution Details)
+The previous slide updates to include bullet points describing the sampling distribution of 
+𝑝
+^
+p
+^
+	​
+
+:
+
+Approximately normal
+
+Mean (
+𝜇
+𝑝
+^
+μ
+p
+^
+	​
+
+	​
+
+) = 0.30
+
+Standard deviation calculation resulting in 0.065.
+
+01:13 - Sampling From a High School (Visual Model)
+An image is added to the previous slide showing a normal curve filled with small 
+𝑝
+^
+p
+^
+	​
+
+ symbols to illustrate the distribution model.
+
+01:26 - Interpreting the Mean
+The slide is titled "Interpreting the Mean." It asks to interpret the value 
+𝜇
+𝑝
+^
+=
+0.30
+μ
+p
+^
+	​
+
+	​
+
+=0.30
+. The graphic of the normal curve with 
+𝑝
+^
+p
+^
+	​
+
+ symbols is displayed on the right.
+
+01:34 - Interpreting the Mean (Answer)
+The answer text appears below the question, stating: "For all random samples of size 
+𝑛
+=
+50
+n=50
+ from this population, the sample proportions of students who have a driver's license will have a mean of 0.30."
+
+01:58 - Interpreting the Standard Deviation
+The slide is titled "Interpreting the Standard Deviation." It asks to interpret the value 
+𝜎
+𝑝
+^
+=
+0.065
+σ
+p
+^
+	​
+
+	​
+
+=0.065
+. The graphic remains on the right.
+
+02:07 - Interpreting the Standard Deviation (Answer)
+The answer text appears, stating: "For all random samples of size 
+𝑛
+=
+50
+n=50
+ from this population, the sample proportions of students who have a driver's license typically vary by about 0.065 from the population proportion of 0.30." A note at the bottom emphasizes the importance of knowing how a sample statistic typically varies.
+
+02:52 - Calculating Probabilities (Question)
+The slide is titled "Calculating Probabilities." It poses the question: "Would it be unusual to get a sample proportion of 
+𝑝
+^
+=
+0.12
+p
+^
+	​
+
+=0.12
+ or less in a random sample of size 
+𝑛
+=
+50
+n=50
+ from this population?"
+
+03:18 - Calculating Probabilities (Graph)
+The slide updates to show a normal curve centered at 0.30. A blue line marks 0.12, and the area to the left is shaded to represent the probability being calculated.
+
+03:40 - Calculating Probabilities (Z-Score)
+The mathematical calculation appears on the left side of the slide. It shows the Z-score formula: 
+𝑧
+=
+0.12
+−
+0.30
+0.065
+=
+−
+2.77
+z=
+0.065
+0.12−0.30
+	​
+
+=−2.77
+.
+
+04:02 - Calculating Probabilities (Result)
+An arrow points to the shaded tail of the graph indicating the probability derived from Table A or technology: 
+𝑃
+(
+𝑝
+^
+≤
+0.12
+)
+=
+0.0028
+P(
+p
+^
+	​
+
+≤0.12)=0.0028
+.
+
+04:14 - Interpreting Probabilities
+The title changes to "Interpreting Probabilities." Text on the left interprets the result: "Getting a sample proportion of 0.12 or less happens in only about 0.28% of all possible samples of size 50 from this population. This is very unusual!" A star note explains that identifying unusual values is a key reason for studying these distributions.
+
+04:44 - Section Header
+A blue transition slide with the text "What Should We Take Away?"
+
+04:47 - Key Takeaways (Part 1)
+A white slide titled "Key Takeaways." It answers the first learning objective (Interpreting parameters) with three bullet points:
+
+In context
+
+Reference all possible samples of this size from the population
+
+For standard deviation, include "typically" or "on average"
+
+05:23 - Key Takeaways (Part 2)
+The second learning objective (Calculating/Interpreting probabilities) is added to the list with two bullet points:
+
+Use normal distribution procedures from Topic 5.2 with parameters from Topic 5.5.
+
+Interpretations should be in context and reference all possible samples of this size from the population.
+
+05:51 - End Slide
+A blue slide that simply reads "Thank you."

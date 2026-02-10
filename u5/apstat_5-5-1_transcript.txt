@@ -1,0 +1,279 @@
+Here is the transcript for the video on Sampling Distributions for Sample Proportions.
+
+00:00
+Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a short video about Topic 5.5: Sampling Distributions for Sample Proportions. In this video, we're going to discuss the shape, center, and variability of the sampling distribution of a sample proportion.
+
+00:19
+Let's start by thinking about what we're going to learn in this video. We're going to answer two questions. One: How do we determine the parameters of a sampling distribution of a sample proportion? And two: How do we determine if the shape of a sampling distribution of a sample proportion is approximately normal?
+
+00:39
+Let's start by looking at an example. This example is about sampling from a high school. In a high school with 2,000 students, 30% of the students have a driver's license. Suppose we select a random sample of 
+𝑛
+=
+50
+n=50
+ students from the high school, ask each student in the sample if he or she has a driver's license, and calculate the sample proportion 
+𝑝
+^
+p
+^
+	​
+
+ (p-hat) with a driver's license.
+
+01:05
+Here's what the population looks like. Notice we've got 30% that have a driver's license and 70% that don't have a driver's license. That's in the entire population. When we take a sample of size 50, we may not get exactly 30%. Here's an example of one possible sample. In this sample, we got 12 students out of 50 that have a driver's license. That's a sample proportion of 0.24. And here's that value, 0.24, and the beginnings of a sampling distribution of 
+𝑝
+^
+p
+^
+	​
+
+.
+
+01:37
+Now let's take another sample. We won't always get the same value when we take a sample; that's called sampling variability. In this second sample, we get a 
+𝑝
+^
+p
+^
+	​
+
+ of 19 over 50, or 0.38. You can see that 
+𝑝
+^
+p
+^
+	​
+
+ now appears on our sampling distribution on the right.
+
+01:53
+One more look. Here's a third sample. In this sample, we get a 
+𝑝
+^
+p
+^
+	​
+
+ of 16 out of 50. That's a value of 0.32. And you can see that now on the dot plot of the sampling distribution of the sample proportion. Of course, there's lots of possible samples of size 50 that we could take, and that's only three of them.
+
+02:10
+Let's take a step forward and look at 500 random samples of size 50, adding to the three that we already have. Here's what that graph looks like. I can't use 
+𝑝
+^
+p
+^
+	​
+
+s here because they won't all fit, but there's 500 dots there, and each of those dots represents a value of 
+𝑝
+^
+p
+^
+	​
+
+ that could come from a random sample of size 50 from this population.
+
+02:31
+When we think about describing this distribution, you should always think about shape, and center, and variability. So, the distribution of the sample proportions is: approximately normal; centered at 0.30; and with values that vary from about 0.15 to about 0.45.
+
+02:50
+One of the things we're learning in this video is how to identify the mean and the standard deviation of that distribution. We did it casually just looking at the graph, but there's actually formulas that we can use to find the mean and the standard deviation. So it says, let 
+𝑝
+^
+p
+^
+	​
+
+ be the sample proportion of successes in a random sample of size 
+𝑛
+n
+ selected from a population with proportion of successes 
+𝑝
+p
+. Then, the mean of the 
+𝑝
+^
+p
+^
+	​
+
+ distribution equals 
+𝑝
+p
+, the true proportion or population proportion.
+
+03:20
+And the standard deviation of the 
+𝑝
+^
+p
+^
+	​
+
+ distribution is 
+𝑝
+(
+1
+−
+𝑝
+)
+𝑛
+n
+p(1−p)
+	​
+
+	​
+
+. Now, there's a special condition for that standard deviation formula to work. We must—it must be true that the sample size is less than 10% of the population size. Or, it's also true if we sample with replacement from the population. Now, this condition is met in almost all real-life sampling, so we can use this formula in almost all circumstances.
+
+03:48
+Now, good news! You don't have to memorize these formulas because they're on the formula sheet that you get on both sections of the AP exam. Here's what that looks like. You can see the random variable is 
+𝑝
+^
+p
+^
+	​
+
+, and the two formulas are listed under the Parameters of Sampling Distribution.
+
+04:04
+For our example about sampling students from the high school and calculating the proportion of students with a driver's license, we took samples of size 50, where the true proportion was equal to 0.3. So that tells us the mean of the 
+𝑝
+^
+p
+^
+	​
+
+ distribution in that context is going to be 0.3. And the standard deviation is going to be 
+0.3
+(
+1
+−
+0.3
+)
+50
+50
+0.3(1−0.3)
+	​
+
+	​
+
+ or 0.065. And in this case, we're taking samples of size 50 from a large high school of 2,000 students, so the sample is clearly less than 10% of the population size.
+
+04:39
+Now let's look at shape. Let 
+𝑝
+^
+p
+^
+	​
+
+ be the sample proportion of successes in a random sample of size 
+𝑛
+n
+ selected from a population with a proportion of successes 
+𝑝
+p
+. Then, the sampling distribution of 
+𝑝
+^
+p
+^
+	​
+
+ will be approximately normal when both 
+𝑛
+𝑝
+≥
+10
+np≥10
+ and 
+𝑛
+(
+1
+−
+𝑝
+)
+≥
+10
+n(1−p)≥10
+.
+
+05:03
+For our example about students with driver's licenses, remember that 
+𝑛
+=
+50
+n=50
+ and 
+𝑝
+=
+0.3
+p=0.3
+. So that means 
+𝑛
+𝑝
+np
+ is 15; that's greater than or equal to 10. And 
+𝑛
+(
+1
+−
+𝑝
+)
+n(1−p)
+ is 35; that's also greater than or equal to 10. So as long as both of those products are at least 10, we're good. That means the sampling distribution of 
+𝑝
+^
+p
+^
+	​
+
+ will be approximately normal.
+
+05:29
+Now let's summarize what you learned in this video. The first question we asked was: How do we determine the parameters of a sampling distribution of a sample proportion? Well, we've got formulas. For the mean—the mean of 
+𝑝
+^
+p
+^
+	​
+
+ distribution is equal to 
+𝑝
+p
+, the true proportion. And the standard deviation is equal to 
+𝑝
+(
+1
+−
+𝑝
+)
+𝑛
+n
+p(1−p)
+	​
+
+	​
+
+, assuming the sample size is less than 10% of the population size.
+
+05:55
+The second question was: How do we determine if the shape of the sampling distribution of the sample proportion is approximately normal? Well, it's going to be approximately normal when both 
+𝑛
+𝑝
+np
+ and 
+𝑛
+(
+1
+−
+𝑝
+)
+n(1−p)
+ are at least 10.
+
+06:09
+This has been Josh Tabor. Thanks for tuning in.
