@@ -1,0 +1,60 @@
+Here is the transcript of the video, including timestamps.
+
+00:00
+Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about Topic 5.7: Sampling Distributions for Sample Means. In this video, we'll discuss the shape, center, and variability of the sampling distribution of a sample mean.
+
+00:19
+Let's start by talking about what you'll learn in this video. We're going to answer two questions. First: How do we determine the parameters of a sampling distribution of a sample mean? And second: How do we determine if the shape of a sampling distribution of a sample mean is approximately normal?
+
+00:39
+If you've watched my last couple of videos, you'll recognize these questions. In the first two sets, we did distributions for proportions. In this video, we're talking about means.
+
+00:51
+Let's start by looking at an example. This one is about sampling lemons. A large tree produces lemons with weights that are approximately normally distributed with a mean of 4 ounces and a standard deviation of 0.5 ounces. Suppose we randomly select a sample of n = 6 lemons from the tree, weigh each lemon, and then calculate the sample mean weight x-bar (
+𝑥
+ˉ
+x
+ˉ
+) for each sample.
+
+01:18
+Here's what we're talking about. Start by thinking about the population. The problem description tells us that the distribution of weight for these lemons is approximately normal with a mean of 4 and a standard deviation of 0.5 ounces. It also says that we are to take random samples of size 6 from the tree. So here's an example of what one possible sample could look like. In this case, you can see the six lemons there and their weights. The average of those six is 3.8 ounces. We use that value of x-bar to start forming our sampling distribution of x-bar. You can see that on the right.
+
+01:56
+Now, that's just one possible sample. There are other possible samples that we could get also. For example, here's a second sample. You can see that the lemons are different here and the average is different. It's 4.15. Now you can see that x-bar showing up in our sampling distribution on the right. Let's take a look at one more sample. Here it is. The mean of this sample is 3.82. And you can see that value showing up on the sampling distribution on the right.
+
+02:29
+Of course, that's only three possible samples and three possible values of x-bar. There's lots and lots and lots of possible samples of size 6 we can take. So, to up the number of samples, let's use a simulation. Here is a simulated sampling distribution of x-bar—the sample mean lemon weight—based on 500 samples of size 6 from an approximately normal population with a mean of 4 and a standard deviation of 0.5.
+
+02:53
+You can see here the simulated distribution. Each dot represents one possible value of x-bar. So, thinking about how to describe that distribution, we always want to talk about shape and center and variability. So the distribution of sample means is: approximately normal; centered at 4 ounces; and it varies from about 3.4 ounces to about 4.6 ounces.
+
+03:19
+Now, in the next couple of slides, we're going to learn how to calculate the mean and standard deviation using formulas. So, let x-bar be the mean of a sample of size n selected from a population with mean mu (
+𝜇
+μ
+) and standard deviation sigma (
+𝜎
+σ
+). Then, the mean of the x-bar distribution is equal to the mean of the population, mu. And the standard deviation of the x-bar distribution is equal to the standard deviation of the population, sigma, over square root n.
+
+03:49
+And like previous videos, there's a condition that needs to be met for that standard deviation formula to work. We have to assume that the sample size is less than 10% of the population size. And, like I've mentioned in previous videos, good news! These formulas are on the formula sheet, so you don't have to memorize them. Here we see an excerpt from the formula sheet. The column for Random Variable shows for one population: x-bar. And the parameters of the sampling distribution of x-bar with the mean and the standard deviation listed.
+
+04:21
+Now, thinking about our example, we selected samples of size 6 from an approximately normal population with a mean of mu = 4 and a standard deviation of sigma = 0.5. So, the mean of the x-bar distribution—again, is equal to the mean of the population—which is 4 ounces. And the standard deviation is 0.5 over square root 6, or 0.204 ounces. And that's reasonable to calculate because this is a large lemon tree, and taking a sample of 6 is a very small fraction of that population.
+
+04:54
+Now let's talk about shape. So, let x-bar be the mean of a sample of size n selected from a population with mean mu and standard deviation sigma. So, the sampling distribution of x-bar will be approximately normal when one of two things is true. You only need one of these two things to be true.
+
+05:15
+The first possibility is if the population distribution itself is approximately normal. That was the case in the lemon example. The other way that you can get a sampling distribution of x-bar to be approximately normal is if the population is non-normal, but the sample size is large enough. For example, greater than or equal to 30. This is called the Central Limit Theorem, and you learned about this in Topic 5.3.
+
+05:40
+Now let's summarize what you should have learned in this video. Our first question was: How do we determine the parameters of a sampling distribution of a sample mean? Well, we've got formulas. The mean of the x-bar distribution is equal to mu, the mean of the population. The standard deviation of the x-bar distribution is equal to sigma—the population standard deviation—divided by square root n, or square root sample size. And that formula works assuming the sample size is less than 10% of the population size.
+
+06:11
+Second question: How do we determine if the shape of a sampling distribution of a sample mean is approximately normal? Well, there's two ways. The sampling distribution of x-bar will be approximately normal when the population itself is approximately normal, OR when the sample size is large enough. In other words, n greater than or equal to 30.
+
+06:31
+This has been Josh Tabor. Thanks for tuning in.

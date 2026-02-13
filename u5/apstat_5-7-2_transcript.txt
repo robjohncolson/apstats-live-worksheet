@@ -1,0 +1,161 @@
+00:00
+Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about Topic 5.7: Sampling Distributions for Sample Means. In this video, we'll discuss how to interpret parameters and probabilities for a sampling distribution of a sample mean.
+
+00:21
+Let's start by talking about what you'll learn in this video. We're going to answer two questions. First, how do we interpret the parameters of a sampling distribution of a sample mean? And second, how do we calculate and interpret probabilities involving a sampling distribution of a sample mean? Again, these questions should be familiar from the previous couple of topics.
+
+00:45
+Let's start by looking at an example. The example should be familiar from the previous video. It's about sampling lemons. A large tree produces lemons with weights that are approximately normally distributed with a mean of 4 ounces and a standard deviation of 0.5 ounces. Suppose we select a random sample of 
+𝑛
+=
+6
+n=6
+ lemons from the tree, weigh each lemon, and calculate the sample mean weight 
+𝑥
+ˉ
+x
+ˉ
+ for each sample.
+
+01:12
+What we learned in the last video is the sampling distribution of 
+𝑥
+ˉ
+x
+ˉ
+ is going to be approximately normal because the population itself is approximately normal. And it's going to have a mean of about 4 and a standard deviation of 0.204. You can see the image on the right is not the full sampling distribution, because that doesn't display all possible values of 
+𝑥
+ˉ
+x
+ˉ
+, but it gives you an idea of what the sampling distribution should look like. The 
+𝑥
+ˉ
+x
+ˉ
+'s are centered around 4, some are greater, some are less. And we'll talk about how to interpret the mean of that distribution and the standard deviation of that distribution in the next couple of slides.
+
+01:50
+So let's start with the mean. We want to interpret the value 
+𝜇
+𝑥
+ˉ
+=
+4
+μ
+x
+ˉ
+	​
+
+=4
+. Well, for all random samples of size 
+𝑛
+=
+6
+n=6
+ from this population, the sample mean weights of lemons will have a mean of 4 ounces. That is, if we took all possible samples, calculated all the 
+𝑥
+ˉ
+x
+ˉ
+'s from those samples, and then found the average of those 
+𝑥
+ˉ
+x
+ˉ
+'s, it would equal 4. And you can see that in the picture; roughly half the 
+𝑥
+ˉ
+x
+ˉ
+'s are greater than 4 and half are less than 4. If you average them, it would equal 4.
+
+02:24
+Now let's talk about the standard deviation. Let's interpret the value 
+𝜎
+𝑥
+ˉ
+=
+0.204
+σ
+x
+ˉ
+	​
+
+=0.204
+. For all random samples of size 
+𝑛
+=
+6
+n=6
+ from this population, the sample mean weights of lemons will typically vary by about 0.204 ounces from the population mean of 4 ounces. Again, looking at the picture, you can see that some of the 
+𝑥
+ˉ
+x
+ˉ
+'s are very close to 4. Other 
+𝑥
+ˉ
+x
+ˉ
+'s are quite far away from the center of 4. So how far do those 
+𝑥
+ˉ
+x
+ˉ
+'s typically vary? Well, about 0.204 ounces. That's what the standard deviation tells us. Also remember that knowing how much a sample statistic typically varies from the truth is one of the most important reasons to study sampling distributions. That's going to be the basis of our study of confidence intervals in units six through nine.
+
+03:19
+Now let's talk about calculating probabilities. So, we've got our introduction: the large tree produces lemons with weights that are approximately normal with a mean of 4 ounces and a standard deviation of 0.5 ounces. Well, suppose we go out and select a random sample of 6 lemons from the tree. Would it be unusual or surprising to get a sample mean of 
+𝑥
+ˉ
+=
+4.5
+x
+ˉ
+=4.5
+ or greater in a random sample of size 6 from this population? Remember, the expected mean is 4, so this is a sample mean that's bigger than expected. But is it unusually big? That's what we want to find out.
+
+03:54
+Now, when we do calculations involving normal distributions, the first step is always to draw a picture where you label the mean, standard deviations, boundary value, and do some shading. That's what we've got here. You can see that we've got the mean, we've got the values two standard deviations from the mean on either side, and we've got the value of interest, 4.5, as well as shaded to the right because we want to know the probability of getting a sample mean 4.5 ounces or greater.
+
+04:22
+After drawing a picture, the next step is to calculate a Z-score. In this case, the Z-score is 
+4.5
+−
+4
+4.5−4
+ divided by 
+0.204
+0.204
+, which is 
+2.45
+2.45
+. In other words, a sample mean of 4.5 ounces is 2.45 standard deviations greater than the mean. How likely is that? Well, you can turn to technology or Table A to calculate the probability: it's 
+0.0071
+0.0071
+. That's pretty unusual.
+
+04:51
+Now, let's finish this up by interpreting that probability. Again, the question was: would it be unusual to get a sample mean of 4.5 or greater in a random sample of size 6? Well, getting a sample mean of 4.5 ounces or more happens in only about 
+0.71
+%
+0.71%
+ of all possible samples of size 6 from this tree. That's very unusual. So, getting one lemon that's 4.5 ounces? Not surprising. Getting an average of 6 lemons that's 4.5 ounces or greater? That is surprising. And that's because averages are a lot less variable than individual values.
+
+05:28
+Now, as a reminder, knowing what values of a statistic count as unusual is one of the most important reasons we study sampling distributions. This is going to be foundational when you learn about significance tests in units six through nine.
+
+05:42
+Let's finish by summarizing what you should have learned in this video. Here's our two questions. First, how do we interpret the parameters of a sampling distribution of a sample mean? Well, we always do it in context like any other interpretation in AP Statistics. But now that we're dealing with quantitative variables, we also want to be mindful of units—in this example, it was ounces. Second, you want to reference all possible samples of this size from the population. The diagrams that I showed you were just simulations that didn't show all possible samples, but when you're interpreting the mean or standard deviation of a sampling distribution, you want to reference all possible samples. Third, when you're interpreting standard deviation, make sure to include the word "typically" or "on average" to indicate that not every single value is exactly that distance from the mean.
+
+06:34
+Our second question was: how do we calculate and interpret probabilities involving a sampling distribution of a sample mean? Well, for the calculation part, you're going to want to use a normal distribution procedure from Topic 5.2 along with the parameters of the sampling distribution of 
+𝑥
+ˉ
+x
+ˉ
+ that you learned about in video one. For the interpretations, as always, they should be in context, with units, and reference all possible samples of this size from the population.
+
+07:01
+Thank you.
