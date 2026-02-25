@@ -1,0 +1,457 @@
+Here is a description of each slide in the video with the corresponding timestamps:
+
+00:00 - Title Slide
+
+Visuals: A dark blue slide with the text "TOPIC 5.6: Sampling Distributions for Differences in Sample Proportions." It features the AP Statistics logo on the left and a "Daily Video 1" subtitle. The presenter, Josh Tabor, appears in a video box in the top right corner.
+
+00:18 - Learning Objectives
+
+Visuals: A slide titled "What Will We Learn?" against a white background.
+
+Content: Two numbered points appear sequentially:
+
+How do we determine the parameters of a sampling distribution of a difference in sample proportions?
+
+How do we determine if the shape of a sampling distribution of a difference in sample proportions is approximately normal?
+
+00:56 - Example Context: Sampling From a High School
+
+Visuals: A text-heavy slide introducing the scenario.
+
+Content: It describes High School A (30% have a license) and High School B (22% have a license). It outlines the sampling method: selecting a random sample of 
+𝑛
+=
+50
+n=50
+ students from each school and computing the difference 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+.
+
+01:36 - Example Calculation: Sample 1
+
+Visuals: The text remains on the left, but now shows calculations for a specific sample: "One possible sample from A: 
+𝑝
+^
+𝐴
+=
+18
+/
+50
+=
+0.36
+p
+^
+	​
+
+A
+	​
+
+=18/50=0.36
+" and "One possible sample from B: 
+𝑝
+^
+𝐵
+=
+10
+/
+50
+=
+0.20
+p
+^
+	​
+
+B
+	​
+
+=10/50=0.20
+."
+
+Animation: On the right side, a graph appears titled "Sampling distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+." A calculation appears (
+0.36
+−
+0.20
+=
+0.16
+0.36−0.20=0.16
+), and a single blue dot is plotted on the graph at 0.16.
+
+02:15 - Example Calculation: Sample 2
+
+Visuals: The sample data on the left updates to new numbers (
+𝑝
+^
+𝐴
+=
+0.26
+p
+^
+	​
+
+A
+	​
+
+=0.26
+, 
+𝑝
+^
+𝐵
+=
+0.28
+p
+^
+	​
+
+B
+	​
+
+=0.28
+).
+
+Animation: The difference is calculated as 
+−
+0.02
+−0.02
+. A second blue dot appears on the graph at -0.02.
+
+02:51 - Example Calculation: Sample 3
+
+Visuals: The sample data updates again (
+𝑝
+^
+𝐴
+=
+0.28
+p
+^
+	​
+
+A
+	​
+
+=0.28
+, 
+𝑝
+^
+𝐵
+=
+0.18
+p
+^
+	​
+
+B
+	​
+
+=0.18
+).
+
+Animation: The difference is calculated as 
+0.10
+0.10
+. A third blue dot appears on the graph at 0.10.
+
+03:16 - Simulated Sampling Distribution
+
+Visuals: The graph on the right is now fully populated with 500 blue dots forming a bell-shaped curve.
+
+Content: Text on the left describes the distribution:
+
+Approximately normal
+
+Centered at 0.08
+
+Varies from about -0.15 to about 0.35
+
+03:58 - Mean and Standard Deviation Formulas
+
+Visuals: A slide defining the notation for two populations (
+𝑝
+^
+1
+,
+𝑛
+1
+,
+𝑝
+1
+p
+^
+	​
+
+1
+	​
+
+,n
+1
+	​
+
+,p
+1
+	​
+
+ and 
+𝑝
+^
+2
+,
+𝑛
+2
+,
+𝑝
+2
+p
+^
+	​
+
+2
+	​
+
+,n
+2
+	​
+
+,p
+2
+	​
+
+).
+
+Content:
+
+Formula for the Mean: 
+𝜇
+𝑝
+^
+1
+−
+𝑝
+^
+2
+=
+𝑝
+1
+−
+𝑝
+2
+μ
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+	​
+
+=p
+1
+	​
+
+−p
+2
+	​
+
+
+Formula for Standard Deviation: A large square root formula combining the variances of both populations.
+
+Conditions listed at the bottom: Sample sizes must be less than 10% of population sizes, and samples must be independent.
+
+05:24 - Calculating Mean for the Example
+
+Visuals: The slide lists the known values for High School A (
+𝑝
+𝐴
+=
+0.30
+p
+A
+	​
+
+=0.30
+) and B (
+𝑝
+𝐵
+=
+0.22
+p
+B
+	​
+
+=0.22
+).
+
+Content: It shows the calculation for the mean of the difference: 
+0.30
+−
+0.22
+=
+0.08
+0.30−0.22=0.08
+.
+
+06:05 - Calculating Standard Deviation for the Example
+
+Visuals: The slide shows the substitution of the values (0.30, 0.22, and n=50) into the complex standard deviation formula.
+
+Content: The result is calculated as 0.087. A note at the bottom reiterates the 10% condition and independence assumption.
+
+06:37 - Formula Sheet Reference
+
+Visuals: A screenshot of the official AP Statistics formula sheet table.
+
+Content: The section "For two populations" is highlighted, with the formulas for Mean and Standard Deviation (SD) circled in blue to show students they do not need to memorize them.
+
+07:04 - Shape (Normal Condition Rule)
+
+Visuals: A slide titled "Shape" defining the variables again.
+
+Content: It states the Large Counts condition required for the distribution to be approximately normal. It displays four inequalities that must all be met:
+
+𝑛
+1
+𝑝
+1
+≥
+10
+n
+1
+	​
+
+p
+1
+	​
+
+≥10
+
+𝑛
+1
+(
+1
+−
+𝑝
+1
+)
+≥
+10
+n
+1
+	​
+
+(1−p
+1
+	​
+
+)≥10
+
+𝑛
+2
+𝑝
+2
+≥
+10
+n
+2
+	​
+
+p
+2
+	​
+
+≥10
+
+𝑛
+2
+(
+1
+−
+𝑝
+2
+)
+≥
+10
+n
+2
+	​
+
+(1−p
+2
+	​
+
+)≥10
+
+08:06 - Checking Shape for the Example
+
+Visuals: Calculations are shown for the High School A and B example.
+
+Content: It verifies that for High School A (15 and 35) and High School B (11 and 39), all resulting values are 
+≥
+10
+≥10
+. The conclusion states the distribution is approximately normal.
+
+08:42 - Key Takeaways
+
+Visuals: A summary slide titled "Key Takeaways."
+
+Content:
+
+Parameters: Displays the formulas for Mean and Standard Deviation again.
+
+Shape: Displays the four Large Counts inequalities required to prove approximate normality.
+
+09:48 - Outro
+
+Visuals: A solid blue screen with "Thank you" and the College Board logo.

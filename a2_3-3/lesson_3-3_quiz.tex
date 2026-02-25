@@ -1,0 +1,317 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Colors
+\definecolor{lightgray}{HTML}{F0F0F0}
+\definecolor{medgray}{HTML}{CCCCCC}
+\definecolor{darkrule}{HTML}{333333}
+\definecolor{rubrichead}{HTML}{2C3E50}
+\definecolor{rubriclight}{HTML}{EBF5FB}
+\definecolor{rubricmid}{HTML}{D6EAF8}
+\definecolor{frameblue}{HTML}{E8F4FD}
+\definecolor{frameborder}{HTML}{3498DB}
+
+% tcolorbox styles
+\tcbset{
+  wordbank/.style={
+    colback=lightgray,
+    colframe=medgray,
+    boxrule=0.5pt,
+    fonttitle=\bfseries\small,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    title=Word Bank
+  },
+  answerbox/.style={
+    colback=lightgray!50,
+    colframe=medgray,
+    boxrule=0.5pt,
+    left=6pt, right=6pt, top=6pt, bottom=6pt,
+  },
+  sentenceframe/.style={
+    colback=frameblue,
+    colframe=frameborder,
+    boxrule=1pt,
+    left=8pt, right=8pt, top=6pt, bottom=6pt,
+    fonttitle=\bfseries,
+    title=#1
+  }
+}
+
+\newcommand{\blank}[1][2cm]{\underline{\hspace{#1}}}
+\newcommand{\writeline}{\vspace{2pt}\noindent\rule{\linewidth}{0.3pt}\vspace{6pt}}
+
+\pagestyle{empty}
+
+\begin{document}
+
+% ============================================================
+%  PAGE 1: THE QUIZ
+% ============================================================
+
+\begin{center}
+{\LARGE\bfseries Lesson 3-3 Quiz: Polynomial Identities}
+\end{center}
+
+\vspace{-6pt}
+\noindent Name: \blank[7cm] \hfill Period: \blank[1.5cm]
+
+\vspace{2pt}
+\noindent\rule{\linewidth}{1.5pt}
+
+\vspace{8pt}
+
+% ---------- QUESTION 1 ----------
+\noindent{\large\bfseries Question 1:} {\itshape Polynomial Identities (Factoring)} \hfill \textbf{/6 pts}
+
+\vspace{6pt}
+\noindent Use a polynomial identity to factor $\;8 + 125x^3$.
+
+\vspace{8pt}
+\noindent\textbf{(a)} Which polynomial identity applies here? Circle one. \hfill \textit{(1 pt)}
+
+\vspace{4pt}
+\noindent
+\begin{tabular}{|p{0.46\textwidth}|p{0.46\textwidth}|}
+\hline
+\textbf{Difference of Cubes} & \textbf{Sum of Cubes} \\[2pt]
+$a^3 - b^3 = (a - b)(a^2 + ab + b^2)$ & $a^3 + b^3 = (a + b)(a^2 - ab + b^2)$ \\[4pt]
+\hline
+\end{tabular}
+
+\vspace{8pt}
+\noindent\textbf{(b)} Show your work. Factor $\;8 + 125x^3\;$ completely. \hfill \textit{(3 pts)}
+
+\vspace{4pt}
+\begin{tcolorbox}[wordbank]
+$2$ \qquad $5x$ \qquad $4$ \qquad $25x^2$ \qquad $10x$ \qquad sum of cubes \qquad difference of cubes
+\end{tcolorbox}
+
+\vspace{6pt}
+\noindent Identify $a$ and $b$: \qquad $a = $ \blank[2cm] \qquad $b = $ \blank[2cm]
+
+\vspace{10pt}
+\noindent Substitute into the identity:
+
+\vspace{24pt}
+
+\noindent Final factored form: \quad $8 + 125x^3 \;=\; \bigl($\blank[2cm]$\bigr)\bigl($\blank[3.5cm]$\bigr)$
+
+\vspace{10pt}
+\noindent\textbf{(c)} In 1--2 sentences, explain how you knew which identity to use. \hfill \textit{(2 pts)}
+
+\vspace{2pt}
+\writeline
+\writeline
+
+\vspace{2pt}
+\noindent\rule{\linewidth}{1.5pt}
+\vspace{6pt}
+
+% ---------- QUESTION 2 ----------
+\noindent{\large\bfseries Question 2:} {\itshape Binomial Theorem Expansion} \hfill \textbf{/4 pts}
+
+\vspace{6pt}
+\noindent Use the Binomial Theorem to expand $\;(x - 3)^5$.
+
+\vspace{4pt}
+\begin{tcolorbox}[wordbank]
+Pascal's Triangle coefficients for $n = 5$: \quad 1 \qquad 5 \qquad 10 \qquad 10 \qquad 5 \qquad 1
+\end{tcolorbox}
+
+\vspace{6pt}
+\noindent\textbf{(a)} Fill in the missing coefficients from Pascal's Triangle: \hfill \textit{(1 pt)}
+
+\vspace{4pt}
+\noindent\hspace{6pt}$\displaystyle(x-3)^5 \;=\; $\blank[0.6cm]$x^5(-3)^0 \;+\;$\blank[0.6cm]$x^4(-3)^1 \;+\;$\blank[0.6cm]$x^3(-3)^2$
+
+\vspace{6pt}
+\noindent\hspace{62pt}$+\;$\blank[0.6cm]$x^2(-3)^3 \;+\;$\blank[0.6cm]$x^1(-3)^4 \;+\;$\blank[0.6cm]$(-3)^5$
+
+\vspace{10pt}
+\noindent\textbf{(b)} Evaluate each power of $(-3)$ and simplify each term: \hfill \textit{(2 pts)}
+
+\vspace{24pt}
+
+\noindent\textbf{(c)} Write the expanded polynomial in standard form: \hfill \textit{(1 pt)}
+
+\vspace{4pt}
+\begin{tcolorbox}[answerbox]
+\textbf{Final Answer:} \quad $(x - 3)^5 = $ \blank[10cm]
+\end{tcolorbox}
+
+\vspace{6pt}
+\hfill \textbf{Total: \qquad /10}
+
+\newpage
+
+% ============================================================
+%  PAGE 2: SCORING RUBRIC
+% ============================================================
+
+\begin{center}
+{\LARGE\bfseries Lesson 3-3 Quiz --- Scoring Rubric}\\[4pt]
+{\small\itshape Teacher Copy \quad$\cdot$\quad 10 points total}
+\end{center}
+
+\vspace{4pt}
+\noindent\rule{\linewidth}{1.5pt}
+\vspace{8pt}
+
+% ----- Q1 Rubric -----
+{\large\bfseries Question 1: Polynomial Identity Factoring \hfill 6 points}
+
+\vspace{6pt}
+
+\renewcommand{\arraystretch}{1.4}
+\noindent
+\begin{tabular}{>{\bfseries}p{1.2cm} p{5.5cm} p{3cm} p{4.5cm}}
+\toprule
+\rowcolor{rubrichead}\color{white}Part & \color{white}Criteria & \color{white}Points & \color{white}Answer Key \\
+\midrule
+\rowcolor{rubriclight}
+(a) & Correctly identifies \textbf{Sum of Cubes} & 1 pt & Sum of Cubes \\
+\rowcolor{white}
+(b) & Correctly identifies $a = 2$ and $b = 5x$ & 1 pt & $a=2,\; b=5x$ \\
+\rowcolor{rubriclight}
+(b) & Shows substitution into identity & 1 pt & $(2+5x)(4-10x+25x^2)$ \\
+\rowcolor{white}
+(b) & Correct final factored form & 1 pt & $(2+5x)(4-10x+25x^2)$ \\
+\rowcolor{rubriclight}
+(c) & States the expression is a \textit{sum} (uses $+$) & 1 pt & \textit{See sample below} \\
+\rowcolor{white}
+(c) & Identifies both terms as perfect cubes ($2^3=8$, $(5x)^3=125x^3$) & 1 pt & \textit{See sample below} \\
+\bottomrule
+\end{tabular}
+
+\vspace{8pt}
+\begin{tcolorbox}[colback=white, colframe=rubrichead, title={\color{white}Sample response for (c)}, fonttitle=\bfseries\small, coltitle=white]
+\textit{``I knew to use the sum of cubes identity because the expression uses addition ($+$), and both 8 and $125x^3$ are perfect cubes: $2^3 = 8$ and $(5x)^3 = 125x^3$.''}
+\end{tcolorbox}
+
+\vspace{12pt}
+
+% ----- Q2 Rubric -----
+{\large\bfseries Question 2: Binomial Theorem Expansion \hfill 4 points}
+
+\vspace{6pt}
+
+\noindent
+\begin{tabular}{>{\bfseries}p{1.2cm} p{6cm} p{1.5cm} p{5cm}}
+\toprule
+\rowcolor{rubrichead}\color{white}Part & \color{white}Criteria & \color{white}Points & \color{white}Answer Key \\
+\midrule
+\rowcolor{rubriclight}
+(a) & Fills in all 6 Pascal's Triangle coefficients correctly: 1, 5, 10, 10, 5, 1 & 1 pt & Coefficients provided in word bank \\
+\rowcolor{white}
+(b) & Correctly evaluates powers of $(-3)$:\newline $1,\; -3,\; 9,\; -27,\; 81,\; -243$ & 1 pt & Common error: all positive (ignoring negative sign) \\
+\rowcolor{rubriclight}
+(b) & Correctly multiplies coefficients $\times$ powers of $(-3)$ to simplify each term & 1 pt & $1,\; -15,\; 90,\; -270,\; 405,\; -243$ \\
+\rowcolor{white}
+(c) & Writes complete polynomial in standard form & 1 pt & See key below \\
+\bottomrule
+\end{tabular}
+
+\vspace{8pt}
+\begin{tcolorbox}[colback=white, colframe=rubrichead, title={\color{white}Answer Key}, fonttitle=\bfseries\small, coltitle=white]
+\vspace{-4pt}
+\begin{align*}
+(x-3)^5 &= \binom{5}{0}x^5(-3)^0 + \binom{5}{1}x^4(-3)^1 + \binom{5}{2}x^3(-3)^2 + \binom{5}{3}x^2(-3)^3 + \binom{5}{4}x^1(-3)^4 + \binom{5}{5}x^0(-3)^5 \\[4pt]
+&= x^5 - 15x^4 + 90x^3 - 270x^2 + 405x - 243
+\end{align*}
+\end{tcolorbox}
+
+\vspace{10pt}
+\noindent\rule{\linewidth}{0.5pt}
+\vspace{6pt}
+
+{\bfseries Topic 3 Assessment Alignment:}\\[4pt]
+\begin{tabular}{ll}
+Q1 (Sum of Cubes) & $\longrightarrow$ Topic Assessment Q8: Factor $64 + 27a^3$ \\
+Q2 (Binomial Expansion) & $\longrightarrow$ Topic Assessment Q3: Expand $(x-2)^6$ and Q13: Expand $(2a+2b)^5$ \\
+\end{tabular}
+
+\newpage
+
+% ============================================================
+%  PAGE 3: SENTENCE FRAMES (ELL SUPPORT)
+% ============================================================
+
+\begin{center}
+{\LARGE\bfseries Lesson 3-3 Quiz --- Sentence Frames}\\[4pt]
+{\small\itshape ELL Support Version \quad$\cdot$\quad Use with Question 1, Part (c)}
+\end{center}
+
+\vspace{4pt}
+\noindent\rule{\linewidth}{1.5pt}
+\vspace{10pt}
+
+\noindent{\large\bfseries Question 1(c):} In 1--2 sentences, explain how you knew which identity to use.
+
+\vspace{12pt}
+
+% ----- FRAME OPTION A -----
+\begin{tcolorbox}[sentenceframe={Option A --- Fill in the Blanks}]
+\vspace{4pt}
+
+I used the \blank[3.5cm] identity because the two terms are connected by \blank[2.5cm]\,.
+
+\vspace{14pt}
+I know that \blank[1.5cm] is a perfect cube because \blank[1.5cm]$\,^3 = $ \blank[1.5cm]\,, 
+
+\vspace{14pt}
+and \blank[2cm] is a perfect cube because \blank[1.5cm]$\,^3 = $ \blank[2cm]\,.
+
+\vspace{6pt}
+\end{tcolorbox}
+
+\vspace{6pt}
+
+\begin{tcolorbox}[wordbank]
+$8$ \qquad $125x^3$ \qquad $2$ \qquad $5x$ \qquad addition ($+$) \qquad subtraction ($-$)\\[4pt]
+sum of cubes \qquad difference of cubes
+\end{tcolorbox}
+
+\vspace{16pt}
+
+% ----- FRAME OPTION B -----
+\begin{tcolorbox}[sentenceframe={Option B --- Sentence Starters}]
+\vspace{4pt}
+
+I chose the \blank[5cm] identity because the expression $8 + 125x^3$ shows \blank[5cm]\,.
+
+\vspace{14pt}
+Both terms are perfect cubes because \rule{0pt}{12pt}\hrulefill
+
+\vspace{14pt}
+\hrulefill
+
+\vspace{6pt}
+\end{tcolorbox}
+
+\vspace{20pt}
+
+% ----- KEY VOCABULARY -----
+\begin{tcolorbox}[colback=white, colframe=darkrule, boxrule=1pt, title={\color{white}\bfseries Key Vocabulary}, fonttitle=\large, coltitle=white, colbacktitle=darkrule, left=8pt, right=8pt, top=6pt, bottom=6pt]
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{>{\bfseries}p{3cm} p{11.5cm}}
+identity & A math equation that is always true for all values of the variable. \\
+perfect cube & A number or expression that can be written as something raised to the 3rd power.\\
+ & \textit{Examples:} $8 = 2^3$ \qquad $125x^3 = (5x)^3$ \qquad $27 = 3^3$ \\
+sum & The result of \textbf{adding}. The symbol $+$ means sum. \\
+difference & The result of \textbf{subtracting}. The symbol $-$ means difference. \\
+factor & To rewrite an expression as a product (multiplication) of simpler parts. \\
+\end{tabular}
+\end{tcolorbox}
+
+\end{document}

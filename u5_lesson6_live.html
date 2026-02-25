@@ -429,7 +429,7 @@
     </div>
 
     <h1>Topic 5.6: Sampling Distributions for Differences in Sample Proportions</h1>
-    <div class="subtitle">Comparing Two Populations &mdash; Center, Spread, &amp; Shape</div>
+    <div class="subtitle">Comparing Two Populations &mdash; Parameters, Shape, &amp; Probability</div>
     <div class="worksheet-label">Video Follow-Along Worksheet</div>
 
     <div class="student-info">
@@ -483,6 +483,10 @@
             <tr>
                 <td>Unbiased Estimator</td>
                 <td>A statistic whose sampling distribution is centered at the true parameter value &mdash; on average, it hits the target</td>
+            </tr>
+            <tr>
+                <td>z-score</td>
+                <td>The number of standard deviations a value lies from the mean: z = (value &minus; mean) / SD. Used to calculate probabilities from the normal distribution</td>
             </tr>
         </table>
     </div>
@@ -635,6 +639,83 @@
     </div>
 
     <!-- ============================================================ -->
+    <!-- SECTION 4: Interpreting Parameters & Calculating Probabilities -->
+    <!-- ============================================================ -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Part 4: Interpreting Parameters &amp; Calculating Probabilities</h2>
+            <span class="timestamp">[Video 2: 0:00 &ndash; 7:42]</span>
+        </div>
+
+        <div class="note-box">
+            <strong>From Video 1:</strong>
+            <span class="ts">[1:34]</span>
+            The sampling distribution of p&#770;<sub>A</sub> &minus; p&#770;<sub>B</sub> is approximately normal with mean = 0.08 and SD = 0.087.
+        </div>
+
+        <div class="question">
+            <span class="question-number">11.</span>
+            <span class="ts">[2:05]</span>
+            <strong>Interpreting the mean:</strong> A proper interpretation must reference "<input type="text" class="blank" data-answer="all|all possible" style="width:80px;"> random samples" of these sizes from these populations &mdash; not just one pair of samples.
+        </div>
+
+        <div class="question">
+            <span class="question-number">12.</span>
+            <span class="ts">[2:24]</span>
+            The order of subtraction matters. If we had subtracted B &minus; A instead of A &minus; B, the mean would be <input type="text" class="blank" data-answer="-0.08|negative 0.08" style="width:70px;"> instead of 0.08. Always be clear about which direction you are subtracting.
+        </div>
+
+        <div class="question">
+            <span class="question-number">13.</span>
+            <span class="ts">[3:08]</span>
+            <strong>Interpreting the SD:</strong> The differences in sample proportions <input type="text" class="blank" data-answer="typically|on average" style="width:80px;"> vary by about 0.087 from the true difference of 0.08.
+            <span class="hint">(Use the word "typically" or "on average" when interpreting SD.)</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">14.</span>
+            <span class="ts">[3:51]</span>
+            Knowing how much a statistic <em>typically varies</em> from the truth is one of the most important reasons to study <input type="text" class="blank" data-answer="sampling distributions" style="width:180px;">. This idea connects directly to confidence intervals in later units.
+        </div>
+
+        <div class="model-box">
+            <strong>Probability Question:</strong>
+            <span class="ts">[4:09]</span>
+            Would it be unusual to get a <em>greater</em> proportion of students with a license in the School B sample, even though School A has the higher population proportion?
+        </div>
+
+        <div class="question">
+            <span class="question-number">15.</span>
+            <span class="ts">[4:51]</span>
+            For School B's sample to have a higher proportion, the difference p&#770;<sub>A</sub> &minus; p&#770;<sub>B</sub> must be <input type="text" class="blank" data-answer="negative|less than 0|less than zero" style="width:100px;">. So we need P(p&#770;<sub>A</sub> &minus; p&#770;<sub>B</sub> &lt; 0).
+        </div>
+
+        <div class="question">
+            <span class="question-number">16.</span>
+            <span class="ts">[5:38]</span>
+            <strong>Calculate the z-score:</strong> z = (0 &minus; 0.08) / 0.087 = <input type="text" class="blank" data-answer="-0.92|-.92" style="width:55px;">. This means a difference of 0 is less than one standard deviation below the mean &mdash; not very far out.
+        </div>
+
+        <div class="question">
+            <span class="question-number">17.</span>
+            <span class="ts">[5:55]</span>
+            Using Table A or technology: P(p&#770;<sub>A</sub> &minus; p&#770;<sub>B</sub> &lt; 0) &asymp; <input type="text" class="blank" data-answer="0.1788|.1788|0.18|.18" style="width:60px;">
+        </div>
+
+        <div class="question">
+            <span class="question-number">18.</span>
+            <span class="ts">[6:11]</span>
+            Since about 18% of all sample pairs would produce School B with the higher proportion, this result is <input type="text" class="blank" data-answer="not|not unusual" style="width:80px;"> unusual. It could reasonably happen by chance.
+        </div>
+
+        <div class="model-box">
+            <strong>Key Takeaway:</strong>
+            <span class="ts">[6:25]</span>
+            Determining whether a value of a statistic is <em>unusual</em> is one of the most important reasons we study sampling distributions. This connects directly to significance tests in later units.
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
     <!-- REFLECTION SECTION                                            -->
     <!-- ============================================================ -->
     <div class="section">
@@ -645,14 +726,14 @@
 
         <div class="question">
             <span class="question-number">R1.</span>
-            <strong>Compare the sampling distribution for a single sample proportion (Topic 5.5) to the sampling distribution for a difference in sample proportions (this lesson). What stays the same in how we describe them (shape, center, spread), and what changes? Why does the standard deviation formula add the variance terms?</strong>
+            <strong>The video emphasizes that interpreting the standard deviation of the sampling distribution is "one of the most important reasons to study sampling distributions." Explain what the SD tells us in practical terms. Why is it more useful to know how much a statistic <em>typically varies</em> than to know just the mean of the sampling distribution?</strong>
             <textarea id="reflect1" placeholder="Write your response here..."></textarea>
             <div id="reflect1-feedback"></div>
         </div>
 
         <div class="question">
             <span class="question-number">R2.</span>
-            <strong>In the video, one pair of samples gave p&#770;<sub>A</sub> &minus; p&#770;<sub>B</sub> = &minus;0.02, even though the true difference is p<sub>A</sub> &minus; p<sub>B</sub> = 0.08. Explain why a single pair of samples can produce a difference that has the wrong sign. What does the sampling distribution tell us about how often this might happen?</strong>
+            <strong>In the probability calculation, we found P(p&#770;<sub>A</sub> &minus; p&#770;<sub>B</sub> &lt; 0) &asymp; 0.18. Explain in your own words what this probability means in context. If the probability had been 0.001 instead, how would your interpretation change? Connect this to the idea of whether a result is "unusual."</strong>
             <textarea id="reflect2" placeholder="Write your response here..."></textarea>
             <div id="reflect2-feedback"></div>
         </div>
@@ -666,9 +747,9 @@
         <div class="question">
             <strong>A polling company surveys voters in two cities about support for a ballot measure. In City 1, the true proportion in favor is p<sub>1</sub> = 0.58 and they sample n<sub>1</sub> = 100 voters. In City 2, the true proportion is p<sub>2</sub> = 0.45 and they sample n<sub>2</sub> = 80 voters.</strong>
             <ul style="margin: 8px 0;">
-                <li>(a) Find the mean of the sampling distribution of p&#770;<sub>1</sub> &minus; p&#770;<sub>2</sub>. Interpret this value in context.</li>
-                <li>(b) Calculate the standard deviation of p&#770;<sub>1</sub> &minus; p&#770;<sub>2</sub>. What does this value tell you about how much the difference varies from sample to sample?</li>
-                <li>(c) Verify the Large Counts condition. Can we say the sampling distribution is approximately normal?</li>
+                <li>(a) Find the mean and SD of the sampling distribution of p&#770;<sub>1</sub> &minus; p&#770;<sub>2</sub>. Interpret both in context.</li>
+                <li>(b) Verify the Large Counts condition. Can we say the sampling distribution is approximately normal?</li>
+                <li>(c) Would it be unusual to get a sample difference of 0 or less (meaning City 2's sample shows equal or more support)? Calculate the z-score and probability, and interpret your answer.</li>
             </ul>
             <textarea id="exitTicket" placeholder="Show your work and explain your answer..."></textarea>
             <div id="exitTicket-feedback"></div>

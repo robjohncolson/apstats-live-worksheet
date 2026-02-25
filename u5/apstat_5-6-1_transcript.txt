@@ -1,0 +1,741 @@
+Here is the transcript for the video provided.
+
+00:00
+Josh Tabor: Hello. I'm Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about Topic 5.6: Sampling Distributions for Differences in Sample Proportions. In this video, we'll discuss the shape, center, and variability of the sampling distribution of a difference in sample proportions.
+
+00:18
+Let's start by talking about what you'll learn in this video. The first question is: How do we determine the parameters of a sampling distribution of a difference in sample proportions? The second question is: How do we determine if the shape of a sampling distribution of a difference in sample proportions is approximately normal? These questions probably look familiar to you because they're almost exactly the same as the questions we asked in Topic 5.5. The only difference is that now we're looking at a difference in sample proportions instead of a single sample proportion on its own.
+
+00:55
+Let's look at an example. We're going to continue the context that we had in the last video, but we're going to add a second high school. So in High School A, 30% of the students have a driver's license. In High School B, 22% of the students have a driver's license. Remember, those are population values, population proportions. Now, suppose we select a random sample of 50 students from each high school and ask each student in each sample if he or she has a driver's license. Then, calculate the sample proportion with a driver's license in each sample, and finally, compute the difference in sample proportions 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+.
+
+01:36
+Here's an example. Well, one possible sample from High School A could give us a sample proportion of 18 out of 50, or 0.36. One possible sample from High School B could give us a sample of 10 out of 50, or a 
+𝑝
+^
+p
+^
+	​
+
+ value of 0.20. In this lesson, what we care about is the difference in those sample proportions: 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+. In this case, we get a difference in proportions of 0.16. And here is the beginnings of our sampling distribution of the difference in sample proportions. You can see we have a blue dot at 0.16 that matches the difference in these two samples.
+
+02:15
+Well, let's take a look at another set of samples. In the second set, we could get a sample proportion from High School A of 13 out of 50, or 0.26. And from Sample B, we could get a sample proportion of 14 out of 50, or 0.28. Again, we care about the difference in those sample proportions. In this case, we get a difference of negative 0.02. Now, negatives are okay in this context. That just means that we're subtracting a smaller number minus a bigger number. In other words, the sample proportion from the second sample happened to be bigger in this case by 0.02.
+
+02:51
+Let's look at one more set of examples. In this case, our sample proportion from High School A is 14 out of 50, or 0.28. And our sample proportion from High School B is 9 out of 50, or 0.18. So that gives us a difference of 0.10. So you can see on the right, we've got the beginnings of our sampling distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+. Now let's increase the number of samples.
+
+03:16
+Here is a simulated sampling distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ based on 500 random samples of size 50 from High School A and 500 random samples of size 50 from High School B. So each of those dots on the dot plot represents a possible difference in sample proportions. How would we describe this distribution? Well, like always, we want to think about shape, and center, and variability. So, the distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ is approximately normal in shape. It's centered around 0.08, and it varies from about negative 0.15 to about positive 0.35.
+
+03:57
+One of the goals of this lesson is to help calculate the mean and standard deviation of that sampling distribution. So here's our introduction. Let 
+𝑝
+^
+1
+p
+^
+	​
+
+1
+	​
+
+ be the sample proportion of successes in a random sample of size 
+𝑛
+1
+n
+1
+	​
+
+ selected from population 1 with proportion of successes 
+𝑝
+1
+p
+1
+	​
+
+. And then basically the same thing for sample 2. Let 
+𝑝
+^
+2
+p
+^
+	​
+
+2
+	​
+
+ be the sample proportion of successes in a random sample of size 
+𝑛
+2
+n
+2
+	​
+
+ selected from population 2 with proportion of successes 
+𝑝
+2
+p
+2
+	​
+
+. Sorry for all the notation, but it's important that we clearly define our parameters and our statistics and sample sizes before we get into the formulas.
+
+04:41
+So here's the formula for the mean. The mean of the 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+ distribution is equal to 
+𝑝
+1
+−
+𝑝
+2
+p
+1
+	​
+
+−p
+2
+	​
+
+. The mean of the sampling distribution of the difference in proportions is equal to the true difference. The standard deviation of the difference in sample proportions is equal to the square root:
+
+𝑝
+1
+(
+1
+−
+𝑝
+1
+)
+𝑛
+1
++
+𝑝
+2
+(
+1
+−
+𝑝
+2
+)
+𝑛
+2
+n
+1
+	​
+
+p
+1
+	​
+
+(1−p
+1
+	​
+
+)
+	​
+
++
+n
+2
+	​
+
+p
+2
+	​
+
+(1−p
+2
+	​
+
+)
+	​
+
+	​
+
+
+as you see on the screen.
+
+05:08
+Now, there's two conditions that need to be met for that standard deviation formula to work. It's assuming that both sample sizes are less than 10% of the corresponding population sizes, and that the two samples themselves are independent of each other.
+
+05:25
+All right, let's take a look at the mean and standard deviation for this particular example. Remember in High School A, the true proportion of students with a driver's license was 0.30, and the sample size was 50. In High School B, the true proportion of students with a driver's license is 0.22, and we also had a sample of size 50. Therefore, for the mean, we get a mean of the distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ of 
+0.30
+−
+0.22
+0.30−0.22
+, or 0.08. That is, about half the differences in sample proportions will be bigger than 0.08, and about half will be less than 0.08. We'll learn more about interpreting the mean in the next video.
+
+06:05
+For the standard deviation, we get a value of square root: 
+0.30
+(
+1
+−
+0.30
+)
+/
+50
++
+0.22
+(
+1
+−
+0.22
+)
+/
+50
+0.30(1−0.30)/50+0.22(1−0.22)/50
+, or a value of 0.087. Again, that calculation of the standard deviation is reliant on two conditions being met. In this case, the sample sizes are both less than 10% of the population sizes because these are large high schools. Also, we took separate samples at each high school, so it's reasonable to believe that these samples are independent of each other.
+
+06:37
+Now, good news! You don't have to memorize those formulas because they're on the formula sheet. Here's an image of what that formula sheet looks like. You can see there's a column for random variables, and we want the second one, which is for two populations: 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+. And then there's another column for parameters of the sampling distribution, which lists the mean and the standard deviation. The ones that are circled are the ones that you want for this topic.
+
+07:04
+Now let's talk about shape. Let 
+𝑝
+^
+1
+p
+^
+	​
+
+1
+	​
+
+ be the sample proportion of successes in a random sample of size 
+𝑛
+1
+n
+1
+	​
+
+ selected from population 1 with proportion of successes 
+𝑝
+1
+p
+1
+	​
+
+. And let 
+𝑝
+^
+2
+p
+^
+	​
+
+2
+	​
+
+ be the sample proportion of successes in a random sample of size 
+𝑛
+2
+n
+2
+	​
+
+ selected from population 2 with proportion of successes 
+𝑝
+2
+p
+2
+	​
+
+. Again, sorry about all the details and the symbols, but we need to establish those before we can use the formulas and the rules that we're going to learn next.
+
+07:35
+So, the sampling distribution of 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+ will be approximately normal when these four conditions are met:
+
+𝑛
+1
+𝑝
+1
+≥
+10
+n
+1
+	​
+
+p
+1
+	​
+
+≥10
+
+𝑛
+1
+(
+1
+−
+𝑝
+1
+)
+≥
+10
+n
+1
+	​
+
+(1−p
+1
+	​
+
+)≥10
+
+𝑛
+2
+𝑝
+2
+≥
+10
+n
+2
+	​
+
+p
+2
+	​
+
+≥10
+
+𝑛
+2
+(
+1
+−
+𝑝
+2
+)
+≥
+10
+n
+2
+	​
+
+(1−p
+2
+	​
+
+)≥10
+
+So, you already checked this condition in Topic 5.5. You're actually checking the same condition here; you just have to check it for both samples.
+
+08:06
+So for our example, remember High School A, the sample size was 50 and the true proportion was 0.30. And for High School B, the sample size was 50 and the true proportion was 0.22. So for High School A, we get values of 15 and 35. Both of those are greater than 10. And for High School B, we get values of 11 and 39. Again, both of those are greater than or equal to 10. What that tells us is that the sampling distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ is going to be approximately normal in this context.
+
+08:42
+Now let's summarize what you've learned in this video. Here are our key takeaways. How do we determine the parameters of a sampling distribution of a difference in sample proportions? Good news, there's formulas and they're on the formula sheet. For the mean, it's 
+𝑝
+1
+−
+𝑝
+2
+p
+1
+	​
+
+−p
+2
+	​
+
+. And for the standard deviation, it's 
+𝑝
+1
+(
+1
+−
+𝑝
+1
+)
+𝑛
+1
++
+𝑝
+2
+(
+1
+−
+𝑝
+2
+)
+𝑛
+2
+n
+1
+	​
+
+p
+1
+	​
+
+(1−p
+1
+	​
+
+)
+	​
+
++
+n
+2
+	​
+
+p
+2
+	​
+
+(1−p
+2
+	​
+
+)
+	​
+
+	​
+
+. And again, that formula works as long as the sample sizes are less than 10% of the population sizes and that the samples are independent.
+
+09:15
+The second question was: How do we determine if the shape of a sampling distribution of a difference in sample proportions is approximately normal? Well, the sampling distribution of 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+ will be approximately normal when the following four products are all at least 10: 
+𝑛
+1
+𝑝
+1
+n
+1
+	​
+
+p
+1
+	​
+
+, 
+𝑛
+1
+(
+1
+−
+𝑝
+1
+)
+n
+1
+	​
+
+(1−p
+1
+	​
+
+)
+, 
+𝑛
+2
+𝑝
+2
+n
+2
+	​
+
+p
+2
+	​
+
+, and finally 
+𝑛
+2
+(
+1
+−
+𝑝
+2
+)
+n
+2
+	​
+
+(1−p
+2
+	​
+
+)
+. As long as all four of those products are at least 10, the sampling distribution of 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+ will be approximately normal.
+
+09:48
+This has been Josh Tabor. Thanks for tuning in.

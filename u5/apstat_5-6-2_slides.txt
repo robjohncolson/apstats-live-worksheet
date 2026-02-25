@@ -1,0 +1,379 @@
+Here is a description of each slide presented in the video, along with the corresponding timestamps:
+
+00:00 - Title Slide
+
+Header: TOPIC 5.6
+
+Main Title: Sampling Distributions for Differences in Sample Proportions
+
+Subtitle: DAILY VIDEO 2
+
+Description: Introduces the topic and the presenter, Josh Tabor. It notes that the video will discuss interpreting parameters and probabilities.
+
+00:20 - What Will We Learn?
+
+Header: What Will We Learn?
+
+Content: Lists two main learning objectives:
+
+How do we interpret the parameters of a sampling distribution of a difference in sample proportions?
+
+How do we calculate and interpret probabilities involving a sampling distribution of a difference in sample proportions?
+
+00:57 - Example Introduction
+
+Text: LET'S LOOK AT AN EXAMPLE
+
+Description: A transition slide moving into a specific problem scenario.
+
+01:00 - Sampling From a High School (The Scenario)
+
+Header: Sampling From a High School
+
+Content: A text block describing the problem context:
+
+High School A: 30% have a license.
+
+High School B: 22% have a license.
+
+Sample size (
+𝑛
+n
+) = 50 for both.
+
+Task: Calculate the sample proportion for each, then compute the difference (
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+).
+
+01:34 - Sampling Distribution Statistics
+
+Header: Sampling From a High School
+
+Content: summarizes the findings from the previous video (Daily Video 1).
+
+Distribution is approximately normal.
+
+Mean: 
+𝜇
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+=
+0.08
+μ
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+	​
+
+=0.08
+ (calculated as 
+0.30
+−
+0.22
+0.30−0.22
+).
+
+Standard Deviation: Calculated as approximately 
+0.087
+0.087
+.
+
+Visual: A histogram representing the sampling distribution.
+
+01:57 - Interpreting the Mean (Header)
+
+Header: Interpreting the Mean
+
+Content: Displays the value to be interpreted: 
+𝜇
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+=
+0.08
+μ
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+	​
+
+=0.08
+.
+
+02:05 - Interpreting the Mean (Definition)
+
+Header: Interpreting the Mean
+
+Content: Provides the written interpretation: "For all random samples of 50 students from high school A and 50 students from high school B, the differences (
+𝐴
+−
+𝐵
+A−B
+) in sample proportions... will have a mean of about 0.08."
+
+Visual: The histogram of the distribution is shown on the right.
+
+03:00 - Interpreting the Standard Deviation (Header)
+
+Header: Interpreting the Standard Deviation
+
+Content: Displays the value to be interpreted: 
+𝜎
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+=
+0.087
+σ
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+	​
+
+=0.087
+.
+
+Visual: The histogram is shown on the right.
+
+03:08 - Interpreting the Standard Deviation (Definition)
+
+Header: Interpreting the Standard Deviation
+
+Content: Provides the written interpretation: "For all random samples... the differences (
+𝐴
+−
+𝐵
+A−B
+)... typically vary by about 0.087 from the true difference of 0.08."
+
+03:51 - Interpreting the Standard Deviation (Note)
+
+Header: Interpreting the Standard Deviation
+
+Content: Adds a starred note at the bottom emphasizing that knowing how a statistic varies from the truth is a key reason for studying sampling distributions.
+
+04:09 - Calculating Probabilities (Scenario)
+
+Header: Calculating Probabilities
+
+Content: Restates the High School A vs. B scenario.
+
+Question: "Would it be unusual to get a greater proportion of students with a driver's license in the sample from school B?"
+
+04:51 - Calculating Probabilities (Goal)
+
+Header: Calculating Probabilities
+
+Content: Identifies the mathematical goal: We want to find the probability that the difference is less than zero (
+𝑃
+(
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+<
+0
+)
+P(
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+<0)
+).
+
+05:22 - Calculating Probabilities (Graph)
+
+Visual: A Normal curve graph centered at 0.08. A vertical line is drawn at 0, and the area to the left of 0 is shaded blue to represent the probability being calculated.
+
+05:38 - Calculating Probabilities (Z-Score)
+
+Visual: Adds the Z-score calculation to the left of the graph:
+
+𝑧
+=
+0
+−
+0.08
+0.087
+=
+−
+0.92
+z=
+0.087
+0−0.08
+	​
+
+=−0.92
+
+05:55 - Calculating Probabilities (Result)
+
+Visual: Adds the final probability calculation to the left of the graph:
+
+Using Table A or technology, 
+𝑃
+(
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+<
+0
+)
+=
+0.1788
+P(
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+<0)=0.1788
+.
+
+06:05 - Interpreting Probabilities (Question)
+
+Header: Interpreting Probabilities
+
+Content: Restates the question: "Would it be unusual to get a greater proportion... in the sample from school B?"
+
+06:11 - Interpreting Probabilities (Answer)
+
+Header: Interpreting Probabilities
+
+Content: Provides the written answer: "Getting a difference... of 0 or less happens in about 17.88% of all possible samples... This is not unusual."
+
+06:25 - Interpreting Probabilities (Note)
+
+Header: Interpreting Probabilities
+
+Content: Adds a starred note emphasizing that determining if a statistic is "unusual" is a key reason for studying sampling distributions.
+
+06:40 - Summary Intro
+
+Text: WHAT SHOULD WE TAKE AWAY?
+
+Description: A transition slide to the summary.
+
+06:44 - Key Takeaways (Part 1)
+
+Header: Key Takeaways
+
+Point 1: How do we interpret the parameters...?
+
+In context.
+
+Reference all possible samples of these sizes from the populations.
+
+For standard deviation, include "typically" or "on average."
+
+07:11 - Key Takeaways (Part 2)
+
+Header: Key Takeaways
+
+Point 2: How do we calculate and interpret probabilities...?
+
+Use normal distribution procedures from Topic 5.2.
+
+Interpretations should be in context and reference all possible samples.
+
+07:42 - End Slide
+
+Text: Thank you.

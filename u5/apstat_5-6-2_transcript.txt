@@ -1,0 +1,230 @@
+Here is the transcript of the video, including timestamps.
+
+00:00
+Josh Tabor: Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about Topic 5.6: Sampling Distributions for Differences in Sample Proportions. In this video, we'll discuss how to interpret parameters and probabilities for a sampling distribution of a difference in sample proportions.
+
+00:20
+Josh Tabor: Let's start by looking at what you'll learn in this video. There's two questions we hope that you'll be able to answer by the end. First question: How do we interpret the parameters of a sampling distribution of a difference in sample proportions? And second: How do we calculate and interpret probabilities involving a sampling distribution of a difference in sample proportions? Again, these questions probably look familiar if you watched the videos from Topic 5.5. These questions are almost identical, except that now we're looking at a difference in sample proportions instead of a single sample proportion.
+
+00:58
+Josh Tabor: Let's start here by looking at an example. You'll recognize this example from the previous videos. In high school A, 30% of students have a driver's license. In high school B, only 22% of students have a driver's license. Suppose we select a random sample of 50 students from each high school, ask each student in each sample if he or she has a driver's license, calculate the sample proportion with a driver's license in each sample, and finally, compute the difference in sample proportions—that is 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+.
+
+01:32
+Josh Tabor: Here's what we learned in the last video. We learned that the sampling distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ is approximately normal in shape. We learned that it's centered at 0.08, the difference in the true proportions. We also learned that it has a standard deviation of about 0.087. In the next couple of slides, we'll learn how to interpret the mean and the standard deviation of this sampling distribution.
+
+01:57
+Josh Tabor: Let's start with the mean. Remember the mean of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ is 0.08. Here's the interpretation: For all random samples of 50 students from high school A and 50 students from high school B, the differences (
+𝐴
+−
+𝐵
+A−B
+) in sample proportions of students who have a driver's license will have a mean of about 0.08. So there's a lot of words there, but the picture should help you understand what we're trying to say.
+
+02:24
+Josh Tabor: Each of those dots represents one possible value of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+. If you found the values of all those dots and averaged them, you'd get a mean of 0.08. That is, about half the possible differences in sample proportions are greater than 0.08, and about half are less. Also, notice in the interpretation that we specify the order of subtraction; that we're subtracting 
+𝐴
+−
+𝐵
+A−B
+. If we had subtracted the other way, the mean would be negative 0.08 instead of positive 0.08. So always be clear what order you're subtracting in.
+
+03:00
+Josh Tabor: Now let's talk about the standard deviation. Remember, the standard deviation of the sampling distribution is roughly 0.087. Here's what that means: For all random samples of size 50 from high school A and samples of size 50 from high school B, the differences (
+𝐴
+−
+𝐵
+A−B
+) in the sample proportions of students who have a driver's license typically vary by about 0.087 from the true difference of 0.08.
+
+03:29
+Josh Tabor: So you can see from the picture, it's actually pretty unlikely to get a difference of 0.08 exactly. Instead, most of the differences are something different than 0.08. Some are quite close, and some are far away. On average, the distance of those dots from the center is about 0.087. That's the standard deviation.
+
+03:51
+Josh Tabor: Now, like we said in the video from Topic 5.5, knowing how much a sample statistic typically varies from the truth is one of the most important reasons to study sampling distributions. Again, this will come up in Units 6, 7, 8, and 9 when we talk about confidence intervals.
+
+04:09
+Josh Tabor: Now let's talk about calculating probabilities. In high school A, as you remember, 30% of students have a driver's license. In high school B, it's 22%. Well, suppose we select random samples of 50 students from each of those two high schools. Would it be unusual to get a greater proportion of students with a driver's license in the sample from school B? Remember, school B only has 22%, and school A has 30%. So you'd imagine, most likely, your sample proportion from A would be bigger than B. But it's possible that your sample proportion from school B could be higher than A. That's what this question is asking: how likely is that?
+
+04:51
+Josh Tabor: Well, what we want to find is the probability that 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ is less than zero. Why zero? Well, if the difference equals zero, then you know those two proportions are the same. If you subtract 
+𝐴
+−
+𝐵
+A−B
+ and get a negative, that tells you that A must be smaller and B must be bigger. Remember, smaller minus bigger is what gives you a negative.
+
+05:15
+Josh Tabor: So, now that we know the question we're trying to answer... we're doing a calculation involving a normal distribution; we draw a picture. So here's a normal curve centered at 0.08 with a standard deviation of 0.087. We also see our boundary value of zero indicated, and we've shaded to the left because we want to know how likely it is to get a difference of zero or less.
+
+05:38
+Josh Tabor: The next step after drawing a picture is to calculate a z-score. Here we get 
+0
+−
+0.08
+0−0.08
+ over 
+0.087
+0.087
+, or a z-score of 
+−
+0.92
+−0.92
+. That is, a difference of zero is not quite one standard deviation less than the mean. That's not very unusual.
+
+05:55
+Josh Tabor: So finishing this up, you can use Table A or technology to get an area of about 0.1788. So let's interpret that value, the value 0.1788. Remember we're asking: is it unusual to get a difference in sample proportions that small? Well, getting a difference (
+𝐴
+−
+𝐵
+A−B
+) in sample proportions of 0 or less happens in about 17.88% of all possible samples of size 50 from these populations. This is not unusual.
+
+06:25
+Josh Tabor: And again, noting whether a value of a statistic is unusual is one of the most important reasons we study sampling distributions. You'll see this idea coming up in Units 6, 7, 8, and 9 when you're studying significance tests.
+
+06:40
+Josh Tabor: Let's finish up by summarizing what you should have learned in this video. The first key takeaway: How do we interpret the parameters of a sampling distribution of a difference in sample proportions? Well, you always do it in context. And second, you reference all possible samples of these sizes from the populations. "All possible samples" is what determines a complete sampling distribution. Third, for standard deviation, make sure to include "typically" or "on average" in your interpretation.
+
+07:11
+Josh Tabor: The second question we asked: How do we calculate and interpret probabilities involving a sampling distribution of a difference in sample proportions? For calculations, we use our normal distribution procedures that we learned in Topic 5.2, along with the parameters of the sampling distribution of 
+𝑝
+^
+𝐴
+−
+𝑝
+^
+𝐵
+p
+^
+	​
+
+A
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+ from video 1. For interpretations, make sure that they're in context and make sure to refer to all possible samples of these sizes from these populations.
+
+07:42
+Josh Tabor: This has been Josh Tabor. Thanks for tuning in.
