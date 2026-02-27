@@ -26,6 +26,9 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u5_lesson3_live.html` | Live worksheet for Topic 5.3 (Central Limit Theorem & Randomization Distributions) |
 | `ai-grading-prompts-u5-l3.js` | Rubrics for Unit 5 L3 AI grading (CLT, sampling distributions via simulation, randomization distributions) |
 | `u5_l3_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L3 conceptual reinforcement (CLT, randomization tests) |
+| `u5_lesson8_live.html` | Live worksheet for Topic 5.8 (Sampling Distributions for Differences in Sample Means) |
+| `ai-grading-prompts-u5-l8.js` | Rubrics for Unit 5 L8 AI grading (difference in sample means: parameters, shape, probability) |
+| `u5_l8_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L8 conceptual reinforcement (difference in sample means) |
 | `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
 | `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
 | `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |

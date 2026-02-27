@@ -1,0 +1,128 @@
+Here is a sequential description of each slide shown in the video, along with its corresponding timestamp:
+
+[00:00] Title Slide: Displays the course "AP Statistics" and the video title: "TOPIC 5.8: Sampling Distributions for Differences in Sample Means - DAILY VIDEO 1". The presenter, Josh Tabor, appears in a small video feed in the top right corner.
+
+[00:21] WHAT WILL WE LEARN? (Transition): A blue title card introducing the learning objectives.
+
+[00:25] What Will We Learn?: Lists the two main questions the video will answer: 1) How to determine the parameters of a sampling distribution of a difference in sample means, and 2) How to determine if its shape is approximately normal.
+
+[00:50] LET'S LOOK AT AN EXAMPLE (Transition): A blue title card introducing the practice problem.
+
+[00:54] Sampling Citrus: Presents the word problem about a tree producing lemons (
+𝜇
+=
+4
+μ=4
+ oz, 
+𝜎
+=
+0.5
+σ=0.5
+ oz) and a tree producing oranges (
+𝜇
+=
+3
+μ=3
+ oz, 
+𝜎
+=
+0.4
+σ=0.4
+ oz). It asks to calculate the difference in sample means for a sample size of 
+𝑛
+=
+6
+n=6
+ for each fruit.
+
+[01:56] Sampling Citrus (First Sample): Adds calculations to the bottom of the screen showing a single sample where the lemons average 4.1 oz and oranges average 2.9 oz (a difference of 1.2 oz). A dot plot appears at the bottom right, marking this first 1.2 oz difference with a dot.
+
+[02:29] Sampling Citrus (Second Sample): Updates the math to show a second random sample yielding a difference of 0.7 oz. A second dot is plotted on the graph.
+
+[02:48] Sampling Citrus (Third Sample): Updates the math again to show a third sample yielding a difference of 0.9 oz. A third dot is added to the graph.
+
+[03:25] Sampling Citrus (500 Samples): Replaces the previous examples with a completed, simulated sampling distribution dot plot representing 500 samples. Text details that the distribution is approximately normal, centered at 1 oz, and varies from about 0.2 oz to 1.8 oz.
+
+[04:09] Mean and Standard Deviation: A slide filled with mathematical notation that formally defines the variables for two separate populations and provides the standard formulas for calculating the mean (
+𝜇
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+μ
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+	​
+
+) and standard deviation (
+𝜎
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+σ
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+	​
+
+). It also notes the 10% condition and the independence assumption required for the standard deviation formula.
+
+[05:22] Mean and Standard Deviation (Citrus Example): Applies the formulas from the previous slide to the citrus problem. It shows the step-by-step math, resulting in a mean difference of 1 ounce and a standard deviation of 0.26 ounces.
+
+[06:13] Good news! These are on the formula sheet: Displays a screenshot of the official AP Statistics formula sheet, highlighting the row for "Two populations: 
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+" to reassure students they do not have to memorize the complex formulas.
+
+[06:45] Shape: Outlines the two conditions under which the sampling distribution of a difference in sample means will be approximately normal: 1) Both population distributions are approximately normal, OR 2) Both sample sizes are large enough (
+𝑛
+≥
+30
+n≥30
+).
+
+[07:20] WHAT SHOULD WE TAKE AWAY? (Transition): A blue title card moving into the video's conclusion.
+
+[07:24] Key Takeaways: A summary slide that recaps the entire lesson. It reiterates the formulas for the mean and standard deviation of the sampling distribution, as well as the rules for determining if the shape is approximately normal.
+
+[08:28] Thank you: The final slide displaying "Thank you." alongside the CollegeBoard logo.

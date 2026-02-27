@@ -1,0 +1,588 @@
+Here is a transcript of the video, including timestamps:
+
+[00:00] Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about topic 5.8, Sampling Distributions for Differences in Sample Means. In this video, we'll discuss the shape, center, and variability of the sampling distribution of a difference in sample means.
+
+[00:20] Let's start by talking about what you'll learn in this video. We're going to answer two questions. First, how do we determine the parameters of a sampling distribution of a difference in sample means? And second, how do we determine if the shape of a sampling distribution of a difference in sample means is approximately normal? Again, you'll recognize these questions, but note that we're now talking about differences in sample means instead of a single sample mean.
+
+[00:50] Let's start by looking at an example. We're going to build on the example about lemons from the previous couple videos and add in another type of citrus. A large tree produces lemons with weights that are approximately normally distributed with 
+𝜇
+𝐿
+=
+4
+μ
+L
+	​
+
+=4
+ ounces and 
+𝜎
+𝐿
+=
+0.5
+σ
+L
+	​
+
+=0.5
+ ounces. A different tree produces oranges with weights that are approximately normally distributed with 
+𝜇
+𝑂
+=
+3
+μ
+O
+	​
+
+=3
+ ounces and 
+𝜎
+𝑂
+=
+0.4
+σ
+O
+	​
+
+=0.4
+ ounces. Suppose we select a random sample of 
+𝑛
+=
+6
+n=6
+ fruit from each tree, calculate the mean weight for each sample, and compute the difference in sample means, 
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+.
+
+[01:34] Again, we're taking a sample of six lemons, finding the average, and then a sample of six oranges and finding the average, and then subtracting. Quick side note, you may be thinking why are the oranges lighter than the lemons? Well, this might be based on real life and I have a mandarin orange tree in my backyard that produces really small sweet oranges.
+
+[01:55] All right, let's move on. So one possible sample of lemons could give us a mean of 4.1 ounces. And one possible sample of oranges could give us a mean of 2.9 ounces. Now what we want to know is the difference in those two means. So the difference is 1.2 ounces. And we can see that as the value of 
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+. And now you can see that dot at 1.2 ounces to form the beginnings of our sampling distribution of 
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+.
+
+[02:25] Well, let's take a look at another possible couple of samples. Here we go. In another possible sample of lemons, we get 
+𝑥
+ˉ
+𝐿
+=
+3.8
+x
+ˉ
+L
+	​
+
+=3.8
+ ounces. And in the sample of oranges, we got an 
+𝑥
+ˉ
+x
+ˉ
+ for the oranges of 3.1 ounces. That gives us a difference of 0.7 ounces. And you can see the dot now appearing on the sampling distribution.
+
+[02:47] One more time. Let's look at a third sample of lemons and oranges. In our sample of lemons, we got a mean of 4.0 ounces. And in our sample of oranges, we got a mean of 3.1 ounces. That's a difference of 0.9 ounces. And you can see that dot now appearing on our sampling distribution.
+
+[03:04] Of course, sampling distributions have more than three possible values, right? There's lots and lots and lots of possible samples of size six lemons and samples of size six oranges that I could select. And so there's lots and lots and lots of possible differences. So let's increase the number of samples and take a look at a simulation that shows the results of 500 random samples of oranges and lemons. Here we go.
+
+[03:28] That's what the distribution of 
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+ looks like. Now remember, each of those dots represents one possible difference, 
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+. We had three dots on the previous page and now we've added 497 more to get this simulated sampling distribution.
+
+[03:47] Now, how would we describe this? As always, we want to talk about shape and center and variability. So the distribution of 
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+ is, no surprise, approximately normal. It's centered at 1 ounce. And it varies from about 0.2 ounces to about 1.8 ounces.
+
+[04:08] Now let's talk about calculating the mean and standard deviation. Let 
+𝑥
+ˉ
+1
+x
+ˉ
+1
+	​
+
+ be the sample mean in a random sample of size 
+𝑛
+1
+n
+1
+	​
+
+ selected from population 1 with mean 
+𝜇
+1
+μ
+1
+	​
+
+ and standard deviation 
+𝜎
+1
+σ
+1
+	​
+
+. And let 
+𝑥
+ˉ
+2
+x
+ˉ
+2
+	​
+
+ be the sample mean in a random sample of size 
+𝑛
+2
+n
+2
+	​
+
+ selected from population 2 with mean 
+𝜇
+2
+μ
+2
+	​
+
+ and standard deviation 
+𝜎
+2
+σ
+2
+	​
+
+. Really sorry about all the notation, but it's very important to define these things in advance so we can make sense of the formulas.
+
+[04:41] Let's start by looking at the formula for the mean. 
+𝜇
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+μ
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+	​
+
+ is equal to 
+𝜇
+1
+−
+𝜇
+2
+μ
+1
+	​
+
+−μ
+2
+	​
+
+, or the difference in the population means. And for the standard deviation, 
+𝜎
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+σ
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+	​
+
+ is the square root of 
+𝜎
+1
+2
+/
+𝑛
+1
++
+𝜎
+2
+2
+/
+𝑛
+2
+σ
+1
+2
+	​
+
+/n
+1
+	​
+
++σ
+2
+2
+	​
+
+/n
+2
+	​
+
+. And again, that formula for standard deviation has two conditions that need to be met for the value it produces to be valid. First, the sample sizes both have to be less than 10% of their respective population sizes. And second, those samples need to be independent of each other.
+
+[05:21] Let's see how these formulas apply in our context about lemons and oranges. For the lemons, remember that the mean was 4 and the standard deviation was 0.5. And for the oranges, the mean was 3 and the standard deviation was 0.4. So the mean of the distribution, which is 
+𝜇
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+μ
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+	​
+
+, is equal to the difference in the means of the populations, or 4 - 3, or 1 ounce.
+
+[05:48] The standard deviation, 
+𝜎
+𝑥
+ˉ
+𝐿
+−
+𝑥
+ˉ
+𝑂
+σ
+x
+ˉ
+L
+	​
+
+−
+x
+ˉ
+O
+	​
+
+	​
+
+, is equal to the square root of 
+0.5
+2
+/
+6
++
+0.4
+2
+/
+6
+0.5
+2
+/6+0.4
+2
+/6
+, or 0.26 ounces. And that calculation is valid because we're taking small samples from large trees, so the samples are both less than 10% of the population, and the samples were selected separately, so we can view them as independent.
+
+[06:13] Good news! If you're overwhelmed with formulas by the end of this unit, don't worry. They're all on the formula sheet. So here's an excerpt from the formula sheet. You can see in the bottom row there, you can see the random variable is 
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+. And here are the parameters for that sampling distribution. You can see the formula for the mean and the standard deviation right there on the formula sheet. And as a reminder, you get the formula sheet on both the multiple choice and the free response portions of the AP exam.
+
+[06:44] Now let's talk about the shape of the sampling distribution of 
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+. It will be approximately normal when one of two things is true. Either both population distributions are approximately normal. Well, that was the case in our citrus example. Or if the populations are not approximately normal, or you just don't know, but both sample sizes are large enough, that is greater than or equal to 30, you're in good shape. It's fair to assume that the sampling distribution of 
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+ is approximately normal.
+
+[07:20] Now let's summarize what you should have learned in this video. We addressed two questions. The first question was how do we determine the parameters of a sampling distribution of a difference in sample means? Good news, there's formulas and their formulas are on the formula sheet. For the mean, the mean of the 
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+ distribution is 
+𝜇
+1
+−
+𝜇
+2
+μ
+1
+	​
+
+−μ
+2
+	​
+
+, the difference in the population means. The standard deviation of the 
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+ distribution is equal to the square root of 
+𝜎
+1
+2
+/
+𝑛
+1
++
+𝜎
+2
+2
+/
+𝑛
+2
+σ
+1
+2
+	​
+
+/n
+1
+	​
+
++σ
+2
+2
+	​
+
+/n
+2
+	​
+
+. And again, that's assuming that both sample sizes are less than 10% of the population sizes, and that the samples are independent.
+
+[08:04] The second question, how do we determine if the shape of a sampling distribution of a difference in sample means is approximately normal? Well, there's two ways. The sampling distribution of 
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+ will be approximately normal when both populations are approximately normal, or when both sample sizes are large enough, that is, both sample sizes are at least 30.
+
+[08:28] This has been Josh Tabor. Thanks for tuning in.

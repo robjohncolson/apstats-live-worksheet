@@ -1,0 +1,35 @@
+Here is a transcript of the video, complete with timestamps:
+
+0:00 - Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about topic 5.8: sampling distributions for differences in sample means. In this video, we'll discuss how to interpret parameters and probabilities for a sampling distribution of a difference in sample means.
+
+0:22 - Let's start by talking about the questions we'll answer in this video, and I'm sure they won't be a surprise. The first question is, how do we interpret the parameters of a sampling distribution of a difference in sample means? And second, how do we calculate and interpret probabilities involving a sampling distribution of a difference in sample means?
+
+0:45 - Now let's take a look at an example. You'll recognize this example from the previous video. A large tree produces lemons with weights that are approximately normally distributed with a mean of 4 ounces and a standard deviation of 0.5 ounces. A different tree produces oranges with weights that are approximately normally distributed with a mean of 3 ounces and a standard deviation of 0.4 ounces. Suppose we randomly select six fruit from each tree, calculate the mean weight for each sample, and compute the difference in sample means, x-bar L minus x-bar O.
+
+1:20 - That is, we find the average weight of the six lemons, and then we find the average weight of the six oranges, and then we subtract those two averages. And then we do that a bunch of times. Here's the results of doing that 500 times. You can see that the distribution of x-bar L minus x-bar O is approximately normal. It has a mean of 1 ounce, that's the difference in the two population means. And it has a standard deviation of 0.26 ounces. Again, you learned that formula and how to do this calculation in the previous video.
+
+1:54 - Now let's talk about interpreting the mean. Remember, the mean is mu sub x-bar L minus x-bar O, and that equals 1. Well, for all random samples of six lemons from the lemon tree and six oranges from the orange tree, the differences (L - O) in sample mean weight will have a mean of 1 ounce. You can see that roughly half the differences are bigger than 1 and roughly half are less than 1. And so if we were to find all of those differences and then find the average of all of those differences, it would equal 1.
+
+2:27 - Notice also in our interpretation, we specified the order of subtraction as L minus O. If we had subtracted the oranges minus the lemons, then the mean would have been negative 1. So it's really important to specify which order you're subtracting in.
+
+2:43 - Now let's talk about interpreting the standard deviation. Remember, the standard deviation of x-bar L minus x-bar O is equal to 0.26. So, for all random samples of six lemons from the lemon tree and six oranges from the orange tree, the differences (L - O) in sample mean weight will typically vary by about 0.26 ounces from the true difference in means of 1 ounce. Again, you can see that some of the dots are really close to 1. Other dots are quite far away. The 0.26 measures how far those dots are typically or on average from the mean.
+
+3:19 - And finally, remember that knowing how much a sample statistic typically varies from the truth is one of the most important reasons we study sampling distributions. And you'll see this show up when we learn about confidence intervals in units 6 through 9.
+
+3:33 - Now let's talk about calculating probabilities. Suppose we selected a random sample of six oranges and six lemons from these trees. Would it be unusual to get a sample mean weight for the lemons that was more than 1.2 ounces greater than the sample mean weight for the oranges? Well, what we're trying to find is the probability that x-bar L minus x-bar O is greater than 1.2.
+
+4:00 - And as always, with any normal distribution calculation, you want to start with a picture. So here's a normal distribution centered at 1 with a standard deviation of 0.26. You can see also we've labeled our boundary value of 1.2 and shaded to the right indicating we want the values greater than 1.2.
+
+4:19 - The next step would be calculating a Z-score. Here we get 1.2 minus 1 over 0.26 for a Z-score of 0.77. That is, a difference of 1.2 ounces is only about 0.77 standard deviations greater than the mean. That's not very unusual.
+
+4:37 - You can turn now to technology or Table A to get a probability, and it equals 0.2206.
+
+4:45 - So let's interpret that value. Again, the original question was, would it be unusual to get a difference in sample means of 1.2 ounces, or more than 1.2 ounces? Well, getting a difference (L - O) in sample mean weights of more than 1.2 ounces happens in about 22.06% of all possible samples of six lemons and six oranges from these trees. That's not unusual.
+
+5:11 - One final reminder is that knowing what values of a statistic count as unusual is one of the most important reasons we study sampling distributions. And this will really help you when you're studying significance tests in units 6 through 9.
+
+5:26 - Let's summarize by talking about what you should have learned in this video. Our first question was, how do we interpret the parameters of a sampling distribution of a difference in sample means? Well, we always do it in context with units, now that we've got a quantitative variable. We always reference all possible samples of these sizes from the populations, and for the standard deviation, we include "typically" or "on average."
+
+5:52 - The second question, how do we calculate and interpret probabilities involving a sampling distribution of a difference in sample means? Well, we use normal distribution calculations, uh, from topic 5.2, along with the parameters of the sampling distribution of x-bar 1 minus x-bar 2 that we learned about in video 1. For the interpretations, as always, they should be in context, with units, and reference all possible samples of these sizes from the populations.
+
+6:23 - This has been Josh Tabor. Thanks for tuning in. We'll see you in unit 6.
