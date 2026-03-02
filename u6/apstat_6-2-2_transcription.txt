@@ -1,0 +1,35 @@
+
+
+
+0:00 - 0:15
+From Canyon Del Oro High School in Tucson, Arizona. Here with the video about Topic 6.2: Constructing a Confidence Interval for a Population Proportion. In this video, we'll discuss how to calculate a confidence interval for a population proportion.
+
+0:15 - 0:28
+Let's start by talking about what we'll learn in this video. First, how do we determine the margin of error when estimating a population proportion? And second, how do we calculate a confidence interval for a population proportion?
+
+0:28 - 1:11
+Let's start by looking at a familiar example. Supporters of "Proposition 100" submitted 9,388 signatures in support of this proposition. City administrators randomly selected 500 of these signatures to verify that they came from registered voters in the city. Of the 500 signatures, administrators were able to verify that 364 of them were from registered voters in the city. Calculate and interpret a 95% confidence interval for the proportion of all submitted signatures that are from registered voters in the city. If you watched the last video, you'll know that we've already identified the procedure and checked the conditions for this interval.
+
+1:11 - 1:46
+Now, based on what we learned in Unit 5, the sample proportion p-hat is an unbiased estimator of the population proportion p. However, because of sampling variability, the value of p-hat will almost never equal the value of p. In other words, we should have no confidence that the value of p-hat correctly estimates the population proportion. So to increase our confidence that our estimate is correct, we use an interval of values, a confidence interval, rather than a single-value estimate called a point estimate.
+
+1:46 - 2:42
+Now, let's talk about calculating the margin of error. In AP Statistics, confidence intervals always have the form: point estimate plus or minus margin of error. So we know the point estimate, that's just p-hat. The complicated part is the margin of error. So the margin of error describes how much the value of a sample statistic is likely to vary from the value of the corresponding population parameter. The margin of error is determined by two factors: how much the statistic typically varies from the parameter, and two, how confident we want to be in our estimate. So here's how we calculate the margin of error. It's based on those two factors. The margin of error is equal to the critical value, which is determined based on the amount of confidence we want in the interval, and the standard error of the statistic, that's how far the statistic typically varies from the parameter. You learned about that in Unit 5.
+
+2:42 - 3:33
+Now, let's get to the specific details of the calculation. So we know that the margin of error is equal to the critical value times the standard error of the statistic. So the standard error of a statistic is an estimate of the standard deviation of the sampling distribution of the statistic. We use an estimate because typically to find the true standard deviation, you need to know information about the population, and in this case, we'll only know information about the sample. So, from Topic 5.5, the standard deviation of the sampling distribution of p-hat is sigma sub p-hat equals square root p times 1 minus p over n. Because we don't know the value of p, we have to replace it with p-hat to get the standard error of p-hat. And so that's SE sub p-hat is square root p-hat times 1 minus p-hat over n.
+
+3:33 - 4:26
+Now, the other part of the margin of error is the critical value. A critical value is a multiplier that makes the margin of error large enough to give a specific amount of confidence that the interval contains the value of the parameter. So for confidence intervals for proportions, the critical values represent boundaries encompassing the middle C percent (C like 95%) of the standard normal distribution, where C percent is the approximate confidence level. Like I said, in this case, 95%. So here's how we're going to do this in this particular example. We're asked for a 95% confidence interval, so we want to find the two boundary values that surround the middle 95% in the standard normal distribution. Those are the values negative 1.96 and positive 1.96. So our critical value, z-star, is 1.96.
+
+4:26 - 5:20
+Now we're able to complete the process and calculate the confidence interval. The confidence interval is the point estimate plus or minus the margin of error. In other words, the statistic plus or minus the critical value times the standard error of the statistic. In our example, p-hat was 0.728. And so for a confidence interval for a proportion, we do p-hat, which in this case is 0.728, plus or minus z-star, 1.96, times the standard error, which is square root 0.728 times 1 minus 0.728 over 500. That gives us a margin of error of 0.039, or plus or minus 3.9 percentage points, the kind of thing that you might see at the bottom of a political poll, for example. And finally, our confidence interval with a lower bound of 0.689 to an upper bound of 0.767.
+
+5:20 - 5:51
+Good news! You don't have to remember all the details of that calculation because you can put it together using information from the formula sheet. So on the formula sheet, you'll see a formula for a generic confidence interval: statistic plus or minus critical value times standard error of the statistic. You'll also find a formula for the standard error. In this case, the standard error of p-hat is square root p-hat times 1 minus p-hat over n. Those two pieces of information should allow you to put together the confidence interval.
+
+5:51 - 6:26
+Now, one final follow-up. In the real-life scenario, they have to verify that there's a certain number of valid signatures. In this case, we need to translate our proportions into counts or numbers. So because there was 9,388 signatures, we can do a 95% confidence interval for the number of valid signatures. Just multiply 9388 times the lower end and the upper end of our confidence interval. And we get an interval of roughly 6,468 to 7,201 valid signatures.
+
+6:26 - 7:16
+Now, let's talk about what we should take away from this video. First, how do we determine the margin of error when estimating a population proportion? Well, the margin of error is equal to the critical value, z-star, times the standard error of the statistic. In this case, square root p-hat times 1 minus p-hat over n. And how do we calculate a confidence interval for a population proportion? Well, it's our point estimate, in this case p-hat, plus or minus the margin of error that we calculated earlier. This has been Josh Tabor. Thanks for tuning in.

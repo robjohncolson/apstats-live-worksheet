@@ -1,0 +1,18 @@
+
+
+
+Here is a description of each slide in the video, along with timestamps for when it is shown:
+
+*   **0:00 - 0:06:** **What Will We Learn?** - Introduces the lesson's objective: learning how to determine the minimum sample size needed to achieve a specific margin of error.
+*   **0:07 - 0:10:** **LET'S LOOK AT AN EXAMPLE** - A transition title slide.
+*   **0:10 - 0:59:** **What Proportion of Students Bring Lunch? (Problem Statement)** - Presents a scenario about a food services director wanting to estimate the proportion of students who bring lunch to school, asking for the smallest sample size to get a margin of error of at most 0.05 with 95% confidence.
+*   **1:00 - 1:12:** **What Proportion of Students Bring Lunch? (Formula)** - Introduces the margin of error formula for a one-sample z interval for a population proportion.
+*   **1:12 - 1:28:** **What Proportion of Students Bring Lunch? (Setup)** - Begins setting up the inequality to solve for the sample size *n*, substituting 0.05 for the margin of error and 1.96 for the *z\** critical value corresponding to 95% confidence.
+*   **1:28 - 2:22:** **What Proportion of Students Bring Lunch? (Determining p-hat)** - Discusses how to determine the sample proportion (*p-hat*) before a study is conducted. It provides two options: using a guessed value from a pilot study/previous estimates, or using 0.5 to find a safe upper bound for the sample size.
+*   **2:22 - 4:02:** **What Proportion of Students Bring Lunch? (Solving)** - Shows the step-by-step algebraic process of solving the inequality for *n* using *p-hat* = 0.5. The final calculation shows *n* must be greater than or equal to 384.16, meaning the director must survey at least 385 students.
+*   **4:02 - 4:09:** **LET'S PRACTICE** - A transition title slide.
+*   **4:09 - 4:39:** **What Proportion Read the Comics? (Problem Statement)** - Presents a practice scenario where a newspaper editor wants to estimate the proportion of subscribers who read the comics, aiming for a margin of error of at most 0.03 with 90% confidence.
+*   **4:39 - 5:53:** **What Proportion Read the Comics? (Solving)** - Displays the initial setup of the inequality and walks through the step-by-step algebraic solution. The result dictates that *n* must be at least 751.67, so the editor should survey 752 subscribers.
+*   **5:53 - 5:56:** **WHAT SHOULD WE TAKE AWAY?** - A transition title slide.
+*   **5:56 - 6:30:** **Key Takeaways** - Summarizes the main points of the lesson, displaying the margin of error formula and reiterating the rule to use a guessed value or 0.5 for *p-hat* when finding the required sample size.
+*   **6:30 - 6:58:** **Thank you.** - The final sign-off slide featuring the College Board logo.

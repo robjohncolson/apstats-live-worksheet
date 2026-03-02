@@ -1,0 +1,122 @@
+
+
+
+Here is the transcript of the video, with timestamps included:
+
+0:00 - Tucson, Arizona.
+0:01 - Here with a video about topic 6.2
+0:04 - Constructing a confidence interval for a population proportion.
+0:08 - In this video, we'll discuss how to identify the procedure and check the conditions for constructing a confidence interval for a population proportion.
+0:17 - Let's start by talking about what you'll learn in this video.
+0:21 - You'll be able to answer two questions.
+0:24 - One, how do we identify an appropriate confidence interval procedure for a population proportion?
+0:31 - And two, how do we verify the conditions for calculating a confidence interval for a population proportion?
+0:38 - Before we get started, I need to give you some preliminary information that actually applies to units six, seven, eight, and nine.
+0:47 - So there's two major types of inference that you're gonna learn about in these units.
+0:52 - The first type of inference is called confidence intervals.
+0:55 - These are used to estimate the value of a population parameter, such as a population proportion, mean, or slope.
+1:03 - We use an interval of values, not just a single value to make our estimate.
+1:08 - And that's to account for sampling variability.
+1:11 - Remember, you learned about sampling variability in the last unit when we talked about sampling distributions.
+1:17 - The second major type of inference are called significance tests.
+1:21 - In a significance test, these are used to test a claim about the value of a population parameter, such as a population proportion, mean, or slope.
+1:30 - If you watched the video from topic 6.1, that was an example of a significance test.
+1:37 - We use significance tests to decide whether the evidence supporting a claim is likely or unlikely to happen by chance alone.
+1:46 - Now, let's focus for just a second on unit six.
+1:50 - In unit six, we're talking about categorical data.
+1:53 - And categorical data that can be summarized by calculating the proportion of successes in a sample or in a treatment group.
+2:00 - Topic 6.2 and 6.3 focus on confidence intervals for a population proportion.
+2:07 - Topic 6.4 and through 6.7 focus on significance tests for a population proportion.
+2:14 - And topic 6.8 through 6.11 focus on confidence intervals and significance tests for a difference in population proportions.
+2:24 - Now let's look at an example for this topic.
+2:28 - It's about verifying signatures.
+2:30 - In some cities and states, including Arizona, where I live, citizens can propose new laws to be voted on in an election.
+2:38 - To get a proposition on the ballot, backers of the proposition must gather a specified number of signatures from registered voters in the city.
+2:47 - Supporters of proposition 100 submitted 9,388 signatures in support of this proposition.
+2:55 - City administrators randomly selected 500 of these signatures to verify that they came from registered voters in the city.
+3:03 - They didn't have time to verify all 9,388 signatures.
+3:08 - Of the 500 signatures, administrators were able to verify that 364 of the signatures were from registered voters in the city.
+3:17 - Calculate and interpret a 95% confidence interval for the proportion of all submitted signatures that are from registered voters in the city.
+3:26 - You'll hear that phrase a lot.
+3:28 - Calculate and interpret a confidence interval.
+3:31 - You're going to be hearing that phrase in units six, seven, eight, and nine.
+3:35 - And that initiate or prompts you to calculate a confidence interval.
+3:41 - Well, over the next couple of videos, we're going to talk about the details in that process.
+3:45 - Today, we're talking about identifying the procedure and checking the conditions.
+3:50 - So specifically about identifying the procedure.
+3:54 - There are many different confidence interval procedures that you're going to learn this year.
+3:57 - Right, some involve one sample, like we're doing now.
+4:00 - Others involve two samples where you're comparing two groups to each other.
+4:04 - Some involve estimating proportions, like we are.
+4:07 - Others involve estimating means or slopes.
+4:10 - When the goal is to estimate the proportion of successes in a single population, like we're doing, we use a one sample Z interval for a population proportion.
+4:21 - That's the name, a one sample Z interval for a population proportion.
+4:26 - Now let's check the conditions for this procedure.
+4:29 - You always need to check the conditions before you do any calculations.
+4:33 - So in general, and this applies to units six, seven, eight, and nine, you should always be checking for independence in the methods used to collect the data, and that the appropriate sampling distribution has the correct shape.
+4:48 - Now you learned all about this in the last unit when we talked about sampling distributions.
+4:53 - So we have to be careful to apply the specific rules for the specific type of inference that we're using.
+4:57 - In this case, inference for a single proportion.
+5:01 - So the details of these conditions, like I said, vary from procedure to procedure.
+5:06 - But you'll see common themes as you work through units six through nine.
+5:11 - So specifically, for the one sample Z interval for a population proportion, here are the conditions.
+5:18 - To check for independence, you need to verify, one, that the data are collected using a random sample from the population.
+5:26 - Remember, it's important to have a random sample so that you can generalize about that population.
+5:31 - And two, when sampling without replacement, the sample size is less than or equal to 10% of the population size.
+5:40 - We learned about that in unit five, topic 5.5, about the sampling distribution of a sample proportion.
+5:48 - The second thing we need to check for is that the shape of the sampling distribution is approximately normal.
+5:54 - Well, again, in topic 5.5, you learned how to do that.
+5:58 - We need to verify that both np hat and n times one minus p hat are at least 10.
+6:04 - That is, the number of successes in the sample and the number of failures in the sample are both at least 10.
+6:11 - Now you might notice that we have a p hat there instead of a p.
+6:14 - That's because in the real world when we're doing inference, we don't know the truth about the population.
+6:19 - That's what we're trying to figure out.
+6:21 - So we don't know the value of p.
+6:23 - So we use p hat instead when we're checking this condition.
+6:27 - So let's return to our context.
+6:29 - Remember that supporters submitted 9,388 signatures.
+6:34 - That's our population size.
+6:35 - City administrators randomly selected 500.
+6:39 - That's our sample size.
+6:40 - Of the 500 signatures, they were able to verify that 364 were from registered voters in the city.
+6:47 - So our value of p hat is 364 out of the 500.
+6:52 - So let's check that the conditions are met.
+6:54 - First, it says that the signatures were randomly selected.
+6:57 - So it's a good idea to put a check mark or something like that at the end of your check of the condition just to show the reader that you know that it's been met.
+7:07 - Second, the sample size of 500 is definitely less than 10% of the population size, which is 9,388.
+7:16 - Finally, checking n times p hat, that's 500 times 364 over 500.
+7:22 - Notice the 500s cancel, and you're left with 364, clearly greater than or equal to 10.
+7:28 - And then n times one minus p hat, 500 times one minus 364 over 500.
+7:34 - That's 136, also greater than or equal to 10.
+7:37 - Now you can save yourself a little bit of work if you recognize that 364 is just the number of successes and 136 is just the number of failures.
+7:46 - So you don't actually have to go through all of that multiplying if you can just find the number of successes and the number of failures and show that those are both at least 10.
+7:55 - So in this case, all three conditions have been met and it would be valid to go on to calculations.
+8:00 - You'll learn about those calculations in the next video.
+8:03 - Now, here's a chance for you to practice.
+8:06 - This is checking the conditions part two.
+8:08 - Well suppose that the city administrators were in a hurry and they only verified the first 40 signatures that were submitted.
+8:15 - Of those 40, 38 were from registered voters in the city.
+8:19 - Using these data, not the original data, but using these data, would it be appropriate to calculate a confidence interval for the proportion of all submitted signatures that are from registered voters in the city?
+8:31 - I'll give you a minute to pause and think about your answer to this question.
+8:37 - Okay, hopefully you've gotten your answer now.
+8:39 - Let's take a look at the conditions one by one.
+8:42 - The first condition unfortunately fails.
+8:44 - The signatures were not randomly selected.
+8:47 - They used a convenience sample, only the first 40 that were turned in.
+8:51 - The second condition is met.
+8:53 - The sample size of 40 is definitely less than 10% of the population size of 9,388.
+9:00 - Unfortunately, the third condition also fails.
+9:03 - Although the number of successes, 38, is greater than or equal to 10, the number of failures, only two, is not greater than or equal to 10.
+9:11 - It's less than 10.
+9:12 - So the third condition fails.
+9:14 - So in this case, it would not be appropriate to calculate a confidence interval for the population proportion.
+9:21 - All right, let's summarize what you should have learned in this video.
+9:25 - First, how do we identify an appropriate confidence interval procedure for a population proportion?
+9:31 - Well, when estimating the proportion of successes in a population, use a one sample Z interval for a population proportion.
+9:40 - Second, how do we verify the conditions for calculating a confidence interval for a population proportion?
+9:47 - The first condition is that the data is collected using a random sample from the population.
+9:52 - Second, when sampling without replacement, the sample size should be less than or equal to 10% of the population size.
+10:00 - And third, both n times p hat and n times one minus p hat are at least 10.
+10:06 - That is, the number of successes in the sample and the number of failures in the sample are both at least 10.
+10:11 - This has been Josh Tabor.
+10:13 - Thanks for tuning in.

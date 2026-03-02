@@ -29,6 +29,9 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u5_lesson8_live.html` | Live worksheet for Topic 5.8 (Sampling Distributions for Differences in Sample Means) |
 | `ai-grading-prompts-u5-l8.js` | Rubrics for Unit 5 L8 AI grading (difference in sample means: parameters, shape, probability) |
 | `u5_l8_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L8 conceptual reinforcement (difference in sample means) |
+| `u6_lesson1-2_live.html` | Live worksheet for Topics 6.1–6.2 (Why Be Normal? & Constructing CI for p) |
+| `ai-grading-prompts-u6-l1-2.js` | Rubrics for Unit 6 L1-2 AI grading (significance testing logic, CI conditions, calculation, sample size) |
+| `u6_l1_l2_blooket.csv` | Blooket quiz (35 questions) for Unit 6 L1-2 conceptual reinforcement (significance testing logic, CI for proportions) |
 | `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
 | `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
 | `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |
@@ -37,6 +40,7 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u4_l7_l8/` | Source materials (transcripts, slides, PDFs) for Unit 4 L7-8 worksheet development |
 | `u5_l1_l2/` | Source materials (transcripts, slides, PDFs) for Unit 5 L1-2 worksheet development |
 | `u5/` | Source materials (transcripts, slides, framework) for Unit 5 worksheet development |
+| `u6/` | Source materials (transcripts, slides, framework) for Unit 6 worksheet development |
 
 ## Architecture
 

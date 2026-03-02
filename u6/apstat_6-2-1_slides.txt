@@ -1,0 +1,20 @@
+
+
+
+Here is a description of each slide in the video, along with its corresponding timestamps:
+
+*   **0:00 - 0:17**: "TOPIC 6.2 Constructing a Confidence Interval for a Population Proportion DAILY VIDEO 1" - The title slide introducing the video's topic.
+*   **0:17 - 0:21**: "WHAT WILL WE LEARN?" - A transition slide introducing the learning objectives.
+*   **0:21 - 0:38**: "What Will We Learn?" - Outlines the two main questions the video will answer regarding identifying procedures and verifying conditions.
+*   **0:38 - 2:24**: "Some Preliminary Information..." - Provides an overview of the two major types of inference: Confidence Intervals and Significance Tests, and relates them to upcoming units.
+*   **2:24 - 2:28**: "LET'S LOOK AT AN EXAMPLE" - A transition slide moving to a practical application.
+*   **2:28 - 3:50**: "Verifying Signatures" - Presents a word problem about citizens proposing new laws and verifying the signatures of registered voters.
+*   **3:50 - 4:26**: "Identifying the Procedure" - Explains how to determine the correct statistical procedure, concluding that a "one-sample z interval for a population proportion" is needed.
+*   **4:26 - 5:11**: "Checking the Conditions" - Details the general conditions that must be met before performing calculations (independence and shape of the sampling distribution).
+*   **5:11 - 6:27**: "Checking the Conditions" - Specifies the exact conditions required for a one-sample z interval for a population proportion.
+*   **6:27 - 8:03**: "Checking the Conditions" (Continued) - Applies the previously learned conditions directly to the "Verifying Signatures" example to see if they are met.
+*   **8:03 - 8:06**: "LET'S PRACTICE" - A transition slide for a practice problem.
+*   **8:06 - 9:21**: "Checking the Conditions, Part 2" - Introduces a modified version of the signature problem to practice verifying conditions when they might not all be met.
+*   **9:21 - 9:25**: "WHAT SHOULD WE TAKE AWAY?" - A transition slide for the video's conclusion.
+*   **9:25 - 10:12**: "Key Takeaways" - Summarizes the two main learning objectives covered in the video.
+*   **10:12 - 10:19**: "Thank you." - The final closing slide.

@@ -1,0 +1,18 @@
+
+
+
+Here's a breakdown of the slides in the video, along with their timestamps and descriptions:
+
+*   **0:00 - 0:15**: **Title Slide**. Introduces the topic: "Constructing a Confidence Interval for a Population Proportion."
+*   **0:15 - 0:28**: **What Will We Learn?** Outlines the two main goals of the video: determining the margin of error and calculating the confidence interval.
+*   **0:28 - 1:11**: **Let's Look at an Example**. Presents a scenario involving verifying signatures for a proposition to provide context for the calculations.
+*   **1:11 - 1:45**: **Some Preliminary Information...** Explains why sample proportions will vary and why an interval estimate (confidence interval) is preferred over a point estimate.
+*   **1:45 - 2:41**: **Calculating the Margin of Error**. Introduces the general formula for a confidence interval and defines the margin of error and its two main factors.
+*   **2:41 - 3:33**: **Standard Error Formula**. Explains the "standard error of a statistic" component of the margin of error and shows how to calculate it for a sample proportion using $\hat{p}$.
+*   **3:33 - 4:03**: **Critical Value Definition**. Defines the "critical value" component of the margin of error and how it relates to the desired confidence level.
+*   **4:03 - 4:27**: **Finding the Critical Value**. Shows a standard normal distribution curve to illustrate how to find the critical value ($z^* = 1.96$) for a 95% confidence interval.
+*   **4:27 - 5:20**: **Calculating the Confidence Interval**. Combines all the formulas and walks through the full calculation using the numbers from the initial signature verification example.
+*   **5:20 - 5:51**: **Formula Sheet**. Displays the relevant sections of the AP Statistics formula sheet that provide the formulas needed for these calculations.
+*   **5:51 - 6:26**: **Calculating the Number of Valid Signatures**. Shows how to apply the calculated confidence interval (which is a proportion) to the total population to estimate a raw count or number of successes.
+*   **6:26 - 6:56**: **What Should We Take Away?** Summarizes the key takeaways, presenting the final formulas for the margin of error and the confidence interval.
+*   **6:56 - 7:16**: **Thank you.** A brief closing slide.

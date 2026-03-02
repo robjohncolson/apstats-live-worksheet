@@ -1,0 +1,70 @@
+
+
+
+Here is a transcription of the video, complete with timestamps:
+
+**0:00 - 0:13**
+School in Tucson, Arizona. Here with a video about topic 6.1 introducing statistics. Why be normal? In this video, we'll introduce you to the logic of significance testing for a population proportion.
+
+**0:13 - 0:28**
+Let's start by talking about what you'll learn in this video. You'll be able to answer two questions. First, how do we identify evidence for a claim? And second, how do we determine if the evidence for a claim is convincing?
+
+**0:28 - 0:43**
+Let's start by looking at an example. Does green equal more natural? Well, many companies use the color green in the packaging of a product to suggest that it's healthier or more natural than other similar products.
+
+**0:43 - 1:11**
+To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white, but unknown to the taste testers was the fact that both cups contained the same brand of lemonade.
+
+**1:11 - 1:19**
+Of the 30 students, 18 stated that the lemonade in the green cup tasted more natural.
+
+**1:19 - 1:44**
+Do these data provide convincing evidence that students associate the color green with being more natural? Over the next four units, you'll see that phrasing a lot. Do the data provide convincing evidence of such and such, some claim? This video is to introduce you to the logic of significance testing that you'll be talking about in unit six, seven, eight, and nine. You'll see this phrasing a lot.
+
+**1:44 - 1:56**
+Before we talk about whether the evidence is convincing though, we need to think about what the evidence is. So what is the evidence that students associate the color green with being more natural?
+
+**1:56 - 2:16**
+Well, if the color of the cup had no effect on which cup they chose, then we'd expect 50% of the students would pick the green cup. However, in the study, p hat was 18 out of 30, or 60%. And that's more than 50%. So there is evidence that students associate the color green with being more natural.
+
+**2:16 - 2:54**
+But is that evidence convincing? Well, before we get there, we have to think about the two possible explanations for the evidence that the students found. First possible explanation for why they got 60% instead of 50% is that the color of the cups really did have no effect on the subject's choice and the researchers got a value of 60% just by chance alone. Of course, there's another explanation for why they got 60%. That is that students do associate the color green with being more natural. Okay, that's the claim. Now how do we find if there's convincing evidence for that?
+
+**2:54 - 3:22**
+Well, we have to know how likely it would be to get a sample proportion of 60% or more by chance alone. That is assuming that the color has no effect on the choice that the student makes. If it's pretty unlikely to get 60% or higher by chance alone, well, then we can rule out explanation number one, which leaves us with explanation two. And we could say that there's convincing evidence for explanation two in that case.
+
+**3:22 - 3:45**
+Well, let's figure out how likely it is to get a sample proportion of 60% or more by chance alone. To do that, we're going to do a simulation where we assume that the true proportion is 50%, that is p equals 0.5, and the sample size is 30. And we want to see if getting sample proportions of 60% or higher is common or uncommon.
+
+**3:45 - 4:08**
+So, because we're assuming it's a 50-50 chance, we can simulate this using coin flips. So let's imagine flipping a coin 30 times and recording the proportion of heads. That's equivalent to running this experiment or this study 30 times and recording the number of people who choose the green cup. Again, assuming that the color of the cup has no influence on the cup that's chosen.
+
+**4:08 - 4:24**
+So, in one set of 30 flips, we got 14 out of 30 heads. That's a sample proportion of 0.467. And here's that dot is on a beginnings of a sampling distribution of the sample proportion who would choose the green cup.
+
+**4:24 - 4:36**
+In a different set of 30 flips, we might get 17 out of 30. That's a sample proportion of 0.567. And you can see that dot now appearing on our simulated sampling distribution.
+
+**4:36 - 4:51**
+One more time, here's a set of 30 flips where we only got 12 out of 30 heads. That's a sample proportion of 40%. So far, we haven't gotten any sample proportions of 60% or more by chance alone. But of course we've only tried three times.
+
+**4:51 - 5:06**
+Let's up the number of samples to 100. So here's the results of 100 trials of this simulation. Again, assuming that there's a 50-50 chance of choosing the green cup and that we'll go through the process 30 times.
+
+**5:06 - 5:22**
+Here's what we get. No surprise that the distribution is centered around 50% and sometimes it's lower, sometimes it's higher just by chance. Well, how often did we get 60%? It looks like about I don't know, about 15 or 16 dots there that are 60% or higher.
+
+**5:22 - 5:37**
+In fact, it's 16. So in 16 of the 100 simulated trials, p-hat was 60% or greater. In other words, the probability of getting a p-hat of 0.6 or more is roughly 16 out of 100.
+
+**5:37 - 5:57**
+Now, let's revisit the two explanations for this study. Remember, they got 60% in their actual study. Why did that happen? Well, it could be that the color of the cups had no effect and the researchers got that value by chance alone, or it could be that students do associate the color green with being more natural.
+
+**5:57 - 6:21**
+Well, because it's somewhat likely, that is 16 out of 100 times, to get a sample proportion of p-hat of 0.6 or higher just by chance alone when the truth is 50%, we can't rule out explanation one. And because we can't rule out explanation one, these data do not provide convincing evidence that students at this school associate the color green with being more natural.
+
+**6:21 - 7:14**
+Let's wrap this up by talking about what you should have learned in this video. First, how do we identify evidence for a claim? Well, we show that the results of a study are consistent with that claim. And second, how do we determine if the evidence for a claim is convincing? Well, we consider the two explanations for the evidence. The two explanations are always random chance or there's a real effect. Second, we estimate the probability of getting evidence as strong or stronger than the observed evidence by chance alone. And finally, if you can eliminate random chance as a plausible explanation for the evidence, the evidence for that claim is convincing. You're gonna see this logic repeated all throughout unit six, seven, eight, and nine. So the sooner it becomes natural to you, the better off you're gonna be.
+
+**7:14 - 7:22**
+This has been Josh Tabor. Thanks for tuning in.
