@@ -1,0 +1,37 @@
+
+
+
+Here's a transcription of the video, complete with timestamps:
+
+**0:00 - 0:20**
+This is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about topic 6.3, justifying a claim based on a confidence interval for a population proportion. In this video, we'll illustrate the entire process of constructing and interpreting a confidence interval for a population proportion. 
+
+**0:20 - 0:30**
+Let's start by talking about what you'll learn in this video. In this video, you'll learn how to construct and interpret a confidence interval for a population proportion. 
+
+**0:30 - 1:03**
+So let's practice. In this case, we're going to actually use an AP exam problem from the 2010 International exam. It goes like this: A husband and wife, Mike and Lori, share a digital music player that has a feature that randomly selects which songs to play. A total of 2,384 songs were loaded onto the player, some by Mike and the rest by Lori. Suppose that when the player was in random selection mode, 13 of the first 50 songs selected were songs loaded by Lori. 
+
+**1:03 - 1:30**
+Part (a) of this question says, construct and interpret a 90% confidence interval for the proportion of songs on the player that were loaded by Lori. This question type is actually very common on the AP exam. Nearly every AP exam will have a question that says something like, "construct and interpret a blank percent confidence interval for something." In this case, it happens to be for a population proportion. 
+
+**1:30 - 1:52**
+Sometimes that's the entirety of the question. In this case, there's a part (b). Here's what part (b) says: Mike and Lori are unsure about whether the player samples the songs with replacement or without replacement when the player is in random selection mode. Explain why this distinction is not important for the construction of the interval in part (a). 
+
+**1:52 - 2:30**
+So let's take a look at how to solve this problem. Again, part (a) asks us to construct and interpret a 90% confidence interval for the proportion of songs on the player that were loaded by Lori. The first step when you're constructing and interpreting a confidence interval like this is to define the parameter that you're trying to estimate. In this case, we're using a 90% confidence interval to estimate p, the proportion of all songs on the player that were loaded by Lori. The next step is to identify the procedure that we're going to use to create this confidence interval. This is a one-sample z-interval for p. 
+
+**2:30 - 3:20**
+After we've identified the procedure, the next step is to check the conditions to make sure that that procedure is valid. So here are the conditions for this confidence interval. The first condition is that it's a random sample of songs, and that was stated in the question stem. The second condition is that the sample size, in this case 50, is less than or equal to 10% of the population size. And in this problem, they give us the population size of 2,384, so it's easy to verify that the sample size is less than 10% of the population size. Finally, the third condition is that both the number of successes, 13 in this case, and the number of failures, 37, those numbers are both greater than or equal to 10. So all three conditions have been met, we can proceed to calculations. 
+
+**3:20 - 4:26**
+To do the calculations, we need to first understand what the value of p-hat is. In this case, p-hat is 13 out of 50, or 0.26. We use that value as the center of our confidence interval. That's our point estimate or our statistic. We also need to calculate the margin of error. In this case, the confidence interval is 0.26 plus or minus the critical value. The critical value here is 1.645 because we're asked for a 90% confidence interval. And then the standard error is the square root of 0.26 * (1 - 0.26) / 50. Using your calculator to simplify, we get 0.26 plus or minus 0.102. That 0.102 is the margin of error. Finally, that gives us an interval from 0.158 to 0.362. Now, you've noticed that I've used the formula here to calculate the confidence interval. Likely you have a graphing calculator that will also calculate the interval for you. Make sure to check with your teacher about which procedure your teacher would like you to use on tests in your class. 
+
+**4:26 - 5:00**
+The final step after we've constructed the interval is to interpret it. So here, we are 90% confident that the interval from 0.158 to 0.362 captures the proportion of all songs on the player that were loaded by Lori. That is the full process of constructing and interpreting a confidence interval. Again, make sure you define the parameter, identify the procedure, check the conditions, do the calculations, and finally interpret your interval in the context of this problem. That's part (a). 
+
+**5:00 - 6:03**
+Now let's look again at part (b). It says that Mike and Lori are unsure about whether the player samples the songs with replacement or without replacement when the player is in random selection mode. Explain why this distinction is not important for the construction of the interval in part (a). Let's take a look at a model solution. It says when sampling without replacement, the formula for the standard deviation of the sampling distribution of p-hat will overestimate the actual value of the standard deviation unless the sample size is small relative to the population size. You learned this fact in Topic 5.5 when we were studying sampling distributions for a sample proportion. Now, in this case, the sample of size 50 is much less than 10% of the population size of 2,384, so we can use this formula as if we were sampling with replacement. So in this case, it doesn't matter whether we're sampling with or without replacement because the 10% condition has been satisfied. 
+
+**6:03 - 7:12**
+Let's summarize what you should have learned in this video. Here are some key takeaways about constructing and interpreting a confidence interval for a proportion. When you're doing this, make sure that you first define the parameter you're trying to estimate. Next, identify the procedure that you're using. In this case, it was a one-sample z-interval for a population proportion. Next, verify that the conditions for the procedure are met, with evidence. You can't just say conditions are met, check. You have to give evidence based on the numbers and the words in the question. Next, calculate the confidence interval. And finally, interpret the interval in context. Note that you do not need to interpret the confidence level, that is, what does it mean to be 90% confident. You don't need to do that unless you're specifically asked to interpret the confidence level. In fact, when students try to do that, they often mess up and lose points. So make sure you're answering the question that was asked. This has been Josh Tabor. Thanks for tuning in.

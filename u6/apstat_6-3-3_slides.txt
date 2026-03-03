@@ -1,0 +1,50 @@
+
+
+
+Here is a slide-by-slide description of the video, including timestamps for when each slide is displayed and its progressive animations:
+
+**0:00 - 0:20 | Title Slide**
+The video starts with a title slide for "TOPIC 6.3 Claims: Confidence Intervals for Population Proportions" under "DAILY VIDEO 3." It features the AP Statistics logo and a brief sentence indicating the video will cover the process of constructing and interpreting a confidence interval. The presenter, Josh Tabor, is visible in the top right corner. 
+
+**0:20 - 0:30 | What Will We Learn?**
+The slide transitions to a blue background with the text "WHAT WILL WE LEARN?". At 0:24, the slide changes to a white background and bullet points appear, explaining that students will learn how to construct and interpret a confidence interval for a population proportion.
+
+**0:30 - 0:33 | Let's Practice**
+A brief transition slide appears with a blue background and the text "LET'S PRACTICE."
+
+**0:33 - 1:52 | Practice Problem: 2010 B #4**
+*   **0:33:** The problem context is introduced, detailing a scenario about Mike and Lori sharing a digital music player with 2,384 loaded songs, where 13 out of a random sample of 50 songs were loaded by Lori.
+*   **1:04:** Part (a) of the question appears on the slide, asking to construct and interpret a 90% confidence interval for the proportion of songs loaded by Lori.
+*   **1:35:** Part (b) of the question replaces part (a) on the screen, asking why the distinction between sampling with or without replacement is not important for this interval construction.
+
+**1:52 - 3:20 | Solving Part (a) - Setup & Conditions**
+*   **1:52:** A new blank slide titled "2010 B #4, part (a)" appears.
+*   **2:08:** The first step is revealed: defining the parameter (a 90% confidence interval for *p* = the proportion of all songs loaded by Lori).
+*   **2:26:** The procedure is identified: "One-sample z interval for *p*".
+*   **2:37:** The "Conditions" header appears. Over the next 40 seconds, the slide animates to check off three conditions: a random sample of songs, the 10% condition (50 ≤ 10% of 2384), and the Large Counts condition (13 successes and 37 failures are both ≥ 10). 
+
+**3:20 - 5:02 | Solving Part (a) - Calculations & Interpretation**
+*   **3:20:** The screen clears under the title to make room for the math.
+*   **3:25:** The sample proportion calculation appears ($\hat{p} = 13/50 = 0.26$).
+*   **3:36:** The confidence interval formula is written out using the specific numbers from the problem ($0.26 \pm 1.645 \sqrt{\frac{0.26(1-0.26)}{50}}$).
+*   **3:56:** The formula is simplified to show the margin of error ($0.26 \pm 0.102$).
+*   **4:05:** The final calculated interval is displayed ($0.158 \text{ to } 0.362$). 
+*   **4:30:** The final text block appears at the bottom, providing the written interpretation of the confidence interval in the context of the problem.
+
+**5:02 - 6:04 | Solving Part (b)**
+*   **5:02:** The slide transitions to "2010 B #4, part (b)" and displays the prompt regarding sampling with vs. without replacement. 
+*   **5:20:** The model solution paragraph appears below the prompt. It explains that because the sample size of 50 is less than 10% of the population size of 2,384, the formula can be used as if sampling with replacement without significantly overestimating the standard deviation.
+
+**6:04 - 6:07 | What Should We Take Away?**
+A blue transition slide appears with the text "WHAT SHOULD WE TAKE AWAY?".
+
+**6:07 - 7:04 | Key Takeaways**
+This slide provides a summary list for constructing and interpreting confidence intervals. Under the header "Make sure to:", bullet points animate in one by one:
+*   **6:14:** Define the parameter you are trying to estimate.
+*   **6:19:** Identify the procedure you are using.
+*   **6:27:** Verify that the conditions for the procedure are met (with evidence!).
+*   **6:40:** Calculate the confidence interval.
+*   **6:43:** Interpret the interval in context. A sub-bullet point appears at 6:46 reminding students that they do not need to interpret the *confidence level* unless specifically asked.
+
+**7:04 - 7:12 | Outro**
+The final slide features a blue background with the text "Thank you." and the College Board logo at the bottom.

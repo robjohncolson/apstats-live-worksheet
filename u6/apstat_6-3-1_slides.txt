@@ -1,0 +1,38 @@
+
+
+
+Here is a breakdown of each slide in the video, including timestamps and a description of the visual content:
+
+**0:00 - 0:16** 
+**Title Slide:** Displays "TOPIC 6.3 Claims: Confidence Intervals for Population Proportions" along with the AP Statistics logo. A subtitle reads "DAILY VIDEO 1: In this video, we will discuss how to interpret a confidence interval for a population proportion and use the interval to justify a claim."
+
+**0:17 - 0:34**
+**"WHAT WILL WE LEARN?" Slide:** Lists the two main learning objectives for the video:
+1. How do we interpret a confidence interval for a population proportion?
+2. How do we justify a claim based on a confidence interval for a population proportion?
+
+**0:35 - 1:22**
+**"LET'S LOOK AT AN EXAMPLE" / Verifying Signatures:** Introduces a word problem about "Proposition 100." It details a scenario where city administrators randomly select 500 out of 9,388 submitted signatures to verify if they came from registered voters (finding 364 valid ones). It asks to calculate and interpret a 95% confidence interval.
+
+**1:23 - 2:20**
+**Interpreting the Confidence Interval:** Provides a general fill-in-the-blank template for interpreting confidence intervals: *"We are C% confident that the interval from ___ to ___ captures the [population parameter]."* It then shows the filled-in template for the specific Proposition 100 example using the interval 0.689 to 0.767.
+
+**2:21 - 3:15**
+**Justifying a Claim:** Shows the math used to justify whether the supporters have enough valid signatures. It calculates the required proportion of valid signatures (6000/9388 = 0.639) and states that because all values in the confidence interval are greater than 0.639, there is convincing evidence that they have enough signatures.
+
+**3:16 - 4:31**
+**"LET'S PRACTICE" / Will Proposition 100 Pass?:** Introduces a practice problem. A news program reports a 95% confidence interval of 0.518 ± 0.044 for the proportion of voters planning to vote for the proposition. It asks the viewer to (a) interpret the interval and (b) determine if there is convincing evidence of a majority. 
+
+**4:32 - 5:05**
+**Practice Solution (Part A):** Shows the step-by-step math to convert 0.518 ± 0.044 into an interval (0.474 to 0.562). It then displays the written interpretation of this specific interval in context.
+
+**5:06 - 5:54**
+**Practice Solution (Part B):** Answers whether there is a majority. It explains that because the interval (0.474 to 0.562) includes 0.5 and values less than 0.5, there is *not* convincing evidence that a majority of voters plan to vote for the proposition.
+
+**5:55 - 6:41**
+**"WHAT SHOULD WE TAKE AWAY?" / Key Takeaways:** Summarizes the two main lessons:
+1. The standard template for interpreting a confidence interval.
+2. The rule for justifying a claim (if *all* values are consistent with the claim, there is convincing evidence; if *one or more* values are inconsistent, there is not convincing evidence).
+
+**6:42 - 6:50**
+**Closing Slide:** Displays a blue screen with the text "Thank you." and the CollegeBoard logo.

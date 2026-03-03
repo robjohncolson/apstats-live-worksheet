@@ -1,0 +1,21 @@
+
+
+
+Here is a description of each slide in the video, along with their timestamps:
+
+*   **00:00 - 00:22 | Title Slide**
+    The video begins with a title slide displaying "TOPIC 6.3", "Claims: Confidence Intervals for Population Proportions", and "DAILY VIDEO 2". It also features the AP Statistics logo and a brief summary of the video's focus. 
+*   **00:23 - 00:44 | "What Will We Learn?"** 
+    This slide outlines the two main learning objectives for the video: 
+    1) How to interpret the confidence level of a confidence interval for a population proportion.
+    2) How the sample size and confidence level affect the margin of error.
+*   **00:45 - 04:05 | "Let's Look at an Example" / "Sampling From a High School"**
+    The slide introduces a word problem about a high school where 30% of 2,000 students have a driver's license. The presenter simulates taking samples of 50 students. The visual progressively builds a graph showing multiple calculated confidence intervals plotted along a number line. Intervals that successfully capture the true proportion (0.30) are shown in green, while intervals that miss are shown in red. 
+*   **04:06 - 06:14 | "Interpreting Confidence Level"**
+    This slide provides the formal definition of a confidence level in repeated random sampling. It then displays a large text block applying this definition directly to the high school driver's license example. To highlight a common misunderstanding, the visual brings back the stacked interval chart to explain that a specific, already-calculated interval has either a 100% chance (probability = 1) or a 0% chance (probability = 0) of containing the true proportion.
+*   **06:15 - 08:10 | "Factors That Affect the Margin of Error"**
+    The presenter breaks down the structure of a confidence interval (`Point estimate ± margin of error`). The slide then lists the two ways to decrease the margin of error: having a larger sample size and having a smaller confidence level. This is visually supported by the mathematical formula for margin of error, showing where the sample size (`n`) and critical value (`z*`) are located in the equation.
+*   **08:11 - 08:49 | "What Should We Take Away?" / Key Takeaways**
+    This summary slide recaps the answers to the two primary questions introduced at the start of the video, reinforcing the interpretation of a confidence level and the factors that change the size of the margin of error.
+*   **08:50 - 08:59 | Closing Slide**
+    The final slide simply says "Thank you." above the CollegeBoard logo.

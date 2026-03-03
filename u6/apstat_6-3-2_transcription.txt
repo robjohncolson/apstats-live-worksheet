@@ -1,0 +1,50 @@
+
+
+
+Here is a transcription of the video, with timestamps included:
+
+**00:00** - Josh Tabor, from Canyon del Oro High School in Tucson, Arizona. Here with a video about Topic 6.3: Justifying a claim based on a confidence interval for a population proportion. In this video, we'll discuss how to interpret a confidence level and the factors that affect the margin of error in a confidence interval for a population proportion.
+
+**00:23** - Let's start by talking about what you'll learn in this video. You'll be able to answer two questions. First, how do we interpret the confidence level of a confidence interval for a population proportion? And second, how do the sample size and confidence level affect the margin of error for a confidence interval for a population proportion?
+
+**00:45** - Let's look at an example. This example actually goes all the way back to unit 5, topic 5.5, when we were talking about the sampling distribution of the sample proportion, p-hat. Well, in a high school with 2000 students, 30% of the students have a driver's license. Suppose we select a random sample of 50 students from the high school, ask each student in the sample if he or she has a driver's license, and then calculate a 95% confidence interval for the proportion of all students with a driver's license.
+
+**01:19** - Well, one possible sample might give us a p-hat of 12 over 50. That's a sample proportion of 0.24. That leads to a 95% confidence interval from 0.12 to 0.36. 
+
+**01:32** - Here's what that looks like visually. Notice I've got p-hat in green. It's centered above 0.24. And the green bars that extend on either side, that represents the margin of error. And so you can see the interval goes from as low as 0.12 to as much as 0.36. It's in green because that interval captures 0.3. Remember, 30% is the known true population parameter. Okay? We know that 30% of students in this school have a driver's license. And this interval included 30% as one of the plausible values. So we say that that interval worked, or captured the true proportion.
+
+**02:13** - Let's take a look at another sample. In this sample, we get a p-hat of 0.38, which leads to a 95% confidence interval from 0.25 to 0.51. Again, that is in green because the interval includes the true proportion of 0.3.
+
+**02:31** - Here's another sample. In this case, p-hat is 16 over 50, or 0.32. That gives us a 95% confidence interval of 0.19 to 0.45. Still in green because this interval also includes 0.30. Now, not all intervals are going to include 0.30. Occasionally, we'll get a really unusual value of p-hat that leads to an interval that doesn't include 0.3. Like this next one.
+
+**02:58** - In this case, p-hat is 22 over 50, or 0.44. That gives us a confidence interval of 0.302 (oh, just missed!) to 0.578. Notice it's in red because that interval does not include 0.30.
+
+**03:14** - Well, what would happen if we kept doing this? Here's some examples of additional samples, okay? Different samples give different values of p-hat. They give us different confidence intervals. But you can see that most of the intervals are green because most of the intervals capture the true proportion.
+
+**03:31** - In fact, so far, 13 out of 14, or 93% of the intervals have captured p equals 0.30, the proportion of all students with a driver's license. So if we continued this process and we made lots more intervals, then we'd say about 95% of those intervals would capture the true proportion. That's what we mean by 95% confidence. So if the confidence level is 0.95, you know that if you took lots of samples and used those samples to make lots of intervals, that about 95% of those intervals would end up capturing the true proportion.
+
+**04:06** - So, that's how we interpret a confidence level. In repeated random sampling with the same sample size, approximately C% of "C%" confidence intervals will capture the population proportion.
+
+**04:20** - So in this case, we might say that if we took many random samples of size 50 from the population of students at this high school and we used each sample to construct a 95% confidence interval for the proportion of all students with a driver's license, then about 95% of those intervals would capture the population proportion. Not every single interval will capture it. Again, occasionally you'll get a really unusual sample. But if you're calculating your margin of error with a 95% confidence level, then about 95% of those intervals will indeed capture the true proportion, assuming the conditions have been met.
+
+**04:56** - Now, the confidence level describes what happens in repeated sampling, if you take lots and lots of samples. It does not (ALL CAPS NOT) give the probability that a particular interval captures the population proportion. This is a really common misunderstanding that gets assessed on the AP exam, usually in a multiple choice question. 
+
+**05:18** - So let me give you an example. This interval that I'm pointing at right here right at the top, that interval captures 0.30 with a probability of 1. It doesn't have a probability of 0.95, for example, of capturing the true proportion. The interval is what it is, 0.30 is what it is. Neither of those are moving. That interval is going to always capture 30%. Uh, so the probability of that interval working is 1.
+
+**05:43** - Now what about the red interval over there? That interval captures 0.30 with probability 0. There's zero chance that that interval captures 0.30. The interval is stable, 0.30 is stable, neither are moving, it's never going to capture it. So the probability of that interval working is zero. So that's an important distinction. Confidence level doesn't tell you the probability that a particular interval captures the true proportion. Once you've calculated the interval, it either does work or doesn't work.
+
+**06:15** - Now let's talk about factors that affect the margin of error. Recall that confidence intervals in AP Statistics have the following structure: The confidence interval is the point estimate plus or minus the margin of error. Now note that the width of a confidence interval is twice the margin of error. And that's because we subtract and add the margin of error to our point estimate.
+
+**06:36** - We generally prefer narrow confidence intervals. That is, estimates that are more precise. So we want the margin of error to be small. So there's two common ways to decrease the margin of error. Assuming everything else remains the same, the margin of error will be smaller when...
+
+**06:54** - 1) The sample size is larger. And you can see that from the formula. In the margin of error formula, you can see the sample size is in the denominator. So when you increase n, the margin of error is going to get smaller. Okay? So for a population proportion, the width of the interval is proportional to 1 over square root n. So, key idea: that means you have to quadruple the sample size, or multiply the sample size by 4, in order to cut the margin of error in half.
+
+**07:25** - Now the second factor that affects the margin of error. Assuming everything else stays the same, the margin of error is going to be smaller when...
+
+**07:31** - 2) The confidence level is smaller. That is, if we want to say a 90% confidence level instead of a 95% confidence level. Why is that? Well the confidence level determines our critical value, our z-star value. And we know that the critical value for 90% confidence is 1.645. That's smaller than the critical value for 95% confidence, which is 1.96. So that makes the 90% confidence interval more narrow than the 95% confidence interval. Which makes sense, because it only needs to be wide enough to work 90% of the time. If you want 95% of the intervals to work, they have to be wider to give them more confidence.
+
+**08:12** - All right, let's take a look at what you should have learned in this video. First, how do we interpret the confidence level of a confidence interval for a population proportion? Well we say in repeated random sampling with the same sample size, approximately C% of C% confidence intervals will capture the population proportion.
+
+**08:32** - Second, how do the sample size and confidence level affect the margin of error for a confidence interval for a population proportion? Well assuming everything else stays the same, increasing the sample size will decrease the margin of error. But increasing the confidence level will increase the margin of error.
+
+**08:50** - This has been Josh Tabor. Thanks for tuning in.

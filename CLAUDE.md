@@ -32,6 +32,9 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u6_lesson1-2_live.html` | Live worksheet for Topics 6.1–6.2 (Why Be Normal? & Constructing CI for p) |
 | `ai-grading-prompts-u6-l1-2.js` | Rubrics for Unit 6 L1-2 AI grading (significance testing logic, CI conditions, calculation, sample size) |
 | `u6_l1_l2_blooket.csv` | Blooket quiz (35 questions) for Unit 6 L1-2 conceptual reinforcement (significance testing logic, CI for proportions) |
+| `u6_lesson3_live.html` | Live worksheet for Topic 6.3 (Justifying a Claim Based on a CI for p) |
+| `ai-grading-prompts-u6-l3.js` | Rubrics for Unit 6 L3 AI grading (CI interpretation, confidence level, ME factors, 5-step process) |
+| `u6_l3_blooket.csv` | Blooket quiz (35 questions) for Unit 6 L3 conceptual reinforcement (CI interpretation, justifying claims, ME factors) |
 | `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
 | `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
 | `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |
@@ -152,3 +155,32 @@ See `STATE_MACHINES.md` for detailed diagrams. Key flows:
 2. **AI Grading** - Click → Build Prompt → API Call → Display Feedback
 3. **Appeal System** - Disagree → Form → Submit → Upgraded/Maintained
 4. **Grading State** - Empty → Graded → Appealed (up to 3x) → Exhausted
+
+## Cross-Agent Delegation
+
+CC and Codex can invoke each other as subagents via the Agent repo's runner.
+
+**Delegate implementation to Codex:**
+```bash
+python "C:/Users/rober/Downloads/Projects/Agent/runner/cross-agent.py" \
+  --direction cc-to-codex \
+  --task-type implement \
+  --prompt "Your task description" \
+  --working-dir "C:/Users/rober/Downloads/Projects/school/follow-alongs" \
+  --owned-paths "path/to/file.html" \
+  --timeout 120
+```
+
+**Ask CC a design question (from Codex):**
+```bash
+python "C:/Users/rober/Downloads/Projects/Agent/runner/cross-agent.py" \
+  --direction codex-to-cc \
+  --task-type design-question \
+  --prompt "Your question" \
+  --working-dir "C:/Users/rober/Downloads/Projects/school/follow-alongs" \
+  --timeout 60
+```
+
+**Task types**: `implement`, `review`, `investigate`, `validate`, `design-question`
+**Flags**: `--dry-run` (preview, no tokens), `--read-only`, `--owned-paths`
+When the user asks to delegate work to Codex, use the runner — don't ask the user to copy-paste.
