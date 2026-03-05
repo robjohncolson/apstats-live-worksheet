@@ -1,0 +1,27 @@
+
+
+
+Based on the flow of the video and the transcript provided, here is a description of each slide along with its corresponding timestamp:
+
+*   **[00:00] Title Slide: "TOPIC 6.4 Setting Up a Test for a Population Proportion"** 
+    The instructor introduces himself and the topic of the video, which is how to state null and alternative hypotheses for a significance test.
+*   **[00:20] "What Will We Learn?"** 
+    This slide outlines the two main objectives of the video: learning how to state a null hypothesis and an alternative hypothesis for a population proportion test.
+*   **[00:40] "Let's Look at an Example"** 
+    A brief transition slide introducing the upcoming context.
+*   **[00:43] "Does Green = More Natural?"** 
+    This slide describes a study where 30 students are asked to taste lemonade from a green cup and a white cup to see if the color green makes the drink taste "more natural." 
+*   **[01:36] "Null Hypothesis"** 
+    The slide defines the null hypothesis as a claim of "no difference" or "no change." It explains how this applies to the lemonade example and introduces the symbolic notation ($H_0: p = 0.50$).
+*   **[02:43] "Alternative Hypothesis"** 
+    This slide explains that the alternative hypothesis is the claim researchers hope to support. It demonstrates how to write it symbolically for the lemonade study ($H_a: p > 0.50$) since researchers want to know if *more* than 50% choose the green cup.
+*   **[03:46] "Stating Hypotheses"** 
+    A slide listing general rules and common pitfalls for writing hypotheses. It covers why the null hypothesis always contains an "equal to" sign, explains the difference between one-sided ($<$ or $>$) and two-sided ($\neq$) alternative hypotheses, and stresses the importance of using population parameters ($p$) rather than sample statistics ($\hat{p}$).
+*   **[05:49] "Let's Practice"** 
+    A brief transition slide for the practice section.
+*   **[05:52] Practice Problem: "Stating Hypotheses"** 
+    This slide presents a word problem about the proportion of adults in a specific town whose favorite sport is football compared to a 40% national average. The video pauses for the viewer to answer, and then the instructor reveals and walks through the correct two-sided hypothesis solution ($H_0: p = 0.40$ and $H_a: p \neq 0.40$).
+*   **[07:52] "What Should We Take Away?" / Key Takeaways** 
+    A summary slide that recaps the general symbolic formulas used for both the null hypothesis and the three possible forms of the alternative hypothesis. 
+*   **[08:33] "Thank you."** 
+    The final conclusion screen of the video.

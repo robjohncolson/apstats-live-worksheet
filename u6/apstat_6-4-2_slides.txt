@@ -1,0 +1,28 @@
+
+
+
+Here's a breakdown of each slide in the video, including timestamps for when they appear and when new information is revealed:
+
+*   **00:00 - 00:20**: The video opens with a title slide for "TOPIC 6.4 Setting Up a Test for a Population Proportion", labeled as "DAILY VIDEO 2".
+*   **00:20 - 00:39**: A "WHAT WILL WE LEARN?" slide lists the two main learning objectives: identifying the appropriate procedure and verifying the conditions for a significance test for a population proportion.
+*   **00:39 - 01:34**: An example slide titled "Does Green = More Natural?" describes a study where 30 students tasted lemonade from green and white cups to see if color affects perceived naturalness. At **01:21**, the null ($H_0: p = 0.50$) and alternative ($H_a: p > 0.50$) hypotheses are added to the screen.
+*   **01:34 - 02:37**: The "Identifying the Procedure" slide initially explains that there are various significance test procedures. At **02:04**, text appears stating that a *one-sample z test for a population proportion* is the specific procedure used for testing a claim about successes in a single population.
+*   **02:37 - 04:15**: The "Checking the Conditions" slide starts by outlining general conditions like independence and proper sampling distribution shape.
+    *   At **03:09**, it updates to show the specific checks for a one-sample z test: random sampling, the 10% rule ($n \le 10\%$ of population), and the large counts condition ($np_0 \ge 10$ and $n(1-p_0) \ge 10$).
+    *   At **03:50**, a note appears highlighting that the third condition uses the null hypothesis value ($p_0$), distinguishing it from confidence interval checks.
+*   **04:15 - 05:28**: The presentation returns to the lemonade study to practically check the conditions. The slide fills in sequentially with checkmarks:
+    *   **04:30**: Condition 1 (random selection) is verified.
+    *   **04:35**: Condition 2 (the 10% rule) is assumed to be met.
+    *   **04:58**: Condition 3 (large counts) is calculated and verified using $p_0 = 0.5$.
+    *   **05:20**: A concluding statement, "The conditions are met," appears.
+*   **05:28 - 05:31**: A blue transition slide titled "LET'S PRACTICE" is shown.
+*   **05:31 - 06:39**: A new "Checking Conditions" slide presents a practice problem involving a mayor investigating the proportion of adults whose favorite sport is football. The step-by-step verification appears on screen:
+    *   **06:05**: Condition 1 is checked.
+    *   **06:12**: Condition 2 is checked.
+    *   **06:21**: Condition 3 calculations are shown using $p_0 = 0.4$.
+    *   **06:36**: The conclusion, "The conditions are met," is displayed.
+*   **06:39 - 06:42**: A blue transition slide titled "WHAT SHOULD WE TAKE AWAY?" is shown.
+*   **06:42 - 07:26**: The "Key Takeaways" slide recaps the lesson by answering the two initial questions:
+    *   At **06:48**, it states to use a "one-sample z test".
+    *   Starting at **06:58**, it lists the three necessary conditions to verify (random sample, 10% rule, and large counts).
+*   **07:26 - 08:00**: The final slide displays a simple "Thank you." on a blue background.
