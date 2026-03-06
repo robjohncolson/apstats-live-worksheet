@@ -1,0 +1,50 @@
+# Video 1 — Transcript
+# Unit 6, Lesson 5
+
+
+[00:00] Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about topic 6.5, interpreting p-values. In this video, we'll discuss how to calculate a test statistic and how to calculate a p-value for a significance test for a population proportion.
+
+[00:18] Let's start by talking about what you'll learn in this video. First, how do we calculate an appropriate test statistic in a test for a population proportion? And second, how do we calculate a p-value in a test for a population proportion?
+
+[00:34] Let's start by looking at an example. This example might be familiar to you. To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white. Unknown to the taste testers was the fact that both cups contained the same brand of lemonade. Of the 30 students, 18 stated that the lemonade in the green cup tasted more natural.
+
+[01:13] From previous videos, here's what we learned. We learned that the null hypothesis was p equals 0.5, and the alternative is p greater than 0.5, where p is the proportion of all students at the school that would choose the green cup. We also learned that the conditions were met for this one-sample z-test for a population proportion.
+
+[01:33] Let's move on now and talk about how to do the calculations. So in our lemonade study, we got a p-hat of 18 over 30. That's 60%, or a proportion of 0.6. This gives us evidence for the alternative because the value of p-hat, 0.6, is greater than the null hypothesis value of 0.5, and it's consistent with the direction of the alternative hypothesis. Our question now is whether that evidence is convincing.
+
+[02:00] To figure that out, we need to know how likely it is to get evidence for the alternative this strong or even stronger just by chance when the null hypothesis is true. In other words, it's possible that the null is true, and we just got a sample proportion of 0.6 by chance alone. How likely is that? Well, that's the goal of calculating a test statistic and a p-value.
+
+[02:22] So after verifying that the conditions are met, which we did in the previous video, we go ahead and calculate the standardized test statistic. In general, here's what a standardized test statistic looks like. It's the sample statistic minus the null value of the parameter over the standard deviation of the statistic. That kind of looks like a z-score. And in fact, it is a z-score.
+
+[02:46] So here's what it looks like for a specific test about a population proportion. The standardized test statistic is z equals p-hat, that's our statistic, minus p sub zero, that's our null value, over the standard deviation of the statistic, which we learned from the sampling distribution unit is square root p sub zero times one minus p sub zero over n. Note again that we're using p sub zero in our calculations instead of p-hat there for the standard deviation because we're assuming the null hypothesis is true until we're convinced otherwise.
+
+[03:21] So this again specifies that p sub zero is the null hypothesis value. Now for our data, remember we got a sample proportion of 0.6 and our null hypothesis is 0.5. So in the numerator, we have 0.6 minus 0.5. In the denominator, we have our standard deviation, which is square root 0.5 times one minus 0.5 over 30. Simplifying all that, we get a z-score of 1.10. That is, a proportion of 0.6 is only about 1.1 standard deviations greater than the mean. Not that unusual.
+
+[03:56] Good news. The information you need to calculate the test statistic is available on the formula sheet. And remember, you get the formula sheet on both the multiple choice and the free response portions of the AP exam.
+
+[04:08] So here's where we look. At the bottom of the first page, we see information about sampling distributions and inferential statistics. The very first thing listed is the standardized test statistic. Notice it's in a little bit of an abbreviated form from the previous slide, where it's statistic minus parameter over standard error of the statistic. Remember, standard deviation and standard error are somewhat interchangeable. The standard deviation is what you would get if you calculated it using the true values or the population values. The standard error is what you get if you have to use data from the sample to estimate it.
+
+[04:42] So what do we use in this case? Well, on the next page of the formula sheet, you have a listing of the standard deviations and the standard errors for these statistics. So you can see we're looking at the line that says for the random variable p-hat, a single proportion. And you've got options. You've got the standard deviation of p-hat being p times one minus p over n under the square root, and the standard error being square root p-hat one minus p-hat over n. So the general rule is that if you know the true value, you use it. So in this case, we're assuming that the null value is the true value. And so we'll use the formula on the left with the null value as the value of p.
+
+[05:23] Now, once we've calculated the standardized test statistic, we want to use a standard normal distribution to calculate the p-value. The p-value is the proportion of values in the null distribution that are as extreme or more extreme than the observed value of the test statistic in the direction of the alternative.
+
+[05:42] So because our alternative hypothesis is that p is greater than 0.5, we want to know how likely is it to get a value, a z-score, greater than or equal to 1.10. That's the value of our standardized test statistic. Well, anytime you do a calculation involving a normal distribution, it's a good idea to draw a picture.
+
+[06:00] So here's our standard normal distribution with our boundary value of 1.10 identified, and shaded to the right again because our alternative hypothesis is suggesting that it's p greater than 0.5. Now using table A or technology, you can get that probability, now called a p-value, of 0.1357.
+
+[06:23] Now here's a chance for you to practice. A newspaper reports that 40% of adults in the U.S. would say that football is their favorite sport. The mayor of a town wonders if the proportion of adults in the town who would say football is their favorite sport differs from the national proportion. To investigate, the mayor selected a random sample of 100 adults in the town and found that 29 named football as their favorite sport. Calculate the standardized test statistic and p-value. Go ahead and pause the video and try to do these calculations yourself.
+
+[06:58] Okay, now that you're back, let's take a look. From previous videos, remember that the null hypothesis is p equals 0.4 and the alternative is p not equal to 0.4, where p is the proportion of all adults in the town who would say football is their favorite sport. And remember, we verified that the conditions were met in a previous video.
+
+[07:19] So for calculating the test statistic, we need to start with the value of p-hat. P-hat equals 0.29. So using the formula for the test statistic, we get a z of 0.29 minus 0.4 over square root 0.4 1 minus 0.4 over 100. We get a z-score of negative 2.25. So that value of 0.29 is more than two standard deviations less than the mean. That's pretty unusual.
+
+[07:44] Well, now we need to turn it into a p-value. And there's one special distinction that you need to make that you may not have known about when you tried it yourself. And that is, when we're doing a two-sided test, that is when our alternative hypothesis is not equal to, we need to find area in both tails of the standard normal curve. We need to find the probability of getting a z-score less than or equal to negative 2.25 and the probability of getting a z-score greater than or equal to positive 2.25 because evidence in either direction is evidence for the alternative when we have a two-sided test.
+
+[08:21] Well, using table A or technology, we get a p-value of 0.0122 plus 0.0122. Or just take one of those values and double it, and you get the p-value of 0.0244.
+
+[08:37] Let's summarize what you should have learned in this video. One, how do we calculate an appropriate test statistic in a test for a population proportion? Here's our formula: z equals p-hat minus p sub zero over square root p sub zero one minus p sub zero over n. And how do we calculate a p-value in a test for a population proportion? Well, if our alternative is a greater than, we calculate the probability of getting a z-score greater than our observed test statistic. If our alternative is a less than, we calculate the probability of getting a z-score less than or equal to our observed test statistic. And if the alternative is p not equal to a specific number, then we find the p-value by finding two times the area in the tail, either tail, the lower end or the upper end.
+
+[09:24] This has been Josh Tabor. Thanks for tuning in.
+
+thumb_up
+thumb_down

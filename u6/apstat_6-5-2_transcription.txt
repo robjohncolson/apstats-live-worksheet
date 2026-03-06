@@ -1,0 +1,28 @@
+# Video 2 — Transcript
+# Unit 6, Lesson 5
+
+
+[00:00] Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona. Here with a video about topic 6.5, Interpreting p-Values. In this video, we'll discuss how to interpret a p-value for a significance test for a population proportion. Let's start by talking about what we'll learn in this video. You'll be able to answer one question: how do we interpret the p-value in a test for a population proportion? And even though this is only one question, it's a really important question.
+
+[00:32] So let's take a look at an example. To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white. Unknown to the taste testers was the fact that both cups contained the same brand of lemonade. Of the 30 students, 18 stated that the lemonade in the green cup tasted more natural.
+
+[01:07] So, in previous videos we've done a lot of work with this context. We know that the null hypothesis is that p equals 0.5, and the alternative is that p is greater than 0.5, where p is the proportion of all students at the school who would choose the green cup. We also know that the conditions have been met, that the standardized test statistic is z equals 1.10, and that our p-value is 0.1357. The goal of this video is to understand what that value, 0.1357, what it measures.
+
+[01:38] So, let's talk specifically about interpreting that p-value. So, in the lemonade study, we got a p-hat of 18 out of 30, or 0.6. And we already said that this is evidence for the alternative because the value of p-hat, 0.6, is greater than 0.5, the null value. A p-value measures how likely it is to get evidence for the alternative as strong as or even stronger than the observed evidence by chance alone when the null is true.
+
+[02:06] So in this case, we would say something like this: assuming that 50% of all students at this school would choose the green cup, there is a 0.1357 probability of getting a sample proportion of 0.6 or greater by chance alone in a random sample of 50 students from this school.
+
+[02:26] Let's take a minute and dissect this interpretation. The first line, the line that says "assuming 50% of all the students at this school would choose the green cup," that's a statement that the null hypothesis is true. You can think of a p-value as a conditional probability, where the condition is that the null hypothesis is true, and you always have to include that fact when you're interpreting a p-value. Then you also talk about how likely it is to get evidence as strong as or stronger than the observed evidence. So it's not just a 0.1357 probability of getting a sample proportion of exactly 0.6, it's the probability of getting a sample proportion of 0.6 or greater. If you watch the previous video, you remember we did a calculation involving a normal curve, where we found the area greater than the z-score of 1.10, not just equal to a z-score of 1.10.
+
+[03:20] Now, here's a chance for you to practice interpreting a p-value. A newspaper reports that 40% of adults in the US would say football is their favorite sport. The mayor of a town wonders if the proportion of adults in the town who would say football is their favorite sport differs from the national proportion. To investigate, the mayor selected a random sample of 100 adults in the town and found that 29 named football as their favorite sport. Interpret the p-value of 0.0244. Go ahead and pause the video and give this a try.
+
+[03:58] Okay, now that you're back, let's see how you did. Remember from previous videos, the null hypothesis is p equals 0.4, and the alternative is p not equal to 0.4, where p is the proportion of all adults in the town who would say football is their favorite sport. Also remember that the conditions have been met, and that the z-score—standardized test statistic that is—is negative 2.25, and the p-value, like that was mentioned earlier, is 0.0244. So here's the interpretation of that number.
+
+[04:30] Assuming that 40% of all adults in the town would say that football is their favorite sport, there is a 0.0244 probability of getting a sample proportion as extreme as or more extreme than 0.29 in either direction by chance alone in a random sample of 100 adults in this town.
+
+[04:52] So let's dissect this interpretation briefly. The first sentence, or pardon me, the first clause, is our statement that the null hypothesis is true. That's important when you're interpreting a p-value. Then it goes on to say that there's a 0.0244 probability of getting a sample proportion as extreme as or more extreme—the more extreme gives us the area in the tails—than 0.29 in either direction. Remember, we're not just finding the probability that it's less than 0.29; we have to find the probability that it's that extreme or more in either direction because the alternative hypothesis is not equal to, or two-sided.
+
+[05:32] All right, let's summarize what you should have learned in this vid
+
+thumb_up
+thumb_down

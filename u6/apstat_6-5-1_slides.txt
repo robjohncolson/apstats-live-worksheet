@@ -1,0 +1,523 @@
+# Video 1 — Slide Descriptions
+# Unit 6, Lesson 5
+
+
+[00:00] — Title Slide
+Text on screen:
+6.5: Interpreting p-Values
+How do we calculate a test statistic and p-value?
+AP Statistics
+Josh Tabor
+
+[00:18] — What will you learn?
+Text on screen:
+
+How do we calculate an appropriate test statistic in a test for a population proportion?
+
+How do we calculate a p-value in a test for a population proportion?
+
+[00:34] — Green lemonade
+Text on screen:
+To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each subject was asked to taste 2 cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white. Unknown to the taste testers was the fact that both cups contained the same brand of lemonade.
+
+Of the 30 students, 18 stated that the lemonade in the green cup tasted more natural.
+
+[01:13] — Green lemonade (Hypotheses and Conditions)
+Text on screen (below the paragraph from the previous slide):
+From previous videos, we learned that:
+
+𝐻
+0
+:
+𝑝
+=
+0.5
+H
+0
+	​
+
+:p=0.5
+
+𝐻
+𝑎
+:
+𝑝
+>
+0.5
+H
+a
+	​
+
+:p>0.5
+
+where 
+𝑝
+p
+ is the proportion of all students at the school that would choose the green cup.
+
+The conditions were met for a one-sample 
+𝑧
+z
+ test for a population proportion.
+
+[01:33] — Green lemonade (Calculations & Questioning Evidence)
+Text on screen:
+We got 
+𝑝
+^
+=
+18
+30
+=
+0.60
+p
+^
+	​
+
+=
+30
+18
+	​
+
+=0.60
+.
+This gives us evidence for 
+𝐻
+𝑎
+:
+𝑝
+>
+0.5
+H
+a
+	​
+
+:p>0.5
+ because the value of 
+𝑝
+^
+=
+0.60
+p
+^
+	​
+
+=0.60
+ is greater than the null value of 0.5.
+Is this evidence convincing?
+
+We need to know how likely it is to get evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ this strong or stronger just by chance when 
+𝐻
+0
+H
+0
+	​
+
+ is true.
+
+That is the goal of calculating a test statistic and a p-value.
+
+[02:22] — The test statistic
+Text and formulas on screen:
+After verifying the conditions are met, calculate the standardized test statistic.
+
+Boxed formula:
+
+Standardized test statistic
+=
+Statistic
+−
+Null value of parameter
+Standard deviation of statistic
+Standardized test statistic=
+Standard deviation of statistic
+Statistic−Null value of parameter
+	​
+
+
+For a specific test about a population proportion, the standardized test statistic is
+
+𝑧
+=
+𝑝
+^
+−
+𝑝
+0
+𝑝
+0
+(
+1
+−
+𝑝
+0
+)
+𝑛
+z=
+n
+p
+0
+	​
+
+(1−p
+0
+	​
+
+)
+	​
+
+	​
+
+p
+^
+	​
+
+−p
+0
+	​
+
+	​
+
+
+Annotations pointing to the formula:
+
+An arrow from "Statistic" points to 
+𝑝
+^
+p
+^
+	​
+
+.
+
+An arrow from "Null value" points to 
+𝑝
+0
+p
+0
+	​
+
+.
+
+An arrow from "Standard deviation of statistic" points to the denominator 
+𝑝
+0
+(
+1
+−
+𝑝
+0
+)
+𝑛
+n
+p
+0
+	​
+
+(1−p
+0
+	​
+
+)
+	​
+
+	​
+
+. Below this arrow is the note: (uses null value, assuming 
+𝐻
+0
+H
+0
+	​
+
+ is true).
+
+[03:21] — The test statistic (Calculation for example)
+Text and formula on screen:
+For our data:
+
+𝑧
+=
+𝑝
+^
+−
+𝑝
+0
+𝑝
+0
+(
+1
+−
+𝑝
+0
+)
+𝑛
+=
+0.60
+−
+0.50
+0.50
+(
+1
+−
+0.50
+)
+30
+=
+1.10
+z=
+n
+p
+0
+	​
+
+(1−p
+0
+	​
+
+)
+	​
+
+	​
+
+p
+^
+	​
+
+−p
+0
+	​
+
+	​
+
+=
+30
+0.50(1−0.50)
+	​
+
+	​
+
+0.60−0.50
+	​
+
+=1.10
+
+[03:56] — Formula sheet check
+Text on screen:
+Good news! The information you need to calculate the test statistic is available on the formula sheet!
+
+[04:08] — AP Statistics Formula Sheet Excerpt (Page 1)
+An image of section "III. Sampling Distributions and Inferential Statistics" from the AP formula sheet is shown.
+A red box highlights the formula:
+
+Standardized test statistic
+=
+statistic
+−
+parameter
+standard error of the statistic
+Standardized test statistic=
+standard error of the statistic
+statistic−parameter
+	​
+
+
+Added text on screen: (Standard deviation and Standard error are somewhat interchangeable)
+
+[04:42] — AP Statistics Formula Sheet Excerpt (Page 2)
+An image of the "Sampling Distributions and Inferential Statistics (continued)" table from the AP formula sheet is shown.
+A red box highlights the row for "Random Variable: 
+𝑝
+^
+p
+^
+	​
+
+, a single proportion".
+The standard deviation column shows 
+𝑝
+(
+1
+−
+𝑝
+)
+𝑛
+n
+p(1−p)
+	​
+
+	​
+
+.
+The standard error of sample statistic column shows 
+𝑝
+^
+(
+1
+−
+𝑝
+^
+)
+𝑛
+n
+p
+^
+	​
+
+(1−
+p
+^
+	​
+
+)
+	​
+
+	​
+
+.
+
+Added text on screen: (Use the null value as the true value!) with an arrow pointing to the Standard Deviation formula.
+
+[05:23] — Finding a p-value
+Text on screen:
+Use a standard normal distribution to calculate the p-value.
+
+The p-value is the proportion of values in the null distribution that are as extreme or more extreme than the observed value of the test statistic in the direction of the alternative.
+
+Because our alternative hypothesis is 
+𝐻
+𝑎
+:
+𝑝
+>
+0.5
+H
+a
+	​
+
+:p>0.5
+, we want to know how likely it is to get 
+𝑧
+≥
+1.10
+z≥1.10
+. (A note points to 
+𝑧
+z
+ saying "test stat").
+
+A graph of a standard normal distribution (mean 0) is shown. A vertical line is placed at 1.10 on the x-axis, and the area under the curve to the right of 1.10 is shaded blue.
+
+Below the graph:
+Using Table A or technology, p-value = 0.1357.
+
+[06:23] — Your turn to practice
+Text on screen:
+A newspaper reports that 40% of adults in the U.S. would say that football is their favorite sport. The mayor of a town wonders if the proportion of adults in the town who would say football is their favorite sport differs from the national proportion. To investigate, the mayor selected a random sample of 100 adults in the town and found that 29 named football as their favorite sport. Calculate the standardized test statistic and p-value.
+
+A pause icon appears in the bottom right corner.
+
+[06:58] — Your turn to practice (Solution steps)
+Added text below the problem description:
+From previous videos, we learned that:
+
+𝐻
+0
+:
+𝑝
+=
+0.4
+H
+0
+	​
+
+:p=0.4
+
+𝐻
+𝑎
+:
+𝑝
+≠
+0.4
+H
+a
+	​
+
+:p
+
+=0.4
+
+where 
+𝑝
+p
+ is the proportion of all adults in the town who would say football is their favorite sport.
+
+The conditions were met for a one-sample 
+𝑧
+z
+ test for a population proportion.
+
+𝑝
+^
+=
+0.29
+p
+^
+	​
+
+=0.29
+
+
+𝑧
+=
+0.29
+−
+0.40
+0.40
+(
+1
+−
+0.40
+)
+100
+=
+−
+2.25
+z=
+100
+0.40(1−0.40)
+	​
+
+	​
+
+0.29−0.40
+	​
+
+=−2.25
+
+[07:44] — Your turn to practice (p-value calculation)
+The text on screen is replaced with:
+When 
+𝐻
+𝑎
+H
+a
+	​
+
+ is 
+𝑝
+≠
+p
+
+=
+ a number, find the a
+
+thumb_up
+thumb_down

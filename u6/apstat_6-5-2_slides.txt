@@ -1,0 +1,225 @@
+# Video 2 — Slide Descriptions
+# Unit 6, Lesson 5
+
+
+[00:00] — TOPIC 6.5 Interpreting p-Values
+The title slide for the video is displayed, showing "AP Statistics", "TOPIC 6.5 Interpreting p-Values", and "DAILY VIDEO 2". Subtext reads: "In this video, we will discuss how to interpret the p-value for a significance test for a population proportion."
+
+[00:18] — WHAT WILL WE LEARN?
+A blue transition slide displaying the text "WHAT WILL WE LEARN?".
+
+[00:22] — What Will We Learn?
+A slide showing the main objective for the video.
+Text displayed:
+"1. How do we interpret the p-value in a test for a population proportion?"
+
+[00:32] — LET'S LOOK AT AN EXAMPLE
+A blue transition slide displaying the text "LET'S LOOK AT AN EXAMPLE".
+
+[00:35] — Does Green = More Natural?
+A slide presenting the context for the first example problem.
+Text displayed:
+"To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white. Unknown to the taste testers was the fact that both cups contained the same brand of lemonade. Of the 30 students, 18 stated that the lemonade in the green cup tasted more natural."
+
+[01:07] — Does Green = More Natural?
+The descriptive text is removed and replaced with the statistical breakdown of the study from previous videos.
+Text displayed:
+"From previous videos:
+
+𝐻
+0
+:
+𝑝
+=
+0.50
+H
+0
+	​
+
+:p=0.50
+ vs. 
+𝐻
+𝑎
+:
+𝑝
+>
+0.50
+H
+a
+	​
+
+:p>0.50
+, where 
+𝑝
+=
+p=
+ the proportion of all students at this school who would choose the green cup.
+
+Conditions are met.
+
+𝑝
+^
+=
+0.60
+p
+^
+	​
+
+=0.60
+, 
+𝑧
+=
+1.10
+z=1.10
+, and 
+𝑝
+p
+-value 
+=
+0.1357
+=0.1357
+"
+
+[01:38] — Interpreting the p-value
+A new slide begins the interpretation of the results.
+Text displayed:
+"In the lemonade study, 
+𝑝
+^
+=
+18
+30
+=
+0.60
+p
+^
+	​
+
+=
+30
+18
+	​
+
+=0.60
+. This is evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ because 
+𝑝
+^
+=
+0.60
+>
+0.50
+p
+^
+	​
+
+=0.60>0.50
+."
+
+[01:55] — Interpreting the p-value
+The general definition of a p-value is added to the slide.
+Text displayed:
+"The 
+𝑝
+p
+-value measures how likely it is to get evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ as strong as or stronger than the observed evidence by chance alone when 
+𝐻
+0
+H
+0
+	​
+
+ is true."
+
+[02:06] — Interpreting the p-value
+The specific written interpretation for the lemonade study is added to the slide.
+Text displayed:
+"“Assuming 50% of all students at this school would choose the green cup, there is a 0.1357 probability of getting a sample proportion of 0.60 or greater by chance alone in a random sample of 50 students from this school.”" (Note: The slide text says "50 students" despite the earlier problem stating a sample size of 30).
+
+[03:20] — LET'S PRACTICE
+A blue transition slide displaying the text "LET'S PRACTICE".
+
+[03:25] — Favorite Sport
+A slide presenting a new practice problem for the viewer to try.
+Text displayed:
+"A newspaper reports that 40% of adults in the U.S. would say football is their favorite sport. The mayor of a town wonders if the proportion of adults in the town who would say football is their favorite sport differs from the national proportion. To investigate, the mayor selected a random sample of 100 adults in the town and found that 29 named football as their favorite sport. Interpret the p-value of 0.0244."
+
+[04:02] — Favorite Sport
+The descriptive text is removed and replaced with the statistical breakdown of the problem.
+Text displayed:
+"From previous videos:
+
+𝐻
+0
+:
+𝑝
+=
+0.40
+H
+0
+	​
+
+:p=0.40
+ vs. 
+𝐻
+𝑎
+:
+𝑝
+≠
+0.40
+H
+a
+	​
+
+:p
+
+=0.40
+, where 
+𝑝
+=
+p=
+ the proportion of all adults in the town who would say football is their favorite sport.
+
+Conditions are met.
+
+𝑝
+^
+=
+0.29
+p
+^
+	​
+
+=0.29
+, 
+𝑧
+=
+−
+2.25
+z=−2.25
+, and 
+𝑝
+p
+-value 
+=
+0.0244
+=0.0244
+."
+
+[04:30] — **Favorite Spor
+
+thumb_up
+thumb_down

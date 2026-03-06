@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * ⚠️  DORMANT — Gemini 3.1 Pro has zero free API quota as of March 2026.
+ * This script cannot be used with the model needed for video transcription.
+ * The working alternative is: Agent/scripts/aistudio-ingest.mjs (CDP browser automation)
+ * Keep this script for future use if Gemini 3.1 Pro API quota becomes available.
+ */
+
+/**
  * video-ingest.mjs — Transcribe + describe slides from AP Classroom videos
  * Uses Gemini 3.1 Pro via free API tier
  *
