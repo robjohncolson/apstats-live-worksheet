@@ -1,0 +1,315 @@
+# Video 1 — Slide Descriptions
+# Unit 6, Lesson 7
+
+edit
+more_vert
+
+[00:00] — TOPIC 6.7: Potential Errors When Performing Tests
+Title slide with the text:
+"TOPIC 6.7
+Potential Errors When Performing Tests
+DAILY VIDEO 1
+In this video, we will discuss how to identify and interpret Type I and Type II errors."
+There is an icon of a bridge and "AP Statistics" on the left. The speaker is in a small box in the top right corner.
+
+[00:12] — WHAT WILL WE LEARN?
+A transition slide with a solid blue background and large white text reading "WHAT WILL WE LEARN?".
+
+[00:16] — What Will We Learn?
+A white slide with a title. A numbered list appears, building step-by-step:
+
+At [00:16], point 1 appears: "1. How do we identify Type I and Type II errors?"
+
+At [00:21], point 2 appears: "2. How do we interpret Type I and Type II errors?"
+
+[00:26] — Type I and Type II Errors
+The slide begins with the text: "There are two possible conclusions we can make in a significance test:"
+The rest of the slide builds up text dynamically:
+
+At [00:32]: "Conclusion 1: If the p-value 
+≤
+𝛼
+≤α
+, we reject 
+𝐻
+0
+H
+0
+	​
+
+. In this case, there is convincing statistical evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+."
+
+At [00:46]: "If we find convincing evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ but 
+𝐻
+0
+H
+0
+	​
+
+ is actually true, then we made a Type I error."
+
+At [00:54]: "A Type I error occurs when the null hypothesis is true and is rejected (false positive)."
+
+At [01:08], the bottom three blocks of text clear and are replaced by the second scenario: "Conclusion 2: If the p-value > 
+𝛼
+α
+, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. In this case, there is not convincing statistical evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+."
+
+At [01:17]: "If we don't find convincing evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ but 
+𝐻
+0
+H
+0
+	​
+
+ is actually false, then we made a Type II error."
+
+At [01:30]: "A Type II error occurs when the null hypothesis is false and is not rejected (false negative)."
+
+[01:40] — Table of Errors
+A graphic table is displayed to summarize decisions vs. reality.
+
+Columns (Actual Population Value): "
+𝐻
+0
+H
+0
+	​
+
+ true" and "
+𝐻
+𝑎
+H
+a
+	​
+
+ true".
+
+Rows (Decision): "Reject 
+𝐻
+0
+H
+0
+	​
+
+" and "Fail to Reject 
+𝐻
+0
+H
+0
+	​
+
+".
+
+Grid Cells:
+
+Reject 
+𝐻
+0
+H
+0
+	​
+
+ + 
+𝐻
+0
+H
+0
+	​
+
+ true = Type I Error
+
+Reject 
+𝐻
+0
+H
+0
+	​
+
+ + 
+𝐻
+𝑎
+H
+a
+	​
+
+ true = Correct Decision
+
+Fail to Reject 
+𝐻
+0
+H
+0
+	​
+
+ + 
+𝐻
+0
+H
+0
+	​
+
+ true = Correct Decision
+
+Fail to Reject 
+𝐻
+0
+H
+0
+	​
+
+ + 
+𝐻
+𝑎
+H
+a
+	​
+
+ true = Type II Error
+
+A citation at the bottom reads: "Source: AP Statistics Course and Exam Description. Effective Fall 2020"
+
+[02:27] — LET'S LOOK AT AN EXAMPLE
+A transition slide with a solid blue background and large white text.
+
+[02:32] — Does Green = More Natural? (Scenario)
+A paragraph describes an experiment:
+"To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white. Unknown to the taste testers was the fact that both cups contained the same brand of lemonade. Describe a Type I and a Type II error in this context. Which error is more consequential?"
+
+At [03:06], the hypotheses are added below the text:
+"From previous videos:
+
+𝐻
+0
+H
+0
+	​
+
+: 
+𝑝
+=
+0.50
+p=0.50
+ vs. 
+𝐻
+𝑎
+H
+a
+	​
+
+: 
+𝑝
+>
+0.50
+p>0.50
+, where 
+𝑝
+p
+ = the proportion of all students at this school who would choose the green cup."
+
+[03:20] — Does Green = More Natural? (Identifying the Errors)
+The paragraph clears, leaving the title. The errors are defined in context:
+
+At [03:20]: "Type I: The researchers find convincing evidence that more than 50% of all students at this school would choose the green cup, but the actual percentage is 50%."
+
+At [03:41]: "Type II: The researchers do not find convincing evidence that more than 50% of all students at this school would choose the green cup, but the actual percentage is more than 50%."
+
+[04:03] — Does Green = More Natural? (Consequences)
+The previous text clears, and the slide addresses the question of consequence. Text builds up:
+
+At [04:03]: "Which error is more consequential?"
+
+At [04:06]: "If these student researchers get hired in a marketing department:"
+
+At [04:16]: Bullet 1: "A Type I error would lead them to use green in the branding of food and beverage items when people don't actually associate green with being more natural. This seems low risk, unless green ink costs a lot."
+
+At [04:39]: Bullet 2: "A Type II error would lead them to not use green in the branding of food and beverage items when people actually associate green with being more natural. This would result in a loss of potential sales."
+
+At [05:04]: Bullet 3: "Type II is more consequential because a Type I error isn't very harmful, but a Type II error would reduce income."
+
+[05:25] — WHAT SHOULD WE TAKE AWAY?
+A transition slide with a solid blue background and large white text.
+
+[05:29] — Key Takeaways
+The slide summarizes the video's objectives and answers them point-by-point:
+
+At [05:29]: "1. How do we identify Type I and Type II errors?"
+
+At [05:33]: "A Type I error occurs when the null hypothesis is true and is rejected (false positive)."
+
+At [05:41]: "A Type II error occurs when the null hypothesis is false and is not rejected (false negative)."
+
+At [05:49]: "2. How do we interpret Type I and Type II errors?"
+
+At [05:52]: "Type I: We find convincing evidence that [
+𝐻
+𝑎
+H
+a
+	​
+
+ in context], when 
+𝐻
+𝑎
+H
+a
+	​
+
+ isn't actually true."
+
+At [06:07]: "Type II: We don't find convincing evidence that [
+𝐻
+𝑎
+H
+a
+	​
+
+ in context], when 
+𝐻
+𝑎
+H
+a
+	​
+
+ is actually true."
+
+[06:16] — Thank you.
+A solid blue slide with "Thank you." in large white text and the CollegeBoard logo at the bottom. The speaker finishes his sign-off.
+
+thumb_up
+thumb_down

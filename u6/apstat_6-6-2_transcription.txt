@@ -1,0 +1,58 @@
+# Video 2 — Transcript
+# Unit 6, Lesson 6
+
+edit
+more_vert
+
+[00:00] Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona, here with a video about topic 6.6, concluding a test for a population proportion. In this video, we'll illustrate the entire process of performing a significance test for a population proportion.
+
+[00:19] What will we learn? Well, we'll go through all the steps for performing a complete significance test for a population proportion.
+
+[00:28] We're gonna practice using an actual AP exam question from the 2005 AP Statistics exam. Some boxes of a certain brand of breakfast cereal include a voucher for a free video rental inside the box. The company that makes the cereal claims that a voucher can be found in 20% of the boxes.
+
+[00:48] However, based on their experiences eating this cereal at home, a group of students believes that the proportion of boxes with vouchers is less than 0.2. This group of students purchased 65 boxes of the cereal to investigate the company's claim.
+
+[01:04] The students found a total of 11 vouchers for free video rentals in the 65 boxes. Suppose that it is reasonable to assume that the 65 boxes purchased by the students are a random sample of all boxes of this cereal. Based on this sample, is there support for the students' belief that the proportion of boxes with vouchers is less than 0.2?
+
+[01:26] Provide statistical evidence to support your answer. Let's take a look at the steps that you'd need to complete to get full credit on this AP exam item.
+
+[01:37] The first step is to state the hypotheses. Here the null hypothesis is p = 0.20. That is, there's no difference in reality from what the company claims. The company claims there's vouchers in 20% of the boxes, so that's what the null hypothesis says.
+
+[01:54] The alternative hypothesis specifies what we think or what we suspect might be true. In this case, this group of skeptical students thinks that the company is trying to rip them off by not putting vouchers in as many boxes as they say. So they think the proportion is less than 0.2.
+
+[02:10] After you've stated the hypotheses, it's very important that you define the parameter that you used in those hypotheses. In this case, p is the proportion of all boxes of this cereal that have a voucher.
+
+[02:22] The next step is to identify the significance level that you'll use. If there's one stated in the problem, obviously you use that one. In this case there was no significance level stated, so we'll use the most common value, alpha = 0.05.
+
+[02:37] After that, you wanna identify the procedure that you're gonna use for this test. In this case it's a one-sample z-test for a proportion.
+
+[02:46] Then check the conditions for the test to make sure it's valid. The first condition is that it's a random sample of boxes. We were told that that's a reasonable assumption.
+
+[02:56] The second condition is that we have to assume the sample size of 65 is less than or equal to 10% of the population size. Well, we assume that there's more than 650 boxes of this cereal out there, so it's a very reasonable assumption.
+
+[03:11] The third condition has to do with the sample size, and we check n times p sub zero and n times 1 minus p sub zero, making sure that both of those numbers are greater than or equal to 10. So n is the sample size, that's 65, and p sub zero is the null hypothesis value of p, that is 0.2.
+
+[03:30] So here we get 65 times 0.2 is 13, that's greater than or equal to 10. And 65 times 1 minus 0.2 is 52, that's also greater than or equal to 10. A common mistake would be to use the value of p-hat here instead of the value of p sub zero. Don't make that mistake.
+
+[03:48] After we've checked the conditions, we can move on to calculations. So here we get a p-hat of 11 over 65 or 0.169. That is evidence for the alternative because it's less than 0.2, like the students expected. Whether it's convincing evidence or not, we still have to decide. We do that by calculating a test statistic and a p-value.
+
+[04:09] So here's our test statistic. We get a z of 0.169 minus 0.2 over square root 0.2 times 1 minus 0.2 over 65. And that equals negative 0.62. In other words, our p-hat value is only about 0.6 standard deviations below the mean. That's not very unusual.
+
+[04:30] To calculate exactly how unusual that is, we do a normal distribution calculation to get the p-value. So whenever we're doing this calculation, we should start by drawing a picture. And because we want to find... well, because our alternative is that p is less than 0.2, we want to find the probability that z is less than or equal to negative 0.62.
+
+[04:51] Here's what that looks like on a standard normal curve. Finishing this up, you can use technology or table A to get that probability. In fact, on your graphing calculator, you probably have an option to do this significance test and have the calculator do all the calculations for you. You'll need to check with your teacher to see what is appropriate for your class.
+
+[05:14] Now that we have our p-value of 0.2676, we make our conclusion. In this case, because the p-value of 0.2676 is greater than our significance level of 0.05, we fail to reject the null.
+
+[05:28] There is not convincing statistical evidence that the proportion of all boxes of this cereal with vouchers is less than 0.2. So even though our sample proportion was less than 0.2, it was close enough that the difference could have just been random chance.
+
+[05:44] All right, what should you take away from this video? Well, when we're performing a complete significance test for a population proportion, there's a lot of things to do, and you need to generate those things yourself. The question is unlikely to prompt you to do each of these steps.
+
+[06:00] So here's what you need to do. You need to make sure to state the null and alternative hypotheses, making sure to define the parameter. Second, identify the significance level. Third, identify the procedure you're using. In this case it was a one-sample z-test for p.
+
+[06:17] Verify that the conditions for the procedure are met, and show evidence. Calculate the test statistic and p-value. And finally, make a conclusion based on the p-value. Note that you do not need to interpret the p-value unless you're specifically asked.
+
+[06:33] This has been Josh Tabor. Thanks for tuning in.
+
+thumb_up
+thumb_down

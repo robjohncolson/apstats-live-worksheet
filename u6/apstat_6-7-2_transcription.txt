@@ -1,0 +1,144 @@
+# Video 2 — Transcript
+# Unit 6, Lesson 7
+
+edit
+more_vert
+
+[00:00] Hi. This is Josh Tabor from Canyon del Oro High School in Tucson, Arizona.
+
+[00:05] Here with a video about Topic 6.7: Potential Errors When Performing Tests.
+
+[00:10] In this video, we'll discuss power and the factors that affect the probabilities of Type I and Type II errors.
+
+[00:19] Let's talk about what you'll learn in this video.
+
+[00:22] First, how do we calculate the probabilities of Type I and Type II errors?
+
+[00:27] And second, what factors affect the power of a test and the probabilities of errors in significance testing?
+
+[00:34] Alright, let's start with Type I errors.
+
+[00:36] When the null hypothesis is true, the probability of a Type I error is equal to the significance level.
+
+[00:43] That is, the probability of a Type I error equals alpha.
+
+[00:48] Now, because the significance level alpha is the probability of a Type I error, the consequences of a Type I error should influence our choice of significance level.
+
+[00:58] Obviously, a Type I error is an error, so we never want to make errors. But you have to think about the relative importance of Type I errors versus Type II errors when you're thinking about the significance level.
+
+[01:08] So, why not make alpha equals .0000001 to minimize the probability of a Type I error?
+
+[01:17] Well, if alpha is that small, it's going to be extremely difficult to find convincing evidence for the alternative. That in turn makes a Type II error much, much, much more likely.
+
+[01:27] So all other things being equal, decreasing the probability of a Type I error actually increases the probability of a Type II error.
+
+[01:36] So, that's why in the last video we talked about the consequences of both Type I and Type II errors and thought about which one is worse. That will affect your choice in significance level.
+
+[01:46] Now, let's talk about power and Type II errors. In many contexts, a Type II error is more consequential.
+
+[01:54] I say this because in most research, researchers are trying to show that the alternative is true.
+
+[02:00] And if they make a Type II error, that means they didn't find convincing evidence the alternative is true, when it really is. So their suspicions were correct. They just didn't get the data to back up their suspicions.
+
+[02:11] So for a researcher, a Type II error is really bad news.
+
+[02:15] Well, they came up with a word to talk about the probability of avoiding a Type II error. And that word is power.
+
+[02:22] So power is the probability of avoiding a Type II error.
+
+[02:26] The power of a test, then, is the probability that a test will correctly reject a false null hypothesis.
+
+[02:34] Notice it says 'correctly' there. Power is one of, uh, describes a correct decision. So the null hypothesis is false, and our data suggests that it's false, gives us convincing evidence that it's false.
+
+[02:45] So power is the probability that we find convincing evidence for the alternative, when the alternative really is true.
+
+[02:53] That means the probability of a Type II error is 1 minus the power.
+
+[02:58] Remember if power is the probability we avoided a Type II error, then 1 minus the, ah, power is the probability of a Type II error.
+
+[03:06] Now let's look at an example to put this in context.
+
+[03:10] To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school.
+
+[03:19] Each student was asked to taste two cups of lemonade in random order and state which one tasted more natural.
+
+[03:25] One of the cups was green and the other cup was white.
+
+[03:28] And unknown to the taste testers was the fact that both cups contained the same brand of lemonade.
+
+[03:35] From previous videos, remember that we talked about the null hypothesis being p equals 0.50 and the alternative, p greater than 0.50.
+
+[03:44] where p is the proportion of all students at this school who would choose the green cup.
+
+[03:49] Now suppose that researchers used a significance level of 0.05 and that the power of the test against an alternative of p equals 0.64 is 0.45.
+
+[04:00] Interpret the power in context. Then find the probability of a Type I and a Type II error.
+
+[04:07] So before we answer these questions, I want to re-read the question because that first sentence might sound a little confusing.
+
+[04:14] It says, suppose that the researchers used a significance level of 0.05. Well, that's pretty standard.
+
+[04:19] And that the power of the test against an alternative of p equals 0.64 is 0.45.
+
+[04:26] So we're saying the power is 0.45 and it's that number for the specific case that the truth is 0.64.
+
+[04:34] We're not going to get into the calculations in this video, but the calculation of power depends on what the true value is, if it's something different than the null.
+
+[04:43] So in this case we're assuming the true value is 0.64, and then we've done calculations to show that the power equals to 0.45.
+
+[04:50] Again, you don't need to worry about where those numbers come from, I just want to make sure you understand what it's describing.
+
+[04:56] So interpret the power in context, and then we'll find the probability of a Type I and a Type II error.
+
+[05:01] So here's what the power means. If the true proportion of students who would choose the green cup is 0.64,
+
+[05:08] Then there's a 0.45 probability that we find convincing evidence that more than 50% of students would choose the green cup.
+
+[05:16] In other words, there's a 45% chance that we'd find convincing evidence for the alternative hypothesis.
+
+[05:23] Now as far as the probabilities, the probability of a Type I error is equal to the significance level. That's easy, 0.05.
+
+[05:30] And the probability of a Type II error is 1 minus the power.
+
+[05:35] So remember power is 0.45, and so the probability of a Type II error is 1 minus 0.45, or 0.55.
+
+[05:43] Now let's talk about what factors affect power. Assuming everything else remains the same, the power of a test will be greater when,
+
+[05:52] or another way of saying that is, the probability of a Type II error will be smaller when... there's going to be four things that we talk about here.
+
+[06:00] So assuming everything else, uh, stays the same, the power of a test will be greater when the sample size increases.
+
+[06:06] We have more data, we're more likely to make a correct decision.
+
+[06:10] Power will be greater when the significance level increases.
+
+[06:14] The bigger alpha is, the easier it is to get a P-value less than alpha. And that gives us, uh, a better chance of finding convincing evidence for the alternative, which leads to more power.
+
+[06:25] Power will be greater when the standard error decreases. So if we can control sources of variability in our sampling or in an experiment, um,
+
+[06:34] we're more likely to, uh, find convincing evidence for what we're looking for, and power will be greater.
+
+[06:40] And finally, power of a test will be greater when the true parameter value is farther from the null.
+
+[06:47] So in this case, let's say that 100% of the students would pick the green cup. Well, if that's really the truth, then it's going to be pretty easy to figure out that more than 50% of students would choose the green cup.
+
+[06:58] So the further the truth is from the null value, the easier it is to find convincing evidence. In other words, it's easier to see the difference when the difference is larger.
+
+[07:08] Now, let's summarize what you should've taken from this video.
+
+[07:12] First, how do we calculate the probabilities of Type I and Type II errors?
+
+[07:17] Well, the probability of a Type I error is equal to alpha, the significance level.
+
+[07:22] And the probability of a Type II error is equal to 1 minus power. You'd have to be given the power in a problem to be able to figure this out.
+
+[07:29] The power of a test is the probability that the test will correctly reject a false null hypothesis.
+
+[07:36] The second question was what factors affect the power of a test and the probabilities of errors in significance testing?
+
+[07:44] Well, we talked about four factors: 1. The sample size. 2. The significance level. 3. The standard error. And 4. The distance between the true parameter value and the null.
+
+[07:57] This has been Josh Tabor. I'm happy to hand you off to Doug Tyson, who'll do an excellent job with Daily Video 3.
+
+thumb_up
+thumb_down

@@ -1,0 +1,200 @@
+# Video 2 — Slide Descriptions
+# Unit 6, Lesson 7
+
+edit
+more_vert
+
+Here is a description of the visual content of the video, organized by slide changes and visual updates:
+
+[00:00] — Title Slide
+The video opens with an introductory slide.
+Text on screen:
+
+AP Daily
+
+AP Statistics
+
+Topic 6.7: Potential Errors When Performing Tests
+
+Josh Tabor
+
+Canyon del Oro High School
+
+Tucson, AZ
+
+[00:19] — What will we learn?
+The slide lists the learning objectives for the video.
+Text on screen:
+
+Calculate probabilities of Type I and Type II errors.
+
+Identify factors that affect power of a test and probabilities of errors in significance testing.
+
+[00:34] — Let's start with Type I errors
+The slide introduces Type I errors.
+Text on screen:
+
+When the null hypothesis is true, the probability of a Type I error is equal to the significance level.
+
+P(Type I error) = 
+𝛼
+α
+
+[00:48] — Let's start with Type I errors (updated)
+A new bullet point is added to the previous slide.
+Text added:
+
+Because the significance level 
+𝛼
+α
+ is the probability of a Type I error, the consequences of a Type I error should influence our choice of significance level 
+𝛼
+α
+.
+
+[01:08] — Let's start with Type I errors (updated)
+A question is added below the bullet points.
+Text added:
+
+Why not make 
+𝛼
+=
+0.0000001
+α=0.0000001
+ to minimize the probability of a Type I error?
+
+[01:26] — Let's start with Type I errors (updated)
+A final bullet point is added in response to the question.
+Text added:
+
+All other things being equal, decreasing the probability of a Type I error increases the probability of a Type II error.
+
+[01:46] — Now let's talk about power and Type II errors
+The slide shifts focus to power and Type II errors.
+Text on screen:
+
+The power of a test is the probability that a test will correctly reject a false null hypothesis.
+
+[02:52] — Now let's talk about power and Type II errors (updated)
+A formula is added below the definition of power.
+Text added:
+
+P(Type II error) = 1 - power
+
+[03:06] — Example: Are you thirsty?
+The slide presents a scenario and the corresponding hypotheses.
+Text on screen:
+To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each student was asked to taste two cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white. Unknown to the taste testers, both cups contained the same brand of lemonade.
+
+𝐻
+0
+H
+0
+	​
+
+: 
+𝑝
+=
+0.50
+p=0.50
+
+𝐻
+𝑎
+H
+a
+	​
+
+: 
+𝑝
+>
+0.50
+p>0.50
+
+where 
+𝑝
+p
+ is the proportion of all students at this school who would choose the green cup.
+
+[03:49] — Example: Are you thirsty? (updated)
+Additional information and a prompt are added below the hypotheses.
+Text added:
+
+Suppose that the researchers used a significance level of 
+𝛼
+=
+0.05
+α=0.05
+ and that the power of the test against an alternative of 
+𝑝
+=
+0.64
+p=0.64
+ is 0.45.
+
+Interpret the power in context. Then, find the probability of a Type I and a Type II error.
+
+[04:59] — Example: Are you thirsty? (Answers)
+The slide transitions to show the answers. The previous scenario text is condensed at the top.
+Text on screen:
+
+Power: If the true proportion of students who would choose the green cup is 0.64, there is a 0.45 probability that we find convincing evidence that more than 50% of students would choose the green cup.
+
+[05:22] — Example: Are you thirsty? (Answers updated)
+The calculations for the error probabilities are added below the power interpretation.
+Text added:
+
+P(Type I error) = 
+𝛼
+=
+0.05
+α=0.05
+
+P(Type II error) = 1 - 0.45 = 0.55
+
+[05:43] — Factors that affect power
+The slide introduces the conditions that increase power.
+Text on screen:
+
+Assuming everything else remains the same, the power of a test will be greater when (or the probability of a Type II error will be smaller when)...
+
+[06:05] — Factors that affect power (updated)
+Bullet points appear sequentially as the speaker discusses them.
+Text added:
+
+the sample size 
+𝑛
+n
+ increases.
+[06:10] - the significance level 
+𝛼
+α
+ increases.
+[06:24] - the standard error decreases.
+[06:40] - the true parameter value is farther from the null. (It is easier to see a difference when the difference is larger!)
+
+[07:08] — What should we take away?
+The summary slide reviews the main points of the video.
+Text on screen:
+How do we calculate probabilities of Type I and Type II errors?
+
+P(Type I error) = 
+𝛼
+α
+
+P(Type II error) = 1 - power
+
+[07:35] — What should we take away? (updated)
+The second learning objective and its summary are added.
+Text added:
+What factors affect power of a test and probabilities of errors in significance testing?
+
+Sample size
+
+Significance level
+
+Standard error
+
+Distance between true parameter value and null
+
+thumb_up
+thumb_down

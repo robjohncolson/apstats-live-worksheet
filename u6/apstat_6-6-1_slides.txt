@@ -1,0 +1,329 @@
+# Video 1 — Slide Descriptions
+# Unit 6, Lesson 6
+
+edit
+more_vert
+
+Here is a detailed breakdown of each slide and visual change in the video:
+
+[00:00] — Title Slide
+The slide is titled "TOPIC 6.6 Concluding a Test for a Population Proportion". It also displays the text "AP Statistics", "DAILY VIDEO 1", and "In this video, we will discuss how to state a conclusion for a significance test for a population proportion."
+
+[00:20] — WHAT WILL WE LEARN?
+A solid blue transition slide with the text "WHAT WILL WE LEARN?" in large, white, centered letters.
+
+[00:23] — What Will We Learn?
+This slide lists one numbered learning objective:
+
+How do we make a conclusion in a test for a population proportion?
+
+[00:34] — Some Preliminary Information ...
+The slide contains a paragraph explaining p-values: "Small p-values indicate that the observed value of the test statistic would be unusual if the null hypothesis was true, and so provide convincing statistical evidence for the alternative hypothesis. The smaller the p-value, the more convincing the statistical evidence for the alternative hypothesis."
+
+[01:00] — Some Preliminary Information ... (continued)
+A new sentence appears below the first paragraph: "How “small” does a p-value need to be to provide convincing statistical evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+?"
+
+[01:07] — Some Preliminary Information ... (continued)
+Another paragraph is added at the bottom: "The significance level 
+𝛼
+α
+ is a predetermined boundary value that we use to determine if a p-value is small or not small. Common significance levels are 
+𝛼
+α
+ = 0.05, 
+𝛼
+α
+ = 0.01, and 
+𝛼
+α
+ = 0.10."
+
+[01:29] — Some Preliminary Information ... (continued)
+The previous text is cleared and replaced with a single statement: "If the p-value 
+≤
+𝛼
+≤α
+, we reject 
+𝐻
+0
+H
+0
+	​
+
+."
+
+[01:36] — Some Preliminary Information ... (continued)
+A second line is added below the first: "In this case, there is convincing statistical evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+."
+
+[01:54] — Some Preliminary Information ... (continued)
+A third line is added: "If the p-value > 
+𝛼
+α
+, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+."
+
+[02:11] — Some Preliminary Information ... (continued)
+A fourth line is added: "In this case, there is not convincing statistical evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+."
+
+[02:15] — LET'S LOOK AT AN EXAMPLE
+A solid blue transition slide with the text "LET'S LOOK AT AN EXAMPLE" in large, white, centered letters.
+
+[02:18] — Does Green = More Natural?
+The slide presents a word problem: "To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school. Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural. One of the cups was green and the other cup was white. Unknown to the taste testers was the fact that both cups contained the same brand of lemonade. Of the 30 students, 18 stated that the lemonade in the green cup tasted more natural. Is there convincing statistical evidence at the 
+𝛼
+α
+ = 0.05 significance level that more than half of all students at this school would choose the green cup?"
+
+[03:09] — Does Green = More Natural? (continued)
+The slide title is gone, and text summarizing the previous video's findings is shown:
+From previous videos:
+
+𝐻
+0
+H
+0
+	​
+
+: p = 0.50 vs. 
+𝐻
+𝑎
+H
+a
+	​
+
+: p > 0.50, where p = the proportion of all students at this school who would choose the green cup.
+
+Conditions are met.
+
+𝑝
+^
+p
+^
+	​
+
+ = 0.60, z = 1.10, and p-value = 0.1357
+
+[03:32] — Does Green = More Natural? (continued)
+A concluding paragraph is added to the slide: "Because the p-value of 0.1357 > 
+𝛼
+α
+ = 0.05, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. There is not convincing statistical evidence that more than half of all students at this school would choose the green cup."
+
+[03:52] — Cautions About Conclusions
+The slide lists a bullet point: "Conclusions must be justified by explicitly comparing the p-value to the significance level (
+𝛼
+α
+). If no significance level is stated in the item, you should pick a significance level to compare to (e.g., 
+𝛼
+α
+ = 0.05)."
+
+[04:44] — Cautions About Conclusions (continued)
+A second bullet point is added: "Conclusions must be about the alternative hypothesis."
+
+[05:03] — Cautions About Conclusions (continued)
+A third bullet point is added: "Conclusions must be in context."
+
+[05:08] — Cautions About Conclusions (continued)
+A fourth bullet point is added: "When you fail to reject 
+𝐻
+0
+H
+0
+	​
+
+, don’t conclude that 
+𝐻
+0
+H
+0
+	​
+
+ is true! This is called “accepting the null hypothesis.” Don’t do it!"
+
+[05:43] — Cautions About Conclusions (continued)
+A fifth bullet point is added: "When you reject 
+𝐻
+0
+H
+0
+	​
+
+, don’t say that you have “proven” that 
+𝐻
+𝑎
+H
+a
+	​
+
+ is true."
+
+[06:02] — LET'S PRACTICE
+A solid blue transition slide with the text "LET'S PRACTICE" in large, white, centered letters.
+
+[06:04] — Favorite Sport
+The slide presents a new word problem: "A newspaper reports that 40% of adults in the U.S. would say football is their favorite sport. The mayor of a town wonders if the proportion of adults in the town who would say football is their favorite sport differs from the national proportion. To investigate, the mayor selected a random sample of 100 adults in the town and found that 29 named football as their favorite sport. Do these data provide convincing statistical evidence that the proportion of all adults in this town who would say that football is their favorite sport differs from 0.40? Use 
+𝛼
+α
+ = 0.10."
+
+[06:42] — Favorite Sport (continued)
+The slide title is gone, and text summarizing the problem setup is shown:
+From previous videos:
+
+𝐻
+0
+H
+0
+	​
+
+: p = 0.40 vs. 
+𝐻
+𝑎
+H
+a
+	​
+
+: p 
+≠
+
+=
+ 0.40, where p = the proportion of all adults in the town who would say football is their favorite sport.
+
+Conditions are met.
+
+𝑝
+^
+p
+^
+	​
+
+ = 0.29, z = -2.25, and p-value = 0.0244.
+
+[07:13] — Favorite Sport (continued)
+A concluding paragraph is added to the slide: "Because the p-value of 0.0244 
+≤
+𝛼
+≤α
+ = 0.10, we reject 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that the proportion of all adults in this town who would say that football is their favorite sport differs from 0.40."
+
+[07:35] — WHAT SHOULD WE TAKE AWAY?
+A solid blue transition slide with the text "WHAT SHOULD WE TAKE AWAY?" in large, white, centered letters.
+
+[07:39] — Key Takeaways
+This slide lists one numbered point:
+
+How do we make a conclusion in a test for a population proportion?
+
+[07:44] — Key Takeaways (continued)
+A sub-bullet is added under the numbered point:
+
+Because the p-value of ____ 
+≤
+𝛼
+≤α
+ = ____, we reject 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context].
+
+[08:06] — Key Takeaways (continued)
+A second sub-bullet is added:
+
+Because the p-value of ____ > 
+𝛼
+α
+ = ____, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. There is not convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context].
+
+[08:24] — Key Takeaways (continued)
+New text is added below the bullet points:
+Remember to:
+
+Explicitly compare the p-value to 
+𝛼
+α
+.
+
+[08:32] — Key Takeaways (continued)
+An additional bullet is added under "Remember to:":
+
+Include a conclusion about 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context.
+
+[08:39] — Thank you.
+A solid blue closing slide with the text "Thank you." and the CollegeBoard logo at the bottom.
+
+thumb_up
+thumb_down

@@ -1,0 +1,142 @@
+# Video 1 — Transcript
+# Unit 6, Lesson 6
+
+edit
+more_vert
+
+[00:00] Hi, this is Josh Tabor from Canyon del Oro High School in Tucson, Arizona.
+
+[00:04] Here at the video about topic 6.6 concluding a test for a population proportion.
+
+[00:10] In this video, we'll discuss how to state a conclusion for a significance test for a population proportion.
+
+[00:17] Let's start by talking about what you'll learn in this video.
+
+[00:23] There's actually only one question that we'll address, but it's a really important question, and that is how do we make a conclusion in a test for a population proportion?
+
+[00:30] Let's look at some preliminary information. Small P-values, and remember we learned how to calculate P-values in the previous video,
+
+[00:41] Small P-values indicate that the observed value of the test statistic would be unusual or unlikely if the null hypothesis was true, and so provide convincing statistical evidence for the alternative hypothesis.
+
+[00:53] So the smaller the p-value, the more convincing the statistical evidence is for the alternative.
+
+[01:00] Well, how small does a p-value need to be to provide convincing statistical evidence for the alternative?
+
+[01:07] Well, we set a boundary value. It's called a significance level.
+
+[01:13] The significance level denoted alpha, the Greek letter alpha, is a predetermined boundary value that we use to determine if a P-value is small or not.
+
+[01:21] Common significance levels include alpha equals 0.05, alpha equals 0.01, and alpha equals 0.10.
+
+[01:29] Now, if the p-value is small, that is, less than or equal to alpha, we reject the null hypothesis
+
+[01:36] and say that there's convincing statistical evidence for the alternative. Again, if a p-value is small, that means it's unlikely to get evidence like our observed evidence just by chance when the null is true.
+
+[01:45] Well, there's got to be another explanation, and we say that there's convincing evidence then that the alternative is true.
+
+[01:54] On the other hand, if the p-value is larger than alpha, we fail to reject the null.
+
+[02:01] In other words, if the p-value is big, it's plausible that the data we got could have happened by random chance when the null is true.
+
+[02:09] Well, if we fail to reject the null hypothesis, then we do not have convincing statistical evidence for the alternative.
+
+[02:15] Let's start by looking at an example. So let's look at a context now.
+
+[02:22] To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school.
+
+[02:29] Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural.
+
+[02:37] One of the cups was green and the other cup was white, and unknown to the taste testers was the fact that both cups contained the same brand of lemonade.
+
+[02:46] Of the 30 students, 18 stated that the lemonade in the green cup tasted more natural.
+
+[02:52] So is there convincing statistical evidence at the 0.05 significance level that more than half of all students at this school would choose the green cup?
+
+[03:01] The wording there in the last sentence will start sounding very familiar as you work through unit six, seven, eight, and nine.
+
+[03:09] So from previous videos, here's what we learned. The null hypothesis is that p equals 0.5, and the alternative is that p is greater than 0.5,
+
+[03:19] where p is the proportion of all students at the school who would choose the green cup.
+
+[03:26] We also learned that the conditions have been met and that the z-statistic is 1.10 and the p-value is 0.1357.
+
+[03:32] Here's our conclusion. Because the p-value of 0.1357 is greater than our significance level of 0.05, we fail to reject the null hypothesis.
+
+[03:42] So there is not convincing statistical evidence that more than half of all students at this school would choose the green cup.
+
+[03:52] Now, here are some cautions about these conclusions. In other words, these are some common mistakes that students make on the AP exam that you'll want to avoid.
+
+[04:00] Conclusions must be justified by explicitly comparing the p-value to the significance level. In other words, you have to say something like, because the P value of 0.1357 is greater than the significance level or alpha of 0.05.
+
+[04:12] That's an explicit comparison.
+
+[04:19] If you don't make that explicit comparison, you're not going to get full credit in your conclusion because you haven't justified your conclusion.
+
+[04:26] Now, in some problems, there's no significance level stated. In other words, the problem doesn't tell you what significance level or alpha level to use. In that case, you should pick one
+
+[04:36] so that you can compare your p-value to that chosen significance level, and the most commonly used significance level is alpha equals 0.05.
+
+[04:44] The conclusions must be about the alternative hypothesis. So when we say there is convincing evidence or there's not convincing evidence for something, you need to be talking about the alternative hypothesis.
+
+[04:54] In this case, we did not have convincing evidence that more than half of all students at this school would choose the green cup.
+
+[05:03] Conclusions must be in context. That shouldn't be a surprise by this point in the course.
+
+[05:08] And when you fail to reject the null hypothesis, don't conclude that the null hypothesis is true.
+
+[05:16] This is a very common error and it's called accepting the null hypothesis. Don't do it. Okay?
+
+[05:22] So in our case, we said we don't have convincing evidence that more than half of students would choose the green cup.
+
+[05:29] That's a different conclusion than saying that we're convinced that exactly half of the students would choose the green cup. Remember, we had evidence that it was more than 50%.
+
+[05:39] It was just that the evidence wasn't convincing. A lack of convincing evidence for the alternative doesn't prove that the null is true.
+
+[05:43] Which leads to another common error. If we do reject the null, then it's a common error to say that we've proven that the alternative is true.
+
+[05:52] Well, in AP statistics, we never prove anything. It's always based on probabilities and there's always a chance of error.
+
+[05:59] We'll talk about those errors in topic 6.7.
+
+[06:04] Now it's time for you to practice. Let's take a look at a familiar example. A newspaper reports that 40% of adults in the US would say that football is their favorite sport.
+
+[06:12] The mayor of a town wonders if the proportion of adults in the town who would say football is their favorite sport differs from the national proportion.
+
+[06:20] To investigate, the mayor selected a random sample of 100 adults in the town and found that 29 named football as their favorite sport.
+
+[06:28] Do these data provide convincing statistical evidence that the proportion of all adults in the town who would say that football is their favorite sport differs from .4?
+
+[06:37] Use alpha equals .10.
+
+[06:42] Just as a reminder from previous videos, the null hypothesis is that P equals .4, and the alternative is P not equal to .4,
+
+[06:50] where P is the proportion of all adults in the town who would say football is their favorite sport.
+
+[06:55] Also the conditions have been met and we calculated a p-value of 0.0244.
+
+[07:01] So based on that p-value, what conclusion would you make? Pause the video now and write out your conclusion.
+
+[07:09] Okay, now that we're back, let's take a look. Here is a good example of a conclusion in this context.
+
+[07:18] Because the p-value of 0.0244 is less than or equal to our alpha of 0.10, we reject the null hypothesis.
+
+[07:29] There is convincing statistical evidence that the proportion of all adults in this town who would say that football is their favorite sport differs from 0.40.
+
+[07:36] Now let's summarize what you should have learned from this video. How do we make a conclusion in a test for a population proportion?
+
+[07:44] Well, there's two possible conclusions. One says because the p-value of whatever the number is, is less than or equal to alpha, we reject the null hypothesis.
+
+[07:54] And then we say there's convincing evidence that the alternative is true. And you state the alternative in context.
+
+[08:01] The other conclusion is what we get when we have a P-value that's larger than alpha. We'd say because the P-value of whatever the number is, is greater than alpha, we fail to reject the null.
+
+[08:12] And then there is not convincing statistical evidence that the alternative is true. And there you'd fill in with the alternative hypothesis in context.
+
+[08:24] Remember, when you're making a conclusion, to explicitly compare the p-value to alpha by saying greater than or less than.
+
+[08:35] Also make sure you're making a conclusion about the alternative hypothesis, and that you're doing it in context.
+
+[08:43] This has been Josh Tabor. Thanks for tuning in.
+
+thumb_up
+thumb_down

@@ -1,0 +1,89 @@
+# Video 2 — Slide Descriptions
+# Unit 6, Lesson 6
+
+edit
+more_vert
+
+Here is a detailed breakdown of the visual changes, text, formulas, and diagrams presented in the video:
+
+[00:00] — Topic 6.6 Concluding a Test for a Population Proportion
+The title slide displays the "AP Daily" logo at the top. The main text reads: "Topic 6.6 Concluding a Test for a Population Proportion". Below that, the speaker's name and school are listed: "Josh Tabor, Canyon del Oro HS, Tucson, AZ".
+
+[00:19] — What will we learn?
+The slide title is "What will we learn?". There is a single bullet point on the screen:
+
+Perform a complete significance test for a population proportion.
+
+[00:28] — Let's Practice! (Problem Statement)
+The slide title changes to "Let's Practice!" and displays the full text of an AP Exam question:
+"2005 AP® Statistics Exam
+Some boxes of a certain brand of breakfast cereal include a voucher for a free video rental inside the box. The company that makes the cereal claims that a voucher can be found in 20 percent of the boxes. However, based on their experiences eating this cereal at home, a group of students believes that the proportion of boxes with vouchers is less than 0.2. This group of students purchased 65 boxes of the cereal to investigate the company's claim. The students found a total of 11 vouchers for free video rentals in the 65 boxes.
+Suppose it is reasonable to assume that the 65 boxes purchased by the students are a random sample of all boxes of this cereal. Based on this sample, is there support for the students' belief that the proportion of boxes with vouchers is less than 0.2? Provide statistical evidence to support your answer."
+
+[01:37] — Let's Practice! (State the Hypotheses)
+The screen clears the problem text to begin the step-by-step solution. The following text appears:
+H₀: p = 0.20
+Hₐ: p < 0.20
+p = proportion of all boxes of this cereal that have a voucher.
+
+[02:22] — Let's Practice! (Significance Level)
+The following text is added below the hypotheses:
+α = 0.05
+
+[02:37] — Let's Practice! (Identify Procedure)
+The following text is added below the significance level:
+One-sample z test for a proportion.
+
+[02:46] — Let's Practice! (Check Conditions)
+The previous text is cleared. The screen now lists the conditions required to perform the test, starting with:
+
+Random: Reasonable assumption
+
+[02:56] — Let's Practice! (10% Condition)
+The second condition is added to the list:
+
+10%: Assume there are > 650 boxes
+
+[03:11] — Let's Practice! (Large Counts Condition)
+The final condition with its mathematical proof is added:
+
+Large Counts:
+np₀ ≥ 10 → 65(0.2) = 13 ≥ 10
+n(1 - p₀) ≥ 10 → 65(1 - 0.2) = 52 ≥ 10
+
+[03:48] — Let's Practice! (Calculations: Sample Proportion)
+The screen clears to show the calculation steps. The text appears:
+p̂ = 11/65 = 0.169
+
+[04:09] — Let's Practice! (Calculations: Test Statistic)
+The formula and calculation for the z-test statistic are added below the sample proportion:
+z = (0.169 - 0.2) / √( (0.2)(1 - 0.2) / 65 ) = -0.62
+
+[04:30] — Let's Practice! (Calculations: P-value Formula)
+The equation for finding the P-value is added:
+P-value = P(z ≤ -0.62) = 0.2676
+
+[04:51] — Let's Practice! (Standard Normal Curve Visual)
+A drawing of a standard normal bell curve appears on the right side of the screen. The horizontal axis is labeled as a z-axis with the peak of the curve at 0. A vertical line is drawn at z = -0.62. The area under the curve to the left of -0.62 is shaded blue to visually represent the calculated P-value.
+
+[05:14] — Let's Practice! (Conclusion)
+The screen clears to display the final written conclusion:
+"Because the p-value of 0.2676 is greater than α = 0.05, we fail to reject H₀. There is not convincing statistical evidence that the proportion of all boxes of this cereal with vouchers is less than 0.2."
+
+[05:44] — What should we take away?
+The final slide summarizes the process taught in the lesson. A list of bullet points appears on screen:
+
+State H₀ and Hₐ, define parameter
+
+Identify significance level (α)
+
+Identify procedure
+
+Verify conditions, show evidence
+
+Calculate test statistic and p-value
+
+Make a conclusion based on p-value
+
+thumb_up
+thumb_down

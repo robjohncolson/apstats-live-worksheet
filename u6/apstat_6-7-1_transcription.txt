@@ -1,0 +1,124 @@
+# Video 1 — Transcript
+# Unit 6, Lesson 7
+
+edit
+more_vert
+
+[00:00] Hi, AP stats students. I'm Josh Tabor, a high school statistics teacher from Tucson, Arizona, here with a video about topic 6.7, Potential Errors When Performing Tests.
+
+[00:07] In this video, we'll discuss how to identify and interpret Type 1 and Type 2 errors.
+
+[00:13] Let's start by talking about what you'll learn in this video.
+
+[00:16] First, how do we identify Type 1 and Type 2 errors?
+
+[00:21] And second, how do we interpret Type 1 and Type 2 errors?
+
+[00:26] Well, there's two possible conclusions we can make in a significance test.
+
+[00:31] Here's our first possible conclusion: If the P-value is less than or equal to alpha, we reject the null hypothesis.
+
+[00:38] In this case, there's convincing statistical evidence for Ha.
+
+[00:42] You learned about this conclusion in the previous video.
+
+[00:46] Well, if we find convincing evidence for the alternative, but the null is actually true, then we've made what's called a Type 1 error.
+
+[00:54] A Type 1 error occurs when the null hypothesis is true and it's rejected.
+
+[01:00] Sometimes we call that a false positive.
+
+[01:04] Now, the other conclusion we can make in a significance test goes like this: If the P-value is larger than alpha, then we fail to reject the null.
+
+[01:12] In this case, there's not convincing statistical evidence for the alternative.
+
+[01:17] Well, if it turns out, when we don't find convincing evidence for the alternative, but the null hypothesis is actually false and the alternative is true, then we've made what's called a Type 2 error.
+
+[01:29] A Type 2 error occurs when the null hypothesis is false, but it's not rejected.
+
+[01:36] That's sometimes called a false negative.
+
+[01:39] Here's a handy table that will help you understand the relationship between Type 1 and Type 2 errors.
+
+[01:45] Start by looking across the top of the table, where we have the actual population value, and look at the column that says the null hypothesis is true.
+
+[01:53] When the null hypothesis is true, there's two possibilities: If we reject the null, we've made a Type 1 error.
+
+[02:01] If we fail to reject the null, then we've made a correct decision.
+
+[02:05] Now look at the column on the right. This is a situation where the alternative hypothesis is true.
+
+[02:11] Well, if the alternative hypothesis is true, and we go ahead and our decision is to reject the null, we've made a correct decision.
+
+[02:18] But now looking in the lower right, if the alternative is true, but we fail to reject the null, then we've made a Type 2 error.
+
+[02:27] Now let's take a look at an example so we can apply these errors in context.
+
+[02:32] To investigate if high school students associate the color green with being more natural, two student researchers randomly selected 30 students from their school.
+
+[02:42] Each subject was asked to taste two cups of lemonade in random order and state which one tasted more natural.
+
+[02:49] One of the cups was green and the other cup was white. Unknown to the taste testers was the fact that both cups contained the same brand of lemonade.
+
+[02:58] Describe a Type 1 and a Type 2 error in this context. And which error is more consequential?
+
+[03:06] Well, from previous videos, we know that the null hypothesis here is that P equals 0.50, and the alternative is that P is greater than 0.50, where P is the proportion of all students at the school who would choose the green cup.
+
+[03:20] A Type 1 error in this case is that the researchers find convincing evidence that more than 50% of all students at this school would choose the green cup,
+
+[03:28] but the actual percentage is 50%.
+
+[03:32] In other words, they found convincing evidence for the alternative, but the null hypothesis is really true.
+
+[03:38] Now, a Type 2 error is the reverse of that.
+
+[03:41] In a Type 2 error, the researchers do not find convincing evidence that more than 50% of all students at the school would choose the green cup.
+
+[03:49] But the reality is the actual percentage is more than 50%.
+
+[03:54] Well, both of those are errors, and it's no fun to make errors.
+
+[03:57] To think about which one's worse, we have to think about the consequences of making each of these types of errors.
+
+[04:03] Well, so as far as the consequences of these, let's say that these student researchers eventually go to college, get hired as marketers, and work in a marketing department for a food company or something like that.
+
+[04:16] Well, if they had made a Type 1 error, that would lead them to using green in the branding of food and beverage items when people don't actually associate green with being more natural.
+
+[04:26] So they think that it works, but it doesn't really.
+
+[04:29] Well, what's the risk there? Well, unless green ink costs a lot more than other colors of ink, it's probably pretty low risk to make this error.
+
+[04:39] On the other hand, a Type 2 error would lead them to not use green in the branding of food and beverage items when, in fact, that people do associate green with being more natural.
+
+[04:50] So in other words, using green does encourage people to think that that product's more natural, but they don't realize it and they don't take advantage of that fact.
+
+[04:59] And in this case, this would result in a potential loss of sales.
+
+[05:03] And so a Type 2 error in this case seems more consequential.
+
+[05:07] Type 1 error's not that harmful, but a Type 2 error could potentially reduce income.
+
+[05:13] So as you go through different contexts, it's not always true that the Type 2 error is more consequential. In this case, it was, but in other cases, a Type 1 error might be more consequential.
+
+[05:24] Now let's talk about what you should have learned in this video.
+
+[05:29] The first question was how do we identify Type 1 and Type 2 errors?
+
+[05:33] Well, a Type 1 error occurs when the null hypothesis is true and it's rejected. That's a false positive.
+
+[05:40] And a Type 2 error occurs when the null hypothesis is false, but it's not rejected. That's a false negative.
+
+[05:48] Now how do we interpret Type 1 and Type 2 errors?
+
+[05:52] For a Type 1 error, we find convincing evidence that the alternative is true when the alternative isn't actually true.
+
+[05:59] And of course, you can't just say "the alternative," you have to fill in the words of the alternative in context.
+
+[06:06] For a Type 2 error, we don't find convincing evidence that the alternative is true when the alternative really is true.
+
+[06:13] That's a Type 2 error.
+
+[06:15] This has been Josh Tabor. Thanks for tuning in.
+
+thumb_up
+thumb_down
