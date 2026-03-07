@@ -1,5 +1,3 @@
-#movies
-*.mp4
 # Dependencies
 node_modules/
 
