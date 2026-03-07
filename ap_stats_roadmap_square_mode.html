@@ -440,6 +440,8 @@
             width: 100%;
             text-align: center;
             background: var(--white);
+            min-height: 32px;
+            overflow: hidden;
         }
 
         /* ── Scrollbar ──────────────────────────────── */
@@ -596,11 +598,42 @@
     <div class="game-window">
         <div class="game-title-bar">
             <div class="close-box" onclick="closeGame()"></div>
+            <span class="mute-btn" id="mute-btn" onclick="event.stopPropagation();SFX.init();document.getElementById('mute-btn').textContent=SFX.toggleMute()?'🔇':'🔊'" style="position:absolute;right:22px;z-index:3;cursor:pointer;font-size:11px;line-height:19px">🔊</span>
             <div class="title-stripes"></div>
             <span class="title-text chicago">Study Break — Square Mode</span>
         </div>
         <div class="game-content">
             <canvas id="gameCanvas" width="430" height="302" tabindex="0" aria-label="Falling block puzzle game"></canvas>
+            <div class="game-split" id="game-split" style="display:none">
+                <div style="display:flex">
+                    <div style="text-align:center">
+                        <div class="split-label chicago" id="p1-label" style="font-size:10px;padding:2px">You</div>
+                        <canvas id="gameCanvas1" width="215" height="302"></canvas>
+                    </div>
+                    <div style="width:2px;background:var(--black)"></div>
+                    <div style="text-align:center">
+                        <div class="split-label chicago" id="p2-label" style="font-size:10px;padding:2px">Opponent</div>
+                        <canvas id="gameCanvas2" width="215" height="302"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="game-lobby" id="game-lobby" style="display:none;padding:12px;min-height:240px">
+                <div class="chicago" style="font-size:12px;text-align:center;margin-bottom:8px">Challenge a Classmate</div>
+                <div id="lobby-players" style="max-height:180px;overflow-y:auto"></div>
+                <div id="lobby-status" style="text-align:center;font-size:10px;margin-top:8px;color:var(--plat-lo)">Connecting...</div>
+                <div style="text-align:center;margin-top:8px">
+                    <button class="s7btn" onclick="studyBreak.leaveLobby()">Back</button>
+                </div>
+            </div>
+            <div class="game-challenge-dialog" id="challenge-dialog" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:310;background:var(--platinum);border:1px solid var(--black);box-shadow:inset 1px 1px 0 var(--plat-hi),inset -1px -1px 0 var(--plat-lo),2px 2px 0 var(--black);padding:16px 20px;min-width:260px;text-align:center">
+                <div class="chicago" style="font-size:12px;margin-bottom:8px" id="challenge-title">Challenge</div>
+                <div class="geneva" style="font-size:11px;margin-bottom:12px" id="challenge-msg"></div>
+                <div id="challenge-timer" style="font-size:10px;color:var(--plat-lo);margin-bottom:8px"></div>
+                <div style="display:flex;justify-content:center;gap:10px">
+                    <button class="s7btn" id="challenge-decline-btn">Decline</button>
+                    <button class="s7btn s7btn-default" id="challenge-accept-btn">Accept</button>
+                </div>
+            </div>
             <div class="game-score geneva" id="game-score">Score 0 | Lines 0 | Level 1 | Gold 0 | Silver 0</div>
             <div class="game-help geneva" id="game-help">Enter or click to start • Build 4×4 blocks: mixed = silver, same-piece = gold • ←→ move • Z/X rotate • ↓ soft • ↑/Space firm • C/Shift hold • P pause</div>
         </div>
@@ -612,6 +645,144 @@
 <div class="tip geneva" id="tip"></div>
 
 <script>
+/* ═══ SOUND ENGINE (Mac System 7-style synthesized sounds) ═══ */
+const SFX = {
+    ctx: null,
+    muted: false,
+
+    init() {
+        if (this.ctx) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.muted = localStorage.getItem('studybreak-muted') === 'true';
+    },
+
+    ensureCtx() {
+        if (!this.ctx) this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+    },
+
+    play(name, volume = 0.5) {
+        if (this.muted) return;
+        this.ensureCtx();
+        const fn = this.sounds[name];
+        if (fn) fn.call(this, volume);
+    },
+
+    toggleMute() {
+        this.muted = !this.muted;
+        localStorage.setItem('studybreak-muted', this.muted);
+        return this.muted;
+    },
+
+    // Helper: create an oscillator note
+    osc(type, freq, startTime, duration, volume, freqEnd) {
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, startTime);
+        if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, startTime + duration);
+        g.gain.setValueAtTime(volume, startTime);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        o.connect(g).connect(this.ctx.destination);
+        o.start(startTime);
+        o.stop(startTime + duration);
+    },
+
+    // Helper: noise burst
+    noise(startTime, duration, volume) {
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+        const src = this.ctx.createBufferSource();
+        const g = this.ctx.createGain();
+        src.buffer = buffer;
+        g.gain.setValueAtTime(volume, startTime);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        src.connect(g).connect(this.ctx.destination);
+        src.start(startTime);
+        src.stop(startTime + duration);
+    },
+
+    sounds: {
+        // Piece lock - short water droplet sound
+        droplet(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 1400, t, 0.06, vol * 0.4, 400);
+            this.osc('sine', 800, t + 0.02, 0.05, vol * 0.2, 300);
+        },
+
+        // Single line clear - springy boing
+        boing(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 200, t, 0.15, vol * 0.5, 800);
+            this.osc('sine', 250, t + 0.05, 0.12, vol * 0.3, 600);
+        },
+
+        // Double line clear - two-tone alert (Sosumi-like)
+        sosumi(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 880, t, 0.12, vol * 0.5);
+            this.osc('sine', 660, t + 0.15, 0.12, vol * 0.5);
+        },
+
+        // Triple line clear - quack
+        quack(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sawtooth', 300, t, 0.08, vol * 0.3, 200);
+            this.osc('square', 250, t + 0.02, 0.1, vol * 0.2, 180);
+            this.noise(t, 0.06, vol * 0.1);
+        },
+
+        // Tetris (4 lines) - excited ascending chirp (Wild Eep-like)
+        wildEep(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 600, t, 0.08, vol * 0.4, 1800);
+            this.osc('sine', 800, t + 0.1, 0.08, vol * 0.5, 2200);
+            this.osc('sine', 1000, t + 0.2, 0.1, vol * 0.4, 2400);
+        },
+
+        // Level up - pleasant ascending chord (Indigo-like)
+        indigo(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 440, t, 0.2, vol * 0.3);
+            this.osc('sine', 554, t + 0.1, 0.2, vol * 0.3);
+            this.osc('sine', 659, t + 0.2, 0.25, vol * 0.4);
+        },
+
+        // Hold swap - soft click (Moof-like)
+        moof(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('square', 800, t, 0.02, vol * 0.2);
+            this.osc('sine', 600, t + 0.01, 0.03, vol * 0.15);
+        },
+
+        // Game over - descending sad sound (Monkey-like)
+        monkey(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 600, t, 0.15, vol * 0.4, 200);
+            this.osc('sine', 500, t + 0.2, 0.15, vol * 0.3, 150);
+            this.osc('sine', 400, t + 0.4, 0.2, vol * 0.3, 100);
+        },
+
+        // Garbage received - heavy thud (Logjam-like)
+        logjam(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 100, t, 0.15, vol * 0.5, 40);
+            this.noise(t, 0.08, vol * 0.3);
+        },
+
+        // KO / Win - double sosumi staggered
+        koWin(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 880, t, 0.12, vol * 0.5);
+            this.osc('sine', 1100, t + 0.15, 0.15, vol * 0.6);
+            this.osc('sine', 880, t + 0.4, 0.12, vol * 0.5);
+            this.osc('sine', 1100, t + 0.55, 0.15, vol * 0.6);
+        }
+    }
+};
+
 /* ═══ SCHEDULE DATA ═══ */
 const EX_DT=new Date(2026,4,7),MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const R="review",OFF="off",EX="exam",PO="post",NC="noclass";
@@ -708,6 +879,15 @@ const studyBreak = {
     DAS_DELAY: 135,
     DAS_REPEAT: 48,
     SOFT_DROP_INTERVAL: 32,
+    soloConfig: { canvas: null, ctx: null, CELL: 12, BOARD_X: 155, BOARD_Y: 24, CANVAS_W: 430, CANVAS_H: 302 },
+    splitConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 105, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
+    opponentConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 5, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
+    mode: 'solo',  // 'solo' or '1v1'
+    mpState: null,  // multiplayer state: { roomId, opponent, side, opponentBoard, opponentScore, opponentLines, opponentLevel, pendingGarbage, garbageTimer }
+    mpWs: null,
+    mpUsername: null,
+    mpOnlinePlayers: [],
+    mpChallengeTimer: null,
 
     types: ['I', 'O', 'T', 'S', 'Z', 'J', 'L'],
     colors: {
@@ -786,6 +966,8 @@ const studyBreak = {
     flashText: '',
     flashTimer: 0,
     state: 'idle',
+    _soloBtn: null,
+    _vsBtn: null,
     keys: {
         left: { down: false, next: 0 },
         right: { down: false, next: 0 },
@@ -798,6 +980,20 @@ const studyBreak = {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.ctx.imageSmoothingEnabled = false;
+        this.soloConfig.canvas = this.canvas;
+        this.soloConfig.ctx = this.ctx;
+        const splitCanvas = document.getElementById('gameCanvas1');
+        const opponentCanvas = document.getElementById('gameCanvas2');
+        if (splitCanvas) {
+            this.splitConfig.canvas = splitCanvas;
+            this.splitConfig.ctx = splitCanvas.getContext('2d');
+            this.splitConfig.ctx.imageSmoothingEnabled = false;
+        }
+        if (opponentCanvas) {
+            this.opponentConfig.canvas = opponentCanvas;
+            this.opponentConfig.ctx = opponentCanvas.getContext('2d');
+            this.opponentConfig.ctx.imageSmoothingEnabled = false;
+        }
         this.scoreEl = document.getElementById('game-score');
         this.helpEl = document.getElementById('game-help');
         this.canvas.width = this.CANVAS_W;
@@ -805,7 +1001,18 @@ const studyBreak = {
 
         this.canvas.addEventListener('mousedown', (e) => {
             e.preventDefault();
-            if (this.state === 'idle' || this.state === 'gameover') {
+            if (this.state === 'idle') {
+                const rect = this.canvas.getBoundingClientRect();
+                const mx = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const my = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                if (this._soloBtn && mx >= this._soloBtn.x && mx <= this._soloBtn.x + this._soloBtn.w && my >= this._soloBtn.y && my <= this._soloBtn.y + this._soloBtn.h) {
+                    this.mode = 'solo';
+                    this.startNewGame();
+                } else if (this._vsBtn && mx >= this._vsBtn.x && mx <= this._vsBtn.x + this._vsBtn.w && my >= this._vsBtn.y && my <= this._vsBtn.y + this._vsBtn.h) {
+                    this.mode = '1v1';
+                    this.startMultiplayer();
+                }
+            } else if (this.state === 'gameover') {
                 this.startNewGame();
             } else if (this.state === 'paused') {
                 this.togglePause();
@@ -818,7 +1025,7 @@ const studyBreak = {
             const key = e.key;
             const handled = [
                 'ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' ',
-                'z', 'Z', 'x', 'X', 'c', 'C', 'Shift', 'p', 'P', 'Enter', 'r', 'R', 'Escape'
+                'z', 'Z', 'x', 'X', 'c', 'C', 'Shift', 'p', 'P', 'Enter', 'r', 'R', 'Escape', '1', '2'
             ].includes(key);
             if (handled) e.preventDefault();
 
@@ -827,7 +1034,17 @@ const studyBreak = {
                 return;
             }
             if (key === 'Enter') {
-                if (this.state !== 'running') this.startNewGame();
+                if (this.state === 'idle') {
+                    this.mode = 'solo';
+                    this.startNewGame();
+                } else if (this.state === 'gameover' || this.state === 'paused') {
+                    this.startNewGame();
+                }
+                return;
+            }
+            if ((key === '1' || key === '2') && this.state === 'idle') {
+                if (key === '1') { this.mode = 'solo'; this.startNewGame(); }
+                else { this.mode = '1v1'; this.startMultiplayer(); }
                 return;
             }
             if (key === 'r' || key === 'R') {
@@ -897,6 +1114,8 @@ const studyBreak = {
 
     open() {
         this.init();
+        SFX.init();
+        document.getElementById('mute-btn').textContent = SFX.muted ? '🔇' : '🔊';
         this.overlay.style.display = 'block';
         this.canvas.focus();
         this.startLoop();
@@ -906,6 +1125,24 @@ const studyBreak = {
 
     close() {
         if (!this.initialized) return;
+        if (this.mode === '1v1' && this.mpWs && this.mpState && this.mpWs.readyState === 1) {
+            this.mpWs.send(JSON.stringify({ type: 'game_leave' }));
+            this.mpState = null;
+        }
+        if (this.mpChallengeTimer) {
+            clearInterval(this.mpChallengeTimer);
+            this.mpChallengeTimer = null;
+        }
+        if (this.mpState && this.mpState.garbageTimer) {
+            clearTimeout(this.mpState.garbageTimer);
+            this.mpState.garbageTimer = 0;
+        }
+        document.getElementById('game-split').style.display = 'none';
+        document.getElementById('game-lobby').style.display = 'none';
+        document.getElementById('challenge-dialog').style.display = 'none';
+        document.getElementById('game-score').style.display = '';
+        this.canvas.style.display = 'block';
+        this.mode = 'solo';
         this.overlay.style.display = 'none';
         this.clearKeys();
         if (this.state === 'running') this.state = 'paused';
@@ -975,6 +1212,419 @@ const studyBreak = {
         this.fillQueueTo(6);
         this.spawnNext();
         this.startLoop();
+        this.updateHud();
+        this.draw();
+    },
+
+    startMultiplayer() {
+        this.mode = '1v1';
+        this.state = 'idle';
+        // Hide main canvas, show lobby
+        this.canvas.style.display = 'none';
+        document.getElementById('game-split').style.display = 'none';
+        document.getElementById('game-lobby').style.display = 'block';
+        document.getElementById('game-score').style.display = 'none';
+        this.updateHud();
+
+        // Connect to Railway WebSocket
+        this.connectMultiplayerWS();
+    },
+
+    connectMultiplayerWS() {
+        const serverUrl = (window.RAILWAY_SERVER_URL || 'https://curriculumrender-production.up.railway.app').replace(/^http/, 'ws');
+        // Get username from localStorage or fallback
+        this.mpUsername = localStorage.getItem('student-name') || localStorage.getItem('username') || ('Player' + Math.floor(Math.random() * 1000));
+
+        if (this.mpWs && this.mpWs.readyState <= 1) {
+            this.updateLobby();
+            return;
+        }
+
+        const statusEl = document.getElementById('lobby-status');
+        if (statusEl) statusEl.textContent = 'Connecting...';
+        this.mpWs = new WebSocket(serverUrl);
+
+        this.mpWs.onopen = () => {
+            if (statusEl) statusEl.textContent = 'Connected as ' + this.mpUsername;
+            this.mpWs.send(JSON.stringify({ type: 'identify', username: this.mpUsername }));
+        };
+
+        this.mpWs.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleMpMessage(data);
+        };
+
+        this.mpWs.onclose = () => {
+            if (statusEl) statusEl.textContent = 'Disconnected. Reconnecting...';
+            setTimeout(() => {
+                if (this.mode === '1v1' && this.isOpen()) this.connectMultiplayerWS();
+            }, 3000);
+        };
+
+        this.mpWs.onerror = () => {
+            if (statusEl) statusEl.textContent = 'Connection error';
+        };
+    },
+
+    handleMpMessage(data) {
+        switch (data.type) {
+            case 'presence_snapshot':
+                this.mpOnlinePlayers = (data.users || []).filter((u) => u !== this.mpUsername);
+                this.updateLobby();
+                break;
+
+            case 'user_online':
+                if (data.username !== this.mpUsername && !this.mpOnlinePlayers.includes(data.username)) {
+                    this.mpOnlinePlayers.push(data.username);
+                    this.updateLobby();
+                }
+                break;
+
+            case 'user_offline':
+                this.mpOnlinePlayers = this.mpOnlinePlayers.filter((u) => u !== data.username);
+                this.updateLobby();
+                break;
+
+            case 'challenge_received':
+                this.showChallengeDialog(data.from);
+                break;
+
+            case 'challenge_declined':
+                this.flash(data.by + ' declined' + (data.reason === 'timeout' ? ' (timed out)' : ''));
+                this.updateLobby();
+                break;
+
+            case 'challenge_error':
+                this.flash(data.error || 'Challenge failed');
+                break;
+
+            case 'match_start':
+                this.startMatch(data);
+                break;
+
+            case 'opponent_state':
+                this.updateOpponentState(data);
+                break;
+
+            case 'garbage_incoming':
+                this.receiveGarbage(data.lines);
+                break;
+
+            case 'opponent_ko':
+                this.opponentKO(data.finalScore);
+                break;
+
+            case 'opponent_left':
+                this.opponentLeft();
+                break;
+        }
+    },
+
+    updateLobby() {
+        const el = document.getElementById('lobby-players');
+        if (!el) return;
+        if (this.mpOnlinePlayers.length === 0) {
+            el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--plat-lo);font-size:10px">No other players online</div>';
+            return;
+        }
+        el.innerHTML = this.mpOnlinePlayers.map((name) =>
+            `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);cursor:pointer" onmouseenter="this.style.background='var(--black)';this.style.color='var(--white)'" onmouseleave="this.style.background='';this.style.color=''" onclick="studyBreak.sendChallenge('${name.replace(/'/g, "\\'")}')">
+                <span class="geneva" style="font-size:11px">${name}</span>
+                <span style="font-size:9px">Challenge \u2192</span>
+            </div>`
+        ).join('');
+    },
+
+    sendChallenge(target) {
+        if (!this.mpWs || this.mpWs.readyState !== 1) return;
+        this.mpWs.send(JSON.stringify({ type: 'game_challenge', target }));
+        const statusEl = document.getElementById('lobby-status');
+        if (statusEl) statusEl.textContent = 'Challenging ' + target + '...';
+    },
+
+    leaveLobby() {
+        document.getElementById('game-lobby').style.display = 'none';
+        this.canvas.style.display = 'block';
+        document.getElementById('game-score').style.display = '';
+        this.mode = 'solo';
+        this.state = 'idle';
+        this.updateHud();
+        this.draw();
+    },
+
+    showChallengeDialog(fromUser) {
+        SFX.play('sosumi', 0.5);
+        const dialog = document.getElementById('challenge-dialog');
+        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break!';
+        dialog.style.display = 'block';
+
+        let countdown = 30;
+        const timerEl = document.getElementById('challenge-timer');
+        timerEl.textContent = countdown + 's';
+
+        document.getElementById('challenge-accept-btn').onclick = () => {
+            clearInterval(this.mpChallengeTimer);
+            dialog.style.display = 'none';
+            this.mpWs.send(JSON.stringify({ type: 'challenge_accept', from: fromUser }));
+        };
+        document.getElementById('challenge-decline-btn').onclick = () => {
+            clearInterval(this.mpChallengeTimer);
+            dialog.style.display = 'none';
+            this.mpWs.send(JSON.stringify({ type: 'challenge_decline', from: fromUser }));
+        };
+
+        this.mpChallengeTimer = setInterval(() => {
+            countdown--;
+            timerEl.textContent = countdown + 's';
+            if (countdown <= 0) {
+                clearInterval(this.mpChallengeTimer);
+                dialog.style.display = 'none';
+                this.mpWs.send(JSON.stringify({ type: 'challenge_decline', from: fromUser }));
+            }
+        }, 1000);
+    },
+
+    startMatch(data) {
+        SFX.play('wildEep', 0.6);
+        document.getElementById('challenge-dialog').style.display = 'none';
+        document.getElementById('game-lobby').style.display = 'none';
+        document.getElementById('game-score').style.display = '';
+
+        // Set up split screen
+        this.canvas.style.display = 'none';
+        const splitEl = document.getElementById('game-split');
+        splitEl.style.display = 'block';
+
+        const c1 = document.getElementById('gameCanvas1');
+        const c2 = document.getElementById('gameCanvas2');
+        c1.width = 215; c1.height = 302;
+        c2.width = 215; c2.height = 302;
+
+        this.splitConfig.canvas = c1;
+        this.splitConfig.ctx = c1.getContext('2d');
+        this.splitConfig.ctx.imageSmoothingEnabled = false;
+        this.opponentConfig.canvas = c2;
+        this.opponentConfig.ctx = c2.getContext('2d');
+        this.opponentConfig.ctx.imageSmoothingEnabled = false;
+
+        document.getElementById('p1-label').textContent = this.mpUsername || 'You';
+        document.getElementById('p2-label').textContent = data.opponent;
+
+        this.mpState = {
+            roomId: data.roomId,
+            opponent: data.opponent,
+            side: data.side,
+            opponentBoard: Array.from({ length: this.TOTAL_ROWS }, () => Array(this.COLS).fill(null)),
+            opponentScore: 0,
+            opponentLines: 0,
+            opponentLevel: 1,
+            opponentActive: null,
+            pendingGarbage: 0,
+            garbageTimer: 0
+        };
+
+        // Start countdown then game
+        this.state = 'countdown';
+        this.countdownValue = 3;
+        this.updateHud();
+        this.draw();
+
+        const countdownInterval = setInterval(() => {
+            this.countdownValue--;
+            this.draw();
+            if (this.countdownValue <= 0) {
+                clearInterval(countdownInterval);
+                this.resetBoardState();
+                this.state = 'running';
+                this.hold = this.randomType();
+                this.fillQueueTo(6);
+                this.spawnNext();
+                this.startLoop();
+                this.updateHud();
+            }
+        }, 1000);
+    },
+
+    // Send game state to server after each piece lock
+    sendGameState() {
+        if (!this.mpWs || this.mpWs.readyState !== 1 || !this.mpState) return;
+        // Compress board: only send non-null cells as [row, col, colorIndex]
+        const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
+        const compressed = [];
+        for (let y = 0; y < this.TOTAL_ROWS; y++) {
+            for (let x = 0; x < this.COLS; x++) {
+                const cell = this.board[y][x];
+                if (cell) {
+                    const ci = colorPalette.indexOf(cell.color);
+                    compressed.push([y, x, ci >= 0 ? ci : 0]);
+                }
+            }
+        }
+        this.mpWs.send(JSON.stringify({
+            type: 'game_state',
+            board: compressed,
+            score: this.score,
+            lines: this.lines,
+            level: this.level,
+            active: this.active ? { type: this.active.type, rot: this.active.rot, x: this.active.x, y: this.active.y } : null,
+            hold: this.hold,
+            queue: this.queue.slice(0, 3),
+            state: this.state
+        }));
+    },
+
+    updateOpponentState(data) {
+        if (!this.mpState) return;
+        const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
+        // Decompress board
+        const board = Array.from({ length: this.TOTAL_ROWS }, () => Array(this.COLS).fill(null));
+        if (data.board && Array.isArray(data.board)) {
+            for (const [y, x, ci] of data.board) {
+                board[y][x] = { color: colorPalette[ci] || '#888888' };
+            }
+        }
+        this.mpState.opponentBoard = board;
+        this.mpState.opponentScore = data.score || 0;
+        this.mpState.opponentLines = data.lines || 0;
+        this.mpState.opponentLevel = data.level || 1;
+        this.mpState.opponentActive = data.active || null;
+        // Render opponent board
+        this.drawOpponentBoard();
+    },
+
+    drawOpponentBoard() {
+        if (!this.opponentConfig.ctx || !this.mpState) return;
+        const ctx = this.opponentConfig.ctx;
+        const cfg = this.opponentConfig;
+        ctx.clearRect(0, 0, cfg.CANVAS_W, cfg.CANVAS_H);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, cfg.CANVAS_W, cfg.CANVAS_H);
+
+        // Draw board well
+        const bx = cfg.BOARD_X;
+        const by = cfg.BOARD_Y;
+        const bw = this.COLS * cfg.CELL;
+        const bh = this.VISIBLE_ROWS * cfg.CELL;
+        ctx.fillStyle = '#efefef';
+        ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+        ctx.strokeStyle = '#000000';
+        ctx.strokeRect(bx - 1.5, by - 1.5, bw + 3, bh + 3);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(bx, by, bw, bh);
+
+        // Grid lines
+        ctx.strokeStyle = '#e8e8e8';
+        for (let cx = 0; cx <= this.COLS; cx++) {
+            const px = bx + cx * cfg.CELL + 0.5;
+            ctx.beginPath(); ctx.moveTo(px, by); ctx.lineTo(px, by + bh); ctx.stroke();
+        }
+        for (let cy = 0; cy <= this.VISIBLE_ROWS; cy++) {
+            const py = by + cy * cfg.CELL + 0.5;
+            ctx.beginPath(); ctx.moveTo(bx, py); ctx.lineTo(bx + bw, py); ctx.stroke();
+        }
+
+        // Draw cells
+        for (let y = this.HIDDEN_ROWS; y < this.TOTAL_ROWS; y++) {
+            for (let x = 0; x < this.COLS; x++) {
+                const cell = this.mpState.opponentBoard[y][x];
+                if (!cell) continue;
+                const px = bx + x * cfg.CELL;
+                const py = by + (y - this.HIDDEN_ROWS) * cfg.CELL;
+                ctx.fillStyle = cell.color;
+                ctx.fillRect(px, py, cfg.CELL, cfg.CELL);
+                ctx.strokeStyle = '#000000';
+                ctx.strokeRect(px + 0.5, py + 0.5, cfg.CELL - 1, cfg.CELL - 1);
+            }
+        }
+
+        // Draw opponent active piece
+        if (this.mpState.opponentActive) {
+            const a = this.mpState.opponentActive;
+            const cells = this.pieces[a.type] && this.pieces[a.type][a.rot];
+            const color = this.colors[a.type] || '#888888';
+            if (cells) {
+                for (const [cx, cy] of cells) {
+                    const py = a.y + cy;
+                    if (py < this.HIDDEN_ROWS) continue;
+                    const px = bx + (a.x + cx) * cfg.CELL;
+                    const ppy = by + (py - this.HIDDEN_ROWS) * cfg.CELL;
+                    ctx.fillStyle = color;
+                    ctx.fillRect(px, ppy, cfg.CELL, cfg.CELL);
+                    ctx.strokeStyle = '#000000';
+                    ctx.strokeRect(px + 0.5, ppy + 0.5, cfg.CELL - 1, cfg.CELL - 1);
+                }
+            }
+        }
+
+        // Score label at top
+        ctx.fillStyle = '#000000';
+        ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Score ${this.mpState.opponentScore} | L${this.mpState.opponentLevel}`, cfg.CANVAS_W / 2, 14);
+
+        // Garbage warning
+        if (this.mpState.pendingGarbage > 0) {
+            ctx.fillStyle = '#ff0000';
+            for (let i = 0; i < this.mpState.pendingGarbage; i++) {
+                ctx.fillRect(bx - 6, by + bh - (i + 1) * cfg.CELL, 4, cfg.CELL - 1);
+            }
+        }
+        ctx.textAlign = 'left';
+    },
+
+    receiveGarbage(lines) {
+        if (!this.mpState) return;
+        SFX.play('logjam', 0.5);
+        this.mpState.pendingGarbage += lines;
+        // Insert garbage after 1 second delay
+        if (!this.mpState.garbageTimer) {
+            this.mpState.garbageTimer = setTimeout(() => {
+                this.insertGarbage();
+                this.mpState.garbageTimer = 0;
+            }, 1000);
+        }
+    },
+
+    insertGarbage() {
+        if (!this.mpState || this.mpState.pendingGarbage <= 0) return;
+        const count = this.mpState.pendingGarbage;
+        this.mpState.pendingGarbage = 0;
+
+        for (let i = 0; i < count; i++) {
+            // Remove top row
+            this.board.shift();
+            // Add garbage row at bottom
+            const garbageRow = Array(this.COLS).fill(null).map(() => ({
+                kind: 'fragment', pieceId: null, pieceType: null, squareId: null, material: null, color: '#888888'
+            }));
+            // Random gap
+            const gap = Math.floor(Math.random() * this.COLS);
+            garbageRow[gap] = null;
+            this.board.push(garbageRow);
+        }
+
+        // Check if active piece is now invalid
+        if (this.active && !this.isValid(this.active)) {
+            this.state = 'gameover';
+            SFX.play('monkey', 0.6);
+            if (this.mpWs) this.mpWs.send(JSON.stringify({ type: 'game_over', score: this.score, lines: this.lines }));
+        }
+        this.draw();
+    },
+
+    opponentKO(finalScore) {
+        if (!this.mpState) return;
+        SFX.play('koWin', 1.0);
+        this.state = 'gameover';
+        this.flash('YOU WIN! Opponent scored ' + finalScore);
+        this.updateHud();
+        this.draw();
+    },
+
+    opponentLeft() {
+        if (!this.mpState) return;
+        this.state = 'gameover';
+        this.flash('Opponent left the game');
         this.updateHud();
         this.draw();
     },
@@ -1066,6 +1716,10 @@ const studyBreak = {
         if (!this.isValid(piece)) {
             this.active = null;
             this.state = 'gameover';
+            if (this.mode === '1v1' && this.mpWs) {
+                this.mpWs.send(JSON.stringify({ type: 'game_over', score: this.score, lines: this.lines }));
+            }
+            SFX.play('monkey', 0.6);
             this.flash('Stack jammed');
             this.updateHud();
             return;
@@ -1124,6 +1778,7 @@ const studyBreak = {
 
     holdSwap() {
         if (!this.active || this.holdLocked) return;
+        SFX.play('moof', 0.3);
         const current = this.active.type;
         const swap = this.hold;
         this.hold = current;
@@ -1176,6 +1831,7 @@ const studyBreak = {
     lockPiece() {
         if (!this.active) return;
         const piece = this.active;
+        SFX.play('droplet', 0.3);
         let toppedOut = false;
         for (const cell of this.getCells(piece)) {
             if (cell.y < this.HIDDEN_ROWS) toppedOut = true;
@@ -1196,7 +1852,26 @@ const studyBreak = {
         if (clear.lines) {
             this.lines += clear.lines;
             this.score += clear.points;
+            const prevLevel = this.level;
             this.level = 1 + Math.floor(this.lines / 10);
+            if (this.level > prevLevel) SFX.play('indigo', 0.7);
+        }
+
+        // Send garbage to opponent in 1v1 mode
+        if (this.mode === '1v1' && this.mpState && clear.lines > 0) {
+            const garbageTable = { 1: 0, 2: 1, 3: 2, 4: 4 };
+            const garbageToSend = garbageTable[clear.lines] || 0;
+            // Cancel pending incoming garbage first
+            if (this.mpState.pendingGarbage > 0 && garbageToSend > 0) {
+                const canceled = Math.min(this.mpState.pendingGarbage, garbageToSend);
+                this.mpState.pendingGarbage -= canceled;
+                const netGarbage = garbageToSend - canceled;
+                if (netGarbage > 0 && this.mpWs) {
+                    this.mpWs.send(JSON.stringify({ type: 'game_garbage', lines: netGarbage }));
+                }
+            } else if (garbageToSend > 0 && this.mpWs) {
+                this.mpWs.send(JSON.stringify({ type: 'game_garbage', lines: garbageToSend }));
+            }
         }
 
         const messages = [];
@@ -1210,6 +1885,10 @@ const studyBreak = {
             if (clear.silverStrips) messages.push(`silver bonus +${clear.silverStrips * 5}`);
         }
         if (messages.length) this.flash(messages.join(' • '));
+        if (clear.lines === 4) SFX.play('wildEep', 0.8);
+        else if (clear.lines === 3) SFX.play('quack', 0.7);
+        else if (clear.lines === 2) SFX.play('sosumi', 0.6);
+        else if (clear.lines === 1) SFX.play('boing', 0.5);
 
         this.active = null;
         this.spawnTimer = this.ENTRY_DELAY;
@@ -1218,8 +1897,13 @@ const studyBreak = {
 
         if (toppedOut) {
             this.state = 'gameover';
+            if (this.mode === '1v1' && this.mpWs) {
+                this.mpWs.send(JSON.stringify({ type: 'game_over', score: this.score, lines: this.lines }));
+            }
+            SFX.play('monkey', 0.6);
             this.flash('Top out');
         }
+        if (this.mode === '1v1') this.sendGameState();
         this.updateHud();
     },
 
@@ -1382,7 +2066,9 @@ const studyBreak = {
         let prefix = '';
         if (this.state === 'idle') prefix = 'Enter or click to start • Build 4×4 blocks: mixed = silver, same-piece = gold';
         else if (this.state === 'paused') prefix = 'Paused • Press P or click the window to resume';
-        else if (this.state === 'gameover') prefix = `Game over • Final score ${this.score} • Press Enter, R, or click to retry`;
+        else if (this.state === 'gameover') prefix = this.mode === '1v1'
+            ? `${this.flashText || 'Game over'} • Press R to rematch or Escape to exit`
+            : `Game over • Final score ${this.score} • Press Enter, R, or click to retry`;
         else prefix = this.flashText || 'Marathon mode • Gold strips are worth +10, silver strips +5';
         this.helpEl.textContent = `${prefix} • ←→ move • Z/X rotate • ↓ soft • ↑/Space firm • C/Shift hold • P pause`;
     },
@@ -1394,12 +2080,15 @@ const studyBreak = {
         };
     },
 
-    draw() {
-        const ctx = this.ctx;
+    draw(cfg) {
+        const c = cfg || this;
+        const ctx = c.ctx || this.ctx;
         if (!ctx) return;
-        ctx.clearRect(0, 0, this.CANVAS_W, this.CANVAS_H);
+        const canvasW = c.CANVAS_W || this.CANVAS_W;
+        const canvasH = c.CANVAS_H || this.CANVAS_H;
+        ctx.clearRect(0, 0, canvasW, canvasH);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, this.CANVAS_W, this.CANVAS_H);
+        ctx.fillRect(0, 0, canvasW, canvasH);
 
         this.drawPanelBox(12, 14, 116, 78, 'HOLD');
         this.drawPanelBox(12, 102, 116, 78, 'STATUS');
@@ -1451,7 +2140,11 @@ const studyBreak = {
         }
 
         if (this.flashText && this.state === 'running') this.drawFlashBanner(this.flashText);
-        if (this.state === 'idle') this.drawCenterCard('SQUARE MODE', 'Click or press Enter to play');
+        if (this.state === 'countdown') {
+            this.drawCenterCard('GET READY', this.countdownValue > 0 ? String(this.countdownValue) : 'GO!');
+            return;
+        }
+        if (this.state === 'idle') this.drawModeSelect();
         if (this.state === 'paused') this.drawCenterCard('PAUSED', 'Press P or click to resume');
         if (this.state === 'gameover') this.drawCenterCard('GAME OVER', 'Press Enter, R, or click to restart');
     },
@@ -1676,6 +2369,61 @@ const studyBreak = {
         ctx.fillText(subtitle, x + w / 2, y + 35);
         ctx.fillText('Gold = same piece  •  Silver = mixed', x + w / 2, y + 48);
         ctx.textAlign = 'left';
+    },
+
+    drawModeSelect() {
+        const ctx = this.ctx;
+        const w = 200;
+        const h = 90;
+        const x = this.BOARD_X + (this.COLS * this.CELL - w) / 2;
+        const y = this.BOARD_Y + (this.VISIBLE_ROWS * this.CELL - h) / 2;
+        // Card background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#000000';
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        // Title bar
+        ctx.fillStyle = '#dddddd';
+        ctx.fillRect(x + 1, y + 1, w - 2, 14);
+        ctx.fillStyle = '#000000';
+        ctx.font = '10px Chicago, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('STUDY BREAK', x + w / 2, y + 11);
+        // Subtitle
+        ctx.font = '10px Geneva, Arial, sans-serif';
+        ctx.fillText('Square Mode', x + w / 2, y + 28);
+        // Solo button area
+        const btnW = 70, btnH = 24, gap = 16;
+        const btnY = y + 38;
+        const soloX = x + w / 2 - btnW - gap / 2;
+        const vsX = x + w / 2 + gap / 2;
+        // Solo button
+        ctx.strokeStyle = '#000000';
+        ctx.strokeRect(soloX + 0.5, btnY + 0.5, btnW - 1, btnH - 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(soloX + 1, btnY + 1, btnW - 2, btnH - 2);
+        ctx.fillStyle = '#000000';
+        ctx.font = '10px Chicago, Arial, sans-serif';
+        ctx.fillText('SOLO', soloX + btnW / 2, btnY + 15);
+        ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.fillText('Enter', soloX + btnW / 2, btnY + 22);
+        // 1v1 button
+        ctx.strokeStyle = '#000000';
+        ctx.strokeRect(vsX + 0.5, btnY + 0.5, btnW - 1, btnH - 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(vsX + 1, btnY + 1, btnW - 2, btnH - 2);
+        ctx.fillStyle = '#000000';
+        ctx.font = '10px Chicago, Arial, sans-serif';
+        ctx.fillText('1v1', vsX + btnW / 2, btnY + 15);
+        ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.fillText('Click', vsX + btnW / 2, btnY + 22);
+        // Footer
+        ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.fillText('Build 4×4 blocks for bonus pts', x + w / 2, y + h - 8);
+        ctx.textAlign = 'left';
+        // Store button rects for click detection
+        this._soloBtn = { x: soloX, y: btnY, w: btnW, h: btnH };
+        this._vsBtn = { x: vsX, y: btnY, w: btnW, h: btnH };
     }
 };
 
