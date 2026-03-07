@@ -1,0 +1,32 @@
+# Video 1 — Transcript
+# Unit 6, Lesson 9
+
+edit
+more_vert
+
+[00:00] I'm Doug Tyson, here in fabulous York, Pennsylvania. I've got another AP daily video for you. This one's about topic 6.9, justifying a claim with a confidence interval for a difference of two proportions. What are we gonna learn in this video? Well, number one, we're going to interpret a confidence interval for a difference in proportions.
+
+[00:24] Number two, we're going to learn how to justify a claim based on a confidence interval for a difference in proportions. So let's look at an example. Please trees don't leave. A disease is killing many trees in your state. Random samples of trees from two different large forests, one at high elevation and one at low elevation, reveal that 36 of 240 trees at the high elevation and 25 of 200 trees at the low elevation died from the disease.
+
+[01:00] We're gonna calculate and interpret a 90% confidence interval for the difference, high minus low in the proportions of all trees that have died from the disease at these elevations. So how do we interpret the confidence interval? Well here's a general template for interpreting a confidence interval. We are C percent confident that the interval from blank to blank captures the value to be estimated. So you're gonna have to fill in some details there for a particular confidence interval.
+
+[01:33] Now from a previous video, the 90% confidence interval for the diseased trees example is negative 0.029 to 0.079. So let's interpret that. We are 90% confident that the interval from negative 0.029 to positive 0.079 captures the difference high minus low in the proportion of all trees that have in these forests that have died from the disease.
+
+[02:09] We can also use a confidence interval to justify a claim. Wildlife biologists must decide how to use their limited resources to battle the disease. If the disease seems to be more damaging at one of the elevations, they can use more resources to fight the the disease at that elevation. Is there convincing evidence that the disease is more lethal at one of the elevations? Well let's think for a minute if the disease is equally lethal in both forests, then the difference in the proportion of trees that would have died from the disease would be zero because the proportions will be the same and if two things are the same their difference is zero.
+
+[02:52] So because zero is in the 90% confidence interval, negative 0.029 to 0.079, zero is a plausible value for the difference in the proportion, high minus low, of all trees that have died from the disease. So there's not convincing evidence that the disease is more lethal at one of the elevations.
+
+[03:19] So let's practice with a different example. Who's a good dog? A company that manufactures tick repellant for dogs has developed a new formula that has less odor than their old formula. An experiment was conducted with 160 dogs volunteered by their owners. The dogs were randomly assigned a formula, 80 to the new and 80 to the old, and of the dogs treated with the new formula, 12 got ticks compared to 25 of the 80 dogs treated with the old formula.
+
+[03:53] The 95% confidence interval for the difference, new minus old, in the true proportion of dogs such as these that would get ticks is negative 0.1625 plus or minus 0.1282. Let's interpret the confidence interval, that's part A. And part B, based on the interval, is there convincing evidence that the new formula is better than the old formula at preventing ticks on dogs such as the ones in the study?
+
+[04:27] So let's interpret the confidence interval first, that's part A. Well, the interval is negative 0.1625 plus or minus 0.1282. So we can actually do the arithmetic and find out that that's an interval from negative 0.2907 to negative 0.3, negative 0.0343. So we are 95% confident that the interval from negative 0.2907 to negative 0.0343 captures the difference, new minus old, in the true proportion of dogs such as these that would get ticks when using these repellents.
+
+[05:15] And now part B. Based on the interval, is there convincing evidence that the new formula is better than the old at preventing ticks on dogs such as the ones in the study? Well, because all the values in the interval, negative 0.2907 to negative 0.0343 are less than zero, there is convincing evidence that the new formula is better than the old formula at preventing ticks on dogs like these. So think about the interval.
+
+[05:46] All the values are negative. That means that we're 95% confident that the first population proportion is smaller than the second population proportion. That's how we would get a difference that's negative. So what should we take away from this video? Well, number one, how do we interpret a confidence interval for a difference in population proportions? We are C percent confident that the interval from blank to blank captures the value to be estimated. Number two, how do we justify a claim based on a confidence interval for a difference in proportions?
+
+[06:31] If all the values in the interval are consistent with the claim, then we have convincing evidence for the claim. That's what we saw with the dogs example. If one or more of the values in the confidence interval are inconsistent with the claim, then there's not convincing evidence for the claim. And that's what we saw in the trees example. I'm Doug Tyson. Thanks for joining me again in an AP Daily video. Peace.
+
+thumb_up
+thumb_down

@@ -1,0 +1,363 @@
+# Video 2 — Slide Descriptions
+# Unit 6, Lesson 9
+
+edit
+more_vert
+
+[00:00] — Title Slide
+Text on screen:
+AP Daily
+AP Statistics
+Topic 6.9
+Justifying a Claim with a Confidence Interval for a Difference of Two Proportions
+Doug Tyson
+Central York High School
+York, PA
+
+[00:15] — What will we learn?
+Text on screen:
+
+Construct and interpret a confidence interval for a difference in proportions.
+
+[00:26] — Let's practice!
+A transition slide with the title "Let's practice!".
+
+[00:29] — 2006 AP Exam Question (Form B)
+Text on screen:
+"A large company has two shifts—a day shift and a night shift. Parts produced by the two shifts must meet the same specifications. The manager of the company believes that there is a difference in the proportions of parts produced within specifications by the two shifts. To investigate this belief, random samples of parts that were produced on each of these shifts were selected."
+
+[01:00] — 2006 AP Exam Question (Form B) - continued
+Additional text appears on the slide:
+"For the day shift, 188 of its 200 selected parts met specifications. For the night shift, 180 of its 200 selected parts met specifications."
+
+[01:13] — 2006 AP Exam Question (Form B) - continued
+Additional text appears:
+"(a) Use a 96 percent confidence interval to estimate the difference in the proportions of parts produced within specifications by the two shifts."
+
+[01:25] — 2006 AP Exam Question (Form B) - continued
+Additional text appears:
+"(b) Based only on this confidence interval, do you think that the difference in the proportions of parts produced within specifications by the two shifts is significantly different from 0 ? Justify your answer."
+
+[01:42] — Part (a) - Defining the parameter
+The prompt for Part (a) is displayed at the top. Below it, new text appears:
+"We are trying to use a 96% confidence interval to estimate the difference (day - night) in the proportion of all parts produced within specifications by the two shifts."
+(The text "day - night" is highlighted in red font).
+
+[02:14] — Part (a) - Identifying the procedure
+Text on screen:
+"Let 1 = day shift and 2 = night shift.
+We will construct a 2-sample z interval for a difference in proportions, 
+𝑝
+1
+−
+𝑝
+2
+p
+1
+	​
+
+−p
+2
+	​
+
+."
+
+[02:30] — Part (a) - Checking Conditions (Randomness)
+Text on screen:
+"- We have two independent random samples of 200 parts (day shift and night shift)."
+
+[02:49] — Part (a) - Checking Conditions (10% Condition)
+Additional text appears:
+"- Because sampling without replacement was used, we need to verify the 10% condition. 200 parts is likely less than 10% of all parts produced by the day shift and 200 parts is likely less than 10% of all parts produced by the night shift."
+
+[03:07] — Part (a) - Checking Conditions (Large Counts)
+Additional text appears:
+"- Large Counts Condition:
+Sample 1 (Day): 188 successes, 12 failures
+Sample 2 (Night): 180 successes, 20 failures
+All counts are at least 10, so the conditions have been met."
+(Blue checkmarks with "
+≥
+10
+≥10
+" appear next to the success/failure counts).
+
+[03:45] — Part (a) - Calculation Formula
+Text and formulas on screen:
+
+𝑝
+^
+1
+=
+0.94
+p
+^
+	​
+
+1
+	​
+
+=0.94
+, 
+𝑝
+^
+2
+=
+0.90
+p
+^
+	​
+
+2
+	​
+
+=0.90
+
+Formula: 
+(
+𝑝
+^
+1
+−
+𝑝
+^
+2
+)
+±
+𝑧
+∗
+𝑝
+^
+1
+(
+1
+−
+𝑝
+^
+1
+)
+𝑛
+1
++
+𝑝
+^
+2
+(
+1
+−
+𝑝
+^
+2
+)
+𝑛
+2
+(
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+)±z
+∗
+n
+1
+	​
+
+p
+^
+	​
+
+1
+	​
+
+(1−
+p
+^
+	​
+
+1
+	​
+
+)
+	​
+
++
+n
+2
+	​
+
+p
+^
+	​
+
+2
+	​
+
+(1−
+p
+^
+	​
+
+2
+	​
+
+)
+	​
+
+	​
+
+
+[04:05] — Part (a) - Plugging Values into Formula
+The formula is populated with the data values:
+
+(
+0.94
+−
+0.90
+)
+±
+2.054
+0.94
+(
+0.06
+)
+200
++
+0.90
+(
+0.10
+)
+200
+(0.94−0.90)±2.054
+200
+0.94(0.06)
+	​
+
++
+200
+0.90(0.10)
+	​
+
+	​
+
+
+[04:39] — Part (a) - Point Estimate and Margin of Error
+The calculation simplifies to:
+
+0.04
+±
+0.056
+0.04±0.056
+
+[04:48] — Part (a) - Final Confidence Interval
+The final calculated interval appears:
+
+(
+−
+0.016
+,
+0.096
+)
+(−0.016,0.096)
+
+[04:58] — Part (a) using technology
+Text on screen: "Stat > Tests > B: 2-PropZInt..."
+A screenshot of a TI-84 calculator screen appears showing the input menu:
+x1: 188
+n1: 200
+x2: 180
+n2: 200
+C-Level: .96
+Calculate (highlighted)
+
+[05:24] — Part (a) using technology - Output
+A second TI-84 calculator screenshot appears showing the output:
+2-PropZInt
+(-.0156, .09556)
+
+𝑝
+^
+1
+=
+.94
+p
+^
+	​
+
+1
+	​
+
+=.94
+
+
+𝑝
+^
+2
+=
+.9
+p
+^
+	​
+
+2
+	​
+
+=.9
+
+n1=200
+n2=200
+
+[05:37] — Part (a) - Interpreting the Interval
+Text on screen:
+"We are 96% confident that the interval from -0.016 to 0.096 captures the difference (day - night) in the proportion of all parts produced within specifications for these two shifts."
+
+[05:59] — Part (b) - The Prompt
+The prompt for Part (b) is displayed:
+"(b) Based only on this confidence interval, do you think that the difference in the proportions of parts produced within specifications by the two shifts is significantly different from 0 ? Justify your answer."
+
+[06:14] — Part (b) - The Answer
+The answer to Part (b) appears below the prompt:
+"Because 0 is in the 96% confidence interval, 0 is a plausible value for the difference (day - night) in the proportion of all parts produced within specifications by the two shifts. There is not convincing evidence that the proportions of parts produced within specifications by the two shifts is significantly different from 0."
+
+[06:51] — Bonus Feature
+Text on screen:
+"Interpret the confidence level!
+(Notice the difference between interpreting a confidence INTERVAL and interpreting a confidence LEVEL.)"
+
+[07:18] — Bonus Feature - Interpretation Part 1
+Additional text appears:
+"If all possible random samples of 200 parts from each shift were selected and a confidence interval was constructed from each pair of samples..."
+
+[07:38] — Bonus Feature - Interpretation Part 2
+Additional text appears:
+"...then 96% of all these intervals would succeed in capturing the true difference in the proportion of all parts produced within specifications by the two shifts."
+
+[07:58] — What should we take away?
+Text on screen:
+"If asked to construct and interpret a confidence interval for a difference in proportions, be sure to..."
+
+[08:10] — Takeaway Bullet Points
+Bullet points appear sequentially as the speaker reads them:
+
+Define the difference in proportions you are trying to estimate.
+
+Identify the procedure you are using.
+
+Verify the conditions have been met with evidence.
+
+Calculate the confidence interval.
+
+Interpret the interval in context.
+
+thumb_up
+thumb_down

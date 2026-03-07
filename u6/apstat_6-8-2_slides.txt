@@ -1,0 +1,118 @@
+# Video 2 — Slide Descriptions
+# Unit 6, Lesson 8
+
+edit
+more_vert
+
+Here is a detailed breakdown of the visual content and slide changes in the video:
+
+[00:00] — Title Slide
+
+<Title text: "AP Daily" and "Topic 6.8 Confidence Intervals for the Difference of Two Proportions." Presenter name: Doug Tyson, Central York High School, York, PA.>
+
+
+[00:09] — What will we learn?
+<Text lists two learning objectives:
+
+How to determine the margin of error when estimating a difference in proportions.
+
+How to calculate a confidence interval for a difference in proportions.>
+
+[00:25] — Please Trees, Don't Leave! (Example)
+<Text describing the scenario: "A disease is killing many trees in your state. Random samples of trees from two different large forests, one at high elevation and one at low elevation, reveal that 36 of 240 trees at high elevation and 25 of 200 trees at low elevation died from the disease."
+Prompt at the bottom: "Calculate and interpret a 90% confidence interval for the difference (high – low) in the proportions of all trees that have died from the disease at these elevations.">
+
+[01:04] — Margin of Error
+<Text explaining the concept:
+
+"Confidence intervals are of the form: point estimate ± margin of error"
+
+"The margin of error describes how much a value of a sample statistic is likely to vary from the value of the corresponding population parameter."
+
+"Margin of error is determined by two factors:
+
+How much the statistic typically varies from the parameter.
+
+How confident we want to be in our estimate.">
+
+[01:34] — Margin of Error (Formula)
+<Builds on the previous slide. A new formula appears: "Margin of error = (critical value) · (standard error of statistic)"
+Arrows are drawn linking the concepts to the formula components:
+
+Factor 1 ("How much the statistic typically varies...") points to "standard error of statistic"
+
+Factor 2 ("How confident we want to be...") points to "critical value">
+
+[02:08] — Standard Error
+<Text defining the concept: "The standard error is an estimate of the standard deviation of the sampling distribution of the statistic."
+The slide shows the formula for the standard deviation of the sampling distribution:
+σ_(p̂₁ - p̂₂) = √[ (p₁(1-p₁)) / n₁ + (p₂(1-p₂)) / n₂ ]
+Below it, text appears: "We don't know the values of p₁ and p₂. We must substitute p̂₁ and p̂₂."
+The standard error formula is then shown with the sample proportions substituted in:
+SE_(p̂₁ - p̂₂) = √[ (p̂₁(1-p̂₁)) / n₁ + (p̂₂(1-p̂₂)) / n₂ ]>
+
+[02:55] — Critical Value
+<Text defines the critical value: "The critical value is a multiplier that makes the margin of error large enough to give a particular amount of confidence that the interval contains the value we're trying to estimate."
+Further explanation: "For confidence intervals for a difference in proportions, the critical values represent the boundaries encompassing the middle C% of the standard normal distribution, where C% is the confidence level.">
+
+[03:39] — Critical Value (Finding z)*
+<Text applies the concept to the example: "In the diseased trees example, we are looking for a 90% confidence interval, so we must find the boundaries that capture the middle 90% of a standard normal distribution."
+A graph of a standard normal distribution (bell curve) is shown. The x-axis is a z-axis with a mean of 0. The middle section of the curve is shaded blue and labeled "90%". The unshaded left and right tails are each labeled "5%". The boundary values on the x-axis initially show question marks, which are then replaced by "-1.645" and "1.645".
+Text appears below: "z* = 1.645 (We use the positive value by default)">
+
+[04:18] — Calculating Confidence Interval
+<The slide builds the full formula step-by-step:
+"Confidence interval = point estimate ± margin of error"
+"= statistic ± (critical value) · (standard error of statistic)"
+"= (p̂₁ - p̂₂) ± z* √[ (p̂₁(1-p̂₁)) / n₁ + (p̂₂(1-p̂₂)) / n₂ ]">
+
+[04:36] — Calculating Confidence Interval (Diseased Trees Example)
+<The slide calculates the interval for the trees example.
+Text: "Let 1 = High Elevation and 2 = Low Elevation"
+Sample proportions are defined:
+p̂₁ = 36 / 240 = 0.150
+p̂₂ = 25 / 200 = 0.125
+The full formula is shown, and then the specific values are plugged in:
+(0.150 - 0.125) ± 1.645 √[ (0.150(1-0.150)) / 240 + (0.125(1-0.125)) / 200 ]
+The calculation simplifies to: 0.025 ± 0.054
+The final interval is displayed: (-0.029, 0.079)>
+
+[05:43] — A Word About That Formula...
+<Text: "(You don't have to memorize it; you can piece it together with the formula sheet!)"
+An image shows a snippet of the official AP Statistics formula sheet under Roman numeral "I. Descriptive Statistics." A red box highlights the generic template: "Confidence Interval = statistic ± (critical value) · (standard error of statistic)">
+
+[06:04] — A Word About That Formula... (Part 2)
+<An image shows another snippet of the formula sheet, under Roman numeral "III. Inferential Statistics." A table lists parameters and standard errors. A red box highlights the row for "Two populations", specifically looking at the column for a difference in proportions (p₁ - p₂).
+The table shows the statistic as: p̂₁ - p̂₂
+The standard error is shown as: √[ (p̂₁(1-p̂₁)) / n₁ + (p̂₂(1-p̂₂)) / n₂ ]>
+
+[06:33] — Who's a good dog? (Example)
+<Text describing a new scenario: "A company that manufactures tick repellent for dogs has developed a new formula that has less odor than their old formula. However, if the new formula doesn't prevent ticks as well as the old formula, dog owners won't buy it. What is the difference in the effectiveness of these two formulas? An experiment was conducted with 160 dogs volunteered by their owners. The dogs were randomly assigned to a formula, 80 to the new and 80 to the old. After being treated, the dogs played for an hour in a heavily wooded area known to have many ticks. Of the dogs treated with the new formula, 12 got ticks compared to 25 of the dogs treated with the old formula.">
+
+[07:18] — Calculating Confidence Interval (Dog Example)
+<Prompt: "Calculate a 95% confidence interval for the difference (new – old) in the true proportion of dogs like the ones in this study who would get ticks."
+Text assigns variables: "Let N = New formula and O = Old formula"
+Sample proportions are defined:
+p̂_N = 12 / 80 = 0.15
+p̂_O = 25 / 80 = 0.3125
+The formula is shown with values substituted in (using 1.96 as the z* critical value for 95% confidence):
+(0.15 - 0.3125) ± 1.96 √[ (0.15(1-0.15)) / 80 + (0.3125(1-0.3125)) / 80 ]
+The calculation simplifies to: -0.1625 ± 0.1282
+The final interval is displayed: (-0.2907, -0.0343)>
+
+[08:18] — What should we take away?
+<Text recaps the two main learning objectives with their corresponding formulas:
+
+"How do we determine the margin of error when estimating a difference in proportions?"
+"Margin of error = (critical value) · (standard error of statistic)"
+"Margin of Error = z* √[ (p̂₁(1-p̂₁)) / n₁ + (p̂₂(1-p̂₂)) / n₂ ]"
+
+"How do we calculate a confidence interval for a difference in proportions?"
+"Confidence interval = point estimate ± margin of error"
+"Confidence interval = (p̂₁ - p̂₂) ± z* √[ (p̂₁(1-p̂₁)) / n₁ + (p̂₂(1-p̂₂)) / n₂ ]">
+
+[08:55] — Outro
+<The standard AP Daily end screen with the AP logo.>
+
+thumb_up
+thumb_down

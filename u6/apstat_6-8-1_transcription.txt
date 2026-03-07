@@ -1,0 +1,68 @@
+# Video 1 — Transcript
+# Unit 6, Lesson 8
+
+edit
+more_vert
+
+Here is a transcription of the video, complete with formatting and timestamps:
+
+[00:00] Tyson, here in fabulous York, Pennsylvania. I'm here with another AP Daily video on Topic 6.8, Confidence Intervals for the Difference of Two Proportions.
+
+[00:11] What are we going to learn in this video? First, we're going to figure out how we identify an appropriate confidence interval procedure for a difference in proportions. And second, we're going to learn how to verify that the conditions have been met for calculating a confidence interval for a difference in two proportions.
+
+[00:30] So let's look at an example. Please Trees, Don't Leave! A disease is killing many trees in your state. Random samples of trees from two different large forests, one at high elevation and one at low elevation, reveal that 36 of 240 trees at high elevation and 25 of 200 trees at low elevation have died from the disease.
+
+[00:53] Let's calculate and interpret a 90% confidence interval for the difference, high minus low, in the proportions of all trees that have died from the disease at these elevations.
+
+[01:05] So first, we've got to figure out which inference procedure we should choose. So we learned already that a confidence interval for a population proportion involving one sample is called a one-sample z-interval for a population proportion. But here we have two random samples.
+
+[01:25] So this confidence interval is called a two-sample z-interval for a difference in proportions. We're estimating the difference in those two proportions. So this procedure is appropriate for estimating a difference when one of two situations applies.
+
+[01:45] Either you have two random samples, two independent random samples from two different populations, or you have subjects randomly assigned to two treatment groups in a randomized experiment.
+
+[01:59] Once we know which procedure to use, we need to check the conditions, just like all inference procedures in AP Statistics. In general, here's what we need to check for in all our inference procedures.
+
+[02:12] Number one, independence in the methods we use to collect data. And then number two, that the appropriate sampling distribution has the correct shape. So what does that look like when we have independent random samples from two populations?
+
+[02:29] Well, to check for independence, we want to make sure that the data were collected using two random samples, one from each population. Second, if we're sampling without replacement, the sample size in each sample should be less than or equal to 10% of the population size.
+
+[02:49] And then to check that the shape of the sampling distribution is approximately normal, we want to make sure that the observed numbers of successes and failures in each sample are all at least 10.
+
+[03:02] And so you can see we may have to calculate and take sample size times the sample proportion of successes, and sample size times the sample proportion of failures, and calculate each of those counts for both samples. As long as they are at least 10, we've met that condition.
+
+[03:21] Well, what about treatment groups from a randomized experiment? Well, to check for independence, we first need to make sure that we have subjects randomly assigned to two treatment groups, and that's how the data were produced.
+
+[03:36] To check that the shape of the sampling distribution is approximately normal, again, we want to make sure that the numbers of successes and failures in both groups are all at least 10.
+
+[03:49] So let's go back to our example about the trees. Remember that we had random samples of trees from two different large forests, one at high and one at low elevation, and that 36 of 240 trees at high elevation and 25 of 200 trees at low elevation have died from this disease.
+
+[04:09] Let's check to see if the conditions for calculating a confidence interval have been met. So we're going to let the subscript 1 mean high elevation, and the subscript 2 mean low elevation. We know that we have random samples of 240 trees and 200 trees from each of the two elevations. That was given to us. So we've met that condition.
+
+[04:33] It's also reasonable to say that 240 trees or 200 trees are less than 10% of all trees in a large forest. Forests have lots of trees in them. And then finally, we can see that the observed counts of successes and failures in each sample are at least 10.
+
+[04:52] Now, in this case, a success is a tree dying from a disease, unfortunately. So we know that 36 of the 240 trees at high elevation have died from the disease. And over here we can see that 204 have not.
+
+[05:08] Likewise, in the other sample, 25 have died from the disease and 175 have not. Because all those values are at least 10, we've met this condition, and we can be confident that the sampling distribution is approximately normal.
+
+[05:22] All the conditions are met in this case. Let's practice with one more example. Practice is a drag. Drag suits are designed to increase drag and make it harder for swimmers to swim.
+
+[05:39] If drag is really increased, then swimmers should swim more slowly. Swimmers wear drag suits during practice to increase the intensity of their workout. But do drag suits really work? Two student researchers randomly assigned 23 swimmers to wear a drag suit and 24 swimmers to wear their regular suits during a 100-meter freestyle race in practice.
+
+[06:03] Then they recorded whether or not the swimmers swam slower than their average. Of the 23 swimmers who wore a drag suit, 13 swam slower than their average. Meanwhile, in the group that wore regular suits, 8 were slower than their average time. Let's check if the conditions for calculating a confidence interval have been met.
+
+[06:23] So here's the given information again. We're going to let the subscript D mean drag suit and R mean regular suit. So swimmers were randomly assigned to wear either drag suits or regular suits. This was an experiment, and we implemented random assignment.
+
+[06:41] We can see, however, that the large counts condition is not met in this case. There were 13 successes and 10 failures in the drag suit group. Now that's fine. We've met the condition. 10 is at least 10. 13 is at least 10.
+
+[07:01] But in the regular suit group, we can see that 8 swam slower than their regular time, or their average time, rather, and 16 did not. And so 8 is not at least 10. We only have 8 successes in this group, so the conditions are not met in this case.
+
+[07:20] So what should we take away from this video? First, how do we identify an appropriate confidence interval procedure for a difference in proportions? It's a two-sample z-interval for a difference in proportions. That's the name.
+
+[07:35] And how do we verify that the conditions have been met for calculating such a confidence interval? Well, first, we need to have two independent random samples or two groups that were randomly assigned in a randomized experiment.
+
+[07:50] Second, when we're sampling without replacement, the sample sizes need to be less than or equal to 10% of the population sizes. Now remember, that does not apply to experiments because you're not sampling when you have an experiment.
+
+[08:04] And then third, the counts of successes and failures are all at least 10. I'm Doug Tyson. Thanks for tuning into this video. Peace.
+
+thumb_up
+thumb_down

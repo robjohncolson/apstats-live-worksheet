@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week of Mar 16-20 | AP Statistics</title>
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --period-b: #1565c0;
+            --period-e: #7b1fa2;
+            --unit6: #6a1b9a;
+            --unit7: #00838f;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-300: #e0e0e0;
+            --gray-600: #757575;
+            --gray-700: #616161;
+            --gray-900: #212121;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.5;
+            padding: 1.5rem;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .header .subtitle { opacity: 0.9; font-size: 0.95rem; }
+        .exam-banner {
+            background: linear-gradient(135deg, #43a047, #2e7d32);
+            color: white;
+            text-align: center;
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            background: var(--gray-200);
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .status-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .status-badge.on-track {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .status-badge.catching-up {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            background: white;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .day-column {
+            border-right: 1px solid var(--gray-200);
+        }
+        .day-column:last-child { border-right: none; }
+        .day-header {
+            background: var(--gray-100);
+            padding: 0.75rem;
+            text-align: center;
+            border-bottom: 2px solid var(--gray-300);
+        }
+        .day-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+        .day-date {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .day-content {
+            padding: 0.5rem;
+            min-height: 280px;
+        }
+        .period-block {
+            border-radius: 6px;
+            padding: 0.6rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .period-block.period-b {
+            background: #e3f2fd;
+            border-left: 4px solid var(--period-b);
+        }
+        .period-block.period-e {
+            background: #f3e5f5;
+            border-left: 4px solid var(--period-e);
+        }
+        .period-block.unit7-start {
+            background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+            border-left: 4px solid var(--unit7);
+        }
+        .period-label {
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+        .period-b .period-label { color: var(--period-b); }
+        .period-e .period-label { color: var(--period-e); }
+        .unit7-start .period-label { color: var(--unit7); }
+        .topic-tag {
+            display: inline-block;
+            background: #e1bee7;
+            color: #6a1b9a;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 0.2rem;
+        }
+        .topic-tag.unit7 {
+            background: #b2ebf2;
+            color: #00695c;
+        }
+        .content-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin: 0.3rem 0;
+            color: var(--gray-900);
+        }
+        .new-unit-badge {
+            display: inline-block;
+            background: var(--unit7);
+            color: white;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            margin: 0.2rem 0;
+            font-size: 0.75rem;
+            color: var(--gray-700);
+        }
+        .detail-label {
+            font-weight: 600;
+            min-width: 45px;
+            color: var(--gray-600);
+        }
+        .due-item {
+            background: #ffebee;
+            color: #c62828;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0.1rem 0;
+        }
+        .assign-item {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0.1rem 0;
+        }
+        .no-class {
+            color: var(--gray-600);
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.85rem;
+        }
+        .double-up {
+            background: #fff8e1;
+            border: 1px dashed #ffa000;
+            border-radius: 3px;
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
+            color: #e65100;
+            margin-top: 0.3rem;
+            text-align: center;
+        }
+        .progress-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .progress-section h3 {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+        }
+        .progress-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .progress-label {
+            min-width: 70px;
+            font-weight: 600;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 20px;
+            background: var(--gray-200);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+        }
+        .progress-fill.period-b { background: var(--period-b); }
+        .progress-fill.period-e { background: var(--period-e); }
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: var(--gray-600);
+            font-size: 0.8rem;
+        }
+        @media print {
+            body { padding: 0; background: white; }
+            .calendar-grid { box-shadow: none; border: 1px solid var(--gray-300); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Unit 6 Wrap-Up → Unit 7: Inference for Means</h1>
+            <div class="subtitle">AP Statistics | March 16–20, 2026</div>
+        </div>
+        <div class="exam-banner">
+            🎯 AP Exam: May 7, 2026 — 7 weeks away!
+        </div>
+        <div class="status-bar">
+            <div class="status-item">
+                📘 Period B: <span class="status-badge on-track">✓ Starting Unit 7</span>
+            </div>
+            <div class="status-item">
+                📙 Period E: <span class="status-badge catching-up">↑ Finishing Unit 6</span>
+            </div>
+        </div>
+
+        <div class="calendar-grid">
+            <!-- MONDAY -->
+            <div class="day-column">
+                <div class="day-header">
+                    <div class="day-name">Monday</div>
+                    <div class="day-date">Mar 16</div>
+                </div>
+                <div class="day-content">
+                    <div class="period-block period-b">
+                        <div class="period-label">📘 Period B</div>
+                        <div><span class="topic-tag">6.10</span></div>
+                        <div class="content-title">Setting Up Test for p₁ − p₂</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Due:</span>
+                            <span><span class="due-item">Quiz 6.8</span></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Assign:</span>
+                            <span><span class="assign-item">Drills 6.10</span> <span class="assign-item">Quiz 6.9</span></span>
+                        </div>
+                    </div>
+                    <div class="period-block period-e">
+                        <div class="period-label">📙 Period E</div>
+                        <div><span class="topic-tag">6.7</span></div>
+                        <div class="content-title">Potential Errors (Type I & II)</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Due:</span>
+                            <span><span class="due-item">Quiz 6.4-6.5</span></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Assign:</span>
+                            <span><span class="assign-item">Drills 6.7</span> <span class="assign-item">Quiz 6.6</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TUESDAY -->
+            <div class="day-column">
+                <div class="day-header">
+                    <div class="day-name">Tuesday</div>
+                    <div class="day-date">Mar 17</div>
+                </div>
+                <div class="day-content">
+                    <div class="period-block period-b">
+                        <div class="period-label">📘 Period B</div>
+                        <div><span class="topic-tag">6.11</span></div>
+                        <div class="content-title">Carrying Out Test for p₁ − p₂</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Due:</span>
+                            <span><span class="due-item">Quiz 6.9</span></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Assign:</span>
+                            <span><span class="assign-item">U6 Progress Check</span> <span class="assign-item">Drills 6.11</span> <span class="assign-item">Quiz 6.10</span></span>
+                        </div>
+                        <div class="double-up">✅ Unit 6 Complete!</div>
+                    </div>
+                    <div class="no-class">
+                        📙 Period E — No Class
+                    </div>
+                </div>
+            </div>
+
+            <!-- WEDNESDAY -->
+            <div class="day-column">
+                <div class="day-header">
+                    <div class="day-name">Wednesday</div>
+                    <div class="day-date">Mar 18</div>
+                </div>
+                <div class="day-content">
+                    <div class="no-class">
+                        📘 Period B — No Class
+                    </div>
+                    <div class="period-block period-e">
+                        <div class="period-label">📙 Period E</div>
+                        <div><span class="topic-tag">6.8</span><span class="topic-tag">6.9</span></div>
+                        <div class="content-title">CI for p₁ − p₂ + Justifying Claims</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Due:</span>
+                            <span><span class="due-item">Quiz 6.6</span></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Assign:</span>
+                            <span><span class="assign-item">Drills 6.8-6.9</span> <span class="assign-item">Quiz 6.7</span></span>
+                        </div>
+                        <div class="double-up">⚡ Double topic day</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- THURSDAY -->
+            <div class="day-column">
+                <div class="day-header">
+                    <div class="day-name">Thursday</div>
+                    <div class="day-date">Mar 19</div>
+                </div>
+                <div class="day-content">
+                    <div class="period-block unit7-start">
+                        <div class="period-label">📘 Period B</div>
+                        <div class="new-unit-badge">🎉 UNIT 7 STARTS</div>
+                        <div><span class="topic-tag unit7">7.1</span></div>
+                        <div class="content-title">Intro to Inference for Means</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Due:</span>
+                            <span><span class="due-item">Quiz 6.10</span></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Assign:</span>
+                            <span><span class="assign-item">Drills 7.1</span></span>
+                        </div>
+                    </div>
+                    <div class="no-class">
+                        📙 Period E — No Class
+                    </div>
+                </div>
+            </div>
+
+            <!-- FRIDAY -->
+            <div class="day-column">
+                <div class="day-header">
+                    <div class="day-name">Friday</div>
+                    <div class="day-date">Mar 20</div>
+                </div>
+                <div class="day-content">
+                    <div class="period-block period-b">
+                        <div class="period-label">📘 Period B</div>
+                        <div><span class="topic-tag unit7">7.2</span></div>
+                        <div class="content-title">Constructing CI for μ</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Assign:</span>
+                            <span><span class="assign-item">Drills 7.2</span> <span class="assign-item">Quiz 7.1</span></span>
+                        </div>
+                    </div>
+                    <div class="period-block period-e">
+                        <div class="period-label">📙 Period E</div>
+                        <div><span class="topic-tag">6.10</span></div>
+                        <div class="content-title">Setting Up Test for p₁ − p₂</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Due:</span>
+                            <span><span class="due-item">Quiz 6.7</span></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Assign:</span>
+                            <span><span class="assign-item">Drills 6.10</span> <span class="assign-item">Quiz 6.8-6.9</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Tracker -->
+        <div class="progress-section">
+            <h3>📈 End of Week Status</h3>
+            <div class="progress-row">
+                <span class="progress-label">📘 Period B:</span>
+                <div class="progress-bar">
+                    <div class="progress-fill period-b" style="width: 100%;">Unit 6 ✓ → Unit 7.2</div>
+                </div>
+            </div>
+            <div class="progress-row">
+                <span class="progress-label">📙 Period E:</span>
+                <div class="progress-bar">
+                    <div class="progress-fill period-e" style="width: 91%;">6.10 of 6.11</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            AP Statistics — Lynn English High School<br>
+            Period B: Mon/Tue/Thu/Fri &nbsp;|&nbsp; Period E: Mon/Wed/Fri<br>
+            <span style="margin-top: 0.5rem; display: block;">B into Unit 7 → E finishes Unit 6 next Monday</span>
+        </div>
+    </div>
+</body>
+</html>

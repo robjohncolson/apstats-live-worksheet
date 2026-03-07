@@ -1,0 +1,407 @@
+# Video 1 — Slide Descriptions
+# Unit 6, Lesson 8
+
+edit
+more_vert
+
+Here is a description of each visual change and slide in the video:
+
+[00:00] — Title Slide
+The video opens with the standard "AP Daily" title card.
+
+Text:
+
+Topic 6.8 Confidence Intervals for the Difference of Two Proportions
+
+Doug Tyson, Central York High School, York, PA
+
+[00:11] — What will we learn?
+A slide outlining the learning objectives for the video.
+
+Text:
+
+Identify an appropriate confidence interval procedure for a difference in proportions.
+
+Verify that the conditions have been met for calculating a confidence interval for a difference in two proportions.
+
+[00:30] — Example: Please Trees, Don't Leave!
+A slide presenting the first example scenario.
+
+Text:
+
+"A disease is killing many trees in your state. Random samples of trees from two different large forests, one at high elevation and one at low elevation, reveal that 36 of 240 trees at high elevation and 25 of 200 trees at low elevation have died from the disease."
+
+"Calculate and interpret a 90% confidence interval for the difference (high - low) in the proportions of all trees that have died from the disease at these elevations."
+
+[01:05] — Name the Procedure
+A slide explaining the naming convention for the statistical procedure.
+
+Text:
+
+Confidence interval for a population proportion involving one sample = One-sample z-interval for a population proportion.
+
+Confidence interval for a difference in population proportions involving two samples = Two-sample z-interval for a difference in proportions.
+
+[01:34] — Identify the Procedure
+A slide defining when to use this specific interval.
+
+Text: A two-sample z-interval for a difference in proportions is appropriate for estimating a difference when...
+
+...you have 2 independent random samples from 2 populations...
+
+...subjects are randomly assigned to 2 treatment groups in a randomized experiment.
+
+[01:59] — Check Conditions
+A slide outlining the general overarching conditions required for inference.
+
+Text:
+
+Independence in the methods we use to collect data.
+
+The appropriate sampling distribution has the correct shape.
+
+[02:22] — Check Conditions (Independent Random Samples)
+A slide detailing the specific conditions when dealing with independent random samples.
+
+Text for Independence:
+
+Data were collected using 2 independent random samples, one from each population.
+
+If sampling without replacement, the sample size in each sample is 
+≤
+10
+%
+≤10%
+ of the population size.
+
+Text for Shape is approximately Normal:
+
+The observed numbers of successes and failures in each sample are all at least 10.
+
+Formulas shown:
+
+𝑛
+1
+𝑝
+^
+1
+≥
+10
+n
+1
+	​
+
+p
+^
+	​
+
+1
+	​
+
+≥10
+
+𝑛
+1
+(
+1
+−
+𝑝
+^
+1
+)
+≥
+10
+n
+1
+	​
+
+(1−
+p
+^
+	​
+
+1
+	​
+
+)≥10
+
+𝑛
+2
+𝑝
+^
+2
+≥
+10
+n
+2
+	​
+
+p
+^
+	​
+
+2
+	​
+
+≥10
+
+𝑛
+2
+(
+1
+−
+𝑝
+^
+2
+)
+≥
+10
+n
+2
+	​
+
+(1−
+p
+^
+	​
+
+2
+	​
+
+)≥10
+
+[03:21] — Check Conditions (Randomized Experiment)
+A slide detailing the specific conditions when dealing with a randomized experiment.
+
+Text for Independence: Subjects randomly assigned to 2 treatment groups.
+
+Text for Shape is approximately Normal: The observed numbers of successes and failures in both groups are all at least 10.
+
+[03:49] — Example: Please Trees, Don't Leave! (Revisited)
+The tree example slide returns, but the prompt at the bottom has changed.
+
+Text: Check if the conditions for calculating a confidence interval have been met.
+
+[04:14] — Check Conditions (Tree Example)
+A slide showing the step-by-step verification of conditions for the tree example.
+
+Text: Let 1 = high elevation and 2 = low elevation.
+
+Independence checks shown as met:
+
+Random samples of 240 trees and 200 trees.
+
+240
+≤
+10
+%
+240≤10%
+ of all trees in large forest 1.
+
+200
+≤
+10
+%
+200≤10%
+ of all trees in large forest 2.
+
+Shape checks shown as met:
+
+𝑛
+1
+𝑝
+^
+1
+=
+36
+≥
+10
+n
+1
+	​
+
+p
+^
+	​
+
+1
+	​
+
+=36≥10
+
+𝑛
+1
+(
+1
+−
+𝑝
+^
+1
+)
+=
+240
+−
+36
+=
+204
+≥
+10
+n
+1
+	​
+
+(1−
+p
+^
+	​
+
+1
+	​
+
+)=240−36=204≥10
+
+𝑛
+2
+𝑝
+^
+2
+=
+25
+≥
+10
+n
+2
+	​
+
+p
+^
+	​
+
+2
+	​
+
+=25≥10
+
+𝑛
+2
+(
+1
+−
+𝑝
+^
+2
+)
+=
+200
+−
+25
+=
+175
+≥
+10
+n
+2
+	​
+
+(1−
+p
+^
+	​
+
+2
+	​
+
+)=200−25=175≥10
+
+Conclusion: All conditions are met.
+
+[05:25] — Example: Practice is a Drag
+A slide presenting a new example scenario about swimmers and drag suits.
+
+Text:
+
+"Drag suits are designed to increase drag and make it harder for swimmers to swim. If drag is really increased, then swimmers should swim more slowly. Swimmers wear drag suits during practice to increase the intensity of their workout. But do drag suits really work?"
+
+"Two student researchers randomly assigned 23 swimmers to wear a drag suit and 24 swimmers to wear their regular suits during a 100-meter freestyle race in practice. Then, they recorded whether or not the swimmers swam slower than their average."
+
+"Of the 23 swimmers who wore a drag suit, 13 swam slower than their average. Meanwhile, in the group that wore regular suits, 8 were slower than their average time."
+
+"Check if the conditions for calculating a confidence interval have been met."
+
+[06:23] — Check Conditions (Swimmer Example)
+A slide showing the step-by-step verification of conditions for the swimmer example.
+
+Text: Let D = drag suit and R = regular suit.
+
+Independence checks shown as met:
+
+Swimmers were randomly assigned to wear either drag suits or regular suits.
+
+Shape checks shown:
+
+Drag suit group:
+
+Successes: 
+13
+≥
+10
+13≥10
+
+Failures: 
+23
+−
+13
+=
+10
+≥
+10
+23−13=10≥10
+
+Regular suit group:
+
+Successes: 
+8
+8
+ (Not 
+≥
+10
+≥10
+) (This text is highlighted in red to emphasize it fails the condition)
+
+Failures: 
+24
+−
+8
+=
+16
+≥
+10
+24−8=16≥10
+
+Conclusion: Conditions are NOT met.
+
+[07:20] — What should we take away?
+The final summary slide of the video.
+
+Text:
+
+Identify an appropriate confidence interval procedure for a difference in proportions: Two-sample z-interval for a difference in proportions.
+
+Verify that the conditions have been met for calculating a confidence interval for a difference in two proportions:
+
+2 independent random samples OR randomly assigned treatments in an experiment
+
+Sample sizes 
+≤
+10
+%
+≤10%
+ of population sizes (if sampling without replacement)
+
+Counts of successes and failures 
+≥
+10
+≥10
+
+thumb_up
+thumb_down

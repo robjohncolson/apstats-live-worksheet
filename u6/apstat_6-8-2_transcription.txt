@@ -1,0 +1,138 @@
+# Video 2 — Transcript
+# Unit 6, Lesson 8
+
+edit
+more_vert
+
+[00:00] Hi, I'm Doug Tyson, here with another AP Daily video.
+
+[00:04] This is topic 6.8, confidence intervals for the difference of two proportions.
+
+[00:10] What are we going to learn in this video?
+
+[00:13] Well, number one, we're going to learn how to determine the margin of error when we're estimating a difference in proportions,
+
+[00:19] and we're going to learn how to calculate a confidence interval for a difference in proportions.
+
+[00:24] So let's look at an example.
+
+[00:27] Please Trees, Don't Leave! A disease is killing many trees in your state.
+
+[00:33] Random samples of trees from two different large forests, one at high elevation and one at low elevation, reveal that 36 of 240 trees at high elevation and 25 of 200 trees at low elevation died from the disease.
+
+[00:48] Let's calculate and interpret a 90% confidence interval for the difference, high minus low, in the proportions of all trees that have died from the disease at these elevations.
+
+[01:00] First let's think about calculating a margin of error.
+
+[01:06] So in AP Stats, our confidence intervals come in this form: point estimate plus or minus margin of error.
+
+[01:14] The margin of error describes how much a value of a sample statistic is likely to vary from the value of the corresponding population parameter.
+
+[01:24] Margin of error is determined by two factors: number one, how much a statistic typically varies from the parameter, and number two, how confident we want to be in our estimate.
+
+[01:36] So the margin of error is calculated by taking the critical value times the standard error of the statistic.
+
+[01:45] And the two parts of the confidence interval match those two factors.
+
+[01:50] How much the statistic typically varies from the parameter, that's defined by or quantified by the standard error of the statistic,
+
+[01:59] and how confident we want to be determines our critical value.
+
+[02:04] So the margin of error formula is critical value times standard error.
+
+[02:09] The standard error is an estimate of the standard deviation of the sampling distribution of the statistic.
+
+[02:16] So from a previous unit in AP Stats, we learned that this formula is the standard deviation of the sampling distribution of the difference in sample proportions.
+
+[02:30] However, we don't know the value of P sub one or P sub two. In fact, we're trying to estimate the difference in those two.
+
+[02:39] And so we're going to replace them with the sample proportions to get what we call the standard error.
+
+[02:46] And so this formula right here will estimate the standard deviation, we call this one the standard error.
+
+[02:56] Well, what about the critical value? The critical value is a multiplier that makes the margin of error large enough to give us a particular amount of confidence that the interval contains the value we're trying to estimate.
+
+[03:10] So for confidence intervals for a difference in proportions, the critical values represent the boundaries encompassing the middle C percent.
+
+[03:19] If we want 95% confidence, then that would be 95%. If we want 90% confidence, that would be 90%.
+
+[03:26] So it's the middle 90% of the standard normal distribution, and we call that 90% the confidence level.
+
+[03:38] So let's return to our formula.
+
+[03:41] In the diseased trees example, we want a 90% confidence interval, and so to find the critical value, we call it z star, we gotta find the boundaries that capture the middle 90% of a standard normal distribution.
+
+[03:56] And so we can visualize it with this picture, and those two values, we can use either table or technology, and we can find here that the two values are negative 1.645 and 1.645.
+
+[04:11] And so 1.645 is our critical value. We use the positive value by default.
+
+[04:18] So let's go ahead and calculate the confidence interval.
+
+[04:22] The confidence interval is the point estimate plus or minus the margin of error, and so that translates to the statistic plus or minus critical value times standard error of statistic.
+
+[04:36] And for our example about diseased trees, we're going to let the subscript one mean high elevation and two mean low elevation.
+
+[04:47] So our sample proportions, P hat one and P hat two, is 36 out of 240, or 0.15. 25 out of 200, or 0.125.
+
+[05:00] The confidence interval formula then, more on this in just a minute, here's the confidence interval formula,
+
+[05:08] and we're going to plug in all the values. Remember that we found 1.645, that was our critical value,
+
+[05:15] and we plug in all these other numbers, the sample proportions where they go, sample sizes where they go,
+
+[05:23] and we do a little work with our calculator, and we come up with a point estimate of .025 and a margin of error of .054.
+
+[05:34] That gives us a confidence interval from negative 0.029 to positive 0.079.
+
+[05:43] So, about that formula. You don't have to memorize it. You can piece it together with a formula sheet.
+
+[05:51] So on the formula sheet, we first, in one part of the formula sheet, we have the generic template for a confidence interval, and you can see it there, we've been looking at it so far in this video.
+
+[06:02] And then a little further down on the formula sheet, you can find sampling distributions and inferential statistics.
+
+[06:11] In that table, you can find that if you have two populations and you're looking at a difference in proportions,
+
+[06:20] here's the statistic, and over here is the standard error. You'll have to remember to use a z statistic for the critical value.
+
+[06:30] So let's practice with one more example. Who's a good dog?
+
+[06:36] A company that manufactures tick repellent for dogs has developed a new formula that has less odor than their old formula.
+
+[06:42] However, if the new formula doesn't prevent ticks as well as the old formula, dog owners aren't going to buy it.
+
+[06:49] So what's the difference in the effectiveness of these two formulas? An experiment was conducted with 160 dogs volunteered by their owners.
+
+[06:58] The dogs were randomly assigned to a formula, 80 to the new and 80 to the old.
+
+[07:04] After being treated, the dogs played for an hour in a heavily wooded area known to have many ticks.
+
+[07:09] Of the dogs treated with the new formula, 12 got ticks, compared to 25 of the dogs treated with the old formula.
+
+[07:18] So let's calculate a 95% confidence interval for the difference, new minus old, in the true proportion of dogs like the ones in this study who would get ticks.
+
+[07:29] So we're going to let N equal the new formula and O equal the old formula.
+
+[07:34] Then our sample proportions are 0.15 and 0.3125.
+
+[07:40] So we can use our confidence interval formula now, and we can plug in the proportions, sample proportions, and the sample sizes where they belong.
+
+[07:52] The critical value is 1.96. You'll need to use technology or table to find that.
+
+[07:59] And that gives us a point estimate of negative 0.1625 and a margin of error of 0.1282.
+
+[08:08] And so that gives us an interval from negative 0.2907 to negative 0.0343.
+
+[08:17] So what should we take away?
+
+[08:21] Well, how do we determine the margin of error when we're estimating a difference in proportions?
+
+[08:26] Well, it's the critical value times the standard error. And in this case, this is the formula for margin of error when we're looking at a difference in proportions.
+
+[08:37] And number two, how do we calculate a confidence interval?
+
+[08:42] Well, it's the point estimate plus or minus the margin of error. And so we take our point estimate plus or minus that margin of error that we calculated up above, and that's our formula for a confidence interval.
+
+[08:56] I'm Doug Tyson, thanks for watching another AP Daily video. Peace.
+
+thumb_up
+thumb_down

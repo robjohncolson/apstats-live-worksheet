@@ -1,0 +1,74 @@
+# Video 1 — Slide Descriptions
+# Unit 6, Lesson 9
+
+edit
+more_vert
+
+[00:00] — AP Daily Title Screen
+The opening slide shows the title "AP Daily" with the specific topic: "Topic 6.9 Justifying a Claim With a Confidence Interval for a Difference of Proportions (Categorical Data)." Below the topic, the presenter is introduced as Doug Tyson from Central York High School in York, PA. The presenter appears in a video inset on the right side of the screen.
+
+[00:08] — What will we learn?
+The slide transitions to the learning objectives for the video. Two bullet points appear sequentially:
+
+Interpret a confidence interval for a difference in proportions.
+
+Justify a claim based on a confidence interval for a difference in proportions.
+
+[00:23] — Example: Please trees, don't leave.
+A word problem is presented on the screen:
+"A disease is killing many trees in your state. Random samples of trees from two different large forests, one at high elevation and one at low elevation, reveal that 36 of 240 trees at the high elevation and 25 of 200 trees at the low elevation died from the disease."
+A new instruction appears below the problem text:
+"Calculate and interpret a 90% confidence interval for the difference (High - Low) in the proportions of all trees that have died from the disease at these elevations."
+
+[01:03] — Interpreting a confidence interval
+The slide changes to introduce a general framework. Text on the screen reads:
+"General Template:
+We are C% confident that the interval from _______ to _______ captures the [value to be estimated]."
+
+[01:31] — Interpreting a confidence interval (Applied to Example)
+The previous problem about the diseased trees is shown in smaller text at the top of the screen. Below it, the confidence interval is provided and interpreted based on the template:
+"From a previous video, the 90% confidence interval for the diseased trees example is -0.029 to 0.079.
+We are 90% confident that the interval from -0.029 to 0.079 captures the difference (High - Low) in the proportion of all trees in these forests that have died from the disease."
+
+[02:08] — Justifying a claim based on a confidence interval
+A new scenario building on the trees example is presented:
+"Wildlife biologists must decide how to use their limited resources to battle the disease. If the disease seems to be more damaging at one of the elevations, they can use more resources to fight the disease at that elevation. Is there convincing evidence that the disease is more lethal at one of the elevations?"
+Below this, the conclusion is drawn based on the confidence interval:
+"Because 0 is in the 90% confidence interval (-0.029 to 0.079), 0 is a plausible value for the difference in the proportion (High - Low) of all trees that have died from the disease. So, there is not convincing evidence that the disease is more lethal at one of the elevations."
+
+[03:19] — Practice: Who's a good dog?
+A new practice problem is displayed:
+"A company that manufactures tick repellent for dogs has developed a new formula that has less odor than their old formula. An experiment was conducted with 160 dogs volunteered by their owners. The dogs were randomly assigned a formula (80 to the New and 80 to the Old), and of the dogs treated with the new formula, 12 got ticks compared to 25 of the 80 dogs treated with the old formula."
+Additional information and questions appear:
+"The 95% confidence interval for the difference (New - Old) in the true proportion of dogs such as these that would get ticks is -0.1625 ± 0.1282.
+a. Interpret the confidence interval.
+b. Based on the interval, is there convincing evidence that the new formula is better than the old formula at preventing ticks on dogs such as the ones in the study?"
+
+[04:26] — Practice: Who's a good dog? (Part A)
+The problem description remains at the top. The focus shifts to answering part a. The calculation for the interval bounds is shown:
+"-0.1625 ± 0.1282 → (-0.2907, -0.0343)"
+The interpretation is written below:
+"We are 95% confident that the interval from -0.2907 to -0.0343 captures the difference (New - Old) in the true proportion of dogs such as these that would get ticks when using these repellents."
+
+[05:14] — Practice: Who's a good dog? (Part B)
+The problem description remains at the top. The focus shifts to answering part b. The conclusion is provided:
+"Because all of the values in the interval (-0.2907 to -0.0343) are less than 0, there is convincing evidence that the new formula is better than the old formula at preventing ticks on dogs like these."
+
+[05:58] — What should we take away?
+The final content slide summarizes the key learning points from the video with two main bullet points and sub-points:
+
+How do we interpret a confidence interval for a difference in proportions?
+
+General Template: We are C% confident that the interval from _______ to _______ captures the [value to be estimated].
+
+How do we justify a claim based on a confidence interval for a difference in proportions?
+
+If all the values in the interval are consistent with the claim, then we have convincing evidence for the claim.
+
+If one or more of the values in the confidence interval are inconsistent with the claim, then there is not convincing evidence for the claim.
+
+[06:48] — Ending Screen
+The presentation concludes with the AP logo on a white background while the presenter waves goodbye.
+
+thumb_up
+thumb_down

@@ -1,0 +1,86 @@
+# Video 2 — Transcript
+# Unit 6, Lesson 9
+
+edit
+more_vert
+
+[00:00] Hi, I'm Doug Tyson, here in beautiful York, Pennsylvania. We're here with another AP Daily video on Topic 6.9, justifying a claim with a confidence interval for a difference of two proportions.
+
+[00:15] So what are we going to learn in this video?
+
+[00:20] We're going to learn how to construct and interpret a confidence interval for a difference in proportions. We're going to see the whole process.
+
+[00:27] So let's practice.
+
+[00:30] Here's an AP exam question from 2006, Form B. "A large company has two shifts - a day shift and a night shift. Parts produced by the two shifts must meet the same specifications. The manager of the company believes that there is a difference in the proportions of parts produced within specifications by the two shifts. To investigate this belief, random samples of parts that were produced on each of these shifts were selected.
+
+[01:02] For the day shift, 188 of its 200 selected parts met specifications. For the night shift, 180 of its 200 selected parts met specifications.
+
+[01:14] Part A, use a 96% confidence interval to estimate the difference in the proportions of parts produced within specifications by the two shifts.
+
+[01:27] And then Part B, based only on this confidence interval, do you think that the difference in the proportions of parts produced within specifications by the two shifts is significantly different from zero? And justify your answer."
+
+[01:42] So let's take on the parts one at a time. Part A, use a 96% confidence interval to estimate the difference in the proportions of parts produced within specifications by the two shifts.
+
+[01:56] Well first, let's state what we're trying to estimate. We're trying to use a 96% confidence interval to estimate the difference, day minus night, in the proportions of all parts produced within specifications by the two shifts.
+
+[02:14] So we're going to let the subscript 1 stand for the day shift and 2 stand for the night shift.
+
+[02:20] And we're going to construct a two-sample z-interval for a difference in proportions, p sub 1 minus p sub 2.
+
+[02:30] Now let's go ahead and check the conditions for that confidence interval procedure. So first, we should note that we have a random sample of 200 parts from the day shift, and a random sample of 200 parts from the night shift. That's the two independent random samples that we need.
+
+[02:50] Because we're sampling without replacement, we need to check the so-called 10% condition. 200 parts is likely to be less than 10% of all parts from the day shift, and likewise, less than 200-- 200 parts is likely less than 10% of all parts from the night shift.
+
+[03:08] We should also check the large counts condition. We want to make sure that the counts of successes and failures are at least 10 for both samples. So in sample 1 from the day shift, we see that there were 180 successes, 188 parts that met specifications, and 12 failures, so they're both at least 10, we've met that part of that condition.
+
+[03:35] And for the second sample, 180 parts are successes or met specifications, and 20 were not. And so those are both at least 10. And so all conditions have been met.
+
+[03:46] So now we can go ahead and calculate the confidence interval. p-hat sub 1 is 0.94 and p-hat sub 2 is 0.90. Our confidence interval formula is shown here. Remember you can pull that together from the formula sheet. You don't have to memorize the whole thing.
+
+[04:06] So we're going to plug in all the values from our sample data, our sample proportion p-hat 1 and p-hat 2, and we're going to plug them in over here, and the sample sizes as well.
+
+[04:20] And the critical value is 2.054. Remember that you're going to need to find the middle, in this case, 96% of the area in a standard normal distribution, and figure out the boundary values for that middle 96%. So that's our critical value, 2.054.
+
+[04:40] And so we get a point estimate of 0.04 and a margin of error of 0.056. If we do some arithmetic, that means our confidence interval is from -0.016 to 0.096.
+
+[04:58] Now, the calculations can also be done using technology, or at least verified with technology. And so here's one graphing calculator that's available to you to use on the exam, a TI-84 graphing calculator, that could do these calculations.
+
+[05:16] And so here's a screenshot showing you which procedure you would choose. And the inputs for that procedure, and then the outputs. And you can see that the confidence interval here agrees with the interval that we got in our calculations.
+
+[05:37] So, let's go ahead and interpret the interval to finish our problem. "We are 96% confident that the interval from -0.016 to 0.096 captures the difference, day minus night, in the proportions of all parts produced within specifications for these two shifts."
+
+[06:00] So now let's do Part B. "Based only on this interval, do you think that the difference in the proportions of parts produced within specifications by the two shifts is significantly different from zero? Justify your answer."
+
+[06:16] Well, because zero is in the 96% confidence interval, zero is a plausible value for the difference, day minus night, in the proportion of all parts produced within specifications by the two shifts. There is not convincing evidence that the proportions of parts produced within specifications by the two shifts is significantly different from zero.
+
+[06:41] Because we have at least one value in the interval that is inconsistent with the claim, we don't have convincing evidence.
+
+[06:51] Now, for a bonus feature! This was not asked on the exam, but it's a good skill to practice. Let's interpret the confidence level. Now, notice I'm not asking you to interpret the confidence interval, we did that earlier. I'm asking you to interpret the confidence level.
+
+[07:14] That's the 96%. What does the 96% mean?
+
+[07:19] "If all possible random samples of 200 parts from each shift were selected, and a confidence interval was constructed from each pair of samples," - so this is this idea of repeated sampling. "And we're making an interval from each pair of samples, so there's many intervals."
+
+[07:39] "Then 96% of all these intervals would succeed in capturing the true difference in the proportion of all parts produced within specifications by the two shifts."
+
+[07:51] Notice that you could interpret the confidence level before you did any calculations in this problem whatsoever.
+
+[07:59] So what should you take away from this video?
+
+[08:03] If you're asked to construct and interpret a confidence interval for a difference in proportions, you should be sure to do all of the following:
+
+[08:11] Define the difference in proportions you're trying to estimate. That includes telling which direction you're going to find the difference in, and any subscripts you use. So, you know, day minus night, that's the direction of the difference, and the subscript 1 is day and 2 is night, or D for day and N for night.
+
+[08:33] Identify the procedure you're using. In this case, it's the two-sample z-interval for a difference in proportions.
+
+[08:42] Verify that the conditions for the procedure have been met with evidence. Make sure you show how they've been met.
+
+[08:49] Calculate the confidence interval. Do your calculations.
+
+[08:53] And then finally, interpret the interval in context. You do not need to interpret the confidence level if you're not asked.
+
+[09:00] I'm Doug Tyson, thanks for watching another AP Daily video. Peace.
+
+thumb_up
+thumb_down
