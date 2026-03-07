@@ -4,777 +4,332 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AP Statistics — Road to the Exam</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0f1117;
-            --surface: #1a1d27;
-            --surface2: #242836;
-            --border: #2e3345;
-            --text: #e8eaf0;
-            --text-dim: #8b90a5;
-            --text-muted: #565b73;
-            --accent: #60a5fa;
-
-            --u5: #6366f1;  --u5-bg: rgba(99,102,241,0.12);
-            --u6: #a855f7;  --u6-bg: rgba(168,85,247,0.12);  --u6-glow: rgba(168,85,247,0.25);
-            --u7: #06b6d4;  --u7-bg: rgba(6,182,212,0.12);   --u7-glow: rgba(6,182,212,0.25);
-            --u8: #f97316;  --u8-bg: rgba(249,115,22,0.12);   --u8-glow: rgba(249,115,22,0.25);
-            --u9: #3b82f6;  --u9-bg: rgba(59,130,246,0.12);   --u9-glow: rgba(59,130,246,0.25);
-            --review: #10b981; --review-bg: rgba(16,185,129,0.12);
-            --exam: #ef4444; --exam-bg: rgba(239,68,68,0.15);  --exam-glow: rgba(239,68,68,0.4);
-            --off: #374151;  --off-bg: rgba(55,65,81,0.3);
-            --today: #facc15; --today-glow: rgba(250,204,21,0.35);
+            --bg:       #F0EBE3;
+            --surface:  #FAF7F2;
+            --surface2: #EDE8E0;
+            --border:   #D5CEC3;
+            --border-lt:#E4DED5;
+            --text:      #2B2B28;
+            --text-dim:  #6B665C;
+            --text-muted:#9E9889;
+            --text-faint:#C5BFB3;
+            --u5:     #8B7B6B;  --u5-bg: #E8E2DA;
+            --u6:     #7B6B8A;  --u6-bg: #E8E0EE;
+            --u7:     #2C5F6B;  --u7-bg: #D8E8EB;
+            --u8:     #B5623A;  --u8-bg: #F0E0D4;
+            --u9:     #4A6B3C;  --u9-bg: #DDE8D8;
+            --review:   #8A7B3C; --review-bg: #EDE8D4;
+            --exam:     #A63D2F; --exam-bg: #F2DDD8;
+            --exam-glow:rgba(166,61,47,0.15);
+            --off:      #B0A999; --off-bg: #E8E4DD;
+            --today:    #A63D2F;
+            --today-glow:rgba(166,61,47,0.18);
+            --accent:   #5B8A6F;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Noto Serif', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
             padding: 1.5rem;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.018'/%3E%3C/svg%3E");
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* ── Header ─────────────────────────────────── */
-        .hero {
-            text-align: center;
-            padding: 2rem 1rem 1.5rem;
-            position: relative;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -60px; left: 50%; transform: translateX(-50%);
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(250,204,21,0.06) 0%, transparent 70%);
-            pointer-events: none;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .hero { text-align: center; padding: 2.5rem 1rem 1rem; position: relative; }
         .hero h1 {
-            font-family: 'Space Mono', monospace;
-            font-size: clamp(1.6rem, 4vw, 2.4rem);
+            font-family: 'Noto Serif', serif;
+            font-size: clamp(1.5rem, 3.5vw, 2.2rem);
             font-weight: 700;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, #facc15 0%, #f97316 50%, #ef4444 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text);
+            letter-spacing: 2px;
         }
-        .hero .tagline {
-            color: var(--text-dim);
-            font-size: 0.95rem;
-            margin-top: 0.4rem;
+        .hero h1 .kanji {
+            display: block; font-size: 0.45em; font-weight: 400;
+            color: var(--text-muted); letter-spacing: 8px; margin-bottom: 0.3rem;
         }
-
-        /* ── Countdown ──────────────────────────────── */
-        .countdown-strip {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin: 1.5rem 0 2rem;
-            flex-wrap: wrap;
+        .hero .tagline { color: var(--text-dim); font-size: 0.85rem; margin-top: 0.5rem; font-style: italic; }
+        .hero::after {
+            content: ''; display: block; width: 60px; height: 1px;
+            background: var(--text-muted); margin: 1.2rem auto 0;
         }
+        .countdown-strip { display: flex; justify-content: center; gap: 1.2rem; margin: 1.5rem 0 2rem; flex-wrap: wrap; }
         .countdown-box {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 0.8rem 1.4rem;
-            text-align: center;
-            min-width: 100px;
+            background: var(--surface); border: 1px solid var(--border-lt);
+            border-radius: 4px; padding: 0.75rem 1.3rem; text-align: center; min-width: 95px;
         }
         .countdown-box .number {
-            font-family: 'Space Mono', monospace;
-            font-size: 2rem;
-            font-weight: 700;
-            line-height: 1;
+            font-family: 'IBM Plex Mono', monospace; font-size: 1.8rem;
+            font-weight: 600; color: var(--text); line-height: 1;
         }
         .countdown-box .label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-dim);
-            margin-top: 0.3rem;
+            font-size: 0.62rem; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-muted); margin-top: 0.35rem;
         }
-        .countdown-box.exam-box {
-            border-color: var(--exam);
-            box-shadow: 0 0 20px var(--exam-glow);
-        }
+        .countdown-box.exam-box { border-color: var(--exam); }
         .countdown-box.exam-box .number { color: var(--exam); }
-        .countdown-box.today-box {
-            border-color: var(--today);
-            box-shadow: 0 0 20px var(--today-glow);
-        }
+        .countdown-box.today-box { border-color: var(--today); background: var(--exam-bg); }
         .countdown-box.today-box .number { color: var(--today); }
-
-        /* ── Legend ──────────────────────────────────── */
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-size: 0.72rem;
-            color: var(--text-dim);
-        }
-        .legend-dot {
-            width: 10px; height: 10px;
-            border-radius: 3px;
-        }
-
-        /* ── Period Toggle ──────────────────────────── */
-        .period-toggle {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
+        .legend { display: flex; justify-content: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; color: var(--text-dim); letter-spacing: 0.3px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+        .period-toggle { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 1.5rem; }
         .period-btn {
-            font-family: 'DM Sans', sans-serif;
-            padding: 0.5rem 1.4rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text-dim);
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            font-family: 'IBM Plex Mono', monospace; padding: 0.45rem 1.6rem;
+            border-radius: 3px; border: 1px solid var(--border); background: var(--surface);
+            color: var(--text-muted); font-size: 0.78rem; font-weight: 500;
+            cursor: pointer; transition: all 0.25s ease; letter-spacing: 0.5px;
         }
-        .period-btn:hover { border-color: var(--text-dim); }
-        .period-btn.active-b {
-            background: rgba(21,101,192,0.2);
-            border-color: #1565c0;
-            color: #90caf9;
-        }
-        .period-btn.active-e {
-            background: rgba(123,31,162,0.2);
-            border-color: #7b1fa2;
-            color: #ce93d8;
-        }
-
-        /* ── Calendar Grid ──────────────────────────── */
+        .period-btn:hover { border-color: var(--text-dim); color: var(--text-dim); }
+        .period-btn.active-b { background: var(--u7-bg); border-color: var(--u7); color: var(--u7); }
+        .period-btn.active-e { background: var(--u6-bg); border-color: var(--u6); color: var(--u6); }
         .cal-section {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
+            background: var(--surface); border: 1px solid var(--border-lt);
+            border-radius: 6px; padding: 1.25rem; margin-bottom: 1.5rem;
         }
-        .week-row {
-            display: grid;
-            grid-template-columns: 90px repeat(5, 1fr);
-            gap: 4px;
-            margin-bottom: 4px;
-        }
+        .week-row { display: grid; grid-template-columns: 80px repeat(5, 1fr); gap: 3px; margin-bottom: 3px; }
         .week-label {
-            display: flex;
-            align-items: center;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            padding-right: 0.5rem;
-            justify-content: flex-end;
+            display: flex; align-items: center; font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.5px;
+            padding-right: 0.5rem; justify-content: flex-end;
         }
         .day-cell {
-            position: relative;
-            border-radius: 6px;
-            padding: 0.45rem 0.5rem;
-            min-height: 52px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            transition: transform 0.15s, box-shadow 0.15s;
-            cursor: default;
-            overflow: hidden;
+            position: relative; border-radius: 3px; padding: 0.4rem 0.45rem;
+            min-height: 50px; display: flex; flex-direction: column; justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+            cursor: default; overflow: hidden; border: 1px solid transparent;
         }
-        .day-cell:hover {
-            transform: scale(1.04);
-            z-index: 2;
-        }
-        .day-cell .date-num {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 700;
-            opacity: 0.7;
-        }
-        .day-cell .topic-label {
-            font-size: 0.68rem;
-            font-weight: 600;
-            line-height: 1.2;
-            margin-top: 1px;
-        }
-        .day-cell .topic-title {
-            font-size: 0.58rem;
-            opacity: 0.6;
-            line-height: 1.15;
-            margin-top: 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Unit colors */
-        .cell-u5  { background: var(--u5-bg);  color: #a5b4fc; }
-        .cell-u6  { background: var(--u6-bg);  color: #d8b4fe; }
-        .cell-u7  { background: var(--u7-bg);  color: #67e8f9; }
-        .cell-u8  { background: var(--u8-bg);  color: #fdba74; }
-        .cell-u9  { background: var(--u9-bg);  color: #93c5fd; }
-        .cell-rev { background: var(--review-bg); color: #6ee7b7; }
-        .cell-exam { 
-            background: var(--exam-bg); color: #fca5a5;
-            border: 1px solid rgba(239,68,68,0.3);
-            box-shadow: 0 0 12px var(--exam-glow);
-        }
-        .cell-off {
-            background: var(--off-bg); color: var(--text-muted);
-            opacity: 0.5;
-        }
+        .day-cell:hover { transform: scale(1.05); z-index: 2; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .day-cell .date-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; font-weight: 500; opacity: 0.55; }
+        .day-cell .topic-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; font-weight: 600; line-height: 1.2; margin-top: 1px; }
+        .day-cell .topic-title { font-family: 'Noto Serif', serif; font-size: 0.56rem; opacity: 0.5; line-height: 1.15; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cell-u5  { background: var(--u5-bg); color: var(--u5); border-color: #D5CEC3; }
+        .cell-u6  { background: var(--u6-bg); color: var(--u6); border-color: #D5CEE0; }
+        .cell-u7  { background: var(--u7-bg); color: var(--u7); border-color: #C5D5D8; }
+        .cell-u8  { background: var(--u8-bg); color: var(--u8); border-color: #E0CFC3; }
+        .cell-u9  { background: var(--u9-bg); color: var(--u9); border-color: #C8D5C3; }
+        .cell-rev { background: var(--review-bg); color: var(--review); border-color: #D8D5C0; }
+        .cell-exam { background: var(--exam-bg); color: var(--exam); border: 1px solid rgba(166,61,47,0.25); box-shadow: 0 0 8px var(--exam-glow); }
+        .cell-off { background: var(--off-bg); color: var(--off); opacity: 0.55; }
         .cell-off .topic-label { font-weight: 400; }
-        .cell-noclass { background: transparent; color: var(--text-muted); opacity: 0.25; }
-        .cell-post { background: var(--off-bg); color: var(--text-muted); opacity: 0.5; }
-
-        /* Today highlight */
-        .cell-today {
-            outline: 2px solid var(--today);
-            outline-offset: -1px;
-            box-shadow: 0 0 16px var(--today-glow), inset 0 0 12px rgba(250,204,21,0.08);
-        }
+        .cell-noclass { background: transparent; color: var(--text-faint); opacity: 0.2; }
+        .cell-post { background: var(--off-bg); color: var(--off); opacity: 0.5; }
+        .cell-today { outline: 2px solid var(--today); outline-offset: -1px; box-shadow: 0 0 12px var(--today-glow); }
         .cell-today::after {
-            content: 'TODAY';
-            position: absolute;
-            top: 2px; right: 4px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.5rem;
-            font-weight: 700;
-            color: var(--today);
-            letter-spacing: 1px;
+            content: '今日'; position: absolute; top: 2px; right: 4px;
+            font-family: 'Noto Serif', serif; font-size: 0.48rem; font-weight: 600;
+            color: var(--today); letter-spacing: 1px;
         }
-
-        /* Past day dimming */
-        .cell-past { opacity: 0.35; }
+        .cell-past { opacity: 0.3; }
         .cell-past:hover { opacity: 0.7; }
-
-        /* Double-day marker */
-        .double-badge {
-            position: absolute;
-            bottom: 2px; right: 4px;
-            font-size: 0.5rem;
-            opacity: 0.5;
-        }
-
-        /* ── Week header row ────────────────────────── */
-        .day-headers {
-            display: grid;
-            grid-template-columns: 90px repeat(5, 1fr);
-            gap: 4px;
-            margin-bottom: 6px;
-        }
-        .day-headers span {
-            text-align: center;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* ── Progress Bar ───────────────────────────── */
-        .progress-section {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.25rem;
-        }
-        .progress-section h3 {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
-        }
-        .progress-track {
-            height: 28px;
-            background: var(--surface2);
-            border-radius: 14px;
-            overflow: hidden;
-            display: flex;
-            position: relative;
-            margin-bottom: 0.75rem;
-        }
-        .progress-seg {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.6rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            overflow: hidden;
-            transition: width 0.6s ease;
-        }
-        .progress-marker {
-            position: absolute;
-            top: -4px;
-            width: 3px;
-            height: 36px;
-            background: var(--today);
-            border-radius: 2px;
-            box-shadow: 0 0 8px var(--today-glow);
-            z-index: 5;
-            transition: left 0.6s ease;
-        }
-        .progress-marker::after {
-            content: '▼';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.55rem;
-            color: var(--today);
-        }
-
-        .footer-note {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
-
-        /* ── Tooltip ────────────────────────────────── */
+        .double-badge { position: absolute; bottom: 2px; right: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.48rem; opacity: 0.45; }
+        .day-headers { display: grid; grid-template-columns: 80px repeat(5, 1fr); gap: 3px; margin-bottom: 6px; }
+        .day-headers span { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.58rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+        .progress-section { background: var(--surface); border: 1px solid var(--border-lt); border-radius: 6px; padding: 1.25rem; }
+        .progress-section h3 { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1rem; text-align: center; }
+        .progress-track { height: 24px; background: var(--surface2); border-radius: 3px; overflow: hidden; display: flex; position: relative; margin-bottom: 0.75rem; border: 1px solid var(--border-lt); }
+        .progress-seg { height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.5px; color: white; white-space: nowrap; overflow: hidden; transition: width 0.6s ease; }
+        .progress-marker { position: absolute; top: -5px; width: 2px; height: 34px; background: var(--today); border-radius: 1px; box-shadow: 0 0 6px var(--today-glow); z-index: 5; transition: left 0.6s ease; }
+        .progress-marker::after { content: '▾'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: var(--today); }
+        .footer-note { text-align: center; margin-top: 1.8rem; font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.5px; line-height: 1.7; }
         .tooltip {
-            display: none;
-            position: fixed;
-            background: #1e2130;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 0.6rem 0.8rem;
-            font-size: 0.75rem;
-            color: var(--text);
-            pointer-events: none;
-            z-index: 100;
-            max-width: 240px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            line-height: 1.4;
+            display: none; position: fixed; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 4px; padding: 0.65rem 0.85rem; font-size: 0.75rem; color: var(--text);
+            pointer-events: none; z-index: 100; max-width: 250px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); line-height: 1.4;
         }
-        .tooltip .tt-date { font-weight: 700; margin-bottom: 2px; }
-        .tooltip .tt-topic { color: var(--accent); font-weight: 600; }
-        .tooltip .tt-title { color: var(--text-dim); font-size: 0.7rem; }
-        .tooltip .tt-hw { margin-top: 4px; font-size: 0.65rem; color: var(--text-muted); }
-
+        .tooltip .tt-date { font-weight: 700; margin-bottom: 3px; font-size: 0.78rem; }
+        .tooltip .tt-topic { font-weight: 600; color: var(--text); }
+        .tooltip .tt-hw { margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--text-muted); }
         @media (max-width: 700px) {
-            .week-row, .day-headers { grid-template-columns: 50px repeat(5, 1fr); }
-            .week-label { font-size: 0.55rem; }
-            .day-cell { padding: 0.3rem; min-height: 42px; }
-            .day-cell .date-num { font-size: 0.6rem; }
-            .day-cell .topic-label { font-size: 0.58rem; }
+            .week-row, .day-headers { grid-template-columns: 44px repeat(5, 1fr); }
+            .week-label { font-size: 0.5rem; }
+            .day-cell { padding: 0.25rem; min-height: 40px; }
+            .day-cell .date-num { font-size: 0.52rem; }
+            .day-cell .topic-label { font-size: 0.56rem; }
             .day-cell .topic-title { display: none; }
-            .countdown-strip { gap: 0.8rem; }
-            .countdown-box { padding: 0.5rem 0.8rem; min-width: 70px; }
-            .countdown-box .number { font-size: 1.4rem; }
+            .countdown-strip { gap: 0.6rem; }
+            .countdown-box { padding: 0.45rem 0.7rem; min-width: 65px; }
+            .countdown-box .number { font-size: 1.3rem; }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="hero">
-        <h1>Road to the AP Exam</h1>
+        <h1><span class="kanji">統 計 学 の 道</span>Road to the AP Exam</h1>
         <div class="tagline">AP Statistics · Lynn English High School · Spring 2026</div>
     </div>
-
     <div class="countdown-strip" id="countdown"></div>
-
     <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:var(--u5)"></div>U1–5</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--u6)"></div>U6 Proportions</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--u7)"></div>U7 Means</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--u8)"></div>U8 Chi-Square</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--u9)"></div>U9 Slopes</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--u6)"></div>U6 比率</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--u7)"></div>U7 平均</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--u8)"></div>U8 カイ二乗</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--u9)"></div>U9 傾き</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--review)"></div>Review</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--exam)"></div>Exam</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--off);opacity:.5"></div>No School</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--today);border-radius:50%"></div>Today</div>
     </div>
-
     <div class="period-toggle">
-        <button class="period-btn active-b" id="btn-b" onclick="setPeriod('B')">📘 Period B</button>
-        <button class="period-btn" id="btn-e" onclick="setPeriod('E')">📙 Period E</button>
+        <button class="period-btn active-b" id="btn-b" onclick="setPeriod('B')">Period B</button>
+        <button class="period-btn" id="btn-e" onclick="setPeriod('E')">Period E</button>
     </div>
-
     <div class="cal-section">
-        <div class="day-headers">
-            <span></span>
-            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
-        </div>
+        <div class="day-headers"><span></span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span></div>
         <div id="calendar-grid"></div>
     </div>
-
     <div class="progress-section">
-        <h3>Your Journey Through AP Stats</h3>
+        <h3>Progress</h3>
         <div class="progress-track" id="progress-track"></div>
-        <div id="progress-label" style="text-align:center; font-size:0.72rem; color:var(--text-dim);"></div>
+        <div id="progress-label" style="text-align:center;font-size:0.68rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;"></div>
     </div>
-
-    <div class="footer-note">
-        This page updates automatically based on today's date.<br>
-        Tip: Switch between Period B and Period E above to see your schedule.
-    </div>
+    <div class="footer-note">Updates automatically based on today's date.<br>Switch between Period B and Period E to see your schedule.</div>
 </div>
-
 <div class="tooltip" id="tooltip"></div>
-
 <script>
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// DATA
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-const EXAM_DATE = new Date(2026, 4, 7); // May 7, 2026
-const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-
-// Schedule data: each entry = [year, month(0-indexed), day, periodB_info, periodE_info]
-// info format: { t: "topic", n: "title", u: unit#, due: "...", assign: "..." }
-// or "off" / "exam" / "post" / "noclass" / null
-const R = "review";
-const OFF = "off";
-const EX = "exam";
-const POST = "post";
-const NC = "noclass";
-
-function d(topic, title, unit, due, assign, double) {
-    return { t: topic, n: title, u: unit, due: due||"", assign: assign||"", dbl: double||false };
-}
-
-const SCHEDULE = [
-    // ── Week: Mar 9-13 (already happened / in progress) ──
-    [2026,2,9,  d("6.6","Concluding Test for p",6,"Quiz 6.4","Drills 6.6, Quiz 6.5"), d("6.3","Justifying Claims (CI)",6,"Quiz 5-8, U5 PC","Drills 6.3, Quiz 6.1-6.2")],
-    [2026,2,10, d("6.7","Type I & II Errors",6,"Quiz 6.5","Drills 6.7, Quiz 6.6"), NC],
-    [2026,2,11, NC, d("6.4+6.5","Setting Up Tests + p-Values",6,"Quiz 6.1-6.2","Drills 6.4-6.5, Quiz 6.3",true)],
-    [2026,2,12, d("6.8","CI for p₁−p₂",6,"Quiz 6.6","Drills 6.8, Quiz 6.7"), NC],
-    [2026,2,13, d("6.9","Justifying Claims (Diff)",6,"Quiz 6.7","Drills 6.9, Quiz 6.8"), d("6.6","Concluding Test for p",6,"Quiz 6.3","Drills 6.6, Quiz 6.4-6.5")],
-    // ── Week: Mar 16-20 ──
-    [2026,2,16, d("6.10","Test for p₁−p₂ Setup",6,"Quiz 6.8","Drills 6.10, Quiz 6.9"), d("6.7","Type I & II Errors",6,"Quiz 6.4-6.5","Drills 6.7, Quiz 6.6")],
-    [2026,2,17, d("6.11","Test for p₁−p₂",6,"Quiz 6.9","U6 PC, Drills 6.11, Quiz 6.10"), NC],
-    [2026,2,18, NC, d("6.8+6.9","CI + Justify (Diff)",6,"Quiz 6.6","Drills 6.8-6.9, Quiz 6.7",true)],
-    [2026,2,19, d("7.1","Intro: Error",7,"Quiz 6.10","Drills 7.1"), NC],
-    [2026,2,20, d("7.2","CI for μ",7,"","Drills 7.2, Quiz 7.1"), d("6.10","Test for p₁−p₂ Setup",6,"Quiz 6.7","Drills 6.10, Quiz 6.8-6.9")],
-    // ── Week: Mar 23-27 ──
-    [2026,2,23, d("7.3","Justify Claims (μ CI)",7,"Quiz 7.1","Drills 7.3, Quiz 7.2"), d("6.11","Test for p₁−p₂",6,"Quiz 6.8-6.9","U6 PC, Drills 6.11, Quiz 6.10")],
-    [2026,2,24, d("7.4","Setting Up Test for μ",7,"Quiz 7.2","Drills 7.4, Quiz 7.3"), NC],
-    [2026,2,25, NC, d("7.1+7.2","Intro + CI for μ",7,"Quiz 6.10","Drills 7.1-7.2, Quiz 6.11",true)],
-    [2026,2,26, d("7.5","Test for μ",7,"Quiz 7.3","Drills 7.5, Quiz 7.4"), NC],
-    [2026,2,27, d("7.6","CI for μ₁−μ₂",7,"Quiz 7.4","Drills 7.6, Quiz 7.5"), d("7.3","Justify Claims (μ CI)",7,"Quiz 6.11","Drills 7.3, Quiz 7.1-7.2")],
-    // ── Week: Mar 30 - Apr 3 ──
-    [2026,2,30, d("7.7","Justify (Diff Means)",7,"Quiz 7.5","Drills 7.7, Quiz 7.6"), d("7.4","Setting Up Test for μ",7,"Quiz 7.1-7.2","Drills 7.4, Quiz 7.3")],
-    [2026,2,31, d("7.8","Test for μ₁−μ₂ Setup",7,"Quiz 7.6","Drills 7.8, Quiz 7.7"), NC],
-    [2026,3,1,  NC, d("7.5+7.6","Test + CI (Diff Means)",7,"Quiz 7.3","Drills 7.5-7.6, Quiz 7.4",true)],
-    [2026,3,2,  d("7.9","Test for μ₁−μ₂",7,"Quiz 7.7","U7 PC, Drills 7.9, Quiz 7.8"), NC],
-    [2026,3,3,  OFF, OFF], // Good Friday
-    // ── Week: Apr 6-10 ──
-    [2026,3,6,  d("8.1","Intro: Unexpected?",8,"Quiz 7.8","Drills 8.1, Quiz 7.9"), d("7.7","Justify (Diff Means)",7,"Quiz 7.4","Drills 7.7, Quiz 7.5-7.6")],
-    [2026,3,7,  d("8.2","GOF Test Setup",8,"Quiz 7.9","Drills 8.2, Quiz 8.1"), NC],
-    [2026,3,8,  NC, d("7.8+7.9","Test for μ₁−μ₂",7,"Quiz 7.5-7.6","U7 PC, Drills 7.8-7.9, Quiz 7.7",true)],
-    [2026,3,9,  d("8.3","GOF Test",8,"Quiz 8.1","Drills 8.3, Quiz 8.2"), NC],
-    [2026,3,10, d("8.4","Expected Counts",8,"Quiz 8.2","Drills 8.4, Quiz 8.3"), d("8.1","Intro: Unexpected?",8,"Quiz 7.7","Drills 8.1")],
-    // ── Week: Apr 13-17 ──
-    [2026,3,13, d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.3","Drills 8.5, Quiz 8.4"), d("8.2","GOF Test Setup",8,"","Drills 8.2, Quiz 8.1")],
-    [2026,3,14, d("8.6","Chi-Sq Test",8,"Quiz 8.4","U8 PC, Drills 8.6, Quiz 8.5"), NC],
-    [2026,3,15, NC, d("8.3+8.4","GOF + Expected Counts",8,"Quiz 8.1","Drills 8.3-8.4, Quiz 8.2",true)],
-    [2026,3,16, d("9.1","Intro: Points Align?",9,"Quiz 8.5","Drills 9.1, Quiz 8.6"), NC],
-    [2026,3,17, d("9.2","CI for Slope",9,"Quiz 8.6","Drills 9.2, Quiz 9.1"), d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.2","Drills 8.5, Quiz 8.3-8.4")],
-    // ── Apr 20-24 VACATION ──
-    [2026,3,20, OFF, OFF],
-    [2026,3,21, OFF, OFF],
-    [2026,3,22, OFF, OFF],
-    [2026,3,23, OFF, OFF],
-    [2026,3,24, OFF, OFF],
-    // ── Week: Apr 27 - May 1 ──
-    [2026,3,27, d("9.3","Justify Slope (CI)",9,"Quiz 9.1","Drills 9.3, Quiz 9.2"), d("8.6","Chi-Sq Test",8,"Quiz 8.3-8.4","U8 PC, Drills 8.6, Quiz 8.5")],
-    [2026,3,28, d("9.4","Test for Slope Setup",9,"Quiz 9.2","Drills 9.4, Quiz 9.3"), NC],
-    [2026,3,29, NC, d("9.1+9.2","Intro + CI for Slope",9,"Quiz 8.5","Drills 9.1-9.2, Quiz 8.6",true)],
-    [2026,3,30, d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Drills 9.5, Quiz 9.4"), NC],
-    [2026,4,1,  d(R,"Review: U1–5",0,"Quiz 9.4",""), d("9.3","Justify Slope (CI)",9,"Quiz 8.6","Drills 9.3, Quiz 9.1-9.2")],
-    // ── Week: May 4-8 EXAM WEEK ──
-    [2026,4,4,  d(R,"Review: U6–7",0), d("9.4","Test for Slope Setup",9,"Quiz 9.1-9.2","Drills 9.4, Quiz 9.3")],
-    [2026,4,5,  d(R,"Review: U8–9 + FRQ",0), NC],
-    [2026,4,6,  NC, d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Quiz 9.4")],
-    [2026,4,7,  EX, EX],
-    [2026,4,8,  POST, POST],
+const EXAM_DATE=new Date(2026,4,7),MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],DAY_NAMES=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const R="review",OFF="off",EX="exam",POST="post",NC="noclass";
+function d(t,n,u,due,assign,dbl){return{t,n,u,due:due||"",assign:assign||"",dbl:dbl||false}}
+const SCHEDULE=[
+[2026,2,9,d("6.6","Concluding Test for p",6,"Quiz 6.4","Drills 6.6, Quiz 6.5"),d("6.3","Justifying Claims (CI)",6,"Quiz 5-8, U5 PC","Drills 6.3, Quiz 6.1-6.2")],
+[2026,2,10,d("6.7","Type I & II Errors",6,"Quiz 6.5","Drills 6.7, Quiz 6.6"),NC],
+[2026,2,11,NC,d("6.4+6.5","Tests + p-Values",6,"Quiz 6.1-6.2","Drills 6.4-6.5, Quiz 6.3",true)],
+[2026,2,12,d("6.8","CI for p₁−p₂",6,"Quiz 6.6","Drills 6.8, Quiz 6.7"),NC],
+[2026,2,13,d("6.9","Justify Claims (Diff)",6,"Quiz 6.7","Drills 6.9, Quiz 6.8"),d("6.6","Concluding Test for p",6,"Quiz 6.3","Drills 6.6, Quiz 6.4-6.5")],
+[2026,2,16,d("6.10","Test for p₁−p₂ Setup",6,"Quiz 6.8","Drills 6.10, Quiz 6.9"),d("6.7","Type I & II Errors",6,"Quiz 6.4-6.5","Drills 6.7, Quiz 6.6")],
+[2026,2,17,d("6.11","Test for p₁−p₂",6,"Quiz 6.9","U6 PC, Drills 6.11, Quiz 6.10"),NC],
+[2026,2,18,NC,d("6.8+6.9","CI + Justify (Diff)",6,"Quiz 6.6","Drills 6.8-6.9, Quiz 6.7",true)],
+[2026,2,19,d("7.1","Intro: Error",7,"Quiz 6.10","Drills 7.1"),NC],
+[2026,2,20,d("7.2","CI for μ",7,"","Drills 7.2, Quiz 7.1"),d("6.10","Test for p₁−p₂ Setup",6,"Quiz 6.7","Drills 6.10, Quiz 6.8-6.9")],
+[2026,2,23,d("7.3","Justify Claims (μ CI)",7,"Quiz 7.1","Drills 7.3, Quiz 7.2"),d("6.11","Test for p₁−p₂",6,"Quiz 6.8-6.9","U6 PC, Drills 6.11, Quiz 6.10")],
+[2026,2,24,d("7.4","Setting Up Test for μ",7,"Quiz 7.2","Drills 7.4, Quiz 7.3"),NC],
+[2026,2,25,NC,d("7.1+7.2","Intro + CI for μ",7,"Quiz 6.10","Drills 7.1-7.2, Quiz 6.11",true)],
+[2026,2,26,d("7.5","Test for μ",7,"Quiz 7.3","Drills 7.5, Quiz 7.4"),NC],
+[2026,2,27,d("7.6","CI for μ₁−μ₂",7,"Quiz 7.4","Drills 7.6, Quiz 7.5"),d("7.3","Justify Claims (μ CI)",7,"Quiz 6.11","Drills 7.3, Quiz 7.1-7.2")],
+[2026,2,30,d("7.7","Justify (Diff Means)",7,"Quiz 7.5","Drills 7.7, Quiz 7.6"),d("7.4","Setting Up Test for μ",7,"Quiz 7.1-7.2","Drills 7.4, Quiz 7.3")],
+[2026,2,31,d("7.8","Test for μ₁−μ₂ Setup",7,"Quiz 7.6","Drills 7.8, Quiz 7.7"),NC],
+[2026,3,1,NC,d("7.5+7.6","Test + CI (Diff Means)",7,"Quiz 7.3","Drills 7.5-7.6, Quiz 7.4",true)],
+[2026,3,2,d("7.9","Test for μ₁−μ₂",7,"Quiz 7.7","U7 PC, Drills 7.9, Quiz 7.8"),NC],
+[2026,3,3,OFF,OFF],
+[2026,3,6,d("8.1","Intro: Unexpected?",8,"Quiz 7.8","Drills 8.1, Quiz 7.9"),d("7.7","Justify (Diff Means)",7,"Quiz 7.4","Drills 7.7, Quiz 7.5-7.6")],
+[2026,3,7,d("8.2","GOF Test Setup",8,"Quiz 7.9","Drills 8.2, Quiz 8.1"),NC],
+[2026,3,8,NC,d("7.8+7.9","Test for μ₁−μ₂",7,"Quiz 7.5-7.6","U7 PC, Drills 7.8-7.9, Quiz 7.7",true)],
+[2026,3,9,d("8.3","GOF Test",8,"Quiz 8.1","Drills 8.3, Quiz 8.2"),NC],
+[2026,3,10,d("8.4","Expected Counts",8,"Quiz 8.2","Drills 8.4, Quiz 8.3"),d("8.1","Intro: Unexpected?",8,"Quiz 7.7","Drills 8.1")],
+[2026,3,13,d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.3","Drills 8.5, Quiz 8.4"),d("8.2","GOF Test Setup",8,"","Drills 8.2, Quiz 8.1")],
+[2026,3,14,d("8.6","Chi-Sq Test",8,"Quiz 8.4","U8 PC, Drills 8.6, Quiz 8.5"),NC],
+[2026,3,15,NC,d("8.3+8.4","GOF + Expected Counts",8,"Quiz 8.1","Drills 8.3-8.4, Quiz 8.2",true)],
+[2026,3,16,d("9.1","Intro: Points Align?",9,"Quiz 8.5","Drills 9.1, Quiz 8.6"),NC],
+[2026,3,17,d("9.2","CI for Slope",9,"Quiz 8.6","Drills 9.2, Quiz 9.1"),d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.2","Drills 8.5, Quiz 8.3-8.4")],
+[2026,3,20,OFF,OFF],[2026,3,21,OFF,OFF],[2026,3,22,OFF,OFF],[2026,3,23,OFF,OFF],[2026,3,24,OFF,OFF],
+[2026,3,27,d("9.3","Justify Slope (CI)",9,"Quiz 9.1","Drills 9.3, Quiz 9.2"),d("8.6","Chi-Sq Test",8,"Quiz 8.3-8.4","U8 PC, Drills 8.6, Quiz 8.5")],
+[2026,3,28,d("9.4","Test for Slope Setup",9,"Quiz 9.2","Drills 9.4, Quiz 9.3"),NC],
+[2026,3,29,NC,d("9.1+9.2","Intro + CI for Slope",9,"Quiz 8.5","Drills 9.1-9.2, Quiz 8.6",true)],
+[2026,3,30,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Drills 9.5, Quiz 9.4"),NC],
+[2026,4,1,d(R,"Review: U1–5",0,"Quiz 9.4",""),d("9.3","Justify Slope (CI)",9,"Quiz 8.6","Drills 9.3, Quiz 9.1-9.2")],
+[2026,4,4,d(R,"Review: U6–7",0),d("9.4","Test for Slope Setup",9,"Quiz 9.1-9.2","Drills 9.4, Quiz 9.3")],
+[2026,4,5,d(R,"Review: U8–9 + FRQ",0),NC],
+[2026,4,6,NC,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Quiz 9.4")],
+[2026,4,7,EX,EX],
+[2026,4,8,POST,POST]
 ];
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STATE
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-let currentPeriod = "B";
-
-function setPeriod(p) {
-    currentPeriod = p;
-    document.getElementById("btn-b").className = "period-btn" + (p==="B" ? " active-b" : "");
-    document.getElementById("btn-e").className = "period-btn" + (p==="E" ? " active-e" : "");
-    renderCalendar();
-    renderProgress();
+let currentPeriod="B";
+function setPeriod(p){
+    currentPeriod=p;
+    document.getElementById("btn-b").className="period-btn"+(p==="B"?" active-b":"");
+    document.getElementById("btn-e").className="period-btn"+(p==="E"?" active-e":"");
+    renderCalendar();renderProgress();
 }
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// RENDER
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-function getToday() {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+function getToday(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+function cellClass(i){
+    if(i===OFF)return"cell-off";if(i===EX)return"cell-exam";if(i===POST)return"cell-post";
+    if(i===NC||i===null)return"cell-noclass";if(i.t===R)return"cell-rev";return"cell-u"+i.u;
 }
-
-function sameDay(a, b) {
-    return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+function cellContent(i,ds){
+    if(i===OFF)return'<div class="date-num">'+ds+'</div><div class="topic-label">休</div>';
+    if(i===EX)return'<div class="date-num">'+ds+'</div><div class="topic-label">AP EXAM</div>';
+    if(i===POST)return'<div class="date-num">'+ds+'</div><div class="topic-label">✓</div>';
+    if(i===NC||i===null)return'<div class="date-num" style="opacity:0.3">'+ds+'</div>';
+    if(i.t===R)return'<div class="date-num">'+ds+'</div><div class="topic-label">Review</div><div class="topic-title">'+i.n+'</div>';
+    let db=i.dbl?'<span class="double-badge">2×</span>':'';
+    return'<div class="date-num">'+ds+'</div><div class="topic-label">'+i.t+'</div><div class="topic-title">'+i.n+'</div>'+db;
 }
-
-function cellClass(info) {
-    if (info === OFF) return "cell-off";
-    if (info === EX) return "cell-exam";
-    if (info === POST) return "cell-post";
-    if (info === NC) return "cell-noclass";
-    if (info === null) return "cell-noclass";
-    if (info.t === R) return "cell-rev";
-    return "cell-u" + info.u;
-}
-
-function cellContent(info, dateStr) {
-    if (info === OFF) return `<div class="date-num">${dateStr}</div><div class="topic-label">No School</div>`;
-    if (info === EX) return `<div class="date-num">${dateStr}</div><div class="topic-label">🎯 AP EXAM</div>`;
-    if (info === POST) return `<div class="date-num">${dateStr}</div><div class="topic-label">🎉</div>`;
-    if (info === NC || info === null) return `<div class="date-num" style="opacity:0.3">${dateStr}</div>`;
-    if (info.t === R) return `<div class="date-num">${dateStr}</div><div class="topic-label">📝 Review</div><div class="topic-title">${info.n}</div>`;
-    let dblBadge = info.dbl ? '<span class="double-badge">⚡2x</span>' : '';
-    return `<div class="date-num">${dateStr}</div><div class="topic-label">${info.t}</div><div class="topic-title">${info.n}</div>${dblBadge}`;
-}
-
-function renderCalendar() {
-    const today = getToday();
-    const grid = document.getElementById("calendar-grid");
-    grid.innerHTML = "";
-
-    // Group into weeks (Mon-Fri rows)
-    let weeks = [];
-    let currentWeek = [];
-    let lastMonday = null;
-
-    for (const entry of SCHEDULE) {
-        const dt = new Date(entry[0], entry[1], entry[2]);
-        const dow = dt.getDay(); // 0=Sun,1=Mon...
-        if (dow === 1 && currentWeek.length > 0) {
-            weeks.push({ monday: lastMonday, days: currentWeek });
-            currentWeek = [];
-        }
-        if (dow === 1) lastMonday = dt;
-        currentWeek.push(entry);
-    }
-    if (currentWeek.length > 0) weeks.push({ monday: lastMonday, days: currentWeek });
-
-    for (const week of weeks) {
-        const row = document.createElement("div");
-        row.className = "week-row";
-
-        const label = document.createElement("div");
-        label.className = "week-label";
-        const mon = week.monday;
-        label.textContent = `${MONTH_NAMES[mon.getMonth()]} ${mon.getDate()}`;
+function renderCalendar(){
+    const today=getToday(),grid=document.getElementById("calendar-grid");grid.innerHTML="";
+    let weeks=[],cw=[],lm=null;
+    for(const e of SCHEDULE){const dt=new Date(e[0],e[1],e[2]),dow=dt.getDay();
+        if(dow===1&&cw.length>0){weeks.push({monday:lm,days:cw});cw=[];}
+        if(dow===1)lm=dt;cw.push(e);}
+    if(cw.length>0)weeks.push({monday:lm,days:cw});
+    for(const week of weeks){
+        const row=document.createElement("div");row.className="week-row";
+        const label=document.createElement("div");label.className="week-label";
+        const mon=week.monday;label.textContent=MONTH_NAMES[mon.getMonth()]+" "+mon.getDate();
         row.appendChild(label);
-
-        // Fill 5 slots Mon-Fri
-        const dayMap = {};
-        for (const e of week.days) {
-            const dt = new Date(e[0], e[1], e[2]);
-            dayMap[dt.getDay()] = e;
-        }
-
-        for (let dow = 1; dow <= 5; dow++) {
-            const cell = document.createElement("div");
-            cell.className = "day-cell";
-
-            const entry = dayMap[dow];
-            if (!entry) {
-                cell.classList.add("cell-noclass");
-                cell.innerHTML = "";
-                row.appendChild(cell);
-                continue;
-            }
-
-            const dt = new Date(entry[0], entry[1], entry[2]);
-            const dateStr = `${MONTH_NAMES[dt.getMonth()]} ${dt.getDate()}`;
-            const info = currentPeriod === "B" ? entry[3] : entry[4];
-
-            cell.classList.add(cellClass(info));
-            cell.innerHTML = cellContent(info, dateStr);
-
-            if (sameDay(dt, today)) cell.classList.add("cell-today");
-            if (dt < today && !sameDay(dt, today)) cell.classList.add("cell-past");
-
-            // Tooltip
-            cell.addEventListener("mouseenter", (e) => showTooltip(e, dt, info, dateStr));
-            cell.addEventListener("mouseleave", hideTooltip);
-            cell.addEventListener("mousemove", moveTooltip);
-
+        const dm={};for(const e of week.days){const dt=new Date(e[0],e[1],e[2]);dm[dt.getDay()]=e;}
+        for(let dow=1;dow<=5;dow++){
+            const cell=document.createElement("div");cell.className="day-cell";
+            const entry=dm[dow];
+            if(!entry){cell.classList.add("cell-noclass");row.appendChild(cell);continue;}
+            const dt=new Date(entry[0],entry[1],entry[2]),ds=MONTH_NAMES[dt.getMonth()]+" "+dt.getDate();
+            const info=currentPeriod==="B"?entry[3]:entry[4];
+            cell.classList.add(cellClass(info));cell.innerHTML=cellContent(info,ds);
+            if(sameDay(dt,today))cell.classList.add("cell-today");
+            if(dt<today&&!sameDay(dt,today))cell.classList.add("cell-past");
+            cell.addEventListener("mouseenter",(e)=>showTooltip(e,dt,info,ds));
+            cell.addEventListener("mouseleave",hideTooltip);
+            cell.addEventListener("mousemove",moveTooltip);
             row.appendChild(cell);
         }
-
         grid.appendChild(row);
     }
 }
-
-function renderCountdown() {
-    const today = getToday();
-    const msPerDay = 86400000;
-    const daysToExam = Math.max(0, Math.ceil((EXAM_DATE - today) / msPerDay));
-
-    // Count school days remaining
-    let schoolDays = 0;
-    for (const e of SCHEDULE) {
-        const dt = new Date(e[0], e[1], e[2]);
-        if (dt > today && dt <= EXAM_DATE) {
-            const info = e[3]; // use B as reference
-            if (info !== OFF && info !== POST) schoolDays++;
-        }
-    }
-
-    const todayStr = `${MONTH_NAMES[today.getMonth()]} ${today.getDate()}`;
-
-    document.getElementById("countdown").innerHTML = `
-        <div class="countdown-box today-box">
-            <div class="number">${todayStr}</div>
-            <div class="label">Today</div>
-        </div>
-        <div class="countdown-box exam-box">
-            <div class="number">${daysToExam}</div>
-            <div class="label">Days to Exam</div>
-        </div>
-        <div class="countdown-box">
-            <div class="number">${schoolDays}</div>
-            <div class="label">School Days Left</div>
-        </div>
-        <div class="countdown-box">
-            <div class="number">May 7</div>
-            <div class="label">Exam Day</div>
-        </div>
-    `;
+function renderCountdown(){
+    const today=getToday(),ms=86400000,dte=Math.max(0,Math.ceil((EXAM_DATE-today)/ms));
+    let sd=0;for(const e of SCHEDULE){const dt=new Date(e[0],e[1],e[2]);
+        if(dt>today&&dt<=EXAM_DATE&&e[3]!==OFF&&e[3]!==POST)sd++;}
+    const ts=MONTH_NAMES[today.getMonth()]+" "+today.getDate();
+    document.getElementById("countdown").innerHTML=
+        '<div class="countdown-box today-box"><div class="number">'+ts+'</div><div class="label">Today</div></div>'+
+        '<div class="countdown-box exam-box"><div class="number">'+dte+'</div><div class="label">Days to Exam</div></div>'+
+        '<div class="countdown-box"><div class="number">'+sd+'</div><div class="label">School Days</div></div>'+
+        '<div class="countdown-box"><div class="number">May 7</div><div class="label">試験日</div></div>';
 }
-
-function renderProgress() {
-    const today = getToday();
-    const track = document.getElementById("progress-track");
-    const labelEl = document.getElementById("progress-label");
-
-    // Count topics per unit for current period
-    const unitTopics = {};
-    const unitDone = {};
-    let totalTopics = 0;
-    let doneSoFar = 0;
-
-    for (const e of SCHEDULE) {
-        const info = currentPeriod === "B" ? e[3] : e[4];
-        if (!info || info === OFF || info === EX || info === POST || info === NC) continue;
-        const u = info.t === R ? "Rev" : ("U" + info.u);
-        if (info.t === R && info.u === 0) {
-            // review
-            unitTopics["Rev"] = (unitTopics["Rev"]||0) + 1;
-            totalTopics++;
-            const dt = new Date(e[0], e[1], e[2]);
-            if (dt <= today) { unitDone["Rev"] = (unitDone["Rev"]||0) + 1; doneSoFar++; }
-        } else if (info.u) {
-            unitTopics[u] = (unitTopics[u]||0) + 1;
-            totalTopics++;
-            const dt = new Date(e[0], e[1], e[2]);
-            if (dt <= today) { unitDone[u] = (unitDone[u]||0) + 1; doneSoFar++; }
-        }
-    }
-
-    const unitOrder = ["U6","U7","U8","U9","Rev"];
-    const unitColors = { U6: "#a855f7", U7: "#06b6d4", U8: "#f97316", U9: "#3b82f6", Rev: "#10b981" };
-    const unitLabels = { U6: "U6", U7: "U7", U8: "U8", U9: "U9", Rev: "Review" };
-
-    let html = "";
-    for (const u of unitOrder) {
-        const count = unitTopics[u] || 0;
-        if (count === 0) continue;
-        const pct = (count / totalTopics * 100).toFixed(1);
-        const color = unitColors[u];
-        const lbl = unitLabels[u];
-        html += `<div class="progress-seg" style="width:${pct}%; background:${color};">${lbl}</div>`;
-    }
-
-    // Marker position
-    const markerPct = totalTopics > 0 ? (doneSoFar / totalTopics * 100) : 0;
-    html += `<div class="progress-marker" style="left:${markerPct}%"></div>`;
-    track.innerHTML = html;
-
-    const pctDone = totalTopics > 0 ? Math.round(doneSoFar / totalTopics * 100) : 0;
-    labelEl.textContent = `${pctDone}% complete · ${doneSoFar} of ${totalTopics} class sessions done`;
+function renderProgress(){
+    const today=getToday(),track=document.getElementById("progress-track"),lbl=document.getElementById("progress-label");
+    const ut={},ud={};let tt=0,ds=0;
+    for(const e of SCHEDULE){const info=currentPeriod==="B"?e[3]:e[4];
+        if(!info||info===OFF||info===EX||info===POST||info===NC)continue;
+        const u=info.t===R?"Rev":"U"+info.u;
+        if((info.t===R&&info.u===0)||info.u){ut[u]=(ut[u]||0)+1;tt++;
+            const dt=new Date(e[0],e[1],e[2]);if(dt<=today){ud[u]=(ud[u]||0)+1;ds++;}}}
+    const uo=["U6","U7","U8","U9","Rev"],uc={U6:"var(--u6)",U7:"var(--u7)",U8:"var(--u8)",U9:"var(--u9)",Rev:"var(--review)"},
+        ul={U6:"U6",U7:"U7",U8:"U8",U9:"U9",Rev:"復習"};
+    let h="";for(const u of uo){const c=ut[u]||0;if(c===0)continue;
+        h+='<div class="progress-seg" style="width:'+(c/tt*100).toFixed(1)+'%;background:'+uc[u]+';">'+ul[u]+'</div>';}
+    const mp=tt>0?(ds/tt*100):0;h+='<div class="progress-marker" style="left:'+mp+'%"></div>';
+    track.innerHTML=h;lbl.textContent=Math.round(ds/tt*100)+"% complete · "+ds+" of "+tt+" sessions";
 }
-
-// ── Tooltip ───────────────────────────────────────────────
-const tooltip = document.getElementById("tooltip");
-
-function showTooltip(event, dt, info, dateStr) {
-    if (info === NC || info === null) return;
-    const dayName = DAY_NAMES[dt.getDay()];
-    let html = `<div class="tt-date">${dayName}, ${dateStr}</div>`;
-
-    if (info === OFF) {
-        html += `<div class="tt-topic">No School</div>`;
-    } else if (info === EX) {
-        html += `<div class="tt-topic">🎯 AP Statistics Exam!</div>`;
-    } else if (info === POST) {
-        html += `<div class="tt-topic">Post-exam day</div>`;
-    } else {
-        if (info.t === R) {
-            html += `<div class="tt-topic">📝 ${info.n}</div>`;
-        } else {
-            html += `<div class="tt-topic">${info.t} — ${info.n}</div>`;
-        }
-        if (info.due) html += `<div class="tt-hw">📥 Due: ${info.due}</div>`;
-        if (info.assign) html += `<div class="tt-hw">📤 Assigned: ${info.assign}</div>`;
-        if (info.dbl) html += `<div class="tt-hw">⚡ Double topic day</div>`;
-    }
-
-    tooltip.innerHTML = html;
-    tooltip.style.display = "block";
-}
-
-function moveTooltip(e) {
-    tooltip.style.left = (e.clientX + 14) + "px";
-    tooltip.style.top = (e.clientY + 14) + "px";
-}
-
-function hideTooltip() {
-    tooltip.style.display = "none";
-}
-
-// ── Init ──────────────────────────────────────────────────
-renderCountdown();
-renderCalendar();
-renderProgress();
-
-// Refresh countdown at midnight
-setInterval(() => {
-    renderCountdown();
-    renderCalendar();
-    renderProgress();
-}, 60000);
+const tooltip=document.getElementById("tooltip");
+function showTooltip(ev,dt,info,ds){if(info===NC||info===null)return;
+    const dn=DAY_NAMES[dt.getDay()];let h='<div class="tt-date">'+dn+", "+ds+"</div>";
+    if(info===OFF)h+='<div class="tt-topic">No School</div>';
+    else if(info===EX)h+='<div class="tt-topic">AP Statistics Exam</div>';
+    else if(info===POST)h+='<div class="tt-topic">Post-exam</div>';
+    else{h+=info.t===R?'<div class="tt-topic">'+info.n+'</div>':'<div class="tt-topic">'+info.t+" — "+info.n+"</div>";
+        if(info.due)h+='<div class="tt-hw">Due: '+info.due+"</div>";
+        if(info.assign)h+='<div class="tt-hw">Assigned: '+info.assign+"</div>";
+        if(info.dbl)h+='<div class="tt-hw">⚡ Double topic day</div>';}
+    tooltip.innerHTML=h;tooltip.style.display="block";}
+function moveTooltip(e){tooltip.style.left=(e.clientX+14)+"px";tooltip.style.top=(e.clientY+14)+"px";}
+function hideTooltip(){tooltip.style.display="none";}
+renderCountdown();renderCalendar();renderProgress();
+setInterval(()=>{renderCountdown();renderCalendar();renderProgress();},60000);
 </script>
-
 </body>
 </html>
