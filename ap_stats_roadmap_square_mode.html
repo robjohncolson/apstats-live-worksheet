@@ -469,7 +469,7 @@
             width: 100%;
             text-align: center;
             background: var(--white);
-            min-height: 32px;
+            height: 40px;
             overflow: hidden;
         }
 
@@ -2089,6 +2089,7 @@ const studyBreak = {
     mpUsername: null,
     mpOnlinePlayers: [],
     mpChallengeTimer: null,
+    leaderboardEntries: [],
 
     types: ['I', 'O', 'T', 'S', 'Z', 'J', 'L'],
     colors: {
@@ -2347,6 +2348,10 @@ const studyBreak = {
         this.startLoop();
         this.updateHud();
         this.draw();
+        // Fetch leaderboard
+        const lbWs = (this.mpWs && this.mpWs.readyState === 1) ? this.mpWs :
+                     (DogePresence.ws && DogePresence.ws.readyState === 1) ? DogePresence.ws : null;
+        if (lbWs) lbWs.send(JSON.stringify({ type: 'leaderboard_get' }));
     },
 
     close() {
@@ -2363,6 +2368,11 @@ const studyBreak = {
             clearTimeout(this.mpState.garbageTimer);
             this.mpState.garbageTimer = 0;
         }
+        // Clean up WebRTC
+        if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
+        if (this.dataChannel) { this.dataChannel = null; }
+        this.useP2P = false;
+        if (this.rtcTimeout) { clearTimeout(this.rtcTimeout); this.rtcTimeout = null; }
         this.exitSplitMode();
         document.getElementById('game-split').style.display = 'none';
         document.getElementById('game-lobby').style.display = 'none';
@@ -2552,7 +2562,36 @@ const studyBreak = {
                 break;
 
             case 'opponent_left':
-                this.opponentLeft();
+                this.opponentLeft(data.reason);
+                break;
+
+            case 'rtc_offer':
+                if (this.peerConnection) {
+                    this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                        .then(() => this.peerConnection.createAnswer())
+                        .then(answer => this.peerConnection.setLocalDescription(answer))
+                        .then(() => {
+                            if (this.mpWs && this.mpWs.readyState === 1) {
+                                this.mpWs.send(JSON.stringify({ type: 'rtc_answer', sdp: this.peerConnection.localDescription }));
+                            }
+                        });
+                }
+                break;
+
+            case 'rtc_answer':
+                if (this.peerConnection) {
+                    this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                }
+                break;
+
+            case 'rtc_ice':
+                if (this.peerConnection && data.candidate) {
+                    this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+                break;
+
+            case 'leaderboard_data':
+                this.leaderboardEntries = data.entries || [];
                 break;
         }
     },
@@ -2682,11 +2721,14 @@ const studyBreak = {
                 this.updateHud();
             }
         }, 1000);
+
+        // Attempt WebRTC P2P connection
+        this.setupWebRTC();
     },
 
     // Send game state to server after each piece lock
     sendGameState() {
-        if (!this.mpWs || this.mpWs.readyState !== 1 || !this.mpState) return;
+        if (!this.mpState) return;
         // Compress board: only send non-null cells as [row, col, colorIndex]
         const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
         const compressed = [];
@@ -2699,7 +2741,7 @@ const studyBreak = {
                 }
             }
         }
-        this.mpWs.send(JSON.stringify({
+        this.sendGameMessage({
             type: 'game_state',
             board: compressed,
             score: this.score,
@@ -2709,7 +2751,91 @@ const studyBreak = {
             hold: this.hold,
             queue: this.queue.slice(0, 3),
             state: this.state
-        }));
+        });
+    },
+
+    sendGameMessage(msg) {
+        const json = JSON.stringify(msg);
+        if (this.useP2P && this.dataChannel && this.dataChannel.readyState === 'open') {
+            this.dataChannel.send(json);
+        } else if (this.mpWs && this.mpWs.readyState === 1) {
+            this.mpWs.send(json);
+        }
+    },
+
+    submitLeaderboardScore() {
+        const ws = (this.mpWs && this.mpWs.readyState === 1) ? this.mpWs :
+                   (DogePresence.ws && DogePresence.ws.readyState === 1) ? DogePresence.ws : null;
+        if (ws && this.score > 0) {
+            ws.send(JSON.stringify({
+                type: 'leaderboard_submit',
+                name: this.mpUsername || localStorage.getItem('student-name') || 'Unknown',
+                score: this.score,
+                mode: this.mode
+            }));
+        }
+    },
+
+    setupWebRTC() {
+        if (!this.mpState || !this.mpWs) return;
+        this.useP2P = false;
+        this.peerConnection = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+
+        this.peerConnection.onicecandidate = (e) => {
+            if (e.candidate && this.mpWs && this.mpWs.readyState === 1) {
+                this.mpWs.send(JSON.stringify({ type: 'rtc_ice', candidate: e.candidate }));
+            }
+        };
+
+        // Host (side 0) creates the DataChannel and offer
+        if (this.mpState.side === 0) {
+            this.dataChannel = this.peerConnection.createDataChannel('game');
+            this.setupDataChannel(this.dataChannel);
+            this.peerConnection.createOffer().then(offer => {
+                return this.peerConnection.setLocalDescription(offer);
+            }).then(() => {
+                if (this.mpWs && this.mpWs.readyState === 1) {
+                    this.mpWs.send(JSON.stringify({ type: 'rtc_offer', sdp: this.peerConnection.localDescription }));
+                }
+            });
+        } else {
+            // Guest waits for DataChannel
+            this.peerConnection.ondatachannel = (e) => {
+                this.dataChannel = e.channel;
+                this.setupDataChannel(this.dataChannel);
+            };
+        }
+
+        // 5-second fallback timeout
+        this.rtcTimeout = setTimeout(() => {
+            if (!this.useP2P) {
+                console.log('WebRTC P2P failed, using WS relay');
+                if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
+                this.dataChannel = null;
+            }
+        }, 5000);
+    },
+
+    setupDataChannel(channel) {
+        channel.onopen = () => {
+            this.useP2P = true;
+            if (this.rtcTimeout) { clearTimeout(this.rtcTimeout); this.rtcTimeout = null; }
+            console.log('WebRTC P2P connected');
+        };
+        channel.onclose = () => {
+            this.useP2P = false;
+            console.log('WebRTC DataChannel closed, falling back to WS');
+        };
+        channel.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            // Translate raw game messages to server-style types
+            if (data.type === 'game_state') data.type = 'opponent_state';
+            else if (data.type === 'game_garbage') { data.type = 'garbage_incoming'; }
+            else if (data.type === 'game_over') { data.type = 'opponent_ko'; data.finalScore = data.score; }
+            this.handleMpMessage(data);
+        };
     },
 
     updateOpponentState(data) {
@@ -2846,7 +2972,8 @@ const studyBreak = {
         if (this.active && !this.isValid(this.active)) {
             this.state = 'gameover';
             SFX.play('monkey', 0.6);
-            if (this.mpWs) this.mpWs.send(JSON.stringify({ type: 'game_over', score: this.score, lines: this.lines }));
+            this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
+            this.submitLeaderboardScore();
         }
         this.draw();
     },
@@ -2855,15 +2982,26 @@ const studyBreak = {
         if (!this.mpState) return;
         SFX.play('koWin', 1.0);
         this.state = 'gameover';
-        this.flash('YOU WIN! Opponent scored ' + finalScore);
+        const opponentName = this.mpState.opponent || 'Opponent';
+        this.flash(`YOU WIN! You: ${this.score} | ${opponentName}: ${finalScore}`);
+        this.submitLeaderboardScore();
         this.updateHud();
         this.draw();
     },
 
-    opponentLeft() {
+    opponentLeft(reason) {
         if (!this.mpState) return;
+        SFX.play('koWin', 1.0);
         this.state = 'gameover';
-        this.flash('Opponent left the game');
+        const opponentName = this.mpState.opponent || 'Opponent';
+        const myScore = this.score;
+        const theirScore = this.mpState.opponentScore || 0;
+        if (reason === 'quit') {
+            this.flash(`Opponent fled! You win! You: ${myScore} | ${opponentName}: ${theirScore}`);
+        } else {
+            this.flash(`${opponentName} disconnected. You: ${myScore} | ${opponentName}: ${theirScore}`);
+        }
+        this.submitLeaderboardScore();
         this.updateHud();
         this.draw();
     },
@@ -2955,11 +3093,12 @@ const studyBreak = {
         if (!this.isValid(piece)) {
             this.active = null;
             this.state = 'gameover';
-            if (this.mode === '1v1' && this.mpWs) {
-                this.mpWs.send(JSON.stringify({ type: 'game_over', score: this.score, lines: this.lines }));
+            if (this.mode === '1v1') {
+                this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
             }
             SFX.play('monkey', 0.6);
             this.flash('Stack jammed');
+            this.submitLeaderboardScore();
             this.updateHud();
             return;
         }
@@ -3027,6 +3166,7 @@ const studyBreak = {
                 this.active = null;
                 this.state = 'gameover';
                 this.flash('Hold jammed the stack');
+                this.submitLeaderboardScore();
                 this.updateHud();
                 return;
             }
@@ -3105,11 +3245,11 @@ const studyBreak = {
                 const canceled = Math.min(this.mpState.pendingGarbage, garbageToSend);
                 this.mpState.pendingGarbage -= canceled;
                 const netGarbage = garbageToSend - canceled;
-                if (netGarbage > 0 && this.mpWs) {
-                    this.mpWs.send(JSON.stringify({ type: 'game_garbage', lines: netGarbage }));
+                if (netGarbage > 0) {
+                    this.sendGameMessage({ type: 'game_garbage', lines: netGarbage });
                 }
-            } else if (garbageToSend > 0 && this.mpWs) {
-                this.mpWs.send(JSON.stringify({ type: 'game_garbage', lines: garbageToSend }));
+            } else if (garbageToSend > 0) {
+                this.sendGameMessage({ type: 'game_garbage', lines: garbageToSend });
             }
         }
 
@@ -3139,11 +3279,12 @@ const studyBreak = {
 
         if (toppedOut) {
             this.state = 'gameover';
-            if (this.mode === '1v1' && this.mpWs) {
-                this.mpWs.send(JSON.stringify({ type: 'game_over', score: this.score, lines: this.lines }));
+            if (this.mode === '1v1') {
+                this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
             }
             SFX.play('monkey', 0.6);
             this.flash('Top out');
+            this.submitLeaderboardScore();
         }
         if (this.mode === '1v1') this.sendGameState();
         this.updateHud();
@@ -3629,7 +3770,8 @@ const studyBreak = {
     drawModeSelect() {
         const ctx = this.ctx;
         const w = 200;
-        const h = 90;
+        const hasLb = this.leaderboardEntries.length > 0;
+        const h = hasLb ? 150 : 90;
         const x = this.BOARD_X + (this.COLS * this.CELL - w) / 2;
         const y = this.BOARD_Y + (this.VISIBLE_ROWS * this.CELL - h) / 2;
         // Card background
@@ -3672,9 +3814,26 @@ const studyBreak = {
         ctx.fillText('1v1', vsX + btnW / 2, btnY + 15);
         ctx.font = '9px Geneva, Arial, sans-serif';
         ctx.fillText('Click', vsX + btnW / 2, btnY + 22);
+        // Hall of Fame
+        if (this.leaderboardEntries.length > 0) {
+            const lbY = btnY + btnH + 8;
+            ctx.fillStyle = '#999999';
+            ctx.font = '9px Geneva, Arial, sans-serif';
+            ctx.fillText('\u2500\u2500 Hall of Fame \u2500\u2500', x + w / 2, lbY);
+            ctx.font = '9px Geneva, Arial, sans-serif';
+            ctx.fillStyle = '#000000';
+            this.leaderboardEntries.forEach((entry, i) => {
+                const ey = lbY + 12 + i * 11;
+                ctx.textAlign = 'left';
+                ctx.fillText(`${i + 1}. ${entry.name}`, x + 12, ey);
+                ctx.textAlign = 'right';
+                ctx.fillText(`${entry.score}  ${entry.mode}`, x + w - 12, ey);
+                ctx.textAlign = 'center';
+            });
+        }
         // Footer
         ctx.font = '9px Geneva, Arial, sans-serif';
-        ctx.fillText('Build 4×4 blocks for bonus pts', x + w / 2, y + h - 8);
+        ctx.fillText('Build 4\u00d74 blocks for bonus pts', x + w / 2, y + h - 8);
         ctx.textAlign = 'left';
         // Store button rects for click detection
         this._soloBtn = { x: soloX, y: btnY, w: btnW, h: btnH };
@@ -3859,7 +4018,17 @@ const DogePresence = {
                 break;
 
             case 'opponent_left':
-                if (studyBreak.mpState) studyBreak.opponentLeft();
+                if (studyBreak.mpState) studyBreak.opponentLeft(data.reason);
+                break;
+
+            case 'rtc_offer':
+            case 'rtc_answer':
+            case 'rtc_ice':
+                if (studyBreak.peerConnection) studyBreak.handleMpMessage(data);
+                break;
+
+            case 'leaderboard_data':
+                studyBreak.leaderboardEntries = data.entries || [];
                 break;
         }
     },
