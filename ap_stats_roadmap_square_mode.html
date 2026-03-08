@@ -7,8 +7,11 @@
     <style>
         :root {
             --platinum: #DDDDDD;
-            --plat-hi: #FFFFFF;
-            --plat-lo: #888888;
+            --plat-hi: #e8ecf2;
+            --plat-lo: #8890a0;
+            --bevel-hi: #dde4ee;
+            --bevel-mid: #8890a0;
+            --bevel-lo: #3a3d4a;
             --stripe-dark: #AAAAAA;
             --black: #000000;
             --white: #FFFFFF;
@@ -124,6 +127,8 @@
                 2px 2px 0 0 var(--black);
             padding: 1px;
             position: relative;
+            border-radius: 2px;
+            overflow: hidden;
         }
 
         /* ── Title Bar ──────────────────────────────── */
@@ -134,11 +139,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow:
+                inset 0 1px 0 var(--bevel-hi),
+                inset 0 -1px 0 var(--bevel-lo);
         }
         .title-stripes {
             position: absolute;
             top: 2px; bottom: 2px;
-            left: 0; right: 0;
+            left: 22px; right: 22px;
             background: repeating-linear-gradient(
                 to bottom,
                 var(--platinum) 0, var(--platinum) 1px,
@@ -160,6 +168,14 @@
             background: var(--platinum);
             border: 1px solid var(--black);
             z-index: 3;
+            box-shadow:
+                inset 1px 1px 0 var(--bevel-hi),
+                inset -1px -1px 0 var(--bevel-lo);
+        }
+        .close-box:active {
+            box-shadow:
+                inset 1px 1px 0 var(--bevel-lo),
+                inset -1px -1px 0 var(--bevel-hi);
         }
         .collapse-box {
             position: absolute; right: 5px;
@@ -167,7 +183,7 @@
             background: var(--platinum);
             border: 1px solid var(--black);
             z-index: 3;
-            box-shadow: inset 1px 1px 0 var(--plat-hi), inset -1px -1px 0 var(--plat-lo);
+            box-shadow: inset 1px 1px 0 var(--bevel-hi), inset -1px -1px 0 var(--bevel-lo);
         }
         .collapse-box::after {
             content: ""; position: absolute; top: 5px; left: 1px; right: 1px; height: 1px;
@@ -391,6 +407,8 @@
                 inset -1px -1px 0 0 var(--plat-lo),
                 2px 2px 0 0 var(--black);
             padding: 1px;
+            border-radius: 2px;
+            overflow: hidden;
         }
         .game-title-bar {
             height: 19px;
@@ -399,9 +417,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow:
+                inset 0 1px 0 var(--bevel-hi),
+                inset 0 -1px 0 var(--bevel-lo);
         }
         .game-title-bar .title-stripes {
-            position: absolute; top: 2px; bottom: 2px; left: 0; right: 0;
+            position: absolute; top: 2px; bottom: 2px; left: 22px; right: 22px;
             background: repeating-linear-gradient(to bottom, var(--platinum) 0, var(--platinum) 1px, var(--stripe-dark) 1px, var(--stripe-dark) 2px);
             z-index: 1;
         }
@@ -477,7 +498,7 @@
 
 <!-- ═══ Menu Bar ═══ -->
 <div class="menu-bar chicago" id="menubar">
-    <span class="menu-apple" data-menu="apple" id="menu-apple"><img id="pineapple-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='16' viewBox='0 0 14 16'%3E%3Crect x='5' y='0' width='2' height='2' fill='%23228B22'/%3E%3Crect x='7' y='0' width='2' height='2' fill='%23228B22'/%3E%3Crect x='3' y='2' width='2' height='2' fill='%2332CD32'/%3E%3Crect x='5' y='2' width='2' height='2' fill='%2332CD32'/%3E%3Crect x='7' y='2' width='2' height='2' fill='%2332CD32'/%3E%3Crect x='9' y='2' width='2' height='2' fill='%23228B22'/%3E%3Crect x='4' y='4' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='6' y='4' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='8' y='4' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='3' y='6' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='5' y='6' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='7' y='6' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='9' y='6' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='3' y='8' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='5' y='8' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='7' y='8' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='9' y='8' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='3' y='10' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='5' y='10' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='7' y='10' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='9' y='10' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='4' y='12' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='6' y='12' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='8' y='12' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='5' y='14' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='7' y='14' width='2' height='2' fill='%23FFD700'/%3E%3C/svg%3E" alt="pineapple" style="width:14px;height:16px;vertical-align:middle;image-rendering:pixelated"></span>
+    <span class="menu-apple" data-menu="apple" id="menu-apple"><img id="pineapple-icon" src="Doge-Asset.png" alt="doge" style="width:16px;height:16px;vertical-align:middle;image-rendering:pixelated"></span>
     <span class="menu-item" data-menu="file">File
         <div class="menu-dropdown" id="menu-file">
             <div class="menu-dd-item disabled">New <span class="shortcut">&#8984;N</span></div>
@@ -860,7 +881,7 @@ document.addEventListener('mousedown', () => { closeMenus(); });
         closeMenus();
         if (isDoge) {
             icon.src = pineappleSrc;
-            icon.style.width = '14px';
+            icon.style.width = '16px';
             icon.style.height = '16px';
         } else {
             icon.src = 'DOGE6.png';
