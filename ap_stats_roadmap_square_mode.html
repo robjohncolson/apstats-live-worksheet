@@ -517,9 +517,16 @@
         }
         .boot-sprite {
             width: 80px; height: 98px;
-            background: url('sprite.png') 0 0;
-            background-size: 480px 98px;
+            background: url('sprite.png') -168px 0;
+            background-size: 920px 200px;
             filter: grayscale(1) brightness(0.7) sepia(0.3) hue-rotate(220deg);
+            animation: boot-walk 0.48s step-end infinite;
+        }
+        @keyframes boot-walk {
+            0%  { background-position: -168px 0; }
+            25% { background-position: -252px 0; }
+            50% { background-position: -336px 0; }
+            75% { background-position: -420px 0; }
         }
         .boot-title { font-size: 14px; letter-spacing: 1px; margin-top: 2px; }
         .boot-status { font-size: 11px; color: var(--plat-lo); }
