@@ -510,7 +510,7 @@
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" onclick="showDialog('&#128190;','This calendar auto-saves to your brain every time you look at it.','OK')">Save to Floppy...</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" onclick="showDialog('&#9888;&#65039;','You can check out any time you like, but you can never leave. The AP Exam is May 7.','I Accept My Fate')">Quit</div>
+            <div class="menu-dd-item" onclick="showDialog('&#9888;&#65039;','You can check out any time you like, but you can never leave. The AP Exam is May 7.','I Accept My Fate','crash')">Quit</div>
         </div>
     </span>
     <span class="menu-item" data-menu="edit">Edit
@@ -547,12 +547,13 @@
     <span class="menu-item" data-menu="special">Special
         <div class="menu-dropdown" id="menu-special">
             <div class="menu-dd-item" onclick="showDialog('&#128165;','All caches cleared! Your brain has been defragmented. You now have 12% more room for z-scores.','Excellent')">Empty Trash</div>
-            <div class="menu-dd-item" onclick="showDialog('&#128171;','Restart complete. You still have to study for the AP Exam.','*Sigh* OK')">Restart</div>
+            <div class="menu-dd-item" onclick="showDialog('&#128171;','Restart complete. You still have to study for the AP Exam.','*Sigh* OK','crash')">Restart</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" onclick="closeMenus();openGame()" style="font-weight:bold">&#127918; Study Break...</div>
         </div>
     </span>
     <span class="menu-spacer"></span>
+    <span id="mac-mute" style="cursor:pointer;font-size:12px;padding:0 6px" onclick="MacSFX.init();document.getElementById('mac-mute').textContent=MacSFX.toggleMute()?'🔇':'🔊'">🔊</span>
     <span class="menu-clock geneva" id="mclock">9:55 AM</span>
 </div>
 
@@ -866,6 +867,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 document.querySelectorAll('.menu-dd-item:not(.disabled)').forEach(item => {
     item.addEventListener('mousedown', (e) => {
         e.stopPropagation();
+        MacSFX.play('click', 0.3);
     });
 });
 
@@ -955,7 +957,7 @@ document.addEventListener('mousedown', () => { closeMenus(); });
     canvas.addEventListener('click', function(e) {
         e.stopPropagation();
         closeMenus();
-        if (!jumping) { jumping = true; jumpTimer = 0; }
+        if (!jumping) { jumping = true; jumpTimer = 0; MacSFX.play('laugh', 0.5); }
     });
 })();
 
@@ -963,6 +965,60 @@ function closeMenus() {
     document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('show'));
     document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('menu-open'));
     openMenuId = null;
+}
+
+/* ═══ MAC OS UI SOUND EFFECTS ═══ */
+const MacSFX = {
+    sounds: {},
+    muted: false,
+    started: false,
+
+    init() {
+        if (this.started) return;
+        this.started = true;
+        this.muted = localStorage.getItem('macsound-muted') === 'true';
+        const files = {
+            startup:  'Mac-OS-Sounds/StartupMacQuadra.wav',
+            sosumi:   'Mac-OS-Sounds/Sosumi.wav',
+            crash:    'Mac-OS-Sounds/CrashMacQuadra.wav',
+            laugh:    'Mac-OS-Sounds/Laugh.wav',
+            wildEep:  'Mac-OS-Sounds/Wild-Eep.wav',
+            click:    'Mac-OS-Sounds/Single-Click.wav'
+        };
+        for (const [name, src] of Object.entries(files)) {
+            const a = new Audio(src);
+            a.preload = 'auto';
+            this.sounds[name] = a;
+        }
+    },
+
+    play(name, volume = 0.5) {
+        if (this.muted) return;
+        if (!this.started) this.init();
+        const a = this.sounds[name];
+        if (!a) return;
+        a.currentTime = 0;
+        a.volume = volume;
+        a.play().catch(() => {});
+    },
+
+    toggleMute() {
+        this.muted = !this.muted;
+        localStorage.setItem('macsound-muted', this.muted);
+        return this.muted;
+    }
+};
+
+document.addEventListener('click', function macBoot() {
+    MacSFX.init();
+    MacSFX.play('startup', 0.4);
+    document.removeEventListener('click', macBoot);
+}, { once: true });
+
+// Restore mute icon state from localStorage
+if (localStorage.getItem('macsound-muted') === 'true') {
+    const mi = document.getElementById('mac-mute');
+    if (mi) mi.textContent = '\u{1F507}';
 }
 
 /* Update View menu checkmarks */
@@ -973,12 +1029,13 @@ function updateViewMenu() {
 }
 
 /* ═══ DIALOG ═══ */
-function showDialog(icon, msg, btnText) {
+function showDialog(icon, msg, btnText, sfx) {
     closeMenus();
     document.getElementById('dialog-icon').innerHTML = icon;
     document.getElementById('dialog-msg').innerHTML = msg;
     document.getElementById('dialog-btn').textContent = btnText || 'OK';
     document.getElementById('dialog-overlay').style.display = 'block';
+    MacSFX.play(sfx || 'sosumi', 0.5);
 }
 function closeDialog() {
     document.getElementById('dialog-overlay').style.display = 'none';
@@ -2562,6 +2619,7 @@ const studyBreak = {
 };
 
 function openGame() {
+    MacSFX.play('wildEep', 0.5);
     studyBreak.open();
 }
 
