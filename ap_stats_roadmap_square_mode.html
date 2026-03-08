@@ -1067,7 +1067,8 @@ if (MacSFX.muted) {
     if (mi) mi.textContent = '\u{1F507}';
 }
 
-/* ── Boot Chime ─────────────────────────────── */
+/* ── Boot Chime (preload, plays on click-to-dismiss) ── */
+var _bootChime = null;
 (function() {
     if (MacSFX.muted) return;
     var chimes = [
@@ -1093,16 +1094,8 @@ if (MacSFX.muted) {
     if (!pool.length) pool = chimes;
     var pick = pool[Math.floor(Math.random() * pool.length)];
     localStorage.setItem('boot-chime-last', pick);
-    var audio = new Audio(pick);
-    audio.play().catch(function() {
-        var overlay = document.getElementById('boot-overlay');
-        if (!overlay) return;
-        function playOnce() {
-            audio.play();
-            overlay.removeEventListener('click', playOnce);
-        }
-        overlay.addEventListener('click', playOnce);
-    });
+    _bootChime = new Audio(pick);
+    _bootChime.preload = 'auto';
 })();
 
 /* Update View menu checkmarks */
@@ -2806,12 +2799,18 @@ uClock();setInterval(uClock,15e3);
 rCD();rCal();rProg();updateViewMenu();
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
-/* ── Boot Dismissal ─────────────────────────── */
+/* ── Boot Dismissal (click-to-start after progress bar) ── */
 setTimeout(function() {
     var boot = document.getElementById('boot-overlay');
     if (!boot) return;
-    boot.classList.add('fade-out');
-    boot.addEventListener('transitionend', function() { boot.remove(); });
+    var status = boot.querySelector('.boot-status');
+    if (status) { status.textContent = 'Click to start'; status.style.cursor = 'pointer'; }
+    boot.style.cursor = 'pointer';
+    boot.addEventListener('click', function() {
+        if (_bootChime) _bootChime.play().catch(function() {});
+        boot.classList.add('fade-out');
+        boot.addEventListener('transitionend', function() { boot.remove(); });
+    });
 }, 3000);
 </script>
 </body>
