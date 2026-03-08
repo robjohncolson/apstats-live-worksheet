@@ -157,16 +157,10 @@
         .close-box {
             position: absolute; left: 5px;
             width: 13px; height: 13px;
-            background: var(--white);
+            background: var(--platinum);
             border: 1px solid var(--black);
             z-index: 3;
-            display: flex; align-items: center; justify-content: center;
         }
-        .close-box::before {
-            content: ""; width: 7px; height: 7px;
-            border: 1px solid var(--black);
-        }
-        .close-box:active::before { background: var(--black); }
         .collapse-box {
             position: absolute; right: 5px;
             width: 13px; height: 13px;
@@ -343,28 +337,38 @@
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: var(--platinum);
-            border: 1px solid var(--black);
-            box-shadow:
-                inset 1px 1px 0 0 var(--plat-hi),
-                inset -1px -1px 0 0 var(--plat-lo),
-                2px 2px 0 0 var(--black);
+            border: 3px solid #333;
+            border-radius: 2px;
+            outline: 2px solid var(--white);
+            outline-offset: -5px;
+            box-shadow: 2px 2px 0 0 var(--black);
             padding: 16px 20px;
             min-width: 300px;
             max-width: 420px;
-            text-align: center;
+        }
+        .dialog-body {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
         }
         .dialog-box .dialog-icon {
             font-size: 28px;
-            margin-bottom: 8px;
+            flex-shrink: 0;
+            width: 40px;
+            text-align: center;
+            padding-top: 2px;
         }
         .dialog-box .dialog-msg {
             font-size: 12px;
-            margin-bottom: 14px;
             line-height: 1.5;
+            flex: 1;
+            text-align: left;
         }
         .dialog-box .dialog-btns {
             display: flex;
-            justify-content: center;
+            justify-content: flex-end;
             gap: 10px;
         }
 
@@ -473,7 +477,7 @@
 
 <!-- ═══ Menu Bar ═══ -->
 <div class="menu-bar chicago" id="menubar">
-    <span class="menu-apple" data-menu="apple">&#63743;</span>
+    <span class="menu-apple" data-menu="apple" id="menu-apple"><img id="pineapple-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='16' viewBox='0 0 14 16'%3E%3Crect x='5' y='0' width='2' height='2' fill='%23228B22'/%3E%3Crect x='7' y='0' width='2' height='2' fill='%23228B22'/%3E%3Crect x='3' y='2' width='2' height='2' fill='%2332CD32'/%3E%3Crect x='5' y='2' width='2' height='2' fill='%2332CD32'/%3E%3Crect x='7' y='2' width='2' height='2' fill='%2332CD32'/%3E%3Crect x='9' y='2' width='2' height='2' fill='%23228B22'/%3E%3Crect x='4' y='4' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='6' y='4' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='8' y='4' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='3' y='6' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='5' y='6' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='7' y='6' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='9' y='6' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='3' y='8' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='5' y='8' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='7' y='8' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='9' y='8' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='3' y='10' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='5' y='10' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='7' y='10' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='9' y='10' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='4' y='12' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='6' y='12' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='8' y='12' width='2' height='2' fill='%23FFD700'/%3E%3Crect x='5' y='14' width='2' height='2' fill='%23FFC107'/%3E%3Crect x='7' y='14' width='2' height='2' fill='%23FFD700'/%3E%3C/svg%3E" alt="pineapple" style="width:14px;height:16px;vertical-align:middle;image-rendering:pixelated"></span>
     <span class="menu-item" data-menu="file">File
         <div class="menu-dropdown" id="menu-file">
             <div class="menu-dd-item disabled">New <span class="shortcut">&#8984;N</span></div>
@@ -584,8 +588,10 @@
 <!-- ═══ Alert Dialog ═══ -->
 <div class="dialog-overlay" id="dialog-overlay" onclick="closeDialog()">
     <div class="dialog-box chicago" onclick="event.stopPropagation()">
-        <div class="dialog-icon" id="dialog-icon"></div>
-        <div class="dialog-msg geneva" id="dialog-msg"></div>
+        <div class="dialog-body">
+            <div class="dialog-icon" id="dialog-icon"></div>
+            <div class="dialog-msg geneva" id="dialog-msg"></div>
+        </div>
         <div class="dialog-btns">
             <button class="s7btn s7btn-default" id="dialog-btn" onclick="closeDialog()">OK</button>
         </div>
@@ -779,6 +785,21 @@ const SFX = {
             this.osc('sine', 1100, t + 0.15, 0.15, vol * 0.6);
             this.osc('sine', 880, t + 0.4, 0.12, vol * 0.5);
             this.osc('sine', 1100, t + 0.55, 0.15, vol * 0.6);
+        },
+
+        // Gold square - bright ascending major chord chime
+        goldChime(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 523, t, 0.3, vol * 0.5);        // C5 root
+            this.osc('sine', 659, t + 0.08, 0.28, vol * 0.45); // E5 major third
+            this.osc('sine', 784, t + 0.16, 0.35, vol * 0.5);  // G5 fifth
+        },
+
+        // Silver square - shorter metallic shimmer
+        silverShimmer(vol) {
+            const t = this.ctx.currentTime;
+            this.osc('sine', 1047, t, 0.15, vol * 0.4);       // C6
+            this.osc('sine', 1319, t + 0.05, 0.18, vol * 0.35); // E6
         }
     }
 };
@@ -827,6 +848,28 @@ document.querySelectorAll('.menu-dd-item:not(.disabled)').forEach(item => {
 });
 
 document.addEventListener('mousedown', () => { closeMenus(); });
+
+/* Pineapple / Doge easter egg toggle */
+(function() {
+    const apple = document.getElementById('menu-apple');
+    const icon = document.getElementById('pineapple-icon');
+    let isDoge = false;
+    const pineappleSrc = icon.src;
+    apple.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeMenus();
+        if (isDoge) {
+            icon.src = pineappleSrc;
+            icon.style.width = '14px';
+            icon.style.height = '16px';
+        } else {
+            icon.src = 'DOGE6.png';
+            icon.style.width = '16px';
+            icon.style.height = '16px';
+        }
+        isDoge = !isDoge;
+    });
+})();
 
 function closeMenus() {
     document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('show'));
@@ -878,7 +921,7 @@ const studyBreak = {
     ENTRY_DELAY: 150,
     DAS_DELAY: 135,
     DAS_REPEAT: 48,
-    SOFT_DROP_INTERVAL: 32,
+    SOFT_DROP_INTERVAL: 80,
     soloConfig: { canvas: null, ctx: null, CELL: 12, BOARD_X: 155, BOARD_Y: 24, CANVAS_W: 430, CANVAS_H: 302 },
     splitConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 105, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
     opponentConfig: { canvas: null, ctx: null, CELL: 10, BOARD_X: 5, BOARD_Y: 24, CANVAS_W: 215, CANVAS_H: 302 },
@@ -1874,9 +1917,12 @@ const studyBreak = {
             }
         }
 
-        const messages = [];
         const totalGold = firstSquares.gold + secondSquares.gold;
         const totalSilver = firstSquares.silver + secondSquares.silver;
+        if (totalGold) SFX.play('goldChime', 0.7);
+        else if (totalSilver) SFX.play('silverShimmer', 0.6);
+
+        const messages = [];
         if (totalGold) messages.push(totalGold === 1 ? 'Gold square!' : `${totalGold} gold squares!`);
         if (totalSilver) messages.push(totalSilver === 1 ? 'Silver square!' : `${totalSilver} silver squares!`);
         if (clear.lines) {
