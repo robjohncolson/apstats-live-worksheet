@@ -544,7 +544,7 @@
             height: 100%;
             background: var(--plat-lo);
             width: 0;
-            animation: boot-fill 2s linear forwards;
+            animation: boot-fill 1s linear forwards;
         }
         @keyframes boot-fill { to { width: 100%; } }
     </style>
@@ -2807,7 +2807,7 @@ setTimeout(function() {
         boot.classList.add('fade-out');
         boot.addEventListener('transitionend', function() { boot.remove(); });
     });
-}, 2000);
+}, 1000);
 </script>
 </body>
 </html>
