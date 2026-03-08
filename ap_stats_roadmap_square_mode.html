@@ -1978,9 +1978,11 @@ function showResourcePanel(inf, dateStr) {
 
     document.getElementById('resource-body').innerHTML = html;
     document.getElementById('resource-overlay').style.display = 'block';
+    MacSFX.play('sosumi', 0.5);
 }
 
 function closeResourcePanel() {
+    MacSFX.play('click', 0.3);
     document.getElementById('resource-overlay').style.display = 'none';
 }
 
