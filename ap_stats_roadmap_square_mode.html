@@ -404,6 +404,7 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
+            width: 432px;
             background: var(--platinum);
             border: 1px solid var(--black);
             box-shadow:
@@ -413,6 +414,9 @@
             padding: 1px;
             border-radius: 2px;
             overflow: hidden;
+        }
+        .game-score, .game-help {
+            box-sizing: border-box;
         }
         .game-title-bar {
             height: 19px;
@@ -460,6 +464,8 @@
             width: 100%;
             text-align: center;
             background: var(--platinum);
+            height: 22px;
+            overflow: hidden;
         }
         .game-help {
             font-size: 10px;
@@ -2404,7 +2410,7 @@ const studyBreak = {
         if (this.state === 'running') this.update(delta, ts);
         if (this.flashTimer > 0) {
             this.flashTimer = Math.max(0, this.flashTimer - delta);
-            if (this.flashTimer === 0 && this.flashText) {
+            if (this.flashTimer === 0 && this.flashText && this.state !== 'gameover') {
                 this.flashText = '';
                 this.updateHud();
             }
@@ -3537,7 +3543,13 @@ const studyBreak = {
         }
         if (this.state === 'idle') this.drawModeSelect();
         if (this.state === 'paused') this.drawCenterCard('PAUSED', 'Press P or click to resume');
-        if (this.state === 'gameover') this.drawCenterCard('GAME OVER', 'Press Enter, R, or click to restart');
+        if (this.state === 'gameover') {
+            if (this.mode === '1v1' && this.flashText) {
+                this.drawGameOverCard(this.flashText);
+            } else {
+                this.drawCenterCard('GAME OVER', 'Press Enter, R, or click to restart');
+            }
+        }
 
         // Draw opponent board each frame in 1v1 mode
         if (this.mode === '1v1' && this.mpState) {
@@ -3764,6 +3776,51 @@ const studyBreak = {
         ctx.font = '10px Geneva, Arial, sans-serif';
         ctx.fillText(subtitle, x + w / 2, y + 35);
         ctx.fillText('Gold = same piece  •  Silver = mixed', x + w / 2, y + 48);
+        ctx.textAlign = 'left';
+    },
+
+    drawGameOverCard(flashText) {
+        const ctx = this.ctx;
+        // Parse flash text: "YOU WIN! You: 1250 | Bob: 980" or "Opponent fled! ..." or "Bob disconnected. ..."
+        let title = 'GAME OVER';
+        let detail = '';
+        if (flashText.startsWith('YOU WIN!')) {
+            title = 'YOU WIN!';
+            detail = flashText.replace('YOU WIN! ', '');
+        } else if (flashText.includes('fled!')) {
+            title = 'YOU WIN!';
+            detail = flashText.replace(/Opponent fled! You win! ?/, '');
+        } else if (flashText.includes('disconnected')) {
+            title = 'DISCONNECTED';
+            detail = flashText;
+        } else {
+            detail = flashText;
+        }
+        const w = 200;
+        const h = 72;
+        const x = this.BOARD_X + (this.COLS * this.CELL - w) / 2;
+        const y = this.BOARD_Y + (this.VISIBLE_ROWS * this.CELL - h) / 2;
+        // Card
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#000000';
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        // Title bar
+        ctx.fillStyle = '#dddddd';
+        ctx.fillRect(x + 1, y + 1, w - 2, 14);
+        ctx.fillStyle = '#000000';
+        ctx.font = '10px Chicago, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(title, x + w / 2, y + 11);
+        // Score detail
+        ctx.font = '10px Geneva, Arial, sans-serif';
+        ctx.fillText(detail, x + w / 2, y + 32);
+        // Instructions
+        ctx.fillStyle = '#666666';
+        ctx.font = '9px Geneva, Arial, sans-serif';
+        ctx.fillText('R to rematch  •  Esc to exit', x + w / 2, y + 48);
+        ctx.fillStyle = '#000000';
+        ctx.fillText(`Score ${this.score}  •  Lines ${this.lines}`, x + w / 2, y + 60);
         ctx.textAlign = 'left';
     },
 
