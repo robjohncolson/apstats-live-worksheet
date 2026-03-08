@@ -92,13 +92,20 @@
             white-space: nowrap;
             height: 18px;
             line-height: 18px;
+            color: var(--black);
+            font-weight: bold;
         }
         .menu-dd-item:hover {
             background: var(--black);
             color: var(--white);
         }
         .menu-dd-item.disabled {
-            font-weight: bold;
+            color: var(--plat-lo);
+            font-weight: normal;
+        }
+        .menu-dd-item.disabled:hover {
+            background: var(--white);
+            color: var(--plat-lo);
         }
         .menu-dd-sep {
             height: 1px;
