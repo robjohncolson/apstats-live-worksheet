@@ -1079,22 +1079,12 @@ var _bootChime = null;
 (function() {
     if (MacSFX.muted) return;
     var chimes = [
-        'Mac-OS-Sounds/StartupAppleII.wav',
-        'Mac-OS-Sounds/StartupAppleIIc.wav',
         'Mac-OS-Sounds/StartupAppleIIgs.wav',
-        'Mac-OS-Sounds/StartupEMate300.wav',
-        'Mac-OS-Sounds/StartupIntelPreT2Mac.wav',
-        'Mac-OS-Sounds/StartupIntelT2Mac.wav',
-        'Mac-OS-Sounds/StartupiPhone.wav',
         'Mac-OS-Sounds/StartupMacI.wav',
         'Mac-OS-Sounds/StartupMacII.wav',
-        'Mac-OS-Sounds/StartupMacLC.wav',
-        'Mac-OS-Sounds/StartupMacQuadra.wav',
         'Mac-OS-Sounds/StartupMacQuadraAV.wav',
-        'Mac-OS-Sounds/StartupPowerMac.wav',
         'Mac-OS-Sounds/StartupPowerMacCard.wav',
-        'Mac-OS-Sounds/StartupPowerMacPCI.wav',
-        'Mac-OS-Sounds/StartupTwentiethAnniversaryMac.wav'
+        'Mac-OS-Sounds/StartupPowerMacPCI.wav'
     ];
     var last = localStorage.getItem('boot-chime-last');
     var pool = chimes.filter(function(c) { return c !== last; });
