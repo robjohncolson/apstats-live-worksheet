@@ -11,7 +11,8 @@
             --plat-lo: #8890a0;
             --bevel-hi: #dde4ee;
             --bevel-mid: #8890a0;
-            --bevel-lo: #666875;
+            --bevel-lo: #555577;
+            --chrome-border: #333366;
             --stripe-dark: #AAAAAA;
             --black: #000000;
             --white: #FFFFFF;
@@ -166,7 +167,7 @@
             position: absolute; left: 5px;
             width: 13px; height: 13px;
             background: var(--platinum);
-            border: 1px solid var(--black);
+            border: 1px solid var(--chrome-border);
             z-index: 3;
             box-shadow:
                 inset 1px 1px 0 var(--bevel-hi),
@@ -181,13 +182,13 @@
             position: absolute; right: 5px;
             width: 13px; height: 13px;
             background: var(--platinum);
-            border: 1px solid var(--black);
+            border: 1px solid var(--chrome-border);
             z-index: 3;
             box-shadow: inset 1px 1px 0 var(--bevel-hi), inset -1px -1px 0 var(--bevel-lo);
         }
         .collapse-box::after {
             content: ""; position: absolute; top: 5px; left: 1px; right: 1px; height: 1px;
-            background: var(--black);
+            background: var(--chrome-border);
         }
 
         /* ── Inner Window Content ───────────────────── */
@@ -498,7 +499,7 @@
 
 <!-- ═══ Menu Bar ═══ -->
 <div class="menu-bar chicago" id="menubar">
-    <span class="menu-apple" data-menu="apple" id="menu-apple"><img id="pineapple-icon" src="Doge-Asset.png" alt="doge" style="width:16px;height:16px;vertical-align:middle;image-rendering:pixelated"></span>
+    <span class="menu-apple" data-menu="apple" id="menu-apple"><canvas id="menu-sprite" width="13" height="16" style="width:13px;height:16px;vertical-align:middle;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer"></canvas></span>
     <span class="menu-item" data-menu="file">File
         <div class="menu-dropdown" id="menu-file">
             <div class="menu-dd-item disabled">New <span class="shortcut">&#8984;N</span></div>
@@ -870,25 +871,91 @@ document.querySelectorAll('.menu-dd-item:not(.disabled)').forEach(item => {
 
 document.addEventListener('mousedown', () => { closeMenus(); });
 
-/* Pineapple / Doge easter egg toggle */
+/* Pico Park menu sprite animator */
 (function() {
-    const apple = document.getElementById('menu-apple');
-    const icon = document.getElementById('pineapple-icon');
-    let isDoge = false;
-    const pineappleSrc = icon.src;
-    apple.addEventListener('click', function(e) {
+    const canvas = document.getElementById('menu-sprite');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const SHEET_COLS = 11, SHEET_ROWS = 2;
+    const FRAME_W = 80, FRAME_H = 98, PAD = 4;
+    const DISPLAY_H = 16, SCALE = DISPLAY_H / FRAME_H;
+    const DISPLAY_W = Math.round(FRAME_W * SCALE);
+    const WALK_FRAMES = [2, 3, 4, 5];
+    const WALK_SPF = 0.12;
+    const JUMP_FRAME = 5, JUMP_HEIGHT = 6, JUMP_DUR = 0.4;
+
+    /* DPR setup */
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = DISPLAY_W * dpr;
+    canvas.height = DISPLAY_H * dpr;
+    canvas.style.width = DISPLAY_W + 'px';
+    canvas.style.height = DISPLAY_H + 'px';
+    ctx.scale(dpr, dpr);
+
+    const sheet = new Image();
+    sheet.src = 'sprite.png';
+
+    let walkTimer = 0, walkIdx = 0;
+    let jumping = false, jumpTimer = 0;
+    let lastTime = 0, paused = false;
+
+    function getFrameXY(idx) {
+        const col = idx % SHEET_COLS;
+        const row = Math.floor(idx / SHEET_COLS);
+        return { x: col * (FRAME_W + PAD), y: row * (FRAME_H + PAD) };
+    }
+
+    function draw(frameIdx) {
+        ctx.clearRect(0, 0, DISPLAY_W, DISPLAY_H);
+        if (!sheet.complete) return;
+        const f = getFrameXY(frameIdx);
+        ctx.drawImage(sheet, f.x, f.y, FRAME_W, FRAME_H, 0, 0, DISPLAY_W, DISPLAY_H);
+    }
+
+    function tick(now) {
+        if (!lastTime) lastTime = now;
+        const dt = Math.min((now - lastTime) / 1000, 0.1);
+        lastTime = now;
+
+        if (paused) { requestAnimationFrame(tick); return; }
+
+        let frameIdx;
+        if (jumping) {
+            jumpTimer += dt;
+            if (jumpTimer >= JUMP_DUR) {
+                jumping = false;
+                jumpTimer = 0;
+                canvas.style.transform = '';
+            } else {
+                const t = jumpTimer / JUMP_DUR;
+                const yOff = Math.sin(t * Math.PI) * JUMP_HEIGHT;
+                canvas.style.transform = 'translateY(-' + yOff + 'px)';
+            }
+            frameIdx = JUMP_FRAME;
+        } else {
+            walkTimer += dt;
+            if (walkTimer >= WALK_SPF) {
+                walkTimer -= WALK_SPF;
+                walkIdx = (walkIdx + 1) % WALK_FRAMES.length;
+            }
+            frameIdx = WALK_FRAMES[walkIdx];
+        }
+
+        draw(frameIdx);
+        requestAnimationFrame(tick);
+    }
+
+    sheet.onload = function() { requestAnimationFrame(tick); };
+
+    document.addEventListener('visibilitychange', function() {
+        paused = document.hidden;
+        if (!paused) lastTime = 0;
+    });
+
+    canvas.addEventListener('click', function(e) {
         e.stopPropagation();
         closeMenus();
-        if (isDoge) {
-            icon.src = pineappleSrc;
-            icon.style.width = '16px';
-            icon.style.height = '16px';
-        } else {
-            icon.src = 'DOGE6.png';
-            icon.style.width = '16px';
-            icon.style.height = '16px';
-        }
-        isDoge = !isDoge;
+        if (!jumping) { jumping = true; jumpTimer = 0; }
     });
 })();
 
