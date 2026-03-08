@@ -508,9 +508,9 @@
             <div class="menu-dd-item disabled">Close <span class="shortcut">&#8984;W</span></div>
             <div class="menu-dd-item disabled">Save <span class="shortcut">&#8984;S</span></div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" onclick="showDialog('&#128190;','This calendar auto-saves to your brain every time you look at it.','OK')">Save to Floppy...</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128190;','This calendar auto-saves to your brain every time you look at it.','OK')">Save to Floppy...</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" onclick="showDialog('&#9888;&#65039;','You can check out any time you like, but you can never leave. The AP Exam is May 7.','I Accept My Fate','crash')">Quit</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#9888;&#65039;','You can check out any time you like, but you can never leave. The AP Exam is May 7.','I Accept My Fate','crash')">Quit</div>
         </div>
     </span>
     <span class="menu-item" data-menu="edit">Edit
@@ -522,7 +522,7 @@
             <div class="menu-dd-item disabled">Paste <span class="shortcut">&#8984;V</span></div>
             <div class="menu-dd-item disabled">Clear</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" onclick="showDialog('&#9999;&#65039;','Sorry, you cannot edit the laws of statistics. They edit you.','Fair Enough')">Edit Statistics...</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#9999;&#65039;','Sorry, you cannot edit the laws of statistics. They edit you.','Fair Enough')">Edit Statistics...</div>
         </div>
     </span>
     <span class="menu-item" data-menu="view">View
@@ -530,26 +530,26 @@
             <div class="menu-dd-item" onclick="setP('B');closeMenus()">&#10003; Period B</div>
             <div class="menu-dd-item" onclick="setP('E');closeMenus()">&#160;&#160; Period E</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" onclick="showDialog('&#128202;','You are viewing it right now. What more do you want?','Good Point')">by Icon</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128202;','You are viewing it right now. What more do you want?','Good Point')">by Icon</div>
             <div class="menu-dd-item disabled">by Name</div>
             <div class="menu-dd-item disabled">by Date</div>
         </div>
     </span>
     <span class="menu-item" data-menu="label">Label
         <div class="menu-dropdown" id="menu-label">
-            <div class="menu-dd-item" onclick="showDialog('&#127937;','Label applied: &quot;Will Definitely Pass&quot;','&#128079; Thanks')">&#9632; Essential</div>
-            <div class="menu-dd-item" onclick="showDialog('&#128293;','Label applied: &quot;Kinda Important&quot;','Got It')">&#9632; Hot</div>
-            <div class="menu-dd-item" onclick="showDialog('&#129398;','Label applied: &quot;Review While Napping&quot;','Zzz OK')">&#9632; Cool</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#127937;','Label applied: &quot;Will Definitely Pass&quot;','&#128079; Thanks')">&#9632; Essential</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128293;','Label applied: &quot;Kinda Important&quot;','Got It')">&#9632; Hot</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#129398;','Label applied: &quot;Review While Napping&quot;','Zzz OK')">&#9632; Cool</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item disabled">Remove Label</div>
         </div>
     </span>
     <span class="menu-item" data-menu="special">Special
         <div class="menu-dropdown" id="menu-special">
-            <div class="menu-dd-item" onclick="showDialog('&#128165;','All caches cleared! Your brain has been defragmented. You now have 12% more room for z-scores.','Excellent')">Empty Trash</div>
-            <div class="menu-dd-item" onclick="showDialog('&#128171;','Restart complete. You still have to study for the AP Exam.','*Sigh* OK','crash')">Restart</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128165;','All caches cleared! Your brain has been defragmented. You now have 12% more room for z-scores.','Excellent')">Empty Trash</div>
+            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128171;','Restart complete. You still have to study for the AP Exam.','*Sigh* OK','crash')">Restart</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" onclick="closeMenus();openGame()" style="font-weight:bold">&#127918; Study Break...</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openGame()" style="font-weight:bold">&#127918; Study Break...</div>
         </div>
     </span>
     <span class="menu-spacer"></span>
@@ -864,7 +864,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
     });
 });
 
-document.querySelectorAll('.menu-dd-item:not(.disabled)').forEach(item => {
+document.querySelectorAll('.menu-dd-item:not(.disabled):not([data-sfx])').forEach(item => {
     item.addEventListener('mousedown', (e) => {
         e.stopPropagation();
         MacSFX.play('click', 0.3);
@@ -978,7 +978,6 @@ const MacSFX = {
         this.started = true;
         this.muted = localStorage.getItem('macsound-muted') === 'true';
         const files = {
-            startup:  'Mac-OS-Sounds/StartupMacQuadra.wav',
             sosumi:   'Mac-OS-Sounds/Sosumi.wav',
             crash:    'Mac-OS-Sounds/CrashMacQuadra.wav',
             laugh:    'Mac-OS-Sounds/Laugh.wav',
@@ -1009,14 +1008,8 @@ const MacSFX = {
     }
 };
 
-document.addEventListener('click', function macBoot() {
-    MacSFX.init();
-    MacSFX.play('startup', 0.4);
-    document.removeEventListener('click', macBoot);
-}, { once: true });
-
-// Restore mute icon state from localStorage
-if (localStorage.getItem('macsound-muted') === 'true') {
+MacSFX.init();
+if (MacSFX.muted) {
     const mi = document.getElementById('mac-mute');
     if (mi) mi.textContent = '\u{1F507}';
 }
@@ -1038,6 +1031,7 @@ function showDialog(icon, msg, btnText, sfx) {
     MacSFX.play(sfx || 'sosumi', 0.5);
 }
 function closeDialog() {
+    MacSFX.play('click', 0.3);
     document.getElementById('dialog-overlay').style.display = 'none';
 }
 
@@ -2633,6 +2627,7 @@ window.studyBreak = studyBreak;
 /* ═══ CALENDAR APP ═══ */
 let cP="B";
 function setP(p){
+    MacSFX.play('click', 0.3);
     cP=p;
     const a=document.getElementById("btn-b"),b=document.getElementById("btn-e");
     if(p==="B"){a.classList.add("s7btn-inv","s7btn-default");b.classList.remove("s7btn-inv","s7btn-default");}
