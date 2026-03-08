@@ -544,7 +544,7 @@
             height: 100%;
             background: var(--plat-lo);
             width: 0;
-            animation: boot-fill 3s linear forwards;
+            animation: boot-fill 2s linear forwards;
         }
         @keyframes boot-fill { to { width: 100%; } }
     </style>
@@ -1041,7 +1041,7 @@ const MacSFX = {
         this.started = true;
         this.muted = localStorage.getItem('macsound-muted') === 'true';
         const files = {
-            sosumi:   'Mac-OS-Sounds/Sosumi.wav',
+            sosumi:   'Mac-OS-Sounds/PowerMacBeep.wav',
             crash:    'Mac-OS-Sounds/CrashMacQuadra.wav',
             laugh:    'Mac-OS-Sounds/Laugh.wav',
             wildEep:  'Mac-OS-Sounds/Wild-Eep.wav',
@@ -1082,12 +1082,8 @@ var _bootChime = null;
 (function() {
     if (MacSFX.muted) return;
     var chimes = [
-        'Mac-OS-Sounds/StartupAppleIIgs.wav',
         'Mac-OS-Sounds/StartupMacI.wav',
-        'Mac-OS-Sounds/StartupMacII.wav',
-        'Mac-OS-Sounds/StartupMacQuadraAV.wav',
-        'Mac-OS-Sounds/StartupPowerMacCard.wav',
-        'Mac-OS-Sounds/StartupPowerMacPCI.wav'
+        'Mac-OS-Sounds/StartupMacLC.wav'
     ];
     var last = localStorage.getItem('boot-chime-last');
     var pool = chimes.filter(function(c) { return c !== last; });
@@ -2811,7 +2807,7 @@ setTimeout(function() {
         boot.classList.add('fade-out');
         boot.addEventListener('transitionend', function() { boot.remove(); });
     });
-}, 3000);
+}, 2000);
 </script>
 </body>
 </html>
