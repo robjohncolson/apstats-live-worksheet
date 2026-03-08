@@ -493,9 +493,62 @@
             .cd-strip { gap: 6px; }
             .cd-box { padding: 3px 6px; min-width: 60px; } .cd-box .num { font-size: 14px; }
         }
+
+        /* ── Boot Overlay ──────────────────────────── */
+        #boot-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background-color: #555566;
+            background-image: url("data:image/svg+xml,%3Csvg width='2' height='2' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='1' height='1' fill='%23666677'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23666677'/%3E%3C/svg%3E");
+            image-rendering: pixelated;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 1; transition: opacity 0.6s ease;
+        }
+        #boot-overlay.fade-out { opacity: 0; }
+        .boot-monitor {
+            width: 280px;
+            background: var(--platinum);
+            border-radius: 8px;
+            padding: 28px 24px 22px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            box-shadow:
+                inset 1px 1px 0 0 var(--plat-hi),
+                inset -1px -1px 0 0 var(--plat-lo),
+                2px 2px 6px rgba(0,0,0,0.35);
+        }
+        .boot-sprite {
+            width: 80px; height: 98px;
+            background: url('sprite.png') 0 0;
+            background-size: 480px 98px;
+            filter: grayscale(1) brightness(0.7) sepia(0.3) hue-rotate(220deg);
+        }
+        .boot-title { font-size: 14px; letter-spacing: 1px; margin-top: 2px; }
+        .boot-status { font-size: 11px; color: var(--plat-lo); }
+        .boot-progress-track {
+            width: 180px; height: 12px;
+            background: var(--white);
+            border: 1px solid var(--plat-lo);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .boot-progress-fill {
+            height: 100%;
+            background: var(--plat-lo);
+            width: 0;
+            animation: boot-fill 3s linear forwards;
+        }
+        @keyframes boot-fill { to { width: 100%; } }
     </style>
 </head>
 <body>
+
+<div id="boot-overlay">
+  <div class="boot-monitor">
+    <div class="boot-sprite"></div>
+    <div class="boot-title chicago">AP Stats</div>
+    <div class="boot-status geneva">Starting up...</div>
+    <div class="boot-progress-track"><div class="boot-progress-fill"></div></div>
+  </div>
+</div>
 
 <!-- ═══ Menu Bar ═══ -->
 <div class="menu-bar chicago" id="menubar">
@@ -1013,6 +1066,44 @@ if (MacSFX.muted) {
     const mi = document.getElementById('mac-mute');
     if (mi) mi.textContent = '\u{1F507}';
 }
+
+/* ── Boot Chime ─────────────────────────────── */
+(function() {
+    if (MacSFX.muted) return;
+    var chimes = [
+        'Mac-OS-Sounds/StartupAppleII.wav',
+        'Mac-OS-Sounds/StartupAppleIIc.wav',
+        'Mac-OS-Sounds/StartupAppleIIgs.wav',
+        'Mac-OS-Sounds/StartupEMate300.wav',
+        'Mac-OS-Sounds/StartupIntelPreT2Mac.wav',
+        'Mac-OS-Sounds/StartupIntelT2Mac.wav',
+        'Mac-OS-Sounds/StartupiPhone.wav',
+        'Mac-OS-Sounds/StartupMacI.wav',
+        'Mac-OS-Sounds/StartupMacII.wav',
+        'Mac-OS-Sounds/StartupMacLC.wav',
+        'Mac-OS-Sounds/StartupMacQuadra.wav',
+        'Mac-OS-Sounds/StartupMacQuadraAV.wav',
+        'Mac-OS-Sounds/StartupPowerMac.wav',
+        'Mac-OS-Sounds/StartupPowerMacCard.wav',
+        'Mac-OS-Sounds/StartupPowerMacPCI.wav',
+        'Mac-OS-Sounds/StartupTwentiethAnniversaryMac.wav'
+    ];
+    var last = localStorage.getItem('boot-chime-last');
+    var pool = chimes.filter(function(c) { return c !== last; });
+    if (!pool.length) pool = chimes;
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    localStorage.setItem('boot-chime-last', pick);
+    var audio = new Audio(pick);
+    audio.play().catch(function() {
+        var overlay = document.getElementById('boot-overlay');
+        if (!overlay) return;
+        function playOnce() {
+            audio.play();
+            overlay.removeEventListener('click', playOnce);
+        }
+        overlay.addEventListener('click', playOnce);
+    });
+})();
 
 /* Update View menu checkmarks */
 function updateViewMenu() {
@@ -2714,6 +2805,14 @@ function hTip(){tip.style.display="none";}
 uClock();setInterval(uClock,15e3);
 rCD();rCal();rProg();updateViewMenu();
 setInterval(()=>{rCD();rCal();rProg()},6e4);
+
+/* ── Boot Dismissal ─────────────────────────── */
+setTimeout(function() {
+    var boot = document.getElementById('boot-overlay');
+    if (!boot) return;
+    boot.classList.add('fade-out');
+    boot.addEventListener('transitionend', function() { boot.remove(); });
+}, 3000);
 </script>
 </body>
 </html>
