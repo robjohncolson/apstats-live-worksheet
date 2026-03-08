@@ -864,10 +864,10 @@ document.querySelectorAll('.menu-item').forEach(item => {
     });
 });
 
-document.querySelectorAll('.menu-dd-item:not(.disabled):not([data-sfx])').forEach(item => {
+document.querySelectorAll('.menu-dd-item:not(.disabled)').forEach(item => {
     item.addEventListener('mousedown', (e) => {
         e.stopPropagation();
-        MacSFX.play('click', 0.3);
+        if (!item.hasAttribute('data-sfx')) MacSFX.play('click', 0.3);
     });
 });
 
