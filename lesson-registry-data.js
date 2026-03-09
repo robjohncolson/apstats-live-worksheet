@@ -32,7 +32,7 @@ const LESSON_REGISTRY = {
       "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l21-zstat-611",
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=10",
       "blooket": "https://dashboard.blooket.com/set/69ade09c572efa156e0e3402",
-      "schoologyFolder": null,
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986588515",
       "videos": []
     },
     "status": {
