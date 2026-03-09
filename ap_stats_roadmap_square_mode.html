@@ -920,6 +920,7 @@
 <!-- ═══ Tooltip ═══ -->
 <div class="tip geneva" id="tip"></div>
 
+<script src="lesson-registry-data.js"></script>
 <script>
 /* ═══ SOUND ENGINE (Mac System 7-style synthesized sounds) ═══ */
 const SFX = {
@@ -1865,6 +1866,19 @@ function lookupTopic(topicCode) {
     return topicCode.replace('.', '-');
 }
 
+function lookupRegistry(topicCode) {
+    if (typeof LESSON_REGISTRY === 'undefined') return null;
+    if (!topicCode || topicCode === R) return null;
+    // Handle combined topics like "6.10+6.11" — return first match
+    if (topicCode.includes('+')) {
+        for (const t of topicCode.split('+').map(s => s.trim())) {
+            if (LESSON_REGISTRY[t]) return LESSON_REGISTRY[t];
+        }
+        return null;
+    }
+    return LESSON_REGISTRY[topicCode] || null;
+}
+
 function parseDueAssigned(text) {
     if (!text) return [];
     const results = [];
@@ -1926,6 +1940,35 @@ function showResourcePanel(inf, dateStr) {
                 });
             }
         }
+
+        // Registry links (from lesson-registry-data.js sidecar)
+        const regEntry = lookupRegistry(inf.t);
+        if (regEntry && regEntry.urls) {
+            const u = regEntry.urls;
+            const s = regEntry.status || {};
+            if (u.worksheet && s.worksheet === 'done') {
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a></div>';
+            }
+            if (u.drills && s.drills === 'done') {
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.drills + '" target="_blank" style="color:#0000cc;text-decoration:underline">Practice Drills</a></div>';
+            }
+            if (u.quiz) {
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a></div>';
+            }
+            if (u.blooket && s.blooketUpload === 'done') {
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" style="color:#0000cc;text-decoration:underline">Blooket Review</a></div>';
+            }
+            if (u.videos && u.videos.length) {
+                u.videos.forEach(function(vid, i) {
+                    var driveUrl = 'https://drive.google.com/file/d/' + vid + '/view';
+                    lessonHtml += '<div style="margin:3px 0"><a href="' + driveUrl + '" target="_blank" style="color:#0000cc;text-decoration:underline">Google Drive Video ' + (i + 1) + '</a></div>';
+                });
+            }
+            if (u.schoologyFolder) {
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.schoologyFolder + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
+            }
+        }
+
         if (lessonHtml) {
             html += '<div style="margin-bottom:8px"><div class="chicago" style="font-size:10px;margin-bottom:4px">Today\'s Lesson</div>' + lessonHtml + '</div>';
         }
