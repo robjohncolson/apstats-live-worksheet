@@ -21,7 +21,7 @@ const LESSON_REGISTRY = {
       "blooketCsv": "done",
       "blooketUpload": "done",
       "animations": "skipped",
-      "schoology": "done"
+      "schoology": "failed"
     }
   },
   "6.11": {
