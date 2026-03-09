@@ -863,5 +863,26 @@ const LESSON_REGISTRY = {
       "animations": "pending",
       "schoology": "scraped"
     }
+  },
+  "7.1": {
+    "unit": 7,
+    "lesson": 1,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html",
+      "drills": null,
+      "quiz": null,
+      "blooket": null,
+      "schoologyFolder": null,
+      "videos": []
+    },
+    "status": {
+      "ingest": "skipped",
+      "worksheet": "done",
+      "drills": "pending",
+      "blooketCsv": "done",
+      "blooketUpload": "pending",
+      "animations": "skipped",
+      "schoology": "pending"
+    }
   }
 };
