@@ -3,8 +3,9 @@
  * Topic 6.10: Setting Up a Test for the Difference of Two Population Proportion
  *
  * Learning Objectives:
- *   VAR-6.H - Identify null and alternative hypotheses for a difference of two population proportions
- *   VAR-6.I/VAR-6.J - Identify test method and verify conditions for a two-sample z test
+ *   VAR-6.H - Identify null and alternative hypotheses for a difference in population proportions
+ *   VAR-6.I - Identify an appropriate significance test method for a difference in population proportions
+ *   VAR-6.J - Verify conditions for a two-sample z-test for a difference in population proportions
  */
 
 // Lesson context from video transcript for AI grading
@@ -12,137 +13,127 @@ window.LESSON_CONTEXT_U6L10 = `
 VIDEO 1 - Stating Null and Alternative Hypotheses (~9 min):
 - Presenter: Doug Tyson
 - MAIN IDEAS:
-  - This topic focuses on significance tests for a difference in two population proportions
-  - Null hypotheses for this setting state equality/no difference: p1 = p2 or p1 - p2 = 0
-  - Alternative hypotheses use strict inequalities and must match the research question: p1 > p2, p1 < p2, or p1 != p2
-  - One-sided alternatives use > or <; two-sided alternatives use !=
-  - The alternative should be chosen from the context/question before data collection
-  - Hypotheses must use population parameters, not sample statistics (do not use p-hat values in H0 or Ha)
-  - Parameters must be clearly defined in context
+  - The lesson focuses on setting up a significance test for a difference in two population proportions
+  - The null hypothesis for a difference in proportions is a statement of no difference: H0: p1 = p2 or H0: p1 - p2 = 0
+  - The alternative hypothesis always uses a strict inequality: >, <, or !=
+  - One-sided alternatives use > or <, while two-sided alternatives use !=
+  - The choice of alternative should be based on the research question and stated before data collection
+  - Hypotheses must use population parameters, not sample statistics such as p-hat
+  - Parameters should always be clearly defined in context
 - EYE-DROP EXAMPLE:
-  - Clinical trial compares azithromycin to placebo for pink-eye recovery
-  - Data: 82/130 cured for azithromycin; 74/149 cured for placebo
-  - Parameter definitions: p1 = true cure proportion for patients like these using azithromycin; p2 = true cure proportion using placebo
-  - Appropriate hypotheses for "more effective" claim:
-    - H0: p1 = p2 (or p1 - p2 = 0)
-    - Ha: p1 > p2 (or p1 - p2 > 0)
+  - Clinical trial with pink-eye patients compared azithromycin drops to placebo
+  - Data: 82/130 cured with azithromycin and 74/149 cured with placebo
+  - Parameter definitions: p1 = true proportion of similar patients cured by azithromycin, p2 = true proportion cured by placebo
+  - Null: H0: p1 = p2 (or p1 - p2 = 0)
+  - Alternative for the claim "more effective": Ha: p1 > p2 (or p1 - p2 > 0)
 - BRIGHT IDEA EXAMPLE:
-  - Soltown vs Brightville sunglasses purchases
-  - Because question asks for "a difference" without direction, use two-sided alternative:
-    - H0: pS = pB (or pS - pB = 0)
-    - Ha: pS != pB (or pS - pB != 0)
+  - Soltown vs Brightville sunglasses purchasing proportions
+  - Prompt asks whether there is a difference, so the alternative is two-sided
+  - Null: H0: pS = pB (or pS - pB = 0)
+  - Alternative: Ha: pS != pB (or pS - pB != 0)
+  - Parameter definitions: pS and pB are true population proportions for residents in each city
 
-VIDEO 2 - Identifying Procedure and Checking Conditions (~9.5 min):
-- MAIN IDEAS:
-  - Appropriate test is a two-sample z test for a difference in population proportions
-  - Applies to two independent random samples OR two groups in a randomized experiment
-  - Before expected-count checks, compute pooled proportion under H0:
-    - p-hat-c = (x1 + x2)/(n1 + n2)
-- CONDITION CHECKS FOR RANDOM SAMPLES:
-  - Independence: two independent random samples
-  - 10% condition when sampling without replacement: n1 <= 10%N1 and n2 <= 10%N2
-  - Large-count condition using pooled proportion:
-    - n1*p-hat-c >= 10
-    - n1*(1 - p-hat-c) >= 10
-    - n2*p-hat-c >= 10
-    - n2*(1 - p-hat-c) >= 10
-- CONDITION CHECKS FOR RANDOMIZED EXPERIMENTS:
-  - Independence from random assignment to two groups
-  - Large-count condition still checked with pooled proportion
-  - 10% condition does not apply to random assignment designs
-- EYE-DROP CONDITION VALUES:
-  - Pooled proportion: p-hat-c = (82 + 74)/(130 + 149) = 156/279 = 0.559
-  - Expected counts: 72.67, 57.33, 83.29, 65.71 (all >= 10)
-  - Conditions are met
-- BRIGHT IDEA CONDITION VALUES:
-  - Pooled proportion: (314 + 452)/(400 + 550) = 0.806
-  - Expected counts: 322.4, 77.6, 444.3, 106.7 (all >= 10)
-  - Random samples and 10% condition are reasonable; conditions are met
+VIDEO 2 - Identifying the Procedure and Checking Conditions (~10 min):
+- Same presenter
+- PROCEDURE:
+  - The correct method is a two-sample z-test for a difference in population proportions
+  - This applies to two independent random samples or two groups in a randomized experiment
+- POOLED PROPORTION:
+  - Before expected-count checks, compute the combined (pooled) proportion of successes
+  - Formula: p-hat-c = (X1 + X2) / (n1 + n2)
+  - Eye-drop example: p-hat-c = (82 + 74) / (130 + 149) = 156/279 = 0.559
+- CONDITIONS FOR RANDOM SAMPLES:
+  - Two independent random samples
+  - If sampling without replacement, each sample must satisfy the 10% condition
+  - Expected counts of successes and failures in both groups must be at least 10
+  - Use pooled proportion in expected-count calculations: n1*p-hat-c, n1*(1-p-hat-c), n2*p-hat-c, n2*(1-p-hat-c)
+- CONDITIONS FOR EXPERIMENTS:
+  - Random assignment to two groups
+  - Expected successes and failures in both groups must be at least 10 using pooled proportion
 - TAKEAWAYS:
-  - Write hypotheses with parameters and clear definitions
-  - Pick one-sided vs two-sided from the question wording
-  - Use the two-sample z test for difference in proportions
-  - Verify independence and large counts using the pooled proportion
+  - State hypotheses in parameter form with clear definitions
+  - Match one-sided or two-sided alternative to the question
+  - Use a two-sample z-test for differences in population proportions
+  - Check independence and large counts before inference
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U6L10 = {
     reflect1: {
-        questionText: "In the pink-eye trial, define p1 and p2, then state appropriate null and alternative hypotheses to test whether azithromycin is more effective than placebo. Explain why your alternative is one-sided.",
+        questionText: "In the pink-eye eye-drop study, define p1 and p2, then state appropriate null and alternative hypotheses for testing whether azithromycin is more effective than placebo. Explain why the alternative is one-sided.",
         expectedElements: [
-            { id: "parameter-definitions", description: "Defines p1 and p2 as true population cure proportions for patients like those in the study (azithromycin vs placebo)", required: true },
-            { id: "null-hypothesis", description: "States a correct null hypothesis of equality/no difference: p1 = p2 or p1 - p2 = 0", required: true },
-            { id: "alternative-hypothesis", description: "States the correct directional alternative for the claim 'more effective': p1 > p2 or p1 - p2 > 0", required: true },
-            { id: "one-sided-justification", description: "Explains that the test is one-sided because the research claim is specifically greater than (not just different)", required: true },
-            { id: "parameter-not-statistic", description: "Uses population parameters in hypotheses and does not write hypotheses with sample statistics (such as p-hat)", required: true },
-            { id: "equivalent-notation", description: "May provide both equivalent forms (p1 vs p2 and p1 - p2 vs 0)", required: false }
+            { id: "parameter-definitions", description: "Defines p1 and p2 as true population cure proportions for similar patients (azithromycin and placebo groups)", required: true },
+            { id: "null-equality", description: "States the null hypothesis as p1 = p2 or p1 - p2 = 0", required: true },
+            { id: "alternative-direction", description: "States the alternative as p1 > p2 or p1 - p2 > 0", required: true },
+            { id: "one-sided-justification", description: "Explains that one-sided is used because the question asks whether azithromycin is more effective", required: true },
+            { id: "parameter-language", description: "Uses population-parameter language rather than just sample outcomes", required: true },
+            { id: "no-sample-statistics", description: "Avoids writing hypotheses with sample statistics such as p-hat", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly defines parameters, states valid H0 and directional Ha, and clearly justifies why the alternative is one-sided",
-            P: "Response has the general idea but is incomplete in parameter definitions, hypothesis notation, or one-sided justification",
-            I: "Response gives incorrect hypotheses, wrong direction, uses sample statistics in hypotheses, or omits major required components"
+            E: "Response correctly defines parameters, states correct null and one-sided alternative hypotheses, and explains why the direction is greater than",
+            P: "Response has the main structure but is incomplete or vague about parameter definitions, direction, or one-sided reasoning",
+            I: "Response gives incorrect hypotheses, reverses the direction, or fails to connect hypotheses to the study question"
         },
         commonMistakes: [
-            "Using sample proportions (p-hat) in H0 or Ha",
-            "Writing H0 with an inequality instead of equality",
-            "Using Ha: p1 != p2 when the claim is specifically 'more effective'",
-            "Failing to define p1 and p2 in context",
-            "Reversing the direction and writing p1 < p2"
+            "Using p-hat symbols instead of population parameters",
+            "Writing a two-sided alternative when the claim is more effective",
+            "Reversing the inequality direction",
+            "Leaving parameters undefined",
+            "Stating hypotheses about sample counts instead of population proportions"
         ],
-        contextFromVideo: "Doug Tyson states that null hypotheses are equality statements and alternatives use strict inequalities that match the question. For the eye-drop claim 'more effective,' the lesson uses Ha: p1 > p2 and emphasizes defining parameters in context."
+        contextFromVideo: "Doug Tyson emphasizes that null hypotheses use equality, alternatives use strict inequalities, and the eye-drop claim 'more effective' leads to a one-sided alternative p1 > p2."
     },
 
     reflect2: {
-        questionText: "For the sunglasses study (314/400 in Soltown and 452/550 in Brightville), identify the appropriate significance test and verify whether conditions are met. Include pooled proportion and expected-count reasoning.",
+        questionText: "For the Soltown vs Brightville sunglasses question, state null and alternative hypotheses in symbols and context. Explain why the alternative should be two-sided and why hypotheses should use parameters, not sample statistics.",
         expectedElements: [
-            { id: "procedure", description: "Identifies the correct procedure as a two-sample z test for a difference in population proportions", required: true },
-            { id: "pooled-proportion", description: "Computes or states pooled proportion p-hat-c = (314 + 452)/(400 + 550) = 0.806 (approximately)", required: true },
-            { id: "independence", description: "Checks independence by noting two independent random samples (one from each city)", required: true },
-            { id: "ten-percent", description: "Checks or discusses the 10% condition for both samples when sampling without replacement", required: true },
-            { id: "large-counts", description: "Checks expected counts with pooled proportion: n1*p-hat-c, n1*(1-p-hat-c), n2*p-hat-c, n2*(1-p-hat-c), all at least 10", required: true },
-            { id: "conditions-conclusion", description: "Concludes that conditions are met for using the test", required: true },
-            { id: "numeric-expected-counts", description: "May include approximate expected counts 322.4, 77.6, 444.3, 106.7", required: false }
+            { id: "parameter-definitions", description: "Defines pS and pB as true population proportions of residents in Soltown and Brightville who purchased sunglasses", required: true },
+            { id: "null-equality", description: "States the null hypothesis as pS = pB or pS - pB = 0", required: true },
+            { id: "two-sided-alternative", description: "States the alternative as pS != pB or pS - pB != 0", required: true },
+            { id: "difference-rationale", description: "Explains that two-sided is used because the question asks whether there is a difference without direction", required: true },
+            { id: "parameter-not-statistic", description: "Explains that hypotheses should be written using population parameters, not sample statistics", required: true },
+            { id: "equivalent-forms", description: "May show both equivalent forms (comparison form and difference-equals-zero form)", required: false }
         ],
         scoringGuide: {
-            E: "Response identifies the correct test and correctly verifies independence and large-count conditions using the pooled proportion, with a clear conditions-met conclusion",
-            P: "Response identifies the test and some conditions correctly but is incomplete or vague about pooled-proportion calculations or condition checks",
-            I: "Response uses the wrong procedure, omits key condition checks, or gives incorrect condition conclusions"
+            E: "Response correctly gives two-sided hypotheses with clear parameter definitions and explains why parameter form is required",
+            P: "Response gets most components correct but misses context, direction explanation, or parameter-versus-statistic distinction",
+            I: "Response uses incorrect hypothesis structure, wrong direction, or does not justify why a two-sided alternative is appropriate"
         },
         commonMistakes: [
-            "Naming a confidence interval procedure instead of a significance test",
-            "Checking counts with separate sample proportions instead of pooled proportion",
-            "Skipping the 10% condition for random samples",
-            "Checking only successes and not failures",
-            "Stating conditions are met without evidence"
+            "Using a one-sided alternative even though the question asks for a difference",
+            "Failing to define pS and pB",
+            "Using sample proportions in hypotheses",
+            "Confusing null and alternative roles",
+            "Not connecting hypotheses to population context"
         ],
-        contextFromVideo: "Video 2 identifies the two-sample z test for difference in proportions and demonstrates pooled-proportion and expected-count checks. For the sunglasses data, p-hat-c is 0.806 and all expected counts exceed 10."
+        contextFromVideo: "In the Bright Idea example, the lesson uses Ha: pS != pB because the prompt asks about a difference, not whether one city is specifically higher."
     },
 
     exitTicket: {
-        questionText: "A clinical trial compares two drops for pink eye. Of 130 patients randomly assigned to azithromycin drops, 82 were cured within one week. Of 149 patients randomly assigned to placebo drops, 74 were cured within one week. (a) Define parameters and state null and alternative hypotheses for testing whether azithromycin is more effective. (b) Identify the appropriate test procedure. (c) Compute the pooled proportion and verify whether expected-count conditions are met.",
+        questionText: "A district compares two reading apps. In random samples, 78 of 120 students using App A met a benchmark, and 66 of 120 students using App B met a benchmark. Assume each sample is less than 10% of its population. The district wants to test whether App A has a higher true success proportion than App B. (a) Define pA and pB, and state H0 and Ha in symbols. (b) Name the appropriate significance test procedure. (c) Compute the pooled proportion and verify the expected-count condition. State whether conditions for this test are met.",
         expectedElements: [
-            { id: "parameter-definitions", description: "Defines p1 and p2 as true cure proportions for patients like those in the study under azithromycin and placebo", required: true },
-            { id: "correct-hypotheses", description: "States H0: p1 = p2 (or p1 - p2 = 0) and Ha: p1 > p2 (or p1 - p2 > 0)", required: true },
-            { id: "procedure", description: "Identifies a two-sample z test for a difference in population proportions", required: true },
-            { id: "pooled-proportion", description: "Computes pooled proportion as (82 + 74)/(130 + 149) = 156/279 = 0.559 (approximately)", required: true },
-            { id: "independence", description: "Checks independence via random assignment to two groups in the experiment", required: true },
-            { id: "large-counts", description: "Verifies expected counts using pooled proportion are all at least 10 (about 72.67, 57.33, 83.29, 65.71)", required: true },
-            { id: "conditions-conclusion", description: "Concludes conditions are met for conducting the significance test", required: true },
-            { id: "ten-percent-note", description: "May note that 10% condition is for random-sample designs and not required for random assignment experiments", required: false }
+            { id: "parameter-definitions", description: "Defines pA and pB as the true population benchmark-success proportions for students using App A and App B", required: true },
+            { id: "null-hypothesis", description: "States H0 as pA = pB or pA - pB = 0", required: true },
+            { id: "alternative-hypothesis", description: "States Ha as pA > pB or pA - pB > 0", required: true },
+            { id: "procedure-name", description: "Identifies the method as a two-sample z-test for a difference in population proportions", required: true },
+            { id: "pooled-proportion", description: "Computes pooled proportion as p-hat-c = (78 + 66)/(120 + 120) = 144/240 = 0.60", required: true },
+            { id: "expected-counts", description: "Checks expected counts using pooled proportion: 120(0.60)=72, 120(0.40)=48 for each group, all at least 10", required: true },
+            { id: "conditions-conclusion", description: "Concludes conditions are met by citing random samples, 10% condition, and large counts", required: true },
+            { id: "parameter-focus", description: "Keeps hypotheses in terms of parameters rather than sample statistics", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly handles hypotheses, procedure identification, pooled-proportion calculation, and condition verification with an appropriate conclusion",
-            P: "Response includes most major pieces but has incomplete setup, weak condition evidence, or minor errors in calculations/notation",
-            I: "Response misstates hypotheses or procedure, omits pooled/condition checks, or gives incorrect overall setup"
+            E: "Response correctly states hypotheses and procedure, computes pooled proportion and expected counts accurately, and clearly concludes that conditions are met",
+            P: "Response includes most major parts but has minor errors or omissions in calculations, condition checks, or hypothesis detail",
+            I: "Response has major errors in hypotheses, procedure identification, or condition verification, or omits required components"
         },
         commonMistakes: [
-            "Using Ha: p1 != p2 instead of the directional claim Ha: p1 > p2",
-            "Failing to define the parameters in context",
-            "Not computing pooled proportion before expected-count checks",
-            "Checking only two expected counts instead of all four",
-            "Confusing experimental random assignment with random-sample 10% checks"
+            "Using a two-sided alternative when the claim is that App A is higher",
+            "Forgetting to pool successes for expected-count checks",
+            "Using incorrect pooled-proportion arithmetic",
+            "Checking large counts with separate sample proportions instead of pooled proportion",
+            "Not explicitly concluding whether conditions are met"
         ],
-        contextFromVideo: "The lesson's eye-drop example uses a directional alternative for 'more effective,' pooled proportion 0.559, and expected counts all above 10. Random assignment plus large counts supports using the two-sample z test."
+        contextFromVideo: "Video 2 stresses using pooled proportion for expected-count checks and verifying independence plus large counts before running a two-sample z-test for a difference in proportions."
     }
 };
 
@@ -214,6 +205,3 @@ Respond in JSON format:
 window.getRubricU6L10 = function(questionId) {
     return window.RUBRICS_U6L10[questionId];
 };
-
-
-

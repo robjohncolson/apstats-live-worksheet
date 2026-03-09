@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -407,7 +407,7 @@
     </div>
 
     <h1>Topic 6.10: Setting Up a Test for the Difference of Two Population Proportion</h1>
-    <div class="subtitle">Null and Alternative Hypotheses, Test Selection, and Condition Checks</div>
+    <div class="subtitle">Writing Hypotheses, Choosing the Procedure, and Checking Conditions</div>
     <div class="worksheet-label">Video Follow-Along Worksheet</div>
 
     <div class="student-info">
@@ -424,175 +424,180 @@
         <button class="btn-ai" onclick="gradeAllReflections()">&#129302; Grade My Reflections</button>
         <span id="scoreDisplay"></span>
     </div>
+
     <div class="objective-box">
         <strong>Learning Objectives:</strong>
         <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li><strong>VAR-6.H:</strong> Identify the null and alternative hypotheses for a difference of two population proportions.</li>
-            <li><strong>VAR-6.I:</strong> Identify an appropriate testing method for the difference of two population proportions.</li>
-            <li><strong>VAR-6.J:</strong> Verify the conditions for making statistical inferences when testing a difference of two population proportions.</li>
+            <li><strong>VAR-6.H:</strong> Identify null and alternative hypotheses for a difference of two population proportions.</li>
+            <li><strong>VAR-6.I:</strong> Identify an appropriate significance test for a difference of two population proportions.</li>
+            <li><strong>VAR-6.J:</strong> Verify conditions for making inferences when testing a difference of two population proportions.</li>
         </ul>
         <strong style="margin-top: 10px; display: block;">Essential Knowledge:</strong>
         <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li>For tests of a difference in proportions, the null states equality: <em>p</em><sub>1</sub> = <em>p</em><sub>2</sub> or <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = 0.</li>
-            <li>The alternative uses a strict inequality: greater than, less than, or not equal to.</li>
-            <li>The correct procedure is a two-sample <em>z</em>-test for a difference in population proportions.</li>
-            <li>Condition checks include independence, the 10% condition for random samples, and large expected counts using the pooled proportion.</li>
+            <li>The null hypothesis for a difference in population proportions states no difference: <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = 0.</li>
+            <li>The alternative hypothesis uses a strict inequality: greater than, less than, or not equal to 0.</li>
+            <li>The correct test procedure is a two-sample <em>z</em>-test for a difference in population proportions.</li>
+            <li>Check independence and large-count conditions before inference, using the pooled proportion in expected-count checks.</li>
+            <li>For random samples without replacement, verify each sample is no more than 10% of its population.</li>
         </ul>
     </div>
+
     <div class="vocab-box">
         <h3>Key Vocabulary</h3>
         <table class="vocab-table">
             <tr>
                 <td>Null Hypothesis</td>
-                <td>The no-difference claim, usually <em>H</em><sub>0</sub>: <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = 0.</td>
+                <td>A claim of no difference or no effect, usually written as <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = 0.</td>
             </tr>
             <tr>
                 <td>Alternative Hypothesis</td>
-                <td>The claim being tested, written with a strict inequality (&gt;, &lt;, or &ne;).</td>
+                <td>The claim supported by evidence, written with &gt;, &lt;, or &ne;.</td>
             </tr>
             <tr>
-                <td>One-Sided Alternative</td>
-                <td>A directional claim such as <em>p</em><sub>1</sub> &gt; <em>p</em><sub>2</sub> or <em>p</em><sub>1</sub> &lt; <em>p</em><sub>2</sub>.</td>
+                <td>One-Sided Test</td>
+                <td>A test with a directional alternative (<em>p</em><sub>1</sub> &gt; <em>p</em><sub>2</sub> or <em>p</em><sub>1</sub> &lt; <em>p</em><sub>2</sub>).</td>
             </tr>
             <tr>
-                <td>Two-Sided Alternative</td>
-                <td>A non-directional claim: <em>p</em><sub>1</sub> &ne; <em>p</em><sub>2</sub>.</td>
+                <td>Two-Sided Test</td>
+                <td>A test with <em>p</em><sub>1</sub> &ne; <em>p</em><sub>2</sub>.</td>
             </tr>
             <tr>
-                <td>Two-Sample <em>z</em>-Test</td>
-                <td>The significance test used for a difference between two population proportions.</td>
+                <td>Two-Sample z-Test</td>
+                <td>The significance test used for comparing two population proportions.</td>
             </tr>
             <tr>
                 <td>Pooled Proportion</td>
-                <td>The combined success rate, <em>p̂</em><sub>c</sub> = (x<sub>1</sub> + x<sub>2</sub>)/(n<sub>1</sub> + n<sub>2</sub>).</td>
+                <td>The combined success proportion, written as <em>p&#770;</em><sub>c</sub>, used for expected-count checks.</td>
+            </tr>
+            <tr>
+                <td>Expected Counts</td>
+                <td>The values <em>n</em><sub>1</sub><em>p&#770;</em><sub>c</sub>, <em>n</em><sub>1</sub>(1 - <em>p&#770;</em><sub>c</sub>), <em>n</em><sub>2</sub><em>p&#770;</em><sub>c</sub>, and <em>n</em><sub>2</sub>(1 - <em>p&#770;</em><sub>c</sub>).</td>
             </tr>
             <tr>
                 <td>10% Condition</td>
                 <td>For random samples without replacement, each sample size is at most 10% of its population.</td>
             </tr>
-            <tr>
-                <td>Expected Counts</td>
-                <td>For shape, check n<sub>1</sub><em>p̂</em><sub>c</sub>, n<sub>1</sub>(1-<em>p̂</em><sub>c</sub>), n<sub>2</sub><em>p̂</em><sub>c</sub>, n<sub>2</sub>(1-<em>p̂</em><sub>c</sub>) are all at least 10.</td>
-            </tr>
         </table>
     </div>
+
     <!-- ============================================================ -->
-    <!-- VIDEO 1: Hypotheses Setup                                    -->
+    <!-- VIDEO 1: Hypotheses                                          -->
     <!-- ============================================================ -->
     <div class="section">
         <div class="section-header">
-            <h2>Video 1: Stating Null and Alternative Hypotheses for a Difference in Proportions</h2>
+            <h2>Video 1: Stating Null and Alternative Hypotheses</h2>
             <span class="timestamp">[0:00 &ndash; 9:19]</span>
         </div>
 
         <div class="question">
             <span class="question-number">1.</span>
             <span class="ts">[0:05]</span>
-            This lesson focuses on setting up a test for a difference in <input type="text" class="blank" data-answer="proportions|population proportions" style="width:150px;">.
+            This lesson is about setting up a test for a difference in <input type="text" class="blank" data-answer="proportions|population proportions" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">2.</span>
             <span class="ts">[0:13]</span>
-            One goal is to state the <input type="text" class="blank" data-answer="null|null hypothesis" style="width:150px;"> hypothesis for a difference in proportions.
+            The first goal is to state the <input type="text" class="blank" data-answer="null" style="width:80px;"> hypothesis for a difference in proportions.
         </div>
 
         <div class="question">
             <span class="question-number">3.</span>
             <span class="ts">[0:20]</span>
-            Another goal is to state the <input type="text" class="blank" data-answer="alternative|alternative hypothesis" style="width:150px;"> hypothesis for a difference in proportions.
+            The second goal is to state the <input type="text" class="blank" data-answer="alternative" style="width:150px;"> hypothesis.
         </div>
 
         <div class="question">
             <span class="question-number">4.</span>
-            <span class="ts">[0:40]</span>
-            Unit 6 uses two inference tools: confidence <input type="text" class="blank" data-answer="intervals|interval" style="width:150px;"> and significance <input type="text" class="blank" data-answer="tests|test" style="width:150px;">.
+            <span class="ts">[1:25]</span>
+            Significance tests are used to test a <input type="text" class="blank" data-answer="claim|claims" style="width:80px;"> about a population parameter.
         </div>
 
         <div class="note-box">
             <strong>Context &mdash; Effective Eye Drops?</strong>
             <span class="ts">[1:42]</span>
-            In a clinical trial with pink-eye patients, 82 of 130 assigned azithromycin drops were cured within a week, and 74 of 149 assigned placebo drops were cured within a week.
+            In a clinical trial, 82 of 130 patients assigned azithromycin drops were cured within a week, compared with 74 of 149 assigned placebo drops.
         </div>
 
         <div class="question">
             <span class="question-number">5.</span>
-            <span class="ts">[2:07]</span>
-            In the trial results, <input type="text" class="blank" data-answer="82" style="width:80px;"> of <input type="text" class="blank" data-answer="130" style="width:80px;"> were cured with azithromycin, and <input type="text" class="blank" data-answer="74" style="width:80px;"> of <input type="text" class="blank" data-answer="149" style="width:80px;"> were cured with placebo.
-        </div>
-
-        <div class="model-box">
-            <strong>Hypothesis Form:</strong>
-            <span class="ts">[2:36 &ndash; 3:02]</span>
-            Null hypotheses state equality (no difference). Alternative hypotheses use a strict inequality and match the research question.
+            <span class="ts">[2:36]</span>
+            The null hypothesis is a claim of no difference, so a common form is <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = <input type="text" class="blank" data-answer="0|zero" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">6.</span>
-            <span class="ts">[2:36]</span>
-            The null hypothesis usually represents <input type="text" class="blank" data-answer="no difference|no effect" style="width:150px;"> between population proportions.
+            <span class="ts">[3:25]</span>
+            In this example, <em>p</em><sub>1</sub> is the true cure proportion for <input type="text" class="blank" data-answer="azithromycin" style="width:150px;"> drops.
         </div>
 
         <div class="question">
             <span class="question-number">7.</span>
-            <span class="ts">[3:02]</span>
-            In symbols, one valid null form is <em>p</em><sub>1</sub> <input type="text" class="blank" data-answer="equals|equal" style="width:80px;"> <em>p</em><sub>2</sub>, or <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = <input type="text" class="blank" data-answer="0|zero" style="width:80px;">.
+            <span class="ts">[3:34]</span>
+            And <em>p</em><sub>2</sub> is the true cure proportion for <input type="text" class="blank" data-answer="placebo" style="width:150px;"> drops.
         </div>
 
         <div class="question">
             <span class="question-number">8.</span>
-            <span class="ts">[3:25]</span>
-            In the eye-drop example, <em>p</em><sub>1</sub> is the true proportion cured by <input type="text" class="blank" data-answer="azithromycin|azithro" style="width:150px;"> and <em>p</em><sub>2</sub> is the true proportion cured by <input type="text" class="blank" data-answer="placebo" style="width:150px;">.
+            <span class="ts">[4:13]</span>
+            Because researchers suspected azithromycin works better, the alternative is <em>p</em><sub>1</sub> <input type="text" class="blank" data-answer="greater|greater than" style="width:150px;"> <em>p</em><sub>2</sub>.
+        </div>
+
+        <div class="model-box">
+            <strong>Hypothesis Structure Summary:</strong>
+            <span class="ts">[4:53]</span>
+            Null hypotheses use equality; alternatives use strict inequalities. Direction comes from the research question stated before data collection.
         </div>
 
         <div class="question">
             <span class="question-number">9.</span>
-            <span class="ts">[3:49]</span>
-            Because researchers asked whether azithromycin is more effective, the alternative is <em>p</em><sub>1</sub> <input type="text" class="blank" data-answer="greater than|more than" style="width:150px;"> <em>p</em><sub>2</sub>.
+            <span class="ts">[5:00]</span>
+            The null is a statement of <input type="text" class="blank" data-answer="equality|equal" style="width:150px;">, while the alternative has a strict <input type="text" class="blank" data-answer="inequality|inequalty" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">10.</span>
-            <span class="ts">[5:00]</span>
-            The null hypothesis is always a statement of <input type="text" class="blank" data-answer="equality|equal" style="width:150px;">.
+            <span class="ts">[5:24 &ndash; 5:32]</span>
+            Alternatives with &gt; or &lt; are <input type="text" class="blank" data-answer="one|one-sided|onesided" style="width:80px;">-sided; alternatives with &ne; are <input type="text" class="blank" data-answer="two|two-sided|twosided" style="width:80px;">-sided.
         </div>
 
         <div class="question">
             <span class="question-number">11.</span>
-            <span class="ts">[5:13]</span>
-            The alternative hypothesis always contains a strict <input type="text" class="blank" data-answer="inequality|inequal" style="width:150px;">.
+            <span class="ts">[5:54]</span>
+            Never write hypotheses using sample statistics like <em>p&#770;</em>; hypotheses must use population <input type="text" class="blank" data-answer="parameters|parameter" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">12.</span>
-            <span class="ts">[5:24]</span>
-            Alternatives with &gt; or &lt; are called <input type="text" class="blank" data-answer="one-sided|onesided|one sided" style="width:150px;"> tests.
+            <span class="ts">[6:16]</span>
+            Always <input type="text" class="blank" data-answer="define|state" style="width:80px;"> any parameter symbols you use.
+        </div>
+
+        <div class="note-box">
+            <strong>Practice Context &mdash; A Bright Idea</strong>
+            <span class="ts">[6:33]</span>
+            A marketing agent compares sunglasses-purchase proportions in Soltown and Brightville and asks whether there is a difference.
         </div>
 
         <div class="question">
             <span class="question-number">13.</span>
-            <span class="ts">[5:32]</span>
-            An alternative with &ne; is called a <input type="text" class="blank" data-answer="two-sided|twosided|two sided" style="width:150px;"> test.
+            <span class="ts">[7:34]</span>
+            For this practice, the null can be written as <em>p</em><sub>S</sub> - <em>p</em><sub>B</sub> = <input type="text" class="blank" data-answer="0|zero" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">14.</span>
-            <span class="ts">[5:54]</span>
-            In hypotheses, never use sample <input type="text" class="blank" data-answer="statistics|statistic" style="width:150px;"> like <em>p̂</em>; use population <input type="text" class="blank" data-answer="parameters|parameter" style="width:150px;">.
-        </div>
-
-        <div class="note-box">
-            <strong>Context &mdash; A Bright Idea</strong>
-            <span class="ts">[6:33]</span>
-            A marketing agent compares the proportions of residents who purchased sunglasses in Soltown and Brightville.
+            <span class="ts">[8:00]</span>
+            Because the question asks about "a difference," the alternative uses <input type="text" class="blank" data-answer="not|not equal" style="width:150px;"> equal.
         </div>
 
         <div class="question">
             <span class="question-number">15.</span>
-            <span class="ts">[8:00]</span>
-            Because the question asks whether there is a difference (without direction), the alternative should use <input type="text" class="blank" data-answer="not equal|not equals|different" style="width:150px;">.
+            <span class="ts">[8:18]</span>
+            Here, <em>p</em><sub>S</sub> is the proportion of all <input type="text" class="blank" data-answer="soltown" style="width:150px;"> residents who purchased sunglasses in the last 12 months.
         </div>
     </div>
+
     <!-- ============================================================ -->
     <!-- VIDEO 2: Procedure and Conditions                            -->
     <!-- ============================================================ -->
@@ -602,73 +607,61 @@
             <span class="timestamp">[0:00 &ndash; 9:37]</span>
         </div>
 
+        <div class="note-box">
+            <strong>Context &mdash; Effective Eye Drops Revisited</strong>
+            <span class="ts">[0:28]</span>
+            The same azithromycin vs placebo trial is used to identify the correct significance test and verify conditions.
+        </div>
+
         <div class="question">
             <span class="question-number">16.</span>
-            <span class="ts">[0:11]</span>
-            This video emphasizes identifying the correct significance <input type="text" class="blank" data-answer="test|procedure" style="width:150px;"> and checking the <input type="text" class="blank" data-answer="conditions|condition" style="width:150px;">.
+            <span class="ts">[1:52]</span>
+            The appropriate procedure is a two-sample <input type="text" class="blank" data-answer="z|z-test|z test" style="width:150px;"> test for a difference in proportions.
         </div>
 
         <div class="question">
             <span class="question-number">17.</span>
-            <span class="ts">[1:52]</span>
-            For a claim about a difference in proportions, use a two-sample <input type="text" class="blank" data-answer="z test|z-test|z" style="width:150px;"> for a difference in <input type="text" class="blank" data-answer="proportions|population proportions" style="width:150px;">.
+            <span class="ts">[2:59]</span>
+            Before checking large counts, compute the combined (or <input type="text" class="blank" data-answer="pooled|combined" style="width:150px;">) proportion of successes, <em>p&#770;</em><sub>c</sub>.
         </div>
 
         <div class="model-box">
-            <strong>Pooled Proportion Step:</strong>
-            <span class="ts">[2:59 &ndash; 3:32]</span>
-            Before checking expected counts for a test of <em>H</em><sub>0</sub>: <em>p</em><sub>1</sub> = <em>p</em><sub>2</sub>, compute the combined (pooled) proportion
-            <div class="formula"><em>p̂</em><sub>c</sub> = (x<sub>1</sub> + x<sub>2</sub>)/(n<sub>1</sub> + n<sub>2</sub>)</div>
+            <strong>Pooled Proportion Formula:</strong>
+            <span class="ts">[3:32]</span>
+            <em>p&#770;</em><sub>c</sub> = (<em>X</em><sub>1</sub> + <em>X</em><sub>2</sub>) / (<em>n</em><sub>1</sub> + <em>n</em><sub>2</sub>), using successes and totals from both groups.
         </div>
 
         <div class="question">
             <span class="question-number">18.</span>
-            <span class="ts">[2:59]</span>
-            The combined proportion is also called the <input type="text" class="blank" data-answer="pooled|combined" style="width:150px;"> proportion, written as <em>p̂</em><sub><input type="text" class="blank" data-answer="c" style="width:80px;"></sub>.
+            <span class="ts">[3:32]</span>
+            For the eye-drop data, <em>p&#770;</em><sub>c</sub> = 156/279 = <input type="text" class="blank" data-answer="0.559|.559" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">19.</span>
-            <span class="ts">[3:32]</span>
-            In the eye-drop example, total successes are <input type="text" class="blank" data-answer="156" style="width:80px;"> and the pooled proportion is <input type="text" class="blank" data-answer="0.559|.559" style="width:80px;">.
+            <span class="ts">[4:17]</span>
+            With random samples and no replacement, each sample size should be at most <input type="text" class="blank" data-answer="10|10%" style="width:80px;">% of its population.
         </div>
 
         <div class="question">
             <span class="question-number">20.</span>
             <span class="ts">[4:17]</span>
-            For random samples, independence requires two <input type="text" class="blank" data-answer="independent" style="width:150px;"> random samples, one from each population.
+            For shape, expected successes and expected <input type="text" class="blank" data-answer="failures|failure" style="width:150px;"> in both groups should each be at least 10.
         </div>
 
         <div class="question">
             <span class="question-number">21.</span>
-            <span class="ts">[4:17]</span>
-            If sampling without replacement, check the <input type="text" class="blank" data-answer="10%|ten percent|10 percent" style="width:80px;"> condition for both samples.
+            <span class="ts">[5:06]</span>
+            In experiments, independence is checked by confirming subjects were randomly <input type="text" class="blank" data-answer="assigned|assignment" style="width:150px;"> to groups.
         </div>
 
         <div class="question">
             <span class="question-number">22.</span>
-            <span class="ts">[5:06]</span>
-            For shape, expected <input type="text" class="blank" data-answer="successes" style="width:150px;"> and expected <input type="text" class="blank" data-answer="failures" style="width:150px;"> in both groups should each be at least <input type="text" class="blank" data-answer="10" style="width:80px;">.
-        </div>
-
-        <div class="question">
-            <span class="question-number">23.</span>
-            <span class="ts">[5:06]</span>
-            These expected-count checks use the <input type="text" class="blank" data-answer="pooled|combined" style="width:150px;"> proportion.
-        </div>
-
-        <div class="note-box">
-            <strong>Practice &mdash; Sunglasses in Two Cities</strong>
-            <span class="ts">[6:41]</span>
-            Soltown: 314 of 400 purchased sunglasses. Brightville: 452 of 550 purchased sunglasses.
-        </div>
-
-        <div class="question">
-            <span class="question-number">24.</span>
-            <span class="ts">[7:27]</span>
-            For the sunglasses data, the pooled proportion is about <input type="text" class="blank" data-answer="0.806|.806" style="width:80px;">, and all expected counts are at least <input type="text" class="blank" data-answer="10" style="width:80px;">.
+            <span class="ts">[8:35]</span>
+            The named procedure for this lesson is a two-sample <em>z</em>-test for a difference in population <input type="text" class="blank" data-answer="proportions|proportion" style="width:150px;">.
         </div>
     </div>
+
     <!-- ============================================================ -->
     <!-- SECTION: Key Takeaways                                        -->
     <!-- ============================================================ -->
@@ -680,13 +673,14 @@
 
         <div class="model-box">
             <ol style="margin: 5px 0; padding-left: 20px;">
-                <li>State hypotheses with parameters: null uses equality, alternative uses a strict inequality.</li>
-                <li>Choose the alternative form (&gt;, &lt;, or &ne;) from the research question before looking at results.</li>
-                <li>Use a two-sample <em>z</em>-test for a difference in population proportions.</li>
-                <li>Check independence and expected counts with the pooled proportion before running the test.</li>
+                <li>For a difference in two population proportions, the null uses equality: <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = 0.</li>
+                <li>The alternative uses a strict inequality (&gt;, &lt;, or &ne;) based on the original question of interest.</li>
+                <li>The correct significance test is a two-sample <em>z</em>-test for a difference in population proportions.</li>
+                <li>Check independence and large counts, using the pooled proportion for expected-success and expected-failure counts.</li>
             </ol>
         </div>
     </div>
+
     <!-- ============================================================ -->
     <!-- REFLECTION SECTION                                            -->
     <!-- ============================================================ -->
@@ -698,29 +692,30 @@
 
         <div class="question">
             <span class="question-number">R1.</span>
-            <strong>In the pink-eye trial, define <em>p</em><sub>1</sub> and <em>p</em><sub>2</sub>, then state appropriate null and alternative hypotheses to test whether azithromycin is more effective than placebo. Explain why your alternative is one-sided.</strong>
+            <strong>In the pink-eye eye-drop study, define <em>p</em><sub>1</sub> and <em>p</em><sub>2</sub>, then state appropriate null and alternative hypotheses for testing whether azithromycin is more effective than placebo. Explain why the alternative is one-sided.</strong>
             <textarea id="reflect1" placeholder="Write your response here..."></textarea>
             <div id="reflect1-feedback"></div>
         </div>
 
         <div class="question">
             <span class="question-number">R2.</span>
-            <strong>For the sunglasses study (314/400 in Soltown and 452/550 in Brightville), identify the appropriate significance test and verify whether conditions are met. Include pooled proportion and expected-count reasoning.</strong>
+            <strong>For the Soltown vs Brightville sunglasses question, state null and alternative hypotheses in symbols and context. Explain why the alternative should be two-sided and why hypotheses should use parameters, not sample statistics.</strong>
             <textarea id="reflect2" placeholder="Write your response here..."></textarea>
             <div id="reflect2-feedback"></div>
         </div>
     </div>
+
     <!-- ============================================================ -->
     <!-- EXIT TICKET                                                   -->
     <!-- ============================================================ -->
     <div class="exit-ticket">
         <h3 style="margin-top: 0; color: #003366;">Exit Ticket</h3>
         <div class="question">
-            <strong>A clinical trial compares two drops for pink eye. Of 130 patients randomly assigned to azithromycin drops, 82 were cured within one week. Of 149 patients randomly assigned to placebo drops, 74 were cured within one week.</strong>
+            <strong>A district compares two reading apps. In random samples, 78 of 120 students using App A met a benchmark, and 66 of 120 students using App B met a benchmark. Assume each sample is less than 10% of its population. The district wants to test whether App A has a higher true success proportion than App B.</strong>
             <ul style="margin: 8px 0;">
-                <li>(a) Define parameters and state null and alternative hypotheses for testing whether azithromycin is more effective.</li>
-                <li>(b) Identify the appropriate test procedure.</li>
-                <li>(c) Compute the pooled proportion and verify whether expected-count conditions are met.</li>
+                <li>(a) Define <em>p</em><sub>A</sub> and <em>p</em><sub>B</sub>, and state <em>H</em><sub>0</sub> and <em>H</em><sub>a</sub> in symbols.</li>
+                <li>(b) Name the appropriate significance test procedure.</li>
+                <li>(c) Compute the pooled proportion and verify the expected-count condition. State whether conditions for this test are met.</li>
             </ul>
             <textarea id="exitTicket" placeholder="Answer all three parts in complete sentences..."></textarea>
             <div id="exitTicket-feedback"></div>
@@ -1298,11 +1293,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
