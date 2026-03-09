@@ -863,28 +863,5 @@ const LESSON_REGISTRY = {
       "animations": "pending",
       "schoology": "scraped"
     }
-  },
-  "7.1": {
-    "unit": 7,
-    "lesson": 1,
-    "urls": {
-      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html",
-      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u7-inference-means&level=l01-identify-evidence-71",
-      "quiz": null,
-      "blooket": null,
-      "schoologyFolder": null,
-      "videos": [
-        "1DRCmH8ENSMJwf75yG-M_hPnUWcF2uww4"
-      ]
-    },
-    "status": {
-      "ingest": "done",
-      "worksheet": "done",
-      "drills": "done",
-      "blooketCsv": "done",
-      "blooketUpload": "pending",
-      "animations": "skipped",
-      "schoology": "pending"
-    }
   }
 };
