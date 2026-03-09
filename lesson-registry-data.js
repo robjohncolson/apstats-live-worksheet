@@ -58,8 +58,8 @@ const LESSON_REGISTRY = {
     },
     "status": {
       "ingest": "pending",
-      "worksheet": "pending",
-      "drills": "pending",
+      "worksheet": "done",
+      "drills": "done",
       "blooketCsv": "done",
       "blooketUpload": "done",
       "animations": "pending",
