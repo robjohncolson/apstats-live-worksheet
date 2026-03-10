@@ -1974,7 +1974,7 @@ function showResourcePanel(inf, dateStr) {
                 });
             }
             if (u.schoologyFolder) {
-                var scUrl = rewriteSchoologyUrl(u.schoologyFolder);
+                var scUrl = (cP === 'E' && u.schoologyFolderE) ? u.schoologyFolderE : rewriteSchoologyUrl(u.schoologyFolder);
                 lessonHtml += '<div style="margin:3px 0"><a href="' + scUrl + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
             }
         }

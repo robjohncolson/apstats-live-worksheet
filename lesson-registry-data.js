@@ -8,11 +8,12 @@ const LESSON_REGISTRY = {
       "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l17-hypotheses-610",
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=9",
       "blooket": "https://dashboard.blooket.com/set/69ad1cce0d5874349dbbf688",
-      "schoologyFolder": null,
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986721319",
       "videos": [
         "1dIRMyHdePpkx7pCJFcAkRHIPj2Q8RtqG",
         "1SDYELDZa9kcJldq_qf1DsOOMhrjzfkio"
-      ]
+      ],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896988"
     },
     "status": {
       "ingest": "done",
@@ -21,7 +22,7 @@ const LESSON_REGISTRY = {
       "blooketCsv": "done",
       "blooketUpload": "done",
       "animations": "skipped",
-      "schoology": "failed"
+      "schoology": "done"
     }
   },
   "6.11": {
@@ -33,7 +34,8 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=10",
       "blooket": "https://dashboard.blooket.com/set/69ade09c572efa156e0e3402",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986588515",
-      "videos": []
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986897040"
     },
     "status": {
       "ingest": "done",
@@ -54,7 +56,8 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=6",
       "blooket": "https://dashboard.blooket.com/set/69ab32e0d721c5ea7bb4c56e",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986400679",
-      "videos": []
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896908"
     },
     "status": {
       "ingest": "pending",
@@ -768,7 +771,8 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=3",
       "blooket": null,
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986218661",
-      "videos": []
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896839"
     },
     "status": {
       "ingest": "pending",
@@ -789,7 +793,8 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=4",
       "blooket": null,
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986218661",
-      "videos": []
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896839"
     },
     "status": {
       "ingest": "pending",
@@ -810,7 +815,8 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=5",
       "blooket": "https://dashboard.blooket.com/set/69ab037ffb99ffa131a2e07d",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986400679",
-      "videos": []
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896878"
     },
     "status": {
       "ingest": "pending",
@@ -831,7 +837,8 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=7",
       "blooket": null,
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986444841",
-      "videos": []
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896948"
     },
     "status": {
       "ingest": "pending",
@@ -852,7 +859,8 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=8",
       "blooket": null,
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986454317",
-      "videos": []
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896948"
     },
     "status": {
       "ingest": "pending",
@@ -862,6 +870,50 @@ const LESSON_REGISTRY = {
       "blooketUpload": "pending",
       "animations": "pending",
       "schoology": "scraped"
+    }
+  },
+  "7.2": {
+    "unit": 7,
+    "lesson": 2,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson2_live.html",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u7-mean-ci&level=l01-identify-procedure",
+      "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=1",
+      "blooket": "https://dashboard.blooket.com/set/69aee24b0d5874349dbc4469",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986757072",
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986897075"
+    },
+    "status": {
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "done",
+      "schoology": "done"
+    }
+  },
+  "7.1": {
+    "unit": 7,
+    "lesson": 1,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html",
+      "drills": null,
+      "quiz": null,
+      "blooket": "https://dashboard.blooket.com/set/69aef69b0d5874349dbc4f74",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986796249",
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986897075"
+    },
+    "status": {
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "done",
+      "schoology": "done"
     }
   }
 };
