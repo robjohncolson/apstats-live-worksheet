@@ -56,7 +56,7 @@
         .vocab-box h3 { margin-top: 0; color: #003366; }
         .vocab-table { width: 100%; }
         .vocab-table td { padding: 5px 0; vertical-align: top; }
-        .vocab-table td:first-child { font-weight: bold; width: 200px; color: #003366; }
+        .vocab-table td:first-child { font-weight: bold; width: 220px; color: #003366; }
         .section { margin-bottom: 28px; }
         .section-header {
             display: flex;
@@ -429,7 +429,7 @@
     </div>
 
     <h1>Topic 6.4: Setting Up a Test for a Population Proportion</h1>
-    <div class="subtitle">Hypotheses, Procedure, and Conditions</div>
+    <div class="subtitle">Null and Alternative Hypotheses, One-Sample z Tests, and Condition Checks</div>
     <div class="worksheet-label">Video Follow-Along Worksheet</div>
 
     <div class="student-info">
@@ -454,216 +454,236 @@
             <li><strong>VAR-6.E:</strong> Identify an appropriate testing method for a population proportion.</li>
             <li><strong>VAR-6.F:</strong> Verify the conditions for making statistical inferences when testing a population proportion.</li>
         </ul>
-        <strong style="margin-top: 10px; display: block;">Essential Knowledge:</strong>
-        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li>The null hypothesis contains an equality; the alternative contains a strict inequality.</li>
-            <li>The appropriate test is a one-sample <em>z</em>-test for a population proportion.</li>
-            <li>Conditions: random sample, 10% rule, and Large Counts using <em>p</em><sub>0</sub> (not <span style="text-decoration: overline;"><em>p</em></span>).</li>
-        </ul>
     </div>
 
     <div class="vocab-box">
         <h3>Key Vocabulary</h3>
         <table class="vocab-table">
             <tr>
-                <td>Null Hypothesis (H<sub>0</sub>)</td>
-                <td>The claim of "no difference" or "no change" &mdash; assumed true until evidence says otherwise. Always contains =.</td>
+                <td>Null Hypothesis</td>
+                <td>The initial or &ldquo;no difference / no change&rdquo; claim; for proportions, <em>H</em><sub>0</sub>: <em>p</em> = <em>p</em><sub>0</sub></td>
             </tr>
             <tr>
-                <td>Alternative Hypothesis (H<sub>a</sub>)</td>
-                <td>The claim researchers hope to support with data. Contains &lt;, &gt;, or &ne;.</td>
+                <td>Alternative Hypothesis</td>
+                <td>The claim we hope to support with evidence; for proportions, <em>H</em><sub>a</sub>: <em>p</em> &gt; <em>p</em><sub>0</sub>, <em>p</em> &lt; <em>p</em><sub>0</sub>, or <em>p</em> &ne; <em>p</em><sub>0</sub></td>
             </tr>
             <tr>
-                <td>One-Sided Test</td>
-                <td>Alternative uses &lt; or &gt; &mdash; evidence on only one side of the null value supports the claim.</td>
+                <td>One-Sided Alternative</td>
+                <td>Uses &gt; or &lt; and looks for evidence in only one direction</td>
             </tr>
             <tr>
-                <td>Two-Sided Test</td>
-                <td>Alternative uses &ne; &mdash; evidence on either side of the null value supports the claim.</td>
+                <td>Two-Sided Alternative</td>
+                <td>Uses &ne; and looks for evidence on either side of the null value</td>
             </tr>
             <tr>
-                <td>One-Sample <em>z</em>-Test</td>
-                <td>The significance test procedure used when testing a claim about the proportion of successes in a single population.</td>
+                <td>Procedure</td>
+                <td>For one categorical variable, use a one-sample <em>z</em> test for a population proportion</td>
             </tr>
             <tr>
                 <td>Large Counts Condition</td>
-                <td><em>np</em><sub>0</sub> &ge; 10 and <em>n</em>(1 &minus; <em>p</em><sub>0</sub>) &ge; 10 &mdash; uses the null hypothesis value, not <span style="text-decoration: overline;"><em>p</em></span>.</td>
+                <td>For tests, assume <em>H</em><sub>0</sub> is true and verify that <em>n</em><em>p</em><sub>0</sub> &ge; 10 and <em>n</em>(1 - <em>p</em><sub>0</sub>) &ge; 10</td>
             </tr>
         </table>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- VIDEO 1: Stating Hypotheses                                   -->
-    <!-- ============================================================ -->
     <div class="section">
         <div class="section-header">
-            <h2>Video 1: Stating Hypotheses</h2>
-            <span class="timestamp">[0:00 &ndash; 8:33]</span>
-        </div>
-
-        <div class="note-box">
-            <strong>Context &mdash; "Does Green = More Natural?"</strong>
-            <span class="ts">[0:43]</span>
-            Two student researchers randomly selected 30 students. Each tasted lemonade from a green cup and a white cup (same lemonade in both). <strong>18 of 30</strong> said the green cup tasted more natural.
+            <h2>Topic 6.4: Stating Null &amp; Alternative Hypotheses (Video 1)</h2>
+            <span class="timestamp">[0:00-8:33]</span>
         </div>
 
         <div class="question">
             <span class="question-number">1.</span>
-            <span class="ts">[1:36]</span>
-            The null hypothesis is a claim of "<input type="text" class="blank" data-answer="no difference|no change" style="width:120px;">." In this study, H<sub>0</sub> says that <input type="text" class="blank" data-answer="50|50%|0.50|0.5" style="width:50px;">% of students would choose the green cup.
+            <span class="ts">[0:20]</span>
+            In this video, you learn how to state a <input type="text" class="blank" data-answer="null" style="width:80px;"> hypothesis and an <input type="text" class="blank" data-answer="alternative" style="width:80px;"> hypothesis for a population proportion.
+        </div>
+
+        <div class="note-box">
+            <strong>Lemonade Example:</strong>
+            <span class="ts">[1:00]</span>
+            Two student researchers randomly selected 30 students. Each tasted lemonade from a green cup and a white cup, even though both cups contained the same lemonade. Of the 30 students, 18 said the green cup tasted more natural.
+        </div>
+
+        <div class="model-box">
+            <strong>Hypothesis Structure:</strong>
+            <span class="ts">[2:00]</span>
+            <em>H</em><sub>0</sub>: <em>p</em> = <em>p</em><sub>0</sub><br>
+            <em>H</em><sub>a</sub>: <em>p</em> &gt; <em>p</em><sub>0</sub>, <em>p</em> &lt; <em>p</em><sub>0</sub>, or <em>p</em> &ne; <em>p</em><sub>0</sub><br>
+            Always define <em>p</em> in context as a population proportion.
         </div>
 
         <div class="question">
             <span class="question-number">2.</span>
-            <span class="ts">[2:00]</span>
-            We write the null hypothesis in symbols as: H<sub>0</sub>: <em>p</em> = <input type="text" class="blank" data-answer="0.50|0.5" style="width:50px;">, where <em>p</em> is the proportion of <input type="text" class="blank" data-answer="all" style="width:35px;"> students at the school who would choose the green cup.
+            <span class="ts">[1:36]</span>
+            The null hypothesis is often a claim of &ldquo;no <input type="text" class="blank" data-answer="difference" style="width:80px;">&rdquo; or &ldquo;no <input type="text" class="blank" data-answer="change" style="width:80px;">.&rdquo;
         </div>
 
         <div class="question">
             <span class="question-number">3.</span>
-            <span class="ts">[2:28]</span>
-            Until we have convincing evidence otherwise, we assume the <input type="text" class="blank" data-answer="null hypothesis|null" style="width:120px;"> is correct.
+            <span class="ts">[2:00]</span>
+            For the lemonade study, the null hypothesis is <em>H</em><sub>0</sub>: <input type="text" class="blank" data-answer="p" style="width:35px;"> = <input type="text" class="blank" data-answer="0.5|0.50|.5|.50" style="width:60px;">.
         </div>
 
         <div class="question">
             <span class="question-number">4.</span>
-            <span class="ts">[2:43]</span>
-            The alternative hypothesis is the claim researchers hope to <input type="text" class="blank" data-answer="support" style="width:80px;"> with evidence from the data. Since the researchers expect <em>more</em> than 50% to choose green, the alternative is H<sub>a</sub>: <em>p</em> <input type="text" class="blank" data-answer=">|greater than" style="width:30px;"> 0.50.
-        </div>
-
-        <div class="model-box">
-            <strong>Rules for Stating Hypotheses:</strong>
-            <span class="ts">[3:46]</span>
-            <ul style="margin: 5px 0; padding-left: 20px;">
-                <li>H<sub>0</sub> always contains an <input type="text" class="blank" data-answer="equal|equality|equal to|equals" style="width:80px;"> sign.</li>
-                <li>H<sub>a</sub> always contains a strict <input type="text" class="blank" data-answer="inequality" style="width:90px;"> (&lt;, &gt;, or &ne;).</li>
-                <li>When H<sub>a</sub> uses &lt; or &gt;, the test is called <input type="text" class="blank" data-answer="one-sided|one sided" style="width:90px;">.</li>
-                <li>When H<sub>a</sub> uses &ne;, the test is called <input type="text" class="blank" data-answer="two-sided|two sided" style="width:90px;">.</li>
-                <li>Never use a <input type="text" class="blank" data-answer="statistic|sample statistic|p-hat|p hat" style="width:80px;"> (like <span style="text-decoration: overline;"><em>p</em></span>) in the hypotheses &mdash; always use a parameter (<em>p</em>).</li>
-            </ul>
+            <span class="ts">[2:28]</span>
+            Until we have convincing evidence otherwise, we <input type="text" class="blank" data-answer="assume" style="width:80px;"> the null hypothesis is correct.
         </div>
 
         <div class="question">
             <span class="question-number">5.</span>
-            <span class="ts">[4:54]</span>
-            The choice of alternative hypothesis should be determined by the <input type="text" class="blank" data-answer="question of interest|research question" style="width:150px;"> and stated <input type="text" class="blank" data-answer="before" style="width:60px;"> data collection begins.
-        </div>
-
-        <div class="note-box">
-            <strong>Practice &mdash; Football Favorites:</strong>
-            <span class="ts">[5:49]</span>
-            A newspaper reports 40% of U.S. adults say football is their favorite sport. A mayor wonders if the proportion in his town <em>differs</em> from the national proportion. He surveys 100 random adults.
+            <span class="ts">[3:09]</span>
+            Because researchers wanted to know if more than 50% would choose the green cup, the alternative is <em>H</em><sub>a</sub>: <em>p</em> <input type="text" class="blank" data-answer="greater than|more than" style="width:150px;"> 0.5.
         </div>
 
         <div class="question">
             <span class="question-number">6.</span>
-            <span class="ts">[6:26]</span>
-            H<sub>0</sub>: <em>p</em> = <input type="text" class="blank" data-answer="0.40|0.4" style="width:50px;">, H<sub>a</sub>: <em>p</em> <input type="text" class="blank" data-answer="!=|=/=|not equal to|≠" style="width:50px;"> 0.40.
-            <span class="hint">The keyword "differs" tells us the direction.</span>
+            <span class="ts">[3:46]</span>
+            The null hypothesis always contains an <input type="text" class="blank" data-answer="equality|equal sign" style="width:80px;">, while the alternative hypothesis contains a strict <input type="text" class="blank" data-answer="inequality" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">7.</span>
-            <span class="ts">[7:10]</span>
-            When defining <em>p</em>, we must say "the proportion of all adults in the town who <input type="text" class="blank" data-answer="would say|would" style="width:80px;"> football is their favorite sport." Using "said" instead of "would say" would refer to the <input type="text" class="blank" data-answer="sample" style="width:70px;">, not the population.
-        </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- VIDEO 2: Procedure and Conditions                             -->
-    <!-- ============================================================ -->
-    <div class="section">
-        <div class="section-header">
-            <h2>Video 2: Identifying the Procedure &amp; Checking Conditions</h2>
-            <span class="timestamp">[0:00 &ndash; 7:26]</span>
+            <span class="ts">[4:24]</span>
+            If the alternative uses &gt; or &lt;, the test is <input type="text" class="blank" data-answer="one-sided|one sided" style="width:150px;">. If it uses &ne;, the test is <input type="text" class="blank" data-answer="two-sided|two sided" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">8.</span>
-            <span class="ts">[2:04]</span>
-            When the goal is to test a claim about the proportion of successes in a single population, we use a <input type="text" class="blank" data-answer="one-sample z-test|one sample z test|one-sample z test|1-sample z-test" style="width:170px;"> for a population proportion.
+            <span class="ts">[4:54]</span>
+            The choice of alternative should be based on the <input type="text" class="blank" data-answer="research question|question of interest" style="width:150px;"> and stated <input type="text" class="blank" data-answer="before" style="width:80px;"> data collection begins.
         </div>
 
         <div class="question">
             <span class="question-number">9.</span>
-            <span class="ts">[2:37]</span>
-            After identifying the procedure, you must verify that the <input type="text" class="blank" data-answer="conditions" style="width:90px;"> for using that procedure are met. In general, we check for <input type="text" class="blank" data-answer="independence" style="width:110px;"> and that the sampling distribution has the correct <input type="text" class="blank" data-answer="shape" style="width:60px;">.
+            <span class="ts">[5:12]</span>
+            Never include a statistic such as <input type="text" class="blank" data-answer="p-hat|p hat|phat" style="width:80px;"> in the hypotheses. Hypotheses should be about the <input type="text" class="blank" data-answer="population" style="width:80px;">, not the sample.
         </div>
 
-        <div class="formula-box">
-            <h4>Conditions for a One-Sample <em>z</em>-Test for a Proportion</h4>
-            <div style="text-align: left; max-width: 600px; margin: 0 auto;">
-                <ol style="margin: 5px 0; padding-left: 20px;">
-                    <li><strong>Random:</strong> Data collected from a <input type="text" class="blank" data-answer="random sample|random" style="width:120px;"> from the population of interest.</li>
-                    <li><strong>10% Rule:</strong> When sampling without replacement, <em>n</em> &le; <input type="text" class="blank" data-answer="10%|10|10% of N" style="width:50px;"> of the population size (<em>N</em>).</li>
-                    <li><strong>Large Counts:</strong> <em>np</em><sub>0</sub> &ge; <input type="text" class="blank" data-answer="10" style="width:30px;"> AND <em>n</em>(1 &minus; <em>p</em><sub>0</sub>) &ge; <input type="text" class="blank" data-answer="10" style="width:30px;">, where <em>p</em><sub>0</sub> is the value from the <input type="text" class="blank" data-answer="null hypothesis|null|H0" style="width:120px;">.</li>
-                </ol>
-            </div>
+        <div class="note-box">
+            <strong>Practice Problem:</strong>
+            <span class="ts">[5:49]</span>
+            A newspaper reports that 40% of adults in the United States would say football is their favorite sport. A mayor wonders if the proportion in the town differs from the national proportion.
         </div>
 
         <div class="question">
             <span class="question-number">10.</span>
-            <span class="ts">[3:50]</span>
-            The Large Counts condition for significance tests differs from confidence intervals. For a test, we use <input type="text" class="blank" data-answer="p0|p sub 0|p naught|p-naught|the null value" style="width:50px;"> (the hypothesized value), because we start by <input type="text" class="blank" data-answer="assuming the null hypothesis is true|assuming H0 is true" style="width:250px;">.
-        </div>
-
-        <div class="note-box">
-            <strong>Checking Conditions &mdash; Lemonade Study:</strong>
-            <span class="ts">[4:15]</span>
-            <em>n</em> = 30, 18 chose green, H<sub>0</sub>: <em>p</em> = 0.50.
+            <span class="ts">[6:26]</span>
+            For the mayor&rsquo;s study, the null is <em>H</em><sub>0</sub>: <em>p</em> = <input type="text" class="blank" data-answer="0.4|0.40|.4|.40" style="width:60px;"> and the alternative is <em>H</em><sub>a</sub>: <em>p</em> <input type="text" class="blank" data-answer="not equal to|differs from" style="width:150px;"> 0.40.
         </div>
 
         <div class="question">
             <span class="question-number">11.</span>
-            <span class="ts">[4:30]</span>
-            Check the three conditions for the lemonade study:
-            <div class="sub-questions">
-                <div class="sub-question">(a) <strong>Random:</strong> The students were <input type="text" class="blank" data-answer="randomly selected|randomly chosen" style="width:150px;">.</div>
-                <div class="sub-question">(b) <strong>10% Rule:</strong> 30 &le; 10% of all students at the school. We assume the school has more than <input type="text" class="blank" data-answer="300" style="width:45px;"> students.</div>
-                <div class="sub-question">(c) <strong>Large Counts:</strong> <em>np</em><sub>0</sub> = 30(0.5) = <input type="text" class="blank" data-answer="15" style="width:35px;"> &ge; 10 and <em>n</em>(1 &minus; <em>p</em><sub>0</sub>) = 30(0.5) = <input type="text" class="blank" data-answer="15" style="width:35px;"> &ge; 10.</div>
-            </div>
-        </div>
-
-        <div class="note-box">
-            <strong>Practice &mdash; Football Study Conditions:</strong>
-            <span class="ts">[5:28]</span>
-            <em>n</em> = 100, H<sub>0</sub>: <em>p</em> = 0.40.
+            <span class="ts">[7:10]</span>
+            Define the parameter as the proportion of all adults in the town who <input type="text" class="blank" data-answer="would say|would choose" style="width:150px;"> football is their favorite sport.
         </div>
 
         <div class="question">
             <span class="question-number">12.</span>
-            <span class="ts">[6:03]</span>
-            Check the three conditions for the football study:
-            <div class="sub-questions">
-                <div class="sub-question">(a) <strong>Random:</strong> The mayor selected the adults at <input type="text" class="blank" data-answer="random" style="width:70px;">.</div>
-                <div class="sub-question">(b) <strong>10% Rule:</strong> 100 &le; 10% of all adults in the town. We assume the town has more than <input type="text" class="blank" data-answer="1000" style="width:55px;"> adults.</div>
-                <div class="sub-question">(c) <strong>Large Counts:</strong> <em>np</em><sub>0</sub> = 100(0.4) = <input type="text" class="blank" data-answer="40" style="width:35px;"> &ge; 10 and <em>n</em>(1 &minus; <em>p</em><sub>0</sub>) = 100(0.6) = <input type="text" class="blank" data-answer="60" style="width:35px;"> &ge; 10.</div>
-            </div>
+            <span class="ts">[7:52]</span>
+            Summary: a null hypothesis for a population proportion is always in the form <em>p</em> equals some <input type="text" class="blank" data-answer="number|value" style="width:80px;"> between 0 and 1.
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- SECTION: Key Takeaways                                        -->
-    <!-- ============================================================ -->
     <div class="section">
         <div class="section-header">
-            <h2>Key Takeaways</h2>
-            <span class="timestamp">[Summary]</span>
+            <h2>Topic 6.4: Identifying the Procedure &amp; Checking Conditions (Video 2)</h2>
+            <span class="timestamp">[0:00-7:26]</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">13.</span>
+            <span class="ts">[0:21]</span>
+            In this video, you learn how to identify the correct test <input type="text" class="blank" data-answer="procedure" style="width:80px;"> and how to verify the <input type="text" class="blank" data-answer="conditions" style="width:80px;">.
+        </div>
+
+        <div class="note-box">
+            <strong>Recall the Lemonade Study:</strong>
+            <span class="ts">[1:20]</span>
+            The hypotheses are <em>H</em><sub>0</sub>: <em>p</em> = 0.5 and <em>H</em><sub>a</sub>: <em>p</em> &gt; 0.5, where <em>p</em> is the proportion of all students at the school who would choose the green cup.
+        </div>
+
+        <div class="question">
+            <span class="question-number">14.</span>
+            <span class="ts">[2:04]</span>
+            When testing a claim about the proportion of successes in a single population, use a <input type="text" class="blank" data-answer="one-sample z test|one sample z test|1-sample z test" style="width:250px;"> for a population proportion.
         </div>
 
         <div class="model-box">
-            <ol style="margin: 5px 0; padding-left: 20px;">
-                <li>Null hypothesis: H<sub>0</sub>: <em>p</em> = <em>p</em><sub>0</sub>. Always define the <input type="text" class="blank" data-answer="parameter" style="width:90px;"> in context.</li>
-                <li>Alternative hypothesis: H<sub>a</sub>: <em>p</em> &lt; <em>p</em><sub>0</sub>, <em>p</em> &gt; <em>p</em><sub>0</sub>, or <em>p</em> &ne; <em>p</em><sub>0</sub>. Direction depends on the <input type="text" class="blank" data-answer="research question|question of interest" style="width:140px;">.</li>
-                <li>Procedure: <input type="text" class="blank" data-answer="one-sample z-test|one sample z test|one-sample z test" style="width:160px;"> for a population proportion.</li>
-                <li>Always check: Random, 10% Rule, and <input type="text" class="blank" data-answer="Large Counts|large counts" style="width:110px;"> (using <em>p</em><sub>0</sub>).</li>
-            </ol>
+            <strong>Conditions for a One-Sample z Test for <em>p</em>:</strong>
+            <span class="ts">[3:08]</span>
+            1. Random sample or randomized experiment<br>
+            2. When sampling without replacement, <em>n</em> &le; 10% of the population size<br>
+            3. Assuming <em>H</em><sub>0</sub> is true, verify <em>n</em><em>p</em><sub>0</sub> &ge; 10 and <em>n</em>(1 - <em>p</em><sub>0</sub>) &ge; 10
+        </div>
+
+        <div class="question">
+            <span class="question-number">15.</span>
+            <span class="ts">[3:08]</span>
+            To check independence, the data should come from a <input type="text" class="blank" data-answer="random|randomly selected" style="width:80px;"> sample or a randomized experiment.
+        </div>
+
+        <div class="question">
+            <span class="question-number">16.</span>
+            <span class="ts">[3:08]</span>
+            When sampling without replacement, we check that <em>n</em> is less than or equal to <input type="text" class="blank" data-answer="10|ten" style="width:40px;">% of the population size.
+        </div>
+
+        <div class="question">
+            <span class="question-number">17.</span>
+            <span class="ts">[3:31]</span>
+            For the large counts condition in a significance test, we use the null value <input type="text" class="blank" data-answer="p0|p_0|null" style="width:60px;">, not <em>p&#770;</em>.
+        </div>
+
+        <div class="question">
+            <span class="question-number">18.</span>
+            <span class="ts">[3:31]</span>
+            Specifically, we verify that <em>n</em><em>p</em><sub>0</sub> and <em>n</em>(1 - <em>p</em><sub>0</sub>) are both at least <input type="text" class="blank" data-answer="10|ten" style="width:40px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">19.</span>
+            <span class="ts">[4:30]</span>
+            In the lemonade study, the first condition is met because the students were selected <input type="text" class="blank" data-answer="randomly" style="width:90px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">20.</span>
+            <span class="ts">[4:30]</span>
+            For the 10% condition, with <em>n</em> = 30 we need to assume the school has more than <input type="text" class="blank" data-answer="300|three hundred" style="width:80px;"> students.
+        </div>
+
+        <div class="question">
+            <span class="question-number">21.</span>
+            <span class="ts">[4:58]</span>
+            Using <em>H</em><sub>0</sub>: <em>p</em> = 0.5, the expected number of successes is 30(0.5) = <input type="text" class="blank" data-answer="15|fifteen" style="width:60px;"> and the expected number of failures is also <input type="text" class="blank" data-answer="15|fifteen" style="width:60px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">22.</span>
+            <span class="ts">[4:58]</span>
+            When checking the third condition, we use the <input type="text" class="blank" data-answer="expected" style="width:80px;"> counts under the null, not the observed sample counts.
+        </div>
+
+        <div class="note-box">
+            <strong>Practice Conditions Check:</strong>
+            <span class="ts">[5:28]</span>
+            For the mayor&rsquo;s study, <em>n</em> = 100 and the null hypothesis value is <em>p</em><sub>0</sub> = 0.40.
+        </div>
+
+        <div class="question">
+            <span class="question-number">23.</span>
+            <span class="ts">[6:03]</span>
+            In the mayor&rsquo;s study, <em>n</em><em>p</em><sub>0</sub> = <input type="text" class="blank" data-answer="40|forty" style="width:60px;"> and <em>n</em>(1 - <em>p</em><sub>0</sub>) = <input type="text" class="blank" data-answer="60|sixty" style="width:60px;">, so the large counts condition is met.
+        </div>
+
+        <div class="question">
+            <span class="question-number">24.</span>
+            <span class="ts">[6:39]</span>
+            Key takeaway: for a single categorical variable, the appropriate significance test is a one-sample <input type="text" class="blank" data-answer="z" style="width:35px;"> test for a population proportion.
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- REFLECTION SECTION                                            -->
-    <!-- ============================================================ -->
     <div class="section">
         <div class="section-header">
             <h2>Reflection Questions</h2>
@@ -672,37 +692,35 @@
 
         <div class="question">
             <span class="question-number">R1.</span>
-            <strong>A student writes: "H<sub>0</sub>: <span style="text-decoration: overline;"><em>p</em></span> = 0.50" and "H<sub>a</sub>: <span style="text-decoration: overline;"><em>p</em></span> &gt; 0.50". Identify TWO errors in these hypotheses and explain why each matters. Then write the corrected hypotheses with a proper parameter definition.</strong>
+            <strong>A snack company claims that 50% of all teens would prefer its new granola bar to the old version. A researcher wants to investigate whether the true proportion is higher than 50%. Define the parameter, state the null and alternative hypotheses, and explain why the alternative is one-sided instead of two-sided.</strong>
             <textarea id="reflect1" placeholder="Write your response here..."></textarea>
             <div id="reflect1-feedback"></div>
         </div>
 
         <div class="question">
             <span class="question-number">R2.</span>
-            <strong>When checking the Large Counts condition for a significance test, we use <em>np</em><sub>0</sub> and <em>n</em>(1 &minus; <em>p</em><sub>0</sub>) instead of <em>n</em><span style="text-decoration: overline;"><em>p</em></span> and <em>n</em>(1 &minus; <span style="text-decoration: overline;"><em>p</em></span>) like we did for confidence intervals. Explain WHY we use <em>p</em><sub>0</sub> (the null hypothesis value) for significance tests. What assumption makes this the right choice?</strong>
+            <strong>A town health department wants to test whether the proportion of all adults in the town who would say walking is their main exercise differs from 0.35. A random sample of 120 adults will be selected. Identify the correct inference procedure and verify whether the conditions for the test are met. Be sure to address the random condition, the 10% condition, the large counts condition, and why the large counts check uses 0.35 rather than the sample proportion.</strong>
             <textarea id="reflect2" placeholder="Write your response here..."></textarea>
             <div id="reflect2-feedback"></div>
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- EXIT TICKET                                                   -->
-    <!-- ============================================================ -->
     <div class="exit-ticket">
         <h3 style="margin-top: 0; color: #003366;">Exit Ticket</h3>
         <div class="question">
-            <strong>A company claims that 80% of customers are satisfied with their product. A consumer group suspects the true proportion is lower. They survey a random sample of 60 customers and find that 42 are satisfied.</strong>
+            <strong>A state report says that 65% of all high school students get at least 8 hours of sleep on school nights. A principal wonders whether the proportion at her school is lower than 65%. She randomly selects 90 students from the school, and 50 say they usually get at least 8 hours of sleep.</strong>
             <ul style="margin: 8px 0;">
-                <li>(a) State the null and alternative hypotheses, defining the parameter.</li>
-                <li>(b) Name the appropriate procedure.</li>
-                <li>(c) Check all three conditions for performing this test.</li>
+                <li>(a) Define the parameter in context.</li>
+                <li>(b) State the null and alternative hypotheses.</li>
+                <li>(c) Identify the appropriate test procedure.</li>
+                <li>(d) Verify all conditions needed for the test.</li>
+                <li>(e) Explain whether it is appropriate to proceed with the significance test, and why <em>p&#770;</em> should not appear in the hypotheses.</li>
             </ul>
-            <textarea id="exitTicket" placeholder="Show your work for each part..."></textarea>
+            <textarea id="exitTicket" placeholder="Show your work and explain your answer..."></textarea>
             <div id="exitTicket-feedback"></div>
         </div>
     </div>
 
-    <!-- Aggregate Drawer -->
     <div id="aggregateDrawer" class="aggregate-drawer">
         <div class="drawer-header">
             <h3>Class Responses <span style="font-size: 0.7em; color: #999; font-weight: normal;">(Esc to close)</span></h3>
@@ -713,7 +731,6 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="../railway_config.js"></script>
     <script src="../railway_client.js"></script>
     <script src="ai-grading-prompts-u6-l4.js"></script>
@@ -1135,7 +1152,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     scenario: {
-                        topic: 'AP Statistics - Setting Up a Test for a Population Proportion',
+                        topic: 'AP Statistics - Inference for Proportions',
                         questionId,
                         lessonContext: window.LESSON_CONTEXT_U6L4
                     },
@@ -1231,7 +1248,7 @@
                     body: JSON.stringify({
                         scenario: {
                             questionId,
-                            topic: 'AP Statistics - Setting Up a Test for a Population Proportion',
+                            topic: 'AP Statistics - Inference for Proportions',
                             prompt: rubric.questionText,
                             expectedElements: rubric.expectedElements.map(e => e.description),
                             lessonContext: window.LESSON_CONTEXT_U6L4

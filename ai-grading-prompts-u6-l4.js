@@ -1,205 +1,150 @@
-/**
- * AI Grading Prompts for Unit 6 Lesson 4: Setting Up a Test for a Population Proportion
- * Topic 6.4: Hypotheses, Procedure, and Conditions for a One-Sample z-Test
- *
- * Learning Objectives:
- *   VAR-6.D - Identify null and alternative hypotheses for a population proportion [Skill 1.F]
- *   VAR-6.E - Identify an appropriate testing method for a population proportion [Skill 1.E]
- *   VAR-6.F - Verify the conditions for making statistical inferences when testing a population proportion [Skill 4.C]
- */
+// AI Grading Prompts for Unit 6 Lesson 4 (Topic 6.4)
+// Inference for Categorical Data: Proportions - Setting Up a Test for a Population Proportion
 
-// Lesson context from video transcript for AI grading
 window.LESSON_CONTEXT_U6L4 = `
-VIDEO 1 - Setting Up a Test for a Population Proportion: Stating Hypotheses (~8.5 min):
-- Presenter: Josh Tabor
-- Context: "Does Green = More Natural?" study
-  - 30 students randomly selected, each tasted lemonade from a green cup and a white cup
-  - Both cups contained the same lemonade; 18 of 30 chose the green cup as "more natural"
-- NULL HYPOTHESIS (H0):
-  - Claim of "no difference" or "no change"
-  - Written symbolically: H0: p = 0.50
-  - Always contains an equality (=)
-  - Assumed correct until convincing evidence otherwise
-- ALTERNATIVE HYPOTHESIS (Ha):
-  - Claim researchers hope to support with data
-  - For lemonade study: Ha: p > 0.50 (one-sided, because researchers expect MORE than 50%)
-  - Three forms: p > p0, p < p0, or p ≠ p0
-  - One-sided: < or > (evidence on one side only)
-  - Two-sided: ≠ (evidence on either side)
-- IMPORTANT RULES:
-  - Alternative should be stated BEFORE data collection
-  - Never use p-hat in hypotheses — hypotheses are about the POPULATION, not the sample
-  - Always define the parameter in context (e.g., "p = proportion of ALL students at the school who would choose the green cup")
-  - Use "would" language for parameters (not "said" which refers to the sample)
-- PRACTICE: Mayor investigating if proportion of adults whose favorite sport is football differs from 40%
-  - H0: p = 0.40, Ha: p ≠ 0.40 (two-sided because "differs from")
-  - p = proportion of all adults in the town who would say football is their favorite sport
+Unit 6 Lesson 4 covers Topic 6.4 of AP Statistics: Setting Up a Test for a Population Proportion.
 
-VIDEO 2 - Setting Up a Test: Identifying Procedure & Checking Conditions (~7.5 min):
-- Same presenter and context
-- IDENTIFYING THE PROCEDURE:
-  - When testing a claim about proportion of successes in a single population → one-sample z-test for a population proportion
-  - Similar name to confidence interval procedure (one-sample z-interval) but different purpose
-- CONDITIONS FOR ONE-SAMPLE Z-TEST:
-  1. Random: Data collected from a random sample from the population of interest
-  2. 10% Rule: When sampling without replacement, n ≤ 10% of N (population size)
-     - Often must assume this is reasonable when population size isn't given
-  3. Large Counts: np0 ≥ 10 AND n(1-p0) ≥ 10
-     - Uses the NULL HYPOTHESIS value p0 (NOT p-hat like confidence intervals)
-     - This is because in a significance test, we assume H0 is true
-     - These are EXPECTED counts under H0, not observed counts
-- LEMONADE EXAMPLE CONDITIONS CHECK:
-  1. Random: Students were randomly selected ✓
-  2. 10% Rule: 30 ≤ 10% of all students (assume school has > 300 students) ✓
-  3. Large Counts: 30(0.5) = 15 ≥ 10 ✓ and 30(1-0.5) = 15 ≥ 10 ✓
-- PRACTICE CONDITIONS CHECK (football/mayor):
-  1. Random: Mayor selects a random sample ✓
-  2. 10% Rule: 100 ≤ 10% of adults in town (assume > 1000) ✓
-  3. Large Counts: 100(0.4) = 40 ≥ 10 ✓ and 100(0.6) = 60 ≥ 10 ✓
+Video 1 - Stating Null and Alternative Hypotheses:
+Students learn how to state the null and alternative hypotheses for a significance test for a population proportion.
+Lemonade example: 30 students taste lemonade from a green cup and a white cup; 18 say the green cup tastes more natural.
+Null hypothesis: often represents "no difference" or "no change." For the lemonade study, H0: p = 0.50, where p is the proportion of all students at the school who would choose the green cup.
+Alternative hypothesis: the claim researchers hope to support. For the lemonade study, Ha: p > 0.50 because researchers want to know if more than 50% would choose the green cup.
+General rules: the null hypothesis always contains an equality, and the alternative contains a strict inequality.
+One-sided alternatives use > or <. Two-sided alternatives use !=.
+The choice of alternative is based on the research question and should be stated before data collection begins.
+Never include a statistic such as p-hat in hypotheses. Hypotheses must be about a population parameter, not a sample statistic.
+Practice example: Nationally, 40% of adults would say football is their favorite sport. For a town study asking whether the town differs from the nation, H0: p = 0.40 and Ha: p != 0.40.
+Parameter definitions should use population language such as "would say," not sample language such as "said."
+
+Video 2 - Identifying the Procedure and Checking Conditions:
+When testing a claim about the proportion of successes in a single population, the correct procedure is a one-sample z test for a population proportion.
+To verify conditions:
+1. Random: data come from a random sample or randomized experiment.
+2. 10% condition: when sampling without replacement, n <= 10% of the population size.
+3. Large counts: assuming H0 is true, verify that n*p0 >= 10 and n*(1-p0) >= 10, where p0 is the null hypothesis value.
+Important distinction from confidence intervals: for significance tests, the large counts condition uses p0, not p-hat, because we begin by assuming the null hypothesis is true.
+Lemonade example conditions: random sample of 30 students; assume school has more than 300 students; n*p0 = 30(0.5) = 15 and n*(1-p0) = 15, so conditions are met.
+Mayor practice example: n = 100, p0 = 0.40, so n*p0 = 40 and n*(1-p0) = 60; conditions are met.
+Key takeaway: for a single categorical variable, the correct significance test is a one-sample z test for a population proportion, and the three conditions above must be checked before proceeding.
 `;
 
-// Rubrics for each reflection question
 window.RUBRICS_U6L4 = {
     reflect1: {
-        questionText: "A student writes: 'H0: p-hat = 0.50' and 'Ha: p-hat > 0.50'. Identify TWO errors in these hypotheses and explain why each matters. Then write the corrected hypotheses with a proper parameter definition.",
+        questionText: "A snack company claims that 50% of all teens would prefer its new granola bar to the old version. A researcher wants to investigate whether the true proportion is higher than 50%. Define the parameter, state the null and alternative hypotheses, and explain why the alternative is one-sided instead of two-sided.",
         expectedElements: [
-            { id: "error-phat-not-p", description: "Identifies that hypotheses should use the population parameter p, not the sample statistic p-hat", required: true },
-            { id: "why-parameter-matters", description: "Explains that hypotheses are claims about the population, not the sample — using p-hat would make it about one specific sample", required: true },
-            { id: "corrected-hypotheses", description: "Writes corrected hypotheses: H0: p = 0.50 and Ha: p > 0.50", required: true },
-            { id: "defines-parameter", description: "Defines p in context (e.g., 'p = proportion of all students at the school who would choose the green cup')", required: true },
-            { id: "would-vs-said", description: "Uses 'would' language in the parameter definition to indicate the population, not 'said' or 'did' which refer to the sample", required: false }
+            { id: "define-parameter", description: "Defines the parameter in context as p = the proportion of all teens who would prefer the new granola bar to the old version", required: true },
+            { id: "null-hypothesis", description: "States the null hypothesis correctly as H0: p = 0.50", required: true },
+            { id: "alternative-hypothesis", description: "States the alternative hypothesis correctly as Ha: p > 0.50", required: true },
+            { id: "one-sided-reasoning", description: "Explains that the alternative is one-sided because the research question asks whether the proportion is higher than 50%, so evidence is only being considered in one direction", required: true },
+            { id: "equality-rule", description: "Notes that the null contains the equality and the alternative uses a strict inequality", required: false }
         ],
         scoringGuide: {
-            E: "Response identifies both the p-hat error (should be p) and explains why parameters matter, writes corrected hypotheses, and defines the parameter in context",
-            P: "Response identifies the p-hat error but explanation is incomplete, or corrects hypotheses without defining the parameter, or misses one key element",
-            I: "Response does not identify the p-hat error, or shows fundamental misunderstanding of the difference between parameters and statistics in hypotheses"
+            E: "Correctly defines the parameter in population language, states both hypotheses accurately, and clearly explains why the alternative is one-sided based on the direction of the claim.",
+            P: "Gets most of the setup correct but is incomplete on one part, such as vague parameter wording, missing context, or limited explanation of why the alternative is one-sided.",
+            I: "Uses the wrong hypotheses, includes p-hat instead of p, fails to define the parameter as a population proportion, or does not explain the direction of the alternative."
         },
         commonMistakes: [
-            "Only identifying one error instead of two",
-            "Saying p-hat is wrong without explaining WHY hypotheses use parameters",
-            "Correcting the notation but forgetting to define the parameter",
-            "Using 'said' or 'chose' instead of 'would say' or 'would choose' when defining the parameter"
+            "Using p-hat instead of p in the hypotheses",
+            "Writing H0: p > 0.50 and Ha: p = 0.50",
+            "Defining the parameter in terms of the sample rather than all teens",
+            "Using a two-sided alternative when the claim is specifically 'higher than 50%'",
+            "Forgetting that the null hypothesis contains the equality"
         ],
-        contextFromVideo: "Josh Tabor explicitly warns: 'Never include a statistic, such as p-hat, in the hypotheses. This is a really common error. Make sure your hypotheses are claims about the population, not about the sample.' He also stresses: 'make sure you always define the parameter' and use 'would' language to refer to the population."
+        contextFromVideo: "For tests about a population proportion, the null hypothesis is written as H0: p = p0 and represents the assumed initial claim, often 'no difference' or 'no change.' The alternative hypothesis is the claim we hope to support and must use a strict inequality. If the question asks whether the proportion is greater than a value, the alternative is one-sided: Ha: p > p0."
     },
 
     reflect2: {
-        questionText: "When checking the Large Counts condition for a significance test, we use np0 and n(1-p0) instead of n*p-hat and n*(1-p-hat) like we did for confidence intervals. Explain WHY we use p0 (the null hypothesis value) for significance tests. What assumption makes this the right choice?",
+        questionText: "A town health department wants to test whether the proportion of all adults in the town who would say walking is their main exercise differs from 0.35. A random sample of 120 adults will be selected. Identify the correct inference procedure and verify whether the conditions for the test are met. Be sure to address the random condition, the 10% condition, the large counts condition, and why the large counts check uses 0.35 rather than the sample proportion.",
         expectedElements: [
-            { id: "assume-h0-true", description: "States that in a significance test, we START by assuming the null hypothesis is true", required: true },
-            { id: "p0-is-assumed-value", description: "Explains that p0 is the value we assume to be true under H0, so we use it to check if the sampling distribution is approximately normal", required: true },
-            { id: "expected-not-observed", description: "Distinguishes between expected counts under H0 (np0) and observed counts from the sample (n*p-hat)", required: true },
-            { id: "ci-comparison", description: "Notes that confidence intervals use p-hat because there is no hypothesized value — we're estimating the parameter, not testing a claim about it", required: false },
-            { id: "se-connection", description: "Connects to the fact that the standard error in the test also uses p0, not p-hat", required: false }
+            { id: "identify-procedure", description: "Identifies the correct procedure as a one-sample z test for a population proportion", required: true },
+            { id: "random-condition", description: "States that the random condition is met because the sample of 120 adults is selected at random", required: true },
+            { id: "ten-percent-condition", description: "Checks the 10% condition by noting that 120 must be no more than 10% of the town's adult population, or equivalently assuming the town has at least 1200 adults", required: true },
+            { id: "large-counts", description: "Checks large counts using the null value: 120(0.35) = 42 and 120(0.65) = 78, both at least 10", required: true },
+            { id: "use-p-zero", description: "Explains that the large counts check uses 0.35 because significance tests assume the null hypothesis is true, so the check uses p0 rather than p-hat", required: true }
         ],
         scoringGuide: {
-            E: "Response clearly explains that significance tests assume H0 is true, that p0 is therefore the appropriate value for checking conditions, and distinguishes expected counts from observed counts",
-            P: "Response mentions assuming H0 is true but doesn't clearly explain why that leads to using p0, or doesn't distinguish expected from observed counts",
-            I: "Response shows fundamental misunderstanding — thinks p-hat and p0 are interchangeable, or doesn't connect the condition check to the assumption of H0"
+            E: "Correctly identifies the one-sample z test, verifies all three conditions with appropriate calculations or assumptions, and explains why the large counts condition uses the null value 0.35.",
+            P: "Identifies the procedure and most conditions correctly but is incomplete on one part, such as not explaining the 10% assumption clearly or forgetting why p0 is used in the large counts check.",
+            I: "Chooses the wrong procedure, fails to verify the conditions correctly, or uses the sample proportion instead of the null value in the large counts condition."
         },
         commonMistakes: [
-            "Thinking p0 and p-hat are the same thing",
-            "Not understanding that significance tests assume H0 is true from the start",
-            "Confusing when to use p0 vs p-hat (tests vs intervals)",
-            "Thinking the conditions are the same for both procedures"
+            "Calling the procedure a confidence interval instead of a significance test",
+            "Checking large counts with p-hat instead of p0",
+            "Ignoring the 10% condition entirely",
+            "Stating the sample is random without linking it to the condition",
+            "Forgetting to calculate both n*p0 and n*(1-p0)"
         ],
-        contextFromVideo: "Josh Tabor says: 'Remember, when we're doing a significance test, we always start by assuming the null hypothesis is true. So we use that null hypothesis value p0 in our check of the conditions.' He notes: 'condition three differs for confidence intervals and significance tests' and that 'we're not using the observed successes and failures from the sample. We're using the expected number of successes and failures if the null hypothesis were true.'"
+        contextFromVideo: "When testing a claim about a single population proportion, use a one-sample z test for a population proportion. Check three conditions: random sample or randomized experiment, 10% condition, and large counts. For significance tests, the large counts check uses the null value p0 because we begin by assuming H0 is true."
     },
 
     exitTicket: {
-        questionText: "A company claims that 80% of customers are satisfied with their product. A consumer group suspects the true proportion is lower. They survey a random sample of 60 customers and find that 42 are satisfied. (a) State the null and alternative hypotheses, defining the parameter. (b) Name the appropriate procedure. (c) Check all three conditions for performing this test.",
+        questionText: "A state report says that 65% of all high school students get at least 8 hours of sleep on school nights. A principal wonders whether the proportion at her school is lower than 65%. She randomly selects 90 students from the school, and 50 say they usually get at least 8 hours of sleep.\n(a) Define the parameter in context.\n(b) State the null and alternative hypotheses.\n(c) Identify the appropriate test procedure.\n(d) Verify all conditions needed for the test.\n(e) Explain whether it is appropriate to proceed with the significance test, and why p-hat should not appear in the hypotheses.",
         expectedElements: [
-            { id: "correct-h0", description: "States H0: p = 0.80", required: true },
-            { id: "correct-ha", description: "States Ha: p < 0.80 (one-sided, lower, because they suspect it's LOWER)", required: true },
-            { id: "defines-p", description: "Defines p as the proportion of all customers who are satisfied (population parameter with 'would' language or equivalent)", required: true },
-            { id: "names-procedure", description: "Names the procedure as a one-sample z-test for a population proportion", required: true },
-            { id: "checks-random", description: "Checks Random: data collected from a random sample", required: true },
-            { id: "checks-10pct", description: "Checks 10% Rule: 60 ≤ 10% of all customers (assumes company has > 600 customers)", required: true },
-            { id: "checks-large-counts", description: "Checks Large Counts using p0 = 0.80: np0 = 60(0.80) = 48 ≥ 10 and n(1-p0) = 60(0.20) = 12 ≥ 10", required: true },
-            { id: "uses-p0-not-phat", description: "Uses p0 = 0.80 (not p-hat = 42/60 = 0.70) for the Large Counts check", required: true }
+            { id: "define-parameter", description: "Defines the parameter as p = the proportion of all students at the school who would say they usually get at least 8 hours of sleep on school nights", required: true },
+            { id: "state-hypotheses", description: "States the hypotheses correctly as H0: p = 0.65 and Ha: p < 0.65", required: true },
+            { id: "identify-procedure", description: "Identifies the procedure as a one-sample z test for a population proportion", required: true },
+            { id: "check-random", description: "Checks the random condition using the fact that the principal randomly selected 90 students", required: true },
+            { id: "check-ten-percent", description: "Checks the 10% condition by noting that 90 must be at most 10% of the school's student population, or assuming the school has at least 900 students", required: true },
+            { id: "check-large-counts", description: "Checks large counts using the null value: 90(0.65) = 58.5 and 90(0.35) = 31.5, both at least 10", required: true },
+            { id: "proceed-and-parameter", description: "Concludes that it is appropriate to proceed because the conditions are met and explains that p-hat should not appear in the hypotheses because hypotheses are about the population proportion p, not the sample statistic", required: true }
         ],
         scoringGuide: {
-            E: "Response correctly states hypotheses (with Ha: p < 0.80), defines p, names the one-sample z-test, and checks all three conditions using p0 = 0.80 for Large Counts",
-            P: "Response has most elements correct but makes one error (e.g., uses p-hat instead of p0 for Large Counts, writes two-sided instead of one-sided, or skips defining the parameter)",
-            I: "Response has multiple errors — wrong hypotheses direction, missing condition checks, uses p-hat instead of p0, or doesn't name the procedure"
+            E: "Correctly sets up the full test: defines the parameter, states both hypotheses, identifies the one-sample z test, verifies all conditions using p0 = 0.65, and explains both why the test can proceed and why p-hat does not belong in the hypotheses.",
+            P: "Shows the main setup correctly but misses or weakens one part, such as incomplete condition checks, weak population wording, or limited explanation of why p-hat should not appear.",
+            I: "Misses multiple setup components, uses incorrect hypotheses or procedure, fails to check conditions correctly, or confuses the population parameter with the sample statistic."
         },
         commonMistakes: [
-            "Writing Ha: p > 0.80 instead of Ha: p < 0.80 (misreading 'suspects it's lower')",
-            "Writing Ha: p ≠ 0.80 (two-sided when the question clearly indicates one-sided)",
-            "Using p-hat = 42/60 = 0.70 instead of p0 = 0.80 for the Large Counts condition",
-            "Forgetting to define the parameter p",
-            "Not naming the specific procedure (one-sample z-test for a population proportion)",
-            "Using p-hat in the hypotheses instead of p"
+            "Writing a two-sided or greater-than alternative instead of Ha: p < 0.65",
+            "Using p-hat in the hypotheses",
+            "Checking large counts with 50/90 instead of 0.65",
+            "Forgetting to assume the school is large enough for the 10% condition",
+            "Defining the parameter as the proportion of sampled students rather than all students at the school"
         ],
-        contextFromVideo: "Both videos demonstrate the full setup process: Video 1 shows how to write hypotheses (one-sided vs two-sided based on the research question, always using p not p-hat, always defining the parameter). Video 2 shows the three conditions and emphasizes using p0 (not p-hat) for the Large Counts condition because 'we always start by assuming the null hypothesis is true.'"
+        contextFromVideo: "Setup for a significance test for a population proportion includes four core parts in this lesson: define the population proportion parameter in context, state H0 and Ha using p and the null value p0, identify the procedure as a one-sample z test for a population proportion, and verify the random, 10%, and large counts conditions. For the large counts condition, always use p0 because H0 is assumed true during setup."
     }
 };
 
-/**
- * Build the grading prompt for a specific reflection question
- * @param {string} questionId - The ID of the question (reflect1, reflect2, exitTicket)
- * @param {string} studentAnswer - The student's response
- * @returns {string} The formatted prompt for the AI grader
- */
+window.getRubricU6L4 = function(questionId) {
+    return window.RUBRICS_U6L4[questionId] || null;
+};
+
 window.buildReflectionPromptU6L4 = function(questionId, studentAnswer) {
     const rubric = window.RUBRICS_U6L4[questionId];
-    if (!rubric) {
-        throw new Error(`Unknown question ID: ${questionId}`);
-    }
+    if (!rubric) return null;
 
-    const requiredElements = rubric.expectedElements.filter(e => e.required);
-    const optionalElements = rubric.expectedElements.filter(e => !e.required);
+    const requiredElements = rubric.expectedElements.filter(e => e.required).map(e => e.description);
+    const optionalElements = rubric.expectedElements.filter(e => !e.required).map(e => e.description);
 
-    return `You are grading an AP Statistics student response about Setting Up a Test for a Population Proportion.
+    return `You are an AP Statistics teacher grading a student's response.
 
-QUESTION:
-${rubric.questionText}
+QUESTION: ${rubric.questionText}
 
-STUDENT RESPONSE:
-${studentAnswer}
+STUDENT'S ANSWER: ${studentAnswer}
 
-LESSON CONTEXT:
-${window.LESSON_CONTEXT_U6L4}
+LESSON CONTEXT: ${rubric.contextFromVideo}
 
-REQUIRED ELEMENTS (must address for E score):
-${requiredElements.map(e => `- ${e.description}`).join('\n')}
-
-OPTIONAL ELEMENTS (strengthen response):
-${optionalElements.map(e => `- ${e.description}`).join('\n')}
-
-SCORING GUIDE:
+SCORING RUBRIC:
 - E (Essentially Correct): ${rubric.scoringGuide.E}
 - P (Partially Correct): ${rubric.scoringGuide.P}
 - I (Incorrect): ${rubric.scoringGuide.I}
 
+REQUIRED ELEMENTS (must address for E):
+${requiredElements.map((e, i) => `${i + 1}. ${e}`).join('\n')}
+
+BONUS ELEMENTS (strengthen the response):
+${optionalElements.map((e, i) => `${i + 1}. ${e}`).join('\n')}
+
 COMMON MISTAKES TO WATCH FOR:
-${rubric.commonMistakes.map(m => `- ${m}`).join('\n')}
+${rubric.commonMistakes.map((m, i) => `${i + 1}. ${m}`).join('\n')}
 
-CONTEXT FROM VIDEO:
-${rubric.contextFromVideo}
-
-Grade this response and provide:
-1. A score (E, P, or I)
-2. Brief feedback explaining the score
-3. List of elements the student addressed correctly (matched)
-4. List of elements that are missing or incorrect (missing)
-5. A helpful suggestion for improvement (if not E)
+Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing. Provide a specific suggestion for improvement if the score is P or I.
 
 Respond in JSON format:
 {
-    "score": "E|P|I",
-    "feedback": "Brief explanation of score",
-    "matched": ["element1", "element2"],
-    "missing": ["element3"],
-    "suggestion": "Helpful tip for improvement or null if E"
+    "score": "E" | "P" | "I",
+    "feedback": "Brief explanation of the grade",
+    "matched": ["list of elements the student addressed"],
+    "missing": ["list of elements the student missed"],
+    "suggestion": "Specific suggestion for improvement (null if E)"
 }`;
-};
-
-/**
- * Get the rubric for a specific question
- * @param {string} questionId - The ID of the question
- * @returns {object} The rubric object
- */
-window.getRubricU6L4 = function(questionId) {
-    return window.RUBRICS_U6L4[questionId];
 };
