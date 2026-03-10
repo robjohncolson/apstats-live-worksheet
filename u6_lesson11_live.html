@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -407,7 +407,7 @@
     </div>
 
     <h1>Topic 6.11: Carrying Out a Test for the Difference of Two Population Proportions</h1>
-    <div class="subtitle">Test Statistic, p-Value, Interpretation, and Conclusions</div>
+    <div class="subtitle">Calculating the Test Statistic, p-Value, and Conclusion</div>
     <div class="worksheet-label">Video Follow-Along Worksheet</div>
 
     <div class="student-info">
@@ -428,17 +428,17 @@
     <div class="objective-box">
         <strong>Learning Objectives:</strong>
         <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li><strong>VAR-6.K:</strong> Calculate an appropriate test statistic for a difference of two population proportions.</li>
-            <li><strong>DAT-3.C:</strong> Interpret the p-value of a significance test for a difference of population proportions.</li>
-            <li><strong>DAT-3.D:</strong> Justify a claim about populations using a significance-test decision.</li>
+            <li><strong>VAR-6.K:</strong> Calculate an appropriate test statistic for the difference of two population proportions.</li>
+            <li><strong>DAT-3.C:</strong> Interpret the <em>p</em>-value of a significance test for a difference of two population proportions.</li>
+            <li><strong>DAT-3.D:</strong> Justify a claim about populations using a decision from a significance test.</li>
         </ul>
         <strong style="margin-top: 10px; display: block;">Essential Knowledge:</strong>
         <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li>Use the two-sample <em>z</em>-test statistic for a difference in population proportions with the pooled proportion.</li>
-            <li>A p-value interpretation must begin by assuming the null hypothesis is true.</li>
-            <li>For one-sided alternatives, use one tail; for two-sided alternatives, use both tails (or double one tail).</li>
-            <li>Decision rule: if p-value &le; &alpha;, reject <em>H</em><sub>0</sub>; if p-value &gt; &alpha;, fail to reject <em>H</em><sub>0</sub>.</li>
-            <li>Conclusions must be written in context of the original claim about population proportions.</li>
+            <li>The test statistic for a difference in proportions uses the observed difference, the hypothesized difference of 0, and a pooled standard error.</li>
+            <li>The pooled proportion is <em>p&#770;</em><sub>c</sub> = (<em>X</em><sub>1</sub> + <em>X</em><sub>2</sub>) / (<em>n</em><sub>1</sub> + <em>n</em><sub>2</sub>).</li>
+            <li>Use the standard normal distribution to find the <em>p</em>-value, with the tail(s) determined by the alternative hypothesis.</li>
+            <li>An interpretation of a <em>p</em>-value must assume the null hypothesis is true and describe chance variation from random sampling or random assignment.</li>
+            <li>Compare the <em>p</em>-value to the significance level to reject or fail to reject <em>H</em><sub>0</sub>, then state the conclusion in context.</li>
         </ul>
     </div>
 
@@ -446,230 +446,273 @@
         <h3>Key Vocabulary</h3>
         <table class="vocab-table">
             <tr>
-                <td>Test Statistic</td>
-                <td>A standardized value (here, a <em>z</em>-score) measuring how far sample evidence is from the null value.</td>
+                <td>Standardized Test Statistic</td>
+                <td>The value <em>z</em> that compares the observed difference in sample proportions to what is expected under the null hypothesis.</td>
             </tr>
             <tr>
                 <td>Pooled Proportion</td>
-                <td>The combined success rate under <em>H</em><sub>0</sub>, <em>p&#770;</em><sub>c</sub> = (x<sub>1</sub> + x<sub>2</sub>)/(n<sub>1</sub> + n<sub>2</sub>).</td>
+                <td>The combined success proportion, written as <em>p&#770;</em><sub>c</sub>, used in the standard error for a significance test.</td>
             </tr>
             <tr>
-                <td>p-value</td>
-                <td>The probability, assuming <em>H</em><sub>0</sub> is true, of getting evidence as extreme or more extreme than observed.</td>
+                <td>p-Value</td>
+                <td>The probability, assuming the null is true, of getting a result as extreme or more extreme than the observed result.</td>
             </tr>
             <tr>
-                <td>One-Sided p-value</td>
-                <td>Probability in one tail when the alternative is directional (&gt; or &lt;).</td>
+                <td>Right-Tail p-Value</td>
+                <td>Used when the alternative is greater than, such as <em>p</em><sub>1</sub> &gt; <em>p</em><sub>2</sub>.</td>
             </tr>
             <tr>
-                <td>Two-Sided p-value</td>
-                <td>Probability in both tails when the alternative is non-directional (&ne;).</td>
+                <td>Two-Sided p-Value</td>
+                <td>Used when the alternative is not equal to, so extreme results in both directions count.</td>
             </tr>
             <tr>
-                <td>Significance Level (&alpha;)</td>
-                <td>The cutoff probability used to decide whether to reject <em>H</em><sub>0</sub>.</td>
+                <td>Significance Level</td>
+                <td>The cutoff, written as &alpha;, used to decide whether the evidence is strong enough to reject the null hypothesis.</td>
             </tr>
             <tr>
                 <td>Reject <em>H</em><sub>0</sub></td>
-                <td>Decision when p-value is small enough (p-value &le; &alpha;), giving convincing evidence for <em>H</em><sub>a</sub>.</td>
+                <td>A decision made when the <em>p</em>-value is less than or equal to &alpha;, supporting the alternative hypothesis.</td>
             </tr>
             <tr>
                 <td>Fail to Reject <em>H</em><sub>0</sub></td>
-                <td>Decision when p-value is too large (p-value &gt; &alpha;), so evidence for <em>H</em><sub>a</sub> is not convincing.</td>
+                <td>A decision made when the <em>p</em>-value is greater than &alpha;, meaning the data do not provide convincing evidence for the alternative.</td>
             </tr>
         </table>
     </div>
+
+    <!-- LESSON CONTENT -->
+
     <!-- ============================================================ -->
     <!-- VIDEO 1: Test Statistic and p-Value                          -->
     <!-- ============================================================ -->
     <div class="section">
         <div class="section-header">
             <h2>Video 1: Calculating the Test Statistic and p-Value</h2>
-            <span class="timestamp">[0:00 &ndash; 9:19]</span>
+            <span class="timestamp">[0:00 &ndash; 10:28]</span>
         </div>
 
         <div class="question">
             <span class="question-number">1.</span>
-            <span class="ts">[0:10]</span>
-            The two main goals are calculating a test statistic and a <input type="text" class="blank" data-answer="p-value|p value" style="width:150px;"> for a difference in proportions test.
-        </div>
-
-        <div class="note-box">
-            <strong>Context &mdash; Effective Eye Drops</strong>
-            <span class="ts">[0:31]</span>
-            In a clinical trial, 82 of 130 patients in the azithromycin group were cured, and 74 of 149 in the placebo group were cured.
+            <span class="ts">[0:08]</span>
+            This topic is about carrying out a significance test for a difference in <input type="text" class="blank" data-answer="proportions|population proportions" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">2.</span>
-            <span class="ts">[1:24]</span>
-            For this setup, the null claims the difference is <input type="text" class="blank" data-answer="0|zero" style="width:80px;">, and the alternative claims the difference is greater than zero.
+            <span class="ts">[0:18]</span>
+            One goal is to calculate an appropriate test <input type="text" class="blank" data-answer="statistic" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">3.</span>
-            <span class="ts">[1:50]</span>
-            The observed difference in sample proportions is <input type="text" class="blank" data-answer="0.134|.134" style="width:80px;">.
+            <span class="ts">[0:25]</span>
+            Another goal is to calculate a <input type="text" class="blank" data-answer="p-value|p value" style="width:150px;">.
         </div>
 
-        <div class="model-box">
-            <strong>Standardized Test Statistic Form:</strong>
-            <span class="ts">[2:35 &ndash; 2:54]</span>
-            <div class="formula">standardized test statistic = (statistic &minus; parameter) / (standard error)</div>
-            <div class="formula">z = ((<em>p&#770;</em><sub>1</sub> &minus; <em>p&#770;</em><sub>2</sub>) &minus; 0) / &radic;[<em>p&#770;</em><sub>c</sub>(1&minus;<em>p&#770;</em><sub>c</sub>)(1/n<sub>1</sub> + 1/n<sub>2</sub>)]</div>
+        <div class="note-box">
+            <strong>Context &mdash; Effective Eye Drops?</strong>
+            <span class="ts">[0:30]</span>
+            In a clinical trial, 82 of 130 patients randomly assigned azithromycin drops were cured within a week, compared with 74 of 149 assigned placebo drops.
         </div>
 
         <div class="question">
             <span class="question-number">4.</span>
-            <span class="ts">[2:35]</span>
-            The denominator of the standardized statistic is the <input type="text" class="blank" data-answer="standard error|se" style="width:150px;"> of the statistic.
+            <span class="ts">[1:57]</span>
+            In the eye-drop study, the difference in group proportions is 82/130 - 74/149 = <input type="text" class="blank" data-answer="0.134|.134" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">5.</span>
-            <span class="ts">[3:25]</span>
-            The combined (pooled) proportion is <em>p&#770;</em><sub>c</sub> = (x<sub>1</sub> + x<sub>2</sub>)/(n<sub>1</sub> + n<sub>2</sub>) = <input type="text" class="blank" data-answer="0.559|.559" style="width:80px;">.
+            <span class="ts">[2:44]</span>
+            The standardized test statistic equals the statistic minus the parameter divided by the <input type="text" class="blank" data-answer="standard error|standarderror" style="width:150px;"> of the statistic.
+        </div>
+
+        <div class="model-box">
+            <strong>Test Statistic Formula:</strong>
+            <span class="ts">[2:54 &ndash; 3:25]</span>
+            For a two-sample <em>z</em>-test for a difference in proportions,
+            <div style="margin-top: 8px;">
+                <em>z</em> = [ (<em>p&#770;</em><sub>1</sub> - <em>p&#770;</em><sub>2</sub>) - 0 ] / &radic;[ <em>p&#770;</em><sub>c</sub>(1 - <em>p&#770;</em><sub>c</sub>)(1/<em>n</em><sub>1</sub> + 1/<em>n</em><sub>2</sub>) ]
+            </div>
+            <div style="margin-top: 8px;">
+                where <em>p&#770;</em><sub>c</sub> = (<em>X</em><sub>1</sub> + <em>X</em><sub>2</sub>) / (<em>n</em><sub>1</sub> + <em>n</em><sub>2</sub>).
+            </div>
         </div>
 
         <div class="question">
             <span class="question-number">6.</span>
-            <span class="ts">[3:45]</span>
-            After substitution, the eye-drop test statistic is z = <input type="text" class="blank" data-answer="2.25" style="width:80px;">.
+            <span class="ts">[3:55]</span>
+            For the eye-drop data, the pooled proportion is 156/279 = <input type="text" class="blank" data-answer="0.559|.559" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">7.</span>
-            <span class="ts">[5:48]</span>
-            Because <em>H</em><sub>a</sub> is greater-than, the p-value comes from the <input type="text" class="blank" data-answer="right tail|right-tail" style="width:150px;"> of the standard normal curve.
+            <span class="ts">[4:22]</span>
+            Plugging the values into the formula gives a standardized test statistic of <input type="text" class="blank" data-answer="2.25" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">8.</span>
-            <span class="ts">[6:04]</span>
-            Using Table A or technology, the p-value is <input type="text" class="blank" data-answer="0.0122|.0122" style="width:80px;">.
+            <span class="ts">[6:13]</span>
+            Using Table A or technology, the p-value for the eye-drop study is <input type="text" class="blank" data-answer="0.0122|.0122" style="width:80px;">.
         </div>
-    </div>
 
-    <!-- ============================================================ -->
-    <!-- VIDEO 2: Interpreting p-Value and Conclusions                -->
-    <!-- ============================================================ -->
-    <div class="section">
-        <div class="section-header">
-            <h2>Video 2: Interpreting the p-Value and Stating a Conclusion</h2>
-            <span class="timestamp">[0:00 &ndash; 8:56]</span>
+        <div class="note-box">
+            <strong>Practice Context &mdash; A Bright Idea</strong>
+            <span class="ts">[6:25]</span>
+            Of 400 randomly selected Soltown residents, 314 purchased sunglasses in the last 12 months. Of 550 randomly selected Brightville residents, 452 purchased sunglasses.
         </div>
 
         <div class="question">
             <span class="question-number">9.</span>
-            <span class="ts">[2:09]</span>
-            A p-value is computed under the assumption that the null hypothesis is <input type="text" class="blank" data-answer="true" style="width:80px;">.
-        </div>
-
-        <div class="model-box">
-            <strong>p-Value Interpretation Template:</strong>
-            <span class="ts">[2:51]</span>
-            Assuming <em>H</em><sub>0</sub> is true, there is a p-value probability of getting a difference in proportions as extreme or more extreme than observed, by chance alone in random assignment or random samples.
+            <span class="ts">[7:05]</span>
+            Because the sunglasses question asks whether there is a difference, the alternative is <input type="text" class="blank" data-answer="two-sided|two sided|two" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">10.</span>
-            <span class="ts">[3:30]</span>
-            In the eye-drop interpretation, the observed difference is 0.134, and for a greater-than alternative we say "0.134 or <input type="text" class="blank" data-answer="greater|larger" style="width:80px;">".
+            <span class="ts">[7:48]</span>
+            For the practice data, the pooled proportion is <input type="text" class="blank" data-answer="0.806|.806" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">11.</span>
-            <span class="ts">[4:23]</span>
-            If p-value &le; &alpha;, we <input type="text" class="blank" data-answer="reject|reject h0" style="width:150px;"> the null hypothesis.
+            <span class="ts">[8:29]</span>
+            The practice problem gives a z statistic of <input type="text" class="blank" data-answer="-1.42" style="width:80px;">.
         </div>
 
         <div class="question">
             <span class="question-number">12.</span>
-            <span class="ts">[4:56]</span>
-            If p-value &gt; &alpha;, we <input type="text" class="blank" data-answer="fail to reject|fail reject" style="width:150px;"> the null hypothesis.
-        </div>
-
-        <div class="question">
-            <span class="question-number">13.</span>
-            <span class="ts">[5:22]</span>
-            When no significance level is stated, the lesson uses &alpha; = <input type="text" class="blank" data-answer="0.05|.05" style="width:80px;">.
-        </div>
-
-        <div class="note-box">
-            <strong>Practice &mdash; A Bright Idea</strong>
-            <span class="ts">[6:10]</span>
-            Soltown: 314/400 purchased sunglasses. Brightville: 452/550 purchased sunglasses. For this two-sided test, p-value = 0.1556 at &alpha; = 0.10.
-        </div>
-
-        <div class="question">
-            <span class="question-number">14.</span>
-            <span class="ts">[8:16]</span>
-            Because 0.1556 is greater than 0.10, we <input type="text" class="blank" data-answer="fail to reject|fail reject" style="width:150px;"> <em>H</em><sub>0</sub>.
-        </div>
-
-        <div class="question">
-            <span class="question-number">15.</span>
-            <span class="ts">[8:16]</span>
-            Therefore, there is <input type="text" class="blank" data-answer="not convincing|insufficient" style="width:150px;"> statistical evidence of a difference in population proportions.
+            <span class="ts">[9:05]</span>
+            The two-sided p-value for the practice problem is <input type="text" class="blank" data-answer="0.1556|.1556" style="width:80px;">.
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- VIDEO 3: Complete Significance Test                          -->
+    <!-- VIDEO 2: Interpret and Conclude                              -->
     <!-- ============================================================ -->
     <div class="section">
         <div class="section-header">
-            <h2>Video 3: Performing a Complete Two-Sample Proportion Test</h2>
-            <span class="timestamp">[0:00 &ndash; 8:33]</span>
+            <h2>Video 2: Interpreting the p-Value and Stating a Conclusion</h2>
+            <span class="timestamp">[0:00 &ndash; 10:03]</span>
         </div>
 
         <div class="note-box">
-            <strong>AP Exam Practice Context</strong>
-            <span class="ts">[0:27]</span>
-            December 2008 sample: 676 yes out of 1009 adults. December 2007 sample: 622 yes out of 1020 adults.
-            Question asks whether the proportion saying yes <em>changed</em>.
+            <strong>Context &mdash; Eye Drops Revisited</strong>
+            <span class="ts">[1:29 &ndash; 2:09]</span>
+            From earlier work: <em>H</em><sub>0</sub>: <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = 0, <em>H</em><sub>a</sub>: <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> &gt; 0, with <em>p&#770;</em><sub>1</sub> - <em>p&#770;</em><sub>2</sub> = 0.134, <em>z</em> = 2.25, and <em>p</em>-value = 0.0122.
+        </div>
+
+        <div class="question">
+            <span class="question-number">13.</span>
+            <span class="ts">[2:35]</span>
+            The p-value measures how likely it is to get evidence as strong or stronger by chance alone when the <input type="text" class="blank" data-answer="null|h0" style="width:80px;"> hypothesis is true.
+        </div>
+
+        <div class="model-box">
+            <strong>p-Value Interpretation Template:</strong>
+            <span class="ts">[2:50]</span>
+            Assuming the null hypothesis is true, there is a <em>p</em>-value probability of getting a difference in sample proportions as extreme or more extreme than the observed result by chance alone in the random assignment or random samples.
+        </div>
+
+        <div class="question">
+            <span class="question-number">14.</span>
+            <span class="ts">[3:49]</span>
+            For a greater-than alternative, the interpretation says the observed difference in proportions or <input type="text" class="blank" data-answer="greater|larger" style="width:80px;"> by chance alone.
+        </div>
+
+        <div class="question">
+            <span class="question-number">15.</span>
+            <span class="ts">[4:23]</span>
+            If the p-value is less than or equal to the significance level, we <input type="text" class="blank" data-answer="reject|reject h0" style="width:150px;"> the null hypothesis.
         </div>
 
         <div class="question">
             <span class="question-number">16.</span>
-            <span class="ts">[1:30]</span>
-            The word "changed" implies a <input type="text" class="blank" data-answer="two-sided|two sided" style="width:150px;"> alternative, so <em>H</em><sub>a</sub> uses not <input type="text" class="blank" data-answer="equal|equals" style="width:80px;">.
+            <span class="ts">[4:56]</span>
+            If the p-value is greater than the significance level, we <input type="text" class="blank" data-answer="fail to reject|fail" style="width:150px;"> the null hypothesis.
         </div>
 
         <div class="question">
             <span class="question-number">17.</span>
-            <span class="ts">[2:46]</span>
-            The correct procedure is a two-sample <input type="text" class="blank" data-answer="z test|z-test|z" style="width:150px;"> for a difference in <input type="text" class="blank" data-answer="proportions|population proportions" style="width:150px;">.
+            <span class="ts">[5:22]</span>
+            When no significance level is given, the video uses &alpha; = <input type="text" class="blank" data-answer="0.05|.05" style="width:80px;">.
+        </div>
+
+        <div class="note-box">
+            <strong>Context &mdash; Sunglasses Revisited</strong>
+            <span class="ts">[6:42]</span>
+            For the Soltown and Brightville comparison, the p-value is 0.1556 and the significance level is 0.10.
         </div>
 
         <div class="question">
             <span class="question-number">18.</span>
-            <span class="ts">[3:30]</span>
-            The pooled proportion is (676 + 622)/(1009 + 1020) = <input type="text" class="blank" data-answer="0.640|.640|0.64|.64" style="width:80px;">.
+            <span class="ts">[7:47]</span>
+            Because the alternative is two-sided, the interpretation says the sample difference of -0.037 or one more <input type="text" class="blank" data-answer="different|extreme" style="width:150px;"> in either direction.
         </div>
 
         <div class="question">
             <span class="question-number">19.</span>
-            <span class="ts">[4:46]</span>
-            The standardized test statistic for this example is z = <input type="text" class="blank" data-answer="2.82" style="width:80px;">.
+            <span class="ts">[8:16]</span>
+            Since 0.1556 is greater than 0.10, we <input type="text" class="blank" data-answer="fail to reject|fail" style="width:150px;"> the null hypothesis.
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIDEO 3: Complete Test                                       -->
+    <!-- ============================================================ -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Video 3: A Complete Significance Test from Start to Finish</h2>
+            <span class="timestamp">[0:00 &ndash; 8:33]</span>
+        </div>
+
+        <div class="note-box">
+            <strong>Context &mdash; 2012 AP Exam Survey</strong>
+            <span class="ts">[0:24 &ndash; 0:54]</span>
+            In December 2008, 676 of 1009 randomly selected U.S. adults said television commercials are an effective way to promote a new product. In December 2007, 622 of 1020 randomly selected U.S. adults said yes.
         </div>
 
         <div class="question">
             <span class="question-number">20.</span>
-            <span class="ts">[5:52]</span>
-            With a two-sided alternative, the p-value is <input type="text" class="blank" data-answer="0.0048|.0048" style="width:80px;">.
+            <span class="ts">[1:30]</span>
+            Because the question asks whether the proportion changed, the alternative should be <input type="text" class="blank" data-answer="not equal|different|not equal to" style="width:150px;">.
         </div>
 
         <div class="question">
             <span class="question-number">21.</span>
-            <span class="ts">[6:36]</span>
-            Since 0.0048 &lt; 0.05, we <input type="text" class="blank" data-answer="reject|reject h0" style="width:150px;"> <em>H</em><sub>0</sub> and conclude the population proportion likely <input type="text" class="blank" data-answer="changed|different" style="width:150px;"> across years.
+            <span class="ts">[2:47]</span>
+            The named procedure is a two-sample <input type="text" class="blank" data-answer="z-test|z test|z" style="width:150px;"> for a difference in proportions.
         </div>
 
         <div class="question">
             <span class="question-number">22.</span>
-            <span class="ts">[7:40]</span>
-            A complete test includes hypotheses, conditions, test statistic, p-value, and a contextual <input type="text" class="blank" data-answer="conclusion|decision" style="width:150px;">.
+            <span class="ts">[3:30]</span>
+            The pooled proportion for the survey data is <input type="text" class="blank" data-answer="0.640|.640" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">23.</span>
+            <span class="ts">[5:01]</span>
+            The standardized test statistic for the survey example is <input type="text" class="blank" data-answer="2.82" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">24.</span>
+            <span class="ts">[5:30]</span>
+            The two-sided p-value for the survey example is <input type="text" class="blank" data-answer="0.0048|.0048" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">25.</span>
+            <span class="ts">[6:36]</span>
+            Because 0.0048 is less than 0.05, we <input type="text" class="blank" data-answer="reject|reject h0" style="width:150px;"> the null hypothesis.
+        </div>
+
+        <div class="model-box">
+            <strong>Complete Test Checklist:</strong>
+            <span class="ts">[7:36]</span>
+            A full significance test should include hypotheses, parameter definitions, significance level, named procedure, condition checks, test statistic, p-value, and a conclusion in context.
         </div>
     </div>
 
@@ -684,16 +727,17 @@
 
         <div class="model-box">
             <ol style="margin: 5px 0; padding-left: 20px;">
-                <li>Compute the two-sample <em>z</em> test statistic using the pooled proportion for significance tests of two population proportions.</li>
-                <li>Interpret p-values by starting with "assuming the null is true" and describing evidence as extreme or more extreme by chance alone.</li>
-                <li>Use one tail for directional alternatives and two tails for non-directional alternatives.</li>
-                <li>Compare p-value with &alpha; to decide reject or fail to reject, then write the conclusion in context.</li>
+                <li>For a significance test about two population proportions, compute the pooled proportion first and use it in the standard error.</li>
+                <li>Use the standard normal distribution to turn the <em>z</em> test statistic into a <em>p</em>-value.</li>
+                <li>The alternative hypothesis determines whether the <em>p</em>-value comes from the left tail, right tail, or both tails.</li>
+                <li>Interpret the <em>p</em>-value by assuming the null hypothesis is true and describing chance variation.</li>
+                <li>Compare the <em>p</em>-value to &alpha; to reject or fail to reject <em>H</em><sub>0</sub>, then state the conclusion in context.</li>
             </ol>
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- REFLECTION SECTION                                           -->
+    <!-- REFLECTION SECTION                                            -->
     <!-- ============================================================ -->
     <div class="section">
         <div class="section-header">
@@ -703,32 +747,33 @@
 
         <div class="question">
             <span class="question-number">R1.</span>
-            <strong>For the pink-eye study (82/130 vs 74/149), describe how to carry out the test statistic calculation for <em>H</em><sub>0</sub>: <em>p</em><sub>1</sub> - <em>p</em><sub>2</sub> = 0, then interpret the p-value 0.0122 in context.</strong>
+            <strong>In the pink-eye eye-drop study, explain how to calculate the pooled proportion, the standardized test statistic, and the p-value. Include the numerical results and explain why the p-value is found in the right tail. Then interpret the p-value in context.</strong>
             <textarea id="reflect1" placeholder="Write your response here..."></textarea>
             <div id="reflect1-feedback"></div>
         </div>
 
         <div class="question">
             <span class="question-number">R2.</span>
-            <strong>For the sunglasses study (314/400 vs 452/550), interpret p-value = 0.1556 and state the decision and conclusion at &alpha; = 0.10.</strong>
+            <strong>For the Soltown vs Brightville sunglasses study, interpret the p-value of 0.1556 and state the conclusion at the &alpha; = 0.10 significance level. Explain why the conclusion is fail to reject <em>H</em><sub>0</sub> rather than saying the two population proportions are proven equal.</strong>
             <textarea id="reflect2" placeholder="Write your response here..."></textarea>
             <div id="reflect2-feedback"></div>
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- EXIT TICKET                                                  -->
+    <!-- EXIT TICKET                                                   -->
     <!-- ============================================================ -->
     <div class="exit-ticket">
         <h3 style="margin-top: 0; color: #003366;">Exit Ticket</h3>
         <div class="question">
-            <strong>In 2008, 676 of 1009 randomly selected U.S. adults said "yes" to a question about TV commercial effectiveness. In 2007, 622 of 1020 randomly selected U.S. adults said "yes" to the same question.</strong>
+            <strong>A school compares two study apps. In random samples, 84 of 120 students using App A met a benchmark, and 66 of 120 students using App B met the benchmark. Assume each sample is less than 10% of its population. The school wants to test whether App A has a higher true benchmark-success proportion than App B.</strong>
             <ul style="margin: 8px 0;">
-                <li>(a) Define parameters and state null and alternative hypotheses for whether the proportion changed from 2007 to 2008.</li>
-                <li>(b) Identify the correct test and verify conditions (independence, 10% condition, and expected counts with pooled proportion).</li>
-                <li>(c) Report the test statistic and p-value, then make a conclusion at &alpha; = 0.05 in context.</li>
+                <li>(a) Define <em>p</em><sub>A</sub> and <em>p</em><sub>B</sub>, and state <em>H</em><sub>0</sub> and <em>H</em><sub>a</sub> in symbols.</li>
+                <li>(b) Name the appropriate significance test and verify the conditions.</li>
+                <li>(c) Compute the pooled proportion, the standardized test statistic, and the p-value.</li>
+                <li>(d) State the conclusion at &alpha; = 0.05 in context.</li>
             </ul>
-            <textarea id="exitTicket" placeholder="Answer all three parts in complete sentences..."></textarea>
+            <textarea id="exitTicket" placeholder="Answer all four parts in complete sentences..."></textarea>
             <div id="exitTicket-feedback"></div>
         </div>
     </div>
@@ -928,6 +973,7 @@
             document.getElementById('scoreDisplay').classList.remove('visible');
             gradingState.clear();
         }
+
         // ==================== SERVER SYNC ====================
         function handleLiveUpdate(blank) {
             const questionId = blank.dataset.questionId;
@@ -1300,6 +1346,5 @@
             buttons.forEach(b => b.disabled = false);
         }
     </script>
-
 </body>
 </html>

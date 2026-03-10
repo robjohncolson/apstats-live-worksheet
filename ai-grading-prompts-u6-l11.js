@@ -1,158 +1,164 @@
-﻿/**
+/**
  * AI Grading Prompts for Unit 6 Lesson 11: Carrying Out a Test for the Difference of Two Population Proportions
  * Topic 6.11: Carrying Out a Test for the Difference of Two Population Proportions
  *
  * Learning Objectives:
- *   VAR-6.K - Calculate the test statistic for a two-sample z test for a difference in population proportions
- *   DAT-3.C - Interpret the p-value for a significance test for a difference in population proportions
- *   DAT-3.D - Use p-value vs alpha to make and justify a contextual conclusion
+ *   VAR-6.K - Calculate an appropriate test statistic for the difference of two population proportions
+ *   DAT-3.C - Interpret the p-value of a significance test for a difference of two population proportions
+ *   DAT-3.D - Justify a claim using a decision from a significance test
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U6L11 = `
-VIDEO 1 - Calculating Test Statistic and p-Value (~9 min):
+VIDEO 1 - Calculating the Test Statistic and p-value (~10 min):
 - Presenter: Doug Tyson
 - MAIN IDEAS:
-  - Topic focus: carrying out a significance test for a difference in two population proportions
-  - Goals: calculate an appropriate z test statistic and calculate a p-value
-  - Standardized test statistic form: (statistic - parameter) / standard error
-  - For tests of H0: p1 = p2, use pooled proportion in the standard error
-  - Pooled proportion formula: p-hat-c = (x1 + x2)/(n1 + n2)
-  - p-value is found from the standard normal distribution using the direction of Ha
-- EYE-DROP EXAMPLE (azithromycin vs placebo):
-  - Data: 82/130 vs 74/149
-  - Sample difference: p-hat1 - p-hat2 = 0.134
-  - Pooled proportion: p-hat-c = (82 + 74)/(130 + 149) = 156/279 = 0.559
+  - The lesson focuses on carrying out a significance test for a difference in two population proportions
+  - Students calculate an appropriate standardized test statistic and then a p-value
+  - The standardized test statistic follows the general form (statistic - parameter) / standard error
+  - For a two-sample z-test for a difference in proportions, use the pooled standard error because the null hypothesis assumes the population proportions are equal
+  - The pooled proportion is p-hat-c = (X1 + X2) / (n1 + n2)
+  - The p-value comes from the standard normal distribution
+  - For a greater-than alternative, use the right tail; for a less-than alternative, use the left tail; for a not-equal alternative, use both tails
+- EYE-DROP EXAMPLE:
+  - Clinical trial comparing azithromycin drops and placebo drops for pink eye
+  - Data: 82/130 cured with azithromycin and 74/149 cured with placebo
+  - Difference in sample proportions: 0.134
+  - Pooled proportion: p-hat-c = (82 + 74) / (130 + 149) = 156/279 = 0.559
   - Test statistic: z = 2.25
-  - Because Ha is greater-than, p-value uses right tail: P(Z >= 2.25) = 0.0122
-- BRIGHT IDEA PRACTICE:
-  - Data: Soltown 314/400, Brightville 452/550
-  - p-hat-S = 0.785, p-hat-B = 0.822, pooled p-hat-c = 0.806
+  - Because Ha: p1 > p2, the p-value is P(z >= 2.25) = 0.0122
+- BRIGHT IDEA EXAMPLE:
+  - Soltown vs Brightville sunglasses-purchase proportions
+  - Data: 314/400 for Soltown and 452/550 for Brightville
+  - Sample proportions: 0.785 and 0.822
+  - Pooled proportion: 0.806
   - Test statistic: z = -1.42
-  - Two-sided p-value: 2 * P(Z >= 1.42) = 0.1556
+  - Because Ha: pS != pB, the two-sided p-value is 0.1556
 
-VIDEO 2 - Interpreting p-Value and Stating Conclusion (~9 min):
+VIDEO 2 - Interpreting the p-value and Stating a Conclusion (~10 min):
 - MAIN IDEAS:
-  - p-value interpretation must assume H0 is true
-  - p-value measures probability of evidence as extreme or more extreme by chance alone
-  - Template: assuming null true, probability of getting observed difference (or more extreme) in random assignment/samples
-  - Decision rule:
-    - If p-value <= alpha, reject H0 and claim convincing evidence for Ha
-    - If p-value > alpha, fail to reject H0 and claim not convincing evidence for Ha
-- EYE-DROP INTERPRETATION:
-  - Assuming true difference (azithromycin - placebo) is 0,
-    there is a 0.0122 probability of getting a sample difference of 0.134 or greater
-    by chance alone in random assignment
-  - With alpha = 0.05: reject H0, convincing evidence azithromycin is more effective
-- BRIGHT IDEA INTERPRETATION/CONCLUSION:
-  - Assuming true difference (Soltown - Brightville) is 0,
-    there is a 0.1556 probability of getting -0.037 or one more different in either direction
-    by chance alone in random samples
-  - With alpha = 0.10: fail to reject H0, not convincing evidence of a difference
+  - A p-value interpretation must assume the null hypothesis is true
+  - The p-value is the probability of getting a difference in sample proportions as extreme or more extreme than the observed one by chance alone
+  - Interpretation wording depends on the alternative: "or greater," "or less," or "more different in either direction"
+  - Small p-values indicate the result would be unlikely by chance alone if the null were true
+  - If p-value <= alpha, reject H0 and say there is convincing statistical evidence for the alternative in context
+  - If p-value > alpha, fail to reject H0 and say there is not convincing statistical evidence for the alternative in context
+- EYE-DROP CONCLUSION:
+  - With alpha = 0.05, p-value 0.0122 is less than 0.05
+  - Reject H0
+  - There is convincing statistical evidence that the azithromycin cure proportion is greater than the placebo cure proportion for patients like those in the study
+- SUNGLASSES CONCLUSION:
+  - With alpha = 0.10, p-value 0.1556 is greater than 0.10
+  - Fail to reject H0
+  - There is not convincing statistical evidence that the Soltown and Brightville population proportions differ
+  - Failing to reject H0 does not prove the population proportions are equal
 
-VIDEO 3 - Complete Significance Test Workflow (~8.5 min):
-- MAIN IDEAS:
-  - Perform a full significance test from hypotheses to conclusion
-  - Include hypotheses, parameter definitions, significance level, procedure, conditions, calculations, and conclusion
-  - If alpha is not given, use alpha = 0.05
-- AP EXAM PRACTICE (2008 vs 2007 survey):
-  - Data: 676/1009 (Dec 2008) vs 622/1020 (Dec 2007)
-  - Research wording: "changed" implies two-sided alternative
-  - Hypotheses: H0: p1 - p2 = 0 vs Ha: p1 - p2 != 0
-  - Procedure: two-sample z test for a difference in population proportions
+VIDEO 3 - A Complete Significance Test from Start to Finish (~8.5 min):
+- AP EXAM SURVEY EXAMPLE:
+  - In December 2008, 676 of 1009 randomly selected U.S. adults said "yes"
+  - In December 2007, 622 of 1020 randomly selected U.S. adults said "yes"
+  - Research question asks whether the proportion changed, so the alternative is two-sided
+  - Parameters: p1 = proportion of all U.S. adults in December 2008 who would say yes; p2 = proportion of all U.S. adults in December 2007 who would say yes
+  - If no significance level is given, use alpha = 0.05
+  - Procedure: two-sample z-test for a difference in population proportions
   - Conditions:
-    - two independent random samples
-    - 10% condition for each sample
-    - pooled proportion p-hat-c = (676 + 622)/(1009 + 1020) = 0.640
-    - expected counts: 645.76, 363.24, 652.8, 367.2 (all >= 10)
+    - Two independent random samples
+    - Each sample is less than 10% of the relevant population
+    - Use pooled proportion p-hat-c = (676 + 622) / (1009 + 1020) = 0.640
+    - Expected counts: 645.76, 363.24, 652.8, and 367.2, all at least 10
   - Test statistic: z = 2.82
-  - p-value: 0.0048 (two-sided)
-  - Decision at alpha = 0.05: reject H0
-  - Conclusion: convincing statistical evidence the proportion responding yes changed from 2007 to 2008
+  - Two-sided p-value: 0.0048
+  - Since 0.0048 < 0.05, reject H0
+  - Conclusion: there is convincing statistical evidence that the proportion of U.S. adults who would respond yes changed from December 2007 to December 2008
+- FULL TEST CHECKLIST:
+  - State null and alternative hypotheses
+  - Define parameters and direction of subtraction
+  - Identify alpha if needed
+  - Name the procedure
+  - Verify conditions with evidence
+  - Calculate pooled proportion, test statistic, and p-value
+  - Make a conclusion in context
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U6L11 = {
     reflect1: {
-        questionText: "For the pink-eye study (82/130 vs 74/149), describe how to carry out the test statistic calculation for H0: p1 - p2 = 0, then interpret the p-value 0.0122 in context.",
+        questionText: "In the pink-eye eye-drop study, explain how to calculate the pooled proportion, the standardized test statistic, and the p-value. Include the numerical results and explain why the p-value is found in the right tail. Then interpret the p-value in context.",
         expectedElements: [
-            { id: "procedure", description: "Identifies a two-sample z test for a difference in population proportions", required: true },
-            { id: "pooled-proportion", description: "Computes or states pooled proportion p-hat-c = (82 + 74)/(130 + 149) = 0.559 (approximately)", required: true },
-            { id: "test-statistic", description: "States or supports that the test statistic is z = 2.25 (from the pooled standard error setup)", required: true },
-            { id: "null-assumption", description: "Interprets p-value under the assumption that the true difference (azithromycin minus placebo) is 0", required: true },
-            { id: "contextual-probability", description: "Interprets 0.0122 as probability of getting a difference of 0.134 or greater by chance alone in random assignment", required: true },
-            { id: "direction-link", description: "Connects the one-sided interpretation to the greater-than alternative", required: true },
-            { id: "alpha-decision", description: "May include that 0.0122 < 0.05 so reject H0 and conclude convincing evidence azithromycin is more effective", required: false }
+            { id: "pooled-proportion", description: "Computes the pooled proportion as (82 + 74) / (130 + 149) = 156/279 = 0.559", required: true },
+            { id: "test-statistic", description: "States or computes the standardized test statistic as z = 2.25 using the difference in sample proportions and pooled standard error", required: true },
+            { id: "p-value", description: "States the p-value as 0.0122", required: true },
+            { id: "right-tail-justification", description: "Explains that the p-value is a right-tail probability because the alternative is p1 > p2", required: true },
+            { id: "p-value-interpretation", description: "Interprets the p-value by assuming the null hypothesis is true and describing the probability of getting a difference of 0.134 or greater by chance alone in the random assignment", required: true },
+            { id: "context-language", description: "Uses context about azithromycin and placebo cure proportions for patients like those in the study", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly explains pooled-z setup, references z = 2.25, and gives a correct contextual p-value interpretation under the null",
-            P: "Response shows partial understanding but misses key calculation setup details or omits part of the p-value interpretation template",
-            I: "Response misstates the test/statistic setup or gives an incorrect p-value interpretation that does not assume the null is true"
+            E: "Response correctly gives the pooled proportion, z statistic, and p-value, explains the right-tail choice, and interprets the p-value in context under the null hypothesis",
+            P: "Response includes most major components but is incomplete or unclear about the calculation details, tail direction, or p-value interpretation",
+            I: "Response has major errors in the calculation results, tail choice, or interpretation of the p-value"
         },
         commonMistakes: [
-            "Interpreting p-value as probability that the null hypothesis is true",
-            "Failing to mention the null-assumption phrase in p-value interpretation",
-            "Using a two-sided interpretation for this one-sided alternative",
-            "Not using pooled proportion in the standard error setup",
-            "Giving direction opposite to the claim (less than instead of greater than)"
+            "Using the separate sample proportions instead of the pooled proportion in the standard error",
+            "Giving the wrong z statistic or p-value",
+            "Using a two-sided or left-tail p-value when the alternative is greater than",
+            "Interpreting the p-value as the probability that the null hypothesis is true",
+            "Leaving the interpretation out of context"
         ],
-        contextFromVideo: "Video 1 computes p-hat-c = 0.559, z = 2.25, and p-value = 0.0122; Video 2 models the full contextual p-value interpretation template for the eye-drop example."
+        contextFromVideo: "The video computes p-hat-c = 0.559, z = 2.25, and p-value = 0.0122 for the eye-drop study, then emphasizes that the right tail is used because Ha: p1 > p2."
     },
 
     reflect2: {
-        questionText: "For the sunglasses study (314/400 vs 452/550), interpret p-value = 0.1556 and state the decision and conclusion at alpha = 0.10.",
+        questionText: "For the Soltown vs Brightville sunglasses study, interpret the p-value of 0.1556 and state the conclusion at the alpha = 0.10 significance level. Explain why the conclusion is fail to reject H0 rather than saying the two population proportions are proven equal.",
         expectedElements: [
-            { id: "null-assumption", description: "States interpretation assuming the true difference (Soltown minus Brightville) is 0", required: true },
-            { id: "two-sided-extremes", description: "Describes two-sided extremeness (for example, -0.037 or one more different in either direction)", required: true },
-            { id: "chance-language", description: "Uses chance-alone language tied to random samples", required: true },
-            { id: "alpha-comparison", description: "Compares p-value 0.1556 to alpha 0.10 correctly", required: true },
-            { id: "decision", description: "States fail to reject H0", required: true },
-            { id: "contextual-conclusion", description: "Concludes there is not convincing statistical evidence of a difference in population proportions", required: true },
-            { id: "two-sided-note", description: "May explicitly mention that Ha is not equal (two-sided)", required: false }
+            { id: "null-assumption", description: "Begins the interpretation by assuming the null hypothesis is true, meaning the population proportions are equal or their difference is zero", required: true },
+            { id: "two-sided-interpretation", description: "Interprets 0.1556 as the probability of getting a sample difference of -0.037 or one more different in either direction by chance alone in the random samples", required: true },
+            { id: "compare-to-alpha", description: "Compares 0.1556 to alpha = 0.10 and notes that the p-value is larger", required: true },
+            { id: "decision", description: "States the decision to fail to reject H0", required: true },
+            { id: "context-conclusion", description: "Concludes there is not convincing statistical evidence that the Soltown and Brightville population proportions differ", required: true },
+            { id: "not-proving-equality", description: "Explains that failing to reject H0 does not prove the population proportions are equal", required: true }
         ],
         scoringGuide: {
-            E: "Response gives a correct null-based p-value interpretation and correctly makes the fail-to-reject conclusion at alpha = 0.10",
-            P: "Response has the right general direction but is incomplete in interpretation language, alpha comparison, or contextual conclusion",
-            I: "Response gives an incorrect decision, incorrect interpretation, or does not connect results to the population claim"
+            E: "Response correctly interprets the two-sided p-value, compares it to alpha, gives the correct fail-to-reject decision, and explains why that does not prove equality",
+            P: "Response has the general idea but is missing part of the interpretation, conclusion, or explanation about why fail to reject does not prove the null",
+            I: "Response misinterprets the p-value, makes the wrong decision, or claims the test proves the population proportions are equal"
         },
         commonMistakes: [
-            "Saying reject H0 even though 0.1556 > 0.10",
-            "Treating the test as one-sided instead of two-sided",
-            "Interpreting p-value as chance the alternative is true",
-            "Missing contextual language about population proportions",
-            "Forgetting to include random-samples chance wording"
+            "Forgetting to assume the null hypothesis is true when interpreting the p-value",
+            "Not mentioning that the result is two-sided or in either direction",
+            "Rejecting H0 even though 0.1556 is greater than 0.10",
+            "Saying the data prove the two city proportions are equal",
+            "Leaving the conclusion out of context"
         ],
-        contextFromVideo: "Video 2 gives this exact example: p-value 0.1556 at alpha 0.10 leads to fail to reject H0 and no convincing evidence of a difference."
+        contextFromVideo: "The video interprets 0.1556 as the probability of a sample difference of -0.037 or one more different in either direction by chance alone, then concludes fail to reject H0 at alpha = 0.10."
     },
 
     exitTicket: {
-        questionText: "In 2008, 676 of 1009 randomly selected U.S. adults said yes to a TV-commercial question, while in 2007, 622 of 1020 said yes. (a) Define parameters and state hypotheses for whether the proportion changed. (b) Identify test and verify conditions. (c) Report test statistic and p-value, then conclude at alpha = 0.05.",
+        questionText: "A school compares two study apps. In random samples, 84 of 120 students using App A met a benchmark, and 66 of 120 students using App B met the benchmark. Assume each sample is less than 10% of its population. The school wants to test whether App A has a higher true benchmark-success proportion than App B. (a) Define pA and pB, and state H0 and Ha in symbols. (b) Name the appropriate significance test and verify the conditions. (c) Compute the pooled proportion, the standardized test statistic, and the p-value. (d) State the conclusion at alpha = 0.05 in context.",
         expectedElements: [
-            { id: "parameter-definitions", description: "Defines p1 and p2 as population yes-response proportions for 2008 and 2007, respectively", required: true },
-            { id: "two-sided-hypotheses", description: "States H0: p1 = p2 (or p1 - p2 = 0) and Ha: p1 != p2 (or p1 - p2 != 0) because the claim is changed", required: true },
-            { id: "significance-level", description: "Uses alpha = 0.05 when no significance level is stated", required: true },
-            { id: "procedure", description: "Identifies the procedure as a two-sample z test for a difference in population proportions", required: true },
-            { id: "independence", description: "Checks two independent random samples", required: true },
-            { id: "ten-percent", description: "Checks or states the 10% condition for both samples", required: true },
-            { id: "pooled-proportion", description: "Computes pooled proportion as (676 + 622)/(1009 + 1020) = 0.640 (approximately)", required: true },
-            { id: "large-counts", description: "Verifies expected counts using pooled proportion are all at least 10", required: true },
-            { id: "test-results", description: "Reports test statistic z = 2.82 and p-value = 0.0048", required: true },
-            { id: "decision-conclusion", description: "Compares p-value to alpha, rejects H0, and concludes convincing evidence the population proportion changed", required: true },
-            { id: "direction-clarity", description: "May explicitly state the subtraction order (2008 minus 2007) in the conclusion", required: false }
+            { id: "parameter-definitions", description: "Defines pA and pB as the true population benchmark-success proportions for students using App A and App B", required: true },
+            { id: "hypotheses", description: "States H0 as pA = pB or pA - pB = 0 and Ha as pA > pB or pA - pB > 0", required: true },
+            { id: "procedure", description: "Identifies the method as a two-sample z-test for a difference in population proportions", required: true },
+            { id: "conditions", description: "Verifies conditions by citing random samples, the given 10% condition, and large counts using the pooled proportion", required: true },
+            { id: "pooled-proportion", description: "Computes the pooled proportion as (84 + 66) / (120 + 120) = 150/240 = 0.625", required: true },
+            { id: "expected-counts", description: "Checks expected counts with pooled proportion: 120(0.625)=75 and 120(0.375)=45 in each group, all at least 10", required: true },
+            { id: "test-statistic", description: "Computes the standardized test statistic as z = 2.40", required: true },
+            { id: "p-value", description: "Computes or states the right-tail p-value as about 0.0082", required: true },
+            { id: "decision-and-conclusion", description: "Compares 0.0082 to alpha = 0.05, rejects H0, and concludes there is convincing statistical evidence that App A has a higher true success proportion", required: true },
+            { id: "context-language", description: "Keeps the conclusion in context rather than only reporting a symbolic decision", required: false }
         ],
         scoringGuide: {
-            E: "Response correctly completes all major steps of the significance test and gives a proper reject-H0 contextual conclusion",
-            P: "Response includes most core steps but has minor omissions, weak condition evidence, or incomplete conclusion wording",
-            I: "Response omits major steps, uses wrong hypotheses/procedure, or makes an incorrect decision/conclusion"
+            E: "Response correctly sets up the full test, verifies conditions, computes the pooled proportion, z statistic, and p-value, and gives the correct conclusion in context",
+            P: "Response includes most major parts but has minor computational errors, incomplete condition checks, or an unclear conclusion",
+            I: "Response has major errors in the hypotheses, procedure, calculations, or decision, or omits major parts of the test"
         },
         commonMistakes: [
-            "Using a one-sided alternative when the question says changed",
-            "Not defining parameters as population proportions",
-            "Skipping pooled proportion before expected-count checks",
-            "Not checking the 10% condition for random samples",
-            "Failing to compare p-value with alpha in the formal decision"
+            "Using a two-sided alternative instead of a greater-than alternative",
+            "Forgetting to use the pooled proportion in the standard error and expected counts",
+            "Giving incorrect pooled proportion, z, or p-value calculations",
+            "Not checking the large-count condition with expected successes and failures",
+            "Failing to compare the p-value to alpha before stating the conclusion"
         ],
-        contextFromVideo: "Video 3 works this exact AP exam-style problem and reports p-hat-c = 0.640, z = 2.82, p-value = 0.0048, reject H0 at alpha = 0.05, and a contextual changed conclusion."
+        contextFromVideo: "Video 3 emphasizes a complete test: hypotheses, alpha, named procedure, conditions with pooled counts, the z statistic and p-value, and then a conclusion based on comparing the p-value to alpha."
     }
 };
 
