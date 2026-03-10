@@ -30,7 +30,7 @@ const LESSON_REGISTRY = {
     "lesson": 11,
     "urls": {
       "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson11_live.html",
-      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l21-zstat-611",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l21-test-statistic-611",
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=10",
       "blooket": "https://dashboard.blooket.com/set/69ade09c572efa156e0e3402",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986588515",
