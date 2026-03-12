@@ -769,19 +769,19 @@ const LESSON_REGISTRY = {
       "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson4_live.html",
       "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l17-state-null",
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=3",
-      "blooket": null,
+      "blooket": "https://dashboard.blooket.com/set/69b09491958376ccb01393d9",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986218661",
       "videos": [],
       "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896839"
     },
     "status": {
-      "ingest": "pending",
+      "ingest": "done",
       "worksheet": "done",
       "drills": "done",
-      "blooketCsv": "pending",
-      "blooketUpload": "pending",
-      "animations": "pending",
-      "schoology": "scraped"
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "failed",
+      "schoology": "done"
     }
   },
   "6.5": {
