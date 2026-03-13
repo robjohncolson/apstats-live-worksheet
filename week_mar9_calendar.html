@@ -243,7 +243,31 @@
             body { padding: 0; background: white; }
             .calendar-grid { box-shadow: none; border: 1px solid var(--gray-300); }
         }
+        .materials-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.2rem;
+            margin-top: 0.3rem;
+            padding-top: 0.3rem;
+            border-top: 1px dashed var(--gray-300);
+        }
+        .material-link {
+            display: inline-block;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .material-link:hover { opacity: 0.8; }
+        .material-worksheet { background: #e3f2fd; color: #1565c0; }
+        .material-drills { background: #e8f5e9; color: #2e7d32; }
+        .material-quiz { background: #fff3e0; color: #e65100; }
+        .material-blooket { background: #f3e5f5; color: #7b1fa2; }
+        .material-videos { background: #ffebee; color: #c62828; }
     </style>
+    <script src="calendar-linker.js" defer></script>
 </head>
 <body>
     <div class="container">
