@@ -1,0 +1,51 @@
+# Video 3 — Transcript
+# Unit 7, Lesson 5
+
+more_vert
+
+Certainly! Here's a transcription of the video:
+
+[00:00] Hi, I'm Doug Tyson, here in Supercalifragilisticexpialidocious, York, Pennsylvania. I've got another AP daily video for you, and this one is about the entire process of performing a significance test for a population mean, from soup to nuts.
+
+[00:17] What are we going to learn? Well, we're going to learn how to perform a complete significance test for a population mean. We're going to put it all together.
+
+[00:25] So let's look at an example. Bakin' Bacon! Doug likes his bacon crispy, but still tender. Bridget recommends that Doug try adding mango habanero seasoning to his bacon during frying because the sugar in the seasoning will caramelize, creating a crust that helps the bacon retain moisture and therefore weight.
+
+[00:43] To test this claim, Doug randomly assigned half of one package of bacon to be cooked without seasoning. The remaining half-package was seasoned with a mango habanero seasoning and cooked for the same length of time. After cooking, Doug measured the weight in grams of each half-package of cooked bacon to see if the seasoning helped the bacon retain its moisture and therefore its weight. Then he repeated this process for nine more packages. Yum!
+
+[01:12] Here are the data. You can see in the table that I've listed each package one through 10 and the weight with seasoning for that half-package and the weight without seasoning for the other half of that package.
+
+[01:27] And these data were produced using a matched pairs experiment and therefore they're an example of paired data. Each half-package is paired together because they came from the same package.
+
+[01:45] And so matched pairs can be thought of as one sample of pairs. To analyze paired data, we first find the difference in each pair. So you can see 278 minus 260 is an 18-gram difference. 268 minus 238 is a 30-gram difference and so on. Differences can be negative. In this case, that means the weight with seasoning was smaller than the weight without seasoning.
+
+[02:14] So once differences between pairs of values have been found, we're going to compute the mean difference X-bar sub D, and D stands for difference. So from technology, we can put in those 10 numbers and find that the mean difference, the sample mean difference, is 9.5 grams, the standard deviation of the differences is 12.51 grams, and of course there are 10 pairs or 10 differences.
+
+[02:41] Now that we can analyze the paired data, inference, that is, confidence intervals and significance tests, can be performed about mu sub D, the true mean difference, just as for a population mean.
+
+[02:56] So let's return to Bakin' Bacon! An important question is: Do these data give convincing evidence that the seasoning causes cooked bacon to retain more weight, on average, for packages of bacon like the ones in the study? In other words, do we have convincing evidence that Bridget's claim is true?
+
+[03:17] Well, the null hypothesis is that mu sub D is zero. If the two methods of cooking, with seasoning or without seasoning, were no different, then we would expect no difference in weight, and no difference in weight means a difference of zero.
+
+[03:37] The alternative hypothesis is that mu sub D is greater than zero. Why? Because the claim is that the bacon, the half-packages, are going to retain more weight on average. And because we're subtracting in this direction, with minus without, we're expecting the half-packages with seasoning to weigh more than without. And so a bigger number minus a smaller number means a greater than zero or positive difference.
+
+[04:05] We're going to define mu sub D as the true mean difference in weight, with seasoning minus without seasoning, for packages of cooked bacon like the ones in the study.
+
+[04:16] And there's no significance level stated, so we're going to use alpha equal point zero five, which is the standard.
+
+[04:25] So we would like to perform a one-sample T-test for mu sub D, but we need to verify the conditions. First, we have half-packages randomly assigned to be cooked with or without seasoning. So we have random assignment, and that condition is met.
+
+[04:44] There's no 10% condition because we are not randomly sampling without replacement here.
+
+[04:51] But we do need to make sure that the dot plot of differences shows no strong skewness or outliers. And if we look at the dot plot, we have to make one, we have to create a graph or a box plot or a stem plot or a histogram, but we can see in the sample data that there are no outliers and there's no strong skewness. And so this condition is met as well.
+
+[05:13] So remember, from technology, we had these sample statistics. So we can plug it into our standardized test statistic formula. So we have 9.5 minus the hypothesized mean of 0 over S divided by square root of n, and that gives us 2.401. That's our standardized test statistic.
+
+[05:35] It's a T-statistic, and we'll have 10 minus one or nine degrees of freedom. And so we can calculate the P-value by finding the probability that in a T-distribution with nine degrees of freedom, the tail probability to have a T-value of 2.401 or greater is point zero one nine nine. We can do that using technology or using table B critical value.
+
+[06:04] So let's make our conclusion. Because the P-value of point zero one nine nine is less than the significance level of point zero five, we reject the null hypothesis. Small P-value, reject the null hypothesis. There is convincing statistical evidence that the seasoning causes bacon to retain more weight on average for packages of bacon like the ones in the study.
+
+[06:30] Now here's some important bonus content. Although you weren't asked in this case, if you wanted to estimate the average gain in weight, you would constru
+
+thumb_up
+thumb_down

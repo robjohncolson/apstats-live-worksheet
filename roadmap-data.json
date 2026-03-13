@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-13T12:48:54.823Z",
-  "registryVersion": "50e1e0acb8ad",
+  "generatedAt": "2026-03-13T15:40:41.913Z",
+  "registryVersion": "0b1f55d4b76b",
   "lessons": {
     "6.10": {
       "topic": "Monday 3/16/26",
@@ -1077,6 +1077,30 @@
         "E": {
           "date": "2026-03-30",
           "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=987461044",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "7.5": {
+      "topic": "Topic 7.5",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson5_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=4",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-26",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987537901",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-04-01",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=987538858",
           "posted": true,
           "verified": false
         }

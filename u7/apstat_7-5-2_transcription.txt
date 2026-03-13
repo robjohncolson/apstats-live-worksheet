@@ -1,0 +1,29 @@
+# Video 2 — Transcript
+# Unit 7, Lesson 5
+
+more_vert
+
+The transcribed text from the video is as follows:
+
+[00:00] Hello, I'm Doug Tyson from York, Pennsylvania. I'm bringing you another AP Daily video, and this one is about interpreting the p-value and stating a conclusion in a test for a population mean.
+
+[00:14] What are we going to learn in this video? Well, two things. First, how do we interpret the p-value in a test for a population mean? And second, how do we state a conclusion in a test for a population mean?
+
+[00:28] So let's look at an example. "Got Hops?" An article on the internet claims that the average vertical jump for teens is 15 inches. Intrepid AP Statistics students at one large high school selected a random sample of 20 students and measured their vertical jumps. The students in the sample jumped an average of 15.8 inches, with a standard deviation of 2.33 inches. Do these data provide convincing evidence that the mean vertical jump for all students at this school differs from 15 inches? And we see the data.
+
+[01:06] So from previous videos, we found that the hypotheses are that μ equals 15 inches versus μ not equal to 15 inches, and μ is defined as the mean vertical jump for all students at this high school. We found that the sample statistics are 15.8, 2.33 for the standard deviation, the t-statistic was 1.535 with 19 degrees of freedom, and the p-value was 0.1412. All of that from previous videos. The p-value measures how likely it is to get evidence for the alternative as strong as or stronger than the observed evidence by chance alone when the null is true.
+
+[01:52] So, to interpret a p-value, there are three parts, and they're color-coded here. First, we're going to state that we're going to assume that the null is true. And then second, if that's the case, there is this p-value probability of getting a sample mean of as much as we had, and one that was greater, less, or more different, depending on your alternative, by chance alone in the random sample or random assignment. So, assuming that the mean vertical jump for all students in this high school is 15 inches—that's our null—there is a 0.1412 probability that something happens. What happens? Of getting a sample mean vertical jump as extreme or more extreme than 15.8 inches in either direction by chance alone in a random sample of 20 students. So there it is again.
+
+[02:55] Now, let's state a conclusion. Now that we have interpreted our p-value, what does that mean for our test, for a conclusion for our test? Remember that small p-values indicate that the test statistic is unlikely to occur by random chance alone, and large p-values indicate that a test statistic is likely to occur by random chance alone.
+
+[03:17] So, if we have a small p-value, smaller than our significance level, we would say because the p-value of blank is less than or equal to our significance level, we reject the null hypothesis. And we would then go on to say that there is convincing statistical evidence that whatever our alternative is in context. If we have a large p-value, larger than our significance level, we would say because the p-value of blank is greater than our significance level, we fail to reject the null hypothesis. And we would go on to say there is not convincing statistical evidence that whatever our alternative is in context. Notice that the first sentence in either case is about the null hypothesis and our decision to reject or not reject it based on the size of the p-value, and then the second sentence is the implication of that decision for our alternative hypothesis.
+
+[04:21] So let's practice with the vertical jump example. Now, no significance level was given, so we'll use 0.05, which is the most common significance level. Because the p-value of 0.1412 is greater than alpha equals 0.05, we fail to reject the null hypothesis. There is not convincing statistical evidence that the mean vertical jump for all students at this school is different than 15 inches.
+
+[04:51] So let's practice with a different example. "I can go for miles and miles." A tire manufacturer must test its Tread40 tires to see if they last more than 40,000 miles, on average. A quality control engineer selects a random sample of 35 tires and puts them on a machine that simulates driving conditions until the tread on the tire is 2/32nd of an inch, when they must be replaced. The average mileage for the sample is 42,348 miles with a standard deviation of 2,140 miles. The p-value for a one-sample t-test of the mean mileage is 9.99 x 10^-8. We saw that in a previous video. So let's interpret the p-value and make a conclusion at the alpha equals 0.01 significance level. So we have two things to do.
+
+[05:48] So here are our hypotheses, as they were stated in a previous video, and we know the sample mean is 42,348 miles, the t-statistic is 6.491 with 34 degrees of freedom, and the p-value is 9.99 x 10^-8. So first, let's interpret the p-value. Assuming
+
+thumb_up
+thumb_down

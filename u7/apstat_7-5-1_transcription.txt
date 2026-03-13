@@ -1,0 +1,51 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 5
+
+more_vert
+
+[00:00] Hello again, everyone. I'm Doug Tyson, coming to you here from enchanting York, Pennsylvania. I'm bringing you one more AP Daily video, and this one is on calculating the test statistic and p-value in a significance test for a population mean. So we're focusing on calculations.
+
+[00:16] What will we learn? Well, we're going to learn how to calculate an appropriate test statistic in a test for a population mean. And also, we're going to learn how to calculate a p-value in a test for a population mean.
+
+[00:30] So let's look at an example. "Got Hops?" An article on the internet claims that the average vertical jump for teens is 15 inches. Intrepid AP Statistics students at one large high school selected a random sample of 20 students and measured their vertical jumps. The students in the sample jumped an average of 15.8 inches, with a standard deviation of 2.33 inches. Do these data provide convincing evidence that the mean vertical jump for all students at this school differs from 15 inches?
+
+[00:58] Well, from previous videos, we've seen that the hypotheses are that mu equals 15 versus mu not equal to 15 inches. And mu is the mean vertical jump for all students at this high school. We've also seen that the conditions for conducting a test have been met.
+
+[01:14] So let's focus on calculating the test statistic. In the vertical jump study, the sample mean is 15.8 inches. That gives us some evidence for the alternative that mu is not equal to 15 inches, because the sample mean is 15.8 inches, which is not 15. But we want to know how likely it is to get evidence as strong for the alternative as we got, or stronger, just by chance alone when the null is true.
+
+[01:45] So after we verify the conditions, which we have, calculate the standardized test statistic using this formula: Standardized test statistic equals statistic minus parameter divided by standard error of the statistic.
+
+[02:00] Specifically, for a one-sample t-test for a mean, the standardized test statistic is t equals x-bar minus mu divided by s over the square root of n. And t is going to have an approximate t-distribution with n minus 1 degrees of freedom.
+
+[02:18] Now, we use technology to get the sample statistics here. The sample mean is 15.8 inches. The sample standard deviation is 2.33 inches. And the sample size is 20. So if we plug all those values into the appropriate places and do a computation, we get that t is 1.535 with 19 degrees of freedom.
+
+[02:41] Now, you don't have to memorize the formula for the standardized test statistic. It is in the formula sheet in bits and pieces. So here, we see that there's the general template for a standardized test statistic. And then later on in the formula sheet, for a random variable x-bar, a sample mean, that's our statistic, here's the standard error. So you can pretty much put the formula together from the formula sheet.
+
+[03:11] So now that we have a test statistic, let's calculate a p-value. The p-value is the probability of obtaining a test statistic as extreme or more extreme than the observed test statistic when the null hypothesis and probability model are assumed to be true. For a one-sample t-test for a population mean, the p-value is calculated from a t-distribution with n minus 1 degrees of freedom.
+
+[03:40] So remember, our test statistic was 1.535 with a degrees of freedom of 19. Because we had a two-sided alternative, not equal to 15, we want to find the probability that t is less than or equal to negative 1.535 or greater than or equal to positive 1.535. That is, the probability in both tails added together, to be as extreme or more extreme as the value that we got in either direction. We could also shorten our work by finding the probability in one tail and then doubling it.
+
+[04:15] Here's a t-distribution with 19 degrees of freedom. And we've indicated the boundary values. And we can use technology to get a tail probability of 0.0706. And so when we double that, the p-value will be 0.1412.
+
+[04:34] Now, there are lots of different graphing calculators you can use to find a tail probability for a t-distribution, but here's one, this is the TI-84. You can find it in this menu. And we're filling in the boundaries here for the lower and upper values in the right tail, giving the degrees of freedom. And then we calculate that that probability in one tail is 0.0706.
+
+[05:03] You can also use a table to find the p-value. We use the t-distribution critical values, which is called Table B in AP Statistics. And find the degrees of freedom 19 and look at that row. Now, in a perfect world, you would find your t-statistic somewhere on that row, but that will almost never happen. You're going to have to find it trapped between two different values. So our 1.535 is between those two values right there. And if we look up at the top of the table, that means that the tail probability is somewhere between 0.05 and 0.10.
+
+[05:43] And so going back to our picture, each tail has probability between 0.05 and 0.10. And so the p-value is between two times 0.05 and two times 0.10, or between 0.10 and 0.20.
+
+[06:01] So let's practice with a different example. "I Can Go for Miles and Miles." A tire manufacturer must test its Tread40 tires to see if they last more than 40,000 miles on average. A quality control engineer selects a random sample of 35 tires and puts them on a machine that simulates driving conditions until the tread on the tire is 2/32 of an inch, when they must be replaced. The average mileage for the sample is 42,348 miles and a standard deviation of 2,140 miles. So let's calculate the standardized test statistic and the p-value.
+
+[06:41] So from previous videos, we know the hypotheses are mu equal 40,000 versus mu greater than 40,000. And mu is the true mean mileage for all Tread40 tires. And conditions are met. We've seen that in previous videos.
+
+[06:58] So from technology, we obtained these sample statistics. And if we plug them into our standardized test statistic formula, it's the sample mean minus 40,000, that's our hypothesized mean, divided by s over square root of 35. And that gives us 6.491. We have a degrees of freedom of 35 minus 1, or 34.
+
+[07:28] So now let's get the p-value. So we have a t-statistic of 6.491 with 34 degrees of freedom. Our alternative hypothesis was that mu is greater than 40,000, and so we want to find the probability that t is greater than or equal to 6.491. So because we have a "greater than" alternative, we want to find a "greater than or equal to" probability.
+
+[07:54] So we can draw the picture, mark our boundary value, and although you can't really see it, we've shaded the right tail, greater than 6.491. And technology will give us a p-value of about 9.99 times 10 to the negative 8 power, which is really small.
+
+[08:15] From Table B, we can get that the p-value is less than 0.0005. Now, how do we do that? Well, again, we look at the row for degrees of freedom. Now, we don't have 34, which is what we would require, so we use the highest degrees of freedom that's available on the table that's still less than our degrees of freedom that we require, so that would be 30. And again, we're looking for 6.491, and we don't see it all the way across. So we know that 6.491 must be greater than 3.646, which means that the tail probability is somewhere smaller than 0.0005.
+
+[09:01] So what should we take away from this video? How do we calculate an appropriate test statistic in a test for a population mean? Well, here's our test statistic formula. And that t-statistic will have an approximate t-distribution with n minus 1 degrees of freedom. And how do we calculate a p-value in a test for a population mean? We use a different probability value, or p-value, depending on which direction our alternative is pointing. So if we have a "greater than" alternative, we fin
+
+thumb_up
+thumb_down

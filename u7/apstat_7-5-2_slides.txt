@@ -1,0 +1,310 @@
+# Video 2 — Slide Descriptions
+# Unit 7, Lesson 5
+
+more_vert
+
+Here's a detailed description of the slides and visual transitions in the video:
+
+[00:00] — Intro Slide: Carrying Out a Test for a Population Mean
+
+Text: TOPIC 7.5 Carrying Out a Test for a Population Mean
+
+Sub-text: DAILY VIDEO 2: In this video, we will discuss how to interpret the p-value and state a conclusion for a significance test for a population mean.
+
+Graphic: A circle featuring an icon of a bell curve distribution with vertical lines. "AP Statistics" is printed in white beneath the graphic.
+
+Speaker: Doug Tyson appears in a small inset video in the top-right corner.
+
+[00:14] — Outline: What Will We Learn?
+
+How do we interpret the p-value in a test for a population mean?
+
+How do we state a conclusion for a significance test for a population mean?
+
+[00:28] — Transition Slide
+
+Text: LET'S LOOK AT AN EXAMPLE
+
+[00:32] — Example Slide: Got Hops?
+
+Text: An article on the internet claims that the average vertical jump for teens is 15 inches. Intrepid AP Statistics students at one large high school selected a random sample of 20 students and measured their vertical jumps. The students in the sample jumped an average of 15.8 inches, with a standard deviation of 2.33 inches. Do these data provide convincing evidence that the mean vertical jump for all students at this school differs from 15 inches?
+
+Table: Contains 20 data points: [11.5, 12.5, 13.25, 13.75, 13.75, 14.25, 14.5, 15.25, 15.25, 15.5, 15.75, 16.25, 16.5, 16.75, 17.0, 17.5, 18.5, 18.75, 19.0, 20.5].
+
+Graphic: An image of six silhouetted people jumping in front of a setting sun.
+
+[01:07] — Analysis: Got Hops?
+
+Hypotheses:
+
+𝐻
+0
+:
+𝜇
+=
+15
+H
+0
+	​
+
+:μ=15
+ inches
+
+𝐻
+𝑎
+:
+𝜇
+≠
+15
+H
+a
+	​
+
+:μ
+
+=15
+ inches
+
+Where 
+𝜇
+=
+μ=
+ the mean vertical jump for all students at this high school.
+
+Sample Statistics:
+
+𝑥
+ˉ
+=
+15.8
+,
+𝑠
+=
+2.33
+x
+ˉ
+=15.8,s=2.33
+
+𝑡
+=
+1.535
+t=1.535
+ with 
+𝑑
+𝑓
+=
+19
+df=19
+
+𝑝
+−
+𝑣
+𝑎
+𝑙
+𝑢
+𝑒
+=
+0.1412
+p−value=0.1412
+
+Definition: "The 
+𝑝
+p
+-value measures how likely it is to get evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ as strong as or stronger than the observed evidence by chance alone when 
+𝐻
+0
+H
+0
+	​
+
+ is true."
+
+[01:53] — Template: Interpreting a p-value
+
+General Template: Assuming 
+𝐻
+0
+H
+0
+	​
+
+ is true, there is a 
+<
+𝑝
+-
+𝑣
+𝑎
+𝑙
+𝑢
+𝑒
+>
+<p-value>
+ probability of getting a sample mean of 
+<
+𝑜
+𝑏
+𝑠
+𝑒
+𝑟
+𝑣
+𝑒
+𝑑
+ 
+𝑚
+𝑒
+𝑎
+𝑛
+>
+<observed mean>
+ or 
+<
+𝑔
+𝑟
+𝑒
+𝑎
+𝑡
+𝑒
+𝑟
+/
+𝑙
+𝑒
+𝑠
+𝑠
+/
+𝑚
+𝑜
+𝑟
+𝑒
+ 
+𝑑
+𝑖
+𝑓
+𝑓
+𝑒
+𝑟
+𝑒
+𝑛
+𝑡
+>
+<greater/less/more different>
+, by chance alone in the random sample (random assignment).
+
+Contextual Application: Assuming the mean vertical jump for all students in this high school is 15 inches, there is a 0.1412 probability of getting a sample mean vertical jump as extreme as or more extreme than 15.8 inches in either direction, by chance alone in a random sample of 20 students.
+
+Note: The text uses color-coding to link the template placeholders to the specific values in the example.
+
+[02:56] — Template: Stating a Conclusion
+
+Key Logic:
+
+Small 
+𝑝
+p
+-values 
+→
+→
+ test statistic is unlikely to occur by random chance alone.
+
+Large 
+𝑝
+p
+-values 
+→
+→
+ test statistic is likely to occur by random chance alone.
+
+[03:18] — Conclusion Scenarios
+
+Scenario 1 (Reject): Because the 
+𝑝
+p
+-value of ____ 
+≤
+𝛼
+=
+≤α=
+ ____, we reject 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context].
+
+Scenario 2 (Fail to Reject): Because the 
+𝑝
+p
+-value of ____ 
+>
+𝛼
+=
+>α=
+ ____, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. There is not convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context].
+
+[04:22] — Conclusion: Got Hops?
+
+Text: No significance level was stated in the vertical jump example, so we'll use 
+𝛼
+=
+0.05
+α=0.05
+, which is the most common significance level.
+
+Formal Conclusion: Because the 
+𝑝
+p
+-value of 
+0.1412
+>
+𝛼
+=
+0.05
+0.1412>α=0.05
+, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. There is not convincing statistical evidence that the mean vertical jump for all students at this school is different than 15 inches.
+
+[04:52] — Transition Slide
+
+Text: LET'S PRACTICE
+
+[04:55] — Practice Example: I Can Go for Miles and Miles
+
+Text: A tire manufacturer must te
+
+thumb_up
+thumb_down

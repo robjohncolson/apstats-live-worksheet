@@ -1,0 +1,205 @@
+# Video 3 — Slide Descriptions
+# Unit 7, Lesson 5
+
+more_vert
+
+Based on the video provided, here is a detailed description of each slide and visual change:
+
+[00:00] — Topic 7.5: Carrying Out a Test for a Population Mean
+
+Visuals: Title slide on a dark blue background.
+
+Text:
+
+TOPIC 7.5
+
+Carrying Out a Test for a Population Mean
+
+AP Statistics (next to a white line-art icon of a normal distribution curve with vertical bars).
+
+DAILY VIDEO 3
+
+"In this video, we will illustrate the entire process of performing a significance test for a population mean."
+
+Presenter: Doug Tyson is visible in a picture-in-picture window in the top right corner.
+
+[00:17] — What Will We Learn?
+
+Visuals: Bright blue transition slide with white text.
+
+Text: WHAT WILL WE LEARN?
+
+Next Frame (00:20): White background with a numbered list point.
+
+"1. How do we perform a complete significance test for a population mean?"
+
+College Board logo at the bottom left.
+
+[00:25] — Let's Look at an Example
+
+Visuals: Bright blue transition slide.
+
+Text: LET’S LOOK AT AN EXAMPLE
+
+[00:27] — Bakin’ Bacon! (Example Intro)
+
+Visuals: Light blue header. Text on a white background. An image of a package of "Hardwood Smoked Bacon" is on the right.
+
+Text:
+
+Doug likes his bacon crispy, but still tender. Bridget recommends that Doug try adding mango habanero seasoning to his bacon during frying because the sugar in the seasoning will caramelize, creating a crust that helps the bacon retain moisture.
+
+Additional Text (00:44):
+
+"To test this claim, Doug randomly assigned half of one package of bacon to be cooked without seasoning. The remaining half-package was seasoned with a mango habanero seasoning and cooked for the same length of time. After cooking, Doug measured the weight (in grams) of each half-package of cooked bacon to see if the seasoning helped the bacon retain its moisture. Then he repeated this process for 9 more packages. (Yum!)"
+
+[01:12] — Paired Data
+
+Visuals: A table showing the results of the experiment.
+
+Table Data:
+
+Columns: Package (1–10), Weight With Seasoning (grams), Weight Without Seasoning (grams).
+
+Data: (1: 278, 260), (2: 268, 238), (3: 271, 281), (4: 301, 306), (5: 256, 240), (6: 248, 244), (7: 240, 220), (8: 260, 252), (9: 286, 287), (10: 309, 294).
+
+Key Definition (01:28): "Because these data were produced from a matched pairs experiment, they are an example of paired data."
+
+Conceptual Note (01:45): "Matched pairs can be thought of as one sample of pairs."
+
+Calculation (01:49): A new column is added: "Difference in Weight (with – without)".
+
+Values: 18, 30, -10, -5, 16, 4, 20, 8, -1, 15.
+
+Instruction (02:14): "Once differences between pairs of values are found, compute the mean difference 
+𝑥
+ˉ
+𝑑
+x
+ˉ
+d
+	​
+
+."
+
+Stats from Technology (02:25):
+
+𝑥
+ˉ
+𝑑
+=
+9.5
+x
+ˉ
+d
+	​
+
+=9.5
+ grams
+
+𝑠
+𝑑
+=
+12.51
+s
+d
+	​
+
+=12.51
+ grams
+
+𝑛
+=
+10
+n=10
+
+Inference Note (02:42): "Inference (confidence intervals and significance tests) can be performed about 
+𝜇
+𝑑
+μ
+d
+	​
+
+ just as for a population mean."
+
+[02:56] — Bakin’ Bacon! (Setting Up the Test)
+
+Visuals: The original experiment text returns on the left. The table of 10 differences is shown on the right.
+
+Text Highlight: "Do these data give convincing evidence that the seasoning causes cooked bacon to retain more weight, on average...?"
+
+Hypotheses (03:17):
+
+𝐻
+0
+:
+𝜇
+𝑑
+=
+0
+H
+0
+	​
+
+:μ
+d
+	​
+
+=0
+ grams
+
+𝐻
+𝑎
+:
+𝜇
+𝑑
+>
+0
+H
+a
+	​
+
+:μ
+d
+	​
+
+>0
+ grams (highlighted in teal).
+
+Parameter Definition (04:06): "where 
+𝜇
+𝑑
+μ
+d
+	​
+
+ = the true mean difference in weight (with seasoning – without seasoning) for packages of cooked bacon like the ones in this study"
+
+Alpha Level (04:17): "No significance level is stated, so we’ll use 
+𝛼
+=
+0.05
+α=0.05
+."
+
+Procedure Name (04:26): One-sample t test for 
+𝜇
+𝑑
+μ
+d
+	​
+
+.
+
+Conditions (04:32):
+
+Half-packages were randomly assigned to be cooked with or without seasoning. (Checked)
+
+No 10% condition! (Not sampling from a population).
+
+The dotplot of differences shows no strong skewness or outliers. (Checked)
+
+**Graph (0
+
+thumb_up
+thumb_down

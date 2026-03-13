@@ -1,0 +1,246 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 5
+
+more_vert
+
+Below is a description of each slide and visual change in the video:
+
+[00:00] — TOPIC 7.5: Carrying Out a Test for a Population Mean
+
+Daily Video 1: Overview of calculating a test statistic and p-value for a population mean.
+
+Logo: AP Statistics (showing a bell curve inside a circle).
+
+Presenter: Doug Tyson.
+
+[00:16] — What Will We Learn?
+
+Topic 1: Calculating an appropriate test statistic for a population mean.
+
+Topic 2: Calculating a p-value for a population mean.
+
+[00:29] — Let's Look at an Example
+
+Transition slide with a blue background.
+
+[00:31] — Got Hops? (Problem Statement)
+
+Scenario: Claims the average vertical jump for teens is 15 inches.
+
+Sample Data: 
+𝑛
+=
+20
+n=20
+, 
+𝑥
+ˉ
+=
+15.8
+x
+ˉ
+=15.8
+ inches, 
+𝑠
+=
+2.33
+s=2.33
+ inches.
+
+Question: Does the data differ significantly from 15 inches?
+
+Visuals: A silhouette of people jumping and a table with 20 data points (11.5 to 20.5).
+
+[00:58] — Hypotheses and Conditions
+
+Null Hypothesis (
+𝐻
+0
+H
+0
+	​
+
+): 
+𝜇
+=
+15
+μ=15
+ inches.
+
+Alternative Hypothesis (
+𝐻
+𝑎
+H
+a
+	​
+
+): 
+𝜇
+≠
+15
+μ
+
+=15
+ inches (two-sided test).
+
+Parameter: 
+𝜇
+μ
+ = mean vertical jump for all students at the school.
+
+Status: "Conditions are met."
+
+[01:13] — Calculating a Test Statistic (Rationale)
+
+Evidence: The sample mean (15.8) is not equal to 15.
+
+Objective: Determine the probability of getting such evidence by chance if 
+𝐻
+0
+H
+0
+	​
+
+ is true.
+
+[01:44] — The General Formula
+
+Standardized Test Statistic: 
+=
+statistic
+−
+parameter
+standard error of the statistic
+=
+standard error of the statistic
+statistic−parameter
+	​
+
+
+[02:00] — One-Sample t-Test Formula
+
+Specific Formula: 
+𝑡
+=
+𝑥
+ˉ
+−
+𝜇
+𝑠
+/
+𝑛
+t=
+s/
+n
+	​
+
+x
+ˉ
+−μ
+	​
+
+
+Distribution: 
+𝑡
+t
+ distribution with degrees of freedom 
+𝑑
+𝑓
+=
+𝑛
+−
+1
+df=n−1
+.
+
+[02:18] — Calculating the t-Statistic
+
+Values: 
+𝑥
+ˉ
+=
+15.8
+x
+ˉ
+=15.8
+, 
+𝜇
+=
+15
+μ=15
+, 
+𝑠
+=
+2.33
+s=2.33
+, 
+𝑛
+=
+20
+n=20
+.
+
+Calculation: 
+𝑡
+=
+15.8
+−
+15
+2.33
+/
+20
+=
+1.535
+t=
+2.33/
+20
+	​
+
+15.8−15
+	​
+
+=1.535
+
+𝑑
+𝑓
+df
+: 
+20
+−
+1
+=
+19
+20−1=19
+.
+
+[02:41] — AP Statistics Formula Sheet
+
+Shows snippets from the official College Board formula sheet: "Sampling Distributions and Inferential Statistics."
+
+Highlights the generic formula and the table row for means where standard error is defined as 
+𝑠
+𝑥
+ˉ
+=
+𝑠
+𝑛
+s
+x
+ˉ
+	​
+
+=
+n
+	​
+
+s
+	​
+
+.
+
+[03:12] — Calculating a p-value
+
+Definition: The probability of observing a test statistic as extreme or more extreme than the
+
+thumb_up
+thumb_down
