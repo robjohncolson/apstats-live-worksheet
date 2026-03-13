@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-13T01:19:31.315Z",
-  "registryVersion": "58046362fbd7",
+  "generatedAt": "2026-03-13T02:49:35.443Z",
+  "registryVersion": "a48108bc7d7d",
   "lessons": {
     "6.10": {
       "topic": "Monday 3/16/26",
@@ -799,7 +799,7 @@
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html",
         "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l01-identify-evidence",
-        "quiz": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=8",
         "blooket": null
       },
       "status": "partial",
@@ -848,9 +848,9 @@
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson3_live.html",
         "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l12-interpret-ci",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=2",
-        "blooket": null
+        "blooket": "https://dashboard.blooket.com/set/69a665f28e7de9a574a989e5"
       },
-      "status": "partial",
+      "status": "ready",
       "periods": {
         "B": {
           "date": "2026-03-03",
@@ -896,9 +896,9 @@
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson5_live.html",
         "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l24-test-statistic",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=4",
-        "blooket": null
+        "blooket": "https://dashboard.blooket.com/set/69aa45856790eef16f71aebb"
       },
-      "status": "partial",
+      "status": "ready",
       "periods": {
         "B": {
           "date": "2026-03-06",
@@ -944,9 +944,9 @@
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson8_live.html",
         "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l44-identify-two-prop-ci",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=7",
-        "blooket": null
+        "blooket": "https://dashboard.blooket.com/set/69abad096790eef16f72126f"
       },
-      "status": "partial",
+      "status": "ready",
       "periods": {
         "B": {
           "date": "2026-03-12",
@@ -968,9 +968,9 @@
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson9_live.html",
         "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l49-interpret-two-prop-claim-interval",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=8",
-        "blooket": null
+        "blooket": "https://dashboard.blooket.com/set/69ac522756de72a066cbf492"
       },
-      "status": "partial",
+      "status": "ready",
       "periods": {
         "B": {
           "date": "2026-03-13",
@@ -1014,11 +1014,11 @@
       "topic": "Thursday 3/19/26",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html",
-        "drills": null,
-        "quiz": null,
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u7-mean-ci&level=l06-identify-evidence",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=11",
         "blooket": "https://dashboard.blooket.com/set/69aef69b0d5874349dbc4f74"
       },
-      "status": "partial",
+      "status": "ready",
       "periods": {
         "B": {
           "date": "2026-03-19",
