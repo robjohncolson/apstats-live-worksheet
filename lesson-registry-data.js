@@ -21,8 +21,13 @@ const LESSON_REGISTRY = {
       "drills": "done",
       "blooketCsv": "done",
       "blooketUpload": "done",
-      "animations": "skipped",
-      "schoology": "done"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "done",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.11": {
@@ -44,7 +49,12 @@ const LESSON_REGISTRY = {
       "blooketCsv": "done",
       "blooketUpload": "done",
       "animations": "done",
-      "schoology": "done"
+      "animationUpload": "pending",
+      "schoology": "done",
+      "schoologyVerified": "needs-reverify",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.7": {
@@ -65,8 +75,13 @@ const LESSON_REGISTRY = {
       "drills": "done",
       "blooketCsv": "done",
       "blooketUpload": "done",
-      "animations": "pending",
-      "schoology": "pending"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "pending",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "1.3": {
@@ -716,8 +731,13 @@ const LESSON_REGISTRY = {
       "drills": "done",
       "blooketCsv": "pending",
       "blooketUpload": "pending",
-      "animations": "pending",
-      "schoology": "scraped"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "scraped",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.2": {
@@ -737,8 +757,13 @@ const LESSON_REGISTRY = {
       "drills": "done",
       "blooketCsv": "pending",
       "blooketUpload": "pending",
-      "animations": "pending",
-      "schoology": "scraped"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "scraped",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.3": {
@@ -758,8 +783,13 @@ const LESSON_REGISTRY = {
       "drills": "done",
       "blooketCsv": "pending",
       "blooketUpload": "pending",
-      "animations": "pending",
-      "schoology": "scraped"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "scraped",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.4": {
@@ -770,7 +800,7 @@ const LESSON_REGISTRY = {
       "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l17-state-null",
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=3",
       "blooket": "https://dashboard.blooket.com/set/69b09491958376ccb01393d9",
-      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986218661",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987073401",
       "videos": [],
       "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896839"
     },
@@ -780,8 +810,13 @@ const LESSON_REGISTRY = {
       "drills": "done",
       "blooketCsv": "done",
       "blooketUpload": "done",
-      "animations": "failed",
-      "schoology": "done"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "done",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.5": {
@@ -800,10 +835,15 @@ const LESSON_REGISTRY = {
       "ingest": "pending",
       "worksheet": "done",
       "drills": "done",
-      "blooketCsv": "pending",
-      "blooketUpload": "pending",
-      "animations": "pending",
-      "schoology": "scraped"
+      "blooketCsv": "running",
+      "blooketUpload": "failed",
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "scraped",
+      "schoologyVerified": "needs-reverify",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.6": {
@@ -824,8 +864,13 @@ const LESSON_REGISTRY = {
       "drills": "done",
       "blooketCsv": "done",
       "blooketUpload": "done",
-      "animations": "pending",
-      "schoology": "scraped"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "scraped",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.8": {
@@ -841,13 +886,18 @@ const LESSON_REGISTRY = {
       "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896948"
     },
     "status": {
-      "ingest": "pending",
+      "ingest": "failed",
       "worksheet": "done",
       "drills": "done",
       "blooketCsv": "pending",
       "blooketUpload": "pending",
-      "animations": "pending",
-      "schoology": "scraped"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "scraped",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "6.9": {
@@ -863,13 +913,18 @@ const LESSON_REGISTRY = {
       "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896948"
     },
     "status": {
-      "ingest": "pending",
+      "ingest": "done",
       "worksheet": "done",
       "drills": "done",
-      "blooketCsv": "pending",
+      "blooketCsv": "running",
       "blooketUpload": "pending",
-      "animations": "pending",
-      "schoology": "scraped"
+      "animations": "done",
+      "animationUpload": "pending",
+      "schoology": "scraped",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   },
   "7.2": {
@@ -914,6 +969,37 @@ const LESSON_REGISTRY = {
       "blooketUpload": "done",
       "animations": "done",
       "schoology": "done"
+    }
+  },
+  "7.3": {
+    "unit": 7,
+    "lesson": 3,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson3_live.html",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u7-mean-ci&level=l11-interpret-interval",
+      "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=2",
+      "blooket": "https://dashboard.blooket.com/set/69b23ce2f54efd7ead71c8de",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987263209",
+      "videos": [
+        "https://apclassroom.collegeboard.org/d/b1ywa7d80z?sui=33,7",
+        "https://apclassroom.collegeboard.org/d/xk5a52ajgk?sui=33,7",
+        "https://apclassroom.collegeboard.org/d/lghtcfwy1x?sui=33,7"
+      ],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=987263235"
+    },
+    "status": {
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "pending",
+      "animationUpload": "pending",
+      "schoology": "done",
+      "schoologyVerified": "done",
+      "urlsGenerated": "pending",
+      "registryExported": "pending",
+      "committed": "pending"
     }
   }
 };
