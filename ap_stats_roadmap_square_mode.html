@@ -715,6 +715,31 @@
             background: var(--black);
             color: var(--white);
         }
+
+        /* Registry link icons */
+        .link-row { display:flex; gap:3px; justify-content:center; margin-top:2px; }
+        .link-row a {
+          display:inline-block; width:16px; height:16px; text-decoration:none;
+          font-size:11px; text-align:center; line-height:16px; opacity:0.7;
+          border-radius:3px;
+        }
+        .link-row a:hover { opacity:1; background:rgba(255,255,255,0.2); }
+
+        /* Status dots */
+        .status-dot {
+          position:absolute; bottom:3px; left:3px;
+          width:6px; height:6px; border-radius:50%;
+        }
+        .status-ready { background:#4caf50; }
+        .status-partial { background:#ff9800; }
+
+        /* Tooltip enhancements */
+        .tt-links { margin-top:4px; font-size:11px; }
+        .tt-links a { color:#90caf9; margin-right:6px; }
+        .tt-status { margin-top:4px; font-size:11px; font-weight:600; }
+        .tt-status.ready { color:#4caf50; }
+        .tt-status.partial { color:#ff9800; }
+        .tt-status.pending { color:#888; }
     </style>
 </head>
 <body>
@@ -920,8 +945,1103 @@
 <!-- ═══ Tooltip ═══ -->
 <div class="tip geneva" id="tip"></div>
 
-<script src="lesson-registry-data.js"></script>
 <script>
+/* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
+const BAKED_REGISTRY = {
+  "generatedAt": "2026-03-13T01:19:31.315Z",
+  "registryVersion": "58046362fbd7",
+  "lessons": {
+    "6.10": {
+      "topic": "Monday 3/16/26",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson10_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l17-hypotheses-610",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=9",
+        "blooket": "https://dashboard.blooket.com/set/69ad1cce0d5874349dbbf688"
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-03-16",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986721319",
+          "posted": true,
+          "verified": true
+        },
+        "E": {
+          "date": "2026-03-20",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896988",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.11": {
+      "topic": "Topic 6.11",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson11_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l21-test-statistic-611",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=10",
+        "blooket": "https://dashboard.blooket.com/set/69ade09c572efa156e0e3402"
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-03-17",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986588515",
+          "posted": true,
+          "verified": true
+        },
+        "E": {
+          "date": "2026-03-23",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986897040",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.7": {
+      "topic": "Topic 6.7",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson7_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l35-identify-error-type",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=6",
+        "blooket": "https://dashboard.blooket.com/set/69ab32e0d721c5ea7bb4c56e"
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-03-10",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986400679",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-16",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896908",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "1.3": {
+      "topic": "Topic 1.3",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson3_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=2",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=947992805",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "1.4": {
+      "topic": "Topic 1.4",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=3",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=947992805",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "1.5": {
+      "topic": "Topic 1.5",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson5_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=4",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=947992805",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "1.6": {
+      "topic": "Topic 1.6",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson6_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=5",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=947992805",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": false,
+          "verified": false
+        }
+      }
+    },
+    "1.7": {
+      "topic": "Topic 1.7",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=6",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=948168199",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "1.8": {
+      "topic": "Topic 1.8",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson8_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=7",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=949296571",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "1.9": {
+      "topic": "Topic 1.9",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson9_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=8",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=949903740",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "1.10": {
+      "topic": "Topic 1.10",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson10_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=9",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=950173574",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "2.1": {
+      "topic": "Topic 2.1",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson1_live.html",
+        "drills": null,
+        "quiz": null,
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=954330871",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "2.2": {
+      "topic": "Topic 2.2",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson2_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=1",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=954636359",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "2.3": {
+      "topic": "Topic 2.3",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson3_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=2",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=955309456",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "2.4": {
+      "topic": "Topic 2.4",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson4_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=3",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=957153701",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "2.5": {
+      "topic": "Topic 2.5",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson5_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=4",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=959200382",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "2.6": {
+      "topic": "Topic 2.6",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson6_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=5",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=960099957",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "2.7": {
+      "topic": "Topic 2.7",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson7_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=6",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=961457155",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "3.4": {
+      "topic": "Topic 3.4",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson4_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=3&l=3",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945312398/materials?f=986581863",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "3.5": {
+      "topic": "Topic 3.5",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson5_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=3&l=4",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=971289382",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "4.3": {
+      "topic": "Topic 4.3",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=4&l=2",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=976933461",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "4.6": {
+      "topic": "Topic 4.6",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson6_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=4&l=5",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=978369747",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "4.7": {
+      "topic": "Topic 4.7",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson7_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=4&l=6",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=979189351",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "4.8": {
+      "topic": "Topic 4.8",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson8_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=4&l=7",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=979189351",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "4.9": {
+      "topic": "Topic 4.9",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson9_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=4&l=8",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=979189351",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.1": {
+      "topic": "Topic 5.1",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson1_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l01-sample-variability",
+        "quiz": null,
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=980335378",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.2": {
+      "topic": "Topic 5.2",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson2_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l03-z-score-calc",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=1",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=980334396",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.3": {
+      "topic": "Topic 5.3",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson3_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l11-clt-concept",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=2",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=981293561",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.4": {
+      "topic": "Topic 5.4",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson4_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l16-point-estimate-terminology",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=3",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=981564763",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.5": {
+      "topic": "Topic 5.5",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson5_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l20-prop-dist-params",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=4",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=981770601",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.6": {
+      "topic": "Topic 5.6",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson6_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l25-diff-prop-params",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=5",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=982382766",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.7": {
+      "topic": "Topic 5.7",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson7_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l31-mean-dist-params",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=6",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=982382766",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "5.8": {
+      "topic": "Topic 5.8",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson8_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u5-sampling-dist&level=l36-diff-mean-params",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=5&l=7",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=984565607",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.1": {
+      "topic": "Topic 6.1",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l01-identify-evidence",
+        "quiz": null,
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-02",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=985196978",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-06",
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.2": {
+      "topic": "Topic 6.2",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l04-identify-procedure",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=1",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-02",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=985597961",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-06",
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.3": {
+      "topic": "Topic 6.3",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson3_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l12-interpret-ci",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=2",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-03",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=985937488",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-09",
+          "schoologyFolder": null,
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.4": {
+      "topic": "Wednesday 3/11/26",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson4_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l17-state-null",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=3",
+        "blooket": "https://dashboard.blooket.com/set/69b09491958376ccb01393d9"
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-03-05",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987073401",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-11",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896839",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.5": {
+      "topic": "Topic 6.5",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson5_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l24-test-statistic",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=4",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-06",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986218661",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-11",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896839",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.6": {
+      "topic": "Topic 6.6",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson6_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l29-compare-pvalue-alpha",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=5",
+        "blooket": "https://dashboard.blooket.com/set/69ab037ffb99ffa131a2e07d"
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-03-09",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986400679",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-13",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896878",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.8": {
+      "topic": "Thursday 3/12/26",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson8_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l44-identify-two-prop-ci",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=7",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-12",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986444841",
+          "posted": true,
+          "verified": true
+        },
+        "E": {
+          "date": "2026-03-18",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896948",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "6.9": {
+      "topic": "Friday 3/13/26",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson9_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u6-inference-prop&level=l49-interpret-two-prop-claim-interval",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=6&l=8",
+        "blooket": null
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-13",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986454317",
+          "posted": true,
+          "verified": true
+        },
+        "E": {
+          "date": "2026-03-18",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986896948",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "7.2": {
+      "topic": "Friday 3/20/26",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson2_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u7-mean-ci&level=l01-identify-procedure",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=1",
+        "blooket": "https://dashboard.blooket.com/set/69aee24b0d5874349dbc4469"
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-03-20",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986757072",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-25",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986897075",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "7.1": {
+      "topic": "Thursday 3/19/26",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html",
+        "drills": null,
+        "quiz": null,
+        "blooket": "https://dashboard.blooket.com/set/69aef69b0d5874349dbc4f74"
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-19",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=986796249",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-03-25",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=986897075",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "7.3": {
+      "topic": "Topic 7.3",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson3_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u7-mean-ci&level=l11-interpret-interval",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=2",
+        "blooket": "https://dashboard.blooket.com/set/69b23ce2f54efd7ead71c8de"
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-03-23",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987263209",
+          "posted": true,
+          "verified": true
+        },
+        "E": {
+          "date": "2026-03-27",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=987263235",
+          "posted": true,
+          "verified": true
+        }
+      }
+    }
+  }
+};
+let REGISTRY = BAKED_REGISTRY;
+
+async function loadRegistry() {
+  try {
+    const resp = await fetch('roadmap-data.json', { cache: 'no-cache' });
+    if (resp.ok) REGISTRY = await resp.json();
+  } catch(e) { /* use baked-in fallback */ }
+  rCal();
+  rProg();
+}
+
+function getRegistryEntry(topicKey) {
+  if (!REGISTRY || !REGISTRY.lessons) return null;
+  if (topicKey && topicKey.includes('+')) {
+    const keys = topicKey.split('+');
+    for (const k of keys) {
+      const e = REGISTRY.lessons[k];
+      if (e) return e;
+    }
+    return null;
+  }
+  return REGISTRY.lessons[topicKey] || null;
+}
+
+function getAllRegistryEntries(topicKey) {
+  if (!REGISTRY || !REGISTRY.lessons) return [];
+  if (topicKey && topicKey.includes('+')) {
+    return topicKey.split('+').map(k => REGISTRY.lessons[k]).filter(Boolean);
+  }
+  const e = REGISTRY.lessons[topicKey];
+  return e ? [e] : [];
+}
+
 /* ═══ SOUND ENGINE (Mac System 7-style synthesized sounds) ═══ */
 const SFX = {
     ctx: null,
@@ -1868,19 +2988,6 @@ function lookupTopic(topicCode) {
     return topicCode.replace('.', '-');
 }
 
-function lookupRegistry(topicCode) {
-    if (typeof LESSON_REGISTRY === 'undefined') return null;
-    if (!topicCode || topicCode === R) return null;
-    // Handle combined topics like "6.10+6.11" — return first match
-    if (topicCode.includes('+')) {
-        for (const t of topicCode.split('+').map(s => s.trim())) {
-            if (LESSON_REGISTRY[t]) return LESSON_REGISTRY[t];
-        }
-        return null;
-    }
-    return LESSON_REGISTRY[topicCode] || null;
-}
-
 function parseDueAssigned(text) {
     if (!text) return [];
     const results = [];
@@ -1950,32 +3057,27 @@ function showResourcePanel(inf, dateStr) {
             }
         }
 
-        // Registry links (from lesson-registry-data.js sidecar)
-        const regEntry = lookupRegistry(inf.t);
+        // Registry links (from roadmap-data.json)
+        const regEntry = getRegistryEntry(inf.t);
         if (regEntry && regEntry.urls) {
             const u = regEntry.urls;
-            const s = regEntry.status || {};
-            if (u.worksheet && s.worksheet === 'done') {
+            if (u.worksheet) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a></div>';
             }
-            if (u.drills && s.drills === 'done') {
+            if (u.drills) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.drills + '" target="_blank" style="color:#0000cc;text-decoration:underline">Practice Drills</a></div>';
             }
             if (u.quiz) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a></div>';
             }
-            if (u.blooket && s.blooketUpload === 'done') {
+            if (u.blooket) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" style="color:#0000cc;text-decoration:underline">Blooket Review</a></div>';
             }
-            if (u.videos && u.videos.length) {
-                u.videos.forEach(function(vid, i) {
-                    var driveUrl = 'https://drive.google.com/file/d/' + vid + '/view';
-                    lessonHtml += '<div style="margin:3px 0"><a href="' + driveUrl + '" target="_blank" style="color:#0000cc;text-decoration:underline">Google Drive Video ' + (i + 1) + '</a></div>';
-                });
-            }
-            if (u.schoologyFolder) {
-                var scUrl = (cP === 'E' && u.schoologyFolderE) ? u.schoologyFolderE : rewriteSchoologyUrl(u.schoologyFolder);
-                lessonHtml += '<div style="margin:3px 0"><a href="' + scUrl + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
+        }
+        if (regEntry && regEntry.periods) {
+            const pInfo = regEntry.periods[cP];
+            if (pInfo && pInfo.schoologyFolder) {
+                lessonHtml += '<div style="margin:3px 0"><a href="' + pInfo.schoologyFolder + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
             }
         }
 
@@ -4319,7 +5421,21 @@ function htm(i,ds){
     if(i===PO)return`<div class="dn">${ds}</div><div class="tl">Done!</div>`;
     if(i===NC||!i)return`<div class="dn" style="opacity:.4">${ds}</div>`;
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
-    return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>${i.db?'<span class="dbl">2x</span>':''}`;
+    let db=i.db?'<span class="dbl">2x</span>':'';
+    let linkHtml='';
+    const entries=getAllRegistryEntries(i.t);
+    for(const re of entries){
+        if(re.status==='pending')continue;
+        let icons='';
+        if(re.urls){
+            if(re.urls.worksheet)icons+='<a href="'+re.urls.worksheet+'" target="_blank" title="Worksheet" onclick="event.stopPropagation()">📄</a>';
+            if(re.urls.drills)icons+='<a href="'+re.urls.drills+'" target="_blank" title="Drills" onclick="event.stopPropagation()">🎯</a>';
+            if(re.urls.quiz)icons+='<a href="'+re.urls.quiz+'" target="_blank" title="Quiz" onclick="event.stopPropagation()">📝</a>';
+            if(re.urls.blooket)icons+='<a href="'+re.urls.blooket+'" target="_blank" title="Blooket" onclick="event.stopPropagation()">🟦</a>';
+        }
+        if(icons)linkHtml+='<div class="link-row">'+icons+'</div>';
+    }
+    return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+db+linkHtml;
 }
 function rCal(){
     const t=tdy(),g=document.getElementById("cg");g.innerHTML="";
@@ -4340,6 +5456,18 @@ function rCal(){
             c.classList.add(cls(inf));c.innerHTML=htm(inf,ds);
             if(eq(dt,t))c.classList.add("cell-today");
             if(dt<t&&!eq(dt,t))c.classList.add("cell-past");
+            if (typeof inf === 'object' && inf.t) {
+              const allEntries = getAllRegistryEntries(inf.t);
+              if (allEntries.length) {
+                const worst = allEntries.some(e => e.status === 'partial') ? 'partial'
+                  : allEntries.every(e => e.status === 'ready') ? 'ready' : null;
+                if (worst) {
+                  c.style.position = 'relative';
+                  const dotClass = worst === 'ready' ? 'status-ready' : 'status-partial';
+                  c.insertAdjacentHTML('beforeend', '<span class="status-dot ' + dotClass + '"></span>');
+                }
+              }
+            }
             c.onmouseenter=(ev)=>sTip(ev,dt,inf,ds);c.onmouseleave=hTip;c.onmousemove=mTip;
             if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){c.style.cursor='pointer';c.onclick=()=>{hTip();showResourcePanel(inf,ds);};}
             r.appendChild(c);
@@ -4381,7 +5509,24 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
     else if(inf===PO)h+='<div class="tp">Post-exam</div>';
     else{h+=inf.t===R?`<div class="tp">${inf.n}</div>`:`<div class="tp">${inf.t} \u2014 ${inf.n}</div>`;
         if(inf.due)h+=`<div class="th">Due: ${inf.due}</div>`;if(inf.as)h+=`<div class="th">Assign: ${inf.as}</div>`;
-        if(inf.db)h+='<div class="th">** Double topic day **</div>';}
+        if(inf.db)h+='<div class="th">** Double topic day **</div>';
+        const re=getRegistryEntry(inf.t);
+        if(re){
+            let links='';
+            if(re.urls){
+                if(re.urls.worksheet)links+='<a href="'+re.urls.worksheet+'" target="_blank">📄 Worksheet</a>';
+                if(re.urls.drills)links+='<a href="'+re.urls.drills+'" target="_blank">🎯 Drills</a>';
+                if(re.urls.quiz)links+='<a href="'+re.urls.quiz+'" target="_blank">📝 Quiz</a>';
+                if(re.urls.blooket)links+='<a href="'+re.urls.blooket+'" target="_blank">🟦 Blooket</a>';
+            }
+            if(links)h+='<div class="tt-links">'+links+'</div>';
+            const statusText=re.status==='ready'?'Ready ✓':re.status==='partial'?'Partial ◐':'Pending ○';
+            h+='<div class="tt-status '+(re.status||'pending')+'">'+statusText+'</div>';
+            if(re.periods&&re.periods[cP]&&re.periods[cP].schoologyFolder){
+                h+='<div class="tt-links"><a href="'+re.periods[cP].schoologyFolder+'" target="_blank">📁 Schoology Folder</a></div>';
+            }
+        }
+    }
     tip.innerHTML=h;tip.style.display="block";}
 function mTip(e){tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY+12)+"px";}
 function hTip(){tip.style.display="none";}
@@ -4389,6 +5534,7 @@ function hTip(){tip.style.display="none";}
 /* ═══ INIT ═══ */
 uClock();setInterval(uClock,15e3);
 rCD();rCal();rProg();updateViewMenu();
+loadRegistry();
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
 /* ── Boot Dismissal (click-to-start after progress bar) ── */
