@@ -1,0 +1,55 @@
+# Video 2 — Slide Descriptions
+# Unit 7, Lesson 7
+
+more_vert
+
+[00:00] — Title Slide
+The slide displays the AP Daily logo and the title: "Justifying a Claim Based on a Confidence Interval for a Difference of Population Means." The presenter's name, Anna Matamoros, and her school, John H. Guyer High School in Denton, TX, are shown below.
+
+[00:09] — What are we going to learn?
+The slide lists two learning objectives as bullet points:
+
+Interpret a confidence interval for a difference in means
+
+Justify a claim based on a confidence interval for a difference in means
+
+[00:20] — Example: Argiope Spiders (Context)
+The slide provides background context: "A group of researchers collected data on Argiope spiders to investigate the differences between male and female spiders. For this study, the researchers collected a random sample of 15 female spiders and a random sample of 15 male spiders. They measured the body lengths of the spiders in millimeters." A picture of a spider web with a large female and small male spider is visible in the background.
+
+[00:34] — Example: Argiope Spiders (Data and Task)
+A data table is shown comparing Female and Male spiders:
+
+n: Female = 15, Male = 15
+
+Mean: Female = 14.933, Male = 4.887
+
+St. Dev: Female = 3.235, Male = 1.488
+Below the table, the task is stated: "Calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male spiders." A blue box highlights the word "interpret".
+
+[00:48] — Interpreting a Confidence Interval (General)
+The slide shows a general template for interpreting confidence intervals: "In general: 'We are C% confident that the interval from [lower bound] to [upper bound] captures the [value to be estimated].'"
+
+[01:07] — Example: Argiope Spiders (Specific Interpretation)
+The slide applies the general template to the spider example.
+First, it notes: "From Topic 7.6 Video 2, the 95% confidence interval for the difference, female - male, in the mean body length of female and male Argiope spiders is: (7.956 mm, 12.129 mm)".
+Then it provides the interpretation: "We are 95% confident that the interval from 7.956 to 12.129 millimeters captures the difference, female – male, in the true mean body lengths of all female and male Argiope spiders." A blue box highlights the phrase "difference, female – male" to emphasize the direction of subtraction.
+
+[01:46] — Interpreting a Confidence Interval (Alternate)
+The slide shows an "Alternate Interpretation" for the spider data: "I am 95% confident that the true mean body length of all female Argiope spiders is between 7.956 and 12.129 millimeters larger than the mean body length of all male Argiope spiders." The words "larger than" are bolded in blue.
+
+[02:04] — Example: Argiope Spiders (Reversed Subtraction)
+The slide explains what happens if the order of subtraction changes: "If we estimate the difference in the mean body lengths by subtracting in the opposite order, male - female, the 95% confidence interval is: (-12.129 mm, -7.956 mm)".
+Below, the interpretation is adjusted: "I am 95% confident that the true mean body length of all male Argiope spiders is between 7.956 and 12.129 millimeters smaller than the mean body length of all female Argiope spiders." The words "smaller than" are bolded in blue.
+
+[02:46] — Interpreting a Confidence Interval (Incorrect Interpretation 1)
+The slide details an incorrect interpretation: "We are 95% confident that the interval from 7.956 to 12.129 millimeters captures the difference, female – male, in the mean body lengths of these Argiope spiders." The word "these" is bolded red, and a red box appears pointing to it, stating: "Refers to the samples instead of the parameter".
+
+[03:22] — Interpreting a Confidence Interval (Incorrect Interpretation 2)
+A second incorrect interpretation is shown: "There is a 95% chance that the interval from 7.956 to 12.129 millimeters captures the difference, female – male, in the true mean body lengths of female and male Argiope spiders." The word "chance" is bolded red, and a red box points to it, stating: "Confidence level is not a probability of capturing the population parameter".
+
+[03:54] — Justifying a Claim (Context)
+The slide outlines a hypothesis from the researchers: "The researchers in this study hypothesize that male spiders tend to be smaller than female spiders so that they can maneuver around webs and habitats faster against the effects of gravity. This makes finding a mate easier."
+It continues with a question: "To further study this phenomenon, they wish to identify various spider species where the females are larger than the males on average. Is there convincing evidence that Argiope spiders should be
+
+thumb_up
+thumb_down

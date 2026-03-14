@@ -1,0 +1,142 @@
+# Video 3 — Transcript
+# Unit 7, Lesson 7
+
+edit
+more_vert
+
+[00:00] AP Statistics. My name is Mrs. Matamoros,
+
+[00:03] and in this video we're going to look at an entire confidence interval procedure for a difference in means.
+
+[00:09] So what are we going to learn?
+
+[00:11] How do we construct and interpret a confidence interval for a difference in means?
+
+[00:16] Okay, so we're going to be doing an AP problem, and so here are some pointers that I want you to think about.
+
+[00:20] First, I want you to read the entire question, including all the parts, for understanding,
+
+[00:26] because it's going to be a lot to read a lot of times.
+
+[00:30] Then I want you to reread the question, this time for details, and I want you to annotate important items.
+
+[00:38] Next, I want you to make sure to answer the question that's asked.
+
+[00:41] If a later part of the question asks you to answer based on a previous part that you've already answered, make sure that you address it in the appropriate part.
+
+[00:50] Lastly, you must communicate clearly. You have to define any subscripts you use, and don't forget context.
+
+[01:00] All right, so let's practice.
+
+[01:02] This is the 2009 Question 4. I'd like for you to pause the video and read through,
+
+[01:08] then read through a second time to get the important information.
+
+[01:15] Great. So, here are the important items from this question.
+
+[01:19] We have two fire stations. That means we have two samples: one from the northern half, one from the southern half.
+
+[01:26] And the claim is that the council members believe the two fire stations have different mean response times.
+
+[01:33] We have a random sample of 50 calls from the northern fire station with a mean of 4.3 minutes, standard deviation of 3.7 minutes.
+
+[01:42] We also have a random sample of 50 calls from the southern fire station with a mean of 5.3, standard deviation of 3.2 minutes.
+
+[01:53] Okay, so part a, we're asked to construct and interpret a 95 percent confidence interval
+
+[01:58] for the difference in mean response times between the two fire stations.
+
+[02:02] So let's identify our parameters. We've got mu sub N, which is the mean response time for calls from the northern fire station,
+
+[02:09] and mu sub S is going to be the mean response time for calls from the southern fire station.
+
+[02:14] We have a 2-sample t-interval for a difference in population means between the northern and southern fire station.
+
+[02:22] So we have our formula as well.
+
+[02:25] Now, I don't recommend writing the formula on the AP exam because as soon as you miss one thing in the formula, then you can get docked down to partial credit.
+
+[02:35] So for the conditions next, we have a random sample of 50 calls from the northern fire station.
+
+[02:40] We also have a random sample of 50 calls from the southern fire station. Great.
+
+[02:45] First one checks off.
+
+[02:47] Second, 50 calls are likely less than or equal to 10% of all calls from the northern fire station.
+
+[02:54] Likewise, 50 calls are likely less than or equal to 10% of all calls from the southern fire station.
+
+[03:00] Condition number two checks off.
+
+[03:03] For the last one, we have sample sizes that are 50, which is greater than 30.
+
+[03:07] That means both samples are large enough that the sampling distribution of the difference in sample means is approximately normal according to the Central Limit Theorem. Yes.
+
+[03:17] All right, for the mechanics. This is the math part.
+
+[03:21] We're going to go straight to the calculator so it can do all the work for us, and we're going to go to 2-SampTInt in the STAT TESTS menu.
+
+[03:28] We type in the Stats. We don't have Data this time, we have Stats. Remember not to Pool your samples.
+
+[03:36] And we'll get our results.
+
+[03:39] Now if we wanted to plug into the formula, we would have the difference of our sample means, plus or minus our t critical value which we'll have to find in a second,
+
+[03:47] and then we'd plug in the remaining values to the standard error formula.
+
+[03:52] But on the AP exam remember, you don't have to plug into the formula. You could just write down your interval and the degrees of freedom.
+
+[04:00] If we wanted to go back to find our t critical value, we would plug in our 96 degrees of freedom along with our bottom tail percent of 2.5%
+
+[04:08] or .025 to get our critical value of -1.985.
+
+[04:16] Perfect. So our interpretation now is that I am 95% confident that the difference in the population mean response times for the two fire stations,
+
+[04:25] the northern minus the southern, is between -2.37 minutes and 0.37 minutes.
+
+[04:34] And part b, it asks, "Does the confidence interval in part (a) support the council member's belief that the two fire stations have different mean response times?" Don't forget to explain.
+
+[04:44] So from part a, our 95% confidence interval is -2.37 to 0.37.
+
+[04:52] So since 0 is within the interval, it's a plausible value for the difference in the mean response times.
+
+[04:58] Therefore, this confidence interval does not support the council member's belief that there's a difference in the mean response times for the two fire stations.
+
+[05:06] Okay, an important note here: do not say the council member is wrong! That would be incorrect.
+
+[05:12] All right, so for scoring. Section 1, we had to identify the appropriate confidence interval by name or formula and check the appropriate conditions, which we did.
+
+[05:23] Section 2, show a correct confidence interval, either by displaying the numbers in the formula or by writing the numerical interval.
+
+[05:30] And Section 3, give a correct interpretation of the interval in context.
+
+[05:36] Section 4, we had to make a correct conclusion in context, supported by the fact that 0 is contained within the 95% confidence interval.
+
+[05:45] So sometimes you're asked to interpret the confidence LEVEL instead of the confidence interval.
+
+[05:51] Suppose this AP exam question had a part c: "Interpret the meaning of the 95% confidence level for this interval."
+
+[06:00] Well, it'd be something like this: If all possible random samples of 50 calls from each fire station were selected,
+
+[06:07] and a 95% confidence interval was constructed from each pair of samples, then 95% of these intervals would succeed in capturing the difference,
+
+[06:14] northern minus southern, in the mean response times for calls from the two fire stations.
+
+[06:23] So what should we take away?
+
+[06:26] How do we construct and interpret a confidence interval for a difference in means?
+
+[06:30] Be sure to: define the difference in means you're trying to estimate.
+
+[06:34] That means indicating the direction of your difference and defining any subscripts you use.
+
+[06:40] You must identify the procedure you're using, and verify the conditions for the procedure are met,
+
+[06:47] calculate your confidence interval,
+
+[06:50] and interpret the interval in context.
+
+[06:53] Thanks for tuning in! I'll check you out in the next video.
+
+thumb_up
+thumb_down

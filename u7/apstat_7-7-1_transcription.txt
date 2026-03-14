@@ -1,0 +1,27 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 7
+
+more_vert
+
+[00:00] AP Statistics students. My name is Mrs. Matamoros from Guyer High School in Denton, Texas. Today we're going to talk about justifying a claim with a confidence interval for a difference in means. So what are we going to learn? How do we interpret a confidence interval for a difference in means? And how do we justify a claim based on a confidence interval for a difference in means?
+
+[00:23] So let's look at an example. They just won't go away. So we've got the spiders coming back, and if you still haven't seen some of the prior videos, go ahead and pause so you can read for the context.
+
+[00:35] Great. Let's keep going. We do have our data for the female and male spider body lengths. We're asked to calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male spiders. So here we go. In general, here is how to interpret a confidence interval for a population parameter. This goes for any confidence interval. We are C% confident that the interval from the lower bound to the upper bound captures the value to be estimated.
+
+[01:07] So from Topic 7.6 Video 2, the 95% confidence interval for the Argiope spiders example was 7.956 millimeters to 12.129 millimeters. So if we put that into this model statement, we have, we are 95% confident that the interval from 7.956 to 12.129 millimeters captures the difference, female minus male, in the true mean body lengths of all female and male Argiope spiders. Do not forget to include the direction that you subtract in your interpretation.
+
+[01:45] All right, so an alternate interpretation that some people like better is I am 95% confident that the true mean body lengths of all female Argiope spiders is between 7.956 and 12.129 millimeters larger than the mean body length of all male Argiope spiders. So if we estimate the difference in the mean body lengths by subtracting in the opposite order, male minus female, the 95% confidence interval would be the same values just negated. And some people get scared because they think they typed something into the calculator wrong. That's maybe not the case, it's just that that's the order of the subtraction. But it can still be correct as long as you interpret it correctly.
+
+[02:29] In this case it would be, I am 95% confident that the true mean body length of all male Argiope spiders is between 7.956 and 12.129 millimeters smaller than the mean body length of all female Argiope spiders. So here are some incorrect interpretations that you want to be careful of. One, we are 95% confident that the interval from 7.956 to 12.129 millimeters captures the difference, female minus male, in the mean body lengths of these Argiope spiders. It sounds okay at first until you notice the word these. Now, the problem with that is it's referring to the samples instead of the parameter. We don't need to estimate something about the samples. We know everything about the samples. It's the parameter that we're trying to estimate.
+
+[03:22] Second incorrect interpretation. There is a 95% chance that the interval from 7.956 to 12.129 millimeters captures the difference, female minus male, in the true mean body lengths of female and male Argiope spiders. Now, the problem with that one is that it's a chance. The confidence level of 95% is not a probability of capturing the population parameter. In fact, any confidence interval either includes the parameter of interest or it does not include the parameter.
+
+[03:55] So how do we justify a claim? The researchers in this study hypothesize that male spiders tend to be smaller than female spiders so that they can maneuver around the webs and habitats faster against the effects of gravity. This makes finding a mate easier. To further study this phenomenon, they wish to identify various spider species where the females are larger than the males on average. Is there convincing evidence that Argiope spiders should be included in this follow-up study? All right. So if the female and male Argiope spiders were equal in size, then the difference in their mean body lengths would be zero.
+
+[04:35] But because zero is not on our 95% confidence interval from 7.956 to 12.129, zero is not a plausible value for the difference in the population mean body lengths of the female and the male spiders. Therefore, we DO have convincing evidence that the female Argiope spiders have significantly larger body lengths than males, on average. Argiope spiders then should be included in the follow-up study.
+
+[05:03] So let's practice. I'd like for you to pause the video and read through this question and see if you can identify a conclusion that the restaurant manager can make. So let's look at which conclusion is correct. A, the manager should be 95% confident that the mean food temperature in the eight foam containers is between 3.2 degrees Fahrenheit and 9.3 degrees Fahrenheit higher than the mean food temp
+
+thumb_up
+thumb_down

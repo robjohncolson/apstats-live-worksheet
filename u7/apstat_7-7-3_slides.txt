@@ -1,0 +1,100 @@
+# Video 3 — Slide Descriptions
+# Unit 7, Lesson 7
+
+more_vert
+
+Here is a detailed description of each slide and visual change in the video:
+
+[00:00] — AP Statistics
+The slide has a dark background with an orange and yellow sunburst graphic. Text on screen reads: "AP Statistics", "Mrs. Matamoros", and "Belen Jesuit Preparatory School".
+
+[00:09] — What are we going to learn?
+The background remains dark. The title "What are we going to learn?" is at the top. Below, a yellow banner contains the text: "Constructing and Interpreting a Confidence Interval for a Difference in Means".
+
+[00:16] — AP Problem Pointers
+The slide lists several tips for solving AP problems, which appear as the speaker mentions them:
+
+Read the entire question (including all parts) for understanding.
+
+Read the question a second time for details. Annotate important items.
+
+Answer the question that is asked.
+
+Communicate clearly:
+
+Define any subscripts you use.
+
+Context, context, context.
+
+[01:00] — Let's Practice!
+The full text for the 2009 AP Exam Question 4 is displayed:
+"A council member of a large city was concerned about the time it took for fire engines to respond to calls sent to the single fire station in the city. The city council used a 95 percent confidence interval to estimate the mean response time, in minutes, for a random sample of fire calls. As a result of this interval, the city council decided to build a second fire station in the city. The two fire stations are located on opposite sides of the city—one in the northern half and the other in the southern half.
+
+The council member wants to know if the two fire stations have different mean response times. A random sample of 50 calls is selected from the northern fire station, and the time it takes a fire engine to respond to each call is recorded. The mean and standard deviation of these 50 response times are 4.3 minutes and 3.7 minutes, respectively. A random sample of 50 calls is also selected from the southern fire station, and the time it takes a fire engine to respond to each call is recorded. The mean and standard deviation of these 50 response times are 5.3 minutes and 3.2 minutes, respectively.
+
+(a) Construct and interpret a 95 percent confidence interval for the difference in mean response times between the two fire stations.
+(b) Does the confidence interval in part (a) support the council member's belief that the two fire stations have different mean response times? Explain."
+
+[01:16] — Let's Practice! (Annotated)
+The same text is shown, but key details are highlighted with yellow boxes:
+
+"two fire stations"
+
+"northern half and the other in the southern half"
+
+"two fire stations have different mean response times"
+
+"random sample of 50 calls... northern fire station... mean... 4.3 minutes and standard deviation... 3.7 minutes"
+
+"random sample of 50 calls... southern fire station... mean... 5.3 minutes and standard deviation... 3.2 minutes"
+
+[01:54] — Part (a)
+The text for part (a) is at the top. The slide defines the parameters and the procedure:
+"μ_N = the mean response time for calls from the northern fire station"
+"μ_S = the mean response time for calls from the southern fire station"
+"2-sample t-interval for a difference in population means between the northern and southern fire station."
+A box containing the formula "(x̄_1 - x̄_2) ± t* √(s_1²/n_1 + s_2²/n_2)" appears. A red crossed-out circle is drawn over it, accompanied by the text "Don't recommend", warning students against writing out the raw formula.
+
+[02:35] — Conditions
+Three condition checks are listed, each receiving a green checkmark as the speaker verifies them:
+
+"Random samples of 50 calls from the northern fire station and 50 calls from the southern fire station."
+
+"50 calls ≤ 10% of all calls from the northern fire station AND 50 calls ≤ 10% of all calls from the southern fire station."
+
+"Both samples are large enough (n_N = 50 > 30, n_S = 50 > 30) that the sampling distribution of the difference in sample means is approximately normal according to the Central Limit Theorem."
+
+[03:18] — Mechanics
+Two screenshots from a TI-84 calculator are shown.
+The left screen shows the "2-SampTInt" input menu: "Inpt: Stats", "x̄1: 4.3", "Sx1: 3.7", "n1: 50", "x̄2: 5.3", "Sx2: 3.2", "n2: 50", "C-Level: .95", "Pooled: No".
+The right screen shows the calculated output: "(-2.373, .37344)", "df=96.00943632", "x̄1=4.3", "x̄2=5.3", "Sx1=3.7", "Sx2=3.2".
+Below the screenshots, the mathematical steps are written out:
+"x̄_N - x̄_S = 4.3 - 5.3 = -1.0"
+"-1.0 ± 1.985 √(3.7²/50 + 3.2²/50)"
+"(-2.373, 0.373)"
+"df = 96.0 (calculated by TI-84)"
+A separate calculation line shows how to find the critical t-value: "invT(0.025, 96) = -1.985".
+
+[04:17] — Interpretation
+The slide provides the final written interpretation for part (a):
+"I am 95% confident that the difference in the population mean response times for the two fire stations (northern - southern) is between -2.37 minutes and 0.37 minutes."
+
+[04:35] — Part (b)
+The text for part (b) is at the top. The slide answers the question based on the calculated interval:
+"95% CI: (-2.37, 0.37)"
+"Since 0 is within the interval, it is a plausible value for the difference in the mean response times."
+"Therefore, this confidence interval does not support the council member's belief that there is a difference in the mean response times for the two fire stations."
+A highlighted yellow box emphasizes: "DO NOT say that the council member is wrong."
+
+[05:13] — Scoring
+The slide outlines a four-section scoring rubric. A green checkmark appears next to each section:
+"Section 1: Identifies the appropriate confidence interval by name or formula and checks appropriate conditions."
+"Section 2: Shows a correct confidence interval, either by displaying the numbers in the formula or by writing the numerical interval."
+"Section 3: Gives a correct interpretation of the interval in context."
+"Section 4: Makes a correct conclusion in context, supported by the fact that 0 is contained within the 95% confidence interval."
+
+[05:44] — What if...
+The slide poses a hypothetical scenario: "Suppose this AP Exam q
+
+thumb_up
+thumb_down

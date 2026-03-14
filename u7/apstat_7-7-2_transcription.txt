@@ -1,0 +1,77 @@
+# Video 2 — Transcript
+# Unit 7, Lesson 7
+
+more_vert
+
+[00:00] Statistics students, my name is Mrs. Matamoros from Guyer High School in Denton, Texas. Today we're gonna talk about justifying a claim with a confidence interval for a difference in means.
+
+[00:10] So what are we gonna learn? How do we interpret a confidence interval for a difference in means? And how do we justify a claim based on a confidence interval for a difference in means?
+
+[00:21] So let's look at an example. They just won't go away. So we've got the spiders coming back, and if you still haven't seen some of the prior videos, go ahead and pause so you can read for the context.
+
+[00:34] Great, let's keep going. We do have our data for the female and male spider body lengths. We're asked to calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male spiders.
+
+[00:48] So here we go. In general, here is how to interpret a confidence interval for a population parameter. This goes for any confidence interval. We are C% confident that the interval from the lower bound to the upper bound captures the value to be estimated.
+
+[01:07] So from topic 7.6 video two, the 95% confidence interval for the Argiope spiders example was 7.956 mm to 12.129 mm.
+
+[01:20] So if we put that into this model statement, we have, we are 95% confident that the interval from 7.956 to 12.129 millimeters captures the difference, female minus male, in the true mean body lengths of all female and male Argiope spiders.
+
+[01:39] Do not forget to include the direction that you subtract in your interpretation.
+
+[01:46] Alright, so an alternate interpretation that some people like better is, I am 95% confident that the true mean body length of all female Argiope spiders is between 7.956 and 12.129 millimeters larger than the mean body length of all male Argiope spiders.
+
+[02:05] So if we estimate the difference in the mean body lengths by subtracting in the opposite order, male minus female, the 95% confidence interval would be the same values just negated.
+
+[02:18] And some people get scared because they think they typed something into the calculator wrong. That's maybe not the case, it's just that that's the order of the subtraction.
+
+[02:26] But it can still be correct as long as you interpret it correctly. In this case, it would be, I'm 95% confident that the true mean body length of all male Argiope spiders is between 7.956 and 12.129 millimeters smaller than the mean body length of all female Argiope spiders.
+
+[02:46] So here are some incorrect interpretations that you want to be careful of. One, we are 95% confident that the interval from 7.956 to 12.129 millimeters captures the difference, female minus male, in the mean body lengths of these Argiope spiders.
+
+[03:04] It sounds okay at first until you notice the word 'these'. Now the problem with that is it's referring to the samples instead of the parameter.
+
+[03:14] We don't need to estimate something about the samples. We know everything about the samples. It's the parameter that we're trying to estimate.
+
+[03:22] Second incorrect interpretation. There is a 95% chance that the interval from 7.956 to 12.129 millimeters captures the difference, female minus male, in the true mean body lengths of female and male Argiope spiders.
+
+[03:37] Now the problem with that one is that it's a chance. The confidence level of 95% is not a probability of capturing the population parameter.
+
+[03:47] In fact, any confidence interval either includes the parameter of interest or it does not include the parameter.
+
+[03:55] So how do we justify a claim? The researchers in this study hypothesize that male spiders tend to be smaller than female spiders so that they can maneuver around the webs and habitats faster against the effects of gravity.
+
+[04:09] This makes finding a mate easier. So to further study this phenomenon, they wish to identify various spider species where the females are larger than the males on average.
+
+[04:19] Is there convincing evidence that Argiope spiders should be included in this follow-up study?
+
+[04:25] Alright, so if the female and male Argiope spiders were equal in size, then the difference in their mean body lengths would be zero.
+
+[04:35] But because zero is not on our 95% confidence interval, from 7.956 to 12.129, zero is not a plausible value for the difference in the population mean body lengths of the female and male spiders.
+
+[04:50] Therefore, we do have convincing evidence that the female Argiope spiders have significantly larger body lengths than males on average. Argiope spiders then should be included in the follow-up study.
+
+[05:03] So let's practice. I'd like for you to pause the video and read through this question and see if you can identify a conclusion that the restaurant manager can make.
+
+[05:15] So let's look at which conclusion is correct. A, the manager should be 95% confident that the mean food temperature in the eight foam containers is between 3.2 degrees Fahrenheit and 9.3 degrees Fahrenheit higher than the mean food temperature in the eight plastic containers.
+
+[05:31] Wait a second, in the eight containers? Well, we know everything about the containers, that's the sample. So that's not correct. Our confidence interval should never be interpreted about the statistics, it's about the parameter.
+
+[05:44] B, the manager should be 95% confident that the interval from -9.3 degrees Fahrenheit to 3.2 degrees Fahrenheit captures the true difference in mean internal temperatures of food in foam and plastic containers. Hey, that sounds like it's it.
+
+[06:01] But let's keep reading just to make sure. C, the manager should switch to the plastic containers because 95% of them helped the food maintain heat better than the foam containers.
+
+[06:11] Nope, 95% confidence level is not the same thing as 95% of them helped the food maintain the heat. D, since zero is not on the interval... Uh, wait a sec, zero is on the interval. So I can stop reading on answer choice D.
+
+[06:30] And E, well since zero is on the interval, that means it's plausible that there is no difference between the foam and plastic containers and the difference in the mean food temperatures.
+
+[06:42] So it's not E. That means correct answer choice is B.
+
+[06:49] So what should we take away? How do we interpret a confidence interval for a difference in means?
+
+[06:55] In general, we are C% confident that the interval from the lower bound to the upper bound captures the value that we're estimating.
+
+[07:03] And how do we justify a claim based on a confidence interval? If all the values in the confidence interval are consis
+
+thumb_up
+thumb_down

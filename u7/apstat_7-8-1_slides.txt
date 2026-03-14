@@ -1,0 +1,94 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 8
+
+more_vert
+
+[00:00] — Title Slide
+The slide reads "TOPIC 7.8 Setting Up a Test for the Difference of Two Population Means". The presenter, Mrs. Matamoros, is visible in a small window in the top right corner. The AP Statistics logo is on the left.
+
+[00:10] — What Will We Learn?
+A slide showing two main objectives:
+
+How do we state a null hypothesis in a test for a difference in means?
+
+How do we state an alternative hypothesis in a test for a difference in means?
+
+[00:21] — Transition Slide
+A blue slide with the text "LET'S LOOK AT AN EXAMPLE".
+
+[00:23] — Video Clip
+A short video clip of a man (Adam Shrager) yawning. At [00:30], the text "Did you just yawn?" appears next to him.
+
+[00:35] — Contagious Yawning Experiment Description
+A slide titled "Contagious Yawning" containing a paragraph describing an experiment:
+"Three students wanted to test out the urban legend that yawning is contagious. From a group of 27 volunteers, they randomly assigned 14 people to have a children's nighttime story read to them while the storyteller yawned occasionally. The remaining 13 volunteers were read the same children's nighttime story, but without any yawning by the storyteller. The subjects in both groups were observed and the number of times each person yawned was recorded, as shown in the table below."
+A table shows data rows for "Yawn" and "No Yawn" with a series of numbers for each.
+Below the table: "Is there convincing statistical evidence that yawning is contagious? That is, do the data provide convincing statistical evidence that people yawn more, on average, when watching someone yawn? Use an alpha = 0.05 level of significance."
+
+[01:21] — Null Hypothesis
+The slide begins with: "If you were a skeptic, you would shrug off the claim that yawning is contagious."
+At [01:28], text is added: "This is essentially the idea behind the null hypothesis— there is no treatment effect, no difference between groups, no change."
+At [01:34], text is added under the heading "In words:":
+"The mean number of people who yawn when exposed to someone who yawns (μ_Y) is the same as the mean number of people who yawn spontaneously without seeing someone yawn (μ_N)."
+At [01:48], formulas are added under the heading "In symbols:":
+"H_0: μ_Y = μ_N or H_0: μ_Y - μ_N = 0"
+At [02:03], yellow highlights appear over key phrases linking the concepts: "no difference" is linked to "the same as" which is linked to the "=" signs in the formulas.
+
+[02:12] — Alternative Hypothesis
+The slide begins with: "If you were NOT a skeptic, you would try to justify the claim that yawning is contagious using evidence from the data collected."
+At [02:22], text is added: "This is the idea behind the alternative hypothesis— there is a treatment effect or there is a difference between groups."
+At [02:29], text is added under the heading "In words:":
+"The mean number of people who yawn when exposed to someone who yawns (μ_Y) is greater than the mean number of people who yawn spontaneously without seeing someone yawn (μ_N)."
+At [02:40], formulas are added under the heading "In symbols:":
+"H_a: μ_Y > μ_N or H_a: μ_Y - μ_N > 0"
+At [02:48], yellow highlights appear over key phrases: "is a treatment effect" is linked to "greater than" which is linked to the ">" signs in the formulas.
+
+[02:56] — Types of Alternative Hypotheses
+The slide says, "When writing an alternative hypothesis, there are two types:"
+At [02:59], two normal distribution curves appear. The left one is labeled "One-sided" and shows the right tail shaded blue. The right one is labeled "Two-sided" and shows both tails shaded blue.
+At [03:02], text appears under "One-sided": "A one-sided H_a is used when we would like to show evidence that one group has a larger (or smaller) mean than the other."
+At [03:10], formulas and text appear below that:
+"H_a: μ_1 < μ_2" and "H_a: μ_1 > μ_2"
+"The direction is based on context."
+At [03:15], text appears under "Two-sided": "A two-sided H_a is used when we would like to show evidence that the groups have different means without regard for which is larger or smaller."
+At [03:25], a formula appears below that:
+"H_a: μ_1 ≠ μ_2"
+
+[03:28] — Alternative Hypothesis (Continued)
+The slide returns to the yawning example: "In the yawning example, we are only interested in determining if the treatment of seeing someone yawn increases the average number of yawns."
+At [03:36], text and formulas with a red "X" appear:
+"It would not make sense to reverse the inequality symbol."
+[Red X] "H_a: μ_Y < μ_N or H_a: μ_Y - μ_N < 0"
+At [03:40], more text and formulas with a red "X" appear:
+"Similarly, it would not make sense to use a two-sided alternative because we have a specific direction in mind."
+[Red X] "H_a: μ_Y ≠ μ_N or H_a: μ_Y - μ_N ≠ 0"
+
+[03:48] — Alternative Hypothesis (Order of Subtraction)
+The slide states: "Just as with confidence intervals, you must be aware of the order in which the means are subtracted."
+At [03:55], an example of reversing the order is shown:
+"For the yawning example, reversing the order that the means are subtracted will necessarily reverse the inequality for a one-sided H_a.
+H_a: μ_N < μ_Y or H_a: μ_N - μ_Y < 0"
+
+[04:08] — Summing Up Hypotheses
+A summary slide building point by point. "For hypotheses about a difference in means:"
+At [04:12], "The null is a statement of equality, typically H_0: μ_Y - μ_N = 0."
+At [04:17], "The alternative always contains a strict inequality."
+At [04:21], a bracket labeled "One-sided" points to two formulas: "H_a: μ_1 - μ_2 > 0" and "H_a: μ_1 - μ_2 < 0".
+At [04:23], a bracket labeled "Two-sided" points to the formula: "H_a: μ_1 - μ_2 ≠ 0".
+At [04:25], "Never refer to statistics (such as x̄_1 or x̄_2) in the hypotheses!"
+At [04:30], "Remember to define any parameters or subscripts you use."
+
+[04:33] — Transition Slide
+A blue slide with the text "LET'S PRACTICE".
+
+[04:35] — Multiple-Choice Example
+A long paragraph describes a scenario where roommates majoring in chemistry, physics, and statistics argue about difficult courses. The statistics major takes a random sample of 200 words from a chemistry textbook (mean length 5.71, std dev 3.02) and 200 words from a physics textbook (mean length 6.03, std dev 3.58). The question asks: "Which pair of hypotheses is appropriate for the statistics major's proposed test?"
+
+[04:44] — Multiple-Choice Options
+The text is replaced by five options (A-E):
+(A) H_0: μ_C = 5.71, H_a: μ_P > 5.71
+(B) H_0: μ_P - μ_C < 0, H_a: μ_P - μ_C > 0
+(C) H_0: μ_P - μ_C = 0, H_a: μ
+
+thumb_up
+thumb_down

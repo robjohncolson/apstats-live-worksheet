@@ -1,0 +1,78 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 8
+
+edit
+more_vert
+
+[00:00] Hi AP Statistics. Mrs. Matamoros here. We're going to start setting up a test for the difference of two population means.
+
+[00:08] So what are we gonna learn? First, how do we state a null hypothesis in a test for a difference in means? And two, how do we state an alternative hypothesis in a test for a difference in means?
+
+[00:20] So let's look at an example. Oh man, did you just yawn? Because I sure did.
+
+[00:35] Three students wanted to test out the urban legend that yawning is contagious. From a group of 27 volunteers, they randomly assigned 14 people to have a children's nighttime story read to them while the storyteller yawned occasionally.
+
+[00:48] The remaining 13 volunteers were read the same children's nighttime story, but without any yawning by the storyteller. The subjects in both groups were observed and the number of times each person yawned was recorded, as shown in the table below.
+
+[01:01] Is there convincing statistical evidence that yawning is contagious? That is, do the data provide convincing statistical evidence that people yawn more, on average, when watching someone yawn? Use an alpha of 0.05 level of significance. Alright, so we've got our table of our data values there.
+
+[01:20] If you were a skeptic, you would shrug off the claim that yawning is contagious. This is essentially the idea behind the null hypothesis. There is no treatment effect, no difference between groups, no change.
+
+[01:34] In words, this means the mean number of people who yawn when exposed to someone who yawns, that's mu sub y, is the same as the mean number of people who yawn spontaneously without seeing someone yawn, mu sub n.
+
+[01:48] So in symbols, we write this as H sub zero, and we are going to equate the two means together showing that they are equal. Or we can also show that the difference between the two means is zero.
+
+[02:03] You'll notice that it's the same idea here. No difference, the same, they're equal, their difference is zero. It's the same concept.
+
+[02:12] Now, the alternative hypothesis. If you were NOT a skeptic, you would try to justify the claim that yawning is contagious using the evidence from the data collected.
+
+[02:22] So the idea behind the alternative hypothesis is that there is a treatment effect or there is a difference between groups.
+
+[02:29] In words, we would say that the mean number of people who yawn when exposed to someone who yawns is greater than the mean number of people who yawn spontaneously without seeing someone yawn.
+
+[02:40] When we get to the symbolic part here, we have to use our inequality symbol because we have a direction that's specified. We have greater than, we have a treatment effect, we are trying to show that yawning increases the mean number of yawns.
+
+[02:55] When writing an alternative hypothesis, there are two types: one-sided and two-sided. A one-sided alternative hypothesis is used when we would like to show evidence that one group has a larger or smaller mean than the other.
+
+[03:10] And so we'll use our inequality signs. The direction though is based on context.
+
+[03:15] For the two-sided alternative hypothesis, it's used when we would like to show evidence that the groups have different means without regard for which is larger or smaller. And so we'll use the not equal to sign.
+
+[03:28] Now in the yawning example, we're only interested in determining if the treatment of seeing someone yawn increases the average number of yawns. It would not make sense to reverse the inequality symbol.
+
+[03:40] Similarly, it's not going to make sense to use a two-sided alternative because we have a very specific direction in mind.
+
+[03:48] So just as with confidence intervals, you have to be aware of the order in which the means are subtracted. For the yawning example, reversing the order that the means are subtracted, if I did no yawns minus yawns...
+
+[04:01] ...I would have to reverse the inequality for a one-sided alternative hypothesis.
+
+[04:08] So let's sum this up. For hypotheses about a difference in means, the null is a statement of equality, that the difference between the means equals zero.
+
+[04:17] The alternative always contains a strict inequality, either a one-sided or a two-sided inequality.
+
+[04:25] Never refer to statistics in the hypotheses, it's always about the parameters. And remember to define the parameters or the subscripts that you use.
+
+[04:34] So let's practice. Go ahead and read through this question and see if you can write the hypotheses.
+
+[04:44] Now I'd like for you to pause and see if your hypotheses match the correct answer here.
+
+[04:50] So in answer choice A, neither hypothesis denotes a difference in means, so it can't be A.
+
+[04:55] In B, the null hypothesis does not have equality to zero, so that can't be correct. Additionally, our alternative hypothesis should have not equal to, it should be a two-sided alternative.
+
+[05:08] In answer choice C, again the alternative hypothesis should be a two-sided. And then for part D, those are statistics. We can't refer to statistics in the hypotheses, only the parameters.
+
+[05:22] So answer choice E is the correct version. It's got our correct parameters, equality in the null, inequality in our two-sided alternative.
+
+[05:31] Okay, so what should we take away? How do we state a null hypothesis in a test for a difference in means?
+
+[05:38] We need to show that the difference in the means is zero or that they are equal. And remember to clearly define the parameters and subscripts that you use.
+
+[05:48] How do we state an alternative hypothesis in a test for a difference in means? We need to show that the difference is either greater than zero or that one is larger than the other...
+
+[05:59] ...and that could go in the opposite direction. Or we need to show they're not equal if it's two-sided.
+
+[06:05] Thanks for watching. Check out the next video where we continue our problem on yawning.
+
+thumb_up
+thumb_down
