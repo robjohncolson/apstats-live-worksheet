@@ -1,0 +1,1297 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topic 7.6: Confidence Intervals for the Difference of Two Means</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background: #f9f9f9;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header-left { font-weight: bold; color: #003366; }
+        .header-center { font-weight: bold; }
+        .header-right { font-weight: bold; color: #003366; }
+        h1 { text-align: center; color: #003366; margin-bottom: 5px; font-size: 1.5rem; }
+        .subtitle { text-align: center; font-style: italic; color: #555; margin-bottom: 10px; }
+        .worksheet-label { text-align: center; font-weight: bold; margin-bottom: 20px; }
+        .student-info { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .student-info label { font-weight: bold; }
+        .student-info input {
+            border: none;
+            border-bottom: 1px solid #333;
+            background: transparent;
+            padding: 2px 5px;
+            font-size: 1em;
+        }
+        .objective-box {
+            border: 2px solid #003366;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        .objective-box strong { color: #003366; }
+        .vocab-box {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .vocab-box h3 { margin-top: 0; color: #003366; }
+        .vocab-table { width: 100%; }
+        .vocab-table td { padding: 5px 0; vertical-align: top; }
+        .vocab-table td:first-child { font-weight: bold; width: 200px; color: #003366; }
+        .section { margin-bottom: 28px; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+        .section-header h2 { margin: 0; color: #003366; font-size: 1.15rem; }
+        .timestamp { color: #666; font-size: 0.95rem; }
+        .ts { color: #888; font-size: 0.88em; font-style: italic; margin-right: 4px; }
+        .question {
+            margin-bottom: 12px;
+            padding-left: 6px;
+            position: relative;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #003366;
+            margin-right: 8px;
+        }
+        .sub-questions { margin-left: 22px; margin-top: 6px; }
+        .sub-question { margin: 4px 0; }
+        .blank {
+            border: none;
+            border-bottom: 1px solid #003366;
+            background: transparent;
+            padding: 2px 4px;
+            font-size: 1em;
+            min-width: 90px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .blank:focus {
+            outline: none;
+            border-bottom: 2px solid #003366;
+            background: #f0f7ff;
+        }
+        .blank.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+        .blank.partial {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+        .blank.incorrect {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+        .blank.revealed {
+            background-color: #e2e3f3;
+            border-color: #6c757d;
+        }
+        .model-box, .note-box {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background: #fff;
+            margin: 10px 0 14px;
+        }
+        .note-box { background: #f7fbff; border-color: #cce0ff; }
+        .hint { color: #777; font-size: 0.92em; margin-left: 6px; }
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .exit-ticket {
+            border: 2px solid #003366;
+            border-radius: 6px;
+            padding: 12px;
+            background: #f0f4ff;
+            margin-top: 18px;
+        }
+        .formula-box {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9ff;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .formula-box h4 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .formula {
+            font-size: 1.2em;
+            font-family: 'Times New Roman', serif;
+            margin: 8px 0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        .data-table th {
+            background: #003366;
+            color: white;
+        }
+        .data-table td input {
+            width: 60px;
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .btn-check {
+            background: #003366;
+            color: #fff;
+        }
+        .btn-show {
+            background: #6c757d;
+            color: #fff;
+        }
+        .btn-reset {
+            background: #dc3545;
+            color: #fff;
+        }
+        .btn-print {
+            background: #28a745;
+            color: #fff;
+        }
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .ai-feedback {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9ff;
+            border: 1px solid #d0d7ff;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .ai-feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .score-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .score-badge.score-E { background: #d4edda; color: #155724; }
+        .score-badge.score-P { background: #fff3cd; color: #856404; }
+        .score-badge.score-I { background: #f8d7da; color: #721c24; }
+        .ai-feedback-body { color: #444; }
+        .ai-feedback-matched { color: #155724; margin-top: 4px; }
+        .ai-feedback-missing { color: #856404; margin-top: 4px; }
+        .ai-feedback-suggestion { color: #004085; margin-top: 4px; font-style: italic; }
+        textarea.graded-E { border-color: #28a745; background: #f8fff9; }
+        textarea.graded-P { border-color: #ffc107; background: #fffef5; }
+        textarea.graded-I { border-color: #dc3545; background: #fff8f8; }
+        .appeal-section { margin-top: 8px; }
+        .appeal-btn {
+            background: none;
+            border: 1px solid #6c757d;
+            color: #6c757d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .appeal-btn:hover { background: #f0f0f0; }
+        .appeal-form {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .appeal-form.visible { display: block; }
+        .appeal-form textarea {
+            min-height: 60px;
+            margin-bottom: 8px;
+        }
+        .appeal-form button {
+            margin-right: 8px;
+        }
+        .appeal-result {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .appeal-result.upgraded { background: #d4edda; color: #155724; }
+        .appeal-result.maintained { background: #fff3cd; color: #856404; }
+        .appeal-count { font-size: 0.8em; color: #666; margin-top: 4px; }
+        #scoreDisplay {
+            display: none;
+            padding: 10px 15px;
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        #scoreDisplay.visible {
+            display: inline-block;
+        }
+        .aggregate-trigger {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #1565c0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+        .aggregate-trigger:hover {
+            background: #bbdefb;
+        }
+        .aggregate-drawer {
+            position: fixed;
+            top: 0;
+            right: -380px;
+            width: 360px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+            transition: right 0.25s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .aggregate-drawer.open {
+            right: 0;
+        }
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .drawer-header h3 { margin: 0; color: #003366; }
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+        }
+        .drawer-content { font-size: 0.95em; }
+        .bar-chart { margin: 10px 0; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+        }
+        .bar-label {
+            width: 100px;
+            font-size: 0.85em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .bar-container {
+            flex: 1;
+            height: 18px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 8px;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .bar-count {
+            width: 35px;
+            text-align: right;
+            font-size: 0.85em;
+            color: #666;
+        }
+        .save-indicator {
+            font-size: 0.8em;
+            color: #28a745;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .save-indicator.visible {
+            opacity: 1;
+        }
+        .upload-particle {
+            position: absolute;
+            font-size: 0.9em;
+            color: #667eea;
+            pointer-events: none;
+            animation: floatUp 0.9s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-16px); }
+        }
+        @media print {
+            .controls, .aggregate-trigger, .aggregate-drawer, .save-indicator,
+            .appeal-section, .ai-feedback, .btn-ai { display: none !important; }
+            .blank { border-bottom: 1px solid #000 !important; background: transparent !important; }
+            body { background: white; }
+            .section { page-break-inside: avoid; }
+            .exit-ticket { page-break-before: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="header-left">AP Statistics</span>
+        <span class="header-center">Unit 7</span>
+        <span class="header-right">Inference for Means</span>
+    </div>
+
+    <h1>Topic 7.6: Confidence Intervals for the Difference of Two Means</h1>
+    <div class="subtitle">Choosing the Procedure, Checking Conditions, and Calculating the Interval</div>
+    <div class="worksheet-label">Video Follow-Along Worksheet</div>
+
+    <div class="student-info">
+        <div><label>Name:</label> <input type="text" id="worksheetName" style="width:160px;"></div>
+        <div><label>Period:</label> <input type="text" id="worksheetPeriod" style="width:40px;"></div>
+        <div><label>Username:</label> <input type="text" id="worksheetUsername" style="width:120px;" placeholder="for class sync"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>
+        <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
+        <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
+        <button class="btn-print" onclick="window.print()">&#128424; Print</button>
+        <button class="btn-ai" onclick="gradeAllReflections()">&#129302; Grade My Reflections</button>
+        <span id="scoreDisplay"></span>
+    </div>
+
+    <div class="objective-box">
+        <strong>Learning Objectives:</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+            <li>Identify when a 2-sample <em>t</em>-interval is an appropriate confidence interval procedure for comparing two population means.</li>
+            <li>Verify the independence, 10% condition, and normality or large-sample conditions for a confidence interval for <em>&mu;</em><sub>1</sub> &minus; <em>&mu;</em><sub>2</sub>.</li>
+            <li>Use the general confidence interval structure statistic &plusmn; (critical value)(standard error of statistic).</li>
+            <li>Calculate the point estimate, margin of error, and confidence interval for a difference in population means.</li>
+            <li>Use technology to find the degrees of freedom and construct a 2-SampTInt with pooled set to no.</li>
+            <li>Interpret a confidence interval for a difference in means in context and connect the sign of the interval to which group tends to be larger.</li>
+        </ul>
+        <strong style="margin-top: 10px; display: block;">Essential Knowledge:</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+            <li>When comparing two independent groups with quantitative data and estimating a difference in means, the appropriate procedure is a 2-sample <em>t</em>-interval.</li>
+            <li>Independence requires two independent random samples or a randomized experiment; when sampling without replacement, each sample should be no more than 10% of its population.</li>
+            <li>If both sample sizes are greater than 30, the sampling distribution of <em>x&#772;</em><sub>1</sub> &minus; <em>x&#772;</em><sub>2</sub> is approximately normal; otherwise, both sample distributions should be free from extreme skewness and outliers.</li>
+            <li>The two-sample confidence interval has the form (<em>x&#772;</em><sub>1</sub> &minus; <em>x&#772;</em><sub>2</sub>) &plusmn; <em>t</em><sup>*</sup>&radic;((<em>s</em><sub>1</sub><sup>2</sup>/<em>n</em><sub>1</sub>) + (<em>s</em><sub>2</sub><sup>2</sup>/<em>n</em><sub>2</sub>)).</li>
+            <li>The point estimate is the difference in sample means, and the margin of error is the critical value times the standard error.</li>
+            <li>For a two-sample <em>t</em>-interval, degrees of freedom are typically found with technology rather than a simple <em>n</em> &minus; 1 rule.</li>
+        </ul>
+    </div>
+
+    <div class="vocab-box">
+        <h3>Key Vocabulary</h3>
+        <table class="vocab-table">
+            <tr>
+                <td>2-Sample <em>t</em>-Interval</td>
+                <td>A confidence interval procedure used to estimate the difference between two population means from independent samples.</td>
+            </tr>
+            <tr>
+                <td>Independent Samples</td>
+                <td>Two samples collected so that knowing the outcomes in one group does not determine the outcomes in the other group.</td>
+            </tr>
+            <tr>
+                <td>Difference in Means</td>
+                <td>The parameter <em>&mu;</em><sub>1</sub> &minus; <em>&mu;</em><sub>2</sub> or the statistic <em>x&#772;</em><sub>1</sub> &minus; <em>x&#772;</em><sub>2</sub>.</td>
+            </tr>
+            <tr>
+                <td>Point Estimate</td>
+                <td>The sample statistic at the center of the interval; here it is the difference in sample means.</td>
+            </tr>
+            <tr>
+                <td>Margin of Error</td>
+                <td>The amount added and subtracted from the point estimate to create the interval.</td>
+            </tr>
+            <tr>
+                <td>Critical Value</td>
+                <td>The <em>t</em><sup>*</sup> value determined by the confidence level and the degrees of freedom.</td>
+            </tr>
+            <tr>
+                <td>Standard Error</td>
+                <td>A measure of how much the difference in sample means typically varies from the difference in population means.</td>
+            </tr>
+            <tr>
+                <td>Degrees of Freedom</td>
+                <td>For a two-sample <em>t</em>-interval, a value usually found with technology and used to determine the critical value.</td>
+            </tr>
+            <tr>
+                <td>Pooled: No</td>
+                <td>The default calculator setting for a 2-SampTInt because pooling requires a different procedure and extra conditions.</td>
+            </tr>
+            <tr>
+                <td>Interpretation</td>
+                <td>A contextual statement about plausible values of the true difference in population means.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Video 1: Identifying the Procedure and Checking Conditions</h2>
+            <span class="timestamp">[0:00 &ndash; 7:00]</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">1.</span>
+            <span class="ts">[0:11]</span>
+            In this video, we learn how to identify an appropriate confidence <input type="text" class="blank" data-answer="interval|confidence interval" style="width:150px;"> procedure and verify the <input type="text" class="blank" data-answer="conditions" style="width:150px;"> for a difference of two population means.
+        </div>
+
+        <div class="note-box">
+            <strong>Context &mdash; Argiope Spiders</strong>
+            <span class="ts">[0:50 &ndash; 1:09]</span>
+            Researchers collected a random sample of 14 adult female spiders and a random sample of 14 adult male spiders from the genus Argiope. The goal was to calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male spiders.
+        </div>
+
+        <div class="question">
+            <span class="question-number">2.</span>
+            <span class="ts">[1:21]</span>
+            The spider example compares <input type="text" class="blank" data-answer="two|2" style="width:80px;"> groups, uses <input type="text" class="blank" data-answer="quantitative" style="width:150px;"> data, and asks for a 95% confidence interval.
+        </div>
+
+        <div class="question">
+            <span class="question-number">3.</span>
+            <span class="ts">[1:48]</span>
+            That makes the correct procedure a <input type="text" class="blank" data-answer="2-sample t-interval|two-sample t-interval|2 sample t interval" style="width:250px;"> for the difference in population <input type="text" class="blank" data-answer="means" style="width:80px;">.
+        </div>
+
+        <div class="model-box">
+            <strong>Procedure Check:</strong>
+            <span class="ts">[1:21 &ndash; 1:48]</span>
+            <ol style="margin: 5px 0; padding-left: 20px;">
+                <li>Count the number of groups. Here there are two groups: female spiders and male spiders.</li>
+                <li>Identify the type of data. Body lengths are quantitative measurements.</li>
+                <li>Notice the goal. We are estimating a difference in population means with a confidence interval.</li>
+            </ol>
+        </div>
+
+        <div class="question">
+            <span class="question-number">4.</span>
+            <span class="ts">[2:01]</span>
+            For independence, the data should come from two independent random samples or a randomized <input type="text" class="blank" data-answer="experiment" style="width:150px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">5.</span>
+            <span class="ts">[2:01]</span>
+            When sampling without replacement, each sample should be less than or equal to <input type="text" class="blank" data-answer="10%|10 percent" style="width:80px;"> of its respective population.
+        </div>
+
+        <div class="question">
+            <span class="question-number">6.</span>
+            <span class="ts">[2:23]</span>
+            For the normal condition, both sample sizes should be greater than <input type="text" class="blank" data-answer="30" style="width:80px;"> or both samples should come from approximately <input type="text" class="blank" data-answer="normal|normally distributed" style="width:150px;"> populations.
+        </div>
+
+        <div class="question">
+            <span class="question-number">7.</span>
+            <span class="ts">[2:23]</span>
+            If both samples are small, the sample distributions should be free from extreme <input type="text" class="blank" data-answer="skewness|skew" style="width:150px;"> or <input type="text" class="blank" data-answer="outliers|outlier" style="width:150px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">8.</span>
+            <span class="ts">[2:51 &ndash; 3:04]</span>
+            In the original spider study, both samples were randomly <input type="text" class="blank" data-answer="selected|sampled" style="width:150px;">, and 14 in each group is safely under the <input type="text" class="blank" data-answer="10%|10 percent" style="width:80px;"> condition.
+        </div>
+        <div class="question">
+            <span class="question-number">9.</span>
+            <span class="ts">[3:28]</span>
+            The histograms showed both samples were roughly <input type="text" class="blank" data-answer="unimodal" style="width:150px;"> and <input type="text" class="blank" data-answer="symmetric" style="width:150px;">, so it was reasonable to assume approximately normal populations.
+        </div>
+
+        <div class="question">
+            <span class="question-number">10.</span>
+            <span class="ts">[4:06 &ndash; 4:32]</span>
+            If the researchers instead had 35 females and 35 males, condition 3 would be easier because both sample sizes are greater than <input type="text" class="blank" data-answer="30" style="width:80px;">, making the sampling distribution approximately <input type="text" class="blank" data-answer="normal" style="width:150px;">.
+        </div>
+
+        <div class="note-box">
+            <strong>Practice &mdash; Slow Internet and Stress</strong>
+            <span class="ts">[5:03 &ndash; 6:41]</span>
+            A teacher randomly assigned 18 students to work with slow internet and 18 students to work with fast internet, then measured diastolic blood pressure. The boxplots showed clear skewness and an outlier.
+        </div>
+
+        <div class="question">
+            <span class="question-number">11.</span>
+            <span class="ts">[5:27 &ndash; 6:41]</span>
+            In the slow-internet experiment, random <input type="text" class="blank" data-answer="assignment" style="width:150px;"> satisfies the first condition, but strong skewness and an <input type="text" class="blank" data-answer="outlier" style="width:150px;"> mean the teacher should not proceed with the interval.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Video 2: Margin of Error and Calculating the Interval</h2>
+            <span class="timestamp">[0:00 &ndash; 8:14]</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">12.</span>
+            <span class="ts">[0:11]</span>
+            In this video, we learn how to determine the <input type="text" class="blank" data-answer="margin of error" style="width:150px;"> and calculate a confidence <input type="text" class="blank" data-answer="interval|confidence interval" style="width:150px;"> for a difference in means.
+        </div>
+
+        <div class="question">
+            <span class="question-number">13.</span>
+            <span class="ts">[0:22 &ndash; 0:58]</span>
+            In general, a confidence interval is the statistic plus or minus a <input type="text" class="blank" data-answer="critical value" style="width:150px;"> times the <input type="text" class="blank" data-answer="standard error" style="width:150px;"> of the statistic.
+        </div>
+
+        <div class="formula-box">
+            <h4>2-Sample <em>t</em>-Interval Formulas</h4>
+            <div class="formula">Confidence interval = statistic &plusmn; (critical value)(standard error of statistic)</div>
+            <div class="formula">(<em>x&#772;</em><sub>1</sub> &minus; <em>x&#772;</em><sub>2</sub>) &plusmn; <em>t</em><sup>*</sup>&radic;((<em>s</em><sub>1</sub><sup>2</sup>/<em>n</em><sub>1</sub>) + (<em>s</em><sub>2</sub><sup>2</sup>/<em>n</em><sub>2</sub>))</div>
+            <div class="formula">Margin of error = <em>t</em><sup>*</sup> &times; standard error</div>
+        </div>
+
+        <div class="question">
+            <span class="question-number">14.</span>
+            <span class="ts">[1:08 &ndash; 1:21]</span>
+            The point estimate is another name for the <input type="text" class="blank" data-answer="statistic" style="width:150px;"> and is the <input type="text" class="blank" data-answer="middle|center" style="width:150px;"> of the interval.
+        </div>
+
+        <div class="question">
+            <span class="question-number">15.</span>
+            <span class="ts">[1:32 &ndash; 1:55]</span>
+            The margin of error combines the <input type="text" class="blank" data-answer="critical value" style="width:150px;"> and the <input type="text" class="blank" data-answer="standard error" style="width:150px;">, and a higher confidence level gives a <input type="text" class="blank" data-answer="larger|bigger" style="width:150px;"> critical value.
+        </div>
+
+        <div class="note-box">
+            <strong>Return to the Spider Example</strong>
+            <span class="ts">[2:14 &ndash; 2:33]</span>
+            The calculator gave the following summary statistics for body lengths in millimeters.
+        </div>
+
+        <table class="data-table">
+            <tr>
+                <th>Group</th>
+                <th><em>n</em></th>
+                <th><em>x&#772;</em></th>
+                <th><em>s</em></th>
+            </tr>
+            <tr><td>Female</td><td>14</td><td>14.15</td><td>3.54</td></tr>
+            <tr><td>Male</td><td>14</td><td>4.107</td><td>0.92</td></tr>
+        </table>
+
+        <div class="question">
+            <span class="question-number">16.</span>
+            <span class="ts">[2:24 &ndash; 2:42]</span>
+            For the spiders, the point estimate for female minus male is 14.15 &minus; 4.107 = <input type="text" class="blank" data-answer="10.043|10.04" style="width:80px;"> millimeters.
+        </div>
+
+        <div class="question">
+            <span class="question-number">17.</span>
+            <span class="ts">[2:59 &ndash; 3:34]</span>
+            For a two-sample <em>t</em>-interval, the degrees of freedom are best found using <input type="text" class="blank" data-answer="technology|calculator" style="width:150px;">, and the calculator setting should be pooled: <input type="text" class="blank" data-answer="no" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">18.</span>
+            <span class="ts">[4:00]</span>
+            Using 2-SampTInt gives a 95% interval of (<input type="text" class="blank" data-answer="7.956|7.9563" style="width:80px;">, <input type="text" class="blank" data-answer="12.129" style="width:80px;">) with degrees of freedom about <input type="text" class="blank" data-answer="14.73|14.7" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">19.</span>
+            <span class="ts">[4:24 &ndash; 4:37]</span>
+            To find the critical value for this 95% interval, use invT with bottom-tail area <input type="text" class="blank" data-answer="0.025|2.5%" style="width:80px;"> and <em>df</em> = 14.73, which gives <em>t</em><sup>*</sup> about <input type="text" class="blank" data-answer="2.13" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">20.</span>
+            <span class="ts">[4:54 &ndash; 5:20]</span>
+            The margin of error for the spider interval is <input type="text" class="blank" data-answer="2.086|2.09" style="width:80px;"> millimeters, so the interval can be written as 10.043 &plusmn; <input type="text" class="blank" data-answer="2.086|2.09" style="width:80px;">.
+        </div>
+
+        <div class="question">
+            <span class="question-number">21.</span>
+            <span class="ts">[6:20 &ndash; 7:30]</span>
+            In the practice multiple-choice problem, answer choice A was wrong because it used a <input type="text" class="blank" data-answer="z" style="width:80px;"> critical value, and the correct answer was choice <input type="text" class="blank" data-answer="c|C" style="width:80px;"> with <em>t</em><sup>*</sup> about <input type="text" class="blank" data-answer="1.73" style="width:80px;"> for a 90% interval.
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Key Takeaways</h2>
+            <span class="timestamp">[Summary]</span>
+        </div>
+
+        <div class="model-box">
+            <ol style="margin: 5px 0; padding-left: 20px;">
+                <li>Use a 2-sample <em>t</em>-interval when you have two independent groups, quantitative data, and want to estimate a difference in population means.</li>
+                <li>Check independence, the 10% condition when sampling without replacement, and either both sample sizes greater than 30 or roughly normal sample distributions with no extreme skewness or outliers.</li>
+                <li>For two means, the confidence interval is (<em>x&#772;</em><sub>1</sub> &minus; <em>x&#772;</em><sub>2</sub>) &plusmn; <em>t</em><sup>*</sup>&radic;((<em>s</em><sub>1</sub><sup>2</sup>/<em>n</em><sub>1</sub>) + (<em>s</em><sub>2</sub><sup>2</sup>/<em>n</em><sub>2</sub>)).</li>
+                <li>Degrees of freedom and the final interval are typically found with technology, and the same interval can be written with endpoints or as point estimate &plusmn; margin of error.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Reflection Questions</h2>
+            <span class="timestamp">[AI-Graded]</span>
+        </div>
+
+        <div class="question">
+            <span class="question-number">R1.</span>
+            <strong>Explain how to identify the correct confidence interval procedure for the difference of two population means and how to verify the conditions. Use the spider example and the slow-internet experiment to discuss the roles of two groups, quantitative data, independence, the 10% condition, and the shape or sample-size requirement.</strong>
+            <textarea id="reflect1" placeholder="Write your response here..."></textarea>
+            <div id="reflect1-feedback"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-number">R2.</span>
+            <strong>Explain how to calculate and interpret a 2-sample <em>t</em>-interval for a difference in means. Use the spider example to describe the point estimate, margin of error, how technology gives the degrees of freedom, why pooled should be set to no, and what the interval (7.956, 12.129) means in context.</strong>
+            <textarea id="reflect2" placeholder="Write your response here..."></textarea>
+            <div id="reflect2-feedback"></div>
+        </div>
+    </div>
+
+    <div class="exit-ticket">
+        <h3 style="margin-top: 0; color: #003366;">Exit Ticket</h3>
+        <div class="question">
+            <strong>Random samples of 14 adult female Argiope spiders and 14 adult male Argiope spiders were collected. Histograms for both groups were roughly unimodal and symmetric. The summary statistics were <em>x&#772;</em><sub>F</sub> = 14.15 mm, <em>s</em><sub>F</sub> = 3.54 mm, <em>x&#772;</em><sub>M</sub> = 4.107 mm, and <em>s</em><sub>M</sub> = 0.92 mm. A calculator produced the 95% confidence interval (7.956, 12.129) for (female &minus; male).</strong>
+            <ul style="margin: 8px 0;">
+                <li>(a) Define the parameter and identify the correct confidence interval procedure.</li>
+                <li>(b) Explain why the conditions are met, including independence, the 10% condition, and why the shape check is needed here.</li>
+                <li>(c) Interpret the interval in context and explain what the positive endpoints suggest about female and male spider body lengths.</li>
+            </ul>
+            <textarea id="exitTicket" placeholder="Answer all three parts in complete sentences..."></textarea>
+            <div id="exitTicket-feedback"></div>
+        </div>
+    </div>
+
+    <div id="aggregateDrawer" class="aggregate-drawer">
+        <div class="drawer-header">
+            <h3>Class Responses <span style="font-size: 0.7em; color: #999; font-weight: normal;">(Esc to close)</span></h3>
+            <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+        </div>
+        <div class="drawer-content" id="drawerContent">
+            <p>Click a "Class" button next to a question to see responses.</p>
+        </div>
+    </div>
+
+    <script src="../railway_config.js"></script>
+    <script src="../railway_client.js"></script>
+    <script src="ai-grading-prompts-u7-l6.js"></script>
+    <script>
+        // ==================== CONFIG ====================
+        const UNIT_ID = 'U7L6';
+        const DEBOUNCE_MS = 250;
+
+        // ==================== STATE ====================
+        let debounceMap = new Map();
+        let currentQuestionBlanks = [];
+        let gradingState = new Map();
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', init);
+
+        function init() {
+            ensureRailwayDefaults();
+            restoreSavedUser();
+            assignQuestionIds();
+            addSaveIndicators();
+            bindBlankEvents();
+            injectAggregateButtons();
+        }
+
+        function ensureRailwayDefaults() {
+            if (!window.RAILWAY_SERVER_URL) {
+                window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';
+            }
+        }
+
+        // ==================== USER PERSISTENCE ====================
+        function restoreSavedUser() {
+            try {
+                const saved = localStorage.getItem('worksheet-user');
+                if (saved) {
+                    const user = JSON.parse(saved);
+                    if (user.name) document.getElementById('worksheetName').value = user.name;
+                    if (user.klass) document.getElementById('worksheetPeriod').value = user.klass;
+                    if (user.username) document.getElementById('worksheetUsername').value = user.username;
+                }
+            } catch (e) { console.warn('Could not restore user', e); }
+        }
+
+        function saveUser() {
+            const user = {
+                name: document.getElementById('worksheetName').value,
+                klass: document.getElementById('worksheetPeriod').value,
+                username: document.getElementById('worksheetUsername').value
+            };
+            localStorage.setItem('worksheet-user', JSON.stringify(user));
+        }
+
+        function getUsername() {
+            return (document.getElementById('worksheetUsername').value || '').trim();
+        }
+
+        document.getElementById('worksheetUsername').addEventListener('blur', saveUser);
+        document.getElementById('worksheetName').addEventListener('blur', saveUser);
+        document.getElementById('worksheetPeriod').addEventListener('blur', saveUser);
+
+        // ==================== QUESTION IDs & EVENTS ====================
+        function assignQuestionIds() {
+            const blanks = document.querySelectorAll('.blank');
+            blanks.forEach((blank, idx) => {
+                blank.dataset.questionId = `WS-${UNIT_ID}-Q${idx + 1}`;
+            });
+        }
+
+        function addSaveIndicators() {
+            document.querySelectorAll('.question').forEach(q => {
+                if (!q.querySelector('.save-indicator')) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'save-indicator';
+                    indicator.textContent = '\u2713 saved';
+                    q.appendChild(indicator);
+                }
+            });
+        }
+
+        function bindBlankEvents() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.addEventListener('blur', () => handleLiveUpdate(blank));
+                blank.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleLiveUpdate(blank);
+                        focusNextBlank(blank);
+                    }
+                });
+            });
+        }
+
+        function focusNextBlank(current) {
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            const idx = blanks.indexOf(current);
+            if (idx >= 0 && idx < blanks.length - 1) {
+                blanks[idx + 1].focus();
+            }
+        }
+
+        // ==================== ANSWER CHECKING ====================
+        function normalize(str) {
+            return (str || '').toLowerCase().trim().replace(/[^\w\s./-]/g, '');
+        }
+
+        function checkAnswer(blank) {
+            const userAnswer = normalize(blank.value);
+            const acceptedRaw = blank.dataset.answer || '';
+            const accepted = acceptedRaw.split('|').map(normalize);
+
+            blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+
+            if (!userAnswer) return 'empty';
+
+            if (accepted.includes(userAnswer)) {
+                blank.classList.add('correct');
+                return 'correct';
+            }
+
+            const partialMatch = accepted.some(ans =>
+                userAnswer.includes(ans) || ans.includes(userAnswer)
+            );
+            if (partialMatch) {
+                blank.classList.add('partial');
+                return 'partial';
+            }
+
+            blank.classList.add('incorrect');
+            return 'incorrect';
+        }
+
+        function checkAnswers() {
+            const blanks = document.querySelectorAll('.blank');
+            let correct = 0, partial = 0, total = 0;
+
+            blanks.forEach(blank => {
+                if (blank.value.trim()) {
+                    total++;
+                    const result = checkAnswer(blank);
+                    if (result === 'correct') correct++;
+                    else if (result === 'partial') partial++;
+                }
+            });
+
+            const scoreEl = document.getElementById('scoreDisplay');
+            if (total > 0) {
+                const pct = Math.round((correct / total) * 100);
+                scoreEl.textContent = `Score: ${correct}/${total} (${pct}%)` + (partial > 0 ? ` +${partial} partial` : '');
+                scoreEl.classList.add('visible');
+            } else {
+                scoreEl.classList.remove('visible');
+            }
+
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function showAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                const answers = (blank.dataset.answer || '').split('|');
+                blank.value = answers[0] || '';
+                blank.classList.remove('correct', 'partial', 'incorrect');
+                blank.classList.add('revealed');
+            });
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function resetAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.value = '';
+                blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+            });
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.value = '';
+                ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+            });
+            document.querySelectorAll('.ai-feedback').forEach(fb => fb.remove());
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            gradingState.clear();
+        }
+        // ==================== SERVER SYNC ====================
+        function handleLiveUpdate(blank) {
+            const questionId = blank.dataset.questionId;
+            if (!questionId) return;
+
+            const now = Date.now();
+            const lastTime = debounceMap.get(questionId) || 0;
+            if (now - lastTime < DEBOUNCE_MS) return;
+            debounceMap.set(questionId, now);
+
+            sendAnswer(blank);
+        }
+
+        async function sendAnswer(blank) {
+            const username = getUsername();
+            if (!username) return;
+
+            const questionId = blank.dataset.questionId;
+            const answer = blank.value.trim();
+
+            try {
+                if (window.railwayClient && window.railwayClient.submitAnswer) {
+                    await window.railwayClient.submitAnswer(username, questionId, answer);
+                } else {
+                    await fetch(`${window.RAILWAY_SERVER_URL}/api/submit-answer`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username,
+                            question_id: questionId,
+                            answer_value: answer,
+                            timestamp: Date.now()
+                        })
+                    });
+                }
+                showSaved(blank);
+                spawnUploadParticle(blank);
+            } catch (err) {
+                console.warn('Failed to sync answer:', err);
+            }
+        }
+
+        function pushAllAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                if (blank.value.trim()) sendAnswer(blank);
+            });
+        }
+
+        function showSaved(blank) {
+            const question = blank.closest('.question');
+            if (!question) return;
+            const indicator = question.querySelector('.save-indicator');
+            if (indicator) {
+                indicator.classList.add('visible');
+                setTimeout(() => indicator.classList.remove('visible'), 2000);
+            }
+        }
+
+        function spawnUploadParticle(blank) {
+            const particle = document.createElement('span');
+            particle.className = 'upload-particle';
+            particle.textContent = '\u2191';
+            const rect = blank.getBoundingClientRect();
+            particle.style.left = `${rect.left + rect.width / 2}px`;
+            particle.style.top = `${rect.top - 5}px`;
+            particle.style.position = 'fixed';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 900);
+        }
+
+        // ==================== AGGREGATE DRAWER ====================
+        function injectAggregateButtons() {
+            document.querySelectorAll('.question').forEach(q => {
+                const blanks = q.querySelectorAll('.blank');
+                if (blanks.length > 0 && !q.querySelector('.aggregate-trigger')) {
+                    const btn = document.createElement('button');
+                    btn.className = 'aggregate-trigger';
+                    btn.textContent = '\uD83D\uDCCA Class';
+                    btn.onclick = () => openDrawerForQuestion(q);
+                    q.appendChild(btn);
+                }
+            });
+        }
+
+        function openDrawerForQuestion(questionEl) {
+            currentQuestionBlanks = Array.from(questionEl.querySelectorAll('.blank'));
+            const drawer = document.getElementById('aggregateDrawer');
+            const content = document.getElementById('drawerContent');
+
+            drawer.classList.add('open');
+            content.innerHTML = '<p>Loading...</p>';
+
+            loadAggregateData();
+        }
+
+        async function loadAggregateData() {
+            const content = document.getElementById('drawerContent');
+            let html = '';
+
+            for (const blank of currentQuestionBlanks) {
+                const questionId = blank.dataset.questionId;
+                if (!questionId) continue;
+
+                try {
+                    const stats = await fetchQuestionStats(questionId);
+                    html += renderBarChart(questionId, stats);
+                } catch (err) {
+                    html += `<p>Error loading ${questionId}</p>`;
+                }
+            }
+
+            content.innerHTML = html || '<p>No data available.</p>';
+            spawnPeerSnow();
+        }
+
+        async function fetchQuestionStats(questionId) {
+            if (window.railwayClient && window.railwayClient.getStats) {
+                return await window.railwayClient.getStats(questionId);
+            }
+            const res = await fetch(`${window.RAILWAY_SERVER_URL}/api/question-stats/${questionId}`);
+            return await res.json();
+        }
+
+        function renderBarChart(questionId, stats) {
+            const responses = stats.responses || stats.distribution || {};
+            const entries = Object.entries(responses).sort((a, b) => b[1] - a[1]);
+            const maxCount = entries.length > 0 ? Math.max(...entries.map(([, c]) => c)) : 0;
+
+            if (entries.length === 0) {
+                return `<div class="bar-chart"><strong>${questionId}</strong><p>No responses yet</p></div>`;
+            }
+
+            let html = `<div class="bar-chart"><strong>${questionId}</strong>`;
+            entries.slice(0, 8).forEach(([answer, count]) => {
+                const widthPct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                html += `
+                    <div class="bar-row">
+                        <span class="bar-label" title="${answer}">${answer}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${widthPct}%"></div>
+                        </div>
+                        <span class="bar-count">${count}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function closeDrawer() {
+            document.getElementById('aggregateDrawer').classList.remove('open');
+            currentQuestionBlanks = [];
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('aggregateDrawer').classList.contains('open')) {
+                closeDrawer();
+            }
+        });
+
+        function refreshDrawerIfOpen() {
+            if (document.getElementById('aggregateDrawer').classList.contains('open') && currentQuestionBlanks.length > 0) {
+                loadAggregateData();
+            }
+        }
+
+        function spawnPeerSnow() {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const snow = document.createElement('span');
+                    snow.textContent = '\u2744';
+                    snow.style.cssText = `
+                        position: fixed;
+                        right: ${20 + Math.random() * 300}px;
+                        top: ${100 + Math.random() * 200}px;
+                        font-size: 1.2em;
+                        color: #90caf9;
+                        pointer-events: none;
+                        animation: snowDrift 1.4s ease-out forwards;
+                    `;
+                    document.body.appendChild(snow);
+                    setTimeout(() => snow.remove(), 1400);
+                }, i * 100);
+            }
+        }
+
+        // ==================== AI GRADING ====================
+        async function gradeAllReflections() {
+            const btn = document.querySelector('.btn-ai');
+            btn.disabled = true;
+            btn.textContent = '\u23F3 Grading...';
+
+            const textareas = ['reflect1', 'reflect2', 'exitTicket'];
+
+            for (const id of textareas) {
+                const textarea = document.getElementById(id);
+                if (!textarea) continue;
+
+                const answer = textarea.value.trim();
+                if (answer.length < 20) {
+                    showFeedback(id, { score: 'I', feedback: 'Please write a more complete response (at least 20 characters).' });
+                    continue;
+                }
+
+                try {
+                    const result = await gradeReflection(id, answer);
+                    gradingState.set(id, {
+                        result,
+                        originalAnswer: answer,
+                        appealCount: 0,
+                        history: []
+                    });
+                    showFeedback(id, result);
+                } catch (err) {
+                    console.error('Grading error:', err);
+                    showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
+                }
+            }
+
+            btn.disabled = false;
+            btn.textContent = '\uD83E\uDD16 Grade My Reflections';
+        }
+
+        async function gradeReflection(questionId, answer) {
+            if (!window.buildReflectionPromptU7L6) {
+                throw new Error('AI grading prompts not loaded');
+            }
+
+            const prompt = window.buildReflectionPromptU7L6(questionId, answer);
+            const rubric = window.getRubricU7L6(questionId);
+
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'AP Statistics - Confidence Intervals for the Difference of Two Means',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_U7L6
+                    },
+                    answers: { answer },
+                    prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Grading request failed');
+            return await response.json();
+        }
+        function showFeedback(questionId, result) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add(`graded-${result.score}`);
+
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+
+            const feedback = document.createElement('div');
+            feedback.className = 'ai-feedback';
+
+            let html = `
+                <div class="ai-feedback-header">
+                    <span class="score-badge score-${result.score}">${result.score === 'E' ? 'Essentially Correct' : result.score === 'P' ? 'Partially Correct' : 'Incorrect'}</span>
+                </div>
+                <div class="ai-feedback-body">${result.feedback || ''}</div>
+            `;
+
+            if (result.matched && result.matched.length > 0) {
+                html += `<div class="ai-feedback-matched">\u2713 You addressed: ${result.matched.join(', ')}</div>`;
+            }
+            if (result.missing && result.missing.length > 0) {
+                html += `<div class="ai-feedback-missing">\u25CB Missing: ${result.missing.join(', ')}</div>`;
+            }
+            if (result.suggestion) {
+                html += `<div class="ai-feedback-suggestion">\uD83D\uDCA1 ${result.suggestion}</div>`;
+            }
+
+            feedback.innerHTML = html;
+
+            const state = gradingState.get(questionId);
+            if (state && result.score !== 'E' && state.appealCount < 3) {
+                const appealSection = document.createElement('div');
+                appealSection.className = 'appeal-section';
+                appealSection.innerHTML = `
+                    <button class="appeal-btn" onclick="showAppealForm('${questionId}')">\uD83D\uDCAC Disagree? Appeal</button>
+                    <div class="appeal-form" id="appeal-form-${questionId}">
+                        <p>Explain why your answer deserves a higher score:</p>
+                        <textarea id="appeal-text-${questionId}" placeholder="I believe my answer addresses..."></textarea>
+                        <button class="btn-check" onclick="submitAppeal('${questionId}')">Submit Appeal</button>
+                        <button class="btn-show" onclick="hideAppealForm('${questionId}')">Cancel</button>
+                    </div>
+                    <div class="appeal-count">Appeals used: ${state.appealCount}/3</div>
+                `;
+                feedback.appendChild(appealSection);
+            }
+
+            container.appendChild(feedback);
+        }
+
+        function showAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.add('visible');
+        }
+
+        function hideAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.remove('visible');
+        }
+
+        async function submitAppeal(questionId) {
+            const state = gradingState.get(questionId);
+            if (!state || state.appealCount >= 3) return;
+
+            const appealText = document.getElementById(`appeal-text-${questionId}`).value.trim();
+            if (appealText.length < 10) {
+                alert('Please provide more detail in your appeal.');
+                return;
+            }
+
+            const form = document.getElementById(`appeal-form-${questionId}`);
+            const buttons = form.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            try {
+                const rubric = window.getRubricU7L6(questionId);
+                const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/appeal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: {
+                            questionId,
+                            topic: 'AP Statistics - Confidence Intervals for the Difference of Two Means',
+                            prompt: rubric.questionText,
+                            expectedElements: rubric.expectedElements.map(e => e.description),
+                            lessonContext: window.LESSON_CONTEXT_U7L6
+                        },
+                        answers: { answer: state.originalAnswer },
+                        appealText,
+                        previousResults: { answer: state.result }
+                    })
+                });
+
+                const appealResult = await response.json();
+                const previousScore = state.result.score;
+                const upgraded = appealResult.score === 'E' ||
+                    (previousScore === 'I' && appealResult.score === 'P');
+
+                state.history.push({
+                    appealText,
+                    previousScore,
+                    newScore: appealResult.score,
+                    response: appealResult.feedback,
+                    upgraded
+                });
+                state.appealCount++;
+                state.result = appealResult;
+
+                showFeedback(questionId, appealResult);
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `appeal-result ${upgraded ? 'upgraded' : 'maintained'}`;
+                resultDiv.textContent = upgraded ? '\uD83C\uDF89 Appeal Granted! Score upgraded.' : 'Score maintained. ' + (appealResult.feedback || '');
+                document.getElementById(`${questionId}-feedback`).appendChild(resultDiv);
+
+            } catch (err) {
+                console.error('Appeal error:', err);
+                alert('Error processing appeal. Please try again.');
+            }
+
+            buttons.forEach(b => b.disabled = false);
+        }
+    </script>
+
+</body>
+</html>
