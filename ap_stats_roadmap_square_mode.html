@@ -2699,8 +2699,40 @@ let REGISTRY = BAKED_REGISTRY;
 
 async function loadRegistry() {
   try {
-    const resp = await fetch('roadmap-data.json', { cache: 'no-cache' });
-    if (resp.ok) REGISTRY = await resp.json();
+    var resp = await fetch('roadmap-data.json', { cache: 'no-cache' });
+    if (resp.ok) {
+      var fresh = await resp.json();
+      if (fresh && fresh.lessons) {
+        if (!REGISTRY.lessons) REGISTRY.lessons = {};
+        for (var k in fresh.lessons) {
+          var existing = REGISTRY.lessons[k];
+          var incoming = fresh.lessons[k];
+          if (!existing) {
+            REGISTRY.lessons[k] = incoming;
+          } else {
+            if (incoming.topic) existing.topic = incoming.topic;
+            if (incoming.status) existing.status = incoming.status;
+            if (incoming.urls) {
+              if (!existing.urls) existing.urls = {};
+              for (var u in incoming.urls) {
+                if (incoming.urls[u] != null) existing.urls[u] = incoming.urls[u];
+              }
+            }
+            if (incoming.periods) {
+              if (!existing.periods) existing.periods = {};
+              for (var p in incoming.periods) {
+                if (!existing.periods[p]) existing.periods[p] = {};
+                for (var f in incoming.periods[p]) {
+                  if (incoming.periods[p][f] != null) existing.periods[p][f] = incoming.periods[p][f];
+                }
+              }
+            }
+          }
+        }
+        if (fresh.generatedAt) REGISTRY.generatedAt = fresh.generatedAt;
+        if (fresh.registryVersion) REGISTRY.registryVersion = fresh.registryVersion;
+      }
+    }
   } catch(e) { /* use baked-in fallback */ }
   await loadSupabaseOverlay(cP);
   rCal();
@@ -2708,34 +2740,70 @@ async function loadRegistry() {
 }
 
 async function loadSupabaseOverlay(period){
-  var cached=_supaCache[period];
-  if(cached&&Date.now()-cached.ts<60000){mergeSupabase(cached.rows,period);return;}
+  // Check schedule cache (per-period)
+  var schedCached=_supaCache['sched_'+period];
+  var urlsCached=_supaCache['urls'];
+  var now=Date.now();
+  var needSched=!schedCached||now-schedCached.ts>60000;
+  var needUrls=!urlsCached||now-urlsCached.ts>60000;
+  if(!needSched&&!needUrls){mergeSupabase(schedCached.rows,urlsCached.rows,period);return;}
   try{
-    var url=SUPABASE_URL+'/rest/v1/topic_schedule?period=eq.'+period+'&select=topic,date,title,status,schoology_folder_id&order=date.asc';
-    var resp=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY}});
-    if(!resp.ok)return;
-    var rows=await resp.json();
-    _supaCache[period]={rows:rows,ts:Date.now()};
-    mergeSupabase(rows,period);
+    var fetches=[];
+    if(needSched){
+      fetches.push(fetch(SUPABASE_URL+'/rest/v1/topic_schedule?period=eq.'+period+'&select=topic,date,title,status,schoology_folder_id&order=date.asc',{headers:{apikey:SUPABASE_ANON_KEY}}));
+    }else{fetches.push(Promise.resolve(null));}
+    if(needUrls){
+      fetches.push(fetch(SUPABASE_URL+'/rest/v1/lesson_urls?select=topic,worksheet_url,drills_url,quiz_url,blooket_url',{headers:{apikey:SUPABASE_ANON_KEY}}));
+    }else{fetches.push(Promise.resolve(null));}
+    var results=await Promise.all(fetches);
+    var schedRows=schedCached?schedCached.rows:[];
+    var urlsRows=urlsCached?urlsCached.rows:[];
+    if(results[0]&&results[0].ok){schedRows=await results[0].json();_supaCache['sched_'+period]={rows:schedRows,ts:now};}
+    if(results[1]&&results[1].ok){urlsRows=await results[1].json();_supaCache['urls']={rows:urlsRows,ts:now};}
+    mergeSupabase(schedRows,urlsRows,period);
   }catch(e){/* fail silently — baked data is fine */}
 }
 
-function mergeSupabase(rows,period){
-  if(!REGISTRY||!REGISTRY.lessons)return;
+function mergeSupabase(schedRows,urlsRows,period){
+  if(!REGISTRY)REGISTRY={lessons:{}};
+  if(!REGISTRY.lessons)REGISTRY.lessons={};
   var courseId=period==='B'?SCHOOLOGY_COURSE_B:SCHOOLOGY_COURSE_E;
-  for(var i=0;i<rows.length;i++){
-    var row=rows[i];
-    var lesson=REGISTRY.lessons[row.topic];
-    if(!lesson)continue;
-    if(!lesson.periods)lesson.periods={};
-    if(!lesson.periods[period])lesson.periods[period]={};
-    var p=lesson.periods[period];
-    if(row.schoology_folder_id){
-      p.schoologyFolder='https://lynnschools.schoology.com/course/'+courseId+'/materials?f='+row.schoology_folder_id;
-    }
+
+  // Phase 1: merge topic-global material URLs
+  for(var i=0;i<urlsRows.length;i++){
+    var uRow=urlsRows[i];
+    var lesson=REGISTRY.lessons[uRow.topic];
+    if(!lesson){lesson={topic:uRow.topic,urls:{},periods:{},status:'pending'};REGISTRY.lessons[uRow.topic]=lesson;}
+    if(!lesson.urls)lesson.urls={};
+    if(uRow.worksheet_url)lesson.urls.worksheet=uRow.worksheet_url;
+    if(uRow.drills_url)lesson.urls.drills=uRow.drills_url;
+    if(uRow.quiz_url)lesson.urls.quiz=uRow.quiz_url;
+    if(uRow.blooket_url)lesson.urls.blooket=uRow.blooket_url;
+  }
+
+  // Phase 2: merge period-scoped sync state
+  for(var j=0;j<schedRows.length;j++){
+    var row=schedRows[j];
+    var les=REGISTRY.lessons[row.topic];
+    if(!les){les={topic:row.topic,urls:{},periods:{},status:'pending'};REGISTRY.lessons[row.topic]=les;}
+    if(!les.periods)les.periods={};
+    if(!les.periods[period])les.periods[period]={};
+    var p=les.periods[period];
+    if(row.schoology_folder_id){p.schoologyFolder='https://lynnschools.schoology.com/course/'+courseId+'/materials?f='+row.schoology_folder_id;}
     p.posted=row.status==='posted'||row.status==='taught';
     p.syncStatus=row.status;
     p.syncSource='supabase';
+  }
+
+  // Phase 3: recompute status — ready = 4 URLs AND at least one period posted
+  for(var topic in REGISTRY.lessons){
+    var les2=REGISTRY.lessons[topic];
+    if(!les2.urls)continue;
+    var urlCount=[les2.urls.worksheet,les2.urls.drills,les2.urls.quiz,les2.urls.blooket].filter(Boolean).length;
+    var anyPosted=false;
+    if(les2.periods){for(var pr in les2.periods){if(les2.periods[pr].posted){anyPosted=true;break;}}}
+    if(urlCount===4&&anyPosted)les2.status='ready';
+    else if(urlCount>0||anyPosted)les2.status='partial';
   }
 }
 
