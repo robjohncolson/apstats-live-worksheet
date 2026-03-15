@@ -948,8 +948,8 @@
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
 const BAKED_REGISTRY = {
-  "generatedAt": "2026-03-14T00:33:36.609Z",
-  "registryVersion": "d3aa95b03c4d",
+  "generatedAt": "2026-03-15T02:50:35.032Z",
+  "registryVersion": "34e00e5f4ff6",
   "lessons": {
     "6.10": {
       "topic": "Monday 3/16/26",
@@ -2617,6 +2617,81 @@ const BAKED_REGISTRY = {
           "verified": false
         }
       }
+    },
+    "7.7": {
+      "topic": "Topic 7.7",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson7_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=6",
+        "blooket": "https://dashboard.blooket.com/set/69b573932209798f94f1c912",
+        "videos": []
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-30",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987697777",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-04-06",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=987697813",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "7.8": {
+      "topic": "Topic 7.8",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson8_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=7",
+        "blooket": "https://dashboard.blooket.com/set/69b60f747e3edc6f469fd91a",
+        "videos": []
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-03-31",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987728262",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-04-08",
+          "schoologyFolder": null,
+          "posted": false,
+          "verified": false
+        }
+      }
+    },
+    "7.9": {
+      "topic": "Topic 7.9",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson9_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=8",
+        "blooket": "https://dashboard.blooket.com/set/69b61c9a2209798f94f1de47",
+        "videos": []
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": "2026-04-02",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987729960",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-04-08",
+          "schoologyFolder": null,
+          "posted": false,
+          "verified": false
+        }
+      }
     }
   }
 };
@@ -2627,8 +2702,41 @@ async function loadRegistry() {
     const resp = await fetch('roadmap-data.json', { cache: 'no-cache' });
     if (resp.ok) REGISTRY = await resp.json();
   } catch(e) { /* use baked-in fallback */ }
+  await loadSupabaseOverlay(cP);
   rCal();
   rProg();
+}
+
+async function loadSupabaseOverlay(period){
+  var cached=_supaCache[period];
+  if(cached&&Date.now()-cached.ts<60000){mergeSupabase(cached.rows,period);return;}
+  try{
+    var url=SUPABASE_URL+'/rest/v1/topic_schedule?period=eq.'+period+'&select=topic,date,title,status,schoology_folder_id&order=date.asc';
+    var resp=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY}});
+    if(!resp.ok)return;
+    var rows=await resp.json();
+    _supaCache[period]={rows:rows,ts:Date.now()};
+    mergeSupabase(rows,period);
+  }catch(e){/* fail silently — baked data is fine */}
+}
+
+function mergeSupabase(rows,period){
+  if(!REGISTRY||!REGISTRY.lessons)return;
+  var courseId=period==='B'?SCHOOLOGY_COURSE_B:SCHOOLOGY_COURSE_E;
+  for(var i=0;i<rows.length;i++){
+    var row=rows[i];
+    var lesson=REGISTRY.lessons[row.topic];
+    if(!lesson)continue;
+    if(!lesson.periods)lesson.periods={};
+    if(!lesson.periods[period])lesson.periods[period]={};
+    var p=lesson.periods[period];
+    if(row.schoology_folder_id){
+      p.schoologyFolder='https://lynnschools.schoology.com/course/'+courseId+'/materials?f='+row.schoology_folder_id;
+    }
+    p.posted=row.status==='posted'||row.status==='taught';
+    p.syncStatus=row.status;
+    p.syncSource='supabase';
+  }
 }
 
 function getRegistryEntry(topicKey) {
@@ -2811,6 +2919,9 @@ const EX_DT=new Date(2026,4,7),MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Au
 const R="review",OFF="off",EX="exam",PO="post",NC="noclass";
 const SCHOOLOGY_COURSE_B = '7945275782';
 const SCHOOLOGY_COURSE_E = '7945275798';
+const SUPABASE_URL='https://hgvnytaqmuybzbotosyj.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhndm55dGFxbXV5Ynpib3Rvc3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNTE5MTMsImV4cCI6MjA4MDcyNzkxM30.-LcH_zly4pXoX_2Vra-RbH9twPvUj6xAJp66xPi02tU';
+const _supaCache={};
 function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false}}
 const S=[[2026,2,9,d("6.6","Concluding Test for p",6,"Quiz 6.4","Drills 6.6, Quiz 6.5"),d("6.3","Justifying Claims (CI)",6,"Quiz 5-8, U5 PC","Drills 6.3, Quiz 6.1-6.2")],[2026,2,10,d("6.7","Type I & II Errors",6,"Quiz 6.5","Drills 6.7, Quiz 6.6"),NC],[2026,2,11,NC,d("6.4+6.5","Tests + p-Values",6,"Quiz 6.1-6.2","Drills 6.4-6.5, Quiz 6.3",true)],[2026,2,12,d("6.8","CI for p1-p2",6,"Quiz 6.6","Drills 6.8, Quiz 6.7"),NC],[2026,2,13,d("6.9","Justify Claims (Diff)",6,"Quiz 6.7","Drills 6.9, Quiz 6.8"),d("6.6","Concluding Test for p",6,"Quiz 6.3","Drills 6.6, Quiz 6.4-6.5")],[2026,2,16,d("6.10","Test for p1-p2 Setup",6,"Quiz 6.8","Drills 6.10, Quiz 6.9"),d("6.7","Type I & II Errors",6,"Quiz 6.4-6.5","Drills 6.7, Quiz 6.6")],[2026,2,17,d("6.11","Test for p1-p2",6,"Quiz 6.9","U6 PC, Drills 6.11, Quiz 6.10"),NC],[2026,2,18,NC,d("6.8+6.9","CI + Justify (Diff)",6,"Quiz 6.6","Drills 6.8-6.9, Quiz 6.7",true)],[2026,2,19,d("7.1","Intro: Error",7,"Quiz 6.10","Drills 7.1"),NC],[2026,2,20,d("7.2","CI for mean",7,"","Drills 7.2, Quiz 7.1"),d("6.10","Test for p1-p2 Setup",6,"Quiz 6.7","Drills 6.10, Quiz 6.8-6.9")],[2026,2,23,d("7.3","Justify Claims (mean CI)",7,"Quiz 7.1","Drills 7.3, Quiz 7.2"),d("6.11","Test for p1-p2",6,"Quiz 6.8-6.9","U6 PC, Drills 6.11, Quiz 6.10")],[2026,2,24,d("7.4","Setting Up Test for mean",7,"Quiz 7.2","Drills 7.4, Quiz 7.3"),NC],[2026,2,25,NC,d("7.1+7.2","Intro + CI for mean",7,"Quiz 6.10","Drills 7.1-7.2, Quiz 6.11",true)],[2026,2,26,d("7.5","Test for mean",7,"Quiz 7.3","Drills 7.5, Quiz 7.4"),NC],[2026,2,27,d("7.6","CI for diff of means",7,"Quiz 7.4","Drills 7.6, Quiz 7.5"),d("7.3","Justify Claims (mean CI)",7,"Quiz 6.11","Drills 7.3, Quiz 7.1-7.2")],[2026,2,30,d("7.7","Justify (Diff Means)",7,"Quiz 7.5","Drills 7.7, Quiz 7.6"),d("7.4","Setting Up Test for mean",7,"Quiz 7.1-7.2","Drills 7.4, Quiz 7.3")],[2026,2,31,d("7.8","Test for diff means Setup",7,"Quiz 7.6","Drills 7.8, Quiz 7.7"),NC],[2026,3,1,NC,d("7.5+7.6","Test + CI (Diff Means)",7,"Quiz 7.3","Drills 7.5-7.6, Quiz 7.4",true)],[2026,3,2,d("7.9","Test for diff means",7,"Quiz 7.7","U7 PC, Drills 7.9, Quiz 7.8"),NC],[2026,3,3,OFF,OFF],[2026,3,6,d("8.1","Intro: Unexpected?",8,"Quiz 7.8","Drills 8.1, Quiz 7.9"),d("7.7","Justify (Diff Means)",7,"Quiz 7.4","Drills 7.7, Quiz 7.5-7.6")],[2026,3,7,d("8.2","GOF Test Setup",8,"Quiz 7.9","Drills 8.2, Quiz 8.1"),NC],[2026,3,8,NC,d("7.8+7.9","Test for diff means",7,"Quiz 7.5-7.6","U7 PC, Drills 7.8-7.9, Quiz 7.7",true)],[2026,3,9,d("8.3","GOF Test",8,"Quiz 8.1","Drills 8.3, Quiz 8.2"),NC],[2026,3,10,d("8.4","Expected Counts",8,"Quiz 8.2","Drills 8.4, Quiz 8.3"),d("8.1","Intro: Unexpected?",8,"Quiz 7.7","Drills 8.1")],[2026,3,13,d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.3","Drills 8.5, Quiz 8.4"),d("8.2","GOF Test Setup",8,"","Drills 8.2, Quiz 8.1")],[2026,3,14,d("8.6","Chi-Sq Test",8,"Quiz 8.4","U8 PC, Drills 8.6, Quiz 8.5"),NC],[2026,3,15,NC,d("8.3+8.4","GOF + Expected Counts",8,"Quiz 8.1","Drills 8.3-8.4, Quiz 8.2",true)],[2026,3,16,d("9.1","Intro: Points Align?",9,"Quiz 8.5","Drills 9.1, Quiz 8.6"),NC],[2026,3,17,d("9.2","CI for Slope",9,"Quiz 8.6","Drills 9.2, Quiz 9.1"),d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.2","Drills 8.5, Quiz 8.3-8.4")],[2026,3,20,OFF,OFF],[2026,3,21,OFF,OFF],[2026,3,22,OFF,OFF],[2026,3,23,OFF,OFF],[2026,3,24,OFF,OFF],[2026,3,27,d("9.3","Justify Slope (CI)",9,"Quiz 9.1","Drills 9.3, Quiz 9.2"),d("8.6","Chi-Sq Test",8,"Quiz 8.3-8.4","U8 PC, Drills 8.6, Quiz 8.5")],[2026,3,28,d("9.4","Test for Slope Setup",9,"Quiz 9.2","Drills 9.4, Quiz 9.3"),NC],[2026,3,29,NC,d("9.1+9.2","Intro + CI for Slope",9,"Quiz 8.5","Drills 9.1-9.2, Quiz 8.6",true)],[2026,3,30,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Drills 9.5, Quiz 9.4"),NC],[2026,4,1,d(R,"Review: U1-5",0,"Quiz 9.4",""),d("9.3","Justify Slope (CI)",9,"Quiz 8.6","Drills 9.3, Quiz 9.1-9.2")],[2026,4,4,d(R,"Review: U6-7",0),d("9.4","Test for Slope Setup",9,"Quiz 9.1-9.2","Drills 9.4, Quiz 9.3")],[2026,4,5,d(R,"Review: U8-9 + FRQ",0),NC],[2026,4,6,NC,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Quiz 9.4")],[2026,4,7,EX,EX],[2026,4,8,PO,PO]];
 
@@ -3685,11 +3796,21 @@ function showResourcePanel(inf, dateStr) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" style="color:#0000cc;text-decoration:underline">Blooket Review</a></div>';
             }
         }
-        if (regEntry && regEntry.periods) {
-            const pInfo = regEntry.periods[cP];
-            if (pInfo && pInfo.schoologyFolder) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + pInfo.schoologyFolder + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
-            }
+        var _rpAll = getAllRegistryEntries(inf.t);
+        var _rpFolder = null; var _rpSyncs = [];
+        for (var _ri = 0; _ri < _rpAll.length; _ri++) {
+            var _rp = _rpAll[_ri].periods && _rpAll[_ri].periods[cP];
+            if (_rp && _rp.schoologyFolder && !_rpFolder) _rpFolder = _rp.schoologyFolder;
+            if (_rp && _rp.syncStatus) _rpSyncs.push(_rp.syncStatus);
+        }
+        if (_rpFolder) {
+            lessonHtml += '<div style="margin:3px 0"><a href="' + _rpFolder + '" target="_blank" style="color:#0000cc;text-decoration:underline">View on Schoology</a></div>';
+        }
+        if (_rpSyncs.length) {
+            var _rpAllPosted = _rpSyncs.every(function(s) { return s === 'posted' || s === 'taught'; });
+            var _rpSomePosted = _rpSyncs.some(function(s) { return s === 'posted' || s === 'taught'; });
+            var _rpLabel = _rpAllPosted ? 'Posted' : _rpSomePosted ? 'Partially Posted' : 'Scheduled';
+            lessonHtml += '<div style="margin:3px 0;color:#3b82f6">Schoology: ' + _rpLabel + '</div>';
         }
 
         if (lessonHtml) {
@@ -6022,6 +6143,8 @@ function setP(p){
     else{b.classList.add("s7btn-inv","s7btn-default");a.classList.remove("s7btn-inv","s7btn-default");}
     updateViewMenu();
     rCal();rProg();
+    var pu=new URL(window.location);pu.searchParams.set('period',p);history.replaceState(null,'',pu);
+    loadSupabaseOverlay(p).then(function(){rCal();rProg();});
 }
 function tdy(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
 function eq(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
@@ -6133,8 +6256,20 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
             if(links)h+='<div class="tt-links">'+links+'</div>';
             const statusText=re.status==='ready'?'Ready ✓':re.status==='partial'?'Partial ◐':'Pending ○';
             h+='<div class="tt-status '+(re.status||'pending')+'">'+statusText+'</div>';
-            if(re.periods&&re.periods[cP]&&re.periods[cP].schoologyFolder){
-                h+='<div class="tt-links"><a href="'+re.periods[cP].schoologyFolder+'" target="_blank">📁 Schoology Folder</a></div>';
+            var _allE=getAllRegistryEntries(inf.t);
+            var _syncStates=[];var _folderUrl=null;
+            for(var _i=0;_i<_allE.length;_i++){var _ep=_allE[_i].periods&&_allE[_i].periods[cP];
+                if(_ep&&_ep.syncStatus)_syncStates.push(_ep.syncStatus);
+                if(_ep&&_ep.schoologyFolder&&!_folderUrl)_folderUrl=_ep.schoologyFolder;
+            }
+            if(_syncStates.length){
+                var _allPosted=_syncStates.every(function(s){return s==='posted'||s==='taught';});
+                var _somePosted=_syncStates.some(function(s){return s==='posted'||s==='taught';});
+                var _sl2=_allPosted?'Posted':_somePosted?'Partially Posted':'Scheduled';
+                h+='<div class="tt-status" style="color:#3b82f6">Schoology: '+_sl2+'</div>';
+            }
+            if(_folderUrl){
+                h+='<div class="tt-links"><a href="'+_folderUrl+'" target="_blank">📁 Schoology Folder</a></div>';
             }
         }
     }
@@ -6143,8 +6278,10 @@ function mTip(e){tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY+12)
 function hTip(){tip.style.display="none";}
 
 /* ═══ INIT ═══ */
+(function(){var ps=new URLSearchParams(window.location.search);var pp=(ps.get('period')||'').toUpperCase();if(pp==='E')cP='E';})();
 uClock();setInterval(uClock,15e3);
 rCD();rCal();rProg();updateViewMenu();
+if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");_b.classList.add("s7btn-inv","s7btn-default");_a.classList.remove("s7btn-inv","s7btn-default");}
 loadRegistry();
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
