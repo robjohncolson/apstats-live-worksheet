@@ -1,0 +1,612 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topic 8.3: Carrying Out a Chi-Square Test for Goodness of Fit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background: #f9f9f9;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header-left { font-weight: bold; color: #003366; }
+        .header-center { font-weight: bold; }
+        .header-right { font-weight: bold; color: #003366; }
+        h1 { text-align: center; color: #003366; margin-bottom: 5px; font-size: 1.5rem; }
+        .subtitle { text-align: center; font-style: italic; color: #555; margin-bottom: 10px; }
+        .worksheet-label { text-align: center; font-weight: bold; margin-bottom: 20px; }
+        .student-info { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .student-info label { font-weight: bold; }
+        .student-info input {
+            border: none;
+            border-bottom: 1px solid #333;
+            background: transparent;
+            padding: 2px 5px;
+            font-size: 1em;
+        }
+        .objective-box {
+            border: 2px solid #003366;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        .objective-box strong { color: #003366; }
+        .vocab-box {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .vocab-box h3 { margin-top: 0; color: #003366; }
+        .vocab-table { width: 100%; }
+        .vocab-table td { padding: 5px 0; vertical-align: top; }
+        .vocab-table td:first-child { font-weight: bold; width: 200px; color: #003366; }
+        .section { margin-bottom: 28px; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+        .section-header h2 { margin: 0; color: #003366; font-size: 1.15rem; }
+        .timestamp { color: #666; font-size: 0.95rem; }
+        .ts { color: #888; font-size: 0.88em; font-style: italic; margin-right: 4px; }
+        .question {
+            margin-bottom: 12px;
+            padding-left: 6px;
+            position: relative;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #003366;
+            margin-right: 8px;
+        }
+        .sub-questions { margin-left: 22px; margin-top: 6px; }
+        .sub-question { margin: 4px 0; }
+        .blank {
+            border: none;
+            border-bottom: 1px solid #003366;
+            background: transparent;
+            padding: 2px 4px;
+            font-size: 1em;
+            min-width: 90px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .blank:focus {
+            outline: none;
+            border-bottom: 2px solid #003366;
+            background: #f0f7ff;
+        }
+        .blank.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+        .blank.partial {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+        .blank.incorrect {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+        .blank.revealed {
+            background-color: #e2e3f3;
+            border-color: #6c757d;
+        }
+        .model-box, .note-box {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background: #fff;
+            margin: 10px 0 14px;
+        }
+        .note-box { background: #f7fbff; border-color: #cce0ff; }
+        .hint { color: #777; font-size: 0.92em; margin-left: 6px; }
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .exit-ticket {
+            border: 2px solid #003366;
+            border-radius: 6px;
+            padding: 12px;
+            background: #f0f4ff;
+            margin-top: 18px;
+        }
+        .formula-box {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9ff;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .formula-box h4 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .formula {
+            font-size: 1.2em;
+            font-family: 'Times New Roman', serif;
+            margin: 8px 0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        .data-table th {
+            background: #003366;
+            color: white;
+        }
+        .data-table td input {
+            width: 60px;
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .btn-check {
+            background: #003366;
+            color: #fff;
+        }
+        .btn-show {
+            background: #6c757d;
+            color: #fff;
+        }
+        .btn-reset {
+            background: #dc3545;
+            color: #fff;
+        }
+        .btn-print {
+            background: #28a745;
+            color: #fff;
+        }
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .ai-feedback {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9ff;
+            border: 1px solid #d0d7ff;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .ai-feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .score-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .score-badge.score-E { background: #d4edda; color: #155724; }
+        .score-badge.score-P { background: #fff3cd; color: #856404; }
+        .score-badge.score-I { background: #f8d7da; color: #721c24; }
+        .ai-feedback-body { color: #444; }
+        .ai-feedback-matched { color: #155724; margin-top: 4px; }
+        .ai-feedback-missing { color: #856404; margin-top: 4px; }
+        .ai-feedback-suggestion { color: #004085; margin-top: 4px; font-style: italic; }
+        textarea.graded-E { border-color: #28a745; background: #f8fff9; }
+        textarea.graded-P { border-color: #ffc107; background: #fffef5; }
+        textarea.graded-I { border-color: #dc3545; background: #fff8f8; }
+        .appeal-section { margin-top: 8px; }
+        .appeal-btn {
+            background: none;
+            border: 1px solid #6c757d;
+            color: #6c757d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .appeal-btn:hover { background: #f0f0f0; }
+        .appeal-form {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .appeal-form.visible { display: block; }
+        .appeal-form textarea {
+            min-height: 60px;
+            margin-bottom: 8px;
+        }
+        .appeal-form button {
+            margin-right: 8px;
+        }
+        .appeal-result {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .appeal-result.upgraded { background: #d4edda; color: #155724; }
+        .appeal-result.maintained { background: #fff3cd; color: #856404; }
+        .appeal-count { font-size: 0.8em; color: #666; margin-top: 4px; }
+        #scoreDisplay {
+            display: none;
+            padding: 10px 15px;
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        #scoreDisplay.visible {
+            display: inline-block;
+        }
+        .aggregate-trigger {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #1565c0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+        .aggregate-trigger:hover {
+            background: #bbdefb;
+        }
+        .aggregate-drawer {
+            position: fixed;
+            top: 0;
+            right: -380px;
+            width: 360px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+            transition: right 0.25s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .aggregate-drawer.open {
+            right: 0;
+        }
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .drawer-header h3 { margin: 0; color: #003366; }
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+        }
+        .drawer-content { font-size: 0.95em; }
+        .bar-chart { margin: 10px 0; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+        }
+        .bar-label {
+            width: 100px;
+            font-size: 0.85em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .bar-container {
+            flex: 1;
+            height: 18px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 8px;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .bar-count {
+            width: 35px;
+            text-align: right;
+            font-size: 0.85em;
+            color: #666;
+        }
+        .save-indicator {
+            font-size: 0.8em;
+            color: #28a745;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .save-indicator.visible {
+            opacity: 1;
+        }
+        .upload-particle {
+            position: absolute;
+            font-size: 0.9em;
+            color: #667eea;
+            pointer-events: none;
+            animation: floatUp 0.9s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-16px); }
+        }
+        @media print {
+            .controls, .aggregate-trigger, .aggregate-drawer, .save-indicator,
+            .appeal-section, .ai-feedback, .btn-ai { display: none !important; }
+            .blank { border-bottom: 1px solid #000 !important; background: transparent !important; }
+            body { background: white; }
+            .section { page-break-inside: avoid; }
+            .exit-ticket { page-break-before: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="header-left">AP Statistics</span>
+        <span class="header-center">Unit 8</span>
+        <span class="header-right">Inference for Categorical Data</span>
+    </div>
+
+    <h1>Topic 8.3: Carrying Out a Chi-Square Test for Goodness of Fit</h1>
+    <div class="subtitle">Test Statistics, P-Values, and Conclusions for a Chi-Square Goodness-of-Fit Test</div>
+    <div class="worksheet-label">Video Follow-Along Worksheet</div>
+
+    <div class="student-info">
+        <div><label>Name:</label> <input type="text" id="worksheetName" style="width:160px;"></div>
+        <div><label>Period:</label> <input type="text" id="worksheetPeriod" style="width:40px;"></div>
+        <div><label>Username:</label> <input type="text" id="worksheetUsername" style="width:120px;" placeholder="for class sync"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>
+        <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
+        <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
+        <button class="btn-print" onclick="window.print()">&#128424; Print</button>
+        <button class="btn-ai" onclick="gradeAllReflections()">&#129302; Grade My Reflections</button>
+        <span id="scoreDisplay"></span>
+    </div>
+
+    <div class='objective-box'>
+    <strong>Learning Objectives:</strong>
+    <ul style='margin: 8px 0 0 0; padding-left: 20px;'>
+        <li>Calculate the chi-square test statistic from observed and expected counts for a goodness-of-fit test.</li>
+        <li>Use technology or a chi-square table to find or estimate the p-value for a chi-square goodness-of-fit test.</li>
+        <li>Interpret the p-value in context for a chi-square goodness-of-fit test.</li>
+        <li>Compare the p-value to a significance level and state the correct decision and conclusion.</li>
+        <li>Carry out a complete chi-square goodness-of-fit test and use contributions to identify the largest discrepancy.</li>
+    </ul>
+    <strong style='margin-top: 10px; display: block;'>Essential Knowledge:</strong>
+    <ul style='margin: 8px 0 0 0; padding-left: 20px;'>
+        <li>Expected counts come from multiplying the null-model proportions by the sample size.</li>
+        <li>Each contribution is calculated as (Observed &minus; Expected)<sup>2</sup> / Expected.</li>
+        <li>The chi-square statistic is the sum of the category contributions.</li>
+        <li>Degrees of freedom are based on the number of categories minus one, not the sample size.</li>
+        <li>Chi-square goodness-of-fit tests use the upper-tail probability of a chi-square distribution.</li>
+        <li>A chi-square statistic of 0 means a perfect fit, and larger values indicate a worse fit to the null model.</li>
+        <li>The p-value is interpreted as the probability of getting a result as extreme as the one in the study, or more extreme, assuming the null hypothesis is true.</li>
+        <li>If the p-value is less than or equal to alpha, reject the null hypothesis; if it is greater than alpha, fail to reject the null hypothesis.</li>
+        <li>The category with the largest contribution is the category showing the greatest discrepancy from the null model.</li>
+    </ul>
+</div>
+
+<div class='vocab-box'>
+    <h3>Key Vocabulary</h3>
+    <table class='vocab-table'>
+        <tr><td>Chi-Square Statistic</td><td>The sum of the category contributions, measuring how far the observed counts are from the expected counts.</td></tr>
+        <tr><td>Contribution</td><td>A category's value of (Observed minus Expected) squared divided by Expected.</td></tr>
+        <tr><td>P-Value</td><td>The probability of getting a result as extreme as the observed one, or more extreme, assuming the null hypothesis is true.</td></tr>
+        <tr><td>Upper Tail</td><td>The area to the right of the observed chi-square statistic on a chi-square distribution.</td></tr>
+        <tr><td>Chi-Square GOF-Test</td><td>The calculator procedure used to carry out a chi-square goodness-of-fit test.</td></tr>
+        <tr><td>Chi-Square CDF</td><td>A calculator function that finds chi-square probabilities from a lower bound to an upper bound.</td></tr>
+        <tr><td>Table C</td><td>A chi-square critical value table that gives upper-tail probabilities for selected chi-square values.</td></tr>
+        <tr><td>Significance Level</td><td>The alpha value used to decide whether to reject the null hypothesis.</td></tr>
+        <tr><td>Reject H<sub>0</sub></td><td>The decision made when the p-value is less than or equal to alpha.</td></tr>
+        <tr><td>Fail to Reject H<sub>0</sub></td><td>The decision made when the p-value is greater than alpha.</td></tr>
+    </table>
+</div>
+
+<div class='section'>
+    <div class='section-header'>
+        <h2>Video 1: Calculating the Test Statistic and P-Value</h2>
+        <span class='timestamp'>[0:00 &ndash; 9:56]</span>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>1.</span>
+        <span class='ts'>[0:11]</span>
+        In this video, we learn how to calculate a test statistic and a <input type='text' class='blank' data-answer='p-value|p value' style='width:80px;'> for a chi-square goodness-of-fit test.
+    </div>
+
+    <div class='note-box'>
+        <strong>Context &mdash; Predatory Lending in Dallas</strong>
+        <span class='ts'>[0:32 &ndash; 1:58]</span>
+        A random sample of 40 predatory lending businesses in Dallas, Texas was classified by the income bracket of the area where each business was located. The null model uses Dallas household proportions of 0.452, 0.292, and 0.256 for the three income categories.
+    </div>
+
+    <table class='data-table'>
+        <tr>
+            <th>Income Bracket</th>
+            <th>Observed Count</th>
+            <th>Null Proportion</th>
+            <th>Expected Count</th>
+        </tr>
+        <tr>
+            <td>$0 to &lt; $50,000</td>
+            <td>20</td>
+            <td>0.452</td>
+            <td>18.08</td>
+        </tr>
+        <tr>
+            <td>$50,000 to &lt; $100,000</td>
+            <td>17</td>
+            <td>0.292</td>
+            <td>11.68</td>
+        </tr>
+        <tr>
+            <td>$100,000 and above</td>
+            <td>3</td>
+            <td>0.256</td>
+            <td>10.24</td>
+        </tr>
+    </table>
+
+    <div class='question'>
+        <span class='question-number'>2.</span>
+        <span class='ts'>[1:38]</span>
+        In the null hypothesis, it is best to specify the <input type='text' class='blank' data-answer='numerical|numeric' style='width:150px;'> values for the category proportions.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>3.</span>
+        <span class='ts'>[2:05]</span>
+        Each expected count is found by multiplying the null proportion by the sample <input type='text' class='blank' data-answer='size|n' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>4.</span>
+        <span class='ts'>[2:18]</span>
+        The differences are computed as <input type='text' class='blank' data-answer='observed|obs' style='width:80px;'> minus expected.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>5.</span>
+        <span class='ts'>[2:38]</span>
+        The values of (Obs &minus; Exp)<sup>2</sup> / Exp are called <input type='text' class='blank' data-answer='contributions|contribution' style='width:150px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>6.</span>
+        <span class='ts'>[2:49]</span>
+        For the predatory lending data, the chi-square statistic is <input type='text' class='blank' data-answer='7.746|7.74595|7.74595074' style='width:80px;'>.
+    </div>
+
+    <div class='model-box'>
+        <strong>Chi-Square Mechanics</strong>
+        <span class='ts'>[2:05 &ndash; 4:24]</span>
+        <ol style='margin: 5px 0; padding-left: 20px;'>
+            <li>Use the null-model proportions and the sample size to find expected counts.</li>
+            <li>Compute Obs &minus; Exp for each category, square the differences, and divide by the expected count.</li>
+            <li>Add the contributions to get the chi-square statistic, &chi;<sup>2</sup>.</li>
+            <li>Use a chi-square distribution with <em>df</em> = number of categories &minus; 1 to find the upper-tail p-value.</li>
+        </ol>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>7.</span>
+        <span class='ts'>[3:25]</span>
+        Degrees of freedom are based on the number of <input type='text' class='blank' data-answer='categories|category' style='width:150px;'>, not the sample size.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>8.</span>
+        <span class='ts'>[3:25]</span>
+        With three income brackets, the chi-square distribution has <input type='text' class='blank' data-answer='2|two' style='width:80px;'> degrees of freedom.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>9.</span>
+        <span class='ts'>[4:15]</span>
+        A chi-square goodness-of-fit test uses the <input type='text' class='blank' data-answer='upper tail|right tail' style='width:150px;'> probability.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>10.</span>
+        <span class='ts'>[5:46]</span>
+        A chi-square statistic of 0 means the observed and expected counts are a <input type='text' class='blank' data-answer='perfect|exact' style='width:80px;'> fit.
+    </div>
+
+    <div class='note-box'>
+        <strong>Practice Context &mdash; Battleship Quadrants</strong>
+        <span class='ts'>[6:43 &ndash; 9:05]</span>
+        A random sample of 100 Battleship players gave observed counts of 16, 22, 33, and 29 for quadrants 1 through 4. If there is no preferred quadrant, the expected count is 25 in each quadrant.
+    </div>
+
+    <table class='data-table'>
+        <tr>
+            <th>Quadrant</th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+        </tr>
+        <tr>
+            <td>Observed</td>
+            <td>16</td>
+            <td>22</td>
+            <td>33</td>
+            <td>29</td>
+        </tr>
+        <tr>
+            <td>Expected</td>
+            <td>25</td>
+            <td>25</td>
+            <td>25</td>
+            <td>25</td>
+        </tr>
+    </table>
+
+    <div class='question'>
+        <span class='question-number'>11.</span>
+        <span class='ts'>[8:52]</span>
+        For the Battleship example, the correct p-value is about <input type='text' class='blank' data-answer='0.079|.079|0.0786|0.07855316' style='width:80px;'>.
+    </div>
+</div>
