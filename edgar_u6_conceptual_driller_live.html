@@ -1128,8 +1128,28 @@
     </div>
 
     <!-- Scripts -->
-    <script src="../railway_config.js"></script>
-    <script src="../railway_client.js"></script>
+    <!-- Railway config: try external first, inline fallback for standalone serving -->
+    <script src="../railway_config.js" onerror="
+        window.USE_RAILWAY = true;
+        window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';
+        console.log('railway_config.js not found, using inline defaults');
+    "></script>
+    <script src="../railway_client.js" onerror="
+        window.railwayClient = {
+            submitAnswer: function(u,q,a) {
+                return fetch(window.RAILWAY_SERVER_URL + '/api/submit-answer', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({username:u, question_id:q, answer_value:a, timestamp:Date.now()})
+                }).then(function(r){return r.json()}).catch(function(){return {success:false}});
+            },
+            getStats: function(q) {
+                return fetch(window.RAILWAY_SERVER_URL + '/api/question-stats/' + q)
+                    .then(function(r){return r.json()}).catch(function(){return {responses:{}}});
+            },
+            isConnected: function(){return false;}
+        };
+        console.log('railway_client.js not found, using inline fallback client');
+    "></script>
     <script src="ai-grading-prompts-edgar-u6.js"></script>
     <script>
         // ==================== CONFIG ====================
