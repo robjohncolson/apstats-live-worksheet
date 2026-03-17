@@ -1,0 +1,46 @@
+# Video 2 — Transcript
+# Unit 6, Lesson 11
+
+edit
+more_vert
+
+[00:00] Hi everyone. I'm Doug Tyson here in magical York, Pennsylvania. I'm here to bring you another AP Daily video and this one's on topic 6.11, carrying out a test for a difference in proportions.
+
+[00:24] What are we going to learn in this video? Well, we're going to learn how to interpret the p-value for a significance test for a difference in proportions. Then also we're going to learn how to state a conclusion for a significance test for a difference in proportions. So let's look at an example.
+
+[00:39] Bacterial conjunctivitis or pink eye causes eye irritation in those unlucky enough to contract it. Can eyedrops containing azithromycin make the recovery faster? In one clinical trial, eyedrops containing azithromycin were compared to a placebo eyedrop among 279 patients suffering from pink eye.
+
+[01:02] The results? Of 130 patients that were randomly assigned to the azithromycin drops, 82 were cured within a week. Of the 149 patients randomly assigned to the placebo drops, 74 were cured within a week. Do these results give convincing evidence that azithromycin is more effective at curing pink eye than a placebo for subjects like the ones in this study?
+
+[01:29] So from previous videos, here's what we've learned so far. The null hypothesis is that the two proportions are equal, or that their difference is zero. And the alternative is that the first proportion, p sub one, is greater than the second proportion, or that the difference is greater than zero. And that's where p sub one is the true proportion of pink eye patients like the subjects in the experiment who would be cured by azithromycin drops. p sub two is the similar proportion but for placebo drops. We also saw that all the conditions were met.
+
+[02:09] So let's think about interpreting a p-value. In previous videos we saw the difference in the group proportions is .134. That gave us a standardized test statistic of 2.25 and a p-value of .0122. Now having a difference in group proportions of .134 is evidence for the alternative because .134 is a positive difference, it's greater than zero. However, the p-value doesn't just measure whether or not there is evidence, it measures how likely to get evidence as strong or stronger in favor of the alternative than the observed evidence by chance alone assuming that the null is true.
+
+[02:50] So here's a template for interpreting the p-value. Notice that there are three parts and they're identified by three colors. In the first part, in blue, we assume that the null is true. And then in green, we're going to state that there is a certain probability, the p in p-value stands for probability. And then finally, of getting a difference in proportions of whatever the one was that we got or greater or less or more different, depending on the alternative, by chance alone in the random assignment or in the random samples.
+
+[03:29] So let's put that into practice with our effective eyedrops example. State that we're assuming the null is true. So assuming that the difference in the true proportions of pink eye patients like the ones in the experiment who would be cured is zero, there is a .0122 probability of getting a difference in proportions of .134 or greater by chance alone in the random assignment. So the .134 or greater, we say or greater because our alternative was a greater than alternative. There's the p-value interpreted.
+
+[04:05] Now let's turn our attention to stating a conclusion. Small p-values indicate that a test statistic is unlikely to occur by random chance alone, while large p-values indicate the observed test statistic is likely to occur by random chance alone. So if we have a small p-value, here's our conclusion. Because the p-value of blank is less than or equal to our significance level, we reject the null hypothesis. Then we go on to make a statement about what that means for the alternative. There is convincing statistical evidence that, and then you state the alternative in context.
+
+[04:47] So a small p-value, smaller than your significance level, leads to rejecting the null, and then having convincing evidence of the alternative. Contrast that, if we have a large p-value. Because the p-value of blank is greater than our significance level, we fail to reject the null hypothesis. And if we fail to reject the null hypothesis, then there is not convincing evidence that whatever the alternative is in context. So let's state the conclusion for our eyedrops.
+
+[05:22] No significance level was stated in the eyedrops example, so we'll use .05, which is the most common significance level in use today. Because the p-value of .0122 is less than alpha equal .05, we reject the null hypothesis. Our p-value was smaller than our significance level, we reject the null hypothesis. There is convincing statistical evidence that the difference, azithromycin minus placebo, in the proportions of patients like the ones in this experiment who would be cured within a week is greater than zero. So there is evidence that and then we stated the alternative in context. That the difference in the proportions is greater than zero.
+
+[06:10] So let's practice with another example. A bright idea. A marketing agent wonders if there's a difference in the percentage of residents in two cities who have purchased sunglasses during the last 12 months. Of 400 randomly selected residents of Soltown, 314 purchased sunglasses in the last 12 months. Meanwhile, a random sample of Brightville residents reveals that 452 of 550 residents purchased sunglasses within the last 12 months.
+
+[06:42] The p-value for a two-sample z-test of the difference in proportions is .1556. Let's interpret the p-value and make a conclusion at the .10 significance level.
+
+[07:00] So, let's interpret the p-value. In previous videos, we see that the hypotheses are these. The null hypothesis is the two proportions are equal. The alternative is that they're not equal, that there's a difference. And again, in previous videos, we found that the difference in the sample proportions is -.037, and that gave us a p-value of .1556.
+
+[07:27] So let's interpret the p-value. Assuming that the difference, Soltown minus Brightville, in the proportions of all residents who have purchased sunglasses in the last 12 months is zero. So that's assuming the null is true. There's a .1556 probability of getting a difference in sample proportions of -.037 or one more different in either direction by chance alone in the random samples. And so that phrase, or one more different in either direction, is because our alternative is not equal to, it's a two-sided alternative. So, more different in either direction. So there's our p-value interpretation.
+
+[08:16] Now let's state our conclusion. Remember, we use any .10 significance level. So because the p-value of .1556 is greater than our significance level of .10, we fail to reject the null hypothesis. There is not convincing statistical evidence that the difference, Soltown minus Brightville, in the proportions of all residents who have purchased sunglasses during the last 12 months is not equal to zero. So there's not convincing evidence of the alternative, that the difference in proportions is not zero.
+
+[08:56] So what should we take away from this video? How do we interpret a p-value? Well it comes in three parts, and here's our template. Assuming the null is true, there's a p-value probability of getting a difference in proportions as extreme or more extreme as the one we saw by chance alone in the random assignment or random samples.
+
+[09:22] Number two, how do we state a conclusion? Well, if we have a small p-value, smaller than our significance level, we say because the p-value of blank is less than the significance level, we reject the null. There is convincing statistical evidence that the alternative in context. If we have a large p-value, larger than our significance level, we would say because the p-value of blank is greater than our significance level, we fail to reject the null. There is not convincing statistical evidence that, say the alternative in context.
+
+[10:03] I'm Doug Tyson, thanks so much for joining me in this video. I'm looking forward to seeing you in the next video. Peace.
+
+thumb_up
+thumb_down

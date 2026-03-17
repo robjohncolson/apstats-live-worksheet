@@ -1,0 +1,145 @@
+# Video 2 — Transcript
+# Unit 7, Lesson 3
+
+more_vert
+
+The following transcription includes all spoken content from the provided video, with timestamps for each segment.
+
+[00:00] Hello AP stats world, Tyson again here from spectacular York, Pennsylvania.
+
+[00:06] I've got another AP Daily video for you, and in this video, we're going to learn how to interpret a confidence level for a confidence interval,
+
+[00:13] and we're also going to look at factors that affect margin of error.
+
+[00:17] So, what specifically will we learn here?
+
+[00:20] Two things. We're going to learn how to interpret the confidence level of a confidence interval.
+
+[00:26] Now, watch out for the word "confidence level." We are not going to interpret the confidence interval—that was done in a previous video—
+
+[00:33] we're interpreting the confidence level.
+
+[00:35] Second, we're going to figure out how sample size and confidence level affect margin of error in a confidence interval for a population mean.
+
+[00:46] So, like usual, let's start with an example.
+
+[00:50] Human body temperature. Suppose that human body temperatures are approximately normally distributed with a mean of 98.6 degrees Fahrenheit and a standard deviation of 0.8 degrees Fahrenheit.
+
+[01:04] So, imagine selecting a random sample of 10 people, recording their body temperature, and calculating a 95% confidence interval for the mean human body temperature of all people.
+
+[01:17] So, using this example, we're going to learn how to interpret a confidence level by first looking at a simulation.
+
+[01:25] We know our population has a mean of 98.6, standard deviation of 0.8, and a shape that's approximately normal.
+
+[01:34] So, I'm going to put a number line down here, and I'm going to mark 98.6 as the true mean.
+
+[01:41] So, let's simulate taking a random sample of 10 individuals.
+
+[01:44] One possible sample gives us a mean of 98.79, and we could plot that as a dot, or rather, an x-bar here to represent the dot.
+
+[01:56] And then we can add the margin of error to create our confidence interval, add and subtract,
+
+[02:02] and you can see that this confidence interval captures 98.6, as we would hope.
+
+[02:08] So, we could do that for another sample and get another confidence interval.
+
+[02:12] And here's another confidence interval from a different sample.
+
+[02:16] Notice in this one, the mean was 98.1, and when we included the margin of error, it didn't quite make the interval wide enough to capture mu.
+
+[02:27] And because it didn't capture mu, we've colored it red.
+
+[02:30] Here's another interval, and now let's just do a bunch more.
+
+[02:35] So, here's a bunch more intervals, and notice that so far, 11 out of 12, or about 91.7% of the intervals, have captured mu—
+
+[02:46] that's 98.6 degrees Fahrenheit, which is the mean for the population.
+
+[02:51] If we increase the simulation to get a thousand different intervals from a thousand different random samples,
+
+[03:00] we can see that 95.6% of those thousand intervals have actually captured the true population mean.
+
+[03:11] And that's awfully close to our confidence level.
+
+[03:14] In fact, that is what we mean by "confidence level."
+
+[03:17] So, keep that picture in your mind.
+
+[03:19] In general, here is how we interpret a confidence level for a population parameter—that's the 95% number.
+
+[03:28] In repeated random sampling with the same sample size, approximately c% (or 95%)
+
+[03:38] of those c% confidence intervals that were created will capture the population mean.
+
+[03:44] So, let's apply that to human body temperatures.
+
+[03:47] If we take many random samples of 10 people from the population of all humans and use each sample to construct a 95% confidence interval
+
+[03:56]—now you see in the picture—for the mean human body temperature of all people,
+
+[04:02] then about 95% of those intervals would capture the population mean.
+
+[04:07] And that's a good interpretation of confidence level: the 95%.
+
+[04:14] One tip for the AP exam, in particular: please remember to write in context, always.
+
+[04:22] You can see here the context is colored in blue.
+
+[04:26] So, one common mistake is to try to attach a probability of a single interval capturing the population mean to the confidence level,
+
+[04:40] and that is not a good interpretation.
+
+[04:42] So, confidence level describes what happens in repeated sampling.
+
+[04:46] It doesn't give the probability that any one particular interval captures the population proportion.
+
+[04:52] So, we can see from our simulation, we have an interval up here that captured the mean with probability one.
+
+[05:00] And there's another interval that captured the mean with probability zero.
+
+[05:06] So, be sure not to try to attach 95% as a probability of a single interval capturing the mean.
+
+[05:13] So, now let's turn our attention to factors that affect margin of error.
+
+[05:19] So, remember that in AP Stats, confidence intervals have this structure: point estimate plus or minus margin of error.
+
+[05:27] That means that changing the margin of error directly changes the width of the interval, because the width of the interval is double the margin of error.
+
+[05:38] So, we would like to have narrow confidence intervals; that's more precise.
+
+[05:44] So, we want the margin of error to be small.
+
+[05:47] Well, there are two common ways to decrease margin of error.
+
+[05:51] So, if everything else remains the same, the margin of error will be smaller when the sample size is larger.
+
+[06:01] Now, here we see the formula for margin of error when we're estimating a population mean.
+
+[06:06] Look at the denominator of the fraction: it has a square root of n in there, and n is sample size.
+
+[06:12] So, if we increase the sample size—that's the bottom of a fraction—that will decrease the value of the fraction,
+
+[06:19] and that would therefore decrease the margin of error, if all else is the same.
+
+[06:25] So, for a population mean, the width of the interval is actually proportional to 1 over the square root of n,
+
+[06:31] which would mean we would have to quadruple sample size to cut the margin of error in half.
+
+[06:39] A second way to affect the margin of error is to change the confidence level.
+
+[06:46] So, if we make the confidence level smaller, that'll make the margin of error smaller.
+
+[06:51] To see why, look here: we can see that the critical value t-star—that's tied to confidence level—
+
+[06:58] and critical values are smaller for lower confidence levels.
+
+[07:05] And so, the critical value t-star for 90% confidence is smaller, for all degrees of freedom, than the critical value for 95% confidence,
+
+[07:15] and that will make this interval narrower.
+
+[07:21] So, what should we take away from this video?
+
+[07:24] First, how do you interpret the confidence level of a confidence interval for a popul
+
+thumb_up
+thumb_down

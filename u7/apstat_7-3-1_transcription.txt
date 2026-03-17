@@ -1,0 +1,25 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 3
+
+more_vert
+
+[00:00] Hi again, everyone. I'm Doug Tyson here in phenomenal York, Pennsylvania. I'm bringing you another AP Daily video and this time we're going to interpret a confidence interval for a population mean and learn how to use the interval to justify a claim.
+
+[00:20] What are we going to learn? Well, two things in particular. We are going to interpret a confidence interval for a population mean and then secondly we're going to learn how to justify a claim on... based on a confidence interval for a population mean.
+
+[00:38] So as usual let's start with an example. Sweet sugary goodness. A bakery owner purchases powdered sugar, also called confectioner's sugar or 10x sugar, from a new food wholesaler. Because the food wholesaler is new, the bakery owner wants to make sure that the bags were properly filled on average. Here are the weights in grams of 10 randomly selected bags from the food wholesaler. Our task is to calculate and interpret a 95% confidence interval for the mean weight mu of all bags filled by the wholesaler.
+
+[01:14] Well, in a previous video we learned how to calculate the interval, so now we're going to talk about interpreting the interval. So in general, here's the template for interpreting a confidence interval for a population parameter. "We are C percent confident that the interval from blank to blank captures the whatever parameter it is we're trying to capture."
+
+[01:39] Now in our previous video in topic 7.2 video number 3, we found that the 95% confidence interval for the powdered sugar example is 900.92 grams to 912.68 grams. So let's use our template and write the interpretation. "We are 95% confident that the interval from 900.92 to 912.68 grams captures the mean weight of all bags filled by this wholesaler."
+
+[02:14] And now that we've interpreted the interval, let's go ahead and try and justify a claim. So the manufacturer claims that the bags contain an average of 907 grams of powdered sugar. The bakery owner is worried that the bags weigh less than 907 grams on average, so there's some concern that the bags are underfilled. Is there convincing evidence, convincing evidence that the bags of powdered sugar are being underfilled? Well, because 907 grams is in the 95% confidence interval, so from 900.92 to 912.68, 907 grams is a plausible value for mu, the mean weight of all bags filled by this wholesaler. Therefore there's not convincing evidence that the bags of powdered sugar are being underfilled.
+
+[03:08] Let's practice with a different example. Fiddler Feeding Frenzy. Wildlife biologists studied a random sample of 40 fiddler crabs to see how quickly they eat. The 90% confidence interval for the mean feeding rate of all fiddler crabs of this species is 67.65 plus or minus 1.76 scoops per 30 seconds. We're going to do two things in this problem. We're going to interpret the confidence interval and then based on that interval we're going to decide if there's convincing evidence that the average feeding rate for this species is faster, that is greater than 2 scoops per second.
+
+[03:51] So first let's interpret the confidence interval. So we were given the interval in the form point estimate plus or minus margin of error. So let's create the lower and upper bounds by adding and subtracting. So 65.89 to 69.41 scoops per 30 seconds, that's our interval. So "we are 90% confident that the interval 65.89 to 69.41 scoops per 30 seconds captures the mean feeding rate for all fiddler crabs of this species."
+
+[04:30] Now part b. Based on this interval is there convincing evidence that the average feeding rate is faster for this species or greater than 2 scoops per second? Well, scoops per second was not our units of measure, but we can convert it. So 2 scoops per 1 second is the same as 60 scoops per 30 seconds, and that's our units of measure. So now we can use the interval to make our decision. Our 90% interval is 65.89 to 69.41 scoops per 30 seconds. Because all of the values in the interval, so from 65.89 to 69.41 scoops per 30 seconds, because all of those values are greater
+
+thumb_up
+thumb_down

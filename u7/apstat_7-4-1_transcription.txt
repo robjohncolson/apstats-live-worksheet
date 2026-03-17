@@ -1,0 +1,39 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 4
+
+more_vert
+
+[00:00] Hi again everyone. I'm Doug Tyson, here in wondrous York, Pennsylvania. I'm bringing you another AP daily video and this one is about stating the null and alternative hypotheses in a significance test for a population mean.
+
+[00:15] What are we going to learn in this video? We're going to learn how we state a null hypothesis in a test for a population mean, and we're also going to learn how we state an alternative hypothesis in a test for a population mean.
+
+[00:31] So a quick reminder about the structures of units 6 through 9. There are two major types of statistical inference in these units: confidence intervals. They're used to estimate the value of a population parameter and they're an interval of values, rather than a single value, that are used to estimate the parameter to account for sampling variability.
+
+[00:58] The second kind of inference are significance tests and we're working on those in this topic. A significance test is used to test a claim about the value of a population parameter and they assess whether evidence supporting a claim is likely or unlikely to happen by chance alone.
+
+[01:18] So in unit 7 particularly, we're going to focus on quantitative data that can be summarized by calculating the mean in a sample or treatment group. Topics 7.2 and 3 are about confidence intervals for a population mean. 7.4 and 7.5 are about significance tests for a population mean. Topics 7.6 and 7.7 are about confidence interval for a difference in means and 7.8 and 7.9 are about significance tests for a difference in means.
+
+[01:54] So let's look at an example. Got hops? An article on the internet claims that the average vertical jump for teens is 15 inches. Intrepid AP statistics students at one large high school selected a random sample of 20 students and measured their vertical jumps. The students in the sample jumped an average of 15.8 inches with the standard deviation of 2.33 inches. Do these data provide convincing evidence that the average vertical jump for all students at this school differs from 15 inches? And there we see the data.
+
+[02:31] So let's talk about the null hypothesis first. In a statistical test, the null hypothesis is often a claim of "no difference" or "no change." So in this vertical jump example, the null hypothesis is that the average vertical jump for students at this high school is no different than the average for all teens. So the null hypothesis is written this way in symbols. H sub zero is the symbol for null hypothesis, and in this case, it's that mu equals 15 inches, where mu is the mean vertical jump for all students at this high school. Until we have convincing evidence otherwise, we perform a significance test assuming the null is true.
+
+[03:20] So now how about the alternative hypothesis? In a statistical test, the alternative hypothesis is the claim we hope to support with evidence from the data collected. So in the vertical jump example, the AP stats students wanted to know if the average jump for students at this school differs from 15 inches. So the alternative hypothesis is that the mean vertical jump for all students at this high school is not equal to 15 inches.
+
+[03:53] And so remember the null is that the mean for all students at this high school is 15 inches. The alternative is that the mean is not equal to, it's different than 15 inches. And remember we need to define our parameter. Mu here is the mean vertical jump for all students at this high school.
+
+[04:12] So let's summarize what we need to know about hypotheses. So the null hypothesis is a statement of equality, typically that mu equals some value, some hypothesized value or null value. The alternative always contains a strict inequality, there's no equal to sign as a part of the alternative. So either mu is less than or greater than or not equal to some null value.
+
+[04:44] So when the inequality is strictly less than or strictly greater than, we say that the alternative is a one-sided alternative. And if the inequality is less than or equal to, or rather not equal to, the alternative is said to be two-sided.
+
+[05:01] So the choice of the alternative hypothesis is determined by the question of interest and should always be stated before you collect data. And never refer to statistics like x-bar in your hypotheses and finally remember to define the parameter mu.
+
+[05:22] So let's practice with a different example. I can go for miles and miles. A tire manufacturer must test its Tread40 tires to see if they last more than 40,000 miles on average. A quality control engineer selects a random sample of 35 tires and puts them on a machine that simulates driving conditions until the tread on the tire is 2/32nd of an inch when the tire must be replaced. The average mileage for the sample is 42,348 miles with a standard deviation of 2,140 miles.
+
+[05:58] So let's state hypotheses for the engineer's test. The null hypothesis is typically a statement of equality and so the null hypothesis is that mu equals 40,000 miles. The alternative is an inequality. Here mu is greater than 40,000 miles because the engineer wants to see if the tires last more than 40,000 miles on average. And finally don't forget to state what the parameter is. The parameter mu is the mean mileage for all Tread40 tires, not just the ones in the sample, but for the population of all tires.
+
+[06:40] What should you take away from this video? How do we state a null hypothesis in a test for a population mean? Well, h sub zero, which is the symbol for the null hypothesis, is that mu equals some null or hypothesized value. And also remember to define mu. Mu is the population mean of whatever you're estimating.
+
+[07:07] Secondly, how do we state an alternative hypothesis in a test for a population mean? Well, the alternative is going to take one of these three forms and that's determined by the research question. Should be stated be
+
+thumb_up
+thumb_down

@@ -1,0 +1,396 @@
+# Video 2 — Slide Descriptions
+# Unit 7, Lesson 2
+
+more_vert
+
+Here is a detailed breakdown of the visual changes and slide content in the video:
+
+[00:00] — Title Slide
+<Title: "TOPIC 7.2 Constructing a Confidence Interval for a Population Mean". Subtitle: "DAILY VIDEO 3. In this video, we will discuss how to calculate a confidence interval for a population mean.">
+
+[00:15] — What Will We Learn?
+<Slide shows two numbered learning objectives that appear sequentially:
+
+How do we determine the margin of error when estimating a population mean?
+
+How do we calculate a confidence interval for a population mean?>
+
+[00:28] — LET'S LOOK AT AN EXAMPLE
+<Transition slide.>
+
+[00:30] — Sweet Sugary Goodness
+<A text-heavy slide with a picture of a slice of chocolate cake dusted with powdered sugar. Text describes a bakery owner buying powdered sugar from a new wholesaler and wanting to check if bags are properly filled. A data table shows weights (in grams) of 10 randomly selected bags: 910, 919, 900, 913, 904, 913, 903, 914, 893, 899. Task at the bottom: "Calculate a 95% confidence interval for the mean weight 
+𝜇
+μ
+ of all bags filled by this wholesaler.">
+
+[01:06] — Calculating the Margin of Error
+<Slide displays the general formula: "margin of error = (critical value)(standard error of statistic)". As the instructor speaks, definitions and formulas appear below it:
+
+"The standard error of a statistic is an estimate of the standard deviation of the sampling distribution of the statistic."
+
+"From Topic 5.7, the standard deviation of the sampling distribution of 
+𝑥
+ˉ
+x
+ˉ
+ is: 
+𝜎
+𝑥
+ˉ
+=
+𝜎
+𝑛
+σ
+x
+ˉ
+	​
+
+=
+n
+	​
+
+σ
+	​
+
+"
+
+"Because we don't know the value of 
+𝜎
+σ
+, we replace it with 
+𝑠
+s
+ to get the standard error of 
+𝑥
+ˉ
+x
+ˉ
+: 
+𝑆
+𝐸
+𝑥
+ˉ
+=
+𝑠
+𝑛
+SE
+x
+ˉ
+	​
+
+=
+n
+	​
+
+s
+	​
+
+"
+
+"The critical value is a multiplier that makes the margin of error large enough to give a specific amount of confidence that the interval contains the value being estimated."
+
+"As we saw in the earlier Topic 7.2 video, when estimating a population mean, the critical value comes from a 
+𝑡
+t
+ distribution.">
+
+[02:24] — 
+𝑡
+t
+ Distributions
+<Slide shows a graph of a bell-shaped curve centered at 0, representing a 
+𝑡
+t
+ distribution. The x-axis ranges from -4 to 4. Text states: "The mean of a 
+𝑡
+t
+ distribution is 0." Text updates sequentially to show:
+
+"The variability of a 
+𝑡
+t
+ distribution is determined by its degrees of freedom. For estimating a population mean, 
+𝑑
+𝑓
+=
+𝑛
+−
+1
+df=n−1
+." A label "df = 4" appears next to the curve.
+
+"The shape of a 
+𝑡
+t
+ distribution is like a standard normal distribution, but with fatter tails and a slightly lower peak."
+
+"As degrees of freedom increase, the tails get thinner and the peak gets higher." The graph updates to show a second, taller, narrower curve represented by a green dotted line labeled "df = 29" overlaid on the original curve.>
+
+[03:14] — Calculating the Margin of Error (continued)
+<Returns to the original margin of error formula. New text appears below: "For confidence intervals for a population mean, the critical value represents the boundaries encompassing the middle C% of the 
+𝑡
+t
+ distribution with 
+𝑛
+−
+1
+n−1
+ degrees of freedom, where C% is the approximate confidence level.">
+
+[03:36] — Finding the Critical Value
+<Slide features a graph of a 
+𝑡
+t
+ distribution. The central area of the curve is shaded red and labeled "Area = 0.95". Text explains the task: find the boundaries for the middle 95% with 
+𝑑
+𝑓
+=
+9
+df=9
+ (since 
+𝑑
+𝑓
+=
+10
+−
+1
+=
+9
+df=10−1=9
+). Values appear below the x-axis marking the boundaries of the red shaded area: "
+−
+𝑡
+∗
+=
+−
+2.262
+−t
+∗
+=−2.262
+" and "
+𝑡
+∗
+=
+2.262
+t
+∗
+=2.262
+". The final conclusion at the bottom is "The critical value is 
+𝑡
+∗
+=
+2.262
+t
+∗
+=2.262
+.">
+
+[04:17] — Using Table B for Critical Values
+<A snippet of "Table B: 
+𝑡
+t
+ distribution critical values" (from the AP formula sheet) appears next to the graph. A blue rectangle highlights the row for 
+𝑑
+𝑓
+=
+9
+df=9
+ on the left side of the table. Another blue rectangle highlights the column for 95% confidence level (Tail probability 
+𝑝
+=
+0.025
+p=0.025
+). An arrow points to their intersection, highlighting the value 2.262, verifying the number found via technology.>
+
+[05:04] — Calculating the Confidence Interval
+<Slide displays steps and formulas sequentially:
+
+General formula: "CI = point estimate 
+±
+±
+ margin of error"
+
+Expanded general formula: "CI = statistic 
+±
+±
+ (critical value)(standard error of statistic)"
+
+Specific stats for the sugar example appear: 
+𝑥
+ˉ
+=
+906.8
+x
+ˉ
+=906.8
+, 
+𝑠
+=
+8.22
+s=8.22
+, and 
+𝑛
+=
+10
+n=10
+.
+
+Specific formula: "CI = 
+𝑥
+ˉ
+±
+𝑡
+∗
+𝑠
+𝑛
+x
+ˉ
+±t
+∗
+n
+	​
+
+s
+	​
+
+"
+
+Values substituted: 
+=
+906.8
+±
+2.262
+8.22
+10
+=906.8±2.262
+10
+	​
+
+8.22
+	​
+
+. A red callout box points to 2.262, explaining: "In a 
+𝑡
+t
+ distribution with 9 degrees of freedom, the middle 95% of the area is between 
+−
+𝑡
+∗
+=
+−
+2.262
+−t
+∗
+=−2.262
+ and 
+𝑡
+∗
+=
+2.262
+t
+∗
+=2.262
+."
+
+The calculation is simplified to 
+=
+906.8
+±
+5.88
+=906.8±5.88
+. Green arrows label 906.8 as the "point estimate" and 5.88 as the "margin of error".
+
+The final interval is calculated and displayed as bounds: 
+=
+900.92
+=900.92
+ to 
+912.68
+912.68
+, with green arrows labeling them "lower bound" and "upper bound".>
+
+[05:56] — Formula Sheet Reference
+<Slide shows snippets from the AP Statistics formula sheet. It highlights Section III, "Sampling Distributions and Inferential Statistics," showing the generic confidence interval template. It then shows the sub-table "Sampling Distributions for means," drawing attention with a purple arrow to the row for a single population mean, showing the formulas for the parameter, standard deviation, and standard error (
+𝑠
+𝑛
+n
+	​
+
+s
+	​
+
+).>
+
+[06:29] — LET'S PRACTICE
+<Transition slide.>
+
+[06:31] — Fiddler Feeding Frenzy
+<Slide with an image of fiddler crabs in the sand. Text describes a study on crab feeding speeds. Data provided: For 
+𝑛
+=
+40
+n=40
+ crabs, sample mean 
+𝑥
+ˉ
+=
+67.65
+x
+ˉ
+=67.65
+ scoops/30 sec, sample standard deviation 
+𝑠
+=
+6.61
+s=6.61
+ scoops/30 sec. Task: "Calculate a 90% confidence interval for the mean feeding rate of all fiddler crabs of this species.">
+
+[07:08] — Finding the Critical Value for Practice Problem
+<Slide shows a 
+𝑡
+t
+ distribution graph with the middle area shaded red and labeled "Area = 0.90". Top right text calculates degrees of freedom: "
+𝑑
+𝑓
+=
+40
+−
+1
+=
+39
+df=40−1=39
+". Below the graph, boundary values calculated via technology appear: "
+−
+𝑡
+∗
+=
+−
+1.685
+−t
+∗
+=−1.685
+" and "
+𝑡
+∗
+=
+1.685
+t
+∗
+=1.685
+". Conclusion text: "The critical value is 
+𝑡
+∗
+=
+1.685
+t
+∗
+=1.685
+.">
+
+[07:29] — Table B Limitation
+
+<Table B appears next to the graph. The instructor notes that $df = 39$ is not an option in the table. Blue boxes highlight how to use the table conservatively: drop down to the closest row without going over, which is $df = 30$. The column for 90% confidence intersects this row at 1.697. The instructor emphasizes this is different from the technology value of 1.685.>
+
+thumb_up
+thumb_down

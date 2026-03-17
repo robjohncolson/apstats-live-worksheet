@@ -1,0 +1,29 @@
+# Video 2 — Transcript
+# Unit 7, Lesson 4
+
+more_vert
+
+Absolutely! Here's a transcription of the video:
+
+[00:00] Hi again everyone. I'm Doug Tyson, here in awe-inspiring York, Pennsylvania. I've got another AP Daily video for you, and this one is about how to identify the procedure and check the conditions for a significance test for a population mean.
+
+[00:17] So, what are we going to learn in this video? We're going to learn how to identify an appropriate significance test procedure for a population mean. And then we're going to learn how to verify that the conditions for performing that significance test for a mean have been met.
+
+[00:34] So, let's look at an example. "Got Hops?" An article on the internet claims that the average vertical jump for teens is 15 inches. Intrepid AP Statistics students at one large high school selected a random sample of 20 students and measured their vertical jumps. The students in the sample jumped an average of 15.8 inches, with a standard deviation of 2.33 inches. Do these data provide convincing evidence that the average vertical jump for all students at this school differs from 15 inches?
+
+[01:11] In a previous video, we stated the hypotheses: Mu = 15 inches versus Mu is not equal to 15 inches, where Mu is the mean vertical jump for all students at this high school.
+
+[01:25] So, how do we identify the procedure? So, we've already learned about significance tests for a population proportion based on data from one sample. But in this case, the parameter is a population mean. So, when the goal is to test a claim about a population mean, the correct procedure is a one-sample t-test for a population mean.
+
+[01:50] Now, how do we check the conditions to make sure that we can use that one-sample t-test for a population mean? Well, in general, we should always check for independence in the methods used to collect the data, and that the appropriate sampling distribution has the correct shape.
+
+[02:11] So, what does that look like specifically for a one-sample t-test for a population mean? So, to check for independence, make sure the data are collected by using a random sample from a population or a randomized experiment. Also, if you're sampling without replacement, then make sure that the sample size is less than 10% of the population size. How do you check that the shape of the sampling distribution is approximately normal? Well, that happens when the sample size is large—so, as a rule of thumb, n is at least 30. Or, if n is less than 30, check that the sample data show no strong skewness or outliers. If these conditions look familiar, that's because they are. They're exactly the same conditions that we used for a one-sample t-interval for a population mean.
+
+[03:08] So, let's return to our example. Does the average vertical jump of all students at a large high school differ from 15 inches? Here are the vertical jumps of 20 randomly selected students. Check if the conditions for calculating a confidence interval are met. So, number one: yes, the 20 students were randomly selected. That condition is met. Number two: in a large high school, it's reasonable to think that 20 students is less than 10% of all students. And then third, we can graph the sample data since our sample size is not 30 or more, and we see that there are no outliers or strong skewness in the sample data. I've chosen to make a box plot here, but you could use a dot plot or stem plot or histogram. It's important that you actually make the graph though, you can't just make this statement without showing the evidence. So, all the conditions are met in this case.
+
+[04:10] So, let's practice with a different example. "Long Live the Tablet!" CB Tablets claims that its tablet computers have an average battery life of 14 hours under normal usage. A consumer advocacy group wonders if the batteries have shorter lives, on average, than the claim by CB Tablets. The table here shows the battery life, in hours, for 10 tablets. Let's check if the conditions for performing a significance test are met in this case. Well, first, we have no indication that these 10 tablets were randomly selected. So, this condition is not met. It is, however, reasonable to think that 10 tablets is less than or equal to 10% of all tablets made by CB Tablets. But our third condition—that one's violated as well. A dot plot here of the sample data shows strong skewness and a potential outlier. And so this condition isn't met either. Which means the conditions for inference here are not met.
+
+[05:20] So, what should we take away from this video? First, how do you identify an appropriate significance test procedure fo
+
+thumb_up
+thumb_down

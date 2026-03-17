@@ -1,0 +1,172 @@
+# Video 3 — Transcript
+# Unit 8, Lesson 3
+
+edit
+more_vert
+
+[00:00] Hi AP Statistics. Bridget Matamoros here with a full-length AP exam FRQ.
+
+[00:07] So what will we learn?
+
+[00:10] Well, how do you perform a complete significance test for a distribution of proportions for one categorical variable?
+
+[00:16] So let's look at our example.
+
+[00:34] City leaders want to test if the proportions that are being used by the city are still valid.
+
+[00:39] Data collected by a statistician from a simple random sample this past summer indicated that the following number of households participated in each district.
+
+[00:49] Part A states, the statistician claims that the data for this past summer provide evidence that the proportions that are being used by the city are no longer valid.
+
+[00:58] Give statistical evidence to justify the claim.
+
+[01:01] And Part B is asking then for which one of the six districts had the greatest change in participation since the year 2000?
+
+[01:08] Use the information from Part A to explain your choice.
+
+[01:11] So let's plan out our response a little bit.
+
+[01:14] Focusing on Part A, first, this is a significance test because we are asked to give statistical evidence for a claim.
+
+[01:21] Let's identify the procedure so we know how to set things up.
+
+[01:25] So we have one sample and the variable of interest is a categorical variable with six categories. Those are the districts.
+
+[01:33] This tells us we will need to perform a chi-square goodness-of-fit test.
+
+[01:38] Part B is asking then, uh, which district had the biggest change.
+
+[01:42] So in a chi-square goodness-of-fit test, remember that the test statistic is calculated by looking at the size of the squared differences between the observed and expected counts relative to the expected counts.
+
+[01:52] So if we can identify the district that had the largest contribution towards the chi-square statistic, then that will be the one with the largest change.
+
+[02:01] Okay, so in general, significance tests have four parts.
+
+[02:05] We've got the hypotheses and the parameters. Uh, we've got the procedure and the conditions, the mechanics, and the conclusion.
+
+[02:13] So the significance tests that you will encounter in the rest of Unit 8 do not require parameters, but every other inference procedure we have used will need this piece.
+
+[02:22] Um, additionally, we have a follow-up question in Part B.
+
+[02:25] So though there are four parts, we should identify the procedure first so we know how to write the hypotheses.
+
+[02:31] So for the null hypothesis, we'll state that each of the proportions for each district are equal to the ones that were given in the problem because this is what we're told to assume, this is the original claim.
+
+[02:44] So you also need to specify what each of those proportions mean.
+
+[02:48] So those are the parameters.
+
+[02:50] And since we are given districts, uh, we can state that where P sub A through P sub F are the proportions of households participating in the summer program for each district.
+
+[03:00] You don't have to list out every single one separately.
+
+[03:03] Um, people that are scoring your exam are going to know what you mean if you give a description like this.
+
+[03:07] The alternative hypothesis would then be that at least one of the proportions is different from those specified in the null hypothesis.
+
+[03:15] Do remember that for your null hypothesis, you want to specify actual values for the proportions. That's the best way.
+
+[03:23] Next up are our procedure and our conditions.
+
+[03:26] Well, we already know that it's going to be a chi-square goodness-of-fit test. We talked through that.
+
+[03:30] For our conditions, first we need a random sample.
+
+[03:33] Well, the study said in the problem that it was a simple random sample of households. Check it off.
+
+[03:38] Next, in order to get our... 10% condition, uh, we need to find the total number of households. So if we add the households that were sampled together, we'll get 240.
+
+[03:49] So remember that that has to be less than or equal to 10% of all the households.
+
+[03:54] We don't really know anything about this city, so we'll just assume that 240 households are less than or equal to 10% of all the households in the city. That's a reasonable assumption.
+
+[04:05] Next for our expected counts to be greater than five, we'll need to calculate those.
+
+[04:10] So on the AP exam, it's highly recommended that you just add a row to your table that's given, um, in the problem or make your own table off to the side.
+
+[04:20] So these are the proportions from the null hypothesis that were given.
+
+[04:24] If we multiply each of those by the sample size of 240 households, we'll get our expected values.
+
+[04:30] You do need to state these on your exam.
+
+[04:34] And so then we can say that all our expected counts are greater than five. Great.
+
+[04:39] Moving on to the mechanics.
+
+[04:41] We will use our calculator to type in the observed and expected counts into List 1 and List 2.
+
+[04:47] We'll go to the stat tests menu and find goodness of fit, the chi-square goodness-of-fit test towards the bottom.
+
+[04:54] Then we'll need to specify the list where the observed and expected counts are located as well as specify the degrees of freedom.
+
+[05:01] Remember this is big.
+
+[05:03] We have six districts so that means we have five degrees of freedom. It's categories minus one.
+
+[05:10] Then when you hit calculate, we'll be given our chi-square test statistic. We'll be given our P-value and your degrees of freedom are stated again. That's a good way to check that you put the right thing.
+
+[05:22] So make sure that you record all three of these values on the AP exam. We've got to see all three.
+
+[05:29] Great, so now we can move on to the conclusion.
+
+[05:33] Since our P-value of approximately zero is less than an alpha of 0.05, we reject the null hypothesis.
+
+[05:42] There is convincing statistical evidence that the proportions of households participating in the summer program for each district are not the same as those being used by the city.
+
+[05:54] Sounds like they're outdated.
+
+[05:56] So now we can move on to Part B.
+
+[05:58] So this is the one where we needed to look at the contributions to find out which of the six districts had the greatest change in participation.
+
+[06:05] So if we look at our table and we look at our expected counts and the observed counts, we can then find all of the contributions from each of those categories.
+
+[06:17] And you'll see that the district D had the largest contribution.
+
+[06:22] Now if you don't want to do this by hand, you can use the calculator. So here are some options you have for that.
+
+[06:30] You can go to List 3 and you can highlight the top of List 3 and type in the formula of observed minus expected squared divided by expected using the lists that you have those values input into.
+
+[06:45] And so then if you calculate those, then you will get all of the contributions and you can quickly identify which one is the largest.
+
+[06:53] Alternatively, if you don't want to use the formula, when you do calculate a chi-square goodness-of-fit test, it automatically stores the contributions from all of the categories in a list. Very similar to when you did a linear regression in the calculator and it stored the residuals.
+
+[07:11] So you can grab those contributions and you can put them into a different list by highlighting the top again, and then it'll give you those values and again you can quickly find that.
+
+[07:24] So we can finally answer this and say that district D had the greatest change in participation because it has the largest contribution toward the value of the chi-square test statistic with 28.27.
+
+[07:38] Beautiful. So here are the things that were scored on for this question.
+
+[07:41] You would need to state a correct pair of hypotheses and check the conditions.
+
+[07:46] You would need to show the correct mechanics, including the value of the test statistic, the degrees of freedom, and the p-value.
+
+[07:54] Section 3, you're... you would need to show correct conclusion in context using the results of the test.
+
+[08:00] And the last section, you have to identify and show supporting evidence for the selection of the correct district, which was district D.
+
+[08:09] So what should we take away?
+
+[08:11] One, how do we perform a complete significance test for a distribution of proportions for one categorical variable? Here we go.
+
+[08:19] Be sure to:
+
+[08:21] Define any parameters or subscripts you use.
+
+[08:24] State the hypotheses. Always use values for the proportions in each category.
+
+[08:31] Then we need to identify the procedure that we're using.
+
+[08:34] Verify that the conditions for that procedure are met.
+
+[08:39] Then we will calculate our test statistic, our degrees of freedom, and our p-value.
+
+[08:44] And finally, we will interpret the results in context.
+
+[08:49] Thank you so much for tuning in. It's been a pleasure to help you.
+
+[08:53] I'm signing off now and handing it over to the amazingly talented Luke Wilcox, who's going to close out Unit 8.
+
+thumb_up
+thumb_down

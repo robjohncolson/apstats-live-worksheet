@@ -1,0 +1,153 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 6
+
+more_vert
+
+Here is a detailed breakdown of the slides and visual changes in the video:
+
+[00:00] — TOPIC 7.6 Confidence Intervals for the Difference of Two Means
+Title slide with AP Statistics logo and a drawing of a bridge/bell curve. The video is labeled "DAILY VIDEO 1: In this video, we will show how to identify the procedure and verify the conditions for constructing a confidence interval for a difference in means."
+
+[00:11] — What Will We Learn?
+Slide lists two objectives:
+
+How do we identify an appropriate confidence interval procedure for the difference of two population means?
+
+How do we verify the conditions for calculating a confidence interval for the difference of two population means?
+
+[00:27] — LET'S LOOK AT AN EXAMPLE
+Transition slide.
+
+[00:30] — Arachnophobia?
+Shows a picture of two spiders (one large, one small). Text reads: "Mammal species typically have larger males than females. However, there are some species in the animal kingdom where the females are larger than the males. This most notably occurs with spiders."
+
+[00:50] — Arachnophobia?
+Additional text is added: "To determine the difference in the mean body lengths of female and male spiders, researchers collected a random sample of 14 adult female spiders and a random sample of 14 adult male spiders from the genus Argiope, a particularly large type of spider."
+
+[01:09] — Arachnophobia?
+New text appears: "The data on body lengths are shown below. Calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male Argiope spiders."
+Below the text are two data tables:
+
+"Female spider body lengths (in millimeters)": Contains 14 data points.
+
+"Male spider body lengths (in millimeters)": Contains 14 data points.
+
+[01:21] — Identifying the Procedure
+Questions and answers populate the slide:
+
+How many groups? We are comparing two groups of spiders (female and male).
+
+What type of data were collected? Measurements of body lengths in millimeters (quantitative).
+
+What are we asked to do? Estimate the difference in the population mean body lengths of female and male spiders with a 95% confidence interval.
+
+[01:48] — Identifying the Procedure
+At the bottom of the slide, the conclusion appears: "2-sample t-interval for the difference in population means". The terms "two groups", "quantitative", "mean", and "confidence interval" from the previous points are highlighted in yellow to show how they lead to this conclusion. The words "2-sample", "t", and "interval" are also highlighted in the final conclusion.
+
+[02:01] — Checking the Conditions
+The slide lists the conditions that must be checked:
+To check for independence:
+
+The data should come from two independent random samples OR a randomized experiment.
+
+When sampling without replacement, the samples should be less than or equal to 10% of their respective populations.
+To check that the shape of the sampling distribution of 
+(
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+)
+(
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+)
+ is approximately normal:
+
+Both 
+𝑛
+1
+n
+1
+	​
+
+ and 
+𝑛
+2
+n
+2
+	​
+
+ should be greater than 30 OR both samples should come from approximately normally distributed populations.
+
+If samples are small, the shapes of the sample distributions should be free from extreme skewness or outliers.
+
+[02:51] — Checking the Conditions
+The slide displays the text from the spider example: "To determine the difference in the mean body lengths of female and male spiders, researchers collected a random sample of 14 adult female spiders and a random sample of 14 adult male spiders from the genus Argiope." The two data tables for female and male spider body lengths are shown again.
+
+[02:55] — Checking the Conditions
+The phrases "random sample" are highlighted in yellow in the text. Below the tables, point 1 appears with a green checkmark: "1. Both samples of spiders were randomly selected."
+
+[03:04] — Checking the Conditions
+The numbers "14" are highlighted in yellow in the text. Point 2 appears with a green checkmark: "2. The 14 female and 14 male spiders are certainly less than or equal to 10% of the populations of these spiders."
+
+[03:17] — Checking the Conditions
+Point 3 appears without a checkmark yet: "3. Both samples have less than 30 observations so we must verify there is no extreme skewness or outliers."
+
+[03:28] — Checking the Conditions
+The data tables are still at the top. Below them, two TI-84 calculator screenshots showing histograms are displayed: one for "Female body lengths" and one for "Male body lengths". Below the graphs, point 3 is updated with a green checkmark: "3. Both samples are roughly unimodal and symmetric, so it is reasonable to assume they come from approximately normal populations."
+
+[04:06] — Checking the Conditions
+A revised version of the problem text is shown. It now reads: "To determine the difference in the mean body lengths of female and male spiders, researchers actually collected a random sample of 35 adult female spiders and a random sample of 35 adult male spiders from the genus Argiope. If the researchers wanted to calculate a 95% confidence interval for the difference (female - male) in mean body lengths of Argiope spiders, are the conditions met?"
+
+[04:32] — Checking the Conditions
+The three condition checks appear below the text, all with green checkmarks:
+"1. Both samples of spiders were randomly selected."
+"2. 35 female and 35 male spiders are certainly less than or equal to 10% of the populations of these spiders."
+"3. Both samples have more than 30 observations so the sampling distribution of 
+(
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+)
+(
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+)
+ is approximately normal."
+
+[05:01] — LET'S PRACTICE
+Transition slide.
+
+[05:03] — Checking the Conditions: Multiple Choice
+A word problem is presented:
+"A teacher wanted to measure the effects of slow internet on student stress levels. She randomly assigned 18 students from her class to complete an online task in a room where the internet connection was slow due to the distance from the Wi-Fi hub. The remaining 18 students completed the same online task in a room very close to the hub which allowed for a much faster connection. The diastolic blood pressure for each student was measured immediately at the conclusion of the task. The teacher would like to calculate a 95% confidence interval for the difference in mean blood pressure of students with fast and slow internet connections. Summary statistics and boxplots of the blood pressure readings are given below."
+Below the text is a table of "Summary Statistics" (Group Name, n, Mean, SD
+
+thumb_up
+thumb_down

@@ -1,0 +1,90 @@
+# Video 2 — Slide Descriptions
+# Unit 7, Lesson 4
+
+more_vert
+
+Here is a detailed breakdown of the slides and visual transitions in the video:
+
+[00:00] — Topic 7.4: Setting Up a Test for a Population Mean (Title Slide)
+
+Main Title: TOPIC 7.4 Setting Up a Test for a Population Mean
+
+Sub-logo: AP Statistics accompanied by a blue circular graphic containing a stylized bar graph and normal distribution curve.
+
+Footer Text: DAILY VIDEO 2. "In this video, we will discuss how to identify the procedure and check the conditions for performing a significance test for a population mean."
+
+Speaker: Doug Tyson appears in a video inset in the top right corner.
+
+[00:17] — WHAT WILL WE LEARN?
+
+Slide Title: WHAT WILL WE LEARN?
+
+Content:
+
+How do we identify an appropriate significance test procedure for a population mean?
+
+How do we verify the conditions for performing a significance test for a population mean?
+
+Footer: CollegeBoard logo.
+
+[00:38] — Example Introduction: Got Hops?
+
+Headline: Got Hops?
+
+Scenario Text: "An article on the internet claims that the average vertical jump for teens is 15 inches. Intrepid AP Statistics students at one large high school selected a random sample of 20 students and measured their vertical jumps. The students in the sample jumped an average of 15.8 inches, with a standard deviation of 2.33 inches. Do these data provide convincing evidence that the average vertical jump for all students at this school differs from 15 inches?"
+
+Visuals: A photo of jumping silhouettes against a sunset.
+
+Data Table: A grid containing 20 raw data points:
+
+11.5, 12.5, 13.25, 13.75, 13.75, 14.25, 14.5, 15.25, 15.25, 15.5
+
+15.75, 16.25, 16.5, 16.75, 17.0, 17.5, 18.5, 18.75, 19.0, 20.5
+
+[01:12] — Defining Hypotheses for the Example
+
+Headline: Got Hops?
+
+Content: "In a previous video, we stated the hypotheses:"
+
+Formulas:
+
+𝐻
+0
+:
+𝜇
+=
+15
+H
+0
+	​
+
+:μ=15
+ inches
+
+𝐻
+𝑎
+:
+𝜇
+≠
+15
+H
+a
+	​
+
+:μ
+
+=15
+ inches
+
+Variable definition: "where 
+𝜇
+μ
+ = the mean vertical jump for all students at this high school"
+
+[01:25] — Identifying the Procedure
+
+Slide Title: Identifying the
+
+thumb_up
+thumb_down

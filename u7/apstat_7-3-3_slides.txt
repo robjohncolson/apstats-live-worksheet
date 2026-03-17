@@ -1,0 +1,133 @@
+# Video 3 — Slide Descriptions
+# Unit 7, Lesson 3
+
+more_vert
+
+[00:00] — Title Slide
+Blue background with "AP Daily" logo in the corner. Text: "Constructing and Interpreting a Confidence Interval for a Population Mean." Subtext: "Doug Tyson, Central York High School, York, PA."
+
+[00:06] — What we are going to learn
+Slide lists the learning objective: "Construct and interpret a confidence interval for a population mean."
+
+[00:31] — Let’s Practice: 2013 #1
+Problem description text: "An environmental group conducted a study to determine whether crows in a certain region were ingesting food containing unhealthy levels of lead. A biologist classified lead levels greater than 6.0 parts per million (ppm) as unhealthy. The lead levels of a random sample of 23 crows in the region were measured and recorded. The data are shown in the stemplot."
+A stemplot is displayed:
+
+2 | 8
+
+3 | 0 1 1 5 8 8
+
+4 | 1 1 2 3 3 3 4 7 9
+
+5 | 0 1 2 2 3
+
+6 | 1 2 4 6
+
+Key: 2 | 8 represents 2.8 ppm.
+
+[01:03] — Question Parts (a) and (b)
+Text added to the slide:
+
+"(a) What proportion of crows in the sample had lead levels that are classified by the biologist as unhealthy?"
+
+"(b) Construct and interpret a 95 percent confidence interval for the mean lead level of crows in the region."
+
+[01:26] — Part (a) Solution
+The stemplot is still visible. The leaf values for the "6" stem (1, 2, 4, 6) are highlighted in red.
+Text added: "Proportion = 4/23 
+≈
+≈
+ 0.174."
+
+[01:52] — Part (b): State
+Text: "The mean lead level of the 23 crows in the sample was 4.90 ppm and the standard deviation was 1.12 ppm."
+The "State" step of the process is shown:
+
+"State: We want to estimate 
+𝜇
+μ
+ = the mean lead level of all crows in the region with 95% confidence."
+
+[02:37] — Part (b): Plan
+Text: "Plan: One-sample 
+𝑡
+t
+-interval for 
+𝜇
+μ
+."
+Conditions are listed with checkmarks:
+
+"Random: A random sample of 23 crows was recorded." (Check)
+
+"10%: 23 is less than 10% of all crows in the region." (Check)
+
+"Normal/Large Sample: The stemplot does not show strong skewness or outliers." (Check)
+
+[03:23] — Part (b): Do
+The formula is shown: 
+𝑥
+ˉ
+±
+𝑡
+∗
+𝑠
+𝑥
+𝑛
+x
+ˉ
+±t
+∗
+n
+	​
+
+s
+x
+	​
+
+	​
+
+
+Calculations are displayed step-by-step:
+
+𝑥
+ˉ
+=
+4.90
+x
+ˉ
+=4.90
+
+𝑠
+𝑥
+=
+1.12
+s
+x
+	​
+
+=1.12
+
+𝑛
+=
+23
+n=23
+
+𝑑
+𝑓
+=
+22
+df=22
+
+𝑡
+∗
+=
+2.074
+t
+∗
+=2.074
+
+Calculation: $4.90 \pm 2.074 \left( \frac
+
+thumb_up
+thumb_down

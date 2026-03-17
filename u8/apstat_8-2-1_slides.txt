@@ -1,0 +1,172 @@
+# Video 1 — Slide Descriptions
+# Unit 8, Lesson 2
+
+more_vert
+
+Here is a detailed timeline of the video, describing each slide and visual change:
+
+[00:00] — Title Slide
+The video starts with the title slide: "TOPIC 8.2 Setting Up a Chi-Square Goodness of Fit Test". Below it, "DAILY VIDEO 1 In this video, we will illustrate the properties of chi-square distributions." The AP Statistics logo is visible on the left.
+
+[00:05] — What Will We Learn?
+This slide outlines two main learning objectives:
+
+What does the chi-square statistic measure?
+
+How do the degrees of freedom affect the shape of chi-square distributions?
+An overlay appears that says "LET'S LOOK AT AN EXAMPLE".
+
+[00:15] — Predatory Lending
+A text-heavy slide introduces the example context, explaining that payday and title loans are forms of predatory lending with interest rates often exceeding 100%. These tactics frequently target low-income, elderly, or individuals with less formal education. An image of a house on top of a loan application is shown.
+
+[00:51] — Predatory Lending Map
+A map of Dallas County, TX census tracts is shown. The text explains that a random sample of 40 predatory lending businesses was selected and plotted as black dots on the map. The question is posed: Do these businesses tend to be located primarily in lower-income regions, or are they found proportionally across all income levels?
+
+[01:21] — Observed Counts
+A table titled "Observed Counts" is introduced. It categorizes household incomes into three brackets and lists the observed number of businesses in census tracts corresponding to each bracket:
+
+$0 to less than $50,000: 20 businesses
+
+$50,000 to less than $100,000: 17 businesses
+
+$100,000 and above: 3 businesses
+Total businesses = 40.
+
+[01:40] — Expected Counts (Bar Graph)
+To find expected counts, the instructor assumes businesses should be distributed proportionally to households in these income brackets. A bar graph labeled "Percent of Dallas, TX Households" displays 16 income brackets. The instructor groups these into the three broad categories used in the problem, calculating the totals: 45.2% for the lowest bracket, 29.2% for the middle, and 25.6% for the highest.
+
+[02:21] — Calculating Expected Counts & Differences
+The previous table is expanded to include a column for the "Expected Number of Predatory Lending Businesses". This is calculated by multiplying the percentage of households by the sample size (40):
+
+0.452 * 40 = 18.08
+
+0.292 * 40 = 11.68
+
+0.256 * 40 = 10.24
+A final column, "Difference (Obs – Exp)", shows the differences: 1.92, 5.32, and -7.24. The sum of these differences is shown to be exactly 0.
+
+[02:48] — The Chi-Square Statistic (Squaring Differences)
+Because the sum of differences is zero, the slide explains the need to square the differences to keep all values positive. Two new columns are added:
+
+"Squared Difference (Obs – Exp)²": 3.6864, 28.3024, 52.4176
+
+A column comparing squared differences to expected values, 
+(
+𝑂
+𝑏
+𝑠
+–
+𝐸
+𝑥
+𝑝
+)
+2
+𝐸
+𝑥
+𝑝
+Exp
+(Obs–Exp)
+2
+	​
+
+: 0.20389, 2.42315, 5.11891. These are defined as the "contributions".
+
+[03:04] — The Chi-Square Statistic Calculation
+The final calculation for the chi-square statistic is presented. The formula is shown: 
+𝜒
+2
+=
+∑
+(
+Observed
+−
+Expected
+)
+2
+Expected
+χ
+2
+=∑
+Expected
+(Observed−Expected)
+2
+	​
+
+. The sum of the three contributions equals 7.746. The instructor notes that for a normal or t-distribution, a test statistic this large is extreme, prompting the question of what a chi-square distribution looks like.
+
+[03:23] — Chi-Square Distributions
+Text explains that there are infinitely many chi-square distributions, whose shapes are determined by the number of degrees of freedom. For a single categorical variable, the formula is provided: 
+𝑑
+𝑓
+=
+number of categories
+−
+1
+df=number of categories−1
+. An important note is highlighted in red: "Degrees of freedom for chi-square distributions are NOT based on the sample size!"
+
+[03:54] — Simulation Setup
+To investigate the shape of a chi-square distribution with 
+𝑑
+𝑓
+=
+2
+df=2
+ (since there are 3 income brackets), the instructor plans to simulate drawing random samples of size 40 based on the expected population proportions. A link to the "Analyzing One-way Tables" applet on the Rossman/Chance website is provided.
+
+[04:29] — Applet Simulation
+The video cuts to a screen recording of the Rossman/Chance applet. The instructor enters the hypothesized proportions (0.452, 0.292, 0.256) and draws simulated random samples of size 40. The applet calculates the chi-square statistic for each sample and plots it on a dot plot. The simulation runs progressively through 1, 2, 100, and finally 1000 samples to build a right-skewed distribution. Out of 1000 samples, only 22 resulted in a chi-square statistic 
+≥
+7.746
+≥7.746
+.
+
+[06:43] — Chi-Square Distribution Shape Comparison
+A slide compares two simulated histograms.
+
+Left: The predatory lending simulation (
+𝑑
+𝑓
+=
+2
+df=2
+, 1000 samples). It is heavily right-skewed, peaking near 0.
+
+Right: A simulation from a previous video rolling a 10-sided die 100 times (
+𝑑
+𝑓
+=
+9
+df=9
+, 1000 samples). It resembles a normal distribution much more closely.
+
+[07:23] — Theoretical Chi-Square Distribution Shapes
+Three smooth, theoretical chi-square probability density curves are plotted on the same graph to clearly show the effect of degrees of freedom:
+
+Red line: 
+𝑑
+𝑓
+=
+2
+df=2
+ (highly skewed right, starts high on the y-axis)
+
+Blue line: 
+𝑑
+𝑓
+=
+5
+df=5
+ (less skewed, peaks further to the right)
+
+Purple line: 
+𝑑
+𝑓
+=
+9
+df=9
+ (even less skewed, wider spread)
+Text below notes: "We see that as the degrees of freedom increase, the skewness of the chi-square distribution becomes less pronounced. Additionally, we can see that chi-square distributions have only nonnegative values.
+
+thumb_up
+thumb_down

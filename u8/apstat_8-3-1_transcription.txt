@@ -1,0 +1,113 @@
+# Video 1 — Transcript
+# Unit 8, Lesson 3
+
+more_vert
+
+[00:00] Good to see you, AP Statistics Superstars. I'm Bridget Matamoros and in this video we're going to look at the mechanics of a Chi-Square Goodness of Fit Test.
+
+[00:11] So what will we learn? How do we calculate a test statistic for a Chi-Square Goodness of Fit Test and how do we calculate a p-value for a Chi-Square Goodness of Fit Test?
+
+[00:23] So let's look at an example. So if you need to recap the problem that we've been working through go ahead and pause the video to read this over because I'm going to go through it pretty fast.
+
+[00:32] Okay, so we have a random sample of 40 predatory lending businesses in Dallas, Texas and we are curious to know if they tend to be located in lower income areas or if they are found proportionally in regions of all income levels.
+
+[00:46] And these are the data from the American Community Survey administered by the US Census. I was able to identify how many businesses were located in three different types of regions defined by the median household income bracket.
+
+[00:58] Okay, so our hypotheses and our conditions, recall from the previous video that the hypotheses for this chi-square goodness-of-fit test are that the first proportion is equal to .452, the second one is equal to .292, and the third one is equal to .256.
+
+[01:16] Remember that you have to specify what the subscripts mean. So, where p sub 1, p sub 2, and p sub 3 represent the proportions of predatory lending businesses found in regions of Dallas, TX where household incomes are, for the first bracket, $0 to less than $50,000, the second bracket $50,000 to less than $100,000, and the last one $100,000 or above.
+
+[01:38] So, an important reminder, it is always best to specify the numerical values for the proportions in each of the categories in the null hypothesis.
+
+[01:46] For our alternative hypothesis, we have at least one of the proportions is not specified in the null hypothesis. Additionally, the conditions for inference have already been met. Yeehaw!
+
+[01:58] So our next step is to proceed with the mechanics of the test: calculating the test statistic and the p-value.
+
+[02:05] So in the previous video, we found the expected counts by multiplying the proportions of each category from the null hypothesis with the sample size. And that gave us our expected counts.
+
+[02:18] And so next, we need to calculate the differences between the observed and expected counts. So we'll take the observed counts minus the expected counts, and that'll give us our differences. Some are positive, some are negative.
+
+[02:30] So to keep the values positive as well as give more weight to extreme deviations, we will square the differences. And then taking into account the size of the sample, we will find the ratios of the squared differences to the expected values. And these are our contributions.
+
+[02:49] Alright, so then lastly we'll find the sum of all of those ratios, and that will give us our chi-square statistic. Now that looks rather large, 7.746. Man.
+
+[02:59] Okay, so we can use technology to find our p-value. That's going to be the easiest way to do this.
+
+[03:04] So in the TI-84, we will type in our observed counts into list one, our expected counts, sorry, into list two. And then we will go to the STAT TESTS menu and look for the chi-square goodness-of-fit test towards the bottom.
+
+[03:17] We will specify which list we have our observed counts, which list we have our expected counts, and then you have to specify the degrees of freedom.
+
+[03:25] Since we have three categories that we're dealing with, three income brackets, we have two degrees of freedom. So you have to remember that degrees of freedom are based on the categories, not the sample size.
+
+[03:36] So then the values that we're given, we've got our chi-square test statistic, and we have our p-value that's calculated for us.
+
+[03:44] And then if you hit draw instead of calculate, you'll be able to see the shape of that chi-square distribution that has two degrees of freedom. And it will shade the p-value for you.
+
+[03:53] Much like the normal CDF function on the calculator, you can also use the chi-square CDF function to calculate the p-value.
+
+[04:00] So under the distribution menu, which is second vars, you'll find the chi-square CDF option. Then you'll need to specify the test statistic for the lower bound, and a really large number for the upper bound, along with the degrees of freedom.
+
+[04:15] So recall that a chi-square significance test is a one-sided test using only the upper tail, so any really large value for the upper bound will suffice.
+
+[04:24] And you'll notice that the probability we get from the chi-square CDF matches the p-value from our goodness of fit test.
+
+[04:31] An alternative to using technology is to use Table C, containing our chi-square critical values.
+
+[04:38] Notice the fine print specifying that these are probabilities lying above a critical value.
+
+[04:44] And so for a chi-square test for goodness of fit, the p-values are calculated by finding that upper tail probability.
+
+[04:51] Again, this is unique from significance tests in prior units, where we had two-sided tests or a one-sided test in the negative direction.
+
+[05:00] So to use the table, first we'll find our degrees of freedom, and then we'll read to the right until we find two values that our test statistic falls in between. Then we can read up to find our tail probability.
+
+[05:13] So since the test statistic of 7.746 falls between the two critical values of 7.38 and 7.82, our p-value is going to be between .025 and .02 in a chi-square distribution with two degrees of freedom.
+
+[05:30] So you'll note that the table can only give you estimates for p-values, so if you need more precision, then it's recommended that you use the calculator.
+
+[05:38] So why this funny business with the upper tail for calculating p-values in a chi-square goodness of fit test?
+
+[05:46] So, recall that a chi-square distribution can only take non-negative values. That's why we squared all of the differences to try to keep them positive.
+
+[05:55] So a chi-square statistic of zero means that observed and expected counts were equal. So that would be a perfect fit.
+
+[06:03] If they're all identical, the observed and expected values will get differences of zero. Then when we add those together, we'll get zero.
+
+[06:11] So as we move further away from zero, this implies that the deviations between the observed and expected counts are larger, which means the fit is less good.
+
+[06:21] So if you think about a categorical variable with many categories, like the 10-sided die in the first video of Unit 8, if there are large discrepancies between the observed and expected counts for many categories, then that chi-square test statistic could potentially be enormous.
+
+[06:37] Much larger than a test statistic you would see in a z-test for proportions or a t-test for means.
+
+[06:43] So let's practice. Back to Battleship. If you need to recap, go ahead and pause and read the problem. And away we go.
+
+[06:53] So we have our observed counts for each quadrant. Which of the following gives the correct test statistic and p-value for a chi-square goodness of fit test to determine if there is convincing evidence that players have a preference for certain quadrants of the Battleship game field?
+
+[07:09] So I'd like you to pause the video to see if you can determine the test statistic and the p-value before moving on to the answer choices.
+
+[07:19] Ready? Here we go. Haha, it's not just numbers for the answer choices.
+
+[07:25] So if you did this in the calculator correctly, you'll be able to identify the correct answer based on the p-value.
+
+[07:31] However, we're gonna go through each of the errors in the calculations for the chi-square test statistic.
+
+[07:37] So in answer choice A, you'll notice it's subtracting in the opposite order. It has expected minus observed, and then it's also not squaring those differences.
+
+[07:47] Additionally, the differences are being divided by the observed values instead of the expected values. So this answer choice is just a hot mess.
+
+[07:56] In answer choice B, we have what appears to be a proper setup with the order of the subtraction and the expected counts in the denominator, but the differences are not being squared, so that one cannot be correct.
+
+[08:10] Answer choices C and D both have the correct values plugged into the formula and in the correct locations, so we would need to verify what the p-value is to see which one is correct. So we'll come back to that.
+
+[08:25] In answer choice E, we're dividing by the whole sample size instead of the expected values. So that one is not correct either.
+
+[08:34] Okay, so back to C and D. If we do this in the calculator and we type in the observed values and the expected values into lists one and two, and then we go to the chi-square goodness of fit test, we've got three degrees of freedom because we have four quadrants.
+
+[08:52] And we will get a p-value of .079 if we round. So that's great. We have the correct answer now.
+
+[09:00] However, what was the deal with answer choice C?
+
+[09:04] So if we go back, you have to be very, very careful when
+
+thumb_up
+thumb_down

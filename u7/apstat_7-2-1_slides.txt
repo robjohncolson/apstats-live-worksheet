@@ -1,0 +1,201 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 2
+
+more_vert
+
+Here is a detailed description of each slide and visual change in the video:
+
+[00:00] — TOPIC 7.2 Constructing a Confidence Interval for a Population Mean
+
+<Title slide features the AP Statistics logo with a bridge graphic on the left. The main text reads: "TOPIC 7.2 Constructing a Confidence Interval for a Population Mean". Below that is "DAILY VIDEO 2" and the description: "In this video, we will discuss how to identify the procedure and check the conditions for constructing a confidence interval for a population mean." The speaker, Doug Tyson, is visible in a small window in the top right corner.>
+
+
+[00:17] — WHAT WILL WE LEARN?
+<A blue transition slide with white text reading "WHAT WILL WE LEARN?">
+
+[00:18] — What Will We Learn? (Point 1)
+<A white slide with a blue header "What Will We Learn?". A numbered list begins with:
+"1 How do we identify an appropriate confidence interval procedure for a population mean?">
+
+[00:27] — What Will We Learn? (Point 2)
+<The list on the same slide updates to include point 2:
+"2 How do we verify the conditions for calculating a confidence interval for a population mean?">
+
+[00:34] — Some Reminders ...
+<Slide header: "Some Reminders ...".
+Text reads: "There are two major types of statistical inference in Units 6-9:">
+
+[00:44] — Some Reminders ... (Confidence Intervals)
+<A bullet point appears:
+"• Confidence Intervals">
+
+[00:47] — Some Reminders ... (Confidence Intervals Details)
+<Sub-bullets appear under Confidence Intervals:
+"- used to estimate the value of a population parameter"
+"- an interval of values—rather than a single value—used to estimate a parameter to account for sampling variability">
+
+[01:01] — Some Reminders ... (Significance Tests)
+<A second main bullet point appears:
+"• Significance Tests">
+
+[01:06] — Some Reminders ... (Significance Tests Details)
+<Sub-bullets appear under Significance Tests:
+"- used to test a claim about the value of a population parameter"
+"- assess whether the evidence supporting a claim is likely or unlikely to happen by chance alone">
+
+[01:16] — The Structure of Unit 7
+<Slide header: "The Structure of Unit 7".
+Text reads: "In Unit 7, we will focus on quantitative data that can be summarized by calculating the mean in a sample or treatment group.">
+
+[01:29] — The Structure of Unit 7 (Topics 7.2-7.3)
+<Text appears below:
+"Topics 7.2-7.3 
+→
+→
+ confidence intervals for a population mean">
+
+[01:35] — The Structure of Unit 7 (Topics 7.4-7.5)
+<Text appears:
+"Topics 7.4-7.5 
+→
+→
+ significance tests for a population mean">
+
+[01:41] — The Structure of Unit 7 (Topics 7.6-7.7)
+<Text appears:
+"Topics 7.6-7.7 
+→
+→
+ confidence intervals for a difference in means">
+
+[01:47] — The Structure of Unit 7 (Topics 7.8-7.9)
+<Text appears:
+"Topics 7.8-7.9 
+→
+→
+ significance tests for a difference in means">
+
+[01:56] — LET'S LOOK AT AN EXAMPLE
+<A blue transition slide with white text reading "LET'S LOOK AT AN EXAMPLE">
+
+[01:59] — Sweet Sugary Goodness
+<Slide header: "Sweet Sugary Goodness".
+Text reads: "A bakery owner purchases powdered sugar, also called confectioners' sugar or 10X sugar, from a new food wholesaler. Because the food wholesaler is new, the bakery owner wants to make sure that the bags were properly filled, on average. Here are the weights (in grams) of 10 randomly selected bags from the food wholesaler. Calculate and interpret a 95% confidence interval for the mean weight 
+𝜇
+μ
+ of all bags filled by this wholesaler."
+An image on the right shows a stack of brownies dusted with powdered sugar.
+A data table is shown at the bottom:
+Row 1: 910 | 919 | 900 | 913 | 904
+Row 2: 913 | 903 | 914 | 893 | 899>
+
+[02:32] — Identifying the Procedure
+<Slide header: "Identifying the Procedure".
+Text reads: "You have already learned about a confidence interval for a population proportion. But in this case we are estimating a population mean.">
+
+[02:47] — Identifying the Procedure (Procedure Name)
+<Text appears below:
+"When the goal is to estimate the mean in a single population, we use a one-sample t interval for a population mean.">
+
+[03:01] — Checking the Conditions
+<Slide header: "Checking the Conditions".
+Text reads: "Remember that for all inference procedures in AP Statistics, you must verify that the conditions for using that procedure are met.">
+
+[03:13] — Checking the Conditions (General Checks)
+<Text appears below:
+"In general, you should check for:">
+
+[03:18] — Checking the Conditions (Independence)
+<A bullet point appears:
+"• independence in the methods used to collect the data, and">
+
+[03:22] — Checking the Conditions (Shape)
+<A second bullet point appears:
+"• that the appropriate sampling distribution has the correct shape.">
+
+[03:29] — Checking the Conditions (Specific Rules)
+<Slide header remains "Checking the Conditions".
+New text reads: "Here are the conditions for a one-sample t interval for a population mean.">
+
+[03:36] — Checking the Conditions (Independence Condition)
+<Text appears:
+"To check for independence:">
+
+[03:39] — Checking the Conditions (Randomization)
+<Text appears:
+"1. The data are collected using a random sample from the population or a randomized experiment.">
+
+[03:45] — Checking the Conditions (10% Rule)
+<Text appears:
+"2. When sampling without replacement, the sample size is less than or equal to 10% of the population size.">
+
+[03:55] — Checking the Conditions (Normal Condition)
+<Text appears:
+"To check that the shape of the sampling distribution is approximately normal:">
+
+[04:00] — Checking the Conditions (Sample Size/Shape Rules)
+<Text appears:
+"3. The sample size is large (
+𝑛
+≥
+30
+n≥30
+)
+OR
+if 
+𝑛
+<
+30
+n<30
+, the sample data are free of strong skewness and outliers.">
+
+[04:17] — Checking the Conditions (Example Problem Application)
+<The slide reverts back to the "Sweet Sugary Goodness" example.
+Text reads: "A bakery owner wants to make sure that bags of powdered sugar were properly filled, on average. Here are the weights (in grams) of 10 randomly selected bags from the food wholesaler. Check if the conditions for calculating a confidence interval are met."
+The table of 10 data points is shown again. (910, 919, 900, 913, 904, 913, 903, 914, 893, 899).>
+
+[04:32] — Example Application (Condition 1 Check)
+<The problem paragraph disappears. Below the data table, text appears:
+"1. The 10 bags were randomly selected. ✔️" (Green checkmark).>
+
+[04:40] — Example Application (Condition 2 Check)
+<Text appears below:
+"2. It's reasonable to believe 10 bags is less than or equal to 10% of all bags from a food wholesaler. ✔️" (Green checkmark).>
+
+[04:53] — Example Application (Condition 3 Check & Boxplot)
+<Text appears below:
+"3. A boxplot of the weights shows no strong skewness or outliers. ✔️" (Green checkmark).
+A boxplot graph appears at the bottom. The horizontal axis is labeled "Weight (g)" and is numbered from 894 to 920 in increments of 2. The boxplot shows the minimum around 893, Q1 around 900, median around 904, Q3 around 913, and maximum around 919. There are no asterisks/dots indicating outliers.>
+
+[05:11] — Example Application (Conclusion)
+<Text appears at the bottom:
+"The conditions are met.">
+
+[05:18] — LET'S PRACTICE
+<A blue transition slide with white text reading "LET'S PRACTICE">
+
+[05:20] — Avril Showers ...
+<Slide header: "Avril Showers ...".
+Text reads: "Avril wants to estimate the average amount of rainfall for all houses in her county during the month of April. She gets 6 classmates to put rain gauges in their yards and record the total rainfall during the month of April. Here are their data, in millimeters. Check if the conditions for calculating a confidence interval are met."
+An image on the right shows rain falling into a puddle.
+Data boxes at the bottom: 82 | 80 | 81 | 82 | 75 | 82>
+
+[05:41] — Avril Showers ... (Checking Conditions)
+<Slide header remains "Avril Showers ...".
+The descriptive paragraph shrinks down to just the summary statement: "Avril asked 6 classmates to put rain gauges in their yards and record the total rainfall during the month of April. Here are their data, in millimeters. Check if the conditions for calculating a confidence interval are met."
+Data boxes remain: 82 | 80 | 81 | 82 | 75 | 82>
+
+[05:46] — Avril Showers ... (Condition 1 Check)
+<Text appears below the data:
+"1. The 6 houses were NOT randomly selected. ❌" (Red X symbol).>
+
+[05:58] — Avril Showers ... (Condition 2 Check)
+<Text appears below:
+"2. It's reasonable to believe 6 houses is less than or equal to 10% of all houses in a county. ✔️" (Green checkmark).>
+
+[06:06] — Avril Showers ... (Condition 3 Check & Dotplot)
+<Text appears below:
+"3. A dotplot of the total ra
+
+thumb_up
+thumb_down

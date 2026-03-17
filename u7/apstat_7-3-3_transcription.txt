@@ -1,0 +1,23 @@
+# Video 3 — Transcript
+# Unit 7, Lesson 3
+
+more_vert
+
+[00:00] Well hello again, everyone. I'm Doug Tyson, here from mind-blowing York, Pennsylvania. I have another AP Daily video for you, and this one is going to illustrate the entire process of constructing and interpreting a confidence interval for a population mean, from soup to nuts. What are we going to learn in this video? We're going to learn how to construct and interpret a confidence interval for a population mean, and we're going to do the entire process from start to finish.
+
+[00:31] So let's practice. This is 2013, number one on the AP Statistics exam. An environmental group conducted a study to determine whether crows in a certain region were ingesting food containing unhealthy levels of lead. A biologist classified lead levels greater than 6.0 parts per million (ppm) as unhealthy. The lead levels of a random sample of 23 crows in the region were measured and recorded. The data are shown in the stemplot. So, we have two parts to this question. Part A: what proportion of crows in the sample had lead levels that are classified by the biologist as unhealthy? And then Part B, I'll read fully to you when we get to it, it's going to be to construct and interpret a confidence interval for the mean lead level of crows in the region.
+
+[01:26] So let's start with Part A. Remember that lead levels greater than 6.0 parts per million were classified as unhealthy, and we see here that there are four crows that have unhealthy lead levels. So the proportion of crows in the sample that were classified as unhealthy is 4 out of 23, or about 0.174. That's pretty straightforward.
+
+[01:52] And now in Part B: the mean lead level of the 23 crows in the sample was 4.90 parts per million, and the standard deviation was 1.12 parts per million. Construct and interpret a 95% confidence interval for the mean lead level of crows in the region. So, to start creating a confidence interval, let's just state what we're trying to accomplish. We would like to create a 95% confidence interval for mu (μ), the mean lead level of all crows in the region. So this is a population mean. Part A asked us to calculate a proportion, but Part B is about the mean lead level of all crows in the region.
+
+[02:37] Next, let's identify the procedure that we're going to use. It's a one-sample t-interval for mu. And as always, you should check the conditions before proceeding with this procedure. So, there is a random sample of 23 crows in the region, that was given to us, so that condition is met. It seems reasonable to think that 23 crows is less than 10% of all crows in a region, so that condition is met. And if we look over at the stemplot, we can see that there's no strong skewness or outliers in the stemplot, so it's reasonable to think that the population distribution could be approximately normal.
+
+[03:23] And so that condition is met. Now that all conditions have been met, we can go ahead and calculate the interval. So here's our formula for a confidence interval for a population mean. So we can plug in the values that were given from the sample data. So the sample mean, and the sample standard deviation, and the sample size. And we can use either Table B or technology to find the t-critical value of 2.074, that's for 22 degrees of freedom and a confidence level of 95%. Doing a computation that gives us a margin of error of 0.484, and an interval that stretches from 4.416 parts per million to 5.384 parts per million.
+
+[04:11] So let's interpret the interval. We can be 95% confident that the interval from 4.416 to 5.384 parts per million captures the mean lead level in the population of all crows in the region.
+
+[04:29] What should we take away? So how do you construct and interpret a confidence interval for a population mean, the full procedure altogether? First, make sure you define the parameter you're trying to estimate. Second, identify the procedure that you're going to use. Third, verify that the conditions for that procedure have been met, and give the specific evidence convincing your reader that the conditions have been met. Then calculate the interval and finally interpret the confidence interval in context. As a final note, you do not need to interpret the confidence level, the 95% number, unless you're specifically asked to do
+
+thumb_up
+thumb_down

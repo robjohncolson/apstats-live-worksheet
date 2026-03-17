@@ -1,0 +1,481 @@
+# Video 3 — Slide Descriptions
+# Unit 6, Lesson 11
+
+more_vert
+
+Here is a detailed description of the visual changes and slide content in the video:
+
+[00:00] — TOPIC 6.11 Carrying Out a Test for the Difference of Two Population Proportions
+Title slide with AP Statistics logo and the subtitle: "DAILY VIDEO 3. In this video, we will illustrate the entire process of performing a significance test of a difference in proportions."
+
+[00:15] — WHAT WILL WE LEARN?
+A blue transition title card.
+
+[00:16] — What Will We Learn?
+Slide with a single numbered point:
+
+How do we perform a complete significance test for a difference in proportions?
+
+[00:25] — LET'S PRACTICE
+A blue transition title card.
+
+[00:27] — 2012 #4: Survey setup
+Text appears describing an AP exam question from 2012:
+"A survey organization conducted telephone interviews in December 2008 in which 1,009 randomly selected adults in the United States responded to the following question."
+
+[00:46] — 2012 #4: Survey question
+The exact wording of the survey question is revealed:
+"At the present time, do you think television commercials are an effective way to promote a new product?"
+
+[00:54] — 2012 #4: Survey results and research question
+The survey results and the final prompt are shown:
+"Of the 1,009 adults surveyed, 676 responded 'yes.' In December 2007, 622 of 1,020 randomly selected adults in the United States had responded 'yes' to the same question. Do the data provide convincing evidence that the proportion of adults in the United States who would respond 'yes' to the question changed from December 2007 to December 2008?"
+
+[01:31] — 2012 #4: Hypotheses
+The null and alternative hypotheses are defined on screen in two equivalent formats:
+
+𝐻
+0
+:
+𝑝
+1
+=
+𝑝
+2
+H
+0
+	​
+
+:p
+1
+	​
+
+=p
+2
+	​
+
+ or 
+𝐻
+0
+:
+𝑝
+1
+−
+𝑝
+2
+=
+0
+H
+0
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+=0
+
+
+𝐻
+𝑎
+:
+𝑝
+1
+≠
+𝑝
+2
+H
+a
+	​
+
+:p
+1
+	​
+
+
+=p
+2
+	​
+
+ or 
+𝐻
+𝑎
+:
+𝑝
+1
+−
+𝑝
+2
+≠
+0
+H
+a
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+
+=0
+
+[02:10] — 2012 #4: Parameter Definitions
+Definitions for the parameters are added below the hypotheses:
+where 
+𝑝
+1
+p
+1
+	​
+
+ = the proportion of all U.S. adults who would respond "yes" to the question in December 2008
+
+𝑝
+2
+p
+2
+	​
+
+ = the proportion of all U.S. adults who would respond "yes" to the question in December 2007
+
+[02:37] — 2012 #4: Significance level
+A note about the significance level appears at the bottom:
+"No significance level was stated, so we'll use 
+𝛼
+α
+ = 0.05."
+
+[02:46] — 2012 #4: Identifying the test
+The specific statistical test is named at the top of a new slide:
+"Two-sample z test for a difference in proportions"
+
+[02:58] — 2012 #4: Condition 1: Random Samples
+A "Conditions:" checklist begins.
+
+"Two independent random samples of U.S. adults, 1009 adults from December 2008 and 1020 adults from December 2007." A green checkmark appears to indicate this is met.
+
+[03:13] — 2012 #4: Condition 2: 10% Condition
+2. "1009 adults is less than 10% of all U.S. adults in December 2008." A green checkmark appears.
+"1020 adults is less than 10% of all U.S. adults in December 2007." A green checkmark appears.
+
+[03:30] — 2012 #4: Condition 3 setup: Pooled Proportion
+The pooled proportion formula (
+𝑝
+^
+𝐶
+p
+^
+	​
+
+C
+	​
+
+) is shown and calculated:
+
+𝑝
+^
+𝐶
+=
+676
++
+622
+1009
++
+1020
+=
+0.640
+p
+^
+	​
+
+C
+	​
+
+=
+1009+1020
+676+622
+	​
+
+=0.640
+
+[04:03] — 2012 #4: Condition 3: Large Counts
+3. The expected successes and failures for both groups are calculated using the pooled proportion:
+
+𝑛
+1
+𝑝
+^
+𝐶
+=
+1009
+(
+0.640
+)
+=
+645.76
+≥
+10
+n
+1
+	​
+
+p
+^
+	​
+
+C
+	​
+
+=1009(0.640)=645.76≥10
+ and 
+𝑛
+1
+(
+1
+−
+𝑝
+^
+𝐶
+)
+=
+1009
+(
+1
+−
+0.640
+)
+=
+363.24
+≥
+10
+n
+1
+	​
+
+(1−
+p
+^
+	​
+
+C
+	​
+
+)=1009(1−0.640)=363.24≥10
+ (Checkmarks appear)
+
+𝑛
+2
+𝑝
+^
+𝐶
+=
+1020
+(
+0.640
+)
+=
+652.8
+≥
+10
+n
+2
+	​
+
+p
+^
+	​
+
+C
+	​
+
+=1020(0.640)=652.8≥10
+ and 
+𝑛
+2
+(
+1
+−
+𝑝
+^
+𝐶
+)
+=
+1020
+(
+1
+−
+0.640
+)
+=
+367.2
+≥
+10
+n
+2
+	​
+
+(1−
+p
+^
+	​
+
+C
+	​
+
+)=1020(1−0.640)=367.2≥10
+ (Checkmarks appear)
+
+[04:32] — 2012 #4: Proportions Review
+A new slide displays the calculated sample proportions and the pooled proportion at the top:
+
+𝑝
+^
+1
+=
+676
+1009
+=
+0.670
+p
+^
+	​
+
+1
+	​
+
+=
+1009
+676
+	​
+
+=0.670
+
+
+𝑝
+^
+2
+=
+622
+1020
+=
+0.610
+p
+^
+	​
+
+2
+	​
+
+=
+1020
+622
+	​
+
+=0.610
+
+
+𝑝
+^
+𝐶
+=
+676
++
+622
+1009
++
+1020
+=
+0.640
+p
+^
+	​
+
+C
+	​
+
+=
+1009+1020
+676+622
+	​
+
+=0.640
+
+[04:46] — 2012 #4: Test Statistic Calculation
+The z-test statistic formula is populated with the values from above. It shows two algebraically equivalent ways to write the denominator (the standard error). The final calculated z-score is shown as 
+=
+2.82
+=2.82
+.
+
+[05:30] — 2012 #4: Normal Curve
+A standard normal distribution curve is shown with the x-axis labeled from -3 to 3. The calculated test statistic 2.82 and its negative counterpart -2.82 are plotted, and the regions in the tails outside of those bounds are shaded to visually represent the two-tailed p-value.
+
+[05:51] — 2012 #4: P-value Calculation
+The area of each shaded tail is labeled as 0.0024. Text appears on the right: "Using Table A or technology, 
+𝑝
+p
+-value = 2(0.0024) = 0.0048."
+
+[06:03] — 2012 #4: Calculator - Menu
+A screenshot of a TI-84 calculator's STAT TESTS menu is shown. A blue arrow points to the required test: "6:2-PropZTest...".
+
+[06:18] — 2012 #4: Calculator - Inputs
+A screenshot shows the proper inputs for the 2-PropZTest menu:
+x1: 676, n1: 1009
+x2: 622, n2: 1020
+p1: 
+≠
+𝑝
+2
+
+=p
+2
+	​
+
+
+Color: BLUE
+Calculate
+
+[06:26] — 2012 #4: Calculator - Outputs
+A screenshot shows the calculator's output screen for the test. Blue arrows highlight the z-score (
+𝑧
+=
+2.8225...
+z=2.8225...
+) and the p-value (
+𝑝
+=
+0.00476...
+p=0.00476...
+).
+
+[06:37] — 2012 #4: Conclusion Option 1
+A text block shows how to write a formal conclusion:
+"Because the 
+𝑝
+p
+-value of 0.0048 < 
+𝛼
+α
+ = 0.05, we reject 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that the difference (December 2008 – December 2007) in the proportions of all U.S. adults who would respond 'yes' to the question is different than 0."
+
+[07:05] — 2012 #4: Conclusion Option 2
+The word "OR" appears, followed by an alternatively worded co
+
+thumb_up
+thumb_down

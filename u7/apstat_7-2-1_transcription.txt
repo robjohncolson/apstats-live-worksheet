@@ -1,0 +1,111 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 2
+
+more_vert
+
+[00:00] Hi everyone. I'm Doug Tyson, here in astounding York, Pennsylvania.
+
+[00:03] I'm bringing you another AP Daily video, and this one is about how to identify the procedure and check the conditions for constructing a confidence interval for a population mean.
+
+[00:17] What are we going to learn in this video?
+
+[00:20] Well, we're going to learn how to identify an appropriate confidence interval procedure for a population mean, and we're going to learn how to verify the conditions for calculating a confidence interval for a population mean.
+
+[00:34] So before we get rolling, here are some reminders.
+
+[00:38] There are two major types of statistical inference in units six through nine.
+
+[00:44] Confidence intervals. And a confidence interval is used to estimate the value of a population parameter, and it's an interval of values rather than a single value that's used to estimate a parameter to account for sampling variability.
+
+[01:02] The second kind of inference is significance tests. They're used to test a claim about the value of a population parameter, and they assess whether evidence supporting a claim is likely or unlikely to happen by chance alone.
+
+[01:16] Also, before we get going, a reminder about the structure of this unit.
+
+[01:21] In Unit 7, we're going to focus on quantitative data that can be summarized by calculating the mean in a sample or a treatment group.
+
+[01:29] So Topics 7.2 and 7.3 are about confidence intervals for a population mean.
+
+[01:35] Topics 7.4 and 7.5 are about significance tests for a population mean.
+
+[01:41] Topics 7.6 and 7.7 are confidence intervals for a difference in means.
+
+[01:47] And Topics 7.8 and 7.9 are for significance tests for a difference in means.
+
+[01:56] So let's look at an example.
+
+[01:59] Sweet, sugary goodness. A bakery owner purchases powdered sugar, also called confectioner's sugar or 10X sugar, from a new food wholesaler.
+
+[02:10] Because the food wholesaler is new, the bakery owner wants to make sure that the bags were properly filled on average.
+
+[02:17] Here are the weights in grams of 10 randomly selected bags from the food wholesaler.
+
+[02:22] Let's calculate and interpret a 95% confidence interval for the mean weight mu of all bags filled by this wholesaler.
+
+[02:32] Now, we want to identify the procedure that we need to create this confidence interval.
+
+[02:37] So we've already learned that there's a way to create a confidence interval for a population proportion, but in this case, we're estimating a population mean or average.
+
+[02:47] And so when the goal is to estimate the mean in a single population, we use a one-sample t-interval for a population mean.
+
+[02:55] That's the name of the procedure. A one-sample t-interval for a population mean.
+
+[03:02] Once you've identified the procedure, remember that for every inference procedure in AP Stats, you have to verify that the conditions have been met to use that procedure.
+
+[03:14] And this is no exception. Now in general, there are two things to check for.
+
+[03:18] Number one, independence in the methods used to collect the data, and number two, that the appropriate sampling distribution has the correct shape.
+
+[03:29] So how about the one-sample t-interval for a population mean? Specifically, what conditions do we need to check?
+
+[03:36] To check for independence, we have to check that the data are collected using a random sample from the population or a randomized experiment, and when we're sampling without replacement, then we need to make sure the sample size is less than or equal to 10% of the population size.
+
+[03:55] To check that the shape of the sampling distribution is approximately normal, we want to check that either we have a large sample size, as a rule of thumb, 30 or more, or if the sample size is less than 30, then we want to make sure the sample data are free of strong skewness or outliers.
+
+[04:17] So remember our problem. A bakery owner wants to make sure that the bags of powdered sugar were properly filled on average, and we have the weights of 10 randomly selected bags from the food wholesaler.
+
+[04:29] So are the conditions for calculating a confidence interval met? Well, in our first condition, we've met that. The 10 bags were randomly selected.
+
+[04:40] Although we're not given the size of the population, it's reasonable to think that 10 bags is less than 10% of all bags from a food wholesaler. They usually deal in bulk.
+
+[04:52] And then our third condition, a boxplot of the weights here shows that no strong skewness or outliers exist in these data.
+
+[05:01] So if a graph is not provided for you, you must create one. You can't just write this sentence without showing evidence in the graph.
+
+[05:11] All the conditions are met in this case. So let's practice with a different example.
+
+[05:18] Avril Showers. Avril wants to estimate the average amount of rainfall for all houses in her county during the month of April.
+
+[05:27] She gets six classmates to put rain gauges in their yards and record the total rainfall during the month of April.
+
+[05:33] Here are their data in millimeters. Check if the conditions for calculating a confidence interval are met.
+
+[05:40] So here are the data again, just so that you can see them. First condition is not met. The houses were not randomly selected.
+
+[05:51] She didn't make any attempt to select a random sample of houses from around the county, she just asked six classmates.
+
+[05:59] Now it is reasonable to think that six houses is less than or equal to 10% of all houses in a county.
+
+[06:07] But if we check the third condition, we find that a dotplot of the total rainfall shows that there is both strong skewness and a potential outlier.
+
+[06:17] So that condition's not met either. So the conditions are not met in this case.
+
+[06:21] If we fail any one of them, we haven't met the conditions. In this case, we failed two of them.
+
+[06:29] So what should we take away from this video? Well, how do you identify an appropriate confidence interval procedure for estimating a population mean?
+
+[06:38] It's called a one-sample t-interval for a population mean.
+
+[06:44] How do you verify that conditions for calculating a confidence interval for a population mean have been met?
+
+[06:51] The conditions are the data are collected using a random sample from the population or a randomized experiment.
+
+[07:00] When you're sampling without replacement, the sample size needs to be less than or equal to 10% of the population size.
+
+[07:08] And number three, the sample size needs to be large, as a rule, 30 or more.
+
+[07:15] Or, if the sample size is less than 30, make sure the sample data are free of strong skewness and outliers.
+
+[07:24] I'm Doug Tyson. I'm looking forward to seeing you in the
+
+thumb_up
+thumb_down

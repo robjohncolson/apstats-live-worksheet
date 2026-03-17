@@ -1,0 +1,471 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 1
+
+more_vert
+
+[00:00] — Title Slide
+Text: "TOPIC 7.1 Introducing Statistics: Should I Worry About Error?", "AP Statistics", "DAILY VIDEO 1 In this video, we will introduce the logic of significance testing for a difference in means." The speaker is visible in a small window in the top right corner.
+
+[00:10] — WHAT WILL WE LEARN?
+A blue transition slide with the text "WHAT WILL WE LEARN?".
+
+[00:12] — What Will We Learn?
+A slide displaying two learning objectives:
+
+How do we identify evidence for a claim?
+
+How do we determine if the evidence for a claim is convincing?
+
+[00:21] — LET'S LOOK AT AN EXAMPLE
+A blue transition slide with the text "LET'S LOOK AT AN EXAMPLE".
+
+[00:24] — Bonus vs. Rebate (Study Description)
+Text describes the setup of a study: "Are people more likely to spend money if it is called a bonus or if it is called a rebate? Volunteer college students were given $50 with no strings attached. 25 of the 47 students were randomly assigned to be told that the money was 'bonus income,' while the other 22 students were told the money was a 'tuition rebate.' After one week, the students were asked to report how much of the $50 they spent. Here are the data, along with the mean amount spent by each group." An image of a $50 bill is shown on the right.
+
+[00:56] — Bonus vs. Rebate (Data Tables)
+The slide shows two data tables side-by-side.
+
+Left table: "Amount Spent in Dollars (Bonus Income)" with 25 data points. Below it is the calculated mean: 
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+=
+$
+22.04
+x
+ˉ
+BONUS
+	​
+
+=$22.04
+.
+
+Right table: "Amount Spent in Dollars (Tuition Rebate)" with 22 data points. Below it is the calculated mean: 
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+=
+$
+9.55
+x
+ˉ
+REBATE
+	​
+
+=$9.55
+.
+
+[01:26] — Bonus vs. Rebate (Operating Question)
+Text on screen: "Do these data provide convincing evidence that the bonus wording causes college students like the ones in this study to spend more money, on average, than the tuition rebate wording?"
+
+[01:41] — Bonus vs. Rebate (Identifying Evidence)
+Text asks: "What is the evidence that more money would be spent using the bonus income wording?"
+
+[01:48] — Bonus vs. Rebate (Expected Difference)
+A paragraph is added: "If the wording made no difference in the amount spent, the mean amount spent by each group should be equal. Therefore we expect a difference in means of $0."
+
+[02:03] — Bonus vs. Rebate (Observed Difference)
+The actual difference calculation from the study data is added to the slide:
+"In the study, 
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+−
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+=
+$
+22.04
+−
+$
+9.55
+=
+$
+12.49
+>
+0
+x
+ˉ
+BONUS
+	​
+
+−
+x
+ˉ
+REBATE
+	​
+
+=$22.04−$9.55=$12.49>0
+"
+
+[02:26] — Bonus vs. Rebate (Two Explanations Question)
+Text asks: "What are the two explanations for the evidence found in this study?"
+
+[02:30] — Bonus vs. Rebate (Explanation 1)
+The first explanation appears: "1. The wording made no difference in the amount spent, and the $12.49 difference in mean amount spent occurred due to chance variation in the random assignment to groups."
+
+[02:52] — Bonus vs. Rebate (Explanation 2)
+The second explanation is added: "2. The bonus wording caused students to spend more, on average, than the rebate wording."
+
+[03:00] — Bonus vs. Rebate (Testing Explanation 2)
+Text on screen: "To be convinced that Explanation #2 is correct, we need to know how likely it would be to get a difference in means of 
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+−
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+≥
+$
+12.49
+x
+ˉ
+BONUS
+	​
+
+−
+x
+ˉ
+REBATE
+	​
+
+≥$12.49
+ by chance alone."
+
+[03:15] — Bonus vs. Rebate (Ruling out Explanation 1)
+Additional text appears: "If it is unlikely to get 
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+−
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+≥
+$
+12.49
+x
+ˉ
+BONUS
+	​
+
+−
+x
+ˉ
+REBATE
+	​
+
+≥$12.49
+ by chance variation in the random assignment, we can rule out Explanation #1 and conclude that Explanation #2 is correct."
+
+[03:33] — Bonus vs. Rebate (Simulation Setup)
+Text on screen states the goal: "To estimate 
+𝑃
+(
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+−
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+≥
+$
+12.49
+)
+P(
+x
+ˉ
+BONUS
+	​
+
+−
+x
+ˉ
+REBATE
+	​
+
+≥$12.49)
+ when wording makes no difference in the amount that would be spent, we can perform a simulation."
+
+[03:47] — Bonus vs. Rebate (Simulation Assumption)
+A paragraph is added explaining the logic: "Because we are assuming that wording makes no difference, subjects are expected to spend the same amount no matter which group they're in."
+
+[03:55] — Bonus vs. Rebate (Simulation Process)
+Further explanation is added: "We can randomly assign the subjects to groups (re-randomize), find the mean amount for each group, and calculate the difference in means."
+
+[04:10] — Bonus vs. Rebate (Original Study Data)
+The slide displays the original two data tables, their respective sample means (
+$
+22.04
+$22.04
+ and 
+$
+9.55
+$9.55
+), and the calculated difference of 
+$
+12.49
+$12.49
+.
+
+[04:24] — Bonus vs. Rebate (Simulation Animation)
+The numbers inside the data tables begin to shuffle rapidly, visually demonstrating the process of random assignment.
+
+[04:33] — Bonus vs. Rebate (Simulation Trial 1 Data)
+The shuffling stops, showing a new random distribution of the same data points across the two groups. New values are shown: 
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+=
+$
+11.60
+x
+ˉ
+BONUS
+	​
+
+=$11.60
+, 
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+=
+$
+21.41
+x
+ˉ
+REBATE
+	​
+
+=$21.41
+, and a new difference calculation: 
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+−
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+=
+−
+$
+9.81
+x
+ˉ
+BONUS
+	​
+
+−
+x
+ˉ
+REBATE
+	​
+
+=−$9.81
+.
+
+[04:48] — Bonus vs. Rebate (Simulation Trial 1 Plot)
+A number line appears at the bottom of the screen with a scale from -15 to 15. The x-axis is labeled: "
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+−
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+=
+Difference in mean amount spent
+x
+ˉ
+BONUS
+	​
+
+−
+x
+ˉ
+REBATE
+	​
+
+=Difference in mean amount spent
+". A blue dot is plotted corresponding to the calculated difference of 
+−
+9.81
+−9.81
+.
+
+[04:54] — Bonus vs. Rebate (Simulation Trial 2 Animation)
+The numbers in the tables shuffle again to simulate a second trial.
+
+[04:57] — Bonus vs. Rebate (Simulation Trial 2 Result)
+The shuffling stops to show new means (
+$
+21.64
+$21.64
+ and 
+$
+10.00
+$10.00
+) and a new difference of 
+$
+11.64
+$11.64
+. A second blue dot is plotted on the number line at 
+11.64
+11.64
+.
+
+[05:13] — Bonus vs. Rebate (Simulation Trial 3 Animation)
+The numbers in the tables shuffle for a third time.
+
+[05:18] — Bonus vs. Rebate (Simulation Trial 3 Result)
+The new trial yields means of 
+$
+15.60
+$15.60
+ and 
+$
+16.86
+$16.86
+, resulting in a difference of 
+−
+$
+1.26
+−$1.26
+. A third blue dot is plotted on the number line.
+
+[05:25] — Bonus vs. Rebate (Simulation Trial 4 Animation)
+The numbers shuffle for a fourth time.
+
+[05:30] — Bonus vs. Rebate (Simulation Trial 4 Result)
+The fourth trial yields means of 
+$
+18.04
+$18.04
+ and 
+$
+14.09
+$14.09
+, resulting in a difference of 
+$
+3.95
+$3.95
+. A fourth dot (this one colored red) is plotted on the number line.
+
+[05:43] — Bonus vs. Rebate (Full Simulation Dotplot)
+The slide now displays a complete, bell-shaped dotplot representing 1000 trials of the simulation. Text above asks: "Here are the results of 1000 trials of this simulation. Based on the simulation, would it be surprising to get a difference in means of 
+𝑥
+ˉ
+𝐵
+𝑂
+𝑁
+𝑈
+𝑆
+−
+𝑥
+ˉ
+𝑅
+𝐸
+𝐵
+𝐴
+𝑇
+𝐸
+=
+$
+12.49
+x
+ˉ
+BONUS
+	​
+
+−
+x
+ˉ
+REBATE
+	​
+
+=$12.49
+ or greater just by chance variation in the random assignment?"
+
+[06:03] — Bonus vs. Rebate (Marking the Observed Value)
+A vertical dashed red line appears on the dotplot at the value of $12.49, labeled accordingly, indicating the original observed difference.
+
+[06:11] — Bonus vs. Rebate (Highlighting Tail Values)
+A red rectangular box appears, outlining the small cluster of dots that fall on or to the
+
+thumb_up
+thumb_down

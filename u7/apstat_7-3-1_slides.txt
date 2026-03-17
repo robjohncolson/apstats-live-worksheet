@@ -1,0 +1,92 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 3
+
+more_vert
+
+[00:00] — Intro Slide: Interpreting a Confidence Interval for a Population Mean
+The video opens with Doug Tyson on screen. Beside him is a blue title slide with the AP Daily logo.
+
+Text: Topic 7.3: Interpreting a Confidence Interval for a Population Mean.
+
+Speaker Info: Doug Tyson, Central York High School, York, PA.
+
+[00:21] — Learning Objectives
+
+Slide Title: What will we learn?
+
+Bullet Points:
+
+Interpret a confidence interval for a population mean.
+
+Justify a claim based on a confidence interval for a population mean.
+
+[00:38] — Example 1: Powdered Sugar
+
+Slide Title: Example: Sweet Sugary Goodness
+
+Scenario Text: A bakery owner purchases powdered sugar from a new food wholesaler. The bakery owner wants to make sure that the bags were properly filled on average.
+
+Data Table: Weights (in grams) of 10 randomly selected bags: 911, 910, 915, 905, 910, 899, 908, 910, 902, 910.
+
+Task: Calculate and interpret a 95% confidence interval for the mean weight 
+𝜇
+μ
+ of all bags filled by the wholesaler.
+
+[01:14] — The Interpretation Template
+
+Slide Title: Interpreting a Confidence Interval
+
+Formula/Template: "We are 
+𝐶
+%
+C%
+ confident that the interval from ___ to ___ captures the [parameter in context]."
+
+Note: The speaker emphasizes that this template is a standard way to avoid common interpretation errors.
+
+[01:39] — Applying the Interpretation (Example 1)
+
+Slide Title: Example: Sweet Sugary Goodness
+
+Calculation Reference: Refers back to Topic 7.2 Video 3.
+
+Interval: 900.92 grams to 912.68 grams.
+
+Interpretation Text: "We are 95% confident that the interval from 900.92 to 912.68 grams captures the mean weight of all bags filled by this wholesaler."
+
+[02:14] — Justifying a Claim (Example 1)
+
+Slide Title: Example: Sweet Sugary Goodness
+
+Claim Text: The manufacturer claims that the bags contain an average of 907 grams. The bakery owner is worried that the bags weigh less than 907 grams on average.
+
+Question: Is there convincing evidence that the bags are being underfilled?
+
+Analysis:
+
+Interval: (900.92, 912.68)
+
+Logic: Because 907 grams is inside the interval, it is a plausible value.
+
+Conclusion Text: "Therefore, there is not convincing evidence that the bags of powdered sugar are being underfilled."
+
+[03:08] — Example 2: Fiddler Crabs
+
+Slide Title: Example: Fiddler Feeding Frenzy
+
+Scenario Text: Wildlife biologists studied a random sample of 40 fiddler crabs to see how quickly they eat.
+
+Interval Provided: The 90% confidence interval for the mean feeding rate is 
+67.65
+±
+1.76
+67.65±1.76
+ scoops per 30 seconds.
+
+Task A: Interpret the confidence interval.
+
+Task B: Is there convincing evidence that the average feeding r
+
+thumb_up
+thumb_down

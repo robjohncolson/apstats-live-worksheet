@@ -26,5 +26,59 @@ const LESSON_REGISTRY = {
       "registryExported": "done",
       "committed": "done"
     }
+  },
+  "8.2": {
+    "unit": 8,
+    "lesson": 2,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson2_live.html",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l06-chi-square-gof-procedure",
+      "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=1",
+      "blooket": "https://dashboard.blooket.com/set/69b783b70641400d44478430",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987876008",
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=987904192"
+    },
+    "status": {
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "done",
+      "animationUpload": "done",
+      "schoology": "done",
+      "schoologyVerified": "done",
+      "urlsGenerated": "done",
+      "registryExported": "done",
+      "committed": "done"
+    }
+  },
+  "8.3": {
+    "unit": 8,
+    "lesson": 3,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson3_live.html",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results",
+      "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=2",
+      "blooket": "https://dashboard.blooket.com/set/69b81f452209798f94f22801",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=988059802",
+      "videos": [],
+      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=988061148"
+    },
+    "status": {
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "failed",
+      "animationUpload": "done",
+      "schoology": "done",
+      "schoologyVerified": "done",
+      "urlsGenerated": "done",
+      "registryExported": "pending",
+      "committed": "pending"
+    }
   }
 };

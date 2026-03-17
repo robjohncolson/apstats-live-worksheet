@@ -1,0 +1,84 @@
+# Video 1 — Transcript
+# Unit 8, Lesson 2
+
+**[00:00]** Hey crew, Bridget Matamoros here with the next video of Unit 8, looking at chi-square distributions.
+
+**[00:06]** So what will we learn? First, what does the chi-square statistic measure? And second, how do the degrees of freedom affect the shape of chi-square distributions?
+
+**[00:15]** So let's look at an example.
+
+**[00:18]** Payday loans and title loans are examples of predatory lending where borrowers are left paying interest rates of 100% or more in some cases, making it impossible to pay off the loans. Often, these borrowers have few options due to low credit scores or financial hardship.
+
+**[00:35]** The predatory label of these tactics comes from a pattern of targeting people who are low income, elderly, or who have little formal education. Predatory lenders argue that they provide a service and that people from all backgrounds use their services, but is this true?
+
+**[00:51]** So this map shows census tracts in Dallas County, Texas. And you'll notice the blue in the background, that's actually Dallas city.
+
+**[01:00]** So a random sample of 40 predatory lending businesses with Dallas, Texas addresses was selected. Their approximate locations are shown as black points on the map.
+
+**[01:10]** Do these types of businesses tend to be located primarily in lower income regions, or are they found proportionally in regions of all income levels?
+
+**[01:21]** So household incomes were divided into three categories, and the number of predatory lending businesses found in census tracts categorized by the three income brackets was determined. Now, this took a while. So we have these observed values, but what exactly would we expect to find?
+
+**[01:40]** We will use the assumption that the number of businesses found in census tracts corresponding to the three income brackets is proportional to the number of households in the three income brackets.
+
+**[01:50]** So these data are from the 2019 American Community Survey administered by the US Census Bureau. I summed the percentages of households in the different intervals that correspond to the three income brackets we are investigating.
+
+**[02:04]** Notice that using these percentages is a more realistic assumption for where the predatory lending businesses would be located, instead of assuming that they are distributed in equal proportions of one-third each, similar to the die-rolling example in the previous video.
+
+**[02:21]** We find the expected counts by multiplying the proportion of each group with the sample size.
+
+**[02:27]** Then we find the differences between the observed and expected counts.
+
+**[02:33]** Recall that if we find the sum of these differences, we get zero. This should come as no surprise because if one category has more than expected, this would need to be offset by another category that has less than expected since the sample is fixed at 40.
+
+**[02:48]** We need something non-zero, so we square the differences to keep all the values positive.
+
+**[02:54]** Next, we will compare the size of the squared differences relative to their expected values. These ratios are called the contributions.
+
+**[03:04]** Lastly, we will sum all of the contributions of the observed counts toward the chi-square statistic.
+
+**[03:10]** Now, if we were thinking in terms of a normal distribution or the t-distribution, a test statistic as large as 7.746 seems rather extreme.
+
+**[03:20]** So what does a chi-square distribution look like?
+
+**[03:23]** Well, similar to t-distributions, there are infinitely many chi-square distributions whose shapes are determined by the number of degrees of freedom.
+
+**[03:32]** However, for inference about the distribution of a single categorical variable, we use a chi-square distribution with degrees of freedom equal to number of categories minus one.
+
+**[03:45]** Now that's an important note. The degrees of freedom for chi-square distributions are not based on the sample size like they are with t-distributions.
+
+**[03:54]** So to investigate the shape of the distribution of the chi-square statistic with 2 degrees of freedom, we've got three categories for our income brackets, so 2 degrees of freedom, we will simulate drawing random samples of size 40 from a population where the proportions of predatory lending businesses found in census tracts from the three income brackets are the same as the proportions of households in those three income brackets.
+
+**[04:21]** Okay, so we'll be using the online statistical applet "Analyzing One-Way Tables," much like we did in the previous video.
+
+**[04:29]** So here in the applet, I'm first going to paste our data in tabular form, and I'm going to click "Use Table." And so we can see our bar graph from our data that we have, and it's got the proportions as well. Now I'm going to change this to chi-square so that it can calculate a chi-square statistic. And when I show sampling options, I now have to change the percents to the ones that we are hypothesizing.
+
+**[04:54]** And here are our percents. So now when I click "Sample," we are sampling randomly 40 businesses, because it is a simulation, and it's assuming that those businesses follow these hypothesized probabilities. And so this is the chi-square statistic from our first sample.
+
+**[05:12]** Here's another sample, chi-square statistic of 1.37.
+
+**[05:17]** And so when I sample these, I can see down here the results from each trial and how closely they followed our proportions or deviate from those proportions. And so let me go ahead and take some more.
+
+**[05:35]** This gives us a total of 100 samples. Hmm, interesting.
+
+**[05:42]** Here's even more. And each time you can see that we have most samples falling in this first interval here from about 0 to 2, and we see some very extreme values happening at 8 or later.
+
+**[06:03]** Now this is a very different shape of a distribution compared to a normal or t-distribution. So let me get 1,000 samples here. And our chi-square statistic from our sample data was 7.746. So let's see how many fell above that. Only 22 out of 1,000 samples had a chi-square statistic of 7.746 or more. That's only 2.2% of all of these samples.
+
+**[06:31]** That seems a little extreme then. How did we get 7.746?
+
+**[06:37]** So mostly I want to look at just the shape of our distribution here.
+
+**[06:43]** So here is that simulated distribution of the chi-square statistic for the predatory lending businesses across the three income brackets when taking random samples of size 40. Now this has two degrees of freedom. So let's contrast that from the distribution we saw in the previous video. We simulated the distribution of the chi-square statistic when rolling a fair 10-sided die 100 times. And that had 9 degrees of freedom because we had 10 categories.
+
+**[07:10]** So look at the difference in those two shapes. You can see that with fewer degrees of freedom, the distribution is more right-skewed. Now this may be a bit hard to see if they're not on the same scale, so let's look at a better comparison.
+
+**[07:24]** So here's 2 degrees of freedom, here's 5 degrees of freedom, and here's 9 degrees of freedom. So we see that the degrees of freedom, as they increase, the skewness of the chi-square distribution becomes less pronounced.
+
+**[07:39]** Additionally, we can see that chi-square distributions have only non-negative values, unlike normal and t-distributions that can have negative values.
+
+**[07:50]** Alright, so what should we take away? First, what does the chi-square statistic measure? It measures the distance between observed and expected counts relative to expected counts. And values of the chi-square statistic are always non-negative.
+
+**[08:07]** Second, how do the degrees of freedom affect the shape of chi-square distributions? So the right-skewed shape of a chi-square distribution becomes less pronounced as the degrees of freedom increase.
+
+**[08:20]** Thanks for watching. Catch the next video when we start setting up a chi-square goodness-of-fit test.

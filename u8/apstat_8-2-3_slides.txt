@@ -1,0 +1,387 @@
+# Video 3 — Slide Descriptions
+# Unit 8, Lesson 2
+
+more_vert
+
+Here is a detailed timeline of the slides and visual changes in the video:
+
+[00:00] — TOPIC 8.2 Setting Up a Chi-Square Goodness of Fit Test
+The title slide appears with the AP Statistics logo and the subtitle "DAILY VIDEO 3: In this video, we will demonstrate how to identify the procedure and check the conditions for using a chi-square goodness-of-fit test." The presenter is in the top right corner.
+
+[00:10] — What Will We Learn?
+The slide displays two learning objectives:
+
+How do we identify an appropriate significance test procedure for a distribution of proportions for one categorical variable?
+
+How do we check the conditions for performing a significance test for a distribution of proportions for one categorical variable?
+
+[00:27] — LET'S LOOK AT AN EXAMPLE
+A blue transition slide with white text.
+
+[00:29] — Predatory Lending
+A slide introducing the context. It features an image of a house resting on a loan application. The text reads:
+"Payday loans and title loans are examples of predatory lending where borrowers are left paying interest rates of 100% or more in some cases, making it impossible to pay off the loans. Often, these borrowers have few options due to low credit scores or financial hardship."
+"The 'predatory' label of these tactics comes from a pattern of targeting people who are low-income, elderly, or who have little formal education. Predatory lenders argue that they provide a service and that people from all backgrounds use their services, but is this true?"
+
+[00:41] — Predatory Lending Recap
+A map of Dallas County, TX, is shown with census tracts outlined and black dots indicating locations. The text reads:
+"The map shows census tracts in Dallas County, TX."
+"A random sample of 40 predatory lending businesses with Dallas, TX addresses was selected. Their approximate locations are plotted as black points on the map."
+"Do these types of businesses tend to be located primarily in lower income regions, or are they found proportionally in regions of all income levels?"
+
+[00:57] — Observed Counts
+The text on the left states: "Household incomes were divided into three categories and the number of predatory lending businesses found in census tracts categorized by the three income brackets was determined."
+A table is displayed:
+
+Median Household Income | Number of Predatory Lending Businesses
+
+$0 to less than $50,000 | 20
+
+$50,000 to less than $100,000 | 17
+
+$100,000 and above | 3
+
+[01:14] — Hypothesized Proportions
+The text reads: "We will use the assumption that the number of businesses found in census tracts corresponding to the three income brackets is proportional to the number of households in the three income brackets."
+A bar chart titled "Percent of Dallas, TX Households" shows the percentage of households across 16 different Median Household Income brackets, ranging from "Less than 
+10
+,
+000
+"
+𝑢
+𝑝
+𝑡
+𝑜
+"
+10,000"upto"
+200,000 or more".
+At [01:33], groups of bars are highlighted to correspond with the three categories used in the problem, and percentages appear above them: 45.2% for the lowest bracket, 29.2% for the middle bracket, and 25.6% for the highest bracket.
+
+[01:50] — Hypotheses
+The null hypothesis is displayed:
+"
+𝐻
+0
+:
+𝑝
+1
+=
+.452
+,
+𝑝
+2
+=
+.292
+,
+𝑝
+3
+=
+.256
+H
+0
+	​
+
+:p
+1
+	​
+
+=.452,p
+2
+	​
+
+=.292,p
+3
+	​
+
+=.256
+ where 
+𝑝
+1
+,
+𝑝
+2
+,
+p
+1
+	​
+
+,p
+2
+	​
+
+,
+ and 
+𝑝
+3
+p
+3
+	​
+
+ represent the proportions of predatory lending businesses found in regions of Dallas, TX where household incomes are $0 to less than $50,000, $50,000 to less than $100,000, and 
+100
+,
+000
+𝑎
+𝑛
+𝑑
+𝑎
+𝑏
+𝑜
+𝑣
+𝑒
+,
+𝑟
+𝑒
+𝑠
+𝑝
+𝑒
+𝑐
+𝑡
+𝑖
+𝑣
+𝑒
+𝑙
+𝑦
+.
+"
+𝐴
+𝑡
+∗
+∗
+[
+02
+:
+21
+]
+∗
+∗
+,
+𝑡
+ℎ
+𝑒
+𝑎
+𝑙
+𝑡
+𝑒
+𝑟
+𝑛
+𝑎
+𝑡
+𝑖
+𝑣
+𝑒
+ℎ
+𝑦
+𝑝
+𝑜
+𝑡
+ℎ
+𝑒
+𝑠
+𝑖
+𝑠
+𝑎
+𝑝
+𝑝
+𝑒
+𝑎
+𝑟
+𝑠
+𝑏
+𝑒
+𝑙
+𝑜
+𝑤
+𝑖
+𝑡
+:
+"
+100,000andabove,respectively."At∗∗[02:21]∗∗,thealternativehypothesisappearsbelowit:"
+H_a$: At least one of the proportions is not as specified in the null hypothesis."
+
+[02:28] — Identifying the Procedure
+A sequence of questions and answers appears on screen to determine the correct test:
+
+[02:32] What type of data were collected? Business locations were recorded as observed counts across three categories of one variable: median household income bracket.
+
+[02:44] How many groups? We have one random sample of 40 predatory lending businesses.
+
+[02:51] What are we asked to do? Determine if there is <u>convincing statistical evidence</u> that predatory lending businesses are NOT located in regions of varying income levels proportionally.
+
+[03:03] Conclusion appears: Chi-Square Goodness-of-Fit Test
+From [03:09] to [03:19], the presenter highlights parts of the text to explain the name of the test: "three categories" links to "Chi-Square", "one variable" and "one random sample" link to "Goodness-of-Fit", and "convincing statistical evidence" links to "Test".
+
+[03:24] — Checking the Conditions
+The slide lists the conditions that must be checked:
+
+"To check for independence:"
+
+[03:32] "1. The data should come from a random sample OR a randomized experiment."
+
+[03:38] "2. When sampling without replacement, the sample should be less than or equal to 10% of the respective population."
+
+[03:47] "The chi-square goodness-of-fit test becomes more accurate with more observations, so large counts should be used (shape)."
+
+[03:56] "3. All expected counts should be greater than 5."
+
+[04:08] — Checking the Conditions (applied to the example)
+The presenter applies the conditions to the lending problem:
+
+"1. A random sample of 40 predatory lending businesses was selected." (A green checkmark appears).
+
+[04:13] "2. We will assume that 40 predatory lending businesses is less than or equal to 10% of all the predatory lending businesses in Dallas, TX." (A green checkmark appears).
+
+[04:23] Text appears at the bottom setting up the final condition: "To verify that the expected counts are all greater than 5, we need the proportions from the null hypothesis: 
+𝑝
+1
+=
+.452
+𝑝
+2
+=
+.292
+𝑝
+3
+=
+.256
+p
+1
+	​
+
+=.452p
+2
+	​
+
+=.292p
+3
+	​
+
+=.256
+"
+
+[04:30] — Expected Counts
+Text reads: "We find the expected counts by multiplying the proportions of each category from the null hypothesis with the sample size."
+The observed counts table from earlier is shown.
+At [04:34], a third column is added titled "Expected Number of Predatory Lending Businesses". It shows the formulas: 0.452(40), 0.292(40), and 0.256(40).
+At [04:40], the formulas change to the calculated results: 18.08, 11.68, 10.24.
+At [04:43], text appears at the bottom: "3. All expected counts are greater than 5." with a green checkmark.
+
+[04:58] — LET'S PRACTICE
+A blue transition slide.
+
+[04:59] — Battleship Quadrants
+An image of a Battleship game is shown next to text introducing a new scenario:
+"Are certain quadrants on the Battleship game field preferred by players as strategic locations for their ships?"
+"A random sample of 100 people who enjoy the game Battleship were surveyed. They were asked to place their five ships on a Battleship game field as if they were going to begin playing against a worthy opponent. The quadrant of the game field with the greatest number of spaces occupied by ships was recorded. Ties were broken by identifying the greatest number of ships found in or near a quadrant. Quadrant 1 was defined as the northwest corner (containing space A1) and subsequent quadrants were identified in clockwise order."
+
+[05:05] — Battleship Quadrants (Data)
+The text paragraph is replaced by a table of observed counts and a diagram.
+The table shows:
+
+Quadrant: 1 | 2 | 3 | 4
+
+Observed: 16 | 22 | 33 | 29
+The diagram shows a 10x10 grid labeled A-J vertically and 1-10 horizontally, divided into four colored quadrants (1: Top Left, 2: Top Right, 3: Bottom Right, 4: Bottom Left).
+Below the table, text asks: "Is there convincing statistical evidence that players have a preference for certain quadrants of the Battleship game field? Identify the procedure and verify that the conditions for inference have been met."
+
+[05:24] — Hypotheses
+The hypotheses for the Battleship problem appear:
+
+[05:26] "
+𝐻
+0
+:
+𝑝
+1
+=
+𝑝
+2
+=
+𝑝
+3
+=
+𝑝
+4
+=
+0.25
+H
+0
+	​
+
+:p
+1
+	​
+
+=p
+2
+	​
+
+=p
+3
+	​
+
+=p
+4
+	​
+
+=0.25
+ where 
+𝑝
+1
+,
+𝑝
+2
+,
+𝑝
+3
+,
+p
+1
+	​
+
+,p
+2
+	​
+
+,p
+3
+	​
+
+,
+ and 
+𝑝
+4
+p
+4
+	​
+
+ are the proportions of players that place the most ships in Battleship quadrants 1, 2, 3, and 4."
+
+[05:42] "
+𝐻
+𝑎
+H
+a
+	​
+
+: At least one of the proportions is not as specified in the null hypothesis."
+
+[05:47] — Identifying the Procedure
+Similar to the first example, questions and answers build on the slide:
+
+What type of data were collected? [05:52] People were recorded as observed counts across four categories of one variable: which of the four quadrants had the most ships.
+
+How many groups? [06:01] We have one random sample of 100 people who enjoy playing Battleship.
+
+What are we asked to do? [06:07] Determine if there is <u>convincing statistical evidence</u> that people prefer to place their ships in certain quadrants of the Battleship game field.
+
+[06:16] Conclusion: Chi-Square Goodness-of-Fit Test
+From [06:20] to [06:31], highlights map the text to the name of the test just like in the previous example.
+
+[06:35] — Checking the Conditions
+The first two conditions are checked for the Battleship problem:
+
+[06:37] "1. A random sample of 10
+
+thumb_up
+thumb_down

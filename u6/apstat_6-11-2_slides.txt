@@ -1,0 +1,560 @@
+# Video 2 — Slide Descriptions
+# Unit 6, Lesson 11
+
+more_vert
+
+Here's a breakdown of the visual changes and slide content in the video:
+
+[00:00] — TOPIC 6.11 Carrying Out a Test for the Difference of Two Population Proportions
+The title slide for Daily Video 2. Text indicates: "In this video, we will discuss how to interpret the p-value and state a conclusion for a significance test of a difference in proportions." The presenter is visible in a small window in the top right corner.
+
+[00:24] — What Will We Learn?
+The first learning objective appears:
+"1. How do we interpret the p-value for a significance test for a difference in proportions?"
+
+[00:32] — What Will We Learn?
+The second learning objective appears below the first:
+"2. How do we state a conclusion for a significance test for a difference in proportions?"
+
+[00:38] — LET'S LOOK AT AN EXAMPLE
+A blue transition slide with the text centered.
+
+[00:40] — Effective Eyedrops?
+Text introduces a scenario: "Bacterial conjunctivitis (pink eye) causes eye irritation in those unlucky enough to contract it. Can eye drops containing azithromycin make the recovery faster? In one clinical trial, eyedrops containing azithromycin were compared to a placebo eyedrop among 279 patients suffering from pink eye." An image of someone administering eye drops is on the right.
+
+[01:02] — Effective Eyedrops?
+The text on the slide updates to show the results of the trial: "The results? Of the 130 patients who were randomly assigned azithromycin drops, 82 were cured within a week. Of the 149 patients who were randomly assigned placebo drops, 74 were cured within a week. Do these results give convincing evidence that azithromycin is more effective at curing pink-eye than a placebo for subjects like the ones in this study?"
+
+[01:29] — Effective Eyedrops?
+The slide clears and shows the text: "From previous videos:"
+
+[01:32] — Effective Eyedrops?
+The null and alternative hypotheses from a previous lesson appear:
+
+𝐻
+0
+:
+𝑝
+1
+=
+𝑝
+2
+H
+0
+	​
+
+:p
+1
+	​
+
+=p
+2
+	​
+
+ or 
+𝐻
+0
+:
+𝑝
+1
+−
+𝑝
+2
+=
+0
+H
+0
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+=0
+
+
+𝐻
+𝑎
+:
+𝑝
+1
+>
+𝑝
+2
+H
+a
+	​
+
+:p
+1
+	​
+
+>p
+2
+	​
+
+ or 
+𝐻
+𝑎
+:
+𝑝
+1
+−
+𝑝
+2
+>
+0
+H
+a
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+>0
+
+[01:50] — Effective Eyedrops?
+Definitions for the parameters are added:
+"where 
+𝑝
+1
+p
+1
+	​
+
+ = the true proportion of pink eye patients like the subjects in this experiment who would be cured by azithromycin drops"
+"
+𝑝
+2
+p
+2
+	​
+
+ = the true proportion of pink eye patients like the subjects in this experiment who would be cured by placebo drops"
+
+[02:06] — Effective Eyedrops?
+The text "Conditions are met." appears at the bottom.
+
+[02:09] — Interpreting a p-value
+The slide heading changes. Text says: "From previous videos:"
+
+[02:13] — Interpreting a p-value
+Statistics from previous videos are displayed:
+
+𝑝
+^
+1
+−
+𝑝
+^
+2
+=
+0.134
+,
+𝑧
+=
+2.25
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+=0.134,z=2.25
+, and p-value = 0.0122
+
+[02:24] — Interpreting a p-value
+An explanatory sentence appears:
+
+𝑝
+^
+1
+−
+𝑝
+^
+2
+=
+0.134
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+=0.134
+ is evidence for 
+𝐻
+𝑎
+:
+𝑝
+1
+−
+𝑝
+2
+>
+0
+H
+a
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+>0
+ because 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+=
+0.134
+>
+0
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+=0.134>0
+.
+
+[02:35] — Interpreting a p-value
+Another sentence is added:
+"The p-value measures how likely it is to get evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ as strong as or stronger than the observed evidence by chance alone when 
+𝐻
+0
+H
+0
+	​
+
+ is true."
+
+[02:50] — Interpreting a p-value
+A color-coded template for interpreting a p-value is shown:
+Assuming 
+𝐻
+0
+H
+0
+	​
+
+ is true (blue), there is a <p-value> probability (green) of getting a difference in proportions of <observed difference> or <greater/less/more different>, by chance alone in the random assignment (random samples) (purple).
+
+[03:29] — Interpreting a p-value
+Applying the template to the example, the first part (in blue) appears:
+"Assuming the difference (azithromycin – placebo) in the true proportions of pink eye patients like the ones in this experiment who would be cured is 0,"
+
+[03:46] — Interpreting a p-value
+The second part of the interpretation (in green) appears:
+"there is a 0.0122 probability"
+
+[03:49] — Interpreting a p-value
+The final part of the interpretation (in purple) appears:
+"of getting a difference in proportions of 0.134 or greater, by chance alone in the random assignment."
+
+[04:05] — Stating a Conclusion
+The slide title changes. Two bullet points describe general p-value rules:
+
+Small p-values → test statistic is unlikely to occur by random chance alone
+
+Large p-values → test statistic is likely to occur by random chance alone
+
+[04:23] — Stating a Conclusion
+A color-coded conclusion template for a small p-value appears:
+
+Because the p-value of ___ 
+≤
+𝛼
+=
+≤α=
+ ___ (purple), we reject 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context] (teal).
+
+[04:56] — Stating a Conclusion
+A similar color-coded template for a large p-value is added:
+
+Because the p-value of ___ 
+>
+𝛼
+=
+>α=
+ ___ (purple), we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. There is not convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context] (teal).
+
+[05:22] — Stating a Conclusion
+The slide resets to apply this to the current example. Text says:
+"No significance level was stated in the effective eyedrops example, so we'll use 
+𝛼
+=
+0.05
+α=0.05
+, which is the most common significance level."
+
+[05:30] — Stating a Conclusion
+The first part of the conclusion (in purple) appears:
+"Because the p-value of 0.0122 < 
+𝛼
+α
+ = 0.05, we reject 
+𝐻
+0
+H
+0
+	​
+
+."
+
+[05:44] — Stating a Conclusion
+The second part of the conclusion (in teal) appears:
+"There is convincing statistical evidence that the difference (azithromycin – placebo) in the proportions of patients like the subjects in this experiment who would be cured within a week is greater than 0."
+
+[06:10] — LET'S PRACTICE
+A blue transition slide.
+
+[06:13] — A Bright Idea
+A new example scenario is presented: "A marketing agent wonders if there is a difference in the percentage of residents in two cities who have purchased sunglasses during the last 12 months. Of 400 randomly selected residents of Soltown, 314 purchased sunglasses in the last 12 months. Meanwhile, a random sample of Brightville residents revealed that 452 of 550 residents purchased sunglasses in the last 12 months." An image of sunglasses is on the right.
+
+[06:42] — A Bright Idea
+Additional text is added to the scenario:
+"The p-value for a two-sample z test of the difference (Soltown – Brightville) in proportions is 0.1556. Interpret the p-value and make a conclusion at the 
+𝛼
+=
+0.10
+α=0.10
+ significance level."
+
+[06:59] — A Bright Idea: Interpret p-value
+The hypotheses for this new example are displayed:
+
+𝐻
+0
+:
+𝑝
+𝑆
+=
+𝑝
+𝐵
+H
+0
+	​
+
+:p
+S
+	​
+
+=p
+B
+	​
+
+ or 
+𝐻
+0
+:
+𝑝
+𝑆
+−
+𝑝
+𝐵
+=
+0
+H
+0
+	​
+
+:p
+S
+	​
+
+−p
+B
+	​
+
+=0
+
+
+𝐻
+𝑎
+:
+𝑝
+𝑆
+≠
+𝑝
+𝐵
+H
+a
+	​
+
+:p
+S
+	​
+
+
+=p
+B
+	​
+
+ or 
+𝐻
+𝑎
+:
+𝑝
+𝑆
+−
+𝑝
+𝐵
+≠
+0
+H
+a
+	​
+
+:p
+S
+	​
+
+−p
+B
+	​
+
+
+=0
+
+[07:15] — A Bright Idea: Interpret p-value
+The calculated statistics are shown:
+
+𝑝
+^
+𝑆
+−
+𝑝
+^
+𝐵
+=
+−
+0.037
+,
+𝑧
+=
+−
+1.42
+p
+^
+	​
+
+S
+	​
+
+−
+p
+^
+	​
+
+B
+	​
+
+=−0.037,z=−1.42
+, and p-value = 0.1556
+
+[07:27] — A Bright Idea: Interpret p-value
+The instruction "Interpret the p-value." appears.
+
+[07:30] — A Bright Idea: Interpret p-value
+The first part of the interpretation (in blue) appears:
+"Assuming the difference (Soltown – Brightville) in the proportions of all residents who have purchased sunglasses during the last 12 months is 0,"
+
+[07:43] — A Bright Idea: Interpret p-value
+The second part (in green) appears:
+"there is a 0.1556 probability"
+
+[07:47] — A Bright Idea: Interpret p-value
+The final part (in purple) appears:
+"of getting a difference in sample proportions of –0.037 or one more different in either direction, by chance alone in the random samples."
+
+[08:16] — A Bright Idea: State Conclusion
+The slide title changes, and the instruction "Make a conclusion at the 
+𝛼
+=
+0.10
+α=0.10
+ significance level." is displayed. The hypotheses a
+
+thumb_up
+thumb_down

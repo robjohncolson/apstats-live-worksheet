@@ -1,0 +1,114 @@
+# Video 3 — Transcript
+# Unit 8, Lesson 2
+
+more_vert
+
+[00:00] Greetings AP Statistics students. My name is Bridget Matamoros from Denton, Texas, here with some more chi-square goodness-of-fit testing.
+
+[00:09] So what are we going to learn in this video? How do we identify an appropriate significance test procedure for a distribution of proportions for one categorical variable? And two, how do we check the conditions for performing a significance test for a distribution of proportions for one categorical variable?
+
+[00:27] So let's look at an example. This is the predatory lending um problem that we started in the last video, so go ahead and pause your video and read through this if you're not familiar with it.
+
+[00:40] And just to recap, we have this map here and we have a random sample of 40 predatory lending businesses across Dallas, Texas. And we're trying to see if they tend to be located primarily in lower-income regions or if they're found proportionally in regions of all income levels.
+
+[00:57] So we have our observed counts. We had 20 in the first category of $0 to less than $50,000, and we had 17 businesses in the $50,000 to less than $100,000 income bracket, and then only three in the $100,000 and above income bracket.
+
+[01:14] So for our hypothesized proportions, we're using the assumption that the number of businesses found in census tracts corresponding to the three income brackets is proportional to the number of households in the three income brackets. So recall that these are data from the 2019 American Community Survey from the US Census Bureau, and we've got these percentages for the three income brackets that we are investigating because we would presume that the predatory lending businesses would be located in different areas proportionally based on median household income, not equally one-third each.
+
+[01:49] So let's recap our hypotheses from the last video. We had our null hypothesis that proportion 1 is equal to .452, proportion 2 is equal to .292, and proportion 3 is equal to .256. Those are from that last slide, where 
+𝑝
+1
+p
+1
+	​
+
+, 
+𝑝
+2
+p
+2
+	​
+
+, and 
+𝑝
+3
+p
+3
+	​
+
+ represent the proportions of the predatory lending businesses found in regions of Dallas, Texas where household incomes are $0 to less than $50,000, $50,000 to less than $100,000, and then $100,000 or above, respectively.
+
+[02:21] And our alternative was that at least one of the proportions is not as specified in the null hypothesis.
+
+[02:27] So let's identify the procedure. So what type of data were collected? We've got business locations that were recorded as observed counts across three categories of one variable. That was median household income bracket.
+
+[02:42] How many groups do we have? Well, we just have one random sample of 40 predatory lending businesses. And then what are we asked to do? And so we have been asked to determine if there is convincing statistical evidence that predatory lending businesses are not located in regions of varying income levels proportionally.
+
+[03:02] So this, as the title of the video suggests, is a chi-square goodness-of-fit test. So why, again? Well, we've got three categories instead of just two. We have one variable, as well as one sample. And that's what makes this a goodness-of-fit test.
+
+[03:19] And it's a test because we are asked to make a decision.
+
+[03:23] Okay, so checking the conditions. We need to first check for independence. This is very similar to what you've already been doing in your previous significance testing. So the data should come from a random sample or it should come from a randomized experiment.
+
+[03:38] Second, when we're sampling without replacement, the sample should be less than or equal to 10% of the respective population.
+
+[03:46] Now the chi-square goodness-of-fit test becomes more accurate with more observations, so large counts should be used. And this is the shape part. So all of our expected counts should be greater than 5.
+
+[04:01] Alright, so here it goes. As with all inference procedures in AP stats, let's check these conditions off. First, we have a random sample of 40 predatory lending businesses that was selected. Second, we will assume that 40 predatory lending businesses is less than or equal to 10% of all the predatory lending businesses in Dallas, Texas. And then lastly, to verify that the expected counts are all greater than 5, we need the proportions from the null hypothesis.
+
+[04:30] And to find the expected counts, we're gonna multiply the proportions of each category from the null hypothesis with the sample size. And so those are the values that we get. We notice that they're all greater than 5. So all three of our conditions check off, we are good.
+
+[04:48] Now, keep in mind that if the null hypothesis of the problem states that all the proportions are equal, the expected values will also be equal.
+
+[04:57] So let's practice. Go ahead and pause your video and read about the Battleship problem.
+
+[05:04] Great, so our observed counts for each of the quadrants are found in this table. And so we're looking for convincing statistical evidence that the players have a preference for certain quadrants. And so we need to identify the procedure and verify that the conditions for inference have been met.
+
+[05:23] Alright, so first we have to look at our hypotheses. So from the last video, we have that all four proportions are equal to 0.25, where 
+𝑝
+1
+p
+1
+	​
+
+, 
+𝑝
+2
+p
+2
+	​
+
+, 
+𝑝
+3
+p
+3
+	​
+
+, and 
+𝑝
+4
+p
+4
+	​
+
+ are the proportions of the players that place the most ships in Battleship quadrants 1, 2, 3, and 4.
+
+[05:41] And the alternative was that at least one of the proportions is not as specified in the null hypothesis.
+
+[05:47] So let's identify the procedure. So what type of data were collected? Well, people were recorded as observed counts across four categories of one variable, which of the four quadrants had the most ships.
+
+[05:59] How many groups? We have one random sample of 100 people who enjoy playing Battleship. And what are we asked to do? We need to determine if there's convincing statistical evidence that people prefer to place their ships in certain quadrants of the Battleship game field.
+
+[06:15] So this is a chi-square goodness-of-fit test. Again, because we have four categories instead of just two, making this chi-square. We know it's goodness of fit because we have one variable and one sample that we're dealing with. And it's a test because we're asked to make a decision.
+
+[06:34] Alright, so let's check our conditions. We do have a random sample of 100 people who enjoy playing the game Battleship that was selected. And we have at least 10 times our sample size, which is 1,000 people who enjoy playing the game Battleship.
+
+[06:50] So to verify that the expected counts are all greater than 5, we need the proportions stated in the null hypothesis, and they were all equal to 0.25. Well, since they're all 0.25, all the expected counts will be equal to the same thing, so 0.25 times 100 is just 25. Beautiful. So all of our expected counts are greater than 5, we are good to go.
+
+[07:13] So what should we take away? How do we identify an appropriate significance test procedure for a distribution of proportions for one categorical variable? We will use a chi-square goodness-of-fit test. And how do we verify the conditions for performing a significance test for a distribution of proportions for one categorical variable?
+
+[07:33] First, the data should come from a random sample or a randomized experiment. S
+
+thumb_up
+thumb_down

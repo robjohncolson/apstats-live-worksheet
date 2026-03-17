@@ -1,0 +1,118 @@
+# Video 3 — Transcript
+# Unit 6, Lesson 11
+
+edit
+more_vert
+
+[00:00] Hi, I'm Doug Tyson, here in fabulous York, Pennsylvania. I have another AP Daily video for you, and this one's on topic 6.11, Carrying Out a Test for the Difference of Two Population Proportions.
+
+[00:14] What are we gonna learn in this video? Well, in this video, we're gonna perform a complete significance test for a difference in proportions, from soup to nuts.
+
+[00:24] Let's practice. This example is taken from an AP Exam question in 2012. This was number four on the AP Exam. A survey organization conducted telephone interviews in December 2008, in which 1,009 randomly selected adults in the US responded to the following question.
+
+[00:46] At the present time, do you think television commercials are an effective way to promote a new product?
+
+[00:54] Of the 1,009 adults surveyed, 676 responded "yes." In December of 2007, 622 of 1,020 randomly selected adults in the US had responded "yes" to the same question. Do the data provide convincing evidence that the proportion of adults in the United States who would respond "yes" to the question changed from December 2007 to December 2008? And that's gonna be important to notice: "changed from," okay?
+
+[01:30] So, our null hypothesis, no difference, no change, that 
+𝑝
+1
+p
+1
+	​
+
+ equals 
+𝑝
+2
+p
+2
+	​
+
+, that the two population proportions are equal, or their difference is zero. The alternative in this case is that 
+𝑝
+1
+p
+1
+	​
+
+ is not equal to 
+𝑝
+2
+p
+2
+	​
+
+. Remember the phrase "changed." It wasn't indicated whether we thought the change was gonna be less than or greater than, and so the proper alternative here is "not equal to." It's a two-sided alternative. You can also state it as a difference in the two proportions is not equal to zero.
+
+[02:10] Remember to define your parameters. 
+𝑝
+1
+p
+1
+	​
+
+ here is the proportion of all US adults who would respond "yes" to the question in December of 2008. Be sure you don't talk about the sample when you're defining your parameters. And then likewise, 
+𝑝
+2
+p
+2
+	​
+
+ is the proportion of all US adults who would respond "yes" to the question in December of 2007.
+
+[02:37] There is no significance level stated, so we'll use 
+𝛼
+=
+0.05
+α=0.05
+. And that's a standard significance level in statistics.
+
+[02:47] We're gonna identify the test that we're using. It's a two-sample z-test for a difference in proportions. And then we're gonna check to make sure the conditions have been met for carrying out this test. We do have two independent random samples of US adults, 1,009 from December of 2008, and 1,020 adults from December of 2007. So we've met that condition.
+
+[03:13] 1,009 adults is less than 10% of all US adults in December of 2008. That is clearly true. And 1,020 adults is indeed less than 10% of all US adults in December 2007.
+
+[03:30] Remember to calculate the combined proportion of successes. If there were no change, if the null were true, then your best estimate for the proportion who would say "yes" is by combining both samples into one huge sample. And so you'd add the successes in the numerator and add the total sample sizes in the denominator. Your combined proportion, or pooled proportion, is 0.640.
+
+[03:59] So, we can perform our last check. The expected count of successes in our first sample is 645.76. The expected failures, 363.24. In the second group, the expected count of successes is 652.8, and failures 367.2. All of those are at least 10. And so we've met that condition, and indeed we've met all the conditions for performing this test.
+
+[04:32] So now let's move on to calculating the test statistic and the p-value. So here are our sample proportions and our combined proportion. So 0.670, 0.610, and 0.640. We're gonna plug them into the formula for the test statistic. And our standardized test statistic is the difference in the sample proportions—that's the statistic—minus the parameter, and the null hypothesis says that that difference is zero.
+
+[05:01] And divided by the standard deviation or standard error of the statistic. And so we can plug in the values as shown here, or the formula sheet shows this version where the numerator is factored out of both fractions. Remember to use the combined proportion when calculating the standard error. And when you do all the computations, the standardized test statistic is 2.82.
+
+[05:30] Now we're gonna find the p-value. And because it's a two-sided alternative, a "not equal to," we are gonna find the probability to be as extreme as 2.82 or more extreme in either direction. And so we've shaded the tails. It's hard to see, but they're indeed shaded. And the p-value is gonna be the probability of being in either tail, and so that's 
+2
+×
+0.0024
+2×0.0024
+, or a p-value of 0.0048.
+
+[06:03] A quick note, you can use approved calculators on the AP Exam to do these calculations for you. Here are screenshots from a TI-84 calculator. You can see the appropriate test to choose in this menu. And here are the appropriate inputs. The alternative here is "not equal to."
+
+[06:24] And then when you actually run the test, the output shows you results just like we got: a standardized test statistic of 2.82, with a p-value of 0.0048.
+
+[06:36] Now let's make our conclusion to the test. You have to make a conclusion. Because the p-value of 0.0048 is less than our significance level of 
+𝛼
+=
+0.05
+α=0.05
+, we reject 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that the difference (December 2008 - December 2007) in the proportions of all US adults who would respond "yes" to this question is different than 0.
+
+[07:05] Or, you can use the wording directly from the stem of the question. Because the p-value of 0.0048 is less than our significance level of 0.05, we reject the null hypothesis. There is convincing statistical evidence that the proportion of adults in the US who would respond "yes" to the question changed from December 2007 to December 2008.
+
+[07:36] What should we take away? How do we perform a complete significance test for a difference in proportions? Well, you need to be sure to do the following: State the null and alternative hypotheses, define any parameters, and indicate the direction of the difference. Which way are you subtracting?
+
+[07:57] Make sure you identify the significance level. If one's not provided, use a standard significance level like 0.05. Identify the procedure you are using by name. Verify that the conditions for the procedure are met (with evidence!). Show that they've been met. Calculate the test statistic and p-value. So these are the calculations.
+
+[08:22] And then finally, make a conclusion based on the p-value. You do not need to interpret the p-value unless specifically asked. But you do need to make a conclusion.
+
+[08:33] Thanks for watching this video. I'm Doug Tyson. I'll see you in the next video. Peace.
+
+thumb_up
+thumb_down

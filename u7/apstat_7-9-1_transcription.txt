@@ -1,0 +1,29 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 9
+
+more_vert
+
+[00:00] We need to identify how can we define this line.
+
+[00:03] What is the formula for the distance D, capital D
+
+[00:07] which evaluates how far are these points from our line.
+
+[00:10] The distance is formulated as this equation.
+
+[00:14] It considers the Y value of point A
+
+[00:17] subtract the Y value of point line at point A X.
+
+[00:21] Because we don't care whether the point is above the line or below the line,
+
+[00:26] we square the difference.
+
+[00:28] The next step is applying the same operation for point B, point C, point D, etc.
+
+[00:36] Sum up all these square differences
+
+**[00:40]
+
+thumb_up
+thumb_down

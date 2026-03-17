@@ -1,0 +1,179 @@
+# Video 2 — Transcript
+# Unit 7, Lesson 6
+
+more_vert
+
+[00:00] Hi, my name's Mrs. Matamoros, coming to you from Guyer High School in Denton, Texas.
+
+[00:04] Today we're going to talk more about confidence intervals for the difference of two means.
+
+[00:09] So what are we going to learn?
+
+[00:11] First, how do we determine the margin of error when estimating a difference in means?
+
+[00:17] And second, how do we calculate a confidence interval for a difference in means?
+
+[00:22] So a two-sample t-interval for the difference in population means has a formula that you can find on your formula chart.
+
+[00:29] In general, though, confidence intervals are the statistic plus or minus the critical value times the standard error of the statistic.
+
+[00:37] So looking at our formula chart under sampling distributions for means, we can find where our two population means are, that's our random variable.
+
+[00:46] So the statistic that we're calculating is going to be the difference of two sample means.
+
+[00:51] And then our standard error of the statistic is found on the very right hand side.
+
+[00:57] Great.
+
+[00:58] So we're going to take those and we know that our statistic is the difference in the sample means plus or minus our t critical value and our standard error of the statistic.
+
+[01:08] So the point estimate is another fancy word for the statistic.
+
+[01:13] That's going to be the middle of our interval, plus or minus the margin of error, that's the entire quantity there after the plus or minus.
+
+[01:21] The margin of error describes how much a value of the sample statistic is likely to vary from the value of the corresponding population parameter.
+
+[01:31] So for the margin of error, it's made up of the critical value in this case, a t critical value since we're using the t distribution.
+
+[01:39] And that tells us how confident we want to be in our estimate.
+
+[01:43] So if we only want to be 90% confident or we can toss out our net a little bit further to capture 99% and so that would increase our confidence level and that will determine our critical value.
+
+[01:55] Now the standard error of our statistic tells us how much the statistic typically varies from the parameter of interest.
+
+[02:03] All right, so let's look at an example.
+
+[02:05] So the spiders are back.
+
+[02:07] Feel free to pause the video here and read through this question if you did not watch the prior video.
+
+[02:14] We've got our 14 randomly selected female spiders and our 14 randomly selected male spiders, and we have our data as well.
+
+[02:23] So, we have the formula for calculating the confidence interval, and we're going to use the calculator to find the sample means and the sample standard deviations.
+
+[02:33] Plugging that into the formula gives us this thing that looks pretty ominous, but don't worry, it'll be okay.
+
+[02:42] We've got our difference of sample means first plus or minus our margin of error made up of our critical value and then we plug in the standard deviations and the sample sizes to the standard error formula.
+
+[02:54] But what does that give us?
+
+[02:56] Because we don't have a t critical value there.
+
+[02:59] So in topic 7.2 you learned about finding the critical value from a t distribution using degrees of freedom equals n minus 1 for a one sample t interval.
+
+[03:09] But in a two sample t interval the degrees of freedom are best found using your best friend the calculator.
+
+[03:16] So we're going to go to stat tests and then arrow down to a 2-sample t-interval.
+
+[03:22] So we will input our data into lists 1 and list 2.
+
+[03:26] And then we'll set our confidence level for 95%.
+
+[03:29] Now make sure that your default option is to pick no for pooled.
+
+[03:34] We would have to do a completely different inference procedure to be able to have permission to pool our samples together.
+
+[03:40] Looking at our standard deviations of our samples they are very, very different.
+
+[03:45] And choosing no for pooled is just going to be your safest bet.
+
+[03:49] It's easier too.
+
+[03:51] So when you hit calculate, notice you get the interval right off the bat and then degrees of freedom right underneath that.
+
+[03:59] Great.
+
+[04:00] So now we have our formula and we know that that's going to give us an interval of 7.956 to 12.129 with degrees of freedom equals 14.73.
+
+[04:13] So sometimes you will have to find the critical value for this interval.
+
+[04:18] So we'll go to the distributions menu, which is under 2nd VARS.
+
+[04:22] We need the inverse t option.
+
+[04:24] And we're going to type in an area of 0.025.
+
+[04:28] Now that's because in a 95% confidence interval, we have 2.5% in either tail, and we just need the bottom tail.
+
+[04:35] And we'll type in our degrees of freedom.
+
+[04:37] When we paste that, we get a t critical value of 2.13 on either side.
+
+[04:44] So let's sum up our confidence interval calculations.
+
+[04:47] We have our lower bound of 7.956 mm and our upper bound of 12.129 mm.
+
+[04:54] We have our point estimate, which is right down the middle.
+
+[04:57] That's the difference of our sample means.
+
+[04:59] We can also find that by taking the midpoint of our interval or the average of the endpoints, and that gives us 10.043 mm.
+
+[05:08] Our margin of error can be calculated by taking the difference between the upper bound and the point estimate, or you could also use the formula for the margin of error.
+
+[05:20] All in all, we have a 95% confidence interval that is written as point estimate of 10.043 plus or minus a margin of error of 2.086 mm.
+
+[05:30] You will need to be familiar with all forms of how a confidence interval can be written.
+
+[05:35] You could be given the interval with the lower bound and the upper bound.
+
+[05:39] You could be given the interval with the point estimate plus or minus the margin of error, or you could also be given the entire formula with the values plugged in.
+
+[05:50] So let's practice.
+
+[05:52] I'd like for you to pause the video and see if you can calculate the confidence interval for this problem.
+
+[06:07] All right, so let's check your work.
+
+[06:09] So looking at all five answer choices, we start off by looking at the difference in the sample means, but they're all the same, so we can't eliminate any answer choices that way.
+
+[06:20] We'll look at answer choice D, and the first thing that pops out is that the standard deviations are not squared.
+
+[06:26] So that one cannot be correct, that's not the right formula.
+
+[06:30] Next, we'll look at answer choice E, and it's got the sample sizes flipped with the opposite standard deviations.
+
+[06:40] So that one can't be right.
+
+[06:42] Next, answer choice A, if you notice the critical value there is for a z interval, not a t interval, so that one's not correct.
+
+[06:52] So now it comes down to answer choices B and C.
+
+[06:56] The only difference between them is the critical value.
+
+[06:59] So that means we will have to find what that is in the calculator.
+
+[07:02] We've got stats this time that we can type in, and we'll set our confidence level to 90%.
+
+[07:07] Not pooled.
+
+[07:08] And it gives us our interval with our degrees of freedom.
+
+[07:13] We can then plug in our degrees of freedom to the inverse t function to find the critical value.
+
+[07:19] And since we have a 90% confidence interval this time, we only need the bottom 5%, since there's 5% in either tail.
+
+[07:27] This gives us our critical value of 1.73.
+
+[07:30] So that means answer choice C is the correct one.
+
+[07:34] So what should we take away?
+
+[07:37] So how do we determine the margin of error when estimating a difference in means?
+
+[07:41] In general, we take the critical value times the standard error of the statistic.
+
+[07:46] This looks like a t critical value times our standard error of the statistic with degrees of freedom found using technology.
+
+[07:54] And two, how do we calculate a confidence interval for a difference in means?
+
+[07:58] In general, we take the point estimate plus or minus the margin of error.
+
+[08:03] For a two-sample t interval, that means we'll take the difference in the sample means plus or minus that margin of error with degrees of freedom found using technology.
+
+[08:13] Thanks for watching.
+
+[08:14] Tune in next time when we continue with confidence intervals for difference of t
+
+thumb_up
+thumb_down

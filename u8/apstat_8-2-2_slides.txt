@@ -1,0 +1,302 @@
+# Video 2 — Slide Descriptions
+# Unit 8, Lesson 2
+
+more_vert
+
+Here is a detailed description of the slides and visual changes in the video, along with their timestamps:
+
+[00:00] — Title Slide
+The slide displays the AP Statistics logo, the topic "TOPIC 8.2", the title "Setting Up a Chi-Square Goodness of Fit Test", and "DAILY VIDEO 2". Below this, text reads: "In this video, we will demonstrate how to state the null and alternative hypotheses for a chi-square goodness-of-fit test." The instructor appears in a video box in the top right corner.
+
+[00:11] — What Will We Learn?
+The slide lists two objectives:
+
+"How do we state the null hypothesis for a chi-square goodness-of-fit test?"
+
+"How do we state the alternative hypothesis for a chi-square goodness-of-fit test?"
+
+[00:23] — Transition
+A blue screen with the text "LET'S LOOK AT AN EXAMPLE" is shown.
+
+[00:25] — Predatory Lending
+The slide introduces the topic with an image of a loan application, a model house, a calculator, and cash. The text reads: "Payday loans and title loans are examples of predatory lending where borrowers are left paying interest rates of 100% or more in some cases, making it impossible to pay off the loans. Often, these borrowers have few options due to low credit scores or financial hardship."
+At [00:43], a new paragraph appears: "The 'predatory' label of these tactics comes from a pattern of targeting people who are low-income, elderly, or who have little formal education. Predatory lenders argue that they provide a service and that people from all backgrounds use their services, but is this true?"
+
+[01:00] — Predatory Lending Recap
+A map showing census tracts in Dallas County, TX, is displayed on the right. A portion in the center is shaded blue to represent the city of Dallas. Black dots are plotted on the map. The text on the left reads: "The map shows census tracts in Dallas County, TX. A random sample of 40 predatory lending businesses with Dallas, TX addresses was selected. Their approximate locations are plotted as black points on the map. Do these types of businesses tend to be located primarily in lower income regions, or are they found proportionally in regions of all income levels?"
+
+[01:26] — Observed Counts
+The map is still visible on the right. The text on the left explains: "Household incomes were divided into three categories and the number of predatory lending businesses found in census tracts categorized by the three income brackets was determined." A table is shown with two columns: "Median Household Income" and "Number of Predatory Lending Businesses". The rows are:
+
+"$0 to less than $50,000" with a count of 20
+
+"$50,000 to less than $100,000" with a count of 17
+
+"$100,000 and above" with a count of 3
+
+[01:38] — Hypothesized Proportions
+The text states: "We are using the assumption that the number of businesses found in census tracts corresponding to the three income brackets is proportional to the number of households in the three income brackets." Below is a bar chart titled "Percent of Dallas, TX Households". The x-axis lists 14 different income brackets (e.g., "Less than 
+10
+,
+000
+"
+,
+"
+10,000","
+10,000 to 
+14
+,
+999
+"
+,
+𝑢
+𝑝
+𝑡
+𝑜
+"
+14,999",upto"
+200,000 or more"). The y-axis shows percentages from 0% to 12%.
+
+[02:00] — Hypothesized Proportions (Updated)
+The bar chart is visually grouped into three overarching brackets, matching the categories from the previous slide. Large percentage numbers appear above these groups:
+
+45.2% for the lowest five income bars
+
+29.2% for the middle four income bars
+
+25.6% for the highest five income bars
+
+[02:20] — Null Hypothesis
+The text states: "When we write the null hypothesis for a chi-square goodness-of-fit test, we can write it in words or symbols."
+At [02:27], the written version appears: "In words: 
+𝐻
+0
+H
+0
+	​
+
+: The distribution of predatory lending businesses in Dallas, TX is the same as the proportions of households in the specified income brackets."
+At [02:39], the symbolic version appears: "In symbols: 
+𝐻
+0
+H
+0
+	​
+
+: 
+𝑝
+1
+=
+.452
+p
+1
+	​
+
+=.452
+, 
+𝑝
+2
+=
+.292
+p
+2
+	​
+
+=.292
+, 
+𝑝
+3
+=
+.256
+p
+3
+	​
+
+=.256
+"
+At [02:51], the parameter definitions are added: "where 
+𝑝
+1
+p
+1
+	​
+
+, 
+𝑝
+2
+p
+2
+	​
+
+, and 
+𝑝
+3
+p
+3
+	​
+
+ represent the proportions of predatory lending businesses found in regions of Dallas, TX where household incomes are $0 to less than $50,000, $50,000 to less than $100,000, and $100,000 or above, respectively."
+
+[03:18] — Null Hypothesis (Highlighted)
+The phrase "the same as" in the written hypothesis is highlighted in yellow. The three "
+=
+=
+" signs in the symbolic hypothesis are also highlighted in yellow to emphasize the statement of equality.
+
+[03:34] — Alternative Hypothesis
+The text states: "Recall that we need a form of inequality in the alternative hypothesis. We have three proportions to consider. Since these proportions come from categories that cover all possible outcomes, their sum will be 1." The three proportions are listed below: 
+𝑝
+1
+=
+.452
+p
+1
+	​
+
+=.452
+, 
+𝑝
+2
+=
+.292
+p
+2
+	​
+
+=.292
+, 
+𝑝
+3
+=
+.256
+p
+3
+	​
+
+=.256
+.
+At [03:48], the text "Sum of proportions = 1" is added at the bottom.
+At [03:50], a new sentence appears: "If one proportion is different (in red text) from its hypothesized proportion, that means at least one additional proportion will also be different (highlighted in green text) since all the proportions must sum to 1." The value for 
+𝑝
+1
+p
+1
+	​
+
+ changes to a red ".541", and the sum changes to a highlighted yellow "1.089".
+At [03:57], the value for 
+𝑝
+2
+p
+2
+	​
+
+ changes to a green ".203", and the sum changes back to a white "1", demonstrating the concept.
+
+[04:03] — Alternative Hypothesis (Warnings)
+The slide provides guidance on what not to do.
+Text: "You should not state the alternative hypothesis in a way that suggests all the proportions in the null hypothesis are different!"
+At [04:09], an incorrect notation is shown with a large red 'X' next to it: 
+𝐻
+𝑎
+H
+a
+	​
+
+: 
+𝑝
+1
+≠
+.452
+p
+1
+	​
+
+
+=.452
+, 
+𝑝
+2
+≠
+.292
+p
+2
+	​
+
+
+=.292
+, 
+𝑝
+3
+≠
+.256
+p
+3
+	​
+
+
+=.256
+.
+At [04:16], an explanation is added: "We are testing for goodness-of-fit, so given convincing evidence that at least one proportion is different from what is stated in the null hypothesis is sufficient to show the data do not fit well."
+At [04:28], another warning is added: "Likewise, you should not state the alternative hypothesis with directional inequalities like 
+<
+<
+ or 
+>
+>
+ that we used for significance testing in previous units."
+
+[04:39] — Transition
+A blue screen with the text "Remember: State the 
+𝐻
+𝑎
+H
+a
+	​
+
+ in words!" is shown.
+
+[04:46] — Summing Up Hypotheses
+A summary list begins under the heading: "For hypotheses about a distribution of proportions for a single categorical variable:"
+
+Bullet 1: "The null hypothesis is a statement of equality where the proportions are all equal to specified values."
+
+At [05:05], Bullet 2: "The alternative hypothesis states that at least one proportion is not as specified in the null hypothesis."
+
+At [05:14], Bullet 3: "Never refer to sample proportions (such as 
+𝑝
+^
+1
+p
+^
+	​
+
+1
+	​
+
+) in the hypotheses!"
+
+At [05:26], Bullet 4: "Remember to define any parameters or subscripts you use."
+
+[05:31] — Transition
+A blue screen with the text "LET'S PRACTICE" is shown.
+
+[05:32] — Battleship Quadrants
+An image of a Battleship game board with red and white pegs is shown on the right. The text introduces a practice scenario: "Are certain quadrants on the Battleship game field preferred by players as strategic locations for their ships?"
+At [05:39], more details are provided: A survey of 100 people asked them to place 5 ships. The quadrant with the most spaces occupied was recorded, and tie-breaking rules are explained. Quadrant 1 is defined as the northwest corner, with subsequent quadrants in clockwise order.
+
+[06:10] — Battleship Quadrants (Grid & Data)
+The image of the physical game board is replaced by a diagram of a 10x10 grid (columns 1-10, rows A-J). The grid is divided into four colored sections labeled Quadrant 1 (top-left), Quadrant 2 (top-right), Quadrant 3 (bottom-right), and Quadrant 4 (bottom-left).
+At [06:11], a table labeled "The observed counts for each quadrant are found in the table below." appears:
+
+Quadrant 1: 16
+
+Quadrant 2: 22
+
+Quadrant 3: 33
+
+Quadrant 4: 29
+At [06:22], the question is posed: "Is there convincing statistical evidence that players have a preference for certain quadrants of the Battleship game field? State the hypotheses for a chi-squar
+
+thumb_up
+thumb_down

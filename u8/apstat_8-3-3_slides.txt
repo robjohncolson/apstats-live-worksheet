@@ -1,0 +1,259 @@
+# Video 3 — Slide Descriptions
+# Unit 8, Lesson 3
+
+more_vert
+
+[00:00] — TOPIC 8.3 Carrying Out a Chi-Square Goodness of Fit Test
+The title slide for "DAILY VIDEO 3" of AP Statistics Topic 8.3, featuring a graphic of a bridge.
+
+[00:08] — What Will We Learn?
+The slide outlines the video's learning objective:
+
+How do we perform a complete significance test for a distribution of proportions for one categorical variable?
+
+[00:17] — Let's Look At An Example
+A blue transition slide introducing the upcoming practice problem.
+
+[00:19] — 2008 International Exam
+The slide introduces the context of a city testing if its assumed proportions of household participation in summer programs are still accurate. A table is provided showing the original expected proportions for six districts:
+
+District A: 0.32
+
+District B: 0.12
+
+District C: 0.10
+
+District D: 0.27
+
+District E: 0.05
+
+District F: 0.14
+
+[00:34] — 2008 International Exam (continued)
+The slide adds the observed data from a simple random sample taken this past summer:
+
+Number of Households: A (100), B (35), C (40), D (22), E (12), F (31)
+The slide lists two questions to answer:
+(a) Give statistical evidence to justify the claim that the proportions are no longer valid.
+(b) Which district had the greatest change in participation since 2000?
+
+[01:11] — Planning the Response
+The presenter highlights key phrases in the prompt ("one sample," "simple random sample," "number of households") to identify that the variable is categorical with 6 categories, leading to the conclusion that a chi-square goodness-of-fit test is required.
+
+[02:01] — Planning the Response (continued)
+A checklist appears for the four parts of a significance test:
+
+Hypotheses & Parameters
+
+Procedure & Conditions
+
+Mechanics
+
+Conclusion
+The presenter also notes that for Part (b), they will need to look at the "contributions" to the chi-square statistic.
+
+[02:31] — Hypotheses & Parameters
+The slide defines the null and alternative hypotheses:
+
+𝐻
+0
+H
+0
+	​
+
+: 
+𝑝
+𝐴
+=
+0.32
+p
+A
+	​
+
+=0.32
+, 
+𝑝
+𝐵
+=
+0.12
+p
+B
+	​
+
+=0.12
+, 
+𝑝
+𝐶
+=
+0.10
+p
+C
+	​
+
+=0.10
+, 
+𝑝
+𝐷
+=
+0.27
+p
+D
+	​
+
+=0.27
+, 
+𝑝
+𝐸
+=
+0.05
+p
+E
+	​
+
+=0.05
+, and 
+𝑝
+𝐹
+=
+0.14
+p
+F
+	​
+
+=0.14
+ where 
+𝑝
+𝐴
+p
+A
+	​
+
+ through 
+𝑝
+𝐹
+p
+F
+	​
+
+ are the proportions of households participating in the summer program for each district.
+
+𝐻
+𝑎
+H
+a
+	​
+
+: At least one of the proportions is different from those specified in the null hypothesis.
+
+[03:23] — Procedure & Conditions
+The presenter begins checking the conditions for the chosen test:
+
+Identification of procedure: We will use a chi-square goodness-of-fit test.
+
+Condition 1: The study uses a simple random sample of households. (Checked)
+
+[03:38] — Procedure & Conditions (continued)
+The presenter adds the sampled households to find a total sample size of 240.
+
+Condition 2 (10% rule): We must assume that 240 households are less than or equal to 10% of all the households in the city. (Checked)
+
+[04:05] — Procedure & Conditions (continued)
+The slide shows the calculation for expected counts by multiplying the hypothesized proportions by the total sample size (240):
+
+Expected counts: A = 76.8, B = 28.8, C = 24, D = 64.8, E = 12, F = 33.6
+
+Condition 3: All expected counts are greater than 5. (Checked)
+
+[04:39] — Mechanics
+Screenshots from a TI-84 calculator are shown. The observed counts are entered into L1 and the calculated expected counts into L2.
+
+[04:47] — Mechanics (continued)
+The presenter navigates to the STAT TESTS menu and selects the D: $\chi^2$GOF-Test. The setup screen is shown with Observed: L1, Expected: L2, and df: 5 (since there are 6 categories, 
+𝑑
+𝑓
+=
+𝑛
+−
+1
+=
+5
+df=n−1=5
+).
+
+[04:58] — Mechanics (continued)
+(Note: A computer pop-up notification briefly obscures part of the screen during this section.)
+The calculator output is shown on the screen, and text is added emphasizing the need to record these specific values on the exam:
+
+𝜒
+2
+=
+47.48
+χ
+2
+=47.48
+
+𝑝
+-value
+=
+4.53
+×
+10
+−
+9
+p-value=4.53×10
+−9
+
+𝑑
+𝑓
+=
+5
+df=5
+
+[05:31] — Conclusion
+(Note: Computer pop-up notifications appear again.)
+The slide displays the final conclusion based on the test:
+
+Since the p-value of approximately zero is less than 
+𝛼
+=
+0.05
+α=0.05
+, we reject the 
+𝐻
+0
+H
+0
+	​
+
+.
+
+There is convincing statistical evidence that the proportions of households participating in the summer program for each district are NOT the same as those being used by the city.
+
+[05:56] — Part (b)
+The slide transitions to answering the second part of the question. A table displaying the previously calculated Expected counts and the Observed counts is shown.
+
+[06:12] — Part (b) (continued)
+A new row is added to the table to calculate the individual contribution of each category using the formula 
+(
+𝑂
+𝑏
+𝑠
+−
+𝐸
+𝑥
+𝑝
+)
+2
+/
+𝐸
+𝑥
+𝑝
+(Obs−Exp)
+2
+/Exp
+:
+
+Contributions: A = 7.0083, B = 1.3347, C = 10
+
+thumb_up
+thumb_down

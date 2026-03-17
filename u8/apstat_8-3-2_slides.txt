@@ -1,0 +1,299 @@
+# Video 2 — Slide Descriptions
+# Unit 8, Lesson 3
+
+more_vert
+
+Here is a detailed breakdown of the slides and visual changes in the video:
+
+[00:00] — Title Slide
+<The video begins with a title slide: "TOPIC 8.3: Carrying Out a Chi-Square Goodness of Fit Test. DAILY VIDEO 2: In this video, we will demonstrate how to interpret the p-value and state a conclusion for a chi-square goodness-of-fit test. AP Statistics.">
+
+[00:06] — What Will We Learn?
+<The slide outlines two learning objectives:
+
+How do we interpret the p-value for a chi-square goodness-of-fit test?
+
+How do we state a conclusion for a chi-square goodness-of-fit test?>
+
+[00:16] — Let's Look at an Example
+<A transition slide introducing the example problem.>
+
+[00:18] — Predatory Lending Recap
+<Text explains that payday loans and title loans are examples of predatory lending, targeting low-income, elderly, or those with little formal education. It asks if it's true that these lenders provide a service to people from all backgrounds. An image of a loan application is shown.>
+
+[00:29] — Predatory Lending Recap (Map and Question)
+<A map of Dallas County, TX is shown with black dots representing a random sample of 40 predatory lending businesses. The text asks: "Do these types of businesses tend to be located primarily in lower income regions, or are they found proportionally in regions of all income levels?">
+
+[00:44] — Observed Counts
+<A table displays the observed counts of the 40 businesses categorized by Median Household Income:
+
+$0 to less than $50,000: 20
+
+$50,000 to less than $100,000: 17
+
+$100,000 and above: 3>
+
+[00:50] — Hypotheses
+<The null and alternative hypotheses are stated:
+
+𝐻
+0
+H
+0
+	​
+
+: 
+𝑝
+1
+=
+.452
+p
+1
+	​
+
+=.452
+, 
+𝑝
+2
+=
+.292
+p
+2
+	​
+
+=.292
+, and 
+𝑝
+3
+=
+.256
+p
+3
+	​
+
+=.256
+ where 
+𝑝
+1
+,
+𝑝
+2
+p
+1
+	​
+
+,p
+2
+	​
+
+, and 
+𝑝
+3
+p
+3
+	​
+
+ represent the proportions of predatory lending businesses found in regions of Dallas, TX where household incomes are $0 to less than $50,000, $50,000 to less than $100,000, and $100,000 or above, respectively.
+
+𝐻
+𝑎
+H
+a
+	​
+
+: At least one of the proportions is not as specified in the null hypothesis.>
+
+[01:28] — Procedure & Conditions / Mechanics
+<A green checkmark appears next to "The conditions for a chi-square goodness-of-fit test have been verified." The mechanics from a previous video are listed: "The test statistic is 
+𝜒
+2
+=
+7.746
+χ
+2
+=7.746
+ and the 
+𝑝
+p
+-value = 0.0208.">
+
+[01:52] — Interpreting a p-value (Definition)
+<A generic chi-square distribution curve is shown with the right tail shaded and labeled "Probability p". The text asks, "What exactly does this probability describe?" and defines it: "From units 6 and 7, we learned that the p-value is the probability of obtaining a result as extreme as the one in the study, or more extreme, by chance alone, assuming the null hypothesis is true.">
+
+[02:21] — Interpreting a p-value (In Context)
+<The definition is applied to the specific problem: "There is a 0.0208 probability of getting a chi-square statistic of 7.746 or greater just by the chance involved in the random selection of the businesses, assuming that the distribution of predatory lending businesses in Dallas, TX is the same as the proportions of households in the specified income brackets.">
+
+[02:44] — Interpreting a p-value (Calculation Table)
+<A table shows the step-by-step calculation of the chi-square statistic for each income bracket, displaying Observed, Expected, (Obs - Exp), 
+(
+𝑂
+𝑏
+𝑠
+−
+𝐸
+𝑥
+𝑝
+)
+2
+(Obs−Exp)
+2
+, and 
+(
+𝑂
+𝑏
+𝑠
+−
+𝐸
+𝑥
+𝑝
+)
+2
+𝐸
+𝑥
+𝑝
+Exp
+(Obs−Exp)
+2
+	​
+
+. The final 
+𝜒
+2
+χ
+2
+ value is calculated as 7.746.>
+
+[03:18] — Stating a Conclusion: A General Guide
+<The slide outlines the two main parts of a conclusion:
+
+How does the p-value compare to our level of significance, 
+𝛼
+α
+, and what decision must be made about 
+𝐻
+0
+H
+0
+	​
+
+?
+
+What does this mean about 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context?>
+
+[03:37] — Stating a Conclusion: A General Guide (Small p-values)
+<Text explains what to do when the p-value is small (test statistic is unlikely to occur by random chance): "Since the p-value of ___ 
+≤
+𝛼
+=
+≤α=
+ ___, we reject 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context].">
+
+[03:59] — Stating a Conclusion: A General Guide (Large p-values)
+<Text explains what to do when the p-value is large (test statistic is likely to occur by random chance): "Since the p-value of ___ 
+>
+𝛼
+=
+>α=
+ ___, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. There is not convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context].">
+
+[04:25] — Stating a Conclusion (Visualized)
+<A chi-square curve with 2 degrees of freedom is shown. An alpha level of 0.05 is established. The test statistic 
+𝜒
+2
+=
+7.746
+χ
+2
+=7.746
+ is plotted, and the area to the right is shaded to represent the p-value of 0.0208. Text provides the final written conclusion: "Since the p-value of 0.0208 is less than 
+𝛼
+=
+0.05
+α=0.05
+, we reject the 
+𝐻
+0
+H
+0
+	​
+
+. There is convincing statistical evidence that the distribution of predatory lending businesses in Dallas, TX is NOT the same as the proportions of households in the specified income brackets.">
+
+[05:13] — Contributions
+<The slide returns to the original question of whether these businesses are primarily located in lower-income regions. It notes that we know the proportions are NOT the same, and states that looking at the contributions of each category to the chi-square statistic can show where the largest discrepancy lies.>
+
+[05:43] — Contributions (Table Analysis)
+<The calculation table from earlier is shown again. Text appears stating, "We can see that the highest income bracket had the largest contribution." A red circle highlights the large negative difference (-7.24) and the large chi-square contribution (5.11891) for the "$100,000 and above" bracket. The conclusion is drawn: "From these data, we can infer that predatory lending businesses do tend to be located in lower income regions because they were represented far less than we expected in the highest income regions.">
+
+[06:15] — Let's Practice
+<A title slide introducing a practice problem.>
+
+[06:16] — Multiple-Choice Example (Setup)
+<Text and an image describe a Battleship game setup where 100 players were asked to place five ships. A grid shows how the board is divided into four quadrants (Quadrant 1 in the top left, going clockwise to Quadrant 4).>
+
+[06:24] — Multiple-Choice Example (Question and Data)
+<A table shows the observed counts of ships in each quadrant (1: 16, 2: 22, 3: 33, 4: 29). The question asks: "A chi-square goodness-of-fit test to determine whether the proportions of players preferring each of the four quadrants are the same resulted in a p-value of 0.079. Which of the following is a correct interpretation of the p-value?">
+
+[06:41] — Multiple-Choice Example (Answer Choices)
+<Five multiple-choice options (A through E) are presented for the correct interpretation of the p-value.>
+
+[06:51] — Multiple-Choice Example (Walkthrough/Solution)
+<Large text warns to "PAY ATTENTION TO WHAT THE QUESTION IS ASKING!" The instructor crosses out incorrect options:
+
+A is wrong because a p-value > alpha means you fail to reject the null.
+
+B is wrong because the condition is Expected Counts > 5, not Observed Counts > 30.
+
+C is wrong because that is not the definition of a p-value.
+
+E is wrong because the assumption must be based on the null hypothesis, not the alternative.
+
+D is selected as the correct answer: "There is a 0.079 probability that we would get results this extreme or more extreme, by chance alone, if the proportions of players preferring different quadrants is the same.">
+
+[08:28] — What Should We Take Away?
+<A title slide for the lesson summary.>
+
+[08:30] — Key Takeaways
+<The slide summarizes the two learning objectives:
+
+Interpretation: "Assuming the proportions of a single categorical variable as stated in the null hypothesis are true, there is a <p-value> probability of getting a chi-square statistic as extreme as the one in the study or more extreme, by chance alone in random sampling..."
+
+Conclusion: Templates are provided for stating conclusions for both small p-values (Rej
+
+thumb_up
+thumb_down

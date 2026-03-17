@@ -1,0 +1,274 @@
+# Video 3 — Slide Descriptions
+# Unit 7, Lesson 2
+
+more_vert
+
+[00:18] — TOPIC 7.3: Justifying a Claim About a Population Mean Based on a Confidence Interval
+The title slide for Daily Video 2.
+
+[00:37] — What Will We Learn?
+The slide lists two objectives:
+
+How do we interpret the confidence level of a confidence interval for a population mean? (The word 'level' is highlighted with a blue box).
+
+How do the sample size and confidence level affect the margin of error for a confidence interval for a population mean?
+
+[01:05] — LET'S LOOK AT AN EXAMPLE
+A title slide introducing the next section.
+
+[01:09] — Human Body Temperature
+The slide presents a scenario: "Suppose that human body temperatures are approximately normally distributed with mean 
+𝜇
+=
+98.6
+∘
+F
+μ=98.6
+∘
+F
+ and standard deviation 
+𝜎
+=
+0.8
+∘
+F
+σ=0.8
+∘
+F
+." A picture of a digital thermometer is shown on the right.
+Then, a second paragraph appears: "Suppose we select a random sample of 
+𝑛
+=
+10
+n=10
+ people, record the body temperature of each person, and calculate a 95% confidence interval for the mean human body temperature of all people."
+
+[01:37] — Simulating Confidence Intervals (Setup)
+The slide shows the population parameters on the left:
+
+Population:
+
+𝜇
+=
+98.6
+∘
+F
+μ=98.6
+∘
+F
+ (highlighted in blue)
+
+𝜎
+=
+0.8
+∘
+F
+σ=0.8
+∘
+F
+
+Shape: approximately normal
+
+On the right, a vertical number line axis is shown from 97 to 100. A vertical blue line is drawn at 
+𝜇
+=
+98.6
+∘
+F
+μ=98.6
+∘
+F
+.
+
+[02:04] — Simulating Confidence Intervals (First Sample)
+On the left, text appears:
+
+"One possible sample:"
+
+𝑥
+ˉ
+=
+98.79
+x
+ˉ
+=98.79
+
+On the right, a blue dot labeled 
+𝑥
+ˉ
+x
+ˉ
+ appears on the graph at 
+98.79
+98.79
+.
+
+[02:16] — Simulating Confidence Intervals (First Interval)
+On the left, the corresponding confidence interval is added:
+
+"95% CI = 98.29 to 99.29" (The text is colored green).
+On the right, a horizontal green line representing the interval is drawn through the blue dot. The interval crosses the vertical blue line (meaning it captures the true mean).
+
+[02:27] — Simulating Confidence Intervals (Second Interval)
+The text on the left updates with a second sample:
+
+𝑥
+ˉ
+=
+98.46
+x
+ˉ
+=98.46
+
+"95% CI = 97.81 to 99.11"
+A second green interval is plotted on the right, below the first one.
+
+[02:32] — Simulating Confidence Intervals (Third Interval - Red)
+A third sample is added:
+
+𝑥
+ˉ
+=
+98.10
+x
+ˉ
+=98.10
+
+"95% CI = 97.60 to 98.59" (The text is colored red).
+A third interval is plotted on the graph. This interval is colored red because it does not cross the vertical blue line (it fails to capture the true mean).
+
+[02:50] — Simulating Confidence Intervals (Fourth Interval)
+A fourth sample is added:
+
+𝑥
+ˉ
+=
+98.89
+x
+ˉ
+=98.89
+
+"95% CI = 98.00 to 99.78"
+A fourth interval (green) is plotted.
+
+[02:53] — Simulating Confidence Intervals (12 Samples)
+The graph now displays a stack of 12 simulated intervals (11 green, 1 red). The text on the left changes to:
+
+"Lots more samples:"
+
+"So far, 11/12 = 91.7% of the intervals have captured 
+𝜇
+=
+98.6
+∘
+F
+μ=98.6
+∘
+F
+, the mean body temperature of all humans." (The text is colored green).
+
+[03:11] — Simulating Confidence Intervals (1000 Samples)
+The graph now displays a dense stack of 1000 simulated intervals. Most are green, but several red ones are visible on the left and right edges. The text on the left updates to:
+
+"Simulating 1000 random samples:"
+
+"In this simulation, 956/1000 = 95.6% of the intervals have captured 
+𝜇
+=
+98.6
+∘
+F
+μ=98.6
+∘
+F
+, the mean body temperature of all humans."
+
+[03:31] — Interpreting the Confidence Level
+A new title slide with just the title at the top.
+
+[03:47] — Interpreting the Confidence Level (General Definition)
+Text appears on the screen:
+"In general, here is how to interpret a confidence level for a population parameter:"
+"In repeated random sampling with the same sample size, approximately C% of those C% confidence intervals created will capture the population mean."
+
+[04:05] — Interpreting the Confidence Level (Applied to Example)
+The generic definition is replaced with an interpretation specific to the body temperature example:
+"If we take many random samples of 10 people from the population of all humans and use each sample to construct a 95% confidence interval for the mean body temperature of all people, about 95% of those intervals would capture the population mean."
+
+[04:33] — Interpreting the Confidence Level (Context Reminder)
+A blue box appears with the text: "Remember to write in context. Always."
+Certain phrases in the interpretation text are highlighted in blue to indicate the context: "10 people from the population of all humans", "for the mean body temperature of all people", and "about 95%".
+
+[04:45] — Interpreting the Confidence Level (Common Mistake)
+The text changes to explain a common misconception:
+"The confidence level describes what happens in repeated sampling. It does NOT give the probability that a particular interval captures the population proportion." (Note: The speaker says "population mean", but the slide text says "proportion").
+On the right, a segment of the simulated interval graph is shown.
+
+[05:11] — Interpreting the Confidence Level (Probability of 1)
+An arrow points to one of the green intervals in the graph, with the text: "This interval captures 
+98.6
+∘
+F
+98.6
+∘
+F
+ with probability = 1."
+
+[05:19] — Interpreting the Confidence Level (Probability of 0)
+A second arrow points to the red interval in the graph, with the text: "This interval captures 
+98.6
+∘
+F
+98.6
+∘
+F
+ with probability = 0."
+
+[05:32] — Factors That Affect the Margin of Error
+A new title slide with just the title at the top.
+
+[05:39] — Factors That Affect the Margin of Error (Formula Structure)
+Text appears: "Recall that confidence intervals in AP Statistics have the following structure:"
+"CI = point estimate 
+±
+±
+ margin of error"
+
+[05:46] — Factors That Affect the Margin of Error (Interval Width)
+Additional text appears: "The width of a confidence interval is twice the margin of error."
+
+[05:56] — Factors That Affect the Margin of Error (Goal)
+More text appears: "We generally prefer narrow confidence intervals (more precision), so we want the margin of error to be small. There are two common ways to decrease the margin of error."
+
+[06:11] — Factors That Affect the Margin of Error (Sample Size)
+The slide clears the previous text and shows: "Assuming everything else remains the same, the margin of error will be smaller when ..."
+
+[06:16] — Factors That Affect the Margin of Error (Sample Size Formula)
+The first point is added:
+"1) The sample size is larger"
+Below this, the formula for margin of error is shown: "margin of error = 
+𝑡
+∗
+𝑠
+𝑛
+t
+∗
+n
+	​
+
+s
+	​
+
+".
+A blue arrow points specifically to the 
+𝑛
+n
+	​
+
+ in the denominator.
+
+[06:44] — Factors That Affect the Margin of Error (Sample Size Relationship)
+Text is added below
+
+thumb_up
+thumb_down

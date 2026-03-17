@@ -1,0 +1,141 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 4
+
+more_vert
+
+Below is a breakdown of the visual changes and slide content from the video:
+
+[00:00] — Topic 7.4 Setting Up a Test for a Population Mean
+The title slide features "TOPIC 7.4 Setting Up a Test for a Population Mean" in large text. Below it, the slide notes "DAILY VIDEO 1" and explains: "In this video, we will discuss how to state the null and alternative hypotheses for a significance test for a population mean." An "AP Statistics" label is on the left next to a stylized circular icon containing a line graph.
+
+[00:16] — What Will We Learn?
+This slide outlines the two main objectives:
+
+How do we state a null hypothesis in a test for a population mean?
+
+How do we state an alternative hypothesis in a test for a population mean?
+
+[00:32] — Some Reminders ...
+The slide lists the two major types of statistical inference covered in Units 6-9:
+
+Confidence Intervals: Used to estimate the value of a population parameter. It is an interval of values used to account for sampling variability.
+
+Significance Tests: (Added at 00:58) Used to test a claim about a population parameter and assess if evidence is likely or unlikely to happen by chance.
+
+[01:19] — The Structure of Unit 7
+This slide provides a roadmap for Unit 7, focusing on quantitative data summarized by means. It lists the following topic pairings:
+
+Topics 7.2–7.3: Confidence intervals for a population mean.
+
+Topics 7.4–7.5: Significance tests for a population mean.
+
+Topics 7.6–7.7: Confidence intervals for a difference in means.
+
+Topics 7.8–7.9: Significance tests for a difference in means.
+
+[01:54] — LET'S LOOK AT AN EXAMPLE
+A transitional blue screen with white text.
+
+[01:57] — Example: Got Hops?
+This slide introduces a word problem about teen vertical jump heights.
+
+Scenario: An internet claim says the average is 15 inches. A sample of 20 students had an average jump of 15.8 inches (
+𝑠
+=
+2.33
+s=2.33
+).
+
+Question: Does this provide evidence that the jump height for all students at this school differs from 15 inches?
+
+Data: A table at the bottom shows 20 raw data points ranging from 11.5 to 20.5.
+
+[02:32] — Null Hypothesis (
+𝐻
+0
+H
+0
+	​
+
+)
+The slide defines the null hypothesis as a claim of "no difference" or "no change."
+
+Context: For the jump example, 
+𝐻
+0
+H
+0
+	​
+
+ is that the average jump is no different than 15 inches.
+
+Formula: 
+𝐻
+0
+:
+𝜇
+=
+15
+ inches
+H
+0
+	​
+
+:μ=15 inches
+, where 
+𝜇
+μ
+ is the mean vertical jump for all students at the school.
+
+[03:21] — Alternative Hypothesis (
+𝐻
+𝑎
+H
+a
+	​
+
+)
+Defines the alternative hypothesis as the claim we hope to support with evidence.
+
+Context: The goal is to see if the jump height differs from 15 inches.
+
+Formula: 
+𝐻
+𝑎
+:
+𝜇
+≠
+15
+ inches
+H
+a
+	​
+
+:μ
+
+=15 inches
+.
+
+The slide shows both 
+𝐻
+0
+H
+0
+	​
+
+ and 
+𝐻
+𝑎
+H
+a
+	​
+
+ together, emphasizing the use of the parameter 
+𝜇
+μ
+.
+
+[04:13] — *
+
+thumb_up
+thumb_down

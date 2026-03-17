@@ -1,0 +1,794 @@
+# Video 2 — Slide Descriptions
+# Unit 7, Lesson 6
+
+more_vert
+
+Here is a detailed description of the visual changes and slides in the video:
+
+[00:00] — Topic 7.6: Confidence Intervals for the Difference of Two Means
+The video starts with a title slide for AP Statistics Topic 7.6, labeled "DAILY VIDEO 2". Subtext states: "In this video, we will demonstrate how to calculate a confidence interval for a difference in means." The speaker is visible in a small window in the top right corner.
+
+[00:10] — What Will We Learn?
+The slide lists two main learning objectives:
+
+How do we determine the margin of error when estimating a difference in means?
+
+How do we calculate a confidence interval for a difference in means?
+
+[00:22] — Formula for Success!
+The slide introduces the "2-sample t-interval for the difference in population means".
+It presents the general formula:
+Confidence interval: statistic ± (critical value)(standard error of statistic)
+
+[00:38] — Sampling distributions for means
+A table from a formula chart is displayed, showing parameters for sampling distributions.
+It covers "For one population" and "For two populations".
+Under "For two populations":
+
+Random Variable: 
+𝑋
+ˉ
+1
+−
+𝑋
+ˉ
+2
+X
+ˉ
+1
+	​
+
+−
+X
+ˉ
+2
+	​
+
+
+Parameters: 
+𝜇
+𝑋
+ˉ
+1
+−
+𝑋
+ˉ
+2
+=
+𝜇
+1
+−
+𝜇
+2
+μ
+X
+ˉ
+1
+	​
+
+−
+X
+ˉ
+2
+	​
+
+	​
+
+=μ
+1
+	​
+
+−μ
+2
+	​
+
+, 
+𝜎
+𝑋
+ˉ
+1
+−
+𝑋
+ˉ
+2
+=
+𝜎
+1
+2
+𝑛
+1
++
+𝜎
+2
+2
+𝑛
+2
+σ
+X
+ˉ
+1
+	​
+
+−
+X
+ˉ
+2
+	​
+
+	​
+
+=
+n
+1
+	​
+
+σ
+1
+2
+	​
+
+	​
+
++
+n
+2
+	​
+
+σ
+2
+2
+	​
+
+	​
+
+	​
+
+
+Standard Error* of Sample Statistic: 
+𝑠
+𝑋
+ˉ
+1
+−
+𝑋
+ˉ
+2
+=
+𝑠
+1
+2
+𝑛
+1
++
+𝑠
+2
+2
+𝑛
+2
+s
+X
+ˉ
+1
+	​
+
+−
+X
+ˉ
+2
+	​
+
+	​
+
+=
+n
+1
+	​
+
+s
+1
+2
+	​
+
+	​
+
++
+n
+2
+	​
+
+s
+2
+2
+	​
+
+	​
+
+	​
+
+
+Highlights appear to connect parts of the general formula to specific components for two means: "statistic" is linked to 
+𝑋
+ˉ
+1
+−
+𝑋
+ˉ
+2
+X
+ˉ
+1
+	​
+
+−
+X
+ˉ
+2
+	​
+
+, and "standard error of statistic" is linked to the standard error formula.
+
+[00:57] — Constructing the Formula
+The slide shows the specific components coming together:
+
+(
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+)
+(
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+)
+ (highlighted yellow as the statistic)
+
+±
+𝑡
+∗
+±t
+∗
+ (highlighted yellow as the critical value)
+
+𝑠
+1
+2
+𝑛
+1
++
+𝑠
+2
+2
+𝑛
+2
+n
+1
+	​
+
+s
+1
+2
+	​
+
+	​
+
++
+n
+2
+	​
+
+s
+2
+2
+	​
+
+	​
+
+	​
+
+ (highlighted yellow as the standard error of statistic)
+
+[01:08] — Point Estimate and Margin of Error
+The general equation is rewritten as: CI = point estimate ± margin of error.
+The specific formula components are labeled:
+
+(
+𝑥
+ˉ
+1
+−
+𝑥
+ˉ
+2
+)
+(
+x
+ˉ
+1
+	​
+
+−
+x
+ˉ
+2
+	​
+
+)
+ is the "point estimate"
+
+𝑡
+∗
+𝑠
+1
+2
+𝑛
+1
++
+𝑠
+2
+2
+𝑛
+2
+t
+∗
+n
+1
+	​
+
+s
+1
+2
+	​
+
+	​
+
++
+n
+2
+	​
+
+s
+2
+2
+	​
+
+	​
+
+	​
+
+ is the "margin of error"
+A text box appears: "The margin of error describes how much a value of a sample statistic is likely to vary from the value of the corresponding population parameter."
+
+[01:32] — Calculating the Margin of Error
+The slide focuses on the margin of error: 
+𝑡
+∗
+𝑠
+1
+2
+𝑛
+1
++
+𝑠
+2
+2
+𝑛
+2
+t
+∗
+n
+1
+	​
+
+s
+1
+2
+	​
+
+	​
+
++
+n
+2
+	​
+
+s
+2
+2
+	​
+
+	​
+
+	​
+
+
+𝑡
+∗
+t
+∗
+ is highlighted green as the "critical value", with text explaining it represents "How confident we want to be in our estimate". A normal curve graphic illustrates 90% and then 99% confidence areas.
+
+The square root portion is highlighted blue as the "standard error of statistic", with text explaining it represents "How much the statistic typically varies from the parameter".
+
+[02:03] — Let's Look At An Example
+A transition slide to introduce a practice problem.
+
+[02:05] — Eight-Legged Friends
+The slide presents a word problem about comparing the body lengths of male and female Argiope spiders. It includes an image of the spiders. The text describes collecting a random sample of 14 female and 14 male spiders.
+
+[02:20] — Eight-Legged Friends (Data)
+The prompt continues: "Calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male Argiope spiders."
+Data tables for both groups are shown, containing 14 values each (in millimeters).
+
+[02:24] — Calculating the Confidence Interval
+The formula is shown: 
+(
+𝑥
+ˉ
+𝐹
+−
+𝑥
+ˉ
+𝑀
+)
+±
+𝑡
+∗
+𝑠
+𝐹
+2
+𝑛
+𝐹
++
+𝑠
+𝑀
+2
+𝑛
+𝑀
+(
+x
+ˉ
+F
+	​
+
+−
+x
+ˉ
+M
+	​
+
+)±t
+∗
+n
+F
+	​
+
+s
+F
+2
+	​
+
+	​
+
++
+n
+M
+	​
+
+s
+M
+2
+	​
+
+	​
+
+	​
+
+
+Summary statistics calculated from the data are provided:
+
+Females: 
+𝑥
+ˉ
+𝐹
+=
+14.15
+x
+ˉ
+F
+	​
+
+=14.15
+ mm, 
+𝑠
+𝐹
+=
+3.54
+s
+F
+	​
+
+=3.54
+ mm
+
+Males: 
+𝑥
+ˉ
+𝑀
+=
+4.107
+x
+ˉ
+M
+	​
+
+=4.107
+ mm, 
+𝑠
+𝑀
+=
+0.92
+s
+M
+	​
+
+=0.92
+ mm
+These values are plugged into the formula:
+
+(
+14.15
+−
+4.107
+)
+±
+𝑡
+∗
+3.54
+2
+14
++
+0.92
+2
+14
+(14.15−4.107)±t
+∗
+14
+3.54
+2
+	​
+
++
+14
+0.92
+2
+	​
+
+	​
+
+
+[02:59] — What About the Degrees of Freedom?
+The slide addresses finding the 
+𝑡
+∗
+t
+∗
+ value.
+Text explains that while 
+𝑑
+𝑓
+=
+𝑛
+−
+1
+df=n−1
+ is used for a 1-sample t-interval, for a two-sample t-interval, degrees of freedom are best found using technology.
+
+[03:17] — Calculating the Confidence Interval (Calculator)
+Screenshots of a TI-84 calculator demonstrate how to find the interval and degrees of freedom using the "2-SampTInt" function with "Data" input from lists.
+It highlights setting "Pooled: No".
+The output screen shows the calculated interval (7.9563, 12.129) and the degrees of freedom 
+𝑑
+𝑓
+=
+14.73284565
+df=14.73284565
+.
+
+[04:00] — Calculating the Confidence Interval (Result)
+The calculated result is appended to the formula:
+
+(
+14.15
+−
+4.107
+)
+±
+𝑡
+∗
+3.54
+2
+14
++
+0.92
+2
+14
+=
+(
+7.956
+,
+12.129
+)
+(14.15−4.107)±t
+∗
+14
+3.54
+2
+	​
+
++
+14
+0.92
+2
+	​
+
+	​
+
+=(7.956,12.129)
+
+Text indicates this is with 
+𝑑
+𝑓
+=
+14.73
+df=14.73
+.
+
+[04:14] — Finding the Critical Value
+The slide demonstrates how to find the specific 
+𝑡
+∗
+t
+∗
+ critical value if needed.
+A normal curve visualizes a 95% confidence level, leaving 2.5% in each tail.
+Calculator screenshots show using the invT function: invT(.025, 14.73).
+The result is 
+𝑡
+=
+−
+2.13
+t=−2.13
+, indicating a critical value 
+𝑡
+∗
+=
+2.13
+t
+∗
+=2.13
+.
+
+[04:44] — Summing Up the CI Calculations
+A number line visualizes the confidence interval from roughly 8 to 12.
+
+Lower bound: 7.956
+
+Upper bound: 12.129
+The Point Estimate is calculated two ways:
+
+14.15
+−
+4.107
+=
+10.043
+14.15−4.107=10.043
+ mm
+
+Midpoint: 
+7.956
++
+12.129
+2
+=
+10.043
+2
+7.956+12.129
+	​
+
+=10.043
+ mm
+The Margin of Error is calculated two ways:
+
+Difference: 
+12.129
+−
+10.043
+=
+2.086
+12.129−10.043=2.086
+ mm
+
+Formula: 
+2.13
+3.54
+2
+14
++
+0.92
+2
+14
+=
+2.086
+2.13
+14
+3.54
+2
+	​
+
++
+14
+0.92
+2
+	​
+
+	​
+
+=2.086
+ mm
+The final result is written as: 95% Confidence Interval: 10.043 ± 2.086 mm
+
+[05:30] — Confidence Interval Formats
+The slide shows three equivalent ways to write the final confidence interval:
+
+(7.956, 12.129)
+
+10.043 ± 2.086
+
+(
+14.15
+−
+4.107
+)
+±
+2.13
+3.54
+2
+14
++
+0.92
+2
+14
+(14.15−4.107)±2.13
+14
+3.54
+2
+	​
+
++
+14
+0.92
+2
+	​
+
+	​
+
+
+[05:51] — Let's Practice
+A transition slide to introduce a multiple-choice question.
+
+[05:53] — *Multiple-Choice Example
+
+thumb_up
+thumb_down

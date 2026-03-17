@@ -1,0 +1,39 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 1
+
+more_vert
+
+[00:00] I've got another AP Daily video for you. This one is on the logic of significance testing for a difference in means.
+
+[00:09] What are we going to learn in this video? We're going to learn how we identify evidence for a claim, and we're going to determine if the evidence for a claim is convincing.
+
+[00:20] So let's look at an example. Bonus versus rebate. Are people more likely to spend money if it is called a bonus or if it is called a rebate? Volunteer college students were given $50 with no strings attached. 25 of the 47 students were randomly assigned to be told that the money was bonus income, while the other 22 students were told the money was a tuition rebate. After one week, the students were asked to report how much of the $50 they spent. Here are the data, along with the mean amount spent by each group.
+
+[00:56] So you can see that the group that was told bonus income spent $22.04, and the group that was told rebate spent $9.55. Now social scientists might wonder why that is. One working theory is if it's bonus, that's someone else's money, that's easy to spend that. But if it's rebate, that means it was your money to begin with, and you don't want to spend your money, do you?
+
+[01:26] The operating question for this video is, do these data provide convincing evidence that the bonus wording causes college students like the ones in this study to spend more money, on average, than the tuition rebate wording?
+
+[01:41] So what's the evidence that more money would be spent using the bonus income wording? Well, if the wording made no difference in the amount spent, then the mean amount spent by each group should be equal. In that case, we would expect a difference in the average amount spent to be zero. If they're the same, their difference is zero. But what we saw in the study was that the difference in the group means was $12.49. And that's different than zero, that's greater than zero. So we have some evidence. There's some evidence that bonus might cause college students like the ones in this study to spend more.
+
+[02:26] But there are two explanations for that evidence. The first explanation is, hey, you know, the wording really makes no difference in the amount spent. And that $12.49 difference, that occurred just to chance variation in the random assignment to groups. You know, the people who were going to spend more, they were going to spend more no matter what you said to them. And they just, they tended to be in one group rather than the other. Well, the other explanation is that the bonus wording caused students to spend more on average than the rebate wording.
+
+[03:00] If we want to be convinced that explanation two is correct, remember our question, then we need to know how likely it would be to get a difference in means of 12.49 or more by chance alone. So if it's unlikely to get a difference in means of $12.49 or more, just by chance variation in the random assignment, well then we could rule out explanation one and we can conclude that explanation two is probably right. It's probably the case.
+
+[03:33] So we need to figure this probability out. The probability to get a difference in means of 12.49 or more when the wording makes no difference in the amount spent. So let's perform a simulation. Because we are assuming that wording makes no difference, subjects are expected to spend the same amount no matter which group they're in. So we can randomly assign the subjects to groups again and again. We can re-randomly assign them under this assumption. And then find the mean amount for each group and then calculate the difference in means.
+
+[04:09] So here was the original study, the data from the original study. And you can see the average and the difference. But what if we reassigned them randomly to groups? Like this, we could shuffle them over and over and over again. Well, let's take a look at one possible random assignment right here. The mean in the bonus group is $11.60. The mean in the rebate group is $21.41. That's a difference of negative $9.81.
+
+[04:48] So let's plot that difference and let's rerandomize again. Here's another random assignment. In the bonus group, $21.64 was spent and the rebate group, $10 was spent on average. That gives us a difference in means of $11.64, and we can plot that one down on the graph as well. Another random assignment, another set of group means, another difference in means, negative $1.26. Let's just do it one more time to make sure we got the idea. Randomly assigned subjects to groups...
+
+[05:25] ...calculate the average spent for each group, find the difference in those averages, $3.95, and make a dot. Now, let's take this simulation, let's do it a thousand times. This is a resulting dot plot from 1,000 trials of the simulation. So based on this simulation, would it be surprising to get a difference in means of 12.49 or greater just by chance variation in the random assignment? Well, we can actually estimate that. There's $12.49. You can see it marked here.
+
+[06:12] The differences that are 12.49 or greater are there to the right. And if you count them, there should be 13 out of the thousand. And that gives us an approximate probability of 13 in a thousand, or about .013, about 1%. So remember our question, do these data provide convincing evidence that the bonus wording causes college students like the ones in this study to spend more money on average than the tuition rebate wording?
+
+[06:48] Well, remember our two explanations. The wording made no difference in the amount spent and the 12.49 difference occurred due to chance variation only. We just simulated that. And what we found was the probability that that's the case is very low. .013 or so. Explanation number two, the bonus wording causes students to spend more on average than the rebate wording. Well, because it's unlikely, probability value of about .013, to get a difference in means of 12.49 or greater by chance alone when wording makes no difference in the amount that would be spent, you get to rule out explanation one. If the wording makes no difference, then it would be unlikely to see a difference in means that large.
+
+[07:43] So these data do provide convincing evidence that bonus the bonus wording causes college students like the ones in this study to spend more money on average than the tuition rebate wording. What should we take away?
+
+**[08:0
+
+thumb_up
+thumb_down

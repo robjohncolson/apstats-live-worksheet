@@ -1,0 +1,271 @@
+# Video 1 — Slide Descriptions
+# Unit 7, Lesson 9
+
+more_vert
+
+[00:00] — Line of best fit setup
+Text appears on screen: "Line of best fit" and below it, the question, "How to define the 'distance' between the line and points?". On the right, a graph displays an x-axis and y-axis. A straight blue line labeled "
+𝑙
+𝑖
+𝑛
+𝑒
+line
+" passes through the graph. Five data points are scattered around the line, labeled with their coordinates: 
+𝐴
+(
+𝐴
+𝑥
+,
+𝐴
+𝑦
+)
+A(A
+x
+	​
+
+,A
+y
+	​
+
+)
+, 
+𝐵
+(
+𝐵
+𝑥
+,
+𝐵
+𝑦
+)
+B(B
+x
+	​
+
+,B
+y
+	​
+
+)
+, 
+𝐶
+(
+𝐶
+𝑥
+,
+𝐶
+𝑦
+)
+C(C
+x
+	​
+
+,C
+y
+	​
+
+)
+, 
+𝐷
+(
+𝐷
+𝑥
+,
+𝐷
+𝑦
+)
+D(D
+x
+	​
+
+,D
+y
+	​
+
+)
+, and 
+𝐸
+(
+𝐸
+𝑥
+,
+𝐸
+𝑦
+)
+E(E
+x
+	​
+
+,E
+y
+	​
+
+)
+.
+
+[00:11] — Distance formula for point A
+A formula begins to form below the initial question: 
+𝐷
+=
+(
+𝐴
+𝑦
+−
+𝑙
+𝑖
+𝑛
+𝑒
+(
+𝐴
+𝑥
+)
+)
+2
+D=(A
+y
+	​
+
+−line(A
+x
+	​
+
+))
+2
+. Simultaneously, on the graph, a vertical dashed red line appears connecting point A to the blue line, visually representing this distance.
+
+[00:30] — Distance formula for point B
+The formula is expanded to include the calculation for the second point: 
+𝐷
+=
+(
+𝐴
+𝑦
+−
+𝑙
+𝑖
+𝑛
+𝑒
+(
+𝐴
+𝑥
+)
+)
+2
++
+(
+𝐵
+𝑦
+−
+𝑙
+𝑖
+𝑛
+𝑒
+(
+𝐵
+𝑥
+)
+)
+2
+D=(A
+y
+	​
+
+−line(A
+x
+	​
+
+))
+2
++(B
+y
+	​
+
+−line(B
+x
+	​
+
+))
+2
+. A second vertical dashed red line appears on the graph, connecting point B to the blue line.
+
+[00:33] — Distance formula for point C
+The formula expands again to include the third point: 
+𝐷
+=
+(
+𝐴
+𝑦
+−
+𝑙
+𝑖
+𝑛
+𝑒
+(
+𝐴
+𝑥
+)
+)
+2
++
+(
+𝐵
+𝑦
+−
+𝑙
+𝑖
+𝑛
+𝑒
+(
+𝐵
+𝑥
+)
+)
+2
++
+(
+𝐶
+𝑦
+−
+𝑙
+𝑖
+𝑛
+𝑒
+(
+𝐶
+𝑥
+)
+)
+2
+D=(A
+y
+	​
+
+−line(A
+x
+	​
+
+))
+2
++(B
+y
+	​
+
+−line(B
+x
+	​
+
+))
+2
++(C
+y
+	​
+
+−line(C
+x
+	​
+
+))
+2
+. A vertical dashed red line appears connecting point C t
+
+thumb_up
+thumb_down

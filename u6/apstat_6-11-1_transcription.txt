@@ -1,0 +1,160 @@
+# Video 1 — Transcript
+# Unit 6, Lesson 11
+
+edit
+more_vert
+
+[00:00] Hi everyone, I'm Doug Tyson here in beautiful York, Pennsylvania. And I'm here with another AP daily video.
+
+[00:08] This one's on topic 6.11, carrying out a significance test for a difference in proportions.
+
+[00:15] What are we going to learn in this video?
+
+[00:18] We're going to learn how to calculate an appropriate test statistic for a test for a difference in proportions.
+
+[00:25] And also we're going to calculate a p-value for a test for a difference in proportions.
+
+[00:30] So let's look at an example. Bacterial conjunctivitis, often called pink eye, causes eye irritation for those unlucky enough to contract it.
+
+[00:40] Can eye drops containing azithromycin make the recovery faster?
+
+[00:45] In one clinical trial, eye drops containing azithromycin were compared to a placebo eyedrop among 279 patients suffering from pink eye.
+
+[00:55] The results? Of the 130 patients who were randomly assigned azithromycin, 82 were cured within a week.
+
+[01:04] Of the 149 patients who were randomly assigned to the placebo drops, 74 were cured within a week.
+
+[01:11] Do these results give convincing evidence that azithromycin is more effective at curing pink eye than a placebo for subjects like the ones in this study?
+
+[01:22] So in previous videos we set up the hypotheses, that the difference in proportions is zero versus the difference in proportions is greater than zero,
+
+[01:32] where p sub 1 is the proportion of pink eye patients like the ones in the study who would be cured by azithromycin,
+
+[01:40] and p sub 2 is likewise but for the placebo group.
+
+[01:45] We also noted that all conditions were met in the previous videos.
+
+[01:50] Now we want to calculate the test statistic. So in this study, we have a difference in group proportions of 0.134.
+
+[02:00] So we can take the 82 out of 130, minus the 74 out of 149. This is evidence for the alternative.
+
+[02:07] There's at least some evidence that the azithromycin drops are better, because the difference in the group proportions is a positive number, it's greater than zero.
+
+[02:16] That means that the proportion for azithromycin in that group was higher than the proportion cured in the placebo group.
+
+[02:25] But we want to know how likely it is to get evidence for the alternative this strong or stronger by chance alone when the null is true.
+
+[02:34] So after verifying that the conditions have been met, we're going to calculate this standardized test statistic.
+
+[02:41] And this is the formula that you'll see on the formula sheet.
+
+[02:44] The standardized test statistic equals the statistic minus the parameter divided by the standard error of the statistic.
+
+[02:53] For a two-sample z test for a difference in proportions, the standardized test statistic has this formula.
+
+[03:02] Notice I rewrote the formula here by factoring out the numerator of both of these fractions.
+
+[03:10] And in fact, this version, the second version is the one that you'll see on the formula sheet.
+
+[03:17] Now p hat sub c is the combined or pooled proportion of successes, and we saw this in a previous video.
+
+[03:25] That means that you just combine the number of successes in both groups or samples, and you divide that by the total number in both groups or samples.
+
+[03:36] So let's take the formula that we have, we'll calculate the combined or pooled proportion of successes.
+
+[03:44] So 82 in the azithromycin group, 74 in the placebo group, the total of both groups, the number of patients in both groups, 130 plus 149,
+
+[03:55] so we get 0.559. That's our combined or pooled proportion.
+
+[04:00] Now let's plug in all the values into the formula.
+
+[04:04] So here we have p hat sub 1, the proportion of successes in the azithromycin group,
+
+[04:10] the proportion of successes in the placebo group, and down here the combined or pooled proportion.
+
+[04:17] You could also use this version of the formula up here and you would be just fine.
+
+[04:22] We fill in all the values, we do a computation, we get 2.25.
+
+[04:28] On the formula sheet, you can build this formula. First you see here is the standardized test statistic equals this fraction, as I mentioned before.
+
+[04:38] And then further down on the formula sheet for two populations, we see here's the statistic that goes in the top part of the formula.
+
+[04:48] The parameter is the hypothesized difference in proportions, which is usually zero for our null hypothesis.
+
+[04:57] And then the denominator is shown here. When we assume that the two proportions are equal, which is what we do in a significance test,
+
+[05:07] then here's the standard error of the statistic, and that's what goes in the denominator.
+
+[05:14] So you can build this formula from the formula sheet, you do not need to memorize it.
+
+[05:19] So how do we calculate a p-value? We're going to use the standard normal distribution to calculate it.
+
+[05:25] We've calculated a standardized test statistic that is a z statistic, a standard normal statistic, so we use the standard normal distribution.
+
+[05:34] The p-value is going to be the probability of observing a test statistic as extreme or more extreme than the observed test statistic,
+
+[05:42] when the null hypothesis and probability model are assumed to be true.
+
+[05:47] So because our alternative is a greater than alternative, we're going to look for a probability that the z statistic is greater than or equal to 2.25,
+
+[05:58] as extreme or more extreme in the direction of the alternative.
+
+[06:04] And so here's a standard normal distribution. We've shaded the right tail, greater than 2.25.
+
+[06:13] We can use table A or technology to find that that probability is, the p-value or 0.0122.
+
+[06:21] So let's practice with a different example.
+
+[06:25] A bright idea: A marketing agent wonders if there's a difference in the percentage of residents in two cities who have purchased sunglasses during the last 12 months.
+
+[06:35] Of 400 randomly selected Soltown residents, 314 have purchased sunglasses. Of 550 Brightville residents, 452 have purchased sunglasses in the last 12 months.
+
+[06:51] Does this give us convincing evidence of a difference in the proportions of residents who have purchased sunglasses in the past 12 months for these two cities?
+
+[07:00] We're going to calculate the standardized test statistic and the p-value.
+
+[07:05] So from previous videos we've set up the hypotheses, notice that the alternative is not equal to, right? A difference.
+
+[07:15] We defined the parameters, p sub s is the proportion for all Soltown residents who purchased sunglasses in the last 12 months, and p sub b is similar but for Brightville.
+
+[07:29] And we know that the conditions have been met because we checked them in previous videos.
+
+[07:34] So let's calculate our test statistic. We have the two sample proportions for Soltown and Brightville, so 0.785 for Soltown, 0.822 for Brightville.
+
+[07:48] We have the combined proportion which is 0.806, that's combining both samples into one big sample.
+
+[07:58] And our z statistic then is the difference in the sample proportions minus the hypothesized difference in the population proportions, which our null hypothesis says that's zero.
+
+[08:14] And then down here is the standard error of the statistic, and again we're using the combined or pooled proportion when we hypothesize that the p sub 1 and p sub 2 are equal, like we do in a significance test.
+
+[08:29] And we get a z statistic of -1.42.
+
+[08:33] Because our alternative is two-sided, that is, not equal to zero, you want to find the probability that our standardized test statistic is as extreme or more extreme as the observed value in either direction.
+
+[08:48] So less than or equal to -1.42 or greater than or equal to +1.42.
+
+[08:57] So we can double the probability in one tail or the other, or add them together.
+
+[09:05] So each tail has a probability of 0.0788. So when we multiply them by 2 or add them together, the p-value is 0.1556.
+
+[09:18] So what should we take away from this video?
+
+[09:22] Number one, how do you calculate an appropriate test statistic for a significance test for a difference in proportions? Well, we have this formula. You can build it from the formula sheet.
+
+[09:34] Number two, how do we calculate the p-value for a test for a difference in proportions?
+
+[09:40] Well, if your alternative is that the first proportion is greater than the second population proportion, or that the difference is greater than zero,
+
+[09:51] the p-value is going to be the probability that z is greater than or equal to the observed test statistic.
+
+[09:59] If your alternative is less than, the p-value is the probability that z is less than or equal to the observed test statistic.
+
+[10:08] And if your alternative is not equal to zero or different than zero, then the p-value is doubling the probability that the z is greater than the absolute value of the test statistic.
+
+[10:21] So the probability of being as extreme or more extreme in either direction.
+
+[10:28] Thanks for watching. I'm Doug Tyson, and I'll see you in the next video.
+
+thumb_up
+thumb_down

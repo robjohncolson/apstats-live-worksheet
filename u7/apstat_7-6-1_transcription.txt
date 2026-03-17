@@ -1,0 +1,35 @@
+# Video 1 — Transcript
+# Unit 7, Lesson 6
+
+more_vert
+
+[00:00] Hi, AP Statistics students. My name is Mrs. Matamoras, coming to you from the eclectic town of Denton, Texas. Today, we're going to talk about confidence intervals for the difference of two means.
+
+[00:11] So, what will we learn? First, how do we identify an appropriate confidence interval procedure for the difference of two population means? And second, how do we verify the conditions for calculating a confidence interval for the difference of two population means?
+
+[00:27] So, let's look at an example. I have a secret. I love spiders. That's right. Mammal species typically have larger males than females. However, there are some species in the animal kingdom where the females are larger than the males. This most notably occurs with spiders. I think that's why I like them so much.
+
+[00:50] To determine the difference in mean body lengths of female and male spiders, researchers collected a random sample of 14 adult female spiders and a random sample of 14 adult male spiders from the genus Argiope. It's a particularly large type of spider. I get some in my garden every year. The data on body lengths are shown below. Calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male Argiope spiders.
+
+[01:21] So first, we need to identify the procedure we'll be using. To do that, we're going to ask how many groups we're dealing with, and that's two. We've got female and male spiders. Then what type of data are collected? Since we've got measurements of body lengths in millimeters, that's quantitative data. And lastly, what are we asked to do? And that's estimate the difference in the population mean body lengths of female and male spiders with a 95% confidence interval.
+
+[01:48] All right, so this is a 2-sample t-interval because we've got quantitative data, and kind of obvious it's a confidence interval because I said it, and we're doing the difference in population means.
+
+[02:01] So now we need to check the conditions so that we are able to use this procedure. To check for independence, we need to make sure the data come from two independent random samples or a randomized experiment. Second, when we're sampling without replacement, the samples should be less than or equal to 10% of their respective populations.
+
+[02:23] Lastly, we have to check that the shape of the sampling distribution of the difference in sample means is approximately normal. So to do that, both our sample sizes, both have to be greater than 30 or both samples should come from approximately normally distributed populations. So if your samples are small, then the shapes of the sample distributions themselves should be free from extreme skewness or outliers.
+
+[02:51] All right, so let's check those conditions with our data that we have. We have a random sample of both female and male spiders, so that checks off our first condition. For the second condition, you've got 14 spiders of each, 14 female, 14 male. Yeah, that's gonna be less than or equal to 10% of the populations of those spiders. There are tons of spiders in the world. Lastly, both samples have less than 30 observations. That's problematic. So we're gonna have to verify that there is no extreme skewness or outliers in those sample distributions.
+
+[03:28] We're going to turn to the calculator for that. And I've typed the data from the female spider lengths into list 1 of the calculator and the male spider body lengths into list 2. If we make a histogram of the female body lengths and a histogram of the male body lengths, then we can see that both samples are roughly unimodal and symmetric, so it's reasonable to assume they come from approximately normal populations. We're not looking for it to be perfectly unimodal and symmetric, just roughly, so it's reasonable to assume they come from approximately normal populations. Great.
+
+[04:06] So to determine the difference in the mean body lengths of female and male spiders, researchers actually collected a random sample of 35 adult female spiders and a random sample of 35 adult male spiders from the genus Argiope. So if the researchers wanted to calculate a 95% confidence interval for the difference (female minus male) in the mean body lengths of the Argiope spiders, are the conditions met now? Since both samples were randomly selected, same as before, that one's OK. But the second one is made a little bit different. Still though, 35 for each is gonna be less than 10% of their respective populations. However, the third condition is made much, much easier because we have more than 30 observations for both our samples, so we don't have to look at the distributions of the samples to see if they're unimodal and roughly symmetric.
+
+[05:01] All right, so let's practice. I'd like for you to pause the video and read through this question and see if you can determine if the conditions have been met for the inference procedure described. Great. So we have this experiment here, and so let's look at these answer choices to see which of the following is true regarding the teacher's method.
+
+[05:27] The students were not randomly selected, so it is not appropriate to calculate a confidence interval for a difference in means. Well, we don't necessarily have to have random selection, we do have random assignment here, so that will qualify for that first condition. So it's not A. B. 36 students is a large enough sample for the sampling distribution of the difference in sample means to be approximately normal. Well, 36 students, though it is large enough, that's putting both samples together. We can't do that. We have to look at both samples separately, and both of them have to have more than 30. So B is not correct. C. There is clear skewness and an outlier in the sample distributions so the teacher cannot assume the data come from approximately normally distributed populations. Well, that one...that one sounds true. That one checks out because we do have an outlier and we do have some severe skewness. So that one sounds good. We're gonna keep reading though. D. There is clear skewness and an outlier in the sample distributions so the two groups cannot be assumed to be independent. Well, the shape of the sample distributions does not help us with the independence condition, so it's not D. Answer choice E. The conditions appear to be verified so the teacher can proceed with her chosen inference method. Well, that one contradicts answer choice C, and we've already seen that there is an outlier and skewness that's problematic. So the correct answer is answer choice C.
+
+[07:00] So, what should we take away? How do we identify an appropriate confidence interval procedure for the difference of two population means? When estimating the difference in
+
+thumb_up
+thumb_down

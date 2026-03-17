@@ -1,0 +1,83 @@
+# Video 2 — Transcript
+# Unit 8, Lesson 3
+
+edit
+more_vert
+
+[00:00] I'm Madame Morris, and in this video, we'll be looking at the last step in a chi-square goodness-of-fit test.
+
+[00:06] So what will we learn? How do we interpret the p-value for a chi-square goodness-of-fit test? And how do we state a conclusion for a chi-square goodness-of-fit test?
+
+[00:16] So let's look at an example. So we've been working through this problem quite a bit, so if you need to recap, go ahead and pause the video and read through it.
+
+[00:30] Great. And so again, we have a random sample of 40 predatory lending businesses in Dallas, Texas. And we're trying to figure out if they are located in lower income areas or if they are located proportionally in regions of all income levels. So I gathered this data from the American Community Survey by the US Census.
+
+[00:50] And so our hypotheses. We have our null hypothesis, that the first proportion is equal to 0.452, the second proportion is 0.292, and the third proportion is 0.256, where p sub one, p sub two, and p sub three represent the proportions of predatory lending businesses found in regions of Dallas, Texas where household incomes are $0 to less than $50,000, $50,000 to less than $100,000, and $100,000 or above, respectively.
+
+[01:21] Our alternative hypothesis is that at least one of those proportions is not as specified in the null hypothesis.
+
+[01:28] We've worked through our procedure and our conditions. We know that this is a chi-square goodness-of-fit test, and we have checked off that our conditions are verified. Yes.
+
+[01:39] Our mechanics: in the last video, we found a test statistic where chi-squared is equal to 7.746, and the p-value is equal to 0.0208. So now we can interpret the results.
+
+[01:52] So when we interpret a p-value, you'll recall from the previous video that the p-value is calculated by finding the upper tail probability of a chi-square distribution. So what exactly does this probability describe?
+
+[02:06] Well, from Units 6 and 7, we learned that the p-value is the probability of obtaining a result as extreme as the one in the study, or more extreme, by chance alone, assuming that the null hypothesis is true.
+
+[02:21] So in the context of this study, we would say there is a 0.0208 probability of getting a chi-square statistic of 7.746 or greater just by the chance involved in the random selection of the businesses, assuming that the distribution of predatory lending businesses in Dallas, Texas is the same as the proportions of households in the specified income brackets.
+
+[02:45] So real quick, we'll go through the calculation one more time. We've got our observed counts. We've got our expected number of businesses in those brackets. We took the differences of the observed minus expected, we squared those differences to make them positive and to highlight any very large differences. And then we took the ratio of those squared differences with the expected values.
+
+[03:13] So our chi-square statistic of 7.746 is what we're looking at.
+
+[03:19] So here's a general guide when we state a conclusion. We've got two main parts. First, how does the p-value compare to our level of significance, alpha, and what decision must we make about the null hypothesis? And the second part is, what does this mean about the alternative hypothesis in context?
+
+[03:37] So for small p-values, our test statistic is unlikely to occur by random chance alone. And we would state that since the p-value of the value we get is less than or equal to an alpha of what you are using, we would reject the null hypothesis. We would then say that there is convincing statistical evidence that, and we'd state the alternative hypothesis in context.
+
+[04:00] However, for large p-values, our test statistic is likely to occur by random chance alone, and we would state that since the p-value of something large is greater than an alpha equal to what you're told to use, we would fail to reject the null hypothesis. We would then state there is not convincing statistical evidence that, state your alternative in context. Remember context is important.
+
+[04:25] So let's take a look at this visually before we state our conclusion in context. So here's a chi-square distribution with two degrees of freedom. The problem did not state a significance level, so we will use an alpha of 0.05.
+
+[04:39] Then we will shade the area under the curve and to the right of our test statistic of 7.746. That gives us our p-value of 0.0208, which you can clearly see is less than our alpha of 0.05.
+
+[04:52] So here we go. Since the p-value of 0.0208 is less than alpha of 0.05, we reject the null hypothesis. There is convincing statistical evidence that the distribution of predatory lending businesses in Dallas, Texas is not the same as the proportions of households in the specified income brackets.
+
+[05:13] So now let's talk about our contributions. If we go back to the original question, it was asking, is there convincing statistical evidence that these types of businesses tend to be located primarily in lower income regions?
+
+[05:27] Well, we have determined that the proportions of predatory lending businesses found in regions of different income brackets are not the same as the proportions of households in the specified income brackets. So, are they located primarily in lower income regions?
+
+[05:43] By looking at the contributions of each category toward the chi-square statistic, we can determine where the largest discrepancy lies in what we observed and what we expected.
+
+[05:54] So we can see that the highest income bracket, that of $100,000 and above, had the largest contribution. So from these data, we can infer that predatory lending businesses do tend to be located in lower income regions because they were represented far less than what we expected in the highest income regions.
+
+[06:15] So let's practice. Back to Battleship again. So I'd like for you to pause if you're not familiar with this from previous videos.
+
+[06:24] And so here is the actual question. A chi-square goodness-of-fit test to determine whether the proportions of players preferring each of the four quadrants are the same resulted in a p-value of 0.079. Which of the following is a correct interpretation of the p-value?
+
+[06:42] So here are your answer choices. I'd like for you to go ahead and pause the video and see if you can determine the correct one.
+
+[06:51] Okay, let's try it. So first, pay attention to what the question is asking. It's asking for an interpretation of the p-value, not just a conclusion in context.
+
+[07:02] So answer choice A, it's saying that our p-value is greater than alpha, and that we should reject the null hypothesis. But if it's greater than alpha, we do not reject, so it's not answer choice A.
+
+[07:15] For answer choice B, three of the observed counts are not greater than 30. What? Greater than 30? That's not what we're looking for. For a chi-square goodness-of-fit test, our expected counts need to be greater than five. So this is not correct. That's not even an interpretation of the p-value.
+
+[07:32] And in answer choice C, the p-value means that only 7.9% of those surveyed preferred quadrant 1. Uh, that's not what a p-value measures. No.
+
+[07:43] Answer choice D, there is a 0.079 probability that we would get results this extreme or more extreme by chance alone if the proportions of players preferring different quadrants is the same. Hmm.
+
+[07:56] Now that's very, very similar to answer choice E. There is a 0.079 probability that we would get these results or something more extreme by chance alone, assuming that players have a preference for different quadrants.
+
+[08:10] So one of these answer choices is using the null, and the other one is using the alternative as our assumption. So remember, we always use the null hypothesis for our assumption. So E is not correct. It would be answer choice D that will get you that correct answer on the AP exam.
+
+[08:28] So what should we take away? First, how do we interpret the p-value for a chi-square goodness-of-fit test? Assuming the proportions of a single categorical variable as stated in the null hypothesis are true, there is a p-value probability of getting a chi-square statistic as extreme as the one in the study or more extreme, by chance alone in random sampling, or random assignment if you have a randomized experiment.
+
+[08:54] And two, how do we state a conclusion for a chi-square goodness-of-fit test? The first option, when you have a small p-value, we would state since the p-value of blank is less than or equal to an alpha of what you're supposed to use, we reject the null hypothesis. There is convincing statistical evidence that, state the alternative in context.
+
+[09:14] Or, if you have a large p-value, you'd state since the p-value of blank is greater than an alpha of what you're using, we fail to reject the null. There is not convincing statistical evidence that, state your alternative in context.
+
+[09:30] Thanks for watching. Check out the next video where we go over an AP exam question.
+
+thumb_up
+thumb_down
+57.7s

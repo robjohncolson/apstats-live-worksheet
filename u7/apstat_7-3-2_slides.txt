@@ -1,0 +1,115 @@
+# Video 2 — Slide Descriptions
+# Unit 7, Lesson 3
+
+more_vert
+
+Here is the visual breakdown of the video, describing each slide and the information presented.
+
+[00:00] — Introduction
+The video opens with Tyson (the presenter) on screen with a background of York, Pennsylvania. A title card appears at the bottom with his name and the topic: "Interpreting Confidence Level and Factors that Affect Margin of Error."
+
+[00:19] — Learning Objectives
+A slide titled "What will we learn?" appears. It lists two bullet points:
+
+Interpret the confidence level of a confidence interval.
+
+Determine how sample size and confidence level affect the margin of error in a confidence interval for a population mean.
+
+[00:48] — Example: Human Body Temperature
+A slide titled "Example: Human Body Temperature" appears.
+
+Text: "Suppose that human body temperatures are approximately normally distributed with mean 
+𝜇
+=
+98.6
+∘
+F
+μ=98.6
+∘
+F
+ and standard deviation 
+𝜎
+=
+0.8
+∘
+F
+σ=0.8
+∘
+F
+."
+
+Scenario Text: "Imagine selecting a random sample of 
+𝑛
+=
+10
+n=10
+ people, recording their body temperatures, and calculating a 95% confidence interval for the mean human body temperature of all people."
+
+[01:25] — Simulation of Confidence Intervals
+The screen transitions to a simulation graphic.
+
+Graphic: A horizontal number line at the bottom represents body temperature in Fahrenheit, centered around 
+98.6
+98.6
+. A vertical dashed line is drawn upward from 
+98.6
+98.6
+, labeled "
+𝜇
+μ
+".
+
+Animation: Horizontal bars (intervals) begin to appear one by one above the number line.
+
+Blue bars represent intervals that cross the vertical dashed line (capturing the mean).
+
+Red bars represent intervals that do not touch the dashed line (missing the mean).
+
+Stats Box (Top Left):
+
+Initially shows: "Total = 12", "Captures = 11", "Percent = 91.7%".
+
+By [03:00], the simulation speeds up significantly to 1,000 samples. The box updates to: "Total = 1000", "Captures = 956", "Percent = 95.6%".
+
+[03:22] — Interpreting a Confidence Level (General)
+A slide titled "Interpreting a Confidence Level" appears with a general definition.
+
+Definition: "In repeated random sampling with the same sample size, approximately 
+𝐶
+%
+C%
+ of the 
+𝐶
+%
+C%
+ confidence intervals created will capture the population parameter."
+
+[03:45] — Interpreting a Confidence Level (Contextual)
+The slide updates to show the specific application to the body temperature example.
+
+Text: "If we take many random samples of 10 people from the population of all humans and use each sample to construct a 95% confidence interval for the mean human body temperature of all people, then about 95% of those intervals would capture the population mean (
+𝜇
+μ
+)."
+
+Visual Detail: The phrase "human body temperature of all people" and "population mean (
+𝜇
+μ
+)" are highlighted in blue to denote context.
+
+[04:14] — AP Exam Tip
+A slide titled "AP Exam Tip!" appears.
+
+Text: "Always include context in your interpretations."
+
+Warning: It cautions against describing a single interval as a probability (e.g., "There is a 95% probability that 
+𝜇
+μ
+ is in this specific interval").
+
+Visual: The simulation from earlier remains visible in the background, showing that for any single interval, it either captures the mean (100% success) or it doesn't (0% success).
+
+**[05:15] — Facto
+
+thumb_up
+thumb_down

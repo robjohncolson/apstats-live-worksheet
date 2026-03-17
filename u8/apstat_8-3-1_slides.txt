@@ -1,0 +1,497 @@
+# Video 1 — Slide Descriptions
+# Unit 8, Lesson 3
+
+edit
+more_vert
+
+[00:00] — TOPIC 8.3 Carrying Out a Chi-Square Goodness of Fit Test
+The title slide for "DAILY VIDEO 1" introduces the goal: "In this video, we will demonstrate how to calculate a test statistic and p-value for a chi-square goodness-of-fit test."
+
+[00:11] — What Will We Learn?
+Two learning objectives are displayed sequentially:
+
+How do we calculate a test statistic for a chi-square goodness-of-fit test?
+
+How do we calculate a p-value for a chi-square goodness-of-fit test?
+
+[00:23] — LET'S LOOK AT AN EXAMPLE
+A transition slide to introduce a practice problem.
+
+[00:24] — Predatory Lending Recap
+A paragraph defining predatory lending (payday loans, title loans) targeting low-income, elderly, or less formally educated individuals. An image of a house, calculator, money, and a loan application is shown.
+
+[00:32] — Predatory Lending Recap (Dallas Map)
+The text updates to describe the scenario: A random sample of 40 predatory lending businesses with Dallas, TX addresses was selected. The approximate locations are plotted as black points on a map. The question asks: "Do these types of businesses tend to be located primarily in lower income regions, or are they found proportionally in regions of all income levels?" A map of Dallas divided into census tracts with plotted points is shown on the right.
+
+[00:46] — Observed Counts
+A table is shown with two columns: "Median Household Income" and "Number of Predatory Lending Businesses".
+
+$0 to less than $50,000: 20
+
+$50,000 to less than $100,000: 17
+
+$100,000 and above: 3
+
+[00:59] — Hypotheses & Conditions
+The slide recaps the null and alternative hypotheses established in a previous video:
+
+𝐻
+0
+:
+𝑝
+1
+=
+.452
+,
+𝑝
+2
+=
+.292
+,
+and 
+𝑝
+3
+=
+.256
+H
+0
+	​
+
+:p
+1
+	​
+
+=.452,p
+2
+	​
+
+=.292,and p
+3
+	​
+
+=.256
+ where 
+𝑝
+1
+,
+𝑝
+2
+,
+and 
+𝑝
+3
+p
+1
+	​
+
+,p
+2
+	​
+
+,and p
+3
+	​
+
+ represent the proportions of predatory lending businesses found in regions of Dallas, TX where household incomes are $0 to less than $50,000, $50,000 to less than $100,000, and $100,000 or above, respectively.
+
+𝐻
+𝑎
+:
+H
+a
+	​
+
+:
+ At least one of the proportions is not as specified in the null hypothesis.
+
+"Additionally, the conditions for inference have already been met. (Yeehaw!)"
+
+At the bottom, text appears: "Our next step is to proceed with the mechanics of the test: calculating the test statistic and the p-value."
+
+[02:06] — Calculating the Test Statistic
+The slide builds a table step-by-step to calculate the statistic. First, an "Expected Number" column is added. Expected counts are found by multiplying the null hypothesis proportions by the sample size (40):
+
+0.452(40) = 18.08
+
+0.292(40) = 11.68
+
+0.256(40) = 10.24
+
+[02:18] — Calculating the Test Statistic (Differences)
+A new column "(Obs - Exp)" is added to show the difference between observed and expected counts:
+
+20 - 18.08 = 1.92
+
+17 - 11.68 = 5.32
+
+3 - 10.24 = -7.24
+
+[02:30] — Calculating the Test Statistic (Squared Differences)
+A new column "(Obs - Exp)²" is added to keep values positive and give more weight to extreme deviations:
+
+(1.92)² = 3.6864
+
+(5.32)² = 28.3024
+
+(-7.24)² = 52.4176
+
+[02:38] — Calculating the Test Statistic (Ratios)
+A final column "(Obs - Exp)² / Exp" is added, taking into account the sample size by finding the ratio of squared differences to expected values:
+
+3.6864 / 18.08 = 0.20389
+
+28.3024 / 11.68 = 2.42315
+
+52.4176 / 10.24 = 5.11891
+
+[02:49] — Calculating the Test Statistic (Final Sum)
+The text says "Lastly, we will find the sum of these ratios." The table is removed and replaced by the formula:
+
+𝜒
+2
+=
+∑
+(
+𝑂
+𝑏
+𝑠
+𝑒
+𝑟
+𝑣
+𝑒
+𝑑
+−
+𝐸
+𝑥
+𝑝
+𝑒
+𝑐
+𝑡
+𝑒
+𝑑
+)
+2
+𝐸
+𝑥
+𝑝
+𝑒
+𝑐
+𝑡
+𝑒
+𝑑
+=
+7.746
+χ
+2
+=∑
+Expected
+(Observed−Expected)
+2
+	​
+
+=7.746
+
+An arrow indicates that 7.746 is the sum of the three values calculated in the previous step.
+
+[03:00] — Calculating the p-value (TI-84)
+The text states "We can use technology to calculate the p-value." Screenshots from a TI-84 calculator are shown sequentially:
+
+First, L1 is filled with observed counts (20, 17, 3) and L2 with expected counts (18.08, 11.68, 10.24).
+
+Second, the STAT > TESTS menu is shown, selecting "D:
+𝜒
+2
+χ
+2
+GOF-Test".
+
+Third, the test setup screen shows Observed: L1, Expected: L2. A reminder box pops up: "Remember: df = number of categories - 1". The df is set to 2.
+
+Finally, the output screens are shown. The "Calculate" screen gives 
+𝜒
+2
+=
+7.74595074
+χ
+2
+=7.74595074
+, 
+𝑝
+=
+0.0207964003
+p=0.0207964003
+, and df=2. The "Draw" screen shows the corresponding chi-square distribution curve with the right tail shaded.
+
+[03:53] — Calculating the p-value (
+𝜒
+2
+χ
+2
+cdf)
+An alternative calculator method is shown. Text says: "You can also use the 
+𝜒
+2
+χ
+2
+cdf function on the calculator."
+
+The DISTR menu is shown, selecting "8:
+𝜒
+2
+χ
+2
+cdf(".
+
+The function is used with syntax 
+𝜒
+2
+χ
+2
+cdf(lowerbound, upperbound, df).
+
+The input is 
+𝜒
+2
+cdf
+(
+7.746
+,
+1000
+,
+2
+)
+χ
+2
+cdf(7.746,1000,2)
+, which outputs 0.0207958881. This matches the result from the GOF-Test.
+
+[04:31] — Using a Table
+Table C (
+𝜒
+2
+χ
+2
+ Critical Values) is introduced as an alternative to technology. A graphic of a distribution curve shows that the table entry for 
+𝑝
+p
+ is the point (
+𝜒
+2
+χ
+2
+) with probability 
+𝑝
+p
+ lying above it (the upper tail). Text states: "For a chi-square test for goodness-of-fit test, p-values are calculated by finding the upper tail probability."
+
+[05:00] — Using a Table (Finding the Range)
+The slide demonstrates how to read the table for df=2. The test statistic 7.746 falls between the critical values 7.38 (which corresponds to a tail probability of .025) and 7.82 (tail probability of .02). Text appears summarizing: "Since the test statistic of 
+𝜒
+2
+=
+7.746
+χ
+2
+=7.746
+ falls between the critical values of 7.38 and 7.82, the p-value will be between .025 and .02 in a chi-square distribution with df = 2."
+
+[05:38] — Why the Upper Tail?
+A graph of a chi-square distribution is shown to explain why only the upper tail is used.
+
+Text explains that a chi-square distribution only takes nonnegative values.
+
+A green dot is placed at zero. "A chi-square statistic of zero means the observed and expected counts are equal (a perfect fit!)."
+
+The right tail of the graph is shaded red. "As we move further away from zero, this implies the deviations between the observed and expected counts are larger, which means the fit is less good."
+
+[06:43] — LET'S PRACTICE
+A transition slide.
+
+[06:44] — Multiple-Choice Example
+A new problem is presented regarding player preferences for quadrants on a Battleship game board based on a random sample of 100 people.
+
+[06:54] — Multiple-Choice Example (Data)
+A table of observed counts is provided for the 4 quadrants: Quadrant 1 (16), 2 (22), 3 (33), 4 (29). The question asks to identify the correct calculation for the test statistic and p-value to determine if there is a preference.
+
+[07:21] — Multiple-Choice Example (Evaluating Options)
+Five options (A-E) are shown showing different calculations. The presenter evaluates them one by one:
+
+(A) is incorrect: A formula overlay shows 
+(
+𝐸
+𝑥
+𝑝
+−
+𝑂
+𝑏
+𝑠
+)
+𝑂
+𝑏
+𝑠
+Obs
+(Exp−Obs)
+	​
+
+. The terms are subtracted in the wrong order, not squared, and divided by observed instead of expected.
+
+(B) is incorrect: A formula overlay shows 
+∑
+(
+𝑂
+𝑏
+𝑠
+−
+𝐸
+𝑥
+𝑝
+)
+𝐸
+𝑥
+𝑝
+∑
+Exp
+(Obs−Exp)
+	​
+
+. The numerators are not squared.
+
+(C) and (D) are evaluated: Both show the correct formula structure 
+∑
+(
+𝑂
+𝑏
+𝑠
+−
+𝐸
+𝑥
+𝑝
+)
+2
+𝐸
+𝑥
+𝑝
+∑
+Exp
+(Obs−Exp)
+2
+	​
+
+. Note that expected counts are 25 (100 total / 4 equal quadrants). However, they have different p-values (0.147 vs 0.079).
+
+(E) is incorrect: A formula overlay shows 
+∑
+(
+𝑂
+𝑏
+𝑠
+−
+𝐸
+𝑥
+𝑝
+)
+2
+𝑛
+∑
+n
+(Obs−Exp)
+2
+	​
+
+. The denominators use the total sample size (100) instead of the expected counts (25).
+
+[08:37] — Multiple-Choice Example (Calculating the Correct p-value)
+TI-84 screenshots are shown to determine the correct p-value between options C and D.
+
+L1 has observed counts (16, 22, 33, 29). L2 has expected counts (25, 25, 25, 25).
+
+The 
+𝜒
+2
+χ
+2
+GOF-Test is run with df=3 (4 quadrants - 1).
+
+The output yields 
+𝜒
+2
+=
+6.8
+χ
+2
+=6.8
+ and 
+𝑝
+=
+0.07855316
+p=0.07855316
+.
+
+This confirms that (D) is the correct answer.
+
+[09:05] — Multiple-Choice Example (Be careful with df!)
+The presenter explains why option C had the wrong p-value. A calculator screenshot shows a user mistakenly running the test with df=4 (the number of categories, instead of categories minus one). This mistake yields 
+𝑝
+=
+0.1468...
+p=0.1468...
+, matching the incorrect option C.
+
+[09:20] — WHAT SHOULD WE TAKE AWAY?
+A transition slide.
+
+[09:22] — Key Takeaways
+The two learning objectives are answered:
+
+How do we calculate a test statistic for a chi-square goodness-of-fit test?
+
+𝜒
+2
+=
+∑
+(
+𝑂
+𝑏
+𝑠
+𝑒
+𝑟
+𝑣
+𝑒
+𝑑
+−
+𝐸
+𝑥
+𝑝
+𝑒
+𝑐
+𝑡
+𝑒
+𝑑
+)
+2
+𝐸
+𝑥
+𝑝
+𝑒
+𝑐
+𝑡
+𝑒
+𝑑
+χ
+2
+=∑
+Expected
+(Observed−Expected)
+2
+	​
+
+
+How do we calculate a p-value for a chi-square goodness-of-fit test?
+Calculate the upper tail probability from a chi-square distribution with df = number of categories - 1 using technology.
+
+[09:56] — Thank you.
+The final slide.
+
+thumb_up
+thumb_down
+62.8s

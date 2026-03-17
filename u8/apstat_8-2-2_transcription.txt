@@ -1,0 +1,90 @@
+# Video 2 — Transcript
+# Unit 8, Lesson 2
+
+edit
+more_vert
+
+[00:00] Good day AP Statistics students. I'm Bridget Matamoros, here with the next video for unit eight. We're going to look at stating hypotheses for a chi square goodness of fit test.
+
+[00:11] So what are we going to learn? Number one, how do we state the null hypothesis for a chi square goodness of fit test? And two, how do we state the alternative hypothesis for a chi square goodness of fit test?
+
+[00:23] So let's look at an example. So payday loans and title loans are examples of predatory lending where borrowers are left paying interest rates of 100% or more in some cases, making it impossible to pay off the loans.
+
+[00:38] Often these borrowers are left with few options due to low credit scores or financial hardship. The predatory label of these tactics comes from a pattern of targeting people who are low income, elderly, or who have little formal education.
+
+[00:51] Predatory lenders argue that they provide a service and that these people from all backgrounds use their service, but is that true?
+
+[01:00] So this map shows census tracts in Dallas County, and the blue in the background is the city of Dallas. A random sample of 40 predatory lending businesses with Dallas, Texas addresses was selected. Their locations are plotted as black points on the map.
+
+[01:16] Do these types of businesses tend to be located primarily in lower income regions, or are they found proportionally in regions of all income levels?
+
+[01:26] So household incomes were divided into three categories, and the number of predatory lending businesses found in census tracts categorized by these three income brackets was determined.
+
+[01:38] And so we're using the assumption that the number of businesses found in census tracts corresponding to the three income brackets is proportional to the number of households in the three income brackets.
+
+[01:50] So this data, remember from the last video, comes from the 2019 American Community Survey administered by the Census Bureau. And we have the percentages of households in the three income brackets...
+
+[02:01] ...because we would presume that the predatory lending businesses would be located in different areas proportionally based on the median household income. It would not be reasonable to think that they would be distributed equally with one third of the businesses in each income bracket's census tract.
+
+[02:20] So when we write the null hypothesis for a chi square goodness of fit test, we can write it in words or symbols. In words, it would look like this.
+
+[02:29] The null hypothesis is the distribution of predatory lending businesses in Dallas, Texas is the same as the proportions of households in the specified income brackets.
+
+[02:39] In symbols, we can write it where each of the proportions is equal to what we are hypothesizing for those income brackets. But if you use symbols, you have to tell what they equal, what they represent.
+
+[02:53] So we would add, where P sub one, P sub two, and P sub three represent the proportions of predatory lending businesses found in regions of Dallas, Texas where household incomes are zero to less than 50,000, 50,000 to less than 100,000, and 100,000 or above respectively.
+
+[03:12] Now, yes, that's kind of long. The problems that you might find maybe aren't that long.
+
+[03:18] So you'll notice it's the same idea as when you did other significance testing where the null hypothesis is this idea of equality. The proportions are the same as those that we are hypothesizing. You've got equal signs with the proportions there.
+
+[03:34] So recall that we need a form of inequality in the alternative hypothesis. Well, in this case, we have three proportions to consider. Since these proportions come from categories that cover all possible outcomes, their sum will be one.
+
+[03:50] But if one proportion is different from its hypothesized proportion, that means at least one additional proportion must also be different since all the proportions must still sum to one.
+
+[04:02] So here are some things to be careful of when stating the alternative hypothesis. You should not state the alternative hypothesis in a way that suggests all the proportions in the null hypothesis are different.
+
+[04:16] We are testing for goodness of fit. So given convincing evidence that at least one proportion is different from what is stated in the null hypothesis is sufficient to show that the data do not fit well.
+
+[04:28] Likewise, you should not state the alternative hypothesis with directional inequalities like less than or greater than that we used for significance testing in previous units.
+
+[04:39] So remember, state your alternative hypothesis in words for a chi square goodness of fit test.
+
+[04:46] All right, so let's sum this up. For hypotheses about a distribution of proportions for a single categorical variable, the null hypothesis is a statement of equality where the proportions are all equal to specified values.
+
+[05:00] It's always best to put the actual numerical values for those proportions. The alternative hypothesis states that at least one proportion is not as specified in the null hypothesis.
+
+[05:14] Also, never refer to the sample proportions like P hat in the hypotheses. Remember that your hypotheses are all about the parameters, not statistics. Remember to define any of the parameters or subscripts that you use.
+
+[05:31] So let's practice. Are certain quadrants on the Battleship game field preferred by players as strategic locations for their ships?
+
+[05:39] A random sample of 100 people who enjoy the game Battleship were surveyed. They were asked to place their five ships on a Battleship game field as if they were going to begin playing against a worthy opponent.
+
+[05:51] The quadrant of the game field with the greatest number of spaces occupied by ships was recorded. Ties were broken by identifying the greatest number of ships found in or near a quadrant.
+
+[06:02] So quadrant one was defined as the northwest corner containing space A1, and subsequent quadrants were identified in clockwise order. So I've given you a diagram here of what that looks like.
+
+[06:14] So these were the observed counts for each of the quadrants that I got from this survey. And people said it was the most fun survey they'd ever filled out. It's awesome.
+
+[06:22] So is there convincing statistical evidence that players have a preference for certain quadrants of the Battleship game field? I would kind of like to know that because if I am playing against someone, I want to know where to put my ships and where to guess where theirs are.
+
+[06:34] So let's state the hypotheses for a chi square goodness of fit test. I want you to try this first by pausing the video and then see if you can check your answer.
+
+[06:46] Great, so we're not given a specified distribution to assume for the proportion of players that prefer each of the four quadrants. Instead, if players have no preference for where to place their ships, we would expect to see that all the quadrants are equally represented.
+
+[07:02] So our null hypothesis would be that the distribution of Battleship quadrants preferred by players is the same across all four quadrants, or 0.25. So notice I've included the value there for each proportion.
+
+[07:16] Or we could also use subscripts for P and say that all of them are equal, equaling 0.25. Don't forget to include that.
+
+[07:26] Where P sub one, P sub two, P sub three, and P sub four are the proportions of players that place the most ships in Battleship quadrants one, two, three, and four. So either of those would have been a valid null hypothesis.
+
+[07:40] For the alternative hypothesis, remember to write this in words. So we would say the distribution of Battleship quadrants preferred by players is not the same across all four quadrants. Or we can state that at least one of the proportions is not as specified in the null hypothesis.
+
+[07:59] Great, so what should we take away? First, how do we state the null hypothesis for a chi square goodness of fit test? The null hypothesis states that the proportions for the categories in a single categorical variable are equal to specified values.
+
+[08:15] And second, how do we state the alternative hypothesis for a chi square goodness of fit test? In words, state that at least one of the proportions is not as specified in the null hypothesis.
+
+[08:28] All right, thanks for watching. Check out the next video where we dive in a little bit further.
+
+thumb_up
+thumb_down

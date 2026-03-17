@@ -1,0 +1,1130 @@
+# Video 1 — Slide Descriptions
+# Unit 6, Lesson 11
+
+more_vert
+
+Here is a detailed breakdown of the visual changes and slide contents in the video:
+
+[00:00] — Title Slide
+<The slide displays the video topic: "TOPIC 6.11: Carrying Out a Test for the Difference of Two Population Proportions". Below this is "DAILY VIDEO 1" with the description: "In this video, we will discuss how to calculate a test statistic and p-value for a significance test of a difference in proportions." The speaker, Doug Tyson, is visible in a small video feed in the top right corner. The AP Statistics logo is on the left.>
+
+[00:14] — WHAT WILL WE LEARN?
+<A transition slide with just the text "WHAT WILL WE LEARN?" in large, bold letters on a blue background.>
+
+[00:16] — What Will We Learn?
+<The slide lists two learning objectives:
+
+How do we calculate an appropriate test statistic in a test for a difference in proportions?
+
+How do we calculate a p-value in a test for a difference in proportions?>
+
+[00:30] — LET'S LOOK AT AN EXAMPLE
+<A transition slide with just the text "LET'S LOOK AT AN EXAMPLE" on a blue background.>
+
+[00:32] — Effective Eyedrops?
+<The slide introduces an example problem. The text reads: "Bacterial conjunctivitis (pink eye) causes eye irritation in those unlucky enough to contract it. Can eye drops containing azithromycin make the recovery faster? In one clinical trial, eyedrops containing azithromycin were compared to a placebo eyedrop among 279 patients suffering from pink eye." An image of a person applying eye drops is shown on the right.>
+
+[00:55] — Effective Eyedrops? (Results)
+<The text is updated to show the results of the trial: "The results? Of the 130 patients who were randomly assigned azithromycin drops, 82 were cured within a week. Of the 149 patients who were randomly assigned placebo drops, 74 were cured within a week." Below this is the question: "Do these results give convincing evidence that azithromycin is more effective at curing pink eye than a placebo for subjects like the ones in this study?" The image changes to a close-up of a pink eye.>
+
+[01:22] — Effective Eyedrops? (Hypotheses)
+<The slide reviews the hypotheses setup from a previous video:
+
+𝐻
+0
+:
+𝑝
+1
+=
+𝑝
+2
+H
+0
+	​
+
+:p
+1
+	​
+
+=p
+2
+	​
+
+ or 
+𝐻
+0
+:
+𝑝
+1
+−
+𝑝
+2
+=
+0
+H
+0
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+=0
+
+
+𝐻
+𝑎
+:
+𝑝
+1
+>
+𝑝
+2
+H
+a
+	​
+
+:p
+1
+	​
+
+>p
+2
+	​
+
+ or 
+𝐻
+𝑎
+:
+𝑝
+1
+−
+𝑝
+2
+>
+0
+H
+a
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+>0
+
+It defines the parameters:
+where 
+𝑝
+1
+=
+p
+1
+	​
+
+=
+ the true proportion of pink eye patients like the ones in this study who would be cured by azithromycin drops
+
+𝑝
+2
+=
+p
+2
+	​
+
+=
+ the true proportion of pink eye patients like the ones in this study who would be cured by placebo drops
+A note at the bottom says: "Conditions are met.">
+
+[01:49] — Calculating a Test Statistic (Initial Calculation)
+<The slide calculates the difference in sample proportions: "In the effective eyedrops study, 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+=
+82
+/
+130
+−
+74
+/
+149
+=
+0.134
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+=82/130−74/149=0.134
+". Below this it states: "This is evidence for 
+𝐻
+𝑎
+:
+𝑝
+1
+−
+𝑝
+2
+>
+0
+H
+a
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+>0
+ because 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+=
+0.134
+>
+0
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+=0.134>0
+". A final sentence asks: "We want to know how likely it is to get evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ this strong or stronger by chance alone when 
+𝐻
+0
+H
+0
+	​
+
+ is true.">
+
+[02:35] — Calculating a Test Statistic (General Formula)
+<The previous text remains, and a general formula is added at the bottom:
+"After verifying the conditions are met, calculate the standardized test statistic:"
+"standardized test statistic = (statistic - parameter) / standard error of the statistic">
+
+[02:54] — Calculating a Test Statistic (Specific Formula)
+<The slide clears and presents the specific formula:
+"For a two-sample z test for a difference in proportions, the standardized test statistic is:"
+
+𝑧
+=
+(
+𝑝
+^
+1
+−
+𝑝
+^
+2
+)
+−
+0
+𝑝
+^
+𝑐
+(
+1
+−
+𝑝
+^
+𝑐
+)
+𝑛
+1
++
+𝑝
+^
+𝑐
+(
+1
+−
+𝑝
+^
+𝑐
+)
+𝑛
+2
+=
+(
+𝑝
+^
+1
+−
+𝑝
+^
+2
+)
+−
+0
+𝑝
+^
+𝑐
+(
+1
+−
+𝑝
+^
+𝑐
+)
+(
+1
+𝑛
+1
++
+1
+𝑛
+2
+)
+z=
+n
+1
+	​
+
+p
+^
+	​
+
+c
+	​
+
+(1−
+p
+^
+	​
+
+c
+	​
+
+)
+	​
+
++
+n
+2
+	​
+
+p
+^
+	​
+
+c
+	​
+
+(1−
+p
+^
+	​
+
+c
+	​
+
+)
+	​
+
+	​
+
+(
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+)−0
+	​
+
+=
+p
+^
+	​
+
+c
+	​
+
+(1−
+p
+^
+	​
+
+c
+	​
+
+)(
+n
+1
+	​
+
+1
+	​
+
++
+n
+2
+	​
+
+1
+	​
+
+)
+	​
+
+(
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+)−0
+	​
+
+
+Below the formula it states: "where 
+𝑝
+^
+𝑐
+p
+^
+	​
+
+c
+	​
+
+ is the combined (pooled) proportion of successes.">
+
+[03:25] — Calculating a Test Statistic (Pooled Proportion Formula)
+<The formula for the combined proportion is added at the bottom:
+
+𝑝
+^
+𝑐
+=
+combined number of successes
+combined number of observations
+=
+𝑋
+1
++
+𝑋
+2
+𝑛
+1
++
+𝑛
+2
+p
+^
+	​
+
+c
+	​
+
+=
+combined number of observations
+combined number of successes
+	​
+
+=
+n
+1
+	​
+
++n
+2
+	​
+
+X
+1
+	​
+
++X
+2
+	​
+
+	​
+
+>
+
+[03:36] — Calculating a Test Statistic (Pooled Proportion Calculation)
+<The slide keeps the z-statistic formula at the top and replaces the bottom section with the calculation for the pooled proportion using numbers from the example:
+
+𝑝
+^
+𝑐
+=
+82
++
+74
+130
++
+149
+=
+156
+279
+=
+0.559
+p
+^
+	​
+
+c
+	​
+
+=
+130+149
+82+74
+	​
+
+=
+279
+156
+	​
+
+=0.559
+>
+
+[04:04] — Calculating a Test Statistic (Plugging in Values)
+<The slide shows the z-statistic formula at the top, the pooled proportion calculation in the middle, and introduces the substituted z-formula at the bottom:
+
+𝑧
+=
+(
+82
+/
+130
+−
+74
+/
+149
+)
+−
+0
+0.559
+(
+1
+−
+0.559
+)
+(
+1
+130
++
+1
+149
+)
+z=
+0.559(1−0.559)(
+130
+1
+	​
+
++
+149
+1
+	​
+
+)
+	​
+
+(82/130−74/149)−0
+	​
+
+>
+
+[04:23] — Calculating a Test Statistic (Final Result)
+<The final result = 2.25 is added to the end of the z-statistic calculation at the bottom of the slide.>
+
+[04:28] — Formula Sheet: Standardized Test Statistic
+<The slide title is "III. Sampling Distributions and Inferential Statistics". It shows a cropped section of the AP Statistics formula sheet, highlighting the general formula: "Standardized test statistic = (statistic - parameter) / standard error of the statistic". A purple arrow points to this row.>
+
+[04:39] — Formula Sheet: Details for Two Proportions
+<The slide title updates to "III. Sampling Distributions and Inferential Statistics (continued)". It displays another section of the formula sheet. A purple box highlights the "Random Variable" row for "Two populations: 
+𝑝
+^
+1
+−
+𝑝
+^
+2
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+". The corresponding "Parameter" is 
+𝑝
+1
+−
+𝑝
+2
+p
+1
+	​
+
+−p
+2
+	​
+
+. A purple arrow points to the specific formula for the standard error when assuming the proportions are equal: 
+𝑠
+𝑝
+^
+1
+−
+𝑝
+^
+2
+=
+𝑝
+^
+𝑐
+(
+1
+−
+𝑝
+^
+𝑐
+)
+(
+1
+𝑛
+1
++
+1
+𝑛
+2
+)
+s
+p
+^
+	​
+
+1
+	​
+
+−
+p
+^
+	​
+
+2
+	​
+
+	​
+
+=
+p
+^
+	​
+
+c
+	​
+
+(1−
+p
+^
+	​
+
+c
+	​
+
+)(
+n
+1
+	​
+
+1
+	​
+
++
+n
+2
+	​
+
+1
+	​
+
+)
+	​
+
+ where 
+𝑝
+^
+𝑐
+=
+𝑋
+1
++
+𝑋
+2
+𝑛
+1
++
+𝑛
+2
+p
+^
+	​
+
+c
+	​
+
+=
+n
+1
+	​
+
++n
+2
+	​
+
+X
+1
+	​
+
++X
+2
+	​
+
+	​
+
+.>
+
+[05:19] — Calculating a p-value
+<The slide displays a paragraph explaining the concept: "Once we have calculated the standardized test statistic, use the standard normal distribution to calculate the p-value. The p-value is the probability of observing a test statistic as extreme or more extreme than the observed test statistic when the null hypothesis and probability model are assumed to be true.">
+
+[05:47] — Calculating a p-value (Probability Statement)
+<Text is added below the paragraph: "Because our alternative hypothesis is 
+𝐻
+𝑎
+:
+𝑝
+1
+−
+𝑝
+2
+>
+0
+H
+a
+	​
+
+:p
+1
+	​
+
+−p
+2
+	​
+
+>0
+, we want to find 
+𝑃
+(
+𝑧
+≥
+2.25
+)
+P(z≥2.25)
+." >
+
+[06:04] — Calculating a p-value (Normal Curve)
+<The top paragraph is removed. A standard normal distribution curve is shown below the probability statement. The x-axis ranges from -3 to 3. A red vertical line marks 2.25, and the area under the curve to the right of this line is shaded light blue.>
+
+[06:13] — Calculating a p-value (Result)
+<Text is added above the curve: "Using Table A or technology, p-value = 0.0122." A blue arrow points from this text down to the shaded region on the graph.>
+
+[06:21] — LET'S PRACTICE
+<A transition slide with just the text "LET'S PRACTICE" on a blue background.>
+
+[06:25] — A Bright Idea
+<A new practice problem is presented. Text: "A marketing agent wonders if there is a difference in the percentage of residents in two cities who have purchased sunglasses during the last 12 months. Of 400 randomly selected residents of Soltown, 314 purchased sunglasses in the last 12 months. Meanwhile, a random sample of Brightville residents revealed that 452 of 550 residents purchased sunglasses in the last 12 months." An image of sunglasses is on the right.>
+
+[06:50] — A Bright Idea (Question)
+<Text is appended to the problem description: "Do these data give convincing evidence of a difference in the proportions of residents who have purchased sunglasses in the past 12 months in these two cities? Calculate the standardized test statistic and p-value.">
+
+[07:05] — A Bright Idea (Hypotheses)
+<The slide reviews the hypotheses for this specific problem:
+
+𝐻
+0
+:
+𝑝
+𝑆
+=
+𝑝
+𝐵
+H
+0
+	​
+
+:p
+S
+	​
+
+=p
+B
+	​
+
+ or 
+𝐻
+0
+:
+𝑝
+𝑆
+−
+𝑝
+𝐵
+=
+0
+H
+0
+	​
+
+:p
+S
+	​
+
+−p
+B
+	​
+
+=0
+
+
+𝐻
+𝑎
+:
+𝑝
+𝑆
+≠
+𝑝
+𝐵
+H
+a
+	​
+
+:p
+S
+	​
+
+
+=p
+B
+	​
+
+ or 
+𝐻
+𝑎
+:
+𝑝
+𝑆
+−
+𝑝
+𝐵
+≠
+0
+H
+a
+	​
+
+:p
+S
+	​
+
+−p
+B
+	​
+
+
+=0
+
+It defines the parameters:
+where 
+𝑝
+𝑆
+=
+p
+S
+	​
+
+=
+ the proportion of all Soltown residents who purchased sunglasses in the past 12 months
+
+𝑝
+𝐵
+=
+p
+B
+	​
+
+=
+ the proportion of all Brightville residents who purchased sunglasses in the past 12 months
+A note at the bottom adds: "Conditions are met.">
+
+[07:34] — Calculating a Test Statistic (Practice Problem)
+<The slide shows the calculation of the two sample proportions:
+
+𝑝
+^
+𝑆
+=
+314
+400
+=
+0.785
+p
+^
+	​
+
+S
+	​
+
+=
+400
+314
+	​
+
+=0.785
+
+
+𝑝
+^
+𝐵
+=
+452
+550
+=
+0.822
+p
+^
+	​
+
+B
+	​
+
+=
+550
+452
+	​
+
+=0.822
+>
+
+[07:48] — Calculating a Test Statistic (Pooled Proportion - Practice)
+<The calculation for the pooled proportion is added below the sample proportions:
+
+𝑝
+^
+𝑐
+=
+314
++
+452
+400
++
+550
+=
+0.806
+p
+^
+	​
+
+c
+	​
+
+=
+400+550
+314+452
+	​
+
+=0.806
+>
+
+[07:58] — Calculating a Test Statistic (Z Calculation - Practice)
+<The fully substituted z-statistic formula and its result are added at the bottom:
+
+𝑧
+=
+(
+0.785
+−
+0.822
+)
+−
+0
+0.806
+(
+1
+−
+0.806
+)
+(
+1
+400
++
+1
+550
+)
+=
+−
+1.42
+z=
+0.806(1−0.806)(
+400
+1
+	​
+
++
+550
+1
+	​
+
+)
+	​
+
+(0.785−0.822)−0
+	​
+
+=−1.42
+>
+
+[08:33] — Calculating a p-value (Practice Problem)
+<The slide text reads: "Because our alternative hypothesis is 
+𝐻
+𝑎
+:
+𝑝
+𝑆
+−
+𝑝
+𝐵
+≠
+0
+H
+a
+	​
+
+:p
+S
+	​
+
+−p
+B
+	​
+
+
+=0
+, we want to find 
+𝑃
+(
+𝑧
+≤
+−
+1.42
+)
++
+𝑃
+(
+𝑧
+≥
+1.42
+)
+→
+2
+×
+𝑃
+(
+𝑧
+≥
+∣
+−
+1.42
+∣
+)
+P(z≤−1.42)+P(z≥1.42)→2×P(z≥∣−1.42∣)
+". Below this is a standard normal distribution curve. Red vertical lines denote -1.42 and 1.42. The areas to the left of -1.42 and right of 1.42 are shaded light blue.>
+
+[09:05] — Calculating a p-value (Practice Result)
+<Text is added next to the graph: "Using Table A or technology, p-value = 2(0.0788) = 0.1556". The value "0.0788" appears next to two arrows, each
+
+thumb_up
+thumb_down
