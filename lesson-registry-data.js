@@ -69,7 +69,7 @@ const LESSON_REGISTRY = {
     "status": {
       "ingest": "done",
       "worksheet": "done",
-      "drills": "done",
+      "drills": "pending",
       "blooketCsv": "done",
       "blooketUpload": "done",
       "animations": "failed",
@@ -77,8 +77,61 @@ const LESSON_REGISTRY = {
       "schoology": "done",
       "schoologyVerified": "done",
       "urlsGenerated": "done",
+      "registryExported": "done",
+      "committed": "done"
+    }
+  },
+  "8.4": {
+    "unit": 8,
+    "lesson": 4,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson4_live.html",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results",
+      "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=3",
+      "blooket": null,
+      "schoologyFolder": null,
+      "videos": []
+    },
+    "status": {
+      "ingest": "pending",
+      "worksheet": "pending",
+      "drills": "pending",
+      "blooketCsv": "pending",
+      "blooketUpload": "pending",
+      "animations": "pending",
+      "animationUpload": "pending",
+      "schoology": "pending",
+      "schoologyVerified": "pending",
+      "urlsGenerated": "pending",
       "registryExported": "pending",
       "committed": "pending"
+    }
+  },
+  "6.review": {
+    "unit": 6,
+    "lesson": 12,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/edgar_u6_conceptual_driller_live.html",
+      "drills": null,
+      "quiz": null,
+      "blooket": null,
+      "schoologyFolder": null,
+      "schoologyFolderE": null,
+      "videos": []
+    },
+    "status": {
+      "ingest": "skipped",
+      "worksheet": "done",
+      "drills": "skipped",
+      "blooketCsv": "skipped",
+      "blooketUpload": "skipped",
+      "animations": "skipped",
+      "animationUpload": "skipped",
+      "schoology": "done",
+      "schoologyVerified": "skipped",
+      "urlsGenerated": "done",
+      "registryExported": "done",
+      "committed": "skipped"
     }
   }
 };
