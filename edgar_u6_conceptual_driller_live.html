@@ -271,6 +271,21 @@
         textarea.graded-P { border-color: #ffc107; background: #fffef5; }
         textarea.graded-I { border-color: #dc3545; background: #fff8f8; }
 
+        /* Per-question grade button */
+        .btn-grade-single {
+            display: block;
+            margin: 6px 0 4px 0;
+            padding: 5px 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .btn-grade-single:hover { opacity: 0.9; }
+        .btn-grade-single:disabled { opacity: 0.5; cursor: not-allowed; }
+
         /* Appeal system styles */
         .appeal-section { margin-top: 8px; }
         .appeal-btn {
@@ -432,7 +447,7 @@
         /* Print styles */
         @media print {
             .controls, .aggregate-trigger, .aggregate-drawer, .save-indicator,
-            .appeal-section, .ai-feedback, .btn-ai { display: none !important; }
+            .appeal-section, .ai-feedback, .btn-ai, .btn-grade-single { display: none !important; }
             .blank { border-bottom: 1px solid #000 !important; background: transparent !important; }
             body { background: white; }
             .section { page-break-inside: avoid; }
@@ -463,7 +478,6 @@
         <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
         <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
         <button class="btn-print" onclick="window.print()">&#128424; Print</button>
-        <button class="btn-ai" onclick="gradeAllReflections()">&#129302; Grade My Reflections</button>
         <span id="scoreDisplay"></span>
     </div>
 
@@ -579,6 +593,7 @@
             <span class="question-number">R1.</span>
             <strong>Reflection:</strong> Using the germination scenario above, identify the population, <em>p</em>, the sample, and <em>p&#770;</em>. Then write one well-written paragraph explaining the difference between a <em>parameter</em> and a <em>statistic</em>. Use the words &ldquo;population,&rdquo; &ldquo;sample,&rdquo; and &ldquo;unknown truth.&rdquo;
             <textarea id="reflect_vocab" placeholder="Write your response here..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('reflect_vocab', this)">&#129302; Grade This Response</button>
             <div id="reflect_vocab-feedback"></div>
         </div>
     </div>
@@ -722,6 +737,7 @@
             <span class="question-number">R2.</span>
             <strong>Reflection:</strong> In your own words, explain the critical distinction between large-counts checks for CIs versus tests. Why does the test use <em>p</em><sub>0</sub>? Why does the CI use <em>p&#770;</em>? What is the logical reason for the difference?
             <textarea id="reflect_conditions" placeholder="Write your response here..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('reflect_conditions', this)">&#129302; Grade This Response</button>
             <div id="reflect_conditions-feedback"></div>
         </div>
     </div>
@@ -813,6 +829,7 @@
             <span class="question-number">R3.</span>
             <strong>Reflection:</strong> In a random sample of 1,000 people in the United States, 37% said American football was their favorite sport to watch on television. (a) Construct a 95% confidence interval for the population proportion. Show your work. (b) Interpret the interval in context. (c) Explain why the statement &ldquo;There is a 95% probability that <em>p</em> is in this interval&rdquo; is not a correct interpretation.
             <textarea id="reflect_ci" placeholder="Write your response here..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('reflect_ci', this)">&#129302; Grade This Response</button>
             <div id="reflect_ci-feedback"></div>
         </div>
     </div>
@@ -881,6 +898,7 @@
             <span class="question-number">R4.</span>
             <strong>Reflection:</strong> Using the bats problem above: (a) State <em>p&#770;</em>, <em>p</em><sub>0</sub>, and <em>n</em>. (b) Compute the one-sample <em>z</em>-test statistic, showing the formula with numbers. (c) If the p-value is 0.164, write a correct interpretation assuming the null is true. (d) At &alpha; = 0.05, state the formal decision and contextual conclusion.
             <textarea id="reflect_test" placeholder="Write your response here..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('reflect_test', this)">&#129302; Grade This Response</button>
             <div id="reflect_test-feedback"></div>
         </div>
     </div>
@@ -938,6 +956,7 @@
             <span class="question-number">R5.</span>
             <strong>Reflection:</strong> Researchers are testing whether a new machine improves precision. (a) What is a Type I error in this context? (b) What is a Type II error? (c) The researchers care more about missing a real improvement &mdash; which type of error is that? (d) Give two ways to reduce the chance of that error. (e) What happens to Type I error risk when you reduce Type II?
             <textarea id="reflect_errors" placeholder="Write your response here..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('reflect_errors', this)">&#129302; Grade This Response</button>
             <div id="reflect_errors-feedback"></div>
         </div>
     </div>
@@ -1003,6 +1022,7 @@
             <span class="question-number">R6.</span>
             <strong>Reflection:</strong> Two independent random samples are taken to compare support for a proposal: District A (35/50 support) and District B (36/60 support). (a) Why does a two-proportion <em>z</em>-test use the pooled proportion <em>p&#770;</em><sub>c</sub> in its standard error? (b) Why would it be logically wrong to pool when constructing a confidence interval for <em>p</em><sub>A</sub> &minus; <em>p</em><sub>B</sub>?
             <textarea id="reflect_twoprop" placeholder="Write your response here..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('reflect_twoprop', this)">&#129302; Grade This Response</button>
             <div id="reflect_twoprop-feedback"></div>
         </div>
     </div>
@@ -1073,6 +1093,7 @@
                 <li>(f) Describe Type I and Type II errors in this context.</li>
             </ul>
             <textarea id="capstone1" style="min-height: 180px;" placeholder="Show your work and explain your answer for all parts..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('capstone1', this)">&#129302; Grade This Response</button>
             <div id="capstone1-feedback"></div>
         </div>
     </div>
@@ -1102,6 +1123,7 @@
                 <li>(f) Suppose the p-value is greater than 0.05. State the formal decision, contextual conclusion, and what a matching CI for <em>p</em><sub>A</sub> &minus; <em>p</em><sub>B</sub> should contain.</li>
             </ul>
             <textarea id="capstone2" style="min-height: 180px;" placeholder="Show your work and explain your answer for all parts..."></textarea>
+            <button class="btn-grade-single" onclick="gradeSingleReflection('capstone2', this)">&#129302; Grade This Response</button>
             <div id="capstone2-feedback"></div>
         </div>
     </div>
@@ -1150,7 +1172,239 @@
         };
         console.log('railway_client.js not found, using inline fallback client');
     "></script>
-    <script src="ai-grading-prompts-edgar-u6.js"></script>
+    <script>
+    // AI Grading Prompts for Edgar's Unit 6 Conceptual Driller (inlined for file:// compatibility)
+    // Source: ai-grading-prompts-edgar-u6.js
+
+    window.LESSON_CONTEXT_EDGAR_U6 = "This is a bottom-up conceptual driller that builds inference for proportions from first principles. " +
+        "It is NOT a video follow-along. It is a deliberate pedagogical expansion of the standard 4-phase Unit 6 study plan, " +
+        "starting one layer earlier with sampling distributions and building through all of Unit 6 (Topics 6.1-6.11).\n\n" +
+        "Key concepts tested at AP FRQ level:\n" +
+        "- Population proportion p vs sample proportion p-hat vs hypothesized p0 vs pooled p-hat-c\n" +
+        "- Sampling distribution: centered at p, spread sqrt(p(1-p)/n), approximately normal if Large Counts met\n" +
+        "- Three conditions: Random, 10%, Large Counts\n" +
+        "- THE CRITICAL DISTINCTION: CI checks Large Counts with p-hat; significance test checks with p0\n" +
+        "- CI interpretation: 'We are C% confident...' (never probability language)\n" +
+        "- p-value interpretation: assumes H0 is true\n" +
+        "- Conclusion language: reject/fail to reject (never 'accept H0')\n" +
+        "- Type I error = false positive (prob = alpha); Type II = false negative (prob = 1-power)\n" +
+        "- Two-proportion CI uses separate p-hats; two-proportion test pools because H0 assumes equality";
+
+    var RUBRICS_EDGAR_U6 = {
+        reflect_vocab: {
+            questionText: "For the germination scenario (seed company claims 90%, botanist observes 80% in a random sample), identify: (a) the population, (b) the parameter p, (c) the sample, (d) the statistic p-hat. Then explain in a paragraph: what is the difference between a parameter and a statistic? Use the words 'population', 'sample', and 'unknown truth'.",
+            expectedElements: [
+                { id: "population-id", description: "Identifies population as all seeds of this type (from the company)", required: true },
+                { id: "parameter-id", description: "Identifies p as the true proportion of all seeds that germinate", required: true },
+                { id: "sample-id", description: "Identifies the sample as the specific random sample of seeds the botanist tested", required: true },
+                { id: "statistic-id", description: "Identifies p-hat as 0.80, the proportion that germinated in the sample", required: true },
+                { id: "param-vs-stat", description: "Explains that a parameter is a fixed but unknown truth about the population, while a statistic is calculated from a sample and varies from sample to sample", required: true },
+                { id: "p-hat-in-hypotheses", description: "Notes or implies that hypotheses use p (parameter), not p-hat (statistic)", required: false }
+            ],
+            scoringGuide: {
+                E: "Correctly identifies all four elements (population, p, sample, p-hat) with context, and writes a clear paragraph distinguishing parameters (fixed, unknown, about the population) from statistics (calculated, varies, from the sample).",
+                P: "Identifies most elements correctly but is vague on one (e.g., says 'the seeds' without specifying all seeds vs the sample), or the paragraph is correct but lacks clarity or context.",
+                I: "Confuses population with sample, confuses p with p-hat, or the paragraph shows fundamental misunderstanding of the parameter/statistic distinction."
+            },
+            commonMistakes: [
+                "Saying the population is 'the sample of seeds' instead of all seeds of this type",
+                "Listing p = 0.80 (that's p-hat) or p = 0.90 (that's p0, the claimed value)",
+                "Saying 'a parameter is a number' without explaining it's about the population and is unknown",
+                "Failing to mention that statistics vary from sample to sample"
+            ],
+            contextFromVideo: "The population is all seeds of this type. p = true germination rate for all seeds (unknown). Sample = the specific seeds the botanist tested. p-hat = 0.80 (observed rate). p0 = 0.90 (the company's claim, used in hypotheses). Parameters are fixed unknowns about populations; statistics are calculated from samples and vary."
+        },
+        reflect_conditions: {
+            questionText: "For a significance test with H0: p = 0.60, sample size n = 40, and observed p-hat = 0.45: (a) What two Large Counts products must be checked? (b) Which value - p0 or p-hat - belongs in those checks? Explain WHY in your own words. Then complete: 'For a confidence interval, the large-counts check uses ___. For a significance test, the large-counts check uses ___, because ___.'",
+            expectedElements: [
+                { id: "two-products", description: "States the two products: np0 = 40(0.60) = 24 and n(1-p0) = 40(0.40) = 16", required: true },
+                { id: "uses-p0", description: "States that p0 (not p-hat) belongs in the check for a significance test", required: true },
+                { id: "why-p0", description: "Explains WHY: because the test assumes H0 is true, so we check whether the sampling distribution under H0 is approximately normal - and under H0, p = p0", required: true },
+                { id: "ci-uses-phat", description: "States that a CI uses p-hat because we don't have a hypothesized value - we're estimating p, so our best available value is p-hat", required: true },
+                { id: "fill-in-sentence", description: "Correctly completes: CI uses p-hat, test uses p0, because the test assumes the null is true", required: true }
+            ],
+            scoringGuide: {
+                E: "Correctly computes both products using p0 = 0.60 (not p-hat = 0.45), clearly explains that tests use p0 because they operate under the assumption H0 is true, and correctly distinguishes CI (uses p-hat) from test (uses p0) with reasoning.",
+                P: "Gets the correct value (p0) but explanation is vague or incomplete (e.g., 'because that's the rule' without explaining the H0 assumption), or correctly explains reasoning but makes an arithmetic error.",
+                I: "Uses p-hat = 0.45 in the Large Counts check, or cannot explain why tests and CIs use different values, or fundamentally confuses the two procedures."
+            },
+            commonMistakes: [
+                "Computing 40(0.45) = 18 and 40(0.55) = 22 instead of 40(0.60) = 24 and 40(0.40) = 16",
+                "Saying 'use p0 because the formula says so' without connecting to the H0 assumption",
+                "Confusing the CI and test checks - saying CI uses p0",
+                "Not explaining that 'assuming H0 is true' is the key reason p0 is used"
+            ],
+            contextFromVideo: "For a significance test: Large Counts check uses p0 because we are assuming H0: p = p0 is true. Under that assumption, the sampling distribution is centered at p0, so we check np0 >= 10 and n(1-p0) >= 10. For a CI: no hypothesized value exists, so we use p-hat (our best estimate) to check np-hat >= 10 and n(1-p-hat) >= 10. This is the #1 student error on the AP exam."
+        },
+        reflect_ci: {
+            questionText: "A random sample of 1,000 people in the United States found that 37% said American football was their favorite sport to watch on television. (a) Construct a 95% confidence interval for the population proportion. Show your work. (b) Interpret the interval in context. (c) Explain why the statement 'There is a 95% probability that p is in this interval' is not a correct interpretation.",
+            expectedElements: [
+                { id: "phat-calc", description: "Identifies p-hat = 0.37 and n = 1000", required: true },
+                { id: "ci-formula", description: "Uses correct formula: 0.37 +/- 1.96 * sqrt(0.37 * 0.63 / 1000)", required: true },
+                { id: "ci-result", description: "Calculates approximately (0.340, 0.400) or equivalent", required: true },
+                { id: "correct-interpretation", description: "Writes 'We are 95% confident that the interval from ___ to ___ captures the proportion of all people in the United States who say American football is their favorite sport to watch on television'", required: true },
+                { id: "no-probability", description: "Explains that p is a fixed (not random) value - the interval either contains p or it doesn't. The 95% refers to the long-run success rate of the method across many samples, not a probability for any specific interval.", required: true }
+            ],
+            scoringGuide: {
+                E: "Correctly constructs the CI with proper formula and arithmetic, interprets using confidence language with full context (population + variable), and clearly explains why probability language is wrong (p is fixed, the method is random).",
+                P: "Constructs CI correctly but interpretation lacks full context, or explanation of probability error is vague.",
+                I: "Uses wrong z* or wrong SE formula, interprets with probability language, or cannot explain the distinction between confidence and probability."
+            },
+            commonMistakes: [
+                "Using z* = 2.576 (99%) instead of 1.96 (95%)",
+                "Using p0 in the SE instead of p-hat (this is a CI, not a test)",
+                "Interpreting as 'There is a 95% chance...' or '95% of the data falls in...'",
+                "Not naming the population (all people in the US) or the variable (favorite sport) in the interpretation",
+                "Saying the parameter 'moves around' - it's fixed"
+            ],
+            contextFromVideo: "CI formula: p-hat +/- z* * sqrt(p-hat(1-p-hat)/n). For 95%, z* = 1.96. Here: 0.37 +/- 1.96 * sqrt(0.37*0.63/1000) = 0.37 +/- 0.030 = (0.340, 0.400). Interpretation must say 'confident' not 'probability.' The 95% is about the method's long-run capture rate."
+        },
+        reflect_test: {
+            questionText: "In a region, 30% of bats have wingspans greater than 10 inches. In a random sample of 80 bats from outside the region, 20 had wingspans greater than 10 inches. (a) State p-hat, p0, and n. (b) Compute the one-sample z-test statistic. (c) The p-value is 0.164. Write a correct interpretation assuming the null is true. (d) At alpha = 0.05, state the formal decision and contextual conclusion.",
+            expectedElements: [
+                { id: "identify-values", description: "p-hat = 20/80 = 0.25, p0 = 0.30, n = 80", required: true },
+                { id: "z-formula", description: "z = (0.25 - 0.30) / sqrt(0.30 * 0.70 / 80) - uses p0 in denominator, not p-hat", required: true },
+                { id: "z-calc", description: "Computes z approximately equal to -0.976 or -0.98", required: true },
+                { id: "pvalue-interp", description: "Interprets p-value: 'Assuming the true proportion is 0.30, there is a 0.164 probability of observing a sample proportion as extreme as or more extreme than 0.25'", required: true },
+                { id: "decision", description: "Since 0.164 > 0.05, fail to reject H0", required: true },
+                { id: "conclusion-context", description: "There is not convincing evidence that the proportion of bats outside the region with wingspan > 10 inches is different from 0.30", required: true },
+                { id: "no-accept", description: "Does NOT say 'accept H0' or 'prove H0 is true'", required: false }
+            ],
+            scoringGuide: {
+                E: "Correctly identifies all three values, writes the z-formula with p0 in the denominator, computes z correctly, interprets the p-value by stating it assumes H0, makes the correct decision, and states the conclusion in context.",
+                P: "Gets most steps correct but has one error: e.g., uses p-hat in the denominator, or interprets p-value without mentioning the H0 assumption.",
+                I: "Multiple errors: wrong formula, p-value interpreted as probability H0 is true, incorrect decision, or conclusion not in context."
+            },
+            commonMistakes: [
+                "Using p-hat = 0.25 in the denominator instead of p0 = 0.30",
+                "Interpreting p-value as 'the probability that H0 is true'",
+                "Saying 'we accept H0' instead of 'we fail to reject H0'",
+                "Forgetting to state the conclusion in context"
+            ],
+            contextFromVideo: "z = (p-hat - p0) / sqrt(p0(1-p0)/n) = (0.25 - 0.30) / sqrt(0.30*0.70/80) = -0.05/0.0512 = -0.976. The SE uses p0 because under H0 we assume p = 0.30. p-value interpretation must begin with 'Assuming H0 is true' or equivalent."
+        },
+        reflect_errors: {
+            questionText: "Researchers are testing whether a new machine improves precision. (a) Describe Type I error in this context. (b) Describe Type II error. (c) Missing a real improvement is which type? (d) Two ways to reduce it. (e) Explain the tradeoff with Type I error.",
+            expectedElements: [
+                { id: "type1-context", description: "Type I: concluding the machine improves precision when it actually does not (false alarm)", required: true },
+                { id: "type2-context", description: "Type II: failing to detect a real improvement (missed signal)", required: true },
+                { id: "identify-type2", description: "Missing a real improvement = Type II error", required: true },
+                { id: "reduce-type2", description: "Two ways: increase sample size, increase alpha", required: true },
+                { id: "tradeoff", description: "Increasing alpha to reduce Type II also increases Type I risk. With fixed n, reducing one increases the other.", required: true }
+            ],
+            scoringGuide: {
+                E: "Correctly describes both errors in the machine context, identifies Type II as the concern, gives two valid ways to reduce it, and clearly explains the alpha tradeoff.",
+                P: "Describes both errors but one is vague, or identifies the correct error but gives only one way to reduce it.",
+                I: "Confuses Type I and Type II, or gives incorrect methods for reducing the error."
+            },
+            commonMistakes: [
+                "Swapping Type I and Type II definitions",
+                "Describing errors abstractly without the machine context",
+                "Saying 'decrease alpha' reduces Type II (it's the opposite)"
+            ],
+            contextFromVideo: "Type I = reject H0 when true (prob = alpha). Type II = fail to reject H0 when false (prob = 1-power). Missing a real improvement = Type II. Reduce by: increase n, increase alpha. Tradeoff: increasing alpha reduces Type II but increases Type I."
+        },
+        reflect_twoprop: {
+            questionText: "Two independent random samples: District A (35/50) and District B (36/60). (a) Why does a two-prop z-test pool? (b) Why is pooling wrong for a CI? Write a paragraph explaining the distinction.",
+            expectedElements: [
+                { id: "why-pool-test", description: "In a test, H0 says p_A = p_B, so under H0 both populations have the same proportion. Combining gives a better estimate of that shared proportion.", required: true },
+                { id: "why-not-pool-ci", description: "A CI does not assume equality - the whole point is to estimate the difference. Pooling would contradict the goal.", required: true },
+                { id: "pooled-formula", description: "Mentions p-hat-c = total successes / total n", required: false },
+                { id: "logical-distinction", description: "Test assumes equality (so pool), CI estimates difference (so keep separate)", required: true }
+            ],
+            scoringGuide: {
+                E: "Clearly explains that pooling is justified because H0 assumes equal proportions, and wrong in a CI because a CI estimates the difference.",
+                P: "States the correct rule but the WHY is incomplete or circular.",
+                I: "Cannot distinguish when to pool vs. not pool, or gives incorrect reasoning."
+            },
+            commonMistakes: [
+                "Saying 'pool for both' or 'pool for neither'",
+                "Explaining the rule without connecting to the H0 assumption",
+                "Saying 'we pool to get a larger sample size'"
+            ],
+            contextFromVideo: "Two-prop test: H0 says p1 = p2, so under H0 one shared proportion exists. Pool: p-hat-c = (35+36)/(50+60) = 71/110. Two-prop CI: no equality assumption. Use separate p-hats."
+        },
+        capstone1: {
+            questionText: "Baked die: p(6) = 1/6 fair. 200 rolls, 43 sixes. Define p, compute p-hat. 95% CI = (0.158, 0.272): interpret, compare to 1/6. Test H0: p=1/6 vs Ha: p>1/6, z=1.83, p-value=0.033: decide at alpha=0.05, conclude, interpret p-value. Do CI and test agree? Describe Type I and II errors.",
+            expectedElements: [
+                { id: "define-p", description: "p = the true proportion of times the baked die lands on 6", required: true },
+                { id: "compute-phat", description: "p-hat = 43/200 = 0.215", required: true },
+                { id: "ci-interpret", description: "We are 95% confident that (0.158, 0.272) captures the true proportion", required: true },
+                { id: "ci-vs-1over6", description: "1/6 ~ 0.167 IS in the interval, so CI alone does not provide convincing evidence", required: true },
+                { id: "decision", description: "p-value 0.033 < 0.05, reject H0", required: true },
+                { id: "conclusion-context", description: "Convincing evidence the baked die lands on 6 more often than a fair die", required: true },
+                { id: "pvalue-interp", description: "Assuming p = 1/6, probability of p-hat >= 0.215 is 0.033", required: true },
+                { id: "ci-test-agree", description: "CI is two-sided, test is one-sided - may give slightly different signals", required: true },
+                { id: "type1", description: "Type I: concluding biased when actually fair", required: true },
+                { id: "type2", description: "Type II: failing to detect bias when biased", required: true }
+            ],
+            scoringGuide: {
+                E: "Addresses all parts with correct notation, proper interpretation language, correct decision, and both errors in context.",
+                P: "Gets most parts correct but 1-2 errors.",
+                I: "Multiple fundamental errors."
+            },
+            commonMistakes: [
+                "Defining p without specifying the BAKED die",
+                "Saying the CI 'proves' bias",
+                "Interpreting p-value as probability H0 is true",
+                "Not recognizing the CI/test tension"
+            ],
+            contextFromVideo: "Full capstone integrating one-proportion CI, test, p-value, conclusion language, and errors. The 95% CI contains 1/6 ~ 0.167 so CI alone is inconclusive, but the one-sided test rejects because two-sided CI corresponds to two-sided test, not one-sided."
+        },
+        capstone2: {
+            questionText: "Two districts: A (35/50), B (36/60). Define parameters, write hypotheses, compute pooled proportion, check conditions, write test statistic formula, interpret p-value > 0.05, connect to CI containing 0.",
+            expectedElements: [
+                { id: "define-params", description: "p_A = true proportion District A supports; p_B = true proportion District B supports", required: true },
+                { id: "hypotheses", description: "H0: p_A = p_B; Ha: p_A != p_B", required: true },
+                { id: "compute-phats", description: "p-hat-A = 0.70, p-hat-B = 0.60, p-hat-c = 71/110 ~ 0.645", required: true },
+                { id: "check-conditions", description: "Random, 10%, Large Counts using pooled proportion", required: true },
+                { id: "test-stat-formula", description: "z = (0.70 - 0.60) / sqrt(0.645 * 0.355 * (1/50 + 1/60))", required: true },
+                { id: "decision-ftreject", description: "p-value > 0.05, fail to reject H0", required: true },
+                { id: "conclusion-nodiff", description: "Not convincing evidence of a difference", required: true },
+                { id: "ci-contains-zero", description: "CI for p_A - p_B should contain 0", required: true }
+            ],
+            scoringGuide: {
+                E: "Correctly defines parameters, writes hypotheses, computes pooled proportion, checks conditions with pooled value, writes formula, draws correct conclusion with CI-zero connection.",
+                P: "Gets most steps right but 1-2 errors.",
+                I: "Multiple fundamental errors."
+            },
+            commonMistakes: [
+                "Using separate p-hats in test SE instead of pooled",
+                "Checking Large Counts with separate p-hats",
+                "Saying 'accept H0'"
+            ],
+            contextFromVideo: "Two-prop test: pool pc = 71/110 ~ 0.645. Check Large Counts with pc. If p-value > 0.05, fail to reject. CI containing 0 is consistent."
+        }
+    };
+
+    window.getRubricEdgarU6 = function(questionId) {
+        return RUBRICS_EDGAR_U6[questionId] || null;
+    };
+
+    window.buildReflectionPromptEdgarU6 = function(questionId, studentAnswer) {
+        var rubric = RUBRICS_EDGAR_U6[questionId];
+        if (!rubric) return null;
+        var requiredElements = rubric.expectedElements.filter(function(e) { return e.required; }).map(function(e) { return e.description; });
+        var optionalElements = rubric.expectedElements.filter(function(e) { return !e.required; }).map(function(e) { return e.description; });
+        return 'You are an AP Statistics teacher grading a student\'s response using the AP FRQ E/P/I rubric.\n\n' +
+            'QUESTION: ' + rubric.questionText + '\n\n' +
+            'STUDENT\'S ANSWER: ' + studentAnswer + '\n\n' +
+            'LESSON CONTEXT: ' + rubric.contextFromVideo + '\n\n' +
+            'SCORING RUBRIC (AP FRQ Style):\n' +
+            '- E (Essentially Correct): ' + rubric.scoringGuide.E + '\n' +
+            '- P (Partially Correct): ' + rubric.scoringGuide.P + '\n' +
+            '- I (Incorrect): ' + rubric.scoringGuide.I + '\n\n' +
+            'REQUIRED ELEMENTS (must address for E):\n' +
+            requiredElements.map(function(e, i) { return (i + 1) + '. ' + e; }).join('\n') + '\n\n' +
+            'BONUS ELEMENTS (strengthen the response):\n' +
+            optionalElements.map(function(e, i) { return (i + 1) + '. ' + e; }).join('\n') + '\n\n' +
+            'COMMON MISTAKES TO WATCH FOR:\n' +
+            rubric.commonMistakes.map(function(m, i) { return (i + 1) + '. ' + m; }).join('\n') + '\n\n' +
+            'Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing. Provide a specific suggestion for improvement if the score is P or I.\n\n' +
+            'Respond in JSON format:\n' +
+            '{\n    "score": "E" | "P" | "I",\n    "feedback": "Brief explanation of the grade",\n    "matched": ["list of elements the student addressed"],\n    "missing": ["list of elements the student missed"],\n    "suggestion": "Specific suggestion for improvement (null if E)"\n}';
+    };
+    </script>
     <script>
         // ==================== CONFIG ====================
         const UNIT_ID = 'EDGAR_U6';
@@ -1167,9 +1421,11 @@
         function init() {
             ensureRailwayDefaults();
             restoreSavedUser();
+            restoreSavedTextareas();
             assignQuestionIds();
             addSaveIndicators();
             bindBlankEvents();
+            bindTextareaPersistence();
             injectAggregateButtons();
         }
 
@@ -1209,6 +1465,57 @@
         document.getElementById('worksheetName').addEventListener('blur', saveUser);
         document.getElementById('worksheetPeriod').addEventListener('blur', saveUser);
 
+        // ==================== TEXTAREA PERSISTENCE ====================
+        const ANSWERS_STORAGE_KEY = 'edgar-u6-answers';
+
+        function restoreSavedTextareas() {
+            try {
+                const saved = localStorage.getItem(ANSWERS_STORAGE_KEY);
+                if (!saved) return;
+                const data = JSON.parse(saved);
+                // Restore textareas by id
+                if (data.textareas) {
+                    for (const [id, value] of Object.entries(data.textareas)) {
+                        const el = document.getElementById(id);
+                        if (el && el.tagName === 'TEXTAREA') {
+                            el.value = value;
+                        }
+                    }
+                }
+                // Restore blanks by index
+                if (data.blanks) {
+                    const blanks = document.querySelectorAll('.blank');
+                    data.blanks.forEach((value, idx) => {
+                        if (blanks[idx] && value) {
+                            blanks[idx].value = value;
+                        }
+                    });
+                }
+            } catch (e) { console.warn('Could not restore answers', e); }
+        }
+
+        function saveAllAnswers() {
+            const textareas = {};
+            document.querySelectorAll('textarea[id]').forEach(ta => {
+                if (ta.value.trim()) {
+                    textareas[ta.id] = ta.value;
+                }
+            });
+            const blanks = [];
+            document.querySelectorAll('.blank').forEach(blank => {
+                blanks.push(blank.value || '');
+            });
+            try {
+                localStorage.setItem(ANSWERS_STORAGE_KEY, JSON.stringify({ textareas, blanks }));
+            } catch (e) { console.warn('Could not save answers', e); }
+        }
+
+        function bindTextareaPersistence() {
+            document.querySelectorAll('textarea[id]').forEach(ta => {
+                ta.addEventListener('blur', saveAllAnswers);
+            });
+        }
+
         // ==================== QUESTION IDs & EVENTS ====================
         function assignQuestionIds() {
             const blanks = document.querySelectorAll('.blank');
@@ -1230,11 +1537,12 @@
 
         function bindBlankEvents() {
             document.querySelectorAll('.blank').forEach(blank => {
-                blank.addEventListener('blur', () => handleLiveUpdate(blank));
+                blank.addEventListener('blur', () => { handleLiveUpdate(blank); saveAllAnswers(); });
                 blank.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         handleLiveUpdate(blank);
+                        saveAllAnswers();
                         focusNextBlank(blank);
                     }
                 });
@@ -1330,6 +1638,7 @@
             document.querySelectorAll('.ai-feedback').forEach(fb => fb.remove());
             document.getElementById('scoreDisplay').classList.remove('visible');
             gradingState.clear();
+            try { localStorage.removeItem(ANSWERS_STORAGE_KEY); } catch (e) {}
         }
 
         // ==================== SERVER SYNC ====================
@@ -1520,40 +1829,36 @@
         }
 
         // ==================== AI GRADING ====================
-        async function gradeAllReflections() {
-            const btn = document.querySelector('.btn-ai');
+        async function gradeSingleReflection(id, btn) {
+            const textarea = document.getElementById(id);
+            if (!textarea) return;
+
+            const answer = textarea.value.trim();
+            if (answer.length < 20) {
+                showFeedback(id, { score: 'I', feedback: 'Please write a more complete response (at least 20 characters).' });
+                return;
+            }
+
+            const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = '\u23F3 Grading...';
 
-            const textareas = ['reflect_vocab', 'reflect_conditions', 'reflect_ci', 'reflect_test', 'reflect_errors', 'reflect_twoprop', 'capstone1', 'capstone2'];
-
-            for (const id of textareas) {
-                const textarea = document.getElementById(id);
-                if (!textarea) continue;
-
-                const answer = textarea.value.trim();
-                if (answer.length < 20) {
-                    showFeedback(id, { score: 'I', feedback: 'Please write a more complete response (at least 20 characters).' });
-                    continue;
-                }
-
-                try {
-                    const result = await gradeReflection(id, answer);
-                    gradingState.set(id, {
-                        result,
-                        originalAnswer: answer,
-                        appealCount: 0,
-                        history: []
-                    });
-                    showFeedback(id, result);
-                } catch (err) {
-                    console.error('Grading error:', err);
-                    showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
-                }
+            try {
+                const result = await gradeReflection(id, answer);
+                gradingState.set(id, {
+                    result,
+                    originalAnswer: answer,
+                    appealCount: 0,
+                    history: []
+                });
+                showFeedback(id, result);
+            } catch (err) {
+                console.error('Grading error:', err);
+                showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
             }
 
             btn.disabled = false;
-            btn.textContent = '\uD83E\uDD16 Grade My Reflections';
+            btn.textContent = originalText;
         }
 
         async function gradeReflection(questionId, answer) {
