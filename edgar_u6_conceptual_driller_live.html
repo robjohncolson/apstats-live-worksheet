@@ -1400,9 +1400,14 @@
             optionalElements.map(function(e, i) { return (i + 1) + '. ' + e; }).join('\n') + '\n\n' +
             'COMMON MISTAKES TO WATCH FOR:\n' +
             rubric.commonMistakes.map(function(m, i) { return (i + 1) + '. ' + m; }).join('\n') + '\n\n' +
-            'Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing. Provide a specific suggestion for improvement if the score is P or I.\n\n' +
+            'Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing.\n\n' +
+            'SUGGESTION RULES (for P or I only):\n' +
+            '- For each missing element, write one concrete sentence starting with "Try adding..." or "Revise to include..." that tells the student EXACTLY what to write.\n' +
+            '- Reference the specific concept or term they need (e.g., "define p as the true germination rate" not "clarify the parameter").\n' +
+            '- Never say "lacks clarity" or "needs more detail" — always say WHAT detail.\n' +
+            '- Keep it to 2-3 sentences max. Sound like a coach, not a judge.\n\n' +
             'Respond in JSON format:\n' +
-            '{\n    "score": "E" | "P" | "I",\n    "feedback": "Brief explanation of the grade",\n    "matched": ["list of elements the student addressed"],\n    "missing": ["list of elements the student missed"],\n    "suggestion": "Specific suggestion for improvement (null if E)"\n}';
+            '{\n    "score": "E" | "P" | "I",\n    "feedback": "One sentence explaining the grade — what they got right first, then what\'s missing",\n    "matched": ["list of elements the student addressed"],\n    "missing": ["list of elements the student missed"],\n    "suggestion": "2-3 actionable sentences using \'Try adding...\' or \'Revise to include...\' (null if E)"\n}';
     };
     </script>
     <script>

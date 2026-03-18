@@ -254,14 +254,20 @@ ${optionalElements.map((e, i) => `${i + 1}. ${e}`).join('\n')}
 COMMON MISTAKES TO WATCH FOR:
 ${rubric.commonMistakes.map((m, i) => `${i + 1}. ${m}`).join('\n')}
 
-Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing. Provide a specific suggestion for improvement if the score is P or I.
+Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing.
+
+SUGGESTION RULES (for P or I only):
+- For each missing element, write one concrete sentence starting with "Try adding..." or "Revise to include..." that tells the student EXACTLY what to write.
+- Reference the specific concept or term they need (e.g., "define p as the true germination rate" not "clarify the parameter").
+- Never say "lacks clarity" or "needs more detail" — always say WHAT detail.
+- Keep it to 2-3 sentences max. Sound like a coach, not a judge.
 
 Respond in JSON format:
 {
     "score": "E" | "P" | "I",
-    "feedback": "Brief explanation of the grade",
+    "feedback": "One sentence explaining the grade — what they got right first, then what's missing",
     "matched": ["list of elements the student addressed"],
     "missing": ["list of elements the student missed"],
-    "suggestion": "Specific suggestion for improvement (null if E)"
+    "suggestion": "2-3 actionable sentences using 'Try adding...' or 'Revise to include...' (null if E)"
 }`;
 };
