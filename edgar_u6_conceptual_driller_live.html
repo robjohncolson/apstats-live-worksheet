@@ -324,6 +324,48 @@
         .appeal-result.maintained { background: #fff3cd; color: #856404; }
         .appeal-count { font-size: 0.8em; color: #666; margin-top: 4px; }
 
+        /* Enriched pass — near-miss auto-upgrade */
+        .enriched-pass {
+            margin-top: 8px;
+            padding: 12px 14px;
+            background: #e8f0fe;
+            border-left: 4px solid #4285f4;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .enriched-pass-header {
+            font-weight: bold;
+            color: #1a56db;
+            margin-bottom: 6px;
+            font-size: 1.05em;
+        }
+        .enriched-pass-subtext {
+            color: #555;
+            font-size: 0.92em;
+            margin-bottom: 10px;
+        }
+        .enriched-pass-quote {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px 12px;
+            color: #333;
+            line-height: 1.5;
+            font-style: italic;
+        }
+        .enriched-pass-quote strong {
+            font-style: normal;
+            background: #d4edda;
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+        .enriched-pass-score {
+            margin-top: 8px;
+            color: #155724;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
         /* Score display */
         #scoreDisplay {
             display: none;
@@ -448,6 +490,7 @@
         @media print {
             .controls, .aggregate-trigger, .aggregate-drawer, .save-indicator,
             .appeal-section, .ai-feedback, .btn-ai, .btn-grade-single { display: none !important; }
+            .enriched-pass { display: block !important; border-left-color: #000 !important; background: #f0f0f0 !important; }
             .blank { border-bottom: 1px solid #000 !important; background: transparent !important; }
             body { background: white; }
             .section { page-break-inside: avoid; }
@@ -1640,7 +1683,7 @@
                 ta.value = '';
                 ta.classList.remove('graded-E', 'graded-P', 'graded-I');
             });
-            document.querySelectorAll('.ai-feedback').forEach(fb => fb.remove());
+            document.querySelectorAll('[id$="-feedback"]').forEach(c => c.innerHTML = '');
             document.getElementById('scoreDisplay').classList.remove('visible');
             gradingState.clear();
             try { localStorage.removeItem(ANSWERS_STORAGE_KEY); } catch (e) {}
@@ -1850,6 +1893,41 @@
 
             try {
                 const result = await gradeReflection(id, answer);
+
+                // --- Enriched Pass: near-miss auto-upgrade ---
+                if (result.score === 'P' && result.missing && result.missing.length === 0) {
+                    // AI said P but listed nothing missing — inconsistent, auto-upgrade
+                    result.score = 'E';
+                    result.feedback = 'Nice work — you covered the key ideas.';
+                    result.suggestion = null;
+                }
+
+                if (result.score === 'P' && result.missing && result.missing.length === 1) {
+                    // Near-miss: one element away from E — run Phase 2
+                    btn.textContent = '\u2728 Polishing...';
+                    try {
+                        const enriched = await fetchEnrichedAnswer(id, answer, result.missing[0]);
+                        if (enriched.score !== 'E' || !enriched.suggestion) {
+                            throw new Error('Enrichment returned invalid payload');
+                        }
+                        result.score = 'E';
+                        gradingState.set(id, {
+                            result,
+                            originalAnswer: answer,
+                            appealCount: 0,
+                            history: []
+                        });
+                        renderEnrichedPass(id, enriched);
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        return;
+                    } catch (err) {
+                        console.warn('Enrichment failed, falling back to P:', err);
+                        // Fall through to normal P rendering
+                    }
+                }
+                // --- End Enriched Pass ---
+
                 gradingState.set(id, {
                     result,
                     originalAnswer: answer,
@@ -1864,6 +1942,67 @@
 
             btn.disabled = false;
             btn.textContent = originalText;
+        }
+
+        async function fetchEnrichedAnswer(questionId, studentAnswer, missingElement) {
+            const prompt =
+                'You are helping an AP Statistics student polish their answer. ' +
+                'Their response was strong but missed one detail.\n\n' +
+                '## Student\'s Original Answer\n"' + studentAnswer + '"\n\n' +
+                '## What was missing\n"' + missingElement + '"\n\n' +
+                '## Instructions\n' +
+                'Rewrite the student\'s answer to naturally include the missing concept. Rules:\n' +
+                '- Keep the student\'s voice, vocabulary, and sentence structure\n' +
+                '- Weave the missing detail in so it reads like the student wrote it\n' +
+                '- Do NOT add anything beyond the one missing element\n' +
+                '- Keep it roughly the same length (plus or minus one sentence)\n' +
+                '- Wrap ONLY the newly added words or phrases in <strong> tags\n\n' +
+                'Respond in JSON format:\n' +
+                '{\n' +
+                '    "score": "E",\n' +
+                '    "feedback": "You nailed the key ideas!",\n' +
+                '    "matched": [],\n' +
+                '    "missing": [],\n' +
+                '    "suggestion": "the rewritten answer with <strong>added detail</strong> highlighted"\n' +
+                '}';
+
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'AP Statistics - Enriched Answer Polish',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_EDGAR_U6
+                    },
+                    answers: { answer: studentAnswer },
+                    prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Enrichment request failed');
+            return await response.json();
+        }
+
+        function renderEnrichedPass(questionId, enrichedResult) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add('graded-E');
+
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+
+            const block = document.createElement('div');
+            block.className = 'enriched-pass';
+            block.innerHTML =
+                '<div class="enriched-pass-header">\u2726 You nailed the key ideas!</div>' +
+                '<div class="enriched-pass-subtext">Here\'s your answer with one small detail woven in &mdash; save this for your notes:</div>' +
+                '<div class="enriched-pass-quote">' + (enrichedResult.suggestion || '') + '</div>' +
+                '<div class="enriched-pass-score">Score: E \u2713</div>';
+
+            container.appendChild(block);
         }
 
         async function gradeReflection(questionId, answer) {
