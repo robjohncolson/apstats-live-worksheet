@@ -1907,8 +1907,8 @@
                 const totalElements = matchedCount + missingCount;
                 const hitRate = totalElements > 0 ? matchedCount / totalElements : 0;
 
-                if (result.score === 'P' && hitRate >= 0.7 && missingCount > 0) {
-                    // Near-miss: student hit 70%+ of elements — run Phase 2
+                if (result.score === 'P' && hitRate >= 0.3 && missingCount > 0) {
+                    // Student hit 30%+ of elements — run Phase 2
                     btn.textContent = '\u2728 Polishing...';
                     try {
                         const enriched = await fetchEnrichedAnswer(id, answer, result.missing);
