@@ -1902,11 +1902,16 @@
                     result.suggestion = null;
                 }
 
-                if (result.score === 'P' && result.missing && result.missing.length === 1) {
-                    // Near-miss: one element away from E — run Phase 2
+                const matchedCount = (result.matched || []).length;
+                const missingCount = (result.missing || []).length;
+                const totalElements = matchedCount + missingCount;
+                const hitRate = totalElements > 0 ? matchedCount / totalElements : 0;
+
+                if (result.score === 'P' && hitRate >= 0.7 && missingCount > 0) {
+                    // Near-miss: student hit 70%+ of elements — run Phase 2
                     btn.textContent = '\u2728 Polishing...';
                     try {
-                        const enriched = await fetchEnrichedAnswer(id, answer, result.missing[0]);
+                        const enriched = await fetchEnrichedAnswer(id, answer, result.missing);
                         if (enriched.score !== 'E' || !enriched.suggestion) {
                             throw new Error('Enrichment returned invalid payload');
                         }
@@ -1944,18 +1949,20 @@
             btn.textContent = originalText;
         }
 
-        async function fetchEnrichedAnswer(questionId, studentAnswer, missingElement) {
+        async function fetchEnrichedAnswer(questionId, studentAnswer, missingElements) {
+            const missingList = missingElements.map(function(m, i) { return (i + 1) + '. ' + m; }).join('\n');
+            const detailWord = missingElements.length === 1 ? 'one detail' : missingElements.length + ' small details';
             const prompt =
                 'You are helping an AP Statistics student polish their answer. ' +
-                'Their response was strong but missed one detail.\n\n' +
+                'Their response was strong but missed ' + detailWord + '.\n\n' +
                 '## Student\'s Original Answer\n"' + studentAnswer + '"\n\n' +
-                '## What was missing\n"' + missingElement + '"\n\n' +
+                '## What was missing\n' + missingList + '\n\n' +
                 '## Instructions\n' +
-                'Rewrite the student\'s answer to naturally include the missing concept. Rules:\n' +
+                'Rewrite the student\'s answer to naturally include the missing concepts. Rules:\n' +
                 '- Keep the student\'s voice, vocabulary, and sentence structure\n' +
-                '- Weave the missing detail in so it reads like the student wrote it\n' +
-                '- Do NOT add anything beyond the one missing element\n' +
-                '- Keep it roughly the same length (plus or minus one sentence)\n' +
+                '- Weave the missing details in so it reads like the student wrote it\n' +
+                '- Do NOT add anything beyond the missing elements listed above\n' +
+                '- Keep it concise (add at most one sentence per missing element)\n' +
                 '- Wrap ONLY the newly added words or phrases in <strong> tags\n\n' +
                 'Respond in JSON format:\n' +
                 '{\n' +
@@ -1963,7 +1970,7 @@
                 '    "feedback": "You nailed the key ideas!",\n' +
                 '    "matched": [],\n' +
                 '    "missing": [],\n' +
-                '    "suggestion": "the rewritten answer with <strong>added detail</strong> highlighted"\n' +
+                '    "suggestion": "the rewritten answer with <strong>added details</strong> highlighted"\n' +
                 '}';
 
             const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
@@ -1998,7 +2005,7 @@
             block.className = 'enriched-pass';
             block.innerHTML =
                 '<div class="enriched-pass-header">\u2726 You nailed the key ideas!</div>' +
-                '<div class="enriched-pass-subtext">Here\'s your answer with one small detail woven in &mdash; save this for your notes:</div>' +
+                '<div class="enriched-pass-subtext">Here\'s your answer polished up &mdash; save this for your notes:</div>' +
                 '<div class="enriched-pass-quote">' + (enrichedResult.suggestion || '') + '</div>' +
                 '<div class="enriched-pass-score">Score: E \u2713</div>';
 
