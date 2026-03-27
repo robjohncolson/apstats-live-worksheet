@@ -16,6 +16,11 @@
             --stripe-dark: #AAAAAA;
             --black: #000000;
             --white: #FFFFFF;
+            --u1: #FFD5D5;  --u1-t: #000000;
+            --u2: #FFE8CC;  --u2-t: #000000;
+            --u3: #FFFFCC;  --u3-t: #000000;
+            --u4: #D5FFD5;  --u4-t: #000000;
+            --u5: #D5D5FF;  --u5-t: #000000;
             --u6: #CCCCFF;  --u6-t: #000000;
             --u7: #CCFFFF;  --u7-t: #000000;
             --u8: #FFCC99;  --u8-t: #000000;
@@ -194,6 +199,64 @@
             background: var(--chrome-border);
         }
 
+        /* ── Window Dragging & Minimize ────────────── */
+        .mac-window.dragging { cursor: grabbing; user-select: none; }
+        .mac-window.dragging .window-content { pointer-events: none; }
+        .title-bar { cursor: grab; }
+        .mac-window.dragging .title-bar { cursor: grabbing; }
+        .collapse-box { cursor: pointer; }
+        .close-box { cursor: pointer; }
+
+        .desktop-icon {
+            position: fixed;
+            bottom: 40px;
+            left: 30px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: default;
+            z-index: 5;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .desktop-icon.visible { display: flex; }
+        .desktop-icon .icon-img {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #9999BB 0%, #777799 40%, #666688 100%);
+            border: 2px solid #444466;
+            border-radius: 3px;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #DDDDEE;
+            image-rendering: pixelated;
+        }
+        .desktop-icon .icon-img::after {
+            content: "\1F4C5";
+        }
+        .desktop-icon.selected .icon-img {
+            border-color: var(--black);
+            outline: 2px solid var(--black);
+            outline-offset: 1px;
+        }
+        .desktop-icon .icon-label {
+            font-family: 'Geneva', 'Arial', sans-serif;
+            font-size: 9px;
+            color: var(--white);
+            background: #555566;
+            padding: 1px 3px;
+            text-align: center;
+            max-width: 80px;
+            white-space: nowrap;
+        }
+        .desktop-icon.selected .icon-label {
+            background: var(--black);
+            color: var(--white);
+        }
+
         /* ── Inner Window Content ───────────────────── */
         .window-content {
             margin: 1px 2px 2px 2px;
@@ -289,6 +352,11 @@
         .dc .dn { font-size: 9px; margin-bottom: 2px; }
         .dc .tl { font-size: 10px; line-height: 1.2; margin-top: 1px; font-weight: bold; }
         .dc .tt { font-size: 9px; line-height: 1.1; margin-top: 2px; }
+        .cell-u1 { background: var(--u1); color: var(--u1-t); }
+        .cell-u2 { background: var(--u2); color: var(--u2-t); }
+        .cell-u3 { background: var(--u3); color: var(--u3-t); }
+        .cell-u4 { background: var(--u4); color: var(--u4-t); }
+        .cell-u5 { background: var(--u5); color: var(--u5-t); }
         .cell-u6 { background: var(--u6); color: var(--u6-t); }
         .cell-u7 { background: var(--u7); color: var(--u7-t); }
         .cell-u8 { background: var(--u8); color: var(--u8-t); }
@@ -786,6 +854,9 @@
             <div class="menu-dd-item" onclick="setP('B');closeMenus()">&#10003; Period B</div>
             <div class="menu-dd-item" onclick="setP('E');closeMenus()">&#160;&#160; Period E</div>
             <div class="menu-dd-sep"></div>
+            <div class="menu-dd-item" data-year="SY25-26" onclick="loadYear('SY25-26');closeMenus()">  Spring 2026</div>
+            <div class="menu-dd-item" data-year="SY26-27" onclick="loadYear('SY26-27');closeMenus()">  Full Year 2026-27</div>
+            <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="showDialog('&#128202;','You are viewing it right now. What more do you want?','Good Point')">by Icon</div>
             <div class="menu-dd-item disabled">by Name</div>
             <div class="menu-dd-item disabled">by Date</div>
@@ -820,19 +891,24 @@
 </div>
 
 <!-- ═══ Main Window ═══ -->
-<div class="window-wrap">
-<div class="mac-window">
+<div class="desktop-icon" id="desktop-icon" ondblclick="restoreWindow()" onclick="selectIcon(this)">
+    <div class="icon-img"></div>
+    <div class="icon-label">Road to the AP Exam</div>
+</div>
+
+<div class="window-wrap" id="window-wrap">
+<div class="mac-window" id="mac-window">
     <div class="title-bar">
-        <div class="close-box"></div>
+        <div class="close-box" onclick="minimizeWindow()" title="Close"></div>
         <div class="title-stripes"></div>
         <span class="title-text chicago">Road to the AP Exam</span>
-        <div class="collapse-box"></div>
+        <div class="collapse-box" onclick="minimizeWindow()" title="Collapse"></div>
     </div>
     <div class="window-content">
         <div class="info-bar geneva">
             <span id="ft">40 Sessions</span>
-            <span>Spring 2026</span>
-            <span>Lynn English High School</span>
+            <span id="ib-year" style="cursor:pointer" onclick="cycleYear()">Spring 2026</span>
+            <span id="ib-school">Lynn English High School</span>
         </div>
         <div class="window-body">
             <div class="cd-strip chicago">
@@ -845,15 +921,7 @@
                 <button class="s7btn s7btn-default s7btn-inv" id="btn-b" onclick="setP('B')">Period B</button>
                 <button class="s7btn" id="btn-e" onclick="setP('E')">Period E</button>
             </div>
-            <div class="legend geneva">
-                <div class="legend-item"><div class="legend-sw" style="background:var(--u6)"></div>U6 Proportions</div>
-                <div class="legend-item"><div class="legend-sw" style="background:var(--u7)"></div>U7 Means</div>
-                <div class="legend-item"><div class="legend-sw" style="background:var(--u8)"></div>U8 Chi-Square</div>
-                <div class="legend-item"><div class="legend-sw" style="background:var(--u9)"></div>U9 Slopes</div>
-                <div class="legend-item"><div class="legend-sw" style="background:var(--rev)"></div>Review</div>
-                <div class="legend-item"><div class="legend-sw" style="background:var(--exam-bg)"></div>Exam</div>
-                <div class="legend-item"><div class="legend-sw cell-off"></div>No School</div>
-            </div>
+            <div class="legend geneva" id="legend-bar"></div>
             <div class="cal-outer geneva">
                 <div class="hdr-row">
                     <span>Week of</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
@@ -1366,15 +1434,357 @@ const SFX = {
 };
 
 /* ═══ SCHEDULE DATA ═══ */
-const EX_DT=new Date(2026,4,7),MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+let EX_DT=new Date(2026,4,7);
+const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const R="review",OFF="off",EX="exam",PO="post",NC="noclass";
-const SCHOOLOGY_COURSE_B = '7945275782';
-const SCHOOLOGY_COURSE_E = '7945275798';
+let SCHOOLOGY_COURSE_B = '7945275782';
+let SCHOOLOGY_COURSE_E = '7945275798';
 const SUPABASE_URL='https://hgvnytaqmuybzbotosyj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhndm55dGFxbXV5Ynpib3Rvc3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNTE5MTMsImV4cCI6MjA4MDcyNzkxM30.-LcH_zly4pXoX_2Vra-RbH9twPvUj6xAJp66xPi02tU';
 const _supaCache={};
 function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false}}
-const S=[[2026,2,9,d("6.6","Concluding Test for p",6,"Quiz 6.4","Drills 6.6, Quiz 6.5"),d("6.3","Justifying Claims (CI)",6,"Quiz 5-8, U5 PC","Drills 6.3, Quiz 6.1-6.2")],[2026,2,10,d("6.7","Type I & II Errors",6,"Quiz 6.5","Drills 6.7, Quiz 6.6"),NC],[2026,2,11,NC,d("6.4+6.5","Tests + p-Values",6,"Quiz 6.1-6.2","Drills 6.4-6.5, Quiz 6.3",true)],[2026,2,12,d("6.8","CI for p1-p2",6,"Quiz 6.6","Drills 6.8, Quiz 6.7"),NC],[2026,2,13,d("6.9","Justify Claims (Diff)",6,"Quiz 6.7","Drills 6.9, Quiz 6.8"),d("6.6","Concluding Test for p",6,"Quiz 6.3","Drills 6.6, Quiz 6.4-6.5")],[2026,2,16,d("6.10","Test for p1-p2 Setup",6,"Quiz 6.8","Drills 6.10, Quiz 6.9"),d("6.7","Type I & II Errors",6,"Quiz 6.4-6.5","Drills 6.7, Quiz 6.6")],[2026,2,17,d("6.11","Test for p1-p2",6,"Quiz 6.9","U6 PC, Drills 6.11, Quiz 6.10"),NC],[2026,2,18,NC,d("6.8+6.9","CI + Justify (Diff)",6,"Quiz 6.6","Drills 6.8-6.9, Quiz 6.7",true)],[2026,2,19,d("7.1","Intro: Error",7,"Quiz 6.10","Drills 7.1"),NC],[2026,2,20,d("7.2","CI for mean",7,"","Drills 7.2, Quiz 7.1"),d("6.10","Test for p1-p2 Setup",6,"Quiz 6.7","Drills 6.10, Quiz 6.8-6.9")],[2026,2,23,d("7.3","Justify Claims (mean CI)",7,"Quiz 7.1","Drills 7.3, Quiz 7.2"),d("6.11","Test for p1-p2",6,"Quiz 6.8-6.9","U6 PC, Drills 6.11, Quiz 6.10")],[2026,2,24,d("7.4","Setting Up Test for mean",7,"Quiz 7.2","Drills 7.4, Quiz 7.3"),NC],[2026,2,25,NC,d("7.1+7.2","Intro + CI for mean",7,"Quiz 6.10","Drills 7.1-7.2, Quiz 6.11",true)],[2026,2,26,d("7.5","Test for mean",7,"Quiz 7.3","Drills 7.5, Quiz 7.4"),NC],[2026,2,27,d("7.6","CI for diff of means",7,"Quiz 7.4","Drills 7.6, Quiz 7.5"),d("7.3","Justify Claims (mean CI)",7,"Quiz 6.11","Drills 7.3, Quiz 7.1-7.2")],[2026,2,30,d("7.7","Justify (Diff Means)",7,"Quiz 7.5","Drills 7.7, Quiz 7.6"),d("7.4","Setting Up Test for mean",7,"Quiz 7.1-7.2","Drills 7.4, Quiz 7.3")],[2026,2,31,d("7.8","Test for diff means Setup",7,"Quiz 7.6","Drills 7.8, Quiz 7.7"),NC],[2026,3,1,NC,d("7.5+7.6","Test + CI (Diff Means)",7,"Quiz 7.3","Drills 7.5-7.6, Quiz 7.4",true)],[2026,3,2,d("7.9","Test for diff means",7,"Quiz 7.7","U7 PC, Drills 7.9, Quiz 7.8"),NC],[2026,3,3,OFF,OFF],[2026,3,6,d("8.1","Intro: Unexpected?",8,"Quiz 7.8","Drills 8.1, Quiz 7.9"),d("7.7","Justify (Diff Means)",7,"Quiz 7.4","Drills 7.7, Quiz 7.5-7.6")],[2026,3,7,d("8.2","GOF Test Setup",8,"Quiz 7.9","Drills 8.2, Quiz 8.1"),NC],[2026,3,8,NC,d("7.8+7.9","Test for diff means",7,"Quiz 7.5-7.6","U7 PC, Drills 7.8-7.9, Quiz 7.7",true)],[2026,3,9,d("8.3","GOF Test",8,"Quiz 8.1","Drills 8.3, Quiz 8.2"),NC],[2026,3,10,d("8.4","Expected Counts",8,"Quiz 8.2","Drills 8.4, Quiz 8.3"),d("8.1","Intro: Unexpected?",8,"Quiz 7.7","Drills 8.1")],[2026,3,13,d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.3","Drills 8.5, Quiz 8.4"),d("8.2","GOF Test Setup",8,"","Drills 8.2, Quiz 8.1")],[2026,3,14,d("8.6","Chi-Sq Test",8,"Quiz 8.4","U8 PC, Drills 8.6, Quiz 8.5"),NC],[2026,3,15,NC,d("8.3+8.4","GOF + Expected Counts",8,"Quiz 8.1","Drills 8.3-8.4, Quiz 8.2",true)],[2026,3,16,d("9.1","Intro: Points Align?",9,"Quiz 8.5","Drills 9.1, Quiz 8.6"),NC],[2026,3,17,d("9.2","CI for Slope",9,"Quiz 8.6","Drills 9.2, Quiz 9.1"),d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.2","Drills 8.5, Quiz 8.3-8.4")],[2026,3,20,OFF,OFF],[2026,3,21,OFF,OFF],[2026,3,22,OFF,OFF],[2026,3,23,OFF,OFF],[2026,3,24,OFF,OFF],[2026,3,27,d("9.3","Justify Slope (CI)",9,"Quiz 9.1","Drills 9.3, Quiz 9.2"),d("8.6","Chi-Sq Test",8,"Quiz 8.3-8.4","U8 PC, Drills 8.6, Quiz 8.5")],[2026,3,28,d("9.4","Test for Slope Setup",9,"Quiz 9.2","Drills 9.4, Quiz 9.3"),NC],[2026,3,29,NC,d("9.1+9.2","Intro + CI for Slope",9,"Quiz 8.5","Drills 9.1-9.2, Quiz 8.6",true)],[2026,3,30,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Drills 9.5, Quiz 9.4"),NC],[2026,4,1,d(R,"Review: U1-5",0,"Quiz 9.4",""),d("9.3","Justify Slope (CI)",9,"Quiz 8.6","Drills 9.3, Quiz 9.1-9.2")],[2026,4,4,d(R,"Review: U6-7",0),d("9.4","Test for Slope Setup",9,"Quiz 9.1-9.2","Drills 9.4, Quiz 9.3")],[2026,4,5,d(R,"Review: U8-9 + FRQ",0),NC],[2026,4,6,NC,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Quiz 9.4")],[2026,4,7,EX,EX],[2026,4,8,PO,PO]];
+const SY2627_PACING_B = [
+  {t:"1.1",n:"Individuals & Variables",u:1},
+  {t:"1.2",n:"Categorical Displays",u:1},
+  {t:"1.3",n:"One Quantitative Variable",u:1},
+  {t:"1.4",n:"Representing a Quant Variable",u:1},
+  {t:"1.5",n:"Describing Distributions",u:1},
+  {t:"1.6",n:"Normal Distributions",u:1},
+  {t:"1.7",n:"Summary Statistics",u:1},
+  {t:"1.8",n:"Graphical Representations",u:1},
+  {t:"1.9",n:"Comparing Distributions",u:1},
+  {t:"1.10",n:"The Normal Distribution",u:1},
+  {t:"2.1",n:"Two Categorical Variables",u:2},
+  {t:"2.2",n:"Two Quantitative Variables",u:2},
+  {t:"2.3",n:"Correlation",u:2},
+  {t:"2.4",n:"Linear Regression Models",u:2},
+  {t:"2.5",n:"Residuals",u:2},
+  {t:"2.6",n:"Least Squares Regression",u:2},
+  {t:"2.7",n:"Departures from Linearity",u:2},
+  {t:"2.8",n:"Influential Points",u:2},
+  {t:"2.9",n:"Multivariable Thinking",u:2},
+  {t:"3.1",n:"Samples and Surveys",u:3},
+  {t:"3.2",n:"Experiments and Observational",u:3},
+  {t:"3.3",n:"Random Sampling",u:3},
+  {t:"3.4",n:"Bias in Sampling",u:3},
+  {t:"3.5",n:"Designing Experiments",u:3},
+  {t:"3.6",n:"Principles of Experiments",u:3},
+  {t:"3.7",n:"Inference and Experiments",u:3},
+  {t:"4.1",n:"Probability",u:4},
+  {t:"4.2",n:"Mutually Exclusive Events",u:4},
+  {t:"4.3",n:"Conditional Probability",u:4},
+  {t:"4.4",n:"Independence",u:4},
+  {t:"4.5",n:"Probability Rules",u:4},
+  {t:"4.6",n:"Random Variables & Prob Dist",u:4},
+  {t:"4.7",n:"Mean & SD of Random Vars",u:4},
+  {t:"4.8",n:"Combining Random Variables",u:4},
+  {t:"4.9",n:"Binomial Random Variables",u:4},
+  {t:"4.10",n:"Mean & SD of Binomial",u:4},
+  {t:"4.11",n:"Geometric Random Variables",u:4},
+  {t:"4.12",n:"Simulations & Margin of Error",u:4},
+  {t:"5.1",n:"Intro: Why Is My Sample Diff?",u:5},
+  {t:"5.2",n:"Normal Distribution Revisited",u:5},
+  {t:"5.3",n:"Central Limit Theorem",u:5},
+  {t:"5.4",n:"Biased & Unbiased Estimates",u:5},
+  {t:"5.5",n:"Sampling Dist for Proportions",u:5},
+  {t:"5.6",n:"Sampling Dist Diff Proportions",u:5},
+  {t:"5.7",n:"Sampling Dist for Means",u:5},
+  {t:"5.8",n:"Sampling Dist Diff Means",u:5},
+  {t:"6.1",n:"Intro: What % Believe?",u:6},
+  {t:"6.2",n:"Constructing CI for p",u:6},
+  {t:"6.3",n:"Justifying Claims (CI)",u:6},
+  {t:"6.4",n:"Setting Up Test for p",u:6},
+  {t:"6.5",n:"Interpreting p-Values",u:6},
+  {t:"6.6",n:"Concluding Test for p",u:6},
+  {t:"6.7",n:"Type I & II Errors",u:6},
+  {t:"6.8",n:"CI for p1-p2",u:6},
+  {t:"6.9",n:"Justify Claims (Diff)",u:6},
+  {t:"6.10",n:"Test for p1-p2 Setup",u:6},
+  {t:"6.11",n:"Test for p1-p2",u:6},
+  {t:"7.1",n:"Intro: Error",u:7},
+  {t:"7.2",n:"CI for mean",u:7},
+  {t:"7.3",n:"Justify Claims (mean CI)",u:7},
+  {t:"7.4",n:"Setting Up Test for mean",u:7},
+  {t:"7.5",n:"Test for mean",u:7},
+  {t:"7.6",n:"CI for diff of means",u:7},
+  {t:"7.7",n:"Justify (Diff Means)",u:7},
+  {t:"7.8",n:"Test for diff means Setup",u:7},
+  {t:"7.9",n:"Test for diff means",u:7},
+  {t:"8.1",n:"Intro: Unexpected?",u:8},
+  {t:"8.2",n:"GOF Test Setup",u:8},
+  {t:"8.3",n:"GOF Test",u:8},
+  {t:"8.4",n:"Expected Counts",u:8},
+  {t:"8.5",n:"Chi-Sq Homog/Indep",u:8},
+  {t:"8.6",n:"Chi-Sq Test",u:8},
+  {t:"9.1",n:"Intro: Points Align?",u:9},
+  {t:"9.2",n:"CI for Slope",u:9},
+  {t:"9.3",n:"Justify Slope (CI)",u:9},
+  {t:"9.4",n:"Test for Slope Setup",u:9},
+  {t:"9.5",n:"Test for Slope",u:9},
+  {t:R,n:"Review: U1-4",u:0},
+  {t:R,n:"Review: U5-7",u:0},
+  {t:R,n:"Review: U8-9 + FRQ",u:0}
+];
+
+const SY2627_PACING_E = [
+  {t:"1.1",n:"Individuals & Variables",u:1},
+  {t:"1.2+1.3",n:"Cat + Quant Displays",u:1,db:true},
+  {t:"1.4+1.5",n:"Represent + Describe",u:1,db:true},
+  {t:"1.6",n:"Normal Distributions",u:1},
+  {t:"1.7+1.8",n:"Summary Stats + Graphs",u:1,db:true},
+  {t:"1.9+1.10",n:"Compare + Normal Dist",u:1,db:true},
+  {t:"2.1",n:"Two Categorical Variables",u:2},
+  {t:"2.2+2.3",n:"Scatterplots + Correlation",u:2,db:true},
+  {t:"2.4+2.5",n:"Regression + Residuals",u:2,db:true},
+  {t:"2.6",n:"Least Squares Regression",u:2},
+  {t:"2.7+2.8",n:"Departures + Influential",u:2,db:true},
+  {t:"2.9",n:"Multivariable Thinking",u:2},
+  {t:"3.1",n:"Samples and Surveys",u:3},
+  {t:"3.2+3.3",n:"Experiments + Random Samp",u:3,db:true},
+  {t:"3.4+3.5",n:"Bias + Designing Experiments",u:3,db:true},
+  {t:"3.6+3.7",n:"Principles + Inference",u:3,db:true},
+  {t:"4.1",n:"Probability",u:4},
+  {t:"4.2+4.3",n:"Mut Excl + Conditional",u:4,db:true},
+  {t:"4.4+4.5",n:"Independence + Rules",u:4,db:true},
+  {t:"4.6",n:"Random Variables",u:4},
+  {t:"4.7+4.8",n:"Mean/SD + Combining RV",u:4,db:true},
+  {t:"4.9+4.10",n:"Binomial RV + Mean/SD",u:4,db:true},
+  {t:"4.11+4.12",n:"Geometric + Simulations",u:4,db:true},
+  {t:"5.1",n:"Intro: Why Diff Samples?",u:5},
+  {t:"5.2+5.3",n:"Normal + CLT",u:5,db:true},
+  {t:"5.4+5.5",n:"Bias + Samp Dist p",u:5,db:true},
+  {t:"5.6+5.7",n:"Diff p + Samp Dist mean",u:5,db:true},
+  {t:"5.8",n:"Sampling Dist Diff Means",u:5},
+  {t:"6.1",n:"Intro: What % Believe?",u:6},
+  {t:"6.2+6.3",n:"CI + Justify (p)",u:6,db:true},
+  {t:"6.4+6.5",n:"Tests + p-Values",u:6,db:true},
+  {t:"6.6",n:"Concluding Test for p",u:6},
+  {t:"6.7",n:"Type I & II Errors",u:6},
+  {t:"6.8+6.9",n:"CI + Justify (Diff)",u:6,db:true},
+  {t:"6.10",n:"Test for p1-p2 Setup",u:6},
+  {t:"6.11",n:"Test for p1-p2",u:6},
+  {t:"7.1",n:"Intro: Error",u:7},
+  {t:"7.2+7.3",n:"CI + Justify (mean)",u:7,db:true},
+  {t:"7.4",n:"Setting Up Test for mean",u:7},
+  {t:"7.5+7.6",n:"Test + CI (Diff Means)",u:7,db:true},
+  {t:"7.7",n:"Justify (Diff Means)",u:7},
+  {t:"7.8+7.9",n:"Test for diff means",u:7,db:true},
+  {t:"8.1",n:"Intro: Unexpected?",u:8},
+  {t:"8.2",n:"GOF Test Setup",u:8},
+  {t:"8.3+8.4",n:"GOF + Expected Counts",u:8,db:true},
+  {t:"8.5",n:"Chi-Sq Homog/Indep",u:8},
+  {t:"8.6",n:"Chi-Sq Test",u:8},
+  {t:"9.1",n:"Intro: Points Align?",u:9},
+  {t:"9.2+9.3",n:"CI + Justify (Slope)",u:9,db:true},
+  {t:"9.4",n:"Test for Slope Setup",u:9},
+  {t:"9.5",n:"Test for Slope",u:9},
+  {t:R,n:"Review: U1-4",u:0},
+  {t:R,n:"Review: U5-7",u:0},
+  {t:R,n:"Review: U8-9 + FRQ",u:0}
+];
+
+const SCHEDULE_DEFS = {
+  "SY25-26": {
+    label: "Spring 2026 (Units 6-9)",
+    school: "Lynn English High School",
+    examDate: [2026, 4, 7],
+    range: { start: [2026,2,9], end: [2026,4,8] },
+    periods: {
+      B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:"7945275782" },
+      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, schoologyCourse:"7945275798" }
+    },
+    daysOff: [[[2026,3,3]], [[2026,3,20],[2026,3,24]]],
+    pacing: { B: [], E: [] },
+    units: [
+      {id:6,label:"Proportions"},{id:7,label:"Means"},
+      {id:8,label:"Chi-Square"},{id:9,label:"Slopes"}
+    ],
+    _legacyS: [[2026,2,9,d("6.6","Concluding Test for p",6,"Quiz 6.4","Drills 6.6, Quiz 6.5"),d("6.3","Justifying Claims (CI)",6,"Quiz 5-8, U5 PC","Drills 6.3, Quiz 6.1-6.2")],[2026,2,10,d("6.7","Type I & II Errors",6,"Quiz 6.5","Drills 6.7, Quiz 6.6"),NC],[2026,2,11,NC,d("6.4+6.5","Tests + p-Values",6,"Quiz 6.1-6.2","Drills 6.4-6.5, Quiz 6.3",true)],[2026,2,12,d("6.8","CI for p1-p2",6,"Quiz 6.6","Drills 6.8, Quiz 6.7"),NC],[2026,2,13,d("6.9","Justify Claims (Diff)",6,"Quiz 6.7","Drills 6.9, Quiz 6.8"),d("6.6","Concluding Test for p",6,"Quiz 6.3","Drills 6.6, Quiz 6.4-6.5")],[2026,2,16,d("6.10","Test for p1-p2 Setup",6,"Quiz 6.8","Drills 6.10, Quiz 6.9"),d("6.7","Type I & II Errors",6,"Quiz 6.4-6.5","Drills 6.7, Quiz 6.6")],[2026,2,17,d("6.11","Test for p1-p2",6,"Quiz 6.9","U6 PC, Drills 6.11, Quiz 6.10"),NC],[2026,2,18,NC,d("6.8+6.9","CI + Justify (Diff)",6,"Quiz 6.6","Drills 6.8-6.9, Quiz 6.7",true)],[2026,2,19,d("7.1","Intro: Error",7,"Quiz 6.10","Drills 7.1"),NC],[2026,2,20,d("7.2","CI for mean",7,"","Drills 7.2, Quiz 7.1"),d("6.10","Test for p1-p2 Setup",6,"Quiz 6.7","Drills 6.10, Quiz 6.8-6.9")],[2026,2,23,d("7.3","Justify Claims (mean CI)",7,"Quiz 7.1","Drills 7.3, Quiz 7.2"),d("6.11","Test for p1-p2",6,"Quiz 6.8-6.9","U6 PC, Drills 6.11, Quiz 6.10")],[2026,2,24,d("7.4","Setting Up Test for mean",7,"Quiz 7.2","Drills 7.4, Quiz 7.3"),NC],[2026,2,25,NC,d("7.1+7.2","Intro + CI for mean",7,"Quiz 6.10","Drills 7.1-7.2, Quiz 6.11",true)],[2026,2,26,d("7.5","Test for mean",7,"Quiz 7.3","Drills 7.5, Quiz 7.4"),NC],[2026,2,27,d("7.6","CI for diff of means",7,"Quiz 7.4","Drills 7.6, Quiz 7.5"),d("7.3","Justify Claims (mean CI)",7,"Quiz 6.11","Drills 7.3, Quiz 7.1-7.2")],[2026,2,30,d("7.7","Justify (Diff Means)",7,"Quiz 7.5","Drills 7.7, Quiz 7.6"),d("7.4","Setting Up Test for mean",7,"Quiz 7.1-7.2","Drills 7.4, Quiz 7.3")],[2026,2,31,d("7.8","Test for diff means Setup",7,"Quiz 7.6","Drills 7.8, Quiz 7.7"),NC],[2026,3,1,NC,d("7.5+7.6","Test + CI (Diff Means)",7,"Quiz 7.3","Drills 7.5-7.6, Quiz 7.4",true)],[2026,3,2,d("7.9","Test for diff means",7,"Quiz 7.7","U7 PC, Drills 7.9, Quiz 7.8"),NC],[2026,3,3,OFF,OFF],[2026,3,6,d("8.1","Intro: Unexpected?",8,"Quiz 7.8","Drills 8.1, Quiz 7.9"),d("7.7","Justify (Diff Means)",7,"Quiz 7.4","Drills 7.7, Quiz 7.5-7.6")],[2026,3,7,d("8.2","GOF Test Setup",8,"Quiz 7.9","Drills 8.2, Quiz 8.1"),NC],[2026,3,8,NC,d("7.8+7.9","Test for diff means",7,"Quiz 7.5-7.6","U7 PC, Drills 7.8-7.9, Quiz 7.7",true)],[2026,3,9,d("8.3","GOF Test",8,"Quiz 8.1","Drills 8.3, Quiz 8.2"),NC],[2026,3,10,d("8.4","Expected Counts",8,"Quiz 8.2","Drills 8.4, Quiz 8.3"),d("8.1","Intro: Unexpected?",8,"Quiz 7.7","Drills 8.1")],[2026,3,13,d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.3","Drills 8.5, Quiz 8.4"),d("8.2","GOF Test Setup",8,"","Drills 8.2, Quiz 8.1")],[2026,3,14,d("8.6","Chi-Sq Test",8,"Quiz 8.4","U8 PC, Drills 8.6, Quiz 8.5"),NC],[2026,3,15,NC,d("8.3+8.4","GOF + Expected Counts",8,"Quiz 8.1","Drills 8.3-8.4, Quiz 8.2",true)],[2026,3,16,d("9.1","Intro: Points Align?",9,"Quiz 8.5","Drills 9.1, Quiz 8.6"),NC],[2026,3,17,d("9.2","CI for Slope",9,"Quiz 8.6","Drills 9.2, Quiz 9.1"),d("8.5","Chi-Sq Homog/Indep",8,"Quiz 8.2","Drills 8.5, Quiz 8.3-8.4")],[2026,3,20,OFF,OFF],[2026,3,21,OFF,OFF],[2026,3,22,OFF,OFF],[2026,3,23,OFF,OFF],[2026,3,24,OFF,OFF],[2026,3,27,d("9.3","Justify Slope (CI)",9,"Quiz 9.1","Drills 9.3, Quiz 9.2"),d("8.6","Chi-Sq Test",8,"Quiz 8.3-8.4","U8 PC, Drills 8.6, Quiz 8.5")],[2026,3,28,d("9.4","Test for Slope Setup",9,"Quiz 9.2","Drills 9.4, Quiz 9.3"),NC],[2026,3,29,NC,d("9.1+9.2","Intro + CI for Slope",9,"Quiz 8.5","Drills 9.1-9.2, Quiz 8.6",true)],[2026,3,30,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Drills 9.5, Quiz 9.4"),NC],[2026,4,1,d(R,"Review: U1-5",0,"Quiz 9.4",""),d("9.3","Justify Slope (CI)",9,"Quiz 8.6","Drills 9.3, Quiz 9.1-9.2")],[2026,4,4,d(R,"Review: U6-7",0),d("9.4","Test for Slope Setup",9,"Quiz 9.1-9.2","Drills 9.4, Quiz 9.3")],[2026,4,5,d(R,"Review: U8-9 + FRQ",0),NC],[2026,4,6,NC,d("9.5","Test for Slope",9,"Quiz 9.3","U9 PC, Quiz 9.4")],[2026,4,7,EX,EX],[2026,4,8,PO,PO]]
+  },
+  "SY26-27": {
+    label: "Full Year 2026-27 (Units 1-9)",
+    school: "Lynn English High School",
+    examDate: [2027, 4, 14],
+    range: { start: [2026,8,2], end: [2027,4,15] },
+    periods: {
+      B: { label:"Period B", meetsDays:[1,2,4,5], doubleDay:null, schoologyCourse:null },
+      E: { label:"Period E", meetsDays:[1,3,5], doubleDay:3, schoologyCourse:null }
+    },
+    daysOff: [
+      [[2026,8,7]],
+      [[2026,9,12]],
+      [[2026,10,11]],
+      [[2026,10,25],[2026,10,27]],
+      [[2026,11,23],[2027,0,2]],
+      [[2027,0,18]],
+      [[2027,1,15],[2027,1,19]],
+      [[2027,3,19],[2027,3,23]]
+    ],
+    pacing: { B: SY2627_PACING_B, E: SY2627_PACING_E },
+    units: [
+      {id:1,label:"1-Var Data"},{id:2,label:"2-Var Data"},{id:3,label:"Sampling"},
+      {id:4,label:"Probability"},{id:5,label:"Distributions"},{id:6,label:"Proportions"},
+      {id:7,label:"Means"},{id:8,label:"Chi-Square"},{id:9,label:"Slopes"}
+    ],
+    _legacyS: null
+  }
+};
+let S = [];
+let cYear = "SY25-26";
+
+function dateFromArr(a){return new Date(a[0],a[1],a[2])}
+
+function buildOffSet(daysOff){
+  const s=new Set();
+  for(const e of daysOff){
+    if(e.length===1){const[y,m,d]=e[0];s.add(y+'-'+m+'-'+d)}
+    else{const st=dateFromArr(e[0]),en=dateFromArr(e[1]);
+      for(let dt=new Date(st);dt<=en;dt.setDate(dt.getDate()+1))
+        if(dt.getDay()>=1&&dt.getDay()<=5) s.add(dt.getFullYear()+'-'+dt.getMonth()+'-'+dt.getDate());
+    }
+  }
+  return s;
+}
+
+function enumWeekdays(startArr,endArr){
+  const days=[],st=dateFromArr(startArr),en=dateFromArr(endArr);
+  for(let dt=new Date(st);dt<=en;dt.setDate(dt.getDate()+1))
+    if(dt.getDay()>=1&&dt.getDay()<=5) days.push(new Date(dt));
+  return days;
+}
+
+function generateSchedule(def){
+  const offSet=buildOffSet(def.daysOff);
+  const allDays=enumWeekdays(def.range.start,def.range.end);
+  const queues={};
+  for(const pid in def.periods) queues[pid]=[...def.pacing[pid]];
+  const result=[],examDt=dateFromArr(def.examDate);
+  for(const dt of allDays){
+    const dow=dt.getDay();
+    const da=[dt.getFullYear(),dt.getMonth(),dt.getDate()];
+    const dk=da.join('-');
+    if(offSet.has(dk)){result.push([...da,OFF,OFF]);continue}
+    if(dt>=examDt){const isEx=dt.getTime()===examDt.getTime();result.push([...da,isEx?EX:PO,isEx?EX:PO]);continue}
+    const cells={};
+    for(const pid in def.periods){
+      const pDef=def.periods[pid];
+      if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
+      else if(queues[pid].length>0){const tp=queues[pid].shift();cells[pid]=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false)}
+      else cells[pid]=NC;
+    }
+    result.push([...da,cells.B||NC,cells.E||NC]);
+  }
+  return result;
+}
+
+function loadYear(yearKey){
+  const def=SCHEDULE_DEFS[yearKey];
+  if(!def) return;
+  cYear=yearKey;
+  if(def._legacyS) S=def._legacyS;
+  else{
+    const saved=loadScheduleEdits(yearKey);
+    if(saved){const ed=applyEdits(def,saved);S=generateSchedule(ed)}
+    else S=generateSchedule(def);
+  }
+  EX_DT=dateFromArr(def.examDate);
+  updateInfoBar(def);
+  updateLegend(def);
+  SCHOOLOGY_COURSE_B=def.periods.B.schoologyCourse||'';
+  SCHOOLOGY_COURSE_E=def.periods.E.schoologyCourse||'';
+  rCD();rCal();rProg();
+  localStorage.setItem('ap-roadmap-year',yearKey);
+  var pu=new URL(window.location);
+  pu.searchParams.set('year',yearKey);
+  history.replaceState(null,'',pu);
+  if(def.periods[cP]&&def.periods[cP].schoologyCourse){
+    loadSupabaseOverlay(cP).then(()=>{rCal();rProg()});
+  }
+  updateViewMenu();
+}
+
+function cycleYear(){
+  const keys=Object.keys(SCHEDULE_DEFS);
+  const idx=(keys.indexOf(cYear)+1)%keys.length;
+  loadYear(keys[idx]);
+  if(typeof MacSFX!=='undefined') MacSFX.play('click',0.3);
+}
+
+/* ═══ WINDOW DRAG & MINIMIZE ═══ */
+(function(){
+  const win=document.getElementById('mac-window');
+  const wrap=document.getElementById('window-wrap');
+  const icon=document.getElementById('desktop-icon');
+  const tb=win.querySelector('.title-bar');
+  let isDrag=false, startX=0, startY=0, origLeft=0, origTop=0, isPositioned=false;
+
+  tb.addEventListener('mousedown',function(e){
+    if(e.target.classList.contains('close-box')||e.target.classList.contains('collapse-box')) return;
+    isDrag=true;
+    if(!isPositioned){
+      const r=win.getBoundingClientRect();
+      win.style.position='relative';
+      win.style.left='0px'; win.style.top='0px';
+      isPositioned=true;
+    }
+    startX=e.clientX; startY=e.clientY;
+    origLeft=parseInt(win.style.left)||0;
+    origTop=parseInt(win.style.top)||0;
+    win.classList.add('dragging');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',function(e){
+    if(!isDrag) return;
+    win.style.left=(origLeft+e.clientX-startX)+'px';
+    win.style.top=(origTop+e.clientY-startY)+'px';
+  });
+  document.addEventListener('mouseup',function(){
+    if(!isDrag) return;
+    isDrag=false;
+    win.classList.remove('dragging');
+  });
+
+  window.minimizeWindow=function(){
+    if(typeof MacSFX!=='undefined') MacSFX.play('click',0.3);
+    wrap.style.display='none';
+    icon.classList.add('visible');
+    icon.classList.add('selected');
+    setTimeout(function(){icon.classList.remove('selected')},1500);
+  };
+  window.restoreWindow=function(){
+    if(typeof MacSFX!=='undefined') MacSFX.play('click',0.3);
+    wrap.style.display='';
+    icon.classList.remove('visible');
+    icon.classList.remove('selected');
+  };
+  window.selectIcon=function(el){
+    el.classList.toggle('selected');
+  };
+})();
+
+function saveScheduleEdits(yk,edits){edits.editedAt=new Date().toISOString();localStorage.setItem('ap-roadmap-edits-'+yk,JSON.stringify(edits))}
+function loadScheduleEdits(yk){const r=localStorage.getItem('ap-roadmap-edits-'+yk);if(!r)return null;try{return JSON.parse(r)}catch(e){return null}}
+function applyEdits(def,edits){const m=JSON.parse(JSON.stringify(def));if(edits.daysOff)m.daysOff=edits.daysOff;if(edits.periods)for(const p in edits.periods)if(m.periods[p])Object.assign(m.periods[p],edits.periods[p]);return m}
+
+function updateInfoBar(def){
+  const ib=document.getElementById('ib-year');
+  if(ib) ib.textContent=def.label;
+  const sc=document.getElementById('ib-school');
+  if(sc) sc.textContent=def.school;
+  const ft=document.getElementById('ft');
+  if(ft){let cnt=0;for(const e of S){const inf=cP==='B'?e[3]:e[4];if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO)cnt++}ft.textContent=cnt+' Sessions'}
+}
+
+function updateLegend(def){
+  const el=document.getElementById('legend-bar');
+  if(!el) return;
+  let h='';
+  for(const u of def.units) h+='<div class="legend-item"><div class="legend-sw" style="background:var(--u'+u.id+')"></div>U'+u.id+' '+u.label+'</div>';
+  h+='<div class="legend-item"><div class="legend-sw" style="background:var(--rev)"></div>Review</div>';
+  h+='<div class="legend-item"><div class="legend-sw" style="background:var(--exam-bg);border:1px solid #999"></div>Exam</div>';
+  h+='<div class="legend-item"><div class="legend-sw cell-off" style="border:1px solid #999"></div>No School</div>';
+  el.innerHTML=h;
+}
 
 /* ═══ MENU SYSTEM ═══ */
 let openMenuId = null;
@@ -2384,6 +2794,10 @@ function updateViewMenu() {
     const items = document.querySelectorAll('#menu-view .menu-dd-item');
     items[0].innerHTML = (cP==='B' ? '&#10003; ' : '&#160;&#160; ') + 'Period B';
     items[1].innerHTML = (cP==='E' ? '&#10003; ' : '&#160;&#160; ') + 'Period E';
+    document.querySelectorAll('[data-year]').forEach(function(item){
+      var yk=item.dataset.year;
+      item.textContent=(cYear===yk?'\u2713 ':'  ')+SCHEDULE_DEFS[yk].label;
+    });
 }
 
 /* ═══ DIALOG ═══ */
@@ -4675,9 +5089,9 @@ function rProg(){
         const u=inf.t===R?"Rev":"U"+inf.u;
         if((inf.t===R&&inf.u===0)||inf.u){ut[u]=(ut[u]||0)+1;tt++;
             const dt=new Date(e[0],e[1],e[2]);if(dt<=t){ud[u]=(ud[u]||0)+1;ds++;}}}
-    const uo=["U6","U7","U8","U9","Rev"];
-    const uc={U6:"var(--u6)",U7:"var(--u7)",U8:"var(--u8)",U9:"var(--u9)",Rev:"var(--rev)"};
-    const utc={U6:"var(--u6-t)",U7:"var(--u7-t)",U8:"var(--u8-t)",U9:"var(--u9-t)",Rev:"var(--rev-t)"};
+    const def=SCHEDULE_DEFS[cYear];
+    const uo=def.units.map(u=>"U"+u.id).concat(["Rev"]);
+    const uc={};const utc={};for(const u of uo){uc[u]="var(--"+(u==="Rev"?"rev":u.toLowerCase())+")";utc[u]="var(--"+(u==="Rev"?"rev":u.toLowerCase())+"-t)";}
     let h="";for(const u of uo){const c=ut[u]||0;if(!c)continue;
         h+=`<div class="prog-seg" style="width:${(c/tt*100).toFixed(1)}%;background:${uc[u]};color:${utc[u]}">${u}</div>`;}
     h+=`<div class="prog-mark" style="left:${tt?(ds/tt*100):0}%"></div>`;
@@ -4729,9 +5143,15 @@ function mTip(e){tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY+12)
 function hTip(){tip.style.display="none";}
 
 /* ═══ INIT ═══ */
-(function(){var ps=new URLSearchParams(window.location.search);var pp=(ps.get('period')||'').toUpperCase();if(pp==='E')cP='E';})();
+(function(){
+  var ps=new URLSearchParams(window.location.search);
+  var pp=(ps.get('period')||'').toUpperCase();
+  var py=ps.get('year')||localStorage.getItem('ap-roadmap-year')||'SY25-26';
+  if(pp==='E') cP='E';
+  if(SCHEDULE_DEFS[py]) cYear=py;
+  loadYear(cYear);
+})();
 uClock();setInterval(uClock,15e3);
-rCD();rCal();rProg();updateViewMenu();
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");_b.classList.add("s7btn-inv","s7btn-default");_a.classList.remove("s7btn-inv","s7btn-default");}
 loadRegistry();
 setInterval(()=>{rCD();rCal();rProg()},6e4);
