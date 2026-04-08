@@ -1,0 +1,50 @@
+# Video 2 — Transcript
+# Unit 9, Lesson 5
+
+edit
+more_vert
+
+[00:00] Hello students. I'm Daren Starnes, coming to you from beautiful Hilton Head, South Carolina. This is the second video on topic 9.5: Carrying Out a Test for the Slope of a Regression Model.
+
+[00:11] What will you learn in this video? First, how do you interpret the p-value in a test about the slope of a population regression line? And second, how do we state a conclusion in a test about the slope?
+
+[00:24] Let's look at a familiar example from the previous videos. It's about schools and "equal opportunity". The big question is whether educational systems can equalize opportunities for lower income students.
+
+[00:37] This visual from New York City shows that higher poverty areas, in general, tend to have lower attendance rates. That's true throughout the country. Higher income areas tend to have fewer chronically absent students, perhaps because they have better access to transportation or they don't have to work to support their families like some low-income students do.
+
+[00:57] Researchers wondered if attendance might be the solution. If they could develop policies and systems to support lower-income students, increasing attendance, and if that would result in increased scores.
+
+[01:12] So some researchers in Texas decided to find out. They took a random sample of 11 Algebra 1 students in Texas and recorded the percent of school days attended and the number of questions answered correctly on the state's end-of-course test.
+
+[01:28] Here are the data, along with a scatterplot, a regression line, and a least-squares regression analysis from computer output. The question we've been asking is: do these data give convincing evidence at the alpha equals .01 significance level of a positive linear relationship between state test score and percent attendance in the population of Texas Algebra 1 students?
+
+[01:50] So far, in previous videos, we've stated hypotheses. Our null was beta equals zero, our alternative was beta greater than zero to test for a positive linear relationship in the population. And we defined the slope, uh, beta as the slope of the population regression line for predicting the number of questions answered correctly on the state test from the percent of school days attended for all the Texas Algebra 1 students. We're using alpha equals .01, and we identify the procedure as a t-test for slope, and we checked that the conditions were met.
+
+[02:24] In the most recent video, we calculated the standardized test statistic, t equals 9.18, and a p-value of approximately zero, to three decimal places, using our slope of our sample regression line of .57. And we said that that sample regression line slope of .57 is evidence against the null hypothesis of no linear relationship and for the alternative hypothesis of a positive linear relationship, because obviously .57 is greater than zero. Now the p-value measures how likely it is to get evidence for the alternative hypothesis as strong as or stronger than the observed evidence from the study by chance alone when the null hypothesis is true.
+
+[03:07] So in this case, assuming that there is no linear relationship between state test score and percent attendance for all Texas Algebra 1 students, there is an approximately zero probability of getting a sample regression line with a slope of .57 or greater by chance alone in a random sample of 11 Texas students.
+
+[03:27] Well you'll remember from the past when you're making a conclusion in a test, a small p-value means the test statistic is unlikely to occur by random chance alone, whereas larger p-values suggest the test statistic is not unlikely to occur by random chance. And that guides your conclusion. If the p-value is small, then we say because the p-value of whatever is less than or equal to the alpha value, we reject the null hypothesis, and we state that there is convincing statistical evidence for Ha in context. If the p-value is larger than alpha, we fail to reject the null hypothesis, and we state that there is not convincing statistical evidence that the alternative hypothesis is correct.
+
+[04:09] What about in this case? Well, we're recapping all of the things from the previous videos once again. And with that p-value of approximately zero, which is less than our alpha stated of .01, we reject the null hypothesis. There is convincing statistical evidence of a positive linear relationship between state test score and per- percent attendance-- excuse me-- percent attendance for all the Texas Algebra 1 students.
+
+[04:35] So let's practice with a scenario from a couple of videos past, called "Don't Spill My Drink!" Remember that two AP Statistics students designed an experiment to see if there's a linear relationship between speed on a dirt road with bumps and amount of drink spilled. To find out, they filled a cup with 275 milliliters of water each time and placed it in the car's cup holder before driving down a bumpy dirt road at a randomly assigned speed and then recording how much water spilled out. They did five trials each at 10, 20, 30, 40, and 50 miles an hour, in a random order. And here is a scatterplot of the data along with a reduced version of the computer output from the least-squares regression analysis.
+
+[05:18] We ask the question before of whether these data provide convincing evidence at the .05 significance level of a linear relationship between the two variables, the car's speed on a bumpy dirt road and the amount of drink spilled. And we were told to assume the conditions for inference are met.
+
+[05:34] So a quick recap from the previous videos. Uh, we stated hypotheses. This time the alternative is beta not equal to zero because the student researchers didn't have an idea of whether more or less would spill out as they drove across the bumpy road. T-test for slope was the method, and we calculated in the previous video that t was 8.49 and the p-value 1.52 times 10 to the negative 8.
+
+[05:58] Why don't you try to interpret the p-value? Just pause the video, write out your interpretation, and then resume the video and see how you did.
+
+[06:08] We would say, assuming that there is no linear relationship between the car's speed on a bumpy dirt road and the amount of drink spilled, there is a 1.52 times 10 to the negative eighth probability of getting a sample regression line with a slope as extreme as or more extreme than 1.52 in either direction by chance alone.
+
+[06:29] How'd you do on that one? And now we're ready to make the conclusion. Again, why don't you try pausing the video, writing out your conclusion, and then you can resume to see how you did.
+
+[06:41] Recapping once again from the previous videos, most recently t equals 8.49 and p-value 1.52 times 10 to the negative eighth. We would say because the p-value of 1.52 times 10 to the negative eighth is less than our stated alpha of .05, we reject the null hypothesis. There is convincing statistical evidence of a linear relationship between the car's speed on a bumpy dirt road and the amount of drink spilled.
+
+[07:09] What should you take away from this video? Well, in interpreting a p-value in a test about the slope, it measures how likely it would be to get evidence for the alternative hypothesis as strong as or stronger than the observed evidence from the study by chance alone when the null hypothesis is true. Just be sure to pay attention to whether you have a one-sided or a two-sided alternative hypothesis. And when you state your conclusion, follow the rules you've been using for significance tests. If the p-value is less than or equal to alpha, reject the null because there's convincing evidence for the alternative. If the p-value is greater than alpha, fail to reject the null and state that there is not convincing statistical evidence for the alternative.
+
+[07:51] Well, thank you for tuning in. In the next video, we'll take you through a test about the slope from start to finish. We'll see you then.
+
+thumb_up
+thumb_down

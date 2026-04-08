@@ -1,0 +1,165 @@
+# Video 2 — Slide Descriptions
+# Unit 9, Lesson 3
+
+more_vert
+
+[00:00] — TOPIC 9.3
+The video opens with a title slide: "TOPIC 9.3 Justifying a Claim with a Confidence Interval for a Slope of a Regression Model DAILY VIDEO 2". It states, "In this video, we will illustrate the entire process of constructing and interpreting a confidence interval for the slope of a population regression line."
+
+[00:13] — WHAT WILL WE LEARN?
+A transition slide with the text "WHAT WILL WE LEARN?".
+
+[00:15] — What Will We Learn?
+The slide lists the learning objective:
+"1. How do we construct and interpret a confidence interval for the slope of a population regression line?"
+
+[00:24] — LET'S PRACTICE
+A transition slide with the text "LET'S PRACTICE".
+
+[00:27] — 2019 International Exam #2
+The slide presents a problem scenario, a scatterplot, and a computer output table.
+
+Text: "A real estate agent working in a large city believes that, for three-bedroom houses, the selling price of the house decreases by approximately $2,000 for every mile increase in the distance of the house from the city center. To investigate the belief, the agent obtained a random sample of 20 three-bedroom houses that sold in the last year. The selling price, in thousands of dollars, and the distance from the city center, in miles, for each of the 20 houses are shown in the scatterplot. The table shows computer output from a regression analysis of the data."
+
+Scatterplot: The x-axis is "Distance from City Center (miles)" (ranging from 0 to 25) and the y-axis is "Selling Price (thousands)" (ranging from $250 to $310). It shows a negative linear association between the variables.
+
+Table:
+
+Predictor: Constant, Distance
+
+Coef: 301.7, -2.158
+
+SE Coef: 1.80, 0.149
+
+T: 167.17, -14.45
+
+P: 0.000, 0.000
+
+S = 4.4336, R-sq = 92.1%
+
+[01:10] — 2019 International Exam #2
+The same slide, but now the two parts of the question are displayed below the text:
+"(a) Assume all conditions for inference are met. Construct and interpret a 95 percent confidence interval for the slope of the least-squares regression line.
+(b) Does the confidence interval contradict the agent's belief about the relationship between selling price and distance from the city center? Justify your answer."
+
+[01:53] — 2019 International Exam #2(a)
+The slide focuses on part (a) of the question, keeping the scatterplot and table visible on the right.
+
+[02:04] — 2019 International Exam #2(a)
+Text appears on the left to define the parameter: "95% confidence interval for 
+𝛽
+β
+ = the slope of the population regression line for predicting selling price (in thousands) from distance from the city center (in miles) for all three-bedroom houses near this city."
+
+[02:25] — 2019 International Exam #2(a)
+The text "One-sample 
+𝑡
+t
+ interval for 
+𝛽
+β
+" appears, identifying the procedure.
+
+[02:30] — 2019 International Exam #2(a)
+The text "Conditions are met." appears below the previous point.
+
+[02:37] — 2019 International Exam #2(a)
+The left side of the slide clears to begin the calculation. The text "
+𝑏
+=
+−
+2.158
+b=−2.158
+" appears, and a blue box highlights the value "-2.158" in the "Coef" column next to "Distance" in the computer output table.
+
+[02:46] — 2019 International Exam #2(a)
+The next line of the calculation appears: "For 95% confidence and df = 20 - 2 = 18, 
+𝑡
+∗
+=
+2.101
+t
+∗
+=2.101
+"
+
+[03:00] — Table B t distribution critical values
+The video switches to a PDF of a statistical table. The row for degrees of freedom (df) = 18 is highlighted, along with the column for 95% confidence level (which corresponds to a tail probability 
+𝑝
+=
+0.025
+p=0.025
+). The intersecting value, 2.101, is highlighted in blue.
+
+[03:19] — 2019 International Exam #2(a)
+The video returns to the slide with the calculation steps.
+
+[03:26] — TI-84 Plus Calculator
+The video shows a calculator screen demonstrating how to find the critical t-value. The user navigates to the invT function and inputs the area (0.975 for the positive critical value) and degrees of freedom (18). The output shows 2.100922015.
+
+[03:46] — 2019 International Exam #2(a)
+The video returns to the slide, and the final steps for calculating the confidence interval are displayed:
+
+𝐶
+𝐼
+=
+𝑏
+±
+𝑡
+∗
+(
+𝑆
+𝐸
+𝑏
+)
+CI=b±t
+∗
+(SE
+b
+	​
+
+)
+
+=
+−
+2.158
+±
+2.101
+(
+0.149
+)
+=−2.158±2.101(0.149)
+ (A blue box highlights the standard error "0.149" in the table)
+
+=
+−
+2.158
+±
+0.313
+=−2.158±0.313
+
+=
+−
+2.471
+=−2.471
+ to 
+−
+1.845
+−1.845
+
+[04:26] — 2019 International Exam #2(a)
+The left side clears, and the calculated interval "95% CI: -2.471 to -1.845" is shown at the top left.
+
+[04:31] — 2019 International Exam #2(a)
+The interpretation of the interval appears below the CI value:
+"We are 95% confident that the slope of the true regression line is between -2.471 and -1.845 thousands of dollars per mile. This implies that for each additional mile that a three-bedroom house is away from the city center, the selling price of the house is expected to decline between $1,845 and $2,471."
+
+[05:01] — 2019 International Exam #2(b)
+The slide shifts to part (b) of the question, displaying the main problem text, the part (b) prompt, the scatterplot, and t
+
+Citations
+
+https://www.bartleby.com/questions-and-answers/suppose-x~n12.-what-is-thez-scoreof-x8-enter-an-exact-number-as-an-integer-fraction-or-decimal./da3b9516-ce8d-452e-9ffd-08cf556cc82a
+https://pdfcoffee.com/download/2019-stat-ap-pdf-free.html
+thumb_up
+thumb_down

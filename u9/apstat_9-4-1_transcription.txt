@@ -1,0 +1,114 @@
+# Video 1 — Transcript
+# Unit 9, Lesson 4
+
+edit
+more_vert
+
+[00:00] Hello AP stats students. I'm Daren Starnes coming to you from beautiful Hilton Head South Carolina.
+
+[00:07] This is video one on topic 9.4, setting up a test for the slope of a regression model.
+
+[00:14] What will you learn in this video? How do you state a null hypothesis in a test about the slope of a population regression line?
+
+[00:23] And how do you state the alternative hypothesis in a test about the slope? Let's look at an example.
+
+[00:30] This actually came from Dash Young Saver in Unit 2 if you watched one of his videos. This is about schools and equal opportunity.
+
+[00:39] And the question researchers posed was, can education systems equalize opportunities for lower-income students?
+
+[00:48] Here's a graphic that shows New York City and a study that revealed that higher-poverty areas typically have lower attendance rates.
+
+[00:57] Nationally, it's also true that higher-income areas tend to have fewer chronically absent students.
+
+[01:03] Some possible reasons for that are increased access to transportation for those students and also not having to work to support their families like some low-income students do.
+
+[01:13] We call this the income-attendance gap. So one question we might ask is, can we improve scores of low-income students by increasing attendance?
+
+[01:26] Some school systems have targeted attendance as a key in trying to do that.
+
+[01:31] So if the model is that low income leads to low attendance leads to low scores, maybe if we increase attendance we can also increase the scores.
+
+[01:41] So researchers in Texas designed a study to find out.
+
+[01:45] They collected data on the percent of school days attended and the number of questions answered correctly on the state's end-of-course Algebra 1 test for a random sample of 11 Algebra 1 students.
+
+[01:56] We're going to show you the data here, along with a scatterplot and computer output from a least-squares regression analysis.
+
+[02:04] You can see the regression line there on the plot. And the big question is, do the data give convincing evidence at the alpha equals 0.01 significance level of a positive linear relationship between state test score and percent attendance for all Texas Algebra 1 students?
+
+[02:22] We know that we need to start our test by stating a null hypothesis. And from past units you learned that in a statistical test, the null hypothesis is a statement of no difference or no change or no relationship quite often.
+
+[02:37] In this example with attendance and test scores, the null hypothesis would be that there is not a linear relationship between these two variables.
+
+[02:44] Percent of school days attended and number of questions answered correctly on the Algebra 1 state test.
+
+[02:51] So if that's true, if there's no linear relationship, that means you have a horizontal line for the population regression line with a slope of zero.
+
+[03:00] And we can write it this way in symbols. The null hypothesis beta equals zero.
+
+[03:06] Where beta is the slope of the population regression line for predicting number of questions answered correctly on the state test from the percent of school days attended for all Texas Algebra 1 students.
+
+[03:17] Now until we have convincing evidence otherwise, that's what we assume is true throughout our significance test. We assume the null hypothesis is true.
+
+[03:25] What about the alternative hypothesis? Well you know that from previous work in a test, the alternative hypothesis is the claim that researchers hope to support with evidence from their data.
+
+[03:37] In this particular case the researchers suspected that there is a positive linear relationship between the two variables percent of school days attended and number of questions answered correctly.
+
+[03:49] So their alternative hypothesis is that the population regression line would have a positive slope.
+
+[03:55] In symbols we write it as H sub a beta greater than zero. And we've already defined what beta is.
+
+[04:03] So a quick summary. You already know a lot about stating hypotheses. But for the slope of a population regression line, the null is typically a statement of equality suggesting no linear relationship.
+
+[04:14] H naught beta equals zero. And the alternative always contains a strict inequality. So we could have beta greater than zero, beta less than zero, or beta not equal to zero.
+
+[04:26] When the equality is less than or greater than, we call that a one-sided alternative hypothesis. When the inequality is not equal to, we call it two-sided.
+
+[04:36] Remember that the choice of the alternative hypothesis is determined by the researchers when they pose their question and should be stated before they collect data.
+
+[04:44] It's no fair looking at the data afterwards and then choosing your alternative to suit your purposes.
+
+[04:49] Remember never to refer to statistics like the slope of the sample regression line b in the hypotheses. And always remember to define your parameter.
+
+[05:00] So let's practice. We've got a fun scenario here about two AP statistics students who wondered about whether there is a linear relationship between speed and amount of drink spilled when driving on bumpy dirt roads.
+
+[05:14] To find out they designed an experiment where they filled a cup with 275 milliliters of water and placed it in the cup holder of the car.
+
+[05:22] Then they drove down a bumpy dirt road at a specified speed and recorded how much water spilled out.
+
+[05:28] They ran 25 trials of this experiment with five trials each at 10, 20, 30, 40, and 50 miles per hour.
+
+[05:36] Now here are the data from the experiment. You see five trials for each speed. Notice that several data points have the same value for amount spilled at that speed. So keep that in mind.
+
+[05:49] Here's a scatterplot of the data labeled with the number of repeated values and the least squares regression output from an analysis from the computer.
+
+[05:59] The question here, do the data provide convincing evidence at the .05 significance level of a linear relationship between the car's speed on a bumpy dirt road and the amount of drink spilled?
+
+[06:10] We'll assume the conditions for inference are met. We need to state hypotheses.
+
+[06:16] So what I'd like you to do is pause the video, state your hypotheses, and then turn the video back on and you can see how you did.
+
+[06:29] All right, so as we state our appropriate hypotheses, our null hypothesis is beta equals zero, no linear relationship.
+
+[06:37] And our alternative hypothesis is beta not equal to zero. The researchers did not specify whether they thought the amount spilled would increase or decrease as the speed of the vehicle increased.
+
+[06:49] Here beta is the slope of the true regression line for predicting amount of drink spilled in milliliters from the car's speed in miles per hour on a bumpy dirt road. How'd you do?
+
+[07:01] What should you take away from this video?
+
+[07:04] When you're stating the null hypothesis in a test about the slope, the null hypothesis is beta equals a specified value. Usually beta equals zero indicating a test of no linear relationship.
+
+[07:17] Always remember to define your parameter beta clearly.
+
+[07:21] When you state your alternative hypothesis, there are three possibilities.
+
+[07:25] You might think that the positive linear relationship is the case in the population, beta greater than zero.
+
+[07:31] Or maybe a negative linear relationship, beta less than zero.
+
+[07:35] Or you just think that there might be a linear relationship, beta not equal to zero.
+
+[07:40] So that's it for this first video. When we come back we'll check conditions for a test about the slope. Hope to see you then.
+
+thumb_up
+thumb_down

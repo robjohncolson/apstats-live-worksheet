@@ -1,0 +1,94 @@
+# Video 2 — Transcript
+# Unit 9, Lesson 2
+
+more_vert
+
+[00:00] I'm Daren Starnes, coming to you from beautiful Hilton Head, South Carolina. This is the second video for topic 9.2, Confidence Intervals for the Slope of a Regression Model. What will you learn in this video? Two things. First, how do we identify an appropriate procedure for a confidence interval for the slope of a population regression line? And second, how do we verify conditions for calculating a confidence interval for the slope?
+
+[00:30] Well, let's look at a familiar example from the first two videos. This is about predicting Old Faithful eruptions in 2019. You may recall, if you've seen the earlier videos, that our family took our first trip to Yellowstone in July of 1995 and were fortunate, with only six hours in the park, to see Old Faithful erupt. My wife and I returned to the park in July of 2019 and wondered if the model used for predicting Old Faithful eruptions in the past, from 1995, was still valid. And in the first video of this unit, we used simulation to determine that the answer is no. So we want to construct a confidence interval for the slope of the population regression line in 2019, if possible.
+
+[01:15] Well, here are the data from July of 2019. We have a random sample of 25 eruptions, and we've made a scatterplot of the duration and the wait time. And we've also calculated the sample regression line. You can notice the computer output here from a least squares regression analysis gives the same slope, 7.79, and the same y-intercept, 62.95, as is shown in the equation.
+
+[01:41] So, how do we go about constructing a confidence interval? Well, first we better check that it's okay to do so. In the previous video, we talked about the population regression model, and this visual summarizes what is going on when the conditions are met for the population regression model. So we have the population regression line 
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+. And then we have these three conditions that have to be met before we perform inference for 
+𝛽
+β
+. The true relationship between x and y has to be linear, not curved. The standard deviation of the y values has to be the same, represented by these same three sigmas on the normal curves. And the third, for any particular value of x, the responses or y values have to be approximately normally distributed around the regression line.
+
+[02:33] When those conditions are met, we learned in the last video that the sampling distribution of the slope b of the sample regression line has a shape that's approximately normal, has a center that's equal to the slope of the population regression line 
+𝛽
+β
+, and has a variability or standard deviation given by this complicated formula, as long as we don't sample more than 10% of the population. So here's the picture of what the sampling distribution looks like when the population regression model conditions are met.
+
+[03:05] And we defined those symbols earlier in a previous video, that 
+𝜎
+σ
+ is the standard deviation of the residuals around the population regression line. 
+𝜎
+𝑥
+σ
+x
+	​
+
+ is standard deviation of x values in the population. And n is the sample size.
+
+[03:20] We had some questions left over from the previous video. How do we check conditions about the population regression model using only the sample data you see here? And how can we estimate the standard deviation of the sampling distribution of the sample slope b using this formula when we don't know the values of 
+𝜎
+σ
+ and 
+𝜎
+𝑥
+σ
+x
+	​
+
+ from the population?
+
+[03:43] Well, in terms of checking conditions, we have to first be sure that the true relationship between x and y is linear. Looking at this scatterplot, the pattern has a linear form, not curved. It's not very strong, but it's definitely linear in form. We can also look at the residual plot to be sure that we see a random scatter of points about the horizontal line at zero, and no clear indication of a leftover curved pattern of any sort. So that condition is satisfied.
+
+[04:16] The standard deviation of the y values does not vary with x. Well, it's hard to tell with so few points. We can look at the scatterplot and see that there's roughly similar amount of variation around the line at all the x values. Or we could magnify it on the residual plot, and we don't see any clear evidence, with so few points, that the amount of spread around this horizontal line is different. So we need to see clear evidence that a condition is violated before we say no good.
+
+[04:48] And the third one is that for any particular value of x, the responses or y values are approximately normally distributed. Well, we need to make a graph of the residuals, in this case a dotplot, or maybe a histogram or something like that. We don't see any evidence of skewness, or any clear outliers that would indicate departures from normality. Now, if we do see strong skewness, or if we see outliers that indicate non-normality, we need to check that our sample size is greater than 30, or we can't proceed.
+
+[05:22] There are some additional conditions based on the data collection itself that have to be met for inference. One is that our data need to be collected using a random sample or a randomized experiment. In this case, the data came from a random sample of 25 eruptions in July 2019. So that will allow us to generalize to the population of eruptions in that month.
+
+[05:46] And the other is, we need to be sure that we have independent observations. So when we're sampling without replacement, we need to check that we didn't sample more than 10% of the population. We knew that there were 262 eruptions in a month back in 1995. So assuming that's still similar, 25 would be certainly less than or equal to 10% of 262.
+
+[06:10] So all the conditions are met, which is good. And now the other question that we had left unanswered was, if the conditions are met, how do we estimate the standard deviation of the sampling distribution of the slope? We don't know 
+𝜎
+σ
+. We don't know 
+𝜎
+𝑥
+σ
+x
+	​
+
+.
+
+[06:30] Well, maybe we can use the sample regression output to give us some information. The sample standard deviation of the x values is 0.213. And we can use that to estimate the population standard deviation of the x values. When we look at the residual plot, the standard deviation of the residuals for the sample regression line is given by this slightly complicated formula. We call it s. It's the square root of the sum of the squared residuals divided by n - 2. And that value is actually given down here in the computer output, 4.2097. So that's the size of a typical prediction error when we use the sample regression line. We'll use that value s to estimate 
+𝜎
+σ
+, the standard deviations around the population regression line. So we now have an answer to that second lingering question.
+
+[07:30] And that means we're about ready to construct a confidence interval for the slope of this population regression line in 2019. The name of that type of interval is a t-interval for the slope. We'll get into the details of calculating it in the next video.
+
+[07:46] So what should you take away? Well, if you are wanting to calculate a confidence interval for the slope of a population regression line, you'd like to use a t-interval for the slope. Why a t-interval? Because we're estimating 
+𝜎
+σ
+ with s. And how do we verify the conditions? Well, as you can see, there are quite a lot of them. Most of the verifications of those first three conditions are based on looking at graphs. The last one is about how the data were collected. S
+
+thumb_up
+thumb_down

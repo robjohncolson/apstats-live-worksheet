@@ -1,0 +1,577 @@
+# Video 3 — Slide Descriptions
+# Unit 9, Lesson 2
+
+more_vert
+
+Here is a detailed breakdown of the visual changes and content in the video:
+
+[00:00] — Title Slide
+Topic 9.2: Confidence Intervals for the Slope of a Regression Model. Daily Video 3.
+
+[00:13] — What Will We Learn?
+The slide lists two objectives:
+
+How do we determine the margin of error when estimating the slope of a population regression line?
+
+How do we calculate a confidence interval for the slope of a population regression line?
+
+[00:28] — Title Slide
+"Let's Look at an Example"
+
+[00:32] — Predicting Old Faithful: 2019
+The slide displays a scenario: "The scatterplot displays data on the duration (in minutes) and wait time until the next eruption (in minutes) for a random sample of 25 Old Faithful eruptions in July 2019, along with the sample regression line. Computer output from a least-squares regression analysis is shown below."
+
+Visual: A scatterplot titled "Wait Time (min)" vs "Duration (min)" showing the data points and a regression line.
+
+Computer Output Table:
+Predictor | Coef | SE Coef | T-Value | P-Value
+--- | --- | --- | --- | ---
+Constant | 62.95 | 16.4 | 3.85 | 0.001
+Duration(min) | 7.79 | 4.03 | 1.94 | 0.065
+S=4.20970 | R-sq=14.01% | R-sq(adj)=10.27%
+
+Prompt: "Calculate and interpret a 95% confidence interval for the slope of the population regression line in 2019."
+
+[01:12] — Calculating the Margin of Error
+The slide begins with the text: "In AP Statistics, confidence intervals have the form:"
+
+Formula: CI = point estimate ± margin of error
+
+[01:23] — Calculating the Margin of Error (continued text)
+Text appears: "The margin of error describes how much a value of a sample statistic is likely to vary from the value of the corresponding population parameter."
+
+[01:34] — Calculating the Margin of Error (factors)
+Text appears: "The margin of error is determined by two factors:"
+
+How much the statistic typically varies from the parameter
+
+How confident we want to be in our estimate
+
+[01:50] — Calculating the Margin of Error (formula expansion)
+The formula expands to: margin of error = (critical value)(standard error of statistic)
+
+[02:00] — Calculating the Margin of Error (visual linking)
+Blue and red boxes appear, linking the conceptual factors to the parts of the formula:
+
+Red box links "How confident we want to be in our estimate" to (critical value).
+
+Blue box links "How much the statistic typically varies from the parameter" to (standard error of statistic).
+
+[02:17] — Standard Error of Slope
+The slide title changes, keeping the margin of error formula at the top.
+Text appears: "The standard error of a statistic is an estimate of the standard deviation of the sampling distribution of the statistic."
+
+[02:27] — Standard Error of Slope (formula)
+Text and formula appear: "From Topic 9.2, the standard deviation of the sampling distribution of b is: 
+𝜎
+𝑏
+=
+𝜎
+𝜎
+𝑥
+𝑛
+σ
+b
+	​
+
+=
+σ
+x
+	​
+
+n
+	​
+
+σ
+	​
+
+"
+
+[02:43] — Standard Error of Slope (estimation)
+Text and a new formula appear: "Because we don't know the value of 
+𝜎
+σ
+ or 
+𝜎
+𝑥
+σ
+x
+	​
+
+, we estimate them with the standard deviation of residuals for the sample regression line, 
+𝑠
+s
+, and the standard deviation of the 
+𝑥
+x
+-values in the sample, 
+𝑠
+𝑥
+s
+x
+	​
+
+, to get the standard error of b: 
+𝑆
+𝐸
+𝑏
+=
+𝑠
+𝑠
+𝑥
+𝑛
+−
+1
+SE
+b
+	​
+
+=
+s
+x
+	​
+
+n−1
+	​
+
+s
+	​
+
+"
+
+[03:20] — Calculating the Margin of Error (critical value)
+The slide returns to the "Calculating the Margin of Error" title.
+Text appears: "The critical value is a multiplier that makes the margin of error large enough to give a specific amount of confidence that the interval contains the value of the parameter."
+
+[03:35] — Calculating the Margin of Error (t distribution)
+Text appears: "For confidence intervals for the slope of a population regression line, the critical values represent the boundaries encompassing the middle 
+𝐶
+%
+C%
+ of the 
+𝑡
+t
+ distribution with degrees of freedom 
+𝑑
+𝑓
+=
+𝑛
+−
+2
+df=n−2
+, where 
+𝐶
+%
+C%
+ is the confidence level."
+
+[03:58] — Calculating the Margin of Error (Old Faithful example)
+The slide updates with a specific text problem applying the concept to the Old Faithful scenario: "In the Old Faithful example, we are asked to construct a 95% confidence interval based on a random sample of 
+𝑛
+=
+25
+n=25
+ eruptions. To find the critical value 
+𝑡
+∗
+t
+∗
+ for a 95% confidence interval, find the boundaries encompassing the middle 95% of the 
+𝑡
+t
+ distribution with 
+𝑑
+𝑓
+=
+25
+−
+2
+=
+23
+df=25−2=23
+."
+
+[04:15] — Calculating the Margin of Error (distribution graph)
+A visual graph of a standard normal distribution curve appears on the right side of the screen. The center area is shaded blue, and it is labeled "
+𝑡
+t
+ distribution with 
+𝑑
+𝑓
+=
+23
+df=23
+".
+
+[04:26] — Calculating the Margin of Error (graph labels)
+Labels are added to the graph: The shaded area is labeled "Area = 0.95". The left boundary is labeled "
+−
+𝑡
+∗
+=
+−
+2.069
+−t
+∗
+=−2.069
+" and the right boundary is labeled "
+𝑡
+∗
+=
+2.069
+t
+∗
+=2.069
+".
+
+[04:36] — Table B: t distribution critical values
+The video switches to a PDF view of "Table B", the formula sheet used for AP Statistics. The presenter's mouse cursor highlights row 23 (degrees of freedom) and the column for 95% confidence, pointing to the value 2.069.
+
+[04:55] — Calculating the Margin of Error (return to slide)
+The video returns to the Old Faithful example slide showing the text and the graph with the labeled critical values.
+
+[05:23] — Calculating the Confidence Interval
+The slide displays generic formulas:
+
+CI = point estimate ± margin of error
+
+CI = statistic ± (critical value)(standard error of statistic)
+
+[05:33] — Calculating the Confidence Interval (symbolic formulas)
+Symbolic formulas for slope are added:
+
+CI = b ± t*SE_b = b ± t* \frac{s}{s_x\sqrt{n-1}}
+
+[05:47] — Calculating the Confidence Interval (applying data)
+The Old Faithful context text and the computer output table (from [00:32]) are added to the right side of the slide.
+
+[05:58] — Calculating the Confidence Interval (extracting data)
+The presenter highlights values in the computer output table as they define them:
+
+𝑏
+=
+7.79
+b=7.79
+ (Coef for Duration)
+
+𝑠
+=
+4.2097
+s=4.2097
+ (S value at bottom)
+
+[06:08] — Calculating the Confidence Interval (
+𝑠
+𝑥
+s
+x
+	​
+
+ value)
+Text is added below the formula: "Unfortunately, 
+𝑠
+𝑥
+s
+x
+	​
+
+ is not shown in the computer regression output. From the previous video, 
+𝑠
+𝑥
+=
+0.213
+s
+x
+	​
+
+=0.213
+."
+
+[06:13] — Calculating the Confidence Interval (plugging in values)
+The formula is populated with the numbers:
+
+7.79
+±
+2.069
+4.2097
+0.213
+25
+−
+1
+7.79±2.069
+0.213
+25−1
+	​
+
+4.2097
+	​
+
+
+[06:22] — Calculating the Confidence Interval (simplifying SE)
+The calculation simplifies to:
+
+7.79
+±
+2.069
+(
+4.03
+)
+7.79±2.069(4.03)
+
+A highlight shows that 4.03 corresponds to the "SE Coef" for Duration in the computer output table.
+
+[06:43] — Calculating the Confidence Interval (margin of error)
+The calculation simplifies further:
+
+7.79
+±
+8.34
+7.79±8.34
+
+[06:49] — Calculating the Confidence Interval (final result)
+The final interval is displayed: 
+−
+0.55
+ to 
+16.13
+−0.55 to 16.13
+. Labels appear identifying 
+7.79
+7.79
+ as the "point estimate" and 
+8.34
+8.34
+ as the "margin of error".
+
+[07:00] — Sampling Distributions and Inferential Statistics (formula sheet)
+A snippet from the AP Statistics formula sheet is shown, highlighting the generic confidence interval formula: Confidence interval: statistic ± (critical value) · (standard error of statistic).
+
+[07:11] — Sampling Distributions and Inferential Statistics (slope formulas)
+The view of the formula sheet scrolls down to a table. A purple box highlights the "Standard Error of Sample Statistic" formula for the slope (
+𝑏
+b
+): 
+𝑠
+𝑏
+=
+𝑠
+𝑠
+𝑥
+𝑛
+−
+1
+s
+b
+	​
+
+=
+s
+x
+	​
+
+n−1
+	​
+
+s
+	​
+
+.
+
+[07:25] — Factors That Affect Interval Width
+The slide title appears with text: "Recall that confidence intervals in AP Statistics have the following structure: CI = point estimate ± margin of error"
+"The width of a confidence interval is twice the margin of error."
+
+[07:38] — Factors That Affect Interval Width (slope formula)
+Text and formula appear: "For a confidence interval about the slope of a population regression line, margin of error = t^* \frac{s}{s_x\sqrt{n-1}}"
+
+[07:48] — Factors That Affect Interval Width (decreasing margin)
+Text appears: "We generally prefer narrow confidence intervals (more precision), so we want the margin of error to be small. There are two common ways to decrease the margin of error:"
+
+[08:03] — Factors That Affect Interval Width (Sample size)
+Option 1 appears: "(1) Increase the sample size". A blue box highlights the '
+𝑛
+n
+' in the denominator of the formula.
+
+[08:14] — Factors That Affect Interval Width (Confidence level)
+Option 2 appears: "(2) Decrease the confidence level". A blue box highlights the '
+𝑡
+∗
+t
+∗
+' multiplier in the formula.
+
+[08:28] — Title Slide
+"Let's Practice"
+
+[08:31] — Calculating a confidence interval (Practice Problem)
+The slide presents a full practice problem scenario about Raoul and rubber band airplanes, including computer output.
+
+Computer Output Table:
+Predictor | Coef | SE Coef | T | P
+--- | --- | --- | --- | ---
+Constant | 0.9241 | 0.6413 | 1.44 | 0.172
+Rotation | 0.04625 | 0.01565 | 2.96 | 0.010
+S = 0.5426 | R-Sq = 38.4% | R-Sq(adj) = 34.0%
+
+Prompt: "Assuming that the conditions for inference are satisfied, which of the following is a 95 percent confidence interval for the slope of the regression line that relates the number of rotations the rubber band is wound and the plane's flight time?"
+
+Multiple Choice Options:
+(A) 
+0.04625
+±
+(
+2.145
+)
+(
+0.01565
+)
+0.04625±(2.145)(0.01565)
+
+(B) 
+0.9241
+±
+(
+2.145
+)
+(
+0.6413
+)
+0.9241±(2.145)(0.6413)
+
+(C) 
+0.04625
+±
+(
+2.131
+)
+(
+0.01565
+)
+0.04625±(2.131)(0.01565)
+
+(D) 
+0.04625
+±
+(
+2.131
+)
+(
+0.5426
+16
+)
+0.04625±(2.131)(
+16
+	​
+
+0.5426
+	​
+
+)
+
+(E) 
+0.9241
+±
+(
+2.131
+)
+(
+0.5426
+16
+)
+0.9241±(2.131)(
+16
+	​
+
+0.5426
+	​
+
+)
+
+[09:29] — Calculating a confidence interval (Solution Steps)
+The formula 
+𝐶
+𝐼
+=
+𝑏
+±
+𝑡
+∗
+𝑆
+𝐸
+𝑏
+CI=b±t
+∗
+SE
+b
+	​
+
+ appears on screen.
+
+[09:37] — Calculating a confidence interval (Identifying 
+𝑏
+b
+)
+The presenter highlights the value 
+𝑏
+=
+0.04625
+b=0.04625
+ in the table (Rotation Coef) and plugs it into the formula.
+
+[09:40] — Calculating a confidence interval (Identifying 
+𝑆
+𝐸
+𝑏
+SE
+b
+	​
+
+)
+The presenter highlights the value 
+𝑆
+𝐸
+𝑏
+=
+0.01565
+SE
+b
+	​
+
+=0.01565
+ in the table (Rotation SE Coef) and plugs it into the formula.
+
+[10:02] — Calculating a confidence interval (Finding 
+𝑡
+∗
+t
+∗
+)
+The calculation for degrees of freedom and the critical value is shown: 
+𝑑
+𝑓
+=
+𝑛
+−
+2
+=
+16
+−
+2
+=
+14
+→
+𝑡
+∗
+=
+2.145
+df=n−2=16−2=14→t
+∗
+=2.145
+.
+
+[10:14] — Calculating a confidence interval (Final Answer)
+A box highlights option (A) as the correct choice: $0.04625 \pm (2
+
+thumb_up
+thumb_down

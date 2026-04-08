@@ -1,0 +1,86 @@
+# Video 2 — Transcript
+# Unit 8, Lesson 5
+
+edit
+more_vert
+
+[00:00] Hi, this is Luke Wilcox, AP Statistics teacher from East Kentwood High School in Kentwood, Michigan.
+[00:06] And in this video, we're gonna talk about setting up a chi-square test for homogeneity or independence.
+[00:14] So let's start with what we will learn.
+[00:17] And we just have one question that we're gonna try and answer in this video.
+[00:20] And that is, how do we verify the conditions for performing a chi-square test for homogeneity or independence?
+[00:30] So we're gonna jump right into an example problem, one that might be familiar with to you at this point.
+[00:35] It's titled, Where Do You Go To School?
+[00:38] So it says, a random sample of parents with school-aged children was taken during 2019.
+[00:43] A separate random sample of parents with school-aged children was taken in 2020.
+[00:48] Parents were asked what type of school their children attended.
+[00:51] Here are the results.
+[00:55] Researchers would like to perform a test to determine if the distribution of school type for all school-aged children differed between the two years.
+[01:03] Check the conditions for inference.
+[01:07] Well, let's start with what we already know.
+[01:10] In a previous video, we already stated the hypotheses for this test.
+[01:15] The null hypothesis says that there is no difference in the distribution of school types attended by school-aged children from 2019 to 2020.
+[01:23] And the alternative hypothesis says that there is a difference in the distribution of school types attended by school-aged children from 2019 to 2020.
+[01:32] Now in that same video, we also decided that we would be using a chi-square test for homogeneity.
+[01:40] Now let's talk about checking the conditions for this test.
+[01:43] Remember that for all inference procedures in AP Stats, you must verify that the conditions for using that procedure are met before you can actually carry out the procedure.
+[01:54] So in general, there's two sort of big ideas that we wanna be checking for here.
+[01:59] The first one says that independence in the methods used to collect the data.
+[02:04] And the second one is that the appropriate sampling distribution has the correct shape.
+[02:10] So what is this going to look like for this particular context?
+[02:14] Well, here are the conditions that we will use to check a chi-square test for homogeneity or independence.
+[02:20] And typically, there are three of them that we have to check.
+[02:24] So to check for independence, the first condition says that data should be collected using a stratified random sample or randomized experiment.
+[02:33] Now that would be for a test for homogeneity.
+[02:37] Or a single random sample if we're doing a test for independence.
+[02:42] The second condition says that if we are sampling without replacement, the sample size has to be less than or equal to 10% of the population size.
+[02:52] Next, we need to check to make sure that the shape of the sampling distribution is approximately a chi-square distribution.
+[03:00] And the way that we're gonna check that is the third condition here.
+[03:02] We're going to make sure that all expected counts should be greater than five.
+[03:08] Now be careful here that you're checking your expected counts and not the observed counts.
+[03:15] So let's go ahead and check our three conditions here for the example problem that I introduced earlier.
+[03:22] So the first condition here is gonna say that there are two independent random samples.
+[03:27] And we could think of this as being a stratified random sample.
+[03:30] Well, that's because we have a random sample from 2019 and a separate random sample from 2020.
+[03:37] So this first condition has been met.
+[03:40] For the second condition, the 10% condition, we're gonna say that it's reasonable to believe that the 320 parents from 2019 is less than or equal to 10% of all the parents in 2019.
+[03:52] And then the 214 parents is less than or equal to 10% of all the parents in 2020.
+[04:00] And then the third condition here is to make sure that all expected counts are greater than five.
+[04:06] Well, in a previous video, we went through the calculations of these expected counts.
+[04:10] And if you take a look, you can see that all of them are clearly greater than five.
+[04:15] Now one other way that we could say that is we could find the lowest expected count, in this case 14.8, and say that that value is greater than five.
+[04:25] And that's because if the lowest expected value is greater than five, well, then of course all of the expected values are greater than five.
+[04:33] So we have decided here that all three conditions have been met.
+[04:39] So let's try this on another practice problem.
+[04:42] This one's titled, Are You Working?
+[04:44] And it says, a random sample of 2,000 adults revealed the following data about education level and employment status.
+[04:52] Researchers want to determine if there's an association between education level and employment status.
+[04:57] Check the conditions for inference.
+[05:00] Well, let's start with what we already know.
+[05:03] In a previous video, we stated the hypotheses for this.
+[05:07] The null hypothesis says that there is no association between education level and employment status for all adults.
+[05:14] And the alternative says that there is an association between these two variables.
+[05:18] We also decided in that video that we should be using a chi-square test for independence.
+[05:25] So let's go ahead and check our conditions now.
+[05:28] Condition number one, the 2,000 adults were randomly selected.
+[05:33] It says that very clearly right in the outline of the problem.
+[05:36] So we know the first condition is met.
+[05:38] The second condition, the 10% condition, we're gonna say that it's reasonable to believe that these 2,000 adults is less than or equal to 10% of all adults.
+[05:49] And then number three, we need to check that all of the expected counts are greater than five.
+[05:54] Well once again, we calculated these expected values in a previous video.
+[05:58] And if you take a look, you can see that all of those expected counts are in fact greater than five.
+[06:06] So all three of the conditions have been met in this case.
+[06:10] So what should we take away from this video here?
+[06:13] Well, let's go back to that one question that we had at the beginning of the video.
+[06:17] How do we verify the conditions for performing a chi-square test for homogeneity or independence?
+[06:23] And remember, there are three of them.
+[06:25] The first condition says that the data should be collected using a stratified random sample or randomized experiment.
+[06:31] Now that would be if we were doing a test for homogeneity.
+[06:34] Or a single random sample if we're doing a test for independence.
+[06:40] Condition number two, if we are sampling without replacement, the sample size has to be less than or equal to 10% of the population size.
+[06:48] And then the third condition, we need to check that all the expected counts are greater than five.
+[06:55] So this is Luke Wilcox signing off.
+[06:58] Thanks for watching and I hope to see you in the next video.
+
+thumb_up
+thumb_down

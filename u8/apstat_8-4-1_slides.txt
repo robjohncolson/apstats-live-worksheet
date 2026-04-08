@@ -1,0 +1,140 @@
+# Video 1 — Slide Descriptions
+# Unit 8, Lesson 4
+
+more_vert
+
+[00:00] — Introduction: Expected Counts in Two-Way Tables
+The title slide for Topic 8.4 is displayed on a blue background.
+
+Text: "TOPIC 8.4 Expected Counts in Two-Way Tables"
+
+Logo: An icon representing AP Statistics (a bridge under a normal distribution curve).
+
+Subtitle: "DAILY VIDEO 1"
+
+Description: "In this video, we will discuss how to calculate expected counts for two-way tables of categorical data."
+
+Instructor: Luke Wilcox appears in a small inset video in the top right.
+
+[00:23] — What Will We Learn?
+A transition slide with large white text on a blue background asks: "WHAT WILL WE LEARN?"
+
+[00:26] — Learning Objectives
+The main question for the session is presented:
+
+Heading: "What Will We Learn?"
+
+Question 1: "How do we calculate the expected counts involving two-way tables of categorical data?"
+
+[00:38] — A Look Forward: Chi-Square Significance Tests
+The instructor explains the upcoming curriculum.
+
+Heading: "A Look Forward"
+
+Point 1: "In Topics 8.4 – 8.6 we will learn two new types of chi-square significance tests."
+
+Point 2 (added at 00:59): "For both tests, we will be analyzing data in a two-way table."
+
+Definition (added at 01:07): "A two-way table summarizes data for two categorical variables."
+
+Diagram (added at 01:16): A generic two-way table is shown with "Variable 1" (Category 1, 2, 3) as columns and "Variable 2" (Category A, B, C) as rows.
+
+[01:28] — Example Introduction
+A transition slide appears: "LET'S LOOK AT AN EXAMPLE".
+
+[01:30] — Example: School Attendance Data
+A scenario about school types is introduced.
+
+Heading: "Where Do You Go To School?"
+
+Visual: A photo of a diverse group of teenagers.
+
+Scenario (added at 01:34): "A random sample of parents with school-aged children was taken during 2019. A separate random sample of parents with school-aged children was taken in 2020. Parents were asked what type of school their children attended. Here are the results."
+
+Table (added at 01:49):
+
+Columns: 2019 Sample, 2020 Sample.
+
+Rows: Public (266, 163), Private/Parochial/Charter (16, 21), Home (38, 30).
+
+[02:01] — Concept: Expected Counts Calculation
+The definition of expected counts is provided.
+
+Heading: "Expected Counts"
+
+Rule: "Expected counts in a two-way table are calculated assuming there is no relationship between the two categorical variables."
+
+[02:17] — Calculating Totals
+The previous table is expanded to include totals.
+
+Step 1 (02:22): Find row totals (Public: 429, Private: 37, Home: 68).
+
+Step 2 (02:31): Find column totals (2019: 320, 2020: 214).
+
+Step 3 (02:40): Find the table total (534).
+
+[02:54] — Deriving the Expected Count Formula
+The instructor demonstrates the logic behind the formula using the "Public" row.
+
+Proportion calculation: "Overall proportion that attend public school = 429 / 534 = 0.8034".
+
+Application to 2019 (03:26): "80.34% of the 2019 sample should attend public school, or (0.8034)(320) = 257.1".
+
+The combined calculation (03:51): "expected count (public, 2019) = (429 / 534)(320) = 257.1".
+
+[04:10] — General Formula for Expected Counts
+A box appears with the universal formula:
+
+Formula:
+expected count
+=
+(
+row total
+)
+×
+(
+column total
+)
+table total
+expected count=
+table total
+(row total)×(column total)
+	​
+
+
+[04:28] — Calculating Expected Counts for the Table
+The formula is applied to populate the table. The expected counts are written in blue parentheses next to observed values.
+
+Cell 1 (04:38): Expected count (Private, 2019) = (37)(320) / 534 = 22.2.
+
+Shortcut Method (05:29): For the last cell in a column, subtract known expected counts from the column total. Expected count (Home, 2019) = 320 - (257.1 + 22.2) = 40.7.
+
+Row Shortcut (05:45): Expected count (Public, 2020) = 429 - 257.1 = 171.9.
+
+Completion (06:00): Remaining cells are calculated using subtraction (14.8 and 27.3). A key "(expected counts)" is added.
+
+[06:29] — Practice Problem Transition
+A transition slide: "LET'S PRACTICE".
+
+[06:31] — Practice Problem: Employment and Education
+
+Heading: "Are You Working?"
+
+Visual: A photo of students at graduation.
+
+Scenario (06:35): "A random sample of 2000 adults revealed the following data about education level and employment status."
+
+Observed Data Table (06:42):
+
+Rows: Employed, Unemployed.
+
+Columns: No High School Diploma (206, 14), High School Diploma No College (548, 22), High School Diploma Some College (1186, 24).
+
+Task: "Calculate the expected counts."
+
+[06:57] — Step-by-Step Practice Solution
+
+Totals (07:02): The table is updated with row totals (1940, 60), column totals (220
+
+thumb_up
+thumb_down

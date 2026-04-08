@@ -1,0 +1,237 @@
+# Video 2 — Slide Descriptions
+# Unit 9, Lesson 4
+
+more_vert
+
+Here is a detailed breakdown of the slides and visual changes in the video:
+
+[00:00] — Title Slide
+The video opens with the title: "TOPIC 9.4 Setting Up a Test for the Slope of a Regression Model", for AP Statistics. The subtitle reads: "DAILY VIDEO 2 In this video, we will discuss how to identify the procedure and check the conditions for performing a significance test about the slope of a population regression line."
+
+[00:15] — WHAT WILL WE LEARN?
+A transition slide with the text "WHAT WILL WE LEARN?" on a blue background.
+
+[00:17] — What Will We Learn?
+The slide outlines two learning objectives:
+
+"How do we identify an appropriate significance test procedure for the slope of a population regression line?"
+
+"How do we verify the conditions for performing a significance test about the slope of a population regression line?"
+
+[00:30] — LET'S LOOK AT AN EXAMPLE
+A transition slide with the text "LET'S LOOK AT AN EXAMPLE" on a blue background.
+
+[00:33] — Schools and "Equal Opportunity"
+Features an illustration of a stressed student overwhelmed by "RENT", "JOBS & FEES", "HEALTH CARE", and "MATH". The text asks: "Can education systems equalize opportunities for lower income students?"
+
+[00:43] — The Income Attendance Gap
+Shows a map of New York City highlighting that "NYC: High Poverty Areas Have Lower Attendance Rates". The accompanying text states: "Nationally, higher income areas tend to have fewer chronically absent students. Possible reasons: Transportation access, Work to support family".
+
+[01:05] — Is Attendance the Solution?
+Displays a flowchart: "Poverty 
+→
+→
+ Low Attendance 
+→
+→
+ Low Scores". The text reads: "Some school systems have targeted attendance as the key to raising test scores for lower income students."
+
+[01:21] — Is Attendance the Solution? (Updated)
+The flowchart updates to show "High Attendance" and "High Scores", with red strikethroughs crossing out the word "Low" in both places, visualizing the proposed solution.
+
+[01:28] — Let's Look at the Data
+Introduces a study context: "Researchers collected data on the percent of school days attended and the number of questions answered correctly on the state's end-of-course test for a random sample of 11 Texas Algebra 1 students."
+
+[01:43] — Let's Look at the Data (with visuals)
+Adds three elements to the slide:
+
+A data table showing "Percent attendance" (ranging 76-99) and "Questions correct" (ranging 31-51) for the 11 students.
+
+A scatterplot of "Number of Correct Answers" vs. "Percent of School Days Attended" with a least-squares regression line drawn through the positive correlation.
+
+Computer output from a regression analysis:
+
+Predictor / Coef / SE Coef / T / P
+
+Constant / -7.69 / 5.37 / -1.43 / 0.186
+
+Attendance / 0.57 / 0.062 / 9.18 / 0.000
+
+S = 1.99 / R-Sq = 90.3% / R-Sq(adj) = 89.3%
+
+[01:51] — Let's Look at the Data (with question)
+Adds the main question to be answered: "Do the data give convincing evidence at the 
+𝛼
+=
+0.01
+α=0.01
+ significance level of a positive, linear relationship between state test score and percent attendance for Texas Algebra 1 students?"
+
+[02:06] — Test Scores and Attendance
+This slide consolidates the previous information, showing the research context, the question posed, the scatterplot, and the computer output.
+
+[02:08] — Test Scores and Attendance (with hypotheses)
+Adds the hypotheses established in the previous video:
+
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+
+𝐻
+𝑎
+:
+𝛽
+>
+0
+H
+a
+	​
+
+:β>0
+
+Where 
+𝛽
+β
+ = the slope of the population regression line for predicting number of correct answers on the state test from the percent of school days attended for Texas Algebra 1 students.
+
+[02:32] — Identifying the Procedure
+Text reviews previously learned procedures: "You have learned many different significance test procedures this year. Some involved one sample and others involve two samples. Some involved inference about categorical data: proportions or chi-square. Others involved inference about quantitative data: means or slopes."
+
+[02:59] — Identifying the Procedure (Test Name)
+Adds the specific procedure needed for this lesson: "When the goal is to test a claim about the slope of a population regression line, we use a t-test for a slope."
+
+[03:11] — Checking Conditions
+The text states: "To perform a significance test about the slope 
+𝛽
+β
+ of a population regression line, we must check the following:". A 3D diagram appears showing an 
+𝑥
+x
+ and 
+𝑦
+y
+ axis plane. A true regression line (
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+) is drawn across it, with three bell-shaped normal distribution curves rising out of the plane at different points along the line, illustrating the theoretical model.
+
+[03:28] — Checking Conditions (Condition 1)
+Adds the first condition to the list: "The true relationship between 
+𝑥
+x
+ and 
+𝑦
+y
+ is linear."
+
+[03:36] — Checking Conditions (Condition 2)
+Adds the second condition: "The standard deviation of 
+𝑦
+y
+, 
+𝜎
+𝑦
+σ
+y
+	​
+
+, does not vary with 
+𝑥
+x
+."
+
+[03:44] — Checking Conditions (Condition 3)
+Adds the third condition: "For a particular value of 
+𝑥
+x
+, the responses (
+𝑦
+y
+-values) are approximately normally distributed."
+
+[04:10] — Checking Conditions (Condition 4)
+Adds the fourth condition: "There is independence in data collection."
+
+[04:17] — Checking Conditions (Independence details)
+Adds a sub-bullet for independence: "Data are collected using a random sample or a randomized experiment."
+
+[04:23] — Checking Conditions (Independence details continued)
+Adds a second sub-bullet for independence: "When sampling without replacement, check that 
+𝑛
+≤
+10
+%
+𝑁
+n≤10%N
+."
+
+[04:32] — Checking Conditions (Applying to example - Linearity)
+The slide transitions to apply these conditions to the Texas data. Shows the first condition and the scatterplot. Text appears in yellow: "The scatterplot shows a moderately strong, positive, linear relationship between the percent of school days attended by a student and the number of correct answers on the state Algebra 1 test."
+
+[04:48] — Checking Conditions (Linearity - Residual Plot)
+The yellow text and scatterplot are replaced by a residual plot (Residual vs. Percent of School Days Attended) and new blue text: "The residual plot shows fairly random scatter about Residual = 0 line and no obvious curved pattern."
+
+[05:03] — Checking Conditions (Linearity checked)
+A blue box with a checkmark appears next to the first condition.
+
+[05:06] — Checking Conditions (Standard Deviation - Scatterplot)
+The second condition appears on screen. The scatterplot returns, with blue text: "Scatterplot: The number of correct answers vary by a similar amount for the different percents of school days attended in the data set."
+
+[05:19] — Checking Conditions (Standard Deviation - Residual Plot)
+The residual plot replaces the scatterplot, with updated blue text: "Residual plot: The residuals are similar in size for the different percents of school days attended in the data set."
+
+[05:29] — Checking Conditions (Standard Deviation checked)
+A blue checkmark appears next to the second condition.
+
+[05:30] — Checking Conditions (Normality)
+The third condition appears on screen.
+
+[05:35] — Checking Conditions (Normality - Dotplot)
+A dotplot of the residuals is shown (ranging from roughly -2.5 to 2.5). Blue text states: "A dotplot of residuals shows no obvious skewness or outliers."
+
+[05:53] — Checking Conditions (Independence)
+A blue checkmark is added to the third condition. The fourth condition (independence) and its sub-bullets appear, alongside the scatterplot.
+
+[05:57] — Checking Conditions (Independence - Random Sample)
+Blue text appears: "The data came from a random sample of 11 Texas Algebra 1 students." A checkmark is added next to the first sub-bullet.
+
+[06:04] — Checking Conditions (Independence - 10% condition)
+Blue text appears: "
+11
+≤
+10
+%
+11≤10%
+ (all Texas Algebra 1 students)". A checkmark is added next to the second sub-bullet.
+
+[06:14] — Checking Conditions (All conditions met)
+Blue text appears at the bottom: "All of the conditions are met."
+
+[06:19] — WHAT SHOULD WE TAKE AWAY?
+A transition slide with the text "WHAT SHOULD WE TAKE AWAY?" on a blue background.
+
+[06:23] — Key Takeaways
+Lists the two main points from the video:
+
+"How do we identify an appropriate significance test procedure for the slope of a population r
+
+thumb_up
+thumb_down

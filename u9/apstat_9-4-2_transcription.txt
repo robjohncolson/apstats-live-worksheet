@@ -1,0 +1,48 @@
+# Video 2 — Transcript
+# Unit 9, Lesson 4
+
+edit
+more_vert
+
+[00:00] Hello AP stat students. I'm Daren Starnes, coming to you from beautiful Hilton Head, South Carolina. This is the second video on topic 9.4, setting up a test for the slope of a regression model.
+
+[00:15] What will you learn in this video? First, how do you identify an appropriate significance test procedure for the slope of a population regression line? And second, how do we verify the conditions for performing a test about the slope of a population regression line?
+
+[00:30] We'll look at an example familiar from the first video about schools and equal opportunity. We wonder if educational systems can equalize opportunities for lower income students. One problem is the so-called income attendance gap. You see this map of New York City that shows higher poverty areas tend to have lower attendance rates, and nationally that's the case as well. Some possible reasons are that lower income students typically have less access to transportation and also may have to work to support their families, which makes their attendance less at school.
+
+[01:05] So we wonder if we can find a way to improve low-income students' attendance, if that will result in an improvement in their test scores. Some school systems have investigated this. So if the model right now is low income leads to low attendance leads to low scores, maybe we can break that cycle by increasing attendance and therefore increase the scores.
+
+[01:28] Some researchers in Texas wanted to investigate this and collected some data from a random sample of 11 Texas Algebra I students about the percent of school days they attended and the number of questions answered correctly on the state's end-of-course test. Here are the data, and also the scatter plot with the least squares regression line added here and the computer output.
+
+[01:51] And in the previous video, we posed this question. Do the data give convincing evidence at the alpha equals 0.01 significance level of a positive linear relationship between state test score and percent attendance for all Texas Algebra 1 students?
+
+[02:07] In the previous video, we stated hypotheses. Here they are. The null hypothesis beta equals zero. The alternative hypothesis beta greater than zero indicating a positive linear relationship, and beta was defined as the slope of the population regression line for predicting number of questions answered correctly on the state test from percent of school days attended by the Texas Algebra I students.
+
+[02:32] The identifying the procedure for a test about slope is a new one. You've learned many different test procedures already. Some involved one sample, others involved two samples. Some were about categorical data for proportions or about categorical data for chi square. Others involved inference about quantitative data for means, and more recently inference about quantitative data for slopes.
+
+[02:59] It probably won't surprise you to know that when we test a claim about the slope, we're going to use a procedure known as a t-test for the slope, just like when you did a confidence interval, it was a t-interval for the slope.
+
+[03:11] Now, as you know, checking conditions for performing inference about slope is a little unpleasant. I have to remind you about the conditions for the slope of the regression line that must be met in order for us to perform the inference. And there's a visual to help you be reminded. First and foremost, the true relationship between x and y, the two variables must be linear, not curved.
+
+[03:37] Second, the standard deviation of y should not vary with the values of x. It should be constant. And third, for a particular value of x, the responses, the y values are approximately normally distributed. And you can see from this visual that at three different x values, we have the same amount of variability around the regression line marked by sigma. We also have these normal curves at each of those Xs representing the Y values, and we also have the curve centered on the population regression line.
+
+[04:11] We also needed there to be independence in the observations from the data collection. So that required two checks. One, that the data are coming from a random sample or a randomized experiment, and also when we're sampling without replacement, we need to check that our sample size is less than or equal to 10% of the population size.
+
+[04:32] So let's check for the data from Texas. First, we need to check the true relationship between X and Y is linear. Here's the scatterplot and you can see a moderately strong, positive, linear relationship between the two variables.
+
+[04:48] We also have made a residual plot that shows a fairly random scatter about the residual equals zero line and no obvious curved pattern. Now with 11 points you might think you see a curved pattern but don't stare at it for too long or there's no pattern. So that condition is satisfied.
+
+[05:07] Next we need the standard deviation of y to be constant across all the x values. From the scatter plot it looks like the points deviate from the line by a similar amount throughout the domain, and from the residual plot we don't see any clear evidence that the deviations from the line are any larger at any set of x values in the domain. So this condition is satisfied.
+
+[05:31] And finally, for a particular value of x, we need the responses or y values to be approximately normally distributed. Remember we checked that with a residual plot such as a dotplot of residuals or maybe a histogram. We don't see any strong skewness or outliers that would indicate non-normality. If we did, we would need to make sure the sample size was greater than 30.
+
+[05:53] Checking the independence in data collection, our data did come from a random sample of 11 Texas Algebra I students, so that's good. And we are sampling without replacement, but surely 11 is less than or equal to 10% of all Texas Algebra 1 students. I don't think we have any issues there. So all the conditions are met, which means we're allowed to proceed with calculations in the next video.
+
+[06:19] So what should you take away as far as this video is concerned? First, the appropriate significance test procedure for the slope of a population regression line is called the t-test for slope.
+
+[06:32] And verifying the conditions for a significance test about the slope is the same as verifying conditions for a confidence interval about the slope. True relationship between x and y is linear. Standard deviation of y does not vary with x. For a particular x value, the y values are approximately normally distributed. And independence in data collection, which requires random sampling or a randomized experiment, and then if we're sampling without replacement checking that the sample size is less than or equal to 10% of the population size. It's not very pleasant, but we can do it.
+
+[07:06] So that's it for this video. In the next video, I'll be talking to you about how to do those calculations. Hope to see you then.
+
+thumb_up
+thumb_down

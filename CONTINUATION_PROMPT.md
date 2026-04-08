@@ -1,87 +1,171 @@
-# Continuation Prompt — apstats-live-worksheet
+# Continuation Prompt — TI-84 CE Procedural Trainer
 
-## What to do NOW
+**Last updated**: 2026-04-07
+**Status**: Data verification phase — Codex output needs ground-truth checking before implementation
 
-**Propagate the tighter AI grading suggestion prompt to ALL worksheet grading files.**
+---
 
-In this session we discovered that the AI grading `suggestion` field was (a) vaguely prompted and (b) stripped by the Railway server. Both issues are now fixed for `edgar_u6`. The next task is to apply the same prompt improvement to every other grading prompts file.
+## What This Project Is
 
-### Files to update
+A standalone single-file HTML webapp that trains AP Statistics students on the **mechanical key-press sequences** for every TI-84 Plus CE procedure used across Units 1-9. Students learn via guided walkthrough, then prove retention via recall drills. SRS scheduling ensures durable memory.
 
-Each file has a `buildReflectionPrompt*` function with the old instruction block. Replace the old instruction + JSON schema with the new version from `ai-grading-prompts-edgar-u6.js` (lines 257-272).
+**Not an emulator** — a scripted procedural trainer with mid-fidelity screen rendering and state-accurate navigation paths.
 
-| File | Function name |
-|------|---------------|
-| `ai-grading-prompts.js` | `buildReflectionPrompt` (Unit 3) |
-| `ai-grading-prompts-u4.js` | `buildReflectionPromptU4` |
-| `ai-grading-prompts-u4-l3.js` | `buildReflectionPromptU4L3` |
-| `ai-grading-prompts-u4-l7-8.js` | `buildReflectionPromptU4L78` |
-| `ai-grading-prompts-u5-l1-2.js` | `buildReflectionPromptU5L12` |
-| `ai-grading-prompts-u5-l3.js` | `buildReflectionPromptU5L3` |
-| `ai-grading-prompts-u5-l8.js` | `buildReflectionPromptU5L8` |
-| `ai-grading-prompts-u6-l1-2.js` | `buildReflectionPromptU6L12` |
-| `ai-grading-prompts-u6-l3.js` | `buildReflectionPromptU6L3` |
+## Key Design Decisions (Already Made)
 
-Also check each corresponding `*_live.html` file for inline copies of the prompt builder — those need the same update.
+1. **Standalone monolithic HTML** — single file, zero dependencies, embedded JS/CSS
+2. **Mid-fidelity UI, high accuracy of state** — recognizable screens but not pixel-perfect
+3. **Guided walkthrough -> Recall drill** — teach first, test from memory second
+4. **Two input modes**: Virtual clickable keypad (primary) + Physical-first mode (student uses real calc alongside app)
+5. **Content model**: Procedures + micro-skills as DAG nodes with prerequisite edges
+6. **Skill types**: navigation (menus/tabs), parameter (values/options), confirmation (ENTER to execute)
+7. **V1**: Guided + recall + SM-2 SRS scheduling
+8. **V2**: Bayesian knowledge tracing + DAG prerequisite enforcement
 
-### What to replace
+## Files
 
-**Old (find this pattern in each file):**
+| File | Purpose |
+|------|---------|
+| `ti84-trainer-spec.md` | Full spec (architecture, content model, interaction design, SRS, UI, phases) |
+| `ti84-trainer-research-prompt.md` | Prompt given to Codex to produce the procedure data |
+| `ti84-procedures-data.json` | Codex's output — 27 procedures, 16 micro-skills, 65 screens, 67 DAG edges |
+
+## What Codex Produced
+
+`ti84-procedures-data.json` contains:
+- **27 procedures** (U1-U9: 1-Var Stats, histogram, boxplot, normalcdf, invNorm, LinReg, scatterplot, residual-plot, binompdf/cdf, geometpdf/cdf, normalcdf/invNorm-sampling, 1-PropZTest/Int, T-Test stats/data, TInterval stats/data, 2-SampTTest/Int, matrix-entry, chi-square GOF/Test, LinRegTTest/TInt)
+- **16 micro-skills** (enter-data-l1, enter-data-l1-l2, clear-lists, nav-stat-edit/calc/tests, nav-2nd-distr/statplot, select-data-vs-stats, enter-matrix, set-plot-type, zoom-stat, diagnostic-on, access-resid-list, select-alternative, calculate-vs-draw)
+- **65 screen states** (menus, wizards, results, editors, graphs)
+- **67 DAG edges** (prerequisite relationships)
+
+## Three Known Issues in Codex's Output
+
+### Issue 1: Formulaic Common Errors (HIGH PRIORITY)
+Every single one of the 27 procedures has **exactly 4 common errors on exactly steps [1,2]**. No errors anywhere else. This is Codex being lazy/formulaic. Real error coverage should:
+- Vary by procedure (some have more error-prone steps than others)
+- Extend to wizard/parameter steps (Data vs Stats toggle, alternative hypothesis selection, wrong list references, forgetting Calculate/Draw)
+- Cover the STAT > TESTS wizard steps which are major error hotspots
+
+### Issue 2: Y= vs Y_EQUALS Key ID Mismatch (EASY FIX)
+- Keypad defines the key as `"id": "Y_EQUALS"` (label: "Y=")
+- 5 steps use `"key": "Y="` instead of `"key": "Y_EQUALS"`: histogram step 2, modified-boxplot step 2, scatterplot step 2, residual-plot step 2, nav-2nd-statplot step 2
+- Would break key validation in the trainer
+
+### Issue 3: Inlined Navigation Not Factored Into Micro-Skills (DESIGN DECISION)
+- 12 STAT>TESTS procedures inline `STAT > RIGHT > RIGHT` while also listing `nav-stat-tests` as a prerequisite
+- 4 graphing procedures inline `2ND > Y= > ENTER` while also listing `nav-2nd-statplot` as a prerequisite
+- DAG edges exist but step deduplication doesn't — the runner will need to handle this (either inline expansion or skip-if-mastered)
+
+## Verification Status
+
+### COMPLETED: STAT > TESTS Menu Numbering (Reference Guide verified)
+**CRITICAL LESSON**: ROM string table order does NOT match menu display order. An initial attempt to derive menu positions from ROM string offsets produced WRONG results (10 items mislabeled). The TI-84 Plus CE Reference Guide (2020) is the authoritative source.
+
+**Codex's original numbering was CORRECT all along.** It was reverted after cross-checking against the official TI Reference Guide PDF.
+
+Reference Guide-verified STAT > TESTS menu (18 items):
 ```
-Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing. Provide a specific suggestion for improvement if the score is P or I.
-
-Respond in JSON format:
-{
-    "score": "E" | "P" | "I",
-    "feedback": "Brief explanation of the grade",
-    "matched": ["list of elements the student addressed"],
-    "missing": ["list of elements the student missed"],
-    "suggestion": "Specific suggestion for improvement (null if E)"
-}
+1:Z-Test  2:T-Test  3:2-SampZTest  4:2-SampTTest  5:1-PropZTest
+6:2-PropZTest  7:ZInterval  8:TInterval  9:2-SampZInt  0:2-SampTInt
+A:1-PropZInt  B:2-PropZInt  C:χ²-Test  D:χ²GOF-Test
+E:2-SampFTest  F:LinRegTTest  G:LinRegTInt  H:ANOVA(
 ```
 
-**New (from ai-grading-prompts-edgar-u6.js lines 257-272):**
+### COMPLETED: 2ND > DISTR Menu Numbering (ROM-verified)
+Codex's subset was correct: A:binompdf, B:binomcdf, E:geometpdf, F:geometcdf. JSON updated with full 16-item menu.
+
+### COMPLETED: Wizard Field Labels (ROM-verified)
+Extracted all wizard field labels from ROM region 0xAEB30-0xAED00. Full report in `ti84-rom-wizard-fields.md`.
+
+**35+ fields confirmed matching** JSON: p₀, x̄, Sx, n, C-Level, Observed, Expected, Xlist, Ylist, FreqList, Calculate, Draw, Inpt, Data, Stats, Pooled, RegEQ, lower, upper, area, Tail, LEFT/CENTER/RIGHT, β & ρ, etc.
+
+**3 fixes applied on 2026-04-07:**
+- `numtrials` → `trials` (binompdf/binomcdf wizard fields — ROM says `trials` at 0xAEC99)
+- `tail` → `Tail` (invNorm field — ROM uses capitalized `Tail` at 0xAECE5)
+- `CNTB` in χ²GOF-Test result: **flagged as unverified** — string not found in ROM, needs CEmu visual check
+
+### Still Needs Visual Verification (CEmu)
+1. **Wizard field ORDER** — ROM confirms labels exist but can't confirm top-to-bottom layout
+2. **Wizard default values** — what's pre-filled (e.g., List: L₁, Tail: LEFT)
+3. **Result screen layout** — exact label order (e.g., does z= come before p= on 1-PropZTest result?)
+4. **CNTB label** — does χ²GOF-Test actually display this on result screen?
+5. **CE-specific behaviors** — Data/Stats toggle position, Calculate/Draw button placement
+
+### Verification Resources
+- **TI-84 Plus CE ROM**: `TI-84_Plus_CE/ROM.rom` (OS 5.8.2.0029) — string extraction for menu ordering
+- **TI-84 CE Online Emulator**: https://ti84calc.com/ti84calc — browser-MCP connected, can click through procedures
+- **Browser-MCP**: configured in Claude Code, use for visual verification of wizard/result screens
+- TI official guidebook PDFs (listed in ti84-procedures-data.json meta.sources)
+
+## Current Task: Verify Wizard Fields & Result Screens
+
+### Completed
+1. ✅ STAT > TESTS menu (ROM-verified, 10 items corrected)
+2. ✅ 2ND > DISTR menu (ROM-verified, confirmed correct)
+
+### Remaining Verification
+3. Inference wizards (1-PropZTest, T-Test, etc.) — field names and order
+4. Distribution wizards (normalcdf, binompdf, etc.) — field names and order
+5. Result screens — output labels
+
+### Approach
+Use browser-MCP on ti84calc.com emulator to click through each procedure and screenshot wizard/result screens. ROM string extraction can also help find field labels.
+
+## Completed Fixes
+
+1. ✅ Issue 2 fixed: Y= → Y_EQUALS in 5 steps (histogram, boxplot, scatterplot, residual-plot, nav-2nd-statplot)
+2. ✅ Issue 1 fixed: Common errors expanded from 108 → 144 total, 16/27 procedures now have errors beyond step 2. Covers Data/Stats toggle, alternative hypothesis, Calculate/Draw, menu confusion, tail direction, df entry, variance vs SD, etc.
+3. ⏳ Issue 3 (inlined navigation): design decision deferred — runner will handle
+
+## State Machine (Codex-built)
+
+`ti84-state-machine.js` (1347 lines) — deterministic JS state machine:
+- **API**: `createState(screenId)`, `createRouteState(routeId)`, `transition(state, key)`, `validKeys(state)`
+- **Modes**: generic structural navigation + optional guided-route layer
+- **Coverage**: all 27 procedures, all 16 micro-skills
+- **Tests**: `tests/ti84-state-machine.test.js` — 52/52 passing
+- **Data source**: reads from `ti84-procedures-data.json`
+
+## Next Steps
+
+1. Begin V1 implementation of the trainer HTML app
+2. Visual verification of wizard field ORDER via CEmu (when stable)
+3. Resolve Issue 3 strategy in the runner (inline expansion vs skip-if-mastered)
+
+## Architecture Reminder
+
 ```
-Grade the response as E, P, or I. Be encouraging but accurate. Identify which elements were addressed and which were missing.
-
-SUGGESTION RULES (for P or I only):
-- For each missing element, write one concrete sentence starting with "Try adding..." or "Revise to include..." that tells the student EXACTLY what to write.
-- Reference the specific concept or term they need (e.g., "define p as the true germination rate" not "clarify the parameter").
-- Never say "lacks clarity" or "needs more detail" — always say WHAT detail.
-- Keep it to 2-3 sentences max. Sound like a coach, not a judge.
-
-Respond in JSON format:
-{
-    "score": "E" | "P" | "I",
-    "feedback": "One sentence explaining the grade — what they got right first, then what's missing",
-    "matched": ["list of elements the student addressed"],
-    "missing": ["list of elements the student missed"],
-    "suggestion": "2-3 actionable sentences using 'Try adding...' or 'Revise to include...' (null if E)"
-}
+CONTENT LAYER (data)     -> PROCEDURES[], MICRO_SKILLS[], SCREENS{}, KEYPAD_LAYOUT, DAG
+ENGINE LAYER (logic)     -> ProcedureRunner, ScreenRenderer, KeypadController, SessionQueue, KnowledgeTracer, StateManager
+UI LAYER (rendering)     -> Calculator display, Virtual keypad, Compact key palette, Session dashboard, Mode selector
 ```
 
-### Server fix already deployed
+All in one HTML file. localStorage for persistence. No server needed (export/import JSON for backup).
 
-`curriculum_render` server (`d9f6d57`) already passes `suggestion` through `normalizeGradingResponse()` — no further server changes needed.
+## Previous Context Chain
 
-## Session Commits
-
-| Repo | Hash | Description |
-|------|------|-------------|
-| `apstats-live-worksheet` | `5372de8` | Tighten AI grading suggestion prompt for Edgar U6 (both .js and inline HTML) |
-| `curriculum_render` | `d9f6d57` | Pass `suggestion` field through `normalizeGradingResponse` to client |
-
-## Key Paths
-
-- Grading prompt files: `ai-grading-prompts*.js` (9 files to update)
-- Live worksheets with inline prompts: `u*_live.html`, `edgar_*_live.html`
-- Server normalizer: `C:\Users\ColsonR\curriculum_render\railway-server\server.js` line 708
-- Reference implementation: `ai-grading-prompts-edgar-u6.js` lines 257-272
-
-## Environment
-
-- Platform: Windows 11, Git Bash
-- Node: v22.19.0
-- Railway server: auto-deploys from `curriculum_render` main branch
-- GitHub Pages: auto-deploys from `apstats-live-worksheet` master branch
-- AI model: DeepSeek-V3 (`deepseek-chat`) via Railway
+The conversation went:
+1. User asked CC to research what TI-84 procedures AP Stats covers -> CC audited framework files, curriculum.json, existing apps
+2. CC asked 5 clarifying questions (standalone vs cartridge, visual fidelity, interaction model, input method, scope)
+3. User answered all 5 with detailed decisions (standalone HTML, mid-fidelity, guided+recall, virtual keypad + physical-first, full U1-U9)
+4. CC wrote `ti84-trainer-spec.md` (full spec) and `ti84-trainer-research-prompt.md` (Codex research prompt)
+5. User dispatched Codex with the research prompt -> Codex produced `ti84-procedures-data.json`
+6. CC analyzed the JSON and found 3 issues (formulaic errors, Y= mismatch, inlined nav)
+7. **Connection dropped** during discussion of verification approach
+8. Reconnected, re-established context, user provided emulator URL: https://ti84calc.com/ti84calc
+9. User asked to save this continuation prompt before proceeding with verification
+10. Set up browser-MCP, navigated to emulator — saw STAT EDIT and CALC menus but arrow clicks were flaky (WebSocket timeouts)
+11. User pivoted: had Codex examine actual TI-84 Plus CE ROM (`TI-84_Plus_CE/ROM.rom`, OS 5.8.2.0029)
+12. Codex confirmed STAT > TESTS numbering was suspicious; DISTR looked OK
+13. CC extracted menu strings from ROM binary — INCORRECTLY assumed string order = menu order
+14. CC "corrected" 10 menu items based on ROM string order — THIS WAS WRONG
+15. CC updated DISTR screen with full 16-item menu (DISTR was correct)
+16. CC ran background agent to extract wizard field labels from ROM — 35+ matches, 3 fixes applied
+17. Applied fixes: `numtrials`→`trials`, `tail`→`Tail`, flagged `CNTB` as unverified
+18. Full ROM extraction report saved to `ti84-rom-wizard-fields.md`
+19. Codex prompt for CEmu verification saved to `codex-cemu-verification-prompt.md`
+20. CEmu automation attempted — SendKeys failed (LCD stayed off), Codex also found CEmu brittle
+21. Downloaded TI-84 Plus CE Reference Guide PDF — cross-checked menu positions
+22. **CRITICAL DISCOVERY**: ROM string table order ≠ menu display order. Codex's ORIGINAL numbering was correct!
+23. REVERTED all STAT>TESTS changes. Menu now has full 18 items matching Reference Guide exactly
+24. Lesson: never trust ROM byte offsets for menu ordering; use official documentation or live UI

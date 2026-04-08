@@ -1,0 +1,63 @@
+# Video 3 — Transcript
+# Unit 9, Lesson 5
+
+edit
+more_vert
+
+[00:00] Hello AP Stat students. I'm Darren Starns, coming to you from beautiful Hilton Head, South Carolina.
+
+[00:07] This is video three in topic 9.5 carrying out a test for the slope of a regression model.
+
+[00:14] What will you learn in this video? Well, we're gonna go through a complete significance test about the slope of a population regression line using everything you've learned to this point.
+
+[00:26] Let's practice. Here's an exam question from the 2001 AP Statistics exam. This was question number six, but we've modified it slightly. The statistics department at a large university is trying to determine if it is possible to predict whether an applicant will successfully complete the Ph.D. program or will leave before completing the program. The department is considering whether GPA, grade point average in undergraduate statistics and mathematics courses, a measure of performance, and mean number of credit hours per semester, a measure of workload, would be helpful measures.
+
+[01:02] To gather data, a random sample of 20 entering students from the past five years is taken. The data are given below. Here are the data for those who successfully completed the Ph.D. program. Notice that there are 13 of those students. And here are the data for the seven students who did not complete the Ph.D. program.
+
+[01:23] The regression output below resulted from fitting a line to the data in the group of seven students that did not complete the Ph.D. program. The residual plot not shown indicated no unusual patterns and the assumptions necessary for inference were judged to be reasonable. Well, we always applaud that. So you see the computer output here.
+
+[01:45] And the question, part A, says, for the students who did not complete the Ph.D. program, is there a significant relationship between GPA and mean number of credit hours per semester at the alpha equals .01 level? Now, if you'd like to try your hand at this, you can pause the video, see if you can write out the full solution, and then you can compare it to the model solution that I'll give when you resume the video.
+
+[02:13] Well, the first thing is stating our hypotheses. Our null hypothesis, beta equals zero, would indicate no linear relationship. And our alternative hypothesis, beta not equal to zero, would indicate some kind of linear relationship. Unclear whether it's positive or negative because the researchers didn't state that.
+
+[02:36] And beta, the parameter, is the slope of the population regression line for predicting mean number of credit hours per semester from GPA for students who did not complete the statistics Ph.D. program at this large university.
+
+[02:50] Just one remark. In question, part A, there's no mention of linear. That is unfortunate because the question could only be talking about a significant linear relationship. But it's not uncommon for different authors to write their questions with slightly different wording. So I just wanted to point out to you it may not always say significant linear relationship, which would be a big clue about what you needed to do.
+
+[03:15] We're told to use alpha equals .01, and the procedure we would want to use is a t-test for the slope. And we're told that the assumptions necessary for inference were reasonable, so the conditions are met. We can proceed to calculations.
+
+[03:33] Remember our hypotheses, we'll need those in just a second. So our t-statistic from the computer output is -3.44.
+
+[03:44] And to find our p-value, we want to find the probability of getting a result at least as surprising in either direction as t equals -3.44. So we have the t-distribution curve here drawn with both tails shaded.
+
+[03:58] And using your table or technology, you can find that the p-value is .018, using degrees of freedom of 7 - 2 or 5. Of course the table won't give you the specific p-value of .018, it'll give you a value say less than .025.
+
+[04:19] And our conclusion, because the p-value of .018 is greater than alpha equals .01, we fail to reject the null hypothesis. There is not convincing evidence of a linear relationship between GPA and mean number of credit hours in the population of students at this university who did not complete the statistics Ph.D. program.
+
+[04:42] So you've seen the whole solution start to finish. But this question has a part B.
+
+[04:47] We haven't talked yet about the students who completed the Ph.D. program. So here is the regression output that resulted from fitting a line to the data for that group. And again, the residual plot indicated no unusual patterns and the assumptions necessary for inference were judged to be reasonable.
+
+[05:05] Part B says, for the students who successfully completed the Ph.D. program, is the evidence for a significant linear, in parentheses, relationship between GPA and mean number of credit hours per semester stronger or weaker than for the students who did not complete the Ph.D. program? Justify your answer. One remark. It is not necessary to carry out a full significance test to answer this question. Everything we need is right there on the computer output. With that hint, if you'd like to pause the video and try to sketch out your answer, then you can resume the video and see how it compares to the model solution.
+
+[05:49] Well, the answer is stronger. There are two pieces of information we could look at. We could look at the t-statistic or we could look at the p-value. Either of those will indicate that the relationship is stronger for the students that completed the Ph.D. program.
+
+[06:05] You can see that the p-value for this two-sided test is approximately 0 for the students who completed the Ph.D. program. Whereas in part A, the p-value was .018 for students who did not complete the Ph.D. program.
+
+[06:20] You could also compare the t-statistics from the two tests. And this t-statistic is more extreme. It's farther from 0 than the t-statistic in the negative 3 points values that we got last time.
+
+[06:33] So this is that type of part B question that requires you to think a little bit outside the box or think on your feet where you have to not just do the full process, but take one part of the process and implement it. In this case, interpreting the meaning of the t-statistic or the p-value relative to another test.
+
+[06:53] So what should you take away from this video? Well, in performing any complete significance test, you would always want to state null and alternative hypotheses and define your parameter. In this case, the parameter is the slope of a population or true regression line.
+
+[07:11] You want to give your significance level. If one's not provided, you might use the default of alpha equals .05. You need something to compare to when you make your conclusion. Identify the procedure you're using. In this case it would be a t-test for the slope. Verify the conditions are met, or hope that the problem tells you to assume that. Calculate your test statistic and p-value.
+
+[07:35] And then make a conclusion based on your p-value. Remember that you don't need to interpret the p-value unless you're specifically asked, and you might well be asked somewhere else on the exam.
+
+[07:46] Well, thanks for tuning in. I hope this makes you feel more confident about carrying out a full significance test for the slope of the regression line.
+
+Citations
+
+https://brainly.com/question/31628740
+thumb_up
+thumb_down

@@ -1,0 +1,127 @@
+# Video 1 — Slide Descriptions
+# Unit 9, Lesson 1
+
+more_vert
+
+Here is a breakdown of the slides and visual changes in the video:
+
+[00:00] — TOPIC 9.1 Introducing Statistics- Do Those Points Align?
+The title slide for the video, labeled "DAILY VIDEO 1". Text states: "In this video, we will introduce the logic of inference about the slope of a population regression model." The speaker is visible in a small window in the top right.
+
+[00:18] — WHAT WILL WE LEARN?
+A transition slide.
+
+[00:21] — What Will We Learn?
+A numbered point is shown:
+
+How can we determine if the slope of a sample regression line is consistent with random variation from a population regression model?
+
+[00:30] — LET'S LOOK AT AN EXAMPLE
+A transition slide.
+
+[00:34] — How Faithful Is Old Faithful?
+A picture of the Old Faithful geyser erupting is on the right. On the left, a paragraph describes the geyser as a popular attraction in Yellowstone National Park and mentions the National Park Service predicts its eruptions. It notes the Starnes family visited in July 1995 and saw it erupt.
+
+[01:00] — How Faithful Is Old Faithful?
+A second paragraph is added: "Mr. and Mrs. Starnes returned to the park in July 2019. They wondered if the model used to predict eruptions of Old Faithful was still the same as in 1995."
+
+[01:12] — Old Faithful: 1995
+A scatterplot appears on the right. The x-axis is "Duration (min)" from 1.5 to 5. The y-axis is "Wait Time (min)" from 40 to 110. The plot contains many blue dots. Text on the left explains: "The scatterplot displays data on the duration (in minutes) and wait time until the next eruption (in minutes) for all 262 recorded eruptions of Old Faithful in July 1995."
+
+[01:25] — Old Faithful: 1995
+Text is added below the first paragraph: "There is a moderately strong, positive, linear relationship between duration and wait time in this population of Old Faithful eruptions."
+
+[01:36] — Old Faithful: 1995
+A straight regression line is added through the points on the scatterplot. Text is added: "We have added the population regression line to the scatterplot."
+
+[01:42] — Old Faithful: 1995
+The equation for the regression line is added to the slide and above the scatterplot: "Its equation is predicted wait time = 33.34 + 13.29(duration)".
+
+[01:50] — Old Faithful: 2019
+A new scatterplot is shown with fewer points. The axes are the same, but scaled differently (x-axis 3.5 to 4.5, y-axis 88 to 102). Text explains: "The scatterplot displays data on the duration (in minutes) and wait time until the next eruption (in minutes) for a random sample of 25 Old Faithful eruptions in July 2019."
+
+[02:05] — Old Faithful: 2019
+Text is added: "There is a moderately weak, positive, linear relationship between duration and wait time in this sample of eruptions."
+
+[02:15] — Old Faithful: 2019
+A regression line is added to this new scatterplot. Text is added: "We have added the sample regression line to the scatterplot."
+
+[02:20] — Old Faithful: 2019
+The equation is added to the slide and the plot: "Its equation is predicted wait time = 62.95 + 7.79(duration)".
+
+[02:30] — Old Faithful: Then and Now
+Text poses the main question: "Is it believable that the population regression model from 1995 is still valid for predicting wait time from the duration of the previous Old Faithful eruption in 2019?"
+
+[02:43] — Old Faithful: Then and Now
+The 1995 scatterplot and its regression line reappear on the right side of the slide, labeled "July 1995 Population (N = 262)".
+
+[02:48] — Old Faithful: Then and Now
+The smaller 2019 scatterplot and its regression line appear below the question, labeled "July 2019 Sample (n = 25)".
+
+[03:00] — Old Faithful: Then and Now
+Text is added below the main question: "We need to estimate the probability of getting a sample regression line with a slope at least as unusual as 7.79 in a random sample of n = 25 observations from the July 1995 population."
+
+[03:21] — Old Faithful: Simulation Trial 1
+The July 1995 scatterplot is shown on the right.
+
+[03:27] — Old Faithful: Simulation Trial 1
+Text appears on the left: "Simulated random sample of n = 25 points from the July 1995 population".
+
+[03:32] — Old Faithful: Simulation Trial 1
+25 random dots on the 1995 scatterplot change color from blue to red.
+
+[03:38] — Old Faithful: Simulation Trial 1
+A new scatterplot appears on the left, displaying only those 25 red points.
+
+[03:45] — Old Faithful: Simulation Trial 1
+A regression line is calculated and drawn for the sample of 25 red points. The equation appears above it: "predicted wait time = 28.74 + 14.46(duration)".
+
+[03:55] — Old Faithful: Simulation Trial 1
+A label pointing to the new sample regression line appears: "Slope = 14.46".
+
+[04:00] — Old Faithful: Simulation Trial 1
+A new horizontal axis appears in the bottom right, titled "Simulated sampling distribution of the slope of the sample regression line". The axis ranges from 10 to 17.
+
+[04:05] — Old Faithful: Simulation Trial 1
+An arrow goes from the "Slope = 14.46" label to the new axis, and a dot is plotted on the axis at approximately 14.46.
+
+[04:16] — Old Faithful: Simulation Trial 2
+The slide resets, showing the full 1995 population scatterplot on the right.
+
+[04:21] — Old Faithful: Simulation Trial 2
+The text "Simulated random sample of n = 25 points from the July 1995 population" reappears on the left.
+
+[04:25] — Old Faithful: Simulation Trial 2
+A different set of 25 dots turn red on the 1995 plot.
+
+[04:27] — Old Faithful: Simulation Trial 2
+A new scatterplot appears on the left showing this new sample.
+
+[04:33] — Old Faithful: Simulation Trial 2
+A regression line is drawn on the left scatterplot. The new equation is: "predicted wait time = 39.27 + 11.97(duration)".
+
+[04:40] — Old Faithful: Simulation Trial 2
+A label points to the line: "Slope = 11.97".
+
+[04:45] — Old Faithful: Simulation Trial 2
+The horizontal axis reappears, retaining the dot from the first trial. An arrow draws from the new slope to plot a second dot at roughly 11.97.
+
+[04:52] — Old Faithful: Simulation Results
+The slide returns to the layout of the "Then and Now" slide. The main question and the 2019 sample graph are on the left. The 1995 population graph is on the right.
+
+[05:09] — Old Faithful: Simulation Results
+The 1995 scatterplot on the right is replaced by a large dotplot. The title is "Simulated sampling distribution of the slope of the sample regression line based on samples of size n = 25 from the July 1995 population". The dotplot shows hundreds of black dots forming a roughly bell-shaped distribution centered around 13.3. The horizontal axis is labeled from 10 to 16.
+
+[05:21] — Old Faithful: Simulation Results
+Text reappears below the main question: "We need to estimate the probability of getting a sample regression line with a slope at least as unusual as 7.79 in a random sample of n = 25 observations from the July 1995 population."
+
+[05:45] — Old Faithful: Simulation Results
+An arrow starts from the 2019 graph (which had a slope of 7.79) and points toward the far left of the dotplot axis (which only goes down to 10), indicating that 7.79 is far outside the range of simulated results. Text appears above the dotplot: "Estimated probability ≈ 0".
+
+[05:56] — Old Faithful: Simulation Results
+Text appears answering the main question: "No. There is an approximately 0 probability of obtaining a sample regression line with a slope at least as surprising (in either direction) as 7.79 if the population regression model from 1995 is still valid."
+
+**[06:22
+
+thumb_up
+thumb_down

@@ -1,0 +1,392 @@
+# Video 2 — Slide Descriptions
+# Unit 9, Lesson 2
+
+more_vert
+
+Here's a detailed breakdown of each slide and visual change in the video:
+
+[00:00] — Title Slide
+The video opens with the College Board AP Statistics logo and the text: "TOPIC 9.2 Confidence Intervals for the Slope of a Regression Model", and "DAILY VIDEO 2. In this video, we will discuss how to identify the procedure and check the conditions for constructing a confidence interval for the slope of a population regression line." The presenter is shown in a small video box in the top right corner.
+
+[00:11] — WHAT WILL WE LEARN?
+A transition slide with large text reading "WHAT WILL WE LEARN?".
+
+[00:13] — What Will We Learn?
+A list of two learning objectives appears:
+
+How do we identify an appropriate confidence interval procedure for the slope of a population regression line?
+
+How do we verify the conditions for calculating a confidence interval for the slope of a population regression line?
+
+[00:30] — LET'S LOOK AT AN EXAMPLE
+A transition slide with large text reading "LET'S LOOK AT AN EXAMPLE".
+
+[00:34] — Predicting Old Faithful in 2019
+This slide provides context for the example. It includes a picture of the Old Faithful geyser erupting. The text says:
+"The Starnes family took its first trip to Yellowstone National Park in July 1995. They only had six hours in the park, but were able to see the Old Faithful geyser erupt.
+Mr. and Mrs. Starnes returned to the park in July 2019. They wondered if the model used to predict eruptions of Old Faithful was still the same as in 1995. Earlier, we used simulation to determine that the answer is 'No.'
+Can we construct a confidence interval for the slope of the population regression line in 2019?"
+
+[01:15] — Old Faithful: 2019
+The slide displays the data for the example.
+Text: "The scatterplot displays data on the duration (in minutes) and wait time until the next eruption (in minutes) for a random sample of 25 Old Faithful eruptions in July 2019, along with the sample regression line. Computer output from a least-squares regression analysis is shown below."
+A scatterplot shows "Wait Time (min)" on the y-axis (from 88 to 102) versus "Duration (min)" on the x-axis (from 3.5 to 4.5). A positive linear trend line is drawn through the points, with the equation displayed above it: "predicted wait time = 62.95 + 7.79(duration)".
+Below the scatterplot is a table of computer output showing columns for Predictor, Coef, SE Coef, T-Value, and P-Value. The rows are "Constant" (Coef: 62.95) and "Duration(min)" (Coef: 7.79). Additional stats are listed below the table: S=4.20970, R-sq=14.01%, R-sq(adj)=10.27%.
+
+[01:46] — Population Regression Model
+Text at the top: "The population regression model is 
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+ where 
+𝜇
+𝑦
+μ
+y
+	​
+
+ is the mean value of the response variable y for a given value of the explanatory variable x."
+A 3D diagram shows a regression plane with an x-axis and a y-axis. A line runs across the plane labeled "
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+". Three normal distribution curves stand vertically along the line, indicating the distribution of y-values for specific x-values.
+Text appears below: "Confidence intervals and significance tests for the slope 
+𝛽
+β
+ require that the population regression model meet these conditions:"
+Bullet points appear sequentially:
+
+The true relationship between x and y is linear.
+
+The standard deviation of y, 
+𝜎
+𝑦
+σ
+y
+	​
+
+, does not vary with x.
+
+For a particular value of x, the responses (y-values) are approximately normally distributed.
+
+[02:30] — Sampling Distribution of Slope
+Text updates to: "When the population regression model 
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+ meets the conditions, the sampling distribution of the slope b of the sample regression line has"
+The properties of the sampling distribution are listed one by one:
+
+Shape: Approximately normal
+
+Center: 
+𝜇
+𝑏
+=
+𝛽
+μ
+b
+	​
+
+=β
+
+Variability: 
+𝜎
+𝑏
+=
+𝜎
+𝜎
+𝑥
+𝑛
+σ
+b
+	​
+
+=
+σ
+x
+	​
+
+n
+	​
+
+σ
+	​
+
+ (if 
+𝑛
+≤
+10
+%
+𝑁
+n≤10%N
+)
+A normal distribution curve appears on the right side of the screen, centered at 
+𝛽
+β
+, with arrows indicating the spread labeled with the formula for 
+𝜎
+𝑏
+σ
+b
+	​
+
+: 
+𝜎
+𝜎
+𝑥
+𝑛
+σ
+x
+	​
+
+n
+	​
+
+σ
+	​
+
+. A text box at the bottom defines the variables: 
+𝜎
+σ
+ = standard deviation of residuals for the population regression line, 
+𝜎
+𝑥
+σ
+x
+	​
+
+ = standard deviation of x-values in population, n = sample size.
+
+[03:19] — Inference for Slope
+The slide returns to the main question: "Can we construct a confidence interval for the slope of the population regression line in 2019?" The scatterplot of the Old Faithful data with the regression line is shown on the right.
+Two "Related questions" are posed on the left:
+
+How do we check conditions about the population regression model using only the sample data?
+
+How can we estimate the standard deviation of the sampling distribution of the sample slope, 
+𝜎
+𝑏
+=
+𝜎
+𝜎
+𝑥
+𝑛
+σ
+b
+	​
+
+=
+σ
+x
+	​
+
+n
+	​
+
+σ
+	​
+
+, when we do not know the values of 
+𝜎
+σ
+ or 
+𝜎
+𝑥
+σ
+x
+	​
+
+?
+
+[03:43] — Checking Conditions (Linearity)
+The title is "Checking Conditions. To calculate a confidence interval for the slope 
+𝛽
+β
+ of a population regression line, we must check the following:" The scatterplot is shown on the right.
+The first condition is evaluated: "The true relationship between x and y is linear."
+Text appears under it: "The scatterplot shows a moderately weak, positive, linear relationship between duration and wait time." The scatterplot on the right is then replaced by a residual plot (Residuals vs. Duration). Text appears below the new plot: "The residual plot shows random scatter about Residual = 0 line and no evidence of a leftover curved pattern." A blue check box appears next to the condition.
+
+[04:16] — Checking Conditions (Equal Variance)
+The second condition is evaluated: "The standard deviation of y, 
+𝜎
+𝑦
+σ
+y
+	​
+
+, does not vary with x."
+The scatterplot reappears on the right. Text below it says: "Scatterplot: The wait times vary by a similar amount for the different eruption durations in the data set." The scatterplot is again replaced by the residual plot. Text below it says: "Residual plot: The residuals are similar in size for the different eruption durations in the data set." A blue check box appears next to this condition.
+
+[04:48] — Checking Conditions (Normality)
+The third condition is evaluated: "For a particular value of x, the responses (y-values) are approximately normally distributed."
+A dotplot showing the distribution of residuals appears on the right, centered around 0, ranging from about -10 to 10.
+Text underneath the dotplot says: "A dotplot of residuals shows no obvious skewness or outliers." A blue check box appears next to the condition. A grey note box is added below the text on the left: "If the observed distribution is skewed or shows other clear departures from normality, n should be greater than 30."
+
+[05:22] — Checking Conditions (Independence)
+The final conditions regarding data collection are evaluated under the bullet point: "There is independence in data collection." The scatterplot returns to the right side of the screen.
+Sub-bullet: "Data are collected using a random sample or a randomized experiment." Note added: "The data came from a random sample of 25 Old Faithful eruptions in July 2019." A check box appears.
+Sub-bullet: "When sampling without replacement, check that 
+𝑛
+≤
+10
+%
+𝑁
+n≤10%N
+." Note added: "25 
+≤
+≤
+ 0.10(262) = 26.2". A check box appears.
+Green text appears at the very bottom: "All of the conditions are met."
+
+[06:14] — Inference for Slope (Revisited)
+The slide from [03:19] returns. The first related question about checking conditions now has a blue check box next to it. The focus shifts to the second related question about estimating the standard deviation. The normal curve graphic for the sampling distribution of 
+𝛽
+β
+ is shown on the right.
+
+[06:28] — Estimating 
+𝜎
+σ
+
+The slide title changes to "Estimating 
+𝜎
+σ
+". The question text remains on the left. The 3D regression plane visual and the normal distribution curve are shown. The scatterplot and the computer output table reappear on the right.
+
+[06:36] — Estimating 
+𝜎
+σ
+ (Using 
+𝑆
+𝑥
+S
+x
+	​
+
+)
+A text label "
+𝑆
+𝑥
+=
+0.213
+S
+x
+	​
+
+=0.213
+" is added next to the scatterplot to indicate the sample standard deviation of x. Text appears on the left: "Use 
+𝑆
+𝑥
+S
+x
+	​
+
+ to estimate 
+𝜎
+𝑥
+σ
+x
+	​
+
+."
+
+[06:48] — Estimating 
+𝜎
+σ
+ (Using s)
+The scatterplot is replaced by the residual plot. Above the plot, text reads "Standard deviation of residuals for the sample regression line:" and a formula appears: 
+𝑠
+=
+∑
+(
+𝑦
+𝑖
+−
+𝑦
+^
+𝑖
+)
+2
+𝑛
+−
+2
+=
+∑
+residual
+2
+𝑛
+−
+2
+s=
+n−2
+∑(y
+i
+	​
+
+−
+y
+^
+	​
+
+i
+	​
+
+)
+2
+	​
+
+	​
+
+=
+n−2
+∑residual
+2
+	​
+
+	​
+
+. Below the formula, text says "
+𝑠
+s
+ estimates the size of a typical prediction error".
+
+[07:07] — Estimating 
+𝜎
+σ
+ (Finalizing)
+The computer output table is shown again below the residual plot, with the value "S = 4.20970" highlighted. Text appears on the left: "Use s to estimate 
+𝜎
+σ
+." A blue check box appears next to the or
+
+thumb_up
+thumb_down

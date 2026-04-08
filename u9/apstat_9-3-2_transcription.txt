@@ -1,0 +1,57 @@
+# Video 2 — Transcript
+# Unit 9, Lesson 3
+
+more_vert
+
+[00:00] Hello students. I'm Darren Starnes, coming to you from beautiful Hilton Head, South Carolina. This is the final video for Topic 9.3 on justifying a claim with a confidence interval for the slope of a regression model.
+
+[00:13] What will you learn in this video? Well, we're actually going to show you how to construct and interpret a confidence interval for the slope of a population regression line from start to finish.
+
+[00:24] So let's get right to it. This question comes from the 2019 AP Statistics International Exam, it was question number two. A real estate agent working in a large city believes that, for three-bedroom houses, the selling price of the house decreases by approximately $2,000 for every mile increase in the distance of the house from the city center.
+
+[00:48] To investigate the belief, the agent obtained a random sample of 20 three-bedroom houses that sold in the last year. The selling price, in thousands of dollars, and the distance from the city center, in miles, for each of the 20 houses are shown in the scatterplot. The table shows computer output from a regression analysis of the data.
+
+[01:11] There are two parts to this question. Part A, assume all conditions for inference are met. Woohoo! That's always nice to see when you're doing inference about slope. Construct and interpret a 95 percent confidence interval for the slope of the least-squares regression line.
+
+[01:29] Part B, does the confidence interval contradict the agent's belief about the relationship between selling price and distance from the city center? Justify your answer.
+
+[01:40] What I'd like to suggest is that you pause the video here and work through the question as much as you can on your own. Then you can tune back in to see the model solution for this question.
+
+[01:54] All right, let's look at Part A. This is where we're going to construct and interpret a 95 percent confidence interval for the slope of the population least-squares regression line. So we want to do a 95 percent confidence interval for beta, which is the slope of the true or population regression line for predicting the selling price in thousands from distance from city center in miles for all the three-bedroom homes in this city.
+
+[02:25] And we would like to use a one-sample T interval for that slope beta. And fortunately, we're told in the question that the conditions are assumed to be met.
+
+[02:37] So we can get right to the calculating part. The slope of the sample regression line is given here, negative 2.158. Now for 95 percent confidence, we're needing our degrees of freedom. They took a random sample of 20 homes, so our degrees of freedom would be 18.
+
+[02:57] We can get the critical value from our formula sheet with Table B. So we just need to find our 18 degrees of freedom and our confidence level of 95 percent, and that would give us 2.101 with tail probability 0.025 on either side. So we get 2.101.
+
+[03:21] Again, you could do that with your calculator using the inverse T command. So if you want to do it that way, you could do something like Second Variables, go to Inverse T, tell it the area to the left of the place you want, either 0.975 for the positive value or 0.025 for the negative value, 18 degrees of freedom, paste that in, and you get 2.101 that way. Whichever suits you better.
+
+[03:49] And then to calculate the confidence interval, we're going to take the sample slope, plus or minus T critical value, times the standard error of the slope. So we already have the negative 2.158 from the computer output. The standard error of the slope is given here, the 0.149, so we can plug that in.
+
+[04:07] And then the 2.101 comes from the critical value that we found just a minute ago. So we can multiply those two together to get the margin of error being 0.313, and our final interval negative 2.471 to negative 1.845. So it's not too bad to calculate.
+
+[04:26] Now we need to interpret that interval. And I'll put it here just to remind you what we got. And we would say we are 95 percent confident that the slope of the true or population regression line is between negative 2.471 and negative 1.845 thousands of dollars per mile.
+
+[04:46] So that would imply that for each additional mile that a three-bedroom house is away from the city center, the selling price of the house is expected to decline by between $1,845 and $2,471.
+
+[05:02] Now let's take a look at Part B. Does the confidence interval contradict the agent's belief about the relationship between selling price and distance from the city center? Justify your answer. Well, remember that the agent thought that the selling price of the home would decrease by about $2,000 for every mile increase in how far the house was from the city center.
+
+[05:27] And remember that our interval we got was negative 2.471 to negative 1.845. That interval definitely includes negative two, which corresponds to a 2,000 decrease.
+
+[05:41] So because the confidence interval contains negative two, corresponding to that $2,000 decrease, it is a believable or plausible value for the slope of the regression line based on the sample data. Consequently, the data do not contradict the agent's belief that the selling prices of three-bedroom houses decrease about $2,000 for every one-mile increase in the distance of the house from the city center.
+
+[06:07] Just a comment in general, this is a very typical confidence interval question from the AP Exam free response. We had a Part A that was focused on calculating and interpreting the interval, and then a follow-up in Part B, justifying a claim based on our interval. You really need to be able to do all of these things because you could be asked to do so on the AP Exam.
+
+[06:31] So what can you take away from this experience of going through a confidence interval from start to finish? Well, you always want to be sure to define the parameter you're trying to estimate, in our case it was the slope of the population regression line. Identify the procedure you're using, we did a one-sample T interval for the slope beta.
+
+[06:52] Verify that the conditions for the procedure are met, and we got very fortunate because we were told to assume that. Then calculate the confidence interval, using your technology or your formula sheet where you need it. And then interpret the interval in context.
+
+[07:08] So I want to thank you
+
+Citations
+
+https://www.bartleby.com/questions-and-answers/suppose-x~n12.-what-is-thez-scoreof-x8-enter-an-exact-number-as-an-integer-fraction-or-decimal./da3b9516-ce8d-452e-9ffd-08cf556cc82a
+https://pdfcoffee.com/download/2019-stat-ap-pdf-free.html
+thumb_up
+thumb_down

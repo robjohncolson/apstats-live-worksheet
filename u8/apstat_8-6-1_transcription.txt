@@ -1,0 +1,207 @@
+# Video 1 — Transcript
+# Unit 8, Lesson 6
+
+edit
+more_vert
+
+[00:00]
+Hi, this is Luke Wilcox, AP Statistics teacher at East Kentwood High School in Kentwood, Michigan. And in this video, we're going to talk about carrying out a chi-square test for homogeneity or independence.
+
+[00:12]
+So let's start with a look at what we will learn. We have two questions that we'd like to try and answer in this video. Number one, how do we calculate an appropriate test statistic for a chi-square test for homogeneity or independence?
+
+[00:25]
+And number two, how do we calculate a p-value for a chi-square test for homogeneity or independence?
+
+[00:31]
+So let's start by taking a look at an example that might be familiar to you here. This one is titled Where Do You Go To School?
+
+[00:38]
+And it says a random sample of parents with school-aged children was taken during 2019. A separate random sample of parents with school-aged children was taken in 2020. Parents were asked what type of school their children attended. Here are the results.
+
+[00:54]
+Researchers would like to perform a test to determine if the distribution of school type for all school-aged children differed between the two years. Find the test statistic and the p-value.
+
+[01:04]
+So let's start with what we know from some of the previous videos. We stated that the null hypothesis here should be that there is no difference in the distribution of school types for school-aged children from 2019 to 2020. And the alternative is going to say that there is a difference in this distribution.
+
+[01:23]
+In that earlier video, we decided that we should be using a chi-square test for homogeneity. And then we also checked that all three of the conditions had been met.
+
+[01:33]
+So now let's talk about how we can calculate a test statistic here.
+
+[01:37]
+So here's the data.
+
+[01:39]
+And in an earlier video, we talked about how to calculate the expected counts using this formula. So let me go ahead and put those values into the table.
+
+[01:48]
+Now here is the formula that we're going to use for our test statistic.
+
+[01:53]
+And this one is going to look familiar to you because you used exactly the same formula when you did the chi-square goodness-of-fit test earlier in the unit.
+
+[02:02]
+So we just have to go ahead now and plug in our observed values and our expected values into this formula.
+
+[02:08]
+So that's going to look like this.
+
+[02:11]
+Now if we do the calculation, you're going to see there are six different parts that we are adding up in order to get a value of 5.55.
+
+[02:20]
+Now this value is what's called the chi-square statistic.
+
+[02:24]
+And those six numbers that we added up in order to get that value, we're going to call those the contributions to the chi-square statistic.
+
+[02:31]
+So now we've got our test statistic. Let's see if we can calculate a p-value.
+
+[02:37]
+So here's what we know. The p-value is the probability of observing a chi-square statistic at least as large as the one observed, assuming the null hypothesis and the probability model are true.
+
+[02:50]
+So for a chi-square test for homogeneity or independence, the p-value is going to be calculated from a chi-square distribution with degrees of freedom given by the following formula here.
+
+[03:02]
+So here's how we calculate degrees of freedom. We take the number of rows minus 1, and then we multiply it by the number of columns minus 1.
+
+[03:11]
+So here's our two-way table. And very important here, we are not going to include the total row or the total column when we are counting up the number of rows and number of columns.
+
+[03:22]
+So the number of rows here is 3, and the number of columns here is 2. So we plug that into the formula, and we see that the degrees of freedom is 2.
+
+[03:31]
+Now let me try and explain why that makes sense that the degrees of freedom is 2. And I'm going to go back to the expected count calculations that we did earlier.
+
+[03:40]
+And if you remember from that video, we used this formula to calculate the first two expected counts.
+
+[03:49]
+But then we used a shortcut in order to find the remainder of the expected counts by using the row totals, the column totals, and subtraction in order to come up with those other four expected counts.
+
+[04:00]
+And so what I want you to notice here is that those first two expected counts have freedom to vary. But once those two values are determined, the other four are automatically determined by the row totals and the column totals.
+
+[04:15]
+So we see here that there's really only two expected values that have freedom to vary. And that explains why the degrees of freedom is 2 here.
+
+[04:24]
+So let's continue on and try and calculate the p-value. We know our chi-square statistic is 5.55, and we know our degrees of freedom is 2.
+
+[04:32]
+So here's my chi-square distribution with degrees of freedom 2. You can see our test statistic of 5.55. And we know that the p-value is the probability of getting that chi-squared value or greater purely by chance.
+
+[04:47]
+So in the picture, this p-value is represented by the area that you see shaded in pink.
+
+[04:52]
+So how do we find that p-value? Well, there's two different ways that we have in order to calculate that p-value.
+
+[04:59]
+The first one, we're going to be using a table of values that would be provided for you on the AP exam. And these are called chi-squared critical values.
+
+[05:07]
+Now here's how the table works. The first thing we identify is the degrees of freedom. And we know our degrees of freedom is 2, so we're only going to be looking at this row.
+
+[05:16]
+Next, we're going to try and find the chi-squared statistic of 5.55. Well, you're going to see here that that statistic would be somewhere between 4.61 and 5.99.
+
+[05:28]
+Which means that the tail probability is going to be between 0.05 and 0.10.
+
+[05:35]
+So this means that the p-value is somewhere between 0.05 and 0.10.
+
+[05:41]
+Now if you'd like to find the exact p-value, you can use your calculator to do that. On the calculator, you're going to be using the distribution menu, and you're going to use option number 8 here, which is chi-squared CDF.
+
+[05:55]
+Now once you pull up that menu, you're going to have to indicate the lower bound of 5.55, the upper bound, which should just be some very, very large number, and then the degrees of freedom.
+
+[06:05]
+And then the calculator is going to tell you the p-value. So we can see here that the p-value is about 0.06.
+
+[06:13]
+Now notice that the p-value from the calculator is consistent with what we found in table C, where we said that the p-value is between 0.05 and 0.10. The calculator gives us a more exact value of 0.062.
+
+[06:28]
+Now let's go ahead and practice this with a new example. This one's titled Are You Working?
+
+[06:33]
+It says a random sample of 2,000 adults revealed the following data about education level and employment status.
+
+[06:40]
+Researchers want to determine if there's an association between education level and employment status. Find the test statistic and the p-value.
+
+[06:48]
+Well, let's start with what we already know from some previous videos. We know the null hypothesis is that there is no association between education level and employment status for all adults.
+
+[06:58]
+And the alternative says that there is an association between these two variables.
+
+[07:03]
+And we decided earlier that we should be using a chi-square test for independence.
+
+[07:08]
+Now we also decided that all three of the conditions for inference had been met.
+
+[07:13]
+So let's go ahead and find the test statistic. Now I'm showing you already here the expected counts that we had from a previous video.
+
+[07:21]
+And now we can use the formula to calculate the chi-square statistic.
+
+[07:25]
+So here are all of the observed and expected values plugged into the formula. There's the calculation. And here is the total when you add all of those values up.
+
+[07:35]
+So once again, remember this is what's called the chi-square statistic. We got 14.30. Now let's see if we can use that to find the p-value.
+
+[07:46]
+So calculating a p-value, we know the chi-squared value is 14.30.
+
+[07:50]
+We can calculate the degrees of freedom, which is going to end up being 2 in this problem here.
+
+[07:56]
+And we know that the p-value is the probability of getting that chi-squared value or greater. So our picture here has a chi-square distribution with degrees of freedom 2. And you can see the p-value is going to be that area out to the right of 14.30.
+
+[08:11]
+So let's start with table C. Once again, we're using degrees of freedom 2, and we're looking for a chi-squared value of 14.30.
+
+[08:20]
+Well, you can see that that critical value is going to land somewhere between 13.82 and 15.20. Which is indicating to us that the p-value is somewhere between 0.0005 and 0.001.
+
+[08:37]
+Now once again, if we want the exact p-value, we can go to the calculator under the distribution menu, we'll use chi-squared CDF. We'll put in the lower bound, the upper bound, and the degrees of freedom.
+
+[08:47]
+And then the calculator is going to give us the exact p-value here, which is 0.0008, if we round that. Which is consistent with what we got from the table. From the table we said it's between 0.0005 and 0.001. The technology gave us the exact p-value of 0.0008.
+
+[09:09]
+So what should we take away from this video here? Well let's go back to the two questions from the beginning of the video. Number one, how do we calculate a test statistic for a chi-square test for homogeneity or independence?
+
+[09:21]
+Well, you already knew this formula here from the chi-square goodness-of-fit test. So that's the formula we would use to calculate the test statistic.
+
+[09:29]
+Now number two, how do we calculate a p-value for a chi-square test for homogeneity or independence?
+
+[09:34]
+Well, we know the p-value is the probability of getting our observed chi-squared value or greater purely by chance. Now we have to know our degrees of freedom given by the number of rows minus 1 multiplied by the number of columns minus 1.
+
+[09:47]
+And then we can go to table C or we can use chi-squared CDF on the calculator in order to determine the p-value.
+
+[09:55]
+So this is Luke Wilcox signing off. Thank you all for watching and I hope to see you in the next video.
+
+thumb_up
+thumb_down
+48.6s

@@ -1,0 +1,67 @@
+# Video 2 — Transcript
+# Unit 8, Lesson 6
+
+more_vert
+
+[00:00] Hi, this is Luke Wilcox, AP Statistics teacher from East Kentwood High School in Kentwood, Michigan. And in this video, we're going to talk about carrying out a chi-square test for homogeneity or independence.
+
+[00:15] So let's start by taking a look at what we will learn. We have two questions that we want to try and answer in this video. Number one, how do we interpret the p-value in a chi-square test for homogeneity or independence? And number two, how do we state a conclusion for a chi-square test for homogeneity or independence?
+
+[00:37] So let's start with a look at an example that might be familiar to you at this point. It's titled, "Where Do You Go To School?" It says a random sample of parents with school-aged children was taken during 2019. A separate random sample of parents with school-aged children was taken in 2020. Parents were asked what type of school their children attended.
+
+[00:58] Here are the results. Researchers would like to perform a test to determine if the distribution of school type for all school-aged children differed between the two years.
+
+[01:13] Well, let's start with what we have from some of the previous videos. In those videos, we defined the null hypothesis as being there is no difference in the distribution of school types for school-aged children from 2019 to 2020. And then, of course, the alternative says that there is a difference in the distribution of school types.
+
+[01:34] We also decided that we wanted to use a chi-square test for homogeneity, and we checked to make sure that the conditions were met to be able to do this procedure. We calculated the chi-square statistic as 5.55. And you can see the p-value there of 0.062.
+
+[01:53] Now, what that p-value means. Well, the p-value measures how likely it is to get evidence for the alternative hypothesis as strong as or stronger than the observed evidence by chance alone when the null hypothesis is true.
+
+[02:10] So let's see if we can interpret the p-value here. So what I'm going to do is I'm going to first show you a template that you can use for interpreting the p-value, and then we'll put in the specific details from this example problem. So here's what the template looks like, and it has three parts to it.
+
+[02:27] The first part is to say assuming the null hypothesis is true. The second part is to say that there is a, and you're going to insert your p-value there probability. And then the third part is to say, of getting a chi-squared of, and then you insert your chi-square statistic or greater by chance alone in the random sample or random assignment.
+
+[02:49] So let's see what this interpretation would look like for this example problem. So here's the first part. Assuming the null is true, we're going to say assuming there is no difference in the distribution of school types for school-aged children from 2019 to 2020. In the second part, we're going to insert our p-value here and say there is a .062 probability.
+
+[03:13] And then the third part, we're going to insert our chi-square statistic, and we're going to say, of getting a chi-square of 5.55 or greater by chance alone in the random samples.
+
+[03:25] So now that we have a p-value, let's see if we can turn that into a conclusion. And there are two different types of conclusions that you can have depending on whether or not you have a small or a large p-value. So let's talk about a small p-value first, which means that the test statistic is unlikely to occur by random chance alone.
+
+[03:46] If this is the case, here's what your conclusion is going to look like. Because the p-value of blank is less than or equal to alpha, we reject the null hypothesis. This means there is convincing statistical evidence of the alternative hypothesis stated in context.
+
+[04:05] Now, if you have a p-value that is a large p-value, this means that the test statistic is likely to occur by random chance alone, and your conclusion is going to look different. Here's what it's going to look like. Because the p-value of blank is greater than alpha, this time we fail to reject the null hypothesis.
+
+[04:25] And this means there is not convincing statistical evidence for the alternative hypothesis stated in context.
+
+[04:34] So let's go back to our example now and see if we can make a conclusion. Now, there was no significance level given in the school type example. So we're just going to use alpha equals .05, which is the most common significance level. So here's what our conclusion would look like. Because the p-value of .062 is greater than our alpha of .05, we fail to reject the null hypothesis.
+
+[05:01] And this means that there is not convincing statistical evidence that there is a difference in the distribution of school types for school-aged children from 2019 to 2020.
+
+[05:14] Okay, let's practice using a new example problem. This one's titled "Are You Working?" It says a random sample of 2,000 adults revealed the following data about education level and employment status.
+
+[05:29] Researchers want to determine if there is an association between education level and employment status. Now, the p-value for a chi-square test for independence is .0008. So we want to interpret the p-value, and then make a conclusion at the alpha equals .01 significance level.
+
+[05:53] Now, from previous videos, we know that the null hypothesis here should say that there is no association between education level and employment status for all adults. And the alternative is going to say that there is an association between these two variables. We know that the conditions have been met and we've checked those.
+
+[06:11] And we've also calculated the chi-square value of 14.30, as well as the p-value of .0008. So here is what the p-value actually means. Assuming there is no association between educational level and employment status for all adults, there is a .0008 probability of getting a chi-squared value of 14.30 or greater by chance alone in the random sample of 2,000 adults.
+
+[06:46] Now let's see if we can turn that into a conclusion. Well, this time we have a p-value that is definitely small. So here's what our conclusion would look like. Because the p-value of .0008 is less than or equal to alpha of .01, we reject the null hypothesis, which means there is convincing statistical evidence that there's an association between education level and employment status for all adults.
+
+[07:13] Now, when you end up with a p-value that's small and you have convincing statistical evidence, you might wonder why did that happen. In which case it makes sense to do what's called a follow-up analysis.
+
+[07:25] So I'm showing you the work that we did in a previous video where we calculated the chi-square statistic. But we're going to focus in on the contributions that were made to that chi-square statistic. And what we're looking for is the largest of those contributions. And you can see in this list here that 8.30 is our largest contribution.
+
+[07:47] And if we take that back to the two-way table, you can see that that happens in the cell for those that were unemployed with no high school diploma. And the reason why we got such a large contribution there is because the observed value of 14 is much larger than that expected value of 6.6.
+
+[08:06] So here's what we would state for our follow-up analysis here. We would say the largest contribution to the chi-square statistic is 8.30 because the observed number of unemployed adults with no high school diploma is much higher than expected.
+
+[08:23] So what should we take away from this video here? Well, let's go back to the two questions from the beginning of the video. Number one, how do we interpret the p-value in a chi-square test for homogeneity or independence? Well, we have a template for this. And here's what it looks like. Assuming the null hypothesis is true, there is a, and then you insert your p-value probability, of getting a chi-squared of, and then you insert your chi-square statistic or greater by chance alone in the random sample or the random assignment.
+
+[08:55] Now, the second question was, how do we state a conclusion for a chi-square test for homogeneity or independence? Now, this depends on whether you have a small p-value or a large p-value. If you have a small p-value, we're going to say, because the p-value of blank is less than or equal to alpha, we reject the null hypothesis.
+
+[09:15] And there is convincing statistical evidence for the alternative hypothesis in context. Now, if your p-value is large, your conclusion is going to say, because the p-value of blank is greater than alpha, we fail to reject the null hypothesis. There is not convincing statistical evidence for the alternative hypothesis in context.
+
+[09:39] So this is Luke Wilcox signing off. Thanks for watching, and I hope to see you
+
+thumb_up
+thumb_down

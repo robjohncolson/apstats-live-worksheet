@@ -1,0 +1,213 @@
+# Video 3 — Slide Descriptions
+# Unit 9, Lesson 5
+
+more_vert
+
+[00:00] — TOPIC 9.5 Carrying Out a Test for the Slope of a Regression Model
+The title slide introduces the topic. A subtitle reads, "DAILY VIDEO 3 In this video, we will illustrate the entire process of performing a significance test about the slope of a population regression line." The speaker is visible in a small window in the top right corner.
+
+[00:14] — WHAT WILL WE LEARN?
+A blue transition slide appears with the text "WHAT WILL WE LEARN?".
+
+[00:16] — What Will We Learn?
+The slide outlines the main learning objective for the video:
+"1. How do we perform a complete significance test about the slope of a population regression line?"
+
+[00:25] — LET'S PRACTICE
+A blue transition slide appears with the text "LET'S PRACTICE".
+
+[00:28] — 2001 Exam #6 (Modified) - Problem Context
+The slide introduces a modified AP Statistics exam question with a paragraph setting up the scenario: "The Statistics Department at a large university is trying to determine if it is possible to predict whether an applicant will successfully complete the Ph.D. program or will leave before completing the program. The department is considering whether GPA (grade point average) in undergraduate statistics and mathematics courses (a measure of performance) and mean number of credit hours per semester (a measure of workload) would be helpful measures. To gather data, a random sample of 20 entering students from the past 5 years is taken. The data are given below."
+
+[01:09] — 2001 Exam #6 (Modified) - Data Tables
+The introductory text is replaced by two data tables. The top table is titled "Successfully Completed Ph.D. Program" and lists data for Students A through M, including columns for "GPA" and "Credit hours". At [01:17], the bottom table appears, titled "Did Not Complete Ph.D. Program", listing data for Students N through T with the same columns.
+
+[01:22] — 2001 Exam #6 (Modified) - Regression Output
+The data tables are removed. New text explains the origin of the upcoming data: "The regression output below resulted from fitting a line to the data in the group of 7 students that did not complete the Ph.D. program. The residual plot (not shown) indicated no unusual patterns, and the assumptions necessary for inference were judged to be reasonable." Below this, a regression output table titled "Did Not Complete Ph.D. Program" is shown. It includes columns for Predictor, Coef, StDev, T, and P. The "GPA" row shows Coef = -3.485, StDev = 1.013, T = -3.44, and P = 0.018.
+
+[01:45] — 2001 Exam #6 (Modified) - Part A Question
+The text explaining the regression output is replaced by the specific question for part (a): "(a) For the students who did not complete the Ph.D. program, is there a significant relationship between GPA and mean number of credit hours per semester at the α = 0.01 level?" The regression output table remains on screen, moved slightly upwards.
+
+[02:13] — 2001 Exam #6 (Modified) - Hypotheses
+The regression output table is removed, leaving only the part (a) question text at the top. The slide now displays the null and alternative hypotheses: "
+𝐻
+0
+:
+𝛽
+=
+0
+ vs. 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+0
+	​
+
+:β=0 vs. H
+a
+	​
+
+:β
+
+=0
+". Below the hypotheses, the parameter beta is defined: "where 
+𝛽
+β
+ = the slope of the population regression line for predicting mean number of credit hours per semester from GPA for students who did not complete the statistics Ph.D. program at this large university."
+
+[03:15] — 2001 Exam #6 (Modified) - Significance Level
+The statement "Use α = 0.01." is added to the bottom of the slide.
+
+[03:19] — 2001 Exam #6 (Modified) - Procedure & Conditions
+The slide layout changes. The part (a) question remains at the top. The regression output table reappears on the left side of the screen. The hypotheses "
+𝐻
+0
+:
+𝛽
+=
+0
+ vs. 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+0
+	​
+
+:β=0 vs. H
+a
+	​
+
+:β
+
+=0
+" are placed on the right. At the bottom left, text states the chosen procedure and verifies conditions: "Test for slope; Conditions are met."
+
+[03:32] — 2001 Exam #6 (Modified) - Calculations (t-statistic)
+The text "Test for slope; Conditions are met." is replaced by the calculation for the test statistic: "
+𝑡
+=
+−
+3.44
+t=−3.44
+". A blue highlight box appears around the value -3.44 in the "T" column of the regression output table to show where this number came from.
+
+[03:43] — 2001 Exam #6 (Modified) - Calculations (P-value setup)
+Text is added below the hypotheses on the right side of the screen explaining how to find the p-value: "Because 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+a
+	​
+
+:β
+
+=0
+, we want to find 
+𝑃
+(
+𝑡
+≤
+−
+3.44
+)
++
+𝑃
+(
+𝑡
+≥
+3.44
+)
+P(t≤−3.44)+P(t≥3.44)
+."
+
+[03:53] — 2001 Exam #6 (Modified) - Calculations (t-distribution curve)
+A graphic of a t-distribution curve is added below the p-value explanation. The curve shows shaded regions in both tails, representing values less than -3.44 and greater than 3.44.
+
+[03:58] — 2001 Exam #6 (Modified) - Calculations (Degrees of Freedom and P-value)
+Additional calculation details are added below the t-statistic on the left side: "df = 7 - 2 = 5 ; p-value = 0.018". A blue highlight box appears around the value 0.018 in the "P" column of the regression table.
+
+[04:19] — 2001 Exam #6 (Modified) - Conclusion
+The calculation details on the left side (t-statistic, df, p-value) are replaced by a paragraph stating the final conclusion based on the test: "Because the p-value of 0.018 > α = 0.01, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. There is not convincing evidence of a linear relationship between GPA and mean number of credit hours in the population of students at this university who did not complete the statistics Ph.D. program."
+
+[04:47] — 2001 Exam #6 (Modified) - Part B Context
+The slide clears all previous work and presents new information for the second part of the problem. Text reads: "The regression output below resulted from fitting a line to the data in the group of 13 students that successfully completed the Ph.D. program. The residual plot (not shown) indicated no unusual patterns, and the assumptions necessary for inference were judged to be reasonable." A new regression output table titled "Successfully Completed Ph.D. Program" is shown. In the "GPA" row, it lists Coef = -2.7555, StDev = 0.4668, T = -5.90, and P = 0.000.
+
+[05:05] — 2001 Exam #6 (Modified) - Part B Question
+The context text is replaced by the question for part (b): "(b) For the students who successfully completed the Ph.D. program, is the evidence for a significant relationship between GPA and mean number of credit hours per semester stronger or weaker than for the students who did not complete the Ph.D. program? Justify your answer." The new regression output table remains on screen.
+
+[05:49] — 2001 Exam #6 (Modified) - Part B Answer
+A paragraph answering the part (b) question appears below it: "Stronger. The p-value for a test of 
+𝐻
+0
+:
+𝛽
+=
+0
+ vs. 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+0
+	​
+
+:β=0 vs. H
+a
+	​
+
+:β
+
+=0
+, where 
+𝛽
+β
+ = the slope of the population regression line for predicting mean number of credit hours per semester from GPA for students who successfully completed the statistics Ph.D. program at this large university, is approximately 0.000. This p-value is smaller than the 0.018 p-value for the test in part (a), and gives stronger evidence of a significant relationship between GPA and mean number of credit hours per semester."
+
+[06:54] — WHAT SHOULD WE TAKE AWAY?
+A blue transition slide appears with the text "WHAT SHOULD WE TAKE AWAY?".
+
+[06:57] — Key Takeaways
+The slide begins summarizing the lesson by restating the objective: "1. How do we perform a complete significance test about the slope of a population regression line?"
+
+[07:00] — Key Takeaways - Steps
+The text "Make sure to:" appears, followed by a list of steps that populate one by one as the speaker mentions them:
+
+[07:01] State the null and alternative hypotheses, and define the parameter.
+
+[07:10] Give the significance level.
+
+[07:21] Identify the procedure you are using.
+
+[07:26] Verify that the conditions for the procedure are met.
+
+[07:31] Calculate the test statistic and p-value.
+
+[07:35] Make a conclusi
+
+Citations
+
+https://brainly.com/question/31628740
+thumb_up
+thumb_down

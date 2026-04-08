@@ -1,0 +1,131 @@
+# Video 1 — Transcript
+# Unit 8, Lesson 5
+
+more_vert
+
+[00:00] AP statistics teacher from East Kentwood High School in Kentwood, Michigan. And in this video, we're going to talk about setting up a chi-squared test for homogeneity or independence.
+
+[00:12] So let's start with a look at what we will learn. We have three questions that we'd like to try and answer in this video.
+
+[00:19] Number one, how do we identify the appropriate significance test procedure for data in a two-way table?
+
+[00:26] Number two, how do we state a null and alternative hypothesis for a chi-square test for homogeneity?
+
+[00:33] And number three, how do we state a null and alternative hypothesis for a chi-square test for independence?
+
+[00:41] So let's start by talking a little bit about how we're going to identify the correct procedure here. There are two types of significance tests for categorical data in a two-way table.
+
+[00:52] And the difference between these two tests depends on what your goal is for the study.
+
+[00:58] If your goal is to compare distributions of one categorical variable for multiple populations,
+
+[01:06] then when you collect your data, you're going to take independent random samples from each one of those populations,
+
+[01:13] or multiple groups within a randomized experiment. Now, if this is the case, then we are going to use a chi-square test for homogeneity.
+
+[01:23] Now on the other hand, if your goal is to determine whether two categorical variables are somehow associated,
+
+[01:31] in this case, when you do the data collection, you're going to take one single random sample from the population and then just measure those two categorical variables for each individual.
+
+[01:41] In this case, we're going to use a chi-square test for independence. Now let's notice something here.
+
+[01:46] The appropriate test for data in a two-way table, it depends on how the data are collected.
+
+[01:54] So if we look at the first scenario here, we have independent random samples from multiple populations or multiple groups in an experiment,
+
+[02:03] in which case we use the chi-square test for homogeneity. In the second scenario, we only have a single random sample here, in which case we're going to use the chi-square test for independence.
+
+[02:18] So let's go ahead and try this with an example problem. This one's titled, where do you go to school?
+
+[02:24] And it says, a random sample of parents with school-aged children was taken during 2019. A separate random sample of parents with school-aged children was taken in 2020.
+
+[02:35] Parents were asked what type of school their children attended. Here are the results.
+
+[02:42] So if we are interested in comparing the distribution of type of school for the two years, which significance test is appropriate?
+
+[02:51] Well, we should notice here that the goal is to compare the distribution of school type between the two years,
+
+[02:58] and the way that the data was collected here was that we had two random samples, independent random samples from two different populations.
+
+[03:06] This clearly indicates to us that we would use a chi-square test for homogeneity.
+
+[03:13] Now let's talk about what the null hypothesis would look like for this test.
+
+[03:18] Remember, in a statistical test, the null hypothesis is often a claim of no difference or no change.
+
+[03:26] So in this context, we're going to define the null hypothesis as there being no difference in the distribution of school types attended by school-aged children from 2019 to 2020.
+
+[03:37] Now notice here that there is no parameter to define. Like you've had to in previous significance tests,
+
+[03:45] we don't have a mean or a proportion that we have to define as part of the hypotheses here.
+
+[03:50] Now let's take a look at the alternative hypothesis. Remember, in a statistical test,
+
+[03:56] the alternative hypothesis is the claim that we hope to support with evidence from the data collected.
+
+[04:02] Well, here's our null hypothesis which said that says that there is no difference in the distribution.
+
+[04:08] So of course the alternative is going to say that there is a difference in the distribution of school types attended by school-aged children from 2019 to 2020.
+
+[04:19] Now because this alternative hypothesis includes several proportions, right, we have the proportion that are public school,
+
+[04:26] the proportion that are private, parochial, charter, and the proportion that are home, and that could be higher or lower from 2019 compared to 2020.
+
+[04:34] This is why we refer to this as being many-sided. So let's go ahead and practice with another example here.
+
+[04:43] This one's titled, are you working? It says a random sample of 2,000 adults revealed the following data about education level and employment status.
+
+[04:54] If we are interested in deciding if education level and employment status are associated, what is the appropriate significance test?
+
+[05:03] Well here we are trying to see if there's an association between two categorical variables,
+
+[05:08] and you can see that the data was collected using one single random sample from one population.
+
+[05:15] And you'll also notice that they use the word associated here, which are both clear indicators to us that we should be using a chi-square test for independence here.
+
+[05:25] So let's talk about the null hypothesis for this test. And remember, in a statistical test,
+
+[05:32] the null hypothesis is often a claim of no difference or no change.
+
+[05:37] So in this context, the null hypothesis is going to say there's no association between education level and employment status for all adults.
+
+[05:46] Now there is another version of this null hypothesis that is also acceptable here,
+
+[05:51] and that's to say that education level and employment status are independent for all adults.
+
+[05:58] Now once again notice that we don't have any parameters that we have to define for these hypotheses.
+
+[06:05] Now let's turn to the alternative hypothesis. And remember in a statistical test,
+
+[06:11] the alternative hypothesis is the claim that we hope to support with evidence from the data collected.
+
+[06:16] So if we're using the null hypothesis that says that there is no association,
+
+[06:22] then the alternative is going to say that there is an association between education level and employment status for all adults.
+
+[06:30] Now if we are using that other version of the null hypothesis which says that education level and employment status are independent for all adults,
+
+[06:38] well then the alternative is going to say that they are not independent for all adults.
+
+[06:44] So what should we take away from this video here? Well let's go back to the questions from the beginning of the video.
+
+[06:51] The first question, how do we identify the appropriate significance test procedure for data in a two-way table?
+
+[06:58] Well here we decided that if we are comparing the distribution of one categorical variable with multiple populations, then we're going to use a chi-square test for homogeneity.
+
+[07:10] On the other hand, if we want to see if there's an association between two categorical variables from one population there, then we're going to use the chi-square test for independence.
+
+[07:22] Now the second question, how do we state a null and alternative hypothesis for a chi-square test for homogeneity?
+
+[07:29] Well here the null is going to say that there is no difference in the distribution of whatever our categorical variable is across populations or treatments,
+
+[07:38] and the alternative will say that there is a difference in the distribution of that categorical variable across populations or treatments.
+
+[07:46] And number three, how do we state a null and alternative hypothesis for a chi-square test for independence?
+
+[07:52] Well remember we have two different versions here. In the first version the null hypothesis would say that there is no association,
+
+[08:00] and the alternative would say that there is an association between the two categorical variables.
+
+thumb_up
+thumb_down

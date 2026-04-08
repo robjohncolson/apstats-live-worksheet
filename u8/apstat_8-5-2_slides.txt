@@ -1,0 +1,113 @@
+# Video 2 — Slide Descriptions
+# Unit 8, Lesson 5
+
+more_vert
+
+[00:00] — TOPIC 8.5 Setting Up a Chi-Square Test for Homogeneity or Independence
+The title slide displays the topic, "DAILY VIDEO 2," and a description: "In this video, we will discuss how to check the conditions for performing a chi-square test for homogeneity or independence." A graph icon is shown on the left, and the presenter is visible in the top right corner.
+
+[00:14] — WHAT WILL WE LEARN?
+A transition title card introduces the lesson objectives.
+
+[00:17] — What Will We Learn?
+The slide shows the single main objective for the video:
+"1. How do we verify the conditions for performing a chi-square test for homogeneity or independence?"
+
+[00:30] — LET'S LOOK AT AN EXAMPLE
+A transition title card introduces the first example problem.
+
+[00:33] — Where Do You Go To School?
+The slide presents the first problem scenario:
+"A random sample of parents with school-aged children was taken during 2019. A separate random sample of parents with school-aged children was taken in 2020. Parents were asked what type of school their children attended. Here are the results."
+A table displays the observed counts:
+
+Public: 266 (2019 Sample), 163 (2020 Sample)
+
+Private/Parochial/Charter: 16 (2019 Sample), 21 (2020 Sample)
+
+Home: 38 (2019 Sample), 30 (2020 Sample)
+Text at the bottom reads: "Researchers would like to perform a test to determine if the distribution of school type for all school-aged children differed between the two years. Check the conditions for inference." A stock photo of students is on the right.
+
+[01:07] — Where Do You Go To School? (Hypotheses)
+The data table remains, but the bottom text is replaced with the hypotheses established in a previous video:
+"H_0: There is no difference in the distribution of school types attended by school-aged children from 2019 to 2020."
+"H_a: There is a difference in the distribution of school types attended by school-aged children from 2019 to 2020."
+A final line notes: "We also identified the procedure as a chi-square test for homogeneity."
+
+[01:40] — Checking the Conditions
+A new slide introduces the general concept of checking conditions. Text appears:
+"Remember that for all inference procedures in AP Statistics you must verify that the conditions for using that procedure are met."
+"In general, you should check for:
+• independence in the methods used to collect the data, and
+• that the appropriate sampling distribution has the correct shape."
+
+[02:13] — Checking the Conditions (Specifics)
+The slide updates to detail the specific conditions for this test:
+"Here are the conditions for a chi-square test for homogeneity or independence."
+"To check for independence:"
+"1. Data should be collected using a stratified random sample or randomized experiment (homogeneity) or a single random sample (independence)."
+"2. When sampling without replacement, the sample size is less than or equal to 10% of the population size."
+"To check that the shape of the sampling distribution is approximately a chi-square distribution:"
+"3. All expected counts should be greater than 5."
+
+[03:15] — Checking the Conditions (Applying to Example 1)
+The slide returns to the "Where Do You Go To School?" context. The data table is shown again, now including a "Total" row: 320 for the 2019 sample and 214 for the 2020 sample. The presenter checks off the conditions one by one, with a green checkmark appearing for each:
+
+"1. There are two independent random samples (stratified random sample)."
+
+[03:40] "2. It's reasonable to believe 320 parents is less than or equal to 10% of all parents in 2019 and 214 parents is less than or equal to 10% of all parents in 2020."
+
+[04:00] "3. All expected counts are greater than 5."
+At this point, the table updates to display the calculated expected counts in blue parentheses next to the observed counts:
+
+Public: (257.1), (171.9)
+
+Private/Parochial/Charter: (22), (14.8)
+
+Home: (40.7), (27.3)
+Finally, the text "The conditions are met." appears at the bottom.
+
+[04:38] — LET'S PRACTICE
+A transition title card for a second practice problem.
+
+[04:41] — Are You Working?
+A new problem is presented:
+"A random sample of 2000 adults revealed the following data about education level and employment status."
+A table shows counts cross-referencing employment status with education level:
+
+Employed: 206 (No High School Diploma), 548 (High School Diploma, No College), 1186 (High school Diploma, Some College)
+
+Unemployed: 14 (No High School Diploma), 22 (High School Diploma, No College), 24 (High school Diploma, Some College)
+Text below reads: "Researchers wants to determine if there is an association between education level and employment status. Check the conditions for inference." A stock photo of graduates throwing their caps is on the right.
+
+[05:01] — Are You Working? (Hypotheses)
+The text below the table is replaced to show the established hypotheses:
+"H_0: There is no association between education level and employment status for all adults."
+"H_a: There is an association between education level and employment status for all adults."
+A note at the bottom says: "We also identified the procedure as a chi-square test for independence."
+
+[05:25] — Are You Working? (Checking conditions)
+The slide transitions to checking the conditions for this new example. The data table remains. Green checkmarks appear as each condition is verified:
+
+"1. The 2000 adults were randomly selected."
+
+[05:38] "2. It's reasonable to believe 2000 adults is less than or equal to 10% of all adults."
+
+[05:49] "3. All expected counts are greater than 5."
+The table updates to show the expected counts in blue parentheses below the observed counts:
+
+Employed: (213.4), (552.9), (1173.7)
+
+Unemployed: (6.6), (17.1), (36.3)
+The text "The conditions are met." appears at the bottom.
+
+[06:10] — WHAT SHOULD WE TAKE AWAY?
+A transition title card for the video summary.
+
+[06:13] — Key Takeaways
+The slide summarizes the answer to the lesson's main question:
+"1. How do we verify the conditions for performing a chi-square test for homogeneity or independence?"
+The three core conditions are restated on s
+
+thumb_up
+thumb_down

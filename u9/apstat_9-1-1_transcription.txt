@@ -1,0 +1,51 @@
+# Video 1 — Transcript
+# Unit 9, Lesson 1
+
+more_vert
+
+[00:00] Starnes coming to you live from Hilton Head, South Carolina. Welcome to the final unit of the AP Statistics course. Inference for quantitative data, slopes. This is Topic 9.1: Introducing Statistics - Do Those Points Align?
+
+[00:18] What will you learn in this video? How can you determine if the slope of a sample regression line is consistent with random variation from a population regression model?
+
+[00:30] Let's start by looking at an example. The Old Faithful geyser is the most popular attraction in Yellowstone National Park. People travel from all over the world to see this geyser erupt. The National Park Service helps visitors plan their time in the park by predicting when Old Faithful will erupt next. The Starnes family took its first trip to Yellowstone National Park in July 1995. We only had six hours in the park, but we were able to see Old Faithful erupt.
+
+[01:01] My wife and I returned to the park in July of 2019, and we wondered if the model used to predict eruptions of Old Faithful was still the same as in 1995.
+
+[01:12] This scatterplot displays data on the duration and wait time until the next eruption for all 262 of the recorded eruptions of Old Faithful in July of 1995. And we can see that there's a moderately strong, positive, linear relationship between duration and wait time in this population of Old Faithful eruptions.
+
+[01:37] And here we've added the population regression line to the scatterplot. Its equation is predicted wait time equals 33.34 plus 13.29 times duration.
+
+[01:50] Now the question is, what about 2019? So here's a scatterplot displaying data on the duration and wait time until the next eruption for a random sample of 25 Old Faithful eruptions in July of 2019. And here we can see a moderately weak, but again positive, linear relationship between duration and wait time in the sample of eruptions.
+
+[02:15] And here we've added the sample regression line so you can see the trend. The equation of the sample regression line, predicted wait time is 62.95 plus 7.79 times duration.
+
+[02:30] So the big question is, is it believable that the population regression model from 1995 is still valid for predicting wait times from durations in 2019?
+
+[02:43] So here again is the July 1995 population with the regression model, and our July 2019 sample of 25 eruptions gave us this sample regression equation: 62.95 plus 7.79 duration.
+
+[03:00] So we really need to estimate the probability of getting a sample regression line with a slope at least as surprising or unusual as 7.79 in a random sample of 25 observations from the July 1995 population, because we're wondering if that model still applies in 2019.
+
+[03:21] Well, how do we figure that out? Let's start with the July 1995 population, and let's actually simulate taking a random sample of 25 points from that population. So we've done that with our computer. You can see the sample of points highlighted in red now.
+
+[03:38] And here are the points on their own scatterplot. So this is a simulated sample of size 25, and we can calculate the equation of that sample regression line. Predicted wait time is equal to 28.74 plus 14.46 times duration. So the slope of this sample regression line is 14.46,
+
+[04:00] which is not exactly the same as the slope of the population regression model was, but it's not too far from it. So we'll build this new graph as we continue simulating for the sampling distribution of the slope of these sample regression lines.
+
+[04:16] Let's do another one. Here's our population again from July of 1995. We'll simulate another random sample of 25 points. Here they are in red.
+
+[04:27] And here is the scatterplot of the sample of points with the regression line added. And the equation this time, predicted wait time is 39.27 plus 11.97 times the duration. The slope this time is 11.97.
+
+[04:44] So we'll add that simulated slope to our dotplot, and we'll imagine that we continue this process, simulating random samples many, many times. And we'll remind ourselves that we're trying to figure out if it's believable
+
+[05:00] that the population regression model from 1995 still applies for predicting wait time from duration in July of 2019.
+
+[05:09] So we'll keep doing that, and we'll build up a simulated sampling distribution of the slope, which looks something like this blob of dots. It's got some pretty interesting features that we'll talk about later.
+
+[05:22] But remember, we need to estimate how likely it is to get a sample regression line with a slope at least as unusual as 7.79, the one we saw in July of 2019, in a random sample of 25 observations from the old population regression model.
+
+[05:39] Well, let's see where 7.79 is. It would be way off to the left end of this scale. We never once got a sample regression line with a slope that far from this center of the distribution. So our estimated probability is zero.
+
+[05:56] Let's translate that. It's not believable that this population regression model from 2000, sorry from 1995, still applies because there's an approximately zero probability of getting a sample regression line with a slope at least as surprising as 7.79 in either direction from the center if the population regression model from
+
+thumb_up
+thumb_down

@@ -1,0 +1,93 @@
+# Video 1 — Slide Descriptions
+# Unit 9, Lesson 3
+
+more_vert
+
+[00:00] — Topic 9.3: Justifying a Claim with a Confidence Interval for a Slope of a Regression Model
+The title slide for Daily Video 1. Subtext reads: "In this video, we will discuss how to interpret a confidence interval for the slope of a population regression line and how to use the interval to justify a claim." The AP Statistics logo is on the left, and the instructor is visible in a small window in the top right corner.
+
+[00:17] — What Will We Learn?
+The slide lists two main learning objectives:
+
+How do we interpret a confidence interval for the slope of a population regression line?
+
+How do we justify a claim based on a confidence interval for slope?
+
+[00:30] — Predicting Old Faithful: 2019
+This slide presents a scenario with a scatterplot and computer output table.
+Text: "The scatterplot displays data on the duration (in minutes) and wait time until the next eruption (in minutes) for a random sample of 25 Old Faithful eruptions in July 2019, along with the sample regression line. Computer output from a least-squares regression analysis is shown below."
+The table shows:
+
+Predictor: Constant, Duration(min)
+
+Coef: 62.95, 7.79
+
+SE Coef: 16.4, 4.03
+
+T-Value: 3.85, 1.94
+
+P-Value: 0.001, 0.065
+
+S=4.20970, R-sq=14.01%, R-sq(adj)=10.27%
+Text below the table: "Calculate and interpret a 95% confidence interval for the slope of the population regression line in 2019."
+A scatterplot on the right graphs "Duration (min)" on the x-axis against "Wait Time (min)" on the y-axis, with a line of best fit drawn through the data points.
+
+[01:14] — Interpreting the Confidence Interval
+Text: "In general, here is how to interpret a confidence interval for the slope of a regression model:"
+A fill-in-the-blank template is shown: "We are 
+𝐶
+C
+% confident that the interval from ___ to ___ captures the slope of the population regression line [in context]."
+An example is then provided below: "From Topic 9.2 Video 3, the 95% confidence interval is -0.55 to 16.13: We are 95% confident that the interval from -0.55 to 16.13 captures the slope of the population regression line for predicting wait time until the next eruption (in minutes) from the duration of the previous eruption (in minutes) for all Old Faithful geyser eruptions in July 2019."
+
+[02:14] — Interpreting Confidence Level
+Text: "In repeated random sampling with the same sample size, approximately 
+𝐶
+C
+% of '
+𝐶
+C
+%' confidence intervals created will capture the slope of the population regression line."
+An example applies this to the Old Faithful scenario: "If we take many random samples of size 25 from the population of Old Faithful eruptions in July 2019, and use each sample to construct a 95% confidence interval for the slope of the population regression line for predicting wait time until the next eruption (in minutes) from the duration of the previous eruption (in minutes), about 95% of those intervals would capture the true slope."
+
+[03:08] — Justifying a Claim
+A question is posed: "Does the confidence interval (-0.55 to 16.13) provide convincing evidence that wait time until the next eruption of Old Faithful is linearly related to the duration of the previous eruption in July 2019?"
+Text appears explaining the concept: "Note that 
+𝛽
+=
+0
+β=0
+ would indicate a line with slope 0 is the model for predicting wait time from eruption duration. In other words, the regression model would predict the same wait time until the next Old Faithful eruption no matter the duration of the previous eruption."
+The conclusion is drawn: "Because the confidence interval (-0.55 to 16.13) contains 0 as a plausible value of the slope of the population regression line, there is not convincing evidence that wait time until the next eruption of Old Faithful is linearly related to the duration of the previous eruption in July 2019."
+
+[04:10] — Interpreting a Confidence Interval (Practice)
+A multiple-choice question is presented based on a new scenario:
+Text: "Raoul performed an experiment using 16 windup rubber band single-propeller airplanes. He wound up the propeller a different number of times and recorded the amount of time (in seconds) that the airplane flew for each number of rotations that the propeller was wound. A regression analysis was performed, and the conditions for inference were verified. A 95% confidence interval for the slope of the regression line that relates the number of rotations the rubber band is wound and the plane's flight time is given by (0.013, 0.080). Which of the following provides a correct interpretation of the confidence interval?"
+Five options (A-E) are listed. At 04:56, the instructor reveals the correct answer is (E): "We are 95% confident that the slope of the population regression line that relates the number of rotations the rubber band is wound and the plane's flight time is between 0.013 and 0.080."
+
+[05:33] — Justifying a Claim with a CI (Practice)
+Another multiple-choice question based on Raoul's airplane experiment. The scenario text is the same, but the question asks: "Which of the following conclusions is most appropriate based on the confidence interval?"
+Five options (A-E) are listed. At 06:10, the instructor reveals the correct answer is (D): "There is convincing evidence of a positive linear relationship between the number of rotations of the rubber band and the flight times of windup airplanes like these because all values in the interval are positive."
+
+[06:37] — Key Takeaways
+The slide summarizes the video's objectives:
+
+How do we interpret a confidence interval for the slope of a population regression line?
+
+"We are 
+𝐶
+C
+% confident that the interval from ___ to ___ captures the slope of the population regression line [in context]."
+
+How do we justify a claim based on a confidence interval for slope?
+
+If all the values in the confidence interval are consistent with the claim, there is convincing evidence for the claim.
+
+If one or more of the values in the confidence interval are inconsistent with the claim, there is not convincing evidence for th
+
+Citations
+
+https://south.mpls.k12.mn.us/uploads/ch_12_review_2018_2.docx
+https://apcentral.collegeboard.org/media/pdf/ap22-cr-report-statistics.pdf
+thumb_up
+thumb_down

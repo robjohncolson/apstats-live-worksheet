@@ -1,0 +1,530 @@
+# Video 1 — Slide Descriptions
+# Unit 9, Lesson 5
+
+more_vert
+
+Here is a detailed breakdown of the visual changes and slides in the video:
+
+[00:00] — TOPIC 9.5 Carrying Out a Test for the Slope of a Regression Model
+The title slide introduces the topic. Subtext reads: "DAILY VIDEO 1. In this video, we will discuss how to calculate a test statistic and p-value for a significance test about the slope of a population regression line."
+
+[00:13] — What Will We Learn?
+Slide lists two learning objectives:
+
+How do we calculate an appropriate test statistic in a test about the slope of a population regression line?
+
+How do we calculate a p-value in a test about the slope of a population regression line?
+
+[00:26] — Let's Look at an Example
+Title slide introducing the first example.
+
+[00:30] — Schools and "Equal Opportunity"
+Features an illustration of a stressed person juggling bills and "kid's math." Text poses the question: "Can education systems equalize opportunities for lower income students?"
+
+[00:38] — The Income Attendance Gap
+Shows a map of NYC indicating "High Poverty Areas Have Lower Attendance Rates." Text notes: "Nationally, higher income areas tend to have fewer chronically absent students. Possible reasons: Transportation access, Work to support family."
+
+[00:58] — Is Attendance the Solution?
+Displays a flowchart. Initially it reads "Poverty -> Low Attendance -> Low Scores." Then "Low Attendance" is replaced with "High Attendance," with an arrow pointing to "High Scores" (changing from Low). Text adds: "Some school systems have targeted attendance as the key to raising test scores for lower income students."
+
+[01:12] — Let's Look at the Data
+Text explains the study context: "Researchers collected data on the percent of school days attended and the number of questions answered correctly on the state's end-of-course test for a random sample of 11 Texas Algebra 1 students. Here are the data, along with a scatterplot and computer output from a least-squares regression analysis."
+
+[01:26] — Let's Look at the Data
+The slide updates to show:
+
+A data table with values for "Percent attendance" and "Questions correct" for 11 students.
+
+A scatterplot showing "Number of Correct Answers" vs. "Percent of School Days Attended" with a positive regression line.
+
+Computer output table with columns for Predictor, Coef, SE Coef, T, and P. Key values: Constant (-7.69), Attendance (0.57), SE Coef for Attendance (0.062), T for Attendance (9.18), P for Attendance (0.000).
+
+[01:33] — Let's Look at the Data
+A new text box appears at the bottom: "Do the data give convincing evidence at the 
+𝛼
+=
+0.01
+α=0.01
+ significance level of a positive, linear relationship between state test score and percent attendance for Texas Algebra 1 students?"
+
+[01:48] — Test Scores and Attendance
+The slide summarizes the setup from previous videos:
+
+Question repeated from the previous slide.
+
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+
+𝐻
+𝑎
+:
+𝛽
+>
+0
+H
+a
+	​
+
+:β>0
+
+Where 
+𝛽
+β
+ = the slope of the population regression line for predicting number of questions answered correctly on the state test from percent of school days attended for Texas Algebra 1 students.
+
+Use 
+𝛼
+=
+0.01
+α=0.01
+.
+
+𝑡
+t
+-test for slope; Conditions are met.
+
+[02:26] — Calculating a Test Statistic
+Displays the scatterplot and the computer output table again.
+
+[02:28] — Calculating a Test Statistic
+Text appears on the left: "In the attendance and test score study, 
+𝑏
+=
+0.57
+b=0.57
+." The value 0.57 is highlighted in the Coef column of the table.
+
+[02:36] — Calculating a Test Statistic
+More text appears: "This is evidence for 
+𝐻
+𝑎
+:
+𝛽
+>
+0
+H
+a
+	​
+
+:β>0
+ because 
+𝑏
+=
+0.57
+>
+0
+b=0.57>0
+."
+
+[02:44] — Calculating a Test Statistic
+More text appears: "We want to know how likely it is to get evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ this strong or stronger by chance alone when 
+𝐻
+0
+H
+0
+	​
+
+ is true."
+
+[02:54] — Calculating a Test Statistic
+More text appears: "After verifying the conditions are met, calculate the standardized test statistic:
+standardized test statistic = (statistic - parameter) / standard error of the statistic"
+
+[03:07] — Calculating a Test Statistic
+The slide updates to show the specific formula for a 
+𝑡
+t
+-test for a slope: 
+𝑡
+=
+𝑏
+−
+𝛽
+0
+𝑆
+𝐸
+𝑏
+t=
+SE
+b
+	​
+
+b−β
+0
+	​
+
+	​
+
+
+[03:22] — Calculating a Test Statistic
+Values are plugged into the formula: 
+𝑡
+=
+0.57
+−
+0
+0.062
+=
+9.19
+t=
+0.062
+0.57−0
+	​
+
+=9.19
+. Text clarifies: "where 
+𝛽
+0
+β
+0
+	​
+
+ is the value of 
+𝛽
+β
+ specified by the null hypothesis."
+
+[03:38] — Calculating a Test Statistic
+A blue box highlights "9.18" in the T column of the computer output, and an arrow points from the calculated 
+9.19
+9.19
+ to the 
+9.18
+9.18
+ in the table, showing they are equivalent (difference is due to rounding).
+
+[03:58] — Calculating a Test Statistic
+Shows a snippet from the AP Statistics formula sheet: "III. Sampling Distributions and Inferential Statistics" showing the general formula for a standardized test statistic.
+
+[04:04] — Calculating a Test Statistic
+Shows another snippet from the formula sheet: the table for "Parameters of Sampling Distributions." It highlights the row "For slope: 
+𝑏
+b
+" showing formulas for 
+𝜇
+𝑏
+μ
+b
+	​
+
+, 
+𝜎
+𝑏
+σ
+b
+	​
+
+, and the standard error 
+𝑠
+𝑏
+s
+b
+	​
+
+.
+
+[04:18] — Calculating a p-value
+Text appears next to the scatterplot and computer output: "Once we have calculated the standardized test statistic, use the 
+𝑡
+t
+-distribution with 
+𝑑
+𝑓
+=
+𝑛
+−
+2
+df=n−2
+ to calculate the 
+𝑝
+p
+-value. The 
+𝑝
+p
+-value is the proportion of values for the null distribution that are as extreme or more extreme than the observed value of the test statistic."
+
+[04:35] — Calculating a p-value
+More text appears: "Because our alternative hypothesis is 
+𝐻
+𝑎
+:
+𝛽
+>
+0
+H
+a
+	​
+
+:β>0
+, we want to find 
+𝑃
+(
+𝑡
+≥
+9.18
+)
+P(t≥9.18)
+ in a 
+𝑡
+t
+ distribution with 
+𝑑
+𝑓
+=
+11
+−
+2
+=
+9
+df=11−2=9
+."
+
+[04:55] — Calculating a p-value
+A graph of a 
+𝑡
+t
+-distribution curve appears, centered at 0, with the value 9.18 marked very far out on the right tail.
+
+[05:07] — Calculating a p-value
+Text appears showing the calculated values:
+
+Table B: 
+𝑝
+p
+-value 
+<
+0.0005
+<0.0005
+
+Technology: 
+𝑝
+p
+-value 
+=
+3.63
+×
+10
+−
+6
+=3.63×10
+−6
+
+[05:21] — Calculating a p-value
+A blue box highlights "0.000" in the P column of the computer output. An arrow points to it with the text: "The 
+𝑝
+p
+-values in computer output are usually for a two-sided test."
+
+[05:38] — Let's Practice
+Title slide introducing a practice problem.
+
+[05:40] — Don't Spill My Drink!
+Text describes an experiment where two students drove at assigned speeds (10, 20, 30, 40, 50 mph) on a bumpy dirt road and recorded how much water spilled from a cup.
+
+[06:05] — Don't Spill My Drink!
+Shows a scatterplot of "Amount Spilled (mL)" vs. "Speed (mph)". Numbers next to some dots indicate repeated values.
+A truncated computer output table is shown below it, with columns for Term, Coef, and SE Coef (the T and P columns are missing).
+Speed (mph) Coef is 1.520, SE Coef is 0.179.
+
+[06:14] — Don't Spill My Drink!
+A question appears: "Do the data provide convincing evidence at the 0.05 significance level of a linear relationship between the car's speed on a bumpy dirt road and the amount of drink spilled? Assume the conditions for inference are met."
+
+[06:29] — Don't Spill My Drink!
+A prompt appears: "Calculate the standardized test statistic and 
+𝑝
+p
+-value."
+
+[06:50] — Don't Spill My Drink!
+A summary of the previous video's findings appears:
+
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+ vs. 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+a
+	​
+
+:β
+
+=0
+
+where 
+𝛽
+β
+ = the slope of the true regression line for predicting amount of drink spilled (in ml) from the car's speed (in mph) on a bumpy dirt road.
+
+Use 
+𝛼
+=
+0.05
+α=0.05
+.
+
+𝑡
+t
+-test for slope; Conditions are met.
+
+[07:08] — Calculating a Test Statistic
+Shows the scatterplot and truncated computer output. "1.520" is highlighted in the Coef column. Text reads: "In this context, 
+𝑏
+=
+1.520
+b=1.520
+."
+
+[07:13] — Calculating a Test Statistic
+The hypotheses are restated: 
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+, 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+a
+	​
+
+:β
+
+=0
+.
+The formula is populated: 
+𝑡
+=
+𝑏
+−
+𝛽
+0
+𝑆
+𝐸
+𝑏
+=
+1.520
+−
+0
+0.179
+=
+8.49
+t=
+SE
+b
+	​
+
+b−β
+0
+	​
+
+	​
+
+=
+0.179
+1.520−0
+	​
+
+=8.49
+
+[07:34] — Calculating a p-value
+Text appears next to the graphs: "Because our alternative hypothesis is 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+a
+	​
+
+:β
+
+=0
+, we want to find"
+
+[07:46] — Calculating a p-value
+The text completes: "
+𝑃
+(
+𝑡
+≤
+−
+8.49
+)
++
+𝑃
+(
+𝑡
+≥
+8.49
+)
+P(t≤−8.49)+P(t≥8.49)
+ in a 
+𝑡
+t
+ distribution with 
+𝑑
+𝑓
+=
+25
+−
+2
+=
+23
+df=25−2=23
+"
+
+[07:53] — Calculating a p-value
+A 
+𝑡
+t
+-distribution curve appears, showing the values -8.49 and 8.49 marked on the extreme left and right tails.
+
+[08:01] — Calculating a p-value
+Calculated values appear:
+*
+
+thumb_up
+thumb_down

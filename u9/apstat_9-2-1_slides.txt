@@ -1,0 +1,470 @@
+# Video 1 — Slide Descriptions
+# Unit 9, Lesson 2
+
+more_vert
+
+Here is a detailed visual description of each slide and visual change in the video, formatted with timestamps:
+
+[00:00] — Title Slide
+Text: "TOPIC 9.2 Confidence Intervals for the Slope of a Regression Model" and "DAILY VIDEO 1". Below, it states: "In this video, we will show how the sampling distribution of the slope of a sample regression line relates to the population regression model." The speaker is visible in the top right corner.
+
+[00:17] — WHAT WILL WE LEARN?
+Title slide with just the text "WHAT WILL WE LEARN?".
+
+[00:20] — What Will We Learn?
+Point 1 appears: "What conditions must the population regression model meet to obtain valid confidence intervals and significance tests for the slope?"
+
+[00:31] — What Will We Learn?
+Point 2 appears: "How can we determine the shape, center, and variability of the sampling distribution of the slope of a sample regression line?"
+
+[00:41] — LET'S LOOK AT AN EXAMPLE
+Title slide with just the text.
+
+[00:44] — Is Old Faithful Still Faithful?
+Text describes a family trip to Yellowstone in July 1995 and a return trip in July 2019. They want to know if the model predicting eruptions is still the same. Earlier simulation showed the answer is "No." A photo of the Old Faithful geyser is on the right.
+
+[01:19] — Is Old Faithful Still Faithful?
+Additional text appears below the introductory paragraph: "Can we construct a confidence interval for the slope of the population regression line in 2019? To answer that question, we need to understand the connection between the population regression model and the sampling distribution of the slope."
+
+[01:37] — Old Faithful: 1995
+Text describes a scatterplot displaying duration (min) and wait time (min) for all 262 recorded eruptions in July 1995. It notes the population regression line is added, with the equation: "predicted wait time = 33.34 + 13.29(duration)". The right side shows the scatterplot. The x-axis is "Duration (min)" (ranging 1.5 to 5) and the y-axis is "Wait Time (min)" (ranging 50 to 110). A regression line runs through the dense cluster of blue data points.
+
+[01:55] — Old Faithful: 2019
+Text describes a scatterplot for a random sample of 25 eruptions in July 2019. The sample regression line is added with the equation: "predicted wait time = 62.95 + 7.79(duration)". The scatterplot on the right shows the 2019 sample data. The x-axis is "Duration (min)" (ranging 3.5 to 4.5) and the y-axis is "Wait Time (min)" (ranging 88 to 102).
+
+[02:20] — Old Faithful: 2019
+Text added at the bottom: "Can we construct a confidence interval for the slope of the population regression line in 2019?"
+
+[02:27] — Simulated Sampling Distribution
+Text on the left: "Suppose we take repeated random samples of 
+𝑛
+=
+25
+n=25
+ observations from the population of eruptions in July 1995 and calculate the sample regression line 
+𝑦
+^
+=
+𝑎
++
+𝑏
+𝑥
+y
+^
+	​
+
+=a+bx
+ for each one." The 1995 population scatterplot from earlier is shown on the right.
+
+[02:50] — Simulated Sampling Distribution
+Text added on the left: "Can we determine the shape, center, and variability of the sampling distribution of the slope 
+𝑏
+b
+ of the sample regression line from the population regression model?"
+
+[03:05] — Simulated Sampling Distribution
+The scatterplot on the right is replaced by a histogram titled "Simulated sampling distribution of the slope based on samples of 
+𝑛
+=
+25
+n=25
+ from the July 1995 population". The x-axis ranges from 10 to 17. The shape is roughly symmetric and bell-shaped.
+
+[03:18] — Simulated Sampling Distribution
+Text on the left updates to: "What are the shape, center, and variability of the simulated sampling distribution of the slope of the sample regression line 
+𝑦
+^
+=
+𝑎
++
+𝑏
+𝑥
+y
+^
+	​
+
+=a+bx
+?". Below this, under the heading "Sampling distribution of 
+𝑏
+b
+", it lists: "Shape: Approximately normal".
+
+[03:25] — Simulated Sampling Distribution
+"Center: Mean = 13.29" is added to the left text. On the histogram, text pointing to the peak reads "Mean = 13.29".
+
+[03:33] — Simulated Sampling Distribution
+"Variability: SD = 1.10" is added to the left text. On the histogram, "SD = 1.10" is added below the mean, and the x-axis is labeled "Slope of Sample Regression Line".
+
+[03:38] — Simulated Sampling Distribution
+Question added at the bottom left: "How are these characteristics related to the population regression model?"
+
+[03:43] — Population Regression Model
+Text: "The population regression model is 
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+ where 
+𝜇
+𝑦
+μ
+y
+	​
+
+ is the mean value of the response variable 
+𝑦
+y
+ for a given value of the explanatory variable 
+𝑥
+x
+." Below is a 3D diagram showing an x-y plane. A regression line labeled 
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+ is drawn on the plane. Three normal (bell-shaped) curves are drawn vertically, centered on the regression line at three different points along the x-axis, illustrating the distribution of y-values for specific x-values.
+
+[04:10] — Population Regression Model
+Text added to the left of the diagram: "Confidence intervals and significance tests for the slope 
+𝛽
+β
+ require that the population regression model meet these conditions:"
+
+[04:19] — Population Regression Model
+First condition appears under the introductory text: "The true relationship between 
+𝑥
+x
+ and 
+𝑦
+y
+ is linear."
+
+[04:26] — Population Regression Model
+Second condition appears: "The standard deviation of 
+𝑦
+y
+, 
+𝜎
+σ
+, does not vary with 
+𝑥
+x
+."
+
+[04:35] — Population Regression Model
+Third condition appears: "For a particular value of 
+𝑥
+x
+, the responses (
+𝑦
+y
+-values) are approximately normally distributed."
+
+[04:55] — Population Regression Model
+The slide layout changes. The 1995 scatterplot is on the right. The equation on the graph has changed to 
+𝜇
+𝑤
+𝑎
+𝑖
+𝑡
+𝑡
+𝑖
+𝑚
+𝑒
+=
+33.34
++
+13.29
+(
+𝑑
+𝑢
+𝑟
+𝑎
+𝑡
+𝑖
+𝑜
+𝑛
+)
+μ
+waittime
+	​
+
+=33.34+13.29(duration)
+. On the left, the introductory text about conditions remains.
+
+[05:00] — Population Regression Model
+The first condition appears on the left: "The true relationship between 
+𝑥
+x
+ and 
+𝑦
+y
+ is linear."
+
+[05:04] — Population Regression Model
+A checkbox with a checkmark appears next to the word "linear". Text below states: "The scatterplot shows a moderately strong, positive, linear relationship between duration and wait time."
+
+[05:13] — Population Regression Model
+The scatterplot is replaced by a residual plot corresponding to the 1995 data. The y-axis is "Residual", x-axis is "Duration (min)". The points are scattered seemingly randomly above and below the horizontal zero line. Text below the condition updates to: "The residual plot shows random scatter about Residual = 0 line and no evidence of a leftover curved pattern."
+
+[05:29] — Population Regression Model
+The residual plot is replaced by the scatterplot. The second condition appears: "The standard deviation of 
+𝑦
+y
+, 
+𝜎
+σ
+, does not vary with 
+𝑥
+x
+." A checkbox with a checkmark appears.
+
+[05:46] — Population Regression Model
+Text appears below the second condition: "Scatterplot: The wait times vary by a similar amount for the different eruption durations in the data set."
+
+[05:59] — Population Regression Model
+The scatterplot is again replaced by the residual plot. The text below the condition updates to: "Residual plot: The residuals are similar in size for the eruption durations in the data set."
+
+[06:12] — Population Regression Model
+The scatterplot returns. The third condition appears: "For a particular value of 
+𝑥
+x
+, the responses (
+𝑦
+y
+-values) are approximately normally distributed." A checkbox with a checkmark appears.
+
+[06:20] — Population Regression Model
+The scatterplot is replaced by a histogram-like dotplot of the residuals. The x-axis ranges from -25 to 20. The shape is roughly symmetric and peaks near 0. Text below the condition states: "A dotplot of residuals is roughly symmetric, single-peaked, and somewhat bell-shaped."
+
+[06:36] — Sampling Distribution of Slope
+Text on left: "When the population regression model 
+𝜇
+𝑦
+=
+𝛼
++
+𝛽
+𝑥
+μ
+y
+	​
+
+=α+βx
+ meets the conditions, the sampling distribution of the slope 
+𝑏
+b
+ of the sample regression line has". The 1995 scatterplot is on the right.
+
+[06:44] — Sampling Distribution of Slope
+Text added on the left: "Shape: Approximately normal".
+
+[06:48] — Sampling Distribution of Slope
+Text added on the left: "Center: 
+𝜇
+𝑏
+=
+𝛽
+μ
+b
+	​
+
+=β
+".
+
+[06:55] — Sampling Distribution of Slope
+Text added on the left: "Variability: 
+𝜎
+𝑏
+=
+𝜎
+𝜎
+𝑥
+𝑛
+σ
+b
+	​
+
+=
+σ
+x
+	​
+
+n
+	​
+
+σ
+	​
+
+ (if 
+𝑛
+≤
+10
+%
+𝑁
+n≤10%N
+)". On the scatterplot, the slope value "13.29" in the equation is highlighted in orange to show it corresponds to 
+𝛽
+β
+.
+
+[07:12] — Sampling Distribution of Slope
+Text is added under the variability formula explaining the symbols: 
+𝜎
+σ
+ = standard deviation of residuals for the population regression line, and 
+𝜎
+𝑥
+σ
+x
+	​
+
+ = standard deviation of 
+𝑥
+x
+-values in population. On the scatterplot, the text "
+𝜎
+=
+6.47
+σ=6.47
+" is displayed.
+
+[07:27] — Sampling Distribution of Slope
+On the scatterplot, the text "
+𝜎
+𝑥
+=
+1.18
+σ
+x
+	​
+
+=1.18
+" is displayed.
+
+[07:36] — Sampling Distribution of Slope
+The scatterplot is replaced by the simulated sampling distribution histogram from earlier. Text on the left updates to: "Suppose we take every possible random sample of 
+𝑛
+=
+25
+n=25
+ observations from this population and calculate the sample regression line 
+𝑦
+^
+=
+𝑎
++
+𝑏
+𝑥
+y
+^
+	​
+
+=a+bx
+ for each one. Sampling distribution of 
+𝑏
+b
+".
+
+[07:42] — Sampling Distribution of Slope
+The text is filled out step-by-step. First, "Shape: Approximately normal".
+
+[07:45] — Sampling Distribution of Slope
+Next, "Center: 
+𝜇
+𝑏
+=
+𝛽
+=
+13.29
+μ
+b
+	​
+
+=β=13.29
+".
+
+[07:49] — Sampling Distribution of Slope
+Then the formula is populated: "Variability: 
+𝜎
+𝑏
+=
+𝜎
+𝜎
+𝑥
+𝑛
+=
+6.47
+1.18
+25
+=
+1.10
+σ
+b
+	​
+
+=
+σ
+x
+	​
+
+n
+	​
+
+σ
+	​
+
+=
+1.18
+25
+	​
+
+6.47
+	​
+
+=1.10
+".
+
+[07:54] — Sampling Distribution of Slope
+The text "Mean = 13.29" and "SD = 1.10" appear on the histogram graphic.
+
+[08:00] — Sampling Distribution of Slope
+The 10% condition calculation appears in blue text below the formula: "
+25
+≤
+0.10
+(
+262
+)
+=
+26.2
+25≤0.10(262)=26.2
+".
+
+[08:14] — Old Faithful: Back to 2019
+The slide returns to the 2019 data setup. The text describes the random sample of 25 and asks, "Can we construct a confidence interval for the slope of the population regression line in 2019?" The 2019 scatterplot is on the right.
+
+[08:29] — Inference for Slope
+The question remains on the left. Below it, a "Related question" appears with an arrow pointing to it: "How do we check conditions about the population regression model using only the sample data?"
+
+[08:45] — Inference for Slope
+A second related question appears: "How can we es
+
+thumb_up
+thumb_down

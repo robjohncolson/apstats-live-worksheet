@@ -1,0 +1,296 @@
+# Video 1 — Slide Descriptions
+# Unit 9, Lesson 4
+
+more_vert
+
+Here is a detailed chronological breakdown of the slides and visual changes in the video:
+
+[00:00] — TOPIC 9.4 Setting Up a Test for the Slope of a Regression Model
+The title slide introduces the topic for AP Statistics Daily Video 1: "In this video, we will discuss how to state the null and alternative hypotheses for a significance test about the slope of a population regression line."
+
+[00:14] — What Will We Learn?
+The slide lists two main learning objectives:
+
+How do we state a null hypothesis in a test about the slope of a population regression line?
+
+How do we state an alternative hypothesis in a test about the slope of a population regression line?
+
+[00:27] — LET'S LOOK AT AN EXAMPLE
+A transition slide to introduce an example.
+
+[00:30] — Schools and “Equal Opportunity”
+The slide features an illustration of an overwhelmed student juggling bills and a thought bubble of food. Text asks: "Can education systems equalize opportunities for lower income students?"
+
+[00:48] — The Income Attendance Gap
+A map of NYC is shown with the claim: "NYC: High Poverty Areas Have Lower Attendance Rates." Text to the right states: "Nationally, higher income areas tend to have fewer chronically absent students. Possible reasons: Transportation access, Work to support family."
+
+[01:15] — Is Attendance the Solution?
+A flowchart shows the progression: "Poverty 
+→
+→
+ Low Attendance 
+→
+→
+ Low Scores". Text explains: "Some school systems have targeted attendance as the key to raising test scores for lower income students." (At 01:36, the flowchart updates to show that higher attendance might lead to higher scores).
+
+[01:41] — Let's Look at the Data
+Text introduces a study: "Researchers collected data on the percent of school days attended and the number of questions answered correctly on the state’s end-of-course test for a random sample of 11 Texas Algebra 1 students."
+
+[01:57] — Let's Look at the Data (continued)
+The slide updates to show a data table (11 pairs of Percent Attendance and Questions Correct) and a scatterplot with a line of best fit. A computer output table is provided for the least-squares regression:
+
+Constant: Coef = -7.69, SE Coef = 5.37, T = -1.43, P = 0.186
+
+Attendance: Coef = 0.57, SE Coef = 0.062, T = 9.18, P = 0.000
+
+S = 1.99, R-sq = 90.3%, R-sq(adj) = 89.3%
+
+[02:07] — Let's Look at the Data (continued)
+A question appears at the bottom: "Do the data give convincing evidence at the 
+𝛼
+=
+0.01
+α=0.01
+ significance level of a positive, linear relationship between state test score and percent attendance for Texas Algebra 1 students?"
+
+[02:22] — Null Hypothesis
+The slide defines the concept: "In a statistical test, the null hypothesis is often a claim of 'no difference', 'no change', or 'no relationship.'" Over the next 40 seconds, text reveals the specific application to the example: "the null hypothesis is that there is no linear relationship... In other words, the population regression line would have a slope of 0. In symbols: 
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+."
+
+[03:06] — Null Hypothesis (continued)
+The parameter is defined on screen: "where 
+𝛽
+β
+ = the slope of the population regression line for predicting number of questions answered correctly on the state test from the percent of school days attended for Texas Algebra 1 students." A final note states we assume the null hypothesis is correct until there is convincing evidence otherwise.
+
+[03:25] — Alternative Hypothesis
+The slide defines the concept: "the alternative hypothesis is the claim that we hope to support with evidence from the data collected." Text reveals the application to the example: researchers wanted to know if there is a positive, linear relationship. "So the alternative hypothesis is that the population regression line would have a positive slope. In symbols: 
+𝐻
+𝑎
+:
+𝛽
+>
+0
+H
+a
+	​
+
+:β>0
+." The parameter 
+𝛽
+β
+ is defined exactly as on the previous slide.
+
+[04:03] — Stating Hypotheses: Summary
+A bulleted summary for stating hypotheses about the slope of a population regression line appears sequentially:
+
+The null is a statement of equality, typically 
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+.
+
+The alternative always contains a strict inequality, typically 
+𝐻
+𝑎
+:
+𝛽
+>
+0
+H
+a
+	​
+
+:β>0
+, 
+𝐻
+𝑎
+:
+𝛽
+<
+0
+H
+a
+	​
+
+:β<0
+, or 
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+a
+	​
+
+:β
+
+=0
+.
+
+When the inequality is < or >, the alternative is "one-sided." When it is 
+≠
+
+=
+, it is "two-sided."
+
+The choice of alternative is determined by the question of interest and should be stated before data collection begins.
+
+Never refer to statistics (such as 
+𝑏
+b
+) in the hypotheses!
+
+Remember to define the parameter.
+
+[04:59] — LET'S PRACTICE
+A transition slide.
+
+[05:02] — Don't Spill My Drink!
+Text sets up an experiment: Students tested for a linear relationship between car speed (mph) and amount of drink spilled (mL) on bumpy dirt roads using 275 mL of water in a cup holder. They ran 25 trials (5 trials each at 10, 20, 30, 40, 50 mph).
+
+[05:36] — Don't Spill My Drink! (continued)
+A table listing all 25 pairs of Speed and Spilled data points appears.
+
+[05:48] — Don't Spill My Drink! (continued)
+A scatterplot appears showing the data, with numbers plotted instead of dots to indicate repeated values. A regression output table appears below it:
+
+Constant: Coef = 14.40, SE Coef = 5.95
+
+Speed (mph): Coef = 1.520, SE Coef = 0.179
+
+S = 12.6800, R-sq = 75.75%
+
+[05:59] — Don't Spill My Drink! (continued)
+The problem prompt appears: "Do the data provide convincing evidence at the 0.05 significance level of a linear relationship between the car’s speed on a bumpy dirt road and the amount of drink spilled? Assume the conditions for inference are met."
+
+[06:13] — Stating Hypotheses
+The slide contains the prompt, the scatterplot, and the computer output from the previous slide. New text asks the viewer to: "State appropriate hypotheses for an appropriate significance test to answer this question." The video pauses for the student to solve it.
+
+[06:31] — Stating Hypotheses (continued)
+The correct hypotheses appear on screen:
+
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+
+𝐻
+𝑎
+:
+𝛽
+≠
+0
+H
+a
+	​
+
+:β
+
+=0
+
+[06:50] — Stating Hypotheses (continued)
+The parameter definition appears: "where 
+𝛽
+β
+ = the slope of the true regression line for predicting amount of drink spilled (in mL) from the car's speed (in mph) on a bumpy dirt road."
+
+[07:01] — WHAT SHOULD WE TAKE AWAY?
+A transition slide.
+
+[07:04] — Key Takeaways
+A summary of the video's objectives:
+
+Null Hypothesis: For a test about the slope, 
+𝐻
+0
+:
+𝛽
+=
+𝛽
+0
+H
+0
+	​
+
+:β=β
+0
+	​
+
+. For a null hypothesis of no linear relationship, 
+𝐻
+0
+:
+𝛽
+=
+0
+H
+0
+	​
+
+:β=0
+. Remember to define parameter 
+𝛽
+β
+.
+
+Alternative Hypothesis:
+
+For a test of a positive linear relationship, 
+𝐻
+𝑎
+:
+𝛽
+>
+0
+H
+a
+	​
+
+:β>0
+
+For a test of a negative linear relationship, 
+𝐻
+𝑎
+:
+𝛽
+<
+0
+H
+a
+	​
+
+:β<0
+
+For a test of a linear relations
+
+thumb_up
+thumb_down

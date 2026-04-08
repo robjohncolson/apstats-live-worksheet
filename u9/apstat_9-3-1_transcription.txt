@@ -1,0 +1,48 @@
+# Video 1 — Transcript
+# Unit 9, Lesson 3
+
+edit
+more_vert
+
+[00:00] Hello, AP Stat students. I'm Mr. Starnes, coming to you from beautiful Hilton Head, South Carolina. Welcome back for Daily Video number 1 of Topic 9.3: Justifying a Claim with a Confidence Interval for the Slope of a Regression Model.
+
+[00:16] What are you going to learn in this video? How do we interpret a confidence interval for the slope of a population regression line? And second, how do we justify a claim based on a confidence interval for slope?
+
+[00:30] Let's look at a familiar example if you've been with me for a few videos. My wife and I returned to Old Faithful in July of 2019, almost 25 years from when we had taken our boys there the first time in 1995. We collected data on a random sample of 25 eruptions that month and made the scatterplot you see here, adding the sample regression line and producing the computer output from the least squares regression analysis.
+
+[00:59] In the previous video, we calculated a 95% confidence interval for the slope of the population regression line in 2019 for predicting wait time from duration of the Old Faithful geyser. Now we want to interpret that interval.
+
+[01:14] Remember from what you've learned in the course already that we interpret any confidence interval in a similar way. "We are [blank]% confident that the interval from [blank] to [blank] captures the parameter we're talking about" - in this case, the slope of the population regression line - "[in context]."
+
+[01:36] So let's practice with the Old Faithful scenario. In the previous video, we found that the 95% confidence interval for the slope was negative 0.55 to 16.13. So we would say, "We are 95% confident that the interval from negative 0.55 to 16.13 captures the slope of the population regression line for predicting wait time until the next eruption in minutes from the duration of the previous eruption in minutes for all Old Faithful geyser eruptions in July 2019." The context is sometimes wordy like this.
+
+[02:14] When you're interpreting the confidence level, you might remember that we're talking about what happens if we were to repeat the random data production process many times in the same way. In this case, if we repeated the random sampling with the same sample size, about 95% of our 95% confidence intervals created would capture the slope of the population regression line.
+
+[02:40] So for Old Faithful, if we were to take many random samples of size 25 from the population of Old Faithful eruptions in July of 2019, and we used each one of those samples to construct a 95% confidence interval for the population slope, about 95% of those intervals would capture the true slope. So remember, there's a difference between interpreting confidence intervals, like we did on the previous slide, and interpreting confidence levels, like we're doing here.
+
+[03:07] How about if we want to justify a claim of some sort? Does the confidence interval that we got, negative 0.55 to 16.13, provide convincing evidence that wait time until the next eruption of Old Faithful is linearly related to the duration of the previous eruption in July 2019? Well, note that a beta of zero would indicate a horizontal line, zero slope, is the model for predicting wait time from eruption duration in the population.
+
+[03:36] In other words, the population regression model would predict the same wait time until the next eruption, no matter how long the previous Old Faithful eruption lasted. So that would be not a linear relationship. Well, because our confidence interval contains zero as a plausible value of the slope of our population regression line, there is not convincing evidence that the wait time until the next eruption of Old Faithful is linearly related to the duration of the previous eruption in July 2019. That's too bad. It would have been nice to be able to use a linear model to predict.
+
+[04:09] So let's practice with a scenario from the previous video. This was about Raoul, who performed an experiment using some wind-up rubber band airplanes. He did that a number of times and recorded how long the airplane flew in seconds for each number of turns that he did of the rubber band with the propeller. He did the regression analysis and the conditions for inference were verified.
+
+[04:34] The 95% confidence interval he obtained in the previous video was 0.013 to 0.080. And the question is: Which of the following provides a correct interpretation of the confidence interval? So I'd like you to pause the video and try this one on your own before I give you the answer.
+
+[04:55] All right, so we're interpreting the confidence interval. We would like to say something like, "We are 95% confident that the slope of the population or true regression line relating the number of rotations the rubber band is wound and the plane's flight time is between 0.013 and 0.080." So it's choice E.
+
+[05:18] You might look back through each of the other choices if you picked choice E and just see why each of them is wrong. That'd be a good review for you of some of the other misconceptions that some of these multiple-choice questions throw at you.
+
+[05:33] Let's try just one more about justifying a claim. So it's the same scenario with Raoul and the rubber band propeller airplanes. Here's the confidence interval that he got. Which of the following conclusions is most appropriate based on the confidence interval?
+
+[05:49] So this is the question about whether there is or is not evidence of a linear relationship based on the data from Raoul's experiment. Well, this time, the confidence interval is including only positive values. So that is a clear indicator of convincing evidence of a positive linear relationship between the number of rotations of the rubber band and the flight times of wind-up airplanes like these because all the values in the interval are positive.
+
+[06:21] Again, I'd encourage you to take a look at the other distractors to see what it is about them that's tricky, that isn't quite right. Because looking through distractors on multiple-choice is a good strategy for helping you avoid them on the AP exam.
+
+[06:36] So what should you take away from this video? Well, in interpreting a confidence interval for the slope of a population regression line, it's just like interpreting a confidence interval for any other parameter, except you're talking now about slope of a population regression line.
+
+[06:51] And you can use a confidence interval to justify a claim by looking and seeing whether that confidence interval includes all values consistent with the claim, as in Raoul's experiment, or not, as in the Old Faithful data collection from July of 2019.
+
+[07:11] So I thank you for tuning in. If you come back for the next video, you'll see us go through a confidence interval for slope from start to finish like you might be asked to do on the AP exam. Hope to see you then.
+
+thumb_up
+thumb_down

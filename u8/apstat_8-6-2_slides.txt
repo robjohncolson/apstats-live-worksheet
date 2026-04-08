@@ -1,0 +1,433 @@
+# Video 2 — Slide Descriptions
+# Unit 8, Lesson 6
+
+more_vert
+
+Here's a breakdown of the slide changes and visual elements in the video:
+
+[00:00] — Title Slide
+The video opens with a title slide: "TOPIC 8.6 Carrying Out a Chi-Square Test for Homogeneity or Independence". Below this, it says "DAILY VIDEO 2" and "In this video, we will discuss how to interpret the p-value and state a conclusion for a chi-square test for homogeneity or independence." The speaker, Luke Wilcox, is visible in a small window in the top right corner. The AP Statistics and College Board logos are also present.
+
+[00:14] — WHAT WILL WE LEARN?
+A transition slide with large white text on a blue background.
+
+[00:18] — What Will We Learn? (Questions)
+A white slide with the title "What Will We Learn?". Two numbered points appear sequentially:
+
+How do we interpret the p-value in a chi-square test for homogeneity or independence?
+
+How do we state a conclusion for a chi-square test for homogeneity or independence?
+
+[00:36] — LET'S LOOK AT AN EXAMPLE
+A transition slide with large white text on a blue background.
+
+[00:41] — Where Do You Go To School? (Context)
+The slide title is "Where Do You Go To School?". An image of high school students standing by lockers is on the right. The text reads: "A random sample of parents with school-aged children was taken during 2019. A separate random sample of parents with school-aged children was taken in 2020. Parents were asked what type of school their children attended. Here are the results."
+
+[00:58] — Where Do You Go To School? (Data Table)
+A data table appears below the text with two columns ("2019 Sample" and "2020 Sample") and three rows indicating school types:
+
+Public: 266 (2019), 163 (2020)
+
+Private/Parochial/Charter: 16 (2019), 21 (2020)
+
+Home: 38 (2019), 30 (2020)
+
+[01:01] — Where Do You Go To School? (Goal)
+Text appears below the table stating the researchers' goal: "Researchers would like to perform a test to determine if the distribution of school type for all school-aged children differed between the two years."
+
+[01:12] — Where Do You Go To School? (Previous Info)
+The slide clears except for the title and the image of the students. The text "From previous videos:" appears.
+
+[01:18] — Where Do You Go To School? (Hypotheses)
+The hypotheses are presented:
+
+𝐻
+0
+H
+0
+	​
+
+: There is no difference in the distribution of school types for school-aged children from 2019 to 2020.
+
+𝐻
+𝑎
+H
+a
+	​
+
+: There is a difference in the distribution of school types for school-aged children from 2019 to 2020.
+
+[01:34] — Where Do You Go To School? (Test & Conditions)
+Text is added below the hypotheses: "Chi-square test for homogeneity. Conditions are met."
+
+[01:42] — Where Do You Go To School? (Statistics)
+The calculated statistics are displayed: 
+𝜒
+2
+=
+5.55
+χ
+2
+=5.55
+, df = 2, p-value = 0.062.
+
+[01:52] — Where Do You Go To School? (p-value definition)
+A definition appears at the bottom of the screen: "The p-value measures how likely it is to get evidence for 
+𝐻
+𝑎
+H
+a
+	​
+
+ as strong as or stronger than the observed evidence by chance alone when 
+𝐻
+0
+H
+0
+	​
+
+ is true."
+
+[02:10] — Interpreting a p-value
+The slide title changes to "Interpreting a p-value". The previously stated hypotheses, 
+𝜒
+2
+χ
+2
+ value, degrees of freedom, and p-value remain at the top of the slide.
+
+[02:24] — Interpreting a p-value (Template)
+A fill-in-the-blank template for interpreting a p-value appears, using color coding for emphasis:
+"Assuming 
+𝐻
+0
+H
+0
+	​
+
+ is true [blue], there is a <p-value> [green] probability of getting a 
+𝜒
+2
+χ
+2
+ of <calculated chi-square> [purple] or greater, by chance alone in the random sample(s) or random assignment."
+
+[02:56] — Interpreting a p-value (Filled Template)
+The template is populated with the specific details from the example, appearing in segments:
+
+Assuming there is no difference in the distribution of school types for school-aged children from 2019 to 2020, [blue]
+
+there is a 0.062 probability [green]
+
+of getting a 
+𝜒
+2
+χ
+2
+ of 5.55 or greater, by chance alone in the random samples. [purple]
+
+[03:25] — Stating a Conclusion
+A new slide titled "Stating a Conclusion" appears.
+
+[03:38] — Stating a Conclusion (Small p-values)
+Text appears: "Small p-values 
+→
+→
+ test statistic is unlikely to occur by random chance alone".
+
+[03:49] — Stating a Conclusion (Small p-value Template)
+A template for a conclusion when rejecting the null hypothesis appears:
+"Because the p-value of ___ 
+≤
+𝛼
+=
+≤α=
+ ___, we reject 
+𝐻
+0
+H
+0
+	​
+
+. [purple]
+There is convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context]. [blue]"
+
+[04:06] — Stating a Conclusion (Large p-values)
+Text appears below the first template: "Large p-values 
+→
+→
+ test statistic is likely to occur by random chance alone".
+
+[04:16] — Stating a Conclusion (Large p-value Template)
+A template for a conclusion when failing to reject the null hypothesis appears:
+"Because the p-value of ___ 
+>
+𝛼
+=
+>α=
+ ___, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. [purple]
+There is not convincing statistical evidence that [state 
+𝐻
+𝑎
+H
+a
+	​
+
+ in context]. [blue]"
+
+[04:33] — Stating a Conclusion (Example Application)
+The slide clears, keeping the title. Text appears: "No significance level was stated in the school type example, so we'll use 
+𝛼
+=
+0.05
+α=0.05
+, which is the most common significance level."
+
+[04:50] — Stating a Conclusion (Example Conclusion)
+The conclusion for the school type example is written out:
+"Because the p-value of 0.062 
+>
+𝛼
+=
+0.05
+>α=0.05
+, we fail to reject 
+𝐻
+0
+H
+0
+	​
+
+. [purple]
+There is not convincing statistical evidence that there is a difference in the distribution of school types for school-aged children from 2019 to 2020. [green]"
+
+[05:13] — LET'S PRACTICE
+A transition slide with large white text on a blue background.
+
+[05:18] — Are You Working?
+A new example slide titled "Are You Working?". An image of graduates in caps and gowns is shown.
+
+[05:20] — Are You Working? (Context)
+Text appears: "A random sample of 2000 adults revealed the following data about education level and employment status."
+
+[05:28] — Are You Working? (Data Table & Goal)
+A table displays the cross-tabulation of employment status (Employed, Unemployed) and education level (No High School Diploma, High School Diploma No College, High School Diploma Some College). Below the table, it states: "Researchers wants to determine if there is an association between education level and employment status."
+
+[05:36] — Are You Working? (p-value & Task)
+Text is added at the bottom:
+"The p-value for a chi-square test for independence is 0.0008.
+Interpret the p-value and make a conclusion at the 
+𝛼
+=
+0.01
+α=0.01
+ significance level."
+
+[05:52] — Interpret p-value
+The slide title changes to "Interpret p-value". The image of the graduates remains. Text indicates "From previous videos:".
+
+[05:56] — Interpret p-value (Hypotheses & Stats)
+The hypotheses and test statistics from prior work are listed:
+
+𝐻
+0
+H
+0
+	​
+
+: There is no association between education level and employment status for all adults.
+
+𝐻
+𝑎
+H
+a
+	​
+
+: There is an association between education level and employment status for all adults.
+
+The conditions are met.
+
+𝜒
+2
+=
+14.30
+χ
+2
+=14.30
+, df = 2, p-value = 0.0008
+
+[06:20] — Interpret p-value (Interpretation)
+The interpretation of the p-value is constructed step-by-step using the established template and color coding:
+"Assuming there is no association between educational level and employment status for all adults, [blue] there is a 0.0008 probability [green] of getting 
+𝜒
+2
+χ
+2
+ of 14.30 or greater, by chance alone in a random sample of 2000 adults. [purple]"
+
+[06:45] — State A Conclusion
+The slide title changes to "State A Conclusion". The hypotheses and statistics remain at the top.
+
+[06:53] — State A Conclusion (Conclusion)
+The conclusion is written out, using color coding:
+"Because the p-value of 0.0008 
+≤
+𝛼
+=
+0.01
+≤α=0.01
+, we reject 
+𝐻
+0
+H
+0
+	​
+
+. [purple]
+There is convincing statistical evidence that there is an association between educational level and employment status for all adults. [blue]"
+
+[07:22] — Follow-Up Analysis
+A new slide titled "Follow-Up Analysis". It displays the 2-way table from the previous example, now including marginal totals (Total rows and columns) and the expected counts displayed in blue parentheses next to the observed counts. On the right, the 
+𝜒
+2
+χ
+2
+ formula is shown: 
+𝜒
+2
+=
+Σ
+(
+𝑜
+𝑏
+𝑠
+𝑒
+𝑟
+𝑣
+𝑒
+𝑑
+−
+𝑒
+𝑥
+𝑝
+𝑒
+𝑐
+𝑡
+𝑒
+𝑑
+)
+2
+𝑒
+𝑥
+𝑝
+𝑒
+𝑐
+𝑡
+𝑒
+𝑑
+χ
+2
+=Σ
+expected
+(observed−expected)
+2
+	​
+
+.
+
+[07:33] — Follow-Up Analysis (Calculations)
+Below the table, the full calculation for the chi-square statistic is written out, showing the sum of six fractions representing the contribution from each cell in the table.
+
+[07:34] — Follow-Up Analysis (Contributions)
+The calculation simplifies to show the specific decimal contributions from each cell:
+
+𝜒
+2
+=
+0.26
++
+0.04
++
+0.13
++
+8.30
++
+1.40
++
+4.17
+χ
+2
+=0.26+0.04+0.13+8.30+1.40+4.17
+
+An arrow labeled "contributions" points to these numbers. Below this, the final statistic is shown: 
+𝜒
+2
+=
+14.30
+χ
+2
+=14.30
+, labeled as "chi-square statistic".
+
+[07:42] — Follow-Up Analysis (Highlighting)
+The speaker highlights the largest contribution, "8.30", turning the text orange. This highlighting is then applied to the corresponding calculation fraction 
+(
+14
+−
+6.6
+)
+2
+6.6
+6.6
+(14−6.6)
+2
+	​
+
+ and finally to the specific cell in the table (Unemployed / No High School Diploma, observed 14, expected 6.6) to visually connect the math to the specific category.
+
+[08:08] — Follow-Up Analysis (Conclusion)
+A concluding statement for the follow-up analysis appears at the bottom: "The largest contribution to the chi-square statistic is 8.30, because the observed number of unemployed adults with no high school diploma is much higher than expected."
+
+[08:22] — WHAT SHOULD WE TAKE AWAY?
+A transition slide with large white text on a blue background.
+
+[08:26] — Key Takeaways
+A summary slide with two numbered sections.
+
+[08:30] — Key Takeaways (Point 1)
+Point 1 appears: "How do we interpret the p-value in a chi-square test for homogeneity or independence?". Below it, the general template is shown again: "Assuming 
+𝐻
+0
+H
+0
+	​
+
+ is true [blue], there is a <p-value> [green] probability of getting a 
+𝜒
+2
+χ
+2
+ of <calculated chi-square> [purple] or greater, by chance alone in the random sample(s) or random assignment."
+
+[08:56] — Key Takeaways (Point 2)
+Point 2 appears: "How do we state a conclusion for a chi-square test for homogeneity or independence?".
+
+**[0
+
+thumb_up
+thumb_down

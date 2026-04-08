@@ -1,0 +1,46 @@
+# Video 1 — Transcript
+# Unit 9, Lesson 5
+
+edit
+more_vert
+
+[00:00] Hello, AP Stat students. I'm Daren Starnes, coming to you from beautiful Hilton Head, South Carolina. This is the first video for Topic 9.5, Carrying Out a Test for the Slope of a Regression Model.
+
+[00:13] What will you learn in this video? How do you calculate an appropriate test statistic in a test about the slope of a population regression line? And how do we calculate a p-value in a test about the slope? Let's look at a familiar example from our previous two videos. Schools and equal opportunity. Can educational systems find a way to equalize opportunities for lower-income students?
+
+[00:38] As this graphic suggests about New York City, it's true nationally that higher-income areas tend to have fewer chronically absent students. Possible reasons include access to transportation being more prevalent for higher-income students, and there being less of a need for them to work to support their family. So researchers wondered if we could break this pattern of poverty leading to low attendance leading to low scores by finding ways to increase attendance for low-income students, and hopefully increasing their test scores.
+
+[01:12] Researchers in Texas collected some data from a random sample of 11 Algebra 1 students on the percent of school days attended and the number of questions they answered correctly on the state's end-of-course test. Here are the data, along with the scatter plot, linear regression, and computer output.
+
+[01:33] The question we've asked previously is, do the data give convincing evidence at the alpha equals 0.01 level of a positive linear relationship between these two variables, state test score and percent attendance, for all the Texas Algebra 1 students? Now, in previous videos, we've already stated our hypotheses. Null hypothesis beta equals 0, alternative hypothesis beta greater than 0, to represent a positive linear relationship. And we define beta to be the slope of the population regression line for predicting the number of questions answered correctly on the state test from percent of school days attended for all Texas Algebra 1 students.
+
+[02:14] We said we would use alpha equals 0.01. And in the previous video, we identified a t-test for the slope as the correct procedure and checked that the conditions are met. So how do you calculate a test statistic? Well, in this particular data set, we have a sample regression line with a slope of 0.57. That's our b value. This gives us some evidence for the alternative hypothesis because the sample slope 0.57 is positive.
+
+[02:45] We want to know how likely it is to get evidence for the alternative hypothesis this strong or stronger by chance alone when the null hypothesis is true. Well, we verify that the conditions are met, so we can now calculate the standardized test statistic using this formula from the formula sheet. Statistic minus parameter over standard error of the statistic. For the t-test for a slope, our standardized test statistic is t equals the sample slope minus the null value from the null hypothesis beta naught divided by the standard error of the slope.
+
+[03:22] And from our computer output, we can see that the sample slope 0.57 minus the null value of 0 divided by the standard error of the slope 0.062. And that gives us a t-statistic of 9.19. Now, here's a little shortcut. If you look at the t column next to the attendance row, that's very close to the 9.18 value that you find there. The difference is due to rounding. So 9.18 or 9.19 are our t-statistic, and you can just read it off the computer output. But we want you to know how it's obtained.
+
+[03:58] So calculating the test statistic is really just a matter of referring to your formula from the formula sheet and then remembering which type of inference you're doing. In this case, inference about the slope of the regression line. And there's the formula for the standard error, should you need it. What you hope is that you get computer output and that you won't need it. You can just look at the output. How do you get the p-value?
+
+[04:18] Well, like with the confidence intervals, we use a t-distribution with degrees of freedom equal to sample size minus 2. And the p-value represents the proportion of values that are as extreme or more extreme than the observed value of the test statistic. In this case, t equals 9.18. Because our alternative hypothesis is one-sided, we only are looking for evidence of a positive slope. We want to find this probability t greater than or equal to 9.18 in a t-distribution with degrees of freedom equal to number of points, 11, minus 2, which is 9.
+
+[04:55] So here's a picture. This is the t-distribution centered at zero. And here's 9.18 way, way out to the right. So the probability of getting a standardized value that far away from zero is very, very small. Using the tables, the p-value would be less than 0.0005 for this one-sided test. And with technology like your calculator, the p-value is 3.63 times 10 to the negative 6. You'll also notice in the computer output, there is a p-value column next to the attendance row, and that is the p-value for a two-sided test.
+
+[05:30] So if you want to use that value, you need to split it in half for a one-sided test. In this case, we're still going to get about zero. Let's practice with a scenario from a previous video about spilling your drink when you drive on a bumpy dirt road. Two students designed an experiment filling a cup with 275 milliliters of water for each trial and placing it in the car's cup holder. Then they drove down a bumpy dirt road at a randomly assigned speed and recorded how much water spilled out. They had five trials each at 10, 20, 30, 40, and 50 miles an hour.
+
+[06:04] Here's a scatter plot of the data. Notice there are some repeated values on the scatter plot and also the least-squares regression output. And our question from before, do the data provide convincing evidence at the 0.05 level of a linear relationship between the car's speed on the bumpy dirt road and the amount of drink spilled? We're told to assume conditions for inference are met. Yes.
+
+[06:29] In a previous video, we have already found the hypotheses and the conditions are assumed met, so we can now proceed with the calculation. Why don't you pause the video and see if you can calculate the standardized test statistic and p-value, and then resume the video and see if you got the same answer I did.
+
+[06:51] So in the previous video, we stated the null hypothesis and the alternative hypothesis, and we define the slope. And we said to use alpha equals 0.05 in the question, and we said to use a t-test for the slope. Now, to do our calculations, we have a sample slope of 1.520. Reminding you of the hypotheses, that's the null value beta equals 0. We get 1.520 minus 0 over 0.179.
+
+[07:22] Now, notice I was not very nice on my computer output. I did not give you the column for t or for the p-value. Not nice. But you can still calculate the t-statistic as 8.49. Finding the p-value on a two-sided test means that you need to find the probability of getting a t-statistic either less than or equal to negative 8.49 or greater than or equal to 8.49 on a t-distribution with degrees of freedom equal to 25 minus 2, or 23.
+
+[07:53] So here's our picture again. 8.49 and negative 8.49 are so far from zero that it's just not very likely to get values so extreme. So with table b, the best we can do is the p-value is less than 2 times 0.0005, which would be less than 0.001. And with technology, the p-value is 1.52 times 10 to the negative 8. Pretty darn small.
+
+[08:16] So what should you take away from this video? First, calculating the test statistic in a test about the slope is fairly straightforward if you have computer output that provides it. Otherwise, you can use the formula. T equals b minus beta sub 0, the null value of the slope, over the standard error of the slope. And for the p-value, you just need to see if you have a one-sided test or if you have a two-sided test, as in our let's practice illustration, and then find the p-value using the table or technology. Always use a t-distribution with n minus 2 degrees of freedom.
+
+[08:51] Thanks for tuning in. In the next video, we're going to...
+
+thumb_up
+thumb_down
