@@ -360,6 +360,15 @@
       }
 
       try {
+        // CEmu's ASM_CONSTS reference these globals during boot.
+        // Define stubs so callMain() doesn't throw.
+        window.emul_is_inited = false;
+        window.emul_is_paused = true;
+        window.initFuncs = window.initFuncs || function () {};
+        window.initLCD = window.initLCD || function () {};
+        window.enableGUI = window.enableGUI || function () {};
+        window.disableGUI = window.disableGUI || function () {};
+
         const module = await factory({
           noInitialRun: true,
           locateFile(file) {
