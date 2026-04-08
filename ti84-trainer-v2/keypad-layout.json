@@ -3,8 +3,9 @@
 
   "BUTTONS": [
     ["Y_EQUALS", "WINDOW", "ZOOM", "TRACE", "GRAPH"],
-    ["2ND", "MODE", "DEL", "UP", "RIGHT"],
-    ["ALPHA", "X_T", "STAT", "LEFT", "DOWN"],
+    ["2ND", "MODE", "DEL", null, "UP"],
+    ["ALPHA", "X_T", "STAT", "LEFT", "RIGHT"],
+    [null, null, null, null, "DOWN"],
     ["MATH", "APPS", "PRGM", "VARS", "CLEAR"],
     ["X_INVERSE", "SIN", "COS", "TAN", "POWER"],
     ["SQUARED", "COMMA", "LPAREN", "RPAREN", "DIVIDE"],
