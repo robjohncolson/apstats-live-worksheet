@@ -25,17 +25,17 @@
   );
 
   const BUTTONS = [
-    ['Y_EQUALS', 'WINDOW', 'ZOOM', 'TRACE', 'GRAPH'],
-    ['2ND', 'MODE', 'DEL', null, 'UP'],
-    ['ALPHA', 'X_T', 'STAT', 'LEFT', 'RIGHT'],
-    [null, null, null, null, 'DOWN'],
-    ['MATH', 'APPS', 'PRGM', 'VARS', 'CLEAR'],
-    ['X_INVERSE', 'SIN', 'COS', 'TAN', 'POWER'],
-    ['SQUARED', 'COMMA', 'LPAREN', 'RPAREN', 'DIVIDE'],
-    ['LOG', 'SEVEN', 'EIGHT', 'NINE', 'MULTIPLY'],
-    ['LN', 'FOUR', 'FIVE', 'SIX', 'MINUS'],
-    ['STO', 'ONE', 'TWO', 'THREE', 'PLUS'],
-    ['ON', 'ZERO', 'DECIMAL', 'NEGATIVE', 'ENTER'],
+    ['Y_EQUALS', 'WINDOW', 'ZOOM', 'TRACE', null, 'GRAPH'],
+    ['2ND', 'MODE', 'DEL', null, 'UP', null],
+    ['ALPHA', 'X_T', 'STAT', 'LEFT', null, 'RIGHT'],
+    [null, null, null, null, 'DOWN', null],
+    ['MATH', 'APPS', 'PRGM', 'VARS', null, 'CLEAR'],
+    ['X_INVERSE', 'SIN', 'COS', 'TAN', null, 'POWER'],
+    ['SQUARED', 'COMMA', 'LPAREN', 'RPAREN', null, 'DIVIDE'],
+    ['LOG', 'SEVEN', 'EIGHT', 'NINE', null, 'MULTIPLY'],
+    ['LN', 'FOUR', 'FIVE', 'SIX', null, 'MINUS'],
+    ['STO', 'ONE', 'TWO', 'THREE', null, 'PLUS'],
+    ['ON', 'ZERO', 'DECIMAL', 'NEGATIVE', null, 'ENTER'],
   ];
 
   const BUTTON_META = {
