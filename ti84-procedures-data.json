@@ -17,8 +17,8 @@
       "https://education.ti.com/en/customer-support/knowledge-base/ti-83-84-plus-family/product-usage/34799",
       "TI-84 Plus CE ROM dump (OS 5.8.2.0029) — string extraction for menu ordering verification"
     ],
-    "verification_date": "2026-04-07",
-    "verification_notes": "STAT > TESTS menu verified against TI-84 Plus CE Reference Guide (2020). ROM string table order does NOT match menu display order. DISTR menu confirmed. Wizard field labels verified via ROM extraction."
+    "verification_date": "2026-04-08",
+    "verification_notes": "STAT > TESTS menu verified against TI-84 Plus CE Reference Guide (2020). ROM string table order does NOT match menu display order. DISTR menu confirmed. Wizard field labels verified via ROM extraction. ROM disassembly (eZ80) confirmed wizard field tables, added Color: field to draw-capable wizards, merged Calculate/Draw into selector, removed hallucinated CNTB from chi2gof result."
   },
   "keypad": {
     "description": "Subset of TI-84 Plus CE keys and 2ND combinations used in AP Statistics procedures.",
@@ -878,7 +878,11 @@
           "label": "Paste",
           "type": "action-button"
         }
-      ]
+      ],
+      "sharedParameterTable": {
+        "sharedWith": "binomcdf-wizard",
+        "romOffset": "0x0AF802"
+      }
     },
     {
       "id": "binomcdf-wizard",
@@ -901,7 +905,11 @@
           "label": "Paste",
           "type": "action-button"
         }
-      ]
+      ],
+      "sharedParameterTable": {
+        "sharedWith": "binompdf-wizard",
+        "romOffset": "0x0AF802"
+      }
     },
     {
       "id": "geometpdf-wizard",
@@ -920,7 +928,11 @@
           "label": "Paste",
           "type": "action-button"
         }
-      ]
+      ],
+      "sharedParameterTable": {
+        "sharedWith": "geometcdf-wizard",
+        "romOffset": "0x0AF818"
+      }
     },
     {
       "id": "geometcdf-wizard",
@@ -939,7 +951,11 @@
           "label": "Paste",
           "type": "action-button"
         }
-      ]
+      ],
+      "sharedParameterTable": {
+        "sharedWith": "geometpdf-wizard",
+        "romOffset": "0x0AF818"
+      }
     },
     {
       "id": "distribution-home-result",
@@ -1031,12 +1047,16 @@
           "type": "choice"
         },
         {
-          "label": "Calculate",
-          "type": "action-button"
+          "label": "Color:",
+          "type": "color-selector"
         },
         {
-          "label": "Draw",
-          "type": "action-button"
+          "label": "Calculate/Draw",
+          "type": "action-selector",
+          "options": [
+            "Calculate",
+            "Draw"
+          ]
         }
       ]
     },
@@ -1079,12 +1099,16 @@
           "type": "choice"
         },
         {
-          "label": "Calculate",
-          "type": "action-button"
+          "label": "Color:",
+          "type": "color-selector"
         },
         {
-          "label": "Draw",
-          "type": "action-button"
+          "label": "Calculate/Draw",
+          "type": "action-selector",
+          "options": [
+            "Calculate",
+            "Draw"
+          ]
         }
       ]
     },
@@ -1237,12 +1261,16 @@
           "type": "choice"
         },
         {
-          "label": "Calculate",
-          "type": "action-button"
+          "label": "Color:",
+          "type": "color-selector"
         },
         {
-          "label": "Draw",
-          "type": "action-button"
+          "label": "Calculate/Draw",
+          "type": "action-selector",
+          "options": [
+            "Calculate",
+            "Draw"
+          ]
         }
       ]
     },
@@ -1354,21 +1382,25 @@
           "type": "integer"
         },
         {
-          "label": "Prop ? p0",
+          "label": "prop",
           "options": [
-            "≠",
-            "<",
-            ">"
+            "≠p₀",
+            "<p₀",
+            ">p₀"
           ],
           "type": "choice"
         },
         {
-          "label": "Calculate",
-          "type": "action-button"
+          "label": "Color:",
+          "type": "color-selector"
         },
         {
-          "label": "Draw",
-          "type": "action-button"
+          "label": "Calculate/Draw",
+          "type": "action-selector",
+          "options": [
+            "Calculate",
+            "Draw"
+          ]
         }
       ]
     },
@@ -1509,12 +1541,16 @@
           "type": "integer"
         },
         {
-          "label": "Calculate",
-          "type": "action-button"
+          "label": "Color:",
+          "type": "color-selector"
         },
         {
-          "label": "Draw",
-          "type": "action-button"
+          "label": "Calculate/Draw",
+          "type": "action-selector",
+          "options": [
+            "Calculate",
+            "Draw"
+          ]
         }
       ]
     },
@@ -1525,8 +1561,7 @@
       "lines": [
         "χ² = {value}",
         "p = {value}",
-        "df = {value}",
-        "CNTB = {value or list}"
+        "df = {value}"
       ]
     },
     {
@@ -1554,12 +1589,16 @@
           "type": "matrix-selector"
         },
         {
-          "label": "Calculate",
-          "type": "action-button"
+          "label": "Color:",
+          "type": "color-selector"
         },
         {
-          "label": "Draw",
-          "type": "action-button"
+          "label": "Calculate/Draw",
+          "type": "action-selector",
+          "options": [
+            "Calculate",
+            "Draw"
+          ]
         }
       ]
     },
