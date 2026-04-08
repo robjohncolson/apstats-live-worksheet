@@ -1,0 +1,1626 @@
+{
+  "meta": {
+    "rom": "TI-84 Plus CE OS 5.8.2.0029",
+    "rom_size": 4194304,
+    "extraction_date": "2026-04-08",
+    "method": "Targeted eZ80 byte-level analysis of form tables at 0x0AE5FE-0x0AEA27, command-to-table links near 0x0AEA2A, compact distribution parameter tables at 0x0AF796-0x0AF86A, and result-header/token tables at 0x0AB3D6-0x0AB4D4 plus 0x0A0A68-0x0A0AE8. Current ti84-procedures-data.json screens were used only to scope the 20 AP Statistics wizards and 14 result screens. Where slot-tag semantics or result display code stayed ambiguous, confidence is lowered explicitly.",
+    "sources": [
+      "TI-84_Plus_CE/ROM.rom",
+      "ti84-procedures-data.json",
+      "ti84-rom-wizard-fields.md"
+    ],
+    "limitations": [
+      "Default values were only partially recoverable from ROM tables; defaults retained from the trainer are marked medium or low confidence.",
+      "Distribution parameter tables clearly identify participating labels, but visible row order depends on compact slot tags that were not fully decoded from ROM alone.",
+      "No dedicated χ²GOF result-line label for CNTB was found anywhere in the ROM."
+    ]
+  },
+  "wizards": {
+    "one-var-stats-wizard": {
+      "entry_offset": "0x0AE95E",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE95E",
+          "label": "List",
+          "label_offset": "0x0AEB45",
+          "position": 1,
+          "type": "list-selector",
+          "default": "L1",
+          "default_confidence": "medium",
+          "default_notes": "List defaults were not recovered directly from the ROM table."
+        },
+        {
+          "descriptor_offset": "0x0AE962",
+          "label": "FreqList",
+          "label_offset": "0x0AECC4",
+          "position": 2,
+          "type": "list-selector",
+          "default": "1",
+          "default_confidence": "medium",
+          "default_notes": "FreqList default was not recovered directly from the ROM table."
+        },
+        {
+          "descriptor_offset": "0x0AE966",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 3,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "Straight 4-byte descriptor table; record order matches the visible field order."
+    },
+    "normalcdf-wizard": {
+      "entry_offset": "0x0AF7A3",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AF7A4",
+          "label": "lower",
+          "label_offset": "0x0AEC6E",
+          "position": 1,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF7A8",
+          "label": "upper",
+          "label_offset": "0x0AEC74",
+          "position": 2,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF7B0",
+          "label": "μ",
+          "label_offset": "0x0AEB43",
+          "position": 3,
+          "type": "number",
+          "default": "0",
+          "default_confidence": "low",
+          "default_notes": "μ=0 is consistent with the trainer and TI behavior, but the default literal was not recovered from the compact ROM table."
+        },
+        {
+          "descriptor_offset": "0x0AF7AC",
+          "label": "σ",
+          "label_offset": "0x0AEBBB",
+          "position": 4,
+          "type": "number",
+          "default": "1",
+          "default_confidence": "low",
+          "default_notes": "σ=1 is consistent with the trainer and TI behavior, but the default literal was not recovered from the compact ROM table."
+        },
+        {
+          "descriptor_offset": "0x0AF2A3",
+          "label": "Paste",
+          "label_offset": "0x0AECA0",
+          "position": 5,
+          "type": "action-button",
+          "rom_label": " Paste"
+        }
+      ],
+      "confidence": "medium",
+      "notes": "Label membership is clear from the compact distribution table. Visible μ/σ row order was kept in the trainer order because it matches TI syntax, while the slot-tag ordering remains unresolved."
+    },
+    "invnorm-wizard": {
+      "entry_offset": "0x0AF7B4",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AF7B5",
+          "label": "area",
+          "label_offset": "0x0AEC8A",
+          "position": 1,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF7BD",
+          "label": "μ",
+          "label_offset": "0x0AEB43",
+          "position": 2,
+          "type": "number",
+          "default": "0",
+          "default_confidence": "low",
+          "default_notes": "μ=0 was not recovered directly from ROM defaults."
+        },
+        {
+          "descriptor_offset": "0x0AF7B9",
+          "label": "σ",
+          "label_offset": "0x0AEBBB",
+          "position": 3,
+          "type": "number",
+          "default": "1",
+          "default_confidence": "low",
+          "default_notes": "σ=1 was not recovered directly from ROM defaults."
+        },
+        {
+          "descriptor_offset": "0x0AF7C1",
+          "label": "Tail",
+          "label_offset": "0x0AECE5",
+          "position": 4,
+          "type": "choice",
+          "options": [
+            "LEFT",
+            "CENTER",
+            "RIGHT"
+          ],
+          "options_offsets": [
+            "0x0AECEA",
+            "0x0AECEF",
+            "0x0AECF6"
+          ],
+          "default_confidence": "low",
+          "default_notes": "Option strings are recovered; the selected default index was not fully decoded."
+        },
+        {
+          "descriptor_offset": "0x0AF2A3",
+          "label": "Paste",
+          "label_offset": "0x0AECA0",
+          "position": 5,
+          "type": "action-button",
+          "rom_label": " Paste"
+        }
+      ],
+      "confidence": "medium",
+      "notes": "The compact table clearly covers area, μ/σ, and Tail. The row order is kept in TI syntax order rather than raw record order."
+    },
+    "binompdf-wizard": {
+      "entry_offset": "0x0AF802",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AF803",
+          "label": "trials",
+          "label_offset": "0x0AEC99",
+          "position": 1,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF807",
+          "label": "p",
+          "label_offset": "0x0AEC97",
+          "position": 2,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF80B",
+          "label": "x",
+          "label_offset": "0x0AEC8F",
+          "position": 3,
+          "type": "integer",
+          "rom_label": "x value"
+        },
+        {
+          "descriptor_offset": "0x0AF2A3",
+          "label": "Paste",
+          "label_offset": "0x0AECA0",
+          "position": 4,
+          "type": "action-button",
+          "rom_label": " Paste"
+        }
+      ],
+      "confidence": "medium",
+      "notes": "The compact distribution table is shared with BinomCDF. The ROM points at x value rather than a bare x label."
+    },
+    "binomcdf-wizard": {
+      "entry_offset": "0x0AF802",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AF803",
+          "label": "trials",
+          "label_offset": "0x0AEC99",
+          "position": 1,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF807",
+          "label": "p",
+          "label_offset": "0x0AEC97",
+          "position": 2,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF80B",
+          "label": "x",
+          "label_offset": "0x0AEC8F",
+          "position": 3,
+          "type": "integer",
+          "rom_label": "x value"
+        },
+        {
+          "descriptor_offset": "0x0AF2A3",
+          "label": "Paste",
+          "label_offset": "0x0AECA0",
+          "position": 4,
+          "type": "action-button",
+          "rom_label": " Paste"
+        }
+      ],
+      "confidence": "medium",
+      "notes": "BinomPDF and BinomCDF share the same compact parameter table in ROM."
+    },
+    "geometpdf-wizard": {
+      "entry_offset": "0x0AF818",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AF819",
+          "label": "p",
+          "label_offset": "0x0AEC97",
+          "position": 1,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF81D",
+          "label": "x",
+          "label_offset": "0x0AEC8F",
+          "position": 2,
+          "type": "integer",
+          "rom_label": "x value"
+        },
+        {
+          "descriptor_offset": "0x0AF2A3",
+          "label": "Paste",
+          "label_offset": "0x0AECA0",
+          "position": 3,
+          "type": "action-button",
+          "rom_label": " Paste"
+        }
+      ],
+      "confidence": "medium",
+      "notes": "GeometPDF and GeometCDF share the same compact parameter table in ROM."
+    },
+    "geometcdf-wizard": {
+      "entry_offset": "0x0AF818",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AF819",
+          "label": "p",
+          "label_offset": "0x0AEC97",
+          "position": 1,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AF81D",
+          "label": "x",
+          "label_offset": "0x0AEC8F",
+          "position": 2,
+          "type": "integer",
+          "rom_label": "x value"
+        },
+        {
+          "descriptor_offset": "0x0AF2A3",
+          "label": "Paste",
+          "label_offset": "0x0AECA0",
+          "position": 3,
+          "type": "action-button",
+          "rom_label": " Paste"
+        }
+      ],
+      "confidence": "medium",
+      "notes": "GeometPDF and GeometCDF share the same compact parameter table in ROM."
+    },
+    "linreg-wizard": {
+      "entry_offset": "0x0AE982",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE982",
+          "label": "Xlist",
+          "label_offset": "0x0AEBA8",
+          "position": 1,
+          "type": "list-selector",
+          "default": "L1",
+          "default_confidence": "medium",
+          "default_notes": "List defaults were not recovered directly from the ROM table."
+        },
+        {
+          "descriptor_offset": "0x0AE986",
+          "label": "Ylist",
+          "label_offset": "0x0AEBAE",
+          "position": 2,
+          "type": "list-selector",
+          "default": "L2",
+          "default_confidence": "medium",
+          "default_notes": "List defaults were not recovered directly from the ROM table."
+        },
+        {
+          "descriptor_offset": "0x0AE98A",
+          "label": "FreqList",
+          "label_offset": "0x0AECC4",
+          "position": 3,
+          "type": "list-selector",
+          "default": "1",
+          "default_confidence": "medium",
+          "default_notes": "FreqList default was not recovered directly from the ROM table."
+        },
+        {
+          "descriptor_offset": "0x0AE98E",
+          "label": "Store RegEQ",
+          "label_offset": "0x0AECCD",
+          "position": 4,
+          "type": "equation-selector",
+          "default": "Y1",
+          "default_confidence": "low",
+          "default_notes": "The target equation slot was not recovered directly from ROM defaults."
+        },
+        {
+          "descriptor_offset": "0x0AE992",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 5,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "This matches the LinReg(a+bx) style table with Store RegEQ rather than the simpler 2-Var Stats table."
+    },
+    "t-test-data-wizard": {
+      "entry_offset": "0x0AE622",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE622",
+          "label": "Inpt",
+          "label_offset": "0x0AEBE7",
+          "position": 1,
+          "type": "choice",
+          "options": [
+            "Data",
+            "Stats"
+          ],
+          "options_offsets": [
+            "0x0AEBFA",
+            "0x0AEBFF"
+          ],
+          "default": "Data",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE626",
+          "label": "μ0",
+          "label_offset": "0x0AEB40",
+          "position": 2,
+          "type": "number",
+          "rom_label": "contextual μ₀/σ₀ token"
+        },
+        {
+          "descriptor_offset": "0x0AE62A",
+          "label": "List",
+          "label_offset": "0x0AEB45",
+          "position": 3,
+          "type": "list-selector",
+          "default": "L1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE62E",
+          "label": "Freq",
+          "label_offset": "0x0AEB4A",
+          "position": 4,
+          "type": "list-selector",
+          "default": "1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE632",
+          "label": "μ ? μ0",
+          "label_offset": "0x0AEBBB",
+          "position": 5,
+          "type": "choice",
+          "rom_label": "contextual μ ? μ₀ choice base",
+          "options": [
+            "≠",
+            "<",
+            ">"
+          ],
+          "options_offsets": [
+            "0x0AEC05",
+            "0x0AEC0D",
+            "0x0AEC09"
+          ]
+        },
+        {
+          "descriptor_offset": "0x0AE636",
+          "label": "Color",
+          "label_offset": "0x0AEBE0",
+          "position": 6,
+          "type": "color-selector",
+          "rom_label": "Color:"
+        },
+        {
+          "descriptor_offset": "0x0AE63A",
+          "label": "Action",
+          "label_offset": "0x0AEBD1",
+          "rom_label": "Calculate/Draw",
+          "position": 7,
+          "type": "choice-action",
+          "options": [
+            "Calculate",
+            "Draw"
+          ],
+          "options_offsets": [
+            "0x0AEBD1",
+            "0x0AEBDB"
+          ]
+        }
+      ],
+      "confidence": "high",
+      "notes": "The ROM table is draw-capable: it includes Color: and a final Calculate/Draw control rather than two independent buttons."
+    },
+    "t-test-stats-wizard": {
+      "entry_offset": "0x0AE82E",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE82E",
+          "label": "Inpt",
+          "label_offset": "0x0AEBE7",
+          "position": 1,
+          "type": "choice",
+          "options": [
+            "Data",
+            "Stats"
+          ],
+          "options_offsets": [
+            "0x0AEBFA",
+            "0x0AEBFF"
+          ],
+          "default": "Stats",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE832",
+          "label": "μ0",
+          "label_offset": "0x0AEB40",
+          "position": 2,
+          "type": "number",
+          "rom_label": "contextual μ₀/σ₀ token"
+        },
+        {
+          "descriptor_offset": "0x0AE836",
+          "label": "x̄",
+          "label_offset": "0x0AEBB4",
+          "position": 3,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE83A",
+          "label": "Sx",
+          "label_offset": "0x0AEBB8",
+          "position": 4,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE83E",
+          "label": "n",
+          "label_offset": "0x0AEBB6",
+          "position": 5,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE842",
+          "label": "μ ? μ0",
+          "label_offset": "0x0AEBBB",
+          "position": 6,
+          "type": "choice",
+          "rom_label": "contextual μ ? μ₀ choice base",
+          "options": [
+            "≠",
+            "<",
+            ">"
+          ],
+          "options_offsets": [
+            "0x0AEC05",
+            "0x0AEC0D",
+            "0x0AEC09"
+          ]
+        },
+        {
+          "descriptor_offset": "0x0AE846",
+          "label": "Color",
+          "label_offset": "0x0AEBE0",
+          "position": 7,
+          "type": "color-selector",
+          "rom_label": "Color:"
+        },
+        {
+          "descriptor_offset": "0x0AE84A",
+          "label": "Action",
+          "label_offset": "0x0AEBD1",
+          "rom_label": "Calculate/Draw",
+          "position": 8,
+          "type": "choice-action",
+          "options": [
+            "Calculate",
+            "Draw"
+          ],
+          "options_offsets": [
+            "0x0AEBD1",
+            "0x0AEBDB"
+          ]
+        }
+      ],
+      "confidence": "high",
+      "notes": "This is the stats-mode companion to 0x0AE622. The contextual μ/σ token is reused for the alternative-hypothesis field."
+    },
+    "t-interval-data-wizard": {
+      "entry_offset": "0x0AE73E",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE73E",
+          "label": "Inpt",
+          "label_offset": "0x0AEBE7",
+          "position": 1,
+          "type": "choice",
+          "options": [
+            "Data",
+            "Stats"
+          ],
+          "options_offsets": [
+            "0x0AEBFA",
+            "0x0AEBFF"
+          ],
+          "default": "Data",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE742",
+          "label": "List",
+          "label_offset": "0x0AEB45",
+          "position": 2,
+          "type": "list-selector",
+          "default": "L1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE746",
+          "label": "Freq",
+          "label_offset": "0x0AEB4A",
+          "position": 3,
+          "type": "list-selector",
+          "default": "1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE74A",
+          "label": "C-Level",
+          "label_offset": "0x0AEB8E",
+          "position": 4,
+          "type": "number",
+          "default": ".95",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE74E",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 5,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "Straight descriptor table with no draw/color branch."
+    },
+    "t-interval-stats-wizard": {
+      "entry_offset": "0x0AE8EE",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE8EE",
+          "label": "Inpt",
+          "label_offset": "0x0AEBE7",
+          "position": 1,
+          "type": "choice",
+          "options": [
+            "Data",
+            "Stats"
+          ],
+          "options_offsets": [
+            "0x0AEBFA",
+            "0x0AEBFF"
+          ],
+          "default": "Stats",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE8F2",
+          "label": "x̄",
+          "label_offset": "0x0AEBB4",
+          "position": 2,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE8F6",
+          "label": "Sx",
+          "label_offset": "0x0AEBB8",
+          "position": 3,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE8FA",
+          "label": "n",
+          "label_offset": "0x0AEBB6",
+          "position": 4,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE8FE",
+          "label": "C-Level",
+          "label_offset": "0x0AEB8E",
+          "position": 5,
+          "type": "number",
+          "default": ".95",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE902",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 6,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "Stats-mode companion to 0x0AE73E."
+    },
+    "two-samp-ttest-stats-wizard": {
+      "entry_offset": "0x0AE852",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE852",
+          "label": "Inpt",
+          "label_offset": "0x0AEBE7",
+          "position": 1,
+          "type": "choice",
+          "options": [
+            "Data",
+            "Stats"
+          ],
+          "options_offsets": [
+            "0x0AEBFA",
+            "0x0AEBFF"
+          ],
+          "default": "Stats",
+          "default_confidence": "low",
+          "default_notes": "The trainer uses one screen with an inputMode toggle, but ROM uses a paired data table at 0x0AE6FE and this stats table at 0x0AE852."
+        },
+        {
+          "descriptor_offset": "0x0AE856",
+          "label": "x̄1",
+          "label_offset": "0x0AEB6A",
+          "position": 2,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE85A",
+          "label": "Sx1",
+          "label_offset": "0x0AEB6D",
+          "position": 3,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE85E",
+          "label": "n1",
+          "label_offset": "0x0AEB67",
+          "position": 4,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE862",
+          "label": "x̄2",
+          "label_offset": "0x0AEB74",
+          "position": 5,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE866",
+          "label": "Sx2",
+          "label_offset": "0x0AEB77",
+          "position": 6,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE86A",
+          "label": "n2",
+          "label_offset": "0x0AEB71",
+          "position": 7,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE86E",
+          "label": "μ1 ? μ2",
+          "label_offset": "0x0AEBBD",
+          "position": 8,
+          "type": "choice",
+          "rom_label": "contextual μ₁/σ₁ choice base",
+          "options": [
+            "≠",
+            "<",
+            ">"
+          ],
+          "options_offsets": [
+            "0x0AEC35",
+            "0x0AEC3D",
+            "0x0AEC39"
+          ]
+        },
+        {
+          "descriptor_offset": "0x0AE872",
+          "label": "Pooled",
+          "label_offset": "0x0AEBEC",
+          "position": 9,
+          "type": "choice",
+          "options": [
+            "No",
+            "Yes"
+          ],
+          "options_offsets": [
+            "0x0AEBF7",
+            "0x0AEBF3"
+          ],
+          "default_confidence": "low"
+        },
+        {
+          "descriptor_offset": "0x0AE876",
+          "label": "Color",
+          "label_offset": "0x0AEBE0",
+          "position": 10,
+          "type": "color-selector",
+          "rom_label": "Color:"
+        },
+        {
+          "descriptor_offset": "0x0AE87A",
+          "label": "Action",
+          "label_offset": "0x0AEBD1",
+          "rom_label": "Calculate/Draw",
+          "position": 11,
+          "type": "choice-action",
+          "options": [
+            "Calculate",
+            "Draw"
+          ],
+          "options_offsets": [
+            "0x0AEBD1",
+            "0x0AEBDB"
+          ]
+        }
+      ],
+      "confidence": "medium",
+      "notes": "The trainer currently represents only the stats-side screen, but ROM has a paired data-mode table at 0x0AE6FE. The μ/σ token at 0x0AEBBD is contextual."
+    },
+    "two-samp-tint-stats-wizard": {
+      "entry_offset": "0x0AE90A",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE90A",
+          "label": "Inpt",
+          "label_offset": "0x0AEBE7",
+          "position": 1,
+          "type": "choice",
+          "options": [
+            "Data",
+            "Stats"
+          ],
+          "options_offsets": [
+            "0x0AEBFA",
+            "0x0AEBFF"
+          ],
+          "default": "Stats",
+          "default_confidence": "low",
+          "default_notes": "The trainer uses one screen with an inputMode toggle, but ROM has separate data and stats tables."
+        },
+        {
+          "descriptor_offset": "0x0AE90E",
+          "label": "x̄1",
+          "label_offset": "0x0AEB6A",
+          "position": 2,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE912",
+          "label": "Sx1",
+          "label_offset": "0x0AEB6D",
+          "position": 3,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE916",
+          "label": "n1",
+          "label_offset": "0x0AEB67",
+          "position": 4,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE91A",
+          "label": "x̄2",
+          "label_offset": "0x0AEB74",
+          "position": 5,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE91E",
+          "label": "Sx2",
+          "label_offset": "0x0AEB77",
+          "position": 6,
+          "type": "number"
+        },
+        {
+          "descriptor_offset": "0x0AE922",
+          "label": "n2",
+          "label_offset": "0x0AEB71",
+          "position": 7,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE926",
+          "label": "C-Level",
+          "label_offset": "0x0AEB8E",
+          "position": 8,
+          "type": "number",
+          "default": ".95",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE92A",
+          "label": "Pooled",
+          "label_offset": "0x0AEBEC",
+          "position": 9,
+          "type": "choice",
+          "options": [
+            "No",
+            "Yes"
+          ],
+          "options_offsets": [
+            "0x0AEBF7",
+            "0x0AEBF3"
+          ],
+          "default_confidence": "low"
+        },
+        {
+          "descriptor_offset": "0x0AE92E",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 10,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "ROM has a separate data-mode companion table at 0x0AE756 with List1/List2/Freq1/Freq2."
+    },
+    "one-propztest-wizard": {
+      "entry_offset": "0x0AE696",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE696",
+          "label": "p0",
+          "label_offset": "0x0AEB81",
+          "position": 1,
+          "type": "number",
+          "rom_label": "p₀"
+        },
+        {
+          "descriptor_offset": "0x0AE69A",
+          "label": "x",
+          "label_offset": "0x0AEB84",
+          "position": 2,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE69E",
+          "label": "n",
+          "label_offset": "0x0AEB86",
+          "position": 3,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE6A2",
+          "label": "Prop ? p0",
+          "label_offset": "0x0AEBC0",
+          "position": 4,
+          "type": "choice",
+          "rom_label": "prop",
+          "options": [
+            "≠",
+            "<",
+            ">"
+          ],
+          "options_offsets": [
+            "0x0AEC1D",
+            "0x0AEC25",
+            "0x0AEC21"
+          ]
+        },
+        {
+          "descriptor_offset": "0x0AE6A6",
+          "label": "Color",
+          "label_offset": "0x0AEBE0",
+          "position": 5,
+          "type": "color-selector",
+          "rom_label": "Color:"
+        },
+        {
+          "descriptor_offset": "0x0AE6AA",
+          "label": "Action",
+          "label_offset": "0x0AEBD1",
+          "rom_label": "Calculate/Draw",
+          "position": 6,
+          "type": "choice-action",
+          "options": [
+            "Calculate",
+            "Draw"
+          ],
+          "options_offsets": [
+            "0x0AEBD1",
+            "0x0AEBDB"
+          ]
+        }
+      ],
+      "confidence": "high",
+      "notes": "Like the t-test tables, the draw-capable control is ROM-backed as Color plus a final action selector."
+    },
+    "one-propzint-wizard": {
+      "entry_offset": "0x0AE7A2",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE7A2",
+          "label": "x",
+          "label_offset": "0x0AEB84",
+          "position": 1,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE7A6",
+          "label": "n",
+          "label_offset": "0x0AEB86",
+          "position": 2,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE7AA",
+          "label": "C-Level",
+          "label_offset": "0x0AEB8E",
+          "position": 3,
+          "type": "number",
+          "default": ".95",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7AE",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 4,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "Straight descriptor table with no draw/color branch."
+    },
+    "chi2gof-wizard": {
+      "entry_offset": "0x0AE6E6",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE6E6",
+          "label": "Observed",
+          "label_offset": "0x0AEB96",
+          "position": 1,
+          "type": "list-selector",
+          "default": "L1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE6EA",
+          "label": "Expected",
+          "label_offset": "0x0AEB9F",
+          "position": 2,
+          "type": "list-selector",
+          "default": "L2",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE6EE",
+          "label": "df",
+          "label_offset": "0x0AEC50",
+          "position": 3,
+          "type": "integer"
+        },
+        {
+          "descriptor_offset": "0x0AE6F2",
+          "label": "Color",
+          "label_offset": "0x0AEBE0",
+          "position": 4,
+          "type": "color-selector",
+          "rom_label": "Color:"
+        },
+        {
+          "descriptor_offset": "0x0AE6F6",
+          "label": "Action",
+          "label_offset": "0x0AEBD1",
+          "rom_label": "Calculate/Draw",
+          "position": 5,
+          "type": "choice-action",
+          "options": [
+            "Calculate",
+            "Draw"
+          ],
+          "options_offsets": [
+            "0x0AEBD1",
+            "0x0AEBDB"
+          ]
+        }
+      ],
+      "confidence": "high",
+      "notes": "The trainer models Calculate and Draw separately, but the ROM table is Color plus a final action selector."
+    },
+    "chi2test-wizard": {
+      "entry_offset": "0x0AE6D2",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE6D2",
+          "label": "Observed",
+          "label_offset": "0x0AEB96",
+          "position": 1,
+          "type": "matrix-selector",
+          "default": "[A]",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE6D6",
+          "label": "Expected",
+          "label_offset": "0x0AEB9F",
+          "position": 2,
+          "type": "matrix-selector",
+          "default": "[B]",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE6DA",
+          "label": "Color",
+          "label_offset": "0x0AEBE0",
+          "position": 3,
+          "type": "color-selector",
+          "rom_label": "Color:"
+        },
+        {
+          "descriptor_offset": "0x0AE6DE",
+          "label": "Action",
+          "label_offset": "0x0AEBD1",
+          "rom_label": "Calculate/Draw",
+          "position": 4,
+          "type": "choice-action",
+          "options": [
+            "Calculate",
+            "Draw"
+          ],
+          "options_offsets": [
+            "0x0AEBD1",
+            "0x0AEBDB"
+          ]
+        }
+      ],
+      "confidence": "high",
+      "notes": "The ROM-backed χ²-Test wizard is matrix-based and draw-capable."
+    },
+    "linreg-ttest-wizard": {
+      "entry_offset": "0x0AE7D2",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE7D2",
+          "label": "Xlist",
+          "label_offset": "0x0AEBA8",
+          "position": 1,
+          "type": "list-selector",
+          "default": "L1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7D6",
+          "label": "Ylist",
+          "label_offset": "0x0AEBAE",
+          "position": 2,
+          "type": "list-selector",
+          "default": "L2",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7DA",
+          "label": "Freq",
+          "label_offset": "0x0AEB4A",
+          "position": 3,
+          "type": "list-selector",
+          "default": "1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7DE",
+          "label": "β and ρ",
+          "label_offset": "0x0AEBCB",
+          "position": 4,
+          "type": "choice",
+          "rom_label": "β & ρ",
+          "options": [
+            "≠0",
+            "<0",
+            ">0"
+          ],
+          "options_offsets": [
+            "0x0AEC41",
+            "0x0AEC47",
+            "0x0AEC44"
+          ]
+        },
+        {
+          "descriptor_offset": "0x0AE7E2",
+          "label": "RegEQ",
+          "label_offset": "0x0AEC4A",
+          "position": 5,
+          "type": "equation-selector",
+          "default": "Y1",
+          "default_confidence": "low"
+        },
+        {
+          "descriptor_offset": "0x0AE7E6",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 6,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "No draw/color branch in the ROM table for LinRegTTest."
+    },
+    "linreg-tint-wizard": {
+      "entry_offset": "0x0AE7EE",
+      "fields": [
+        {
+          "descriptor_offset": "0x0AE7EE",
+          "label": "Xlist",
+          "label_offset": "0x0AEBA8",
+          "position": 1,
+          "type": "list-selector",
+          "default": "L1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7F2",
+          "label": "Ylist",
+          "label_offset": "0x0AEBAE",
+          "position": 2,
+          "type": "list-selector",
+          "default": "L2",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7F6",
+          "label": "Freq",
+          "label_offset": "0x0AEB4A",
+          "position": 3,
+          "type": "list-selector",
+          "default": "1",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7FA",
+          "label": "C-Level",
+          "label_offset": "0x0AEB8E",
+          "position": 4,
+          "type": "number",
+          "default": ".95",
+          "default_confidence": "medium"
+        },
+        {
+          "descriptor_offset": "0x0AE7FE",
+          "label": "RegEQ",
+          "label_offset": "0x0AEC4A",
+          "position": 5,
+          "type": "equation-selector",
+          "default": "Y1",
+          "default_confidence": "low"
+        },
+        {
+          "descriptor_offset": "0x0AE802",
+          "label": "Calculate",
+          "label_offset": "0x0AEBD1",
+          "position": 6,
+          "type": "action-button"
+        }
+      ],
+      "confidence": "high",
+      "notes": "No draw/color branch in the ROM table for LinRegTInt."
+    }
+  },
+  "results": {
+    "one-var-stats-result-page1": {
+      "lines": [
+        "x̄ = {value}",
+        "Σx = {value}",
+        "Σx² = {value}",
+        "Sx = {value}",
+        "σx = {value}",
+        "n = {value}"
+      ],
+      "line_offsets": [
+        "0x0A0A75",
+        "0x0A0A7B",
+        "0x0A0A7F",
+        "0x0A0A88",
+        "0x0A0A84",
+        "0x0AEBB6"
+      ],
+      "scrollable": true,
+      "confidence": "high",
+      "notes": "The variable-token table order directly exposes the first page ordering."
+    },
+    "one-var-stats-result-page2": {
+      "lines": [
+        "minX = {value}",
+        "Q1 = {value}",
+        "Med = {value}",
+        "Q3 = {value}",
+        "maxX = {value}"
+      ],
+      "line_offsets": [
+        "0x0A0A8C",
+        "0x0A0ACB",
+        "0x0A0AC5",
+        "0x0A0ACE",
+        "0x0A0A92"
+      ],
+      "scrollable": true,
+      "confidence": "high",
+      "notes": "Page-two labels are recoverable from the stat variable table plus the dedicated minX/Q1/Med/Q3/maxX display labels."
+    },
+    "distribution-home-result": {
+      "lines": [
+        "command(...)",
+        "{value}"
+      ],
+      "line_offsets": [
+        null,
+        null
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "No dedicated result-screen table was recovered. ROM evidence only confirms that Paste routes back to Home and inserts the selected DISTR command."
+    },
+    "linreg-result": {
+      "lines": [
+        "y = a + bx",
+        "a = {intercept}",
+        "b = {slope}",
+        "r² = {value}",
+        "r = {value}"
+      ],
+      "line_offsets": [
+        null,
+        "0x0A0AC0",
+        "0x0A0ABE",
+        "0x0A0AC2",
+        "0x0A0AC2"
+      ],
+      "scrollable": false,
+      "confidence": "medium",
+      "notes": "a, b, and r tokens are present in the stat variable table, but the full display-list routine was not isolated."
+    },
+    "t-test-result": {
+      "lines": [
+        "μ ? μ0",
+        "t = {value}",
+        "p = {value}",
+        "x̄ = {value}",
+        "Sx = {value}",
+        "n = {value}"
+      ],
+      "line_offsets": [
+        [
+          "0x0AEC05",
+          "0x0AEC0D",
+          "0x0AEC09"
+        ],
+        null,
+        null,
+        "0x0AEBB4",
+        "0x0AEBB8",
+        "0x0AEBB6"
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "The result variable list was not recovered directly. The first line is carried forward from the selected alternative-hypothesis choice."
+    },
+    "t-interval-result": {
+      "lines": [
+        "({lower}, {upper})",
+        "x̄ = {value}",
+        "Sx = {value}",
+        "n = {value}"
+      ],
+      "line_offsets": [
+        null,
+        "0x0AEBB4",
+        "0x0AEBB8",
+        "0x0AEBB6"
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "Mean, Sx, and n tokens are clear, but the interval display routine itself was not isolated."
+    },
+    "two-samp-ttest-result": {
+      "lines": [
+        "μ1 ? μ2",
+        "t = {value}",
+        "p = {value}",
+        "df = {value}",
+        "x̄1 = {value}",
+        "x̄2 = {value}",
+        "Sx1 = {value}",
+        "Sx2 = {value}",
+        "n1 = {value}",
+        "n2 = {value}"
+      ],
+      "line_offsets": [
+        [
+          "0x0AB415",
+          "0x0AB421",
+          "0x0AB41B"
+        ],
+        null,
+        null,
+        "0x0AEC50",
+        "0x0AEB6A",
+        "0x0AEB74",
+        "0x0AEB6D",
+        "0x0AEB77",
+        "0x0AEB67",
+        "0x0AEB71"
+      ],
+      "scrollable": false,
+      "confidence": "medium",
+      "notes": "The alternative-hypothesis header is ROM-backed. The remaining line order is kept from the trainer because the dedicated result list routine was not fully decoded."
+    },
+    "two-samp-tint-result": {
+      "lines": [
+        "({lower}, {upper})",
+        "df = {value}",
+        "x̄1 = {value}",
+        "x̄2 = {value}",
+        "Sx1 = {value}",
+        "Sx2 = {value}",
+        "n1 = {value}",
+        "n2 = {value}"
+      ],
+      "line_offsets": [
+        null,
+        "0x0AEC50",
+        "0x0AEB6A",
+        "0x0AEB74",
+        "0x0AEB6D",
+        "0x0AEB77",
+        "0x0AEB67",
+        "0x0AEB71"
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "The numeric variable labels are ROM-backed, but the full interval result line order was not recovered directly."
+    },
+    "one-propztest-result": {
+      "lines": [
+        "prop ? p0",
+        "z = {value}",
+        "p = {value}",
+        "p̂ = {value}",
+        "n = {value}"
+      ],
+      "line_offsets": [
+        [
+          "0x0AB3F1",
+          "0x0AB3FD",
+          "0x0AB3F7"
+        ],
+        null,
+        null,
+        null,
+        "0x0AEB86"
+      ],
+      "scrollable": false,
+      "confidence": "medium",
+      "notes": "The first-line alternative header is ROM-backed. z, p, and p̂ are rendered by runtime stat display code rather than as dedicated literal strings."
+    },
+    "one-propzint-result": {
+      "lines": [
+        "({lower}, {upper})",
+        "p̂ = {value}",
+        "n = {value}"
+      ],
+      "line_offsets": [
+        null,
+        null,
+        "0x0AEB86"
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "Only n has a directly recoverable wizard/result label. p̂ appears to be rendered from the stat variable context at runtime."
+    },
+    "chi2gof-result": {
+      "lines": [
+        "χ² = {value}",
+        "p = {value}",
+        "df = {value}",
+        "CNTB = {value or list}"
+      ],
+      "line_offsets": [
+        null,
+        null,
+        "0x0AEC50",
+        null
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "df is ROM-backed. CNTB was not found anywhere in the ROM and remains unverified."
+    },
+    "chi2test-result": {
+      "lines": [
+        "χ² = {value}",
+        "p = {value}",
+        "df = {value}"
+      ],
+      "line_offsets": [
+        null,
+        null,
+        "0x0AEC50"
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "df is ROM-backed; the exact χ²/p result-line list was not fully recovered."
+    },
+    "linreg-ttest-result": {
+      "lines": [
+        "β and ρ alternative",
+        "t = {value}",
+        "p = {value}",
+        "df = {value}",
+        "a = {value}",
+        "b = {value}",
+        "s = {value}",
+        "r² = {value}",
+        "r = {value}"
+      ],
+      "line_offsets": [
+        [
+          "0x0AB44F",
+          "0x0AB443",
+          "0x0AB437"
+        ],
+        null,
+        null,
+        "0x0AEC50",
+        "0x0A0AC0",
+        "0x0A0ABE",
+        null,
+        "0x0A0AC2",
+        "0x0A0AC2"
+      ],
+      "scrollable": false,
+      "confidence": "medium",
+      "notes": "The β/ρ alternative header is ROM-backed. a, b, and r are recoverable from the variable table; the remaining order is retained from the trainer."
+    },
+    "linreg-tint-result": {
+      "lines": [
+        "({lower}, {upper})",
+        "df = {value}",
+        "a = {value}",
+        "b = {value}",
+        "s = {value}",
+        "r² = {value}",
+        "r = {value}"
+      ],
+      "line_offsets": [
+        null,
+        "0x0AEC50",
+        "0x0A0AC0",
+        "0x0A0ABE",
+        null,
+        "0x0A0AC2",
+        "0x0A0AC2"
+      ],
+      "scrollable": false,
+      "confidence": "low",
+      "notes": "df, a, b, and r are ROM-backed, but the full result layout was not recovered directly."
+    }
+  },
+  "discrepancies": [
+    {
+      "item": "t-test-data-wizard",
+      "field": "final controls",
+      "json_says": "Inpt, μ0, List, Freq, μ ? μ0, Calculate, Draw",
+      "rom_says": "Inpt, μ0, List, Freq, contextual μ ? μ0, Color:, Calculate/Draw selector",
+      "confidence": "high",
+      "offset": "0x0AE622"
+    },
+    {
+      "item": "t-test-stats-wizard",
+      "field": "final controls",
+      "json_says": "Inpt, μ0, x̄, Sx, n, μ ? μ0, Calculate, Draw",
+      "rom_says": "Inpt, μ0, x̄, Sx, n, contextual μ ? μ0, Color:, Calculate/Draw selector",
+      "confidence": "high",
+      "offset": "0x0AE82E"
+    },
+    {
+      "item": "two-samp-ttest-stats-wizard",
+      "field": "mode coverage",
+      "json_says": "One stats-shaped screen with an inputMode toggle",
+      "rom_says": "Separate data table at 0x0AE6FE and stats table at 0x0AE852; the stats table also adds Color: before a Calculate/Draw selector",
+      "confidence": "medium",
+      "offset": "0x0AE6FE"
+    },
+    {
+      "item": "two-samp-tint-stats-wizard",
+      "field": "mode coverage",
+      "json_says": "One stats-shaped screen with an inputMode toggle",
+      "rom_says": "Separate data table at 0x0AE756 and stats table at 0x0AE90A",
+      "confidence": "high",
+      "offset": "0x0AE756"
+    },
+    {
+      "item": "one-propztest-wizard",
+      "field": "final controls",
+      "json_says": "p0, x, n, Prop ? p0, Calculate, Draw",
+      "rom_says": "p₀, x, n, prop choice, Color:, Calculate/Draw selector",
+      "confidence": "high",
+      "offset": "0x0AE696"
+    },
+    {
+      "item": "chi2gof-wizard",
+      "field": "final controls",
+      "json_says": "Observed, Expected, df, Calculate, Draw",
+      "rom_says": "Observed, Expected, df, Color:, Calculate/Draw selector",
+      "confidence": "high",
+      "offset": "0x0AE6E6"
+    },
+    {
+      "item": "chi2test-wizard",
+      "field": "final controls",
+      "json_says": "Observed, Expected, Calculate, Draw",
+      "rom_says": "Observed, Expected, Color:, Calculate/Draw selector",
+      "confidence": "high",
+      "offset": "0x0AE6D2"
+    },
+    {
+      "item": "one-propztest-wizard",
+      "field": "alternative-hypothesis label",
+      "json_says": "Prop ? p0",
+      "rom_says": "Base label is prop at 0x0AEBC0; the ≠p₀, <p₀, and >p₀ choices are stored separately",
+      "confidence": "high",
+      "offset": "0x0AEBC0"
+    },
+    {
+      "item": "t-test-data-wizard",
+      "field": "hypothesized-mean label",
+      "json_says": "μ0",
+      "rom_says": "Shared contextual μ₀/σ₀ token pointed to as 0x0AEB40",
+      "confidence": "low",
+      "offset": "0x0AEB40"
+    },
+    {
+      "item": "t-test-stats-wizard",
+      "field": "hypothesized-mean label",
+      "json_says": "μ0",
+      "rom_says": "Shared contextual μ₀/σ₀ token pointed to as 0x0AEB40",
+      "confidence": "low",
+      "offset": "0x0AEB40"
+    },
+    {
+      "item": "chi2gof-result",
+      "field": "CNTB line",
+      "json_says": "χ², p, df, CNTB",
+      "rom_says": "No CNTB string or dedicated CNTB label was found anywhere in the ROM",
+      "confidence": "medium",
+      "offset": null
+    },
+    {
+      "item": "binompdf-wizard and binomcdf-wizard",
+      "field": "parameter table identity",
+      "json_says": "Two separate screens",
+      "rom_says": "Both functions share the same compact parameter table at 0x0AF802",
+      "confidence": "high",
+      "offset": "0x0AF802"
+    },
+    {
+      "item": "geometpdf-wizard and geometcdf-wizard",
+      "field": "parameter table identity",
+      "json_says": "Two separate screens",
+      "rom_says": "Both functions share the same compact parameter table at 0x0AF818",
+      "confidence": "high",
+      "offset": "0x0AF818"
+    }
+  ]
+}
