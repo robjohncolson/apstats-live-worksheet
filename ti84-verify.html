@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TI-84 Procedure Verification</title>
+<style>
+  :root {
+    --bg: #f5f5f5; --surface: #fff; --border: #ccc;
+    --pass: #2e7d32; --pass-bg: #e8f5e9;
+    --fail: #c62828; --fail-bg: #ffebee;
+    --skip: #f57f17; --skip-bg: #fff8e1;
+    --accent: #1565c0; --accent-light: #e3f2fd;
+    --text: #212121; --muted: #757575;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+  /* Layout */
+  .app { max-width: 900px; margin: 0 auto; padding: 16px; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 2px solid var(--border); margin-bottom: 16px; }
+  header h1 { font-size: 1.3rem; }
+  .header-actions { display: flex; gap: 8px; }
+
+  /* Progress bar */
+  .progress-bar { background: var(--border); border-radius: 8px; height: 24px; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 8px; transition: width 0.3s; }
+  .progress-fill.pass { background: var(--pass); }
+  .progress-fill.fail { background: var(--fail); position: absolute; top: 0; }
+  .progress-label { position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 0.8rem; font-weight: 600; line-height: 24px; color: var(--text); }
+
+  /* Stats row */
+  .stats { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; }
+  .stat.pass { background: var(--pass-bg); color: var(--pass); }
+  .stat.fail { background: var(--fail-bg); color: var(--fail); }
+  .stat.skip { background: var(--skip-bg); color: var(--skip); }
+  .stat.total { background: var(--accent-light); color: var(--accent); }
+
+  /* Procedure list */
+  .proc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .proc-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+  .proc-item:hover { background: var(--accent-light); }
+  .proc-item.active { border-color: var(--accent); background: var(--accent-light); }
+  .proc-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; white-space: nowrap; }
+  .proc-badge.pass { background: var(--pass-bg); color: var(--pass); }
+  .proc-badge.fail { background: var(--fail-bg); color: var(--fail); }
+  .proc-badge.partial { background: var(--skip-bg); color: var(--skip); }
+  .proc-badge.pending { background: #eee; color: var(--muted); }
+  .proc-name { font-weight: 600; flex: 1; }
+  .proc-unit { font-size: 0.8rem; color: var(--muted); }
+  .proc-step-count { font-size: 0.8rem; color: var(--muted); }
+
+  /* Step view */
+  .step-view { display: none; }
+  .step-view.visible { display: block; }
+  .step-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .step-nav button { padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); cursor: pointer; font-size: 0.9rem; }
+  .step-nav button:hover { background: var(--accent-light); }
+  .step-nav button:disabled { opacity: 0.4; cursor: default; }
+  .step-counter { font-weight: 600; }
+  .back-to-list { margin-bottom: 12px; }
+  .back-to-list button { padding: 4px 12px; font-size: 0.85rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); cursor: pointer; }
+
+  /* Step card */
+  .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+  .step-card h3 { margin-bottom: 8px; font-size: 1.1rem; }
+  .step-field { margin-bottom: 10px; }
+  .step-field label { font-weight: 600; font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 2px; }
+  .step-field .value { font-size: 1rem; }
+  .key-badge { display: inline-block; padding: 4px 12px; background: #263238; color: #fff; border-radius: 6px; font-family: 'Courier New', monospace; font-weight: 700; font-size: 1.1rem; }
+
+  /* Screen detail */
+  .screen-detail { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+  .screen-detail h4 { font-size: 0.9rem; margin-bottom: 6px; color: var(--accent); }
+  .screen-detail .field-row { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; align-items: center; }
+  .screen-detail .field-row:last-child { border-bottom: none; }
+  .field-label { font-weight: 600; min-width: 100px; }
+  .field-default { color: var(--muted); }
+  .field-type { font-size: 0.8rem; background: #eee; padding: 1px 6px; border-radius: 4px; }
+  .menu-items { font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.8; }
+  .result-lines { font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.8; }
+
+  /* Verdict buttons */
+  .verdict-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .verdict-btn { padding: 8px 20px; border: 2px solid; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.15s; }
+  .verdict-btn.pass { border-color: var(--pass); color: var(--pass); background: #fff; }
+  .verdict-btn.pass:hover, .verdict-btn.pass.selected { background: var(--pass); color: #fff; }
+  .verdict-btn.fail { border-color: var(--fail); color: var(--fail); background: #fff; }
+  .verdict-btn.fail:hover, .verdict-btn.fail.selected { background: var(--fail); color: #fff; }
+  .verdict-btn.skip { border-color: var(--skip); color: var(--skip); background: #fff; }
+  .verdict-btn.skip:hover, .verdict-btn.skip.selected { background: var(--skip); color: #fff; }
+
+  /* Discrepancy note */
+  .disc-note { margin-top: 10px; display: none; }
+  .disc-note.visible { display: block; }
+  .disc-note textarea { width: 100%; min-height: 80px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9rem; resize: vertical; }
+  .disc-note label { font-size: 0.85rem; font-weight: 600; color: var(--fail); display: block; margin-bottom: 4px; }
+
+  /* Screen-level verification for wizards/results */
+  .screen-verify { margin-top: 12px; padding: 12px; background: #fffde7; border: 1px solid #fff9c4; border-radius: 8px; }
+  .screen-verify h4 { font-size: 0.9rem; margin-bottom: 8px; color: var(--skip); }
+  .screen-verify .check-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.9rem; }
+  .screen-verify input[type="checkbox"] { width: 18px; height: 18px; }
+
+  /* Export/Import */
+  button.primary { padding: 8px 20px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+  button.primary:hover { opacity: 0.9; }
+  button.danger { padding: 8px 20px; background: var(--fail); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1.1rem; }
+
+  /* Discrepancy summary */
+  .disc-summary { margin-top: 24px; }
+  .disc-summary h2 { margin-bottom: 12px; }
+  .disc-entry { background: var(--fail-bg); border: 1px solid #ffcdd2; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+  .disc-entry .proc-name { font-weight: 700; }
+  .disc-entry .step-info { font-size: 0.85rem; color: var(--muted); }
+  .disc-entry .note { margin-top: 4px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading">Loading ti84-procedures-data.json...</div>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'ti84-verify-results';
+  let DATA = null;
+  let results = loadResults();
+  let currentProc = null;
+  let currentStep = 0;
+
+  function loadResults() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch { return {}; }
+  }
+
+  function saveResults() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(results));
+  }
+
+  function getStepKey(procId, stepNum) {
+    return `${procId}__step${stepNum}`;
+  }
+
+  function getStepResult(procId, stepNum) {
+    return results[getStepKey(procId, stepNum)] || null;
+  }
+
+  function setStepResult(procId, stepNum, verdict, note) {
+    results[getStepKey(procId, stepNum)] = {
+      verdict,
+      note: note || '',
+      timestamp: Date.now()
+    };
+    saveResults();
+  }
+
+  function getProcStatus(proc) {
+    let pass = 0, fail = 0, skip = 0, pending = 0;
+    for (const step of proc.steps) {
+      const r = getStepResult(proc.id, step.stepNumber);
+      if (!r) { pending++; continue; }
+      if (r.verdict === 'pass') pass++;
+      else if (r.verdict === 'fail') fail++;
+      else skip++;
+    }
+    const total = proc.steps.length;
+    if (fail > 0) return { label: `${fail} issue${fail > 1 ? 's' : ''}`, cls: 'fail', pass, fail, skip, pending, total };
+    if (pending === total) return { label: 'Not started', cls: 'pending', pass, fail, skip, pending, total };
+    if (pending > 0) return { label: `${pass}/${total}`, cls: 'partial', pass, fail, skip, pending, total };
+    return { label: 'Certified', cls: 'pass', pass, fail, skip, pending, total };
+  }
+
+  function getScreenById(id) {
+    if (!DATA) return null;
+    return DATA.screens.find(s => s.id === id) || null;
+  }
+
+  function getOverallStats() {
+    let pass = 0, fail = 0, skip = 0, total = 0;
+    for (const proc of DATA.procedures) {
+      for (const step of proc.steps) {
+        total++;
+        const r = getStepResult(proc.id, step.stepNumber);
+        if (!r) continue;
+        if (r.verdict === 'pass') pass++;
+        else if (r.verdict === 'fail') fail++;
+        else skip++;
+      }
+    }
+    return { pass, fail, skip, total, pending: total - pass - fail - skip };
+  }
+
+  // Rendering
+  function render() {
+    const app = document.getElementById('app');
+    if (!DATA) {
+      app.innerHTML = '<div class="loading">Loading ti84-procedures-data.json...</div>';
+      return;
+    }
+    if (currentProc) {
+      renderStepView(app);
+    } else {
+      renderListView(app);
+    }
+  }
+
+  function renderListView(app) {
+    const stats = getOverallStats();
+    const passPercent = stats.total ? (stats.pass / stats.total * 100) : 0;
+    const failPercent = stats.total ? (stats.fail / stats.total * 100) : 0;
+
+    let html = `
+      <header>
+        <h1>TI-84 CE Procedure Verification</h1>
+        <div class="header-actions">
+          <button class="primary" onclick="app_exportJSON()">Export JSON</button>
+          <button class="primary" onclick="app_showSummary()">Summary</button>
+        </div>
+      </header>
+      <div class="progress-bar">
+        <div class="progress-fill pass" style="width:${passPercent}%"></div>
+        <div class="progress-fill fail" style="width:${failPercent}%; left:${passPercent}%"></div>
+        <div class="progress-label">${stats.pass + stats.fail + stats.skip} / ${stats.total} steps verified</div>
+      </div>
+      <div class="stats">
+        <div class="stat total">${stats.total} steps</div>
+        <div class="stat pass">${stats.pass} pass</div>
+        <div class="stat fail">${stats.fail} issues</div>
+        <div class="stat skip">${stats.skip} skipped</div>
+      </div>
+      <div class="proc-list">
+    `;
+
+    // Group by unit
+    const byUnit = {};
+    for (const proc of DATA.procedures) {
+      const u = proc.unit || 0;
+      if (!byUnit[u]) byUnit[u] = [];
+      byUnit[u].push(proc);
+    }
+
+    for (const [unit, procs] of Object.entries(byUnit).sort((a,b) => a[0] - b[0])) {
+      html += `<div style="font-weight:700; font-size:0.85rem; color:var(--muted); margin-top:8px;">Unit ${unit}</div>`;
+      for (const proc of procs) {
+        const status = getProcStatus(proc);
+        html += `
+          <div class="proc-item" onclick="app_selectProc('${proc.id}')">
+            <span class="proc-name">${proc.name}</span>
+            <span class="proc-step-count">${proc.steps.length} steps</span>
+            <span class="proc-badge ${status.cls}">${status.label}</span>
+          </div>
+        `;
+      }
+    }
+
+    html += '</div>';
+
+    // Discrepancy summary inline
+    const discrepancies = getDiscrepancies();
+    if (discrepancies.length > 0) {
+      html += `<div class="disc-summary"><h2>${discrepancies.length} Discrepanc${discrepancies.length === 1 ? 'y' : 'ies'} Found</h2>`;
+      for (const d of discrepancies) {
+        html += `
+          <div class="disc-entry">
+            <span class="proc-name">${d.procName}</span>
+            <span class="step-info"> &mdash; Step ${d.stepNumber}: press [${d.key}]</span>
+            <div class="note">${escHtml(d.note)}</div>
+          </div>
+        `;
+      }
+      html += '</div>';
+    }
+
+    app.innerHTML = html;
+  }
+
+  function renderStepView(app) {
+    const proc = currentProc;
+    const step = proc.steps[currentStep];
+    const stepResult = getStepResult(proc.id, step.stepNumber);
+    const screen = getScreenById(step.screen);
+    const procStatus = getProcStatus(proc);
+
+    let html = `
+      <div class="back-to-list"><button onclick="app_backToList()">&larr; All Procedures</button></div>
+      <header>
+        <h1>${proc.name}</h1>
+        <span class="proc-badge ${procStatus.cls}">${procStatus.label}</span>
+      </header>
+      <div class="step-nav">
+        <button onclick="app_prevStep()" ${currentStep === 0 ? 'disabled' : ''}>&larr; Prev</button>
+        <span class="step-counter">Step ${step.stepNumber} of ${proc.steps.length}</span>
+        <button onclick="app_nextStep()" ${currentStep === proc.steps.length - 1 ? 'disabled' : ''}>Next &rarr;</button>
+      </div>
+      <div class="step-card">
+        <h3>Press <span class="key-badge">${step.key}</span></h3>
+        <div class="step-field"><label>Instruction</label><div class="value">${step.narration}</div></div>
+        <div class="step-field"><label>Expected screen</label><div class="value">${step.screen}</div></div>
+        <div class="step-field"><label>Highlight</label><div class="value">${step.highlight || '(none)'}</div></div>
+        <div class="step-field"><label>Skill type</label><div class="value">${step.skillType}</div></div>
+    `;
+
+    // Show screen details
+    if (screen) {
+      html += renderScreenDetail(screen);
+    }
+
+    // Common errors
+    if (step.commonErrors && step.commonErrors.length > 0) {
+      html += `<div class="screen-detail" style="margin-top:12px;"><h4>Common Errors (${step.commonErrors.length})</h4>`;
+      for (const err of step.commonErrors) {
+        html += `<div class="field-row"><span class="field-label">[${err.key}]</span><span>${err.feedback}</span></div>`;
+      }
+      html += '</div>';
+    }
+
+    // Verdict buttons
+    html += `
+        <div class="verdict-row">
+          <button class="verdict-btn pass ${stepResult?.verdict === 'pass' ? 'selected' : ''}"
+            onclick="app_verdict('pass')">Correct</button>
+          <button class="verdict-btn fail ${stepResult?.verdict === 'fail' ? 'selected' : ''}"
+            onclick="app_verdict('fail')">Discrepancy</button>
+          <button class="verdict-btn skip ${stepResult?.verdict === 'skip' ? 'selected' : ''}"
+            onclick="app_verdict('skip')">Skip</button>
+        </div>
+        <div class="disc-note ${stepResult?.verdict === 'fail' || false ? 'visible' : ''}" id="disc-note">
+          <label>What's different on the real calculator?</label>
+          <textarea id="disc-text" placeholder="e.g., Field order is List, FreqList, Store RegEQ (not shown in JSON). Default for C-Level is .95 not blank."
+            oninput="app_saveNote()">${stepResult?.note || ''}</textarea>
+        </div>
+      </div>
+    `;
+
+    // Quick step overview strip
+    html += '<div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:12px;">';
+    for (let i = 0; i < proc.steps.length; i++) {
+      const s = proc.steps[i];
+      const r = getStepResult(proc.id, s.stepNumber);
+      let bg = '#eee';
+      if (r?.verdict === 'pass') bg = 'var(--pass)';
+      else if (r?.verdict === 'fail') bg = 'var(--fail)';
+      else if (r?.verdict === 'skip') bg = 'var(--skip)';
+      const border = i === currentStep ? '2px solid #000' : '2px solid transparent';
+      html += `<div onclick="app_goStep(${i})" style="width:28px;height:28px;border-radius:6px;background:${bg};border:${border};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:${r ? '#fff' : 'var(--muted)'}">${s.stepNumber}</div>`;
+    }
+    html += '</div>';
+
+    app.innerHTML = html;
+  }
+
+  function renderScreenDetail(screen) {
+    let html = '<div class="screen-detail">';
+    html += `<h4>${screen.type.toUpperCase()}: ${screen.id}</h4>`;
+    html += `<div style="font-size:0.85rem;color:var(--muted);margin-bottom:8px;">${screen.description}</div>`;
+
+    if (screen.type === 'wizard' && screen.fields) {
+      html += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">Fields (top to bottom):</div>';
+      for (let i = 0; i < screen.fields.length; i++) {
+        const f = screen.fields[i];
+        html += `<div class="field-row">
+          <span style="color:var(--muted);min-width:20px;">${i + 1}.</span>
+          <span class="field-label">${f.label}</span>
+          <span class="field-type">${f.type}</span>
+          ${f.default ? `<span class="field-default">default: ${f.default}</span>` : ''}
+          ${f.options ? `<span class="field-default">options: ${f.options.join(' / ')}</span>` : ''}
+        </div>`;
+      }
+    }
+
+    if (screen.type === 'result' && screen.lines) {
+      html += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">Result lines:</div>';
+      html += '<div class="result-lines">';
+      for (const line of screen.lines) {
+        html += `<div>${escHtml(line)}</div>`;
+      }
+      html += '</div>';
+      if (screen.scrollable) {
+        html += '<div style="font-size:0.8rem;color:var(--muted);margin-top:4px;">Scrollable (DOWN for more)</div>';
+      }
+    }
+
+    if (screen.type === 'menu') {
+      if (screen.tabs) {
+        html += `<div style="font-size:0.85rem;margin-bottom:4px;"><strong>Tabs:</strong> ${screen.tabs.join(' | ')} (active: ${screen.activeTab})</div>`;
+      }
+      if (screen.items) {
+        html += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">Menu items:</div>';
+        html += '<div class="menu-items">';
+        for (const item of screen.items) {
+          html += `<div>${escHtml(item)}</div>`;
+        }
+        html += '</div>';
+      }
+    }
+
+    if (screen.type === 'editor') {
+      if (screen.fields) {
+        html += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">Editor fields:</div>';
+        for (const f of screen.fields) {
+          html += `<div class="field-row"><span class="field-label">${f.label || f}</span></div>`;
+        }
+      }
+      if (screen.columns) {
+        html += `<div style="font-size:0.85rem;">Columns: ${screen.columns.join(', ')}</div>`;
+      }
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  function getDiscrepancies() {
+    const discs = [];
+    for (const proc of DATA.procedures) {
+      for (const step of proc.steps) {
+        const r = getStepResult(proc.id, step.stepNumber);
+        if (r?.verdict === 'fail' && r.note) {
+          discs.push({
+            procId: proc.id,
+            procName: proc.name,
+            stepNumber: step.stepNumber,
+            key: step.key,
+            screen: step.screen,
+            note: r.note
+          });
+        }
+      }
+    }
+    return discs;
+  }
+
+  function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // Public API (called from onclick)
+  window.app_selectProc = function (id) {
+    currentProc = DATA.procedures.find(p => p.id === id);
+    currentStep = 0;
+    // Jump to first unverified step
+    for (let i = 0; i < currentProc.steps.length; i++) {
+      if (!getStepResult(currentProc.id, currentProc.steps[i].stepNumber)) {
+        currentStep = i;
+        break;
+      }
+    }
+    render();
+    window.scrollTo(0, 0);
+  };
+
+  window.app_backToList = function () {
+    currentProc = null;
+    currentStep = 0;
+    render();
+  };
+
+  window.app_prevStep = function () {
+    if (currentStep > 0) { currentStep--; render(); window.scrollTo(0, 0); }
+  };
+
+  window.app_nextStep = function () {
+    if (currentStep < currentProc.steps.length - 1) { currentStep++; render(); window.scrollTo(0, 0); }
+  };
+
+  window.app_goStep = function (i) {
+    currentStep = i;
+    render();
+    window.scrollTo(0, 0);
+  };
+
+  window.app_verdict = function (v) {
+    const step = currentProc.steps[currentStep];
+    const existing = getStepResult(currentProc.id, step.stepNumber);
+    setStepResult(currentProc.id, step.stepNumber, v, existing?.note || '');
+    // Show note field if fail
+    const noteDiv = document.getElementById('disc-note');
+    if (noteDiv) noteDiv.classList.toggle('visible', v === 'fail');
+    render();
+    // Auto-advance on pass/skip after brief delay
+    if (v !== 'fail' && currentStep < currentProc.steps.length - 1) {
+      setTimeout(() => { currentStep++; render(); window.scrollTo(0, 0); }, 300);
+    }
+  };
+
+  window.app_saveNote = function () {
+    const step = currentProc.steps[currentStep];
+    const text = document.getElementById('disc-text')?.value || '';
+    const existing = getStepResult(currentProc.id, step.stepNumber);
+    setStepResult(currentProc.id, step.stepNumber, existing?.verdict || 'fail', text);
+  };
+
+  window.app_exportJSON = function () {
+    const output = {
+      exportDate: new Date().toISOString(),
+      calculator: 'TI-84 Plus CE',
+      stats: getOverallStats(),
+      discrepancies: getDiscrepancies(),
+      allResults: results
+    };
+    const blob = new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ti84-verify-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window.app_showSummary = function () {
+    const discs = getDiscrepancies();
+    const stats = getOverallStats();
+    let msg = `Verification Progress:\n`;
+    msg += `${stats.pass} pass / ${stats.fail} issues / ${stats.skip} skipped / ${stats.pending} remaining\n\n`;
+    if (discs.length > 0) {
+      msg += `Discrepancies:\n`;
+      for (const d of discs) {
+        msg += `  ${d.procName} step ${d.stepNumber} [${d.key}]: ${d.note}\n`;
+      }
+    } else {
+      msg += 'No discrepancies recorded yet.';
+    }
+    alert(msg);
+  };
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', function (e) {
+    if (!currentProc) return;
+    if (e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); app_prevStep(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); app_nextStep(); }
+    if (e.key === '1' || e.key === 'p') { e.preventDefault(); app_verdict('pass'); }
+    if (e.key === '2' || e.key === 'f') { e.preventDefault(); app_verdict('fail'); }
+    if (e.key === '3' || e.key === 's') { e.preventDefault(); app_verdict('skip'); }
+    if (e.key === 'Escape') { e.preventDefault(); app_backToList(); }
+  });
+
+  // Load data
+  fetch('ti84-procedures-data.json')
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(data => {
+      DATA = data;
+      render();
+    })
+    .catch(err => {
+      document.getElementById('app').innerHTML = `
+        <div class="loading" style="color:var(--fail)">
+          Failed to load ti84-procedures-data.json<br>
+          <small>${escHtml(err.message)}</small><br><br>
+          <small>Make sure this file is served from the same directory as ti84-procedures-data.json<br>
+          (e.g., python -m http.server 8000)</small>
+        </div>
+      `;
+    });
+})();
+</script>
+</body>
+</html>
