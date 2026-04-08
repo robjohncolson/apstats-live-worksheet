@@ -126,11 +126,43 @@ Use browser-MCP on ti84calc.com emulator to click through each procedure and scr
 - **Tests**: `tests/ti84-state-machine.test.js` — 52/52 passing
 - **Data source**: reads from `ti84-procedures-data.json`
 
+## V2 ROM-Based Trainer (Codex-built, 2026-04-07)
+
+`ti84-trainer-v2/` — complete ROM-backed trainer with real CEmu WASM:
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `app.js` | 1681 | Track 1 pattern recognition, Track 2 guided/recall, SRS, UI orchestration |
+| `bridge.js` | 568 | CEmu WASM bridge: LCD canvas rendering, keypad input routing |
+| `style.css` | 569 | System 7 Mac aesthetic (Chicago font, bevels, platinum gray) |
+| `index.html` | 521 | Dev entry point (loads modules separately) |
+| `standalone.html` | 4200 | Built single-file bundle (270KB) |
+| `build.mjs` | 3738 | Assembles standalone from modules + data |
+| `wasm/WebCEmu.js` | 73KB | Emscripten glue code |
+| `wasm/WebCEmu.wasm` | 112KB | CEmu WASM binary (52KB gzipped!) |
+| `CEMU_BUILD.md` | 144 | Build notes, keypad row/col matrix |
+| `generated/` | — | Inlined procedure data, pattern data, state machine |
+
+**Key architecture decisions:**
+- CEmu core compiled with Emscripten 3.1.74, `-Oz -flto`, exported `_emsc_keypad_event`
+- ROM loaded from IndexedDB (student provides once via file picker)
+- State machine is an overlay — intercepts wrong keys, passes correct keys to CEmu
+- Track 1 (pattern recognition) has unlimited branching on wrong answers
+- Track 2 (calculator navigation) uses real ROM output, not mid-fidelity renderer
+- V1 files untouched — Codex isolated the work due to CRITICAL upstream impact on `createState`
+
+**Verified:**
+- `node --check` passes on all JS files
+- `node build.mjs` regenerates standalone.html (270KB)
+- `npx vitest run tests/ti84-state-machine.test.js` → 52/52 passing
+- Existing tests unaffected (only `schedule.test.js` has pre-existing failures)
+
 ## Next Steps
 
-1. Begin V1 implementation of the trainer HTML app
-2. Visual verification of wizard field ORDER via CEmu (when stable)
-3. Resolve Issue 3 strategy in the runner (inline expansion vs skip-if-mastered)
+1. Test V2 in browser with actual ROM — verify CEmu boots, LCD renders, keypad works
+2. Student pilot — have students load ROM and run through a few procedures
+3. Iterate on UX based on feedback (narration tone, mobile layout, session pacing)
+4. Resolve Issue 3 strategy in the runner (inline expansion vs skip-if-mastered)
 
 ## Architecture Reminder
 
@@ -169,3 +201,11 @@ The conversation went:
 22. **CRITICAL DISCOVERY**: ROM string table order ≠ menu display order. Codex's ORIGINAL numbering was correct!
 23. REVERTED all STAT>TESTS changes. Menu now has full 18 items matching Reference Guide exactly
 24. Lesson: never trust ROM byte offsets for menu ordering; use official documentation or live UI
+25. User decided: problem-first flow (pattern recognition → calculator walkthrough), System 7 UI
+26. Generated pattern recognition data: 62 canonical problems, 22 confusion pairs, 27 distractor sets
+27. Codex built V1 trainer (`ti84_trainer.html`) — works but "dry as heck", overwhelming UI
+28. User decided: run actual ROM in browser (Path B — never compromise quality for speed)
+29. Research: CEmu has official Emscripten support (`core/os/os-emscripten.c`, `core/emscripten.mk`)
+30. Wrote V2 ROM-based Codex prompt; Codex built complete V2 in `ti84-trainer-v2/`
+31. V2 verified: WASM binary 112KB, syntax checks pass, build runs, standalone.html 270KB
+32. **30-day student deadline**: students need SRS reps before AP exam (~May 7, 2026)
