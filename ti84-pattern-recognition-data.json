@@ -1,0 +1,905 @@
+{
+  "meta": {
+    "description": "Pattern recognition data for TI-84 CE procedural trainer. Includes pattern signatures, confusion matrix, canonical problems, and distractor sets.",
+    "version": "1.0.0",
+    "generated": "2026-04-07",
+    "spec": "ti84-trainer-pattern-recognition-spec.md",
+    "procedureCount": 27,
+    "confusionPairCount": 22,
+    "canonicalProblemCount": 62
+  },
+
+  "patternSignatures": {
+    "one-propztest": {
+      "dataType": "categorical",
+      "parameterType": "proportion",
+      "questionType": "test",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "normal",
+      "keywords": ["proportion", "percent", "%", "out of", "claimed", "p =", "p >", "p <", "claimed proportion", "hypothesized"],
+      "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "difference between"],
+      "frameworkSkills": ["VAR-6.D", "VAR-6.F", "VAR-6.G", "DAT-3.A", "DAT-3.B"],
+      "unit": 6
+    },
+    "one-propzint": {
+      "dataType": "categorical",
+      "parameterType": "proportion",
+      "questionType": "interval",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "normal",
+      "keywords": ["proportion", "percent", "%", "out of", "confidence interval", "estimate", "margin of error"],
+      "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "test", "claim", "hypothes"],
+      "frameworkSkills": ["UNC-4.A", "UNC-4.B", "UNC-4.C", "UNC-4.D"],
+      "unit": 6
+    },
+    "t-test-stats": {
+      "dataType": "quantitative",
+      "parameterType": "mean",
+      "questionType": "test",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "t",
+      "keywords": ["mean", "average", "claimed mean", "hypothesized mean", "sample mean", "x-bar", "standard deviation"],
+      "antiKeywords": ["proportion", "percent", "out of", "slope", "regression", "two groups", "two samples"],
+      "frameworkSkills": ["VAR-7.B", "VAR-7.C", "VAR-7.D", "VAR-7.E", "DAT-3.E", "DAT-3.F"],
+      "unit": 7
+    },
+    "t-test-data": {
+      "dataType": "quantitative",
+      "parameterType": "mean",
+      "questionType": "test",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "t",
+      "keywords": ["mean", "average", "raw data", "data set", "list of values", "sample data"],
+      "antiKeywords": ["proportion", "percent", "slope", "two groups", "summary statistics"],
+      "frameworkSkills": ["VAR-7.B", "VAR-7.C", "VAR-7.D", "VAR-7.E", "DAT-3.E", "DAT-3.F"],
+      "unit": 7
+    },
+    "t-interval-stats": {
+      "dataType": "quantitative",
+      "parameterType": "mean",
+      "questionType": "interval",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "t",
+      "keywords": ["mean", "average", "confidence interval", "estimate", "margin of error", "sample mean", "standard deviation"],
+      "antiKeywords": ["proportion", "percent", "slope", "two groups", "two samples", "test", "claim", "hypothes"],
+      "frameworkSkills": ["UNC-4.O", "UNC-4.P", "UNC-4.Q", "UNC-4.R"],
+      "unit": 7
+    },
+    "t-interval-data": {
+      "dataType": "quantitative",
+      "parameterType": "mean",
+      "questionType": "interval",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "t",
+      "keywords": ["mean", "average", "confidence interval", "estimate", "raw data", "data set", "list of values"],
+      "antiKeywords": ["proportion", "percent", "slope", "two groups", "summary statistics", "test", "claim"],
+      "frameworkSkills": ["UNC-4.O", "UNC-4.P", "UNC-4.Q", "UNC-4.R"],
+      "unit": 7
+    },
+    "two-samp-ttest": {
+      "dataType": "quantitative",
+      "parameterType": "mean",
+      "questionType": "test",
+      "sampleStructure": "two-sample",
+      "distributionFamily": "t",
+      "keywords": ["two groups", "two samples", "difference in means", "compare means", "independent samples", "group 1", "group 2"],
+      "antiKeywords": ["proportion", "percent", "slope", "one sample", "matched pairs", "before and after"],
+      "frameworkSkills": ["VAR-7.F", "VAR-7.G", "VAR-7.H", "VAR-7.I", "DAT-3.G", "DAT-3.H"],
+      "unit": 7
+    },
+    "two-samp-tint": {
+      "dataType": "quantitative",
+      "parameterType": "mean",
+      "questionType": "interval",
+      "sampleStructure": "two-sample",
+      "distributionFamily": "t",
+      "keywords": ["two groups", "two samples", "difference in means", "compare means", "confidence interval", "estimate the difference"],
+      "antiKeywords": ["proportion", "percent", "slope", "one sample", "matched pairs", "test", "claim"],
+      "frameworkSkills": ["UNC-4.V", "UNC-4.W", "UNC-4.X", "UNC-4.Y"],
+      "unit": 7
+    },
+    "chi-square-gof-test": {
+      "dataType": "categorical",
+      "parameterType": "distribution",
+      "questionType": "test",
+      "sampleStructure": "one-sample",
+      "distributionFamily": "chi-square",
+      "keywords": ["distribution", "categories", "fit", "expected proportions", "claimed distribution", "observed counts", "expected counts", "goodness of fit"],
+      "antiKeywords": ["mean", "slope", "two-way table", "association", "independence", "homogeneity"],
+      "frameworkSkills": ["VAR-8.B", "VAR-8.C", "VAR-8.D", "VAR-8.E", "VAR-8.F", "VAR-8.G", "DAT-3.I", "DAT-3.J"],
+      "unit": 8
+    },
+    "chi-square-test": {
+      "dataType": "categorical",
+      "parameterType": "distribution",
+      "questionType": "test",
+      "sampleStructure": "two-sample",
+      "distributionFamily": "chi-square",
+      "keywords": ["two-way table", "association", "independence", "homogeneity", "relationship between", "contingency table", "row", "column"],
+      "antiKeywords": ["mean", "slope", "one variable", "single proportion", "goodness of fit"],
+      "frameworkSkills": ["VAR-8.I", "VAR-8.J", "VAR-8.K", "VAR-8.L", "VAR-8.M", "DAT-3.K", "DAT-3.L"],
+      "unit": 8
+    },
+    "linreg-ttest": {
+      "dataType": "quantitative",
+      "parameterType": "slope",
+      "questionType": "test",
+      "sampleStructure": "paired",
+      "distributionFamily": "t",
+      "keywords": ["slope", "regression", "linear relationship", "predict", "explanatory", "response", "scatterplot", "beta", "correlation"],
+      "antiKeywords": ["proportion", "percent", "categories", "two groups", "confidence interval"],
+      "frameworkSkills": ["VAR-7.J", "VAR-7.K", "VAR-7.L", "VAR-7.M", "DAT-3.M", "DAT-3.N"],
+      "unit": 9
+    },
+    "linreg-tint": {
+      "dataType": "quantitative",
+      "parameterType": "slope",
+      "questionType": "interval",
+      "sampleStructure": "paired",
+      "distributionFamily": "t",
+      "keywords": ["slope", "regression", "linear relationship", "confidence interval", "estimate the slope", "population regression"],
+      "antiKeywords": ["proportion", "percent", "categories", "two groups", "test", "claim"],
+      "frameworkSkills": ["UNC-4.AC", "UNC-4.AD", "UNC-4.AE", "UNC-4.AF"],
+      "unit": 9
+    },
+    "normalcdf": {
+      "dataType": "quantitative",
+      "parameterType": "probability",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "normal",
+      "keywords": ["probability", "proportion", "between", "less than", "greater than", "area", "normal distribution", "mean", "standard deviation"],
+      "antiKeywords": ["sample mean", "sampling distribution", "confidence interval", "hypothesis", "binomial", "trials"],
+      "frameworkSkills": ["VAR-2.B", "VAR-6.A"],
+      "unit": 1
+    },
+    "invnorm": {
+      "dataType": "quantitative",
+      "parameterType": "percentile",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "normal",
+      "keywords": ["percentile", "cutoff", "top", "bottom", "what value", "find the score", "boundary", "lowest", "highest"],
+      "antiKeywords": ["probability", "proportion of", "how likely", "sampling distribution", "binomial"],
+      "frameworkSkills": ["VAR-2.B", "VAR-6.B"],
+      "unit": 1
+    },
+    "binompdf": {
+      "dataType": "categorical",
+      "parameterType": "probability",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "binomial",
+      "keywords": ["exactly", "probability of exactly", "n trials", "success", "failure", "independent trials", "fixed number"],
+      "antiKeywords": ["at most", "at least", "fewer than", "more than", "first success", "geometric", "normal distribution"],
+      "frameworkSkills": ["UNC-3.A", "UNC-3.B"],
+      "unit": 4
+    },
+    "binomcdf": {
+      "dataType": "categorical",
+      "parameterType": "probability",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "binomial",
+      "keywords": ["at most", "at least", "fewer than", "more than", "no more than", "cumulative", "n trials", "success", "failure"],
+      "antiKeywords": ["exactly", "first success", "geometric", "normal distribution"],
+      "frameworkSkills": ["UNC-3.A", "UNC-3.B"],
+      "unit": 4
+    },
+    "geometpdf": {
+      "dataType": "categorical",
+      "parameterType": "probability",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "geometric",
+      "keywords": ["first success", "first time", "on the", "trial", "attempt", "exactly the"],
+      "antiKeywords": ["at most", "at least", "within", "fixed number of trials", "n trials", "normal distribution"],
+      "frameworkSkills": ["UNC-3.E"],
+      "unit": 4
+    },
+    "geometcdf": {
+      "dataType": "categorical",
+      "parameterType": "probability",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "geometric",
+      "keywords": ["within", "by the", "at most", "no more than", "first success within", "takes at most"],
+      "antiKeywords": ["exactly on", "fixed number of trials", "n trials", "normal distribution"],
+      "frameworkSkills": ["UNC-3.E"],
+      "unit": 4
+    },
+    "normalcdf-sampling": {
+      "dataType": "quantitative",
+      "parameterType": "probability",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "normal",
+      "keywords": ["sample mean", "sampling distribution", "random sample of size", "probability that the sample mean", "standard error"],
+      "antiKeywords": ["individual", "one randomly selected", "percentile", "cutoff", "binomial"],
+      "frameworkSkills": ["UNC-3.Q", "UNC-3.R", "UNC-3.S"],
+      "unit": 5
+    },
+    "invnorm-sampling": {
+      "dataType": "quantitative",
+      "parameterType": "percentile",
+      "questionType": "calculation",
+      "sampleStructure": "n/a",
+      "distributionFamily": "normal",
+      "keywords": ["sample mean", "sampling distribution", "cutoff", "percentile of sample means", "what sample mean", "top", "bottom"],
+      "antiKeywords": ["individual", "one randomly selected", "probability", "proportion of", "binomial"],
+      "frameworkSkills": ["UNC-3.Q", "UNC-3.R", "UNC-3.S"],
+      "unit": 5
+    },
+    "one-var-stats": {
+      "dataType": "quantitative",
+      "parameterType": "descriptive",
+      "questionType": "calculation",
+      "sampleStructure": "one-sample",
+      "distributionFamily": null,
+      "keywords": ["summary statistics", "mean", "standard deviation", "five-number summary", "quartiles", "median", "describe the distribution"],
+      "antiKeywords": ["hypothesis", "confidence interval", "test", "claim", "regression", "slope"],
+      "frameworkSkills": ["UNC-1.D", "UNC-1.E", "UNC-1.F", "UNC-1.G"],
+      "unit": 1
+    },
+    "linreg-a-plus-bx": {
+      "dataType": "quantitative",
+      "parameterType": "regression",
+      "questionType": "calculation",
+      "sampleStructure": "paired",
+      "distributionFamily": null,
+      "keywords": ["regression equation", "least-squares", "predict", "line of best fit", "correlation", "r-squared", "slope", "y-intercept"],
+      "antiKeywords": ["hypothesis", "confidence interval", "significance", "p-value", "test the slope"],
+      "frameworkSkills": ["DAT-1.D", "DAT-1.G", "DAT-1.H"],
+      "unit": 2
+    },
+    "histogram": {
+      "dataType": "quantitative",
+      "parameterType": "graphical",
+      "questionType": "display",
+      "sampleStructure": "one-sample",
+      "distributionFamily": null,
+      "keywords": ["histogram", "shape", "distribution", "frequency", "display the data", "graph the data"],
+      "antiKeywords": ["boxplot", "scatterplot", "regression", "two variables"],
+      "frameworkSkills": ["UNC-1.H", "UNC-1.I"],
+      "unit": 1
+    },
+    "modified-boxplot": {
+      "dataType": "quantitative",
+      "parameterType": "graphical",
+      "questionType": "display",
+      "sampleStructure": "one-sample",
+      "distributionFamily": null,
+      "keywords": ["boxplot", "box-and-whisker", "five-number summary", "outliers", "quartiles", "IQR"],
+      "antiKeywords": ["histogram", "scatterplot", "regression", "two variables"],
+      "frameworkSkills": ["UNC-1.H", "UNC-1.L"],
+      "unit": 1
+    },
+    "scatterplot": {
+      "dataType": "quantitative",
+      "parameterType": "graphical",
+      "questionType": "display",
+      "sampleStructure": "paired",
+      "distributionFamily": null,
+      "keywords": ["scatterplot", "two variables", "relationship", "explanatory", "response", "bivariate"],
+      "antiKeywords": ["histogram", "boxplot", "one variable", "residual"],
+      "frameworkSkills": ["UNC-1.S", "DAT-1.A"],
+      "unit": 2
+    },
+    "residual-plot": {
+      "dataType": "quantitative",
+      "parameterType": "graphical",
+      "questionType": "display",
+      "sampleStructure": "paired",
+      "distributionFamily": null,
+      "keywords": ["residual", "residual plot", "appropriateness", "linear model", "pattern in residuals"],
+      "antiKeywords": ["scatterplot", "histogram", "boxplot", "one variable"],
+      "frameworkSkills": ["DAT-1.E", "DAT-1.F"],
+      "unit": 2
+    },
+    "matrix-entry": {
+      "dataType": "categorical",
+      "parameterType": "utility",
+      "questionType": "setup",
+      "sampleStructure": "n/a",
+      "distributionFamily": null,
+      "keywords": ["matrix", "two-way table", "enter data", "rows", "columns", "observed counts"],
+      "antiKeywords": [],
+      "frameworkSkills": [],
+      "unit": 8
+    }
+  },
+
+  "confusionMatrix": [
+    {
+      "a": "one-propztest",
+      "b": "one-propzint",
+      "type": "test-vs-interval",
+      "contrast": "Your problem tests a specific claim about a proportion -- there is a hypothesized value like 'more than 60%.' A confidence interval estimates a plausible range for the proportion when there is no specific claim to test. Look for words like 'test,' 'claim,' or 'hypothesize' (test) versus 'estimate' or 'how large' (interval)."
+    },
+    {
+      "a": "t-test-stats",
+      "b": "t-interval-stats",
+      "type": "test-vs-interval",
+      "contrast": "Your problem makes a specific claim about a population mean and asks you to evaluate it -- that is a hypothesis test. A confidence interval estimates a range of plausible values for the mean without testing a particular claim. Check: is there a number being challenged, or are you estimating?"
+    },
+    {
+      "a": "two-samp-ttest",
+      "b": "two-samp-tint",
+      "type": "test-vs-interval",
+      "contrast": "Your problem compares two group means and asks whether there is a significant difference -- that calls for a two-sample t-test. A two-sample t-interval estimates how large the difference might be. If the problem says 'is there a difference,' use a test. If it says 'estimate the difference,' use an interval."
+    },
+    {
+      "a": "linreg-ttest",
+      "b": "linreg-tint",
+      "type": "test-vs-interval",
+      "contrast": "Your problem asks whether there is convincing evidence of a linear relationship between two variables -- that is a test for the slope. A confidence interval for the slope estimates the range of plausible values for the true slope. If the question says 'is there a relationship,' test. If it says 'estimate the slope,' build an interval."
+    },
+    {
+      "a": "one-propztest",
+      "b": "t-test-stats",
+      "type": "proportion-vs-mean",
+      "contrast": "Look at the data type. Your problem involves counts or percentages ('102 out of 150 said yes') -- that is categorical data about a proportion. A t-test is for quantitative measurements like heights, weights, or scores where you have a sample mean and standard deviation. Proportions use z; means use t."
+    },
+    {
+      "a": "one-propzint",
+      "b": "t-interval-stats",
+      "type": "proportion-vs-mean",
+      "contrast": "Check whether the data is categorical (yes/no, success/failure counts) or quantitative (measurements with a mean and SD). Proportions come from counting successes out of a total. Means come from measuring a quantity. If you see x and n, it is a proportion interval. If you see x-bar and s, it is a t-interval."
+    },
+    {
+      "a": "t-test-stats",
+      "b": "linreg-ttest",
+      "type": "mean-vs-slope",
+      "contrast": "Both use the t-distribution, but they answer different questions. A t-test asks about one population mean (or a mean difference). A LinRegTTest asks whether the slope of a regression line is significantly different from zero -- that is, whether two quantitative variables have a linear relationship. If you have paired (x, y) data and a scatterplot, think regression."
+    },
+    {
+      "a": "one-propztest",
+      "b": "chi-square-gof-test",
+      "type": "single-proportion-vs-distribution",
+      "contrast": "A 1-PropZTest checks one proportion against a claimed value ('Is the proportion of defectives more than 5%?'). A chi-square goodness-of-fit test checks an entire distribution across multiple categories ('Do the colors appear in the claimed ratio of 3:2:1?'). If there are only two outcomes (success/failure), use 1-PropZTest. If there are three or more categories, use chi-square GOF."
+    },
+    {
+      "a": "t-test-stats",
+      "b": "two-samp-ttest",
+      "type": "one-sample-vs-two-sample",
+      "contrast": "Count the number of groups. A one-sample t-test compares a single sample mean to a claimed value (like 'the manufacturer says the mean is 500g'). A two-sample t-test compares the means of two independent groups ('is there a difference between Group A and Group B?'). One group versus a number: one-sample. Two groups versus each other: two-sample."
+    },
+    {
+      "a": "t-interval-stats",
+      "b": "two-samp-tint",
+      "type": "one-sample-vs-two-sample",
+      "contrast": "A one-sample t-interval estimates a single population mean. A two-sample t-interval estimates the difference between two population means. Ask: am I estimating one number, or the gap between two numbers?"
+    },
+    {
+      "a": "chi-square-test",
+      "b": "chi-square-gof-test",
+      "type": "independence-vs-gof",
+      "contrast": "Both are chi-square tests, but they handle different situations. A goodness-of-fit test has ONE categorical variable and checks if its distribution matches a claimed set of proportions. A chi-square test for independence or homogeneity has TWO categorical variables in a two-way table and checks whether they are related. One variable: GOF. Two variables in a table: independence/homogeneity."
+    },
+    {
+      "a": "normalcdf",
+      "b": "invnorm",
+      "type": "forward-vs-inverse",
+      "contrast": "These are opposite directions. normalcdf starts with boundary values and finds a probability (area): 'What proportion of values fall between 60 and 80?' invNorm starts with a probability and finds the boundary value: 'What score separates the top 10%?' If you know the boundaries and want the probability, use normalcdf. If you know the probability and want the boundary, use invNorm."
+    },
+    {
+      "a": "binompdf",
+      "b": "binomcdf",
+      "type": "exact-vs-cumulative",
+      "contrast": "binompdf gives the probability of exactly one outcome: 'P(X = 3).' binomcdf gives the cumulative probability up to a value: 'P(X <= 3).' If the problem says 'exactly,' use pdf. If it says 'at most,' 'no more than,' or 'fewer than,' use cdf. For 'at least,' use 1 minus binomcdf."
+    },
+    {
+      "a": "geometpdf",
+      "b": "geometcdf",
+      "type": "exact-vs-cumulative",
+      "contrast": "geometpdf gives the probability that the first success occurs on exactly one specific trial: 'P(first success on trial 5).' geometcdf gives the probability that the first success occurs within a certain number of trials: 'P(first success by trial 5).' Exact trial: pdf. Within the first k trials: cdf."
+    },
+    {
+      "a": "normalcdf",
+      "b": "binomcdf",
+      "type": "continuous-vs-discrete",
+      "contrast": "normalcdf is for continuous data that follows a normal (bell-shaped) distribution -- measurements like heights, times, or temperatures. binomcdf is for counting successes in a fixed number of independent trials with the same probability of success. If the variable is measured on a continuous scale, think normalcdf. If it counts successes out of n trials, think binomial."
+    },
+    {
+      "a": "binompdf",
+      "b": "geometpdf",
+      "type": "fixed-trials-vs-first-success",
+      "contrast": "Both involve independent trials with two outcomes, but they count different things. Binomial has a FIXED number of trials (n) and counts how many are successes. Geometric has NO fixed number of trials and counts how many trials it takes to get the FIRST success. Fixed n and counting successes: binomial. Waiting for the first success: geometric."
+    },
+    {
+      "a": "normalcdf",
+      "b": "normalcdf-sampling",
+      "type": "population-vs-sampling",
+      "contrast": "Both use normalcdf on the calculator, but the inputs differ. For an individual value from a population, use the population mean and SD directly. For a sample mean from a sampling distribution, you must use the standard error (sigma / sqrt(n)) instead of sigma. Ask: is this about one individual, or about the average of a sample of n?"
+    },
+    {
+      "a": "one-propztest",
+      "b": "chi-square-gof-test",
+      "type": "proportion-claim-vs-distribution-fit",
+      "contrast": "If the problem tests a claim about a single proportion with two outcomes (yes/no, success/failure), use 1-PropZTest. If the problem tests whether a categorical variable with three or more categories follows a specific distribution, use chi-square GOF. Two categories: proportion test. Multiple categories: GOF test."
+    },
+    {
+      "a": "linreg-a-plus-bx",
+      "b": "linreg-ttest",
+      "type": "descriptive-vs-inferential",
+      "contrast": "LinReg(a+bx) simply calculates the equation of the least-squares regression line from data -- it is descriptive. LinRegTTest does that AND runs a significance test to determine whether the slope is significantly different from zero. If you just need the equation, use LinReg. If you need a p-value to test whether the relationship is real, use LinRegTTest."
+    },
+    {
+      "a": "one-var-stats",
+      "b": "t-test-stats",
+      "type": "descriptive-vs-inferential",
+      "contrast": "1-Var Stats calculates summary statistics (mean, SD, quartiles) to describe a data set. A t-test uses those statistics to make an inference about a population mean. If the question asks you to describe or summarize the data, use 1-Var Stats. If it asks you to test a claim or draw a conclusion about a population, use a t-test."
+    },
+    {
+      "a": "invnorm",
+      "b": "invnorm-sampling",
+      "type": "population-vs-sampling",
+      "contrast": "Both find a cutoff value using invNorm, but the standard deviation input differs. For an individual from a population, use sigma. For a sample mean from a sampling distribution of size n, use the standard error sigma / sqrt(n). The question will tell you: is it about one randomly selected individual, or about the mean of a random sample?"
+    },
+    {
+      "a": "t-test-stats",
+      "b": "t-test-data",
+      "type": "input-mode",
+      "contrast": "These run the exact same test. The only difference is input format. Use Stats mode when the problem gives you summary statistics (x-bar, s, n). Use Data mode when the problem gives you a list of raw data values that you have entered into L1. Same test, different starting point."
+    }
+  ],
+
+  "canonicalProblems": {
+    "one-propztest": [
+      {
+        "stem": "A company claims that at least 70% of its customers are satisfied with their service. In a random sample of 200 customers, 126 reported satisfaction. Test the company's claim at the alpha = 0.05 significance level.",
+        "values": { "p0": 0.70, "x": 126, "n": 200, "direction": "<" },
+        "frameworkSkill": "VAR-6.G",
+        "unit": 6
+      },
+      {
+        "stem": "A botanist believes that fewer than 90% of seeds from a certain supplier will germinate. She plants a random sample of 120 seeds and observes that 100 germinate. Is there convincing evidence at alpha = 0.05 to support the botanist's belief?",
+        "values": { "p0": 0.90, "x": 100, "n": 120, "direction": "<" },
+        "frameworkSkill": "DAT-3.B",
+        "unit": 6
+      },
+      {
+        "stem": "Approximately 38% of people in Region W have blood type O positive. A random sample of 100 people from Region X reveals that 45 have blood type O positive. Is there evidence that the proportion in Region X differs from Region W?",
+        "values": { "p0": 0.38, "x": 45, "n": 100, "direction": "!=" },
+        "frameworkSkill": "VAR-6.D",
+        "unit": 6
+      }
+    ],
+    "one-propzint": [
+      {
+        "stem": "A random sample of 80 adults was selected, and 22 indicated they would support eliminating the penny from circulation. Construct a 99% confidence interval for the true proportion of adults who support this idea.",
+        "values": { "x": 22, "n": 80, "cLevel": 0.99 },
+        "frameworkSkill": "UNC-4.D",
+        "unit": 6
+      },
+      {
+        "stem": "In a random sample of 500 registered voters, 235 said they plan to vote for Candidate A. Construct a 95% confidence interval to estimate the true proportion of voters who support Candidate A.",
+        "values": { "x": 235, "n": 500, "cLevel": 0.95 },
+        "frameworkSkill": "UNC-4.C",
+        "unit": 6
+      },
+      {
+        "stem": "A school librarian sampled 50 students from senior English classes, and 35 had read a certain book. Construct a 90% confidence interval for the proportion of all seniors who have read the book.",
+        "values": { "x": 35, "n": 50, "cLevel": 0.90 },
+        "frameworkSkill": "UNC-4.D",
+        "unit": 6
+      }
+    ],
+    "t-test-stats": [
+      {
+        "stem": "A cereal manufacturer claims that boxes contain a mean of 500 grams of cereal. A quality inspector takes a random sample of 36 boxes and finds a sample mean of 494 grams with a standard deviation of 18 grams. Is there evidence at alpha = 0.05 that the true mean is less than 500 grams?",
+        "values": { "mu0": 500, "xbar": 494, "sx": 18, "n": 36, "direction": "<" },
+        "frameworkSkill": "VAR-7.E",
+        "unit": 7
+      },
+      {
+        "stem": "A physical therapist claims that a new stretching routine reduces recovery time to less than 10 days. In a random sample of 25 patients, the mean recovery time was 8.9 days with a standard deviation of 3.2 days. Test this claim at alpha = 0.01.",
+        "values": { "mu0": 10, "xbar": 8.9, "sx": 3.2, "n": 25, "direction": "<" },
+        "frameworkSkill": "DAT-3.F",
+        "unit": 7
+      },
+      {
+        "stem": "The FAA mandates that airline pilot response time to a warning signal must average no more than 4.5 seconds. A random sample of 40 pilots had a mean response time of 4.8 seconds with s = 1.1 seconds. At alpha = 0.05, is there evidence the mean exceeds the mandate?",
+        "values": { "mu0": 4.5, "xbar": 4.8, "sx": 1.1, "n": 40, "direction": ">" },
+        "frameworkSkill": "DAT-3.E",
+        "unit": 7
+      }
+    ],
+    "t-test-data": [
+      {
+        "stem": "A teacher claims the mean score on a standardized test for her class is higher than the national average of 72. She records the following scores from her 12 randomly selected students: 68, 74, 79, 71, 85, 77, 82, 73, 80, 76, 88, 69. Test at alpha = 0.05.",
+        "values": { "mu0": 72, "data": [68, 74, 79, 71, 85, 77, 82, 73, 80, 76, 88, 69], "direction": ">" },
+        "frameworkSkill": "VAR-7.E",
+        "unit": 7
+      },
+      {
+        "stem": "A nutritionist suspects that the mean daily sodium intake for a group of patients exceeds the recommended 2300 mg. She randomly selects 8 patients and records their daily intake: 2450, 2200, 2650, 2100, 2500, 2350, 2800, 2400. Test at alpha = 0.05.",
+        "values": { "mu0": 2300, "data": [2450, 2200, 2650, 2100, 2500, 2350, 2800, 2400], "direction": ">" },
+        "frameworkSkill": "DAT-3.F",
+        "unit": 7
+      }
+    ],
+    "t-interval-stats": [
+      {
+        "stem": "A random sample of 45 students at a university had a mean GPA of 3.12 with a standard deviation of 0.48. Construct a 95% confidence interval for the mean GPA of all students at the university.",
+        "values": { "xbar": 3.12, "sx": 0.48, "n": 45, "cLevel": 0.95 },
+        "frameworkSkill": "UNC-4.R",
+        "unit": 7
+      },
+      {
+        "stem": "An engineer measures the tensile strength of 30 randomly selected steel rods and finds a mean of 425 MPa with a standard deviation of 38 MPa. Construct a 99% confidence interval for the true mean tensile strength.",
+        "values": { "xbar": 425, "sx": 38, "n": 30, "cLevel": 0.99 },
+        "frameworkSkill": "UNC-4.Q",
+        "unit": 7
+      }
+    ],
+    "t-interval-data": [
+      {
+        "stem": "A biologist measures the lengths (in cm) of 10 randomly caught fish from a lake: 22.1, 25.3, 19.8, 23.5, 24.7, 21.0, 26.4, 20.2, 23.9, 22.6. Construct a 90% confidence interval for the true mean length of fish in the lake.",
+        "values": { "data": [22.1, 25.3, 19.8, 23.5, 24.7, 21.0, 26.4, 20.2, 23.9, 22.6], "cLevel": 0.90 },
+        "frameworkSkill": "UNC-4.R",
+        "unit": 7
+      },
+      {
+        "stem": "A farmer records the yield (in bushels per acre) for 8 randomly selected plots: 148, 152, 145, 160, 155, 149, 158, 153. Construct a 95% confidence interval for the mean yield per acre.",
+        "values": { "data": [148, 152, 145, 160, 155, 149, 158, 153], "cLevel": 0.95 },
+        "frameworkSkill": "UNC-4.R",
+        "unit": 7
+      }
+    ],
+    "two-samp-ttest": [
+      {
+        "stem": "A researcher wants to know whether a new teaching method produces different test scores than the traditional method. A random sample of 28 students using the new method had a mean score of 78.5 (s = 9.2), while 32 students using the traditional method had a mean of 73.1 (s = 10.4). Test at alpha = 0.05.",
+        "values": { "xbar1": 78.5, "sx1": 9.2, "n1": 28, "xbar2": 73.1, "sx2": 10.4, "n2": 32, "direction": "!=" },
+        "frameworkSkill": "VAR-7.I",
+        "unit": 7
+      },
+      {
+        "stem": "An agronomist tests whether a new fertilizer increases corn yield. Thirty randomly assigned plots using the new fertilizer yielded a mean of 162 bushels/acre (s = 12.5). Twenty-five plots with the standard fertilizer yielded a mean of 155 bushels/acre (s = 14.1). Test at alpha = 0.05 whether the new fertilizer produces higher yields.",
+        "values": { "xbar1": 162, "sx1": 12.5, "n1": 30, "xbar2": 155, "sx2": 14.1, "n2": 25, "direction": ">" },
+        "frameworkSkill": "DAT-3.H",
+        "unit": 7
+      }
+    ],
+    "two-samp-tint": [
+      {
+        "stem": "A health study compares the mean systolic blood pressure of 40 runners (mean 118, s = 10.5) with 35 non-runners (mean 128, s = 14.3). Construct a 95% confidence interval for the difference in mean blood pressure (runners minus non-runners).",
+        "values": { "xbar1": 118, "sx1": 10.5, "n1": 40, "xbar2": 128, "sx2": 14.3, "n2": 35, "cLevel": 0.95 },
+        "frameworkSkill": "UNC-4.Y",
+        "unit": 7
+      },
+      {
+        "stem": "Two brands of batteries are tested. A sample of 20 Brand A batteries has a mean life of 52.4 hours (s = 4.8). A sample of 22 Brand B batteries has a mean life of 48.7 hours (s = 5.1). Construct a 90% confidence interval for the difference in mean battery life.",
+        "values": { "xbar1": 52.4, "sx1": 4.8, "n1": 20, "xbar2": 48.7, "sx2": 5.1, "n2": 22, "cLevel": 0.90 },
+        "frameworkSkill": "UNC-4.X",
+        "unit": 7
+      }
+    ],
+    "chi-square-gof-test": [
+      {
+        "stem": "A candy company claims its bags contain 30% red, 25% blue, 20% green, 15% yellow, and 10% orange candies. A random sample of 200 candies from a bag yields: 72 red, 46 blue, 38 green, 24 yellow, and 20 orange. At alpha = 0.05, test whether the distribution matches the company's claim.",
+        "values": { "observed": [72, 46, 38, 24, 20], "expected_proportions": [0.30, 0.25, 0.20, 0.15, 0.10], "n": 200, "df": 4 },
+        "frameworkSkill": "VAR-8.F",
+        "unit": 8
+      },
+      {
+        "stem": "A fair six-sided die is rolled 300 times. The outcomes are: 58 ones, 45 twos, 53 threes, 49 fours, 52 fives, and 43 sixes. At alpha = 0.10, test whether the die is fair.",
+        "values": { "observed": [58, 45, 53, 49, 52, 43], "expected_proportions": [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1667], "n": 300, "df": 5 },
+        "frameworkSkill": "DAT-3.J",
+        "unit": 8
+      },
+      {
+        "stem": "According to genetics, offspring should appear in a 9:3:3:1 phenotypic ratio. A biologist observes 315 round yellow, 108 round green, 101 wrinkled yellow, and 32 wrinkled green in a sample of 556 offspring. Test at alpha = 0.05 whether the data fit the expected ratio.",
+        "values": { "observed": [315, 108, 101, 32], "expected_proportions": [0.5625, 0.1875, 0.1875, 0.0625], "n": 556, "df": 3 },
+        "frameworkSkill": "VAR-8.B",
+        "unit": 8
+      }
+    ],
+    "chi-square-test": [
+      {
+        "stem": "A survey asked 400 randomly selected adults about their exercise habits (none, moderate, intense) and their stress level (low, high). The results are summarized in a 2x3 table. At alpha = 0.05, test whether stress level is associated with exercise frequency. Observed counts: None/Low: 30, None/High: 70, Moderate/Low: 80, Moderate/High: 60, Intense/Low: 110, Intense/High: 50.",
+        "values": { "matrix": [[30, 70], [80, 60], [110, 50]], "rows": 3, "cols": 2, "df": 2 },
+        "frameworkSkill": "DAT-3.L",
+        "unit": 8
+      },
+      {
+        "stem": "A researcher investigates whether political affiliation is independent of region. A random sample of 600 voters produces a 3x3 contingency table with political party (A, B, C) and region (North, South, West). At alpha = 0.01, test for independence.",
+        "values": { "matrix": [[80, 50, 70], [60, 75, 65], [55, 70, 75]], "rows": 3, "cols": 3, "df": 4 },
+        "frameworkSkill": "VAR-8.I",
+        "unit": 8
+      }
+    ],
+    "linreg-ttest": [
+      {
+        "stem": "A wildlife biologist measured the age (months) and weight (pounds) of 15 randomly selected adolescent moose. After verifying conditions, the computer output shows slope b = 2.34, SE_b = 0.48, and the data are stored in L1 and L2. At alpha = 0.05, is there convincing evidence of a linear relationship between age and weight?",
+        "values": { "beta0": 0, "xList": "L1", "yList": "L2", "direction": "!=" },
+        "frameworkSkill": "DAT-3.N",
+        "unit": 9
+      },
+      {
+        "stem": "A study examined the relationship between hours of study per week and GPA for 20 randomly selected college students. The data are in L1 (hours) and L2 (GPA). At alpha = 0.05, is there evidence that hours of study is positively associated with GPA?",
+        "values": { "beta0": 0, "xList": "L1", "yList": "L2", "direction": ">" },
+        "frameworkSkill": "VAR-7.M",
+        "unit": 9
+      },
+      {
+        "stem": "Dairy farmers collected data on the age (years) and weekly milk production (gallons) for 12 randomly selected cows. At alpha = 0.05, test whether there is a negative linear relationship between age and milk production. Data are stored in L1 (age) and L2 (milk).",
+        "values": { "beta0": 0, "xList": "L1", "yList": "L2", "direction": "<" },
+        "frameworkSkill": "DAT-3.M",
+        "unit": 9
+      }
+    ],
+    "linreg-tint": [
+      {
+        "stem": "A researcher collected height (cm) and foot length (cm) data for 25 randomly selected adults. The data are in L1 (foot length) and L2 (height). Construct a 95% confidence interval for the true slope of the regression of height on foot length.",
+        "values": { "xList": "L1", "yList": "L2", "cLevel": 0.95 },
+        "frameworkSkill": "UNC-4.AF",
+        "unit": 9
+      },
+      {
+        "stem": "An economist studied the relationship between advertising spending (thousands of dollars) and monthly revenue (thousands of dollars) for 18 randomly selected small businesses. The data are in L1 and L2. Construct a 99% confidence interval for the slope.",
+        "values": { "xList": "L1", "yList": "L2", "cLevel": 0.99 },
+        "frameworkSkill": "UNC-4.AE",
+        "unit": 9
+      }
+    ],
+    "normalcdf": [
+      {
+        "stem": "The distribution of daily processing times at a coffee shop is approximately normal with mean 276 seconds and standard deviation 38 seconds. Find the proportion of orders processed in less than 240 seconds.",
+        "values": { "lower": -1e99, "upper": 240, "mu": 276, "sigma": 38 },
+        "frameworkSkill": "VAR-2.B",
+        "unit": 1
+      },
+      {
+        "stem": "The distribution of customer purchases at a convenience store is approximately normal with mean $15.50 and standard deviation $1.72. Find the proportion of purchases between $14.00 and $16.00.",
+        "values": { "lower": 14.00, "upper": 16.00, "mu": 15.50, "sigma": 1.72 },
+        "frameworkSkill": "VAR-6.A",
+        "unit": 1
+      },
+      {
+        "stem": "The number of daily transactions at a bank is approximately normal with mean 478 and standard deviation 64. What proportion of days have more than 350 transactions?",
+        "values": { "lower": 350, "upper": 1e99, "mu": 478, "sigma": 64 },
+        "frameworkSkill": "VAR-2.B",
+        "unit": 1
+      }
+    ],
+    "invnorm": [
+      {
+        "stem": "The distribution of salmon lengths in a river is approximately normal with mean 25.5 inches and standard deviation 3.5 inches. What length separates the longest 10% of salmon from the rest?",
+        "values": { "area": 0.90, "mu": 25.5, "sigma": 3.5, "tail": "left" },
+        "frameworkSkill": "VAR-6.B",
+        "unit": 1
+      },
+      {
+        "stem": "Scores on a college entrance exam are normally distributed with mean 500 and standard deviation 100. What score marks the 25th percentile?",
+        "values": { "area": 0.25, "mu": 500, "sigma": 100, "tail": "left" },
+        "frameworkSkill": "VAR-2.B",
+        "unit": 1
+      },
+      {
+        "stem": "The weight of field mice is approximately normal with mean 25 grams and standard deviation 4 grams. Below what weight are the lightest 5% of mice?",
+        "values": { "area": 0.05, "mu": 25, "sigma": 4, "tail": "left" },
+        "frameworkSkill": "VAR-6.B",
+        "unit": 1
+      }
+    ],
+    "binompdf": [
+      {
+        "stem": "A basketball player makes 75% of her free throws. In tonight's game, she shoots 10 free throws. What is the probability she makes exactly 8?",
+        "values": { "n": 10, "p": 0.75, "x": 8 },
+        "frameworkSkill": "UNC-3.B",
+        "unit": 4
+      },
+      {
+        "stem": "A multiple-choice quiz has 15 questions, each with 4 options. If a student guesses randomly on every question, what is the probability of getting exactly 5 correct?",
+        "values": { "n": 15, "p": 0.25, "x": 5 },
+        "frameworkSkill": "UNC-3.B",
+        "unit": 4
+      }
+    ],
+    "binomcdf": [
+      {
+        "stem": "A basketball player makes 75% of her free throws. In tonight's game, she shoots 10 free throws. What is the probability she makes at most 6?",
+        "values": { "n": 10, "p": 0.75, "x": 6 },
+        "frameworkSkill": "UNC-3.B",
+        "unit": 4
+      },
+      {
+        "stem": "An airline knows that 5% of passengers miss their flight. For a flight with 180 seats, all of which are booked, find the probability that at most 7 passengers miss the flight.",
+        "values": { "n": 180, "p": 0.05, "x": 7 },
+        "frameworkSkill": "UNC-3.B",
+        "unit": 4
+      },
+      {
+        "stem": "A seed company claims a germination rate of 85%. A farmer plants 20 seeds. What is the probability that at least 18 germinate? (Hint: use 1 - binomcdf with x = 17.)",
+        "values": { "n": 20, "p": 0.85, "x": 17, "note": "Use 1 - binomcdf(20, 0.85, 17) for P(X >= 18)" },
+        "frameworkSkill": "UNC-3.B",
+        "unit": 4
+      }
+    ],
+    "geometpdf": [
+      {
+        "stem": "A telemarketer has a 12% chance of making a sale on each call. What is the probability that the first sale occurs on exactly the 5th call?",
+        "values": { "p": 0.12, "x": 5 },
+        "frameworkSkill": "UNC-3.E",
+        "unit": 4
+      },
+      {
+        "stem": "A quality inspector checks items one at a time. Each item has a 3% chance of being defective. What is the probability that the first defective item is exactly the 10th one inspected?",
+        "values": { "p": 0.03, "x": 10 },
+        "frameworkSkill": "UNC-3.E",
+        "unit": 4
+      }
+    ],
+    "geometcdf": [
+      {
+        "stem": "A telemarketer has a 12% chance of making a sale on each call. What is the probability that the first sale occurs within the first 8 calls?",
+        "values": { "p": 0.12, "x": 8 },
+        "frameworkSkill": "UNC-3.E",
+        "unit": 4
+      },
+      {
+        "stem": "A spinner has a 20% chance of landing on red. What is the probability that you get your first red within 4 spins?",
+        "values": { "p": 0.20, "x": 4 },
+        "frameworkSkill": "UNC-3.E",
+        "unit": 4
+      }
+    ],
+    "normalcdf-sampling": [
+      {
+        "stem": "The distribution of daily processing times at a coffee shop is approximately normal with mean 276 seconds and standard deviation 38 seconds. In a random sample of 25 orders, what is the probability that the sample mean processing time is less than 260 seconds?",
+        "values": { "lower": -1e99, "upper": 260, "mu": 276, "sigma_xbar": 7.6, "note": "sigma/sqrt(n) = 38/sqrt(25) = 7.6" },
+        "frameworkSkill": "UNC-3.S",
+        "unit": 5
+      },
+      {
+        "stem": "The mean number of transactions at a bank is 478 per day with standard deviation 64. For a random sample of 16 days, what is the probability that the sample mean exceeds 500 transactions?",
+        "values": { "lower": 500, "upper": 1e99, "mu": 478, "sigma_xbar": 16, "note": "sigma/sqrt(n) = 64/sqrt(16) = 16" },
+        "frameworkSkill": "UNC-3.Q",
+        "unit": 5
+      },
+      {
+        "stem": "The weight of field mice is approximately normal with mean 25 grams and standard deviation 4 grams. In a random sample of 36 mice, what is the probability that the sample mean weight is between 24 and 26 grams?",
+        "values": { "lower": 24, "upper": 26, "mu": 25, "sigma_xbar": 0.667, "note": "sigma/sqrt(n) = 4/sqrt(36) = 0.667" },
+        "frameworkSkill": "UNC-3.R",
+        "unit": 5
+      }
+    ],
+    "invnorm-sampling": [
+      {
+        "stem": "The mean height of adult women is 64.5 inches with standard deviation 2.5 inches. For random samples of size 49, what sample mean height separates the top 5% of all possible sample means?",
+        "values": { "area": 0.95, "mu": 64.5, "sigma_xbar": 0.357, "tail": "left", "note": "sigma/sqrt(n) = 2.5/sqrt(49) = 0.357" },
+        "frameworkSkill": "UNC-3.S",
+        "unit": 5
+      },
+      {
+        "stem": "An online store averages 1200 purchases per hour with standard deviation 200. For a random sample of 40 hours, below what sample mean are the lowest 10% of all possible sample means?",
+        "values": { "area": 0.10, "mu": 1200, "sigma_xbar": 31.62, "tail": "left", "note": "sigma/sqrt(n) = 200/sqrt(40) = 31.62" },
+        "frameworkSkill": "UNC-3.Q",
+        "unit": 5
+      }
+    ],
+    "one-var-stats": [
+      {
+        "stem": "A teacher recorded the following test scores: 72, 85, 91, 64, 78, 88, 69, 95, 82, 76. Calculate the mean, standard deviation, five-number summary, and check for outliers.",
+        "values": { "data": [72, 85, 91, 64, 78, 88, 69, 95, 82, 76] },
+        "frameworkSkill": "UNC-1.F",
+        "unit": 1
+      },
+      {
+        "stem": "A biologist recorded the lengths (cm) of 12 randomly caught trout: 28, 32, 25, 36, 29, 31, 34, 27, 30, 33, 26, 35. Calculate summary statistics for this data set.",
+        "values": { "data": [28, 32, 25, 36, 29, 31, 34, 27, 30, 33, 26, 35] },
+        "frameworkSkill": "UNC-1.E",
+        "unit": 1
+      }
+    ],
+    "linreg-a-plus-bx": [
+      {
+        "stem": "A researcher collected data on study hours (L1) and exam scores (L2) for 10 students. Find the equation of the least-squares regression line and the correlation coefficient. Data in L1: 2, 3, 5, 6, 7, 8, 9, 10, 11, 12. Data in L2: 65, 70, 74, 80, 78, 85, 88, 91, 93, 96.",
+        "values": { "xList": "L1", "yList": "L2" },
+        "frameworkSkill": "DAT-1.G",
+        "unit": 2
+      },
+      {
+        "stem": "The heights (inches) and shoe sizes for 8 adults are recorded. Find the regression equation. Heights (L1): 62, 65, 67, 69, 70, 72, 74, 76. Shoe sizes (L2): 6, 7, 8, 9, 9.5, 10.5, 11, 12.",
+        "values": { "xList": "L1", "yList": "L2" },
+        "frameworkSkill": "DAT-1.D",
+        "unit": 2
+      }
+    ],
+    "histogram": [
+      {
+        "stem": "Create a histogram of the following test scores to examine the shape of the distribution: 72, 85, 91, 64, 78, 88, 69, 95, 82, 76, 55, 83, 90, 67, 74.",
+        "values": { "data": [72, 85, 91, 64, 78, 88, 69, 95, 82, 76, 55, 83, 90, 67, 74] },
+        "frameworkSkill": "UNC-1.H",
+        "unit": 1
+      },
+      {
+        "stem": "A farm records the daily egg production for 20 days: 145, 152, 148, 160, 155, 149, 158, 153, 147, 156, 150, 162, 144, 159, 151, 157, 146, 154, 161, 148. Display the data in a histogram.",
+        "values": { "data": [145, 152, 148, 160, 155, 149, 158, 153, 147, 156, 150, 162, 144, 159, 151, 157, 146, 154, 161, 148] },
+        "frameworkSkill": "UNC-1.I",
+        "unit": 1
+      }
+    ],
+    "modified-boxplot": [
+      {
+        "stem": "Construct a modified boxplot for the following car fuel efficiencies (mpg): 22, 25, 28, 30, 31, 33, 34, 36, 38, 42, 55. Identify any outliers.",
+        "values": { "data": [22, 25, 28, 30, 31, 33, 34, 36, 38, 42, 55] },
+        "frameworkSkill": "UNC-1.L",
+        "unit": 1
+      },
+      {
+        "stem": "Display the following commute times (minutes) in a modified boxplot and identify outliers: 8, 12, 15, 18, 20, 22, 24, 25, 27, 30, 32, 35, 58.",
+        "values": { "data": [8, 12, 15, 18, 20, 22, 24, 25, 27, 30, 32, 35, 58] },
+        "frameworkSkill": "UNC-1.L",
+        "unit": 1
+      }
+    ],
+    "scatterplot": [
+      {
+        "stem": "An ecologist records the number of bird species and the area (acres) of 10 forest fragments. Create a scatterplot with area on the x-axis and species count on the y-axis to explore the relationship.",
+        "values": { "xList": "L1", "yList": "L2" },
+        "frameworkSkill": "DAT-1.A",
+        "unit": 2
+      },
+      {
+        "stem": "Create a scatterplot of temperature (F) versus ice cream sales ($) for 12 summer days to investigate whether higher temperatures are associated with higher sales.",
+        "values": { "xList": "L1", "yList": "L2" },
+        "frameworkSkill": "UNC-1.S",
+        "unit": 2
+      }
+    ],
+    "residual-plot": [
+      {
+        "stem": "After fitting a least-squares regression line to the relationship between study hours and exam scores, create a residual plot to assess whether a linear model is appropriate.",
+        "values": { "xList": "L1", "residList": "RESID" },
+        "frameworkSkill": "DAT-1.F",
+        "unit": 2
+      },
+      {
+        "stem": "A researcher fitted a linear model for tree height versus diameter. Create a residual plot to determine whether the linear model is appropriate for these data.",
+        "values": { "xList": "L1", "residList": "RESID" },
+        "frameworkSkill": "DAT-1.E",
+        "unit": 2
+      }
+    ],
+    "matrix-entry": [
+      {
+        "stem": "Enter the following two-way table into Matrix [A] on your calculator so you can run a chi-square test. The table has 3 rows and 2 columns: [[30, 70], [80, 60], [110, 50]].",
+        "values": { "rows": 3, "cols": 2, "data": [[30, 70], [80, 60], [110, 50]] },
+        "frameworkSkill": "VAR-8.H",
+        "unit": 8
+      }
+    ]
+  },
+
+  "distractorSets": {
+    "one-propztest": ["one-propzint", "t-test-stats", "chi-square-gof-test"],
+    "one-propzint": ["one-propztest", "t-interval-stats", "chi-square-gof-test"],
+    "t-test-stats": ["t-interval-stats", "one-propztest", "two-samp-ttest"],
+    "t-test-data": ["t-interval-data", "one-var-stats", "two-samp-ttest"],
+    "t-interval-stats": ["t-test-stats", "one-propzint", "two-samp-tint"],
+    "t-interval-data": ["t-test-data", "one-var-stats", "two-samp-tint"],
+    "two-samp-ttest": ["t-test-stats", "two-samp-tint", "chi-square-test"],
+    "two-samp-tint": ["two-samp-ttest", "t-interval-stats", "chi-square-test"],
+    "chi-square-gof-test": ["chi-square-test", "one-propztest", "t-test-stats"],
+    "chi-square-test": ["chi-square-gof-test", "two-samp-ttest", "one-propztest"],
+    "linreg-ttest": ["linreg-tint", "linreg-a-plus-bx", "t-test-stats"],
+    "linreg-tint": ["linreg-ttest", "linreg-a-plus-bx", "t-interval-stats"],
+    "normalcdf": ["invnorm", "normalcdf-sampling", "binomcdf"],
+    "invnorm": ["normalcdf", "invnorm-sampling", "binomcdf"],
+    "binompdf": ["binomcdf", "geometpdf", "normalcdf"],
+    "binomcdf": ["binompdf", "geometcdf", "normalcdf"],
+    "geometpdf": ["geometcdf", "binompdf", "normalcdf"],
+    "geometcdf": ["geometpdf", "binomcdf", "normalcdf"],
+    "normalcdf-sampling": ["normalcdf", "invnorm-sampling", "t-test-stats"],
+    "invnorm-sampling": ["invnorm", "normalcdf-sampling", "t-interval-stats"],
+    "one-var-stats": ["t-test-data", "histogram", "t-interval-data"],
+    "linreg-a-plus-bx": ["linreg-ttest", "scatterplot", "one-var-stats"],
+    "histogram": ["modified-boxplot", "one-var-stats", "scatterplot"],
+    "modified-boxplot": ["histogram", "one-var-stats", "scatterplot"],
+    "scatterplot": ["residual-plot", "linreg-a-plus-bx", "histogram"],
+    "residual-plot": ["scatterplot", "linreg-a-plus-bx", "histogram"],
+    "matrix-entry": ["chi-square-test", "chi-square-gof-test", "one-var-stats"]
+  }
+}
