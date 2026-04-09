@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-17T04:44:46.168Z",
-  "registryVersion": "e120e5d83503",
+  "generatedAt": "2026-04-09T12:00:00.000Z",
+  "registryVersion": "u8-ingest-complete",
   "lessons": {
     "8.1": {
       "topic": "Topic 8.1",
@@ -81,23 +81,73 @@
       "topic": "Topic 8.4",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson4_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l15-two-way-table-totals",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=3",
-        "blooket": null,
+        "blooket": "https://dashboard.blooket.com/set/69c098310774a12931de3d19",
         "videos": []
       },
-      "status": "partial",
+      "status": "ready",
       "periods": {
         "B": {
           "date": "2026-04-10",
-          "schoologyFolder": null,
-          "posted": false,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=989165947",
+          "posted": true,
           "verified": false
         },
         "E": {
           "date": "2026-04-15",
-          "schoologyFolder": null,
-          "posted": false,
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=988061148",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "8.5": {
+      "topic": "Topic 8.5",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson5_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l19-identify-test-type",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=4",
+        "blooket": "https://dashboard.blooket.com/set/69c0a4560774a12931de3f76",
+        "videos": []
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-04-13",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=989177841",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-04-16",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=989178189",
+          "posted": true,
+          "verified": false
+        }
+      }
+    },
+    "8.6": {
+      "topic": "Topic 8.6",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson6_live.html",
+        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l23-chi-square-twoway",
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=5",
+        "blooket": "https://dashboard.blooket.com/set/69c35c8f0774a12931df155c",
+        "videos": []
+      },
+      "status": "ready",
+      "periods": {
+        "B": {
+          "date": "2026-04-14",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=989911631",
+          "posted": true,
+          "verified": false
+        },
+        "E": {
+          "date": "2026-04-17",
+          "schoologyFolder": "https://lynnschools.schoology.com/course/7945275798/materials?f=989911716",
+          "posted": true,
           "verified": false
         }
       }

@@ -610,3 +610,931 @@
         For the Battleship example, the correct p-value is about <input type='text' class='blank' data-answer='0.079|.079|0.0786|0.07855316' style='width:80px;'>.
     </div>
 </div>
+
+<div class='section'>
+    <div class='section-header'>
+        <h2>Video 2: Interpreting the P-Value and Stating a Conclusion</h2>
+        <span class='timestamp'>[0:00 &ndash; 9:30]</span>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>12.</span>
+        <span class='ts'>[1:39]</span>
+        From the previous video, the chi-square test statistic for the predatory lending data is <input type='text' class='blank' data-answer='7.746|7.74595' style='width:80px;'> and the p-value is <input type='text' class='blank' data-answer='0.0208|.0208|0.021' style='width:80px;'>.
+    </div>
+
+    <div class='note-box'>
+        <strong>Interpreting a P-Value</strong>
+        <span class='ts'>[1:52 &ndash; 2:45]</span>
+        The p-value is the probability of obtaining a result as extreme as the one in the study, or more extreme, by chance alone, assuming the null hypothesis is true. For chi-square, this is the upper-tail probability.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>13.</span>
+        <span class='ts'>[2:06]</span>
+        The p-value is interpreted as the probability of getting a result as extreme as the one in the study, or more extreme, assuming the <input type='text' class='blank' data-answer='null hypothesis|null|H0' style='width:150px;'> is true.
+    </div>
+
+    <div class='model-box'>
+        <strong>Stating a Conclusion &mdash; Two Parts</strong>
+        <span class='ts'>[3:19 &ndash; 4:25]</span>
+        <ol style='margin: 5px 0; padding-left: 20px;'>
+            <li><strong>Decision:</strong> Compare the p-value to the significance level &alpha;. If p &le; &alpha;, reject H<sub>0</sub>. If p &gt; &alpha;, fail to reject H<sub>0</sub>.</li>
+            <li><strong>Context:</strong> State what the decision means about the alternative hypothesis in context.</li>
+        </ol>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>14.</span>
+        <span class='ts'>[3:37]</span>
+        For small p-values, we say "since the p-value is less than or equal to &alpha;, we <input type='text' class='blank' data-answer='reject|reject H0|reject the null' style='width:150px;'> the null hypothesis."
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>15.</span>
+        <span class='ts'>[4:00]</span>
+        For large p-values, we say "since the p-value is greater than &alpha;, we <input type='text' class='blank' data-answer='fail to reject|fail to reject H0|do not reject' style='width:200px;'> the null hypothesis."
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>16.</span>
+        <span class='ts'>[4:39]</span>
+        Using &alpha; = 0.05, the p-value of 0.0208 is <input type='text' class='blank' data-answer='less than|less|<' style='width:120px;'> &alpha;, so we <input type='text' class='blank' data-answer='reject|reject H0' style='width:120px;'> the null hypothesis.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>17.</span>
+        <span class='ts'>[5:13]</span>
+        Conclusion in context: There is <input type='text' class='blank' data-answer='convincing|convincing statistical' style='width:150px;'> statistical evidence that the distribution of predatory lending businesses in Dallas is not the same as the proportions of households in the specified income brackets.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>18.</span>
+        <span class='ts'>[5:43]</span>
+        To determine where the largest discrepancy lies, we examine the <input type='text' class='blank' data-answer='contributions|contribution' style='width:150px;'> of each category toward the chi-square statistic.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>19.</span>
+        <span class='ts'>[5:54]</span>
+        The income bracket with the largest contribution was the <input type='text' class='blank' data-answer='$100,000 and above|100000 and above|highest|100k+' style='width:200px;'> bracket, suggesting predatory lending businesses are underrepresented in higher-income areas.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>20.</span>
+        <span class='ts'>[6:55]</span>
+        In the Battleship practice, the p-value of 0.079 is <input type='text' class='blank' data-answer='greater than|greater|>' style='width:120px;'> &alpha; = 0.05, so we <input type='text' class='blank' data-answer='fail to reject|do not reject|fail to reject H0' style='width:200px;'> H<sub>0</sub>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>21.</span>
+        <span class='ts'>[7:43]</span>
+        Correct p-value interpretation: "There is a 0.079 probability that we would get results this extreme or more extreme by chance alone if the proportions of players preferring different quadrants <input type='text' class='blank' data-answer='is the same|are the same|are equal' style='width:200px;'>."
+    </div>
+</div>
+
+<div class='section'>
+    <div class='section-header'>
+        <h2>Video 3: Full Chi-Square GOF Test &mdash; AP Exam FRQ</h2>
+        <span class='timestamp'>[0:00 &ndash; 8:53]</span>
+    </div>
+
+    <div class='note-box'>
+        <strong>Context &mdash; 2008 International Exam: Summer Program Participation</strong>
+        <span class='ts'>[0:19 &ndash; 1:08]</span>
+        A city uses proportions from the year 2000 to allocate resources for a summer program across six districts. A statistician claims the proportions are no longer valid based on a simple random sample of 240 households from this past summer.
+    </div>
+
+    <table class='data-table'>
+        <tr>
+            <th>District</th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+        </tr>
+        <tr>
+            <td><strong>Year 2000 Proportion</strong></td>
+            <td>0.32</td>
+            <td>0.12</td>
+            <td>0.10</td>
+            <td>0.27</td>
+            <td>0.05</td>
+            <td>0.14</td>
+        </tr>
+        <tr>
+            <td><strong>Observed Households</strong></td>
+            <td>100</td>
+            <td>35</td>
+            <td>40</td>
+            <td>22</td>
+            <td>12</td>
+            <td>31</td>
+        </tr>
+    </table>
+
+    <div class='question'>
+        <span class='question-number'>22.</span>
+        <span class='ts'>[1:25]</span>
+        The variable of interest is <input type='text' class='blank' data-answer='categorical|category' style='width:150px;'> with <input type='text' class='blank' data-answer='6|six' style='width:40px;'> categories.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>23.</span>
+        <span class='ts'>[1:33]</span>
+        Because there is one sample and one categorical variable, the correct test is a chi-square <input type='text' class='blank' data-answer='goodness-of-fit|goodness of fit|GOF' style='width:200px;'> test.
+    </div>
+
+    <div class='model-box'>
+        <strong>Four Parts of a Significance Test</strong>
+        <span class='ts'>[2:01 &ndash; 2:25]</span>
+        <ol style='margin: 5px 0; padding-left: 20px;'>
+            <li>Hypotheses &amp; Parameters</li>
+            <li>Procedure &amp; Conditions</li>
+            <li>Mechanics (test statistic, df, p-value)</li>
+            <li>Conclusion in context</li>
+        </ol>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>24.</span>
+        <span class='ts'>[2:31]</span>
+        The null hypothesis states that each district proportion equals the <input type='text' class='blank' data-answer='year 2000|2000|original' style='width:120px;'> proportions.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>25.</span>
+        <span class='ts'>[3:07]</span>
+        The alternative hypothesis: at least one of the proportions is <input type='text' class='blank' data-answer='different|not the same|not as specified' style='width:200px;'> from those specified in the null hypothesis.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>26.</span>
+        <span class='ts'>[3:38]</span>
+        The 10% condition: the total sample of <input type='text' class='blank' data-answer='240' style='width:60px;'> households must be &le; 10% of all households in the city.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>27.</span>
+        <span class='ts'>[4:10]</span>
+        Expected counts are found by multiplying the null proportions by the sample size of <input type='text' class='blank' data-answer='240' style='width:60px;'>.
+    </div>
+
+    <table class='data-table'>
+        <tr>
+            <th>District</th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+        </tr>
+        <tr>
+            <td><strong>Expected</strong></td>
+            <td><input type='text' class='blank' data-answer='76.8|76.80' style='width:50px;'></td>
+            <td><input type='text' class='blank' data-answer='28.8|28.80' style='width:50px;'></td>
+            <td><input type='text' class='blank' data-answer='24|24.0|24.00' style='width:50px;'></td>
+            <td><input type='text' class='blank' data-answer='64.8|64.80' style='width:50px;'></td>
+            <td><input type='text' class='blank' data-answer='12|12.0|12.00' style='width:50px;'></td>
+            <td><input type='text' class='blank' data-answer='33.6|33.60' style='width:50px;'></td>
+        </tr>
+    </table>
+
+    <div class='question'>
+        <span class='question-number'>28.</span>
+        <span class='ts'>[4:34]</span>
+        All expected counts are greater than <input type='text' class='blank' data-answer='5|five' style='width:40px;'>, so the Large Counts condition is met.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>29.</span>
+        <span class='ts'>[5:03]</span>
+        With six districts, degrees of freedom = <input type='text' class='blank' data-answer='5|five' style='width:40px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>30.</span>
+        <span class='ts'>[5:10]</span>
+        From the calculator: &chi;<sup>2</sup> &asymp; <input type='text' class='blank' data-answer='55.43|55.427|55.4267' style='width:80px;'>, p-value &asymp; <input type='text' class='blank' data-answer='0|0.000|approximately 0|approx 0' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>31.</span>
+        <span class='ts'>[5:33]</span>
+        Since the p-value is <input type='text' class='blank' data-answer='less than|less|<' style='width:120px;'> &alpha; = 0.05, we reject H<sub>0</sub>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>32.</span>
+        <span class='ts'>[5:42]</span>
+        Conclusion: There is convincing statistical evidence that the proportions of households participating in the summer program are <input type='text' class='blank' data-answer='not the same|different|not the same as' style='width:250px;'> as those being used by the city.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>33.</span>
+        <span class='ts'>[6:17]</span>
+        For Part B, the district with the largest contribution is District <input type='text' class='blank' data-answer='D|d' style='width:40px;'>, with a contribution of about <input type='text' class='blank' data-answer='28.27|28.267|28.2667' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>34.</span>
+        <span class='ts'>[7:41]</span>
+        An AP exam response is scored on four sections: correct hypotheses &amp; conditions, correct <input type='text' class='blank' data-answer='mechanics|test statistic' style='width:120px;'> (test statistic, df, p-value), conclusion in context, and identifying the correct district with supporting evidence.
+    </div>
+</div>
+
+<!-- Reflection Questions -->
+<div class='section'>
+    <div class='section-header'>
+        <h2>Reflection Questions</h2>
+        <span class='timestamp'>[AI-Graded]</span>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>R1.</span>
+        <strong>Walk through the complete mechanics of the predatory lending chi-square GOF test. Include the hypothesized proportions, expected counts, chi-square statistic, degrees of freedom, p-value, and the conclusion at &alpha; = 0.05. Then explain which income bracket showed the largest discrepancy and what that tells us about where predatory lending businesses are located.</strong>
+        <textarea id='reflect1' placeholder='Write your response here...'></textarea>
+        <div id='reflect1-feedback'></div>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>R2.</span>
+        <strong>Explain how to interpret a p-value for a chi-square goodness-of-fit test and how to state a conclusion. Use both the predatory lending result (p = 0.0208) and the Battleship result (p = 0.079) to illustrate the difference between rejecting and failing to reject the null hypothesis at &alpha; = 0.05.</strong>
+        <textarea id='reflect2' placeholder='Write your response here...'></textarea>
+        <div id='reflect2-feedback'></div>
+    </div>
+</div>
+
+<div class='exit-ticket'>
+    <h3 style='margin-top: 0; color: #003366;'>Exit Ticket</h3>
+    <div class='question'>
+        <strong>The city summer program problem: A simple random sample of 240 households produced observed counts of 100, 35, 40, 22, 12, and 31 for districts A through F. The year-2000 proportions are 0.32, 0.12, 0.10, 0.27, 0.05, and 0.14.</strong>
+        <ul style='margin: 8px 0;'>
+            <li>(a) State the null and alternative hypotheses.</li>
+            <li>(b) Check the three conditions for inference, showing the expected counts.</li>
+            <li>(c) Give the test statistic, degrees of freedom, and p-value.</li>
+            <li>(d) State the conclusion in context at &alpha; = 0.05.</li>
+            <li>(e) Which district had the greatest change in participation? Justify using contributions.</li>
+        </ul>
+        <textarea id='exitTicket' placeholder='Answer all five parts in complete sentences...'></textarea>
+        <div id='exitTicket-feedback'></div>
+    </div>
+</div>
+
+<div id="aggregateDrawer" class="aggregate-drawer">
+    <div class="drawer-header">
+        <h3>Class Responses <span style="font-size: 0.7em; color: #999; font-weight: normal;">(Esc to close)</span></h3>
+        <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+    </div>
+    <div class="drawer-content" id="drawerContent">
+        <p>Click a "Class" button next to a question to see responses.</p>
+    </div>
+</div>
+
+    <script src="../railway_config.js"></script>
+    <script src="../railway_client.js"></script>
+    <script src="ai-grading-prompts-u8-l3.js"></script>
+    <script>
+        // ==================== CONFIG ====================
+        const UNIT_ID = 'U8L3';
+        const DEBOUNCE_MS = 250;
+
+        // ==================== STATE ====================
+        let debounceMap = new Map();
+        let currentQuestionBlanks = [];
+        let gradingState = new Map();
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', init);
+
+        function init() {
+            ensureRailwayDefaults();
+            restoreSavedUser();
+            assignQuestionIds();
+            addSaveIndicators();
+            bindBlankEvents();
+            injectAggregateButtons();
+        }
+
+        function ensureRailwayDefaults() {
+            if (!window.RAILWAY_SERVER_URL) {
+                window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';
+            }
+        }
+
+        // ==================== USER PERSISTENCE ====================
+        function restoreSavedUser() {
+            try {
+                const saved = localStorage.getItem('worksheet-user');
+                if (saved) {
+                    const user = JSON.parse(saved);
+                    if (user.name) document.getElementById('worksheetName').value = user.name;
+                    if (user.klass) document.getElementById('worksheetPeriod').value = user.klass;
+                    if (user.username) document.getElementById('worksheetUsername').value = user.username;
+                }
+            } catch (e) { console.warn('Could not restore user', e); }
+        }
+
+        function saveUser() {
+            const user = {
+                name: document.getElementById('worksheetName').value,
+                klass: document.getElementById('worksheetPeriod').value,
+                username: document.getElementById('worksheetUsername').value
+            };
+            localStorage.setItem('worksheet-user', JSON.stringify(user));
+        }
+
+        function getUsername() {
+            return (document.getElementById('worksheetUsername').value || '').trim();
+        }
+
+        document.getElementById('worksheetUsername').addEventListener('blur', saveUser);
+        document.getElementById('worksheetName').addEventListener('blur', saveUser);
+        document.getElementById('worksheetPeriod').addEventListener('blur', saveUser);
+
+        // ==================== QUESTION IDs & EVENTS ====================
+        function assignQuestionIds() {
+            const blanks = document.querySelectorAll('.blank');
+            blanks.forEach((blank, idx) => {
+                blank.dataset.questionId = `WS-${UNIT_ID}-Q${idx + 1}`;
+            });
+        }
+
+        function addSaveIndicators() {
+            document.querySelectorAll('.question').forEach(q => {
+                if (!q.querySelector('.save-indicator')) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'save-indicator';
+                    indicator.textContent = '\u2713 saved';
+                    q.appendChild(indicator);
+                }
+            });
+        }
+
+        function bindBlankEvents() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.addEventListener('blur', () => handleLiveUpdate(blank));
+                blank.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleLiveUpdate(blank);
+                        focusNextBlank(blank);
+                    }
+                });
+            });
+        }
+
+        function focusNextBlank(current) {
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            const idx = blanks.indexOf(current);
+            if (idx >= 0 && idx < blanks.length - 1) {
+                blanks[idx + 1].focus();
+            }
+        }
+
+        // ==================== ANSWER CHECKING ====================
+        function normalize(str) {
+            return (str || '').toLowerCase().trim().replace(/[^\w\s./-]/g, '');
+        }
+
+        function checkAnswer(blank) {
+            const userAnswer = normalize(blank.value);
+            const acceptedRaw = blank.dataset.answer || '';
+            const accepted = acceptedRaw.split('|').map(normalize);
+
+            blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+
+            if (!userAnswer) return 'empty';
+
+            if (accepted.includes(userAnswer)) {
+                blank.classList.add('correct');
+                return 'correct';
+            }
+
+            const partialMatch = accepted.some(ans =>
+                userAnswer.includes(ans) || ans.includes(userAnswer)
+            );
+            if (partialMatch) {
+                blank.classList.add('partial');
+                return 'partial';
+            }
+
+            blank.classList.add('incorrect');
+            return 'incorrect';
+        }
+
+        function checkAnswers() {
+            const blanks = document.querySelectorAll('.blank');
+            let correct = 0, partial = 0, total = 0;
+
+            blanks.forEach(blank => {
+                if (blank.value.trim()) {
+                    total++;
+                    const result = checkAnswer(blank);
+                    if (result === 'correct') correct++;
+                    else if (result === 'partial') partial++;
+                }
+            });
+
+            const scoreEl = document.getElementById('scoreDisplay');
+            if (total > 0) {
+                const pct = Math.round((correct / total) * 100);
+                scoreEl.textContent = `Score: ${correct}/${total} (${pct}%)` + (partial > 0 ? ` +${partial} partial` : '');
+                scoreEl.classList.add('visible');
+            } else {
+                scoreEl.classList.remove('visible');
+            }
+
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function showAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                const answers = (blank.dataset.answer || '').split('|');
+                blank.value = answers[0] || '';
+                blank.classList.remove('correct', 'partial', 'incorrect');
+                blank.classList.add('revealed');
+            });
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function resetAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.value = '';
+                blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+            });
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.value = '';
+                ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+            });
+            document.querySelectorAll('[id$="-feedback"]').forEach(c => c.innerHTML = '');
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            gradingState.clear();
+        }
+
+        // ==================== SERVER SYNC ====================
+        function handleLiveUpdate(blank) {
+            const questionId = blank.dataset.questionId;
+            if (!questionId) return;
+
+            const now = Date.now();
+            const lastTime = debounceMap.get(questionId) || 0;
+            if (now - lastTime < DEBOUNCE_MS) return;
+            debounceMap.set(questionId, now);
+
+            sendAnswer(blank);
+        }
+
+        async function sendAnswer(blank) {
+            const username = getUsername();
+            if (!username) return;
+
+            const questionId = blank.dataset.questionId;
+            const answer = blank.value.trim();
+
+            try {
+                if (window.railwayClient && window.railwayClient.submitAnswer) {
+                    await window.railwayClient.submitAnswer(username, questionId, answer);
+                } else {
+                    await fetch(`${window.RAILWAY_SERVER_URL}/api/submit-answer`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username,
+                            question_id: questionId,
+                            answer_value: answer,
+                            timestamp: Date.now()
+                        })
+                    });
+                }
+                showSaved(blank);
+                spawnUploadParticle(blank);
+            } catch (err) {
+                console.warn('Failed to sync answer:', err);
+            }
+        }
+
+        function pushAllAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                if (blank.value.trim()) sendAnswer(blank);
+            });
+        }
+
+        function showSaved(blank) {
+            const question = blank.closest('.question');
+            if (!question) return;
+            const indicator = question.querySelector('.save-indicator');
+            if (indicator) {
+                indicator.classList.add('visible');
+                setTimeout(() => indicator.classList.remove('visible'), 2000);
+            }
+        }
+
+        function spawnUploadParticle(blank) {
+            const particle = document.createElement('span');
+            particle.className = 'upload-particle';
+            particle.textContent = '\u2191';
+            const rect = blank.getBoundingClientRect();
+            particle.style.left = `${rect.left + rect.width / 2}px`;
+            particle.style.top = `${rect.top - 5}px`;
+            particle.style.position = 'fixed';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 900);
+        }
+
+        // ==================== AGGREGATE DRAWER ====================
+        function injectAggregateButtons() {
+            document.querySelectorAll('.question').forEach(q => {
+                const blanks = q.querySelectorAll('.blank');
+                if (blanks.length > 0 && !q.querySelector('.aggregate-trigger')) {
+                    const btn = document.createElement('button');
+                    btn.className = 'aggregate-trigger';
+                    btn.textContent = '\uD83D\uDCCA Class';
+                    btn.onclick = () => openDrawerForQuestion(q);
+                    q.appendChild(btn);
+                }
+            });
+        }
+
+        function openDrawerForQuestion(questionEl) {
+            currentQuestionBlanks = Array.from(questionEl.querySelectorAll('.blank'));
+            const drawer = document.getElementById('aggregateDrawer');
+            const content = document.getElementById('drawerContent');
+
+            drawer.classList.add('open');
+            content.innerHTML = '<p>Loading...</p>';
+
+            loadAggregateData();
+        }
+
+        async function loadAggregateData() {
+            const content = document.getElementById('drawerContent');
+            let html = '';
+
+            for (const blank of currentQuestionBlanks) {
+                const questionId = blank.dataset.questionId;
+                if (!questionId) continue;
+
+                try {
+                    const stats = await fetchQuestionStats(questionId);
+                    html += renderBarChart(questionId, stats);
+                } catch (err) {
+                    html += `<p>Error loading ${questionId}</p>`;
+                }
+            }
+
+            content.innerHTML = html || '<p>No data available.</p>';
+            spawnPeerSnow();
+        }
+
+        async function fetchQuestionStats(questionId) {
+            if (window.railwayClient && window.railwayClient.getStats) {
+                return await window.railwayClient.getStats(questionId);
+            }
+            const res = await fetch(`${window.RAILWAY_SERVER_URL}/api/question-stats/${questionId}`);
+            return await res.json();
+        }
+
+        function renderBarChart(questionId, stats) {
+            const responses = stats.responses || stats.distribution || {};
+            const entries = Object.entries(responses).sort((a, b) => b[1] - a[1]);
+            const maxCount = entries.length > 0 ? Math.max(...entries.map(([, c]) => c)) : 0;
+
+            if (entries.length === 0) {
+                return `<div class="bar-chart"><strong>${questionId}</strong><p>No responses yet</p></div>`;
+            }
+
+            let html = `<div class="bar-chart"><strong>${questionId}</strong>`;
+            entries.slice(0, 8).forEach(([answer, count]) => {
+                const widthPct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                html += `
+                    <div class="bar-row">
+                        <span class="bar-label" title="${answer}">${answer}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${widthPct}%"></div>
+                        </div>
+                        <span class="bar-count">${count}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function closeDrawer() {
+            document.getElementById('aggregateDrawer').classList.remove('open');
+            currentQuestionBlanks = [];
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('aggregateDrawer').classList.contains('open')) {
+                closeDrawer();
+            }
+        });
+
+        function refreshDrawerIfOpen() {
+            if (document.getElementById('aggregateDrawer').classList.contains('open') && currentQuestionBlanks.length > 0) {
+                loadAggregateData();
+            }
+        }
+
+        function spawnPeerSnow() {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const snow = document.createElement('span');
+                    snow.textContent = '\u2744';
+                    snow.style.cssText = `
+                        position: fixed;
+                        right: ${20 + Math.random() * 300}px;
+                        top: ${100 + Math.random() * 200}px;
+                        font-size: 1.2em;
+                        color: #90caf9;
+                        pointer-events: none;
+                        animation: snowDrift 1.4s ease-out forwards;
+                    `;
+                    document.body.appendChild(snow);
+                    setTimeout(() => snow.remove(), 1400);
+                }, i * 100);
+            }
+        }
+
+        // ==================== AI GRADING ====================
+        async function gradeAllReflections() {
+            const btn = document.querySelector('.btn-ai');
+            btn.disabled = true;
+            btn.textContent = '\u23F3 Grading...';
+
+            const textareas = ['reflect1', 'reflect2', 'exitTicket'];
+
+            for (const id of textareas) {
+                const textarea = document.getElementById(id);
+                if (!textarea) continue;
+
+                const answer = textarea.value.trim();
+                if (answer.length < 20) {
+                    showFeedback(id, { score: 'I', feedback: 'Please write a more complete response (at least 20 characters).' });
+                    continue;
+                }
+
+                try {
+                    const result = await gradeReflection(id, answer);
+
+                    if (result.score === 'P' && result.missing && result.missing.length === 0) {
+                        result.score = 'E';
+                        result.feedback = 'Nice work \u2014 you covered the key ideas.';
+                        result.suggestion = null;
+                    }
+
+                    const matchedCount = (result.matched || []).length;
+                    const missingCount = (result.missing || []).length;
+                    const totalElements = matchedCount + missingCount;
+                    const hitRate = totalElements > 0 ? matchedCount / totalElements : 0;
+
+                    if (result.score === 'P' && hitRate >= 0.3 && missingCount > 0) {
+                        btn.textContent = '\u2728 Polishing...';
+                        try {
+                            const enriched = await fetchEnrichedAnswer(id, answer, result.missing);
+                            if (enriched.score === 'E' && enriched.suggestion) {
+                                result.score = 'E';
+                                gradingState.set(id, { result, originalAnswer: answer, appealCount: 0, history: [] });
+                                renderEnrichedPass(id, enriched);
+                                continue;
+                            }
+                        } catch (err) {
+                            console.warn('Enrichment failed, falling back to P:', err);
+                        }
+                    }
+
+                    gradingState.set(id, { result, originalAnswer: answer, appealCount: 0, history: [] });
+                    showFeedback(id, result);
+                } catch (err) {
+                    console.error('Grading error:', err);
+                    showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
+                }
+            }
+
+            btn.disabled = false;
+            btn.textContent = '\uD83E\uDD16 Grade My Reflections';
+        }
+
+        async function fetchEnrichedAnswer(questionId, studentAnswer, missingElements) {
+            const missingList = missingElements.map(function(m, i) { return (i + 1) + '. ' + m; }).join('\n');
+            const detailWord = missingElements.length === 1 ? 'one detail' : missingElements.length + ' small details';
+            const prompt =
+                'You are helping an AP Statistics student polish their answer. ' +
+                'Their response was strong but missed ' + detailWord + '.\n\n' +
+                '## Student\'s Original Answer\n"' + studentAnswer + '"\n\n' +
+                '## What was missing\n' + missingList + '\n\n' +
+                '## Instructions\n' +
+                'Rewrite the student\'s answer to naturally include the missing concepts. Rules:\n' +
+                '- Keep the student\'s voice, vocabulary, and sentence structure\n' +
+                '- Weave the missing details in so it reads like the student wrote it\n' +
+                '- Do NOT add anything beyond the missing elements listed above\n' +
+                '- Keep it concise (add at most one sentence per missing element)\n' +
+                '- Wrap ONLY the newly added words or phrases in <strong> tags\n\n' +
+                'Respond in JSON format:\n' +
+                '{\n' +
+                '    "score": "E",\n' +
+                '    "feedback": "You nailed the key ideas!",\n' +
+                '    "matched": [],\n' +
+                '    "missing": [],\n' +
+                '    "suggestion": "the rewritten answer with <strong>added details</strong> highlighted"\n' +
+                '}';
+
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'AP Statistics - Enriched Answer Polish',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_U8L3
+                    },
+                    answers: { answer: studentAnswer },
+                    prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Enrichment request failed');
+            return await response.json();
+        }
+
+        function renderEnrichedPass(questionId, enrichedResult) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add('graded-E');
+
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+
+            const block = document.createElement('div');
+            block.className = 'enriched-pass';
+            block.innerHTML =
+                '<div class="enriched-pass-header">\u2726 You nailed the key ideas!</div>' +
+                '<div class="enriched-pass-subtext">Here\'s your answer polished up &mdash; save this for your notes:</div>' +
+                '<div class="enriched-pass-quote">' + (enrichedResult.suggestion || '') + '</div>' +
+                '<div class="enriched-pass-score">Score: E \u2713</div>';
+
+            container.appendChild(block);
+        }
+
+        async function gradeReflection(questionId, answer) {
+            if (!window.buildReflectionPromptU8L3) {
+                throw new Error('AI grading prompts not loaded');
+            }
+
+            const prompt = window.buildReflectionPromptU8L3(questionId, answer);
+            const rubric = window.getRubricU8L3(questionId);
+
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'AP Statistics - Carrying Out a Chi-Square Goodness of Fit Test',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_U8L3
+                    },
+                    answers: { answer },
+                    prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Grading request failed');
+            return await response.json();
+        }
+
+        function showFeedback(questionId, result) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add(`graded-${result.score}`);
+
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+
+            const feedback = document.createElement('div');
+            feedback.className = 'ai-feedback';
+
+            let html = `
+                <div class="ai-feedback-header">
+                    <span class="score-badge score-${result.score}">${result.score === 'E' ? 'Essentially Correct' : result.score === 'P' ? 'Partially Correct' : 'Incorrect'}</span>
+                </div>
+                <div class="ai-feedback-body">${result.feedback || ''}</div>
+            `;
+
+            if (result.matched && result.matched.length > 0) {
+                html += `<div class="ai-feedback-matched">\u2713 You addressed: ${result.matched.join(', ')}</div>`;
+            }
+            if (result.missing && result.missing.length > 0) {
+                html += `<div class="ai-feedback-missing">\u25CB Missing: ${result.missing.join(', ')}</div>`;
+            }
+            if (result.suggestion) {
+                html += `<div class="ai-feedback-suggestion">\uD83D\uDCA1 ${result.suggestion}</div>`;
+            }
+
+            feedback.innerHTML = html;
+
+            const state = gradingState.get(questionId);
+            if (state && result.score !== 'E' && state.appealCount < 3) {
+                const appealSection = document.createElement('div');
+                appealSection.className = 'appeal-section';
+                appealSection.innerHTML = `
+                    <button class="appeal-btn" onclick="showAppealForm('${questionId}')">\uD83D\uDCAC Disagree? Appeal</button>
+                    <div class="appeal-form" id="appeal-form-${questionId}">
+                        <p>Explain why your answer deserves a higher score:</p>
+                        <textarea id="appeal-text-${questionId}" placeholder="I believe my answer addresses..."></textarea>
+                        <button class="btn-check" onclick="submitAppeal('${questionId}')">Submit Appeal</button>
+                        <button class="btn-show" onclick="hideAppealForm('${questionId}')">Cancel</button>
+                    </div>
+                    <div class="appeal-count">Appeals used: ${state.appealCount}/3</div>
+                `;
+                feedback.appendChild(appealSection);
+            }
+
+            container.appendChild(feedback);
+        }
+
+        function showAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.add('visible');
+        }
+
+        function hideAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.remove('visible');
+        }
+
+        async function submitAppeal(questionId) {
+            const state = gradingState.get(questionId);
+            if (!state || state.appealCount >= 3) return;
+
+            const appealText = document.getElementById(`appeal-text-${questionId}`).value.trim();
+            if (appealText.length < 10) {
+                alert('Please provide more detail in your appeal.');
+                return;
+            }
+
+            const form = document.getElementById(`appeal-form-${questionId}`);
+            const buttons = form.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            try {
+                const rubric = window.getRubricU8L3(questionId);
+                const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/appeal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: {
+                            questionId,
+                            topic: 'AP Statistics - Carrying Out a Chi-Square Goodness of Fit Test',
+                            prompt: rubric.questionText,
+                            expectedElements: rubric.expectedElements.map(e => e.description),
+                            lessonContext: window.LESSON_CONTEXT_U8L3
+                        },
+                        answers: { answer: state.originalAnswer },
+                        appealText,
+                        previousResults: { answer: state.result }
+                    })
+                });
+
+                const appealResult = await response.json();
+                const previousScore = state.result.score;
+                const upgraded = appealResult.score === 'E' ||
+                    (previousScore === 'I' && appealResult.score === 'P');
+
+                state.history.push({
+                    appealText,
+                    previousScore,
+                    newScore: appealResult.score,
+                    response: appealResult.feedback,
+                    upgraded
+                });
+                state.appealCount++;
+                state.result = appealResult;
+
+                showFeedback(questionId, appealResult);
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `appeal-result ${upgraded ? 'upgraded' : 'maintained'}`;
+                resultDiv.textContent = upgraded ? '\uD83C\uDF89 Appeal Granted! Score upgraded.' : 'Score maintained. ' + (appealResult.feedback || '');
+                document.getElementById(`${questionId}-feedback`).appendChild(resultDiv);
+
+            } catch (err) {
+                console.error('Appeal error:', err);
+                alert('Error processing appeal. Please try again.');
+            }
+
+            buttons.forEach(b => b.disabled = false);
+        }
+    </script>
+
+</body>
+</html>

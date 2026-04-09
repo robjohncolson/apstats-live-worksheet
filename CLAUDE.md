@@ -35,6 +35,24 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u6_lesson3_live.html` | Live worksheet for Topic 6.3 (Justifying a Claim Based on a CI for p) |
 | `ai-grading-prompts-u6-l3.js` | Rubrics for Unit 6 L3 AI grading (CI interpretation, confidence level, ME factors, 5-step process) |
 | `u6_l3_blooket.csv` | Blooket quiz (35 questions) for Unit 6 L3 conceptual reinforcement (CI interpretation, justifying claims, ME factors) |
+| `u8_lesson1_live.html` | Live worksheet for Topic 8.1 (Introducing Statistics: Are My Results Unexpected?) |
+| `ai-grading-prompts-u8-l1.js` | Rubrics for Unit 8 L1 AI grading (chi-square statistic, simulation, P-value interpretation) |
+| `u8_l1_blooket.csv` | Blooket quiz for Unit 8 L1 conceptual reinforcement |
+| `u8_lesson2_live.html` | Live worksheet for Topic 8.2 (Chi-Square Distributions & Setting Up a GOF Test) |
+| `ai-grading-prompts-u8-l2.js` | Rubrics for Unit 8 L2 AI grading (chi-square distributions, hypotheses, conditions) |
+| `u8_l2_blooket.csv` | Blooket quiz for Unit 8 L2 conceptual reinforcement |
+| `u8_lesson3_live.html` | Live worksheet for Topic 8.3 (Carrying Out a Chi-Square GOF Test) |
+| `ai-grading-prompts-u8-l3.js` | Rubrics for Unit 8 L3 AI grading (test statistic, P-value, conclusion, contributions) |
+| `u8_l3_blooket.csv` | Blooket quiz for Unit 8 L3 conceptual reinforcement |
+| `u8_lesson4_live.html` | Live worksheet for Topic 8.4 (Chi-Square Test for Homogeneity) |
+| `ai-grading-prompts-u8-l4.js` | Rubrics for Unit 8 L4 AI grading (two-way tables, homogeneity test) |
+| `u8_l4_blooket.csv` | Blooket quiz for Unit 8 L4 conceptual reinforcement |
+| `u8_lesson5_live.html` | Live worksheet for Topic 8.5 (Chi-Square Test for Independence) |
+| `ai-grading-prompts-u8-l5.js` | Rubrics for Unit 8 L5 AI grading (independence test, association) |
+| `u8_l5_blooket.csv` | Blooket quiz for Unit 8 L5 conceptual reinforcement |
+| `u8_lesson6_live.html` | Live worksheet for Topic 8.6 (Chi-Square Tests — Putting It All Together) |
+| `ai-grading-prompts-u8-l6.js` | Rubrics for Unit 8 L6 AI grading (GOF vs homogeneity vs independence) |
+| `u8_l6_blooket.csv` | Blooket quiz for Unit 8 L6 conceptual reinforcement |
 | `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
 | `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
 | `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |
@@ -44,6 +62,7 @@ This directory contains AP Statistics "Video Follow-Along" live worksheets—sin
 | `u5_l1_l2/` | Source materials (transcripts, slides, PDFs) for Unit 5 L1-2 worksheet development |
 | `u5/` | Source materials (transcripts, slides, framework) for Unit 5 worksheet development |
 | `u6/` | Source materials (transcripts, slides, framework) for Unit 6 worksheet development |
+| `u8/` | Source materials (transcripts, slides) for Unit 8 worksheet development |
 
 ## Architecture
 

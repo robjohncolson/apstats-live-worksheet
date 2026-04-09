@@ -9,8 +9,7 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=9",
       "blooket": "https://dashboard.blooket.com/set/69b6cdd37e3edc6f469fe78d",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987745452",
-      "videos": [],
-      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=987801140"
+      "videos": []
     },
     "status": {
       "ingest": "done",
@@ -36,8 +35,7 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=1",
       "blooket": "https://dashboard.blooket.com/set/69b783b70641400d44478430",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=987876008",
-      "videos": [],
-      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=987904192"
+      "videos": []
     },
     "status": {
       "ingest": "done",
@@ -63,8 +61,7 @@ const LESSON_REGISTRY = {
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=2",
       "blooket": "https://dashboard.blooket.com/set/69b81f452209798f94f22801",
       "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=988059802",
-      "videos": [],
-      "schoologyFolderE": "https://lynnschools.schoology.com/course/7945275798/materials?f=988061148"
+      "videos": []
     },
     "status": {
       "ingest": "done",
@@ -86,24 +83,76 @@ const LESSON_REGISTRY = {
     "lesson": 4,
     "urls": {
       "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson4_live.html",
-      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l15-two-way-table-totals",
       "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=3",
-      "blooket": null,
-      "schoologyFolder": null,
+      "blooket": "https://dashboard.blooket.com/set/69c098310774a12931de3d19",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=989165947",
       "videos": []
     },
     "status": {
-      "ingest": "pending",
-      "worksheet": "pending",
-      "drills": "pending",
-      "blooketCsv": "pending",
-      "blooketUpload": "pending",
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
       "animations": "pending",
       "animationUpload": "pending",
-      "schoology": "pending",
+      "schoology": "done",
       "schoologyVerified": "pending",
-      "urlsGenerated": "pending",
-      "registryExported": "pending",
+      "urlsGenerated": "done",
+      "registryExported": "done",
+      "committed": "pending"
+    }
+  },
+  "8.5": {
+    "unit": 8,
+    "lesson": 5,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson5_live.html",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l19-identify-test-type",
+      "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=4",
+      "blooket": "https://dashboard.blooket.com/set/69c0a4560774a12931de3f76",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=989177841",
+      "videos": []
+    },
+    "status": {
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "pending",
+      "animationUpload": "pending",
+      "schoology": "done",
+      "schoologyVerified": "pending",
+      "urlsGenerated": "done",
+      "registryExported": "done",
+      "committed": "pending"
+    }
+  },
+  "8.6": {
+    "unit": 8,
+    "lesson": 6,
+    "urls": {
+      "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson6_live.html",
+      "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l23-chi-square-twoway",
+      "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=5",
+      "blooket": "https://dashboard.blooket.com/set/69c35c8f0774a12931df155c",
+      "schoologyFolder": "https://lynnschools.schoology.com/course/7945275782/materials?f=989911631",
+      "videos": []
+    },
+    "status": {
+      "ingest": "done",
+      "worksheet": "done",
+      "drills": "done",
+      "blooketCsv": "done",
+      "blooketUpload": "done",
+      "animations": "pending",
+      "animationUpload": "pending",
+      "schoology": "done",
+      "schoologyVerified": "pending",
+      "urlsGenerated": "done",
+      "registryExported": "done",
       "committed": "pending"
     }
   },
@@ -116,7 +165,6 @@ const LESSON_REGISTRY = {
       "quiz": null,
       "blooket": null,
       "schoologyFolder": null,
-      "schoologyFolderE": null,
       "videos": []
     },
     "status": {
