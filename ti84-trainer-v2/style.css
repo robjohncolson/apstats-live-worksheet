@@ -160,7 +160,7 @@ input[type="file"] {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(360px, 0.95fr) minmax(440px, 1.1fr);
+  grid-template-columns: 1fr minmax(280px, 340px);
   gap: 16px;
   padding: 16px;
 }
@@ -342,9 +342,9 @@ h2 {
 
 .calculator-shell {
   display: grid;
-  gap: 14px;
-  padding: 18px 18px 20px;
-  border-radius: 34px;
+  gap: 8px;
+  padding: 12px 12px 14px;
+  border-radius: 24px;
   background:
     radial-gradient(circle at top center, rgba(255, 255, 255, 0.16), transparent 30%),
     linear-gradient(180deg, var(--calc-body-highlight) 0%, var(--calc-body) 26%, var(--calc-body-deep) 100%);
@@ -382,8 +382,8 @@ h2 {
 }
 
 .lcd-bezel {
-  padding: 14px;
-  border-radius: 24px;
+  padding: 8px;
+  border-radius: 16px;
   background: linear-gradient(180deg, #ffd043 0%, var(--calc-bezel) 66%, #d39f0b 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
@@ -392,8 +392,8 @@ h2 {
 
 .screen-frame {
   position: relative;
-  padding: 10px;
-  border-radius: 18px;
+  padding: 6px;
+  border-radius: 12px;
   background: linear-gradient(180deg, #2a2d32 0%, var(--lcd-frame) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -463,8 +463,8 @@ h2 {
 }
 
 .keypad-shell {
-  padding: 16px 12px 6px;
-  border-radius: 28px;
+  padding: 10px 8px 4px;
+  border-radius: 18px;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.02));
 }
 
@@ -478,12 +478,12 @@ h2 {
 
 .keypad-layout {
   display: grid;
-  gap: 12px;
+  gap: 6px;
 }
 
 .key-row {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .key-row-function,
@@ -493,20 +493,20 @@ h2 {
 
 .keypad-upper {
   display: grid;
-  grid-template-columns: minmax(72px, 0.82fr) minmax(140px, 1.05fr) minmax(148px, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(52px, 0.82fr) minmax(100px, 1.05fr) minmax(108px, 1fr);
+  gap: 6px;
   align-items: center;
 }
 
 .modifier-column {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .modifier-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 6px;
 }
 
 .key {
@@ -514,10 +514,10 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 54px;
-  padding: 12px 10px 8px;
+  min-height: 36px;
+  padding: 8px 6px 6px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--key-dark);
   color: var(--label-primary);
   box-shadow:
@@ -586,12 +586,13 @@ h2 {
 .key-secondary,
 .key-alpha-label {
   position: absolute;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .key-secondary {
-  top: -1rem;
+  top: -0.9rem;
   left: 50%;
   transform: translateX(-50%);
   color: var(--label-2nd);
@@ -599,7 +600,7 @@ h2 {
 
 .key-alpha-label {
   top: 50%;
-  right: 10px;
+  right: 4px;
   transform: translateY(-50%);
   color: var(--label-alpha);
 }
@@ -607,26 +608,26 @@ h2 {
 .key-label {
   text-align: center;
   font-family: var(--font-ui);
-  font-size: 0.88rem;
+  font-size: 0.72rem;
   letter-spacing: 0.02em;
   text-transform: lowercase;
 }
 
 .key-number .key-label {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
   text-transform: none;
 }
 
 .key-operator .key-label {
-  font-size: 1.3rem;
+  font-size: 1rem;
   font-weight: 700;
   text-transform: none;
 }
 
 .key-second .key-label,
 .key-alpha .key-label {
-  font-size: 1rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
@@ -639,7 +640,7 @@ h2 {
 .dpad-shell {
   position: relative;
   justify-self: center;
-  width: min(100%, 156px);
+  width: min(100%, 110px);
   aspect-ratio: 1;
 }
 
@@ -851,7 +852,7 @@ code {
   }
 
   .calculator-shell {
-    padding: 16px 16px 18px;
+    padding: 10px 10px 12px;
   }
 }
 
@@ -865,30 +866,30 @@ code {
   }
 
   .calculator-shell {
-    border-radius: 28px;
+    border-radius: 18px;
   }
 
   .key-row-function,
   .key-row-main {
-    gap: 8px;
+    gap: 4px;
   }
 
   .key {
-    min-height: 48px;
-    padding-inline: 8px;
+    min-height: 32px;
+    padding-inline: 4px;
   }
 
   .key-large,
   .key-enter {
-    min-height: 54px;
+    min-height: 38px;
   }
 
   .key-number .key-label {
-    font-size: 1.3rem;
+    font-size: 1rem;
   }
 
   .dpad-shell {
-    width: 138px;
+    width: 100px;
   }
 
   .dashboard-row {
