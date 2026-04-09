@@ -756,12 +756,27 @@
     render();
   }
 
+  // Map menu letter keys to the physical calculator key that produces them.
+  // In TI-84 menus, pressing the key with alpha label "C" selects item C:
+  const LETTER_TO_PHYSICAL = {
+    A: 'MATH', B: 'APPS', C: 'PRGM', D: 'X_INVERSE',
+    E: 'SIN', F: 'COS', G: 'TAN', H: 'POWER',
+  };
+
   function normalizeStepKey(key) {
     if (key === 'Y=') {
       return 'Y_EQUALS';
     }
 
     return key;
+  }
+
+  // Resolve which physical button to highlight/accept for a step.
+  // For letter keys (A-H), returns the physical key; otherwise returns the step key.
+  function resolvePhysicalKey(step) {
+    if (step.physicalKey) return step.physicalKey;
+    if (LETTER_TO_PHYSICAL[step.key]) return LETTER_TO_PHYSICAL[step.key];
+    return normalizeStepKey(step.key);
   }
 
   function stepIsParameter(step) {
@@ -802,6 +817,12 @@
   }
 
   function displayKey(key) {
+    // For letter keys, show the physical key label + the letter
+    if (LETTER_TO_PHYSICAL[key]) {
+      const physId = LETTER_TO_PHYSICAL[key];
+      const physLabel = BUTTON_META[physId]?.label ?? physId;
+      return `${physLabel} (${key})`;
+    }
     const buttonId = ENGINE_TO_BUTTON[normalizeStepKey(key)] ?? normalizeStepKey(key);
     return BUTTON_META[buttonId]?.label ?? key;
   }
@@ -944,7 +965,8 @@
       ]);
     }
 
-    const expected = ENGINE_TO_BUTTON[normalizeStepKey(step.key)];
+    const physKey = resolvePhysicalKey(step);
+    const expected = ENGINE_TO_BUTTON[physKey] ?? physKey;
     return new Set(expected ? [expected] : []);
   }
 
@@ -1262,9 +1284,10 @@
     }
 
     const engineKey = BUTTON_TO_ENGINE[buttonId] ?? buttonId;
+    const physKey = resolvePhysicalKey(step);
     const correct = stepIsParameter(step)
       ? PARAMETER_INPUT_KEYS.has(engineKey)
-      : normalizeStepKey(step.key) === engineKey;
+      : normalizeStepKey(step.key) === engineKey || physKey === engineKey || physKey === buttonId;
 
     if (!correct) {
       if (app.walkthrough.mode === 'recall') {

@@ -4297,9 +4297,10 @@
           "key": "E",
           "screen": "geometpdf-wizard",
           "highlight": "E:geometpdf(",
-          "narration": "Press [E] to select geometpdf.",
+          "narration": "Press [sin] (the E key) to select geometpdf.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "physicalKey": "SIN"
         },
         {
           "stepNumber": 4,
@@ -4402,9 +4403,10 @@
           "key": "F",
           "screen": "geometcdf-wizard",
           "highlight": "F:geometcdf(",
-          "narration": "Press [F] to select geometcdf.",
+          "narration": "Press [cos] (the F key) to select geometcdf.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "physicalKey": "COS"
         },
         {
           "stepNumber": 4,
@@ -4979,7 +4981,7 @@
           "key": "A",
           "screen": "one-propzint-wizard",
           "highlight": "A:1-PropZInt...",
-          "narration": "Press [A] to select 1-PropZInt.",
+          "narration": "Press [math] (the A key) to select 1-PropZInt.",
           "skillType": "confirmation",
           "repeatable": true,
           "commonErrors": [
@@ -4987,7 +4989,8 @@
               "key": "ENTER",
               "feedback": "Keep scrolling — A:1-PropZInt is below the visible items."
             }
-          ]
+          ],
+          "physicalKey": "MATH"
         },
         {
           "stepNumber": 5,
@@ -6388,9 +6391,10 @@
           "key": "D",
           "screen": "chi2gof-wizard",
           "highlight": "D:χ²GOF-Test...",
-          "narration": "Press [D] to select χ²GOF-Test.",
+          "narration": "Press [x⁻¹] (the D key) to select χ²GOF-Test.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "physicalKey": "X_INVERSE"
         },
         {
           "stepNumber": 5,
@@ -6541,9 +6545,10 @@
           "key": "C",
           "screen": "chi2test-wizard",
           "highlight": "C:χ²-Test...",
-          "narration": "Press [C] to select χ²-Test.",
+          "narration": "Press [prgm] (the C key) to select χ²-Test.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "physicalKey": "PRGM"
         },
         {
           "stepNumber": 5,
@@ -6640,9 +6645,10 @@
           "key": "F",
           "screen": "linreg-ttest-wizard",
           "highlight": "F:LinRegTTest...",
-          "narration": "Press [F] to select LinRegTTest.",
+          "narration": "Press [cos] (the F key) to select LinRegTTest.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "physicalKey": "COS"
         },
         {
           "stepNumber": 5,
@@ -6841,9 +6847,10 @@
           "key": "G",
           "screen": "linreg-tint-wizard",
           "highlight": "G:LinRegTInt...",
-          "narration": "Press [G] to select LinRegTInt.",
+          "narration": "Press [tan] (the G key) to select LinRegTInt.",
           "skillType": "confirmation",
-          "repeatable": true
+          "repeatable": true,
+          "physicalKey": "TAN"
         },
         {
           "stepNumber": 5,
