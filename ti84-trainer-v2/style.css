@@ -694,6 +694,16 @@ h2 {
   text-transform: none;
 }
 
+.key-dpad-arrow:active:not(:disabled) {
+  transform: revert;
+  filter: brightness(0.88);
+}
+
+.key-up:active { transform: translateX(-50%); }
+.key-down:active { transform: translateX(-50%); }
+.key-left:active { transform: translateY(-50%); }
+.key-right:active { transform: translateY(-50%); }
+
 .key-up {
   top: 0;
   left: 50%;
