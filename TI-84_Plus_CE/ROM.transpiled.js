@@ -4,7 +4,7 @@
 export const TRANSPILATION_META = {
   "romPath": "TI-84_Plus_CE\\ROM.rom",
   "romSize": 4194304,
-  "generatedAt": "2026-04-09T13:04:53.895Z",
+  "generatedAt": "2026-04-09T13:12:24.883Z",
   "generator": "..\\..\\..\\..\\..\\..\\C:\\Users\\rober\\Downloads\\Projects\\school\\follow-alongs\\scripts\\transpile-ti84-rom.mjs",
   "blockCount": 2048,
   "coveredBytes": 22033,
@@ -72856,7 +72856,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_002136_adl(cpu) {\n  // 0x002136  52 1b            dec.sil de\n  cpu.unimplemented(0x002136, \"dec.sil de\");\n  // 0x002138  06 00            ld b, 0x00\n  cpu.b = 0x00;\n  // 0x00213a  0e 00            ld c, 0x00\n  cpu.c = 0x00;\n  // 0x00213c  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x00213d  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00213e  52 ed 42         sbc.sil hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x002141  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002142  ed 33 03         lea iy, iy+3\n  cpu.iy = (cpu.iy + 3) & cpu.addressMask;\n  // 0x002145  20 df            jr nz, 0x002126\n  if (cpu.checkCondition('nz')) return 0x002126;\n  return 0x002147;\n}"
+    "source": "function block_002136_adl(cpu) {\n  // 0x002136  52 1b            dec.sil de\n  cpu.de = (cpu.de - 1) & cpu.addressMask;\n  // 0x002138  06 00            ld b, 0x00\n  cpu.b = 0x00;\n  // 0x00213a  0e 00            ld c, 0x00\n  cpu.c = 0x00;\n  // 0x00213c  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x00213d  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00213e  52 ed 42         sbc.sil hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x002141  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002142  ed 33 03         lea iy, iy+3\n  cpu.iy = (cpu.iy + 3) & cpu.addressMask;\n  // 0x002145  20 df            jr nz, 0x002126\n  if (cpu.checkCondition('nz')) return 0x002126;\n  return 0x002147;\n}"
   },
   "002301:adl": {
     "id": "002301:adl",
@@ -80515,8 +80515,11 @@ export const PRELIFTED_BLOCKS = {
         "mode": "adl",
         "bytes": "fd cd 7c 1c 00",
         "dasm": "call 0x001c7c",
-        "tag": "generic",
-        "length": 5
+        "tag": "call",
+        "length": 5,
+        "target": 7292,
+        "targetMode": "adl",
+        "fallthrough": 7317
       },
       {
         "pc": 7317,
@@ -80593,10 +80596,15 @@ export const PRELIFTED_BLOCKS = {
     ],
     "exits": [
       {
+        "type": "call",
+        "target": 7292,
+        "targetMode": "adl"
+      },
+      {
         "type": "return"
       }
     ],
-    "source": "function block_001c84_adl(cpu) {\n  // 0x001c84  dd e5            push ix\n  cpu.push(cpu.ix);\n  // 0x001c86  dd 21 00 00 00   ld ix, 0x000000\n  cpu.ix = 0x000000;\n  // 0x001c8b  dd 39            add ix, sp\n  cpu.ix = cpu.addWord(cpu.ix, cpu.sp);\n  // 0x001c8d  c5               push bc\n  cpu.push(cpu.bc);\n  // 0x001c8e  dd 2f            cpl\n  cpu.a = (~cpu.a) & 0xff;\n  // 0x001c90  fd cd 7c 1c 00   call 0x001c7c\n  cpu.unimplemented(0x001c90, \"call 0x001c7c\");\n  // 0x001c95  dd 07            rlca\n  cpu.a = cpu.rotateLeftCircular(cpu.a);\n  // 0x001c97  fd b7            or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x001c99  ed 42            sbc hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x001c9b  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x001c9c  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x001c9d  dd 27            daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x001c9f  fd dd f9         ld sp, ix\n  cpu.sp = cpu.ix;\n  // 0x001ca2  dd e1            pop ix\n  cpu.ix = cpu.pop();\n  // 0x001ca4  c9               ret\n  return cpu.popReturn();\n}"
+    "source": "function block_001c84_adl(cpu) {\n  // 0x001c84  dd e5            push ix\n  cpu.push(cpu.ix);\n  // 0x001c86  dd 21 00 00 00   ld ix, 0x000000\n  cpu.ix = 0x000000;\n  // 0x001c8b  dd 39            add ix, sp\n  cpu.ix = cpu.addWord(cpu.ix, cpu.sp);\n  // 0x001c8d  c5               push bc\n  cpu.push(cpu.bc);\n  // 0x001c8e  dd 2f            cpl\n  cpu.a = (~cpu.a) & 0xff;\n  // 0x001c90  fd cd 7c 1c 00   call 0x001c7c\n  cpu.call(0x001c7c);\n  // 0x001c95  dd 07            rlca\n  cpu.a = cpu.rotateLeftCircular(cpu.a);\n  // 0x001c97  fd b7            or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x001c99  ed 42            sbc hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x001c9b  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x001c9c  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x001c9d  dd 27            daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x001c9f  fd dd f9         ld sp, ix\n  cpu.sp = cpu.ix;\n  // 0x001ca2  dd e1            pop ix\n  cpu.ix = cpu.pop();\n  // 0x001ca4  c9               ret\n  return cpu.popReturn();\n}"
   },
   "001e01:adl": {
     "id": "001e01:adl",
@@ -83013,7 +83021,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_002211_adl(cpu) {\n  // 0x002211  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002212  3e 18            ld a, 0x18\n  cpu.a = 0x18;\n  // 0x002214  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x002215  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x002217  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002218  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x002219  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x00221a  ed 6a            adc hl, hl\n  cpu.unimplemented(0x00221a, \"adc hl, hl\");\n  // 0x00221c  ed 42            sbc hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x00221e  30 03            jr nc, 0x002223\n  if (cpu.checkCondition('nc')) return 0x002223;\n  return 0x002220;\n}"
+    "source": "function block_002211_adl(cpu) {\n  // 0x002211  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002212  3e 18            ld a, 0x18\n  cpu.a = 0x18;\n  // 0x002214  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x002215  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x002217  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002218  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x002219  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x00221a  ed 6a            adc hl, hl\n  cpu.hl = cpu.addWithCarryWord(cpu.hl, cpu.hl);\n  // 0x00221c  ed 42            sbc hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x00221e  30 03            jr nc, 0x002223\n  if (cpu.checkCondition('nc')) return 0x002223;\n  return 0x002220;\n}"
   },
   "0101d8:adl": {
     "id": "0101d8:adl",
@@ -95674,8 +95682,11 @@ export const PRELIFTED_BLOCKS = {
         "mode": "adl",
         "bytes": "fd cd c2 21 00",
         "dasm": "call 0x0021c2",
-        "tag": "generic",
-        "length": 5
+        "tag": "call",
+        "length": 5,
+        "target": 8642,
+        "targetMode": "adl",
+        "fallthrough": 65100
       },
       {
         "pc": 65100,
@@ -95696,6 +95707,11 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       },
       {
+        "type": "call",
+        "target": 8642,
+        "targetMode": "adl"
+      },
+      {
         "type": "branch",
         "condition": "z",
         "target": 65673,
@@ -95707,7 +95723,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_00fe10_adl(cpu) {\n  // 0x00fe10  21 ee ff ff      ld hl, 0xffffee\n  cpu.hl = 0xffffee;\n  // 0x00fe14  cd 97 21 00      call 0x002197\n  cpu.call(0x002197);\n  // 0x00fe18  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x00fe1b  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe1c  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x00fe1e  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x00fe1f  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x00fe20  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x00fe21  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x00fe22  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x00fe23  01 ed 3f d1      ld bc, 0xd13fed\n  cpu.bc = 0xd13fed;\n  // 0x00fe27  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x00fe28  ed 07            ld bc, (hl)\n  cpu.bc = cpu.read24(cpu.hl);\n  // 0x00fe2a  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe2c  fd 01 ec 41 d1   ld bc, 0xd141ec\n  cpu.bc = 0xd141ec;\n  // 0x00fe31  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe33  f6 dd            or 0xdd\n  cpu.a |= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe35  36 fc            ld (hl), 0xfc\n  cpu.writeIndirect8('hl', 0xfc);\n  // 0x00fe37  02               ld (bc), a\n  cpu.writeIndirect8('bc', cpu.a);\n  // 0x00fe38  dd 07            rlca\n  cpu.a = cpu.rotateLeftCircular(cpu.a);\n  // 0x00fe3a  f6 dd            or 0xdd\n  cpu.a |= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe3c  0f               rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe3d  ee dd            xor 0xdd\n  cpu.a ^= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe3f  07               rlca\n  cpu.a = cpu.rotateLeftCircular(cpu.a);\n  // 0x00fe40  f6 03            or 0x03\n  cpu.a |= 0x03;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe42  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe44  f6 dd            or 0xdd\n  cpu.a |= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe46  27               daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x00fe47  fd cd c2 21 00   call 0x0021c2\n  cpu.unimplemented(0x00fe47, \"call 0x0021c2\");\n  // 0x00fe4c  ca 89 00 01      jp z, 0x010089\n  if (cpu.checkCondition('z')) return 0x010089;\n  return 0x00fe50;\n}"
+    "source": "function block_00fe10_adl(cpu) {\n  // 0x00fe10  21 ee ff ff      ld hl, 0xffffee\n  cpu.hl = 0xffffee;\n  // 0x00fe14  cd 97 21 00      call 0x002197\n  cpu.call(0x002197);\n  // 0x00fe18  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x00fe1b  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe1c  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x00fe1e  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x00fe1f  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x00fe20  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x00fe21  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x00fe22  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x00fe23  01 ed 3f d1      ld bc, 0xd13fed\n  cpu.bc = 0xd13fed;\n  // 0x00fe27  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x00fe28  ed 07            ld bc, (hl)\n  cpu.bc = cpu.read24(cpu.hl);\n  // 0x00fe2a  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe2c  fd 01 ec 41 d1   ld bc, 0xd141ec\n  cpu.bc = 0xd141ec;\n  // 0x00fe31  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe33  f6 dd            or 0xdd\n  cpu.a |= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe35  36 fc            ld (hl), 0xfc\n  cpu.writeIndirect8('hl', 0xfc);\n  // 0x00fe37  02               ld (bc), a\n  cpu.writeIndirect8('bc', cpu.a);\n  // 0x00fe38  dd 07            rlca\n  cpu.a = cpu.rotateLeftCircular(cpu.a);\n  // 0x00fe3a  f6 dd            or 0xdd\n  cpu.a |= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe3c  0f               rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe3d  ee dd            xor 0xdd\n  cpu.a ^= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe3f  07               rlca\n  cpu.a = cpu.rotateLeftCircular(cpu.a);\n  // 0x00fe40  f6 03            or 0x03\n  cpu.a |= 0x03;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe42  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x00fe44  f6 dd            or 0xdd\n  cpu.a |= 0xdd;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x00fe46  27               daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x00fe47  fd cd c2 21 00   call 0x0021c2\n  cpu.call(0x0021c2);\n  // 0x00fe4c  ca 89 00 01      jp z, 0x010089\n  if (cpu.checkCondition('z')) return 0x010089;\n  return 0x00fe50;\n}"
   },
   "00967f:adl": {
     "id": "00967f:adl",
@@ -100173,7 +100189,7 @@ export const PRELIFTED_BLOCKS = {
         "type": "return"
       }
     ],
-    "source": "function block_08262b_adl(cpu) {\n  // 0x08262b  ed b8            lddr\n  cpu.unimplemented(0x08262b, \"lddr\");\n  // 0x08262d  ed 53 93 25 d0   ld (0xd02593), de\n  cpu.write24(0xd02593, cpu.de);\n  // 0x082632  d1               pop de\n  cpu.de = cpu.pop();\n  // 0x082633  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x082634  2a 90 25 d0      ld hl, (0xd02590)\n  cpu.hl = cpu.read24(0xd02590);\n  // 0x082638  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x082639  22 90 25 d0      ld (0xd02590), hl\n  cpu.write24(0xd02590, cpu.hl);\n  // 0x08263d  cd ca 27 08      call 0x0827ca\n  cpu.call(0x0827ca);\n  // 0x082641  c9               ret\n  return cpu.popReturn();\n}"
+    "source": "function block_08262b_adl(cpu) {\n  // 0x08262b  ed b8            lddr\n  cpu.lddr();\n  // 0x08262d  ed 53 93 25 d0   ld (0xd02593), de\n  cpu.write24(0xd02593, cpu.de);\n  // 0x082632  d1               pop de\n  cpu.de = cpu.pop();\n  // 0x082633  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x082634  2a 90 25 d0      ld hl, (0xd02590)\n  cpu.hl = cpu.read24(0xd02590);\n  // 0x082638  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x082639  22 90 25 d0      ld (0xd02590), hl\n  cpu.write24(0xd02590, cpu.hl);\n  // 0x08263d  cd ca 27 08      call 0x0827ca\n  cpu.call(0x0827ca);\n  // 0x082641  c9               ret\n  return cpu.popReturn();\n}"
   },
   "08284d:adl": {
     "id": "08284d:adl",
@@ -102832,7 +102848,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_04066d_adl(cpu) {\n  // 0x04066d  f3               di\n  cpu.iff1 = 0;\n  cpu.iff2 = 0;\n  // 0x04066e  32 91 05 d0      ld (0xd00591), a\n  cpu.write8(0xd00591, cpu.a);\n  // 0x040672  cd 15 08 04      call 0x040815\n  cpu.call(0x040815);\n  // 0x040676  0e 00            ld c, 0x00\n  cpu.c = 0x00;\n  // 0x040678  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x04067a  ed 58            in e, (c)\n  cpu.unimplemented(0x04067a, \"in e, (c)\");\n  // 0x04067c  bb               cp e\n  cpu.compare(cpu.a, cpu.e);\n  // 0x04067d  28 fb            jr z, 0x04067a\n  if (cpu.checkCondition('z')) return 0x04067a;\n  return 0x04067f;\n}"
+    "source": "function block_04066d_adl(cpu) {\n  // 0x04066d  f3               di\n  cpu.iff1 = 0;\n  cpu.iff2 = 0;\n  // 0x04066e  32 91 05 d0      ld (0xd00591), a\n  cpu.write8(0xd00591, cpu.a);\n  // 0x040672  cd 15 08 04      call 0x040815\n  cpu.call(0x040815);\n  // 0x040676  0e 00            ld c, 0x00\n  cpu.c = 0x00;\n  // 0x040678  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x04067a  ed 58            in e, (c)\n  cpu.e = cpu.ioRead(cpu.c);\n  // 0x04067c  bb               cp e\n  cpu.compare(cpu.a, cpu.e);\n  // 0x04067d  28 fb            jr z, 0x04067a\n  if (cpu.checkCondition('z')) return 0x04067a;\n  return 0x04067f;\n}"
   },
   "04066b:adl": {
     "id": "04066b:adl",
@@ -102937,7 +102953,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_04066b_adl(cpu) {\n  // 0x04066b  3e 01            ld a, 0x01\n  cpu.a = 0x01;\n  // 0x04066d  f3               di\n  cpu.iff1 = 0;\n  cpu.iff2 = 0;\n  // 0x04066e  32 91 05 d0      ld (0xd00591), a\n  cpu.write8(0xd00591, cpu.a);\n  // 0x040672  cd 15 08 04      call 0x040815\n  cpu.call(0x040815);\n  // 0x040676  0e 00            ld c, 0x00\n  cpu.c = 0x00;\n  // 0x040678  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x04067a  ed 58            in e, (c)\n  cpu.unimplemented(0x04067a, \"in e, (c)\");\n  // 0x04067c  bb               cp e\n  cpu.compare(cpu.a, cpu.e);\n  // 0x04067d  28 fb            jr z, 0x04067a\n  if (cpu.checkCondition('z')) return 0x04067a;\n  return 0x04067f;\n}"
+    "source": "function block_04066b_adl(cpu) {\n  // 0x04066b  3e 01            ld a, 0x01\n  cpu.a = 0x01;\n  // 0x04066d  f3               di\n  cpu.iff1 = 0;\n  cpu.iff2 = 0;\n  // 0x04066e  32 91 05 d0      ld (0xd00591), a\n  cpu.write8(0xd00591, cpu.a);\n  // 0x040672  cd 15 08 04      call 0x040815\n  cpu.call(0x040815);\n  // 0x040676  0e 00            ld c, 0x00\n  cpu.c = 0x00;\n  // 0x040678  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x04067a  ed 58            in e, (c)\n  cpu.e = cpu.ioRead(cpu.c);\n  // 0x04067c  bb               cp e\n  cpu.compare(cpu.a, cpu.e);\n  // 0x04067d  28 fb            jr z, 0x04067a\n  if (cpu.checkCondition('z')) return 0x04067a;\n  return 0x04067f;\n}"
   },
   "040658:adl": {
     "id": "040658:adl",
@@ -109928,7 +109944,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_00ee09_adl(cpu) {\n  // 0x00ee09  dd 34 ff         inc ix-1\n  cpu.unimplemented(0x00ee09, \"inc ix-1\");\n  // 0x00ee0c  dd 7e ff         ld a, (ix+0xff)\n  cpu.a = cpu.readIndexed8('ix', +0xff);\n  // 0x00ee0f  fe 05            cp 0x05\n  cpu.compare(cpu.a, 0x05);\n  // 0x00ee11  da 83 ed 00      jp c, 0x00ed83\n  if (cpu.checkCondition('c')) return 0x00ed83;\n  return 0x00ee15;\n}"
+    "source": "function block_00ee09_adl(cpu) {\n  // 0x00ee09  dd 34 ff         inc ix-1\n  cpu.writeIndexed8('ix', -1, (cpu.readIndexed8('ix', -1) + 1) & 0xff);\n  // 0x00ee0c  dd 7e ff         ld a, (ix+0xff)\n  cpu.a = cpu.readIndexed8('ix', +0xff);\n  // 0x00ee0f  fe 05            cp 0x05\n  cpu.compare(cpu.a, 0x05);\n  // 0x00ee11  da 83 ed 00      jp c, 0x00ed83\n  if (cpu.checkCondition('c')) return 0x00ed83;\n  return 0x00ee15;\n}"
   },
   "00ed9b:adl": {
     "id": "00ed9b:adl",
@@ -110413,7 +110429,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_002217_adl(cpu) {\n  // 0x002217  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002218  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x002219  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x00221a  ed 6a            adc hl, hl\n  cpu.unimplemented(0x00221a, \"adc hl, hl\");\n  // 0x00221c  ed 42            sbc hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x00221e  30 03            jr nc, 0x002223\n  if (cpu.checkCondition('nc')) return 0x002223;\n  return 0x002220;\n}"
+    "source": "function block_002217_adl(cpu) {\n  // 0x002217  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x002218  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x002219  eb               ex de, hl\n  {\n    const temp = cpu.de;\n    cpu.de = cpu.hl;\n    cpu.hl = temp;\n  }\n  // 0x00221a  ed 6a            adc hl, hl\n  cpu.hl = cpu.addWithCarryWord(cpu.hl, cpu.hl);\n  // 0x00221c  ed 42            sbc hl, bc\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.bc);\n  // 0x00221e  30 03            jr nc, 0x002223\n  if (cpu.checkCondition('nc')) return 0x002223;\n  return 0x002220;\n}"
   },
   "002227:adl": {
     "id": "002227:adl",
@@ -116939,7 +116955,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_04067a_adl(cpu) {\n  // 0x04067a  ed 58            in e, (c)\n  cpu.unimplemented(0x04067a, \"in e, (c)\");\n  // 0x04067c  bb               cp e\n  cpu.compare(cpu.a, cpu.e);\n  // 0x04067d  28 fb            jr z, 0x04067a\n  if (cpu.checkCondition('z')) return 0x04067a;\n  return 0x04067f;\n}"
+    "source": "function block_04067a_adl(cpu) {\n  // 0x04067a  ed 58            in e, (c)\n  cpu.e = cpu.ioRead(cpu.c);\n  // 0x04067c  bb               cp e\n  cpu.compare(cpu.a, cpu.e);\n  // 0x04067d  28 fb            jr z, 0x04067a\n  if (cpu.checkCondition('z')) return 0x04067a;\n  return 0x04067f;\n}"
   },
   "04067f:adl": {
     "id": "04067f:adl",
@@ -117020,7 +117036,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_04067f_adl(cpu) {\n  // 0x04067f  0e 04            ld c, 0x04\n  cpu.c = 0x04;\n  // 0x040681  ed 50            in d, (c)\n  cpu.unimplemented(0x040681, \"in d, (c)\");\n  // 0x040683  0e 08            ld c, 0x08\n  cpu.c = 0x08;\n  // 0x040685  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x040687  3c               inc a\n  cpu.a = (cpu.a + 1) & 0xff;\n  // 0x040688  fe 18            cp 0x18\n  cpu.compare(cpu.a, 0x18);\n  // 0x04068a  38 07            jr c, 0x040693\n  if (cpu.checkCondition('c')) return 0x040693;\n  return 0x04068c;\n}"
+    "source": "function block_04067f_adl(cpu) {\n  // 0x04067f  0e 04            ld c, 0x04\n  cpu.c = 0x04;\n  // 0x040681  ed 50            in d, (c)\n  cpu.d = cpu.ioRead(cpu.c);\n  // 0x040683  0e 08            ld c, 0x08\n  cpu.c = 0x08;\n  // 0x040685  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x040687  3c               inc a\n  cpu.a = (cpu.a + 1) & 0xff;\n  // 0x040688  fe 18            cp 0x18\n  cpu.compare(cpu.a, 0x18);\n  // 0x04068a  38 07            jr c, 0x040693\n  if (cpu.checkCondition('c')) return 0x040693;\n  return 0x04068c;\n}"
   },
   "04065a:adl": {
     "id": "04065a:adl",
@@ -120881,7 +120897,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_048ef7_adl(cpu) {\n  // 0x048ef7  dd 34 ff         inc ix-1\n  cpu.unimplemented(0x048ef7, \"inc ix-1\");\n  // 0x048efa  dd 7e ff         ld a, (ix+0xff)\n  cpu.a = cpu.readIndexed8('ix', +0xff);\n  // 0x048efd  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x048efe  20 be            jr nz, 0x048ebe\n  if (cpu.checkCondition('nz')) return 0x048ebe;\n  return 0x048f00;\n}"
+    "source": "function block_048ef7_adl(cpu) {\n  // 0x048ef7  dd 34 ff         inc ix-1\n  cpu.writeIndexed8('ix', -1, (cpu.readIndexed8('ix', -1) + 1) & 0xff);\n  // 0x048efa  dd 7e ff         ld a, (ix+0xff)\n  cpu.a = cpu.readIndexed8('ix', +0xff);\n  // 0x048efd  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x048efe  20 be            jr nz, 0x048ebe\n  if (cpu.checkCondition('nz')) return 0x048ebe;\n  return 0x048f00;\n}"
   },
   "048ef1:adl": {
     "id": "048ef1:adl",
@@ -121953,7 +121969,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_005a2d_adl(cpu) {\n  // 0x005a2d  ed 44            neg\n  cpu.unimplemented(0x005a2d, \"neg\");\n  // 0x005a2f  47               ld b, a\n  cpu.b = cpu.a;\n  // 0x005a30  3e 20            ld a, 0x20\n  cpu.a = 0x20;\n  // 0x005a32  05               dec b\n  cpu.b = (cpu.b - 1) & 0xff;\n  // 0x005a33  28 06            jr z, 0x005a3b\n  if (cpu.checkCondition('z')) return 0x005a3b;\n  return 0x005a35;\n}"
+    "source": "function block_005a2d_adl(cpu) {\n  // 0x005a2d  ed 44            neg\n  cpu.a = cpu.negate(cpu.a);\n  // 0x005a2f  47               ld b, a\n  cpu.b = cpu.a;\n  // 0x005a30  3e 20            ld a, 0x20\n  cpu.a = 0x20;\n  // 0x005a32  05               dec b\n  cpu.b = (cpu.b - 1) & 0xff;\n  // 0x005a33  28 06            jr z, 0x005a3b\n  if (cpu.checkCondition('z')) return 0x005a3b;\n  return 0x005a35;\n}"
   },
   "0015d5:adl": {
     "id": "0015d5:adl",
@@ -124888,8 +124904,11 @@ export const PRELIFTED_BLOCKS = {
         "mode": "adl",
         "bytes": "fd cd c2 21 00",
         "dasm": "call 0x0021c2",
-        "tag": "generic",
-        "length": 5
+        "tag": "call",
+        "length": 5,
+        "target": 8642,
+        "targetMode": "adl",
+        "fallthrough": 77545
       },
       {
         "pc": 77545,
@@ -124905,6 +124924,11 @@ export const PRELIFTED_BLOCKS = {
     ],
     "exits": [
       {
+        "type": "call",
+        "target": 8642,
+        "targetMode": "adl"
+      },
+      {
         "type": "branch",
         "condition": "z",
         "target": 77654,
@@ -124916,7 +124940,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_012ed3_adl(cpu) {\n  // 0x012ed3  40 01 82 30      ld.sis bc, 0x3082\n  cpu.bc = 0x3082;\n  // 0x012ed7  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x012ed9  e6 20            and 0x20\n  cpu.a &= 0x20;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x012edb  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x012edc  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x012ede  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x012edf  dd 2f            cpl\n  cpu.a = (~cpu.a) & 0xff;\n  // 0x012ee1  fd dd 27         daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x012ee4  fd cd c2 21 00   call 0x0021c2\n  cpu.unimplemented(0x012ee4, \"call 0x0021c2\");\n  // 0x012ee9  28 6b            jr z, 0x012f56\n  if (cpu.checkCondition('z')) return 0x012f56;\n  return 0x012eeb;\n}"
+    "source": "function block_012ed3_adl(cpu) {\n  // 0x012ed3  40 01 82 30      ld.sis bc, 0x3082\n  cpu.bc = 0x3082;\n  // 0x012ed7  ed 78            in a, (c)\n  cpu.a = cpu.ioRead(cpu.c);\n  // 0x012ed9  e6 20            and 0x20\n  cpu.a &= 0x20;\n  cpu.updateLogicFlags(cpu.a);\n  // 0x012edb  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x012edc  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x012ede  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x012edf  dd 2f            cpl\n  cpu.a = (~cpu.a) & 0xff;\n  // 0x012ee1  fd dd 27         daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x012ee4  fd cd c2 21 00   call 0x0021c2\n  cpu.call(0x0021c2);\n  // 0x012ee9  28 6b            jr z, 0x012f56\n  if (cpu.checkCondition('z')) return 0x012f56;\n  return 0x012eeb;\n}"
   },
   "0123c1:adl": {
     "id": "0123c1:adl",
@@ -128099,7 +128123,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_0878b1_adl(cpu) {\n  // 0x0878b1  11 40 00 00      ld de, 0x000040\n  cpu.de = 0x000040;\n  // 0x0878b5  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x0878b6  f5               push af\n  cpu.push(cpu.af);\n  // 0x0878b7  c5               push bc\n  cpu.push(cpu.bc);\n  // 0x0878b8  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x0878b9  0a               ld a, (bc)\n  cpu.a = cpu.readIndirect8('bc');\n  // 0x0878ba  21 00 00 00      ld hl, 0x000000\n  cpu.hl = 0x000000;\n  // 0x0878be  01 0c 00 00      ld bc, 0x00000c\n  cpu.bc = 0x00000c;\n  // 0x0878c2  52 09            add.sil hl, bc\n  cpu.unimplemented(0x0878c2, \"add.sil hl, bc\");\n  // 0x0878c4  3d               dec a\n  cpu.a = (cpu.a - 1) & 0xff;\n  // 0x0878c5  20 fb            jr nz, 0x0878c2\n  if (cpu.checkCondition('nz')) return 0x0878c2;\n  return 0x0878c7;\n}"
+    "source": "function block_0878b1_adl(cpu) {\n  // 0x0878b1  11 40 00 00      ld de, 0x000040\n  cpu.de = 0x000040;\n  // 0x0878b5  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x0878b6  f5               push af\n  cpu.push(cpu.af);\n  // 0x0878b7  c5               push bc\n  cpu.push(cpu.bc);\n  // 0x0878b8  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x0878b9  0a               ld a, (bc)\n  cpu.a = cpu.readIndirect8('bc');\n  // 0x0878ba  21 00 00 00      ld hl, 0x000000\n  cpu.hl = 0x000000;\n  // 0x0878be  01 0c 00 00      ld bc, 0x00000c\n  cpu.bc = 0x00000c;\n  // 0x0878c2  52 09            add.sil hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x0878c4  3d               dec a\n  cpu.a = (cpu.a - 1) & 0xff;\n  // 0x0878c5  20 fb            jr nz, 0x0878c2\n  if (cpu.checkCondition('nz')) return 0x0878c2;\n  return 0x0878c7;\n}"
   },
   "0a239e:adl": {
     "id": "0a239e:adl",
@@ -135428,7 +135452,7 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_03c4eb_adl(cpu) {\n  // 0x03c4eb  dd 34 ff         inc ix-1\n  cpu.unimplemented(0x03c4eb, \"inc ix-1\");\n  // 0x03c4ee  dd 7e ff         ld a, (ix+0xff)\n  cpu.a = cpu.readIndexed8('ix', +0xff);\n  // 0x03c4f1  fe 05            cp 0x05\n  cpu.compare(cpu.a, 0x05);\n  // 0x03c4f3  38 bb            jr c, 0x03c4b0\n  if (cpu.checkCondition('c')) return 0x03c4b0;\n  return 0x03c4f5;\n}"
+    "source": "function block_03c4eb_adl(cpu) {\n  // 0x03c4eb  dd 34 ff         inc ix-1\n  cpu.writeIndexed8('ix', -1, (cpu.readIndexed8('ix', -1) + 1) & 0xff);\n  // 0x03c4ee  dd 7e ff         ld a, (ix+0xff)\n  cpu.a = cpu.readIndexed8('ix', +0xff);\n  // 0x03c4f1  fe 05            cp 0x05\n  cpu.compare(cpu.a, 0x05);\n  // 0x03c4f3  38 bb            jr c, 0x03c4b0\n  if (cpu.checkCondition('c')) return 0x03c4b0;\n  return 0x03c4f5;\n}"
   },
   "03c4c8:adl": {
     "id": "03c4c8:adl",
@@ -135730,8 +135754,11 @@ export const PRELIFTED_BLOCKS = {
         "mode": "adl",
         "bytes": "fd cd 38 01 00",
         "dasm": "call 0x000138",
-        "tag": "generic",
-        "length": 5
+        "tag": "call",
+        "length": 5,
+        "target": 312,
+        "targetMode": "adl",
+        "fallthrough": 249043
       },
       {
         "pc": 249043,
@@ -135747,6 +135774,11 @@ export const PRELIFTED_BLOCKS = {
     ],
     "exits": [
       {
+        "type": "call",
+        "target": 312,
+        "targetMode": "adl"
+      },
+      {
         "type": "branch",
         "condition": "z",
         "target": 249706,
@@ -135758,13 +135790,13 @@ export const PRELIFTED_BLOCKS = {
         "targetMode": "adl"
       }
     ],
-    "source": "function block_03ccae_adl(cpu) {\n  // 0x03ccae  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03ccb1  d6 80            sub 0x80\n  cpu.a = cpu.subtract8(cpu.a, 0x80);\n  // 0x03ccb3  dd 77 06         ld (ix+0x06), a\n  cpu.writeIndexed8('ix', +0x06, cpu.a);\n  // 0x03ccb6  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03ccb9  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x03ccba  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x03ccbc  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x03ccbd  2b               dec hl\n  cpu.hl = (cpu.hl - 1) & cpu.addressMask;\n  // 0x03ccbe  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x03ccbf  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x03ccc0  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x03ccc1  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03ccc2  01 01 30 d0      ld bc, 0xd03001\n  cpu.bc = 0xd03001;\n  // 0x03ccc6  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03ccc7  ed 07            ld bc, (hl)\n  cpu.bc = cpu.read24(cpu.hl);\n  // 0x03ccc9  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x03cccb  fd dd 27         daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x03ccce  fd cd 38 01 00   call 0x000138\n  cpu.unimplemented(0x03ccce, \"call 0x000138\");\n  // 0x03ccd3  ca 6a cf 03      jp z, 0x03cf6a\n  if (cpu.checkCondition('z')) return 0x03cf6a;\n  return 0x03ccd7;\n}"
+    "source": "function block_03ccae_adl(cpu) {\n  // 0x03ccae  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03ccb1  d6 80            sub 0x80\n  cpu.a = cpu.subtract8(cpu.a, 0x80);\n  // 0x03ccb3  dd 77 06         ld (ix+0x06), a\n  cpu.writeIndexed8('ix', +0x06, cpu.a);\n  // 0x03ccb6  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03ccb9  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x03ccba  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x03ccbc  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x03ccbd  2b               dec hl\n  cpu.hl = (cpu.hl - 1) & cpu.addressMask;\n  // 0x03ccbe  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x03ccbf  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x03ccc0  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x03ccc1  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03ccc2  01 01 30 d0      ld bc, 0xd03001\n  cpu.bc = 0xd03001;\n  // 0x03ccc6  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03ccc7  ed 07            ld bc, (hl)\n  cpu.bc = cpu.read24(cpu.hl);\n  // 0x03ccc9  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x03cccb  fd dd 27         daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x03ccce  fd cd 38 01 00   call 0x000138\n  cpu.call(0x000138);\n  // 0x03ccd3  ca 6a cf 03      jp z, 0x03cf6a\n  if (cpu.checkCondition('z')) return 0x03cf6a;\n  return 0x03ccd7;\n}"
   },
   "03cc97:adl": {
     "id": "03cc97:adl",
     "startPc": 248983,
     "mode": "adl",
-    "instructionCount": 32,
+    "instructionCount": 13,
     "instructions": [
       {
         "pc": 248983,
@@ -135866,180 +135898,21 @@ export const PRELIFTED_BLOCKS = {
         "pc": 249003,
         "mode": "adl",
         "bytes": "fd 18 1e",
-        "dasm": "jr pc+30",
-        "tag": "generic",
-        "length": 3
-      },
-      {
-        "pc": 249006,
-        "mode": "adl",
-        "bytes": "dd 7e 06",
-        "dasm": "ld a, (ix+0x06)",
-        "tag": "generic",
-        "length": 3
-      },
-      {
-        "pc": 249009,
-        "mode": "adl",
-        "bytes": "d6 80",
-        "dasm": "sub 0x80",
-        "tag": "generic",
-        "length": 2
-      },
-      {
-        "pc": 249011,
-        "mode": "adl",
-        "bytes": "dd 77 06",
-        "dasm": "ld (ix+0x06), a",
-        "tag": "generic",
-        "length": 3
-      },
-      {
-        "pc": 249014,
-        "mode": "adl",
-        "bytes": "dd 7e 06",
-        "dasm": "ld a, (ix+0x06)",
-        "tag": "generic",
-        "length": 3
-      },
-      {
-        "pc": 249017,
-        "mode": "adl",
-        "bytes": "b7",
-        "dasm": "or a",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249018,
-        "mode": "adl",
-        "bytes": "ed 62",
-        "dasm": "sbc hl, hl",
-        "tag": "generic",
-        "length": 2
-      },
-      {
-        "pc": 249020,
-        "mode": "adl",
-        "bytes": "6f",
-        "dasm": "ld l, a",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249021,
-        "mode": "adl",
-        "bytes": "2b",
-        "dasm": "dec hl",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249022,
-        "mode": "adl",
-        "bytes": "e5",
-        "dasm": "push hl",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249023,
-        "mode": "adl",
-        "bytes": "c1",
-        "dasm": "pop bc",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249024,
-        "mode": "adl",
-        "bytes": "29",
-        "dasm": "add hl, hl",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249025,
-        "mode": "adl",
-        "bytes": "09",
-        "dasm": "add hl, bc",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249026,
-        "mode": "adl",
-        "bytes": "01 01 30 d0",
-        "dasm": "ld bc, 0xd03001",
-        "tag": "generic",
-        "length": 4
-      },
-      {
-        "pc": 249030,
-        "mode": "adl",
-        "bytes": "09",
-        "dasm": "add hl, bc",
-        "tag": "generic",
-        "length": 1
-      },
-      {
-        "pc": 249031,
-        "mode": "adl",
-        "bytes": "ed 07",
-        "dasm": "ld bc, (hl)",
-        "tag": "load-word-from-hl",
-        "length": 2
-      },
-      {
-        "pc": 249033,
-        "mode": "adl",
-        "bytes": "dd 0f",
-        "dasm": "rrca",
-        "tag": "generic",
-        "length": 2
-      },
-      {
-        "pc": 249035,
-        "mode": "adl",
-        "bytes": "fd dd 27",
-        "dasm": "daa",
-        "tag": "generic",
-        "length": 3
-      },
-      {
-        "pc": 249038,
-        "mode": "adl",
-        "bytes": "fd cd 38 01 00",
-        "dasm": "call 0x000138",
-        "tag": "generic",
-        "length": 5
-      },
-      {
-        "pc": 249043,
-        "mode": "adl",
-        "bytes": "ca 6a cf 03",
-        "dasm": "jp z, 0x03cf6a",
-        "tag": "jp-conditional",
-        "length": 4,
-        "target": 249706,
-        "targetMode": "adl",
-        "fallthrough": 249047
+        "dasm": "jr 0x03cccc",
+        "tag": "jr",
+        "length": 3,
+        "target": 249036,
+        "targetMode": "adl"
       }
     ],
     "exits": [
       {
-        "type": "branch",
-        "condition": "z",
-        "target": 249706,
-        "targetMode": "adl"
-      },
-      {
-        "type": "fallthrough",
-        "target": 249047,
+        "type": "jump",
+        "target": 249036,
         "targetMode": "adl"
       }
     ],
-    "source": "function block_03cc97_adl(cpu) {\n  // 0x03cc97  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03cc9a  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x03cc9b  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x03cc9d  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x03cc9e  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x03cc9f  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x03cca0  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x03cca1  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03cca2  01 ed 3f d1      ld bc, 0xd13fed\n  cpu.bc = 0xd13fed;\n  // 0x03cca6  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03cca7  ed 07            ld bc, (hl)\n  cpu.bc = cpu.read24(cpu.hl);\n  // 0x03cca9  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x03ccab  fd 18 1e         jr pc+30\n  cpu.unimplemented(0x03ccab, \"jr pc+30\");\n  // 0x03ccae  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03ccb1  d6 80            sub 0x80\n  cpu.a = cpu.subtract8(cpu.a, 0x80);\n  // 0x03ccb3  dd 77 06         ld (ix+0x06), a\n  cpu.writeIndexed8('ix', +0x06, cpu.a);\n  // 0x03ccb6  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03ccb9  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x03ccba  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x03ccbc  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x03ccbd  2b               dec hl\n  cpu.hl = (cpu.hl - 1) & cpu.addressMask;\n  // 0x03ccbe  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x03ccbf  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x03ccc0  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x03ccc1  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03ccc2  01 01 30 d0      ld bc, 0xd03001\n  cpu.bc = 0xd03001;\n  // 0x03ccc6  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03ccc7  ed 07            ld bc, (hl)\n  cpu.bc = cpu.read24(cpu.hl);\n  // 0x03ccc9  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x03cccb  fd dd 27         daa\n  cpu.a = cpu.decimalAdjustAccumulator(cpu.a);\n  // 0x03ccce  fd cd 38 01 00   call 0x000138\n  cpu.unimplemented(0x03ccce, \"call 0x000138\");\n  // 0x03ccd3  ca 6a cf 03      jp z, 0x03cf6a\n  if (cpu.checkCondition('z')) return 0x03cf6a;\n  return 0x03ccd7;\n}"
+    "source": "function block_03cc97_adl(cpu) {\n  // 0x03cc97  dd 7e 06         ld a, (ix+0x06)\n  cpu.a = cpu.readIndexed8('ix', +0x06);\n  // 0x03cc9a  b7               or a\n  cpu.updateLogicFlags(cpu.a);\n  // 0x03cc9b  ed 62            sbc hl, hl\n  cpu.hl = cpu.subtractWithBorrowWord(cpu.hl, cpu.hl);\n  // 0x03cc9d  6f               ld l, a\n  cpu.l = cpu.a;\n  // 0x03cc9e  e5               push hl\n  cpu.push(cpu.hl);\n  // 0x03cc9f  c1               pop bc\n  cpu.bc = cpu.pop();\n  // 0x03cca0  29               add hl, hl\n  cpu.hl = cpu.addWord(cpu.hl, cpu.hl);\n  // 0x03cca1  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03cca2  01 ed 3f d1      ld bc, 0xd13fed\n  cpu.bc = 0xd13fed;\n  // 0x03cca6  09               add hl, bc\n  cpu.hl = cpu.addWord(cpu.hl, cpu.bc);\n  // 0x03cca7  ed 07            ld bc, (hl)\n  cpu.bc = cpu.read24(cpu.hl);\n  // 0x03cca9  dd 0f            rrca\n  cpu.a = cpu.rotateRightCircular(cpu.a);\n  // 0x03ccab  fd 18 1e         jr 0x03cccc\n  return 0x03cccc;\n}"
   },
   "048ebe:adl": {
     "id": "048ebe:adl",
