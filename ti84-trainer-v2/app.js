@@ -1415,28 +1415,29 @@
   }
 
   async function goToListHeader(listIndex) {
-    for (let step = 0; step < 24; step += 1) {
-      await sendAndWait('UP', 20);
-    }
+    // Quit to home and re-enter STAT>EDIT for reliable positioning
+    await quitToHome();
+    await delay(100);
+    await sendAndWait('STAT', 80);
+    await sendAndWait('ENTER', 200);
 
-    for (let step = 0; step < 8; step += 1) {
-      await sendAndWait('LEFT', 20);
-    }
-
+    // Cursor starts on L1 row 1. Navigate right to target column.
     for (let step = 0; step < listIndex; step += 1) {
-      await sendAndWait('RIGHT', 30);
+      await sendAndWait('RIGHT', 80);
     }
 
-    await sendAndWait('UP', 40);
+    // Move up to the header row
+    await sendAndWait('UP', 80);
   }
 
   async function autoFillList(listName, values) {
     const listIndex = Number(listName.slice(1)) - 1;
 
     await goToListHeader(listIndex);
-    await sendAndWait('CLEAR', 80);
-    await sendAndWait('ENTER', 100);
-    await sendAndWait('DOWN', 60);
+    // CLEAR on the header clears the entire list, ENTER confirms
+    await sendAndWait('CLEAR', 100);
+    await sendAndWait('ENTER', 120);
+    // Cursor is now on row 1 of the (empty) list — no extra DOWN needed
 
     for (let index = 0; index < values.length; index += 1) {
       await app.bridge.typeValue(String(values[index]));
@@ -1512,13 +1513,8 @@
         .filter((name) => /^L\d$/.test(name))
         .sort(listNameSort);
 
-      if (listNames.length) {
-        await sendAndWait('STAT');
-        await sendAndWait('ENTER', 180);
-
-        for (const listName of listNames) {
-          await autoFillList(listName, dataTarget[listName]);
-        }
+      for (const listName of listNames) {
+        await autoFillList(listName, dataTarget[listName]);
       }
 
       const matrixNames = Object.keys(dataTarget).filter((name) => /^\[.+\]$/.test(name));
