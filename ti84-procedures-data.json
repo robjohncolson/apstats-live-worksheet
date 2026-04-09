@@ -2842,6 +2842,9 @@
           "skillType": "navigation"
         }
       ],
+      "dataRequirements": {
+        "L1": "numeric"
+      },
       "assumeDataIn": "L1"
     },
     {
@@ -3000,6 +3003,9 @@
           "repeatable": true
         }
       ],
+      "dataRequirements": {
+        "L1": "numeric"
+      },
       "assumeDataIn": "L1"
     },
     {
@@ -3158,6 +3164,9 @@
           "repeatable": true
         }
       ],
+      "dataRequirements": {
+        "L1": "numeric"
+      },
       "assumeDataIn": "L1"
     },
     {
@@ -3630,6 +3639,10 @@
           "skillType": "confirmation"
         }
       ],
+      "dataRequirements": {
+        "L1": "numeric",
+        "L2": "numeric"
+      },
       "assumeDataIn": [
         "L1",
         "L2"
@@ -3798,6 +3811,10 @@
           "repeatable": true
         }
       ],
+      "dataRequirements": {
+        "L1": "numeric",
+        "L2": "numeric"
+      },
       "assumeDataIn": [
         "L1",
         "L2"
@@ -3974,7 +3991,11 @@
           "skillType": "navigation",
           "repeatable": true
         }
-      ]
+      ],
+      "dataRequirements": {
+        "L1": "numeric",
+        "L2": "numeric"
+      }
     },
     {
       "id": "binompdf",
@@ -5452,6 +5473,9 @@
           "skillType": "confirmation"
         }
       ],
+      "dataRequirements": {
+        "L1": "numeric"
+      },
       "assumeDataIn": "L1"
     },
     {
@@ -5769,6 +5793,9 @@
           "skillType": "confirmation"
         }
       ],
+      "dataRequirements": {
+        "L1": "numeric"
+      },
       "assumeDataIn": "L1"
     },
     {
@@ -6350,7 +6377,11 @@
           "skillType": "confirmation",
           "repeatable": true
         }
-      ]
+      ],
+      "dataRequirements": {
+        "L1": "numeric",
+        "L2": "numeric"
+      }
     },
     {
       "id": "chi-square-gof-test",
@@ -6510,7 +6541,11 @@
           "narration": "Choose Calculate to show χ², p, df, and CNTB.",
           "skillType": "confirmation"
         }
-      ]
+      ],
+      "dataRequirements": {
+        "L1": "numeric",
+        "L2": "numeric"
+      }
     },
     {
       "id": "chi-square-test",
@@ -6617,7 +6652,10 @@
           "narration": "Choose Calculate to show χ², p, and df. The expected counts are stored in [B].",
           "skillType": "confirmation"
         }
-      ]
+      ],
+      "dataRequirements": {
+        "[A]": "matrix"
+      }
     },
     {
       "id": "linreg-ttest",
@@ -6827,7 +6865,11 @@
           "narration": "Run LinRegTTest and display t, p, df, a, b, s, r², and r.",
           "skillType": "confirmation"
         }
-      ]
+      ],
+      "dataRequirements": {
+        "L1": "numeric",
+        "L2": "numeric"
+      }
     },
     {
       "id": "linreg-tint",
@@ -7029,7 +7071,11 @@
           "narration": "Run LinRegTInt and display the slope interval and regression details.",
           "skillType": "confirmation"
         }
-      ]
+      ],
+      "dataRequirements": {
+        "L1": "numeric",
+        "L2": "numeric"
+      }
     }
   ],
   "dag": {

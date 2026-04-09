@@ -246,6 +246,61 @@ h2 {
   background: #f6f6f6;
 }
 
+.clutch-card {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--ink);
+  background: #f3f0d7;
+}
+
+.clutch-card h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+
+.clutch-card-review {
+  background: #e8efe2;
+}
+
+.clutch-note {
+  margin-top: 0;
+}
+
+.data-target-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.data-target-row {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.data-target-row strong {
+  font-family: var(--font-ui);
+}
+
+.data-progress-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.data-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 0.86rem;
+}
+
 .contrast-label {
   margin: 0 0 8px;
   font-family: var(--font-ui);

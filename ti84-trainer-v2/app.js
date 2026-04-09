@@ -177,7 +177,24 @@
   }
 
   const STORAGE_KEY = 'ti84trainer_v2_state';
+  const MEMORY_KEY = 'ti84-trainer-list-memory';
   const PARAMETER_PATTERN = /^\{.+\}$/;
+  const DATA_SETUP_INPUT_CHAR = {
+    ZERO: '0',
+    ONE: '1',
+    TWO: '2',
+    THREE: '3',
+    FOUR: '4',
+    FIVE: '5',
+    SIX: '6',
+    SEVEN: '7',
+    EIGHT: '8',
+    NINE: '9',
+    DECIMAL: '.',
+    NEGATIVE: '-',
+    MINUS: '-',
+  };
+  const DIGIT_BUTTON_IDS = ['ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
 
   const { createState, createRouteState, transition } = machine;
   const { createBackend } = backendApi;
@@ -466,9 +483,18 @@
     flashKeyId: null,
     flashKind: null,
     romDialogOpen: false,
+    clutch: {
+      engaged: true,
+      phase: 'idle',
+      dataTarget: null,
+      dataProgress: {},
+      autoFilling: false,
+      manualEntry: null,
+    },
   };
 
   app.filterUnit = app.persisted.filterUnit ?? 'all';
+  let listMemory = loadListMemory();
 
   function loadPersisted() {
     const fallback = {
@@ -499,6 +525,287 @@
   function savePersisted() {
     app.persisted.filterUnit = app.filterUnit;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(app.persisted));
+  }
+
+  function loadListMemory() {
+    try {
+      const raw = window.localStorage.getItem(MEMORY_KEY);
+
+      if (!raw) {
+        return {};
+      }
+
+      return JSON.parse(raw) || {};
+    } catch (error) {
+      console.warn('Failed to load TI-84 list memory.', error);
+      return {};
+    }
+  }
+
+  function saveListMemory() {
+    window.localStorage.setItem(MEMORY_KEY, JSON.stringify(listMemory));
+  }
+
+  function cloneDataValue(data) {
+    return JSON.parse(JSON.stringify(data));
+  }
+
+  function clearListMemory() {
+    listMemory = {};
+    window.localStorage.removeItem(MEMORY_KEY);
+  }
+
+  function setListMemoryEntry(name, data, source) {
+    listMemory[name] = {
+      data: cloneDataValue(data),
+      source,
+      timestamp: Date.now(),
+    };
+    saveListMemory();
+  }
+
+  function dataMatches(left, right) {
+    if (Array.isArray(left) && Array.isArray(right)) {
+      if (left.length !== right.length) {
+        return false;
+      }
+
+      return left.every((entry, index) => dataMatches(entry, right[index]));
+    }
+
+    return left === right;
+  }
+
+  function listDataMatches(name, targetData) {
+    const entry = listMemory[name];
+
+    if (!entry?.data) {
+      return false;
+    }
+
+    return dataMatches(entry.data, targetData);
+  }
+
+  function dataItemCount(data) {
+    if (!Array.isArray(data)) {
+      return 0;
+    }
+
+    if (!Array.isArray(data[0])) {
+      return data.length;
+    }
+
+    return data.reduce((sum, row) => sum + row.length, 0);
+  }
+
+  function dataProgressUnit(name, data) {
+    if (/^\[.+\]$/.test(name) || Array.isArray(data[0])) {
+      return 'cells';
+    }
+
+    return 'values';
+  }
+
+  function createDataProgress(dataTarget) {
+    const progress = {};
+
+    for (const [name, data] of Object.entries(dataTarget ?? {})) {
+      progress[name] = {
+        entered: 0,
+        total: dataItemCount(data),
+        unit: dataProgressUnit(name, data),
+      };
+    }
+
+    return progress;
+  }
+
+  function setProgressComplete(dataTarget) {
+    const progress = createDataProgress(dataTarget);
+
+    for (const entry of Object.values(progress)) {
+      entry.entered = entry.total;
+    }
+
+    app.clutch.dataProgress = progress;
+  }
+
+  function resetClutchState() {
+    app.clutch.engaged = true;
+    app.clutch.phase = 'idle';
+    app.clutch.dataTarget = null;
+    app.clutch.dataProgress = {};
+    app.clutch.autoFilling = false;
+    app.clutch.manualEntry = null;
+  }
+
+  function hasDataTarget(dataTarget) {
+    return Boolean(dataTarget && Object.keys(dataTarget).length);
+  }
+
+  function listNameSort(left, right) {
+    return Number(left.replace(/\D/g, '')) - Number(right.replace(/\D/g, ''));
+  }
+
+  function createManualEntryState(dataTarget) {
+    const listOrder = Object.keys(dataTarget ?? {})
+      .filter((name) => /^L\d$/.test(name))
+      .sort(listNameSort);
+
+    return {
+      pendingStat: false,
+      editorOpen: false,
+      listOrder,
+      activeListIndex: 0,
+      activeRow: 0,
+      buffer: '',
+      entries: Object.fromEntries(listOrder.map((name) => [name, []])),
+    };
+  }
+
+  function currentTrackedListName() {
+    const state = app.clutch.manualEntry;
+
+    if (!state?.listOrder.length) {
+      return null;
+    }
+
+    return state.listOrder[state.activeListIndex] ?? null;
+  }
+
+  function sequentialEntryCount(entries) {
+    let count = 0;
+
+    while (entries[count] !== undefined) {
+      count += 1;
+    }
+
+    return count;
+  }
+
+  function updateManualDataProgress() {
+    const manual = app.clutch.manualEntry;
+
+    if (!manual) {
+      return;
+    }
+
+    for (const listName of manual.listOrder) {
+      const progress = app.clutch.dataProgress[listName];
+
+      if (!progress) {
+        continue;
+      }
+
+      progress.entered = Math.min(sequentialEntryCount(manual.entries[listName]), progress.total);
+    }
+  }
+
+  function trackDataSetupInput(buttonId) {
+    if (app.clutch.phase !== 'data-setup' || !app.clutch.manualEntry) {
+      return;
+    }
+
+    const manual = app.clutch.manualEntry;
+
+    if (buttonId === 'STAT') {
+      manual.pendingStat = true;
+      return;
+    }
+
+    if (manual.pendingStat && buttonId === 'ENTER') {
+      manual.pendingStat = false;
+      manual.editorOpen = true;
+      manual.activeListIndex = 0;
+      manual.activeRow = 0;
+      manual.buffer = '';
+      updateManualDataProgress();
+      return;
+    }
+
+    manual.pendingStat = false;
+
+    if (!manual.editorOpen) {
+      return;
+    }
+
+    if (buttonId === 'RIGHT') {
+      manual.activeListIndex = Math.min(manual.activeListIndex + 1, manual.listOrder.length - 1);
+      manual.activeRow = sequentialEntryCount(manual.entries[currentTrackedListName()] ?? []);
+      manual.buffer = '';
+      return;
+    }
+
+    if (buttonId === 'LEFT') {
+      manual.activeListIndex = Math.max(manual.activeListIndex - 1, 0);
+      manual.activeRow = sequentialEntryCount(manual.entries[currentTrackedListName()] ?? []);
+      manual.buffer = '';
+      return;
+    }
+
+    if (buttonId === 'UP') {
+      manual.activeRow = Math.max(manual.activeRow - 1, 0);
+      manual.buffer = '';
+      return;
+    }
+
+    if (buttonId === 'DOWN') {
+      manual.activeRow += 1;
+      manual.buffer = '';
+      return;
+    }
+
+    if (buttonId === 'CLEAR' && manual.activeRow === 0) {
+      const listName = currentTrackedListName();
+
+      if (!listName) {
+        return;
+      }
+
+      manual.entries[listName] = [];
+      manual.buffer = '';
+      updateManualDataProgress();
+      return;
+    }
+
+    const char = DATA_SETUP_INPUT_CHAR[buttonId];
+
+    if (char) {
+      manual.buffer += char;
+      return;
+    }
+
+    if (buttonId !== 'ENTER' || !manual.buffer) {
+      return;
+    }
+
+    const value = Number(manual.buffer);
+    const listName = currentTrackedListName();
+
+    manual.buffer = '';
+
+    if (!Number.isFinite(value) || !listName) {
+      return;
+    }
+
+    manual.entries[listName][manual.activeRow] = value;
+    manual.activeRow += 1;
+    updateManualDataProgress();
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
+  }
+
+  function buttonIdForDigit(digit) {
+    return DIGIT_BUTTON_IDS[Number(digit)] ?? null;
+  }
+
+  async function sendAndWait(buttonId, delayMs = 80) {
+    await app.bridge.sendButton(buttonId);
+    await delay(delayMs);
   }
 
   function todayIso() {
@@ -856,6 +1163,397 @@
     return `${value}`;
   }
 
+  function pairedDataProcedure(procedureId) {
+    return new Set([
+      'scatterplot',
+      'residual-plot',
+      'linreg-a-plus-bx',
+      'linreg-ttest',
+      'linreg-tint',
+    ]).has(procedureId);
+  }
+
+  function procedurePhaseBanner() {
+    if (app.walkthrough?.mode === 'guided') {
+      return 'Follow the highlighted key. Wrong keys are blocked before they reach the calculator.';
+    }
+
+    return 'Recall mode is live. Hints count as misses.';
+  }
+
+  function procedureDataNote(procedureId, listName) {
+    if (procedureId === 'chi-square-gof-test') {
+      return listName === 'L1' ? 'Observed' : 'Expected';
+    }
+
+    if (procedureId === 'chi-square-test') {
+      return listName === '[A]' ? 'Observed' : 'Expected';
+    }
+
+    if (pairedDataProcedure(procedureId)) {
+      return listName === 'L1' ? 'X values' : 'Y values';
+    }
+
+    return listName === 'L1' ? 'Data' : '';
+  }
+
+  function mergeProblemValues(problem) {
+    const values = problem?.values && typeof problem.values === 'object'
+      ? { ...problem.values }
+      : {};
+
+    if (problem?.data !== undefined && values.data === undefined) {
+      values.data = problem.data;
+    }
+
+    return values;
+  }
+
+  function resolveListData(listName, procedure, problem) {
+    const values = mergeProblemValues(problem);
+
+    if (Array.isArray(values[listName])) {
+      return values[listName];
+    }
+
+    if (listName === 'L1') {
+      if (Array.isArray(values.observed)) {
+        return values.observed;
+      }
+
+      if (Array.isArray(values.x_values)) {
+        return values.x_values;
+      }
+
+      if (Array.isArray(values.xValues)) {
+        return values.xValues;
+      }
+    }
+
+    if (listName === 'L2') {
+      if (Array.isArray(values.expected)) {
+        return values.expected;
+      }
+
+      if (Array.isArray(values.expected_counts)) {
+        return values.expected_counts;
+      }
+
+      if (Array.isArray(values.expected_proportions) && Number.isFinite(values.n)) {
+        return values.expected_proportions.map((entry) => Math.round(entry * values.n * 10000) / 10000);
+      }
+
+      if (Array.isArray(values.y_values)) {
+        return values.y_values;
+      }
+
+      if (Array.isArray(values.yValues)) {
+        return values.yValues;
+      }
+    }
+
+    if (!Array.isArray(values.data)) {
+      return null;
+    }
+
+    if (!Array.isArray(values.data[0])) {
+      if (listName === 'L1') {
+        return values.data;
+      }
+
+      return null;
+    }
+
+    const listOrder = Object.keys(procedure?.dataRequirements ?? {})
+      .filter((name) => /^L\d$/.test(name))
+      .sort(listNameSort);
+    const listIndex = listOrder.indexOf(listName);
+
+    if (listIndex === -1 || !Array.isArray(values.data[listIndex])) {
+      return null;
+    }
+
+    return values.data[listIndex];
+  }
+
+  function expectedMatrixFromObserved(observed) {
+    if (!Array.isArray(observed) || !observed.length) {
+      return null;
+    }
+
+    const rowTotals = observed.map((row) => row.reduce((sum, entry) => sum + entry, 0));
+    const colTotals = observed[0].map((_, colIndex) => observed.reduce((sum, row) => sum + row[colIndex], 0));
+    const total = rowTotals.reduce((sum, entry) => sum + entry, 0);
+
+    if (!total) {
+      return null;
+    }
+
+    return observed.map((row, rowIndex) => row.map((_, colIndex) => {
+      const expected = (rowTotals[rowIndex] * colTotals[colIndex]) / total;
+      return Math.round(expected * 10000) / 10000;
+    }));
+  }
+
+  function resolveMatrixData(matrixName, problem) {
+    const values = mergeProblemValues(problem);
+
+    if (Array.isArray(values[matrixName])) {
+      return values[matrixName];
+    }
+
+    if (matrixName === '[A]') {
+      if (Array.isArray(values.matrix)) {
+        return values.matrix;
+      }
+
+      if (Array.isArray(values.data) && Array.isArray(values.data[0])) {
+        return values.data;
+      }
+    }
+
+    if (matrixName === '[B]') {
+      if (Array.isArray(values.expected_matrix)) {
+        return values.expected_matrix;
+      }
+
+      if (Array.isArray(values.matrix)) {
+        return expectedMatrixFromObserved(values.matrix);
+      }
+    }
+
+    return null;
+  }
+
+  function buildDataTarget(procedure, problem) {
+    const requirements = procedure?.dataRequirements;
+
+    if (!requirements) {
+      return null;
+    }
+
+    const target = {};
+
+    for (const name of Object.keys(requirements)) {
+      const data = /^L\d$/.test(name)
+        ? resolveListData(name, procedure, problem)
+        : resolveMatrixData(name, problem);
+
+      if (!Array.isArray(data) || !data.length) {
+        continue;
+      }
+
+      target[name] = cloneDataValue(data);
+    }
+
+    return hasDataTarget(target) ? target : null;
+  }
+
+  function rememberDataTarget(dataTarget, source) {
+    for (const [name, data] of Object.entries(dataTarget ?? {})) {
+      setListMemoryEntry(name, data, source);
+    }
+  }
+
+  function syncDataTargetToNative(dataTarget) {
+    for (const [name, data] of Object.entries(dataTarget ?? {})) {
+      if (/^L\d$/.test(name)) {
+        app.bridge.setList?.(name, data);
+        continue;
+      }
+
+      if (/^\[.+\]$/.test(name)) {
+        app.bridge.setMatrix?.(name, data);
+      }
+    }
+  }
+
+  function dataTargetMatchesMemory(dataTarget) {
+    return Object.entries(dataTarget ?? {}).every(([name, data]) => listDataMatches(name, data));
+  }
+
+  function startProcedurePhase(message) {
+    app.walkthrough.preparing = false;
+    app.busy = false;
+    app.clutch.engaged = true;
+    app.clutch.phase = 'procedure';
+    app.clutch.dataTarget = null;
+    app.clutch.dataProgress = {};
+    app.clutch.autoFilling = false;
+    app.clutch.manualEntry = null;
+    app.banner = message || procedurePhaseBanner();
+    updateMockCanvas();
+    render();
+  }
+
+  function enterDataSetupPhase(procedure, dataTarget) {
+    app.walkthrough.preparing = false;
+    app.busy = false;
+    app.clutch.engaged = false;
+    app.clutch.phase = 'data-setup';
+    app.clutch.dataTarget = dataTarget;
+    app.clutch.dataProgress = createDataProgress(dataTarget);
+    app.clutch.autoFilling = false;
+    app.clutch.manualEntry = createManualEntryState(dataTarget);
+    app.banner = `Enter the required data for ${procedure.name}, or use Auto-fill.`;
+    updateMockCanvas();
+    render();
+  }
+
+  function enterResultReviewPhase() {
+    app.busy = false;
+    app.clutch.engaged = false;
+    app.clutch.phase = 'result-review';
+    app.banner = 'Walkthrough complete. Explore the result, then finish the review.';
+    updateMockCanvas();
+    render();
+  }
+
+  async function quitToHome() {
+    await sendAndWait('2ND');
+    await sendAndWait('MODE', 160);
+  }
+
+  async function goToListHeader(listIndex) {
+    for (let step = 0; step < 24; step += 1) {
+      await sendAndWait('UP', 20);
+    }
+
+    for (let step = 0; step < 8; step += 1) {
+      await sendAndWait('LEFT', 20);
+    }
+
+    for (let step = 0; step < listIndex; step += 1) {
+      await sendAndWait('RIGHT', 30);
+    }
+
+    await sendAndWait('UP', 40);
+  }
+
+  async function autoFillList(listName, values) {
+    const listIndex = Number(listName.slice(1)) - 1;
+
+    await goToListHeader(listIndex);
+    await sendAndWait('CLEAR', 80);
+    await sendAndWait('ENTER', 100);
+    await sendAndWait('DOWN', 60);
+
+    for (let index = 0; index < values.length; index += 1) {
+      await app.bridge.typeValue(String(values[index]));
+      await delay(40);
+      await sendAndWait('ENTER', 70);
+
+      app.clutch.dataProgress[listName] = {
+        ...app.clutch.dataProgress[listName],
+        entered: index + 1,
+      };
+      render();
+    }
+  }
+
+  function matrixMenuIndex(matrixName) {
+    const letter = matrixName.slice(1, -1);
+    return 'ABCDEFGHIJ'.indexOf(letter) + 1;
+  }
+
+  async function autoFillMatrix(matrixName, values) {
+    const rows = values.length;
+    const cols = values[0]?.length ?? 0;
+    const matrixIndex = matrixMenuIndex(matrixName);
+
+    if (!matrixIndex || !rows || !cols) {
+      return;
+    }
+
+    await quitToHome();
+    await sendAndWait('2ND');
+    await sendAndWait('X_INVERSE', 100);
+    await sendAndWait('RIGHT', 60);
+    await sendAndWait('RIGHT', 60);
+    await sendAndWait(buttonIdForDigit(matrixIndex), 100);
+    await app.bridge.typeValue(String(rows));
+    await delay(40);
+    await sendAndWait('ENTER', 70);
+    await app.bridge.typeValue(String(cols));
+    await delay(40);
+    await sendAndWait('ENTER', 100);
+
+    let entered = 0;
+    const total = rows * cols;
+
+    for (const row of values) {
+      for (const cell of row) {
+        await app.bridge.typeValue(String(cell));
+        await delay(40);
+        await sendAndWait('ENTER', 70);
+        entered += 1;
+        app.clutch.dataProgress[matrixName] = {
+          ...app.clutch.dataProgress[matrixName],
+          entered,
+          total,
+        };
+        render();
+      }
+    }
+  }
+
+  async function autoFillData(dataTarget) {
+    if (!hasDataTarget(dataTarget) || app.clutch.autoFilling) {
+      return;
+    }
+
+    app.busy = true;
+    app.clutch.autoFilling = true;
+    app.banner = 'Auto-filling data...';
+    render();
+
+    try {
+      const listNames = Object.keys(dataTarget)
+        .filter((name) => /^L\d$/.test(name))
+        .sort(listNameSort);
+
+      if (listNames.length) {
+        await sendAndWait('STAT');
+        await sendAndWait('ENTER', 180);
+
+        for (const listName of listNames) {
+          await autoFillList(listName, dataTarget[listName]);
+        }
+      }
+
+      const matrixNames = Object.keys(dataTarget).filter((name) => /^\[.+\]$/.test(name));
+
+      for (const matrixName of matrixNames) {
+        await autoFillMatrix(matrixName, dataTarget[matrixName]);
+      }
+
+      if (listNames.length || matrixNames.length) {
+        await quitToHome();
+      }
+
+      rememberDataTarget(dataTarget, 'auto-fill');
+      syncDataTargetToNative(dataTarget);
+      startProcedurePhase('Data entered. Starting procedure.');
+    } catch (error) {
+      app.busy = false;
+      app.clutch.autoFilling = false;
+      app.banner = error.message;
+      render();
+    }
+  }
+
+  function confirmDataSetup() {
+    if (!hasDataTarget(app.clutch.dataTarget)) {
+      startProcedurePhase();
+      return;
+    }
+
+    setProgressComplete(app.clutch.dataTarget);
+    rememberDataTarget(app.clutch.dataTarget, 'manual-confirm');
+    syncDataTargetToNative(app.clutch.dataTarget);
+    startProcedurePhase('Data setup confirmed. Starting procedure.');
+  }
+
   function seedNativeLists(problem, procedure) {
     if (!app.bridge?.setList) {
       return;
@@ -1029,7 +1727,9 @@
     const routeState = createRouteState(procedureId);
     const record = ensureProcedureRecord(procedureId).track2;
     const procedure = PROCEDURE_BY_ID[procedureId];
+    const dataTarget = buildDataTarget(procedure, problem);
 
+    resetClutchState();
     app.walkthrough = {
       procedureId,
       problem,
@@ -1053,19 +1753,25 @@
 
     try {
       await app.bridge.prepareHome();
+
+      if (hasDataTarget(dataTarget)) {
+        if (dataTargetMatchesMemory(dataTarget)) {
+          syncDataTargetToNative(dataTarget);
+          startProcedurePhase('Using saved data already in the calculator. Starting procedure.');
+          return;
+        }
+
+        enterDataSetupPhase(procedure, dataTarget);
+        return;
+      }
+
       seedNativeLists(problem, procedure);
       seedNativeMatrices(problem);
     } catch (error) {
       console.warn('Failed to prepare the calculator home screen.', error);
     }
 
-    app.walkthrough.preparing = false;
-    app.busy = false;
-    app.banner = app.walkthrough.mode === 'guided'
-      ? `Follow the highlighted key. Wrong keys are blocked before they reach the calculator.${walkthroughDataNote(procedure)}`
-      : `Recall mode is live. Hints count as misses.${walkthroughDataNote(procedure)}`;
-    updateMockCanvas();
-    render();
+    startProcedurePhase(procedurePhaseBanner());
   }
 
   async function handleCorrectChoice() {
@@ -1228,6 +1934,8 @@
       return;
     }
 
+    resetClutchState();
+
     const track2Summary = applyTrack2Outcome(walkthrough);
 
     if (walkthrough.sourceKind === 'branch') {
@@ -1273,7 +1981,30 @@
   }
 
   async function pressButton(buttonId) {
-    if (!app.walkthrough || app.walkthrough.preparing || app.walkthrough.completion || app.busy) {
+    if (!app.walkthrough || app.walkthrough.preparing || app.walkthrough.completion || app.busy || app.clutch.autoFilling) {
+      return;
+    }
+
+    if (!app.clutch.engaged) {
+      app.busy = true;
+
+      try {
+        await app.bridge.sendButton(buttonId);
+
+        if (app.clutch.phase === 'data-setup') {
+          trackDataSetupInput(buttonId);
+          app.banner = 'Data setup mode is active. Keys go straight to the calculator.';
+        } else if (app.clutch.phase === 'result-review') {
+          app.banner = 'Result review mode is active. Explore the output, then finish the review.';
+        }
+      } catch (error) {
+        app.banner = error.message;
+      } finally {
+        app.busy = false;
+        updateMockCanvas();
+        render();
+      }
+
       return;
     }
 
@@ -1321,7 +2052,7 @@
       flashButton(buttonId, 'correct');
 
       if (app.walkthrough.routeState.routeIndex >= currentProcedure().steps.length) {
-        completeWalkthrough();
+        enterResultReviewPhase();
         return;
       }
     } catch (error) {
@@ -1334,7 +2065,7 @@
   }
 
   function showHint() {
-    if (!app.walkthrough || app.walkthrough.mode !== 'recall' || app.walkthrough.preparing) {
+    if (!app.walkthrough || app.walkthrough.mode !== 'recall' || app.walkthrough.preparing || app.clutch.phase !== 'procedure') {
       return;
     }
 
@@ -1398,7 +2129,7 @@
             ([key, value]) => `
               <span class="chip">
                 <strong>${key}</strong>
-                <span>${formatCalculatorValue(value)}</span>
+                <span>${Array.isArray(value) ? formatDataPreview(value, 8) : formatCalculatorValue(value)}</span>
               </span>
             `,
           )
@@ -1464,12 +2195,97 @@
     `;
   }
 
+  function formatDataPreview(data, limit = 12) {
+    if (!Array.isArray(data)) {
+      return formatCalculatorValue(data);
+    }
+
+    if (!Array.isArray(data[0])) {
+      const values = data.slice(0, limit).map((entry) => formatCalculatorValue(entry));
+      return data.length > limit ? `${values.join(', ')}, ...` : values.join(', ');
+    }
+
+    return data
+      .map((row) => `[${row.map((entry) => formatCalculatorValue(entry)).join(', ')}]`)
+      .join(' ');
+  }
+
+  function renderDataSetupPanel(procedure) {
+    const dataTarget = app.clutch.dataTarget ?? {};
+    const progress = app.clutch.dataProgress ?? {};
+    const names = Object.keys(dataTarget);
+
+    return `
+      <div class="clutch-card clutch-card-setup">
+        <p class="panel-kicker">Data Setup</p>
+        <h3>Load the required data before the walkthrough.</h3>
+        <p class="panel-note clutch-note">The clutch is disengaged, so every key goes straight to the calculator.</p>
+        <div class="data-target-list">
+          ${names
+            .map((name) => {
+              const note = procedureDataNote(procedure.id, name);
+              return `
+                <div class="data-target-row">
+                  <strong>${name}${note ? ` (${note})` : ''}</strong>
+                  <span>${formatDataPreview(dataTarget[name])}</span>
+                </div>
+              `;
+            })
+            .join('')}
+        </div>
+        <p class="panel-note">Open [STAT] then [ENTER] for lists, or use the matrix editor for matrix data. Click Auto-fill if you want the trainer to type it for you.</p>
+        <div class="button-row">
+          <button type="button" class="mac-button primary" data-action="auto-fill-data" ${app.clutch.autoFilling ? 'disabled' : ''}>
+            Auto-fill
+          </button>
+          <button type="button" class="mac-button" data-action="data-setup-done" ${app.clutch.autoFilling ? 'disabled' : ''}>
+            I'm done
+          </button>
+        </div>
+        <div class="data-progress-row">
+          ${Object.entries(progress)
+            .map(([name, entry]) => `<span class="data-progress-pill">${name}: ${entry.entered}/${entry.total} ${entry.unit}</span>`)
+            .join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderResultReviewPanel() {
+    return `
+      <div class="clutch-card clutch-card-review">
+        <p class="panel-kicker">Result Review</p>
+        <h3>Explore the calculator output before finishing.</h3>
+        <p class="panel-note clutch-note">The clutch is disengaged again, so keys go straight to the calculator while you inspect the result.</p>
+        <div class="button-row">
+          <button type="button" class="mac-button primary" data-action="finish-review">
+            Finish review
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   function renderWalkthroughPanel() {
     const walkthrough = app.walkthrough;
     const procedure = currentProcedure();
     const step = currentStep();
     const stepNumber = walkthrough.routeState.routeIndex + 1;
     const totalSteps = procedure.steps.length;
+    const phase = app.clutch.phase;
+    let copy = walkthrough.preparing ? 'Resetting the calculator to HOME…' : step?.narration ?? 'Walkthrough complete.';
+    let note = walkthrough.preparing ? 'The trainer clears back to HOME before the first step.' : `Step ${Math.min(stepNumber, totalSteps)} of ${totalSteps}`;
+    let clutchPanel = '';
+
+    if (phase === 'data-setup') {
+      copy = 'Enter the required list or matrix data before the guided procedure begins.';
+      note = 'Data setup mode';
+      clutchPanel = renderDataSetupPanel(procedure);
+    } else if (phase === 'result-review') {
+      copy = 'The guided procedure is finished. Use the calculator freely to inspect the result.';
+      note = 'Result review mode';
+      clutchPanel = renderResultReviewPanel();
+    }
 
     return `
       <section class="panel problem-panel walkthrough-panel">
@@ -1486,10 +2302,10 @@
         <p class="problem-stem minimized">${walkthrough.problem?.stem ?? procedure.description}</p>
         ${renderValueChips(walkthrough.problem?.values)}
         <div class="walkthrough-copy">
-          <p>${walkthrough.preparing ? 'Resetting the calculator to HOME…' : step?.narration ?? 'Walkthrough complete.'}</p>
-          <p class="panel-note">${walkthrough.preparing ? 'The trainer clears back to HOME before the first step.' : `Step ${Math.min(stepNumber, totalSteps)} of ${totalSteps}`}</p>
-          ${procedure.assumeDataIn ? '<p class="panel-note">Sample list data is treated as already entered for this walkthrough.</p>' : ''}
+          <p>${copy}</p>
+          <p class="panel-note">${note}</p>
         </div>
+        ${clutchPanel}
       </section>
     `;
   }
@@ -1559,7 +2375,7 @@
     const suggested = showAssist && suggestions.has(buttonId);
     const dimmed = showAssist && suggestions.size && !suggested ? ' dimmed' : '';
     const flash = app.flashKeyId === buttonId ? ` flash-${app.flashKind}` : '';
-    const disabled = !app.walkthrough || app.walkthrough.preparing || app.busy ? ' disabled' : '';
+    const disabled = !app.walkthrough || app.walkthrough.preparing || app.busy || app.clutch.autoFilling ? ' disabled' : '';
     const className = [
       'key',
       `key-${meta.color}`,
@@ -1597,6 +2413,7 @@
     const step = currentStep();
     const suggestions = guidedSuggestions(step);
     const showAssist = app.walkthrough
+      && app.clutch.phase === 'procedure'
       && (app.walkthrough.mode === 'guided' || app.walkthrough.hintVisible);
 
     return `
@@ -1670,6 +2487,16 @@
       : statusTone === 'loading'
         ? 'Calculator firmware is loading.'
         : 'Simplified calculator mode is active.';
+    let walkthroughHeadline = step?.narration ?? 'Walkthrough complete.';
+    let walkthroughDetail = `Step ${currentStepNumber} of ${totalSteps}`;
+
+    if (app.clutch.phase === 'data-setup') {
+      walkthroughHeadline = 'Data setup mode is active.';
+      walkthroughDetail = 'Keys go straight to the calculator while you enter the required values.';
+    } else if (app.clutch.phase === 'result-review') {
+      walkthroughHeadline = 'Result review mode is active.';
+      walkthroughDetail = 'Keys go straight to the calculator while you inspect the result.';
+    }
 
     return `
       <section class="panel calc-panel">
@@ -1704,13 +2531,13 @@
           </div>
           <div class="narration-bar">
             <div class="narration-copy">
-              <strong>${walkthrough ? (step?.narration ?? 'Walkthrough complete.') : idleHeadline}</strong>
-              <span>${walkthrough ? `Step ${currentStepNumber} of ${totalSteps}` : app.bridgeStatus.detail}</span>
+              <strong>${walkthrough ? walkthroughHeadline : idleHeadline}</strong>
+              <span>${walkthrough ? walkthroughDetail : app.bridgeStatus.detail}</span>
             </div>
             <div class="button-row compact">
               <button type="button" class="mac-button" data-action="open-rom-dialog">Firmware</button>
               <button type="button" class="mac-button" data-action="restart-walkthrough" ${!walkthrough ? 'disabled' : ''}>Restart</button>
-              <button type="button" class="mac-button" data-action="show-hint" ${!walkthrough || walkthrough.mode !== 'recall' ? 'disabled' : ''}>Hint</button>
+              <button type="button" class="mac-button" data-action="show-hint" ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>Hint</button>
             </div>
           </div>
           ${walkthrough
@@ -1969,6 +2796,15 @@
       case 'show-hint':
         showHint();
         break;
+      case 'auto-fill-data':
+        await autoFillData(app.clutch.dataTarget);
+        break;
+      case 'data-setup-done':
+        confirmDataSetup();
+        break;
+      case 'finish-review':
+        completeWalkthrough();
+        break;
       case 'restart-walkthrough':
         await restartWalkthrough();
         break;
@@ -1991,9 +2827,10 @@
       }
       case 'clear-rom':
         await app.bridge.clearStoredRom();
+        clearListMemory();
         app.bridgeStatus = app.bridge.getStatus();
         app.romDialogOpen = false;
-        app.banner = 'Cached firmware cleared. Simplified mode is active until firmware is loaded again.';
+        app.banner = 'Cached firmware and saved list memory were cleared. Simplified mode is active until firmware is loaded again.';
         updateMockCanvas();
         render();
         break;
