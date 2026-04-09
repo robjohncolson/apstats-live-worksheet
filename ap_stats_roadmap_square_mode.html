@@ -257,6 +257,62 @@
             color: var(--white);
         }
 
+        /* ── App Desktop Icons (right column) ──── */
+        .app-desktop-icons {
+            position: fixed;
+            top: 32px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 4;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: default;
+        }
+        .app-icon .icon-img {
+            width: 48px; height: 48px;
+            border: 2px solid #444466;
+            border-radius: 3px;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            image-rendering: pixelated;
+            background: linear-gradient(135deg, #9999BB 0%, #777799 40%, #666688 100%);
+            color: #DDDDEE;
+        }
+        .app-icon .icon-img img {
+            width: 32px; height: 32px;
+            image-rendering: pixelated;
+        }
+        .app-icon.selected .icon-img {
+            border-color: var(--black);
+            outline: 2px solid var(--black);
+            outline-offset: 1px;
+        }
+        .app-icon .icon-label {
+            font-family: 'Geneva', 'Arial', sans-serif;
+            font-size: 9px;
+            color: var(--white);
+            background: #555566;
+            padding: 1px 3px;
+            text-align: center;
+            max-width: 80px;
+            white-space: nowrap;
+        }
+        .app-icon.selected .icon-label {
+            background: var(--black);
+            color: var(--white);
+        }
+
         /* ── Inner Window Content ───────────────────── */
         .window-content {
             margin: 1px 2px 2px 2px;
@@ -612,6 +668,7 @@
                 transform: none;
                 border-radius: 0;
             }
+            .app-desktop-icons { display: none; }
             .wk-row, .hdr-row { grid-template-columns: 40px repeat(5, 1fr); }
             .wk-lbl { font-size: 8px; padding-right: 4px; }
             .dc { padding: 3px; min-height: 40px; }
@@ -944,6 +1001,26 @@
         <div class="doge-challenge-panel" id="doge-challenge-panel"></div>
     </span>
     <span class="menu-clock geneva" id="mclock">9:55 AM</span>
+</div>
+
+<!-- ═══ App Desktop Icons (right column) ═══ -->
+<div class="app-desktop-icons" id="app-desktop-icons">
+    <div class="app-icon" data-app="ti84" ondblclick="openApp('ti84')" onclick="selectAppIcon(this)">
+        <div class="icon-img"><img src="icons/icon-ti84.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'" >&#128290;</div>
+        <div class="icon-label">TI-84 Trainer</div>
+    </div>
+    <div class="app-icon" data-app="quiz" ondblclick="openApp('quiz')" onclick="selectAppIcon(this)">
+        <div class="icon-img"><img src="icons/icon-quiz.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#128221;</div>
+        <div class="icon-label">AP Stats Quiz</div>
+    </div>
+    <div class="app-icon" data-app="formulas" ondblclick="openApp('formulas')" onclick="selectAppIcon(this)">
+        <div class="icon-img"><img src="icons/icon-formulas.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#9889;</div>
+        <div class="icon-label">Equation Trainer</div>
+    </div>
+    <div class="app-icon" data-app="game" ondblclick="openGame()" onclick="selectAppIcon(this)">
+        <div class="icon-img"><img src="icons/icon-tetris.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#127918;</div>
+        <div class="icon-label">Study Break</div>
+    </div>
 </div>
 
 <!-- ═══ Main Window ═══ -->
@@ -4782,11 +4859,29 @@ function openApp(id) {
 }
 
 function closeApp(id) {
+    // Minimize — hide overlay but keep iframe alive (no reload on reopen)
     var overlay = document.getElementById('app-' + id + '-overlay');
-    var iframe = document.getElementById('app-' + id + '-frame');
     overlay.style.display = 'none';
-    iframe.src = 'about:blank';
 }
+
+function selectAppIcon(el) {
+    // Deselect all other app icons first
+    document.querySelectorAll('.app-icon.selected').forEach(function(ic) {
+        if (ic !== el) ic.classList.remove('selected');
+    });
+    el.classList.toggle('selected');
+}
+
+// Hide emoji fallback text when PNG loads successfully
+document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
+    img.addEventListener('load', function() {
+        // PNG loaded — hide the emoji text node
+        var parent = img.parentElement;
+        parent.childNodes.forEach(function(node) {
+            if (node.nodeType === 3) node.textContent = '';
+        });
+    });
+});
 
 // Click backdrop to close app overlays
 document.querySelectorAll('.app-overlay').forEach(function(overlay) {
