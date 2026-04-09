@@ -274,7 +274,7 @@
             user-select: none;
             -webkit-user-select: none;
         }
-        .app-icon.dragging { cursor: grabbing; z-index: 6; }
+        .app-icon.dragging, .desktop-icon.dragging { cursor: grabbing; z-index: 6; }
         .app-icon .icon-img {
             width: 48px; height: 48px;
             display: flex;
@@ -1024,7 +1024,7 @@
 </div>
 
 <!-- ═══ Main Window ═══ -->
-<div class="desktop-icon" id="desktop-icon" ondblclick="restoreWindow()" onclick="selectIcon(this)">
+<div class="desktop-icon" id="desktop-icon" data-app="calendar" ondblclick="restoreWindow()" onclick="selectIcon(this)">
     <div class="icon-img"><img src="icons/icon-calendar.png" alt="" onerror="this.style.display='none'" onload="this.parentElement.classList.add('has-png')"></div>
     <div class="icon-label">Road to the AP Exam</div>
 </div>
@@ -4899,7 +4899,7 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
 /* ── Draggable Desktop Icons ── */
 (function() {
     var STORAGE_KEY = 'ap-roadmap-icon-positions';
-    var icons = document.querySelectorAll('.app-icon');
+    var icons = document.querySelectorAll('.app-icon, .desktop-icon');
     var dragIcon = null, startX = 0, startY = 0, origX = 0, origY = 0, didDrag = false;
 
     // Restore saved positions
@@ -4912,6 +4912,7 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
                     el.style.left = saved[key].x + 'px';
                     el.style.top = saved[key].y + 'px';
                     el.style.right = 'auto';
+                    el.style.bottom = 'auto';
                 }
             });
         } catch(e) {}
@@ -4937,10 +4938,11 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
             origY = rect.top;
             startX = e.clientX;
             startY = e.clientY;
-            // Convert from right-positioned to left-positioned
+            // Convert from right/bottom-positioned to left/top-positioned
             el.style.left = origX + 'px';
             el.style.top = origY + 'px';
             el.style.right = 'auto';
+            el.style.bottom = 'auto';
             e.preventDefault();
         });
     });
