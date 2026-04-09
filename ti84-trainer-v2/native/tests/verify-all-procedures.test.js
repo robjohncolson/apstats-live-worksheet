@@ -99,6 +99,11 @@ describe('Automated procedure verification', () => {
     // Seed lists with sample data for data-dependent procedures
     calc.setList('L1', [145, 152, 148, 160, 155, 149, 158, 153, 147, 156, 150, 162, 144, 159, 151, 157, 146, 154, 161, 148]);
     calc.setList('L2', [2.5, 3.1, 2.8, 3.5, 3.0, 2.7, 3.3, 2.9, 2.6, 3.2, 2.8, 3.6, 2.4, 3.4, 2.9, 3.3, 2.5, 3.0, 3.5, 2.7]);
+    // Seed matrices for chi-square tests
+    if (calc.setMatrix) {
+      calc.setMatrix('[A]', [[20, 30], [25, 25]]);
+      calc.setMatrix('[B]', [[18.75, 31.25], [26.25, 23.75]]);
+    }
   });
 
   for (const proc of proceduresData.procedures) {
