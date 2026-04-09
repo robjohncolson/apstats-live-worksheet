@@ -8,7 +8,7 @@
   const STORE_NAME = 'assets';
   const ROM_RECORD_ID = 'ce-rom';
   const ROM_CONFIG = {
-    supabaseUrl: '',
+    supabaseUrl: 'https://bzqbhtrurzzavhqbgqrs.supabase.co',
     bucketPath: 'ti84-trainer-assets/ROM.rom',
     cacheKey: ROM_RECORD_ID,
     cacheVersion: '5.8.2.0029',
