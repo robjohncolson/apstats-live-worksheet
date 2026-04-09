@@ -216,7 +216,7 @@
             align-items: center;
             gap: 4px;
             cursor: default;
-            z-index: 5;
+            z-index: 1;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -270,11 +270,11 @@
             align-items: center;
             gap: 4px;
             cursor: default;
-            z-index: 4;
+            z-index: 1;
             user-select: none;
             -webkit-user-select: none;
         }
-        .app-icon.dragging, .desktop-icon.dragging { cursor: grabbing; z-index: 6; }
+        .app-icon.dragging, .desktop-icon.dragging { cursor: grabbing; z-index: 2; }
         .app-icon .icon-img {
             width: 48px; height: 48px;
             display: flex;
@@ -4845,12 +4845,10 @@ const studyBreak = {
 function openGame() {
     MacSFX.play('wildEep', 0.5);
     studyBreak.open();
-    hideDesktopIcons();
 }
 
 function closeGame() {
     studyBreak.close();
-    showDesktopIcons();
 }
 
 window.studyBreak = studyBreak;
@@ -4864,17 +4862,6 @@ const APP_REGISTRY = {
     driller:  { url: 'https://lrsl-driller.vercel.app/platform/app.html?cartridge=a2t4l1-inverse-variation&mode=1', sfx: 'wildEep' }
 };
 
-function hideDesktopIcons() {
-    document.querySelectorAll('.app-icon').forEach(function(el) {
-        el.style.display = 'none';
-    });
-}
-function showDesktopIcons() {
-    document.querySelectorAll('.app-icon').forEach(function(el) {
-        el.style.display = '';
-    });
-}
-
 function openApp(id) {
     var app = APP_REGISTRY[id];
     if (!app) return;
@@ -4885,15 +4872,11 @@ function openApp(id) {
         iframe.src = app.url;
     }
     overlay.style.display = 'block';
-    hideDesktopIcons();
 }
 
 function closeApp(id) {
     var overlay = document.getElementById('app-' + id + '-overlay');
     overlay.style.display = 'none';
-    // Show icons if no overlays are open
-    var anyOpen = document.querySelector('.app-overlay[style*="display: block"]');
-    if (!anyOpen) showDesktopIcons();
 }
 
 function selectAppIcon(el) {
