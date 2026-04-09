@@ -497,6 +497,227 @@
     return window.innerWidth <= 600;
   }
 
+  const VERIFICATION_FIELDS = {
+    't-test-data': [
+      { key: 't', label: 't =' },
+      { key: 'p', label: 'p =' },
+    ],
+    't-test-stats': [
+      { key: 't', label: 't =' },
+      { key: 'p', label: 'p =' },
+    ],
+    'two-samp-ttest': [
+      { key: 't', label: 't =' },
+      { key: 'p', label: 'p =' },
+    ],
+    'one-propztest': [
+      { key: 'z', label: 'z =' },
+      { key: 'p', label: 'p =' },
+    ],
+    'chi-square-gof-test': [
+      { key: 'chi2', label: '&#967;&sup2; =' },
+      { key: 'p', label: 'p =' },
+    ],
+    'chi-square-test': [
+      { key: 'chi2', label: '&#967;&sup2; =' },
+      { key: 'p', label: 'p =' },
+    ],
+    'linreg-ttest': [
+      { key: 't', label: 't =' },
+      { key: 'p', label: 'p =' },
+    ],
+    't-interval-data': [
+      { key: 'lower', label: '(' },
+      { key: 'upper', label: ',' },
+    ],
+    't-interval-stats': [
+      { key: 'lower', label: '(' },
+      { key: 'upper', label: ',' },
+    ],
+    'two-samp-tint': [
+      { key: 'lower', label: '(' },
+      { key: 'upper', label: ',' },
+    ],
+    'one-propzint': [
+      { key: 'lower', label: '(' },
+      { key: 'upper', label: ',' },
+    ],
+    'linreg-tint': [
+      { key: 'lower', label: '(' },
+      { key: 'upper', label: ',' },
+    ],
+    'one-var-stats': [
+      { key: 'xbar', label: 'x&#772; =' },
+      { key: 'Sx', label: 'Sx =' },
+    ],
+    'linreg-a-plus-bx': [
+      { key: 'a', label: 'a =' },
+      { key: 'b', label: 'b =' },
+      { key: 'r', label: 'r =' },
+    ],
+    normalcdf: [{ key: 'value', label: 'P =' }],
+    invnorm: [{ key: 'value', label: 'z =' }],
+    'normalcdf-sampling': [{ key: 'value', label: 'P =' }],
+    'invnorm-sampling': [{ key: 'value', label: 'z =' }],
+    binompdf: [{ key: 'value', label: 'P =' }],
+    binomcdf: [{ key: 'value', label: 'P =' }],
+    geometpdf: [{ key: 'value', label: 'P =' }],
+    geometcdf: [{ key: 'value', label: 'P =' }],
+  };
+
+  function escapeHtml(value) {
+    return `${value ?? ''}`.replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[char]));
+  }
+
+  function computeExpected(procedureId, problem) {
+    const SM = window.TI84StatMath;
+    const v = problem?.values && typeof problem.values === 'object'
+      ? problem.values
+      : problem ?? {};
+
+    if (!SM) {
+      return null;
+    }
+
+    const singleData = Array.isArray(v.data) && !Array.isArray(v.data[0])
+      ? v.data
+      : Array.isArray(v.L1)
+        ? v.L1
+        : null;
+    const xValues = Array.isArray(v.L1)
+      ? v.L1
+      : Array.isArray(v.x_values)
+        ? v.x_values
+        : Array.isArray(v.xValues)
+          ? v.xValues
+          : null;
+    const yValues = Array.isArray(v.L2)
+      ? v.L2
+      : Array.isArray(v.y_values)
+        ? v.y_values
+        : Array.isArray(v.yValues)
+          ? v.yValues
+          : null;
+    const observedMatrix = Array.isArray(v.observed) && Array.isArray(v.observed[0])
+      ? v.observed
+      : Array.isArray(v.matrix)
+        ? v.matrix
+        : null;
+    const sigma = v.sigma_xbar ?? v.sigma ?? 1;
+    const trials = v.trials ?? v.n;
+
+    switch (procedureId) {
+      case 'one-var-stats':
+        return singleData ? SM.oneVarStats(singleData) : null;
+      case 't-test-data': {
+        const stats = singleData ? SM.oneVarStats(singleData) : null;
+        return stats ? SM.tTest(v.mu0, stats.xbar, stats.Sx, stats.n, v.direction) : null;
+      }
+      case 't-test-stats':
+        return SM.tTest(v.mu0, v.xbar, v.sx, v.n, v.direction);
+      case 't-interval-data': {
+        const stats = singleData ? SM.oneVarStats(singleData) : null;
+        return stats ? SM.tInterval(stats.xbar, stats.Sx, stats.n, v.cLevel) : null;
+      }
+      case 't-interval-stats':
+        return SM.tInterval(v.xbar, v.sx, v.n, v.cLevel);
+      case 'one-propztest':
+        return SM.onePropZTest(v.p0, v.x, v.n, v.direction);
+      case 'one-propzint':
+        return SM.onePropZInt(v.x, v.n, v.cLevel);
+      case 'chi-square-gof-test': {
+        const expected = Array.isArray(v.expected)
+          ? v.expected
+          : Array.isArray(v.expected_counts)
+            ? v.expected_counts
+            : Array.isArray(v.expected_proportions) && Number.isFinite(v.n)
+              ? v.expected_proportions.map((entry) => entry * v.n)
+              : null;
+        return Array.isArray(v.observed) && Array.isArray(expected)
+          ? SM.chi2GOFTest(v.observed, expected, v.df)
+          : null;
+      }
+      case 'chi-square-test':
+        return observedMatrix ? SM.chi2Test(observedMatrix) : null;
+      case 'linreg-a-plus-bx':
+        return xValues && yValues ? SM.linReg(xValues, yValues) : null;
+      case 'linreg-ttest':
+        return xValues && yValues ? SM.linRegTTest(xValues, yValues, null, v.direction) : null;
+      case 'linreg-tint':
+        return xValues && yValues ? SM.linRegTInt(xValues, yValues, null, v.cLevel) : null;
+      case 'two-samp-ttest':
+        return SM.twoSampTTest(
+          v.xbar1 ?? v.x1,
+          v.sx1 ?? v.s1,
+          v.n1,
+          v.xbar2 ?? v.x2,
+          v.sx2 ?? v.s2,
+          v.n2,
+          v.direction,
+          false,
+        );
+      case 'two-samp-tint':
+        return SM.twoSampTInt(
+          v.xbar1 ?? v.x1,
+          v.sx1 ?? v.s1,
+          v.n1,
+          v.xbar2 ?? v.x2,
+          v.sx2 ?? v.s2,
+          v.n2,
+          v.cLevel,
+          false,
+        );
+      case 'normalcdf':
+      case 'normalcdf-sampling':
+        return { value: SM.normalcdf(v.lower, v.upper, v.mu ?? 0, sigma) };
+      case 'invnorm':
+      case 'invnorm-sampling':
+        return { value: SM.invNorm(v.area, v.mu ?? 0, sigma, v.tail ?? 'left') };
+      case 'binompdf':
+        return Number.isFinite(trials) ? { value: SM.binompdf(trials, v.p, v.x) } : null;
+      case 'binomcdf':
+        return Number.isFinite(trials) ? { value: SM.binomcdf(trials, v.p, v.x) } : null;
+      case 'geometpdf':
+        return { value: SM.geometpdf(v.p, v.x) };
+      case 'geometcdf':
+        return { value: SM.geometcdf(v.p, v.x) };
+      default:
+        return null;
+    }
+  }
+
+  function valuesMatch(actual, expected, key) {
+    const normalized = `${actual ?? ''}`.trim().replace(/\(-\)/g, '-').replace(/\s+/g, '');
+    const a = parseFloat(normalized);
+
+    if (Number.isNaN(a) || typeof expected !== 'number' || Number.isNaN(expected)) {
+      return false;
+    }
+
+    if (expected === 0) {
+      return Math.abs(a) < 1e-6;
+    }
+
+    const relTol = 1e-4;
+    const absTol = 1e-6;
+
+    return Math.abs(a - expected) <= Math.max(relTol * Math.abs(expected), absTol);
+  }
+
+  function formatExpectedValue(value) {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+      return `${value ?? ''}`;
+    }
+
+    return window.TI84StatMath?.formatTI?.(value) ?? formatCalculatorValue(value);
+  }
+
   let wasMobile = isMobileViewport();
   let resizeRenderTimer = null;
 
@@ -1408,10 +1629,16 @@
   }
 
   function enterResultReviewPhase() {
+    const procedureId = currentProcedure()?.id;
+
     app.busy = false;
     app.clutch.engaged = false;
     app.clutch.phase = 'result-review';
-    app.banner = 'Walkthrough complete. Explore the result, then finish the review.';
+    app.walkthrough.answerVerified = false;
+    app.walkthrough.answerCheckResults = null;
+    app.banner = VERIFICATION_FIELDS[procedureId]
+      ? 'Walkthrough complete. Check your answer, then finish the review.'
+      : 'Walkthrough complete. Explore the result, then finish the review.';
     updateMockCanvas();
     render();
   }
@@ -1747,6 +1974,9 @@
       sourceQuestion: options.sourceQuestion ?? null,
       branchProcedureId: options.branchProcedureId ?? null,
       summaryCopy: '',
+      answerValues: {},
+      answerCheckResults: null,
+      answerVerified: false,
     };
     app.branchIntro = null;
     app.sessionResult = null;
@@ -1976,6 +2206,86 @@
     };
     app.banner = 'The walkthrough finished. Start the next scheduled item when ready.';
     savePersisted();
+    render();
+  }
+
+  function syncAnswerInputsFromDom() {
+    if (!app.walkthrough) {
+      return;
+    }
+
+    const answerValues = { ...(app.walkthrough.answerValues ?? {}) };
+
+    root.querySelectorAll('[data-answer-key]').forEach((input) => {
+      answerValues[input.dataset.answerKey] = input.value;
+    });
+
+    app.walkthrough.answerValues = answerValues;
+  }
+
+  function resetAnswerVerificationUi() {
+    const procedureId = currentProcedure()?.id;
+
+    root.querySelector('.answer-card')?.classList.remove('verified');
+
+    if (VERIFICATION_FIELDS[procedureId]) {
+      const finishButton = root.querySelector('[data-action="finish-review"]');
+
+      if (finishButton) {
+        finishButton.disabled = true;
+      }
+    }
+
+    root.querySelectorAll('.answer-status').forEach((element) => {
+      element.textContent = '';
+      element.classList.remove('correct', 'wrong');
+    });
+  }
+
+  function checkAnswerVerification() {
+    const walkthrough = app.walkthrough;
+    const procedure = currentProcedure();
+    const fields = procedure ? VERIFICATION_FIELDS[procedure.id] : null;
+
+    if (!walkthrough || !fields?.length) {
+      return;
+    }
+
+    syncAnswerInputsFromDom();
+
+    const expected = computeExpected(procedure.id, walkthrough.problem);
+
+    if (!expected) {
+      walkthrough.answerVerified = false;
+      walkthrough.answerCheckResults = null;
+      app.banner = 'Answer verification is not available for this procedure yet.';
+      render();
+      return;
+    }
+
+    const results = {};
+    const values = walkthrough.answerValues ?? {};
+    let allCorrect = true;
+
+    fields.forEach((field) => {
+      const correct = valuesMatch(values[field.key], expected[field.key], field.key);
+
+      results[field.key] = {
+        actual: values[field.key] ?? '',
+        expected: expected[field.key],
+        correct,
+      };
+
+      if (!correct) {
+        allCorrect = false;
+      }
+    });
+
+    walkthrough.answerCheckResults = results;
+    walkthrough.answerVerified = allCorrect;
+    app.banner = allCorrect
+      ? 'Answer verified. Finish review is unlocked.'
+      : 'Some values do not match yet. Compare the expected values and try again.';
     render();
   }
 
@@ -2253,13 +2563,68 @@
   }
 
   function renderResultReviewPanel() {
+    const walkthrough = app.walkthrough;
+    const procedure = currentProcedure();
+    const fields = procedure ? VERIFICATION_FIELDS[procedure.id] : null;
+
+    if (!walkthrough || !fields) {
+      return `
+        <div class="clutch-card clutch-card-review">
+          <p class="panel-kicker">Result Review</p>
+          <h3>Explore the calculator output before finishing.</h3>
+          <p class="panel-note clutch-note">The clutch is disengaged again, so keys go straight to the calculator while you inspect the result.</p>
+          <div class="button-row">
+            <button type="button" class="mac-button primary" data-action="finish-review">
+              Finish review
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    const results = walkthrough.answerCheckResults ?? {};
+    const verifiedClass = walkthrough.answerVerified ? ' verified' : '';
+    const fieldRows = fields
+      .map((field) => {
+        const value = walkthrough.answerValues?.[field.key] ?? '';
+        const status = results[field.key];
+        const statusMarkup = !status
+          ? '<span class="answer-status"></span>'
+          : status.correct
+            ? '<span class="answer-status correct">&#10003;</span>'
+            : `<span class="answer-status wrong">&#10007; <span class="answer-hint">Expected: ${escapeHtml(formatExpectedValue(status.expected))}</span></span>`;
+
+        return `
+          <div class="answer-field-row">
+            <label class="answer-label" for="answer-${field.key}">${field.label}</label>
+            <input
+              id="answer-${field.key}"
+              class="answer-input"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              spellcheck="false"
+              data-answer-key="${field.key}"
+              value="${escapeHtml(value)}"
+            >
+            ${statusMarkup}
+          </div>
+        `;
+      })
+      .join('');
+
     return `
-      <div class="clutch-card clutch-card-review">
+      <div class="clutch-card clutch-card-review answer-card${verifiedClass}">
         <p class="panel-kicker">Result Review</p>
-        <h3>Explore the calculator output before finishing.</h3>
+        <h3>Check Your Answer</h3>
         <p class="panel-note clutch-note">The clutch is disengaged again, so keys go straight to the calculator while you inspect the result.</p>
+        <p class="panel-note">Enter the key values from your calculator result.</p>
+        ${fieldRows}
         <div class="button-row">
-          <button type="button" class="mac-button primary" data-action="finish-review">
+          <button type="button" class="mac-button" data-action="check-answer">
+            Check
+          </button>
+          <button type="button" class="mac-button primary" data-action="finish-review" ${walkthrough.answerVerified ? '' : 'disabled'}>
             Finish review
           </button>
         </div>
@@ -2828,7 +3193,15 @@
       case 'data-setup-done':
         confirmDataSetup();
         break;
+      case 'check-answer':
+        checkAnswerVerification();
+        break;
       case 'finish-review':
+        if (VERIFICATION_FIELDS[currentProcedure()?.id] && !app.walkthrough?.answerVerified) {
+          app.banner = 'Check your answer before finishing the review.';
+          render();
+          break;
+        }
         completeWalkthrough();
         break;
       case 'pause-guidance':
@@ -2911,6 +3284,34 @@
     }
   }
 
+  function handleInput(event) {
+    const answerKey = event.target?.dataset?.answerKey;
+
+    if (!answerKey || !app.walkthrough) {
+      return;
+    }
+
+    app.walkthrough.answerValues = {
+      ...(app.walkthrough.answerValues ?? {}),
+      [answerKey]: event.target.value,
+    };
+
+    if (app.walkthrough.answerVerified || app.walkthrough.answerCheckResults) {
+      app.walkthrough.answerVerified = false;
+      app.walkthrough.answerCheckResults = null;
+      resetAnswerVerificationUi();
+    }
+  }
+
+  function handleKeydown(event) {
+    if (event.key !== 'Enter' || !event.target?.classList?.contains('answer-input')) {
+      return;
+    }
+
+    event.preventDefault();
+    checkAnswerVerification();
+  }
+
   function bindEvents() {
     root.addEventListener('click', (event) => {
       void handleClick(event);
@@ -2919,6 +3320,9 @@
     root.addEventListener('change', (event) => {
       void handleChange(event);
     });
+
+    root.addEventListener('input', handleInput);
+    root.addEventListener('keydown', handleKeydown);
   }
 
   function attachBridge() {

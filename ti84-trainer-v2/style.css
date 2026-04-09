@@ -903,6 +903,74 @@ code {
   font-family: var(--font-mono);
 }
 
+.answer-card h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+
+.answer-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.answer-label {
+  flex: 0 0 auto;
+  min-width: 42px;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.answer-input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-dark),
+    inset -1px -1px 0 var(--bevel-light);
+}
+
+.answer-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.answer-status {
+  flex: 0 0 auto;
+  min-width: 20px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.answer-status.correct {
+  color: var(--good);
+}
+
+.answer-status.wrong {
+  color: var(--bad);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.answer-hint {
+  font-size: 0.82rem;
+  font-weight: 400;
+  font-family: var(--font-mono);
+}
+
+.answer-card.verified {
+  background: #e8efe2;
+  border-color: var(--good);
+}
+
 @media (max-width: 960px) {
   #app {
     padding: 14px;
@@ -1160,6 +1228,18 @@ code {
 
   .dashboard-row.mobile-hidden {
     display: none;
+  }
+
+  .answer-field-row {
+    flex-wrap: wrap;
+  }
+
+  .answer-input {
+    flex: 1 1 100%;
+  }
+
+  .answer-status.wrong {
+    flex-wrap: wrap;
   }
 
   .dialog-window {
