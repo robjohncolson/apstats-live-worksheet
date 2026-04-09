@@ -167,7 +167,7 @@ input[type="file"] {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(300px, 31vw, 360px);
+  grid-template-columns: minmax(0, 1fr) clamp(380px, 38vw, 480px);
   align-items: start;
   gap: var(--workspace-gap);
   min-height: calc(100dvh - (var(--page-pad) * 2) - var(--window-chrome));
@@ -441,8 +441,10 @@ h2 {
 
 .lcd-bezel {
   display: flex;
-  flex: 0 0 clamp(82px, 20%, 150px);
-  min-height: clamp(82px, 19%, 150px);
+  flex: 0 0 auto;
+  min-height: 140px;
+  height: clamp(140px, 24vh, 180px);
+  max-height: 200px;
   padding: clamp(5px, 0.7vh, 8px);
   border-radius: 16px;
   background: linear-gradient(180deg, #ffd043 0%, var(--calc-bezel) 66%, #d39f0b 100%);
@@ -469,9 +471,10 @@ h2 {
 
 .calc-canvas {
   display: block;
-  width: auto;
-  height: 100%;
+  width: 100%;
+  height: auto;
   max-width: 100%;
+  max-height: 100%;
   aspect-ratio: 4 / 3;
   margin: 0 auto;
   border: 0;
@@ -565,15 +568,17 @@ h2 {
 
 .keypad-layout {
   flex: 1 1 auto;
-  display: grid;
-  grid-template-rows: minmax(0, 0.72fr) minmax(0, 1.45fr) repeat(7, minmax(0, 1fr));
-  gap: clamp(4px, 0.6vh, 6px);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
   min-height: 0;
 }
 
 .key-row {
   display: grid;
-  gap: clamp(4px, 0.6vh, 6px);
+  flex: 1 1 auto;
+  gap: 4px;
   min-height: 0;
   align-items: stretch;
 }
@@ -585,8 +590,9 @@ h2 {
 
 .keypad-upper {
   display: grid;
+  flex: 2 1 auto;
   grid-template-columns: minmax(0, 0.74fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(4px, 0.6vh, 6px);
+  gap: 4px;
   min-height: 0;
   align-items: stretch;
 }
@@ -594,7 +600,7 @@ h2 {
 .modifier-column {
   display: grid;
   grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: clamp(4px, 0.6vh, 6px);
+  gap: 4px;
   min-height: 0;
 }
 
@@ -602,7 +608,7 @@ h2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: clamp(4px, 0.6vh, 6px);
+  gap: 4px;
   min-height: 0;
 }
 
@@ -611,7 +617,7 @@ h2 {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  min-height: 0;
+  min-height: 32px;
   height: 100%;
   padding: clamp(12px, 1.65vh, 15px) clamp(4px, 0.4vw, 6px) clamp(4px, 0.7vh, 6px);
   border: 0;
@@ -673,7 +679,7 @@ h2 {
 .key-alpha-label {
   position: absolute;
   font-family: var(--font-body);
-  font-size: clamp(7px, 0.72vw, 11px);
+  font-size: clamp(8px, 0.75vw, 11px);
   font-weight: 600;
   line-height: 0.92;
 }
@@ -704,7 +710,7 @@ h2 {
   width: 100%;
   text-align: center;
   font-family: var(--font-ui);
-  font-size: clamp(8px, 0.82vw, 13px);
+  font-size: clamp(9px, 0.9vw, 13px);
   letter-spacing: 0.02em;
   line-height: 1;
   padding-top: clamp(0.6rem, 1vh, 0.9rem);
@@ -712,7 +718,7 @@ h2 {
 }
 
 .key-number .key-label {
-  font-size: clamp(12px, 1.5vw, 21px);
+  font-size: clamp(14px, 1.6vw, 22px);
   font-weight: 700;
   text-transform: none;
 }
@@ -739,7 +745,7 @@ h2 {
   position: relative;
   justify-self: center;
   align-self: stretch;
-  width: auto;
+  width: min(100%, 90px);
   height: 100%;
   max-width: 100%;
   max-height: 100%;
@@ -949,11 +955,6 @@ code {
     display: none;
   }
 
-  .lcd-bezel {
-    flex-basis: 72px;
-    min-height: 72px;
-  }
-
   .narration-bar {
     min-height: 40px;
     padding: 6px 8px;
@@ -973,19 +974,6 @@ code {
     font-size: 0.68rem;
   }
 
-  .keypad-layout {
-    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.25fr) repeat(7, minmax(0, 1fr));
-  }
-
-  .modifier-column {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: none;
-  }
-
-  .modifier-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: none;
-  }
 }
 
 @media (max-width: 960px) {
