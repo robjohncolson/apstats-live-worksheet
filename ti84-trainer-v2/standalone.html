@@ -48,9 +48,6 @@
   --status-ready: #d9efdf;
   --status-loading: #f6efc2;
   --status-offline: #f1dfb6;
-  --page-pad: clamp(10px, 1.4vw, 24px);
-  --workspace-gap: clamp(12px, 1vw, 16px);
-  --window-chrome: 76px;
 }
 
 * {
@@ -61,7 +58,6 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  height: 100%;
 }
 
 body {
@@ -80,15 +76,12 @@ input {
 }
 
 #app {
-  min-height: 100dvh;
-  padding: var(--page-pad);
+  padding: 24px;
 }
 
 .trainer-window {
   max-width: 1440px;
   margin: 0 auto;
-  display: grid;
-  grid-template-rows: auto auto auto auto;
   border: 1px solid var(--ink);
   background: var(--window);
   box-shadow: var(--shadow);
@@ -100,7 +93,7 @@ input {
   grid-template-columns: 20px 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--ink);
   background:
     repeating-linear-gradient(
@@ -166,19 +159,17 @@ input[type="file"] {
 }
 
 .banner-row {
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--ink);
   background: #efefef;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
 }
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(380px, 38vw, 480px);
-  align-items: start;
-  gap: var(--workspace-gap);
-  min-height: calc(100dvh - (var(--page-pad) * 2) - var(--window-chrome));
-  padding: var(--workspace-gap);
+  grid-template-columns: minmax(360px, 0.95fr) minmax(440px, 1.1fr);
+  gap: 16px;
+  padding: 16px;
 }
 
 .panel,
@@ -192,32 +183,12 @@ input[type="file"] {
 }
 
 .panel {
-  min-width: 0;
-  min-height: 0;
-  padding: clamp(12px, 1.2vw, 16px);
+  padding: 16px;
 }
 
 .problem-panel,
 .calc-panel {
-  min-height: 0;
-  height: 100%;
-}
-
-.problem-panel {
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-}
-
-.calc-panel {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(8px, 1vh, 12px);
-  height: calc(100dvh - (var(--page-pad) * 2) - var(--window-chrome) - var(--workspace-gap) - 18px);
-  max-height: calc(100dvh - (var(--page-pad) * 2) - var(--window-chrome) - var(--workspace-gap) - 18px);
-  overflow: hidden;
-  position: sticky;
-  top: var(--page-pad);
+  min-height: 100%;
 }
 
 .panel-kicker {
@@ -295,18 +266,7 @@ h2 {
 }
 
 .button-row.compact {
-  position: absolute;
-  top: 8px;
-  right: 10px;
   margin-top: 0;
-  gap: 4px;
-  justify-content: flex-end;
-}
-
-.button-row.compact .mac-button {
-  min-height: 22px;
-  padding: 3px 6px;
-  font-size: 0.72rem;
 }
 
 .compact-problem-bar,
@@ -331,11 +291,11 @@ h2 {
   display: inline-flex;
   gap: 6px;
   align-items: center;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border: 1px solid rgba(0, 0, 0, 0.16);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.86);
-  font-size: 0.8rem;
+  font-size: 0.86rem;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
 }
 
@@ -384,31 +344,14 @@ h2 {
 }
 
 .calc-top {
-  margin-bottom: 0;
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
-  align-items: start;
-}
-
-.calc-top h2 {
-  margin-bottom: 0;
-  font-size: clamp(1rem, 1vw, 1.1rem);
-}
-
-.calc-top .panel-kicker {
-  margin-bottom: 2px;
+  margin-bottom: 12px;
 }
 
 .calculator-shell {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: clamp(5px, 0.65vh, 8px);
-  min-height: 0;
-  padding: clamp(8px, 1vh, 12px);
-  border-radius: 20px;
+  display: grid;
+  gap: 14px;
+  padding: 18px 18px 20px;
+  border-radius: 34px;
   background:
     radial-gradient(circle at top center, rgba(255, 255, 255, 0.16), transparent 30%),
     linear-gradient(180deg, var(--calc-body-highlight) 0%, var(--calc-body) 26%, var(--calc-body-deep) 100%);
@@ -422,8 +365,7 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  flex: 0 0 auto;
-  padding: 0 6px;
+  padding: 2px 10px 0;
   color: var(--label-primary);
 }
 
@@ -434,26 +376,21 @@ h2 {
 
 .calculator-brand-copy strong {
   font-family: var(--font-ui);
-  font-size: clamp(0.82rem, 0.82vw, 0.95rem);
+  font-size: 1rem;
   letter-spacing: 0.02em;
 }
 
 .calculator-brand-copy span,
 .calculator-model {
-  font-size: clamp(0.58rem, 0.58vw, 0.68rem);
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.82;
 }
 
 .lcd-bezel {
-  display: flex;
-  flex: 0 0 auto;
-  min-height: 140px;
-  height: clamp(140px, 24vh, 180px);
-  max-height: 200px;
-  padding: clamp(5px, 0.7vh, 8px);
-  border-radius: 16px;
+  padding: 14px;
+  border-radius: 24px;
   background: linear-gradient(180deg, #ffd043 0%, var(--calc-bezel) 66%, #d39f0b 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
@@ -462,14 +399,8 @@ h2 {
 
 .screen-frame {
   position: relative;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  align-items: stretch;
-  justify-content: center;
-  padding: clamp(4px, 0.6vh, 6px);
-  border-radius: 12px;
+  padding: 10px;
+  border-radius: 18px;
   background: linear-gradient(180deg, #2a2d32 0%, var(--lcd-frame) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -479,9 +410,6 @@ h2 {
 .calc-canvas {
   display: block;
   width: 100%;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
   aspect-ratio: 4 / 3;
   margin: 0 auto;
   border: 0;
@@ -493,9 +421,8 @@ h2 {
 
 .screen-overlay {
   position: absolute;
-  right: clamp(10px, 1.6vw, 18px);
-  bottom: clamp(8px, 1.5vh, 16px);
-  max-width: calc(100% - 20px);
+  right: 18px;
+  bottom: 16px;
 }
 
 .screen-meta {
@@ -507,7 +434,7 @@ h2 {
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(255, 255, 255, 0.92);
   color: #252a30;
-  font-size: clamp(0.68rem, 0.78vw, 0.82rem);
+  font-size: 0.82rem;
 }
 
 .calc-placeholder-copy {
@@ -517,77 +444,53 @@ h2 {
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(255, 255, 255, 0.92);
   color: #252a30;
-  font-size: clamp(0.68rem, 0.78vw, 0.82rem);
+  font-size: 0.82rem;
 }
 
 .narration-bar {
-  position: relative;
-  display: block;
-  flex: 0 0 auto;
-  padding: 8px 10px;
+  padding: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   background: rgba(18, 20, 24, 0.28);
   color: var(--label-primary);
-  min-height: 48px;
 }
 
 .narration-copy {
   display: grid;
-  gap: 2px;
-  min-width: 0;
-  padding-right: 172px;
+  gap: 4px;
 }
 
 .narration-copy strong {
-  font-size: clamp(0.76rem, 0.82vw, 0.88rem);
-  line-height: 1.1;
+  font-size: 0.95rem;
 }
 
 .narration-copy span {
-  font-size: clamp(0.68rem, 0.72vw, 0.78rem);
-  line-height: 1.05;
+  font-size: 0.86rem;
   opacity: 0.85;
 }
 
 .keypad-shell {
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: clamp(6px, 0.9vh, 10px) clamp(6px, 0.8vw, 8px) clamp(4px, 0.6vh, 6px);
-  border-radius: 18px;
+  padding: 16px 12px 6px;
+  border-radius: 28px;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.02));
-  overflow: hidden;
 }
 
 .keypad-empty {
-  display: grid;
-  flex: 1 1 auto;
-  place-items: center;
-  min-height: 0;
   margin-top: 4px;
   padding: 18px;
   border-radius: 18px;
   background: rgba(18, 20, 24, 0.18);
   color: var(--label-primary);
-  text-align: center;
 }
 
 .keypad-layout {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 4px;
-  min-height: 0;
+  display: grid;
+  gap: 12px;
 }
 
 .key-row {
   display: grid;
-  flex: 1 1 auto;
-  gap: 4px;
-  min-height: 0;
-  align-items: stretch;
+  gap: 10px;
 }
 
 .key-row-function,
@@ -597,38 +500,31 @@ h2 {
 
 .keypad-upper {
   display: grid;
-  flex: 2 1 auto;
-  grid-template-columns: minmax(0, 0.74fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: 4px;
-  min-height: 0;
-  align-items: stretch;
+  grid-template-columns: minmax(72px, 0.82fr) minmax(140px, 1.05fr) minmax(148px, 1fr);
+  gap: 12px;
+  align-items: center;
 }
 
 .modifier-column {
   display: grid;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  min-height: 0;
+  gap: 10px;
 }
 
 .modifier-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  min-height: 0;
+  gap: 10px;
 }
 
 .key {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  min-height: 32px;
-  height: 100%;
-  padding: clamp(12px, 1.65vh, 15px) clamp(4px, 0.4vw, 6px) clamp(4px, 0.7vh, 6px);
+  min-height: 54px;
+  padding: 12px 10px 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--key-dark);
   color: var(--label-primary);
   box-shadow:
@@ -678,6 +574,18 @@ h2 {
   color: #1f2328;
 }
 
+.key-modifier {
+  min-height: 58px;
+}
+
+.key-large {
+  min-height: 60px;
+}
+
+.key-enter {
+  min-height: 62px;
+}
+
 .key-on .key-label {
   text-transform: lowercase;
 }
@@ -685,60 +593,48 @@ h2 {
 .key-secondary,
 .key-alpha-label {
   position: absolute;
-  font-family: var(--font-body);
-  font-size: clamp(8px, 0.75vw, 11px);
+  font-size: 0.7rem;
   font-weight: 600;
-  line-height: 0.92;
+  white-space: nowrap;
 }
 
 .key-secondary {
-  top: 4px;
-  left: 5px;
-  max-width: 68%;
-  overflow: hidden;
-  color: var(--label-2nd);
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: normal;
-  word-break: break-word;
+  top: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
   color: var(--label-2nd);
 }
 
 .key-alpha-label {
-  top: 4px;
-  right: 5px;
-  transform: none;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
   color: var(--label-alpha);
-  white-space: nowrap;
 }
 
 .key-label {
-  display: block;
-  width: 100%;
   text-align: center;
   font-family: var(--font-ui);
-  font-size: clamp(9px, 0.9vw, 13px);
+  font-size: 0.88rem;
   letter-spacing: 0.02em;
-  line-height: 1;
-  padding-top: clamp(0.6rem, 1vh, 0.9rem);
   text-transform: lowercase;
 }
 
 .key-number .key-label {
-  font-size: clamp(14px, 1.6vw, 22px);
+  font-size: 1.5rem;
   font-weight: 700;
   text-transform: none;
 }
 
 .key-operator .key-label {
-  font-size: clamp(11px, 1.25vw, 18px);
+  font-size: 1.3rem;
   font-weight: 700;
   text-transform: none;
 }
 
 .key-second .key-label,
 .key-alpha .key-label {
-  font-size: clamp(8px, 0.92vw, 13px);
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -751,17 +647,13 @@ h2 {
 .dpad-shell {
   position: relative;
   justify-self: center;
-  align-self: stretch;
-  width: min(100%, 90px);
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
+  width: min(100%, 156px);
   aspect-ratio: 1;
 }
 
 .dpad-disc {
   position: absolute;
-  inset: clamp(6px, 0.8vh, 8px);
+  inset: 8px;
   border-radius: 50%;
   background: linear-gradient(180deg, #f3f4f6 0%, var(--key-dpad) 72%, #9ca2ab 100%);
   box-shadow:
@@ -804,10 +696,9 @@ h2 {
 }
 
 .key-dpad-arrow .key-label {
-  font-size: clamp(13px, 1.4vw, 18px);
+  font-size: 1.15rem;
   font-weight: 700;
   text-transform: none;
-  padding-top: 0;
 }
 
 .key-up {
@@ -899,20 +790,20 @@ h2 {
 .dashboard-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(8px, 0.8vw, 12px);
-  padding: 0 var(--workspace-gap) var(--workspace-gap);
+  gap: 12px;
+  padding: 0 16px 16px;
 }
 
 .dashboard-card {
   display: grid;
   gap: 4px;
-  padding: 10px 12px;
+  padding: 12px;
   background: #f7f7f7;
 }
 
 .dashboard-card strong {
   font-family: var(--font-ui);
-  font-size: clamp(1.05rem, 1.2vw, 1.25rem);
+  font-size: 1.3rem;
 }
 
 .dashboard-control label {
@@ -954,71 +845,21 @@ code {
   font-family: var(--font-mono);
 }
 
-@media (min-width: 961px) and (max-height: 820px) {
-  .calc-top .panel-kicker,
-  .calculator-brand-copy span,
-  .calculator-model,
-  .narration-copy span {
-    display: none;
-  }
-
-  .narration-bar {
-    min-height: 40px;
-    padding: 6px 8px;
-  }
-
-  .narration-copy {
-    padding-right: 160px;
-  }
-
-  .button-row.compact {
-    top: 6px;
-    right: 8px;
-  }
-
-  .button-row.compact .mac-button {
-    min-height: 20px;
-    font-size: 0.68rem;
-  }
-
-}
-
 @media (max-width: 960px) {
   #app {
     padding: 14px;
   }
 
-  .trainer-window {
-    min-height: calc(100dvh - 28px);
-  }
-
   .workspace {
     grid-template-columns: 1fr;
-    min-height: auto;
   }
 
   .dashboard-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .problem-panel {
-    overflow: visible;
-  }
-
-  .calc-panel {
-    height: auto;
-    max-height: none;
-    min-height: min(76dvh, 720px);
-    position: static;
-  }
-
-  .button-row.compact {
-    position: static;
-    margin-top: 6px;
-  }
-
-  .narration-copy {
-    padding-right: 0;
+  .calculator-shell {
+    padding: 16px 16px 18px;
   }
 }
 
@@ -1029,20 +870,33 @@ code {
 
   .modifier-column {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: none;
   }
 
   .calculator-shell {
-    border-radius: 18px;
+    border-radius: 28px;
   }
 
   .key-row-function,
   .key-row-main {
-    gap: 4px;
+    gap: 8px;
   }
 
   .key {
-    padding-inline: 4px;
+    min-height: 48px;
+    padding-inline: 8px;
+  }
+
+  .key-large,
+  .key-enter {
+    min-height: 54px;
+  }
+
+  .key-number .key-label {
+    font-size: 1.3rem;
+  }
+
+  .dpad-shell {
+    width: 138px;
   }
 
   .dashboard-row {
