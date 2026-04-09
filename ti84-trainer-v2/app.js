@@ -493,6 +493,13 @@
     },
   };
 
+  function isMobileViewport() {
+    return window.innerWidth <= 600;
+  }
+
+  let wasMobile = isMobileViewport();
+  let resizeRenderTimer = null;
+
   app.filterUnit = app.persisted.filterUnit ?? 'all';
   let listMemory = loadListMemory();
 
@@ -2262,14 +2269,19 @@
 
   function renderWalkthroughPanel() {
     const walkthrough = app.walkthrough;
+    const mobile = isMobileViewport();
     const procedure = currentProcedure();
     const step = currentStep();
     const stepNumber = walkthrough.routeState.routeIndex + 1;
     const totalSteps = procedure.steps.length;
+    const stepInfo = walkthrough ? `Step ${Math.min(stepNumber, totalSteps)}/${totalSteps}` : '';
     const phase = app.clutch.phase;
     let copy = walkthrough.preparing ? 'Resetting the calculator to HOME…' : step?.narration ?? 'Walkthrough complete.';
     let note = walkthrough.preparing ? 'The trainer clears back to HOME before the first step.' : `Step ${Math.min(stepNumber, totalSteps)} of ${totalSteps}`;
     let clutchPanel = '';
+    const togglePanel = mobile
+      ? ' onclick="if (event.target.closest(\'.compact-problem-bar\')) this.classList.toggle(\'expanded\')"'
+      : '';
 
     if (phase === 'data-setup') {
       copy = 'Enter the required list or matrix data before the guided procedure begins.';
@@ -2282,11 +2294,12 @@
     }
 
     return `
-      <section class="panel problem-panel walkthrough-panel">
+      <section class="panel problem-panel walkthrough-panel"${togglePanel}>
         <div class="compact-problem-bar">
           <div>
             <p class="panel-kicker">Track 2: Calculator Navigation</p>
             <h2>${procedure.name}</h2>
+            ${mobile && stepInfo ? `<p class="panel-note">${stepInfo}</p>` : ''}
           </div>
           <div class="mode-badge-row">
             <span class="mode-badge">${walkthrough.mode === 'guided' ? 'Guided' : 'Recall'}</span>
@@ -2472,6 +2485,7 @@
 
   function renderCalculatorColumn() {
     const walkthrough = app.walkthrough;
+    const mobile = isMobileViewport();
     const step = currentStep();
     const totalSteps = walkthrough ? currentProcedure().steps.length : 0;
     const currentStepNumber = walkthrough ? Math.min(walkthrough.routeState.routeIndex + 1, totalSteps) : 0;
@@ -2491,6 +2505,17 @@
       walkthroughHeadline = 'Result review mode is active.';
       walkthroughDetail = 'Keys go straight to the calculator while you inspect the result.';
     }
+
+    const firmwareLabel = mobile ? '⚙' : 'Firmware';
+    const restartLabel = mobile ? '↺' : 'Restart';
+    const hintLabel = mobile ? '?' : 'Hint';
+    const pauseLabel = mobile ? '⏸' : 'Pause';
+    const resumeLabel = mobile ? '▶' : 'Resume';
+    const firmwareAttrs = mobile ? 'title="Firmware" aria-label="Firmware"' : '';
+    const restartAttrs = mobile ? 'title="Restart" aria-label="Restart"' : '';
+    const hintAttrs = mobile ? 'title="Hint" aria-label="Hint"' : '';
+    const pauseAttrs = mobile ? 'title="Pause guidance" aria-label="Pause guidance"' : '';
+    const resumeAttrs = mobile ? 'title="Resume guidance" aria-label="Resume guidance"' : '';
 
     return `
       <section class="panel calc-panel">
@@ -2529,13 +2554,13 @@
               <span>${walkthrough ? walkthroughDetail : app.bridgeStatus.detail}</span>
             </div>
             <div class="button-row compact">
-              <button type="button" class="mac-button" data-action="open-rom-dialog">Firmware</button>
-              <button type="button" class="mac-button" data-action="restart-walkthrough" ${!walkthrough ? 'disabled' : ''}>Restart</button>
-              <button type="button" class="mac-button" data-action="show-hint" ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>Hint</button>
+              <button type="button" class="mac-button" data-action="open-rom-dialog" ${firmwareAttrs}>${firmwareLabel}</button>
+              <button type="button" class="mac-button" data-action="restart-walkthrough" ${restartAttrs} ${!walkthrough ? 'disabled' : ''}>${restartLabel}</button>
+              <button type="button" class="mac-button" data-action="show-hint" ${hintAttrs} ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>${hintLabel}</button>
               ${walkthrough && app.clutch.phase === 'procedure'
                 ? app.clutch.engaged
-                  ? `<button type="button" class="mac-button" data-action="pause-guidance">Pause</button>`
-                  : `<button type="button" class="mac-button primary" data-action="resume-guidance">Resume</button>`
+                  ? `<button type="button" class="mac-button" data-action="pause-guidance" ${pauseAttrs}>${pauseLabel}</button>`
+                  : `<button type="button" class="mac-button primary" data-action="resume-guidance" ${resumeAttrs}>${resumeLabel}</button>`
                 : ''}
             </div>
           </div>
@@ -2552,8 +2577,10 @@
   }
 
   function renderDashboard(snapshot) {
+    const dashHidden = isMobileViewport() && app.walkthrough ? ' mobile-hidden' : '';
+
     return `
-      <section class="dashboard-row">
+      <section class="dashboard-row${dashHidden}">
         <div class="dashboard-card">
           <span>Due</span>
           <strong>${snapshot.dueCount}</strong>
@@ -2922,6 +2949,18 @@
 
   window.addEventListener('beforeunload', () => {
     app.bridge?.destroy();
+  });
+
+  window.addEventListener('resize', () => {
+    window.clearTimeout(resizeRenderTimer);
+    resizeRenderTimer = window.setTimeout(() => {
+      const nowMobile = isMobileViewport();
+
+      if (nowMobile !== wasMobile) {
+        wasMobile = nowMobile;
+        render();
+      }
+    }, 120);
   });
 
   void init();

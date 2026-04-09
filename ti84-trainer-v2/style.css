@@ -971,3 +971,204 @@ code {
     justify-self: start;
   }
 }
+
+@media (max-width: 600px) {
+  #app {
+    padding: 0;
+  }
+
+  .trainer-window {
+    border: 0;
+    box-shadow: none;
+    max-width: none;
+  }
+
+  .window-titlebar {
+    display: none;
+  }
+
+  .workspace {
+    padding: 0;
+    gap: 0;
+  }
+
+  .banner-row {
+    display: none;
+  }
+
+  .problem-panel.walkthrough-panel {
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: none;
+    cursor: pointer;
+  }
+
+  .problem-panel.walkthrough-panel .problem-stem,
+  .problem-panel.walkthrough-panel .chip-row,
+  .problem-panel.walkthrough-panel .walkthrough-copy,
+  .problem-panel.walkthrough-panel .clutch-card,
+  .problem-panel.walkthrough-panel .button-row {
+    display: none;
+  }
+
+  .problem-panel.walkthrough-panel.expanded .problem-stem,
+  .problem-panel.walkthrough-panel.expanded .walkthrough-copy,
+  .problem-panel.walkthrough-panel.expanded .clutch-card {
+    display: block;
+  }
+
+  .problem-panel.walkthrough-panel.expanded .chip-row {
+    display: flex;
+  }
+
+  .problem-panel.walkthrough-panel.expanded .button-row {
+    display: flex;
+  }
+
+  .calc-panel {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    height: calc(100vh - 52px);
+    height: calc(100dvh - 52px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calc-top,
+  .calculator-branding {
+    display: none;
+  }
+
+  .calculator-shell {
+    border-radius: 0;
+    padding: 8px 6px 6px;
+    box-shadow: none;
+  }
+
+  .lcd-bezel {
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  .screen-frame {
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .calc-canvas {
+    border-radius: 8px;
+  }
+
+  .narration-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: 8px 10px;
+    border-radius: 12px 12px 0 0;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .narration-copy {
+    min-width: 0;
+  }
+
+  .narration-copy strong {
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .narration-copy span {
+    display: none;
+  }
+
+  .narration-bar .button-row .mac-button {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .keypad-shell {
+    padding: 6px 2px 2px;
+  }
+
+  .keypad-layout {
+    gap: 6px;
+  }
+
+  .key-row {
+    gap: 5px;
+  }
+
+  .key {
+    min-height: 42px;
+    padding: 8px 5px 6px;
+    border-radius: 10px;
+  }
+
+  .key-modifier {
+    min-height: 44px;
+  }
+
+  .key-large,
+  .key-enter {
+    min-height: 46px;
+  }
+
+  .key-label {
+    font-size: 0.8rem;
+  }
+
+  .key-number .key-label {
+    font-size: 1.2rem;
+  }
+
+  .key-operator .key-label {
+    font-size: 1.1rem;
+  }
+
+  .key-secondary {
+    font-size: 0.58rem;
+  }
+
+  .key-alpha-label {
+    display: none;
+  }
+
+  .dpad-shell {
+    width: min(100%, 120px);
+  }
+
+  .keypad-upper {
+    gap: 8px;
+  }
+
+  .dashboard-row {
+    padding: 8px;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-row.mobile-hidden {
+    display: none;
+  }
+
+  .dialog-window {
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .dialog-backdrop {
+    padding: 8px;
+  }
+}

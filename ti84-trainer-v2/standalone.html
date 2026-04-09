@@ -979,6 +979,207 @@ code {
   }
 }
 
+@media (max-width: 600px) {
+  #app {
+    padding: 0;
+  }
+
+  .trainer-window {
+    border: 0;
+    box-shadow: none;
+    max-width: none;
+  }
+
+  .window-titlebar {
+    display: none;
+  }
+
+  .workspace {
+    padding: 0;
+    gap: 0;
+  }
+
+  .banner-row {
+    display: none;
+  }
+
+  .problem-panel.walkthrough-panel {
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: none;
+    cursor: pointer;
+  }
+
+  .problem-panel.walkthrough-panel .problem-stem,
+  .problem-panel.walkthrough-panel .chip-row,
+  .problem-panel.walkthrough-panel .walkthrough-copy,
+  .problem-panel.walkthrough-panel .clutch-card,
+  .problem-panel.walkthrough-panel .button-row {
+    display: none;
+  }
+
+  .problem-panel.walkthrough-panel.expanded .problem-stem,
+  .problem-panel.walkthrough-panel.expanded .walkthrough-copy,
+  .problem-panel.walkthrough-panel.expanded .clutch-card {
+    display: block;
+  }
+
+  .problem-panel.walkthrough-panel.expanded .chip-row {
+    display: flex;
+  }
+
+  .problem-panel.walkthrough-panel.expanded .button-row {
+    display: flex;
+  }
+
+  .calc-panel {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    height: calc(100vh - 52px);
+    height: calc(100dvh - 52px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calc-top,
+  .calculator-branding {
+    display: none;
+  }
+
+  .calculator-shell {
+    border-radius: 0;
+    padding: 8px 6px 6px;
+    box-shadow: none;
+  }
+
+  .lcd-bezel {
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  .screen-frame {
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .calc-canvas {
+    border-radius: 8px;
+  }
+
+  .narration-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: 8px 10px;
+    border-radius: 12px 12px 0 0;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .narration-copy {
+    min-width: 0;
+  }
+
+  .narration-copy strong {
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .narration-copy span {
+    display: none;
+  }
+
+  .narration-bar .button-row .mac-button {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .keypad-shell {
+    padding: 6px 2px 2px;
+  }
+
+  .keypad-layout {
+    gap: 6px;
+  }
+
+  .key-row {
+    gap: 5px;
+  }
+
+  .key {
+    min-height: 42px;
+    padding: 8px 5px 6px;
+    border-radius: 10px;
+  }
+
+  .key-modifier {
+    min-height: 44px;
+  }
+
+  .key-large,
+  .key-enter {
+    min-height: 46px;
+  }
+
+  .key-label {
+    font-size: 0.8rem;
+  }
+
+  .key-number .key-label {
+    font-size: 1.2rem;
+  }
+
+  .key-operator .key-label {
+    font-size: 1.1rem;
+  }
+
+  .key-secondary {
+    font-size: 0.58rem;
+  }
+
+  .key-alpha-label {
+    display: none;
+  }
+
+  .dpad-shell {
+    width: min(100%, 120px);
+  }
+
+  .keypad-upper {
+    gap: 8px;
+  }
+
+  .dashboard-row {
+    padding: 8px;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-row.mobile-hidden {
+    display: none;
+  }
+
+  .dialog-window {
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .dialog-backdrop {
+    padding: 8px;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -8119,6 +8320,13 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     },
   };
 
+  function isMobileViewport() {
+    return window.innerWidth <= 600;
+  }
+
+  let wasMobile = isMobileViewport();
+  let resizeRenderTimer = null;
+
   app.filterUnit = app.persisted.filterUnit ?? 'all';
   let listMemory = loadListMemory();
 
@@ -9888,14 +10096,19 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   function renderWalkthroughPanel() {
     const walkthrough = app.walkthrough;
+    const mobile = isMobileViewport();
     const procedure = currentProcedure();
     const step = currentStep();
     const stepNumber = walkthrough.routeState.routeIndex + 1;
     const totalSteps = procedure.steps.length;
+    const stepInfo = walkthrough ? `Step ${Math.min(stepNumber, totalSteps)}/${totalSteps}` : '';
     const phase = app.clutch.phase;
     let copy = walkthrough.preparing ? 'Resetting the calculator to HOME…' : step?.narration ?? 'Walkthrough complete.';
     let note = walkthrough.preparing ? 'The trainer clears back to HOME before the first step.' : `Step ${Math.min(stepNumber, totalSteps)} of ${totalSteps}`;
     let clutchPanel = '';
+    const togglePanel = mobile
+      ? ' onclick="if (event.target.closest(\'.compact-problem-bar\')) this.classList.toggle(\'expanded\')"'
+      : '';
 
     if (phase === 'data-setup') {
       copy = 'Enter the required list or matrix data before the guided procedure begins.';
@@ -9908,11 +10121,12 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     }
 
     return `
-      <section class="panel problem-panel walkthrough-panel">
+      <section class="panel problem-panel walkthrough-panel"${togglePanel}>
         <div class="compact-problem-bar">
           <div>
             <p class="panel-kicker">Track 2: Calculator Navigation</p>
             <h2>${procedure.name}</h2>
+            ${mobile && stepInfo ? `<p class="panel-note">${stepInfo}</p>` : ''}
           </div>
           <div class="mode-badge-row">
             <span class="mode-badge">${walkthrough.mode === 'guided' ? 'Guided' : 'Recall'}</span>
@@ -10098,6 +10312,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   function renderCalculatorColumn() {
     const walkthrough = app.walkthrough;
+    const mobile = isMobileViewport();
     const step = currentStep();
     const totalSteps = walkthrough ? currentProcedure().steps.length : 0;
     const currentStepNumber = walkthrough ? Math.min(walkthrough.routeState.routeIndex + 1, totalSteps) : 0;
@@ -10117,6 +10332,17 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       walkthroughHeadline = 'Result review mode is active.';
       walkthroughDetail = 'Keys go straight to the calculator while you inspect the result.';
     }
+
+    const firmwareLabel = mobile ? '⚙' : 'Firmware';
+    const restartLabel = mobile ? '↺' : 'Restart';
+    const hintLabel = mobile ? '?' : 'Hint';
+    const pauseLabel = mobile ? '⏸' : 'Pause';
+    const resumeLabel = mobile ? '▶' : 'Resume';
+    const firmwareAttrs = mobile ? 'title="Firmware" aria-label="Firmware"' : '';
+    const restartAttrs = mobile ? 'title="Restart" aria-label="Restart"' : '';
+    const hintAttrs = mobile ? 'title="Hint" aria-label="Hint"' : '';
+    const pauseAttrs = mobile ? 'title="Pause guidance" aria-label="Pause guidance"' : '';
+    const resumeAttrs = mobile ? 'title="Resume guidance" aria-label="Resume guidance"' : '';
 
     return `
       <section class="panel calc-panel">
@@ -10155,13 +10381,13 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
               <span>${walkthrough ? walkthroughDetail : app.bridgeStatus.detail}</span>
             </div>
             <div class="button-row compact">
-              <button type="button" class="mac-button" data-action="open-rom-dialog">Firmware</button>
-              <button type="button" class="mac-button" data-action="restart-walkthrough" ${!walkthrough ? 'disabled' : ''}>Restart</button>
-              <button type="button" class="mac-button" data-action="show-hint" ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>Hint</button>
+              <button type="button" class="mac-button" data-action="open-rom-dialog" ${firmwareAttrs}>${firmwareLabel}</button>
+              <button type="button" class="mac-button" data-action="restart-walkthrough" ${restartAttrs} ${!walkthrough ? 'disabled' : ''}>${restartLabel}</button>
+              <button type="button" class="mac-button" data-action="show-hint" ${hintAttrs} ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>${hintLabel}</button>
               ${walkthrough && app.clutch.phase === 'procedure'
                 ? app.clutch.engaged
-                  ? `<button type="button" class="mac-button" data-action="pause-guidance">Pause</button>`
-                  : `<button type="button" class="mac-button primary" data-action="resume-guidance">Resume</button>`
+                  ? `<button type="button" class="mac-button" data-action="pause-guidance" ${pauseAttrs}>${pauseLabel}</button>`
+                  : `<button type="button" class="mac-button primary" data-action="resume-guidance" ${resumeAttrs}>${resumeLabel}</button>`
                 : ''}
             </div>
           </div>
@@ -10178,8 +10404,10 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   function renderDashboard(snapshot) {
+    const dashHidden = isMobileViewport() && app.walkthrough ? ' mobile-hidden' : '';
+
     return `
-      <section class="dashboard-row">
+      <section class="dashboard-row${dashHidden}">
         <div class="dashboard-card">
           <span>Due</span>
           <strong>${snapshot.dueCount}</strong>
@@ -10548,6 +10776,18 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   window.addEventListener('beforeunload', () => {
     app.bridge?.destroy();
+  });
+
+  window.addEventListener('resize', () => {
+    window.clearTimeout(resizeRenderTimer);
+    resizeRenderTimer = window.setTimeout(() => {
+      const nowMobile = isMobileViewport();
+
+      if (nowMobile !== wasMobile) {
+        wasMobile = nowMobile;
+        render();
+      }
+    }, 120);
   });
 
   void init();
