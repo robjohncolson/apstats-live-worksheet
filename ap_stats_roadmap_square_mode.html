@@ -630,6 +630,7 @@
             max-width: 95vw;
             height: 80vh;
             max-height: 90vh;
+            z-index: 251;
             background: var(--platinum);
             border: 1px solid var(--black);
             box-shadow:
@@ -4844,10 +4845,12 @@ const studyBreak = {
 function openGame() {
     MacSFX.play('wildEep', 0.5);
     studyBreak.open();
+    hideDesktopIcons();
 }
 
 function closeGame() {
     studyBreak.close();
+    showDesktopIcons();
 }
 
 window.studyBreak = studyBreak;
@@ -4861,6 +4864,17 @@ const APP_REGISTRY = {
     driller:  { url: 'https://lrsl-driller.vercel.app/platform/app.html?cartridge=a2t4l1-inverse-variation&mode=1', sfx: 'wildEep' }
 };
 
+function hideDesktopIcons() {
+    document.querySelectorAll('.app-icon, .desktop-icon').forEach(function(el) {
+        el.style.visibility = 'hidden';
+    });
+}
+function showDesktopIcons() {
+    document.querySelectorAll('.app-icon, .desktop-icon').forEach(function(el) {
+        el.style.visibility = '';
+    });
+}
+
 function openApp(id) {
     var app = APP_REGISTRY[id];
     if (!app) return;
@@ -4871,12 +4885,15 @@ function openApp(id) {
         iframe.src = app.url;
     }
     overlay.style.display = 'block';
+    hideDesktopIcons();
 }
 
 function closeApp(id) {
-    // Minimize — hide overlay but keep iframe alive (no reload on reopen)
     var overlay = document.getElementById('app-' + id + '-overlay');
     overlay.style.display = 'none';
+    // Show icons if no overlays are open
+    var anyOpen = document.querySelector('.app-overlay[style*="display: block"]');
+    if (!anyOpen) showDesktopIcons();
 }
 
 function selectAppIcon(el) {
@@ -4982,6 +4999,44 @@ document.querySelectorAll('.app-overlay').forEach(function(overlay) {
         }
     });
 });
+
+// Draggable app windows (by title bar)
+(function() {
+    var dragWin = null, startX = 0, startY = 0, origX = 0, origY = 0;
+
+    document.querySelectorAll('.app-window .game-title-bar').forEach(function(tb) {
+        tb.style.cursor = 'grab';
+        tb.addEventListener('mousedown', function(e) {
+            if (e.target.classList.contains('close-box')) return;
+            var win = tb.closest('.app-window');
+            dragWin = win;
+            // Convert from centered to positioned
+            var rect = win.getBoundingClientRect();
+            win.style.left = rect.left + 'px';
+            win.style.top = rect.top + 'px';
+            win.style.transform = 'none';
+            startX = e.clientX;
+            startY = e.clientY;
+            origX = rect.left;
+            origY = rect.top;
+            tb.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragWin) return;
+        dragWin.style.left = (origX + e.clientX - startX) + 'px';
+        dragWin.style.top = (origY + e.clientY - startY) + 'px';
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragWin) return;
+        var tb = dragWin.querySelector('.game-title-bar');
+        if (tb) tb.style.cursor = 'grab';
+        dragWin = null;
+    });
+})();
 
 
 /* ═══ DOGE PRESENCE SYSTEM ═══ */
