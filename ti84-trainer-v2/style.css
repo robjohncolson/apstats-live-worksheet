@@ -750,36 +750,41 @@ h2 {
 }
 
 .key-dpad-arrow:active:not(:disabled) {
-  transform: revert;
+  /* Override the generic .key:active translateY(1px) — D-pad arrows are
+     absolutely positioned with their own transforms for centering, so the
+     generic press-down effect displaces them. Use brightness only. */
+  transform: var(--dpad-rest-transform);
   filter: brightness(0.88);
+  box-shadow:
+    inset 0 2px 0 rgba(86, 92, 100, 0.18),
+    0 1px 3px rgba(0, 0, 0, 0.14);
 }
-
-.key-up:active { transform: translateX(-50%); }
-.key-down:active { transform: translateX(-50%); }
-.key-left:active { transform: translateY(-50%); }
-.key-right:active { transform: translateY(-50%); }
 
 .key-up {
   top: 0;
   left: 50%;
+  --dpad-rest-transform: translateX(-50%);
   transform: translateX(-50%);
 }
 
 .key-down {
   bottom: 0;
   left: 50%;
+  --dpad-rest-transform: translateX(-50%);
   transform: translateX(-50%);
 }
 
 .key-left {
   top: 50%;
   left: 0;
+  --dpad-rest-transform: translateY(-50%);
   transform: translateY(-50%);
 }
 
 .key-right {
   top: 50%;
   right: 0;
+  --dpad-rest-transform: translateY(-50%);
   transform: translateY(-50%);
 }
 
