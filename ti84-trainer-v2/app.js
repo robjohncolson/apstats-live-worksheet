@@ -1988,6 +1988,8 @@
           app.banner = 'Data setup mode is active. Keys go straight to the calculator.';
         } else if (app.clutch.phase === 'result-review') {
           app.banner = 'Result review mode is active. Explore the output, then finish the review.';
+        } else if (app.clutch.phase === 'procedure') {
+          app.banner = 'Guidance paused. Fix your entry, then click Resume.';
         }
       } catch (error) {
         app.banner = error.message;
@@ -2530,6 +2532,11 @@
               <button type="button" class="mac-button" data-action="open-rom-dialog">Firmware</button>
               <button type="button" class="mac-button" data-action="restart-walkthrough" ${!walkthrough ? 'disabled' : ''}>Restart</button>
               <button type="button" class="mac-button" data-action="show-hint" ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>Hint</button>
+              ${walkthrough && app.clutch.phase === 'procedure'
+                ? app.clutch.engaged
+                  ? `<button type="button" class="mac-button" data-action="pause-guidance">Pause</button>`
+                  : `<button type="button" class="mac-button primary" data-action="resume-guidance">Resume</button>`
+                : ''}
             </div>
           </div>
           ${walkthrough
@@ -2796,6 +2803,18 @@
         break;
       case 'finish-review':
         completeWalkthrough();
+        break;
+      case 'pause-guidance':
+        app.clutch.engaged = false;
+        app.banner = 'Guidance paused. Keys go straight to the calculator — fix your entry, then click Resume.';
+        render();
+        break;
+      case 'resume-guidance':
+        app.clutch.engaged = true;
+        app.banner = app.walkthrough.mode === 'guided'
+          ? 'Guidance resumed. Follow the highlighted key.'
+          : 'Guidance resumed. Continue from memory.';
+        render();
         break;
       case 'restart-walkthrough':
         await restartWalkthrough();
