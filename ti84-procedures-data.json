@@ -4294,16 +4294,23 @@
         },
         {
           "stepNumber": 3,
-          "key": "E",
-          "screen": "geometpdf-wizard",
-          "highlight": "E:geometpdf(",
-          "narration": "Press [sin] (the E key) to select geometpdf.",
-          "skillType": "confirmation",
-          "repeatable": true,
-          "physicalKey": "SIN"
+          "key": "ALPHA",
+          "screen": "distr-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
         },
         {
           "stepNumber": 4,
+          "key": "SIN",
+          "screen": "geometpdf-wizard",
+          "highlight": "E:geometpdf(",
+          "narration": "Press [sin] (the E key) to select geometpdf..",
+          "skillType": "confirmation",
+          "repeatable": true
+        },
+        {
+          "stepNumber": 5,
           "key": "{p}",
           "screen": "geometpdf-wizard",
           "highlight": "p entered",
@@ -4311,7 +4318,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 5,
+          "stepNumber": 6,
           "key": "DOWN",
           "screen": "geometpdf-wizard",
           "highlight": "x",
@@ -4319,7 +4326,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 7,
           "key": "{x}",
           "screen": "geometpdf-wizard",
           "highlight": "x entered",
@@ -4327,7 +4334,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "geometpdf-wizard",
           "highlight": "Paste",
@@ -4335,7 +4342,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "ENTER",
           "screen": "home",
           "highlight": "geometpdf(...) pasted",
@@ -4343,7 +4350,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "ENTER",
           "screen": "distribution-home-result",
           "highlight": "single probability",
@@ -4400,16 +4407,23 @@
         },
         {
           "stepNumber": 3,
-          "key": "F",
-          "screen": "geometcdf-wizard",
-          "highlight": "F:geometcdf(",
-          "narration": "Press [cos] (the F key) to select geometcdf.",
-          "skillType": "confirmation",
-          "repeatable": true,
-          "physicalKey": "COS"
+          "key": "ALPHA",
+          "screen": "distr-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
         },
         {
           "stepNumber": 4,
+          "key": "COS",
+          "screen": "geometcdf-wizard",
+          "highlight": "F:geometcdf(",
+          "narration": "Press [cos] (the F key) to select geometcdf..",
+          "skillType": "confirmation",
+          "repeatable": true
+        },
+        {
+          "stepNumber": 5,
           "key": "{p}",
           "screen": "geometcdf-wizard",
           "highlight": "p entered",
@@ -4417,7 +4431,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 5,
+          "stepNumber": 6,
           "key": "DOWN",
           "screen": "geometcdf-wizard",
           "highlight": "x",
@@ -4425,7 +4439,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 7,
           "key": "{x}",
           "screen": "geometcdf-wizard",
           "highlight": "x entered",
@@ -4433,7 +4447,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "geometcdf-wizard",
           "highlight": "Paste",
@@ -4441,7 +4455,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "ENTER",
           "screen": "home",
           "highlight": "geometcdf(...) pasted",
@@ -4449,7 +4463,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "ENTER",
           "screen": "distribution-home-result",
           "highlight": "cumulative probability",
@@ -4978,10 +4992,18 @@
         },
         {
           "stepNumber": 4,
-          "key": "A",
+          "key": "ALPHA",
+          "screen": "stat-tests-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 5,
+          "key": "MATH",
           "screen": "one-propzint-wizard",
           "highlight": "A:1-PropZInt...",
-          "narration": "Press [math] (the A key) to select 1-PropZInt.",
+          "narration": "Press [math] (the A key) to select 1-PropZInt..",
           "skillType": "confirmation",
           "repeatable": true,
           "commonErrors": [
@@ -4989,11 +5011,10 @@
               "key": "ENTER",
               "feedback": "Keep scrolling — A:1-PropZInt is below the visible items."
             }
-          ],
-          "physicalKey": "MATH"
+          ]
         },
         {
-          "stepNumber": 5,
+          "stepNumber": 6,
           "key": "{x}",
           "screen": "one-propzint-wizard",
           "highlight": "x entered",
@@ -5001,7 +5022,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 7,
           "key": "DOWN",
           "screen": "one-propzint-wizard",
           "highlight": "n",
@@ -5009,7 +5030,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "{n}",
           "screen": "one-propzint-wizard",
           "highlight": "n entered",
@@ -5017,7 +5038,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "DOWN",
           "screen": "one-propzint-wizard",
           "highlight": "C-Level",
@@ -5025,7 +5046,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "{C-Level}",
           "screen": "one-propzint-wizard",
           "highlight": "C-Level entered",
@@ -5033,7 +5054,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "one-propzint-wizard",
           "highlight": "Calculate",
@@ -5041,7 +5062,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "ENTER",
           "screen": "one-propzint-result",
           "highlight": "interval line",
@@ -6388,16 +6409,23 @@
         },
         {
           "stepNumber": 4,
-          "key": "D",
-          "screen": "chi2gof-wizard",
-          "highlight": "D:χ²GOF-Test...",
-          "narration": "Press [x⁻¹] (the D key) to select χ²GOF-Test.",
-          "skillType": "confirmation",
-          "repeatable": true,
-          "physicalKey": "X_INVERSE"
+          "key": "ALPHA",
+          "screen": "stat-tests-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
         },
         {
           "stepNumber": 5,
+          "key": "X_INVERSE",
+          "screen": "chi2gof-wizard",
+          "highlight": "D:χ²GOF-Test...",
+          "narration": "Press [x⁻¹] (the D key) to select χ²GOF-Test..",
+          "skillType": "confirmation",
+          "repeatable": true
+        },
+        {
+          "stepNumber": 6,
           "key": "2ND",
           "screen": "chi2gof-wizard",
           "highlight": "2ND indicator",
@@ -6405,7 +6433,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 7,
           "key": "1",
           "screen": "chi2gof-wizard",
           "highlight": "Observed: L1",
@@ -6413,7 +6441,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "chi2gof-wizard",
           "highlight": "Expected",
@@ -6421,7 +6449,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "2ND",
           "screen": "chi2gof-wizard",
           "highlight": "2ND indicator",
@@ -6429,7 +6457,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "2",
           "screen": "chi2gof-wizard",
           "highlight": "Expected: L2",
@@ -6437,7 +6465,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "chi2gof-wizard",
           "highlight": "df",
@@ -6451,7 +6479,7 @@
           ]
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "{df}",
           "screen": "chi2gof-wizard",
           "highlight": "df entered",
@@ -6459,7 +6487,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "DOWN",
           "screen": "chi2gof-wizard",
           "highlight": "Calculate",
@@ -6467,7 +6495,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "DOWN",
           "screen": "chi2gof-wizard",
           "highlight": "Calculate",
@@ -6475,7 +6503,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "ENTER",
           "screen": "chi2gof-result",
           "highlight": "χ² line",
@@ -6542,16 +6570,23 @@
         },
         {
           "stepNumber": 4,
-          "key": "C",
-          "screen": "chi2test-wizard",
-          "highlight": "C:χ²-Test...",
-          "narration": "Press [prgm] (the C key) to select χ²-Test.",
-          "skillType": "confirmation",
-          "repeatable": true,
-          "physicalKey": "PRGM"
+          "key": "ALPHA",
+          "screen": "stat-tests-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
         },
         {
           "stepNumber": 5,
+          "key": "PRGM",
+          "screen": "chi2test-wizard",
+          "highlight": "C:χ²-Test...",
+          "narration": "Press [prgm] (the C key) to select χ²-Test..",
+          "skillType": "confirmation",
+          "repeatable": true
+        },
+        {
+          "stepNumber": 6,
           "key": "DOWN",
           "screen": "chi2test-wizard",
           "highlight": "Expected: [B]",
@@ -6559,7 +6594,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 7,
           "key": "DOWN",
           "screen": "chi2test-wizard",
           "highlight": "Calculate",
@@ -6567,7 +6602,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "chi2test-wizard",
           "highlight": "Calculate",
@@ -6575,7 +6610,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "ENTER",
           "screen": "chi2test-result",
           "highlight": "χ² line",
@@ -6642,16 +6677,23 @@
         },
         {
           "stepNumber": 4,
-          "key": "F",
-          "screen": "linreg-ttest-wizard",
-          "highlight": "F:LinRegTTest...",
-          "narration": "Press [cos] (the F key) to select LinRegTTest.",
-          "skillType": "confirmation",
-          "repeatable": true,
-          "physicalKey": "COS"
+          "key": "ALPHA",
+          "screen": "stat-tests-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
         },
         {
           "stepNumber": 5,
+          "key": "COS",
+          "screen": "linreg-ttest-wizard",
+          "highlight": "F:LinRegTTest...",
+          "narration": "Press [cos] (the F key) to select LinRegTTest..",
+          "skillType": "confirmation",
+          "repeatable": true
+        },
+        {
+          "stepNumber": 6,
           "key": "2ND",
           "screen": "linreg-ttest-wizard",
           "highlight": "2ND indicator",
@@ -6659,7 +6701,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 7,
           "key": "1",
           "screen": "linreg-ttest-wizard",
           "highlight": "Xlist: L1",
@@ -6667,7 +6709,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "linreg-ttest-wizard",
           "highlight": "Ylist",
@@ -6675,7 +6717,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "2ND",
           "screen": "linreg-ttest-wizard",
           "highlight": "2ND indicator",
@@ -6683,7 +6725,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "2",
           "screen": "linreg-ttest-wizard",
           "highlight": "Ylist: L2",
@@ -6691,7 +6733,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "linreg-ttest-wizard",
           "highlight": "Freq",
@@ -6699,7 +6741,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "1",
           "screen": "linreg-ttest-wizard",
           "highlight": "Freq: 1",
@@ -6707,7 +6749,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "DOWN",
           "screen": "linreg-ttest-wizard",
           "highlight": "β and ρ row",
@@ -6721,7 +6763,7 @@
           ]
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "RIGHT",
           "screen": "linreg-ttest-wizard",
           "highlight": "desired alternative",
@@ -6730,7 +6772,7 @@
           "repeatable": true
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "DOWN",
           "screen": "linreg-ttest-wizard",
           "highlight": "RegEQ",
@@ -6738,7 +6780,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "VARS",
           "screen": "linreg-ttest-wizard",
           "highlight": "Y-VARS selector",
@@ -6746,7 +6788,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 17,
           "key": "RIGHT",
           "screen": "linreg-ttest-wizard",
           "highlight": "Function menu",
@@ -6754,7 +6796,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 17,
+          "stepNumber": 18,
           "key": "ENTER",
           "screen": "linreg-ttest-wizard",
           "highlight": "Y1",
@@ -6762,7 +6804,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 18,
+          "stepNumber": 19,
           "key": "ENTER",
           "screen": "linreg-ttest-wizard",
           "highlight": "RegEQ: Y1",
@@ -6770,7 +6812,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 19,
+          "stepNumber": 20,
           "key": "DOWN",
           "screen": "linreg-ttest-wizard",
           "highlight": "Calculate",
@@ -6778,7 +6820,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 20,
+          "stepNumber": 21,
           "key": "ENTER",
           "screen": "linreg-ttest-result",
           "highlight": "t line",
@@ -6844,16 +6886,23 @@
         },
         {
           "stepNumber": 4,
-          "key": "G",
-          "screen": "linreg-tint-wizard",
-          "highlight": "G:LinRegTInt...",
-          "narration": "Press [tan] (the G key) to select LinRegTInt.",
-          "skillType": "confirmation",
-          "repeatable": true,
-          "physicalKey": "TAN"
+          "key": "ALPHA",
+          "screen": "stat-tests-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
         },
         {
           "stepNumber": 5,
+          "key": "TAN",
+          "screen": "linreg-tint-wizard",
+          "highlight": "G:LinRegTInt...",
+          "narration": "Press [tan] (the G key) to select LinRegTInt..",
+          "skillType": "confirmation",
+          "repeatable": true
+        },
+        {
+          "stepNumber": 6,
           "key": "2ND",
           "screen": "linreg-tint-wizard",
           "highlight": "2ND indicator",
@@ -6861,7 +6910,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 6,
+          "stepNumber": 7,
           "key": "1",
           "screen": "linreg-tint-wizard",
           "highlight": "Xlist: L1",
@@ -6869,7 +6918,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 7,
+          "stepNumber": 8,
           "key": "DOWN",
           "screen": "linreg-tint-wizard",
           "highlight": "Ylist",
@@ -6877,7 +6926,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 8,
+          "stepNumber": 9,
           "key": "2ND",
           "screen": "linreg-tint-wizard",
           "highlight": "2ND indicator",
@@ -6885,7 +6934,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 9,
+          "stepNumber": 10,
           "key": "2",
           "screen": "linreg-tint-wizard",
           "highlight": "Ylist: L2",
@@ -6893,7 +6942,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 10,
+          "stepNumber": 11,
           "key": "DOWN",
           "screen": "linreg-tint-wizard",
           "highlight": "Freq",
@@ -6901,7 +6950,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 11,
+          "stepNumber": 12,
           "key": "1",
           "screen": "linreg-tint-wizard",
           "highlight": "Freq: 1",
@@ -6909,7 +6958,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 12,
+          "stepNumber": 13,
           "key": "DOWN",
           "screen": "linreg-tint-wizard",
           "highlight": "C-Level",
@@ -6917,7 +6966,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 13,
+          "stepNumber": 14,
           "key": "{C-Level}",
           "screen": "linreg-tint-wizard",
           "highlight": "C-Level entered",
@@ -6925,7 +6974,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 14,
+          "stepNumber": 15,
           "key": "DOWN",
           "screen": "linreg-tint-wizard",
           "highlight": "RegEQ",
@@ -6933,7 +6982,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 15,
+          "stepNumber": 16,
           "key": "VARS",
           "screen": "linreg-tint-wizard",
           "highlight": "Y-VARS selector",
@@ -6941,7 +6990,7 @@
           "skillType": "parameter"
         },
         {
-          "stepNumber": 16,
+          "stepNumber": 17,
           "key": "RIGHT",
           "screen": "linreg-tint-wizard",
           "highlight": "Function menu",
@@ -6949,7 +6998,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 17,
+          "stepNumber": 18,
           "key": "ENTER",
           "screen": "linreg-tint-wizard",
           "highlight": "Y1",
@@ -6957,7 +7006,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 18,
+          "stepNumber": 19,
           "key": "ENTER",
           "screen": "linreg-tint-wizard",
           "highlight": "RegEQ: Y1",
@@ -6965,7 +7014,7 @@
           "skillType": "confirmation"
         },
         {
-          "stepNumber": 19,
+          "stepNumber": 20,
           "key": "DOWN",
           "screen": "linreg-tint-wizard",
           "highlight": "Calculate",
@@ -6973,7 +7022,7 @@
           "skillType": "navigation"
         },
         {
-          "stepNumber": 20,
+          "stepNumber": 21,
           "key": "ENTER",
           "screen": "linreg-tint-result",
           "highlight": "interval line",

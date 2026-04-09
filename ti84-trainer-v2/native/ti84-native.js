@@ -605,10 +605,36 @@
 
     // ── Key press pipeline ──────────────────────────────────────────────
 
+    // Physical key -> alpha character for menu letter selection
+    var ALPHA_MAP = {
+      MATH: 'A', APPS: 'B', PRGM: 'C', X_INVERSE: 'D',
+      SIN: 'E', COS: 'F', TAN: 'G', POWER: 'H',
+    };
+    var alphaActive = false;
+
     function pressKey(key) {
       bus.emit('key-press', { key: key, handled: true, blocked: false });
 
-      // 1. Handle 2ND modifier
+      // 1a. Handle ALPHA modifier
+      if (key === 'ALPHA') {
+        alphaActive = true;
+        return;
+      }
+
+      // 1b. If ALPHA was active, resolve to letter for menu selection
+      if (alphaActive) {
+        alphaActive = false;
+        var letter = ALPHA_MAP[key];
+        if (letter && screen.type === 'menu') {
+          // Send the letter character to the menu nav
+          handleMenuKey(letter);
+          render();
+          return;
+        }
+        // Outside menus or unknown key — ignore alpha
+      }
+
+      // 1c. Handle 2ND modifier
       if (key === '2ND') {
         secondActive = true;
         return;
