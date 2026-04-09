@@ -562,7 +562,56 @@
         }
         ::-webkit-scrollbar-button { display: none; }
 
+        /* ── App Overlay Windows ────────────────── */
+        .app-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 250;
+            background: rgba(85, 85, 102, 0.6);
+        }
+        .app-window {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px;
+            max-width: 95vw;
+            height: 80vh;
+            max-height: 90vh;
+            background: var(--platinum);
+            border: 1px solid var(--black);
+            box-shadow:
+                inset 1px 1px 0 0 var(--plat-hi),
+                inset -1px -1px 0 0 var(--plat-lo),
+                2px 2px 0 0 var(--black);
+            padding: 1px;
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .app-content {
+            margin: 1px 2px 2px 2px;
+            border: 1px solid var(--black);
+            background: var(--white);
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+        .app-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            flex: 1;
+        }
+
         @media (max-width: 700px) {
+            .app-window {
+                width: 100vw; height: 100vh;
+                max-width: 100vw; max-height: 100vh;
+                top: 0; left: 0;
+                transform: none;
+                border-radius: 0;
+            }
             .wk-row, .hdr-row { grid-template-columns: 40px repeat(5, 1fr); }
             .wk-lbl { font-size: 8px; padding-right: 4px; }
             .dc { padding: 3px; min-height: 40px; }
@@ -871,6 +920,13 @@
             <div class="menu-dd-item disabled">Remove Label</div>
         </div>
     </span>
+    <span class="menu-item" data-menu="apps">Apps
+        <div class="menu-dropdown" id="menu-apps">
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('ti84')" style="font-weight:bold">&#128290; TI-84 Trainer</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('quiz')" style="font-weight:bold">&#128221; AP Stats Quiz</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
+        </div>
+    </span>
     <span class="menu-item" data-menu="special">Special
         <div class="menu-dropdown" id="menu-special">
             <div class="menu-dd-item" data-sfx onclick="showDialog('&#128165;','All caches cleared! Your brain has been defragmented. You now have 12% more room for z-scores.','Excellent')">Empty Trash</div>
@@ -1009,6 +1065,48 @@
     </div>
 </div>
 
+
+<!-- ═══ App Window: TI-84 Trainer ═══ -->
+<div class="app-overlay" id="app-ti84-overlay">
+    <div class="app-window">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="closeApp('ti84')"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">TI-84 Trainer</span>
+        </div>
+        <div class="app-content">
+            <iframe id="app-ti84-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ App Window: AP Stats Quiz ═══ -->
+<div class="app-overlay" id="app-quiz-overlay">
+    <div class="app-window">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="closeApp('quiz')"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">AP Stats Quiz</span>
+        </div>
+        <div class="app-content">
+            <iframe id="app-quiz-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ App Window: Equation Trainer ═══ -->
+<div class="app-overlay" id="app-formulas-overlay">
+    <div class="app-window">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="closeApp('formulas')"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">Equation Trainer</span>
+        </div>
+        <div class="app-content">
+            <iframe id="app-formulas-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
+        </div>
+    </div>
+</div>
 
 <!-- ═══ Tooltip ═══ -->
 <div class="tip geneva" id="tip"></div>
@@ -4664,6 +4762,43 @@ function closeGame() {
 window.studyBreak = studyBreak;
 
 
+/* ═══ APP LAUNCHER ═══ */
+const APP_REGISTRY = {
+    ti84:     { url: 'https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', sfx: 'wildEep' },
+    quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
+    formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' }
+};
+
+function openApp(id) {
+    var app = APP_REGISTRY[id];
+    if (!app) return;
+    MacSFX.play(app.sfx, 0.5);
+    var overlay = document.getElementById('app-' + id + '-overlay');
+    var iframe = document.getElementById('app-' + id + '-frame');
+    if (!iframe.src || iframe.src === 'about:blank' || iframe.src === window.location.href) {
+        iframe.src = app.url;
+    }
+    overlay.style.display = 'block';
+}
+
+function closeApp(id) {
+    var overlay = document.getElementById('app-' + id + '-overlay');
+    var iframe = document.getElementById('app-' + id + '-frame');
+    overlay.style.display = 'none';
+    iframe.src = 'about:blank';
+}
+
+// Click backdrop to close app overlays
+document.querySelectorAll('.app-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            var id = overlay.id.replace('app-', '').replace('-overlay', '');
+            closeApp(id);
+        }
+    });
+});
+
+
 /* ═══ DOGE PRESENCE SYSTEM ═══ */
 const DogePresence = {
     ws: null,
@@ -4986,13 +5121,19 @@ document.addEventListener('mousedown', (e) => {
     }
 });
 
-// Close doge dropdown on Escape
+// Close doge dropdown & app overlays on Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         if (DogePresence.dropdownOpen) DogePresence.closeDropdown();
         if (DogePresence.incomingChallenge) {
             document.getElementById('doge-challenge-panel').style.display = 'none';
         }
+        document.querySelectorAll('.app-overlay').forEach(function(el) {
+            if (el.style.display === 'block') {
+                var id = el.id.replace('app-', '').replace('-overlay', '');
+                closeApp(id);
+            }
+        });
     }
 });
 
