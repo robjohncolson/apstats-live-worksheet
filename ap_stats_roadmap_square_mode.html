@@ -4902,6 +4902,7 @@ const studyBreak = {
 };
 
 function openGame() {
+    bumpUsage('game');
     MacSFX.play('wildEep', 0.5);
     studyBreak.open();
 }
@@ -4921,9 +4922,18 @@ const APP_REGISTRY = {
     driller:  { url: 'https://lrsl-driller.vercel.app/platform/app.html?cartridge=a2t4l1-inverse-variation&mode=1', sfx: 'wildEep' }
 };
 
+function bumpUsage(id) {
+    try {
+        var counts = JSON.parse(localStorage.getItem('ap-roadmap-icon-usage') || '{}');
+        counts[id] = (counts[id] || 0) + 1;
+        localStorage.setItem('ap-roadmap-icon-usage', JSON.stringify(counts));
+    } catch(e) {}
+}
+
 function openApp(id) {
     var app = APP_REGISTRY[id];
     if (!app) return;
+    bumpUsage(id);
     MacSFX.play(app.sfx, 0.5);
     var overlay = document.getElementById('app-' + id + '-overlay');
     var iframe = document.getElementById('app-' + id + '-frame');
@@ -5016,36 +5026,31 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
     });
 });
 
-/* ── Draggable Desktop Icons ── */
+/* ── Draggable Desktop Icons + Auto-Arrange by Usage ── */
 (function() {
-    var STORAGE_KEY = 'ap-roadmap-icon-positions';
-    var icons = document.querySelectorAll('.app-icon, .desktop-icon');
+    var icons = Array.from(document.querySelectorAll('.app-icon'));
     var dragIcon = null, startX = 0, startY = 0, origX = 0, origY = 0, didDrag = false;
+    var ICON_TOP_START = 36;
+    var ICON_GAP = 72;
+    var ICON_RIGHT = 20;
 
-    // Restore saved positions
-    function loadPositions() {
-        try {
-            var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            icons.forEach(function(el) {
-                var key = el.dataset.app;
-                if (saved[key]) {
-                    el.style.left = saved[key].x + 'px';
-                    el.style.top = saved[key].y + 'px';
-                    el.style.right = 'auto';
-                    el.style.bottom = 'auto';
-                }
-            });
-        } catch(e) {}
+    function getUsageCounts() {
+        try { return JSON.parse(localStorage.getItem('ap-roadmap-icon-usage') || '{}'); }
+        catch(e) { return {}; }
     }
 
-    function savePositions() {
-        var pos = {};
-        icons.forEach(function(el) {
-            var key = el.dataset.app;
-            var rect = el.getBoundingClientRect();
-            pos[key] = { x: rect.left, y: rect.top };
+    // Sort icons by usage count (descending), arrange in right column
+    function arrangeByUsage() {
+        var counts = getUsageCounts();
+        icons.sort(function(a, b) {
+            return (counts[b.dataset.app] || 0) - (counts[a.dataset.app] || 0);
         });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
+        icons.forEach(function(el, i) {
+            el.style.top = (ICON_TOP_START + i * ICON_GAP) + 'px';
+            el.style.right = ICON_RIGHT + 'px';
+            el.style.left = 'auto';
+            el.style.bottom = 'auto';
+        });
     }
 
     icons.forEach(function(el) {
@@ -5058,7 +5063,6 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
             origY = rect.top;
             startX = e.clientX;
             startY = e.clientY;
-            // Convert from right/bottom-positioned to left/top-positioned
             el.style.left = origX + 'px';
             el.style.top = origY + 'px';
             el.style.right = 'auto';
@@ -5081,7 +5085,6 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
     document.addEventListener('mouseup', function() {
         if (!dragIcon) return;
         dragIcon.classList.remove('dragging');
-        if (didDrag) savePositions();
         dragIcon = null;
     });
 
@@ -5090,7 +5093,7 @@ document.querySelectorAll('.app-icon .icon-img img').forEach(function(img) {
         if (didDrag) { e.stopPropagation(); didDrag = false; }
     }, true);
 
-    loadPositions();
+    arrangeByUsage();
 })();
 
 // Click backdrop to close app overlays
