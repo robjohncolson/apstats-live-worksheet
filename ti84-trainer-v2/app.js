@@ -1751,12 +1751,8 @@
       await app.bridge.prepareHome();
 
       if (hasDataTarget(dataTarget)) {
-        if (dataTargetMatchesMemory(dataTarget)) {
-          syncDataTargetToNative(dataTarget);
-          startProcedurePhase('Using saved data already in the calculator. Starting procedure.');
-          return;
-        }
-
+        // Always show data setup phase — let the student confirm or re-enter.
+        // Memory might be stale if CEmu was reset or auto-fill targeted wrong columns.
         enterDataSetupPhase(procedure, dataTarget);
         return;
       }
