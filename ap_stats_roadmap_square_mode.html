@@ -234,8 +234,15 @@
             color: #DDDDEE;
             image-rendering: pixelated;
         }
+        .desktop-icon .icon-img img {
+            width: 32px; height: 32px;
+            image-rendering: pixelated;
+        }
         .desktop-icon .icon-img::after {
             content: "\1F4C5";
+        }
+        .desktop-icon .icon-img.has-png::after {
+            content: none;
         }
         .desktop-icon.selected .icon-img {
             border-color: var(--black);
@@ -982,6 +989,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('ti84')" style="font-weight:bold">&#128290; TI-84 Trainer</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('quiz')" style="font-weight:bold">&#128221; AP Stats Quiz</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('driller')" style="font-weight:bold">&#128296; Driller</div>
         </div>
     </span>
     <span class="menu-item" data-menu="special">Special
@@ -1017,6 +1025,10 @@
         <div class="icon-img"><img src="icons/icon-formulas.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#9889;</div>
         <div class="icon-label">Equation Trainer</div>
     </div>
+    <div class="app-icon" data-app="driller" ondblclick="openApp('driller')" onclick="selectAppIcon(this)">
+        <div class="icon-img"><img src="icons/icon-driller.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#128296;</div>
+        <div class="icon-label">Driller</div>
+    </div>
     <div class="app-icon" data-app="game" ondblclick="openGame()" onclick="selectAppIcon(this)">
         <div class="icon-img"><img src="icons/icon-tetris.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#127918;</div>
         <div class="icon-label">Study Break</div>
@@ -1025,7 +1037,7 @@
 
 <!-- ═══ Main Window ═══ -->
 <div class="desktop-icon" id="desktop-icon" ondblclick="restoreWindow()" onclick="selectIcon(this)">
-    <div class="icon-img"></div>
+    <div class="icon-img"><img src="icons/icon-calendar.png" alt="" onerror="this.style.display='none'" onload="this.parentElement.classList.add('has-png')"></div>
     <div class="icon-label">Road to the AP Exam</div>
 </div>
 
@@ -1181,6 +1193,20 @@
         </div>
         <div class="app-content">
             <iframe id="app-formulas-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ App Window: Driller ═══ -->
+<div class="app-overlay" id="app-driller-overlay">
+    <div class="app-window">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="closeApp('driller')"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">Driller</span>
+        </div>
+        <div class="app-content">
+            <iframe id="app-driller-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
         </div>
     </div>
 </div>
@@ -4843,7 +4869,8 @@ window.studyBreak = studyBreak;
 const APP_REGISTRY = {
     ti84:     { url: 'https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', sfx: 'wildEep' },
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
-    formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' }
+    formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' },
+    driller:  { url: 'https://lrsl-driller.vercel.app/platform/app.html?cartridge=a2t4l1-inverse-variation&mode=1', sfx: 'wildEep' }
 };
 
 function openApp(id) {
