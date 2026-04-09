@@ -995,7 +995,10 @@
 
       // Expose internals for testing
       _getHomeLines: function () { return homeLines; },
-      _getBus: function () { return bus; }
+      _getBus: function () { return bus; },
+
+      /** Last computed result values (set after ENTER on a wizard). */
+      getComputedValues: function () { return resultComputedValues; }
     };
 
     return calc;

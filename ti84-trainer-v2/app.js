@@ -131,6 +131,10 @@
         return native.getMatrix(name);
       },
 
+      getComputedValues() {
+        return native.getComputedValues?.() ?? null;
+      },
+
       async selectRomFile(file) {
         const ready = await cemu.selectRomFile(file);
         options.onStatus?.(cemu.getStatus());
@@ -576,6 +580,14 @@
   }
 
   function computeExpected(procedureId, problem) {
+    // Prefer values the native module already computed during the walkthrough.
+    // These are consistent with what the mock LCD showed.
+    const nativeValues = app.backend?.getComputedValues?.();
+    if (nativeValues && typeof nativeValues === 'object') {
+      return nativeValues;
+    }
+
+    // Fallback: recompute from problem data (may diverge from TI-84 ROM).
     const SM = window.TI84StatMath;
     const v = problem?.values && typeof problem.values === 'object'
       ? problem.values
@@ -701,11 +713,15 @@
     }
 
     if (expected === 0) {
-      return Math.abs(a) < 1e-6;
+      return Math.abs(a) < 0.005;
     }
 
-    const relTol = 1e-4;
-    const absTol = 1e-6;
+    // AP-appropriate tolerance: match to ~3 decimal places.
+    // TI-84 ROM and stat-math.js use different numerical methods
+    // (especially for distributions), so tight tolerance causes
+    // false negatives.
+    const relTol = 0.005;    // 0.5% relative
+    const absTol = 0.0005;   // absolute for small values
 
     return Math.abs(a - expected) <= Math.max(relTol * Math.abs(expected), absTol);
   }
