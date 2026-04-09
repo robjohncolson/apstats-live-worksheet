@@ -4865,13 +4865,13 @@ const APP_REGISTRY = {
 };
 
 function hideDesktopIcons() {
-    document.querySelectorAll('.app-icon, .desktop-icon').forEach(function(el) {
-        el.style.visibility = 'hidden';
+    document.querySelectorAll('.app-icon').forEach(function(el) {
+        el.style.display = 'none';
     });
 }
 function showDesktopIcons() {
-    document.querySelectorAll('.app-icon, .desktop-icon').forEach(function(el) {
-        el.style.visibility = '';
+    document.querySelectorAll('.app-icon').forEach(function(el) {
+        el.style.display = '';
     });
 }
 
