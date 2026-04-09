@@ -9,91 +9,59 @@
 
     const native = nativeApi.create();
     const state = {
-      activeBackend: 'native',
       canvas: null,
-      mountedBackend: null,
-      mountedCanvas: null,
-      suppressCemuStatus: false,
     };
 
     const cemu = bridgeApi.createBridge({
       onStatus(status) {
-        if (state.suppressCemuStatus || state.activeBackend !== 'cemu') {
-          return;
-        }
-
         options.onStatus?.(status);
       },
     });
 
-    function mountActiveBackend(force = false) {
-      const backend = state.activeBackend === 'native' ? native : cemu;
-
-      if (!backend || !state.canvas) {
+    function mountCemuCanvas() {
+      if (!state.canvas) {
         return;
       }
 
-      if (!force
-        && state.mountedBackend === state.activeBackend
-        && state.mountedCanvas === state.canvas) {
-        return;
+      cemu.mountCanvas(state.canvas);
+    }
+
+    function syncValueToNative(value, options = {}) {
+      const input = `${value ?? ''}`.trim();
+
+      if (!input) {
+        return false;
       }
 
-      backend.mountCanvas(state.canvas);
-      state.mountedBackend = state.activeBackend;
-      state.mountedCanvas = state.canvas;
-    }
-
-    function nativeStatus() {
-      return {
-        code: 'ready',
-        detail: 'Native mode',
-        usingMock: false,
-        romMeta: null,
-      };
-    }
-
-    function emitStatus() {
-      const status = state.activeBackend === 'native'
-        ? nativeStatus()
-        : cemu.getStatus();
-
-      options.onStatus?.(status);
-    }
-
-    async function switchToCemu(file) {
-      if (file) {
-        await cemu.selectRomFile(file);
+      if (options.clearField !== false) {
+        native.pressKey('CLEAR');
       }
 
-      if (!cemu.isRealEmulator()) {
-        const status = cemu.getStatus();
-        throw new Error(status.detail || 'Failed to boot the TI-84 Plus CE ROM.');
+      for (const char of input) {
+        if (char === ' ') {
+          continue;
+        }
+
+        const buttonId = bridgeApi.CHAR_TO_BUTTON[char];
+
+        if (!buttonId) {
+          throw new Error(`Cannot type character "${char}" on the native keypad.`);
+        }
+
+        native.pressKey(buttonId);
       }
 
-      state.activeBackend = 'cemu';
-      state.mountedBackend = null;
-      mountActiveBackend(true);
-      emitStatus();
-      return true;
-    }
-
-    function switchToNative() {
-      state.activeBackend = 'native';
-      state.mountedBackend = null;
-      mountActiveBackend(true);
-      native.reset();
-      emitStatus();
       return true;
     }
 
     return {
       async init() {
         await native.init();
-        mountActiveBackend(true);
         native.reset();
-        emitStatus();
-        return true;
+        mountCemuCanvas();
+        const ready = await cemu.init();
+        options.onStatus?.(cemu.getStatus());
+        return ready;
       },
 
       mountCanvas(canvas) {
@@ -102,71 +70,41 @@
         }
 
         state.canvas = canvas;
-        mountActiveBackend();
+        mountCemuCanvas();
       },
 
       async sendButton(buttonId, holdMs) {
-        if (state.activeBackend === 'native') {
-          native.pressKey(buttonId);
-          return true;
-        }
-
-        return cemu.sendButton(buttonId, holdMs);
+        native.pressKey(buttonId);
+        await cemu.sendButton(buttonId, holdMs);
+        return true;
       },
 
       async prepareHome() {
-        if (state.activeBackend === 'native') {
-          native.reset();
-          return true;
-        }
-
-        return cemu.prepareHome();
+        native.reset();
+        await cemu.prepareHome();
+        return true;
       },
 
       async typeValue(value) {
-        if (state.activeBackend !== 'native') {
-          return cemu.typeValue(value);
-        }
-
-        const input = `${value ?? ''}`.trim();
-
-        for (const char of input) {
-          if (char === ' ') {
-            continue;
-          }
-
-          const buttonId = bridgeApi.CHAR_TO_BUTTON[char];
-
-          if (!buttonId) {
-            throw new Error(`Cannot type character "${char}" on the native keypad.`);
-          }
-
-          native.pressKey(buttonId);
-        }
-
+        syncValueToNative(value);
+        await cemu.typeValue(value);
         return true;
       },
 
       isRealEmulator() {
-        return state.activeBackend === 'cemu' && cemu.isRealEmulator();
-      },
-
-      isNative() {
-        return state.activeBackend === 'native';
+        return cemu.isRealEmulator();
       },
 
       getStatus() {
-        return state.activeBackend === 'native'
-          ? nativeStatus()
-          : cemu.getStatus();
+        return cemu.getStatus();
       },
 
       getScreen() {
-        return state.activeBackend === 'native' ? native.getScreen() : null;
+        return native.getScreen();
       },
 
       getWizardValues() {
-        return state.activeBackend === 'native' ? native.getWizardValues() : null;
+        return native.getWizardValues();
       },
 
       on(event, callback) {
@@ -193,36 +131,25 @@
         return native.getMatrix(name);
       },
 
-      async switchToCemu(file) {
-        return switchToCemu(file);
-      },
-
-      switchToNative() {
-        return switchToNative();
-      },
-
       async selectRomFile(file) {
-        return switchToCemu(file);
+        const ready = await cemu.selectRomFile(file);
+        options.onStatus?.(cemu.getStatus());
+        return ready;
       },
 
       async clearStoredRom() {
-        state.suppressCemuStatus = true;
-
-        try {
-          await cemu.clearStoredRom();
-        } finally {
-          state.suppressCemuStatus = false;
-        }
-
-        return switchToNative();
+        native.reset();
+        await cemu.clearStoredRom();
+        options.onStatus?.(cemu.getStatus());
+        return true;
       },
 
       setMockLines(lines, footer) {
-        if (state.activeBackend === 'native') {
-          return;
-        }
-
         cemu.setMockLines(lines, footer);
+      },
+
+      supportsManualRomSelection() {
+        return cemu.supportsManualRomSelection?.() ?? false;
       },
 
       destroy() {
@@ -246,7 +173,7 @@
   const backendApi = window.TI84V2Backend;
 
   if (!root || !proceduresData || !patternsData || !machine || !backendApi) {
-    throw new Error('TI-84 Trainer V2 failed to initialize.');
+    throw new Error('TI-84 Trainer V3 failed to initialize.');
   }
 
   const STORAGE_KEY = 'ti84trainer_v2_state';
@@ -263,71 +190,73 @@
     proceduresData.screens.map((screen) => [screen.id, screen]),
   );
 
-  const BUTTONS = [
-    ['Y_EQUALS', 'WINDOW', 'ZOOM', 'TRACE', null, 'GRAPH'],
-    ['2ND', 'MODE', 'DEL', null, 'UP', null],
-    ['ALPHA', 'X_T', 'STAT', 'LEFT', null, 'RIGHT'],
-    [null, null, null, null, 'DOWN', null],
-    ['MATH', 'APPS', 'PRGM', 'VARS', null, 'CLEAR'],
-    ['X_INVERSE', 'SIN', 'COS', 'TAN', null, 'POWER'],
-    ['SQUARED', 'COMMA', 'LPAREN', 'RPAREN', null, 'DIVIDE'],
-    ['LOG', 'SEVEN', 'EIGHT', 'NINE', null, 'MULTIPLY'],
-    ['LN', 'FOUR', 'FIVE', 'SIX', null, 'MINUS'],
-    ['STO', 'ONE', 'TWO', 'THREE', null, 'PLUS'],
-    ['ON', 'ZERO', 'DECIMAL', 'NEGATIVE', null, 'ENTER'],
+  const FUNCTION_ROW = ['Y_EQUALS', 'WINDOW', 'ZOOM', 'TRACE', 'GRAPH'];
+  const MODIFIER_COLUMN = ['2ND', 'ALPHA'];
+  const MODIFIER_GRID = [
+    ['MODE', 'DEL'],
+    ['X_T', 'STAT'],
+  ];
+  const MAIN_KEY_ROWS = [
+    ['MATH', 'APPS', 'PRGM', 'VARS', 'CLEAR'],
+    ['X_INVERSE', 'SIN', 'COS', 'TAN', 'POWER'],
+    ['SQUARED', 'COMMA', 'LPAREN', 'RPAREN', 'DIVIDE'],
+    ['LOG', 'SEVEN', 'EIGHT', 'NINE', 'MULTIPLY'],
+    ['LN', 'FOUR', 'FIVE', 'SIX', 'MINUS'],
+    ['STO', 'ONE', 'TWO', 'THREE', 'PLUS'],
+    ['ON', 'ZERO', 'DECIMAL', 'NEGATIVE', 'ENTER'],
   ];
 
   const BUTTON_META = {
-    Y_EQUALS: { label: 'y=', color: 'gray', secondary: 'statplot f1' },
-    WINDOW: { label: 'window', color: 'gray', secondary: 'tblset f2' },
-    ZOOM: { label: 'zoom', color: 'gray', secondary: 'format f3' },
-    TRACE: { label: 'trace', color: 'gray', secondary: 'calc f4' },
-    GRAPH: { label: 'graph', color: 'gray', secondary: 'table f5' },
-    '2ND': { label: '2nd', color: 'blue' },
-    MODE: { label: 'mode', color: 'black', secondary: 'quit' },
-    DEL: { label: 'del', color: 'black', secondary: 'ins' },
-    ALPHA: { label: 'alpha', color: 'green', secondary: 'A-lock' },
-    X_T: { label: 'X,T,\u03b8,n', color: 'black', secondary: 'link' },
-    STAT: { label: 'stat', color: 'black', secondary: 'list' },
-    MATH: { label: 'math', color: 'black', secondary: 'test', alpha: 'A' },
-    APPS: { label: 'apps', color: 'black', secondary: 'angle', alpha: 'B' },
-    PRGM: { label: 'prgm', color: 'black', secondary: 'draw', alpha: 'C' },
-    VARS: { label: 'vars', color: 'black', secondary: 'distr' },
-    CLEAR: { label: 'clear', color: 'black' },
-    UP: { label: '\u25b2', color: 'gray' },
-    DOWN: { label: '\u25bc', color: 'gray' },
-    LEFT: { label: '\u25c4', color: 'gray' },
-    RIGHT: { label: '\u25ba', color: 'gray' },
-    ENTER: { label: 'enter', color: 'gray', secondary: 'entry solve' },
-    X_INVERSE: { label: 'x\u207b\u00b9', color: 'black', secondary: 'matrix', alpha: 'D' },
-    SIN: { label: 'sin', color: 'black', secondary: 'sin\u207b\u00b9', alpha: 'E' },
-    COS: { label: 'cos', color: 'black', secondary: 'cos\u207b\u00b9', alpha: 'F' },
-    TAN: { label: 'tan', color: 'black', secondary: 'tan\u207b\u00b9', alpha: 'G' },
-    POWER: { label: '^', color: 'black', secondary: '\u03c0', alpha: 'H' },
-    SQUARED: { label: 'x\u00b2', color: 'black', secondary: '\u221a', alpha: 'I' },
-    COMMA: { label: ',', color: 'black', secondary: 'EE', alpha: 'J' },
-    LPAREN: { label: '(', color: 'black', secondary: '{', alpha: 'K' },
-    RPAREN: { label: ')', color: 'black', secondary: '}', alpha: 'L' },
-    DIVIDE: { label: '\u00f7', color: 'gray', secondary: 'e', alpha: 'M' },
-    LOG: { label: 'log', color: 'black', secondary: '10^x', alpha: 'N' },
-    SEVEN: { label: '7', color: 'white', secondary: 'u', alpha: 'O' },
-    EIGHT: { label: '8', color: 'white', secondary: 'v', alpha: 'P' },
-    NINE: { label: '9', color: 'white', secondary: 'w', alpha: 'Q' },
-    MULTIPLY: { label: '\u00d7', color: 'gray', secondary: '[', alpha: 'R' },
-    LN: { label: 'ln', color: 'black', secondary: 'e^x', alpha: 'S' },
-    FOUR: { label: '4', color: 'white', secondary: 'L4', alpha: 'T' },
-    FIVE: { label: '5', color: 'white', secondary: 'L5', alpha: 'U' },
-    SIX: { label: '6', color: 'white', secondary: 'L6', alpha: 'V' },
-    MINUS: { label: '\u2212', color: 'gray', secondary: ']', alpha: 'W' },
-    STO: { label: 'sto \u2192', color: 'black', secondary: 'rcl', alpha: 'X' },
-    ONE: { label: '1', color: 'white', secondary: 'L1', alpha: 'Y' },
-    TWO: { label: '2', color: 'white', secondary: 'L2', alpha: 'Z' },
-    THREE: { label: '3', color: 'white', secondary: 'L3', alpha: '\u03b8' },
-    PLUS: { label: '+', color: 'gray', secondary: 'mem', alpha: '"' },
-    ON: { label: 'on', color: 'black', secondary: 'off' },
-    ZERO: { label: '0', color: 'white', secondary: 'catalog', alpha: '\u2423' },
-    DECIMAL: { label: '.', color: 'white', secondary: 'i', alpha: ':' },
-    NEGATIVE: { label: '(-)', color: 'white', secondary: 'ans', alpha: '?' },
+    Y_EQUALS: { label: 'y=', color: 'function', secondary: 'stat plot f1' },
+    WINDOW: { label: 'window', color: 'function', secondary: 'tblset f2' },
+    ZOOM: { label: 'zoom', color: 'function', secondary: 'format f3' },
+    TRACE: { label: 'trace', color: 'function', secondary: 'calc f4' },
+    GRAPH: { label: 'graph', color: 'function', secondary: 'table f5' },
+    '2ND': { label: '2nd', color: 'second' },
+    MODE: { label: 'mode', color: 'dark', secondary: 'quit' },
+    DEL: { label: 'del', color: 'dark', secondary: 'ins' },
+    ALPHA: { label: 'alpha', color: 'alpha', secondary: 'A-lock' },
+    X_T: { label: 'x,t,\u03b8,n', color: 'dark', secondary: 'link' },
+    STAT: { label: 'stat', color: 'dark', secondary: 'list' },
+    MATH: { label: 'math', color: 'dark', secondary: 'test', alpha: 'A' },
+    APPS: { label: 'apps', color: 'dark', secondary: 'angle', alpha: 'B' },
+    PRGM: { label: 'prgm', color: 'dark', secondary: 'draw', alpha: 'C' },
+    VARS: { label: 'vars', color: 'dark', secondary: 'distr' },
+    CLEAR: { label: 'clear', color: 'dark' },
+    UP: { label: '\u25b2', color: 'dpad' },
+    DOWN: { label: '\u25bc', color: 'dpad' },
+    LEFT: { label: '\u25c4', color: 'dpad' },
+    RIGHT: { label: '\u25ba', color: 'dpad' },
+    ENTER: { label: 'enter', color: 'operator', secondary: 'entry solve' },
+    X_INVERSE: { label: 'x\u207b\u00b9', color: 'dark', secondary: 'matrix', alpha: 'D' },
+    SIN: { label: 'sin', color: 'dark', secondary: 'sin\u207b\u00b9', alpha: 'E' },
+    COS: { label: 'cos', color: 'dark', secondary: 'cos\u207b\u00b9', alpha: 'F' },
+    TAN: { label: 'tan', color: 'dark', secondary: 'tan\u207b\u00b9', alpha: 'G' },
+    POWER: { label: '^', color: 'dark', secondary: '\u03c0', alpha: 'H' },
+    SQUARED: { label: 'x\u00b2', color: 'dark', secondary: '\u221a', alpha: 'I' },
+    COMMA: { label: ',', color: 'dark', secondary: 'EE', alpha: 'J' },
+    LPAREN: { label: '(', color: 'dark', secondary: '{', alpha: 'K' },
+    RPAREN: { label: ')', color: 'dark', secondary: '}', alpha: 'L' },
+    DIVIDE: { label: '\u00f7', color: 'operator', secondary: 'e', alpha: 'M' },
+    LOG: { label: 'log', color: 'dark', secondary: '10\u02e3', alpha: 'N' },
+    SEVEN: { label: '7', color: 'number', secondary: 'u', alpha: 'O' },
+    EIGHT: { label: '8', color: 'number', secondary: 'v', alpha: 'P' },
+    NINE: { label: '9', color: 'number', secondary: 'w', alpha: 'Q' },
+    MULTIPLY: { label: '\u00d7', color: 'operator', secondary: '[', alpha: 'R' },
+    LN: { label: 'ln', color: 'dark', secondary: 'e\u02e3', alpha: 'S' },
+    FOUR: { label: '4', color: 'number', secondary: 'L4', alpha: 'T' },
+    FIVE: { label: '5', color: 'number', secondary: 'L5', alpha: 'U' },
+    SIX: { label: '6', color: 'number', secondary: 'L6', alpha: 'V' },
+    MINUS: { label: '\u2212', color: 'operator', secondary: ']', alpha: 'W' },
+    STO: { label: 'sto\u2192', color: 'dark', secondary: 'rcl', alpha: 'X' },
+    ONE: { label: '1', color: 'number', secondary: 'L1', alpha: 'Y' },
+    TWO: { label: '2', color: 'number', secondary: 'L2', alpha: 'Z' },
+    THREE: { label: '3', color: 'number', secondary: 'L3', alpha: '\u03b8' },
+    PLUS: { label: '+', color: 'operator', secondary: 'mem', alpha: '"' },
+    ON: { label: 'on', color: 'dark', secondary: 'off' },
+    ZERO: { label: '0', color: 'number', secondary: 'catalog', alpha: '\u2423' },
+    DECIMAL: { label: '.', color: 'number', secondary: 'i', alpha: ':' },
+    NEGATIVE: { label: '(-)', color: 'number', secondary: 'ans', alpha: '?' },
   };
 
   const BUTTON_TO_ENGINE = {
@@ -385,9 +314,18 @@
 
   const ENGINE_TO_BUTTON = {
     Y_EQUALS: 'Y_EQUALS',
+    WINDOW: 'WINDOW',
     ZOOM: 'ZOOM',
     TRACE: 'TRACE',
+    GRAPH: 'GRAPH',
+    MODE: 'MODE',
+    DEL: 'DEL',
+    ALPHA: 'ALPHA',
+    X_T: 'X_T',
     STAT: 'STAT',
+    MATH: 'MATH',
+    APPS: 'APPS',
+    PRGM: 'PRGM',
     VARS: 'VARS',
     CLEAR: 'CLEAR',
     UP: 'UP',
@@ -396,7 +334,16 @@
     DOWN: 'DOWN',
     ENTER: 'ENTER',
     X_INVERSE: 'X_INVERSE',
+    SIN: 'SIN',
+    COS: 'COS',
+    TAN: 'TAN',
     '2ND': '2ND',
+    SQUARED: 'SQUARED',
+    LOG: 'LOG',
+    LN: 'LN',
+    STO: 'STO',
+    ON: 'ON',
+    '^': 'POWER',
     '0': 'ZERO',
     '1': 'ONE',
     '2': 'TWO',
@@ -508,13 +455,13 @@
     persisted: loadPersisted(),
     filterUnit: 'all',
     bridge: null,
-    bridgeStatus: { code: 'booting', detail: 'Loading trainer…', romMeta: null, usingMock: false },
+    bridgeStatus: { code: 'booting', detail: 'Checking calculator firmware…', romMeta: null, usingMock: false },
     canvasEl: null,
     question: null,
     branchIntro: null,
     walkthrough: null,
     sessionResult: null,
-    banner: 'Native TI-84 mode starts instantly. Load a ROM only if you want CEmu rendering.',
+    banner: 'The trainer boots the real calculator firmware when it is cached or configured.',
     busy: false,
     flashKeyId: null,
     flashKind: null,
@@ -838,6 +785,22 @@
     return app.walkthrough ? SCREEN_BY_ID[app.walkthrough.routeState.id] : null;
   }
 
+  function currentNativeScreen() {
+    return app.bridge?.getScreen?.() ?? null;
+  }
+
+  function screenTitleFor(screenId) {
+    if (!screenId) {
+      return null;
+    }
+
+    if (screenId === 'home') {
+      return 'HOME';
+    }
+
+    return SCREEN_BY_ID[screenId]?.title || screenId;
+  }
+
   function displayKey(key) {
     const buttonId = ENGINE_TO_BUTTON[normalizeStepKey(key)] ?? normalizeStepKey(key);
     return BUTTON_META[buttonId]?.label ?? key;
@@ -873,7 +836,7 @@
   }
 
   function seedNativeLists(problem, procedure) {
-    if (!app.bridge?.isNative?.()) {
+    if (!app.bridge?.setList) {
       return;
     }
 
@@ -916,7 +879,7 @@
   }
 
   function seedNativeMatrices(problem) {
-    if (!app.bridge?.isNative?.() || !app.bridge.setMatrix) {
+    if (!app.bridge?.setMatrix) {
       return;
     }
 
@@ -1016,6 +979,14 @@
     }, 220);
   }
 
+  function walkthroughDataNote(procedure) {
+    if (!procedure?.assumeDataIn) {
+      return '';
+    }
+
+    return ' Sample list data is assumed to already be entered for this walkthrough.';
+  }
+
   function modeForWalkthrough(record, sourceKind, branchCount) {
     if (sourceKind === 'branch') {
       return 'guided';
@@ -1069,8 +1040,8 @@
     app.walkthrough.preparing = false;
     app.busy = false;
     app.banner = app.walkthrough.mode === 'guided'
-      ? 'Follow the highlighted key. Wrong keys are blocked before they reach CEmu.'
-      : 'Recall mode is live. Hints count as misses.';
+      ? `Follow the highlighted key. Wrong keys are blocked before they reach the calculator.${walkthroughDataNote(procedure)}`
+      : `Recall mode is live. Hints count as misses.${walkthroughDataNote(procedure)}`;
     updateMockCanvas();
     render();
   }
@@ -1494,6 +1465,7 @@
         <div class="walkthrough-copy">
           <p>${walkthrough.preparing ? 'Resetting the calculator to HOME…' : step?.narration ?? 'Walkthrough complete.'}</p>
           <p class="panel-note">${walkthrough.preparing ? 'The trainer clears back to HOME before the first step.' : `Step ${Math.min(stepNumber, totalSteps)} of ${totalSteps}`}</p>
+          ${procedure.assumeDataIn ? '<p class="panel-note">Sample list data is treated as already entered for this walkthrough.</p>' : ''}
         </div>
       </section>
     `;
@@ -1522,17 +1494,17 @@
     return `
       <section class="panel problem-panel start-panel">
         <p class="panel-kicker">Session Start</p>
-        <h2>Native TI-84 procedural trainer</h2>
+        <h2>TI-84 Trainer V3</h2>
         <p class="problem-stem">
-          Track 1 asks for the correct procedure. Track 2 walks the native TI-84 route with no ROM required.
-          Load a ROM only if you want pixel-perfect CEmu rendering on the calculator screen.
+          Track 1 asks for the correct procedure. Track 2 validates each key with the native state machine while
+          the calculator panel boots the real TI-84 firmware when it is cached or configured.
         </p>
         <div class="button-row">
           <button type="button" class="mac-button primary" data-action="start-session">
             Start next item
           </button>
           <button type="button" class="mac-button" data-action="open-rom-dialog">
-            ROM options
+            Firmware
           </button>
         </div>
       </section>
@@ -1559,46 +1531,88 @@
     return renderStartPanel();
   }
 
+  function renderKeyButton(buttonId, suggestions, showAssist, extraClass = '') {
+    const meta = BUTTON_META[buttonId];
+    const suggested = showAssist && suggestions.has(buttonId);
+    const dimmed = showAssist && suggestions.size && !suggested ? ' dimmed' : '';
+    const flash = app.flashKeyId === buttonId ? ` flash-${app.flashKind}` : '';
+    const disabled = !app.walkthrough || app.walkthrough.preparing || app.busy ? ' disabled' : '';
+    const className = [
+      'key',
+      `key-${meta.color}`,
+      suggested ? 'suggested' : '',
+      dimmed.trim(),
+      flash.trim(),
+      extraClass,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    return `
+      <button type="button" class="${className}" data-key="${buttonId}" ${disabled}>
+        ${meta.secondary ? `<span class="key-secondary">${meta.secondary}</span>` : ''}
+        ${meta.alpha ? `<span class="key-alpha-label">${meta.alpha}</span>` : ''}
+        <span class="key-label">${meta.label}</span>
+      </button>
+    `;
+  }
+
+  function renderDpad(suggestions, showAssist) {
+    return `
+      <div class="dpad-shell" aria-label="Directional pad">
+        <div class="dpad-disc" aria-hidden="true"></div>
+        ${renderKeyButton('UP', suggestions, showAssist, 'key-dpad-arrow key-up')}
+        ${renderKeyButton('LEFT', suggestions, showAssist, 'key-dpad-arrow key-left')}
+        ${renderKeyButton('RIGHT', suggestions, showAssist, 'key-dpad-arrow key-right')}
+        ${renderKeyButton('DOWN', suggestions, showAssist, 'key-dpad-arrow key-down')}
+        <div class="dpad-center" aria-hidden="true"></div>
+      </div>
+    `;
+  }
+
   function renderKeypad() {
     const step = currentStep();
     const suggestions = guidedSuggestions(step);
     const showAssist = app.walkthrough
       && (app.walkthrough.mode === 'guided' || app.walkthrough.hintVisible);
 
-    return BUTTONS.map((row, rowIndex) =>
-      row.map((buttonId, columnIndex) => {
-        if (!buttonId) {
-          return `<div class="key-gap" style="grid-row:${rowIndex + 1};grid-column:${columnIndex + 1};"></div>`;
-        }
+    return `
+      <div class="keypad-layout">
+        <div class="key-row key-row-function">
+          ${FUNCTION_ROW.map((buttonId) => renderKeyButton(buttonId, suggestions, showAssist)).join('')}
+        </div>
+        <div class="keypad-upper">
+          <div class="modifier-column">
+            ${MODIFIER_COLUMN.map((buttonId) => renderKeyButton(buttonId, suggestions, showAssist, 'key-modifier')).join('')}
+          </div>
+          <div class="modifier-grid">
+            ${MODIFIER_GRID.flat().map((buttonId) => renderKeyButton(buttonId, suggestions, showAssist)).join('')}
+          </div>
+          ${renderDpad(suggestions, showAssist)}
+        </div>
+        ${MAIN_KEY_ROWS.map((row) => `
+          <div class="key-row key-row-main">
+            ${row.map((buttonId) => {
+              const extraClass = [
+                BUTTON_META[buttonId].color === 'number' ? 'key-large' : '',
+                buttonId === 'ENTER' ? 'key-enter' : '',
+                buttonId === 'ON' ? 'key-on' : '',
+              ].filter(Boolean).join(' ');
 
-        const meta = BUTTON_META[buttonId];
-        const suggested = showAssist && suggestions.has(buttonId);
-        const dimmed = showAssist && suggestions.size && !suggested ? ' dimmed' : '';
-        const flash = app.flashKeyId === buttonId ? ` flash-${app.flashKind}` : '';
-        const tall = meta.tall ? ' tall' : '';
-        const disabled = !app.walkthrough || app.walkthrough.preparing || app.busy ? ' disabled' : '';
-
-        return `
-          <button
-            type="button"
-            class="key key-${meta.color}${suggested ? ' suggested' : ''}${dimmed}${flash}${tall}"
-            data-key="${buttonId}"
-            style="grid-row:${rowIndex + 1}${meta.tall ? ' / span 2' : ''};grid-column:${columnIndex + 1};"
-            ${disabled}
-          >
-            ${meta.secondary ? `<span class="key-secondary">${meta.secondary}</span>` : ''}
-            ${meta.alpha ? `<span class="key-alpha">${meta.alpha}</span>` : ''}
-            <span class="key-label">${meta.label}</span>
-          </button>
-        `;
-      }).join('')).join('');
+              return renderKeyButton(buttonId, suggestions, showAssist, extraClass);
+            }).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
   function renderScreenMeta() {
+    const nativeScreen = currentNativeScreen();
     const screen = currentScreen();
+    const title = screenTitleFor(nativeScreen?.id || screen?.id);
 
-    if (screen) {
-      const title = screen.title || screen.id;
+    if (title) {
       return `
         <div class="screen-meta">
           <span>Screen</span>
@@ -1607,29 +1621,19 @@
       `;
     }
 
-    if (app.bridge?.isNative?.()) {
-      const nativeScreen = app.bridge.getScreen?.();
-      const title = nativeScreen?.id === 'home'
-        ? 'HOME'
-        : nativeScreen?.id;
-
-      if (title) {
-        return `
-          <div class="screen-meta">
-            <span>Screen</span>
-            <strong>${title}</strong>
-          </div>
-        `;
-      }
-
-      return '<p class="calc-placeholder-copy">Native calculator ready on HOME.</p>';
-    }
-
     if (app.bridge?.isRealEmulator?.()) {
-      return '<p class="calc-placeholder-copy">CEmu is active. Start a walkthrough to align the authored overlay with the ROM screen.</p>';
+      return '<p class="calc-placeholder-copy">Real TI-84 firmware is active.</p>';
     }
 
-    return '<p class="calc-placeholder-copy">The native calculator appears here immediately. Load a ROM to switch to CEmu.</p>';
+    if (bridgeStatusTone() === 'loading') {
+      return '<p class="calc-placeholder-copy">Loading calculator firmware…</p>';
+    }
+
+    if (app.bridgeStatus.manualSelectionAvailable) {
+      return '<p class="calc-placeholder-copy">Choose a local ROM file to boot CEmu during development.</p>';
+    }
+
+    return '<p class="calc-placeholder-copy">Simplified mode is active while calculator firmware is unavailable.</p>';
   }
 
   function renderCalculatorColumn() {
@@ -1637,14 +1641,12 @@
     const step = currentStep();
     const totalSteps = walkthrough ? currentProcedure().steps.length : 0;
     const currentStepNumber = walkthrough ? Math.min(walkthrough.routeState.routeIndex + 1, totalSteps) : 0;
-    const isNative = app.bridge?.isNative?.();
-    const statusClass = isNative ? 'status-ready' : `status-${app.bridgeStatus.code}`;
-    const statusStyle = isNative ? ' style="background:#d7e8ff;"' : '';
-    const idleHeadline = isNative
-      ? 'Native calculator ready on HOME.'
-      : app.bridge?.isRealEmulator?.()
-        ? 'CEmu is active.'
-        : 'Load a ROM to switch to CEmu.';
+    const statusTone = bridgeStatusTone();
+    const idleHeadline = app.bridge?.isRealEmulator?.()
+      ? 'The real TI-84 Plus CE is ready.'
+      : statusTone === 'loading'
+        ? 'Calculator firmware is loading.'
+        : 'Simplified calculator mode is active.';
 
     return `
       <section class="panel calc-panel">
@@ -1654,39 +1656,48 @@
             <h2>TI-84 Plus CE</h2>
           </div>
           <div class="status-pills">
-            <span class="status-pill ${statusClass}"${statusStyle}>${bridgeStatusLabel()}</span>
-            ${!isNative && app.bridgeStatus.usingMock ? '<span class="status-pill subtle">Mock screen</span>' : ''}
+            <span class="status-pill status-${statusTone}">
+              <span class="status-indicator" aria-hidden="true"></span>
+              ${bridgeStatusLabel()}
+            </span>
           </div>
         </div>
 
-        <div class="screen-frame">
-          <canvas id="calc-canvas" class="calc-canvas" width="320" height="240"></canvas>
-          <div class="screen-overlay">
-            ${renderScreenMeta()}
+        <div class="calculator-shell">
+          <div class="calculator-branding">
+            <div class="calculator-brand-copy">
+              <strong>TI-84 Plus CE</strong>
+              <span>Texas Instruments</span>
+            </div>
+            <span class="calculator-model">Python</span>
           </div>
-        </div>
-
-        <div class="narration-bar">
-          <div class="narration-copy">
-            <strong>${walkthrough ? (step?.narration ?? 'Walkthrough complete.') : idleHeadline}</strong>
-            <span>${walkthrough ? `Step ${currentStepNumber} of ${totalSteps}` : app.bridgeStatus.detail}</span>
-          </div>
-          <div class="button-row compact">
-            <button type="button" class="mac-button" data-action="open-rom-dialog">ROM</button>
-            <button type="button" class="mac-button" data-action="restart-walkthrough" ${!walkthrough ? 'disabled' : ''}>Restart</button>
-            <button type="button" class="mac-button" data-action="show-hint" ${!walkthrough || walkthrough.mode !== 'recall' ? 'disabled' : ''}>Hint</button>
-          </div>
-        </div>
-
-        ${walkthrough
-          ? `
-            <div class="keypad-shell">
-              <div class="keypad-grid">
-                ${renderKeypad()}
+          <div class="lcd-bezel">
+            <div class="screen-frame">
+              <canvas id="calc-canvas" class="calc-canvas" width="320" height="240"></canvas>
+              <div class="screen-overlay">
+                ${renderScreenMeta()}
               </div>
             </div>
-          `
-          : '<div class="keypad-empty">Pattern recognition comes first. The keypad unlocks after you enter a walkthrough.</div>'}
+          </div>
+          <div class="narration-bar">
+            <div class="narration-copy">
+              <strong>${walkthrough ? (step?.narration ?? 'Walkthrough complete.') : idleHeadline}</strong>
+              <span>${walkthrough ? `Step ${currentStepNumber} of ${totalSteps}` : app.bridgeStatus.detail}</span>
+            </div>
+            <div class="button-row compact">
+              <button type="button" class="mac-button" data-action="open-rom-dialog">Firmware</button>
+              <button type="button" class="mac-button" data-action="restart-walkthrough" ${!walkthrough ? 'disabled' : ''}>Restart</button>
+              <button type="button" class="mac-button" data-action="show-hint" ${!walkthrough || walkthrough.mode !== 'recall' ? 'disabled' : ''}>Hint</button>
+            </div>
+          </div>
+          ${walkthrough
+            ? `
+              <div class="keypad-shell">
+                ${renderKeypad()}
+              </div>
+            `
+            : '<div class="keypad-empty">Pattern recognition comes first. The keypad unlocks after you enter a walkthrough.</div>'}
+        </div>
       </section>
     `;
   }
@@ -1725,12 +1736,13 @@
       return '';
     }
 
-    const isNative = app.bridge?.isNative?.();
+    const manualSelectionAvailable = app.bridge?.supportsManualRomSelection?.()
+      ?? app.bridgeStatus.manualSelectionAvailable;
     const romName = app.bridgeStatus.romMeta?.name;
-    const detail = isNative
-      ? 'Native mode is active. All AP Stats procedures work without a ROM.'
-      : app.bridge?.isRealEmulator?.()
-        ? `CEmu is active${romName ? ` with ${romName}` : ''}.`
+    const detail = app.bridge?.isRealEmulator?.()
+      ? `Calculator firmware is loaded${romName ? ` from ${romName}` : ''}.`
+      : manualSelectionAvailable
+        ? 'Firmware auto-download is not configured. Choose a local ROM file for development.'
         : app.bridgeStatus.detail;
 
     return `
@@ -1738,23 +1750,30 @@
         <section class="dialog-window">
           <div class="dialog-titlebar">
             <span class="close-box"></span>
-            <strong>TI-84 Plus CE ROM</strong>
+            <strong>Calculator Firmware</strong>
             <span></span>
           </div>
           <div class="dialog-body">
             <p>${detail}</p>
             <p class="dialog-note">
-              Load a TI-84 Plus CE ROM to switch from the native stats engine to pixel-perfect CEmu rendering.
-              The file stays local in IndexedDB for later launches.
+              ${manualSelectionAvailable
+                ? 'Leave the Supabase URL blank during development and choose a local ROM file. The file stays cached in IndexedDB.'
+                : 'Automatic firmware download is controlled by the Supabase URL in bridge.js. Cached firmware stays in IndexedDB between sessions.'}
             </p>
-            ${romName ? `<p class="dialog-note">Saved ROM: ${romName}</p>` : ''}
-            <input id="rom-file-input" type="file" accept=".rom,.bin,application/octet-stream">
+            ${romName ? `<p class="dialog-note">Cached firmware: ${romName}</p>` : ''}
+            ${manualSelectionAvailable
+              ? '<input id="rom-file-input" type="file" accept=".rom,.bin,application/octet-stream">'
+              : ''}
             <div class="button-row">
-              <button type="button" class="mac-button primary" data-action="choose-rom">
-                Choose ROM
-              </button>
+              ${manualSelectionAvailable
+                ? `
+                  <button type="button" class="mac-button primary" data-action="choose-rom">
+                    Choose local ROM
+                  </button>
+                `
+                : ''}
               <button type="button" class="mac-button" data-action="clear-rom">
-                Clear saved ROM
+                Clear cached firmware
               </button>
               <button type="button" class="mac-button" data-action="close-rom-dialog">
                 Close
@@ -1766,27 +1785,27 @@
     `;
   }
 
-  function bridgeStatusLabel() {
-    if (app.bridge?.isNative?.()) {
-      return 'Native';
-    }
-
+  function bridgeStatusTone() {
     if (app.bridge?.isRealEmulator?.()) {
-      return 'CEmu';
+      return 'ready';
     }
 
     switch (app.bridgeStatus.code) {
       case 'booting':
-        return 'Booting';
+      case 'downloading-rom':
       case 'loading-wasm':
-        return 'Loading WebCEmu';
-      case 'needs-rom':
-        return 'Need ROM';
-      case 'mock':
-        return 'Mock mode';
+        return 'loading';
       default:
-        return 'Starting';
+        return 'offline';
     }
+  }
+
+  function bridgeStatusLabel() {
+    if (app.bridge?.isRealEmulator?.()) {
+      return 'Calculator Ready';
+    }
+
+    return bridgeStatusTone() === 'loading' ? 'Loading…' : 'Offline Mode';
   }
 
   function render() {
@@ -1796,8 +1815,8 @@
       <main class="trainer-window">
         <header class="window-titlebar">
           <span class="close-box"></span>
-          <strong>TI-84 Procedural Trainer V2</strong>
-          <button type="button" class="titlebar-button" data-action="open-rom-dialog">ROM</button>
+          <strong>TI-84 Procedural Trainer V3</strong>
+          <button type="button" class="titlebar-button" data-action="open-rom-dialog">Firmware</button>
         </header>
 
         <section class="banner-row">
@@ -1869,7 +1888,7 @@
   }
 
   function updateMockCanvas() {
-    if (app.bridge.isNative?.() || app.bridge.isRealEmulator()) {
+    if (app.bridge.isRealEmulator() || !app.walkthrough) {
       return;
     }
 
@@ -1951,7 +1970,7 @@
         await app.bridge.clearStoredRom();
         app.bridgeStatus = app.bridge.getStatus();
         app.romDialogOpen = false;
-        app.banner = 'Switched back to native mode.';
+        app.banner = 'Cached firmware cleared. Simplified mode is active until firmware is loaded again.';
         updateMockCanvas();
         render();
         break;
@@ -1976,14 +1995,14 @@
       }
 
       app.busy = true;
-      app.banner = `Loading ${file.name}…`;
+      app.banner = `Loading calculator firmware from ${file.name}…`;
       render();
 
       try {
         await app.bridge.selectRomFile(file);
         app.bridgeStatus = app.bridge.getStatus();
         app.romDialogOpen = false;
-        app.banner = `Switched to CEmu with ${file.name}.`;
+        app.banner = `Calculator firmware loaded from ${file.name}.`;
       } catch (error) {
         app.banner = error.message;
       } finally {
@@ -2020,6 +2039,12 @@
     render();
     await app.bridge.init();
     app.bridgeStatus = app.bridge.getStatus();
+    if (app.bridgeStatus.code === 'needs-rom' && app.bridgeStatus.manualSelectionAvailable) {
+      app.romDialogOpen = true;
+      app.banner = 'Firmware auto-download is not configured. Choose a local ROM file to boot CEmu during development.';
+    } else if (bridgeStatusTone() === 'offline') {
+      app.banner = app.bridgeStatus.detail;
+    }
     updateMockCanvas();
     render();
   }

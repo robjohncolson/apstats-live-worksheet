@@ -101,7 +101,7 @@ const standalone = `<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TI-84 Procedural Trainer V2</title>
+  <title>TI-84 Procedural Trainer V3</title>
   <style>
 ${styleSource}
   </style>

@@ -7,6 +7,12 @@
   const DB_NAME = 'ti84-trainer-v2';
   const STORE_NAME = 'assets';
   const ROM_RECORD_ID = 'ce-rom';
+  const ROM_CONFIG = {
+    supabaseUrl: '',
+    bucketPath: 'ti84-trainer-assets/ROM.rom',
+    cacheKey: ROM_RECORD_ID,
+    cacheVersion: '5.8.2.0029',
+  };
 
   const DEFAULT_HOLD_MS = 72;
 
@@ -172,22 +178,59 @@
       imageData: null,
       module: null,
       renderHandle: 0,
-      status: { code: 'booting', detail: 'Checking for a saved ROM…' },
+      status: { code: 'booting', detail: 'Checking for calculator firmware…', progress: null },
       assetBase: new URL(window.TI84V2_ASSET_BASE || './', window.location.href),
       onStatus: options.onStatus ?? (() => {}),
       romMeta: null,
       usingMock: false,
       mockLines: [
         'ROM-backed TI-84 screen',
-        'Choose a ROM or drop in WebCEmu.',
+        'Checking calculator firmware…',
       ],
       mockFooter: 'Waiting for emulator assets',
       importPromise: null,
     };
 
-    function setStatus(code, detail) {
-      state.status = { code, detail };
-      state.onStatus(state.status);
+    function hasSupabaseUrl() {
+      return Boolean(`${ROM_CONFIG.supabaseUrl ?? ''}`.trim());
+    }
+
+    function supportsManualRomSelection() {
+      return !hasSupabaseUrl();
+    }
+
+    function getRomFilename() {
+      const parts = `${ROM_CONFIG.bucketPath ?? ''}`.split('/').filter(Boolean);
+      return parts[parts.length - 1] || ROM_FILENAME;
+    }
+
+    function buildSupabaseRomUrl() {
+      if (!hasSupabaseUrl()) {
+        return null;
+      }
+
+      const base = `${ROM_CONFIG.supabaseUrl}`.trim();
+      const objectPath = `${ROM_CONFIG.bucketPath}`.replace(/^\/+/, '');
+      return new URL(`/storage/v1/object/public/${objectPath}`, base).href;
+    }
+
+    function getStatus() {
+      return {
+        ...state.status,
+        romMeta: state.romMeta,
+        usingMock: state.usingMock,
+        manualSelectionAvailable: supportsManualRomSelection(),
+        autoDownloadConfigured: hasSupabaseUrl(),
+      };
+    }
+
+    function setStatus(code, detail, extra = {}) {
+      state.status = {
+        code,
+        detail,
+        progress: extra.progress ?? null,
+      };
+      state.onStatus(getStatus());
     }
 
     function mountCanvas(canvas) {
@@ -292,11 +335,27 @@
     }
 
     function useMock(detail) {
+      const lines = Array.isArray(detail)
+        ? detail
+        : [
+          'TI-84 Plus CE offline',
+          'Using simplified calculator mode.',
+        ];
+      const footer = typeof detail === 'string' ? detail : state.mockFooter;
+      showFallback('offline', footer, lines, footer);
+    }
+
+    function showFallback(code, detail, lines, footer) {
       stopRenderLoop();
       state.module = null;
       state.usingMock = true;
-      state.mockFooter = detail;
-      setStatus('mock', detail);
+
+      if (Array.isArray(lines) && lines.length) {
+        state.mockLines = lines.slice(0, 7);
+      }
+
+      state.mockFooter = footer || detail;
+      setStatus(code, detail);
       drawMockFrame();
     }
 
@@ -306,10 +365,110 @@
       }
 
       return {
-        id: ROM_RECORD_ID,
-        name: record.name || ROM_FILENAME,
+        id: ROM_CONFIG.cacheKey,
+        name: record.name || getRomFilename(),
         updatedAt: record.updatedAt || Date.now(),
+        version: record.version || null,
+        source: record.source || 'cache',
         bytes: toUint8Array(record.bytes),
+      };
+    }
+
+    function isCacheCurrent(record) {
+      return Boolean(record && record.version === ROM_CONFIG.cacheVersion);
+    }
+
+    function concatenateChunks(chunks, totalBytes) {
+      const merged = new Uint8Array(totalBytes);
+      let offset = 0;
+
+      chunks.forEach((chunk) => {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      });
+
+      return merged;
+    }
+
+    async function downloadRomFromSupabase() {
+      const romUrl = buildSupabaseRomUrl();
+
+      if (!romUrl) {
+        return null;
+      }
+
+      state.usingMock = true;
+      state.mockLines = [
+        'Downloading calculator firmware…',
+        getRomFilename(),
+      ];
+      state.mockFooter = 'Connecting to Supabase…';
+      setStatus('downloading-rom', 'Downloading calculator firmware…', { progress: 0 });
+      drawMockFrame();
+
+      const response = await fetch(romUrl);
+
+      if (!response.ok) {
+        throw new Error(`Supabase returned ${response.status} ${response.statusText}.`);
+      }
+
+      const totalBytes = Number.parseInt(response.headers.get('content-length') || '', 10);
+
+      if (!response.body || typeof response.body.getReader !== 'function') {
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        return {
+          id: ROM_CONFIG.cacheKey,
+          name: getRomFilename(),
+          updatedAt: Date.now(),
+          version: ROM_CONFIG.cacheVersion,
+          source: 'supabase',
+          bytes,
+        };
+      }
+
+      const reader = response.body.getReader();
+      const chunks = [];
+      let receivedBytes = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        if (!value) {
+          continue;
+        }
+
+        chunks.push(value);
+        receivedBytes += value.length;
+
+        const hasLength = Number.isFinite(totalBytes) && totalBytes > 0;
+        const progress = hasLength ? receivedBytes / totalBytes : null;
+        const percent = hasLength ? Math.min(100, Math.round(progress * 100)) : null;
+
+        setStatus(
+          'downloading-rom',
+          percent === null
+            ? 'Downloading calculator firmware…'
+            : `Downloading calculator firmware… ${percent}%`,
+          { progress },
+        );
+
+        state.mockFooter = percent === null
+          ? `${(receivedBytes / (1024 * 1024)).toFixed(1)} MB downloaded`
+          : `${percent}% complete`;
+        drawMockFrame();
+      }
+
+      return {
+        id: ROM_CONFIG.cacheKey,
+        name: getRomFilename(),
+        updatedAt: Date.now(),
+        version: ROM_CONFIG.cacheVersion,
+        source: 'supabase',
+        bytes: concatenateChunks(chunks, receivedBytes),
       };
     }
 
@@ -335,10 +494,21 @@
 
       if (!normalized) {
         state.romMeta = null;
-        setStatus('needs-rom', 'No ROM is stored yet.');
-        state.usingMock = true;
-        state.mockFooter = 'Select a TI-84 Plus CE ROM to continue';
-        drawMockFrame();
+        showFallback(
+          supportsManualRomSelection() ? 'needs-rom' : 'offline',
+          supportsManualRomSelection()
+            ? 'No calculator firmware is stored yet. Choose a ROM file to continue.'
+            : 'Could not load calculator firmware. Using simplified mode.',
+          [
+            'TI-84 Plus CE firmware',
+            supportsManualRomSelection()
+              ? 'Choose a ROM file for development.'
+              : 'Using simplified calculator mode.',
+          ],
+          supportsManualRomSelection()
+            ? 'Manual ROM selection available'
+            : 'Firmware unavailable',
+        );
         return false;
       }
 
@@ -355,7 +525,15 @@
       try {
         factory = await loadFactory();
       } catch (error) {
-        useMock(`WebCEmu.js was not found in wasm/. ${error.message}`);
+        showFallback(
+          'offline',
+          'Could not load calculator firmware. Using simplified mode.',
+          [
+            'WebCEmu assets missing',
+            'Using simplified calculator mode.',
+          ],
+          `WebCEmu.js was not found in wasm/. ${error.message}`,
+        );
         return false;
       }
 
@@ -384,6 +562,8 @@
         state.romMeta = {
           name: normalized.name,
           updatedAt: normalized.updatedAt,
+          version: normalized.version,
+          source: normalized.source,
         };
 
         module.FS.writeFile(ROM_FILENAME, normalized.bytes);
@@ -396,17 +576,63 @@
         return true;
       } catch (error) {
         console.error(error);
-        useMock(`Failed to boot the ROM. ${error.message}`);
+        showFallback(
+          'offline',
+          'Could not load calculator firmware. Using simplified mode.',
+          [
+            'ROM boot failed',
+            'Using simplified calculator mode.',
+          ],
+          `Failed to boot the ROM. ${error.message}`,
+        );
         return false;
       }
     }
 
     async function init() {
       try {
-        const record = await readRecord(ROM_RECORD_ID);
-        return bootRecord(record);
+        setStatus('booting', 'Checking for cached calculator firmware…');
+        const record = await readRecord(ROM_CONFIG.cacheKey);
+
+        if (isCacheCurrent(record)) {
+          return bootRecord(record);
+        }
+
+        if (record) {
+          try {
+            await deleteRecord(ROM_CONFIG.cacheKey);
+          } catch (error) {
+            console.warn('Failed to clear stale calculator firmware cache.', error);
+          }
+        }
+
+        if (!hasSupabaseUrl()) {
+          return bootRecord(null);
+        }
+
+        const downloadedRecord = await downloadRomFromSupabase();
+
+        if (!downloadedRecord) {
+          return bootRecord(null);
+        }
+
+        try {
+          await writeRecord(downloadedRecord);
+        } catch (error) {
+          console.warn('Failed to cache calculator firmware locally.', error);
+        }
+
+        return bootRecord(downloadedRecord);
       } catch (error) {
-        useMock(`IndexedDB failed. ${error.message}`);
+        showFallback(
+          'offline',
+          'Could not load calculator firmware. Using simplified mode.',
+          [
+            'TI-84 Plus CE offline',
+            'Using simplified calculator mode.',
+          ],
+          error.message,
+        );
         return false;
       }
     }
@@ -418,9 +644,11 @@
 
       const bytes = new Uint8Array(await file.arrayBuffer());
       const record = {
-        id: ROM_RECORD_ID,
-        name: file.name || ROM_FILENAME,
+        id: ROM_CONFIG.cacheKey,
+        name: file.name || getRomFilename(),
         updatedAt: Date.now(),
+        version: ROM_CONFIG.cacheVersion,
+        source: 'manual',
         bytes,
       };
 
@@ -429,18 +657,25 @@
     }
 
     async function clearStoredRom() {
-      await deleteRecord(ROM_RECORD_ID);
+      await deleteRecord(ROM_CONFIG.cacheKey);
       state.romMeta = null;
       stopRenderLoop();
       state.module = null;
-      state.usingMock = true;
-      state.mockLines = [
-        'Saved ROM cleared.',
-        'Choose a new ROM to boot again.',
-      ];
-      state.mockFooter = 'No ROM currently stored';
-      setStatus('needs-rom', 'Saved ROM cleared.');
-      drawMockFrame();
+      showFallback(
+        supportsManualRomSelection() ? 'needs-rom' : 'offline',
+        supportsManualRomSelection()
+          ? 'Saved ROM cleared.'
+          : 'Cached calculator firmware cleared. Reload to download it again.',
+        [
+          supportsManualRomSelection() ? 'Saved ROM cleared.' : 'Calculator firmware cleared.',
+          supportsManualRomSelection()
+            ? 'Choose a new ROM to boot again.'
+            : 'Reload to fetch a fresh copy.',
+        ],
+        supportsManualRomSelection()
+          ? 'No ROM currently stored'
+          : 'Simplified mode active',
+      );
     }
 
     function invokeKeypad(row, col, pressed) {
@@ -451,7 +686,15 @@
       const handler = state.module._emsc_keypad_event || state.module._emu_keypad_event;
 
       if (typeof handler !== 'function') {
-        useMock('No keypad bridge export was found.');
+        showFallback(
+          'offline',
+          'Could not load calculator firmware. Using simplified mode.',
+          [
+            'Keypad bridge missing',
+            'Using simplified calculator mode.',
+          ],
+          'No keypad bridge export was found.',
+        );
         return;
       }
 
@@ -545,14 +788,6 @@
       return Boolean(state.module) && !state.usingMock;
     }
 
-    function getStatus() {
-      return {
-        ...state.status,
-        romMeta: state.romMeta,
-        usingMock: state.usingMock,
-      };
-    }
-
     return {
       init,
       mountCanvas,
@@ -565,11 +800,13 @@
       destroy,
       isRealEmulator,
       getStatus,
+      supportsManualRomSelection,
       keyMap: KEY_TO_RC,
     };
   }
 
   window.TI84V2Bridge = {
+    ROM_CONFIG,
     CHAR_TO_BUTTON,
     KEY_TO_RC,
     createBridge,
