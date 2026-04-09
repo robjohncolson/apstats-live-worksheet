@@ -1,12 +1,251 @@
 (function () {
+  function createBackend(options = {}) {
+    const bridgeApi = window.TI84V2Bridge;
+    const nativeApi = window.TI84Native;
+
+    if (!bridgeApi?.createBridge || !bridgeApi.CHAR_TO_BUTTON || !nativeApi?.create) {
+      throw new Error('TI-84 backend dependencies failed to load.');
+    }
+
+    const native = nativeApi.create();
+    const state = {
+      activeBackend: 'native',
+      canvas: null,
+      mountedBackend: null,
+      mountedCanvas: null,
+      suppressCemuStatus: false,
+    };
+
+    const cemu = bridgeApi.createBridge({
+      onStatus(status) {
+        if (state.suppressCemuStatus || state.activeBackend !== 'cemu') {
+          return;
+        }
+
+        options.onStatus?.(status);
+      },
+    });
+
+    function mountActiveBackend(force = false) {
+      const backend = state.activeBackend === 'native' ? native : cemu;
+
+      if (!backend || !state.canvas) {
+        return;
+      }
+
+      if (!force
+        && state.mountedBackend === state.activeBackend
+        && state.mountedCanvas === state.canvas) {
+        return;
+      }
+
+      backend.mountCanvas(state.canvas);
+      state.mountedBackend = state.activeBackend;
+      state.mountedCanvas = state.canvas;
+    }
+
+    function nativeStatus() {
+      return {
+        code: 'ready',
+        detail: 'Native mode',
+        usingMock: false,
+        romMeta: null,
+      };
+    }
+
+    function emitStatus() {
+      const status = state.activeBackend === 'native'
+        ? nativeStatus()
+        : cemu.getStatus();
+
+      options.onStatus?.(status);
+    }
+
+    async function switchToCemu(file) {
+      if (file) {
+        await cemu.selectRomFile(file);
+      }
+
+      if (!cemu.isRealEmulator()) {
+        const status = cemu.getStatus();
+        throw new Error(status.detail || 'Failed to boot the TI-84 Plus CE ROM.');
+      }
+
+      state.activeBackend = 'cemu';
+      state.mountedBackend = null;
+      mountActiveBackend(true);
+      emitStatus();
+      return true;
+    }
+
+    function switchToNative() {
+      state.activeBackend = 'native';
+      state.mountedBackend = null;
+      mountActiveBackend(true);
+      native.reset();
+      emitStatus();
+      return true;
+    }
+
+    return {
+      async init() {
+        await native.init();
+        mountActiveBackend(true);
+        native.reset();
+        emitStatus();
+        return true;
+      },
+
+      mountCanvas(canvas) {
+        if (!canvas) {
+          return;
+        }
+
+        state.canvas = canvas;
+        mountActiveBackend();
+      },
+
+      async sendButton(buttonId, holdMs) {
+        if (state.activeBackend === 'native') {
+          native.pressKey(buttonId);
+          return true;
+        }
+
+        return cemu.sendButton(buttonId, holdMs);
+      },
+
+      async prepareHome() {
+        if (state.activeBackend === 'native') {
+          native.reset();
+          return true;
+        }
+
+        return cemu.prepareHome();
+      },
+
+      async typeValue(value) {
+        if (state.activeBackend !== 'native') {
+          return cemu.typeValue(value);
+        }
+
+        const input = `${value ?? ''}`.trim();
+
+        for (const char of input) {
+          if (char === ' ') {
+            continue;
+          }
+
+          const buttonId = bridgeApi.CHAR_TO_BUTTON[char];
+
+          if (!buttonId) {
+            throw new Error(`Cannot type character "${char}" on the native keypad.`);
+          }
+
+          native.pressKey(buttonId);
+        }
+
+        return true;
+      },
+
+      isRealEmulator() {
+        return state.activeBackend === 'cemu' && cemu.isRealEmulator();
+      },
+
+      isNative() {
+        return state.activeBackend === 'native';
+      },
+
+      getStatus() {
+        return state.activeBackend === 'native'
+          ? nativeStatus()
+          : cemu.getStatus();
+      },
+
+      getScreen() {
+        return state.activeBackend === 'native' ? native.getScreen() : null;
+      },
+
+      getWizardValues() {
+        return state.activeBackend === 'native' ? native.getWizardValues() : null;
+      },
+
+      on(event, callback) {
+        native.on(event, callback);
+      },
+
+      off(event, callback) {
+        native.off(event, callback);
+      },
+
+      setList(name, data) {
+        native.setList(name, data);
+      },
+
+      getList(name) {
+        return native.getList(name);
+      },
+
+      setMatrix(name, data) {
+        native.setMatrix(name, data);
+      },
+
+      getMatrix(name) {
+        return native.getMatrix(name);
+      },
+
+      async switchToCemu(file) {
+        return switchToCemu(file);
+      },
+
+      switchToNative() {
+        return switchToNative();
+      },
+
+      async selectRomFile(file) {
+        return switchToCemu(file);
+      },
+
+      async clearStoredRom() {
+        state.suppressCemuStatus = true;
+
+        try {
+          await cemu.clearStoredRom();
+        } finally {
+          state.suppressCemuStatus = false;
+        }
+
+        return switchToNative();
+      },
+
+      setMockLines(lines, footer) {
+        if (state.activeBackend === 'native') {
+          return;
+        }
+
+        cemu.setMockLines(lines, footer);
+      },
+
+      destroy() {
+        native.destroy?.();
+        cemu.destroy?.();
+      },
+    };
+  }
+
+  window.TI84V2Backend = {
+    createBackend,
+  };
+}());
+
+(function () {
   const root = document.getElementById('app');
 
   const proceduresData = window.TI84V2ProceduresData;
   const patternsData = window.TI84V2PatternsData;
   const machine = window.TI84V2Machine;
-  const bridgeApi = window.TI84V2Bridge;
+  const backendApi = window.TI84V2Backend;
 
-  if (!root || !proceduresData || !patternsData || !machine || !bridgeApi) {
+  if (!root || !proceduresData || !patternsData || !machine || !backendApi) {
     throw new Error('TI-84 Trainer V2 failed to initialize.');
   }
 
@@ -14,7 +253,7 @@
   const PARAMETER_PATTERN = /^\{.+\}$/;
 
   const { createState, createRouteState, transition } = machine;
-  const { createBridge } = bridgeApi;
+  const { createBackend } = backendApi;
 
   const PROCEDURES = proceduresData.procedures.filter(
     (procedure) => patternsData.patternSignatures[procedure.id],
@@ -270,11 +509,12 @@
     filterUnit: 'all',
     bridge: null,
     bridgeStatus: { code: 'booting', detail: 'Loading trainer…', romMeta: null, usingMock: false },
+    canvasEl: null,
     question: null,
     branchIntro: null,
     walkthrough: null,
     sessionResult: null,
-    banner: 'ROM-backed pattern recognition and calculator navigation are ready to be linked.',
+    banner: 'Native TI-84 mode starts instantly. Load a ROM only if you want CEmu rendering.',
     busy: false,
     flashKeyId: null,
     flashKind: null,
@@ -632,6 +872,66 @@
     return `${value}`;
   }
 
+  function seedNativeLists(problem, procedure) {
+    if (!app.bridge?.isNative?.()) {
+      return;
+    }
+
+    const values = problem?.values ?? {};
+    const assumeDataIn = procedure?.assumeDataIn;
+
+    for (const [key, value] of Object.entries(values)) {
+      if (/^L\d$/.test(key) && Array.isArray(value)) {
+        app.bridge.setList(key, value);
+      }
+    }
+
+    if (Array.isArray(values.observed)) {
+      app.bridge.setList('L1', values.observed);
+    }
+
+    if (Array.isArray(values.expected)) {
+      app.bridge.setList('L2', values.expected);
+    }
+
+    if (Array.isArray(values.expected_proportions) && Number.isFinite(values.n)) {
+      app.bridge.setList(
+        'L2',
+        values.expected_proportions.map((entry) => entry * values.n),
+      );
+    }
+
+    if (Array.isArray(values.data) && Array.isArray(assumeDataIn)) {
+      assumeDataIn.forEach((listName, index) => {
+        if (/^L\d$/.test(listName) && Array.isArray(values.data[index])) {
+          app.bridge.setList(listName, values.data[index]);
+        }
+      });
+      return;
+    }
+
+    if (Array.isArray(values.data) && typeof assumeDataIn === 'string' && /^L\d$/.test(assumeDataIn)) {
+      app.bridge.setList(assumeDataIn, values.data);
+    }
+  }
+
+  function seedNativeMatrices(problem) {
+    if (!app.bridge?.isNative?.() || !app.bridge.setMatrix) {
+      return;
+    }
+
+    const values = problem?.values ?? {};
+
+    if (Array.isArray(values.matrix)) {
+      app.bridge.setMatrix('[A]', values.matrix);
+      return;
+    }
+
+    if (Array.isArray(values.data) && Array.isArray(values.data[0])) {
+      app.bridge.setMatrix('[A]', values.data);
+    }
+  }
+
   function routeFallback(step) {
     const next = createState(step.screen);
     next.routeId = app.walkthrough.routeState.routeId;
@@ -735,6 +1035,7 @@
   async function startWalkthrough(procedureId, problem, options = {}) {
     const routeState = createRouteState(procedureId);
     const record = ensureProcedureRecord(procedureId).track2;
+    const procedure = PROCEDURE_BY_ID[procedureId];
 
     app.walkthrough = {
       procedureId,
@@ -759,6 +1060,8 @@
 
     try {
       await app.bridge.prepareHome();
+      seedNativeLists(problem, procedure);
+      seedNativeMatrices(problem);
     } catch (error) {
       console.warn('Failed to prepare the calculator home screen.', error);
     }
@@ -1219,10 +1522,10 @@
     return `
       <section class="panel problem-panel start-panel">
         <p class="panel-kicker">Session Start</p>
-        <h2>ROM-backed TI-84 procedural trainer</h2>
+        <h2>Native TI-84 procedural trainer</h2>
         <p class="problem-stem">
-          Track 1 asks for the correct procedure. Track 2 walks the real calculator route,
-          blocks wrong keys, and stores separate spaced-repetition state for recognition and execution.
+          Track 1 asks for the correct procedure. Track 2 walks the native TI-84 route with no ROM required.
+          Load a ROM only if you want pixel-perfect CEmu rendering on the calculator screen.
         </p>
         <div class="button-row">
           <button type="button" class="mac-button primary" data-action="start-session">
@@ -1294,17 +1597,39 @@
   function renderScreenMeta() {
     const screen = currentScreen();
 
-    if (!screen) {
-      return '<p class="calc-placeholder-copy">The real calculator screen appears here after a walkthrough begins.</p>';
+    if (screen) {
+      const title = screen.title || screen.id;
+      return `
+        <div class="screen-meta">
+          <span>Screen</span>
+          <strong>${title}</strong>
+        </div>
+      `;
     }
 
-    const title = screen.title || screen.id;
-    return `
-      <div class="screen-meta">
-        <span>Screen</span>
-        <strong>${title}</strong>
-      </div>
-    `;
+    if (app.bridge?.isNative?.()) {
+      const nativeScreen = app.bridge.getScreen?.();
+      const title = nativeScreen?.id === 'home'
+        ? 'HOME'
+        : nativeScreen?.id;
+
+      if (title) {
+        return `
+          <div class="screen-meta">
+            <span>Screen</span>
+            <strong>${title}</strong>
+          </div>
+        `;
+      }
+
+      return '<p class="calc-placeholder-copy">Native calculator ready on HOME.</p>';
+    }
+
+    if (app.bridge?.isRealEmulator?.()) {
+      return '<p class="calc-placeholder-copy">CEmu is active. Start a walkthrough to align the authored overlay with the ROM screen.</p>';
+    }
+
+    return '<p class="calc-placeholder-copy">The native calculator appears here immediately. Load a ROM to switch to CEmu.</p>';
   }
 
   function renderCalculatorColumn() {
@@ -1312,6 +1637,14 @@
     const step = currentStep();
     const totalSteps = walkthrough ? currentProcedure().steps.length : 0;
     const currentStepNumber = walkthrough ? Math.min(walkthrough.routeState.routeIndex + 1, totalSteps) : 0;
+    const isNative = app.bridge?.isNative?.();
+    const statusClass = isNative ? 'status-ready' : `status-${app.bridgeStatus.code}`;
+    const statusStyle = isNative ? ' style="background:#d7e8ff;"' : '';
+    const idleHeadline = isNative
+      ? 'Native calculator ready on HOME.'
+      : app.bridge?.isRealEmulator?.()
+        ? 'CEmu is active.'
+        : 'Load a ROM to switch to CEmu.';
 
     return `
       <section class="panel calc-panel">
@@ -1321,8 +1654,8 @@
             <h2>TI-84 Plus CE</h2>
           </div>
           <div class="status-pills">
-            <span class="status-pill status-${app.bridgeStatus.code}">${bridgeStatusLabel()}</span>
-            ${app.bridgeStatus.usingMock ? '<span class="status-pill subtle">Mock screen</span>' : ''}
+            <span class="status-pill ${statusClass}"${statusStyle}>${bridgeStatusLabel()}</span>
+            ${!isNative && app.bridgeStatus.usingMock ? '<span class="status-pill subtle">Mock screen</span>' : ''}
           </div>
         </div>
 
@@ -1335,7 +1668,7 @@
 
         <div class="narration-bar">
           <div class="narration-copy">
-            <strong>${walkthrough ? (step?.narration ?? 'Walkthrough complete.') : 'Calculator hidden until a walkthrough starts.'}</strong>
+            <strong>${walkthrough ? (step?.narration ?? 'Walkthrough complete.') : idleHeadline}</strong>
             <span>${walkthrough ? `Step ${currentStepNumber} of ${totalSteps}` : app.bridgeStatus.detail}</span>
           </div>
           <div class="button-row compact">
@@ -1392,6 +1725,14 @@
       return '';
     }
 
+    const isNative = app.bridge?.isNative?.();
+    const romName = app.bridgeStatus.romMeta?.name;
+    const detail = isNative
+      ? 'Native mode is active. All AP Stats procedures work without a ROM.'
+      : app.bridge?.isRealEmulator?.()
+        ? `CEmu is active${romName ? ` with ${romName}` : ''}.`
+        : app.bridgeStatus.detail;
+
     return `
       <div class="dialog-backdrop">
         <section class="dialog-window">
@@ -1401,11 +1742,12 @@
             <span></span>
           </div>
           <div class="dialog-body">
-            <p>${app.bridgeStatus.detail}</p>
-            ${app.bridgeStatus.usingMock
-              ? '<p class="dialog-note">Real calculator mode needs `wasm/WebCEmu.js` and `wasm/WebCEmu.wasm`. Until then, the trainer stays in overlay-only mock mode.</p>'
-              : ''}
-            <p class="dialog-note">A saved ROM is stored locally in IndexedDB for later launches.</p>
+            <p>${detail}</p>
+            <p class="dialog-note">
+              Load a TI-84 Plus CE ROM to switch from the native stats engine to pixel-perfect CEmu rendering.
+              The file stays local in IndexedDB for later launches.
+            </p>
+            ${romName ? `<p class="dialog-note">Saved ROM: ${romName}</p>` : ''}
             <input id="rom-file-input" type="file" accept=".rom,.bin,application/octet-stream">
             <div class="button-row">
               <button type="button" class="mac-button primary" data-action="choose-rom">
@@ -1425,9 +1767,15 @@
   }
 
   function bridgeStatusLabel() {
+    if (app.bridge?.isNative?.()) {
+      return 'Native';
+    }
+
+    if (app.bridge?.isRealEmulator?.()) {
+      return 'CEmu';
+    }
+
     switch (app.bridgeStatus.code) {
-      case 'ready':
-        return 'ROM ready';
       case 'booting':
         return 'Booting';
       case 'loading-wasm':
@@ -1466,7 +1814,15 @@
       ${renderRomDialog()}
     `;
 
-    app.bridge.mountCanvas(document.getElementById('calc-canvas'));
+    const nextCanvas = document.getElementById('calc-canvas');
+
+    if (app.canvasEl && nextCanvas && app.canvasEl !== nextCanvas) {
+      nextCanvas.replaceWith(app.canvasEl);
+    } else {
+      app.canvasEl = nextCanvas;
+    }
+
+    app.bridge.mountCanvas(app.canvasEl);
   }
 
   function screenLinesForMock() {
@@ -1513,7 +1869,7 @@
   }
 
   function updateMockCanvas() {
-    if (app.bridge.isRealEmulator()) {
+    if (app.bridge.isNative?.() || app.bridge.isRealEmulator()) {
       return;
     }
 
@@ -1594,7 +1950,9 @@
       case 'clear-rom':
         await app.bridge.clearStoredRom();
         app.bridgeStatus = app.bridge.getStatus();
-        app.banner = 'Saved ROM cleared.';
+        app.romDialogOpen = false;
+        app.banner = 'Switched back to native mode.';
+        updateMockCanvas();
         render();
         break;
       default:
@@ -1625,7 +1983,7 @@
         await app.bridge.selectRomFile(file);
         app.bridgeStatus = app.bridge.getStatus();
         app.romDialogOpen = false;
-        app.banner = `Stored and loaded ${file.name}.`;
+        app.banner = `Switched to CEmu with ${file.name}.`;
       } catch (error) {
         app.banner = error.message;
       } finally {
@@ -1647,14 +2005,9 @@
   }
 
   function attachBridge() {
-    app.bridge = createBridge({
+    app.bridge = createBackend({
       onStatus(status) {
         app.bridgeStatus = status;
-
-        if (status.code === 'needs-rom') {
-          app.romDialogOpen = true;
-        }
-
         updateMockCanvas();
         render();
       },

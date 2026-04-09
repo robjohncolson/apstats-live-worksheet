@@ -13,12 +13,25 @@ const stateMachinePath = path.join(projectRoot, 'ti84-state-machine.js');
 const stylePath = path.join(__dirname, 'style.css');
 const appPath = path.join(__dirname, 'app.js');
 const bridgePath = path.join(__dirname, 'bridge.js');
+const nativeDir = path.join(__dirname, 'native');
 
 const generatedDir = path.join(__dirname, 'generated');
 const generatedProceduresPath = path.join(generatedDir, 'data-procedures.js');
 const generatedPatternsPath = path.join(generatedDir, 'data-patterns.js');
 const generatedStateMachinePath = path.join(generatedDir, 'state-machine.js');
 const standalonePath = path.join(__dirname, 'standalone.html');
+
+const nativeScriptFilenames = [
+  'event-bus.js',
+  'stat-math.js',
+  'menu-tables.js',
+  'field-tables.js',
+  'menu-nav.js',
+  'form-engine.js',
+  'result-formatter.js',
+  'screen-renderer.js',
+  'ti84-native.js',
+];
 
 fs.mkdirSync(generatedDir, { recursive: true });
 
@@ -28,6 +41,10 @@ const stateMachineSource = fs.readFileSync(stateMachinePath, 'utf8');
 const styleSource = fs.readFileSync(stylePath, 'utf8');
 const bridgeSource = fs.readFileSync(bridgePath, 'utf8');
 const appSource = fs.readFileSync(appPath, 'utf8');
+const nativeSources = nativeScriptFilenames.map((filename) => ({
+  filename,
+  source: fs.readFileSync(path.join(nativeDir, filename), 'utf8'),
+}));
 
 function escapeInlineScript(source) {
   return source.replace(/<\/script/gi, '<\\/script');
@@ -67,6 +84,14 @@ const generatedStateMachine = transformStateMachine(
   'const proceduresData = window.TI84V2ProceduresData;',
 );
 
+const nativeInlineScripts = nativeSources
+  .map(
+    ({ source }) => `  <script>
+${escapeInlineScript(source)}
+  </script>`,
+  )
+  .join('\n');
+
 fs.writeFileSync(generatedProceduresPath, generatedProcedures);
 fs.writeFileSync(generatedPatternsPath, generatedPatterns);
 fs.writeFileSync(generatedStateMachinePath, generatedStateMachine);
@@ -95,6 +120,7 @@ ${escapeInlineScript(generatedStateMachine)}
   <script>
 ${escapeInlineScript(bridgeSource)}
   </script>
+${nativeInlineScripts}
   <script>
 ${escapeInlineScript(appSource)}
   </script>
