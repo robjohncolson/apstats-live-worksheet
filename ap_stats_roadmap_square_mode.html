@@ -5113,52 +5113,107 @@ const ProgressApp = {
     },
 
     // --- Login ---
+    userList: [],
+
     renderLogin: function(err) {
-        var prefill = localStorage.getItem('student-name') || localStorage.getItem('username') || '';
+        var self = this;
         var content = document.getElementById('progress-content');
         content.innerHTML =
             '<div class="prog-login">' +
                 '<div class="chicago" style="font-size:14px">My Progress</div>' +
-                '<div class="geneva" style="font-size:11px;color:var(--plat-lo)">Enter your username to view your data</div>' +
-                '<input id="prog-user-input" class="geneva" placeholder="Fruit_Animal" value="' + this.esc(prefill) + '" />' +
+                '<div class="geneva" style="font-size:11px;color:var(--plat-lo)">Select your username and enter your password</div>' +
+                '<select id="prog-user-select" class="geneva" style="font-size:12px;border:1px solid var(--black);padding:4px 8px;width:216px;background:var(--white);box-shadow:inset 1px 1px 0 var(--plat-lo)">' +
+                    '<option value="">Loading users...</option>' +
+                '</select>' +
+                '<input id="prog-pass-input" class="geneva" type="password" placeholder="Password" style="width:200px" />' +
                 '<button class="s7btn s7btn-default" onclick="ProgressApp.handleLogin()">Log In</button>' +
                 (err ? '<div class="prog-err geneva">' + this.esc(err) + '</div>' : '') +
             '</div>';
-        var inp = document.getElementById('prog-user-input');
-        inp.addEventListener('keydown', function(e) {
+        var passInp = document.getElementById('prog-pass-input');
+        passInp.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') ProgressApp.handleLogin();
         });
-        inp.focus();
+        // Fetch user list if not cached
+        if (this.userList.length > 0) {
+            this.populateDropdown();
+        } else {
+            this.drillerFetch('/api/users').then(function(users) {
+                if (Array.isArray(users)) {
+                    self.userList = users.sort(function(a, b) {
+                        return (a.real_name || a.username).localeCompare(b.real_name || b.username);
+                    });
+                }
+                self.populateDropdown();
+            });
+        }
+    },
+
+    populateDropdown: function() {
+        var sel = document.getElementById('prog-user-select');
+        if (!sel) return;
+        var prefill = localStorage.getItem('progress-username') || localStorage.getItem('student-name') || '';
+        var html = '<option value="">— Select —</option>';
+        for (var i = 0; i < this.userList.length; i++) {
+            var u = this.userList[i];
+            var label = u.real_name ? u.real_name + ' (' + u.username + ')' : u.username;
+            var selected = u.username === prefill ? ' selected' : '';
+            html += '<option value="' + this.esc(u.username) + '"' + selected + '>' + this.esc(label) + '</option>';
+        }
+        sel.innerHTML = html;
+        if (prefill) {
+            var passInp = document.getElementById('prog-pass-input');
+            if (passInp) passInp.focus();
+        }
     },
 
     handleLogin: function() {
-        var inp = document.getElementById('prog-user-input');
-        var username = (inp.value || '').trim();
-        if (!username) { this.renderLogin('Please enter a username.'); return; }
-        this.username = username;
-        localStorage.setItem('progress-username', username);
+        var sel = document.getElementById('prog-user-select');
+        var passInp = document.getElementById('prog-pass-input');
+        var username = sel.value;
+        var password = (passInp.value || '').trim();
+        if (!username) { this.renderLogin('Please select a username.'); return; }
+        if (!password) { this.renderLogin('Please enter your password.'); return; }
+        var self = this;
         this.showLoading();
-        this.lookupUser().then(function() { ProgressApp.renderMain(); });
+        fetch(PROG_DRILLER_API + '/api/users/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password })
+        }).then(function(r) { return r.json(); })
+          .then(function(result) {
+            if (result.valid) {
+                self.username = username;
+                self.realName = result.real_name || username;
+                localStorage.setItem('progress-username', username);
+                self.foundIn.driller = true;
+                // Also check quiz DB
+                self.quizFetch('users', 'username=eq.' + encodeURIComponent(username) + '&select=real_name')
+                    .then(function(q) {
+                        self.foundIn.quiz = q && q.length > 0;
+                        self.renderMain();
+                    });
+            } else {
+                self.renderLogin(result.error || 'Incorrect password.');
+            }
+        }).catch(function() {
+            self.renderLogin('Connection error. Try again.');
+        });
     },
 
     lookupUser: function() {
+        // Called when reopening with cached username — re-verify against both DBs
         var self = this;
         return Promise.all([
-            this.drillerFetch('/api/users/' + encodeURIComponent(this.username) + '/stars')
-                .then(function(d) { return d; }),
-            this.quizFetch('users', 'username=eq.' + encodeURIComponent(this.username) + '&select=real_name,user_type')
+            this.drillerFetch('/api/users/' + encodeURIComponent(this.username) + '/stars'),
+            this.quizFetch('users', 'username=eq.' + encodeURIComponent(this.username) + '&select=real_name')
         ]).then(function(results) {
-            var driller = results[0];
-            var quiz = results[1];
-            self.foundIn.driller = driller && !driller.error;
-            self.foundIn.quiz = quiz && quiz.length > 0;
-            if (self.foundIn.quiz) self.realName = quiz[0].real_name || self.username;
-            else self.realName = self.username;
-
+            self.foundIn.driller = results[0] && !results[0].error;
+            self.foundIn.quiz = results[1] && results[1].length > 0;
+            if (self.foundIn.quiz) self.realName = results[1][0].real_name || self.username;
             if (!self.foundIn.driller && !self.foundIn.quiz) {
                 self.username = null;
                 localStorage.removeItem('progress-username');
-                self.renderLogin('Username not found.');
+                self.renderLogin('Session expired. Please log in again.');
             }
         });
     },
