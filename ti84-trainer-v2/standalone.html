@@ -1268,6 +1268,15 @@ code {
   </style>
 </head>
 <body>
+  <!-- QR Code Share Button -->
+  <button id="qr-toggle" onclick="document.getElementById('qr-modal').style.display=document.getElementById('qr-modal').style.display==='flex'?'none':'flex'" style="position:fixed;bottom:12px;right:12px;z-index:9999;width:40px;height:40px;border-radius:8px;border:2px solid #7a7a7a;background:#e8e8e8;cursor:pointer;font-size:18px;line-height:1;padding:0;box-shadow:2px 2px 0 rgba(0,0,0,.25)">QR</button>
+  <div id="qr-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.5);align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#fff;border-radius:8px;padding:24px;text-align:center;max-width:320px;box-shadow:4px 4px 0 rgba(0,0,0,.3)">
+      <p style="margin:0 0 12px;font-family:Geneva,Helvetica Neue,sans-serif;font-size:14px;font-weight:bold">Scan to open on your phone</p>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;data=https%3A%2F%2Frobjohncolson.github.io%2Fapstats-live-worksheet%2Fti84-trainer-v2%2Fstandalone.html" alt="QR Code" width="200" height="200" style="image-rendering:pixelated" onerror="this.outerHTML='<p style=color:red>QR failed to load</p>'">
+      <p style="margin:12px 0 0;font-family:Courier New,monospace;font-size:11px;word-break:break-all;color:#555">https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html</p>
+    </div>
+  </div>
   <div id="app"></div>
   <script>
 (function () {
