@@ -487,6 +487,7 @@
     flashKeyId: null,
     flashKind: null,
     romDialogOpen: false,
+    optionsDialogOpen: false,
     clutch: {
       engaged: true,
       phase: 'idle',
@@ -2437,6 +2438,7 @@
   function togglePhysicalMode() {
     const next = !app.persisted.physicalMode;
     app.persisted.physicalMode = next;
+    app.optionsDialogOpen = false;
     savePersisted();
     app.banner = next
       ? 'Real calculator mode active. Follow the instructions on your TI-84.'
@@ -3049,10 +3051,6 @@
         </div>
 
         ${renderPhysicalStepCard()}
-
-        <div class="physical-mode-toggle">
-          <button type="button" class="mac-button" data-action="toggle-physical-mode">Switch to on-screen emulator</button>
-        </div>
       </section>
     `;
   }
@@ -3186,6 +3184,44 @@
     `;
   }
 
+  function renderOptionsDialog() {
+    if (!app.optionsDialogOpen) {
+      return '';
+    }
+
+    const physical = app.persisted.physicalMode;
+    const toggleLabel = physical ? 'Switch to on-screen emulator' : 'Switch to real calculator mode';
+    const toggleHint = physical
+      ? 'Use the built-in WASM emulator instead (requires network + firmware).'
+      : 'Follow along on your physical TI-84 (works offline).';
+
+    return `
+      <div class="dialog-backdrop">
+        <section class="dialog-window">
+          <div class="dialog-titlebar">
+            <span class="close-box"></span>
+            <strong>Options</strong>
+            <span></span>
+          </div>
+          <div class="dialog-body">
+            <p>Calculator firmware and the built-in emulator are tucked away here so students stay focused on the real TI-84.</p>
+            <div class="options-row">
+              <button type="button" class="mac-button" data-action="open-rom-dialog">Firmware…</button>
+              <span class="dialog-note">Manage the cached WASM calculator ROM.</span>
+            </div>
+            <div class="options-row">
+              <button type="button" class="mac-button" data-action="toggle-physical-mode">${toggleLabel}</button>
+              <span class="dialog-note">${toggleHint}</span>
+            </div>
+            <div class="button-row">
+              <button type="button" class="mac-button" data-action="close-options-dialog">Close</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
   function renderRomDialog() {
     if (!app.romDialogOpen) {
       return '';
@@ -3271,7 +3307,7 @@
         <header class="window-titlebar">
           <span class="close-box"></span>
           <strong>TI-84 Procedural Trainer V3</strong>
-          <button type="button" class="titlebar-button" data-action="open-rom-dialog">Firmware</button>
+          <button type="button" class="titlebar-button" data-action="open-options-dialog">Options</button>
         </header>
 
         <section class="banner-row">
@@ -3285,6 +3321,7 @@
 
         ${renderDashboard(snapshot)}
       </main>
+      ${renderOptionsDialog()}
       ${renderRomDialog()}
     `;
 
@@ -3448,11 +3485,20 @@
         render();
         break;
       case 'open-rom-dialog':
+        app.optionsDialogOpen = false;
         app.romDialogOpen = true;
         render();
         break;
       case 'close-rom-dialog':
         app.romDialogOpen = false;
+        render();
+        break;
+      case 'open-options-dialog':
+        app.optionsDialogOpen = true;
+        render();
+        break;
+      case 'close-options-dialog':
+        app.optionsDialogOpen = false;
         render();
         break;
       case 'choose-rom': {

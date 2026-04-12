@@ -1382,9 +1382,27 @@ code {
   border-top: 1px dashed #aaa;
 }
 
-.physical-mode-toggle {
+.options-row {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed #aaa;
+}
+
+.options-row:last-of-type {
+  border-bottom: none;
+}
+
+.options-row .mac-button {
+  flex-shrink: 0;
+  min-width: 180px;
+}
+
+.options-row .dialog-note {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4a4a4a;
 }
 
 .physical-idle,
