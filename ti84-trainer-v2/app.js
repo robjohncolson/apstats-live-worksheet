@@ -745,7 +745,7 @@
       version: 2,
       filterUnit: 'all',
       records: {},
-      physicalMode: false,
+      physicalMode: true,
     };
 
     try {
@@ -760,7 +760,7 @@
         ...fallback,
         ...parsed,
         records: parsed.records ?? {},
-        physicalMode: parsed.physicalMode === true,
+        physicalMode: parsed.physicalMode !== false,
       };
     } catch (error) {
       console.warn('Failed to load TI-84 V2 progress.', error);
