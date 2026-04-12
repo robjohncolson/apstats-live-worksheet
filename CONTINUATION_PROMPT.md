@@ -1,8 +1,8 @@
 # Continuation Prompt — TI-84 CE Procedural Trainer
 
-**Last updated**: 2026-04-09
-**Status**: V3 shipped — all core features implemented. CEmu primary, native state machine, clutch, auto-fill, pattern recognition, dual-track SRS
-**Deadline**: ~May 7 (AP exam, 28 days out)
+**Last updated**: 2026-04-11
+**Status**: V3 shipped + Physical Calculator Mode is now primary (default). CEmu/WASM emulator demoted to a legacy option behind the Options dialog because school networks block Supabase and WASM boot fails. All core features implemented.
+**Deadline**: ~May 7 (AP exam, 26 days out)
 
 ---
 
@@ -147,6 +147,9 @@ Phase 3: RESULT REVIEW (clutch disengaged)
 | Calculator Skin | DONE | Photo-accurate EZ-Spot model colors, 6-column keypad grid |
 | Mobile Layout | DONE | `@media (max-width: 600px)`: full-bleed, compact walkthrough bar, sticky narration, 42px keys, icon buttons |
 | Answer Verification | DONE | "Check Your Answer" card in result-review phase, 23 procedures, uses native computed values with 0.5% tolerance fallback |
+| Physical Calculator Mode | DONE (PRIMARY) | Default-on. Renders instruction cards (Press KEY / narration / expected / tips / Back, I did it) so students follow along on their real TI-84. Bypasses `pressButton` validation and just advances `routeState`. Zero network, works offline. |
+| Options Dialog | DONE | Titlebar "Options" button opens a small dialog housing Firmware + mode toggle. Keeps the physical view uncluttered. |
+| Choice Button Flash | DONE | Track 1 choice buttons flash green (correct) or red (wrong) for 650ms before the panel transitions, so students see which button they hit. |
 
 ## Known Issues / Remaining Work
 
@@ -226,3 +229,9 @@ Config in: ti84-trainer-v2/bridge.js line 11 (ROM_CONFIG.supabaseUrl)
 62. Supabase data audit — mapped two projects: lrsl-trainer (13 active tables: users, lsrl_progress, user_progress, ghost_profiles, ghost_battles, ghost_ratings, time_sessions, etc.) and curriculum_render (7 tables: users, answers, votes, badges, user_activity, identity_claims, teacher_notifications). Both use Fruit_Animal username/password auth. Different Supabase instances, same schema patterns.
 63. Built "My Progress" app window — native JS module (not iframe) that queries both Supabase projects read-only. Login via dropdown + password (verified against driller Railway API `/api/users/verify`). 4 tabs: Driller (stars/scores), Quiz Answers (per-question), Badges (achievement grid), Time on Task (session durations). 60-second cache, System 7 spreadsheet aesthetic with beveled headers and folder tabs. **Commented out for Spring 2026** — students primarily use curriculum_render quizzes, showing empty driller progress could send wrong signal. Re-enable for SY26-27.
 64. ROM.transpiled.js grew to 149MB (past GitHub's 100MB limit) from Codex transpiler phases. Added to `.gitignore`, removed from tracking. File kept locally as research artifact. Separate from trainer functionality.
+65. QR code share button added to the trainer (commit `2302536`). Small button next to the titlebar generates a QR code students can scan to open the trainer on their phone. See `CONTINUATION_PROMPT_CODEX.md` for the parallel ROM-transpiler progress around the same time (Phase 25G, 0xB608 seeds landing in commit `1836e80` so the OS event loop runs 50K steps).
+66. **Pivot — Physical Calculator Mode** (commit `ba6ae75`). Edgar reported the WASM emulator fails on school networks: Supabase is blocked and WebCEmu itself errors out. Since every student owns a physical TI-84 anyway, we added a new render path that uses the existing `generated/data-procedures.js` data (narration, key, highlight, commonErrors) to display big text instruction cards instead of an on-screen calculator. Advance bypasses `pressButton` key validation and just calls `nextRouteState(step)` directly. Data-setup and result-review phases get analogous cards. Zero new dependencies, fully offline. Verified end-to-end in jsdom: data-setup → step 1 of N → advance → back, all button states correct, localStorage persists the mode.
+67. **Default flipped to Physical Mode** (commit `a976af6`). New cohort logic: `parsed.physicalMode !== false` — fresh installs get physical, legacy users with no explicit preference are grandfathered into physical, anyone who explicitly opted out stays in emulator. Verified across four cohorts in jsdom.
+68. **Options dialog** (commit `48b5605`). Titlebar "Firmware" button renamed to "Options" and routes through a new `renderOptionsDialog()` that contains Firmware + mode-toggle. Bottom `physical-mode-toggle` strip removed from the physical view. `open-rom-dialog` and `toggle-physical-mode` handlers auto-close the Options dialog for clean chaining. Purpose: keep the student-facing physical view focused on just the step card.
+69. **Choice-button flash feedback** (commit `7a97232`). Track 1 pattern-recognition buttons now shade green (correct) or red (wrong) for 650ms before the panel transitions to the walkthrough or branch intro. New `app.choiceFlash = { procedureId, kind }` state, `handleChoice` sets the flash + banner, renders, awaits 650ms, clears, then proceeds. CSS classes `.choice-flash-correct` / `.choice-flash-wrong` provide shaded background + bevel. Reason: previously students never saw which button they clicked — the panel just swapped out instantly.
+70. **Known stale state (not yet acted on)**: The autonomous frontier runner started a transpile at ~19:06 on 2026-04-11 that ran ~53 min with full CPU and then died silently (PID 14700 gone, `ROM.transpiled.js` / `report.json` still stamped 15:23). Root cause not diagnosed; current `ROM.transpiled.js` is the successful 0xB608 build from commit `1836e80`, which is fine. Logs: `TI-84_Plus_CE/transpile.log`, `TI-84_Plus_CE/new-seeds*.txt`. See `CONTINUATION_PROMPT_CODEX.md` for the ROM-side implications.
