@@ -486,6 +486,7 @@
     busy: false,
     flashKeyId: null,
     flashKind: null,
+    choiceFlash: null,
     romDialogOpen: false,
     optionsDialogOpen: false,
     clutch: {
@@ -2535,10 +2536,11 @@
           ${question.remainingChoices
             .map((choiceId) => {
               const disabled = removed.has(choiceId);
+              const flash = app.choiceFlash?.procedureId === choiceId ? ` choice-flash-${app.choiceFlash.kind}` : '';
               return `
                 <button
                   type="button"
-                  class="choice-button${disabled ? ' removed' : ''}"
+                  class="choice-button${disabled ? ' removed' : ''}${flash}"
                   data-action="choose-procedure"
                   data-procedure-id="${choiceId}"
                   ${disabled ? 'disabled' : ''}
@@ -3389,11 +3391,21 @@
   }
 
   async function handleChoice(procedureId) {
-    if (!app.question || app.busy) {
+    if (!app.question || app.busy || app.choiceFlash) {
       return;
     }
 
-    if (procedureId === app.question.correctId) {
+    const correct = procedureId === app.question.correctId;
+    app.choiceFlash = { procedureId, kind: correct ? 'correct' : 'wrong' };
+    app.banner = correct
+      ? 'Correct! Starting the walkthrough…'
+      : `Not quite. That leads to ${PROCEDURE_BY_ID[procedureId]?.name ?? 'a different procedure'}.`;
+    render();
+
+    await new Promise((resolve) => window.setTimeout(resolve, 650));
+    app.choiceFlash = null;
+
+    if (correct) {
       await handleCorrectChoice();
       return;
     }

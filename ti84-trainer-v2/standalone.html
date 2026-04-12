@@ -245,6 +245,28 @@ h2 {
   text-decoration: line-through;
 }
 
+.choice-button.choice-flash-correct {
+  background: #cdebcf;
+  border-color: #2e7d32;
+  color: #1b4b1e;
+  font-weight: 700;
+  box-shadow:
+    inset 1px 1px 0 #e8f7e9,
+    inset -1px -1px 0 #4a9a4f,
+    0 0 0 2px rgba(46, 125, 50, 0.35);
+}
+
+.choice-button.choice-flash-wrong {
+  background: #f6cfce;
+  border-color: #b71c1c;
+  color: #7a1414;
+  font-weight: 700;
+  box-shadow:
+    inset 1px 1px 0 #fde4e3,
+    inset -1px -1px 0 #d24c48,
+    0 0 0 2px rgba(183, 28, 28, 0.35);
+}
+
 .contrast-card,
 .walkthrough-copy,
 .keypad-empty {
@@ -8578,6 +8600,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     busy: false,
     flashKeyId: null,
     flashKind: null,
+    choiceFlash: null,
     romDialogOpen: false,
     optionsDialogOpen: false,
     clutch: {
@@ -10627,10 +10650,11 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
           ${question.remainingChoices
             .map((choiceId) => {
               const disabled = removed.has(choiceId);
+              const flash = app.choiceFlash?.procedureId === choiceId ? ` choice-flash-${app.choiceFlash.kind}` : '';
               return `
                 <button
                   type="button"
-                  class="choice-button${disabled ? ' removed' : ''}"
+                  class="choice-button${disabled ? ' removed' : ''}${flash}"
                   data-action="choose-procedure"
                   data-procedure-id="${choiceId}"
                   ${disabled ? 'disabled' : ''}
@@ -11481,11 +11505,21 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   async function handleChoice(procedureId) {
-    if (!app.question || app.busy) {
+    if (!app.question || app.busy || app.choiceFlash) {
       return;
     }
 
-    if (procedureId === app.question.correctId) {
+    const correct = procedureId === app.question.correctId;
+    app.choiceFlash = { procedureId, kind: correct ? 'correct' : 'wrong' };
+    app.banner = correct
+      ? 'Correct! Starting the walkthrough…'
+      : `Not quite. That leads to ${PROCEDURE_BY_ID[procedureId]?.name ?? 'a different procedure'}.`;
+    render();
+
+    await new Promise((resolve) => window.setTimeout(resolve, 650));
+    app.choiceFlash = null;
+
+    if (correct) {
       await handleCorrectChoice();
       return;
     }

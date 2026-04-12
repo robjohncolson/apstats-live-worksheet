@@ -238,6 +238,28 @@ h2 {
   text-decoration: line-through;
 }
 
+.choice-button.choice-flash-correct {
+  background: #cdebcf;
+  border-color: #2e7d32;
+  color: #1b4b1e;
+  font-weight: 700;
+  box-shadow:
+    inset 1px 1px 0 #e8f7e9,
+    inset -1px -1px 0 #4a9a4f,
+    0 0 0 2px rgba(46, 125, 50, 0.35);
+}
+
+.choice-button.choice-flash-wrong {
+  background: #f6cfce;
+  border-color: #b71c1c;
+  color: #7a1414;
+  font-weight: 700;
+  box-shadow:
+    inset 1px 1px 0 #fde4e3,
+    inset -1px -1px 0 #d24c48,
+    0 0 0 2px rgba(183, 28, 28, 0.35);
+}
+
 .contrast-card,
 .walkthrough-copy,
 .keypad-empty {
