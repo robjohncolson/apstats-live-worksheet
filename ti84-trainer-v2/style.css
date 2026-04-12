@@ -1257,3 +1257,162 @@ code {
     padding: 8px;
   }
 }
+
+.physical-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.physical-card {
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark);
+}
+
+.physical-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  border-bottom: 1px dashed #aaa;
+  padding-bottom: 10px;
+}
+
+.physical-card-header .panel-kicker {
+  margin: 0;
+}
+
+.physical-procedure-name {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d2d2d;
+}
+
+.physical-card h3 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+}
+
+.physical-key-pane {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--accent-soft);
+  border: 1px solid var(--ink);
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-light),
+    inset -1px -1px 0 var(--bevel-dark);
+}
+
+.physical-key-prefix {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4a4a4a;
+}
+
+.physical-key-value {
+  font-family: var(--font-ui);
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.physical-narration {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.physical-expect {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #f4f4f4;
+  border: 1px solid #aaa;
+}
+
+.physical-expect-label {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4a4a4a;
+}
+
+.physical-expect-value {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.physical-tips {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.physical-tips li {
+  line-height: 1.4;
+}
+
+.physical-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 6px;
+  border-top: 1px dashed #aaa;
+}
+
+.physical-mode-toggle {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.physical-idle,
+.physical-data-setup,
+.physical-review {
+  gap: 10px;
+}
+
+.physical-note {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4a4a4a;
+}
+
+@media (max-width: 600px) {
+  .physical-card {
+    padding: 14px;
+  }
+
+  .physical-key-value {
+    font-size: 1.5rem;
+  }
+
+  .physical-actions {
+    flex-direction: column-reverse;
+  }
+
+  .physical-actions .mac-button {
+    width: 100%;
+  }
+}

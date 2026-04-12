@@ -745,6 +745,7 @@
       version: 2,
       filterUnit: 'all',
       records: {},
+      physicalMode: false,
     };
 
     try {
@@ -759,6 +760,7 @@
         ...fallback,
         ...parsed,
         records: parsed.records ?? {},
+        physicalMode: parsed.physicalMode === true,
       };
     } catch (error) {
       console.warn('Failed to load TI-84 V2 progress.', error);
@@ -2432,6 +2434,59 @@
     });
   }
 
+  function togglePhysicalMode() {
+    const next = !app.persisted.physicalMode;
+    app.persisted.physicalMode = next;
+    savePersisted();
+    app.banner = next
+      ? 'Real calculator mode active. Follow the instructions on your TI-84.'
+      : 'On-screen emulator mode active. Press the keys shown on screen.';
+    render();
+  }
+
+  function physicalAdvance() {
+    if (!app.walkthrough || app.walkthrough.preparing || app.clutch.phase !== 'procedure') {
+      return;
+    }
+
+    const step = currentStep();
+
+    if (!step) {
+      return;
+    }
+
+    app.walkthrough.routeState = nextRouteState(step);
+    app.walkthrough.hintVisible = false;
+
+    if (app.walkthrough.routeState.routeIndex >= currentProcedure().steps.length) {
+      enterResultReviewPhase();
+      return;
+    }
+
+    app.banner = 'Nice. Next step ready.';
+    render();
+  }
+
+  function physicalBack() {
+    if (!app.walkthrough || app.walkthrough.preparing) {
+      return;
+    }
+
+    const currentIndex = app.walkthrough.routeState.routeIndex;
+
+    if (currentIndex <= 0) {
+      return;
+    }
+
+    app.walkthrough.routeState = {
+      ...app.walkthrough.routeState,
+      routeIndex: currentIndex - 1,
+    };
+    app.walkthrough.hintVisible = false;
+    app.banner = 'Stepped back one instruction.';
+    render();
+  }
+
   function choiceLabel(procedureId) {
     return PROCEDURE_BY_ID[procedureId]?.name ?? procedureId;
   }
@@ -2864,7 +2919,149 @@
     return '<p class="calc-placeholder-copy">Simplified mode is active while calculator firmware is unavailable.</p>';
   }
 
+  function physicalKeyLabel(step) {
+    if (!step) {
+      return '';
+    }
+
+    if (stepIsParameter(step)) {
+      const token = step.key.slice(1, -1);
+      const value = sampleValueForToken(token, app.walkthrough?.problem?.values ?? {});
+      return `Type ${value}`;
+    }
+
+    return displayKey(step.key);
+  }
+
+  function renderPhysicalStepCard() {
+    const walkthrough = app.walkthrough;
+    const procedure = currentProcedure();
+
+    if (!walkthrough || walkthrough.preparing || !procedure) {
+      return `
+        <div class="physical-card physical-idle">
+          <p class="panel-kicker">Real calculator mode</p>
+          <h3>Pick a procedure to start</h3>
+          <p>Track 1 asks for the correct procedure first. Once you enter a walkthrough, the step-by-step instructions appear here.</p>
+        </div>
+      `;
+    }
+
+    const totalSteps = procedure.steps.length;
+    const stepIndex = Math.min(walkthrough.routeState.routeIndex, Math.max(totalSteps - 1, 0));
+    const stepNumber = Math.min(walkthrough.routeState.routeIndex + 1, totalSteps);
+    const phase = app.clutch.phase;
+
+    if (phase === 'data-setup') {
+      return `
+        <div class="physical-card physical-data-setup">
+          <p class="panel-kicker">Step 0 — Data setup</p>
+          <h3>Enter the required data into your calculator</h3>
+          <p class="physical-narration">Open <strong>STAT &rarr; Edit</strong> on your TI-84 and key in the values shown on the left. When every list is loaded, click below to start the guided steps.</p>
+          <div class="physical-actions">
+            <button type="button" class="mac-button primary" data-action="data-setup-done">Data entered — continue</button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (phase === 'result-review') {
+      const needsVerify = Boolean(VERIFICATION_FIELDS[procedure.id]) && !walkthrough.answerVerified;
+      return `
+        <div class="physical-card physical-review">
+          <p class="panel-kicker">Result review</p>
+          <h3>Read the answer off your calculator</h3>
+          <p class="physical-narration">${procedure.description}</p>
+          ${needsVerify ? '<p class="physical-note">Check your answer on the left, then finish the review.</p>' : ''}
+          <div class="physical-actions">
+            <button type="button" class="mac-button" data-action="restart-walkthrough">Restart</button>
+            <button type="button" class="mac-button primary" data-action="finish-review">Finish review</button>
+          </div>
+        </div>
+      `;
+    }
+
+    const step = procedure.steps[stepIndex];
+
+    if (!step) {
+      return `
+        <div class="physical-card">
+          <p class="panel-kicker">All steps complete</p>
+          <h3>${procedure.name} walkthrough done</h3>
+          <div class="physical-actions">
+            <button type="button" class="mac-button primary" data-action="finish-review">Finish review</button>
+          </div>
+        </div>
+      `;
+    }
+
+    const keyLabel = physicalKeyLabel(step);
+    const highlight = step.highlight || '';
+    const tips = Array.isArray(step.commonErrors)
+      ? step.commonErrors.slice(0, 2).map((entry) => entry?.feedback).filter(Boolean)
+      : [];
+    const isFirst = stepIndex === 0;
+
+    return `
+      <div class="physical-card">
+        <div class="physical-card-header">
+          <p class="panel-kicker">Step ${stepNumber} of ${totalSteps}</p>
+          <p class="physical-procedure-name">${procedure.name}</p>
+        </div>
+        <div class="physical-key-pane">
+          <span class="physical-key-prefix">Press</span>
+          <span class="physical-key-value">${keyLabel}</span>
+        </div>
+        <p class="physical-narration">${step.narration ?? ''}</p>
+        ${highlight ? `
+          <div class="physical-expect">
+            <span class="physical-expect-label">You should see</span>
+            <span class="physical-expect-value">${highlight}</span>
+          </div>
+        ` : ''}
+        ${tips.length ? `
+          <ul class="physical-tips">
+            ${tips.map((tip) => `<li>${tip}</li>`).join('')}
+          </ul>
+        ` : ''}
+        <div class="physical-actions">
+          <button type="button" class="mac-button" data-action="physical-back" ${isFirst ? 'disabled' : ''}>&larr; Back</button>
+          <button type="button" class="mac-button primary" data-action="physical-advance">I did it &rarr;</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPhysicalColumn() {
+    return `
+      <section class="panel calc-panel physical-panel">
+        <div class="calc-top">
+          <div>
+            <p class="panel-kicker">Real Calculator Mode</p>
+            <h2>Use your TI-84</h2>
+          </div>
+          <div class="status-pills">
+            <span class="status-pill status-ready">
+              <span class="status-indicator" aria-hidden="true"></span>
+              Offline-ready
+            </span>
+          </div>
+        </div>
+
+        ${renderPhysicalStepCard()}
+
+        <div class="physical-mode-toggle">
+          <button type="button" class="mac-button" data-action="toggle-physical-mode">Switch to on-screen emulator</button>
+        </div>
+      </section>
+    `;
+  }
+
   function renderCalculatorColumn() {
+    if (app.persisted.physicalMode) {
+      return renderPhysicalColumn();
+    }
+
     const walkthrough = app.walkthrough;
     const mobile = isMobileViewport();
     const step = currentStep();
@@ -2936,6 +3133,7 @@
             </div>
             <div class="button-row compact">
               <button type="button" class="mac-button" data-action="open-rom-dialog" ${firmwareAttrs}>${firmwareLabel}</button>
+              <button type="button" class="mac-button" data-action="toggle-physical-mode" title="Follow along on a real TI-84 instead of the emulator">${mobile ? '📱' : 'Real TI-84'}</button>
               <button type="button" class="mac-button" data-action="restart-walkthrough" ${restartAttrs} ${!walkthrough ? 'disabled' : ''}>${restartLabel}</button>
               <button type="button" class="mac-button" data-action="show-hint" ${hintAttrs} ${!walkthrough || walkthrough.mode !== 'recall' || app.clutch.phase !== 'procedure' ? 'disabled' : ''}>${hintLabel}</button>
               ${walkthrough && app.clutch.phase === 'procedure'
@@ -3234,6 +3432,15 @@
         break;
       case 'restart-walkthrough':
         await restartWalkthrough();
+        break;
+      case 'toggle-physical-mode':
+        togglePhysicalMode();
+        break;
+      case 'physical-advance':
+        physicalAdvance();
+        break;
+      case 'physical-back':
+        physicalBack();
         break;
       case 'return-question':
         app.sessionResult = null;
