@@ -36,7 +36,7 @@
     .summary-detail{margin-top:6px;color:#334862;line-height:1.5}
     #units-container{display:grid;gap:22px}
     .unit-card{overflow:hidden;border-radius:24px}
-    .unit-header{display:grid;gap:12px;padding:22px 24px 20px;background:linear-gradient(135deg,rgba(8,28,52,.98),rgba(23,56,95,.95));color:#fff}
+    .unit-header{display:grid;gap:12px;padding:22px 24px 20px;background:linear-gradient(135deg,rgba(8,28,52,.98),rgba(23,56,95,.95));color:#fff;cursor:pointer;user-select:none}
     .unit-header-top,.probe-head,.focus-lesson-top,.frq-grade-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
     .unit-kicker{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.76)}
     .unit-title{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);letter-spacing:-.03em}
@@ -76,6 +76,11 @@
     .focus-priority-high{background:var(--hi);color:#fff}.focus-priority-medium{background:var(--med);color:#fff}.focus-priority-low{background:var(--low);color:#fff}
     .focus-lesson{display:grid;gap:8px;padding:14px;border-radius:14px;border:1px solid rgba(13,39,70,.1);background:#fbfcfe}
     .focus-lo{font-size:.92rem;color:var(--muted);line-height:1.45}
+    .unit-chevron{flex-shrink:0;font-size:1.15rem;line-height:1;opacity:.7;margin-left:6px;transition:transform .2s;display:inline-block}
+    .unit-card.collapsed .unit-chevron{transform:rotate(-90deg)}
+    .frq-paper-toggle{display:flex;gap:10px;align-items:center;cursor:pointer;font-weight:700;color:var(--navy);padding:12px 14px;border-radius:12px;border:1px solid rgba(13,39,70,.1);background:#fcfdff;user-select:none}
+    .frq-paper-toggle input{width:18px;height:18px;flex-shrink:0;cursor:pointer;accent-color:var(--navy)}
+    .frq-paper-note{display:grid;gap:6px;padding:14px 16px;border-radius:14px;background:var(--warnbg);border:1px solid rgba(154,106,22,.22);color:#5a3a00;line-height:1.55}
     .toast{position:fixed;right:18px;bottom:18px;max-width:min(360px,calc(100vw - 36px));padding:14px 16px;border-radius:14px;background:rgba(8,28,52,.96);color:#fff;box-shadow:var(--shadow);opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .18s ease,transform .18s ease;z-index:30;line-height:1.45}
     .toast.visible{opacity:1;transform:translateY(0)}
     @media (max-width:900px){.header{grid-template-columns:1fr;text-align:center}.header-left,.header-center,.header-right{justify-self:center}.student-info,.progress-summary{grid-template-columns:1fr}}
@@ -176,7 +181,7 @@
 
       function makeDefaultState() {
         const units = {};
-        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null };
+        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false };
         return { schemaVersion:SCHEMA_VERSION, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), units };
       }
 
@@ -218,7 +223,9 @@
             mcqResults: value.mcqResults && typeof value.mcqResults === 'object' ? Object.fromEntries(Object.entries(value.mcqResults).filter(([,v]) => v === 'correct' || v === 'incorrect')) : {},
             frqAnswer: typeof value.frqAnswer === 'string' ? value.frqAnswer : '',
             frqGrade: normalizeGrade(value.frqGrade),
-            focusSynthesis: normalizeFocus(value.focusSynthesis)
+            focusSynthesis: normalizeFocus(value.focusSynthesis),
+            collapsed: typeof value.collapsed === 'boolean' ? value.collapsed : true,
+            frqOnPaper: typeof value.frqOnPaper === 'boolean' ? value.frqOnPaper : false,
           };
         }
         return next;
@@ -231,7 +238,7 @@
         return copy;
       };
 
-      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null });
+      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false });
       const showToast = msg => { ui.toast.textContent = msg; ui.toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => ui.toast.classList.remove('visible'), 2600); };
       const saveNow = () => { clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState())); } catch { showToast('Local save failed.'); } };
       const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); };
@@ -363,15 +370,31 @@
 
       function renderUnit(unit) {
         const data = getUnit(unit);
-        const card = make('section', 'unit-card');
+        const card = make('section', data.collapsed ? 'unit-card collapsed' : 'unit-card');
+
+        // Header — always visible; click anywhere to toggle expand/collapse
         const header = make('div', 'unit-header');
+        header.addEventListener('click', () => {
+          data.collapsed = !data.collapsed;
+          saveNow();
+          rerenderUnit(unit);
+        });
         const top = make('div', 'unit-header-top');
         const titleWrap = make('div');
-        titleWrap.append(make('div', 'unit-kicker', `Unit ${unit}`), make('h2', 'unit-title', unitTitle(unit)));
+        titleWrap.append(make('div', 'unit-kicker', `Unit ${unit} / ${UNIT_COUNT}`), make('h2', 'unit-title', unitTitle(unit)));
         const meta = make('div', 'unit-meta');
-        meta.append(make('div', 'unit-chip', `Exam weight: ${examWeight(unit)}`), make('div', 'unit-chip', `Mode: ${data.mode === 'both' ? 'Both' : data.mode.toUpperCase()}`));
+        meta.append(
+          make('div', 'unit-chip', `Exam weight: ${examWeight(unit)}`),
+          make('div', 'unit-chip', `Mode: ${data.mode === 'both' ? 'Both' : data.mode.toUpperCase()}`),
+          make('span', 'unit-chevron', data.collapsed ? '▶' : '▾')
+        );
         top.append(titleWrap, meta);
         header.append(top, make('div', 'copy', unitTopic(unit)));
+        card.appendChild(header);
+
+        // Body — only built when expanded (keeps initial load fast)
+        if (data.collapsed) return card;
+
         const body = make('div', 'unit-body');
         const mode = ui.modeTemplate.content.firstElementChild.cloneNode(true);
         mode.querySelectorAll('button').forEach(button => {
@@ -380,13 +403,18 @@
         });
         const status = make('div', 'status-row');
         const checked = Object.keys(data.mcqResults || {}).length;
-        const correct = Object.values(data.mcqResults || {}).filter(value => value === 'correct').length;
-        [checked ? [`MCQ: ${checked}/${probesFor(unit).length} checked`, 'ready'] : [`MCQ: 0/${probesFor(unit).length} checked`, 'pending'], checked ? [`MCQ: ${correct}/${checked} correct`, 'ready'] : ['MCQ accuracy pending', 'pending'], data.frqGrade ? [`FRQ graded: ${data.frqGrade.score}`, 'ready'] : ['FRQ not graded yet', 'pending'], data.focusSynthesis ? ['Focus plan ready', 'ready'] : ['Focus plan not generated', 'pending']].forEach(([text, cls]) => status.appendChild(make('div', `status-badge ${cls}`, text)));
+        const correct = Object.values(data.mcqResults || {}).filter(v => v === 'correct').length;
+        [
+          checked ? [`MCQ: ${checked}/${probesFor(unit).length} checked`, 'ready'] : [`MCQ: 0/${probesFor(unit).length} checked`, 'pending'],
+          checked ? [`MCQ: ${correct}/${checked} correct`, 'ready'] : ['MCQ accuracy pending', 'pending'],
+          data.frqGrade ? [`FRQ graded: ${data.frqGrade.score}`, 'ready'] : data.frqOnPaper ? ['FRQ: on paper — submit to Mr. Colson', 'pending'] : ['FRQ not graded yet', 'pending'],
+          data.focusSynthesis ? ['Focus plan ready', 'ready'] : ['Focus plan not generated', 'pending'],
+        ].forEach(([text, cls]) => status.appendChild(make('div', `status-badge ${cls}`, text)));
         body.append(mode, status);
         if (data.mode === 'mcq' || data.mode === 'both') body.appendChild(renderMcq(unit));
         if (data.mode === 'frq' || data.mode === 'both') body.appendChild(renderFrq(unit));
         body.appendChild(renderFocus(unit));
-        card.append(header, body);
+        card.appendChild(body);
         return card;
       }
 
@@ -475,22 +503,51 @@
         const data = getUnit(unit);
         const question = gateQuestion(unit);
         const section = make('section', 'unit-section');
-        section.append(make('h3', '', 'FRQ synthesis'), make('p', 'copy', 'Write one response that synthesizes the full unit. Click Grade This FRQ when you are ready for AI feedback.'));
+        section.append(make('h3', '', 'FRQ synthesis'), make('p', 'copy', 'Write one response that synthesizes the full unit. Or toggle "on paper" if you prefer to write by hand.'));
         if (!question) return section.appendChild(make('div', 'empty', 'The gate FRQ for this unit was not found.')), section;
+
         const block = make('div', 'frq-block');
-        const answer = document.createElement('textarea');
-        answer.className = 'frq-answer';
-        answer.placeholder = 'Write your full response here. Use statistics vocabulary, evidence, and complete reasoning.';
-        answer.value = data.frqAnswer || '';
-        answer.addEventListener('input', () => { data.frqAnswer = answer.value; data.frqGrade = null; data.focusSynthesis = null; saveSoon(); });
-        const actions = make('div', 'unit-action-row');
-        const button = make('button', 'unit-action-btn', pending.grade[unit] ? 'Grading...' : 'Grade This FRQ');
-        button.type = 'button';
-        button.disabled = !!pending.grade[unit];
-        button.addEventListener('click', () => gradeFrq(unit));
-        actions.appendChild(button);
-        block.append(make('div', 'frq-prompt', stripFrq(question.prompt || '')), answer, actions);
-        if (data.frqGrade) block.appendChild(renderGrade(data.frqGrade));
+        block.appendChild(make('div', 'frq-prompt', stripFrq(question.prompt || '')));
+
+        // Paper-submission toggle
+        const paperLabel = make('label', 'frq-paper-toggle');
+        const paperCheckbox = document.createElement('input');
+        paperCheckbox.type = 'checkbox';
+        paperCheckbox.checked = !!data.frqOnPaper;
+        paperCheckbox.addEventListener('change', () => {
+          data.frqOnPaper = paperCheckbox.checked;
+          if (data.frqOnPaper) data.frqGrade = null;
+          saveNow();
+          rerenderUnit(unit);
+        });
+        paperLabel.append(paperCheckbox, '📝 I\'ll work this out on paper');
+        block.appendChild(paperLabel);
+
+        if (data.frqOnPaper) {
+          // Paper mode: withhold AI judgment, remind student to hand in
+          const note = make('div', 'frq-paper-note');
+          note.append(
+            make('strong', '', 'Submit your written work to Mr. Colson for grading.'),
+            make('span', '', 'Your focus plan below is based on your MCQ results. No AI grade will be recorded for this unit.')
+          );
+          block.appendChild(note);
+        } else {
+          // Digital mode: textarea + Grade button
+          const answer = document.createElement('textarea');
+          answer.className = 'frq-answer';
+          answer.placeholder = 'Write your full response here. Use statistics vocabulary, evidence, and complete reasoning.';
+          answer.value = data.frqAnswer || '';
+          answer.addEventListener('input', () => { data.frqAnswer = answer.value; data.frqGrade = null; data.focusSynthesis = null; saveSoon(); });
+          const actions = make('div', 'unit-action-row');
+          const button = make('button', 'unit-action-btn', pending.grade[unit] ? 'Grading...' : 'Grade This FRQ');
+          button.type = 'button';
+          button.disabled = !!pending.grade[unit];
+          button.addEventListener('click', () => gradeFrq(unit));
+          actions.appendChild(button);
+          block.append(answer, actions);
+          if (data.frqGrade) block.appendChild(renderGrade(data.frqGrade));
+        }
+
         section.appendChild(block);
         return section;
       }
@@ -567,7 +624,9 @@
 
       async function runFocus(unit) {
         const data = getUnit(unit);
-        if (!Object.keys(data.mcqResults || {}).length && !((data.frqAnswer || '').trim() || data.frqGrade)) return showToast('Add at least one MCQ result or FRQ response before building a focus plan.');
+        const hasMcq = Object.keys(data.mcqResults || {}).length > 0;
+        const hasFrq = (data.frqAnswer || '').trim() || data.frqGrade;
+        if (!hasMcq && !hasFrq && !data.frqOnPaper) return showToast('Check at least one MCQ probe, or toggle "on paper" for the FRQ, before building a focus plan.');
         if (!window.RAILWAY_SERVER_URL) return showToast('The AI focus-synthesis server is not configured on this page.');
         pending.focus[unit] = true; rerenderUnit(unit);
         try {
@@ -576,7 +635,11 @@
             return { questionId:qid, lesson:lessonFromId(qid), correct:data.mcqResults[qid] === 'correct', selected:data.mcqAnswers[qid] || '', correctAnswer:q.answerKey || '', prompt:(q.prompt || '').slice(0, 400) };
           });
           const frameworkContext = typeof UNIT_FRAMEWORKS !== 'undefined' ? window.getFrameworkContextSG(unit, UNIT_FRAMEWORKS) : null;
-          const prompt = window.buildFocusSynthesisPromptSG({ unit, unitTitle:unitTitle(unit), unitTopic:unitTopic(unit), mcqResults, frqAnswer:data.frqAnswer || '', frqGrade:data.frqGrade || null, frameworkContext });
+          // When the student did the FRQ on paper, signal the AI so it doesn't expect a typed response
+          const frqAnswerForPrompt = data.frqOnPaper && !(data.frqAnswer || '').trim()
+            ? '(Student completed FRQ on paper — not yet submitted for AI grading. Base recommendations on MCQ signal and the unit framework.)'
+            : data.frqAnswer || '';
+          const prompt = window.buildFocusSynthesisPromptSG({ unit, unitTitle:unitTitle(unit), unitTopic:unitTopic(unit), mcqResults, frqAnswer:frqAnswerForPrompt, frqGrade:data.frqGrade || null, frameworkContext });
           const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Focus Synthesis', questionId:`SG-U${unit}-FOCUS`, lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer:'Focus synthesis request' }, prompt }) });
           if (!response.ok) throw new Error('Focus synthesis request failed');
           data.focusSynthesis = normalizeFocus(await response.json()) || { priority:'medium', overallSummary:'The AI returned a response, but it was not in the expected focus-synthesis format.', focusLessons:[], synthesisNote:'Try again after checking more MCQ probes or grading the FRQ.' };
