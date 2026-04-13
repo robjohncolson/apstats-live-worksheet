@@ -149,6 +149,7 @@
       const pending = { grade:{}, focus:{} };
       let saveTimer = null;
       let toastTimer = null;
+      const today = () => new Date().toISOString().slice(0, 10);
       let state = makeDefaultState();
       const ui = {
         name: document.getElementById('studentName'),
@@ -164,7 +165,6 @@
       };
 
       const make = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text != null) el.textContent = text; return el; };
-      const today = () => new Date().toISOString().slice(0, 10);
       const esc = (value='') => String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
       const trunc = (text='', max=150) => text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '...';
       const letter = value => String(value || '').trim().toUpperCase();
