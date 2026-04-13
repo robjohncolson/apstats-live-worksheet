@@ -19,12 +19,12 @@
     .student-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
     .student-info label{display:grid;gap:8px;font-weight:700;color:var(--navy)}
     input,textarea{width:100%;padding:10px 12px;border:1px solid #c5d0db;border-radius:10px;font:inherit;color:var(--ink);background:#fff}
-    textarea{min-height:180px;resize:vertical;line-height:1.6}
+    textarea{min-height:110px;resize:vertical;line-height:1.6}
     .instructions-box ul{margin:0;padding-left:20px;line-height:1.65;color:#334862}
     .action-bar,.unit-action-row,.probe-actions,.status-row,.focus-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
     .action-bar{margin:18px 0}
     .action-btn,.import-label,.unit-action-btn,.probe-check-btn,.mode-toggle button{border:0;border-radius:999px;font:inherit;font-weight:800;cursor:pointer;transition:transform .14s ease,background-color .14s ease}
-    .action-btn,.import-label,.unit-action-btn,.probe-check-btn{min-height:46px;padding:0 18px;color:#fff;background:var(--navy);box-shadow:0 8px 18px rgba(8,28,52,.08)}
+    .action-btn,.import-label,.unit-action-btn,.probe-check-btn{min-height:40px;padding:0 16px;color:#fff;background:var(--navy);box-shadow:0 6px 14px rgba(8,28,52,.08)}
     .action-btn.warning{background:var(--bad)}
     .action-btn.secondary,.unit-action-btn.secondary{background:#fff;color:var(--navy);border:1px solid rgba(13,39,70,.14)}
     .import-label{display:inline-flex;justify-content:center;align-items:center}
@@ -36,24 +36,24 @@
     .summary-detail{margin-top:6px;color:#334862;line-height:1.5}
     #units-container{display:grid;gap:22px}
     .unit-card{overflow:hidden;border-radius:24px}
-    .unit-header{display:grid;gap:12px;padding:22px 24px 20px;background:linear-gradient(135deg,rgba(8,28,52,.98),rgba(23,56,95,.95));color:#fff;cursor:pointer;user-select:none}
+    .unit-header{display:grid;gap:8px;padding:14px 20px 12px;background:linear-gradient(135deg,rgba(8,28,52,.98),rgba(23,56,95,.95));color:#fff;cursor:pointer;user-select:none}
     .unit-header-top,.probe-head,.focus-lesson-top,.frq-grade-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
     .unit-kicker{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.76)}
     .unit-title{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);letter-spacing:-.03em}
     .unit-meta{display:flex;flex-wrap:wrap;gap:10px;color:rgba(255,255,255,.86)}
-    .unit-chip,.status-badge,.probe-tag,.focus-priority-pill{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;font-size:.88rem;font-weight:700}
+    .unit-chip,.status-badge,.probe-tag,.focus-priority-pill{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:999px;font-size:.82rem;font-weight:700}
     .unit-chip{background:rgba(255,255,255,.12)}
-    .unit-body{display:grid;gap:18px;padding:22px 24px 26px}
+    .unit-body{display:grid;gap:12px;padding:14px 18px 18px}
     .mode-toggle{display:inline-flex;flex-wrap:wrap;gap:8px;padding:6px;border-radius:999px;background:rgba(8,28,52,.08)}
     .mode-toggle button{min-height:42px;padding:0 16px;background:transparent;color:var(--navy)}
     .mode-toggle button.active{background:var(--navy);color:#fff}
     .status-badge{background:#f2f5f9;color:#334862}.status-badge.ready{background:var(--okbg);color:var(--ok)}.status-badge.pending{background:var(--warnbg);color:var(--warn)}
-    .unit-section{display:grid;gap:14px;padding:18px;border-radius:20px;background:rgba(255,255,255,.82);border:1px solid rgba(13,39,70,.08)}
+    .unit-section{display:grid;gap:10px;padding:14px;border-radius:14px;background:rgba(255,255,255,.82);border:1px solid rgba(13,39,70,.08)}
     .unit-section h3{margin:0;color:var(--navy);font-size:1.14rem}
     .copy,.note,.probe-prompt,.probe-feedback,.frq-grade-copy,.focus-summary,.focus-reason,.focus-action,.focus-note,.empty{line-height:1.6;color:#334862}
     .note,.empty{padding:12px 14px;border-radius:14px;background:rgba(216,225,235,.5)}
     .probe-list,.probe-attachments,.focus-lessons,.frq-block,.focus-panel{display:grid;gap:14px}
-    .probe{display:grid;gap:14px;padding:18px;border-radius:16px;background:#fff;border:1px solid rgba(13,39,70,.1)}
+    .probe{display:grid;gap:10px;padding:14px;border-radius:12px;background:#fff;border:1px solid rgba(13,39,70,.1)}
     .probe.correct{background:linear-gradient(180deg,#fff,#f5fbf7);border-color:rgba(47,123,74,.35)}.probe.incorrect{background:linear-gradient(180deg,#fff,#fff7f7);border-color:rgba(171,62,62,.3)}
     .probe-title,.focus-lesson-title,.frq-grade-title{margin:0;color:var(--navy);font-weight:800}
     .probe-tag{background:rgba(8,28,52,.08);color:#334862}
@@ -70,8 +70,17 @@
     .attachment-table th,.attachment-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
     .attachment-table th{background:#f2f5f9;color:var(--navy)}
     .attachment-figure{margin:0;display:grid;gap:8px}.attachment-figure img{width:min(100%,560px);border-radius:14px;border:1px solid rgba(13,39,70,.1);background:#fff}
-    .resource-card{display:grid;gap:10px;padding:16px;border-radius:16px;background:linear-gradient(180deg,#f7faff,#eef4fb);border:1px solid rgba(33,74,120,.14)}
-    .resource-card-header{font-weight:800;color:var(--navy)}.resource-card ul{margin:0;padding-left:20px;line-height:1.7;color:#334862}
+    .resource-card{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:linear-gradient(180deg,#f7faff,#eef4fb);border:1px solid rgba(33,74,120,.14)}
+    .resource-card-header{font-weight:800;font-size:.88rem;color:var(--navy)}
+    .resource-link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+    .resource-link-btn{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:#fff;border:1px solid rgba(13,39,70,.12);color:var(--navy);text-decoration:none;font:inherit;font-weight:700;font-size:.84rem;cursor:pointer;transition:background .12s,border-color .12s;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+    .resource-link-btn:hover{background:#deeaf8;border-color:rgba(13,39,70,.28)}
+    .instructions-box{padding:0}
+    .instructions-box summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;font-weight:800;color:var(--navy);border-radius:var(--r)}
+    .instructions-box summary::-webkit-details-marker{display:none}
+    .instructions-box summary::after{content:'▾';font-size:1rem;opacity:.6;transition:transform .2s}
+    .instructions-box:not([open]) summary::after{transform:rotate(-90deg)}
+    .instructions-box ul{margin:0;padding:0 18px 16px 34px;line-height:1.65;color:#334862}
     .frq-prompt{padding:16px;border-radius:16px;border:1px solid rgba(13,39,70,.1);background:linear-gradient(180deg,rgba(247,250,253,.96),#fff);line-height:1.7;white-space:pre-wrap}
     .frq-grade{display:grid;gap:10px;padding:16px;border-radius:16px;border:1px solid rgba(13,39,70,.12)}
     .frq-grade-E{background:var(--okbg);border-color:rgba(47,123,74,.24)}.frq-grade-P{background:var(--warnbg);border-color:rgba(154,106,22,.24)}.frq-grade-I{background:var(--badbg);border-color:rgba(171,62,62,.22)}
@@ -119,16 +128,16 @@
       <label>Date<input id="studentDate" type="date"></label>
     </section>
 
-    <section class="panel instructions-box">
-      <strong>How this works:</strong>
+    <details class="panel instructions-box">
+      <summary>How does this work?</summary>
       <ul>
         <li>Each unit has its own card. Toggle <strong>MCQ</strong> (fast, instant grading), <strong>FRQ</strong> (deep, AI-graded), or <strong>Both</strong>.</li>
-        <li>MCQ: one multiple-choice probe per lesson, checked instantly.</li>
+        <li>MCQ: one multiple-choice probe per lesson — checked instantly.</li>
         <li>FRQ: one free-response question synthesizing the whole unit, AI-graded.</li>
-        <li>After you've answered what you can for a unit, click <strong>Show me what to focus on</strong> and the AI will use AP framework metadata to prioritize lessons and LO codes.</li>
-        <li>Use <strong>Export</strong> to download a printable HTML review sheet that also works as your save file. Use <strong>Import</strong> to restore it later.</li>
+        <li>After answering, click <strong>Show me what to focus on</strong> — the AI uses your answers + AP framework metadata to prioritize lessons and LO codes.</li>
+        <li>Use <strong>Export</strong> to download a printable review sheet that also works as your save file. <strong>Import</strong> restores it later.</li>
       </ul>
-    </section>
+    </details>
 
     <div class="action-bar export-bar">
       <button id="export-btn" class="action-btn" type="button">📤 Export</button>
@@ -567,23 +576,24 @@
       function renderResourceCard(unit, lesson) {
         const key = `${unit}-${lesson}`;
         const card = make('div', 'resource-card');
-        const list = make('ul');
+        const grid = make('div', 'resource-link-grid');
         const pushLink = (href, label) => {
-          const li = document.createElement('li');
           const a = document.createElement('a');
+          a.className = 'resource-link-btn';
           a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = label;
-          li.appendChild(a); list.appendChild(li);
+          grid.appendChild(a);
         };
         const video = videoUrl(unit, lesson);
-        if (video) pushLink(video, '📹 Watch the lesson video');
+        if (video) pushLink(video, '📹 Lesson video');
         const wsFile = WORKSHEET_FILES[key];
         if (wsFile) pushLink(`./${wsFile}`, '📝 Follow-along worksheet');
         const bkFile = BLOOKET_FILES[key];
-        if (bkFile) pushLink(`./${bkFile}`, '🃏 Blooket quiz CSV');
-        pushLink(`../curriculum_render/index.html?u=${unit}&l=${lesson}`, '❓ AP Stats quiz app (this unit & lesson)');
-        pushLink('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '⚡ Equation Trainer (select your unit inside)');
-        pushLink('https://lrsl-driller.vercel.app/platform/app.html', '🔧 Driller (select your unit inside)');
-        card.append(make('div', 'resource-card-header', `📚 Review resources for Unit ${unit}, Lesson ${lesson}`), list);
+        if (bkFile) pushLink(`./${bkFile}`, '🃏 Blooket CSV');
+        pushLink(`../curriculum_render/index.html?u=${unit}&l=${lesson}`, '❓ Quiz app');
+        pushLink('https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', '🖩 TI-84 Trainer');
+        pushLink('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '⚡ Equation Trainer');
+        pushLink('https://lrsl-driller.vercel.app/platform/app.html', '🔧 Driller');
+        card.append(make('div', 'resource-card-header', `📚 Unit ${unit} · Lesson ${lesson}`), grid);
         return card;
       }
 
