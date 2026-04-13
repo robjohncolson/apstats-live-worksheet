@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AP Statistics - Diagnostic Study Guide</title>
+  <style>
+    :root {
+      --navy: #003366;
+      --navy-2: #0f4a80;
+      --bg: #f9f9f9;
+      --line: #d6dde5;
+      --text: #1f2933;
+      --muted: #52606d;
+      --green: #1f8f52;
+      --green-bg: #e9f7ef;
+      --yellow: #a67c00;
+      --yellow-bg: #fff7d6;
+      --red: #b42318;
+      --red-bg: #fdeceb;
+      --shadow: 0 8px 24px rgba(0, 28, 61, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0 0 48px;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(0, 51, 102, 0.08), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, #f6f8fb 100%);
+    }
+
+    .header {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto 24px;
+      padding: 18px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      color: #fff;
+      border-radius: 0 0 20px 20px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .header-left,
+    .header-right {
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .header-center {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .page-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 8px 0;
+      font-size: clamp(2rem, 2.8vw, 2.8rem);
+      color: var(--navy);
+    }
+
+    h2, h3, h4 {
+      margin-top: 0;
+      color: var(--navy);
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      font-size: 1.05rem;
+      color: var(--muted);
+    }
+
+    .student-info,
+    .instructions-box,
+    .summary-panel,
+    .gate-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .student-info {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .student-info label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .student-info input,
+    textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #b7c4d0;
+      border-radius: 10px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .instructions-box,
+    .summary-panel {
+      padding: 20px 22px;
+      margin-bottom: 22px;
+    }
+
+    .instructions-box ol {
+      margin: 10px 0 0 18px;
+      color: var(--muted);
+    }
+
+    #gates-container {
+      display: grid;
+      gap: 22px;
+    }
+
+    .gate-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(232, 240, 247, 0.9), rgba(255, 255, 255, 0.95));
+    }
+
+    .gate-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .gate-unit-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .gate-topic,
+    .gate-status-copy,
+    .gate-question-meta,
+    .figure-caption,
+    .figure-note,
+    .probe-message,
+    .page-footer {
+      color: var(--muted);
+    }
+
+    .gate-status {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .gate-badge,
+    .summary-score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .gate-badge-pending { color: var(--navy); background: #edf2f7; border-color: #cfdae5; }
+    .gate-badge-E, .summary-card-E .summary-score { color: var(--green); background: var(--green-bg); border-color: rgba(31, 143, 82, 0.24); }
+    .gate-badge-P, .summary-card-P .summary-score { color: var(--yellow); background: var(--yellow-bg); border-color: rgba(166, 124, 0, 0.24); }
+    .gate-badge-I, .summary-card-I .summary-score { color: var(--red); background: var(--red-bg); border-color: rgba(180, 35, 24, 0.2); }
+
+    .gate-body { padding: 22px; }
+    .gate-prompt,
+    .probe-prompt { line-height: 1.6; white-space: pre-wrap; }
+
+    .question-table-wrap { overflow-x: auto; margin: 16px 0; }
+    .question-table {
+      width: 100%;
+      min-width: 340px;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .question-table th,
+    .question-table td {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    .question-table th {
+      background: #e8f0f7;
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .question-figure {
+      margin: 16px 0;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fafcfe;
+    }
+    .question-figure img {
+      display: block;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 1px solid #d8e0e8;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .answer-block { margin-top: 18px; }
+    .answer-block label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .feedback-panel {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+    .feedback-panel-E { background: var(--green-bg); border-color: rgba(31, 143, 82, 0.22); }
+    .feedback-panel-P { background: var(--yellow-bg); border-color: rgba(166, 124, 0, 0.2); }
+    .feedback-panel-I { background: var(--red-bg); border-color: rgba(180, 35, 24, 0.18); }
+    .feedback-panel ul { margin: 10px 0 0 18px; }
+
+    .drill-toggle,
+    .check-btn,
+    .grade-btn,
+    .secondary-btn {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+    }
+
+    .drill-toggle {
+      margin-top: 14px;
+      border: 1px solid #bfd0df;
+      background: #fff;
+      color: var(--navy);
+    }
+
+    .check-btn,
+    .grade-btn {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(0, 51, 102, 0.18);
+    }
+
+    .secondary-btn {
+      background: #edf2f7;
+      color: var(--navy);
+      border: 1px solid #d2dce6;
+    }
+
+    .drill-down {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid #d6e0ea;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(247, 250, 252, 0.95), rgba(255, 255, 255, 0.95));
+    }
+
+    .drill-down[hidden],
+    #summary-panel[hidden] { display: none; }
+
+    .drill-header,
+    .probe-header,
+    .probe-actions,
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .drill-header { justify-content: space-between; margin-bottom: 14px; }
+    .drill-header-copy,
+    .probe-title,
+    .resource-card-header { font-weight: 700; color: var(--navy); }
+
+    .unit-note {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #eef5fb;
+      border: 1px solid #d5e3ef;
+      color: var(--navy);
+      font-style: italic;
+    }
+
+    .probe-list { display: grid; gap: 16px; }
+    .probe {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid #d7e0e8;
+      background: #fff;
+    }
+    .probe.correct { border-color: rgba(31, 143, 82, 0.35); background: #f2fbf6; }
+    .probe.incorrect { border-color: rgba(180, 35, 24, 0.28); background: #fff8f7; }
+    .probe.correct .probe-status { color: var(--green); }
+    .probe.incorrect .probe-status { color: var(--red); }
+
+    .choice-list { display: grid; gap: 10px; margin-top: 12px; }
+    .choice-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #dfe6ed;
+      background: #fbfcfe;
+    }
+    .choice-text { flex: 1; line-height: 1.45; }
+
+    .resource-card {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid #f2c5bf;
+      background: linear-gradient(180deg, #fff3f1 0%, #fffaf9 100%);
+    }
+    .resource-card-header { color: var(--red); margin-bottom: 10px; }
+    .resource-card ul { margin: 0; padding-left: 18px; }
+    .resource-card a { color: var(--navy); }
+
+    .action-bar { justify-content: center; margin: 28px 0 24px; }
+    #grade-btn { min-width: 240px; }
+
+    #summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .summary-card {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .page-footer { margin-top: 28px; text-align: center; }
+
+    @media (max-width: 840px) {
+      .header { grid-template-columns: 1fr; text-align: center; }
+      .student-info { grid-template-columns: 1fr; }
+      .gate-header, .drill-header { flex-direction: column; align-items: flex-start; }
+      .gate-status { justify-content: flex-start; }
+    }
+
+    @media (max-width: 560px) {
+      .header,
+      .page-shell { width: min(100% - 20px, 1180px); }
+      .header { padding: 16px 18px; margin-bottom: 18px; }
+      .student-info,
+      .instructions-box,
+      .summary-panel,
+      .gate-body,
+      .gate-header { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">AP Statistics</div>
+    <div class="header-center">Diagnostic Study Guide</div>
+    <div class="header-right">Know Where to Focus</div>
+  </div>
+
+  <div class="page-shell">
+    <h1>Diagnostic Study Guide</h1>
+    <p class="subtitle">Nine questions, one per unit. We'll show you exactly where to review.</p>
+
+    <div class="student-info">
+      <label>Name: <input id="studentName"></label>
+      <label>Period: <input id="studentPeriod"></label>
+      <label>Date: <input id="studentDate" type="date"></label>
+    </div>
+
+    <div class="instructions-box">
+      <strong>How this works:</strong>
+      <ol>
+        <li>Answer each unit's gate question as fully as you can.</li>
+        <li>Click "Grade My Diagnostic" - all 9 go to the grader at once.</li>
+        <li>Units you nail (<strong>E</strong>) collapse - done.</li>
+        <li>Units you partially answered (<strong>P</strong>) offer optional review.</li>
+        <li>Units you miss (<strong>I</strong>) auto-expand lesson probes and remediation resources.</li>
+      </ol>
+    </div>
+
+    <div id="gates-container"></div>
+
+    <div class="action-bar">
+      <button id="grade-btn" class="grade-btn">🤖 Grade My Diagnostic</button>
+      <button id="clear-btn" class="secondary-btn" type="button">Clear All Answers</button>
+    </div>
+
+    <div id="summary-panel" class="summary-panel" hidden>
+      <h2>Your Diagnostic Summary</h2>
+      <div id="summary-grid"></div>
+    </div>
+
+    <p class="page-footer">Start with the red units after grading. Those are your highest-priority review targets.</p>
+  </div>
+
+  <script src="../railway_config.js"></script>
+  <script src="../railway_client.js"></script>
+  <script src="../curriculum_render/data/curriculum.js"></script>
+  <script src="ai-grading-prompts-study-guide.js"></script>
+  <script>
+    (function () {
+      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v1';
+      const SAVE_DELAY = 300;
+
+      const GATE_ID_LITERALS = {
+        1: 'U1-PC-FRQ-Q02',
+        2: 'U2-PC-FRQ-Q02',
+        3: 'U3-PC-FRQ-Q01',
+        4: 'U4-PC-FRQ-Q02',
+        5: 'U5-PC-FRQ-Q02',
+        6: 'U6-PC-FRQ-Q01',
+        7: 'U7-PC-FRQ-Q02',
+        8: 'U8-PC-FRQ-Q01',
+        9: 'U9-PC-FRQ-Q01',
+      };
+
+      const state = {
+        savedAt: '',
+        studentName: '',
+        studentPeriod: '',
+        studentDate: '',
+        answers: {},
+        grades: {},
+        probeAnswers: {},
+        probeResults: {},
+        drillsOpened: [],
+      };
+
+      const gateRefs = new Map();
+      const questionById = new Map();
+      let saveTimer = null;
+
+      document.addEventListener('DOMContentLoaded', init);
+
+      function init() {
+        indexCurriculum();
+        restoreState();
+        renderGates();
+        bindTopLevelControls();
+        renderSummary();
+      }
+
+      function indexCurriculum() {
+        if (!Array.isArray(EMBEDDED_CURRICULUM)) return;
+        EMBEDDED_CURRICULUM.forEach(function (question) {
+          questionById.set(question.id, question);
+        });
+      }
+
+      function bindTopLevelControls() {
+        const studentName = document.getElementById('studentName');
+        const studentPeriod = document.getElementById('studentPeriod');
+        const studentDate = document.getElementById('studentDate');
+        const gradeButton = document.getElementById('grade-btn');
+        const clearButton = document.getElementById('clear-btn');
+
+        studentName.value = state.studentName || '';
+        studentPeriod.value = state.studentPeriod || '';
+        studentDate.value = state.studentDate || '';
+
+        [studentName, studentPeriod, studentDate].forEach(function (input) {
+          input.addEventListener('input', function () {
+            state.studentName = studentName.value.trim();
+            state.studentPeriod = studentPeriod.value.trim();
+            state.studentDate = studentDate.value;
+            scheduleSave();
+          });
+        });
+
+        gradeButton.addEventListener('click', handleGradeAll);
+        clearButton.addEventListener('click', handleClearAll);
+      }
+
+      function renderGates() {
+        const container = document.getElementById('gates-container');
+        container.innerHTML = '';
+        gateRefs.clear();
+
+        for (let unitNumber = 1; unitNumber <= 9; unitNumber += 1) {
+          container.appendChild(buildGateCard(unitNumber));
+          applySavedGrade(unitNumber);
+        }
+      }
+
+      function buildGateCard(unitNumber) {
+        const questionId = getGateId(unitNumber);
+        const question = questionById.get(questionId);
+        const card = document.createElement('section');
+        card.className = 'gate-card';
+        card.dataset.unit = String(unitNumber);
+
+        const header = document.createElement('div');
+        header.className = 'gate-header';
+
+        const titleBlock = document.createElement('div');
+        titleBlock.className = 'gate-title-block';
+        titleBlock.innerHTML =
+          '<div class="gate-unit-label">' + escapeHtml(getUnitTitle(unitNumber)) + '</div>' +
+          '<div class="gate-topic">' + escapeHtml(getUnitTopic(unitNumber)) + '</div>';
+
+        const status = document.createElement('div');
+        status.className = 'gate-status';
+
+        const badge = document.createElement('span');
+        badge.className = 'gate-badge gate-badge-pending';
+        badge.textContent = 'Not graded';
+
+        const statusCopy = document.createElement('div');
+        statusCopy.className = 'gate-status-copy';
+        statusCopy.textContent = 'Answer the unit gate, then grade the whole diagnostic.';
+
+        status.appendChild(badge);
+        status.appendChild(statusCopy);
+        header.appendChild(titleBlock);
+        header.appendChild(status);
+
+        const body = document.createElement('div');
+        body.className = 'gate-body';
+
+        if (!question) {
+          body.innerHTML = '<p class="gate-prompt">Gate question not found for ' + escapeHtml(questionId) + '.</p>';
+          card.appendChild(header);
+          card.appendChild(body);
+          return card;
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'gate-question-meta';
+        meta.textContent = 'Gate question ID: ' + questionId;
+
+        const prompt = document.createElement('div');
+        prompt.className = 'gate-prompt';
+        prompt.textContent = stripPrompt(question.prompt || '');
+
+        const answerBlock = document.createElement('div');
+        answerBlock.className = 'answer-block';
+
+        const answerLabel = document.createElement('label');
+        answerLabel.htmlFor = answerKey(unitNumber);
+        answerLabel.textContent = 'Your response';
+
+        const textarea = document.createElement('textarea');
+        textarea.id = answerKey(unitNumber);
+        textarea.placeholder = 'Write your full response here. Show your reasoning and statistical justification.';
+        textarea.value = state.answers[answerKey(unitNumber)] || '';
+        textarea.addEventListener('input', function () {
+          state.answers[answerKey(unitNumber)] = textarea.value;
+          scheduleSave();
+        });
+
+        const feedback = document.createElement('div');
+        feedback.hidden = true;
+
+        const drillToggle = document.createElement('button');
+        drillToggle.type = 'button';
+        drillToggle.className = 'drill-toggle';
+        drillToggle.hidden = true;
+        drillToggle.addEventListener('click', function () {
+          toggleDrill(unitNumber);
+        });
+
+        const drillDown = document.createElement('div');
+        drillDown.className = 'drill-down';
+        drillDown.hidden = true;
+
+        body.appendChild(meta);
+        body.appendChild(prompt);
+        appendTable(body, question.attachments && question.attachments.table);
+        appendImage(body, question);
+        answerBlock.appendChild(answerLabel);
+        answerBlock.appendChild(textarea);
+        body.appendChild(answerBlock);
+        body.appendChild(feedback);
+        body.appendChild(drillToggle);
+        body.appendChild(drillDown);
+
+        card.appendChild(header);
+        card.appendChild(body);
+
+        gateRefs.set(unitNumber, {
+          badge: badge,
+          statusCopy: statusCopy,
+          textarea: textarea,
+          feedback: feedback,
+          drillToggle: drillToggle,
+          drillDown: drillDown,
+          questionId: questionId,
+        });
+
+        return card;
+      }
+
+      function getGateId(unitNumber) {
+        if (window.getGateIdForUnitSG) {
+          return window.getGateIdForUnitSG(unitNumber);
+        }
+        return GATE_ID_LITERALS[unitNumber];
+      }
+
+      function getUnitTitle(unitNumber) {
+        return window.UNIT_TITLES_SG && window.UNIT_TITLES_SG[unitNumber]
+          ? window.UNIT_TITLES_SG[unitNumber]
+          : 'Unit ' + unitNumber;
+      }
+
+      function getUnitTopic(unitNumber) {
+        return window.UNIT_TOPICS_SG && window.UNIT_TOPICS_SG[unitNumber]
+          ? window.UNIT_TOPICS_SG[unitNumber]
+          : 'Diagnostic focus area';
+      }
+
+      function answerKey(unitNumber) {
+        return 'sg-u' + unitNumber + '-answer';
+      }
+
+      function stripPrompt(promptText) {
+        return window.stripFrqBoilerplateSG ? window.stripFrqBoilerplateSG(promptText) : promptText;
+      }
+
+      function appendTable(parent, tableData) {
+        if (!Array.isArray(tableData) || tableData.length === 0) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'question-table-wrap';
+
+        const table = document.createElement('table');
+        table.className = 'question-table';
+
+        tableData.forEach(function (row, rowIndex) {
+          const tr = document.createElement('tr');
+          (row || []).forEach(function (cellValue) {
+            const cell = document.createElement(rowIndex === 0 ? 'th' : 'td');
+            cell.textContent = cellValue == null ? '' : String(cellValue);
+            tr.appendChild(cell);
+          });
+          table.appendChild(tr);
+        });
+
+        wrap.appendChild(table);
+        parent.appendChild(wrap);
+      }
+
+      function appendImage(parent, question) {
+        if (!question || !question.attachments) return;
+        const imagePath = question.attachments.image;
+        const captionText = question.attachments.imageCaption;
+        const requiresGraph = Boolean(question.requiresGraph);
+
+        if (!imagePath && !requiresGraph) return;
+
+        const figure = document.createElement('div');
+        figure.className = 'question-figure';
+
+        if (imagePath) {
+          const image = document.createElement('img');
+          image.src = '../curriculum_render/' + imagePath;
+          image.alt = captionText || 'Question figure';
+          figure.appendChild(image);
+        }
+
+        if (captionText) {
+          const caption = document.createElement('div');
+          caption.className = 'figure-caption';
+          caption.textContent = captionText;
+          figure.appendChild(caption);
+        }
+
+        if (requiresGraph) {
+          const note = document.createElement('p');
+          note.className = 'figure-note';
+          note.textContent = '*This question references a figure. If you cannot see it, ask your teacher or skip to the drill-down.';
+          figure.appendChild(note);
+        }
+
+        parent.appendChild(figure);
+      }
+
+      async function handleGradeAll() {
+        const button = document.getElementById('grade-btn');
+        button.disabled = true;
+        button.textContent = 'Grading all 9 units...';
+
+        try {
+          for (let unitNumber = 1; unitNumber <= 9; unitNumber += 1) {
+            await gradeUnit(unitNumber);
+          }
+          renderSummary();
+          document.getElementById('summary-panel').hidden = false;
+          persistState();
+        } catch (error) {
+          window.alert('Something went wrong while grading.\n\n' + error.message);
+        } finally {
+          button.disabled = false;
+          button.textContent = '🤖 Grade My Diagnostic';
+        }
+      }
+
+      async function gradeUnit(unitNumber) {
+        const gate = gateRefs.get(unitNumber);
+        if (!gate) return;
+
+        const answer = (gate.textarea.value || '').trim();
+        state.answers[answerKey(unitNumber)] = gate.textarea.value;
+
+        gate.badge.className = 'gate-badge gate-badge-pending';
+        gate.badge.textContent = '...';
+        gate.statusCopy.textContent = 'Sending to the grader...';
+
+        const result = await gradeGate(unitNumber, gate.questionId, answer);
+        state.grades[answerKey(unitNumber)] = normalizeGrade(result);
+        applySavedGrade(unitNumber);
+        await submitGateAnswer(unitNumber, answer, result);
+        persistState();
+      }
+
+      function applySavedGrade(unitNumber) {
+        const gate = gateRefs.get(unitNumber);
+        if (!gate) return;
+
+        const grade = state.grades[answerKey(unitNumber)];
+        if (!grade) {
+          gate.badge.className = 'gate-badge gate-badge-pending';
+          gate.badge.textContent = 'Not graded';
+          gate.statusCopy.textContent = 'Answer the unit gate, then grade the whole diagnostic.';
+          gate.feedback.hidden = true;
+          gate.drillToggle.hidden = true;
+          gate.drillDown.hidden = true;
+          gate.drillDown.innerHTML = '';
+          return;
+        }
+
+        gate.badge.className = 'gate-badge gate-badge-' + grade.score;
+        gate.badge.textContent = grade.score;
+        gate.statusCopy.textContent = gradeStatusCopy(grade);
+
+        renderFeedback(unitNumber, grade);
+        renderDrillToggle(unitNumber, grade);
+
+        const shouldOpen = grade.score === 'I' || state.drillsOpened.includes(unitNumber);
+        setDrillOpen(unitNumber, shouldOpen);
+      }
+
+      function renderFeedback(unitNumber, grade) {
+        const panel = gateRefs.get(unitNumber).feedback;
+        panel.className = 'feedback-panel feedback-panel-' + grade.score;
+        panel.hidden = false;
+
+        const matched = Array.isArray(grade.matched) ? grade.matched : [];
+        const missing = Array.isArray(grade.missing) ? grade.missing : [];
+
+        panel.innerHTML =
+          '<strong>Feedback</strong>' +
+          '<p>' + escapeHtml(grade.feedback || 'No feedback returned.') + '</p>' +
+          (matched.length ? '<strong>You showed</strong>' + bulletList(matched) : '') +
+          (missing.length ? '<strong>Still missing</strong>' + bulletList(missing) : '');
+      }
+
+      function renderDrillToggle(unitNumber, grade) {
+        const toggle = gateRefs.get(unitNumber).drillToggle;
+        toggle.hidden = false;
+
+        if (grade.score === 'E') {
+          toggle.textContent = '✓ Unit passed - click to expand for review';
+        } else if (grade.score === 'P') {
+          toggle.textContent = 'Review these if you want to strengthen this unit';
+        } else {
+          toggle.textContent = '⚠ Focus here';
+        }
+      }
+
+      function toggleDrill(unitNumber) {
+        setDrillOpen(unitNumber, !state.drillsOpened.includes(unitNumber));
+        persistState();
+      }
+
+      function setDrillOpen(unitNumber, shouldOpen) {
+        const gate = gateRefs.get(unitNumber);
+        if (!gate) return;
+
+        state.drillsOpened = state.drillsOpened.filter(function (value) {
+          return value !== unitNumber;
+        });
+
+        if (!shouldOpen) {
+          gate.drillDown.hidden = true;
+          return;
+        }
+
+        state.drillsOpened.push(unitNumber);
+        renderDrill(unitNumber);
+        gate.drillDown.hidden = false;
+      }
+
+      function renderDrill(unitNumber) {
+        const gate = gateRefs.get(unitNumber);
+        const grade = state.grades[answerKey(unitNumber)];
+        const probes = buildProbesForUnit(unitNumber);
+        const drill = gate.drillDown;
+
+        drill.innerHTML = '';
+
+        const header = document.createElement('div');
+        header.className = 'drill-header';
+        header.innerHTML =
+          '<div class="drill-header-copy">' + escapeHtml(drillHeaderCopy(grade && grade.score)) + '</div>' +
+          '<div class="probe-message">These lesson checks help you pinpoint what to review next.</div>';
+        drill.appendChild(header);
+
+        if (unitNumber === 1 || unitNumber === 2) {
+          const note = document.createElement('p');
+          note.className = 'unit-note';
+          note.textContent = 'Follow-along worksheets aren\'t available for this unit yet - use the curriculum quiz app.';
+          drill.appendChild(note);
+        }
+
+        const probeList = document.createElement('div');
+        probeList.className = 'probe-list';
+
+        if (probes.length === 0) {
+          probeList.innerHTML = '<p class="probe-message">No lesson probes were found for this unit.</p>';
+        } else {
+          probes.forEach(function (probe, index) {
+            probeList.appendChild(renderProbe(unitNumber, probe, index + 1));
+          });
+        }
+
+        drill.appendChild(probeList);
+      }
+
+      function renderProbe(unitNumber, probe, ordinal) {
+        const question = probe.question;
+        const probeId = question.id;
+        const savedAnswer = state.probeAnswers[probeId] || '';
+        const savedResult = state.probeResults[probeId] || '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'probe';
+        if (savedResult === 'correct') wrapper.classList.add('correct');
+        if (savedResult === 'incorrect') wrapper.classList.add('incorrect');
+
+        const header = document.createElement('div');
+        header.className = 'probe-header';
+        header.innerHTML =
+          '<div class="probe-title">Lesson ' + probe.lesson + ' probe ' + ordinal + '</div>' +
+          '<div class="probe-status">' + escapeHtml(probeStatusText(savedResult)) + '</div>';
+        wrapper.appendChild(header);
+
+        const prompt = document.createElement('div');
+        prompt.className = 'probe-prompt';
+        prompt.textContent = question.prompt || '';
+        wrapper.appendChild(prompt);
+
+        appendTable(wrapper, question.attachments && question.attachments.table);
+
+        const choiceList = document.createElement('div');
+        choiceList.className = 'choice-list';
+        const choices = Array.isArray(question.attachments && question.attachments.choices)
+          ? question.attachments.choices
+          : [];
+
+        choices.forEach(function (choice) {
+          const label = document.createElement('label');
+          label.className = 'choice-item';
+
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = 'probe-' + probeId;
+          radio.value = choice.key;
+          radio.checked = savedAnswer === choice.key;
+          radio.addEventListener('change', function () {
+            state.probeAnswers[probeId] = radio.value;
+            scheduleSave();
+          });
+
+          const text = document.createElement('div');
+          text.className = 'choice-text';
+          text.textContent = choice.key + '. ' + choice.value;
+
+          label.appendChild(radio);
+          label.appendChild(text);
+          choiceList.appendChild(label);
+        });
+        wrapper.appendChild(choiceList);
+
+        const actions = document.createElement('div');
+        actions.className = 'probe-actions';
+
+        const checkButton = document.createElement('button');
+        checkButton.type = 'button';
+        checkButton.className = 'check-btn';
+        checkButton.textContent = 'Check';
+
+        const message = document.createElement('div');
+        message.className = 'probe-message';
+        message.textContent = probeMessage(savedResult);
+
+        checkButton.addEventListener('click', function () {
+          handleProbeCheck(unitNumber, probe.lesson, question, wrapper);
+        });
+
+        actions.appendChild(checkButton);
+        actions.appendChild(message);
+        wrapper.appendChild(actions);
+
+        const resourceHost = document.createElement('div');
+        resourceHost.className = 'probe-resource-host';
+        wrapper.appendChild(resourceHost);
+
+        if (savedResult === 'incorrect') {
+          resourceHost.appendChild(buildResourceCard(unitNumber, probe.lesson));
+        }
+        if (savedResult === 'correct') {
+          choiceList.style.display = 'none';
+        }
+
+        return wrapper;
+      }
+
+      async function handleProbeCheck(unitNumber, lessonNumber, question, wrapper) {
+        const selected = wrapper.querySelector('input[type="radio"]:checked');
+        if (!selected) {
+          window.alert('Choose an answer before checking the probe.');
+          return;
+        }
+
+        const isCorrect = selected.value === question.answerKey;
+        const probeId = question.id;
+        const status = wrapper.querySelector('.probe-status');
+        const message = wrapper.querySelector('.probe-message');
+        const resourceHost = wrapper.querySelector('.probe-resource-host');
+        const choiceList = wrapper.querySelector('.choice-list');
+
+        state.probeAnswers[probeId] = selected.value;
+        state.probeResults[probeId] = isCorrect ? 'correct' : 'incorrect';
+
+        wrapper.classList.remove('correct', 'incorrect');
+        resourceHost.innerHTML = '';
+
+        if (isCorrect) {
+          wrapper.classList.add('correct');
+          status.textContent = '✓ Correct';
+          message.textContent = 'Nice work. This lesson checkpoint is clear.';
+          choiceList.style.display = 'none';
+        } else {
+          wrapper.classList.add('incorrect');
+          status.textContent = 'Needs review';
+          message.textContent = 'Review the lesson resources below, then come back to this concept.';
+          choiceList.style.display = '';
+          resourceHost.appendChild(buildResourceCard(unitNumber, lessonNumber));
+        }
+
+        persistState();
+        await submitProbeAnswer(unitNumber, lessonNumber, question, selected.value, isCorrect);
+      }
+
+      function buildResourceCard(unitNumber, lessonNumber) {
+        const card = document.createElement('div');
+        card.className = 'resource-card';
+        card.innerHTML =
+          '<div class="resource-card-header">📚 Review resources for Unit ' + unitNumber + ', Lesson ' + lessonNumber + '</div>' +
+          '<ul>' +
+          '<li><a href="./u' + unitNumber + '_lesson' + lessonNumber + '_live.html" target="_blank">📝 Follow-along worksheet</a></li>' +
+          '<li><a href="./u' + unitNumber + '_l' + lessonNumber + '_blooket.csv" target="_blank">🃏 Blooket quiz CSV</a></li>' +
+          '<li><a href="../curriculum_render/index.html" target="_blank">❓ Curriculum quiz app (filter by unit ' + unitNumber + ', lesson ' + lessonNumber + ')</a></li>' +
+          '</ul>';
+        return card;
+      }
+
+      function renderSummary() {
+        const summaryPanel = document.getElementById('summary-panel');
+        const summaryGrid = document.getElementById('summary-grid');
+        summaryGrid.innerHTML = '';
+
+        let count = 0;
+        for (let unitNumber = 1; unitNumber <= 9; unitNumber += 1) {
+          const grade = state.grades[answerKey(unitNumber)];
+          if (!grade) continue;
+          count += 1;
+
+          const card = document.createElement('div');
+          card.className = 'summary-card summary-card-' + grade.score;
+          card.innerHTML =
+            '<div class="summary-score">' + escapeHtml(grade.score) + '</div>' +
+            '<h3>' + escapeHtml(getUnitTitle(unitNumber)) + '</h3>' +
+            '<p>' + escapeHtml(summaryCopy(grade)) + '</p>';
+          summaryGrid.appendChild(card);
+        }
+
+        summaryPanel.hidden = count === 0;
+      }
+
+      function handleClearAll() {
+        const confirmed = window.confirm('Clear every gate answer, grade, and probe result?');
+        if (!confirmed) return;
+
+        state.savedAt = '';
+        state.studentName = '';
+        state.studentPeriod = '';
+        state.studentDate = '';
+        state.answers = {};
+        state.grades = {};
+        state.probeAnswers = {};
+        state.probeResults = {};
+        state.drillsOpened = [];
+
+        localStorage.removeItem(STORAGE_KEY);
+        document.getElementById('studentName').value = '';
+        document.getElementById('studentPeriod').value = '';
+        document.getElementById('studentDate').value = '';
+
+        renderGates();
+        renderSummary();
+      }
+
+      function restoreState() {
+        let parsed = null;
+        try {
+          parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        } catch (error) {
+          parsed = null;
+        }
+        if (!parsed || typeof parsed !== 'object') return;
+
+        state.savedAt = parsed.savedAt || '';
+        state.studentName = parsed.studentName || '';
+        state.studentPeriod = parsed.studentPeriod || '';
+        state.studentDate = parsed.studentDate || '';
+        state.answers = plainObject(parsed.answers);
+        state.grades = gradeObject(parsed.grades);
+        state.probeAnswers = plainObject(parsed.probeAnswers);
+        state.probeResults = plainObject(parsed.probeResults);
+        state.drillsOpened = Array.isArray(parsed.drillsOpened)
+          ? parsed.drillsOpened.filter(function (value) { return Number.isInteger(value); })
+          : [];
+      }
+
+      function scheduleSave() {
+        window.clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(function () {
+          persistState();
+        }, SAVE_DELAY);
+      }
+
+      function persistState() {
+        state.savedAt = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          savedAt: state.savedAt,
+          studentName: state.studentName,
+          studentPeriod: state.studentPeriod,
+          studentDate: state.studentDate,
+          answers: state.answers,
+          grades: state.grades,
+          probeAnswers: state.probeAnswers,
+          probeResults: state.probeResults,
+          drillsOpened: state.drillsOpened.slice().sort(function (a, b) { return a - b; }),
+        }));
+      }
+
+      function findGateQuestionText(questionId) {
+        const question = questionById.get(questionId);
+        return question ? stripPrompt(question.prompt || '') : '';
+      }
+
+      async function gradeGate(unitNumber, questionId, answer) {
+        const fullPrompt = findGateQuestionText(questionId);
+        const prompt = window.buildReflectionPromptSG(unitNumber, fullPrompt, answer);
+
+        const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scenario: {
+              topic: 'AP Statistics Diagnostic Study Guide',
+              questionId: questionId,
+              lessonContext: window.LESSON_CONTEXT_SG,
+            },
+            answers: { answer: answer },
+            prompt: prompt,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Grading request failed');
+        const result = await response.json();
+
+        if (result.score === 'P' && result.missing && result.missing.length === 0) {
+          result.score = 'E';
+          result.feedback = 'Nice work - you covered the key ideas.';
+        }
+        return result;
+      }
+
+      async function submitGateAnswer(unitNumber, answer, result) {
+        if (!window.railwayClient || !window.railwayClient.submitAnswer) return;
+        try {
+          await window.railwayClient.submitAnswer(
+            `SG-U${unitNumber}-GATE`,
+            answer,
+            { score: result.score }
+          );
+        } catch (err) {
+          console.warn('Railway submission failed (non-fatal):', err);
+        }
+      }
+
+      async function submitProbeAnswer(unitNumber, lessonNumber, question, selectedValue, isCorrect) {
+        if (!window.railwayClient || !window.railwayClient.submitAnswer) return;
+        try {
+          await window.railwayClient.submitAnswer(
+            `SG-${question.id}`,
+            selectedValue,
+            { result: isCorrect ? 'correct' : 'incorrect', unit: unitNumber, lesson: lessonNumber }
+          );
+        } catch (err) {
+          console.warn('Railway submission failed (non-fatal):', err);
+        }
+      }
+
+      function buildProbesForUnit(unitNumber) {
+        const unitPrefix = 'U' + unitNumber + '-L';
+        const mcByLesson = {};
+        for (const q of EMBEDDED_CURRICULUM) {
+          if (q.type !== 'multiple-choice') continue;
+          if (!q.id.startsWith(unitPrefix)) continue;
+          const m = q.id.match(/^U\d+-L(\d+)-Q\d+/);
+          if (!m) continue;
+          const lesson = parseInt(m[1], 10);
+          (mcByLesson[lesson] ||= []).push(q);
+        }
+        const lessons = Object.keys(mcByLesson).map(Number).sort(function (a, b) {
+          return a - b;
+        });
+        const probes = [];
+        for (const lesson of lessons.slice(0, 6)) {
+          const first = mcByLesson[lesson].slice().sort(function (a, b) {
+            return a.id.localeCompare(b.id);
+          })[0];
+          probes.push({ lesson: lesson, question: first });
+        }
+        return probes;
+      }
+
+      function normalizeGrade(grade) {
+        const value = grade && typeof grade === 'object' ? grade : {};
+        return {
+          score: ['E', 'P', 'I'].includes(value.score) ? value.score : 'I',
+          feedback: value.feedback || '',
+          matched: Array.isArray(value.matched) ? value.matched.slice() : [],
+          missing: Array.isArray(value.missing) ? value.missing.slice() : [],
+        };
+      }
+
+      function plainObject(input) {
+        if (!input || typeof input !== 'object') return {};
+        const output = {};
+        Object.keys(input).forEach(function (key) {
+          output[key] = input[key];
+        });
+        return output;
+      }
+
+      function gradeObject(input) {
+        if (!input || typeof input !== 'object') return {};
+        const output = {};
+        Object.keys(input).forEach(function (key) {
+          output[key] = normalizeGrade(input[key]);
+        });
+        return output;
+      }
+
+      function drillHeaderCopy(score) {
+        if (score === 'E') return '✓ Unit passed - click to expand for review';
+        if (score === 'P') return 'Review these if you want to strengthen this unit';
+        return '⚠ Focus here';
+      }
+
+      function gradeStatusCopy(grade) {
+        if (grade.score === 'E') return 'Strong - you nailed the unit-level synthesis.';
+        if (grade.score === 'P') return grade.feedback || 'Use the optional review to strengthen this unit.';
+        return grade.feedback || 'Focus here first. The drill-down is open below.';
+      }
+
+      function summaryCopy(grade) {
+        if (grade.score === 'E') return 'You can treat this unit as low priority unless you want extra review.';
+        if (grade.score === 'P') return 'Some core ideas are in place. Use the lesson probes if you want to push this unit higher.';
+        return 'This unit should be one of your next review targets.';
+      }
+
+      function probeStatusText(result) {
+        if (result === 'correct') return '✓ Correct';
+        if (result === 'incorrect') return 'Needs review';
+        return 'Unchecked';
+      }
+
+      function probeMessage(result) {
+        if (result === 'correct') return 'You already cleared this lesson checkpoint.';
+        if (result === 'incorrect') return 'This lesson needs review resources.';
+        return 'Pick one answer, then check it.';
+      }
+
+      function bulletList(items) {
+        return '<ul>' + items.map(function (item) {
+          return '<li>' + escapeHtml(item) + '</li>';
+        }).join('') + '</ul>';
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+    })();
+  </script>
+</body>
+</html>
