@@ -144,6 +144,9 @@
   <div id="toast" class="toast" aria-live="polite"></div>
   <script src="../railway_config.js"></script>
   <script src="../railway_client.js"></script>
+  <!-- MathJax config must appear before the MathJax script -->
+  <script>window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [['$$','$$'],['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] } };</script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <script src="../curriculum_render/data/curriculum.js"></script>
   <script src="../curriculum_render/data/units.js"></script>
   <script src="../curriculum_render/data/frameworks.js"></script>
@@ -177,6 +180,9 @@
 
       const make = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text != null) el.textContent = text; return el; };
       const esc = (value='') => String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+      // Trigger MathJax on a specific element (or whole page if el is omitted).
+      // Safe to call at any time — no-op if MathJax hasn't loaded yet.
+      const typeset = el => { if (window.MathJax?.typesetPromise) MathJax.typesetPromise(el ? [el] : undefined).catch(() => {}); };
       const trunc = (text='', max=150) => text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '...';
       const letter = value => String(value || '').trim().toUpperCase();
       const normalizeMode = mode => ['mcq','frq','both'].includes(mode) ? mode : 'both';
@@ -381,6 +387,7 @@
       function renderUnits() {
         ui.units.textContent = '';
         for (let unit = 1; unit <= UNIT_COUNT; unit += 1) ui.units.appendChild(renderUnit(unit));
+        typeset(ui.units);
       }
 
       function rerenderUnit(unit) {
@@ -388,6 +395,7 @@
         const cards = Array.from(ui.units.children);
         const next = renderUnit(unit);
         if (cards[unit - 1]) ui.units.replaceChild(next, cards[unit - 1]);
+        typeset(next);
       }
 
       function renderUnit(unit) {
