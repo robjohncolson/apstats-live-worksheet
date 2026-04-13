@@ -678,7 +678,9 @@
           const prompt = window.buildFocusSynthesisPromptSG({ unit, unitTitle:unitTitle(unit), unitTopic:unitTopic(unit), mcqResults, frqAnswer:frqAnswerForPrompt, frqGrade:data.frqGrade || null, frameworkContext });
           const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Focus Synthesis', questionId:`SG-U${unit}-FOCUS`, lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer:'Focus synthesis request' }, prompt }) });
           if (!response.ok) throw new Error('Focus synthesis request failed');
-          data.focusSynthesis = normalizeFocus(await response.json()) || { priority:'medium', overallSummary:'The AI returned a response, but it was not in the expected focus-synthesis format.', focusLessons:[], synthesisNote:'Try again after checking more MCQ probes or grading the FRQ.' };
+          const rawFocus = await response.json();
+          console.log('[StudyGuide] focus synthesis raw response:', rawFocus);
+          data.focusSynthesis = normalizeFocus(rawFocus) || { priority:'medium', overallSummary:'The AI returned a response, but it was not in the expected focus-synthesis format. Check the browser console for the raw response.', focusLessons:[], synthesisNote:'Try again after checking more MCQ probes or grading the FRQ.' };
           saveNow();
           showToast(`Unit ${unit} focus plan updated.`);
         } catch (error) {
