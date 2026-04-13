@@ -204,6 +204,27 @@ python "C:/Users/rober/Downloads/Projects/Agent/runner/cross-agent.py" \
 **Flags**: `--dry-run` (preview, no tokens), `--read-only`, `--owned-paths`
 When the user asks to delegate work to Codex, use the runner — don't ask the user to copy-paste.
 
+## TI-84 ROM Transpilation — Continuation Workflow
+
+Default operating mode when the user says "go for it" / "keep going" on `CONTINUATION_PROMPT_CODEX.md` work:
+
+1. **Pick up state**: Read `CONTINUATION_PROMPT_CODEX.md` in chunks (it's ~3200+ lines — use `offset`/`limit` + `Grep` for `^### Phase`). The latest phase + "Phase N+ Priorities for Next Session" section at the bottom has the active list.
+2. **Default to parallel Codex dispatch**: Use the cross-agent.py runner for any file-writing, probe-running, or disassembly work. CC focuses on investigation, analysis, and orchestration. Give Codex self-contained prompts with exact addresses, reference commits, file paths, and calling-convention details — it has NO conversation context. **Default posture: spawn 3-4 Codex agents in parallel for independent priorities** — single-agent dispatch is the exception, not the norm. Only serialize when a task depends on another task's output.
+3. **At every pause** (after a phase completes, before picking the next target): run `/context` AND **update `CONTINUATION_PROMPT_CODEX.md`** with what just ran (artifacts, findings, next-phase priorities). Keep the "last updated" header current. Both steps are non-negotiable — the file is the only handoff mechanism.
+4. **Continue or stop based on context**: If `/context` shows **< 70%** of 1M, proceed to the next priority without asking — assume reasonable choices are approved. If **≥ 70%**, make sure `CONTINUATION_PROMPT_CODEX.md` is fully up-to-date, then stop and hand off.
+5. **User will clear context** and hand the updated file to a fresh session. Self-contained continuation is the goal.
+
+**Do NOT** ask for approval between reasonable next-phase targets. The user explicitly delegated that judgment. Only stop for: (a) context ≥ 70%, (b) genuinely ambiguous fork in the road, (c) destructive operation not previously authorized.
+
+**Cross-agent dispatch invocation** (use this exact command pattern):
+```bash
+python "C:/Users/rober/Downloads/Projects/Agent/runner/cross-agent.py" \
+  --direction cc-to-codex --task-type implement \
+  --prompt "<self-contained task with exact addresses, file paths, calling conventions>" \
+  --working-dir "C:/Users/rober/Downloads/Projects/school/follow-alongs" \
+  --timeout 600
+```
+
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
