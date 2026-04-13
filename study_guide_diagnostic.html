@@ -516,15 +516,73 @@
         return card;
       }
 
+      // Only entries for files that actually exist on disk.
+      const WORKSHEET_FILES = {
+        '3-6':'u3_lesson6-7_live.html', '3-7':'u3_lesson6-7_live.html',
+        '4-1':'u4_lesson1-2_live.html', '4-2':'u4_lesson1-2_live.html',
+        '4-3':'u4_lesson3-4-5_live.html', '4-4':'u4_lesson3-4-5_live.html', '4-5':'u4_lesson3-4-5_live.html',
+        '4-6':'u4_lesson6_live.html',
+        '4-7':'u4_lesson7-8_live.html', '4-8':'u4_lesson7-8_live.html',
+        '4-9':'u4_lesson9_live.html',
+        '4-10':'u4_lesson10-12_live.html', '4-11':'u4_lesson10-12_live.html', '4-12':'u4_lesson10-12_live.html',
+        '5-1':'u5_lesson1-2_live.html', '5-2':'u5_lesson1-2_live.html',
+        '5-3':'u5_lesson3_live.html', '5-4':'u5_lesson4_live.html', '5-5':'u5_lesson5_live.html',
+        '5-6':'u5_lesson6_live.html', '5-7':'u5_lesson7_live.html', '5-8':'u5_lesson8_live.html',
+        '6-1':'u6_lesson1-2_live.html', '6-2':'u6_lesson1-2_live.html',
+        '6-3':'u6_lesson3_live.html', '6-4':'u6_lesson4_live.html', '6-5':'u6_lesson5_live.html',
+        '6-6':'u6_lesson6_live.html', '6-7':'u6_lesson7_live.html', '6-8':'u6_lesson8_live.html',
+        '6-9':'u6_lesson9_live.html', '6-10':'u6_lesson10_live.html', '6-11':'u6_lesson11_live.html',
+        '7-1':'u7_lesson1_live.html', '7-2':'u7_lesson2_live.html', '7-3':'u7_lesson3_live.html',
+        '7-4':'u7_lesson4_live.html', '7-5':'u7_lesson5_live.html', '7-6':'u7_lesson6_live.html',
+        '7-7':'u7_lesson7_live.html', '7-8':'u7_lesson8_live.html', '7-9':'u7_lesson9_live.html',
+        '8-1':'u8_lesson1_live.html', '8-2':'u8_lesson2_live.html', '8-3':'u8_lesson3_live.html',
+        '8-4':'u8_lesson4_live.html', '8-5':'u8_lesson5_live.html', '8-6':'u8_lesson6_live.html',
+        '9-1':'u9_lesson1_live.html', '9-2':'u9_lesson2_live.html', '9-3':'u9_lesson3_live.html',
+        '9-4':'u9_lesson4_live.html', '9-5':'u9_lesson5_live.html',
+      };
+
+      const BLOOKET_FILES = {
+        '4-1':'u4_l1_l2_blooket.csv', '4-2':'u4_l1_l2_blooket.csv',
+        '4-3':'u4_l3_l4_l5_blooket.csv', '4-4':'u4_l3_l4_l5_blooket.csv', '4-5':'u4_l3_l4_l5_blooket.csv',
+        '4-6':'u4_lesson6_blooket.csv',
+        '4-7':'u4_l7_l8_blooket.csv', '4-8':'u4_l7_l8_blooket.csv',
+        '4-9':'u4_l9_blooket.csv',
+        '4-10':'u4_l10_l11_l12_blooket.csv', '4-11':'u4_l10_l11_l12_blooket.csv', '4-12':'u4_l10_l11_l12_blooket.csv',
+        '5-1':'u5_l1_l2_blooket.csv', '5-2':'u5_l1_l2_blooket.csv',
+        '5-3':'u5_l3_blooket.csv', '5-4':'u5_l4_blooket.csv', '5-5':'u5_l5_blooket.csv',
+        '5-6':'u5_l6_blooket.csv', '5-7':'u5_l7_blooket.csv', '5-8':'u5_l8_blooket.csv',
+        '6-1':'u6_l1_l2_blooket.csv', '6-2':'u6_l1_l2_blooket.csv',
+        '6-3':'u6_l3_blooket.csv', '6-4':'u6_l4_blooket.csv', '6-5':'u6_l5_blooket.csv',
+        '6-6':'u6_l6_blooket.csv', '6-7':'u6_l7_blooket.csv', '6-8':'u6_l8_blooket.csv',
+        '6-9':'u6_l9_blooket.csv', '6-10':'u6_l10_blooket.csv', '6-11':'u6_l11_blooket.csv',
+        '7-1':'u7_l1_blooket.csv', '7-2':'u7_l2_blooket.csv', '7-3':'u7_l3_blooket.csv',
+        '7-4':'u7_l4_blooket.csv', '7-5':'u7_l5_blooket.csv', '7-6':'u7_l6_blooket.csv',
+        '7-7':'u7_l7_blooket.csv', '7-8':'u7_l8_blooket.csv', '7-9':'u7_l9_blooket.csv',
+        '8-1':'u8_l1_blooket.csv', '8-2':'u8_l2_blooket.csv', '8-3':'u8_l3_blooket.csv',
+        '8-4':'u8_l4_blooket.csv', '8-5':'u8_l5_blooket.csv', '8-6':'u8_l6_blooket.csv',
+        '9-1':'u9_l1_blooket.csv', '9-2':'u9_l2_blooket.csv', '9-3':'u9_l3_blooket.csv',
+        '9-4':'u9_l4_blooket.csv', '9-5':'u9_l5_blooket.csv',
+      };
+
       function renderResourceCard(unit, lesson) {
+        const key = `${unit}-${lesson}`;
         const card = make('div', 'resource-card');
         const list = make('ul');
-        const pushLink = (href, label) => { const li = document.createElement('li'); const a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = label; li.appendChild(a); list.appendChild(li); };
+        const pushLink = (href, label) => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = label;
+          li.appendChild(a); list.appendChild(li);
+        };
         const video = videoUrl(unit, lesson);
         if (video) pushLink(video, '📹 Watch the lesson video');
-        if (unit > 2) pushLink(`./u${unit}_lesson${lesson}_live.html`, '📝 Follow-along worksheet');
-        pushLink(`./u${unit}_l${lesson}_blooket.csv`, '🃏 Blooket quiz CSV');
-        pushLink('../curriculum_render/index.html', '❓ Curriculum quiz app');
+        const wsFile = WORKSHEET_FILES[key];
+        if (wsFile) pushLink(`./${wsFile}`, '📝 Follow-along worksheet');
+        const bkFile = BLOOKET_FILES[key];
+        if (bkFile) pushLink(`./${bkFile}`, '🃏 Blooket quiz CSV');
+        pushLink(`../curriculum_render/index.html?u=${unit}&l=${lesson}`, '❓ AP Stats quiz app (this unit & lesson)');
+        pushLink('https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', '⚡ Equation Trainer (select your unit inside)');
+        pushLink('https://lrsl-driller.vercel.app/platform/app.html', '🔧 Driller (select your unit inside)');
         card.append(make('div', 'resource-card-header', `📚 Review resources for Unit ${unit}, Lesson ${lesson}`), list);
         return card;
       }
