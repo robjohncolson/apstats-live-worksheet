@@ -57,9 +57,15 @@
     .probe.correct{background:linear-gradient(180deg,#fff,#f5fbf7);border-color:rgba(47,123,74,.35)}.probe.incorrect{background:linear-gradient(180deg,#fff,#fff7f7);border-color:rgba(171,62,62,.3)}
     .probe-title,.focus-lesson-title,.frq-grade-title{margin:0;color:var(--navy);font-weight:800}
     .probe-tag{background:rgba(8,28,52,.08);color:#334862}
-    .choice-list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
-    .choice-item{padding:12px 14px;border-radius:14px;border:1px solid rgba(13,39,70,.1);background:#fcfdff}
-    .choice-row{display:flex;gap:10px;align-items:baseline}.choice-key{font-weight:800;color:var(--navy);display:inline-block;width:26px;flex-shrink:0}.choice-value{flex:1;line-height:1.5}
+    .choice-list{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+    .choice-item{display:flex;align-items:center;padding:11px 14px;border-radius:12px;border:2px solid rgba(13,39,70,.1);background:#fcfdff;transition:border-color .15s,background .15s}
+    .choice-item:hover{background:#fff9e8;border-color:rgba(192,88,34,.35)}
+    .choice-item.choice-correct{background:var(--okbg);border-color:rgba(47,123,74,.4)}
+    .choice-item.choice-wrong{background:var(--badbg);border-color:rgba(171,62,62,.35)}
+    .choice-row{display:flex;align-items:center;gap:10px;width:100%;cursor:pointer}
+    .choice-row input[type=radio]{flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:var(--navy)}
+    .choice-key{font-weight:800;color:var(--navy);flex-shrink:0;width:26px}
+    .choice-value{flex:1;line-height:1.5;color:var(--ink)}
     .attachment-table{width:100%;border-collapse:collapse;border:1px solid var(--line);font-size:.94rem}
     .attachment-table th,.attachment-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
     .attachment-table th{background:#f2f5f9;color:var(--navy)}
@@ -347,8 +353,24 @@
         if (hasImage) {
           const fig = make('figure', 'attachment-figure');
           const img = document.createElement('img');
-          img.src = /^(https?:)?\/\//i.test(attachments.image) ? attachments.image : `../curriculum_render/${String(attachments.image).replace(/^\.?\//, '')}`;
+          const rawPath = String(attachments.image).replace(/^\.?\//, '');
+          // Primary: resolve relative to where curriculum_render scripts were loaded from.
+          // Fallback 1: try with ../curriculum_render/ prefix (local file:// access).
+          // Fallback 2: bare path (if page is served from curriculum_render root).
+          const scriptEl = document.querySelector('script[src*="curriculum_render/data"]');
+          const crBase = scriptEl
+            ? scriptEl.getAttribute('src').replace(/\/data\/[^/]+$/, '')
+            : '../curriculum_render';
+          img.style.maxWidth = '100%';
+          img.style.height = 'auto';
+          img.src = /^(https?:)?\/\//i.test(attachments.image)
+            ? attachments.image
+            : `${crBase}/${rawPath}`;
           img.alt = attachments.imageAlt || 'Question attachment';
+          img.onerror = function () {
+            this.onerror = null;
+            this.src = rawPath; // last-resort: bare relative path
+          };
           fig.appendChild(img);
           if (attachments.imageCaption || attachments.imageAlt) fig.appendChild(make('figcaption', '', attachments.imageCaption || attachments.imageAlt || ''));
           wrap.appendChild(fig);
