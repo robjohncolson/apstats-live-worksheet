@@ -5,1264 +5,687 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AP Statistics - Diagnostic Study Guide</title>
   <style>
-    :root {
-      --navy: #003366;
-      --navy-2: #0f4a80;
-      --bg: #f9f9f9;
-      --line: #d6dde5;
-      --text: #1f2933;
-      --muted: #52606d;
-      --green: #1f8f52;
-      --green-bg: #e9f7ef;
-      --yellow: #a67c00;
-      --yellow-bg: #fff7d6;
-      --red: #b42318;
-      --red-bg: #fdeceb;
-      --shadow: 0 8px 24px rgba(0, 28, 61, 0.08);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 0 0 48px;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top right, rgba(0, 51, 102, 0.08), transparent 28%),
-        linear-gradient(180deg, #ffffff 0%, #f6f8fb 100%);
-    }
-
-    .header {
-      width: min(1180px, calc(100% - 32px));
-      margin: 0 auto 24px;
-      padding: 18px 24px;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 12px;
-      align-items: center;
-      color: #fff;
-      border-radius: 0 0 20px 20px;
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
-      box-shadow: var(--shadow);
-    }
-
-    .header-left,
-    .header-right {
-      font-size: 0.95rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.78);
-    }
-
-    .header-center {
-      text-align: center;
-      font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-    }
-
-    .page-shell {
-      width: min(1180px, calc(100% - 32px));
-      margin: 0 auto;
-    }
-
-    h1 {
-      margin: 8px 0;
-      font-size: clamp(2rem, 2.8vw, 2.8rem);
-      color: var(--navy);
-    }
-
-    h2, h3, h4 {
-      margin-top: 0;
-      color: var(--navy);
-    }
-
-    .subtitle {
-      margin: 0 0 24px;
-      font-size: 1.05rem;
-      color: var(--muted);
-    }
-
-    .student-info,
-    .instructions-box,
-    .summary-panel,
-    .gate-card {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-    }
-
-    .student-info {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      padding: 18px;
-      margin-bottom: 20px;
-    }
-
-    .student-info label {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-weight: 600;
-      color: var(--navy);
-    }
-
-    .student-info input,
-    textarea {
-      width: 100%;
-      padding: 11px 12px;
-      border: 1px solid #b7c4d0;
-      border-radius: 10px;
-      font: inherit;
-      color: var(--text);
-      background: #fff;
-    }
-
-    .instructions-box,
-    .summary-panel {
-      padding: 20px 22px;
-      margin-bottom: 22px;
-    }
-
-    .instructions-box ol {
-      margin: 10px 0 0 18px;
-      color: var(--muted);
-    }
-
-    #gates-container {
-      display: grid;
-      gap: 22px;
-    }
-
-    .gate-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 18px 22px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(232, 240, 247, 0.9), rgba(255, 255, 255, 0.95));
-    }
-
-    .gate-title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .gate-unit-label {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--navy);
-    }
-
-    .gate-topic,
-    .gate-status-copy,
-    .gate-question-meta,
-    .figure-caption,
-    .figure-note,
-    .probe-message,
-    .page-footer {
-      color: var(--muted);
-    }
-
-    .gate-status {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .gate-badge,
-    .summary-score {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 42px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid transparent;
-      font-size: 0.95rem;
-      font-weight: 800;
-      letter-spacing: 0.03em;
-    }
-
-    .gate-badge-pending { color: var(--navy); background: #edf2f7; border-color: #cfdae5; }
-    .gate-badge-E, .summary-card-E .summary-score { color: var(--green); background: var(--green-bg); border-color: rgba(31, 143, 82, 0.24); }
-    .gate-badge-P, .summary-card-P .summary-score { color: var(--yellow); background: var(--yellow-bg); border-color: rgba(166, 124, 0, 0.24); }
-    .gate-badge-I, .summary-card-I .summary-score { color: var(--red); background: var(--red-bg); border-color: rgba(180, 35, 24, 0.2); }
-
-    .gate-body { padding: 22px; }
-    .gate-prompt,
-    .probe-prompt { line-height: 1.6; white-space: pre-wrap; }
-
-    .question-table-wrap { overflow-x: auto; margin: 16px 0; }
-    .question-table {
-      width: 100%;
-      min-width: 340px;
-      border-collapse: collapse;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-    .question-table th,
-    .question-table td {
-      padding: 10px 12px;
-      border: 1px solid var(--line);
-      text-align: left;
-      vertical-align: top;
-    }
-    .question-table th {
-      background: #e8f0f7;
-      color: var(--navy);
-      font-weight: 700;
-    }
-
-    .question-figure {
-      margin: 16px 0;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fafcfe;
-    }
-    .question-figure img {
-      display: block;
-      max-width: 100%;
-      margin: 0 auto;
-      border: 1px solid #d8e0e8;
-      border-radius: 10px;
-      background: #fff;
-    }
-
-    .answer-block { margin-top: 18px; }
-    .answer-block label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 700;
-      color: var(--navy);
-    }
-    textarea {
-      min-height: 160px;
-      resize: vertical;
-      line-height: 1.5;
-    }
-
-    .feedback-panel {
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-    }
-    .feedback-panel-E { background: var(--green-bg); border-color: rgba(31, 143, 82, 0.22); }
-    .feedback-panel-P { background: var(--yellow-bg); border-color: rgba(166, 124, 0, 0.2); }
-    .feedback-panel-I { background: var(--red-bg); border-color: rgba(180, 35, 24, 0.18); }
-    .feedback-panel ul { margin: 10px 0 0 18px; }
-
-    .drill-toggle,
-    .check-btn,
-    .grade-btn,
-    .secondary-btn {
-      appearance: none;
-      border: none;
-      border-radius: 999px;
-      padding: 11px 18px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-    }
-
-    .drill-toggle {
-      margin-top: 14px;
-      border: 1px solid #bfd0df;
-      background: #fff;
-      color: var(--navy);
-    }
-
-    .check-btn,
-    .grade-btn {
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(0, 51, 102, 0.18);
-    }
-
-    .secondary-btn {
-      background: #edf2f7;
-      color: var(--navy);
-      border: 1px solid #d2dce6;
-    }
-
-    .drill-down {
-      margin-top: 18px;
-      padding: 18px;
-      border: 1px solid #d6e0ea;
-      border-radius: 16px;
-      background: linear-gradient(180deg, rgba(247, 250, 252, 0.95), rgba(255, 255, 255, 0.95));
-    }
-
-    .drill-down[hidden],
-    #summary-panel[hidden] { display: none; }
-
-    .drill-header,
-    .probe-header,
-    .probe-actions,
-    .action-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .drill-header { justify-content: space-between; margin-bottom: 14px; }
-    .drill-header-copy,
-    .probe-title,
-    .resource-card-header { font-weight: 700; color: var(--navy); }
-
-    .unit-note {
-      margin: 0 0 14px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #eef5fb;
-      border: 1px solid #d5e3ef;
-      color: var(--navy);
-      font-style: italic;
-    }
-
-    .probe-list { display: grid; gap: 16px; }
-    .probe {
-      padding: 16px;
-      border-radius: 14px;
-      border: 1px solid #d7e0e8;
-      background: #fff;
-    }
-    .probe.correct { border-color: rgba(31, 143, 82, 0.35); background: #f2fbf6; }
-    .probe.incorrect { border-color: rgba(180, 35, 24, 0.28); background: #fff8f7; }
-    .probe.correct .probe-status { color: var(--green); }
-    .probe.incorrect .probe-status { color: var(--red); }
-
-    .choice-list { display: grid; gap: 10px; margin-top: 12px; }
-    .choice-item {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #dfe6ed;
-      background: #fbfcfe;
-    }
-    .choice-text { flex: 1; line-height: 1.45; }
-
-    .resource-card {
-      margin-top: 14px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid #f2c5bf;
-      background: linear-gradient(180deg, #fff3f1 0%, #fffaf9 100%);
-    }
-    .resource-card-header { color: var(--red); margin-bottom: 10px; }
-    .resource-card ul { margin: 0; padding-left: 18px; }
-    .resource-card a { color: var(--navy); }
-
-    .action-bar { justify-content: center; margin: 28px 0 24px; }
-    #grade-btn { min-width: 240px; }
-
-    #summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-top: 16px;
-    }
-    .summary-card {
-      padding: 16px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-
-    .page-footer { margin-top: 28px; text-align: center; }
-
-    @media (max-width: 840px) {
-      .header { grid-template-columns: 1fr; text-align: center; }
-      .student-info { grid-template-columns: 1fr; }
-      .gate-header, .drill-header { flex-direction: column; align-items: flex-start; }
-      .gate-status { justify-content: flex-start; }
-    }
-
-    @media (max-width: 560px) {
-      .header,
-      .page-shell { width: min(100% - 20px, 1180px); }
-      .header { padding: 16px 18px; margin-bottom: 18px; }
-      .student-info,
-      .instructions-box,
-      .summary-panel,
-      .gate-body,
-      .gate-header { padding: 16px; }
-    }
+    :root{--navy:#0d2746;--navy2:#17385f;--ink:#142138;--muted:#5e7189;--line:#d8e1eb;--ok:#2f7b4a;--okbg:#edf8f0;--warn:#9a6a16;--warnbg:#fff5dd;--bad:#ab3e3e;--badbg:#fff0f0;--hi:#c05822;--med:#946500;--low:#2a6782;--shadow:0 14px 34px rgba(8,28,52,.12);--r:18px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at top right,rgba(62,103,152,.16),transparent 24%),linear-gradient(180deg,#f8fafc,#ecf2f8)}
+    a{color:var(--navy2)}
+    .header{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:14px 24px;background:linear-gradient(135deg,#081c34,var(--navy2));color:#fff;border-bottom:3px solid rgba(255,255,255,.14);font-size:.82rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+    .header-left{justify-self:start}.header-center{justify-self:center}.header-right{justify-self:end}
+    .page{width:min(1240px,calc(100% - 32px));margin:0 auto;padding:26px 0 70px}
+    h1{margin:0;color:#081c34;font-size:clamp(2rem,3.3vw,3.1rem);letter-spacing:-.03em}
+    .subtitle{margin:10px 0 0;color:#334862;line-height:1.6}
+    .panel,.unit-card,.summary-tile{background:rgba(255,255,255,.95);border:1px solid rgba(13,39,70,.12);box-shadow:var(--shadow)}
+    .panel{margin-top:18px;padding:18px;border-radius:var(--r)}
+    .student-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .student-info label{display:grid;gap:8px;font-weight:700;color:var(--navy)}
+    input,textarea{width:100%;padding:10px 12px;border:1px solid #c5d0db;border-radius:10px;font:inherit;color:var(--ink);background:#fff}
+    textarea{min-height:180px;resize:vertical;line-height:1.6}
+    .instructions-box ul{margin:0;padding-left:20px;line-height:1.65;color:#334862}
+    .action-bar,.unit-action-row,.probe-actions,.status-row,.focus-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .action-bar{margin:18px 0}
+    .action-btn,.import-label,.unit-action-btn,.probe-check-btn,.mode-toggle button{border:0;border-radius:999px;font:inherit;font-weight:800;cursor:pointer;transition:transform .14s ease,background-color .14s ease}
+    .action-btn,.import-label,.unit-action-btn,.probe-check-btn{min-height:46px;padding:0 18px;color:#fff;background:var(--navy);box-shadow:0 8px 18px rgba(8,28,52,.08)}
+    .action-btn.warning{background:var(--bad)}
+    .action-btn.secondary,.unit-action-btn.secondary{background:#fff;color:var(--navy);border:1px solid rgba(13,39,70,.14)}
+    .import-label{display:inline-flex;justify-content:center;align-items:center}
+    .action-btn:hover,.import-label:hover,.unit-action-btn:hover,.probe-check-btn:hover,.mode-toggle button:hover{transform:translateY(-1px)}
+    .progress-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}
+    .summary-tile{padding:18px;border-radius:var(--r)}
+    .summary-label{font-size:.82rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .summary-value{margin-top:8px;font-size:clamp(1.35rem,2.8vw,2rem);font-weight:800;color:#081c34}
+    .summary-detail{margin-top:6px;color:#334862;line-height:1.5}
+    #units-container{display:grid;gap:22px}
+    .unit-card{overflow:hidden;border-radius:24px}
+    .unit-header{display:grid;gap:12px;padding:22px 24px 20px;background:linear-gradient(135deg,rgba(8,28,52,.98),rgba(23,56,95,.95));color:#fff}
+    .unit-header-top,.probe-head,.focus-lesson-top,.frq-grade-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+    .unit-kicker{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.76)}
+    .unit-title{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);letter-spacing:-.03em}
+    .unit-meta{display:flex;flex-wrap:wrap;gap:10px;color:rgba(255,255,255,.86)}
+    .unit-chip,.status-badge,.probe-tag,.focus-priority-pill{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;font-size:.88rem;font-weight:700}
+    .unit-chip{background:rgba(255,255,255,.12)}
+    .unit-body{display:grid;gap:18px;padding:22px 24px 26px}
+    .mode-toggle{display:inline-flex;flex-wrap:wrap;gap:8px;padding:6px;border-radius:999px;background:rgba(8,28,52,.08)}
+    .mode-toggle button{min-height:42px;padding:0 16px;background:transparent;color:var(--navy)}
+    .mode-toggle button.active{background:var(--navy);color:#fff}
+    .status-badge{background:#f2f5f9;color:#334862}.status-badge.ready{background:var(--okbg);color:var(--ok)}.status-badge.pending{background:var(--warnbg);color:var(--warn)}
+    .unit-section{display:grid;gap:14px;padding:18px;border-radius:20px;background:rgba(255,255,255,.82);border:1px solid rgba(13,39,70,.08)}
+    .unit-section h3{margin:0;color:var(--navy);font-size:1.14rem}
+    .copy,.note,.probe-prompt,.probe-feedback,.frq-grade-copy,.focus-summary,.focus-reason,.focus-action,.focus-note,.empty{line-height:1.6;color:#334862}
+    .note,.empty{padding:12px 14px;border-radius:14px;background:rgba(216,225,235,.5)}
+    .probe-list,.probe-attachments,.focus-lessons,.frq-block,.focus-panel{display:grid;gap:14px}
+    .probe{display:grid;gap:14px;padding:18px;border-radius:16px;background:#fff;border:1px solid rgba(13,39,70,.1)}
+    .probe.correct{background:linear-gradient(180deg,#fff,#f5fbf7);border-color:rgba(47,123,74,.35)}.probe.incorrect{background:linear-gradient(180deg,#fff,#fff7f7);border-color:rgba(171,62,62,.3)}
+    .probe-title,.focus-lesson-title,.frq-grade-title{margin:0;color:var(--navy);font-weight:800}
+    .probe-tag{background:rgba(8,28,52,.08);color:#334862}
+    .choice-list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+    .choice-item{padding:12px 14px;border-radius:14px;border:1px solid rgba(13,39,70,.1);background:#fcfdff}
+    .choice-row{display:flex;gap:12px;align-items:flex-start}.choice-key{font-weight:800;color:var(--navy)}
+    .attachment-table{width:100%;border-collapse:collapse;border:1px solid var(--line);font-size:.94rem}
+    .attachment-table th,.attachment-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    .attachment-table th{background:#f2f5f9;color:var(--navy)}
+    .attachment-figure{margin:0;display:grid;gap:8px}.attachment-figure img{width:min(100%,560px);border-radius:14px;border:1px solid rgba(13,39,70,.1);background:#fff}
+    .resource-card{display:grid;gap:10px;padding:16px;border-radius:16px;background:linear-gradient(180deg,#f7faff,#eef4fb);border:1px solid rgba(33,74,120,.14)}
+    .resource-card-header{font-weight:800;color:var(--navy)}.resource-card ul{margin:0;padding-left:20px;line-height:1.7;color:#334862}
+    .frq-prompt{padding:16px;border-radius:16px;border:1px solid rgba(13,39,70,.1);background:linear-gradient(180deg,rgba(247,250,253,.96),#fff);line-height:1.7;white-space:pre-wrap}
+    .frq-grade{display:grid;gap:10px;padding:16px;border-radius:16px;border:1px solid rgba(13,39,70,.12)}
+    .frq-grade-E{background:var(--okbg);border-color:rgba(47,123,74,.24)}.frq-grade-P{background:var(--warnbg);border-color:rgba(154,106,22,.24)}.frq-grade-I{background:var(--badbg);border-color:rgba(171,62,62,.22)}
+    .frq-grade-badge{display:inline-flex;align-items:center;justify-content:center;min-width:42px;min-height:42px;padding:0 14px;border-radius:999px;color:#fff;font-weight:800}
+    .frq-grade-E .frq-grade-badge{background:var(--ok)}.frq-grade-P .frq-grade-badge{background:var(--warn)}.frq-grade-I .frq-grade-badge{background:var(--bad)}
+    .grade-list{margin:0;padding-left:20px;line-height:1.6;color:#334862}
+    .focus-panel{padding:18px;border-radius:18px;border:1px solid rgba(13,39,70,.12);background:#fff}
+    .focus-priority-high{background:var(--hi);color:#fff}.focus-priority-medium{background:var(--med);color:#fff}.focus-priority-low{background:var(--low);color:#fff}
+    .focus-lesson{display:grid;gap:8px;padding:14px;border-radius:14px;border:1px solid rgba(13,39,70,.1);background:#fbfcfe}
+    .focus-lo{font-size:.92rem;color:var(--muted);line-height:1.45}
+    .toast{position:fixed;right:18px;bottom:18px;max-width:min(360px,calc(100vw - 36px));padding:14px 16px;border-radius:14px;background:rgba(8,28,52,.96);color:#fff;box-shadow:var(--shadow);opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .18s ease,transform .18s ease;z-index:30;line-height:1.45}
+    .toast.visible{opacity:1;transform:translateY(0)}
+    @media (max-width:900px){.header{grid-template-columns:1fr;text-align:center}.header-left,.header-center,.header-right{justify-self:center}.student-info,.progress-summary{grid-template-columns:1fr}}
+    @media (max-width:620px){.page{width:min(100% - 16px,100%);padding-top:18px}}
+    @media print{body{background:#fff}.header,.action-bar,.mode-toggle,.unit-action-row,.probe-check-btn,.toast{display:none !important}.page{width:100%;margin:0;padding:0}.panel,.unit-card,.summary-tile,.unit-section,.probe,.focus-panel{box-shadow:none;border-color:#d0d6de}.unit-card{break-inside:avoid;page-break-inside:avoid;margin-bottom:20px}.unit-header{background:#11325c}a{color:inherit;text-decoration:none}}
   </style>
 </head>
 <body>
-  <div class="header">
+  <header class="header">
     <div class="header-left">AP Statistics</div>
     <div class="header-center">Diagnostic Study Guide</div>
     <div class="header-right">Know Where to Focus</div>
-  </div>
+  </header>
 
-  <div class="page-shell">
+  <template id="mode-button-template">
+    <div class="mode-toggle" aria-label="Unit mode toggle">
+      <button type="button" data-mode="mcq">MCQ</button>
+      <button type="button" data-mode="frq">FRQ</button>
+      <button type="button" data-mode="both">Both</button>
+    </div>
+  </template>
+
+  <main class="page">
     <h1>Diagnostic Study Guide</h1>
-    <p class="subtitle">Nine questions, one per unit. We'll show you exactly where to review.</p>
+    <p class="subtitle">Pick any unit. Choose MCQ, FRQ, or Both. Get a personalized focus list.</p>
 
-    <div class="student-info">
-      <label>Name: <input id="studentName"></label>
-      <label>Period: <input id="studentPeriod"></label>
-      <label>Date: <input id="studentDate" type="date"></label>
-    </div>
+    <section class="panel student-info">
+      <label>Name<input id="studentName" autocomplete="name"></label>
+      <label>Period<input id="studentPeriod" autocomplete="off"></label>
+      <label>Date<input id="studentDate" type="date"></label>
+    </section>
 
-    <div class="instructions-box">
+    <section class="panel instructions-box">
       <strong>How this works:</strong>
-      <ol>
-        <li>Answer each unit's gate question as fully as you can.</li>
-        <li>Click "Grade My Diagnostic" - all 9 go to the grader at once.</li>
-        <li>Units you nail (<strong>E</strong>) collapse - done.</li>
-        <li>Units you partially answered (<strong>P</strong>) offer optional review.</li>
-        <li>Units you miss (<strong>I</strong>) auto-expand lesson probes and remediation resources.</li>
-      </ol>
+      <ul>
+        <li>Each unit has its own card. Toggle <strong>MCQ</strong> (fast, instant grading), <strong>FRQ</strong> (deep, AI-graded), or <strong>Both</strong>.</li>
+        <li>MCQ: one multiple-choice probe per lesson, checked instantly.</li>
+        <li>FRQ: one free-response question synthesizing the whole unit, AI-graded.</li>
+        <li>After you've answered what you can for a unit, click <strong>Show me what to focus on</strong> and the AI will use AP framework metadata to prioritize lessons and LO codes.</li>
+        <li>Use <strong>Export</strong> to download a printable HTML review sheet that also works as your save file. Use <strong>Import</strong> to restore it later.</li>
+      </ul>
+    </section>
+
+    <div class="action-bar export-bar">
+      <button id="export-btn" class="action-btn" type="button">📤 Export</button>
+      <label class="import-label" for="import-input">📥 Import</label>
+      <input id="import-input" type="file" accept=".html,text/html" hidden>
+      <button id="clear-btn" class="action-btn warning" type="button">Clear All</button>
     </div>
 
-    <div id="gates-container"></div>
+    <section id="progress-summary" class="progress-summary"></section>
+    <div id="units-container"></div>
+  </main>
 
-    <div class="action-bar">
-      <button id="grade-btn" class="grade-btn">🤖 Grade My Diagnostic</button>
-      <button id="clear-btn" class="secondary-btn" type="button">Clear All Answers</button>
-    </div>
-
-    <div id="summary-panel" class="summary-panel" hidden>
-      <h2>Your Diagnostic Summary</h2>
-      <div id="summary-grid"></div>
-    </div>
-
-    <p class="page-footer">Start with the red units after grading. Those are your highest-priority review targets.</p>
-  </div>
-
+  <div id="toast" class="toast" aria-live="polite"></div>
   <script src="../railway_config.js"></script>
   <script src="../railway_client.js"></script>
   <script src="../curriculum_render/data/curriculum.js"></script>
+  <script src="../curriculum_render/data/units.js"></script>
+  <script src="../curriculum_render/data/frameworks.js"></script>
   <script src="ai-grading-prompts-study-guide.js"></script>
   <script>
-    (function () {
-      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v1';
-      const SAVE_DELAY = 300;
-
-      const GATE_ID_LITERALS = {
-        1: 'U1-PC-FRQ-Q02',
-        2: 'U2-PC-FRQ-Q02',
-        3: 'U3-PC-FRQ-Q01',
-        4: 'U4-PC-FRQ-Q02',
-        5: 'U5-PC-FRQ-Q02',
-        6: 'U6-PC-FRQ-Q01',
-        7: 'U7-PC-FRQ-Q02',
-        8: 'U8-PC-FRQ-Q01',
-        9: 'U9-PC-FRQ-Q01',
-      };
-
-      const state = {
-        savedAt: '',
-        studentName: '',
-        studentPeriod: '',
-        studentDate: '',
-        answers: {},
-        grades: {},
-        probeAnswers: {},
-        probeResults: {},
-        drillsOpened: [],
-      };
-
-      const gateRefs = new Map();
-      const questionById = new Map();
+    (() => {
+      const STORAGE_KEY = window.STORAGE_KEY_SG || 'apStatsStudyGuideDiagnostic.v2';
+      const SCHEMA_VERSION = window.SCHEMA_VERSION_SG || 2;
+      const STATE_ID = 'sg-state-v2';
+      const UNIT_COUNT = 9;
+      const GATE_IDS = window.GATE_IDS_SG || {1:'U1-PC-FRQ-Q02',2:'U2-PC-FRQ-Q02',3:'U3-PC-FRQ-Q01',4:'U4-PC-FRQ-Q02',5:'U5-PC-FRQ-Q02',6:'U6-PC-FRQ-Q01',7:'U7-PC-FRQ-Q02',8:'U8-PC-FRQ-Q01',9:'U9-PC-FRQ-Q01'};
+      const questions = new Map();
+      const probeCache = {};
+      const pending = { grade:{}, focus:{} };
       let saveTimer = null;
+      let toastTimer = null;
+      let state = makeDefaultState();
+      const ui = {
+        name: document.getElementById('studentName'),
+        period: document.getElementById('studentPeriod'),
+        date: document.getElementById('studentDate'),
+        exportBtn: document.getElementById('export-btn'),
+        importInput: document.getElementById('import-input'),
+        clearBtn: document.getElementById('clear-btn'),
+        summary: document.getElementById('progress-summary'),
+        units: document.getElementById('units-container'),
+        toast: document.getElementById('toast'),
+        modeTemplate: document.getElementById('mode-button-template')
+      };
 
-      document.addEventListener('DOMContentLoaded', init);
+      const make = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text != null) el.textContent = text; return el; };
+      const today = () => new Date().toISOString().slice(0, 10);
+      const esc = (value='') => String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+      const trunc = (text='', max=150) => text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '...';
+      const letter = value => String(value || '').trim().toUpperCase();
+      const normalizeMode = mode => ['mcq','frq','both'].includes(mode) ? mode : 'both';
+      const stripFrq = text => typeof window.stripFrqBoilerplateSG === 'function' ? window.stripFrqBoilerplateSG(text || '') : String(text || '');
+      const gateId = unit => GATE_IDS[unit];
+      const gateQuestion = unit => questions.get(gateId(unit)) || null;
+      const lessonFromId = id => { const match = String(id || '').match(/-L(\d+)-/); return match ? Number(match[1]) : null; };
 
-      function init() {
-        indexCurriculum();
-        restoreState();
-        renderGates();
-        bindTopLevelControls();
-        renderSummary();
+      function makeDefaultState() {
+        const units = {};
+        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null };
+        return { schemaVersion:SCHEMA_VERSION, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), units };
       }
 
-      function indexCurriculum() {
-        if (!Array.isArray(EMBEDDED_CURRICULUM)) return;
-        EMBEDDED_CURRICULUM.forEach(function (question) {
-          questionById.set(question.id, question);
-        });
+      function normalizeGrade(raw) {
+        if (!raw || typeof raw !== 'object' || !['E','P','I'].includes(raw.score)) return null;
+        return { score:raw.score, feedback:typeof raw.feedback === 'string' ? raw.feedback : '', matched:Array.isArray(raw.matched) ? raw.matched.filter(Boolean) : [], missing:Array.isArray(raw.missing) ? raw.missing.filter(Boolean) : [] };
       }
 
-      function bindTopLevelControls() {
-        const studentName = document.getElementById('studentName');
-        const studentPeriod = document.getElementById('studentPeriod');
-        const studentDate = document.getElementById('studentDate');
-        const gradeButton = document.getElementById('grade-btn');
-        const clearButton = document.getElementById('clear-btn');
-
-        studentName.value = state.studentName || '';
-        studentPeriod.value = state.studentPeriod || '';
-        studentDate.value = state.studentDate || '';
-
-        [studentName, studentPeriod, studentDate].forEach(function (input) {
-          input.addEventListener('input', function () {
-            state.studentName = studentName.value.trim();
-            state.studentPeriod = studentPeriod.value.trim();
-            state.studentDate = studentDate.value;
-            scheduleSave();
-          });
-        });
-
-        gradeButton.addEventListener('click', handleGradeAll);
-        clearButton.addEventListener('click', handleClearAll);
-      }
-
-      function renderGates() {
-        const container = document.getElementById('gates-container');
-        container.innerHTML = '';
-        gateRefs.clear();
-
-        for (let unitNumber = 1; unitNumber <= 9; unitNumber += 1) {
-          container.appendChild(buildGateCard(unitNumber));
-          applySavedGrade(unitNumber);
-        }
-      }
-
-      function buildGateCard(unitNumber) {
-        const questionId = getGateId(unitNumber);
-        const question = questionById.get(questionId);
-        const card = document.createElement('section');
-        card.className = 'gate-card';
-        card.dataset.unit = String(unitNumber);
-
-        const header = document.createElement('div');
-        header.className = 'gate-header';
-
-        const titleBlock = document.createElement('div');
-        titleBlock.className = 'gate-title-block';
-        titleBlock.innerHTML =
-          '<div class="gate-unit-label">' + escapeHtml(getUnitTitle(unitNumber)) + '</div>' +
-          '<div class="gate-topic">' + escapeHtml(getUnitTopic(unitNumber)) + '</div>';
-
-        const status = document.createElement('div');
-        status.className = 'gate-status';
-
-        const badge = document.createElement('span');
-        badge.className = 'gate-badge gate-badge-pending';
-        badge.textContent = 'Not graded';
-
-        const statusCopy = document.createElement('div');
-        statusCopy.className = 'gate-status-copy';
-        statusCopy.textContent = 'Answer the unit gate, then grade the whole diagnostic.';
-
-        status.appendChild(badge);
-        status.appendChild(statusCopy);
-        header.appendChild(titleBlock);
-        header.appendChild(status);
-
-        const body = document.createElement('div');
-        body.className = 'gate-body';
-
-        if (!question) {
-          body.innerHTML = '<p class="gate-prompt">Gate question not found for ' + escapeHtml(questionId) + '.</p>';
-          card.appendChild(header);
-          card.appendChild(body);
-          return card;
-        }
-
-        const meta = document.createElement('div');
-        meta.className = 'gate-question-meta';
-        meta.textContent = 'Gate question ID: ' + questionId;
-
-        const prompt = document.createElement('div');
-        prompt.className = 'gate-prompt';
-        prompt.textContent = stripPrompt(question.prompt || '');
-
-        const answerBlock = document.createElement('div');
-        answerBlock.className = 'answer-block';
-
-        const answerLabel = document.createElement('label');
-        answerLabel.htmlFor = answerKey(unitNumber);
-        answerLabel.textContent = 'Your response';
-
-        const textarea = document.createElement('textarea');
-        textarea.id = answerKey(unitNumber);
-        textarea.placeholder = 'Write your full response here. Show your reasoning and statistical justification.';
-        textarea.value = state.answers[answerKey(unitNumber)] || '';
-        textarea.addEventListener('input', function () {
-          state.answers[answerKey(unitNumber)] = textarea.value;
-          scheduleSave();
-        });
-
-        const feedback = document.createElement('div');
-        feedback.hidden = true;
-
-        const drillToggle = document.createElement('button');
-        drillToggle.type = 'button';
-        drillToggle.className = 'drill-toggle';
-        drillToggle.hidden = true;
-        drillToggle.addEventListener('click', function () {
-          toggleDrill(unitNumber);
-        });
-
-        const drillDown = document.createElement('div');
-        drillDown.className = 'drill-down';
-        drillDown.hidden = true;
-
-        body.appendChild(meta);
-        body.appendChild(prompt);
-        appendTable(body, question.attachments && question.attachments.table);
-        appendImage(body, question);
-        answerBlock.appendChild(answerLabel);
-        answerBlock.appendChild(textarea);
-        body.appendChild(answerBlock);
-        body.appendChild(feedback);
-        body.appendChild(drillToggle);
-        body.appendChild(drillDown);
-
-        card.appendChild(header);
-        card.appendChild(body);
-
-        gateRefs.set(unitNumber, {
-          badge: badge,
-          statusCopy: statusCopy,
-          textarea: textarea,
-          feedback: feedback,
-          drillToggle: drillToggle,
-          drillDown: drillDown,
-          questionId: questionId,
-        });
-
-        return card;
-      }
-
-      function getGateId(unitNumber) {
-        if (window.getGateIdForUnitSG) {
-          return window.getGateIdForUnitSG(unitNumber);
-        }
-        return GATE_ID_LITERALS[unitNumber];
-      }
-
-      function getUnitTitle(unitNumber) {
-        return window.UNIT_TITLES_SG && window.UNIT_TITLES_SG[unitNumber]
-          ? window.UNIT_TITLES_SG[unitNumber]
-          : 'Unit ' + unitNumber;
-      }
-
-      function getUnitTopic(unitNumber) {
-        return window.UNIT_TOPICS_SG && window.UNIT_TOPICS_SG[unitNumber]
-          ? window.UNIT_TOPICS_SG[unitNumber]
-          : 'Diagnostic focus area';
-      }
-
-      function answerKey(unitNumber) {
-        return 'sg-u' + unitNumber + '-answer';
-      }
-
-      function stripPrompt(promptText) {
-        return window.stripFrqBoilerplateSG ? window.stripFrqBoilerplateSG(promptText) : promptText;
-      }
-
-      function appendTable(parent, tableData) {
-        if (!Array.isArray(tableData) || tableData.length === 0) return;
-        const wrap = document.createElement('div');
-        wrap.className = 'question-table-wrap';
-
-        const table = document.createElement('table');
-        table.className = 'question-table';
-
-        tableData.forEach(function (row, rowIndex) {
-          const tr = document.createElement('tr');
-          (row || []).forEach(function (cellValue) {
-            const cell = document.createElement(rowIndex === 0 ? 'th' : 'td');
-            cell.textContent = cellValue == null ? '' : String(cellValue);
-            tr.appendChild(cell);
-          });
-          table.appendChild(tr);
-        });
-
-        wrap.appendChild(table);
-        parent.appendChild(wrap);
-      }
-
-      function appendImage(parent, question) {
-        if (!question || !question.attachments) return;
-        const imagePath = question.attachments.image;
-        const captionText = question.attachments.imageCaption;
-        const requiresGraph = Boolean(question.requiresGraph);
-
-        if (!imagePath && !requiresGraph) return;
-
-        const figure = document.createElement('div');
-        figure.className = 'question-figure';
-
-        if (imagePath) {
-          const image = document.createElement('img');
-          image.src = '../curriculum_render/' + imagePath;
-          image.alt = captionText || 'Question figure';
-          figure.appendChild(image);
-        }
-
-        if (captionText) {
-          const caption = document.createElement('div');
-          caption.className = 'figure-caption';
-          caption.textContent = captionText;
-          figure.appendChild(caption);
-        }
-
-        if (requiresGraph) {
-          const note = document.createElement('p');
-          note.className = 'figure-note';
-          note.textContent = '*This question references a figure. If you cannot see it, ask your teacher or skip to the drill-down.';
-          figure.appendChild(note);
-        }
-
-        parent.appendChild(figure);
-      }
-
-      async function handleGradeAll() {
-        const button = document.getElementById('grade-btn');
-        button.disabled = true;
-        button.textContent = 'Grading all 9 units...';
-
-        try {
-          for (let unitNumber = 1; unitNumber <= 9; unitNumber += 1) {
-            await gradeUnit(unitNumber);
-          }
-          renderSummary();
-          document.getElementById('summary-panel').hidden = false;
-          persistState();
-        } catch (error) {
-          window.alert('Something went wrong while grading.\n\n' + error.message);
-        } finally {
-          button.disabled = false;
-          button.textContent = '🤖 Grade My Diagnostic';
-        }
-      }
-
-      async function gradeUnit(unitNumber) {
-        const gate = gateRefs.get(unitNumber);
-        if (!gate) return;
-
-        const answer = (gate.textarea.value || '').trim();
-        state.answers[answerKey(unitNumber)] = gate.textarea.value;
-
-        gate.badge.className = 'gate-badge gate-badge-pending';
-        gate.badge.textContent = '...';
-        gate.statusCopy.textContent = 'Sending to the grader...';
-
-        const result = await gradeGate(unitNumber, gate.questionId, answer);
-        state.grades[answerKey(unitNumber)] = normalizeGrade(result);
-        applySavedGrade(unitNumber);
-        await submitGateAnswer(unitNumber, answer, result);
-        persistState();
-      }
-
-      function applySavedGrade(unitNumber) {
-        const gate = gateRefs.get(unitNumber);
-        if (!gate) return;
-
-        const grade = state.grades[answerKey(unitNumber)];
-        if (!grade) {
-          gate.badge.className = 'gate-badge gate-badge-pending';
-          gate.badge.textContent = 'Not graded';
-          gate.statusCopy.textContent = 'Answer the unit gate, then grade the whole diagnostic.';
-          gate.feedback.hidden = true;
-          gate.drillToggle.hidden = true;
-          gate.drillDown.hidden = true;
-          gate.drillDown.innerHTML = '';
-          return;
-        }
-
-        gate.badge.className = 'gate-badge gate-badge-' + grade.score;
-        gate.badge.textContent = grade.score;
-        gate.statusCopy.textContent = gradeStatusCopy(grade);
-
-        renderFeedback(unitNumber, grade);
-        renderDrillToggle(unitNumber, grade);
-
-        const shouldOpen = grade.score === 'I' || state.drillsOpened.includes(unitNumber);
-        setDrillOpen(unitNumber, shouldOpen);
-      }
-
-      function renderFeedback(unitNumber, grade) {
-        const panel = gateRefs.get(unitNumber).feedback;
-        panel.className = 'feedback-panel feedback-panel-' + grade.score;
-        panel.hidden = false;
-
-        const matched = Array.isArray(grade.matched) ? grade.matched : [];
-        const missing = Array.isArray(grade.missing) ? grade.missing : [];
-
-        panel.innerHTML =
-          '<strong>Feedback</strong>' +
-          '<p>' + escapeHtml(grade.feedback || 'No feedback returned.') + '</p>' +
-          (matched.length ? '<strong>You showed</strong>' + bulletList(matched) : '') +
-          (missing.length ? '<strong>Still missing</strong>' + bulletList(missing) : '');
-      }
-
-      function renderDrillToggle(unitNumber, grade) {
-        const toggle = gateRefs.get(unitNumber).drillToggle;
-        toggle.hidden = false;
-
-        if (grade.score === 'E') {
-          toggle.textContent = '✓ Unit passed - click to expand for review';
-        } else if (grade.score === 'P') {
-          toggle.textContent = 'Review these if you want to strengthen this unit';
-        } else {
-          toggle.textContent = '⚠ Focus here';
-        }
-      }
-
-      function toggleDrill(unitNumber) {
-        setDrillOpen(unitNumber, !state.drillsOpened.includes(unitNumber));
-        persistState();
-      }
-
-      function setDrillOpen(unitNumber, shouldOpen) {
-        const gate = gateRefs.get(unitNumber);
-        if (!gate) return;
-
-        state.drillsOpened = state.drillsOpened.filter(function (value) {
-          return value !== unitNumber;
-        });
-
-        if (!shouldOpen) {
-          gate.drillDown.hidden = true;
-          return;
-        }
-
-        state.drillsOpened.push(unitNumber);
-        renderDrill(unitNumber);
-        gate.drillDown.hidden = false;
-      }
-
-      function renderDrill(unitNumber) {
-        const gate = gateRefs.get(unitNumber);
-        const grade = state.grades[answerKey(unitNumber)];
-        const probes = buildProbesForUnit(unitNumber);
-        const drill = gate.drillDown;
-
-        drill.innerHTML = '';
-
-        const header = document.createElement('div');
-        header.className = 'drill-header';
-        header.innerHTML =
-          '<div class="drill-header-copy">' + escapeHtml(drillHeaderCopy(grade && grade.score)) + '</div>' +
-          '<div class="probe-message">These lesson checks help you pinpoint what to review next.</div>';
-        drill.appendChild(header);
-
-        if (unitNumber === 1 || unitNumber === 2) {
-          const note = document.createElement('p');
-          note.className = 'unit-note';
-          note.textContent = 'Follow-along worksheets aren\'t available for this unit yet - use the curriculum quiz app.';
-          drill.appendChild(note);
-        }
-
-        const probeList = document.createElement('div');
-        probeList.className = 'probe-list';
-
-        if (probes.length === 0) {
-          probeList.innerHTML = '<p class="probe-message">No lesson probes were found for this unit.</p>';
-        } else {
-          probes.forEach(function (probe, index) {
-            probeList.appendChild(renderProbe(unitNumber, probe, index + 1));
-          });
-        }
-
-        drill.appendChild(probeList);
-      }
-
-      function renderProbe(unitNumber, probe, ordinal) {
-        const question = probe.question;
-        const probeId = question.id;
-        const savedAnswer = state.probeAnswers[probeId] || '';
-        const savedResult = state.probeResults[probeId] || '';
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'probe';
-        if (savedResult === 'correct') wrapper.classList.add('correct');
-        if (savedResult === 'incorrect') wrapper.classList.add('incorrect');
-
-        const header = document.createElement('div');
-        header.className = 'probe-header';
-        header.innerHTML =
-          '<div class="probe-title">Lesson ' + probe.lesson + ' probe ' + ordinal + '</div>' +
-          '<div class="probe-status">' + escapeHtml(probeStatusText(savedResult)) + '</div>';
-        wrapper.appendChild(header);
-
-        const prompt = document.createElement('div');
-        prompt.className = 'probe-prompt';
-        prompt.textContent = question.prompt || '';
-        wrapper.appendChild(prompt);
-
-        appendTable(wrapper, question.attachments && question.attachments.table);
-
-        const choiceList = document.createElement('div');
-        choiceList.className = 'choice-list';
-        const choices = Array.isArray(question.attachments && question.attachments.choices)
-          ? question.attachments.choices
-          : [];
-
-        choices.forEach(function (choice) {
-          const label = document.createElement('label');
-          label.className = 'choice-item';
-
-          const radio = document.createElement('input');
-          radio.type = 'radio';
-          radio.name = 'probe-' + probeId;
-          radio.value = choice.key;
-          radio.checked = savedAnswer === choice.key;
-          radio.addEventListener('change', function () {
-            state.probeAnswers[probeId] = radio.value;
-            scheduleSave();
-          });
-
-          const text = document.createElement('div');
-          text.className = 'choice-text';
-          text.textContent = choice.key + '. ' + choice.value;
-
-          label.appendChild(radio);
-          label.appendChild(text);
-          choiceList.appendChild(label);
-        });
-        wrapper.appendChild(choiceList);
-
-        const actions = document.createElement('div');
-        actions.className = 'probe-actions';
-
-        const checkButton = document.createElement('button');
-        checkButton.type = 'button';
-        checkButton.className = 'check-btn';
-        checkButton.textContent = 'Check';
-
-        const message = document.createElement('div');
-        message.className = 'probe-message';
-        message.textContent = probeMessage(savedResult);
-
-        checkButton.addEventListener('click', function () {
-          handleProbeCheck(unitNumber, probe.lesson, question, wrapper);
-        });
-
-        actions.appendChild(checkButton);
-        actions.appendChild(message);
-        wrapper.appendChild(actions);
-
-        const resourceHost = document.createElement('div');
-        resourceHost.className = 'probe-resource-host';
-        wrapper.appendChild(resourceHost);
-
-        if (savedResult === 'incorrect') {
-          resourceHost.appendChild(buildResourceCard(unitNumber, probe.lesson));
-        }
-        if (savedResult === 'correct') {
-          choiceList.style.display = 'none';
-        }
-
-        return wrapper;
-      }
-
-      async function handleProbeCheck(unitNumber, lessonNumber, question, wrapper) {
-        const selected = wrapper.querySelector('input[type="radio"]:checked');
-        if (!selected) {
-          window.alert('Choose an answer before checking the probe.');
-          return;
-        }
-
-        const isCorrect = selected.value === question.answerKey;
-        const probeId = question.id;
-        const status = wrapper.querySelector('.probe-status');
-        const message = wrapper.querySelector('.probe-message');
-        const resourceHost = wrapper.querySelector('.probe-resource-host');
-        const choiceList = wrapper.querySelector('.choice-list');
-
-        state.probeAnswers[probeId] = selected.value;
-        state.probeResults[probeId] = isCorrect ? 'correct' : 'incorrect';
-
-        wrapper.classList.remove('correct', 'incorrect');
-        resourceHost.innerHTML = '';
-
-        if (isCorrect) {
-          wrapper.classList.add('correct');
-          status.textContent = '✓ Correct';
-          message.textContent = 'Nice work. This lesson checkpoint is clear.';
-          choiceList.style.display = 'none';
-        } else {
-          wrapper.classList.add('incorrect');
-          status.textContent = 'Needs review';
-          message.textContent = 'Review the lesson resources below, then come back to this concept.';
-          choiceList.style.display = '';
-          resourceHost.appendChild(buildResourceCard(unitNumber, lessonNumber));
-        }
-
-        persistState();
-        await submitProbeAnswer(unitNumber, lessonNumber, question, selected.value, isCorrect);
-      }
-
-      function buildResourceCard(unitNumber, lessonNumber) {
-        const card = document.createElement('div');
-        card.className = 'resource-card';
-        card.innerHTML =
-          '<div class="resource-card-header">📚 Review resources for Unit ' + unitNumber + ', Lesson ' + lessonNumber + '</div>' +
-          '<ul>' +
-          '<li><a href="./u' + unitNumber + '_lesson' + lessonNumber + '_live.html" target="_blank">📝 Follow-along worksheet</a></li>' +
-          '<li><a href="./u' + unitNumber + '_l' + lessonNumber + '_blooket.csv" target="_blank">🃏 Blooket quiz CSV</a></li>' +
-          '<li><a href="../curriculum_render/index.html" target="_blank">❓ Curriculum quiz app (filter by unit ' + unitNumber + ', lesson ' + lessonNumber + ')</a></li>' +
-          '</ul>';
-        return card;
-      }
-
-      function renderSummary() {
-        const summaryPanel = document.getElementById('summary-panel');
-        const summaryGrid = document.getElementById('summary-grid');
-        summaryGrid.innerHTML = '';
-
-        let count = 0;
-        for (let unitNumber = 1; unitNumber <= 9; unitNumber += 1) {
-          const grade = state.grades[answerKey(unitNumber)];
-          if (!grade) continue;
-          count += 1;
-
-          const card = document.createElement('div');
-          card.className = 'summary-card summary-card-' + grade.score;
-          card.innerHTML =
-            '<div class="summary-score">' + escapeHtml(grade.score) + '</div>' +
-            '<h3>' + escapeHtml(getUnitTitle(unitNumber)) + '</h3>' +
-            '<p>' + escapeHtml(summaryCopy(grade)) + '</p>';
-          summaryGrid.appendChild(card);
-        }
-
-        summaryPanel.hidden = count === 0;
-      }
-
-      function handleClearAll() {
-        const confirmed = window.confirm('Clear every gate answer, grade, and probe result?');
-        if (!confirmed) return;
-
-        state.savedAt = '';
-        state.studentName = '';
-        state.studentPeriod = '';
-        state.studentDate = '';
-        state.answers = {};
-        state.grades = {};
-        state.probeAnswers = {};
-        state.probeResults = {};
-        state.drillsOpened = [];
-
-        localStorage.removeItem(STORAGE_KEY);
-        document.getElementById('studentName').value = '';
-        document.getElementById('studentPeriod').value = '';
-        document.getElementById('studentDate').value = '';
-
-        renderGates();
-        renderSummary();
-      }
-
-      function restoreState() {
-        let parsed = null;
-        try {
-          parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-        } catch (error) {
-          parsed = null;
-        }
-        if (!parsed || typeof parsed !== 'object') return;
-
-        state.savedAt = parsed.savedAt || '';
-        state.studentName = parsed.studentName || '';
-        state.studentPeriod = parsed.studentPeriod || '';
-        state.studentDate = parsed.studentDate || '';
-        state.answers = plainObject(parsed.answers);
-        state.grades = gradeObject(parsed.grades);
-        state.probeAnswers = plainObject(parsed.probeAnswers);
-        state.probeResults = plainObject(parsed.probeResults);
-        state.drillsOpened = Array.isArray(parsed.drillsOpened)
-          ? parsed.drillsOpened.filter(function (value) { return Number.isInteger(value); })
-          : [];
-      }
-
-      function scheduleSave() {
-        window.clearTimeout(saveTimer);
-        saveTimer = window.setTimeout(function () {
-          persistState();
-        }, SAVE_DELAY);
-      }
-
-      function persistState() {
-        state.savedAt = new Date().toISOString();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          savedAt: state.savedAt,
-          studentName: state.studentName,
-          studentPeriod: state.studentPeriod,
-          studentDate: state.studentDate,
-          answers: state.answers,
-          grades: state.grades,
-          probeAnswers: state.probeAnswers,
-          probeResults: state.probeResults,
-          drillsOpened: state.drillsOpened.slice().sort(function (a, b) { return a - b; }),
-        }));
-      }
-
-      function findGateQuestionText(questionId) {
-        const question = questionById.get(questionId);
-        return question ? stripPrompt(question.prompt || '') : '';
-      }
-
-      async function gradeGate(unitNumber, questionId, answer) {
-        const fullPrompt = findGateQuestionText(questionId);
-        const prompt = window.buildReflectionPromptSG(unitNumber, fullPrompt, answer);
-
-        const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            scenario: {
-              topic: 'AP Statistics Diagnostic Study Guide',
-              questionId: questionId,
-              lessonContext: window.LESSON_CONTEXT_SG,
-            },
-            answers: { answer: answer },
-            prompt: prompt,
-          }),
-        });
-
-        if (!response.ok) throw new Error('Grading request failed');
-        const result = await response.json();
-
-        if (result.score === 'P' && result.missing && result.missing.length === 0) {
-          result.score = 'E';
-          result.feedback = 'Nice work - you covered the key ideas.';
-        }
-        return result;
-      }
-
-      async function submitGateAnswer(unitNumber, answer, result) {
-        if (!window.railwayClient || !window.railwayClient.submitAnswer) return;
-        try {
-          await window.railwayClient.submitAnswer(
-            `SG-U${unitNumber}-GATE`,
-            answer,
-            { score: result.score }
-          );
-        } catch (err) {
-          console.warn('Railway submission failed (non-fatal):', err);
-        }
-      }
-
-      async function submitProbeAnswer(unitNumber, lessonNumber, question, selectedValue, isCorrect) {
-        if (!window.railwayClient || !window.railwayClient.submitAnswer) return;
-        try {
-          await window.railwayClient.submitAnswer(
-            `SG-${question.id}`,
-            selectedValue,
-            { result: isCorrect ? 'correct' : 'incorrect', unit: unitNumber, lesson: lessonNumber }
-          );
-        } catch (err) {
-          console.warn('Railway submission failed (non-fatal):', err);
-        }
-      }
-
-      function buildProbesForUnit(unitNumber) {
-        const unitPrefix = 'U' + unitNumber + '-L';
-        const mcByLesson = {};
-        for (const q of EMBEDDED_CURRICULUM) {
-          if (q.type !== 'multiple-choice') continue;
-          if (!q.id.startsWith(unitPrefix)) continue;
-          const m = q.id.match(/^U\d+-L(\d+)-Q\d+/);
-          if (!m) continue;
-          const lesson = parseInt(m[1], 10);
-          (mcByLesson[lesson] ||= []).push(q);
-        }
-        const lessons = Object.keys(mcByLesson).map(Number).sort(function (a, b) {
-          return a - b;
-        });
-        const probes = [];
-        for (const lesson of lessons.slice(0, 6)) {
-          const first = mcByLesson[lesson].slice().sort(function (a, b) {
-            return a.id.localeCompare(b.id);
-          })[0];
-          probes.push({ lesson: lesson, question: first });
-        }
-        return probes;
-      }
-
-      function normalizeGrade(grade) {
-        const value = grade && typeof grade === 'object' ? grade : {};
+      function normalizeFocus(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const priority = ['high','medium','low'].includes(String(raw.priority || '').toLowerCase()) ? String(raw.priority).toLowerCase() : 'medium';
         return {
-          score: ['E', 'P', 'I'].includes(value.score) ? value.score : 'I',
-          feedback: value.feedback || '',
-          matched: Array.isArray(value.matched) ? value.matched.slice() : [],
-          missing: Array.isArray(value.missing) ? value.missing.slice() : [],
+          priority,
+          overallSummary: typeof raw.overallSummary === 'string' ? raw.overallSummary : '',
+          focusLessons: Array.isArray(raw.focusLessons) ? raw.focusLessons.map(item => ({
+            lesson: item && item.lesson != null ? String(item.lesson) : '',
+            topic: item && typeof item.topic === 'string' ? item.topic : '',
+            loIds: Array.isArray(item && item.loIds) ? item.loIds.filter(Boolean) : typeof (item && item.loIds) === 'string' ? item.loIds.split(',').map(part => part.trim()).filter(Boolean) : [],
+            reason: item && typeof item.reason === 'string' ? item.reason : '',
+            suggestedAction: item && typeof item.suggestedAction === 'string' ? item.suggestedAction : ''
+          })) : [],
+          synthesisNote: typeof raw.synthesisNote === 'string' ? raw.synthesisNote : ''
         };
       }
 
-      function plainObject(input) {
-        if (!input || typeof input !== 'object') return {};
-        const output = {};
-        Object.keys(input).forEach(function (key) {
-          output[key] = input[key];
+      function normalizeState(raw) {
+        const next = makeDefaultState();
+        if (!raw || typeof raw !== 'object') return next;
+        next.studentName = typeof raw.studentName === 'string' ? raw.studentName : '';
+        next.studentPeriod = typeof raw.studentPeriod === 'string' ? raw.studentPeriod : '';
+        next.studentDate = typeof raw.studentDate === 'string' ? raw.studentDate : today();
+        next.savedAt = typeof raw.savedAt === 'string' ? raw.savedAt : new Date().toISOString();
+        const incomingUnits = raw.units && typeof raw.units === 'object' ? raw.units : {};
+        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
+          const value = incomingUnits[unit] || incomingUnits[String(unit)] || {};
+          next.units[unit] = {
+            mode: normalizeMode(value.mode),
+            mcqAnswers: value.mcqAnswers && typeof value.mcqAnswers === 'object' ? {...value.mcqAnswers} : {},
+            mcqResults: value.mcqResults && typeof value.mcqResults === 'object' ? Object.fromEntries(Object.entries(value.mcqResults).filter(([,v]) => v === 'correct' || v === 'incorrect')) : {},
+            frqAnswer: typeof value.frqAnswer === 'string' ? value.frqAnswer : '',
+            frqGrade: normalizeGrade(value.frqGrade),
+            focusSynthesis: normalizeFocus(value.focusSynthesis)
+          };
+        }
+        return next;
+      }
+
+      const serializeState = () => {
+        const copy = normalizeState(state);
+        copy.schemaVersion = SCHEMA_VERSION;
+        copy.savedAt = new Date().toISOString();
+        return copy;
+      };
+
+      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null });
+      const showToast = msg => { ui.toast.textContent = msg; ui.toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => ui.toast.classList.remove('visible'), 2600); };
+      const saveNow = () => { clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState())); } catch { showToast('Local save failed.'); } };
+      const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); };
+
+      function unitHasWork(unitState) {
+        return !!(Object.keys(unitState.mcqAnswers || {}).length || (unitState.frqAnswer || '').trim() || unitState.frqGrade || unitState.focusSynthesis);
+      }
+
+      function summaryData(snapshot) {
+        let unitsAttempted = 0, mcqAnswered = 0, mcqCorrect = 0, frqsGraded = 0;
+        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
+          const data = snapshot.units[unit];
+          if (unitHasWork(data)) unitsAttempted += 1;
+          Object.values(data.mcqResults || {}).forEach(value => { mcqAnswered += 1; if (value === 'correct') mcqCorrect += 1; });
+          if (data.frqGrade) frqsGraded += 1;
+        }
+        return { unitsAttempted, mcqAnswered, mcqCorrect, mcqAccuracy: mcqAnswered ? Math.round((mcqCorrect / mcqAnswered) * 100) : 0, frqsGraded };
+      }
+
+      function renderSummary() {
+        const info = summaryData(serializeState());
+        ui.summary.textContent = '';
+        [
+          ['Units Attempted', `${info.unitsAttempted} / ${UNIT_COUNT}`, info.unitsAttempted ? `You have started ${info.unitsAttempted} unit${info.unitsAttempted === 1 ? '' : 's'}.` : 'No units started yet.'],
+          ['MCQ Accuracy', `${info.mcqAnswered ? info.mcqAccuracy : 0}%`, info.mcqAnswered ? `${info.mcqCorrect} of ${info.mcqAnswered} probes are correct.` : 'Check a few probes to get immediate feedback.'],
+          ['FRQs Graded', String(info.frqsGraded), info.frqsGraded ? `${info.frqsGraded} FRQ${info.frqsGraded === 1 ? ' has' : 's have'} been graded.` : 'No FRQ grades yet.']
+        ].forEach(([label, value, detail]) => {
+          const tile = make('div', 'summary-tile');
+          tile.append(make('div', 'summary-label', label), make('div', 'summary-value', value), make('div', 'summary-detail', detail));
+          ui.summary.appendChild(tile);
         });
-        return output;
       }
 
-      function gradeObject(input) {
-        if (!input || typeof input !== 'object') return {};
-        const output = {};
-        Object.keys(input).forEach(function (key) {
-          output[key] = normalizeGrade(input[key]);
+      function unitTitle(unit) {
+        if (window.UNIT_TITLES_SG && window.UNIT_TITLES_SG[unit]) return window.UNIT_TITLES_SG[unit];
+        if (typeof UNIT_FRAMEWORKS !== 'undefined' && UNIT_FRAMEWORKS[unit] && UNIT_FRAMEWORKS[unit].title) return `Unit ${unit}: ${UNIT_FRAMEWORKS[unit].title}`;
+        return `Unit ${unit}`;
+      }
+
+      function unitTopic(unit) {
+        if (window.UNIT_TOPICS_SG && window.UNIT_TOPICS_SG[unit]) return window.UNIT_TOPICS_SG[unit];
+        if (typeof UNIT_FRAMEWORKS !== 'undefined' && UNIT_FRAMEWORKS[unit] && UNIT_FRAMEWORKS[unit].title) return UNIT_FRAMEWORKS[unit].title;
+        return 'Review the core ideas and AP Statistics skills for this unit.';
+      }
+
+      function examWeight(unit) {
+        if (typeof UNIT_FRAMEWORKS !== 'undefined' && UNIT_FRAMEWORKS[unit] && UNIT_FRAMEWORKS[unit].examWeight) return UNIT_FRAMEWORKS[unit].examWeight;
+        if (typeof ALL_UNITS_DATA !== 'undefined' && Array.isArray(ALL_UNITS_DATA)) {
+          const found = ALL_UNITS_DATA.find(item => item && item.unitId === `unit${unit}`);
+          if (found && found.examWeight) return found.examWeight;
+        }
+        return 'See framework';
+      }
+
+      function lessonTitle(unit, lesson) {
+        if (typeof UNIT_FRAMEWORKS !== 'undefined' && UNIT_FRAMEWORKS[unit] && UNIT_FRAMEWORKS[unit].lessons && UNIT_FRAMEWORKS[unit].lessons[lesson] && UNIT_FRAMEWORKS[unit].lessons[lesson].topic) return UNIT_FRAMEWORKS[unit].lessons[lesson].topic;
+        if (typeof ALL_UNITS_DATA !== 'undefined' && Array.isArray(ALL_UNITS_DATA)) {
+          const data = ALL_UNITS_DATA.find(item => item && item.unitId === `unit${unit}`);
+          const topic = data && Array.isArray(data.topics) ? data.topics.find(item => item && item.id === `${unit}-${lesson}`) : null;
+          if (topic && topic.description) return topic.description;
+          if (topic && topic.name) return topic.name;
+        }
+        return `Topic ${unit}.${lesson}`;
+      }
+
+      function videoUrl(unit, lesson) {
+        if (typeof ALL_UNITS_DATA === 'undefined' || !Array.isArray(ALL_UNITS_DATA)) return null;
+        const data = ALL_UNITS_DATA.find(item => item && item.unitId === `unit${unit}`);
+        const topic = data && Array.isArray(data.topics) ? data.topics.find(item => item && item.id === `${unit}-${lesson}`) : null;
+        return topic && Array.isArray(topic.videos) && topic.videos[0] ? (topic.videos[0].url || topic.videos[0].altUrl || null) : null;
+      }
+
+      function buildProbes(unit) {
+        const list = typeof EMBEDDED_CURRICULUM !== 'undefined' && Array.isArray(EMBEDDED_CURRICULUM) ? EMBEDDED_CURRICULUM : [];
+        const bucket = {};
+        list.forEach(question => {
+          if (!question || question.type !== 'multiple-choice' || !String(question.id || '').startsWith(`U${unit}-L`)) return;
+          const match = question.id.match(/^U\d+-L(\d+)-Q\d+/);
+          if (!match) return;
+          const lesson = Number(match[1]);
+          (bucket[lesson] ||= []).push(question);
         });
-        return output;
+        return Object.keys(bucket).map(Number).sort((a,b) => a - b).slice(0, 6).map(lesson => ({ lesson, question: bucket[lesson].slice().sort((a,b) => a.id.localeCompare(b.id))[0] }));
       }
 
-      function drillHeaderCopy(score) {
-        if (score === 'E') return '✓ Unit passed - click to expand for review';
-        if (score === 'P') return 'Review these if you want to strengthen this unit';
-        return '⚠ Focus here';
+      const probesFor = unit => (probeCache[unit] ||= buildProbes(unit));
+
+      function attachMedia(attachments) {
+        const hasTable = Array.isArray(attachments && attachments.table) && attachments.table.length;
+        const hasImage = attachments && typeof attachments.image === 'string' && attachments.image.trim();
+        if (!hasTable && !hasImage) return null;
+        const wrap = make('div', 'probe-attachments');
+        if (hasTable) {
+          const table = make('table', 'attachment-table');
+          attachments.table.forEach((row, i) => {
+            const tr = document.createElement('tr');
+            row.forEach(cell => {
+              const td = document.createElement(i === 0 ? 'th' : 'td');
+              td.textContent = String(cell);
+              tr.appendChild(td);
+            });
+            table.appendChild(tr);
+          });
+          wrap.appendChild(table);
+        }
+        if (hasImage) {
+          const fig = make('figure', 'attachment-figure');
+          const img = document.createElement('img');
+          img.src = /^(https?:)?\/\//i.test(attachments.image) ? attachments.image : `../curriculum_render/${String(attachments.image).replace(/^\.?\//, '')}`;
+          img.alt = attachments.imageAlt || 'Question attachment';
+          fig.appendChild(img);
+          if (attachments.imageCaption || attachments.imageAlt) fig.appendChild(make('figcaption', '', attachments.imageCaption || attachments.imageAlt || ''));
+          wrap.appendChild(fig);
+        }
+        return wrap;
       }
 
-      function gradeStatusCopy(grade) {
-        if (grade.score === 'E') return 'Strong - you nailed the unit-level synthesis.';
-        if (grade.score === 'P') return grade.feedback || 'Use the optional review to strengthen this unit.';
-        return grade.feedback || 'Focus here first. The drill-down is open below.';
+      function renderUnits() {
+        ui.units.textContent = '';
+        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) ui.units.appendChild(renderUnit(unit));
       }
 
-      function summaryCopy(grade) {
-        if (grade.score === 'E') return 'You can treat this unit as low priority unless you want extra review.';
-        if (grade.score === 'P') return 'Some core ideas are in place. Use the lesson probes if you want to push this unit higher.';
-        return 'This unit should be one of your next review targets.';
+      function rerenderUnit(unit) {
+        renderSummary();
+        const cards = Array.from(ui.units.children);
+        const next = renderUnit(unit);
+        if (cards[unit - 1]) ui.units.replaceChild(next, cards[unit - 1]);
       }
 
-      function probeStatusText(result) {
-        if (result === 'correct') return '✓ Correct';
-        if (result === 'incorrect') return 'Needs review';
-        return 'Unchecked';
+      function renderUnit(unit) {
+        const data = getUnit(unit);
+        const card = make('section', 'unit-card');
+        const header = make('div', 'unit-header');
+        const top = make('div', 'unit-header-top');
+        const titleWrap = make('div');
+        titleWrap.append(make('div', 'unit-kicker', `Unit ${unit}`), make('h2', 'unit-title', unitTitle(unit)));
+        const meta = make('div', 'unit-meta');
+        meta.append(make('div', 'unit-chip', `Exam weight: ${examWeight(unit)}`), make('div', 'unit-chip', `Mode: ${data.mode === 'both' ? 'Both' : data.mode.toUpperCase()}`));
+        top.append(titleWrap, meta);
+        header.append(top, make('div', 'copy', unitTopic(unit)));
+        const body = make('div', 'unit-body');
+        const mode = ui.modeTemplate.content.firstElementChild.cloneNode(true);
+        mode.querySelectorAll('button').forEach(button => {
+          if (button.dataset.mode === data.mode) button.classList.add('active');
+          button.addEventListener('click', () => { data.mode = normalizeMode(button.dataset.mode); saveNow(); rerenderUnit(unit); });
+        });
+        const status = make('div', 'status-row');
+        const checked = Object.keys(data.mcqResults || {}).length;
+        const correct = Object.values(data.mcqResults || {}).filter(value => value === 'correct').length;
+        [checked ? [`MCQ: ${checked}/${probesFor(unit).length} checked`, 'ready'] : [`MCQ: 0/${probesFor(unit).length} checked`, 'pending'], checked ? [`MCQ: ${correct}/${checked} correct`, 'ready'] : ['MCQ accuracy pending', 'pending'], data.frqGrade ? [`FRQ graded: ${data.frqGrade.score}`, 'ready'] : ['FRQ not graded yet', 'pending'], data.focusSynthesis ? ['Focus plan ready', 'ready'] : ['Focus plan not generated', 'pending']].forEach(([text, cls]) => status.appendChild(make('div', `status-badge ${cls}`, text)));
+        body.append(mode, status);
+        if (data.mode === 'mcq' || data.mode === 'both') body.appendChild(renderMcq(unit));
+        if (data.mode === 'frq' || data.mode === 'both') body.appendChild(renderFrq(unit));
+        body.appendChild(renderFocus(unit));
+        card.append(header, body);
+        return card;
       }
 
-      function probeMessage(result) {
-        if (result === 'correct') return 'You already cleared this lesson checkpoint.';
-        if (result === 'incorrect') return 'This lesson needs review resources.';
-        return 'Pick one answer, then check it.';
+      function renderMcq(unit) {
+        const section = make('section', 'unit-section');
+        section.append(make('h3', '', 'MCQ probes'), make('p', 'copy', 'One probe per lesson, capped at six lessons. Choose an answer, then click Check for instant feedback.'));
+        if (unit === 1 || unit === 2) { const note = make('div', 'note'); note.appendChild(make('em', '', "Follow-along worksheets aren't available for this unit yet - use the video and curriculum quiz to review.")); section.appendChild(note); }
+        const probes = probesFor(unit);
+        if (!probes.length) return section.appendChild(make('div', 'empty', 'No MCQ probes were found for this unit in EMBEDDED_CURRICULUM.')), section;
+        const list = make('div', 'probe-list');
+        probes.forEach(info => list.appendChild(renderProbe(unit, info)));
+        section.appendChild(list);
+        return section;
       }
 
-      function bulletList(items) {
-        return '<ul>' + items.map(function (item) {
-          return '<li>' + escapeHtml(item) + '</li>';
-        }).join('') + '</ul>';
+      function renderProbe(unit, info) {
+        const data = getUnit(unit);
+        const { question, lesson } = info;
+        const selected = data.mcqAnswers[question.id] || '';
+        const result = data.mcqResults[question.id] || '';
+        const card = make('article', `probe${result ? ` ${result}` : ''}`);
+        const head = make('div', 'probe-head');
+        head.append(make('h4', 'probe-title', `Lesson ${lesson}: ${lessonTitle(unit, lesson)}`), make('div', 'probe-tag', question.id));
+        card.append(head, make('p', 'probe-prompt', question.prompt || 'No prompt available.'));
+        if (question.attachments) {
+          const media = attachMedia(question.attachments);
+          if (media) card.appendChild(media);
+        }
+        const choices = make('ul', 'choice-list');
+        const choiceData = question.attachments && Array.isArray(question.attachments.choices) ? question.attachments.choices : [];
+        choiceData.forEach(choice => {
+          const item = make('li', 'choice-item');
+          const label = make('label', 'choice-row');
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = `mcq-${unit}-${question.id}`;
+          input.value = choice.key;
+          input.checked = selected === choice.key;
+          input.addEventListener('change', () => {
+            data.mcqAnswers[question.id] = choice.key;
+            delete data.mcqResults[question.id];
+            data.focusSynthesis = null;
+            saveSoon();
+            rerenderUnit(unit);
+          });
+          const wrap = make('span'); wrap.style.display = 'grid'; wrap.style.gap = '4px';
+          wrap.append(make('span', 'choice-key', choice.key), make('span', '', choice.value));
+          label.append(input, wrap); item.appendChild(label); choices.appendChild(item);
+        });
+        const actions = make('div', 'probe-actions');
+        const check = make('button', 'probe-check-btn', 'Check');
+        check.type = 'button';
+        check.addEventListener('click', () => {
+          if (!data.mcqAnswers[question.id]) return showToast('Choose an answer before checking this probe.');
+          data.mcqResults[question.id] = letter(data.mcqAnswers[question.id]) === letter(question.answerKey) ? 'correct' : 'incorrect';
+          data.focusSynthesis = null;
+          saveNow();
+          rerenderUnit(unit);
+        });
+        actions.appendChild(check);
+        card.append(choices, actions);
+        if (result) {
+          const feedback = make('div', 'probe-feedback');
+          feedback.appendChild(make('strong', '', result === 'correct' ? 'Correct.' : 'Not yet.'));
+          feedback.appendChild(document.createTextNode(result === 'correct' ? ' Keep moving - this lesson looks solid.' : ` The correct answer is ${question.answerKey || ''}. Review the resources below before you retry.`));
+          card.appendChild(feedback);
+        }
+        if (result === 'incorrect') card.appendChild(renderResourceCard(unit, lesson));
+        return card;
       }
 
-      function escapeHtml(value) {
-        return String(value)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
+      function renderResourceCard(unit, lesson) {
+        const card = make('div', 'resource-card');
+        const list = make('ul');
+        const pushLink = (href, label) => { const li = document.createElement('li'); const a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = label; li.appendChild(a); list.appendChild(li); };
+        const video = videoUrl(unit, lesson);
+        if (video) pushLink(video, '📹 Watch the lesson video');
+        if (unit > 2) pushLink(`./u${unit}_lesson${lesson}_live.html`, '📝 Follow-along worksheet');
+        pushLink(`./u${unit}_l${lesson}_blooket.csv`, '🃏 Blooket quiz CSV');
+        pushLink('../curriculum_render/index.html', '❓ Curriculum quiz app');
+        card.append(make('div', 'resource-card-header', `📚 Review resources for Unit ${unit}, Lesson ${lesson}`), list);
+        return card;
       }
+
+      function renderFrq(unit) {
+        const data = getUnit(unit);
+        const question = gateQuestion(unit);
+        const section = make('section', 'unit-section');
+        section.append(make('h3', '', 'FRQ synthesis'), make('p', 'copy', 'Write one response that synthesizes the full unit. Click Grade This FRQ when you are ready for AI feedback.'));
+        if (!question) return section.appendChild(make('div', 'empty', 'The gate FRQ for this unit was not found.')), section;
+        const block = make('div', 'frq-block');
+        const answer = document.createElement('textarea');
+        answer.className = 'frq-answer';
+        answer.placeholder = 'Write your full response here. Use statistics vocabulary, evidence, and complete reasoning.';
+        answer.value = data.frqAnswer || '';
+        answer.addEventListener('input', () => { data.frqAnswer = answer.value; data.frqGrade = null; data.focusSynthesis = null; saveSoon(); });
+        const actions = make('div', 'unit-action-row');
+        const button = make('button', 'unit-action-btn', pending.grade[unit] ? 'Grading...' : 'Grade This FRQ');
+        button.type = 'button';
+        button.disabled = !!pending.grade[unit];
+        button.addEventListener('click', () => gradeFrq(unit));
+        actions.appendChild(button);
+        block.append(make('div', 'frq-prompt', stripFrq(question.prompt || '')), answer, actions);
+        if (data.frqGrade) block.appendChild(renderGrade(data.frqGrade));
+        section.appendChild(block);
+        return section;
+      }
+
+      function renderGrade(grade) {
+        const panel = make('div', `frq-grade frq-grade-${grade.score}`);
+        const top = make('div', 'frq-grade-top');
+        top.append(make('div', 'frq-grade-badge', grade.score), make('div', 'frq-grade-title', grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? 'Progressing - you are close.' : 'Needs review before the unit exam.'));
+        const copy = make('div', 'frq-grade-copy', grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? (grade.feedback || 'You hit some key ideas, but your explanation still needs more depth.') : `${grade.feedback || 'Your response is still missing core ideas.'} Review the focus lessons below.`);
+        panel.append(top, copy);
+        if (grade.matched && grade.matched.length) { const list = make('ul', 'grade-list'); grade.matched.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Matched ideas'), list); }
+        if (grade.missing && grade.missing.length) { const list = make('ul', 'grade-list'); grade.missing.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Missing ideas'), list); }
+        return panel;
+      }
+
+      function renderFocus(unit) {
+        const data = getUnit(unit);
+        const section = make('section', 'unit-section');
+        section.append(make('h3', '', 'Show me what to focus on'), make('p', 'copy', 'This combines your MCQ checks, FRQ result, and the AP Course Framework metadata for the unit to produce a prioritized study plan.'));
+        const row = make('div', 'unit-action-row');
+        const button = make('button', 'unit-action-btn secondary', pending.focus[unit] ? 'Building focus plan...' : 'Show me what to focus on');
+        button.type = 'button';
+        button.disabled = !!pending.focus[unit];
+        button.addEventListener('click', () => runFocus(unit));
+        row.appendChild(button);
+        section.appendChild(row);
+        if (!data.focusSynthesis) return section.appendChild(make('div', 'empty', 'No focus plan yet. Answer at least one MCQ or grade the FRQ first.')), section;
+        const focus = data.focusSynthesis;
+        const panel = make('div', 'focus-panel');
+        const top = make('div', 'focus-top');
+        top.appendChild(make('div', `focus-priority-pill focus-priority-${focus.priority}`, `${focus.priority} priority`));
+        panel.append(top, make('div', 'focus-summary', focus.overallSummary || 'The AI returned a limited focus summary for this unit.'));
+        const lessons = make('div', 'focus-lessons');
+        focus.focusLessons.forEach(item => {
+          const card = make('div', 'focus-lesson');
+          const head = make('div', 'focus-lesson-top');
+          const digits = String(item.lesson || '').replace(/[^\d]/g, '');
+          head.append(make('div', 'focus-lesson-title', `${digits ? `Lesson ${digits}` : 'Lesson'}${item.topic ? `: ${item.topic}` : ''}`), make('div', 'focus-lo', `LOs: ${(item.loIds || []).join(', ') || 'Not specified'}`));
+          card.append(head, make('div', 'focus-reason', item.reason || 'Reason not provided.'), make('div', 'focus-action', item.suggestedAction || 'Suggested action not provided.'));
+          lessons.appendChild(card);
+        });
+        panel.appendChild(lessons);
+        if (focus.synthesisNote) panel.appendChild(make('div', 'focus-note', focus.synthesisNote));
+        section.appendChild(panel);
+        return section;
+      }
+
+      async function gradeFrq(unit) {
+        const data = getUnit(unit);
+        const question = gateQuestion(unit);
+        const answer = (data.frqAnswer || '').trim();
+        const promptText = stripFrq(question ? question.prompt : '');
+        if (answer.length < 20) { data.frqGrade = { score:'I', feedback:'Please write a more complete response (at least 20 characters).', matched:[], missing:[] }; saveNow(); rerenderUnit(unit); return; }
+        if (!window.RAILWAY_SERVER_URL) return showToast('The AI grading server is not configured on this page.');
+        pending.grade[unit] = true; rerenderUnit(unit);
+        try {
+          const prompt = window.buildReflectionPromptSG(unit, promptText, answer);
+          const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Study Guide', questionId:gateId(unit), lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer }, prompt }) });
+          if (!response.ok) throw new Error('Grading request failed');
+          let result = normalizeGrade(await response.json()) || { score:'I', feedback:'The grading response was malformed. Try again.', matched:[], missing:[] };
+          if (result.score === 'P' && Array.isArray(result.missing) && result.missing.length === 0) { result.score = 'E'; result.feedback = 'Nice work - you covered the key ideas.'; }
+          data.frqGrade = result;
+          data.focusSynthesis = null;
+          saveNow();
+          try { if (window.railwayClient && typeof window.railwayClient.submitAnswer === 'function') { const sent = window.railwayClient.submitAnswer({ worksheet:'study_guide_diagnostic', unit, gateId:gateId(unit), answer, grade:result }); if (sent && typeof sent.catch === 'function') sent.catch(() => {}); } } catch {}
+          showToast(`Unit ${unit} FRQ graded.`);
+        } catch (error) {
+          showToast(error && error.message ? error.message : 'FRQ grading failed.');
+        } finally {
+          pending.grade[unit] = false;
+          rerenderUnit(unit);
+        }
+      }
+
+      async function runFocus(unit) {
+        const data = getUnit(unit);
+        if (!Object.keys(data.mcqResults || {}).length && !((data.frqAnswer || '').trim() || data.frqGrade)) return showToast('Add at least one MCQ result or FRQ response before building a focus plan.');
+        if (!window.RAILWAY_SERVER_URL) return showToast('The AI focus-synthesis server is not configured on this page.');
+        pending.focus[unit] = true; rerenderUnit(unit);
+        try {
+          const mcqResults = Object.keys(data.mcqResults || {}).map(qid => {
+            const q = questions.get(qid) || {};
+            return { questionId:qid, lesson:lessonFromId(qid), correct:data.mcqResults[qid] === 'correct', selected:data.mcqAnswers[qid] || '', correctAnswer:q.answerKey || '', prompt:(q.prompt || '').slice(0, 400) };
+          });
+          const frameworkContext = typeof UNIT_FRAMEWORKS !== 'undefined' ? window.getFrameworkContextSG(unit, UNIT_FRAMEWORKS) : null;
+          const prompt = window.buildFocusSynthesisPromptSG({ unit, unitTitle:unitTitle(unit), unitTopic:unitTopic(unit), mcqResults, frqAnswer:data.frqAnswer || '', frqGrade:data.frqGrade || null, frameworkContext });
+          const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Focus Synthesis', questionId:`SG-U${unit}-FOCUS`, lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer:'Focus synthesis request' }, prompt }) });
+          if (!response.ok) throw new Error('Focus synthesis request failed');
+          data.focusSynthesis = normalizeFocus(await response.json()) || { priority:'medium', overallSummary:'The AI returned a response, but it was not in the expected focus-synthesis format.', focusLessons:[], synthesisNote:'Try again after checking more MCQ probes or grading the FRQ.' };
+          saveNow();
+          showToast(`Unit ${unit} focus plan updated.`);
+        } catch (error) {
+          showToast(error && error.message ? error.message : 'Focus synthesis failed.');
+        } finally {
+          pending.focus[unit] = false;
+          rerenderUnit(unit);
+        }
+      }
+
+      function exportFilename(snapshot) {
+        const safe = String(snapshot.studentName || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'student';
+        return `ap-stats-diagnostic-${safe}-${snapshot.studentDate || today()}.html`;
+      }
+
+      function exportHtml() {
+        saveNow();
+        const snapshot = serializeState();
+        const info = summaryData(snapshot);
+        const stateJson = JSON.stringify(snapshot, null, 2).replace(/</g, '\\u003c');
+        const unitSections = Array.from({ length: UNIT_COUNT }, (_, i) => i + 1).map(unit => {
+          const data = snapshot.units[unit];
+          const rows = probesFor(unit).map(({ lesson, question }) => `<tr><td>${lesson}</td><td>${esc(lessonTitle(unit, lesson))}</td><td>${esc(trunc(question.prompt || '', 150))}</td><td>${esc(data.mcqAnswers[question.id] || '-')}</td><td>${esc(question.answerKey || '-')}</td><td>${data.mcqResults[question.id] === 'correct' ? '✓' : data.mcqResults[question.id] === 'incorrect' ? '✗' : '-'}</td></tr>`).join('');
+          const q = gateQuestion(unit);
+          const grade = data.frqGrade;
+          const focus = data.focusSynthesis;
+          const gradeHtml = grade ? `<div class="box"><p><span class="badge score-${esc(grade.score)}">${esc(grade.score)}</span></p><p>${esc(grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? (grade.feedback || 'Progressing.') : `${grade.feedback || 'Needs review.'} Review the focus lessons below.`)}</p>${grade.matched.length ? `<p><strong>Matched:</strong> ${esc(grade.matched.join('; '))}</p>` : ''}${grade.missing.length ? `<p><strong>Missing:</strong> ${esc(grade.missing.join('; '))}</p>` : ''}</div>` : `<div class="box muted">No FRQ grade recorded.</div>`;
+          const focusHtml = focus ? `<div class="box"><p><strong>Priority:</strong> ${esc(focus.priority)}</p><p>${esc(focus.overallSummary || '')}</p>${focus.focusLessons.map(item => `<div class="item"><strong>${esc(`${String(item.lesson || '').replace(/[^\d]/g,'') ? `Lesson ${String(item.lesson || '').replace(/[^\d]/g,'')}` : 'Lesson'}${item.topic ? `: ${item.topic}` : ''}`)}</strong><p><strong>LO IDs:</strong> ${esc((item.loIds || []).join(', ') || 'Not specified')}</p><p><strong>Reason:</strong> ${esc(item.reason || 'Not specified')}</p><p><strong>Suggested action:</strong> ${esc(item.suggestedAction || 'Not specified')}</p></div>`).join('')}${focus.synthesisNote ? `<p><strong>Note:</strong> ${esc(focus.synthesisNote)}</p>` : ''}</div>` : `<div class="box muted">No focus synthesis generated for this unit.</div>`;
+          return `<section class="unit"><h2>${esc(unitTitle(unit))}</h2><p class="muted">${esc(unitTopic(unit))}</p><p><span class="pill">Mode: ${esc(data.mode === 'both' ? 'Both' : data.mode.toUpperCase())}</span> <span class="pill">Exam Weight: ${esc(examWeight(unit))}</span></p><h3>MCQ Results</h3><table><thead><tr><th>Lesson</th><th>Topic</th><th>Probe Prompt</th><th>Student Answer</th><th>Correct Answer</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table><h3>FRQ</h3><p>${esc(stripFrq(q ? q.prompt || '' : 'FRQ not found.'))}</p><div class="quote">${esc(data.frqAnswer || '')}</div>${gradeHtml}<h3>Focus Synthesis</h3>${focusHtml}</section>`;
+        }).join('');
+        return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AP Statistics Diagnostic Export</title><style>body{margin:0;padding:32px;font-family:"Segoe UI",Arial,sans-serif;color:#16263d;background:#fff}.sheet{max-width:980px;margin:0 auto}h1,h2,h3{margin-top:0;color:#0d2746}.muted{color:#5f7189}.head{margin-bottom:28px;padding-bottom:18px;border-bottom:3px solid #0d2746}.grid,.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.cell,.card,.unit,.box,.item{border:1px solid #d7dfeb;border-radius:14px;background:#fff}.cell,.card{padding:14px}.card .v{margin-top:8px;font-size:28px;font-weight:800;color:#0d2746}.unit{margin-bottom:26px;padding:22px;break-inside:avoid;page-break-inside:avoid}.pill,.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4fb;font-size:13px;font-weight:700}.quote{padding:14px;border-left:4px solid #214a78;background:#f8fafc;white-space:pre-wrap;line-height:1.6}.box,.item{padding:14px;margin-top:12px}.badge{color:#fff}.score-E{background:#2f7b4a}.score-P{background:#9a6a16}.score-I{background:#ab3e3e}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px 12px;border:1px solid #d7dfeb;text-align:left;vertical-align:top}th{background:#f3f6fa;color:#0d2746}@media print{body{padding:.4in}}</style></head><body><div class="sheet"><section class="head"><h1>AP Statistics Diagnostic Study Guide</h1><p class="muted">Printable review sheet and save file generated from the v2 diagnostic worksheet.</p><div class="grid"><div class="cell"><strong>Name</strong><div>${esc(snapshot.studentName || '')}</div></div><div class="cell"><strong>Period</strong><div>${esc(snapshot.studentPeriod || '')}</div></div><div class="cell"><strong>Date</strong><div>${esc(snapshot.studentDate || '')}</div></div></div></section><section class="summary"><div class="card"><div>Units Attempted</div><div class="v">${info.unitsAttempted}/${UNIT_COUNT}</div></div><div class="card"><div>MCQ Accuracy</div><div class="v">${info.mcqAnswered ? info.mcqAccuracy : 0}%</div></div><div class="card"><div>FRQs Graded</div><div class="v">${info.frqsGraded}</div></div></section>${unitSections}<script type="application/json" id="${STATE_ID}">${stateJson}</script></div></body></html>`;
+      }
+
+      function doExport() {
+        const a = document.createElement('a');
+        const url = URL.createObjectURL(new Blob([exportHtml()], {type:'text/html'}));
+        a.href = url;
+        a.download = exportFilename(serializeState());
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 250);
+        showToast(`Diagnostic exported as ${a.download}.`);
+      }
+
+      function importStateFromFile(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const match = String(reader.result || '').match(/<script[^>]*type=["']application\/json["'][^>]*id=["']sg-state-v2["'][^>]*>([\s\S]*?)<\/script>/i);
+            if (!match) throw new Error('No embedded v2 state block was found in that HTML file.');
+            const parsed = JSON.parse(match[1]);
+            if (!parsed || parsed.schemaVersion !== 2) throw new Error('The imported file is not a valid schemaVersion 2 diagnostic export.');
+            state = normalizeState(parsed);
+            pending.grade = {};
+            pending.focus = {};
+            ui.name.value = state.studentName || '';
+            ui.period.value = state.studentPeriod || '';
+            ui.date.value = state.studentDate || today();
+            saveNow();
+            renderSummary();
+            renderUnits();
+            showToast('Diagnostic imported successfully.');
+          } catch (error) {
+            showToast(error && error.message ? error.message : 'Import failed.');
+          } finally {
+            ui.importInput.value = '';
+          }
+        };
+        reader.onerror = () => { showToast('The selected file could not be read.'); ui.importInput.value = ''; };
+        reader.readAsText(file);
+      }
+
+      function clearAll() {
+        if (!window.confirm('Clear all saved work for this diagnostic?')) return;
+        state = makeDefaultState();
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
+        ui.name.value = state.studentName; ui.period.value = state.studentPeriod; ui.date.value = state.studentDate;
+        renderSummary(); renderUnits(); showToast('All diagnostic data was cleared.');
+      }
+
+      function init() {
+        if (typeof EMBEDDED_CURRICULUM !== 'undefined' && Array.isArray(EMBEDDED_CURRICULUM)) EMBEDDED_CURRICULUM.forEach(q => { if (q && typeof q.id === 'string') questions.set(q.id, q); });
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.schemaVersion === SCHEMA_VERSION) state = normalizeState(parsed);
+          }
+        } catch {}
+        ui.name.value = state.studentName || '';
+        ui.period.value = state.studentPeriod || '';
+        ui.date.value = state.studentDate || today();
+        ui.name.addEventListener('input', () => { state.studentName = ui.name.value; saveSoon(); });
+        ui.period.addEventListener('input', () => { state.studentPeriod = ui.period.value; saveSoon(); });
+        ui.date.addEventListener('input', () => { state.studentDate = ui.date.value; saveSoon(); });
+        ui.exportBtn.addEventListener('click', doExport);
+        ui.importInput.addEventListener('change', importStateFromFile);
+        ui.clearBtn.addEventListener('click', clearAll);
+        renderSummary();
+        renderUnits();
+      }
+
+      init();
     })();
   </script>
 </body>

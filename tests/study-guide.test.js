@@ -1,10 +1,14 @@
 /**
- * Structural tests for the AP Statistics Diagnostic Study Guide.
+ * Structural tests for the AP Statistics Diagnostic Study Guide (v2).
  *
- * These tests check that the generated worksheet + grading prompts
- * file contain the expected wiring, not that the UI renders correctly.
- * (The UI behavior is tested implicitly by using the worksheet in a
- * browser — see STATE_MACHINES.md for the state machine specs.)
+ * The v2 worksheet has per-unit cards with a mode toggle (MCQ / FRQ / Both),
+ * immediate client-side MCQ grading, per-unit FRQ grading via the Railway
+ * AI endpoint, per-unit focus-synthesis ("Show me what to focus on") that
+ * combines MCQ + FRQ signal + AP Course Framework metadata, and export /
+ * import of a self-contained HTML file that doubles as the student's
+ * submission to the teacher and as a save file for resuming later.
+ *
+ * These tests assert the structural wiring — they don't render the UI.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -26,18 +30,28 @@ const EXPECTED_GATE_IDS = [
   'U9-PC-FRQ-Q01',
 ];
 
-describe('ai-grading-prompts-study-guide.js', () => {
+describe('ai-grading-prompts-study-guide.js — v2 exports', () => {
   it('exists on disk', () => {
     expect(existsSync(PROMPTS_PATH)).toBe(true);
   });
 
-  it('exports the expected shape via window assignments', () => {
+  it('defines the v2 schema + storage constants', () => {
+    const src = readFileSync(PROMPTS_PATH, 'utf8');
+    expect(src).toContain('SCHEMA_VERSION_SG');
+    expect(src).toContain('STORAGE_KEY_SG');
+    expect(src).toContain('apStatsStudyGuideDiagnostic.v2');
+  });
+
+  it('exposes all required window globals for the worksheet', () => {
     const src = readFileSync(PROMPTS_PATH, 'utf8');
     expect(src).toContain('window.LESSON_CONTEXT_SG');
     expect(src).toContain('window.UNIT_TITLES_SG');
+    expect(src).toContain('window.UNIT_TOPICS_SG');
     expect(src).toContain('window.GATE_IDS_SG');
     expect(src).toContain('window.buildReflectionPromptSG');
-    expect(src).toContain('window.getRubricSG');
+    expect(src).toContain('window.buildFocusSynthesisPromptSG');
+    expect(src).toContain('window.getFrameworkContextSG');
+    expect(src).toContain('window.stripFrqBoilerplateSG');
   });
 
   it('lists all 9 expected gate IDs', () => {
@@ -57,38 +71,41 @@ describe('ai-grading-prompts-study-guide.js', () => {
 });
 
 describe('ai-grading-prompts-study-guide.js — prompt template structure', () => {
-  it('defines the grading rubric vocabulary in the prompt template', () => {
+  it('FRQ template uses the AP rubric vocabulary', () => {
     const src = readFileSync(PROMPTS_PATH, 'utf8');
     expect(src).toContain('E (Essentially Correct)');
     expect(src).toContain('P (Partially Correct)');
     expect(src).toContain('I (Incorrect)');
   });
 
-  it('includes the unit title and unit topic in the prompt builder output', () => {
-    const src = readFileSync(PROMPTS_PATH, 'utf8');
-    expect(src).toContain('You are grading an AP Statistics Progress Check Free-Response Question');
-    expect(src).toContain('Unit focus:');
-  });
-
-  it('has JSON response schema keys documented in the prompt template', () => {
+  it('FRQ template documents the JSON response schema keys', () => {
     const src = readFileSync(PROMPTS_PATH, 'utf8');
     expect(src).toContain('"score"');
     expect(src).toContain('"feedback"');
     expect(src).toContain('"matched"');
     expect(src).toContain('"missing"');
   });
+
+  it('focus synthesis template requests LO-grounded recommendations', () => {
+    const src = readFileSync(PROMPTS_PATH, 'utf8');
+    expect(src).toContain('focusLessons');
+    expect(src).toContain('loIds');
+    expect(src).toContain('AP Course Framework');
+  });
 });
 
-describe('study_guide_diagnostic.html', () => {
+describe('study_guide_diagnostic.html — v2 structure', () => {
   it('exists on disk', () => {
     expect(existsSync(HTML_PATH)).toBe(true);
   });
 
-  it('loads the shared railway scripts and curriculum data', () => {
+  it('loads railway, curriculum, units, frameworks, and study-guide prompts', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('../railway_config.js');
     expect(src).toContain('../railway_client.js');
     expect(src).toContain('../curriculum_render/data/curriculum.js');
+    expect(src).toContain('../curriculum_render/data/units.js');
+    expect(src).toContain('../curriculum_render/data/frameworks.js');
     expect(src).toContain('ai-grading-prompts-study-guide.js');
   });
 
@@ -99,10 +116,21 @@ describe('study_guide_diagnostic.html', () => {
     }
   });
 
-  it('wires the grading button and localStorage key', () => {
+  it('wires a mode toggle per unit (mcq / frq / both)', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('id="grade-btn"');
-    expect(src).toContain('apStatsStudyGuideDiagnostic.v1');
+    expect(src).toContain('data-mode="mcq"');
+    expect(src).toContain('data-mode="frq"');
+    expect(src).toContain('data-mode="both"');
+  });
+
+  it('has a container for the 9 unit cards', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('id="units-container"');
+  });
+
+  it('uses the v2 localStorage key', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('apStatsStudyGuideDiagnostic.v2');
   });
 
   it('POSTs reflections to /api/ai/grade', () => {
@@ -110,9 +138,26 @@ describe('study_guide_diagnostic.html', () => {
     expect(src).toContain('/api/ai/grade');
   });
 
-  it('references the gate container and summary panel', () => {
+  it('calls the focus synthesis prompt builder', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('id="gates-container"');
-    expect(src).toContain('id="summary-panel"');
+    expect(src).toContain('buildFocusSynthesisPromptSG');
+  });
+
+  it('has export and import buttons', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('id="export-btn"');
+    expect(src).toContain('id="import-input"');
+  });
+
+  it('embeds a JSON state block id for re-import', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-state-v2');
+  });
+
+  it('references EMBEDDED_CURRICULUM, ALL_UNITS_DATA, and UNIT_FRAMEWORKS', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('EMBEDDED_CURRICULUM');
+    expect(src).toContain('ALL_UNITS_DATA');
+    expect(src).toContain('UNIT_FRAMEWORKS');
   });
 });
