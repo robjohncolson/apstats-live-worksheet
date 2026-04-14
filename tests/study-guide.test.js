@@ -237,11 +237,44 @@ describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
     expect(src).toContain('data/formula-probe-supplement.js');
   });
 
-  it('uses the v5 schema version, storage key, and state id', () => {
+  it('uses the v6 schema version, storage key, and state id', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain("STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v5'");
-    expect(src).toContain('SCHEMA_VERSION = 5');
-    expect(src).toContain('sg-state-v5');
+    expect(src).toContain("STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v6'");
+    expect(src).toContain('SCHEMA_VERSION = 6');
+    expect(src).toContain('sg-state-v6');
+  });
+
+  it('declares v6 storage schema', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('apStatsStudyGuideDiagnostic.v6');
+    expect(src).toContain('sg-state-v6');
+    expect(src).toContain('SCHEMA_VERSION = 6');
+  });
+
+  it('exposes v6 FRQ decomposition helpers', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('getFrqDecomposition');
+    expect(src).toContain('computeEffectiveScore');
+    expect(src).toContain('computeEffectivePenalty');
+    expect(src).toContain('recordHelperUsed');
+  });
+
+  it('includes frqHelpers state field', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('frqHelpers');
+    expect(src).toContain('defaultFrqHelpers');
+    expect(src).toContain('normalizeFrqHelpers');
+  });
+
+  it('has FRQ helper modal class', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-frq-helper-modal');
+    expect(src).toContain('sg-frq-helpers');
+  });
+
+  it('loads frq-decompositions.js script', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('data/frq-decompositions.js');
   });
 
   it('publishes and consumes __studyGuideV5__ while keeping the v4 bridge inline', () => {

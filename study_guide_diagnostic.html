@@ -102,6 +102,7 @@
     .sg-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:500}
     .sg-modal{max-width:520px;width:calc(100% - 32px);padding:22px 24px;background:var(--sg-bg);border:1px solid var(--sg-border);border-radius:14px;color:var(--sg-text);display:grid;gap:14px}
     .sg-modal h2{margin:0;font-size:1.15rem}
+    .sg-frq-helper-modal .sg-modal{gap:12px}
     .sg-tier-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--sg-bg-card)}
     .sg-tier-row .sg-tier-dot{width:12px;height:12px;border-radius:999px}
     .sg-tier-row.is-tier-0 .sg-tier-dot{background:#2e7d32}
@@ -111,6 +112,11 @@
     .sg-frq-paper-toggle{align-self:start;padding:8px 12px;border:1px solid var(--sg-border);background:var(--sg-bg-card);color:var(--sg-text);font:inherit;border-radius:999px;cursor:pointer}
     .sg-frq-paper-toggle:hover{border-color:var(--sg-accent)}
     .sg-frq-paper-toggle.is-on{background:var(--sg-accent);color:var(--sg-bg);border-color:var(--sg-accent)}
+    .sg-frq-helpers{display:grid;gap:10px;padding:12px 0;border-top:1px solid var(--sg-border);margin-top:8px}
+    .sg-frq-helpers-intro{margin:0;font-size:.85rem;color:var(--sg-text-dim)}
+    .sg-frq-skill-name{font-weight:700;font-size:.9rem;color:var(--sg-text);margin-top:4px}
+    .sg-frq-helper-formula-btn,.sg-frq-helper-drill-btn{padding:6px 12px;border-radius:999px;border:1px solid var(--sg-border);background:var(--sg-bg-card);color:var(--sg-text);font:inherit;cursor:pointer;font-size:.85rem}
+    .sg-frq-helper-formula-btn:hover,.sg-frq-helper-drill-btn:hover{border-color:var(--sg-accent)}
     .sg-queue-list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
     .sg-queue-item{display:block}
     .sg-queue-item.is-done{opacity:.55}
@@ -205,6 +211,8 @@
     .frq-grade-P .frq-grade-badge{background:var(--sg-mastery-mid)}
     .frq-grade-I .frq-grade-badge{background:var(--sg-mastery-low)}
     .grade-list{margin:0;padding-left:20px;line-height:1.6;color:var(--sg-text-dim)}
+    .frq-grade-effective{font-size:.9rem;color:var(--sg-text-dim);display:grid;gap:4px;padding-top:8px;margin-top:8px;border-top:1px solid var(--sg-border)}
+    .sg-helper-drill-card{display:grid;gap:12px;padding:12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);margin-top:10px}
     .focus-panel{padding:18px;border-radius:8px;border:1px solid var(--sg-border);background:var(--sg-bg-card)}
     .focus-priority-high{background:var(--sg-mastery-low);border-color:var(--sg-mastery-low);color:var(--sg-bg)}
     .focus-priority-medium{background:var(--sg-mastery-mid);border-color:var(--sg-mastery-mid);color:var(--sg-bg)}
@@ -285,11 +293,12 @@
   <script src="data/ap-stats-cartridge.js"></script>
   <script src="data/formula-probe-map.js"></script>
   <script src="data/formula-probe-supplement.js"></script>
+  <script src="data/frq-decompositions.js"></script>
   <script>
     (() => {
-      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v5';
-      const SCHEMA_VERSION = 5;
-      const STATE_ID = 'sg-state-v5';
+      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v6';
+      const SCHEMA_VERSION = 6;
+      const STATE_ID = 'sg-state-v6';
       const UNIT_COUNT = 9;
       {
       'use strict';
@@ -1421,7 +1430,211 @@
 
         window.__studyGuideV5__ = api;
       })(typeof window !== 'undefined' ? window : globalThis);
+      (function(window) {
+        'use strict';
+
+        function hasOwn(obj, key) {
+          return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
+        }
+
+        function createFrqHelpers() {
+          return {
+            formulasViewed: [],
+            mcqDrills: {},
+            confirmed: false,
+            activeDrillQuestionId: null
+          };
+        }
+
+        function ensureFrqHelpers(state, unit) {
+          if (!state || !state.units || !state.units[unit] || typeof state.units[unit] !== 'object') {
+            return null;
+          }
+
+          if (!state.units[unit].frqHelpers || typeof state.units[unit].frqHelpers !== 'object') {
+            state.units[unit].frqHelpers = createFrqHelpers();
+          }
+
+          return state.units[unit].frqHelpers;
+        }
+
+        function normalizeRawScore(rawScore) {
+          if (rawScore === 'E' || rawScore === 'P' || rawScore === 'I') {
+            return rawScore;
+          }
+
+          return 'I';
+        }
+
+        function getRawNumeric(rawScore) {
+          if (rawScore === 'E') {
+            return 1.0;
+          }
+
+          if (rawScore === 'P') {
+            return 0.6;
+          }
+
+          return 0.2;
+        }
+
+        function getFrqDecomposition(questionId) {
+          if (!window || !window.FRQ_DECOMPOSITIONS) {
+            return null;
+          }
+
+          if (typeof questionId !== 'string' || questionId.length === 0) {
+            return null;
+          }
+
+          if (!hasOwn(window.FRQ_DECOMPOSITIONS, questionId)) {
+            return null;
+          }
+
+          return window.FRQ_DECOMPOSITIONS[questionId];
+        }
+
+        function recordHelperUsed(unit, kind, payload, state) {
+          const frqHelpers = ensureFrqHelpers(state, unit);
+
+          if (!frqHelpers) {
+            return;
+          }
+
+          if (typeof payload !== 'string' || payload.length === 0) {
+            return;
+          }
+
+          if (kind === 'formula') {
+            if (frqHelpers.formulasViewed.indexOf(payload) !== -1) {
+              return;
+            }
+
+            frqHelpers.formulasViewed.push(payload);
+            return;
+          }
+
+          if (kind !== 'mcq-correct' && kind !== 'mcq-wrong') {
+            return;
+          }
+
+          if (hasOwn(frqHelpers.mcqDrills, payload)) {
+            return;
+          }
+
+          frqHelpers.mcqDrills[payload] = kind === 'mcq-correct' ? 'correct' : 'wrong';
+        }
+
+        function computeEffectivePenalty(frqHelpers, decomposition) {
+          const skills = decomposition && Array.isArray(decomposition.skills) ? decomposition.skills : [];
+          const formulasViewed = frqHelpers && Array.isArray(frqHelpers.formulasViewed)
+            ? frqHelpers.formulasViewed
+            : [];
+          const mcqDrills = frqHelpers && frqHelpers.mcqDrills && typeof frqHelpers.mcqDrills === 'object'
+            ? frqHelpers.mcqDrills
+            : null;
+          const supportingFormulaIds = new Set();
+          const uniqueFormulasViewed = new Set(formulasViewed);
+          let maxPenalty;
+          let penalty = 0;
+          let i;
+          let j;
+          let skill;
+          let formulas;
+          let questionIds;
+          let status;
+
+          if (!frqHelpers || !decomposition) {
+            return 0;
+          }
+
+          for (i = 0; i < skills.length; i += 1) {
+            skill = skills[i];
+            formulas = skill && Array.isArray(skill.supportingFormulas) ? skill.supportingFormulas : [];
+
+            for (j = 0; j < formulas.length; j += 1) {
+              supportingFormulaIds.add(formulas[j]);
+            }
+          }
+
+          uniqueFormulasViewed.forEach(function(formulaId) {
+            if (supportingFormulaIds.has(formulaId)) {
+              penalty += 0.05;
+            }
+          });
+
+          if (mcqDrills) {
+            questionIds = Object.keys(mcqDrills);
+
+            for (i = 0; i < questionIds.length; i += 1) {
+              status = mcqDrills[questionIds[i]];
+
+              if (status === 'correct') {
+                penalty += 0.10;
+              } else if (status === 'wrong') {
+                penalty += 0.15;
+              }
+            }
+          }
+
+          maxPenalty = Number.isFinite(decomposition.maxPenalty) ? decomposition.maxPenalty : 0.50;
+          maxPenalty = Math.min(0.50, maxPenalty);
+
+          return Math.max(0, Math.min(penalty, maxPenalty));
+        }
+
+        function computeEffectiveScore(rawScore, penalty) {
+          const safePenalty = Number.isFinite(penalty) ? penalty : 0;
+          const normalizedRaw = normalizeRawScore(rawScore);
+          const rawNumeric = getRawNumeric(normalizedRaw);
+
+          if (rawScore === 'paper') {
+            return {
+              raw: 'paper',
+              rawNumeric: null,
+              effective: null,
+              penaltyPct: 0,
+              breakdown: []
+            };
+          }
+
+          return {
+            raw: normalizedRaw,
+            rawNumeric: rawNumeric,
+            effective: Math.round(rawNumeric * (1 - safePenalty) * 100) / 100,
+            penaltyPct: Math.round(safePenalty * 100),
+            breakdown: []
+          };
+        }
+
+        window.__studyGuideV6__ = {
+          getFrqDecomposition: getFrqDecomposition,
+          recordHelperUsed: recordHelperUsed,
+          computeEffectivePenalty: computeEffectivePenalty,
+          computeEffectiveScore: computeEffectiveScore
+        };
+      })(typeof window !== 'undefined' ? window : globalThis);
       const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
+      const { getFrqDecomposition, recordHelperUsed, computeEffectivePenalty, computeEffectiveScore } = window.__studyGuideV6__;
+      function defaultFrqHelpers() {
+        return { formulasViewed: [], mcqDrills: {}, confirmed: false, activeDrillQuestionId: null };
+      }
+
+      function normalizeFrqHelpers(raw) {
+        if (!raw || typeof raw !== 'object') return defaultFrqHelpers();
+        return {
+          formulasViewed: Array.isArray(raw.formulasViewed)
+            ? raw.formulasViewed.filter(v => typeof v === 'string')
+            : [],
+          mcqDrills: raw.mcqDrills && typeof raw.mcqDrills === 'object'
+            ? Object.fromEntries(
+                Object.entries(raw.mcqDrills).filter(([, v]) => v === 'correct' || v === 'wrong')
+              )
+            : {},
+          confirmed: typeof raw.confirmed === 'boolean' ? raw.confirmed : false,
+          activeDrillQuestionId: typeof raw.activeDrillQuestionId === 'string' ? raw.activeDrillQuestionId : null
+        };
+      }
       const GATE_IDS = window.GATE_IDS_SG || {1:'U1-PC-FRQ-Q02',2:'U2-PC-FRQ-Q02',3:'U3-PC-FRQ-Q01',4:'U4-PC-FRQ-Q02',5:'U5-PC-FRQ-Q02',6:'U6-PC-FRQ-Q01',7:'U7-PC-FRQ-Q02',8:'U8-PC-FRQ-Q01',9:'U9-PC-FRQ-Q01'};
       const questions = new Map();
       const probeCache = {};
@@ -1461,7 +1674,7 @@
       function makeDefaultState() {
         const units = {};
         for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
-          units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null };
+          units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers() };
         }
         return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), touchedFormulas:{}, doseLadder:{ tier:0, mcqDebt:0, frqDebt:0 }, dailyDose:null, units };
       }
@@ -1556,7 +1769,7 @@
       function normalizeState(raw) {
         const next = makeDefaultState();
         if (!raw || typeof raw !== 'object') return next;
-        if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4 && raw.schemaVersion !== 5) return next;
+        if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4 && raw.schemaVersion !== 5 && raw.schemaVersion !== 6) return next;
         next.studentName = typeof raw.studentName === 'string' ? raw.studentName : '';
         next.studentPeriod = typeof raw.studentPeriod === 'string' ? raw.studentPeriod : '';
         next.studentDate = typeof raw.studentDate === 'string' ? raw.studentDate : today();
@@ -1568,10 +1781,10 @@
               .filter(([, v]) => v && typeof v === 'object' && typeof v.lastMastery === 'number')
               .map(([k, v]) => [k, { firstTouchedAt: typeof v.firstTouchedAt === 'string' ? v.firstTouchedAt : today(), lastMastery: v.lastMastery }]))
           : {};
-        next.doseLadder = raw.schemaVersion === 5
+        next.doseLadder = (raw.schemaVersion === 5 || raw.schemaVersion === 6)
           ? normalizeDoseLadder(raw.doseLadder)
           : { tier:0, mcqDebt:0, frqDebt:0 };
-        next.dailyDose = raw.schemaVersion === 5
+        next.dailyDose = (raw.schemaVersion === 5 || raw.schemaVersion === 6)
           ? normalizeDailyDoseV5(raw.dailyDose)
           : null;
         const incomingUnits = raw.units && typeof raw.units === 'object' ? raw.units : {};
@@ -1588,6 +1801,7 @@
             frqOnPaper: typeof value.frqOnPaper === 'boolean' ? value.frqOnPaper : false,
             masteryState: value.masteryState && typeof value.masteryState === 'object' ? {...value.masteryState} : {},
             priority: raw.schemaVersion >= 3 ? normalizePriority(value.priority) : null,
+            frqHelpers: normalizeFrqHelpers(value.frqHelpers),
           };
         }
         next.schemaVersion = SCHEMA_VERSION;
@@ -1601,7 +1815,7 @@
         return copy;
       };
 
-      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null });
+      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers() });
       const showToast = msg => { ui.toast.textContent = msg; ui.toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => ui.toast.classList.remove('visible'), 2600); };
       const saveNow = () => { clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState())); } catch { showToast('Local save failed.'); } };
       const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); };
@@ -2271,8 +2485,48 @@
           actions.appendChild(paperButton);
           actions.appendChild(gradeButton);
           card.append(answer, actions);
+          if (!data.frqHelpers) data.frqHelpers = defaultFrqHelpers();
+          const decomp = getFrqDecomposition(questionId);
+          if (decomp && Array.isArray(decomp.skills) && decomp.skills.length) {
+            const helperPanel = make('div', 'sg-frq-helpers');
+            helperPanel.appendChild(make('p', 'sg-frq-helpers-intro', 'Need a hint? Using helpers reduces your score.'));
+            decomp.skills.forEach(skill => {
+              const hasFormulas = Array.isArray(skill.supportingFormulas) && skill.supportingFormulas.length;
+              const hasMcqs = Array.isArray(skill.supportingMcqIds) && skill.supportingMcqIds.length;
+              if (!hasFormulas && !hasMcqs) return;
+              helperPanel.appendChild(make('div', 'sg-frq-skill-name', skill.name || skill.id || 'Skill'));
+              const btnRow = make('div', 'sg-next-row');
+              if (hasFormulas) {
+                skill.supportingFormulas.forEach(formulaId => {
+                  const formulaEntry = typeof getFormulaEntry === 'function' ? getFormulaEntry(formulaId) : null;
+                  const label = formulaEntry && formulaEntry.action ? formulaEntry.action : formulaId;
+                  const btn = make('button', 'sg-frq-helper-formula-btn', `Formula: ${label}`);
+                  btn.type = 'button';
+                  btn.addEventListener('click', () => handleHelperClick('formula', formulaId, unit, data, questionId));
+                  btnRow.appendChild(btn);
+                });
+              }
+              if (hasMcqs) {
+                skill.supportingMcqIds.forEach(mcqId => {
+                  const btn = make('button', 'sg-frq-helper-drill-btn', 'Practice drill');
+                  btn.type = 'button';
+                  btn.dataset.mcqId = mcqId;
+                  btn.addEventListener('click', () => handleHelperClick('drill', mcqId, unit, data, questionId));
+                  btnRow.appendChild(btn);
+                });
+              }
+              helperPanel.appendChild(btnRow);
+            });
+            card.appendChild(helperPanel);
+          }
           if (pending.focus[unit]) card.appendChild(make('div', 'sg-remediation-body', 'Refreshing focus plan...'));
-          if (data.frqGrade) card.appendChild(renderGrade(data.frqGrade));
+          if (data.frqGrade) {
+            const decompForGrade = getFrqDecomposition(questionId);
+            const frqH = data.frqHelpers || defaultFrqHelpers();
+            const penaltyVal = computeEffectivePenalty(frqH, decompForGrade);
+            const effScore = computeEffectiveScore(data.frqGrade.score, penaltyVal);
+            card.appendChild(renderGrade(data.frqGrade, effScore));
+          }
           if (data.frqGrade) {
             const nextButton = make('button', '', 'Next');
             nextButton.id = 'sg-next-after-check';
@@ -2302,6 +2556,91 @@
 
         const unit = Number(state.activeProbe.unit);
         const questionId = state.activeProbe.questionId;
+        const isFrqGate = /^U\d-PC-FRQ/.test(String(questionId || ''));
+        if (isFrqGate) {
+          const data = getUnit(unit);
+          if (!data.frqHelpers) data.frqHelpers = defaultFrqHelpers();
+          const decomp = getFrqDecomposition(questionId);
+          const card = make('div', 'sg-remediation-card');
+          card.appendChild(make('div', 'sg-remediation-kicker', `Unit ${unit} · FRQ Gate`));
+          if (!decomp) {
+            card.appendChild(make('h3', 'sg-remediation-title', 'FRQ Gate'));
+            card.appendChild(make('p', 'sg-remediation-body', 'Skill details are unavailable for this gate.'));
+          } else {
+            card.appendChild(make('h3', 'sg-remediation-title', decomp.topic || 'FRQ Gate'));
+            const activeDrillId = data.frqHelpers.activeDrillQuestionId;
+            if (activeDrillId) {
+              const drillQ = findQuestion(activeDrillId);
+              if (drillQ) {
+                const drillCard = make('div', 'sg-helper-drill-card');
+                drillCard.appendChild(make('p', 'sg-probe-prompt', drillQ.prompt || ''));
+                const drillChoices = make('ul', 'choice-list');
+                const choiceData = drillQ.attachments && Array.isArray(drillQ.attachments.choices) ? drillQ.attachments.choices : [];
+                const drillFeedback = make('div', 'probe-feedback');
+                let drillAnswered = false;
+                choiceData.forEach(choice => {
+                  const item = make('li', 'choice-item');
+                  const label = make('label', 'choice-row');
+                  const input = document.createElement('input');
+                  input.type = 'radio';
+                  input.name = 'sg-drill-choice';
+                  input.value = choice.key;
+                  label.append(input, make('span', 'choice-key', choice.key + ')'), make('span', 'choice-value', choice.value));
+                  item.appendChild(label);
+                  drillChoices.appendChild(item);
+                });
+                const drillCheck = make('button', '', 'Check');
+                drillCheck.type = 'button';
+                drillCheck.addEventListener('click', () => {
+                  if (drillAnswered) return;
+                  const sel = drillChoices.querySelector('input[name="sg-drill-choice"]:checked');
+                  if (!sel) { showToast('Choose an answer.'); return; }
+                  const correct = letter(sel.value) === letter(drillQ.answerKey);
+                  drillAnswered = true;
+                  recordHelperUsed(unit, correct ? 'mcq-correct' : 'mcq-wrong', activeDrillId, state);
+                  drillFeedback.textContent = correct ? 'Correct!' : `Incorrect. Correct answer: ${drillQ.answerKey || '?'}.`;
+                  Array.from(drillChoices.querySelectorAll('input')).forEach(i => { i.disabled = true; });
+                  drillCheck.disabled = true;
+                  const closeBtn = make('button', '', 'Close drill');
+                  closeBtn.type = 'button';
+                  closeBtn.addEventListener('click', () => {
+                    data.frqHelpers.activeDrillQuestionId = null;
+                    saveSoon();
+                    renderRemediation();
+                    renderActiveProbe();
+                  });
+                  drillCard.appendChild(closeBtn);
+                  saveSoon();
+                });
+                drillCard.appendChild(drillChoices);
+                drillCard.appendChild(drillCheck);
+                drillCard.appendChild(drillFeedback);
+                card.appendChild(drillCard);
+              } else {
+                data.frqHelpers.activeDrillQuestionId = null;
+              }
+            } else if (Array.isArray(decomp.skills) && decomp.skills.length) {
+              const skillList = make('ul', 'sg-remediation-skills');
+              decomp.skills.forEach(skill => {
+                const li = document.createElement('li');
+                li.className = 'sg-remediation-body';
+                const nameSpan = make('strong', '', skill.name || 'Skill');
+                li.appendChild(nameSpan);
+                li.appendChild(document.createTextNode(' — ' + (skill.whyItMatters || '')));
+                skillList.appendChild(li);
+              });
+              card.appendChild(skillList);
+            }
+          }
+          const focus = getUnit(unit).focusSynthesis;
+          if (focus && focus.overallSummary) {
+            card.appendChild(make('p', 'sg-remediation-body', focus.overallSummary));
+          }
+          ui.remediation.innerHTML = '';
+          ui.remediation.appendChild(card);
+          typeset(ui.remediation);
+          return;
+        }
         const tag = tagEntry(questionId) || {};
         const lesson = tag.lesson || lessonFromId(questionId);
         const primaryLoId = tag.primaryLoId || loIdsForQuestion(questionId)[0] || '';
@@ -2366,7 +2705,76 @@
         renderRemediation();
       }
 
-      function renderGrade(grade) {
+      function handleHelperClick(kind, id, unit, data, questionId) {
+        if (!data.frqHelpers) data.frqHelpers = defaultFrqHelpers();
+        if (!data.frqHelpers.confirmed) {
+          showFrqHelperModal(() => {
+            data.frqHelpers.confirmed = true;
+            saveSoon();
+            doHelperAction(kind, id, unit, data, questionId);
+          });
+          return;
+        }
+        doHelperAction(kind, id, unit, data, questionId);
+      }
+
+      function doHelperAction(kind, id, unit, data, questionId) {
+        if (kind === 'formula') {
+          recordHelperUsed(unit, 'formula', id, state);
+          renderRemediation();
+          renderActiveProbe();
+          saveSoon();
+        } else if (kind === 'drill') {
+          data.frqHelpers.activeDrillQuestionId = id;
+          renderRemediation();
+          saveSoon();
+        }
+      }
+
+      function showFrqHelperModal(onConfirm) {
+        const backdrop = make('div', 'sg-modal-backdrop sg-frq-helper-modal');
+        const modal = make('div', 'sg-modal');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.tabIndex = -1;
+        modal.appendChild(make('h2', '', 'Using helpers will reduce your score.'));
+        modal.appendChild(make('p', 'sg-remediation-body', 'Continue?'));
+        const btnRow = make('div', 'sg-next-row');
+        const confirmBtn = make('button', '', 'Yes, show helper');
+        confirmBtn.type = 'button';
+        const escHandler = e => {
+          if (e.key === 'Escape') {
+            backdrop.remove();
+            document.removeEventListener('keydown', escHandler);
+          }
+        };
+        confirmBtn.addEventListener('click', () => {
+          backdrop.remove();
+          document.removeEventListener('keydown', escHandler);
+          onConfirm();
+        });
+        const cancelBtn = make('button', '', 'Cancel');
+        cancelBtn.type = 'button';
+        cancelBtn.addEventListener('click', () => {
+          backdrop.remove();
+          document.removeEventListener('keydown', escHandler);
+        });
+        btnRow.appendChild(confirmBtn);
+        btnRow.appendChild(cancelBtn);
+        modal.appendChild(btnRow);
+        backdrop.appendChild(modal);
+        document.addEventListener('keydown', escHandler);
+        backdrop.addEventListener('click', e => {
+          if (e.target === backdrop) {
+            backdrop.remove();
+            document.removeEventListener('keydown', escHandler);
+          }
+        });
+        document.body.appendChild(backdrop);
+        modal.focus();
+      }
+
+      function renderGrade(grade, effectiveScoreResult) {
         const paperGrade = grade.score === 'paper';
         const panel = make('div', `frq-grade frq-grade-${paperGrade ? 'paper' : grade.score}`);
         const top = make('div', 'frq-grade-top');
@@ -2375,6 +2783,13 @@
         panel.append(top, copy);
         if (!paperGrade && grade.matched && grade.matched.length) { const list = make('ul', 'grade-list'); grade.matched.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Matched ideas'), list); }
         if (!paperGrade && grade.missing && grade.missing.length) { const list = make('ul', 'grade-list'); grade.missing.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Missing ideas'), list); }
+        if (effectiveScoreResult && effectiveScoreResult.raw !== 'paper' && effectiveScoreResult.effective !== null) {
+          const effDiv = make('div', 'frq-grade-effective');
+          effDiv.appendChild(make('div', '', `Raw: ${effectiveScoreResult.raw} (${Math.round(effectiveScoreResult.rawNumeric * 100)}%)`));
+          effDiv.appendChild(make('div', '', `Penalty: ${effectiveScoreResult.penaltyPct}%`));
+          effDiv.appendChild(make('div', '', `Effective score: ${Math.round(effectiveScoreResult.effective * 100)}%`));
+          panel.appendChild(effDiv);
+        }
         return panel;
       }
       async function gradeFrq(unit) {
@@ -2489,11 +2904,12 @@
         reader.onload = () => {
           try {
             const html = String(reader.result || '');
+            const matchV6 = html.match(/<script[^>]*data-state-id=["']sg-state-v6["'][^>]*>([\s\S]*?)<\/script>/i);
             const matchV5 = html.match(/<script[^>]*data-state-id=["']sg-state-v5["'][^>]*>([\s\S]*?)<\/script>/i);
             const matchV4 = html.match(/<script[^>]*data-state-id=["']sg-state-v4["'][^>]*>([\s\S]*?)<\/script>/i);
             const matchV3 = html.match(/<script[^>]*data-state-id=["']sg-state-v3["'][^>]*>([\s\S]*?)<\/script>/i);
             const matchV2 = html.match(/<script[^>]*data-state-id=["']sg-state-v2["'][^>]*>([\s\S]*?)<\/script>/i);
-            const match = matchV5 || matchV4 || matchV3 || matchV2;
+            const match = matchV6 || matchV5 || matchV4 || matchV3 || matchV2;
             if (!match) throw new Error('No embedded study-guide state block was found in that HTML file.');
             const parsed = JSON.parse(match[1]);
             state = normalizeState(parsed);
@@ -2552,25 +2968,30 @@
           });
         }
         try {
-          const rawV5 = localStorage.getItem(STORAGE_KEY);
-          if (rawV5) {
-            state = normalizeState(JSON.parse(rawV5));
+          const rawV6 = localStorage.getItem(STORAGE_KEY);
+          if (rawV6) {
+            state = normalizeState(JSON.parse(rawV6));
           } else {
-            const rawV4 = localStorage.getItem('apStatsStudyGuideDiagnostic.v4');
-            if (rawV4) {
-              state = normalizeState(JSON.parse(rawV4));
+            const rawV5 = localStorage.getItem('apStatsStudyGuideDiagnostic.v5');
+            if (rawV5) {
+              state = normalizeState(JSON.parse(rawV5));
             } else {
-              const rawV3 = localStorage.getItem('apStatsStudyGuideDiagnostic.v3');
-              if (rawV3) {
-                state = normalizeState(JSON.parse(rawV3));
-                saveNow();
+              const rawV4 = localStorage.getItem('apStatsStudyGuideDiagnostic.v4');
+              if (rawV4) {
+                state = normalizeState(JSON.parse(rawV4));
               } else {
-                const rawV2 = localStorage.getItem('apStatsStudyGuideDiagnostic.v2');
-                if (rawV2) {
-                  state = normalizeState(JSON.parse(rawV2));
+                const rawV3 = localStorage.getItem('apStatsStudyGuideDiagnostic.v3');
+                if (rawV3) {
+                  state = normalizeState(JSON.parse(rawV3));
                   saveNow();
                 } else {
-                  state = makeDefaultState();
+                  const rawV2 = localStorage.getItem('apStatsStudyGuideDiagnostic.v2');
+                  if (rawV2) {
+                    state = normalizeState(JSON.parse(rawV2));
+                    saveNow();
+                  } else {
+                    state = makeDefaultState();
+                  }
                 }
               }
             }
