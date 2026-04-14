@@ -1,12 +1,10 @@
 /**
- * Structural tests for the AP Statistics Diagnostic Study Guide (v2).
+ * Structural tests for the AP Statistics Diagnostic Study Guide (v3).
  *
- * The v2 worksheet has per-unit cards with a mode toggle (MCQ / FRQ / Both),
- * immediate client-side MCQ grading, per-unit FRQ grading via the Railway
- * AI endpoint, per-unit focus-synthesis ("Show me what to focus on") that
- * combines MCQ + FRQ signal + AP Course Framework metadata, and export /
- * import of a self-contained HTML file that doubles as the student's
- * submission to the teacher and as a save file for resuming later.
+ * The v3 worksheet uses a focused three-pane layout: a weakness rail, one
+ * active probe at a time, and a remediation panel. Adaptive probe selection,
+ * BKT mastery updates, AI grading, focus synthesis, and export/import remain
+ * in place, but the old per-unit card and DAG-renderer shell is gone.
  *
  * These tests assert the structural wiring — they don't render the UI.
  */
@@ -94,7 +92,7 @@ describe('ai-grading-prompts-study-guide.js — prompt template structure', () =
   });
 });
 
-describe('study_guide_diagnostic.html — v2 structure', () => {
+describe('study_guide_diagnostic.html — v3 structure', () => {
   it('exists on disk', () => {
     expect(existsSync(HTML_PATH)).toBe(true);
   });
@@ -116,21 +114,17 @@ describe('study_guide_diagnostic.html — v2 structure', () => {
     }
   });
 
-  it('wires a mode toggle per unit (mcq / frq / both)', () => {
+  it('has the focused v3 layout containers', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('data-mode="mcq"');
-    expect(src).toContain('data-mode="frq"');
-    expect(src).toContain('data-mode="both"');
+    expect(src).toContain('id="sg-rail"');
+    expect(src).toContain('id="sg-active"');
+    expect(src).toContain('id="sg-remediation"');
+    expect(src).toContain('id="theme-toggle"');
   });
 
-  it('has a container for the 9 unit cards', () => {
+  it('uses the v3 localStorage key', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('id="units-container"');
-  });
-
-  it('uses the v2 localStorage key', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('apStatsStudyGuideDiagnostic.v2');
+    expect(src).toContain('apStatsStudyGuideDiagnostic.v3');
   });
 
   it('POSTs reflections to /api/ai/grade', () => {
@@ -151,7 +145,7 @@ describe('study_guide_diagnostic.html — v2 structure', () => {
 
   it('embeds a JSON state block id for re-import', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('sg-state-v2');
+    expect(src).toContain('sg-state-v3');
   });
 
   it('references EMBEDDED_CURRICULUM, ALL_UNITS_DATA, and UNIT_FRAMEWORKS', () => {
@@ -163,13 +157,12 @@ describe('study_guide_diagnostic.html — v2 structure', () => {
 });
 
 describe('study_guide_diagnostic.html — DAG / BKT integration', () => {
-  it('loads the five new adaptive-study scripts (topology, tag map, BKT, selector, renderer)', () => {
+  it('loads the adaptive-study scripts (topology, tag map, BKT, selector)', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('data/dag-topology.js');
     expect(src).toContain('data/question-lo-map.js');
     expect(src).toContain('lib/bkt.js');
     expect(src).toContain('lib/probe-selector.js');
-    expect(src).toContain('lib/dag-renderer.js');
   });
 
   it('persists per-unit masteryState through makeDefaultState / normalizeState / getUnit', () => {
@@ -193,14 +186,6 @@ describe('study_guide_diagnostic.html — DAG / BKT integration', () => {
     expect(src).toContain('loIdsForQuestion');
   });
 
-  it('renders a DAG panel inside each unit body', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('renderDagPanel');
-    expect(src).toContain('window.DagRenderer.render');
-    expect(src).toContain('dag-panel');
-    expect(src).toContain('dag-legend');
-  });
-
   it('passes a masterySnapshot into the focus synthesis prompt builder', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('masterySnapshot');
@@ -211,5 +196,32 @@ describe('study_guide_diagnostic.html — DAG / BKT integration', () => {
     const src = readFileSync(PROMPTS_PATH, 'utf8');
     expect(src).toContain('masterySnapshot');
     expect(src).toContain('Current estimated mastery');
+  });
+});
+
+describe('study_guide_diagnostic.html — v3 focused layout', () => {
+  it('defines the v3 render pipeline', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderTreeRail');
+    expect(src).toContain('function renderActiveProbe');
+    expect(src).toContain('function renderRemediation');
+    expect(src).toContain('function applyFrqFocusToBkt');
+    expect(src).toContain('function pickProbeForLo');
+    expect(src).toContain('function pickNextWeakest');
+    expect(src).toContain('function buildCurriculumLink');
+    expect(src).toContain('function setActiveProbe');
+    expect(src).toContain('function applyTheme');
+  });
+
+  it('no longer references the removed DAG renderer pipeline', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('renderDagPanel');
+    expect(src).not.toContain('window.DagRenderer');
+    expect(src).not.toContain('lib/dag-renderer.js');
+  });
+
+  it('links to curriculum_render via query params', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('../curriculum_render/index.html?u=');
   });
 });
