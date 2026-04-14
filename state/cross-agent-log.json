@@ -2009,15 +2009,310 @@
         "TI-84_Plus_CE/probe-phase119-08c7ad.mjs"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "b8bab85bf7cc",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 119 \u2014 0x08C7AD Common Handler Investigation\n\n## Context\nYou are working on a TI-84 Plus CE R",
+      "status": "completed",
+      "duration_seconds": 816.099,
+      "timestamp": "2026-04-14T18:47:05Z",
+      "files_changed": [
+        ".auto-session-32-p1.md",
+        ".auto-session-32-p2.md",
+        ".auto-session-32-p3.md",
+        "CONTINUATION_PROMPT_CODEX.md",
+        "TI-84_Plus_CE/font-decoder.mjs",
+        "TI-84_Plus_CE/phase118-report.md",
+        "TI-84_Plus_CE/phase119-report.md",
+        "TI-84_Plus_CE/phase120-report.md",
+        "TI-84_Plus_CE/phase99c-poll-port-report.md",
+        "TI-84_Plus_CE/phase99d-report.md",
+        "TI-84_Plus_CE/probe-phase118-04c973.mjs",
+        "TI-84_Plus_CE/probe-phase119-08c7ad.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "cf2763fa288f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 125 \u2014 Visual End-to-End Regression with Full Text Decode\n\n## Context\nYou are working on a TI",
+      "status": "completed",
+      "duration_seconds": 499.738,
+      "timestamp": "2026-04-14T19:11:31Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "15cf3bb93912",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 123 \u2014 Key-Handler Table Initialization Hunt\n\n## Context\nYou are working on a TI-84 Plus CE R",
+      "status": "completed",
+      "duration_seconds": 553.106,
+      "timestamp": "2026-04-14T19:12:21Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7140eff59062",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 122 \u2014 0x0A2E05 Key-Action Dispatch Table\n\n## Context\nYou are working on a TI-84 Plus CE ROM ",
+      "status": "completed",
+      "duration_seconds": 672.735,
+      "timestamp": "2026-04-14T19:14:19Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase122-0a2e05.mjs",
+        "TI-84_Plus_CE/probe-phase123-key-table-init.mjs",
+        "TI-84_Plus_CE/probe-phase125-full-text-decode.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "d432880eea32",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 124 \u2014 0x06EDAC + 0x06FCD0 Home-Screen Key Handlers\n\n## Context\nYou are working on a TI-84 Pl",
+      "status": "completed",
+      "duration_seconds": 704.068,
+      "timestamp": "2026-04-14T19:14:54Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase122-0a2e05.mjs",
+        "TI-84_Plus_CE/probe-phase123-key-table-init.mjs",
+        "TI-84_Plus_CE/probe-phase124-home-key-handlers.mjs",
+        "TI-84_Plus_CE/probe-phase125-full-text-decode.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "ad1d724818e2",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 128 \u2014 0x06EDAC Full-Screen Render Analysis\n\n## Context\nWe're reverse-engineering the TI-84 P",
+      "status": "completed",
+      "duration_seconds": 789.238,
+      "timestamp": "2026-04-14T19:46:26Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "5845343bc237",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 126 \u2014 0x0B8E19 Key-Handler Table Initialization Deep-Dive\n\n## Context\nWe're reverse-engineer",
+      "status": "completed",
+      "duration_seconds": 871.855,
+      "timestamp": "2026-04-14T19:47:45Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "6b820e908322",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 127 \u2014 0x08C7E1+ Key-Code Compare Chain Disassembly\n\n## Context\nWe're reverse-engineering the",
+      "status": "timeout",
+      "duration_seconds": 900.051,
+      "timestamp": "2026-04-14T19:48:15Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "74961bbfa1af",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 129 \u2014 History Area Rendering Investigation\n\n## Context\nWe're reverse-engineering the TI-84 P",
+      "status": "timeout",
+      "duration_seconds": 900.048,
+      "timestamp": "2026-04-14T19:48:18Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "00594de020bd",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 130 \u2014 Seed 0x54CDD5 and Retranspile\n\n## Context\nYou are working on a TI-84 Plus CE ROM trans",
+      "status": "completed",
+      "duration_seconds": 77.494,
+      "timestamp": "2026-04-14T20:05:25Z",
+      "files_changed": [
+        "TI-84_Plus_CE/phase130-seeds.txt",
+        "scripts/transpile-ti84-rom.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "7b1daf4c3292",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 131 \u2014 0x06EDAC VRAM Blit Mechanism Analysis\n\n## Context\nYou are working on a TI-84 Plus CE R",
+      "status": "timeout",
+      "duration_seconds": 600.046,
+      "timestamp": "2026-04-14T20:14:09Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f1d1195478e9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 133 \u2014 Home-Screen Key Handler Functions\n\n## Context\nYou are working on a TI-84 Plus CE ROM t",
+      "status": "timeout",
+      "duration_seconds": 600.051,
+      "timestamp": "2026-04-14T20:14:10Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "13e568a18458",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 135 \u2014 Hardware Poll 0x006138 Response Implementation\n\n## Context\nYou are working on a TI-84 ",
+      "status": "completed",
+      "duration_seconds": 391.49,
+      "timestamp": "2026-04-14T20:39:49Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase135-poll-boot.mjs",
+        "TI-84_Plus_CE/phase135-report.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "a2b7c36bd2fa",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 134 \u2014 RAM Dispatch Table Initialization Hunt\n\n## Context\nYou are working on a TI-84 Plus CE ",
+      "status": "completed",
+      "duration_seconds": 814.101,
+      "timestamp": "2026-04-14T20:46:50Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e2b4ce086ae1",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 136 \u2014 0x08759D Key-Code Table Deep Analysis\n\n## Context\nYou are working on a TI-84 Plus CE R",
+      "status": "timeout",
+      "duration_seconds": 900.081,
+      "timestamp": "2026-04-14T20:48:19Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9fb3860210d1",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 137 \u2014 0x0800A0 Caller Analysis (IY+0x14 bit 3 flag)\n\n## Context\nYou are working on a TI-84 P",
+      "status": "timeout",
+      "duration_seconds": 900.059,
+      "timestamp": "2026-04-14T20:48:21Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "48c1f131d953",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 140 \u2014 IY+0x14 Bit 3 Cross-Reference with TI-OS Documentation\n\n## Context\nWe are reverse-engi",
+      "status": "completed",
+      "duration_seconds": 385.82,
+      "timestamp": "2026-04-14T21:10:08Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase140-iy-flags.mjs",
+        "TI-84_Plus_CE/phase140-report.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "87f99c99d6d6",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 139 \u2014 Boot Stall Root Cause at Step 691\n\n## Context\nWe are reverse-engineering the TI-84 Plu",
+      "status": "completed",
+      "duration_seconds": 740.625,
+      "timestamp": "2026-04-14T21:16:01Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f931405d92ac",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 138 \u2014 0x056900 Dispatch Table Populator Deep Dive\n\n## Context\nWe are reverse-engineering the",
+      "status": "completed",
+      "duration_seconds": 761.439,
+      "timestamp": "2026-04-14T21:16:20Z",
+      "files_changed": [
+        "TI-84_Plus_CE/phase138-report.md",
+        "TI-84_Plus_CE/phase139-report.md",
+        "TI-84_Plus_CE/phase140-report.md",
+        "TI-84_Plus_CE/phase141-report.md",
+        "TI-84_Plus_CE/probe-phase138-dispatch-populator.mjs",
+        "TI-84_Plus_CE/probe-phase139-boot-stall.mjs",
+        "TI-84_Plus_CE/probe-phase140-iy-flags.mjs",
+        "TI-84_Plus_CE/probe-phase141-scancode-translate.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "6d99ab7e29b7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 141 \u2014 Scan Code \u2192 Internal Code Translation Layer\n\n## Context\nWe are reverse-engineering the",
+      "status": "timeout",
+      "duration_seconds": 900.069,
+      "timestamp": "2026-04-14T21:18:43Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9fe8a3cf07a8",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Echo test: reply with exactly 'CODEX_OK'",
+      "status": "completed",
+      "duration_seconds": 27.819,
+      "timestamp": "2026-04-14T21:36:58Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "a1bf152b8f4a",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 142 \u2014 FD-Prefix Transpiler Bug Investigation\n\n## Context\n\nYou are working on a TI-84 Plus CE",
+      "status": "completed",
+      "duration_seconds": 342.6,
+      "timestamp": "2026-04-14T21:40:23Z",
+      "files_changed": [
+        "TI-84_Plus_CE/phase142-report.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "ec4061b0182e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 144 \u2014 Wire Scan-Code Translation Table into Browser Shell\n\n## Context\n\nYou are working on a ",
+      "status": "completed",
+      "duration_seconds": 467.656,
+      "timestamp": "2026-04-14T21:42:32Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 174,
-    "cc_to_codex": 174,
+    "total_calls": 197,
+    "cc_to_codex": 197,
     "codex_to_cc": 0,
-    "completed": 133,
-    "failed": 38,
+    "completed": 149,
+    "failed": 45,
     "refused": 0,
-    "avg_duration_seconds": 416.031
+    "avg_duration_seconds": 441.654
   }
 }
