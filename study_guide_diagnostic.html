@@ -113,10 +113,26 @@
     .sg-frq-paper-toggle:hover{border-color:var(--sg-accent)}
     .sg-frq-paper-toggle.is-on{background:var(--sg-accent);color:var(--sg-bg);border-color:var(--sg-accent)}
     .sg-frq-helpers{display:grid;gap:10px;padding:12px 0;border-top:1px solid var(--sg-border);margin-top:8px}
+    .sg-frq-helpers-header{display:grid;gap:4px;margin-bottom:4px}
+    .sg-frq-helpers-title{margin:0;font-size:1rem}
     .sg-frq-helpers-intro{margin:0;font-size:.85rem;color:var(--sg-text-dim)}
-    .sg-frq-skill-name{font-weight:700;font-size:.9rem;color:var(--sg-text);margin-top:4px}
-    .sg-frq-helper-formula-btn,.sg-frq-helper-drill-btn{padding:6px 12px;border-radius:999px;border:1px solid var(--sg-border);background:var(--sg-bg-card);color:var(--sg-text);font:inherit;cursor:pointer;font-size:.85rem}
-    .sg-frq-helper-formula-btn:hover,.sg-frq-helper-drill-btn:hover{border-color:var(--sg-accent)}
+    .sg-frq-skill-list{margin:0;padding:0;list-style:none;display:grid;gap:14px}
+    .sg-frq-skill{display:grid;gap:8px;padding:12px;border:1px solid var(--sg-border);border-radius:10px;background:var(--sg-bg-card)}
+    .sg-frq-skill-head{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+    .sg-frq-skill-num{width:28px;height:28px;border-radius:999px;background:var(--sg-bar-track);color:var(--sg-text);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem}
+    .sg-frq-skill-body{display:grid;gap:4px}
+    .sg-frq-skill-name{font-weight:700;font-size:.95rem;color:var(--sg-text);margin:0}
+    .sg-frq-skill-why{margin:0;font-size:.82rem;color:var(--sg-text-dim);line-height:1.4}
+    .sg-frq-skill-helpers{display:grid;gap:6px}
+    @media (min-width:600px){.sg-frq-skill-helpers{grid-template-columns:1fr 1fr}}
+    .sg-frq-helper-btn,.sg-frq-helper-formula-btn,.sg-frq-helper-drill-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--sg-border);background:var(--sg-bg);color:var(--sg-text);font:inherit;cursor:pointer;font-size:.85rem;text-align:left;width:100%}
+    .sg-frq-helper-btn:hover:not([data-used="true"]){border-color:var(--sg-accent)}
+    .sg-frq-helper-btn[data-used="true"]{opacity:.72;background:var(--sg-bar-track);cursor:default;pointer-events:none}
+    .sg-frq-helper-btn[data-used="true"] .sg-frq-helper-label::before{content:"✓ ";color:var(--sg-mastery-high);font-weight:800}
+    .sg-frq-helper-label{flex:1;color:inherit}
+    .sg-frq-helper-label strong{color:var(--sg-text);font-weight:700}
+    .sg-frq-helper-cost{flex-shrink:0;padding:2px 8px;border-radius:999px;background:var(--sg-bg-card);color:var(--sg-text-dim);font-size:.75rem;font-weight:700;white-space:nowrap}
+    .sg-frq-helper-btn[data-used="true"] .sg-frq-helper-cost{background:var(--sg-bg);color:var(--sg-text-dim)}
     .sg-queue-list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
     .sg-queue-item{display:block}
     .sg-queue-item.is-done{opacity:.55}
@@ -300,6 +316,7 @@
       const SCHEMA_VERSION = 6;
       const STATE_ID = 'sg-state-v6';
       const UNIT_COUNT = 9;
+      <!-- block-scope at line ~303 intentionally preserved; see session 76 notes -->
       {
       'use strict';
 
@@ -2487,38 +2504,7 @@
           card.append(answer, actions);
           if (!data.frqHelpers) data.frqHelpers = defaultFrqHelpers();
           const decomp = getFrqDecomposition(questionId);
-          if (decomp && Array.isArray(decomp.skills) && decomp.skills.length) {
-            const helperPanel = make('div', 'sg-frq-helpers');
-            helperPanel.appendChild(make('p', 'sg-frq-helpers-intro', 'Need a hint? Using helpers reduces your score.'));
-            decomp.skills.forEach(skill => {
-              const hasFormulas = Array.isArray(skill.supportingFormulas) && skill.supportingFormulas.length;
-              const hasMcqs = Array.isArray(skill.supportingMcqIds) && skill.supportingMcqIds.length;
-              if (!hasFormulas && !hasMcqs) return;
-              helperPanel.appendChild(make('div', 'sg-frq-skill-name', skill.name || skill.id || 'Skill'));
-              const btnRow = make('div', 'sg-next-row');
-              if (hasFormulas) {
-                skill.supportingFormulas.forEach(formulaId => {
-                  const formulaEntry = typeof getFormulaEntry === 'function' ? getFormulaEntry(formulaId) : null;
-                  const label = formulaEntry && formulaEntry.action ? formulaEntry.action : formulaId;
-                  const btn = make('button', 'sg-frq-helper-formula-btn', `Formula: ${label}`);
-                  btn.type = 'button';
-                  btn.addEventListener('click', () => handleHelperClick('formula', formulaId, unit, data, questionId));
-                  btnRow.appendChild(btn);
-                });
-              }
-              if (hasMcqs) {
-                skill.supportingMcqIds.forEach(mcqId => {
-                  const btn = make('button', 'sg-frq-helper-drill-btn', 'Practice drill');
-                  btn.type = 'button';
-                  btn.dataset.mcqId = mcqId;
-                  btn.addEventListener('click', () => handleHelperClick('drill', mcqId, unit, data, questionId));
-                  btnRow.appendChild(btn);
-                });
-              }
-              helperPanel.appendChild(btnRow);
-            });
-            card.appendChild(helperPanel);
-          }
+          renderFrqHelperPanel(card, decomp, unit, data, questionId);
           if (pending.focus[unit]) card.appendChild(make('div', 'sg-remediation-body', 'Refreshing focus plan...'));
           if (data.frqGrade) {
             const decompForGrade = getFrqDecomposition(questionId);
@@ -2601,6 +2587,7 @@
                   drillFeedback.textContent = correct ? 'Correct!' : `Incorrect. Correct answer: ${drillQ.answerKey || '?'}.`;
                   Array.from(drillChoices.querySelectorAll('input')).forEach(i => { i.disabled = true; });
                   drillCheck.disabled = true;
+                  renderActiveProbe();
                   const closeBtn = make('button', '', 'Close drill');
                   closeBtn.type = 'button';
                   closeBtn.addEventListener('click', () => {
@@ -2703,6 +2690,176 @@
         renderQueuePane();
         renderActiveProbe();
         renderRemediation();
+      }
+
+      function helperSkillHasContent(skill) {
+        const hasFormulas = Array.isArray(skill && skill.supportingFormulas) && skill.supportingFormulas.length;
+        const hasDrills = Array.isArray(skill && skill.supportingMcqIds) && skill.supportingMcqIds.length;
+        return hasFormulas || hasDrills;
+      }
+
+      function helperUsageState(data) {
+        const helpers = data && data.frqHelpers && typeof data.frqHelpers === 'object'
+          ? data.frqHelpers
+          : defaultFrqHelpers();
+
+        return {
+          formulasViewed: Array.isArray(helpers.formulasViewed) ? helpers.formulasViewed : [],
+          mcqDrills: helpers.mcqDrills && typeof helpers.mcqDrills === 'object' ? helpers.mcqDrills : {}
+        };
+      }
+
+      function helperPromptSnippet(questionId) {
+        const question = findQuestion(questionId);
+        const prompt = question && typeof question.prompt === 'string'
+          ? question.prompt.replace(/\s+/g, ' ').trim()
+          : '';
+
+        return prompt ? prompt.slice(0, 40) : '';
+      }
+
+      function helperDrillDescriptor(mcqId) {
+        const tag = tagEntry(mcqId) || {};
+        const formulaName = typeof tag.formulaName === 'string' ? tag.formulaName.trim() : '';
+
+        if (formulaName) {
+          return formulaName;
+        }
+
+        if (tag.lesson) {
+          const unitMatch = String(mcqId || '').match(/^U(\d+)-/);
+          const unit = tag.unit || (unitMatch ? Number(unitMatch[1]) : null);
+          const lessonName = unit ? lessonTitle(unit, tag.lesson) : '';
+
+          if (typeof lessonName === 'string' && lessonName.trim()) {
+            return lessonName.trim();
+          }
+        }
+
+        return helperPromptSnippet(mcqId) || mcqId;
+      }
+
+      function appendHelperLabel(labelNode, prefixText, detailText) {
+        const strong = make('strong', '', detailText);
+        labelNode.appendChild(document.createTextNode(prefixText + ' · '));
+        labelNode.appendChild(strong);
+      }
+
+      function buildFrqHelperButton(kind, id, detailText, unit, data, questionId, usedState) {
+        const button = document.createElement('button');
+        const label = make('span', 'sg-frq-helper-label');
+        const cost = make('span', 'sg-frq-helper-cost');
+        const drillOutcome = kind === 'drill' ? usedState.drillOutcome : '';
+        const used = kind === 'formula' ? usedState.used : drillOutcome === 'correct' || drillOutcome === 'wrong';
+        const penalty = kind === 'formula'
+          ? 5
+          : drillOutcome === 'wrong'
+            ? 15
+            : 10;
+
+        button.type = 'button';
+        button.className = kind === 'formula'
+          ? 'sg-frq-helper-btn sg-frq-helper-formula-btn'
+          : 'sg-frq-helper-btn sg-frq-helper-drill-btn';
+        button.dataset.used = used ? 'true' : 'false';
+        button.dataset.penalty = String(penalty);
+
+        if (kind === 'formula') {
+          appendHelperLabel(label, 'Formula card', detailText);
+          cost.textContent = '−5%';
+        } else {
+          appendHelperLabel(label, 'Practice drill', detailText);
+          button.dataset.mcqId = id;
+          cost.textContent = drillOutcome === 'correct'
+            ? '−10% (correct)'
+            : drillOutcome === 'wrong'
+              ? '−15% (wrong)'
+              : '−10% / −15%';
+        }
+
+        button.append(label, cost);
+
+        if (!used) {
+          button.addEventListener('click', () => handleHelperClick(kind, id, unit, data, questionId));
+        }
+
+        return button;
+      }
+
+      function renderFrqHelperPanel(card, decomp, unit, data, questionId) {
+        if (!decomp || !Array.isArray(decomp.skills) || !decomp.skills.length) {
+          return null;
+        }
+
+        const helperSkills = decomp.skills.filter(helperSkillHasContent);
+
+        if (!helperSkills.length) {
+          return null;
+        }
+
+        const helperPanel = make('section', 'sg-frq-helpers');
+        const header = make('header', 'sg-frq-helpers-header');
+        const skillList = make('ol', 'sg-frq-skill-list');
+        const usageState = helperUsageState(data);
+
+        header.appendChild(make('h4', 'sg-frq-helpers-title', 'Need a hint?'));
+        header.appendChild(make('p', 'sg-frq-helpers-intro', 'Each hint lowers your score. Formula cards: −5%. Correct drill: −10%. Wrong drill: −15%. Max total penalty: −50%.'));
+        helperPanel.appendChild(header);
+
+        helperSkills.forEach((skill, index) => {
+          const item = make('li', 'sg-frq-skill');
+          const head = make('div', 'sg-frq-skill-head');
+          const body = make('div', 'sg-frq-skill-body');
+          const helpers = make('div', 'sg-frq-skill-helpers');
+          const formulas = Array.isArray(skill.supportingFormulas) ? skill.supportingFormulas : [];
+          const drills = Array.isArray(skill.supportingMcqIds) ? skill.supportingMcqIds : [];
+          const whyText = typeof skill.whyItMatters === 'string' ? skill.whyItMatters.trim() : '';
+
+          head.appendChild(make('span', 'sg-frq-skill-num', String(index + 1)));
+          body.appendChild(make('div', 'sg-frq-skill-name', skill.name || skill.id || 'Skill'));
+
+          if (whyText) {
+            body.appendChild(make('p', 'sg-frq-skill-why', `Why it matters: ${whyText}`));
+          }
+
+          head.appendChild(body);
+          item.appendChild(head);
+
+          formulas.forEach(formulaId => {
+            const formulaEntry = getFormulaEntry(formulaId);
+            const detailText = formulaEntry && formulaEntry.action ? formulaEntry.action : formulaId;
+            const used = usageState.formulasViewed.includes(formulaId);
+
+            helpers.appendChild(buildFrqHelperButton(
+              'formula',
+              formulaId,
+              detailText,
+              unit,
+              data,
+              questionId,
+              { used: used }
+            ));
+          });
+
+          drills.forEach(mcqId => {
+            helpers.appendChild(buildFrqHelperButton(
+              'drill',
+              mcqId,
+              helperDrillDescriptor(mcqId),
+              unit,
+              data,
+              questionId,
+              { drillOutcome: usageState.mcqDrills[mcqId] || '' }
+            ));
+          });
+
+          item.appendChild(helpers);
+          skillList.appendChild(item);
+        });
+
+        helperPanel.appendChild(skillList);
+        card.appendChild(helperPanel);
+        return helperPanel;
       }
 
       function handleHelperClick(kind, id, unit, data, questionId) {

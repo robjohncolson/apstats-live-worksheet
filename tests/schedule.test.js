@@ -11,7 +11,7 @@ import { join } from 'path';
 let document;
 let periodBTable;
 let periodETable;
-let quizInventoryTable;
+let cartridgeTrackerTable;
 
 beforeAll(() => {
   const html = readFileSync(join(__dirname, '..', 'unit4_schedule_v4.html'), 'utf-8');
@@ -22,7 +22,7 @@ beforeAll(() => {
   const tables = document.querySelectorAll('.schedule-table');
   periodBTable = tables[0];
   periodETable = tables[1];
-  quizInventoryTable = tables[2];
+  cartridgeTrackerTable = tables[2];
 });
 
 describe('Schedule Structure', () => {
@@ -35,8 +35,8 @@ describe('Schedule Structure', () => {
 
   it('should show correct date range in meta', () => {
     const meta = document.querySelector('.header .meta');
-    expect(meta.textContent).toContain('January 20');
-    expect(meta.textContent).toContain('February 6, 2026');
+    expect(meta.textContent).toContain('January 21');
+    expect(meta.textContent).toContain('February 7, 2026');
   });
 
   it('should have both Period B and Period E sections', () => {
@@ -54,12 +54,12 @@ describe('Schedule Structure', () => {
     const periodEHeader = document.querySelector('.section-header.period-e');
 
     expect(periodBHeader.textContent).toContain('Mon / Tue / Thu / Fri');
-    expect(periodEHeader.textContent).toContain('Mon / Wed / Thu / Fri');
+    expect(periodEHeader.textContent).toContain('Mon / Wed / Fri');
   });
 
-  it('should have three schedule tables (B, E, Quiz Inventory)', () => {
+  it('should have four schedule tables (B, E, cartridges, resources)', () => {
     const tables = document.querySelectorAll('.schedule-table');
-    expect(tables.length).toBe(3);
+    expect(tables.length).toBe(4);
   });
 });
 
@@ -101,42 +101,42 @@ describe('Period B Schedule', () => {
     expect(dividers[2].textContent).toContain('Week 3');
   });
 
-  it('should start with Topics 4.1-4.2 on Tue 1/20', () => {
-    const row = getRowByDate('1/20');
+  it('should start with Topics 4.1-4.2 on Tue 1/21', () => {
+    const row = getRowByDate('1/21');
     expect(row).toBeDefined();
     expect(row.textContent).toContain('4.1');
     expect(row.textContent).toContain('4.2');
     expect(row.textContent).toContain('Simulation');
   });
 
-  it('should have Topics 4.3-4.5 on Thu 1/22 (Long block)', () => {
-    const row = getRowByDate('1/22');
+  it('should have Topics 4.3-4.5 on Thu 1/23', () => {
+    const row = getRowByDate('1/23');
     expect(row).toBeDefined();
-    expect(row.classList.contains('long-block')).toBe(true);
     expect(row.textContent).toContain('4.3');
     expect(row.textContent).toContain('4.4');
     expect(row.textContent).toContain('4.5');
+    expect(row.textContent).toContain('Rules Marathon');
   });
 
-  it('should assign Quiz 4.1-4.2 on Thu 1/22', () => {
-    const row = getRowByDate('1/22');
+  it('should assign Quiz 4.1-4.2 on Thu 1/23', () => {
+    const row = getRowByDate('1/23');
     expect(row.querySelector('.assign-cell').textContent).toContain('Quiz 4.1-4.2');
   });
 
-  it('should have Quiz 4.1-4.2 due on Fri 1/23', () => {
-    const row = getRowByDate('1/23');
+  it('should have Quiz 4.1-4.2 due on Fri 1/24', () => {
+    const row = getRowByDate('1/24');
     expect(row.querySelector('.due-cell').textContent).toContain('Quiz 4.1-4.2');
   });
 
-  it('should have Progress Check on Fri 1/30', () => {
-    const row = getRowByDate('1/30');
+  it('should have Progress Check on Fri 1/31', () => {
+    const row = getRowByDate('1/31');
     expect(row).toBeDefined();
     expect(row.textContent).toContain('Progress Check');
     expect(row.querySelector('.badge-progress')).toBeDefined();
   });
 
-  it('should have Unit 4 Test on Thu 2/5', () => {
-    const row = getRowByDate('2/5');
+  it('should have Unit 4 Test on Thu 2/6', () => {
+    const row = getRowByDate('2/6');
     expect(row).toBeDefined();
     expect(row.classList.contains('test-day')).toBe(true);
     expect(row.textContent).toContain('UNIT 4 TEST');
@@ -144,8 +144,8 @@ describe('Period B Schedule', () => {
     expect(row.textContent).toContain('2 FRQ');
   });
 
-  it('should have Binomial & Geometric (4.10-4.12) on Thu 1/29', () => {
-    const row = getRowByDate('1/29');
+  it('should have Binomial & Geometric (4.10-4.12) on Thu 1/30', () => {
+    const row = getRowByDate('1/30');
     expect(row).toBeDefined();
     expect(row.textContent).toContain('4.10');
     expect(row.textContent).toContain('4.11');
@@ -163,41 +163,39 @@ describe('Period E Schedule', () => {
     );
   };
 
-  it('should start with Topics 4.1-4.2 on Wed 1/21', () => {
-    const row = getRowByDate('1/21');
+  it('should start with Topics 4.1-4.2 on Wed 1/22', () => {
+    const row = getRowByDate('1/22');
     expect(row).toBeDefined();
     expect(row.textContent).toContain('4.1');
     expect(row.textContent).toContain('4.2');
   });
 
-  it('should have standalone 4.3 on Thu 1/22', () => {
-    const row = getRowByDate('1/22');
+  it('should have Topics 4.3-4.5 on Fri 1/24', () => {
+    const row = getRowByDate('1/24');
     expect(row).toBeDefined();
     expect(row.textContent).toContain('4.3');
-    expect(row.textContent).toContain('9 min');
+    expect(row.textContent).toContain('4.4');
+    expect(row.textContent).toContain('4.5');
+    expect(row.textContent).toContain('75 min');
   });
 
-  it('should have Unit 4 Test on Fri 2/6', () => {
-    const row = getRowByDate('2/6');
+  it('should have Unit 4 Test on Fri 2/7', () => {
+    const row = getRowByDate('2/7');
     expect(row).toBeDefined();
     expect(row.classList.contains('test-day')).toBe(true);
     expect(row.textContent).toContain('UNIT 4 TEST');
   });
 
-  it('should split binomial/geometric across two days', () => {
-    // 4.10-4.11 on Fri 1/30
-    const row1 = getRowByDate('1/30');
-    expect(row1.textContent).toContain('4.10');
-    expect(row1.textContent).toContain('4.11');
-    expect(row1.textContent).toContain('Binomial');
-
-    // 4.12 on Mon 2/2
-    const row2 = getRowByDate('2/2');
-    expect(row2.textContent).toContain('4.12');
-    expect(row2.textContent).toContain('Geometric');
+  it('should cover binomial and geometric together on Mon 2/3', () => {
+    const row = getRowByDate('2/3');
+    expect(row.textContent).toContain('4.10');
+    expect(row.textContent).toContain('4.11');
+    expect(row.textContent).toContain('4.12');
+    expect(row.textContent).toContain('Binomial');
+    expect(row.textContent).toContain('Geometric');
   });
 
-  it('should have Progress Check on Thu 2/5', () => {
+  it('should have Progress Check on Wed 2/5', () => {
     const row = getRowByDate('2/5');
     expect(row).toBeDefined();
     expect(row.textContent).toContain('Progress Check');
@@ -249,37 +247,44 @@ describe('Lagged Quiz System Validation', () => {
   });
 });
 
-describe('Quiz Inventory Table', () => {
-  it('should list all quizzes', () => {
-    const quizzes = quizInventoryTable.querySelectorAll('tbody tr');
-    expect(quizzes.length).toBeGreaterThanOrEqual(7);
+describe('Drill Cartridge Tracker', () => {
+  it('should list all drill cartridges', () => {
+    const cartridges = cartridgeTrackerTable.querySelectorAll('tbody tr');
+    expect(cartridges.length).toBeGreaterThanOrEqual(7);
   });
 
-  it('should have Quiz 4.1-4.2 with correct dates', () => {
-    const rows = quizInventoryTable.querySelectorAll('tbody tr');
-    const quiz412 = Array.from(rows).find(r => r.textContent.includes('Quiz 4.1-4.2'));
+  it('should include apstatu4l1l2 with correct first-use dates', () => {
+    const rows = cartridgeTrackerTable.querySelectorAll('tbody tr');
+    const cartridge412 = Array.from(rows).find(r => r.textContent.includes('apstatu4l1l2'));
 
-    expect(quiz412).toBeDefined();
-    expect(quiz412.textContent).toContain('Simulation');
-    expect(quiz412.textContent).toContain('LLN');
-    expect(quiz412.textContent).toContain('Thu 1/22'); // B Assigned
-    expect(quiz412.textContent).toContain('Fri 1/23'); // B Due
+    expect(cartridge412).toBeDefined();
+    expect(cartridge412.textContent).toContain('4.1-4.2');
+    expect(cartridge412.textContent).toContain('Tue 1/21');
+    expect(cartridge412.textContent).toContain('Wed 1/22');
   });
 
-  it('should show different quiz splits for Period E', () => {
-    const text = quizInventoryTable.textContent;
-    // Period E has separate Quiz 4.10-4.11 and Quiz 4.12
-    expect(text).toContain('Quiz 4.10-4.11');
-    expect(text).toContain('Quiz 4.12');
+  it('should include the combined 4.10-4.12 cartridge timing for Period E', () => {
+    const rows = cartridgeTrackerTable.querySelectorAll('tbody tr');
+    const cartridge101112 = Array.from(rows).find(r => r.textContent.includes('apstatu4l10l11l12'));
+
+    expect(cartridge101112).toBeDefined();
+    expect(cartridge101112.textContent).toContain('4.10-4.12');
+    expect(cartridge101112.textContent).toContain('Thu 1/30');
+    expect(cartridge101112.textContent).toContain('Wed 1/29 + Fri 1/31');
   });
 });
 
 describe('Autograder Rules Section', () => {
   it('should have Communication Gate rules', () => {
+    const header = Array.from(document.querySelectorAll('.section-header'))
+      .find(sectionHeader => sectionHeader.textContent.includes('Global Autograder Rules'));
     const dangerAlert = document.querySelector('.alert-danger');
+
+    expect(header).toBeDefined();
+    expect(header.textContent).toContain('No Naked Numbers');
     expect(dangerAlert).toBeDefined();
     expect(dangerAlert.textContent).toContain('Communication Gate');
-    expect(dangerAlert.textContent).toContain('No Naked Numbers');
+    expect(dangerAlert.textContent).toContain('partial credit max');
   });
 
   it('should list three requirements for full credit', () => {
@@ -294,31 +299,9 @@ describe('Autograder Rules Section', () => {
     const tagTexts = Array.from(feedbackTags).map(t => t.textContent);
 
     expect(tagTexts).toContain('MISSING_PROB_STATEMENT');
-    expect(tagTexts).toContain('MISSING_SETUP');
     expect(tagTexts).toContain('CALCULATOR_SPEAK_ONLY');
-  });
-});
-
-describe('Drill Cartridge Priority', () => {
-  it('should list drill cartridges in priority order', () => {
-    const priorityItems = document.querySelectorAll('.priority-list li');
-    expect(priorityItems.length).toBeGreaterThanOrEqual(3);
-  });
-
-  it('should have U4-TABLE-TREE as first priority', () => {
-    const firstPriority = document.querySelector('.priority-list li:first-child');
-    expect(firstPriority.textContent).toContain('U4-TABLE-TREE');
-    expect(firstPriority.textContent).toContain('Conditional');
-  });
-
-  it('should have U4-BINOM-GEO as second priority', () => {
-    const items = document.querySelectorAll('.priority-list li');
-    expect(items[1].textContent).toContain('U4-BINOM-GEO');
-  });
-
-  it('should have U4-RV-PARAMS as third priority', () => {
-    const items = document.querySelectorAll('.priority-list li');
-    expect(items[2].textContent).toContain('U4-RV-PARAMS');
+    expect(tagTexts).toContain('MISSING_PARAMS');
+    expect(tagTexts).toContain('WRONG_RULE');
   });
 });
 
@@ -383,6 +366,6 @@ describe('Footer Information', () => {
   it('should show both period meeting patterns', () => {
     const footer = document.querySelector('.footer');
     expect(footer.textContent).toContain('Period B: Mon/Tue/Thu/Fri');
-    expect(footer.textContent).toContain('Period E: Mon/Wed/Thu/Fri');
+    expect(footer.textContent).toContain('Period E: Mon/Wed/Fri');
   });
 });

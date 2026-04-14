@@ -2371,15 +2371,74 @@
       "timestamp": "2026-04-14T22:14:48Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "970f98a34c89",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 152 \u2014 Add DD/FD 0F/1F/2F/31/37/3E/3F to eZ80 decoder + transpiler emitter\n\n## Context\nThe eZ",
+      "status": "completed",
+      "duration_seconds": 76.763,
+      "timestamp": "2026-04-14T22:38:59Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "90d86f93a701",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 151 \u2014 Fix scancode-translate.js stride bug\n\n## Context\nThe file `TI-84_Plus_CE/scancode-tran",
+      "status": "completed",
+      "duration_seconds": 113.948,
+      "timestamp": "2026-04-14T22:39:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1d98ca735932",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch C \u2014 Supplement probe signal report script\n\nYou are Codex working inside `C:/Users/rober/Down",
+      "status": "completed",
+      "duration_seconds": 198.665,
+      "timestamp": "2026-04-14T23:19:59Z",
+      "files_changed": [
+        "scripts/supplement-probe-signal.mjs",
+        "probe-signal-reports/2026-04-14.md",
+        ".batch-c-probe-signal.result.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "8044c8df0ed3",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch B \u2014 Re-align tests/schedule.test.js with current HTML\n\nYou are Codex working inside `C:/User",
+      "status": "completed",
+      "duration_seconds": 235.592,
+      "timestamp": "2026-04-14T23:20:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "87a9c35d7a06",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch A \u2014 FRQ helper panel UI cleanup + block-scope flatten\n\nYou are Codex working inside `C:/User",
+      "status": "completed",
+      "duration_seconds": 420.468,
+      "timestamp": "2026-04-14T23:23:37Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 202,
-    "cc_to_codex": 202,
+    "total_calls": 207,
+    "cc_to_codex": 207,
     "codex_to_cc": 0,
-    "completed": 152,
+    "completed": 157,
     "failed": 47,
     "refused": 0,
-    "avg_duration_seconds": 445.038
+    "avg_duration_seconds": 439.338
   }
 }
