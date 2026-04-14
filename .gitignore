@@ -33,3 +33,7 @@ eng.traineddata
 state/cross-agent/
 .claude/scheduled_tasks.lock
 tmp_capture.ps1
+
+# Auto-continuation runtime artifacts
+logs/
+.auto-session-*.md
