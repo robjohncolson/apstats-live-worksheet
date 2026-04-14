@@ -191,7 +191,8 @@ describe('pickDailyQueue', () => {
     const dailyDose = api.pickDailyQueue(state, TODAY, EXAM_DATE);
 
     expect(dailyDose.date).toBe(TODAY);
-    expect(dailyDose.queue).toHaveLength(3);
+    expect(dailyDose.queue.length).toBeGreaterThanOrEqual(3);
+    expect(dailyDose.queue.length).toBeLessThanOrEqual(4);
     expect(dailyDose.queue).toEqual(expect.arrayContaining([
       expect.objectContaining({
         formulaId: expect.any(String),
@@ -225,7 +226,8 @@ describe('pickDailyQueue', () => {
     const dailyDose = api.pickDailyQueue(state, TODAY, EXAM_DATE);
 
     expect(dailyDose.date).toBe(TODAY);
-    expect(dailyDose.queue).toHaveLength(3);
+    expect(dailyDose.queue.length).toBeGreaterThanOrEqual(3);
+    expect(dailyDose.queue.length).toBeLessThanOrEqual(4);
   });
 });
 

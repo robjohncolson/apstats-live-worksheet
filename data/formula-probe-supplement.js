@@ -180,6 +180,9 @@ const EMBEDDED_CURRICULUM_SUPPLEMENT = [
   }
 ];
 
+if (typeof window !== 'undefined') {
+  window.EMBEDDED_CURRICULUM_SUPPLEMENT = EMBEDDED_CURRICULUM_SUPPLEMENT;
+}
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { EMBEDDED_CURRICULUM_SUPPLEMENT };
 }

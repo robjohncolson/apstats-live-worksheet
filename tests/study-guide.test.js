@@ -199,18 +199,26 @@ describe('study_guide_diagnostic.html — DAG / BKT integration', () => {
   });
 });
 
-describe('study_guide_diagnostic.html — v3 focused layout', () => {
-  it('defines the v3 render pipeline', () => {
+describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
+  it('defines the v4 render pipeline', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('function renderTreeRail');
+    expect(src).toContain('function renderQueuePane');
+    expect(src).toContain('function renderSeeAllDisclosure');
     expect(src).toContain('function renderActiveProbe');
     expect(src).toContain('function renderRemediation');
+    expect(src).toContain('function advanceDailyQueue');
     expect(src).toContain('function applyFrqFocusToBkt');
-    expect(src).toContain('function pickProbeForLo');
-    expect(src).toContain('function pickNextWeakest');
     expect(src).toContain('function buildCurriculumLink');
     expect(src).toContain('function setActiveProbe');
     expect(src).toContain('function applyTheme');
+  });
+
+  it('no longer references the removed v3 tree-rail pipeline', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('function renderTreeRail');
+    expect(src).not.toContain('function markActiveRailRow');
+    expect(src).not.toContain('function pickNextWeakest');
+    expect(src).not.toContain('function activateNextWeakest');
   });
 
   it('no longer references the removed DAG renderer pipeline', () => {
@@ -218,6 +226,31 @@ describe('study_guide_diagnostic.html — v3 focused layout', () => {
     expect(src).not.toContain('renderDagPanel');
     expect(src).not.toContain('window.DagRenderer');
     expect(src).not.toContain('lib/dag-renderer.js');
+  });
+
+  it('loads the v4 data layer scripts in order', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('data/ap-stats-cartridge.js');
+    expect(src).toContain('data/formula-probe-map.js');
+    expect(src).toContain('data/formula-probe-supplement.js');
+  });
+
+  it('uses the v4 schema version and storage key', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v4'");
+    expect(src).toContain('SCHEMA_VERSION = 4');
+  });
+
+  it('publishes and consumes __studyGuideV4__', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.__studyGuideV4__');
+    expect(src).toContain('pickDailyQueue');
+    expect(src).toContain('recordFormulaTouch');
+  });
+
+  it('guards against supplement ID collisions on init', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('supplement ID collision');
   });
 
   it('links to curriculum_render via query params', () => {
