@@ -161,3 +161,55 @@ describe('study_guide_diagnostic.html — v2 structure', () => {
     expect(src).toContain('UNIT_FRAMEWORKS');
   });
 });
+
+describe('study_guide_diagnostic.html — DAG / BKT integration', () => {
+  it('loads the five new adaptive-study scripts (topology, tag map, BKT, selector, renderer)', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('data/dag-topology.js');
+    expect(src).toContain('data/question-lo-map.js');
+    expect(src).toContain('lib/bkt.js');
+    expect(src).toContain('lib/probe-selector.js');
+    expect(src).toContain('lib/dag-renderer.js');
+  });
+
+  it('persists per-unit masteryState through makeDefaultState / normalizeState / getUnit', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const masteryOccurrences = (src.match(/masteryState/g) || []).length;
+    expect(masteryOccurrences).toBeGreaterThanOrEqual(6);
+  });
+
+  it('defines adaptive probe selection via ProbeSelector with a legacy fallback', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.ProbeSelector');
+    expect(src).toContain('selectProbes');
+    expect(src).toContain('buildProbesLegacy');
+    expect(src).toContain('PROBE_COUNT');
+    expect(src).toContain('alreadyAnswered');
+  });
+
+  it('updates BKT mastery when a probe is checked', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.BKT.updateMastery');
+    expect(src).toContain('loIdsForQuestion');
+  });
+
+  it('renders a DAG panel inside each unit body', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('renderDagPanel');
+    expect(src).toContain('window.DagRenderer.render');
+    expect(src).toContain('dag-panel');
+    expect(src).toContain('dag-legend');
+  });
+
+  it('passes a masterySnapshot into the focus synthesis prompt builder', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('masterySnapshot');
+    expect(src).toContain('ensureMasteryState');
+  });
+
+  it('prompt builder renders the mastery block when a snapshot is provided', () => {
+    const src = readFileSync(PROMPTS_PATH, 'utf8');
+    expect(src).toContain('masterySnapshot');
+    expect(src).toContain('Current estimated mastery');
+  });
+});

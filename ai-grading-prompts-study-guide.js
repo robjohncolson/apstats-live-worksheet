@@ -137,6 +137,7 @@ function buildFocusSynthesisPromptSG(options) {
   const frqAnswer = typeof opts.frqAnswer === 'string' ? opts.frqAnswer : '';
   const frqGrade = opts.frqGrade || null;
   const frameworkContext = opts.frameworkContext || null;
+  const masterySnapshot = opts.masterySnapshot && typeof opts.masterySnapshot === 'object' ? opts.masterySnapshot : null;
 
   const mcqLines = mcqResults.length
     ? mcqResults.map(function (r) {
@@ -167,12 +168,28 @@ function buildFocusSynthesisPromptSG(options) {
       ].join('\n')
     : '(framework data unavailable for this unit)';
 
+  const masteryBlock = masterySnapshot && Object.keys(masterySnapshot).length
+    ? [
+        '## Current estimated mastery per learning objective (from Bayesian Knowledge Tracing, 0-100%):',
+        Object.keys(masterySnapshot)
+          .sort()
+          .map(function (loId) {
+            var raw = Number(masterySnapshot[loId]);
+            var pct = Number.isFinite(raw) ? Math.round(raw * 100) : 0;
+            return '- ' + loId + ': ' + pct + '%';
+          })
+          .join('\n'),
+        '',
+        'Use these numbers to break ties — LOs with lower mastery should be prioritized over LOs the student already understands.',
+      ].join('\n')
+    : '(no mastery snapshot yet — student has not checked any MCQs)';
+
   return [
     'You are an AP Statistics tutor building a personalized review plan for a student.',
     'Unit: ' + unitTitle,
     'Unit focus: ' + unitTopic,
     '',
-    'The student just completed a diagnostic for this unit. Use their MCQ answers, their FRQ answer (if any), and the AP Course Framework to recommend which lessons they should review.',
+    'The student just completed a diagnostic for this unit. Use their MCQ answers, their FRQ answer (if any), the AP Course Framework, and the current BKT mastery snapshot to recommend which lessons they should review.',
     '',
     '## MCQ signal:',
     mcqLines,
@@ -180,6 +197,8 @@ function buildFocusSynthesisPromptSG(options) {
     frqBlock,
     '',
     frameworkBlock,
+    '',
+    masteryBlock,
     '',
     '## Your task:',
     'Return a prioritized list of lessons the student should focus on next. Ground every recommendation in a specific learning objective (LO) ID from the framework. If the student nailed the MCQs but stumbled on the FRQ, emphasize synthesis practice. If the student missed adjacent MCQs, group them and recommend the bridging concept. If the student did not attempt the FRQ, say so and keep the recommendation based on MCQ signal alone.',

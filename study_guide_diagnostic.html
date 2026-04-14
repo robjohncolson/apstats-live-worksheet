@@ -101,6 +101,13 @@
     @media (max-width:900px){.header{grid-template-columns:1fr;text-align:center}.header-left,.header-center,.header-right{justify-self:center}.student-info,.progress-summary{grid-template-columns:1fr}}
     @media (max-width:620px){.page{width:min(100% - 16px,100%);padding-top:18px}}
     @media print{body{background:#fff}.header,.action-bar,.mode-toggle,.unit-action-row,.probe-check-btn,.toast{display:none !important}.page{width:100%;margin:0;padding:0}.panel,.unit-card,.summary-tile,.unit-section,.probe,.focus-panel{box-shadow:none;border-color:#d0d6de}.unit-card{break-inside:avoid;page-break-inside:avoid;margin-bottom:20px}.unit-header{background:#11325c}a{color:inherit;text-decoration:none}}
+    .dag-panel .dag-svg-wrap{display:flex;justify-content:center;padding:8px;border-radius:14px;background:rgba(255,255,255,.92);border:1px solid rgba(13,39,70,.08);overflow:auto}
+    .dag-panel svg{max-width:100%;height:auto}
+    .dag-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .dag-legend-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700;color:#fff}
+    .dag-legend-chip.low{background:#c4453f}
+    .dag-legend-chip.mid{background:#c89026}
+    .dag-legend-chip.high{background:#3a8c53}
   </style>
 </head>
 <body>
@@ -161,6 +168,11 @@
   <script src="../curriculum_render/data/units.js"></script>
   <script src="../curriculum_render/data/frameworks.js"></script>
   <script src="ai-grading-prompts-study-guide.js"></script>
+  <script src="data/dag-topology.js"></script>
+  <script src="data/question-lo-map.js"></script>
+  <script src="lib/bkt.js"></script>
+  <script src="lib/probe-selector.js"></script>
+  <script src="lib/dag-renderer.js"></script>
   <script>
     (() => {
       const STORAGE_KEY = window.STORAGE_KEY_SG || 'apStatsStudyGuideDiagnostic.v2';
@@ -203,7 +215,7 @@
 
       function makeDefaultState() {
         const units = {};
-        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false };
+        for (let unit = 1; unit <= UNIT_COUNT; unit += 1) units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{} };
         return { schemaVersion:SCHEMA_VERSION, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), units };
       }
 
@@ -248,6 +260,7 @@
             focusSynthesis: normalizeFocus(value.focusSynthesis),
             collapsed: typeof value.collapsed === 'boolean' ? value.collapsed : true,
             frqOnPaper: typeof value.frqOnPaper === 'boolean' ? value.frqOnPaper : false,
+            masteryState: value.masteryState && typeof value.masteryState === 'object' ? {...value.masteryState} : {},
           };
         }
         return next;
@@ -260,7 +273,7 @@
         return copy;
       };
 
-      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false });
+      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{} });
       const showToast = msg => { ui.toast.textContent = msg; ui.toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => ui.toast.classList.remove('visible'), 2600); };
       const saveNow = () => { clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState())); } catch { showToast('Local save failed.'); } };
       const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); };
@@ -333,7 +346,38 @@
         return topic && Array.isArray(topic.videos) && topic.videos[0] ? (topic.videos[0].url || topic.videos[0].altUrl || null) : null;
       }
 
-      function buildProbes(unit) {
+      const PROBE_COUNT = 6;
+
+      function tagEntry(questionId) {
+        const map = window.SG_QUESTION_LO_MAP;
+        return map && map.questions ? map.questions[questionId] || null : null;
+      }
+
+      function loIdsForQuestion(questionId) {
+        const tag = tagEntry(questionId);
+        if (!tag) return [];
+        const ids = [];
+        if (tag.primaryLoId) ids.push(tag.primaryLoId);
+        if (Array.isArray(tag.secondaryLoIds)) tag.secondaryLoIds.forEach(id => { if (id && !ids.includes(id)) ids.push(id); });
+        return ids;
+      }
+
+      function unitTopology(unit) {
+        const topo = window.SG_DAG_TOPOLOGY;
+        return topo && topo.units ? topo.units[unit] || null : null;
+      }
+
+      function ensureMasteryState(unit) {
+        const data = getUnit(unit);
+        if (!data.masteryState || typeof data.masteryState !== 'object') data.masteryState = {};
+        if (Object.keys(data.masteryState).length) return data.masteryState;
+        const topo = unitTopology(unit);
+        if (!topo || !window.BKT) return data.masteryState;
+        data.masteryState = window.BKT.initMasteryState(topo.nodes || []);
+        return data.masteryState;
+      }
+
+      function buildProbesLegacy(unit) {
         const list = typeof EMBEDDED_CURRICULUM !== 'undefined' && Array.isArray(EMBEDDED_CURRICULUM) ? EMBEDDED_CURRICULUM : [];
         const bucket = {};
         list.forEach(question => {
@@ -343,7 +387,34 @@
           const lesson = Number(match[1]);
           (bucket[lesson] ||= []).push(question);
         });
-        return Object.keys(bucket).map(Number).sort((a,b) => a - b).slice(0, 6).map(lesson => ({ lesson, question: bucket[lesson].slice().sort((a,b) => a.id.localeCompare(b.id))[0] }));
+        return Object.keys(bucket).map(Number).sort((a,b) => a - b).slice(0, PROBE_COUNT).map(lesson => ({ lesson, question: bucket[lesson].slice().sort((a,b) => a.id.localeCompare(b.id))[0] }));
+      }
+
+      function buildProbes(unit) {
+        if (!window.ProbeSelector || !window.SG_QUESTION_LO_MAP || typeof EMBEDDED_CURRICULUM === 'undefined') return buildProbesLegacy(unit);
+        const data = getUnit(unit);
+        const masteryState = ensureMasteryState(unit);
+        const answeredIds = Object.keys(data.mcqResults || {}).filter(qid => qid.startsWith(`U${unit}-L`));
+        // Preserve answered probes so the student still sees their history
+        const answeredProbes = answeredIds.map(qid => {
+          const q = questions.get(qid);
+          if (!q) return null;
+          const match = qid.match(/^U\d+-L(\d+)-Q\d+/);
+          return { lesson: match ? Number(match[1]) : 0, question: q, loIds: loIdsForQuestion(qid) };
+        }).filter(Boolean);
+        const remaining = Math.max(0, PROBE_COUNT - answeredProbes.length);
+        const picks = remaining > 0 ? window.ProbeSelector.selectProbes({
+          unit,
+          count: remaining,
+          curriculum: EMBEDDED_CURRICULUM,
+          tagMap: window.SG_QUESTION_LO_MAP,
+          masteryState,
+          alreadyAnswered: answeredIds,
+          BKT: window.BKT
+        }) : [];
+        const combined = answeredProbes.concat(picks.map(pick => ({ lesson: pick.lesson, question: pick.question, loIds: pick.loIds })));
+        if (!combined.length) return buildProbesLegacy(unit);
+        return combined.sort((a, b) => (a.lesson - b.lesson) || a.question.id.localeCompare(b.question.id));
       }
 
       const probesFor = unit => (probeCache[unit] ||= buildProbes(unit));
@@ -451,11 +522,55 @@
           data.focusSynthesis ? ['Focus plan ready', 'ready'] : ['Focus plan not generated', 'pending'],
         ].forEach(([text, cls]) => status.appendChild(make('div', `status-badge ${cls}`, text)));
         body.append(mode, status);
+        const dag = renderDagPanel(unit);
+        if (dag) body.appendChild(dag);
         if (data.mode === 'mcq' || data.mode === 'both') body.appendChild(renderMcq(unit));
         if (data.mode === 'frq' || data.mode === 'both') body.appendChild(renderFrq(unit));
         body.appendChild(renderFocus(unit));
         card.appendChild(body);
         return card;
+      }
+
+      function renderDagPanel(unit) {
+        const topo = unitTopology(unit);
+        if (!topo || !window.DagRenderer) return null;
+        const masteryState = ensureMasteryState(unit);
+        const panel = make('section', 'unit-section dag-panel');
+        panel.append(
+          make('h3', '', 'Concept map'),
+          make('p', 'copy', 'Each circle is a concept in this unit. Color shows your current mastery (red = low, amber = mid, green = high). Solid lines are prerequisite flow; dashed lines cross into other units.')
+        );
+        const wrap = make('div', 'dag-svg-wrap');
+        const allCross = (window.SG_DAG_TOPOLOGY && window.SG_DAG_TOPOLOGY.crossUnitEdges) || [];
+        const crossEdges = allCross.filter(edge => {
+          const fromUnit = Number(String(edge && edge.from || '').match(/^U(\d+)/)?.[1]);
+          const toUnit = Number(String(edge && edge.to || '').match(/^U(\d+)/)?.[1]);
+          return (fromUnit === unit || toUnit === unit);
+        });
+        try {
+          const svg = window.DagRenderer.render(topo, masteryState, {
+            width: 520,
+            height: 280,
+            crossEdges,
+            onNodeClick(node) {
+              const firstLo = Array.isArray(node.loIds) ? node.loIds[0] : null;
+              const pct = firstLo && masteryState[firstLo] != null ? Math.round(masteryState[firstLo] * 100) : null;
+              showToast(pct != null ? `${node.label}: ${pct}% mastery · ${(node.loIds || []).join(', ')}` : `${node.label}: ${(node.loIds || []).join(', ')}`);
+            }
+          });
+          wrap.appendChild(svg);
+        } catch (error) {
+          wrap.appendChild(make('div', 'empty', 'Concept map unavailable: ' + (error && error.message ? error.message : 'unknown error')));
+        }
+        panel.appendChild(wrap);
+        const legend = make('div', 'dag-legend');
+        legend.append(
+          make('span', 'dag-legend-chip low', 'Low'),
+          make('span', 'dag-legend-chip mid', 'Mid'),
+          make('span', 'dag-legend-chip high', 'High')
+        );
+        panel.appendChild(legend);
+        return panel;
       }
 
       function renderMcq(unit) {
@@ -508,7 +623,14 @@
         check.type = 'button';
         check.addEventListener('click', () => {
           if (!data.mcqAnswers[question.id]) return showToast('Choose an answer before checking this probe.');
-          data.mcqResults[question.id] = letter(data.mcqAnswers[question.id]) === letter(question.answerKey) ? 'correct' : 'incorrect';
+          const correct = letter(data.mcqAnswers[question.id]) === letter(question.answerKey);
+          data.mcqResults[question.id] = correct ? 'correct' : 'incorrect';
+          if (window.BKT) {
+            const masteryState = ensureMasteryState(unit);
+            loIdsForQuestion(question.id).forEach(loId => {
+              masteryState[loId] = window.BKT.updateMastery(masteryState[loId], correct);
+            });
+          }
           data.focusSynthesis = null;
           saveNow();
           rerenderUnit(unit);
@@ -743,7 +865,8 @@
           const frqAnswerForPrompt = data.frqOnPaper && !(data.frqAnswer || '').trim()
             ? '(Student completed FRQ on paper — not yet submitted for AI grading. Base recommendations on MCQ signal and the unit framework.)'
             : data.frqAnswer || '';
-          const prompt = window.buildFocusSynthesisPromptSG({ unit, unitTitle:unitTitle(unit), unitTopic:unitTopic(unit), mcqResults, frqAnswer:frqAnswerForPrompt, frqGrade:data.frqGrade || null, frameworkContext });
+          const masterySnapshot = {...ensureMasteryState(unit)};
+          const prompt = window.buildFocusSynthesisPromptSG({ unit, unitTitle:unitTitle(unit), unitTopic:unitTopic(unit), mcqResults, frqAnswer:frqAnswerForPrompt, frqGrade:data.frqGrade || null, frameworkContext, masterySnapshot });
           const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Focus Synthesis', questionId:`SG-U${unit}-FOCUS`, lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer:'Focus synthesis request' }, prompt }) });
           if (!response.ok) throw new Error('Focus synthesis request failed');
           const rawFocus = await response.json();
