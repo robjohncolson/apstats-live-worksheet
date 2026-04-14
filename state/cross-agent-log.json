@@ -1979,15 +1979,45 @@
       "timestamp": "2026-04-14T18:15:19Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "a777b5146fdf",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 120 \u2014 Font Decoder Rewrite (1bpp 16px wide)\n\n## Context\nYou are working on a TI-84 Plus CE R",
+      "status": "completed",
+      "duration_seconds": 245.343,
+      "timestamp": "2026-04-14T18:37:35Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "77e4fcbc7cef",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 118 \u2014 0x04C973 Helper Investigation\n\n## Context\nYou are working on a TI-84 Plus CE ROM trans",
+      "status": "completed",
+      "duration_seconds": 565.253,
+      "timestamp": "2026-04-14T18:42:52Z",
+      "files_changed": [
+        "TI-84_Plus_CE/font-decoder.mjs",
+        "TI-84_Plus_CE/phase118-report.md",
+        "TI-84_Plus_CE/phase119-report.md",
+        "TI-84_Plus_CE/phase99c-poll-port-report.md",
+        "TI-84_Plus_CE/phase99d-report.md",
+        "TI-84_Plus_CE/probe-phase118-04c973.mjs",
+        "TI-84_Plus_CE/probe-phase119-08c7ad.mjs"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 172,
-    "cc_to_codex": 172,
+    "total_calls": 174,
+    "cc_to_codex": 174,
     "codex_to_cc": 0,
-    "completed": 131,
+    "completed": 133,
     "failed": 38,
     "refused": 0,
-    "avg_duration_seconds": 416.156
+    "avg_duration_seconds": 416.031
   }
 }
