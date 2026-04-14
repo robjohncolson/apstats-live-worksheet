@@ -131,18 +131,18 @@ const EMBEDDED_CURRICULUM_SUPPLEMENT = [
     "id": "U6-L4-QS1",
     "type": "multiple-choice",
     "formulaId": "width-ci",
-    "prompt": "A horticulturist wants to estimate the mean weight of tomatoes at a 95% confidence level with a margin of error of at most 2 grams. A preliminary study suggests σ ≈ 8 grams. Using z* = 1.96, what is the minimum sample size required?",
+    "prompt": "A political pollster wants to estimate the proportion of voters who support a ballot measure with 95% confidence and a margin of error of at most 3 percentage points (0.03). A conservative estimate uses p-hat = 0.5 to maximize the needed sample size. Using z* = 1.96, what is the minimum sample size required?",
     "answerKey": "C",
     "attachments": {
       "choices": [
-        { "key": "A", "value": "8" },
-        { "key": "B", "value": "16" },
-        { "key": "C", "value": "62, because n ≥ (1.96·8/2)² = 61.47 and we round up." },
-        { "key": "D", "value": "31, because 1.96·8/2 ≈ 7.84 and then divide by 2 again." },
-        { "key": "E", "value": "98, because 1.96·8·2·√31/2." }
+        { "key": "A", "value": "267, because 0.5 times 0.5 times (1.96/0.03) = 32.67." },
+        { "key": "B", "value": "534, because 0.5 times (1.96/0.03)^2 = 533." },
+        { "key": "C", "value": "1068, because n >= (1.96/0.03)^2 times 0.5 times 0.5 = 1067.11 and we round up." },
+        { "key": "D", "value": "33, because 1.96/0.03 times 0.5 is about 33." },
+        { "key": "E", "value": "385, using p-hat = 0.1 instead of 0.5." }
       ]
     },
-    "reasoning": "Solve ME = z*·σ/√n for n: n = (z*·σ / ME)² = (1.96 · 8 / 2)² = (7.84)² ≈ 61.47. Always round UP to guarantee ME ≤ 2, so n = 62."
+    "reasoning": "For a proportion CI: n >= (z*/ME)^2 * p-hat(1 - p-hat). Using the conservative p-hat = 0.5: n >= (1.96/0.03)^2 * 0.25 = 4268.4 * 0.25 = 1067.11. Always round UP: n = 1068."
   },
   {
     "id": "U6-L4-QS2",

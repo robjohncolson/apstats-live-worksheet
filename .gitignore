@@ -27,4 +27,9 @@ tmpclaude-*
 .env
 .gitnexus
 TI-84_Plus_CE/ROM.transpiled.js
-TI-84_Plus_CE/ROM.transpiled.js
+
+# Large binaries / local-only artifacts
+eng.traineddata
+state/cross-agent/
+.claude/scheduled_tasks.lock
+tmp_capture.ps1
