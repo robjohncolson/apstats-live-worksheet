@@ -1520,15 +1520,474 @@
       "timestamp": "2026-04-14T03:11:23Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "258eec015b2d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch M1 \u2014 Study Guide v4 HTML Plumbing & State\n\nYou are Codex, invoked via cross-agent.py. **Read",
+      "status": "blocked",
+      "duration_seconds": 63.165,
+      "timestamp": "2026-04-14T03:13:00Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f3c8ad62cc7f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch M1 \u2014 Study Guide v4 HTML Plumbing & State\n\nYou are Codex, invoked via cross-agent.py. **Read",
+      "status": "completed",
+      "duration_seconds": 423.138,
+      "timestamp": "2026-04-14T03:20:30Z",
+      "files_changed": [
+        ".phase100c-prompt.md",
+        ".phase102a-prompt.md",
+        ".phase103-prompt.md",
+        "study_guide_diagnostic.html"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "63ac0db8435e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 102A \u2014 Wire 0x0a3301 Status-Dot Renderer into Home Screen Composites\n\n## Mission\nAdd the `0x",
+      "status": "completed",
+      "duration_seconds": 283.016,
+      "timestamp": "2026-04-14T03:22:09Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "2b7735e59f51",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "# Phase 103 \u2014 Port 0xD00D / 0xD00C Hardware Semantics Research\n\n## Mission\nResolve the `TODO` commen",
+      "status": "completed",
+      "duration_seconds": 458.823,
+      "timestamp": "2026-04-14T03:25:07Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e87cfd0af0dd",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch M2 \u2014 Study Guide v4 Render Pipeline + Test Updates\n\nYou are Codex, invoked via cross-agent.p",
+      "status": "completed_with_deviations",
+      "duration_seconds": 334.124,
+      "timestamp": "2026-04-14T03:26:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b8c0fd5a8ae3",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 100C \u2014 Mode-Display Chain Retranspile + Re-Probe\n\n## Mission\nUnlock the natural home-screen ",
+      "status": "completed",
+      "duration_seconds": 773.296,
+      "timestamp": "2026-04-14T03:30:16Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "881cb24b14ab",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch A \u2014 Study guide v4: untested display + See-All clickable + v4 CSS styling\n\n## Goal\nThree edi",
+      "status": "completed",
+      "duration_seconds": 245.429,
+      "timestamp": "2026-04-14T04:03:38Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "dd109db37497",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch B \u2014 Self-playtest audit of 10 existing supplement probes\n\n## Goal\nAudit the 10 hand-authored",
+      "status": "completed",
+      "duration_seconds": 330.61,
+      "timestamp": "2026-04-14T04:05:05Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "cc07b2b67ee9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch C \u2014 Add 6 new Power/Type-I/Type-II probes + enhance reasoning on 3 existing\n\n## Goal\nAdd 6 n",
+      "status": "completed",
+      "duration_seconds": 331.079,
+      "timestamp": "2026-04-14T04:05:06Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "6728855553c1",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Batch D \u2014 Cross-check 6 new probes + 3 enhanced reasoning fields\n\n## Goal\nSame self-playtest audit",
+      "status": "completed",
+      "duration_seconds": 300.446,
+      "timestamp": "2026-04-14T04:14:26Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c2834aa84d12",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Task: Phase 103 recommendation \u2014 split SPI poll handler, 0xD00C returns 0x02\n\nYou are Codex operat",
+      "status": "completed",
+      "duration_seconds": 110.621,
+      "timestamp": "2026-04-14T13:48:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "127afcf06bb5",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Task: Phase 100E \u2014 instrument cpu.write8 for 0xD020A6..0xD020BF during 500k-step boot\n\nYou are Cod",
+      "status": "completed",
+      "duration_seconds": 409.638,
+      "timestamp": "2026-04-14T13:53:31Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "da3cf9462b17",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Task: Phase 100D \u2014 hunt the mode-state initializer (RAM 0xD00080-0xD000FF)\n\nYou are Codex operatin",
+      "status": "completed",
+      "duration_seconds": 529.958,
+      "timestamp": "2026-04-14T13:55:30Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "33ba3f5054ac",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "Re-audit two hand-fixed supplement probes in `data/formula-probe-supplement.js` using the Batch B me",
+      "status": "completed",
+      "duration_seconds": 117.255,
+      "timestamp": "2026-04-14T14:29:34Z",
+      "files_changed": [
+        ".supplement-audit-reaudit.md",
+        "state/cross-agent/33ba3f5054ac.result.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "51d6a59fe3e8",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "**Task**: Write a self-contained pure-logic block for study guide v5 (dose ladder + FRQ queue), plus",
+      "status": "completed",
+      "duration_seconds": 811.417,
+      "timestamp": "2026-04-14T15:03:13Z",
+      "files_changed": [
+        ".v5-ladder-block.js",
+        "tests/study-guide-v5-ladder.test.js",
+        "state/cross-agent/51d6a59fe3e8.result.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "c05a5c5f6333",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "**Task**: Integrate the v5 dose ladder + hybrid MCQ/FRQ queue into `study_guide_diagnostic.html`. Re",
+      "status": "completed",
+      "duration_seconds": 789.355,
+      "timestamp": "2026-04-14T15:16:55Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9bde9b485563",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 100G \u2014 BCALL dispatch instrumentation (missing_block logging)\n\n## Context\nWe are transpiling",
+      "status": "completed",
+      "duration_seconds": 381.802,
+      "timestamp": "2026-04-14T16:09:36Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "81272a91bfea",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 100F \u2014 Disassemble the function containing PC 0x00287d\n\n## Context\nWe are transpiling the TI",
+      "status": "completed",
+      "duration_seconds": 420.372,
+      "timestamp": "2026-04-14T16:10:11Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "a51c4c6f2c7e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 104 \u2014 Event loop with pre-seeded mode-state bytes\n\n## Context\nWe are transpiling the TI-84 P",
+      "status": "completed",
+      "duration_seconds": 512.632,
+      "timestamp": "2026-04-14T16:11:46Z",
+      "files_changed": [
+        "TI-84_Plus_CE/phase100f-report.md",
+        "TI-84_Plus_CE/phase99d-report.md",
+        "TI-84_Plus_CE/probe-phase100g-missing-blocks.mjs",
+        "TI-84_Plus_CE/probe-phase104-mode-preseed.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "79586b6772aa",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 106: Browser-Shell Keyboard Interaction\n\n## Context\nThe browser shell at `TI-84_Plus_CE/brow",
+      "status": "completed",
+      "duration_seconds": 212.564,
+      "timestamp": "2026-04-14T16:37:43Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c9d1117d1580",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 102B-alt: Render VRAM to PNG via Node.js probe\n\n## Context\nWe have a TI-84 Plus CE ROM trans",
+      "status": "completed",
+      "duration_seconds": 406.856,
+      "timestamp": "2026-04-14T16:40:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "92bb58020967",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 105: Next-Feature Investigation \u2014 Key-Press Response Path\n\n## Context\nWe have a working TI-8",
+      "status": "completed",
+      "duration_seconds": 656.229,
+      "timestamp": "2026-04-14T16:45:05Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "866810cf4977",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Task: Author data/frq-decompositions.json for the AP Statistics Study Guide v6 FRQ Decomposition fea",
+      "status": "completed",
+      "duration_seconds": 475.159,
+      "timestamp": "2026-04-14T16:46:06Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "15fd72055ce9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Task: Audit C:/Users/rober/Downloads/Projects/school/follow-alongs/data/frq-decompositions.json and ",
+      "status": "completed",
+      "duration_seconds": 233.696,
+      "timestamp": "2026-04-14T16:50:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b3f7bc7c43f6",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Task: Write `.v6-frq-decomp-block.js` (pure-logic IIFE) and `tests/study-guide-v6-frq-decomposition.",
+      "status": "completed",
+      "duration_seconds": 241.446,
+      "timestamp": "2026-04-14T16:50:53Z",
+      "files_changed": [
+        ".auto-session-28-p1.md",
+        ".auto-session-28-p2.md",
+        ".auto-session-28-p3.md",
+        ".frq-decomp-audit.md",
+        ".v6-frq-decomp-block.js",
+        "CONTINUATION_PROMPT_CODEX.md",
+        "logs/auto-session-20260414-1230.log",
+        "tests/study-guide-v6-frq-decomposition.test.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "990b8299575e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Task: Wire the FRQ Decomposition feature into `study_guide_diagnostic.html` \u2014 state schema v5\u2192v6, he",
+      "status": "completed",
+      "duration_seconds": 499.487,
+      "timestamp": "2026-04-14T16:59:52Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "09455d3df8d7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 102B-comparison \u2014 Visual Comparison Report\n\n## Context\n\nYou are working on a TI-84 Plus CE R",
+      "status": "completed",
+      "duration_seconds": 225.735,
+      "timestamp": "2026-04-14T17:06:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4f06ea5de870",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 107 \u2014 Key-Event Dispatch Family Probe\n\n## Context\n\nYou are working on a TI-84 Plus CE ROM tr",
+      "status": "completed",
+      "duration_seconds": 246.736,
+      "timestamp": "2026-04-14T17:06:51Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b6cfeee229a9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 108 \u2014 Event Loop with Keyboard IRQ + Pre-Pressed Key\n\n## Context\n\nYou are working on a TI-84",
+      "status": "completed",
+      "duration_seconds": 378.945,
+      "timestamp": "2026-04-14T17:09:05Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "fdb30bebb4db",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 109 \u2014 Menu Rendering Re-Probe\n\n## Context\n\nYou are working on a TI-84 Plus CE ROM transpiler",
+      "status": "completed",
+      "duration_seconds": 836.76,
+      "timestamp": "2026-04-14T17:16:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7259757c4a6f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 111 \u2014 Menu Seed Retranspile\n\n## Context\nYou are working on a TI-84 Plus CE ROM transpilation",
+      "status": "completed",
+      "duration_seconds": 117.305,
+      "timestamp": "2026-04-14T17:35:26Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "92ba338fc422",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 112 \u2014 White-Fill Home Screen Workspace\n\n## Context\nYou are working on a TI-84 Plus CE ROM tr",
+      "status": "completed",
+      "duration_seconds": 367.786,
+      "timestamp": "2026-04-14T17:39:38Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "48baef727c9c",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 110 \u2014 Deep-Dive into 0x085E16 Key Dispatch\n\n## Context\nYou are working on a TI-84 Plus CE RO",
+      "status": "completed",
+      "duration_seconds": 436.213,
+      "timestamp": "2026-04-14T17:40:43Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9efcb1a0adae",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 113 \u2014 0x08C4A3 Dispatch Entry Investigation\n\n## Context\nYou are working on a TI-84 Plus CE R",
+      "status": "completed",
+      "duration_seconds": 769.668,
+      "timestamp": "2026-04-14T17:46:21Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "cdb6c403e0ff",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 116 \u2014 Home Screen PNG Regeneration\n\n## Context\nYou are working on a TI-84 Plus CE ROM transp",
+      "status": "completed",
+      "duration_seconds": 165.659,
+      "timestamp": "2026-04-14T18:06:22Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4fa316d3a6f5",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 115 \u2014 Menu Renderer Integration (Browser-Shell Buttons)\n\n## Context\nYou are working on a TI-",
+      "status": "completed",
+      "duration_seconds": 422.417,
+      "timestamp": "2026-04-14T18:10:37Z",
+      "files_changed": [
+        "TI-84_Plus_CE/browser-shell.html",
+        "TI-84_Plus_CE/probe-phase115-menu-modes.mjs",
+        "TI-84_Plus_CE/phase115-report.md",
+        "state/cross-agent/4fa316d3a6f5.result.json"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "ebeb10abdc07",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 114 \u2014 0x08C543 Normal-Key Handler Investigation\n\n## Context\nYou are working on a TI-84 Plus ",
+      "status": "completed",
+      "duration_seconds": 464.394,
+      "timestamp": "2026-04-14T18:11:17Z",
+      "files_changed": [
+        "TI-84_Plus_CE/browser-shell.html",
+        "TI-84_Plus_CE/home-screen-render.png",
+        "TI-84_Plus_CE/phase114-report.md",
+        "TI-84_Plus_CE/phase115-report.md",
+        "TI-84_Plus_CE/phase116-report.md",
+        "TI-84_Plus_CE/phase99d-report.md",
+        "TI-84_Plus_CE/probe-phase102b-vram-to-png.mjs",
+        "TI-84_Plus_CE/probe-phase114-08c543.mjs",
+        "TI-84_Plus_CE/probe-phase115-menu-modes.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "00d41c5b5f6b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 117 \u2014 0x08C5D1 Special-Key Handler Investigation\n\n## Context\nYou are working on a TI-84 Plus",
+      "status": "completed",
+      "duration_seconds": 701.553,
+      "timestamp": "2026-04-14T18:15:19Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 134,
-    "cc_to_codex": 134,
+    "total_calls": 172,
+    "cc_to_codex": 172,
     "codex_to_cc": 0,
-    "completed": 95,
+    "completed": 131,
     "failed": 38,
     "refused": 0,
-    "avg_duration_seconds": 418.613
+    "avg_duration_seconds": 416.156
   }
 }
