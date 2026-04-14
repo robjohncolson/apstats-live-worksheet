@@ -83,8 +83,34 @@
     .sg-lo-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);color:var(--sg-text);cursor:pointer;text-align:left}
     .sg-lo-btn:hover,.sg-lo-btn.is-active{border-color:var(--sg-accent)}
     .sg-lo-btn.is-active{background:var(--sg-bar-track);font-weight:800}
-    .sg-queue-header{display:grid;gap:4px;margin-bottom:14px}
+    .sg-queue-header{display:grid;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--sg-border)}
+    .sg-queue-title{font-size:1.05rem;color:var(--sg-text)}
     .sg-queue-sub{font-size:.88rem;color:var(--sg-text-dim)}
+    .sg-tier-meter{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}
+    .sg-tier-seg{height:8px;border-radius:999px;background:var(--sg-bar-track);opacity:.35;transition:opacity .2s}
+    .sg-tier-seg.is-active{opacity:1}
+    .sg-tier-seg.is-tier-0{background:#2e7d32}
+    .sg-tier-seg.is-tier-1{background:#f9a825}
+    .sg-tier-seg.is-tier-2{background:#ef6c00}
+    .sg-tier-seg.is-tier-3{background:#c62828}
+    .sg-tier-info{background:none;border:none;color:var(--sg-text-dim);font:inherit;cursor:pointer;padding:0;text-align:left;text-decoration:underline dotted}
+    .sg-tier-info:hover{color:var(--sg-accent)}
+    .sg-queue-tabs{display:flex;gap:6px;margin:14px 0 12px}
+    .sg-queue-tab{flex:1;padding:8px 10px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);color:var(--sg-text-dim);font:inherit;font-weight:700;cursor:pointer}
+    .sg-queue-tab:hover{border-color:var(--sg-accent)}
+    .sg-queue-tab.is-active{background:var(--sg-bar-track);color:var(--sg-text);border-color:var(--sg-accent)}
+    .sg-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:500}
+    .sg-modal{max-width:520px;width:calc(100% - 32px);padding:22px 24px;background:var(--sg-bg);border:1px solid var(--sg-border);border-radius:14px;color:var(--sg-text);display:grid;gap:14px}
+    .sg-modal h2{margin:0;font-size:1.15rem}
+    .sg-tier-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--sg-bg-card)}
+    .sg-tier-row .sg-tier-dot{width:12px;height:12px;border-radius:999px}
+    .sg-tier-row.is-tier-0 .sg-tier-dot{background:#2e7d32}
+    .sg-tier-row.is-tier-1 .sg-tier-dot{background:#f9a825}
+    .sg-tier-row.is-tier-2 .sg-tier-dot{background:#ef6c00}
+    .sg-tier-row.is-tier-3 .sg-tier-dot{background:#c62828}
+    .sg-frq-paper-toggle{align-self:start;padding:8px 12px;border:1px solid var(--sg-border);background:var(--sg-bg-card);color:var(--sg-text);font:inherit;border-radius:999px;cursor:pointer}
+    .sg-frq-paper-toggle:hover{border-color:var(--sg-accent)}
+    .sg-frq-paper-toggle.is-on{background:var(--sg-accent);color:var(--sg-bg);border-color:var(--sg-accent)}
     .sg-queue-list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
     .sg-queue-item{display:block}
     .sg-queue-item.is-done{opacity:.55}
@@ -261,9 +287,9 @@
   <script src="data/formula-probe-supplement.js"></script>
   <script>
     (() => {
-      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v4';
-      const SCHEMA_VERSION = 4;
-      const STATE_ID = 'sg-state-v4';
+      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v5';
+      const SCHEMA_VERSION = 5;
+      const STATE_ID = 'sg-state-v5';
       const UNIT_COUNT = 9;
       {
       'use strict';
@@ -755,13 +781,654 @@
         recordFormulaTouch: recordFormulaTouch
       };
       }
-      const { daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, pickDailyQueue, recordFormulaTouch, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV4__;
+      (function(window) {
+        'use strict';
+
+        const LADDER = [
+          { tier: 0, mcq: 5, frq: 1, label: 'Warmup', color: 'green' },
+          { tier: 1, mcq: 7, frq: 1, label: 'Steady', color: 'yellow' },
+          { tier: 2, mcq: 10, frq: 2, label: 'Catch-up', color: 'orange' },
+          { tier: 3, mcq: 12, frq: 2, label: 'Crunch', color: 'red' }
+        ];
+        const STUDY_START_DATE = '2026-04-14';
+        const TIER_CALENDAR_DAYS = [0, 8, 15, 21];
+        const GATE_IDS_V5 = {
+          1: 'U1-PC-FRQ-Q02',
+          2: 'U2-PC-FRQ-Q02',
+          3: 'U3-PC-FRQ-Q01',
+          4: 'U4-PC-FRQ-Q02',
+          5: 'U5-PC-FRQ-Q02',
+          6: 'U6-PC-FRQ-Q01',
+          7: 'U7-PC-FRQ-Q02',
+          8: 'U8-PC-FRQ-Q01',
+          9: 'U9-PC-FRQ-Q01'
+        };
+        const MS_PER_DAY = 24 * 60 * 60 * 1000;
+        const DEBT_ROLL_MARKER = '__studyGuideV5DebtRolledDate';
+
+        function hasOwn(obj, key) {
+          return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
+        }
+
+        function parseIsoDate(value) {
+          const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+          let year;
+          let month;
+          let day;
+          let date;
+
+          if (!match) {
+            return null;
+          }
+
+          year = Number(match[1]);
+          month = Number(match[2]);
+          day = Number(match[3]);
+          date = new Date(Date.UTC(year, month - 1, day));
+
+          if (
+            Number.isNaN(date.getTime()) ||
+            date.getUTCFullYear() !== year ||
+            date.getUTCMonth() !== month - 1 ||
+            date.getUTCDate() !== day
+          ) {
+            return null;
+          }
+
+          return date;
+        }
+
+        function clampTier(value) {
+          const numeric = Number(value);
+
+          if (!Number.isFinite(numeric)) {
+            return 0;
+          }
+
+          return Math.max(0, Math.min(3, Math.floor(numeric)));
+        }
+
+        function debtValue(value) {
+          if (typeof value !== 'number' || !Number.isFinite(value)) {
+            return 0;
+          }
+
+          return Math.max(0, value);
+        }
+
+        function getV4() {
+          return window.__studyGuideV4__ || {};
+        }
+
+        function getCommands() {
+          if (!window.AP_STATS_CARTRIDGE || !Array.isArray(window.AP_STATS_CARTRIDGE.commands)) {
+            return [];
+          }
+
+          return window.AP_STATS_CARTRIDGE.commands;
+        }
+
+        function getFormulaEntry(formulaId) {
+          const commands = getCommands();
+          let i;
+
+          for (i = 0; i < commands.length; i += 1) {
+            if (commands[i] && commands[i].id === formulaId) {
+              return commands[i];
+            }
+          }
+
+          return null;
+        }
+
+        function getUnits(state) {
+          if (!state || !state.units || typeof state.units !== 'object') {
+            return {};
+          }
+
+          return state.units;
+        }
+
+        function getUnitState(state, unit) {
+          const units = getUnits(state);
+
+          if (hasOwn(units, unit)) {
+            return units[unit];
+          }
+
+          if (hasOwn(units, String(unit))) {
+            return units[String(unit)];
+          }
+
+          return null;
+        }
+
+        function compareFormulaIds(a, b, weights) {
+          const weightDiff = (weights[b] || 0) - (weights[a] || 0);
+
+          if (weightDiff !== 0) {
+            return weightDiff;
+          }
+
+          if (a < b) {
+            return -1;
+          }
+
+          if (a > b) {
+            return 1;
+          }
+
+          return 0;
+        }
+
+        function ensureDoseLadder(state) {
+          if (!state || typeof state !== 'object') {
+            return null;
+          }
+
+          if (!state.doseLadder || typeof state.doseLadder !== 'object') {
+            state.doseLadder = {
+              tier: 0,
+              mcqDebt: 0,
+              frqDebt: 0
+            };
+          }
+
+          state.doseLadder.tier = clampTier(state.doseLadder.tier);
+          state.doseLadder.mcqDebt = debtValue(state.doseLadder.mcqDebt);
+          state.doseLadder.frqDebt = debtValue(state.doseLadder.frqDebt);
+
+          return state.doseLadder;
+        }
+
+        function getDebtRollMarker(doseLadder) {
+          return doseLadder && doseLadder[DEBT_ROLL_MARKER];
+        }
+
+        function setDebtRollMarker(doseLadder, dateStr) {
+          if (!doseLadder || typeof doseLadder !== 'object') {
+            return;
+          }
+
+          try {
+            Object.defineProperty(doseLadder, DEBT_ROLL_MARKER, {
+              value: dateStr,
+              writable: true,
+              configurable: true,
+              enumerable: false
+            });
+          } catch (error) {
+            doseLadder[DEBT_ROLL_MARKER] = dateStr;
+          }
+        }
+
+        function getCount(value) {
+          return Array.isArray(value) ? value.length : 0;
+        }
+
+        function adjustDebt(currentDebt, expected, completed) {
+          const short = Math.max(0, expected - completed);
+          const over = Math.max(0, completed - expected);
+
+          return Math.max(0, debtValue(currentDebt) + short - over);
+        }
+
+        function getQueueEntries(dailyDose, pool) {
+          if (!dailyDose || !Array.isArray(dailyDose[pool])) {
+            return [];
+          }
+
+          return dailyDose[pool];
+        }
+
+        function ensureCompletedEntries(dailyDose, pool) {
+          const key = pool + 'Completed';
+
+          if (!dailyDose || typeof dailyDose !== 'object') {
+            return [];
+          }
+
+          if (!Array.isArray(dailyDose[key])) {
+            dailyDose[key] = [];
+          }
+
+          return dailyDose[key];
+        }
+
+        function findPoolForQuestionId(dailyDose, questionId) {
+          const pools = ['mcq', 'frq'];
+          let poolIndex;
+          let entries;
+          let i;
+
+          for (poolIndex = 0; poolIndex < pools.length; poolIndex += 1) {
+            entries = getQueueEntries(dailyDose, pools[poolIndex]);
+
+            for (i = 0; i < entries.length; i += 1) {
+              if (entries[i] && entries[i].questionId === questionId) {
+                return pools[poolIndex];
+              }
+            }
+          }
+
+          return null;
+        }
+
+        function findNextUncompleted(dailyDose, pool) {
+          const entries = getQueueEntries(dailyDose, pool);
+          const completed = ensureCompletedEntries(dailyDose, pool);
+          let i;
+
+          for (i = 0; i < entries.length; i += 1) {
+            if (entries[i] && completed.indexOf(entries[i].questionId) === -1) {
+              return entries[i];
+            }
+          }
+
+          return null;
+        }
+
+        function daysSinceStudyStart(todayStr, startStr = STUDY_START_DATE) {
+          const today = parseIsoDate(todayStr);
+          const start = parseIsoDate(startStr);
+
+          if (!today || !start) {
+            return 1;
+          }
+
+          return Math.max(1, Math.ceil((today.getTime() - start.getTime()) / MS_PER_DAY) + 1);
+        }
+
+        function calendarTier(todayStr, startStr = STUDY_START_DATE) {
+          const dayOfStudy = daysSinceStudyStart(todayStr, startStr);
+          let tier = 0;
+          let i;
+
+          for (i = 0; i < TIER_CALENDAR_DAYS.length; i += 1) {
+            if (TIER_CALENDAR_DAYS[i] <= dayOfStudy) {
+              tier = i;
+            }
+          }
+
+          return tier;
+        }
+
+        function debtToTier(debt) {
+          return clampTier(Math.min(3, debtValue(debt)));
+        }
+
+        function computeDoseTier(state, todayStr) {
+          const doseLadder = state && state.doseLadder ? state.doseLadder : {};
+          const tier = Math.max(
+            calendarTier(todayStr),
+            debtToTier(doseLadder.mcqDebt),
+            debtToTier(doseLadder.frqDebt)
+          );
+
+          return clampTier(tier);
+        }
+
+        function tierSpec(tier) {
+          return LADDER[clampTier(tier)] || LADDER[0];
+        }
+
+        function updateDebtFromPriorDose(state, todayStr) {
+          const doseLadder = ensureDoseLadder(state);
+          const dailyDose = state && state.dailyDose;
+
+          if (!doseLadder || !dailyDose || typeof dailyDose !== 'object') {
+            return;
+          }
+
+          if (dailyDose.date === todayStr) {
+            return;
+          }
+
+          if (getDebtRollMarker(doseLadder) === dailyDose.date) {
+            return;
+          }
+
+          doseLadder.mcqDebt = adjustDebt(
+            doseLadder.mcqDebt,
+            getCount(dailyDose.mcq),
+            getCount(dailyDose.mcqCompleted)
+          );
+          doseLadder.frqDebt = adjustDebt(
+            doseLadder.frqDebt,
+            getCount(dailyDose.frq),
+            getCount(dailyDose.frqCompleted)
+          );
+
+          setDebtRollMarker(doseLadder, dailyDose.date);
+        }
+
+        function unitMeanMastery(unitState) {
+          const masteryState = unitState && unitState.masteryState && typeof unitState.masteryState === 'object'
+            ? unitState.masteryState
+            : null;
+          const masteryIds = masteryState ? Object.keys(masteryState) : [];
+          let sum = 0;
+          let count = 0;
+          let i;
+          let value;
+
+          for (i = 0; i < masteryIds.length; i += 1) {
+            value = masteryState[masteryIds[i]];
+            if (typeof value === 'number' && Number.isFinite(value)) {
+              sum += value;
+              count += 1;
+            }
+          }
+
+          if (count === 0) {
+            return 0.3;
+          }
+
+          return sum / count;
+        }
+
+        function pickDailyFrqs(state, n) {
+          const limit = Math.max(0, Number(n) || 0);
+          const candidates = [];
+          let unit;
+          let unitState;
+
+          for (unit = 1; unit <= 9; unit += 1) {
+            unitState = getUnitState(state, unit);
+
+            if (unitState && unitState.frqGrade) {
+              continue;
+            }
+
+            candidates.push({
+              unit: unit,
+              mastery: unitMeanMastery(unitState)
+            });
+          }
+
+          candidates.sort(function(a, b) {
+            if (a.mastery !== b.mastery) {
+              return a.mastery - b.mastery;
+            }
+
+            return a.unit - b.unit;
+          });
+
+          return candidates.slice(0, limit).map(function(candidate) {
+            return {
+              kind: 'frq',
+              unit: candidate.unit,
+              questionId: GATE_IDS_V5[candidate.unit],
+              formulaId: null
+            };
+          });
+        }
+
+        function buildMcqQueue(state, doseSize) {
+          const v4 = getV4();
+          const formulaMap = v4 && v4.FORMULA_UNIT_MAP && typeof v4.FORMULA_UNIT_MAP === 'object'
+            ? v4.FORMULA_UNIT_MAP
+            : {};
+          const formulaWeight = v4 && typeof v4.formulaWeight === 'function'
+            ? v4.formulaWeight
+            : function() { return 0; };
+          const pickProbeForFormula = v4 && typeof v4.pickProbeForFormula === 'function'
+            ? v4.pickProbeForFormula
+            : function() { return null; };
+          const touchedFormulaCount = v4 && typeof v4.touchedFormulaCount === 'function'
+            ? v4.touchedFormulaCount
+            : function() { return 0; };
+          const allFormulas = Object.keys(formulaMap);
+          const touchedFormulas = state && state.touchedFormulas && typeof state.touchedFormulas === 'object'
+            ? state.touchedFormulas
+            : {};
+          const touched = [];
+          const untouched = [];
+          const weights = {};
+          const priorityLookup = {};
+          const priority = [];
+          const others = [];
+          const queue = [];
+          const limit = Math.max(0, Number(doseSize) || 0);
+          const coreAndRegularTouched = touchedFormulaCount(state, 'core') + touchedFormulaCount(state, 'regular');
+          let i;
+          let formulaId;
+          let formulaEntry;
+          let probe;
+          let sortedCandidates;
+
+          for (i = 0; i < allFormulas.length; i += 1) {
+            formulaId = allFormulas[i];
+            if (hasOwn(touchedFormulas, formulaId)) {
+              touched.push(formulaId);
+            } else {
+              untouched.push(formulaId);
+            }
+          }
+
+          for (i = 0; i < allFormulas.length; i += 1) {
+            formulaId = allFormulas[i];
+            weights[formulaId] = formulaWeight(formulaId, state);
+          }
+
+          if (coreAndRegularTouched < 32) {
+            for (i = 0; i < untouched.length; i += 1) {
+              formulaId = untouched[i];
+              formulaEntry = getFormulaEntry(formulaId);
+
+              if (formulaEntry && (formulaEntry.tier === 'core' || formulaEntry.tier === 'regular')) {
+                priorityLookup[formulaId] = true;
+              }
+            }
+          }
+
+          for (i = 0; i < allFormulas.length; i += 1) {
+            formulaId = allFormulas[i];
+            if (priorityLookup[formulaId]) {
+              priority.push(formulaId);
+            } else {
+              others.push(formulaId);
+            }
+          }
+
+          priority.sort(function(a, b) {
+            return compareFormulaIds(a, b, weights);
+          });
+
+          others.sort(function(a, b) {
+            return compareFormulaIds(a, b, weights);
+          });
+
+          sortedCandidates = priority.concat(others);
+
+          for (i = 0; i < sortedCandidates.length; i += 1) {
+            if (queue.length >= limit) {
+              break;
+            }
+
+            probe = pickProbeForFormula(sortedCandidates[i], state);
+
+            if (probe) {
+              queue.push({
+                kind: 'mcq',
+                formulaId: probe.formulaId,
+                questionId: probe.questionId,
+                unit: probe.unit,
+                lesson: probe.lesson,
+                tier: probe.tier
+              });
+            }
+          }
+
+          return queue;
+        }
+
+        function pickDailyQueueV5(state, todayStr, examDateStr) {
+          const sourceState = state && typeof state === 'object' ? state : {};
+          const existingDose = sourceState.dailyDose;
+
+          updateDebtFromPriorDose(sourceState, todayStr);
+
+          if (existingDose && existingDose.date === todayStr) {
+            return existingDose;
+          }
+
+          const tier = computeDoseTier(sourceState, todayStr);
+          const spec = tierSpec(tier);
+
+          ensureDoseLadder(sourceState);
+          sourceState.doseLadder.tier = tier;
+
+          return {
+            date: todayStr,
+            tierAtGeneration: tier,
+            mcq: buildMcqQueue(sourceState, spec.mcq),
+            mcqCompleted: [],
+            frq: pickDailyFrqs(sourceState, spec.frq),
+            frqCompleted: [],
+            activeTab: 'mcq'
+          };
+        }
+
+        function advanceDailyQueueV5(state, currentQuestionId) {
+          const dailyDose = state && state.dailyDose;
+          const foundPool = findPoolForQuestionId(dailyDose, currentQuestionId);
+          const currentPool = foundPool || (dailyDose && dailyDose.activeTab === 'frq' ? 'frq' : 'mcq');
+          const otherPool = currentPool === 'frq' ? 'mcq' : 'frq';
+          let completed;
+          let nextEntry;
+
+          if (!dailyDose || typeof dailyDose !== 'object') {
+            return null;
+          }
+
+          completed = ensureCompletedEntries(dailyDose, currentPool);
+
+          if (foundPool && completed.indexOf(currentQuestionId) === -1) {
+            completed.push(currentQuestionId);
+          }
+
+          nextEntry = findNextUncompleted(dailyDose, currentPool);
+          if (nextEntry) {
+            dailyDose.activeTab = currentPool;
+            return nextEntry;
+          }
+
+          nextEntry = findNextUncompleted(dailyDose, otherPool);
+          if (nextEntry) {
+            dailyDose.activeTab = otherPool;
+            return nextEntry;
+          }
+
+          return null;
+        }
+
+        function setActiveTab(state, tab) {
+          if (!state || !state.dailyDose || typeof state.dailyDose !== 'object') {
+            return;
+          }
+
+          state.dailyDose.activeTab = tab === 'frq' ? 'frq' : 'mcq';
+        }
+
+        const api = {
+          LADDER: LADDER,
+          STUDY_START_DATE: STUDY_START_DATE,
+          TIER_CALENDAR_DAYS: TIER_CALENDAR_DAYS,
+          GATE_IDS_V5: GATE_IDS_V5,
+          daysSinceStudyStart: daysSinceStudyStart,
+          calendarTier: calendarTier,
+          debtToTier: debtToTier,
+          computeDoseTier: computeDoseTier,
+          tierSpec: tierSpec,
+          updateDebtFromPriorDose: updateDebtFromPriorDose,
+          unitMeanMastery: unitMeanMastery,
+          pickDailyFrqs: pickDailyFrqs,
+          pickDailyQueueV5: pickDailyQueueV5,
+          advanceDailyQueueV5: advanceDailyQueueV5,
+          setActiveTab: setActiveTab,
+          daysLeft: function(todayStr, examDateStr) {
+            const v4 = getV4();
+            return v4 && typeof v4.daysLeft === 'function' ? v4.daysLeft(todayStr, examDateStr) : 1;
+          },
+          computeDailyDose: function(remaining, days) {
+            const v4 = getV4();
+            return v4 && typeof v4.computeDailyDose === 'function' ? v4.computeDailyDose(remaining, days) : 3;
+          },
+          formulaMastery: function(formulaId, state) {
+            const v4 = getV4();
+            return v4 && typeof v4.formulaMastery === 'function' ? v4.formulaMastery(formulaId, state) : 0.3;
+          },
+          formulaWeight: function(formulaId, state) {
+            const v4 = getV4();
+            return v4 && typeof v4.formulaWeight === 'function' ? v4.formulaWeight(formulaId, state) : 0;
+          },
+          formulaName: function(formulaId) {
+            const v4 = getV4();
+            return v4 && typeof v4.formulaName === 'function' ? v4.formulaName(formulaId) : formulaId;
+          },
+          touchedFormulaCount: function(state, tier) {
+            const v4 = getV4();
+            return v4 && typeof v4.touchedFormulaCount === 'function' ? v4.touchedFormulaCount(state, tier) : 0;
+          },
+          pickProbeForFormula: function(formulaId, state) {
+            const v4 = getV4();
+            return v4 && typeof v4.pickProbeForFormula === 'function' ? v4.pickProbeForFormula(formulaId, state) : null;
+          },
+          recordFormulaTouch: function(formulaId, correct, state) {
+            const v4 = getV4();
+            return v4 && typeof v4.recordFormulaTouch === 'function' ? v4.recordFormulaTouch(formulaId, correct, state) : 0.3;
+          }
+        };
+
+        Object.defineProperties(api, {
+          FORMULA_UNIT_MAP: {
+            enumerable: true,
+            get: function() {
+              const v4 = getV4();
+              return v4 && v4.FORMULA_UNIT_MAP ? v4.FORMULA_UNIT_MAP : {};
+            }
+          },
+          UNIT_EXAM_WEIGHTS: {
+            enumerable: true,
+            get: function() {
+              const v4 = getV4();
+              return v4 && v4.UNIT_EXAM_WEIGHTS ? v4.UNIT_EXAM_WEIGHTS : {};
+            }
+          },
+          TIER_MULTIPLIERS: {
+            enumerable: true,
+            get: function() {
+              const v4 = getV4();
+              return v4 && v4.TIER_MULTIPLIERS ? v4.TIER_MULTIPLIERS : {};
+            }
+          },
+          BKT_INIT: {
+            enumerable: true,
+            get: function() {
+              const v4 = getV4();
+              return v4 && typeof v4.BKT_INIT === 'number' ? v4.BKT_INIT : 0.3;
+            }
+          },
+          AP_EXAM_DATE: {
+            enumerable: true,
+            get: function() {
+              const v4 = getV4();
+              return v4 && typeof v4.AP_EXAM_DATE === 'string' ? v4.AP_EXAM_DATE : '2026-05-07';
+            }
+          }
+        });
+
+        window.__studyGuideV5__ = api;
+      })(typeof window !== 'undefined' ? window : globalThis);
+      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
       const GATE_IDS = window.GATE_IDS_SG || {1:'U1-PC-FRQ-Q02',2:'U2-PC-FRQ-Q02',3:'U3-PC-FRQ-Q01',4:'U4-PC-FRQ-Q02',5:'U5-PC-FRQ-Q02',6:'U6-PC-FRQ-Q01',7:'U7-PC-FRQ-Q02',8:'U8-PC-FRQ-Q01',9:'U9-PC-FRQ-Q01'};
       const questions = new Map();
       const probeCache = {};
       const pending = { grade:{}, focus:{} };
       let saveTimer = null;
       let toastTimer = null;
+      let tierInfoModal = null;
       const today = () => new Date().toISOString().slice(0, 10);
       let state = makeDefaultState();
       const ui = {
@@ -796,12 +1463,18 @@
         for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
           units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null };
         }
-        return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), touchedFormulas:{}, dailyDose:null, units };
+        return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), touchedFormulas:{}, doseLadder:{ tier:0, mcqDebt:0, frqDebt:0 }, dailyDose:null, units };
       }
 
       function normalizeGrade(raw) {
-        if (!raw || typeof raw !== 'object' || !['E','P','I'].includes(raw.score)) return null;
-        return { score:raw.score, feedback:typeof raw.feedback === 'string' ? raw.feedback : '', matched:Array.isArray(raw.matched) ? raw.matched.filter(Boolean) : [], missing:Array.isArray(raw.missing) ? raw.missing.filter(Boolean) : [] };
+        if (!raw || typeof raw !== 'object' || !['E','P','I','paper'].includes(raw.score)) return null;
+        return {
+          score:raw.score,
+          feedback:typeof raw.feedback === 'string' ? raw.feedback : '',
+          matched:raw.score === 'paper' ? [] : Array.isArray(raw.matched) ? raw.matched.filter(Boolean) : [],
+          missing:raw.score === 'paper' ? [] : Array.isArray(raw.missing) ? raw.missing.filter(Boolean) : [],
+          submittedAt:typeof raw.submittedAt === 'string' ? raw.submittedAt : ''
+        };
       }
 
       function normalizeFocus(raw) {
@@ -836,23 +1509,70 @@
         return raw === 'high' || raw === 'medium' || raw === 'low' ? raw : null;
       }
 
+      function normalizeDoseLadder(raw) {
+        if (!raw || typeof raw !== 'object') {
+          return { tier:0, mcqDebt:0, frqDebt:0 };
+        }
+        return {
+          tier: typeof raw.tier === 'number' && Number.isFinite(raw.tier) && raw.tier >= 0 ? Math.floor(raw.tier) : 0,
+          mcqDebt: typeof raw.mcqDebt === 'number' && Number.isFinite(raw.mcqDebt) && raw.mcqDebt >= 0 ? raw.mcqDebt : 0,
+          frqDebt: typeof raw.frqDebt === 'number' && Number.isFinite(raw.frqDebt) && raw.frqDebt >= 0 ? raw.frqDebt : 0
+        };
+      }
+
+      function normalizeDailyDoseEntry(raw, kind) {
+        if (!raw || typeof raw !== 'object') return null;
+        if (typeof raw.unit !== 'number' || !Number.isFinite(raw.unit)) return null;
+        if (typeof raw.questionId !== 'string') return null;
+        const entry = {
+          kind,
+          unit: raw.unit,
+          questionId: raw.questionId,
+          formulaId: typeof raw.formulaId === 'string' ? raw.formulaId : null
+        };
+        if (kind === 'mcq') {
+          entry.lesson = typeof raw.lesson === 'number' && Number.isFinite(raw.lesson) ? raw.lesson : null;
+          entry.tier = typeof raw.tier === 'string' ? raw.tier : '';
+        }
+        return entry;
+      }
+
+      function normalizeDailyDoseV5(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        if (typeof raw.date !== 'string') return null;
+        if (typeof raw.tierAtGeneration !== 'number' || !Number.isFinite(raw.tierAtGeneration)) return null;
+        if (!Array.isArray(raw.mcq) || !Array.isArray(raw.mcqCompleted) || !Array.isArray(raw.frq) || !Array.isArray(raw.frqCompleted)) return null;
+        return {
+          date: raw.date,
+          tierAtGeneration: raw.tierAtGeneration,
+          mcq: raw.mcq.map(entry => normalizeDailyDoseEntry(entry, 'mcq')).filter(Boolean),
+          mcqCompleted: raw.mcqCompleted.filter(value => typeof value === 'string'),
+          frq: raw.frq.map(entry => normalizeDailyDoseEntry(entry, 'frq')).filter(Boolean),
+          frqCompleted: raw.frqCompleted.filter(value => typeof value === 'string'),
+          activeTab: raw.activeTab === 'frq' ? 'frq' : 'mcq'
+        };
+      }
+
       function normalizeState(raw) {
         const next = makeDefaultState();
         if (!raw || typeof raw !== 'object') return next;
-        if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4) return next;
+        if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4 && raw.schemaVersion !== 5) return next;
         next.studentName = typeof raw.studentName === 'string' ? raw.studentName : '';
         next.studentPeriod = typeof raw.studentPeriod === 'string' ? raw.studentPeriod : '';
         next.studentDate = typeof raw.studentDate === 'string' ? raw.studentDate : today();
         next.savedAt = typeof raw.savedAt === 'string' ? raw.savedAt : new Date().toISOString();
         next.theme = raw.schemaVersion >= 3 ? normalizeTheme(raw.theme) : 'paper';
         next.activeProbe = raw.schemaVersion >= 3 ? normalizeActiveProbe(raw.activeProbe) : null;
-        next.touchedFormulas = raw.schemaVersion === 4 && raw.touchedFormulas && typeof raw.touchedFormulas === 'object'
+        next.touchedFormulas = raw.schemaVersion >= 4 && raw.touchedFormulas && typeof raw.touchedFormulas === 'object'
           ? Object.fromEntries(Object.entries(raw.touchedFormulas)
               .filter(([, v]) => v && typeof v === 'object' && typeof v.lastMastery === 'number')
               .map(([k, v]) => [k, { firstTouchedAt: typeof v.firstTouchedAt === 'string' ? v.firstTouchedAt : today(), lastMastery: v.lastMastery }]))
           : {};
-        next.dailyDose = raw.schemaVersion === 4 && raw.dailyDose && typeof raw.dailyDose === 'object' && typeof raw.dailyDose.date === 'string' && Array.isArray(raw.dailyDose.queue)
-          ? { date: raw.dailyDose.date, queue: raw.dailyDose.queue.filter(q => q && typeof q.formulaId === 'string' && typeof q.questionId === 'string'), completed: Array.isArray(raw.dailyDose.completed) ? raw.dailyDose.completed.filter(s => typeof s === 'string') : [] }
+        next.doseLadder = raw.schemaVersion === 5
+          ? normalizeDoseLadder(raw.doseLadder)
+          : { tier:0, mcqDebt:0, frqDebt:0 };
+        next.dailyDose = raw.schemaVersion === 5
+          ? normalizeDailyDoseV5(raw.dailyDose)
           : null;
         const incomingUnits = raw.units && typeof raw.units === 'object' ? raw.units : {};
         for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
@@ -1153,39 +1873,146 @@
         return list.find(entry => entry && entry.id === questionId) || null;
       }
 
+      function closeTierInfoModal() {
+        if (!tierInfoModal) return;
+        document.removeEventListener('keydown', handleTierInfoModalKeydown);
+        tierInfoModal.remove();
+        tierInfoModal = null;
+      }
+
+      function handleTierInfoModalKeydown(event) {
+        if (event.key === 'Escape') {
+          closeTierInfoModal();
+        }
+      }
+
+      function tierTriggerCopy(tier) {
+        const minDay = TIER_CALENDAR_DAYS[tier] || 0;
+        if (tier === 0) {
+          const nextMinDay = TIER_CALENDAR_DAYS[1] || 8;
+          return `Days ${minDay + 1}-${nextMinDay - 1}, no debt`;
+        }
+        if (tier >= LADDER.length - 1) {
+          return `Days ${minDay}+ OR ${tier}+ days behind`;
+        }
+        return `Days ${minDay}+ OR ${tier} day${tier === 1 ? '' : 's'} behind`;
+      }
+
+      function renderTierInfoModal() {
+        if (tierInfoModal) return tierInfoModal;
+
+        const backdrop = make('div', 'sg-modal-backdrop');
+        const modal = make('div', 'sg-modal');
+        const rows = make('div');
+        const note = make('p', '', 'The ladder auto-advances with calendar pressure and falls behind pressure (debt). Working ahead cancels debt.');
+
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.tabIndex = -1;
+        modal.appendChild(make('h2', '', 'What do tiers mean?'));
+
+        LADDER.forEach(spec => {
+          const row = make('div', `sg-tier-row is-tier-${spec.tier}`);
+          const middle = make('div');
+          middle.appendChild(make('div', '', `Tier ${spec.tier} ${spec.label}`));
+          middle.appendChild(make('div', 'sg-queue-sub', tierTriggerCopy(spec.tier)));
+          row.appendChild(make('div', 'sg-tier-dot'));
+          row.appendChild(middle);
+          row.appendChild(make('div', '', `${spec.mcq} MCQ + ${spec.frq} FRQ`));
+          rows.appendChild(row);
+        });
+
+        modal.appendChild(rows);
+        modal.appendChild(note);
+        modal.addEventListener('click', event => event.stopPropagation());
+        backdrop.appendChild(modal);
+        backdrop.addEventListener('click', closeTierInfoModal);
+        document.body.appendChild(backdrop);
+        document.addEventListener('keydown', handleTierInfoModalKeydown);
+        tierInfoModal = backdrop;
+        modal.focus();
+        return tierInfoModal;
+      }
+
       function renderQueuePane() {
         if (!ui.rail) return;
         ui.rail.innerHTML = '';
-        const today = new Date().toISOString().slice(0, 10);
-        if (!state.dailyDose || state.dailyDose.date !== today) {
-          state.dailyDose = pickDailyQueue(state, today, AP_EXAM_DATE);
+        const todayStr = today();
+        if (!state.dailyDose || state.dailyDose.date !== todayStr) {
+          state.dailyDose = pickDailyQueueV5(state, todayStr, AP_EXAM_DATE);
           saveSoon();
         }
         const dose = state.dailyDose;
-        if (!dose || !Array.isArray(dose.queue) || dose.queue.length === 0) {
-          ui.rail.appendChild(make('h3', '', 'Today'));
+        if (!dose) {
           ui.rail.appendChild(make('p', 'sg-empty', 'No queue items are available yet.'));
           return;
         }
+        const tier = state.doseLadder && typeof state.doseLadder.tier === 'number' ? state.doseLadder.tier : 0;
+        const spec = tierSpec(tier);
         const header = make('div', 'sg-queue-header');
-        header.appendChild(make('h3', '', `Today: ${dose.queue.length} question${dose.queue.length === 1 ? '' : 's'}`));
-        const days = daysLeft(today, AP_EXAM_DATE);
-        header.appendChild(make('div', 'sg-queue-sub', `${days} day${days === 1 ? '' : 's'} until the AP exam.`));
+        const title = make('div', 'sg-queue-title');
+        title.innerHTML = `Today: <strong>${spec.mcq} MCQ + ${spec.frq} FRQ</strong>`;
+        header.appendChild(title);
+        const days = daysLeft(todayStr, AP_EXAM_DATE);
+        header.appendChild(make('div', 'sg-queue-sub', `Tier ${spec.tier} ${spec.label} · ${days} day${days === 1 ? '' : 's'} to exam`));
+        const meter = make('div', 'sg-tier-meter');
+        LADDER.forEach(entry => {
+          const segment = make('div', `sg-tier-seg is-tier-${entry.tier}`);
+          if (entry.tier <= tier) segment.classList.add('is-active');
+          meter.appendChild(segment);
+        });
+        header.appendChild(meter);
+        const infoButton = make('button', 'sg-tier-info', 'ⓘ What do tiers mean?');
+        infoButton.type = 'button';
+        infoButton.addEventListener('click', renderTierInfoModal);
+        header.appendChild(infoButton);
         ui.rail.appendChild(header);
 
+        const activeTab = dose.activeTab === 'frq' ? 'frq' : 'mcq';
+        const tabs = make('div', 'sg-queue-tabs');
+        tabs.setAttribute('role', 'tablist');
+
+        ['mcq', 'frq'].forEach(tab => {
+          const pool = Array.isArray(dose[tab]) ? dose[tab] : [];
+          const completed = Array.isArray(dose[`${tab}Completed`]) ? dose[`${tab}Completed`] : [];
+          const tabButton = make('button', `sg-queue-tab${tab === activeTab ? ' is-active' : ''}`, `${tab.toUpperCase()} (${completed.length}/${pool.length})`);
+          tabButton.type = 'button';
+          tabButton.dataset.tab = tab;
+          tabButton.setAttribute('role', 'tab');
+          tabButton.setAttribute('aria-selected', tab === activeTab ? 'true' : 'false');
+          tabButton.addEventListener('click', () => {
+            setActiveTab(state, tab);
+            saveSoon();
+            renderQueuePane();
+          });
+          tabs.appendChild(tabButton);
+        });
+
+        ui.rail.appendChild(tabs);
+
+        const entries = Array.isArray(dose[activeTab]) ? dose[activeTab] : [];
+        const completedEntries = Array.isArray(dose[`${activeTab}Completed`]) ? dose[`${activeTab}Completed`] : [];
         const list = make('ol', 'sg-queue-list');
-        dose.queue.forEach((entry, index) => {
+
+        entries.forEach((entry, index) => {
           const item = make('li', 'sg-queue-item');
-          const done = Array.isArray(dose.completed) && dose.completed.includes(entry.questionId);
+          const done = completedEntries.includes(entry.questionId);
           const isActive = state.activeProbe && state.activeProbe.questionId === entry.questionId;
+          const lesson = entry.lesson || lessonFromId(entry.questionId) || '—';
+          const label = activeTab === 'mcq'
+            ? formulaName(entry.formulaId)
+            : `Unit ${entry.unit} FRQ Gate`;
+          const meta = activeTab === 'mcq'
+            ? `Unit ${entry.unit} · L${lesson}`
+            : `Mastery: ${Math.round(unitMeanMastery(state.units[entry.unit]) * 100)}%`;
           if (done) item.classList.add('is-done');
           if (isActive) item.classList.add('is-active');
           const button = make('button', 'sg-queue-btn');
           button.type = 'button';
-          button.dataset.formulaId = entry.formulaId;
+          button.dataset.formulaId = entry.formulaId || '';
           button.dataset.questionId = entry.questionId;
           button.dataset.unit = String(entry.unit);
-          button.innerHTML = `<span class="sg-queue-index">${index + 1}.</span> <span class="sg-queue-label">${esc(formulaName(entry.formulaId))}</span><span class="sg-queue-meta">Unit ${entry.unit} · L${entry.lesson}</span>`;
+          button.innerHTML = `<span class="sg-queue-index">${index + 1}.</span> <span class="sg-queue-label">${esc(label)}</span><span class="sg-queue-meta">${esc(meta)}</span>`;
           button.addEventListener('click', () => {
             setActiveProbe(entry.unit, entry.questionId, 'daily-queue', entry.formulaId);
             renderActiveProbe();
@@ -1195,7 +2022,13 @@
           item.appendChild(button);
           list.appendChild(item);
         });
-        ui.rail.appendChild(list);
+
+        if (entries.length) {
+          ui.rail.appendChild(list);
+        } else {
+          ui.rail.appendChild(make('p', 'sg-empty', activeTab === 'mcq' ? 'No MCQ items are queued right now.' : 'No FRQ gates are queued right now.'));
+        }
+
         ui.rail.appendChild(renderSeeAllDisclosure());
       }
 
@@ -1261,19 +2094,17 @@
       }
 
       function advanceDailyQueue() {
-        if (!state.dailyDose || !Array.isArray(state.dailyDose.queue)) return null;
-        const current = state.activeProbe && state.activeProbe.questionId;
-        if (current && !state.dailyDose.completed.includes(current)) {
-          state.dailyDose.completed.push(current);
-        }
-        const remaining = state.dailyDose.queue.find(entry => !state.dailyDose.completed.includes(entry.questionId));
-        if (!remaining) {
+        if (!state.dailyDose || !state.activeProbe) return null;
+        const currentId = state.activeProbe.questionId;
+        const next = advanceDailyQueueV5(state, currentId);
+        if (!next) {
           state.activeProbe = null;
           saveSoon();
           return null;
         }
-        setActiveProbe(remaining.unit, remaining.questionId, 'daily-queue', remaining.formulaId);
-        return remaining;
+        setActiveProbe(next.unit, next.questionId, 'daily-queue', next.formulaId);
+        saveSoon();
+        return next;
       }
 
       function renderActiveProbe() {
@@ -1400,9 +2231,12 @@
           card.appendChild(nextRow);
           paintFeedback(result);
         } else {
+          const paperMode = !!data.frqOnPaper;
           const answer = document.createElement('textarea');
           answer.className = 'frq-answer';
-          answer.placeholder = 'Write your full response here. Use statistics vocabulary, evidence, and complete reasoning.';
+          answer.placeholder = paperMode
+            ? 'Write on paper and hand in to Mr. Colson — AI grading skipped.'
+            : 'Write your full response here. Use statistics vocabulary, evidence, and complete reasoning.';
           answer.value = data.frqAnswer || '';
           answer.addEventListener('input', () => {
             data.frqAnswer = answer.value;
@@ -1411,13 +2245,30 @@
             saveSoon();
           });
           const actions = make('div', 'sg-next-row');
-          const gradeButton = make('button', '', pending.grade[unit] || pending.focus[unit] ? 'Grading...' : 'Grade');
+          const paperButton = make('button', `sg-frq-paper-toggle${paperMode ? ' is-on' : ''}`, "I'll write this on paper");
+          paperButton.type = 'button';
+          paperButton.setAttribute('aria-pressed', paperMode ? 'true' : 'false');
+          paperButton.addEventListener('click', () => {
+            data.frqOnPaper = !data.frqOnPaper;
+            saveNow();
+            renderActiveProbe();
+          });
+          const gradeButton = make('button', '', pending.grade[unit] || pending.focus[unit] ? 'Grading...' : paperMode ? 'Mark complete (paper)' : 'Grade');
           gradeButton.id = 'sg-grade-frq';
           gradeButton.type = 'button';
           gradeButton.disabled = !!pending.grade[unit] || !!pending.focus[unit];
           gradeButton.addEventListener('click', async () => {
+            if (data.frqOnPaper) {
+              data.frqGrade = { score:'paper', feedback:'Written response submitted to teacher.', submittedAt:today() };
+              saveNow();
+              renderActiveProbe();
+              renderRemediation();
+              renderQueuePane();
+              return;
+            }
             await gradeFrq(unit);
           });
+          actions.appendChild(paperButton);
           actions.appendChild(gradeButton);
           card.append(answer, actions);
           if (pending.focus[unit]) card.appendChild(make('div', 'sg-remediation-body', 'Refreshing focus plan...'));
@@ -1516,13 +2367,14 @@
       }
 
       function renderGrade(grade) {
-        const panel = make('div', `frq-grade frq-grade-${grade.score}`);
+        const paperGrade = grade.score === 'paper';
+        const panel = make('div', `frq-grade frq-grade-${paperGrade ? 'paper' : grade.score}`);
         const top = make('div', 'frq-grade-top');
-        top.append(make('div', 'frq-grade-badge', grade.score), make('div', 'frq-grade-title', grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? 'Progressing - you are close.' : 'Needs review before the unit exam.'));
-        const copy = make('div', 'frq-grade-copy', grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? (grade.feedback || 'You hit some key ideas, but your explanation still needs more depth.') : `${grade.feedback || 'Your response is still missing core ideas.'} Review the focus lessons below.`);
+        top.append(make('div', 'frq-grade-badge', paperGrade ? 'Paper' : grade.score), make('div', 'frq-grade-title', paperGrade ? 'Paper response marked complete.' : grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? 'Progressing - you are close.' : 'Needs review before the unit exam.'));
+        const copy = make('div', 'frq-grade-copy', paperGrade ? (grade.feedback || 'Written response submitted to teacher.') : grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? (grade.feedback || 'You hit some key ideas, but your explanation still needs more depth.') : `${grade.feedback || 'Your response is still missing core ideas.'} Review the focus lessons below.`);
         panel.append(top, copy);
-        if (grade.matched && grade.matched.length) { const list = make('ul', 'grade-list'); grade.matched.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Matched ideas'), list); }
-        if (grade.missing && grade.missing.length) { const list = make('ul', 'grade-list'); grade.missing.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Missing ideas'), list); }
+        if (!paperGrade && grade.matched && grade.matched.length) { const list = make('ul', 'grade-list'); grade.matched.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Matched ideas'), list); }
+        if (!paperGrade && grade.missing && grade.missing.length) { const list = make('ul', 'grade-list'); grade.missing.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Missing ideas'), list); }
         return panel;
       }
       async function gradeFrq(unit) {
@@ -1611,7 +2463,7 @@
           const q = gateQuestion(unit);
           const grade = data.frqGrade;
           const focus = data.focusSynthesis;
-          const gradeHtml = grade ? `<div class="box"><p><span class="badge score-${esc(grade.score)}">${esc(grade.score)}</span></p><p>${esc(grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? (grade.feedback || 'Progressing.') : `${grade.feedback || 'Needs review.'} Review the focus lessons below.`)}</p>${grade.matched.length ? `<p><strong>Matched:</strong> ${esc(grade.matched.join('; '))}</p>` : ''}${grade.missing.length ? `<p><strong>Missing:</strong> ${esc(grade.missing.join('; '))}</p>` : ''}</div>` : `<div class="box muted">No FRQ grade recorded.</div>`;
+          const gradeHtml = grade ? `<div class="box"><p><span class="badge score-${esc(grade.score)}">${esc(grade.score === 'paper' ? 'Paper' : grade.score)}</span></p><p>${esc(grade.score === 'paper' ? (grade.feedback || 'Written response submitted to teacher.') : grade.score === 'E' ? "Strong - you nailed this unit's synthesis." : grade.score === 'P' ? (grade.feedback || 'Progressing.') : `${grade.feedback || 'Needs review.'} Review the focus lessons below.`)}</p>${grade.score !== 'paper' && grade.matched.length ? `<p><strong>Matched:</strong> ${esc(grade.matched.join('; '))}</p>` : ''}${grade.score !== 'paper' && grade.missing.length ? `<p><strong>Missing:</strong> ${esc(grade.missing.join('; '))}</p>` : ''}</div>` : `<div class="box muted">No FRQ grade recorded.</div>`;
           const focusHtml = focus ? `<div class="box"><p><strong>Priority:</strong> ${esc(focus.priority)}</p><p>${esc(focus.overallSummary || '')}</p>${focus.focusLessons.map(item => `<div class="item"><strong>${esc(`${String(item.lesson || '').replace(/[^\d]/g,'') ? `Lesson ${String(item.lesson || '').replace(/[^\d]/g,'')}` : 'Lesson'}${item.topic ? `: ${item.topic}` : ''}`)}</strong><p><strong>LO IDs:</strong> ${esc((item.loIds || []).join(', ') || 'Not specified')}</p><p><strong>Reason:</strong> ${esc(item.reason || 'Not specified')}</p><p><strong>Suggested action:</strong> ${esc(item.suggestedAction || 'Not specified')}</p></div>`).join('')}${focus.synthesisNote ? `<p><strong>Note:</strong> ${esc(focus.synthesisNote)}</p>` : ''}</div>` : `<div class="box muted">No focus synthesis generated for this unit.</div>`;
           return `<section class="unit"><h2>${esc(unitTitle(unit))}</h2><p class="muted">${esc(unitTopic(unit))}</p><p><span class="pill">Mode: ${esc(data.mode === 'both' ? 'Both' : data.mode.toUpperCase())}</span> <span class="pill">Exam Weight: ${esc(examWeight(unit))}</span></p><h3>MCQ Results</h3><table><thead><tr><th>Lesson</th><th>Topic</th><th>Probe Prompt</th><th>Student Answer</th><th>Correct Answer</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table><h3>FRQ</h3><p>${esc(stripFrq(q ? q.prompt || '' : 'FRQ not found.'))}</p><div class="quote">${esc(data.frqAnswer || '')}</div>${gradeHtml}<h3>Focus Synthesis</h3>${focusHtml}</section>`;
         }).join('');
@@ -1637,9 +2489,11 @@
         reader.onload = () => {
           try {
             const html = String(reader.result || '');
+            const matchV5 = html.match(/<script[^>]*data-state-id=["']sg-state-v5["'][^>]*>([\s\S]*?)<\/script>/i);
+            const matchV4 = html.match(/<script[^>]*data-state-id=["']sg-state-v4["'][^>]*>([\s\S]*?)<\/script>/i);
             const matchV3 = html.match(/<script[^>]*data-state-id=["']sg-state-v3["'][^>]*>([\s\S]*?)<\/script>/i);
             const matchV2 = html.match(/<script[^>]*data-state-id=["']sg-state-v2["'][^>]*>([\s\S]*?)<\/script>/i);
-            const match = matchV3 || matchV2;
+            const match = matchV5 || matchV4 || matchV3 || matchV2;
             if (!match) throw new Error('No embedded study-guide state block was found in that HTML file.');
             const parsed = JSON.parse(match[1]);
             state = normalizeState(parsed);
@@ -1698,21 +2552,26 @@
           });
         }
         try {
-          const rawV4 = localStorage.getItem(STORAGE_KEY);
-          if (rawV4) {
-            state = normalizeState(JSON.parse(rawV4));
+          const rawV5 = localStorage.getItem(STORAGE_KEY);
+          if (rawV5) {
+            state = normalizeState(JSON.parse(rawV5));
           } else {
-            const rawV3 = localStorage.getItem('apStatsStudyGuideDiagnostic.v3');
-            if (rawV3) {
-              state = normalizeState(JSON.parse(rawV3));
-              saveNow();
+            const rawV4 = localStorage.getItem('apStatsStudyGuideDiagnostic.v4');
+            if (rawV4) {
+              state = normalizeState(JSON.parse(rawV4));
             } else {
-              const rawV2 = localStorage.getItem('apStatsStudyGuideDiagnostic.v2');
-              if (rawV2) {
-                state = normalizeState(JSON.parse(rawV2));
+              const rawV3 = localStorage.getItem('apStatsStudyGuideDiagnostic.v3');
+              if (rawV3) {
+                state = normalizeState(JSON.parse(rawV3));
                 saveNow();
               } else {
-                state = makeDefaultState();
+                const rawV2 = localStorage.getItem('apStatsStudyGuideDiagnostic.v2');
+                if (rawV2) {
+                  state = normalizeState(JSON.parse(rawV2));
+                  saveNow();
+                } else {
+                  state = makeDefaultState();
+                }
               }
             }
           }
@@ -1727,7 +2586,7 @@
         ui.exportBtn.addEventListener('click', doExport);
         ui.importInput.addEventListener('change', importStateFromFile);
         ui.clearBtn.addEventListener('click', clearAll);
-        state.dailyDose = pickDailyQueue(state, today(), AP_EXAM_DATE);
+        state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
         saveSoon();
         refreshFocusedLayout();
       }

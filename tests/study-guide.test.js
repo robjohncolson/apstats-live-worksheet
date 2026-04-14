@@ -200,15 +200,17 @@ describe('study_guide_diagnostic.html — DAG / BKT integration', () => {
 });
 
 describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
-  it('defines the v4 render pipeline', () => {
+  it('defines the v5 render pipeline', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('function renderQueuePane');
     expect(src).toContain('function renderSeeAllDisclosure');
     expect(src).toContain('function renderActiveProbe');
     expect(src).toContain('function renderRemediation');
     expect(src).toContain('function advanceDailyQueue');
+    expect(src).toContain('function advanceDailyQueueV5');
     expect(src).toContain('function applyFrqFocusToBkt');
     expect(src).toContain('function buildCurriculumLink');
+    expect(src).toContain('function renderTierInfoModal');
     expect(src).toContain('function setActiveProbe');
     expect(src).toContain('function applyTheme');
   });
@@ -228,24 +230,41 @@ describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
     expect(src).not.toContain('lib/dag-renderer.js');
   });
 
-  it('loads the v4 data layer scripts in order', () => {
+  it('loads the formula-backed study-guide data layer scripts in order', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('data/ap-stats-cartridge.js');
     expect(src).toContain('data/formula-probe-map.js');
     expect(src).toContain('data/formula-probe-supplement.js');
   });
 
-  it('uses the v4 schema version and storage key', () => {
+  it('uses the v5 schema version, storage key, and state id', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain("STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v4'");
-    expect(src).toContain('SCHEMA_VERSION = 4');
+    expect(src).toContain("STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v5'");
+    expect(src).toContain('SCHEMA_VERSION = 5');
+    expect(src).toContain('sg-state-v5');
   });
 
-  it('publishes and consumes __studyGuideV4__', () => {
+  it('publishes and consumes __studyGuideV5__ while keeping the v4 bridge inline', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('window.__studyGuideV4__');
-    expect(src).toContain('pickDailyQueue');
+    expect(src).toContain('window.__studyGuideV5__');
+    expect(src).toContain('tier: 0');
+    expect(src).toContain('mcq: 5');
+    expect(src).toContain('frq: 1');
     expect(src).toContain('recordFormulaTouch');
+  });
+
+  it('renders the v5 tier meter, queue tabs, and FRQ paper toggle hooks', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-tier-meter');
+    expect(src).toContain('sg-queue-tabs');
+    expect(src).toContain('sg-frq-paper-toggle');
+  });
+
+  it('uses the v5 queue generator call sites instead of the old v4 init call', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('pickDailyQueueV5(state, today()');
+    expect(src).not.toContain('pickDailyQueue(state, today()');
   });
 
   it('guards against supplement ID collisions on init', () => {
