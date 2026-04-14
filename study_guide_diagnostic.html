@@ -83,6 +83,35 @@
     .sg-lo-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);color:var(--sg-text);cursor:pointer;text-align:left}
     .sg-lo-btn:hover,.sg-lo-btn.is-active{border-color:var(--sg-accent)}
     .sg-lo-btn.is-active{background:var(--sg-bar-track);font-weight:800}
+    .sg-queue-header{display:grid;gap:4px;margin-bottom:14px}
+    .sg-queue-sub{font-size:.88rem;color:var(--sg-text-dim)}
+    .sg-queue-list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+    .sg-queue-item{display:block}
+    .sg-queue-item.is-done{opacity:.55}
+    .sg-queue-item.is-done .sg-queue-btn::before{content:"✓";position:absolute;top:10px;right:12px;font-weight:800;color:var(--sg-mastery-high)}
+    .sg-queue-item.is-done .sg-queue-label{text-decoration:line-through}
+    .sg-queue-item.is-active .sg-queue-btn{border-color:var(--sg-accent);background:var(--sg-bar-track)}
+    .sg-queue-item.is-active .sg-queue-label{font-weight:800}
+    .sg-queue-btn{position:relative;width:100%;display:grid;grid-template-columns:2.25rem 1fr;grid-template-areas:"index label" ". meta";align-items:start;column-gap:10px;row-gap:4px;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);color:var(--sg-text);cursor:pointer;text-align:left;font:inherit}
+    .sg-queue-btn:hover{border-color:var(--sg-accent)}
+    .sg-queue-index{grid-area:index;min-width:2.25rem;font-weight:700;color:var(--sg-text-dim)}
+    .sg-queue-label{grid-area:label;color:var(--sg-text)}
+    .sg-queue-meta{grid-area:meta;font-size:.85rem;color:var(--sg-text-dim)}
+    .sg-see-all{margin-top:16px;padding-top:16px;border-top:1px solid var(--sg-border)}
+    .sg-see-all summary{padding:2px 0;color:var(--sg-text);font-weight:700;cursor:pointer}
+    .sg-see-all-body{display:grid;gap:12px;padding-top:10px}
+    .sg-see-all-summary{margin:0;font-size:.82rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--sg-text-dim)}
+    .sg-see-all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+    .sg-see-all-cell{appearance:none;width:100%;display:block;margin:0;padding:10px;border:1px solid var(--sg-border);border-radius:10px;background:var(--sg-bg-card);color:var(--sg-text);cursor:pointer;text-align:left;font:inherit}
+    .sg-see-all-cell.is-untested{background:var(--sg-bg)}
+    .sg-see-all-cell.is-untested .sg-see-all-name,.sg-see-all-cell.is-untested .sg-see-all-mastery{color:var(--sg-text-dim)}
+    .sg-see-all-cell.is-touched.is-low{box-shadow:inset 3px 0 0 var(--sg-mastery-low)}
+    .sg-see-all-cell.is-touched.is-mid{box-shadow:inset 3px 0 0 var(--sg-mastery-mid)}
+    .sg-see-all-cell.is-touched.is-high{box-shadow:inset 3px 0 0 var(--sg-mastery-high)}
+    .sg-see-all-cell.is-unavailable,.sg-see-all-cell:disabled{opacity:.4;cursor:not-allowed}
+    .sg-see-all-cell:hover:not([disabled]){border-color:var(--sg-accent);background:var(--sg-bar-track)}
+    .sg-see-all-name{margin-bottom:4px;font-weight:700}
+    .sg-see-all-mastery{font-size:.85rem;color:var(--sg-text-dim);font-variant-numeric:tabular-nums}
     #sg-next-weakest,#sg-check,#sg-next-after-check,#sg-grade-frq,.sg-open-curriculum{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--sg-accent);background:var(--sg-accent);color:var(--sg-bg);font-weight:700;cursor:pointer;text-decoration:none}
     .sg-probe-card,.sg-remediation-card{display:grid;gap:14px}
     .sg-probe-prompt{font-family:Georgia,"Times New Roman",serif;line-height:1.7;color:var(--sg-text);white-space:pre-wrap}
@@ -1108,7 +1137,7 @@
       }
 
       function setActiveProbe(unit, questionId, source, formulaId) {
-        const validSource = ['manual','next-weakest','lo-click','daily-queue'].includes(source) ? source : 'manual';
+        const validSource = ['manual','next-weakest','lo-click','daily-queue','see-all'].includes(source) ? source : 'manual';
         state.activeProbe = { unit, questionId, source: validSource, formulaId: typeof formulaId === 'string' ? formulaId : null };
         saveSoon();
       }
@@ -1172,6 +1201,9 @@
 
       function renderSeeAllDisclosure() {
         const wrapper = make('details', 'sg-see-all');
+        if (state.activeProbe && state.activeProbe.source === 'see-all') {
+          wrapper.open = true;
+        }
         wrapper.appendChild(make('summary', '', 'See all formulas'));
         const body = make('div', 'sg-see-all-body');
         const touchedCore = touchedFormulaCount(state, 'core');
@@ -1182,11 +1214,45 @@
         const allFormulas = Object.keys(FORMULA_UNIT_MAP).sort();
         const grid = make('div', 'sg-see-all-grid');
         allFormulas.forEach(formulaId => {
-          const mastery = formulaMastery(formulaId, state);
-          const pct = Math.round(mastery * 100);
-          const cell = make('div', 'sg-see-all-cell');
+          const touchedEntry = state.touchedFormulas && state.touchedFormulas[formulaId] && typeof state.touchedFormulas[formulaId].lastMastery === 'number'
+            ? state.touchedFormulas[formulaId]
+            : null;
+          const pick = pickProbeForFormula(formulaId, state);
+          const cell = make('button', 'sg-see-all-cell');
+          const masteryLabel = make('div', 'sg-see-all-mastery');
+
+          cell.type = 'button';
+
+          if (touchedEntry) {
+            cell.classList.add('is-touched');
+            if (touchedEntry.lastMastery < 0.4) {
+              cell.classList.add('is-low');
+            } else if (touchedEntry.lastMastery > 0.7) {
+              cell.classList.add('is-high');
+            } else {
+              cell.classList.add('is-mid');
+            }
+            masteryLabel.textContent = `${Math.round(touchedEntry.lastMastery * 100)}%`;
+          } else {
+            cell.classList.add('is-untested');
+            masteryLabel.textContent = 'untested';
+          }
+
+          if (!pick) {
+            cell.classList.add('is-unavailable');
+            cell.disabled = true;
+            cell.title = 'No probe available for this formula yet';
+          } else {
+            cell.addEventListener('click', () => {
+              setActiveProbe(pick.unit, pick.questionId, 'see-all', pick.formulaId);
+              renderActiveProbe();
+              renderRemediation();
+              renderQueuePane();
+            });
+          }
+
           cell.appendChild(make('div', 'sg-see-all-name', formulaName(formulaId)));
-          cell.appendChild(make('div', 'sg-see-all-mastery', `${pct}%`));
+          cell.appendChild(masteryLabel);
           grid.appendChild(cell);
         });
         body.appendChild(grid);
