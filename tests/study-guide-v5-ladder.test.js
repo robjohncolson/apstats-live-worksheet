@@ -816,3 +816,253 @@ describe('debt scenarios', () => {
     expect(api.computeDoseTier(state, THIRD_DAY)).toBeGreaterThanOrEqual(2);
   });
 });
+
+// ═══════════════════════════════════════════════════════
+// Session 85 — mastery map pure function tests
+// ═══════════════════════════════════════════════════════
+
+// Helpers for mastery map tests (use v4 directly — loaded in beforeEach).
+function makeMapCommands() {
+  return [
+    { id: 'mean', action: 'Mean', tier: 'core', dom: 'descriptive' },
+    { id: 'corr-r', action: 'Correlation', tier: 'regular', dom: 'descriptive' },
+    { id: 'binom-pmf', action: 'Binomial PMF', tier: 'core', dom: 'probability' },
+    { id: 'phat-sd', action: 'Sampling SD', tier: 'regular', dom: 'sampling' },
+    { id: 'one-prop-z', action: 'One Prop Z', tier: 'core', dom: 'inference' },
+    { id: 'chi-sq', action: 'Chi-square', tier: 'core', dom: 'inference' },
+    { id: 'slope-t', action: 'Slope t', tier: 'core', dom: 'regression' },
+    { id: 'unmapped-formula', action: 'Unmapped', tier: 'support', dom: 'other' }
+  ];
+}
+
+function makeMapUnitMap() {
+  return {
+    mean: 1,
+    'corr-r': 2,
+    'binom-pmf': 4,
+    'phat-sd': 5,
+    'one-prop-z': 6,
+    'chi-sq': 8,
+    'slope-t': 9
+    // 'unmapped-formula' intentionally omitted
+  };
+}
+
+describe('computeMapLayout', () => {
+  it('returns nodes for every cartridge command', () => {
+    const commands = makeMapCommands();
+    const layout = v4.computeMapLayout(commands, makeMapUnitMap());
+    expect(layout.nodes.length).toBe(commands.length);
+  });
+
+  it('assigns unit per FORMULA_UNIT_MAP', () => {
+    const commands = makeMapCommands();
+    const layout = v4.computeMapLayout(commands, makeMapUnitMap());
+    const meanNode = layout.nodes.find(n => n.id === 'mean');
+    const chiNode = layout.nodes.find(n => n.id === 'chi-sq');
+    expect(meanNode.unit).toBe(1);
+    expect(chiNode.unit).toBe(8);
+  });
+
+  it('places core formulas in inner ring and others in outer ring', () => {
+    const commands = makeMapCommands();
+    const layout = v4.computeMapLayout(commands, makeMapUnitMap());
+    const meanNode = layout.nodes.find(n => n.id === 'mean');
+    const corrNode = layout.nodes.find(n => n.id === 'corr-r');
+    expect(meanNode.ring).toBe('core');
+    expect(corrNode.ring).toBe('outer');
+  });
+
+  it('assigns unmapped formulas to unit 3 as fallback', () => {
+    const commands = makeMapCommands();
+    const layout = v4.computeMapLayout(commands, makeMapUnitMap());
+    const unmappedNode = layout.nodes.find(n => n.id === 'unmapped-formula');
+    expect(unmappedNode).toBeTruthy();
+    expect(unmappedNode.unit).toBe(3);
+  });
+
+  it('is deterministic — same input produces same positions', () => {
+    const commands = makeMapCommands();
+    const unitMap = makeMapUnitMap();
+    const layout1 = v4.computeMapLayout(commands, unitMap);
+    const layout2 = v4.computeMapLayout(commands, unitMap);
+    layout1.nodes.forEach((n, i) => {
+      expect(n.x).toBe(layout2.nodes[i].x);
+      expect(n.y).toBe(layout2.nodes[i].y);
+    });
+  });
+
+  it('worldBounds covers all nodes', () => {
+    const commands = makeMapCommands();
+    const layout = v4.computeMapLayout(commands, makeMapUnitMap());
+    const bounds = layout.worldBounds;
+    layout.nodes.forEach(n => {
+      expect(n.x).toBeGreaterThanOrEqual(0);
+      expect(n.y).toBeGreaterThanOrEqual(0);
+      expect(n.x).toBeLessThanOrEqual(bounds.width);
+      expect(n.y).toBeLessThanOrEqual(bounds.height);
+    });
+  });
+
+  it('unitCenters has 9 entries for units 1-9', () => {
+    const commands = makeMapCommands();
+    const layout = v4.computeMapLayout(commands, makeMapUnitMap());
+    expect(layout.unitCenters.length).toBe(9);
+    const unitNums = layout.unitCenters.map(uc => uc.unit);
+    for (let u = 1; u <= 9; u++) {
+      expect(unitNums).toContain(u);
+    }
+  });
+});
+
+describe('colorForMastery', () => {
+  it('returns grey-blue for untouched', () => {
+    const color = v4.colorForMastery(0, false);
+    expect(color.fill).toBe('#3a4060');
+  });
+
+  it('returns red for mastery 0 when touched', () => {
+    const color = v4.colorForMastery(0, true);
+    // hue = 0 * 120 = 0 → hsl(0, 75%, 50%)
+    expect(color.fill).toContain('hsl(0,');
+  });
+
+  it('returns yellow for mastery 0.5', () => {
+    const color = v4.colorForMastery(0.5, true);
+    // hue = 0.5 * 120 = 60
+    expect(color.fill).toContain('hsl(60,');
+  });
+
+  it('returns green for mastery 1.0', () => {
+    const color = v4.colorForMastery(1.0, true);
+    // hue = 1 * 120 = 120
+    expect(color.fill).toContain('hsl(120,');
+  });
+
+  it('returns glow color for mastery > 0.5', () => {
+    const color = v4.colorForMastery(0.7, true);
+    expect(color.glow).toBeTruthy();
+    expect(color.glow).toContain('hsla');
+  });
+
+  it('returns no glow for mastery <= 0.5', () => {
+    const colorAt05 = v4.colorForMastery(0.5, true);
+    const colorAt03 = v4.colorForMastery(0.3, true);
+    expect(colorAt05.glow).toBeNull();
+    expect(colorAt03.glow).toBeNull();
+  });
+
+  it('clamps mastery below 0 to 0', () => {
+    const colorNeg = v4.colorForMastery(-0.5, true);
+    const color0 = v4.colorForMastery(0, true);
+    expect(colorNeg.fill).toBe(color0.fill);
+  });
+
+  it('clamps mastery above 1 to 1', () => {
+    const colorOver = v4.colorForMastery(1.5, true);
+    const color1 = v4.colorForMastery(1.0, true);
+    expect(colorOver.fill).toBe(color1.fill);
+  });
+});
+
+describe('clampPan', () => {
+  // We need clampPan from the HTML inline copy; test it by loading v4 (which has the same logic).
+  // clampPan is not exported from v4/v5 — we test it via a local re-implementation
+  // to keep tests self-contained and pure.
+  function clampPanLocal(viewState, worldBounds, canvasWidth, canvasHeight) {
+    const scaledW = worldBounds.width * viewState.zoom;
+    const scaledH = worldBounds.height * viewState.zoom;
+    const maxPanX = Math.max(0, (scaledW - canvasWidth) / 2);
+    const maxPanY = Math.max(0, (scaledH - canvasHeight) / 2);
+    viewState.panX = Math.max(-maxPanX, Math.min(maxPanX, viewState.panX));
+    viewState.panY = Math.max(-maxPanY, Math.min(maxPanY, viewState.panY));
+    return viewState;
+  }
+
+  it('allows no pan at minZoom (content fits viewport)', () => {
+    // At minZoom, scaledW <= canvasWidth, so maxPanX = 0.
+    const worldBounds = { width: 1000, height: 700 };
+    const canvasW = 1000;
+    const canvasH = 700;
+    const minZoom = Math.min(canvasW / worldBounds.width, canvasH / worldBounds.height) * 0.95;
+    const viewState = { zoom: minZoom, panX: 50, panY: 50 };
+    clampPanLocal(viewState, worldBounds, canvasW, canvasH);
+    expect(viewState.panX).toBe(0);
+    expect(viewState.panY).toBe(0);
+  });
+
+  it('allows pan proportional to zoom overflow', () => {
+    const worldBounds = { width: 1000, height: 700 };
+    const canvasW = 1000;
+    const canvasH = 700;
+    // zoom = 2 → scaledW = 2000, maxPanX = (2000-1000)/2 = 500
+    const viewState = { zoom: 2, panX: 200, panY: 100 };
+    clampPanLocal(viewState, worldBounds, canvasW, canvasH);
+    expect(viewState.panX).toBe(200);
+    expect(viewState.panY).toBe(100);
+  });
+
+  it('clamps panX and panY to bounds', () => {
+    const worldBounds = { width: 1000, height: 700 };
+    const canvasW = 1000;
+    const canvasH = 700;
+    // zoom = 2 → maxPanX = 500, maxPanY = 350
+    const viewState = { zoom: 2, panX: 9999, panY: 9999 };
+    clampPanLocal(viewState, worldBounds, canvasW, canvasH);
+    expect(viewState.panX).toBe(500);
+    expect(viewState.panY).toBe(350);
+  });
+});
+
+describe('hitTest', () => {
+  function hitTestLocal(nodes, clickX, clickY, viewState, worldBounds, canvasWidth, canvasHeight) {
+    const cx = canvasWidth / 2 + viewState.panX;
+    const cy = canvasHeight / 2 + viewState.panY;
+    const worldX = (clickX - cx) / viewState.zoom + worldBounds.width / 2;
+    const worldY = (clickY - cy) / viewState.zoom + worldBounds.height / 2;
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const dx = worldX - node.x;
+      const dy = worldY - node.y;
+      if (dx * dx + dy * dy <= node.radius * node.radius * 1.4) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  const worldBounds = { width: 1000, height: 700 };
+  const canvasW = 1000;
+  const canvasH = 700;
+  const minZoom = Math.min(canvasW / worldBounds.width, canvasH / worldBounds.height) * 0.95;
+
+  it('returns the node under a click at the center of a node', () => {
+    const nodes = [{ id: 'test-node', x: 500, y: 350, radius: 8 }];
+    const viewState = { zoom: minZoom, panX: 0, panY: 0 };
+    // At minZoom with pan=0, canvas center maps to world center (500, 350).
+    // canvasCenter = (500, 350). worldX = (500 - 500) / minZoom + 500 = 500. worldY = 350.
+    const hit = hitTestLocal(nodes, 500, 350, viewState, worldBounds, canvasW, canvasH);
+    expect(hit).toBeTruthy();
+    expect(hit.id).toBe('test-node');
+  });
+
+  it('returns null for clicks in empty space', () => {
+    const nodes = [{ id: 'test-node', x: 500, y: 350, radius: 8 }];
+    const viewState = { zoom: minZoom, panX: 0, panY: 0 };
+    // Click far from node.
+    const hit = hitTestLocal(nodes, 0, 0, viewState, worldBounds, canvasW, canvasH);
+    expect(hit).toBeNull();
+  });
+
+  it('accounts for zoom and pan in the inverse transform', () => {
+    // Place a node at world (200, 150). At zoom=2, pan=(0,0):
+    // canvas coords for that point: cx=500, cy=350, worldX = (clickX-500)/2 + 500 = 200 → clickX = 500 + (200-500)*2 = 500-600 = -100 — outside canvas.
+    // Use a simpler: node at world center (500, 350) but zoom=2, panX=50.
+    // cx = 500+50 = 550, worldX = (clickX-550)/2 + 500. For node at worldX=500: clickX = (500-500)*2 + 550 = 550.
+    const nodes = [{ id: 'zoom-node', x: 500, y: 350, radius: 8 }];
+    const viewState = { zoom: 2, panX: 50, panY: 0 };
+    const hit = hitTestLocal(nodes, 550, 350, viewState, worldBounds, canvasW, canvasH);
+    expect(hit).toBeTruthy();
+    expect(hit.id).toBe('zoom-node');
+  });
+});

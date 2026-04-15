@@ -590,6 +590,117 @@
     return state.touchedFormulas[formulaId];
   }
 
+  // --- mastery map layout (pure, deterministic) ---
+
+  function computeMapLayout(commands, formulaUnitMap) {
+    const CELL_W = 300;
+    const CELL_H = 200;
+    const GRID_ORIGIN_X = 50;
+    const GRID_ORIGIN_Y = 50;
+    const INNER_R = 30;
+    const OUTER_R = 65;
+
+    // Group commands by unit and ring.
+    const byUnit = {};
+    let u;
+    for (u = 1; u <= 9; u += 1) {
+      byUnit[u] = { core: [], outer: [] };
+    }
+    const unmapped = [];
+
+    let i;
+    let cmd;
+    let unit;
+    let ring;
+    for (i = 0; i < commands.length; i += 1) {
+      cmd = commands[i];
+      unit = formulaUnitMap ? formulaUnitMap[cmd.id] : undefined;
+      if (!unit) {
+        unmapped.push(cmd);
+        continue;
+      }
+      ring = cmd.tier === 'core' ? 'core' : 'outer';
+      byUnit[unit][ring].push(cmd);
+    }
+
+    // Fallback: unmapped formulas go into unit 3 (which has no mapped formulas).
+    for (i = 0; i < unmapped.length; i += 1) {
+      byUnit[3].outer.push(unmapped[i]);
+    }
+
+    // Compute positions for each unit cluster.
+    const nodes = [];
+    const unitCenters = [];
+    let row;
+    let col;
+    let cx;
+    let cy;
+    let coreList;
+    let outerList;
+    let angle;
+    let node;
+
+    for (u = 1; u <= 9; u += 1) {
+      row = Math.floor((u - 1) / 3);
+      col = (u - 1) % 3;
+      cx = GRID_ORIGIN_X + col * CELL_W + CELL_W / 2;
+      cy = GRID_ORIGIN_Y + row * CELL_H + CELL_H / 2;
+      unitCenters.push({ unit: u, cx: cx, cy: cy });
+
+      coreList = byUnit[u].core;
+      outerList = byUnit[u].outer;
+
+      coreList.forEach(function(c, idx) {
+        angle = (idx / Math.max(1, coreList.length)) * Math.PI * 2 - Math.PI / 2;
+        nodes.push({
+          id: c.id,
+          label: c.action || c.id,
+          unit: u,
+          ring: 'core',
+          x: cx + Math.cos(angle) * INNER_R,
+          y: cy + Math.sin(angle) * INNER_R,
+          radius: 8
+        });
+      });
+
+      outerList.forEach(function(c, idx) {
+        angle = (idx / Math.max(1, outerList.length)) * Math.PI * 2 - Math.PI / 2;
+        nodes.push({
+          id: c.id,
+          label: c.action || c.id,
+          unit: u,
+          ring: 'outer',
+          x: cx + Math.cos(angle) * OUTER_R,
+          y: cy + Math.sin(angle) * OUTER_R,
+          radius: 7
+        });
+      });
+    }
+
+    return {
+      nodes: nodes,
+      worldBounds: { x: 0, y: 0, width: 1000, height: 700 },
+      unitCenters: unitCenters
+    };
+  }
+
+  // Maps a BKT mastery value (0.0–1.0) to HSL fill/stroke colors.
+  // touched=false means "never seen" → grey-blue; touched=true uses hue gradient.
+  function colorForMastery(mastery, touched) {
+    if (!touched || typeof mastery !== 'number') {
+      return { fill: '#3a4060', stroke: '#4a5075', glow: null };
+    }
+    const m = Math.max(0, Math.min(1, mastery));
+    const hue = m * 120;
+    const sat = 75;
+    const light = 50;
+    return {
+      fill: 'hsl(' + hue + ', ' + sat + '%, ' + light + '%)',
+      stroke: 'hsl(' + hue + ', ' + sat + '%, ' + (light + 15) + '%)',
+      glow: m > 0.5 ? 'hsla(' + hue + ', ' + sat + '%, ' + light + '%, 0.4)' : null
+    };
+  }
+
   // --- diagnostic export for testing + integration ---
   window.__studyGuideV4__ = {
     AP_EXAM_DATE: AP_EXAM_DATE,
@@ -614,6 +725,8 @@
     queuedFormulasToday: queuedFormulasToday,
     daysBetween: daysBetween,
     reviewQueueEntries: reviewQueueEntries,
-    graduateFormula: graduateFormula
+    graduateFormula: graduateFormula,
+    computeMapLayout: computeMapLayout,
+    colorForMastery: colorForMastery
   };
 })(typeof window !== 'undefined' ? window : globalThis);

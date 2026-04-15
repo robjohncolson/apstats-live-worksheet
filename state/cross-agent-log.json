@@ -2681,15 +2681,75 @@
       "timestamp": "2026-04-15T02:19:59Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "19990eda1626",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 172 \u2014 Direct Display Buffer Seeding in Browser Shell + Golden Regression\n\n## Context\nYou are",
+      "status": "completed",
+      "duration_seconds": 155.82,
+      "timestamp": "2026-04-15T02:44:51Z",
+      "files_changed": [
+        "TI-84_Plus_CE/browser-shell.html",
+        "TI-84_Plus_CE/probe-phase99d-home-verify.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "518c2a774a6c",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 171 \u2014 Display Buffer Populator Hunt\n\n## Context\nYou are working on the TI-84 Plus CE ROM tra",
+      "status": "timeout",
+      "duration_seconds": 900.398,
+      "timestamp": "2026-04-15T02:57:15Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "edb1019f0725",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 173 \u2014 0x0A2xxx Rendering Cluster Analysis\n\n## Context\nYou are working on the TI-84 Plus CE R",
+      "status": "timeout",
+      "duration_seconds": 900.1,
+      "timestamp": "2026-04-15T02:57:18Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "53bf79725741",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 174 \u2014 0x0A2133 Line-Writer Source Trace\n\n## Context\nYou are working on a TI-84 Plus CE ROM t",
+      "status": "completed",
+      "duration_seconds": 586.282,
+      "timestamp": "2026-04-15T03:12:39Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b2031f058e2b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 175 \u2014 Display Buffer Backup at 0xD02EC7\n\n## Context\nYou are working on a TI-84 Plus CE ROM t",
+      "status": "completed",
+      "duration_seconds": 643.32,
+      "timestamp": "2026-04-15T03:13:37Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase175-backup-buffer.mjs"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 229,
-    "cc_to_codex": 229,
+    "total_calls": 234,
+    "cc_to_codex": 234,
     "codex_to_cc": 0,
-    "completed": 173,
-    "failed": 51,
+    "completed": 176,
+    "failed": 53,
     "refused": 0,
-    "avg_duration_seconds": 444.971
+    "avg_duration_seconds": 449.078
   }
 }

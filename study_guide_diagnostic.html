@@ -294,6 +294,24 @@
     @media (max-width:900px){.header{grid-template-columns:1fr;text-align:center}.header-left,.header-center,.header-right{justify-self:center}.student-info,.progress-summary,#sg-layout{grid-template-columns:1fr}}
     @media (max-width:620px){.page{width:min(100% - 16px,100%);padding-top:18px}.action-bar{align-items:stretch}.action-btn,.import-label,#theme-toggle{width:100%}}
     @media print{body{background:var(--sg-bg-card)}.header,.action-bar,.mode-toggle,.unit-action-row,.probe-check-btn,.toast{display:none !important}.page{width:100%;margin:0;padding:0}.panel,.unit-card,.summary-tile,.unit-section,.probe,.focus-panel,#sg-rail,#sg-active,#sg-remediation{border-color:var(--sg-border)}.unit-card{break-inside:avoid;page-break-inside:avoid;margin-bottom:20px}.unit-header{background:var(--sg-accent)}a{color:inherit;text-decoration:none}}
+    .sg-mastery-map-panel{margin-top:14px;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card)}
+    .sg-mastery-map-panel-header{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:.88rem;margin-bottom:6px;color:var(--sg-text)}
+    .sg-mastery-map-panel-header button{padding:2px 8px;font-size:.75rem;border-radius:6px;border:1px solid var(--sg-border);background:var(--sg-bg);color:var(--sg-text);cursor:pointer}
+    .sg-mastery-map-panel-header button:hover{border-color:var(--sg-accent)}
+    .sg-mastery-map-mini{display:block;width:100%;height:80px;border-radius:6px;cursor:pointer;background:#0a0e27}
+    .sg-mastery-map-modal .sg-modal{max-width:min(1040px, 96vw);max-height:min(760px, 92vh);overflow:hidden;padding:18px 20px;gap:10px}
+    .sg-mastery-map-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .sg-mastery-map-header h2{margin:0;font-size:1.1rem}
+    .sg-mastery-map-stats{margin:2px 0 0;font-size:.82rem;color:var(--sg-text-dim)}
+    .sg-mastery-map-close{padding:6px 14px;border-radius:6px;border:1px solid var(--sg-border);background:var(--sg-bg-card);color:var(--sg-text);font:inherit;cursor:pointer}
+    .sg-mastery-map-close:hover{border-color:var(--sg-accent)}
+    .sg-mastery-map-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;border-radius:8px;background:#0a0e27}
+    .sg-mastery-map-canvas{display:block;max-width:100%;max-height:100%;cursor:grab}
+    .sg-mastery-map-canvas:active{cursor:grabbing}
+    .sg-mastery-map-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:6px;font-size:.78rem;color:var(--sg-text-dim);flex-wrap:wrap}
+    .sg-mastery-map-legend{display:flex;gap:10px;align-items:center}
+    .sg-mastery-legend-dot{display:inline-block;width:10px;height:10px;border-radius:999px;vertical-align:middle;margin-right:4px}
+    .sg-mastery-map-hint{font-style:italic}
   </style>
 </head>
 <body>
@@ -977,7 +995,9 @@
         queuedFormulasToday: queuedFormulasToday,
         daysBetween: daysBetween,
         reviewQueueEntries: reviewQueueEntries,
-        graduateFormula: graduateFormula
+        graduateFormula: graduateFormula,
+        computeMapLayout: computeMapLayout,
+        colorForMastery: colorForMastery
       };
       }
       (function(window) {
@@ -1601,6 +1621,14 @@
           graduateFormula: function(formulaId, state) {
             const v4 = getV4();
             return v4 && typeof v4.graduateFormula === 'function' ? v4.graduateFormula(formulaId, state) : null;
+          },
+          computeMapLayout: function(commands, formulaUnitMap) {
+            const v4 = getV4();
+            return v4 && typeof v4.computeMapLayout === 'function' ? v4.computeMapLayout(commands, formulaUnitMap) : { nodes: [], worldBounds: { x: 0, y: 0, width: 1000, height: 700 }, unitCenters: [] };
+          },
+          colorForMastery: function(mastery, touched) {
+            const v4 = getV4();
+            return v4 && typeof v4.colorForMastery === 'function' ? v4.colorForMastery(mastery, touched) : { fill: '#3a4060', stroke: '#4a5075', glow: null };
           }
         };
 
@@ -2452,6 +2480,512 @@
         return `Days ${minDay}+ OR ${tier} day${tier === 1 ? '' : 's'} behind`;
       }
 
+      // ═══════════════════════════════════════════════════════
+      // MASTERY MAP — session 85
+      // ═══════════════════════════════════════════════════════
+
+      // --- Pure functions (inline copies; authoritative versions in .v4-logic-block.js) ---
+
+      function computeMapLayout(commands, formulaUnitMap) {
+        const CELL_W = 300;
+        const CELL_H = 200;
+        const GRID_ORIGIN_X = 50;
+        const GRID_ORIGIN_Y = 50;
+        const INNER_R = 30;
+        const OUTER_R = 65;
+
+        const byUnit = {};
+        let u;
+        for (u = 1; u <= 9; u += 1) {
+          byUnit[u] = { core: [], outer: [] };
+        }
+        const unmapped = [];
+
+        let i;
+        let cmd;
+        let unit;
+        let ring;
+        for (i = 0; i < commands.length; i += 1) {
+          cmd = commands[i];
+          unit = formulaUnitMap ? formulaUnitMap[cmd.id] : undefined;
+          if (!unit) {
+            unmapped.push(cmd);
+            continue;
+          }
+          ring = cmd.tier === 'core' ? 'core' : 'outer';
+          byUnit[unit][ring].push(cmd);
+        }
+
+        for (i = 0; i < unmapped.length; i += 1) {
+          byUnit[3].outer.push(unmapped[i]);
+        }
+
+        const nodes = [];
+        const unitCenters = [];
+        let row;
+        let col;
+        let cx;
+        let cy;
+        let coreList;
+        let outerList;
+        let angle;
+
+        for (u = 1; u <= 9; u += 1) {
+          row = Math.floor((u - 1) / 3);
+          col = (u - 1) % 3;
+          cx = GRID_ORIGIN_X + col * CELL_W + CELL_W / 2;
+          cy = GRID_ORIGIN_Y + row * CELL_H + CELL_H / 2;
+          unitCenters.push({ unit: u, cx: cx, cy: cy });
+
+          coreList = byUnit[u].core;
+          outerList = byUnit[u].outer;
+
+          coreList.forEach(function(c, idx) {
+            angle = (idx / Math.max(1, coreList.length)) * Math.PI * 2 - Math.PI / 2;
+            nodes.push({
+              id: c.id,
+              label: c.action || c.id,
+              unit: u,
+              ring: 'core',
+              x: cx + Math.cos(angle) * INNER_R,
+              y: cy + Math.sin(angle) * INNER_R,
+              radius: 8
+            });
+          });
+
+          outerList.forEach(function(c, idx) {
+            angle = (idx / Math.max(1, outerList.length)) * Math.PI * 2 - Math.PI / 2;
+            nodes.push({
+              id: c.id,
+              label: c.action || c.id,
+              unit: u,
+              ring: 'outer',
+              x: cx + Math.cos(angle) * OUTER_R,
+              y: cy + Math.sin(angle) * OUTER_R,
+              radius: 7
+            });
+          });
+        }
+
+        return {
+          nodes: nodes,
+          worldBounds: { x: 0, y: 0, width: 1000, height: 700 },
+          unitCenters: unitCenters
+        };
+      }
+
+      function colorForMastery(mastery, touched) {
+        if (!touched || typeof mastery !== 'number') {
+          return { fill: '#3a4060', stroke: '#4a5075', glow: null };
+        }
+        const m = Math.max(0, Math.min(1, mastery));
+        const hue = m * 120;
+        const sat = 75;
+        const light = 50;
+        return {
+          fill: 'hsl(' + hue + ', ' + sat + '%, ' + light + '%)',
+          stroke: 'hsl(' + hue + ', ' + sat + '%, ' + (light + 15) + '%)',
+          glow: m > 0.5 ? 'hsla(' + hue + ', ' + sat + '%, ' + light + '%, 0.4)' : null
+        };
+      }
+
+      function clampPan(viewState, worldBounds, canvasWidth, canvasHeight) {
+        const scaledW = worldBounds.width * viewState.zoom;
+        const scaledH = worldBounds.height * viewState.zoom;
+        const maxPanX = Math.max(0, (scaledW - canvasWidth) / 2);
+        const maxPanY = Math.max(0, (scaledH - canvasHeight) / 2);
+        viewState.panX = Math.max(-maxPanX, Math.min(maxPanX, viewState.panX));
+        viewState.panY = Math.max(-maxPanY, Math.min(maxPanY, viewState.panY));
+        return viewState;
+      }
+
+      function hitTest(nodes, clickX, clickY, viewState, worldBounds, canvasWidth, canvasHeight) {
+        const cx = canvasWidth / 2 + viewState.panX;
+        const cy = canvasHeight / 2 + viewState.panY;
+        const worldX = (clickX - cx) / viewState.zoom + worldBounds.width / 2;
+        const worldY = (clickY - cy) / viewState.zoom + worldBounds.height / 2;
+
+        let i;
+        let node;
+        let dx;
+        let dy;
+        for (i = 0; i < nodes.length; i += 1) {
+          node = nodes[i];
+          dx = worldX - node.x;
+          dy = worldY - node.y;
+          if (dx * dx + dy * dy <= node.radius * node.radius * 1.4) {
+            return node;
+          }
+        }
+        return null;
+      }
+
+      // --- Canvas rendering ---
+
+      function renderMasteryMap(canvas, nodes, worldBounds, appState, viewState) {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const w = canvas.width;
+        const h = canvas.height;
+        const zoom = viewState.zoom;
+        const panX = viewState.panX;
+        const panY = viewState.panY;
+
+        // Dark-blue background.
+        ctx.fillStyle = '#0a0e27';
+        ctx.fillRect(0, 0, w, h);
+
+        // Center-in-viewport transform with pan/zoom.
+        ctx.save();
+        ctx.translate(w / 2 + panX, h / 2 + panY);
+        ctx.scale(zoom, zoom);
+        ctx.translate(-worldBounds.width / 2, -worldBounds.height / 2);
+
+        // Unit labels — extract unitCenters from nodes.
+        const unitCenterMap = {};
+        nodes.forEach(function(n) {
+          if (!unitCenterMap[n.unit]) {
+            // Estimate cluster center from grid math (matches computeMapLayout).
+            const row = Math.floor((n.unit - 1) / 3);
+            const col = (n.unit - 1) % 3;
+            unitCenterMap[n.unit] = {
+              unit: n.unit,
+              cx: 50 + col * 300 + 150,
+              cy: 50 + row * 200 + 100
+            };
+          }
+        });
+
+        Object.keys(unitCenterMap).forEach(function(uKey) {
+          const uc = unitCenterMap[uKey];
+          ctx.font = Math.max(10, 14 / zoom) + 'px sans-serif';
+          ctx.fillStyle = 'rgba(140, 148, 190, 0.7)';
+          ctx.textAlign = 'center';
+          ctx.fillText('Unit ' + uc.unit, uc.cx, uc.cy - 85);
+        });
+
+        // Draw nodes.
+        const touched = (appState && appState.touchedFormulas) || {};
+        let i;
+        let node;
+        let entry;
+        let mastery;
+        let isTouched;
+        let color;
+        let grad;
+        for (i = 0; i < nodes.length; i += 1) {
+          node = nodes[i];
+          entry = touched[node.id];
+          mastery = entry ? (typeof entry.lastMastery === 'number' ? entry.lastMastery : 0) : 0;
+          isTouched = !!entry;
+          color = colorForMastery(mastery, isTouched);
+
+          // Glow for high-mastery nodes.
+          if (color.glow) {
+            grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, node.radius * 2.8);
+            grad.addColorStop(0, color.glow);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius * 2.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Main dot.
+          ctx.fillStyle = color.fill;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.lineWidth = 1.5 / zoom;
+          ctx.strokeStyle = color.stroke;
+          ctx.stroke();
+
+          // Label only at high zoom.
+          if (zoom > 1.8) {
+            ctx.font = Math.max(8, 10 / zoom) + 'px sans-serif';
+            ctx.fillStyle = '#cbd0e8';
+            ctx.textAlign = 'center';
+            ctx.fillText(node.label, node.x, node.y + node.radius + 12 / zoom);
+          }
+        }
+
+        ctx.restore();
+      }
+
+      function renderMasteryMiniMap(canvas, nodes, worldBounds, appState) {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const w = canvas.width;  // 120
+        const h = canvas.height; // 80
+
+        ctx.fillStyle = '#0a0e27';
+        ctx.fillRect(0, 0, w, h);
+
+        const scaleX = w / worldBounds.width;
+        const scaleY = h / worldBounds.height;
+        const scale = Math.min(scaleX, scaleY) * 0.95;
+        const offsetX = (w - worldBounds.width * scale) / 2;
+        const offsetY = (h - worldBounds.height * scale) / 2;
+
+        const touched = (appState && appState.touchedFormulas) || {};
+        let i;
+        let node;
+        let entry;
+        let color;
+        for (i = 0; i < nodes.length; i += 1) {
+          node = nodes[i];
+          entry = touched[node.id];
+          color = colorForMastery(
+            entry ? (typeof entry.lastMastery === 'number' ? entry.lastMastery : 0) : 0,
+            !!entry
+          );
+          ctx.fillStyle = color.fill;
+          ctx.beginPath();
+          ctx.arc(
+            offsetX + node.x * scale,
+            offsetY + node.y * scale,
+            2,
+            0, Math.PI * 2
+          );
+          ctx.fill();
+        }
+      }
+
+      // --- Modal ---
+
+      function showMasteryMapModal() {
+        const commands = (window.AP_STATS_CARTRIDGE && Array.isArray(window.AP_STATS_CARTRIDGE.commands))
+          ? window.AP_STATS_CARTRIDGE.commands
+          : [];
+        const formulaUnitMap = FORMULA_UNIT_MAP;
+        const layout = computeMapLayout(commands, formulaUnitMap);
+        const nodes = layout.nodes;
+        const worldBounds = layout.worldBounds;
+
+        const CANVAS_W = 1000;
+        const CANVAS_H = 700;
+        const minZoom = Math.min(CANVAS_W / worldBounds.width, CANVAS_H / worldBounds.height) * 0.95;
+        const maxZoom = minZoom * 5;
+
+        // Reset viewport on every open.
+        const viewState = { zoom: minZoom, panX: 0, panY: 0 };
+
+        // Compute stats for header.
+        const touched = (state && state.touchedFormulas) || {};
+        let masteredCount = 0;
+        let practicingCount = 0;
+        let untouchedCount = 0;
+        commands.forEach(function(cmd) {
+          const entry = touched[cmd.id];
+          if (!entry) {
+            untouchedCount += 1;
+          } else if (typeof entry.lastMastery === 'number' && entry.lastMastery >= 0.75) {
+            masteredCount += 1;
+          } else {
+            practicingCount += 1;
+          }
+        });
+
+        // Build modal DOM.
+        const backdrop = make('div', 'sg-modal-backdrop sg-mastery-map-modal');
+        const modal = make('div', 'sg-modal');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.tabIndex = -1;
+
+        // Header.
+        const header = make('div', 'sg-mastery-map-header');
+        const headerLeft = make('div', '');
+        const titleEl = make('h2', '', '\uD83D\uDDFA\uFE0F Mastery map');
+        const statsEl = make('p', 'sg-mastery-map-stats',
+          masteredCount + ' of ' + commands.length + ' mastered \u00B7 ' +
+          practicingCount + ' practicing \u00B7 ' +
+          untouchedCount + ' untouched'
+        );
+        headerLeft.appendChild(titleEl);
+        headerLeft.appendChild(statsEl);
+        header.appendChild(headerLeft);
+
+        const closeBtn = make('button', 'sg-mastery-map-close', 'Close');
+        closeBtn.type = 'button';
+        header.appendChild(closeBtn);
+        modal.appendChild(header);
+
+        // Canvas wrap.
+        const canvasWrap = make('div', 'sg-mastery-map-canvas-wrap');
+        const canvas = document.createElement('canvas');
+        canvas.className = 'sg-mastery-map-canvas';
+        canvas.width = CANVAS_W;
+        canvas.height = CANVAS_H;
+        canvasWrap.appendChild(canvas);
+        modal.appendChild(canvasWrap);
+
+        // Footer with legend.
+        const footer = make('div', 'sg-mastery-map-footer');
+        const legend = make('div', 'sg-mastery-map-legend');
+
+        function makeDot(bg) {
+          const dot = make('span', 'sg-mastery-legend-dot');
+          dot.style.background = bg;
+          return dot;
+        }
+
+        legend.appendChild(makeDot('#3a4060'));
+        legend.appendChild(document.createTextNode(' Untouched'));
+        legend.appendChild(makeDot('hsl(0,75%,50%)'));
+        legend.appendChild(document.createTextNode(' Low'));
+        legend.appendChild(makeDot('hsl(60,75%,50%)'));
+        legend.appendChild(document.createTextNode(' Mid'));
+        legend.appendChild(makeDot('hsl(120,75%,50%)'));
+        legend.appendChild(document.createTextNode(' High'));
+        footer.appendChild(legend);
+        footer.appendChild(make('div', 'sg-mastery-map-hint', 'Click a formula to open its card \u00B7 scroll to zoom \u00B7 drag to pan'));
+        modal.appendChild(footer);
+
+        backdrop.appendChild(modal);
+
+        // Close logic.
+        function closeMap() {
+          backdrop.remove();
+          document.removeEventListener('keydown', escHandler);
+        }
+
+        const escHandler = function(e) {
+          if (e.key === 'Escape') closeMap();
+        };
+
+        closeBtn.addEventListener('click', closeMap);
+        backdrop.addEventListener('click', function(e) {
+          if (e.target === backdrop) closeMap();
+        });
+        document.addEventListener('keydown', escHandler);
+
+        // Initial render (no-op if jsdom).
+        if (nodes.length === 0) {
+          // Graceful no-data: show a message inside the canvas area.
+          const noData = make('p', '', 'No formula data available.');
+          noData.style.cssText = 'color:#8c94be;text-align:center;padding:20px;margin:0';
+          canvasWrap.insertBefore(noData, canvas);
+        }
+        renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
+
+        // --- Wheel zoom ---
+        canvas.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          const prevZoom = viewState.zoom;
+          const newZoom = Math.max(minZoom, Math.min(maxZoom, prevZoom * (1 + e.deltaY * -0.001)));
+
+          // Zoom toward cursor: adjust pan so point under cursor stays fixed.
+          const scaleChange = newZoom / prevZoom;
+          viewState.panX = mouseX - scaleChange * (mouseX - viewState.panX);
+          viewState.panY = mouseY - scaleChange * (mouseY - viewState.panY);
+          viewState.zoom = newZoom;
+          clampPan(viewState, worldBounds, CANVAS_W, CANVAS_H);
+          renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
+        }, { passive: false });
+
+        // --- Mouse drag / click ---
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let dragPanX = 0;
+        let dragPanY = 0;
+        let isDragging = false;
+
+        canvas.addEventListener('mousedown', function(e) {
+          isDragging = true;
+          dragStartX = e.clientX;
+          dragStartY = e.clientY;
+          dragPanX = viewState.panX;
+          dragPanY = viewState.panY;
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          viewState.panX = dragPanX + (e.clientX - dragStartX);
+          viewState.panY = dragPanY + (e.clientY - dragStartY);
+          clampPan(viewState, worldBounds, CANVAS_W, CANVAS_H);
+          renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
+        });
+
+        canvas.addEventListener('mouseup', function(e) {
+          if (!isDragging) return;
+          isDragging = false;
+          const dx = e.clientX - dragStartX;
+          const dy = e.clientY - dragStartY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          // Drag vs click threshold is 4 pixels.
+          if (dist < 4) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            const hit = hitTest(nodes, clickX, clickY, viewState, worldBounds, CANVAS_W, CANVAS_H);
+            if (hit) {
+              // Close map modal first, then open formula modal with a no-op onClose.
+              closeMap();
+              const noop = function() {};
+              showFormulaCardModal(hit.id, null, null, null, noop);
+            }
+          }
+        });
+
+        canvas.addEventListener('mouseleave', function() {
+          isDragging = false;
+        });
+
+        document.body.appendChild(backdrop);
+        modal.focus();
+      }
+
+      // Appends the mastery map mini-map panel into ui.rail.
+      // Call once inside renderQueuePane, after renderReviewQueuePanel().
+      function renderMasteryMapPanel() {
+        if (!ui.rail) return;
+
+        // Remove any existing panel before re-rendering.
+        const existing = ui.rail.querySelector('.sg-mastery-map-panel');
+        if (existing) existing.remove();
+
+        const commands = (window.AP_STATS_CARTRIDGE && Array.isArray(window.AP_STATS_CARTRIDGE.commands))
+          ? window.AP_STATS_CARTRIDGE.commands
+          : [];
+        const layout = computeMapLayout(commands, FORMULA_UNIT_MAP);
+        const nodes = layout.nodes;
+        const worldBounds = layout.worldBounds;
+
+        const panel = make('div', 'sg-mastery-map-panel');
+
+        const panelHeader = make('div', 'sg-mastery-map-panel-header');
+        panelHeader.appendChild(make('span', '', '\uD83D\uDDFA\uFE0F Mastery map'));
+
+        const expandBtn = make('button', '', 'Expand');
+        expandBtn.type = 'button';
+        panelHeader.appendChild(expandBtn);
+        panel.appendChild(panelHeader);
+
+        const miniCanvas = document.createElement('canvas');
+        miniCanvas.className = 'sg-mastery-map-mini';
+        miniCanvas.width = 120;
+        miniCanvas.height = 80;
+        panel.appendChild(miniCanvas);
+
+        expandBtn.addEventListener('click', showMasteryMapModal);
+        miniCanvas.addEventListener('click', showMasteryMapModal);
+
+        renderMasteryMiniMap(miniCanvas, nodes, worldBounds, state);
+
+        // Insert before the see-all disclosure if it exists.
+        const seeAll = ui.rail.querySelector('.sg-see-all');
+        if (seeAll) {
+          ui.rail.insertBefore(panel, seeAll);
+        } else {
+          ui.rail.appendChild(panel);
+        }
+      }
+
       function renderTierInfoModal() {
         if (tierInfoModal) return tierInfoModal;
 
@@ -2584,6 +3118,7 @@
         }
 
         renderReviewQueuePanel();
+        renderMasteryMapPanel();
         ui.rail.appendChild(renderSeeAllDisclosure());
       }
 

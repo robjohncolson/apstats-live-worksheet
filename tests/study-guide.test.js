@@ -775,3 +775,74 @@ describe('session 83 TI-84 procedure walkthroughs', () => {
     }
   });
 });
+
+describe('session 85 mastery map', () => {
+  it('defines renderMasteryMap function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderMasteryMap(');
+  });
+
+  it('defines renderMasteryMiniMap function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderMasteryMiniMap(');
+  });
+
+  it('defines showMasteryMapModal function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function showMasteryMapModal(');
+  });
+
+  it('mastery map modal uses sg-mastery-map-modal class', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-mastery-map-modal');
+  });
+
+  it('mastery map modal overrides max-height and overflow', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-mastery-map-modal .sg-modal');
+    expect(src).toContain('overflow:hidden');
+  });
+
+  it('mastery map legend shows four color states', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-mastery-legend-dot');
+    expect(src).toContain('Untouched');
+    expect(src).toContain('Low');
+    expect(src).toContain('Mid');
+    expect(src).toContain('High');
+  });
+
+  it('renderQueuePane appends the mastery-map-panel', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('renderMasteryMapPanel');
+    expect(src).toContain('sg-mastery-map-panel');
+  });
+
+  it('mini-map canvas has width 120 and height 80', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('miniCanvas.width = 120');
+    expect(src).toContain('miniCanvas.height = 80');
+  });
+
+  it('full-screen canvas uses createRadialGradient for glow', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('createRadialGradient');
+  });
+
+  it('click handler calls showFormulaCardModal with a no-op onClose', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('showFormulaCardModal(hit.id, null, null, null, noop)');
+  });
+
+  it('wheel handler prevents default and clamps zoom to [minZoom, maxZoom]', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('e.preventDefault()');
+    expect(src).toContain('minZoom');
+    expect(src).toContain('maxZoom');
+  });
+
+  it('drag vs click threshold is 4 pixels', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('dist < 4');
+  });
+});

@@ -623,6 +623,18 @@
     graduateFormula: function(formulaId, state) {
       const v4 = getV4();
       return v4 && typeof v4.graduateFormula === 'function' ? v4.graduateFormula(formulaId, state) : null;
+    },
+    computeMapLayout: function(commands, formulaUnitMap) {
+      const v4 = getV4();
+      return v4 && typeof v4.computeMapLayout === 'function'
+        ? v4.computeMapLayout(commands, formulaUnitMap)
+        : { nodes: [], worldBounds: { x: 0, y: 0, width: 1000, height: 700 }, unitCenters: [] };
+    },
+    colorForMastery: function(mastery, touched) {
+      const v4 = getV4();
+      return v4 && typeof v4.colorForMastery === 'function'
+        ? v4.colorForMastery(mastery, touched)
+        : { fill: '#3a4060', stroke: '#4a5075', glow: null };
     }
   };
 
