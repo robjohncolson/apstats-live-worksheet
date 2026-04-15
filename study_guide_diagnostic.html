@@ -245,6 +245,7 @@
     .sg-formula-modal-calc-steps summary{cursor:pointer;font-weight:700;color:var(--sg-text);padding:4px 0}
     .sg-formula-modal-calc-steps summary:hover{color:var(--sg-accent)}
     .sg-formula-modal-calc-steps-body{padding-top:10px}
+    .sg-formula-modal-calc-empty{margin:0;color:var(--sg-text-dim);font-size:.9rem;line-height:1.55}
     .sg-calc-walkthrough{display:grid;gap:12px}
     .sg-calc-walkthrough-header{display:grid;gap:4px}
     .sg-calc-walkthrough-title{font-weight:800;font-size:1rem;color:var(--sg-text)}
@@ -3931,19 +3932,23 @@
           modal.appendChild(scSection);
         }
 
-        // Calculator walkthrough section — only renders if this formula has a mapped procedure
+        // Calculator walkthrough section — always render so the absence of a TI-84 path is explicit.
         const procId = (window.FORMULA_PROCEDURE_MAP || {})[formulaId];
+        const calcDetails = document.createElement('details');
+        calcDetails.className = 'sg-formula-modal-calc-steps';
+        calcDetails.open = true;
+        const calcSummary = document.createElement('summary');
+        calcSummary.textContent = '📱 TI-84 calculator steps';
+        calcDetails.appendChild(calcSummary);
+        const calcBody = make('div', 'sg-formula-modal-calc-steps-body');
         if (procId && window.TI84_PROCEDURES && window.TI84_PROCEDURES.procedures) {
-          const calcDetails = document.createElement('details');
-          calcDetails.className = 'sg-formula-modal-calc-steps';
-          const calcSummary = document.createElement('summary');
-          calcSummary.textContent = '📱 Show calculator steps';
-          calcDetails.appendChild(calcSummary);
-          const calcBody = make('div', 'sg-formula-modal-calc-steps-body');
           renderProcedureWalkthrough(procId, calcBody);
-          calcDetails.appendChild(calcBody);
-          modal.appendChild(calcDetails);
+        } else {
+          calcBody.appendChild(make('p', 'sg-formula-modal-calc-empty',
+            'No TI-84 walkthrough is attached to this formula card yet.'));
         }
+        calcDetails.appendChild(calcBody);
+        modal.appendChild(calcDetails);
 
         const closeModal = () => {
           backdrop.remove();

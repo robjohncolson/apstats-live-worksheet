@@ -675,9 +675,10 @@ describe('session 83 TI-84 procedure walkthroughs', () => {
   });
 
   // Test 5
-  it('showFormulaCardModal renders calc-steps details only when procedure is mapped', () => {
+  it('showFormulaCardModal always renders a calc-steps details block', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('if (procId && window.TI84_PROCEDURES');
+    expect(src).toContain("const calcDetails = document.createElement('details');");
+    expect(src).toContain("calcDetails.className = 'sg-formula-modal-calc-steps'");
   });
 
   // Test 6
@@ -689,7 +690,7 @@ describe('session 83 TI-84 procedure walkthroughs', () => {
   // Test 7
   it('calc-steps summary text is "📱 Show calculator steps"', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('Show calculator steps');
+    expect(src).toContain('TI-84 calculator steps');
   });
 
   // Test 8
@@ -1183,5 +1184,19 @@ describe('session 88b formula modal practice button + see-all removal', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('.sg-formula-modal-practice{');
     expect(src).toContain('background:var(--sg-accent)');
+  });
+});
+
+describe('session 89b formula modal calculator visibility', () => {
+  it('keeps the TI-84 section visible by default', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('calcDetails.open = true');
+    expect(src).toContain('TI-84 calculator steps');
+  });
+
+  it('shows an explicit empty-state message when a formula has no TI-84 mapping', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('No TI-84 walkthrough is attached to this formula card yet.');
+    expect(src).toContain("make('p', 'sg-formula-modal-calc-empty'");
   });
 });
