@@ -647,6 +647,22 @@ describe('study_guide_diagnostic.html — session 82 always-scored simplificatio
   });
 });
 
+describe('session 84 modal viewport overflow fix', () => {
+  it('sg-modal base rule caps height at 90vh with overflow-y auto', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const rule = src.match(/\.sg-modal\{[^}]+\}/);
+    expect(rule).not.toBeNull();
+    expect(rule[0]).toContain('max-height:90vh');
+    expect(rule[0]).toContain('overflow-y:auto');
+  });
+
+  it('sg-modal uses overscroll-behavior:contain to prevent background scroll', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const rule = src.match(/\.sg-modal\{[^}]+\}/);
+    expect(rule[0]).toContain('overscroll-behavior:contain');
+  });
+});
+
 describe('session 83 TI-84 procedure walkthroughs', () => {
   const PROCEDURES_JS_PATH = resolve(__dirname, '../data/ti84-procedures.js');
   const MAP_JS_PATH = resolve(__dirname, '../data/formula-procedure-map.js');
