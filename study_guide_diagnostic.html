@@ -44,7 +44,7 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:var(--sg-text);background:var(--sg-bg)}
     a{color:var(--sg-accent)}
-    button,input,textarea{font:inherit}
+    button,input,textarea,select{font:inherit}
     .header{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:14px 24px;background:var(--sg-bg-card);color:var(--sg-text);border-bottom:1px solid var(--sg-border);font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
     .header-left{justify-self:start}
     .header-center{justify-self:center}
@@ -54,10 +54,11 @@
     .subtitle{margin:10px 0 0;color:var(--sg-text-dim);line-height:1.6}
     .panel,.unit-card,.summary-tile,#sg-rail,#sg-active,#sg-remediation{background:var(--sg-bg-card);border:1px solid var(--sg-border);border-radius:8px}
     .panel{margin-top:18px;padding:18px}
-    .student-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .student-info{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
     .student-info label{display:grid;gap:8px;font-weight:700;color:var(--sg-text)}
-    input,textarea{width:100%;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;color:var(--sg-text);background:var(--sg-bg-card)}
+    input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;color:var(--sg-text);background:var(--sg-bg-card)}
     textarea{min-height:110px;resize:vertical;line-height:1.6}
+    .sg-sync-note{grid-column:1 / -1;font-size:.86rem;line-height:1.5;color:var(--sg-text-dim);padding-top:2px}
     .action-bar,.unit-action-row,.probe-actions,.status-row,.focus-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
     .action-bar{margin:18px 0}
     .action-btn,.import-label,.unit-action-btn,.probe-check-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--sg-accent);background:var(--sg-accent);color:var(--sg-bg);font-weight:700;cursor:pointer;text-decoration:none}
@@ -317,9 +318,12 @@
     <p class="subtitle">See the weakest learning objectives first, work one probe at a time, and jump straight into remediation when you need it.</p>
 
     <section class="panel student-info">
+      <label>Username<input id="studentUsername" list="studentUsernameOptions" autocomplete="username" placeholder="Select or type username"></label>
+      <datalist id="studentUsernameOptions"></datalist>
       <label>Name<input id="studentName" autocomplete="name"></label>
       <label>Period<input id="studentPeriod" autocomplete="off"></label>
       <label>Date<input id="studentDate" type="date"></label>
+      <div id="syncStatus" class="sg-sync-note">Backup: local only on this device.</div>
     </section>
 
     <details class="panel instructions-box">
@@ -367,6 +371,7 @@
   <script src="data/formula-probe-map.js"></script>
   <script src="data/formula-probe-supplement.js"></script>
   <script src="data/frq-decompositions.js"></script>
+  <script src="data/study-guide-sync-config.js"></script>
   <script src="data/ti84-procedures.js"></script>
   <script src="data/formula-procedure-map.js"></script>
   <script>
@@ -375,6 +380,11 @@
       const SCHEMA_VERSION = 6;
       const STATE_ID = 'sg-state-v6';
       const UNIT_COUNT = 9;
+      const PROFILE_INDEX_KEY = 'apStatsStudyGuideDiagnostic.userProfiles';
+      const ACTIVE_USER_KEY = 'apStatsStudyGuideDiagnostic.activeUsername';
+      const USER_SNAPSHOT_PREFIX = 'apStatsStudyGuideDiagnostic.user.';
+      const REMOTE_SYNC_DELAY_MS = 1200;
+      const REMOTE_WORKSHEET_ID = 'study_guide_diagnostic';
       <!-- block-scope at line ~303 intentionally preserved; see session 76 notes -->
       {
       'use strict';
@@ -1873,14 +1883,21 @@
       const probeCache = {};
       const pending = { grade:{}, focus:{} };
       let saveTimer = null;
+      let remoteSaveTimer = null;
+      let remotePendingSnapshot = null;
+      let remoteLoadToken = 0;
       let toastTimer = null;
       let tierInfoModal = null;
+      let syncStatusText = 'Backup: local only on this device.';
       const today = () => new Date().toISOString().slice(0, 10);
       let state = makeDefaultState();
       const ui = {
+        username: document.getElementById('studentUsername'),
+        usernameOptions: document.getElementById('studentUsernameOptions'),
         name: document.getElementById('studentName'),
         period: document.getElementById('studentPeriod'),
         date: document.getElementById('studentDate'),
+        syncStatus: document.getElementById('syncStatus'),
         exportBtn: document.getElementById('export-btn'),
         importInput: document.getElementById('import-input'),
         clearBtn: document.getElementById('clear-btn'),
@@ -2030,7 +2047,7 @@
         for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
           units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers() };
         }
-        return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), touchedFormulas:{}, doseLadder:{ tier:0, mcqDebt:0, frqDebt:0 }, dailyDose:null, units };
+        return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentUsername:'', studentName:'', studentPeriod:'', studentDate:today(), touchedFormulas:{}, doseLadder:{ tier:0, mcqDebt:0, frqDebt:0 }, dailyDose:null, units };
       }
 
       function normalizeGrade(raw) {
@@ -2124,6 +2141,7 @@
         const next = makeDefaultState();
         if (!raw || typeof raw !== 'object') return next;
         if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4 && raw.schemaVersion !== 5 && raw.schemaVersion !== 6) return next;
+        next.studentUsername = typeof raw.studentUsername === 'string' ? raw.studentUsername.trim() : '';
         next.studentName = typeof raw.studentName === 'string' ? raw.studentName : '';
         next.studentPeriod = typeof raw.studentPeriod === 'string' ? raw.studentPeriod : '';
         next.studentDate = typeof raw.studentDate === 'string' ? raw.studentDate : today();
@@ -2174,9 +2192,375 @@
         return copy;
       };
 
+      function normalizeUsername(value) {
+        return String(value || '').trim();
+      }
+
+      function usernameLookupKey(value) {
+        return normalizeUsername(value).toLowerCase();
+      }
+
+      function userSnapshotKey(username) {
+        return `${USER_SNAPSHOT_PREFIX}${encodeURIComponent(usernameLookupKey(username))}`;
+      }
+
+      function safeParseStorage(key) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function timestampMs(value) {
+        const parsed = Date.parse(String(value || ''));
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function setSyncStatus(text) {
+        syncStatusText = text;
+        if (ui.syncStatus) {
+          ui.syncStatus.textContent = text;
+        }
+      }
+
+      function legacyUsernameSeeds() {
+        const seeds = [];
+        const push = (username, profile) => {
+          const clean = normalizeUsername(username);
+          if (!clean) return;
+          seeds.push({
+            username: clean,
+            name: profile && typeof profile.name === 'string' ? profile.name : '',
+            period: profile && typeof profile.period === 'string' ? profile.period : '',
+            lastUsedAt: profile && typeof profile.lastUsedAt === 'string' ? profile.lastUsedAt : ''
+          });
+        };
+        push(localStorage.getItem(ACTIVE_USER_KEY));
+        push(localStorage.getItem('progress-username'));
+        push(localStorage.getItem('username'));
+        const worksheetUser = safeParseStorage('worksheet-user');
+        if (worksheetUser && typeof worksheetUser === 'object') {
+          push(worksheetUser.username, {
+            name: worksheetUser.name || '',
+            period: worksheetUser.klass || '',
+            lastUsedAt: ''
+          });
+        }
+        return seeds;
+      }
+
+      function configuredProfiles() {
+        const raw = window.AP_STATS_STUDY_GUIDE_USERNAMES;
+        if (!Array.isArray(raw)) return [];
+        return raw.map(entry => {
+          if (typeof entry === 'string') {
+            return { username: normalizeUsername(entry), name:'', period:'', lastUsedAt:'' };
+          }
+          if (!entry || typeof entry !== 'object') return null;
+          return {
+            username: normalizeUsername(entry.username),
+            name: typeof entry.name === 'string' ? entry.name : '',
+            period: typeof entry.period === 'string' ? entry.period : '',
+            lastUsedAt: typeof entry.lastUsedAt === 'string' ? entry.lastUsedAt : ''
+          };
+        }).filter(entry => entry && entry.username);
+      }
+
+      function mergeProfiles(entries) {
+        const byUser = new Map();
+        entries.forEach(entry => {
+          if (!entry) return;
+          const username = normalizeUsername(entry.username || entry);
+          if (!username) return;
+          const key = usernameLookupKey(username);
+          const prior = byUser.get(key) || { username, name:'', period:'', lastUsedAt:'' };
+          byUser.set(key, {
+            username: prior.username || username,
+            name: entry.name || prior.name || '',
+            period: entry.period || prior.period || '',
+            lastUsedAt: entry.lastUsedAt || prior.lastUsedAt || ''
+          });
+        });
+        return Array.from(byUser.values()).sort((a, b) => {
+          const timeDiff = timestampMs(b.lastUsedAt) - timestampMs(a.lastUsedAt);
+          if (timeDiff) return timeDiff;
+          return a.username.localeCompare(b.username);
+        });
+      }
+
+      function loadProfiles() {
+        const stored = safeParseStorage(PROFILE_INDEX_KEY);
+        const entries = [];
+        if (Array.isArray(stored)) entries.push(...stored);
+        entries.push(...configuredProfiles());
+        entries.push(...legacyUsernameSeeds());
+        return mergeProfiles(entries);
+      }
+
+      function writeProfiles(profiles) {
+        try {
+          localStorage.setItem(PROFILE_INDEX_KEY, JSON.stringify(mergeProfiles(profiles).slice(0, 200)));
+        } catch {}
+      }
+
+      function findProfile(username) {
+        const clean = usernameLookupKey(username);
+        if (!clean) return null;
+        const profiles = loadProfiles();
+        for (let i = 0; i < profiles.length; i += 1) {
+          if (usernameLookupKey(profiles[i].username) === clean) return profiles[i];
+        }
+        return null;
+      }
+
+      function rememberProfile(snapshot) {
+        const username = normalizeUsername(snapshot && snapshot.studentUsername);
+        if (!username) return;
+        const profiles = loadProfiles();
+        profiles.push({
+          username,
+          name: typeof (snapshot && snapshot.studentName) === 'string' ? snapshot.studentName : '',
+          period: typeof (snapshot && snapshot.studentPeriod) === 'string' ? snapshot.studentPeriod : '',
+          lastUsedAt: typeof (snapshot && snapshot.savedAt) === 'string' ? snapshot.savedAt : new Date().toISOString()
+        });
+        writeProfiles(profiles);
+      }
+
+      function renderUsernameOptions() {
+        if (!ui.usernameOptions) return;
+        ui.usernameOptions.innerHTML = '';
+        loadProfiles().forEach(profile => {
+          const option = document.createElement('option');
+          option.value = profile.username;
+          option.label = profile.name ? `${profile.name} (${profile.username})` : profile.username;
+          ui.usernameOptions.appendChild(option);
+        });
+      }
+
+      function applyIdentityInputsFromState() {
+        if (ui.username) ui.username.value = state.studentUsername || '';
+        if (ui.name) ui.name.value = state.studentName || '';
+        if (ui.period) ui.period.value = state.studentPeriod || '';
+        if (ui.date) ui.date.value = state.studentDate || today();
+        renderUsernameOptions();
+      }
+
+      function writeLocalSnapshot(snapshot) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+          if (snapshot.studentUsername) {
+            localStorage.setItem(userSnapshotKey(snapshot.studentUsername), JSON.stringify(snapshot));
+            localStorage.setItem(ACTIVE_USER_KEY, snapshot.studentUsername);
+          } else {
+            localStorage.removeItem(ACTIVE_USER_KEY);
+          }
+          rememberProfile(snapshot);
+        } catch {
+          showToast('Local save failed.');
+        }
+      }
+
+      function loadLocalSnapshotForUser(username) {
+        const clean = normalizeUsername(username);
+        if (!clean) return null;
+        const parsed = safeParseStorage(userSnapshotKey(clean));
+        return parsed ? normalizeState(parsed) : null;
+      }
+
+      function getSupabaseSyncConfig() {
+        const raw = window.AP_STATS_STUDY_GUIDE_SUPABASE;
+        if (!raw || typeof raw !== 'object') return null;
+        const url = String(raw.url || raw.supabaseUrl || '').trim().replace(/\/+$/, '');
+        const anonKey = String(raw.anonKey || raw.apikey || '').trim();
+        if (!url || !anonKey) return null;
+        return {
+          url,
+          anonKey,
+          table: String(raw.table || 'study_guide_state_backups'),
+          worksheetColumn: String(raw.worksheetColumn || 'worksheet_id'),
+          usernameColumn: String(raw.usernameColumn || 'student_username'),
+          stateColumn: String(raw.stateColumn || 'state_json'),
+          savedAtColumn: String(raw.savedAtColumn || 'saved_at'),
+          nameColumn: String(raw.nameColumn || 'student_name'),
+          periodColumn: String(raw.periodColumn || 'student_period')
+        };
+      }
+
+      function refreshSyncStatus() {
+        const username = normalizeUsername(state.studentUsername);
+        const config = getSupabaseSyncConfig();
+        if (!username) return setSyncStatus('Backup: local only on this device. Add a username to keep separate student progress.');
+        if (!config) return setSyncStatus(`Backup: ${username} is saved on this device. Cloud backup is off.`);
+        if (remotePendingSnapshot) return setSyncStatus(`Backup: syncing ${username} to Supabase…`);
+        return setSyncStatus(`Backup: ${username} is ready for Supabase sync.`);
+      }
+
+      async function saveRemoteSnapshot(snapshot) {
+        const config = getSupabaseSyncConfig();
+        const username = normalizeUsername(snapshot && snapshot.studentUsername);
+        remotePendingSnapshot = null;
+        if (!config || !username) {
+          refreshSyncStatus();
+          return;
+        }
+        setSyncStatus(`Backup: syncing ${username} to Supabase…`);
+        try {
+          const payload = {};
+          payload[config.worksheetColumn] = REMOTE_WORKSHEET_ID;
+          payload[config.usernameColumn] = username;
+          payload[config.stateColumn] = snapshot;
+          payload[config.savedAtColumn] = snapshot.savedAt || new Date().toISOString();
+          payload[config.nameColumn] = snapshot.studentName || null;
+          payload[config.periodColumn] = snapshot.studentPeriod || null;
+          const response = await fetch(
+            `${config.url}/rest/v1/${config.table}?on_conflict=${encodeURIComponent(`${config.worksheetColumn},${config.usernameColumn}`)}`,
+            {
+              method: 'POST',
+              headers: {
+                apikey: config.anonKey,
+                Authorization: `Bearer ${config.anonKey}`,
+                'Content-Type': 'application/json',
+                Prefer: 'resolution=merge-duplicates,return=minimal'
+              },
+              body: JSON.stringify(payload)
+            }
+          );
+          if (!response.ok) throw new Error(`Supabase sync returned ${response.status}`);
+          setSyncStatus(`Backup: synced ${username} to Supabase at ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}.`);
+        } catch {
+          setSyncStatus(`Backup: Supabase sync failed for ${username}. Local save still worked.`);
+        }
+      }
+
+      function scheduleRemoteSave(snapshot) {
+        clearTimeout(remoteSaveTimer);
+        remotePendingSnapshot = snapshot;
+        const config = getSupabaseSyncConfig();
+        const username = normalizeUsername(snapshot && snapshot.studentUsername);
+        if (!config || !username) {
+          remotePendingSnapshot = null;
+          refreshSyncStatus();
+          return;
+        }
+        setSyncStatus(`Backup: syncing ${username} to Supabase…`);
+        remoteSaveTimer = setTimeout(() => {
+          void saveRemoteSnapshot(remotePendingSnapshot);
+        }, REMOTE_SYNC_DELAY_MS);
+      }
+
+      async function hydrateRemoteSnapshot(username, localSnapshot, options) {
+        const config = getSupabaseSyncConfig();
+        const clean = normalizeUsername(username);
+        const silent = !!(options && options.silent);
+        if (!config || !clean) {
+          refreshSyncStatus();
+          return false;
+        }
+        const loadToken = ++remoteLoadToken;
+        setSyncStatus(`Backup: checking Supabase for ${clean}…`);
+        try {
+          const query = [
+            `${config.worksheetColumn}=eq.${encodeURIComponent(REMOTE_WORKSHEET_ID)}`,
+            `${config.usernameColumn}=eq.${encodeURIComponent(clean)}`,
+            `select=${encodeURIComponent(`${config.stateColumn},${config.savedAtColumn}`)}`,
+            'limit=1'
+          ].join('&');
+          const response = await fetch(`${config.url}/rest/v1/${config.table}?${query}`, {
+            headers: {
+              apikey: config.anonKey,
+              Authorization: `Bearer ${config.anonKey}`
+            }
+          });
+          if (!response.ok) throw new Error(`Supabase restore returned ${response.status}`);
+          const rows = await response.json();
+          if (loadToken !== remoteLoadToken) return false;
+          const row = Array.isArray(rows) ? rows[0] : null;
+          if (!row || !row[config.stateColumn]) {
+            refreshSyncStatus();
+            scheduleRemoteSave(localSnapshot);
+            return false;
+          }
+          const remoteSnapshot = normalizeState(row[config.stateColumn]);
+          remoteSnapshot.studentUsername = clean;
+          if (typeof row[config.savedAtColumn] === 'string') remoteSnapshot.savedAt = row[config.savedAtColumn];
+          if (timestampMs(remoteSnapshot.savedAt) > timestampMs(localSnapshot && localSnapshot.savedAt)) {
+            state = remoteSnapshot;
+            applyIdentityInputsFromState();
+            refreshFocusedLayout();
+            writeLocalSnapshot(remoteSnapshot);
+            setSyncStatus(`Backup: restored ${clean} from Supabase.`);
+            if (!silent) showToast(`Loaded cloud save for ${clean}.`);
+            return true;
+          }
+          scheduleRemoteSave(localSnapshot);
+          setSyncStatus(`Backup: ${clean} is current on this device and in Supabase.`);
+          return false;
+        } catch {
+          if (loadToken !== remoteLoadToken) return false;
+          setSyncStatus(`Backup: Supabase restore failed for ${clean}. Using local save.`);
+          return false;
+        }
+      }
+
+      function makeUserSeedState(username, theme) {
+        const next = makeDefaultState();
+        next.theme = normalizeTheme(theme);
+        next.studentUsername = normalizeUsername(username);
+        const profile = findProfile(next.studentUsername);
+        if (profile) {
+          next.studentName = profile.name || '';
+          next.studentPeriod = profile.period || '';
+        }
+        return next;
+      }
+
+      async function switchStudentProfile(username) {
+        const nextUsername = normalizeUsername(username);
+        const currentUsername = normalizeUsername(state.studentUsername);
+        if (nextUsername === currentUsername) {
+          state.studentUsername = nextUsername;
+          applyIdentityInputsFromState();
+          refreshSyncStatus();
+          saveSoon();
+          return;
+        }
+        saveNow();
+        const theme = normalizeTheme(document.documentElement.getAttribute('data-theme'));
+        const nextState = nextUsername
+          ? loadLocalSnapshotForUser(nextUsername) || makeUserSeedState(nextUsername, theme)
+          : (() => {
+              const blank = makeDefaultState();
+              blank.theme = theme;
+              blank.studentName = state.studentName || '';
+              blank.studentPeriod = state.studentPeriod || '';
+              blank.studentDate = state.studentDate || today();
+              return blank;
+            })();
+        state = normalizeState(nextState);
+        state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
+        applyIdentityInputsFromState();
+        refreshFocusedLayout();
+        const snapshot = serializeState();
+        state.savedAt = snapshot.savedAt;
+        writeLocalSnapshot(snapshot);
+        refreshSyncStatus();
+        if (nextUsername) {
+          await hydrateRemoteSnapshot(nextUsername, snapshot, { silent: true });
+        }
+      }
+
       const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers() });
       const showToast = msg => { ui.toast.textContent = msg; ui.toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => ui.toast.classList.remove('visible'), 2600); };
-      const saveNow = () => { clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState())); } catch { showToast('Local save failed.'); } };
+      const saveNow = () => {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+        const snapshot = serializeState();
+        state.savedAt = snapshot.savedAt;
+        writeLocalSnapshot(snapshot);
+        scheduleRemoteSave(snapshot);
+      };
       const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); };
 
       function unitHasWork(unitState) {
@@ -4091,7 +4475,8 @@
       }
 
       function exportFilename(snapshot) {
-        const safe = String(snapshot.studentName || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'student';
+        const source = snapshot.studentUsername || snapshot.studentName || '';
+        const safe = String(source).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'student';
         return `ap-stats-diagnostic-${safe}-${snapshot.studentDate || today()}.html`;
       }
 
@@ -4143,9 +4528,7 @@
             state = normalizeState(parsed);
             pending.grade = {};
             pending.focus = {};
-            ui.name.value = state.studentName || '';
-            ui.period.value = state.studentPeriod || '';
-            ui.date.value = state.studentDate || today();
+            applyIdentityInputsFromState();
             applyTheme(state.theme || 'paper');
             saveNow();
             refreshFocusedLayout();
@@ -4161,11 +4544,24 @@
       }
 
       function clearAll() {
-        if (!window.confirm('Clear all saved work for this diagnostic?')) return;
-        state = makeDefaultState();
-        state.theme = normalizeTheme(document.documentElement.getAttribute('data-theme'));
-        try { localStorage.removeItem(STORAGE_KEY); } catch {}
-        ui.name.value = state.studentName; ui.period.value = state.studentPeriod; ui.date.value = state.studentDate;
+        const username = normalizeUsername(state.studentUsername);
+        const prompt = username
+          ? `Clear saved work for ${username} on this device?`
+          : 'Clear all saved work for this diagnostic?';
+        if (!window.confirm(prompt)) return;
+        const theme = normalizeTheme(document.documentElement.getAttribute('data-theme'));
+        const blank = makeDefaultState();
+        blank.theme = theme;
+        blank.studentUsername = username;
+        blank.studentName = state.studentName || '';
+        blank.studentPeriod = state.studentPeriod || '';
+        state = blank;
+        state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          if (username) localStorage.removeItem(userSnapshotKey(username));
+        } catch {}
+        applyIdentityInputsFromState();
         saveNow();
         refreshFocusedLayout();
         showToast('All diagnostic data was cleared.');
@@ -4225,10 +4621,21 @@
             }
           }
         } catch {}
-        ui.name.value = state.studentName || '';
-        ui.period.value = state.studentPeriod || '';
-        ui.date.value = state.studentDate || today();
+        const preferredUsername = normalizeUsername(state.studentUsername || localStorage.getItem(ACTIVE_USER_KEY));
+        if (preferredUsername) {
+          const remembered = loadLocalSnapshotForUser(preferredUsername);
+          if (remembered) {
+            state = remembered;
+          } else {
+            state.studentUsername = preferredUsername;
+          }
+        }
+        applyIdentityInputsFromState();
         applyTheme(state.theme || 'paper');
+        if (ui.username) {
+          ui.username.addEventListener('change', () => { void switchStudentProfile(ui.username.value); });
+          ui.username.addEventListener('blur', () => { void switchStudentProfile(ui.username.value); });
+        }
         ui.name.addEventListener('input', () => { state.studentName = ui.name.value; saveSoon(); });
         ui.period.addEventListener('input', () => { state.studentPeriod = ui.period.value; saveSoon(); });
         ui.date.addEventListener('input', () => { state.studentDate = ui.date.value; saveSoon(); });
@@ -4238,6 +4645,11 @@
         state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
         saveSoon();
         refreshFocusedLayout();
+        if (state.studentUsername) {
+          void hydrateRemoteSnapshot(state.studentUsername, serializeState(), { silent: true });
+        } else {
+          refreshSyncStatus();
+        }
       }
 
       init();

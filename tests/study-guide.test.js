@@ -15,6 +15,8 @@ import { resolve } from 'node:path';
 
 const HTML_PATH = resolve(__dirname, '../study_guide_diagnostic.html');
 const PROMPTS_PATH = resolve(__dirname, '../ai-grading-prompts-study-guide.js');
+const SYNC_CONFIG_PATH = resolve(__dirname, '../data/study-guide-sync-config.js');
+const SYNC_SQL_PATH = resolve(__dirname, '../scripts/study-guide-state-backups.sql');
 
 const EXPECTED_GATE_IDS = [
   'U1-PC-FRQ-Q02',
@@ -1198,5 +1200,48 @@ describe('session 89b formula modal calculator visibility', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('No TI-84 walkthrough is attached to this formula card yet.');
     expect(src).toContain("make('p', 'sg-formula-modal-calc-empty'");
+  });
+});
+
+describe('session 90 student profiles + supabase backup', () => {
+  it('adds a username picker, datalist, and sync status note to the student panel', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('id="studentUsername"');
+    expect(src).toContain('id="studentUsernameOptions"');
+    expect(src).toContain('id="syncStatus"');
+  });
+
+  it('loads the optional study-guide sync config file', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('data/study-guide-sync-config.js');
+  });
+
+  it('persists studentUsername in the v6 state model', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("studentUsername:''");
+    expect(src).toContain("next.studentUsername = typeof raw.studentUsername === 'string'");
+  });
+
+  it('writes per-user local snapshots and can switch student profiles', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('PROFILE_INDEX_KEY');
+    expect(src).toContain('USER_SNAPSHOT_PREFIX');
+    expect(src).toContain('localStorage.setItem(userSnapshotKey(snapshot.studentUsername), JSON.stringify(snapshot))');
+    expect(src).toContain('async function switchStudentProfile(');
+  });
+
+  it('contains Supabase backup and restore hooks', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.AP_STATS_STUDY_GUIDE_SUPABASE');
+    expect(src).toContain('/rest/v1/');
+    expect(src).toContain('study_guide_state_backups');
+    expect(src).toContain('hydrateRemoteSnapshot');
+  });
+
+  it('ships a default sync config file and SQL schema', () => {
+    expect(existsSync(SYNC_CONFIG_PATH)).toBe(true);
+    expect(existsSync(SYNC_SQL_PATH)).toBe(true);
+    expect(readFileSync(SYNC_CONFIG_PATH, 'utf8')).toContain('AP_STATS_STUDY_GUIDE_SUPABASE');
+    expect(readFileSync(SYNC_SQL_PATH, 'utf8')).toContain('create table if not exists public.study_guide_state_backups');
   });
 });
