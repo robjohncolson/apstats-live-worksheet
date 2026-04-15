@@ -524,6 +524,72 @@
     return result;
   }
 
+  // Returns the signed integer number of days from fromIso to toIso.
+  // Uses UTC midnight parsing to avoid timezone drift.
+  // Returns NaN if either argument is falsy or cannot be parsed as YYYY-MM-DD.
+  function daysBetween(fromIso, toIso) {
+    if (!fromIso || !toIso) return NaN;
+    const from = parseIsoDate(fromIso);
+    const to = parseIsoDate(toIso);
+    if (!from || !to) return NaN;
+    return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY);
+  }
+
+  // Returns an array of {id, name, hintedAt, daysSince} objects for formulas
+  // in the review queue: hinted within maxDays (default 7), not graduated.
+  // Sorted by hintedAt descending (most recent first); ties broken by id ascending.
+  function reviewQueueEntries(state, todayIso, opts) {
+    const maxDays = (opts && typeof opts.maxDays === 'number') ? opts.maxDays : 7;
+    const touched = (state && state.touchedFormulas) || {};
+    const result = [];
+
+    for (const id in touched) {
+      const entry = touched[id];
+
+      // Skip graduated entries.
+      if (entry && entry.graduated === true) continue;
+
+      // Skip entries without a valid hintedAt date.
+      if (!entry || typeof entry.hintedAt !== 'string') continue;
+
+      const daysSince = daysBetween(entry.hintedAt, todayIso);
+
+      // Skip NaN, negative (future), or beyond maxDays.
+      if (Number.isNaN(daysSince) || daysSince < 0 || daysSince > maxDays) continue;
+
+      result.push({
+        id: id,
+        name: formulaName(id),
+        hintedAt: entry.hintedAt,
+        daysSince: daysSince
+      });
+    }
+
+    // Sort by hintedAt descending; ties broken by id alphabetically ascending.
+    result.sort(function(a, b) {
+      if (b.hintedAt > a.hintedAt) return 1;
+      if (b.hintedAt < a.hintedAt) return -1;
+      if (a.id < b.id) return -1;
+      if (a.id > b.id) return 1;
+      return 0;
+    });
+
+    return result;
+  }
+
+  // Sets graduated=true on an existing touchedFormulas entry.
+  // No-op if the entry doesn't exist (does not create a new entry).
+  // Returns the updated entry, or null if no-op.
+  // NOTE: Graduation does NOT refund any FRQ penalty already applied.
+  // data.frqHelpers.formulasViewed is a separate concern from the review queue.
+  function graduateFormula(formulaId, state) {
+    if (!state || !state.touchedFormulas || !state.touchedFormulas[formulaId]) {
+      return null;
+    }
+    state.touchedFormulas[formulaId].graduated = true;
+    return state.touchedFormulas[formulaId];
+  }
+
   // --- diagnostic export for testing + integration ---
   window.__studyGuideV4__ = {
     AP_EXAM_DATE: AP_EXAM_DATE,
@@ -545,6 +611,9 @@
     pickDailyQueue: pickDailyQueue,
     recordFormulaTouch: recordFormulaTouch,
     recordFormulaHint: recordFormulaHint,
-    queuedFormulasToday: queuedFormulasToday
+    queuedFormulasToday: queuedFormulasToday,
+    daysBetween: daysBetween,
+    reviewQueueEntries: reviewQueueEntries,
+    graduateFormula: graduateFormula
   };
 })(typeof window !== 'undefined' ? window : globalThis);

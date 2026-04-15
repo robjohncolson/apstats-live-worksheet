@@ -575,6 +575,183 @@ describe('queuedFormulasToday', () => {
   });
 });
 
+describe('daysBetween', () => {
+  it('returns 0 for same date', () => {
+    expect(v4.daysBetween('2026-04-14', '2026-04-14')).toBe(0);
+  });
+
+  it('returns positive integer for later date', () => {
+    expect(v4.daysBetween('2026-04-14', '2026-04-21')).toBe(7);
+  });
+
+  it('returns negative integer for earlier date', () => {
+    expect(v4.daysBetween('2026-04-21', '2026-04-14')).toBe(-7);
+  });
+
+  it('returns NaN for malformed input', () => {
+    expect(Number.isNaN(v4.daysBetween('not-a-date', '2026-04-14'))).toBe(true);
+    expect(Number.isNaN(v4.daysBetween(null, '2026-04-14'))).toBe(true);
+    expect(Number.isNaN(v4.daysBetween('2026-04-14', ''))).toBe(true);
+  });
+
+  it('is exported via v5 proxy', () => {
+    expect(typeof api.daysBetween).toBe('function');
+    expect(api.daysBetween('2026-04-14', '2026-04-16')).toBe(2);
+  });
+});
+
+describe('reviewQueueEntries', () => {
+  it('returns empty array when touchedFormulas is empty', () => {
+    const result = v4.reviewQueueEntries({ touchedFormulas: {} }, START_DAY);
+    expect(result).toEqual([]);
+  });
+
+  it('returns entries hinted within the last 7 days', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    const result = v4.reviewQueueEntries(testState, START_DAY);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('mean');
+    expect(result[0].daysSince).toBe(0);
+  });
+
+  it('excludes graduated entries', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY, graduated: true }
+      }
+    };
+    const result = v4.reviewQueueEntries(testState, START_DAY);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes entries older than maxDays', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: '2026-04-01', lastMastery: 0.3, hintedAt: '2026-04-01' }
+      }
+    };
+    // START_DAY is 2026-04-14 — 13 days after 2026-04-01, which exceeds default 7.
+    const result = v4.reviewQueueEntries(testState, START_DAY);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes entries without hintedAt', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.5 }
+      }
+    };
+    const result = v4.reviewQueueEntries(testState, START_DAY);
+    expect(result).toHaveLength(0);
+  });
+
+  it('sorts by hintedAt descending', () => {
+    const testState = {
+      touchedFormulas: {
+        'corr-r': { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: '2026-04-12' },
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    const result = v4.reviewQueueEntries(testState, START_DAY);
+    expect(result[0].id).toBe('mean');
+    expect(result[1].id).toBe('corr-r');
+  });
+
+  it('resolves display name via formulaName', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    const result = v4.reviewQueueEntries(testState, START_DAY);
+    // formulaName('mean') should return 'Mean' from the cartridge fixture.
+    expect(result[0].name).toBe('Mean');
+  });
+
+  it('respects custom maxDays option', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: '2026-04-11', lastMastery: 0.3, hintedAt: '2026-04-11' }
+      }
+    };
+    // 3 days before START_DAY — within default 7, but beyond maxDays: 2.
+    const excluded = v4.reviewQueueEntries(testState, START_DAY, { maxDays: 2 });
+    expect(excluded).toHaveLength(0);
+    // With maxDays: 4, it should appear.
+    const included = v4.reviewQueueEntries(testState, START_DAY, { maxDays: 4 });
+    expect(included).toHaveLength(1);
+  });
+
+  it('is exported via v5 proxy', () => {
+    expect(typeof api.reviewQueueEntries).toBe('function');
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    const proxyResult = api.reviewQueueEntries(testState, START_DAY);
+    const directResult = v4.reviewQueueEntries(testState, START_DAY);
+    expect(proxyResult).toEqual(directResult);
+  });
+});
+
+describe('graduateFormula', () => {
+  it('sets graduated=true on an existing entry', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    v4.graduateFormula('mean', testState);
+    expect(testState.touchedFormulas.mean.graduated).toBe(true);
+  });
+
+  it('is a no-op for nonexistent formula id', () => {
+    const testState = { touchedFormulas: {} };
+    const result = v4.graduateFormula('nonexistent', testState);
+    expect(result).toBeNull();
+    expect(testState.touchedFormulas.nonexistent).toBeUndefined();
+  });
+
+  it('preserves other fields on graduated entry', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.6, hintedAt: START_DAY }
+      }
+    };
+    v4.graduateFormula('mean', testState);
+    expect(testState.touchedFormulas.mean.lastMastery).toBe(0.6);
+    expect(testState.touchedFormulas.mean.hintedAt).toBe(START_DAY);
+    expect(testState.touchedFormulas.mean.firstTouchedAt).toBe(START_DAY);
+  });
+
+  it('is idempotent — graduating twice is safe', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    v4.graduateFormula('mean', testState);
+    v4.graduateFormula('mean', testState);
+    expect(testState.touchedFormulas.mean.graduated).toBe(true);
+  });
+
+  it('is exported via v5 proxy', () => {
+    expect(typeof api.graduateFormula).toBe('function');
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    api.graduateFormula('mean', testState);
+    expect(testState.touchedFormulas.mean.graduated).toBe(true);
+  });
+});
+
 describe('debt scenarios', () => {
   it('does not create debt when the student works ahead', () => {
     state.doseLadder = { tier: 0, mcqDebt: 0, frqDebt: 0 };

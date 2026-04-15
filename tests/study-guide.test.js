@@ -544,3 +544,102 @@ describe('study_guide_diagnostic.html — session 80 formula UX fixes', () => {
     expect(src).toContain('if (queued.length)');
   });
 });
+
+describe('study_guide_diagnostic.html — session 81 review queue panel', () => {
+  it('defines renderReviewQueuePanel function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderReviewQueuePanel()');
+  });
+
+  it('renderReviewQueuePanel reads from reviewQueueEntries(state, today())', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('reviewQueueEntries(state, today())');
+  });
+
+  it('renderReviewQueuePanel renders sg-review-queue disclosure', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-review-queue');
+    expect(src).toContain('sg-review-queue-summary');
+    expect(src).toContain('sg-review-queue-body');
+  });
+
+  it('renderReviewQueuePanel shows count badge', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-review-queue-count');
+    expect(src).toContain('entries.length');
+  });
+
+  it('renderReviewQueuePanel shows empty-state message when list is empty', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-review-queue-empty');
+    expect(src).toContain('No formulas to review yet');
+  });
+
+  it('review button click calls showFormulaCardModal with onClose callback', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // Review button must call showFormulaCardModal with entry.id and an onClose callback.
+    expect(src).toContain('showFormulaCardModal(entry.id, null, null, null, function()');
+    expect(src).toContain('renderReviewQueuePanel()');
+  });
+
+  it('graduate button click calls graduateFormula', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('graduateFormula(entry.id, state)');
+    expect(src).toContain('sg-review-queue-btn-graduate');
+  });
+
+  it('showFormulaCardModal accepts optional onClose parameter', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function showFormulaCardModal(formulaId, unit, data, questionId, onClose)');
+  });
+
+  it('closeModal calls onClose when provided, renderActiveProbe otherwise', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('if (typeof onClose === \'function\')');
+    expect(src).toContain('onClose()');
+    // The else branch must still call renderActiveProbe.
+    const closeModalIdx = src.indexOf('if (typeof onClose === \'function\')');
+    const region = src.slice(closeModalIdx, closeModalIdx + 200);
+    expect(region).toContain('renderActiveProbe()');
+  });
+
+  it('renderReviewQueuePanel is called from renderQueuePane at the end', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // renderReviewQueuePanel() must appear inside renderQueuePane, before renderSeeAllDisclosure.
+    const queuePaneStart = src.indexOf('function renderQueuePane()');
+    const seeAllIdx = src.indexOf('renderSeeAllDisclosure()', queuePaneStart);
+    const reviewQueueCallIdx = src.indexOf('renderReviewQueuePanel()', queuePaneStart);
+    expect(queuePaneStart).toBeGreaterThan(-1);
+    expect(reviewQueueCallIdx).toBeGreaterThan(queuePaneStart);
+    expect(reviewQueueCallIdx).toBeLessThan(seeAllIdx);
+  });
+
+  it('normalizeState preserves graduated field on touchedFormulas entries', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('if (v.graduated === true) entry.graduated = true');
+  });
+
+  it('meta text uses "Hinted today" / "Hinted yesterday" / "Hinted N days ago"', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('Hinted today');
+    expect(src).toContain('Hinted yesterday');
+    expect(src).toContain('Hinted ');
+    expect(src).toContain('days ago');
+  });
+
+  it('CSS rules for review queue are present', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.sg-review-queue{');
+    expect(src).toContain('.sg-review-queue-item{');
+    expect(src).toContain('.sg-review-queue-btn{');
+    expect(src).toContain('.sg-review-queue-btn-graduate{');
+  });
+
+  it('new functions are exported via v4 and destructured from v5', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('daysBetween: daysBetween');
+    expect(src).toContain('reviewQueueEntries: reviewQueueEntries');
+    expect(src).toContain('graduateFormula: graduateFormula');
+    expect(src).toContain('daysBetween, reviewQueueEntries, graduateFormula');
+  });
+});

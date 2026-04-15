@@ -611,6 +611,18 @@
     queuedFormulasToday: function(state, todayStr) {
       const v4 = getV4();
       return v4 && typeof v4.queuedFormulasToday === 'function' ? v4.queuedFormulasToday(state, todayStr) : [];
+    },
+    daysBetween: function(fromIso, toIso) {
+      const v4 = getV4();
+      return v4 && typeof v4.daysBetween === 'function' ? v4.daysBetween(fromIso, toIso) : NaN;
+    },
+    reviewQueueEntries: function(state, todayIso, opts) {
+      const v4 = getV4();
+      return v4 && typeof v4.reviewQueueEntries === 'function' ? v4.reviewQueueEntries(state, todayIso, opts) : [];
+    },
+    graduateFormula: function(formulaId, state) {
+      const v4 = getV4();
+      return v4 && typeof v4.graduateFormula === 'function' ? v4.graduateFormula(formulaId, state) : null;
     }
   };
 

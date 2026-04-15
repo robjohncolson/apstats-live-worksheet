@@ -119,6 +119,22 @@
     .sg-frq-queued-formulas{margin-top:6px;padding:6px 10px;border-radius:8px;background:var(--sg-bar-track);border:1px solid var(--sg-border);font-size:.82rem;color:var(--sg-text-dim);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
     .sg-frq-queued-label{font-weight:700;color:var(--sg-text);white-space:nowrap}
     .sg-frq-queued-list{color:var(--sg-text-dim)}
+    .sg-review-queue{border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);margin-top:14px}
+    .sg-review-queue[open] .sg-review-queue-body{padding:6px 12px 10px}
+    .sg-review-queue-summary{padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:700}
+    .sg-review-queue-summary:hover{color:var(--sg-accent)}
+    .sg-review-queue-title{color:var(--sg-text)}
+    .sg-review-queue-count{color:var(--sg-text-dim);font-weight:600;font-size:.85rem}
+    .sg-review-queue-list{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+    .sg-review-queue-item{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;background:var(--sg-bg);border:1px solid var(--sg-border)}
+    .sg-review-queue-info{flex:1;display:grid;gap:2px;min-width:0}
+    .sg-review-queue-name{font-weight:700;color:var(--sg-text);font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sg-review-queue-meta{font-size:.78rem;color:var(--sg-text-dim)}
+    .sg-review-queue-actions{display:flex;gap:6px;flex-shrink:0}
+    .sg-review-queue-btn{padding:4px 8px;border-radius:6px;border:1px solid var(--sg-border);background:var(--sg-bg-card);color:var(--sg-text);font:inherit;font-size:.78rem;cursor:pointer}
+    .sg-review-queue-btn:hover{border-color:var(--sg-accent)}
+    .sg-review-queue-btn-graduate{color:var(--sg-mastery-high)}
+    .sg-review-queue-empty p{margin:8px 0;color:var(--sg-text-dim);font-size:.85rem}
     .sg-frq-skill-list{margin:0;padding:0;list-style:none;display:grid;gap:14px}
     .sg-frq-skill{display:grid;gap:8px;padding:12px;border:1px solid var(--sg-border);border-radius:10px;background:var(--sg-bg-card)}
     .sg-frq-skill-head{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
@@ -856,6 +872,72 @@
         return result;
       }
 
+      // Returns the signed integer number of days from fromIso to toIso.
+      // Uses UTC midnight parsing to avoid timezone drift.
+      // Returns NaN if either argument is falsy or cannot be parsed as YYYY-MM-DD.
+      function daysBetween(fromIso, toIso) {
+        if (!fromIso || !toIso) return NaN;
+        const from = parseIsoDate(fromIso);
+        const to = parseIsoDate(toIso);
+        if (!from || !to) return NaN;
+        return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY);
+      }
+
+      // Returns an array of {id, name, hintedAt, daysSince} objects for formulas
+      // in the review queue: hinted within maxDays (default 7), not graduated.
+      // Sorted by hintedAt descending (most recent first); ties broken by id ascending.
+      function reviewQueueEntries(state, todayIso, opts) {
+        const maxDays = (opts && typeof opts.maxDays === 'number') ? opts.maxDays : 7;
+        const touched = (state && state.touchedFormulas) || {};
+        const result = [];
+
+        for (const id in touched) {
+          const entry = touched[id];
+
+          // Skip graduated entries.
+          if (entry && entry.graduated === true) continue;
+
+          // Skip entries without a valid hintedAt date.
+          if (!entry || typeof entry.hintedAt !== 'string') continue;
+
+          const daysSince = daysBetween(entry.hintedAt, todayIso);
+
+          // Skip NaN, negative (future), or beyond maxDays.
+          if (Number.isNaN(daysSince) || daysSince < 0 || daysSince > maxDays) continue;
+
+          result.push({
+            id: id,
+            name: formulaName(id),
+            hintedAt: entry.hintedAt,
+            daysSince: daysSince
+          });
+        }
+
+        // Sort by hintedAt descending; ties broken by id alphabetically ascending.
+        result.sort(function(a, b) {
+          if (b.hintedAt > a.hintedAt) return 1;
+          if (b.hintedAt < a.hintedAt) return -1;
+          if (a.id < b.id) return -1;
+          if (a.id > b.id) return 1;
+          return 0;
+        });
+
+        return result;
+      }
+
+      // Sets graduated=true on an existing touchedFormulas entry.
+      // No-op if the entry doesn't exist (does not create a new entry).
+      // Returns the updated entry, or null if no-op.
+      // NOTE: Graduation does NOT refund any FRQ penalty already applied.
+      // data.frqHelpers.formulasViewed is a separate concern from the review queue.
+      function graduateFormula(formulaId, state) {
+        if (!state || !state.touchedFormulas || !state.touchedFormulas[formulaId]) {
+          return null;
+        }
+        state.touchedFormulas[formulaId].graduated = true;
+        return state.touchedFormulas[formulaId];
+      }
+
       // --- diagnostic export for testing + integration ---
       window.__studyGuideV4__ = {
         AP_EXAM_DATE: AP_EXAM_DATE,
@@ -877,7 +959,10 @@
         pickDailyQueue: pickDailyQueue,
         recordFormulaTouch: recordFormulaTouch,
         recordFormulaHint: recordFormulaHint,
-        queuedFormulasToday: queuedFormulasToday
+        queuedFormulasToday: queuedFormulasToday,
+        daysBetween: daysBetween,
+        reviewQueueEntries: reviewQueueEntries,
+        graduateFormula: graduateFormula
       };
       }
       (function(window) {
@@ -1489,6 +1574,18 @@
           queuedFormulasToday: function(state, todayStr) {
             const v4 = getV4();
             return v4 && typeof v4.queuedFormulasToday === 'function' ? v4.queuedFormulasToday(state, todayStr) : [];
+          },
+          daysBetween: function(fromIso, toIso) {
+            const v4 = getV4();
+            return v4 && typeof v4.daysBetween === 'function' ? v4.daysBetween(fromIso, toIso) : NaN;
+          },
+          reviewQueueEntries: function(state, todayIso, opts) {
+            const v4 = getV4();
+            return v4 && typeof v4.reviewQueueEntries === 'function' ? v4.reviewQueueEntries(state, todayIso, opts) : [];
+          },
+          graduateFormula: function(formulaId, state) {
+            const v4 = getV4();
+            return v4 && typeof v4.graduateFormula === 'function' ? v4.graduateFormula(formulaId, state) : null;
           }
         };
 
@@ -1721,7 +1818,7 @@
           computeEffectiveScore: computeEffectiveScore
         };
       })(typeof window !== 'undefined' ? window : globalThis);
-      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, queuedFormulasToday, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
+      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, queuedFormulasToday, daysBetween, reviewQueueEntries, graduateFormula, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
       const { getFrqDecomposition, recordHelperUsed, computeEffectivePenalty, computeEffectiveScore } = window.__studyGuideV6__;
       function defaultFrqHelpers() {
         return { formulasViewed: [], mcqDrills: {}, confirmed: false, activeDrillQuestionId: null };
@@ -1889,6 +1986,7 @@
               .map(([k, v]) => {
                 const entry = { firstTouchedAt: typeof v.firstTouchedAt === 'string' ? v.firstTouchedAt : today(), lastMastery: v.lastMastery };
                 if (typeof v.hintedAt === 'string') entry.hintedAt = v.hintedAt;
+                if (v.graduated === true) entry.graduated = true;
                 return [k, entry];
               }))
           : {};
@@ -2362,7 +2460,93 @@
           ui.rail.appendChild(make('p', 'sg-empty', activeTab === 'mcq' ? 'No MCQ items are queued right now.' : 'No FRQ gates are queued right now.'));
         }
 
+        renderReviewQueuePanel();
         ui.rail.appendChild(renderSeeAllDisclosure());
+      }
+
+      // Renders the persistent review queue panel into ui.rail.
+      // Lists formulas hinted in the last 7 days that haven't been graduated yet.
+      // Each entry has a Review button (reopens formula modal) and "I know it" (graduates the entry).
+      // Panel stays visible when empty so the student knows where to find reviewed formulas later.
+      function renderReviewQueuePanel() {
+        if (!ui.rail) return;
+
+        // Remove any existing panel before re-rendering.
+        const existing = ui.rail.querySelector('.sg-review-queue');
+        if (existing) existing.remove();
+
+        const entries = reviewQueueEntries(state, today());
+
+        const details = make('details', 'sg-review-queue');
+        details.open = true;
+
+        const summary = make('summary', 'sg-review-queue-summary');
+        summary.appendChild(make('span', 'sg-review-queue-title', '\uD83D\uDCDD Review queue'));
+        summary.appendChild(make('span', 'sg-review-queue-count', '(' + entries.length + ')'));
+        details.appendChild(summary);
+
+        if (entries.length === 0) {
+          const body = make('div', 'sg-review-queue-body sg-review-queue-empty');
+          body.appendChild(make('p', 'sg-empty', 'No formulas to review yet. Click a \u201CFormula card\u201D button on an FRQ when you need help \u2014 they\u2019ll show up here so you can review them later.'));
+          details.appendChild(body);
+        } else {
+          const body = make('div', 'sg-review-queue-body');
+          const list = make('ol', 'sg-review-queue-list');
+
+          entries.forEach(function(entry) {
+            const item = make('li', 'sg-review-queue-item');
+
+            const info = make('div', 'sg-review-queue-info');
+            info.appendChild(make('div', 'sg-review-queue-name', entry.name));
+
+            let metaText;
+            if (entry.daysSince === 0) {
+              metaText = 'Hinted today';
+            } else if (entry.daysSince === 1) {
+              metaText = 'Hinted yesterday';
+            } else {
+              metaText = 'Hinted ' + entry.daysSince + ' days ago';
+            }
+            info.appendChild(make('div', 'sg-review-queue-meta', metaText));
+
+            const actions = make('div', 'sg-review-queue-actions');
+
+            const reviewBtn = make('button', 'sg-review-queue-btn sg-review-queue-btn-review', 'Review');
+            reviewBtn.type = 'button';
+            reviewBtn.addEventListener('click', function() {
+              showFormulaCardModal(entry.id, null, null, null, function() { renderReviewQueuePanel(); });
+            });
+
+            // NOTE: Graduation removes the entry from the review queue visually but does NOT
+            // refund any FRQ penalty already applied. data.frqHelpers.formulasViewed is a
+            // separate concern from state.touchedFormulas.{id}.graduated.
+            const graduateBtn = make('button', 'sg-review-queue-btn sg-review-queue-btn-graduate', 'I know it');
+            graduateBtn.type = 'button';
+            graduateBtn.addEventListener('click', function() {
+              graduateFormula(entry.id, state);
+              saveSoon();
+              renderReviewQueuePanel();
+            });
+
+            actions.appendChild(reviewBtn);
+            actions.appendChild(graduateBtn);
+
+            item.appendChild(info);
+            item.appendChild(actions);
+            list.appendChild(item);
+          });
+
+          body.appendChild(list);
+          details.appendChild(body);
+        }
+
+        // Insert before the see-all disclosure (last child of rail).
+        const seeAll = ui.rail.querySelector('.sg-see-all');
+        if (seeAll) {
+          ui.rail.insertBefore(details, seeAll);
+        } else {
+          ui.rail.appendChild(details);
+        }
       }
 
       function renderSeeAllDisclosure() {
@@ -3020,6 +3204,7 @@
           const formulaEntry = getFormulaEntry(id);
           const action = formulaEntry && formulaEntry.action ? formulaEntry.action : id;
           showToast(`\uD83D\uDCDD ${action} added to your practice queue \u2014 you\u2019ll see it tomorrow.`);
+          renderReviewQueuePanel();
           showFormulaCardModal(id, unit, data, questionId);
           saveSoon();
         } else if (kind === 'drill') {
@@ -3073,7 +3258,9 @@
       }
 
       // Thread 1: Show formula content in a modal when a formula helper button is clicked.
-      function showFormulaCardModal(formulaId, unit, data, questionId) {
+      // onClose (5th arg, optional): if provided, called instead of renderActiveProbe() when modal closes.
+      // Existing 4-arg call sites are unchanged — onClose is undefined and renderActiveProbe fires.
+      function showFormulaCardModal(formulaId, unit, data, questionId, onClose) {
         const formulaEntry = getFormulaEntry(formulaId);
         const backdrop = make('div', 'sg-modal-backdrop sg-formula-modal');
         const modal = make('div', 'sg-modal');
@@ -3129,7 +3316,11 @@
         const closeModal = () => {
           backdrop.remove();
           document.removeEventListener('keydown', escHandler);
-          renderActiveProbe();
+          if (typeof onClose === 'function') {
+            onClose();
+          } else {
+            renderActiveProbe();
+          }
         };
 
         const escHandler = e => {
