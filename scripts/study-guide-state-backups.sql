@@ -1,7 +1,6 @@
 create table if not exists public.study_guide_state_backups (
   worksheet_id text not null,
   student_username text not null,
-  student_name text,
   student_period text,
   saved_at timestamptz not null default now(),
   state_json jsonb not null,

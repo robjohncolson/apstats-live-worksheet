@@ -1271,6 +1271,8 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(src).toContain('/rest/v1/');
     expect(src).toContain('study_guide_state_backups');
     expect(src).toContain('hydrateRemoteSnapshot');
+    expect(src).toContain('isMissingStudyGuideBackupTable');
+    expect(src).toContain('Run the setup SQL first.');
   });
 
   it('ships a default sync config file and SQL schema', () => {
@@ -1278,6 +1280,8 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(existsSync(SYNC_SQL_PATH)).toBe(true);
     expect(readFileSync(SYNC_CONFIG_PATH, 'utf8')).toContain('AP_STATS_STUDY_GUIDE_SUPABASE');
     expect(readFileSync(SYNC_CONFIG_PATH, 'utf8')).toContain('AP_STATS_STUDY_GUIDE_USER_SOURCE');
+    expect(readFileSync(SYNC_CONFIG_PATH, 'utf8')).toContain('https://bzqbhtrurzzavhqbgqrs.supabase.co');
     expect(readFileSync(SYNC_SQL_PATH, 'utf8')).toContain('create table if not exists public.study_guide_state_backups');
+    expect(readFileSync(SYNC_SQL_PATH, 'utf8')).not.toContain('student_name text');
   });
 });

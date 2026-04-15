@@ -2481,6 +2481,11 @@
         return setSyncStatus(`Backup: ${username} is ready for Supabase sync.`);
       }
 
+      function isMissingStudyGuideBackupTable(message) {
+        const text = String(message || '');
+        return text.includes('study_guide_state_backups');
+      }
+
       async function saveRemoteSnapshot(snapshot) {
         const config = getSupabaseSyncConfig();
         const username = normalizeUsername(snapshot && snapshot.studentUsername);
@@ -2510,9 +2515,13 @@
               body: JSON.stringify(payload)
             }
           );
-          if (!response.ok) throw new Error(`Supabase sync returned ${response.status}`);
+          if (!response.ok) throw new Error(await response.text() || `Supabase sync returned ${response.status}`);
           setSyncStatus(`Backup: synced ${username} to Supabase at ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}.`);
-        } catch {
+        } catch (error) {
+          if (isMissingStudyGuideBackupTable(error && error.message)) {
+            setSyncStatus('Backup: Supabase is connected, but the study-guide backup table is missing. Run the setup SQL first.');
+            return;
+          }
           setSyncStatus(`Backup: Supabase sync failed for ${username}. Local save still worked.`);
         }
       }
@@ -2556,7 +2565,7 @@
               Authorization: `Bearer ${config.anonKey}`
             }
           });
-          if (!response.ok) throw new Error(`Supabase restore returned ${response.status}`);
+          if (!response.ok) throw new Error(await response.text() || `Supabase restore returned ${response.status}`);
           const rows = await response.json();
           if (loadToken !== remoteLoadToken) return false;
           const row = Array.isArray(rows) ? rows[0] : null;
@@ -2580,8 +2589,12 @@
           scheduleRemoteSave(localSnapshot);
           setSyncStatus(`Backup: ${clean} is current on this device and in Supabase.`);
           return false;
-        } catch {
+        } catch (error) {
           if (loadToken !== remoteLoadToken) return false;
+          if (isMissingStudyGuideBackupTable(error && error.message)) {
+            setSyncStatus('Backup: Supabase is connected, but the study-guide backup table is missing. Run the setup SQL first.');
+            return false;
+          }
           setSyncStatus(`Backup: Supabase restore failed for ${clean}. Using local save.`);
           return false;
         }
