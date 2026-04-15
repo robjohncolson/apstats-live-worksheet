@@ -2793,15 +2793,38 @@
         "scripts/transpile-ti84-rom.mjs"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "4c9f3f7e54e5",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 178 \u2014 Real Text Populator Hunt\n\n## Context\nYou are working on the TI-84 Plus CE ROM transpil",
+      "status": "completed",
+      "duration_seconds": 388.192,
+      "timestamp": "2026-04-15T03:40:24Z",
+      "files_changed": [
+        ".probe-session86.mjs",
+        ".session86-audit.result.md",
+        "CONTINUATION_PROMPT.md",
+        "TI-84_Plus_CE/ROM.transpiled.js",
+        "TI-84_Plus_CE/ROM.transpiled.report.json",
+        "TI-84_Plus_CE/phase179-seeds.txt",
+        "TI-84_Plus_CE/phase99d-report.md",
+        "TI-84_Plus_CE/probe-phase178-text-populator.mjs",
+        "TI-84_Plus_CE/probe-phase179-restore-test.mjs",
+        "TI-84_Plus_CE/probe-phase99d-home-verify.mjs",
+        "scripts/transpile-ti84-rom.mjs"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 238,
-    "cc_to_codex": 238,
+    "total_calls": 239,
+    "cc_to_codex": 239,
     "codex_to_cc": 0,
-    "completed": 179,
+    "completed": 180,
     "failed": 54,
     "refused": 0,
-    "avg_duration_seconds": 448.645
+    "avg_duration_seconds": 448.393
   }
 }
