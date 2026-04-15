@@ -2659,15 +2659,37 @@
       "timestamp": "2026-04-15T02:13:46Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "b4ec0aec3b8e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Auto-Session 46 \u2014 Priority 1: Phase 169 \u2014 Display Buffer 0xD006C0 Investigation\n\n## Context\n\nYou a",
+      "status": "timeout",
+      "duration_seconds": 900.105,
+      "timestamp": "2026-04-15T02:19:56Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "37c781664001",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Auto-Session 46 \u2014 Priority 3: Phase 168 \u2014 Stack Frame Fabrication for IX Fix\n\n## Context\n\nYou are ",
+      "status": "timeout",
+      "duration_seconds": 900.09,
+      "timestamp": "2026-04-15T02:19:59Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 227,
-    "cc_to_codex": 227,
+    "total_calls": 229,
+    "cc_to_codex": 229,
     "codex_to_cc": 0,
     "completed": 173,
-    "failed": 49,
+    "failed": 51,
     "refused": 0,
-    "avg_duration_seconds": 440.961
+    "avg_duration_seconds": 444.971
   }
 }

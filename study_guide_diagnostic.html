@@ -256,6 +256,26 @@
     .sg-formula-modal-subconcepts{margin:0;font-size:.88rem}
     .sg-formula-modal-subconcepts summary{cursor:pointer;color:var(--sg-text-dim);font-weight:700;padding:4px 0}
     .sg-formula-modal-subconcepts ul{margin:6px 0 0;padding-left:20px;line-height:1.55;color:var(--sg-text-dim)}
+    .sg-formula-modal-calc-steps{border-top:1px solid var(--sg-border);padding-top:10px;margin-top:4px}
+    .sg-formula-modal-calc-steps summary{cursor:pointer;font-weight:700;color:var(--sg-text);padding:4px 0}
+    .sg-formula-modal-calc-steps summary:hover{color:var(--sg-accent)}
+    .sg-formula-modal-calc-steps-body{padding-top:10px}
+    .sg-calc-walkthrough{display:grid;gap:12px}
+    .sg-calc-walkthrough-header{display:grid;gap:4px}
+    .sg-calc-walkthrough-title{font-weight:800;font-size:1rem;color:var(--sg-text)}
+    .sg-calc-walkthrough-description{font-size:.85rem;color:var(--sg-text-dim)}
+    .sg-calc-prereq{padding:8px 12px;border-radius:8px;background:#fff3e0;border:1px solid #f9a825;color:#6d4c00;font-size:.85rem;line-height:1.5}
+    .sg-night .sg-calc-prereq{background:rgba(255,152,0,0.12);color:#ffd180;border-color:#ef6c00}
+    .sg-calc-step-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+    .sg-calc-step{display:grid;grid-template-columns:28px auto 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:8px;background:var(--sg-bg-card);border:1px solid var(--sg-border)}
+    .sg-calc-step-num{width:24px;height:24px;border-radius:999px;background:var(--sg-bar-track);color:var(--sg-text);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem}
+    .sg-calc-key{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:6px;background:#2b2b2b;color:#f5f5f5;border:1px solid #000;box-shadow:0 1px 0 rgba(255,255,255,0.2) inset, 0 2px 0 #000;min-width:36px;text-align:center;letter-spacing:.5px;white-space:nowrap}
+    .sg-night .sg-calc-key{background:#1a1a1a;color:#fafafa}
+    .sg-calc-param{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:6px;background:#e3f2fd;color:#0d47a1;border:1px solid #64b5f6;min-width:36px;text-align:center;white-space:nowrap}
+    .sg-night .sg-calc-param{background:rgba(100,181,246,0.15);color:#90caf9;border-color:#1976d2}
+    .sg-calc-step-narration{font-size:.85rem;line-height:1.5;color:var(--sg-text)}
+    .sg-calc-step-narration strong{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700;color:var(--sg-text)}
+    .sg-calc-step-hint{display:block;margin-top:2px;font-size:.75rem;color:var(--sg-text-dim);font-style:italic}
     .sg-frq-helpers-escape-hatch{margin-top:6px;padding:6px 10px;background:var(--sg-bar-track);border:1px solid var(--sg-border);border-radius:8px;color:var(--sg-text);font-size:.82rem}
     .focus-panel{padding:18px;border-radius:8px;border:1px solid var(--sg-border);background:var(--sg-bg-card)}
     .focus-priority-high{background:var(--sg-mastery-low);border-color:var(--sg-mastery-low);color:var(--sg-bg)}
@@ -338,6 +358,8 @@
   <script src="data/formula-probe-map.js"></script>
   <script src="data/formula-probe-supplement.js"></script>
   <script src="data/frq-decompositions.js"></script>
+  <script src="data/ti84-procedures.js"></script>
+  <script src="data/formula-procedure-map.js"></script>
   <script>
     (() => {
       const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v6';
@@ -1856,6 +1878,127 @@
       // Safe to call at any time — no-op if MathJax hasn't loaded yet.
       const typeset = el => { if (window.MathJax?.typesetPromise) MathJax.typesetPromise(el ? [el] : undefined).catch(() => {}); };
       const trunc = (text='', max=150) => text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '...';
+
+      // --- TI-84 procedure walkthrough renderer ---
+
+      const KEY_DISPLAY = {
+        RIGHT: '→',
+        LEFT: '←',
+        UP: '↑',
+        DOWN: '↓',
+        ENTER: 'ENTER',
+        STAT: 'STAT',
+        ALPHA: 'ALPHA',
+        '2ND': '2ND',
+        MATH: 'MATH',
+        GRAPH: 'GRAPH',
+        TRACE: 'TRACE',
+        ZOOM: 'ZOOM',
+        WINDOW: 'WINDOW',
+        'Y=': 'Y=',
+        MODE: 'MODE',
+        DEL: 'DEL',
+        CLEAR: 'CLEAR',
+        STO: 'STO→',
+        ON: 'ON',
+        VARS: 'VARS'
+      };
+
+      function renderProcedureWalkthrough(procedureId, container) {
+        const procedures = window.TI84_PROCEDURES && window.TI84_PROCEDURES.procedures;
+        const procedure = procedures ? procedures.find(p => p.id === procedureId) : null;
+
+        if (!procedure) {
+          const msg = make('p', 'sg-calc-walkthrough-not-found', 'Calculator steps not available for this formula.');
+          msg.style.color = 'var(--sg-text-dim)';
+          msg.style.fontStyle = 'italic';
+          container.appendChild(msg);
+          return;
+        }
+
+        const wrapper = make('div', 'sg-calc-walkthrough');
+
+        // Header: name + description
+        const header = make('div', 'sg-calc-walkthrough-header');
+        header.appendChild(make('div', 'sg-calc-walkthrough-title', procedure.name));
+        if (procedure.description) {
+          header.appendChild(make('div', 'sg-calc-walkthrough-description', procedure.description));
+        }
+        wrapper.appendChild(header);
+
+        // Prereq callout: render if dataRequirements has at least one key
+        const dataReqs = procedure.dataRequirements;
+        const hasDataReqs = dataReqs && typeof dataReqs === 'object' && Object.keys(dataReqs).length > 0;
+        if (hasDataReqs) {
+          const prereq = make('div', 'sg-calc-prereq');
+          const keys = Object.keys(dataReqs);
+          const listKeys = keys.filter(k => dataReqs[k] === 'list' || dataReqs[k] === 'numeric');
+          const matrixKeys = keys.filter(k => dataReqs[k] === 'matrix');
+          let prereqText = '';
+          if (listKeys.length > 0 && matrixKeys.length === 0) {
+            if (listKeys.length === 1) {
+              prereqText = `Enter your data into ${listKeys[0]} first.`;
+            } else {
+              const joined = listKeys.slice(0, -1).join(', ') + ' and ' + listKeys[listKeys.length - 1];
+              prereqText = `Enter your data into ${joined} first.`;
+            }
+          } else if (matrixKeys.length > 0 && listKeys.length === 0) {
+            const joined = matrixKeys.join(' and ');
+            prereqText = `Matrix ${joined} must be populated first.`;
+          } else {
+            const joined = keys.join(' and ');
+            prereqText = `${joined} must be populated first.`;
+          }
+          prereq.innerHTML = '<strong>Before you start:</strong> ' + esc(prereqText);
+          if (procedure.assumeDataIn) {
+            const secondary = make('span', '');
+            secondary.textContent = ' (' + procedure.assumeDataIn + ')';
+            secondary.style.color = 'var(--sg-text-dim)';
+            prereq.appendChild(secondary);
+          }
+          wrapper.appendChild(prereq);
+        }
+
+        // Step list
+        const stepList = make('ol', 'sg-calc-step-list');
+        const steps = Array.isArray(procedure.steps) ? procedure.steps : [];
+        steps.forEach(step => {
+          const li = make('li', 'sg-calc-step');
+          li.dataset.skillType = step.skillType || '';
+
+          // Step number badge
+          li.appendChild(make('span', 'sg-calc-step-num', String(step.stepNumber)));
+
+          // Key or parameter chip
+          const key = step.key || '';
+          const isParam = key.startsWith('{') && key.endsWith('}');
+          if (isParam) {
+            const inner = key.slice(1, -1);
+            const label = inner === 'list' ? 'Select: list' : 'Enter: ' + inner;
+            li.appendChild(make('span', 'sg-calc-param', label));
+          } else {
+            const displayKey = KEY_DISPLAY[key] !== undefined ? KEY_DISPLAY[key] : key.toUpperCase();
+            li.appendChild(make('span', 'sg-calc-key', displayKey));
+          }
+
+          // Narration with [KEY] bolding
+          const narrationSpan = make('span', 'sg-calc-step-narration');
+          const escaped = esc(step.narration || '');
+          const bolded = escaped.replace(/\[([A-Z0-9\u2192\u2190\u2191\u2193\-=]+)\]/g, '<strong>[$1]</strong>');
+          narrationSpan.innerHTML = bolded;
+
+          // Highlight hint appended as muted suffix inside narration span
+          if (step.highlight) {
+            const hint = make('span', 'sg-calc-step-hint', '(highlights: ' + step.highlight + ')');
+            narrationSpan.appendChild(hint);
+          }
+
+          li.appendChild(narrationSpan);
+          stepList.appendChild(li);
+        });
+        wrapper.appendChild(stepList);
+        container.appendChild(wrapper);
+      }
       const letter = value => String(value || '').trim().toUpperCase();
       const normalizeMode = mode => ['mcq','frq','both'].includes(mode) ? mode : 'both';
       const stripFrq = text => typeof window.stripFrqBoilerplateSG === 'function' ? window.stripFrqBoilerplateSG(text || '') : String(text || '');
@@ -3218,6 +3361,20 @@
             scSection.appendChild(details);
           });
           modal.appendChild(scSection);
+        }
+
+        // Calculator walkthrough section — only renders if this formula has a mapped procedure
+        const procId = (window.FORMULA_PROCEDURE_MAP || {})[formulaId];
+        if (procId && window.TI84_PROCEDURES && window.TI84_PROCEDURES.procedures) {
+          const calcDetails = document.createElement('details');
+          calcDetails.className = 'sg-formula-modal-calc-steps';
+          const calcSummary = document.createElement('summary');
+          calcSummary.textContent = '📱 Show calculator steps';
+          calcDetails.appendChild(calcSummary);
+          const calcBody = make('div', 'sg-formula-modal-calc-steps-body');
+          renderProcedureWalkthrough(procId, calcBody);
+          calcDetails.appendChild(calcBody);
+          modal.appendChild(calcDetails);
         }
 
         const closeModal = () => {

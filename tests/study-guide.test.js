@@ -646,3 +646,116 @@ describe('study_guide_diagnostic.html — session 82 always-scored simplificatio
     expect(src).not.toContain('function renderFrqModeBanner(');
   });
 });
+
+describe('session 83 TI-84 procedure walkthroughs', () => {
+  const PROCEDURES_JS_PATH = resolve(__dirname, '../data/ti84-procedures.js');
+  const MAP_JS_PATH = resolve(__dirname, '../data/formula-procedure-map.js');
+  const PROCEDURES_JSON_PATH = resolve(__dirname, '../ti84-procedures-data.json');
+
+  // Test 1
+  it('loads window.TI84_PROCEDURES via data/ti84-procedures.js script tag', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('<script src="data/ti84-procedures.js"></script>');
+  });
+
+  // Test 2
+  it('loads window.FORMULA_PROCEDURE_MAP via data/formula-procedure-map.js script tag', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('<script src="data/formula-procedure-map.js"></script>');
+  });
+
+  // Test 3
+  it('defines renderProcedureWalkthrough function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderProcedureWalkthrough(');
+  });
+
+  // Test 4
+  it('showFormulaCardModal reads window.FORMULA_PROCEDURE_MAP', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.FORMULA_PROCEDURE_MAP || {})[formulaId]');
+  });
+
+  // Test 5
+  it('showFormulaCardModal renders calc-steps details only when procedure is mapped', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('if (procId && window.TI84_PROCEDURES');
+  });
+
+  // Test 6
+  it('calc-steps details uses .sg-formula-modal-calc-steps class', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("calcDetails.className = 'sg-formula-modal-calc-steps'");
+  });
+
+  // Test 7
+  it('calc-steps summary text is "📱 Show calculator steps"', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('Show calculator steps');
+  });
+
+  // Test 8
+  it('renderProcedureWalkthrough renders sg-calc-walkthrough container', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("make('div', 'sg-calc-walkthrough')");
+  });
+
+  // Test 9
+  it('renderProcedureWalkthrough renders sg-calc-step-list', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("make('ol', 'sg-calc-step-list')");
+  });
+
+  // Test 10
+  it('renderProcedureWalkthrough renders sg-calc-prereq when dataRequirements non-empty', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-calc-prereq');
+    expect(src).toContain('hasDataReqs');
+  });
+
+  // Test 11
+  it('KEY_DISPLAY map wraps arrow keys as unicode', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("RIGHT: '\u2192'");
+    expect(src).toContain("DOWN: '\u2193'");
+  });
+
+  // Test 12
+  it('parameter placeholder keys are rendered as sg-calc-param chips', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("key.startsWith('{') && key.endsWith('}')" );
+    expect(src).toContain("sg-calc-param");
+  });
+
+  // Test 13
+  it('narration wraps [KEY] patterns in <strong>', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.replace(/\\[([A-Z0-9');
+    expect(src).toContain('<strong>[$1]</strong>');
+  });
+
+  // Test 14
+  it('formula-procedure-map.js exports at least 30 mappings', () => {
+    const mapSrc = readFileSync(MAP_JS_PATH, 'utf8');
+    const win = {};
+    // eslint-disable-next-line no-new-func
+    new Function('window', mapSrc)(win);
+    expect(Object.keys(win.FORMULA_PROCEDURE_MAP).length).toBeGreaterThanOrEqual(30);
+  });
+
+  // Test 15
+  it('every mapped procedure id exists in the procedures data', () => {
+    const mapSrc = readFileSync(MAP_JS_PATH, 'utf8');
+    const procSrc = readFileSync(PROCEDURES_JS_PATH, 'utf8');
+    const win = {};
+    // eslint-disable-next-line no-new-func
+    new Function('window', mapSrc)(win);
+    // eslint-disable-next-line no-new-func
+    new Function('window', procSrc)(win);
+    const procedureIds = new Set(win.TI84_PROCEDURES.procedures.map(p => p.id));
+    const mapValues = Object.values(win.FORMULA_PROCEDURE_MAP);
+    for (const procId of mapValues) {
+      expect(procedureIds.has(procId), `Procedure id "${procId}" not found in ti84-procedures-data.json`).toBe(true);
+    }
+  });
+});
