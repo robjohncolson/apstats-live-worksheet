@@ -505,3 +505,42 @@ describe('study_guide_diagnostic.html — session 79 fix-pass regression tests',
     expect(src).toContain('validSubconcepts.length');
   });
 });
+
+describe('study_guide_diagnostic.html — session 80 formula UX fixes', () => {
+  it('handleHelperClick in gate mode skips confirmation for formula clicks', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The formula early-return must appear BEFORE the !data.frqHelpers.confirmed check.
+    const formulaBranchIdx = src.indexOf("if (kind === 'formula') {");
+    const confirmBranchIdx = src.indexOf('if (!data.frqHelpers.confirmed) {');
+    expect(formulaBranchIdx).toBeGreaterThan(-1);
+    expect(formulaBranchIdx).toBeLessThan(confirmBranchIdx);
+    // The formula branch must call doHelperAction directly.
+    const formulaRegion = src.slice(formulaBranchIdx, confirmBranchIdx);
+    expect(formulaRegion).toContain('doHelperAction(kind, id, unit, data, questionId)');
+    expect(formulaRegion).toContain('return;');
+  });
+
+  it('handleHelperClick still shows confirmation for drill clicks in gate mode first time', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The showFrqHelperModal branch must still be present and reachable for drills.
+    expect(src).toContain('if (!data.frqHelpers.confirmed) {');
+    expect(src).toContain('showFrqHelperModal(');
+  });
+
+  it('helper panel header renders queued-formulas chip when any formula was hinted today', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // renderFrqHelperPanel must call queuedFormulasToday with today().
+    expect(src).toContain('queuedFormulasToday(state, today())');
+    // The chip container class must be used.
+    expect(src).toContain('sg-frq-queued-formulas');
+    // CSS rules for the chip must be present.
+    expect(src).toContain('.sg-frq-queued-label');
+    expect(src).toContain('.sg-frq-queued-list');
+  });
+
+  it('queued-formulas chip is omitted when no formulas were queued today', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The chip must only render when queued.length is truthy.
+    expect(src).toContain('if (queued.length)');
+  });
+});

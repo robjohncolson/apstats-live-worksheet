@@ -116,6 +116,9 @@
     .sg-frq-helpers-header{display:grid;gap:4px;margin-bottom:4px}
     .sg-frq-helpers-title{margin:0;font-size:1rem}
     .sg-frq-helpers-intro{margin:0;font-size:.85rem;color:var(--sg-text-dim)}
+    .sg-frq-queued-formulas{margin-top:6px;padding:6px 10px;border-radius:8px;background:var(--sg-bar-track);border:1px solid var(--sg-border);font-size:.82rem;color:var(--sg-text-dim);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .sg-frq-queued-label{font-weight:700;color:var(--sg-text);white-space:nowrap}
+    .sg-frq-queued-list{color:var(--sg-text-dim)}
     .sg-frq-skill-list{margin:0;padding:0;list-style:none;display:grid;gap:14px}
     .sg-frq-skill{display:grid;gap:8px;padding:12px;border:1px solid var(--sg-border);border-radius:10px;background:var(--sg-bg-card)}
     .sg-frq-skill-head{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
@@ -841,6 +844,18 @@
         return sourceState.touchedFormulas[formulaId];
       }
 
+      function queuedFormulasToday(state, todayStr) {
+        const touched = (state && state.touchedFormulas) || {};
+        const result = [];
+        for (const id in touched) {
+          const entry = touched[id];
+          if (entry && entry.hintedAt === todayStr) {
+            result.push({ id: id, name: formulaName(id) });
+          }
+        }
+        return result;
+      }
+
       // --- diagnostic export for testing + integration ---
       window.__studyGuideV4__ = {
         AP_EXAM_DATE: AP_EXAM_DATE,
@@ -861,7 +876,8 @@
         pickProbeForFormula: pickProbeForFormula,
         pickDailyQueue: pickDailyQueue,
         recordFormulaTouch: recordFormulaTouch,
-        recordFormulaHint: recordFormulaHint
+        recordFormulaHint: recordFormulaHint,
+        queuedFormulasToday: queuedFormulasToday
       };
       }
       (function(window) {
@@ -1469,6 +1485,10 @@
           getFormulaEntry: function(formulaId) {
             const v4 = getV4();
             return v4 && typeof v4.getFormulaEntry === 'function' ? v4.getFormulaEntry(formulaId) : null;
+          },
+          queuedFormulasToday: function(state, todayStr) {
+            const v4 = getV4();
+            return v4 && typeof v4.queuedFormulasToday === 'function' ? v4.queuedFormulasToday(state, todayStr) : [];
           }
         };
 
@@ -1701,7 +1721,7 @@
           computeEffectiveScore: computeEffectiveScore
         };
       })(typeof window !== 'undefined' ? window : globalThis);
-      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
+      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, queuedFormulasToday, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
       const { getFrqDecomposition, recordHelperUsed, computeEffectivePenalty, computeEffectiveScore } = window.__studyGuideV6__;
       function defaultFrqHelpers() {
         return { formulasViewed: [], mcqDrills: {}, confirmed: false, activeDrillQuestionId: null };
@@ -2902,6 +2922,13 @@
         header.appendChild(make('p', 'sg-frq-helpers-intro', frqMode === 'practice'
           ? 'Hints are free in practice mode. Switch to gate mode to be scored.'
           : 'Each hint lowers your score. Formula cards: \u22125%. Correct drill: \u221210%. Wrong drill: \u221215%. Max total penalty: \u221250%.'));
+        const queued = queuedFormulasToday(state, today());
+        if (queued.length) {
+          const chip = make('div', 'sg-frq-queued-formulas');
+          chip.appendChild(make('span', 'sg-frq-queued-label', '\uD83D\uDCDD Queued for tomorrow:'));
+          chip.appendChild(make('span', 'sg-frq-queued-list', queued.map(function(q) { return q.name; }).join(', ')));
+          header.appendChild(chip);
+        }
         helperPanel.appendChild(header);
 
         helperSkills.forEach((skill, index) => {
@@ -2962,11 +2989,19 @@
 
       function handleHelperClick(kind, id, unit, data, questionId) {
         if (!data.frqHelpers) data.frqHelpers = defaultFrqHelpers();
-        // In practice mode, hints are free — skip the confirmation modal entirely.
+        // Practice mode — hints are free, no confirmation needed.
         if (data.frqMode === 'practice') {
           doHelperAction(kind, id, unit, data, questionId);
           return;
         }
+        // Formula cards skip the confirmation modal even in gate mode: the cost is
+        // shown inline on the button, and the mode banner warns at the top of the FRQ.
+        // The modal was interrupting students from seeing the formula content.
+        if (kind === 'formula') {
+          doHelperAction(kind, id, unit, data, questionId);
+          return;
+        }
+        // Drills still require one-time confirmation — they mutate more state.
         if (!data.frqHelpers.confirmed) {
           showFrqHelperModal(() => {
             data.frqHelpers.confirmed = true;

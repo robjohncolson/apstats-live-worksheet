@@ -512,6 +512,18 @@
     return sourceState.touchedFormulas[formulaId];
   }
 
+  function queuedFormulasToday(state, todayStr) {
+    const touched = (state && state.touchedFormulas) || {};
+    const result = [];
+    for (const id in touched) {
+      const entry = touched[id];
+      if (entry && entry.hintedAt === todayStr) {
+        result.push({ id: id, name: formulaName(id) });
+      }
+    }
+    return result;
+  }
+
   // --- diagnostic export for testing + integration ---
   window.__studyGuideV4__ = {
     AP_EXAM_DATE: AP_EXAM_DATE,
@@ -532,6 +544,7 @@
     pickProbeForFormula: pickProbeForFormula,
     pickDailyQueue: pickDailyQueue,
     recordFormulaTouch: recordFormulaTouch,
-    recordFormulaHint: recordFormulaHint
+    recordFormulaHint: recordFormulaHint,
+    queuedFormulasToday: queuedFormulasToday
   };
 })(typeof window !== 'undefined' ? window : globalThis);

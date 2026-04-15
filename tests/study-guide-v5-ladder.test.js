@@ -517,6 +517,64 @@ describe('formulaWeight hint boost', () => {
   });
 });
 
+describe('queuedFormulasToday', () => {
+  it('returns empty array when touchedFormulas is empty', () => {
+    const emptyTfState = { touchedFormulas: {} };
+    const result = api.queuedFormulasToday(emptyTfState, START_DAY);
+    expect(result).toEqual([]);
+  });
+
+  it('returns formulas hinted today with their names', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    const result = api.queuedFormulasToday(testState, START_DAY);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('mean');
+    // formulaName('mean') returns 'Mean' based on the commands fixture
+    expect(typeof result[0].name).toBe('string');
+    expect(result[0].name.length).toBeGreaterThan(0);
+  });
+
+  it('excludes formulas hinted on other dates', () => {
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY },
+        'corr-r': { firstTouchedAt: NEXT_DAY, lastMastery: 0.3, hintedAt: NEXT_DAY }
+      }
+    };
+    const result = api.queuedFormulasToday(testState, START_DAY);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('mean');
+  });
+
+  it('handles touchedFormulas entries without hintedAt', () => {
+    // Old entries may only have firstTouchedAt, no hintedAt field.
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.5 }
+      }
+    };
+    const result = api.queuedFormulasToday(testState, START_DAY);
+    expect(result).toEqual([]);
+  });
+
+  it('is exported via v5 proxy', () => {
+    expect(typeof api.queuedFormulasToday).toBe('function');
+    // Calling via v5 proxy should delegate to v4 and return the same result as calling v4 directly.
+    const testState = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: START_DAY, lastMastery: 0.3, hintedAt: START_DAY }
+      }
+    };
+    const proxyResult = api.queuedFormulasToday(testState, START_DAY);
+    const directResult = v4.queuedFormulasToday(testState, START_DAY);
+    expect(proxyResult).toEqual(directResult);
+  });
+});
+
 describe('debt scenarios', () => {
   it('does not create debt when the student works ahead', () => {
     state.doseLadder = { tier: 0, mcqDebt: 0, frqDebt: 0 };

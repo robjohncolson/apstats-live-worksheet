@@ -607,6 +607,10 @@
     getFormulaEntry: function(formulaId) {
       const v4 = getV4();
       return v4 && typeof v4.getFormulaEntry === 'function' ? v4.getFormulaEntry(formulaId) : null;
+    },
+    queuedFormulasToday: function(state, todayStr) {
+      const v4 = getV4();
+      return v4 && typeof v4.queuedFormulasToday === 'function' ? v4.queuedFormulasToday(state, todayStr) : [];
     }
   };
 

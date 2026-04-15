@@ -2568,15 +2568,40 @@
       "timestamp": "2026-04-15T00:37:09Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "c7b428c38e70",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 161 \u2014 SP Corruption Fix (Set IX=SP Before Rendering Stages)\n\n## Context\n\nThe TI-84 Plus CE R",
+      "status": "completed",
+      "duration_seconds": 245.029,
+      "timestamp": "2026-04-15T00:38:24Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "91e2d8285c9e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 164 \u2014 Scan ROM for CALL 0x002197 (Frame Helper Callers)\n\n## Context\n\nThe function at ROM add",
+      "status": "completed",
+      "duration_seconds": 420.592,
+      "timestamp": "2026-04-15T00:41:23Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase164-frame-callers.mjs",
+        "TI-84_Plus_CE/phase164-report.md"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 219,
-    "cc_to_codex": 219,
+    "total_calls": 221,
+    "cc_to_codex": 221,
     "codex_to_cc": 0,
-    "completed": 168,
+    "completed": 170,
     "failed": 47,
     "refused": 0,
-    "avg_duration_seconds": 434.917
+    "avg_duration_seconds": 433.993
   }
 }
