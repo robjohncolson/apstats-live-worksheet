@@ -162,21 +162,9 @@
     .sg-queue-index{grid-area:index;min-width:2.25rem;font-weight:700;color:var(--sg-text-dim)}
     .sg-queue-label{grid-area:label;color:var(--sg-text)}
     .sg-queue-meta{grid-area:meta;font-size:.85rem;color:var(--sg-text-dim)}
-    .sg-see-all{margin-top:16px;padding-top:16px;border-top:1px solid var(--sg-border)}
-    .sg-see-all summary{padding:2px 0;color:var(--sg-text);font-weight:700;cursor:pointer}
-    .sg-see-all-body{display:grid;gap:12px;padding-top:10px}
-    .sg-see-all-summary{margin:0;font-size:.82rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--sg-text-dim)}
-    .sg-see-all-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
-    .sg-see-all-cell{appearance:none;width:100%;display:block;margin:0;padding:10px;border:1px solid var(--sg-border);border-radius:10px;background:var(--sg-bg-card);color:var(--sg-text);cursor:pointer;text-align:left;font:inherit}
-    .sg-see-all-cell.is-untested{background:var(--sg-bg)}
-    .sg-see-all-cell.is-untested .sg-see-all-name,.sg-see-all-cell.is-untested .sg-see-all-mastery{color:var(--sg-text-dim)}
-    .sg-see-all-cell.is-touched.is-low{box-shadow:inset 3px 0 0 var(--sg-mastery-low)}
-    .sg-see-all-cell.is-touched.is-mid{box-shadow:inset 3px 0 0 var(--sg-mastery-mid)}
-    .sg-see-all-cell.is-touched.is-high{box-shadow:inset 3px 0 0 var(--sg-mastery-high)}
-    .sg-see-all-cell.is-unavailable,.sg-see-all-cell:disabled{opacity:.4;cursor:not-allowed}
-    .sg-see-all-cell:hover:not([disabled]){border-color:var(--sg-accent);background:var(--sg-bar-track)}
-    .sg-see-all-name{margin-bottom:4px;font-weight:700}
-    .sg-see-all-mastery{font-size:.85rem;color:var(--sg-text-dim);font-variant-numeric:tabular-nums}
+    .sg-formula-modal-practice{padding:7px 14px;border-radius:6px;border:1px solid var(--sg-accent);background:var(--sg-accent);color:var(--sg-bg);font:inherit;cursor:pointer;font-weight:600}
+    .sg-formula-modal-practice:hover:not([disabled]){filter:brightness(1.1)}
+    .sg-formula-modal-practice[disabled]{opacity:.5;cursor:not-allowed;background:var(--sg-bg-card);color:var(--sg-text-dim);border-color:var(--sg-border)}
     #sg-next-weakest,#sg-check,#sg-next-after-check,#sg-grade-frq,.sg-open-curriculum{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--sg-accent);background:var(--sg-accent);color:var(--sg-bg);font-weight:700;cursor:pointer;text-decoration:none}
     .sg-probe-card,.sg-remediation-card{display:grid;gap:14px}
     .sg-probe-prompt{font-family:Georgia,"Times New Roman",serif;line-height:1.7;color:var(--sg-text);white-space:pre-wrap}
@@ -2441,7 +2429,7 @@
       }
 
       function setActiveProbe(unit, questionId, source, formulaId) {
-        const validSource = ['manual','next-weakest','lo-click','daily-queue','see-all'].includes(source) ? source : 'manual';
+        const validSource = ['manual','next-weakest','lo-click','daily-queue'].includes(source) ? source : 'manual';
         state.activeProbe = { unit, questionId, source: validSource, formulaId: typeof formulaId === 'string' ? formulaId : null };
         saveSoon();
       }
@@ -3103,14 +3091,7 @@
         miniCanvas.addEventListener('click', showMasteryMapModal);
 
         renderMasteryMiniMap(miniCanvas, nodes, worldBounds, state);
-
-        // Insert before the see-all disclosure if it exists.
-        const seeAll = ui.rail.querySelector('.sg-see-all');
-        if (seeAll) {
-          ui.rail.insertBefore(panel, seeAll);
-        } else {
-          ui.rail.appendChild(panel);
-        }
+        ui.rail.appendChild(panel);
       }
 
       function renderTierInfoModal() {
@@ -3246,7 +3227,6 @@
 
         renderReviewQueuePanel();
         renderMasteryMapPanel();
-        ui.rail.appendChild(renderSeeAllDisclosure());
       }
 
       // Renders the persistent review queue panel into ui.rail.
@@ -3325,74 +3305,7 @@
           details.appendChild(body);
         }
 
-        // Insert before the see-all disclosure (last child of rail).
-        const seeAll = ui.rail.querySelector('.sg-see-all');
-        if (seeAll) {
-          ui.rail.insertBefore(details, seeAll);
-        } else {
-          ui.rail.appendChild(details);
-        }
-      }
-
-      function renderSeeAllDisclosure() {
-        const wrapper = make('details', 'sg-see-all');
-        if (state.activeProbe && state.activeProbe.source === 'see-all') {
-          wrapper.open = true;
-        }
-        wrapper.appendChild(make('summary', '', 'See all formulas'));
-        const body = make('div', 'sg-see-all-body');
-        const touchedCore = touchedFormulaCount(state, 'core');
-        const touchedRegular = touchedFormulaCount(state, 'regular');
-        const touchedPower = touchedFormulaCount(state, 'power');
-        const touchedSupport = touchedFormulaCount(state, 'support');
-        body.appendChild(make('p', 'sg-see-all-summary', `Touched so far: ${touchedCore} core · ${touchedRegular} regular · ${touchedPower} power · ${touchedSupport} support.`));
-        const allFormulas = Object.keys(FORMULA_UNIT_MAP).sort();
-        const grid = make('div', 'sg-see-all-grid');
-        allFormulas.forEach(formulaId => {
-          const touchedEntry = state.touchedFormulas && state.touchedFormulas[formulaId] && typeof state.touchedFormulas[formulaId].lastMastery === 'number'
-            ? state.touchedFormulas[formulaId]
-            : null;
-          const pick = pickProbeForFormula(formulaId, state);
-          const cell = make('button', 'sg-see-all-cell');
-          const masteryLabel = make('div', 'sg-see-all-mastery');
-
-          cell.type = 'button';
-
-          if (touchedEntry) {
-            cell.classList.add('is-touched');
-            if (touchedEntry.lastMastery < 0.4) {
-              cell.classList.add('is-low');
-            } else if (touchedEntry.lastMastery > 0.7) {
-              cell.classList.add('is-high');
-            } else {
-              cell.classList.add('is-mid');
-            }
-            masteryLabel.textContent = `${Math.round(touchedEntry.lastMastery * 100)}%`;
-          } else {
-            cell.classList.add('is-untested');
-            masteryLabel.textContent = 'untested';
-          }
-
-          if (!pick) {
-            cell.classList.add('is-unavailable');
-            cell.disabled = true;
-            cell.title = 'No probe available for this formula yet';
-          } else {
-            cell.addEventListener('click', () => {
-              setActiveProbe(pick.unit, pick.questionId, 'see-all', pick.formulaId);
-              renderActiveProbe();
-              renderRemediation();
-              renderQueuePane();
-            });
-          }
-
-          cell.appendChild(make('div', 'sg-see-all-name', formulaName(formulaId)));
-          cell.appendChild(masteryLabel);
-          grid.appendChild(cell);
-        });
-        body.appendChild(grid);
-        wrapper.appendChild(body);
-        return wrapper;
+        ui.rail.appendChild(details);
       }
 
       function advanceDailyQueue() {
@@ -4047,6 +3960,28 @@
         };
 
         const btnRow = make('div', 'sg-next-row');
+
+        // Practice button: launches an MCQ probe for this formula if one exists.
+        // Replaces the functionality of the removed See-all disclosure.
+        const practicePick = (typeof pickProbeForFormula === 'function')
+          ? pickProbeForFormula(formulaId, state)
+          : null;
+        const practiceBtn = make('button', 'sg-formula-modal-practice', 'Practice this formula');
+        practiceBtn.type = 'button';
+        if (!practicePick) {
+          practiceBtn.disabled = true;
+          practiceBtn.title = 'No practice probe available for this formula yet';
+        } else {
+          practiceBtn.addEventListener('click', function() {
+            closeModal();
+            setActiveProbe(practicePick.unit, practicePick.questionId, 'manual', practicePick.formulaId);
+            renderActiveProbe();
+            renderRemediation();
+            renderQueuePane();
+          });
+        }
+        btnRow.appendChild(practiceBtn);
+
         const closeBtn = make('button', '', 'Got it — close');
         closeBtn.type = 'button';
         closeBtn.addEventListener('click', closeModal);

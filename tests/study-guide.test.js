@@ -203,7 +203,6 @@ describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
   it('defines the v5 render pipeline', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('function renderQueuePane');
-    expect(src).toContain('function renderSeeAllDisclosure');
     expect(src).toContain('function renderActiveProbe');
     expect(src).toContain('function renderRemediation');
     expect(src).toContain('function advanceDailyQueue');
@@ -511,17 +510,6 @@ describe('study_guide_diagnostic.html — session 81 review queue panel', () => 
     const closeModalIdx = src.indexOf('if (typeof onClose === \'function\')');
     const region = src.slice(closeModalIdx, closeModalIdx + 200);
     expect(region).toContain('renderActiveProbe()');
-  });
-
-  it('renderReviewQueuePanel is called from renderQueuePane at the end', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    // renderReviewQueuePanel() must appear inside renderQueuePane, before renderSeeAllDisclosure.
-    const queuePaneStart = src.indexOf('function renderQueuePane()');
-    const seeAllIdx = src.indexOf('renderSeeAllDisclosure()', queuePaneStart);
-    const reviewQueueCallIdx = src.indexOf('renderReviewQueuePanel()', queuePaneStart);
-    expect(queuePaneStart).toBeGreaterThan(-1);
-    expect(reviewQueueCallIdx).toBeGreaterThan(queuePaneStart);
-    expect(reviewQueueCallIdx).toBeLessThan(seeAllIdx);
   });
 
   it('normalizeState preserves graduated field on touchedFormulas entries', () => {
@@ -1064,5 +1052,75 @@ describe('session 87 audit fixes', () => {
     const cardSrc = src.slice(cardStart, nextCard);
     expect(cardSrc).toContain('unreliable');
     expect(cardSrc).not.toContain('invalid');
+  });
+});
+
+describe('session 88b formula modal practice button + see-all removal', () => {
+  it('showFormulaCardModal has a Practice this formula button', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('Practice this formula');
+  });
+
+  it('practice button is disabled when pickProbeForFormula returns null', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('practiceBtn.disabled = true');
+    expect(src).toContain('No practice probe available for this formula yet');
+  });
+
+  it('practice button click calls pickProbeForFormula and setActiveProbe', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('pickProbeForFormula(formulaId, state)');
+    expect(src).toContain('setActiveProbe(practicePick.unit, practicePick.questionId,');
+  });
+
+  it('practice button click closes the formula modal first', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // closeModal() must appear before setActiveProbe( within the practice click handler
+    const handlerStart = src.indexOf("practiceBtn.addEventListener('click', function()");
+    const handlerRegion = src.slice(handlerStart, handlerStart + 300);
+    const closeModalIdx = handlerRegion.indexOf('closeModal()');
+    const setActiveProbeIdx = handlerRegion.indexOf('setActiveProbe(');
+    expect(closeModalIdx).toBeGreaterThan(-1);
+    expect(setActiveProbeIdx).toBeGreaterThan(-1);
+    expect(closeModalIdx).toBeLessThan(setActiveProbeIdx);
+  });
+
+  it("practice button uses 'manual' source for setActiveProbe", () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const handlerStart = src.indexOf("practiceBtn.addEventListener('click', function()");
+    const handlerRegion = src.slice(handlerStart, handlerStart + 300);
+    expect(handlerRegion).toContain("'manual'");
+  });
+
+  it('renderSeeAllDisclosure function is no longer defined', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('function renderSeeAllDisclosure');
+  });
+
+  it('no call sites of renderSeeAllDisclosure remain', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('renderSeeAllDisclosure()');
+  });
+
+  it('no sg-see-all CSS rules remain', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('.sg-see-all{');
+    expect(src).not.toContain('.sg-see-all-');
+  });
+
+  it('renderMasteryMapPanel no longer queries for .sg-see-all', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain("querySelector('.sg-see-all')");
+  });
+
+  it('formula modal practice button has sg-formula-modal-practice class', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("make('button', 'sg-formula-modal-practice', 'Practice this formula')");
+  });
+
+  it('practice button CSS uses primary accent style', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.sg-formula-modal-practice{');
+    expect(src).toContain('background:var(--sg-accent)');
   });
 });

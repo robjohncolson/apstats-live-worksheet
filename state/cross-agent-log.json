@@ -2816,15 +2816,70 @@
         "scripts/transpile-ti84-rom.mjs"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "3b168a411f49",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 180 \u2014 Browser-shell restore path integration\n\n## Context\nYou are working on a TI-84 Plus CE ",
+      "status": "completed",
+      "duration_seconds": 310.587,
+      "timestamp": "2026-04-15T04:08:21Z",
+      "files_changed": [
+        "TI-84_Plus_CE/browser-shell.html",
+        "node_modules/.vite/vitest/results.json",
+        "tests/study-guide.test.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "508cbd52e11d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 182 \u2014 Stage 2 status dots regression investigation\n\n## Context\nYou are working on a TI-84 Pl",
+      "status": "completed",
+      "duration_seconds": 323.053,
+      "timestamp": "2026-04-15T04:08:37Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase182-status-dots.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "42a0578a0c82",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 181 \u2014 Stage 3/4 step count investigation (0x004a7e missing block)\n\n## Context\nYou are workin",
+      "status": "completed",
+      "duration_seconds": 470.391,
+      "timestamp": "2026-04-15T04:11:02Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase181-missing-block.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "920766f8d0e0",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Session 88b review \u2014 Codex\n\nYou are Codex. **Read-only review task.** Do not edit any file except ",
+      "status": "completed",
+      "duration_seconds": 220.624,
+      "timestamp": "2026-04-15T04:19:19Z",
+      "files_changed": [
+        ".verify-session88b.result.md",
+        "state/cross-agent/920766f8d0e0.result.json"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 239,
-    "cc_to_codex": 239,
+    "total_calls": 243,
+    "cc_to_codex": 243,
     "codex_to_cc": 0,
-    "completed": 180,
+    "completed": 184,
     "failed": 54,
     "refused": 0,
-    "avg_duration_seconds": 448.393
+    "avg_duration_seconds": 446.463
   }
 }
