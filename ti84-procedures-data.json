@@ -1451,6 +1451,108 @@
       ]
     },
     {
+      "id": "two-propztest-wizard",
+      "type": "wizard",
+      "description": "2-PropZTest editor.",
+      "fields": [
+        {
+          "label": "x1",
+          "type": "integer"
+        },
+        {
+          "label": "n1",
+          "type": "integer"
+        },
+        {
+          "label": "x2",
+          "type": "integer"
+        },
+        {
+          "label": "n2",
+          "type": "integer"
+        },
+        {
+          "label": "p1 ? p2",
+          "options": [
+            "≠",
+            "<",
+            ">"
+          ],
+          "type": "choice"
+        },
+        {
+          "label": "Color:",
+          "type": "color-selector"
+        },
+        {
+          "label": "Calculate/Draw",
+          "type": "action-selector",
+          "options": [
+            "Calculate",
+            "Draw"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-propztest-result",
+      "type": "result",
+      "description": "2-PropZTest numeric output.",
+      "lines": [
+        "p1 ? p2",
+        "z = {value}",
+        "p = {value}",
+        "p̂1 = {value}",
+        "p̂2 = {value}",
+        "n1 = {value}",
+        "n2 = {value}"
+      ]
+    },
+    {
+      "id": "two-propzint-wizard",
+      "type": "wizard",
+      "description": "2-PropZInt editor.",
+      "fields": [
+        {
+          "label": "x1",
+          "type": "integer"
+        },
+        {
+          "label": "n1",
+          "type": "integer"
+        },
+        {
+          "label": "x2",
+          "type": "integer"
+        },
+        {
+          "label": "n2",
+          "type": "integer"
+        },
+        {
+          "label": "C-Level",
+          "default": ".95",
+          "type": "number"
+        },
+        {
+          "label": "Calculate",
+          "type": "action-button"
+        }
+      ]
+    },
+    {
+      "id": "two-propzint-result",
+      "type": "result",
+      "description": "2-PropZInt numeric output.",
+      "lines": [
+        "({lower}, {upper})",
+        "p̂1 = {value}",
+        "p̂2 = {value}",
+        "n1 = {value}",
+        "n2 = {value}"
+      ]
+    },
+    {
       "id": "matrix-menu-names",
       "type": "menu",
       "title": "MATRIX",
@@ -2057,6 +2159,8 @@
       "usedBy": [
         "one-propztest",
         "one-propzint",
+        "two-propztest",
+        "two-propzint",
         "t-test-stats",
         "t-test-data",
         "t-interval-stats",
@@ -2654,6 +2758,7 @@
       "description": "Move across the alternative row until the correct inequality is highlighted.",
       "usedBy": [
         "one-propztest",
+        "two-propztest",
         "t-test-stats",
         "t-test-data",
         "two-samp-ttest",
@@ -2706,6 +2811,7 @@
       "description": "Move to Calculate or Draw at the bottom of a test editor, then execute it.",
       "usedBy": [
         "one-propztest",
+        "two-propztest",
         "t-test-stats",
         "t-test-data",
         "two-samp-ttest",
@@ -5093,6 +5199,362 @@
       ]
     },
     {
+      "id": "two-propztest",
+      "name": "2-PropZTest",
+      "unit": 6,
+      "category": "inference-proportion",
+      "description": "Run a two-proportion z test from summary counts x1/n1 and x2/n2.",
+      "prerequisites": [
+        "nav-stat-tests",
+        "select-alternative",
+        "calculate-vs-draw"
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "key": "STAT",
+          "screen": "stat-menu",
+          "highlight": "EDIT tab",
+          "narration": "Press [STAT] to open the statistics menu.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "2ND",
+              "feedback": "Use [STAT] directly. [2ND] only activates yellow secondary functions."
+            },
+            {
+              "key": "Y=",
+              "feedback": "[Y=] opens function entry, not the statistics menu."
+            }
+          ]
+        },
+        {
+          "stepNumber": 2,
+          "key": "RIGHT",
+          "screen": "stat-calc-menu",
+          "highlight": "CALC tab",
+          "narration": "Move to CALC.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "ENTER",
+              "feedback": "That would choose the highlighted EDIT item. Move to CALC first."
+            },
+            {
+              "key": "RIGHT",
+              "feedback": "One more [RIGHT] would move to TESTS instead of staying on CALC."
+            }
+          ]
+        },
+        {
+          "stepNumber": 3,
+          "key": "RIGHT",
+          "screen": "stat-tests-menu",
+          "highlight": "TESTS tab",
+          "narration": "Move to TESTS.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 4,
+          "key": "6",
+          "screen": "two-propztest-wizard",
+          "highlight": "x1",
+          "narration": "Open 2-PropZTest.",
+          "skillType": "confirmation",
+          "commonErrors": [
+            {
+              "key": "5",
+              "feedback": "That opens 1-PropZTest. Press [6] for 2-PropZTest."
+            },
+            {
+              "key": "4",
+              "feedback": "That opens 2-SampTTest for means. Press [6] for the two-proportion z test."
+            }
+          ]
+        },
+        {
+          "stepNumber": 5,
+          "key": "{x1}",
+          "screen": "two-propztest-wizard",
+          "highlight": "x1 entered",
+          "narration": "Enter the number of successes for sample 1.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 6,
+          "key": "DOWN",
+          "screen": "two-propztest-wizard",
+          "highlight": "n1",
+          "narration": "Move to n1.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 7,
+          "key": "{n1}",
+          "screen": "two-propztest-wizard",
+          "highlight": "n1 entered",
+          "narration": "Enter the sample size for sample 1.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 8,
+          "key": "DOWN",
+          "screen": "two-propztest-wizard",
+          "highlight": "x2",
+          "narration": "Move to x2.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 9,
+          "key": "{x2}",
+          "screen": "two-propztest-wizard",
+          "highlight": "x2 entered",
+          "narration": "Enter the number of successes for sample 2.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 10,
+          "key": "DOWN",
+          "screen": "two-propztest-wizard",
+          "highlight": "n2",
+          "narration": "Move to n2.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 11,
+          "key": "{n2}",
+          "screen": "two-propztest-wizard",
+          "highlight": "n2 entered",
+          "narration": "Enter the sample size for sample 2.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 12,
+          "key": "DOWN",
+          "screen": "two-propztest-wizard",
+          "highlight": "p1 ? p2 row",
+          "narration": "Move to the alternative row.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 13,
+          "key": "RIGHT",
+          "screen": "two-propztest-wizard",
+          "highlight": "desired alternative",
+          "narration": "Move across the p1 and p2 alternatives until the desired relation is highlighted.",
+          "skillType": "navigation",
+          "repeatable": true,
+          "commonErrors": [
+            {
+              "key": "ENTER",
+              "feedback": "Check the alternative hypothesis direction first. Arrow [RIGHT] to cycle through ≠, <, and >."
+            },
+            {
+              "key": "DOWN",
+              "feedback": "Use [RIGHT] to change the direction, not [DOWN]. DOWN moves to the next field."
+            }
+          ]
+        },
+        {
+          "stepNumber": 14,
+          "key": "DOWN",
+          "screen": "two-propztest-wizard",
+          "highlight": "Calculate",
+          "narration": "Move to Calculate or Draw.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 15,
+          "key": "DOWN",
+          "screen": "two-propztest-wizard",
+          "highlight": "Calculate",
+          "narration": "Move past Color: to Calculate.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 16,
+          "key": "ENTER",
+          "screen": "two-propztest-result",
+          "highlight": "z line",
+          "narration": "Choose Calculate to show the test results.",
+          "skillType": "confirmation",
+          "commonErrors": [
+            {
+              "key": "DOWN",
+              "feedback": "Cursor is already on Calculate. Press [ENTER] to run the test."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-propzint",
+      "name": "2-PropZInt",
+      "unit": 6,
+      "category": "inference-proportion",
+      "description": "Compute a two-proportion z confidence interval from summary counts x1/n1 and x2/n2.",
+      "prerequisites": [
+        "nav-stat-tests"
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "key": "STAT",
+          "screen": "stat-menu",
+          "highlight": "EDIT tab",
+          "narration": "Press [STAT] to open the statistics menu.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "2ND",
+              "feedback": "Use [STAT] directly. [2ND] only activates yellow secondary functions."
+            },
+            {
+              "key": "Y=",
+              "feedback": "[Y=] opens function entry, not the statistics menu."
+            }
+          ]
+        },
+        {
+          "stepNumber": 2,
+          "key": "RIGHT",
+          "screen": "stat-calc-menu",
+          "highlight": "CALC tab",
+          "narration": "Move to CALC.",
+          "skillType": "navigation",
+          "commonErrors": [
+            {
+              "key": "ENTER",
+              "feedback": "That would choose the highlighted EDIT item. Move to CALC first."
+            },
+            {
+              "key": "RIGHT",
+              "feedback": "One more [RIGHT] would move to TESTS instead of staying on CALC."
+            }
+          ]
+        },
+        {
+          "stepNumber": 3,
+          "key": "RIGHT",
+          "screen": "stat-tests-menu",
+          "highlight": "TESTS tab",
+          "narration": "Move to TESTS.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 4,
+          "key": "ALPHA",
+          "screen": "stat-tests-menu",
+          "highlight": "ALPHA key",
+          "narration": "Press [alpha] to activate letter input.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 5,
+          "key": "APPS",
+          "screen": "two-propzint-wizard",
+          "highlight": "B:2-PropZInt...",
+          "narration": "Press [apps] (the B key) to select 2-PropZInt..",
+          "skillType": "confirmation",
+          "repeatable": true,
+          "commonErrors": [
+            {
+              "key": "MATH",
+              "feedback": "That opens A:1-PropZInt. Press [APPS] for B:2-PropZInt."
+            }
+          ]
+        },
+        {
+          "stepNumber": 6,
+          "key": "{x1}",
+          "screen": "two-propzint-wizard",
+          "highlight": "x1 entered",
+          "narration": "Enter the number of successes for sample 1.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 7,
+          "key": "DOWN",
+          "screen": "two-propzint-wizard",
+          "highlight": "n1",
+          "narration": "Move to n1.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 8,
+          "key": "{n1}",
+          "screen": "two-propzint-wizard",
+          "highlight": "n1 entered",
+          "narration": "Enter the sample size for sample 1.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 9,
+          "key": "DOWN",
+          "screen": "two-propzint-wizard",
+          "highlight": "x2",
+          "narration": "Move to x2.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 10,
+          "key": "{x2}",
+          "screen": "two-propzint-wizard",
+          "highlight": "x2 entered",
+          "narration": "Enter the number of successes for sample 2.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 11,
+          "key": "DOWN",
+          "screen": "two-propzint-wizard",
+          "highlight": "n2",
+          "narration": "Move to n2.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 12,
+          "key": "{n2}",
+          "screen": "two-propzint-wizard",
+          "highlight": "n2 entered",
+          "narration": "Enter the sample size for sample 2.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 13,
+          "key": "DOWN",
+          "screen": "two-propzint-wizard",
+          "highlight": "C-Level",
+          "narration": "Move to C-Level.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 14,
+          "key": "{C-Level}",
+          "screen": "two-propzint-wizard",
+          "highlight": "C-Level entered",
+          "narration": "Enter the confidence level.",
+          "skillType": "parameter"
+        },
+        {
+          "stepNumber": 15,
+          "key": "DOWN",
+          "screen": "two-propzint-wizard",
+          "highlight": "Calculate",
+          "narration": "Move to Calculate.",
+          "skillType": "navigation"
+        },
+        {
+          "stepNumber": 16,
+          "key": "ENTER",
+          "screen": "two-propzint-result",
+          "highlight": "interval line",
+          "narration": "Compute the two-proportion confidence interval.",
+          "skillType": "confirmation"
+        }
+      ]
+    },
+    {
       "id": "t-test-stats",
       "name": "T-Test (Stats input)",
       "unit": 7,
@@ -7257,6 +7719,18 @@
         "unit": 6
       },
       {
+        "id": "two-propztest",
+        "type": "procedure",
+        "name": "2-PropZTest",
+        "unit": 6
+      },
+      {
+        "id": "two-propzint",
+        "type": "procedure",
+        "name": "2-PropZInt",
+        "unit": 6
+      },
+      {
         "id": "t-test-stats",
         "type": "procedure",
         "name": "T-Test (Stats input)",
@@ -7362,6 +7836,16 @@
       {
         "from": "nav-stat-tests",
         "to": "one-propzint",
+        "type": "prerequisite"
+      },
+      {
+        "from": "nav-stat-tests",
+        "to": "two-propztest",
+        "type": "prerequisite"
+      },
+      {
+        "from": "nav-stat-tests",
+        "to": "two-propzint",
         "type": "prerequisite"
       },
       {
@@ -7551,6 +8035,11 @@
       },
       {
         "from": "select-alternative",
+        "to": "two-propztest",
+        "type": "prerequisite"
+      },
+      {
+        "from": "select-alternative",
         "to": "t-test-stats",
         "type": "prerequisite"
       },
@@ -7572,6 +8061,11 @@
       {
         "from": "calculate-vs-draw",
         "to": "one-propztest",
+        "type": "prerequisite"
+      },
+      {
+        "from": "calculate-vs-draw",
+        "to": "two-propztest",
         "type": "prerequisite"
       },
       {

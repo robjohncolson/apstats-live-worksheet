@@ -23,7 +23,7 @@ function escapeInlineScript(source) {
 
 function transformStateMachine(source) {
   const stripped = source.replace(
-    "import { createRequire } from 'node:module';\n\nconst require = createRequire(import.meta.url);\nconst proceduresData = require('./ti84-procedures-data.json');\n",
+    /import \{ createRequire \} from 'node:module';\r?\n\r?\nconst require = createRequire\(import\.meta\.url\);\r?\nconst proceduresData = require\('\.\/ti84-procedures-data\.json'\);\r?\n/,
     'const proceduresData = DATA;\n',
   );
 

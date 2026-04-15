@@ -52,7 +52,7 @@ function escapeInlineScript(source) {
 
 function transformStateMachine(source, dataBinding) {
   const stripped = source.replace(
-    "import { createRequire } from 'node:module';\n\nconst require = createRequire(import.meta.url);\nconst proceduresData = require('./ti84-procedures-data.json');\n",
+    /import \{ createRequire \} from 'node:module';\r?\n\r?\nconst require = createRequire\(import\.meta\.url\);\r?\nconst proceduresData = require\('\.\/ti84-procedures-data\.json'\);\r?\n/,
     `${dataBinding}\n`,
   );
   const browserReady = stripped.replace(/export function /g, 'function ');

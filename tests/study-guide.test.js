@@ -955,12 +955,12 @@ describe('session 87 audit fixes', () => {
     expect(src).not.toContain('"empirical-rule":');
   });
 
-  it('formula-procedure-map still has exactly 33 entries', () => {
+  it('formula-procedure-map now has exactly 35 entries', () => {
     const src = readFileSync(MAP_PATH, 'utf8');
     // Count lines that match the pattern  "key": "value",  inside the object
     const entries = src.match(/^\s+"[\w-]+":\s+"[\w-]+"/gm);
     expect(entries).not.toBeNull();
-    expect(entries.length).toBe(33);
+    expect(entries.length).toBe(35);
   });
 
   // Fix B — FRQ skill drift corrections
@@ -1052,6 +1052,67 @@ describe('session 87 audit fixes', () => {
     const cardSrc = src.slice(cardStart, nextCard);
     expect(cardSrc).toContain('unreliable');
     expect(cardSrc).not.toContain('invalid');
+  });
+});
+
+describe('session 89 two-proportion calculator walkthroughs', () => {
+  const MAP_PATH = resolve(__dirname, '../data/formula-procedure-map.js');
+  const PROCEDURES_JSON_PATH = resolve(__dirname, '../ti84-procedures-data.json');
+
+  it('maps two-prop-z and two-prop-ci to dedicated TI-84 procedures', () => {
+    const mapSrc = readFileSync(MAP_PATH, 'utf8');
+    const win = {};
+    // eslint-disable-next-line no-new-func
+    new Function('window', mapSrc)(win);
+    expect(win.FORMULA_PROCEDURE_MAP['two-prop-z']).toBe('two-propztest');
+    expect(win.FORMULA_PROCEDURE_MAP['two-prop-ci']).toBe('two-propzint');
+  });
+
+  it('adds two-proportion wizard and result screens to ti84-procedures-data.json', () => {
+    const data = JSON.parse(readFileSync(PROCEDURES_JSON_PATH, 'utf8'));
+    const screenIds = new Set(data.screens.map(screen => screen.id));
+    expect(screenIds.has('two-propztest-wizard')).toBe(true);
+    expect(screenIds.has('two-propztest-result')).toBe(true);
+    expect(screenIds.has('two-propzint-wizard')).toBe(true);
+    expect(screenIds.has('two-propzint-result')).toBe(true);
+  });
+
+  it('two-propztest records the 6-key test flow with both samples and an alternative row', () => {
+    const data = JSON.parse(readFileSync(PROCEDURES_JSON_PATH, 'utf8'));
+    const proc = data.procedures.find(entry => entry.id === 'two-propztest');
+    expect(proc).toBeDefined();
+    expect(proc.prerequisites).toEqual(['nav-stat-tests', 'select-alternative', 'calculate-vs-draw']);
+    expect(proc.steps[3].key).toBe('6');
+    expect(proc.steps[3].screen).toBe('two-propztest-wizard');
+    expect(proc.steps.some(step => step.key === '{x1}')).toBe(true);
+    expect(proc.steps.some(step => step.key === '{n1}')).toBe(true);
+    expect(proc.steps.some(step => step.key === '{x2}')).toBe(true);
+    expect(proc.steps.some(step => step.key === '{n2}')).toBe(true);
+    expect(proc.steps.some(step => step.highlight === 'p1 ? p2 row')).toBe(true);
+  });
+
+  it('two-propzint records the ALPHA + B interval flow with confidence level entry', () => {
+    const data = JSON.parse(readFileSync(PROCEDURES_JSON_PATH, 'utf8'));
+    const proc = data.procedures.find(entry => entry.id === 'two-propzint');
+    expect(proc).toBeDefined();
+    expect(proc.prerequisites).toEqual(['nav-stat-tests']);
+    expect(proc.steps[3].key).toBe('ALPHA');
+    expect(proc.steps[4].key).toBe('APPS');
+    expect(proc.steps[4].screen).toBe('two-propzint-wizard');
+    expect(proc.steps.some(step => step.key === '{C-Level}')).toBe(true);
+    expect(proc.steps.at(-1).screen).toBe('two-propzint-result');
+  });
+
+  it('DAG wiring includes the new unit 6 procedure nodes and prerequisites', () => {
+    const data = JSON.parse(readFileSync(PROCEDURES_JSON_PATH, 'utf8'));
+    const nodeIds = new Set(data.dag.nodes.map(node => node.id));
+    const edgeKeys = new Set(data.dag.edges.map(edge => `${edge.from}->${edge.to}`));
+    expect(nodeIds.has('two-propztest')).toBe(true);
+    expect(nodeIds.has('two-propzint')).toBe(true);
+    expect(edgeKeys.has('nav-stat-tests->two-propztest')).toBe(true);
+    expect(edgeKeys.has('nav-stat-tests->two-propzint')).toBe(true);
+    expect(edgeKeys.has('select-alternative->two-propztest')).toBe(true);
+    expect(edgeKeys.has('calculate-vs-draw->two-propztest')).toBe(true);
   });
 });
 
