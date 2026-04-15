@@ -2942,11 +2942,27 @@
         }
 
         // --- Wheel zoom ---
+        // Convert a mouse event's client coords to the canvas's bitmap pixel
+        // coords. Needed because the canvas has max-width:100% so CSS may
+        // scale it — event.offsetX/clientX are in CSS pixels, but hitTest
+        // and viewState.zoom/pan all operate in bitmap pixels. Without this
+        // scaling, clicks, hovers, drags, and zoom-toward-cursor all land
+        // in the wrong spot on any non-1:1-sized canvas.
+        function toBitmap(e) {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / (rect.width || canvas.width);
+          const scaleY = canvas.height / (rect.height || canvas.height);
+          return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY,
+          };
+        }
+
         canvas.addEventListener('wheel', function(e) {
           e.preventDefault();
-          const rect = canvas.getBoundingClientRect();
-          const mouseX = e.clientX - rect.left;
-          const mouseY = e.clientY - rect.top;
+          const pos = toBitmap(e);
+          const mouseX = pos.x;
+          const mouseY = pos.y;
           const prevZoom = viewState.zoom;
           const newZoom = Math.max(minZoom, Math.min(maxZoom, prevZoom * (1 + e.deltaY * -0.001)));
 
@@ -2960,6 +2976,7 @@
         }, { passive: false });
 
         // --- Mouse drag / click ---
+        // Drag coords stored in bitmap pixel space for consistency with viewState.
         let dragStartX = 0;
         let dragStartY = 0;
         let dragPanX = 0;
@@ -2968,23 +2985,26 @@
 
         canvas.addEventListener('mousedown', function(e) {
           isDragging = true;
-          dragStartX = e.clientX;
-          dragStartY = e.clientY;
+          const start = toBitmap(e);
+          dragStartX = start.x;
+          dragStartY = start.y;
           dragPanX = viewState.panX;
           dragPanY = viewState.panY;
         });
 
         canvas.addEventListener('mousemove', function(e) {
-          // Drag pan.
+          const pos = toBitmap(e);
+
+          // Drag pan — delta is in bitmap pixels to match viewState units.
           if (isDragging) {
-            viewState.panX = dragPanX + (e.clientX - dragStartX);
-            viewState.panY = dragPanY + (e.clientY - dragStartY);
+            viewState.panX = dragPanX + (pos.x - dragStartX);
+            viewState.panY = dragPanY + (pos.y - dragStartY);
             clampPan(viewState, worldBounds, CANVAS_W, CANVAS_H);
             renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
           }
 
-          // Tooltip hit-test using canvas-relative offsetX/offsetY.
-          const hoverNode = hitTest(nodes, e.offsetX, e.offsetY, viewState, worldBounds, CANVAS_W, CANVAS_H);
+          // Tooltip hit-test using bitmap-space cursor position.
+          const hoverNode = hitTest(nodes, pos.x, pos.y, viewState, worldBounds, CANVAS_W, CANVAS_H);
           if (hoverNode) {
             const hovTouched = (state && state.touchedFormulas) ? state.touchedFormulas[hoverNode.id] : null;
             let metaText;
@@ -3021,16 +3041,14 @@
         canvas.addEventListener('mouseup', function(e) {
           if (!isDragging) return;
           isDragging = false;
-          const dx = e.clientX - dragStartX;
-          const dy = e.clientY - dragStartY;
+          const end = toBitmap(e);
+          const dx = end.x - dragStartX;
+          const dy = end.y - dragStartY;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          // Drag vs click threshold is 4 pixels.
+          // Drag vs click threshold is 4 bitmap pixels.
           if (dist < 4) {
-            const rect = canvas.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-            const hit = hitTest(nodes, clickX, clickY, viewState, worldBounds, CANVAS_W, CANVAS_H);
+            const hit = hitTest(nodes, end.x, end.y, viewState, worldBounds, CANVAS_W, CANVAS_H);
             if (hit) {
               // Close map modal first, then open formula modal with a no-op onClose.
               closeMap();

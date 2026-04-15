@@ -901,6 +901,51 @@ describe('session 86 queued chip removal', () => {
   });
 });
 
+describe('session 88 mastery map click fix', () => {
+  it('showMasteryMapModal defines a toBitmap helper', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function toBitmap(e)');
+  });
+
+  it('toBitmap uses canvas.getBoundingClientRect for CSS-to-bitmap scaling', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const toBitmapMatch = src.match(/function toBitmap\(e\)\s*\{[\s\S]*?\n\s{8}\}/);
+    expect(toBitmapMatch).not.toBeNull();
+    expect(toBitmapMatch[0]).toContain('canvas.getBoundingClientRect');
+    expect(toBitmapMatch[0]).toContain('canvas.width');
+    expect(toBitmapMatch[0]).toContain('canvas.height');
+  });
+
+  it('click (mouseup) hit-test uses toBitmap-converted coordinates', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const mouseupMatch = src.match(/canvas\.addEventListener\('mouseup'[\s\S]*?\}\);/);
+    expect(mouseupMatch).not.toBeNull();
+    expect(mouseupMatch[0]).toContain('toBitmap(e)');
+    expect(mouseupMatch[0]).toContain('hitTest');
+  });
+
+  it('hover (mousemove) hit-test uses toBitmap-converted coordinates', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const mousemoveMatch = src.match(/canvas\.addEventListener\('mousemove'[\s\S]*?\}\);/);
+    expect(mousemoveMatch).not.toBeNull();
+    expect(mousemoveMatch[0]).toContain('toBitmap(e)');
+  });
+
+  it('wheel zoom uses toBitmap-converted coordinates', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const wheelMatch = src.match(/canvas\.addEventListener\('wheel'[\s\S]*?\}, \{ passive: false \}\);/);
+    expect(wheelMatch).not.toBeNull();
+    expect(wheelMatch[0]).toContain('toBitmap(e)');
+  });
+
+  it('mousedown stores drag start in bitmap coordinates', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const mousedownMatch = src.match(/canvas\.addEventListener\('mousedown'[\s\S]*?\}\);/);
+    expect(mousedownMatch).not.toBeNull();
+    expect(mousedownMatch[0]).toContain('toBitmap(e)');
+  });
+});
+
 describe('session 87 audit fixes', () => {
   const MAP_PATH = resolve(__dirname, '../data/formula-procedure-map.js');
   const FRQ_PATH = resolve(__dirname, '../data/frq-decompositions.json');
