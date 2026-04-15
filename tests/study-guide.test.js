@@ -15,6 +15,7 @@ import { resolve } from 'node:path';
 
 const HTML_PATH = resolve(__dirname, '../study_guide_diagnostic.html');
 const PROMPTS_PATH = resolve(__dirname, '../ai-grading-prompts-study-guide.js');
+const FRQ_BANK_PATH = resolve(__dirname, '../data/study-guide-frq-bank.js');
 const SYNC_CONFIG_PATH = resolve(__dirname, '../data/study-guide-sync-config.js');
 const SYNC_SQL_PATH = resolve(__dirname, '../scripts/study-guide-state-backups.sql');
 
@@ -1283,5 +1284,57 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(readFileSync(SYNC_CONFIG_PATH, 'utf8')).toContain('https://bzqbhtrurzzavhqbgqrs.supabase.co');
     expect(readFileSync(SYNC_SQL_PATH, 'utf8')).toContain('create table if not exists public.study_guide_state_backups');
     expect(readFileSync(SYNC_SQL_PATH, 'utf8')).not.toContain('student_name text');
+  });
+});
+
+describe('session 91 local gate FRQ bank + official scoring prompt', () => {
+  it('ships a local gate FRQ bank file', () => {
+    expect(existsSync(FRQ_BANK_PATH)).toBe(true);
+    const src = readFileSync(FRQ_BANK_PATH, 'utf8');
+    expect(src).toContain('window.STUDY_GUIDE_FRQ_BANK');
+  });
+
+  it('local FRQ bank contains all 9 expected gate IDs', () => {
+    const src = readFileSync(FRQ_BANK_PATH, 'utf8');
+    const win = {};
+    // eslint-disable-next-line no-new-func
+    new Function('window', src)(win);
+    const bank = win.STUDY_GUIDE_FRQ_BANK || {};
+    for (const gateId of EXPECTED_GATE_IDS) {
+      expect(bank[gateId], `gate record ${gateId} should exist`).toBeDefined();
+    }
+  });
+
+  it('loads the local gate FRQ bank script into the worksheet', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('data/study-guide-frq-bank.js');
+  });
+
+  it('overlays local gate FRQs into the questions map during init', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function applyLocalGateFrqs()');
+    expect(src).toContain('window.STUDY_GUIDE_FRQ_BANK');
+    expect(src).toContain('Object.values(bank).forEach(question => {');
+    expect(src).toContain('questions.set(question.id, question);');
+  });
+
+  it('passes the full local question record into the FRQ grading prompt builder', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.buildReflectionPromptSG(unit, question, answer)');
+    expect(src).not.toContain('window.buildReflectionPromptSG(unit, promptText, answer)');
+  });
+
+  it('prompt builder exposes official scoring and solution checkpoint helpers', () => {
+    const src = readFileSync(PROMPTS_PATH, 'utf8');
+    expect(src).toContain('function getOfficialScoringSG(');
+    expect(src).toContain('function getSolutionCheckpointsSG(');
+    expect(src).toContain('Official scoring guide');
+    expect(src).toContain('Official solution checkpoints');
+  });
+
+  it('prompt builder handles both solution.scoring and top-level scoring shapes', () => {
+    const src = readFileSync(PROMPTS_PATH, 'utf8');
+    expect(src).toContain('questionRecord.solution.scoring');
+    expect(src).toContain('questionRecord.scoring');
   });
 });

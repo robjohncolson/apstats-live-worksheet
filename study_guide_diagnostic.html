@@ -366,6 +366,7 @@
   <script src="../curriculum_render/data/curriculum.js"></script>
   <script src="../curriculum_render/data/units.js"></script>
   <script src="../curriculum_render/data/frameworks.js"></script>
+  <script src="data/study-guide-frq-bank.js"></script>
   <script src="ai-grading-prompts-study-guide.js"></script>
   <script src="data/dag-topology.js"></script>
   <script src="data/question-lo-map.js"></script>
@@ -2049,6 +2050,14 @@
       const stripFrq = text => typeof window.stripFrqBoilerplateSG === 'function' ? window.stripFrqBoilerplateSG(text || '') : String(text || '');
       const gateId = unit => GATE_IDS[unit];
       const gateQuestion = unit => questions.get(gateId(unit)) || null;
+      function applyLocalGateFrqs() {
+        const bank = window.STUDY_GUIDE_FRQ_BANK;
+        if (!bank || typeof bank !== 'object') return;
+        Object.values(bank).forEach(question => {
+          if (!question || typeof question.id !== 'string') return;
+          questions.set(question.id, question);
+        });
+      }
       const lessonFromId = id => { const match = String(id || '').match(/-L(\d+)-/); return match ? Number(match[1]) : null; };
 
       function makeDefaultState() {
@@ -4590,7 +4599,6 @@
         const data = getUnit(unit);
         const question = gateQuestion(unit);
         const answer = (data.frqAnswer || '').trim();
-        const promptText = stripFrq(question ? question.prompt : '');
         if (answer.length < 20) {
           data.frqGrade = { score:'I', feedback:'Please write a more complete response (at least 20 characters).', matched:[], missing:[] };
           saveNow();
@@ -4601,7 +4609,7 @@
         pending.grade[unit] = true;
         renderActiveProbe();
         try {
-          const prompt = window.buildReflectionPromptSG(unit, promptText, answer);
+          const prompt = window.buildReflectionPromptSG(unit, question, answer);
           const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Study Guide', questionId:gateId(unit), lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer }, prompt }) });
           if (!response.ok) throw new Error('Grading request failed');
           let result = normalizeGrade(await response.json()) || { score:'I', feedback:'The grading response was malformed. Try again.', matched:[], missing:[] };
@@ -4771,6 +4779,7 @@
 
       function init() {
         if (typeof EMBEDDED_CURRICULUM !== 'undefined' && Array.isArray(EMBEDDED_CURRICULUM)) EMBEDDED_CURRICULUM.forEach(q => { if (q && typeof q.id === 'string') questions.set(q.id, q); });
+        applyLocalGateFrqs();
         if (typeof window.EMBEDDED_CURRICULUM_SUPPLEMENT !== 'undefined' && Array.isArray(window.EMBEDDED_CURRICULUM_SUPPLEMENT)) {
           window.EMBEDDED_CURRICULUM_SUPPLEMENT.forEach(q => {
             if (!q || typeof q.id !== 'string') return;
@@ -4778,6 +4787,7 @@
             questions.set(q.id, q);
           });
         }
+        applyLocalGateFrqs();
         try {
           const rawV6 = localStorage.getItem(STORAGE_KEY);
           if (rawV6) {
