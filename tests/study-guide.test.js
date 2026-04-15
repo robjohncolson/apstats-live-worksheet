@@ -266,9 +266,8 @@ describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
     expect(src).toContain('normalizeFrqHelpers');
   });
 
-  it('has FRQ helper modal class', () => {
+  it('has FRQ helpers panel class', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('sg-frq-helper-modal');
     expect(src).toContain('sg-frq-helpers');
   });
 
@@ -378,64 +377,6 @@ describe('study_guide_diagnostic.html — Thread 2: SRS hint feed', () => {
   });
 });
 
-describe('study_guide_diagnostic.html — Thread 3: practice vs gate mode', () => {
-  it('defines the .sg-frq-mode-banner CSS class', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('sg-frq-mode-banner');
-    expect(src).toContain('sg-frq-mode-banner.is-practice');
-    expect(src).toContain('sg-frq-mode-banner.is-gate');
-  });
-
-  it('defines renderFrqModeBanner function', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('function renderFrqModeBanner(');
-  });
-
-  it('defines showGateEscalationModal function', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('function showGateEscalationModal(');
-  });
-
-  it('renders the mode banner before the answer textarea in the FRQ branch', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('renderFrqModeBanner(unit, data)');
-  });
-
-  it('passes frqMode to computeEffectivePenalty at the renderActiveProbe call site', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('computeEffectivePenalty(frqH, decompForGrade, frqMode)');
-  });
-
-  it('passes frqMode to renderGrade at the renderActiveProbe call site', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('renderGrade(data.frqGrade, effScore, frqMode)');
-  });
-
-  it('normalizes frqMode to practice by default in normalizeState', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain("value.frqMode === 'gate' ? 'gate' : 'practice'");
-  });
-
-  it('defaults frqMode to practice in makeDefaultState', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain("frqMode:'practice'");
-  });
-
-  it('sets frqMode to gate when a daily-queue FRQ entry is clicked', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain("unitData.frqMode = 'gate'");
-  });
-
-  it('skips the confirmation modal in practice mode in handleHelperClick', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain("data.frqMode === 'practice'");
-  });
-
-  it('the sg-frq-mode-escalate button class is defined in CSS', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('sg-frq-mode-escalate');
-  });
-});
 
 describe('study_guide_diagnostic.html — session 79 fix-pass regression tests', () => {
   it('Fix 1: wraps formulaEntry.latex in block-math delimiters for MathJax', () => {
@@ -492,11 +433,6 @@ describe('study_guide_diagnostic.html — session 79 fix-pass regression tests',
     expect(src).toContain('data issue');
   });
 
-  it('Fix 5: gate escalation warning mentions practice-mode helpers applying penalties', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('already used in practice mode will now count');
-  });
-
   it('Fix 2 (polish): subconcept loop filters out null/malformed entries before rendering', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     // The filter must guard against null entries and missing .q / .correct fields.
@@ -507,26 +443,6 @@ describe('study_guide_diagnostic.html — session 79 fix-pass regression tests',
 });
 
 describe('study_guide_diagnostic.html — session 80 formula UX fixes', () => {
-  it('handleHelperClick in gate mode skips confirmation for formula clicks', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    // The formula early-return must appear BEFORE the !data.frqHelpers.confirmed check.
-    const formulaBranchIdx = src.indexOf("if (kind === 'formula') {");
-    const confirmBranchIdx = src.indexOf('if (!data.frqHelpers.confirmed) {');
-    expect(formulaBranchIdx).toBeGreaterThan(-1);
-    expect(formulaBranchIdx).toBeLessThan(confirmBranchIdx);
-    // The formula branch must call doHelperAction directly.
-    const formulaRegion = src.slice(formulaBranchIdx, confirmBranchIdx);
-    expect(formulaRegion).toContain('doHelperAction(kind, id, unit, data, questionId)');
-    expect(formulaRegion).toContain('return;');
-  });
-
-  it('handleHelperClick still shows confirmation for drill clicks in gate mode first time', () => {
-    const src = readFileSync(HTML_PATH, 'utf8');
-    // The showFrqHelperModal branch must still be present and reachable for drills.
-    expect(src).toContain('if (!data.frqHelpers.confirmed) {');
-    expect(src).toContain('showFrqHelperModal(');
-  });
-
   it('helper panel header renders queued-formulas chip when any formula was hinted today', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     // renderFrqHelperPanel must call queuedFormulasToday with today().
@@ -641,5 +557,92 @@ describe('study_guide_diagnostic.html — session 81 review queue panel', () => 
     expect(src).toContain('reviewQueueEntries: reviewQueueEntries');
     expect(src).toContain('graduateFormula: graduateFormula');
     expect(src).toContain('daysBetween, reviewQueueEntries, graduateFormula');
+  });
+});
+
+describe('study_guide_diagnostic.html — session 82 always-scored simplification', () => {
+  it('handleHelperClick calls doHelperAction directly without any mode branching', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // handleHelperClick must be exactly 3 lines: guard + doHelperAction call. No frqMode branching.
+    const fnStart = src.indexOf('function handleHelperClick(');
+    const fnEnd = src.indexOf('\n      }', fnStart) + '\n      }'.length;
+    const fnBody = src.slice(fnStart, fnEnd);
+    expect(fnBody).toContain('doHelperAction(kind, id, unit, data, questionId)');
+    expect(fnBody).not.toContain("frqMode");
+    expect(fnBody).not.toContain('showFrqHelperModal');
+  });
+
+  it('buildFrqHelperButton cost pills always show real penalty values', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // No 'free' string should appear inside the cost pill branch.
+    const fnStart = src.indexOf('function buildFrqHelperButton(');
+    const fnEnd = src.indexOf('\n      }', fnStart) + '\n      }'.length;
+    const fnBody = src.slice(fnStart, fnEnd);
+    expect(fnBody).not.toContain("'free'");
+    // Formula button must show −5%.
+    expect(fnBody).toContain('\\u22125%');
+    // Drill pending state must show −10% / −15%.
+    expect(fnBody).toContain('\\u221210% / \\u221215%');
+  });
+
+  it('renderFrqHelperPanel intro always includes the penalty values', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The source contains JS unicode escapes — check for the escape sequences literally.
+    expect(src).toContain('Formula cards:');
+    expect(src).toContain('Correct drill:');
+    expect(src).toContain('Wrong drill:');
+    expect(src).toContain('Max total penalty:');
+    expect(src).toContain('sg-frq-helpers-intro');
+  });
+
+  it('renderFrqHelperPanel includes the escape-hatch note about grading', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-frq-helpers-escape-hatch');
+    expect(src).toContain("Click");
+    expect(src).toContain("Grade");
+    expect(src).toContain("until then, helpers don");
+  });
+
+  it('renderGrade signature no longer includes a mode parameter', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderGrade(grade, effectiveScoreResult)');
+    expect(src).not.toContain('function renderGrade(grade, effectiveScoreResult, mode)');
+  });
+
+  it('renderQueuePane FRQ click handler does not touch unitData.frqMode', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The click handler block must not write frqMode.
+    const queuePaneStart = src.indexOf('function renderQueuePane()');
+    const queuePaneEnd = src.indexOf('\n      function ', queuePaneStart + 1);
+    const queuePaneBody = src.slice(queuePaneStart, queuePaneEnd);
+    expect(queuePaneBody).not.toContain("frqMode");
+  });
+
+  it('makeDefaultState per-unit defaults do not include frqMode', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const fnStart = src.indexOf('function makeDefaultState()');
+    const fnEnd = src.indexOf('\n      }', fnStart) + '\n      }'.length;
+    const fnBody = src.slice(fnStart, fnEnd);
+    expect(fnBody).not.toContain('frqMode');
+  });
+
+  it('normalizeState does not preserve frqMode', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain("value.frqMode");
+  });
+
+  it('showFrqHelperModal is not defined', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('function showFrqHelperModal(');
+  });
+
+  it('showGateEscalationModal is not defined', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('function showGateEscalationModal(');
+  });
+
+  it('renderFrqModeBanner is not defined', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('function renderFrqModeBanner(');
   });
 });

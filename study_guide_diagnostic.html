@@ -102,7 +102,6 @@
     .sg-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:500}
     .sg-modal{max-width:520px;width:calc(100% - 32px);padding:22px 24px;background:var(--sg-bg);border:1px solid var(--sg-border);border-radius:14px;color:var(--sg-text);display:grid;gap:14px}
     .sg-modal h2{margin:0;font-size:1.15rem}
-    .sg-frq-helper-modal .sg-modal{gap:12px}
     .sg-tier-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--sg-bg-card)}
     .sg-tier-row .sg-tier-dot{width:12px;height:12px;border-radius:999px}
     .sg-tier-row.is-tier-0 .sg-tier-dot{background:#2e7d32}
@@ -257,13 +256,7 @@
     .sg-formula-modal-subconcepts{margin:0;font-size:.88rem}
     .sg-formula-modal-subconcepts summary{cursor:pointer;color:var(--sg-text-dim);font-weight:700;padding:4px 0}
     .sg-formula-modal-subconcepts ul{margin:6px 0 0;padding-left:20px;line-height:1.55;color:var(--sg-text-dim)}
-    .sg-frq-mode-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:8px;border:1px solid var(--sg-border);font-size:.88rem;font-weight:700;margin-bottom:8px}
-    .sg-frq-mode-banner.is-practice{background:#e8f5e9;border-color:#a5d6a7;color:#1b5e20}
-    .sg-frq-mode-banner.is-gate{background:#fff8e1;border-color:#ffe082;color:#5d4037}
-    [data-theme=night] .sg-frq-mode-banner.is-practice{background:#1b2f1b;border-color:#2e5e2e;color:#a5d6a7}
-    [data-theme=night] .sg-frq-mode-banner.is-gate{background:#2e2a1a;border-color:#5d4e1a;color:#ffe082}
-    .sg-frq-mode-escalate{padding:6px 12px;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap}
-    .sg-frq-mode-escalate:hover{opacity:.8}
+    .sg-frq-helpers-escape-hatch{margin-top:6px;padding:6px 10px;background:var(--sg-bar-track);border:1px solid var(--sg-border);border-radius:8px;color:var(--sg-text);font-size:.82rem}
     .focus-panel{padding:18px;border-radius:8px;border:1px solid var(--sg-border);background:var(--sg-bg-card)}
     .focus-priority-high{background:var(--sg-mastery-low);border-color:var(--sg-mastery-low);color:var(--sg-bg)}
     .focus-priority-medium{background:var(--sg-mastery-mid);border-color:var(--sg-mastery-mid);color:var(--sg-bg)}
@@ -1724,7 +1717,7 @@
           frqHelpers.mcqDrills[payload] = kind === 'mcq-correct' ? 'correct' : 'wrong';
         }
 
-        function computeEffectivePenalty(frqHelpers, decomposition, mode) {
+        function computeEffectivePenalty(frqHelpers, decomposition) {
           const skills = decomposition && Array.isArray(decomposition.skills) ? decomposition.skills : [];
           const formulasViewed = frqHelpers && Array.isArray(frqHelpers.formulasViewed)
             ? frqHelpers.formulasViewed
@@ -1742,11 +1735,6 @@
           let formulas;
           let questionIds;
           let status;
-
-          // Practice mode: helpers are free, no penalty regardless of usage.
-          if (mode === 'practice') {
-            return 0;
-          }
 
           if (!frqHelpers || !decomposition) {
             return 0;
@@ -1878,7 +1866,7 @@
       function makeDefaultState() {
         const units = {};
         for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
-          units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers(), frqMode:'practice' };
+          units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers() };
         }
         return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentName:'', studentPeriod:'', studentDate:today(), touchedFormulas:{}, doseLadder:{ tier:0, mcqDebt:0, frqDebt:0 }, dailyDose:null, units };
       }
@@ -2011,7 +1999,6 @@
             masteryState: value.masteryState && typeof value.masteryState === 'object' ? {...value.masteryState} : {},
             priority: raw.schemaVersion >= 3 ? normalizePriority(value.priority) : null,
             frqHelpers: normalizeFrqHelpers(value.frqHelpers),
-            frqMode: value.frqMode === 'gate' ? 'gate' : 'practice',
           };
         }
         next.schemaVersion = SCHEMA_VERSION;
@@ -2025,7 +2012,7 @@
         return copy;
       };
 
-      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers(), frqMode:'practice' });
+      const getUnit = unit => (state.units[unit] ||= { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers() });
       const showToast = msg => { ui.toast.textContent = msg; ui.toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => ui.toast.classList.remove('visible'), 2600); };
       const saveNow = () => { clearTimeout(saveTimer); saveTimer = null; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState())); } catch { showToast('Local save failed.'); } };
       const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); };
@@ -2439,13 +2426,6 @@
           button.innerHTML = `<span class="sg-queue-index">${index + 1}.</span> <span class="sg-queue-label">${esc(label)}</span><span class="sg-queue-meta">${esc(meta)}</span>`;
           button.addEventListener('click', () => {
             setActiveProbe(entry.unit, entry.questionId, 'daily-queue', entry.formulaId);
-            // Thread 3: FRQs opened from the daily queue are gate attempts.
-            if (entry.kind === 'frq') {
-              const unitData = getUnit(entry.unit);
-              if (!unitData.frqMode || unitData.frqMode !== 'gate') {
-                unitData.frqMode = 'gate';
-              }
-            }
             renderActiveProbe();
             renderRemediation();
             renderQueuePane();
@@ -2749,10 +2729,6 @@
           paintFeedback(result);
         } else {
           if (!data.frqHelpers) data.frqHelpers = defaultFrqHelpers();
-          if (!data.frqMode) data.frqMode = 'practice';
-          const frqMode = data.frqMode;
-          // Thread 3: Mode banner above the answer area.
-          card.appendChild(renderFrqModeBanner(unit, data));
           const paperMode = !!data.frqOnPaper;
           const answer = document.createElement('textarea');
           answer.className = 'frq-answer';
@@ -2799,9 +2775,9 @@
           if (data.frqGrade) {
             const decompForGrade = getFrqDecomposition(questionId);
             const frqH = data.frqHelpers || defaultFrqHelpers();
-            const penaltyVal = computeEffectivePenalty(frqH, decompForGrade, frqMode);
+            const penaltyVal = computeEffectivePenalty(frqH, decompForGrade);
             const effScore = computeEffectiveScore(data.frqGrade.score, penaltyVal);
-            card.appendChild(renderGrade(data.frqGrade, effScore, frqMode));
+            card.appendChild(renderGrade(data.frqGrade, effScore));
           }
           if (data.frqGrade) {
             const nextButton = make('button', '', 'Next');
@@ -3041,7 +3017,6 @@
         const cost = make('span', 'sg-frq-helper-cost');
         const drillOutcome = kind === 'drill' ? usedState.drillOutcome : '';
         const used = kind === 'formula' ? usedState.used : drillOutcome === 'correct' || drillOutcome === 'wrong';
-        const frqMode = data.frqMode || 'practice';
         const penalty = kind === 'formula'
           ? 5
           : drillOutcome === 'wrong'
@@ -3057,19 +3032,15 @@
 
         if (kind === 'formula') {
           appendHelperLabel(label, 'Formula card', detailText);
-          cost.textContent = frqMode === 'practice' ? 'free' : '\u22125%';
+          cost.textContent = '\u22125%';
         } else {
           appendHelperLabel(label, 'Practice drill', detailText);
           button.dataset.mcqId = id;
-          if (frqMode === 'practice') {
-            cost.textContent = 'free';
-          } else {
-            cost.textContent = drillOutcome === 'correct'
-              ? '\u221210% (correct)'
-              : drillOutcome === 'wrong'
-                ? '\u221215% (wrong)'
-                : '\u221210% / \u221215%';
-          }
+          cost.textContent = drillOutcome === 'correct'
+            ? '\u221210% (correct)'
+            : drillOutcome === 'wrong'
+              ? '\u221215% (wrong)'
+              : '\u221210% / \u221215%';
         }
 
         button.append(label, cost);
@@ -3101,11 +3072,11 @@
         const skillList = make('ol', 'sg-frq-skill-list');
         const usageState = helperUsageState(data);
 
-        const frqMode = data.frqMode || 'practice';
         header.appendChild(make('h4', 'sg-frq-helpers-title', 'Need a hint?'));
-        header.appendChild(make('p', 'sg-frq-helpers-intro', frqMode === 'practice'
-          ? 'Hints are free in practice mode. Switch to gate mode to be scored.'
-          : 'Each hint lowers your score. Formula cards: \u22125%. Correct drill: \u221210%. Wrong drill: \u221215%. Max total penalty: \u221250%.'));
+        header.appendChild(make('p', 'sg-frq-helpers-intro', 'Each hint lowers your score when you grade. Formula cards: \u22125%. Correct drill: \u221210%. Wrong drill: \u221215%. Max total penalty: \u221250%.'));
+        const escapeHatch = make('p', 'sg-frq-helpers-escape-hatch');
+        escapeHatch.innerHTML = 'Click <strong>Grade</strong> when you\u2019re ready for your final score \u2014 until then, helpers don\u2019t hurt you.';
+        header.appendChild(escapeHatch);
         const queued = queuedFormulasToday(state, today());
         if (queued.length) {
           const chip = make('div', 'sg-frq-queued-formulas');
@@ -3173,27 +3144,6 @@
 
       function handleHelperClick(kind, id, unit, data, questionId) {
         if (!data.frqHelpers) data.frqHelpers = defaultFrqHelpers();
-        // Practice mode — hints are free, no confirmation needed.
-        if (data.frqMode === 'practice') {
-          doHelperAction(kind, id, unit, data, questionId);
-          return;
-        }
-        // Formula cards skip the confirmation modal even in gate mode: the cost is
-        // shown inline on the button, and the mode banner warns at the top of the FRQ.
-        // The modal was interrupting students from seeing the formula content.
-        if (kind === 'formula') {
-          doHelperAction(kind, id, unit, data, questionId);
-          return;
-        }
-        // Drills still require one-time confirmation — they mutate more state.
-        if (!data.frqHelpers.confirmed) {
-          showFrqHelperModal(() => {
-            data.frqHelpers.confirmed = true;
-            saveSoon();
-            doHelperAction(kind, id, unit, data, questionId);
-          });
-          return;
-        }
         doHelperAction(kind, id, unit, data, questionId);
       }
 
@@ -3212,49 +3162,6 @@
           renderRemediation();
           saveSoon();
         }
-      }
-
-      function showFrqHelperModal(onConfirm) {
-        const backdrop = make('div', 'sg-modal-backdrop sg-frq-helper-modal');
-        const modal = make('div', 'sg-modal');
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-modal', 'true');
-        modal.tabIndex = -1;
-        modal.appendChild(make('h2', '', 'Using helpers will reduce your score.'));
-        modal.appendChild(make('p', 'sg-remediation-body', 'Continue?'));
-        const btnRow = make('div', 'sg-next-row');
-        const confirmBtn = make('button', '', 'Yes, show helper');
-        confirmBtn.type = 'button';
-        const escHandler = e => {
-          if (e.key === 'Escape') {
-            backdrop.remove();
-            document.removeEventListener('keydown', escHandler);
-          }
-        };
-        confirmBtn.addEventListener('click', () => {
-          backdrop.remove();
-          document.removeEventListener('keydown', escHandler);
-          onConfirm();
-        });
-        const cancelBtn = make('button', '', 'Cancel');
-        cancelBtn.type = 'button';
-        cancelBtn.addEventListener('click', () => {
-          backdrop.remove();
-          document.removeEventListener('keydown', escHandler);
-        });
-        btnRow.appendChild(confirmBtn);
-        btnRow.appendChild(cancelBtn);
-        modal.appendChild(btnRow);
-        backdrop.appendChild(modal);
-        document.addEventListener('keydown', escHandler);
-        backdrop.addEventListener('click', e => {
-          if (e.target === backdrop) {
-            backdrop.remove();
-            document.removeEventListener('keydown', escHandler);
-          }
-        });
-        document.body.appendChild(backdrop);
-        modal.focus();
       }
 
       // Thread 1: Show formula content in a modal when a formula helper button is clicked.
@@ -3342,75 +3249,7 @@
         modal.focus();
       }
 
-      // Thread 3: Escalation modal — ask student to confirm switching from practice to gate mode.
-      function showGateEscalationModal(unit, data, onConfirm) {
-        const backdrop = make('div', 'sg-modal-backdrop');
-        const modal = make('div', 'sg-modal');
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-modal', 'true');
-        modal.tabIndex = -1;
-        modal.appendChild(make('h2', '', 'Start a gate attempt?'));
-        modal.appendChild(make('p', 'sg-remediation-body', 'This FRQ will now be scored. Helpers you already used in practice mode will now count toward your score. Additional helpers you use will also lower your effective score. This cannot be undone.'));
-
-        const escHandler = e => {
-          if (e.key === 'Escape') {
-            backdrop.remove();
-            document.removeEventListener('keydown', escHandler);
-          }
-        };
-
-        const btnRow = make('div', 'sg-next-row');
-        const confirmBtn = make('button', '', 'Yes, start gate attempt');
-        confirmBtn.type = 'button';
-        confirmBtn.addEventListener('click', () => {
-          backdrop.remove();
-          document.removeEventListener('keydown', escHandler);
-          onConfirm();
-        });
-        const cancelBtn = make('button', '', 'Cancel');
-        cancelBtn.type = 'button';
-        cancelBtn.addEventListener('click', () => {
-          backdrop.remove();
-          document.removeEventListener('keydown', escHandler);
-        });
-        btnRow.appendChild(confirmBtn);
-        btnRow.appendChild(cancelBtn);
-        modal.appendChild(btnRow);
-        backdrop.appendChild(modal);
-        document.addEventListener('keydown', escHandler);
-        backdrop.addEventListener('click', e => { if (e.target === backdrop) { backdrop.remove(); document.removeEventListener('keydown', escHandler); } });
-        document.body.appendChild(backdrop);
-        modal.focus();
-      }
-
-      // Thread 3: Render the practice/gate mode banner above the FRQ answer textarea.
-      function renderFrqModeBanner(unit, data) {
-        const mode = data.frqMode || 'practice';
-        const banner = make('div', `sg-frq-mode-banner is-${mode}`);
-
-        if (mode === 'practice') {
-          const text = make('span', '', '\uD83D\uDCDA Practice mode \u2014 hints are free.');
-          const escalateBtn = make('button', 'sg-frq-mode-escalate', 'Start gate attempt');
-          escalateBtn.type = 'button';
-          escalateBtn.addEventListener('click', () => {
-            showGateEscalationModal(unit, data, () => {
-              data.frqMode = 'gate';
-              data.frqHelpers = data.frqHelpers || defaultFrqHelpers();
-              data.frqHelpers.confirmed = true;
-              saveSoon();
-              renderActiveProbe();
-            });
-          });
-          banner.appendChild(text);
-          banner.appendChild(escalateBtn);
-        } else {
-          banner.appendChild(make('span', '', '\u2696 Gate mode \u2014 scored. Helpers lower your score.'));
-        }
-
-        return banner;
-      }
-
-      function renderGrade(grade, effectiveScoreResult, mode) {
+      function renderGrade(grade, effectiveScoreResult) {
         const paperGrade = grade.score === 'paper';
         const panel = make('div', `frq-grade frq-grade-${paperGrade ? 'paper' : grade.score}`);
         const top = make('div', 'frq-grade-top');
@@ -3419,8 +3258,8 @@
         panel.append(top, copy);
         if (!paperGrade && grade.matched && grade.matched.length) { const list = make('ul', 'grade-list'); grade.matched.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Matched ideas'), list); }
         if (!paperGrade && grade.missing && grade.missing.length) { const list = make('ul', 'grade-list'); grade.missing.forEach(item => list.appendChild(make('li', '', item))); panel.append(make('div', 'frq-grade-title', 'Missing ideas'), list); }
-        // In gate mode, show the effective score breakdown. In practice mode, helpers are free so skip it.
-        if (mode !== 'practice' && effectiveScoreResult && effectiveScoreResult.raw !== 'paper' && effectiveScoreResult.effective !== null) {
+        // Always show the effective score breakdown when the student has graded.
+        if (effectiveScoreResult && effectiveScoreResult.raw !== 'paper' && effectiveScoreResult.effective !== null) {
           const effDiv = make('div', 'frq-grade-effective');
           effDiv.appendChild(make('div', '', `Raw: ${effectiveScoreResult.raw} (${Math.round(effectiveScoreResult.rawNumeric * 100)}%)`));
           effDiv.appendChild(make('div', '', `Penalty: ${effectiveScoreResult.penaltyPct}%`));

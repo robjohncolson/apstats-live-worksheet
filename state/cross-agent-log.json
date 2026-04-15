@@ -2593,15 +2593,70 @@
         "TI-84_Plus_CE/phase164-report.md"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "86cbd7e28a4f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 161b \u2014 IX=SP Stage-Specific Trace Investigation\n\n## Context\nYou are working on the TI-84 Plu",
+      "status": "completed",
+      "duration_seconds": 465.52,
+      "timestamp": "2026-04-15T01:27:11Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "8669ec024f1c",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 163 \u2014 Font Record Structure Reverse-Engineering\n\n## Context\nYou are working on the TI-84 Plu",
+      "status": "blocked",
+      "duration_seconds": 580.819,
+      "timestamp": "2026-04-15T01:29:08Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b937d13d9baf",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 165 \u2014 0x58C35B Crash Site Investigation\n\n## Context\nYou are working on the TI-84 Plus CE ROM",
+      "status": "timeout",
+      "duration_seconds": 900.117,
+      "timestamp": "2026-04-15T01:34:29Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0a2cbcdebdfb",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 167 \u2014 Font Pointer Call Chain Investigation\n\n## Context\n\nYou are working on a TI-84 Plus CE ",
+      "status": "completed",
+      "duration_seconds": 811.151,
+      "timestamp": "2026-04-15T01:48:00Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e8e72349ce2f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 166 \u2014 IX Corruption Source Investigation\n\n## Context\n\nYou are working on a TI-84 Plus CE ROM",
+      "status": "timeout",
+      "duration_seconds": 900.091,
+      "timestamp": "2026-04-15T01:49:27Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 221,
-    "cc_to_codex": 221,
+    "total_calls": 226,
+    "cc_to_codex": 226,
     "codex_to_cc": 0,
-    "completed": 170,
-    "failed": 47,
+    "completed": 172,
+    "failed": 49,
     "refused": 0,
-    "avg_duration_seconds": 433.993
+    "avg_duration_seconds": 440.576
   }
 }

@@ -93,7 +93,7 @@
     frqHelpers.mcqDrills[payload] = kind === 'mcq-correct' ? 'correct' : 'wrong';
   }
 
-  function computeEffectivePenalty(frqHelpers, decomposition, mode) {
+  function computeEffectivePenalty(frqHelpers, decomposition) {
     const skills = decomposition && Array.isArray(decomposition.skills) ? decomposition.skills : [];
     const formulasViewed = frqHelpers && Array.isArray(frqHelpers.formulasViewed)
       ? frqHelpers.formulasViewed
@@ -111,12 +111,6 @@
     let formulas;
     let questionIds;
     let status;
-
-    // Practice mode: helpers are free, no penalty regardless of usage.
-    // Default is 'gate' so existing callers without the arg are unaffected.
-    if (mode === 'practice') {
-      return 0;
-    }
 
     if (!frqHelpers || !decomposition) {
       return 0;

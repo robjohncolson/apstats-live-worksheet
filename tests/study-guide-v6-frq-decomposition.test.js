@@ -260,38 +260,32 @@ describe('computeEffectivePenalty', () => {
   });
 });
 
-describe('computeEffectivePenalty — practice vs gate mode', () => {
-  it('returns 0 in practice mode regardless of helper usage', () => {
-    const helpers = makeHelpers({
-      formulasViewed: ['zscore', 'empirical-rule'],
-      mcqDrills: { 'U1-L10-Q02': 'correct', 'U1-L10-Q05': 'wrong' }
-    });
-
-    expect(api.computeEffectivePenalty(helpers, sampleDecomp, 'practice')).toBe(0);
+describe('computeEffectivePenalty — session 82 always-scored simplification', () => {
+  it('computeEffectivePenalty signature takes only frqHelpers and decomposition', () => {
+    // The function must accept exactly 2 params — no mode argument.
+    expect(api.computeEffectivePenalty.length).toBe(2);
   });
 
-  it('applies the full penalty in gate mode', () => {
+  it('computeEffectivePenalty always computes penalty from helpers — no mode early return', () => {
     const helpers = makeHelpers({
       formulasViewed: ['zscore'],
       mcqDrills: { 'U1-L10-Q02': 'correct' }
     });
 
     // zscore penalty: 0.05, correct drill: 0.10 = 0.15 total
-    expect(api.computeEffectivePenalty(helpers, sampleDecomp, 'gate')).toBeCloseTo(0.15, 10);
+    const penalty = api.computeEffectivePenalty(helpers, sampleDecomp);
+    expect(penalty).toBeCloseTo(0.15, 10);
   });
 
-  it('is backwards-compatible when the mode argument is omitted (defaults to gate behavior)', () => {
+  it('backwards-compat: passing a third arg is silently ignored', () => {
     const helpers = makeHelpers({ formulasViewed: ['zscore'] });
 
-    // Same result with explicit 'gate' and without the arg
-    const withGate = api.computeEffectivePenalty(helpers, sampleDecomp, 'gate');
+    // Passing 'practice' as the old mode arg must NOT return 0 — the mode is ignored.
+    const withThirdArg = api.computeEffectivePenalty(helpers, sampleDecomp, 'practice');
     const withoutArg = api.computeEffectivePenalty(helpers, sampleDecomp);
 
-    expect(withoutArg).toBe(withGate);
-  });
-
-  it('returns 0 in practice mode even when frqHelpers and decomposition are null', () => {
-    expect(api.computeEffectivePenalty(null, null, 'practice')).toBe(0);
+    expect(withThirdArg).toBe(withoutArg);
+    expect(withThirdArg).toBeGreaterThan(0);
   });
 });
 
