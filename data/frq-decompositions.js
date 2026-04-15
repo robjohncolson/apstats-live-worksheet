@@ -13,22 +13,19 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U1-L10-Q02",
           "U1-L10-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u1-frq-tail-comparison",
         "name": "Compare normal tail chances",
         "whyItMatters": "Part (b) requires more than naming the southern region; the rubric rewards a direct comparison of the z-scores or the corresponding normal-curve proportions.",
         "supportingFormulas": [
-          "zscore",
-          "empirical-rule"
+          "zscore"
         ],
         "supportingMcqIds": [
           "U1-L10-Q05",
           "U1-L10-Q07"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -48,8 +45,7 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U2-L7-Q01",
           "U2-L6-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u2-frq-residual-spread",
@@ -60,8 +56,7 @@ window.FRQ_DECOMPOSITIONS = {
         ],
         "supportingMcqIds": [
           "U9-L1-QS1"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u2-frq-normal-tail",
@@ -73,8 +68,7 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U1-L10-Q02",
           "U1-L10-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u2-frq-surprising-case",
@@ -87,8 +81,7 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U2-L7-Q01",
           "U1-L10-Q02"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -102,16 +95,14 @@ window.FRQ_DECOMPOSITIONS = {
         "name": "Match method to population",
         "whyItMatters": "Part (a) awards separate components for naming the correct population of generalization for each method and justifying it from how participants were obtained.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u3-frq-causal-claims",
         "name": "Justify causal claims",
         "whyItMatters": "Part (b) rewards a cause-and-effect conclusion only for method I, with justification based on random assignment of exercise conditions.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       }
     ],
     "maxPenalty": 0.50
@@ -129,8 +120,7 @@ window.FRQ_DECOMPOSITIONS = {
         ],
         "supportingMcqIds": [
           "U4-L4-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u4-frq-expected-value",
@@ -141,36 +131,31 @@ window.FRQ_DECOMPOSITIONS = {
         ],
         "supportingMcqIds": [
           "U4-L8-Q04"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u4-frq-strategy-ev",
         "name": "Compare strategy expected values",
         "whyItMatters": "Part (c) requires weighting the successful and failed long-hit outcomes by their probabilities and choosing the lower expected score.",
         "supportingFormulas": [
-          "rv-mean",
-          "lincomb-mean"
+          "rv-mean"
         ],
         "supportingMcqIds": [
           "U4-L8-Q04",
           "U4-L9-QS1"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u4-frq-break-even-p",
         "name": "Solve break-even probability",
         "whyItMatters": "Part (d) awards a correct expected-value expression in terms of p, the comparison to 4.55, and the inequality that identifies when the long hit is better.",
         "supportingFormulas": [
-          "rv-mean",
-          "lincomb-mean"
+          "rv-mean"
         ],
         "supportingMcqIds": [
           "U4-L8-Q04",
           "U4-L9-QS1"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -184,8 +169,7 @@ window.FRQ_DECOMPOSITIONS = {
         "name": "Estimate probability from histogram",
         "whyItMatters": "Part (a) specifically rewards reading relative frequency from the histogram bars; using a normal model instead misses the point.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u5-frq-clt-xbar",
@@ -200,31 +184,25 @@ window.FRQ_DECOMPOSITIONS = {
           "U5-L7-Q05",
           "U5-L7-Q04",
           "U1-L10-Q02"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u5-frq-midrange-choice",
         "name": "Compute and defend midrange",
         "whyItMatters": "Part (c) awards the correct sample midrange and a plausible reason someone might prefer it, such as easier computation.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u5-frq-estimator-comparison",
         "name": "Compare bias and variability",
-        "whyItMatters": "Part (d) gives credit for explaining why the sample mean is preferable, using numerical evidence that the midrange is biased, more variable, or less well-behaved.",
-        "supportingFormulas": [
-          "xbar-mean",
-          "xbar-sd"
-        ],
+        "whyItMatters": "Part (d) earns credit by citing numerical evidence that the sample midrange is biased (mean of sampling distribution $617K vs population mean $403K) or more variable (SD $136K vs $44K for the sample mean). One well-supported argument is sufficient; the cartridge has no midrange card, so this skill is intentionally tool-free.",
+        "supportingFormulas": [],
         "supportingMcqIds": [
           "U5-L7-Q05",
           "U5-L7-Q04",
           "U5-L7-Q09"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -245,8 +223,7 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U6-L2-Q01",
           "U6-L2-Q02"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u6-frq-construct-ci",
@@ -258,8 +235,7 @@ window.FRQ_DECOMPOSITIONS = {
         ],
         "supportingMcqIds": [
           "U6-L2-Q05"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u6-frq-interpret-ci",
@@ -272,20 +248,18 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U6-L2-Q03",
           "U6-L2-Q05"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u6-frq-claim-check",
         "name": "Use interval to judge claim",
         "whyItMatters": "Part (b) depends on checking whether 33% lies inside the interval and explicitly tying the conclusion back to the interval from part (a).",
         "supportingFormulas": [
-          "ci-formula"
+          "one-prop-ci"
         ],
         "supportingMcqIds": [
           "U6-L2-Q03"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -305,8 +279,7 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U6-L2-Q01",
           "U6-L2-Q02"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u7-frq-construct-ci",
@@ -320,8 +293,7 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U7-L2-Q06",
           "U7-L5-Q01"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u7-frq-interpret-ci",
@@ -334,16 +306,14 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U6-L2-Q03",
           "U7-L2-Q06"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u7-frq-scope-limit",
         "name": "Respect the sampling scope",
         "whyItMatters": "Part (b) earns credit for recognizing that results from emperor penguins cannot be generalized to all penguin types.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.05
+        "supportingMcqIds": []
       }
     ],
     "maxPenalty": 0.50
@@ -363,8 +333,7 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U8-L5-Q02",
           "U8-L2-Q05"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u8-frq-conditions-calc",
@@ -381,8 +350,7 @@ window.FRQ_DECOMPOSITIONS = {
           "U8-L4-Q01",
           "U8-L4-Q03",
           "U8-L3-Q06"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u8-frq-conclusion",
@@ -393,8 +361,7 @@ window.FRQ_DECOMPOSITIONS = {
         ],
         "supportingMcqIds": [
           "U8-L3-Q09"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -406,16 +373,12 @@ window.FRQ_DECOMPOSITIONS = {
       {
         "id": "u9-frq-scatterplot",
         "name": "Plot and assess linearity",
-        "whyItMatters": "Part (a) awards a correctly oriented scatterplot and a justification that a linear model is reasonable based on the pattern.",
-        "supportingFormulas": [
-          "linreg",
-          "residual"
-        ],
+        "whyItMatters": "Part (a) awards two components: correctly constructing the scatterplot with dial setting on the x-axis and output length on the y-axis, AND justifying (with reference to the plot's pattern) that a linear model is appropriate. Both components are needed for full credit.",
+        "supportingFormulas": [],
         "supportingMcqIds": [
           "U2-L6-Q03",
           "U2-L7-Q01"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u9-frq-lsrl",
@@ -429,16 +392,14 @@ window.FRQ_DECOMPOSITIONS = {
         "supportingMcqIds": [
           "U2-L6-Q03",
           "U2-L8-Q01"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u9-frq-slope-hypotheses",
         "name": "State slope hypotheses",
         "whyItMatters": "Part (c) earns credit for stating H0: beta_1 = 0 and Ha: beta_1 != 0, or the equivalent contextual statements about a linear relationship.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u9-frq-slope-test",
@@ -452,8 +413,7 @@ window.FRQ_DECOMPOSITIONS = {
           "U9-L5-Q02",
           "U9-L5-Q04",
           "U7-L5-Q01"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50

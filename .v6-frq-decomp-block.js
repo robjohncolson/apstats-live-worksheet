@@ -93,6 +93,7 @@
     frqHelpers.mcqDrills[payload] = kind === 'mcq-correct' ? 'correct' : 'wrong';
   }
 
+  // Per-helper penalties (formula 0.05, correct drill 0.10, wrong drill 0.15). Global cap from decomposition.maxPenalty (0.50).
   function computeEffectivePenalty(frqHelpers, decomposition) {
     const skills = decomposition && Array.isArray(decomposition.skills) ? decomposition.skills : [];
     const formulasViewed = frqHelpers && Array.isArray(frqHelpers.formulasViewed)

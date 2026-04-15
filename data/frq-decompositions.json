@@ -13,8 +13,7 @@
         "supportingMcqIds": [
           "U1-L10-Q02",
           "U1-L10-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u1-frq-tail-comparison",
@@ -26,8 +25,7 @@
         "supportingMcqIds": [
           "U1-L10-Q05",
           "U1-L10-Q07"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -47,8 +45,7 @@
         "supportingMcqIds": [
           "U2-L7-Q01",
           "U2-L6-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u2-frq-residual-spread",
@@ -59,8 +56,7 @@
         ],
         "supportingMcqIds": [
           "U9-L1-QS1"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u2-frq-normal-tail",
@@ -72,8 +68,7 @@
         "supportingMcqIds": [
           "U1-L10-Q02",
           "U1-L10-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u2-frq-surprising-case",
@@ -86,8 +81,7 @@
         "supportingMcqIds": [
           "U2-L7-Q01",
           "U1-L10-Q02"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -101,16 +95,14 @@
         "name": "Match method to population",
         "whyItMatters": "Part (a) awards separate components for naming the correct population of generalization for each method and justifying it from how participants were obtained.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u3-frq-causal-claims",
         "name": "Justify causal claims",
         "whyItMatters": "Part (b) rewards a cause-and-effect conclusion only for method I, with justification based on random assignment of exercise conditions.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       }
     ],
     "maxPenalty": 0.50
@@ -128,8 +120,7 @@
         ],
         "supportingMcqIds": [
           "U4-L4-Q03"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u4-frq-expected-value",
@@ -140,8 +131,7 @@
         ],
         "supportingMcqIds": [
           "U4-L8-Q04"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u4-frq-strategy-ev",
@@ -153,8 +143,7 @@
         "supportingMcqIds": [
           "U4-L8-Q04",
           "U4-L9-QS1"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u4-frq-break-even-p",
@@ -166,8 +155,7 @@
         "supportingMcqIds": [
           "U4-L8-Q04",
           "U4-L9-QS1"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -181,8 +169,7 @@
         "name": "Estimate probability from histogram",
         "whyItMatters": "Part (a) specifically rewards reading relative frequency from the histogram bars; using a normal model instead misses the point.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u5-frq-clt-xbar",
@@ -197,28 +184,25 @@
           "U5-L7-Q05",
           "U5-L7-Q04",
           "U1-L10-Q02"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u5-frq-midrange-choice",
         "name": "Compute and defend midrange",
         "whyItMatters": "Part (c) awards the correct sample midrange and a plausible reason someone might prefer it, such as easier computation.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u5-frq-estimator-comparison",
         "name": "Compare bias and variability",
-        "whyItMatters": "Compare the sampling behavior of the sample mean vs the sample midrange — this is a reasoning point, not a computation. The cartridge has no midrange card, so this skill is intentionally tool-free.",
+        "whyItMatters": "Part (d) earns credit by citing numerical evidence that the sample midrange is biased (mean of sampling distribution $617K vs population mean $403K) or more variable (SD $136K vs $44K for the sample mean). One well-supported argument is sufficient; the cartridge has no midrange card, so this skill is intentionally tool-free.",
         "supportingFormulas": [],
         "supportingMcqIds": [
           "U5-L7-Q05",
           "U5-L7-Q04",
           "U5-L7-Q09"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -239,8 +223,7 @@
         "supportingMcqIds": [
           "U6-L2-Q01",
           "U6-L2-Q02"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u6-frq-construct-ci",
@@ -252,8 +235,7 @@
         ],
         "supportingMcqIds": [
           "U6-L2-Q05"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u6-frq-interpret-ci",
@@ -266,8 +248,7 @@
         "supportingMcqIds": [
           "U6-L2-Q03",
           "U6-L2-Q05"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u6-frq-claim-check",
@@ -278,8 +259,7 @@
         ],
         "supportingMcqIds": [
           "U6-L2-Q03"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -299,8 +279,7 @@
         "supportingMcqIds": [
           "U6-L2-Q01",
           "U6-L2-Q02"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u7-frq-construct-ci",
@@ -314,8 +293,7 @@
         "supportingMcqIds": [
           "U7-L2-Q06",
           "U7-L5-Q01"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u7-frq-interpret-ci",
@@ -328,16 +306,14 @@
         "supportingMcqIds": [
           "U6-L2-Q03",
           "U7-L2-Q06"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u7-frq-scope-limit",
         "name": "Respect the sampling scope",
         "whyItMatters": "Part (b) earns credit for recognizing that results from emperor penguins cannot be generalized to all penguin types.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.05
+        "supportingMcqIds": []
       }
     ],
     "maxPenalty": 0.50
@@ -357,8 +333,7 @@
         "supportingMcqIds": [
           "U8-L5-Q02",
           "U8-L2-Q05"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u8-frq-conditions-calc",
@@ -375,8 +350,7 @@
           "U8-L4-Q01",
           "U8-L4-Q03",
           "U8-L3-Q06"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u8-frq-conclusion",
@@ -387,8 +361,7 @@
         ],
         "supportingMcqIds": [
           "U8-L3-Q09"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50
@@ -400,13 +373,12 @@
       {
         "id": "u9-frq-scatterplot",
         "name": "Plot and assess linearity",
-        "whyItMatters": "Describe the scatterplot's form, direction, strength, and unusual features — this is a visual analysis skill, not a formula computation. The cartridge has no scatterplot card, so this skill is intentionally tool-free.",
+        "whyItMatters": "Part (a) awards two components: correctly constructing the scatterplot with dial setting on the x-axis and output length on the y-axis, AND justifying (with reference to the plot's pattern) that a linear model is appropriate. Both components are needed for full credit.",
         "supportingFormulas": [],
         "supportingMcqIds": [
           "U2-L6-Q03",
           "U2-L7-Q01"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u9-frq-lsrl",
@@ -420,16 +392,14 @@
         "supportingMcqIds": [
           "U2-L6-Q03",
           "U2-L8-Q01"
-        ],
-        "penalty": 0.10
+        ]
       },
       {
         "id": "u9-frq-slope-hypotheses",
         "name": "State slope hypotheses",
         "whyItMatters": "Part (c) earns credit for stating H0: beta_1 = 0 and Ha: beta_1 != 0, or the equivalent contextual statements about a linear relationship.",
         "supportingFormulas": [],
-        "supportingMcqIds": [],
-        "penalty": 0.10
+        "supportingMcqIds": []
       },
       {
         "id": "u9-frq-slope-test",
@@ -443,8 +413,7 @@
           "U9-L5-Q02",
           "U9-L5-Q04",
           "U7-L5-Q01"
-        ],
-        "penalty": 0.10
+        ]
       }
     ],
     "maxPenalty": 0.50

@@ -52,16 +52,14 @@ const sampleDecomp = {
       name: 'Skill A',
       whyItMatters: 'x',
       supportingFormulas: ['zscore'],
-      supportingMcqIds: ['U1-L10-Q02'],
-      penalty: 0.10
+      supportingMcqIds: ['U1-L10-Q02']
     },
     {
       id: 'u1-frq-b',
       name: 'Skill B',
       whyItMatters: 'y',
       supportingFormulas: ['empirical-rule', 'zscore'],
-      supportingMcqIds: ['U1-L10-Q05'],
-      penalty: 0.10
+      supportingMcqIds: ['U1-L10-Q05']
     }
   ],
   maxPenalty: 0.50
@@ -352,5 +350,77 @@ describe('computeEffectiveScore', () => {
 
   it('always returns an empty breakdown array', () => {
     expect(api.computeEffectiveScore('P', 0.25).breakdown).toEqual([]);
+  });
+});
+
+describe('session 89 workstream B — skill.penalty stripped', () => {
+  const JSON_PATH = resolve(__dirname, '../data/frq-decompositions.json');
+  const rawDecomps = JSON.parse(readFileSync(JSON_PATH, 'utf8'));
+
+  it('frq-decompositions.json parses as valid JSON', () => {
+    expect(typeof rawDecomps).toBe('object');
+    expect(rawDecomps).not.toBeNull();
+  });
+
+  it('every skill in frq-decompositions.json does NOT have a penalty field', () => {
+    const keys = Object.keys(rawDecomps);
+
+    for (const questionId of keys) {
+      const { skills } = rawDecomps[questionId];
+
+      if (Array.isArray(skills)) {
+        for (const skill of skills) {
+          expect(
+            Object.prototype.hasOwnProperty.call(skill, 'penalty'),
+            `skill ${skill.id} in ${questionId} should not have penalty`
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('all 9 FRQ question keys are present', () => {
+    const expected = [
+      'U1-PC-FRQ-Q02',
+      'U2-PC-FRQ-Q02',
+      'U3-PC-FRQ-Q01',
+      'U4-PC-FRQ-Q02',
+      'U5-PC-FRQ-Q02',
+      'U6-PC-FRQ-Q01',
+      'U7-PC-FRQ-Q02',
+      'U8-PC-FRQ-Q01',
+      'U9-PC-FRQ-Q01'
+    ];
+
+    for (const key of expected) {
+      expect(Object.prototype.hasOwnProperty.call(rawDecomps, key), `key ${key} should exist`).toBe(true);
+    }
+  });
+
+  it('total skill count across all FRQs is 31', () => {
+    let total = 0;
+
+    for (const questionId of Object.keys(rawDecomps)) {
+      const { skills } = rawDecomps[questionId];
+
+      if (Array.isArray(skills)) {
+        total += skills.length;
+      }
+    }
+
+    expect(total).toBe(31);
+  });
+
+  it('every skill has a non-empty whyItMatters string', () => {
+    for (const questionId of Object.keys(rawDecomps)) {
+      const { skills } = rawDecomps[questionId];
+
+      if (Array.isArray(skills)) {
+        for (const skill of skills) {
+          expect(typeof skill.whyItMatters).toBe('string');
+          expect(skill.whyItMatters.trim().length).toBeGreaterThan(0);
+        }
+      }
+    }
   });
 });

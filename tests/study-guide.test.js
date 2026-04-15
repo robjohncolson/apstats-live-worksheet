@@ -588,9 +588,9 @@ describe('study_guide_diagnostic.html — session 82 always-scored simplificatio
     expect(src).toContain("until then, helpers don");
   });
 
-  it('renderGrade signature no longer includes a mode parameter', () => {
+  it('renderGrade signature includes questionId and no mode parameter', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('function renderGrade(grade, effectiveScoreResult)');
+    expect(src).toContain('function renderGrade(grade, effectiveScoreResult, questionId)');
     expect(src).not.toContain('function renderGrade(grade, effectiveScoreResult, mode)');
   });
 
@@ -1210,9 +1210,11 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(src).toContain('id="studentUsername"');
     expect(src).toContain('<select id="studentUsername"');
     expect(src).toContain('id="studentPassword"');
-    expect(src).toContain('id="newStudentUsername"');
+    // session 89 A: Period + New Username fields dropped from main bar; modal has newStudentUsernameModal
+    expect(src).toContain('id="newStudentUsernameModal"');
     expect(src).toContain('id="studentLoginBtn"');
-    expect(src).toContain('id="studentCreateBtn"');
+    // session 89 A: Create button replaced with a link
+    expect(src).toContain('id="studentCreateLink"');
     expect(src).toContain('id="syncStatus"');
     expect(src).not.toContain('id="studentName"');
     expect(src).not.toContain('id="studentDate"');
@@ -1255,7 +1257,8 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(src).toContain('/api/users/verify');
     expect(src).toContain("body: JSON.stringify({ username, real_name:'', password })");
     expect(src).toContain("ui.loginBtn.addEventListener('click'");
-    expect(src).toContain("ui.createBtn.addEventListener('click'");
+    // session 89 A: create account is now via modal; confirmCreateBtn wires the creation
+    expect(src).toContain("confirmCreateBtn.addEventListener('click'");
   });
 
   it('exports username, period, and saved timestamp instead of name/date metadata', () => {
@@ -1336,5 +1339,268 @@ describe('session 91 local gate FRQ bank + official scoring prompt', () => {
     const src = readFileSync(PROMPTS_PATH, 'utf8');
     expect(src).toContain('questionRecord.solution.scoring');
     expect(src).toContain('questionRecord.scoring');
+  });
+});
+
+describe('session 89 workstream C — FRQ decomposition integrity', () => {
+  const DECOMP_JSON_PATH = resolve(__dirname, '../data/frq-decompositions.json');
+  const rawDecomps = JSON.parse(readFileSync(DECOMP_JSON_PATH, 'utf8'));
+  const allKeys = Object.keys(rawDecomps);
+
+  it('all 9 FRQ keys are present in frq-decompositions.json', () => {
+    const expected = [
+      'U1-PC-FRQ-Q02',
+      'U2-PC-FRQ-Q02',
+      'U3-PC-FRQ-Q01',
+      'U4-PC-FRQ-Q02',
+      'U5-PC-FRQ-Q02',
+      'U6-PC-FRQ-Q01',
+      'U7-PC-FRQ-Q02',
+      'U8-PC-FRQ-Q01',
+      'U9-PC-FRQ-Q01'
+    ];
+
+    expect(allKeys.sort()).toEqual(expected.sort());
+  });
+
+  it('total skill count is exactly 31 — no accidental deletions', () => {
+    let total = 0;
+
+    for (const key of allKeys) {
+      const { skills } = rawDecomps[key];
+
+      if (Array.isArray(skills)) {
+        total += skills.length;
+      }
+    }
+
+    expect(total).toBe(31);
+  });
+
+  it('every skill has a non-empty whyItMatters string', () => {
+    for (const key of allKeys) {
+      const { skills } = rawDecomps[key];
+
+      if (Array.isArray(skills)) {
+        for (const skill of skills) {
+          expect(typeof skill.whyItMatters).toBe('string');
+          expect(
+            skill.whyItMatters.trim().length,
+            `${skill.id} whyItMatters should not be empty`
+          ).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  it('updated u5-frq-estimator-comparison whyItMatters mentions numerical evidence', () => {
+    const skills = rawDecomps['U5-PC-FRQ-Q02'].skills;
+    const skill = skills.find(s => s.id === 'u5-frq-estimator-comparison');
+
+    expect(skill).toBeDefined();
+    expect(skill.whyItMatters).toContain('numerical evidence');
+  });
+
+  it('updated u9-frq-scatterplot whyItMatters mentions both components', () => {
+    const skills = rawDecomps['U9-PC-FRQ-Q01'].skills;
+    const skill = skills.find(s => s.id === 'u9-frq-scatterplot');
+
+    expect(skill).toBeDefined();
+    expect(skill.whyItMatters).toContain('constructing the scatterplot');
+    expect(skill.whyItMatters).toContain('linear model');
+  });
+});
+
+describe('session 89 workstream D — rubric surfacing in renderGrade', () => {
+  it('renderGrade function accepts questionId as third argument', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderGrade(grade, effectiveScoreResult, questionId)');
+  });
+
+  it('renderGrade looks up STUDY_GUIDE_FRQ_BANK at render time', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.STUDY_GUIDE_FRQ_BANK ? window.STUDY_GUIDE_FRQ_BANK[questionId]');
+  });
+
+  it('renderGrade gates disclosures on non-paper score (Fix 2)', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("if (grade && grade.score && grade.score !== 'paper')");
+    // Old unconditional gate must not exist
+    expect(src).not.toContain('if (grade && grade.score) {');
+  });
+
+  it('renderGrade paper gate: condition comment mentions non-paper AI grading', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('non-paper AI grading');
+  });
+
+  it('.sg-grade-rubric CSS class exists', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.sg-grade-rubric');
+  });
+
+  it('.sg-grade-solution CSS class exists', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.sg-grade-solution');
+  });
+
+  it('.sg-rubric-notes CSS class exists', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.sg-rubric-notes');
+  });
+
+  it('.sg-solution-calcs CSS class exists', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.sg-solution-calcs');
+  });
+
+  it('Official AP rubric details disclosure has correct summary text pattern', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('📋 Official AP rubric');
+  });
+
+  it('Worked solution details disclosure has correct summary text', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('💡 Worked solution');
+  });
+
+  it('graceful degradation: skips rubric disclosure if scoring.rubric is missing or empty', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('rubric.length > 0');
+  });
+
+  it('graceful degradation: skips solution disclosure if solution.parts is missing', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('parts.length > 0');
+  });
+
+  it('MathJax typesetPromise is called on solution body after append', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.MathJax.typesetPromise([solutionBody])');
+  });
+
+  it('call site passes questionId to renderGrade', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('renderGrade(data.frqGrade, effScore, questionId)');
+  });
+});
+
+describe('session 89 workstream A — login bar UX', () => {
+  it('student-info section does not contain studentPeriod or newStudentUsername ids', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('id="studentPeriod"');
+    expect(src).not.toContain('id="newStudentUsername"');
+  });
+
+  it('student-info section contains studentCreateLink anchor (not a button)', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('id="studentCreateLink"');
+    // Should be an anchor, not a button
+    expect(src).toContain('<a href="#" id="studentCreateLink"');
+  });
+
+  it('refreshAuthPanelVisibility function is defined in the HTML', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function refreshAuthPanelVisibility()');
+  });
+
+  it('createNewUsername flow is handled via createStudentAccount using modal input', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('newStudentUsernameModal');
+    expect(src).toContain('async function createStudentAccount()');
+  });
+
+  it('.sg-create-user-modal CSS class exists', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.sg-create-user-modal');
+  });
+
+  it('grid template columns updated to repeat(2,...) for student-info', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('grid-template-columns:repeat(2,minmax(0,1fr))');
+  });
+
+  it('sign out button calls clearAuthSession', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('clearAuthSession()');
+    expect(src).toContain('sg-signout-btn');
+  });
+
+  it('username change handler calls clearAuthSession when new username differs from verified username', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('usernameLookupKey(ui.username.value) !== authSession.username');
+    expect(src).toContain('clearAuthSession()');
+    expect(src).toContain('refreshAuthPanelVisibility()');
+  });
+
+  it('Fix 3: refreshSyncStatus is called inside refreshAuthPanelVisibility so sync status stays current on auth state changes', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The refreshAuthPanelVisibility body should contain a call to refreshSyncStatus.
+    const fnStart = src.indexOf('function refreshAuthPanelVisibility()');
+    const fnEnd = src.indexOf('\n      function ', fnStart + 1);
+    const fnBody = src.slice(fnStart, fnEnd);
+    expect(fnBody).toContain('refreshSyncStatus()');
+  });
+});
+
+describe('Fix 1 — wireAuthFormListeners rebind after sign-out', () => {
+  it('wireAuthFormListeners function is defined', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function wireAuthFormListeners()');
+  });
+
+  it('wireAuthFormListeners is called from init (replaces inline wiring)', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // init() contains wireAuthFormListeners() call
+    expect(src).toContain('wireAuthFormListeners()');
+    // The init body should not contain the old inline wiring — all of that now lives in wireAuthFormListeners.
+    // Extract init() body to check it specifically.
+    const initStart = src.indexOf('function init()');
+    const initEnd = src.indexOf('\n      function ', initStart + 1);
+    const initBody = src.slice(initStart, initEnd);
+    expect(initBody).toContain('wireAuthFormListeners()');
+    // Confirm inline addEventListener calls are not duplicated inside init itself.
+    expect(initBody).not.toContain("ui.password.addEventListener('keydown'");
+    expect(initBody).not.toContain("ui.username.addEventListener('change'");
+  });
+
+  it('wireAuthFormListeners is called from restore branch of refreshAuthPanelVisibility', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The refreshAuthPanelVisibility body must contain wireAuthFormListeners()
+    const fnStart = src.indexOf('function refreshAuthPanelVisibility()');
+    const fnEnd = src.indexOf('\n      function ', fnStart + 1);
+    const fnBody = src.slice(fnStart, fnEnd);
+    expect(fnBody).toContain('wireAuthFormListeners()');
+  });
+
+  it('wireAuthFormListeners re-queries all 4 ui fields from the DOM', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    const fnStart = src.indexOf('function wireAuthFormListeners()');
+    const fnEnd = src.indexOf('\n      function ', fnStart + 1);
+    const fnBody = src.slice(fnStart, fnEnd);
+    expect(fnBody).toContain("getElementById('studentUsername')");
+    expect(fnBody).toContain("getElementById('studentPassword')");
+    expect(fnBody).toContain("getElementById('studentLoginBtn')");
+    expect(fnBody).toContain("getElementById('studentCreateLink')");
+  });
+});
+
+describe('Fix 4 — frq-decompositions.js and .json parity', () => {
+  const FRQ_JSON_PATH = resolve(__dirname, '../data/frq-decompositions.json');
+  const FRQ_JS_PATH = resolve(__dirname, '../data/frq-decompositions.js');
+
+  it('frq-decompositions.js and frq-decompositions.json have identical content', () => {
+    // Parse the JSON file directly.
+    const jsonSrc = readFileSync(FRQ_JSON_PATH, 'utf8');
+    const parsedJson = JSON.parse(jsonSrc);
+
+    // Extract window.FRQ_DECOMPOSITIONS from the JS wrapper using a synthetic window.
+    const jsSrc = readFileSync(FRQ_JS_PATH, 'utf8');
+    const fakeWindow = {};
+    new Function('window', jsSrc)(fakeWindow);
+    const parsedWrapper = fakeWindow.FRQ_DECOMPOSITIONS;
+
+    // Deep equality: any drift between the two files will fail here.
+    expect(parsedWrapper).toEqual(parsedJson);
   });
 });

@@ -54,7 +54,16 @@
     .subtitle{margin:10px 0 0;color:var(--sg-text-dim);line-height:1.6}
     .panel,.unit-card,.summary-tile,#sg-rail,#sg-active,#sg-remediation{background:var(--sg-bg-card);border:1px solid var(--sg-border);border-radius:8px}
     .panel{margin-top:18px;padding:18px}
-    .student-info{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .student-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .student-info.is-signed-in{grid-template-columns:1fr;padding:10px 18px}
+    .sg-signed-in-strip{display:flex;align-items:center;justify-content:flex-end;gap:12px;font-size:.9rem;color:var(--sg-text-dim)}
+    .sg-signed-in-name{font-weight:700;color:var(--sg-text)}
+    .sg-signout-btn{background:none;border:none;color:var(--sg-accent);cursor:pointer;font-size:.9rem;text-decoration:underline;padding:0}
+    .sg-signout-btn:hover{color:var(--sg-text)}
+    .sg-create-link{font-size:.9rem;color:var(--sg-accent);text-decoration:underline;cursor:pointer;align-self:center}
+    .sg-create-link:hover{text-decoration:none}
+    .sg-create-user-modal .sg-modal-input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg);color:var(--sg-text);font-size:1rem}
+    .sg-modal-hint{margin:8px 0 0;font-size:.88rem;color:var(--sg-text-dim);line-height:1.5}
     .student-info label{display:grid;gap:8px;font-weight:700;color:var(--sg-text)}
     input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;color:var(--sg-text);background:var(--sg-bg-card)}
     textarea{min-height:110px;resize:vertical;line-height:1.6}
@@ -102,6 +111,7 @@
     .sg-queue-tab:hover{border-color:var(--sg-accent)}
     .sg-queue-tab.is-active{background:var(--sg-bar-track);color:var(--sg-text);border-color:var(--sg-accent)}
     .sg-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:500}
+    .sg-modal-backdrop[hidden]{display:none}
     .sg-modal{max-width:520px;width:calc(100% - 32px);max-height:90vh;overflow-y:auto;overscroll-behavior:contain;padding:22px 24px;background:var(--sg-bg);border:1px solid var(--sg-border);border-radius:14px;color:var(--sg-text);display:grid;gap:14px}
     .sg-modal h2{margin:0;font-size:1.15rem}
     .sg-tier-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--sg-bg-card)}
@@ -235,6 +245,17 @@
     .frq-grade-I .frq-grade-badge{background:var(--sg-mastery-low)}
     .grade-list{margin:0;padding-left:20px;line-height:1.6;color:var(--sg-text-dim)}
     .frq-grade-effective{font-size:.9rem;color:var(--sg-text-dim);display:grid;gap:4px;padding-top:8px;margin-top:8px;border-top:1px solid var(--sg-border)}
+    .sg-grade-rubric,.sg-grade-solution{border-top:1px solid var(--sg-border);padding-top:10px;margin-top:4px}
+    .sg-grade-rubric summary,.sg-grade-solution summary{cursor:pointer;font-weight:700;color:var(--sg-text);padding:4px 0;user-select:none}
+    .sg-grade-rubric summary:hover,.sg-grade-solution summary:hover{color:var(--sg-accent)}
+    .sg-grade-rubric-body,.sg-grade-solution-body{padding-top:10px;display:grid;gap:12px}
+    .sg-grade-rubric-part,.sg-grade-solution-part{display:grid;gap:6px}
+    .sg-grade-rubric-header{font-weight:800;font-size:.95rem;color:var(--sg-text)}
+    .sg-rubric-criteria{margin:0;padding-left:20px;line-height:1.6;color:var(--sg-text-dim);font-size:.9rem}
+    .sg-rubric-notes{padding:8px 12px;border-radius:8px;background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;font-size:.85rem;line-height:1.55;font-style:italic}
+    .sg-night .sg-rubric-notes{background:rgba(100,181,246,0.1);color:#90caf9;border-color:#1976d2}
+    .sg-solution-response{margin:0;line-height:1.65;color:var(--sg-text-dim);font-size:.9rem}
+    .sg-solution-calcs{margin:0;padding-left:20px;line-height:1.6;color:var(--sg-text-dim);font-size:.85rem}
     .sg-helper-drill-card{display:grid;gap:12px;padding:12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);margin-top:10px}
     .sg-formula-modal .sg-modal{max-width:600px}
     .sg-formula-modal-latex{padding:14px 0;font-size:1.12rem;text-align:center;overflow-x:auto}
@@ -318,17 +339,32 @@
     <h1>Diagnostic Study Guide</h1>
     <p class="subtitle">See the weakest learning objectives first, work one probe at a time, and jump straight into remediation when you need it.</p>
 
-    <section class="panel student-info">
+    <section class="panel student-info" id="studentInfoSection">
       <label>Username<select id="studentUsername" autocomplete="username"><option value="">Loading usernames...</option></select></label>
       <label>Password<input id="studentPassword" type="password" autocomplete="current-password" placeholder="Needed for cloud sync"></label>
-      <label>Period<input id="studentPeriod" autocomplete="off"></label>
-      <label>New Username<input id="newStudentUsername" autocomplete="off" placeholder="Only if your username is missing"></label>
       <div class="sg-account-actions">
         <button id="studentLoginBtn" class="action-btn secondary" type="button">Sign In</button>
-        <button id="studentCreateBtn" class="action-btn secondary" type="button">Create Username</button>
+        <a href="#" id="studentCreateLink" class="sg-create-link">Need an account? Create one</a>
       </div>
       <div id="syncStatus" class="sg-sync-note">Backup: local only on this device.</div>
     </section>
+
+    <div class="sg-modal-backdrop sg-create-user-modal" id="createUserModal" hidden>
+      <div class="sg-modal" role="dialog" aria-modal="true" aria-labelledby="createUserModalTitle">
+        <div class="sg-modal-header">
+          <h2 class="sg-modal-title" id="createUserModalTitle">Create a new username</h2>
+          <button class="sg-modal-close" id="createUserModalCloseBtn" type="button" aria-label="Close">✕</button>
+        </div>
+        <div class="sg-modal-body">
+          <input id="newStudentUsernameModal" type="text" autocomplete="off" placeholder="Pick a username" class="sg-modal-input">
+          <p class="sg-modal-hint">Your username will be visible to your teacher and classmates on the class leaderboards.</p>
+        </div>
+        <div class="sg-modal-footer">
+          <button id="cancelCreateBtn" class="action-btn secondary" type="button">Cancel</button>
+          <button id="confirmCreateBtn" class="action-btn primary" type="button">Create</button>
+        </div>
+      </div>
+    </div>
 
     <details class="panel instructions-box">
       <summary>How does this work?</summary>
@@ -1774,6 +1810,7 @@
           frqHelpers.mcqDrills[payload] = kind === 'mcq-correct' ? 'correct' : 'wrong';
         }
 
+        // Per-helper penalties (formula 0.05, correct drill 0.10, wrong drill 0.15). Global cap from decomposition.maxPenalty (0.50).
         function computeEffectivePenalty(frqHelpers, decomposition) {
           const skills = decomposition && Array.isArray(decomposition.skills) ? decomposition.skills : [];
           const formulasViewed = frqHelpers && Array.isArray(frqHelpers.formulasViewed)
@@ -1903,11 +1940,10 @@
       const ui = {
         username: document.getElementById('studentUsername'),
         password: document.getElementById('studentPassword'),
-        period: document.getElementById('studentPeriod'),
-        newUsername: document.getElementById('newStudentUsername'),
         loginBtn: document.getElementById('studentLoginBtn'),
-        createBtn: document.getElementById('studentCreateBtn'),
+        createLink: document.getElementById('studentCreateLink'),
         syncStatus: document.getElementById('syncStatus'),
+        studentInfoSection: document.getElementById('studentInfoSection'),
         exportBtn: document.getElementById('export-btn'),
         importInput: document.getElementById('import-input'),
         clearBtn: document.getElementById('clear-btn'),
@@ -2313,6 +2349,114 @@
         return authSession.verified && authSession.username === usernameLookupKey(username);
       }
 
+      function showCreateUserModal() {
+        const modal = document.getElementById('createUserModal');
+        if (!modal) return;
+        modal.hidden = false;
+        const input = document.getElementById('newStudentUsernameModal');
+        if (input) { input.value = ''; input.focus(); }
+      }
+
+      function hideCreateUserModal() {
+        const modal = document.getElementById('createUserModal');
+        if (modal) modal.hidden = true;
+      }
+
+      // Attach (or re-attach) auth form listeners to freshly-queried DOM nodes.
+      // Called from init() and from the restore branch of refreshAuthPanelVisibility()
+      // so that a sign-out → sign-in cycle doesn't orphan the password Enter key handler
+      // or the username change handler on stale nodes.
+      function wireAuthFormListeners() {
+        ui.username = document.getElementById('studentUsername');
+        ui.password = document.getElementById('studentPassword');
+        ui.loginBtn = document.getElementById('studentLoginBtn');
+        ui.createLink = document.getElementById('studentCreateLink');
+        if (ui.password) {
+          ui.password.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              void verifyStudentAccount();
+            }
+          });
+        }
+        if (ui.username) {
+          ui.username.addEventListener('change', () => {
+            if (usernameLookupKey(ui.username.value) !== authSession.username) {
+              clearAuthSession();
+              refreshAuthPanelVisibility();
+            }
+            void switchStudentProfile(ui.username.value);
+          });
+        }
+        if (ui.loginBtn) {
+          ui.loginBtn.addEventListener('click', () => { void verifyStudentAccount(); });
+        }
+        if (ui.createLink) {
+          ui.createLink.addEventListener('click', event => {
+            event.preventDefault();
+            showCreateUserModal();
+          });
+        }
+      }
+
+      function refreshAuthPanelVisibility() {
+        const section = ui.studentInfoSection;
+        if (!section) return;
+        refreshSyncStatus();
+        if (authSession.verified) {
+          section.classList.add('is-signed-in');
+          const profileKey = usernameLookupKey(authSession.username);
+          const profile = rosterProfiles.find(p => usernameLookupKey(p.username) === profileKey);
+          const displayName = profile && profile.name ? profile.name : authSession.username;
+          section.innerHTML = '';
+          const strip = make('div', 'sg-signed-in-strip');
+          strip.appendChild(make('span', '', 'Signed in as\u00a0'));
+          strip.appendChild(make('span', 'sg-signed-in-name', displayName));
+          strip.appendChild(make('span', '', '\u00a0·\u00a0'));
+          const signOutBtn = make('button', 'sg-signout-btn', 'Sign out');
+          signOutBtn.type = 'button';
+          signOutBtn.addEventListener('click', () => {
+            clearAuthSession();
+            refreshAuthPanelVisibility();
+          });
+          strip.appendChild(signOutBtn);
+          section.appendChild(strip);
+        } else {
+          section.classList.remove('is-signed-in');
+          if (!document.getElementById('studentUsername')) {
+            section.innerHTML = '';
+            const usernameLabel = make('label', '', 'Username');
+            const usernameSelect = make('select', '');
+            usernameSelect.id = 'studentUsername';
+            usernameSelect.autocomplete = 'username';
+            usernameSelect.appendChild(make('option', '', 'Loading usernames...'));
+            usernameLabel.appendChild(usernameSelect);
+            const passwordLabel = make('label', '', 'Password');
+            const passwordInput = make('input', '');
+            passwordInput.type = 'password';
+            passwordInput.id = 'studentPassword';
+            passwordInput.autocomplete = 'current-password';
+            passwordInput.placeholder = 'Needed for cloud sync';
+            passwordLabel.appendChild(passwordInput);
+            const actions = make('div', 'sg-account-actions');
+            const loginBtn = make('button', 'action-btn secondary', 'Sign In');
+            loginBtn.id = 'studentLoginBtn';
+            loginBtn.type = 'button';
+            const createLink = make('a', 'sg-create-link', 'Need an account? Create one');
+            createLink.href = '#';
+            createLink.id = 'studentCreateLink';
+            actions.append(loginBtn, createLink);
+            const syncDiv = make('div', 'sg-sync-note');
+            syncDiv.id = 'syncStatus';
+            syncDiv.textContent = syncStatusText;
+            section.append(usernameLabel, passwordLabel, actions, syncDiv);
+            ui.syncStatus = document.getElementById('syncStatus');
+            renderUsernameOptions();
+            wireAuthFormListeners();
+          }
+        }
+      }
+
       function profileSortText(profile) {
         return profile && profile.name ? profile.name : profile.username;
       }
@@ -2436,8 +2580,6 @@
 
       function applyIdentityInputsFromState() {
         renderUsernameOptions();
-        if (ui.period) ui.period.value = state.studentPeriod || '';
-        if (ui.newUsername) ui.newUsername.value = '';
       }
 
       function writeLocalSnapshot(snapshot) {
@@ -2682,6 +2824,7 @@
             return false;
           }
           markAuthenticated(username);
+          refreshAuthPanelVisibility();
           try { localStorage.setItem('progress-username', username); } catch {}
           state.studentUsername = username;
           saveNow();
@@ -2691,6 +2834,7 @@
           return true;
         } catch {
           clearAuthSession();
+          refreshAuthPanelVisibility();
           refreshSyncStatus();
           showToast('Could not verify your password right now.');
           return false;
@@ -2698,7 +2842,8 @@
       }
 
       async function createStudentAccount() {
-        const username = normalizeUsername(ui.newUsername && ui.newUsername.value);
+        const newUsernameInput = document.getElementById('newStudentUsernameModal');
+        const username = normalizeUsername(newUsernameInput ? newUsernameInput.value : '');
         const password = String(ui.password && ui.password.value || '').trim();
         if (!username) {
           showToast('Type a new username first.');
@@ -2726,9 +2871,13 @@
           rosterProfiles.push({ username, name:'', period:'', lastUsedAt:'' });
           renderUsernameOptions();
           if (ui.username) ui.username.value = username;
-          if (ui.newUsername) ui.newUsername.value = '';
+          const modalInput = document.getElementById('newStudentUsernameModal');
+          if (modalInput) modalInput.value = '';
+          hideCreateUserModal();
+          if (ui.password) ui.password.focus();
           await switchStudentProfile(username);
           markAuthenticated(username);
+          refreshAuthPanelVisibility();
           try { localStorage.setItem('progress-username', username); } catch {}
           saveNow();
           refreshSyncStatus();
@@ -4071,7 +4220,7 @@
             const frqH = data.frqHelpers || defaultFrqHelpers();
             const penaltyVal = computeEffectivePenalty(frqH, decompForGrade);
             const effScore = computeEffectiveScore(data.frqGrade.score, penaltyVal);
-            card.appendChild(renderGrade(data.frqGrade, effScore));
+            card.appendChild(renderGrade(data.frqGrade, effScore, questionId));
           }
           if (data.frqGrade) {
             const nextButton = make('button', '', 'Next');
@@ -4576,7 +4725,7 @@
         modal.focus();
       }
 
-      function renderGrade(grade, effectiveScoreResult) {
+      function renderGrade(grade, effectiveScoreResult, questionId) {
         const paperGrade = grade.score === 'paper';
         const panel = make('div', `frq-grade frq-grade-${paperGrade ? 'paper' : grade.score}`);
         const top = make('div', 'frq-grade-top');
@@ -4592,6 +4741,73 @@
           effDiv.appendChild(make('div', '', `Penalty: ${effectiveScoreResult.penaltyPct}%`));
           effDiv.appendChild(make('div', '', `Effective score: ${Math.round(effectiveScoreResult.effective * 100)}%`));
           panel.appendChild(effDiv);
+        }
+        // Rubric + solution disclosures — only shown after non-paper AI grading.
+        if (grade && grade.score && grade.score !== 'paper') {
+          const bankEntry = window.STUDY_GUIDE_FRQ_BANK ? window.STUDY_GUIDE_FRQ_BANK[questionId] : null;
+          if (bankEntry) {
+            // Determine scoring shape: bank has either solution.scoring or top-level scoring.
+            const scoring = (bankEntry.solution && bankEntry.solution.scoring) ? bankEntry.solution.scoring : bankEntry.scoring;
+            const parts = bankEntry.solution && Array.isArray(bankEntry.solution.parts) ? bankEntry.solution.parts : [];
+            const rubric = scoring && Array.isArray(scoring.rubric) ? scoring.rubric : [];
+            // Build rubric disclosure if rubric data present.
+            if (rubric.length > 0) {
+              const totalPoints = scoring.totalPoints || rubric.reduce((sum, r) => sum + (r.maxPoints || 0), 0);
+              const rubricDetails = make('details', 'sg-grade-rubric');
+              rubricDetails.appendChild(make('summary', '', `📋 Official AP rubric (${totalPoints} points)`));
+              const rubricBody = make('div', 'sg-grade-rubric-body');
+              rubric.forEach(rubricPart => {
+                const partId = rubricPart.part || '';
+                const matchingPart = parts.find(p => p.partId === partId);
+                const partDiv = make('div', 'sg-grade-rubric-part');
+                const pts = rubricPart.maxPoints || 0;
+                const header = make('div', 'sg-grade-rubric-header', `Part (${partId}) · ${pts} point${pts === 1 ? '' : 's'}`);
+                partDiv.appendChild(header);
+                if (matchingPart && matchingPart.description) {
+                  partDiv.appendChild(make('div', 'sg-solution-response', matchingPart.description));
+                }
+                if (Array.isArray(rubricPart.criteria) && rubricPart.criteria.length > 0) {
+                  const criteriaList = make('ul', 'sg-rubric-criteria');
+                  rubricPart.criteria.forEach(c => criteriaList.appendChild(make('li', '', c)));
+                  partDiv.appendChild(criteriaList);
+                }
+                if (rubricPart.scoringNotes) {
+                  partDiv.appendChild(make('div', 'sg-rubric-notes', rubricPart.scoringNotes));
+                }
+                rubricBody.appendChild(partDiv);
+              });
+              rubricDetails.appendChild(rubricBody);
+              panel.appendChild(rubricDetails);
+            }
+            // Build solution disclosure if solution parts present.
+            if (parts.length > 0) {
+              const solutionDetails = make('details', 'sg-grade-solution');
+              solutionDetails.appendChild(make('summary', '', '💡 Worked solution'));
+              const solutionBody = make('div', 'sg-grade-solution-body');
+              parts.forEach(part => {
+                const partDiv = make('div', 'sg-grade-solution-part');
+                partDiv.appendChild(make('div', 'sg-grade-rubric-header', `Part (${part.partId})`));
+                if (part.response) {
+                  const paragraphs = part.response.split(/\n\n/);
+                  paragraphs.forEach(para => {
+                    if (para.trim()) partDiv.appendChild(make('p', 'sg-solution-response', para.trim()));
+                  });
+                }
+                if (Array.isArray(part.calculations) && part.calculations.length > 0) {
+                  const calcList = make('ul', 'sg-solution-calcs');
+                  part.calculations.forEach(c => calcList.appendChild(make('li', '', c)));
+                  partDiv.appendChild(calcList);
+                }
+                solutionBody.appendChild(partDiv);
+              });
+              solutionDetails.appendChild(solutionBody);
+              panel.appendChild(solutionDetails);
+              // Typeset LaTeX in the solution body.
+              if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                window.MathJax.typesetPromise([solutionBody]).catch(() => {});
+              }
+            }
+          }
         }
         return panel;
       }
@@ -4829,40 +5045,43 @@
         }
         applyIdentityInputsFromState();
         applyTheme(state.theme || 'paper');
-        if (ui.username) {
-          ui.username.addEventListener('change', () => { void switchStudentProfile(ui.username.value); });
+        wireAuthFormListeners();
+        // Modal buttons.
+        const cancelCreateBtn = document.getElementById('cancelCreateBtn');
+        const confirmCreateBtn = document.getElementById('confirmCreateBtn');
+        const newUsernameModalInput = document.getElementById('newStudentUsernameModal');
+        if (cancelCreateBtn) {
+          cancelCreateBtn.addEventListener('click', hideCreateUserModal);
         }
-        if (ui.period) {
-          ui.period.addEventListener('input', () => { state.studentPeriod = ui.period.value; saveSoon(); });
+        if (confirmCreateBtn) {
+          confirmCreateBtn.addEventListener('click', () => { void createStudentAccount(); });
         }
-        if (ui.password) {
-          ui.password.addEventListener('keydown', event => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void verifyStudentAccount();
-            }
+        if (newUsernameModalInput) {
+          newUsernameModalInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') { event.preventDefault(); void createStudentAccount(); }
+            if (event.key === 'Escape') hideCreateUserModal();
           });
         }
-        if (ui.newUsername) {
-          ui.newUsername.addEventListener('keydown', event => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void createStudentAccount();
-            }
+        // Modal backdrop click closes.
+        const createUserModal = document.getElementById('createUserModal');
+        if (createUserModal) {
+          createUserModal.addEventListener('click', event => {
+            if (event.target === createUserModal) hideCreateUserModal();
           });
         }
-        if (ui.loginBtn) {
-          ui.loginBtn.addEventListener('click', () => { void verifyStudentAccount(); });
-        }
-        if (ui.createBtn) {
-          ui.createBtn.addEventListener('click', () => { void createStudentAccount(); });
-        }
+        // Global Escape key closes modal.
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && createUserModal && !createUserModal.hidden) {
+            hideCreateUserModal();
+          }
+        });
         ui.exportBtn.addEventListener('click', doExport);
         ui.importInput.addEventListener('change', importStateFromFile);
         ui.clearBtn.addEventListener('click', clearAll);
         state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
         saveSoon();
         refreshFocusedLayout();
+        refreshAuthPanelVisibility();
         void fetchRosterProfiles();
         if (state.studentUsername) {
           void hydrateRemoteSnapshot(state.studentUsername, serializeState(), { silent: true });
