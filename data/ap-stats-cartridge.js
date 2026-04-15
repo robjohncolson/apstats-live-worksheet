@@ -120,7 +120,7 @@ const AP_STATS_CARTRIDGE={
       subconcepts:[{q:'Why \u221a(1-p) in the numerator?',correct:'More uncertainty (lower p) increases spread',wrong:['To balance the formula','To normalize variance']},{q:'Why divide by p?',correct:'Rarer successes mean more spread in wait time',wrong:['Because we square the mean','To convert to standard units']},{q:'How does \u03c3 change as p increases?',correct:'\u03c3 decreases (less variation in wait time)',wrong:['\u03c3 increases','\u03c3 stays constant']}]},
 
     // ══ III. INFERENTIAL — General ══
-    {id:'z-test-stat',action:'Standardized Test Statistic',tier:'core',dom:'inference',
+    {id:'z-test-stat',action:'Standardized z Statistic',tier:'core',dom:'inference',
       hint:'How many standard errors from the parameter?',
       explain:'Distance from the hypothesized value, measured in standard errors',
       latex:'z = \\frac{\\text{statistic} - \\text{parameter}}{SE}',
@@ -145,7 +145,7 @@ const AP_STATS_CARTRIDGE={
       explain:'An unbiased estimator — the center of all possible sample proportions',
       latex:'\\mu_{\\hat{p}} = p',
       blanks:[{latex:'\\mu_{\\hat{p}} = \\boxed{\\,?\\,}',answer:'p',choices:['p','\\hat{p}','\\mu']}],
-      subconcepts:[{q:'Why does \u03bc_p-hat = p?',correct:'p-hat is an unbiased estimator of p',wrong:['All samples give exactly p','p-hat = p always']},{q:'What is p in this context?',correct:'The true population proportion',wrong:['The sample proportion','Probability of Type I error']},{q:'What distribution does p-hat follow?',correct:'Approximately Normal (by CLT)',wrong:['Exactly Normal always','Binomial']}]},
+      subconcepts:[{q:'Why does \u03bc_p-hat = p?',correct:'p-hat is an unbiased estimator of p',wrong:['All samples give exactly p','p-hat = p always']},{q:'What is p in this context?',correct:'The true population proportion',wrong:['The sample proportion','Probability of Type I error']},{q:'What distribution does p-hat follow?',correct:'Approximately Normal when the Large Counts condition holds (np \u2265 10 and n(1-p) \u2265 10)',wrong:['Exactly Normal always','Binomial']}]},
     {id:'phat-sd',action:'Sampling Distribution SD of p\u0302',tier:'core',dom:'inf-proportions',
       hint:'sqrt of p(1-p) over n',
       explain:'Larger samples reduce variability — sample size is in the denominator',
@@ -332,7 +332,7 @@ const AP_STATS_CARTRIDGE={
       ]},
     {id:'y-intercept',action:'Y-Intercept of Regression Line',tier:'support',dom:'descriptive',
       hint:'Derived from the point of means',
-      explain:'Ensures the line passes through (x-bar, y-bar)',
+      explain:'Predicted y when x = 0',
       latex:'a = \\bar{y} - b\\bar{x}',
       blanks:[{latex:'a = \\bar{y} - \\boxed{\\,?\\,} \\cdot \\bar{x}',answer:'b',choices:['b','r','a']}],
       subconcepts:[
@@ -521,7 +521,7 @@ const AP_STATS_CARTRIDGE={
       latex:'ME = z^* \\cdot SE \\quad \\text{or} \\quad ME = t^* \\cdot SE',
       blanks:[{latex:'ME = \\boxed{\\,?\\,} \\cdot SE',answer:'z^* \\text{ or } t^*',choices:['z^* \\text{ or } t^*','\\alpha','n']}],
       subconcepts:[
-        {q:'What determines whether to use z* or t*?',correct:'z* for proportions (sigma known), t* for means (sigma unknown)',wrong:['z* for small samples','t* only when n < 30']},
+        {q:'What determines whether to use z* or t*?',correct:'z* for proportions (the standard error of p-hat uses p-hat itself, so no population SD estimate is needed); t* for means (we estimate the population SD \u03c3 with sample SD s, which adds uncertainty and requires a t distribution)',wrong:['z* for small samples','t* only when n < 30']},
         {q:'How does increasing confidence level affect ME?',correct:'ME increases (wider interval, more confident)',wrong:['ME decreases','ME stays the same']},
         {q:'How does increasing n affect ME?',correct:'ME decreases (SE gets smaller, more precise)',wrong:['ME increases','No effect']}
       ]},
@@ -588,7 +588,7 @@ const AP_STATS_CARTRIDGE={
       ],
       subconcepts:[
         {q:'Why do both np and n(1-p) need to be checked?',correct:'Both the number of successes and failures must be large enough for Normal approximation',wrong:['Only one condition matters','To check independence']},
-        {q:'What happens if large counts condition fails?',correct:'The Normal approximation is unreliable and inference procedures are invalid',wrong:['The test automatically fails','The p-value doubles']},
+        {q:'What happens if large counts condition fails?',correct:'The normal approximation for p-hat becomes unreliable, so the standard AP z procedures should not be used (the sampling distribution may be noticeably skewed)',wrong:['The test automatically fails','The p-value doubles']},
         {q:'For a hypothesis test, do you use p0 or p-hat to check large counts?',correct:'Use p0 (the hypothesized value) for hypothesis tests',wrong:['Always use p-hat','Use whichever is larger']}
       ]},
     {id:'type-i-error',action:'Type I Error (\u03b1)',tier:'support',dom:'inference',
@@ -736,7 +736,7 @@ const AP_STATS_CARTRIDGE={
       ]},
     {id:'normal-condition',action:'Normal/Large Sample (CLT or n \u2265 30)',tier:'support',dom:'inference',
       hint:'Check that the sampling distribution is approximately Normal',
-      explain:'Proportions: large counts using p\u0302 (CI) or p\u2080 (test). Means: n\u226530 or population Normal.',
+      explain:'For means: n \u2265 30 by CLT, OR population is Normal, OR sample data look roughly normal with no strong skew or outliers (for small n). For proportions, use large-counts.',
       latex:'\\text{Proportions: } n\\hat{p},\\; n(1-\\hat{p}) \\geq 10 \\text{ (CI)} \\;|\\; np_0,\\; n(1-p_0) \\geq 10 \\text{ (test)} \\;|\\; \\text{Means: } n \\geq 30',
       blanks:[
         {latex:'\\text{Proportions: } np \\geq \\boxed{\\,?\\,}',answer:'10',choices:['10','30','5']},

@@ -900,3 +900,124 @@ describe('session 86 queued chip removal', () => {
     expect(src).not.toContain('.sg-frq-queued-list');
   });
 });
+
+describe('session 87 audit fixes', () => {
+  const MAP_PATH = resolve(__dirname, '../data/formula-procedure-map.js');
+  const FRQ_PATH = resolve(__dirname, '../data/frq-decompositions.json');
+  const CARTRIDGE_PATH = resolve(__dirname, '../data/ap-stats-cartridge.js');
+
+  // Fix A — dropped wrong normalcdf mappings
+  it('formula-procedure-map no longer contains zscore', () => {
+    const src = readFileSync(MAP_PATH, 'utf8');
+    expect(src).not.toContain('"zscore":');
+  });
+
+  it('formula-procedure-map no longer contains z-test-stat', () => {
+    const src = readFileSync(MAP_PATH, 'utf8');
+    expect(src).not.toContain('"z-test-stat":');
+  });
+
+  it('formula-procedure-map no longer contains empirical-rule', () => {
+    const src = readFileSync(MAP_PATH, 'utf8');
+    expect(src).not.toContain('"empirical-rule":');
+  });
+
+  it('formula-procedure-map still has exactly 33 entries', () => {
+    const src = readFileSync(MAP_PATH, 'utf8');
+    // Count lines that match the pattern  "key": "value",  inside the object
+    const entries = src.match(/^\s+"[\w-]+":\s+"[\w-]+"/gm);
+    expect(entries).not.toBeNull();
+    expect(entries.length).toBe(33);
+  });
+
+  // Fix B — FRQ skill drift corrections
+  it('u1-frq-tail-comparison no longer lists empirical-rule', () => {
+    const frq = JSON.parse(readFileSync(FRQ_PATH, 'utf8'));
+    const skill = frq['U1-PC-FRQ-Q02'].skills.find(s => s.id === 'u1-frq-tail-comparison');
+    expect(skill).toBeDefined();
+    expect(skill.supportingFormulas).not.toContain('empirical-rule');
+  });
+
+  it('u4-frq-strategy-ev no longer lists lincomb-mean', () => {
+    const frq = JSON.parse(readFileSync(FRQ_PATH, 'utf8'));
+    const skill = frq['U4-PC-FRQ-Q02'].skills.find(s => s.id === 'u4-frq-strategy-ev');
+    expect(skill).toBeDefined();
+    expect(skill.supportingFormulas).not.toContain('lincomb-mean');
+  });
+
+  it('u4-frq-break-even-p no longer lists lincomb-mean', () => {
+    const frq = JSON.parse(readFileSync(FRQ_PATH, 'utf8'));
+    const skill = frq['U4-PC-FRQ-Q02'].skills.find(s => s.id === 'u4-frq-break-even-p');
+    expect(skill).toBeDefined();
+    expect(skill.supportingFormulas).not.toContain('lincomb-mean');
+  });
+
+  it('u5-frq-estimator-comparison has empty supportingFormulas', () => {
+    const frq = JSON.parse(readFileSync(FRQ_PATH, 'utf8'));
+    const skill = frq['U5-PC-FRQ-Q02'].skills.find(s => s.id === 'u5-frq-estimator-comparison');
+    expect(skill).toBeDefined();
+    expect(skill.supportingFormulas).toEqual([]);
+  });
+
+  it('u6-frq-claim-check lists one-prop-ci', () => {
+    const frq = JSON.parse(readFileSync(FRQ_PATH, 'utf8'));
+    const skill = frq['U6-PC-FRQ-Q01'].skills.find(s => s.id === 'u6-frq-claim-check');
+    expect(skill).toBeDefined();
+    expect(skill.supportingFormulas).toContain('one-prop-ci');
+    expect(skill.supportingFormulas).not.toContain('ci-formula');
+  });
+
+  it('u9-frq-scatterplot has empty supportingFormulas', () => {
+    const frq = JSON.parse(readFileSync(FRQ_PATH, 'utf8'));
+    const skill = frq['U9-PC-FRQ-Q01'].skills.find(s => s.id === 'u9-frq-scatterplot');
+    expect(skill).toBeDefined();
+    expect(skill.supportingFormulas).toEqual([]);
+  });
+
+  // Fix C — cartridge wording corrections
+  it('z-test-stat action is "Standardized z Statistic"', () => {
+    const src = readFileSync(CARTRIDGE_PATH, 'utf8');
+    expect(src).toContain("action:'Standardized z Statistic'");
+    expect(src).not.toContain("action:'Standardized Test Statistic'");
+  });
+
+  it('y-intercept explain is "Predicted y when x = 0"', () => {
+    const src = readFileSync(CARTRIDGE_PATH, 'utf8');
+    expect(src).toContain("explain:'Predicted y when x = 0'");
+    expect(src).not.toContain("explain:'Ensures the line passes through (x-bar, y-bar)'");
+  });
+
+  it('normal-condition explain mentions roughly normal for small n', () => {
+    const src = readFileSync(CARTRIDGE_PATH, 'utf8');
+    const cardStart = src.indexOf("id:'normal-condition'");
+    const nextCard = src.indexOf("{id:'", cardStart + 1);
+    const cardSrc = src.slice(cardStart, nextCard);
+    expect(cardSrc).toContain('roughly normal');
+  });
+
+  it('phat-mean subconcept mentions Large Counts condition', () => {
+    const src = readFileSync(CARTRIDGE_PATH, 'utf8');
+    const cardStart = src.indexOf("id:'phat-mean'");
+    const nextCard = src.indexOf("{id:'", cardStart + 1);
+    const cardSrc = src.slice(cardStart, nextCard);
+    expect(cardSrc).toContain('Large Counts condition');
+  });
+
+  it('margin-error subconcept no longer claims sigma known', () => {
+    const src = readFileSync(CARTRIDGE_PATH, 'utf8');
+    const cardStart = src.indexOf("id:'margin-error'");
+    const nextCard = src.indexOf("{id:'", cardStart + 1);
+    const cardSrc = src.slice(cardStart, nextCard);
+    expect(cardSrc).not.toContain('sigma known');
+  });
+
+  it('large-counts subconcept says unreliable not invalid', () => {
+    const src = readFileSync(CARTRIDGE_PATH, 'utf8');
+    const cardStart = src.indexOf("id:'large-counts'");
+    // Find the start of the very next card to bound our slice tightly
+    const nextCard = src.indexOf("{id:'", cardStart + 1);
+    const cardSrc = src.slice(cardStart, nextCard);
+    expect(cardSrc).toContain('unreliable');
+    expect(cardSrc).not.toContain('invalid');
+  });
+});

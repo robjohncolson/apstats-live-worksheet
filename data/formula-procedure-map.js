@@ -20,11 +20,6 @@ window.FORMULA_PROCEDURE_MAP = {
   "slope-t": "linreg-ttest",
   "slope-ci": "linreg-tint",
 
-  // Normal / z — computed via normalcdf
-  "zscore": "normalcdf",
-  "z-test-stat": "normalcdf",
-  "empirical-rule": "normalcdf",
-
   // Binomial / Geometric
   "binom-pmf": "binompdf",
   "geom-pmf": "geometpdf",

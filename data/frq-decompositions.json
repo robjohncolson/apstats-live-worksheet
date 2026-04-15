@@ -21,8 +21,7 @@
         "name": "Compare normal tail chances",
         "whyItMatters": "Part (b) requires more than naming the southern region; the rubric rewards a direct comparison of the z-scores or the corresponding normal-curve proportions.",
         "supportingFormulas": [
-          "zscore",
-          "empirical-rule"
+          "zscore"
         ],
         "supportingMcqIds": [
           "U1-L10-Q05",
@@ -149,8 +148,7 @@
         "name": "Compare strategy expected values",
         "whyItMatters": "Part (c) requires weighting the successful and failed long-hit outcomes by their probabilities and choosing the lower expected score.",
         "supportingFormulas": [
-          "rv-mean",
-          "lincomb-mean"
+          "rv-mean"
         ],
         "supportingMcqIds": [
           "U4-L8-Q04",
@@ -163,8 +161,7 @@
         "name": "Solve break-even probability",
         "whyItMatters": "Part (d) awards a correct expected-value expression in terms of p, the comparison to 4.55, and the inequality that identifies when the long hit is better.",
         "supportingFormulas": [
-          "rv-mean",
-          "lincomb-mean"
+          "rv-mean"
         ],
         "supportingMcqIds": [
           "U4-L8-Q04",
@@ -214,11 +211,8 @@
       {
         "id": "u5-frq-estimator-comparison",
         "name": "Compare bias and variability",
-        "whyItMatters": "Part (d) gives credit for explaining why the sample mean is preferable, using numerical evidence that the midrange is biased, more variable, or less well-behaved.",
-        "supportingFormulas": [
-          "xbar-mean",
-          "xbar-sd"
-        ],
+        "whyItMatters": "Compare the sampling behavior of the sample mean vs the sample midrange — this is a reasoning point, not a computation. The cartridge has no midrange card, so this skill is intentionally tool-free.",
+        "supportingFormulas": [],
         "supportingMcqIds": [
           "U5-L7-Q05",
           "U5-L7-Q04",
@@ -280,7 +274,7 @@
         "name": "Use interval to judge claim",
         "whyItMatters": "Part (b) depends on checking whether 33% lies inside the interval and explicitly tying the conclusion back to the interval from part (a).",
         "supportingFormulas": [
-          "ci-formula"
+          "one-prop-ci"
         ],
         "supportingMcqIds": [
           "U6-L2-Q03"
@@ -406,11 +400,8 @@
       {
         "id": "u9-frq-scatterplot",
         "name": "Plot and assess linearity",
-        "whyItMatters": "Part (a) awards a correctly oriented scatterplot and a justification that a linear model is reasonable based on the pattern.",
-        "supportingFormulas": [
-          "linreg",
-          "residual"
-        ],
+        "whyItMatters": "Describe the scatterplot's form, direction, strength, and unusual features — this is a visual analysis skill, not a formula computation. The cartridge has no scatterplot card, so this skill is intentionally tool-free.",
+        "supportingFormulas": [],
         "supportingMcqIds": [
           "U2-L6-Q03",
           "U2-L7-Q01"
