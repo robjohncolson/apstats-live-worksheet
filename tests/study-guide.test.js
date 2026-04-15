@@ -1204,11 +1204,17 @@ describe('session 89b formula modal calculator visibility', () => {
 });
 
 describe('session 90 student profiles + supabase backup', () => {
-  it('adds a username picker, datalist, and sync status note to the student panel', () => {
+  it('adds username, password, and account controls to the student panel', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('id="studentUsername"');
-    expect(src).toContain('id="studentUsernameOptions"');
+    expect(src).toContain('<select id="studentUsername"');
+    expect(src).toContain('id="studentPassword"');
+    expect(src).toContain('id="newStudentUsername"');
+    expect(src).toContain('id="studentLoginBtn"');
+    expect(src).toContain('id="studentCreateBtn"');
     expect(src).toContain('id="syncStatus"');
+    expect(src).not.toContain('id="studentName"');
+    expect(src).not.toContain('id="studentDate"');
   });
 
   it('loads the optional study-guide sync config file', () => {
@@ -1220,6 +1226,8 @@ describe('session 90 student profiles + supabase backup', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain("studentUsername:''");
     expect(src).toContain("next.studentUsername = typeof raw.studentUsername === 'string'");
+    expect(src).not.toContain('studentName:\'\'');
+    expect(src).not.toContain('studentDate:today()');
   });
 
   it('writes per-user local snapshots and can switch student profiles', () => {
@@ -1228,6 +1236,33 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(src).toContain('USER_SNAPSHOT_PREFIX');
     expect(src).toContain('localStorage.setItem(userSnapshotKey(snapshot.studentUsername), JSON.stringify(snapshot))');
     expect(src).toContain('async function switchStudentProfile(');
+  });
+
+  it('fetches the shared username roster from lrsl-driller for the dropdown', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('DEFAULT_DRILLER_API_BASE');
+    expect(src).toContain('https://lrsl-driller-production.up.railway.app');
+    expect(src).toContain('/api/users');
+    expect(src).toContain('async function fetchRosterProfiles(');
+    expect(src).toContain('void fetchRosterProfiles()');
+  });
+
+  it('supports password verification and username creation against lrsl-driller', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('async function verifyStudentAccount()');
+    expect(src).toContain('async function createStudentAccount()');
+    expect(src).toContain('/api/users/verify');
+    expect(src).toContain("body: JSON.stringify({ username, real_name:'', password })");
+    expect(src).toContain("ui.loginBtn.addEventListener('click'");
+    expect(src).toContain("ui.createBtn.addEventListener('click'");
+  });
+
+  it('exports username, period, and saved timestamp instead of name/date metadata', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('<strong>Username</strong>');
+    expect(src).toContain('<strong>Saved</strong>');
+    expect(src).not.toContain('<strong>Name</strong>');
+    expect(src).not.toContain('<strong>Date</strong>');
   });
 
   it('contains Supabase backup and restore hooks', () => {
@@ -1242,6 +1277,7 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(existsSync(SYNC_CONFIG_PATH)).toBe(true);
     expect(existsSync(SYNC_SQL_PATH)).toBe(true);
     expect(readFileSync(SYNC_CONFIG_PATH, 'utf8')).toContain('AP_STATS_STUDY_GUIDE_SUPABASE');
+    expect(readFileSync(SYNC_CONFIG_PATH, 'utf8')).toContain('AP_STATS_STUDY_GUIDE_USER_SOURCE');
     expect(readFileSync(SYNC_SQL_PATH, 'utf8')).toContain('create table if not exists public.study_guide_state_backups');
   });
 });

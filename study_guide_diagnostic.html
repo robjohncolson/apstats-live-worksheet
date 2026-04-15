@@ -58,6 +58,7 @@
     .student-info label{display:grid;gap:8px;font-weight:700;color:var(--sg-text)}
     input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;color:var(--sg-text);background:var(--sg-bg-card)}
     textarea{min-height:110px;resize:vertical;line-height:1.6}
+    .sg-account-actions{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
     .sg-sync-note{grid-column:1 / -1;font-size:.86rem;line-height:1.5;color:var(--sg-text-dim);padding-top:2px}
     .action-bar,.unit-action-row,.probe-actions,.status-row,.focus-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
     .action-bar{margin:18px 0}
@@ -318,11 +319,14 @@
     <p class="subtitle">See the weakest learning objectives first, work one probe at a time, and jump straight into remediation when you need it.</p>
 
     <section class="panel student-info">
-      <label>Username<input id="studentUsername" list="studentUsernameOptions" autocomplete="username" placeholder="Select or type username"></label>
-      <datalist id="studentUsernameOptions"></datalist>
-      <label>Name<input id="studentName" autocomplete="name"></label>
+      <label>Username<select id="studentUsername" autocomplete="username"><option value="">Loading usernames...</option></select></label>
+      <label>Password<input id="studentPassword" type="password" autocomplete="current-password" placeholder="Needed for cloud sync"></label>
       <label>Period<input id="studentPeriod" autocomplete="off"></label>
-      <label>Date<input id="studentDate" type="date"></label>
+      <label>New Username<input id="newStudentUsername" autocomplete="off" placeholder="Only if your username is missing"></label>
+      <div class="sg-account-actions">
+        <button id="studentLoginBtn" class="action-btn secondary" type="button">Sign In</button>
+        <button id="studentCreateBtn" class="action-btn secondary" type="button">Create Username</button>
+      </div>
       <div id="syncStatus" class="sg-sync-note">Backup: local only on this device.</div>
     </section>
 
@@ -385,6 +389,7 @@
       const USER_SNAPSHOT_PREFIX = 'apStatsStudyGuideDiagnostic.user.';
       const REMOTE_SYNC_DELAY_MS = 1200;
       const REMOTE_WORKSHEET_ID = 'study_guide_diagnostic';
+      const DEFAULT_DRILLER_API_BASE = 'https://lrsl-driller-production.up.railway.app';
       <!-- block-scope at line ~303 intentionally preserved; see session 76 notes -->
       {
       'use strict';
@@ -1886,6 +1891,9 @@
       let remoteSaveTimer = null;
       let remotePendingSnapshot = null;
       let remoteLoadToken = 0;
+      let rosterLoadPromise = null;
+      let rosterProfiles = [];
+      let authSession = { username:'', verified:false };
       let toastTimer = null;
       let tierInfoModal = null;
       let syncStatusText = 'Backup: local only on this device.';
@@ -1893,10 +1901,11 @@
       let state = makeDefaultState();
       const ui = {
         username: document.getElementById('studentUsername'),
-        usernameOptions: document.getElementById('studentUsernameOptions'),
-        name: document.getElementById('studentName'),
+        password: document.getElementById('studentPassword'),
         period: document.getElementById('studentPeriod'),
-        date: document.getElementById('studentDate'),
+        newUsername: document.getElementById('newStudentUsername'),
+        loginBtn: document.getElementById('studentLoginBtn'),
+        createBtn: document.getElementById('studentCreateBtn'),
         syncStatus: document.getElementById('syncStatus'),
         exportBtn: document.getElementById('export-btn'),
         importInput: document.getElementById('import-input'),
@@ -2047,7 +2056,7 @@
         for (let unit = 1; unit <= UNIT_COUNT; unit += 1) {
           units[unit] = { mode:'both', mcqAnswers:{}, mcqResults:{}, frqAnswer:'', frqGrade:null, focusSynthesis:null, collapsed:true, frqOnPaper:false, masteryState:{}, priority:null, frqHelpers: defaultFrqHelpers() };
         }
-        return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentUsername:'', studentName:'', studentPeriod:'', studentDate:today(), touchedFormulas:{}, doseLadder:{ tier:0, mcqDebt:0, frqDebt:0 }, dailyDose:null, units };
+        return { schemaVersion:SCHEMA_VERSION, theme:'paper', activeProbe:null, savedAt:new Date().toISOString(), studentUsername:'', studentPeriod:'', touchedFormulas:{}, doseLadder:{ tier:0, mcqDebt:0, frqDebt:0 }, dailyDose:null, units };
       }
 
       function normalizeGrade(raw) {
@@ -2142,9 +2151,7 @@
         if (!raw || typeof raw !== 'object') return next;
         if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4 && raw.schemaVersion !== 5 && raw.schemaVersion !== 6) return next;
         next.studentUsername = typeof raw.studentUsername === 'string' ? raw.studentUsername.trim() : '';
-        next.studentName = typeof raw.studentName === 'string' ? raw.studentName : '';
         next.studentPeriod = typeof raw.studentPeriod === 'string' ? raw.studentPeriod : '';
-        next.studentDate = typeof raw.studentDate === 'string' ? raw.studentDate : today();
         next.savedAt = typeof raw.savedAt === 'string' ? raw.savedAt : new Date().toISOString();
         next.theme = raw.schemaVersion >= 3 ? normalizeTheme(raw.theme) : 'paper';
         next.activeProbe = raw.schemaVersion >= 3 ? normalizeActiveProbe(raw.activeProbe) : null;
@@ -2268,6 +2275,39 @@
         }).filter(entry => entry && entry.username);
       }
 
+      function getUserSourceConfig() {
+        const raw = window.AP_STATS_STUDY_GUIDE_USER_SOURCE;
+        const baseUrl = raw && typeof raw === 'object'
+          ? String(raw.baseUrl || DEFAULT_DRILLER_API_BASE).trim().replace(/\/+$/, '')
+          : DEFAULT_DRILLER_API_BASE;
+        const listUrl = raw && typeof raw === 'object'
+          ? String(raw.listUrl || raw.url || `${baseUrl}/api/users`).trim()
+          : `${baseUrl}/api/users`;
+        const verifyUrl = raw && typeof raw === 'object'
+          ? String(raw.verifyUrl || `${baseUrl}/api/users/verify`).trim()
+          : `${baseUrl}/api/users/verify`;
+        const createUrl = raw && typeof raw === 'object'
+          ? String(raw.createUrl || `${baseUrl}/api/users`).trim()
+          : `${baseUrl}/api/users`;
+        return { baseUrl, listUrl, verifyUrl, createUrl };
+      }
+
+      function clearAuthSession() {
+        authSession = { username:'', verified:false };
+      }
+
+      function markAuthenticated(username) {
+        authSession = { username: usernameLookupKey(username), verified:true };
+      }
+
+      function isAuthenticatedFor(username) {
+        return authSession.verified && authSession.username === usernameLookupKey(username);
+      }
+
+      function profileSortText(profile) {
+        return profile && profile.name ? profile.name : profile.username;
+      }
+
       function mergeProfiles(entries) {
         const byUser = new Map();
         entries.forEach(entry => {
@@ -2286,7 +2326,7 @@
         return Array.from(byUser.values()).sort((a, b) => {
           const timeDiff = timestampMs(b.lastUsedAt) - timestampMs(a.lastUsedAt);
           if (timeDiff) return timeDiff;
-          return a.username.localeCompare(b.username);
+          return profileSortText(a).localeCompare(profileSortText(b));
         });
       }
 
@@ -2294,6 +2334,7 @@
         const stored = safeParseStorage(PROFILE_INDEX_KEY);
         const entries = [];
         if (Array.isArray(stored)) entries.push(...stored);
+        entries.push(...rosterProfiles);
         entries.push(...configuredProfiles());
         entries.push(...legacyUsernameSeeds());
         return mergeProfiles(entries);
@@ -2321,30 +2362,73 @@
         const profiles = loadProfiles();
         profiles.push({
           username,
-          name: typeof (snapshot && snapshot.studentName) === 'string' ? snapshot.studentName : '',
+          name: '',
           period: typeof (snapshot && snapshot.studentPeriod) === 'string' ? snapshot.studentPeriod : '',
           lastUsedAt: typeof (snapshot && snapshot.savedAt) === 'string' ? snapshot.savedAt : new Date().toISOString()
         });
         writeProfiles(profiles);
       }
 
+      function usernameOptionLabel(profile) {
+        return profile && profile.name ? `${profile.name} (${profile.username})` : profile.username;
+      }
+
       function renderUsernameOptions() {
-        if (!ui.usernameOptions) return;
-        ui.usernameOptions.innerHTML = '';
-        loadProfiles().forEach(profile => {
+        if (!ui.username) return;
+        const selected = normalizeUsername(state.studentUsername);
+        const profiles = loadProfiles();
+        ui.username.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = profiles.length ? '— Select username —' : 'No usernames found';
+        ui.username.appendChild(placeholder);
+        profiles.forEach(profile => {
           const option = document.createElement('option');
           option.value = profile.username;
-          option.label = profile.name ? `${profile.name} (${profile.username})` : profile.username;
-          ui.usernameOptions.appendChild(option);
+          option.textContent = usernameOptionLabel(profile);
+          ui.username.appendChild(option);
         });
+        ui.username.value = selected;
+      }
+
+      async function fetchRosterProfiles() {
+        if (typeof fetch !== 'function') {
+          rosterProfiles = [];
+          renderUsernameOptions();
+          refreshSyncStatus();
+          return [];
+        }
+        if (rosterLoadPromise) return rosterLoadPromise;
+        const source = getUserSourceConfig();
+        rosterLoadPromise = fetch(source.listUrl)
+          .then(response => response.ok ? response.json() : [])
+          .then(rows => {
+            rosterProfiles = Array.isArray(rows) ? rows.map(row => {
+              if (!row || typeof row !== 'object') return null;
+              return {
+                username: normalizeUsername(row.username),
+                name: typeof row.real_name === 'string' ? row.real_name : '',
+                period: '',
+                lastUsedAt: ''
+              };
+            }).filter(profile => profile && profile.username) : [];
+            renderUsernameOptions();
+            refreshSyncStatus();
+            return rosterProfiles;
+          })
+          .catch(() => {
+            rosterProfiles = [];
+            renderUsernameOptions();
+            refreshSyncStatus();
+            return [];
+          });
+        return rosterLoadPromise;
       }
 
       function applyIdentityInputsFromState() {
-        if (ui.username) ui.username.value = state.studentUsername || '';
-        if (ui.name) ui.name.value = state.studentName || '';
-        if (ui.period) ui.period.value = state.studentPeriod || '';
-        if (ui.date) ui.date.value = state.studentDate || today();
         renderUsernameOptions();
+        if (ui.period) ui.period.value = state.studentPeriod || '';
+        if (ui.newUsername) ui.newUsername.value = '';
       }
 
       function writeLocalSnapshot(snapshot) {
@@ -2383,7 +2467,6 @@
           usernameColumn: String(raw.usernameColumn || 'student_username'),
           stateColumn: String(raw.stateColumn || 'state_json'),
           savedAtColumn: String(raw.savedAtColumn || 'saved_at'),
-          nameColumn: String(raw.nameColumn || 'student_name'),
           periodColumn: String(raw.periodColumn || 'student_period')
         };
       }
@@ -2392,6 +2475,7 @@
         const username = normalizeUsername(state.studentUsername);
         const config = getSupabaseSyncConfig();
         if (!username) return setSyncStatus('Backup: local only on this device. Add a username to keep separate student progress.');
+        if (!isAuthenticatedFor(username)) return setSyncStatus(`Backup: ${username} is local only until you sign in with the account password.`);
         if (!config) return setSyncStatus(`Backup: ${username} is saved on this device. Cloud backup is off.`);
         if (remotePendingSnapshot) return setSyncStatus(`Backup: syncing ${username} to Supabase…`);
         return setSyncStatus(`Backup: ${username} is ready for Supabase sync.`);
@@ -2401,7 +2485,7 @@
         const config = getSupabaseSyncConfig();
         const username = normalizeUsername(snapshot && snapshot.studentUsername);
         remotePendingSnapshot = null;
-        if (!config || !username) {
+        if (!config || !username || !isAuthenticatedFor(username)) {
           refreshSyncStatus();
           return;
         }
@@ -2412,7 +2496,6 @@
           payload[config.usernameColumn] = username;
           payload[config.stateColumn] = snapshot;
           payload[config.savedAtColumn] = snapshot.savedAt || new Date().toISOString();
-          payload[config.nameColumn] = snapshot.studentName || null;
           payload[config.periodColumn] = snapshot.studentPeriod || null;
           const response = await fetch(
             `${config.url}/rest/v1/${config.table}?on_conflict=${encodeURIComponent(`${config.worksheetColumn},${config.usernameColumn}`)}`,
@@ -2439,7 +2522,7 @@
         remotePendingSnapshot = snapshot;
         const config = getSupabaseSyncConfig();
         const username = normalizeUsername(snapshot && snapshot.studentUsername);
-        if (!config || !username) {
+        if (!config || !username || !isAuthenticatedFor(username)) {
           remotePendingSnapshot = null;
           refreshSyncStatus();
           return;
@@ -2454,7 +2537,7 @@
         const config = getSupabaseSyncConfig();
         const clean = normalizeUsername(username);
         const silent = !!(options && options.silent);
-        if (!config || !clean) {
+        if (!config || !clean || !isAuthenticatedFor(clean)) {
           refreshSyncStatus();
           return false;
         }
@@ -2510,7 +2593,6 @@
         next.studentUsername = normalizeUsername(username);
         const profile = findProfile(next.studentUsername);
         if (profile) {
-          next.studentName = profile.name || '';
           next.studentPeriod = profile.period || '';
         }
         return next;
@@ -2527,15 +2609,15 @@
           return;
         }
         saveNow();
+        clearAuthSession();
+        if (ui.password) ui.password.value = '';
         const theme = normalizeTheme(document.documentElement.getAttribute('data-theme'));
         const nextState = nextUsername
           ? loadLocalSnapshotForUser(nextUsername) || makeUserSeedState(nextUsername, theme)
           : (() => {
               const blank = makeDefaultState();
               blank.theme = theme;
-              blank.studentName = state.studentName || '';
               blank.studentPeriod = state.studentPeriod || '';
-              blank.studentDate = state.studentDate || today();
               return blank;
             })();
         state = normalizeState(nextState);
@@ -2548,6 +2630,93 @@
         refreshSyncStatus();
         if (nextUsername) {
           await hydrateRemoteSnapshot(nextUsername, snapshot, { silent: true });
+        }
+      }
+
+      async function verifyStudentAccount() {
+        const username = normalizeUsername(ui.username && ui.username.value);
+        const password = String(ui.password && ui.password.value || '').trim();
+        if (!username) {
+          showToast('Choose your username from the dropdown first.');
+          return false;
+        }
+        if (!password) {
+          showToast('Enter your account password.');
+          return false;
+        }
+        const source = getUserSourceConfig();
+        setSyncStatus(`Backup: verifying ${username}…`);
+        try {
+          const response = await fetch(source.verifyUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          const result = await response.json();
+          if (!response.ok || !result.valid) {
+            clearAuthSession();
+            refreshSyncStatus();
+            showToast(result && result.error ? result.error : 'Incorrect password.');
+            return false;
+          }
+          markAuthenticated(username);
+          try { localStorage.setItem('progress-username', username); } catch {}
+          state.studentUsername = username;
+          saveNow();
+          await hydrateRemoteSnapshot(username, serializeState(), { silent: true });
+          refreshSyncStatus();
+          showToast(`Signed in as ${username}.`);
+          return true;
+        } catch {
+          clearAuthSession();
+          refreshSyncStatus();
+          showToast('Could not verify your password right now.');
+          return false;
+        }
+      }
+
+      async function createStudentAccount() {
+        const username = normalizeUsername(ui.newUsername && ui.newUsername.value);
+        const password = String(ui.password && ui.password.value || '').trim();
+        if (!username) {
+          showToast('Type a new username first.');
+          return false;
+        }
+        if (!password) {
+          showToast('Enter a password for the new username.');
+          return false;
+        }
+        const source = getUserSourceConfig();
+        setSyncStatus(`Backup: creating ${username}…`);
+        try {
+          const response = await fetch(source.createUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, real_name:'', password })
+          });
+          const result = await response.json();
+          if (!response.ok || result.error) {
+            refreshSyncStatus();
+            showToast(result && result.error ? result.error : 'Could not create that username.');
+            return false;
+          }
+          rosterLoadPromise = null;
+          rosterProfiles.push({ username, name:'', period:'', lastUsedAt:'' });
+          renderUsernameOptions();
+          if (ui.username) ui.username.value = username;
+          if (ui.newUsername) ui.newUsername.value = '';
+          await switchStudentProfile(username);
+          markAuthenticated(username);
+          try { localStorage.setItem('progress-username', username); } catch {}
+          saveNow();
+          refreshSyncStatus();
+          void fetchRosterProfiles();
+          showToast(`Created ${username}.`);
+          return true;
+        } catch {
+          refreshSyncStatus();
+          showToast('Could not create that username right now.');
+          return false;
         }
       }
 
@@ -4475,9 +4644,15 @@
       }
 
       function exportFilename(snapshot) {
-        const source = snapshot.studentUsername || snapshot.studentName || '';
+        const source = snapshot.studentUsername || '';
         const safe = String(source).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'student';
-        return `ap-stats-diagnostic-${safe}-${snapshot.studentDate || today()}.html`;
+        return `ap-stats-diagnostic-${safe}-${String(snapshot.savedAt || today()).slice(0, 10)}.html`;
+      }
+
+      function formatSavedAt(value) {
+        const parsed = new Date(value || '');
+        if (Number.isNaN(parsed.getTime())) return '';
+        return parsed.toLocaleString();
       }
 
       function exportHtml() {
@@ -4495,7 +4670,7 @@
           const focusHtml = focus ? `<div class="box"><p><strong>Priority:</strong> ${esc(focus.priority)}</p><p>${esc(focus.overallSummary || '')}</p>${focus.focusLessons.map(item => `<div class="item"><strong>${esc(`${String(item.lesson || '').replace(/[^\d]/g,'') ? `Lesson ${String(item.lesson || '').replace(/[^\d]/g,'')}` : 'Lesson'}${item.topic ? `: ${item.topic}` : ''}`)}</strong><p><strong>LO IDs:</strong> ${esc((item.loIds || []).join(', ') || 'Not specified')}</p><p><strong>Reason:</strong> ${esc(item.reason || 'Not specified')}</p><p><strong>Suggested action:</strong> ${esc(item.suggestedAction || 'Not specified')}</p></div>`).join('')}${focus.synthesisNote ? `<p><strong>Note:</strong> ${esc(focus.synthesisNote)}</p>` : ''}</div>` : `<div class="box muted">No focus synthesis generated for this unit.</div>`;
           return `<section class="unit"><h2>${esc(unitTitle(unit))}</h2><p class="muted">${esc(unitTopic(unit))}</p><p><span class="pill">Mode: ${esc(data.mode === 'both' ? 'Both' : data.mode.toUpperCase())}</span> <span class="pill">Exam Weight: ${esc(examWeight(unit))}</span></p><h3>MCQ Results</h3><table><thead><tr><th>Lesson</th><th>Topic</th><th>Probe Prompt</th><th>Student Answer</th><th>Correct Answer</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table><h3>FRQ</h3><p>${esc(stripFrq(q ? q.prompt || '' : 'FRQ not found.'))}</p><div class="quote">${esc(data.frqAnswer || '')}</div>${gradeHtml}<h3>Focus Synthesis</h3>${focusHtml}</section>`;
         }).join('');
-        return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AP Statistics Diagnostic Export</title><style>body{margin:0;padding:32px;font-family:"Segoe UI",Arial,sans-serif;color:#16263d;background:#fff}.sheet{max-width:980px;margin:0 auto}h1,h2,h3{margin-top:0;color:#0d2746}.muted{color:#5f7189}.head{margin-bottom:28px;padding-bottom:18px;border-bottom:3px solid #0d2746}.grid,.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.cell,.card,.unit,.box,.item{border:1px solid #d7dfeb;border-radius:14px;background:#fff}.cell,.card{padding:14px}.card .v{margin-top:8px;font-size:28px;font-weight:800;color:#0d2746}.unit{margin-bottom:26px;padding:22px;break-inside:avoid;page-break-inside:avoid}.pill,.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4fb;font-size:13px;font-weight:700}.quote{padding:14px;border-left:4px solid #214a78;background:#f8fafc;white-space:pre-wrap;line-height:1.6}.box,.item{padding:14px;margin-top:12px}.badge{color:#fff}.score-E{background:#2f7b4a}.score-P{background:#9a6a16}.score-I{background:#ab3e3e}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px 12px;border:1px solid #d7dfeb;text-align:left;vertical-align:top}th{background:#f3f6fa;color:#0d2746}@media print{body{padding:.4in}}</style></head><body><div class="sheet"><section class="head"><h1>AP Statistics Diagnostic Study Guide</h1><p class="muted">Printable review sheet and save file generated from the v3 diagnostic worksheet.</p><div class="grid"><div class="cell"><strong>Name</strong><div>${esc(snapshot.studentName || '')}</div></div><div class="cell"><strong>Period</strong><div>${esc(snapshot.studentPeriod || '')}</div></div><div class="cell"><strong>Date</strong><div>${esc(snapshot.studentDate || '')}</div></div></div></section><section class="summary"><div class="card"><div>Units Attempted</div><div class="v">${info.unitsAttempted}/${UNIT_COUNT}</div></div><div class="card"><div>MCQ Accuracy</div><div class="v">${info.mcqAnswered ? info.mcqAccuracy : 0}%</div></div><div class="card"><div>FRQs Graded</div><div class="v">${info.frqsGraded}</div></div></section>${unitSections}<script type="application/json" id="${STATE_ID}" data-state-id="${STATE_ID}">${stateJson}<\/script></div></body></html>`;
+        return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AP Statistics Diagnostic Export</title><style>body{margin:0;padding:32px;font-family:"Segoe UI",Arial,sans-serif;color:#16263d;background:#fff}.sheet{max-width:980px;margin:0 auto}h1,h2,h3{margin-top:0;color:#0d2746}.muted{color:#5f7189}.head{margin-bottom:28px;padding-bottom:18px;border-bottom:3px solid #0d2746}.grid,.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.cell,.card,.unit,.box,.item{border:1px solid #d7dfeb;border-radius:14px;background:#fff}.cell,.card{padding:14px}.card .v{margin-top:8px;font-size:28px;font-weight:800;color:#0d2746}.unit{margin-bottom:26px;padding:22px;break-inside:avoid;page-break-inside:avoid}.pill,.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4fb;font-size:13px;font-weight:700}.quote{padding:14px;border-left:4px solid #214a78;background:#f8fafc;white-space:pre-wrap;line-height:1.6}.box,.item{padding:14px;margin-top:12px}.badge{color:#fff}.score-E{background:#2f7b4a}.score-P{background:#9a6a16}.score-I{background:#ab3e3e}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px 12px;border:1px solid #d7dfeb;text-align:left;vertical-align:top}th{background:#f3f6fa;color:#0d2746}@media print{body{padding:.4in}}</style></head><body><div class="sheet"><section class="head"><h1>AP Statistics Diagnostic Study Guide</h1><p class="muted">Printable review sheet and save file generated from the v3 diagnostic worksheet.</p><div class="grid"><div class="cell"><strong>Username</strong><div>${esc(snapshot.studentUsername || '')}</div></div><div class="cell"><strong>Period</strong><div>${esc(snapshot.studentPeriod || '')}</div></div><div class="cell"><strong>Saved</strong><div>${esc(formatSavedAt(snapshot.savedAt))}</div></div></div></section><section class="summary"><div class="card"><div>Units Attempted</div><div class="v">${info.unitsAttempted}/${UNIT_COUNT}</div></div><div class="card"><div>MCQ Accuracy</div><div class="v">${info.mcqAnswered ? info.mcqAccuracy : 0}%</div></div><div class="card"><div>FRQs Graded</div><div class="v">${info.frqsGraded}</div></div></section>${unitSections}<script type="application/json" id="${STATE_ID}" data-state-id="${STATE_ID}">${stateJson}<\/script></div></body></html>`;
       }
 
       function doExport() {
@@ -4553,7 +4728,6 @@
         const blank = makeDefaultState();
         blank.theme = theme;
         blank.studentUsername = username;
-        blank.studentName = state.studentName || '';
         blank.studentPeriod = state.studentPeriod || '';
         state = blank;
         state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
@@ -4634,17 +4808,39 @@
         applyTheme(state.theme || 'paper');
         if (ui.username) {
           ui.username.addEventListener('change', () => { void switchStudentProfile(ui.username.value); });
-          ui.username.addEventListener('blur', () => { void switchStudentProfile(ui.username.value); });
         }
-        ui.name.addEventListener('input', () => { state.studentName = ui.name.value; saveSoon(); });
-        ui.period.addEventListener('input', () => { state.studentPeriod = ui.period.value; saveSoon(); });
-        ui.date.addEventListener('input', () => { state.studentDate = ui.date.value; saveSoon(); });
+        if (ui.period) {
+          ui.period.addEventListener('input', () => { state.studentPeriod = ui.period.value; saveSoon(); });
+        }
+        if (ui.password) {
+          ui.password.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              void verifyStudentAccount();
+            }
+          });
+        }
+        if (ui.newUsername) {
+          ui.newUsername.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              void createStudentAccount();
+            }
+          });
+        }
+        if (ui.loginBtn) {
+          ui.loginBtn.addEventListener('click', () => { void verifyStudentAccount(); });
+        }
+        if (ui.createBtn) {
+          ui.createBtn.addEventListener('click', () => { void createStudentAccount(); });
+        }
         ui.exportBtn.addEventListener('click', doExport);
         ui.importInput.addEventListener('change', importStateFromFile);
         ui.clearBtn.addEventListener('click', clearAll);
         state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
         saveSoon();
         refreshFocusedLayout();
+        void fetchRosterProfiles();
         if (state.studentUsername) {
           void hydrateRemoteSnapshot(state.studentUsername, serializeState(), { silent: true });
         } else {
