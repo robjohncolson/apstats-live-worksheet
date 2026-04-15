@@ -2741,15 +2741,67 @@
         "TI-84_Plus_CE/probe-phase175-backup-buffer.mjs"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "1ff6480bcae7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 176 \u2014 SP Corruption Mitigation via IX Analysis\n\n## Context\nYou are working on a TI-84 Plus C",
+      "status": "timeout",
+      "duration_seconds": 900.052,
+      "timestamp": "2026-04-15T03:17:56Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "d4b6e115b3fb",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 177 \u2014 IX=0xD1A860 Integration into Golden Regression\n\n## Context\nYou are working on the TI-8",
+      "status": "completed",
+      "duration_seconds": 68.62,
+      "timestamp": "2026-04-15T03:35:02Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase99d-home-verify.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "8fec12870189",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Session 86 \u2014 Content audit (read-only, Codex)\n\nYou are Codex. This is a **diagnosis-only, read-onl",
+      "status": "completed",
+      "duration_seconds": 595.232,
+      "timestamp": "2026-04-15T03:35:47Z",
+      "files_changed": [
+        ".session86-audit.result.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "8eb2eba2d05d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 179 \u2014 Restore Path Seed (0x088720) + Retranspile + Test\n\n## Context\nYou are working on the T",
+      "status": "completed",
+      "duration_seconds": 129.382,
+      "timestamp": "2026-04-15T03:36:06Z",
+      "files_changed": [
+        "TI-84_Plus_CE/phase179-seeds.txt",
+        "TI-84_Plus_CE/probe-phase179-restore-test.mjs",
+        "scripts/transpile-ti84-rom.mjs"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 234,
-    "cc_to_codex": 234,
+    "total_calls": 238,
+    "cc_to_codex": 238,
     "codex_to_cc": 0,
-    "completed": 176,
-    "failed": 53,
+    "completed": 179,
+    "failed": 54,
     "refused": 0,
-    "avg_duration_seconds": 449.078
+    "avg_duration_seconds": 448.645
   }
 }

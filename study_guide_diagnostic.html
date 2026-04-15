@@ -115,9 +115,6 @@
     .sg-frq-helpers-header{display:grid;gap:4px;margin-bottom:4px}
     .sg-frq-helpers-title{margin:0;font-size:1rem}
     .sg-frq-helpers-intro{margin:0;font-size:.85rem;color:var(--sg-text-dim)}
-    .sg-frq-queued-formulas{margin-top:6px;padding:6px 10px;border-radius:8px;background:var(--sg-bar-track);border:1px solid var(--sg-border);font-size:.82rem;color:var(--sg-text-dim);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-    .sg-frq-queued-label{font-weight:700;color:var(--sg-text);white-space:nowrap}
-    .sg-frq-queued-list{color:var(--sg-text-dim)}
     .sg-review-queue{border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);margin-top:14px}
     .sg-review-queue[open] .sg-review-queue-body{padding:6px 12px 10px}
     .sg-review-queue-summary{padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:700}
@@ -312,6 +309,11 @@
     .sg-mastery-map-legend{display:flex;gap:10px;align-items:center}
     .sg-mastery-legend-dot{display:inline-block;width:10px;height:10px;border-radius:999px;vertical-align:middle;margin-right:4px}
     .sg-mastery-map-hint{font-style:italic}
+    .sg-mastery-map-canvas-wrap{position:relative}
+    .sg-mastery-map-tooltip{position:absolute;pointer-events:none;background:rgba(10,14,39,0.95);border:1px solid rgba(100,110,170,0.5);border-radius:6px;padding:6px 10px;color:#e8ecf5;font-size:.78rem;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,0.4);z-index:10;white-space:nowrap;max-width:240px}
+    .sg-mastery-map-tooltip[hidden]{display:none}
+    .sg-mastery-tooltip-name{font-weight:700;color:#fff}
+    .sg-mastery-tooltip-meta{color:#a0aac8;margin-top:2px}
   </style>
 </head>
 <body>
@@ -2656,6 +2658,18 @@
           }
         });
 
+        // Cluster outlines — faint circles grouping each unit's nodes.
+        ctx.strokeStyle = 'rgba(100, 110, 170, 0.18)';
+        ctx.lineWidth = 1.5 / zoom;
+        Object.keys(unitCenterMap).forEach(function(uKey) {
+          const uc = unitCenterMap[uKey];
+          const OUTLINE_RADIUS = 80;
+          ctx.beginPath();
+          ctx.arc(uc.cx, uc.cy, OUTLINE_RADIUS, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+
+        // Unit labels — drawn above outlines.
         Object.keys(unitCenterMap).forEach(function(uKey) {
           const uc = unitCenterMap[uKey];
           ctx.font = Math.max(10, 14 / zoom) + 'px sans-serif';
@@ -2666,6 +2680,27 @@
 
         // Draw nodes.
         const touched = (appState && appState.touchedFormulas) || {};
+
+        // Find the highest-mastery node for the pulse effect.
+        let pulseNodeId = null;
+        let highestMastery = 0;
+        nodes.forEach(function(n) {
+          const e = touched[n.id];
+          if (e && typeof e.lastMastery === 'number' && e.lastMastery > highestMastery) {
+            highestMastery = e.lastMastery;
+            pulseNodeId = n.id;
+          } else if (e && typeof e.lastMastery === 'number' && e.lastMastery === highestMastery && highestMastery > 0) {
+            // Break ties by id alphabetically for determinism.
+            if (pulseNodeId === null || n.id < pulseNodeId) {
+              pulseNodeId = n.id;
+            }
+          }
+        });
+
+        const pulseGlowScale = (viewState && typeof viewState.pulseGlowScale === 'number')
+          ? viewState.pulseGlowScale
+          : 1;
+
         let i;
         let node;
         let entry;
@@ -2673,6 +2708,7 @@
         let isTouched;
         let color;
         let grad;
+        let glowRadius;
         for (i = 0; i < nodes.length; i += 1) {
           node = nodes[i];
           entry = touched[node.id];
@@ -2680,14 +2716,18 @@
           isTouched = !!entry;
           color = colorForMastery(mastery, isTouched);
 
-          // Glow for high-mastery nodes.
+          // Glow for high-mastery nodes — pulse the highest-mastery node.
           if (color.glow) {
-            grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, node.radius * 2.8);
+            glowRadius = node.radius * 2.8;
+            if (highestMastery > 0 && node.id === pulseNodeId) {
+              glowRadius = glowRadius * pulseGlowScale;
+            }
+            grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, glowRadius);
             grad.addColorStop(0, color.glow);
             grad.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(node.x, node.y, node.radius * 2.8, 0, Math.PI * 2);
+            ctx.arc(node.x, node.y, glowRadius, 0, Math.PI * 2);
             ctx.fill();
           }
 
@@ -2818,6 +2858,14 @@
         canvas.width = CANVAS_W;
         canvas.height = CANVAS_H;
         canvasWrap.appendChild(canvas);
+
+        // Tooltip element — positioned by mousemove, never captures pointer events.
+        const tooltip = make('div', 'sg-mastery-map-tooltip');
+        tooltip.hidden = true;
+        tooltip.appendChild(make('div', 'sg-mastery-tooltip-name', ''));
+        tooltip.appendChild(make('div', 'sg-mastery-tooltip-meta', ''));
+        canvasWrap.appendChild(tooltip);
+
         modal.appendChild(canvasWrap);
 
         // Footer with legend.
@@ -2844,8 +2892,15 @@
 
         backdrop.appendChild(modal);
 
+        // rAF loop id — cancelled on close.
+        let pulseRafId = null;
+
         // Close logic.
         function closeMap() {
+          if (pulseRafId !== null) {
+            cancelAnimationFrame(pulseRafId);
+            pulseRafId = null;
+          }
           backdrop.remove();
           document.removeEventListener('keydown', escHandler);
         }
@@ -2868,6 +2923,23 @@
           canvasWrap.insertBefore(noData, canvas);
         }
         renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
+
+        // --- Pulse rAF loop (highest-mastery node glow) ---
+        // Only start if any node is touched.
+        const hasTouchedNodes = nodes.some(function(n) {
+          const e = (state && state.touchedFormulas) ? state.touchedFormulas[n.id] : null;
+          return e && typeof e.lastMastery === 'number' && e.lastMastery > 0;
+        });
+        if (hasTouchedNodes) {
+          function pulseTick() {
+            const t = performance.now();
+            // 2-second sine period, 15% amplitude.
+            viewState.pulseGlowScale = 1 + Math.sin(t * 2 * Math.PI / 2000) * 0.15;
+            renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
+            pulseRafId = requestAnimationFrame(pulseTick);
+          }
+          pulseRafId = requestAnimationFrame(pulseTick);
+        }
 
         // --- Wheel zoom ---
         canvas.addEventListener('wheel', function(e) {
@@ -2903,11 +2975,47 @@
         });
 
         canvas.addEventListener('mousemove', function(e) {
-          if (!isDragging) return;
-          viewState.panX = dragPanX + (e.clientX - dragStartX);
-          viewState.panY = dragPanY + (e.clientY - dragStartY);
-          clampPan(viewState, worldBounds, CANVAS_W, CANVAS_H);
-          renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
+          // Drag pan.
+          if (isDragging) {
+            viewState.panX = dragPanX + (e.clientX - dragStartX);
+            viewState.panY = dragPanY + (e.clientY - dragStartY);
+            clampPan(viewState, worldBounds, CANVAS_W, CANVAS_H);
+            renderMasteryMap(canvas, nodes, worldBounds, state, viewState);
+          }
+
+          // Tooltip hit-test using canvas-relative offsetX/offsetY.
+          const hoverNode = hitTest(nodes, e.offsetX, e.offsetY, viewState, worldBounds, CANVAS_W, CANVAS_H);
+          if (hoverNode) {
+            const hovTouched = (state && state.touchedFormulas) ? state.touchedFormulas[hoverNode.id] : null;
+            let metaText;
+            if (!hovTouched) {
+              metaText = 'Not yet touched';
+            } else if (hovTouched.graduated === true) {
+              metaText = 'Graduated \u2014 you know this';
+            } else {
+              const pct = typeof hovTouched.lastMastery === 'number'
+                ? Math.round(hovTouched.lastMastery * 100)
+                : 0;
+              metaText = 'Mastery: ' + pct + '%';
+            }
+            tooltip.querySelector('.sg-mastery-tooltip-name').textContent = hoverNode.label || hoverNode.id;
+            tooltip.querySelector('.sg-mastery-tooltip-meta').textContent = metaText;
+
+            // Position tooltip near cursor, flip left if near right edge.
+            const wrapRect = canvasWrap.getBoundingClientRect();
+            const cursorX = e.clientX - wrapRect.left;
+            const cursorY = e.clientY - wrapRect.top;
+            const TIP_OFFSET = 12;
+            const tipW = 180; // estimated max width
+            const leftPos = (cursorX + TIP_OFFSET + tipW < wrapRect.width)
+              ? cursorX + TIP_OFFSET
+              : cursorX - TIP_OFFSET - tipW;
+            tooltip.style.left = leftPos + 'px';
+            tooltip.style.top = (cursorY + TIP_OFFSET) + 'px';
+            tooltip.hidden = false;
+          } else {
+            tooltip.hidden = true;
+          }
         });
 
         canvas.addEventListener('mouseup', function(e) {
@@ -2934,6 +3042,7 @@
 
         canvas.addEventListener('mouseleave', function() {
           isDragging = false;
+          tooltip.hidden = true;
         });
 
         document.body.appendChild(backdrop);
@@ -3755,13 +3864,6 @@
         const escapeHatch = make('p', 'sg-frq-helpers-escape-hatch');
         escapeHatch.innerHTML = 'Click <strong>Grade</strong> when you\u2019re ready for your final score \u2014 until then, helpers don\u2019t hurt you.';
         header.appendChild(escapeHatch);
-        const queued = queuedFormulasToday(state, today());
-        if (queued.length) {
-          const chip = make('div', 'sg-frq-queued-formulas');
-          chip.appendChild(make('span', 'sg-frq-queued-label', '\uD83D\uDCDD Queued for tomorrow:'));
-          chip.appendChild(make('span', 'sg-frq-queued-list', queued.map(function(q) { return q.name; }).join(', ')));
-          header.appendChild(chip);
-        }
         helperPanel.appendChild(header);
 
         helperSkills.forEach((skill, index) => {

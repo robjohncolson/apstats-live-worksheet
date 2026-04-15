@@ -443,21 +443,15 @@ describe('study_guide_diagnostic.html — session 79 fix-pass regression tests',
 });
 
 describe('study_guide_diagnostic.html — session 80 formula UX fixes', () => {
-  it('helper panel header renders queued-formulas chip when any formula was hinted today', () => {
+  // Note: chip rendering tests removed in session 86 (chip deleted — redundant with session-81 review queue).
+  it('handleHelperClick bypasses confirmation modal for formula kind', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    // renderFrqHelperPanel must call queuedFormulasToday with today().
-    expect(src).toContain('queuedFormulasToday(state, today())');
-    // The chip container class must be used.
-    expect(src).toContain('sg-frq-queued-formulas');
-    // CSS rules for the chip must be present.
-    expect(src).toContain('.sg-frq-queued-label');
-    expect(src).toContain('.sg-frq-queued-list');
+    expect(src).toContain("if (kind === 'formula')");
   });
 
-  it('queued-formulas chip is omitted when no formulas were queued today', () => {
+  it('doHelperAction handles drill kind via activeDrillQuestionId', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    // The chip must only render when queued.length is truthy.
-    expect(src).toContain('if (queued.length)');
+    expect(src).toContain('activeDrillQuestionId');
   });
 });
 
@@ -844,5 +838,65 @@ describe('session 85 mastery map', () => {
   it('drag vs click threshold is 4 pixels', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
     expect(src).toContain('dist < 4');
+  });
+});
+
+describe('session 86 mastery map polish', () => {
+  it('renderMasteryMap draws cluster outline circles before nodes', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // Cluster outlines use a low-alpha rgba stroke.
+    expect(src).toContain("rgba(100, 110, 170, 0.18)");
+    // Outline radius constant.
+    expect(src).toContain('OUTLINE_RADIUS = 80');
+  });
+
+  it('mastery map modal has a tooltip element', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-mastery-map-tooltip');
+  });
+
+  it('tooltip shows formula name and mastery percent on hover', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('Math.round(hovTouched.lastMastery * 100)');
+    expect(src).toContain('sg-mastery-tooltip-name');
+    expect(src).toContain('sg-mastery-tooltip-meta');
+  });
+
+  it('tooltip shows "Not yet touched" for untouched formulas', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('Not yet touched');
+  });
+
+  it('tooltip shows "Graduated" for graduated formulas', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('Graduated');
+    expect(src).toContain('graduated === true');
+  });
+
+  it('showMasteryMapModal uses requestAnimationFrame for the pulse loop', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('requestAnimationFrame');
+    expect(src).toContain('pulseGlowScale');
+  });
+
+  it('showMasteryMapModal cancels the rAF loop on close', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('cancelAnimationFrame');
+    expect(src).toContain('pulseRafId');
+  });
+});
+
+describe('session 86 queued chip removal', () => {
+  it('renderFrqHelperPanel no longer renders the sg-frq-queued-formulas chip', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The class must not appear anywhere in the source (chip and CSS both removed).
+    expect(src).not.toContain('sg-frq-queued-formulas');
+  });
+
+  it('CSS rules for sg-frq-queued-formulas are removed', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).not.toContain('.sg-frq-queued-formulas{');
+    expect(src).not.toContain('.sg-frq-queued-label');
+    expect(src).not.toContain('.sg-frq-queued-list');
   });
 });
