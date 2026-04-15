@@ -599,6 +599,14 @@
     recordFormulaTouch: function(formulaId, correct, state) {
       const v4 = getV4();
       return v4 && typeof v4.recordFormulaTouch === 'function' ? v4.recordFormulaTouch(formulaId, correct, state) : 0.3;
+    },
+    recordFormulaHint: function(formulaId, state) {
+      const v4 = getV4();
+      return v4 && typeof v4.recordFormulaHint === 'function' ? v4.recordFormulaHint(formulaId, state) : null;
+    },
+    getFormulaEntry: function(formulaId) {
+      const v4 = getV4();
+      return v4 && typeof v4.getFormulaEntry === 'function' ? v4.getFormulaEntry(formulaId) : null;
     }
   };
 

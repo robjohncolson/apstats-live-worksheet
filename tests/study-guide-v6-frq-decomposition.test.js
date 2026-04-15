@@ -260,6 +260,41 @@ describe('computeEffectivePenalty', () => {
   });
 });
 
+describe('computeEffectivePenalty — practice vs gate mode', () => {
+  it('returns 0 in practice mode regardless of helper usage', () => {
+    const helpers = makeHelpers({
+      formulasViewed: ['zscore', 'empirical-rule'],
+      mcqDrills: { 'U1-L10-Q02': 'correct', 'U1-L10-Q05': 'wrong' }
+    });
+
+    expect(api.computeEffectivePenalty(helpers, sampleDecomp, 'practice')).toBe(0);
+  });
+
+  it('applies the full penalty in gate mode', () => {
+    const helpers = makeHelpers({
+      formulasViewed: ['zscore'],
+      mcqDrills: { 'U1-L10-Q02': 'correct' }
+    });
+
+    // zscore penalty: 0.05, correct drill: 0.10 = 0.15 total
+    expect(api.computeEffectivePenalty(helpers, sampleDecomp, 'gate')).toBeCloseTo(0.15, 10);
+  });
+
+  it('is backwards-compatible when the mode argument is omitted (defaults to gate behavior)', () => {
+    const helpers = makeHelpers({ formulasViewed: ['zscore'] });
+
+    // Same result with explicit 'gate' and without the arg
+    const withGate = api.computeEffectivePenalty(helpers, sampleDecomp, 'gate');
+    const withoutArg = api.computeEffectivePenalty(helpers, sampleDecomp);
+
+    expect(withoutArg).toBe(withGate);
+  });
+
+  it('returns 0 in practice mode even when frqHelpers and decomposition are null', () => {
+    expect(api.computeEffectivePenalty(null, null, 'practice')).toBe(0);
+  });
+});
+
 describe('computeEffectiveScore', () => {
   it('returns full credit for E with zero penalty', () => {
     expect(api.computeEffectiveScore('E', 0)).toEqual({

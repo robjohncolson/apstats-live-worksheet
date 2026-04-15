@@ -310,3 +310,198 @@ describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
     expect(src).toContain('../curriculum_render/index.html?u=');
   });
 });
+
+describe('study_guide_diagnostic.html — Thread 1: formula card modal', () => {
+  it('defines showFormulaCardModal function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function showFormulaCardModal(');
+  });
+
+  it('uses the .sg-formula-modal class in the modal builder', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-formula-modal');
+  });
+
+  it('calls getFormulaEntry inside showFormulaCardModal to look up formula content', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('getFormulaEntry(formulaId)');
+  });
+
+  it('renders the latex block from formulaEntry', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-formula-modal-latex');
+    expect(src).toContain('formulaEntry.latex');
+  });
+
+  it('renders the hint callout from formulaEntry', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-formula-modal-hint');
+    expect(src).toContain('formulaEntry.hint');
+  });
+
+  it('calls showFormulaCardModal from doHelperAction formula branch', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("showFormulaCardModal(id, unit, data, questionId)");
+  });
+
+  it('calls recordFormulaHint from doHelperAction formula branch', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('recordFormulaHint(id, state)');
+  });
+
+  it('exports getFormulaEntry from __studyGuideV4__', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('getFormulaEntry: getFormulaEntry');
+  });
+
+  it('exports recordFormulaHint from __studyGuideV4__', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('recordFormulaHint: recordFormulaHint');
+  });
+});
+
+describe('study_guide_diagnostic.html — Thread 2: SRS hint feed', () => {
+  it('defines recordFormulaHint function in the inline v4 block', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function recordFormulaHint(');
+  });
+
+  it('includes hintedAt passthrough in normalizeState', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("entry.hintedAt = v.hintedAt");
+  });
+
+  it('formulaWeight reads hintedAt for the SRS boost', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('hintedAt');
+    expect(src).toContain('hintBoost');
+  });
+});
+
+describe('study_guide_diagnostic.html — Thread 3: practice vs gate mode', () => {
+  it('defines the .sg-frq-mode-banner CSS class', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-frq-mode-banner');
+    expect(src).toContain('sg-frq-mode-banner.is-practice');
+    expect(src).toContain('sg-frq-mode-banner.is-gate');
+  });
+
+  it('defines renderFrqModeBanner function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function renderFrqModeBanner(');
+  });
+
+  it('defines showGateEscalationModal function', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('function showGateEscalationModal(');
+  });
+
+  it('renders the mode banner before the answer textarea in the FRQ branch', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('renderFrqModeBanner(unit, data)');
+  });
+
+  it('passes frqMode to computeEffectivePenalty at the renderActiveProbe call site', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('computeEffectivePenalty(frqH, decompForGrade, frqMode)');
+  });
+
+  it('passes frqMode to renderGrade at the renderActiveProbe call site', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('renderGrade(data.frqGrade, effScore, frqMode)');
+  });
+
+  it('normalizes frqMode to practice by default in normalizeState', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("value.frqMode === 'gate' ? 'gate' : 'practice'");
+  });
+
+  it('defaults frqMode to practice in makeDefaultState', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("frqMode:'practice'");
+  });
+
+  it('sets frqMode to gate when a daily-queue FRQ entry is clicked', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("unitData.frqMode = 'gate'");
+  });
+
+  it('skips the confirmation modal in practice mode in handleHelperClick', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("data.frqMode === 'practice'");
+  });
+
+  it('the sg-frq-mode-escalate button class is defined in CSS', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sg-frq-mode-escalate');
+  });
+});
+
+describe('study_guide_diagnostic.html — session 79 fix-pass regression tests', () => {
+  it('Fix 1: wraps formulaEntry.latex in block-math delimiters for MathJax', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The modal builder must delimit the raw TeX so MathJax recognizes it.
+    // Accepts \\[...\\] (block) or \\(...\\) (inline) — either works.
+    const hasBlockDelim = src.includes("'\\\\[' + formulaEntry.latex + '\\\\]'") ||
+                          src.includes('"\\\\[" + formulaEntry.latex + "\\\\]"') ||
+                          src.includes("'\\[' + formulaEntry.latex + '\\]'") ||
+                          src.includes('"\\[" + formulaEntry.latex + "\\]"') ||
+                          src.includes('`\\\\[${formulaEntry.latex}\\\\]`') ||
+                          src.includes('`\\[${formulaEntry.latex}\\]`');
+    const hasInlineDelim = src.includes("'\\\\(' + formulaEntry.latex + '\\\\)'") ||
+                           src.includes('"\\\\(" + formulaEntry.latex + "\\\\)"') ||
+                           src.includes('`\\\\(${formulaEntry.latex}\\\\)`') ||
+                           src.includes('`\\(${formulaEntry.latex}\\)`');
+    expect(hasBlockDelim || hasInlineDelim).toBe(true);
+  });
+
+  it('Fix 2: subconcept rendering accesses sc.q (not bare sc)', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The subconcept loop must reference sc.q (the question string), not pass sc directly.
+    expect(src).toContain('sc.q');
+  });
+
+  it('Fix 2: subconcept rendering accesses sc.correct for the answer', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('sc.correct');
+  });
+
+  it('Fix 3: used formula buttons still get a click listener (re-open modal)', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The else-if branch for used formula buttons must attach a click listener.
+    expect(src).toContain("} else if (kind === 'formula') {");
+    // And it must call showFormulaCardModal for re-opens.
+    expect(src).toContain("showFormulaCardModal(id, unit, data, questionId)");
+  });
+
+  it('Fix 3: CSS pointer-events:none scoped to drill buttons only, not all used buttons', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The broad rule locking all [data-used="true"] with pointer-events:none must NOT exist.
+    expect(src).not.toContain('.sg-frq-helper-btn[data-used="true"]{opacity:.72;background:var(--sg-bar-track);cursor:default;pointer-events:none}');
+    // The drill-specific rule must exist.
+    expect(src).toContain('sg-frq-helper-drill-btn[data-used="true"]');
+    // Formula buttons must NOT have pointer-events:none when used.
+    expect(src).toContain('sg-frq-helper-formula-btn[data-used="true"]');
+    expect(src).not.toMatch(/sg-frq-helper-formula-btn\[data-used="true"\][^}]*pointer-events:none/);
+  });
+
+  it('Fix 4: null formulaEntry shows a data-issue fallback message in the modal', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // There must be a branch that renders a fallback when formulaEntry is falsy.
+    expect(src).toContain('sg-formula-modal-not-found');
+    expect(src).toContain('data issue');
+  });
+
+  it('Fix 5: gate escalation warning mentions practice-mode helpers applying penalties', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('already used in practice mode will now count');
+  });
+
+  it('Fix 2 (polish): subconcept loop filters out null/malformed entries before rendering', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    // The filter must guard against null entries and missing .q / .correct fields.
+    expect(src).toContain('sc && typeof sc === \'object\' && sc.q && sc.correct');
+    // The "Check your understanding" header must only appear inside the validSubconcepts guard.
+    expect(src).toContain('validSubconcepts.length');
+  });
+});

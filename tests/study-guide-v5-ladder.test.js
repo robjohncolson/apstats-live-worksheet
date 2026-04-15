@@ -404,6 +404,119 @@ describe('setActiveTab', () => {
   });
 });
 
+describe('recordFormulaHint', () => {
+  it('sets hintedAt without changing lastMastery', () => {
+    state.touchedFormulas = {
+      mean: { firstTouchedAt: '2026-04-14', lastMastery: 0.75 }
+    };
+
+    v4.recordFormulaHint('mean', state);
+
+    expect(state.touchedFormulas.mean.hintedAt).toBeTruthy();
+    expect(typeof state.touchedFormulas.mean.hintedAt).toBe('string');
+    expect(state.touchedFormulas.mean.lastMastery).toBe(0.75);
+  });
+
+  it('initializes the touchedFormulas entry with BKT_INIT mastery when the formula is new', () => {
+    v4.recordFormulaHint('corr-r', state);
+
+    expect(state.touchedFormulas['corr-r']).toBeTruthy();
+    expect(state.touchedFormulas['corr-r'].lastMastery).toBe(v4.BKT_INIT);
+    expect(state.touchedFormulas['corr-r'].hintedAt).toBeTruthy();
+  });
+
+  it('returns the updated entry', () => {
+    const result = v4.recordFormulaHint('mean', state);
+
+    expect(result).toBeTruthy();
+    expect(result.hintedAt).toBeTruthy();
+  });
+
+  it('overwrites a prior hintedAt date when called again', () => {
+    state.touchedFormulas = {
+      mean: { firstTouchedAt: '2026-04-10', lastMastery: 0.5, hintedAt: '2026-04-10' }
+    };
+
+    v4.recordFormulaHint('mean', state);
+
+    // The new hintedAt is today (or a recent date), not the old one.
+    // We can't assert the exact value, but it should exist and be a string.
+    expect(typeof state.touchedFormulas.mean.hintedAt).toBe('string');
+  });
+});
+
+describe('formulaWeight hint boost', () => {
+  it('boosts a formula hinted today over an unhinted formula', () => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    // Hint 'mean', leave 'corr-r' unhinted. Both have same initial mastery.
+    state.touchedFormulas = {
+      mean: { firstTouchedAt: todayStr, lastMastery: 0.3, hintedAt: todayStr },
+      'corr-r': { firstTouchedAt: todayStr, lastMastery: 0.3 }
+    };
+
+    const hintedWeight = v4.formulaWeight('mean', state);
+    const unhintedWeight = v4.formulaWeight('corr-r', state);
+
+    expect(hintedWeight).toBeGreaterThan(unhintedWeight);
+  });
+
+  it('applies zero boost when hintedAt is 3 or more days ago', () => {
+    // Set hintedAt to 3 days ago.
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    state.touchedFormulas = {
+      mean: { firstTouchedAt: threeDaysAgo, lastMastery: 0.3, hintedAt: threeDaysAgo }
+    };
+
+    const baseWeightNoHint = v4.formulaWeight('mean', { touchedFormulas: { mean: { firstTouchedAt: threeDaysAgo, lastMastery: 0.3 } } });
+    const decayedWeight = v4.formulaWeight('mean', state);
+
+    // After 3 days the boost is exactly 0, so weights should be equal.
+    expect(decayedWeight).toBeCloseTo(baseWeightNoHint, 5);
+  });
+
+  it('applies a partial boost when hintedAt is 1 day ago', () => {
+    const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    state.touchedFormulas = {
+      mean: { firstTouchedAt: oneDayAgo, lastMastery: 0.3, hintedAt: oneDayAgo }
+    };
+
+    const baseWeight = v4.formulaWeight('mean', { touchedFormulas: { mean: { firstTouchedAt: oneDayAgo, lastMastery: 0.3 } } });
+    const boostedWeight = v4.formulaWeight('mean', state);
+
+    // Boost should be positive but smaller than today's boost.
+    expect(boostedWeight).toBeGreaterThan(baseWeight);
+    // The boost at 1 day ago: 0.3 * (1 - 1/3) = 0.3 * 0.667 = 0.2
+    expect(boostedWeight - baseWeight).toBeCloseTo(0.2, 1);
+  });
+
+  it('formulaWeight with hintedAt today is greater than without hintedAt', () => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    // Compare 'mean' with hint vs 'mean' without hint, same mastery level.
+    const stateWithHint = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: todayStr, lastMastery: 0.3, hintedAt: todayStr }
+      }
+    };
+    const stateWithoutHint = {
+      touchedFormulas: {
+        mean: { firstTouchedAt: todayStr, lastMastery: 0.3 }
+      }
+    };
+
+    const weightWithHint = v4.formulaWeight('mean', stateWithHint);
+    const weightWithoutHint = v4.formulaWeight('mean', stateWithoutHint);
+
+    expect(weightWithHint).toBeGreaterThan(weightWithoutHint);
+    // The boost at day 0: 0.3 * (1 - 0/3) = 0.3
+    expect(weightWithHint - weightWithoutHint).toBeCloseTo(0.3, 5);
+  });
+});
+
 describe('debt scenarios', () => {
   it('does not create debt when the student works ahead', () => {
     state.doseLadder = { tier: 0, mcqDebt: 0, frqDebt: 0 };

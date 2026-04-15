@@ -2430,15 +2430,153 @@
       "timestamp": "2026-04-14T23:23:37Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "d33fb83f3d54",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 156 \u2014 Browser-Shell 2nd/Alpha Modifier Integration\n\n## Context\nYou are working on a TI-84 Pl",
+      "status": "completed",
+      "duration_seconds": 135.988,
+      "timestamp": "2026-04-14T23:41:55Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f747fa005c3e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 155 \u2014 Native Font Rendering via 0xD00585 Pointer\n\n## Context\nYou are working on a TI-84 Plus",
+      "status": "completed",
+      "duration_seconds": 219.996,
+      "timestamp": "2026-04-14T23:43:16Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "320f9da4a826",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 147 \u2014 Extended Boot Exploration Past 943-Step Init\n\n## Context\nYou are working on a TI-84 Pl",
+      "status": "completed_with_deviations",
+      "duration_seconds": 318.242,
+      "timestamp": "2026-04-14T23:44:56Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase147-extended-boot.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "05f3986d2cf0",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 154 \u2014 Trace Missing Block Origins in Rendering Stages\n\n## Context\nYou are working on a TI-84",
+      "status": "completed",
+      "duration_seconds": 470.494,
+      "timestamp": "2026-04-14T23:47:25Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase154-trace.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "1e5b3fd7bf56",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Diagnosis task \u2014 Formula card helper buttons don't work\n\nYou are Codex. This is a **diagnosis-only",
+      "status": "completed",
+      "duration_seconds": 175.059,
+      "timestamp": "2026-04-14T23:52:46Z",
+      "files_changed": [
+        ".bug-diagnose-formula-card.result.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "2c13f2e87abc",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 159 \u2014 SP Corruption Root Cause Hunt\n\n## Context\n\nYou are working on a TI-84 Plus CE ROM tran",
+      "status": "completed",
+      "duration_seconds": 231.636,
+      "timestamp": "2026-04-15T00:08:18Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "39c403758ed1",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 157 \u2014 DD/FD 01/11 Correctness Audit\n\n## Context\n\nYou are working on a TI-84 Plus CE ROM tran",
+      "status": "completed",
+      "duration_seconds": 502.929,
+      "timestamp": "2026-04-15T00:12:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "efb77ef46df7",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 160 \u2014 Dispatch Table Population Investigation\n\n## Context\n\nYou are working on a TI-84 Plus C",
+      "status": "completed",
+      "duration_seconds": 546.453,
+      "timestamp": "2026-04-15T00:13:34Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c72bb84b9f2f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 155B \u2014 Font Rendering Deeper Investigation\n\n## Context\n\nYou are working on a TI-84 Plus CE R",
+      "status": "completed",
+      "duration_seconds": 695.32,
+      "timestamp": "2026-04-15T00:16:05Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "c990a0f93521",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Session 79 verification pass\n\nYou are Codex. This is a **verification-only** task. **DO NOT EDIT C",
+      "status": "completed",
+      "duration_seconds": 522.415,
+      "timestamp": "2026-04-15T00:18:31Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b169f704c8ed",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Session 79 fix-pass re-verification\n\nYou are Codex. **Read-only verification.** Do not edit code. ",
+      "status": "completed",
+      "duration_seconds": 316.517,
+      "timestamp": "2026-04-15T00:29:39Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "620ccf01711e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 162 \u2014 Remove DD/FD 01/11 from Decoder + Retranspile\n\n## Context\n\nPhase 157 (auto-session 42)",
+      "status": "completed",
+      "duration_seconds": 168.839,
+      "timestamp": "2026-04-15T00:37:09Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 207,
-    "cc_to_codex": 207,
+    "total_calls": 219,
+    "cc_to_codex": 219,
     "codex_to_cc": 0,
-    "completed": 157,
+    "completed": 168,
     "failed": 47,
     "refused": 0,
-    "avg_duration_seconds": 439.338
+    "avg_duration_seconds": 434.917
   }
 }

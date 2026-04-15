@@ -243,12 +243,32 @@
     const examWeight = UNIT_EXAM_WEIGHTS[unit] || 0;
     const tierMult = formulaEntry ? (TIER_MULTIPLIERS[formulaEntry.tier] || 0) : 0;
     const mastery = formulaMastery(formulaId, state);
+    const touchedEntry = state && state.touchedFormulas && state.touchedFormulas[formulaId];
+    const hintedAt = touchedEntry && typeof touchedEntry.hintedAt === 'string' ? touchedEntry.hintedAt : null;
+    let baseWeight;
+    let hintBoost = 0;
 
     if (!unit || !formulaEntry) {
       return 0;
     }
 
-    return examWeight * tierMult * (1 - mastery);
+    baseWeight = examWeight * tierMult * (1 - mastery);
+
+    if (hintedAt) {
+      const hintDate = parseIsoDate(hintedAt);
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayDate = parseIsoDate(todayStr);
+
+      if (hintDate && todayDate) {
+        const daysSince = Math.floor((todayDate.getTime() - hintDate.getTime()) / MS_PER_DAY);
+
+        if (daysSince < 3) {
+          hintBoost = 0.3 * (1 - daysSince / 3);
+        }
+      }
+    }
+
+    return baseWeight + hintBoost;
   }
 
   function formulaName(formulaId) {
@@ -465,10 +485,31 @@
     sourceState.touchedFormulas = touchedFormulas;
     sourceState.touchedFormulas[formulaId] = {
       firstTouchedAt: existingTouch ? existingTouch.firstTouchedAt : new Date().toISOString().slice(0, 10),
-      lastMastery: next
+      lastMastery: next,
+      hintedAt: existingTouch ? existingTouch.hintedAt : undefined
     };
 
     return next;
+  }
+
+  // Records that the student viewed a formula card as a hint.
+  // Sets hintedAt to today's date but does NOT modify lastMastery.
+  // This is a lighter-weight signal than recordFormulaTouch — it boosts
+  // the formula's weight in the SRS queue without tanking BKT mastery.
+  function recordFormulaHint(formulaId, state) {
+    const sourceState = state || {};
+    const touchedFormulas = sourceState.touchedFormulas || {};
+    const existingTouch = touchedFormulas[formulaId];
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    sourceState.touchedFormulas = touchedFormulas;
+    sourceState.touchedFormulas[formulaId] = {
+      firstTouchedAt: existingTouch && existingTouch.firstTouchedAt ? existingTouch.firstTouchedAt : todayStr,
+      lastMastery: existingTouch && typeof existingTouch.lastMastery === 'number' ? existingTouch.lastMastery : BKT_INIT,
+      hintedAt: todayStr
+    };
+
+    return sourceState.touchedFormulas[formulaId];
   }
 
   // --- diagnostic export for testing + integration ---
@@ -486,9 +527,11 @@
     formulaMastery: formulaMastery,
     formulaWeight: formulaWeight,
     formulaName: formulaName,
+    getFormulaEntry: getFormulaEntry,
     touchedFormulaCount: touchedFormulaCount,
     pickProbeForFormula: pickProbeForFormula,
     pickDailyQueue: pickDailyQueue,
-    recordFormulaTouch: recordFormulaTouch
+    recordFormulaTouch: recordFormulaTouch,
+    recordFormulaHint: recordFormulaHint
   };
 })(typeof window !== 'undefined' ? window : globalThis);
