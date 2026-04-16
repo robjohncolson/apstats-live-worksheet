@@ -2871,15 +2871,164 @@
         "state/cross-agent/920766f8d0e0.result.json"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "db3d4a7ceeab",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 183 \u2014 Per-stage IX Discovery Probe\n\n## Context\n\nThe TI-84 Plus CE ROM transpiler project run",
+      "status": "completed",
+      "duration_seconds": 281.759,
+      "timestamp": "2026-04-15T04:38:07Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3358251ffbc0",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 181B \u2014 Investigate Stages 3/4 Step Count Discrepancy\n\n## Context\n\nThe TI-84 Plus CE ROM tran",
+      "status": "completed",
+      "duration_seconds": 331.422,
+      "timestamp": "2026-04-15T04:38:58Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "80759fad1d93",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 186 \u2014 Font Record Pointer Fix for Direct Rendering\n\n## Context\nYou are working on a TI-84 Pl",
+      "status": "completed",
+      "duration_seconds": 850.656,
+      "timestamp": "2026-04-15T05:18:19Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "86326a9722a6",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 185 \u2014 Status Dots Root Cause: White-on-White Color Data\n\n## Context\nYou are working on a TI-",
+      "status": "timeout",
+      "duration_seconds": 900.065,
+      "timestamp": "2026-04-15T05:19:07Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4cac9514778d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 187 \u2014 Stage 3 Max-Steps Investigation\n\n## Context\nYou are working on a TI-84 Plus CE ROM tra",
+      "status": "timeout",
+      "duration_seconds": 900.049,
+      "timestamp": "2026-04-15T05:19:10Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e36a92fc247d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Task: Phase 158+ Interim \u2014 Seed JT Slot Targets for Coverage Expansion\n\nYou are working on a TI-84",
+      "status": "completed",
+      "duration_seconds": 254.933,
+      "timestamp": "2026-04-15T22:09:16Z",
+      "files_changed": [
+        "scripts/transpile-ti84-rom.mjs",
+        "TI-84_Plus_CE/phase158-jt-seeds-report.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "4fb6fbee09b9",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Task: Phase 188a \u2014 Trace VRAM Writer Color Reads\n\nYou are working on a TI-84 Plus CE ROM transpile",
+      "status": "completed",
+      "duration_seconds": 578.437,
+      "timestamp": "2026-04-15T22:14:28Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0f228e9f36cc",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Task: Phase 188b \u2014 Disassemble SetTextFgColor and Trace Its RAM Writes\n\nYou are working on a TI-84",
+      "status": "completed",
+      "duration_seconds": 589.362,
+      "timestamp": "2026-04-15T22:14:44Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase188-settextfgcolor.mjs",
+        "TI-84_Plus_CE/phase188-settextfgcolor-report.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "bb17712172e4",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read the full task brief at .session89-codex-review.md in the current working directory, then execut",
+      "status": "completed",
+      "duration_seconds": 503.911,
+      "timestamp": "2026-04-15T22:50:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "eac8b7b8fbeb",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read the full task brief at .session90-codex-review.md in the current working directory, then execut",
+      "status": "completed",
+      "duration_seconds": 557.843,
+      "timestamp": "2026-04-15T23:44:43Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f544d52311bb",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 190 \u2014 Fix browser-shell IX convention bug\n\n## Context\nThe TI-84 Plus CE browser shell (`TI-8",
+      "status": "completed",
+      "duration_seconds": 86.272,
+      "timestamp": "2026-04-16T00:06:22Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7a87adf321bf",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 188b \u2014 Remove paintGlyphs() overlay, verify native rendering\n\n## Context\nThe file `TI-84_Plu",
+      "status": "completed_with_unverified_changes",
+      "duration_seconds": 246.406,
+      "timestamp": "2026-04-16T00:08:59Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "8ddb1de1a213",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 189 \u2014 Status dots branch tracing (investigation only)\n\n## Context\nThe TI-84 Plus CE ROM tran",
+      "status": "completed",
+      "duration_seconds": 616.589,
+      "timestamp": "2026-04-16T00:15:11Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 243,
-    "cc_to_codex": 243,
+    "total_calls": 256,
+    "cc_to_codex": 256,
     "codex_to_cc": 0,
-    "completed": 184,
-    "failed": 54,
+    "completed": 194,
+    "failed": 56,
     "refused": 0,
-    "avg_duration_seconds": 446.463
+    "avg_duration_seconds": 449.954
   }
 }
