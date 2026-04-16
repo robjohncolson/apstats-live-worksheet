@@ -1,7 +1,7 @@
 # Continuation Prompt — TI-84 CE Procedural Trainer
 
-**Last updated**: 2026-04-15 (post session 88 — history trim pass)
-**Status**: TI-84 trainer V3 shipped, Physical Calculator Mode primary. Study guide `study_guide_diagnostic.html` feature-complete at v6: FRQ decomposition, review queue, mastery map constellation, inline TI-84 procedure walkthroughs. **263/263 study-guide tests green**.
+**Last updated**: 2026-04-16 (post session 91 — FRQ solution-part charts + multi-chart rendering + tier-jump diagnosis)
+**Status**: TI-84 trainer V3 shipped, Physical Calculator Mode primary. Study guide `study_guide_diagnostic.html` feature-complete at v6: FRQ decomposition, review queue, mastery map constellation, inline TI-84 procedure walkthroughs, login UX, official AP rubric disclosures, inline chart rendering (70 MCQ charts via singular + plural forms, + deferred-render solution charts). **421/421 study-guide tests green**.
 **Deadline**: ~May 7 (AP exam, 22 days out)
 
 ---
@@ -196,17 +196,23 @@ Config in: ti84-trainer-v2/bridge.js line 11 (ROM_CONFIG.supabaseUrl)
 
 ---
 
-## Study Guide State (post session 88)
+## Study Guide State (post session 90)
 
 The parallel `study_guide_diagnostic.html` track is feature-complete. Current state:
 
 - **Schema**: `apStatsStudyGuideDiagnostic.v6` (migration chain v6 → v5 → v4 → v3 → v2)
+- **Account bar** (s89): username/password login hides when verified, replaced with "Signed in as X · Sign out" strip. Create-user modal opens via text link. No Period / New-Username fields.
 - **Daily queue**: v5 dose ladder with 4 tiers (Warmup / Steady / Catch-up / Crunch), hybrid MCQ/FRQ tabs, tier meter + info modal
-- **FRQ decomposition**: 31 skills across 9 Progress Check gate FRQs, per-skill formula cards + drill MCQs with penalty scoring (5% formula, 10% correct drill, 15% wrong drill, 50% cap). Helpers only materialize as penalty when the student clicks Grade.
+- **FRQ decomposition**: 31 skills across 9 Progress Check gate FRQs, per-skill formula cards + drill MCQs with latent-penalty scoring (5% formula, 10% correct drill, 15% wrong drill, 50% cap). Helpers only materialize as penalty when the student clicks Grade.
+- **Grade card disclosures** (s89): after grading, collapsed `<details>` for "📋 Official AP rubric" (per-part `maxPoints` + criteria + `scoringNotes` pulled from `data/study-guide-frq-bank.js`) and "💡 Worked solution" (per-part response + calculations, MathJax-rendered). Both gated on `grade.score !== 'paper'` — paper mode cannot reveal the answer key.
 - **Formula card modal**: LaTeX via MathJax, explain/hint/subconcepts, inline TI-84 procedure walkthrough (33+ mappings), "Practice this formula" primary action
 - **Review Queue**: 7-day SM2-lite auto-aging + student graduation via "I know it"
 - **Mastery Map**: 81-node constellation canvas, mini-map in sidebar + fullscreen modal with mouse zoom/pan, click-to-open formula card, hover tooltip, pulse on highest-mastery node
-- **Tests**: 263/263 green across `tests/study-guide.test.js` (155), `tests/study-guide-v5-ladder.test.js` (75), `tests/study-guide-v6-frq-decomposition.test.js` (33)
+- **Inline MCQ chart rendering** (s90 + s91 plural form): `attachMedia` renders both `attachments.chartType` (singular) and `attachments.charts` (plural array) forms via lifted `curriculum_render/js/charts.js`. 70 questions unblocked after s91 (59 via singular + 11 multi-chart questions via plural array that were silently missing charts before). 2-phase `getChartHtml` → `requestAnimationFrame` → `renderChartNow` with `chartCounter` canvas IDs + instance cleanup on probe change. Multi-chart CSS: `.attachment-multi-chart{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}`.
+- **FRQ worked-solution chart rendering** (s91 Phase 4): `renderGrade` solution disclosure renders `part.attachments.chartType` for each solution part. `U2-PC-FRQ-Q02` part c (normal curve) and `U9-PC-FRQ-Q01` part a (scatter) now render. Canvas inside closed `<details>` has 0×0 dimensions so rendering is deferred via a `toggle` listener that fires on first open.
+- **Question context audit** (s90 + s91): `scripts/audit-question-context.mjs` classifies 807 served questions across 9 statuses. s91 extended `classifyQuestion` to treat `attachments.charts` (plural) as a chart attachment. Post-s91 counts: OK 627 / OK_TABLE 103 / OK_CHART 70 / IMAGE_OK 3 / CONTEXT_ORPHAN 1 / CONTEXT_UNCLEAR 3. The remaining 1 orphan + 3 unclears are self-contained text questions (U7-L6-Q01 describes a boxplot verbally but is answerable from CLT logic; the 3 unclears are just regex false positives on "below"/"following data"). Report at `.session90-question-audit.md`.
+- **Tier-jump semantics** (s91 diagnosed): `debtToTier(debt)` in `.v5-ladder-block.js:277` is 1:1 capped at 3. A single missed day of a tier-0 dose (5 MCQ + 1 FRQ = 6 items, leave 3+ undone) immediately pins the next day to Tier 3 Crunch. WAI per tests (`study-guide-v5-ladder.test.js:178-182`). User confirmed this as intended aggressive escalation in s91.
+- **Tests**: 421/421 green across 4 test files (`study-guide.test.js`, `study-guide-v5-ladder.test.js`, `study-guide-v6-frq-decomposition.test.js`, `audit-script.test.js`)
 
 ### Load-bearing design principles
 
@@ -222,9 +228,14 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 
 6. **v4/v5 export sync** — new pure functions must be added in FOUR places: `.v4-logic-block.js`, the inline v4 export object in `study_guide_diagnostic.html`, `.v5-ladder-block.js`, AND the inline v5 proxy block. Sonnet missed one of these four in s85. Post-check: grep `__studyGuideV4__ = {` and `__studyGuideV5__`.
 
+7. **Paper mode is a cheat path by default** — `Mark complete (paper)` sets `grade.score = 'paper'` with zero content validation. Any student-facing disclosure that could reveal the answer (worked solutions, full rubric criteria, correct-answer highlights) must gate on `grade.score !== 'paper'` OR require real content submission. Codex caught this once in s89 grade disclosures; similar checks needed for any future post-grade reveal.
+
+8. **Dynamic DOM rebuild must rebind listeners** — any function that uses `section.innerHTML = ''` or equivalent teardown to rebuild a form (e.g., `refreshAuthPanelVisibility` restore branch) destroys all child DOM nodes AND their event listeners. Cached `ui.*` refs become stale. Canonical fix: extract wiring into a helper (e.g., `wireAuthFormListeners()`) that re-queries elements + re-attaches handlers, then call it from both init and the restore branch.
+
 ### Non-obvious gotchas
 
-- **jsdom smoke probes**: construct JSDOM with `new JSDOM(html, { resources: new ResourceLoader() })` or `<script src>` data files won't load. Default jsdom silently skips external scripts.
+- **jsdom smoke probes**: construct JSDOM with `new JSDOM(html, { url: pathToFileURL(htmlPath).href, resources: new ResourceLoader(), runScripts: 'dangerously' })`. The `file://` URL is critical — relative `<script src>` resolves against the document URL, so an `http://localhost/` URL fails with ECONNREFUSED when nothing's serving. `file://` lets jsdom fetch scripts directly from disk. ResourceLoader is needed to actually fetch them; without it, external scripts are silently skipped.
+- **`[hidden]` attribute vs class specificity**: a static HTML `<div class="sg-modal-backdrop" hidden>` stays VISIBLE because the class rule `.sg-modal-backdrop{display:flex}` (specificity 0,0,1,0) beats the UA `[hidden]{display:none}` (0,0,0,1). Scope the hide rule to the combined selector — `.sg-modal-backdrop[hidden]{display:none}` (0,0,1,1) — to outrank the base class rule.
 - **MathJax 3 delimiters**: LaTeX written into `textContent` must be wrapped in `\[...\]` block-math delimiters (matches the `displayMath` config at line 314-315). Undelimited strings are silently ignored.
 - **CSS-pixel vs bitmap-pixel on CSS-scaled canvas**: mastery map canvas has `width=1000 height=700` attributes plus `max-width:100%`. All mouse handlers must multiply `e.offsetX` by `canvas.width/rect.width` to convert CSS → bitmap space (see `toBitmap` helper inside `showMasteryMapModal`). jsdom `getBoundingClientRect` returns zero-width, so this bug is invisible in tests — verify in a real browser or with a probe that computes coords from `computeMapLayout`.
 - **Dispatch verification**: Sonnet once returned a fabricated "263/263 tests pass" result file (s88b) without touching the HTML at all. Always run `git status` after dispatch and confirm expected files are in the modified list BEFORE trusting the report. A result file listing deliverables is not evidence the deliverables exist.
@@ -242,11 +253,15 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 | `.v5-ladder-block.js` | v5 tier ladder pure functions (proxies v4) |
 | `.v6-frq-decomp-block.js` | v6 FRQ decomposition logic (`computeEffectivePenalty`, helper tracking) |
 | `data/ap-stats-cartridge.js` | 81 formula cards with latex, explain, hint, subconcepts |
-| `data/frq-decompositions.json` | 31 skills across 9 gate FRQs |
+| `data/frq-decompositions.json` | 31 skills across 9 gate FRQs (no `penalty` field — stripped s89) |
+| `data/study-guide-frq-bank.js` | 9 localized gate FRQ prompts + worked solutions + official AP rubrics (s89 drives grade-card disclosures) |
 | `data/formula-procedure-map.js` | Formula → TI-84 procedure mappings (36 → 33 after s87 drops) |
 | `data/ti84-procedures.js` | Wrapper exposing `ti84-procedures-data.json` as `window.TI84_PROCEDURES` |
 | `data/formula-probe-supplement.js` | Hand-authored MCQ supplement (ONLY place to add new MCQs) |
+| `lib/chart.min.js` + `lib/chartjs-plugin-datalabels.min.js` | Vendored Chart.js + datalabels plugin (s90) |
+| `lib/curriculum-charts.js` | Lifted `curriculum_render/js/charts.js` + `charthelper.js` — defines `window.getChartHtml` / `window.renderChartNow` / `window.chartInstances` |
 | `scripts/supplement-probe-signal.mjs` | Signal monitor for supplement probes (run on school network) |
+| `scripts/audit-question-context.mjs` | Question context audit — classifies 807 served questions (s90) |
 
 ---
 
@@ -256,7 +271,7 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 
 **Sessions 65-75**: full narratives in `SESSIONS_ARCHIVE.md` (QR button, Physical Mode pivot, Options dialog, choice flash, study guide v2/v3/v4).
 
-**Sessions 76-88**: one line per session below. Use `git show <hash>` for implementation details, file lists, and test-count deltas.
+**Sessions 76-90**: one line per session below. Use `git show <hash>` for implementation details, file lists, and test-count deltas.
 
 | # | Commit | Delta |
 |---|--------|-------|
@@ -274,17 +289,21 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 | 87 | e3ff567 | Apply s86 audit: drop 3 wrong `normalcdf` map entries (`zscore`, `z-test-stat`, `empirical-rule`) + fix 6 FRQ skill drifts + 6 cartridge wording updates |
 | 88a | beef1d3 | Mastery map click/hover/zoom fix: `toBitmap` helper for CSS-scaled canvas (5 mouse handlers) |
 | 88b | d77b174 | Remove "See all formulas" disclosure + add "Practice this formula" button to formula card modal. Sonnet fabricated the deliverables; Opus applied the edits directly after catching via `git status` |
-
-**Post-session 88**: git log has further commits that are not narrated above — `7fe8726` (two-prop TI-84 walkthroughs — closes the old s87 carry-over), `44b0b2b` (make TI-84 steps visible in formula modal), `939246d` (student profiles + Supabase backups), `dfc84e4` (username flow), `762f8e8` (shared Supabase), `5da9fb0` (localize gate FRQs + official scoring). Check `git log --oneline -- study_guide_diagnostic.html` for the full post-88 trail.
+| — | 7fe8726..5da9fb0 | Interim batch between s88 and s89 (no formal session number): two-prop TI-84 walkthroughs (closes s87 carry-over), make TI-84 steps visible in formula modal, student profiles + username flow + shared Supabase backups, **localize gate FRQs with official scoring rubrics into `data/study-guide-frq-bank.js`** — the last one is what s89 Workstream D surfaces in the grade card |
+| 89 | bd1c906 | Login UX (hide on verify, drop Period / New-Username, Create link → modal, sign-out strip, listener rebind helper) + official AP rubric + worked-solution disclosures in `renderGrade` (paper-mode gated) + FRQ decomposition audit (`whyItMatters` tightened on u5/u9) + **strip `skill.penalty`** metadata + JSON↔wrapper parity test (incidentally closed an s87 wrapper drift regression) |
+| 90 | 53d275f | Question context audit (`scripts/audit-question-context.mjs`, 807 served questions, 9-status classification) + **lift chart rendering** (`curriculum_render/js/charts.js` → `lib/curriculum-charts.js` + vendored Chart.js) — 59 chart questions now render. `attachMedia` extended with `hasChart` branch, `isDarkMode()` patched for `data-theme="night"`, `--chart-*` CSS variables added, chart instance cleanup on active-probe change. Phase 4 (FRQ solution-part charts) deferred |
+| 91 | _pending_ | Tier-jump diagnosis (debt ladder confirmed WAI) + **Phase 4 FRQ solution-part charts** (deferred-render via `<details>` toggle listener for U2-PC-FRQ-Q02 part c + U9-PC-FRQ-Q01 part a) + **discovered `attachments.charts` plural form silently missing charts** → extend `attachMedia` with `hasCharts` branch + update `classifyQuestion` in audit script. Net: OK_CHART 59 → 70 (+11 multi-chart questions unblocked), CONTEXT_ORPHAN 7 → 1, CONTEXT_UNCLEAR 3 → 3. `.attachment-multi-chart{display:grid}` CSS. 412 → 421 tests (+5 Phase 4 + +5 audit/attachMedia plural). The 1 remaining orphan (U7-L6-Q01) + 3 unclears are genuine self-contained text questions — no action needed. |
 
 ## Open Carry-overs
 
 - **(a) Run `node scripts/supplement-probe-signal.mjs` on the school network** — 16 supplement probes still have zero real-student signal. Deterministic script, just needs network. Commits `probe-signal-reports/YYYY-MM-DD.md`. Carried since s78.
-- **(b) Real student pilot data** — signals to watch: formula modal opens, review-queue reviews/graduations, drill helper usage, mastery map interactions, practice→grade commits. No telemetry bucket yet; direct observation.
+- **(b) Real student pilot data** — signals to watch now include formula modal opens, review-queue reviews/graduations, drill helper usage, mastery map interactions, grade-card rubric disclosures, chart question engagement. No telemetry bucket yet; direct observation.
 - **(c) WEAK setup/output mapping schema** — 16 entries in `data/formula-procedure-map.js` are "uses as input" rather than "computes" (e.g., `phat-se → normalcdf-sampling`). Options: redesign to `{procedureId, relationship: 'direct'|'setup'}`, or drop them. User preference needed.
-- **(d) `skill.penalty` metadata decision** — `.v6-frq-decomp-block.js` ignores the authored per-skill penalty and applies fixed 5/10/15% at runtime. Either wire it up or remove the field from `data/frq-decompositions.json` for cleanliness.
-- **(e) Mobile touch gestures for the mastery map** — deferred from s85. Pinch-zoom + single-finger drag is ~80 LOC.
-- **(f) Block-scope oddity at `study_guide_diagnostic.html:303`** — formally deferred (see Gotchas). Don't flatten without a full v5-destructure rename plan.
+- **(d) Mobile touch gestures for the mastery map** — deferred from s85. Pinch-zoom + single-finger drag is ~80 LOC.
+- **(e) Block-scope oddity at `study_guide_diagnostic.html:303`** — formally deferred (see Gotchas). Don't flatten without a full v5-destructure rename plan.
+- **(f) RESOLVED in s91** — FRQ worked-solution chart rendering for U2-PC-FRQ-Q02 part c + U9-PC-FRQ-Q01 part a landed via toggle-deferred rendering inside `<details class='sg-grade-solution'>`.
+- **(g) RESOLVED in s91** — All 7 original orphans were false positives. 6/7 had `attachments.charts` plural form that the audit missed (fixed — see s91 row). 1/7 (U7-L6-Q01) is self-contained: describes a boxplot but answerable from CLT logic. No action needed.
+- **(h) RESOLVED in s91** — All 3 "unclears" are self-contained text questions flagged by the regex on "below" / "following data". U1-PC-MCQ-B-Q18 describes a normal distribution mathematically; U6-L10-Q04 describes the experiment in full; U8-L5-Q06 describes the chi-square setup fully. No visual needed. (Potential future polish: tighten `UNCLEAR_REGEX` in the audit script to reduce noise.)
 
 ## Regen commands
 

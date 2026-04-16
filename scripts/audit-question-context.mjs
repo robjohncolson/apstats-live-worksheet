@@ -58,9 +58,11 @@ export function classifyQuestion(q, pngRoot, chartRendererAvailable) {
   const hasTable = Array.isArray(att.table) && att.table.length > 0;
   const hasImage = typeof att.image === 'string' && att.image.trim().length > 0;
   const hasChart = typeof att.chartType === 'string' && att.chartType.trim().length > 0;
+  const hasCharts = Array.isArray(att.charts) && att.charts.length > 0
+    && att.charts.some(c => c && typeof c.chartType === 'string' && c.chartType.trim().length > 0);
 
-  // Chart attachment
-  if (hasChart) {
+  // Chart attachment (singular or plural multi-chart array)
+  if (hasChart || hasCharts) {
     // After Phase 2: renderer is available, chart questions can render
     if (chartRendererAvailable) return 'OK_CHART';
     return 'CHART_MISSING_RENDERER';

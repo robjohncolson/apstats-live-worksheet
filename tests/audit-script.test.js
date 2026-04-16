@@ -127,6 +127,49 @@ describe('classifyQuestion — status codes', () => {
     const q = { id: 'TEST-Q14', type: 'multiple-choice', prompt: 'Which of these is correct?', attachments: { choices: [{ key: 'A', value: 'Yes' }] } };
     expect(classifyQuestion(q, PNG_ROOT_FAKE)).toBe('OK');
   });
+
+  it('returns OK_CHART for plural charts array (multi-chart question), renderer present', () => {
+    const q = {
+      id: 'TEST-Q15',
+      type: 'multiple-choice',
+      prompt: 'Based on the histograms, which comparison is correct?',
+      attachments: { charts: [
+        { chartType: 'histogram', title: 'A', series: [] },
+        { chartType: 'histogram', title: 'B', series: [] }
+      ] }
+    };
+    expect(classifyQuestion(q, PNG_ROOT_FAKE, true)).toBe('OK_CHART');
+  });
+
+  it('returns CHART_MISSING_RENDERER for plural charts array when renderer is absent', () => {
+    const q = {
+      id: 'TEST-Q15b',
+      type: 'multiple-choice',
+      prompt: 'Based on the scatterplots, which shows the strongest correlation?',
+      attachments: { charts: [{ chartType: 'scatter', points: [] }] }
+    };
+    expect(classifyQuestion(q, PNG_ROOT_FAKE, false)).toBe('CHART_MISSING_RENDERER');
+  });
+
+  it('empty charts array does not count as a chart attachment', () => {
+    const q = {
+      id: 'TEST-Q15c',
+      type: 'multiple-choice',
+      prompt: 'Which of these is correct?',
+      attachments: { charts: [] }
+    };
+    expect(classifyQuestion(q, PNG_ROOT_FAKE, true)).toBe('OK');
+  });
+
+  it('charts array with only malformed entries does not count as a chart attachment', () => {
+    const q = {
+      id: 'TEST-Q15d',
+      type: 'multiple-choice',
+      prompt: 'Which of these is correct?',
+      attachments: { charts: [{}, null, { chartType: '' }] }
+    };
+    expect(classifyQuestion(q, PNG_ROOT_FAKE, true)).toBe('OK');
+  });
 });
 
 describe('ORPHAN_REGEX — pattern coverage', () => {

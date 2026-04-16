@@ -235,6 +235,8 @@
     .attachment-chart-container{margin:12px 0;background:var(--sg-bg-card);padding:16px;border-radius:8px;border:1px solid var(--sg-border)}
     .attachment-chart-container .chart-title{text-align:center;margin-bottom:12px;font-weight:700;font-size:.95rem;color:var(--sg-text)}
     .attachment-chart-container .chart-canvas{position:relative;height:340px;width:100%}
+    .attachment-multi-chart{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+    .attachment-multi-chart .attachment-chart-container{margin:0}
     .resource-card{display:grid;gap:8px;padding:12px 14px;border-radius:8px;background:var(--sg-bg-card);border:1px solid var(--sg-border)}
     .resource-card-header{font-weight:800;font-size:.88rem;color:var(--sg-text)}
     .resource-link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
@@ -3076,7 +3078,8 @@
         const hasTable = Array.isArray(attachments && attachments.table) && attachments.table.length;
         const hasImage = attachments && typeof attachments.image === 'string' && attachments.image.trim();
         const hasChart = attachments && typeof attachments.chartType === 'string' && attachments.chartType.trim();
-        if (!hasTable && !hasImage && !hasChart) return null;
+        const hasCharts = Array.isArray(attachments && attachments.charts) && attachments.charts.length > 0;
+        if (!hasTable && !hasImage && !hasChart && !hasCharts) return null;
         const wrap = make('div', 'probe-attachments');
         if (hasTable) {
           const table = make('table', 'attachment-table');
@@ -3124,6 +3127,24 @@
           requestAnimationFrame(() => {
             if (window.renderChartNow) window.renderChartNow(attachments, canvasId);
           });
+        }
+        // Plural form: attachments.charts is an array of chartData objects, each shaped like a single chart.
+        // Used for multi-chart questions (e.g. "Which histogram shows…", "For which scatterplot…").
+        if (hasCharts && window.getChartHtml && window.renderChartNow) {
+          const multiWrap = document.createElement('div');
+          multiWrap.className = 'attachment-multi-chart';
+          attachments.charts.forEach(chartData => {
+            if (!chartData || typeof chartData.chartType !== 'string' || !chartData.chartType.trim()) return;
+            const canvasId = `sg-chart-${chartCounter++}`;
+            const chartWrap = document.createElement('div');
+            chartWrap.className = 'attachment-chart-container';
+            chartWrap.innerHTML = window.getChartHtml(chartData, canvasId);
+            multiWrap.appendChild(chartWrap);
+            requestAnimationFrame(() => {
+              if (window.renderChartNow) window.renderChartNow(chartData, canvasId);
+            });
+          });
+          wrap.appendChild(multiWrap);
         }
         return wrap;
       }
@@ -4824,6 +4845,7 @@
               const solutionDetails = make('details', 'sg-grade-solution');
               solutionDetails.appendChild(make('summary', '', '💡 Worked solution'));
               const solutionBody = make('div', 'sg-grade-solution-body');
+              const pendingSolutionCharts = [];
               parts.forEach(part => {
                 const partDiv = make('div', 'sg-grade-solution-part');
                 partDiv.appendChild(make('div', 'sg-grade-rubric-header', `Part (${part.partId})`));
@@ -4838,9 +4860,30 @@
                   part.calculations.forEach(c => calcList.appendChild(make('li', '', c)));
                   partDiv.appendChild(calcList);
                 }
+                // Chart.js inside a closed <details> sees a 0x0 canvas, so defer renderChartNow until first open.
+                if (part.attachments && typeof part.attachments.chartType === 'string' && part.attachments.chartType.trim() && window.getChartHtml && window.renderChartNow) {
+                  const canvasId = `sg-chart-${chartCounter++}`;
+                  const chartWrap = document.createElement('div');
+                  chartWrap.className = 'attachment-chart-container';
+                  chartWrap.innerHTML = window.getChartHtml(part.attachments, canvasId);
+                  partDiv.appendChild(chartWrap);
+                  pendingSolutionCharts.push({ attachments: part.attachments, canvasId });
+                }
                 solutionBody.appendChild(partDiv);
               });
               solutionDetails.appendChild(solutionBody);
+              if (pendingSolutionCharts.length > 0) {
+                let solutionChartsRendered = false;
+                solutionDetails.addEventListener('toggle', () => {
+                  if (!solutionDetails.open || solutionChartsRendered) return;
+                  solutionChartsRendered = true;
+                  pendingSolutionCharts.forEach(({ attachments, canvasId }) => {
+                    requestAnimationFrame(() => {
+                      if (window.renderChartNow) window.renderChartNow(attachments, canvasId);
+                    });
+                  });
+                });
+              }
               panel.appendChild(solutionDetails);
               // Typeset LaTeX in the solution body.
               if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {

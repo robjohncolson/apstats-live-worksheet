@@ -1485,6 +1485,68 @@ describe('session 89 workstream D — rubric surfacing in renderGrade', () => {
   });
 });
 
+describe('session 91 phase 4 — FRQ solution-part chart rendering', () => {
+  it('renderGrade solution branch reads part.attachments.chartType', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("part.attachments && typeof part.attachments.chartType === 'string'");
+  });
+
+  it('renderGrade solution branch uses chartCounter + getChartHtml', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('window.getChartHtml(part.attachments, canvasId)');
+  });
+
+  it('renderGrade solution branch defers chart rendering via toggle listener', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('pendingSolutionCharts');
+    expect(src).toContain("solutionDetails.addEventListener('toggle'");
+    expect(src).toContain('solutionChartsRendered');
+  });
+
+  it('renderGrade solution branch calls renderChartNow inside rAF', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toMatch(/requestAnimationFrame\(\(\) => \{\s*if \(window\.renderChartNow\) window\.renderChartNow\(attachments, canvasId\);/);
+  });
+
+  it('study-guide-frq-bank still has solution chart attachments for U2 part c and U9 part a', () => {
+    const bankSrc = readFileSync(resolve(__dirname, '../data/study-guide-frq-bank.js'), 'utf8');
+    // U2-PC-FRQ-Q02 part c: normal distribution
+    expect(bankSrc).toMatch(/"partId":\s*"c"[\s\S]*?"chartType":\s*"normal"/);
+    // U9-PC-FRQ-Q01 part a: scatter
+    expect(bankSrc).toMatch(/"partId":\s*"a"[\s\S]*?"chartType":\s*"scatter"/);
+  });
+});
+
+describe('session 91 — attachMedia plural charts array', () => {
+  it('attachMedia detects hasCharts for attachments.charts plural form', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('const hasCharts = Array.isArray(attachments && attachments.charts) && attachments.charts.length > 0');
+  });
+
+  it('attachMedia early-return gate includes hasCharts', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('if (!hasTable && !hasImage && !hasChart && !hasCharts) return null');
+  });
+
+  it('attachMedia plural branch iterates attachments.charts and skips malformed entries', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('attachments.charts.forEach(chartData =>');
+    expect(src).toContain("typeof chartData.chartType !== 'string'");
+  });
+
+  it('attachMedia plural branch wraps each chart in attachment-chart-container inside attachment-multi-chart', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain("multiWrap.className = 'attachment-multi-chart'");
+    expect(src).toContain("chartWrap.className = 'attachment-chart-container'");
+  });
+
+  it('attachment-multi-chart CSS grid layout is defined', () => {
+    const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('.attachment-multi-chart{display:grid');
+    expect(src).toContain('minmax(320px,1fr)');
+  });
+});
+
 describe('session 89 workstream A — login bar UX', () => {
   it('student-info section does not contain studentPeriod or newStudentUsername ids', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
