@@ -660,6 +660,13 @@
         return v4 && v4.TIER_MULTIPLIERS ? v4.TIER_MULTIPLIERS : {};
       }
     },
+    MASTERY_THRESHOLD: {
+      enumerable: true,
+      get: function() {
+        const v4 = getV4();
+        return v4 && v4.MASTERY_THRESHOLD ? v4.MASTERY_THRESHOLD : 0.75;
+      }
+    },
     BKT_INIT: {
       enumerable: true,
       get: function() {

@@ -1730,6 +1730,13 @@
               return v4 && v4.TIER_MULTIPLIERS ? v4.TIER_MULTIPLIERS : {};
             }
           },
+          MASTERY_THRESHOLD: {
+            enumerable: true,
+            get: function() {
+              const v4 = getV4();
+              return v4 && v4.MASTERY_THRESHOLD ? v4.MASTERY_THRESHOLD : 0.75;
+            }
+          },
           BKT_INIT: {
             enumerable: true,
             get: function() {
@@ -1933,7 +1940,7 @@
           computeEffectiveScore: computeEffectiveScore
         };
       })(typeof window !== 'undefined' ? window : globalThis);
-      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, queuedFormulasToday, daysBetween, reviewQueueEntries, graduateFormula, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
+      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, queuedFormulasToday, daysBetween, reviewQueueEntries, graduateFormula, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, MASTERY_THRESHOLD, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
       const { getFrqDecomposition, recordHelperUsed, computeEffectivePenalty, computeEffectiveScore } = window.__studyGuideV6__;
       function defaultFrqHelpers() {
         return { formulasViewed: [], mcqDrills: {}, confirmed: false, activeDrillQuestionId: null };
