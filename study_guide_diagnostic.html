@@ -340,6 +340,21 @@
     .sg-mastery-map-tooltip[hidden]{display:none}
     .sg-mastery-tooltip-name{font-weight:700;color:#fff}
     .sg-mastery-tooltip-meta{color:#a0aac8;margin-top:2px}
+    .sg-scoreboard-btn{background:none;border:none;color:var(--sg-accent);cursor:pointer;font-size:.9rem;text-decoration:underline;padding:0}
+    .sg-scoreboard-btn:hover{color:var(--sg-text)}
+    .sg-scoreboard-modal .sg-modal{max-width:480px}
+    .sg-scoreboard-table{width:100%;border-collapse:collapse;font-size:.88rem}
+    .sg-scoreboard-table th{text-align:left;padding:6px 8px;border-bottom:2px solid var(--sg-border);color:var(--sg-text-dim);font-weight:700;font-size:.8rem}
+    .sg-scoreboard-table th:last-child{text-align:right}
+    .sg-scoreboard-table td{padding:6px 8px;border-bottom:1px solid var(--sg-border)}
+    .sg-scoreboard-table td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+    .sg-scoreboard-row-me{background:var(--sg-bar-track);font-weight:700}
+    .sg-scoreboard-separator td,.sg-scoreboard-separator td:last-child{text-align:center;color:var(--sg-text-dim);border-bottom:none;padding:4px 8px;font-size:.8rem}
+    .sg-scoreboard-bar-wrap{display:inline-block;width:60px;height:10px;border-radius:4px;background:var(--sg-bar-track);vertical-align:middle;overflow:hidden}
+    .sg-scoreboard-bar{display:block;height:100%;border-radius:4px}
+    .sg-scoreboard-empty{text-align:center;color:var(--sg-text-dim);padding:24px 0;font-size:.9rem}
+    .sg-scoreboard-loading{text-align:center;color:var(--sg-text-dim);padding:24px 0;font-size:.9rem}
+    .sg-scoreboard-error{text-align:center;color:var(--sg-mastery-low,#e74c3c);padding:24px 0;font-size:.9rem}
   </style>
 </head>
 <body>
@@ -2431,6 +2446,11 @@
           strip.appendChild(make('span', '', 'Signed in as\u00a0'));
           strip.appendChild(make('span', 'sg-signed-in-name', displayName));
           strip.appendChild(make('span', '', '\u00a0·\u00a0'));
+          const scoreboardBtn = make('button', 'sg-scoreboard-btn', 'Scoreboard');
+          scoreboardBtn.type = 'button';
+          scoreboardBtn.addEventListener('click', showScoreboardModal);
+          strip.appendChild(scoreboardBtn);
+          strip.appendChild(make('span', '', '\u00a0·\u00a0'));
           const signOutBtn = make('button', 'sg-signout-btn', 'Sign out');
           signOutBtn.type = 'button';
           signOutBtn.addEventListener('click', () => {
@@ -3903,6 +3923,194 @@
         tierInfoModal = backdrop;
         modal.focus();
         return tierInfoModal;
+      }
+
+      function countGreenNodes(studentState) {
+        var count = 0;
+        var touched = studentState && studentState.touchedFormulas;
+        if (!touched || typeof touched !== 'object') return 0;
+        var formulaIds = Object.keys(FORMULA_UNIT_MAP);
+        for (var i = 0; i < formulaIds.length; i++) {
+          var entry = touched[formulaIds[i]];
+          if (entry && typeof entry.lastMastery === 'number' && entry.lastMastery >= MASTERY_THRESHOLD) {
+            count++;
+          }
+        }
+        return count;
+      }
+
+      async function fetchScoreboardData() {
+        var config = getSupabaseSyncConfig();
+        if (!config) throw new Error('Cloud sync is not configured.');
+        var query = [
+          config.worksheetColumn + '=eq.' + encodeURIComponent(REMOTE_WORKSHEET_ID),
+          'select=' + encodeURIComponent(config.usernameColumn + ',' + config.stateColumn)
+        ].join('&');
+        var response = await fetch(config.url + '/rest/v1/' + config.table + '?' + query, {
+          headers: {
+            apikey: config.anonKey,
+            Authorization: 'Bearer ' + config.anonKey
+          }
+        });
+        if (!response.ok) throw new Error('Supabase returned ' + response.status);
+        var rows = await response.json();
+        if (!Array.isArray(rows)) return [];
+        var results = [];
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          if (!row) continue;
+          var username = normalizeUsername(row[config.usernameColumn]);
+          if (!username) continue;
+          var rawState = row[config.stateColumn];
+          var parsed = rawState && typeof rawState === 'object' ? normalizeState(rawState) : null;
+          var greenCount = parsed ? countGreenNodes(parsed) : 0;
+          var profileKey = usernameLookupKey(username);
+          var profile = rosterProfiles.find(function(p) {
+            return usernameLookupKey(p.username) === profileKey;
+          });
+          var displayName = profile && profile.name ? profile.name : username;
+          results.push({ username: username, displayName: displayName, greenCount: greenCount });
+        }
+        results.sort(function(a, b) {
+          if (b.greenCount !== a.greenCount) return b.greenCount - a.greenCount;
+          return a.displayName.localeCompare(b.displayName);
+        });
+        return results;
+      }
+
+      async function showScoreboardModal() {
+        if (document.querySelector('.sg-scoreboard-modal')) return;
+        var TOTAL_FORMULAS = Object.keys(FORMULA_UNIT_MAP).length;
+
+        var backdrop = make('div', 'sg-modal-backdrop sg-scoreboard-modal');
+        var modal = make('div', 'sg-modal');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.tabIndex = -1;
+
+        modal.appendChild(make('h2', '', 'Scoreboard'));
+        var subtitle = make('p', '', 'Green mastery nodes out of ' + TOTAL_FORMULAS);
+        subtitle.style.margin = '0';
+        subtitle.style.fontSize = '.85rem';
+        subtitle.style.color = 'var(--sg-text-dim)';
+        modal.appendChild(subtitle);
+
+        var body = make('div', '');
+        body.appendChild(make('p', 'sg-scoreboard-loading', 'Loading scoreboard\u2026'));
+        modal.appendChild(body);
+
+        var closeModal = function() {
+          backdrop.remove();
+          document.removeEventListener('keydown', escHandler);
+        };
+        var escHandler = function(e) {
+          if (e.key === 'Escape') closeModal();
+        };
+
+        var closeBtn = make('button', 'action-btn secondary', 'Close');
+        closeBtn.type = 'button';
+        closeBtn.addEventListener('click', closeModal);
+        closeBtn.style.marginTop = '4px';
+        modal.appendChild(closeBtn);
+
+        backdrop.addEventListener('click', function(e) {
+          if (e.target === backdrop) closeModal();
+        });
+        document.addEventListener('keydown', escHandler);
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+        modal.focus();
+
+        try {
+          var data = await fetchScoreboardData();
+          body.innerHTML = '';
+
+          if (data.length === 0) {
+            body.appendChild(make('p', 'sg-scoreboard-empty', 'No student data yet.'));
+            return;
+          }
+
+          var ranks = [];
+          var currentRank = 1;
+          for (var i = 0; i < data.length; i++) {
+            if (i > 0 && data[i].greenCount < data[i - 1].greenCount) {
+              currentRank = i + 1;
+            }
+            ranks.push(currentRank);
+          }
+
+          var cutoff = Math.ceil(data.length / 2);
+
+          var myKey = authSession.verified ? usernameLookupKey(authSession.username) : null;
+          var myIndex = -1;
+          if (myKey) {
+            for (var j = 0; j < data.length; j++) {
+              if (usernameLookupKey(data[j].username) === myKey) {
+                myIndex = j;
+                break;
+              }
+            }
+          }
+
+          if (cutoff < data.length) {
+            var boundaryRank = ranks[cutoff - 1];
+            while (cutoff < data.length && ranks[cutoff] === boundaryRank) {
+              cutoff++;
+            }
+          }
+
+          var table = make('table', 'sg-scoreboard-table');
+          var thead = make('thead', '');
+          var headRow = make('tr', '');
+          headRow.appendChild(make('th', '', '#'));
+          headRow.appendChild(make('th', '', 'Student'));
+          headRow.appendChild(make('th', '', 'Mastered'));
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+
+          var tbody = make('tbody', '');
+
+          function buildRow(index) {
+            var entry = data[index];
+            var isMe = myKey && usernameLookupKey(entry.username) === myKey;
+            var tr = make('tr', isMe ? 'sg-scoreboard-row-me' : '');
+            tr.appendChild(make('td', '', String(ranks[index])));
+            tr.appendChild(make('td', '', entry.displayName));
+
+            var scoreCell = make('td', '');
+            var barWrap = make('span', 'sg-scoreboard-bar-wrap');
+            var bar = make('span', 'sg-scoreboard-bar');
+            var pct = TOTAL_FORMULAS > 0 ? (entry.greenCount / TOTAL_FORMULAS) * 100 : 0;
+            bar.style.width = pct + '%';
+            bar.style.background = 'hsl(120,75%,50%)';
+            barWrap.appendChild(bar);
+            scoreCell.appendChild(barWrap);
+            scoreCell.appendChild(document.createTextNode(' ' + entry.greenCount + '/' + TOTAL_FORMULAS));
+            tr.appendChild(scoreCell);
+
+            return tr;
+          }
+
+          for (var k = 0; k < cutoff && k < data.length; k++) {
+            tbody.appendChild(buildRow(k));
+          }
+
+          if (myIndex >= cutoff) {
+            var sepRow = make('tr', 'sg-scoreboard-separator');
+            var sepCell = make('td', '', '\u00b7\u00b7\u00b7');
+            sepCell.colSpan = 3;
+            sepRow.appendChild(sepCell);
+            tbody.appendChild(sepRow);
+            tbody.appendChild(buildRow(myIndex));
+          }
+
+          table.appendChild(tbody);
+          body.appendChild(table);
+
+        } catch (err) {
+          body.innerHTML = '';
+          body.appendChild(make('p', 'sg-scoreboard-error', 'Could not load scoreboard. ' + (err && err.message || '')));
+        }
       }
 
       function renderQueuePane() {
