@@ -16,6 +16,9 @@
       --sg-mastery-low:#c0392b;
       --sg-mastery-mid:#d4a017;
       --sg-mastery-high:#2e7d32;
+      --chart-text:#333333;
+      --chart-grid:rgba(0,0,0,0.1);
+      --chart-point:#36A2EB;
     }
     :root[data-theme="paper"]{
       --sg-bg:#f7f2e8;
@@ -28,6 +31,9 @@
       --sg-mastery-low:#c0392b;
       --sg-mastery-mid:#d4a017;
       --sg-mastery-high:#2e7d32;
+      --chart-text:#333333;
+      --chart-grid:rgba(0,0,0,0.1);
+      --chart-point:#36A2EB;
     }
     :root[data-theme="night"]{
       --sg-bg:#14171c;
@@ -40,6 +46,9 @@
       --sg-mastery-low:#e57373;
       --sg-mastery-mid:#e6c35c;
       --sg-mastery-high:#66bb6a;
+      --chart-text:#E8E8E8;
+      --chart-grid:rgba(255,255,255,0.1);
+      --chart-point:#6FAEFF;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:var(--sg-text);background:var(--sg-bg)}
@@ -223,6 +232,9 @@
     .attachment-table th{background:var(--sg-bar-track);color:var(--sg-text)}
     .attachment-figure{margin:0;display:grid;gap:8px}
     .attachment-figure img{width:min(100%,560px);border-radius:8px;border:1px solid var(--sg-border);background:var(--sg-bg-card)}
+    .attachment-chart-container{margin:12px 0;background:var(--sg-bg-card);padding:16px;border-radius:8px;border:1px solid var(--sg-border)}
+    .attachment-chart-container .chart-title{text-align:center;margin-bottom:12px;font-weight:700;font-size:.95rem;color:var(--sg-text)}
+    .attachment-chart-container .chart-canvas{position:relative;height:340px;width:100%}
     .resource-card{display:grid;gap:8px;padding:12px 14px;border-radius:8px;background:var(--sg-bg-card);border:1px solid var(--sg-border)}
     .resource-card-header{font-weight:800;font-size:.88rem;color:var(--sg-text)}
     .resource-link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
@@ -393,6 +405,9 @@
   </main>
 
   <div id="toast" class="toast" aria-live="polite"></div>
+  <script src="lib/chart.min.js"></script>
+  <script src="lib/chartjs-plugin-datalabels.min.js"></script>
+  <script src="lib/curriculum-charts.js"></script>
   <script src="../railway_config.js"></script>
   <script src="../railway_client.js"></script>
   <script>if (!window.RAILWAY_SERVER_URL) window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';</script>
@@ -432,6 +447,7 @@
       'use strict';
 
       // --- constants ---
+      let chartCounter = 0; // unique canvas IDs for chart attachments
       const AP_EXAM_DATE = '2026-05-07';
       const UNIT_EXAM_WEIGHTS = { 1: 0.19, 2: 0.135, 3: 0.06, 4: 0.15, 5: 0.095, 6: 0.135, 7: 0.14, 8: 0.035, 9: 0.035 };
       const TIER_MULTIPLIERS = { core: 4, regular: 3, power: 2, support: 1 };
@@ -3059,7 +3075,8 @@
       function attachMedia(attachments) {
         const hasTable = Array.isArray(attachments && attachments.table) && attachments.table.length;
         const hasImage = attachments && typeof attachments.image === 'string' && attachments.image.trim();
-        if (!hasTable && !hasImage) return null;
+        const hasChart = attachments && typeof attachments.chartType === 'string' && attachments.chartType.trim();
+        if (!hasTable && !hasImage && !hasChart) return null;
         const wrap = make('div', 'probe-attachments');
         if (hasTable) {
           const table = make('table', 'attachment-table');
@@ -3095,6 +3112,18 @@
           fig.appendChild(img);
           if (attachments.imageCaption || attachments.imageAlt) fig.appendChild(make('figcaption', '', attachments.imageCaption || attachments.imageAlt || ''));
           wrap.appendChild(fig);
+        }
+        if (hasChart && window.getChartHtml && window.renderChartNow) {
+          // Two-phase chart rendering: inject HTML first, then draw after canvas is in the DOM.
+          const canvasId = `sg-chart-${chartCounter++}`;
+          const chartWrap = document.createElement('div');
+          chartWrap.className = 'attachment-chart-container';
+          chartWrap.innerHTML = window.getChartHtml(attachments, canvasId);
+          wrap.appendChild(chartWrap);
+          // Defer renderChartNow until after the caller appends wrap to the DOM.
+          requestAnimationFrame(() => {
+            if (window.renderChartNow) window.renderChartNow(attachments, canvasId);
+          });
         }
         return wrap;
       }
@@ -4237,6 +4266,17 @@
           }
         }
 
+        // Prune any Chart.js instances attached to canvases in the old active probe before tearing down the DOM
+        if (window.chartInstances && ui.active) {
+          const oldCanvases = ui.active.querySelectorAll('canvas[id^="sg-chart-"]');
+          oldCanvases.forEach(c => {
+            const inst = window.chartInstances[c.id];
+            if (inst && typeof inst.destroy === 'function') {
+              try { inst.destroy(); } catch (_) { /* ignore */ }
+              delete window.chartInstances[c.id];
+            }
+          });
+        }
         ui.active.innerHTML = '';
         ui.active.appendChild(card);
         typeset(ui.active);
