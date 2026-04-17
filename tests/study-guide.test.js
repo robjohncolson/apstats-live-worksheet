@@ -239,18 +239,20 @@ describe('study_guide_diagnostic.html — v4 daily queue layout', () => {
     expect(src).toContain('data/formula-probe-supplement.js');
   });
 
-  it('uses the v6 schema version, storage key, and state id', () => {
+  it('uses the v7 schema version, storage key, and state id', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain("STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v6'");
-    expect(src).toContain('SCHEMA_VERSION = 6');
-    expect(src).toContain('sg-state-v6');
+    expect(src).toContain("STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v7'");
+    expect(src).toContain('SCHEMA_VERSION = 7');
+    expect(src).toContain('sg-state-v7');
   });
 
-  it('declares v6 storage schema', () => {
+  it('declares v7 storage schema and keeps v6 migration chain', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
+    expect(src).toContain('apStatsStudyGuideDiagnostic.v7');
+    expect(src).toContain('sg-state-v7');
+    expect(src).toContain('SCHEMA_VERSION = 7');
+    // v6 key still referenced in migration chain (fallback load)
     expect(src).toContain('apStatsStudyGuideDiagnostic.v6');
-    expect(src).toContain('sg-state-v6');
-    expect(src).toContain('SCHEMA_VERSION = 6');
   });
 
   it('exposes v6 FRQ decomposition helpers', () => {

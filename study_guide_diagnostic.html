@@ -323,6 +323,10 @@
     .frq-paper-note{display:grid;gap:6px;padding:14px 16px;border-radius:8px;background:var(--sg-bar-track);border:1px solid var(--sg-border);color:var(--sg-text);line-height:1.55}
     .toast{position:fixed;right:18px;bottom:18px;max-width:min(360px,calc(100vw - 36px));padding:14px 16px;border-radius:8px;background:var(--sg-bg-card);color:var(--sg-text);border:1px solid var(--sg-border);opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .18s ease,transform .18s ease;z-index:30;line-height:1.45}
     .toast.visible{opacity:1;transform:translateY(0)}
+    .sg-unit-locked{opacity:0.5;pointer-events:auto;cursor:not-allowed}
+    .sg-enter-code-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;background:var(--sg-bg);border:1px solid var(--sg-border);border-radius:8px;margin-top:8px}
+    .sg-enter-code-label{font-weight:700;color:var(--sg-text)}
+    .sg-enter-code-input{flex:1;min-width:120px;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.1em;text-transform:uppercase}
     #theme-toggle{background:var(--sg-bg-card);color:var(--sg-text);border:1px solid var(--sg-border);padding:6px 12px;border-radius:6px;cursor:pointer}
     @media (max-width:900px){.header{grid-template-columns:1fr;text-align:center}.header-left,.header-center,.header-right{justify-self:center}.student-info,.progress-summary,#sg-layout{grid-template-columns:1fr}}
     @media (max-width:620px){.page{width:min(100% - 16px,100%);padding-top:18px}.action-bar{align-items:stretch}.action-btn,.import-label,#theme-toggle{width:100%}}
@@ -479,9 +483,9 @@
   <script src="data/formula-procedure-map.js"></script>
   <script>
     (() => {
-      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v6';
-      const SCHEMA_VERSION = 6;
-      const STATE_ID = 'sg-state-v6';
+      const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v7';
+      const SCHEMA_VERSION = 7;
+      const STATE_ID = 'sg-state-v7';
       const UNIT_COUNT = 9;
       const PROFILE_INDEX_KEY = 'apStatsStudyGuideDiagnostic.userProfiles';
       const ACTIVE_USER_KEY = 'apStatsStudyGuideDiagnostic.activeUsername';
@@ -495,7 +499,7 @@
 
       // --- constants ---
       let chartCounter = 0; // unique canvas IDs for chart attachments
-      const AP_EXAM_DATE = '2026-05-07';
+      // AP_EXAM_DATE is assigned after the v7 block is initialized (see below).
       const UNIT_EXAM_WEIGHTS = { 1: 0.19, 2: 0.135, 3: 0.06, 4: 0.15, 5: 0.095, 6: 0.135, 7: 0.14, 8: 0.035, 9: 0.035 };
       const TIER_MULTIPLIERS = { core: 4, regular: 3, power: 2, support: 1 };
       const MASTERY_THRESHOLD = 0.75;
@@ -1604,12 +1608,23 @@
           ensureDoseLadder(sourceState);
           sourceState.doseLadder.tier = tier;
 
+          // v7 gating: filter candidates to unlocked units only.
+          const v7 = (typeof window !== 'undefined' ? window : globalThis).__studyGuideV7__;
+          const isUnlocked = v7 && typeof v7.isUnitUnlocked === 'function'
+            ? v7.isUnitUnlocked
+            : function() { return true; };
+
+          const mcqRaw = buildMcqQueue(sourceState, spec.mcq);
+          const frqRaw = pickDailyFrqs(sourceState, spec.frq);
+          const mcq = mcqRaw.filter(function(entry) { return isUnlocked(entry.unit, sourceState); });
+          const frq = frqRaw.filter(function(entry) { return isUnlocked(entry.unit, sourceState); });
+
           return {
             date: todayStr,
             tierAtGeneration: tier,
-            mcq: buildMcqQueue(sourceState, spec.mcq),
+            mcq: mcq,
             mcqCompleted: [],
-            frq: pickDailyFrqs(sourceState, spec.frq),
+            frq: frq,
             frqCompleted: [],
             activeTab: 'mcq'
           };
@@ -1970,8 +1985,128 @@
           computeEffectiveScore: computeEffectiveScore
         };
       })(typeof window !== 'undefined' ? window : globalThis);
-      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, queuedFormulasToday, daysBetween, reviewQueueEntries, graduateFormula, AP_EXAM_DATE, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, MASTERY_THRESHOLD, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
+      // --- v7 unlock-code + summer-gating helpers (inline copy; authoritative version in .v7-unlock-block.js) ---
+      (function(window) {
+        'use strict';
+
+        const UNLOCK_SALT = 'apstats-unlock-v1-3f9a2c';
+        const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+        const UNIT_COUNT_V7 = 9;
+
+        function normalizeUnlockInput(s) {
+          return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function normalizeCodeInput(s) {
+          return String(s || '')
+            .toUpperCase()
+            .replace(/[\s\-]/g, '')
+            .replace(/I/g, '1')
+            .replace(/L/g, '1')
+            .replace(/O/g, '0');
+        }
+
+        function crockfordBase32(bytes) {
+          let result = '';
+          let buffer = 0;
+          let bitsInBuffer = 0;
+          let i;
+
+          for (i = 0; i < bytes.length; i += 1) {
+            buffer = (buffer << 8) | bytes[i];
+            bitsInBuffer += 8;
+
+            while (bitsInBuffer >= 5) {
+              bitsInBuffer -= 5;
+              result += CROCKFORD[(buffer >> bitsInBuffer) & 0x1f];
+            }
+          }
+
+          if (bitsInBuffer > 0) {
+            result += CROCKFORD[(buffer << (5 - bitsInBuffer)) & 0x1f];
+          }
+
+          return result;
+        }
+
+        async function generateUnlockCode(username, unit) {
+          const payload = UNLOCK_SALT + '|' + normalizeUnlockInput(username) + '|' + unit;
+          const bytes = new TextEncoder().encode(payload);
+          const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+          return crockfordBase32(new Uint8Array(digest)).slice(0, 6).toUpperCase();
+        }
+
+        async function verifyUnlockCode(inputCode, username, unit) {
+          const normalized = normalizeCodeInput(inputCode);
+          const expected = await generateUnlockCode(username, unit);
+          return normalized === expected;
+        }
+
+        function isUnitUnlocked(unit, state) {
+          if (!state || state.curriculumMode !== 'gated') return true;
+          const list = Array.isArray(state.unlockedUnits) ? state.unlockedUnits : [];
+          return list.includes(Number(unit));
+        }
+
+        function nextLockedUnit(state) {
+          if (!state || state.curriculumMode !== 'gated') return null;
+          const unlocked = new Set((state.unlockedUnits || []).map(Number));
+          let u;
+
+          for (u = 1; u <= UNIT_COUNT_V7; u += 1) {
+            if (!unlocked.has(u)) return u;
+          }
+
+          return null;
+        }
+
+        async function applyUnlockCode(inputCode, state) {
+          if (!state || state.curriculumMode !== 'gated') {
+            return { ok: false, reason: 'not-gated' };
+          }
+
+          const nextUnit = nextLockedUnit(state);
+
+          if (!nextUnit) {
+            return { ok: false, reason: 'already-fully-unlocked' };
+          }
+
+          const valid = await verifyUnlockCode(inputCode, state.studentUsername, nextUnit);
+
+          if (!valid) {
+            return { ok: false, reason: 'invalid-code', attemptedUnit: nextUnit };
+          }
+
+          state.unlockedUnits = [...(state.unlockedUnits || []), nextUnit].sort((a, b) => a - b);
+          return { ok: true, unlockedUnit: nextUnit };
+        }
+
+        function computeApExamDate(today) {
+          const ref = today instanceof Date ? today : new Date();
+          const year = ref.getFullYear();
+          // Roll over at midnight May 8 so all of May 7 (exam day) stays on the current year.
+          const rolloverPoint = new Date(year + '-05-08T00:00:00');
+          return ref >= rolloverPoint ? (year + 1) + '-05-07' : year + '-05-07';
+        }
+
+        window.__studyGuideV7__ = {
+          UNLOCK_SALT: UNLOCK_SALT,
+          UNIT_COUNT: UNIT_COUNT_V7,
+          normalizeUnlockInput: normalizeUnlockInput,
+          normalizeCodeInput: normalizeCodeInput,
+          crockfordBase32: crockfordBase32,
+          generateUnlockCode: generateUnlockCode,
+          verifyUnlockCode: verifyUnlockCode,
+          isUnitUnlocked: isUnitUnlocked,
+          nextLockedUnit: nextLockedUnit,
+          applyUnlockCode: applyUnlockCode,
+          computeApExamDate: computeApExamDate
+        };
+      })(typeof window !== 'undefined' ? window : globalThis);
+      const { LADDER, STUDY_START_DATE, TIER_CALENDAR_DAYS, GATE_IDS_V5, daysSinceStudyStart, calendarTier, debtToTier, computeDoseTier, tierSpec, updateDebtFromPriorDose, unitMeanMastery, pickDailyFrqs, pickDailyQueueV5, advanceDailyQueueV5, setActiveTab, daysLeft, computeDailyDose, formulaMastery, formulaWeight, formulaName, touchedFormulaCount, pickProbeForFormula, recordFormulaTouch, recordFormulaHint, getFormulaEntry, queuedFormulasToday, daysBetween, reviewQueueEntries, graduateFormula, UNIT_EXAM_WEIGHTS, TIER_MULTIPLIERS, BKT_INIT, DOSE_MIN, DOSE_MAX, MASTERY_THRESHOLD, FORMULA_UNIT_MAP } = window.__studyGuideV5__;
       const { getFrqDecomposition, recordHelperUsed, computeEffectivePenalty, computeEffectiveScore } = window.__studyGuideV6__;
+      const { isUnitUnlocked, nextLockedUnit, applyUnlockCode, computeApExamDate } = window.__studyGuideV7__;
+      const AP_EXAM_DATE = computeApExamDate();
       function defaultFrqHelpers() {
         return { formulasViewed: [], mcqDrills: {}, confirmed: false, activeDrillQuestionId: null };
       }
@@ -2264,7 +2399,7 @@
       function normalizeState(raw) {
         const next = makeDefaultState();
         if (!raw || typeof raw !== 'object') return next;
-        if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4 && raw.schemaVersion !== 5 && raw.schemaVersion !== 6) return next;
+        if (raw.schemaVersion !== 2 && raw.schemaVersion !== 3 && raw.schemaVersion !== 4 && raw.schemaVersion !== 5 && raw.schemaVersion !== 6 && raw.schemaVersion !== 7) return next;
         next.studentUsername = typeof raw.studentUsername === 'string' ? raw.studentUsername.trim() : '';
         next.studentPeriod = typeof raw.studentPeriod === 'string' ? raw.studentPeriod : '';
         next.savedAt = typeof raw.savedAt === 'string' ? raw.savedAt : new Date().toISOString();
@@ -2280,10 +2415,10 @@
                 return [k, entry];
               }))
           : {};
-        next.doseLadder = (raw.schemaVersion === 5 || raw.schemaVersion === 6)
+        next.doseLadder = (raw.schemaVersion === 5 || raw.schemaVersion === 6 || raw.schemaVersion === 7)
           ? normalizeDoseLadder(raw.doseLadder)
           : { tier:0, mcqDebt:0, frqDebt:0 };
-        next.dailyDose = (raw.schemaVersion === 5 || raw.schemaVersion === 6)
+        next.dailyDose = (raw.schemaVersion === 5 || raw.schemaVersion === 6 || raw.schemaVersion === 7)
           ? normalizeDailyDoseV5(raw.dailyDose)
           : null;
         const incomingUnits = raw.units && typeof raw.units === 'object' ? raw.units : {};
@@ -2303,6 +2438,14 @@
             frqHelpers: normalizeFrqHelpers(value.frqHelpers),
           };
         }
+        // v7: carry over gating fields only when curriculumMode is explicitly 'gated'.
+        // Absent curriculumMode on old profiles is intentional — treated as 'full' at runtime.
+        if (raw.curriculumMode === 'gated') {
+          next.curriculumMode = 'gated';
+          next.unlockedUnits = Array.isArray(raw.unlockedUnits)
+            ? raw.unlockedUnits.filter(u => typeof u === 'number' && Number.isFinite(u)).sort((a, b) => a - b)
+            : [1];
+        }
         next.schemaVersion = SCHEMA_VERSION;
         return next;
       }
@@ -2311,6 +2454,11 @@
         const copy = normalizeState(state);
         copy.schemaVersion = SCHEMA_VERSION;
         copy.savedAt = new Date().toISOString();
+        // Include gating fields only for gated students — keeps full-access exports clean.
+        if (state.curriculumMode === 'gated') {
+          copy.curriculumMode = 'gated';
+          copy.unlockedUnits = Array.isArray(state.unlockedUnits) ? [...state.unlockedUnits] : [1];
+        }
         return copy;
       };
 
@@ -2522,6 +2670,46 @@
           });
           strip.appendChild(signOutBtn);
           section.appendChild(strip);
+
+          // Enter-code panel: visible only when gated + still has locked units.
+          const nextLocked = nextLockedUnit(state);
+          if (state.curriculumMode === 'gated' && nextLocked !== null) {
+            const codeRow = make('div', 'sg-enter-code-row');
+            codeRow.appendChild(make('span', 'sg-enter-code-label', 'Unit ' + nextLocked + ' locked\u00a0·'));
+            const codeInput = make('input', 'sg-enter-code-input');
+            codeInput.type = 'text';
+            codeInput.placeholder = 'Enter unlock code';
+            codeInput.maxLength = 10;
+            codeInput.setAttribute('autocomplete', 'off');
+            codeInput.setAttribute('spellcheck', 'false');
+            codeRow.appendChild(codeInput);
+            const unlockBtn = make('button', 'action-btn secondary', 'Unlock');
+            unlockBtn.type = 'button';
+            unlockBtn.addEventListener('click', async () => {
+              const code = codeInput.value.trim();
+              if (!code) return;
+              unlockBtn.disabled = true;
+              const result = await applyUnlockCode(code, state);
+              unlockBtn.disabled = false;
+              if (result.ok) {
+                saveSoon();
+                showToast('Unit ' + result.unlockedUnit + ' unlocked!');
+                refreshAuthPanelVisibility();
+                renderQueuePane();
+                renderMasteryMapPanel();
+              } else if (result.reason === 'invalid-code') {
+                showToast('This code doesn\u2019t match Unit ' + result.attemptedUnit + '. Double-check with your teacher, or make sure you unlocked earlier units first.');
+                codeInput.focus();
+                codeInput.select();
+              } else if (result.reason === 'already-fully-unlocked') {
+                showToast('All units are unlocked.');
+                refreshAuthPanelVisibility();
+              }
+              // 'not-gated' → hide panel silently (re-render handles it)
+            });
+            codeRow.appendChild(unlockBtn);
+            section.appendChild(codeRow);
+          }
         } else {
           section.classList.remove('is-signed-in');
           if (!document.getElementById('studentUsername')) {
@@ -2993,6 +3181,11 @@
           if (ui.password) ui.password.value = password;
           hideCreateUserModal();
           await switchStudentProfile(username);
+          // If the page was opened with ?mode=summer, gate the new account to Unit 1 only.
+          if (window.__summerModeRequested) {
+            state.curriculumMode = 'gated';
+            state.unlockedUnits = [1];
+          }
           markAuthenticated(username);
           refreshAuthPanelVisibility();
           try { localStorage.setItem('progress-username', username); } catch {}
@@ -3563,6 +3756,12 @@
           ? viewState.pulseGlowScale
           : 1;
 
+        // v7 gating: detect which units are locked.
+        const mapV7 = (typeof window !== 'undefined' ? window : globalThis).__studyGuideV7__;
+        const mapIsUnlocked = mapV7 && typeof mapV7.isUnitUnlocked === 'function'
+          ? mapV7.isUnitUnlocked
+          : function() { return true; };
+
         let i;
         let node;
         let entry;
@@ -3571,15 +3770,17 @@
         let color;
         let grad;
         let glowRadius;
+        let locked;
         for (i = 0; i < nodes.length; i += 1) {
           node = nodes[i];
+          locked = !mapIsUnlocked(node.unit, appState);
           entry = touched[node.id];
           mastery = entry ? (typeof entry.lastMastery === 'number' ? entry.lastMastery : 0) : 0;
           isTouched = !!entry;
-          color = colorForMastery(mastery, isTouched);
+          color = locked ? { fill: '#3a4060', stroke: 'rgba(100,110,170,0.4)', glow: null } : colorForMastery(mastery, isTouched);
 
-          // Glow for high-mastery nodes — pulse the highest-mastery node.
-          if (color.glow) {
+          // Glow for high-mastery unlocked nodes — pulse the highest-mastery node.
+          if (!locked && color.glow) {
             glowRadius = node.radius * 2.8;
             if (highestMastery > 0 && node.id === pulseNodeId) {
               glowRadius = glowRadius * pulseGlowScale;
@@ -3594,6 +3795,7 @@
           }
 
           // Main dot.
+          ctx.globalAlpha = locked ? 0.4 : 1;
           ctx.fillStyle = color.fill;
           ctx.beginPath();
           ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
@@ -3601,9 +3803,17 @@
           ctx.lineWidth = 1.5 / zoom;
           ctx.strokeStyle = color.stroke;
           ctx.stroke();
+          ctx.globalAlpha = 1;
+
+          // Lock emoji overlay for locked nodes.
+          if (locked) {
+            ctx.font = Math.max(6, 8 / zoom) + 'px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('\uD83D\uDD12', node.x, node.y + 3 / zoom);
+          }
 
           // Label only at high zoom.
-          if (zoom > 1.8) {
+          if (!locked && zoom > 1.8) {
             ctx.font = Math.max(8, 10 / zoom) + 'px sans-serif';
             ctx.fillStyle = '#cbd0e8';
             ctx.textAlign = 'center';
@@ -3630,17 +3840,29 @@
         const offsetY = (h - worldBounds.height * scale) / 2;
 
         const touched = (appState && appState.touchedFormulas) || {};
+
+        // v7 gating: grey out locked-unit nodes.
+        const miniV7 = (typeof window !== 'undefined' ? window : globalThis).__studyGuideV7__;
+        const miniIsUnlocked = miniV7 && typeof miniV7.isUnitUnlocked === 'function'
+          ? miniV7.isUnitUnlocked
+          : function() { return true; };
+
         let i;
         let node;
         let entry;
         let color;
+        let miniLocked;
         for (i = 0; i < nodes.length; i += 1) {
           node = nodes[i];
+          miniLocked = !miniIsUnlocked(node.unit, appState);
           entry = touched[node.id];
-          color = colorForMastery(
-            entry ? (typeof entry.lastMastery === 'number' ? entry.lastMastery : 0) : 0,
-            !!entry
-          );
+          color = miniLocked
+            ? { fill: '#3a4060' }
+            : colorForMastery(
+                entry ? (typeof entry.lastMastery === 'number' ? entry.lastMastery : 0) : 0,
+                !!entry
+              );
+          ctx.globalAlpha = miniLocked ? 0.4 : 1;
           ctx.fillStyle = color.fill;
           ctx.beginPath();
           ctx.arc(
@@ -3651,6 +3873,7 @@
           );
           ctx.fill();
         }
+        ctx.globalAlpha = 1;
       }
 
       // --- Modal ---
@@ -3912,10 +4135,16 @@
           if (dist < 4) {
             const hit = hitTest(nodes, end.x, end.y, viewState, worldBounds, CANVAS_W, CANVAS_H);
             if (hit) {
-              // Close map modal first, then open formula modal with a no-op onClose.
-              closeMap();
-              const noop = function() {};
-              showFormulaCardModal(hit.id, null, null, null, noop);
+              if (!isUnitUnlocked(hit.unit, state)) {
+                // Locked node: show toast, don't open card.
+                closeMap();
+                showToast('Unit ' + hit.unit + ' is locked. Enter an unlock code to access this formula.');
+              } else {
+                // Close map modal first, then open formula modal with a no-op onClose.
+                closeMap();
+                const noop = function() {};
+                showFormulaCardModal(hit.id, null, null, null, noop);
+              }
             }
           }
         });
@@ -4284,7 +4513,17 @@
         if (entries.length) {
           ui.rail.appendChild(list);
         } else {
-          ui.rail.appendChild(make('p', 'sg-empty', activeTab === 'mcq' ? 'No MCQ items are queued right now.' : 'No FRQ gates are queued right now.'));
+          // Check if the student is gated and the queue is empty because all allowed units are done.
+          const isGated = state.curriculumMode === 'gated';
+          const emptyMsg = (() => {
+            if (isGated && activeTab === 'mcq') {
+              const unlockedList = Array.isArray(state.unlockedUnits) ? state.unlockedUnits : [];
+              const highestUnlocked = unlockedList.length > 0 ? Math.max(...unlockedList) : 1;
+              return 'All Unit ' + highestUnlocked + ' work for today is done \u2014 see your teacher for the next unit code.';
+            }
+            return activeTab === 'mcq' ? 'No MCQ items are queued right now.' : 'No FRQ gates are queued right now.';
+          })();
+          ui.rail.appendChild(make('p', 'sg-empty', emptyMsg));
         }
 
         renderReviewQueuePanel();
@@ -5364,6 +5603,9 @@
       }
 
       function init() {
+        // Read ?mode=summer URL param before account creation can be triggered.
+        window.__summerModeRequested = new URLSearchParams(location.search).get('mode') === 'summer';
+
         if (typeof EMBEDDED_CURRICULUM !== 'undefined' && Array.isArray(EMBEDDED_CURRICULUM)) EMBEDDED_CURRICULUM.forEach(q => { if (q && typeof q.id === 'string') questions.set(q.id, q); });
         applyLocalGateFrqs();
         if (typeof window.EMBEDDED_CURRICULUM_SUPPLEMENT !== 'undefined' && Array.isArray(window.EMBEDDED_CURRICULUM_SUPPLEMENT)) {
@@ -5375,29 +5617,34 @@
         }
         applyLocalGateFrqs();
         try {
-          const rawV6 = localStorage.getItem(STORAGE_KEY);
-          if (rawV6) {
-            state = normalizeState(JSON.parse(rawV6));
+          const rawV7 = localStorage.getItem(STORAGE_KEY);
+          if (rawV7) {
+            state = normalizeState(JSON.parse(rawV7));
           } else {
-            const rawV5 = localStorage.getItem('apStatsStudyGuideDiagnostic.v5');
-            if (rawV5) {
-              state = normalizeState(JSON.parse(rawV5));
+            const rawV6 = localStorage.getItem('apStatsStudyGuideDiagnostic.v6');
+            if (rawV6) {
+              state = normalizeState(JSON.parse(rawV6));
             } else {
-              const rawV4 = localStorage.getItem('apStatsStudyGuideDiagnostic.v4');
-              if (rawV4) {
-                state = normalizeState(JSON.parse(rawV4));
+              const rawV5 = localStorage.getItem('apStatsStudyGuideDiagnostic.v5');
+              if (rawV5) {
+                state = normalizeState(JSON.parse(rawV5));
               } else {
-                const rawV3 = localStorage.getItem('apStatsStudyGuideDiagnostic.v3');
-                if (rawV3) {
-                  state = normalizeState(JSON.parse(rawV3));
-                  saveNow();
+                const rawV4 = localStorage.getItem('apStatsStudyGuideDiagnostic.v4');
+                if (rawV4) {
+                  state = normalizeState(JSON.parse(rawV4));
                 } else {
-                  const rawV2 = localStorage.getItem('apStatsStudyGuideDiagnostic.v2');
-                  if (rawV2) {
-                    state = normalizeState(JSON.parse(rawV2));
+                  const rawV3 = localStorage.getItem('apStatsStudyGuideDiagnostic.v3');
+                  if (rawV3) {
+                    state = normalizeState(JSON.parse(rawV3));
                     saveNow();
                   } else {
-                    state = makeDefaultState();
+                    const rawV2 = localStorage.getItem('apStatsStudyGuideDiagnostic.v2');
+                    if (rawV2) {
+                      state = normalizeState(JSON.parse(rawV2));
+                      saveNow();
+                    } else {
+                      state = makeDefaultState();
+                    }
                   }
                 }
               }

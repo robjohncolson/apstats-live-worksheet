@@ -500,12 +500,23 @@
     ensureDoseLadder(sourceState);
     sourceState.doseLadder.tier = tier;
 
+    // v7 gating: filter candidates to unlocked units only.
+    const v7 = (typeof window !== 'undefined' ? window : globalThis).__studyGuideV7__;
+    const isUnlocked = v7 && typeof v7.isUnitUnlocked === 'function'
+      ? v7.isUnitUnlocked
+      : function() { return true; };
+
+    const mcqRaw = buildMcqQueue(sourceState, spec.mcq);
+    const frqRaw = pickDailyFrqs(sourceState, spec.frq);
+    const mcq = mcqRaw.filter(function(entry) { return isUnlocked(entry.unit, sourceState); });
+    const frq = frqRaw.filter(function(entry) { return isUnlocked(entry.unit, sourceState); });
+
     return {
       date: todayStr,
       tierAtGeneration: tier,
-      mcq: buildMcqQueue(sourceState, spec.mcq),
+      mcq: mcq,
       mcqCompleted: [],
-      frq: pickDailyFrqs(sourceState, spec.frq),
+      frq: frq,
       frqCompleted: [],
       activeTab: 'mcq'
     };
