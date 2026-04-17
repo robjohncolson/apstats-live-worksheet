@@ -72,6 +72,13 @@
     .sg-create-link{font-size:.9rem;color:var(--sg-accent);text-decoration:underline;cursor:pointer;align-self:center}
     .sg-create-link:hover{text-decoration:none}
     .sg-create-user-modal .sg-modal-input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg);color:var(--sg-text);font-size:1rem}
+    .sg-create-user-modal .sg-modal-field{display:grid;gap:6px;margin-top:12px}
+    .sg-create-user-modal .sg-modal-field:first-child{margin-top:0}
+    .sg-create-user-modal .sg-modal-field-label{font-size:.85rem;font-weight:700;color:var(--sg-text-dim);text-transform:uppercase;letter-spacing:.04em}
+    .sg-create-user-modal .sg-username-row{display:flex;gap:8px;align-items:stretch}
+    .sg-create-user-modal .sg-username-display{flex:1;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg);color:var(--sg-text);font-size:1rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700;display:flex;align-items:center;min-height:1.4em;word-break:break-all}
+    .sg-create-user-modal .sg-regen-btn{padding:0 14px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card);color:var(--sg-text);cursor:pointer;font-size:1.1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+    .sg-create-user-modal .sg-regen-btn:hover{background:var(--sg-accent);color:#fff;border-color:var(--sg-accent)}
     .sg-modal-hint{margin:8px 0 0;font-size:.88rem;color:var(--sg-text-dim);line-height:1.5}
     .student-info label{display:grid;gap:8px;font-weight:700;color:var(--sg-text)}
     input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;color:var(--sg-text);background:var(--sg-bg-card)}
@@ -385,8 +392,23 @@
           <button class="sg-modal-close" id="createUserModalCloseBtn" type="button" aria-label="Close">✕</button>
         </div>
         <div class="sg-modal-body">
-          <input id="newStudentUsernameModal" type="text" autocomplete="off" placeholder="Pick a username" class="sg-modal-input">
-          <p class="sg-modal-hint">Your username will be visible to your teacher and classmates on the class leaderboards.</p>
+          <div class="sg-modal-field">
+            <span class="sg-modal-field-label">Your username</span>
+            <div class="sg-username-row">
+              <input id="newStudentUsernameModal" type="text" autocomplete="off" class="sg-username-display" readonly aria-live="polite">
+              <button type="button" id="regenUsernameBtn" class="sg-regen-btn" title="Generate a new username" aria-label="Generate a new username">↻</button>
+            </div>
+            <p class="sg-modal-hint">Randomly chosen — tap ↻ for a new one. Visible to your teacher and classmates on leaderboards.</p>
+          </div>
+          <div class="sg-modal-field">
+            <span class="sg-modal-field-label">Real name</span>
+            <input id="newStudentRealNameModal" type="text" autocomplete="name" placeholder="So your teacher knows it's you" class="sg-modal-input">
+          </div>
+          <div class="sg-modal-field">
+            <span class="sg-modal-field-label">Password</span>
+            <input id="newStudentPasswordModal" type="password" autocomplete="new-password" placeholder="Pick a password" class="sg-modal-input">
+            <p class="sg-modal-hint">You'll use this to sign in on other devices.</p>
+          </div>
         </div>
         <div class="sg-modal-footer">
           <button id="cancelCreateBtn" class="action-btn secondary" type="button">Cancel</button>
@@ -2389,12 +2411,38 @@
         return authSession.verified && authSession.username === usernameLookupKey(username);
       }
 
+      const USERNAME_FRUITS = ['apple','banana','cherry','grape','kiwi','lemon','lime','mango','melon','peach','pear','plum','berry','fig','date','guava','lychee','papaya','orange','apricot','coconut','pineapple','pomelo','quince','raisin','olive','tomato','avocado','pumpkin','cranberry'];
+      const USERNAME_ANIMALS = ['koala','panda','tiger','lion','bear','wolf','fox','otter','seal','whale','shark','eagle','hawk','owl','duck','swan','deer','moose','zebra','horse','llama','sloth','gecko','turtle','frog','toad','rabbit','hamster','badger','beaver'];
+      const USERNAME_VEHICLES = ['car','truck','van','jeep','bus','taxi','train','tram','airplane','jet','rocket','boat','yacht','canoe','kayak','bike','scooter','tractor','wagon','glider'];
+
+      function pickRandomWord(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function generateUniqueUsername() {
+        const taken = new Set((rosterProfiles || []).map(p => usernameLookupKey(p.username)));
+        for (let i = 0; i < 40; i += 1) {
+          const candidate = `${pickRandomWord(USERNAME_FRUITS)}_${pickRandomWord(USERNAME_ANIMALS)}`;
+          if (!taken.has(usernameLookupKey(candidate))) return candidate;
+        }
+        for (let i = 0; i < 40; i += 1) {
+          const candidate = `${pickRandomWord(USERNAME_FRUITS)}_${pickRandomWord(USERNAME_ANIMALS)}_${pickRandomWord(USERNAME_VEHICLES)}`;
+          if (!taken.has(usernameLookupKey(candidate))) return candidate;
+        }
+        return `${pickRandomWord(USERNAME_FRUITS)}_${pickRandomWord(USERNAME_ANIMALS)}_${Math.floor(Math.random() * 10000)}`;
+      }
+
       function showCreateUserModal() {
         const modal = document.getElementById('createUserModal');
         if (!modal) return;
         modal.hidden = false;
-        const input = document.getElementById('newStudentUsernameModal');
-        if (input) { input.value = ''; input.focus(); }
+        const usernameField = document.getElementById('newStudentUsernameModal');
+        const realNameField = document.getElementById('newStudentRealNameModal');
+        const passwordField = document.getElementById('newStudentPasswordModal');
+        if (usernameField) usernameField.value = generateUniqueUsername();
+        if (realNameField) realNameField.value = '';
+        if (passwordField) passwordField.value = '';
+        if (realNameField) realNameField.focus();
       }
 
       function hideCreateUserModal() {
@@ -2887,39 +2935,55 @@
       }
 
       async function createStudentAccount() {
-        const newUsernameInput = document.getElementById('newStudentUsernameModal');
-        const username = normalizeUsername(newUsernameInput ? newUsernameInput.value : '');
-        const password = String(ui.password && ui.password.value || '').trim();
+        const usernameField = document.getElementById('newStudentUsernameModal');
+        const realNameField = document.getElementById('newStudentRealNameModal');
+        const passwordField = document.getElementById('newStudentPasswordModal');
+        let username = normalizeUsername(usernameField ? usernameField.value : '');
+        const realName = String(realNameField ? realNameField.value : '').trim();
+        const password = String(passwordField ? passwordField.value : '').trim();
         if (!username) {
-          showToast('Type a new username first.');
+          username = generateUniqueUsername();
+          if (usernameField) usernameField.value = username;
+        }
+        if (!realName) {
+          showToast('Enter your real name so your teacher can find you.');
+          if (realNameField) realNameField.focus();
           return false;
         }
         if (!password) {
-          showToast('Enter a password for the new username.');
+          showToast('Pick a password for your new account.');
+          if (passwordField) passwordField.focus();
           return false;
         }
         const source = getUserSourceConfig();
         setSyncStatus(`Backup: creating ${username}…`);
-        try {
+        async function postCreate(name) {
           const response = await fetch(source.createUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, real_name:'', password })
+            body: JSON.stringify({ username: name, real_name: realName, password })
           });
-          const result = await response.json();
-          if (!response.ok || result.error) {
+          const result = await response.json().catch(() => ({}));
+          return { response, result };
+        }
+        try {
+          let { response, result } = await postCreate(username);
+          if ((!response.ok || (result && result.error)) && /exist|taken|dup/i.test(String(result && result.error || ''))) {
+            username = generateUniqueUsername();
+            if (usernameField) usernameField.value = username;
+            ({ response, result } = await postCreate(username));
+          }
+          if (!response.ok || (result && result.error)) {
             refreshSyncStatus();
             showToast(result && result.error ? result.error : 'Could not create that username.');
             return false;
           }
           rosterLoadPromise = null;
-          rosterProfiles.push({ username, name:'', period:'', lastUsedAt:'' });
+          rosterProfiles.push({ username, name: realName, period:'', lastUsedAt:'' });
           renderUsernameOptions();
           if (ui.username) ui.username.value = username;
-          const modalInput = document.getElementById('newStudentUsernameModal');
-          if (modalInput) modalInput.value = '';
+          if (ui.password) ui.password.value = password;
           hideCreateUserModal();
-          if (ui.password) ui.password.focus();
           await switchStudentProfile(username);
           markAuthenticated(username);
           refreshAuthPanelVisibility();
@@ -5347,19 +5411,27 @@
         // Modal buttons.
         const cancelCreateBtn = document.getElementById('cancelCreateBtn');
         const confirmCreateBtn = document.getElementById('confirmCreateBtn');
-        const newUsernameModalInput = document.getElementById('newStudentUsernameModal');
+        const regenUsernameBtn = document.getElementById('regenUsernameBtn');
+        const newRealNameModalInput = document.getElementById('newStudentRealNameModal');
+        const newPasswordModalInput = document.getElementById('newStudentPasswordModal');
         if (cancelCreateBtn) {
           cancelCreateBtn.addEventListener('click', hideCreateUserModal);
         }
         if (confirmCreateBtn) {
           confirmCreateBtn.addEventListener('click', () => { void createStudentAccount(); });
         }
-        if (newUsernameModalInput) {
-          newUsernameModalInput.addEventListener('keydown', event => {
-            if (event.key === 'Enter') { event.preventDefault(); void createStudentAccount(); }
-            if (event.key === 'Escape') hideCreateUserModal();
+        if (regenUsernameBtn) {
+          regenUsernameBtn.addEventListener('click', () => {
+            const usernameField = document.getElementById('newStudentUsernameModal');
+            if (usernameField) usernameField.value = generateUniqueUsername();
           });
         }
+        const submitOnEnter = event => {
+          if (event.key === 'Enter') { event.preventDefault(); void createStudentAccount(); }
+          if (event.key === 'Escape') hideCreateUserModal();
+        };
+        if (newRealNameModalInput) newRealNameModalInput.addEventListener('keydown', submitOnEnter);
+        if (newPasswordModalInput) newPasswordModalInput.addEventListener('keydown', submitOnEnter);
         // Modal backdrop click closes.
         const createUserModal = document.getElementById('createUserModal');
         if (createUserModal) {

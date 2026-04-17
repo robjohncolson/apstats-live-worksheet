@@ -1255,7 +1255,7 @@ describe('session 90 student profiles + supabase backup', () => {
     expect(src).toContain('async function verifyStudentAccount()');
     expect(src).toContain('async function createStudentAccount()');
     expect(src).toContain('/api/users/verify');
-    expect(src).toContain("body: JSON.stringify({ username, real_name:'', password })");
+    expect(src).toContain("body: JSON.stringify({ username: name, real_name: realName, password })");
     expect(src).toContain("ui.loginBtn.addEventListener('click'");
     // session 89 A: create account is now via modal; confirmCreateBtn wires the creation
     expect(src).toContain("confirmCreateBtn.addEventListener('click'");
