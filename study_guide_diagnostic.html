@@ -97,6 +97,9 @@
     .summary-detail{margin-top:6px;color:var(--sg-text-dim);line-height:1.5}
     #sg-layout{display:grid;grid-template-columns:260px 1fr 320px;gap:20px}
     #sg-rail,#sg-active,#sg-remediation{padding:16px;min-height:240px}
+    .sg-remediation-header{margin:0 0 14px;padding:0 0 12px;border-bottom:2px solid var(--sg-accent)}
+    .sg-remediation-heading{margin:0;color:var(--sg-accent);font-size:1.05rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+    .sg-remediation-subheading{margin:4px 0 0;font-size:.82rem;color:var(--sg-text-dim);line-height:1.4}
     #sg-active{min-height:320px}
     #sg-rail h3{margin:0 0 14px;color:var(--sg-text);font-size:1.08rem}
     .sg-rail-list,.sg-rail-los,.sg-remediation-skills{margin:0;padding:0;list-style:none;display:grid;gap:10px}
@@ -438,7 +441,13 @@
     <div id="sg-layout">
       <aside id="sg-rail" aria-label="Concept rail"></aside>
       <section id="sg-active" aria-label="Active probe"></section>
-      <aside id="sg-remediation" aria-label="Remediation"></aside>
+      <aside id="sg-remediation" aria-label="Remediation panel">
+        <div class="sg-remediation-header">
+          <h2 class="sg-remediation-heading">Remediation Panel</h2>
+          <p class="sg-remediation-subheading">Review this after a wrong answer before moving on.</p>
+        </div>
+        <div id="sg-remediation-content"></div>
+      </aside>
     </div>
   </main>
 
@@ -2010,7 +2019,7 @@
         clearBtn: document.getElementById('clear-btn'),
         rail: document.getElementById('sg-rail'),
         active: document.getElementById('sg-active'),
-        remediation: document.getElementById('sg-remediation'),
+        remediation: document.getElementById('sg-remediation-content'),
         toast: document.getElementById('toast'),
         themeToggle: document.getElementById('theme-toggle')
       };
