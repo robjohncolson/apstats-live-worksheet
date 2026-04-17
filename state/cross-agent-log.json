@@ -3020,15 +3020,59 @@
       "timestamp": "2026-04-16T00:15:11Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "c775f2f698fe",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the scoreboard feature just added to study_guide_diagnostic.html for bugs. The feature adds 3",
+      "status": "completed",
+      "duration_seconds": 233.52,
+      "timestamp": "2026-04-16T02:11:45Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "608827161818",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 158+/191 \u2014 Seed 0x006138 + Retranspile + Compress .gz\n\n## Context\nYou are working on a TI-84",
+      "status": "completed",
+      "duration_seconds": 101.097,
+      "timestamp": "2026-04-17T00:37:56Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f17509791d35",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 192 \u2014 Stage 1 Status Bar Background Trace\n\n## Context\nYou are working on a TI-84 Plus CE ROM",
+      "status": "completed",
+      "duration_seconds": 327.974,
+      "timestamp": "2026-04-17T00:41:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "cde34ec5ec5b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 189b \u2014 Status Dots RAM Seeding Experiment\n\n## Context\nYou are working on a TI-84 Plus CE ROM",
+      "status": "completed",
+      "duration_seconds": 332.648,
+      "timestamp": "2026-04-17T00:41:49Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 256,
-    "cc_to_codex": 256,
+    "total_calls": 260,
+    "cc_to_codex": 260,
     "codex_to_cc": 0,
-    "completed": 194,
+    "completed": 198,
     "failed": 56,
     "refused": 0,
-    "avg_duration_seconds": 449.954
+    "avg_duration_seconds": 446.859
   }
 }
