@@ -3064,15 +3064,83 @@
       "timestamp": "2026-04-17T00:41:49Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "a9acc821ffd7",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Independent code review of Session 94a unlock-code feature. Review these files and report issues \u2014 b",
+      "status": "timeout",
+      "duration_seconds": 66709.085,
+      "timestamp": "2026-04-17T22:25:50Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "48d32343a71e",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "TIGHT SCOPE review. Do not modify files. Just report findings concisely.\n\nRead ONLY these two files ",
+      "status": "completed",
+      "duration_seconds": 77.486,
+      "timestamp": "2026-04-17T22:29:53Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4c148069e3c2",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 189c \u2014 Status Dots Pixel Location Mapping\n\n## Context\nThe TI-84 CE ROM emulator's golden reg",
+      "status": "completed",
+      "duration_seconds": 173.744,
+      "timestamp": "2026-04-18T04:08:10Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9d1ba5ab9ed3",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 193 \u2014 Stage 1 VRAM Write Target Investigation\n\n## Context\nThe TI-84 CE ROM emulator's Stage ",
+      "status": "completed",
+      "duration_seconds": 215.252,
+      "timestamp": "2026-04-18T04:08:53Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b165a90c5503",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 194 \u2014 Fix `mem.fill` bug across all TI-84 probes\n\n## Context\n\n`TypedArray.fill(value, start,",
+      "status": "completed",
+      "duration_seconds": 170.381,
+      "timestamp": "2026-04-18T16:06:52Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0d19015f61ac",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Phase 195 \u2014 Stage 1 (0x0A2B72) curRow=0xFF Investigation\n\n## Context\n\nThe TI-84 Plus CE home scree",
+      "status": "completed",
+      "duration_seconds": 726.435,
+      "timestamp": "2026-04-18T16:16:10Z",
+      "files_changed": [
+        "TI-84_Plus_CE/probe-phase195-stage1-currow.mjs"
+      ],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 260,
-    "cc_to_codex": 260,
+    "total_calls": 266,
+    "cc_to_codex": 266,
     "codex_to_cc": 0,
-    "completed": 198,
-    "failed": 56,
+    "completed": 203,
+    "failed": 57,
     "refused": 0,
-    "avg_duration_seconds": 446.859
+    "avg_duration_seconds": 692.691
   }
 }
