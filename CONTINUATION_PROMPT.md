@@ -1,6 +1,6 @@
 # Continuation Prompt — TI-84 CE Procedural Trainer
 
-**Last updated**: 2026-04-18 (post session 94b — TDZ hotfix on AP_EXAM_DATE export)
+**Last updated**: 2026-04-18 (post session 94a-fix — TDZ hotfix on `__studyGuideV4__.AP_EXAM_DATE`)
 **Status**: TI-84 trainer V3 shipped, Physical Calculator Mode primary. Study guide `study_guide_diagnostic.html` feature-complete at **v7**: FRQ decomposition, review queue, mastery map constellation, inline TI-84 procedure walkthroughs, login UX, official AP rubric disclosures, inline chart rendering (70 MCQ charts + solution charts), class scoreboard, **summer unit gating with hash-based unlock codes**, **AP date auto-roll**. Teacher-facing `teacher-code-generator.html` sibling tool. **845/845 project tests green**.
 **Deadline**: auto-rolls May 7 each year via `computeApExamDate()` — currently 2026-05-07 (19 days out).
 
@@ -242,7 +242,8 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 - **Float precision**: `0.05 + 0.10 + 0.15 === 0.30000000000000004`. Use `toBeCloseTo(0.30, 10)`, not `toBe(0.30)`.
 - **`saveSoon` debounce**: state writes are debounced. jsdom probes that read localStorage immediately after a click will see stale values.
 - **Card-boundary test isolation**: asserting a specific card no longer contains text X can false-positive if X appears in another card. Slice the source to the target card's id boundary (`src.indexOf("{id:'", cardStart + 1)`) before the assertion.
-- **Block-scope at `study_guide_diagnostic.html:303`**: bare `{` opens a block wrapping v4 code through ~line 783. Valid JS. Flatten attempts collide with outer-scope v5 destructured names (`AP_EXAM_DATE`, `daysLeft`, `computeDailyDose`, likely more). Formally deferred; don't touch without a full rename plan.
+- **Block-scope at `study_guide_diagnostic.html:497`**: bare `{` opens a block wrapping v4 code through line 1112. The v5/v6/v7 IIFEs and top-level `const` destructures (including `AP_EXAM_DATE` at line 2109) live OUTSIDE it. Valid JS. Flatten attempts collide with outer-scope names (`AP_EXAM_DATE`, `daysLeft`, `computeDailyDose`, likely more). Formally deferred; don't touch without a full rename plan.
+- **TDZ across bare-block boundary (`window.__studyGuideV{N}__` export pattern)**: when the v4 export object literal at line 1085 references a name declared later in the outer scope (line 2109+), property evaluation happens at script-load and throws `Cannot access 'X' before initialization`. **Rule**: any v4/v5/v6/v7 export entry whose value is a `const`/`let` from OUTSIDE the bare block (line 497-1112) MUST use a getter: `get NAME() { return NAME; }`. Regular `NAME: NAME` only works for names declared INSIDE the bare block before line 1085. This is the bug that caused s94a-fix (blank page for all students after s94a shipped).
 
 ### Key files (study guide)
 
@@ -300,7 +301,7 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 | 93 | 09d1804 | Remove dead ✕ close button from create-user modal header |
 | 93 | 89f22ae | Label the Remediation Panel aside (persistent heading + subheading) |
 | 94a | 636cd05 | Summer unit gating: `?mode=summer` URL param, schema v7, hash-based sequential unlock codes, mastery map lock, daily queue filter, teacher-code-generator.html, AP date auto-roll |
-| 94b | (this) | Hotfix: TDZ crash on `__studyGuideV4__.AP_EXAM_DATE`. s94a moved the `const AP_EXAM_DATE = computeApExamDate()` declaration to line 2109, but line 1086 (v4 export object literal) still evaluated the name at script-load time — outer const existed in same scope chain but in TDZ → `ReferenceError: Cannot access 'AP_EXAM_DATE' before initialization` → `init()` never ran → blank page + stuck "Loading usernames..." dropdown. Fix: change `AP_EXAM_DATE: AP_EXAM_DATE,` → `get AP_EXAM_DATE() { return AP_EXAM_DATE; },` so the TDZ lookup is deferred until a consumer reads the property (after line 2109 initializes). 304/304 v4+v5+v7 tests pass. **Gotcha #10** — bare-block scope at line 497 is the same collision the memory warned about. |
+| 94a-fix | 5aa1c76 | TDZ hotfix on `__studyGuideV4__.AP_EXAM_DATE`: s94a moved the `const AP_EXAM_DATE = computeApExamDate()` declaration to line 2109 (outer scope), but line 1086 (v4 export inside the bare block at line 497) still evaluated the name at script-load time → scope walk found the outer const in TDZ → `ReferenceError` → `init()` never ran → blank page + stuck "Loading usernames…" dropdown. Fix: `AP_EXAM_DATE: AP_EXAM_DATE,` → `get AP_EXAM_DATE() { return AP_EXAM_DATE; },`. Getter defers the lookup to property-read time (always after line 2109 initializes). 304/304 v4+v5+v7 tests pass. See gotcha at line 245 — this is the collision the memory warned about. |
 
 ## Open Carry-overs
 
@@ -308,7 +309,7 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 - **(b) Real student pilot data** — no telemetry bucket yet; direct observation only.
 - **(c) WEAK setup/output mapping schema** — 16 entries in `data/formula-procedure-map.js` are "uses as input" rather than "computes". User preference needed on redesign vs drop.
 - **(d) Mobile touch gestures for the mastery map** — deferred from s85. ~80 LOC.
-- **(e) Block-scope oddity at `study_guide_diagnostic.html:303`** — formally deferred. Don't flatten without a full rename plan.
+- **(e) Block-scope oddity at `study_guide_diagnostic.html:497`** — formally deferred. Don't flatten without a full rename plan. See gotcha line ~245 for the TDZ trap and the getter-defer workaround (used in s94a-fix).
 - **(f) Session 94b: adaptive SRS forgetting curve** — full spec in `.session94-spec.md` §13. Ebbinghaus decay on `pKnow`, adaptive half-life tuned to exam proximity (45/21/10/5 days). Solves "empty U1 queue" risk for summer-only students. Needs real student data to tune constants before merging. Deliberately shipped separately from 94a.
 - **(g) Teacher tool security hygiene** — `teacher-code-generator.html` contains the unlock salt in plaintext. Never deploy it publicly or link from the student-facing study guide. Built-in yellow warning banner, but operational discipline needed.
 
