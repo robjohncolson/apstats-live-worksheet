@@ -1,8 +1,8 @@
 # Continuation Prompt — TI-84 CE Procedural Trainer
 
-**Last updated**: 2026-04-16 (post session 92 — class scoreboard modal)
-**Status**: TI-84 trainer V3 shipped, Physical Calculator Mode primary. Study guide `study_guide_diagnostic.html` feature-complete at v6: FRQ decomposition, review queue, mastery map constellation, inline TI-84 procedure walkthroughs, login UX, official AP rubric disclosures, inline chart rendering (70 MCQ charts + solution charts), class scoreboard. **787/787 project tests green**.
-**Deadline**: ~May 7 (AP exam, 21 days out)
+**Last updated**: 2026-04-18 (post session 94b — TDZ hotfix on AP_EXAM_DATE export)
+**Status**: TI-84 trainer V3 shipped, Physical Calculator Mode primary. Study guide `study_guide_diagnostic.html` feature-complete at **v7**: FRQ decomposition, review queue, mastery map constellation, inline TI-84 procedure walkthroughs, login UX, official AP rubric disclosures, inline chart rendering (70 MCQ charts + solution charts), class scoreboard, **summer unit gating with hash-based unlock codes**, **AP date auto-roll**. Teacher-facing `teacher-code-generator.html` sibling tool. **845/845 project tests green**.
+**Deadline**: auto-rolls May 7 each year via `computeApExamDate()` — currently 2026-05-07 (19 days out).
 
 ---
 
@@ -196,11 +196,13 @@ Config in: ti84-trainer-v2/bridge.js line 11 (ROM_CONFIG.supabaseUrl)
 
 ---
 
-## Study Guide State (post session 92)
+## Study Guide State (post session 94a)
 
 The parallel `study_guide_diagnostic.html` track is feature-complete. Current state:
 
-- **Schema**: `apStatsStudyGuideDiagnostic.v6` (migration chain v6 → v5 → v4 → v3 → v2)
+- **Schema**: `apStatsStudyGuideDiagnostic.v7` (migration chain v7 → v6 → v5 → v4 → v3 → v2). v7 migration is a pure version bump — existing profiles retain full access (absence of `curriculumMode` field → treated as `'full'` at runtime).
+- **Summer gating (s94a)**: New accounts created via `?mode=summer` URL param start with `curriculumMode: 'gated'` and `unlockedUnits: [1]`. Teacher issues per-student codes from `teacher-code-generator.html`; student pastes code into the enter-code panel; `applyUnlockCode` always verifies against `nextLockedUnit(state)` so codes must be redeemed in sequence (U2 → U3 → U4 …). Locked units grey out in mastery map + mini-map with 🔒 overlay; click shows toast instead of opening formula card. Daily queue filters to unlocked units; gated + empty queue shows "see teacher" message. Hash = `sha256(salt | normalizedUsername | unit)` → Crockford-B32, slice(0,6). Salt hardcoded at `'apstats-unlock-v1-3f9a2c'` in `.v7-unlock-block.js` and teacher tool — rotate both to invalidate all codes. Fixture: `('pineapple_koala', 2)` → `348BVD`.
+- **AP date auto-roll (s94a)**: `const AP_EXAM_DATE = computeApExamDate()` rolls to next year's May 7 at midnight May 8 (entire exam day stays on current year).
 - **Account bar**: username/password login hides when verified, replaced with "Signed in as X · Scoreboard · Sign out" strip. Create-user modal opens via text link.
 - **Daily queue**: v5 dose ladder with 4 tiers (Warmup / Steady / Catch-up / Crunch), hybrid MCQ/FRQ tabs, tier meter + info modal
 - **FRQ decomposition**: 31 skills across 9 gate FRQs, latent-penalty scoring (5/10/15%, 50% cap). Grade card shows official AP rubric + worked solutions (paper-mode gated).
@@ -224,7 +226,7 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 
 5. **Formula card → Practice closes the feedback loop** — click mastery map node → read card → tap Practice → land on the MCQ drill for that formula via `pickProbeForFormula` + `setActiveProbe`. Primary-accent button styling invites action. Disabled with tooltip when no probe pool exists.
 
-6. **v4/v5 export sync** — new pure functions must be added in FOUR places: `.v4-logic-block.js`, the inline v4 export object in `study_guide_diagnostic.html`, `.v5-ladder-block.js`, AND the inline v5 proxy block. Sonnet missed one of these four in s85. Post-check: grep `__studyGuideV4__ = {` and `__studyGuideV5__`.
+6. **v4/v5/v6/v7 export sync** — new pure functions must be added in FOUR places per version: the standalone `.vN-*-block.js`, the inline vN export object in `study_guide_diagnostic.html`, the downstream proxy block (e.g., v5 proxies v4), AND any inline destructured reads. Sonnet missed one of the four in s85. Post-check: grep `__studyGuideV{4,5,6,7}__ = {` — each should match twice (standalone + inline).
 
 7. **Paper mode is a cheat path by default** — `Mark complete (paper)` sets `grade.score = 'paper'` with zero content validation. Any student-facing disclosure that could reveal the answer (worked solutions, full rubric criteria, correct-answer highlights) must gate on `grade.score !== 'paper'` OR require real content submission. Codex caught this once in s89 grade disclosures; similar checks needed for any future post-grade reveal.
 
@@ -250,6 +252,8 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 | `.v4-logic-block.js` | Standalone v4 pure functions (daily dose, formula weight, BKT) |
 | `.v5-ladder-block.js` | v5 tier ladder pure functions (proxies v4) |
 | `.v6-frq-decomp-block.js` | v6 FRQ decomposition logic (`computeEffectivePenalty`, helper tracking) |
+| `.v7-unlock-block.js` | v7 unlock codes + unit gating + AP date (`generateUnlockCode`, `applyUnlockCode`, `isUnitUnlocked`, `nextLockedUnit`, `computeApExamDate`) |
+| `teacher-code-generator.html` | Teacher-facing sibling tool — single / all-units / bulk CSV code generation. Contains plaintext salt; never deploy publicly |
 | `data/ap-stats-cartridge.js` | 81 formula cards with latex, explain, hint, subconcepts |
 | `data/frq-decompositions.json` | 31 skills across 9 gate FRQs (no `penalty` field — stripped s89) |
 | `data/study-guide-frq-bank.js` | 9 localized gate FRQ prompts + worked solutions + official AP rubrics (s89 drives grade-card disclosures) |
@@ -292,6 +296,11 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 | 90 | 53d275f | Chart rendering lift + question context audit (807 questions) |
 | 91 | 83faee7 | Multi-chart rendering (plural form) + FRQ solution charts |
 | 92 | 9b5f70c | Class scoreboard modal: ranked by green mastery nodes, top-half visible |
+| 93 | 810ca32 | Create-user modal: password field added (bug fix), auto-generated fruit_animal usernames with vehicle tiebreaker, real name field |
+| 93 | 09d1804 | Remove dead ✕ close button from create-user modal header |
+| 93 | 89f22ae | Label the Remediation Panel aside (persistent heading + subheading) |
+| 94a | 636cd05 | Summer unit gating: `?mode=summer` URL param, schema v7, hash-based sequential unlock codes, mastery map lock, daily queue filter, teacher-code-generator.html, AP date auto-roll |
+| 94b | (this) | Hotfix: TDZ crash on `__studyGuideV4__.AP_EXAM_DATE`. s94a moved the `const AP_EXAM_DATE = computeApExamDate()` declaration to line 2109, but line 1086 (v4 export object literal) still evaluated the name at script-load time — outer const existed in same scope chain but in TDZ → `ReferenceError: Cannot access 'AP_EXAM_DATE' before initialization` → `init()` never ran → blank page + stuck "Loading usernames..." dropdown. Fix: change `AP_EXAM_DATE: AP_EXAM_DATE,` → `get AP_EXAM_DATE() { return AP_EXAM_DATE; },` so the TDZ lookup is deferred until a consumer reads the property (after line 2109 initializes). 304/304 v4+v5+v7 tests pass. **Gotcha #10** — bare-block scope at line 497 is the same collision the memory warned about. |
 
 ## Open Carry-overs
 
@@ -300,6 +309,8 @@ The parallel `study_guide_diagnostic.html` track is feature-complete. Current st
 - **(c) WEAK setup/output mapping schema** — 16 entries in `data/formula-procedure-map.js` are "uses as input" rather than "computes". User preference needed on redesign vs drop.
 - **(d) Mobile touch gestures for the mastery map** — deferred from s85. ~80 LOC.
 - **(e) Block-scope oddity at `study_guide_diagnostic.html:303`** — formally deferred. Don't flatten without a full rename plan.
+- **(f) Session 94b: adaptive SRS forgetting curve** — full spec in `.session94-spec.md` §13. Ebbinghaus decay on `pKnow`, adaptive half-life tuned to exam proximity (45/21/10/5 days). Solves "empty U1 queue" risk for summer-only students. Needs real student data to tune constants before merging. Deliberately shipped separately from 94a.
+- **(g) Teacher tool security hygiene** — `teacher-code-generator.html` contains the unlock salt in plaintext. Never deploy it publicly or link from the student-facing study guide. Built-in yellow warning banner, but operational discipline needed.
 
 ## Regen commands
 

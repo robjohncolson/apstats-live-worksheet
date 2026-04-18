@@ -1083,7 +1083,7 @@
 
       // --- diagnostic export for testing + integration ---
       window.__studyGuideV4__ = {
-        AP_EXAM_DATE: AP_EXAM_DATE,
+        get AP_EXAM_DATE() { return AP_EXAM_DATE; },
         UNIT_EXAM_WEIGHTS: UNIT_EXAM_WEIGHTS,
         TIER_MULTIPLIERS: TIER_MULTIPLIERS,
         MASTERY_THRESHOLD: MASTERY_THRESHOLD,
