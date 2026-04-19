@@ -3132,15 +3132,110 @@
         "TI-84_Plus_CE/probe-phase195-stage1-currow.mjs"
       ],
       "depth": 0
+    },
+    {
+      "call_id": "415fdd48e61e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Phase 201: Browser-shell GitHub Pages deploy + pre-flight checks.\n\nCONTEXT: TI-84 ROM transpiler pro",
+      "status": "completed_with_blockers",
+      "duration_seconds": 283.096,
+      "timestamp": "2026-04-19T02:02:09Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "a344dd344d86",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Phase 204: Targeted coverage cleanup \u2014 top CODE? gaps from true-uncovered audit.\n\nCONTEXT: TI-84 ROM",
+      "status": "completed",
+      "duration_seconds": 481.767,
+      "timestamp": "2026-04-19T02:06:03Z",
+      "files_changed": [
+        "TI-84_Plus_CE/phase200-seeds.txt",
+        "TI-84_Plus_CE/ROM.transpiled.report.json",
+        "TI-84_Plus_CE/ROM.transpiled.js",
+        "TI-84_Plus_CE/phase204-coverage-cleanup-report.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "64e180bf6ba1",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "Phase 202: Graph renderer entry-point discovery.\n\nCONTEXT: TI-84 ROM transpiler. Current coverage is",
+      "status": "timeout",
+      "duration_seconds": 600.065,
+      "timestamp": "2026-04-19T02:07:37Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e83d68225e3e",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Phase 203: FPU op test-surface expansion in ti84-math.mjs.\n\nCONTEXT: TI-84 ROM transpiler. Current t",
+      "status": "timeout",
+      "duration_seconds": 900.06,
+      "timestamp": "2026-04-19T02:12:48Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7df22937633a",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "TI-84 Plus CE ROM graph-renderer entry-point investigation. Repo: C:/Users/rober/Downloads/Projects/",
+      "status": "completed",
+      "duration_seconds": 528.959,
+      "timestamp": "2026-04-19T03:06:14Z",
+      "files_changed": [
+        "TI-84_Plus_CE/phase202a-graph-entry.md"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "07ec4168a19b",
+      "direction": "cc-to-codex",
+      "task_type": "investigate",
+      "prompt_summary": "TI-84 Plus CE FPU BCALL slot number investigation. Repo: C:/Users/rober/Downloads/Projects/school/fo",
+      "status": "completed",
+      "duration_seconds": 541.697,
+      "timestamp": "2026-04-19T03:06:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4220ca1d7f15",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Auto-Session 58 \u2014 Priority 1: FPU Op Expansion (Phase 203b)\n\n## Task\nAdd test cases for 4 new FPU ",
+      "status": "completed",
+      "duration_seconds": 137.502,
+      "timestamp": "2026-04-19T04:05:18Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "68918dc0ba39",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "# Auto-Session 58 \u2014 Priority 2: Graph Renderer Investigation (Phase 202b)\n\n## Task\nWrite a ROM disas",
+      "status": "completed",
+      "duration_seconds": 466.781,
+      "timestamp": "2026-04-19T04:10:49Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 266,
-    "cc_to_codex": 266,
+    "total_calls": 274,
+    "cc_to_codex": 274,
     "codex_to_cc": 0,
-    "completed": 203,
-    "failed": 57,
+    "completed": 208,
+    "failed": 59,
     "refused": 0,
-    "avg_duration_seconds": 692.691
+    "avg_duration_seconds": 686.846
   }
 }
