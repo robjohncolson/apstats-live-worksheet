@@ -1,3 +1,0 @@
-# Phase 130 - key processing gap fill
-# 0x54CDD5 discovered by Phase 127 as missing block in key compare chain
-0x54CDD5
