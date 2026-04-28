@@ -549,7 +549,6 @@
       'use strict';
 
       // --- constants ---
-      let chartCounter = 0; // unique canvas IDs for chart attachments
       // AP_EXAM_DATE is assigned after the v7 block is initialized (see below).
       const UNIT_EXAM_WEIGHTS = { 1: 0.19, 2: 0.135, 3: 0.06, 4: 0.15, 5: 0.095, 6: 0.135, 7: 0.14, 8: 0.035, 9: 0.035 };
       const TIER_MULTIPLIERS = { core: 4, regular: 3, power: 2, support: 1 };
@@ -1163,6 +1162,7 @@
       }
       (function(window) {
         'use strict';
+        let chartCounter = 0; // unique canvas IDs for chart attachments
 
         const LADDER = [
           { tier: 0, mcq: 5, frq: 1, label: 'Warmup', color: 'green' },
@@ -3560,7 +3560,12 @@
         if (!questionId) return null;
         if (questions.has(questionId)) return questions.get(questionId);
         const list = typeof EMBEDDED_CURRICULUM !== 'undefined' && Array.isArray(EMBEDDED_CURRICULUM) ? EMBEDDED_CURRICULUM : [];
-        return list.find(entry => entry && entry.id === questionId) || null;
+        const fromCurriculum = list.find(entry => entry && entry.id === questionId) || null;
+        if (fromCurriculum) return fromCurriculum;
+        // Fallback: check FRQ bank directly (covers cases where applyLocalGateFrqs hasn't run yet).
+        const bankEntry = window.STUDY_GUIDE_FRQ_BANK && window.STUDY_GUIDE_FRQ_BANK[questionId];
+        if (bankEntry && bankEntry.prompt && bankEntry.type) return bankEntry;
+        return null;
       }
 
       function closeTierInfoModal() {
@@ -5755,6 +5760,14 @@
         ui.importInput.addEventListener('change', importStateFromFile);
         ui.clearBtn.addEventListener('click', clearAll);
         state.dailyDose = pickDailyQueueV5(state, today(), AP_EXAM_DATE);
+        // Clear orphaned activeProbe (question no longer in curriculum or FRQ bank).
+        if (state.activeProbe && state.activeProbe.questionId) {
+          const apId = state.activeProbe.questionId;
+          const frqBankNow = window.STUDY_GUIDE_FRQ_BANK || {};
+          if (!findQuestion(apId) && !frqBankNow[apId]) {
+            state.activeProbe = null;
+          }
+        }
         saveSoon();
         refreshFocusedLayout();
         refreshAuthPanelVisibility();
