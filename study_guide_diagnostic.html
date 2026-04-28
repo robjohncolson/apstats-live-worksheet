@@ -534,6 +534,7 @@
   <script src="data/formula-procedure-map.js"></script>
   <script>
     (() => {
+      let chartCounter = 0; // unique canvas IDs for chart attachments — outer scope so attachMedia/render paths can see it
       const STORAGE_KEY = 'apStatsStudyGuideDiagnostic.v7';
       const SCHEMA_VERSION = 7;
       const STATE_ID = 'sg-state-v7';
@@ -1162,7 +1163,6 @@
       }
       (function(window) {
         'use strict';
-        let chartCounter = 0; // unique canvas IDs for chart attachments
 
         const LADDER = [
           { tier: 0, mcq: 5, frq: 1, label: 'Warmup', color: 'green' },
