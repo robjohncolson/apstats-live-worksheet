@@ -331,6 +331,32 @@
     @media (max-width:900px){.header{grid-template-columns:1fr;text-align:center}.header-left,.header-center,.header-right{justify-self:center}.student-info,.progress-summary,#sg-layout{grid-template-columns:1fr}}
     @media (max-width:620px){.page{width:min(100% - 16px,100%);padding-top:18px}.action-bar{align-items:stretch}.action-btn,.import-label,#theme-toggle{width:100%}}
     @media print{body{background:var(--sg-bg-card)}.header,.action-bar,.mode-toggle,.unit-action-row,.probe-check-btn,.toast{display:none !important}.page{width:100%;margin:0;padding:0}.panel,.unit-card,.summary-tile,.unit-section,.probe,.focus-panel,#sg-rail,#sg-active,#sg-remediation{border-color:var(--sg-border)}.unit-card{break-inside:avoid;page-break-inside:avoid;margin-bottom:20px}.unit-header{background:var(--sg-accent)}a{color:inherit;text-decoration:none}}
+    .lesson-lifeboat{margin:18px 0;border:3px solid #d97706;border-radius:10px;background:#fffbeb;color:#1f2937;box-shadow:0 4px 14px rgba(217,119,6,.18)}
+    .lesson-lifeboat>summary{padding:18px 22px;font-weight:800;cursor:pointer;list-style:none;font-size:1.35rem;color:#92400e;letter-spacing:.01em}
+    .lesson-lifeboat>summary::-webkit-details-marker{display:none}
+    .lesson-lifeboat>summary::after{content:'\25BE';float:right;transition:transform .2s}
+    .lesson-lifeboat[open]>summary::after{transform:rotate(180deg)}
+    .lesson-lifeboat-tag{display:inline-block;margin-left:10px;padding:2px 8px;background:#fde68a;color:#92400e;border-radius:999px;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+    .lesson-lifeboat-body{padding:4px 18px 18px;border-top:1px solid #fde68a;background:#fff}
+    .lesson-lifeboat-hint{margin:12px 0 14px;color:#6b7280;font-size:.92rem}
+    .lesson-lifeboat-unit{margin:8px 0;border:1px solid #e5e7eb;border-radius:6px;background:#fff}
+    .lesson-lifeboat-unit>summary{padding:10px 14px;cursor:pointer;font-size:.95rem;color:#1f2937;list-style:none}
+    .lesson-lifeboat-unit>summary::-webkit-details-marker{display:none}
+    .lesson-lifeboat-unit>summary::after{content:'\25B8';float:right;color:#9ca3af;transition:transform .2s}
+    .lesson-lifeboat-unit[open]>summary::after{transform:rotate(90deg)}
+    .lesson-lifeboat-unit ul{margin:0;padding:6px 14px 14px 32px;list-style:disc}
+    .lesson-lifeboat-unit li{margin:5px 0;line-height:1.4}
+    .lesson-lifeboat-unit a{color:#1d4ed8;text-decoration:none}
+    .lesson-lifeboat-unit a:hover{text-decoration:underline}
+    .lesson-lifeboat-weight{margin-left:8px;color:#6b7280;font-weight:400;font-size:.82rem}
+    [data-theme="night"] .lesson-lifeboat{background:#3b2a0a;border-color:#d97706;color:#fde68a}
+    [data-theme="night"] .lesson-lifeboat>summary{color:#fde68a}
+    [data-theme="night"] .lesson-lifeboat-tag{background:#92400e;color:#fde68a}
+    [data-theme="night"] .lesson-lifeboat-body{background:#1f2937;border-top-color:#92400e}
+    [data-theme="night"] .lesson-lifeboat-hint{color:#9ca3af}
+    [data-theme="night"] .lesson-lifeboat-unit{background:#111827;border-color:#374151}
+    [data-theme="night"] .lesson-lifeboat-unit>summary{color:#e5e7eb}
+    [data-theme="night"] .lesson-lifeboat-unit a{color:#93c5fd}
     .sg-mastery-map-panel{margin-top:14px;padding:10px 12px;border:1px solid var(--sg-border);border-radius:8px;background:var(--sg-bg-card)}
     .sg-mastery-map-panel-header{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:.88rem;margin-bottom:6px;color:var(--sg-text)}
     .sg-mastery-map-panel-header button{padding:2px 8px;font-size:.75rem;border-radius:6px;border:1px solid var(--sg-border);background:var(--sg-bg);color:var(--sg-text);cursor:pointer}
@@ -381,6 +407,147 @@
   <main class="page">
     <h1>Diagnostic Study Guide</h1>
     <p class="subtitle">See the weakest learning objectives first, work one probe at a time, and jump straight into remediation when you need it.</p>
+
+    <details class="lesson-lifeboat" id="lessonLifeboat" open>
+      <summary>📚 Browse all lessons by unit <span class="lesson-lifeboat-tag">always works · no login needed</span></summary>
+      <div class="lesson-lifeboat-body">
+        <p class="lesson-lifeboat-hint">Pick any unit below to see its lessons. Tap a lesson to open the full curriculum page. Works without an account or internet.</p>
+        <details class="lesson-lifeboat-unit" open>
+          <summary><strong>Unit 1</strong> · Exploring One-Variable Data <span class="lesson-lifeboat-weight">15-23%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=1&l=1">1.1 — Introducing Statistics: What Can We Learn from Data?</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=2">1.2 — The Language of Variation: Variables</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=3">1.3 — Representing a Categorical Variable with Tables</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=4">1.4 — Representing a Categorical Variable with Graphs</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=5">1.5 — Representing a Quantitative Variable with Graphs</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=6">1.6 — Describing the Distribution of a Quantitative Variable</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=7">1.7 — Summary Statistics for a Quantitative Variable</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=8">1.8 — Graphical Representations of Summary Statistics</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=9">1.9 — Comparing Distributions of a Quantitative Variable</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=10">1.10 — The Normal Distribution</a></li>
+            <li><a href="../curriculum_render/index.html?u=1&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 2</strong> · Exploring Two-Variable Data <span class="lesson-lifeboat-weight">5-7%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=2&l=1">2.1 — Introducing Statistics: Are Variables Related?</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=2">2.2 — Representing Two Categorical Variables</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=3">2.3 — Statistics for Two Categorical Variables</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=4">2.4 — Representing the Relationship Between Two Quantitative Variables</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=5">2.5 — Correlation</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=6">2.6 — Linear Regression Models</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=7">2.7 — Residuals</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=8">2.8 — Least Squares Regression</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=9">2.9 — Analyzing Departures from Linearity</a></li>
+            <li><a href="../curriculum_render/index.html?u=2&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 3</strong> · Collecting Data <span class="lesson-lifeboat-weight">12-15%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=3&l=1">3.1 — Introducing Statistics: Do the Data We Collected Tell the Truth?</a></li>
+            <li><a href="../curriculum_render/index.html?u=3&l=2">3.2 — Introduction to Planning a Study</a></li>
+            <li><a href="../curriculum_render/index.html?u=3&l=3">3.3 — Random Sampling and Data Collection</a></li>
+            <li><a href="../curriculum_render/index.html?u=3&l=4">3.4 — Potential Problems with Sampling</a></li>
+            <li><a href="../curriculum_render/index.html?u=3&l=5">3.5 — Introduction to Experimental Design</a></li>
+            <li><a href="../curriculum_render/index.html?u=3&l=6">3.6 — Selecting an Experimental Design</a></li>
+            <li><a href="../curriculum_render/index.html?u=3&l=7">3.7 — Inference and Experiments</a></li>
+            <li><a href="../curriculum_render/index.html?u=3&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 4</strong> · Probability, Random Variables, and Probability Distributions <span class="lesson-lifeboat-weight">10-20%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=4&l=1">4.1 — Introducing Statistics: Random and Non-Random Patterns?</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=2">4.2 — Estimating Probabilities Using Simulation</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=3">4.3 — Introduction to Probability</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=4">4.4 — Mutually Exclusive Events</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=5">4.5 — Conditional Probability</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=6">4.6 — Independent Events and Unions of Events</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=7">4.7 — Introduction to Random Variables and Probability Distributions</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=8">4.8 — Mean and Standard Deviation of Random Variables</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=9">4.9 — Combining Random Variables</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=10">4.10 — Introduction to the Binomial Distribution</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=11">4.11 — Parameters for a Binomial Distribution</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=12">4.12 — The Geometric Distribution</a></li>
+            <li><a href="../curriculum_render/index.html?u=4&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 5</strong> · Sampling Distributions <span class="lesson-lifeboat-weight">7-12%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=5&l=1">5.1 — Introducing Statistics: Why Is My Sample Not Like Yours?</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=2">5.2 — The Normal Distribution, Revisited</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=3">5.3 — The Central Limit Theorem</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=4">5.4 — Biased and Unbiased Point Estimates</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=5">5.5 — Sampling Distributions for Sample Proportions</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=6">5.6 — Sampling Distributions for Differences in Sample Proportions</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=7">5.7 — Sampling Distributions for Sample Means</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=8">5.8 — Sampling Distributions for Differences in Sample Means</a></li>
+            <li><a href="../curriculum_render/index.html?u=5&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 6</strong> · Inference for Categorical Data: Proportions <span class="lesson-lifeboat-weight">12-15%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=6&l=1">6.1 — Introducing Statistics: Why Be Normal?</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=2">6.2 — Constructing a Confidence Interval for a Population Proportion</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=3">6.3 — Justifying a Claim Based on a Confidence Interval for a Population Proportion</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=4">6.4 — Setting Up a Test for a Population Proportion</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=5">6.5 — Interpreting p-Values</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=6">6.6 — Concluding a Test for a Population Proportion</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=7">6.7 — Potential Errors When Performing Tests</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=8">6.8 — Confidence Intervals for the Difference of Two Proportions</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=9">6.9 — Justifying a Claim Based on a Confidence Interval for a Difference of Population Proportions</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=10">6.10 — Setting Up a Test for the Difference of Two Population Proportions</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=11">6.11 — Carrying Out a Test for the Difference of Two Population Proportions</a></li>
+            <li><a href="../curriculum_render/index.html?u=6&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 7</strong> · Inference for Quantitative Data: Means <span class="lesson-lifeboat-weight">10-18%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=7&l=1">7.1 — Introducing Statistics: Should I Worry About Error?</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=2">7.2 — Constructing a Confidence Interval for a Population Mean</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=3">7.3 — Justifying a Claim About a Population Mean Based on a Confidence Interval</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=4">7.4 — Setting Up a Test for a Population Mean</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=5">7.5 — Carrying Out a Test for the Population Mean</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=6">7.6 — Confidence Intervals for the Difference of Two Means</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=7">7.7 — Justifying a Claim About the Difference of Two Means Based on a Confidence Interval</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=8">7.8 — Setting Up a Test for the Difference of Two Population Means</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=9">7.9 — Carrying Out a Test for the Difference of Two Population Means</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=10">7.10 — Skills Focus: Selecting, Implementing, and Communicating Inference Procedures</a></li>
+            <li><a href="../curriculum_render/index.html?u=7&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 8</strong> · Inference for Categorical Data: Chi-Square <span class="lesson-lifeboat-weight">2-5%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=8&l=1">8.1 — Introducing Statistics: Are My Results Unexpected?</a></li>
+            <li><a href="../curriculum_render/index.html?u=8&l=2">8.2 — Setting Up a Chi-Square Goodness of Fit Test</a></li>
+            <li><a href="../curriculum_render/index.html?u=8&l=3">8.3 — Carrying Out a Chi-Square Test for Goodness of Fit</a></li>
+            <li><a href="../curriculum_render/index.html?u=8&l=4">8.4 — Expected Counts in Two-Way Tables</a></li>
+            <li><a href="../curriculum_render/index.html?u=8&l=5">8.5 — Setting Up a Chi-Square Test for Homogeneity or Independence</a></li>
+            <li><a href="../curriculum_render/index.html?u=8&l=6">8.6 — Carrying Out a Chi-Square Test for Homogeneity or Independence</a></li>
+            <li><a href="../curriculum_render/index.html?u=8&l=7">8.7 — Skills Focus: Selecting an Appropriate Inference Procedure for Categorical Data</a></li>
+            <li><a href="../curriculum_render/index.html?u=8&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+        <details class="lesson-lifeboat-unit">
+          <summary><strong>Unit 9</strong> · Inference for Quantitative Data: Slopes <span class="lesson-lifeboat-weight">2-5%</span></summary>
+          <ul>
+            <li><a href="../curriculum_render/index.html?u=9&l=1">9.1 — Introducing Statistics: Do Those Points Align?</a></li>
+            <li><a href="../curriculum_render/index.html?u=9&l=2">9.2 — Confidence Intervals for the Slope of a Regression Model</a></li>
+            <li><a href="../curriculum_render/index.html?u=9&l=3">9.3 — Justifying a Claim About the Slope of a Regression Model Based on a Confidence Interval</a></li>
+            <li><a href="../curriculum_render/index.html?u=9&l=4">9.4 — Setting Up a Test for the Slope of a Regression Model</a></li>
+            <li><a href="../curriculum_render/index.html?u=9&l=5">9.5 — Carrying Out a Test for the Slope of a Regression Model</a></li>
+            <li><a href="../curriculum_render/index.html?u=9&l=6">9.6 — Skills Focus: Selecting an Appropriate Inference Procedure</a></li>
+            <li><a href="../curriculum_render/index.html?u=9&l=PC">Progress Check</a></li>
+          </ul>
+        </details>
+      </div>
+    </details>
 
     <section class="panel student-info" id="studentInfoSection">
       <label>Username<select id="studentUsername" autocomplete="username"><option value="">Loading usernames...</option></select></label>
