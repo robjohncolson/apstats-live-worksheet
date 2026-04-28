@@ -5770,8 +5770,8 @@
       function buildLifeboatTree() {
         const root = document.getElementById('lifeboat-tree');
         if (!root) return;
-        const units = Array.isArray(window.ALL_UNITS_DATA) ? window.ALL_UNITS_DATA : [];
-        const curriculum = Array.isArray(window.EMBEDDED_CURRICULUM) ? window.EMBEDDED_CURRICULUM : [];
+        const units = (typeof ALL_UNITS_DATA !== 'undefined' && Array.isArray(ALL_UNITS_DATA)) ? ALL_UNITS_DATA : (Array.isArray(window.ALL_UNITS_DATA) ? window.ALL_UNITS_DATA : []);
+        const curriculum = (typeof EMBEDDED_CURRICULUM !== 'undefined' && Array.isArray(EMBEDDED_CURRICULUM)) ? EMBEDDED_CURRICULUM : (Array.isArray(window.EMBEDDED_CURRICULUM) ? window.EMBEDDED_CURRICULUM : []);
         if (!units.length || !curriculum.length) {
           root.innerHTML = '<p class="lesson-lifeboat-hint">Lesson tree unavailable — curriculum data did not load.</p>';
           return;
