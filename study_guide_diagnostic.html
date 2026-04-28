@@ -349,6 +349,26 @@
     .lesson-lifeboat-unit a{color:#1d4ed8;text-decoration:none}
     .lesson-lifeboat-unit a:hover{text-decoration:underline}
     .lesson-lifeboat-weight{margin-left:8px;color:#6b7280;font-weight:400;font-size:.82rem}
+    .lf-lesson{margin:6px 0;padding:8px 12px;border:1px solid #e5e7eb;border-radius:6px;background:#fff}
+    .lf-lesson-title{font-size:.92rem;font-weight:700;color:#1f2937;margin:0 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .lf-lesson-video{font-size:.78rem;color:#1d4ed8;text-decoration:none;border:1px solid #cbd5e1;padding:1px 6px;border-radius:999px;background:#f1f5f9}
+    .lf-lesson-video:hover{background:#e2e8f0}
+    .lf-q-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .lf-q-chip{padding:4px 10px;border:1px solid #cbd5e1;border-radius:999px;background:#f8fafc;color:#1f2937;font-size:.82rem;font-weight:600;cursor:pointer;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .lf-q-chip:hover{background:#dbeafe;border-color:#1d4ed8}
+    .lf-q-chip.is-active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+    .lf-q-chip.is-correct{background:#dcfce7;border-color:#16a34a;color:#166534}
+    .lf-q-chip.is-wrong{background:#fee2e2;border-color:#dc2626;color:#991b1b}
+    .lf-q-chip.is-frq{font-style:italic}
+    .lf-empty{font-size:.84rem;color:#9ca3af;font-style:italic;margin:4px 0}
+    [data-theme="night"] .lf-lesson{background:#111827;border-color:#374151}
+    [data-theme="night"] .lf-lesson-title{color:#e5e7eb}
+    [data-theme="night"] .lf-lesson-video{background:#1f2937;border-color:#475569;color:#93c5fd}
+    [data-theme="night"] .lf-q-chip{background:#1f2937;border-color:#475569;color:#e5e7eb}
+    [data-theme="night"] .lf-q-chip:hover{background:#1e3a8a;border-color:#60a5fa}
+    [data-theme="night"] .lf-q-chip.is-active{background:#3b82f6;border-color:#3b82f6}
+    [data-theme="night"] .lf-q-chip.is-correct{background:#14532d;border-color:#16a34a;color:#bbf7d0}
+    [data-theme="night"] .lf-q-chip.is-wrong{background:#7f1d1d;border-color:#dc2626;color:#fecaca}
     [data-theme="night"] .lesson-lifeboat{background:#3b2a0a;border-color:#d97706;color:#fde68a}
     [data-theme="night"] .lesson-lifeboat>summary{color:#fde68a}
     [data-theme="night"] .lesson-lifeboat-tag{background:#92400e;color:#fde68a}
@@ -410,143 +430,7 @@
 
     <details class="lesson-lifeboat" id="lessonLifeboat" open>
       <summary>📚 Browse all lessons by unit <span class="lesson-lifeboat-tag">always works · no login needed</span></summary>
-      <div class="lesson-lifeboat-body">
-        <p class="lesson-lifeboat-hint">Pick any unit below to see its lessons. Tap a lesson to open the full curriculum page. Works without an account or internet.</p>
-        <details class="lesson-lifeboat-unit" open>
-          <summary><strong>Unit 1</strong> · Exploring One-Variable Data <span class="lesson-lifeboat-weight">15-23%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=1&l=1">1.1 — Introducing Statistics: What Can We Learn from Data?</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=2">1.2 — The Language of Variation: Variables</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=3">1.3 — Representing a Categorical Variable with Tables</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=4">1.4 — Representing a Categorical Variable with Graphs</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=5">1.5 — Representing a Quantitative Variable with Graphs</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=6">1.6 — Describing the Distribution of a Quantitative Variable</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=7">1.7 — Summary Statistics for a Quantitative Variable</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=8">1.8 — Graphical Representations of Summary Statistics</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=9">1.9 — Comparing Distributions of a Quantitative Variable</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=10">1.10 — The Normal Distribution</a></li>
-            <li><a href="../curriculum_render/index.html?u=1&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 2</strong> · Exploring Two-Variable Data <span class="lesson-lifeboat-weight">5-7%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=2&l=1">2.1 — Introducing Statistics: Are Variables Related?</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=2">2.2 — Representing Two Categorical Variables</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=3">2.3 — Statistics for Two Categorical Variables</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=4">2.4 — Representing the Relationship Between Two Quantitative Variables</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=5">2.5 — Correlation</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=6">2.6 — Linear Regression Models</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=7">2.7 — Residuals</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=8">2.8 — Least Squares Regression</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=9">2.9 — Analyzing Departures from Linearity</a></li>
-            <li><a href="../curriculum_render/index.html?u=2&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 3</strong> · Collecting Data <span class="lesson-lifeboat-weight">12-15%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=3&l=1">3.1 — Introducing Statistics: Do the Data We Collected Tell the Truth?</a></li>
-            <li><a href="../curriculum_render/index.html?u=3&l=2">3.2 — Introduction to Planning a Study</a></li>
-            <li><a href="../curriculum_render/index.html?u=3&l=3">3.3 — Random Sampling and Data Collection</a></li>
-            <li><a href="../curriculum_render/index.html?u=3&l=4">3.4 — Potential Problems with Sampling</a></li>
-            <li><a href="../curriculum_render/index.html?u=3&l=5">3.5 — Introduction to Experimental Design</a></li>
-            <li><a href="../curriculum_render/index.html?u=3&l=6">3.6 — Selecting an Experimental Design</a></li>
-            <li><a href="../curriculum_render/index.html?u=3&l=7">3.7 — Inference and Experiments</a></li>
-            <li><a href="../curriculum_render/index.html?u=3&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 4</strong> · Probability, Random Variables, and Probability Distributions <span class="lesson-lifeboat-weight">10-20%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=4&l=1">4.1 — Introducing Statistics: Random and Non-Random Patterns?</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=2">4.2 — Estimating Probabilities Using Simulation</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=3">4.3 — Introduction to Probability</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=4">4.4 — Mutually Exclusive Events</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=5">4.5 — Conditional Probability</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=6">4.6 — Independent Events and Unions of Events</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=7">4.7 — Introduction to Random Variables and Probability Distributions</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=8">4.8 — Mean and Standard Deviation of Random Variables</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=9">4.9 — Combining Random Variables</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=10">4.10 — Introduction to the Binomial Distribution</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=11">4.11 — Parameters for a Binomial Distribution</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=12">4.12 — The Geometric Distribution</a></li>
-            <li><a href="../curriculum_render/index.html?u=4&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 5</strong> · Sampling Distributions <span class="lesson-lifeboat-weight">7-12%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=5&l=1">5.1 — Introducing Statistics: Why Is My Sample Not Like Yours?</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=2">5.2 — The Normal Distribution, Revisited</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=3">5.3 — The Central Limit Theorem</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=4">5.4 — Biased and Unbiased Point Estimates</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=5">5.5 — Sampling Distributions for Sample Proportions</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=6">5.6 — Sampling Distributions for Differences in Sample Proportions</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=7">5.7 — Sampling Distributions for Sample Means</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=8">5.8 — Sampling Distributions for Differences in Sample Means</a></li>
-            <li><a href="../curriculum_render/index.html?u=5&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 6</strong> · Inference for Categorical Data: Proportions <span class="lesson-lifeboat-weight">12-15%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=6&l=1">6.1 — Introducing Statistics: Why Be Normal?</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=2">6.2 — Constructing a Confidence Interval for a Population Proportion</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=3">6.3 — Justifying a Claim Based on a Confidence Interval for a Population Proportion</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=4">6.4 — Setting Up a Test for a Population Proportion</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=5">6.5 — Interpreting p-Values</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=6">6.6 — Concluding a Test for a Population Proportion</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=7">6.7 — Potential Errors When Performing Tests</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=8">6.8 — Confidence Intervals for the Difference of Two Proportions</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=9">6.9 — Justifying a Claim Based on a Confidence Interval for a Difference of Population Proportions</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=10">6.10 — Setting Up a Test for the Difference of Two Population Proportions</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=11">6.11 — Carrying Out a Test for the Difference of Two Population Proportions</a></li>
-            <li><a href="../curriculum_render/index.html?u=6&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 7</strong> · Inference for Quantitative Data: Means <span class="lesson-lifeboat-weight">10-18%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=7&l=1">7.1 — Introducing Statistics: Should I Worry About Error?</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=2">7.2 — Constructing a Confidence Interval for a Population Mean</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=3">7.3 — Justifying a Claim About a Population Mean Based on a Confidence Interval</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=4">7.4 — Setting Up a Test for a Population Mean</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=5">7.5 — Carrying Out a Test for the Population Mean</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=6">7.6 — Confidence Intervals for the Difference of Two Means</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=7">7.7 — Justifying a Claim About the Difference of Two Means Based on a Confidence Interval</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=8">7.8 — Setting Up a Test for the Difference of Two Population Means</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=9">7.9 — Carrying Out a Test for the Difference of Two Population Means</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=10">7.10 — Skills Focus: Selecting, Implementing, and Communicating Inference Procedures</a></li>
-            <li><a href="../curriculum_render/index.html?u=7&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 8</strong> · Inference for Categorical Data: Chi-Square <span class="lesson-lifeboat-weight">2-5%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=8&l=1">8.1 — Introducing Statistics: Are My Results Unexpected?</a></li>
-            <li><a href="../curriculum_render/index.html?u=8&l=2">8.2 — Setting Up a Chi-Square Goodness of Fit Test</a></li>
-            <li><a href="../curriculum_render/index.html?u=8&l=3">8.3 — Carrying Out a Chi-Square Test for Goodness of Fit</a></li>
-            <li><a href="../curriculum_render/index.html?u=8&l=4">8.4 — Expected Counts in Two-Way Tables</a></li>
-            <li><a href="../curriculum_render/index.html?u=8&l=5">8.5 — Setting Up a Chi-Square Test for Homogeneity or Independence</a></li>
-            <li><a href="../curriculum_render/index.html?u=8&l=6">8.6 — Carrying Out a Chi-Square Test for Homogeneity or Independence</a></li>
-            <li><a href="../curriculum_render/index.html?u=8&l=7">8.7 — Skills Focus: Selecting an Appropriate Inference Procedure for Categorical Data</a></li>
-            <li><a href="../curriculum_render/index.html?u=8&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-        <details class="lesson-lifeboat-unit">
-          <summary><strong>Unit 9</strong> · Inference for Quantitative Data: Slopes <span class="lesson-lifeboat-weight">2-5%</span></summary>
-          <ul>
-            <li><a href="../curriculum_render/index.html?u=9&l=1">9.1 — Introducing Statistics: Do Those Points Align?</a></li>
-            <li><a href="../curriculum_render/index.html?u=9&l=2">9.2 — Confidence Intervals for the Slope of a Regression Model</a></li>
-            <li><a href="../curriculum_render/index.html?u=9&l=3">9.3 — Justifying a Claim About the Slope of a Regression Model Based on a Confidence Interval</a></li>
-            <li><a href="../curriculum_render/index.html?u=9&l=4">9.4 — Setting Up a Test for the Slope of a Regression Model</a></li>
-            <li><a href="../curriculum_render/index.html?u=9&l=5">9.5 — Carrying Out a Test for the Slope of a Regression Model</a></li>
-            <li><a href="../curriculum_render/index.html?u=9&l=6">9.6 — Skills Focus: Selecting an Appropriate Inference Procedure</a></li>
-            <li><a href="../curriculum_render/index.html?u=9&l=PC">Progress Check</a></li>
-          </ul>
-        </details>
-      </div>
+        <div id="lifeboat-tree" class="lesson-lifeboat-body"></div>
     </details>
 
     <section class="panel student-info" id="studentInfoSection">
@@ -5880,6 +5764,137 @@
         } else {
           refreshSyncStatus();
         }
+        buildLifeboatTree();
+      }
+
+      function buildLifeboatTree() {
+        const root = document.getElementById('lifeboat-tree');
+        if (!root) return;
+        const units = Array.isArray(window.ALL_UNITS_DATA) ? window.ALL_UNITS_DATA : [];
+        const curriculum = Array.isArray(window.EMBEDDED_CURRICULUM) ? window.EMBEDDED_CURRICULUM : [];
+        if (!units.length || !curriculum.length) {
+          root.innerHTML = '<p class="lesson-lifeboat-hint">Lesson tree unavailable — curriculum data did not load.</p>';
+          return;
+        }
+        const byLesson = new Map();
+        curriculum.forEach(q => {
+          if (!q || typeof q.id !== 'string') return;
+          const m = q.id.match(/^U(\d+)-L([0-9PC]+)-Q(\d+)/);
+          if (!m) return;
+          const key = m[1] + '-' + m[2];
+          if (!byLesson.has(key)) byLesson.set(key, []);
+          byLesson.get(key).push(q);
+        });
+        const frqBank = window.STUDY_GUIDE_FRQ_BANK || {};
+        const frqByUnit = new Map();
+        Object.keys(frqBank).forEach(fid => {
+          const m = fid.match(/^U(\d+)-/);
+          if (!m) return;
+          const u = Number(m[1]);
+          if (!frqByUnit.has(u)) frqByUnit.set(u, []);
+          frqByUnit.get(u).push({ id: fid, prompt: (frqBank[fid] && frqBank[fid].prompt) || '' });
+        });
+        const frag = document.createDocumentFragment();
+        const hint = document.createElement('p');
+        hint.className = 'lesson-lifeboat-hint';
+        hint.textContent = 'Tap any question chip to load it as your active probe. Works without an account or internet.';
+        frag.appendChild(hint);
+        units.forEach((u, ui) => {
+          const unitNum = Number((u.unitId || '').replace(/^unit/, '')) || (ui + 1);
+          const det = document.createElement('details');
+          det.className = 'lesson-lifeboat-unit';
+          if (unitNum === 1) det.setAttribute('open', '');
+          const sum = document.createElement('summary');
+          sum.innerHTML = '<strong>' + esc(u.displayName ? u.displayName.replace(/^Unit\s+\d+:\s*/, 'Unit ' + unitNum + ' · ') : 'Unit ' + unitNum) + '</strong>' + (u.examWeight ? ' <span class="lesson-lifeboat-weight">' + esc(u.examWeight) + '</span>' : '');
+          det.appendChild(sum);
+          const topics = Array.isArray(u.topics) ? u.topics.slice() : [];
+          const unitFrqs = frqByUnit.get(unitNum) || [];
+          if (unitFrqs.length) topics.push({ id: unitNum + '-PC', name: 'Progress Check', description: 'Unit ' + unitNum + ' Progress Check (FRQ)', __pc: true });
+          topics.forEach(t => {
+            if (!t || !t.id) return;
+            const lessonNum = String(t.id).split('-')[1];
+            if (!lessonNum) return;
+            const key = unitNum + '-' + lessonNum;
+            const qs = byLesson.get(key) || [];
+            const frqs = t.__pc ? unitFrqs : [];
+            const lesson = document.createElement('div');
+            lesson.className = 'lf-lesson';
+            const title = document.createElement('div');
+            title.className = 'lf-lesson-title';
+            title.innerHTML = '<span>' + esc(t.id.replace('-', '.')) + ' — ' + esc(t.description || t.name || '') + '</span>';
+            const vid = (t.videos && t.videos[0] && t.videos[0].url) ? t.videos[0].url : null;
+            if (vid) {
+              const a = document.createElement('a');
+              a.className = 'lf-lesson-video';
+              a.href = vid;
+              a.target = '_blank';
+              a.rel = 'noopener';
+              a.textContent = '📖 video';
+              title.appendChild(a);
+            }
+            lesson.appendChild(title);
+            const row = document.createElement('div');
+            row.className = 'lf-q-row';
+            if (!qs.length && !frqs.length) {
+              const empty = document.createElement('div');
+              empty.className = 'lf-empty';
+              empty.textContent = 'No questions in bank yet.';
+              row.appendChild(empty);
+            }
+            qs.forEach(q => {
+              const chip = document.createElement('button');
+              chip.type = 'button';
+              chip.className = 'lf-q-chip';
+              const m = q.id.match(/-Q(\d+)$/);
+              chip.textContent = 'Q' + (m ? m[1] : '?');
+              chip.title = (q.prompt || q.id || '').slice(0, 160);
+              chip.dataset.questionId = q.id;
+              chip.dataset.unit = String(unitNum);
+              const data = state.units && state.units[unitNum];
+              const result = data && data.mcqResults ? data.mcqResults[q.id] : null;
+              if (result === 'correct') chip.classList.add('is-correct');
+              else if (result === 'incorrect') chip.classList.add('is-wrong');
+              if (state.activeProbe && state.activeProbe.questionId === q.id) chip.classList.add('is-active');
+              chip.addEventListener('click', () => {
+                setActiveProbe(unitNum, q.id, 'manual', null);
+                renderActiveProbe();
+                renderRemediation();
+                renderQueuePane();
+                document.querySelectorAll('.lf-q-chip.is-active').forEach(c => c.classList.remove('is-active'));
+                chip.classList.add('is-active');
+                const sgActive = document.getElementById('sg-active');
+                if (sgActive) sgActive.scrollIntoView({ block: 'start', behavior: 'smooth' });
+              });
+              row.appendChild(chip);
+            });
+            frqs.forEach(f => {
+              const chip = document.createElement('button');
+              chip.type = 'button';
+              chip.className = 'lf-q-chip is-frq';
+              const fm = (f.id || '').match(/-Q(\d+)$/);
+              chip.textContent = 'FRQ' + (fm ? ' ' + fm[1] : '');
+              chip.title = (f.prompt || f.title || f.id || '').slice(0, 160);
+              chip.dataset.questionId = f.id;
+              chip.dataset.unit = String(unitNum);
+              chip.addEventListener('click', () => {
+                setActiveProbe(unitNum, f.id, 'manual', null);
+                renderActiveProbe();
+                renderRemediation();
+                renderQueuePane();
+                document.querySelectorAll('.lf-q-chip.is-active').forEach(c => c.classList.remove('is-active'));
+                chip.classList.add('is-active');
+                const sgActive = document.getElementById('sg-active');
+                if (sgActive) sgActive.scrollIntoView({ block: 'start', behavior: 'smooth' });
+              });
+              row.appendChild(chip);
+            });
+            lesson.appendChild(row);
+            det.appendChild(lesson);
+          });
+          frag.appendChild(det);
+        });
+        root.innerHTML = '';
+        root.appendChild(frag);
       }
 
       init();
