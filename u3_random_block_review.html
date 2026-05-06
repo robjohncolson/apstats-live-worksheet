@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 3 Focused Review: Randomized Block Design</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background: #f9f9f9;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header-left { font-weight: bold; color: #003366; }
+        .header-right { font-weight: bold; color: #003366; }
+        h1 { text-align: center; color: #003366; margin: 4px 0; font-size: 1.5rem; }
+        .subtitle { text-align: center; font-style: italic; color: #555; margin-bottom: 18px; }
+        h2 {
+            color: #003366;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+            margin-top: 32px;
+            font-size: 1.2rem;
+        }
+        h3 { color: #003366; margin-bottom: 6px; }
+
+        .concept-box {
+            border: 2px solid #003366;
+            border-radius: 5px;
+            padding: 15px 18px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        .concept-box p:last-child { margin-bottom: 0; }
+        .concept-box strong { color: #003366; }
+
+        .design-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 4px;
+            background: white;
+            font-size: 0.95rem;
+        }
+        .design-table th, .design-table td {
+            border: 1px solid #ccc;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .design-table th {
+            background: #003366;
+            color: white;
+        }
+        .design-table tr:nth-child(even) td { background: #f0f4f8; }
+
+        .video-list {
+            background: #f7fbff;
+            border: 1px solid #cce0ff;
+            border-radius: 5px;
+            padding: 12px 18px;
+            margin: 8px 0 4px;
+        }
+        .video-list ul { margin: 6px 0 0 0; padding-left: 20px; }
+        .video-list li { margin: 4px 0; }
+        .video-list .lesson-tag {
+            display: inline-block;
+            background: #003366;
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .question {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+        }
+        .q-id {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: bold;
+            float: right;
+        }
+        .q-prompt { font-weight: 500; margin: 4px 0 12px; }
+        .choices { list-style: none; padding-left: 0; margin: 0; }
+        .choices li {
+            padding: 6px 10px;
+            margin: 4px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .choices .key {
+            display: inline-block;
+            font-weight: bold;
+            color: #003366;
+            width: 22px;
+        }
+
+        .reveal-btn {
+            margin-top: 12px;
+            padding: 6px 14px;
+            background: #003366;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .reveal-btn:hover { background: #00509e; }
+        .reveal-btn:disabled { background: #888; cursor: default; }
+
+        .answer-box {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 15px;
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+        }
+        .answer-box.show { display: block; }
+        .answer-box .ans-key {
+            font-weight: bold;
+            color: #155724;
+            margin-bottom: 6px;
+        }
+        .answer-box .reasoning { color: #1d3a1d; }
+
+        .footer-note {
+            margin-top: 30px;
+            padding: 14px 18px;
+            background: #fff8dc;
+            border: 1px solid #e6d99a;
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">Edgar Chavez-Lopez</div>
+        <div class="header-right">AP Statistics — Mr. Colson</div>
+    </div>
+
+    <h1>Unit 3 Focused Review</h1>
+    <div class="subtitle">Randomized Block Design (and friends)</div>
+
+    <h2>Why blocking?</h2>
+    <div class="concept-box">
+        <p>Use a <strong>randomized block design (RBD)</strong> when you know in advance that some characteristic of your units (sex, age, injury type, location, etc.) is likely to affect the response. You group similar units into <strong>blocks</strong>, then randomly assign treatments <em>within</em> each block.</p>
+        <p>The point of blocking is to <strong>separate the variability caused by that characteristic from the variability caused by your treatments</strong>. That makes treatment differences easier to detect.</p>
+        <p><strong>Matched pairs</strong> is just RBD with blocks of size 2 — twins, before/after on the same person, two very similar plots of land, etc.</p>
+    </div>
+
+    <h2>When to use what</h2>
+    <table class="design-table">
+        <thead>
+            <tr>
+                <th>Design</th>
+                <th>Use when…</th>
+                <th>How to randomize</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Completely Randomized (CRD)</strong></td>
+                <td>Units are reasonably similar — no obvious source of variation to control for.</td>
+                <td>Randomly assign treatments to <em>all</em> units at once.</td>
+            </tr>
+            <tr>
+                <td><strong>Randomized Block (RBD)</strong></td>
+                <td>You can identify a characteristic that <em>will</em> affect the response (a "blocking variable").</td>
+                <td>Group into blocks of similar units. Randomize <em>within each block</em>.</td>
+            </tr>
+            <tr>
+                <td><strong>Matched Pairs</strong></td>
+                <td>Units come in natural pairs (twins, left/right, before/after).</td>
+                <td>For each pair, flip a coin to decide which unit gets which treatment.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Watch (or re-watch) these</h2>
+    <div class="video-list">
+        <p style="margin-top:0;">The conceptual foundation for blocking is in <strong>Topic 3.5</strong>; choosing between designs is <strong>Topic 3.6</strong>. Open AP Classroom and play these in order:</p>
+        <ul>
+            <li><span class="lesson-tag">Unit 3 · Topic 3.5</span> Introduction to Experimental Design — Video 1</li>
+            <li><span class="lesson-tag">Unit 3 · Topic 3.5</span> Introduction to Experimental Design — Video 2</li>
+            <li><span class="lesson-tag">Unit 3 · Topic 3.5</span> Introduction to Experimental Design — Video 3</li>
+            <li><span class="lesson-tag">Unit 3 · Topic 3.6</span> Selecting an Experimental Design — Video 1</li>
+            <li><span class="lesson-tag">Unit 3 · Topic 3.6</span> Selecting an Experimental Design — Video 2</li>
+        </ul>
+    </div>
+
+    <h2>Practice questions</h2>
+    <p style="margin-top:0;font-style:italic;color:#555;">Read the question, decide on an answer, then click <strong>Reveal answer</strong>. If you got it wrong, write down <em>why</em> the correct choice is correct in your own words before moving on — that's where the learning happens.</p>
+
+    <div class="question">
+        <span class="q-id">U3-L6-Q02</span>
+        <h3>Question 1 — Price &amp; Packaging</h3>
+        <p class="q-prompt">A market research firm is studying the effects of price and type of packaging on sales of a particular product. Twenty-seven stores with shoppers of similar characteristics will be used in the study. The nine combinations of three price levels and three packaging types are the treatments of interest. Total sales of the product over a seven-week period will be recorded. Which of the following describes the best design to use for the study?</p>
+        <ol class="choices">
+            <li><span class="key">A.</span> A completely randomized design. Randomly assign the nine combinations of price level and packaging type so that three stores use each combination.</li>
+            <li><span class="key">B.</span> A completely randomized design. Randomly assign the three price levels so that nine stores use each price level.</li>
+            <li><span class="key">C.</span> A completely randomized design. Randomly assign the three packaging types so that nine stores use each type of packaging.</li>
+            <li><span class="key">D.</span> A randomized block design. Use packaging as a block. Randomly assign the nine combinations of three price levels and three packaging types so that three stores use each combination.</li>
+            <li><span class="key">E.</span> A randomized block design. Use packaging as a block. Randomly assign nine stores to each packaging type, then randomly assign price level to three stores within each block.</li>
+        </ol>
+        <button class="reveal-btn" onclick="reveal(this)">Reveal answer</button>
+        <div class="answer-box">
+            <div class="ans-key">Answer: A</div>
+            <div class="reasoning">Because the stores have similar shoppers, a completely randomized design is appropriate — there's no need for blocking. The study is examining the effects of both price and packaging, so the treatments are the combinations of these factors (3 × 3 = 9 combinations). The correct design randomly assigns these nine treatment combinations to the stores, with three stores receiving each combination. <strong>Watch out:</strong> blocking only helps when units differ in a way that affects the response. Here, the stores are already similar.</div>
+        </div>
+    </div>
+
+    <div class="question">
+        <span class="q-id">U3-L6-Q03</span>
+        <h3>Question 2 — Twin Lambs</h3>
+        <p class="q-prompt">A researcher is studying the effect of genetically modified (GM) and nongenetically modified (nGM) corn on the weight gain of lambs. The sex and genetics of the lambs can affect their weight gain. Five sets of male twin lambs and five sets of female twin lambs — for a total of twenty lambs — are available for the study. The lambs will be randomly assigned to a diet of either GM or nGM diet of corn. Weight gain will be recorded for each lamb after five weeks on the diet. Which of the following designs would be best to use in the study?</p>
+        <ol class="choices">
+            <li><span class="key">A.</span> A completely randomized design. Randomly assign ten lambs to the GM diet and ten lambs to the nGM diet.</li>
+            <li><span class="key">B.</span> A stratified randomized design. Divide the lambs into males and females. Within each group, randomly assign the GM diet to one half and the nGM diet to the other half.</li>
+            <li><span class="key">C.</span> A randomized block design. Randomly assign ten lambs to the GM diet and ten lambs to the nGM diet.</li>
+            <li><span class="key">D.</span> A randomized block design. Randomly assign the GM diet to the male lambs and the nGM diet to the female lambs.</li>
+            <li><span class="key">E.</span> A matched pairs design. For each set of twins, randomly assign one twin to the GM diet and the other twin to the nGM diet.</li>
+        </ol>
+        <button class="reveal-btn" onclick="reveal(this)">Reveal answer</button>
+        <div class="answer-box">
+            <div class="ans-key">Answer: E</div>
+            <div class="reasoning">A matched pairs design is most appropriate because twin lambs are naturally matched — they share the same sex and have similar genetic factors that affect weight gain. By randomly assigning one twin to each diet treatment within each pair, this design controls for both sex and genetic variation, providing the most precise comparison of the diet effects while minimizing confounding. <strong>Note D is a trap:</strong> assigning all males to one diet and all females to the other completely confounds sex with treatment — that's the opposite of blocking.</div>
+        </div>
+    </div>
+
+    <div class="question">
+        <span class="q-id">U3-PC-MCQ-B-Q09</span>
+        <h3>Question 3 — Pain Medication &amp; Injury Type</h3>
+        <p class="q-prompt">To investigate the effectiveness of an herbal medication for pain relief, a researcher randomly selected 80 patients who were undergoing physical therapy while recovering from an injury. Of the patients, 40 had knee injuries, 16 had arm injuries, and 24 had foot injuries. The researcher will use two treatments for the investigation: the herbal medication and a standard medication. After the patients are on the medication for two weeks, the amount of pain reduction will be measured for each patient. Which of the following best describes <em>why</em> a randomized block design is appropriate for the investigation?</p>
+        <ol class="choices">
+            <li><span class="key">A.</span> The 80 patients were selected at random from all patients undergoing physical therapy while recovering from an injury.</li>
+            <li><span class="key">B.</span> The sample size was greater than 30.</li>
+            <li><span class="key">C.</span> Each patient will be randomly assigned to either the herbal medication or the standard medication.</li>
+            <li><span class="key">D.</span> Blocking on injury type will help to separate natural variability from differences due to injury type.</li>
+            <li><span class="key">E.</span> Each patient assigned to the herbal medication will be paired with a patient assigned to the standard medication.</li>
+        </ol>
+        <button class="reveal-btn" onclick="reveal(this)">Reveal answer</button>
+        <div class="answer-box">
+            <div class="ans-key">Answer: D</div>
+            <div class="reasoning">Different injury types (knee vs. arm vs. foot) may respond differently to pain medication. Blocking on injury type ensures units within each block are similar with respect to that variable, which separates the natural variability due to injury type from the variability due to the treatments. <strong>This is the textbook justification for blocking</strong> — and the AP exam wants this exact language: "separate the variability due to [blocking variable] from the variability due to the treatments."</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <strong>Quick self-check before our after-school session:</strong> Can you explain, in one sentence, the difference between <em>random selection</em> and <em>random assignment</em>? (Hint: one lets you generalize to a population, the other lets you claim causation.) If that's fuzzy, that's the first thing we'll review.
+    </div>
+
+    <script>
+        function reveal(btn) {
+            btn.nextElementSibling.classList.add('show');
+            btn.disabled = true;
+            btn.textContent = 'Answer revealed';
+        }
+    </script>
+</body>
+</html>
