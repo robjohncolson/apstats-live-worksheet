@@ -1086,6 +1086,14 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openProgress()" style="font-weight:bold">&#128202; My Progress</div> -->
         </div>
     </span>
+    <span class="menu-item" data-menu="student">Student
+        <div class="menu-dropdown" id="menu-student">
+            <div class="menu-dd-item disabled" id="menu-student-status">Not signed in</div>
+            <div class="menu-dd-sep"></div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openSignInModal()">&#128100; Sign In...</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();signOutStudent()">&#128100; Sign Out</div>
+        </div>
+    </span>
     <span class="menu-item" data-menu="special">Special
         <div class="menu-dropdown" id="menu-special">
             <div class="menu-dd-item" data-sfx onclick="showDialog('&#128165;','All caches cleared! Your brain has been defragmented. You now have 12% more room for z-scores.','Excellent')">Empty Trash</div>
@@ -1190,6 +1198,25 @@
         </div>
         <div class="dialog-btns">
             <button class="s7btn s7btn-default" id="dialog-btn" onclick="closeDialog()">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Sign-In Modal ═══ -->
+<div class="dialog-overlay" id="signin-overlay" style="display:none" onclick="if(event.target===this)closeSignInModal()">
+    <div class="dialog-box chicago" onclick="event.stopPropagation()" style="max-width:340px">
+        <div class="dialog-body" style="text-align:left">
+            <div class="dialog-icon" style="float:left;margin-right:10px">&#128100;</div>
+            <div class="dialog-msg geneva" style="font-size:11px">
+                <div class="chicago" style="font-size:12px;margin-bottom:4px">Sign In</div>
+                <div style="margin-bottom:8px">Enter your school email so I can track your progress.</div>
+                <input type="email" id="signin-email" class="geneva" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="you@school.edu">
+                <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
+            </div>
+        </div>
+        <div class="dialog-btns">
+            <button class="s7btn" onclick="closeSignInModal()">Cancel</button>
+            <button class="s7btn s7btn-default" onclick="submitSignIn()">OK</button>
         </div>
     </div>
 </div>
@@ -2757,6 +2784,97 @@ async function loadSupabaseOverlay(period){
   }catch(e){/* fail silently — baked data is fine */}
 }
 
+/* ═══ STUDENT PROGRESS (Supabase anon INSERT only) ═══ */
+function getStudentEmail() {
+  return localStorage.getItem('apstats_desk_student_email');
+}
+
+function getStudentMarks() {
+  const email = getStudentEmail();
+  if (!email) return {};
+  try { return JSON.parse(localStorage.getItem('apstats_desk_marks_' + email) || '{}'); }
+  catch(e) { return {}; }
+}
+
+async function recordProgress(topicId, artifact, score) {
+  const email = getStudentEmail();
+  if (!email) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return false; }
+  const body = { student_email: email, topic_id: topicId, artifact: artifact, score: (score==null?null:Number(score)) };
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/student_progress', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const marks = getStudentMarks();
+    marks[topicId + '|' + artifact] = { ts: new Date().toISOString(), score: score };
+    localStorage.setItem('apstats_desk_marks_' + email, JSON.stringify(marks));
+    return true;
+  } catch (e) {
+    showDialog('⚠️','Could not save: ' + e.message + '. Try again.','OK');
+    return false;
+  }
+}
+
+async function registerStudent(email) {
+  try {
+    await fetch(SUPABASE_URL + '/rest/v1/students', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=ignore-duplicates' },
+      body: JSON.stringify({ email: email })
+    });
+  } catch(e) { /* non-fatal */ }
+}
+
+function updateStudentMenu() {
+  var el = document.getElementById('menu-student-status');
+  if (!el) return;
+  var email = getStudentEmail();
+  el.textContent = email ? ('Signed in as: ' + email) : 'Not signed in';
+}
+
+function openSignInModal() {
+  var ov = document.getElementById('signin-overlay');
+  if (!ov) return;
+  var inp = document.getElementById('signin-email');
+  var err = document.getElementById('signin-error');
+  if (err) err.textContent = '';
+  if (inp) { inp.value = getStudentEmail() || ''; }
+  ov.style.display = 'block';
+  MacSFX.play('sosumi', 0.5);
+  setTimeout(function(){ if (inp) inp.focus(); }, 50);
+}
+
+function closeSignInModal() {
+  var ov = document.getElementById('signin-overlay');
+  if (!ov) return;
+  MacSFX.play('click', 0.3);
+  ov.style.display = 'none';
+}
+
+function submitSignIn() {
+  var inp = document.getElementById('signin-email');
+  var err = document.getElementById('signin-error');
+  var email = (inp && inp.value || '').trim();
+  var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!re.test(email)) {
+    if (err) err.textContent = 'Please enter a valid email address.';
+    return;
+  }
+  localStorage.setItem('apstats_desk_student_email', email);
+  registerStudent(email);
+  updateStudentMenu();
+  closeSignInModal();
+  showDialog('\u{1F464}','Signed in as ' + email + '.','OK');
+}
+
+function signOutStudent() {
+  localStorage.removeItem('apstats_desk_student_email');
+  updateStudentMenu();
+  location.reload();
+}
+
 function mergeSupabase(schedRows,urlsRows,period){
   if(!REGISTRY)REGISTRY={lessons:{}};
   if(!REGISTRY.lessons)REGISTRY.lessons={};
@@ -4193,6 +4311,19 @@ function showResourcePanel(inf, dateStr) {
 
     // Today's Lesson
     if (ids.length > 0) {
+        // topic id in dot format for student_progress (e.g. "1.7")
+        const _stuTopicId = (inf.t && /^\d+\.\d+/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.');
+        const _signedIn = !!getStudentEmail();
+        const _marks = getStudentMarks();
+        function _doneBtn(artifact) {
+            if (!_signedIn) return '';
+            var key = _stuTopicId + '|' + artifact;
+            var saved = !!_marks[key];
+            if (saved) {
+                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6">&#10003; Saved</button>';
+            }
+            return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
+        }
         let lessonHtml = '';
         for (const id of ids) {
             const r = RESOURCES[id];
@@ -4202,6 +4333,7 @@ function showResourcePanel(inf, dateStr) {
                     lessonHtml += '<div style="margin:3px 0">';
                     lessonHtml += '<a href="' + v.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
                     if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
+                    if (i === 0) lessonHtml += _doneBtn('video');
                     lessonHtml += '</div>';
                 });
             }
@@ -4217,16 +4349,16 @@ function showResourcePanel(inf, dateStr) {
         if (regEntry && regEntry.urls) {
             const u = regEntry.urls;
             if (u.worksheet) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _doneBtn('worksheet') + '</div>';
             }
             if (u.drills) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.drills + '" target="_blank" style="color:#0000cc;text-decoration:underline">Practice Drills</a></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.drills + '" target="_blank" style="color:#0000cc;text-decoration:underline">Practice Drills</a>' + _doneBtn('drills') + '</div>';
             }
             if (u.quiz) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a>' + _doneBtn('quiz') + '</div>';
             }
             if (u.blooket) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" style="color:#0000cc;text-decoration:underline">Blooket Review</a></div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _doneBtn('blooket') + '</div>';
             }
         }
         var _rpAll = getAllRegistryEntries(inf.t);
@@ -4298,7 +4430,29 @@ function showResourcePanel(inf, dateStr) {
 
     document.getElementById('resource-body').innerHTML = html;
     document.getElementById('resource-overlay').style.display = 'block';
+    _lastResourcePanel = { inf: inf, dateStr: dateStr };
     MacSFX.play('sosumi', 0.5);
+}
+
+var _lastResourcePanel = null;
+async function studentMark(btn, topicId, artifact) {
+    if (!getStudentEmail()) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return; }
+    var score = null;
+    if (artifact === 'quiz') {
+        var raw = prompt('Score (0-100)?');
+        if (raw === null) return;
+        var n = Number(raw);
+        if (isNaN(n) || n < 0 || n > 100) { showDialog('⚠️','Score must be a number 0-100.','OK'); return; }
+        score = n;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    var ok = await recordProgress(topicId, artifact, score);
+    if (ok && _lastResourcePanel) {
+        showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
+    } else if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '✓ Done';
+    }
 }
 
 function closeResourcePanel() {
@@ -7369,6 +7523,7 @@ function hTip(){tip.style.display="none";}
 uClock();setInterval(uClock,15e3);
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");_b.classList.add("s7btn-inv","s7btn-default");_a.classList.remove("s7btn-inv","s7btn-default");}
 loadRegistry();
+updateStudentMenu();
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
 /* ── Boot Dismissal (click-to-start after progress bar) ── */
