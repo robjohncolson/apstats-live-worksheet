@@ -1,104 +1,110 @@
 ﻿/**
  * AI Grading Prompts for Unit 1 Lesson 8: Topic 1.8
- * Topic 1.8: Graphical Representations of Summary Statistics
+ * Topic 1.8: Topic 1.8
  *
  * Learning Objectives:
- *   Define the five-number summary for a quantitative data set
- *   Use the five-number summary to construct and interpret a box plot
- *   Explain how quartiles and outliers appear on a box plot
- *   Describe advantages and disadvantages of box plots
- *   Predict how distribution shape affects the relationship between the mean and the median
+ *   Represent summary statistics for quantitative data graphically using the five-number summary and box plots
+ *   Describe what a box plot shows about quartiles, outliers, and the middle 50% of the data
+ *   Explain how the shape of a distribution affects the relationship between the mean and the median
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U1L8 = `
-VIDEO 1 - Graphical Representations of Summary Statistics (~8:03):
-- The lesson begins with two main questions: what the five-number summary is and how it is used to make a box plot, and how the shape of a distribution affects the relationship between the mean and the median.
-- The example throughout the video uses Flint water crisis lead-level data from 71 water samples collected from January to June 2015.
-- To begin a box plot, students first set up an x-axis with the variable and a scale that covers all values, from 0 to 104 in the Flint example.
-- The five-number summary is defined as the minimum, Q1, median, Q3, and maximum.
-- For the Flint data, the minimum is 0, Q1 is 2, the median is 3, Q3 is 7, and the maximum is 104.
-- Before completing the box plot, the lesson checks for outliers using the 1.5 IQR method and finds eight outliers.
-- On the box plot, outliers are shown as separate dots or asterisks.
-- The box extends from Q1 to Q3, the median is marked inside the box, and whiskers extend outward.
-- Because the Flint data have large high-end outliers, the right whisker stops at 13, the largest value that is not an outlier, rather than going all the way to 104.
-- A box plot divides the distribution into four quartiles, and each quartile contains 25% of the observations.
-- Advantages of a box plot include quickly showing the five-number summary and whether outliers are present, and clearly dividing the data into quartiles.
-- Disadvantages of a box plot include hiding individual values and hiding shape details such as clusters and gaps within quartiles.
-- The video compares the mean and median for the Flint data and notes that the mean is 7.31 while the median is 3.
-- Because the mean is non-resistant, the high outliers pull it upward in this skewed-right distribution, so the mean is greater than the median.
-- The general relationship is: skewed right means mean > median, skewed left means mean < median, and symmetric means mean and median are about equal.
-- The key takeaway is that box plots graph the five-number summary, highlight quartiles and outliers, and that shape helps predict how mean and median compare.
+VIDEO 1 - Graphical Representations of Summary Statistics (~8:04):
+- The video focuses on graphical representations of summary statistics.
+- Two main questions guide the lesson: what the five-number summary is and how to use it to make a box plot, and how distribution shape affects the relationship between the mean and the median.
+- The lesson returns to the Flint water crisis data with lead levels from 71 water samples collected from Flint residents from January to June 2015.
+- To build a box plot, the x-axis should be labeled with the variable and use a scale that fits all the data values from 0 to 104.
+- The five-number summary for the Flint lead-level data is minimum 0, Q1 2, median 3, Q3 7, and maximum 104.
+- Before completing the box plot, the lesson checks for outliers using the 1.5 IQR method.
+- The Flint data have eight outliers by this method.
+- In a box plot, outliers are shown as separate dots or asterisks.
+- The box extends from Q1 to Q3, and the median is marked inside the box.
+- The left whisker extends to the minimum value of 0.
+- Because the Flint data have high outliers, the right whisker does not go to the maximum of 104; it goes to the largest value that is not an outlier, which is 13.
+- A box plot divides the data into four quartiles, and each quartile contains 25% of the data.
+- Advantages of a box plot include quickly showing the five-number summary and possible outliers.
+- Disadvantages of a box plot include hiding individual values and hiding some shape details such as clusters or gaps.
+- For the Flint data, the mean is 7.31 and the median is 3.
+- The mean is much larger than the median because the high outliers pull the nonresistant mean upward.
+- The median is resistant, so it stays lower in the skewed-right Flint distribution.
+- General rule: if a distribution is skewed right, the mean is usually greater than the median.
+- If a distribution is skewed left, the mean is usually less than the median.
+- If a distribution is relatively symmetric, the mean and median are about equal.
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U1L8 = {
     reflect1: {
-        questionText: 'What is the five-number summary, and how do the quartiles help you build a box plot?',
+        questionText: 'Explain how the five-number summary appears in the box plot for the Flint lead-level data. Include at least two numerical values from the lesson and mention the box, whiskers, or outliers.',
         expectedElements: [
-            { id: 'five-values', description: 'Identifies the five-number summary as the minimum, Q1, median, Q3, and maximum', required: true },
-            { id: 'box-uses-quartiles', description: 'Explains that the box is built from Q1 to Q3 with the median marked inside', required: true },
-            { id: 'quartiles-split-data', description: 'Explains that quartiles divide the data into four groups of 25%', required: true },
-            { id: 'whiskers-or-outliers', description: 'May mention that whiskers extend to the smallest and largest non-outliers or that outliers are plotted separately', required: false }
+            { id: 'five-number-summary', description: 'Identifies that the five-number summary is the minimum, Q1, median, Q3, and maximum', required: true },
+            { id: 'box-and-median', description: 'Explains that the box runs from Q1 to Q3 and that the median is marked inside the box', required: true },
+            { id: 'whiskers-or-outliers', description: 'Explains that whiskers extend to the most extreme non-outliers or that outliers are plotted separately', required: true },
+            { id: 'flint-context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
+            { id: 'numerical-details', description: 'Includes at least two correct numerical values such as 0, 2, 3, 7, 13, or 104', required: true },
+            { id: 'quartile-meaning', description: 'May explain that the box plot splits the data into quartiles or that each section contains 25% of the data', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly names all five parts of the five-number summary and clearly explains how quartiles are used to form the box plot.',
-            P: 'Response shows partial understanding of the five-number summary or box plot construction, but leaves out or confuses one major component.',
-            I: 'Response does not correctly explain the five-number summary or how quartiles are used in a box plot.'
+            E: 'Response clearly explains how the Flint five-number summary is represented on the box plot and uses accurate numerical details.',
+            P: 'Response shows partial understanding of how the box plot represents the Flint data but misses one major feature or uses weak detail.',
+            I: 'Response does not correctly explain how the five-number summary appears on the Flint box plot.'
         },
         commonMistakes: [
-            'Leaving out one or more of the five values such as Q1 or Q3',
-            'Confusing quartiles with random intervals instead of four equal parts of the data',
-            'Describing only the median and not how the box is formed from Q1 to Q3',
-            'Ignoring how whiskers or outliers connect to the box plot'
+            'Listing numbers without explaining what part of the box plot they represent',
+            'Saying the whiskers always go to the minimum and maximum even when outliers exist',
+            'Forgetting that the median is the line inside the box',
+            'Leaving out the Flint lead-level context'
         ],
-        contextFromVideo: 'Luke Wilcox explicitly defines the five-number summary, identifies the Flint values as 0, 2, 3, 7, and 104, and explains that the box plot uses Q1 and Q3 for the box and quartiles for the 25% sections.'
+        contextFromVideo: 'The video gives the Flint five-number summary as 0, 2, 3, 7, and 104, and shows that the right whisker stops at 13 because larger values are outliers.'
     },
 
     reflect2: {
-        questionText: 'How does the shape of a distribution help you predict the relationship between the mean and the median?',
+        questionText: 'Explain how the shape of a distribution helps you compare mean and median. Use skewed right, skewed left, and symmetric in your answer, and connect at least one part of your explanation to the Flint box plot.',
         expectedElements: [
-            { id: 'skewed-right', description: 'States that in a skewed-right distribution the mean is greater than the median', required: true },
-            { id: 'skewed-left', description: 'States that in a skewed-left distribution the mean is less than the median', required: true },
-            { id: 'symmetric', description: 'States that in a symmetric distribution the mean and median are about equal or very similar', required: true },
-            { id: 'why-mean-moves', description: 'May explain that the non-resistant mean is pulled toward the longer tail or outliers more than the median', required: false }
+            { id: 'skewed-right', description: 'States that in a skewed-right distribution the mean is usually greater than the median', required: true },
+            { id: 'skewed-left', description: 'States that in a skewed-left distribution the mean is usually less than the median', required: true },
+            { id: 'symmetric', description: 'States that in a relatively symmetric distribution the mean and median are about equal or very close', required: true },
+            { id: 'outlier-effect', description: 'Explains that outliers or a long tail pull the mean more than the median because the mean is nonresistant', required: true },
+            { id: 'flint-connection', description: 'Connects the rule to the Flint box plot or Flint lead levels by noting that the Flint distribution is skewed right and has mean 7.31 above median 3', required: true },
+            { id: 'median-resistant', description: 'May mention that the median is resistant compared with the mean', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly connects skewed-right, skewed-left, and symmetric shapes to the correct relationship between the mean and median.',
-            P: 'Response gets some of the shape relationships correct but leaves out or mixes up at least one important case.',
-            I: 'Response does not correctly explain how shape helps predict the relationship between the mean and median.'
+            E: 'Response correctly explains how shape affects the relationship between mean and median and connects the rule to the Flint example.',
+            P: 'Response includes some correct comparisons but misses one major relationship, the role of outliers, or the Flint connection.',
+            I: 'Response does not correctly explain how distribution shape affects the relative positions of the mean and median.'
         },
         commonMistakes: [
-            'Reversing the skewed-right and skewed-left relationships',
-            'Saying the mean and median are always equal',
-            'Ignoring the symmetric case',
-            'Not recognizing that outliers and long tails pull the mean more strongly than the median'
+            'Reversing the relationships for skewed-right and skewed-left distributions',
+            'Saying the mean and median are always exactly equal for symmetric distributions',
+            'Ignoring the way outliers pull the mean more than the median',
+            'Failing to connect the explanation to the Flint box plot'
         ],
-        contextFromVideo: 'The video states that the Flint data are skewed right with mean 7.31 and median 3, then generalizes to skewed right mean > median, skewed left mean < median, and symmetric mean about equal to median.'
+        contextFromVideo: 'The video shows that the Flint distribution is skewed right with high outliers, so the mean is 7.31 while the median is only 3.'
     },
 
     exitTicket: {
-        questionText: 'A teacher recorded the number of minutes 15 students spent reading before class one morning: 1, 2, 2, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 15, 22. Find the five-number summary, describe what the box plot would show including any outlier, predict whether the mean is greater than, less than, or about equal to the median and explain why, and write one complete sentence in context.',
+        questionText: 'A school counselor summarized one evening\'s homework times for 12 students with minimum 12, Q1 18, median 22, Q3 31, largest non-outlier 38, and one high outlier at 58. Describe how these values would appear on a box plot, explain what interval contains the middle 50% of homework times, and predict whether the mean is greater than, less than, or about equal to the median.',
         expectedElements: [
-            { id: 'five-number-summary', description: 'Gives a correct or very close five-number summary of 1, 3, 5, 9, and 22', required: true },
-            { id: 'boxplot-details', description: 'Describes a box from 3 to 9 with a median at 5 and notes whiskers or the right whisker stopping before the outlier', required: true },
-            { id: 'outlier', description: 'Identifies 22 as a high outlier or clearly notes a possible high outlier on the right', required: true },
-            { id: 'mean-median-relationship', description: 'Explains that the distribution is skewed right so the mean should be greater than the median', required: true },
-            { id: 'context-sentence', description: 'Writes in context about students and minutes spent reading before class', required: true }
+            { id: 'box-and-median', description: 'Explains that the box would run from Q1 = 18 to Q3 = 31 with a median line at 22', required: true },
+            { id: 'whiskers-and-outlier', description: 'Explains that the whiskers would extend to 12 and 38 and that 58 would be shown as a separate outlier point', required: true },
+            { id: 'middle-50', description: 'States that the middle 50% of homework times are between 18 and 31 minutes', required: true },
+            { id: 'mean-vs-median', description: 'Predicts that the mean is greater than the median because the high outlier suggests a skewed-right distribution', required: true },
+            { id: 'context', description: 'Uses context by referring to homework times or minutes spent on homework', required: true },
+            { id: 'quartile-language', description: 'May mention quartiles or the five-number summary by name', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly gives the five-number summary, describes the box plot and outlier, explains that skewed-right shape makes the mean greater than the median, and writes in context.',
-            P: 'Response gets much of the analysis right but misses or confuses one major component such as the five-number summary, outlier, box plot details, mean-median comparison, or context.',
-            I: 'Response has major errors or omissions in describing the reading-time data with a box plot and shape-based mean-median reasoning.'
+            E: 'Response correctly describes the box plot, identifies the middle 50%, predicts the mean-median relationship, and uses context.',
+            P: 'Response includes several correct ideas but misses one major box-plot feature, the interval for the middle 50%, the mean-median comparison, or clear context.',
+            I: 'Response does not correctly describe the box plot or justify the expected relationship between the mean and the median.'
         },
         commonMistakes: [
-            'Using the maximum 22 as the end of the right whisker even after identifying it as an outlier',
-            'Giving an incorrect quartile or median value in the five-number summary',
-            'Saying the mean is less than the median even though the data have a long right tail',
-            'Forgetting to mention the outlier at 22',
-            'Writing about the numbers without mentioning students or reading time in context'
+            'Sending the right whisker to 58 even though 58 is identified as an outlier',
+            'Saying the middle 50% runs from the minimum to the maximum',
+            'Predicting the mean is less than the median despite the high outlier on the right',
+            'Using generic language without mentioning homework times'
         ],
-        contextFromVideo: 'The lesson models how to use the five-number summary to sketch a box plot, how outliers change the whiskers, and how a skewed-right shape means the mean is larger than the median.'
+        contextFromVideo: 'The lesson says the box runs from Q1 to Q3, whiskers extend to the most extreme non-outliers, outliers are shown separately, and skewed-right distributions usually have mean greater than median.'
     }
 };
 
@@ -117,7 +123,7 @@ window.buildReflectionPromptU1L8 = function(questionId, studentAnswer) {
         .map((e, i) => `${i + 1}. ${e.description}`)
         .join('\n');
 
-    return `You are grading an AP Statistics student's response about graphical representations of summary statistics (Topic 1.8).
+    return `You are grading an AP Statistics student's response about Topic 1.8: Topic 1.8.
 
 ## Question
 ${rubric.questionText}
