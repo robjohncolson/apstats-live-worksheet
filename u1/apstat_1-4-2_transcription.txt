@@ -1,0 +1,75 @@
+# Video 2 — Transcript
+# Unit 1, Lesson 4
+
+[00:02] Welcome back AP Stat students. I'm Mr. Starns, longtime AP statistics teacher, most recently at the Lawrenceville School in New Jersey.
+[00:10] This is the second video in topic 1.4, representing a categorical variable with graphs.
+[00:20] What will you learn in this video? Well, first, how can you represent multiple sets of data for the same categorical variable in tabular form?
+[00:31] Second, how can you represent multiple sets of data for the same categorical variable graphically?
+[00:38] And third, how do these tabular and graphical representations help us to compare multiple sets of categorical data?
+[00:47] Let's look at a somewhat familiar example. At least the context will be familiar.
+[00:51] So, a high school teacher gave a survey to the students in all of her classes on the first day of school.
+[00:59] This survey asked each student to record their sex, male or female.
+[01:03] Another question asked, "Which of the following superpowers would you most like to have?" You've seen those before.
+[01:11] Now, the teacher wants to compare superpower preferences for male and female students.
+[01:15] Here are data for the 80 boys who completed the survey from all the teacher's classes.
+[01:23] And here are the data for the 125 girls who completed the survey from all this teacher's classes.
+[01:30] How can we compare the distribution of superpower preference for these two groups?
+[01:37] Well, from previous videos, you know, we can compare with frequencies.
+[01:41] And we can start with a frequency table comparing the number of males and the number of females who chose each of those superpower preferences.
+[01:53] This is using a new skill to compare distributions in this case or later on compare relative positions of points within a distribution.
+[02:04] So in comparing distributions, we can compare numerically as we're doing now.
+[02:11] So let's look at a multiple choice question. Which of the following statements is supported by the table?
+[02:16] Is it A, fly was the most preferred superpower for both males and females? No, not for the males.
+[02:27] How about B? Freeze time was an equally popular choice of preferred superpower for males and females.
+[02:34] Oh, that one's tempting. An equal number of males and females preferred freeze time, but a larger proportion of males favored it.
+[02:44] 28 out of 80 is much greater than 28 out of the 125 females.
+[02:49] So, be careful when you're dealing with different group sizes like here.
+[02:55] How about C? Invisibility was a more popular choice of preferred superpower for females than males.
+[03:01] Well, it certainly looks that way. 21 versus 15. But remember the lesson from answer choice B.
+[03:08] 15 out of 80 for the males is .1875. 21 out of 125 for the females is only .168.
+[03:16] So invisibility was actually more popular for the males to choose.
+[03:21] How about D? Super strength was twice as popular among males as females.
+[03:25] Well, I'm sure you know the punch line by now. 10 versus five in raw counts.
+[03:31] But when you look at the relative frequencies, a much higher proportion of males than females chose super strength.
+[03:39] How about E? Telepathy was the preferred superpower for less than 10% of males, 7 out of 80, and almost 25% of females, 31 out of 125.
+[03:51] That is the one statement that is supported by the table. Answer choice E.
+[04:00] So as you saw in the previous slide, it's a good idea to use relative frequencies when comparing distributions of categorical data where the groups are different sizes like here.
+[04:12] That'll make comparisons easier if we've already calculated the relative frequencies within each group.
+[04:18] So here's a relative frequency table showing the proportion of males who had each superpower preference and the proportion of females who had each superpower preference.
+[04:31] Remember, we're trying to compare distributions.
+[04:36] Well, we can compare distributions with tables or we can compare distributions with graphs.
+[04:40] So, let's take that relative frequency table and turn it into a relative frequency graph.
+[04:48] Our learning objective is compare multiple sets of categorical data, whether with tables or with graphs.
+[04:58] So, here's our relative frequency bar chart. You can see we've got a darker blue for the males and a lighter blue for the females.
+[05:07] Remember the good habits of graphing that we mentioned in the last video. Label axes. Scale your axes.
+[05:15] Draw those bars leaving spaces between the categories. The bars for males and females can certainly touch.
+[05:24] Add this legend or key because we need to know which bars represent the males and which represent the females.
+[05:32] Now, there's an interesting decision to be made when you're grouping the bars.
+[05:35] You can see that we group them within the superpower preference category, but you could also group them within each sex.
+[05:42] So you could look at the distribution of superpower preference for the males and then separately look at the distribution of superpower preference for the females.
+[05:52] There may be times when that would be a preferred way to display the data.
+[05:57] So you need to be prepared to interpret the graph whichever way it's drawn.
+[06:03] Time for some practice. This scenario is based on one from the last video.
+[06:07] You may remember that in 2019, Common Sense Media surveyed a random sample of over 1,600 US 8 to 18 year olds.
+[06:15] This bar chart compares data on the average daily screen media use by tweens ages 8 to 12 and teens ages 13 to 18 in the sample.
+[06:25] And you can see the tweens is the darker blue and the teens is the lighter blue.
+[06:30] Note here that 0 plus to 2 hours indicates use of screen media for more than zero hours up to and including two hours per day.
+[06:42] So which of the following statements is supported by the graph?
+[06:46] A. Tweens generally report more screen media use than teens.
+[06:51] B. About half of tweens and teens reported two plus to eight hours of screen media use per day.
+[06:57] C. For both tweens and teens, the second most reported amount of screen media use per day is more than eight hours.
+[07:03] D. A similar proportion of tweens and teens report zero plus to eight hours of screen media use per day.
+[07:10] Or E, over 50% of tweens and teens report more than four hours of screen media use per day.
+[07:14] Why don't you pause the video, answer the question, and then come back for a discussion. Now, really pause it.
+[07:22] Okay, we're back. Option A is backwards. It's the teens who report more screen media use. And you may not be surprised by that.
+[07:32] For B, if you look at the tweens and the teens, both of them have 0.51 as the proportion who reported two plus to eight hours of screen media use per day.
+[07:42] So this is the correct answer.
+[07:45] C is not true because teens do have more than eight hours as their second most reported, but tweens do not.
+[07:56] For D, it's not a similar proportion of tweens and teens. 0 plus to 8 hours. It's actually 77 for the tweens versus 66 for the teens.
+[08:08] And for E, over 50% of teens do report more than four hours of screen media use, but for the tweens, it's only 41.
+[08:15] So again, the correct answer is B.
+[08:17] What should you take away from this video? Well, first you can represent multiple sets of data for the same categorical variable using a frequency or relative frequency table.
+[08:28] Second, you can represent multiple sets of data for the same categorical variable with a relative frequency bar graph.
+[08:37] And third, you can use both tables and graphs to compare multiple sets of categorical data.
+[08:43] You can, as with other topics we've discussed, use the information provided in those graphs or tables to justify claims about the data in context.
+[08:53] So, I want to thank you for tuning in.

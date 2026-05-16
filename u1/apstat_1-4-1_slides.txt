@@ -1,0 +1,61 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 4
+
+[00:00] — Introductory Title Card
+  * "AP Daily" logo.
+  * "AP Statistics".
+  * "Topic 1.4: Representing a Categorical Variable with Graphs".
+
+[00:03] — Instructor Introduction
+  * Speaker: Mr. Starns.
+  * Topics: Representing categorical data graphically and using these representations to describe the data.
+
+[00:35] — Example: Superpower Preferences
+  * Data from a random sample of 50 high school students.
+  * Categorical variable: superpower preference (invisibility, telepathy, freeze time, super strength, or fly).
+  * Raw data table showing 50 individual responses.
+
+[01:35] — Representing Categorical Data with Frequencies
+  * A side-by-side comparison of a frequency table and a bar chart.
+  * Both represent the same superpower preference data.
+  * Skill 2B: Construct numerical or graphical representations of distributions.
+
+[02:00] — Representing Categorical Data with Relative Frequencies
+  * A side-by-side comparison of a relative frequency table and a relative frequency bar chart.
+  * Learning Objective: Represent categorical data graphically.
+
+[02:24] — Best Practices for Bar Charts
+  * Label axes: Variable name on horizontal axis, frequency/relative frequency on vertical.
+  * Scale axes: Start at zero on the vertical axis; space out category labels on the horizontal.
+  * Draw bars: Equal width bars with gaps between them.
+
+[03:41] — Describing Categorical Data: Practice Question
+  * Bar chart showing superpower preferences of 50 students.
+  * Multiple-choice question: "Which of the following statements is NOT supported by the graph?".
+  * Options A-E providing various interpretations of the data.
+  * Solution: Choice B is highlighted as the correct answer (not supported).
+
+[05:48] — Pie Charts
+  * Example of a superpower preference pie chart using frequencies.
+  * Example of a superpower preference pie chart using relative frequencies.
+  * Includes a note to always include a legend or key.
+
+[06:25] — Practice Scenario: Screen Media Use
+  * Data from a 2019 Common Sense Media survey of 1,600 teenagers.
+  * Relative frequency bar chart showing daily screen media use categories (e.g., 0 to 2 hours, 2 to 4 hours, etc.).
+
+[06:57] — Practice Question: Screen Media Use
+  * Question: "Which of the following statements is NOT supported by the graph?".
+  * Options A-E providing various interpretations of the screen use data.
+
+[07:47] — Solution: Screen Media Use
+  * Solution: Choice C is identified as the statement not supported by the graph.
+
+[08:15] — Summary of Takeaways
+  * Key methods for representing categorical data graphically: bar charts and pie charts.
+  * How representations help describe data: they reveal information to justify claims in context.
+
+[08:48] — Closing Title Card
+  * "AP Daily" logo.
+  * "AP Statistics".
+  * "Topic 1.4: Representing a Categorical Variable with Graphs".

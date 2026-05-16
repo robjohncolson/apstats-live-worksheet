@@ -1,0 +1,224 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 4
+
+[00:03] Welcome back AP Stat students. I'm Mr.
+[00:06] Starns, longtime AP statistics teacher,
+[00:09] most recently at the Lawrenceville
+[00:11] School in New Jersey. This is topic 1.4,
+[00:15] representing a categorical variable with
+[00:17] graphs.
+[00:19] What will you learn in this video?
+[00:22] Well, first, how can you represent
+[00:24] categorical data graphically?
+[00:27] And second, how do these graphical
+[00:30] representations help you describe
+[00:32] categorical data?
+[00:35] As always, we start with an example.
+[00:39] You may recognize this from the previous
+[00:41] video. We had an online survey that
+[00:44] asked, "Which of the following
+[00:45] superpowers would you most like to have?
+[00:48] Invisibility, telepathy (that's reading
+[00:50] minds), freeze time, super strength, or
+[00:54] fly."
+[00:56] Here are data from a random sample of 50
+[00:58] high school students who completed the
+[01:00] survey. You can see that all five
+[01:02] categories are represented in the data.
+[01:06] The individuals in this data set are the
+[01:08] 50 students who completed the online
+[01:10] survey.
+[01:11] The variable of interest is superpower
+[01:13] preference, which is a categorical
+[01:16] variable.
+[01:17] And the question we asked in the
+[01:19] previous video is the same one here. How
+[01:21] can we represent the distribution of
+[01:23] this categorical variable?
+[01:26] We know we can represent categorical
+[01:28] data with frequencies.
+[01:30] And in the last video, we showed how to
+[01:32] do that with a frequency table.
+[01:35] In this video, we're going to show how
+[01:37] to do it with a graph. So, here's the
+[01:39] frequency table from the previous video.
+[01:43] And here is a bar chart or bar graph of
+[01:46] the data.
+[01:48] And we're using skill 2B: construct
+[01:51] numerical—
+[01:53] that would be the frequency table—or
+[01:55] graphical representations of
+[01:56] distributions.
+[01:59] And you also learned in the last video
+[02:01] that we can represent categorical data
+[02:03] with relative frequencies.
+[02:05] So in the previous video we made a
+[02:07] relative frequency table.
+[02:10] And you guessed it, we can make a
+[02:12] relative frequency bar graph or bar
+[02:14] chart.
+[02:17] So when you're making bar charts for
+[02:19] categorical data,
+[02:21] that represents this new learning
+[02:24] objective: we want to be able to
+[02:26] represent categorical data graphically.
+[02:30] Here's the frequency bar chart. Here's
+[02:33] the relative frequency bar chart. There
+[02:35] are some commonalities whenever you're
+[02:37] making graphs.
+[02:39] First, you should always label your
+[02:41] axes. Put the variable name, superpower
+[02:44] preference, on the horizontal axis and
+[02:47] frequency or relative frequency on the
+[02:49] vertical axis. Many students lose points
+[02:52] on the AP exam for forgetting to label
+[02:54] their axes.
+[02:56] Second, you need to scale your axes. I
+[03:00] put the "air quotes" because on the
+[03:01] horizontal axis, that really amounts to
+[03:03] putting the category labels spaced out.
+[03:06] On the vertical axis, though, we need the
+[03:08] frequency or relative frequency starting
+[03:11] at zero so we don't give a distorted
+[03:13] impression, and going up to or slightly
+[03:16] exceeding the maximum frequency or
+[03:19] relative frequency.
+[03:21] And finally, we have to draw the bars.
+[03:24] The bars should be equal in width and
+[03:28] it's conventional to leave gaps between
+[03:30] them. So, equal-width bars with gaps. The
+[03:34] heights of the bars represent the
+[03:35] category frequencies or relative
+[03:38] frequencies.
+[03:41] So let's practice describing categorical
+[03:44] data using a bar chart. Here's the bar
+[03:47] chart of the data on superpower
+[03:48] preference. Which of the following
+[03:50] statements is not supported by the
+[03:52] graph?
+[03:54] Our learning objective here is to
+[03:56] describe categorical data represented
+[03:58] graphically.
+[04:01] So which is not supported by the graph?
+[04:03] Super strength was chosen by less than
+[04:05] 1/5 of students.
+[04:08] Freeze time was chosen by twice as many
+[04:10] students as fly.
+[04:12] Together, freeze time and telepathy were
+[04:14] chosen by over 60% of students. The
+[04:17] proportion of students who chose
+[04:18] invisibility is less than half the
+[04:20] proportion of students who chose
+[04:21] telepathy. Or the most popular choice
+[04:24] of preferred superpower was telepathy.
+[04:28] So going back to A: super strength was
+[04:30] chosen by three students.
+[04:32] 1/5 of the total number is 10. So this
+[04:36] is definitely correct. Less than
+[04:39] 1/5 of students chose super strength.
+[04:41] How about B? Freeze time was chosen by
+[04:44] 15, fly by nine. That's not twice as
+[04:47] many. So that one's going to be the one
+[04:50] that's not supported by the graph. Let's
+[04:52] just check to make sure there's no other
+[04:54] one. Uh, for C: freeze time and telepathy,
+[04:58] that's 15 plus 16, 31
+[05:01] total out of 50, which is 62%, definitely
+[05:04] over 60%.
+[05:06] How about D? The proportion of students
+[05:08] who chose invisibility—that's 7 out of
+[05:11] 50, or 0.14—
+[05:13] and the proportion who chose telepathy,
+[05:15] 16 out of 50, which is 0.32. So this
+[05:18] proportion is less than half of that
+[05:20] proportion. And E: the most popular
+[05:23] choice was telepathy; that's certainly
+[05:25] supported by the graph,
+[05:28] 16 highest frequency. So the correct
+[05:31] answer in this case, the one not
+[05:32] supported by the graph, is B. Always be
+[05:35] careful to look for those "not" statements
+[05:37] when you're doing multiple choice.
+[05:40] So we're practicing again skill 2A:
+[05:43] describe data presented numerically or,
+[05:45] in this case, graphically.
+[05:48] There are also pie charts as a method
+[05:50] for representing categorical data.
+[05:52] You'll often see these in the media.
+[05:55] They're quite popular.
+[05:57] So here's a superpower preference pie chart with the
+[06:00] frequencies.
+[06:02] Here is a superpower preference pie
+[06:04] chart with the relative frequencies. And
+[06:06] again, the learning objective we were
+[06:08] working on was representing categorical
+[06:10] data graphically when we were making
+[06:12] those bar charts or pie charts.
+[06:15] Be sure to include a legend or a key
+[06:18] that connects the pie pieces to the
+[06:20] categories whenever you make a pie
+[06:21] chart. That's just part of good
+[06:23] graphing.
+[06:25] Time for you to practice. Here's a new
+[06:27] scenario. In 2019, Common Sense Media
+[06:31] surveyed a random sample of more than
+[06:33] 1,600 US 8 to 18-year-olds. The bar
+[06:37] chart summarizes data on average daily
+[06:39] screen media use by the teenagers (those
+[06:42] ages 13 to 18) in the sample. Just a
+[06:46] note, "0+ to 2 hours" would indicate
+[06:49] an average of more than zero hours up to
+[06:51] and including two hours per day. And
+[06:53] that's true for these categories as
+[06:55] well.
+[06:57] So here is the question.
+[06:59] Which of the following statements is not
+[07:01] supported by the graph?
+[07:04] A. Over a quarter of teens reported
+[07:06] screen media use of more than eight
+[07:07] hours per day. B. The proportion of
+[07:10] teens reporting some screen media use is
+[07:13] about 0.95.
+[07:15] C. About five times as many teens
+[07:17] reported more than two screen
+[07:19] media hours per day as reported at most
+[07:23] two hours of screen media per day. D. A
+[07:26] majority of teens reported over four
+[07:28] hours of screen media use per day. E.
+[07:30] About 50% of teens reported 2+ to
+[07:33] 8 hours of screen media use per day. You
+[07:36] should pause the video here. Take a look
+[07:38] at those statements and when you're
+[07:40] ready for the answer, start the video
+[07:43] again. No, really, pause the video.
+[07:47] Okay, I'm back with your solution. Let's
+[07:49] see if you got the same thing that I
+[07:51] did. The one that's not supported by the
+[07:54] graph is answer choice C: "About five
+[07:56] times as many teens reported more than
+[07:58] two hours of screen media use per day as
+[08:01] reported at most two hours of screen
+[08:02] media use per day." It's actually about
+[08:04] four times as many if you look at the
+[08:06] proportions.
+[08:07] So when you're interpreting these
+[08:09] graphs, you have to be prepared for
+[08:11] these "not" statements, as I mentioned
+[08:13] earlier.
+[08:15] What should you take away from this
+[08:16] video? Well, first, how can you
+[08:20] represent categorical data graphically?
+[08:23] Mostly with a bar chart that displays
+[08:25] the category frequencies or relative
+[08:27] frequencies, or with a pie chart.
+[08:30] And how do those graphical
+[08:31] representations help you describe
+[08:33] categorical data? Well, graphical
+[08:36] representations, just like tabular
+[08:38] representations of a categorical
+[08:40] variable, reveal information that you
+[08:42] can use to justify claims about the data
+[08:44] in context.
+[08:47] So once again, I thank you for tuning
+[08:48] in. Until next time, keep looking for
+[08:51] the data.

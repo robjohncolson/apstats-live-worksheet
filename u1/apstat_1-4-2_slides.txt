@@ -1,0 +1,37 @@
+# Video 2 — Slide Descriptions
+# Unit 1, Lesson 4
+
+[00:01] — Representing a Categorical Variable with Graphs (Topic 1.4, Video 2)
+
+[00:20] — Learning Objectives
+  * Representing multiple sets of data for the same categorical variable in tabular form.
+  * Representing multiple sets of data for the same categorical variable graphically.
+  * Comparing multiple sets of categorical data using these representations.
+
+[00:46] — Superpower Preferences: Survey Data
+  * Data for 80 boys and 125 girls regarding their choice of superpower (Fly, Freeze time, Invisibility, Super strength, or Telepathy).
+
+[01:52] — Skill 2.D: Compare distributions
+
+[02:11] — Practice Question: Frequency Table Comparison
+  * A frequency table showing raw counts for male and female superpower preferences.
+  * Multiple-choice question asking which statement is supported by the table.
+
+[03:59] — Relative Frequencies
+  * Explanation of why relative frequencies are better for comparing groups of different sizes.
+  * A relative frequency table showing proportions for each gender.
+
+[04:47] — Learning Objective: Compare multiple sets of categorical data
+
+[04:59] — Side-by-Side Relative Frequency Bar Chart
+  * A bar chart comparing male and female preferences using relative frequency.
+  * Visual emphasizing the importance of labels, scales, and legends.
+
+[06:04] — Practice Problem: Average Daily Screen Media Use
+  * A bar chart comparing "Tweens" (ages 8-12) and "Teens" (ages 13-18).
+  * Multiple-choice question to identify the statement supported by the graph.
+
+[08:16] — Key Takeaways
+  * Representing categorical data with frequency/relative frequency tables.
+  * Representing categorical data with relative frequency bar graphs.
+  * Using tables and graphs to compare sets of data and justify claims.
