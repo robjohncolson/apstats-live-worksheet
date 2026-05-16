@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-05-16T04:31:41.597Z",
-  "registryVersion": "f6c7fc8a7883",
+  "generatedAt": "2026-05-16T05:22:55.237Z",
+  "registryVersion": "9f4cb54d3b95",
   "lessons": {
     "8.1": {
       "topic": "Topic 8.1",
@@ -1409,6 +1409,31 @@
         "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=1",
         "blooket": "https://dashboard.blooket.com/set/6a07f2d0753b45cd2933b68e",
+        "videos": []
+      },
+      "status": "partial",
+      "periods": {
+        "B": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": false,
+          "verified": false
+        },
+        "E": {
+          "date": null,
+          "schoologyFolder": null,
+          "posted": false,
+          "verified": false
+        }
+      }
+    },
+    "1.4": {
+      "topic": "Topic 1.4",
+      "urls": {
+        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html",
+        "drills": null,
+        "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=3",
+        "blooket": "https://dashboard.blooket.com/set/6a07fef9753b45cd2933b74d",
         "videos": []
       },
       "status": "partial",
