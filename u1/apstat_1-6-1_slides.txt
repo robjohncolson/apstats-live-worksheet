@@ -1,0 +1,14 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 6
+
+The following is a list of the visual changes and slide topics featured in the video:
+
+[00:00] — Intro Slide: Features the title "1.6 Describing the Distribution of a Quantitative Variable" and names the speaker, Luke Wilcox from East Kentwood High School.
+[00:11] — What Will You Learn?: Outlines two primary questions regarding the important characteristics of quantitative data distributions and the best ways to discuss them.
+[00:33] — Flint Water Crisis Example: Presents a dot plot displaying lead levels from 71 water samples collected in Flint, Michigan.
+[01:11] — Four Characteristics to Include: Lists the four essential components of a distribution description: shape, center, variability (spread), and unusual features.
+[01:43] — Shape: Displays visual examples of different distribution shapes, including symmetric, skewed left, skewed right, unimodal, bimodal, and uniform.
+[03:00] — Center and Variability: Defines center as the typical response and variability as how packed or spread out the data values are.
+[03:33] — Unusual Features: Illustrates examples of outliers (values that don't fit), gaps, and clusters within a distribution.
+[04:07] — Describing the Flint Water Data: Applies the four characteristics to the Flint lead level dot plot, identifying it as unimodal/skewed right with a center around 3-4, variability from 0 to 104, and unusual features like gaps and outliers.
+[05:40] — Lesson Summary: Revisit the initial two questions, summarizing the four characteristics and the specific vocabulary used to describe them.

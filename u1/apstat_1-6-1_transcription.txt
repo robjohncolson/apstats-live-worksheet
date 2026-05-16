@@ -1,0 +1,70 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 6
+
+[00:00] Hi, this is Luke Wilcox, AP statistics teacher at East Kentwood High School.
+[00:05] And in this video, we're going to talk about describing the distribution of a quantitative variable.
+[00:09] So, let's start with what we will learn and two questions that we'd like to try and answer in this video.
+[00:15] Number one, what are the important characteristics to discuss when describing the distribution of quantitative data?
+[00:23] and two, what are the best ways to discuss the important characteristics when describing a distribution of quantitative data?
+[00:33] So, we're going to do this through an example, one that you're already familiar with, the Flint water crisis data.
+[00:38] If you recall, city officials measured lead levels in 71 water samples from Flint residents in January to June 2015.
+[00:46] Here are the data from the 71 samples.
+[00:50] And in the last video, we talked about graphs that we could use to display the data.
+[00:54] And so, of course, I've chosen my personal favorite, the dot plot here to represent the data.
+[01:01] But here's what we're going to try and do in this video.
+[01:02] We want to be able to describe the distribution of lead level for the 71 water samples in Flint.
+[01:11] So, how do we do that? How do we describe a distribution of quantitative data?
+[01:15] And there are four important characteristics that you have to include in your description.
+[01:20] Number one is the shape of the distribution.
+[01:22] Number two, the center of the distribution.
+[01:25] Number three, the variability or the spread of the distribution.
+[01:30] And then number four, the unusual features.
+[01:33] So let's take a little bit closer look at each one of these four characteristics.
+[01:41] Starting with the shape.
+[01:43] So here are some options of vocabulary terms that you have to use to describe the shape of a distribution.
+[01:50] The first one is a distribution which is symmetric and that means that the left side of the data is essentially equivalent to the right hand side of the data mirror images of each other.
+[01:58] That would be a symmetric distribution.
+[02:04] Now for a skewed left distribution you're going to see a cluster of values here on the high end but then a big long tail going out to the left.
+[02:10] So the left tail is much much bigger than the right side of the graph there.
+[02:17] So we would call that skewed left.
+[02:20] For a skewed right distribution, you're going to see that the right side of the distribution is much more drawn out than the left side.
+[02:28] Now some other terms that you can use here is a distribution can be considered unimodal if it has a single peak here whereas it is bimodal if it has two peaks.
+[02:40] You'll notice a peak here as well as a peak here on this distribution.
+[02:43] And then the final term you can use is the idea of a uniform distribution which means that you have just about the same frequency or same number of values for each value on the x axis there.
+[02:58] So that takes care of the shape.
+[03:00] Let's move on to the center.
+[03:00] And here's the question that we're trying to answer when it comes to center.
+[03:04] which value in the distribution best describes the typical response?
+[03:12] And then for variability, the question that we want to try and answer is, are the values in the distribution packed close together or are they more spread out?
+[03:21] Now, in this video, we're going to talk fairly generally about center and variability, but then in the next video, we'll be much more specific in the way that we refer to center and variability.
+[03:33] Now the fourth characteristic is unusual features and you have a few things to look out for here.
+[03:38] The first is outliers within the distribution and usually that's going to be a value that clearly doesn't fit with the rest of the values much much higher or much much lower than the rest of the values.
+[03:51] The other thing to look out for and these often come together is gaps and clusters.
+[03:55] So you'll notice in this distribution that there are two clear distinct clusters with a gap in between those two clusters.
+[04:07] So let's go back to the Flint water crisis data and see if we can describe the distribution.
+[04:11] And we'll make sure that we address all four of those important characteristics starting with the shape.
+[04:18] And here I've described the shape as being unimodal because it has a single peak at zero.
+[04:24] And definitely this one is skewed to the right because the right hand side of the data is much more stretched out than the left side.
+[04:33] In terms of center, we're looking for the typical value.
+[04:35] Most of our values are down here in the low area with three to four looking like it might be a typical value here.
+[04:43] For the variability, I'm just going to say here that it goes from a minimum value of zero all the way up to a maximum value of 104 parts per billion.
+[04:55] And then unusual features here.
+[04:55] We definitely have a cluster of values here between zero and 10.
+[05:00] You can see a clear gap in the values between 42 and 104.
+[05:06] And we certainly have some outliers.
+[05:08] This one for sure and maybe even some of these other values might be considered outliers.
+[05:12] We'll look at a more formal rule for calculating outliers in a later video.
+[05:16] Now, one thing I want to point out in this solution that you see here is that I have definitely included the context of the problem in my answer here.
+[05:25] So, I said the distribution of lead levels.
+[05:27] You want to make sure you always include context when you're describing a distribution.
+[05:34] So, what should we take away from this video?
+[05:36] Let's go back to the two questions from the beginning of the video.
+[05:39] Number one, what are the important characteristics to discuss when describing the distribution of quantitative data?
+[05:46] And we now know there are four of them: shape, center, variability, and unusual features.
+[05:54] And then question number two, what are the best ways to discuss the important characteristics when describing a distribution of quantitative data?
+[06:00] Lots of new vocabulary in this video here.
+[06:04] For shape, you can use skewed left, skewed right, symmetric, unimodal, bimodal, or uniform.
+[06:12] And for center and variability, we talked fairly generally in this video, but we'll get into more details in the next video.
+[06:17] And then unusual features is where you're going to look out for outliers, gaps, and clusters.
+[06:26] All right, this is Luke Wilcox signing off.
+[06:28] Thank you all for watching, and I hope to see you in the next video.
