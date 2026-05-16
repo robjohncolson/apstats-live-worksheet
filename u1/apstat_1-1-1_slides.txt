@@ -1,0 +1,18 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 1
+
+The following visual changes occur during the video:
+
+* [00:00] — AP Daily for AP Statistics: An opening title slide featuring the course name and topic "1.1 Introducing Statistics: What Can We Learn from Data?"
+* [00:22] — What will you learn in this video?: A list of two learning objectives: identifying the question/problem in a context and using statistics to answer real-world questions based on varying data.
+* [00:46] — Example: The Flint Water Crisis: A detailed contextual slide providing background on the Flint, Michigan, water supply switch in April 2014 and the subsequent complaints from residents.
+* [01:34] — Identify the Question/Problem: The text on the slide shifts to highlight the central statistical question for this context: "Was Flint's water safe to drink?"
+* [01:47] — The Data: A table displaying lead level measurements (in parts per billion) for 71 water samples collected between January and June 2015.
+* [02:18] — Analyze the Data: A dot plot visualizing the distribution of lead levels from the 71 samples, ranging from 0 to 104 ppb.
+* [02:45] — Learning Objective: A brief overlay stating the goal to identify questions based on variation in one-variable data.
+* [02:59] — Question/Problem: The dot plot is updated with a vertical line at the 15 ppb threshold and a box surrounding the eight samples that exceed this level.
+* [03:33] — Interpret the Results: The slide calculates that 11.3% of samples exceeded the threshold, leading to the conclusion that the water was not safe.
+* [03:47] — Data Analysis (Adjusted): The dot plot highlights two specific data points in red (20 ppb and 104 ppb) that city officials omitted from their official analysis.
+* [04:09] — Revised Interpretation: The calculation is updated to show that without the two omitted samples, only 8.7% exceeded the threshold, which the city used to declare the water safe.
+* [04:57] — What Happened Next?: A summary slide detailing findings from Virginia Tech and local pediatricians, the subsequent Legionnaire's disease outbreak, and the eventual legal and corrective actions taken.
+* [06:09] — Key Takeaways: A concluding slide summarizing the two main learning objectives addressed through the Flint water crisis example.

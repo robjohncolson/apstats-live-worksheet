@@ -1,0 +1,64 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 1
+
+[00:00] Welcome to AP Daily for AP Statistics.
+[00:04] I'm Mr. Starns and I've been teaching AP Statistics since 1996, most recently at the Lawrenceville School in New Jersey.
+[00:14] This is our first video on topic 1.1, introducing statistics.
+[00:17] What can we learn from data?
+[00:22] What will you learn in this video?
+[00:25] Well, first, how do we identify the question to be answered or the problem to be solved in a given context?
+[00:34] And second, how can the science of statistics be used to help answer important real-world questions based on data that vary?
+[00:44] Why don't we look at an example?
+[00:47] This example concerns the Flint water crisis.
+[00:52] Where did it happen? In Flint, Michigan, a city with a population of about a 100,000.
+[00:59] When did it take place? April 2014.
+[01:05] So, what happened? Well, the city switched its water supply from Lake Huron to the Flint River.
+[01:12] Why did it do that? To save money.
+[01:16] So, what happened next?
+[01:18] Well, the residents in Flint said the water looked, smelled, and tasted bad.
+[01:24] Some residents even developed rashes, hair loss, or itchy skin.
+[01:30] And the city officials claimed that the water was safe to drink.
+[01:35] So, one of the big skills in statistics is to identify the question to be answered or the problem to be solved in a given context.
+[01:42] In this case, was Flint's water safe to drink?
+[01:48] To find out, city officials collected some data.
+[01:50] They measured lead levels in 71 water samples from Flint residents between January and June 2015.
+[01:59] Here you can see the data measured in parts per billion.
+[02:01] And the data vary from zero parts per billion, no lead present, to 104 parts per billion.
+[02:10] And just to note that lead levels greater than 15 parts per billion are considered extremely unhealthy.
+[02:19] Next, we want to analyze the data that the researchers collected.
+[02:23] So, you can see here a graph of the lead levels from the 71 water samples, again, varying from a low of zero to a high of 104 parts per billion.
+[02:35] Now, if more than 10% of water samples had lead levels greater than 15 parts per billion, the water is deemed not safe to drink and action must be taken.
+[02:46] Our learning objective is to identify questions to be answered based on variation in one variable data.
+[02:54] In this case, the variable of lead level measured in parts per billion.
+[03:00] So, one question that seems pretty important is: what percent of lead levels in these 71 water samples exceed 15 parts per billion?
+[03:06] Well, let's take a look at the graph.
+[03:09] You can see 15 parts per billion is this vertical line segment, and I've boxed in all of the lead levels that are higher than 15 parts per billion.
+[03:18] If we do a quick count, four, five, six, seven, it looks like there are eight water samples out of the 71 in the total sample, or .113, which is 11.3%.
+[03:34] So, let's interpret the results then.
+[03:35] Is Flint's tap water safe to drink?
+[03:41] Unfortunately, no, because 11.3% is greater than the 10% threshold.
+[03:48] Now, interestingly, city officials decided to omit two of the water samples from their analysis, the ones marked in red here: a business that had a reading of 20 parts per billion, and a home at 104 parts per billion.
+[04:00] That home used a filter which, if anything, should have made the lead level reading smaller.
+[04:11] So based on the lead levels of the 69 water samples, why did city officials declare the water safe to drink?
+[04:18] Well, remember the threshold is if more than 10% of the water samples have lead levels greater than 15 parts per billion, the water is deemed not safe to drink.
+[04:27] So again, there's our vertical line segment at 15, and we're going to count and see how many of the water samples have lead levels higher than that.
+[04:40] While omitting the red dots, you can see that we now only have six out of the 69 remaining, which is .087 or 8.7% that exceed 15 parts per billion.
+[04:51] So that's below the 10% threshold.
+[04:53] Therefore, the city officials declared the water safe to drink.
+[04:57] What happened next?
+[04:59] Well, the resident with the lead level of 104 parts per billion, Leanne Walters, contacted Virginia Tech researchers, and they conducted a thorough study of the lead levels in Flint's drinking water.
+[05:13] In their study, about 17% of samples had lead levels above 15 parts per billion.
+[05:18] That's way above the 10% threshold.
+[05:21] Also, Flint pediatrician Mona Hanna-Attisha found elevated blood levels in children had doubled since switching the water source in 2014.
+[05:32] Next, in June 2014 to October 2015, an outbreak of Legionnaire's disease in Flint killed 12 and sickened 87.
+[05:42] In 2016, citizens of Flint sued government officials to demand safe drinking water.
+[05:49] Ultimately, the courts ruled for the citizens, requiring bottled water delivery and replacement of the city's lead pipes.
+[05:57] Also, several government officials were charged with crimes because of the Flint water crisis.
+[06:03] And the best news, the lead levels in Flint have remained below action levels since July of 2016.
+[06:11] What should you take away from this first video?
+[06:13] First, how do we identify the question to be answered or problem to be solved in a given context?
+[06:18] In this case, was Flint's water safe to drink?
+[06:24] And second, how can statistics be used to help answer important real-world questions based on data that vary?
+[06:31] Well, you saw the process in action.
+[06:34] After you ask questions, you collect data, analyze data, and then interpret the results.
+[06:40] I thank you.
