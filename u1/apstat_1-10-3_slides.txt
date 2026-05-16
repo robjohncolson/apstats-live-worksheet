@@ -1,0 +1,12 @@
+# Video 3 — Slide Descriptions
+# Unit 1, Lesson 10
+
+The following is a list of the slides and visual changes in the video, with their corresponding timestamps and titles:
+
+[00:00] — The Normal Distribution
+[00:11] — What will we learn?
+[00:39] — Review: Find area to the left
+[02:07] — Example: Find area to the right
+[03:20] — Example: Find area between two values
+[05:19] — Example: Working backwards
+[07:41] — What did we learn?

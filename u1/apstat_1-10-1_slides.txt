@@ -1,0 +1,20 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 10
+
+The following is a list of slides and visual changes from the video with their corresponding timestamps:
+
+[00:00] — Introduction: Luke Wilcox, a teacher at East Kentwood High School, introduces topic 1.10.
+[00:08] — What will we learn?: This slide presents two learning objectives:
+  * Using percentiles to describe the position of a value in a quantitative data set.
+  * Using standardized scores to describe the position of a value in a quantitative data set.
+[00:36] — Percentile and Standardized Score Definitions:
+  * Percentile: Defined as the percent of values less than or equal to a given value.
+  * Standardized Score (z-score): Defined as the distance of a value from the mean in units of standard deviation.
+[00:46] — z-score Formula and Interpretation: Displays the formula z = (value - mean) / standard deviation and its interpretation as the number of standard deviations a value is above or below the mean.
+[02:54] — Example: Flint Water Crisis: Introduces lead level data from 71 water samples collected in Flint, Michigan, in 2015.
+[03:14] — Summary Statistics: Displays a table of summary statistics for the 71 water samples, including the mean (7.31) and standard deviation (14.39).
+[03:36] — Percentile Calculation (20 ppb): Demonstrates how to find the percentile for a sample of 20 parts per billion (ppb) by identifying all values less than or equal to 20 in an ordered list.
+[05:15] — z-score Calculation (20 ppb): Shows the calculation for the z-score of 20 ppb (z = 0.88), interpreting it as 0.88 standard deviations above the mean.
+[05:39] — Percentile Calculation (2 ppb): Demonstrates finding the percentile for a sample of 2 ppb, noting that 28 out of 71 values are less than or equal to 2 (39.4th percentile).
+[06:29] — z-score Calculation (2 ppb): Shows the calculation for the z-score of 2 ppb (z = -0.37), interpreting it as 0.37 standard deviations below the mean.
+[07:22] — Lesson Summary: Reiterate the definitions of percentiles and z-scores as tools for describing the relative position of values in a data set.

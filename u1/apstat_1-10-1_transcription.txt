@@ -1,0 +1,200 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 10
+
+[00:00] ...teacher at East Kentwood High School in
+[00:02] Kentwood, Michigan. And in this video,
+[00:04] we're going to do an introduction to
+[00:06] topic 1.10.
+[00:09] So, let's take a look at what we will
+[00:10] learn. Two questions that we want to try
+[00:13] and answer in this video. Number one,
+[00:15] how can we use percentile to describe
+[00:18] the position of a value in a
+[00:20] quantitative data set? And number two,
+[00:23] how can we use standardized scores to
+[00:25] describe the position of a value in a
+[00:27] quantitative data set?
+[00:29] So both of these questions are
+[00:31] addressing the relative position of a
+[00:34] value within a list of other values. And
+[00:38] there's two ways that we're going to try
+[00:40] and measure that. The first way we can
+[00:41] measure that is with percentile, which
+[00:44] is defined as the percent of data values
+[00:48] less than or equal to a given value. And
+[00:52] I want to highlight right here that the
+[00:54] definition says 'less than or equal to.'
+[00:57] Depending on which version of which
+[00:59] textbook you're using or which Google
+[01:01] search link you go to, sometimes you
+[01:03] will see percentile defined as just 'less
+[01:06] than.' But for the purpose of AP
+[01:09] Statistics, we are defining it as 'less
+[01:11] than or equal to' a given value.
+[01:15] For interpreting your percentile, you
+[01:17] would say the value of blank, whatever
+[01:20] the value is, is at the Pth percentile.
+[01:24] About P% of the values are less than or
+[01:26] equal to whatever the given value is.
+[01:30] Now the other way that we can measure
+[01:31] relative position is using a
+[01:33] standardized score. So a standardized
+[01:36] score is given by the following formula.
+[01:39] You would take whatever your data value
+[01:41] is and first figure out how far is that
+[01:44] value away from the mean and then you
+[01:47] would take that answer and divide by the
+[01:49] standard deviation. For AP Statistics,
+[01:52] we'll most often be calculating a
+[01:54] standardized z-score, which is given by
+[01:57] the formula on the screen. Now, the
+[01:59] interpretation of the z-score is super
+[02:02] important for AP Statistics. And here's
+[02:04] how you would say it. You would say the
+[02:07] value of whatever your value is, is—and
+[02:10] then you would insert your z-score—
+[02:12] standard deviations above or below the
+[02:15] mean. So the z-score is telling you the
+[02:18] number of standard deviations above or
+[02:20] below the mean.
+[02:22] Now, important caution here. This is
+[02:25] Topic 1.10 which is about normal
+[02:27] distributions. But we are not yet going
+[02:30] to talk about normal distributions in
+[02:31] this video. We will in the next video.
+[02:34] So everything that you see here on
+[02:36] percentile and standardized scores and
+[02:38] z-scores—those can be calculated for any
+[02:41] distribution no matter what the shape
+[02:43] is. Often students will make the
+[02:46] mistake of assuming that just because
+[02:48] they have a z-score it must be a normal
+[02:50] distribution, which is definitely not the
+[02:52] case.
+[02:54] So let's go ahead and take a look at an
+[02:56] example, and this is one that you are
+[02:58] very familiar with: the Flint water
+[03:00] crisis data. So recall here's what it
+[03:03] said. City officials measured lead
+[03:05] levels in 71 water samples from Flint
+[03:08] residents in January to June 2015. And
+[03:11] then we have the data from the 71
+[03:13] samples.
+[03:14] Here is a list of the summary statistics
+[03:17] for the sample of 71.
+[03:20] So what we would like to do is to find
+[03:22] the percentile and the z-score for the
+[03:25] water samples of 20 parts per billion
+[03:28] and two parts per billion. So we are
+[03:30] going to do this for the sample here at
+[03:32] 20. And then we're going to do the same
+[03:33] calculations for the sample at two. So
+[03:36] let's start for the water sample of 20
+[03:39] parts per billion and let's see if we
+[03:41] can find the percentile. So the first
+[03:44] thing is we need to make sure that we
+[03:46] have the data listed in numerical order
+[03:48] from the smallest value to the highest
+[03:50] value. Then you're going to want to find
+[03:52] the value that you're interested in. In
+[03:55] this case, 20 parts per billion. And in
+[03:57] order to calculate the percentile, we
+[04:00] need to find the percent of values less
+[04:02] than or equal to 20. So, I've gone ahead
+[04:06] and highlighted all of those in yellow.
+[04:08] Now, I could count all of those up, or I
+[04:10] could just count the—let's see—six
+[04:12] values that are here to the right.
+[04:14] That's going to leave us with 65 values
+[04:17] out of the 71 that are less than or
+[04:20] equal to 20. And so, I'm getting 0.915.
+[04:23] And here's how we would interpret that.
+[04:25] We would say the value of 20 parts per
+[04:28] billion is at the 91.5th percentile,
+[04:31] or in other words about 91.5% of the
+[04:34] values are less than or equal to 20
+[04:37] parts per billion.
+[04:39] Now the other thing we want to be able
+[04:40] to calculate here is a z-score. So we're
+[04:43] going to need some summary statistics
+[04:44] for that. Specifically we are going to
+[04:46] use the mean and the standard deviation
+[04:49] from this table here. And we're just
+[04:51] going to plug it into the z-score formula.
+[04:53] But let's see if we can understand
+[04:54] what's happening in this calculation.
+[04:57] We're taking our value of 20. And the
+[04:59] first thing that we do is we subtract
+[05:01] the mean. So this number 12.69 is
+[05:05] telling us how far that value is away
+[05:07] from the mean. But we want to know how
+[05:10] many standard deviations it is away from
+[05:12] the mean. So the last step is to divide
+[05:14] by the standard deviation here, which
+[05:16] gives us a z-score of 0.88.
+[05:20] Now here's how we would interpret that
+[05:22] z-score. We would say that the value of 20
+[05:24] parts per billion is 0.88 standard
+[05:28] deviations above the mean. Very clearly,
+[05:32] we know that this 20 is above the mean.
+[05:34] And that's actually represented because
+[05:36] the z-score is a positive value here.
+[05:39] Now, let's see if we can go through the
+[05:41] same calculations, but this time for the
+[05:43] water sample of two parts per billion.
+[05:45] So, we're going to start with the list
+[05:47] of the numbers again, and we're going to
+[05:49] highlight the one that we are interested
+[05:50] in here: the two. And the first thing we
+[05:53] want to find is the percentile. So once
+[05:56] again, percent of values less than or
+[05:58] equal to. So I'm going to go ahead and
+[05:60] highlight those. And notice that I am
+[06:02] highlighting all of the twos there. And
+[06:05] if you were to count up those values,
+[06:07] there are 28 out of the 71 that are less
+[06:10] than or equal to two, which gives me
+[06:12] 0.394. Now, here's how we would interpret
+[06:15] it. The value of two parts per billion
+[06:18] is at the 39.4th percentile. In other
+[06:21] words, about 39.4% of the values are
+[06:25] less than or equal to two parts per
+[06:27] billion.
+[06:29] Now, let's see if we can find the z-score.
+[06:31] Once again, we're going to need the mean
+[06:33] and the standard deviation for our
+[06:34] calculation here. And let's see if we
+[06:37] can understand what's going on here.
+[06:39] We're taking our value of two and we're
+[06:41] first figuring out how far it is away
+[06:43] from the mean. Now, you will notice that
+[06:46] we're getting a negative value here. And
+[06:48] the reason is because two is below the
+[06:51] mean, 5.31 below the mean, and then when
+[06:55] we divide by the standard deviation
+[06:56] there we are going to end up with a
+[06:58] negative z-score indicating that
+[07:01] value is below the mean. So here's how
+[07:04] we would interpret it: The value of two
+[07:06] parts per billion is 0.37 standard
+[07:09] deviations below the mean. Notice I
+[07:12] didn't use the negative value here and I
+[07:14] didn't have to because I used the word
+[07:16] 'below' to indicate that that negative
+[07:19] z-score means we are below the mean.
+[07:23] So what should we take away from this
+[07:24] video? Well, let's go back to the two
+[07:26] questions from the beginning. Number
+[07:28] one, how can we use percentile to
+[07:30] describe the position of a value in a
+[07:32] quantitative data set? Remember
+[07:35] percentile is the percent of data values
+[07:37] less than or equal to a given value.
+[07:42] Question two, how can we use
+[07:44] standardized scores to describe the
+[07:45] position of a value in a quantitative
+[07:47] data set? And this is where we're going
+[07:49] to use z-scores. And remember that a z-score
+[07:52] tells us the number of standard
+[07:54] deviations above or below the mean.
+[07:58] This is Luke Wilcox signing off. Thank...

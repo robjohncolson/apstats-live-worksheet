@@ -1,0 +1,205 @@
+# Video 3 — Transcript
+# Unit 1, Lesson 10
+
+[00:00] Hi, this is Luke Wilcox, AP Statistics
+[00:03] teacher at East Kentwood High School.
+[00:05] And in this video, we're going to talk
+[00:07] about the normal distribution.
+[00:09] So, let's start with what we will learn.
+[00:12] Two questions that we want to try and
+[00:13] answer in this video. Number one, how
+[00:16] can we use the z-scores to find the
+[00:19] percent of data values in a given
+[00:21] interval for a normal distribution? And
+[00:24] you'll notice this is the same question
+[00:25] that we answered in the last video, but
+[00:27] we're going to look at a few more
+[00:28] examples here. And then number two, how
+[00:32] can we find a value given an area or a
+[00:34] proportion for a normal distribution?
+[00:38] So let's start with a quick review of
+[00:40] something that we talked about in the
+[00:41] last video, which is how to find the
+[00:43] area to the left for a normal
+[00:45] distribution. So here was the example.
+[00:48] Systolic blood pressure for adults can
+[00:50] be modeled with a normal distribution
+[00:52] with a mean of 110 and a standard
+[00:54] deviation of 10. What percent of adults
+[00:57] have a systolic blood pressure below
+[01:00] 125?
+[01:01] So remember we always start with a
+[01:03] picture where we clearly label the
+[01:05] boundary value and then shade the region
+[01:08] of interest. And what we did there was
+[01:10] we first calculated a z-score of 1.50
+[01:15] telling us that that value of 125 is
+[01:18] 1.50 standard deviations above the mean.
+[01:22] Then we took that z-score over to Table A.
+[01:26] And if you recall Table A tells us
+[01:29] the area to the left of a given z-score.
+[01:33] And so we looked at the values in Table
+[01:35] A there. And we took our z-score of 1.50.
+[01:39] And using the column on the left, we
+[01:42] went down to 1.5. Across the top, we
+[01:45] wanted 0. And we ended up with this
+[01:47] value of .9332,
+[01:51] which tells us that about 93.32%
+[01:54] of adults have a systolic blood pressure
+[01:57] that is less than 125.
+[02:01] Now, let's continue on with this example
+[02:03] and see if we can handle one where we
+[02:05] are finding the area to the right. So
+[02:08] here's the question. Some experts
+[02:10] consider a systolic blood pressure above
+[02:13] 125 to be considered as elevated. What
+[02:17] proportion of adults have an elevated
+[02:19] systolic blood pressure? So once again,
+[02:22] we start with our picture here and
+[02:23] you'll notice we've got our boundary
+[02:25] value of 125 and then we've shaded the
+[02:28] region of interest in this case above
+[02:31] 125.
+[02:33] Now recall that we just calculated the
+[02:35] area to the left of 125 and that gave us
+[02:39] an answer of .9332.
+[02:42] Now we know that the total area
+[02:44] underneath that curve has to equal one.
+[02:46] So if we know this area, we should be
+[02:48] able to find this area by simply
+[02:51] subtracting it from one, which is going
+[02:54] to give us a value of .0668.
+[02:58] So here's how we would interpret that.
+[03:00] The proportion of adults with an
+[03:02] elevated blood pressure is .0668.
+[03:07] So if you're trying to find the area to
+[03:09] the right, you're going to do one minus
+[03:12] the area to the left that you found in
+[03:14] Table A.
+[03:16] Now let's see if we can handle one where
+[03:17] we're finding area between two values.
+[03:21] So here's the question. Some experts
+[03:23] consider a systolic blood pressure
+[03:25] between 120 and 129 to be hypertension
+[03:28] stage 1. What proportion of adults are
+[03:31] hypertension stage 1? So as always we
+[03:35] start with our picture here where we
+[03:37] have clearly identified our boundary
+[03:39] values of 120 and 129 and then the
+[03:42] shaded in the region of interest there.
+[03:45] Now we have two different boundary
+[03:47] values here and we're going to have to
+[03:49] use both of them. So let's start with
+[03:51] the boundary value of 120 and go ahead
+[03:53] and do a z-score calculation there. And no
+[03:56] big surprise that we end up with a value
+[03:58] of one because 120 is exactly one
+[04:01] standard deviation above the mean. Now
+[04:04] if you take that to Table A, you can
+[04:06] find the area to the left of 120 is
+[04:10] .8413.
+[04:12] That is the area to the left of 120. Now
+[04:16] for the 129, let's go ahead and
+[04:18] calculate the z-score here. It is 1.90
+[04:22] standard deviations above the mean. If
+[04:24] you take that to Table A, it's going to
+[04:26] give you an area of .9713.
+[04:30] So how do we use these answers now to
+[04:33] find the area of the red shaded region?
+[04:36] Well, what we're going to do is we're
+[04:38] going to take the area to the left of
+[04:40] 129 and we're going to subtract out the
+[04:43] area to the left of 120. And that's
+[04:46] going to give us a difference of 0.13.
+[04:50] So here's how we can interpret that. The
+[04:52] proportion of adults that are
+[04:54] hypertension stage 1 is about 0.13.
+[04:59] So if you are trying to find the area
+[05:01] between two values in a normal
+[05:02] distribution, you're going to have to
+[05:04] calculate two z-scores. Go to Table A for
+[05:07] each one of them and then find the
+[05:09] difference between those two areas.
+[05:12] Now, there is one last type of normal
+[05:14] distribution calculation that you will
+[05:16] need to be able to do, and that's
+[05:17] working backwards. So, here's an example
+[05:20] of that. A person is considered high-
+[05:22] risk if they are in the highest 10% of
+[05:25] all systolic blood pressures. What level
+[05:28] blood pressure is considered high risk?
+[05:31] Well, as always, we start with our
+[05:33] picture here. And you'll notice that
+[05:35] I've shaded the top 10% of the curve
+[05:38] here. And this boundary value which we
+[05:40] normally label we don't know that's
+[05:43] actually what we're trying to find here.
+[05:45] So I'm just going to identify it as x
+[05:47] the unknown value there. Now we are
+[05:51] going to use Table A to help us here but
+[05:53] in a little bit different way than we
+[05:55] have on the previous example
+[05:57] problems. What we know here is that this
+[06:00] area to the right is 10%. And recall
+[06:03] that Table A shows you the area to the
+[06:05] left. Well, if this is 10%, then the
+[06:08] area to the left has to be 90%. So, we
+[06:12] know we have an area of 90%. Now, quick
+[06:15] caution here. One of the most common
+[06:17] mistakes that students make is they will
+[06:19] go down the z-score column and look for
+[06:21] that 90%.
+[06:23] We do not have a z-score of 0.9. We have
+[06:27] an area of 0.9. And these are all of
+[06:30] your areas. So, you're going to have to
+[06:32] find the area that is the closest to
+[06:35] 0.90. And if I look here, I think that
+[06:38] this value right here is the one that's
+[06:40] closest to an area of 0.90.
+[06:44] And we'll notice that the z-score that it
+[06:46] corresponds to is a 1.2.
+[06:49] And then we've got the 0.08. So that is
+[06:51] a z-score of 1.28.
+[06:55] We're going to need that to solve for x.
+[06:57] So we go back to now the z-score formula
+[07:00] and we plug in the values we know. We
+[07:03] know the z-score is 1.28.
+[07:06] We know the mean is 110 and we know the
+[07:08] standard deviation is 10. So we plug all
+[07:11] those values in and we're left with one
+[07:13] unknown value here of x which we can
+[07:16] just solve with a little bit of algebra
+[07:19] and what we should end up with here is
+[07:20] an x value of 122.8.
+[07:24] Now here's how we would interpret that.
+[07:26] We would say about 10% of adults are
+[07:29] high risk with a blood pressure of more
+[07:31] than 122.8.
+[07:35] So what should we take away from this
+[07:37] video? Well, let's go back to the two
+[07:39] questions from the beginning. Question
+[07:42] one, how can we use the z-scores to find
+[07:44] the percent of data values in a given
+[07:46] interval for a normal distribution? And
+[07:48] we had three different types of area
+[07:50] problems we needed to be able to solve.
+[07:52] Area to the left is the easiest because
+[07:54] you can just get that value right from
+[07:56] Table A. Area to the right, you're going
+[08:00] to have to take the area from Table A
+[08:01] and subtract that number from one. And
+[08:05] then for finding the area between two
+[08:07] values, you're going to have to subtract
+[08:09] two areas that you find from Table A.
+[08:13] Question two, how can we find a value
+[08:16] given an area for a normal distribution?
+[08:19] This is the backwards calculation. And
+[08:21] remember, for this one, we had to use
+[08:23] Table A to find the z-score that
+[08:26] corresponded to a given area. And once
+[08:29] we knew that z-score, we could plug it in
+[08:31] to the equation and then solve for the
+[08:34] unknown variable x.
+[08:38] All right, this is Luke Wilcox signing
+[08:40] off. Thank you all for joining me and I
+[08:42] hope to see you in the next video.

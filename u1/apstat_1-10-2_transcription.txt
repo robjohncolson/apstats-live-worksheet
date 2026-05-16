@@ -1,0 +1,221 @@
+# Video 2 — Transcript
+# Unit 1, Lesson 10
+
+[00:00] Luke Wilcox, AP statistics teacher from
+[00:02] East Kentwood High School. And in this
+[00:04] video, we're going to talk about the
+[00:06] normal distribution.
+[00:08] So, let's start with a list of what we
+[00:10] will learn. Three questions that we'd
+[00:12] like to try to address in this video.
+[00:14] Number one, what is a normal
+[00:17] distribution?
+[00:18] Number two, how can we use the empirical
+[00:21] rule to find the percent of data values
+[00:23] in a given interval for a normal
+[00:25] distribution? And then number three, how
+[00:28] can we use z-scores to find the percent of
+[00:30] data values in a given interval for a
+[00:32] normal distribution?
+[00:35] So let's start with some ideas around
+[00:38] a normal distribution. And I'm going to
+[00:40] give you a picture here first of a
+[00:42] normal distribution and then a few ideas
+[00:44] related to this. First, a normal
+[00:47] distribution is mound-shaped, often
+[00:50] called a bell curve, and symmetric. So
+[00:52] you'll notice that the left side and the
+[00:54] right side are mirror images of each
+[00:56] other. The next thing is that many
+[00:58] quantitative variables in the real world
+[01:01] can be closely modeled by a normal
+[01:04] distribution. And I've given you a few
+[01:06] examples there. If you're measuring
+[01:07] heights of people, temperatures in
+[01:10] certain locations, or blood pressure.
+[01:13] And then normal distributions are
+[01:15] specifically determined by two values
+[01:18] which are the mean, and we'll use the
+[01:19] Greek letter mu for that, and the
+[01:21] standard deviation, where we'll use the
+[01:23] Greek letter sigma. So the mean mu is
+[01:27] going to be at the very center of the
+[01:29] distribution because it's a symmetric
+[01:30] distribution. And you'll notice that on
+[01:33] the x-axis here there are some marks,
+[01:35] each one representing one standard
+[01:37] deviation away from the previous mark.
+[01:41] So let's take a look at an example
+[01:43] problem so that we have some context
+[01:44] here. So the question to answer is: what
+[01:47] is normal blood pressure? So systolic
+[01:48] blood pressure for adults can be modeled
+[01:51] with a normal distribution with a mean
+[01:53] of 110 and a standard deviation of 10.
+[01:59] So, very important, anytime you're doing
+[02:01] normal distribution calculations, you
+[02:04] want to start with a picture. And in
+[02:06] your picture of the normal distribution,
+[02:08] you want to label the mean at the very
+[02:10] center. And then you want to label the
+[02:12] values that are one, two, and three
+[02:15] standard deviations below and above the
+[02:17] mean, which is very easy to do here with
+[02:19] a standard deviation of 10.
+[02:22] Now, if we look at this shaded area
+[02:24] here, you'll notice that the lower
+[02:27] boundary of 100 is exactly one standard
+[02:29] deviation below the mean and the upper
+[02:32] boundary 120 is exactly one standard
+[02:34] deviation above the mean. So, we have
+[02:36] highlighted or shaded all of the values
+[02:39] that are within one standard deviation
+[02:41] of the mean. And it appears to be about
+[02:44] two-thirds of the area that you see
+[02:47] underneath the normal curve. And it
+[02:49] turns out it's actually about 68% of
+[02:52] the data that lies within one standard
+[02:55] deviation of the mean. And this is true
+[02:57] for any normal distribution.
+[03:00] Now, if we move two standard deviations
+[03:02] away from the mean, now we're going two
+[03:04] standard deviations below the mean all
+[03:06] the way up to two standard deviations
+[03:08] above the mean. And we are now capturing
+[03:10] about 95% of the data. If we go three
+[03:15] standard deviations, you will see that
+[03:17] we have almost all of the data here.
+[03:19] This is about 99.7%
+[03:21] of the data. So, we're going to collect
+[03:24] these three ideas in what some people
+[03:27] call the 68-95-99.7 rule, but is also
+[03:32] often referred to as the empirical rule,
+[03:35] which just says that the percent of data
+[03:37] values that are within one, two, and three
+[03:39] standard deviations of the mean is 68, 95,
+[03:43] and 99.7.
+[03:45] So let's see if we can use that
+[03:47] empirical rule to answer a few questions
+[03:49] here. So once again, I'm going to start
+[03:52] out with my picture. And the first
+[03:54] question that we want to try to answer
+[03:55] is: what percent of adults have a
+[03:58] systolic blood pressure below 100? So,
+[04:01] very important, you want to put that in
+[04:03] your picture. So you'll notice the
+[04:04] boundary value of 100 and I've shaded it
+[04:07] to the left because we want below 100.
+[04:10] Now 100 is exactly one standard
+[04:13] deviation below the mean. And we know
+[04:16] that between 100 and 120 is 68% of the
+[04:20] data. Now, if we subtract that 68 from
+[04:22] 100, that gives me 32%. That has to be
+[04:26] here and then in the other side of it as
+[04:28] well. Now, we only want one of those.
+[04:31] So, we're going to take that 32 and
+[04:33] divide it by two. And that's going to
+[04:35] give us a final answer of 16% here.
+[04:39] Let's try another question which says:
+[04:42] what percent of adults have a systolic
+[04:44] blood pressure below 130? Well, once
+[04:47] again I'm going to start by shading in
+[04:49] the region of interest here. So the
+[04:51] boundary value of 130, you'll notice, is
+[04:54] exactly two standard deviations above
+[04:56] the mean. And because of the empirical
+[04:59] rule, I know that between 90 and 130,
+[05:02] that's within two standard deviations of
+[05:04] the mean, is 95% of the data. Now, that
+[05:08] leaves 5% of the data in this lower
+[05:10] region and this upper region here. And
+[05:12] if it's split equally, then this part
+[05:14] would be 2.5%. So, I'm going to
+[05:17] take that 2.5% and I'm going to add
+[05:19] it to the 95% and that's going to give
+[05:21] me a final answer of 97.5%.
+[05:26] Now, one final question to answer here,
+[05:28] which is: what percent of adults have a
+[05:30] systolic blood pressure below 125?
+[05:33] So, let's start by shading the region of
+[05:36] interest. Here's my boundary value and I
+[05:38] want to go below that. Now, we have a
+[05:40] slight problem here and that problem is
+[05:43] that 125 is not exactly one, two, or
+[05:48] three standard deviations away from the
+[05:50] mean. And this means that we can't
+[05:53] use the empirical rule in order to solve
+[05:56] this particular problem. We need some
+[05:59] sort of a new tool to be able to solve
+[06:01] this one because it's not exactly one,
+[06:04] two, or three standard deviations away
+[06:05] from the mean. So, let me try and show
+[06:08] you how we can handle this one. All
+[06:10] right. So, here's my picture. Got my 125
+[06:13] labeled, shaded to the left. So, the
+[06:15] first thing that we're going to do is
+[06:16] we're going to take that boundary value
+[06:18] and we're going to calculate a z-score
+[06:21] here. And so, recall the formula for a
+[06:23] z-score. And here's what the calculation
+[06:26] would look like. So what we're going to
+[06:28] find here is that that value of 125 is
+[06:32] 1.50 standard deviations above the mean.
+[06:36] So what do we do with that? Well, we now
+[06:38] go to a table that is provided for you
+[06:41] on the AP exam called table A. And what
+[06:44] table A is going to do is it's going to
+[06:46] tell you the area of the shaded region
+[06:50] to the left of some z-score here. Now, very
+[06:54] important, that is area to the left. So
+[06:57] if you know the z-score, you can then turn
+[06:59] that into an area using the values in
+[07:02] the table. So I've taken a small part of
+[07:05] the table here and I want to show you
+[07:06] how this table works. You will see the
+[07:09] z-score listed on the left here. But in
+[07:12] these z-scores, you will only see one
+[07:14] number after the decimal. The second
+[07:16] number after the decimal is provided
+[07:18] across the top of the table here. Now
+[07:21] recall that we calculated our z-score to
+[07:23] be 1.50. So I would go down the
+[07:27] z-score column here until I found 1.5. And
+[07:30] then I need the .00 here in order to
+[07:34] get 1.50.
+[07:35] And I see that value in the table
+[07:37] is .9332.
+[07:41] So this is telling me that about 93.32%
+[07:44] of adults have a systolic blood pressure
+[07:47] that is less than 125. So, when you're
+[07:51] trying to find the area to the left of a
+[07:53] particular z-score, you can just look that
+[07:55] up in table A.
+[07:58] So, what should we take away from this
+[07:59] video? Well, let's go back to the three
+[08:01] questions from the beginning. Question
+[08:04] one: what is a normal distribution?
+[08:07] Well, we discovered that it's a model
+[08:09] for quantitative data that very often
+[08:11] appears in the real world. The shape of
+[08:14] it is typically mound-shaped and
+[08:16] symmetric.
+[08:18] The second question: how can we use that
+[08:20] empirical rule to find the percent of
+[08:22] data values in a given interval for a
+[08:24] normal distribution? Remember, about 68%
+[08:27] of the data is within one standard
+[08:29] deviation of the mean. About 95% is
+[08:32] within two standard deviations, and about
+[08:35] 99.7%
+[08:36] is within three standard deviations of
+[08:38] the mean. And then the third question:
+[08:41] how can we use z-scores to find the
+[08:43] percent of data values in a given
+[08:44] interval for a normal distribution? Now
+[08:47] remember, for that one, we have to
+[08:48] calculate the z-score first. Then we move
+[08:51] over to table A in order to find our
+[08:54] area.
+[08:57] All right, this is Luke Wilcox signing
+[08:59] off. Thank you all for watching and I
+[09:00] hope to see you in the next video.

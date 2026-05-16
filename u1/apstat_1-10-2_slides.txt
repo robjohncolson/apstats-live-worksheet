@@ -1,0 +1,35 @@
+# Video 2 — Slide Descriptions
+# Unit 1, Lesson 10
+
+The following is a description of the visual changes and slide titles in the video:
+
+[00:00] — Introduction: The speaker, an AP statistics teacher, introduces himself against a background featuring a normal distribution curve.
+
+[00:08] — What will we learn?: A bulleted list outlines the three main learning objectives for the video:
+  * What is a normal distribution?
+  * How to use the empirical rule to find the percent of data values in an interval.
+  * How to use z-scores to find the percent of data values in an interval.
+
+[00:17] — Normal Distribution: A visual of a bell-shaped curve is shown with bullet points describing its characteristics:
+  * Mound shaped and symmetric.
+  * A model for many real-world quantitative variables (e.g., heights, temperatures, blood pressure).
+  * Determined by the mean (μ) and standard deviation (σ).
+
+[01:41] — What is "normal" blood pressure?: An example problem is introduced using a normal distribution of systolic blood pressure (mean = 110, standard deviation = 10).
+
+[02:22] — Empirical Rule (68-95-99.7 Rule): The blood pressure distribution is used to illustrate the empirical rule with progressively shaded areas:
+  * 68% of data lies within 1 standard deviation of the mean.
+  * 95% of data lies within 2 standard deviations.
+  * 99.7% of data lies within 3 standard deviations.
+
+[03:45] — Example 1: Below 100: A calculation is shown using the empirical rule to determine that 16% of adults have a systolic blood pressure below 100.
+
+[04:41] — Example 2: Below 130: A second calculation shows that 97.5% of adults have a blood pressure below 130.
+
+[05:27] — Example 3: Below 125: The video introduces a problem where the value (125) is not a whole standard deviation from the mean, necessitating a new tool.
+
+[06:08] — Using Table A: The process for using z-scores and "Table A" (Standard Normal Probabilities) is demonstrated:
+  * Calculate z-score: For 125, the z-score is 1.50.
+  * Table A: A visual of a portion of the table shows how to find the area (0.9332) corresponding to the z-score.
+
+[07:58] — What did we learn?: The video concludes by summarizing the answers to the initial three questions regarding normal distributions, the empirical rule, and using z-scores with Table A.
