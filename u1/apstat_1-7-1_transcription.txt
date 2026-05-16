@@ -1,0 +1,87 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 7
+
+[00:00] This is Luke Wilcox, AP statistics teacher from East Kentwood High School.
+[00:04] And in this video, we're going to talk about summary statistics for a quantitative variable.
+[00:10] So, let's start with what we'll learn.
+[00:12] Two questions that we want to try and answer in this video.
+[00:15] Number one, what summary statistics can be used to describe a distribution of quantitative data?
+[00:21] And question number two, what summary statistics can be used to describe the variability of a distribution of quantitative data?
+[00:28] So our primary focus here is about center and variability of a quantitative data set.
+[00:37] So, let's start with an example, and this is one that you're very familiar with, I hope, at this point.
+[00:40] The Flint water crisis data, which if you recall, says that city officials measured lead levels in 71 water samples from Flint residents in January to June 2015.
+[00:53] So, there we have the data from the 71 water samples.
+[00:56] And what we're going to try and do in this video is to use summary statistics to describe the center and the variability of the distribution of lead levels.
+[01:08] So let's start with some ideas related to measuring the center of the distribution.
+[01:13] And we'll start with one that you probably are familiar with, which is the idea of a mean or calculating an average, which is taking the sum of all the values added together and then dividing by the number of values.
+[01:39] As a formula, it looks like this where x-bar represents the mean of the sample and you've got the sigma notation to add up all the values and then you're dividing by n, which is the number of values.
+[01:40] The other measure of center that we often use is the median.
+[01:43] And you can think of this just like the median in the highway, which is the center of the highway, we're really looking for the value in the center.
+[01:50] Now, if we have an odd number of values in our list, it's pretty easy to find the median because the median is just the middle value if those numbers are written in order.
+[02:03] Now, if you have an even number of values, you're going to take the two numbers that are in the middle and then just take the average of those two numbers in the middle and that will give you the median.
+[02:15] Now, the next thing we need to talk about is Q1 and Q3, which is sort of related to the idea of the median because the median takes that list of data and splits it into two halves.
+[02:26] And what we're going to do now is we're going to find the middle of the first half and the middle of the second half.
+[02:31] So the middle of the first half of the data is called the first quartile (Q1), which you see here is the median of the first half and the third quartile is the median of the second half of the data for our example with the Flint water crisis.
+[02:50] So we'll start by calculating the mean which in this case means that we're going to add up all these values all 71 of them and then divide by 71.
+[02:59] And you can see here the total when we add them up is 519 divide by 71 is going to give us the 7.31.
+[03:06] Now in terms of interpreting that value of 7.31, we would say that the average lead level in the sample is 7.31 parts per billion.
+[03:17] So that takes care of the mean.
+[03:18] Now let's talk about how we would find the median.
+[03:22] Well, here we have 71 values, which is an odd number of values, which means that we can just find the value that's in the middle as long as our data is in order, which it is.
+[03:32] So, 71 values, that means that the 36th value is the one that's right in the middle.
+[03:39] And you'll see there in red that that is the number three.
+[03:41] And so, the median of this distribution is three parts per billion.
+[03:48] Now in terms of interpreting this value of the median, we would say that about half of the lead levels are below three and about half are above three.
+[03:56] Right? That that median splits the data in half.
+[04:01] All right. Now let's talk Q1 and Q3.
+[04:04] In order to get Q1, we need to look at only the first half of the data.
+[04:07] And very important here is that you don't include the position of the median.
+[04:09] So I've taken the first half of the data there.
+[04:10] But you'll notice I am not going to include this three which represents the median.
+[04:14] And so that means we have 35 values here.
+[04:16] Once again an odd number of values.
+[04:17] So we actually do have a middle value which is this number two right here.
+[04:21] And so that is our first quartile at two parts per billion.
+[04:25] For the third quartile we're going to have to look at the second half of the data after the median.
+[04:21] And once again we don't include the position of the median.
+[04:26] So here is the second half of the data.
+[04:28] Notice once again that I am not going to use that median value of three which leaves me with 35 numbers here.
+[04:36] We can find the middle number of those 35 and it is this value of seven here which is our third quartile at seven parts per billion.
+[04:49] Now let's talk about how we can measure variability.
+[04:51] We have several different measures for variability.
+[04:53] The simplest of which is the range which is just simply the difference between the maximum value and the minimum value.
+[05:03] Another measurement that we have for variability is what's called the interquartile range or often abbreviated IQR.
+[05:10] And this one has to do with the third quartile and the first quartile that we talked about earlier.
+[05:13] And here we're just going to take the difference between those two values (Q3 minus Q1).
+[05:21] And then our third measure of variability that we're going to discuss here is standard deviation which essentially is going to tell us the typical distance that each value is away from the mean.
+[05:33] And there is a formula for that which you'll see represented here.
+[05:35] And I'll show you how that formula works with an example in just a moment.
+[05:40] Now one thing I do want to note here is that if you were to square the standard deviation that would give you a measure of variability called the variance.
+[05:51] So let's see if we can calculate these measures of variability using the Flint water crisis data.
+[05:59] So we'll start with the range which we know is just the difference between the maximum and the minimum.
+[06:03] The maximum value being 104, the minimum being zero, that difference equals 104.
+[06:05] Now when we interpret that, we say that the range of the distribution of lead level is 104.
+[06:11] Very important when you're referring to range in statistics, it is a single value.
+[06:13] You don't say that the values range from 0 to 104. You say that the range is equal to 104.
+[06:22] For the interquartile range or the IQR, we take the difference between Q3 and Q1, which we had calculated earlier as 7 and two.
+[06:28] So that inner quartile range ends up being five.
+[06:30] And here's how we would interpret that: we would say that the middle 50% of the values for lead level has a range of five parts per billion.
+[06:41] And finally, we need to talk about standard deviation and that formula for standard deviation.
+[06:44] And I think the important thing to understand here is what you would do first and then next and then next and then next in your calculation.
+[06:52] And so in the calculation for the standard deviation here, we're going to start by finding the difference between each individual value and the mean, which we know is 7.31.
+[07:01] And then we square those values.
+[07:02] And then we add all of those values up.
+[07:03] Then we divide by n minus one.
+[07:05] And then finally we take the square root, which gives us this final answer here of 14.35.
+[07:12] Now I do want to make note that before we did the square root this 205.84 is actually telling us the variance of this distribution.
+[07:22] Now back to the standard deviation of 14.35.
+[07:25] Here is how we would interpret that.
+[07:26] We would say that the lead level from each sample typically varies by about 14.35 parts per billion from the mean of 7.31 parts per billion.
+[07:39] Okay, so what should we take away from this video?
+[07:41] Let me go back to the questions from the beginning.
+[07:42] Number one said, what summary statistics can be used to describe the center of a distribution?
+[07:45] And we know for center that we can use mean and median.
+[07:47] And question number two was asking what summary statistics can we use for the variability of the distribution of quantitative data.
+[07:54] And we know that here we can use the range, the IQR, and the standard deviation.
+[08:02] All right, so this is Luke Wilcox signing off.
+[08:04] Thank you all for joining and I hope to see you in the next video.

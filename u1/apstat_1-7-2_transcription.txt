@@ -1,0 +1,88 @@
+# Video 2 — Transcript
+# Unit 1, Lesson 7
+
+[00:00] ...High school. And in this video, we're going to talk about summary statistics for a quantitative variable.
+[00:08] So, let's start with what we will learn.
+[00:10] Three different questions that we're going to try and answer in this video.
+[00:14] Question one, how can we determine if a value in a data set is in fact an outlier?
+[00:21] Question two, which summary statistics are resistant and which are non-resistant?
+[00:28] And then number three, which measures of center and variability are best for describing a distribution?
+[00:36] So, we're going to go with a very familiar example to you at this point, the Flint water crisis data, which if you recall says that city officials measured lead levels in 71 water samples from Flint residents in January to June 2015.
+[00:54] So, here are the values from the 71 water samples.
+[00:58] And in a previous video, we talked about graphs that we could use to display that.
+[01:01] And I'm using my favorite type of graph, the dot plot here.
+[01:05] And then we use that dot plot to be able to describe the distribution.
+[01:11] And then in a later video, we looked at summary statistics for that set of data.
+[01:17] And in this video, what we're going to do is to try and decide which of those summary statistics is most appropriate for describing this distribution here.
+[01:35] So let's start by thinking about if any of those values would be considered outliers.
+[01:37] And there are two different methods to use to check for outliers.
+[01:39] The first method, which I'll just call method number one, is that an outlier is a value if it is more than 1.5 IQR below the first quartile or more than 1.5 IQR above the third quartile.
+[01:53] So let's see what that looks like for the Flint water crisis data here.
+[01:58] So here are the summary statistics.
+[02:00] So we have all the values that we need in order to calculate the IQR with the Q1 and the Q3 here.
+[02:08] And so a low outlier would have to be more than one and a half IQRs below Q1.
+[02:14] So we take Q1 from our summary statistics, which is two, and then the IQR, which is 7 minus 2, and we're going to end up with a value of -5.5.
+[02:25] And this is telling us that any number less than -5.5 would be an outlier.
+[02:27] Well, obviously, you can't have a negative value here.
+[02:30] And so we do not have any low outliers.
+[02:36] But now let's check on the other end.
+[02:37] High outlier has to be more than one and a half IQR above Q3.
+[02:43] So we're going to get Q3 from our summary statistics over here.
+[02:46] And our IQR we know is 7 minus 2.
+[02:49] And this is going to give us a value of 14.5, which is telling us that any value that is greater than 14.5 is considered an outlier.
+[02:58] And you'll notice we got a whole bunch of values up here greater than 14.5.
+[03:02] There are eight different values that are considered outliers according to this method.
+[03:10] Now there is a second method that you can use for checking for outliers.
+[03:15] And this one says that an outlier is a value located two or more standard deviations above or below the mean.
+[03:23] So let's go ahead and try this method with the same set of data.
+[03:26] So there's our summary statistics and this time a low outlier has to be more than two standard deviations below the mean.
+[03:37] So we take the mean from our summary statistics here and the standard deviation here and we plug those in and that's going to give us a value of -21.384.
+[03:47] Now once again we don't have any negative values here.
+[03:49] So according to this method, there's no low outliers.
+[03:51] Now on the other end, for the high outlier, it has to be more than two standard deviations above the mean.
+[04:00] So we take those same values from the summary statistics and that's going to give us 36.04.
+[04:06] So we know that any value bigger than 36.04 is going to be considered an outlier.
+[04:12] And so this time we only have three outliers according to method two.
+[04:19] All right. Next, let's think about how these outliers influence those summary statistics.
+[04:23] So, here's what we're going to do.
+[04:26] We're going to start with the original data set. 71 water samples. Here they are.
+[04:31] And here are the summary statistics.
+[04:34] And you'll also see that I've calculated the range and the IQR along with that.
+[04:39] Now, here's what I'm going to do. I'm going to take out one of the outliers and I'm going to take out the biggest outlier, that 104.
+[04:49] I'm going to remove it from the data set.
+[04:51] So now I only have 70 values and let's see what happens to the summary statistics.
+[04:59] So here they are. Let's try and notice what happened.
+[05:02] The mean started out at 7.31.
+[05:06] It went way down to 5.9 when we removed that outlier. Big change in the mean.
+[05:12] Standard deviation went from 14.347 all the way down to 8.45. Big change on the standard deviation.
+[05:19] Let's move over to the median which was three.
+[05:25] And then after we remove the outlier, it's still three.
+[05:27] So the median actually didn't change at all there.
+[05:32] And then let's move over to the range which went from 104 down to 42.
+[05:35] Of course, because our maximum value changed.
+[05:37] So the range had a big change.
+[05:40] Now the IQR changed a little bit but not much moving from five to four.
+[05:46] So if we were to summarize what happened there, we'll notice that the mean, the standard deviation, and the range were the ones that were most influenced by removing the outlier.
+[05:59] So we say that those measures are nonresistant.
+[06:03] Okay? Because they change quite a bit when you remove an outlier.
+[06:05] Now the ones that did stay the same or close to the same were the median and the IQR.
+[06:11] And so we say that the median and the IQR are resistant measures.
+[06:20] So now let's try and answer the question of which measures of center and variability are actually the best for our original data set here.
+[06:26] And the way that we're going to answer that is depending on the shape of the distribution.
+[06:31] Remember here we had some large outliers which means that this is a clearly right-skewed distribution and with that right skew remember we found that the mean changed a lot whereas the median didn't and so the median is what we would like to use for the measure of center and for variability the IQR was the value that didn't change much.
+[06:58] So because the median and the IQR are resistant, they are the best measures of center and variability for a skewed distribution.
+[07:07] Now, for a symmetric distribution, we can go with the mean for the center and the standard deviation for the variability.
+[07:15] So, what should we take away from this video?
+[07:17] Let's go back to the three questions from the start.
+[07:21] Question number one, how can we determine if a value in a data set is an outlier?
+[07:26] I showed you two different methods here.
+[07:28] Method one was that if it is less than one and a half IQR below Q1 or more than one and a half IQR above Q3.
+[07:38] The second method is to check if you have any values that are two or more standard deviations away from the mean and that could be below the mean or above the mean.
+[07:48] Question number two, which summary statistics are resistant and which are non-resistant?
+[07:52] We found that the resistant measures are the median and the IQR and the non-resistant measures are the mean, the standard deviation, and the range.
+[08:04] And question number three, which measures of center and variability are best for describing a distribution.
+[08:08] We found that that depends on the shape of the distribution.
+[08:12] If it is a skewed distribution, we will use the median for the center and the IQR for the variability.
+[08:18] If it is a symmetric distribution, we'll use the mean for the center and the standard deviation for the variability.
+[08:28] So, this is Luke Wilcox signing off.
+[08:30] Thank you all for joining and I hope to see you in the next video.

@@ -1,0 +1,14 @@
+# Video 2 — Slide Descriptions
+# Unit 1, Lesson 7
+
+List of the slides and visual changes in the video, with their corresponding timestamps and primary topics:
+
+[00:00] — Summary Statistics for a Quantitative Variable: The title slide introduces the speaker and the main topic of the video.
+[00:08] — What will we learn?: This slide outlines three core questions regarding outliers, resistant vs. non-resistant statistics, and the best measures for describing distributions.
+[00:36] — Example: Flint Water Crisis: A visual showing lead level data from 71 water samples in Flint, Michigan, displayed both as a list of raw values and a dot plot.
+[01:36] — Method 1 for Checking Outliers: This slide defines an outlier using the "1.5 x IQR Rule," checking for values significantly below the first quartile or above the third quartile.
+[01:53] — Checking for Outliers (Method 1): This slide applies the 1.5 x IQR rule to the Flint water data, showing calculations for low and high outlier boundaries.
+[03:10] — Method 2 for Checking Outliers: This slide introduces a second method, defining outliers as values located two or more standard deviations away from the mean.
+[04:19] — Resistant vs. Non-resistant Measures: A comparative visual showing how removing the highest outlier (104) from the data set significantly impacts the mean, standard deviation, and range, while the median and IQR remain relatively stable.
+[06:20] — Which Measures are Best?: This slide summarizes which measures to use based on the shape of a distribution (skewed vs. symmetric).
+[07:15] — What should you take away?: A concluding slide that reviews the answers to the three initial questions presented at the start of the video.

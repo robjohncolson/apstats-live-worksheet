@@ -1,0 +1,24 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 7
+
+List of the slides and visual changes in the video with their corresponding timestamps:
+
+[00:00] — Summary Statistics for a Quantitative Variable
+[00:10] — What will we learn?
+  * What summary statistics can be used to describe the center and variability of a distribution of quantitative data?
+[00:37] — Flint Water Crisis Data
+  * A table displaying lead levels from 71 water samples measured in parts per billion (ppb).
+[01:08] — Measuring Center: Mean and Median
+  * Definitions and formulas for calculating the mean (average) and median (middle value) of a data set.
+[02:15] — Quartiles: Q1 and Q3
+  * Definitions for the first quartile (median of the first half) and third quartile (median of the second half).
+[02:46] — Example: Flint Water Crisis (Center)
+  * Step-by-step calculation and interpretation of the mean (7.31 ppb) and median (3 ppb) using the provided data.
+[04:01] — Example: Flint Water Crisis (Quartiles)
+  * Visual demonstration of finding Q1 (2 ppb) and Q3 (7 ppb) by splitting the ordered data set.
+[05:06] — Measuring Variability
+  * Definitions and formulas for Range, Interquartile Range (IQR), and Standard Deviation.
+[06:11] — Example: Flint Water Crisis (Variability)
+  * Calculation and interpretation of Range (104), IQR (5), and Standard Deviation (14.35) for the Flint water samples.
+[08:19] — Takeaways
+  * Summary of the statistics used to describe center (mean and median) and variability (range, IQR, and standard deviation).
