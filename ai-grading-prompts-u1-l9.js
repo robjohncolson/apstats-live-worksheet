@@ -1,105 +1,114 @@
 ﻿/**
  * AI Grading Prompts for Unit 1 Lesson 9: Topic 1.9
- * Topic 1.9: Comparing Distributions of a Quantitative Variable
+ * Topic 1.9: Topic 1.9
  *
  * Learning Objectives:
- *   Review the four characteristics used to describe a quantitative distribution
- *   Compare two quantitative distributions using shape, center, variability, and unusual features
- *   Interpret side-by-side box plots in context
- *   Write a complete comparison response using comparative language and context
- *   Use box-plot evidence to justify a choice between two groups
+ *   Compare graphical representations for multiple sets of quantitative data
+ *   Compare summary statistics for multiple sets of quantitative data
+ *   Write complete comparison responses using shape, center, variability, unusual features, comparative words, and context
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U1L9 = `
 VIDEO 1 - Comparing Distributions of a Quantitative Variable (~8:31):
-- The lesson begins with two questions: what characteristics matter when comparing quantitative distributions and what is needed for a complete response.
-- Students review the same four characteristics used to describe a single quantitative distribution: shape, center, variability, and unusual features.
+- The video focuses on comparing distributions of a quantitative variable.
+- Two main questions guide the lesson: what characteristics matter when comparing quantitative distributions, and what is needed for a complete written comparison.
+- The lesson reviews the four important characteristics for describing or comparing a quantitative distribution: shape, center, variability, and unusual features.
 - Shape vocabulary includes skewed left, skewed right, symmetric, unimodal, bimodal, and uniform.
 - Center can be described with the mean or median.
-- Variability can be described with the range, IQR, or standard deviation.
+- Variability can be compared with the range, IQR, or standard deviation.
 - Unusual features include outliers, gaps, and clusters.
-- When comparing two distributions, students still address the same four characteristics, but they must compare the groups directly.
-- The example is a released 2015 AP free-response question about yearly salaries in 2014 for 30 employees at corporation A and 30 employees at corporation B, all hired in 2009 as entry-level accountants.
-- The model solution says the box-plot shapes appear similar and fairly symmetric for both corporations.
-- The median salary is approximately the same for corporations A and B.
-- The range and IQR are greater for corporation A than corporation B, so corporation A has more variability.
+- When comparing two distributions, the same four characteristics should still be addressed.
+- The example comes from 2015 AP Exam Question 1 about yearly salaries at corporations A and B.
+- In 2009, both corporations offered a starting salary of $36,000 to entry-level accountants.
+- Data were collected from 30 employees at each corporation who were hired in 2009 and still employed five years later.
+- Side-by-side box plots summarize the 2014 yearly salaries.
+- In the model comparison, both salary distributions appear fairly symmetric and have approximately the same median.
+- Corporation A has greater variability than corporation B because both the range and the IQR are larger.
 - Corporation A has two high outliers, while corporation B has no outliers.
-- The lesson stresses that box plots only suggest shape because we do not know how values are distributed within each quartile, so wording like "appears fairly symmetric" is appropriate.
-- A complete comparison response must address all four characteristics, use comparative words such as similar, same, greater, or less, and include context such as yearly salary.
-- In part B, one reason to choose corporation A is that at least three salaries there are above the maximum salary at corporation B, so A offers the possibility of a higher salary.
-- One reason to choose corporation B is that its minimum salary is higher than corporation A's, while some employees at A appear to still make the starting salary after five years.
-- The key takeaway is to compare shape, center, variability, and unusual features, while writing with comparative language and context.
+- Because box plots do not show how values are distributed inside each quartile, shape language should be cautious, such as saying a distribution appears fairly symmetric.
+- A complete response must address all four characteristics, use comparative words, and include context.
+- Comparative words in the model solution include similar, same, and greater than.
+- Context in the model solution is yearly salary.
+- In part (b), one reason to choose corporation A is that at least 3 out of 30 salaries, or 10%, are greater than the maximum salary at corporation B, so corporation A may offer a higher salary.
+- One reason to choose corporation B is that its minimum salary is greater than corporation A's minimum salary.
+- The video explains that some employees at corporation A may still be making the original $36,000 starting salary and may not have received a raise.
+- The takeaway is to compare shape, center, variability, and unusual features, while also using comparative words and context.
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U1L9 = {
     reflect1: {
-        questionText: 'What four characteristics should you discuss when comparing two quantitative distributions, and how can box plots help you describe them?',
+        questionText: 'Explain how the yearly salary distributions for corporations A and B compare in shape, center, variability, and unusual features. Use comparative words and context in your answer.',
         expectedElements: [
-            { id: 'four-characteristics', description: 'Identifies shape, center, variability, and unusual features as the four characteristics to compare', required: true },
-            { id: 'center-and-variability', description: 'Explains that box plots help compare center and variability using medians, ranges, or IQRs', required: true },
-            { id: 'outliers-or-features', description: 'Explains that box plots can show unusual features such as outliers', required: true },
-            { id: 'cautious-shape', description: 'May note that box plots only suggest shape, so wording like appears fairly symmetric is more appropriate than a definite claim', required: false }
+            { id: 'shape-comparison', description: 'States that the salary distributions appear similar or fairly symmetric for both corporations', required: true },
+            { id: 'center-comparison', description: 'States that the medians are approximately the same for corporations A and B', required: true },
+            { id: 'variability-comparison', description: 'Explains that corporation A has greater variability than corporation B, such as a larger range or IQR', required: true },
+            { id: 'unusual-features', description: 'Explains that corporation A has two high outliers while corporation B has no outliers', required: true },
+            { id: 'comparative-language', description: 'Uses comparative words such as similar, same, greater, or less', required: true },
+            { id: 'context', description: 'Uses context by referring to yearly salaries or corporations A and B', required: true },
+            { id: 'boxplot-caution', description: 'May note that box plots only show that the distributions appear symmetric because values inside quartiles are hidden', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies all four characteristics and clearly explains how box plots help compare them.',
-            P: 'Response shows partial understanding of the four characteristics or how box plots help, but leaves out or confuses one major component.',
-            I: 'Response does not correctly explain what should be compared or how box plots help describe the distributions.'
+            E: 'Response correctly compares the salary distributions in shape, center, variability, and unusual features, while using comparative words and context.',
+            P: 'Response shows partial understanding of the comparison but misses one major characteristic, weakens the comparison language, or lacks clear context.',
+            I: 'Response does not correctly compare the two salary distributions using the key features from the lesson.'
         },
         commonMistakes: [
+            'Describing each corporation separately without directly comparing them',
             'Leaving out one of the four characteristics such as variability or unusual features',
-            'Talking only about center and ignoring spread or outliers',
-            'Treating a box plot as if it shows every individual value',
-            'Using shape language without recognizing that box plots only suggest shape'
+            'Forgetting that corporation A has greater variability than corporation B',
+            'Ignoring context and writing only generic statements about box plots'
         ],
-        contextFromVideo: 'Luke reviews shape, center, variability, and unusual features, then uses side-by-side box plots to compare medians, spread, and outliers between the two corporations.'
+        contextFromVideo: 'The model solution says both salary distributions appear fairly symmetric, the medians are about the same, corporation A has greater range and IQR, and corporation A has two high outliers while corporation B has none.'
     },
 
     reflect2: {
-        questionText: 'What makes a response a complete comparison instead of just a list of separate descriptions?',
+        questionText: 'Explain one reason someone might choose corporation A and one reason someone might choose corporation B based on the box plots. Mention a specific box-plot feature and explain why it matters.',
         expectedElements: [
-            { id: 'all-four', description: 'States that a complete response must address all four characteristics', required: true },
-            { id: 'comparative-words', description: 'Explains that the response must use comparative words such as similar, same, greater, or less', required: true },
-            { id: 'context', description: 'Explains that the response must include context by naming the variable or situation being compared', required: true },
-            { id: 'direct-comparison', description: 'Explains that the two groups should be compared directly rather than described separately with no connection', required: true }
+            { id: 'reason-for-a', description: 'Gives a valid reason to choose corporation A, such as the possibility of earning a higher salary because some salaries at A exceed the maximum at B', required: true },
+            { id: 'a-feature', description: 'Supports the reason for corporation A with a box-plot feature such as the high outliers or the fact that at least 3 of 30 salaries at A are above the maximum at B', required: true },
+            { id: 'reason-for-b', description: 'Gives a valid reason to choose corporation B, such as the higher minimum salary or less risk of never getting a raise', required: true },
+            { id: 'b-feature', description: 'Supports the reason for corporation B with a box-plot feature such as the higher minimum or the absence of salaries still at the starting value', required: true },
+            { id: 'context', description: 'Uses context by referring to salary, raises, or corporations A and B', required: true },
+            { id: 'based-on-box-plots', description: 'May explicitly say that the reasons come from features visible on the box plots', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that a complete comparison addresses all four characteristics, uses comparative language, includes context, and compares the groups directly.',
-            P: 'Response includes some of the ingredients of a complete comparison but leaves out or weakly explains at least one major requirement.',
-            I: 'Response does not explain what makes a comparison complete in AP Statistics.'
+            E: 'Response gives one valid, well-supported reason for choosing each corporation and clearly connects each reason to a box-plot feature in context.',
+            P: 'Response gives partly correct reasons but leaves one reason unsupported, mixes up the corporation evidence, or uses weak context.',
+            I: 'Response does not correctly explain a valid reason for choosing both corporations based on the box plots.'
         },
         commonMistakes: [
-            'Listing shape, center, spread, or outliers without comparing the groups directly',
-            'Forgetting to use words such as greater, less, same, or similar',
-            'Leaving out context and talking only about abstract box plots',
-            'Addressing only one or two characteristics instead of all four'
+            'Giving a preference without referring to any feature of the box plots',
+            'Mixing up which corporation has the higher minimum salary',
+            'Ignoring the high salaries and outliers at corporation A',
+            'Failing to explain why the box-plot feature would matter to someone choosing a job'
         ],
-        contextFromVideo: 'The checklist in the lesson says a complete response addresses all four characteristics, uses comparative words, and includes context such as yearly salary.'
+        contextFromVideo: 'The video says corporation A may be attractive because at least 3 of 30 salaries are above the maximum salary at corporation B, while corporation B may be attractive because its minimum salary is higher and corporation A may still have employees earning $36,000.'
     },
 
     exitTicket: {
-        questionText: 'A school compared the number of minutes students spent on homework on weeknights in two study groups. Group A has minimum 20, Q1 35, median 50, Q3 70, largest non-outlier 110, and one high outlier at 145. Group B has minimum 30, Q1 40, median 50, Q3 60, maximum 85, and no outliers. The box plots appear fairly symmetric. Compare the center and variability, compare unusual features and shape using appropriate box-plot language, and write 2-3 complete sentences that would count as a full AP Statistics comparison in context.',
+        questionText: 'A school compared nightly homework times for students in two study halls using side-by-side box plots. Study Hall A had minimum 30, Q1 45, median 60, Q3 90, largest non-outlier 110, and one high outlier at 150. Study Hall B had minimum 45, Q1 54, median 60, Q3 66, maximum 75, and no outliers. Compare center and variability, describe unusual features and apparent shape, and write a complete comparison using comparative words and context.',
         expectedElements: [
-            { id: 'center', description: 'States that the two groups have about the same center because both medians are 50', required: true },
-            { id: 'variability', description: 'Explains that Group A has greater variability or spread because its range and IQR are larger than Group B', required: true },
-            { id: 'outliers', description: 'Identifies the high outlier at 145 in Group A and notes that Group B has no outliers', required: true },
-            { id: 'shape', description: 'Describes the shapes as appearing fairly symmetric or similar and uses appropriate caution because the information comes from box plots', required: true },
-            { id: 'context-and-comparison', description: 'Writes the comparison in context about homework minutes for the two study groups and uses direct comparative wording', required: true }
+            { id: 'center', description: 'States that the centers are about the same because both medians are 60 minutes', required: true },
+            { id: 'variability', description: 'Explains that Study Hall A has greater variability than Study Hall B, such as a larger IQR or range', required: true },
+            { id: 'unusual-features', description: 'Notes that Study Hall A has a high outlier at 150 while Study Hall B has no outliers', required: true },
+            { id: 'shape', description: 'States that Study Hall A appears skewed right and that Study Hall B appears fairly symmetric or less skewed based on the box plots', required: true },
+            { id: 'comparative-context', description: 'Uses comparative words and refers to nightly homework times or study halls in context', required: true },
+            { id: 'numerical-support', description: 'May include supporting values such as Q1 and Q3 or describe the middle 50% for each study hall', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly compares center, variability, unusual features, and shape, and writes a complete comparison in context with comparative language.',
-            P: 'Response gets much of the comparison right but misses or confuses one major component such as center, variability, outliers, shape, or context.',
-            I: 'Response has major errors or omissions in comparing the two homework-time distributions.'
+            E: 'Response correctly compares center, variability, shape, and unusual features for the two homework-time distributions using comparative language and context.',
+            P: 'Response includes several correct comparisons but misses one major feature, uses weak comparison language, or lacks clear context.',
+            I: 'Response does not correctly compare the two homework-time distributions using the key ideas from the lesson.'
         },
         commonMistakes: [
-            'Saying Group A has a higher center even though both medians are 50',
-            'Ignoring the outlier at 145 or claiming both groups have outliers',
-            'Describing shape too strongly without noting that box plots only suggest shape',
-            'Talking about the numbers without mentioning homework minutes or the study groups',
-            'Listing facts about each group without using direct comparisons such as greater, same, or more variable'
+            'Saying the distributions have different centers even though both medians are 60',
+            'Missing that Study Hall A has much greater variability than Study Hall B',
+            'Ignoring the high outlier at 150 in Study Hall A',
+            'Forgetting to use comparative words or to mention homework times in context'
         ],
-        contextFromVideo: 'The lesson models a complete box-plot comparison by discussing shape, center, variability, and outliers, then emphasizes comparative words and context.'
+        contextFromVideo: 'The lesson says a complete comparison should address shape, center, variability, and unusual features, use comparative words, and include context from the variable being studied.'
     }
 };
 
@@ -118,7 +127,7 @@ window.buildReflectionPromptU1L9 = function(questionId, studentAnswer) {
         .map((e, i) => `${i + 1}. ${e.description}`)
         .join('\n');
 
-    return `You are grading an AP Statistics student's response about comparing distributions of a quantitative variable (Topic 1.9).
+    return `You are grading an AP Statistics student's response about Topic 1.9: Topic 1.9.
 
 ## Question
 ${rubric.questionText}
