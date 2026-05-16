@@ -1,0 +1,34 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 9
+
+The following is a list of slides and visual changes from the video:
+
+[00:00] — Comparing Distributions of a Quantitative Variable
+  * This introductory slide features the presenter's name and school, the course title "AP Statistics," and the specific topic for the video.
+
+[00:12] — What will we learn in this video?
+  * This slide outlines the two main learning objectives: identifying important characteristics for comparing quantitative distributions and determining the requirements for a complete response.
+
+[00:34] — Review: Describing a Distribution
+  * This slide provides a recap of the four essential characteristics for describing a single distribution: shape (skewed, symmetric, etc.), center (mean, median), variability (range, IQR, standard deviation), and unusual features (outliers, gaps, clusters).
+
+[01:45] — 2015 AP Exam #1
+  * This slide introduces a sample free-response question involving two large corporations (A and B) and the distribution of salaries for accountants five years after being hired.
+
+[02:27] — Box Plots of Yearly Salaries
+  * A visual representation comparing the 2014 salaries at Corporation A and Corporation B using two side-by-side box plots.
+
+[02:46] — Example: Model Solution Part (a)
+  * This slide provides a written comparative analysis of the box plots, addressing shape, center (median), variability (range and IQR), and outliers.
+
+[04:15] — Complete Response Checklist
+  * The presenter highlights three key elements of the model solution: addressing all four characteristics, using comparative words (e.g., "similar," "greater"), and including context (e.g., "yearly salary").
+
+[05:22] — Example: Part (b)
+  * This slide presents a follow-up question asking for one reason to choose Corporation A and one reason to choose Corporation B based on the provided box plots.
+
+[06:00] — Example: Model Solution Part (b)
+  * This slide provides the answers for choosing either corporation: Corporation A for the potential of a higher salary (outliers) and Corporation B for a higher minimum salary (no $36,000 starting salaries after five years).
+
+[07:40] — What should we take away from this video?
+  * A summary slide revisiting the initial questions, emphasizing the four characteristics for comparison and the requirements for a complete response.

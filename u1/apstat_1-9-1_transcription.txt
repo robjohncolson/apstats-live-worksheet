@@ -1,0 +1,226 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 9
+
+[00:00] Hi, this is Luke Wilcox, AP Statistics
+[00:03] teacher at East Kentwood High School.
+[00:05] And in this video, we're going to talk
+[00:07] about comparing distributions of a
+[00:10] quantitative variable.
+[00:12] So, let's start by taking a look at what
+[00:14] we will learn in this video. Two
+[00:16] questions that we want to try and
+[00:17] answer. Number one, what are the
+[00:20] important characteristics to discuss
+[00:23] when comparing distributions of
+[00:24] quantitative data? And then number two,
+[00:27] what is needed for a complete response
+[00:30] when comparing distributions of
+[00:32] quantitative data.
+[00:34] So let's start with a quick review from
+[00:36] something that you learned in a previous
+[00:38] video which was how to describe a
+[00:40] distribution of quantitative data.
+[00:43] Remember I told you there are four
+[00:45] important characteristics.
+[00:47] The first one is shape and the
+[00:49] vocabulary terms you have that you can
+[00:51] use here are skewed left, skewed right,
+[00:53] symmetric, unimodal, bimodal and uniform.
+[00:57] Number two is to address the center and
+[01:00] we can use mean, median for that. Then
+[01:03] to address the variability we can use
+[01:05] range, IQR and standard deviation.
+[01:09] And then the fourth characteristic is to
+[01:11] discuss unusual features which include
+[01:14] outliers, gaps and clusters.
+[01:17] Now, this was how to describe a single
+[01:21] distribution of quantitative data. In
+[01:24] this video, we want to try and compare
+[01:27] distributions. So, we're going to be
+[01:29] given two distributions of quantitative
+[01:31] data, and we want to compare those two
+[01:33] distributions. And the wonderful thing
+[01:35] is that we still want to address the
+[01:38] same four important characteristics that
+[01:40] you see here. Shape, center,
+[01:43] variability, and unusual features.
+[01:46] So, we're going to do that by taking a
+[01:47] look at an example. And this is actually
+[01:50] a released free response question from
+[01:52] the AP exam in 2015. It is question
+[01:55] number one. And so, here's what it says.
+[01:58] Two large corporations, A and B, hire
+[02:01] many new college graduates as
+[02:03] accountants at entry-level positions. In
+[02:05] 2009, the starting salary for an
+[02:07] entry-level accountant position was
+[02:09] $36,000 a year at both corporations. At
+[02:12] each corporation, data were collected
+[02:14] from 30 employees who were hired in 2009
+[02:17] as entry-level accountants and were
+[02:19] still employed at the corporation 5
+[02:20] years later. The yearly salaries of the
+[02:23] 60 employees in 2014 are summarized in
+[02:26] the box plots below. So, you'll notice
+[02:28] now that we have two different
+[02:31] distributions of quantitative data, one
+[02:33] for corporation A and one for
+[02:34] corporation B. And the question is
+[02:37] asking us to write a few sentences
+[02:39] comparing the distributions of the
+[02:41] yearly salaries at the two corporations.
+[02:45] So let's take a look at the model
+[02:47] solution here.
+[02:49] It says the shape of the distribution of
+[02:51] yearly salary appears to be similar
+[02:54] fairly symmetric for both corporations A
+[02:57] and B. So if you look at the box plots,
+[02:59] the right hand side appears to be about
+[03:01] the same length as the left hand side in
+[03:03] each one of these. So we're saying that
+[03:05] it appears to be fairly symmetric. But
+[03:08] remember, we have to be careful when
+[03:09] discussing the shape using box plots
+[03:12] because we actually don't know the
+[03:13] distribution of values within each one
+[03:15] of those quartiles. So you'll notice that
+[03:17] I've used the word "appears to be fairly
+[03:19] symmetric" here when describing the
+[03:21] shape. The next thing it says is the
+[03:24] median salary is approximately the same
+[03:26] for both corporations. But we can
+[03:28] clearly see that in the box plots
+[03:30] because we know this value right here is
+[03:32] the median and this value here is the
+[03:33] median. and they appear to be exactly
+[03:35] the same. Next, it says the range in the
+[03:38] interquartile range of the salaries are
+[03:41] greater for corporation A than
+[03:43] corporation B. Well, we can find the
+[03:45] range by taking the maximum minus the
+[03:47] minimum here, which is going to be much
+[03:49] larger for corporation A than it would
+[03:51] be for corporation B. And for the IQR,
+[03:54] we take our Q3 minus the Q1, which is
+[03:56] really just the width of the box here,
+[03:59] which is definitely greater for
+[04:01] corporation A than corporation B.
+[04:04] Next, it says the two highest salaries
+[04:06] at corporation A are outliers, while
+[04:08] corporation B has no outliers. Very easy
+[04:11] to see here that corporation A has these
+[04:13] two outliers.
+[04:15] Now, let's take a little bit closer look
+[04:17] at this model solution and talk about
+[04:19] why this is in fact a complete response
+[04:22] for this one. And the first thing to
+[04:24] notice is that we have in fact addressed
+[04:26] all four of the important
+[04:28] characteristics. So we've addressed the
+[04:31] shape, we've addressed the center, we've
+[04:34] addressed the variability,
+[04:37] and we've addressed outliers. All four
+[04:39] of those have been handled in our
+[04:41] solution here. The next thing which is
+[04:44] really important here is that we have to
+[04:46] use comparative words. We are trying to
+[04:48] compare these two distributions in each
+[04:50] one of these characteristics. So you
+[04:53] have to use comparative words here. So
+[04:55] you'll notice for the shape, we said
+[04:57] that they are similar. For the center,
+[04:59] we're saying that they are the same. And
+[05:02] for the variability, we're saying
+[05:03] greater for corporation A than
+[05:05] corporation B. Those are the comparative
+[05:07] words that you need to use there. And
+[05:10] then finally, you got to make sure that
+[05:12] you include context somewhere in your
+[05:14] solution. And we've actually handled
+[05:16] that right in the first sentence by
+[05:18] referring to the distribution of yearly
+[05:20] salary.
+[05:22] Now, there was a part B to this question
+[05:25] which says, suppose both
+[05:27] corporations offered you a job for
+[05:29] $36,000 a year as an entry-level
+[05:31] accountant. Based on the box plots, give
+[05:35] one reason why you might choose to
+[05:36] accept the job at corporation A. And
+[05:39] then based on the box plots, give one
+[05:41] reason why you might choose to accept
+[05:43] the job at corporation B. Now very
+[05:46] important to notice here in the question
+[05:48] is that it says based on the box plots.
+[05:51] So we want to make sure that in our
+[05:53] solution we are actually referring to
+[05:55] some characteristic of the box plot. So
+[05:59] let's take a look at the model solution
+[06:01] for part B.
+[06:03] The first question it says five years
+[06:06] after starting at least three out of the
+[06:08] 30 or 10% of the salaries at corporation
+[06:11] A are greater than the maximum salary at
+[06:14] corporation B. So look you can see those
+[06:17] two outlier values here. We also know
+[06:19] that this is the largest value that's
+[06:21] not an outlier right here. So we're
+[06:23] guaranteed there's at least three of
+[06:25] those numbers that are are bigger than
+[06:27] the maximum value in corporation B. So
+[06:30] now to finish up here, it says if I
+[06:32] accept the offer from corporation A, I
+[06:35] might be able to make a higher salary at
+[06:37] corporation A than at corporation B. So
+[06:40] you'll notice that in our solution here
+[06:43] is where we are addressing a feature
+[06:45] that you can see on the box plot and
+[06:47] then that's followed by an explanation
+[06:49] as to why it would be advantageous to be
+[06:51] at corporation A. For the second part of
+[06:54] this question, it says five years after
+[06:57] starting, the minimum salary at
+[06:59] corporation B is greater than at
+[07:02] corporation A. So if we look at the
+[07:05] minimum here, the minimum for
+[07:07] corporation A is clearly less than the
+[07:09] minimum at corporation B. So to complete
+[07:12] this answer here, it says in fact at
+[07:14] corporation A, it looks like some people
+[07:16] are still making the starting salary of
+[07:19] $36,000
+[07:20] and they never received a raise in five
+[07:22] years since they were hired. So if I
+[07:24] work at corporation A, I might never
+[07:26] receive a raise in salary. So once
+[07:28] again, you'll notice in this response
+[07:30] that we have referred specifically to a
+[07:32] feature of the box plot followed by an
+[07:35] explanation as to why corporation B
+[07:37] would be advantageous.
+[07:40] So what should we take away from this
+[07:42] video? Let's go back to the two
+[07:44] questions from the beginning. Number
+[07:46] one, what are the important
+[07:47] characteristics to discuss when
+[07:49] comparing distributions of quantitative
+[07:51] data? Well, we know that there are four
+[07:53] of them. Just like when we describe a
+[07:55] distribution, when we compare a
+[07:57] distribution or compare two
+[07:59] distributions, we want to address the
+[08:00] shape, center, variability, and unusual
+[08:04] features.
+[08:05] And then number two, what is needed for
+[08:07] a complete response when comparing
+[08:09] distributions of quantitative data? You
+[08:11] want to make sure first that you address
+[08:13] all four of the important
+[08:14] characteristics,
+[08:16] making sure that you are using
+[08:18] comparative words there, and then also
+[08:21] checking to make sure that you're
+[08:22] including context in your response.
+[08:26] All right, this is Luke Wilcox signing
+[08:29] off. Thank you all for joining me, and I
+[08:31] hope to see you in the next video.
