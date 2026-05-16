@@ -1,114 +1,125 @@
 ﻿/**
- * AI Grading Prompts for Unit 1 Lesson 4: Representing a Categorical Variable with Graphs
+ * AI Grading Prompts for Unit 1 Lesson 4: Topic 1.4
  * Topic 1.4: Representing a Categorical Variable with Graphs
  *
  * Learning Objectives:
  *   Represent categorical data graphically with bar charts and pie charts
- *   Construct well-labeled graphs with appropriate scales
- *   Interpret graphs of categorical data and decide whether claims are supported
+ *   Describe categorical data using graphs
  *   Compare multiple sets of categorical data using relative frequencies
- *   Use grouped relative frequency bar charts to compare distributions in context
+ *   Use graphical and tabular evidence to justify claims in context
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U1L4 = `
-VIDEO 1 - Representing a Categorical Variable with Graphs (~8:53):
-- The lesson asks how categorical data can be represented graphically and how graphs help describe categorical data.
-- Main example: a random sample of 50 high school students completed an online survey about which superpower they would most like to have.
-- The individuals are the 50 students, and the variable is superpower preference, which is categorical.
-- A frequency bar chart or bar graph can represent the category counts.
-- A relative frequency bar chart can represent the category proportions or percents.
-- Good bar chart habits include labeling the axes, putting the variable on the horizontal axis, using frequency or relative frequency on the vertical axis, starting the vertical axis at zero, and drawing equal-width bars with gaps between categories.
-- In the superpower practice question, the unsupported statement is that freeze time was chosen by twice as many students as fly, because freeze time is 15 and fly is 9.
-- Freeze time and telepathy together account for 31 out of 50 students, which is 62%.
-- Telepathy is the most popular choice with frequency 16.
-- Pie charts are another graphical representation for categorical data, and they should include a legend or key.
-- In the screen media practice graph, the unsupported statement is choice C because the graph shows about four times as many, not five times as many.
-- The takeaway is that bar charts, relative frequency bar charts, and pie charts reveal information that can be used to justify claims in context.
+VIDEO 1 - Representing a Categorical Variable with Graphs (~8:51):
+- The video focuses on two questions: how to represent categorical data graphically and how graphical representations help describe categorical data.
+- The main example is the superpower survey from the previous lesson with a random sample of 50 high school students.
+- The individuals are the 50 students who completed the survey.
+- The variable is superpower preference, which is categorical.
+- The lesson shows that a frequency table can be turned into a bar chart or bar graph.
+- It also shows that a relative frequency table can be turned into a relative frequency bar chart.
+- In the superpower example, the frequencies are fly 9, freeze time 15, invisibility 7, super strength 3, and telepathy 16.
+- The relative frequencies are fly 0.18, freeze time 0.30, invisibility 0.14, super strength 0.06, and telepathy 0.32.
+- When making bar charts, students should label both axes.
+- The variable name, superpower preference, goes on the horizontal axis.
+- Frequency or relative frequency goes on the vertical axis.
+- The vertical axis should start at zero to avoid a distorted impression.
+- The bars should be equal in width and should usually have gaps between categories.
+- The lesson practices describing categorical data from a bar chart.
+- In the superpower multiple-choice question, the statement not supported by the graph is that freeze time was chosen by twice as many students as fly, because 15 is not twice 9.
+- The graph does support that telepathy was the most popular choice.
+- The lesson also introduces pie charts as another way to represent categorical data.
+- A pie chart should include a legend or key connecting slices to categories.
+- In the screen media example, the unsupported statement is choice C because the comparison is about four times as many, not five.
+- The video closes by emphasizing that categorical data can be represented graphically with bar charts or pie charts and that graphs reveal information used to justify claims in context.
 
 VIDEO 2 - Comparing Multiple Sets of Categorical Data (~8:53):
-- The lesson asks how to represent multiple sets of data for the same categorical variable in tables and graphs and how to compare the distributions.
-- A teacher surveyed students in her classes and wants to compare superpower preferences for 80 boys and 125 girls.
-- The frequency counts are: fly 20 males and 40 females, freeze time 28 males and 28 females, invisibility 15 males and 21 females, super strength 10 males and 5 females, and telepathy 7 males and 31 females.
-- A count can be the same in two groups while the proportions are different because the group sizes are different.
-- The supported statement from the table is that telepathy was preferred by less than 10% of males and almost 25% of females.
-- Relative frequencies are better than raw counts when comparing groups of different sizes.
-- A grouped relative frequency bar chart should still have labeled axes, an appropriate scale, spaces between category groups, and a legend or key.
-- The grouped bars may be organized by category or by group, so students need to interpret either display correctly.
-- In the tweens versus teens screen media graph, the supported statement is choice B because both groups have about 0.51 in the 2+ to 8 hours range.
-- The graph shows that teens generally report more screen media use than tweens.
-- The takeaway is that tables and relative frequency bar graphs can both be used to compare multiple sets of categorical data and justify claims in context.
+- The second video focuses on representing multiple sets of data for the same categorical variable in tables and graphs and using them to compare distributions.
+- A teacher surveyed students in all of her classes and wants to compare superpower preferences for 80 boys and 125 girls.
+- The lesson warns that raw counts can be misleading when group sizes are different.
+- Freeze time was chosen by 28 males and 28 females, but it was a larger proportion of males because 28/80 is greater than 28/125.
+- Invisibility had counts 15 for males and 21 for females, but it was actually more popular among males because 15/80 is greater than 21/125.
+- Super strength had counts 10 for males and 5 for females, so the proportion is much higher among males.
+- Telepathy was preferred by 7 of 80 males, which is less than 10 percent, and 31 of 125 females, which is almost 25 percent.
+- The supported statement in that table question is choice E about telepathy being less than 10 percent for males and almost 25 percent for females.
+- The lesson says relative frequencies are better for comparing groups of different sizes.
+- A relative frequency table and a side-by-side relative frequency bar chart can be used to compare the male and female distributions.
+- The graph should still have labeled axes, an appropriate scale, spaces between categories, and a legend or key.
+- In a side-by-side bar chart, bars may be grouped within each category or grouped within each sex.
+- A second example compares screen media use for tweens and teens.
+- In that graph question, the supported statement is choice B because both tweens and teens have proportion 0.51 for 2+ to 8 hours of screen media use per day.
+- The video closes by emphasizing that tables and graphs can both be used to compare multiple sets of categorical data and justify claims in context.
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U1L4 = {
     reflect1: {
-        questionText: 'How do labels, scales, and bar heights help a graph communicate the distribution of a categorical variable?',
+        questionText: 'Using the superpower survey of 50 students, explain how a frequency bar chart and a relative frequency bar chart show the same data in different ways.',
         expectedElements: [
-            { id: 'axis-labels', description: 'Explains that the axes should be labeled with the variable and with frequency or relative frequency', required: true },
-            { id: 'appropriate-scale', description: 'Explains that the vertical axis should use an appropriate scale and start at zero to avoid distortion', required: true },
-            { id: 'bar-heights', description: 'Explains that bar heights show the frequencies or relative frequencies for the categories', required: true },
-            { id: 'clear-design', description: 'May mention equal-width bars, gaps, or other features that make the graph easier to read', required: false }
+            { id: 'frequency-counts', description: 'Explains that a frequency bar chart shows counts or frequencies for each category', required: true },
+            { id: 'relative-frequency-proportions', description: 'Explains that a relative frequency bar chart shows proportions or percents for each category', required: true },
+            { id: 'same-superpower-data', description: 'States that both graphs display the same superpower categories or same distribution', required: true },
+            { id: 'superpower-example', description: 'Uses the superpower context or a correct category example such as telepathy, fly, or freeze time', required: true },
+            { id: 'divide-by-total', description: 'May mention that relative frequencies come from dividing by the total of 50 students', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains how labels identify what is being graphed, how scale prevents distortion, and how bar heights show the distribution across categories.',
-            P: 'Response shows partial understanding of graph communication but leaves out a major idea such as labels, scale, or what the bar heights represent.',
-            I: 'Response does not correctly explain how labels, scales, and bar heights help communicate the distribution.'
+            E: 'Response clearly explains that one graph shows counts and the other shows proportions or percents, while tying both to the same superpower data.',
+            P: 'Response shows the general difference between the graphs but leaves out part of the explanation or does not use the superpower context clearly.',
+            I: 'Response does not correctly distinguish a frequency bar chart from a relative frequency bar chart.'
         },
         commonMistakes: [
-            'Only saying graphs help you see the data without explaining how',
-            'Ignoring the need to label axes',
-            'Not mentioning that the vertical scale should start at zero',
-            'Failing to connect bar heights to frequencies or relative frequencies'
+            'Saying both graphs only show counts',
+            'Describing relative frequency without mentioning proportion or percent',
+            'Ignoring that both graphs come from the same superpower data set',
+            'Giving graphing details without explaining the difference in what the heights represent'
         ],
-        contextFromVideo: 'The video emphasizes labeling the axes, starting the vertical axis at zero, and using bar heights to represent category frequencies or relative frequencies.'
+        contextFromVideo: 'The lesson uses the superpower survey of 50 students to show both a frequency bar chart and a relative frequency bar chart. The category heights represent counts in one graph and proportions or percents in the other.'
     },
 
     reflect2: {
-        questionText: 'Why are relative frequencies usually more useful than raw counts when comparing categorical data from groups of different sizes?',
+        questionText: 'Why are relative frequencies better than raw counts when comparing male and female superpower preferences? Use one example from the lesson.',
         expectedElements: [
-            { id: 'different-group-sizes', description: 'Explains that raw counts can be misleading when the groups are different sizes', required: true },
-            { id: 'within-group-proportions', description: 'Explains that relative frequencies compare proportions or percents within each group', required: true },
-            { id: 'fair-comparison', description: 'Explains that relative frequencies make comparisons between groups more fair or meaningful', required: true },
-            { id: 'video-example', description: 'May mention an example such as 28 males and 28 females choosing freeze time but a larger male proportion', required: false }
+            { id: 'different-group-sizes', description: 'Explains that the male and female groups have different sizes, 80 males and 125 females', required: true },
+            { id: 'use-proportions', description: 'Explains that relative frequencies or proportions should be used instead of just raw counts', required: true },
+            { id: 'lesson-example', description: 'Uses a correct lesson example such as freeze time being 28 and 28 but more popular among males, or telepathy being less than 10 percent of males and almost 25 percent of females', required: true },
+            { id: 'comparison-conclusion', description: 'Explains how the relative frequencies change or clarify the comparison', required: true },
+            { id: 'graph-or-table-link', description: 'May mention that relative frequency tables or side-by-side relative frequency bar charts make the comparison easier', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that different group sizes make counts alone misleading and that relative frequencies allow fair comparisons using within-group proportions or percents.',
-            P: 'Response recognizes that relative frequencies help, but does not clearly explain why different group sizes matter or how proportions improve the comparison.',
-            I: 'Response does not correctly explain why relative frequencies are more useful for comparing groups of different sizes.'
+            E: 'Response explains that different group sizes require relative frequencies and uses a correct lesson example to show how proportions lead to the correct comparison.',
+            P: 'Response shows part of the idea or gives an example, but does not fully explain why raw counts can be misleading.',
+            I: 'Response does not show why relative frequencies are preferred when comparing groups of different sizes.'
         },
         commonMistakes: [
-            'Treating equal counts as meaning equal popularity across groups',
-            'Not mentioning that the group sizes are different',
-            'Saying relative frequencies and counts tell the same comparison story',
-            'Giving no explanation of proportions or percents within each group'
+            'Comparing counts only and ignoring the different totals',
+            'Using an example that does not match the lesson numbers',
+            'Saying equal counts mean equal popularity',
+            'Not explaining how the proportion changes the conclusion'
         ],
-        contextFromVideo: 'The video stresses that even though 28 males and 28 females chose freeze time, the larger proportion is for males because there were only 80 males but 125 females.'
+        contextFromVideo: 'The video compares 80 males and 125 females. It shows that equal counts like 28 and 28 for freeze time do not mean equal popularity because 28/80 is greater than 28/125. It also uses telepathy as less than 10 percent of males and almost 25 percent of females.'
     },
 
     exitTicket: {
-        questionText: 'A school surveyed two grade levels about which school event they enjoy most. Among 40 sophomores, the responses were pep rallies = 14, dances = 10, games = 9, and assemblies = 7. Among 60 seniors, the responses were pep rallies = 12, dances = 18, games = 15, and assemblies = 15. Identify the individuals and variable, state whether the variable is categorical or quantitative, explain why a relative frequency bar chart is better for comparing the groups, give the relative frequencies or percents, describe key graph features, and write one supported comparison in context.',
+        questionText: 'A teacher surveyed two grades about their favorite spirit day theme. Explain why a relative frequency bar graph would be more useful than a frequency bar graph, find the Jersey Day relative frequency for each grade, decide whether Jersey Day was equally popular, and justify your answer in context.',
         expectedElements: [
-            { id: 'individuals', description: 'Identifies the individuals as the surveyed sophomores and seniors', required: true },
-            { id: 'variable-type', description: 'Identifies the variable as preferred school event and states that it is categorical', required: true },
-            { id: 'why-relative-frequency', description: 'Explains that a relative frequency bar chart is better because the group sizes are different, 40 versus 60', required: true },
-            { id: 'relative-frequencies', description: 'Gives the relative frequencies or percents for the categories in each group, such as 35%, 25%, 22.5%, 17.5% for sophomores and 20%, 30%, 25%, 25% for seniors', required: true },
-            { id: 'graph-features', description: 'Describes key graph features such as labeled axes, a vertical scale starting at zero, grouped equal-width bars with gaps, and a legend or key', required: true },
-            { id: 'supported-comparison', description: 'Writes one valid supported comparison in context using numbers from the data', required: true }
+            { id: 'different-grade-sizes', description: 'Explains that relative frequencies are better because the grades are different sizes, 30 ninth graders and 20 tenth graders', required: true },
+            { id: 'ninth-jersey-frequency', description: 'Finds Jersey Day for 9th grade as 6 out of 30, which is 0.20 or 20 percent', required: true },
+            { id: 'tenth-jersey-frequency', description: 'Finds Jersey Day for 10th grade as 8 out of 20, which is 0.40 or 40 percent', required: true },
+            { id: 'claim-not-supported', description: 'States that the claim Jersey Day was equally popular is not supported', required: true },
+            { id: 'context-justification', description: 'Uses the spirit day context and counts or relative frequencies to justify that Jersey Day was more popular among 10th graders', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the individuals and categorical variable, explains why relative frequencies are needed, gives the percents, describes the graph features, and provides a supported comparison in context.',
-            P: 'Response gets most of the comparison work correct but misses or confuses one major part such as the variable type, the need for relative frequencies, the percents, or the graph features.',
-            I: 'Response has major errors or omissions in the identification, comparison reasoning, percentages, graph description, or contextual interpretation.'
+            E: 'Response explains why relative frequencies are better for comparing different-sized groups, correctly computes both Jersey Day proportions, rejects the equal-popularity claim, and justifies the answer in context.',
+            P: 'Response includes several correct ideas but misses one major part, such as an incorrect proportion, weak explanation of why relative frequencies are needed, or incomplete justification.',
+            I: 'Response omits multiple required parts or shows weak understanding of relative frequency comparisons.'
         },
         commonMistakes: [
-            'Calling the variable quantitative instead of categorical',
-            'Using only counts without explaining why relative frequencies matter',
-            'Forgetting that the groups have different sizes',
-            'Describing the graph without labels, a zero baseline, or a legend',
-            'Making a comparison without supporting it with numbers in context'
+            'Comparing the Jersey Day counts without noticing the grades have different totals',
+            'Giving 6 and 8 instead of relative frequencies or percents',
+            'Saying the claim is supported because both groups liked Jersey Day',
+            'Forgetting to tie the conclusion back to the spirit day context'
         ],
-        contextFromVideo: 'The lesson emphasizes that grouped categorical comparisons should usually use relative frequencies when group sizes differ and that good graphs need labels, scales, and legends to justify claims in context.'
+        contextFromVideo: 'The lesson emphasizes that relative frequencies are best for comparing categorical distributions when group sizes differ, and that tables or graphs provide evidence to justify claims in context.'
     }
 };
 
@@ -127,7 +138,7 @@ window.buildReflectionPromptU1L4 = function(questionId, studentAnswer) {
         .map((e, i) => `${i + 1}. ${e.description}`)
         .join('\n');
 
-    return `You are grading an AP Statistics student's response about representing a categorical variable with graphs (Topic 1.4).
+    return `You are grading an AP Statistics student's response about Topic 1.4: Representing a Categorical Variable with Graphs.
 
 ## Question
 ${rubric.questionText}
