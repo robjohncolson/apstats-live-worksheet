@@ -1,0 +1,18 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 3
+
+The following is a list of slides and visual changes from the video with their corresponding timestamps:
+
+[00:00] — Statistics for Two Categorical Variables: An introductory title slide featuring the lesson title and the instructor's affiliation with East Kentwood High School.
+[00:10] — What will we learn?: A slide outlining the two main learning objectives: calculating summary statistics for two categorical variables and using those statistics to determine if an association exists.
+[00:31] — Example: Age Group and Educational Attainment: A data table displaying educational attainment levels (rows) across three age groups (columns).
+[01:10] — Finding Totals: The data table is updated to show row totals, column totals, and the grand table total.
+[01:39] — Joint Relative Frequency: A visual demonstration of calculating a joint relative frequency (2.1%) by dividing a specific cell value by the table total.
+[02:49] — Marginal Relative Frequency (Rows): The slide shows how to calculate the marginal relative frequency for those with only a high school diploma (39.0%) by dividing a row total by the table total.
+[03:32] — Marginal Relative Frequency (Columns): A demonstration of calculating the marginal relative frequency for the 35 to 54 age group (37.6%) by dividing a column total by the table total.
+[04:33] — Conditional Relative Frequency (Rows): A visual showing the calculation of a percent within a specific row—the percent of high school diploma holders aged 35 to 54 (34.1%).
+[05:13] — Conditional Relative Frequency (Columns): A visual showing the calculation of a percent within a specific column—the percent of 25 to 34 year olds with no high school diploma (7.2%).
+[06:20] — Distribution of Educational Attainment: The data table is filled in with calculated conditional relative frequencies for every cell, organized by age group columns.
+[07:03] — Segmented Bar Graph: A graphical representation of the previously calculated conditional relative frequencies, with stacked bars for each age group.
+[07:27] — Are age group and educational attainment related?: A slide presenting the final conclusion: because the distribution of conditional relative frequencies differs by age group, the variables are associated.
+[07:59] — What should we take away?: A summary slide reviewing the definitions of joint, marginal, and conditional relative frequencies and their role in determining association.

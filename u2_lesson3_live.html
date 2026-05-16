@@ -1,0 +1,1364 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topic 2.3: Required Course Content</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background: #f9f9f9;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header-left { font-weight: bold; color: #003366; }
+        .header-center { font-weight: bold; }
+        .header-right { font-weight: bold; color: #003366; }
+        h1 { text-align: center; color: #003366; margin-bottom: 5px; font-size: 1.5rem; }
+        .subtitle { text-align: center; font-style: italic; color: #555; margin-bottom: 10px; }
+        .worksheet-label { text-align: center; font-weight: bold; margin-bottom: 20px; }
+        .student-info { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .student-info label { font-weight: bold; }
+        .student-info input {
+            border: none;
+            border-bottom: 1px solid #333;
+            background: transparent;
+            padding: 2px 5px;
+            font-size: 1em;
+        }
+        .objective-box {
+            border: 2px solid #003366;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        .objective-box strong { color: #003366; }
+        .vocab-box {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .vocab-box h3 { margin-top: 0; color: #003366; }
+        .vocab-table { width: 100%; }
+        .vocab-table td { padding: 5px 0; vertical-align: top; }
+        .vocab-table td:first-child { font-weight: bold; width: 200px; color: #003366; }
+        .section { margin-bottom: 28px; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+        .section-header h2 { margin: 0; color: #003366; font-size: 1.15rem; }
+        .timestamp { color: #666; font-size: 0.95rem; }
+        .ts { color: #888; font-size: 0.88em; font-style: italic; margin-right: 4px; }
+        .question {
+            margin-bottom: 12px;
+            padding-left: 6px;
+            position: relative;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #003366;
+            margin-right: 8px;
+        }
+        .sub-questions { margin-left: 22px; margin-top: 6px; }
+        .sub-question { margin: 4px 0; }
+        .blank {
+            border: none;
+            border-bottom: 1px solid #003366;
+            background: transparent;
+            padding: 2px 4px;
+            font-size: 1em;
+            min-width: 90px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .blank:focus {
+            outline: none;
+            border-bottom: 2px solid #003366;
+            background: #f0f7ff;
+        }
+        .blank.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+        .blank.partial {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+        .blank.incorrect {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+        .blank.revealed {
+            background-color: #e2e3f3;
+            border-color: #6c757d;
+        }
+        .model-box, .note-box {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background: #fff;
+            margin: 10px 0 14px;
+        }
+        .note-box { background: #f7fbff; border-color: #cce0ff; }
+        .hint { color: #777; font-size: 0.92em; margin-left: 6px; }
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .exit-ticket {
+            border: 2px solid #003366;
+            border-radius: 6px;
+            padding: 12px;
+            background: #f0f4ff;
+            margin-top: 18px;
+        }
+        .formula-box {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9ff;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .formula-box h4 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .formula {
+            font-size: 1.2em;
+            font-family: 'Times New Roman', serif;
+            margin: 8px 0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        .data-table th {
+            background: #003366;
+            color: white;
+        }
+        .data-table td input {
+            width: 60px;
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .btn-check {
+            background: #003366;
+            color: #fff;
+        }
+        .btn-show {
+            background: #6c757d;
+            color: #fff;
+        }
+        .btn-reset {
+            background: #dc3545;
+            color: #fff;
+        }
+        .btn-print {
+            background: #28a745;
+            color: #fff;
+        }
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .ai-feedback {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9ff;
+            border: 1px solid #d0d7ff;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .ai-feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .score-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .score-badge.score-E { background: #d4edda; color: #155724; }
+        .score-badge.score-P { background: #fff3cd; color: #856404; }
+        .score-badge.score-I { background: #f8d7da; color: #721c24; }
+        .ai-feedback-body { color: #444; }
+        .ai-feedback-matched { color: #155724; margin-top: 4px; }
+        .ai-feedback-missing { color: #856404; margin-top: 4px; }
+        .ai-feedback-suggestion { color: #004085; margin-top: 4px; font-style: italic; }
+        textarea.graded-E { border-color: #28a745; background: #f8fff9; }
+        textarea.graded-P { border-color: #ffc107; background: #fffef5; }
+        textarea.graded-I { border-color: #dc3545; background: #fff8f8; }
+        .appeal-section { margin-top: 8px; }
+        .appeal-btn {
+            background: none;
+            border: 1px solid #6c757d;
+            color: #6c757d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .appeal-btn:hover { background: #f0f0f0; }
+        .appeal-form {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .appeal-form.visible { display: block; }
+        .appeal-form textarea {
+            min-height: 60px;
+            margin-bottom: 8px;
+        }
+        .appeal-form button {
+            margin-right: 8px;
+        }
+        .appeal-result {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .appeal-result.upgraded { background: #d4edda; color: #155724; }
+        .appeal-result.maintained { background: #fff3cd; color: #856404; }
+        .appeal-count { font-size: 0.8em; color: #666; margin-top: 4px; }
+        .enriched-pass {
+            margin-top: 8px;
+            padding: 12px 14px;
+            background: #e8f0fe;
+            border-left: 4px solid #4285f4;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .enriched-pass-header {
+            font-weight: bold;
+            color: #1a56db;
+            margin-bottom: 6px;
+            font-size: 1.05em;
+        }
+        .enriched-pass-subtext {
+            color: #555;
+            font-size: 0.92em;
+            margin-bottom: 10px;
+        }
+        .enriched-pass-quote {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px 12px;
+            color: #333;
+            line-height: 1.5;
+            font-style: italic;
+        }
+        .enriched-pass-quote strong {
+            font-style: normal;
+            background: #d4edda;
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+        .enriched-pass-score {
+            margin-top: 8px;
+            color: #155724;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        #scoreDisplay {
+            display: none;
+            padding: 10px 15px;
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        #scoreDisplay.visible {
+            display: inline-block;
+        }
+        .aggregate-trigger {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #1565c0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+        .aggregate-trigger:hover {
+            background: #bbdefb;
+        }
+        .aggregate-drawer {
+            position: fixed;
+            top: 0;
+            right: -380px;
+            width: 360px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+            transition: right 0.25s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .aggregate-drawer.open {
+            right: 0;
+        }
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .drawer-header h3 { margin: 0; color: #003366; }
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+        }
+        .drawer-content { font-size: 0.95em; }
+        .bar-chart { margin: 10px 0; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+        }
+        .bar-label {
+            width: 100px;
+            font-size: 0.85em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .bar-container {
+            flex: 1;
+            height: 18px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 8px;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .bar-count {
+            width: 35px;
+            text-align: right;
+            font-size: 0.85em;
+            color: #666;
+        }
+        .save-indicator {
+            font-size: 0.8em;
+            color: #28a745;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .save-indicator.visible {
+            opacity: 1;
+        }
+        .upload-particle {
+            position: absolute;
+            font-size: 0.9em;
+            color: #667eea;
+            pointer-events: none;
+            animation: floatUp 0.9s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-16px); }
+        }
+        @media print {
+            .controls, .aggregate-trigger, .aggregate-drawer, .save-indicator,
+            .appeal-section, .ai-feedback, .btn-ai { display: none !important; }
+            .enriched-pass { display: block !important; border-left-color: #000 !important; background: #f0f0f0 !important; }
+            .blank { border-bottom: 1px solid #000 !important; background: transparent !important; }
+            body { background: white; }
+            .section { page-break-inside: avoid; }
+            .exit-ticket { page-break-before: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="header-left">AP Statistics</span>
+        <span class="header-center">Unit 2</span>
+        <span class="header-right">Exploring Two-Variable Data</span>
+    </div>
+
+    <h1>Topic 2.3: Required Course Content</h1>
+    <div class="subtitle">Joint, Marginal, and Conditional Relative Frequencies</div>
+    <div class="worksheet-label">Video Follow-Along Worksheet</div>
+
+    <div class="student-info">
+        <div><label>Name:</label> <input type="text" id="worksheetName" style="width:160px;"></div>
+        <div><label>Period:</label> <input type="text" id="worksheetPeriod" style="width:40px;"></div>
+        <div><label>Username:</label> <input type="text" id="worksheetUsername" style="width:120px;" placeholder="for class sync"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>
+        <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
+        <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
+        <button class="btn-print" onclick="window.print()">&#128424; Print</button>
+        <button class="btn-ai" onclick="gradeAllReflections()">&#129302; Grade My Reflections</button>
+        <span id="scoreDisplay"></span>
+    </div>
+
+    <div class='objective-box'>
+    <strong>Learning Objectives:</strong>
+    <ul style='margin: 8px 0 0 0; padding-left: 20px;'>
+        <li>Calculate joint, marginal, and conditional relative frequencies from a two-way table.</li>
+        <li>Use row totals, column totals, and the table total to choose the correct denominator for a percent.</li>
+        <li>Compare distributions of a categorical variable across groups using conditional relative frequencies.</li>
+        <li>Use summary statistics for two categorical variables to decide whether the variables are associated.</li>
+        <li>Connect the conditional relative frequencies in a table to the segmented bar graph from the previous lesson.</li>
+    </ul>
+    <strong style='margin-top: 10px; display: block;'>Essential Knowledge:</strong>
+    <ul style='margin: 8px 0 0 0; padding-left: 20px;'>
+        <li>Marginal relative frequencies are the row and column totals in a two-way table divided by the total for the entire table.</li>
+        <li>A conditional relative frequency is a relative frequency for a specific part of the contingency table, usually within one row or one column.</li>
+        <li>A joint relative frequency is a cell frequency divided by the total for the entire table.</li>
+        <li>Summary statistics for two categorical variables can be used to compare distributions and determine whether variables are associated.</li>
+        <li>If the conditional distributions are not the same for all groups, that is evidence of an association.</li>
+    </ul>
+</div>
+
+<div class='vocab-box'>
+    <h3>Key Vocabulary</h3>
+    <table class='vocab-table'>
+        <tr><td>Joint Relative Frequency</td><td>A cell count divided by the total number of observations in the table.</td></tr>
+        <tr><td>Marginal Relative Frequency</td><td>A row total or column total divided by the table total.</td></tr>
+        <tr><td>Conditional Relative Frequency</td><td>A relative frequency found within a specific row or column of a two-way table.</td></tr>
+        <tr><td>Row Total</td><td>The total for one row of a two-way table.</td></tr>
+        <tr><td>Column Total</td><td>The total for one column of a two-way table.</td></tr>
+        <tr><td>Table Total</td><td>The grand total of all observations in the two-way table.</td></tr>
+        <tr><td>Distribution</td><td>How the values of a categorical variable are divided among its categories.</td></tr>
+        <tr><td>Association</td><td>A relationship in which knowing one categorical variable helps predict another.</td></tr>
+        <tr><td>Two-Way Table</td><td>A table that summarizes two categorical variables at the same time.</td></tr>
+        <tr><td>Segmented Bar Graph</td><td>A graph that shows conditional relative frequencies stacked to 100% for each group.</td></tr>
+    </table>
+</div>
+<div class='section'>
+    <div class='section-header'>
+        <h2>Video 1: Statistics for Two Categorical Variables</h2>
+        <span class='timestamp'>[0:00 &ndash; 8:53]</span>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>1.</span>
+        <span class='ts'>[0:09]</span>
+        The video focuses on how to calculate summary <input type='text' class='blank' data-answer='statistics|summary statistics' style='width:150px;'> for two categorical variables and how to use them to determine whether there is an <input type='text' class='blank' data-answer='association|associated' style='width:150px;'>.
+    </div>
+
+    <div class='note-box'>
+        <strong>Age Group and Educational Attainment Example</strong>
+        <span class='ts'>[0:31 &ndash; 1:10]</span>
+        The same two-way table from the last two lessons returns here. Age group is arranged across the top of the table, and educational attainment is listed down the side.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>2.</span>
+        <span class='ts'>[0:31]</span>
+        The two categorical variables in the example are <input type='text' class='blank' data-answer='age group|age groups' style='width:150px;'> and <input type='text' class='blank' data-answer='educational attainment|education level' style='width:150px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>3.</span>
+        <span class='ts'>[0:42]</span>
+        In the previous lesson, graphical displays showed that the two variables were <input type='text' class='blank' data-answer='related|associated' style='width:150px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>4.</span>
+        <span class='ts'>[1:10]</span>
+        Before calculating percents, the speaker finds the <input type='text' class='blank' data-answer='column totals|column total' style='width:150px;'>, the <input type='text' class='blank' data-answer='row totals|row total' style='width:150px;'>, and the <input type='text' class='blank' data-answer='grand total|table total' style='width:150px;'>.
+    </div>
+
+    <table class='data-table'>
+        <tr>
+            <th>Statistic</th>
+            <th>Numerator</th>
+            <th>Denominator</th>
+        </tr>
+        <tr>
+            <td>Joint relative frequency</td>
+            <td>One cell count</td>
+            <td>Table total</td>
+        </tr>
+        <tr>
+            <td>Marginal relative frequency</td>
+            <td>Row total or column total</td>
+            <td>Table total</td>
+        </tr>
+        <tr>
+            <td>Conditional relative frequency</td>
+            <td>One cell count in a chosen group</td>
+            <td>That row or column total</td>
+        </tr>
+    </table>
+
+    <div class='question'>
+        <span class='question-number'>5.</span>
+        <span class='ts'>[1:39]</span>
+        To find the percent of people who are 25 to 34 years old with a master's degree or higher, divide the cell count by the <input type='text' class='blank' data-answer='table total|grand total' style='width:150px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>6.</span>
+        <span class='ts'>[2:27]</span>
+        A cell frequency divided by the total for the entire table is called a <input type='text' class='blank' data-answer='joint relative frequency|joint relative freq|joint' style='width:250px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>7.</span>
+        <span class='ts'>[2:08]</span>
+        In the example, that joint relative frequency is about <input type='text' class='blank' data-answer='2.1%|2.1' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>8.</span>
+        <span class='ts'>[2:50]</span>
+        To find the percent of people in the survey who have only a high school diploma, use the <input type='text' class='blank' data-answer='row total|row totals' style='width:150px;'> and divide by the table total.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>9.</span>
+        <span class='ts'>[4:05]</span>
+        A row total or column total divided by the table total is a <input type='text' class='blank' data-answer='marginal relative frequency|marginal relative freq|marginal' style='width:250px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>10.</span>
+        <span class='ts'>[2:50]</span>
+        The marginal relative frequency for people with only a high school diploma is about <input type='text' class='blank' data-answer='39%|39' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>11.</span>
+        <span class='ts'>[3:32]</span>
+        The percent of people in the survey who are 35 to 54 years old uses the <input type='text' class='blank' data-answer='column total|column totals' style='width:150px;'> divided by the table total.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>12.</span>
+        <span class='ts'>[3:32]</span>
+        That marginal relative frequency is about <input type='text' class='blank' data-answer='37.6%|37.6' style='width:80px;'>.
+    </div>
+
+    <div class='model-box'>
+        <strong>Joint vs. Marginal Relative Frequency</strong>
+        <span class='ts'>[1:39 &ndash; 4:05]</span>
+        <ul style='margin: 5px 0; padding-left: 20px;'>
+            <li>Joint relative frequency uses one cell count divided by the table total.</li>
+            <li>Marginal relative frequency uses a row total or column total divided by the table total.</li>
+            <li>Both describe overall percents out of the entire survey.</li>
+        </ul>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>13.</span>
+        <span class='ts'>[4:33]</span>
+        The phrase "of those with only a high school diploma" means the calculation stays within one <input type='text' class='blank' data-answer='row' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>14.</span>
+        <span class='ts'>[4:33]</span>
+        The percent of people with only a high school diploma who are 35 to 54 years old is about <input type='text' class='blank' data-answer='34.1%|34.1' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>15.</span>
+        <span class='ts'>[5:13]</span>
+        The phrase "of those 25 to 34 years old" means the calculation stays within one <input type='text' class='blank' data-answer='column' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>16.</span>
+        <span class='ts'>[5:13]</span>
+        The percent of 25 to 34 year olds who have no high school diploma is about <input type='text' class='blank' data-answer='7.2%|7.2' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>17.</span>
+        <span class='ts'>[5:49]</span>
+        Relative frequencies calculated within a specific row or column are called <input type='text' class='blank' data-answer='conditional relative frequencies|conditional relative frequency|conditional' style='width:250px;'>.
+    </div>
+
+    <div class='model-box'>
+        <strong>Conditional Relative Frequency Rule</strong>
+        <span class='ts'>[4:33 &ndash; 6:20]</span>
+        <ul style='margin: 5px 0; padding-left: 20px;'>
+            <li>Pick one row or one column to work within.</li>
+            <li>Divide the cell count by that row total or column total.</li>
+            <li>Use those within-group percents to compare distributions across groups.</li>
+        </ul>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>18.</span>
+        <span class='ts'>[6:20]</span>
+        In the previous lesson, the class used conditional relative frequencies to find the <input type='text' class='blank' data-answer='distribution|distributions' style='width:150px;'> of educational attainment within each age group.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>19.</span>
+        <span class='ts'>[7:04]</span>
+        In the segmented bar graph, the conditional relative frequencies for each <input type='text' class='blank' data-answer='age group|group' style='width:150px;'> are stacked on top of one another.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>20.</span>
+        <span class='ts'>[7:27]</span>
+        The segmented bar graphs for the age groups were not the <input type='text' class='blank' data-answer='same|equal' style='width:80px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>21.</span>
+        <span class='ts'>[7:53]</span>
+        Because the distributions of conditional relative frequencies are <input type='text' class='blank' data-answer='different|not the same' style='width:150px;'> for the age groups, the variables are <input type='text' class='blank' data-answer='associated|related' style='width:150px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>22.</span>
+        <span class='ts'>[8:28]</span>
+        To decide whether two categorical variables are associated, the most important summary statistics are the <input type='text' class='blank' data-answer='conditional relative frequencies|conditional relative frequency|conditional' style='width:250px;'>.
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>23.</span>
+        Reflection: How is a marginal relative frequency different from a conditional relative frequency?
+        <textarea id='reflect1' rows='4' style='width:100%; margin-top:6px;' placeholder='Write your response here...'></textarea>
+        <div id='reflect1-feedback'></div>
+    </div>
+
+    <div class='question'>
+        <span class='question-number'>24.</span>
+        Reflection: Why are conditional relative frequencies the best summary statistics for deciding whether two categorical variables are associated?
+        <textarea id='reflect2' rows='4' style='width:100%; margin-top:6px;' placeholder='Write your response here...'></textarea>
+        <div id='reflect2-feedback'></div>
+    </div>
+</div>
+
+<div class='section'>
+    <div class='section-header'>
+        <h2>Exit Ticket</h2>
+    </div>
+    <div class='exit-ticket'>
+        <p>A school surveyed students about grade level and preferred study style. The results are shown below.</p>
+        <table class='data-table'>
+            <tr>
+                <th>Study Preference</th>
+                <th>9th Grade</th>
+                <th>10th Grade</th>
+                <th>11th Grade</th>
+                <th>Total</th>
+            </tr>
+            <tr>
+                <td>Prefers studying alone</td>
+                <td>18</td>
+                <td>12</td>
+                <td>10</td>
+                <td>40</td>
+            </tr>
+            <tr>
+                <td>Prefers studying with a group</td>
+                <td>12</td>
+                <td>18</td>
+                <td>30</td>
+                <td>60</td>
+            </tr>
+            <tr>
+                <td>Total</td>
+                <td>30</td>
+                <td>30</td>
+                <td>40</td>
+                <td>100</td>
+            </tr>
+        </table>
+        <p><strong>(a)</strong> Identify the two categorical variables and explain why this is a two-way table.</p>
+        <p><strong>(b)</strong> Find the joint relative frequency for a student who is in 11th grade and prefers studying with a group.</p>
+        <p><strong>(c)</strong> Find the marginal relative frequency for 10th grade.</p>
+        <p><strong>(d)</strong> Find the conditional distribution of study preference within 9th grade and within 11th grade.</p>
+        <p><strong>(e)</strong> Use those conditional relative frequencies to decide whether grade level and study preference are associated.</p>
+        <textarea id='exitTicket' rows='8' style='width:100%; margin-top:6px;' placeholder='Write your complete response here...'></textarea>
+        <div id='exitTicket-feedback'></div>
+    </div>
+</div>
+
+<div id="aggregateDrawer" class="aggregate-drawer">
+    <div class="drawer-header">
+        <h3>Class Responses <span style="font-size: 0.7em; color: #999; font-weight: normal;">(Esc to close)</span></h3>
+        <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+    </div>
+    <div class="drawer-content" id="drawerContent">
+        <p>Click a "Class" button next to a question to see responses.</p>
+    </div>
+</div>
+
+    <script src="../railway_config.js"></script>
+    <script src="../railway_client.js"></script>
+    <script src="ai-grading-prompts-u2-l3.js"></script>
+    <script>
+        // ==================== CONFIG ====================
+        const UNIT_ID = 'U2L3';
+        const DEBOUNCE_MS = 250;
+
+        // ==================== STATE ====================
+        let debounceMap = new Map();
+        let currentQuestionBlanks = [];
+        let gradingState = new Map();
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', init);
+
+        function init() {
+            ensureRailwayDefaults();
+            restoreSavedUser();
+            assignQuestionIds();
+            addSaveIndicators();
+            bindBlankEvents();
+            injectAggregateButtons();
+        }
+
+        function ensureRailwayDefaults() {
+            if (!window.RAILWAY_SERVER_URL) {
+                window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';
+            }
+        }
+
+        // ==================== USER PERSISTENCE ====================
+        function restoreSavedUser() {
+            try {
+                const saved = localStorage.getItem('worksheet-user');
+                if (saved) {
+                    const user = JSON.parse(saved);
+                    if (user.name) document.getElementById('worksheetName').value = user.name;
+                    if (user.klass) document.getElementById('worksheetPeriod').value = user.klass;
+                    if (user.username) document.getElementById('worksheetUsername').value = user.username;
+                }
+            } catch (e) { console.warn('Could not restore user', e); }
+        }
+
+        function saveUser() {
+            const user = {
+                name: document.getElementById('worksheetName').value,
+                klass: document.getElementById('worksheetPeriod').value,
+                username: document.getElementById('worksheetUsername').value
+            };
+            localStorage.setItem('worksheet-user', JSON.stringify(user));
+        }
+
+        function getUsername() {
+            return (document.getElementById('worksheetUsername').value || '').trim();
+        }
+
+        document.getElementById('worksheetUsername').addEventListener('blur', saveUser);
+        document.getElementById('worksheetName').addEventListener('blur', saveUser);
+        document.getElementById('worksheetPeriod').addEventListener('blur', saveUser);
+
+        // ==================== QUESTION IDs & EVENTS ====================
+        function assignQuestionIds() {
+            const blanks = document.querySelectorAll('.blank');
+            blanks.forEach((blank, idx) => {
+                blank.dataset.questionId = `WS-${UNIT_ID}-Q${idx + 1}`;
+            });
+        }
+
+        function addSaveIndicators() {
+            document.querySelectorAll('.question').forEach(q => {
+                if (!q.querySelector('.save-indicator')) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'save-indicator';
+                    indicator.textContent = '\u2713 saved';
+                    q.appendChild(indicator);
+                }
+            });
+        }
+
+        function bindBlankEvents() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.addEventListener('blur', () => handleLiveUpdate(blank));
+                blank.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleLiveUpdate(blank);
+                        focusNextBlank(blank);
+                    }
+                });
+            });
+        }
+
+        function focusNextBlank(current) {
+            const blanks = Array.from(document.querySelectorAll('.blank'));
+            const idx = blanks.indexOf(current);
+            if (idx >= 0 && idx < blanks.length - 1) {
+                blanks[idx + 1].focus();
+            }
+        }
+
+        // ==================== ANSWER CHECKING ====================
+        function normalize(str) {
+            return (str || '').toLowerCase().trim().replace(/[^\w\s./-]/g, '');
+        }
+        function checkAnswer(blank) {
+            const userAnswer = normalize(blank.value);
+            const acceptedRaw = blank.dataset.answer || '';
+            const accepted = acceptedRaw.split('|').map(normalize);
+
+            blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+
+            if (!userAnswer) return 'empty';
+
+            if (accepted.includes(userAnswer)) {
+                blank.classList.add('correct');
+                return 'correct';
+            }
+
+            const partialMatch = accepted.some(ans =>
+                userAnswer.includes(ans) || ans.includes(userAnswer)
+            );
+            if (partialMatch) {
+                blank.classList.add('partial');
+                return 'partial';
+            }
+
+            blank.classList.add('incorrect');
+            return 'incorrect';
+        }
+
+        function checkAnswers() {
+            const blanks = document.querySelectorAll('.blank');
+            let correct = 0, partial = 0, total = 0;
+
+            blanks.forEach(blank => {
+                if (blank.value.trim()) {
+                    total++;
+                    const result = checkAnswer(blank);
+                    if (result === 'correct') correct++;
+                    else if (result === 'partial') partial++;
+                }
+            });
+
+            const scoreEl = document.getElementById('scoreDisplay');
+            if (total > 0) {
+                const pct = Math.round((correct / total) * 100);
+                scoreEl.textContent = `Score: ${correct}/${total} (${pct}%)` + (partial > 0 ? ` +${partial} partial` : '');
+                scoreEl.classList.add('visible');
+            } else {
+                scoreEl.classList.remove('visible');
+            }
+
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function showAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                const answers = (blank.dataset.answer || '').split('|');
+                blank.value = answers[0] || '';
+                blank.classList.remove('correct', 'partial', 'incorrect');
+                blank.classList.add('revealed');
+            });
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            pushAllAnswers();
+            refreshDrawerIfOpen();
+        }
+
+        function resetAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => {
+                blank.value = '';
+                blank.classList.remove('correct', 'partial', 'incorrect', 'revealed');
+            });
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.value = '';
+                ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+            });
+            document.querySelectorAll('[id$="-feedback"]').forEach(c => c.innerHTML = '');
+            document.getElementById('scoreDisplay').classList.remove('visible');
+            gradingState.clear();
+        }
+
+        // ==================== SERVER SYNC ====================
+        function handleLiveUpdate(blank) {
+            const questionId = blank.dataset.questionId;
+            if (!questionId) return;
+
+            const now = Date.now();
+            const lastTime = debounceMap.get(questionId) || 0;
+            if (now - lastTime < DEBOUNCE_MS) return;
+            debounceMap.set(questionId, now);
+
+            sendAnswer(blank);
+        }
+
+        async function sendAnswer(blank) {
+            const username = getUsername();
+            if (!username) return;
+
+            const questionId = blank.dataset.questionId;
+            const answer = blank.value.trim();
+
+            try {
+                if (window.railwayClient && window.railwayClient.submitAnswer) {
+                    await window.railwayClient.submitAnswer(username, questionId, answer);
+                } else {
+                    await fetch(`${window.RAILWAY_SERVER_URL}/api/submit-answer`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username,
+                            question_id: questionId,
+                            answer_value: answer,
+                            timestamp: Date.now()
+                        })
+                    });
+                }
+                showSaved(blank);
+                spawnUploadParticle(blank);
+            } catch (err) {
+                console.warn('Failed to sync answer:', err);
+            }
+        }
+
+        // ==================== AGGREGATE DRAWER ====================
+        function injectAggregateButtons() {
+            document.querySelectorAll('.question').forEach(q => {
+                const blanks = q.querySelectorAll('.blank');
+                if (blanks.length > 0 && !q.querySelector('.aggregate-trigger')) {
+                    const btn = document.createElement('button');
+                    btn.className = 'aggregate-trigger';
+                    btn.textContent = '\uD83D\uDCCA Class';
+                    btn.onclick = () => openDrawerForQuestion(q);
+                    q.appendChild(btn);
+                }
+            });
+        }
+
+        function openDrawerForQuestion(questionEl) {
+            currentQuestionBlanks = Array.from(questionEl.querySelectorAll('.blank'));
+            const drawer = document.getElementById('aggregateDrawer');
+            const content = document.getElementById('drawerContent');
+            drawer.classList.add('open');
+            content.innerHTML = '<p>Loading...</p>';
+            loadAggregateData();
+        }
+
+        async function loadAggregateData() {
+            const content = document.getElementById('drawerContent');
+            let html = '';
+            for (const blank of currentQuestionBlanks) {
+                const questionId = blank.dataset.questionId;
+                if (!questionId) continue;
+                try {
+                    const stats = await fetchQuestionStats(questionId);
+                    html += renderBarChart(questionId, stats);
+                } catch (err) {
+                    html += `<p>Error loading ${questionId}</p>`;
+                }
+            }
+            content.innerHTML = html || '<p>No data available.</p>';
+            spawnPeerSnow();
+        }
+
+        async function fetchQuestionStats(questionId) {
+            if (window.railwayClient && window.railwayClient.getStats) {
+                return await window.railwayClient.getStats(questionId);
+            }
+            const res = await fetch(`${window.RAILWAY_SERVER_URL}/api/question-stats/${questionId}`);
+            return await res.json();
+        }
+
+        function renderBarChart(questionId, stats) {
+            const responses = stats.responses || stats.distribution || {};
+            const entries = Object.entries(responses).sort((a, b) => b[1] - a[1]);
+            const maxCount = entries.length > 0 ? Math.max(...entries.map(([, c]) => c)) : 0;
+            if (entries.length === 0) {
+                return `<div class="bar-chart"><strong>${questionId}</strong><p>No responses yet</p></div>`;
+            }
+            let html = `<div class="bar-chart"><strong>${questionId}</strong>`;
+            entries.slice(0, 8).forEach(([answer, count]) => {
+                const widthPct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                html += `
+                    <div class="bar-row">
+                        <span class="bar-label" title="${answer}">${answer}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${widthPct}%"></div>
+                        </div>
+                        <span class="bar-count">${count}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function closeDrawer() {
+            document.getElementById('aggregateDrawer').classList.remove('open');
+            currentQuestionBlanks = [];
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('aggregateDrawer').classList.contains('open')) {
+                closeDrawer();
+            }
+        });
+
+        function refreshDrawerIfOpen() {
+            if (document.getElementById('aggregateDrawer').classList.contains('open') && currentQuestionBlanks.length > 0) {
+                loadAggregateData();
+            }
+        }
+
+        function spawnPeerSnow() {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const snow = document.createElement('span');
+                    snow.textContent = '\u2744';
+                    snow.style.cssText = `
+                        position: fixed;
+                        right: ${20 + Math.random() * 300}px;
+                        top: ${100 + Math.random() * 200}px;
+                        font-size: 1.2em;
+                        color: #90caf9;
+                        pointer-events: none;
+                        animation: snowDrift 1.4s ease-out forwards;
+                    `;
+                    document.body.appendChild(snow);
+                    setTimeout(() => snow.remove(), 1400);
+                }, i * 100);
+            }
+        }
+
+        // ==================== AI GRADING ====================
+        async function gradeAllReflections() {
+            const btn = document.querySelector('.btn-ai');
+            btn.disabled = true;
+            btn.textContent = '\u23F3 Grading...';
+
+            const textareas = ['reflect1', 'reflect2', 'exitTicket'];
+
+            for (const id of textareas) {
+                const textarea = document.getElementById(id);
+                if (!textarea) continue;
+
+                const answer = textarea.value.trim();
+                if (answer.length < 20) {
+                    showFeedback(id, { score: 'I', feedback: 'Please write a more complete response (at least 20 characters).' });
+                    continue;
+                }
+
+                try {
+                    const result = await gradeReflection(id, answer);
+
+                    if (result.score === 'P' && result.missing && result.missing.length === 0) {
+                        result.score = 'E';
+                        result.feedback = 'Nice work — you covered the key ideas.';
+                        result.suggestion = null;
+                    }
+
+                    const matchedCount = (result.matched || []).length;
+                    const missingCount = (result.missing || []).length;
+                    const totalElements = matchedCount + missingCount;
+                    const hitRate = totalElements > 0 ? matchedCount / totalElements : 0;
+
+                    if (result.score === 'P' && hitRate >= 0.3 && missingCount > 0) {
+                        btn.textContent = '\u2728 Polishing...';
+                        try {
+                            const enriched = await fetchEnrichedAnswer(id, answer, result.missing);
+                            if (enriched.score === 'E' && enriched.suggestion) {
+                                result.score = 'E';
+                                gradingState.set(id, { result, originalAnswer: answer, appealCount: 0, history: [] });
+                                renderEnrichedPass(id, enriched);
+                                continue;
+                            }
+                        } catch (err) {
+                            console.warn('Enrichment failed, falling back to P:', err);
+                        }
+                    }
+
+                    gradingState.set(id, { result, originalAnswer: answer, appealCount: 0, history: [] });
+                    showFeedback(id, result);
+                } catch (err) {
+                    console.error('Grading error:', err);
+                    showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
+                }
+            }
+
+            btn.disabled = false;
+            btn.textContent = '\uD83E\uDD16 Grade My Reflections';
+        }
+
+        async function fetchEnrichedAnswer(questionId, studentAnswer, missingElements) {
+            const missingList = missingElements.map(function(m, i) { return (i + 1) + '. ' + m; }).join('\n');
+            const detailWord = missingElements.length === 1 ? 'one detail' : missingElements.length + ' small details';
+            const prompt =
+                'You are helping an AP Statistics student polish their answer. ' +
+                'Their response was strong but missed ' + detailWord + '.\n\n' +
+                '## Student\'s Original Answer\n"' + studentAnswer + '"\n\n' +
+                '## What was missing\n' + missingList + '\n\n' +
+                '## Instructions\n' +
+                '- Keep the student\'s voice, vocabulary, and sentence structure\n' +
+                '- Weave the missing details in so it reads like the student wrote it\n' +
+                '- Do NOT add anything beyond the missing elements listed above\n' +
+                '- Keep it concise (add at most one sentence per missing element)\n' +
+                '- Wrap ONLY the newly added words or phrases in <strong> tags\n\n' +
+                'Respond in JSON format:\n' +
+                '{\n' +
+                '    "score": "E",\n' +
+                '    "feedback": "You nailed the key ideas!",\n' +
+                '    "matched": [],\n' +
+                '    "missing": [],\n' +
+                '    "suggestion": "the rewritten answer with <strong>added details</strong> highlighted"\n' +
+                '}';
+
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'AP Statistics - Statistics for Two Categorical Variables',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_U2L3
+                    },
+                    answers: { answer: studentAnswer },
+                    prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Enrichment request failed');
+            return await response.json();
+        }
+
+        function renderEnrichedPass(questionId, enrichedResult) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add('graded-E');
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+            const block = document.createElement('div');
+            block.className = 'enriched-pass';
+            block.innerHTML =
+                '<div class="enriched-pass-header">\u2726 You nailed the key ideas!</div>' +
+                '<div class="enriched-pass-subtext">Here\'s your answer polished up &mdash; save this for your notes:</div>' +
+                '<div class="enriched-pass-quote">' + (enrichedResult.suggestion || '') + '</div>' +
+                '<div class="enriched-pass-score">Score: E \u2713</div>';
+            container.appendChild(block);
+        }
+
+        async function gradeReflection(questionId, answer) {
+            if (!window.buildReflectionPromptU2L3) {
+                throw new Error('AI grading prompts not loaded');
+            }
+            const prompt = window.buildReflectionPromptU2L3(questionId, answer);
+            const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: {
+                        topic: 'AP Statistics - Statistics for Two Categorical Variables',
+                        questionId,
+                        lessonContext: window.LESSON_CONTEXT_U2L3
+                    },
+                    answers: { answer },
+                    prompt
+                })
+            });
+            if (!response.ok) throw new Error('Grading request failed');
+            return await response.json();
+        }
+
+        function showFeedback(questionId, result) {
+            const textarea = document.getElementById(questionId);
+            if (!textarea) return;
+            textarea.classList.remove('graded-E', 'graded-P', 'graded-I');
+            textarea.classList.add(`graded-${result.score}`);
+            const container = document.getElementById(`${questionId}-feedback`);
+            container.innerHTML = '';
+            const feedback = document.createElement('div');
+            feedback.className = 'ai-feedback';
+            let html = `
+                <div class="ai-feedback-header">
+                    <span class="score-badge score-${result.score}">${result.score === 'E' ? 'Essentially Correct' : result.score === 'P' ? 'Partially Correct' : 'Incorrect'}</span>
+                </div>
+                <div class="ai-feedback-body">${result.feedback || ''}</div>
+            `;
+            if (result.matched && result.matched.length > 0) {
+                html += `<div class="ai-feedback-matched">\u2713 You addressed: ${result.matched.join(', ')}</div>`;
+            }
+            if (result.missing && result.missing.length > 0) {
+                html += `<div class="ai-feedback-missing">\u25CB Missing: ${result.missing.join(', ')}</div>`;
+            }
+            if (result.suggestion) {
+                html += `<div class="ai-feedback-suggestion">\uD83D\uDCA1 ${result.suggestion}</div>`;
+            }
+            feedback.innerHTML = html;
+
+            const state = gradingState.get(questionId);
+            if (state && result.score !== 'E' && state.appealCount < 3) {
+                const appealSection = document.createElement('div');
+                appealSection.className = 'appeal-section';
+                appealSection.innerHTML = `
+                    <button class="appeal-btn" onclick="showAppealForm('${questionId}')">\uD83D\uDCAC Disagree? Appeal</button>
+                    <div class="appeal-form" id="appeal-form-${questionId}">
+                        <p>Explain why your answer deserves a higher score:</p>
+                        <textarea id="appeal-text-${questionId}" placeholder="I believe my answer addresses..."></textarea>
+                        <button class="btn-check" onclick="submitAppeal('${questionId}')">Submit Appeal</button>
+                        <button class="btn-show" onclick="hideAppealForm('${questionId}')">Cancel</button>
+                    </div>
+                    <div class="appeal-count">Appeals used: ${state.appealCount}/3</div>
+                `;
+                feedback.appendChild(appealSection);
+            }
+            container.appendChild(feedback);
+        }
+
+        function showAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.add('visible');
+        }
+
+        function hideAppealForm(questionId) {
+            document.getElementById(`appeal-form-${questionId}`).classList.remove('visible');
+        }
+
+        async function submitAppeal(questionId) {
+            const state = gradingState.get(questionId);
+            if (!state || state.appealCount >= 3) return;
+            const appealText = document.getElementById(`appeal-text-${questionId}`).value.trim();
+            if (appealText.length < 10) {
+                alert('Please provide more detail in your appeal.');
+                return;
+            }
+            const form = document.getElementById(`appeal-form-${questionId}`);
+            const buttons = form.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+            try {
+                const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/appeal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: {
+                            questionId,
+                            topic: 'AP Statistics - Statistics for Two Categorical Variables',
+                            lessonContext: window.LESSON_CONTEXT_U2L3
+                        },
+                        answers: { answer: state.originalAnswer },
+                        appealText,
+                        previousResults: { answer: state.result }
+                    })
+                });
+                const appealResult = await response.json();
+                const previousScore = state.result.score;
+                const upgraded = appealResult.score === 'E' ||
+                    (previousScore === 'I' && appealResult.score === 'P');
+                state.history.push({
+                    appealText, previousScore,
+                    newScore: appealResult.score,
+                    response: appealResult.feedback,
+                    upgraded
+                });
+                state.appealCount++;
+                state.result = appealResult;
+                showFeedback(questionId, appealResult);
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `appeal-result ${upgraded ? 'upgraded' : 'maintained'}`;
+                resultDiv.textContent = upgraded ? '\uD83C\uDF89 Appeal Granted! Score upgraded.' : 'Score maintained. ' + (appealResult.feedback || '');
+                document.getElementById(`${questionId}-feedback`).appendChild(resultDiv);
+            } catch (err) {
+                console.error('Appeal error:', err);
+                alert('Error processing appeal. Please try again.');
+            }
+            buttons.forEach(b => b.disabled = false);
+        }
+
+        function pushAllAnswers() {
+            document.querySelectorAll('.blank').forEach(blank => sendAnswer(blank));
+        }
+
+        function showSaved(blank) {
+            const q = blank.closest('.question');
+            if (!q) return;
+            const indicator = q.querySelector('.save-indicator');
+            if (indicator) {
+                indicator.classList.add('visible');
+                setTimeout(() => indicator.classList.remove('visible'), 1200);
+            }
+        }
+
+        function spawnUploadParticle(blank) {
+            const rect = blank.getBoundingClientRect();
+            const particle = document.createElement('span');
+            particle.className = 'upload-particle';
+            particle.textContent = '\u2191';
+            particle.style.left = (rect.left + rect.width / 2) + 'px';
+            particle.style.top = (rect.top - 4) + 'px';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 900);
+        }
+    </script>
+
+</body>
+</html>
