@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -444,7 +444,7 @@
     <div class="header">
         <span class="header-left">AP Statistics</span>
         <span class="header-center">Unit 1</span>
-        <span class="header-right">Quantitative Data</span>
+        <span class="header-right">Introducing Statistics</span>
     </div>
 
     <h1>Topic 1.7: Topic 1.7</h1>
@@ -469,43 +469,37 @@
     <div class='objective-box'>
     <strong>Learning Objectives:</strong>
     <ul style='margin: 8px 0 0 0; padding-left: 20px;'>
-        <li>Identify summary statistics that describe the center of a quantitative distribution.</li>
-        <li>Find and interpret the mean, median, first quartile, and third quartile.</li>
-        <li>Find and interpret the range, interquartile range, and standard deviation.</li>
-        <li>Use quartiles and the IQR to describe the middle 50% of a distribution.</li>
-        <li>Use two methods to identify possible outliers in a quantitative data set.</li>
-        <li>Distinguish between resistant and nonresistant summary statistics.</li>
-        <li>Choose appropriate measures of center and variability based on the shape of a distribution.</li>
+        <li>Calculate and interpret mean and median as measures of center for quantitative data.</li>
+        <li>Find and interpret Q1, Q3, range, IQR, and standard deviation for a quantitative distribution.</li>
+        <li>Use the 1.5 IQR rule and the 2 standard deviation rule to identify possible outliers.</li>
+        <li>Choose appropriate summary statistics based on skewness, symmetry, and resistance to outliers.</li>
     </ul>
     <strong style='margin-top: 10px; display: block;'>Essential Knowledge:</strong>
     <ul style='margin: 8px 0 0 0; padding-left: 20px;'>
-        <li>The mean is the average of the values in a data set, and the median is the middle value of an ordered data set.</li>
-        <li>If a data set has an even number of values, the median is the average of the two middle values.</li>
-        <li>Q1 is the median of the lower half of the data and Q3 is the median of the upper half, excluding the overall median when the number of values is odd.</li>
-        <li>The range is the maximum minus the minimum and should be reported as a single value.</li>
-        <li>The interquartile range is Q3 minus Q1 and describes the spread of the middle 50% of the data.</li>
-        <li>Standard deviation describes the typical distance of the values from the mean.</li>
-        <li>The square of the standard deviation is the variance.</li>
-        <li>Possible outliers can be checked with the 1.5 IQR rule or by looking for values two or more standard deviations from the mean.</li>
-        <li>The median and IQR are resistant, while the mean, range, and standard deviation are nonresistant.</li>
-        <li>For skewed distributions, the median and IQR are usually best; for symmetric distributions, the mean and standard deviation are usually best.</li>
+        <li>A statistic is a numerical summary of sample data.</li>
+        <li>The mean is the sum of all data values divided by the number of values, and the median is the middle ordered value.</li>
+        <li>Q1 and Q3 are quartiles that mark the middle 50% of the ordered data set.</li>
+        <li>Range, IQR, and standard deviation are measures of variability, and variance is the square of the standard deviation.</li>
+        <li>Mean, range, and standard deviation are nonresistant to outliers, while median and IQR are resistant.</li>
+        <li>For skewed distributions, median and IQR are preferred; for symmetric distributions, mean and standard deviation are preferred.</li>
     </ul>
 </div>
 <div class='vocab-box'>
     <h3>Key Vocabulary</h3>
     <table class='vocab-table'>
-        <tr><td>Summary Statistics</td><td>Numerical measures that describe a distribution.</td></tr>
-        <tr><td>Mean</td><td>The average value, found by adding all values and dividing by the number of values.</td></tr>
+        <tr><td>Statistic</td><td>A numerical summary calculated from sample data.</td></tr>
+        <tr><td>Mean</td><td>The average found by adding all values and dividing by the number of values.</td></tr>
         <tr><td>Median</td><td>The middle value in an ordered data set.</td></tr>
-        <tr><td>First Quartile (Q1)</td><td>The median of the lower half of the ordered data.</td></tr>
-        <tr><td>Third Quartile (Q3)</td><td>The median of the upper half of the ordered data.</td></tr>
-        <tr><td>Range</td><td>The difference between the maximum and minimum values.</td></tr>
-        <tr><td>Interquartile Range (IQR)</td><td>The difference between Q3 and Q1; it measures the spread of the middle 50%.</td></tr>
+        <tr><td>Quartiles</td><td>Values that divide ordered data into sections, including Q1 and Q3.</td></tr>
+        <tr><td>Q1</td><td>The median of the lower half of the ordered data.</td></tr>
+        <tr><td>Q3</td><td>The median of the upper half of the ordered data.</td></tr>
+        <tr><td>Range</td><td>The maximum minus the minimum.</td></tr>
+        <tr><td>IQR</td><td>The interquartile range, found by Q3 minus Q1.</td></tr>
         <tr><td>Standard Deviation</td><td>A measure of the typical distance each value is from the mean.</td></tr>
         <tr><td>Variance</td><td>The square of the standard deviation.</td></tr>
-        <tr><td>Resistant</td><td>Not strongly affected by outliers or skewness.</td></tr>
-        <tr><td>Nonresistant</td><td>Strongly affected by outliers or skewness.</td></tr>
-        <tr><td>Outlier</td><td>A value that is unusually far from the rest of the data.</td></tr>
+        <tr><td>Outlier</td><td>A value that is unusually far from the rest of the distribution.</td></tr>
+        <tr><td>Resistant</td><td>A statistic that is not greatly affected by outliers.</td></tr>
+        <tr><td>Nonresistant</td><td>A statistic that changes a lot when outliers are present or removed.</td></tr>
     </table>
 </div>
 <div class='section'>
@@ -513,254 +507,52 @@
         <h2>Video 1: Summary Statistics for a Quantitative Variable</h2>
         <span class='timestamp'>[0:00 &ndash; 8:04]</span>
     </div>
-
-    <div class='question'>
-        <span class='question-number'>1.</span>
-        <span class='ts'>[0:15 &ndash; 0:28]</span>
-        The primary focus of this video is the <input type='text' class='blank' data-answer='center' style='width:80px;'> and <input type='text' class='blank' data-answer='variability|spread' style='width:150px;'> of a quantitative data set.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>2.</span>
-        <span class='ts'>[1:13 &ndash; 1:39]</span>
-        The <input type='text' class='blank' data-answer='mean|average' style='width:80px;'> is found by adding all the values and dividing by the number of <input type='text' class='blank' data-answer='values' style='width:80px;'>.
-    </div>
-
-    <div class='model-box'>
-        <strong>Center Statistics</strong>
-        <span class='ts'>[1:13 &ndash; 2:31]</span>
-        <ul style='margin: 5px 0; padding-left: 20px;'>
-            <li>Mean: add all values and divide by the number of values.</li>
-            <li>Median: the middle value of an ordered data set.</li>
-            <li>Q1: the median of the lower half of the data.</li>
-            <li>Q3: the median of the upper half of the data.</li>
-        </ul>
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>3.</span>
-        <span class='ts'>[1:43 &ndash; 1:50]</span>
-        The <input type='text' class='blank' data-answer='median' style='width:80px;'> is the value in the <input type='text' class='blank' data-answer='center|middle' style='width:80px;'> of an ordered data set.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>4.</span>
-        <span class='ts'>[2:03]</span>
-        If a data set has an even number of values, the median is the <input type='text' class='blank' data-answer='average|mean' style='width:80px;'> of the two middle values.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>5.</span>
-        <span class='ts'>[2:26 &ndash; 2:31]</span>
-        Q1 is the median of the <input type='text' class='blank' data-answer='first|lower' style='width:80px;'> half of the data, and Q3 is the median of the <input type='text' class='blank' data-answer='second|upper' style='width:80px;'> half.
-    </div>
-
-    <div class='note-box'>
-        <strong>Flint Water Crisis Data</strong>
-        <span class='ts'>[0:37 &ndash; 0:56]</span>
-        City officials measured lead levels in 71 water samples from Flint residents from January to June 2015. The lesson uses this ordered data set to calculate and interpret summary statistics.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>6.</span>
-        <span class='ts'>[2:59 &ndash; 3:06]</span>
-        The total of the 71 Flint lead levels is 519, so the mean is <input type='text' class='blank' data-answer='7.31' style='width:80px;'> parts per billion.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>7.</span>
-        <span class='ts'>[3:32 &ndash; 3:41]</span>
-        With 71 ordered values, the median is the <input type='text' class='blank' data-answer='36th|36' style='width:80px;'> value, which is <input type='text' class='blank' data-answer='3|three' style='width:80px;'> parts per billion.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>8.</span>
-        <span class='ts'>[4:07 &ndash; 4:14]</span>
-        When finding Q1 and Q3, you do not include the <input type='text' class='blank' data-answer='median' style='width:80px;'> position.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>9.</span>
-        <span class='ts'>[4:21 &ndash; 4:49]</span>
-        For the Flint data, Q1 is <input type='text' class='blank' data-answer='2|two' style='width:80px;'> and Q3 is <input type='text' class='blank' data-answer='7|seven' style='width:80px;'>.
-    </div>
-
-    <table class='data-table'>
-        <tr>
-            <th>Statistic</th>
-            <th>Flint Value</th>
-            <th>Interpretation Cue</th>
-        </tr>
-        <tr><td>Mean</td><td>7.31</td><td>Average lead level</td></tr>
-        <tr><td>Median</td><td>3</td><td>Half below, half above</td></tr>
-        <tr><td>Q1</td><td>2</td><td>Middle of lower half</td></tr>
-        <tr><td>Q3</td><td>7</td><td>Middle of upper half</td></tr>
-    </table>
-
-    <div class='model-box'>
-        <strong>Variability Measures</strong>
-        <span class='ts'>[4:49 &ndash; 5:35]</span>
-        <ul style='margin: 5px 0; padding-left: 20px;'>
-            <li>Range = maximum minus minimum.</li>
-            <li>IQR = Q3 minus Q1.</li>
-            <li>Standard deviation = the typical distance of values from the mean.</li>
-        </ul>
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>10.</span>
-        <span class='ts'>[5:03 &ndash; 5:21]</span>
-        The interquartile range is found by subtracting <input type='text' class='blank' data-answer='Q1' style='width:80px;'> from <input type='text' class='blank' data-answer='Q3' style='width:80px;'>.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>11.</span>
-        <span class='ts'>[5:21 &ndash; 5:33]</span>
-        Standard deviation tells us the typical <input type='text' class='blank' data-answer='distance' style='width:80px;'> each value is from the mean.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>12.</span>
-        <span class='ts'>[5:40 &ndash; 5:51]</span>
-        The square of the standard deviation is called the <input type='text' class='blank' data-answer='variance' style='width:80px;'>.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>13.</span>
-        <span class='ts'>[6:03 &ndash; 6:11]</span>
-        For the Flint data, the range is <input type='text' class='blank' data-answer='104' style='width:80px;'>.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>14.</span>
-        <span class='ts'>[6:22 &ndash; 6:30]</span>
-        For the Flint data, the IQR is <input type='text' class='blank' data-answer='5' style='width:80px;'>.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>15.</span>
-        <span class='ts'>[7:03 &ndash; 7:05]</span>
-        In the standard deviation calculation, you divide by <input type='text' class='blank' data-answer='n-1|n - 1' style='width:80px;'> before taking the square root.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>16.</span>
-        <span class='ts'>[7:26 &ndash; 7:39]</span>
-        The standard deviation for the Flint lead levels is about <input type='text' class='blank' data-answer='14.35' style='width:80px;'> parts per billion.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>17.</span>
-        Reflection: Which summary statistics describe center, and which describe variability? Briefly explain what each one tells you.
-        <textarea id='reflect1' rows='4' style='width:100%; margin-top:6px;' placeholder='Write your response here...'></textarea>
-        <div id='reflect1-feedback'></div>
-    </div>
+    <div class='question'><span class='question-number'>1.</span> <span class='ts'>[0:04]</span> In this video, we are talking about summary <input type='text' class='blank' data-answer='statistics|stats' style='width:150px;'> for a quantitative variable.</div>
+    <div class='question'><span class='question-number'>2.</span> <span class='ts'>[0:28]</span> The primary focus is on the <input type='text' class='blank' data-answer='center' style='width:80px;'> and the <input type='text' class='blank' data-answer='variability|spread' style='width:150px;'> of a quantitative data set.</div>
+    <div class='note-box'><strong>Flint Water Crisis Example</strong> <span class='ts'>[0:37 &ndash; 0:56]</span> The lesson returns to the Flint water crisis data and uses lead levels from 71 water samples to practice describing center and variability with summary statistics.</div>
+    <div class='question'><span class='question-number'>3.</span> <span class='ts'>[0:40]</span> City officials measured lead levels in <input type='text' class='blank' data-answer='71' style='width:80px;'> water samples from Flint residents.</div>
+    <div class='question'><span class='question-number'>4.</span> <span class='ts'>[1:13]</span> The <input type='text' class='blank' data-answer='mean|average' style='width:150px;'> is found by adding all the values and dividing by the number of values.</div>
+    <div class='model-box'><strong>Measures of Center</strong> <span class='ts'>[1:13 &ndash; 2:31]</span><ul style='margin: 5px 0; padding-left: 20px;'><li>Mean: add all values and divide by the number of values.</li><li>Median: the middle ordered value.</li><li>Q1: median of the first half of the data.</li><li>Q3: median of the second half of the data.</li></ul></div>
+    <div class='question'><span class='question-number'>5.</span> <span class='ts'>[1:39]</span> In the sample mean formula, x-bar represents the <input type='text' class='blank' data-answer='mean|average' style='width:80px;'> and n represents the number of <input type='text' class='blank' data-answer='values|observations' style='width:150px;'>.</div>
+    <div class='question'><span class='question-number'>6.</span> <span class='ts'>[1:43 &ndash; 2:03]</span> Another common measure of center is the <input type='text' class='blank' data-answer='median' style='width:150px;'>, and with an even number of values you take the <input type='text' class='blank' data-answer='average|mean' style='width:150px;'> of the two middle values.</div>
+    <div class='question'><span class='question-number'>7.</span> <span class='ts'>[2:31]</span> Q1 is the median of the <input type='text' class='blank' data-answer='first half|lower half' style='width:150px;'> of the data, and Q3 is the median of the <input type='text' class='blank' data-answer='second half|upper half' style='width:150px;'>.</div>
+    <div class='question'><span class='question-number'>8.</span> <span class='ts'>[2:59 &ndash; 3:06]</span> For the Flint data, the values add to <input type='text' class='blank' data-answer='519' style='width:80px;'> and the mean is <input type='text' class='blank' data-answer='7.31' style='width:80px;'> parts per billion.</div>
+    <div class='question'><span class='question-number'>9.</span> <span class='ts'>[3:32 &ndash; 3:41]</span> With 71 ordered values, the median is the <input type='text' class='blank' data-answer='36th|36' style='width:80px;'> value, which is <input type='text' class='blank' data-answer='3|three' style='width:80px;'> parts per billion.</div>
+    <div class='question'><span class='question-number'>10.</span> <span class='ts'>[4:21 &ndash; 4:36]</span> For the Flint lead levels, Q1 is <input type='text' class='blank' data-answer='2|two' style='width:80px;'> and Q3 is <input type='text' class='blank' data-answer='7|seven' style='width:80px;'>.</div>
+    <div class='model-box'><strong>Measures of Variability</strong> <span class='ts'>[4:49 &ndash; 5:40]</span><table class='data-table'><tr><th>Statistic</th><th>Meaning</th></tr><tr><td>Range</td><td>Maximum minus minimum</td></tr><tr><td>IQR</td><td>Q3 minus Q1; spread of the middle 50%</td></tr><tr><td>Standard Deviation</td><td>Typical distance from the mean</td></tr><tr><td>Variance</td><td>Square of the standard deviation</td></tr></table></div>
+    <div class='question'><span class='question-number'>11.</span> <span class='ts'>[4:53 &ndash; 5:21]</span> Three measures of variability in the lesson are the <input type='text' class='blank' data-answer='range' style='width:80px;'>, the <input type='text' class='blank' data-answer='interquartile range|iqr' style='width:150px;'>, and the <input type='text' class='blank' data-answer='standard deviation|sd' style='width:150px;'>.</div>
+    <div class='question'><span class='question-number'>12.</span> <span class='ts'>[5:40 &ndash; 7:12]</span> The square of the standard deviation is the <input type='text' class='blank' data-answer='variance' style='width:150px;'>. For the Flint data, the range is <input type='text' class='blank' data-answer='104' style='width:80px;'>, the IQR is <input type='text' class='blank' data-answer='5|five' style='width:80px;'>, and the standard deviation is about <input type='text' class='blank' data-answer='14.35' style='width:80px;'>.</div>
+    <div class='question'><span class='question-number'>13.</span> Reflection: Explain what the mean, median, and IQR tell you about the Flint lead-level data. Use context and include at least one numerical value from the lesson.<textarea id='reflect1' rows='4' style='width:100%; margin-top:6px;' placeholder='Write your response here...'></textarea><div id='reflect1-feedback'></div></div>
 </div>
+
 <div class='section'>
     <div class='section-header'>
-        <h2>Video 2: Summary Statistics, Outliers, and Resistant Measures</h2>
+        <h2>Video 2: Outliers, Resistant Measures, and Choosing Statistics</h2>
         <span class='timestamp'>[0:00 &ndash; 8:30]</span>
     </div>
-
-    <div class='question'>
-        <span class='question-number'>18.</span>
-        <span class='ts'>[0:14 &ndash; 0:28]</span>
-        This video focuses on identifying <input type='text' class='blank' data-answer='outliers|outlier' style='width:80px;'>, deciding which statistics are <input type='text' class='blank' data-answer='resistant' style='width:80px;'>, and choosing the best measures for a distribution.
-    </div>
-
-    <div class='model-box'>
-        <strong>Two Outlier Rules</strong>
-        <span class='ts'>[1:39 &ndash; 3:23]</span>
-        <ul style='margin: 5px 0; padding-left: 20px;'>
-            <li>Method 1: More than 1.5 IQR below Q1 or above Q3.</li>
-            <li>Method 2: Two or more standard deviations below or above the mean.</li>
-        </ul>
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>19.</span>
-        <span class='ts'>[1:39 &ndash; 1:53]</span>
-        By Method 1, an outlier is more than <input type='text' class='blank' data-answer='1.5' style='width:80px;'> IQR below Q1 or above Q3.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>20.</span>
-        <span class='ts'>[2:43 &ndash; 3:02]</span>
-        For the Flint data, any value greater than <input type='text' class='blank' data-answer='14.5' style='width:80px;'> is an outlier by Method 1, giving <input type='text' class='blank' data-answer='8|eight' style='width:80px;'> high outliers.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>21.</span>
-        <span class='ts'>[3:15 &ndash; 3:23]</span>
-        Method 2 labels a value an outlier if it is two or more <input type='text' class='blank' data-answer='standard deviations|sd' style='width:150px;'> from the mean.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>22.</span>
-        <span class='ts'>[4:00 &ndash; 4:12]</span>
-        Using Method 2 on the Flint data, any value above <input type='text' class='blank' data-answer='36.04' style='width:80px;'> is an outlier, so there are <input type='text' class='blank' data-answer='3|three' style='width:80px;'> high outliers.
-    </div>
-
-    <div class='note-box'>
-        <strong>Removing the Largest Outlier</strong>
-        <span class='ts'>[4:23 &ndash; 5:46]</span>
-        Luke removes the largest value, 104, from the Flint data and compares the summary statistics before and after. This helps show which measures are resistant and which are not.
-    </div>
-
-    <table class='data-table'>
-        <tr>
-            <th>Statistic</th>
-            <th>Original Data</th>
-            <th>Without 104</th>
-        </tr>
-        <tr><td>Mean</td><td>7.31</td><td>5.9</td></tr>
-        <tr><td>Median</td><td>3</td><td>3</td></tr>
-        <tr><td>Range</td><td>104</td><td>42</td></tr>
-        <tr><td>IQR</td><td>5</td><td>4</td></tr>
-        <tr><td>Standard Deviation</td><td>14.347</td><td>8.45</td></tr>
-    </table>
-
-    <div class='question'>
-        <span class='question-number'>23.</span>
-        <span class='ts'>[5:02 &ndash; 5:12]</span>
-        When the outlier 104 is removed, the mean drops from 7.31 to <input type='text' class='blank' data-answer='5.9' style='width:80px;'> and the standard deviation drops from 14.347 to <input type='text' class='blank' data-answer='8.45' style='width:80px;'>.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>24.</span>
-        <span class='ts'>[5:40 &ndash; 6:11]</span>
-        The <input type='text' class='blank' data-answer='median' style='width:80px;'> and <input type='text' class='blank' data-answer='IQR' style='width:80px;'> are resistant measures because they changed little when the outlier was removed.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>25.</span>
-        <span class='ts'>[5:59 &ndash; 6:05]</span>
-        The mean, standard deviation, and range are <input type='text' class='blank' data-answer='nonresistant|non-resistant' style='width:150px;'> measures.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>26.</span>
-        <span class='ts'>[6:31 &ndash; 7:15]</span>
-        For a skewed distribution, use the <input type='text' class='blank' data-answer='median' style='width:80px;'> for center and the <input type='text' class='blank' data-answer='IQR' style='width:80px;'> for variability. For a symmetric distribution, use the <input type='text' class='blank' data-answer='mean' style='width:80px;'> and <input type='text' class='blank' data-answer='standard deviation|sd' style='width:150px;'>.
-    </div>
-
-    <div class='question'>
-        <span class='question-number'>27.</span>
-        Reflection: Why are the median and IQR called resistant, and when should you use median and IQR instead of mean and standard deviation?
-        <textarea id='reflect2' rows='4' style='width:100%; margin-top:6px;' placeholder='Write your response here...'></textarea>
-        <div id='reflect2-feedback'></div>
-    </div>
+    <div class='question'><span class='question-number'>14.</span> <span class='ts'>[1:39]</span> Method 1 says a value is an outlier if it is more than <input type='text' class='blank' data-answer='1.5|1.5 times' style='width:80px;'> IQRs below Q1 or above Q3.</div>
+    <div class='question'><span class='question-number'>15.</span> <span class='ts'>[2:49 &ndash; 3:02]</span> For the Flint data, any value greater than <input type='text' class='blank' data-answer='14.5' style='width:80px;'> is an outlier by method 1, and there are <input type='text' class='blank' data-answer='8|eight' style='width:80px;'> such high outliers.</div>
+    <div class='question'><span class='question-number'>16.</span> <span class='ts'>[3:15]</span> Method 2 says a value is an outlier if it is two or more <input type='text' class='blank' data-answer='standard deviations|sd' style='width:150px;'> above or below the mean.</div>
+    <div class='question'><span class='question-number'>17.</span> <span class='ts'>[4:00 &ndash; 4:12]</span> Using method 2, any Flint lead level above <input type='text' class='blank' data-answer='36.04|36.0' style='width:80px;'> is an outlier, so there are <input type='text' class='blank' data-answer='3|three' style='width:80px;'> high outliers by this rule.</div>
+    <div class='note-box'><strong>Removing the Largest Outlier</strong> <span class='ts'>[4:23 &ndash; 5:46]</span> The teacher removes the largest Flint value, 104, and compares the old and new summary statistics to see which measures change the most.</div>
+    <div class='question'><span class='question-number'>18.</span> <span class='ts'>[5:06 &ndash; 5:19]</span> After removing 104, the mean drops to <input type='text' class='blank' data-answer='5.9|5.90' style='width:80px;'> and the standard deviation drops to about <input type='text' class='blank' data-answer='8.45' style='width:80px;'>.</div>
+    <div class='question'><span class='question-number'>19.</span> <span class='ts'>[5:25 &ndash; 5:46]</span> After removing 104, the median stays at <input type='text' class='blank' data-answer='3|three' style='width:80px;'> and the IQR changes only to <input type='text' class='blank' data-answer='4|four' style='width:80px;'>.</div>
+    <div class='model-box'><strong>Resistant vs. Nonresistant</strong> <span class='ts'>[5:59 &ndash; 6:11]</span><ul style='margin: 5px 0; padding-left: 20px;'><li>Nonresistant: mean, range, standard deviation</li><li>Resistant: median, IQR</li><li>Outliers change nonresistant measures much more than resistant measures.</li></ul></div>
+    <div class='question'><span class='question-number'>20.</span> <span class='ts'>[5:59 &ndash; 6:11]</span> The mean, range, and standard deviation are <input type='text' class='blank' data-answer='nonresistant|non-resistant' style='width:150px;'>, while the median and IQR are <input type='text' class='blank' data-answer='resistant' style='width:150px;'>.</div>
+    <div class='question'><span class='question-number'>21.</span> <span class='ts'>[6:58 &ndash; 7:07]</span> For a skewed distribution, the best measures are the <input type='text' class='blank' data-answer='median' style='width:150px;'> for center and the <input type='text' class='blank' data-answer='IQR|interquartile range' style='width:150px;'> for variability. For a symmetric distribution, use the <input type='text' class='blank' data-answer='mean' style='width:150px;'> and the <input type='text' class='blank' data-answer='standard deviation|sd' style='width:150px;'>.</div>
+    <div class='question'><span class='question-number'>22.</span> Reflection: Explain why the median and IQR are better than the mean and standard deviation for the Flint lead-level distribution. Use the ideas of skewness, outliers, and resistant versus nonresistant measures.<textarea id='reflect2' rows='4' style='width:100%; margin-top:6px;' placeholder='Write your response here...'></textarea><div id='reflect2-feedback'></div></div>
 </div>
+
 <div class='section'>
     <div class='section-header'>
         <h2>Exit Ticket</h2>
     </div>
     <div class='exit-ticket'>
-        <p>A teacher recorded the number of minutes 11 students spent studying for a quiz one night: 12, 13, 14, 14, 15, 16, 16, 17, 18, 20, 35.</p>
-        <p><strong>(a)</strong> Find the median, Q1, Q3, and IQR.</p>
-        <p><strong>(b)</strong> Use the 1.5 IQR rule to decide whether 35 minutes is an outlier.</p>
-        <p><strong>(c)</strong> Decide whether mean and standard deviation or median and IQR are better measures for this distribution, and explain why.</p>
-        <p><strong>(d)</strong> Write one complete sentence describing the center and variability in context.</p>
+        <p>A coach recorded the number of minutes 10 students waited for rides after practice.</p>
+        <table class='data-table'><tr><th>Student</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr><tr><td>Minutes Waiting</td><td>3</td><td>4</td><td>4</td><td>5</td><td>5</td><td>5</td><td>6</td><td>6</td><td>7</td><td>22</td></tr></table>
+        <p><strong>(a)</strong> Choose the best measure of center and the best measure of variability for this distribution.</p>
+        <p><strong>(b)</strong> Explain whether 22 minutes should be considered an outlier using one method from the lesson.</p>
+        <p><strong>(c)</strong> State whether your chosen statistics are resistant or nonresistant, and explain why they fit this distribution.</p>
         <textarea id='exitTicket' rows='8' style='width:100%; margin-top:6px;' placeholder='Write your complete response here...'></textarea>
         <div id='exitTicket-feedback'></div>
     </div>
@@ -931,7 +723,6 @@
             pushAllAnswers();
             refreshDrawerIfOpen();
         }
-
         function showAnswers() {
             document.querySelectorAll('.blank').forEach(blank => {
                 const answers = (blank.dataset.answer || '').split('|');
@@ -1166,6 +957,7 @@
             btn.disabled = false;
             btn.textContent = '\uD83E\uDD16 Grade My Reflections';
         }
+
         async function fetchEnrichedAnswer(questionId, studentAnswer, missingElements) {
             const missingList = missingElements.map(function(m, i) { return (i + 1) + '. ' + m; }).join('\n');
             const detailWord = missingElements.length === 1 ? 'one detail' : missingElements.length + ' small details';
@@ -1194,7 +986,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     scenario: {
-                        topic: 'AP Statistics - Summary Statistics for a Quantitative Variable',
+                        topic: 'AP Statistics - Topic 1.7: Topic 1.7',
                         questionId,
                         lessonContext: window.LESSON_CONTEXT_U1L7
                     },
@@ -1223,7 +1015,6 @@
                 '<div class="enriched-pass-score">Score: E \u2713</div>';
             container.appendChild(block);
         }
-
         async function gradeReflection(questionId, answer) {
             if (!window.buildReflectionPromptU1L7) {
                 throw new Error('AI grading prompts not loaded');
@@ -1234,7 +1025,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     scenario: {
-                        topic: 'AP Statistics - Summary Statistics for a Quantitative Variable',
+                        topic: 'AP Statistics - Topic 1.7: Topic 1.7',
                         questionId,
                         lessonContext: window.LESSON_CONTEXT_U1L7
                     },
@@ -1317,7 +1108,7 @@
                     body: JSON.stringify({
                         scenario: {
                             questionId,
-                            topic: 'AP Statistics - Summary Statistics for a Quantitative Variable',
+                            topic: 'AP Statistics - Topic 1.7: Topic 1.7',
                             lessonContext: window.LESSON_CONTEXT_U1L7
                         },
                         answers: { answer: state.originalAnswer },
@@ -1377,8 +1168,6 @@
 
 </body>
 </html>
-
-
 
 
 
