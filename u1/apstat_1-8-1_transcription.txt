@@ -1,0 +1,197 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 8
+
+[00:03] Hi, this is Luke Wilcox, AP statistics
+[00:05] teacher from East Kentwood High School.
+[00:08] And in this video, we're going to talk
+[00:09] about graphical representations of
+[00:12] summary statistics.
+[00:15] So, let's start with a list of what we
+[00:16] will learn. Two questions that we want
+[00:18] to answer with this video. Number one,
+[00:21] what is the five number summary and how
+[00:24] do we use it to make a box plot? And
+[00:27] then number two, how does the shape of
+[00:30] the graph influence the relative
+[00:32] relationship of the mean and the median?
+[00:36] So we're going to go with a very classic
+[00:39] example of the Flint water crisis, which
+[00:41] you should be familiar with at this
+[00:43] point. Recall that it says that city
+[00:45] officials measured lead levels in 71
+[00:48] water samples from Flint residents in
+[00:50] January to June 2015. Here are the data.
+[00:54] And so we have all 71 of the water
+[00:57] samples there. So what we're going to
+[00:59] try and do here is to find the five
+[01:01] number summary for this data and then
+[01:03] use that five number summary in order to
+[01:05] make a box plot.
+[01:08] So let's start with the list of data
+[01:10] here. And when you're making a box plot,
+[01:13] the first thing that you want to do is
+[01:14] to set up your x-axis with the variable
+[01:17] that you're measuring and to set up a
+[01:19] scale that will accommodate all the
+[01:21] values that you have. So, we know we
+[01:22] need to go from 0 to 104.
+[01:25] Now, let's talk about how we find the
+[01:27] five number summary. The first number
+[01:30] and maybe the easiest one to find is the
+[01:33] minimum or just the lowest value. And
+[01:35] you'll see that here is zero. And so,
+[01:37] what I'm going to do is I'm going to put
+[01:39] a little arrow on the x-axis here at
+[01:41] zero to represent the minimum. The next
+[01:45] easiest value to find is the one on the
+[01:46] other end, the maximum value, which we
+[01:49] know is 104. And so I'm going to go
+[01:52] ahead and put a little arrow here at
+[01:54] 104.
+[01:56] The next value to find is the middle
+[01:59] value or the median which we did in a
+[02:02] previous video. And we know that that
+[02:04] value is three. And so you can see that
+[02:07] represented with the red arrow at three.
+[02:11] And now that we have our data split in
+[02:13] two halves, we're going to find the
+[02:15] middle of the first half of the data
+[02:17] which we call the Q1 or the first
+[02:19] quartile. And in a previous video, we
+[02:21] determined that that value was two. So,
+[02:24] let me go ahead and put that on the x-
+[02:25] axis as a yellow arrow there. And
+[02:28] then we need the median of the right
+[02:30] hand side of the data, which we call Q3.
+[02:34] And in a previous video, we calculated
+[02:36] as seven. And so, I'm going to go ahead
+[02:38] and put a little arrow at seven there.
+[02:42] So, this gives us the five number
+[02:44] summary. The five number summary is the
+[02:47] minimum, the Q1, the median, the Q3, and
+[02:51] the maximum value. Now, the other thing
+[02:54] that we need to know before we make our
+[02:56] box plot is if we have any outliers. And
+[02:58] for this one, we're going to use method
+[03:00] number one, the one and a half IQR
+[03:02] method. And in a previous video, we
+[03:04] determined that there were eight
+[03:06] outliers here. And so, you're going to
+[03:08] see that very clearly when I show you
+[03:10] the box plot. So let's take a look at
+[03:13] what the box plot should look like for
+[03:15] this set of data. Here it is. And right
+[03:18] away you're going to notice that the
+[03:20] eight values for the outliers are just
+[03:23] represented as dots or sometimes as an
+[03:25] asterisk. But let's talk about how we
+[03:28] made this part of the box plot. So the
+[03:30] box or the blue part here has a lower
+[03:34] boundary of Q1 and an upper boundary of
+[03:37] Q3. And then you'll also notice that the
+[03:39] median is noted within that blue box.
+[03:42] And then it has whiskers moving in each
+[03:45] direction, sometimes called a box and
+[03:46] whisker plot. And you'll notice that the
+[03:48] left whisker goes to the minimum value
+[03:51] of zero. Now, because we had outliers,
+[03:54] the right whisker is not going to go all
+[03:56] the way to the maximum like it normally
+[03:58] would. It is going to go to the largest
+[04:00] value that is not considered an outlier.
+[04:04] And so that would be the value of 13,
+[04:07] right? that is the largest value that is
+[04:09] not considered an outlier. That's where
+[04:10] our right whisker would extend out
+[04:13] to. Now the excellent thing about the
+[04:16] box plot is that it splits our data into
+[04:19] four different quartiles. So the
+[04:22] first quartile goes from the minimum to
+[04:25] Q1. And so we know 25% of the data is
+[04:28] here. The second quartile goes from Q1
+[04:32] to the median. And that tells us that
+[04:35] 25% of the data is here. And then we go
+[04:37] from the median to Q3. 25% of the data
+[04:40] is here. And then Q3 all the way to the
+[04:43] maximum, 25% of our data is here.
+[04:48] So let's talk about the advantages and
+[04:51] disadvantages of the box plot. For
+[04:54] advantages, it very quickly shows you
+[04:57] the five number summary and whether
+[04:59] or not you have outliers just visually
+[05:02] by looking at the box plot.
+[05:04] The second advantage is that it splits
+[05:06] the data into quartiles which we talked
+[05:08] about already. 25% 25% 25% and 25%.
+[05:14] And now the disadvantage of the box plot
+[05:17] is that it does not show every
+[05:19] individual value much like the
+[05:21] histogram. The individual values are
+[05:24] being hidden within this. Now we know
+[05:26] there's 25% of the values here but we
+[05:28] don't know exactly what each one of
+[05:30] those values is. And then the second
+[05:32] disadvantage is that a box plot can hide
+[05:36] certain features of the shape of a
+[05:38] distribution. While we might be able to
+[05:41] look at this box plot and know that it
+[05:43] suggests that we're going to be
+[05:45] skewed right here, we still don't
+[05:48] know exactly the shape of the
+[05:50] distribution because we don't know how
+[05:51] the values are distributed within each
+[05:54] one of those quartiles. So there may be
+[05:56] clusters and gaps within this data here
+[05:58] that we just can't see within the box
+[06:01] plot.
+[06:03] So let's take a look at the measures of
+[06:05] center for the data and see what we
+[06:08] notice here. So in terms of measures of
+[06:11] center, we're talking about mean and
+[06:13] median. And very clearly you're going to
+[06:15] notice here that the mean of 7.31 is
+[06:19] much much bigger than the median of
+[06:22] three. And I think we know why from a
+[06:24] previous video where we found that the
+[06:26] mean is non-resistant. In other words,
+[06:29] all of these outliers here are drawing
+[06:31] that mean up to a larger value. Whereas
+[06:34] the median is resistant, it just hangs
+[06:36] out down here at three. And so, as a
+[06:40] general rule, if you have a skewed right
+[06:42] distribution like this one with these
+[06:45] outliers pulling the mean up, you're
+[06:46] going to find that the mean is greater
+[06:48] than the median.
+[06:50] And it follows that a skewed left
+[06:53] distribution has some potential outliers
+[06:56] on the left which is going to bring the
+[06:57] mean down and that would be lower
+[07:00] than the median. Now a symmetric
+[07:02] distribution you should notice that the
+[07:04] mean and the median are very similar.
+[07:07] So what should we take away from this
+[07:09] video? Let's go back to the questions
+[07:11] from the beginning. Question number one,
+[07:14] what is the five number summary and how
+[07:16] do we use it to make a box plot? Well,
+[07:19] we now know the five number summary is
+[07:20] the minimum, the Q1, the median, the Q3,
+[07:24] and the maximum. And we know that we can
+[07:26] then use that five number summary in
+[07:29] order to split the data into quartiles
+[07:31] and represent that graphically with a
+[07:33] box plot.
+[07:35] Question number two, how does the shape
+[07:37] of the graph influence the relative
+[07:39] relationship of the mean and median?
+[07:42] Well, we found here that for skewed
+[07:43] right distributions that mean is going
+[07:45] to be greater than the median. For left
+[07:49] skewed distributions, that mean less
+[07:51] than the median. And for symmetric
+[07:54] distributions, the mean should be equal
+[07:56] to the median.
+[07:59] All right, this is Luke Wilcox signing
+[08:01] off. Thank you all for watching and I
+[08:03] hope to see you in the next video.

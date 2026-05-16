@@ -1,0 +1,16 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 8
+
+The following list describes the visuals and slide changes throughout the video:
+
+[00:00] — Graphical Representations of Summary Statistics: Title slide introducing the video topic and the speaker.
+[00:15] — What Will We Learn?: A slide outlining two main learning objectives: defining the five-number summary and box plots, and understanding how distribution shape affects the relationship between mean and median.
+[00:36] — Flint Water Crisis Data: A slide displaying lead level measurements from 71 water samples as a raw data list.
+[01:08] — Building a Box Plot (Minimum and Maximum): An x-axis representing lead levels is shown, with the speaker identifying the minimum value (0) and maximum value (104) from the data.
+[01:56] — Identifying the Median and Quartiles: The slide updates with arrows marking the median (3), Q1 (2), and Q3 (7) along the x-axis.
+[02:42] — The Five-Number Summary: A summary list is shown: Minimum (0), Q1 (2), Median (3), Q3 (7), and Maximum (104).
+[03:13] — Box Plot of Lead Levels: The completed box plot is displayed, showing outliers as individual dots and the "box and whisker" structure based on the five-number summary.
+[04:14] — Box Plot Quartiles: The box plot is annotated to show how it splits the data into four equal sections, each containing 25% of the data.
+[04:48] — Advantages and Disadvantages of Box Plots: A list comparing the benefits (visualizing five-number summary and outliers) versus drawbacks (hiding individual values and specific distribution features).
+[06:03] — Mean vs. Median: The box plot is shown again with both the median (3) and the mean (7.31) marked to illustrate how outliers pull the non-resistant mean higher than the resistant median.
+[07:07] — What Should You Take Away?: A final summary slide reviewing the definitions of the five-number summary and the relationship between distribution shape (skewed right, skewed left, or symmetric) and the mean and median.
