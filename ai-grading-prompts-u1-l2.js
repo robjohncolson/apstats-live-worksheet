@@ -3,111 +3,108 @@
  * Topic 1.2: The Language of Variation: Variables
  *
  * Learning Objectives:
- *   Identify the individuals in a data set
- *   Identify the variables in a data set and describe them in context
- *   Recognize when a column is an identifier rather than a variable
+ *   Identify the individuals and variables in a data set
+ *   Recognize that a variable changes from one individual to another
  *   Classify variables as categorical or quantitative
- *   Explain why some number-looking variables are categorical
- *   Describe how grouping a quantitative variable can create a categorical variable
+ *   Explain why some number-valued fields are still categorical
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U1L2 = `
 VIDEO 1 - The Language of Variation: Variables (~8:24):
-- The lesson is Topic 1.2, the language of variation: variables.
-- The two main goals are to identify the individuals and variables in a data set and to classify variables as categorical or quantitative.
+- The video introduces two main goals: identifying the individuals and variables in a data set, and classifying variables as categorical or quantitative.
 - The main example is a spreadsheet of home prices in Charleston, South Carolina.
-- The skill focus is describing data presented numerically or graphically, and the Charleston example is presented numerically in a table.
-- Individuals are the people, animals, or objects described by the data set.
-- In the Charleston spreadsheet, the individuals are the properties for sale, shown in the rows.
+- The skill practiced is describing data presented numerically or graphically; in this example, the data are presented numerically.
+- Individuals in a data set can be people, animals, or objects.
+- In the Charleston spreadsheet, the individuals are the properties for sale, and they are shown in the rows.
+- Variables are shown in the columns of the table.
 - A variable is a characteristic that changes or varies from one individual to another.
-- In a spreadsheet, variables are shown in the columns.
 - The leftmost ID column is an identifier, not a variable.
-- Variables in the housing data include type of property, sales price, year built, number of bedrooms, whether or not it has a pool, distance to the beach in miles, parking location, and zip code.
-- The lesson warns students not to copy awkward column headings verbatim; for example, instead of saying "pool?" they should say whether or not the property has a pool.
-- A categorical variable takes values that are category names or group labels.
-- Categorical variables in the housing data include type of property, whether or not it has a pool, parking location, and zip code.
-- Zip code looks numerical, but it is categorical because the numbers represent locations.
-- A quantitative variable takes numerical values for a measured or counted quantity.
-- A quick clue that a variable is quantitative is that it makes sense to find an average of the values.
-- Quantitative variables in the housing data include price, year built, number of bedrooms, and distance to the beach.
-- When a variable is measured, the units of measurement should be stated.
-- Researchers can turn a quantitative variable into a categorical variable by grouping values together.
-- The example groups distance to the beach into categories such as close, nearby, and far.
-- In the practice survey of 30 AP Statistics students, the number of students in the class is not a variable; it is a constant.
-- In that survey, age is quantitative, birth month is categorical, grade level is categorical even though it uses numbers, and number of people in the household is quantitative because it is a count.
-- The lesson closes by emphasizing that individuals are the cases described by the data and that variables either use labels (categorical) or measured or counted numbers (quantitative).
+- Variables in the Charleston data set include type of property, sales price, year built, number of bedrooms, whether or not the property has a pool, distance to the beach in miles, parking location, and zip code.
+- Students are warned not to repeat awkward column labels verbatim. For example, instead of saying "pool?" they should say whether or not the property has a pool.
+- A categorical variable takes on values that are category names or group labels.
+- Categorical variables in the example include type of property, whether or not it has a pool, parking location, and zip code.
+- Zip code is categorical even though it uses numbers, because the numbers represent a location.
+- A quantitative variable takes on numerical values for a measured or counted quantity.
+- One clue that a variable is quantitative is that it makes sense to find an average of its values.
+- Quantitative variables in the example include price, year built, number of bedrooms, and distance to the beach in miles.
+- When a variable measures something, the units should be stated.
+- Not all numerical-looking variables are quantitative.
+- A quantitative variable can be turned into a categorical variable by grouping values, such as labeling beach distance as close, nearby, or far.
+- The practice survey of 30 AP Statistics students includes variables such as age, birth month, reaction time, height, whether the student can roll their tongue, and number of people in the household.
+- The number of students in the class is not a variable because it is a constant equal to 30.
+- In the survey, age is quantitative, birth month is categorical, grade level is categorical even if coded with numbers, and number of people in the household is quantitative because it is a count.
+- The video closes by reviewing that individuals are the people, animals, or objects described by the data, while variables are characteristics that vary from one individual to another.
+- It also reviews that categorical variables use category names or labels, while quantitative variables use numerical values for measured or counted quantities.
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U1L2 = {
     reflect1: {
-        questionText: 'Why is zip code a categorical variable even though it is written with numbers?',
+        questionText: 'Using the Charleston spreadsheet, explain the difference between an individual and a variable.',
         expectedElements: [
-            { id: 'location-label', description: 'Explains that zip codes are labels for locations or groups, not amounts', required: true },
-            { id: 'not-measured-or-counted', description: 'Explains that zip code is not a measured or counted quantity', required: true },
-            { id: 'average-not-meaningful', description: 'Explains that doing arithmetic such as finding an average of zip codes does not make sense in context', required: true },
-            { id: 'numbers-can-still-be-categorical', description: 'May mention that not every variable written with numbers is quantitative', required: false }
+            { id: 'individuals-are-properties', description: 'Identifies the individuals as the properties or homes for sale in Charleston', required: true },
+            { id: 'variable-definition', description: 'Explains that a variable is a characteristic recorded for each individual that can change from one property to another', required: true },
+            { id: 'gives-example-variable', description: 'Gives at least one example of a variable from the Charleston data set, such as price, year built, pool, or zip code', required: true },
+            { id: 'rows-vs-columns', description: 'May note that individuals appear in rows while variables appear in columns', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that zip codes are location labels, not measured or counted amounts, and that arithmetic like averaging does not make sense for them.',
-            P: 'Response shows some understanding that zip code is categorical, but misses one key idea such as the label role, the lack of measurement or count, or why arithmetic is not meaningful.',
-            I: 'Response treats zip code as a quantity or does not correctly explain why it is categorical.'
+            E: 'Response clearly distinguishes individuals from variables in the Charleston example and includes at least one correct variable in context.',
+            P: 'Response shows partial understanding of individuals and variables but does not clearly explain one of them or does not use the Charleston example well.',
+            I: 'Response does not correctly distinguish an individual from a variable.'
         },
         commonMistakes: [
-            'Saying zip code is quantitative just because it uses digits',
-            'Ignoring that the numbers stand for locations',
-            'Failing to explain why it is not measured or counted',
-            'Using the idea of numbers without addressing meaning in context'
+            'Calling the houses variables instead of individuals',
+            'Naming a column heading without explaining what a variable is',
+            'Giving an identifier such as ID as an example of a variable',
+            'Ignoring the Charleston context entirely'
         ],
-        contextFromVideo: 'The video uses zip code as the main reminder that a variable can look numerical but still be categorical because the values are labels for location.'
+        contextFromVideo: 'In the video, the individuals are the Charleston properties for sale, and the variables are characteristics such as sales price, year built, whether the property has a pool, and zip code.'
     },
 
     reflect2: {
-        questionText: 'How does grouping a quantitative variable like distance to the beach into categories change the way the variable is described?',
+        questionText: 'Why are zip code and grade level considered categorical variables even though they can be written with numbers?',
         expectedElements: [
-            { id: 'grouping-intervals', description: 'Explains that numerical values are grouped into labeled ranges such as close, nearby, and far', required: true },
-            { id: 'becomes-categorical', description: 'Explains that once the labels are used, the grouped version is categorical rather than quantitative', required: true },
-            { id: 'reason-for-grouping', description: 'Explains that grouping can make the data easier to summarize, compare, or describe', required: true },
-            { id: 'loss-of-detail', description: 'May mention that grouping can reduce detail from the original numerical values', required: false }
+            { id: 'numbers-as-labels', description: 'Explains that the numbers act as labels or categories rather than measurements or counts', required: true },
+            { id: 'zip-code-location', description: 'Explains that zip code represents a location or category of place', required: true },
+            { id: 'grade-level-categories', description: 'Explains that grade level really stands for labels such as freshman, sophomore, junior, or senior', required: true },
+            { id: 'not-average', description: 'May mention that taking an average would not be meaningful for these values', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains how the numerical values are turned into labeled groups, states that the grouped variable becomes categorical, and gives a sensible reason for grouping.',
-            P: 'Response identifies part of the grouping idea but misses either the change in variable type or the purpose of grouping.',
-            I: 'Response does not correctly explain what grouping does to the variable or how the description changes.'
+            E: 'Response clearly explains that zip code and grade level are labels or categories, not measured or counted quantities, and correctly interprets both examples.',
+            P: 'Response correctly explains one example or gives the general idea of labels versus measurements, but not fully for both zip code and grade level.',
+            I: 'Response treats zip code or grade level as quantitative without explaining the categorical reasoning.'
         },
         commonMistakes: [
-            'Saying the variable stays quantitative after replacing numbers with labels',
-            'Giving examples of groups without explaining the change in type',
-            'Ignoring why a researcher might want grouped categories',
-            'Confusing grouping with changing the individuals in the study'
+            'Assuming that any variable written with numbers must be quantitative',
+            'Explaining zip code as a count or measurement',
+            'Ignoring the grade-level example',
+            'Failing to distinguish labels from measured or counted quantities'
         ],
-        contextFromVideo: 'The lesson shows distance to the beach changing from exact miles to categories like close, nearby, and far, which turns a quantitative variable into a categorical one.'
+        contextFromVideo: 'The video explicitly says that zip code is categorical because the numbers represent location, and grade level is categorical because the values really stand for labels like freshman, sophomore, junior, and senior.'
     },
 
     exitTicket: {
-        questionText: 'A school counselor creates a spreadsheet about 40 students with Student ID, grade level, commute time in minutes, preferred lunch period, and number of clubs joined. The counselor later groups commute time as short, medium, or long. Identify the individuals and the identifier, classify the variables, explain why grade level is categorical, and explain how grouping commute time changes the variable and why a researcher might do that.',
+        questionText: 'A school keeps a spreadsheet for 25 students who play a spring sport. The columns are student ID, sport played, resting heart rate in beats per minute, and number of practices missed this month. Identify the individuals, name two variables in context, classify sport played and resting heart rate, and explain why student ID is not a variable for this lesson.',
         expectedElements: [
-            { id: 'individuals-and-identifier', description: 'Identifies the individuals as the students and Student ID as the identifier rather than a variable', required: true },
-            { id: 'classifications', description: 'Correctly classifies grade level as categorical, commute time in minutes as quantitative, preferred lunch period as categorical, and number of clubs as quantitative', required: true },
-            { id: 'grade-level-reason', description: 'Explains that grade level is categorical because the numbers act as labels for categories rather than measured or counted amounts', required: true },
-            { id: 'grouped-commute-type', description: 'Explains that grouping commute time into short, medium, and long turns it into a categorical variable', required: true },
-            { id: 'reason-for-grouping', description: 'Explains that a researcher might group commute time to simplify summaries, comparisons, or communication of patterns', required: true },
-            { id: 'units-or-count-language', description: 'May mention that commute time is measured in minutes and number of clubs is a count', required: false }
+            { id: 'individuals', description: 'Identifies the individuals as the 25 students who play a spring sport', required: true },
+            { id: 'two-variables', description: 'Names two actual variables from the spreadsheet in context, such as sport played, resting heart rate, or number of practices missed', required: true },
+            { id: 'sport-played-categorical', description: 'Classifies sport played as categorical because it uses category names or labels', required: true },
+            { id: 'heart-rate-quantitative', description: 'Classifies resting heart rate as quantitative because it is a numerical measured quantity in beats per minute', required: true },
+            { id: 'id-not-variable', description: 'Explains that student ID is an identifier used to label each student, not a characteristic that varies in the lesson sense', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the students and Student ID, classifies all listed variables, explains why grade level is categorical, and explains that grouped commute time becomes categorical for easier summary or comparison.',
-            P: 'Response gets most major parts correct but misses or confuses one important piece, such as the identifier, one classification, the reason grade level is categorical, or the effect of grouping commute time.',
-            I: 'Response has major classification errors or does not show understanding of identifiers, categorical versus quantitative variables, or the effect of grouping.'
+            E: 'Response correctly identifies the individuals, names variables in context, classifies sport played and resting heart rate correctly, and explains why student ID is only an identifier.',
+            P: 'Response includes several correct ideas but misses one major part, such as explaining why student ID is not a variable or misclassifying one variable type.',
+            I: 'Response omits multiple required parts or shows weak understanding of individuals, variables, and variable type.'
         },
         commonMistakes: [
-            'Treating Student ID as a variable instead of an identifier',
-            'Calling grade level quantitative because it uses numbers',
-            'Calling preferred lunch period quantitative',
-            'Forgetting that number of clubs is a count and therefore quantitative',
-            'Failing to explain that grouped commute time becomes categorical'
+            'Calling student ID a variable just because it is listed in a column',
+            'Treating sport played as quantitative',
+            'Failing to state that resting heart rate is measured in beats per minute',
+            'Not identifying the students as the individuals'
         ],
-        contextFromVideo: 'The lesson repeatedly distinguishes identifiers from variables, shows that number-looking labels such as grade level can be categorical, and explains that grouping a measured quantity can create a categorical variable.'
+        contextFromVideo: 'The lesson emphasizes that individuals are the people, animals, or objects described by the data, that variables are characteristics that vary, that categorical variables use labels, that quantitative variables measure or count, and that identifiers such as ID are not variables.'
     }
 };
 
@@ -126,7 +123,7 @@ window.buildReflectionPromptU1L2 = function(questionId, studentAnswer) {
         .map((e, i) => `${i + 1}. ${e.description}`)
         .join('\n');
 
-    return `You are grading an AP Statistics student's response about Topic 1.2.
+    return `You are grading an AP Statistics student's response about Topic 1.2: The Language of Variation: Variables.
 
 ## Question
 ${rubric.questionText}
@@ -166,7 +163,3 @@ Grade the student's response. Return JSON:
 window.getRubricU1L2 = function(questionId) {
     return window.RUBRICS_U1L2[questionId] || null;
 };
-
-
-
-
