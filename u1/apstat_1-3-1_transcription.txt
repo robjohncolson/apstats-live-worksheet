@@ -1,0 +1,192 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 3
+
+[00:00] Welcome back AP Stat students. I'm Mr.
+[00:02] Starns, longtime AP Statistics teacher,
+[00:06] most recently at the Lawrenceville
+[00:07] School in New Jersey. This is topic 1.3,
+[00:11] representing a categorical variable with
+[00:13] tables.
+[00:16] What will you learn in this video?
+[00:19] Well, first, how can you represent
+[00:21] categorical data in tabular form?
+[00:25] And second, how do these tabular
+[00:28] representations help us describe the
+[00:30] categorical data?
+[00:33] As always, let's look at an example.
+[00:37] An online survey asked, which of the
+[00:40] following superpowers would you most
+[00:42] like to have? Invisibility,
+[00:45] telepathy, that's the ability to read
+[00:47] minds, freeze time, super strength, or
+[00:51] fly? Think about your own answer. Here
+[00:55] are data from a random sample of 50 high
+[00:57] school students who completed the
+[00:59] survey. And you can see that all five
+[01:03] values of the categorical variable are
+[01:05] present, some more than others.
+[01:09] Let's review the structure of the data
+[01:12] set. The individuals are the 50 high
+[01:14] school students who completed this
+[01:16] online survey.
+[01:18] The variable here is superpower
+[01:20] preference.
+[01:22] What type of variable is that? Well, we
+[01:25] can see the values are category names or
+[01:27] labels. So, it's a categorical variable.
+[01:31] And the big question for us is how can
+[01:33] we represent the distribution of this
+[01:35] categorical variable?
+[01:39] Well, one way is with frequencies.
+[01:43] A frequency table gives us the number of
+[01:46] individuals, sometimes called cases, in
+[01:49] each category.
+[01:50] So, what we're going to do is we're
+[01:52] going to look up at the raw data and
+[01:54] we're going to count how many flies we
+[01:56] see. 1 2 3 4 5 6 7 8 9. And then we're
+[02:01] going to record that in the frequency
+[02:02] table. And we'll continue likewise for
+[02:05] the other categories. Freeze time,
+[02:07] invisibility,
+[02:09] super strength, only three, and
+[02:12] telepathy. Oo, a lot of telepathy.
+[02:15] So, a new skill that we're working on is
+[02:18] constructing numerical or graphical
+[02:21] representations of distributions. In
+[02:23] this video, we're going to be doing
+[02:24] numerical representations in the form of
+[02:26] tables.
+[02:29] Another way we can represent categorical
+[02:31] data is with relative frequencies.
+[02:34] A relative frequency table will give the
+[02:36] proportion or percent of individuals or
+[02:39] cases in each category. So we're
+[02:42] basically going to convert the numbers
+[02:44] in the frequency table at the left into
+[02:47] proportions or percentages.
+[02:50] How do we do that? We divide by the
+[02:52] total number of students who completed
+[02:55] the survey. That was 50. So for fly we
+[02:58] have 9 / 50 which is .18 or 18%. And we
+[03:02] do likewise for each of the other
+[03:04] categories.
+[03:10] Our learning objective is to represent
+[03:12] categorical data using frequency or
+[03:15] relative frequency tables. Now, we need
+[03:18] to think about how we're going to
+[03:19] describe categorical data represented in
+[03:22] these frequency or relative frequency
+[03:24] tables.
+[03:26] Let's try this question. Which of the
+[03:29] following statements about this data set
+[03:31] is true?
+[03:33] Let's try A. A majority of students
+[03:35] chose telepathy as their superpower
+[03:38] preference.
+[03:39] Well, we can see telepathy was chosen by
+[03:41] 32% of the students, and that's not a
+[03:44] majority. A majority is at least 50%.
+[03:47] So, A is not true. How about B? Almost
+[03:50] three times as many students chose super
+[03:53] strength as fly for their superpower
+[03:55] preference.
+[03:57] No, about three times as many chose fly
+[04:00] as super strength. So, that one's
+[04:02] backwards. That's not true. Maybe it's
+[04:05] C. Nearly half of the students picked
+[04:07] either fly or invisibility as their
+[04:10] preferred superpower. Well, let's see.
+[04:12] Fly plus invisibility would be 32%.
+[04:15] That's not nearly half. So, it's not C.
+[04:19] How about D? Exactly 50% of students
+[04:22] chose either fly or telepathy as their
+[04:24] preferred superpower. Fly is 18%.
+[04:28] Telepathy is 32%. You add those
+[04:30] together, you get 50%. Looks like it's
+[04:33] D. Let's take a look at E anyway.
+[04:35] Invisibility is one of the more popular
+[04:37] choices of preferred superpower.
+[04:40] Well, whether you look at the
+[04:42] frequencies or the relative frequencies,
+[04:44] invisibility is second to last. So, it's
+[04:47] not E. So, there's our answer D.
+[04:51] You can see how you might use these
+[04:54] tabular presentations to describe
+[04:56] categorical data.
+[04:59] And our skill is one that we had before
+[05:02] describing data presented numerically or
+[05:04] graphically. In this case, numerically
+[05:07] in a table. So, let's let you practice
+[05:09] here. Here's a new scenario. The annual
+[05:12] Monitoring the Future study surveys
+[05:15] random samples of US 8th, 10th, and 12th
+[05:18] grade students.
+[05:19] One question on the 2018 survey asked,
+[05:22] "How much do you think people risk
+[05:24] harming themselves physically or in
+[05:26] other ways if they vape an e-liquid with
+[05:28] nicotine occasionally?" The frequency
+[05:31] table summarizes students responses.
+[05:35] Which of the following statements is not
+[05:37] supported by the table?
+[05:40] I'll read them. A, over one-third of
+[05:43] students responded slight risk.
+[05:46] B. More than twice as many students
+[05:48] responded slight risk as great risk.
+[05:52] C. A majority of students said that
+[05:53] there was no risk or slight risk. D, over
+[05:57] 10% of students responded can't say drug
+[05:59] unfamiliar. Or E, the proportion of
+[06:01] students who responded no risk is about
+[06:04] 22.
+[06:05] If you need more time to figure it out,
+[06:07] go ahead and pause the video. No,
+[06:09] really, pause the video and I'll answer
+[06:11] it in a second.
+[06:14] All right, I'm back.
+[06:16] One thing you might do is go ahead and
+[06:19] total the frequencies in the table. It's
+[06:21] 2252.
+[06:24] Then you can look at each of the options
+[06:25] with that total in mind. So in part A,
+[06:29] 782 out of 2252
+[06:32] chose slight risk, which is 34.7%. That is
+[06:36] over a third.
+[06:38] In B, 2 * 377
+[06:42] is 754
+[06:45] and slight risk is 782.
+[06:48] So more than twice as many students did
+[06:50] respond slight risk as great risk. How
+[06:53] about C?
+[06:55] Well, if you add those two together, you
+[06:57] get 1,283,
+[06:59] which is more than half of 2252.
+[07:02] So, that one's okay. How about D? 10% of
+[07:05] 2252 is 225.2,
+[07:08] but only 191 said can't say drug
+[07:11] unfamiliar. So, that statement is not
+[07:13] true.
+[07:15] and E, the proportion of students who
+[07:17] responded no risk 501 out of 2252 is
+[07:21] 22.2%.
+[07:23] So E is true. Therefore, the correct
+[07:25] answer is D. That's the one not
+[07:27] supported by the table. The actual
+[07:29] percentage is 191 out of 2252
+[07:32] for 8.5%.
+[07:35] So what should you take away from this
+[07:37] video? First, how can you represent
+[07:40] categorical data in tabular form? With a
+[07:43] frequency table or a relative frequency
+[07:45] table?
+[07:47] How do those tabular representations
+[07:48] help you describe categorical data?
+[07:51] Well, the counts and the relative
+[07:53] frequencies, that is the percentage or
+[07:55] the proportions of the categorical data,
+[07:58] reveal information that you can use to
+[08:00] justify claims about the data in
+[08:02] context.
+[08:04] I want to thank you for tuning in and
+[08:06] until next...
