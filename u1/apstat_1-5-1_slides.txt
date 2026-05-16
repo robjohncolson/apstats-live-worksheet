@@ -1,0 +1,16 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 5
+
+Slide titles and topics from the video with their corresponding timestamps:
+
+[00:00] — Intro Slide: Representing a Quantitative Variable with Graphs
+[00:25] — What we will learn?
+[00:44] — Quick Review: Categorical vs. Quantitative
+[01:12] — Two Types of Quantitative Variables (Discrete and Continuous)
+[02:49] — Example: Flint Water Crisis Data
+[03:53] — Dotplot
+[04:44] — Stem-and-leaf plot
+[05:32] — Stem-and-leaf plot (with split stems)
+[06:01] — Histogram
+[06:44] — Histogram (different interval widths)
+[07:27] — Key Takeaways

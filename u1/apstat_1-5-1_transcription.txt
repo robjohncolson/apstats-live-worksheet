@@ -1,0 +1,77 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 5
+
+[00:02] Hi, my name is Luke Wilcox, AP Statistics teacher from East Kentwood High School in Kentwood, Michigan.
+[00:09] I hope you have enjoyed your time with Mr. Starns, but I will be taking you through the remainder of unit one as well as the start of unit two.
+[00:15] In this video, we're going to be talking about representing a quantitative variable with graphs.
+[00:24] So, let's start with what we'll learn. Two questions that we want to answer with this video.
+[00:27] Number one, what are the two types of quantitative variables and how do we distinguish them?
+[00:36] Number two, what types of graphs can be used to represent quantitative data and what are the advantages and disadvantages of each.
+[00:45] So let's start with a quick review something you learned with Mr. Starns and that was the difference between a categorical variable and a quantitative variable.
+[00:53] So he told you that a categorical variable is a variable that takes values that are category names or labels and that a quantitative variable on the other hand is a variable that takes numerical values for a measured or counted quantity.
+[01:10] Now for the next set of videos that you're going to see with me, we're going to be in the world of quantitative variables.
+[01:16] And there are two different types of quantitative variables that you have to be familiar with.
+[01:21] The first is a discrete variable which can take a countable number of values with gaps.
+[01:30] And let me try to explain with an example here.
+[01:33] If we look at the variable of number of siblings, it's a variable because that value would change from one person to the next.
+[01:42] But if you think of the possible answers that they could give for this question, it could be zero or one or two or three. but it could not be 2.5 or 2.73.
+[01:52] So what you have are gaps in the possible values for that particular variable and that's why we refer to it as a discrete variable.
+[02:01] On the other hand, a continuous variable can take on infinitely many values but those values cannot be counted. So there are no gaps.
+[02:10] An example of that would be a person's height. That's a variable because it's different from one person to the next.
+[02:17] But when you think about the answers for a person's height, it could be 60 in or 61 in or 62 in, but it could be 61.5 in or 61.97 in.
+[02:29] So it's all of the decimals in between all of the values.
+[02:33] And because it has infinitely many values with no gaps, that would be a continuous variable.
+[02:38] So typically a discrete variable is when you are counting something. A continuous variable is when you are measuring something.
+[02:48] So let's take a look at an example.
+[02:51] And this is one that you're familiar with because Mr. Starns introduced this on the very first video, the Flint water crisis data, which if you recall says that city officials measured lead levels in 71 water samples from Flint residents in January to June 2015.
+[03:08] So, we actually have the data from all 71 of the water samples and we want to be able to represent the data with a graph.
+[03:16] Now, first we should make note of what type of variable we have here.
+[03:21] Obviously, because we see numbers, we know that it's a quantitative variable rather than a categorical variable.
+[03:25] But the more difficult question here is about whether this is discrete or continuous.
+[03:32] And you have to realize that when they collected these values, there were actually decimals.
+[03:38] But what they did was they rounded them to the nearest whole value.
+[03:40] So like this value of 11 here could have been like a 10.8 or it could have been an 11.2.
+[03:44] But it does have decimal values there. And so this would be a continuous variable.
+[03:53] So let's talk about the different options we have as far as representing this data set with a graph.
+[03:58] And we're going to start with my personal favorite for types of displays, the dot plot, which you see represented here.
+[04:06] And here's why I really really like the dot plot. First thing is that you can actually see all 71 of the water samples because each one of them is represented by a dot in the graph.
+[04:16] Additionally, it's really nice to quickly see the shape of the distribution.
+[04:26] Well, I don't think there are many disadvantages here.
+[04:27] I am going to mention one of them which is that if you have a very very large data set dot plots can be difficult to make and the dots get tinier and tinier as you have more and more values there.
+[04:40] So that is a slight disadvantage to the dot plot.
+[04:44] Another type of display you can use for the data is a stem and leaf plot which looks like this.
+[04:52] And what you'll see here is that each value is represented with a stem which is the value to the left of the vertical line and a leaf which is the value that you see to the right of the vertical line.
+[05:02] So for example the number 104 is represented with four as the leaf and then one zero as the stem there.
+[05:11] Now, sometimes one of the stems ends up having lots and lots of values like we see here with the zero.
+[05:15] And it actually makes sense to split that stem into two zeros where the first of them is going to take the zero through four and the second one is going to take the five through nine.
+[05:27] And that would look something like this. So you'll notice the split stems here for each one of the values.
+[05:33] Now, let's talk advantages and disadvantages of the stem and leaf plot, which is going to look very similar to what we said for the dot plot.
+[05:43] As far as the advantages, number one, you can actually see every single individual value, all 71 of the water samples.
+[05:48] And it's very easy to see the shape of the distribution just by looking at the stem and leaf plot.
+[05:52] Disadvantages, if you get a large data set, it can become challenging to have to make a stem and leaf plot.
+[06:01] So what do we do when we have one of these larger data sets?
+[06:05] We have another option here, which is to make what's called a histogram.
+[06:07] And with a histogram, you're going to use intervals of values and just figure out how many numbers you have in that interval of values.
+[06:19] And so you'll see here the intervals are set up 0 to 10, 10 to 20, 20 to 30, and so on.
+[06:21] Now, one thing you want to be careful about is the end points. For example, the value of 10.
+[06:28] The value of 10 should be put into this bar here on the left end point.
+[06:31] And then if you had 20, it would jump into the next bar over here.
+[06:38] Now, one of the things you can do with your histogram is you can change the width of the intervals that you're using here.
+[06:44] And so, in this next histogram, I'm using intervals of width two rather than of width 10.
+[06:51] And you'll notice that they can actually change the look and the feel of the histogram quite a bit.
+[06:55] So let's talk advantages and disadvantages of this one.
+[06:59] As far as advantages, it is much easier to make a histogram if you have a very large data set.
+[07:04] And once again, it is easy to see the shape of the distribution based on the histogram.
+[07:11] Now a clear disadvantage for the histogram is that we lose the information about every individual in the data set.
+[07:16] So we don't actually know all of the 71 values for the water samples. We only know how many values are in each interval.
+[07:27] So what should we take away from today? Well, here are your key takeaways.
+[07:31] And we're going to go back to the questions from the beginning of the video.
+[07:36] Number one, the two types of quantitative variables would be the discrete variable, which means that it's countable and has gaps and the continuous, which is not countable and has no gaps.
+[07:51] Question number two, what types of graphs can be used to represent quantitative data and what are the advantages and disadvantages of each?
+[07:59] Well, the dot plot and the stem plot have similar advantages and disadvantages.
+[08:03] They both show each value and it's easy to tell the shape, but they have the disadvantage that they are hard to make when you have large data sets.
+[08:09] And then we had the histogram which is easier to make for large data sets and still easy to see the shape.
+[08:20] But it does not show the value of each.
+[08:24] While these don't represent all of the possible graphs, there are many other types of graphs that you could use. These are some of the most commonly used.
+[08:31] We will be looking at box plots in a later video.
+[08:37] So this is Luke Wilcox signing off. Thank you all for joining
