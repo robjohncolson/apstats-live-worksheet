@@ -1,0 +1,16 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 2
+
+[00:00] — Introduction and Learning Objectives: A title slide introduces the speaker and the topic of representing two categorical variables. It lists two primary questions: how to construct graphical displays for two categorical variables and how to determine if an association exists between them.
+[00:33] — Two-Way Table Example: A table displays data on "Educational attainment by age group" for the U.S. population in 2017. It categorizes data into three age groups and four educational attainment levels.
+[01:21] — Calculating Column Totals: The speaker adds a "Total" row to the bottom of the table to show the total number of individuals in each age group column.
+[01:42] — Calculating Percentages (25–34 Age Group): The table updates to show the calculation of percentages for each educational level within the 25–34 age group, dividing individual counts by the column total of 45,212.
+[02:11] — Educational Attainment Distribution (25–34 Age Group): The raw numbers for the 25–34 age group are replaced with the newly calculated percentages.
+[02:23] — Calculating Percentages (35–54 Age Group): The table shows calculations for the 35–54 age group, dividing each count by the column total of 93,506.
+[02:35] — Educational Attainment Distribution (35–54 Age Group): The percentages for the 35–54 age group are added to the table.
+[02:39] — Calculating and Finalizing All Percentages: The final column for the 55+ age group is updated with its respective percentages.
+[02:51] — Side-by-Side Bar Graph: A graphical display is created where each age group has four separate bars representing the four educational attainment levels.
+[03:33] — Creating a Segmented Bar Graph: The side-by-side bars for each age group are stacked into a single bar totaling 100%, with different colors representing the levels of educational attainment.
+[04:33] — Creating a Mosaic Plot: The segmented bar graph is transformed into a mosaic plot, where the width of each age group's bar is adjusted to represent the size of that group relative to the others.
+[05:41] — Determining Association: Using the segmented bar graph, the speaker illustrates how differences in the color distributions between the bars indicate an association between age and education level.
+[06:35] — Summary of Key Takeaways: A concluding slide revisits the initial learning objectives, summarizing the types of graphs discussed and how they help identify associations between variables.
