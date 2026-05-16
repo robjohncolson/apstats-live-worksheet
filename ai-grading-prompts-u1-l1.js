@@ -3,107 +3,99 @@
  * Topic 1.1: Topic 1.1
  *
  * Learning Objectives:
- *   Identify the question to be answered or the problem to be solved in context
- *   Explain how statistics can answer real-world questions using data that vary
- *   Recognize the variable in one-variable data
- *   Use data displays and percentages to answer a contextual question
- *   Interpret a decision using a threshold in context
- *   Describe the process of asking questions, collecting data, analyzing data, and interpreting results
+ *   Identify the question to be answered or problem to be solved in context
+ *   Recognize how statistics helps answer real-world questions based on data that vary
+ *   Identify questions based on variation in one-variable data
+ *   Explain why numbers become meaningful when placed in context
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U1L1 = `
-VIDEO 1 - Introducing Statistics (~6:40):
-- The lesson opens by asking, "What can we learn from data?"
-- Two main goals are introduced: identify the question or problem in a given context, and explain how statistics can help answer important real-world questions based on data that vary.
-- The main example is the Flint water crisis in Flint, Michigan.
-- In April 2014, the city switched its water supply from Lake Huron to the Flint River to save money.
-- Residents reported that the water looked, smelled, and tasted bad, and some developed rashes, hair loss, or itchy skin.
-- A key statistical question in the context is: Was Flint's water safe to drink?
-- City officials collected data by measuring lead levels in 71 water samples from Flint residents between January and June 2015.
-- The variable is lead level measured in parts per billion, and the data varied from 0 to 104 parts per billion.
-- Lead levels greater than 15 parts per billion were considered extremely unhealthy.
-- The rule in the example was that if more than 10% of samples exceeded 15 parts per billion, the water was deemed not safe to drink.
-- In the full sample of 71 water samples, 8 exceeded 15 parts per billion.
-- That proportion was 8/71 = 0.113, or 11.3%, so based on the full sample the water was not safe to drink.
-- City officials then omitted two samples from the analysis: one business sample with a lead level of 20 parts per billion and one home sample with a lead level of 104 parts per billion.
-- After omitting those two samples, 6 of the remaining 69 samples exceeded 15 parts per billion.
-- That proportion was 6/69 = 0.087, or 8.7%, which is below the 10% threshold, so officials declared the water safe to drink.
-- Later, Virginia Tech researchers conducted a more thorough study and found about 17% of samples above 15 parts per billion.
-- Pediatrician Mona Hanna-Attisha found that elevated blood lead levels in children had doubled since the water source switch.
-- The lesson ends by summarizing the statistical process: ask questions, collect data, analyze data, and interpret the results.
-- A major takeaway is that statistics helps answer real-world questions when data vary, but conclusions depend on how the data are analyzed and interpreted.
+VIDEO 1 - Introducing Statistics: What Can We Learn from Data? (~6:40):
+- The video introduces two main goals: identifying the question to be answered or problem to be solved in a context, and using statistics to answer important real-world questions based on data that vary.
+- The lesson example is the Flint water crisis in Flint, Michigan.
+- In April 2014, Flint switched its water source from Lake Huron to the Flint River to save money.
+- Residents reported that the water looked, smelled, and tasted bad, while city officials claimed it was safe to drink.
+- The central statistical question was: Was Flint's water safe to drink?
+- City officials collected lead-level data from 71 water samples taken between January and June 2015.
+- The lead levels ranged from 0 parts per billion to 104 parts per billion.
+- Lead levels above 15 parts per billion were considered extremely unhealthy.
+- The rule in this context was that if more than 10% of water samples exceeded 15 parts per billion, the water would be deemed not safe to drink.
+- In the full sample, 8 of 71 samples exceeded 15 parts per billion, which is 0.113 or 11.3%, so the water was not safe to drink.
+- City officials omitted two samples, one at 20 parts per billion and one at 104 parts per billion.
+- With those two samples removed, 6 of 69 samples exceeded 15 parts per billion, which is 0.087 or 8.7%, and officials used that result to declare the water safe.
+- Later, Virginia Tech researchers found that about 17% of samples were above the action threshold.
+- The video closes by summarizing the statistical process: ask questions, collect data, analyze data, and interpret results.
+- A key AP Statistics idea in Topic 1.1 is that numbers convey meaningful information only when they are placed in context.
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U1L1 = {
     reflect1: {
-        questionText: 'Why is "Was Flint\'s water safe to drink?" a statistical question instead of something answered by checking just one house?',
+        questionText: 'Why does a number like 15 parts per billion or 11.3% only become meaningful when it is placed in context?',
         expectedElements: [
-            { id: 'variation', description: 'Explains that the lead levels vary from one water sample or house to another', required: true },
-            { id: 'many-samples', description: 'Explains that you need data from many samples rather than just one house', required: true },
-            { id: 'overall-population-question', description: 'Explains that the question is about Flint water in general or the overall safety of the water supply, not one individual house', required: true },
-            { id: 'threshold-link', description: 'May mention using the percent above the threshold to answer the question', required: false }
+            { id: 'needs-context', description: 'Explains that a number by itself does not mean much unless we know what is being measured or described', required: true },
+            { id: 'units-or-variable', description: 'Identifies the context as lead level in water samples or mentions units such as parts per billion or percent of samples', required: true },
+            { id: 'links-to-question', description: 'Connects the number to the real question of whether Flint\'s water was safe to drink or whether the threshold was exceeded', required: true },
+            { id: 'threshold-idea', description: 'May mention that 15 ppb and 11.3% matter because they can be compared to a cutoff or threshold', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that the data vary, that one sample is not enough, and that the question concerns the overall water supply rather than a single house.',
-            P: 'Response shows some understanding of why the question is statistical, but misses one key idea such as variation, the need for many samples, or the overall context.',
-            I: 'Response does not correctly explain why the question requires data and variability rather than a single observation.'
+            E: 'Response clearly explains that numbers need context, identifies what the numbers refer to, and connects them to the question or decision about water safety.',
+            P: 'Response shows some understanding of context but does not clearly explain what the numbers refer to or how they help answer the question.',
+            I: 'Response does not explain why context matters for interpreting the numbers.'
         },
         commonMistakes: [
-            'Saying one sample is enough to answer the question',
-            'Ignoring that lead levels vary from place to place',
-            'Describing the question as only about one home instead of the broader water supply',
-            'Giving a conclusion about safety without explaining why the question is statistical'
+            'Saying the number speaks for itself without needing context',
+            'Mentioning the number but not what it measures',
+            'Failing to connect the number to the question about safe drinking water',
+            'Ignoring the role of units or percent in the interpretation'
         ],
-        contextFromVideo: 'The video emphasizes that statistical questions are answered using data that vary, and the Flint example uses 71 water samples rather than one reading.'
+        contextFromVideo: 'The video emphasizes that numbers such as 15 parts per billion and 11.3% become useful only when tied to the variable, the threshold, and the question of whether the water was safe to drink.'
     },
 
     reflect2: {
-        questionText: 'How did omitting the two water samples change the conclusion, and what does that show about analyzing data carefully?',
+        questionText: 'How did removing two water samples change the conclusion, and what does that show about using statistics responsibly?',
         expectedElements: [
-            { id: 'percent-change', description: 'Explains that the percent above 15 parts per billion changed from 11.3% to 8.7% when the two samples were removed', required: true },
-            { id: 'conclusion-change', description: 'Explains that the conclusion changed from not safe to safe because the percent moved from above the 10% threshold to below it', required: true },
-            { id: 'careful-analysis', description: 'Explains that removing data can change the result, so data must be analyzed carefully and responsibly', required: true },
-            { id: 'ethical-angle', description: 'May mention that selective omission can be misleading or unfair', required: false }
+            { id: 'changed-percent', description: 'Explains that the percent above 15 ppb changed from 11.3% (8 of 71) to 8.7% (6 of 69)', required: true },
+            { id: 'changed-conclusion', description: 'States that the conclusion changed from not safe to safe when the two samples were removed', required: true },
+            { id: 'responsible-use', description: 'Explains that leaving out relevant data can change results and that statistics should be used honestly and carefully', required: true },
+            { id: 'real-consequences', description: 'May note that these choices can affect real people and real decisions', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly explains how the omitted samples changed both the percent and the conclusion, and clearly states why careful analysis of all relevant data matters.',
-            P: 'Response identifies part of the change in percent or conclusion, but does not clearly explain both the numerical change and why careful data analysis matters.',
-            I: 'Response does not correctly explain how omitting the samples affected the conclusion or what that shows about working with data.'
+            E: 'Response correctly explains how the omitted samples changed both the percentage and the conclusion, and it clearly connects that change to responsible use of data.',
+            P: 'Response describes either the numerical change or the idea of responsible data use, but not both clearly and completely.',
+            I: 'Response does not correctly explain how removing the samples changed the result or what that implies.'
         },
         commonMistakes: [
-            'Failing to mention that the percent dropped below the 10% cutoff',
+            'Stating that the omitted points did not affect the conclusion',
+            'Mentioning only that two points were removed without describing the new percentages',
             'Ignoring that the conclusion changed from unsafe to safe',
-            'Saying the omitted points did not matter',
-            'Missing the idea that selective data removal can change or distort a conclusion'
+            'Failing to address why data should be handled responsibly'
         ],
-        contextFromVideo: 'The Flint example shows that using all 71 samples gave 11.3% above the threshold, while removing two samples produced 8.7%, which changed the decision.'
+        contextFromVideo: 'In the video, removing the 20 ppb and 104 ppb readings changed the percent above the threshold from 11.3% to 8.7%, which changed the water-safety conclusion.'
     },
 
     exitTicket: {
-        questionText: 'A school district tests 50 classroom drinking fountains for lead. District leaders say the water system is unsafe if more than 12% of samples are above 15 parts per billion. In the sample, 7 fountains are above 15 parts per billion. State a sensible statistical question and identify the variable, calculate the percent above 15 parts per billion, decide whether the system would be considered safe, and explain how statistics helps answer the question when the data vary.',
+        questionText: 'A school health office records the number of hours of sleep the night before a big exam for a random sample of 30 students. The principal wants to know whether too little sleep is a concern for these students. The data show that 9 of the 30 students got fewer than 6 hours of sleep. Identify the question, describe the variable and variation, explain why 30% is meaningful only in context, and describe how statistics could help answer the question.',
         expectedElements: [
-            { id: 'statistical-question', description: 'States a sensible statistical question such as whether the district water system is safe or whether more than 12% of fountains exceed 15 parts per billion', required: true },
-            { id: 'variable', description: 'Identifies the variable as lead level in the classroom drinking fountains, measured in parts per billion', required: true },
-            { id: 'percent-calculation', description: 'Calculates that 7 out of 50 is 0.14 or 14%', required: true },
-            { id: 'decision', description: 'Concludes that the system would be considered unsafe or that action is needed because 14% is greater than the 12% threshold', required: true },
-            { id: 'variation-and-statistics', description: 'Explains that statistics uses data from many fountains because the lead levels vary from fountain to fountain', required: true },
-            { id: 'process-language', description: 'May mention asking a question, collecting data, analyzing the percent, and interpreting the result', required: false }
+            { id: 'question-in-context', description: 'Identifies a sensible question in context, such as whether too many students are getting too little sleep before the exam', required: true },
+            { id: 'variable', description: 'Describes the variable as the number of hours of sleep the night before the exam', required: true },
+            { id: 'variation', description: 'Explains that the data vary because different students got different amounts of sleep', required: true },
+            { id: 'context-for-30', description: 'Explains that 9 out of 30, or 30%, is meaningful because it describes the proportion of sampled students who got fewer than 6 hours of sleep', required: true },
+            { id: 'statistics-process', description: 'Describes how statistics can help by collecting data, analyzing the data, and interpreting the results to answer the principal\'s question', required: true }
         ],
         scoringGuide: {
-            E: 'Response states a sensible statistical question, identifies the variable, calculates 14%, concludes the system is unsafe because 14% > 12%, and explains that statistics is needed because the data vary across fountains.',
-            P: 'Response gets most major pieces correct but misses or confuses one part, such as the variable, the percent, the threshold comparison, or the explanation of why statistics is needed.',
-            I: 'Response has major errors in the calculation or conclusion, or does not show understanding of the role of variation and data in answering the question.'
+            E: 'Response identifies the question, correctly describes the variable and variation, explains the meaning of 30% in context, and describes the basic statistical process for answering the principal\'s question.',
+            P: 'Response includes several correct ideas but misses one major component, such as the context for 30% or the explanation of variation.',
+            I: 'Response omits multiple required components or does not show understanding of the lesson focus on context and one-variable data.'
         },
         commonMistakes: [
-            'Using the wrong percent for 7 out of 50',
-            'Saying the system is safe even though 14% is greater than 12%',
-            'Not identifying the variable in context',
-            'Failing to explain that data vary from fountain to fountain',
-            'Treating the question as answerable from one fountain instead of many samples'
+            'Giving a number without explaining what it represents',
+            'Failing to identify the variable clearly',
+            'Not explaining what variation means in the data',
+            'Leaving out the role of collecting, analyzing, and interpreting data'
         ],
-        contextFromVideo: 'The lesson uses the Flint water crisis to show how a real-world safety question is answered by collecting data, finding the percent above a threshold, and interpreting the result in context.'
+        contextFromVideo: 'The Flint example shows that a useful statistical response begins with a question, uses one-variable data, interprets numbers in context, and then uses data analysis to support a conclusion.'
     }
 };
 
@@ -122,7 +114,7 @@ window.buildReflectionPromptU1L1 = function(questionId, studentAnswer) {
         .map((e, i) => `${i + 1}. ${e.description}`)
         .join('\n');
 
-    return `You are grading an AP Statistics student's response about Topic 1.1.
+    return `You are grading an AP Statistics student's response about Topic 1.1: introducing statistics and what we can learn from data.
 
 ## Question
 ${rubric.questionText}
