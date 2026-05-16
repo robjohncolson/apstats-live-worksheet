@@ -1,0 +1,17 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 1
+
+The following timestamps describe the visual transitions and slide topics presented in the video:
+
+[00:00] — Introducing Statistics: Are Variables Related?
+[00:12] — What we will learn? (Lists two core questions about relationships between categorical and quantitative variables)
+[00:41] — Definitions Review from Unit 1 (Categorical vs. Quantitative variables)
+[01:07] — Are age group and educational attainment related? (Displays a data table)
+[02:12] — Determining relationships between two categorical variables (Graphical and Numerical approaches)
+[02:30] — Graphical Representations: Segmented Bar Graph and Mosaic Plot
+[03:09] — Numerical Representations: Summary Statistics (Calculated percentages in the data table)
+[04:09] — Are school attendance and math scores related? (Displays a raw data set for 11 students)
+[04:56] — Determining relationships between two quantitative variables (Graphical and Numerical approaches)
+[05:13] — Graphical Representation: Scatter Plot
+[05:35] — Numerical Representations: Correlation (r), Line of Best Fit, and Coefficient of Determination
+[06:04] — Video Takeaways (Summary answers to the initial two core questions)
