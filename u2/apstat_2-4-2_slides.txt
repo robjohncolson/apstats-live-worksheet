@@ -1,0 +1,18 @@
+# Video 2 — Slide Descriptions
+# Unit 2, Lesson 4
+
+The following is a list of visual changes and slide topics from the video:
+
+[00:00] — Introduction: Describing Scatter Plots
+[00:18] — Learning Objectives: Learning to describe direction, form, strength, and unusual features in a scatter plot.
+[00:28] — Example Context: Can educational systems equalize opportunities for low-income students via attendance?
+[01:11] — Data Representation: Scatter plot showing a sample of 11 students with attendance rate as the explanatory variable and algebra exam scores as the response variable.
+[01:49] — Describing Direction: Definitions and visual examples of positive and negative associations.
+[02:33] — Direction Analysis: Identifying the example scatter plot as having a positive direction.
+[02:57] — Describing Form and Unusual Features: Definitions of linear vs. nonlinear forms and examples of outliers or clusters.
+[03:32] — Form and Feature Analysis: Identifying the example as approximately linear with one student having unusually low attendance.
+[03:58] — Describing Strength: Visual examples comparing strong associations (closely following a pattern) to weak associations (high variation around the model).
+[04:54] — Strength Analysis: Identifying the example relationship as strong because data points are close to the linear model.
+[05:20] — Putting it all Together: Combining direction, form, strength, unusual features, and context into a concise summary sentence.
+[06:03] — Reflective Question: Asking what would happen to test scores if a school policy raised attendance based on this relationship.
+[06:17] — Lesson Summary: Key takeaways for describing scatter plots and a final reminder to avoid "bad statistics."

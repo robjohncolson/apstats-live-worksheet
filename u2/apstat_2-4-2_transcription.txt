@@ -1,0 +1,84 @@
+# Video 2 — Transcript
+# Unit 2, Lesson 4
+
+[00:05] Hello statisticians, Mr. Youngsaver here from the College Board.
+[00:09] We're still in topic 2.4 and today's video is going to demonstrate how to properly describe a scatter plot.
+[00:15] So what exactly we're going to learn today?
+[00:19] Well, we're going to learn how to describe direction in a scatter plot, how to describe form and unusual features in a scatter plot, and how to describe strength in a scatter plot.
+[00:27] So, let's look at an example, and we're going to pick it up from our last video.
+[00:31] We talked about last time how middle and upper income students often have wealth privilege, meaning that they don't face as many educational barriers as lower income peers, much of the time.
+[00:41] So, the question is, can educational systems equalize opportunities for low-income students?
+[00:48] And one lever that a lot of school system leaders try and use to equalize opportunities is attendance.
+[00:53] Their idea is that if poverty causes students to come to school less often, if we fix their attendance, maybe test scores will improve and opportunities will be more equal.
+[01:06] So their idea is if you fix attendance, then you'll be able to fix test scores.
+[01:12] So again, we're going to assess if this statement is reasonable or BS, bad statistics.
+[01:19] This is the data we landed on last time.
+[01:21] It's a random sample of 11 students from Texas and it has the percent of school days they attended as the explanatory variable and the number of questions they answered correctly on the Algebra 1 assessment at the end of the year as the response variable.
+[01:41] So I want you to quickly take a pause in the video and answer this question.
+[01:43] How would you describe any trends you see in the scatter plot?
+[01:45] Go ahead, take a pause now and then press play when you're ready.
+[01:49] So one thing we first like to describe in scatter plots like this is direction.
+[01:54] There are two kinds of direction you could talk about: positive and negative.
+[02:01] What a positive direction means is that as x values increase the y values also tend to increase.
+[02:07] So if you look at our graphics here that say positive association you'll see that as the x variable increases in values the y variables also tend to increase in values.
+[02:18] You can see that for each positive association shown here.
+[02:20] For negative associations, as x values increase, the y values tend to decrease.
+[02:24] And you can see that here.
+[02:26] As the x values go up, left to right, the y values tend to go down.
+[02:28] And we can see that as a pattern here.
+[02:33] So in this case, let's look at our direction for these data points.
+[02:35] As our x values tend to increase, it looks like that our y values also tend to increase.
+[02:42] So the direction here is positive.
+[02:42] In context of the variables we're looking at, as the attendance rate per student increases, so does the number of exam questions they answer correctly.
+[02:54] So that's what the positive direction means here.
+[02:58] Now, let's talk about how we describe form and any potential unusual features in our graphic.
+[03:00] A lot of the graphics you're going to look at in AP Stats have a linear form.
+[03:04] They—the dots kind of line up in a line pattern.
+[03:11] And in this graphic we see here, there are no visible unusual features.
+[03:16] Let's see some deviations from this trend, though.
+[03:17] Sometimes forms can be nonlinear.
+[03:19] It may be curved in shape, and you want to address that by saying this is nonlinear.
+[03:23] Sometimes there'll be unusual features such as clusters or apparent outliers that buck the trend of the data.
+[03:32] So, when we're talking about the form here, this appears to be approximately linear.
+[03:36] If I fit a linear model to it, it seems to model the data fairly well.
+[03:41] So, I'm going to say that this form is linear.
+[03:42] And let's look for any unusual points.
+[03:44] Well, one thing that's kind of unusual is there's this one student had especially low attendance compared to the other data points.
+[03:53] So, one student had unusually low attendance.
+[03:54] I want to point that out as a feature of this graph.
+[03:59] Finally, let's describe strength.
+[04:01] So, I showed you these graphics earlier and in addition to direction, they also show differences in strength.
+[04:05] So if I fit a linear model to each one because it seems like they're roughly a linear pattern each one, we could say that the strong ones are ones where the data closely follow this linear pattern.
+[04:16] And that's for these associations here.
+[04:18] In the above cases that are highlighted, if you use linear model to predict new data, you would tend to make close predictions based on the data you see there because linear model seems to be a fairly good fit.
+[04:31] But there's other times where data could be a weak association.
+[04:35] It doesn't closely follow the pattern.
+[04:37] In this case, the linear pattern.
+[04:39] Yes, it does appear to still be—a linear model is the best model here.
+[04:43] But in the above cases, if you use the linear model to predict new data, you might be quite a bit off because there's a lot of variation in our response variable around that model.
+[04:55] So, let's talk about the strength here.
+[04:56] If I fit a linear model to this, we can see that my data points are pretty close to the linear model.
+[05:01] Specifically, the response variable values, the number of questions they answer correctly on the exam, don't vary that much from what's predicted on the line.
+[05:10] So, we say this is a strong relationship, i.e. attendance rate is a good predictor of exam performance.
+[05:20] So, let's put it all together and describe this graphic.
+[05:22] We're going to tackle these parts: Direction, form, strength, and unusual features.
+[05:27] Also, make sure to describe the context when you're asked to describe a graphic.
+[05:35] So, the direction is positive.
+[05:36] The form is linear.
+[05:36] It's strong.
+[05:36] There's one student with especially low attendance.
+[05:39] And the context here is the two variables, attendance rate and number of questions they scored correctly.
+[05:45] You want to put it in nice concise sentence form.
+[05:47] The relationship between attendance rate and exam performance appears to be positive, linear, and strong.
+[05:53] And there appears to be one student with unusually low attendance.
+[05:57] Note how I've covered each component with that concise sentence.
+[06:03] Now, one lingering question to leave you with for our next video.
+[06:05] Given the strong and positive relationship, if a school starts a new policy that raises attendance, what do you think will happen to test scores?
+[06:13] Explain your reasoning.
+[06:16] So, what should we take away today?
+[06:18] Well, direction describes the overall trend in the y values as the x values increase.
+[06:22] Form can be categorized as linear and nonlinear.
+[06:24] And strength describes how closely the data follows a specific pattern.
+[06:28] You should point out unusual features such as clusters and apparent outliers.
+[06:32] And as always, statisticians, when analyzing data, be critical, be cautious, be compassionate, and of course, avoid BS.
+[06:38] That's it for today. Thank you.

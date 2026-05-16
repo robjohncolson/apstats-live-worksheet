@@ -1,0 +1,17 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 4
+
+The following are the visual changes and slide topics from the video:
+
+[00:00] — Introductory Title Slide: Displays "Topic 2.4: Representing the Relationship Between Two Quantitative Variables" with the AP Daily branding.
+[00:13] — Learning Objectives: A list of three questions regarding determining explanatory and response variables and constructing scatter plots.
+[00:27] — The Income Achievement Gap: A slide showing a line graph titled "Income Achievement Gap over Time," displaying math scores for different income groups from 2003 to 2017.
+[01:50] — The Attendance Gap: Text explaining the correlation between higher income areas and lower chronic absenteeism.
+[02:19] — A Potential Solution?: Text outlining the hypothesis that targeting attendance through policy could lead to higher test scores.
+[02:49] — Is it BS (Bad Statistics)?: The speaker presents the core question of whether fixing attendance truly equalizes the opportunity gap.
+[03:06] — Data Table: A table showing a random sample of 11 students with their "Percent Attendance" and "Questions Correct" on an assessment.
+[03:31] — Defining Variables: The same data table updated to label "Percent Attendance" as the Explanatory Variable (X) and "Questions Correct" as the Response Variable (Y).
+[04:11] — Choosing a Plot Type: Questions appear asking how many variables are measured and if the data is categorical or quantitative to determine the correct plot type.
+[04:36] — The Scatter Plot: A completed scatter plot titled "Algebra 1 EOC Performance vs. Attendance" with labeled axes and scales.
+[05:28] — Key Takeaways: A summary slide listing the definitions of explanatory and response variables and the requirements for constructing a scatter plot.
+[05:58] — Closing Slide: Displays the speaker's advice to "Avoid BS (Bad Statistics)".
