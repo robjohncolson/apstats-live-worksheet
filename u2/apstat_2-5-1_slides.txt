@@ -1,0 +1,16 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 5
+
+The following is a list of slide and visual changes in the video with their respective timestamps and topics:
+
+[00:00] — Correlation (title): Introduces the topic of using the correlation coefficient (r) to interpret linear relationships.
+[00:16] — Learning Objectives: Lists the day's goals: calculating and interpreting correlation (r) and understanding what properties of a scatter plot can be learned from that value alone.
+[00:27] — Context: Wealth Privilege and Educational Barriers: Presents the context for the example, discussing how schools use attendance as a lever to try and equalize opportunities for low-income students.
+[01:15] — Correlation Coefficient r: Defines r as a value that gives the direction and quantifies the strength of a linear relationship. Also displays a complex mathematical formula for calculating r while noting that technology is typically used instead.
+[02:33] — Visualizing Correlation: Displays six different scatter plots with their corresponding r values (ranging from -1 to 1) to illustrate various directions and strengths of linear relationships.
+[03:32] — Back to Our Context: Revisits the student data, showing the scatter plot of attendance rates versus exam performance with a calculated correlation coefficient of r = 0.95.
+[04:01] — Example Question: Asks a predictive question about what would happen to test scores if a new policy raised student attendance.
+[04:18] — The Theory in Practice: Describes various expensive initiatives districts used to target attendance, such as calling programs, case managers, and ride-sharing services.
+[04:52] — The Result: Reveals the outcome of the initiatives: while attendance rose, test scores remained flat.
+[05:09] — Lingering Question: Poses a question for the next video, asking how attendance initiatives can fail to boost test scores despite a strong positive correlation between the two variables.
+[05:28] — Key Takeaways: Summarizes that the sign of r indicates direction, its magnitude indicates strength, and that r alone is not enough to determine form or unusual features without looking at the scatter plot.

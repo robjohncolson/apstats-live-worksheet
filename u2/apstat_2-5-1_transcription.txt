@@ -1,0 +1,31 @@
+# Video 1 — Transcript
+# Unit 2, Lesson 5
+
+[00:01] Calculate the correlation R. Statisticians, Mr. Young-Saver here from the College Board.
+[00:05] We're covering topic 2.5 today and this video will illustrate how to use correlation or the correlation coefficient R to interpret a linear relationship.
+[00:16] So what exactly are we going to learn today? Well, how do we calculate the correlation R? How do we interpret it? And what properties of a scatter plot can we learn from that value alone?
+[00:27] Let's look at an example. And this is an example we're going to again pick up from our previous videos.
+[00:31] So middle and upper-income students have wealth privilege and often what that means is they don't face as many educational barriers as their lower-income peers in school.
+[00:42] So can educational systems equalize opportunities for low-income students?
+[00:47] One lever that schools try and use to help equalize opportunities is attendance.
+[00:53] The idea that school leaders have is that if poverty causes low attendance at schools, if you can fix the attendance, maybe you can equalize opportunities in terms of final test scores.
+[01:05] So if we think, let's change the attendance to be high attendance, that will then have an impact on test scores at the end of the school year.
+[01:15] So we're going to see if this statement is reasonable or if it is BS, bad statistics.
+[01:22] So the data on this seems to look promising. This was a random sample of 11 students that we've talked about last time.
+[01:29] And we found that the percent of schools they attended and the number of questions they answered correctly on the end of year Algebra I assessment had a positive and strong association.
+[01:42] Specifically, it was a strong positive linear relationship. As attendance rates rose, exam performance also tended to rise and this relationship was strong.
+[01:54] Now, we were going to ask ourselves, can we quantify exactly how strong this relationship seems to be?
+[02:01] So, let's figure out the correlation coefficient R. R gives the direction and quantifies the strength of a linear relationship.
+[02:10] There's a very fancy formula for R and you can just take a look at it there. But don't freak out. You don't have to worry too much about this formula because technology would do a lot of the work for us and your teacher can show you how to use calculators or other tools to come up with a correlation coefficient R. I want us to talk rather about the concept behind R and what it means.
+[02:31] So here are examples of different correlations and these are linear fits to those correlations. R values span between negative 1 and 1 inclusive. And here's the R values for these charts here. Now, I want you to take a pause really quick. Do you see any patterns in these R values? Take a pause on the video and think about that.
+[02:59] All right, now that you're back, here's some patterns that we can see in those correlation coefficients, R. Negative R values indicate there's a negative correlation. As the X values increase, the Y values tend to decrease. And positive R values indicate there's a positive correlation.
+[03:16] If we think about strength, it seems clear to me that when the R value is closer to zero, we see a weaker correlation. When the R value is closer to negative 1 or 1, so the magnitude is closer to 1, we see a stronger correlation.
+[03:33] So let's talk about correlation in our context here. We saw that this was a strong relationship. Attendance rate is a good predictor of exam performance with our linear model. But how strong exactly is it? Well, if you were to plug these values into a calculator or statistical software, it would spit out the correlation coefficient of .95. This is a very strong relationship. It's also positive as we mentioned earlier.
+[04:01] So this is a question that we looked at last time from our last video. Given that this was a positive linear and very strong relationship, if a school starts a new policy that raises attendance for its students, what do you think will happen to test scores? Explain.
+[04:18] And this was the idea and evidence behind this theory that school leaders had. If we raise attendance, we would also be able to raise test scores.
+[04:28] So, here's what a lot of school leaders did. In the past several years, superintendents have piloted large-scale and sometimes very expensive initiatives to specifically target student attendance. These included calling programs that called chronically absent students, hiring attendance case managers and coordinators, even using ridesharing services for students with transportation issues.
+[04:46] And here's what happened. Attendance rose in those districts. However, test scores stayed flat. Again, attendance rose, test scores did not change significantly.
+[05:04] What? How could that be the case? We saw it was a strong positive relationship. How could this be the case?
+[05:10] So, here's my lingering question for your next video. Many data sets with thousands of student data points, not just 11, but thousands, show a strong positive correlation between attendance rate and exam performance. So given this fact, how could new attendance initiatives still not succeed in boosting test scores? What do you think?
+[05:29] So what should we take away from today? Well, the sign of the correlation coefficient tells you the direction of a linear relationship. Its magnitude quantifies the strength of a linear relationship. And the correlation coefficient alone does not provide enough evidence to make claims about form or unusual features. We have to look at the scatter plot itself to make those determinations.
+[05:49] And statisticians, as always, when analyzing data, be critical, be cautious, be compassionate, and of course, avoid BS. Thank you so much. Have a good one.
