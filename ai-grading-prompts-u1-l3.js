@@ -1,113 +1,112 @@
 ﻿/**
- * AI Grading Prompts for Unit 1 Lesson 3: Representing a Categorical Variable with Tables
- * Topic 1.3: Topic 1.3
+ * AI Grading Prompts for Unit 1 Lesson 3: Topic 1.3
+ * Topic 1.3: Representing a Categorical Variable with Tables
  *
  * Learning Objectives:
- *   Identify individuals and variables in a categorical data set
- *   Represent categorical data with frequency tables
- *   Represent categorical data with relative frequency tables
- *   Convert counts to proportions and percents
- *   Use tables to describe the distribution of categorical data
- *   Decide whether statements about categorical data are supported by a table
+ *   Represent categorical data using frequency tables
+ *   Represent categorical data using relative frequency tables
+ *   Describe categorical data using counts, proportions, and percentages
+ *   Use table values to justify claims in context
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U1L3 = `
 VIDEO 1 - Representing a Categorical Variable with Tables (~8:06):
-- The lesson asks how categorical data can be represented in tabular form and how those tables help describe the data.
-- Main example: an online survey asked 50 high school students which superpower they would most like to have.
+- The video focuses on two questions: how to represent categorical data in tabular form and how tables help describe categorical data.
+- The main example is an online survey asking which superpower students would most like to have.
+- The categories are invisibility, telepathy, freeze time, super strength, and fly.
+- The data come from a random sample of 50 high school students.
 - The individuals are the 50 high school students who completed the survey.
-- The variable is superpower preference, which is categorical because its values are category names or labels.
+- The variable is superpower preference.
+- Because the values are category names or labels, superpower preference is a categorical variable.
+- The distribution of a categorical variable can be represented with a frequency table.
 - A frequency table gives the number of individuals, or cases, in each category.
-- In the superpower example, the frequencies are fly = 9, freeze time = 15, invisibility = 7, super strength = 3, and telepathy = 16.
+- In the superpower example, fly has frequency 9, super strength has frequency 3, and telepathy is one of the higher categories.
+- The lesson also uses relative frequency tables.
 - A relative frequency table gives the proportion or percent of individuals in each category.
-- Relative frequencies are found by dividing each category count by the total number of individuals, 50.
-- For the superpower example, fly has relative frequency 9/50 = 0.18 = 18%.
-- The full relative frequencies are fly 18%, freeze time 30%, invisibility 14%, super strength 6%, and telepathy 32%.
+- Relative frequencies are found by dividing each count by the total number of cases.
+- In the superpower example, the total is 50, so fly has relative frequency 9/50 = 0.18 or 18%.
+- The relative frequency table for the superpower survey includes fly 18%, freeze time 30%, invisibility 14%, super strength 6%, and telepathy 32%.
+- The learning objective is to represent categorical data using frequency or relative frequency tables.
+- The video shows how table values can be used to evaluate statements about the data.
 - A majority means at least 50%.
-- The true statement from the first multiple-choice set is that exactly 50% of students chose either fly or telepathy.
-- Fly plus invisibility is only 32%, so that is not nearly half.
-- About three times as many students chose fly as super strength.
-- Invisibility is second to last in the table, so it is not one of the more popular choices.
-- Practice example: the 2018 Monitoring the Future study asked students about the risk of occasionally vaping nicotine.
-- The frequencies shown are no risk = 501, slight risk = 782, moderate risk = 401, great risk = 377, and can't say, drug unfamiliar = 191.
-- The total number of responses is 2252.
-- Slight risk is 782/2252 = 34.7%, which is over one-third.
-- No risk plus slight risk is 1283, which is more than half of 2252.
-- Can't say, drug unfamiliar is 191/2252 = 8.5%, so it is not over 10%.
-- No risk is 501/2252 = 22.2%.
-- The takeaway is that frequency and relative frequency tables help justify claims about categorical data in context.
+- In the superpower example, exactly 50% of students chose either fly or telepathy because 18% + 32% = 50%.
+- Invisibility is second to last in popularity, so it is not one of the more popular choices.
+- A second example comes from the 2018 Monitoring the Future study about the perceived risk of occasionally vaping nicotine.
+- Students are encouraged to total the frequencies before evaluating claims; the total number of responses is 2252.
+- In that table, 782 out of 2252 responded slight risk, which is 34.7%, so that is over one-third.
+- Also in that table, 191 out of 2252 responded can't say, drug unfamiliar, which is 8.5%, so that is not over 10%.
+- The lesson closes by reviewing that categorical data can be represented with a frequency table or a relative frequency table.
+- It also emphasizes that counts, percentages, and proportions reveal information that can be used to justify claims about data in context.
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U1L3 = {
     reflect1: {
-        questionText: 'How does a relative frequency table help you describe categorical data more clearly than a frequency table by itself?',
+        questionText: 'Using the superpower survey, explain the difference between a frequency table and a relative frequency table.',
         expectedElements: [
-            { id: 'counts-vs-percent', description: 'Explains that a frequency table gives counts while a relative frequency table gives proportions or percentages', required: true },
-            { id: 'compare-categories', description: 'Explains that proportions or percents make it easier to compare categories', required: true },
-            { id: 'justify-claims', description: 'Explains that relative frequencies help support statements such as majority, nearly half, or over one-third', required: true },
-            { id: 'context-language', description: 'May mention that the description should be written in context of the data', required: false }
+            { id: 'frequency-counts', description: 'Explains that a frequency table gives the number of individuals or cases in each category', required: true },
+            { id: 'relative-frequency-proportion', description: 'Explains that a relative frequency table gives the proportion or percent in each category', required: true },
+            { id: 'superpower-context', description: 'Uses the superpower survey context or a correct category example such as fly, telepathy, or invisibility', required: true },
+            { id: 'divide-by-total', description: 'May mention that relative frequencies are found by dividing by the total of 50 students', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that relative frequency tables convert counts to proportions or percents, make comparisons easier, and help justify claims about the distribution.',
-            P: 'Response mentions part of the value of relative frequencies but leaves out a major idea such as comparison or justification of claims.',
-            I: 'Response does not correctly explain how a relative frequency table helps describe categorical data.'
+            E: 'Response clearly distinguishes counts from proportions or percentages and explains both tables in the superpower context.',
+            P: 'Response shows the general difference between the two tables but does not explain one of them fully or does not use the survey context well.',
+            I: 'Response does not correctly distinguish a frequency table from a relative frequency table.'
         },
         commonMistakes: [
-            'Saying a relative frequency table is the same as a frequency table',
-            'Not mentioning proportions or percentages',
-            'Failing to connect relative frequencies to comparisons or claims like majority',
-            'Giving a vague answer with no statistical meaning'
+            'Saying both tables only show counts',
+            'Describing relative frequency without mentioning proportion or percent',
+            'Ignoring the superpower survey context entirely',
+            'Confusing a category name with a relative frequency'
         ],
-        contextFromVideo: 'The video says a relative frequency table gives the proportion or percent in each category and helps students evaluate statements such as majority or nearly half.'
+        contextFromVideo: 'The lesson defines a frequency table as the number of cases in each category and a relative frequency table as the proportion or percent in each category, using the superpower survey of 50 students.'
     },
 
     reflect2: {
-        questionText: 'Why was finding the total of 2252 responses important before deciding whether the vaping statements were supported?',
+        questionText: 'How did the video use table values to decide whether a claim about categorical data was true or not supported? Use one example from the superpower or vaping scenario.',
         expectedElements: [
-            { id: 'need-total', description: 'Explains that the total is needed to convert counts into proportions or percentages', required: true },
-            { id: 'evaluate-claims', description: 'Explains that percentages are needed to check claims such as over one-third, majority, or over 10%', required: true },
-            { id: 'counts-alone', description: 'Explains that counts alone are not enough to judge those proportional statements', required: true },
-            { id: 'example-use', description: 'May give an example such as 782/2252 = 34.7% or 191/2252 = 8.5%', required: false }
+            { id: 'use-counts-or-percentages', description: 'Explains that counts, proportions, or percentages from the table are used to test a claim', required: true },
+            { id: 'specific-example', description: 'Uses a correct example from the lesson, such as fly plus telepathy equaling 50 percent or can\'t say drug unfamiliar being 8.5 percent', required: true },
+            { id: 'claim-judgment', description: 'States whether the claim is supported or not supported and why the numbers justify that decision', required: true },
+            { id: 'majority-threshold', description: 'May mention a benchmark such as majority meaning at least 50 percent or over one-third meaning above about 33 percent', required: false }
         ],
         scoringGuide: {
-            E: 'Response clearly explains that the total of 2252 is needed to compute percentages and determine whether proportional claims in the table are supported.',
-            P: 'Response shows some understanding that the total matters, but does not clearly connect it to percentages or to checking the claims.',
-            I: 'Response does not correctly explain why the total is necessary.'
+            E: 'Response explains that table values justify claims and uses a correct lesson example to show why a statement is true or not supported.',
+            P: 'Response gives part of the idea or mentions an example, but does not clearly connect the numbers to the claim decision.',
+            I: 'Response does not show how counts or relative frequencies are used to evaluate claims about the data.'
         },
         commonMistakes: [
-            'Saying the total was only needed to make the table look complete',
-            'Ignoring the role of percentages or proportions',
-            'Treating counts alone as enough to check majority or over 10% statements',
-            'Giving no connection to the actual claims in the problem'
+            'Giving an opinion instead of using table values',
+            'Using an example that does not match the lesson numbers',
+            'Failing to say whether the claim is supported or not supported',
+            'Ignoring the need to justify the claim in context'
         ],
-        contextFromVideo: 'In the vaping example, the teacher first totaled the frequencies to 2252 and then used that total to check statements like 34.7%, more than half, and 8.5%.'
+        contextFromVideo: 'The video checks statements by comparing counts and relative frequencies to words like majority, nearly half, over one-third, and over 10 percent. It uses examples such as fly plus telepathy equaling exactly 50 percent and can\'t say drug unfamiliar being only 8.5 percent.'
     },
 
     exitTicket: {
-        questionText: 'A random sample of 40 students was asked which school lunch change they would most like to see. The responses were: more choices = 14, shorter lines = 10, lower prices = 8, healthier meals = 5, and bigger portions = 3. Identify the individuals and variable, state whether the variable is categorical or quantitative, describe a frequency table and relative frequencies, decide whether a majority chose more choices or shorter lines, and write one other valid description in context.',
+        questionText: 'A random sample of 40 students was asked which school lunch side they prefer. The table shows fruit 12, chips 18, salad 6, and yogurt 4. Explain what a frequency table records, find the relative frequency or percent for chips and yogurt, decide whether a majority prefer chips, and justify your answer in context.',
         expectedElements: [
-            { id: 'individuals', description: 'Identifies the individuals as the 40 sampled students', required: true },
-            { id: 'variable-type', description: 'Identifies the variable as preferred lunch change and states that it is categorical', required: true },
-            { id: 'frequency-table', description: 'Gives or clearly describes the frequency counts for the categories', required: true },
-            { id: 'relative-frequencies', description: 'Gives the relative frequencies or percentages for the categories, such as 35%, 25%, 20%, 12.5%, and 7.5%', required: true },
-            { id: 'majority-claim', description: 'States that more choices plus shorter lines is 24 out of 40, or 60%, so the majority statement is supported', required: true },
-            { id: 'context-description', description: 'Writes another valid statement describing the distribution in context using a count, proportion, or percent', required: true }
+            { id: 'frequency-definition', description: 'Explains that a frequency table records the number of cases in each category', required: true },
+            { id: 'chips-relative-frequency', description: 'Finds chips as 18 out of 40, which is 0.45 or 45 percent', required: true },
+            { id: 'yogurt-relative-frequency', description: 'Finds yogurt as 4 out of 40, which is 0.10 or 10 percent', required: true },
+            { id: 'no-majority-chips', description: 'States that the claim of a majority preferring chips is not supported because 45 percent is less than 50 percent', required: true },
+            { id: 'context-justification', description: 'Uses counts or relative frequencies to justify the conclusion in the lunch-side context', required: true }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies the individuals and variable, states the variable is categorical, gives the counts and relative frequencies, correctly shows that 24/40 = 60% is a majority, and includes another valid contextual description.',
-            P: 'Response gets most of the table and description work correct but misses or confuses one major part such as the variable type, the relative frequencies, or the majority justification.',
-            I: 'Response has major errors or omissions in the identification, table description, percentages, or supported-claim reasoning.'
+            E: 'Response correctly explains the frequency table, computes the relative frequencies for chips and yogurt, rejects the majority claim, and justifies the answer in context.',
+            P: 'Response includes several correct ideas but misses one major part, such as an incorrect percent, no majority explanation, or weak context justification.',
+            I: 'Response omits multiple required parts or shows weak understanding of frequency tables and relative frequencies.'
         },
         commonMistakes: [
-            'Calling the variable quantitative instead of categorical',
-            'Giving counts without converting them to proportions or percents',
-            'Not checking the majority claim with 24 out of 40 or 60%',
-            'Writing a conclusion without using numbers from the data',
-            'Describing the data without keeping the statement in context of school lunch changes'
+            'Treating 18 students as a majority without comparing to the total of 40',
+            'Giving counts instead of relative frequencies for chips or yogurt',
+            'Forgetting that majority means at least 50 percent',
+            'Explaining the numbers without tying them to the lunch-side context'
         ],
-        contextFromVideo: 'The lesson emphasizes identifying individuals and a categorical variable, building frequency and relative frequency tables, and using those values to justify claims about the distribution in context.'
+        contextFromVideo: 'The lesson emphasizes that a frequency table gives counts, a relative frequency table gives proportions or percentages, and those values are used to justify claims such as whether a majority chose a category.'
     }
 };
 
@@ -126,7 +125,7 @@ window.buildReflectionPromptU1L3 = function(questionId, studentAnswer) {
         .map((e, i) => `${i + 1}. ${e.description}`)
         .join('\n');
 
-    return `You are grading an AP Statistics student's response about representing a categorical variable with tables (Topic 1.3).
+    return `You are grading an AP Statistics student's response about Topic 1.3: Representing a Categorical Variable with Tables.
 
 ## Question
 ${rubric.questionText}
