@@ -1,0 +1,18 @@
+# Video 1 — Slide Descriptions
+# Unit 1, Lesson 2
+
+The following list summarizes the visual changes and slide titles in the video:
+
+* [00:00] — Intro Slide: Topic 1.2: The Language of Variation: Variables.
+* [00:16] — Learning Objectives:
+    * Identify the individuals and variables in a data set.
+    * Classify variables as categorical or quantitative.
+* [00:32] — Variables and Individuals: A spreadsheet displays home prices in Charleston, South Carolina, with rows highlighting individuals (properties) and columns highlighting variables.
+* [01:51] — Identify Variables: The slide lists specific variables from the dataset, including property type, sales price, and zip code.
+* [02:32] — Categorical Variables: Defines categorical variables as those taking category names or labels, such as property type or zip code.
+* [03:17] — Quantitative Variables: Defines quantitative variables as numerical values for measured or counted quantities, such as price or number of bedrooms.
+* [03:50] — Check Your Understanding: Provides tips for identifying data types, such as grouping quantitative values into categories.
+* [05:08] — Scenario: An AP Statistics student survey with eight specific questions is presented.
+* [05:45] — Multiple Choice Question: "Which of the following is NOT a variable in this data set?"
+* [06:26] — Classifying Variables: A practice exercise classifying survey items like age, birth month, and grade level.
+* [07:44] — Wrap Up: A summary of the main takeaways regarding individuals, variables, and the two main types of variables.

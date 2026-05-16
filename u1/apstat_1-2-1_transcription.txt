@@ -1,0 +1,198 @@
+# Video 1 — Transcript
+# Unit 1, Lesson 2
+
+[00:00] AP Stat students, I'm Mr. Starns,
+[00:03] longtime AP statistics teacher, most
+[00:06] recently at the Lawrenceville School in
+[00:08] New Jersey. This video is on topic 1.2,
+[00:12] the language of variation, variables.
+[00:16] What will you learn in this video? Well,
+[00:18] first,
+[00:20] how do you identify the individuals and
+[00:22] variables in a data set?
+[00:25] And second, what are the two main types
+[00:27] of variables? and how do we distinguish
+[00:30] them?
+[00:32] Why don't we look at an example?
+[00:35] Here is a data set that I collected on
+[00:38] home prices in Charleston, South
+[00:40] Carolina.
+[00:43] The skill that we're going to be
+[00:44] practicing is describe data presented
+[00:47] numerically or graphically. In this
+[00:50] case, the data are presented
+[00:51] numerically.
+[00:54] The individuals in a data set can be
+[00:56] people, animals, or objects.
+[01:00] In this case, the individuals are shown
+[01:03] in the rows of our spreadsheet.
+[01:06] And the individuals represent the
+[01:08] properties for sale in Charleston, South
+[01:11] Carolina.
+[01:14] Next, we want to think about the
+[01:17] variables in the data set. A variable is
+[01:20] a characteristic that changes or varies
+[01:24] from one individual to another.
+[01:27] In a spreadsheet like this, the
+[01:29] variables are shown in the columns of
+[01:32] the table. Notice that there's no arrow
+[01:35] on the leftmost column titled ID. That's
+[01:39] because this is an identification number
+[01:42] representing each of the houses. It's
+[01:44] not actually a variable. So be on the
+[01:46] lookout for an identifier in a data
+[01:49] table.
+[01:51] Our learning objective is to identify
+[01:53] variables in a set of data. Well, in
+[01:55] this case, we have type of property,
+[01:59] sales price,
+[02:02] year built, number of bedrooms,
+[02:06] whether or not it has a pool,
+[02:09] distance to the beach measured in miles,
+[02:13] parking location, and zip code.
+[02:17] Be careful not to use the verbatim names
+[02:20] of the variables when you're identifying
+[02:22] the variable. In the case of "pool?", that's not appropriate
+[02:26] for a variable name. You should say
+[02:28] whether or not it has a pool.
+[02:32] There are two basic types of variables
+[02:34] that we'll study in AP statistics.
+[02:37] And our learning objective is to help
+[02:39] you classify those two types of
+[02:41] variables.
+[02:43] One type is a categorical variable which
+[02:45] takes on values that are category names
+[02:48] or group labels.
+[02:50] So, which are the categorical variables
+[02:53] in this data set?
+[02:55] Well, you can see that the type of home
+[02:57] or property,
+[03:00] whether or not it has a pool,
+[03:03] parking location,
+[03:06] and zip code. Now, zip code is
+[03:08] interesting because it takes values that
+[03:10] are numbers, but the numbers really are
+[03:13] representing a location.
+[03:17] A quantitative variable takes on
+[03:19] numerical values for a measured or
+[03:22] counted quantity. Some people like to
+[03:24] say that we can tell a quantitative
+[03:26] variable because it makes sense to find
+[03:28] an average of those values.
+[03:30] So which are the quantitative variables
+[03:32] in this data set?
+[03:34] Well, we have price,
+[03:37] year built, number of bedrooms, and
+[03:40] distance to the beach measured in miles.
+[03:43] It's always important when you're
+[03:45] measuring something to tell the units of
+[03:47] measurement.
+[03:50] So as we try to classify types of
+[03:52] variables, there are a few little things
+[03:54] to keep in mind. One is people often
+[03:57] refer to categorical data as the values
+[04:01] of the categorical variable in a data
+[04:03] set. So the categorical data that we see
+[04:06] here for type of property would be
+[04:09] house, condo, town home.
+[04:13] Likewise, quantitative data are the
+[04:16] values of a quantitative variable in a
+[04:17] data set. So for example, number of
+[04:19] bedrooms, we have 3, 2, 1, 3, 4, 3.
+[04:25] And as I was mentioning earlier, not all
+[04:27] variables that take numerical values are
+[04:29] quantitative. Like zip code, for
+[04:31] example.
+[04:34] Also, sometimes researchers like to make
+[04:37] a quantitative variable into a
+[04:40] categorical variable by grouping values
+[04:43] together. For example, a researcher
+[04:45] might want to think about distance to
+[04:46] the beach in terms of "close," say less
+[04:49] than a mile; "nearby," one to less than
+[04:53] three miles; and "far" from the beach, say
+[04:55] more than 3 miles, uh, or equal to 3
+[04:58] miles. So if we group the values in that
+[05:01] way, those labels "close," "nearby," and "far"
+[05:04] would represent categorical data.
+[05:08] This is a good time for you to do a
+[05:10] little practicing.
+[05:12] So here's a new scenario.
+[05:14] An AP statistics teacher collected data
+[05:17] from all 30 students in class with the
+[05:19] following survey. Let's take a look at
+[05:21] the items here. Grade level, circle one.
+[05:24] Age, oh, even to decimal number of
+[05:26] years. I bet that takes some thinking
+[05:28] for the students. Uh, favorite season,
+[05:32] birth month, uh, reaction time in an
+[05:34] online test measured in milliseconds,
+[05:37] height in centimeters,
+[05:40] can you roll your tongue, and number of
+[05:42] people who live in your household?
+[05:45] So, our first question, which of the
+[05:47] following is not a variable in this data
+[05:50] set?
+[05:51] A. Favorite season. B. Number of people
+[05:54] living in the household. C. Number of
+[05:57] students in this AP statistics class. D.
+[06:00] Whether or not you can roll your tongue.
+[06:05] Have you got your answer?
+[06:08] Well, the correct answer is C. The
+[06:10] number of students in this AP statistics
+[06:12] class is not a variable. It's actually a
+[06:15] constant and it's 30.
+[06:18] All the others, favorite season, number
+[06:20] of people living in the household, and
+[06:21] whether or not you can roll your tongue,
+[06:23] are variables.
+[06:26] Let's try another one. This one's about
+[06:27] classifying variables into one of two
+[06:29] types, categorical or quantitative.
+[06:33] So, as I present each variable, see if
+[06:35] you can categorize it, pardon the pun,
+[06:38] as either categorical or quantitative.
+[06:41] Let's start with age.
+[06:44] Well, age is quantitative.
+[06:47] It represents a measured quantity to the
+[06:49] decimal number of years.
+[06:52] How about birth month?
+[06:55] Right, that one's a categorical
+[06:56] variable. It has a label like October.
+[07:01] How about grade level? Be a little
+[07:04] careful on this one.
+[07:07] It does take number values, but grade
+[07:10] level is a categorical variable. If you
+[07:12] think about renaming those as freshman,
+[07:15] sophomore, junior, and senior, you'll
+[07:17] see why. Those are not really counts of
+[07:19] anything or measurements of anything.
+[07:23] Number of people living in household.
+[07:27] That one is quantitative.
+[07:29] It's a count.
+[07:32] In topic 1.5, you're going to learn a
+[07:34] little bit more about classifying
+[07:36] quantitative variables as discrete,
+[07:38] which are usually the counting ones, or
+[07:40] continuous, which are usually the
+[07:42] measuring ones.
+[07:44] So, what should you take away from this
+[07:46] video?
+[07:47] Well, first, how do you identify the
+[07:50] variables and the individuals in a data
+[07:52] set? Remember that the individuals are
+[07:54] the people, the animals, or the objects
+[07:56] described by the set of data. And
+[07:58] the variable is the characteristic that
+[08:00] changes or varies from one individual to
+[08:02] another.
+[08:04] What are the two main types of variables
+[08:06] and how do we distinguish them? Well, we
+[08:08] have categorical variables. Those take
+[08:11] values that are category names or
+[08:13] labels. And then we have quantitative
+[08:15] variables. Those are the ones that take
+[08:17] number values for a measured or counted
+[08:19] quantity.
+[08:22] So, thank you for tuning in and
+[08:24] remember, keep looking for the data.
