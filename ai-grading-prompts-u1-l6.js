@@ -1,106 +1,115 @@
-/**
+﻿/**
  * AI Grading Prompts for Unit 1 Lesson 6: Topic 1.6
- * Topic 1.6: Describing the Distribution of a Quantitative Variable
+ * Topic 1.6: Topic 1.6
  *
  * Learning Objectives:
- *   Identify the four characteristics used to describe a quantitative distribution
- *   Use vocabulary such as symmetric, skewed left, skewed right, unimodal, bimodal, and uniform to describe shape
- *   Describe center as the typical response and variability as the spread of the distribution
- *   Identify unusual features such as outliers, gaps, and clusters
- *   Describe a quantitative distribution in context
+ *   Describe quantitative data distributions using shape, center, variability, and unusual features
+ *   Use shape vocabulary such as symmetric, skewed left, skewed right, unimodal, bimodal, and uniform
+ *   Identify outliers, gaps, and clusters in a quantitative distribution
+ *   Describe a distribution in context
  */
 
 // Lesson context from video transcripts for AI grading
 window.LESSON_CONTEXT_U1L6 = `
 VIDEO 1 - Describing the Distribution of a Quantitative Variable (~6:28):
-- The lesson asks how to describe the distribution of a quantitative variable.
-- Students are told that there are four important characteristics to include in a description: shape, center, variability or spread, and unusual features.
-- Shape vocabulary includes symmetric, skewed left, skewed right, unimodal, bimodal, and uniform.
-- A symmetric distribution has left and right sides that are roughly mirror images.
-- A skewed-left distribution has a longer tail on the left, while a skewed-right distribution has a longer tail on the right.
-- A unimodal distribution has one peak, and a bimodal distribution has two peaks.
-- A uniform distribution has about the same frequency across values.
+- The video focuses on how to describe the distribution of a quantitative variable.
+- It introduces two big questions: what characteristics matter when describing a quantitative distribution, and what vocabulary best communicates those characteristics.
+- The lesson uses the Flint water crisis data set with lead levels from 71 water samples collected from Flint residents.
+- The teacher uses a dotplot of the Flint lead-level data as the main display.
+- A complete description of a quantitative distribution should include four characteristics: shape, center, variability or spread, and unusual features.
+- A symmetric distribution has a left side that is essentially a mirror image of the right side.
+- A skewed left distribution has a longer left tail.
+- A skewed right distribution has a longer right tail.
+- A distribution with one main peak is unimodal.
+- A distribution with two prominent peaks is bimodal.
+- A distribution with about the same frequency across values is uniform.
 - Center answers the question of which value best describes the typical response.
-- Variability answers whether the values are packed close together or spread out.
+- Variability or spread answers whether the values are packed close together or more spread out.
 - Unusual features include outliers, gaps, and clusters.
-- The main example uses Flint water crisis lead-level data from 71 water samples.
-- In the Flint example, the distribution is described as unimodal and skewed right.
-- The center of the Flint distribution is described as about 3 to 4 parts per billion.
-- The variability is described generally by noting the values range from 0 to 104 parts per billion.
-- The Flint data also show a cluster between 0 and 10, a gap between 42 and 104, and some high outliers.
-- The lesson emphasizes that students should always include context when describing a distribution, such as saying the distribution of lead levels rather than using shape words alone.
-- The key takeaway is that strong descriptions combine statistical vocabulary with context and address shape, center, variability, and unusual features.
+- Outliers are values that do not fit with the rest of the distribution and are much higher or lower than most values.
+- Gaps are regions where no values appear.
+- Clusters are concentrations of values, often separated by gaps.
+- The Flint lead-level distribution is described as unimodal and skewed right.
+- The teacher says a typical value for the Flint lead levels is about 3 to 4 parts per billion.
+- The spread of the Flint data goes from 0 to 104 parts per billion.
+- The Flint data have a cluster of values between 0 and 10.
+- There is a clear gap in the Flint data between 42 and 104.
+- The high-end values, especially 104, may be considered outliers.
+- The lesson emphasizes that students should always include context, such as lead levels for Flint water samples, when describing a distribution.
+- The summary returns to the four required characteristics: shape, center, variability, and unusual features.
 `;
 
 // Rubrics for each reflection question
 window.RUBRICS_U1L6 = {
     reflect1: {
-        questionText: 'What four characteristics should you include when describing the distribution of quantitative data?',
+        questionText: 'Describe the Flint lead-level distribution using all four characteristics from the lesson. Be sure to use context in your answer.',
         expectedElements: [
-            { id: 'shape', description: 'Names shape as one of the four characteristics', required: true },
-            { id: 'center', description: 'Names center as one of the four characteristics', required: true },
-            { id: 'variability', description: 'Names variability or spread as one of the four characteristics', required: true },
-            { id: 'unusual-features', description: 'Names unusual features as one of the four characteristics', required: true },
-            { id: 'brief-meaning', description: 'May briefly explain one or more characteristics, such as center meaning typical value or unusual features meaning outliers, gaps, and clusters', required: false }
+            { id: 'shape-description', description: 'Describes the shape as unimodal and skewed right or gives equivalent correct shape language', required: true },
+            { id: 'center-description', description: 'Identifies a typical value around 3 to 4 parts per billion', required: true },
+            { id: 'variability-description', description: 'Describes the spread or variability as going from 0 to 104 parts per billion or gives an equivalent spread statement', required: true },
+            { id: 'unusual-features', description: 'Mentions unusual features such as the cluster from 0 to 10, the gap between 42 and 104, or high outliers', required: true },
+            { id: 'context', description: 'Uses context by referring to Flint lead levels or Flint water samples', required: true },
+            { id: 'single-peak-detail', description: 'May mention that the single peak is at or near 0', required: false }
         ],
         scoringGuide: {
-            E: 'Response correctly identifies shape, center, variability or spread, and unusual features as the four characteristics, and may briefly explain what they mean.',
-            P: 'Response identifies some of the four characteristics but leaves out or confuses at least one major part.',
-            I: 'Response does not correctly identify the four characteristics used to describe a quantitative distribution.'
+            E: 'Response clearly describes the Flint distribution with shape, center, variability, unusual features, and context.',
+            P: 'Response includes some correct characteristics of the Flint distribution but leaves out one major part or uses weak context.',
+            I: 'Response does not correctly describe the Flint distribution using the four required characteristics.'
         },
         commonMistakes: [
-            'Leaving out variability or unusual features',
-            'Replacing one of the four characteristics with a graph type like histogram',
-            'Using only one or two of the four terms',
-            'Giving vague statements without naming the actual four characteristics'
+            'Describing only the shape and forgetting center or spread',
+            'Leaving out context and writing only generic graph vocabulary',
+            'Calling the Flint distribution symmetric',
+            'Ignoring the unusual features such as the gap or outliers'
         ],
-        contextFromVideo: 'The video explicitly says there are four characteristics to include: shape, center, variability, and unusual features.'
+        contextFromVideo: 'The video describes the Flint lead-level distribution as unimodal and skewed right, with a typical value around 3 to 4, spread from 0 to 104, a cluster from 0 to 10, a gap from 42 to 104, and possible outliers on the high end.'
     },
 
     reflect2: {
-        questionText: 'Why should you include context when describing a distribution, and what might that sound like in a complete sentence?',
+        questionText: 'Explain what unusual features you should look for when describing a quantitative distribution. Use at least two terms from the lesson and connect one of them to the Flint data.',
         expectedElements: [
-            { id: 'name-variable', description: 'Explains that context means naming the variable or situation being described, not just listing shape words', required: true },
-            { id: 'why-context-matters', description: 'Explains that context makes the description clearer and more meaningful', required: true },
-            { id: 'example-sentence', description: 'Gives or describes an example of a contextualized sentence, such as saying the distribution of lead levels is skewed right', required: true },
-            { id: 'feature-in-context', description: 'May include a specific characteristic such as shape, center, or unusual features inside the contextualized sentence', required: false }
+            { id: 'outlier-definition', description: 'Explains that outliers are unusually high or low values that do not fit with the rest of the data', required: true },
+            { id: 'gap-definition', description: 'Explains that a gap is a region where no observed data values appear', required: true },
+            { id: 'cluster-definition', description: 'Explains that clusters are concentrations of values, often separated by gaps', required: true },
+            { id: 'flint-connection', description: 'Connects at least one unusual feature to the Flint data, such as the cluster from 0 to 10, the gap from 42 to 104, or the high outlier', required: true },
+            { id: 'distribution-description-role', description: 'States that unusual features are one of the important characteristics in a full distribution description', required: true },
+            { id: 'gaps-clusters-together', description: 'May mention that gaps and clusters often appear together', required: false }
         ],
         scoringGuide: {
-            E: 'Response explains that context means naming the real variable or situation, explains why this improves clarity, and gives a reasonable example of a complete sentence in context.',
-            P: 'Response shows some understanding of context, but does not clearly explain why it matters or does not provide a strong example sentence.',
-            I: 'Response does not correctly explain the role of context when describing a distribution.'
+            E: 'Response accurately explains unusual features, uses lesson vocabulary, and connects at least one feature to the Flint example.',
+            P: 'Response shows partial understanding of unusual features but misses one major definition or the Flint connection.',
+            I: 'Response does not correctly explain unusual features in a quantitative distribution.'
         },
         commonMistakes: [
-            'Saying context is optional',
-            'Giving only shape words like skewed right without naming the variable',
-            'Not explaining why context helps',
-            'Giving an example sentence with no actual context or variable'
+            'Treating a gap as a low bar rather than a region with no data',
+            'Calling any large value an outlier without explaining why it does not fit',
+            'Mentioning clusters without explaining that they are concentrations of values',
+            'Forgetting to connect the explanation to the Flint example'
         ],
-        contextFromVideo: 'Luke Wilcox points out that he said the distribution of lead levels and emphasizes that students should always include context when describing a distribution.'
+        contextFromVideo: 'The video says unusual features include outliers, gaps, and clusters. In the Flint data, the teacher points out a cluster from 0 to 10, a gap from 42 to 104, and very high values that may be outliers.'
     },
 
     exitTicket: {
-        questionText: 'A trainer recorded the number of minutes 15 athletes spent stretching before practice one afternoon: 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 9, 10, 10, 18, 22. Describe the shape using appropriate vocabulary, give a reasonable center in context, describe the variability or spread, identify any unusual features, and write one complete sentence describing the distribution in context.',
+        questionText: 'A school recorded the number of minutes 11 students waited for a late bus after school. Describe the shape using at least two appropriate terms, give a typical value for the center, describe the variability in context, and identify any unusual features.',
         expectedElements: [
-            { id: 'shape-description', description: 'Describes the distribution as unimodal and skewed right, or otherwise clearly notes one main peak with a longer right tail', required: true },
-            { id: 'center-description', description: 'Gives a reasonable typical value around 7 or 8 minutes in context', required: true },
-            { id: 'variability-description', description: 'Describes the spread, such as values ranging from 4 to 22 minutes or noting the distribution is spread out by the high values', required: true },
-            { id: 'unusual-features', description: 'Identifies unusual features such as a cluster from about 4 to 10, a gap before the high values, or possible high outliers at 18 and 22', required: true },
-            { id: 'context-sentence', description: 'Writes about minutes spent stretching by athletes in a complete sentence or otherwise clearly includes context', required: true }
+            { id: 'shape', description: 'Describes the distribution as skewed right or right-skewed and also identifies one main peak or says unimodal', required: true },
+            { id: 'center', description: 'Gives a typical value around 4 minutes or an equivalent center statement in context', required: true },
+            { id: 'variability', description: 'Describes the spread as running from 1 to 18 minutes or gives an equivalent variability statement in context', required: true },
+            { id: 'unusual-features', description: 'Identifies unusual features such as a cluster from about 1 to 6, a gap before 18, or the value 18 as an outlier', required: true },
+            { id: 'context', description: 'Uses context by referring to minutes waiting for the late bus or waiting times for students', required: true }
         ],
         scoringGuide: {
-            E: 'Response gives a reasonable shape description, center, spread, and unusual features, and does so in context for the athletes stretching data.',
-            P: 'Response gets much of the description right but misses or confuses one major component such as shape, center, spread, unusual features, or context.',
-            I: 'Response has major errors or omissions in describing the distribution of the stretching-time data.'
+            E: 'Response correctly describes the distribution with shape, center, variability, unusual features, and context.',
+            P: 'Response includes several correct ideas but misses one major part of the description or uses weak context.',
+            I: 'Response omits multiple required parts or shows weak understanding of how to describe a quantitative distribution.'
         },
         commonMistakes: [
-            'Ignoring the long right tail created by 18 and 22',
-            'Choosing a center far from the main cluster of values',
-            'Describing only shape and leaving out spread or unusual features',
-            'Forgetting to write in context about athletes and stretching time',
-            'Calling the distribution symmetric even though the high values stretch the right side'
+            'Giving only one shape word when the prompt asks for at least two appropriate terms',
+            'Listing the minimum and maximum without describing center',
+            'Ignoring the high value of 18 as an unusual feature',
+            'Describing the numbers without mentioning bus wait times'
         ],
-        contextFromVideo: 'The lesson models a full description by addressing shape, center, variability, and unusual features, and by stating the answer in context.'
+        contextFromVideo: 'The lesson teaches that a full description of a quantitative distribution should include shape, center, variability, unusual features, and context. Appropriate unusual features here would include the high value 18, the gap before it, and the main cluster of smaller waiting times.'
     }
 };
 
@@ -119,7 +128,7 @@ window.buildReflectionPromptU1L6 = function(questionId, studentAnswer) {
         .map((e, i) => `${i + 1}. ${e.description}`)
         .join('\n');
 
-    return `You are grading an AP Statistics student's response about describing the distribution of a quantitative variable (Topic 1.6).
+    return `You are grading an AP Statistics student's response about Topic 1.6: Topic 1.6.
 
 ## Question
 ${rubric.questionText}
