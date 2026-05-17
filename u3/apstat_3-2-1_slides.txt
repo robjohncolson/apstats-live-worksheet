@@ -1,0 +1,18 @@
+# Video 1 — Slide Descriptions
+# Unit 3, Lesson 2
+
+Description of each visual change with timestamps:
+
+[00:00] — Daily Video 1: Topic 3.2 - Planning Studies
+[00:15] — What will we learn today? Lists the main learning objectives, including the difference between populations and samples, observational studies versus experiments, and the types of conclusions that can be drawn from each.
+[00:29] — Example: Abraham Wald and Survival Bias. A graphic shows a diagram of a bomber plane with red dots indicating where returning aircraft had been hit by bullets during World War II.
+[01:10] — Abraham Wald and Survival Bias (Continued). The same plane graphic is shown, but with the correct vulnerable area (the tail) highlighted based on Wald's statistical analysis.
+[01:53] — Populations vs. Samples. Defines a population as an entire group of individuals of interest and a sample as a subset of that population.
+[02:39] — Representativeness. Asks if the sampled hit locations were representative of the entire population and notes that non-random samples are often not representative.
+[03:19] — Generalization. Explains that generalizations about a population are only appropriate when based on randomly selected or representative samples.
+[04:00] — The Racial Income Gap. Displays 2018 data comparing the median annual household incomes of white households ($70,642) and black households ($58,745).
+[04:56] — Confounding. Lists potential causes for the wage gap, such as school inequity, familial connections, and direct discrimination, labeling these as "confounding factors".
+[05:38] — Observational Study. Defines observational studies (retrospective and prospective) and notes that they cannot be used to infer cause and effect.
+[06:30] — The Resume Experiment (Bertrand and Mullainathan). Describes an experiment where identical resumes with either "white-sounding" or "black-sounding" names were randomly assigned to employers to test for hiring discrimination.
+[07:27] — Experiments. Defines an experiment as a study where treatments are imposed on subjects and notes that well-designed experiments can determine causal relationships.
+[07:47] — Key Takeaways. A final summary slide reiterates the definitions of sample and population, the limitations of observational studies, and the conditions for generalization.
