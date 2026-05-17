@@ -1,0 +1,20 @@
+# Video 2 — Slide Descriptions
+# Unit 3, Lesson 5
+
+The video uses several slides to detail the components of well-designed experimental studies, using a specific example of cattle in Botswana to illustrate these principles.
+
+[00:00] — Intro to Experimental Design: Title slide; second video in the series, focusing on describing the elements of a well-designed experiment.
+[00:22] — What Will We Learn Today?: The learning objective is to understand the principles of a well-designed experiment.
+[00:28] — Principles of Experimental Design: Lists four essential components:
+  * Comparison: Comparing at least two treatment groups, which can include a control group, to determine the effectiveness of a treatment.
+  * Random Assignment: The random allotment of treatments to experimental units to balance out potential confounding factors.
+  * Replication: Using enough experimental units in each group to account for individual variability and see clear differences between treatments.
+  * Control: Controlling potential confounding variables as much as possible.
+[01:40] — Example: Bullseye: Introduces an experiment in Botswana testing whether painting eye spots or cross marks on the rear of cattle reduces attacks from predatory carnivores compared to unmarked cattle.
+[03:00] — Elements of a Well-Designed Experiment (Bullseye): Maps the example to the four principles:
+  * Comparison: Compares three groups: eye spots, cross marks, and unmarked cattle.
+  * Randomization: Cattle were randomly assigned to these three treatment groups.
+  * Replication: Provides the sample sizes for each group (683, 543, and 835 cattle).
+  * Control: The experiment was conducted in the same general location and time period to control for confounding factors like carnivore behavior.
+[04:06] — Completely Randomized Design Diagram: A flowchart representing the experimental process: cattle randomly allocated → groups assigned treatments (Group 1: eye spots, Group 2: cross marks, Group 3: unmarked) → comparison of the proportion of cattle killed by lions or leopards.
+[06:11] — Key Takeaways: A well-designed experiment must include comparison, random assignment, replication, and control of confounding factors.

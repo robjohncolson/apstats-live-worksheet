@@ -1,0 +1,17 @@
+# Video 3 — Slide Descriptions
+# Unit 3, Lesson 5
+
+The following is a list of the slides and visual changes in the video:
+
+[00:00] — Experimental Design Video 3: The opening title slide introduces the topic of exploring different experimental designs and methods.
+[00:19] — What will we learn today?: Outlines the learning objectives: advantages and disadvantages of completely randomized design, the concept of blocking, and the placebo effect.
+[00:37] — Experimental Design: Introduces a real-world experiment regarding Melanoma treatments, comparing a standard of care to a new combination treatment.
+[01:16] — Completely Randomized Design: A diagram illustrates the process of taking subjects and randomly assigning them to two treatment groups to compare results.
+[02:20] — Completely Randomized Design (Benefits): Lists the benefit of this design (balancing confounding variables) while noting the disadvantage that patient-specific differences can still affect results.
+[03:22] — Randomized Block Design: Explains that blocking ensures units within a block are similar based on a specific variable, such as cancer severity, to separate natural variability from treatment effects.
+[04:16] — Randomized Block Design (Diagram): A flowchart shows subjects being split into blocks based on severity before being randomly assigned treatments within those blocks.
+[05:28] — Placebo: Defines a placebo as a fake treatment similar to the one being tested and provides an example using a pain relief ointment.
+[06:01] — The Use of Placebos: A table illustrates how a placebo can be used in the Melanoma study to ensure all patients follow the same two-week visitation schedule, regardless of their treatment group.
+[08:11] — Blinding: Defines single-blind and double-blind experiments, focusing on whether subjects or researchers know which treatment is being administered.
+[09:11] — Matched Pairs Design: Explains a special type of block design where blocks of size two are closely aligned (e.g., identical twins) or a single subject receives both treatments in a random order.
+[09:30] — Takeaways: Summarizes the main points: completely randomized design balances confounding variables, block design ensures similarity before randomization, placebos help identify true treatment effects, and blinding prevents bias.

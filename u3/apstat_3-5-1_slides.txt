@@ -1,0 +1,16 @@
+# Video 1 — Slide Descriptions
+# Unit 3, Lesson 5
+
+The following is a list of the slides and visual changes in the video:
+
+[00:00] — Introduction: A title slide introduces "Topic 3.5: Introduction to Experimental Design".
+[00:10] — Learning Objectives: Lists the main goals of the video, which include learning how confounding affects variable relationships and identifying the components of an experiment.
+[00:36] — Example: Take Note: A scenario is presented questioning if students who regularly take notes in AP Statistics earn higher grades than those who do not.
+[01:59] — Confounding Variable: Defines a confounding variable as one related to the explanatory variable that influences the response variable, potentially creating a false perception of association.
+[03:31] — Defining an Experiment: Provides definitions for key experimental terms:
+  * Experiment: Intentionally imposing treatments on units.
+  * Experimental Units: Individuals (subjects or participants) receiving the treatments.
+  * Explanatory Variable (Factor): The manipulated variable used to predict change.
+  * Response Variable: The variable used to measure the outcome.
+[04:26] — Designing an Experiment: Outlines a potential experiment using note-taking as the treatment, with two levels (taking notes or not) and test grades as the response variable.
+[06:02] — Key Takeaways: A final summary slide notes that observational studies cannot determine causation and that experiments intentionally impose treatments to observe a response.
