@@ -1,0 +1,33 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 9
+
+The following is a list of slide titles and visual changes from the video:
+
+[00:00] — Topic 2.9: Analyzing Departures from Linearity
+[00:13] — Learning Objectives:
+  * Defining high leverage points in linear regression.
+  * Defining outliers in linear regression.
+  * Understanding the effects of influential points on the least squares regression line, correlation, and r-squared.
+[00:30] — Example: San Antonio Supermarket Locations:
+  * Context: Average income vs. number of organic items offered.
+  * Scatterplot showing a positive trend with a regression line (y-hat = 4.7 + 0.001x).
+[01:42] — Removing Low Leverage Points:
+  * Demonstration of removing points near the mean of x (x-bar).
+  * Visual comparison showing the regression line does not change substantially.
+[02:30] — High Leverage Points:
+  * Definition: Points with unusually large or small x-values (far from x-bar).
+  * Demonstration of removing high leverage points, showing a significant shift in the y-intercept and regression line.
+[03:59] — Outliers in Regression:
+  * Definition: Points with an unusually high magnitude residual.
+  * Visual comparison of correlation (r) and r-squared with and without an outlier.
+[05:01] — Types of Influential Points Summary:
+  * Influential points: Removing them substantially changes the slope, y-intercept, and/or correlation.
+  * Categorization: Outliers, high leverage points, or both.
+[05:29] — Visual Examples of Influential Points:
+  * Model 1: High leverage point (not an outlier).
+  * Model 2: Outlier (not high leverage).
+  * Model 3: Both high leverage and an outlier.
+[06:04] — Key Takeaways:
+  * High leverage points have unusual x-values.
+  * Outliers have large residuals.
+  * Influential points affect slope, y-intercept, and/or correlation when removed.

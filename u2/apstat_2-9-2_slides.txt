@@ -1,0 +1,24 @@
+# Video 2 — Slide Descriptions
+# Unit 2, Lesson 9
+
+The following is a description of the slide and visual changes in the video:
+
+[00:00] — Introduction: Nonlinear Relationships
+[00:16] — Learning Objectives:
+  * What to do with nonlinear bivariate data
+  * Effects of transformations on data sets
+  * Assessing if transforming data improved model fit
+[00:34] — Case Study: Income and Life Expectancy
+[01:12] — Scatterplot: Income vs. Life Expectancy (2018 Data)
+[01:34] — Analyzing Specific Data Points (US vs. Japan)
+[02:24] — Linear Model Assessment (Least Squares Regression Line)
+[02:36] — Residual Plot Analysis
+[02:54] — Logarithmic Model Overlay
+[03:05] — The Solution: Data Transformation
+[03:22] — Why Log Transformation? (Reducing Skew)
+[04:12] — Comparison: Untransformed vs. Log Transformed Data
+[04:34] — Improved Residual Plot (Randomness)
+[04:46] — Comparing R-squared Values
+[05:15] — Other Transformation Types and AP Stats Expectations
+[05:42] — Key Takeaways/Summary
+[06:01] — Closing Remarks
