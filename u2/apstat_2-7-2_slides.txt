@@ -1,0 +1,14 @@
+# Video 2 — Slide Descriptions
+# Unit 2, Lesson 7
+
+The following list describes the visuals presented in the video:
+
+[00:00] — Assessing a Linear Model
+[00:08] — What Will I Learn?
+[00:15] — Organic Items in San Antonio (Example)
+[00:41] — Good Fit (Example)
+[01:13] — Residual Plot for the San Antonio Example
+[02:23] — Bad Fit (Example)
+[03:26] — Revisiting the Organic Items Model
+[03:57] — What Should I Take Away?
+[04:22] — Be Critical. Be Cautious. Be Compassionate.

@@ -1,0 +1,46 @@
+# Video 2 — Transcript
+# Unit 2, Lesson 7
+
+[00:00] Hello, statisticians, Mr. Youngsaver here on behalf of the College Board.
+[00:05] We're sticking with Topic 2.7 today, and this video is going to illustrate how to use residual plots to determine if linear models are appropriate for different datasets.
+[00:13] So, what exactly are we going to learn today?
+[00:17] We're going to learn: if a linear model is a good fit, what does the residual plot tend to look like?
+[00:20] And if a linear model is a bad fit, what might the residual plot look like?
+[00:24] Also, what do we do when we encounter a bad-fitting model?
+[00:30] So, let's look at an example, and this is going to be a continuation from last time.
+[00:32] Last time we looked at some data compiled by a former student of mine named Linda, where she collected the average income in different zip codes in the city of San Antonio and then the number of organic items offered in local grocery stores in those zip codes.
+[00:44] We found a positive correlation.
+[00:48] So, what we did was we charted all the residuals and we visualized those residuals on a residual plot.
+[00:54] To remind you, the way a residual plot differs from a scatter plot is, instead of having the actual y-values on the y-axis—meaning in this case the number of organic items at grocery stores—we chart the residual values on the y-axis.
+[01:09] And through that way, we tend to focus in on residuals.
+[01:13] So, here was the residual plot for our model and this data.
+[01:18] And we're going to ask: what does this residual plot indicate about the fit of our model?
+[01:22] So, in order to analyze that, let's look at a couple of simpler examples.
+[01:25] So, this is what we consider to be a good fit.
+[01:31] And let's look at the residual plot to see how we can tell that it's a good fit model.
+[01:35] This is a strong positive correlation, and a linear model is appropriate here.
+[01:39] And one way we can tell that is we can look at the residual plot.
+[01:42] This is all the residuals, again, plotted according to the y-axis.
+[01:47] And what you notice here is—well, you can't really notice a lot. There's not a lot of patterns. And that's a good thing.
+[01:53] We see apparent randomness in this residual plot—that randomness, some scatter centered at zero, with no clear patterns to the data.
+[02:04] So, what this means is that our model—that function of x, our linear model—captured the linear trend of the data without trying to capture the random residual noise around it.
+[02:13] The residual plot shows this random noise, which means that our model captured the pattern and what's left is just this noise that we don't model because it's random noise.
+[02:23] Now, let's look at an example of a bad fit.
+[02:27] Now, at first, you might look at this and be like, "Okay, a linear model seems appropriate." It looks like a pretty strong positive association.
+[02:34] And so you put a linear model on it, but then you tend to notice a little pattern.
+[02:39] Let's look at the residual plot and see if—okay, yeah, the residual plot shows a definite pattern there.
+[02:46] We see up, then down, then up.
+[02:48] So, what's happening here is we see a curved pattern in our residuals, and what this means is that these residuals are not random noise.
+[02:56] There is a curvature to this trend that our model—a simple linear model—failed to capture.
+[03:01] So, the linear model may not be the best fit for this data.
+[03:07] So, what residual plots do for us is they accentuate possible trends in the residuals—really focus in on them—which allows us to better assess our model fit and then question: maybe we should add a more complex, maybe nonlinear model to this, or maybe go with it despite what we see. But it gives us the ability to see what's going on.
+[03:27] So, let's go back to our original data, and this was the residual plot.
+[03:31] And we notice a fair amount of random scatter centered at zero, but there's these shaded areas here where we notice some less apparent randomness.
+[03:39] We see kind of an upward trend, then a downward.
+[03:42] So, what we're going to do is, to really analyze this, we're going to learn about testing other kinds of model fits in Topic 2.9 with some other datasets to get into more complex cases of model fit and what we can do to explore how we can make better models.
+[03:57] So, what should we take away today?
+[03:59] Well, residual plots focus in on residuals, which allow us to better assess model fit.
+[04:06] And when you see apparent randomness with scatter centering at zero, it's a good sign for model fit in your residual plot.
+[04:13] When you see patterns among residual values, that tends to be a bad sign for linear model fit, and you might need to consider nonlinear models or other kinds of modeling procedures.
+[04:22] And as always, statisticians, when analyzing data: be critical, be cautious, be compassionate, and of course, avoid B.S.—bad statistics.
+[04:31] Thank you.

@@ -1,0 +1,19 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 7
+
+The following is a list of visuals and slide transitions from the video:
+
+[00:00] — Topic 2.7: Residuals: The introductory slide lists the presenter's name and the topic for the video, which covers calculating and interpreting residuals and constructing residual plots.
+[00:11] — What will we learn today?: A bulleted list outlining the three main goals: calculating a residual, interpreting a residual, and constructing residual plots.
+[00:21] — A neighborhood store: An introductory slide for a case study asking if neighborhood is a good predictor of access to healthy foods.
+[00:54] — Organic items vs. Income: A scatterplot with a line of best fit showing the relationship between average household income (x-axis) and the number of organic items (y-axis). Also displays the linear regression equation: predicted Organic = -11.45 + 0.0009415(Income).
+[01:47] — What is a residual?: A definition slide stating that a residual is the difference between the actual response value (y) and the predicted response value (y-hat). Formula: Residual = y - y-hat.
+[01:58] — Calculating a residual: Presents a specific problem: predicting the number of organic items for a zip code with a $66,730 average income and finding the residual if the actual number of items is 84.
+[02:29] — Prediction: Shows the step-by-step calculation to find the predicted value (y-hat = 51.4) by plugging the income into the regression equation.
+[02:59] — Residual: Shows the calculation of the residual (84 - 51.4 = 32.6) and provides a written interpretation: "The actual number of organic vegetable varieties offered is greater than predicted by 32.6 items."
+[03:36] — Interpreting residuals: A summary slide explaining that positive residuals indicate model underestimation, while negative residuals indicate model overestimation.
+[03:54] — Visualizing residuals: Shows the original scatterplot with a vertical line representing a specific residual.
+[04:02] — Building a residual plot: A split-screen visual showing a point on the scatterplot being mapped to its corresponding location on a residual plot.
+[04:34] — Building a residual plot (continued): The visual continues to map individual points from the scatterplot to the residual plot to show how the second plot is constructed.
+[04:58] — Residual Plot: A final version of the residual plot for all data points, with the x-axis representing income and the y-axis representing residual values.
+[05:41] — What should we take away?: A concluding summary slide reviewing the definition of residuals, the meaning of positive and negative values, and the purpose of residual plots.
