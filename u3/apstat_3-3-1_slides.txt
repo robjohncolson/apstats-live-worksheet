@@ -1,0 +1,25 @@
+# Video 1 — Slide Descriptions
+# Unit 3, Lesson 3
+
+The following is a list of slide titles and visual changes from the video with their corresponding timestamps:
+
+[00:00] — Topic 3.3: Random Sampling and Data Collection
+[00:14] — Learning Objectives
+[00:30] — Example: San Antonio Income Segregation
+[01:01] — Distribution of Household Incomes (San Antonio, 2017)
+[01:14] — Census vs. Random Sample
+[01:56] — Map of San Antonio Households
+[02:23] — Simple Random Sample (SRS)
+[02:38] — How to Select an SRS
+[03:08] — Simulated SRS Map Results
+[04:43] — SRS Median Income Estimate ($50,500)
+[05:00] — Cluster Random Sample
+[05:20] — How to Select a Cluster Sample
+[06:03] — Cluster Sample Median Income Estimate ($110,350)
+[06:13] — Stratified Random Sample
+[06:30] — How to Select a Stratified Sample
+[07:14] — Stratified Sample Median Income Estimate ($51,025)
+[07:21] — Comparison: Cluster vs. Stratified
+[08:12] — Systematic Random Sample
+[08:49] — Final Question: Which estimate do you trust and why?
+[09:05] — Summary of Sampling Methods

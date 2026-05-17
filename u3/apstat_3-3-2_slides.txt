@@ -1,0 +1,16 @@
+# Video 2 — Slide Descriptions
+# Unit 3, Lesson 3
+
+The following are the visual changes and slide titles from the video:
+
+[00:00] — Sampling Advantages and Disadvantages
+[00:13] — What are we going to learn?
+[00:27] — Example: San Antonio Income Segregation (Recapping the previous video's sampling results)
+[01:41] — Evaluating Sampling Methods: Bias and Variability
+[02:38] — Simulating Sampling Methods
+[03:18] — Simulation: Non-random Sampling
+[03:50] — Simulation: Simple Random Sample (SRS)
+[04:51] — Simulation: Cluster Random Sample
+[06:44] — Simulation: Stratified Random Sample
+[07:11] — Key Takeaways
+[08:04] — Concluding Remarks/Closing Slide
