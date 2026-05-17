@@ -18,11 +18,12 @@ These are implementation-level choices the planner locked. Rationale recorded fo
 | ID | Decision | Rationale |
 |----|----------|-----------|
 | D-A | **Password hash = `bcryptjs`** (pure-JS bcrypt, cost factor 12). | Spec §7 allows "argon2/bcrypt". `argon2` and native `bcrypt` are node-gyp native addons — flaky on Windows local dev (CLAUDE.md platform gotcha) and add Railway build risk. `bcryptjs` is pure JS, zero native deps, identical on Windows + Railway. |
-| D-B | **Standalone `roster-server/` Express service** in *this* repo (own `package.json`, deployed to Railway). NOT bolted onto the separate `curriculum_render` repo's server. | Spec §6.5: "a thin auth service we own (Railway endpoint)… the same shape against the new dedicated project." The lrsl-driller backend the study guide copies is itself a standalone Railway Express service. Standalone keeps Phase 0 reviewable in one PR and does not entangle a separate repo. A subfolder of Node server code is inert to GH Pages (it serves the static HTML; `roster-server/` is never linked). |
+| D-B | **Standalone `roster-server/` Express service** in *this* repo (own `package.json`, deployed to Railway). NOT bolted onto the separate `curriculum_render` repo's server. | Spec §6.5: "a thin auth service we own (Railway endpoint)… the same shape against the curriculum_render project's new isolated roster* tables" (§6.1 revised — see D-G). The lrsl-driller backend the study guide copies is itself a standalone Railway Express service. Standalone keeps Phase 0 reviewable in one PR and does not entangle a separate repo. A subfolder of Node server code is inert to GH Pages (it serves the static HTML; `roster-server/` is never linked). |
 | D-C | **Session token = compact HMAC-SHA256** via Node `crypto` (no JWT dep). `base64url(JSON payload) + "." + base64url(HMAC-SHA256(payload, ROSTER_TOKEN_SECRET))`. Payload `{ sid, exp }`. 30-day expiry. | Phase 1 feeders need a verifiable student stamp without a Supabase session. HMAC is dependency-free, trivial to verify, good enough for a classroom grade-of-record. Export `verifyToken()` for Phase 1. |
 | D-D | **`/roster/enroll` is teacher-gated**: requires header `x-teacher-secret: <ROSTER_TEACHER_SECRET>`. No student self-signup (spec §6.2). Username generated **server-side** (fruit_animal). | Spec §6.2 "teacher-provisioned (no student self-signup)". |
 | D-E | **Data access abstracted behind `roster-server/db.js`** so the service is unit-testable without network (tests inject a fake db). | Cannot provision the live Supabase project from here (no dashboard creds); build must be locally verifiable. |
-| D-F | **Live provisioning is a user-action handoff** (see §6). Everything else is built deploy-ready and locally tested against mocks / a local service instance. | Creating a Supabase project + Railway service needs the user's accounts. Not a code blocker. |
+| D-F | **Live provisioning is a user-action handoff** (see §6). Everything else is built deploy-ready and locally tested against mocks / a local service instance. | Creating/configuring the Supabase + Railway targets needs the user's accounts. Not a code blocker. |
+| D-G | **Roster DB home = REUSE the existing curriculum_render Supabase project `bzqbhtrurzzavhqbgqrs`** (new isolated `roster*` tables), NOT a new dedicated project. *Revises spec §6.1; ratified 2026-05-17.* No code change — `roster-server` is already env-driven (D-E); only `ROSTER_SUPABASE_*` targets + docs change. | Supabase free tier = 2 projects, both used. New tables don't inherit existing schema (intent of §6.1 preserved). Feeder data (`answers`, AI grades) already lives there → cheap same-project joins for Phases 1+ instead of cross-project ETL. |
 
 ---
 
@@ -31,7 +32,9 @@ These are implementation-level choices the planner locked. Rationale recorded fo
 Postgres / Supabase. Exactly per spec §4. **No anon access — service-role only (RLS on, zero policies).**
 
 ```sql
--- 0001_roster.sql — Gradebook Phase 0. Apply to the NEW dedicated Supabase project ONLY.
+-- 0001_roster.sql — Gradebook Phase 0. Apply to the curriculum_render Supabase project
+-- (bzqbhtrurzzavhqbgqrs; §6.1 revised 2026-05-17 / D-G). Creates ONLY roster + roster_alias
+-- (idempotent, RLS on those two only) — NEVER ALTER or touch existing tables in this shared project.
 create extension if not exists pgcrypto;
 
 create table if not exists roster (
@@ -110,7 +113,7 @@ insert into `roster`. On `login_username` collision (DB unique violation) regene
 
 ### Env (`roster-server/.env.example`)
 ```
-ROSTER_SUPABASE_URL=          # NEW dedicated project URL (user fills at deploy)
+ROSTER_SUPABASE_URL=          # curriculum_render project URL https://bzqbhtrurzzavhqbgqrs.supabase.co (D-G)
 ROSTER_SUPABASE_SERVICE_KEY=  # service-role key, SERVER ONLY, never shipped to a client
 ROSTER_TOKEN_SECRET=          # long random string for HMAC
 ROSTER_TEACHER_SECRET=        # shared secret the teacher uses to enroll
@@ -196,7 +199,7 @@ repo-root/`tests/` client files. No path is owned by two workstreams → safe pa
 | One enrolled student resolves to same student_id from roadmap, worksheet, study guide | C | `roster-client-demo.html` + a jsdom test proving `current().studentId` is identical across 3 simulated hosts sharing `apstats_roster.v1` |
 | /api/submit-answer, /api/ai/grade, /api/ai/appeal accept+persist student_id | A (doc only) | Decision Log + spec note: contract/field fixed here, wiring is Phase 1. **Do NOT edit the curriculum_render repo this phase.** |
 | No plaintext passwords/salts client-visible | B+C | grep proof: no password/secret in roster-client.js, roster_config.js, demo, or any test fixture |
-| Documented decision per §6.1–§6.4 | A | "Decision Log" section appended to `GRADEBOOK_SPEC.md` covering §6.1–6.4 + D-A..D-F |
+| Documented decision per §6.1–§6.4 | A | "Decision Log" section appended to `GRADEBOOK_SPEC.md` covering §6.1–6.4 + D-A..D-G (§6.1 reuse-project revision recorded) |
 
 **Out of scope this phase (do NOT do):** item_ledger/skill_mastery tables, any feeder wiring, the
 curriculum_render quiz path, editing the separate `curriculum_render` repo, roadmap/worksheet login
@@ -255,8 +258,8 @@ file is not evidence — the planner re-runs every test (memory gotcha s88b: fab
 These are documented in `roster-server/README.md` and are *not* code blockers; the build is verified
 locally against mocks/a local instance.
 
-1. Create the **new dedicated Supabase project** (spec §6.1). Copy its URL + service-role key.
-2. Run `roster-server/migrations/0001_roster.sql` in that project's SQL editor.
+1. Use the **existing curriculum_render Supabase project** `https://bzqbhtrurzzavhqbgqrs.supabase.co` — **do NOT create a new project** (spec §6.1 revised 2026-05-17 / D-G; free tier = 2 projects, both used). Copy its URL + service-role key from that project's API settings.
+2. Run `roster-server/migrations/0001_roster.sql` in that project's SQL editor. It is idempotent and creates ONLY `roster` + `roster_alias`. **Before running, sanity-check there is no pre-existing `roster`/`roster_alias` table of a different shape; after running, confirm exactly those two tables were created and no existing table changed. Never run destructive/`ALTER` SQL in this shared project.**
 3. Create a Railway service from `roster-server/`; set env: `ROSTER_SUPABASE_URL`,
    `ROSTER_SUPABASE_SERVICE_KEY`, `ROSTER_TOKEN_SECRET` (`openssl rand -hex 32`),
    `ROSTER_TEACHER_SECRET`. Note the deployed URL.

@@ -130,7 +130,7 @@ window.rosterClient = {
 
 ## 6. Locked decisions (signed off 2026-05-17)
 
-1. **Canonical home — NEW dedicated Supabase project.** The gradebook is a system of record and will not inherit the roadmap's or study guide's ad-hoc schema/RLS. A fresh project is provisioned for `roster`/`roster_alias` (and later `item_ledger`/`skill_mastery`).
+1. **Canonical home — REUSE the existing curriculum_render Supabase project (`bzqbhtrurzzavhqbgqrs`).** ⚠ *Revised 2026-05-17 (was "NEW dedicated project"); ratified by the project owner.* Reason: the Supabase free tier caps the account at 2 projects, both already in use (curriculum_render `bzqbhtrurzzavhqbgqrs`; roadmap/driller `hgvnytaqmuybzbotosyj`). The gradebook gets **new, isolated tables** (`roster`/`roster_alias`, later `item_ledger`/`skill_mastery`) *inside* the curriculum_render project — it does **not** inherit or alter any existing table, so §6.1's original intent (clean schema + own service-role-only RLS, no retrofit of a mutable handle table) is preserved. This is also architecturally **better** than a fresh project: every Phase 1 feeder (`answers`, AI grades) already lives in `bzqbhtrurzzavhqbgqrs`, so co-locating `roster` enables cheap same-project joins instead of cross-project ETL. Discipline: the migration creates ONLY `roster*` tables (`create ... if not exists`, RLS on those two only) and must never `ALTER`/touch `answers`/`users`/`identity_claims`/`curriculum`.
 2. **Credential model — HAND-ROLLED username + password.** argon2/bcrypt password hashing in our own auth code, modeled on the study guide's proven fruit_animal-username + password flow, **teacher-provisioned** (no student self-signup). *Supabase Auth (GoTrue) was recommended for native `auth.uid()` RLS and zero new vendors; not selected. Clerk was considered and rejected (2nd vendor, network dependency on offline-capable apps, minors' PII to a third party). Revisit Supabase Auth only if the server-mediated RLS plumbing in §6.5 proves heavier than expected.*
 3. **Historical data — CLEAN-START for the SUMMER26 cohort.** Fresh enrollment for the small active summer cohort. `roster_alias` exists in the schema but reconciliation of legacy worksheet/study-guide/roadmap identities is deferred until/unless old data must be graded.
 4. **Adoption — SHARED client, single canonical login.** One sign-in surface on the **roadmap** (the hub students already open) + shared `roster-client.js` everywhere. Every app reads the same identity from the one localStorage key; no per-app login UI.
@@ -140,7 +140,7 @@ window.rosterClient = {
 Hand-rolled auth means **no Supabase `auth.uid()`**, so RLS cannot key off a Supabase-issued JWT. Single-file apps also cannot safely hold a Supabase service-role key. Therefore:
 
 - **Clients never talk to Supabase directly for `roster`.** All roster reads/writes go through a thin auth service we own (Railway endpoint or Supabase Edge Function) that holds the service key, does the argon2/bcrypt hash + verify, and issues a short signed **session token**.
-- This mirrors how the study guide already works (driller-style `{base}/api/users` + `/api/users/verify`, not direct Supabase). The new service is the same shape against the new dedicated project: `POST /roster/enroll`, `POST /roster/verify` → `{ studentId, token }`, token cached in the one localStorage key.
+- This mirrors how the study guide already works (driller-style `{base}/api/users` + `/api/users/verify`, not direct Supabase). The new service is the same shape against the curriculum_render project's new isolated `roster*` tables: `POST /roster/enroll`, `POST /roster/verify` → `{ studentId, token }`, token cached in the one localStorage key.
 - `roster-client.js` (§5) talks only to that service, never to Supabase. RLS on the Supabase side is then simply: service-role only; no anon access to `roster` at all.
 - This is the accepted cost of choosing hand-rolled over GoTrue. It is more code than `auth.uid()` but reuses a pattern already running in production for the study guide.
 
@@ -148,7 +148,7 @@ Hand-rolled auth means **no Supabase `auth.uid()`**, so RLS cannot key off a Sup
 
 ## 7. Acceptance criteria (Phase 0 "done")
 
-- `roster` + `roster_alias` exist in the **new dedicated** Supabase project. RLS posture: **no anon access at all** — service-role only. Per-student isolation ("a student sees only their own row") and bulk `real_name` protection are enforced by the auth service (§6.5), not by `auth.uid()` (we chose hand-rolled, so there is no Supabase session to key RLS on).
+- `roster` + `roster_alias` exist as **new isolated tables in the curriculum_render Supabase project** (`bzqbhtrurzzavhqbgqrs`; §6.1 revised 2026-05-17). RLS posture: **no anon access at all** — service-role only. Per-student isolation ("a student sees only their own row") and bulk `real_name` protection are enforced by the auth service (§6.5), not by `auth.uid()` (we chose hand-rolled, so there is no Supabase session to key RLS on).
 - Auth service (Railway endpoint or Supabase Edge Function) exists with `POST /roster/enroll` (teacher-provisioned) and `POST /roster/verify` → `{ studentId, token }`; argon2/bcrypt hashing server-side; service-role key never leaves the server.
 - `roster-client.js` deployed as a parent-dir sibling; `rosterClient.current()/signIn()/enroll()/studentId()` work from a plain single-file HTML page with only a `<script src>`, talking **only to the auth service** (never directly to Supabase).
 - A student enrolled once can be resolved to the same `student_id` from the roadmap, a worksheet, and the study guide.
@@ -173,9 +173,12 @@ Sequencing note: Phase 0 proceeds now in parallel with other threads. The U4/U5 
 
 ## Decision Log (Phase 0, recorded 2026-05-17)
 
-### §6.1 — Canonical home: new dedicated Supabase project
+### §6.1 — Canonical home: REUSE the curriculum_render project (revised 2026-05-17)
 
-The gradebook roster lives in a brand-new Supabase project, separate from both the roadmap project (`hgvnytaqmuybzbotosyj`) and the study-guide project. The rationale is that the gradebook is a system of record requiring a clean, stable schema and predictable RLS posture. Inheriting either existing project would couple the grade ledger to ad-hoc schemas and RLS configurations designed for different purposes. A fresh project can be provisioned exactly once with `0001_roster.sql` and its security posture (service-role-only, zero anon access) locked from day one.
+**Original decision (2026-05-17, superseded same day):** a brand-new dedicated Supabase project.
+**Revised & ratified (2026-05-17) by the project owner:** the gradebook tables live as **new, isolated tables in the existing curriculum_render Supabase project** (`bzqbhtrurzzavhqbgqrs`).
+
+Reason for the revision: the Supabase free tier caps the account at **2 projects**, both already in use — `bzqbhtrurzzavhqbgqrs` (curriculum_render: worksheet `answers`, `users`, `identity_claims`, AI grading) and `hgvnytaqmuybzbotosyj` (roadmap/driller). A third dedicated project is not available. The original decision's *intent* — a clean stable schema with its own predictable service-role-only RLS, not a retrofit of someone's mutable handle table — is fully preserved: Phase 0 adds **new** `roster`/`roster_alias` tables (uuid PK, zero RLS policies) and never inherits, alters, or reads the project's existing schema. `0001_roster.sql` is idempotent (`create … if not exists`) and was verified collision-free against the curriculum_render server's known tables. The reuse is also architecturally **superior** to a fresh project: every Phase 1 feeder (`answers`, AI grades) already lives in `bzqbhtrurzzavhqbgqrs`, so co-locating the roster turns every future ledger join into a cheap same-project query instead of cross-project ETL. Operational discipline (in `roster-server/README.md`): run ONLY `0001_roster.sql`, confirm it created exactly `roster` + `roster_alias`, never run destructive/`ALTER` SQL in this shared project.
 
 ### §6.2 — Credential model: hand-rolled username + password (bcrypt, teacher-provisioned)
 

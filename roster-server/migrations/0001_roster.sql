@@ -1,4 +1,6 @@
--- 0001_roster.sql — Gradebook Phase 0. Apply to the NEW dedicated Supabase project ONLY.
+-- 0001_roster.sql — Gradebook Phase 0. Apply to the curriculum_render Supabase project
+-- (bzqbhtrurzzavhqbgqrs; §6.1 revised 2026-05-17 / D-G). Creates ONLY roster + roster_alias
+-- (idempotent, RLS on those two only) — NEVER ALTER or touch existing tables in this shared project.
 create extension if not exists pgcrypto;
 
 create table if not exists roster (

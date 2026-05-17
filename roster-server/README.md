@@ -19,33 +19,43 @@ against mocks (see `tests/`).
 
 ---
 
-## Step 1 — Create a new dedicated Supabase project
+## Step 1 — Use the existing curriculum_render Supabase project
 
-> **Important:** This must be a **brand new project**, not the roadmap project
-> (`hgvnytaqmuybzbotosyj`) and not the study-guide project. The gradebook is a system of record and
-> must not inherit any existing ad-hoc schema.
+> **Important (spec §6.1 revised 2026-05-17 / decision D-G):** Do **NOT** create a new project.
+> The Supabase free tier caps the account at 2 projects, both already in use. The gradebook reuses
+> the **existing curriculum_render project** `https://bzqbhtrurzzavhqbgqrs.supabase.co` — the same
+> project that already holds worksheet `answers`, `users`, and AI-grade data (the Phase 1 feeders).
+> Phase 0 adds **new, isolated** `roster`/`roster_alias` tables; it never inherits, alters, or reads
+> the project's existing schema, so §6.1's intent (clean schema + own service-role-only RLS) holds.
 
-1. Go to [supabase.com/dashboard](https://supabase.com/dashboard) → **New project**.
-2. Name it something like `apstats-roster` or `apstats-gradebook`.
-3. Choose a region close to your students (US East is fine).
-4. Set a strong database password and save it somewhere safe (you won't need it again, but don't lose it).
-5. Wait for the project to finish provisioning (~1–2 minutes).
-6. From **Project Settings → API**, copy:
-   - **Project URL** — looks like `https://xxxxxxxxxxx.supabase.co` → this is `ROSTER_SUPABASE_URL`
+1. Go to [supabase.com/dashboard](https://supabase.com/dashboard) → open the **curriculum_render
+   project** (`bzqbhtrurzzavhqbgqrs`).
+2. From **Project Settings → API**, copy:
+   - **Project URL** = `https://bzqbhtrurzzavhqbgqrs.supabase.co` → this is `ROSTER_SUPABASE_URL`
    - **service_role** key (under "Project API keys") → this is `ROSTER_SUPABASE_SERVICE_KEY`
-     (keep this secret; it bypasses RLS)
+     (keep this secret; it bypasses RLS — it is the *same* service-role key the existing
+     curriculum_render Railway server uses; `roster-server` just holds its own env copy)
 
 ---
 
 ## Step 2 — Run the migration
 
-1. In the Supabase dashboard, go to **SQL Editor** (left sidebar).
+> ⚠ **Shared-project discipline:** this is the curriculum_render project, which already has live
+> tables (`answers`, `users`, `identity_claims`, …). The migration is written to be safe here
+> (`create … if not exists`, RLS only on the two new tables) but you must still:
+> run **only** `0001_roster.sql`, never any destructive/`ALTER` statement, in this project.
+
+1. In the Supabase dashboard (curriculum_render project), go to **SQL Editor** (left sidebar).
 2. Click **New query**.
-3. Open `roster-server/migrations/0001_roster.sql` from this repo and paste its entire contents into
+3. *(Sanity check first)* Run `select to_regclass('public.roster'), to_regclass('public.roster_alias');`
+   — both should return `NULL` (no pre-existing tables of those names). If either is non-NULL, STOP
+   and investigate before proceeding (do not blindly re-run the migration over an unknown table).
+4. Open `roster-server/migrations/0001_roster.sql` from this repo and paste its entire contents into
    the editor.
-4. Click **Run** (or press Cmd/Ctrl+Enter).
-5. You should see a success message with no errors. The editor will show the last statement result.
-6. Verify in **Table Editor** that you now have two tables: `roster` and `roster_alias`.
+5. Click **Run** (or press Cmd/Ctrl+Enter).
+6. You should see a success message with no errors.
+7. Verify in **Table Editor** that the project now has the two **new** tables `roster` and
+   `roster_alias` **and that no pre-existing table (`answers`/`users`/…) changed**.
 
 ### What the migration does
 
@@ -177,7 +187,7 @@ opened as a local file). Use the sign-in form with the credentials from above. V
 See `.env.example` in this directory for the template. **Never commit a `.env` file with real values.**
 
 ```
-ROSTER_SUPABASE_URL=          # NEW dedicated project URL (user fills at deploy)
+ROSTER_SUPABASE_URL=          # curriculum_render project: https://bzqbhtrurzzavhqbgqrs.supabase.co (D-G)
 ROSTER_SUPABASE_SERVICE_KEY=  # service-role key, SERVER ONLY, never shipped to a client
 ROSTER_TOKEN_SECRET=          # long random string for HMAC (openssl rand -hex 32)
 ROSTER_TEACHER_SECRET=        # shared secret the teacher uses to enroll students
