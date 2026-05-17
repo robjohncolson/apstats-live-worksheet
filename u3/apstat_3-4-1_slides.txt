@@ -1,0 +1,17 @@
+# Video 1 — Slide Descriptions
+# Unit 3, Lesson 4
+
+The following is a list of slides and visual changes in the video with their corresponding timestamps:
+
+[00:00] — Potential Sources of Bias in Sampling Methods: Introduction to Topic 3.4, outlining the learning objectives for the session.
+[00:14] — What's Wrong with this Stat?: An example of a college promotional pamphlet claiming 99.7% of graduates have full-time careers of their choice.
+[01:41] — What's Wrong with this Stat? (Expanded): The slide adds further information, noting that only 40% of the freshman class actually graduated within six years.
+[02:22] — Bias: Definitions for bias and undercoverage bias.
+[02:43] — Non-response Bias: A university survey example illustrating non-response bias, which occurs when chosen individuals do not respond.
+[03:27] — How to Explain Bias: A three-step method for explaining bias on free-response questions.
+[03:44] — Applying the Method: Using the three-step method to explain the bias in the previously mentioned university survey.
+[04:12] — Putting it All Together: A complete, written-out explanation of why the university survey results were likely an overestimate.
+[04:54] — Volunteer Response Bias: Definition and example of volunteer response bias, highlighting how it differs from non-response.
+[05:41] — Summary of Sampling Bias: A summary slide listing undercoverage, non-response, and volunteer response bias, with advice on how to handle these terms on the AP exam.
+[06:10] — Other Sources of Bias: Definitions and examples of question wording bias and self-reported response bias.
+[06:55] — Main Takeaways: Final summary of what was learned about bias and how to describe it.
