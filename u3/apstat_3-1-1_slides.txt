@@ -1,0 +1,11 @@
+# Video 1 — Slide Descriptions
+# Unit 3, Lesson 1
+
+The visuals in the video are detailed below:
+
+[00:00] — Unit 3: Collecting Data: The introductory slide presents the unit title and the specific topic for the video: "3.1 Introducing Statistics: Do the Data We Collect Tell the Truth?".
+[00:13] — Abraham Wald (1902-1950): A biographical slide featuring a photograph of statistician Abraham Wald, noting his work for the Statistical Research Group during World War II.
+[02:03] — The Wald Airplane Problem: A visual presentation of six airplane diagrams, each marked with red dots representing bullet hole locations found on bombers that returned from missions. It includes a question asking where extra armor should be placed among five options: the nose, main wings, body, engines, or tail.
+[03:29] — Condition of Data Collection: The same airplane diagrams are shown, now highlighting that the data only includes planes that actually made it back from their missions.
+[04:03] — Identifying the "Achilles Heel": The slide marks the areas where bullet holes were not seen (like the engines) as the most likely vulnerable spots, as planes hit in those areas probably did not survive to be sampled.
+[05:00] — Key Takeaways: A concluding slide summarizing that data analysis must consider how the data was collected and that samples may not always be representative of the entire population.
