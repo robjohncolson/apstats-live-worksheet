@@ -1,0 +1,18 @@
+# Video 2 — Slide Descriptions
+# Unit 2, Lesson 8
+
+The following is a chronological list of visual changes and slide topics from the video:
+
+[00:00] — Representing Data: Interpreting Slope and y-Intercept (Introductory title slide)
+[00:30] — Learning Targets: Interpreting the slope and y-intercept of the least-squares regression line (LSRL) and determining if the y-intercept is meaningful.
+[00:46] — Exam Scores vs. Attendance: A scatterplot showing the relationship between school attendance percentages and Algebra 1 exam scores for 11 students in Texas.
+[01:06] — Linear Model Equation: The equation y-hat = -7.69 + 0.57x is displayed, where y-hat is the predicted number of correct questions and x is the attendance percentage.
+[01:34] — Algebra Review: Slope-Intercept Form (y = mx + b).
+[01:46] — Graphing a Linear Equation: A visual example of the line y = 2x + 1 illustrating slope (rise over run) and the y-intercept.
+[02:38] — The y-Intercept: Highlighting the point (0, 1) where the line crosses the y-axis.
+[03:06] — Algebra vs. Statistics: A comparison table between the algebra equation (y = mx + b) and the statistics LSRL equation (y-hat = a + bx).
+[03:47] — Interpreting the Slope: A template for interpreting slope: "For every 1 unit increase in the explanatory variable, our model predicts an average increase/decrease of [slope value] in the response variable."
+[04:24] — Interpreting the y-Intercept: A template for interpreting the y-intercept: "When the explanatory variable is 0 units, our model predicts that the response variable will be [y-intercept value]."
+[04:51] — Is the y-Intercept meaningful?: A prompt for viewers to consider if a y-intercept of -7.69 correct questions is logical when attendance is 0%.
+[05:35] — Takeaways: A summary of how to interpret slope and y-intercept and the conditions for a y-intercept to be meaningful in context.
+[06:00] — Closing: Final advice to be critical and avoid "bad statistics" (BS).

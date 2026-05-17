@@ -1,0 +1,20 @@
+# Video 3 — Slide Descriptions
+# Unit 2, Lesson 8
+
+The following is a description of each visual change or slide in the video:
+
+[00:00] — Topic 2.8: Least Squares Regression (Interpreting the Coefficient of Determination and Computer Output)
+[00:08] — What will we learn today? Lists the learning objectives: determining and interpreting r-squared and interpreting computer output for linear regression.
+[00:29] — Attendance vs. Algebra Score Example: A scatter plot shows the relationship between school attendance (x) and algebra test scores (y) for 11 students.
+[01:12] — How well does attendance predict test scores? Asks how much better the least squares regression line (LSRL) predictions are compared to a model that does not use attendance.
+[01:21] — Simple Mean Model: A horizontal line representing the mean y-value (y-bar = 41.3) is plotted through the data points, showing a model that does not use attendance (x) for prediction.
+[02:08] — Error in Mean Model: Large squares are overlaid on the scatter plot to visualize the sum of squared residuals for the simple mean model, illustrating a high amount of error.
+[02:32] — Error in LSRL Model: Smaller squares are shown along the LSRL to visualize the sum of squared residuals when using attendance as a predictor, illustrating a reduction in error.
+[03:03] — Comparing Models: A side-by-side comparison of the squared residuals for the mean model versus the LSRL model highlights the significant reduction in error.
+[03:26] — Reduction in Sum of Squared Residuals: This visual calculates a 90.3% reduction in the sum of squared residuals when moving from the mean model to the LSRL.
+[04:02] — Coefficient of Determination (r-squared): The 90.3% reduction is identified as r-squared, and a template for interpreting this value is provided.
+[04:34] — Fun Fact: r-squared vs. r: Explains that the coefficient of determination is equal to the correlation (r) squared and lists properties of r-squared.
+[05:33] — Computer Output for Regression: A table of typical statistical software output is shown, including coefficients for "Constant" and "Attendance," as well as "R-sq."
+[05:51] — Identifying Model Components from Output: Annotations on the computer output show how to identify the y-intercept (-7.69) from the "Constant" and the slope (0.57) from the "Attendance" coefficient.
+[06:43] — Finding Correlation (r) from r-squared: Demonstrates calculating r by taking the square root of r-squared and determining its sign (positive or negative) based on the slope.
+[07:27] — What should we take away today? A summary slide recaps the definition of r-squared, its use as a measure of strength, and how to read computer output.

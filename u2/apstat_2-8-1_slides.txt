@@ -1,0 +1,18 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 8
+
+The following visual changes occur in the video:
+
+[00:00] — Title Card: AP Daily, AP Statistics, Topic 2.8: Least Squares Regression.
+[00:08] — Learning Objectives: A bulleted list outlining how to determine the least squares regression line (LSRL), its important properties, and how to determine slope using correlation.
+[00:32] — Example Context: A slide titled "Can Attendance Equalize Educational Opportunity?" with text discussing poverty, school attendance, and exam performance.
+[01:27] — Data Set Scatterplot: A scatterplot showing the relationship between "Percent Attendance" (x) and "Questions Correct" (y) for a sample of 11 students, featuring a positive linear trend.
+[02:04] — Comparing Models A and B: A simplified scatterplot comparing two different possible linear fit lines, labeled "Model A" and "Model B."
+[02:39] — Residuals Comparison: The same scatterplot demonstrating residuals (prediction errors) for specific data points relative to Model A and Model B.
+[03:06] — Problem with Summing Residuals: A simple case showing three collinear points and a "bad" model where positive and negative residuals cancel out to zero.
+[04:02] — Squaring Residuals: A comparison showing that squaring the residuals eliminates negative values and allows for a more accurate comparison of model quality.
+[04:28] — LSRL Definition: A slide defining the Least Squares Regression Line as the model that minimizes the sum of squared residuals.
+[05:08] — LSRL Property - Mean Point: Demonstration showing that the LSRL always contains the point defined by the mean of the x-values (x-bar) and the mean of the y-values (y-bar).
+[06:00] — LSRL Property - Slope Formula: Presentation of the formula b = r * (s_y / s_x) to calculate slope using correlation and standard deviations.
+[06:21] — Slope Calculation Example: A step-by-step calculation using the formula with provided values for correlation and standard deviations.
+[06:48] — Takeaways: A summary slide listing the key points: the LSRL minimizes squared residuals, contains the (x-bar, y-bar) point, and has a slope calculable from correlation and standard deviations.
