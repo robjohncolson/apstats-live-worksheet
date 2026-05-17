@@ -1,0 +1,19 @@
+# Video 2 — Slide Descriptions
+# Unit 2, Lesson 6
+
+The following describes the visual changes and slide topics from the video:
+
+[00:00] — Introduction: Topic 2.6: Exploring Dangers of Extrapolation in Linear Regression.
+[00:10] — Learning Objectives: Why extrapolation is dangerous and strategies for AP exam free-response questions.
+[00:35] — Example: Extrapolation: A study predicting 100% of Americans will be overweight by 2048 based on past trends.
+[01:14] — Defining Extrapolation: Making predictions outside the interval of observed explanatory (x) values.
+[01:54] — Dangers of Extrapolation: Trends may not continue, making predictions outside the data range unreliable.
+[02:29] — Non-Time Variables: Extrapolation applies to any explanatory variable, not just time-based data.
+[02:58] — Free-Response Practice: Introduction to a 2002 AP Exam question (Form B, #1) regarding swine population and atmospheric ammonia.
+[03:51] — FRQ Part A: Constructing a Scatter Plot: Guidance on identifying explanatory and response variables and labeling axes.
+[04:41] — FRQ Part A: Scoring Rubric: Explanation of Essentially Correct (E), Partially Correct (P), and Incorrect (I) criteria.
+[05:20] — FRQ Part B: Interpreting R: Interpreting a correlation coefficient (r = 0.85) using strength, direction, and context.
+[06:20] — FRQ Part C: Assessing Linearity: Determining if a linear model is appropriate based on the scatter plot and r-value.
+[07:33] — FRQ Part D: Making Predictions: Calculating a predicted value and determining if it is reliable due to extrapolation.
+[09:20] — Overall FRQ Scoring: How to calculate a total score (E=1, P=0.5, I=0) and the holistic approach to rounding.
+[09:55] — Key Takeaways: Summary of extrapolation dangers and tips for tackling AP free-response questions.

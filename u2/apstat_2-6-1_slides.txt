@@ -1,0 +1,16 @@
+# Video 1 — Slide Descriptions
+# Unit 2, Lesson 6
+
+The video includes the following slides and visuals:
+
+[00:00] — Unit 2: Exploring Two-Variable Data: Opening slide introduces Topic 2.6: Linear Regression Models.
+[00:13] — What will we learn today?: A bulleted list outlining the lesson goals: constructing a linear regression model, making predictions, and gauging reliability.
+[00:26] — Access to Healthy Foods: An introductory slide featuring a photo of a supermarket produce aisle and the central question: "Is neighborhood a good predictor of access to healthy foods?"
+[01:03] — The Data: Presents a data table and details on a study of 37 grocery stores in San Antonio, comparing average zip code income to the number of organic vegetable items offered.
+[01:48] — The Scatterplot: A graph displaying the relationship between average household income (explanatory variable) and the number of organic items (response variable).
+[02:18] — Linear Regression Model: A comparison between the algebraic linear equation (y = mx + b) and the statistical linear regression equation (ŷ = a + bx).
+[03:22] — Organic Vegetables vs. Income: The scatterplot returns with a calculated regression line and its equation: ŷ = -14.7 + 0.001x.
+[03:49] — Predicting Response: An example problem asking to predict the number of organic items in a zip code with a $90,000 average income using the regression model.
+[04:12] — Calculation Breakdown: Shows the step-by-step substitution of $90,000 into the equation to reach the predicted value of 75.3.
+[05:03] — Lingering Question: A concluding exercise showing a graph of overweight American trends and asking if a 100% prediction for the year 2048 is believable.
+[05:37] — What should we take away?: A summary slide reviewing the components of linear regression and the nature of statistical predictions.
