@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roster Client Demo</title>
+  <style>
+    body { font-family: monospace; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.2rem; }
+    section { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+    h2 { font-size: 1rem; margin-top: 0; }
+    label { display: block; margin-bottom: .25rem; font-size: .85rem; }
+    input { width: 100%; box-sizing: border-box; margin-bottom: .5rem; padding: .3rem; font-family: monospace; }
+    button { padding: .4rem .8rem; font-family: monospace; cursor: pointer; }
+    pre { background: #f4f4f4; padding: .5rem; white-space: pre-wrap; word-break: break-all; font-size: .8rem; min-height: 2rem; }
+    .ok  { color: green; }
+    .err { color: red;   }
+  </style>
+</head>
+<body>
+  <h1>Roster Client Demo</h1>
+  <p>Loads <code>roster_config.js</code> + <code>roster-client.js</code> via &lt;script src&gt;.
+  Use this page to manually test enroll / signIn / signOut and to verify
+  <code>current()</code> across hosts (identity proof for acceptance criterion §7.4).</p>
+
+  <!-- Scripts — same "../" convention as worksheets, but demo lives at repo root so paths are flat -->
+  <script src="roster_config.js"></script>
+  <script src="roster-client.js"></script>
+
+  <!-- Current session -->
+  <section>
+    <h2>Current session (<code>rosterClient.current()</code>)</h2>
+    <pre id="out-current"></pre>
+    <button onclick="refresh()">Refresh</button>
+    &nbsp;
+    <button onclick="doSignOut()">Sign Out</button>
+  </section>
+
+  <!-- Enroll (teacher-gated) -->
+  <section>
+    <h2>Enroll (teacher-gated)</h2>
+    <label>Real name <input id="enroll-realName" placeholder="Jane Smith" /></label>
+    <label>Section   <input id="enroll-section"  placeholder="SUMMER26" /></label>
+    <label>Password  <input id="enroll-password" type="password" placeholder="student password" /></label>
+    <label>Teacher secret <input id="enroll-secret" type="password" placeholder="ROSTER_TEACHER_SECRET" /></label>
+    <label>Email (optional) <input id="enroll-email" placeholder="student@example.com" /></label>
+    <button onclick="doEnroll()">Enroll</button>
+    <pre id="out-enroll"></pre>
+  </section>
+
+  <!-- Sign in -->
+  <section>
+    <h2>Sign In</h2>
+    <label>Username <input id="signin-username" placeholder="fruit_animal" /></label>
+    <label>Password <input id="signin-password" type="password" placeholder="student password" /></label>
+    <button onclick="doSignIn()">Sign In</button>
+    <pre id="out-signin"></pre>
+  </section>
+
+  <script>
+    function refresh() {
+      var c = rosterClient.current();
+      document.getElementById('out-current').textContent = JSON.stringify(c, null, 2);
+    }
+
+    async function doEnroll() {
+      var out = document.getElementById('out-enroll');
+      out.textContent = 'enrolling…';
+      var result = await rosterClient.enroll({
+        realName:     document.getElementById('enroll-realName').value,
+        section:      document.getElementById('enroll-section').value,
+        password:     document.getElementById('enroll-password').value,
+        teacherSecret:document.getElementById('enroll-secret').value,
+        email:        document.getElementById('enroll-email').value || undefined
+      });
+      out.textContent  = JSON.stringify(result, null, 2);
+      out.className    = result.ok ? 'ok' : 'err';
+      refresh();
+    }
+
+    async function doSignIn() {
+      var out = document.getElementById('out-signin');
+      out.textContent = 'signing in…';
+      var result = await rosterClient.signIn(
+        document.getElementById('signin-username').value,
+        document.getElementById('signin-password').value
+      );
+      out.textContent = JSON.stringify(result, null, 2);
+      out.className   = result.ok ? 'ok' : 'err';
+      refresh();
+    }
+
+    function doSignOut() {
+      rosterClient.signOut();
+      refresh();
+    }
+
+    // Initial display
+    refresh();
+  </script>
+</body>
+</html>

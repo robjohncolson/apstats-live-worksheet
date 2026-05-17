@@ -168,3 +168,34 @@ Per the locked architecture:
 - **Phase 4** — teacher dashboard over the unified ledger.
 
 Sequencing note: Phase 0 proceeds now in parallel with other threads. The U4/U5 per-lesson backfill was **de-scoped** (combined worksheets kept; registry already resolves them), so the only active threads are the roadmap (shipped, commit `27bc1df`) and this spec.
+
+---
+
+## Decision Log (Phase 0, recorded 2026-05-17)
+
+### §6.1 — Canonical home: new dedicated Supabase project
+
+The gradebook roster lives in a brand-new Supabase project, separate from both the roadmap project (`hgvnytaqmuybzbotosyj`) and the study-guide project. The rationale is that the gradebook is a system of record requiring a clean, stable schema and predictable RLS posture. Inheriting either existing project would couple the grade ledger to ad-hoc schemas and RLS configurations designed for different purposes. A fresh project can be provisioned exactly once with `0001_roster.sql` and its security posture (service-role-only, zero anon access) locked from day one.
+
+### §6.2 — Credential model: hand-rolled username + password (bcrypt, teacher-provisioned)
+
+Students authenticate with a `fruit_animal`-style username and a bcrypt-hashed password, modeled on the study guide's proven auth flow. Supabase GoTrue was considered (it would provide native `auth.uid()` RLS and eliminate the need for a separate auth service) but was not selected — the hand-rolled pattern is already running in production for the study guide, adding a second auth vendor would introduce dependencies, and a classroom system of record benefits from explicit control over the credential lifecycle. Clerk was also considered and rejected: a second vendor, a network dependency on potentially offline-capable apps, and a concern about minors' PII leaving our infrastructure. No student self-signup: accounts are teacher-provisioned so that every `student_id` maps to a verified real student in a real class section.
+
+### §6.3 — Historical data: clean-start for SUMMER26 cohort
+
+The SUMMER26 cohort is small and active. Rather than reconciling the three existing identity stores (free-text worksheet names, fruit_animal study-guide usernames, roadmap email addresses), Phase 0 provisions fresh accounts via the teacher enrollment flow. The `roster_alias` table exists in the schema for future back-joins of legacy data, but that reconciliation is deferred until or unless historical grades must be computed. A clean start is simpler, lower-risk, and appropriate for the cohort size.
+
+### §6.4 — Adoption: shared client, single canonical login on the roadmap
+
+One sign-in surface lives on the roadmap (the hub students already open every class). The shared `roster-client.js` script is loaded as a parent-directory sibling — the same `../` pattern the worksheets already use for `railway_client.js` — so every app can call `rosterClient.studentId()` and stamp it on every gradeable submission without each app managing its own login UI. The one canonical localStorage key (`apstats_roster.v1`) means that signing in once on the roadmap propagates identity to worksheets and the study guide automatically, closing the FRQ-orphan gap identified in §2.
+
+---
+
+### Implementation decisions (build doc §0)
+
+- **D-A** — Password hash is `bcryptjs` (pure-JS, cost factor 12). Chose over `argon2` / native `bcrypt` to avoid node-gyp native addons, which are flaky on Windows local dev and add Railway build risk.
+- **D-B** — `roster-server/` is a standalone Express service in this repo (own `package.json`, own Railway deployment). Keeps Phase 0 reviewable in one PR without entangling the separate `curriculum_render` repo.
+- **D-C** — Session token is a compact HMAC-SHA256 (`base64url(payload) + "." + base64url(HMAC)`). Dependency-free, trivial to verify server-side, and sufficient for a classroom grade-of-record. `signToken()`/`verifyToken()` exported from `token.js` for Phase 1 feeder reuse.
+- **D-D** — `/roster/enroll` is teacher-gated via `x-teacher-secret` header; username is generated server-side (`fruit_animal`). No student self-signup, per spec §6.2.
+- **D-E** — Data access is abstracted behind `roster-server/db.js` (injectable fake for unit tests) so the service is locally verifiable without a live Supabase project.
+- **D-F** — Live provisioning (Supabase project creation, migration, Railway deploy, env vars) is a user-action handoff documented in `roster-server/README.md`. All code is built and tested locally against mocks; no code blocker depends on live credentials.
