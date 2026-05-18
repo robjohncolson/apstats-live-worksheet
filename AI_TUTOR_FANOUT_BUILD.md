@@ -27,7 +27,9 @@ Everything else (the §4 behavioral block verbatim, MCQ `(KEY) value` + `KEY:` +
 | U8 | apstat_8 | L2·15, L3·11, L4·3, L5·9, L6·10 | u8_pc | 6 |
 | U9 | apstat_9 | L2·9, L4·9, L5·9 (no L1/L3) | u9_pc (1 FRQ) | 4 |
 
-**Total = 66 artifacts.** A lesson appears here ⇒ it HAS quiz items ⇒ it gets an artifact. Lessons absent from this table have no `curriculum.js` quiz (no artifact — like U1-L1). If an agent's `^U{u}-L{L}-` grep count ≠ the table, FLAG it (don't pad/trim).
+**Total ≈ 66 artifacts (a few less — see resource rule).** A lesson appears here ⇒ it HAS quiz items ⇒ it gets an artifact. Lessons absent from this table have no `curriculum.js` quiz (no artifact — like U1-L1). If an agent's `^U{u}-L{L}-` grep count ≠ the table, FLAG it (don't pad/trim).
+
+**RESOURCE RULE (learned from U2-L1, 2026-05-18):** an item with `"type": "resource"` is a pointer to videos/games, **not** a quiz question. A lesson whose only `^U{u}-L{L}-` hit(s) are resource-type gets **NO artifact** (a tutor with no questions is pointless — same as U1-L1). The grep-by-id inventory above over-counts such lessons by 1; the agent must check `type`, FLAG resource-only lessons, and write no file. (U2-L1 was such a case — dropped.)
 
 ## Execution
 
