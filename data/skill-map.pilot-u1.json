@@ -1,0 +1,3179 @@
+{
+  "U1-L10-Q01": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L10-Q02": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L10-Q03": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L10-Q04": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L10-Q05": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L10-Q06": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L10-Q07": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L10-Q08": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "U1-L3-Q01": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "U1-L3-Q02": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "U1-L3-Q03": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "U1-L4-Q01": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "U1-L4-Q02": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "U1-L4-Q03": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "U1-L4-Q04": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "U1-L4-Q05": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "U1-L4-Q06": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "U1-L5-Q01": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "U1-L5-Q02": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "U1-L5-Q03": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "U1-L7-Q01": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "U1-L7-Q02": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "U1-L7-Q03": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "U1-L7-Q04": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "U1-L7-Q05": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "U1-L7-Q06": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "U1-L8-Q01": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "U1-L8-Q02": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "U1-L8-Q03": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "U1-PC-FRQ-Q01": {
+    "skill": "3.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-FRQ-Q02": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q01": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q02": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q03": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q04": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q05": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q06": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q07": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q08": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q09": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q10": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q11": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q12": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q13": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q14": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q15": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q16": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q17": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.9,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-A-Q18": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q01": {
+    "skill": "2.C",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q02": {
+    "skill": "2.C",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q03": {
+    "skill": "2.C",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.9,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q04": {
+    "skill": "2.C",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q05": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q06": {
+    "skill": "2.C",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.9,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q07": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q08": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q09": {
+    "skill": "2.C",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q10": {
+    "skill": "2.D",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q11": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q12": {
+    "skill": "2.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q13": {
+    "skill": "3.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q14": {
+    "skill": "3.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.9,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q15": {
+    "skill": "3.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q16": {
+    "skill": "3.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.9,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q17": {
+    "skill": "3.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.9,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "U1-PC-MCQ-B-Q18": {
+    "skill": "3.A",
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": null
+  },
+  "WS-U1L10-Q1": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q10": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q11": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q12": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q13": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q14": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q15": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q16": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q17": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q18": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q19": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q2": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q20": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q21": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q22": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q23": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q24": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q25": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q26": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q27": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q28": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q29": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q3": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q30": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q31": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q32": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q33": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q34": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q35": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q4": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q5": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q6": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q7": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q8": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-Q9": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-exitTicket": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-reflect1": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L10-reflect2": {
+    "skill": "3.A",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "WS-U1L3-Q1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q10": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q11": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q12": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q13": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q14": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.6,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q15": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.6,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q16": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q17": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q18": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q19": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q2": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q20": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q21": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q22": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q23": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q24": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q25": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q26": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q27": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q28": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q29": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q3": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q30": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q31": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q4": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q5": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q6": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q7": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q8": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-Q9": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-exitTicket": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-reflect1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L3-reflect2": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.3"
+  },
+  "WS-U1L4-Q1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q10": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q11": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q12": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q13": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q14": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q15": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q16": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q17": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q18": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q19": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q2": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q20": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q21": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q22": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q23": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q24": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q25": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q26": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q27": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q28": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q29": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q3": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q30": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q31": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q32": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q33": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q4": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q5": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q6": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q7": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q8": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-Q9": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-exitTicket": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-reflect1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L4-reflect2": {
+    "skill": "2.D",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.4"
+  },
+  "WS-U1L5-Q1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q10": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q11": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q12": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q13": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q14": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q15": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q16": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q17": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q18": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q19": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q2": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q20": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q21": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q22": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q23": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q24": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q25": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q26": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q3": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q4": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q5": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q6": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q7": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q8": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-Q9": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-exitTicket": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-reflect1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L5-reflect2": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.5"
+  },
+  "WS-U1L7-Q1": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q10": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q11": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q12": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q13": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q14": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q15": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q16": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q17": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q18": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q19": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q2": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q20": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q21": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q22": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q23": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q24": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q25": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q26": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q27": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q28": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q29": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q3": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q30": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q31": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q32": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q33": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q34": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q35": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q36": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q37": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q38": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q39": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q4": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q40": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q5": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q6": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q7": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q8": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-Q9": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-exitTicket": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-reflect1": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L7-reflect2": {
+    "skill": "2.C",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "confidence": 0.92,
+    "provenance": "ai-constrained",
+    "topic": "1.7"
+  },
+  "WS-U1L8-Q1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q10": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q11": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q12": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q13": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q14": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q15": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q16": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q17": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q18": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q19": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q2": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q20": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q21": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q22": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q23": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q24": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q25": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q26": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q27": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q28": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q29": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q3": {
+    "skill": "2.B",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q30": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q31": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q32": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q33": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q34": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q35": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q36": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q37": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q38": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q39": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q4": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q40": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q41": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q42": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q43": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q5": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q6": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q7": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q8": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-Q9": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-exitTicket": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.75,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-reflect1": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.65,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "WS-U1L8-reflect2": {
+    "skill": "2.A",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "confidence": 0.85,
+    "provenance": "ai-constrained",
+    "topic": "1.8"
+  },
+  "u1-frq-tail-comparison": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  },
+  "u1-frq-zscore": {
+    "skill": "2.D",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "confidence": 0.5,
+    "provenance": "ai-constrained",
+    "topic": "1.10"
+  }
+}

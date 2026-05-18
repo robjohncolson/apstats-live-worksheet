@@ -1,0 +1,75 @@
+[
+  {
+    "id": "WS-U1L10-appeal-text-${questionId}",
+    "topic": "1.10",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "WS-U1L3-appeal-text-${questionId}",
+    "topic": "1.3",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "WS-U1L4-appeal-text-${questionId}",
+    "topic": "1.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "WS-U1L5-appeal-text-${questionId}",
+    "topic": "1.5",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "WS-U1L7-appeal-text-${questionId}",
+    "topic": "1.7",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "WS-U1L8-appeal-text-${questionId}",
+    "topic": "1.8",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  }
+]
