@@ -10,12 +10,20 @@ import { createLiveLedgerDb } from './ledger-db.js';
 import { signToken, verifyToken } from './token.js';
 import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
+import { mountDonow } from './donow.js';
+import { readFile } from 'fs/promises';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── App factory (accepts injected db for tests) ───────────────────────────────
 // ledgerDb is optional; defaults to createLiveLedgerDb() in production.
 // Tests pass a fake ledgerDb alongside the fake db.
+// loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
+// Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb) {
+export function createApp(db, ledgerDb, loadManifest) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -168,16 +176,34 @@ export function createApp(db, ledgerDb) {
     mountLedger(app, { db: ledgerDb, verifyToken });
   }
 
+  // ── Do Now routes (Sprint DN1 additive) ──────────────────────────────────────
+  // Mounts GET /donow.
+  // ledgerDb and loadManifest must be passed in.
+  // Tests inject fakes; production uses live ledger + file-based manifest loader.
+  if (ledgerDb && loadManifest) {
+    mountDonow(app, { verifyToken, ledgerDb, loadManifest });
+  }
+
   return app;
 }
 
 // ── Entrypoint (production only) ─────────────────────────────────────────────
 
+// ── Live manifest loader (production only) ────────────────────────────────────
+// Reads WORK_MANIFEST_PATH env or defaults to the repo's data/work-manifest.json.
+// Parses and returns the manifest object. Throws on missing/unparseable file.
+async function loadLiveManifest() {
+  const defaultPath = resolve(__dirname, '..', 'data', 'work-manifest.json');
+  const manifestPath = process.env.WORK_MANIFEST_PATH || defaultPath;
+  const raw = await readFile(manifestPath, 'utf8');
+  return JSON.parse(raw);
+}
+
 // Only start listening when run directly (not imported by tests)
 if (process.env.NODE_ENV !== 'test') {
   const db = createLiveDb();
   const ledgerDb = createLiveLedgerDb();
-  const app = createApp(db, ledgerDb);
+  const app = createApp(db, ledgerDb, loadLiveManifest);
   const PORT = process.env.PORT || 8090;
   app.listen(PORT, () => {
     console.log(`roster-server listening on port ${PORT}`);

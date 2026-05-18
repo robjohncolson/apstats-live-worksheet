@@ -240,3 +240,46 @@ the Railway service (Variables tab) before any `evidence_tier='proctored'` recor
 Practice-tier writes work without it — if the variable is absent or the header does not match,
 all records default to `evidence_tier='practice'`. This variable is **server-side only**; it must
 never appear in any client-side file or be shared with students.
+
+---
+
+## Do Now (DN1)
+
+`GET /donow` — returns the student's current do-now completion structure. Additive; does not change
+any `/roster/*` or `/ledger/*` behavior.
+
+**Auth:** roster session token — same token issued by `POST /roster/verify`. Supply via:
+- `Authorization: Bearer <token>` header, or
+- `?token=<token>` query parameter.
+
+Returns 401 if the token is absent or invalid.
+
+**Behavior:** reads `item_ledger` rows for the authenticated student plus the work-manifest (path
+configured by `WORK_MANIFEST_PATH` env, default `data/work-manifest.json` in the repo root). Computes
+per-activity / per-lesson / per-unit-pc completion in manifest order (unit → lesson → activity; a
+unit's progress-check after its lessons).
+
+**Response (`200 OK`):**
+```json
+{
+  "ok": true,
+  "nextTask": {
+    "unit": "U1", "lesson": "1.2", "activity": "worksheet", "source": "worksheet",
+    "progress": { "done": 4, "total": 12 }, "reason": "earliest-incomplete"
+  },
+  "lessons": [
+    { "unit": "U1", "lesson": "1.2",
+      "activities": [
+        { "activity": "worksheet", "source": "worksheet", "done": 4, "total": 12, "state": "partial" }
+      ],
+      "lessonState": "partial" }
+  ],
+  "units": [
+    { "unit": "U1", "pc": { "done": 0, "total": 60, "state": "none" } }
+  ],
+  "earlierGapFlag": false
+}
+```
+
+`nextTask` is `null` when all activities are complete. `earlierGapFlag` is `true` when any incomplete
+activity exists before the student's most-advanced touched activity (drives the DN3 speed-bump).
