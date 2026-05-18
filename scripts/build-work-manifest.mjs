@@ -36,7 +36,7 @@
  * Multi-lesson combined keys (e.g. U4L1-2) keep their literal lesson string.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -44,6 +44,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const SKILL_MAP_PATH = resolve(ROOT, 'data/skill-map.json');
 const MANIFEST_PATH = resolve(ROOT, 'data/work-manifest.json');
+
+// Railway deploys roster-server with Root Directory = roster-server, so the
+// repo-root data/ dir is NOT in the deployed container. Ship a byte-identical
+// copy INSIDE roster-server so loadLiveManifest() can read it in production.
+// See roster-server/README.md "Do Now (DN1)" + the deploy runbook.
+const BUNDLED_MANIFEST_PATH = resolve(ROOT, 'roster-server/data/work-manifest.json');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Classification
@@ -330,6 +336,12 @@ if (isMain) {
 
   writeFileSync(MANIFEST_PATH, withTimestamp, 'utf8');
   console.log(`Wrote ${MANIFEST_PATH}`);
+
+  // Bundled copy for the roster-server Railway deploy (root=roster-server).
+  // Byte-identical to MANIFEST_PATH so /donow reads the same data in prod.
+  mkdirSync(dirname(BUNDLED_MANIFEST_PATH), { recursive: true });
+  writeFileSync(BUNDLED_MANIFEST_PATH, withTimestamp, 'utf8');
+  console.log(`Wrote ${BUNDLED_MANIFEST_PATH} (bundled for deploy)`);
 
   // Quick summary
   const unitCount = manifest.units.length;

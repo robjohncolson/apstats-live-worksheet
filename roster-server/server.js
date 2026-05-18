@@ -12,6 +12,7 @@ import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
 import { mountDonow } from './donow.js';
 import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -190,12 +191,31 @@ export function createApp(db, ledgerDb, loadManifest) {
 // ── Entrypoint (production only) ─────────────────────────────────────────────
 
 // ── Live manifest loader (production only) ────────────────────────────────────
-// Reads WORK_MANIFEST_PATH env or defaults to the repo's data/work-manifest.json.
-// Parses and returns the manifest object. Throws on missing/unparseable file.
+// Resolves the work-manifest path in priority order, then parses it.
+// Throws on a missing/unparseable file.
+//
+//   1. WORK_MANIFEST_PATH env — explicit override always wins.
+//   2. Bundled copy inside roster-server (./data/work-manifest.json) — this is
+//      the ONLY copy present in the Railway container, because Railway deploys
+//      with Root Directory = roster-server, so the repo-root data/ dir is NOT
+//      shipped. scripts/build-work-manifest.mjs writes this copy byte-identical.
+//   3. Repo-root ../data/work-manifest.json — local dev / running from a full
+//      checkout where the bundled copy was not regenerated.
+function resolveManifestPath() {
+  if (process.env.WORK_MANIFEST_PATH) {
+    return process.env.WORK_MANIFEST_PATH;
+  }
+
+  const bundledPath = resolve(__dirname, 'data', 'work-manifest.json');
+  if (existsSync(bundledPath)) {
+    return bundledPath;
+  }
+
+  return resolve(__dirname, '..', 'data', 'work-manifest.json');
+}
+
 async function loadLiveManifest() {
-  const defaultPath = resolve(__dirname, '..', 'data', 'work-manifest.json');
-  const manifestPath = process.env.WORK_MANIFEST_PATH || defaultPath;
-  const raw = await readFile(manifestPath, 'utf8');
+  const raw = await readFile(resolveManifestPath(), 'utf8');
   return JSON.parse(raw);
 }
 

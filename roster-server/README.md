@@ -283,3 +283,96 @@ unit's progress-check after its lessons).
 
 `nextTask` is `null` when all activities are complete. `earlierGapFlag` is `true` when any incomplete
 activity exists before the student's most-advanced touched activity (drives the DN3 speed-bump).
+
+---
+
+## Redeploy runbook — activate `/donow` (unblocks DN2c)
+
+> **Why this is needed:** the live Railway service was last deployed for Phase 0 / Sprint 1,
+> **before** DN1 landed. `GET /donow` currently returns **404 on prod** simply because the deployed
+> build has no `mountDonow`. The in-repo code is correct; this is purely a "push the current code"
+> step. **This is a teacher/user action** — it requires your Railway account. No code change is
+> required before redeploying; the manifest-reachability fix below is already committed.
+
+### What was already fixed in the repo (so redeploy won't 500)
+
+Railway deploys this service with **Root Directory = `roster-server`**, so the repo-root
+`data/work-manifest.json` is **not** in the deployed container. `GET /donow` needs that manifest.
+The fix (already in the repo):
+
+- `scripts/build-work-manifest.mjs` now writes a **byte-identical bundled copy** to
+  `roster-server/data/work-manifest.json`, which ships inside the deploy artifact.
+- `loadLiveManifest()` resolves the manifest in this order: `WORK_MANIFEST_PATH` env →
+  bundled `roster-server/data/work-manifest.json` → repo-root `../data/work-manifest.json`.
+- `tests/work-manifest.test.js` has a drift guard so the two copies can never silently desync.
+
+So after redeploy `/donow` works with **no env changes** — the bundled manifest is found
+automatically. Setting `WORK_MANIFEST_PATH` is optional and only needed to point at a non-default
+location.
+
+> Before redeploying, make sure the bundled copy is current. If you (or a regen) recently changed
+> `data/skill-map.json`, run `node scripts/build-work-manifest.mjs` and commit both
+> `data/work-manifest.json` and `roster-server/data/work-manifest.json` first.
+
+### Step R1 — Trigger the redeploy
+
+The existing service (`apstats-roster` project, `roster` service,
+`https://roster-production-12c1.up.railway.app`) is already wired to this repo with all secrets set
+(`ROSTER_SUPABASE_URL`, `ROSTER_SUPABASE_SERVICE_KEY`, `ROSTER_TOKEN_SECRET`, `ROSTER_TEACHER_SECRET`,
+`ROSTER_PROCTOR_SECRET`). You only need to ship the latest `master`.
+
+**Option A — Railway dashboard:** open the `roster` service → **Deployments** → **Deploy** (or
+trigger a redeploy of the latest commit on `master`). Confirm the build picks up the current commit.
+
+**Option B — Railway CLI:**
+
+```bash
+cd roster-server
+railway link            # select the existing apstats-roster project / roster service
+railway up
+```
+
+No variables need to change. Railway will build and roll the new deployment.
+
+### Step R2 — Smoke test `/donow` end-to-end
+
+```bash
+# 1. Health (sanity — should already pass pre-redeploy)
+curl https://roster-production-12c1.up.railway.app/health
+# → {"ok":true,"service":"roster","time":"..."}
+
+# 2. Enroll a throwaway student (teacher-gated). Use the SMOKETEST section so the
+#    existing `delete from roster where section='SMOKETEST';` chore cleans it up.
+curl -X POST https://roster-production-12c1.up.railway.app/roster/enroll \
+  -H "Content-Type: application/json" \
+  -H "x-teacher-secret: $ROSTER_TEACHER_SECRET" \
+  -d '{"realName":"DN1 Smoke","section":"SMOKETEST","password":"smoke-dn1-pass"}'
+# → {"ok":true,"studentId":"...","username":"<fruit_animal>", ...}  (save the username)
+
+# 3. Sign in to get a session token
+curl -X POST https://roster-production-12c1.up.railway.app/roster/verify \
+  -H "Content-Type: application/json" \
+  -d '{"username":"<fruit_animal_from_step_2>","password":"smoke-dn1-pass"}'
+# → {"ok":true,"studentId":"...","token":"<token>", ...}  (save the token)
+
+# 4. THE proof — /donow must return 200, NOT 404 and NOT 500
+curl "https://roster-production-12c1.up.railway.app/donow?token=<token_from_step_3>"
+# → 200 {"ok":true,"nextTask":{...},"lessons":[...],"units":[...],"earlierGapFlag":false}
+```
+
+**Interpreting the result:**
+
+| `/donow` response | Meaning | Action |
+|-------------------|---------|--------|
+| **404** | Redeploy didn't take — old build still live | Re-trigger the deploy; confirm it built the latest commit |
+| **500** `"Could not load work manifest"` | Bundled manifest missing from the artifact | Confirm `roster-server/data/work-manifest.json` is committed and not in `.railwayignore`; redeploy |
+| **401** | Token missing/invalid | Re-run steps 2–3; pass the token via `?token=` or `Authorization: Bearer` |
+| **200** with the JSON shape above | ✅ DN1 is live — **DN2c is unblocked** | Proceed with DN2c; run the SMOKETEST cleanup chore |
+
+### Step R3 — Cleanup
+
+After a green `/donow`, clear the throwaway row (also cascades to any `item_ledger` test rows):
+
+```sql
+delete from roster where section='SMOKETEST';
+```

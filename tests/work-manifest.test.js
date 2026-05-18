@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildWorkManifest } from '../scripts/build-work-manifest.mjs';
 
@@ -454,5 +454,39 @@ describe('Index cross-checks', () => {
         }
       }
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Deploy drift guard — the bundled roster-server copy must stay in sync
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Railway deploys roster-server with Root Directory = roster-server, so the
+// repo-root data/ dir is NOT in the deployed container. scripts/build-work-
+// manifest.mjs writes a byte-identical copy to roster-server/data/work-
+// manifest.json that ships in the deploy artifact and is what /donow reads in
+// production. If a future skill-map regen rebuilds one file but not the other,
+// production would silently serve a stale manifest — this guard fails first.
+
+describe('Deploy drift guard (roster-server bundled manifest)', () => {
+  const CANONICAL_PATH = resolve(ROOT, 'data/work-manifest.json');
+  const BUNDLED_PATH = resolve(ROOT, 'roster-server/data/work-manifest.json');
+
+  // Compare structure only — the "generated" timestamp line legitimately differs
+  // by write order within a single CLI run; everything else must match exactly.
+  function stripGenerated(jsonText) {
+    const obj = JSON.parse(jsonText);
+    delete obj.generated;
+    return JSON.stringify(obj);
+  }
+
+  it('the bundled copy exists (regen ran)', () => {
+    expect(existsSync(BUNDLED_PATH), `missing ${BUNDLED_PATH} — run: node scripts/build-work-manifest.mjs`).toBe(true);
+  });
+
+  it('bundled copy is byte-identical to data/work-manifest.json (modulo timestamp)', () => {
+    const canonical = readFileSync(CANONICAL_PATH, 'utf8');
+    const bundled = readFileSync(BUNDLED_PATH, 'utf8');
+    expect(stripGenerated(bundled)).toBe(stripGenerated(canonical));
   });
 });
