@@ -1056,10 +1056,10 @@
     </span>
     <span class="menu-item" data-menu="view">View
         <div class="menu-dropdown" id="menu-view">
-            <div class="menu-dd-item" onclick="setP('B');closeMenus()">&#10003; Period B</div>
-            <div class="menu-dd-item" onclick="setP('E');closeMenus()">&#160;&#160; Period E</div>
+            <div class="menu-dd-item" id="menu-period-x" onclick="setP('B');closeMenus()">&#10003; Period X &#8212; actual periods TBD</div>
+            <!-- Period B/E hidden until periods are assigned: setP('B')/setP('E') still work internally -->
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-year="SUMMER26" onclick="loadYear('SUMMER26');closeMenus()">  Summer 2026 — Units 1–3 Prep</div>
+            <div class="menu-dd-item" data-year="SUMMER26" onclick="loadYear('SUMMER26');closeMenus()">  Summer 2026 — Units 1–5 Prep</div>
             <div class="menu-dd-item" data-year="SY26-27" onclick="loadYear('SY26-27');closeMenus()">  Full Year 2026-27</div>
             <div class="menu-dd-item" data-year="SY25-26" style="opacity:.45" title="Archived — Spring 2026 (AP exam passed 2026-05-07)" onclick="loadYear('SY25-26');closeMenus()">  Spring 2026 (archived)</div>
             <div class="menu-dd-sep"></div>
@@ -1082,7 +1082,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('ti84')" style="font-weight:bold">&#128290; TI-84 Trainer</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('quiz')" style="font-weight:bold">&#128221; AP Stats Quiz</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('driller')" style="font-weight:bold">&#128296; Driller</div>
+            <!-- Driller deprecated — removed 2026-05 -->
             <!-- <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openProgress()" style="font-weight:bold">&#128202; My Progress</div> -->
         </div>
@@ -1127,10 +1127,7 @@
     <div class="icon-img"><img src="icons/icon-formulas.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#9889;</div>
     <div class="icon-label">Equation Trainer</div>
 </div>
-<div class="app-icon" data-app="driller" style="top:252px;right:20px;left:auto" ondblclick="openApp('driller')" onclick="selectAppIcon(this)">
-    <div class="icon-img"><img src="icons/icon-driller.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#128296;</div>
-    <div class="icon-label">Driller</div>
-</div>
+<!-- Driller icon deprecated — removed 2026-05 -->
 <div class="app-icon" data-app="game" style="top:324px;right:20px;left:auto" ondblclick="openGame()" onclick="selectAppIcon(this)">
     <div class="icon-img"><img src="icons/icon-tetris.png" alt="" onerror="this.style.display='none';this.parentElement.dataset.fallback='1'">&#127918;</div>
     <div class="icon-label">Study Break</div>
@@ -1170,8 +1167,9 @@
                 <div class="cd-box cd-dark" id="cd-exam"><div class="num">&mdash;</div><div class="lbl geneva">Exam Day</div></div>
             </div>
             <div class="per-tog chicago">
-                <button class="s7btn s7btn-default s7btn-inv" id="btn-b" onclick="setP('B')">Period B</button>
-                <button class="s7btn" id="btn-e" onclick="setP('E')">Period E</button>
+                <button class="s7btn s7btn-default s7btn-inv" id="btn-b" onclick="setP('B')">Period X &#8212; actual periods TBD</button>
+                <!-- btn-e hidden until periods are assigned -->
+                <button class="s7btn" id="btn-e" onclick="setP('E')" style="display:none">Period E</button>
             </div>
             <div class="legend geneva" id="legend-bar"></div>
             <div class="cal-outer geneva">
@@ -1326,20 +1324,7 @@
     </div>
 </div>
 
-<!-- ═══ App Window: Driller ═══ -->
-<div class="app-overlay" id="app-driller-overlay">
-    <div class="app-window">
-        <div class="game-title-bar">
-            <div class="close-box" onclick="destroyApp('driller')" title="Close"></div>
-            <div class="title-stripes"></div>
-            <span class="title-text chicago">Driller</span>
-            <div class="collapse-box" onclick="minimizeApp('driller')" title="Minimize"></div>
-        </div>
-        <div class="app-content">
-            <iframe id="app-driller-frame" class="app-iframe" allow="cross-origin-isolated"></iframe>
-        </div>
-    </div>
-</div>
+<!-- Driller app window deprecated — removed 2026-05 -->
 
 <!-- ═══ App Window: My Progress ═══ -->
 <div class="app-overlay" id="app-progress-overlay">
@@ -1368,7 +1353,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 8.1",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson1_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l01-topic-8-1-observed-vs-expected",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=7&l=9",
         "blooket": "https://dashboard.blooket.com/set/69b6cdd37e3edc6f469fe78d",
         "videos": []
@@ -1393,7 +1377,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 8.2",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson2_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l06-chi-square-gof-procedure",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=1",
         "blooket": "https://dashboard.blooket.com/set/69b783b70641400d44478430",
         "videos": []
@@ -1418,7 +1401,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 8.3",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson3_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l10-expected-from-proportions",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=2",
         "blooket": "https://dashboard.blooket.com/set/69b81f452209798f94f22801",
         "videos": []
@@ -1443,7 +1425,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 8.4",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson4_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l15-two-way-table-totals",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=3",
         "blooket": "https://dashboard.blooket.com/set/69c098310774a12931de3d19",
         "videos": []
@@ -1468,7 +1449,6 @@ const BAKED_REGISTRY = {
       "topic": "Unit 6 Review",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/edgar_u6_conceptual_driller_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1493,7 +1473,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 8.5",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson5_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l19-identify-test-type",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=4",
         "blooket": "https://dashboard.blooket.com/set/69c0a4560774a12931de3f76",
         "videos": []
@@ -1518,7 +1497,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 8.6",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u8_lesson6_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u8-unexpected-results&level=l23-chi-square-twoway",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=5",
         "blooket": "https://dashboard.blooket.com/set/69c35c8f0774a12931df155c",
         "videos": []
@@ -1543,7 +1521,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 9.1",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u9_lesson1_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u9-regression-slopes&level=l01-population-vs-sample",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=8&l=PC",
         "blooket": "https://dashboard.blooket.com/set/69c3da020e37da3c048cccf4",
         "videos": []
@@ -1568,7 +1545,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 9.2",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u9_lesson2_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u9-regression-slopes&level=l05-conditions-for-inference",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=9&l=1",
         "blooket": "https://dashboard.blooket.com/set/69c3e33a0e37da3c048cd1ab",
         "videos": []
@@ -1593,7 +1569,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 9.3",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u9_lesson3_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u9-justify-slope-claims-ci&level=l93-interpret-slope-ci",
         "quiz": null,
         "blooket": "https://dashboard.blooket.com/set/69c3f1c846f993a1257e896d",
         "videos": []
@@ -1618,7 +1593,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 9.4",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u9_lesson4_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u9-setting-up-slope-tests&level=l94-state-null-hypothesis",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=9&l=3",
         "blooket": "https://dashboard.blooket.com/set/69c550b73930eb3d0972b753",
         "videos": []
@@ -1643,7 +1617,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 9.5",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u9_lesson5_live.html",
-        "drills": "https://lrsl-driller.vercel.app/platform/app.html?c=apstats-u9-carrying-out-slope-tests&level=l95-calculate-test-statistic",
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=9&l=4",
         "blooket": "https://dashboard.blooket.com/set/69c550daa37834f1b9c642d8",
         "videos": []
@@ -1668,7 +1641,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson6-7_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1693,7 +1665,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson6-7_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1718,7 +1689,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1743,7 +1713,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1768,7 +1737,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1793,7 +1761,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1818,7 +1785,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1843,7 +1809,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson6_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1868,7 +1833,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson7-8_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1893,7 +1857,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson7-8_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1918,7 +1881,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson9_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1943,7 +1905,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson10-12_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1968,7 +1929,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson10-12_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -1993,7 +1953,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson10-12_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2018,7 +1977,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson1-2_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2043,7 +2001,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson1-2_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2068,7 +2025,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson3_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2093,7 +2049,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson4_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2118,7 +2073,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson5_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2143,7 +2097,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson6_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2168,7 +2121,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson7_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2193,7 +2145,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u5_lesson8_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2218,7 +2169,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2243,7 +2193,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson1-2_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2268,7 +2217,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson3_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2293,7 +2241,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson4_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2318,7 +2265,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson5_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2343,7 +2289,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson6_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2368,7 +2313,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson7_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2393,7 +2337,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson8_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2418,7 +2361,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson9_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2443,7 +2385,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson10_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2468,7 +2409,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u6_lesson11_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2493,7 +2433,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson1_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2518,7 +2457,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson2_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2543,7 +2481,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson3_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2568,7 +2505,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson4_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2593,7 +2529,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson5_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2618,7 +2553,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson6_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2643,7 +2577,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson7_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2668,7 +2601,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson8_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2693,7 +2625,6 @@ const BAKED_REGISTRY = {
       "topic": null,
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u7_lesson9_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": null,
         "videos": []
@@ -2718,7 +2649,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.3",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson3_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=2",
         "blooket": "https://dashboard.blooket.com/set/6a08aa2b93e4e9542dfc8365",
         "videos": []
@@ -2743,7 +2673,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.1",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson1_live.html",
-        "drills": null,
         "quiz": null,
         "blooket": "https://dashboard.blooket.com/set/6a089df893e4e9542dfc81db",
         "videos": []
@@ -2768,7 +2697,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.2",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson2_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=1",
         "blooket": "https://dashboard.blooket.com/set/6a08a5ec93e4e9542dfc82d6",
         "videos": []
@@ -2793,7 +2721,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.4",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson4_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=3",
         "blooket": "https://dashboard.blooket.com/set/6a08ae0554234f801d61cea6",
         "videos": []
@@ -2818,7 +2745,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.5",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson5_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=4",
         "blooket": "https://dashboard.blooket.com/set/6a08b14254234f801d61cf15",
         "videos": []
@@ -2843,7 +2769,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.6",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson6_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=5",
         "blooket": "https://dashboard.blooket.com/set/6a08b8e854234f801d61d014",
         "videos": []
@@ -2868,7 +2793,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.8",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson8_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=7",
         "blooket": "https://dashboard.blooket.com/set/6a08c14654234f801d61d13b",
         "videos": []
@@ -2893,7 +2817,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.7",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson7_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=6",
         "blooket": "https://dashboard.blooket.com/set/6a08bd35753b45cd2933c8eb",
         "videos": []
@@ -2918,7 +2841,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.9",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson9_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=8",
         "blooket": "https://dashboard.blooket.com/set/6a08c51a54234f801d61d1d3",
         "videos": []
@@ -2943,7 +2865,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 1.10",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson10_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=9",
         "blooket": "https://dashboard.blooket.com/set/6a081a2954234f801d61c07c",
         "videos": []
@@ -2968,7 +2889,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.2",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson2_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=1",
         "blooket": "https://dashboard.blooket.com/set/6a08db6793e4e9542dfc8989",
         "videos": []
@@ -2993,7 +2913,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.1",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson1_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=1&l=PC",
         "blooket": "https://dashboard.blooket.com/set/6a08ee78753b45cd2933cf1b",
         "videos": []
@@ -3018,7 +2937,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.3",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson3_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=2",
         "blooket": "https://dashboard.blooket.com/set/6a08f201753b45cd2933cf97",
         "videos": []
@@ -3043,7 +2961,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.4",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson4_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=3",
         "blooket": "https://dashboard.blooket.com/set/6a08f5db93e4e9542dfc8c96",
         "videos": []
@@ -3068,7 +2985,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.5",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson5_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=4",
         "blooket": "https://dashboard.blooket.com/set/6a09008c753b45cd2933d12a",
         "videos": []
@@ -3093,7 +3009,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.6",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson6_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=5",
         "blooket": "https://dashboard.blooket.com/set/6a090556753b45cd2933d1d2",
         "videos": []
@@ -3118,7 +3033,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.7",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson7_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=6",
         "blooket": "https://dashboard.blooket.com/set/6a0915cb753b45cd2933d3d4",
         "videos": []
@@ -3143,7 +3057,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.8",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson8_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=7",
         "blooket": "https://dashboard.blooket.com/set/6a09199d93e4e9542dfc90a6",
         "videos": []
@@ -3168,7 +3081,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 2.9",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u2_lesson9_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=8",
         "blooket": "https://dashboard.blooket.com/set/6a091d2293e4e9542dfc910c",
         "videos": []
@@ -3193,7 +3105,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 3.1",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson1_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=2&l=PC",
         "blooket": "https://dashboard.blooket.com/set/6a09234354234f801d61dc71",
         "videos": []
@@ -3218,7 +3129,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 3.2",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson2_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=3&l=1",
         "blooket": "https://dashboard.blooket.com/set/6a09269d93e4e9542dfc921f",
         "videos": []
@@ -3243,7 +3153,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 3.3",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson3_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=3&l=2",
         "blooket": "https://dashboard.blooket.com/set/6a092a4293e4e9542dfc9273",
         "videos": []
@@ -3268,7 +3177,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 3.4",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson4_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=3&l=3",
         "blooket": "https://dashboard.blooket.com/set/6a092ead753b45cd2933d677",
         "videos": []
@@ -3293,7 +3201,6 @@ const BAKED_REGISTRY = {
       "topic": "Topic 3.5",
       "urls": {
         "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/u3_lesson5_live.html",
-        "drills": null,
         "quiz": "https://robjohncolson.github.io/curriculum_render/?u=3&l=4",
         "blooket": "https://dashboard.blooket.com/set/6a0932d7753b45cd2933d6e0",
         "videos": []
@@ -3488,7 +3395,7 @@ function mergeSupabase(schedRows,urlsRows,period){
     if(!lesson){lesson={topic:uRow.topic,urls:{},periods:{},status:'pending'};REGISTRY.lessons[uRow.topic]=lesson;}
     if(!lesson.urls)lesson.urls={};
     if(uRow.worksheet_url)lesson.urls.worksheet=uRow.worksheet_url;
-    if(uRow.drills_url)lesson.urls.drills=uRow.drills_url;
+    // drills_url deprecated — not stored in runtime lesson.urls (2026-05)
     if(uRow.quiz_url)lesson.urls.quiz=uRow.quiz_url;
     if(uRow.blooket_url)lesson.urls.blooket=uRow.blooket_url;
   }
@@ -3511,10 +3418,11 @@ function mergeSupabase(schedRows,urlsRows,period){
   for(var topic in REGISTRY.lessons){
     var les2=REGISTRY.lessons[topic];
     if(!les2.urls)continue;
-    var urlCount=[les2.urls.worksheet,les2.urls.drills,les2.urls.quiz,les2.urls.blooket].filter(Boolean).length;
+    // Drills deprecated 2026-05 — ready threshold is now 3 URLs (worksheet, quiz, blooket)
+    var urlCount=[les2.urls.worksheet,les2.urls.quiz,les2.urls.blooket].filter(Boolean).length;
     var anyPosted=false;
     if(les2.periods){for(var pr in les2.periods){if(les2.periods[pr].posted){anyPosted=true;break;}}}
-    if(urlCount===4&&anyPosted)les2.status='ready';
+    if(urlCount===3&&anyPosted)les2.status='ready';
     else if(urlCount>0||anyPosted)les2.status='partial';
   }
 }
@@ -3849,7 +3757,7 @@ const SCHEDULE_DEFS = {
     label: "Summer 2026 — Units 1–5 Prep",
     school: "Lynn English High School",
     examDate: [2026,8,1],
-    range: { start: [2026,4,18], end: [2026,7,14] },
+    range: { start: [2026,5,20], end: [2026,7,25] },
     periods: {
       B: { label:"Self-paced", meetsDays:[1,2,3,4,5], doubleDay:null, schoologyCourse:null },
       E: { label:"Self-paced", meetsDays:[1,2,3,4,5], doubleDay:null, schoologyCourse:null }
@@ -3857,7 +3765,7 @@ const SCHEDULE_DEFS = {
     daysOff: [],
     pacing: { B: [], E: [] },
     units: [ {id:1,label:"1-Var Data"},{id:2,label:"2-Var Data"},{id:3,label:"Sampling"},{id:4,label:"Probability"},{id:5,label:"Distributions"} ],
-    _legacyS: [[2026,4,18,d("1.1","Intro: Learning from Data",1),d("1.1","Intro: Learning from Data",1)],[2026,4,19,NC,NC],[2026,4,20,d("1.2","Variables",1),d("1.2","Variables",1)],[2026,4,21,NC,NC],[2026,4,22,d("1.3","Categorical: Tables",1),d("1.3","Categorical: Tables",1)],[2026,4,25,d("1.4","Categorical: Graphs",1),d("1.4","Categorical: Graphs",1)],[2026,4,26,NC,NC],[2026,4,27,d("1.5","Quantitative: Graphs",1),d("1.5","Quantitative: Graphs",1)],[2026,4,28,NC,NC],[2026,4,29,d("1.6","Describing Distributions",1),d("1.6","Describing Distributions",1)],[2026,5,1,d("1.7","Summary Statistics",1),d("1.7","Summary Statistics",1)],[2026,5,2,NC,NC],[2026,5,3,d("1.8","Graphs of Summary Stats",1),d("1.8","Graphs of Summary Stats",1)],[2026,5,4,NC,NC],[2026,5,5,d("1.9","Comparing Distributions",1),d("1.9","Comparing Distributions",1)],[2026,5,8,d("1.10","Normal Distribution",1),d("1.10","Normal Distribution",1)],[2026,5,9,NC,NC],[2026,5,10,d("2.1","Intro: Are Variables Related?",2),d("2.1","Intro: Are Variables Related?",2)],[2026,5,11,NC,NC],[2026,5,12,d("2.2","Two Categorical Variables",2),d("2.2","Two Categorical Variables",2)],[2026,5,15,d("2.3","Stats: Two Categorical",2),d("2.3","Stats: Two Categorical",2)],[2026,5,16,NC,NC],[2026,5,17,d("2.4","Two Quantitative Variables",2),d("2.4","Two Quantitative Variables",2)],[2026,5,18,NC,NC],[2026,5,19,d("2.5","Correlation",2),d("2.5","Correlation",2)],[2026,5,22,d("2.6","Linear Regression Models",2),d("2.6","Linear Regression Models",2)],[2026,5,23,NC,NC],[2026,5,24,d("2.7","Residuals",2),d("2.7","Residuals",2)],[2026,5,25,NC,NC],[2026,5,26,d("2.8","Least Squares Regression",2),d("2.8","Least Squares Regression",2)],[2026,5,29,d("2.9","Departures from Linearity",2),d("2.9","Departures from Linearity",2)],[2026,5,30,NC,NC],[2026,6,1,d("3.1","Intro: Truthful Data?",3),d("3.1","Intro: Truthful Data?",3)],[2026,6,2,NC,NC],[2026,6,3,d("3.2","Planning Studies",3),d("3.2","Planning Studies",3)],[2026,6,6,d("3.3","Random Sampling",3),d("3.3","Random Sampling",3)],[2026,6,7,NC,NC],[2026,6,8,d("3.4","Sampling Problems",3),d("3.4","Sampling Problems",3)],[2026,6,9,NC,NC],[2026,6,10,d("3.5","Experimental Design",3),d("3.5","Experimental Design",3)],[2026,6,13,d("3.6","Exp. Design & Inference",3),d("3.6","Exp. Design & Inference",3)],[2026,6,14,NC,NC],[2026,6,15,d("4.1","Random Patterns & Simulation (4.1-4.2)",4),d("4.1","Random Patterns & Simulation (4.1-4.2)",4)],[2026,6,16,NC,NC],[2026,6,17,d("4.3","Probability Rules (4.3-4.5)",4),d("4.3","Probability Rules (4.3-4.5)",4)],[2026,6,20,d("4.6","Independent Events & Unions (4.6)",4),d("4.6","Independent Events & Unions (4.6)",4)],[2026,6,21,NC,NC],[2026,6,22,d("4.7","Random Variables & Distributions (4.7-4.8)",4),d("4.7","Random Variables & Distributions (4.7-4.8)",4)],[2026,6,23,NC,NC],[2026,6,24,d("4.9","Combining Random Variables (4.9)",4),d("4.9","Combining Random Variables (4.9)",4)],[2026,6,27,d("4.10","Binomial & Geometric (4.10-4.12)",4),d("4.10","Binomial & Geometric (4.10-4.12)",4)],[2026,6,28,NC,NC],[2026,6,29,d("5.1","Sampling Distributions Intro & Normal (5.1-5.2)",5),d("5.1","Sampling Distributions Intro & Normal (5.1-5.2)",5)],[2026,6,30,NC,NC],[2026,6,31,d("5.3","Central Limit Theorem (5.3)",5),d("5.3","Central Limit Theorem (5.3)",5)],[2026,7,3,d("5.4","Biased/Unbiased Estimators (5.4)",5),d("5.4","Biased/Unbiased Estimators (5.4)",5)],[2026,7,4,NC,NC],[2026,7,5,d("5.5","Sampling Dist. for Proportions (5.5)",5),d("5.5","Sampling Dist. for Proportions (5.5)",5)],[2026,7,6,NC,NC],[2026,7,7,d("5.6","Diff. in Sample Proportions (5.6)",5),d("5.6","Diff. in Sample Proportions (5.6)",5)],[2026,7,10,d("5.7","Sampling Dist. for Means (5.7)",5),d("5.7","Sampling Dist. for Means (5.7)",5)],[2026,7,11,NC,NC],[2026,7,12,d("5.8","Diff. in Sample Means (5.8)",5),d("5.8","Diff. in Sample Means (5.8)",5)],[2026,7,13,NC,NC],[2026,7,14,NC,NC]]
+    _legacyS: [[2026,5,22,d("1.1","Intro: Learning from Data",1),d("1.1","Intro: Learning from Data",1)],[2026,5,23,d("1.2","Variables",1),d("1.2","Variables",1)],[2026,5,24,d("1.3","Categorical: Tables",1),d("1.3","Categorical: Tables",1)],[2026,5,25,d("1.4","Categorical: Graphs",1),d("1.4","Categorical: Graphs",1)],[2026,5,26,NC,NC],[2026,5,29,d("1.5","Quantitative: Graphs",1),d("1.5","Quantitative: Graphs",1)],[2026,5,30,d("1.6","Describing Distributions",1),d("1.6","Describing Distributions",1)],[2026,6,1,d("1.7","Summary Statistics",1),d("1.7","Summary Statistics",1)],[2026,6,2,d("1.8","Graphs of Summary Stats",1),d("1.8","Graphs of Summary Stats",1)],[2026,6,3,NC,NC],[2026,6,6,d("1.9","Comparing Distributions",1),d("1.9","Comparing Distributions",1)],[2026,6,7,d("1.10","Normal Distribution",1),d("1.10","Normal Distribution",1)],[2026,6,8,d("2.1","Intro: Are Variables Related?",2),d("2.1","Intro: Are Variables Related?",2)],[2026,6,9,d("2.2","Two Categorical Variables",2),d("2.2","Two Categorical Variables",2)],[2026,6,10,NC,NC],[2026,6,13,d("2.3","Stats: Two Categorical",2),d("2.3","Stats: Two Categorical",2)],[2026,6,14,d("2.4","Two Quantitative Variables",2),d("2.4","Two Quantitative Variables",2)],[2026,6,15,d("2.5","Correlation",2),d("2.5","Correlation",2)],[2026,6,16,d("2.6","Linear Regression Models",2),d("2.6","Linear Regression Models",2)],[2026,6,17,NC,NC],[2026,6,20,d("2.7","Residuals",2),d("2.7","Residuals",2)],[2026,6,21,d("2.8","Least Squares Regression",2),d("2.8","Least Squares Regression",2)],[2026,6,22,d("2.9","Departures from Linearity",2),d("2.9","Departures from Linearity",2)],[2026,6,23,d("3.1","Intro: Truthful Data?",3),d("3.1","Intro: Truthful Data?",3)],[2026,6,24,NC,NC],[2026,6,27,d("3.2","Planning Studies",3),d("3.2","Planning Studies",3)],[2026,6,28,d("3.3","Random Sampling",3),d("3.3","Random Sampling",3)],[2026,6,29,d("3.4","Sampling Problems",3),d("3.4","Sampling Problems",3)],[2026,6,30,d("3.5","Experimental Design",3),d("3.5","Experimental Design",3)],[2026,6,31,NC,NC],[2026,7,3,d("3.6","Exp. Design & Inference",3),d("3.6","Exp. Design & Inference",3)],[2026,7,4,d("4.1","Random Patterns & Simulation (4.1-4.2)",4),d("4.1","Random Patterns & Simulation (4.1-4.2)",4)],[2026,7,5,d("4.3","Probability Rules (4.3-4.5)",4),d("4.3","Probability Rules (4.3-4.5)",4)],[2026,7,6,d("4.6","Independent Events & Unions (4.6)",4),d("4.6","Independent Events & Unions (4.6)",4)],[2026,7,7,NC,NC],[2026,7,10,d("4.7","Random Variables & Distributions (4.7-4.8)",4),d("4.7","Random Variables & Distributions (4.7-4.8)",4)],[2026,7,11,d("4.9","Combining Random Variables (4.9)",4),d("4.9","Combining Random Variables (4.9)",4)],[2026,7,12,d("4.10","Binomial & Geometric (4.10-4.12)",4),d("4.10","Binomial & Geometric (4.10-4.12)",4)],[2026,7,13,d("5.1","Sampling Distributions Intro & Normal (5.1-5.2)",5),d("5.1","Sampling Distributions Intro & Normal (5.1-5.2)",5)],[2026,7,14,NC,NC],[2026,7,17,d("5.3","Central Limit Theorem (5.3)",5),d("5.3","Central Limit Theorem (5.3)",5)],[2026,7,18,d("5.4","Biased/Unbiased Estimators (5.4)",5),d("5.4","Biased/Unbiased Estimators (5.4)",5)],[2026,7,19,d("5.5","Sampling Dist. for Proportions (5.5)",5),d("5.5","Sampling Dist. for Proportions (5.5)",5)],[2026,7,20,d("5.6","Diff. in Sample Proportions (5.6)",5),d("5.6","Diff. in Sample Proportions (5.6)",5)],[2026,7,21,NC,NC],[2026,7,24,d("5.7","Sampling Dist. for Means (5.7)",5),d("5.7","Sampling Dist. for Means (5.7)",5)],[2026,7,25,d("5.8","Diff. in Sample Means (5.8)",5),d("5.8","Diff. in Sample Means (5.8)",5)],[2026,7,26,NC,NC],[2026,7,27,NC,NC],[2026,7,28,NC,NC]]
   },
   "SY25-26": {
     label: "Spring 2026 (archived)",
@@ -4412,7 +4320,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/695b30a16b6c92373881e1e3", title: "u3l1blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?cartridge=sampling", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "pdf/u3_kickoff_student.pdf", label: "Kickoff Packet (Student)" },
@@ -4425,7 +4332,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/695b30a16b6c92373881e1e3", title: "u3l2blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?cartridge=sampling", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "pdf/u3_kickoff_student.pdf", label: "Kickoff Packet (Student)" },
@@ -4439,7 +4345,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/695b30a16b6c92373881e1e3", title: "u3l3blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?cartridge=sampling", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "pdf/u3_kickoff_student.pdf", label: "Kickoff Packet (Student)" },
@@ -4468,7 +4373,6 @@ const RESOURCES = {
     pdfs: [
       { url: "pdf/u3l5_worksheet.pdf", label: "Follow-Along Worksheet" },
       { url: "worksheets/u3l5.html", label: "Video Write-Along (HTML, interactive)" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?c=exp", label: "Math practice website (experimental design)" }
     ]
   },
   "3-6": {
@@ -4502,7 +4406,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/696edcfa2761a89ccdaf2fdc", title: "u4l1-2blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?c=apstatu4l1l2", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
@@ -4515,7 +4418,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/696edcfa2761a89ccdaf2fdc", title: "u4l1-2blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?c=apstatu4l1l2", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson1-2_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
@@ -4527,7 +4429,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6970461b0b6fcb7e199c7134", title: "u4l3-5blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?cartridge=apstatu4l1l2&start=11", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
@@ -4539,7 +4440,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6970461b0b6fcb7e199c7134", title: "u4l3-5blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?cartridge=apstatu4l1l2&level=l17-mutually-exclusive-def", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
@@ -4551,7 +4451,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/6970461b0b6fcb7e199c7134", title: "u4l3-5blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?cartridge=apstatu4l1l2&level=l20-conditional-def", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson3-4-5_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
@@ -4565,7 +4464,6 @@ const RESOURCES = {
     ],
     blookets: [
       { url: "https://dashboard.blooket.com/set/69719a57390d28db6d7edfa9", title: "u4l6blooket" },
-      { url: "https://lrsl-driller.vercel.app/platform/app.html?cartridge=apstatu4l1l2&level=l25-independent-def", title: "Practice Drills App" }
     ],
     pdfs: [
       { url: "https://robjohncolson.github.io/apstats-live-worksheet/u4_lesson6_live.html", label: "Follow-Along Worksheet (HTML, interactive)" }
@@ -4970,9 +4868,7 @@ function showResourcePanel(inf, dateStr) {
             if (u.worksheet) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _doneBtn('worksheet') + '</div>';
             }
-            if (u.drills) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.drills + '" target="_blank" style="color:#0000cc;text-decoration:underline">Practice Drills</a>' + _doneBtn('drills') + '</div>';
-            }
+            // Drills deprecated — removed 2026-05
             if (u.quiz) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a>' + _doneBtn('quiz') + '</div>';
             }
@@ -5136,9 +5032,12 @@ var _bootChime = null;
 
 /* Update View menu checkmarks */
 function updateViewMenu() {
-    const items = document.querySelectorAll('#menu-view .menu-dd-item');
-    items[0].innerHTML = (cP==='B' ? '&#10003; ' : '&#160;&#160; ') + 'Period B';
-    items[1].innerHTML = (cP==='E' ? '&#10003; ' : '&#160;&#160; ') + 'Period E';
+    // Period is collapsed to one "Period X" label until periods are assigned.
+    const pxItem = document.getElementById('menu-period-x');
+    if (pxItem) pxItem.innerHTML = '&#10003; Period X &#8212; actual periods TBD';
+    // Keep btn-e hidden
+    const btnE = document.getElementById('btn-e');
+    if (btnE) btnE.style.display = 'none';
     document.querySelectorAll('[data-year]').forEach(function(item){
       var yk=item.dataset.year;
       item.textContent=(cYear===yk?'\u2713 ':'  ')+SCHEDULE_DEFS[yk].label;
@@ -7408,8 +7307,8 @@ function destroyProgress() { ProgressApp.destroy(); }
 const APP_REGISTRY = {
     ti84:     { url: 'https://robjohncolson.github.io/apstats-live-worksheet/ti84-trainer-v2/standalone.html', sfx: 'wildEep' },
     quiz:     { url: 'https://robjohncolson.github.io/curriculum_render/', sfx: 'wildEep' },
-    formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' },
-    driller:  { url: 'https://lrsl-driller.vercel.app/platform/app.html?cartridge=a2t4l1-inverse-variation&mode=1', sfx: 'wildEep' }
+    formulas: { url: 'https://tmux-trainer.vercel.app/#deck=ap-stats-formulas', sfx: 'wildEep' }
+    // driller deprecated — removed 2026-05
 };
 
 function bumpUsage(id) {
@@ -7991,9 +7890,10 @@ let cP="B";
 function setP(p){
     MacSFX.play('click', 0.3);
     cP=p;
+    // btn-e is hidden until periods are assigned; btn-b is always "Period X"
     const a=document.getElementById("btn-b"),b=document.getElementById("btn-e");
-    if(p==="B"){a.classList.add("s7btn-inv","s7btn-default");b.classList.remove("s7btn-inv","s7btn-default");}
-    else{b.classList.add("s7btn-inv","s7btn-default");a.classList.remove("s7btn-inv","s7btn-default");}
+    if(b)b.style.display='none'; // keep hidden regardless of period
+    a.classList.add("s7btn-inv","s7btn-default");
     updateViewMenu();
     rCal();rProg();
     var pu=new URL(window.location);pu.searchParams.set('period',p);history.replaceState(null,'',pu);
@@ -8016,7 +7916,7 @@ function htm(i,ds){
         let icons='';
         if(re.urls){
             if(re.urls.worksheet)icons+='<a href="'+re.urls.worksheet+'" target="_blank" title="Worksheet" onclick="event.stopPropagation()">📄</a>';
-            if(re.urls.drills)icons+='<a href="'+re.urls.drills+'" target="_blank" title="Drills" onclick="event.stopPropagation()">🎯</a>';
+            // Drills deprecated — removed 2026-05
             if(re.urls.quiz)icons+='<a href="'+re.urls.quiz+'" target="_blank" title="Quiz" onclick="event.stopPropagation()">📝</a>';
             if(re.urls.blooket)icons+='<a href="'+re.urls.blooket+'" target="_blank" title="Blooket" onclick="event.stopPropagation()">🟦</a>';
         }
@@ -8109,7 +8009,7 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
             let links='';
             if(re.urls){
                 if(re.urls.worksheet)links+='<a href="'+re.urls.worksheet+'" target="_blank">📄 Worksheet</a>';
-                if(re.urls.drills)links+='<a href="'+re.urls.drills+'" target="_blank">🎯 Drills</a>';
+                // Drills deprecated — removed 2026-05
                 if(re.urls.quiz)links+='<a href="'+re.urls.quiz+'" target="_blank">📝 Quiz</a>';
                 if(re.urls.blooket)links+='<a href="'+re.urls.blooket+'" target="_blank">🟦 Blooket</a>';
             }
@@ -8150,7 +8050,8 @@ function hTip(){tip.style.display="none";}
   loadYear(cYear);
 })();
 uClock();setInterval(uClock,15e3);
-if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");_b.classList.add("s7btn-inv","s7btn-default");_a.classList.remove("s7btn-inv","s7btn-default");}
+// Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
+if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
 loadRegistry();
 updateStudentMenu();
 setInterval(()=>{rCD();rCal();rProg()},6e4);
