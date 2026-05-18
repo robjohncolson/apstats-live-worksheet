@@ -157,7 +157,7 @@ Lane: this spec + sample (done) → on approval the authoring run can **start im
 
 ## 8. Open knobs (decide before the build sprint)
 
-1. **Non-gate FRQ rubrics.** The 9 gate FRQs have rubric data; most `curriculum.js` FRQs don't. Acceptable for the tutor to apply general AP scoring norms tethered to the framework EK for those? (Recommend: yes — the framework EK + AP conventions is enough for coaching; flag low-confidence ones.)
+1. **FRQ rubrics — UPDATED 2026-05-18 (U1-pilot finding).** Earlier worry ("most `curriculum.js` FRQs lack rubrics") was too pessimistic: many items carry machine-readable `solution.scoring`/`scoringNotes` (both U1-PC FRQs do) and MCQs carry `reasoning`. **Rule: ground the tutor's hidden rationale in those fields when present (faithful, never contradicting); author from framework EK only where absent.** Authoring risk is lower than feared; the build-doc contract enforces fidelity.
 2. **Delivery mechanic.** Desk-tile copy-to-clipboard button vs. a linked `.md` page the student copies from. (Recommend: copy button — least friction.)
 3. **RESOLVED (2026-05-17).** The artifact is a **complete, teacher/tooling-authored, copy-paste-ready prompt per lesson**. The student assembles nothing and is not being taught prompt-writing. Not an open knob.
 4. **Skill-map tether.** Also inject the item's mapped AP skill code (from `data/skill-map.json`) so hints can name the skill, once that map exists? (Recommend: yes, when available.)
