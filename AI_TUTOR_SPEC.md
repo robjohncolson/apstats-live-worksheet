@@ -1,7 +1,7 @@
 # Per-Lesson AI Tutor — Spec & Sample
 
 **Status:** DRAFT for sign-off (2026-05-17). Design only — **no generator built yet** (deliberate: see §7 coordination).
-**Owner of this doc:** the `start-here.html` / student-deliverable lane. **Owner of the eventual build:** the gradebook/tagging workstream pipeline (§7) — *not* a second parallel driver.
+**Owner of this doc + the build:** the `start-here.html` / student-deliverable lane. Parallel-SAFE with the gradebook/tagging workstream (§7): LLM-authored, read-only ingest of shared sources, isolated `ai-tutor/` write namespace — not a clobber risk.
 
 ---
 
@@ -151,9 +151,9 @@ Safe to run in parallel with the gradebook/tagging workstream because:
 
 Soft coordination only (not blockers):
 - `data/skill-map.json`, once it exists, is an **optional later enhancement** — inject the mapped skill code so hints can name it. Author now without it; backfill later.
-- `apstat_5_framework.md` is malformed (no `## TOPIC` headers; the tagging workstream's T-0 repairs it). Author U1–U4 + U6–U9 now (well-formed); do **U5 after** T-0, or best-effort from its `[Skill]` tags + glance table and flag for regen. U5 is the only sequencing nuance.
+- `apstat_5_framework.md` is malformed **only for deterministic header parsing** (no `## TOPIC` headers). It does **NOT** block AI-tutor authoring (corrected 2026-05-18): authoring is LLM-based — a Sonnet agent reads U5's `[Skill]` tags + the `UNIT AT A GLANCE` table directly (exactly what the audit's fallback used). **U5 fans out with every other unit; no wait on the tagging workstream's T-0.**
 
-Lane: this spec + sample (done) → on approval the authoring run can **start immediately** (LLM dispatch per lesson, same parallel method, **validated on a 1-unit pilot first** to lock quality before fanning out to ~70+ lessons). `start-here.html` AI-tutor section + Desk-tile copy action wired once `ai-tutor/` files exist.
+Status (2026-05-18): U1 pilot COMPLETE (10 artifacts committed, CC-verified). Template LOCKED. **This (student-deliverable) lane runs the U2–U9 fan-out** per teacher direction — parallel Sonnet per lesson, CC independent verification as the gate (Codex broad-review times out at xhigh × 1.7MB; pre-digest items or accept CC verify). `start-here.html` AI-tutor section + Desk-tile copy action wired once the teacher approves delivery.
 
 ## 8. Open knobs (decide before the build sprint)
 
