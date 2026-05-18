@@ -164,7 +164,13 @@ function buildWorksheetIds(root) {
     const textareaBlocks = html.match(/<textarea[^>]*>/g) || [];
     for (const block of textareaBlocks) {
       const m = block.match(/id=['"]([^'"]+)['"]/);
-      if (m) textareaIds.push(m[1]);
+      // Skip unrendered JS template-literal artifacts (e.g. the appeal-form
+      // `<textarea id="appeal-text-${questionId}">` lives inside a template
+      // string, never the static DOM). Capturing these created 1 phantom
+      // skill-map key per worksheet (GRADEBOOK_FEEDER_ID_AUDIT.md). The
+      // worksheet runtime never emits them, so they corrupt the work-manifest
+      // (over-counts expected items by 1/worksheet → never 100%).
+      if (m && !m[1].includes('${') && !m[1].includes('`')) textareaIds.push(m[1]);
     }
 
     const prefix = `WS-${unitId}`;

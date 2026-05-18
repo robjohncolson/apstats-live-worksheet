@@ -165,13 +165,19 @@ describe('Completeness', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Excluded keys', () => {
-  it('appeal keys appear in neither tree nor index', () => {
+  it('no phantom template-literal keys in skill-map; any appeal key stays out of tree/index', () => {
     const treeIds = new Set(collectTreeIds(manifest1));
     const indexIds = new Set(Object.keys(manifest1.index));
+
+    // Regression guard: the appeal-text-${questionId} phantoms (JS template
+    // literals build-skill-map.mjs used to over-capture) are fixed/removed —
+    // there must be NO ${ / backtick keys in skill-map at all.
+    const phantoms = skillMapKeys.filter(k => k.includes('${') || k.includes('`'));
+    expect(phantoms).toHaveLength(0);
+
+    // Whatever appeal-shaped keys remain (if any) must still be excluded from
+    // the manifest tree + index.
     const appeals = skillMapKeys.filter(k => /^WS-U\d+L[\d-]+-appeal/.test(k));
-
-    expect(appeals.length).toBeGreaterThan(0); // sanity: there ARE appeals
-
     for (const key of appeals) {
       expect(treeIds.has(key), `appeal in tree: ${key}`).toBe(false);
       expect(indexIds.has(key), `appeal in index: ${key}`).toBe(false);

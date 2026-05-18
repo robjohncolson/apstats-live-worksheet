@@ -1,4 +1,4 @@
-// GENERATED: 2026-05-18T03:28:40.181Z — do not edit directly
+// GENERATED: 2026-05-18T12:37:51.461Z — do not edit directly
 // Source: node scripts/build-skill-map.mjs
 window.SKILL_MAP = {
   "U1-L10-Q01": {
@@ -11334,15 +11334,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "1.1"
   },
-  "WS-U1L1-appeal-text-${questionId}": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "1.1"
-  },
   "WS-U1L1-exitTicket": {
     "skill": "1.A",
     "candidates": [
@@ -11711,16 +11702,6 @@ window.SKILL_MAP = {
     "topic": "1.10"
   },
   "WS-U1L10-Q9": {
-    "skill": null,
-    "candidates": [
-      "2.D",
-      "3.A"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "1.10"
-  },
-  "WS-U1L10-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "2.D",
@@ -12165,15 +12146,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "1.2"
   },
-  "WS-U1L2-appeal-text-${questionId}": {
-    "skill": "2.A",
-    "candidates": [
-      "2.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "1.2"
-  },
   "WS-U1L2-exitTicket": {
     "skill": "2.A",
     "candidates": [
@@ -12502,16 +12474,6 @@ window.SKILL_MAP = {
     "topic": "1.3"
   },
   "WS-U1L3-Q9": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "1.3"
-  },
-  "WS-U1L3-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "2.A",
@@ -12914,17 +12876,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "1.4"
   },
-  "WS-U1L4-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B",
-      "2.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "1.4"
-  },
   "WS-U1L4-exitTicket": {
     "skill": null,
     "candidates": [
@@ -13218,16 +13169,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "1.5"
   },
-  "WS-U1L5-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "1.5"
-  },
   "WS-U1L5-exitTicket": {
     "skill": null,
     "candidates": [
@@ -13511,15 +13452,6 @@ window.SKILL_MAP = {
     "topic": "1.6"
   },
   "WS-U1L6-Q9": {
-    "skill": "2.A",
-    "candidates": [
-      "2.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "1.6"
-  },
-  "WS-U1L6-appeal-text-${questionId}": {
     "skill": "2.A",
     "candidates": [
       "2.A"
@@ -13946,16 +13878,6 @@ window.SKILL_MAP = {
     "topic": "1.7"
   },
   "WS-U1L7-Q9": {
-    "skill": null,
-    "candidates": [
-      "2.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "1.7"
-  },
-  "WS-U1L7-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "2.C",
@@ -14425,16 +14347,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "1.8"
   },
-  "WS-U1L8-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "1.8"
-  },
   "WS-U1L8-exitTicket": {
     "skill": null,
     "candidates": [
@@ -14789,15 +14701,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "1.9"
   },
-  "WS-U1L9-appeal-text-${questionId}": {
-    "skill": "2.D",
-    "candidates": [
-      "2.D"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "1.9"
-  },
   "WS-U1L9-exitTicket": {
     "skill": "2.D",
     "candidates": [
@@ -15065,16 +14968,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "2.1"
   },
-  "WS-U2L1-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "1.A",
-      "2.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.1"
-  },
   "WS-U2L1-exitTicket": {
     "skill": null,
     "candidates": [
@@ -15316,16 +15209,6 @@ window.SKILL_MAP = {
     "topic": "2.2"
   },
   "WS-U2L2-Q9": {
-    "skill": null,
-    "candidates": [
-      "2.C",
-      "2.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.2"
-  },
-  "WS-U2L2-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "2.C",
@@ -15678,18 +15561,6 @@ window.SKILL_MAP = {
     "topic": "2.3"
   },
   "WS-U2L3-Q9": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B",
-      "2.C",
-      "2.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.3"
-  },
-  "WS-U2L3-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "2.A",
@@ -16193,18 +16064,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "2.4"
   },
-  "WS-U2L4-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B",
-      "2.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.4"
-  },
   "WS-U2L4-exitTicket": {
     "skill": null,
     "candidates": [
@@ -16561,16 +16420,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "2.5"
   },
-  "WS-U2L5-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.5"
-  },
   "WS-U2L5-exitTicket": {
     "skill": null,
     "candidates": [
@@ -16899,17 +16748,6 @@ window.SKILL_MAP = {
     "topic": "2.6"
   },
   "WS-U2L6-Q9": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B",
-      "2.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.6"
-  },
-  "WS-U2L6-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "2.A",
@@ -17398,18 +17236,6 @@ window.SKILL_MAP = {
     "topic": "2.7"
   },
   "WS-U2L7-Q9": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.B",
-      "2.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.7"
-  },
-  "WS-U2L7-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "2.A",
@@ -17985,17 +17811,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "2.8"
   },
-  "WS-U2L8-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.8"
-  },
   "WS-U2L8-exitTicket": {
     "skill": null,
     "candidates": [
@@ -18380,16 +18195,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "2.9"
   },
-  "WS-U2L9-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.A",
-      "2.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "2.9"
-  },
   "WS-U2L9-exitTicket": {
     "skill": null,
     "candidates": [
@@ -18610,15 +18415,6 @@ window.SKILL_MAP = {
     "topic": "3.1"
   },
   "WS-U3L1-Q9": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "3.1"
-  },
-  "WS-U3L1-appeal-text-${questionId}": {
     "skill": "1.A",
     "candidates": [
       "1.A"
@@ -18994,16 +18790,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "3.2"
   },
-  "WS-U3L2-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "1.C",
-      "4.A"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "3.2"
-  },
   "WS-U3L2-exitTicket": {
     "skill": null,
     "candidates": [
@@ -19304,15 +19090,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "3.3"
   },
-  "WS-U3L3-appeal-text-${questionId}": {
-    "skill": "1.C",
-    "candidates": [
-      "1.C"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "3.3"
-  },
   "WS-U3L3-exitTicket": {
     "skill": "1.C",
     "candidates": [
@@ -19548,15 +19325,6 @@ window.SKILL_MAP = {
     "topic": "3.4"
   },
   "WS-U3L4-Q9": {
-    "skill": "1.C",
-    "candidates": [
-      "1.C"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "3.4"
-  },
-  "WS-U3L4-appeal-text-${questionId}": {
     "skill": "1.C",
     "candidates": [
       "1.C"
@@ -19843,16 +19611,6 @@ window.SKILL_MAP = {
     "topic": "3.5"
   },
   "WS-U3L5-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.B",
-      "1.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "3.5"
-  },
-  "WS-U3L5-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.B",
@@ -20567,15 +20325,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "3.6"
   },
-  "WS-U3L6-7-appealText-${textareaId}": {
-    "skill": "1.C",
-    "candidates": [
-      "1.C"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "3.6"
-  },
   "WS-U3L6-7-exitTicket": {
     "skill": "1.C",
     "candidates": [
@@ -20973,15 +20722,6 @@ window.SKILL_MAP = {
     "topic": "4.1"
   },
   "WS-U4L1-2-Q9": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "4.1"
-  },
-  "WS-U4L1-2-appeal-text-${questionId}": {
     "skill": "1.A",
     "candidates": [
       "1.A"
@@ -21540,15 +21280,6 @@ window.SKILL_MAP = {
     "topic": "4.1"
   },
   "WS-U4L1-3-Q9": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "4.1"
-  },
-  "WS-U4L1-3-appeal-text-${questionId}": {
     "skill": "1.A",
     "candidates": [
       "1.A"
@@ -22322,15 +22053,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "4.10"
   },
-  "WS-U4L10-12-appeal-text-${questionId}": {
-    "skill": "3.A",
-    "candidates": [
-      "3.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "4.10"
-  },
   "WS-U4L10-12-exitTicket": {
     "skill": "3.A",
     "candidates": [
@@ -22939,16 +22661,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "4.3"
   },
-  "WS-U4L3-5-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.A",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "4.3"
-  },
   "WS-U4L3-5-exitTicket": {
     "skill": null,
     "candidates": [
@@ -23323,15 +23035,6 @@ window.SKILL_MAP = {
     "topic": "4.6"
   },
   "WS-U4L6-Q9": {
-    "skill": "3.A",
-    "candidates": [
-      "3.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "4.6"
-  },
-  "WS-U4L6-appeal-text-${questionId}": {
     "skill": "3.A",
     "candidates": [
       "3.A"
@@ -23817,16 +23520,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "4.7"
   },
-  "WS-U4L7-8-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "2.B",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "4.7"
-  },
   "WS-U4L7-8-exitTicket": {
     "skill": null,
     "candidates": [
@@ -24257,16 +23950,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "4.9"
   },
-  "WS-U4L9-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.B",
-      "3.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "4.9"
-  },
   "WS-U4L9-exitTicket": {
     "skill": null,
     "candidates": [
@@ -24486,15 +24169,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "5.1"
   },
-  "WS-U5L1-2-appeal-text-${questionId}": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "5.1"
-  },
   "WS-U5L1-2-exitTicket": {
     "skill": "1.A",
     "candidates": [
@@ -24631,15 +24305,6 @@ window.SKILL_MAP = {
     "topic": "5.3"
   },
   "WS-U5L3-Q9": {
-    "skill": "3.C",
-    "candidates": [
-      "3.C"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "5.3"
-  },
-  "WS-U5L3-appeal-text-${questionId}": {
     "skill": "3.C",
     "candidates": [
       "3.C"
@@ -24826,16 +24491,6 @@ window.SKILL_MAP = {
     "topic": "5.4"
   },
   "WS-U5L4-Q9": {
-    "skill": null,
-    "candidates": [
-      "3.B",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "5.4"
-  },
-  "WS-U5L4-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "3.B",
@@ -25337,17 +24992,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "5.5"
   },
-  "WS-U5L5-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.B",
-      "3.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "5.5"
-  },
   "WS-U5L5-exitTicket": {
     "skill": null,
     "candidates": [
@@ -25645,17 +25289,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "5.6"
   },
-  "WS-U5L6-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.B",
-      "3.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "5.6"
-  },
   "WS-U5L6-exitTicket": {
     "skill": null,
     "candidates": [
@@ -25888,17 +25521,6 @@ window.SKILL_MAP = {
     "topic": "5.7"
   },
   "WS-U5L7-Q9": {
-    "skill": null,
-    "candidates": [
-      "3.B",
-      "3.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "5.7"
-  },
-  "WS-U5L7-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "3.B",
@@ -26163,17 +25785,6 @@ window.SKILL_MAP = {
     "topic": "5.8"
   },
   "WS-U5L8-Q9": {
-    "skill": null,
-    "candidates": [
-      "3.B",
-      "3.C",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "5.8"
-  },
-  "WS-U5L8-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "3.B",
@@ -26613,15 +26224,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "6.1"
   },
-  "WS-U6L1-2-appeal-text-${questionId}": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "6.1"
-  },
   "WS-U6L1-2-exitTicket": {
     "skill": "1.A",
     "candidates": [
@@ -26903,17 +26505,6 @@ window.SKILL_MAP = {
     "topic": "6.10"
   },
   "WS-U6L10-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.E",
-      "1.F",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.10"
-  },
-  "WS-U6L10-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.E",
@@ -27222,17 +26813,6 @@ window.SKILL_MAP = {
     "topic": "6.11"
   },
   "WS-U6L11-Q9": {
-    "skill": null,
-    "candidates": [
-      "3.E",
-      "4.B",
-      "4.E"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.11"
-  },
-  "WS-U6L11-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "3.E",
@@ -27881,17 +27461,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "6.3"
   },
-  "WS-U6L3-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "4.A",
-      "4.B",
-      "4.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.3"
-  },
   "WS-U6L3-exitTicket": {
     "skill": null,
     "candidates": [
@@ -28300,17 +27869,6 @@ window.SKILL_MAP = {
     "topic": "6.4"
   },
   "WS-U6L4-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.E",
-      "1.F",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.4"
-  },
-  "WS-U6L4-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.E",
@@ -28854,16 +28412,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "6.5"
   },
-  "WS-U6L5-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.E",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.5"
-  },
   "WS-U6L5-exitTicket": {
     "skill": null,
     "candidates": [
@@ -29308,15 +28856,6 @@ window.SKILL_MAP = {
     "provenance": "topic-inherit",
     "topic": "6.6"
   },
-  "WS-U6L6-appeal-text-${questionId}": {
-    "skill": "4.E",
-    "candidates": [
-      "4.E"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "6.6"
-  },
   "WS-U6L6-exitTicket": {
     "skill": "4.E",
     "candidates": [
@@ -29633,18 +29172,6 @@ window.SKILL_MAP = {
     "topic": "6.7"
   },
   "WS-U6L7-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.B",
-      "3.A",
-      "4.A",
-      "4.B"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.7"
-  },
-  "WS-U6L7-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.B",
@@ -30143,17 +29670,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "6.8"
   },
-  "WS-U6L8-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "1.D",
-      "3.D",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.8"
-  },
   "WS-U6L8-exitTicket": {
     "skill": null,
     "candidates": [
@@ -30627,16 +30143,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "6.9"
   },
-  "WS-U6L9-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "4.B",
-      "4.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "6.9"
-  },
   "WS-U6L9-exitTicket": {
     "skill": null,
     "candidates": [
@@ -30902,15 +30408,6 @@ window.SKILL_MAP = {
     "topic": "7.1"
   },
   "WS-U7L1-Q9": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "7.1"
-  },
-  "WS-U7L1-appeal-text-${questionId}": {
     "skill": "1.A",
     "candidates": [
       "1.A"
@@ -31355,18 +30852,6 @@ window.SKILL_MAP = {
     "topic": "7.2"
   },
   "WS-U7L2-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.D",
-      "3.C",
-      "3.D",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.2"
-  },
-  "WS-U7L2-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.D",
@@ -31854,17 +31339,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "7.3"
   },
-  "WS-U7L3-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "4.A",
-      "4.B",
-      "4.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.3"
-  },
   "WS-U7L3-exitTicket": {
     "skill": null,
     "candidates": [
@@ -32262,17 +31736,6 @@ window.SKILL_MAP = {
     "topic": "7.4"
   },
   "WS-U7L4-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.E",
-      "1.F",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.4"
-  },
-  "WS-U7L4-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.E",
@@ -32943,17 +32406,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "7.5"
   },
-  "WS-U7L5-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.E",
-      "4.B",
-      "4.E"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.5"
-  },
   "WS-U7L5-exitTicket": {
     "skill": null,
     "candidates": [
@@ -33449,17 +32901,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "7.6"
   },
-  "WS-U7L6-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "1.D",
-      "3.D",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.6"
-  },
   "WS-U7L6-exitTicket": {
     "skill": null,
     "candidates": [
@@ -33812,17 +33253,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "7.7"
   },
-  "WS-U7L7-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "4.A",
-      "4.B",
-      "4.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.7"
-  },
   "WS-U7L7-exitTicket": {
     "skill": null,
     "candidates": [
@@ -34120,17 +33550,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "7.8"
   },
-  "WS-U7L8-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "1.E",
-      "1.F",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.8"
-  },
   "WS-U7L8-exitTicket": {
     "skill": null,
     "candidates": [
@@ -34406,17 +33825,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "7.9"
   },
-  "WS-U7L9-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.E",
-      "4.B",
-      "4.E"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "7.9"
-  },
   "WS-U7L9-exitTicket": {
     "skill": null,
     "candidates": [
@@ -34640,15 +34048,6 @@ window.SKILL_MAP = {
     "topic": "8.1"
   },
   "WS-U8L1-Q9": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "8.1"
-  },
-  "WS-U8L1-appeal-text-${questionId}": {
     "skill": "1.A",
     "candidates": [
       "1.A"
@@ -34971,19 +34370,6 @@ window.SKILL_MAP = {
     "topic": "8.2"
   },
   "WS-U8L2-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.E",
-      "1.F",
-      "3.A",
-      "3.C",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "8.2"
-  },
-  "WS-U8L2-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.E",
@@ -35541,17 +34927,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "8.3"
   },
-  "WS-U8L3-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.E",
-      "4.B",
-      "4.E"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "8.3"
-  },
   "WS-U8L3-exitTicket": {
     "skill": null,
     "candidates": [
@@ -35766,15 +35141,6 @@ window.SKILL_MAP = {
     "topic": "8.4"
   },
   "WS-U8L4-Q9": {
-    "skill": "3.A",
-    "candidates": [
-      "3.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "8.4"
-  },
-  "WS-U8L4-appeal-text-${questionId}": {
     "skill": "3.A",
     "candidates": [
       "3.A"
@@ -36075,17 +35441,6 @@ window.SKILL_MAP = {
     "topic": "8.5"
   },
   "WS-U8L5-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.E",
-      "1.F",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "8.5"
-  },
-  "WS-U8L5-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.E",
@@ -36404,17 +35759,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "8.6"
   },
-  "WS-U8L6-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "3.E",
-      "4.B",
-      "4.E"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "8.6"
-  },
   "WS-U8L6-exitTicket": {
     "skill": null,
     "candidates": [
@@ -36611,15 +35955,6 @@ window.SKILL_MAP = {
     "topic": "9.1"
   },
   "WS-U9L1-Q9": {
-    "skill": "1.A",
-    "candidates": [
-      "1.A"
-    ],
-    "confidence": 1,
-    "provenance": "topic-inherit",
-    "topic": "9.1"
-  },
-  "WS-U9L1-appeal-text-${questionId}": {
     "skill": "1.A",
     "candidates": [
       "1.A"
@@ -36930,17 +36265,6 @@ window.SKILL_MAP = {
     "provenance": "unresolved",
     "topic": "9.2"
   },
-  "WS-U9L2-appeal-text-${questionId}": {
-    "skill": null,
-    "candidates": [
-      "1.D",
-      "3.D",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "9.2"
-  },
   "WS-U9L2-exitTicket": {
     "skill": null,
     "candidates": [
@@ -37206,17 +36530,6 @@ window.SKILL_MAP = {
     "topic": "9.3"
   },
   "WS-U9L3-Q9": {
-    "skill": null,
-    "candidates": [
-      "4.A",
-      "4.B",
-      "4.D"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "9.3"
-  },
-  "WS-U9L3-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "4.A",
@@ -37624,17 +36937,6 @@ window.SKILL_MAP = {
     "topic": "9.4"
   },
   "WS-U9L4-Q9": {
-    "skill": null,
-    "candidates": [
-      "1.E",
-      "1.F",
-      "4.C"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "9.4"
-  },
-  "WS-U9L4-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "1.E",
@@ -38086,17 +37388,6 @@ window.SKILL_MAP = {
     "topic": "9.5"
   },
   "WS-U9L5-Q9": {
-    "skill": null,
-    "candidates": [
-      "3.E",
-      "4.B",
-      "4.E"
-    ],
-    "confidence": 0,
-    "provenance": "unresolved",
-    "topic": "9.5"
-  },
-  "WS-U9L5-appeal-text-${questionId}": {
     "skill": null,
     "candidates": [
       "3.E",
