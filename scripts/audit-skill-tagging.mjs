@@ -19,6 +19,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { parseFrameworks as parseFrameworksLib, parseSingleFramework } from './lib/framework-parse.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -365,151 +366,50 @@ export function analyzeSupplementProbes(probes) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pool (d): apstat_{1..9}_framework.md — AP skill definitions
+// Refactored to consume scripts/lib/framework-parse.mjs (hardened parser).
+// Exported signatures are preserved for backward compatibility with tests.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Parse a single framework markdown file.
+ * Delegates to the hardened lib parser; returns the audit-script shape.
  *
  * Returns:
  *  {
  *    unit: number,
- *    topics: [ { topicNum, skills: ['2.A', ...], los: ['VAR-1.A', ...], eks: ['VAR-1.A.1', ...] } ],
- *    malformed: boolean,   // true if apstat_5 no-TOPIC-header defect detected
- *    skillsMentioned: Set<string>,
- *    raw: string
+ *    topics: [ { topicNum, skills: string[], los: [], eks: [] } ],
+ *    malformed: boolean,
+ *    missing: boolean,
+ *    skillsMentioned: Set<string>
  *  }
- *
- * RULE: apstat_5_framework.md has NO ## TOPIC headers — flag as malformed, continue, don't crash.
  */
 export function parseFramework(filePath, unit) {
-  if (!existsSync(filePath)) return { unit, topics: [], malformed: false, missing: true, skillsMentioned: new Set() };
-
-  const raw = readFileSync(filePath, 'utf8');
-
-  // Detect the apstat_5 no-TOPIC-header defect.
-  // Normal format: "## TOPIC 1.1: ..." or "## **TOPIC 1.1**" (bold variant in some files).
-  const hasTOPICHeaders = /^##\s+(?:\*\*)?TOPIC\s+\d+\.\d+/m.test(raw);
-  // Fallback format used by apstat_5: "Topic 5.1: ..." (no ## prefix, no bold)
-  const hasTopicLines = /^Topic\s+\d+\.\d+:/m.test(raw);
-  // apstat_5 is the known-malformed file: has no ## TOPIC headers of any form.
-  const malformed = !hasTOPICHeaders;
-
-  const topics = [];
-  const skillsMentioned = new Set();
-
-  // Try to parse topics from ## TOPIC N.N: headers (normal format)
-  if (hasTOPICHeaders) {
-    // Split on "## TOPIC N.N" or "## **TOPIC N.N**" headers
-    const topicBlocks = raw.split(/^##\s+(?:\*\*)?TOPIC\s+/m).slice(1);
-    for (const block of topicBlocks) {
-      // Strip leading bold markers if present: "**2.1**" -> "2.1"
-      const topicLine = block.split('\n')[0].replace(/\*\*/g, '');
-      const numMatch = topicLine.match(/^(\d+\.\d+)/);
-      const topicNum = numMatch ? numMatch[1] : '?';
-
-      // Extract skill codes from **SKILL** sections and [Skill X.X] brackets.
-      // Handles: "* **2.A**", "**2.A**", "[Skill 2.A]"
-      const allSkillCodesInBlock = new Set();
-      const skillCodeRe2 = /(?:\*\*|(?<=\[Skill\s))([1-4]\.[A-D])(?:\*\*|(?=\]))?/g;
-      const skillRe2b = /\[Skill\s+([1-4]\.[A-D])\]/g;
-      const boldSkillRe = /\*\*([1-4]\.[A-D])\*\*/g;
-      let bm;
-      while ((bm = skillRe2b.exec(block)) !== null) {
-        if (AP_SKILL_CODES.includes(bm[1])) allSkillCodesInBlock.add(bm[1]);
-      }
-      while ((bm = boldSkillRe.exec(block)) !== null) {
-        if (AP_SKILL_CODES.includes(bm[1])) allSkillCodesInBlock.add(bm[1]);
-      }
-      // Also match "* **N.A**" pattern (bullet + bold code)
-      const bulletSkillRe = /\*\s*\*\*([1-4]\.[A-D])\*\*/g;
-      while ((bm = bulletSkillRe.exec(block)) !== null) {
-        if (AP_SKILL_CODES.includes(bm[1])) allSkillCodesInBlock.add(bm[1]);
-      }
-      const skills = [...allSkillCodesInBlock];
-
-      // Extract LOs (e.g. **VAR-1.A**)
-      const loMatches = block.match(/\*\*([A-Z]{2,4}-\d+\.[A-Z]+)\*\*/g) || [];
-      const los = loMatches.map(lo => lo.replace(/\*\*/g, ''));
-
-      // Extract EKs (e.g. **VAR-1.A.1**)
-      const ekMatches = block.match(/\*\*([A-Z]{2,4}-\d+\.[A-Z]+\.\d+)\*\*/g) || [];
-      const eks = ekMatches.map(ek => ek.replace(/\*\*/g, ''));
-
-      skills.forEach(s => skillsMentioned.add(s));
-      topics.push({ topicNum, skills, los, eks });
-    }
-  }
-
-  // Fallback for malformed (apstat_5): try plain "Topic N.N:" lines and skill mentions
-  if (!hasTOPICHeaders) {
-    const topicBlocksPlain = raw.split(/^Topic\s+/m).slice(1);
-    if (hasTopicLines && topicBlocksPlain.length > 0) {
-      for (const block of topicBlocksPlain) {
-        const topicLine = block.split('\n')[0];
-        const numMatch = topicLine.match(/^(\d+\.\d+)/);
-        // Skip blocks that don't start with a topic number (e.g. table header rows)
-        if (!numMatch) continue;
-        const topicNum = numMatch ? numMatch[1] : '?';
-
-        // Extract skill codes from bracket notation [Skill X.X]
-        const skillMatches = block.match(/\[Skill\s+([0-9]\.[A-D])\]/g) || [];
-        const skills = skillMatches.map(s => {
-          const m = s.match(/([0-9]\.[A-D])/);
-          return m ? m[1] : null;
-        }).filter(Boolean);
-
-        // Also look for "N.A" style near skill words
-        const skillRe = /\b([1-4]\.[A-D])\b/g;
-        let sm;
-        const allSkills = new Set(skills);
-        while ((sm = skillRe.exec(block)) !== null) {
-          if (AP_SKILL_CODES.includes(sm[1])) allSkills.add(sm[1]);
-        }
-
-        // Extract LOs like "VAR-1.G:" or "Learning Objective VAR-1.G"
-        const loMatches = block.match(/[A-Z]{2,4}-\d+\.[A-Z]+(?=:|\s\[Skill)/g) || [];
-
-        // Extract EKs like "VAR-1.G.1"
-        const ekMatches = block.match(/[A-Z]{2,4}-\d+\.[A-Z]+\.\d+/g) || [];
-
-        [...allSkills].forEach(s => skillsMentioned.add(s));
-        topics.push({ topicNum, skills: [...allSkills], los: loMatches, eks: ekMatches });
-      }
-    } else {
-      // Complete fallback: just collect all skill code mentions from the entire file
-      const skillRe = /\b([1-4]\.[A-D])\b/g;
-      let sm;
-      while ((sm = skillRe.exec(raw)) !== null) {
-        if (AP_SKILL_CODES.includes(sm[1])) skillsMentioned.add(sm[1]);
-      }
-      // Can't split into topics — that's the malformation
-    }
-  }
-
-  // Always collect all skill mentions from raw for summary stats
-  const globalSkillRe = /\b([1-4]\.[A-D])\b/g;
-  let gsm;
-  while ((gsm = globalSkillRe.exec(raw)) !== null) {
-    if (AP_SKILL_CODES.includes(gsm[1])) skillsMentioned.add(gsm[1]);
-  }
-
-  return { unit, topics, malformed, missing: false, skillsMentioned, raw: '' }; // omit raw to keep memory lean
+  return parseSingleFramework(filePath, unit);
 }
 
 /**
- * Scan all 9 framework files. Returns array of parsed results + flags.
+ * Scan all 9 framework files using the hardened parser.
+ * Returns { results, flags } — same shape as before.
  */
 export function scanFrameworks(root) {
   const results = [];
   const flags = [];
 
+  const { topicSkills, malformed: malformedFiles } = parseFrameworksLib(root);
+
+  // Build per-unit results matching the original shape
   for (let unit = 1; unit <= 9; unit++) {
     const filePath = resolve(root, `apstat_${unit}_framework.md`);
-    const parsed = parseFramework(filePath, unit);
 
-    if (parsed.missing) {
+    if (!existsSync(filePath)) {
       flags.push(`WARN: apstat_${unit}_framework.md is MISSING — skipped.`);
-    } else if (parsed.malformed) {
+      results.push({ unit, topics: [], malformed: false, missing: true, skillsMentioned: new Set() });
+      continue;
+    }
+
+    const parsed = parseSingleFramework(filePath, unit);
+
+    if (parsed.malformed) {
       flags.push(`FLAG: apstat_${unit}_framework.md is MALFORMED — no ## TOPIC headers (known defect for Unit 5). Parsed with fallback. Topic-level skill map may be incomplete for Unit 5.`);
     }
 
@@ -797,7 +697,8 @@ function buildReport({
   });
   for (const topicNum of topicNums) {
     const skills = topicSkillMap[topicNum];
-    lines.push(`| ${topicNum} | ${skills.join(', ') || '(none parsed)'} |`);
+    // Empty-skills topics are N/A synthesis topics (7.10, 8.7, 9.6) — not a parse failure.
+    lines.push(`| ${topicNum} | ${skills.length > 0 ? skills.join(', ') : '(N/A — synthesis topic)'} |`);
   }
   lines.push('');
 

@@ -195,49 +195,61 @@ describe('Deterministic counts across two runs', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. apstat_5 is flagged as malformed (not fatal)
+// 4. apstat_5 is now well-formed (restructured per TT1-E)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('apstat_5_framework.md malformed flag', () => {
-  it('apstat_5 is flagged in allFlags', () => {
-    const flag = auditResult.allFlags.find(f => f.includes('apstat_5'));
-    expect(flag).toBeTruthy();
-    expect(flag).toContain('MALFORMED');
+describe('apstat_5_framework.md — restructured per TT1-E', () => {
+  it('no MALFORMED flags in allFlags (U5 restructured, all units well-formed)', () => {
+    const malformedFlags = auditResult.allFlags.filter(f => f.includes('MALFORMED'));
+    expect(malformedFlags).toHaveLength(0);
   });
 
-  it('apstat_5 malformed flag appears in report', () => {
-    expect(report()).toContain('apstat_5_framework.md is MALFORMED');
+  it('apstat_5 framework is NOT flagged as malformed after TT1-E restructure', () => {
+    const fw5 = auditResult.frameworkScan.results.find(fw => fw.unit === 5);
+    expect(fw5).toBeTruthy();
+    expect(fw5.malformed).toBe(false);
   });
 
-  it('apstat_5 flag mentions the known defect (no TOPIC headers)', () => {
-    const flag = auditResult.allFlags.find(f => f.includes('apstat_5'));
-    expect(flag).toContain('TOPIC');
-  });
-
-  it('audit does not crash when apstat_5 is malformed (run completes)', () => {
-    // If we reached this point, the run completed without throwing
+  it('audit runs to completion without throwing', () => {
     expect(auditResult).toBeTruthy();
     expect(auditResult.frameworkScan).toBeTruthy();
   });
 
-  it('other frameworks (1,2,3,4,6,7,8,9) are NOT flagged as malformed', () => {
-    const nonUnit5Flags = auditResult.allFlags.filter(
-      f => f.includes('MALFORMED') && !f.includes('apstat_5')
-    );
-    expect(nonUnit5Flags).toHaveLength(0);
+  it('other frameworks (1,2,3,4,6,7,8,9) are also NOT flagged as malformed', () => {
+    const malformedFrameworks = auditResult.frameworkScan.results.filter(fw => fw.malformed);
+    expect(malformedFrameworks).toHaveLength(0);
   });
 
-  it('apstat_5 framework is parsed and returns some topics (fallback works)', () => {
+  it('apstat_5 framework is parsed and returns 8 topics (5.1–5.8)', () => {
     const fw5 = auditResult.frameworkScan.results.find(fw => fw.unit === 5);
     expect(fw5).toBeTruthy();
-    expect(fw5.malformed).toBe(true);
-    // Even malformed, fallback should have found some topics
-    expect(fw5.topics.length).toBeGreaterThan(0);
+    expect(fw5.topics.length).toBe(8);
   });
 
-  it('apstat_5 fallback extracts skill codes from the content', () => {
-    const fw5 = auditResult.frameworkScan.results.find(fw => fw.unit === 5);
-    expect(fw5.skillsMentioned.size).toBeGreaterThan(0);
+  it('apstat_5 topics 5.1–5.8 all present in topicSkillMap', () => {
+    for (let t = 1; t <= 8; t++) {
+      expect(auditResult.topicSkillMap[`5.${t}`]).toBeDefined();
+    }
+  });
+
+  it('apstat_5 extracts correct skills (5.2 → [3.A, 3.C], 5.3 → [3.C])', () => {
+    expect(auditResult.topicSkillMap['5.2']).toContain('3.A');
+    expect(auditResult.topicSkillMap['5.2']).toContain('3.C');
+    expect(auditResult.topicSkillMap['5.3']).toContain('3.C');
+  });
+
+  it('previously-holed topics 3.3–3.6 now parse with skills', () => {
+    for (const topic of ['3.3', '3.4', '3.5', '3.6']) {
+      const skills = auditResult.topicSkillMap[topic];
+      expect(skills).toBeDefined();
+      expect(skills.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('previously-holed topic 6.6 now parses with skills', () => {
+    const skills = auditResult.topicSkillMap['6.6'];
+    expect(skills).toBeDefined();
+    expect(skills.length).toBeGreaterThan(0);
   });
 });
 
@@ -270,8 +282,8 @@ describe('Framework parsing correctness', () => {
     expect(auditResult.topicSkillMap['1.10']).toContain('3.A');
   });
 
-  it('at least 70 topics extracted total (frameworks are largely parseable)', () => {
-    expect(Object.keys(auditResult.topicSkillMap).length).toBeGreaterThanOrEqual(70);
+  it('at least 80 topics extracted total (all frameworks parseable, U5 fixed)', () => {
+    expect(Object.keys(auditResult.topicSkillMap).length).toBeGreaterThanOrEqual(80);
   });
 });
 
@@ -379,12 +391,13 @@ describe('Exported functions — unit tests', () => {
     expect(keys).toContain('exitTicket');
   });
 
-  it('parseFramework flags apstat_5 as malformed', async () => {
+  it('parseFramework does NOT flag apstat_5 as malformed after TT1-E restructure', async () => {
     const { parseFramework } = await import('../scripts/audit-skill-tagging.mjs');
     const { resolve } = await import('node:path');
     const result = parseFramework(resolve(ROOT, 'apstat_5_framework.md'), 5);
-    expect(result.malformed).toBe(true);
+    expect(result.malformed).toBe(false);
     expect(result.missing).toBe(false);
+    expect(result.topics.length).toBe(8);
   });
 
   it('parseFramework does NOT flag apstat_1 as malformed', async () => {

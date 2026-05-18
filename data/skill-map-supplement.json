@@ -1,0 +1,114 @@
+{
+  "U4-L9-QS1": {
+    "skill": "3.B",
+    "candidates": ["3.B"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "4.9"
+  },
+  "U9-L2-QS1": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "9.2"
+  },
+  "U9-L2-QS2": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "9.2"
+  },
+  "U9-L1-QS1": {
+    "skill": null,
+    "candidates": ["2.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "9.1"
+  },
+  "U8-L5-QS1": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "8.5"
+  },
+  "U6-L6-QS1": {
+    "skill": null,
+    "candidates": ["4.A", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "6.6"
+  },
+  "U6-L6-QS2": {
+    "skill": null,
+    "candidates": ["4.A", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "6.6"
+  },
+  "U6-L6-QS3": {
+    "skill": null,
+    "candidates": ["4.A", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "6.6"
+  },
+  "U7-L2-QS1": {
+    "skill": null,
+    "candidates": ["3.C", "4.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "7.2"
+  },
+  "U6-L4-QS1": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "6.4"
+  },
+  "U6-L4-QS2": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "6.4"
+  },
+  "U6-L4-QS3": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "6.4"
+  },
+  "U6-L4-QS4": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "6.4"
+  },
+  "U6-L4-QS5": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "6.4"
+  },
+  "U6-L4-QS6": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "6.4"
+  },
+  "U6-L4-QS7": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "formula-map",
+    "topic": "6.4"
+  }
+}

@@ -7,7 +7,7 @@
 
 ## 1. What it is (the centerpiece)
 
-Every lesson gets **one optional copy-paste prompt**. The student pastes it into whatever AI they already use (ChatGPT, Claude, Gemini) and it becomes a **Socratic tutor for exactly that lesson's quiz**, tethered to the AP framework. Goal, stated plainly to the model: get this student to a **5 on the AP exam** — by understanding, not by being handed answers.
+Every lesson gets **one complete, ready-to-paste prompt — authored ahead of time by the teacher's tooling, not assembled or written by the student.** The student copies the whole thing, pastes it into whatever AI they already use (ChatGPT, Claude, Gemini), and it becomes a **Socratic tutor for exactly that lesson's quiz**, tethered to the AP framework. Goal, stated plainly to the model: get this student to a **5 on the AP exam** — by understanding, not by being handed answers.
 
 This is the study spine of the course. The worksheet + quiz are the graded loop (`start-here.html` "the rhythm"); the AI tutor is how a stuck student gets unstuck without the teacher in the room, 24/7, anchored to the actual taught concepts.
 
@@ -140,18 +140,24 @@ question they want to work — or whether they want to start from the top.
 - **Anti-cheat by design** — same spirit as the study guide's "paper mode is a cheat path" rule: the system never hands over the answer; it makes the student earn it.
 - **Self-paced / all units open** — a student doing Unit 7 in July gets the same tutor quality as one doing it in March.
 
-## 7. Build & coordination (READ BEFORE BUILDING — clobber risk)
+## 7. Build & coordination (parallel-SAFE — corrected 2026-05-17)
 
-The generator's inputs (`apstat_*_framework.md` + `curriculum.js`) are **exactly** what the gradebook **tagging workstream is parsing right now** (framework repair incl. `apstat_5`, the framework parser, the deterministic skill-map). Building a second parser in parallel = duplicate work + the cross-session clobber the gradebook session already flagged.
+An earlier draft over-stated a dependency on the gradebook tagging workstream. **Corrected per teacher:** authoring a tutor prompt is an **LLM-heavy content task**, not a deterministic parser. An LLM ingests (read-only) the lesson's **worksheet + `curriculum.js` items + `apstat_{U}_framework.md`** and *writes* a finished prompt. It does **not** need that workstream's solidified parser/skill-map to proceed.
 
-**Therefore:**
-- This is **NOT** a parallel driver. The per-lesson generator is a **downstream consumer** of the tagging workstream: it reuses the **repaired frameworks**, the **framework parser**, and (for the tether) the **skill-map** (`data/skill-map.json`).
-- Sequence: build the generator **after** the tagging workstream's framework repair (T-0) and deterministic map (T-1) land. One driver for that build (the gradebook/tagging pipeline session).
-- This lane's scope: this spec + sample (done) → review/lock → later, wire the AI-tutor section + Desk-tile copy action into `start-here.html` **once `ai-tutor/u{U}_l{L}.md` files exist**.
+Safe to run in parallel with the gradebook/tagging workstream because:
+- **Read-only ingestion** of the shared sources — no edits to framework files or `curriculum.js` (stays sacred).
+- **Isolated write namespace** — output only to `ai-tutor/u{U}_l{L}.md`. Zero file overlap with that workstream (it edits framework files / writes `data/skill-map.json`).
+- **Different method** — LLM authoring, not a second parser. Nothing to duplicate, nothing to block on.
+
+Soft coordination only (not blockers):
+- `data/skill-map.json`, once it exists, is an **optional later enhancement** — inject the mapped skill code so hints can name it. Author now without it; backfill later.
+- `apstat_5_framework.md` is malformed (no `## TOPIC` headers; the tagging workstream's T-0 repairs it). Author U1–U4 + U6–U9 now (well-formed); do **U5 after** T-0, or best-effort from its `[Skill]` tags + glance table and flag for regen. U5 is the only sequencing nuance.
+
+Lane: this spec + sample (done) → on approval the authoring run can **start immediately** (LLM dispatch per lesson, same parallel method, **validated on a 1-unit pilot first** to lock quality before fanning out to ~70+ lessons). `start-here.html` AI-tutor section + Desk-tile copy action wired once `ai-tutor/` files exist.
 
 ## 8. Open knobs (decide before the build sprint)
 
 1. **Non-gate FRQ rubrics.** The 9 gate FRQs have rubric data; most `curriculum.js` FRQs don't. Acceptable for the tutor to apply general AP scoring norms tethered to the framework EK for those? (Recommend: yes — the framework EK + AP conventions is enough for coaching; flag low-confidence ones.)
 2. **Delivery mechanic.** Desk-tile copy-to-clipboard button vs. a linked `.md` page the student copies from. (Recommend: copy button — least friction.)
-3. **"Writing a prompt" reading.** Interpreted as *coaching the student to write AP responses that earn a 5*. If you actually meant *teaching students to write better AI prompts*, that's a different artifact — confirm.
+3. **RESOLVED (2026-05-17).** The artifact is a **complete, teacher/tooling-authored, copy-paste-ready prompt per lesson**. The student assembles nothing and is not being taught prompt-writing. Not an open knob.
 4. **Skill-map tether.** Also inject the item's mapped AP skill code (from `data/skill-map.json`) so hints can name the skill, once that map exists? (Recommend: yes, when available.)

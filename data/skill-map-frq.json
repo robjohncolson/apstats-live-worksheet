@@ -1,0 +1,219 @@
+{
+  "u1-frq-zscore": {
+    "skill": null,
+    "candidates": ["2.D", "3.A"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "1.10"
+  },
+  "u1-frq-tail-comparison": {
+    "skill": null,
+    "candidates": ["2.D", "3.A"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "1.10"
+  },
+  "u2-frq-residual-calc": {
+    "skill": null,
+    "candidates": ["2.A", "2.B", "2.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u2-frq-residual-spread": {
+    "skill": null,
+    "candidates": ["2.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "9.1"
+  },
+  "u2-frq-normal-tail": {
+    "skill": null,
+    "candidates": ["2.D", "3.A"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "1.10"
+  },
+  "u2-frq-surprising-case": {
+    "skill": null,
+    "candidates": ["2.A", "2.B", "2.D", "3.A"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u3-frq-generalization": {
+    "skill": null,
+    "candidates": ["4.A", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u3-frq-causal-claims": {
+    "skill": null,
+    "candidates": ["4.A", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u4-frq-distribution-prob": {
+    "skill": "4.B",
+    "candidates": ["4.B"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "4.4"
+  },
+  "u4-frq-expected-value": {
+    "skill": null,
+    "candidates": ["3.B", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "4.8"
+  },
+  "u4-frq-strategy-ev": {
+    "skill": null,
+    "candidates": ["3.B", "3.C", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u4-frq-break-even-p": {
+    "skill": null,
+    "candidates": ["3.B", "3.C", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u5-frq-histogram-prob": {
+    "skill": null,
+    "candidates": ["3.A"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u5-frq-clt-xbar": {
+    "skill": null,
+    "candidates": ["2.D", "3.A", "3.B", "3.C", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u5-frq-midrange-choice": {
+    "skill": null,
+    "candidates": ["2.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u5-frq-estimator-comparison": {
+    "skill": null,
+    "candidates": ["3.B", "3.C", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": "5.7"
+  },
+  "u6-frq-conditions": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "6.2"
+  },
+  "u6-frq-construct-ci": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "6.2"
+  },
+  "u6-frq-interpret-ci": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "6.2"
+  },
+  "u6-frq-claim-check": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "6.2"
+  },
+  "u7-frq-conditions": {
+    "skill": "4.C",
+    "candidates": ["4.C"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "6.2"
+  },
+  "u7-frq-construct-ci": {
+    "skill": null,
+    "candidates": ["3.C", "4.B", "4.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u7-frq-interpret-ci": {
+    "skill": null,
+    "candidates": ["3.C", "4.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u7-frq-scope-limit": {
+    "skill": null,
+    "candidates": ["4.A", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u8-frq-hypotheses": {
+    "skill": null,
+    "candidates": ["3.A", "3.C", "4.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u8-frq-conditions-calc": {
+    "skill": null,
+    "candidates": ["3.A", "3.C", "4.B", "4.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u8-frq-conclusion": {
+    "skill": "4.B",
+    "candidates": ["4.B"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "8.3"
+  },
+  "u9-frq-scatterplot": {
+    "skill": null,
+    "candidates": ["2.A", "2.B", "2.C"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u9-frq-lsrl": {
+    "skill": null,
+    "candidates": ["2.C", "4.B"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u9-frq-slope-hypotheses": {
+    "skill": null,
+    "candidates": ["4.A"],
+    "confidence": 0,
+    "provenance": "unresolved",
+    "topic": null
+  },
+  "u9-frq-slope-test": {
+    "skill": "4.B",
+    "candidates": ["4.B"],
+    "confidence": 1.0,
+    "provenance": "frq-xref",
+    "topic": "9.5"
+  }
+}
