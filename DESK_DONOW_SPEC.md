@@ -1,6 +1,6 @@
 # Desk "Do Now" + Unified Completion-Colored Fall Calendar — Spec
 
-**Status:** **DRAFT — for sign-off.** Brainstormed & converged 2026-05-18 (session 99). No code yet.
+**Status:** **DRAFT — ready for sign-off (no open blockers).** Brainstormed & converged 2026-05-18 (session 99). §6 exam-date pin RESOLVED 2026-05-18 (teacher chose option 1). No code yet — awaiting explicit sign-off.
 **What this is:** the loop-closer. Phase 0 gave identity, Sprint 1 gave the `item_ledger`; nothing yet shows the *student* what to do next or what they've banked. This spec defines that: a prescriptive **"Do Now"** + the Desk's schedule reframed as **one school-year calendar that colors in as work is banked**.
 **Relationship:** depends on Phase 0 roster (LIVE) + Sprint 1 `item_ledger` (LIVE, `/ledger/record`) + the v2-hybrid grade model (`GRADEBOOK_GRADING_SPEC.md` — cumulative+capped; color = banked). Reuses study-guide daily-queue UX patterns. **Forces the previously-deferred §6.4/Phase-1 adoption to become this feature's hard prerequisite (decision D2).**
 
@@ -52,9 +52,11 @@ Method unchanged: planner freezes contracts → parallel Sonnet → Codex review
 3. Lesson-days that bundle multiple lessons (combined worksheets exist for U4/U5) — cell roll-up rule.
 4. Transfer-in / Sept-start student: all-grey calendar + Do Now = U1 L1 (fine, never-punitive — confirm the messaging isn't discouraging).
 
-## 6. ⚠ Data-pin — AP Stats exam date (the calendar horizon)
+## 6. ✅ Data-pin RESOLVED — AP Stats exam date (the calendar horizon)
 
-Teacher said **"Friday, May 16, AP Statistics, 8 AM."** Inconsistent for 2027: **May 16 2027 is a Sunday**; the roadmap currently has SY26-27 exam = **Fri May 14 2027** (`examDate:[2027,4,14]`, which *is* a Friday). One of {date, weekday} is wrong. **NOT silently encoded — pinned at sign-off.** Candidates: Fri **May 14** 2027 (matches the existing roadmap value + "Friday"), or **May 16** 2027 on whatever weekday it really is (Sun — implausible for an AP exam), or another date. The single fall calendar runs **Sept 1 2026 → this date, 8 AM**; `computeApExamDate()` / SY26-27 `examDate` updates to the confirmed value once pinned.
+Teacher's source said "Friday, May 16" but **May 16 2027 = Sunday** (invalid for an AP exam — College-Board copy/transcription error acknowledged by the teacher). **RESOLVED 2026-05-18 (teacher chose option 1): AP Statistics exam = Friday, May 14, 2027, 8 AM** = the existing roadmap value `examDate:[2027,4,14]` (no value change needed). The single fall calendar runs **Sept 1 2026 → Fri May 14 2027, 8 AM**; SY26-27 `examDate` stays `[2027,4,14]`; add the 8 AM start time to the horizon display.
+
+⚠ **Residual (build-time, not a blocker):** this matches a possibly-stale roadmap value, not a verified College-Board 2027 source. Before the calendar is student-facing, **web-verify the official 2027 AP Statistics date** (cheap; College Board publishes it) and correct `examDate` + `computeApExamDate()` if it differs. Acceptable to spec/build against `[2027,4,14]` now and confirm pre-launch.
 
 ## 7. Non-goals / guardrails
 
