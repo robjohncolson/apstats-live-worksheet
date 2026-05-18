@@ -1166,6 +1166,9 @@
 
     <script src="../railway_config.js"></script>
     <script src="../railway_client.js"></script>
+    <script src="roster_config.js"></script>
+    <script src="roster-client.js"></script>
+    <script src="gradebook-client.js"></script>
     <script src="ai-grading-prompts.js"></script>
     <script>
         const WORKSHEET_ID = 'WS-U3L6-7';
@@ -1344,6 +1347,7 @@
                     }
                 }
             });
+            recordBlankToGradebook(blank);
         }
 
         function showSaved(blank) {
@@ -1904,6 +1908,48 @@ Respond in JSON: {"score": "E/P/I", "feedback": "explanation"}`;
         const gradingState = new Map(); // textareaId -> { result, appealCount, history }
 
         // Grade all reflection textareas
+        // ==================== GRADEBOOK LEDGER FEEDER (DN2) ====================
+        // Fire-and-forget item_ledger writes via window.gradebookClient (CONTRACT 3).
+        // No-ops without roster identity / without the client; never throws/blocks
+        // the worksheet (decision L-D). Blank itemId is recorded VERBATIM from
+        // assignQuestionIds(); reflection itemId = <WS-prefix>-<textareaId>. Both
+        // match the skill-map / work-manifest vocabulary (proven by
+        // scripts/audit-feeder-ids.mjs). topic/skill are intentionally NOT sent —
+        // Phase 3 resolves them from the skill-map by itemId at roll-up time.
+        function gbWsPrefix() {
+            if (typeof UNIT_ID !== 'undefined' && UNIT_ID) return 'WS-' + UNIT_ID;
+            if (typeof WORKSHEET_ID !== 'undefined' && WORKSHEET_ID) return WORKSHEET_ID;
+            return null;
+        }
+        function gbUnitFromItemId(itemId) {
+            var m = /^WS-(U\d+)/.exec(itemId || '');
+            return m ? m[1] : undefined;
+        }
+        function recordBlankToGradebook(blank) {
+            if (!window.gradebookClient || !window.gradebookClient.record) return;
+            var itemId = blank && blank.dataset ? blank.dataset.questionId : null;
+            if (!itemId) return;
+            var value = (blank.value || '').trim();
+            if (!value) return;
+            window.gradebookClient.record({
+                source: 'worksheet', itemId: itemId,
+                unit: gbUnitFromItemId(itemId), response: value, attempt: 1
+            });
+        }
+        function recordReflectionToGradebook(textareaId, answer, scoreLetter) {
+            if (!window.gradebookClient || !window.gradebookClient.record) return;
+            var prefix = gbWsPrefix();
+            if (!prefix) return;
+            var itemId = prefix + '-' + textareaId;
+            var scoreMap = { E: 1, P: 0.5, I: 0 };
+            window.gradebookClient.record({
+                source: 'frq', itemId: itemId,
+                unit: gbUnitFromItemId(itemId), response: answer,
+                score: (scoreLetter in scoreMap) ? scoreMap[scoreLetter] : undefined,
+                attempt: 1
+            });
+        }
+
         async function gradeAllReflections() {
             const reflectionIds = typeof getReflectionQuestionIds === 'function'
                 ? getReflectionQuestionIds()
@@ -1958,7 +2004,7 @@ Respond in JSON: {"score": "E/P/I", "feedback": "explanation"}`;
                             gradingState.set(id, { result, originalAnswer: answer, appealCount: 0, history: [] });
                             textarea.classList.remove('grading');
                             textarea.classList.add('graded-E');
-                            renderEnrichedPass(id, enriched);
+                            renderEnrichedPass(id, enriched); recordReflectionToGradebook(id, answer, 'E');
                             continue;
                         }
                     } catch (err) {
@@ -1974,6 +2020,7 @@ Respond in JSON: {"score": "E/P/I", "feedback": "explanation"}`;
                     appealCount: 0,
                     history: []
                 });
+                recordReflectionToGradebook(id, answer, result.score);
 
                 // Remove loading state
                 textarea.classList.remove('grading');

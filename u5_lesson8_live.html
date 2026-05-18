@@ -796,6 +796,9 @@
     <!-- Scripts -->
     <script src="../railway_config.js"></script>
     <script src="../railway_client.js"></script>
+    <script src="roster_config.js"></script>
+    <script src="roster-client.js"></script>
+    <script src="gradebook-client.js"></script>
     <script src="ai-grading-prompts-u5-l8.js"></script>
     <script>
         // ==================== CONFIG ====================
@@ -989,6 +992,7 @@
             debounceMap.set(questionId, now);
 
             sendAnswer(blank);
+            recordBlankToGradebook(blank);
         }
 
         async function sendAnswer(blank) {
@@ -1166,6 +1170,48 @@
         }
 
         // ==================== AI GRADING ====================
+        // ==================== GRADEBOOK LEDGER FEEDER (DN2) ====================
+        // Fire-and-forget item_ledger writes via window.gradebookClient (CONTRACT 3).
+        // No-ops without roster identity / without the client; never throws/blocks
+        // the worksheet (decision L-D). Blank itemId is recorded VERBATIM from
+        // assignQuestionIds(); reflection itemId = <WS-prefix>-<textareaId>. Both
+        // match the skill-map / work-manifest vocabulary (proven by
+        // scripts/audit-feeder-ids.mjs). topic/skill are intentionally NOT sent —
+        // Phase 3 resolves them from the skill-map by itemId at roll-up time.
+        function gbWsPrefix() {
+            if (typeof UNIT_ID !== 'undefined' && UNIT_ID) return 'WS-' + UNIT_ID;
+            if (typeof WORKSHEET_ID !== 'undefined' && WORKSHEET_ID) return WORKSHEET_ID;
+            return null;
+        }
+        function gbUnitFromItemId(itemId) {
+            var m = /^WS-(U\d+)/.exec(itemId || '');
+            return m ? m[1] : undefined;
+        }
+        function recordBlankToGradebook(blank) {
+            if (!window.gradebookClient || !window.gradebookClient.record) return;
+            var itemId = blank && blank.dataset ? blank.dataset.questionId : null;
+            if (!itemId) return;
+            var value = (blank.value || '').trim();
+            if (!value) return;
+            window.gradebookClient.record({
+                source: 'worksheet', itemId: itemId,
+                unit: gbUnitFromItemId(itemId), response: value, attempt: 1
+            });
+        }
+        function recordReflectionToGradebook(textareaId, answer, scoreLetter) {
+            if (!window.gradebookClient || !window.gradebookClient.record) return;
+            var prefix = gbWsPrefix();
+            if (!prefix) return;
+            var itemId = prefix + '-' + textareaId;
+            var scoreMap = { E: 1, P: 0.5, I: 0 };
+            window.gradebookClient.record({
+                source: 'frq', itemId: itemId,
+                unit: gbUnitFromItemId(itemId), response: answer,
+                score: (scoreLetter in scoreMap) ? scoreMap[scoreLetter] : undefined,
+                attempt: 1
+            });
+        }
+
         async function gradeAllReflections() {
             const btn = document.querySelector('.btn-ai');
             btn.disabled = true;
@@ -1205,7 +1251,7 @@
                             if (enriched.score === 'E' && enriched.suggestion) {
                                 result.score = 'E';
                                 gradingState.set(id, { result, originalAnswer: answer, appealCount: 0, history: [] });
-                                renderEnrichedPass(id, enriched);
+                                renderEnrichedPass(id, enriched); recordReflectionToGradebook(id, answer, 'E');
                                 continue;
                             }
                         } catch (err) {
@@ -1215,7 +1261,7 @@
                     // --- End Enriched Pass ---
 
                     gradingState.set(id, { result, originalAnswer: answer, appealCount: 0, history: [] });
-                    showFeedback(id, result);
+                    showFeedback(id, result); recordReflectionToGradebook(id, answer, result.score);
                 } catch (err) {
                     console.error('Grading error:', err);
                     showFeedback(id, { score: 'I', feedback: 'Error grading response. Please try again.' });
