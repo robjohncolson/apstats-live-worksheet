@@ -1,6 +1,6 @@
 # Gradebook — Grade-Calc & Remediation Spec **v2 (Hybrid)**
 
-**Status:** **DRAFT — for sign-off.** v2 reconciliation converged 2026-05-17 (session 99).
+**Status:** **DRAFT — for sign-off.** v2 reconciliation converged 2026-05-17 (session 99). **§2 amended 2026-05-17 (consensus): TWO graded feeders (Driller dropped) + cap/uncap grade formula** — see the §2 Amendment box. This resolves the teacher-flagged equity flaw; that OPEN question is now CLOSED.
 **What changed v1→v2:** v1 made the grade *be* per-skill BKT mastery (practice capped below θ; only a proctored check could certify). That **contradicted what the teacher actually promises students** (do the work → grade banked per unit; the in-class Progress Check can only *raise* it). Teacher chose **option 3 — the hybrid**: the cumulative+booster model students were promised **is the grade of record**; BKT + skill-tags are demoted to the **diagnostic / remediation engine** (which skill is weak), never the grade arithmetic. v1's decisions A/C/E are superseded; B/F survive; D is reinterpreted. v1 preserved at the bottom for provenance.
 **Relationship:** detailed design for Phases 3–4 of `GRADEBOOK_SPEC.md`. Phase 0 LIVE (`a7d7bbd`); Sprint 1 (`item_ledger` + feeders) LIVE (`d461ebc`). `GRADEBOOK_TAGGING_SPEC.md` is the prerequisite (now powering the diagnostic engine, not the grade).
 
@@ -10,20 +10,25 @@
 
 The teacher is anti–one-shot-grading by conviction (strong test performance, weak grades, career cost). The grade is a **focusing scaffold for the median student**, not a status judgment. The honored promise to students: **"do the work and you've banked the grade; the Progress Check can only help you, never hurt you."** The mechanism must *be* that promise — transparent, cumulative, never-punitive — not a sophisticated model students can't see. The sophistication moves **behind the curtain** (diagnostics/remediation), where it helps the teacher without breaking the promise.
 
-## 2. The grade of record — cumulative + booster (Model B)
+## 2. The grade of record — cumulative + **capped** booster (Model B, amended 2026-05-17)
 
-**This is what students see and were promised. It is simple, transparent, monotonic.**
+**This is what students see and were promised. It is simple, transparent, monotonic, never-punitive.**
 
-- **Three feeders**, accumulating per unit as work is completed:
+> **Amendment (2026-05-17, both-agent + teacher consensus):** (a) **Driller dropped — TWO graded feeders, not three**, to focus the workflow on the pure loop (Blooket → video+worksheet → Blooket → quiz). (b) Pure `max(banked, pc)` had an equity flaw (completion-grinding the low-stakes, retryable, AI-tutored work alone reached ~100, so the Progress Check stopped discriminating genuine understanding). Resolved with **cap + uncap** — which is exactly v1 decision C ("practice caps below θ; proctored uncaps") re-expressed in v2's cumulative language. Philosophically continuous, not new.
+
+- **Two graded feeders**, accumulating per unit as work is completed:
   1. **Follow-alongs** — worksheet fill-ins (Railway `/api/submit-answer`) + AI-graded FRQ (`/api/ai/grade`/`appeal`). Sprint-1 `item_ledger` already captures these with `student_id`.
   2. **curriculum_render quiz** — the per-lesson AP-question quiz (Phase 2 feeder; new write path; **never** touches sacred `curriculum.js`).
-  3. **the Driller** — `lrsl_driller` (app `lrsl-driller.vercel.app`; backend `lrsl-driller-production.up.railway.app` — the same Railway/Supabase the study-guide auth already uses). **NEW 3rd feeder**; needs a feeder integration like the other two.
-- **`banked(unit)`** = a correctness-weighted aggregate over the unit's completed feeder items (0–100%). Doing **all** of a unit's feeder work over the summer can reach full credit → the grade is **banked per unit before the PC** (this is the promise; it is the *opposite* of v1's practice-cap).
-- **The in-class Progress Check is a one-way booster:** `unitGrade = max(banked(unit), pcContribution(unit))`. The PC can **only raise**, never lower. A prepared summer student: PC is pure upside. A transfer-in with no banked work: the PC (and subsequent in-class work) raises them from wherever they start — not penalized for missing the summer window.
-- **Completion is the accountability layer** (did they do the work) — surfaced to the teacher, but the *grade* is correctness-weighted, not completion-points.
-- **"100% if you care"** is now literal and visible: keep doing/redoing feeder work and re-sitting the (booster) check; the number only goes up.
+  *(The Driller / `lrsl_driller` is NOT a grade feeder — dropped 2026-05-17. The AI-tutor pilot is a separate, unrelated workstream.)*
+- **`B(unit)`** = correctness-weighted aggregate over the unit's completed feeder items, 0–100.
+- **Completion caps below 100. The proctored PC is the only thing that uncaps the top band.** Let `C` = the completion ceiling (default **~85**, a §7 pilot-tunable knob); `P(unit)` = the unit grade implied by the proctored Progress Check, **uncapped 0–100**.
+  - `banked(unit) = min(B(unit), C)` — doing **all** the work banks a strong, motivating grade (up to `C`), but **work alone never reaches 100**.
+  - `unitGrade(unit) = max( banked(unit), P(unit) )` — the PC is a **one-way booster**: it can only raise, never lower (it sits inside `max`, so a bad PC day never sinks banked work — the asymmetry/never-punitive promise is preserved). Only the proctored PC carries the `C→100` top band.
+- Worked outcomes (with `C=85`): grinder `B=100`, no/poor PC → **85** (strong, capped). Genuine master `B=23`, `P=100` → **100** (PC uncaps regardless of work done). Strong worker `B=90` + bad PC day `P=40` → **85** (never punished). Strong worker `B=90` + `P=95` → **95**.
+- **Completion is also surfaced as an accountability readout** (did they do the work) separate from the grade.
+- **"100% if you care"** stays literal: do the work for a strong banked grade, then *demonstrate it* on the proctored PC to reach the very top — and re-sit the (only-raises) PC as often as you want.
 
-*Feeder weighting, the exact `banked` aggregation (per-item correctness × completion mix), and how `pcContribution` maps a PC score to a unit raise are §7 open knobs — pedagogical, teacher-set, with sane defaults.*
+*The ceiling `C`, the `B` aggregation (per-item correctness × completion blend), and how a raw PC score maps to `P` are §7 open knobs — pedagogical, teacher-set, pilot-tunable.*
 
 ## 3. The diagnostic / remediation engine — BKT + skill-tags (behind the curtain)
 
@@ -34,11 +39,11 @@ BKT and the `skill-map` (`GRADEBOOK_TAGGING_SPEC.md`) are **not** the grade. The
 - **The teacher dashboard** (Phase 4): class skill heatmap, who's weak where, remediation status.
 - Students may see a **motivational** per-skill view ("territory turning green") but **never** BKT jargon, θ, or probabilities — and it is explicitly *not* their grade.
 
-`θ` survives only as the **diagnostic threshold** ("flag skill as weak below θ"), not a grade boundary. v1's practice-cap / proctored-uncap math is **dropped** (it was the grade mechanic; the grade is now §2).
+`θ` survives only as the **diagnostic threshold** ("flag skill as weak below θ"), not a grade boundary. (Note: v1's *cap/uncap principle* returned in §2's cumulative language via the 2026-05-17 amendment — completion caps at `C`, proctored PC uncaps to 100 — but expressed as a transparent cumulative grade, **not** as per-skill BKT. BKT here is purely diagnostic.)
 
 ## 4. Daily rhythm & structure (was undocumented; teacher expected it in-repo)
 
-- **Each class day:** yesterday's **review Blooket** → today's **video + follow-along notes** → today's **Blooket** → the day's **curriculum_render AP-question quiz**. The **Driller** runs alongside. ~3–4 lessons/week.
+- **Each class day (the pure loop):** yesterday's **review Blooket** → today's **video + follow-along/worksheet** (graded feeder 1) → today's **Blooket** → the day's **curriculum_render AP-question quiz** (graded feeder 2). ~3–4 lessons/week. *(No Driller in the loop — dropped 2026-05-17. Blookets remain ungraded/position-gating per decision F.)*
 - **Unit close:** a **2-period, AP-exam-paced Progress Check**, with **graduated tightening** — gentle in U1–U3, ramping to full exam pace by U7–U9.
 - **Blooket** (decision F, survives): never in the ledger (untrackable); load-bearing **by position** in the rhythm (prediction + retrieval practice; post-Blooket gates "video follow-along done").
 - **Hub:** the roadmap **"Desk"** (`ap_stats_roadmap_square_mode.html`) is the per-lesson hub — each tile already links worksheet + quiz + drills + Blooket. `SUMMER26` default until **2026-09-01**, then `SY26-27`.
@@ -70,18 +75,17 @@ Retake gate = *re-check for skill X unlocked iff every `assigned` remediation fo
 
 ## 7. Open knobs (decide at sign-off)
 
-1. **Feeder weights & `banked` aggregation.** Relative weight of follow-alongs : cr-quiz : Driller, and the correctness×completion blend. (Lean: correctness-dominant, equal-ish feeder weights, completion as a separate accountability readout; tune on pilot data.)
-2. **`pcContribution` mapping.** How a Progress Check score raises the unit grade — to full unit credit on pass, or proportional? (Lean: proportional raise, capped at 100%, never subtractive.)
-3. **Graduated PC tightening schedule** (U1–3 gentle → U7–9 full pace) — concrete pacing per unit band.
-4. **Diagnostic θ.** Weak-skill flag threshold (≈0.6–0.7 as a *diagnostic*, looser than v1's grade θ since it no longer gates a grade). Pilot-tune.
-5. **Driller feeder shape.** What the Driller exposes per student (attempts/scores/skill) and its integration path (its own backend — likely a pull/webhook like the other feeders).
+1. **Completion ceiling `C`.** The cap on work-alone (default ~85). Pilot-tunable; sets how strong a fully-worked-but-un-PC'd grade is.
+2. **Feeder weights & `B` aggregation.** Relative weight of the **two** feeders (follow-alongs : cr-quiz) and the correctness×completion blend. (Lean: correctness-dominant, roughly equal feeder weight, completion as a separate accountability readout; tune on pilot data.)
+3. **Raw-PC → `P` mapping.** How a proctored Progress Check score becomes the uncapped `P(unit)` ∈ 0–100 inside `max(banked, P)`. (Lean: proportional, reaches 100 on a strong PC, never subtractive.)
+4. **Graduated PC tightening schedule** (U1–3 gentle → U7–9 full pace) — concrete pacing per unit band.
+5. **Diagnostic θ.** Weak-skill flag threshold (≈0.6–0.7 as a *diagnostic*, looser than v1's grade θ since it no longer gates a grade). Pilot-tune.
 
 ## 8. Phase sequencing (post-reconciliation)
 
 1. **Tagging workstream** (`GRADEBOOK_TAGGING_SPEC.md`) — now the prerequisite for the **diagnostic engine** (§3) + still needed by the cr-quiz feeder. Same priority (first).
-2. **Phase 2** — curriculum_render quiz feeder (grade feeder #2; sacred-safe).
-3. **Driller feeder** — integrate feeder #3 (`lrsl_driller`).
-4. **Phase 3** — the §2 cumulative+booster grade calc **+** the §3 diagnostic BKT rollup (reuse study-guide BKT/probe/queue for the *diagnostic* side).
+2. **Phase 2** — curriculum_render quiz feeder (grade feeder #2; sacred-safe). *(No Driller feeder — dropped 2026-05-17. Only 2 grade feeders.)*
+3. **Phase 3** — the §2 cumulative + **capped**-booster grade calc **+** the §3 diagnostic BKT rollup (reuse study-guide BKT/probe/queue for the *diagnostic* side).
 5. **Phase 4** — teacher dashboard (weak-skill triage, remediation approve, heatmap) + **`start-here.html`** student-facing rendering.
 6. §6.4 single-sign-in adoption (wire `roster-client`/`gradebook-client` into the apps) — still deferred until the feeders need it.
 
