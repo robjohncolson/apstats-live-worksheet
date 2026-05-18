@@ -14,6 +14,8 @@
 
 Everything else (the §4 behavioral block verbatim, MCQ `(KEY) value` + `KEY:` + `WHY (for tutor's eyes)`, FRQ `SCORING:` E/P/I + 5-level, tables→markdown, charts→`[This item shows a chart in the quiz.]` + tutor-only numeric description read EXACTLY from chartConfig (never invented) + "don't compute for the student", no answer-leak, owned-path discipline, sacred read-only `curriculum.js`) is the U1 contract unchanged.
 
+**ID-LABEL RULE (learned from u6_l11, 2026-05-18):** every item's header line MUST embed the full canonical id — `[MCQ] U{u}-L{L}-Q##` / `[FRQ] U{u}-L{L}-Q##` (or the U1 form `**[Item N of M] — U{u}-L{L}-Q##**`) — NEVER a bare `Q##`. The id is the traceability key CC verifies against `curriculum.js`; a bare label is a contract violation even if content is correct.
+
 ## Inventory (verified vs `curriculum.js` 2026-05-18) — item counts per lesson
 
 | Unit | Framework | Lesson quizzes (id → item count) | PC | Artifacts |
