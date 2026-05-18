@@ -1,116 +1,109 @@
-# Gradebook — Grade-Calc & Remediation Spec (Phase 3/4 design)
+# Gradebook — Grade-Calc & Remediation Spec **v2 (Hybrid)**
 
-**Status:** **DRAFT — for sign-off.** Brainstormed & converged 2026-05-17 (session 99 continuation). No build.
-**Relationship:** This is the detailed design for Phases 3–4 of `GRADEBOOK_SPEC.md` (signed off `67b28e9`, §6.1 revised `eefe0ae`), plus a new remediation layer and a re-sequencing of Phase 2. Phase 0 is live (`a7d7bbd`). Read `GRADEBOOK_SPEC.md` first; this assumes its `roster` / `item_ledger` / `skill_mastery` architecture and its sacred-file rule.
-**Sign-off pattern:** like the Phase 0 spec — the locked decisions below are the teacher's; the open knobs (§9) need a decision before build.
-
----
-
-## 1. Philosophy (the why — drives every mechanic)
-
-The teacher is temperamentally anti-grading: a one-shot grade that fails to reflect what a student actually knows is the bug (personal experience: strong test performance, weak grades, downstream cost). The grade here is a **focusing scaffold for the median student**, not a status judgment, and is designed to be the *antidote* to one-shot grading: **mastery-based, infinitely repeatable, "anyone can earn 100% if they care enough."** "Care enough" is defined mechanically as *completing the learning loop* (§4), not as a lottery of retakes. The model must never devolve into compliance points.
+**Status:** **DRAFT — for sign-off.** v2 reconciliation converged 2026-05-17 (session 99).
+**What changed v1→v2:** v1 made the grade *be* per-skill BKT mastery (practice capped below θ; only a proctored check could certify). That **contradicted what the teacher actually promises students** (do the work → grade banked per unit; the in-class Progress Check can only *raise* it). Teacher chose **option 3 — the hybrid**: the cumulative+booster model students were promised **is the grade of record**; BKT + skill-tags are demoted to the **diagnostic / remediation engine** (which skill is weak), never the grade arithmetic. v1's decisions A/C/E are superseded; B/F survive; D is reinterpreted. v1 preserved at the bottom for provenance.
+**Relationship:** detailed design for Phases 3–4 of `GRADEBOOK_SPEC.md`. Phase 0 LIVE (`a7d7bbd`); Sprint 1 (`item_ledger` + feeders) LIVE (`d461ebc`). `GRADEBOOK_TAGGING_SPEC.md` is the prerequisite (now powering the diagnostic engine, not the grade).
 
 ---
 
-## 2. Locked decisions (teacher, 2026-05-17)
+## 1. Philosophy (unchanged conviction, corrected mechanism)
 
-| # | Decision | Consequence |
-|---|----------|-------------|
-| **A** | Summer / follow-along / curriculum_render-quiz work = **gate + evidence, NOT direct points.** | Completing a unit's prep *unlocks* assessment and *feeds* the skill estimate; it is never points. Preserves "no compliance points" while using the only trackable data. |
-| **B** | Retakes are **earned via a learning loop.** After each proctored check the teacher reviews the weak parts and assigns remediation; completing it gates the retake. | Requires a **remediation/assignment record** + a teacher triage/approve surface (§5). The system auto-produces the weak-skill list; the teacher approves. |
-| **C** | Grade = **BKT per-AP-skill mastery, proctored-anchored.** Unit grade = fraction of the unit's skills with `pKnow ≥ θ`. **Practice-only evidence caps below θ; proctored evidence uncaps it.** | Makes decision D a *math parameter*, not just a policy: a skill cannot reach the top band without proctored evidence. |
-| **D** | **Proctored = single source of truth.** The invariant is "proctored," **not** "the official AP Progress Check specifically." | Official PC administered **once** per unit (canonical certifier). Retakes = **skill-targeted proctored re-checks** from a *non-official* pool, scoped to the flagged weak skills. |
-| **E** | **The "pre" is a computed snapshot, not an administered exam.** | Pre = the BKT skill-mastery estimate from prep feeders (follow-alongs P1 + curriculum_render quiz P2) snapshotted just before the proctored PC. Zero extra class periods; reclaims ~10 instructional periods over 5 units vs. a proctored pre. |
-| **F** | **Blooket stays out of the ledger** (untrackable / excluded by `GRADEBOOK_SPEC.md`) but is **load-bearing by position**: post-Blooket gates "video follow-along done" → which gates the retake. Pre/post-Blooket = prediction + retrieval practice. | No tracked Blooket points; opt-out solved structurally, not by grading. |
+The teacher is anti–one-shot-grading by conviction (strong test performance, weak grades, career cost). The grade is a **focusing scaffold for the median student**, not a status judgment. The honored promise to students: **"do the work and you've banked the grade; the Progress Check can only help you, never hurt you."** The mechanism must *be* that promise — transparent, cumulative, never-punitive — not a sophisticated model students can't see. The sophistication moves **behind the curtain** (diagnostics/remediation), where it helps the teacher without breaking the promise.
 
----
+## 2. The grade of record — cumulative + booster (Model B)
 
-## 3. The grade model (decision C, precisely)
+**This is what students see and were promised. It is simple, transparent, monotonic.**
 
-- **Unit skill set.** Each unit has a set of AP skills `S = {s1…sn}` (from the AP CED; the follow-alongs are already framework-anchored to Skill/EU/LO/EK).
-- **Per-skill estimate.** For each `s`, BKT maintains `pKnow(s)` ∈ [0,1], updated per observed item tagged to `s`. **Reuse the study-guide BKT** (`.v4-logic-block.js` / `lib/bkt.test.js`), not a new implementation.
-- **Evidence tiers (the cap is the core mechanic).**
-  - *Practice evidence* (follow-along blanks/FRQ-AI, curriculum_render quiz, probes): updates `pKnow` but **clamped at `θ_practice` (< θ)** — e.g. θ = 0.85, practice asymptotes at ≤ 0.75. Practice can build a skill *toward* mastery and is great for routing/growth, but can never *certify* it.
-  - *Proctored evidence* (the once-per-unit official PC; skill-targeted proctored re-checks): updates `pKnow` **uncapped**; only proctored evidence can push a skill ≥ θ.
-- **Unit grade.** `grade(unit) = |{ s ∈ S : pKnow(s) ≥ θ }| / |S|`, mapped to a letter band. Robust to one lucky/unlucky run by construction (BKT is a Bayesian blend over the whole sequence).
-- **Growth (free, from decision E).** `growth(unit) = mastery(post-proctored) − mastery(pre-snapshot)`. **Recorded for motivation + teacher analytics.** Open knob §9: whether the *grade* is `mastery` or `max(mastery, growth-implied)` (maximally generous, philosophy-consistent).
-- **"100% if you care."** A skill below θ → remediation loop (§4) → skill-targeted proctored re-check → crosses θ. Iterates until all of `S` ≥ θ.
+- **Three feeders**, accumulating per unit as work is completed:
+  1. **Follow-alongs** — worksheet fill-ins (Railway `/api/submit-answer`) + AI-graded FRQ (`/api/ai/grade`/`appeal`). Sprint-1 `item_ledger` already captures these with `student_id`.
+  2. **curriculum_render quiz** — the per-lesson AP-question quiz (Phase 2 feeder; new write path; **never** touches sacred `curriculum.js`).
+  3. **the Driller** — `lrsl_driller` (app `lrsl-driller.vercel.app`; backend `lrsl-driller-production.up.railway.app` — the same Railway/Supabase the study-guide auth already uses). **NEW 3rd feeder**; needs a feeder integration like the other two.
+- **`banked(unit)`** = a correctness-weighted aggregate over the unit's completed feeder items (0–100%). Doing **all** of a unit's feeder work over the summer can reach full credit → the grade is **banked per unit before the PC** (this is the promise; it is the *opposite* of v1's practice-cap).
+- **The in-class Progress Check is a one-way booster:** `unitGrade = max(banked(unit), pcContribution(unit))`. The PC can **only raise**, never lower. A prepared summer student: PC is pure upside. A transfer-in with no banked work: the PC (and subsequent in-class work) raises them from wherever they start — not penalized for missing the summer window.
+- **Completion is the accountability layer** (did they do the work) — surfaced to the teacher, but the *grade* is correctness-weighted, not completion-points.
+- **"100% if you care"** is now literal and visible: keep doing/redoing feeder work and re-sitting the (booster) check; the number only goes up.
 
-## 4. Unit lifecycle (one unit, end to end)
+*Feeder weighting, the exact `banked` aggregation (per-item correctness × completion mix), and how `pcContribution` maps a PC score to a unit raise are §7 open knobs — pedagogical, teacher-set, with sane defaults.*
 
-1. **Prep (gate + evidence, decision A).** Student does the unit's follow-alongs (P1 feeder: auto-graded blanks + AI-graded FRQ) and curriculum_render quiz (P2 feeder). All of it feeds *practice-tier* BKT (capped).
-2. **Pre-snapshot (decision E).** Day before the proctored PC, snapshot `mastery(unit)` from prep evidence → routing + growth anchor + BKT seed. *Optional cold-probe* (§9) sharpens routing.
-3. **Routing.** High pre-snapshot → student is in the **review/enrich lane** for the unit's in-class videos; low/none → **first-exposure lane**. Same room, self-paced via the follow-along/Blooket structure.
-4. **Instruction.** Every video covered in class: **pre-Blooket → video + follow-along notes → post-Blooket** (decision F). Post-Blooket gates "this video's follow-along complete."
-5. **Proctored PC (decision D, the certifier).** The official AP Progress Check, administered **once**. Proctored, uncapped BKT update. This is the single source of truth.
-6. **Auto-triage (decision B, the part the system does for the teacher).** Item→skill mapping + BKT produce a **per-student weak-skill list** automatically. No manual scantron squinting.
-7. **Remediation assign (teacher judgment, system-assisted).** System **proposes** targeted content per weak skill (the follow-along for that topic, the study-guide formula card / FRQ decomposition / TI-84 walkthrough, a probe set, curriculum_render practice). Teacher **reviews/edits/approves**. Recorded as a remediation/assignment record (§5).
-8. **Learning loop + retake gate.** Student completes the assigned remediation (tracked). Completion **unlocks** a **skill-targeted proctored re-check** — only the flagged skills, fresh items from a *non-official* pool (decision D). Proctored → uncapped → skill crosses θ.
-9. **Iterate** step 6–8 until every skill in the unit ≥ θ (grade → 100%) or the student stops caring (grade = current mastery; never punished for the path or pace).
+## 3. The diagnostic / remediation engine — BKT + skill-tags (behind the curtain)
 
-## 5. New data: the remediation / assignment record
+BKT and the `skill-map` (`GRADEBOOK_TAGGING_SPEC.md`) are **not** the grade. They power:
 
-Beyond `GRADEBOOK_SPEC.md`'s `roster` / `item_ledger` / `skill_mastery`, one new concept (curriculum_render Supabase project, same service-role-only posture):
+- **Auto weak-skill detection** (decision B): after a Progress Check, item→skill + BKT produce a per-student **weak-skill list** automatically — the teacher does not squint at scantrons.
+- **The remediation learning loop** (decision B, survives): teacher reviews/approves system-proposed remediation per weak skill; completing it gates a **re-check**; a successful re-check feeds the feeders/PC and (per §2) **raises** the banked grade. Never lowers.
+- **The teacher dashboard** (Phase 4): class skill heatmap, who's weak where, remediation status.
+- Students may see a **motivational** per-skill view ("territory turning green") but **never** BKT jargon, θ, or probabilities — and it is explicitly *not* their grade.
+
+`θ` survives only as the **diagnostic threshold** ("flag skill as weak below θ"), not a grade boundary. v1's practice-cap / proctored-uncap math is **dropped** (it was the grade mechanic; the grade is now §2).
+
+## 4. Daily rhythm & structure (was undocumented; teacher expected it in-repo)
+
+- **Each class day:** yesterday's **review Blooket** → today's **video + follow-along notes** → today's **Blooket** → the day's **curriculum_render AP-question quiz**. The **Driller** runs alongside. ~3–4 lessons/week.
+- **Unit close:** a **2-period, AP-exam-paced Progress Check**, with **graduated tightening** — gentle in U1–U3, ramping to full exam pace by U7–U9.
+- **Blooket** (decision F, survives): never in the ledger (untrackable); load-bearing **by position** in the rhythm (prediction + retrieval practice; post-Blooket gates "video follow-along done").
+- **Hub:** the roadmap **"Desk"** (`ap_stats_roadmap_square_mode.html`) is the per-lesson hub — each tile already links worksheet + quiz + drills + Blooket. `SUMMER26` default until **2026-09-01**, then `SY26-27`.
+- **Student-facing rendering:** a new **`start-here.html`** presents the model to students in **cumulative framing only — philosophy + rhythm, no BKT/θ jargon** (per the teacher's scope choice). New deliverable.
+
+## 5. Decision ledger (v1 → v2)
+
+| v1 | v2 status |
+|---|---|
+| **A** prep = gate+evidence, NOT points | **SUPERSEDED.** Feeders *are* the grade (correctness-weighted). Completion = accountability layer, not points; not BKT. |
+| **B** retakes via a learning loop + `remediation_assignment` record | **SURVIVES**, powered by the §3 diagnostic engine; the re-check **raises** the grade (never lowers). |
+| **C** grade = BKT per-skill mastery, practice caps < θ | **SUPERSEDED.** BKT is diagnostic only (§3); grade is cumulative+booster (§2). |
+| **D** proctored = single source of truth | **REINTERPRETED.** The PC is the **one-way booster** (§2), not the only certifier. Proctoring integrity still matters: Sprint-1 `evidence_tier` (server-derived from `x-proctor-secret`, L-C) marks which evidence may trigger the booster. |
+| **E** "pre" = computed BKT snapshot | **DROPPED** as a grade mechanic (no θ pre-snapshot). Growth may survive as an optional diagnostic only. |
+| **F** Blooket out of ledger, gates by position | **SURVIVES** unchanged (§4). |
+
+## 6. `remediation_assignment` record (unchanged from v1)
+
+curriculum_render Supabase, service-role-only, additive (same posture as `roster`/`item_ledger`):
 
 ```
 remediation_assignment
-  assignment_id   uuid pk
-  student_id      uuid  → roster.student_id
-  unit            text
-  skill           text            ← the weak AP skill this targets
-  source_attempt  text            ← the proctored attempt that flagged it (item_ledger ref)
-  assigned_refs   jsonb           ← pointers to remediation content (follow-along URL, formula-card id, probe set, curriculum_render practice)
-  status          text            ← proposed | assigned | completed | waived
-  proposed_by     text            ← 'system' (auto) then teacher-approved
-  assigned_at / completed_at  timestamptz
-  unlocks         text            ← the skill-targeted proctored re-check this gates
+  assignment_id  uuid pk · student_id uuid→roster · unit text · skill text
+  source_attempt text (item_ledger ref) · assigned_refs jsonb · status (proposed|assigned|completed|waived)
+  proposed_by text ('system'→teacher-approved) · assigned_at/completed_at tstz · unlocks text (the re-check it gates)
 ```
 
-The retake gate is a query: *re-check for skill X is unlocked iff every `assigned` remediation for (student, X) is `completed`.*
+Retake gate = *re-check for skill X unlocked iff every `assigned` remediation for (student, X) is `completed`.*
 
-## 6. Study-guide reuse map (teacher affirmed "good ideas in it")
+## 7. Open knobs (decide at sign-off)
 
-This design is mostly **assembly of proven study-guide parts**, not new invention:
+1. **Feeder weights & `banked` aggregation.** Relative weight of follow-alongs : cr-quiz : Driller, and the correctness×completion blend. (Lean: correctness-dominant, equal-ish feeder weights, completion as a separate accountability readout; tune on pilot data.)
+2. **`pcContribution` mapping.** How a Progress Check score raises the unit grade — to full unit credit on pass, or proportional? (Lean: proportional raise, capped at 100%, never subtractive.)
+3. **Graduated PC tightening schedule** (U1–3 gentle → U7–9 full pace) — concrete pacing per unit band.
+4. **Diagnostic θ.** Weak-skill flag threshold (≈0.6–0.7 as a *diagnostic*, looser than v1's grade θ since it no longer gates a grade). Pilot-tune.
+5. **Driller feeder shape.** What the Driller exposes per student (attempts/scores/skill) and its integration path (its own backend — likely a pull/webhook like the other feeders).
 
-| Need here | Reuse from study guide |
-|---|---|
-| Per-skill `pKnow` (decision C) | BKT engine — `.v4-logic-block.js`, `lib/bkt.test.js` (`GRADEBOOK_SPEC.md` already mandates reuse) |
-| Cold-probe + skill-targeted re-check item selection | Probe selector + pool — `lib/probe-selector.test.js`, `data/formula-probe-supplement.js`, `pickProbeForFormula` |
-| Remediation content delivery + spacing | v5 dose-ladder daily queue + Review Queue (SM2-lite, 7-day auto-age + "I know it") — the assignment enqueues like a review item |
-| Per-skill FRQ evidence | v6 FRQ decomposition — `data/frq-decompositions.json` (31 skills / 9 FRQs); the **latent-penalty idea** ("helpers don't hurt until you Grade") is the same shape as "practice can't certify; proctored does" |
-| Remediation content targets | `data/ap-stats-cartridge.js` (81 formula cards), `data/formula-procedure-map.js` (TI-84 walkthroughs) |
-| Student motivation ("territory turning green") | Mastery-map constellation → per-skill mastery view; teacher analog = class skill heatmap (Phase 4) |
-| Summer 5-unit gating | v7 unlock-code / `?mode=summer` gating already models a gated summer cohort |
-| Cheat-path discipline | Study-guide "paper mode is a cheat path" rule → here: practice/prep must not be able to *certify* (the cap in §3 enforces this; resist any bypass) |
+## 8. Phase sequencing (post-reconciliation)
 
-## 7. Revised phase sequencing (this design changes the order)
+1. **Tagging workstream** (`GRADEBOOK_TAGGING_SPEC.md`) — now the prerequisite for the **diagnostic engine** (§3) + still needed by the cr-quiz feeder. Same priority (first).
+2. **Phase 2** — curriculum_render quiz feeder (grade feeder #2; sacred-safe).
+3. **Driller feeder** — integrate feeder #3 (`lrsl_driller`).
+4. **Phase 3** — the §2 cumulative+booster grade calc **+** the §3 diagnostic BKT rollup (reuse study-guide BKT/probe/queue for the *diagnostic* side).
+5. **Phase 4** — teacher dashboard (weak-skill triage, remediation approve, heatmap) + **`start-here.html`** student-facing rendering.
+6. §6.4 single-sign-in adoption (wire `roster-client`/`gradebook-client` into the apps) — still deferred until the feeders need it.
 
-`GRADEBOOK_SPEC.md` §8 had Phase 2 (curriculum_render quiz feeder) as "later, hardest." This design **moves it up** — it is the pre-snapshot engine, a retake item source, and the summer-work tracker. Revised order:
+## 9. Study-guide reuse (reframed: powers §3 diagnostics, not the grade)
 
-- **Phase 1** — `item_ledger` + follow-along feeders (Railway `/api/submit-answer`, `/api/ai/grade`/`appeal`) stamped with `rosterClient.studentId()`. + §6.4 single-sign-in adoption on the roadmap.
-- **Phase 2 (promoted, on critical path)** — curriculum_render quiz feeder (new write path; **never** touches sacred `curriculum.js`; every selected option per student per question + item analysis). Powers pre-snapshot, summer tracking, retake items.
-- **Phase 3** — `skill_mastery` BKT rollup (reuse study-guide BKT) + the grade calc of §3 (practice cap / proctored uncap / per-skill θ / growth).
-- **Phase 4** — teacher dashboard: auto-triage weak-skill lists, propose→approve remediation (§5), class skill heatmap, retake-gate management.
+BKT engine (`.v4-logic-block.js`, `lib/bkt.test.js`), probe selector (`lib/probe-selector.test.js`, `data/formula-probe-supplement.js`), v5 dose-ladder / Review-Queue SM2-lite (remediation delivery + spacing), v6 FRQ decomposition (`data/frq-decompositions.json`), formula cards (`data/ap-stats-cartridge.js`), mastery-map constellation (motivational per-skill view) — **all reused for the diagnostic/remediation engine and the student motivational view, never for the grade number.**
 
-## 8. The technical spine / top risk — skill-tagging audit (named workstream)
+## 10. Non-goals / guardrails
 
-Per-skill BKT is **garbage-in/garbage-out without accurate item→AP-skill tags** across four pools: follow-along blanks/FRQs, curriculum_render bank, supplement probes, official PC. State today: follow-alongs anchored (framework-injection done, sessions 96–97); **curriculum_render bank tag quality UNKNOWN**; supplement coverage partial (carry-over (a): 16 zero-signal probes). **A tagging audit is a first-class workstream, not an afterthought** — it gates Phase 3's validity. Must be in the build plan explicitly.
-
-## 9. Open knobs (need a decision before build)
-
-1. **Cold-probe: in or out?** ~1 item/skill from the supplement pool (never PC, never `curriculum.js`), ~10 min day-1, ungraded, low BKT weight — sharper routing vs. 10 minutes. (Recommendation: optional toggle, default off; turn on per unit if routing matters.)
-2. **θ and θ_practice values.** Mastery threshold (≈0.85?) and the practice cap (≈0.75?). Tunable; needs real student data (echoes study-guide carry-over (f): BKT/forgetting constants need pilot data).
-3. **Grade = `mastery` or `max(mastery, growth-implied)`?** The latter is maximally generous and most philosophy-consistent; the former is simpler. (Recommendation: `max(...)`.)
-4. **Retake cadence limits?** "Infinitely repeatable" — any floor on time-between-rechecks or evidence-per-loop beyond "remediation completed"? (Recommendation: the remediation-completed gate *is* the limit; no time floor.)
-
-## 10. Non-goals / guardrails (unchanged from `GRADEBOOK_SPEC.md`)
-
-- **Never** add MCQs to or edit `curriculum_render/data/curriculum.js`. Supplements only.
-- No compliance points; prep is gate+evidence (decision A).
-- Proctored is the only certifier (decision D); practice can never reach θ (the §3 cap is load-bearing — treat any path that lets practice certify as a cheat-path bug).
-- Blooket never enters the ledger (decision F).
-- Reuse study-guide parts; do not re-implement BKT/probes/queues.
+- **Never** add MCQs to or edit `curriculum_render/data/curriculum.js`. Skill-map is external (`GRADEBOOK_TAGGING_SPEC.md` T-2).
+- **The grade students see is the transparent cumulative+booster number (§2).** BKT/θ/probabilities must never *be* the grade or be shown as the grade — that is the v2 cheat-path-discipline rule (the inverse of v1's): keep the smart machinery behind the curtain.
+- The Progress Check can **never lower** a unit grade.
+- Blooket never enters the ledger.
+- Reuse study-guide parts for diagnostics; do not re-implement BKT/probes/queues.
 
 ---
 
-**Next step after sign-off:** turn §3–§5 + §7–§8 into a build plan (frozen contracts + dependency-aware dispatch, same method as Phase 0). Decide the §9 knobs first.
+**Next after sign-off:** retarget `GRADEBOOK_TAGGING_SPEC.md` (diagnostic-engine framing), then build-plan §2/§3/§6/§8 (frozen contracts + dependency-aware dispatch, same method). Decide §7 knobs first.
+
+---
+---
+
+## Appendix — v1 (SUPERSEDED 2026-05-17, kept for provenance)
+
+v1 made the grade = fraction of a unit's AP skills with BKT `pKnow ≥ θ`; practice evidence capped below θ; only a proctored check uncapped it; "pre" was a computed BKT snapshot; grade `max(mastery, growth)`. Superseded because it contradicted the teacher's student-facing promise (summer work banks the grade; PC only raises). The per-skill BKT machinery from v1 is **retained** — relocated to the §3 diagnostic/remediation engine. v1 decisions B and F carried forward intact; D reinterpreted; A/C/E replaced by §2.

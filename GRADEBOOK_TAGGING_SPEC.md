@@ -1,8 +1,9 @@
 # Gradebook — Skill-Tagging Workstream Spec
 
 **Status:** **DRAFT — for sign-off.** Brainstormed & converged 2026-05-17 (session 99). No build.
-**Relationship:** The forced prerequisite for Phases 2–3 of `GRADEBOOK_GRADING_SPEC.md`. Sprint 1's `GRADEBOOK_TAGGING_AUDIT.md` proved per-skill BKT is garbage-in until items carry AP-skill codes; this spec defines how they get tagged. Phase 0 (roster) + Sprint 1 (item_ledger + feeders) are LIVE. Read `GRADEBOOK_GRADING_SPEC.md` (the grade model) and `GRADEBOOK_TAGGING_AUDIT.md` (the gap data) first.
-**Sign-off:** decisions T-0..T-3 below. T-1 is teacher-chosen ("1" = baseline-first). T-2/T-3 adopted from the brainstorm recommendation (uncontested) — flagged so they're a one-word veto at sign-off.
+**⚠ Retargeted by `GRADEBOOK_GRADING_SPEC.md` v2 (hybrid, 2026-05-17):** the skill-map does **not** feed the grade. The grade of record is the cumulative+booster model students were promised (`GRADEBOOK_GRADING_SPEC.md` §2). The skill-map powers the **diagnostic / remediation engine** (§3 there): auto weak-skill detection, the decision-B learning loop, the teacher heatmap. Everything below stands — the deliverable (`data/skill-map.json`) and T-0..T-3 are unchanged — only the *why* moved from "BKT IS the grade" to "BKT/tags diagnose which skill is weak." Wherever this doc says "certifier"/"BKT grade", read "diagnostic engine + the curriculum_render-quiz feeder."
+**Relationship:** prerequisite for the §3 diagnostic engine of `GRADEBOOK_GRADING_SPEC.md` **and** for the Phase 2 curriculum_render-quiz grade feeder. Sprint 1's `GRADEBOOK_TAGGING_AUDIT.md` proved no item carries AP-skill codes (so weak-skill diagnosis is impossible today); this spec defines how they get tagged. Phase 0 (roster) + Sprint 1 (item_ledger + feeders) are LIVE. Read `GRADEBOOK_GRADING_SPEC.md` v2 + `GRADEBOOK_TAGGING_AUDIT.md` first.
+**Sign-off:** decisions T-0..T-3 below. T-1 teacher-chosen ("1" = baseline-first). T-2/T-3 + the §5 knobs adopted from the brainstorm recommendation, **all signed off 2026-05-17** ("I dig your lean" — Codex pipeline; `unresolved`→exclude from the diagnostic rollup; fixed stratified sample). Re-confirm only if the v2 retarget changes your view.
 
 ---
 
