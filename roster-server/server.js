@@ -6,12 +6,16 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import { createLiveDb } from './db.js';
+import { createLiveLedgerDb } from './ledger-db.js';
 import { signToken, verifyToken } from './token.js';
 import { generateUsername } from './username.js';
+import { mountLedger } from './ledger.js';
 
 // ── App factory (accepts injected db for tests) ───────────────────────────────
+// ledgerDb is optional; defaults to createLiveLedgerDb() in production.
+// Tests pass a fake ledgerDb alongside the fake db.
 
-export function createApp(db) {
+export function createApp(db, ledgerDb) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -157,6 +161,13 @@ export function createApp(db) {
     return res.json({ ok: true, studentId });
   });
 
+  // ── Ledger routes (Sprint 1 additive) ────────────────────────────────────────
+  // Mounts POST /ledger/record and GET /ledger/student/:studentId.
+  // ledgerDb must be passed in (tests inject a fake; production passes createLiveLedgerDb()).
+  if (ledgerDb) {
+    mountLedger(app, { db: ledgerDb, verifyToken });
+  }
+
   return app;
 }
 
@@ -165,7 +176,8 @@ export function createApp(db) {
 // Only start listening when run directly (not imported by tests)
 if (process.env.NODE_ENV !== 'test') {
   const db = createLiveDb();
-  const app = createApp(db);
+  const ledgerDb = createLiveLedgerDb();
+  const app = createApp(db, ledgerDb);
   const PORT = process.env.PORT || 8090;
   app.listen(PORT, () => {
     console.log(`roster-server listening on port ${PORT}`);

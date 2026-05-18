@@ -211,3 +211,32 @@ For unit tests (no live Supabase needed — uses injected fake db):
 cd roster-server
 npm test
 ```
+
+---
+
+## Ledger (Sprint 1)
+
+### Migration `0002_item_ledger.sql`
+
+This migration is **additive and safe** in the shared curriculum_render project (`bzqbhtrurzzavhqbgqrs`).
+It creates only the `item_ledger` table — it never alters or touches any existing tables
+(`answers`, `users`, `roster`, etc.).
+
+**Before running it:**
+
+1. In the Supabase SQL Editor, run the sanity check first:
+   ```sql
+   select to_regclass('public.item_ledger');
+   ```
+   The result must be `NULL`. If it is non-NULL, a table of that name already exists — STOP and
+   investigate before proceeding.
+2. Paste the entire contents of `roster-server/migrations/0002_item_ledger.sql` and click **Run**.
+3. Verify in Table Editor that `item_ledger` was created and that no pre-existing table changed.
+
+### `ROSTER_PROCTOR_SECRET` environment variable
+
+`ROSTER_PROCTOR_SECRET` controls proctored-tier evidence writes (decision L-C). You must set it on
+the Railway service (Variables tab) before any `evidence_tier='proctored'` records can be written.
+Practice-tier writes work without it — if the variable is absent or the header does not match,
+all records default to `evidence_tier='practice'`. This variable is **server-side only**; it must
+never appear in any client-side file or be shared with students.

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gradebook Client — Manual Smoke Test</title>
+  <style>
+    body {
+      font-family: monospace;
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f5f5f5;
+      color: #222;
+    }
+    h1  { font-size: 1.2rem; margin-bottom: 4px; }
+    h2  { font-size: 1rem; margin: 24px 0 8px; border-top: 1px solid #ccc; padding-top: 12px; }
+    label { display: block; margin: 6px 0 2px; font-size: 0.85rem; }
+    input { width: 100%; box-sizing: border-box; padding: 6px; font-family: monospace; font-size: 0.85rem; }
+    button {
+      margin-top: 10px;
+      padding: 8px 18px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #3a3a8a;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+    }
+    button:hover  { background: #2a2a6a; }
+    button:active { background: #1a1a4a; }
+    pre {
+      background: #111;
+      color: #aef;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 48px;
+    }
+    .ok    { color: #6f6; }
+    .error { color: #f66; }
+    .note  { font-size: 0.8rem; color: #555; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<h1>gradebook-client.js — Manual Smoke Test</h1>
+<p class="note">
+  Loads <code>roster_config.js</code> + <code>roster-client.js</code> + <code>gradebook-client.js</code>.
+  Sign in first, then fire a ledger record to verify the full chain works end-to-end.
+</p>
+
+<!-- ── Step 1: Sign In ─────────────────────────────────────────────────────── -->
+
+<h2>Step 1 — Sign In (via rosterClient)</h2>
+
+<label for="username">Username</label>
+<input id="username" type="text" placeholder="your_username" />
+
+<label for="password">Password</label>
+<input id="password" type="password" placeholder="••••••••" />
+
+<button id="btn-signin">Sign In</button>
+
+<pre id="signin-output">Waiting…</pre>
+
+<!-- ── Step 2: Fire Record ─────────────────────────────────────────────────── -->
+
+<h2>Step 2 — Fire gradebookClient.record()</h2>
+
+<label for="source">source</label>
+<input id="source" type="text" value="worksheet" />
+
+<label for="itemId">itemId</label>
+<input id="itemId" type="text" value="WS-U4L1-2-Q1" />
+
+<label for="unit">unit (optional)</label>
+<input id="unit" type="text" value="U4" />
+
+<label for="topic">topic (optional)</label>
+<input id="topic" type="text" value="4.1" />
+
+<label for="skill">skill (optional)</label>
+<input id="skill" type="text" value="VAR-3.D" />
+
+<label for="response">response</label>
+<input id="response" type="text" value="probability describes long-run behavior" />
+
+<label for="score">score (optional)</label>
+<input id="score" type="number" value="1" step="0.5" />
+
+<label for="attempt">attempt (optional)</label>
+<input id="attempt" type="number" value="1" />
+
+<button id="btn-record">Fire record()</button>
+
+<pre id="record-output">Waiting…</pre>
+
+<!-- ── Step 3: Identity status ────────────────────────────────────────────── -->
+
+<h2>Step 3 — Current Identity</h2>
+
+<button id="btn-identity">Check rosterClient.current()</button>
+
+<pre id="identity-output">Waiting…</pre>
+
+<button id="btn-signout" style="background:#8a3a3a;">Sign Out</button>
+
+<!-- ── Scripts ─────────────────────────────────────────────────────────────── -->
+
+<script src="roster_config.js"></script>
+<script src="roster-client.js"></script>
+<script src="gradebook-client.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  function display(elId, data, isOk) {
+    var el = document.getElementById(elId);
+    el.textContent = JSON.stringify(data, null, 2);
+    el.className = isOk ? 'ok' : 'error';
+  }
+
+  // Sign In
+  document.getElementById('btn-signin').addEventListener('click', async function () {
+    var username = document.getElementById('username').value.trim();
+    var password = document.getElementById('password').value;
+    display('signin-output', { status: 'signing in…' }, true);
+    var result = await window.rosterClient.signIn(username, password);
+    display('signin-output', result, result.ok);
+  });
+
+  // Fire record
+  document.getElementById('btn-record').addEventListener('click', async function () {
+    display('record-output', { status: 'sending…' }, true);
+
+    var scoreRaw = document.getElementById('score').value;
+    var attemptRaw = document.getElementById('attempt').value;
+
+    var result = await window.gradebookClient.record({
+      source:   document.getElementById('source').value.trim(),
+      itemId:   document.getElementById('itemId').value.trim(),
+      unit:     document.getElementById('unit').value.trim() || undefined,
+      topic:    document.getElementById('topic').value.trim() || undefined,
+      skill:    document.getElementById('skill').value.trim() || undefined,
+      response: document.getElementById('response').value,
+      score:    scoreRaw !== '' ? parseFloat(scoreRaw) : undefined,
+      attempt:  attemptRaw !== '' ? parseInt(attemptRaw, 10) : undefined
+    });
+
+    display('record-output', result, result.ok);
+  });
+
+  // Check identity
+  document.getElementById('btn-identity').addEventListener('click', function () {
+    var current = window.rosterClient.current();
+    var token   = window.rosterClient.token();
+    display('identity-output', { current: current, hasToken: !!token }, !!current);
+  });
+
+  // Sign Out
+  document.getElementById('btn-signout').addEventListener('click', function () {
+    window.rosterClient.signOut();
+    display('identity-output', { signed: 'out' }, false);
+  });
+})();
+</script>
+
+</body>
+</html>
