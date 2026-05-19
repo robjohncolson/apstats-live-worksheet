@@ -1069,9 +1069,8 @@
             <div class="menu-dd-item" id="menu-period-x" onclick="setP('B');closeMenus()">&#10003; Period X &#8212; actual periods TBD</div>
             <!-- Period B/E hidden until periods are assigned: setP('B')/setP('E') still work internally -->
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-year="SUMMER26" onclick="loadYear('SUMMER26');closeMenus()">  Summer 2026 — Units 1–5 Prep</div>
-            <div class="menu-dd-item" data-year="SY26-27" onclick="loadYear('SY26-27');closeMenus()">  Full Year 2026-27</div>
-            <div class="menu-dd-item" data-year="SY25-26" style="opacity:.45" title="Archived — Spring 2026 (AP exam passed 2026-05-07)" onclick="loadYear('SY25-26');closeMenus()">  Spring 2026 (archived)</div>
+            <!-- DN3c / D5: one school-year calendar — year switching removed -->
+            <div class="menu-dd-item disabled" title="One school-year calendar (Sept 2026 → AP Exam). Do work early and watch the calendar fill in ahead.">&#128197; Full Year 2026–27</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="showDialog('&#128202;','You are viewing it right now. What more do you want?','Good Point')">by Icon</div>
             <div class="menu-dd-item disabled">by Name</div>
@@ -1166,7 +1165,7 @@
     <div class="window-content">
         <div class="info-bar geneva">
             <span id="ft">40 Sessions</span>
-            <span id="ib-year" style="cursor:pointer" onclick="cycleYear()">Spring 2026</span>
+            <span id="ib-year">Spring 2026</span><!-- DN3c/D5: static label, year switching removed -->
             <span id="ib-school">Lynn English High School</span>
         </div>
         <div class="window-body">
@@ -1193,6 +1192,10 @@
               #donow-card #donow-msg{font-size:12px}
               #donow-card.donow-done{background:#e6f5e6}
               #donow-card.donow-signin{background:#fff7e0}
+              #donow-card.donow-flash{animation:donowFlash .8s ease-in-out 2}
+              @keyframes donowFlash{0%,100%{box-shadow:2px 2px 0 var(--black)}
+                50%{box-shadow:0 0 0 3px #2b6cb0,2px 2px 0 var(--black)}}
+              @media (prefers-reduced-motion:reduce){#donow-card.donow-flash{animation:none}}
             </style>
             <div id="donow-card" class="donow-signin" style="display:none">
                 <span class="donow-ico">📌</span>
@@ -1226,6 +1229,20 @@
         </div>
         <div class="dialog-btns">
             <button class="s7btn s7btn-default" id="dialog-btn" onclick="closeDialog()">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Do Now speed-bump (DN3c / D1) — soft, never a hard gate ═══ -->
+<div class="dialog-overlay" id="donow-bump-overlay" style="display:none" onclick="if(event.target===this)closeDoNowBump()">
+    <div class="dialog-box chicago" onclick="event.stopPropagation()" style="max-width:360px">
+        <div class="dialog-body">
+            <div class="dialog-icon">&#128073;</div>
+            <div class="dialog-msg geneva">You have unfinished earlier work. Finishing that first is recommended — but units stay open, so it&#39;s your call.</div>
+        </div>
+        <div class="dialog-btns">
+            <button class="s7btn" id="donow-bump-continue">Continue anyway</button>
+            <button class="s7btn s7btn-default" id="donow-bump-goto">Show my Do Now</button>
         </div>
     </div>
 </div>
@@ -3518,6 +3535,50 @@ function paintDonowCells() {
   } catch (_) { /* coloring must never break the Desk */ }
 }
 
+// DN3c / D1 — soft speed-bump. Opening a lesson that ISN'T your Do Now while
+// you have earlier unfinished work shows a gentle, non-blocking nudge. Units
+// stay open (never a hard gate); shown at most once per session.
+var _bumpAcked = false;
+
+function closeDoNowBump() {
+  var ov = document.getElementById('donow-bump-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+function maybeBumpThenOpen(inf, ds) {
+  function open() { try { showResourcePanel(inf, ds); } catch (_) {} }
+  try {
+    var topic = inf && inf.t;
+    var gap = _donowData && _donowData.earlierGapFlag === true;
+    var nt = _donowData && _donowData.nextTask;
+    var isDoNow = nt && topic && donowLessonCovers(nt.lesson, topic);
+    var ov = document.getElementById('donow-bump-overlay');
+
+    if (!gap || _bumpAcked || isDoNow || !ov) { open(); return; }
+
+    var contBtn = document.getElementById('donow-bump-continue');
+    var gotoBtn = document.getElementById('donow-bump-goto');
+    if (contBtn) contBtn.onclick = function () {
+      _bumpAcked = true;            // gentle: don't nag again this session
+      closeDoNowBump();
+      open();
+    };
+    if (gotoBtn) gotoBtn.onclick = function () {
+      _bumpAcked = true;            // seen + acted on → don't re-nag this session (D1)
+      closeDoNowBump();
+      var card = document.getElementById('donow-card');
+      if (card) {
+        try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) { card.scrollIntoView(); }
+        card.classList.add('donow-flash');
+        setTimeout(function () { card.classList.remove('donow-flash'); }, 1600);
+      }
+    };
+    ov.style.display = 'block';
+  } catch (_) {
+    open(); // the speed-bump must never block opening a lesson
+  }
+}
+
 async function renderDoNow() {
   var card = document.getElementById('donow-card');
   var msg = document.getElementById('donow-msg');
@@ -4025,7 +4086,10 @@ const SCHEDULE_DEFS = {
 let S = [];
 // Date-driven default: summer prep now, auto-roll to SY26-27 once that school year begins.
 function computeDefaultYear(){
-  return new Date() < new Date(2026,8,1) ? "SUMMER26" : "SY26-27";
+  // DN3c / decision D5: ONE school-year calendar. The summer-prep value is
+  // preserved by DN3b ahead-coloring + the Do Now earliest-gap walk, not a
+  // separate schedule. SUMMER26/SY25-26 remain in SCHEDULE_DEFS as dead code.
+  return "SY26-27";
 }
 let cYear = computeDefaultYear();
 
@@ -4101,10 +4165,9 @@ function loadYear(yearKey){
 }
 
 function cycleYear(){
-  const keys=Object.keys(SCHEDULE_DEFS);
-  const idx=(keys.indexOf(cYear)+1)%keys.length;
-  loadYear(keys[idx]);
-  if(typeof MacSFX!=='undefined') MacSFX.play('click',0.3);
+  // DN3c / decision D5: ONE school-year calendar — year switching is removed.
+  // Kept as an inert no-op so any residual caller cannot resurrect SUMMER26/
+  // SY25-26 (Codex DN3c MAJOR: this was the live D5 escape hatch).
 }
 
 /* ═══ WINDOW DRAG & MINIMIZE ═══ */
@@ -8168,7 +8231,7 @@ function rCal(){
               }
             }
             c.onmouseenter=(ev)=>sTip(ev,dt,inf,ds);c.onmouseleave=hTip;c.onmousemove=mTip;
-            if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){c.style.cursor='pointer';c.onclick=()=>{hTip();showResourcePanel(inf,ds);};}
+            if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){c.style.cursor='pointer';c.onclick=()=>{hTip();maybeBumpThenOpen(inf,ds);};}
             r.appendChild(c);
         }g.appendChild(r);
     }
@@ -8181,12 +8244,11 @@ function rCD(){
     document.querySelector("#cd-days .num").textContent=dte;
     document.querySelector("#cd-school .num").textContent=sd;
     document.getElementById("ft").textContent=sd+" School Days Remaining";
-    // Keep the 4th box (exam/target date) in sync with the loaded year, and
-    // relabel for the dateless summer-prep view (no exam in summer).
-    const isSummer=(typeof cYear!=='undefined'&&cYear==='SUMMER26');
+    // DN3c / D5: one school-year calendar — always the exam countdown
+    // (no summer "School Starts" special-casing).
     const exN=document.querySelector("#cd-exam .num"); if(exN) exN.textContent=MN[EX_DT.getMonth()]+" "+EX_DT.getDate();
-    const exL=document.querySelector("#cd-exam .lbl"); if(exL) exL.textContent=isSummer?'School Starts':'Exam Day';
-    const dL=document.querySelector("#cd-days .lbl"); if(dL) dL.textContent=isSummer?'Days to School':'Days to Exam';
+    const exL=document.querySelector("#cd-exam .lbl"); if(exL) exL.textContent='Exam Day';
+    const dL=document.querySelector("#cd-days .lbl"); if(dL) dL.textContent='Days to Exam';
 }
 function rProg(){
     const t=tdy(),tk=document.getElementById("pb"),lb=document.getElementById("pl");
@@ -8253,10 +8315,9 @@ function hTip(){tip.style.display="none";}
 (function(){
   var ps=new URLSearchParams(window.location.search);
   var pp=(ps.get('period')||'').toUpperCase();
-  var py=ps.get('year')||localStorage.getItem('ap-roadmap-year')||computeDefaultYear();
-  // Don't auto-land returning users on the archived Spring 2026 year (only an
-  // explicit ?year=SY25-26 reaches it now).
-  if(py==='SY25-26' && !ps.get('year')) py=computeDefaultYear();
+  // DN3c / D5: ONE calendar — ignore ?year= and the persisted ap-roadmap-year
+  // override; always the real school year. Legacy defs kept as dead code.
+  var py=computeDefaultYear();
   if(pp==='E') cP='E';
   if(SCHEDULE_DEFS[py]) cYear=py;
   loadYear(cYear);

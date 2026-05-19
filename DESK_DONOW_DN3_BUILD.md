@@ -1,9 +1,9 @@
 # DN3 Build — Desk: Do Now card + completion calendar (STAGED)
 
-**Frozen contract** (planner, 2026-05-18, session 100). DN3a + DN3b:
+**Frozen contract** (planner, 2026-05-18, session 100). DN3a + DN3b + DN3c:
 IMPLEMENTED + Codex-reviewed (DN3a: 1 MAJOR/3 MINOR/1 regression; DN3b: 1
-BLOCKER/1 MAJOR — all fixed; see §Codex review). DN3c: pending. The Desk
-rework half of
+BLOCKER/1 MAJOR; DN3c: 2 MAJOR/1 MINOR — all fixed; see §Codex review).
+DN3 COMPLETE. The Desk rework half of
 `DESK_DONOW_SPEC.md` §4.4 (decisions D1/D4/D5/D6/D7). Identity + feeders are
 LIVE: DN2c (Desk roster sign-in, `820c79f`), DN2a/b (worksheet feeders),
 DN2d (cr quiz feeder + cr roster, cr `1ccd8a2`). `/donow` is LIVE & prod-
@@ -79,6 +79,29 @@ known-unrelated `study-guide.test.js` fail stays) → tight single-purpose
 commit (forensic HEAD; revert the `data/skill-map.js` GENERATED-header
 false-positive if the audit script touched it) → push `master`. Desk is **LF**
 — keep edits EOL-clean.
+
+## Codex review (focused, read-only, 2026-05-18) — DN3c
+
+CLEAN: scope (DN3c-only, no DN3a/b/AI-tutor regressions); legacy
+SUMMER26/SY25-26 kept as dead code; SY26-27 load path intact
+(loadYear→generateSchedule→rCD/rCal/rProg, cYear/EX_DT updated); no stale
+override READS; D1 core logic (gates earlierGapFlag/_bumpAcked/exact-Do-Now/
+overlay, combined-lesson via donowLessonCovers, null-safe, catch→open);
+reduced-motion; security (no secrets, _bumpAcked in-memory only).
+
+- **MAJOR (FIXED) — D5 not actually enforced: a second live switcher.** I
+  removed the View-menu items but missed the `#ib-year` info-bar label
+  (`onclick="cycleYear()"`), and `cycleYear()` rotated through ALL
+  SCHEDULE_DEFS → a student could still land on SUMMER26/SY25-26. Fix:
+  `#ib-year` made a static non-interactive label; `cycleYear()` gutted to an
+  inert no-op (kept so any residual caller can't resurrect a legacy year).
+- **MAJOR (FIXED) — speed-bump not once-per-session on the goto path.** Only
+  "Continue" set `_bumpAcked`; "Show my Do Now" left it false → the same
+  far-ahead click could re-nag (exactly D1's anti-nag intent). Fix: the goto
+  handler now also sets `_bumpAcked = true`.
+- **MINOR (FIXED) — tests missed both.** Added: `#ib-year` not interactive +
+  `cycleYear()` inert (source + runtime), and a goto-path once-per-session
+  runtime test.
 
 ## Codex review (focused, read-only, 2026-05-18) — DN3b
 
