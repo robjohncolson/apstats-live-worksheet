@@ -1172,6 +1172,25 @@
                 <button class="s7btn" id="btn-e" onclick="setP('E')" style="display:none">Period E</button>
             </div>
             <div class="legend geneva" id="legend-bar"></div>
+            <!-- ═══ Do Now card (DN3a) — server-mediated via /donow; never touches Supabase ═══ -->
+            <style>
+              #donow-card{margin:8px 0;padding:10px 12px;border:2px solid var(--black);
+                background:var(--white);box-shadow:2px 2px 0 var(--black);display:flex;
+                align-items:center;gap:10px}
+              #donow-card .donow-ico{font-size:20px;line-height:1;flex:0 0 auto}
+              #donow-card .donow-body{flex:1 1 auto;min-width:0}
+              #donow-card .donow-ttl{font-size:11px;margin-bottom:2px}
+              #donow-card #donow-msg{font-size:12px}
+              #donow-card.donow-done{background:#e6f5e6}
+              #donow-card.donow-signin{background:#fff7e0}
+            </style>
+            <div id="donow-card" class="donow-signin" style="display:none">
+                <span class="donow-ico">📌</span>
+                <div class="donow-body">
+                    <div class="donow-ttl chicago">Do Now</div>
+                    <div id="donow-msg" class="geneva">…</div>
+                </div>
+            </div>
             <div class="cal-outer geneva">
                 <div class="hdr-row">
                     <span>Week of</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
@@ -3270,6 +3289,7 @@ async function loadRegistry() {
   await loadSupabaseOverlay(cP);
   rCal();
   rProg();
+  renderDoNow();
 }
 
 async function loadSupabaseOverlay(period){
@@ -3419,6 +3439,7 @@ async function submitSignIn() {
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     registerStudent(legacyKey);
     updateStudentMenu();
+    if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded so DN2c stays decoupled
     closeSignInModal();
     showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + '.','OK');
   } finally {
@@ -3433,6 +3454,79 @@ function signOutStudent() {
   updateStudentMenu();
   location.reload();
 }
+
+// ═══ Do Now card (DN3a) ═══
+// Server-mediated via roster-server /donow (D7): the Desk renders + polls only,
+// NEVER touches Supabase. Self-contained; never throws/blocks the Desk.
+async function renderDoNow() {
+  var card = document.getElementById('donow-card');
+  var msg = document.getElementById('donow-msg');
+  if (!card || !msg) return;
+
+  function show(text, mode) {
+    msg.textContent = text;
+    card.className = 'donow-' + (mode || 'signin');
+    card.style.display = 'flex';
+  }
+
+  try {
+    var token = null;
+    try {
+      if (window.rosterClient && typeof window.rosterClient.token === 'function') {
+        token = window.rosterClient.token();
+      }
+    } catch (_) { token = null; }
+
+    if (!token) {
+      show('Sign in (Student ▸ Gradebook) so your work counts and your Do Now appears here.', 'signin');
+      return;
+    }
+
+    var baseUrl = window.ROSTER_SERVICE_URL || null;
+    if (!baseUrl) { show('Do Now is unavailable right now — try again on the school network.', 'signin'); return; }
+
+    var data;
+    try {
+      var res = await fetch(baseUrl + '/donow', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      data = await res.json();
+    } catch (_) {
+      show('Could not load your Do Now right now. It will refresh automatically.', 'signin');
+      return;
+    }
+
+    if (!data || !data.ok) {
+      show('Could not load your Do Now right now. It will refresh automatically.', 'signin');
+      return;
+    }
+
+    var nt = data.nextTask;
+    if (!nt) {
+      show('All caught up — every assigned item is done. 🎉', 'done');
+      return;
+    }
+    // Malformed/partial nextTask (no unit) → quiet fallback, never "undefined".
+    if (!nt.unit) {
+      show('Could not load your Do Now right now. It will refresh automatically.', 'signin');
+      return;
+    }
+
+    var prog = (nt.progress && typeof nt.progress.done === 'number' && typeof nt.progress.total === 'number')
+      ? (' (' + nt.progress.done + '/' + nt.progress.total + ' done)')
+      : '';
+    var where = nt.lesson ? (nt.unit + ' ' + nt.lesson) : nt.unit;
+    var act = nt.activity || 'work';
+    show('Do Now: ' + where + ' — ' + act + prog + '.', 'todo');
+  } catch (_) {
+    // Absolute last-resort guard — the Desk must never break because of Do Now.
+  }
+}
+// Light poll: refresh the Do Now card when the tab regains focus (no interval —
+// avoids hammering roster-server). Guarded inside renderDoNow().
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) renderDoNow();
+});
 
 function mergeSupabase(schedRows,urlsRows,period){
   if(!REGISTRY)REGISTRY={lessons:{}};
