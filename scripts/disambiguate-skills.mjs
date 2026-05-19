@@ -60,9 +60,10 @@
  * }
  */
 
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -227,6 +228,20 @@ export function buildItemTextMap(root, unit) {
   return combined;
 }
 
+/**
+ * Build the item-text map for ALL units (1-9) — the full-run text source.
+ * Worksheet texts are per-unit; curriculum.js + frq are global.
+ */
+export function buildAllItemTextMap(root) {
+  const combined = new Map();
+  for (let u = 1; u <= 9; u++) {
+    loadWorksheetTexts(root, u).forEach((text, id) => combined.set(id, text));
+  }
+  loadCurriculumTexts(root).forEach((text, id) => combined.set(id, text));
+  loadFrqTexts(root).forEach((text, id) => combined.set(id, text));
+  return combined;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Dual-pass disambiguation engine
 // ─────────────────────────────────────────────────────────────────────────────
@@ -291,18 +306,114 @@ export async function disambiguateBatch(items, classifier) {
       );
     }
 
-    if (pass1.skill === pass2.skill) {
-      // Agreement → resolve
-      const confidence = (pass1.confidence + pass2.confidence) / 2;
-      resolved[id] = {
+    const decision = decideAgreement(id, entry, itemText, pass1, pass2);
+    if (decision.resolved) {
+      resolved[id] = decision.resolved;
+    } else {
+      reviewQueue.push(decision.queued);
+    }
+  }
+
+  return { resolved, reviewQueue };
+}
+
+/**
+ * Shared dual-pass decision (single source of truth for agree/disagree).
+ * Pure: assumes pass1/pass2 are already in-candidates. Returns either
+ * { resolved: <FC1 entry> } or { queued: <review-queue entry> }.
+ * Used by both disambiguateBatch (live classifier) and disambiguateAll
+ * (precomputed Codex passes) so the resolution logic never drifts.
+ */
+export function decideAgreement(id, entry, itemText, pass1, pass2) {
+  const { candidates, topic } = entry;
+  if (pass1.skill === pass2.skill) {
+    const confidence = (pass1.confidence + pass2.confidence) / 2;
+    return {
+      resolved: {
         skill: pass1.skill,
         candidates,
         confidence: Math.round(confidence * 100) / 100,
         provenance: 'ai-constrained',
         topic: topic || null,
+      },
+    };
+  }
+  return {
+    queued: {
+      id,
+      topic: topic || null,
+      candidates,
+      itemText,
+      pass1,
+      pass2,
+      reason: 'dual-pass-disagreement',
+    },
+  };
+}
+
+/**
+ * Full-run replay path: resolve every item from PRECOMPUTED dual passes
+ * (the batched Codex classifier already ran both passes). Mirrors
+ * disambiguateBatch's pre-checks (no-text/appeal → queue;
+ * single-candidate → resolve conf 1.0) then defers the agree/disagree
+ * call to the SAME decideAgreement().
+ *
+ * Unlike disambiguateBatch, an out-of-candidates pick here ROUTES TO THE
+ * QUEUE rather than throwing — a 2,593-item run must not abort on one
+ * stray model pick (it just becomes a T3 review item).
+ *
+ * @param {Array<{id, entry, itemText}>} items
+ * @param {Map<string,{skill,confidence}>} pass1Map
+ * @param {Map<string,{skill,confidence}>} pass2Map
+ */
+export function disambiguateAll(items, pass1Map, pass2Map) {
+  const resolved = {};
+  const reviewQueue = [];
+
+  for (const { id, entry, itemText } of items) {
+    const { candidates, topic } = entry;
+
+    if (!itemText || id.includes('appeal-text')) {
+      reviewQueue.push({
+        id,
+        topic: topic || null,
+        candidates,
+        itemText: itemText || null,
+        pass1: null,
+        pass2: null,
+        reason: 'no-item-text',
+      });
+      continue;
+    }
+
+    if (candidates.length === 1) {
+      resolved[id] = {
+        skill: candidates[0],
+        candidates,
+        confidence: 1.0,
+        provenance: 'ai-constrained',
+        topic: topic || null,
       };
-    } else {
-      // Disagreement → teacher review queue
+      continue;
+    }
+
+    const pass1 = pass1Map.get(id);
+    const pass2 = pass2Map.get(id);
+
+    if (!pass1 || !pass2) {
+      reviewQueue.push({
+        id,
+        topic: topic || null,
+        candidates,
+        itemText,
+        pass1: pass1 || null,
+        pass2: pass2 || null,
+        reason: 'classifier-missing',
+      });
+      continue;
+    }
+
+    if (!candidates.includes(pass1.skill) || !candidates.includes(pass2.skill)) {
       reviewQueue.push({
         id,
         topic: topic || null,
@@ -310,12 +421,95 @@ export async function disambiguateBatch(items, classifier) {
         itemText,
         pass1,
         pass2,
-        reason: 'dual-pass-disagreement',
+        reason: 'out-of-candidates',
       });
+      continue;
+    }
+
+    const decision = decideAgreement(id, entry, itemText, pass1, pass2);
+    if (decision.resolved) {
+      resolved[id] = decision.resolved;
+    } else {
+      reviewQueue.push(decision.queued);
     }
   }
 
   return { resolved, reviewQueue };
+}
+
+/**
+ * Render the human-readable Sprint T3 teacher-verification surface from the
+ * machine review queue. Certifier pool (curriculum.js PC/lesson — the
+ * proctored grade certifier, decision T-3) is called out FIRST per the
+ * spec §2/§3 priority order. This run only PRODUCES this; Sprint T3 acts on it.
+ */
+export function buildT3QueueDoc(reviewQueue, resolvedCount) {
+  const isCertifier = (id) => /^U\d+-(L\d+-Q|PC-)/.test(id);
+  const unitOf = (id) => {
+    const m = String(id).match(/U(\d+)/i) || String(id).match(/u(\d+)-/);
+    return m ? `U${m[1]}` : 'U?';
+  };
+  const cert = reviewQueue.filter(q => isCertifier(q.id));
+  const prac = reviewQueue.filter(q => !isCertifier(q.id));
+
+  const tally = (rows) => {
+    const t = {};
+    for (const q of rows) {
+      const u = unitOf(q.id);
+      t[u] = t[u] || {};
+      t[u][q.reason] = (t[u][q.reason] || 0) + 1;
+    }
+    return t;
+  };
+  const reasons = [...new Set(reviewQueue.map(q => q.reason))].sort();
+  const table = (t) => {
+    const units = Object.keys(t).sort();
+    const lines = [`| Unit | ${reasons.join(' | ')} | total |`,
+      `|------|${reasons.map(() => '----:').join('|')}|------:|`];
+    for (const u of units) {
+      const cells = reasons.map(r => t[u][r] || 0);
+      lines.push(`| ${u} | ${cells.join(' | ')} | ${cells.reduce((a, b) => a + b, 0)} |`);
+    }
+    return lines.join('\n');
+  };
+
+  const out = [];
+  out.push('# Gradebook Tagging — Sprint T3 Teacher-Verification Queue');
+  out.push('');
+  out.push(`<!-- GENERATED: ${new Date().toISOString()} by scripts/disambiguate-skills.mjs --all -->`);
+  out.push('');
+  out.push('Produced by the controlled full T2 run. **Sprint T3 (the next tagging ');
+  out.push('sprint) acts on this — this run does NOT block on it.** Auto-resolved ');
+  out.push(`(\`ai-constrained\`, dual-pass agreement): **${resolvedCount}**. Needs human `);
+  out.push(`review below: **${reviewQueue.length}**.`);
+  out.push('');
+  out.push('Per spec §6: `unresolved` / un-verified tags **never certify** — they are ');
+  out.push('excluded from the certifying rollup until a teacher verifies them here.');
+  out.push('');
+  out.push(`## 1. CERTIFIER pool first (curriculum.js PC/lesson) — ${cert.length} items`);
+  out.push('');
+  out.push('These gate Phase-3 READY (decision T-3). Highest priority.');
+  out.push('');
+  out.push(cert.length ? table(tally(cert)) : '_(none — certifier fully auto-resolved)_');
+  out.push('');
+  out.push(`## 2. Practice pool (worksheets / FRQ / probes) — ${prac.length} items`);
+  out.push('');
+  out.push('Capped below mastery anyway; lighter review (spec §T-3).');
+  out.push('');
+  out.push(prac.length ? table(tally(prac)) : '_(none)_');
+  out.push('');
+  out.push('## 3. How to act on this queue (Sprint T3)');
+  out.push('');
+  out.push('- Source of truth = `data/skill-map.review-queue.json` (full per-item ');
+  out.push('  `pass1`/`pass2`/`itemText`/`candidates`).');
+  out.push('- For each certifier item: pick the correct skill from `candidates`, add it ');
+  out.push('  to `data/skill-map.disambiguated.json` with `provenance:"teacher"`, ');
+  out.push('  re-run `node scripts/build-skill-map.mjs`, re-run the audit.');
+  out.push('- `dual-pass-disagreement` = the two Codex passes split; `no-item-text` = ');
+  out.push('  no extractable prompt (e.g. appeal boxes); `out-of-candidates` = model ');
+  out.push('  picked outside the framework set (review the framework topic map).');
+  out.push('');
+  return out.join('\n');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -576,6 +770,274 @@ export function builtInClassifier(itemText, candidates) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Batched Codex classifier (the real full-run pipeline, signed-off §5 #1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Sanitize to ASCII (carry-forward gotcha: non-ASCII in Codex prompts can
+ * crash on cp1252 0x97). Maps common math/typographic unicode to ASCII,
+ * strips the rest.
+ */
+export function asciiSanitize(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/[‘’‚‛]/g, "'")
+    .replace(/[“”„‟]/g, '"')
+    .replace(/[–—−]/g, '-')
+    .replace(/[…]/g, '...')
+    .replace(/[×]/g, 'x')
+    .replace(/[÷]/g, '/')
+    .replace(/[≠]/g, '!=')
+    .replace(/[≤]/g, '<=')
+    .replace(/[≥]/g, '>=')
+    .replace(/[±]/g, '+/-')
+    .replace(/[²]/g, '^2')
+    .replace(/[³]/g, '^3')
+    .replace(/[√]/g, 'sqrt')
+    .replace(/[μ]/g, 'mu')
+    .replace(/[σ]/g, 'sigma')
+    .replace(/[ρ]/g, 'rho')
+    .replace(/[α]/g, 'alpha')
+    .replace(/[β]/g, 'beta')
+    .replace(/[χ]/g, 'chi')
+    .replace(/[ ]/g, ' ')
+    .replace(/[^\x20-\x7E\n]/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+
+const CODEX_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['classifications'],
+  properties: {
+    classifications: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'skill', 'confidence'],
+        properties: {
+          id: { type: 'string' },
+          skill: { type: 'string' },
+          confidence: { type: 'number' },
+        },
+      },
+    },
+  },
+};
+
+/** Build one ASCII batch-classification prompt. */
+export function buildBatchPrompt(batch) {
+  const seen = new Set();
+  let descBlock = '';
+  for (const it of batch) {
+    for (const c of it.candidates) {
+      if (!seen.has(c)) {
+        seen.add(c);
+        descBlock += `  ${c}: ${SKILL_DESCRIPTIONS[c] || c}\n`;
+      }
+    }
+  }
+  let body = '';
+  for (const it of batch) {
+    body +=
+      `[${it.id}] candidates=${JSON.stringify(it.candidates)} topic=${it.topic || 'n/a'}\n` +
+      `  text: ${asciiSanitize(it.itemText).slice(0, 300)}\n`;
+  }
+  return (
+    'You are an AP Statistics curriculum expert. For EACH assessment item below, ' +
+    'pick exactly ONE AP skill code that best describes what a student must DO to ' +
+    'answer it. You MUST pick from that item\'s own candidate list ONLY -- never ' +
+    'use a code outside an item\'s candidates.\n\n' +
+    'AP skill code meanings:\n' +
+    descBlock +
+    '\nGuidance: 2.A=describe/read data shown; 2.B=construct a representation; ' +
+    '2.C=calculate a value; 2.D=compare distributions/positions; 3.A=compute a ' +
+    'probability/proportion; 3.B=find a distribution parameter; 3.C=describe a ' +
+    'probability distribution; 4.A=estimate/predict from a model; 4.B=interpret a ' +
+    'result/assess a claim; 4.C=verify inference conditions; 4.E=justify a claim ' +
+    'from an inference decision.\n\n' +
+    `ITEMS (${batch.length}):\n` +
+    body +
+    `\nReturn JSON {"classifications":[{"id","skill","confidence"}]} covering ALL ` +
+    `${batch.length} items. skill MUST be one of that item's candidates; ` +
+    'confidence is 0.0-1.0.'
+  );
+}
+
+/**
+ * Resolve how to spawn codex WITHOUT a shell. Going through cmd.exe
+ * (`shell:true`) on Windows mangles a large stdin prompt and orphans the
+ * real codex grandchild — proven failure at batch scale. The codex `.cmd`
+ * shim is just `node <pkg>/bin/codex.js %*`; spawning that codex.js with
+ * the current node binary gives a clean direct stdin pipe and correct
+ * child lifecycle. Mirrors the cross-agent runner's Windows resolver.
+ */
+function resolveCodexSpawn() {
+  if (process.env.CODEX_JS && existsSync(process.env.CODEX_JS)) {
+    return { cmd: process.execPath, base: [process.env.CODEX_JS], shell: false };
+  }
+  const pathSep = process.platform === 'win32' ? ';' : ':';
+  const exeNames = process.platform === 'win32'
+    ? ['codex.cmd', 'codex.exe', 'codex']
+    : ['codex'];
+  for (const dir of (process.env.PATH || '').split(pathSep)) {
+    if (!dir) continue;
+    for (const name of exeNames) {
+      const full = resolve(dir, name);
+      if (!existsSync(full)) continue;
+      const js = resolve(dir, 'node_modules/@openai/codex/bin/codex.js');
+      if (existsSync(js)) {
+        return { cmd: process.execPath, base: [js], shell: false };
+      }
+      // Found the launcher but not the JS entry: use it directly.
+      return { cmd: full, base: [], shell: name.endsWith('.cmd') };
+    }
+  }
+  // Last resort: PATH lookup via shell (old behavior).
+  return { cmd: 'codex', base: [], shell: process.platform === 'win32' };
+}
+
+const CODEX_SPAWN = resolveCodexSpawn();
+
+/** Spawn one `codex exec` batch; resolve to parsed classifications array. */
+function runCodexBatch(prompt, { root, schemaPath, outFile, timeoutMs }) {
+  return new Promise((resolvePromise) => {
+    const args = [
+      ...CODEX_SPAWN.base,
+      'exec',
+      '-s', 'read-only',
+      '--skip-git-repo-check',
+      '--ephemeral',
+      '--output-schema', schemaPath,
+      '-o', outFile,
+      '-',
+    ];
+    const errFile = outFile.replace(/\.json$/, '.err.txt');
+    let stderr = '';
+    const child = spawn(CODEX_SPAWN.cmd, args, {
+      cwd: root,
+      shell: CODEX_SPAWN.shell,
+      stdio: ['pipe', 'ignore', 'pipe'],
+    });
+    let done = false;
+    const finish = (val) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (val === null) {
+        try { writeFileSync(errFile, stderr.slice(-2000), 'utf8'); } catch { /* ignore */ }
+      }
+      resolvePromise(val);
+    };
+    const timer = setTimeout(() => {
+      try { child.kill('SIGKILL'); } catch { /* ignore */ }
+      finish(null);
+    }, timeoutMs);
+    if (child.stderr) child.stderr.on('data', d => { stderr += d.toString(); });
+    child.on('error', (e) => { stderr += `\nspawn error: ${e.message}`; finish(null); });
+    child.on('close', () => {
+      if (!existsSync(outFile)) return finish(null);
+      try {
+        const raw = readFileSync(outFile, 'utf8').trim();
+        const jsonStart = raw.indexOf('{');
+        const parsed = JSON.parse(jsonStart >= 0 ? raw.slice(jsonStart) : raw);
+        finish(Array.isArray(parsed.classifications) ? parsed.classifications : null);
+      } catch {
+        finish(null);
+      }
+    });
+    child.stdin.on('error', () => { /* ignore EPIPE if codex exits early */ });
+    child.stdin.write(prompt);
+    child.stdin.end();
+  });
+}
+
+/**
+ * Batched Codex classifier. Runs ONE independent pass over all items.
+ * Resumable: each batch's parsed result is cached at
+ * <tmpDir>/pass<label>-batch<NN>.json and reused on re-run.
+ *
+ * @returns {Promise<Map<string,{skill,confidence}>>}
+ */
+export async function codexBatchClassify(items, opts) {
+  const {
+    root,
+    passLabel,
+    tmpDir,
+    batchSize = 40,
+    concurrency = 5,
+    timeoutMs = 600000,
+    log = () => {},
+  } = opts;
+
+  mkdirSync(tmpDir, { recursive: true });
+  const schemaPath = resolve(tmpDir, 'codex-schema.json');
+  writeFileSync(schemaPath, JSON.stringify(CODEX_SCHEMA), 'utf8');
+
+  const batches = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    batches.push(items.slice(i, i + batchSize));
+  }
+  log(`  pass ${passLabel}: ${items.length} items in ${batches.length} batches (concurrency ${concurrency})`);
+
+  const result = new Map();
+  let nextBatch = 0;
+  let completed = 0;
+
+  async function worker() {
+    while (true) {
+      const idx = nextBatch++;
+      if (idx >= batches.length) return;
+      const batch = batches[idx];
+      const tag = String(idx).padStart(3, '0');
+      // Content-addressed cache: a short hash of this batch's item ids so a
+      // different batch-size / item-set NEVER reuses a stale foreign cache
+      // file (a smoke run's batch000 must not be replayed for the full run).
+      const sig = batch.map(b => b.id).join(',');
+      let h = 5381;
+      for (let k = 0; k < sig.length; k++) h = ((h * 33) ^ sig.charCodeAt(k)) >>> 0;
+      const cacheFile = resolve(tmpDir, `pass${passLabel}-b${tag}-${h.toString(36)}.json`);
+      let classifications = null;
+
+      if (existsSync(cacheFile)) {
+        try {
+          classifications = JSON.parse(readFileSync(cacheFile, 'utf8'));
+        } catch {
+          classifications = null;
+        }
+      }
+      if (!Array.isArray(classifications)) {
+        const prompt = buildBatchPrompt(batch);
+        const outFile = resolve(tmpDir, `pass${passLabel}-out${tag}.json`);
+        classifications = await runCodexBatch(prompt, { root, schemaPath, outFile, timeoutMs });
+        if (Array.isArray(classifications)) {
+          writeFileSync(cacheFile, JSON.stringify(classifications), 'utf8');
+        }
+      }
+      if (Array.isArray(classifications)) {
+        for (const c of classifications) {
+          if (c && typeof c.id === 'string' && typeof c.skill === 'string') {
+            result.set(c.id, {
+              skill: c.skill,
+              confidence: typeof c.confidence === 'number' ? c.confidence : 0.5,
+            });
+          }
+        }
+      }
+      completed++;
+      log(`  pass ${passLabel}: batch ${completed}/${batches.length} done (${result.size} classified)`);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, batches.length) }, () => worker())
+  );
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CLI entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -585,9 +1047,10 @@ async function main() {
   const isPilot = args.includes('--pilot');
   const isAll = args.includes('--all');
 
-  if (!unitIdx === -1 && !isAll) {
+  if (unitIdx === -1 && !isAll) {
     console.error('Usage: node scripts/disambiguate-skills.mjs --unit <N> --pilot');
-    console.error('       node scripts/disambiguate-skills.mjs --all  (full run, future)');
+    console.error('       node scripts/disambiguate-skills.mjs --all   (full controlled run)');
+    console.error('       [--batch-size N] [--concurrency N] [--limit N] [--tmp-dir DIR]');
     process.exit(1);
   }
 
@@ -614,11 +1077,20 @@ async function main() {
     });
   }
 
-  console.log(`\nDisambiguating ${unresolvedEntries.length} unresolved items (unit=${unit || 'all'}, pilot=${isPilot})...`);
+  // Optional --limit N (smoke a subset of the full run, deterministic by key order)
+  const limitIdx = args.indexOf('--limit');
+  if (isAll && limitIdx !== -1) {
+    const n = parseInt(args[limitIdx + 1], 10);
+    if (Number.isFinite(n) && n > 0) unresolvedEntries = unresolvedEntries.slice(0, n);
+  }
+
+  console.log(`\nDisambiguating ${unresolvedEntries.length} unresolved items (unit=${unit || 'all'}, pilot=${isPilot}, all=${isAll})...`);
 
   // Build item text map
   console.log('Building item text map...');
-  const textMap = buildItemTextMap(ROOT, unit !== null ? unit : null);
+  const textMap = isAll
+    ? buildAllItemTextMap(ROOT)
+    : buildItemTextMap(ROOT, unit !== null ? unit : null);
   console.log(`  Text map loaded: ${textMap.size} entries`);
 
   // Prepare items for disambiguation
@@ -632,34 +1104,78 @@ async function main() {
   const noText = items.filter(i => !i.itemText).length;
   console.log(`  Items with text: ${withText}, without text: ${noText}`);
 
-  // Run dual-pass disambiguation
-  console.log('\nRunning dual-pass classification...');
-  const { resolved, reviewQueue } = await disambiguateBatch(items, builtInClassifier);
+  let resolved;
+  let reviewQueue;
+
+  if (isAll) {
+    // ── Full run: real Codex pipeline, dual INDEPENDENT passes ──────────────
+    const tmpIdx = args.indexOf('--tmp-dir');
+    const tmpDir = resolve(ROOT, tmpIdx !== -1 ? args[tmpIdx + 1] : '.t2tmp');
+    const bsIdx = args.indexOf('--batch-size');
+    const ccIdx = args.indexOf('--concurrency');
+    const batchSize = bsIdx !== -1 ? parseInt(args[bsIdx + 1], 10) : 40;
+    const concurrency = ccIdx !== -1 ? parseInt(args[ccIdx + 1], 10) : 5;
+
+    // Only items WITH text and >1 candidate need the classifier; the rest are
+    // decided structurally by disambiguateAll (no Codex spend on them).
+    const toClassify = items
+      .filter(i => i.itemText && !i.id.includes('appeal-text') && i.entry.candidates.length > 1)
+      .map(i => ({ id: i.id, itemText: i.itemText, candidates: i.entry.candidates, topic: i.entry.topic }));
+
+    console.log(`\nCodex pipeline: ${toClassify.length} items need classification ` +
+      `(batch ${batchSize}, concurrency ${concurrency}, tmp ${tmpDir})`);
+
+    console.log('\nPass A...');
+    const passA = await codexBatchClassify(toClassify, {
+      root: ROOT, passLabel: 'A', tmpDir, batchSize, concurrency, log: console.log,
+    });
+    console.log('\nPass B (independent)...');
+    const passB = await codexBatchClassify(toClassify, {
+      root: ROOT, passLabel: 'B', tmpDir, batchSize, concurrency, log: console.log,
+    });
+
+    ({ resolved, reviewQueue } = disambiguateAll(items, passA, passB));
+  } else {
+    // ── Pilot / per-unit: deterministic built-in classifier ─────────────────
+    console.log('\nRunning dual-pass classification (built-in)...');
+    ({ resolved, reviewQueue } = await disambiguateBatch(items, builtInClassifier));
+  }
 
   const resolvedCount = Object.keys(resolved).length;
   const queuedCount = reviewQueue.length;
   const resolveRate = ((resolvedCount / items.length) * 100).toFixed(1);
 
+  // Reason breakdown for the queue
+  const reasonCounts = {};
+  for (const q of reviewQueue) reasonCounts[q.reason] = (reasonCounts[q.reason] || 0) + 1;
+
   console.log(`\nResults:`);
   console.log(`  Total items:   ${items.length}`);
   console.log(`  Resolved:      ${resolvedCount} (${resolveRate}%)`);
   console.log(`  Review queue:  ${queuedCount}`);
+  console.log(`  Queue reasons: ${JSON.stringify(reasonCounts)}`);
 
-  if (isPilot && unit !== null) {
+  if (isAll) {
+    // Full-run artifacts — NEVER touch canonical data/skill-map.json
+    const disambPath = resolve(ROOT, 'data/skill-map.disambiguated.json');
+    const queuePath = resolve(ROOT, 'data/skill-map.review-queue.json');
+    const t3Path = resolve(ROOT, 'GRADEBOOK_TAGGING_T3_QUEUE.md');
+    writeFileSync(disambPath, JSON.stringify(resolved, null, 2), 'utf8');
+    writeFileSync(queuePath, JSON.stringify(reviewQueue, null, 2), 'utf8');
+    writeFileSync(t3Path, buildT3QueueDoc(reviewQueue, resolvedCount), 'utf8');
+    console.log(`\nFull-run outputs written:`);
+    console.log(`  ${disambPath}`);
+    console.log(`  ${queuePath}`);
+    console.log(`  ${t3Path}`);
+  } else if (isPilot && unit !== null) {
     // Write pilot output — NEVER writes to canonical skill-map.json
     const pilotPath = resolve(ROOT, `data/skill-map.pilot-u${unit}.json`);
     const queuePath = resolve(ROOT, `data/skill-map.review-queue.pilot-u${unit}.json`);
-
     writeFileSync(pilotPath, JSON.stringify(resolved, null, 2), 'utf8');
     writeFileSync(queuePath, JSON.stringify(reviewQueue, null, 2), 'utf8');
-
     console.log(`\nPilot outputs written:`);
     console.log(`  ${pilotPath}`);
     console.log(`  ${queuePath}`);
-  } else if (isAll) {
-    console.log('\n--all run: implement full Codex pipeline classifier and write merged output.');
-    console.log('(Not implemented in T2 pilot scope — this is the controlled follow-on.)');
-    process.exit(0);
   }
 
   console.log('\nDone. data/skill-map.json was NOT modified.');

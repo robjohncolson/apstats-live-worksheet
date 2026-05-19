@@ -410,6 +410,41 @@ export function buildSkillMap(root = ROOT) {
     skillMap[id] = entry;
   }
 
+  // ── T2 overlay: merge ai-constrained disambiguations (idempotent) ──────────
+  // data/skill-map.disambiguated.json is a committed input artifact produced
+  // by the controlled full T2 run (scripts/disambiguate-skills.mjs --all).
+  // Overlaying here makes the canonical map a deterministic function of
+  // (frameworks, pools, disambiguated.json): re-running this generator always
+  // reproduces the same map and the .js wrapper stays in sync. Defensive:
+  // only overlay an id that exists, is still `unresolved`, and whose picked
+  // skill is inside that entry's canonical candidate set.
+  let aiConstrainedCount = 0;
+  const disambPath = resolve(root, 'data/skill-map.disambiguated.json');
+  if (existsSync(disambPath)) {
+    let disamb;
+    try {
+      disamb = JSON.parse(readFileSync(disambPath, 'utf8'));
+    } catch {
+      disamb = null;
+    }
+    if (disamb && typeof disamb === 'object') {
+      for (const [id, d] of Object.entries(disamb)) {
+        const cur = skillMap[id];
+        if (!cur || cur.provenance !== 'unresolved') continue;
+        if (!d || typeof d.skill !== 'string') continue;
+        if (!Array.isArray(cur.candidates) || !cur.candidates.includes(d.skill)) continue;
+        skillMap[id] = {
+          skill: d.skill,
+          candidates: cur.candidates,
+          confidence: typeof d.confidence === 'number' ? d.confidence : 0,
+          provenance: 'ai-constrained',
+          topic: cur.topic ?? d.topic ?? null,
+        };
+        aiConstrainedCount++;
+      }
+    }
+  }
+
   // ── Sort keys deterministically ────────────────────────────────────────────
   const sorted = {};
   for (const key of Object.keys(skillMap).sort()) {
@@ -440,9 +475,20 @@ export function buildSkillMap(root = ROOT) {
   console.log(`  Pool (b) curriculum IDs: ${curriculumIds.size}`);
   console.log(`  Pool (c) supplement (WS-2): ${ws2SupplementCount}`);
   console.log(`  Pool (d) FRQ (WS-2): ${ws2FrqCount}`);
+  // Recompute provenance tally from the FINAL map (post ai-constrained overlay,
+  // so unresolvedCount reflects what is actually still unresolved).
+  const provenanceCounts = {};
+  for (const v of Object.values(sorted)) {
+    const p = v.provenance || 'unknown';
+    provenanceCounts[p] = (provenanceCounts[p] || 0) + 1;
+  }
+  const finalUnresolved = provenanceCounts.unresolved || 0;
+
   console.log(`  Total entries: ${totalEntries}`);
   console.log(`  topic-inherit (resolved): ${resolvedCount}`);
-  console.log(`  unresolved: ${unresolvedCount}`);
+  console.log(`  ai-constrained (T2 overlay): ${aiConstrainedCount}`);
+  console.log(`  unresolved (final): ${finalUnresolved}`);
+  console.log(`  provenance: ${JSON.stringify(provenanceCounts)}`);
   console.log(`\nWrote: ${jsonPath}`);
   console.log(`Wrote: ${jsPath}`);
 
@@ -454,7 +500,9 @@ export function buildSkillMap(root = ROOT) {
     ws2SupplementCount,
     ws2FrqCount,
     resolvedCount,
-    unresolvedCount,
+    aiConstrainedCount,
+    unresolvedCount: finalUnresolved,
+    provenanceCounts,
     totalEntries,
     jsonPath,
     jsPath,

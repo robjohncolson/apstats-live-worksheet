@@ -123,8 +123,25 @@ describe('Required report sections', () => {
     expect(report()).toContain('## Phase 3 Readiness Verdict');
   });
 
-  it('Phase 3 verdict contains NOT READY', () => {
-    expect(report()).toContain('NOT READY');
+  it('Phase 3 verdict is dynamic and consistent with skill-map stats', () => {
+    // The verdict is now COMPUTED from data/skill-map.json provenance, not
+    // hardcoded. It must be one of the three states and match the value the
+    // audit derived from the current skill-map.
+    const stats = auditResult.skillMapStats;
+    expect(stats).toBeTruthy();
+    expect(stats.available).toBe(true);
+    expect(['NOT READY', 'CONDITIONAL', 'READY']).toContain(stats.verdict);
+    expect(report()).toContain(`### Verdict: ${stats.verdict}`);
+    // Once ai-constrained tags exist (post full T2 run), state has moved off
+    // the pre-T2 "NOT READY".
+    if (stats.aiConstrained > 0) {
+      expect(stats.verdict).not.toBe('NOT READY');
+    }
+  });
+
+  it('Phase 3 verdict reports a provenance distribution table', () => {
+    expect(report()).toContain('Provenance distribution');
+    expect(report()).toContain('Confidence buckets:');
   });
 
   it('Coverage matrix has all 11 AP skill codes', () => {
@@ -429,5 +446,27 @@ describe('Exported functions — unit tests', () => {
     const result = loadCurriculumJs('/nonexistent/path');
     expect(result.available).toBe(false);
     expect(result.questions).toHaveLength(0);
+  });
+
+  it('loadSkillMapStats reports unavailable when skill-map is missing', async () => {
+    const { loadSkillMapStats } = await import('../scripts/audit-skill-tagging.mjs');
+    const result = loadSkillMapStats('/nonexistent/path');
+    expect(result.available).toBe(false);
+    expect(result.total).toBe(0);
+  });
+
+  it('loadSkillMapStats computes a verdict + split provenance for the real map', async () => {
+    const { loadSkillMapStats } = await import('../scripts/audit-skill-tagging.mjs');
+    const s = loadSkillMapStats(ROOT);
+    expect(s.available).toBe(true);
+    expect(s.total).toBeGreaterThan(0);
+    expect(['NOT READY', 'CONDITIONAL', 'READY']).toContain(s.verdict);
+    // certifier + practice totals partition the whole map.
+    expect(s.certifier.total + s.practice.total).toBe(s.total);
+    // verdict invariants: READY ⇒ no certifier unresolved/ai-constrained.
+    if (s.verdict === 'READY') {
+      expect(s.certifier.unresolved).toBe(0);
+      expect(s.certifier['ai-constrained'] || 0).toBe(0);
+    }
   });
 });

@@ -345,6 +345,74 @@ export function loadFrqDecompositions(root) {
 }
 
 /**
+ * Load data/skill-map.json and compute the provenance distribution, split by
+ * the certifier pool (curriculum.js Progress-Check / lesson items — the
+ * proctored grade certifier, decision T-3) vs. practice pools (worksheets,
+ * FRQ xref, formula probes). Drives the dynamic Phase-3 readiness verdict.
+ */
+export function loadSkillMapStats(root) {
+  const p = resolve(root, 'data/skill-map.json');
+  if (!existsSync(p)) {
+    return { available: false, total: 0 };
+  }
+  let map;
+  try {
+    map = JSON.parse(readFileSync(p, 'utf8'));
+  } catch (e) {
+    return { available: false, total: 0, error: e.message };
+  }
+
+  const isCertifier = (id) => /^U\d+-(L\d+-Q|PC-)/.test(id);
+  const blank = () => ({ total: 0, unresolved: 0, 'topic-inherit': 0, 'ai-constrained': 0, teacher: 0, 'formula-map': 0, 'frq-xref': 0, other: 0 });
+  const byProvenance = {};
+  const certifier = blank();
+  const practice = blank();
+  const confidence = { '1.0': 0, '0.8-0.99': 0, '0.6-0.79': 0, '<0.6': 0, none: 0 };
+
+  for (const [id, v] of Object.entries(map)) {
+    const prov = v.provenance || 'other';
+    byProvenance[prov] = (byProvenance[prov] || 0) + 1;
+    const bucket = isCertifier(id) ? certifier : practice;
+    bucket.total++;
+    bucket[prov] = (bucket[prov] || 0) + 1;
+    const c = typeof v.confidence === 'number' ? v.confidence : null;
+    if (c === null || v.provenance === 'unresolved') confidence.none++;
+    else if (c >= 1.0) confidence['1.0']++;
+    else if (c >= 0.8) confidence['0.8-0.99']++;
+    else if (c >= 0.6) confidence['0.6-0.79']++;
+    else confidence['<0.6']++;
+  }
+
+  const total = Object.keys(map).length;
+  const aiConstrained = byProvenance['ai-constrained'] || 0;
+  const stillUnresolved = byProvenance['unresolved'] || 0;
+
+  // Verdict: NOT READY (pre-T2: no AI tags, mostly unresolved) →
+  // CONDITIONAL (post-T2: practice AI-tagged, certifier residual = Sprint T3)
+  // → READY (post-T3: certifier fully teacher-verified, 0 unresolved).
+  let verdict;
+  if (aiConstrained === 0 && stillUnresolved > total * 0.5) {
+    verdict = 'NOT READY';
+  } else if (certifier.unresolved === 0 && certifier['ai-constrained'] === 0) {
+    verdict = 'READY';
+  } else {
+    verdict = 'CONDITIONAL';
+  }
+
+  return {
+    available: true,
+    total,
+    byProvenance,
+    certifier,
+    practice,
+    confidence,
+    aiConstrained,
+    stillUnresolved,
+    verdict,
+  };
+}
+
+/**
  * Analyze supplement probes for zero-signal (no skill tag, no formulaId).
  */
 export function analyzeSupplementProbes(probes) {
@@ -564,6 +632,7 @@ function pluralize(n, word) {
 }
 
 function buildReport({
+  skillMapStats,
   worksheets,
   gradingPrompts,
   curriculumResult,
@@ -744,34 +813,69 @@ function buildReport({
   }
   lines.push('');
 
-  // ── Phase 3 readiness verdict ──────────────────────────────────────────────
+  // ── Phase 3 readiness verdict (DYNAMIC — computed from data/skill-map.json) ─
   lines.push('## Phase 3 Readiness Verdict');
   lines.push('');
-  lines.push('**Question: Can per-skill BKT (Bayesian Knowledge Tracing) be trusted today?**');
+  lines.push('**Question: Can the diagnostic per-skill BKT engine be trusted today?**');
   lines.push('');
-  lines.push('### Verdict: NOT READY');
-  lines.push('');
-  lines.push('**Reason 1 — No explicit AP-skill tags on any item.**');
-  lines.push(`All 4 pools (${pluralize(totalWorksheets, 'worksheet')}, curriculum.js ${curriculumResult.available ? `(${curriculumResult.questions.length} questions)` : '(unavailable)'}, ${pluralize(supplementCount, 'supplement probe')}, ${totalFrqSkills} FRQ sub-skills) lack AP skill codes on individual items.`);
-  lines.push('Skill mapping is inference-only (lesson → framework topic → AP skill code).');
-  lines.push('');
-  lines.push('**Reason 2 — Worksheet items lack per-question skill attribution.**');
-  lines.push(`${totalBlanks} fill-in-blank items and ${totalTextareas} FRQ textareas across ${totalWorksheets} worksheets carry no data-skill or data-ap-skill attributes.`);
-  lines.push('BKT requires item-level skill tags; inferred topic-level coverage is too coarse for reliable estimation.');
-  lines.push('');
-  lines.push('**Reason 3 — curriculum.js is untagged.**');
-  lines.push(`${curriculumResult.available ? curriculumResult.questions.length : 'N/A'} curriculum.js questions have NO skill field. The sacred-file rule prevents adding tags here.`);
-  lines.push('Phase 2 (curriculum quiz feeder) must route through a skill-tagged wrapper layer.');
-  lines.push('');
-  lines.push('**Reason 4 — FRQ sub-skills use internal IDs, not AP codes.**');
-  lines.push(`${zeroSignalFrqSkills} of ${totalFrqSkills} FRQ sub-skills have zero supporting MCQs. AP skill codes must be mapped to FRQ decomposition entries before BKT can aggregate across item types.`);
-  lines.push('');
-  lines.push('**What needs to happen before Phase 3:**');
-  lines.push('1. Add AP skill codes to worksheet `<input>` and `<textarea>` elements (data-skill attr) — affects all 69 worksheets.');
-  lines.push('2. Build a skill-tag wrapper for curriculum.js (read-only) that maps question IDs → AP skill codes.');
-  lines.push('3. Map frq-decompositions.json sub-skill IDs → AP skill codes (u1-frq-zscore → 2.C or 4.B, etc.).');
-  lines.push('4. Add AP skill codes to supplement probes (formulaId → AP skill code lookup).');
-  lines.push('');
+
+  const sm = skillMapStats || { available: false };
+  if (!sm.available) {
+    lines.push('### Verdict: NOT READY');
+    lines.push('');
+    lines.push('`data/skill-map.json` not found — run `node scripts/build-skill-map.mjs` first.');
+    lines.push('');
+  } else {
+    lines.push(`### Verdict: ${sm.verdict}`);
+    lines.push('');
+
+    // Provenance distribution table (spec §7).
+    lines.push('**Provenance distribution (`data/skill-map.json`):**');
+    lines.push('');
+    lines.push('| Provenance | All | Certifier (curriculum PC/lesson) | Practice (worksheet/FRQ/probe) |');
+    lines.push('|------------|----:|---------------------------------:|-------------------------------:|');
+    const provKeys = ['topic-inherit', 'ai-constrained', 'teacher', 'unresolved', 'formula-map', 'frq-xref'];
+    for (const k of provKeys) {
+      const all = sm.byProvenance[k] || 0;
+      const cert = sm.certifier[k] || 0;
+      const prac = sm.practice[k] || 0;
+      if (all === 0) continue;
+      lines.push(`| ${k} | ${all} | ${cert} | ${prac} |`);
+    }
+    lines.push(`| **total** | **${sm.total}** | **${sm.certifier.total}** | **${sm.practice.total}** |`);
+    lines.push('');
+    lines.push('**Confidence buckets:** ' +
+      Object.entries(sm.confidence).map(([k, v]) => `${k}: ${v}`).join(' · '));
+    lines.push('');
+
+    if (sm.verdict === 'NOT READY') {
+      lines.push('No AI-constrained tags yet and the map is mostly `unresolved` — the ' +
+        'deterministic backbone exists but item→skill resolution has not run. ' +
+        'Run the controlled full T2 disambiguation (`scripts/disambiguate-skills.mjs --all`).');
+    } else if (sm.verdict === 'CONDITIONAL') {
+      lines.push(`**CONDITIONAL — diagnostic-ready, certifier pending Sprint T3.** ` +
+        `Practice pools are tagged (${(sm.practice['topic-inherit'] || 0) + (sm.practice['ai-constrained'] || 0)}/${sm.practice.total} ` +
+        `via topic-inherit + ai-constrained); the diagnostic BKT engine (v2 §3) can ` +
+        `consume practice signal now. The **certifier pool** (curriculum.js Progress ` +
+        `Check — the proctored grade certifier, decision T-3) still has ` +
+        `${sm.certifier.unresolved} \`unresolved\` and ${sm.certifier['ai-constrained'] || 0} ` +
+        `\`ai-constrained\` (not yet teacher-verified). Per spec §6, ` +
+        `\`unresolved\`/un-verified tags **never certify** — they are excluded from ` +
+        `the certifying rollup until Sprint T3 flips the spot-reviewed certifier ` +
+        `tags to \`teacher\`. This is the expected post-T2 state ("move toward READY").`);
+      lines.push('');
+      lines.push('**Residual before READY (= Sprint T3 scope):**');
+      lines.push(`1. Teacher spot-review the certifier \`ai-constrained\` tags (stratified sample) → flip to \`teacher\`.`);
+      lines.push(`2. Resolve the ${sm.certifier.unresolved} certifier \`unresolved\` items (dual-pass disagreements + no-text) from \`data/skill-map.review-queue.json\`.`);
+      lines.push('3. Re-run this audit → verdict becomes READY when certifier `unresolved` == 0 and certifier multi-skill tags are `teacher`.');
+    } else {
+      lines.push('**READY.** Every pool is tagged; the certifier pool has zero ' +
+        '`unresolved` and zero un-verified `ai-constrained` (teacher-verified per ' +
+        'decision T-3). The diagnostic BKT rollup (v2 §3) and the Phase-2 ' +
+        'curriculum-quiz feeder are unblocked.');
+    }
+    lines.push('');
+  }
   lines.push('**Biggest coverage gaps:**');
 
   // Identify skills with most items (proxy for importance) and fewest tags
@@ -865,8 +969,16 @@ export function run(root = ROOT) {
   const gaps = findSkillGaps(matrix, null);
   const unitWorksheetSummary = buildUnitWorksheetSummary(worksheets, gradingPrompts);
 
+  // ── Skill-map provenance (drives the dynamic Phase-3 verdict) ──────────────
+  const skillMapStats = loadSkillMapStats(root);
+  if (skillMapStats.available) {
+    console.log(`  Skill-map: ${skillMapStats.total} entries, verdict ${skillMapStats.verdict} ` +
+      `(ai-constrained ${skillMapStats.aiConstrained}, unresolved ${skillMapStats.stillUnresolved})`);
+  }
+
   // ── Generate report ────────────────────────────────────────────────────────
   const report = buildReport({
+    skillMapStats,
     worksheets,
     gradingPrompts,
     curriculumResult,
@@ -912,6 +1024,7 @@ export function run(root = ROOT) {
     matrix,
     gaps,
     allFlags,
+    skillMapStats,
     outputPath,
   };
 }

@@ -20,7 +20,17 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { resolve } from 'node:path';
 import { readFileSync, existsSync, statSync } from 'node:fs';
-import { disambiguateBatch, buildItemTextMap, builtInClassifier } from '../scripts/disambiguate-skills.mjs';
+import {
+  disambiguateBatch,
+  buildItemTextMap,
+  builtInClassifier,
+  decideAgreement,
+  disambiguateAll,
+  asciiSanitize,
+  buildBatchPrompt,
+  buildAllItemTextMap,
+  buildT3QueueDoc,
+} from '../scripts/disambiguate-skills.mjs';
 
 const ROOT = resolve(__dirname, '..');
 const SKILL_MAP_PATH = resolve(ROOT, 'data/skill-map.json');
@@ -421,5 +431,142 @@ describe('builtInClassifier', () => {
       ['2.A', '2.B']
     );
     expect(result.skill).toBe('2.A');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. Full-run additions (decideAgreement / disambiguateAll / asciiSanitize /
+//     buildBatchPrompt / buildAllItemTextMap) — the controlled --all path
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('decideAgreement (shared dual-pass decision)', () => {
+  const entry = { candidates: ['2.A', '3.A'], topic: '1.10' };
+
+  it('agreement → resolved ai-constrained, confidence averaged', () => {
+    const d = decideAgreement('X-1', entry, 'txt',
+      { skill: '3.A', confidence: 0.9 }, { skill: '3.A', confidence: 0.7 });
+    expect(d.resolved).toBeTruthy();
+    expect(d.resolved.skill).toBe('3.A');
+    expect(d.resolved.provenance).toBe('ai-constrained');
+    expect(d.resolved.confidence).toBe(0.8);
+    expect(d.queued).toBeUndefined();
+  });
+
+  it('disagreement → queued dual-pass-disagreement', () => {
+    const d = decideAgreement('X-2', entry, 'txt',
+      { skill: '2.A', confidence: 0.6 }, { skill: '3.A', confidence: 0.6 });
+    expect(d.queued).toBeTruthy();
+    expect(d.queued.reason).toBe('dual-pass-disagreement');
+    expect(d.queued.pass1.skill).toBe('2.A');
+    expect(d.resolved).toBeUndefined();
+  });
+});
+
+describe('disambiguateAll (precomputed dual passes)', () => {
+  const items = [
+    { id: 'U1-L10-Q01', entry: { candidates: ['2.A', '3.A'], topic: '1.10' }, itemText: 'normal probability' },
+    { id: 'U1-L10-Q02', entry: { candidates: ['2.A', '3.A'], topic: '1.10' }, itemText: 'compare or compute' },
+    { id: 'U1-L1-Q01', entry: { candidates: ['1.A'], topic: '1.1' }, itemText: 'single candidate' },
+    { id: 'WS-U1-appeal-text-3', entry: { candidates: ['2.A', '2.B'], topic: '1.3' }, itemText: 'generic appeal' },
+    { id: 'U1-L10-Q09', entry: { candidates: ['2.A', '3.A'], topic: '1.10' }, itemText: null },
+  ];
+
+  it('agree → resolved; disagree → queue; single-candidate → resolved 1.0; appeal/no-text → queue', () => {
+    const passA = new Map([
+      ['U1-L10-Q01', { skill: '3.A', confidence: 0.9 }],
+      ['U1-L10-Q02', { skill: '2.A', confidence: 0.6 }],
+    ]);
+    const passB = new Map([
+      ['U1-L10-Q01', { skill: '3.A', confidence: 0.8 }],
+      ['U1-L10-Q02', { skill: '3.A', confidence: 0.6 }],
+    ]);
+    const { resolved, reviewQueue } = disambiguateAll(items, passA, passB);
+
+    expect(resolved['U1-L10-Q01'].skill).toBe('3.A');
+    expect(resolved['U1-L10-Q01'].provenance).toBe('ai-constrained');
+    expect(resolved['U1-L1-Q01']).toEqual({
+      skill: '1.A', candidates: ['1.A'], confidence: 1.0, provenance: 'ai-constrained', topic: '1.1',
+    });
+    const reasons = Object.fromEntries(reviewQueue.map(q => [q.id, q.reason]));
+    expect(reasons['U1-L10-Q02']).toBe('dual-pass-disagreement');
+    expect(reasons['WS-U1-appeal-text-3']).toBe('no-item-text');
+    expect(reasons['U1-L10-Q09']).toBe('no-item-text');
+    expect(resolved['U1-L10-Q02']).toBeUndefined();
+  });
+
+  it('out-of-candidates pick → queued (does NOT throw, unlike disambiguateBatch)', () => {
+    const passA = new Map([['U1-L10-Q01', { skill: '9.Z', confidence: 0.9 }]]);
+    const passB = new Map([['U1-L10-Q01', { skill: '9.Z', confidence: 0.9 }]]);
+    const { resolved, reviewQueue } = disambiguateAll([items[0]], passA, passB);
+    expect(resolved['U1-L10-Q01']).toBeUndefined();
+    expect(reviewQueue[0].reason).toBe('out-of-candidates');
+  });
+
+  it('missing classifier result → queued classifier-missing', () => {
+    const { reviewQueue } = disambiguateAll([items[0]], new Map(), new Map());
+    expect(reviewQueue[0].reason).toBe('classifier-missing');
+  });
+});
+
+describe('asciiSanitize', () => {
+  it('maps math/typographic unicode to ASCII and strips the rest', () => {
+    const out = asciiSanitize('μ = 5, σ² ≥ 1, x–y “q” …');
+    expect(out).toBe('mu = 5, sigma^2 >= 1, x-y "q" ...');
+    expect(/[^\x20-\x7E\n]/.test(out)).toBe(false);
+  });
+
+  it('handles null/empty safely', () => {
+    expect(asciiSanitize(null)).toBe('');
+    expect(asciiSanitize('')).toBe('');
+  });
+});
+
+describe('buildBatchPrompt', () => {
+  it('is ASCII-only and embeds every item id + its candidates', () => {
+    const batch = [
+      { id: 'U1-L10-Q01', candidates: ['2.D', '3.A'], topic: '1.10', itemText: 'normal μ text' },
+      { id: 'U2-L3-Q07', candidates: ['2.A', '2.C'], topic: '2.3', itemText: 'calc' },
+    ];
+    const p = buildBatchPrompt(batch);
+    expect(/[^\x20-\x7E\n]/.test(p)).toBe(false); // strict ASCII (cp1252 gotcha)
+    expect(p).toContain('U1-L10-Q01');
+    expect(p).toContain('U2-L3-Q07');
+    expect(p).toContain('classifications');
+  });
+});
+
+describe('buildT3QueueDoc', () => {
+  it('separates certifier vs practice and is teacher-actionable', () => {
+    const queue = [
+      { id: 'U1-L10-Q01', topic: '1.10', candidates: ['2.D', '3.A'], reason: 'dual-pass-disagreement' },
+      { id: 'U2-PC-MCQ-A-Q03', topic: null, candidates: ['2.A', '4.B'], reason: 'dual-pass-disagreement' },
+      { id: 'WS-U3L6-7-Q5', topic: '3.6', candidates: ['1.A', '1.B'], reason: 'no-item-text' },
+    ];
+    const doc = buildT3QueueDoc(queue, 1234);
+    expect(doc).toContain('Sprint T3');
+    expect(doc).toContain('1234'); // auto-resolved count
+    expect(doc).toContain('CERTIFIER pool first');
+    expect(doc).toMatch(/CERTIFIER pool.*2 items/s); // U1-L10-Q01 + U2-PC = certifier
+    expect(doc).toContain('Practice pool');
+    expect(doc).toContain('| U1 |');
+  });
+
+  it('handles an empty queue (all auto-resolved)', () => {
+    const doc = buildT3QueueDoc([], 2500);
+    expect(doc).toContain('certifier fully auto-resolved');
+    expect(doc).toContain('2500');
+  });
+});
+
+describe('buildAllItemTextMap', () => {
+  it('returns a Map spanning multiple units (string values)', () => {
+    const m = buildAllItemTextMap(ROOT);
+    expect(m instanceof Map).toBe(true);
+    expect(m.size).toBeGreaterThan(0);
+    for (const [, t] of m) { expect(typeof t).toBe('string'); break; }
+    // curriculum.js ids from >1 unit present (proves all-unit span)
+    const u1 = [...m.keys()].some(k => /^U1-/.test(k));
+    const uN = [...m.keys()].some(k => /^U[3-9]-/.test(k));
+    expect(u1 && uN).toBe(true);
   });
 });
