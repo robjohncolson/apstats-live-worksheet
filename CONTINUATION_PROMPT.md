@@ -5,22 +5,30 @@
 > text; it is kept only as historical record.** Updated 2026-05-19 (session
 > 100, autonomous loop: T1 T2 DONE; T2 Phase-2 DONE+PROD; T3 Phase-3
 > DONE+PROD (`801dccc`); T4 Phase-4a DONE+PROD (`d68e98b`+`13cb326`);
-> **T5 Phase-5 DONE+PUSHED (`e592d1b`)** — AI-tutor Desk-tile delivery
-> ("🤖 Tutor prompt — copy to clipboard" button per lesson) + start-here.html
-> AI-tutor toolkit card + §6.4 close (study_guide_diagnostic.html adopted
-> roster+gradebook clients; student_id stamped on both /api/ai/grade bodies;
-> fire-and-forget gradebookClient.record('frq_studyguide') on graded-FRQ
-> success only). No roster-server change / no redeploy — Phase 5 is
-> client-side only. PC-tile wiring deferred to Phase 5.1 (lessons only in
-> v1; 9 unit-PC artifacts remain in ai-tutor/ unwired). **NEXT optional
-> loop task = Phase 4b** (`remediation_assignment` write loop + new
-> curriculum_render Supabase migration — own frozen contract, user-gated
-> DB step mirrors Phase 0/1 split). OR wrap session: Phase 5 closed the
-> most user-visible "wire it up" increment; Phase 4b is the architectural
-> "close the remediation loop" increment, but it's an independent contract.
-> The concurrent TR session is DONE & deployed → roster-server contention
-> RELEASED. The concurrent AI-tutor delivery is now LIVE (Phase 5 = the
-> approval). Recall memories first: `project_gradebook_grading_model.md`,
+> T5 Phase-5 DONE+PUSHED (`e592d1b`); **T6 Phase-4b CODE-COMPLETE+PUSHED
+> (`5a46f19`)** — `remediation_assignment` write loop landed: 8 additive
+> roster-server endpoints (propose/approve/complete/waive/
+> propose-from-mastery/list/student/unlocks), `teacher-dashboard.html`
+> Remediation panel, migration `0004_remediation_assignment.sql`,
+> `roster-server/tests/remediation.test.js` 50/50, `tests/phase4b-
+> structure.test.js` 16/16, all Codex 0BLK+4MAJ+2MIN folded.
+> **⚠ TWO USER-OWNED HANDOFFS pending before Phase 4b is functional in
+> prod:** (1) `railway login` then `cd roster-server && railway up --ci
+> -s roster` — Railway OAuth backend was 503 at deploy time AND the
+> existing `roster-production-12c1.up.railway.app/health` returned
+> "Application not found" 404 (X-Railway-Fallback: true), suggesting
+> either a wider Railway issue or the service URL shifted; user re-auth
+> + check Railway service status. (2) Run
+> `roster-server/migrations/0004_remediation_assignment.sql` in the
+> curriculum_render Supabase SQL editor (`bzqbhtrurzzavhqbgqrs`) to
+> provision the new table. Until both done, /remediation/* returns 503
+> "remediation table not yet provisioned" in prod (after redeploy) — the
+> rest of the service stays up. **NEXT optional loop task = wrap session
+> OR Phase 5.1** (PC-tile AI-tutor wiring; 9 unit-PC artifacts remain
+> unwired) once user un-blocks deploy. The concurrent TR session is
+> DONE & deployed → roster-server contention RELEASED. The concurrent
+> AI-tutor delivery is now LIVE (Phase 5 = the approval). Recall
+> memories first: `project_gradebook_grading_model.md`,
 > `project_desk_donow.md`, `project_gradebook_phase0.md`,
 > `project_ai_tutor_pilot.md`, `project_roster_teacher_tools.md`,
 > `feedback_curriculum_render_sacred.md`.
@@ -186,19 +194,58 @@ and all relevant guards pass:
    audit-feeder-ids CLEAN 69; all touched files LF/UTF-8 preserved;
    stage-own-paths discipline held (5 files only). Build doc
    `GRADEBOOK_PHASE5_BUILD.md` §1–§7. Do NOT rebuild Phase 5.
-6. **Phase 4b — remediation_assignment write loop — ⏳ OPTIONAL NEXT LOOP
-   TASK (or wrap session).** The `GRADEBOOK_GRADING_SPEC.md` §3
-   remediation learning loop: system-proposes weak-skill remediation
-   from /class/mastery → teacher-approves → completing it gates a
-   re-check that *raises* the unit grade (only-raises, per the §2 grade
-   model). Needs (a) its own frozen `GRADEBOOK_PHASE4B_BUILD.md`, (b) a
-   NEW curriculum_render Supabase table `remediation_assignment` +
-   user-gated migration (mirrors Phase 0/1 sequencing — DB migrations
-   are user-action handoffs), (c) additive roster-server endpoints, (d)
-   minimal teacher-dashboard.html UI for the approve action. Independent
-   of Phase 5; can run after a wrap if the user prefers. Phase 5 is the
-   "all the wiring's done" milestone — the system is now student-usable
-   end-to-end except for the remediation feedback loop.
+6. **Phase 4b — remediation_assignment write loop — ✅ CODE-COMPLETE &
+   PUSHED (`5a46f19`).** Built per the frozen `GRADEBOOK_PHASE4B_BUILD.md`
+   §1-§7. Nine files: `roster-server/migrations/0004_remediation_assignment.sql`
+   (USER-runs in curriculum_render Supabase to provision the new table —
+   columns: assignment_id/student_id→roster on-delete-cascade/unit/skill/
+   source_attempt/assigned_refs jsonb/status check IN (proposed|assigned|
+   completed|waived)/proposed_by/approved_by/assigned_at/completed_at/
+   completed_score/recheck_item_id/unlocks/notes/created_at; 4 indexes;
+   RLS-no-policies — same posture as 0001/0002); `roster-server/
+   remediation-db.js` (live + injectable wrapper, 6 helpers — section
+   list uses Supabase `roster:student_id!inner` fk-inner-join, a left-
+   join would silently no-op the section filter — Codex MAJOR-1 fold);
+   `roster-server/remediation.js` (8 routes wrapped in `safeAsync` so
+   Express-4 promise-rejections become 500/503 instead of unhandled —
+   Codex MAJOR-2 fold; status transitions proposed→assigned→completed
+   + waive side-exit + 409 on illegal transitions; retake gate
+   `/unlocks` = unlocked iff zero 'assigned' rows remain for (student,
+   skill) per spec §6; `/complete` accepts EITHER student token OR
+   teacher secret with 403-on-cross-student only on the token branch;
+   `/propose-from-mastery` reuses Phase-3 `computeMastery` + bundled
+   answer-key/skill-map/BKT, idempotent skip-existing + dryRun);
+   `roster-server/server.js` (additive mount + fault-tolerant
+   `createLiveRemediationDb` mirroring Phase-3 BKT bootstrap);
+   `roster-server/tests/remediation.test.js` (NEW, 50 cases — 42P01→503
+   pinned on ALL 8 endpoints, Codex MAJOR-3 fold; section-filter test
+   actually stamps __rosterMeta, Codex MAJOR-4 fold); `teacher-
+   dashboard.html` (NEW Remediation panel: propose-from-mastery + dry-
+   run + Refresh buttons — Codex MINOR-1 fold, status-colored badges,
+   per-row Approve/Complete/Waive; migration-pending 503 surfaces as
+   inline message naming 0004; Phase-4a security posture preserved);
+   `tests/phase4-structure.test.js` (read-only guard rewritten to scan
+   postJson call sites — Codex MINOR-2 fold for dead-var); `tests/
+   phase4b-structure.test.js` (NEW, 16 cases). **Codex review = 0
+   BLOCKER + 4 MAJOR + 2 MINOR ALL FOLDED.** GREEN: roster-server
+   **219/219** (was 169 → +50 new, no regression); follow-alongs root
+   1635/1636 (1 known fail); audit-feeder-ids CLEAN 69; LF preserved.
+   **⚠ DEPLOY BLOCKED**: Railway OAuth backend was 503 at deploy time
+   AND existing roster-production URL returned "Application not found"
+   404 — appears to be a wider Railway issue; needs user `railway login`
+   refresh + service-status check. **⚠ USER-OWNED Supabase step**: run
+   `0004_remediation_assignment.sql` in curriculum_render SQL editor to
+   provision the new table. Until BOTH done, /remediation/* returns 503
+   "remediation table not yet provisioned" in prod (after redeploy);
+   the rest of the service is unaffected.
+7. **Phase 5.1 — PC-tile AI-tutor wiring — ⏳ OPTIONAL FOLLOW-UP.** The
+   9 unit-PC artifacts (`ai-tutor/u{1..9}_pc.md`) ship in the repo but
+   are not wired onto the Desk's PC tiles in Phase 5 v1 (lessons only —
+   the lesson topic id is dot-form `(\d+)\.(\d+)` which is regex-easy;
+   PC tiles' topic-id shape needs identification first). Small file —
+   needs reading the Desk schedule data structure for the PC representation
+   and adding a parallel `aiTutorPcPath(inf)` helper next to
+   `copyTutorPrompt`. Independent of Phase 4b; safe to do in either order.
 
 ### Carry-forward gotchas (hard-won — obey these)
 
@@ -254,38 +301,57 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `e592d1b`** (Phase 5). Lineage:
-  `e592d1b` Phase-5 ← `a0c7a93` (docs refresh) ← `13cb326` Phase-4a hotfix
-  ← `d68e98b` Phase-4a ← `deff78b` ← `801dccc` Phase-3 ← `4969715` ←
-  `00e7a6c` Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ←
+- **follow-alongs `master` HEAD `5a46f19`** (Phase 4b). Lineage:
+  `5a46f19` Phase-4b ← `ce864fe` (docs refresh) ← `e592d1b` Phase-5 ←
+  `a0c7a93` (docs refresh) ← `13cb326` Phase-4a hotfix ← `d68e98b`
+  Phase-4a ← `deff78b` ← `801dccc` Phase-3 ← `4969715` ← `00e7a6c`
+  Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ←
   `4140afe`/`1565fd5` T2 ← `52ac6a7` DN3c. Linear, local==origin.
 - **curriculum_render `main` HEAD `1ccd8a2`** (DN2d; sacred `curriculum.js`
   untouched — never re-touched; Phase-2/3/4 only READ it).
-- **roster-server LIVE & current** (`https://roster-production-12c1.up.railway.app`;
-  project `apstats-roster`): TR0–TR4 + T2 + Phase-2 `/rollup` + Phase-3
-  `/grade`+`/mastery` + Phase-4a `/class/grades`+`/class/mastery` ALL
-  deployed & prod-smoke-verified. **Phase 5 did NOT touch roster-server —
-  no redeploy needed** (Phase 5 is client-side only: Desk tile button +
-  start-here card + study_guide_diagnostic.html script-loads). Next
-  redeploy = Phase 4b (when its server endpoints land).
+- **roster-server PROD STATE UNCERTAIN** (was
+  `https://roster-production-12c1.up.railway.app`; project
+  `apstats-roster`): all Phase-0/1/donow/rollup/grade/mastery/class/TR
+  code was previously deployed & prod-smoke-verified through `13cb326`.
+  Phase 5 did NOT touch roster-server (client-side only). **Phase 4b
+  redeploy was BLOCKED** at end of session 100: `railway up --ci -s
+  roster` errored with "OAuth Token refresh failed: HTTP 503 Service
+  Unavailable. Please run `railway login` again." AND a `curl
+  https://roster-production-12c1.up.railway.app/health` returned 404
+  "Application not found" (X-Railway-Fallback: true). This suggests
+  EITHER a wider Railway outage at deploy time, OR the production
+  service URL drifted. User must: (a) re-run `railway login` (fresh
+  OAuth), (b) check the Railway dashboard for `apstats-roster` /
+  `roster` service health + the current public URL (`railway domain` or
+  the dashboard), (c) re-run `cd roster-server && railway up --ci -s
+  roster` to ship Phase 4b. If the URL has drifted, the
+  client-side `roster_config.js`'s `ROSTER_SERVICE_URL` may also need
+  update (search the repo for the URL string).
 - **Concurrent TR session: DONE & deployed** (TR0–TR4 committed + live;
   `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
 - **Concurrent AI-tutor session: idle/done** (`9207d24`); its artifacts in
   `ai-tutor/u{U}_l{L}.md` are the source for the Phase-5 Desk-tile prompt.
-- Test baseline (post-`e592d1b`): follow-alongs root **1619/1620** (only
-  the same 1 known study-guide.test.js fail — `study_guide_diagnostic.html`
-  IS touched in Phase 5 but only in additive script-tag + body-field areas
-  the v3-structure test doesn't snapshot; do NOT "fix" that test);
-  roster-server **169/169** (untouched, no redeploy); cr **764/765** (1
-  known redox-chat — not touched); `audit-feeder-ids` CLEAN 69;
-  phase4-structure 17/17 + phase5-structure **26/26**. → **NEXT optional
-  loop task = Phase 4b** (`remediation_assignment` write loop + new
-  curriculum_render Supabase migration — own frozen contract; mirrors
-  Phase 0/1 split on DB migrations) OR wrap-session. Phase 5 closed the
-  most user-visible "wire it up" increment. ⚠ user-owned pending SQL
-  chore: the user **already ran** `delete from roster where
-  section='SMOKETEST';` (cleared session-100 smoke rows). No new SQL
-  needed for Phase 5 (no schema/DB change).
+- Test baseline (post-`5a46f19`): follow-alongs root **1635/1636** (only
+  the same 1 known study-guide.test.js fail); roster-server
+  **219/219** (was 169 → +50 new Phase-4b tests; no regression on prior
+  modules); cr **764/765** (1 known redox-chat — not touched);
+  `audit-feeder-ids` CLEAN 69; phase4-structure 17/17 + phase4b-structure
+  **16/16** + phase5-structure 26/26 + roster-server/tests/remediation
+  **50/50**. → **NEXT optional loop task = Phase 5.1** (PC-tile AI-tutor
+  wiring — small follow-up; 9 unit-PC artifacts already in `ai-tutor/`,
+  needs identifying the Desk's PC-tile topic-id shape and adding a
+  parallel helper to `copyTutorPrompt`) OR **wrap-session** until the
+  user un-blocks the Phase 4b deploy. **⚠ Two user-owned handoffs
+  pending for Phase 4b to function in prod**: (a) `railway login` + the
+  redeploy (Railway OAuth was 503; existing roster-production URL
+  returned "Application not found"); (b) run `roster-server/migrations/
+  0004_remediation_assignment.sql` in curriculum_render Supabase SQL
+  editor. **NO follow-alongs SQL needed for Phase 4b** (`item_ledger`
+  + `roster` untouched; the new `remediation_assignment` is its own
+  isolated table). Standing chore: `delete from roster where
+  section='SMOKETEST';` (the user already ran this for session 100;
+  Phase 4b smoke didn't add any new SMOKETEST rows since deploy was
+  blocked).
 - ⚠ Phase-4a operational gotcha (recorded): cross-agent runner has a
   sporadic UTF-8-decode bug on Codex's output (cp1252 0xa7/0x97 in the
   stream when files contain §/em-dash/→) — the prompt itself was ASCII
@@ -298,23 +364,28 @@ and all relevant guards pass:
 
 ### Specs to (re)read on reload, per task
 
-**Phase 4b (next optional):** `GRADEBOOK_SPEC.md` §6
-(`remediation_assignment` table — needs definition), `GRADEBOOK_GRADING_SPEC.md`
-§3 (the remediation learning loop — "completing it raises the grade,
-never lowers"), `GRADEBOOK_PHASE4_BUILD.md` §1 (the Phase 4a/4b scope
-split rationale). Will need its own frozen `GRADEBOOK_PHASE4B_BUILD.md` +
-a user-gated curriculum_render Supabase migration. **Phase 5.1 (PC tile
-wiring) is a smaller follow-up** — read the Desk-file's PC-tile shape
-(`ap_stats_roadmap_square_mode.html` schedule data structure; PC tiles
-are visible at lines 1595/2987/3179 area as quiz URLs with `l=PC`) +
-`ai-tutor/u{u}_pc.md` artifact convention. Provenance (DONE, do not
-rebuild): `GRADEBOOK_PHASE5_BUILD.md` (Task #5, this session),
-`GRADEBOOK_PHASE4_BUILD.md`, `GRADEBOOK_PHASE3_BUILD.md`,
-`GRADEBOOK_PHASE2_BUILD.md`, `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`,
+**Phase 5.1 (next optional — small):** Read the Desk file's PC-tile shape
+(`ap_stats_roadmap_square_mode.html` — PC tiles are visible at lines
+1595/2987/3179 area as quiz URLs with `l=PC`; need to identify the topic
+key for PC tiles vs lessons), the existing lessons-only `copyTutorPrompt`
+helper (added in Phase 5, immediately after `closeResourcePanel`), and
+the `ai-tutor/u{u}_pc.md` artifact convention. The 9 PC artifacts ship
+in the repo already.
+
+**Provenance (DONE, do not rebuild)**: `GRADEBOOK_PHASE4B_BUILD.md`
+(Task #6, this session — `remediation_assignment` write loop),
+`GRADEBOOK_PHASE5_BUILD.md` (Task #5, this session — AI-tutor delivery
++ §6.4 close), `GRADEBOOK_PHASE4_BUILD.md` (Phase 4a teacher dashboard +
+start-here render), `GRADEBOOK_PHASE3_BUILD.md` (grade calc + diagnostic
+BKT), `GRADEBOOK_PHASE2_BUILD.md` (cr-quiz rollup),
+`GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md` (T2 disambiguation),
 `ROSTER_TEACHER_TOOLS_SPEC.md` (TR — done/deployed),
 `AI_TUTOR_SPEC.md` (§31/§156 — wiring now LIVE per Phase 5),
 `DESK_DONOW_SPEC.md` + per-sprint `DESK_DONOW_DN*_BUILD.md` /
-`DN2D_BUILD.md`.
+`DN2D_BUILD.md`. `GRADEBOOK_GRADING_SPEC.md` §3 (remediation learning
+loop) and §6 (`remediation_assignment` record) are the inputs Phase 4b
+implements — useful for context if a future "re-check consumer"
+workstream lands.
 
 ---
 
