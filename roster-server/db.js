@@ -74,9 +74,13 @@ export function createDb(client) {
   // Teacher roster view. Optional section filter. Ordered by section then created.
   // Returns { data, error } — data is an array of roster rows.
   async function listRoster(section) {
+    // student_id is included in the projection so /class/grades + /class/mastery
+    // can fan out per student via getLedgerByStudent(student_id). The existing
+    // /roster/list handler explicitly maps to a UI-shaped object that omits it,
+    // so this addition is invisible to the teacher console (additive, safe).
     let query = client
       .from('roster')
-      .select('real_name, login_username, section, password_cipher, must_change_password, created_at');
+      .select('student_id, real_name, login_username, section, password_cipher, must_change_password, created_at');
 
     if (section) {
       query = query.eq('section', section);
