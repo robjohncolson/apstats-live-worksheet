@@ -1208,14 +1208,15 @@
             <div class="dialog-icon" style="float:left;margin-right:10px">&#128100;</div>
             <div class="dialog-msg geneva" style="font-size:11px">
                 <div class="chicago" style="font-size:12px;margin-bottom:4px">Sign In</div>
-                <div style="margin-bottom:8px">Enter your school email so I can track your progress.</div>
-                <input type="email" id="signin-email" class="geneva" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="you@school.edu">
+                <div style="margin-bottom:8px">Sign in with the username &amp; password your teacher gave you.</div>
+                <input type="text" id="signin-username" class="geneva" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="username (e.g. coconut_shark)">
+                <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
             </div>
         </div>
         <div class="dialog-btns">
             <button class="s7btn" onclick="closeSignInModal()">Cancel</button>
-            <button class="s7btn s7btn-default" onclick="submitSignIn()">OK</button>
+            <button class="s7btn s7btn-default" id="signin-ok" onclick="submitSignIn()">OK</button>
         </div>
     </div>
 </div>
@@ -1342,6 +1343,10 @@
 
 <!-- ═══ Tooltip ═══ -->
 <div class="tip geneva" id="tip"></div>
+
+<!-- ═══ Shared roster identity (DN2c) — flat paths, Desk is at repo root (same as roster-client-demo.html). Config before client. ═══ -->
+<script src="roster_config.js"></script>
+<script src="roster-client.js"></script>
 
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
@@ -3338,6 +3343,11 @@ async function registerStudent(email) {
 function updateStudentMenu() {
   var el = document.getElementById('menu-student-status');
   if (!el) return;
+  var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
+  if (who) {
+    el.textContent = 'Signed in as: ' + (who.realName ? (who.realName + ' (' + who.username + ')') : who.username);
+    return;
+  }
   var email = getStudentEmail();
   el.textContent = email ? ('Signed in as: ' + email) : 'Not signed in';
 }
@@ -3345,13 +3355,16 @@ function updateStudentMenu() {
 function openSignInModal() {
   var ov = document.getElementById('signin-overlay');
   if (!ov) return;
-  var inp = document.getElementById('signin-email');
+  var uInp = document.getElementById('signin-username');
+  var pInp = document.getElementById('signin-password');
   var err = document.getElementById('signin-error');
   if (err) err.textContent = '';
-  if (inp) { inp.value = getStudentEmail() || ''; }
+  var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
+  if (uInp) { uInp.value = (who && who.username) || getStudentEmail() || ''; }
+  if (pInp) { pInp.value = ''; }
   ov.style.display = 'block';
   MacSFX.play('sosumi', 0.5);
-  setTimeout(function(){ if (inp) inp.focus(); }, 50);
+  setTimeout(function(){ if (uInp) uInp.focus(); }, 50);
 }
 
 function closeSignInModal() {
@@ -3361,23 +3374,61 @@ function closeSignInModal() {
   ov.style.display = 'none';
 }
 
-function submitSignIn() {
-  var inp = document.getElementById('signin-email');
+async function submitSignIn() {
+  if (submitSignIn._pending) return;            // in-flight guard (OK click + Enter)
+  var uInp = document.getElementById('signin-username');
+  var pInp = document.getElementById('signin-password');
   var err = document.getElementById('signin-error');
-  var email = (inp && inp.value || '').trim();
-  var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!re.test(email)) {
-    if (err) err.textContent = 'Please enter a valid email address.';
+  if (err) err.textContent = '';
+
+  if (!window.rosterClient || !window.rosterClient.signIn) {
+    if (err) err.textContent = 'Sign-in unavailable (offline). Try again on the school network.';
     return;
   }
-  localStorage.setItem('apstats_desk_student_email', email);
-  registerStudent(email);
-  updateStudentMenu();
-  closeSignInModal();
-  showDialog('\u{1F464}','Signed in as ' + email + '.','OK');
+
+  // NOTE: username is trimmed; password is intentionally NOT trimmed —
+  // leading/trailing characters can be valid in a password (security-correct).
+  var username = (uInp && uInp.value || '').trim();
+  var password = (pInp && pInp.value || '');
+  if (!username || !password) {
+    if (err) err.textContent = 'Enter both your username and password.';
+    return;
+  }
+
+  submitSignIn._pending = true;
+  var okBtn = document.getElementById('signin-ok');
+  if (okBtn) okBtn.disabled = true;
+  if (err) err.textContent = 'Signing in…';
+  try {
+    var result;
+    try {
+      result = await window.rosterClient.signIn(username, password);
+    } catch (e) {
+      result = { ok: false, error: (e && e.message) || 'Network error' };
+    }
+    if (!result || !result.ok) {
+      if (err) err.textContent = (result && result.error) || 'Sign-in failed.';
+      return;
+    }
+
+    // Mirror the roster identity into the legacy key so every existing
+    // getStudentEmail()-keyed Desk feature keeps working unchanged (DN3 retires
+    // the legacy student_progress path; clean-start cohort, non-email is harmless).
+    var who = (window.rosterClient.current && window.rosterClient.current()) || {};
+    var legacyKey = who.username || username;
+    localStorage.setItem('apstats_desk_student_email', legacyKey);
+    registerStudent(legacyKey);
+    updateStudentMenu();
+    closeSignInModal();
+    showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + '.','OK');
+  } finally {
+    submitSignIn._pending = false;
+    if (okBtn) okBtn.disabled = false;
+  }
 }
 
 function signOutStudent() {
+  if (window.rosterClient && window.rosterClient.signOut) window.rosterClient.signOut();
   localStorage.removeItem('apstats_desk_student_email');
   updateStudentMenu();
   location.reload();
