@@ -463,10 +463,16 @@ describe('Exported functions — unit tests', () => {
     expect(['NOT READY', 'CONDITIONAL', 'READY']).toContain(s.verdict);
     // certifier + practice totals partition the whole map.
     expect(s.certifier.total + s.practice.total).toBe(s.total);
-    // verdict invariants: READY ⇒ no certifier unresolved/ai-constrained.
+    // Stricter READY (Codex MAJOR #5): READY ⇒ non-empty certifier, no
+    // certifier unresolved/ai-constrained, AND practice fully resolved.
     if (s.verdict === 'READY') {
+      expect(s.certifier.total).toBeGreaterThan(0);
       expect(s.certifier.unresolved).toBe(0);
       expect(s.certifier['ai-constrained'] || 0).toBe(0);
+      expect(s.practice.unresolved).toBe(0);
     }
+    // teacher bucket is tracked (T3 promotion path).
+    expect(s.certifier).toHaveProperty('teacher');
+    expect(s.practice).toHaveProperty('teacher');
   });
 });

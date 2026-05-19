@@ -30,6 +30,7 @@ import {
   buildBatchPrompt,
   buildAllItemTextMap,
   buildT3QueueDoc,
+  extractWorksheetUnitId,
 } from '../scripts/disambiguate-skills.mjs';
 
 const ROOT = resolve(__dirname, '..');
@@ -558,15 +559,57 @@ describe('buildT3QueueDoc', () => {
   });
 });
 
-describe('buildAllItemTextMap', () => {
+describe('extractWorksheetUnitId (mirrors build-skill-map.mjs)', () => {
+  it('extracts UNIT_ID (single or double quote)', () => {
+    expect(extractWorksheetUnitId(`const UNIT_ID = 'U4L1-2';`)).toBe('U4L1-2');
+    expect(extractWorksheetUnitId(`const UNIT_ID = "U1L10";`)).toBe('U1L10');
+  });
+  it('extracts the lone WORKSHEET_ID form (strips WS- prefix)', () => {
+    expect(extractWorksheetUnitId(`const WORKSHEET_ID = 'WS-U3L6-7';`)).toBe('U3L6-7');
+  });
+  it('returns null when neither id is present', () => {
+    expect(extractWorksheetUnitId('<html>no id here</html>')).toBeNull();
+  });
+});
+
+describe('buildAllItemTextMap (loader fix: multi-lesson worksheets included)', () => {
   it('returns a Map spanning multiple units (string values)', () => {
     const m = buildAllItemTextMap(ROOT);
     expect(m instanceof Map).toBe(true);
     expect(m.size).toBeGreaterThan(0);
     for (const [, t] of m) { expect(typeof t).toBe('string'); break; }
-    // curriculum.js ids from >1 unit present (proves all-unit span)
     const u1 = [...m.keys()].some(k => /^U1-/.test(k));
     const uN = [...m.keys()].some(k => /^U[3-9]-/.test(k));
     expect(u1 && uN).toBe(true);
+  });
+
+  it('REGRESSION (Codex MAJOR #3): multi-lesson worksheet families now have text', () => {
+    const m = buildAllItemTextMap(ROOT);
+    const keys = [...m.keys()];
+    // Files like u4_lesson1-2_live.html (UNIT_ID 'U4L1-2') and
+    // u3_lesson6-7_live.html (lone WORKSHEET_ID 'WS-U3L6-7') were skipped by
+    // the old `\d+` filename regex + UNIT_ID-only extractor → whole families
+    // routed to no-item-text. They MUST resolve now.
+    const hasMultiLesson = keys.some(k => /^WS-U\dL\d+-\d/.test(k)); // e.g. WS-U4L1-2-Q3
+    expect(hasMultiLesson).toBe(true);
+    const hasWorksheetIdForm = keys.some(k => /^WS-U3L6-7-/.test(k));
+    expect(hasWorksheetIdForm).toBe(true);
+  });
+
+  it('REGRESSION (Codex re-review MAJOR): non-reflect1/2/exitTicket textareas (reflect3) have text', () => {
+    const m = buildAllItemTextMap(ROOT);
+    // The old hardcoded ['reflect1','reflect2','exitTicket'] list dropped these.
+    expect(typeof m.get('WS-U2L8-reflect3')).toBe('string');
+    expect((m.get('WS-U2L8-reflect3') || '').length).toBeGreaterThan(0);
+    expect(typeof m.get('WS-U4L3-5-reflect3')).toBe('string');
+  });
+
+  it('REGRESSION (Codex re-review MINOR): no phantom WS text-map keys (data-answer= mirrors build-skill-map)', () => {
+    const m = buildAllItemTextMap(ROOT);
+    const skillMap = JSON.parse(
+      readFileSync(resolve(ROOT, 'data/skill-map.json'), 'utf8')
+    );
+    const phantoms = [...m.keys()].filter(k => /^WS-/.test(k) && !(k in skillMap));
+    expect(phantoms).toEqual([]);
   });
 });

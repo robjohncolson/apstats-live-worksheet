@@ -1,5 +1,5 @@
 # Gradebook Tagging Audit — AP Skill Coverage
-<!-- GENERATED: 2026-05-18T01:57:53.315Z -->
+<!-- GENERATED: 2026-05-19T09:06:46.514Z -->
 
 ## Summary
 
@@ -29,12 +29,12 @@
 
 ### Pool (d) — AP Framework Files (apstat_1..9_framework.md)
 - Framework files parsed: 9 of 9
-- Topics extracted: 82
-- Malformed files: 1
+- Topics extracted: 80
+- Malformed files: 0
 
 ## Flags and Malformed Sources
 
-- FLAG: apstat_5_framework.md is MALFORMED — no ## TOPIC headers (known defect for Unit 5). Parsed with fallback. Topic-level skill map may be incomplete for Unit 5.
+No flags.
 
 ## AP Skill Coverage Matrix
 
@@ -77,29 +77,29 @@ Extracted from apstat_{1..9}_framework.md. Unit 5 uses fallback parser (malforme
 |-------|-----------|
 | 1.1 | 1.A |
 | 1.2 | 2.A |
-| 1.3 | 2.B, 2.A |
-| 1.4 | 2.B, 2.A, 2.D |
+| 1.3 | 2.A, 2.B |
+| 1.4 | 2.A, 2.B, 2.D |
 | 1.5 | 2.A, 2.B |
 | 1.6 | 2.A |
 | 1.7 | 2.C, 4.B |
-| 1.8 | 2.B, 2.A |
+| 1.8 | 2.A, 2.B |
 | 1.9 | 2.D |
 | 1.10 | 2.D, 3.A |
 | 2.1 | 1.A, 2.D |
-| 2.2 | 2.D, 2.C |
-| 2.3 | 2.C, 2.D, 2.B, 2.A |
-| 2.4 | 2.B, 2.A, 2.C, 4.B |
+| 2.2 | 2.C, 2.D |
+| 2.3 | 2.A, 2.B, 2.C, 2.D |
+| 2.4 | 2.A, 2.B, 2.C, 4.B |
 | 2.5 | 2.C, 4.B |
-| 2.6 | 2.C, 2.B, 2.A |
-| 2.7 | 2.B, 2.A, 2.C, 4.B |
-| 2.8 | 2.C, 4.B, 2.A |
+| 2.6 | 2.A, 2.B, 2.C |
+| 2.7 | 2.A, 2.B, 2.C, 4.B |
+| 2.8 | 2.A, 2.C, 4.B |
 | 2.9 | 2.A, 2.C |
 | 3.1 | 1.A |
-| 3.2 | 4.A |
-| 3.3 | (none parsed) |
-| 3.4 | (none parsed) |
-| 3.5 | (none parsed) |
-| 3.6 | (none parsed) |
+| 3.2 | 1.C, 4.A |
+| 3.3 | 1.C |
+| 3.4 | 1.C |
+| 3.5 | 1.B, 1.C |
+| 3.6 | 1.C |
 | 3.7 | 4.B |
 | 4.1 | 1.A |
 | 4.2 | 3.A |
@@ -116,44 +116,45 @@ Extracted from apstat_{1..9}_framework.md. Unit 5 uses fallback parser (malforme
 | 5.1 | 1.A |
 | 5.2 | 3.A, 3.C |
 | 5.3 | 3.C |
-| 5.4 | 4.B, 3.B |
+| 5.4 | 3.B, 4.B |
 | 5.5 | 3.B, 3.C, 4.B |
 | 5.6 | 3.B, 3.C, 4.B |
 | 5.7 | 3.B, 3.C, 4.B |
 | 5.8 | 3.B, 3.C, 4.B |
 | 6.1 | 1.A |
-| 6.2 | 4.C |
-| 6.3 | 4.B, 4.A |
-| 6.4 | 4.C |
-| 6.5 | 4.B |
-| 6.6 | (none parsed) |
-| 6.7 | 3.A, 4.A, 4.B |
-| 6.8 | 4.C |
-| 6.9 | 4.B |
-| 6.10 | 4.C |
-| 6.11 | 4.B |
+| 6.2 | 1.D, 3.D, 4.C |
+| 6.3 | 4.A, 4.B, 4.D |
+| 6.4 | 1.E, 1.F, 4.C |
+| 6.5 | 3.E, 4.B |
+| 6.6 | 4.E |
+| 6.7 | 1.B, 3.A, 4.A, 4.B |
+| 6.8 | 1.D, 3.D, 4.C |
+| 6.9 | 4.B, 4.D |
+| 6.10 | 1.E, 1.F, 4.C |
+| 6.11 | 3.E, 4.B, 4.E |
 | 7.1 | 1.A |
-| 7.2 | 3.C, 4.C |
-| 7.3 | 4.B, 4.A |
-| 7.4 | 4.C |
-| 7.5 | 4.B |
-| 7.6 | 4.C |
-| 7.7 | 4.B, 4.A |
-| 7.8 | 4.C |
-| 7.9 | 4.B |
-| 7.10 | (none parsed) |
+| 7.2 | 1.D, 3.C, 3.D, 4.C |
+| 7.3 | 4.A, 4.B, 4.D |
+| 7.4 | 1.E, 1.F, 4.C |
+| 7.5 | 3.E, 4.B, 4.E |
+| 7.6 | 1.D, 3.D, 4.C |
+| 7.7 | 4.A, 4.B, 4.D |
+| 7.8 | 1.E, 1.F, 4.C |
+| 7.9 | 3.E, 4.B, 4.E |
+| 7.10 | (N/A — synthesis topic) |
 | 8.1 | 1.A |
-| 8.2 | 3.C, 3.A, 4.C |
-| 8.3 | 4.B |
+| 8.2 | 1.E, 1.F, 3.A, 3.C, 4.C |
+| 8.3 | 3.E, 4.B, 4.E |
 | 8.4 | 3.A |
-| 8.5 | 4.C |
-| 8.6 | 4.B |
-| 8.7 | (none parsed) |
+| 8.5 | 1.E, 1.F, 4.C |
+| 8.6 | 3.E, 4.B, 4.E |
+| 8.7 | (N/A — synthesis topic) |
 | 9.1 | 1.A |
-| 9.2 | 4.C |
-| 9.3 | 4.B, 4.A |
-| 9.4 | 4.C |
-| 9.5 | 4.B |
+| 9.2 | 1.D, 3.D, 4.C |
+| 9.3 | 4.A, 4.B, 4.D |
+| 9.4 | 1.E, 1.F, 4.C |
+| 9.5 | 3.E, 4.B, 4.E |
+| 9.6 | (N/A — synthesis topic) |
 
 ## Gap List — Skills with Insufficient Coverage
 
@@ -191,30 +192,29 @@ No gaps detected (all skills covered by at least one pool via topic inference).
 
 ## Phase 3 Readiness Verdict
 
-**Question: Can per-skill BKT (Bayesian Knowledge Tracing) be trusted today?**
+**Question: Can the diagnostic per-skill BKT engine be trusted today?**
 
-### Verdict: NOT READY
+### Verdict: CONDITIONAL
 
-**Reason 1 — No explicit AP-skill tags on any item.**
-All 4 pools (69 worksheets, curriculum.js (817 questions), 16 supplement probes, 31 FRQ sub-skills) lack AP skill codes on individual items.
-Skill mapping is inference-only (lesson → framework topic → AP skill code).
+**Provenance distribution (`data/skill-map.json`):**
 
-**Reason 2 — Worksheet items lack per-question skill attribution.**
-2373 fill-in-blank items and 281 FRQ textareas across 69 worksheets carry no data-skill or data-ap-skill attributes.
-BKT requires item-level skill tags; inferred topic-level coverage is too coarse for reliable estimation.
+| Provenance | All | Certifier (curriculum PC/lesson) | Practice (worksheet/FRQ/probe) |
+|------------|----:|---------------------------------:|-------------------------------:|
+| topic-inherit | 837 | 46 | 791 |
+| ai-constrained | 2412 | 725 | 1687 |
+| unresolved | 181 | 31 | 150 |
+| formula-map | 11 | 11 | 0 |
+| frq-xref | 8 | 0 | 8 |
+| **total** | **3449** | **813** | **2636** |
 
-**Reason 3 — curriculum.js is untagged.**
-817 curriculum.js questions have NO skill field. The sacred-file rule prevents adding tags here.
-Phase 2 (curriculum quiz feeder) must route through a skill-tagged wrapper layer.
+**Confidence buckets:** 1.0: 860 · 0.8-0.99: 2021 · 0.6-0.79: 345 · <0.6: 42 · none: 181
 
-**Reason 4 — FRQ sub-skills use internal IDs, not AP codes.**
-6 of 31 FRQ sub-skills have zero supporting MCQs. AP skill codes must be mapped to FRQ decomposition entries before BKT can aggregate across item types.
+**CONDITIONAL — diagnostic-ready, certifier pending Sprint T3.** Practice pools are tagged (2478/2636 via topic-inherit + ai-constrained); the diagnostic BKT engine (v2 §3) can consume practice signal now. The **certifier pool** (curriculum.js Progress Check — the proctored grade certifier, decision T-3) still has 31 `unresolved` and 725 `ai-constrained` (not yet teacher-verified). Per spec §6, `unresolved`/un-verified tags **never certify** — they are excluded from the certifying rollup until Sprint T3 flips the spot-reviewed certifier tags to `teacher`. This is the expected post-T2 state ("move toward READY").
 
-**What needs to happen before Phase 3:**
-1. Add AP skill codes to worksheet `<input>` and `<textarea>` elements (data-skill attr) — affects all 69 worksheets.
-2. Build a skill-tag wrapper for curriculum.js (read-only) that maps question IDs → AP skill codes.
-3. Map frq-decompositions.json sub-skill IDs → AP skill codes (u1-frq-zscore → 2.C or 4.B, etc.).
-4. Add AP skill codes to supplement probes (formulaId → AP skill code lookup).
+**Residual before READY (= Sprint T3 scope):**
+1. Teacher spot-review the certifier `ai-constrained` tags (stratified sample) → flip to `teacher`.
+2. Resolve the 31 certifier `unresolved` items (dual-pass disagreements + no-text) from `data/skill-map.review-queue.json`.
+3. Re-run this audit → verdict becomes READY when certifier `unresolved` == 0 and certifier multi-skill tags are `teacher`.
 
 **Biggest coverage gaps:**
 - Skills with most inferred worksheet items: 4.B (1002), 2.A (469), 4.C (386)

@@ -137,3 +137,73 @@ Per `CONTINUATION_PROMPT.md` GREEN gate, not the whole-workstream §7:
 **Out of scope (unchanged):** never write `curriculum.js`; tags are
 diagnostic only (v2); Sprint T3 (teacher verification of the certifier
 pool + the disagreement queue) is the NEXT tagging sprint, not this run.
+
+## 5. Run results (2026-05-19, completed)
+
+Controlled full run executed via a **detached** process (the first two
+harness-tracked attempts were killed by session suspend; detached survives).
+Clean run, **0 failed batches, 0 constraint violations**:
+
+- **2,472** items classified (117 no-text auto-queued; the rest structural).
+- **2,193 resolved `ai-constrained`** (dual-pass agreement) =
+  **84.6%** of all 2,593 `unresolved` (88.6% of classifiable).
+  Confidence: 1899 in 0.8-0.99, 264 in 0.6-0.79, 26 <0.6, 4 @1.0.
+- **400 → Sprint T3** (`data/skill-map.review-queue.json` +
+  `GRADEBOOK_TAGGING_T3_QUEUE.md`): 283 dual-pass-disagreement + 117 no-text.
+- Merged via `build-skill-map.mjs` overlay → canonical `data/skill-map.json`
+  now `{ai-constrained:2193, topic-inherit:837, unresolved:400,
+  formula-map:11, frq-xref:8}` (3449 keys, key set unchanged). Audit
+  verdict moved **NOT READY → CONDITIONAL** (residual = the T3 queue,
+  exactly "move toward READY").
+- Stratified-sample accuracy audit (3 confidence bands x 9 units, certifier
+  pool): ~22/27 clearly correct (3.A normal-prob, 2.D comparison tables,
+  1.B sampling/design, 3.B sampling-dist parameters, ...).
+
+### Known limitation (routed to Sprint T3 + future re-run)
+
+`SKILL_DESCRIPTIONS` was **missing 1.F / 3.D / 3.E / 4.D** (the U6-U9
+inference skills) during this run, so those codes appeared without a gloss
+in U6-U9 prompts — elevated tag noise concentrated in the U6-U9 **certifier
+pool**, which is exactly the pool Sprint T3's teacher spot-review gates
+(decision T-3), so it does not block (spec T-1: baseline-first/iterate;
+v2: tags diagnostic-only). **Fixed in tooling** (descriptions added;
+`CLASSIFIER_PROMPT_VERSION='v2'` now part of the cache key so a re-run
+recomputes with the better prompt). Per the idempotent-overlay design
+(resolution at rollup time), a future `--all` re-run **retro-improves all
+historical tags** with no ledger rewrite — the intended T-1 iterate path.
+Sprint T3 should prioritize U6-U9 certifier items.
+
+## 6. Codex review (load-bearing gate) + final result
+
+Two Codex read-only reviews were run. Review 1 found **1 BLOCKER + 4 MAJOR**
+(all real, all in the new full-run code; the legacy `disambiguateBatch`
+path confirmed un-regressed). All 5 fixed:
+1. (BLOCKER) stale `-o` reuse → unlink-before-spawn + exit-code gate +
+   batch-id-set validation in `codexBatchClassify`.
+2. (MAJOR) cache key now hashes prompt-version + full batch content
+   (id+itemText+candidates+topic); hash-unique outFile.
+3. (MAJOR) worksheet loader: `.+` filename regex + shared
+   `extractWorksheetUnitId` (UNIT_ID/WORKSHEET_ID); **+ re-review found it
+   incomplete** → `extractWorksheetTextareas` made generic (was hardcoded
+   `reflect1/2/exitTicket`, dropped `reflect3`) and `extractWorksheetBlanks`
+   switched to `data-answer=` (mirrors build-skill-map exactly; kills the
+   `u3_lesson6-7` regex-literal phantom). no-text 117 -> 5 (only the
+   text-less `U#-L#-QS#` supplement probes remain).
+4. (MAJOR) overlay preserves `teacher` provenance (conf 1.0).
+5. (MAJOR) READY verdict requires non-empty certifier + practice fully
+   resolved.
+
+Review 2 (focused re-review) **confirmed fixes 1,2,4,5 correct** and
+surfaced the fix-3 incompleteness above (blast radius = exactly **2**
+items: `WS-U2L8-reflect3`, `WS-U4L3-5-reflect3`). Per spec T-1
+(don't-block / iterate / idempotent-overlay retro-fix) those 2 are routed
+to Sprint T3, not re-run for.
+
+**Final merged result (run #5, all fixes in tooling):**
+**2,412 / 2,593 `ai-constrained` = 93.0%**, 0 constraint violations,
+confidence 4@1.0 / 2021@0.8-0.99 / 345@0.6-0.79 / 42<0.6. Queue **181**
+-> Sprint T3 = 173 dual-pass-disagreement + 7 no-text + 1 classifier-miss.
+Run progression 84.6% (loader-bugged) -> 91.5% (loader fixed) -> 93.0%
+(recovery). Canonical `data/skill-map.json` = `{topic-inherit:837,
+ai-constrained:2412, unresolved:181, formula-map:11, frq-xref:8}`,
+key set unchanged (3449). Audit verdict NOT READY -> CONDITIONAL.

@@ -60,7 +60,7 @@
  * }
  */
 
-import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync, unlinkSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
@@ -78,7 +78,11 @@ const ROOT = resolve(__dirname, '..');
  */
 function extractWorksheetBlanks(htmlPath, unitId) {
   const content = readFileSync(htmlPath, 'utf8');
-  const blankRe = /class=['"]blank['"]/g;
+  // MUST mirror build-skill-map.mjs exactly: it counts `data-answer=`
+  // occurrences. Matching `class="blank"` instead picked up a JS regex
+  // literal in u3_lesson6-7_live.html (phantom key, Codex MINOR). Keying on
+  // data-answer= aligns WS-{unitId}-Q{n} with the canonical skill-map keys.
+  const blankRe = /data-answer=/g;
   const positions = [];
   let m;
   while ((m = blankRe.exec(content)) !== null) {
@@ -97,20 +101,28 @@ function extractWorksheetBlanks(htmlPath, unitId) {
 }
 
 /**
- * Extract textarea contexts (reflect1, reflect2, exitTicket) from a worksheet.
+ * Extract textarea contexts for ALL real textarea ids — mirrors
+ * build-skill-map.mjs exactly (parse every <textarea ...> block, take its
+ * id, skip JS template-literal artifacts). The old hardcoded
+ * ['reflect1','reflect2','exitTicket'] list missed reflect3 (and any other
+ * textarea id), routing those items to no-item-text (Codex MAJOR).
  */
 function extractWorksheetTextareas(htmlPath, unitId) {
   const content = readFileSync(htmlPath, 'utf8');
   const result = new Map();
-  const taIds = ['reflect1', 'reflect2', 'exitTicket'];
+  const blocks = content.match(/<textarea[^>]*>/g) || [];
 
-  for (const taId of taIds) {
-    const marker = `id='${taId}'`;
-    const marker2 = `id="${taId}"`;
-    let idx = content.indexOf(marker);
-    if (idx === -1) idx = content.indexOf(marker2);
+  for (const block of blocks) {
+    const idm = block.match(/id=['"]([^'"]+)['"]/);
+    if (!idm) continue;
+    const taId = idm[1];
+    // Skip unrendered JS template-literal artifacts (e.g. the appeal-form
+    // `<textarea id="appeal-text-${questionId}">`) — same guard as
+    // build-skill-map.mjs so the id namespaces stay identical.
+    if (taId.includes('${') || taId.includes('`')) continue;
+
+    const idx = content.indexOf(block);
     if (idx === -1) continue;
-
     const start = Math.max(0, idx - 600);
     const chunk = content.slice(start, idx + 50);
     const text = stripHtml(chunk).slice(-250);
@@ -136,18 +148,32 @@ function stripHtml(html) {
  * Load all worksheet item texts for a given unit.
  * Returns Map<itemId, text>.
  */
+/**
+ * Extract the worksheet UNIT_ID — MUST mirror build-skill-map.mjs exactly so
+ * the WS-{unitId}-Q{n} ids align with skill-map keys. Handles both id-decl
+ * forms (UNIT_ID and the lone-WORKSHEET_ID form) and single/double quotes.
+ */
+export function extractWorksheetUnitId(html) {
+  const m1 = html.match(/const\s+UNIT_ID\s*=\s*['"]([^'"]+)['"]/);
+  if (m1) return m1[1];
+  const m2 = html.match(/const\s+WORKSHEET_ID\s*=\s*['"]WS-([^'"]+)['"]/);
+  if (m2) return m2[1];
+  return null;
+}
+
 function loadWorksheetTexts(root, unit) {
   const textMap = new Map();
+  // `.+` (not `\d+`) so multi-lesson files (u4_lesson1-2_live.html,
+  // u3_lesson6-7_live.html, u4_lesson10-12_live.html, ...) are NOT skipped.
   const files = readdirSync(root)
-    .filter(f => new RegExp(`^u${unit}_lesson\\d+_live\\.html$`).test(f))
+    .filter(f => new RegExp(`^u${unit}_lesson.+_live\\.html$`).test(f))
     .sort();
 
   for (const filename of files) {
     const htmlPath = resolve(root, filename);
     const content = readFileSync(htmlPath, 'utf8');
-    const unitMatch = content.match(/const UNIT_ID = '([^']+)'/);
-    if (!unitMatch) continue;
-    const unitId = unitMatch[1];
+    const unitId = extractWorksheetUnitId(content);
+    if (!unitId) continue;
 
     const blanks = extractWorksheetBlanks(htmlPath, unitId);
     blanks.forEach((text, id) => textMap.set(id, text));
@@ -533,8 +559,18 @@ const SKILL_DESCRIPTIONS = {
   '1.C': 'Determine relative frequencies, proportions, or probabilities',
   '1.D': 'Collect data appropriately',
   '1.E': 'Identify potential sources of error',
-  '4.E': 'Justify a claim using a decision or conclusion from inference',
+  '4.E': 'Justify a claim using a decision or conclusion from a significance test',
+  // Inference-unit skills (U6-U9) — were missing, degrading those prompts.
+  '1.F': 'Identify an appropriate inference method for a significance test',
+  '3.D': 'Construct a confidence interval, provided conditions are met',
+  '3.E': 'Calculate a test statistic and find a p-value, provided conditions are met',
+  '4.D': 'Justify a claim based on a confidence interval',
 };
+
+// Prompt/classifier version — part of the cache key so a prompt or
+// skill-description change INVALIDATES stale cached batch results
+// (otherwise an improved prompt would silently reuse old classifications).
+const CLASSIFIER_PROMPT_VERSION = 'v2';
 
 /**
  * Build a classification prompt for the LLM.
@@ -916,6 +952,11 @@ function runCodexBatch(prompt, { root, schemaPath, outFile, timeoutMs }) {
     ];
     const errFile = outFile.replace(/\.json$/, '.err.txt');
     let stderr = '';
+    // BLOCKER fix: never let a stale -o file from a prior run be parsed as
+    // fresh output. Delete it before spawn; only accept output when codex
+    // exited 0 AND (re)wrote the file this invocation.
+    try { if (existsSync(outFile)) unlinkSync(outFile); } catch { /* ignore */ }
+    let exitCode = null;
     const child = spawn(CODEX_SPAWN.cmd, args, {
       cwd: root,
       shell: CODEX_SPAWN.shell,
@@ -927,7 +968,7 @@ function runCodexBatch(prompt, { root, schemaPath, outFile, timeoutMs }) {
       done = true;
       clearTimeout(timer);
       if (val === null) {
-        try { writeFileSync(errFile, stderr.slice(-2000), 'utf8'); } catch { /* ignore */ }
+        try { writeFileSync(errFile, `exit=${exitCode}\n` + stderr.slice(-2000), 'utf8'); } catch { /* ignore */ }
       }
       resolvePromise(val);
     };
@@ -937,8 +978,10 @@ function runCodexBatch(prompt, { root, schemaPath, outFile, timeoutMs }) {
     }, timeoutMs);
     if (child.stderr) child.stderr.on('data', d => { stderr += d.toString(); });
     child.on('error', (e) => { stderr += `\nspawn error: ${e.message}`; finish(null); });
+    child.on('exit', (code) => { exitCode = code; });
     child.on('close', () => {
-      if (!existsSync(outFile)) return finish(null);
+      if (exitCode !== 0) return finish(null);          // codex must have succeeded
+      if (!existsSync(outFile)) return finish(null);     // ...and written THIS run
       try {
         const raw = readFileSync(outFile, 'utf8').trim();
         const jsonStart = raw.indexOf('{');
@@ -992,13 +1035,18 @@ export async function codexBatchClassify(items, opts) {
       if (idx >= batches.length) return;
       const batch = batches[idx];
       const tag = String(idx).padStart(3, '0');
-      // Content-addressed cache: a short hash of this batch's item ids so a
-      // different batch-size / item-set NEVER reuses a stale foreign cache
-      // file (a smoke run's batch000 must not be replayed for the full run).
-      const sig = batch.map(b => b.id).join(',');
+      const batchIds = new Set(batch.map(b => b.id));
+      // Truly content-addressed cache key: prompt version + the FULL batch
+      // content (id + itemText + candidates + topic). If the skill map, text
+      // extraction, or prompt changes while ids stay the same, the hash
+      // changes and stale classifications are NOT reused (MAJOR fix).
+      const sig = CLASSIFIER_PROMPT_VERSION + '|' + batch
+        .map(b => `${b.id}${b.itemText || ''}${(b.candidates || []).join(',')}${b.topic || ''}`)
+        .join('');
       let h = 5381;
       for (let k = 0; k < sig.length; k++) h = ((h * 33) ^ sig.charCodeAt(k)) >>> 0;
-      const cacheFile = resolve(tmpDir, `pass${passLabel}-b${tag}-${h.toString(36)}.json`);
+      const hx = h.toString(36);
+      const cacheFile = resolve(tmpDir, `pass${passLabel}-${CLASSIFIER_PROMPT_VERSION}-b${tag}-${hx}.json`);
       let classifications = null;
 
       if (existsSync(cacheFile)) {
@@ -1010,20 +1058,29 @@ export async function codexBatchClassify(items, opts) {
       }
       if (!Array.isArray(classifications)) {
         const prompt = buildBatchPrompt(batch);
-        const outFile = resolve(tmpDir, `pass${passLabel}-out${tag}.json`);
+        // outFile is hash-unique (not just batch index) so a concurrent or
+        // re-run can never collide / leave a foreign stale file behind.
+        const outFile = resolve(tmpDir, `pass${passLabel}-out-${hx}.json`);
         classifications = await runCodexBatch(prompt, { root, schemaPath, outFile, timeoutMs });
         if (Array.isArray(classifications)) {
           writeFileSync(cacheFile, JSON.stringify(classifications), 'utf8');
         }
       }
       if (Array.isArray(classifications)) {
+        // BLOCKER fix: only accept ids that BELONG to this batch (drops
+        // foreign/stale-file content and out-of-batch hallucinated ids).
+        let matched = 0;
         for (const c of classifications) {
-          if (c && typeof c.id === 'string' && typeof c.skill === 'string') {
+          if (c && typeof c.id === 'string' && typeof c.skill === 'string' && batchIds.has(c.id)) {
             result.set(c.id, {
               skill: c.skill,
               confidence: typeof c.confidence === 'number' ? c.confidence : 0.5,
             });
+            matched++;
           }
+        }
+        if (matched < batch.length) {
+          log(`  pass ${passLabel}: batch ${tag} PARTIAL ${matched}/${batch.length} (rest -> review queue)`);
         }
       }
       completed++;

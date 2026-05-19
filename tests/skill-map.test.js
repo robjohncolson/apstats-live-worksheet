@@ -200,11 +200,19 @@ describe('Pool coverage', () => {
     expect(pcIds.length).toBeGreaterThan(0);
   });
 
-  it('pool (b): curriculum.js PC IDs are unresolved (no lesson-level topic)', () => {
+  it('pool (b): curriculum.js PC IDs have no lesson-level topic; provenance unresolved or T2 ai-constrained', () => {
+    // Post-T2: PC ids still have no lesson-level topic (the real invariant),
+    // but the full T2 disambiguation run resolves many from `unresolved` →
+    // `ai-constrained` (skill must then be inside its candidate set).
     const pcIds = Object.entries(skillMap).filter(([k]) => k.includes('-PC-'));
     for (const [, entry] of pcIds) {
-      expect(entry.provenance).toBe('unresolved');
+      expect(['unresolved', 'ai-constrained']).toContain(entry.provenance);
       expect(entry.topic).toBeNull();
+      if (entry.provenance === 'ai-constrained') {
+        expect(entry.candidates).toContain(entry.skill);
+      } else {
+        expect(entry.skill).toBeNull();
+      }
     }
   });
 
@@ -236,15 +244,36 @@ describe('topic-inherit vs unresolved resolution', () => {
     }
   });
 
-  it('topic 1.7 items may be unresolved (multi-skill: 2.C + 4.B)', () => {
-    // U1-L7 maps to topic 1.7 → skills [2.C, 4.B] → unresolved
+  it('topic 1.7 items are multi-skill [2.C,4.B]: unresolved or T2-resolved within that set', () => {
+    // U1-L7 → topic 1.7 → multi-skill candidates [2.C, 4.B]. Pre-T2 these are
+    // `unresolved`; the full T2 run resolves them to `ai-constrained` with a
+    // skill picked FROM the candidate set (constraint preserved by the overlay).
     const u1l7 = Object.entries(skillMap).find(([k]) => k.startsWith('U1-L7-Q'));
     if (u1l7) {
       const [, entry] = u1l7;
-      expect(entry.provenance).toBe('unresolved');
-      expect(entry.skill).toBeNull();
       expect(entry.candidates).toContain('2.C');
       expect(entry.candidates).toContain('4.B');
+      expect(['unresolved', 'ai-constrained']).toContain(entry.provenance);
+      if (entry.provenance === 'ai-constrained') {
+        expect(entry.candidates).toContain(entry.skill);
+      } else {
+        expect(entry.skill).toBeNull();
+      }
+    }
+  });
+
+  it('overlay invariant: every ai-constrained/teacher entry has skill in candidates; teacher ⇒ conf 1.0', () => {
+    // Guards Codex MAJOR #4 fix: the T2/T3 overlay must keep the picked skill
+    // inside the canonical candidate set, and must NOT downgrade a
+    // teacher-confirmed tag to ai-constrained (the documented T3→READY path).
+    for (const [, e] of Object.entries(skillMap)) {
+      if (e.provenance === 'ai-constrained' || e.provenance === 'teacher') {
+        expect(Array.isArray(e.candidates)).toBe(true);
+        expect(e.candidates).toContain(e.skill);
+      }
+      if (e.provenance === 'teacher') {
+        expect(e.confidence).toBe(1.0);
+      }
     }
   });
 

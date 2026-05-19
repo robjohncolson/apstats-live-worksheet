@@ -419,6 +419,7 @@ export function buildSkillMap(root = ROOT) {
   // only overlay an id that exists, is still `unresolved`, and whose picked
   // skill is inside that entry's canonical candidate set.
   let aiConstrainedCount = 0;
+  let teacherCount = 0;
   const disambPath = resolve(root, 'data/skill-map.disambiguated.json');
   if (existsSync(disambPath)) {
     let disamb;
@@ -433,14 +434,20 @@ export function buildSkillMap(root = ROOT) {
         if (!cur || cur.provenance !== 'unresolved') continue;
         if (!d || typeof d.skill !== 'string') continue;
         if (!Array.isArray(cur.candidates) || !cur.candidates.includes(d.skill)) continue;
+        // Preserve a teacher-confirmed tag as `teacher` (conf 1.0) — the T3
+        // promotion path documented in GRADEBOOK_TAGGING_T3_QUEUE.md adds
+        // reviewed entries with provenance:"teacher"; forcing everything to
+        // ai-constrained would make the documented path to READY unreachable.
+        const isTeacher = d.provenance === 'teacher';
         skillMap[id] = {
           skill: d.skill,
           candidates: cur.candidates,
-          confidence: typeof d.confidence === 'number' ? d.confidence : 0,
-          provenance: 'ai-constrained',
+          confidence: isTeacher ? 1.0 : (typeof d.confidence === 'number' ? d.confidence : 0),
+          provenance: isTeacher ? 'teacher' : 'ai-constrained',
           topic: cur.topic ?? d.topic ?? null,
         };
-        aiConstrainedCount++;
+        if (isTeacher) teacherCount++;
+        else aiConstrainedCount++;
       }
     }
   }
@@ -487,6 +494,7 @@ export function buildSkillMap(root = ROOT) {
   console.log(`  Total entries: ${totalEntries}`);
   console.log(`  topic-inherit (resolved): ${resolvedCount}`);
   console.log(`  ai-constrained (T2 overlay): ${aiConstrainedCount}`);
+  console.log(`  teacher (T3 overlay): ${teacherCount}`);
   console.log(`  unresolved (final): ${finalUnresolved}`);
   console.log(`  provenance: ${JSON.stringify(provenanceCounts)}`);
   console.log(`\nWrote: ${jsonPath}`);
@@ -501,6 +509,7 @@ export function buildSkillMap(root = ROOT) {
     ws2FrqCount,
     resolvedCount,
     aiConstrainedCount,
+    teacherCount,
     unresolvedCount: finalUnresolved,
     provenanceCounts,
     totalEntries,

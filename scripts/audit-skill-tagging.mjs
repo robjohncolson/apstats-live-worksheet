@@ -390,10 +390,20 @@ export function loadSkillMapStats(root) {
   // Verdict: NOT READY (pre-T2: no AI tags, mostly unresolved) →
   // CONDITIONAL (post-T2: practice AI-tagged, certifier residual = Sprint T3)
   // → READY (post-T3: certifier fully teacher-verified, 0 unresolved).
+  // READY requires: a non-empty certifier pool, the certifier pool fully
+  // teacher-verified (no `unresolved`, no un-verified `ai-constrained`), AND
+  // the practice pool has no remaining `unresolved` either. Otherwise
+  // "Every pool is tagged" would be false (the prose) and READY would
+  // overstate global readiness.
   let verdict;
   if (aiConstrained === 0 && stillUnresolved > total * 0.5) {
     verdict = 'NOT READY';
-  } else if (certifier.unresolved === 0 && certifier['ai-constrained'] === 0) {
+  } else if (
+    certifier.total > 0 &&
+    certifier.unresolved === 0 &&
+    (certifier['ai-constrained'] || 0) === 0 &&
+    practice.unresolved === 0
+  ) {
     verdict = 'READY';
   } else {
     verdict = 'CONDITIONAL';

@@ -1,0 +1,3550 @@
+[
+  {
+    "id": "U1-L10-Q05",
+    "topic": "1.10",
+    "candidates": [
+      "2.D",
+      "3.A"
+    ],
+    "itemText": "Shalise competed in a jigsaw puzzle competition where participants are timed on how long they take to complete puzzles of various sizes. Shalise completed a small puzzle in 75 minutes and a large jigsaw puzzle in 140 minutes. For all participants, the distribution of completion time for the small puzzle was approximately normal with mean 60 minutes and standard deviation 15 minutes. The distribution of completion time for the large puzzle was approximately normal with mean 180 minutes and standard deviation 40 minutes.\n\nApproximately what percent of the participants had finishing times greater than Shalise's for each puzzle?",
+    "pass1": {
+      "skill": "2.D",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "3.A",
+      "confidence": 0.84
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U1-L4-Q01",
+    "topic": "1.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "itemText": "A market researcher asked a group of men and women to choose their favorite color design from a sample of advertisements. Which of the following statements is not supported by the table?",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "2.D",
+      "confidence": 0.88
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U1-PC-MCQ-A-Q11",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "3.A",
+      "4.B"
+    ],
+    "itemText": "A group of middle school students were asked which school subject was their favorite. The results are displayed by grade of student in the following bar chart.\n\nWhich of the following statements is supported by the bar chart?",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.87
+    },
+    "pass2": {
+      "skill": "2.D",
+      "confidence": 0.82
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U2-PC-MCQ-A-Q13",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D",
+      "4.B"
+    ],
+    "itemText": "For which of the following scatterplots is the correlation between \\(x\\) and \\(y\\) closest to \\(-1\\)?",
+    "pass1": {
+      "skill": "2.C",
+      "confidence": 0.74
+    },
+    "pass2": {
+      "skill": "2.A",
+      "confidence": 0.76
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U3-PC-MCQ-B-Q01",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.C",
+      "4.A",
+      "4.B"
+    ],
+    "itemText": "A company famous for its nacho-flavored corn chips has developed two new formulas, A and B, which they hope their customers will like even more than the original formula. To determine whether customers prefer one of the new formulas over the current nacho flavoring, a sample of 50 customers is obtained. Each customer tastes both formula A and formula B in a randomly assigned order and indicates which one they prefer more. Which of the following best describes this study?",
+    "pass1": {
+      "skill": "1.A",
+      "confidence": 0.86
+    },
+    "pass2": {
+      "skill": "1.B",
+      "confidence": 0.88
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U4-L11-Q04",
+    "topic": "4.11",
+    "candidates": [
+      "3.B",
+      "4.B"
+    ],
+    "itemText": "A certain factory that manufactures office chairs has a quality control process to identify defective chairs. The binomial random variable \\(D\\) represents the number of chairs in a sample of chairs that are defective. The mean of \\(D\\) is 10 chairs and the standard deviation is 3 chairs. Based on the distribution of \\(D\\), which of the following would be an accurate interpretation of the value 0.1?",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.89
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.91
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U4-PC-MCQ-B-Q14",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "2.B",
+      "3.A",
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "The following table shows the joint distribution of random variables \\(X\\) and \\(Y\\). Which of the following statements about the random variables \\(X\\) and \\(Y\\) is correct?",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.83
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.78
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U5-PC-MCQ-A-Q15",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "3.A",
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "The following graphs show the sampling distributions for two different point estimators, \\(\\bar{X}\\) and \\(Y\\), of the same population parameter. Which of the following statements is true?",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.8
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-L3-Q01",
+    "topic": "6.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "Show all your work. Indicate clearly the methods you use, because you will be scored on the correctness of your methods as well as on the accuracy and completeness of your results and explanations.\n\nThe manufacturer of a certain type of new cell phone battery claims that the average life span of the batteries is 500 charges; that is, the battery can be charged at least 500 times before failing. To investigate the claim, a consumer group will select a random sample of cell phones with the new battery and use the phones through 500 charges of the battery. The proportion of batteries that fail to last through 500 charges will be recorded. The results will be used to construct a 95 percent confidence interval to estimate the proportion of all such batteries that fail to last through 500 charges.\n\n(a) Explain in context what it means to be 95 percent confident.\n\n(b) Suppose the consumer group conducts its investigation with a random sample of 5 cell phones with the new battery, and 1 battery out of the 5 fails to last through 500 charges. Verify all conditions for inference for a 95 percent confidence interval for a population proportion. Indicate whether any condition has not been met. Do not construct the interval.\n\n(c) Based on the simulation, what proportion of the 95 percent confidence intervals capture the population proportion of 0.3? Explain how you determined your answer.\n\n(d) For the cell phone batteries, consider a sample of 5 in which 1 battery fails to last through 500 charges.\n    (i) Using the alternate method described, what is the value of \\(\\hat{p}_{new}\\)? Show your work.\n    (ii) Based on the results of the simulation, is the alternate method better than the traditional method described in part (b) to construct a 95 percent confidence interval with a small sample size? Explain your reasoning.",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.58
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-L6-QS1",
+    "topic": "6.6",
+    "candidates": [
+      "4.A",
+      "4.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "U6-L6-QS2",
+    "topic": "6.6",
+    "candidates": [
+      "4.A",
+      "4.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "U6-L6-QS3",
+    "topic": "6.6",
+    "candidates": [
+      "4.A",
+      "4.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "U6-PC-FRQ-Q02",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Show all your work. Indicate clearly the methods you use, because you will be scored on the correctness of your methods as well as on the accuracy and completeness of your results and explanations.\n\nA fair die, with its faces numbered from 1 to 6, is one in which each number is equally likely to land face up when the die is rolled. On a fair die, the probability that the number 6 will land face up is \\(\\frac{1}{6}\\). A group of students wanted to investigate a claim about manipulating a fair die so that it favors one outcome. The claim states that if a fair die is put into an oven and baked at 200°F for 10 minutes, the inside of the die will begin to melt. When the die cools, the inside will be solid again, but with more weight toward the bottom. This shift in weight will cause the face that was up when the die cooled to land up more often that the other faces.\n\nThe students obtained a fair die and baked it according to the preceding directions. The die cooled with the number 6 face up. After the die cooled, they rolled the die 200 times, and the number 6 landed face up 43 times. Let \\(p\\) represent the population proportion of times the number 6 will land face up on the baked die if the die could be rolled an infinite number of times.\n\n(a) Clarke, one of the students, constructed a 95 percent confidence interval for \\(p\\) as \\(0.215 \\pm 0.057\\). Does the interval provide convincing statistical evidence that the number 6 will land face up more often on the baked die than on a fair die? Explain your reasoning.\n\n(b) Aurelia, another student, suggested they conduct a significance test to investigate the claim. She tested the hypotheses \\(H_0: p = \\frac{1}{6}\\) versus \\(H_a: p > \\frac{1}{6}\\) at the significance level of \\(\\alpha = 0.05\\). She obtained a test statistic of \\(z = 1.83\\) with a p-value of 0.033. Do the results of the significance test agree with the results of Clarke's confidence interval in part (a)? Explain your reasoning.\n\n(c) Two standard normal curves are shown below, one for the confidence interval calculated in part (a) and one for the significance test conducted in part (b).\n\n(i) For the confidence interval curve, label the critical values for the 95% confidence level and shade the area that represents values in the outer 5%.\n\n(ii) For the significance test curve, label the critical value for the 5% significance level and shade the area representing the values of \\(z\\) that would lead to a rejection of the null hypothesis in part (b).\n\n(d) Joachim, a third student, noted that the confidence interval in part (a) gives plausible values of the parameter as an interval between two values. He suggested that they develop a one-sided confidence interval because they were only concerned with whether the number 6 was landing face up more often than expected, not less often. The one-sided-interval will determine a value \\(L\\) such that all plausible values of \\(p\\) are greater than \\(L\\). The formula for \\(L\\) is \\(L = \\hat{p} - z^* \\sqrt{\\frac{\\hat{p}(1-\\hat{p})}{n}}\\).\n\n(i) Determine the values of \\(z^*\\) needed to create the one-sided 95 percent confidence interval. Then calculate the value of \\(L\\).\n\n(ii) Do the results of Joachim's one-sided confidence interval agree with results of Aurelia's significance test in part (b)? Explain your reasoning.",
+    "pass1": {
+      "skill": "4.D",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.56
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-A-Q01",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "The manager of a city recreation center wants to estimate the percent of city residents who favor a proposal to build a new dog park. To gather data, the manager will select a random sample of city residents.\n\nWhich of the following is the most appropriate interval for the manager to use for such an estimate?",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "1.D",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-A-Q02",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Biologists studying horseshoe crabs want to estimate the percent of crabs in a certain area that are longer than 35 centimeters. The biologists will select a random sample of crabs to measure.\n\nWhich of the following is the most appropriate method to use for such an estimate?",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "1.D",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-A-Q07",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Sue and Javier are working on a statistics project to estimate the proportion of students at their school who have a pet dog. Sue selects a random sample of 81 students from the 2,400 students at their school, and Javier selects a separate random sample of 64 students. They will both construct a 90 percent confidence interval from their estimates. Consider the situation in which the sample proportion from Sue's sample is equal to the sample proportion from Javier's sample. Which of the following statements correctly describes their intervals?",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.79
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-A-Q08",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Suppose a 90 percent confidence interval to estimate a population proportion was calculated from a sample proportion of 18 percent and a margin of error of 4 percent. What is the width of the confidence interval?",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.91
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-B-Q01",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "A study reports that 75 percent of young adults in a county get their news from online sources. A sociologist believes that the percentage is actually greater than 75 percent. The sociologist will select a random sample of young adults from around the county to interview. Which of the following is the most appropriate method for investigating the sociologist's belief?",
+    "pass1": {
+      "skill": "1.F",
+      "confidence": 0.97
+    },
+    "pass2": {
+      "skill": "1.E",
+      "confidence": 0.92
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-B-Q02",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "A study reported that 28 percent of middle school students in a certain state participate in community service activities. A teacher believes that the rate is greater than 28 percent for the middle school students in the teacher's district. The teacher selected a random sample of middle school students from the district, and the percent of students in the sample who participated in community service activities was found to be 32 percent. Which of the following is the most appropriate method for investigating the teacher's belief?",
+    "pass1": {
+      "skill": "1.F",
+      "confidence": 0.97
+    },
+    "pass2": {
+      "skill": "1.E",
+      "confidence": 0.92
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-B-Q15",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Is the significance level of a hypothesis test equivalent to the probability that the null hypothesis is true?",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.97
+    },
+    "pass2": {
+      "skill": "3.A",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-C-Q01",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Machines at a factory produce circular washers with a specified diameter. The quality control manager at the factory periodically tests a random sample of washers to be sure that greater than 90 percent of the washers are produced with the specified diameter. The null hypothesis of the test is that the proportion of all washers produced with the specified diameter is equal to 90 percent. The alternative hypothesis is that the proportion of all washers produced with the specified diameter is greater than 90 percent. Which of the following describes a Type I error that could result from the test?",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.99
+    },
+    "pass2": {
+      "skill": "1.B",
+      "confidence": 0.97
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-C-Q02",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "At a manufacturing company, the percent of defective items produced on the assembly line is 2%. The company is testing a new assembly line designed to reduce the percent of defective parts. The null and alternative hypotheses of the test are: \\(H_0\\): The percent of defective parts is at least 2%. \\(H_a\\): The percent of defective parts is less than 2%. Which of the following describes a Type II error that could result from the test?",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.99
+    },
+    "pass2": {
+      "skill": "1.B",
+      "confidence": 0.97
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-C-Q03",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Which of the following is defined by the significance level of a hypothesis test?",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.98
+    },
+    "pass2": {
+      "skill": "3.A",
+      "confidence": 0.8
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-C-Q05",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "If all other factors are held constant, which of the following results in an increase in the probability of a Type II error?",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.96
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.96
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-C-Q06",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "If all other factors are held constant, which of the following results in a decrease in the probability of a Type II error?",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.96
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.96
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-C-Q09",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "At a research facility that designs rocket engines, researchers know that some engines fail to ignite as a result of fuel system error. From a random sample of 40 engines of one design, 14 failed to ignite as a result of fuel system error. From a random sample of 30 engines of a second design, 9 failed to ignite as a result of fuel system error. The researchers want to estimate the difference in the proportion of engine failures for the two designs. Which of the following is the most appropriate method to create the estimate?",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.85
+    },
+    "pass2": {
+      "skill": "1.D",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U6-PC-MCQ-C-Q10",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.B",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "Which of the following indicates that the use of a two-sample z-interval for a difference in population proportions is appropriate? I. Two populations of interest exist. II. The variable of interest is categorical. III. The intent is to estimate a difference in sample proportions.",
+    "pass1": {
+      "skill": "4.C",
+      "confidence": 0.99
+    },
+    "pass2": {
+      "skill": "1.D",
+      "confidence": 0.9
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U7-L2-QS1",
+    "topic": "7.2",
+    "candidates": [
+      "3.C",
+      "4.C"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "U9-L1-QS1",
+    "topic": "9.1",
+    "candidates": [
+      "2.C"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "U9-PC-MCQ-A-Q01",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "A health professional is investigating whether stress level before a routine practice session can be used to predict the mean stress level before a major figure skating competition. The health professional selected a random sample of 6 figure skaters and measured the stress level before a routine practice session and before a major competition. Each variable was measured as the change in the interval between heartbeats, or heart rate variability. The health professional wants to estimate the mean change in the stress level before a major competition for each unit increase in the stress level before a routine practice. Assuming the conditions for inference have been met, which of the following inference procedures is the most appropriate for such an investigation?",
+    "pass1": {
+      "skill": "1.F",
+      "confidence": 0.58
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.83
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "U9-PC-MCQ-A-Q02",
+    "topic": null,
+    "candidates": [
+      "1.A",
+      "1.D",
+      "1.E",
+      "1.F",
+      "3.D",
+      "3.E",
+      "4.A",
+      "4.B",
+      "4.C",
+      "4.D",
+      "4.E"
+    ],
+    "itemText": "The critic rating and audience score for 8 movies are shown in the table. An owner of a movie theater is investigating whether critic rating can be used to predict the mean audience score of movies. Assuming the conditions for inference have been met, which of the following inference procedures is the most appropriate to estimate the mean change in audience score for each 1 point increase in the critic rating?",
+    "pass1": {
+      "skill": "1.F",
+      "confidence": 0.58
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.83
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U1L3-Q2",
+    "topic": "1.3",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "itemText": "h2>Video 1: Representing a Categorical Variable with Tables [0:00 - 8:06] 1. [0:19] In this video, you learn how to represent categorical data in form. 2. [0:25] These tabular representations help us <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "2.A",
+      "confidence": 0.63
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U1L3-Q26",
+    "topic": "1.3",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "itemText": "ht risk, 501 for no risk, 377 for great risk, and 191 for can't say, drug unfamiliar. 19. [6:19] The total number of student responses in the vaping table is . 20. [6:32] The 782 students who answered slight risk make up <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.74
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.89
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U1L3-Q28",
+    "topic": "1.3",
+    "candidates": [
+      "2.A",
+      "2.B"
+    ],
+    "itemText": ";'>. 20. [6:32] The 782 students who answered slight risk make up , which is over . 21. [7:29] The response can't say, drug unfamiliar represents <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.88
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U1L4-Q17",
+    "topic": "1.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "itemText": "ies. 12. [4:47] In the superpower practice question, the statement that was not supported by the graph was choice . 13. [4:44] Freeze time was chosen by students and fly by <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.91
+    },
+    "pass2": {
+      "skill": "2.D",
+      "confidence": 0.84
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U1L4-Q2",
+    "topic": "1.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D"
+    ],
+    "itemText": "deo 1: Representing a Categorical Variable with Graphs [0:00 - 8:51] 1. [0:24] In this video, you learn how to represent categorical data . 2. [0:30] These graphical representations help you <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.83
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.76
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U1L7-Q25",
+    "topic": "1.7",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "nclude at least one numerical value from the lesson. Video 2: Outliers, Resistant Measures, and Choosing Statistics [0:00 - 8:30] 14. [1:39] Method 1 says a value is an outlier if it is more than <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.C",
+      "confidence": 0.71
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.93
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U1L7-Q28",
+    "topic": "1.7",
+    "candidates": [
+      "2.C",
+      "4.B"
+    ],
+    "itemText": ";'> IQRs below Q1 or above Q3. 15. [2:49 - 3:02] For the Flint data, any value greater than is an outlier by method 1, and there are such high outliers. 16. [3:15] Method 2 says a value is an outlier if it is two or more <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.C",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.92
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L2-Q14",
+    "topic": "2.2",
+    "candidates": [
+      "2.C",
+      "2.D"
+    ],
+    "itemText": "bars because there are four educational attainment levels. 9. [3:31] A segmented bar graph is created by the bars for each group on top of one another. 10. [3:49] In a segmented bar graph, each bar goes all the way up to <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.C",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "2.D",
+      "confidence": 0.6
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L3-Q1",
+    "topic": "2.3",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D"
+    ],
+    "itemText": "mented Bar Graph A graph that shows conditional relative frequencies stacked to 100% for each group. Video 1: Statistics for Two Categorical Variables [0:00 - 8:53] 1. [0:09] The video focuses on how to calculate summary <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.C",
+      "confidence": 0.95
+    },
+    "pass2": {
+      "skill": "2.A",
+      "confidence": 0.55
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L3-Q22",
+    "topic": "2.3",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "2.D"
+    ],
+    "itemText": "ide the cell count by that row total or column total. Use those within-group percents to compare distributions across groups. 18. [6:20] In the previous lesson, the class used conditional relative frequencies to find the <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "2.D",
+      "confidence": 0.84
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L4-Q1",
+    "topic": "2.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "-line trend. Nonlinear A pattern that bends or curves rather than following a straight line. Video 1: Explanatory and Response Variables; Constructing Scatter Plots [0:00 - 5:14] 1. [0:00] Topic 2.4 distinguishes between <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "2.A",
+      "confidence": 0.58
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L4-Q11",
+    "topic": "2.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "5. [3:31] If attendance is used to explain performance, then attendance is the variable and questions correct is the variable. 6. [3:31] Memory trick: the <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L4-Q12",
+    "topic": "2.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "='ts'>[3:31] If attendance is used to explain performance, then attendance is the variable and questions correct is the variable. 6. [3:31] Memory trick: the variable is explanatory, and the <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L4-Q7",
+    "topic": "2.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "have fewer chronically absent students. 3. [2:20] Some systems hoped that improving might raise . 4. [3:06] The two quantitative variables in the sample are percent <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.76
+    },
+    "pass2": {
+      "skill": "2.A",
+      "confidence": 0.64
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L4-Q8",
+    "topic": "2.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "3. [2:20] Some systems hoped that improving might raise . 4. [3:06] The two quantitative variables in the sample are percent and <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.76
+    },
+    "pass2": {
+      "skill": "2.A",
+      "confidence": 0.64
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L4-reflect2",
+    "topic": "2.4",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "ndance rate and exam performance appears , , and . 23. Reflection: Why is it not enough to describe a scatterplot only by saying it is positive? What else belongs in a complete description? <textarea id='reflect2' rows='4' style='width:100%; margin-t",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "2.A",
+      "confidence": 0.88
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L6-Q10",
+    "topic": "2.6",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C"
+    ],
+    "itemText": "predicted response value. b is the slope of the regression line. a is the y-intercept of the regression line. Technology is usually used to find the model. 6. [2:22] In the regression equation, ŷ is the y-value, b is the <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "2.C",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L6-Q11",
+    "topic": "2.6",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C"
+    ],
+    "itemText": "nse value. b is the slope of the regression line. a is the y-intercept of the regression line. Technology is usually used to find the model. 6. [2:22] In the regression equation, ŷ is the y-value, b is the , and a is the <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "2.C",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L6-Q12",
+    "topic": "2.6",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C"
+    ],
+    "itemText": "s='question'> 6. [2:22] In the regression equation, ŷ is the y-value, b is the , and a is the . 7. [3:15] Students usually use <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.C",
+      "confidence": 0.76
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L6-reflect1",
+    "topic": "2.6",
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.C"
+    ],
+    "itemText": " slope and a , and its predictions do not represent data values. 11. Reflection: How do slope, y-intercept, and x-value work together in ŷ = a + bx, and why is the result only a prediction? <textarea id='reflect1' rows='4' style='width:100%; margin-t",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.76
+    },
+    "pass2": {
+      "skill": "2.C",
+      "confidence": 0.58
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L8-Q13",
+    "topic": "2.8",
+    "candidates": [
+      "2.A",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "6. [3:06] In the three-point example, even a bad model had a residual sum of because the residuals offset each other. 7. [4:02] Squaring the residuals makes every term , so the sum of squared <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.8
+    },
+    "pass2": {
+      "skill": "2.C",
+      "confidence": 0.84
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L8-Q38",
+    "topic": "2.8",
+    "candidates": [
+      "2.A",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "n> [0:15] This video introduces the coefficient of and how to interpret for regression. 22. [1:20] A model that cannot use attendance predicts the mean y-value, or , for <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.71
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.62
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L8-Q8",
+    "topic": "2.8",
+    "candidates": [
+      "2.A",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": "r performance. 3. [1:26] In the Texas sample, there was a strong correlation between percent and exam performance. 4. [2:05] When comparing Model A and Model B, looking at the <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.C",
+      "confidence": 0.57
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.78
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L8-reflect3",
+    "topic": "2.8",
+    "candidates": [
+      "2.A",
+      "2.C",
+      "4.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "WS-U2L9-Q24",
+    "topic": "2.9",
+    "candidates": [
+      "2.A",
+      "2.C"
+    ],
+    "itemText": "life expectancy' style='width:150px;'>. 15. [1:08] The country data show a positive , but the form is not perfectly . 16. [2:24] The original linear fit had an r squared of <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.8
+    },
+    "pass2": {
+      "skill": "2.C",
+      "confidence": 0.64
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U2L9-Q32",
+    "topic": "2.9",
+    "candidates": [
+      "2.A",
+      "2.C"
+    ],
+    "itemText": "19. [4:12] After transforming the x-variable, the residual plot looked more and centered around . 20. [4:46] The transformed model had a higher r squared of <input type='text' class='bla",
+    "pass1": {
+      "skill": "2.A",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "2.C",
+      "confidence": 0.67
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U3L2-Q1",
+    "topic": "3.2",
+    "candidates": [
+      "1.C",
+      "4.A"
+    ],
+    "itemText": "n. Causal Relationship A relationship in which one variable directly causes a change in another. Video 1: Populations, Samples, Observational Studies, and Experiments [0:00 - 8:03] 1. [0:00] Topic 3.2 focuses on planning <input type='text' class='bla",
+    "pass1": {
+      "skill": "1.C",
+      "confidence": 0.45
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.56
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U3L2-Q10",
+    "topic": "3.2",
+    "candidates": [
+      "1.C",
+      "4.A"
+    ],
+    "itemText": "swer='back|home' style='width:80px;'>, Wald said the extra armor should go where the fewest hits appeared, on the . 4. [1:53] A is all individuals or items of interest. 5. [1:53] A <input type='text' class='bla",
+    "pass1": {
+      "skill": "1.C",
+      "confidence": 0.52
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.52
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U3L2-Q11",
+    "topic": "3.2",
+    "candidates": [
+      "1.C",
+      "4.A"
+    ],
+    "itemText": "west hits appeared, on the . 4. [1:53] A is all individuals or items of interest. 5. [1:53] A is always a <input type='text' class='bla",
+    "pass1": {
+      "skill": "1.C",
+      "confidence": 0.47
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.48
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U3L2-Q12",
+    "topic": "3.2",
+    "candidates": [
+      "1.C",
+      "4.A"
+    ],
+    "itemText": "'blank' data-answer='population' style='width:150px;'> is all individuals or items of interest. 5. [1:53] A is always a of the population. 6. [1:53] We often cannot measure the whole <input type='text' class='bla",
+    "pass1": {
+      "skill": "1.C",
+      "confidence": 0.49
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.54
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U3L2-Q13",
+    "topic": "3.2",
+    "candidates": [
+      "1.C",
+      "4.A"
+    ],
+    "itemText": "5. [1:53] A is always a of the population. 6. [1:53] We often cannot measure the whole , so we measure a <input type='text' class='bla",
+    "pass1": {
+      "skill": "1.C",
+      "confidence": 0.5
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.55
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L3-5-Q21",
+    "topic": "4.3",
+    "candidates": [
+      "3.A",
+      "4.B"
+    ],
+    "itemText": "What is the probability that a randomly selected album is not jazz? P(not Jazz) = 1 - P(Jazz) = 1 - 0.205 = Topic 4.4: Mutually Exclusive Events [Video: ~6 min] 12. <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.A",
+      "confidence": 0.96
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L3-5-Q6",
+    "topic": "4.3",
+    "candidates": [
+      "3.A",
+      "4.B"
+    ],
+    "itemText": "ass=\"question\"> 2. Sample space examples: Flip a single coin: S = { } Roll a single die: S = { } 3. If we flip two coins and record the sequence, our sample space has <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "3.A",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L3-5-Q7",
+    "topic": "4.3",
+    "candidates": [
+      "3.A",
+      "4.B"
+    ],
+    "itemText": "e die: S = { } 3. If we flip two coins and record the sequence, our sample space has outcomes: {HH, HT, TH, TT}. 4. If we roll two dice and record the ordered pair showing on each die, the sample space has <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "3.A",
+      "confidence": 0.7
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L3-5-reflect3",
+    "topic": "4.3",
+    "candidates": [
+      "3.A",
+      "4.B"
+    ],
+    "itemText": null,
+    "pass1": null,
+    "pass2": null,
+    "reason": "no-item-text"
+  },
+  {
+    "id": "WS-U4L7-8-Q18",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "X 0 1 2 3 4 5 6 P(X) 0.03 0.03 0.05 0.18 0.31 0.28 0.12 7. Using the thermostat distribution, find P(X &#8805; 4) = P(74 degrees or lower): P(X &#8805; 4) = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.66
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q19",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "td>0 1 2 3 4 5 6 P(X) 0.03 0.03 0.05 0.18 0.31 0.28 0.12 7. Using the thermostat distribution, find P(X &#8805; 4) = P(74 degrees or lower): P(X &#8805; 4) = + <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.66
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.67
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q20",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "P(X) 0.03 0.03 0.05 0.18 0.31 0.28 0.12 7. Using the thermostat distribution, find P(X &#8805; 4) = P(74 degrees or lower): P(X &#8805; 4) = + + <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.66
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.67
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q21",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "0.03 0.03 0.05 0.18 0.31 0.28 0.12 7. Using the thermostat distribution, find P(X &#8805; 4) = P(74 degrees or lower): P(X &#8805; 4) = + + = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.66
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q25",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "-number\">8. To describe a probability distribution, we must talk about , , and . 9. Describe the prairie dog pup distribution: Shape: <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.86
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.82
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q26",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "nk\" data-answer=\"center\" style=\"width:70px;\">, and . 9. Describe the prairie dog pup distribution: Shape: Center (median): approximately <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.81
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q27",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "v> 9. Describe the prairie dog pup distribution: Shape: Center (median): approximately pups Spread (range): <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.81
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q29",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "r (median): approximately pups Spread (range): pups 10. Should a zoologist be surprised if a prairie dog had 6 or 7 pups? Calculate: P(X = 6 or X = 7) = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q30",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "Should a zoologist be surprised if a prairie dog had 6 or 7 pups? Calculate: P(X = 6 or X = 7) = (relatively unlikely) 11. Describe the thermostat distribution (from Video 1): Shape: <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.79
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q31",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "= 7) = (relatively unlikely) 11. Describe the thermostat distribution (from Video 1): Shape: Center: median temperature is about <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.83
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.8
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q32",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "(relatively unlikely) 11. Describe the thermostat distribution (from Video 1): Shape: Center: median temperature is about degrees (X = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.83
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.8
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q33",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "Describe the thermostat distribution (from Video 1): Shape: Center: median temperature is about degrees (X = ) Spread (range): <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.83
+    },
+    "pass2": {
+      "skill": "2.B",
+      "confidence": 0.8
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q34",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "an (Expected Value): &#956; X = &#931;x i &#183; P(x i ) Standard Deviation: &#963; X = &#8730;[&#931;(x i - &#956; X )&#178; &#183; P(x i )] Variance: &#963; X &#178; = &#931;(x i - &#956; X )&#178; &#183; P(x i ) 12. A <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.57
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q35",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "#931;(x i - &#956; X )&#178; &#183; P(x i )] Variance: &#963; X &#178; = &#931;(x i - &#956; X )&#178; &#183; P(x i ) 12. A is a numerical value measuring a characteristic of a population or distribution. It is a single, <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.65
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q36",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "ub>X )&#178; &#183; P(x i ) 12. A is a numerical value measuring a characteristic of a population or distribution. It is a single, value. 13. The mean formula takes into account the different <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.61
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q37",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "ber\">12. A is a numerical value measuring a characteristic of a population or distribution. It is a single, value. 13. The mean formula takes into account the different of each X value by multiplying each value by its <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.61
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q38",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "an formula takes into account the different of each X value by multiplying each value by its . 14. Calculate the mean for prairie dog pups: &#956; X = 1(0.15) + 2(0.38) + 3(0.27) + 4(0.11) + 5(0.05) + 6(0.03) + 7(0.01) = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.65
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.76
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L7-8-Q41",
+    "topic": "4.7",
+    "candidates": [
+      "2.B",
+      "4.B"
+    ],
+    "itemText": "\"> 15. Interpret the mean: In the , if many prairie dog litters are randomly selected, the number of pups per litter will be about 2.66 pups. 16. The standard deviation for prairie dog pups is calculated to be &#963; X = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "2.B",
+      "confidence": 0.61
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.73
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L9-Q2",
+    "topic": "4.9",
+    "candidates": [
+      "3.B",
+      "3.C"
+    ],
+    "itemText": "on\"> 1. A takes the form Y = a + bX, where a shifts the center and b scales the distribution. 2. After an insect infestation, the effect on unhealthy trees is modeled by Y = 3X + 1. The multiplier (3) affects both <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.9
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.67
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L9-Q29",
+    "topic": "4.9",
+    "candidates": [
+      "3.B",
+      "3.C"
+    ],
+    "itemText": "2: Add variances: &#963;&#178; T = Step 3: Take square root: &#963; T = cars 11. Find &#963; D (standard deviation of difference): For the difference X - Y, variances still <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.74
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.69
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U4L9-Q3",
+    "topic": "4.9",
+    "candidates": [
+      "3.B",
+      "3.C"
+    ],
+    "itemText": "dth:150px;\"> takes the form Y = a + bX, where a shifts the center and b scales the distribution. 2. After an insect infestation, the effect on unhealthy trees is modeled by Y = 3X + 1. The multiplier (3) affects both and <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.89
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.67
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q13",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "span class=\"question-number\">6. [2:50] The mean of the sampling distribution of p&#770; equals , the . 7. [3:20] The standard deviation formula requires that the sample size is less than <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.75
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.63
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q14",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "n> The mean of the sampling distribution of p&#770; equals , the . 7. [3:20] The standard deviation formula requires that the sample size is less than % of the <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.75
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.63
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q17",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "class=\"ts\">[4:04] For the driver's license example ( n = 50, p = 0.30): p&#770; = p&#770; = (0.3 0.7 / 50) = 10% condition: Is 50 < 10% of 2,000? <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "3.C",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q31",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "at with standard deviation . Shade to the of 0.12. 14. [3:40] Step 2 - Calculate the z-score: z = (<input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.65
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.79
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q32",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "with standard deviation . Shade to the of 0.12. 14. [3:40] Step 2 - Calculate the z-score: z = ( <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.65
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.79
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q33",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "le=\"width:60px;\">. Shade to the of 0.12. 14. [3:40] Step 2 - Calculate the z-score: z = ( ) / <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.67
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.78
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q34",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "=\"left\" style=\"width:40px;\"> of 0.12. 14. [3:40] Step 2 - Calculate the z-score: z = ( ) / = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.63
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.82
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L5-Q6",
+    "topic": "5.5",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "on-number\">3. [1:37] A second sample gives 19 out of 50: p&#770; = . The fact that different samples give different values of p&#770; is called sampling . 4. [1:53] A third sample gives p&#770; = 16/50 = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.52
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.58
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L6-Q23",
+    "topic": "5.6",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "5:38] Calculate the z-score: z = (0 0.08) / 0.087 = . This means a difference of 0 is less than one standard deviation below the mean - not very far out. 17. [5:55] Using Table A or technology: P(p&#770; A p&#770; B < 0) <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.46
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L6-Q8",
+    "topic": "5.6",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "e . In other words, the statistic targets the parameter on average. 6. [4:41] Notice the standard deviation formula adds the two variance terms (one from each population). We can add variances because the two samples are <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L6-Q9",
+    "topic": "5.6",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": " the two variance terms (one from each population). We can add variances because the two samples are of each other. 7. [5:08] Two conditions must be met for the SD formula to be valid: (a) Both sample sizes are less than <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.9
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.86
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L7-Q1",
+    "topic": "5.7",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": " weights that are approximately normally distributed with = 4 oz and = 0.5 oz. We randomly select n = 6 lemons, weigh them, and calculate the sample mean x . 1. [1:18] Each dot on the sampling distribution represents the <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.87
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.64
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L7-Q11",
+    "topic": "5.7",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "us;p) 10 Population normal OR n SD Formula Condition n < 10% of N n < 10% of N 9. Both sampling distributions share the same condition for the SD formula (<input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.92
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.9
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L7-Q17",
+    "topic": "5.7",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "n-number\">13. [4:22] Calculate the z-score: z = (4.5 4) / 0.204 = . This sample mean is about 2.5 standard deviations above the mean of the sampling distribution. 14. [4:40] Using Table A or technology: P( x 4.5) <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.48
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L7-Q5",
+    "topic": "5.7",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "P formula sheet) Mean: x = SD: x = / n 4. [3:49] The condition for the standard deviation formula to be valid: the sample size must be less than <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.88
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L7-reflect2",
+    "topic": "5.7",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "in your own words why averages are less variable than individual values. What would happen to the probability P( x 4.5) if we increased the sample size from 6 to 50? Explain your reasoning. <textarea id=\"reflect2\" placeholder=\"Write your response her",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.85
+    },
+    "pass2": {
+      "skill": "3.C",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L8-Q1",
+    "topic": "5.8",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "3 oz, O = 0.4 oz. Both distributions are approximately normal. We select n = 6 fruit from each tree, find each sample mean, and compute x&#772; L x&#772; O . 1. [1:55] Each dot on the sampling distribution represents the <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.76
+    },
+    "pass2": {
+      "skill": "3.C",
+      "confidence": 0.89
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L8-Q3",
+    "topic": "5.8",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "s the between the mean weight of 6 lemons and the mean weight of 6 oranges - not an individual fruit s weight. 2. [3:28] After 500 simulated samples, the distribution of x&#772; L x&#772; O is approximately , centered at <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.94
+    },
+    "pass2": {
+      "skill": "3.B",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U5L8-Q9",
+    "topic": "5.8",
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "heir population sizes, and the two samples must be of each other. Pause & Think 7. Notice the SD formula adds the two fractions under the square root, even though we subtract the means. This is because variability always <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.83
+    },
+    "pass2": {
+      "skill": "3.C",
+      "confidence": 0.75
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L3-Q18",
+    "topic": "6.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "ext\" class=\"blank\" data-answer=\"50\" style=\"width:35px;\">. 11. [1:19] Sample 1: p&#770; = 12/50 = 0.24, CI = (0.12, 0.36). This interval capture p = 0.30. 12. [2:58] Sample 4: p&#770; = 22/50 = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.74
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.58
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L3-Q50",
+    "topic": "6.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "on\"> 30. [5:00] Part (b): The distinction between with/without replacement doesn t matter because the sample of 50 is less than % of 2,384, so the 10% condition is satisfied. 31. [6:14] The 5-step process: (1) Define the <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.56
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.42
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L3-Q51",
+    "topic": "6.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "t (b): The distinction between with/without replacement doesn t matter because the sample of 50 is less than % of 2,384, so the 10% condition is satisfied. 31. [6:14] The 5-step process: (1) Define the , (2) Identify the <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.56
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.47
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L3-Q52",
+    "topic": "6.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "placement doesn t matter because the sample of 50 is less than % of 2,384, so the 10% condition is satisfied. 31. [6:14] The 5-step process: (1) Define the , (2) Identify the , (3) Verify <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.55
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.4
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L5-Q3",
+    "topic": "6.5",
+    "candidates": [
+      "3.E",
+      "4.B"
+    ],
+    "itemText": "ext-decoration: overline;\"> p = 18/30 = . This gives evidence for H a because p is the null value of 0.50. 2. [2:00] We need to know how likely it is to get evidence this strong or <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.E",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.73
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L8-Q20",
+    "topic": "6.8",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": " wore regular suits. A success was a swimmer going slower than their average time. The drag-suit group had 13 successes, and the regular-suit group had 8 successes. 10. [6:23] In the swimmer study, swimmers were randomly <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.C",
+      "confidence": 0.8
+    },
+    "pass2": {
+      "skill": "1.D",
+      "confidence": 0.81
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q10",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "nt that this interval captures the high minus low in the of all trees in these forests that died from the disease. 6. [2:24] If the disease were equally lethal in both forests, then the difference high minus low would be <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.D",
+      "confidence": 0.93
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.97
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q11",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "portion\" style=\"width:80px;\"> of all trees in these forests that died from the disease. 6. [2:24] If the disease were equally lethal in both forests, then the difference high minus low would be . 7. [2:52] Because 0 is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.D",
+      "confidence": 0.91
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q28",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "15. [1:56] We are trying to estimate the difference, minus , in the proportions of all parts produced within specifications. 16. [2:20] The procedure is a two-sample <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.65
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.7
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q29",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "e trying to estimate the difference, minus , in the proportions of all parts produced within specifications. 16. [2:20] The procedure is a two-sample for a difference in <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.65
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.7
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q30",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "16. [2:20] The procedure is a two-sample for a difference in . 17. [4:20] For a 96% confidence interval, the critical value is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.66
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q31",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "a difference in . 17. [4:20] For a 96% confidence interval, the critical value is . 18. [4:40] The point estimate is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.66
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q32",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "\"width:150px;\">. 17. [4:20] For a 96% confidence interval, the critical value is . 18. [4:40] The point estimate is and the margin of error is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.66
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q33",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "\" style=\"width:80px;\">. 18. [4:40] The point estimate is and the margin of error is . 19. [4:48] So the 96% confidence interval goes from <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.66
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q34",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "span class=\"question-number\">18. [4:40] The point estimate is and the margin of error is . 19. [4:48] So the 96% confidence interval goes from to <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.66
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q37",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "ass=\"question\"> 20. [5:37] We are 96% confident that this interval captures the difference day minus night in the of all parts produced within . 21. [6:16] Because zero is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.7
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.86
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U6L9-Q38",
+    "topic": "6.9",
+    "candidates": [
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "7] We are 96% confident that this interval captures the difference day minus night in the of all parts produced within . 21. [6:16] Because zero is the interval, zero is a <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.86
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q1",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": " intervals built from repeated random samples of the same size. Video 1: Identifying the Procedure and Checking Conditions [0:00 - 7:24] 1. [0:38] The two major types of statistical inference are confidence intervals and <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "1.D",
+      "confidence": 0.61
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.58
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q12",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "> 7. [4:00] If n < 30, the sample data should be free of strong and . 8. [4:32] In the sugar example, the 10 bags were randomly <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "1.D",
+      "confidence": 0.66
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.9
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q14",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "owers [5:18] Avril asks 6 classmates to measure April rainfall in their yards. The recorded amounts are 82, 80, 81, 82, 75, and 82 millimeters. 10. [5:46 - 6:21] In the Avril Showers example, the houses were not randomly <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "1.D",
+      "confidence": 0.67
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.94
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q19",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "ts\">[1:05 - 5:04] margin of error = ( critical value )( standard error ) SE x&#772; = s / n x&#772; t * ( s / n ) 13. [1:53] For estimating a population mean, the critical value comes from a <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.79
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.75
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q20",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "s / n ) 13. [1:53] For estimating a population mean, the critical value comes from a . 14. [2:23] For a one-sample t -interval, the degrees of freedom are <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.88
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.94
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q23",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "150px;\"> and a slightly lower peak. Back to the Sugar Bags [3:36 - 5:04] For the powdered sugar sample, n = 10, so df = 9. The lesson uses a 95% confidence level. 16. [3:36 - 4:17] With n = 10, the degrees of freedom are <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.86
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q24",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "Back to the Sugar Bags [3:36 - 5:04] For the powdered sugar sample, n = 10, so df = 9. The lesson uses a 95% confidence level. 16. [3:36 - 4:17] With n = 10, the degrees of freedom are , and the 95% critical value is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.96
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q32",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "nzy [6:28] For 40 fiddler crabs, the sample mean feeding rate is 67.65 scoops per 30 seconds and the sample standard deviation is 6.61. 20. [7:29 - 8:43] If Table B does not list df = 39, use the highest df that is still <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.82
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.9
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q33",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "e mean feeding rate is 67.65 scoops per 30 seconds and the sample standard deviation is 6.61. 20. [7:29 - 8:43] If Table B does not list df = 39, use the highest df that is still the desired value; technology gives t * = <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.94
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q5",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "910 919 900 913 904 Bag 6 Bag 7 Bag 8 Bag 9 Bag 10 913 903 914 893 899 4. [2:47] To estimate the mean in a single population, use a <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.93
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.78
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q8",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "ion\"> 5. [3:18] In general, we check for in the data collection process and the correct of the sampling distribution. 6. [3:39] The data should come from a random sample or randomized <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "1.D",
+      "confidence": 0.7
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.94
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L2-Q9",
+    "topic": "7.2",
+    "candidates": [
+      "1.D",
+      "3.C",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "150px;\"> in the data collection process and the correct of the sampling distribution. 6. [3:39] The data should come from a random sample or randomized , and when sampling without replacement the sample should be at most <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "1.D",
+      "confidence": 0.64
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L3-Q10",
+    "topic": "7.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "nterval for the mean feeding rate is given as 67.65 1.76 scoops per 30 seconds. The question asks whether the average feeding rate is faster than 2 scoops per second. 6. [3:08] In the crab example, the margin of error is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.67
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L3-Q11",
+    "topic": "7.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "n asks whether the average feeding rate is faster than 2 scoops per second. 6. [3:08] In the crab example, the margin of error is scoops per 30 seconds. 7. [3:51] Rewriting the crab interval in lower-to-upper form gives <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.73
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.9
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L3-Q12",
+    "topic": "7.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "6. [3:08] In the crab example, the margin of error is scoops per 30 seconds. 7. [3:51] Rewriting the crab interval in lower-to-upper form gives to <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.76
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.91
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L3-Q30",
+    "topic": "7.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "iv> 18. [1:26] Four of the 23 crows were above 6.0 ppm, so the sample proportion classified as unhealthy is about . 19. [1:52] In part (b), we want a 95% confidence interval for , the mean lead level of all <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L3-Q31",
+    "topic": "7.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "=\"blank\" data-answer=\"0.174\" style=\"width:80px;\">. 19. [1:52] In part (b), we want a 95% confidence interval for , the mean lead level of all in the region. 20. [2:37] The correct procedure is a one-sample <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L3-Q35",
+    "topic": "7.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "e conditions are met because the sample was , 23 is less than of all crows, and the stemplot shows no strong skewness or . 22. [3:23] With n = 23, the degrees of freedom are <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.88
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L3-Q36",
+    "topic": "7.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "le=\"width:80px;\">, 23 is less than of all crows, and the stemplot shows no strong skewness or . 22. [3:23] With n = 23, the degrees of freedom are and the 95% critical value is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "4.A",
+      "confidence": 0.9
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L4-Q25",
+    "topic": "7.4",
+    "candidates": [
+      "1.E",
+      "1.F",
+      "4.C"
+    ],
+    "itemText": "enough. 17. [2:11] To check independence, confirm that the data came from a random sample or a randomized . 18. [2:11] When sampling without replacement, the sample size should be less than <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.C",
+      "confidence": 0.97
+    },
+    "pass2": null,
+    "reason": "classifier-missing"
+  },
+  {
+    "id": "WS-U7L4-exitTicket",
+    "topic": "7.4",
+    "candidates": [
+      "1.E",
+      "1.F",
+      "4.C"
+    ],
+    "itemText": "Identify the correct significance test procedure and explain why the conditions are reasonable. (c) Explain why this is a one-sided test and why x&#772; should not appear in the hypotheses. <textarea id=\"exitTicket\" placeholder=\"Answer all three part",
+    "pass1": {
+      "skill": "1.F",
+      "confidence": 0.58
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L5-Q11",
+    "topic": "7.5",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "class=\"question-number\">5. [2:18] Using x&#772; = 15.8, s = 2.33, and n = 20 gives t = with degrees of freedom. 6. [3:11] The p -value is the probability of obtaining a test statistic as <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.88
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.96
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L6-Q1",
+    "topic": "7.6",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "ment about plausible values of the true difference in population means. Video 1: Identifying the Procedure and Checking Conditions [0:00 - 7:00] 1. [0:11] In this video, we learn how to identify an appropriate confidence <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.74
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.78
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L6-Q3",
+    "topic": "7.6",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "e spiders from the genus Argiope. The goal was to calculate and interpret a 95% confidence interval for the difference in the population mean body lengths of female and male spiders. 2. [1:21] The spider example compares <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.79
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.8
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L6-exitTicket",
+    "topic": "7.6",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": ", the 10% condition, and why the shape check is needed here. (c) Interpret the interval in context and explain what the positive endpoints suggest about female and male spider body lengths. <textarea id=\"exitTicket\" placeholder=\"Answer all three part",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.61
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L9-Q13",
+    "topic": "7.9",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "blank\" data-answer=\"both|two\" style=\"width:80px;\"> samples, not just one group. 10. [3:06] Using the sample statistics, the test statistic is about . 11. [3:18] The negative sign means the chemistry sample mean is <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "3.E",
+      "confidence": 0.99
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.93
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L9-Q15",
+    "topic": "7.9",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "minus physics. 12. [3:32] The P -value is found by assuming the null hypothesis is and asking how surprising the observed result would be. 13. [3:46] Because the alternative is two-sided, we consider results in <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.82
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.63
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L9-Q3",
+    "topic": "7.9",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "Textbook n x&#772; s Chemistry 200 5.71 3.02 Physics 200 6.03 3.58 2. [0:44] Because the question asks whether the mean word lengths <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L9-Q4",
+    "topic": "7.9",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "d> 6.03 3.58 2. [0:44] Because the question asks whether the mean word lengths , the alternative hypothesis is two-sided. 3. [0:56] The null hypothesis sets the difference equal to <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.8
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L9-Q5",
+    "topic": "7.9",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "class=\"question-number\">2. [0:44] Because the question asks whether the mean word lengths , the alternative hypothesis is two-sided. 3. [0:56] The null hypothesis sets the difference equal to , and the alternative uses <input type=\"text\" class=\"bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U7L9-exitTicket",
+    "topic": "7.9",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": " statistic and the approximate P -value. (d) State the decision and write a conclusion in context. (e) Explain why failing to reject H 0 does not prove that the mean word lengths are equal. <textarea id=\"exitTicket\" placeholder=\"Answer all five parts",
+    "pass1": {
+      "skill": "4.E",
+      "confidence": 0.68
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.64
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L2-Q11",
+    "topic": "8.2",
+    "candidates": [
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.C",
+      "4.C"
+    ],
+    "itemText": "pan> Chi-square distributions can take only values. Video 2: Stating Hypotheses for a Chi-Square Goodness-of-Fit Test [0:00 - 8:28] 11. [2:20] The null hypothesis for a chi-square goodness-of-fit test is a statement of <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.71
+    },
+    "pass2": {
+      "skill": "1.F",
+      "confidence": 0.96
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L2-Q13",
+    "topic": "8.2",
+    "candidates": [
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.C",
+      "4.C"
+    ],
+    "itemText": "statement of . 12. [2:39] In the predatory lending example, one specified proportion is p 1 = . 13. [3:34] The alternative hypothesis says that at least <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.A",
+      "confidence": 0.67
+    },
+    "pass2": {
+      "skill": "1.F",
+      "confidence": 0.98
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L2-Q14",
+    "topic": "8.2",
+    "candidates": [
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.C",
+      "4.C"
+    ],
+    "itemText": "/sub> = . 13. [3:34] The alternative hypothesis says that at least proportion is not as specified in the null hypothesis. 14. [4:02] We should not write the alternative as if <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.A",
+      "confidence": 0.63
+    },
+    "pass2": {
+      "skill": "1.F",
+      "confidence": 0.97
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L2-Q15",
+    "topic": "8.2",
+    "candidates": [
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.C",
+      "4.C"
+    ],
+    "itemText": "says that at least proportion is not as specified in the null hypothesis. 14. [4:02] We should not write the alternative as if proportions must be different. 15. [4:28] We should not use <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.A",
+      "confidence": 0.74
+    },
+    "pass2": {
+      "skill": "1.F",
+      "confidence": 0.96
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L2-Q16",
+    "topic": "8.2",
+    "candidates": [
+      "1.E",
+      "1.F",
+      "3.A",
+      "3.C",
+      "4.C"
+    ],
+    "itemText": "ified in the null hypothesis. Write the alternative in words rather than with a list of inequality symbols. Use population proportions, not sample proportions such as p&#770; . 16. [5:14] Hypotheses should use population <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.A",
+      "confidence": 0.89
+    },
+    "pass2": {
+      "skill": "1.F",
+      "confidence": 0.98
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L3-Q2",
+    "topic": "8.3",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "00 20 0.452 18.08 $50,000 to < $100,000 17 0.292 11.68 $100,000 and above 3 0.256 10.24 2. [1:38] In the null hypothesis, it is best to specify the <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.78
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.56
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L3-Q27",
+    "topic": "8.3",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "22. [1:25] The variable of interest is with categories. 23. [1:33] Because there is one sample and one categorical variable, the correct test is a chi-square <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.45
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L3-Q28",
+    "topic": "8.3",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": " Significance Test [2:01 - 2:25] Hypotheses & Parameters Procedure & Conditions Mechanics (test statistic, df, p-value) Conclusion in context 24. [2:31] The null hypothesis states that each district proportion equals the <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.79
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.48
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L3-Q29",
+    "topic": "8.3",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "f, p-value) Conclusion in context 24. [2:31] The null hypothesis states that each district proportion equals the proportions. 25. [3:07] The alternative hypothesis: at least one of the proportions is <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.79
+    },
+    "pass2": {
+      "skill": "3.E",
+      "confidence": 0.43
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U8L3-Q42",
+    "topic": "8.3",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "wer='5|five' style='width:40px;'>. 30. [5:10] From the calculator: 2 , p-value . 31. [5:33] Since the p-value is <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.66
+    },
+    "pass2": {
+      "skill": "4.E",
+      "confidence": 0.73
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L2-Q3",
+    "topic": "9.2",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": " each sample regression line. The resulting sampling distribution of b is approximately normal with mean 13.29 and standard deviation 1.10. 3. [3:19] The simulated sampling distribution of the slope appears approximately <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.82
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.78
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L2-Q4",
+    "topic": "9.2",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "pproximately normal with mean 13.29 and standard deviation 1.10. 3. [3:19] The simulated sampling distribution of the slope appears approximately . 4. [3:26] The center of the sampling distribution matches the population <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.81
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.66
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L2-reflect1",
+    "topic": "9.2",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": " three conditions, the idea that the sampling distribution is approximately normal, that its center is the true slope , the formula b = / ( x n), and the Old Faithful values 13.29 and 1.10. <textarea id='reflect1' placeholder='Write your response her",
+    "pass1": {
+      "skill": "3.D",
+      "confidence": 0.73
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.72
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L2-reflect2",
+    "topic": "9.2",
+    "candidates": [
+      "1.D",
+      "3.D",
+      "4.C"
+    ],
+    "itemText": "nterval for slope. Include checking the scatterplot and residual plot, the random sample idea, using s x = 0.213 to estimate x , using s = 4.2097 to estimate , and why a t-interval is used. <textarea id='reflect2' placeholder='Write your response her",
+    "pass1": {
+      "skill": "4.C",
+      "confidence": 0.8
+    },
+    "pass2": {
+      "skill": "3.D",
+      "confidence": 0.6
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L3-Q10",
+    "topic": "9.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "number of rotations of the rubber band to flight time. Because the interval includes only positive values, the sample gives evidence of a positive linear relationship. 10. [5:49] Raoul's confidence interval includes only <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.9
+    },
+    "pass2": {
+      "skill": "4.D",
+      "confidence": 0.91
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L3-Q13",
+    "topic": "9.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "distance from the city center (in miles). Procedure: one-sample t interval for the slope . Conditions: assumed to be met in the problem. 13. [2:04] The parameter is the slope for predicting selling price from city-center <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.63
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L3-Q22",
+    "topic": "9.3",
+    "candidates": [
+      "4.A",
+      "4.B",
+      "4.D"
+    ],
+    "itemText": "interval runs from -2.471 to . 21. [5:41] Because the interval contains -2, the data do not the agent's belief. 22. [6:31] Before calculating an interval, always define the <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.A",
+      "confidence": 0.6
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.71
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L5-Q29",
+    "topic": "9.5",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "o be reasonable. Predictor Coef StDev T P GPA -3.485 1.013 -3.44 0.018 20. [2:13] Because no direction was specified, the alternative hypothesis is <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.E",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.74
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L5-Q37",
+    "topic": "9.5",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "h> T P GPA -2.7555 0.4668 -5.90 0.000 Output for the 13 students who successfully completed the Ph.D. program 25. [5:49 - 6:20] For the students who completed the Ph.D. program, the evidence is <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.82
+    },
+    "pass2": {
+      "skill": "4.E",
+      "confidence": 0.9
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L5-Q38",
+    "topic": "9.5",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "-2.7555 0.4668 -5.90 0.000 Output for the 13 students who successfully completed the Ph.D. program 25. [5:49 - 6:20] For the students who completed the Ph.D. program, the evidence is because the p-value is <input type='text' class='bla",
+    "pass1": {
+      "skill": "4.B",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "4.E",
+      "confidence": 0.95
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L5-Q4",
+    "topic": "9.5",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "-1.43 0.186 Attendance 0.57 0.062 9.18 0.000 S = 1.99 R-sq = 90.3% 2. [1:33] The Texas study tests at = for a <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.E",
+      "confidence": 0.62
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.69
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L5-Q7",
+    "topic": "9.5",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "stic - parameter) / standard error t = (b - 0 ) / SE b 4. [3:22] Using the output, t = (0.57 - 0) / 0.062 = . 5. [3:38] The T column shows 9.18, and the tiny difference from 9.19 is due to <input type='text' class='bla",
+    "pass1": {
+      "skill": "3.E",
+      "confidence": 0.95
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.81
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "WS-U9L5-exitTicket",
+    "topic": "9.5",
+    "candidates": [
+      "3.E",
+      "4.B",
+      "4.E"
+    ],
+    "itemText": "ees of freedom. (c) Explain how the correct one-sided p-value relates to the computer output, then interpret the p-value in context. (d) State a conclusion at the = 0.05 significance level. <textarea id='exitTicket' rows='8' style='width:100%; margin",
+    "pass1": {
+      "skill": "3.E",
+      "confidence": 0.56
+    },
+    "pass2": {
+      "skill": "4.E",
+      "confidence": 0.62
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "u2-frq-surprising-case",
+    "topic": null,
+    "candidates": [
+      "2.A",
+      "2.B",
+      "2.D",
+      "3.A"
+    ],
+    "itemText": "Judge whether a case surprises — Part (d) earns credit by converting 165 cm into the needed residual, linking that cutoff to part (c), and deciding whether the event is unusual.",
+    "pass1": {
+      "skill": "3.A",
+      "confidence": 0.8
+    },
+    "pass2": {
+      "skill": "2.D",
+      "confidence": 0.67
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "u4-frq-strategy-ev",
+    "topic": null,
+    "candidates": [
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "Compare strategy expected values — Part (c) requires weighting the successful and failed long-hit outcomes by their probabilities and choosing the lower expected score.",
+    "pass1": {
+      "skill": "3.B",
+      "confidence": 0.84
+    },
+    "pass2": {
+      "skill": "4.B",
+      "confidence": 0.68
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "u5-frq-clt-xbar",
+    "topic": null,
+    "candidates": [
+      "2.D",
+      "3.A",
+      "3.B",
+      "3.C",
+      "4.B"
+    ],
+    "itemText": "Use CLT for x-bar — Part (b) requires an approximately normal model for x-bar with mean 403,000 and standard deviation 278,000/sqrt(40) before finding the left-tail probability.",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.72
+    },
+    "pass2": {
+      "skill": "3.A",
+      "confidence": 0.73
+    },
+    "reason": "dual-pass-disagreement"
+  },
+  {
+    "id": "u7-frq-interpret-ci",
+    "topic": null,
+    "candidates": [
+      "3.C",
+      "4.C"
+    ],
+    "itemText": "Interpret mean interval correctly — The rubric rewards an interpretation that names the population mean, uses context, and states 95% confidence.",
+    "pass1": {
+      "skill": "3.C",
+      "confidence": 0.33
+    },
+    "pass2": {
+      "skill": "4.C",
+      "confidence": 0.64
+    },
+    "reason": "dual-pass-disagreement"
+  }
+]
