@@ -3,10 +3,11 @@
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below the
 > "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
 > text; it is kept only as historical record.** Updated 2026-05-19 (session
-> 100, checkpoint for context-reload: **Task #1 T2 DONE+pushed; Task #2
-> Phase-2 DONE+pushed+PROD-VERIFIED; Phase-3 spec FULLY FROZEN
-> (`GRADEBOOK_PHASE3_BUILD.md`) — next loop task = implement Phase 3**. The
-> concurrent TR session is DONE & deployed → roster-server contention
+> 100, autonomous loop: **Task #1 T2 DONE; Task #2 Phase-2 DONE+PROD-VERIFIED;
+> Task #3 Phase-3 DONE+pushed+PROD-VERIFIED (`801dccc`, roster-server
+> redeployed, live SMOKETEST smoke ALL PASS) — NEXT loop task = Task #4
+> Phase 4 (teacher dashboard + `start-here.html`; depends on Phase 3 ✓)**.
+> The concurrent TR session is DONE & deployed → roster-server contention
 > RELEASED). Recall memories
 > first: `project_gradebook_grading_model.md`, `project_desk_donow.md`,
 > `project_gradebook_phase0.md`, `project_ai_tutor_pilot.md`,
@@ -84,24 +85,45 @@ and all relevant guards pass:
    Phase-3 `P`). Codex 1 MAJOR + 1 MINOR fixed. roster-server 114/114; live
    `/rollup` smoke on roster-production ALL PASS (co-deployed by TR1's
    `railway up`). Build doc `GRADEBOOK_PHASE2_BUILD.md`.
-3. **Phase 3 — grade calc + diagnostic BKT — ⏳ SPEC FULLY FROZEN, READY TO
-   BUILD: `GRADEBOOK_PHASE3_BUILD.md`** (every §7 knob teacher-decided via
-   s100 brainstorm). Summary: `unitGrade=max(min(B,85),P)`, `C=85` flat;
-   `B=(1·W+2·Q)/3` (worksheet:cr-quiz **1:2**; AI-FRQ E/P/I=100/70/35;
-   completion = separate accountability, B-loophole ACCEPTED); `P` =
-   AP-curve-proxy, **only raises**, retake-till-quarter-close, per-quarter
-   anchors raw%→P=85/100: Q1 40/60 · Q2 45/64 · Q3 50/67 · Q4 55/70
-   (Q4=AP-real ~70=a 5; pilot-tunable). Quarter grade = simple mean of the
-   band's `unitGrade`; bands Q1=U1-2/Q2=U3-5/Q3=U6-7/Q4=U8-9; quarter-close
-   HARD admin lock. Diagnostic (decoupled): BKT over T2 tags, reuse
-   study-guide `.v4-logic-block.js` AS-IS, θ=0.65 (⚠ "Diagnostic c0?"
-   teacher note — θ grade-independent; if they meant "skip diagnostic for
-   now" it's cleanly separable, build grade calc first). roster-server
-   additive endpoints (`/grade`,`/mastery`); NO migration; redeploy +
-   SMOKETEST smoke after GREEN. **This is the next loop task — implement
-   per `GRADEBOOK_PHASE3_BUILD.md` §3.**
-4. **Phase 4 — teacher dashboard + `start-here.html` student render.**
-   v2 §4 cumulative framing, NO BKT jargon student-side. Depends on Phase 3.
+3. **Phase 3 — grade calc + diagnostic BKT — ✅ DONE & PUSHED & PROD-VERIFIED
+   (`801dccc`).** Additive roster-server `GET /grade`
+   (`unitGrade=max(min(B,85),P)`; B=weighted mean over PRESENT feeders
+   renormalized W:Q=1:2; AI-FRQ E/P/I=100/70/35; worksheet fill-ins
+   completion-only — no score recorded; Q vs bundled answer-key; P=per-quarter
+   2-anchor piecewise curve over PC raw%, only-raises, no-PC⇒0; quarterGrade
+   =mean of GRADED band units, ungraded EXCLUDED not 0; separate completion
+   readout) + `GET /mastery` (BKT diagnostic, `lib/bkt.js` reused AS-IS via
+   byte-identical bundled `roster-server/bkt.js`, FULL chronological retry-
+   stream fold, weak-skill pKnow<θ=0.65, unresolved excluded). ALL knobs in
+   one pilot-tunable `roster-server/grade-config.js`. Shared
+   `roster-server/scoring.js` (rollup refactored to reuse → single source;
+   provably cr-id-equivalent — Codex-confirmed 453-id corpus). Bundled
+   `roster-server/data/skill-map.json` + `build-skill-map.mjs` dual-write.
+   NO migration; read-only w.r.t. item_ledger; additive+guarded server.js.
+   Codex review = **1 BLOCKER + 3 MAJOR + 1 MINOR, ALL fixed** (BLOCKER:
+   eager bkt bootstrap could down the live auth service → fault-tolerant
+   degrade-to-no-/mastery; MAJORs: full-stream fold, answer-key+skill-map
+   fail-closed per-entry uniformly across /rollup/grade/mastery; MINOR:
+   weak-skill raw-posterior). Planner self-found `Number(null)===0`
+   ungraded-FRQ miscount → nullish guard. GREEN: roster-server **157/157**
+   (no Phase-0/1/donow/rollup/TR regression); root 1576/1 (the 1 = known
+   study-guide.test.js, untouched); audit-feeder-ids CLEAN 69. SACRED
+   curriculum.js untouched. Redeployed (`railway up --ci -s roster`,
+   Deploy complete) + **live SMOKETEST smoke on roster-production ALL PASS**
+   (/health ok; /grade U1 W=100/Q=50/B=66.7/unitGrade=66.7 exactly as
+   hand-computed; /mastery θ=0.65, 2 obs→skill 3.A via bundled skill-map).
+   Build doc `GRADEBOOK_PHASE3_BUILD.md` (§5 = planner-frozen impl contract).
+   Do NOT rebuild Phase 3.
+4. **Phase 4 — teacher dashboard + `start-here.html` student render — ⏳ THIS
+   IS THE NEXT LOOP TASK.** v2 §4 cumulative framing, NO BKT jargon
+   student-side. Consumes the Phase-3 `/grade` (+ `/mastery` for the teacher
+   heatmap only). Depends on Phase 3 — now satisfied & prod-verified. No
+   frozen build doc yet → loop step 1 = freeze a `GRADEBOOK_PHASE4_BUILD.md`
+   contract first (read `GRADEBOOK_SPEC.md` §8/§6.4, `GRADEBOOK_GRADING_SPEC.md`
+   §3/§4, the live `/grade`+`/mastery` response shapes). 🔒 `start-here.html`
+   is the AI-tutor session's lane historically — but that session is idle/done;
+   gradebook owns the Phase-4 student render. Desk file ownership protocol
+   still holds (gradebook owns `ap_stats_roadmap_square_mode.html`).
 5. **§6.4 adoption + AI-tutor delivery.** Wire remaining feeder/roster
    adoption per `GRADEBOOK_SPEC.md` §6.4; wire the AI-tutor Desk-tile
    "🤖 Tutor prompt" copy action (`ai-tutor/u{U}_l{L}.md`) onto each lesson
@@ -162,31 +184,38 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `00e7a6c`** (Phase 2). Lineage: `00e7a6c`
-  Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` checkpoint ←
-  `4140afe`/`1565fd5` T2 ← `52ac6a7` DN3c. Linear, local==origin. (Plus
-  this Phase-3-spec checkpoint commit on top.)
+- **follow-alongs `master` HEAD `801dccc`** (Phase 3). Lineage: `801dccc`
+  Phase-3 ← `4969715` Phase-3-spec checkpoint ← `00e7a6c` Phase-2 ←
+  `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ← `4140afe`/`1565fd5` T2 ←
+  `52ac6a7` DN3c. Linear, local==origin.
 - **curriculum_render `main` HEAD `1ccd8a2`** (DN2d; sacred `curriculum.js`
   untouched — never re-touched; Phase-2/3 only READ it).
 - **roster-server LIVE & current** (`https://roster-production-12c1.up.railway.app`;
-  project `apstats-roster`): TR0–TR4 (incl. forced-password-change) + T2
-  + Phase-2 `/rollup` ALL deployed & prod-smoke-verified. No pending
-  redeploy until Phase-3 endpoints land.
+  project `apstats-roster`): TR0–TR4 + T2 + Phase-2 `/rollup` + **Phase-3
+  `/grade`+`/mastery`** ALL deployed (`railway up --ci -s roster` after
+  `801dccc`, Deploy complete) & prod-smoke-verified. No pending redeploy
+  until Phase-4 needs one (Phase 4 is front-end + may need none).
 - **Concurrent TR session: DONE & deployed** (TR0–TR4 committed + live;
   `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
 - **Concurrent AI-tutor session: idle/done** (`9207d24`).
-- Test baseline (post-`00e7a6c`): follow-alongs root **1576/1577** (1 known
-  study-guide); roster-server **114/114**; cr **764/765** (1 known
-  redox-chat); `audit-feeder-ids` CLEAN 69. → **NEXT loop task = Phase 3:
-  implement `GRADEBOOK_PHASE3_BUILD.md` (spec fully frozen) loop-style.**
+- Test baseline (post-`801dccc`): follow-alongs root **1576/1577** (1 known
+  study-guide); roster-server **157/157**; cr **764/765** (1 known
+  redox-chat — not touched); `audit-feeder-ids` CLEAN 69. → **NEXT loop
+  task = Phase 4** (teacher dashboard + `start-here.html`; freeze
+  `GRADEBOOK_PHASE4_BUILD.md` first, then loop-style). ⚠ user-owned pending
+  SQL chore (do NOT run): `delete from roster where section='SMOKETEST';`
+  (Phase-0/1/2/3 smoke rows incl. `peach_deer`; cascades to item_ledger).
 
 ### Specs to (re)read on reload, per task
 
-**`GRADEBOOK_PHASE3_BUILD.md` (THE frozen Phase-3 contract — read FIRST,
-implement this)**, `GRADEBOOK_GRADING_SPEC.md` (v2 §2/§3/§7 — Phase-3 grade
-math source), `GRADEBOOK_PHASE2_BUILD.md` (the `/rollup` Phase 3 consumes),
-`GRADEBOOK_SPEC.md` (§8/§6.4), `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`
-(T2 done), `ROSTER_TEACHER_TOOLS_SPEC.md` (TR — done/deployed),
+**Phase 4 (next):** `GRADEBOOK_SPEC.md` (§8 dashboard / §6.4 adoption),
+`GRADEBOOK_GRADING_SPEC.md` (v2 §3 diagnostic / §4 daily rhythm — the
+student framing), `GRADEBOOK_PHASE3_BUILD.md` (DONE — the `/grade`+`/mastery`
+response shapes Phase 4 consumes; §5 = planner-frozen impl contract),
+`AI_TUTOR_SPEC.md` (§31/§156 — Desk-tile + start-here AI-tutor section,
+Task #5). Provenance (DONE, do not rebuild): `GRADEBOOK_PHASE2_BUILD.md`,
+`GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`,
+`ROSTER_TEACHER_TOOLS_SPEC.md` (TR — done/deployed),
 `AI_TUTOR_SPEC.md` (§31/§156, Task #5), `DESK_DONOW_SPEC.md` +
 per-sprint `DESK_DONOW_DN*_BUILD.md` / `DN2D_BUILD.md`.
 
