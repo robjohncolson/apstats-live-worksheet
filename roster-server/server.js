@@ -12,6 +12,8 @@ import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
 import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
+import { mountGrade } from './grade.js';
+import { mountMastery } from './mastery.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -26,7 +28,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -277,6 +279,20 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey) {
     mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey });
   }
 
+  // ── Grade route (Phase 3 additive) ───────────────────────────────────────────
+  // Mounts GET /grade (cumulative + capped-booster grade of record).
+  // Read-only; reuses the Phase-2 cr-quiz aggregation. Same injection as rollup.
+  if (ledgerDb && loadAnswerKey) {
+    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey });
+  }
+
+  // ── Mastery route (Phase 3 additive — decoupled diagnostic) ──────────────────
+  // Mounts GET /mastery (BKT over skill-map tags; weak-skill flag at θ).
+  // Needs the bundled skill-map loader + the AS-IS bkt engine; tests inject fakes.
+  if (ledgerDb && loadAnswerKey && loadSkillMap && bkt) {
+    mountMastery(app, { verifyToken, ledgerDb, loadAnswerKey, loadSkillMap, bkt });
+  }
+
   return app;
 }
 
@@ -330,13 +346,62 @@ async function loadLiveAnswerKey() {
   return JSON.parse(raw);
 }
 
+// ── Live skill-map loader (production only) ──────────────────────────────────
+// Same priority + bundled-copy rationale as the answer-key loader.
+// scripts/build-skill-map.mjs writes ./data/skill-map.json byte-identical.
+function resolveSkillMapPath() {
+  if (process.env.SKILL_MAP_PATH) {
+    return process.env.SKILL_MAP_PATH;
+  }
+  const bundledPath = resolve(__dirname, 'data', 'skill-map.json');
+  if (existsSync(bundledPath)) {
+    return bundledPath;
+  }
+  return resolve(__dirname, '..', 'data', 'skill-map.json');
+}
+
+async function loadLiveSkillMap() {
+  const raw = await readFile(resolveSkillMapPath(), 'utf8');
+  return JSON.parse(raw);
+}
+
+// ── Live BKT engine (production only) ─────────────────────────────────────────
+// The study-guide engine reused AS-IS via the byte-identical bundled copy
+// (roster-server/bkt.js — guarded by tests/bundle-parity.test.js). lib/bkt.js
+// is a UMD module; roster-server is "type":"module" so its CommonJS branch is
+// skipped — we import it for its `globalThis.BKT` side-effect exactly as the
+// study guide / lib/bkt.test.js do (reuse AS-IS, NOT a fork).
+async function loadLiveBkt() {
+  await import('./bkt.js');
+  return globalThis.BKT;
+}
+
 // Only start listening when run directly (not imported by tests)
 if (process.env.NODE_ENV !== 'test') {
-  const db = createLiveDb();
-  const ledgerDb = createLiveLedgerDb();
-  const app = createApp(db, ledgerDb, loadLiveManifest, loadLiveAnswerKey);
-  const PORT = process.env.PORT || 8090;
-  app.listen(PORT, () => {
-    console.log(`roster-server listening on port ${PORT}`);
-  });
+  (async () => {
+    const db = createLiveDb();
+    const ledgerDb = createLiveLedgerDb();
+    // Phase 3 is ADDITIVE: the diagnostic engine must never take down the
+    // LIVE auth service. If bkt.js is missing/corrupt, log and continue —
+    // createApp's guard then simply does not mount /mastery (everything else,
+    // incl. /health /roster/* /donow /rollup /grade, stays up). (Codex BLOCKER.)
+    let bkt = null;
+    try {
+      bkt = await loadLiveBkt();
+    } catch (err) {
+      console.error('roster-server: BKT engine failed to load — /mastery disabled, service continues:', err);
+    }
+    const app = createApp(
+      db,
+      ledgerDb,
+      loadLiveManifest,
+      loadLiveAnswerKey,
+      loadLiveSkillMap,
+      bkt
+    );
+    const PORT = process.env.PORT || 8090;
+    app.listen(PORT, () => {
+      console.log(`roster-server listening on port ${PORT}`);
+    });
+  })();
 }

@@ -13,6 +13,19 @@
 // rollup intentionally only aggregates source === 'curriculum_quiz'.
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+// Scoring/aggregation helpers now live in scoring.js (single source of truth so
+// /grade + /mastery score identically — GRADEBOOK_PHASE3_BUILD.md §5). Behavior
+// is byte-equivalent to the originals; the 13 tests below pin it. normalizeResponse
+// is re-exported because rollup.test.js imports it from this module.
+import {
+  normalizeResponse as _normalizeResponse,
+  isCorrect,
+  latestPerItem,
+  unitOf,
+  answerKeyMapOrNull,
+} from './scoring.js';
+
+export const normalizeResponse = _normalizeResponse;
 
 // Extract Bearer token from Authorization header or ?token= query param.
 function extractToken(req) {
@@ -25,64 +38,6 @@ function extractToken(req) {
   const q = req.query?.token;
   if (typeof q === 'string' && q.trim()) return q;
   return null;
-}
-
-// Normalize a jsonb `response` to a comparable scalar string. DN2d records
-// `response: answer` where `answer` is cr's letter-style value (cr's own
-// checkIfAnswerCorrect compares String(value).trim().toLowerCase() to the
-// letter answerKey). Tolerate string | {value|answer|selected|choice} | array.
-export function normalizeResponse(response) {
-  if (response == null) return null;
-  if (typeof response === 'string' || typeof response === 'number') {
-    return String(response).trim().toLowerCase();
-  }
-  if (Array.isArray(response)) {
-    return response.length ? normalizeResponse(response[0]) : null;
-  }
-  if (typeof response === 'object') {
-    for (const k of ['value', 'answer', 'selected', 'choice', 'key']) {
-      if (response[k] != null) return normalizeResponse(response[k]);
-    }
-  }
-  return null;
-}
-
-// Mirror cr's checkIfAnswerCorrect exactly: trim + lowercase string equality.
-function isCorrect(response, answerKey) {
-  const r = normalizeResponse(response);
-  if (r == null || answerKey == null) return false;
-  return r === String(answerKey).trim().toLowerCase();
-}
-
-// Keep only the authoritative attempt per item_id: highest `attempt`, tie
-// broken by latest `recorded_at`. Defensive against missing fields.
-function latestPerItem(rows) {
-  const best = new Map();
-  for (const row of rows) {
-    const id = row?.item_id;
-    if (typeof id !== 'string' || !id) continue;
-    const cur = best.get(id);
-    if (!cur) { best.set(id, row); continue; }
-    const a = Number(row.attempt) || 0;
-    const b = Number(cur.attempt) || 0;
-    if (a > b) { best.set(id, row); continue; }
-    if (a === b) {
-      const at = Date.parse(row.recorded_at || '') || 0;
-      const bt = Date.parse(cur.recorded_at || '') || 0;
-      if (at >= bt) best.set(id, row);
-    }
-  }
-  return [...best.values()];
-}
-
-// Unit label for aggregation: prefer the answer-key entry's unit, else derive
-// "U{n}" from the id (matches DN2d's `unit: 'U'+n` convention).
-function unitOf(itemId, keyEntry) {
-  if (keyEntry && keyEntry.unit != null && String(keyEntry.unit).trim() !== '') {
-    return `U${String(keyEntry.unit).replace(/^U/i, '')}`;
-  }
-  const m = String(itemId).match(/^U(\d+)-/i);
-  return m ? `U${m[1]}` : 'U?';
 }
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
@@ -126,22 +81,16 @@ export function mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey }) {
       console.error('GET /rollup answer-key error:', err);
       return res.status(500).json({ ok: false, error: 'Could not load answer key' });
     }
-    // Fail CLOSED on a structurally-invalid answer-key doc (parseable but
-    // wrong shape). Substituting {} would silently mark every item ungradable
-    // and return 200 — masking answer-key corruption (Codex MAJOR). Treat it
-    // like a load failure. (A sparse-but-valid object is fine: per-item
-    // "not in key → ungradable" already handles missing entries correctly.)
-    if (
-      !answerKeyDoc ||
-      typeof answerKeyDoc !== 'object' ||
-      !answerKeyDoc.answerKey ||
-      typeof answerKeyDoc.answerKey !== 'object' ||
-      Array.isArray(answerKeyDoc.answerKey)
-    ) {
+    // Fail CLOSED on a structurally-invalid answer-key doc — now via the
+    // shared validator (single source of truth; also rejects parseable-but-
+    // corrupt PER-ENTRY shapes, not just the top-level container — Codex
+    // Phase-3 MAJOR, applied uniformly across /rollup /grade /mastery). A
+    // sparse object is still fine: a MISSING key → ungradable by design.
+    const answerKey = answerKeyMapOrNull(answerKeyDoc);
+    if (!answerKey) {
       console.error('GET /rollup answer-key malformed:', typeof answerKeyDoc);
       return res.status(500).json({ ok: false, error: 'Answer key malformed' });
     }
-    const answerKey = answerKeyDoc.answerKey;
 
     // Only the cr-quiz FEEDER (lesson quizzes). PC = Phase-3 `P`, excluded.
     const rows = (Array.isArray(ledgerRows) ? ledgerRows : [])

@@ -111,3 +111,60 @@ Never write sacred `curriculum.js` (Phase 3 only reads ledger + the derived
 answer-key/skill-map). roster-server additive only. Stage own paths only
 (repo has unrelated dirty scratch + concurrent-session history). The
 diagnostic BKT must reuse the study-guide implementation, not fork it.
+
+## 5. Implementation contract (planner-frozen, session 100)
+
+These resolve the §7-knob *implementation* ambiguities the teacher brainstorm
+did not specify at code level. Frozen here so Codex review + planner-verify
+have a fixed reference (loop method). All sit in the ONE config block,
+pilot-tunable; none change the teacher-frozen policy in §1–§3.
+
+**Ledger feeder shapes (verified on disk, DN2a/b + Phase-2):**
+- `source:'worksheet'` rows record `response` only, **no `score`** (DN2b
+  `recordBlankToGradebook`). No worksheet answer-key exists (Phase 3 builds
+  none — sacred/scope). ⇒ worksheet fill-ins are **completion-only** until a
+  future feeder stamps correctness; they count in the completion readout, NOT
+  the graded `W` denominator (the `/rollup` `ungradable` precedent — forward-
+  compatible: when a score later appears, `W` absorbs it with no rollup
+  change, same "improve a tag → retro-fix grades" philosophy).
+- `source:'frq'` rows record numeric `score ∈ {1, 0.5, 0}` (DN2b
+  `recordReflectionToGradebook` maps E→1/P→0.5/I→0). Phase 3 remaps to the
+  teacher band **E(≈1)→100 · P(≈0.5)→70 · I(≈0)→35** (`frqBand` config).
+- `source:'curriculum_quiz'` → scored vs bundled answer-key (Phase-2 logic).
+- `source:'pc'` → scored vs bundled answer-key (answer-key.json has 347
+  `*-PC-*` MCQ keys; PC-FRQ has no key → ungradable, excluded). **No `pc`
+  writer ships yet** ⇒ `/grade` must yield `P=0` (no lift) when absent.
+
+**`B(u)` with missing feeders (non-punitive, cumulative — teacher §1/§2):**
+`B = weighted mean over feeders that HAVE graded data`, weights renormalized
+to those present. W-only → `B=W`; Q-only → `B=Q`; both → `B=(1·W+2·Q)/3`;
+neither → `B=null` (unit ungraded — NOT 0; a not-yet-done unit must not tank
+the grade — directly serves "cumulative, accumulates as work is completed,
+never punitive"). `banked = B==null ? null : min(B, 85)`.
+
+**`P(u)` curve** (raw% `r` = PC `correct/graded`×100 vs answer-key; null/no
+PC → `P=0`): with quarter anchors `{p85,p100}` —
+`r≥p100 → 100`; `p85≤r<p100 → 85 + (r−p85)/(p100−p85)·15`;
+`0≤r<p85 → r/p85·85` (linear to 0). Clamp [0,100].
+`unitGrade = max( banked ?? 0, P )`; a unit with `banked==null && P==0` has
+**no grade** → excluded from the quarter mean (not counted as 0).
+`quarterGrade = mean( unitGrade for graded units in the band )`, null if none.
+
+**Diagnostic BKT (`/mastery`, decoupled):** reuse `lib/bkt.js` AS-IS via a
+**byte-identical bundled `roster-server/bkt.js`** + a guard test asserting
+identity (reuse, not fork — §4). Load via `createRequire` (UMD →
+`module.exports`). Per-skill: resolve `item_id`→`skill` via byte-identical
+bundled `roster-server/data/skill-map.json` (`skill:null`/unresolved →
+excluded, per tagging spec). Correctness signal: `curriculum_quiz`/`pc` vs
+answer-key; `frq` `correct = score≥0.5`; `worksheet` skipped (no key).
+Sequence rows by `recorded_at` asc; fold `BKT.updateMastery` from `pInit`.
+`weakSkills` = pKnow `< θ (0.65)`. θ/frq-threshold are config, grade-independent.
+
+**Bundling (Railway Root Dir=roster-server/ ⇒ repo-root `data/` not shipped):**
+mirror the answer-key/work-manifest precedent. `build-skill-map.mjs` gains a
+byte-identical dual-write to `roster-server/data/skill-map.json`; `bkt.js`
+copied byte-identical to `roster-server/bkt.js`. Both guarded by a
+byte-identical regression test. `createApp` gains a 5th injectable
+`loadSkillMap` (default = bundled-path loader, same priority chain as
+`loadAnswerKey`); `mountGrade`/`mountMastery` are additive + injectable +
+no-network-in-tests, exactly like `mountRollup`.

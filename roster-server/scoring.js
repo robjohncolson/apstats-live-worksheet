@@ -1,0 +1,148 @@
+// scoring.js — shared cr-quiz/PC answer-key scoring + ledger aggregation
+// helpers. Single source of truth so /rollup (Phase 2), /grade and /mastery
+// (Phase 3) score identically (GRADEBOOK_PHASE3_BUILD.md §5: "reuse the
+// Phase-2 /rollup cr-quiz aggregation", not a fork). Logic is byte-equivalent
+// to rollup.js's original local helpers — the 13 rollup tests pin it.
+
+// Normalize a jsonb `response` to a comparable scalar string. DN2d records
+// `response: answer` where `answer` is cr's letter-style value (cr's own
+// checkIfAnswerCorrect compares String(value).trim().toLowerCase() to the
+// letter answerKey). Tolerate string | {value|answer|selected|choice} | array.
+export function normalizeResponse(response) {
+  if (response == null) return null;
+  if (typeof response === 'string' || typeof response === 'number') {
+    return String(response).trim().toLowerCase();
+  }
+  if (Array.isArray(response)) {
+    return response.length ? normalizeResponse(response[0]) : null;
+  }
+  if (typeof response === 'object') {
+    for (const k of ['value', 'answer', 'selected', 'choice', 'key']) {
+      if (response[k] != null) return normalizeResponse(response[k]);
+    }
+  }
+  return null;
+}
+
+// Mirror cr's checkIfAnswerCorrect exactly: trim + lowercase string equality.
+export function isCorrect(response, answerKey) {
+  const r = normalizeResponse(response);
+  if (r == null || answerKey == null) return false;
+  return r === String(answerKey).trim().toLowerCase();
+}
+
+// Keep only the authoritative attempt per item_id: highest `attempt`, tie
+// broken by latest `recorded_at`. Defensive against missing fields.
+export function latestPerItem(rows) {
+  const best = new Map();
+  for (const row of rows) {
+    const id = row?.item_id;
+    if (typeof id !== 'string' || !id) continue;
+    const cur = best.get(id);
+    if (!cur) { best.set(id, row); continue; }
+    const a = Number(row.attempt) || 0;
+    const b = Number(cur.attempt) || 0;
+    if (a > b) { best.set(id, row); continue; }
+    if (a === b) {
+      const at = Date.parse(row.recorded_at || '') || 0;
+      const bt = Date.parse(cur.recorded_at || '') || 0;
+      if (at >= bt) best.set(id, row);
+    }
+  }
+  return [...best.values()];
+}
+
+// Unit label for aggregation: prefer the answer-key entry's unit, else derive
+// "U{n}" from the id (matches DN2d's `unit: 'U'+n` convention and DN2b's
+// WS-U{n}.../U{n}-... ids). Returns "U?" when nothing parses.
+export function unitOf(itemId, keyEntry) {
+  if (keyEntry && keyEntry.unit != null && String(keyEntry.unit).trim() !== '') {
+    return `U${String(keyEntry.unit).replace(/^U/i, '')}`;
+  }
+  const m = String(itemId).match(/U(\d+)[-L]/i);
+  return m ? `U${m[1]}` : 'U?';
+}
+
+// Validate the bundled answer-key doc shape (fail CLOSED on parseable-but-wrong;
+// substituting {} would silently mark everything ungradable — Codex MAJOR from
+// Phase 2). A sparse object is fine (a MISSING key → ungradable by design), but
+// a PRESENT-but-corrupt entry (e.g. 42, "x", []) must fail closed too, else
+// answer-key corruption silently degrades to ungradable-200 (Codex Phase-3
+// MAJOR). Valid entry = a non-null object whose `answerKey` is string|number
+// |null (null = an objectively-unscorable FRQ entry, by design).
+export function answerKeyMapOrNull(answerKeyDoc) {
+  if (
+    !answerKeyDoc ||
+    typeof answerKeyDoc !== 'object' ||
+    !answerKeyDoc.answerKey ||
+    typeof answerKeyDoc.answerKey !== 'object' ||
+    Array.isArray(answerKeyDoc.answerKey)
+  ) {
+    return null;
+  }
+  const map = answerKeyDoc.answerKey;
+  for (const k of Object.keys(map)) {
+    const e = map[k];
+    if (!e || typeof e !== 'object' || Array.isArray(e)) return null;
+    const ak = e.answerKey;
+    if (ak !== null && typeof ak !== 'string' && typeof ak !== 'number') return null;
+  }
+  return map;
+}
+
+// Validate the bundled skill-map (build-skill-map.mjs output: id → entry).
+// Fail CLOSED on parseable-but-wrong so corruption can't silently empty the
+// diagnostic (Codex Phase-3 MAJOR). The bundled map is NEVER empty (3449+
+// keys; bundle-parity guards it) ⇒ {} = load corruption → reject. A valid
+// entry is a non-null object; `skill` may be a string OR null/absent
+// (unresolved tags are valid and excluded downstream, per the tagging spec).
+export function skillMapValidOrNull(skillMap) {
+  if (!skillMap || typeof skillMap !== 'object' || Array.isArray(skillMap)) {
+    return null;
+  }
+  const keys = Object.keys(skillMap);
+  if (keys.length === 0) return null;
+  for (const k of keys) {
+    const e = skillMap[k];
+    if (!e || typeof e !== 'object' || Array.isArray(e)) return null;
+    if (e.skill !== null && e.skill !== undefined && typeof e.skill !== 'string') return null;
+  }
+  return skillMap;
+}
+
+// Score one source's latest-attempt rows vs the answer key, aggregated per
+// unit. Used for cr-quiz (Q) and PC (P raw%). Returns
+// { units: { U1:{attempted,graded,correct,ungradable,pct} }, totals:{...} }.
+export function scoreAgainstKey(rows, answerKey) {
+  const units = {};
+  const ensure = (u) =>
+    (units[u] || (units[u] = { attempted: 0, graded: 0, correct: 0, ungradable: 0 }));
+
+  for (const row of latestPerItem(rows)) {
+    const itemId = row.item_id;
+    const keyEntry = answerKey[itemId];
+    const u = ensure(unitOf(itemId, keyEntry));
+    u.attempted += 1;
+    if (!keyEntry || keyEntry.answerKey == null) {
+      u.ungradable += 1;
+      continue;
+    }
+    u.graded += 1;
+    if (isCorrect(row.response, keyEntry.answerKey)) u.correct += 1;
+  }
+
+  const totals = { attempted: 0, graded: 0, correct: 0, ungradable: 0 };
+  for (const u of Object.keys(units)) {
+    const x = units[u];
+    x.pct = x.graded > 0 ? Math.round((x.correct / x.graded) * 1000) / 10 : null;
+    totals.attempted += x.attempted;
+    totals.graded += x.graded;
+    totals.correct += x.correct;
+    totals.ungradable += x.ungradable;
+  }
+  totals.pct = totals.graded > 0
+    ? Math.round((totals.correct / totals.graded) * 1000) / 10
+    : null;
+
+  return { units, totals };
+}

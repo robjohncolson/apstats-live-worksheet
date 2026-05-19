@@ -462,7 +462,15 @@ export function buildSkillMap(root = ROOT) {
   const jsonPath = resolve(root, 'data/skill-map.json');
   const jsPath = resolve(root, 'data/skill-map.js');
 
-  writeFileSync(jsonPath, JSON.stringify(sorted, null, 2), 'utf8');
+  const jsonText = JSON.stringify(sorted, null, 2);
+  writeFileSync(jsonPath, jsonText, 'utf8');
+
+  // Phase-3 bundled copy: Railway deploys roster-server with Root Dir =
+  // roster-server/, so the repo-root data/ dir is NOT shipped. /mastery reads
+  // this byte-identical copy (same precedent as answer-key.json /
+  // work-manifest.json). roster-server/tests/bundle-parity.test.js guards it.
+  const bundledSkillMapPath = resolve(root, 'roster-server/data/skill-map.json');
+  writeFileSync(bundledSkillMapPath, jsonText, 'utf8');
 
   // skill-map.js: browser wrapper mirroring data/ti84-procedures.js pattern
   // GENERATED comment is a single clearly-marked line that tests may skip.
