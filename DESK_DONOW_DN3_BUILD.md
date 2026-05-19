@@ -1,8 +1,9 @@
 # DN3 Build — Desk: Do Now card + completion calendar (STAGED)
 
-**Frozen contract** (planner, 2026-05-18, session 100). DN3a: IMPLEMENTED +
-Codex-reviewed (1 MAJOR + 3 MINOR + 1 planner-caught regression, all fixed —
-see §Codex review). DN3b/DN3c: pending. The Desk rework half of
+**Frozen contract** (planner, 2026-05-18, session 100). DN3a + DN3b:
+IMPLEMENTED + Codex-reviewed (DN3a: 1 MAJOR/3 MINOR/1 regression; DN3b: 1
+BLOCKER/1 MAJOR — all fixed; see §Codex review). DN3c: pending. The Desk
+rework half of
 `DESK_DONOW_SPEC.md` §4.4 (decisions D1/D4/D5/D6/D7). Identity + feeders are
 LIVE: DN2c (Desk roster sign-in, `820c79f`), DN2a/b (worksheet feeders),
 DN2d (cr quiz feeder + cr roster, cr `1ccd8a2`). `/donow` is LIVE & prod-
@@ -79,6 +80,28 @@ commit (forensic HEAD; revert the `data/skill-map.js` GENERATED-header
 false-positive if the audit script touched it) → push `master`. Desk is **LF**
 — keep edits EOL-clean.
 
+## Codex review (focused, read-only, 2026-05-18) — DN3b
+
+CLEAN: scope (no DN3c/AI-tutor creep, rCal touch additive); combined-lesson
+rule (4.1↔4.1-2, 1.1≠1.10, 10.x/multi-dash safe); ahead logic (strict >today,
+both sides local-midnight, today→dc-done); never-break/no-flicker (class-toggle
+only, stale-clear, _donowData-null safe, never wipes cell-uN); perf (small grid
+re-query, no leak).
+
+- **BLOCKER (FIXED) — `donowCellState` painted matched `none` as `partial`.**
+  `/donow` includes EVERY manifest lesson and emits `none` for untouched ones,
+  so a fresh student would have seen the **entire calendar amber**. Rewrote the
+  roll-up: `none`/unknown → not-started; return `''` (grey) when all matching
+  lessons are not-done; `partial` only on real partial or mixed done+notdone;
+  `done` only when every match is done.
+- **MAJOR (FIXED) — test gap let the blocker slip.** Added runtime cases:
+  single matched `none` → `''`, all-`none` fresh-student calendar stays grey,
+  unknown lessonState → `''`, and the `dts === today` ahead boundary
+  (→ `dc-done`, not `dc-ahead`).
+
+(Codex dispatch note: the first attempt failed on a cp1252 `0x97` decode — the
+runner choked on `§`/`→`/em-dash in the prompt; re-dispatched ASCII-only.)
+
 ## Codex review (focused, read-only, 2026-05-18) — DN3a
 
 CLEAN: D7 server-mediated (Bearer to ROSTER_SERVICE_URL, zero Supabase);
@@ -105,6 +128,51 @@ Findings dispositioned:
   vm tests (function absent in that sandbox). FIXED at root — the call is now
   `typeof`-guarded, which both fixes the test and properly decouples DN3a
   from DN2c's frozen contract.
+
+## DN3b — frozen scope (4-state calendar coloring, D6)
+
+`ap_stats_roadmap_square_mode.html` only.
+
+1. **Stash** the `/donow` payload in a module var `_donowData` on every
+   `renderDoNow()` success (incl. all-done).
+2. **`rCal()`** (the medium-risk touch — mirror the adjacent status-dot
+   block exactly): tag each lesson cell `c.dataset.topic = inf.t` +
+   `c.dataset.dts = +dt`, and call `paintDonowCells()` at the end of `rCal()`.
+3. **`paintDonowCells()`** — for each `.dc[data-topic]`, compute the lesson
+   state from `_donowData.lessons` and toggle one class:
+   - `none`/no-data → no class (grey unit color stays).
+   - `partial` → `.dc-partial` (amber inset ring).
+   - `done` & cell date ≤ today → `.dc-done` (green inset ring + tint).
+   - `done` & cell date **> today** → `.dc-ahead` (gold ring + soft glow —
+     D6 "done ahead of class" reward).
+   Called from `rCal()` end AND `renderDoNow()` success (no full re-render
+   on poll/visibility — just class toggles; no flicker, preserves scroll).
+4. **Combined-lesson rule (§5 knob #3):** a `/donow` lesson `L` matches a
+   cell topic `T` iff `L === T` OR `L.split('-')[0] === T` OR
+   `L.startsWith(T + '-')` (so cell `4.1` ↔ manifest `4.1-2`, while `1.1`
+   does NOT match `1.10`). Multiple matches → worst-wins
+   (none < partial < done).
+5. **Non-goals (DN3b):** no year collapse / speed-bump (DN3c), no Do Now
+   card change, no Supabase, never touches the `/donow` contract.
+
+## DN3c — frozen scope (D5 one-calendar collapse + D1 speed-bump)
+
+1. **D5 collapse:** make **SY26-27 the only calendar**. `computeDefaultYear()`
+   → always `"SY26-27"`; the year-switcher menu items (SUMMER26 / SY26-27)
+   removed; SUMMER26/SY25-26 defs kept in `SCHEDULE_DEFS` (don't delete code —
+   just stop offering them) but unreachable from the UI; the persisted
+   `ap-roadmap-year` override ignored/forced to SY26-27. Countdown labels
+   drop the summer special-casing (always "Exam Day"/"Days to Exam"). The
+   "do work early" value is preserved by DN3b's ahead-coloring + the Do Now
+   earliest-gap walk (a summer student is driven U1→… and watches the fall
+   calendar fill in ahead — exactly the spec's intent).
+2. **D1 soft speed-bump:** when the student navigates far ahead (opens a
+   unit/lesson) while `/donow`'s `earlierGapFlag` is true, show a gentle
+   non-blocking interstitial: *"You have unfinished earlier work — finishing
+   that first is recommended. Continue anyway?"* with Continue / Go to Do
+   Now. Never hard-locks (units stay open — D1).
+3. **Non-goals (DN3c):** no grade-formula change; no AI-tutor tile
+   (teacher-gated); no deletion of legacy schedule code.
 
 ## Acceptance (DN3a)
 

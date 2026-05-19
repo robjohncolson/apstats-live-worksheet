@@ -461,6 +461,16 @@
             padding: 1px 3px;
         }
         .cell-past { opacity: 0.5; }
+        /* DN3b — /donow completion overlay (D6 4 states; ring keeps unit color visible) */
+        .dc-partial { box-shadow: inset 0 0 0 3px #d99a00; }
+        .dc-done { box-shadow: inset 0 0 0 3px #1f8b3b; }
+        .dc-ahead { box-shadow: inset 0 0 0 3px #d4af00, 0 0 7px 1px #ffcf33;
+                    animation: dcAheadPulse 1.8s ease-in-out infinite; }
+        @keyframes dcAheadPulse {
+          0%,100% { box-shadow: inset 0 0 0 3px #d4af00, 0 0 5px 0 #ffcf33; }
+          50%     { box-shadow: inset 0 0 0 3px #d4af00, 0 0 10px 2px #ffd84d; }
+        }
+        @media (prefers-reduced-motion: reduce) { .dc-ahead { animation: none; } }
         .dbl { position: absolute; bottom: 2px; right: 4px; font-size: 9px; font-weight: bold; }
 
         /* ── Progress ───────────────────────────────── */
@@ -3455,9 +3465,59 @@ function signOutStudent() {
   location.reload();
 }
 
-// ═══ Do Now card (DN3a) ═══
+// ═══ Do Now card (DN3a) + calendar completion coloring (DN3b) ═══
 // Server-mediated via roster-server /donow (D7): the Desk renders + polls only,
 // NEVER touches Supabase. Self-contained; never throws/blocks the Desk.
+var _donowData = null; // latest /donow payload (DN3b cell coloring reads this)
+
+// DN3b — does a /donow lesson string L cover the Desk cell topic T?
+// Exact, or first dash-segment (combined U4/U5 worksheets: cell "4.1" ↔
+// manifest "4.1-2"); "1.1" must NOT match "1.10".
+function donowLessonCovers(L, T) {
+  if (!L || !T) return false;
+  return L === T || L.split('-')[0] === T || L.indexOf(T + '-') === 0;
+}
+
+// DN3b — roll a cell topic up to one of "", "partial", "done"
+// (worst-wins across all matching /donow lessons; "" = none/no-data → grey).
+function donowCellState(topic) {
+  if (!_donowData || !Array.isArray(_donowData.lessons)) return '';
+  var seen = false, anyPartial = false, anyDone = false, anyNotDone = false;
+  for (var i = 0; i < _donowData.lessons.length; i++) {
+    var L = _donowData.lessons[i];
+    if (!donowLessonCovers(L.lesson, topic)) continue;
+    seen = true;
+    var s = L.lessonState;
+    if (s === 'partial') anyPartial = true;
+    else if (s === 'done') anyDone = true;
+    else anyNotDone = true; // 'none' or unknown — NOT started
+  }
+  if (!seen) return '';                          // no /donow lesson covers this cell
+  if (anyPartial) return 'partial';
+  if (anyDone && anyNotDone) return 'partial';   // combined: some done, some not → in progress
+  if (anyDone) return 'done';                    // every matching lesson done
+  return '';                                     // all 'none'/unknown → grey (not started)
+}
+
+// DN3b — apply the 4-state overlay onto already-rendered cells. Pure class
+// toggles (no rCal rebuild → no flicker / scroll loss on poll/visibility).
+function paintDonowCells() {
+  try {
+    var today = +tdy();
+    var cells = document.querySelectorAll('#cg .dc[data-topic]');
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      c.classList.remove('dc-partial', 'dc-done', 'dc-ahead');
+      var st = donowCellState(c.dataset.topic);
+      if (st === 'partial') c.classList.add('dc-partial');
+      else if (st === 'done') {
+        var dts = Number(c.dataset.dts);
+        c.classList.add((dts && dts > today) ? 'dc-ahead' : 'dc-done');
+      }
+    }
+  } catch (_) { /* coloring must never break the Desk */ }
+}
+
 async function renderDoNow() {
   var card = document.getElementById('donow-card');
   var msg = document.getElementById('donow-msg');
@@ -3500,6 +3560,11 @@ async function renderDoNow() {
       show('Could not load your Do Now right now. It will refresh automatically.', 'signin');
       return;
     }
+
+    // DN3b — stash + repaint the calendar completion overlay (all success paths).
+    // typeof-guarded so DN3a's renderDoNow stays decoupled from the DN3b painter.
+    _donowData = data;
+    if (typeof paintDonowCells === 'function') paintDonowCells();
 
     var nt = data.nextTask;
     if (!nt) {
@@ -8090,6 +8155,7 @@ function rCal(){
             if(eq(dt,t))c.classList.add("cell-today");
             if(dt<t&&!eq(dt,t))c.classList.add("cell-past");
             if (typeof inf === 'object' && inf.t) {
+              c.dataset.topic = inf.t; c.dataset.dts = +dt; // DN3b — completion overlay hooks
               const allEntries = getAllRegistryEntries(inf.t);
               if (allEntries.length) {
                 const worst = allEntries.some(e => e.status === 'partial') ? 'partial'
@@ -8106,6 +8172,7 @@ function rCal(){
             r.appendChild(c);
         }g.appendChild(r);
     }
+    paintDonowCells(); // DN3b — overlay completion state onto the fresh grid
 }
 function rCD(){
     const t=tdy(),ms=864e5,dte=Math.max(0,Math.ceil((EX_DT-t)/ms));
