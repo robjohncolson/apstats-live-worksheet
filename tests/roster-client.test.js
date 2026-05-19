@@ -520,3 +520,94 @@ describe('Cross-host identity (acceptance criterion §7.4)', () => {
     expect(ids[2]).toBe('shared-uuid-77');
   });
 });
+
+// ─── TR2: mustChangePassword surfacing + changePassword() ────────────────────
+
+describe('roster-client.js — TR2 mustChangePassword + changePassword()', () => {
+  it('signIn surfaces mustChangePassword:true and persists it in the session', async () => {
+    const { win, localStorage, rosterClient } = makeWindow('https://mock-service.test');
+    mockFetch(win, {
+      ok: true, studentId: 'u-mc', username: 'mango_fox',
+      realName: 'MC', section: 'S', token: 't', mustChangePassword: true
+    });
+
+    const result = await rosterClient.signIn('mango_fox', 'temp');
+    expect(result.ok).toBe(true);
+    expect(result.mustChangePassword).toBe(true);
+
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.mustChangePassword).toBe(true);
+    expect(rosterClient.current().mustChangePassword).toBe(true);
+  });
+
+  it('signIn defaults mustChangePassword to false when absent', async () => {
+    const { win, rosterClient } = makeWindow('https://mock-service.test');
+    mockFetch(win, {
+      ok: true, studentId: 'u-nc', username: 'apple_deer',
+      realName: 'NC', section: 'S', token: 't'
+    });
+    const result = await rosterClient.signIn('apple_deer', 'pw');
+    expect(result.mustChangePassword).toBe(false);
+    expect(rosterClient.current().mustChangePassword).toBe(false);
+  });
+
+  it('changePassword returns {ok:false} when not signed in (no token)', async () => {
+    const { rosterClient } = makeWindow('https://mock-service.test');
+    const r = await rosterClient.changePassword('whatever1');
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/not signed in/i);
+  });
+
+  it('POSTs token+newPassword to /roster/change-password and clears the flag on ok', async () => {
+    const { win, rosterClient } = makeWindow('https://mock-service.test');
+    mockFetch(win, {
+      ok: true, studentId: 'u-cp', username: 'lime_bear',
+      realName: 'CP', section: 'S', token: 'sess.tok', mustChangePassword: true
+    });
+    await rosterClient.signIn('lime_bear', 'temp');
+    expect(rosterClient.current().mustChangePassword).toBe(true);
+
+    const fetchFn = mockFetch(win, { ok: true });
+    const r = await rosterClient.changePassword('brand-new-pw');
+
+    expect(r.ok).toBe(true);
+    const [url, options] = fetchFn.mock.calls[0];
+    expect(url).toBe('https://mock-service.test/roster/change-password');
+    const body = JSON.parse(options.body);
+    expect(body.token).toBe('sess.tok');
+    expect(body.newPassword).toBe('brand-new-pw');
+    // session flag cleared, token preserved
+    expect(rosterClient.current().mustChangePassword).toBe(false);
+    expect(rosterClient.token()).toBe('sess.tok');
+  });
+
+  it('changePassword returns the server error and leaves the session unchanged on ok:false', async () => {
+    const { win, rosterClient } = makeWindow('https://mock-service.test');
+    mockFetch(win, {
+      ok: true, studentId: 'u-er', username: 'fig_cat',
+      realName: 'ER', section: 'S', token: 'tok', mustChangePassword: true
+    });
+    await rosterClient.signIn('fig_cat', 'temp');
+
+    mockFetch(win, { ok: false, error: 'newPassword must be at least 6 characters' }, { ok: false, status: 400 });
+    const r = await rosterClient.changePassword('abc');
+
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain('at least 6');
+    expect(rosterClient.current().mustChangePassword).toBe(true); // unchanged
+  });
+
+  it('changePassword returns ok:false (no throw) on network error', async () => {
+    const { win, rosterClient } = makeWindow('https://mock-service.test');
+    mockFetch(win, {
+      ok: true, studentId: 'u-ne', username: 'pear_elk',
+      realName: 'NE', section: 'S', token: 'tok', mustChangePassword: true
+    });
+    await rosterClient.signIn('pear_elk', 'temp');
+
+    win.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+    const r = await rosterClient.changePassword('newpassword');
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain('Network error');
+  });
+});

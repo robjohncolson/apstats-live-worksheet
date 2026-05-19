@@ -328,3 +328,274 @@ describe('DN2c runtime — signOutStudent / menu / modal open', () => {
     expect(d.el('signin-password').value).toBe('');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. TR2 — forced change-password modal
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TR2 — forced change-password is wired (static)', () => {
+  it('has a non-dismissable pwchange modal with new + confirm inputs', () => {
+    expect(html).toContain('id="pwchange-overlay"');
+    expect(html).toContain('id="pwchange-new"');
+    expect(html).toContain('id="pwchange-confirm"');
+    // No outside-click close handler on the overlay (unlike the sign-in modal).
+    const m = /<div class="dialog-overlay" id="pwchange-overlay"[^>]*>/.exec(html);
+    expect(m).not.toBeNull();
+    expect(m[0]).not.toContain('onclick');
+  });
+
+  it('submitSignIn opens the pw modal when result.mustChangePassword', () => {
+    const b = fnBody(html, 'submitSignIn');
+    expect(b).toMatch(/result\.mustChangePassword/);
+    expect(b).toMatch(/openPwChangeModal\s*\(/);
+  });
+
+  it('submitPwChange calls rosterClient.changePassword and validates length + match', () => {
+    const b = fnBody(html, 'submitPwChange');
+    expect(b).toMatch(/rosterClient\.changePassword\s*\(/);
+    expect(b).toMatch(/length\s*<\s*6/);
+    expect(b).toMatch(/!==\s*confirmPw|pw\s*!==/);
+  });
+
+  it('maybeForcePasswordChange checks current().mustChangePassword and never throws', () => {
+    const b = fnBody(html, 'maybeForcePasswordChange');
+    expect(b).toMatch(/mustChangePassword/);
+    expect(b).toMatch(/try\s*\{/);
+  });
+
+  it('init invokes maybeForcePasswordChange (guarded)', () => {
+    expect(html).toMatch(/typeof maybeForcePasswordChange === 'function'\) maybeForcePasswordChange\(\)/);
+  });
+});
+
+/** Sandbox loading submitSignIn + the TR2 helpers with injectable fakes. */
+function makeDeskTR2({ rosterClient } = {}) {
+  const store = new Map();
+  const localStorage = {
+    getItem: k => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: k => store.delete(k),
+  };
+  const els = new Map();
+  function el(id) {
+    if (!els.has(id)) {
+      els.set(id, { id, value: '', textContent: '', disabled: false,
+                    style: { display: 'none' }, focus() {} });
+    }
+    return els.get(id);
+  }
+  const calls = { showDialog: [], closeSignInModal: 0, registerStudent: [],
+                  updateStudentMenu: 0, signOut: 0, reload: 0 };
+  const sandbox = {
+    document: { getElementById: id => el(id) },
+    localStorage,
+    window: { rosterClient: rosterClient || undefined },
+    setTimeout: fn => fn(),
+    MacSFX: { play() {} },
+    location: { reload: () => { calls.reload++; } },
+    registerStudent: x => { calls.registerStudent.push(x); },
+    updateStudentMenu: () => { calls.updateStudentMenu++; },
+    closeSignInModal: () => { calls.closeSignInModal++; },
+    showDialog: (...a) => { calls.showDialog.push(a); },
+  };
+  createContext(sandbox);
+  const src = ['submitSignIn', 'signOutStudent', 'openPwChangeModal',
+               'closePwChangeModal', 'maybeForcePasswordChange', 'submitPwChange']
+    .map(n => fnBody(html, n)).join('\n');
+  runInContext(src + '\nthis.__api = { submitSignIn, signOutStudent, openPwChangeModal, '
+    + 'closePwChangeModal, maybeForcePasswordChange, submitPwChange };', sandbox);
+  return { api: sandbox.__api, el, store, calls };
+}
+
+describe('TR2 runtime — forced change-password flow', () => {
+  it('sign-in with mustChangePassword opens the pw modal and does NOT show the welcome yet', async () => {
+    const d = makeDeskTR2({
+      rosterClient: {
+        signIn: async () => ({ ok: true, mustChangePassword: true }),
+        current: () => ({ username: 'coconut_shark', realName: 'Pat Q', mustChangePassword: true }),
+      },
+    });
+    d.el('signin-username').value = 'coconut_shark';
+    d.el('signin-password').value = 'temp-pass';
+
+    await d.api.submitSignIn();
+
+    expect(d.el('pwchange-overlay').style.display).toBe('flex');
+    expect(d.calls.showDialog.length).toBe(0); // welcome deferred until pw set
+    expect(d.calls.closeSignInModal).toBe(1);
+  });
+
+  it('sign-in WITHOUT mustChangePassword shows the welcome and never opens the pw modal', async () => {
+    const d = makeDeskTR2({
+      rosterClient: {
+        signIn: async () => ({ ok: true, mustChangePassword: false }),
+        current: () => ({ username: 'coconut_shark', realName: 'Pat Q' }),
+      },
+    });
+    d.el('signin-username').value = 'coconut_shark';
+    d.el('signin-password').value = 'good-pass';
+
+    await d.api.submitSignIn();
+
+    expect(d.el('pwchange-overlay').style.display).toBe('none');
+    expect(d.calls.showDialog.length).toBe(1);
+  });
+
+  it('submitPwChange rejects mismatch and short passwords without calling the client', async () => {
+    let called = 0;
+    const d = makeDeskTR2({
+      rosterClient: { changePassword: async () => { called++; return { ok: true }; },
+                      current: () => ({ username: 'u' }) },
+    });
+
+    d.el('pwchange-new').value = 'abc';            // too short
+    d.el('pwchange-confirm').value = 'abc';
+    await d.api.submitPwChange();
+    expect(d.el('pwchange-error').textContent).toMatch(/6 characters/);
+
+    d.el('pwchange-new').value = 'longenough';     // mismatch
+    d.el('pwchange-confirm').value = 'different1';
+    await d.api.submitPwChange();
+    expect(d.el('pwchange-error').textContent).toMatch(/do not match/);
+
+    expect(called).toBe(0);
+  });
+
+  it('submitPwChange happy path: calls changePassword, closes modal, shows confirmation', async () => {
+    let arg = null;
+    const d = makeDeskTR2({
+      rosterClient: {
+        changePassword: async (pw) => { arg = pw; return { ok: true }; },
+        current: () => ({ username: 'coconut_shark', realName: 'Pat Q' }),
+      },
+    });
+    d.el('pwchange-overlay').style.display = 'flex';
+    d.el('pwchange-new').value = 'brand-new-pw';
+    d.el('pwchange-confirm').value = 'brand-new-pw';
+
+    await d.api.submitPwChange();
+
+    expect(arg).toBe('brand-new-pw');
+    expect(d.el('pwchange-overlay').style.display).toBe('none');
+    expect(d.calls.showDialog.length).toBe(1);
+    expect(JSON.stringify(d.calls.showDialog[0])).toContain('Password set');
+  });
+
+  it('submitPwChange surfaces a server error and keeps the modal open', async () => {
+    const d = makeDeskTR2({
+      rosterClient: {
+        changePassword: async () => ({ ok: false, error: 'newPassword must be at least 6 characters' }),
+        current: () => ({ username: 'u' }),
+      },
+    });
+    d.el('pwchange-overlay').style.display = 'flex';
+    d.el('pwchange-new').value = 'longenough';
+    d.el('pwchange-confirm').value = 'longenough';
+
+    await d.api.submitPwChange();
+
+    expect(d.el('pwchange-error').textContent).toContain('at least 6');
+    expect(d.el('pwchange-overlay').style.display).toBe('flex');
+    expect(d.calls.showDialog.length).toBe(0);
+  });
+
+  it('maybeForcePasswordChange opens the modal only when current().mustChangePassword', () => {
+    const yes = makeDeskTR2({ rosterClient: { current: () => ({ mustChangePassword: true }) } });
+    expect(yes.api.maybeForcePasswordChange()).toBe(true);
+    expect(yes.el('pwchange-overlay').style.display).toBe('flex');
+
+    const no = makeDeskTR2({ rosterClient: { current: () => ({ mustChangePassword: false }) } });
+    expect(no.api.maybeForcePasswordChange()).toBe(false);
+    expect(no.el('pwchange-overlay').style.display).toBe('none');
+
+    const off = makeDeskTR2({ rosterClient: undefined });
+    expect(() => off.api.maybeForcePasswordChange()).not.toThrow();
+    expect(off.api.maybeForcePasswordChange()).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. TR2 acceptance gate — a must-change student reaches NO Desk feature
+//    (regression for the Codex MAJOR: renderDoNow ran before/around the gate)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TR2 — renderDoNow self-gates on mustChangePassword (static)', () => {
+  it('the mustChangePassword check comes before any /donow fetch', () => {
+    const b = fnBody(html, 'renderDoNow');
+    const gateAt = b.indexOf('mustChangePassword');
+    const fetchAt = b.indexOf('fetch(');
+    expect(gateAt).toBeGreaterThan(-1);
+    expect(fetchAt).toBeGreaterThan(-1);
+    expect(gateAt).toBeLessThan(fetchAt);          // gate first, fetch never reached for must-change
+  });
+
+  it('init runs the force gate before renderDoNow()', () => {
+    const i = html.indexOf("maybeForcePasswordChange(); // TR2 — gate BEFORE any feature render");
+    const r = html.indexOf('renderDoNow();\n}');
+    expect(i).toBeGreaterThan(-1);
+    expect(r).toBeGreaterThan(-1);
+    expect(i).toBeLessThan(r);
+  });
+
+  it('the visibilitychange listener routes through renderDoNow (so it is also gated)', () => {
+    expect(html).toMatch(/visibilitychange['"]\s*,\s*function[^}]*renderDoNow\(\)/s);
+  });
+});
+
+/** Harness that runs the real renderDoNow + the TR2 helpers with a fetch spy. */
+function makeDeskDoNow({ rosterClient } = {}) {
+  const els = new Map();
+  function el(id) {
+    if (!els.has(id)) {
+      els.set(id, { id, value: '', textContent: '', className: '',
+                    style: { display: 'none' }, disabled: false, focus() {} });
+    }
+    return els.get(id);
+  }
+  const calls = { fetch: 0 };
+  const sandbox = {
+    document: { getElementById: id => el(id) },
+    window: { rosterClient: rosterClient || undefined, ROSTER_SERVICE_URL: 'https://svc.test' },
+    fetch: (...a) => { calls.fetch++; return Promise.reject(new Error('fetch must NOT run for a must-change user')); },
+    setTimeout: fn => fn(),
+  };
+  createContext(sandbox);
+  const src = ['openPwChangeModal', 'closePwChangeModal', 'maybeForcePasswordChange', 'renderDoNow']
+    .map(n => fnBody(html, n)).join('\n');
+  runInContext(src + '\nthis.__api = { renderDoNow, maybeForcePasswordChange };', sandbox);
+  return { api: sandbox.__api, el, calls };
+}
+
+describe('TR2 runtime — renderDoNow gating', () => {
+  it('must-change session: no /donow fetch, shows the lock message, opens the forced modal', async () => {
+    const d = makeDeskDoNow({
+      rosterClient: {
+        current: () => ({ username: 'u', mustChangePassword: true }),
+        token: () => 'sess.tok',           // token present — must STILL be gated
+      },
+    });
+
+    await d.api.renderDoNow();
+
+    expect(d.calls.fetch).toBe(0);
+    expect(d.el('donow-msg').textContent).toMatch(/set your password/i);
+    expect(d.el('pwchange-overlay').style.display).toBe('flex');
+  });
+
+  it('returning must-change session (no explicit sign-in this load) is still gated on render', async () => {
+    const d = makeDeskDoNow({
+      rosterClient: { current: () => ({ mustChangePassword: true }), token: () => null },
+    });
+    await d.api.renderDoNow();
+    expect(d.calls.fetch).toBe(0);
+    expect(d.el('pwchange-overlay').style.display).toBe('flex');
+  });
+
+  it('not signed in: gate is skipped, no modal, no fetch (sign-in nudge path intact)', async () => {
+    const d = makeDeskDoNow({ rosterClient: { current: () => null, token: () => null } });
+    await d.api.renderDoNow();
+    expect(d.calls.fetch).toBe(0);
+    expect(d.el('pwchange-overlay').style.display).toBe('none');
+    expect(d.el('donow-msg').textContent).toMatch(/sign in/i);
+  });
+});

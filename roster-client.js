@@ -55,7 +55,8 @@
         studentId: session.studentId,
         username: session.username,
         realName: session.realName,
-        section: session.section
+        section: session.section,
+        mustChangePassword: !!session.mustChangePassword
       };
     },
 
@@ -86,6 +87,7 @@
           realName: data.realName,
           section: data.section,
           token: data.token,
+          mustChangePassword: !!data.mustChangePassword,
           signedInAt: new Date().toISOString()
         });
 
@@ -93,8 +95,45 @@
           ok: true,
           studentId: data.studentId,
           realName: data.realName,
-          section: data.section
+          section: data.section,
+          mustChangePassword: !!data.mustChangePassword
         };
+      } catch (err) {
+        return { ok: false, error: err.message || 'Network error' };
+      }
+    },
+
+    // POST /roster/change-password — student changes their own password using
+    // the stored session token. On success, clears mustChangePassword in the
+    // persisted session. Returns { ok, error? }. Never throws.
+    changePassword: async function (newPassword) {
+      var session = readSession();
+      if (!session || !session.token) {
+        return { ok: false, error: 'Not signed in' };
+      }
+
+      var baseUrl = serviceUrl();
+      if (!baseUrl) {
+        return { ok: false, error: 'ROSTER_SERVICE_URL is not configured' };
+      }
+
+      try {
+        var response = await fetch(baseUrl + '/roster/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: session.token, newPassword: newPassword })
+        });
+
+        var data = await response.json();
+
+        if (!data.ok) {
+          return { ok: false, error: data.error || 'Password change failed' };
+        }
+
+        session.mustChangePassword = false;
+        writeSession(session);
+
+        return { ok: true };
       } catch (err) {
         return { ok: false, error: err.message || 'Network error' };
       }

@@ -21,6 +21,7 @@
  *   node scripts/teacher-roster.mjs --csv class.csv --section PERIOD3 --random
  *   node scripts/teacher-roster.mjs --name "Jane Doe" --section PERIOD3 --password apstats2026
  *   node scripts/teacher-roster.mjs --csv class.csv --section PERIOD3 --password x --dry-run
+ *   node scripts/teacher-roster.mjs --view --section PERIOD3 --out roster.csv
  *
  * CSV rows: realName[,section[,email]]   (a header line is auto-detected/skipped)
  * --section <S>   default section for rows that omit one
@@ -50,7 +51,13 @@ USAGE
   node scripts/teacher-roster.mjs --name "Jane Doe" --section PERIOD3 --random
   node scripts/teacher-roster.mjs --csv class.csv --section PERIOD3 --password x --dry-run
 
-INPUT (choose one)
+MODE
+  (default)        enroll students (see INPUT below)
+  --view           instead, list the existing roster (current passwords incl.)
+                   from GET /roster/list; optional --section filter; --out CSV.
+                   Needs roster-server Sprint TR1 deployed.
+
+INPUT (choose one, enroll mode)
   --csv <path>     CSV file; each row: realName[,section[,email]] (header auto-skipped)
   --stdin          read one realName per line from standard input
   --name "<Full>"  enroll a single student
@@ -81,7 +88,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { flags._.push(a); continue; }
     const key = a.slice(2);
-    if (key === 'help' || key === 'dry-run' || key === 'random' || key === 'stdin') {
+    if (key === 'help' || key === 'dry-run' || key === 'random' || key === 'stdin' || key === 'view') {
       flags[key] = true;
       continue;
     }
@@ -217,6 +224,80 @@ async function enrollOne(url, secret, { realName, section, password, email }) {
   return { ok: true, username: data.username, studentId: data.studentId };
 }
 
+// ── View mode (GET /roster/list) ─────────────────────────────────────────────
+
+async function runView(args) {
+  const url = resolveUrl(args.url);
+  const secret = resolveSecret(args.secret);
+  if (!secret) {
+    console.error('ERROR: teacher secret not found. Pass --secret, set ROSTER_TEACHER_SECRET,');
+    console.error('       or ensure roster-server/.env has ROSTER_TEACHER_SECRET=...');
+    process.exit(1);
+  }
+
+  const path = '/roster/list' + (args.section ? '?section=' + encodeURIComponent(args.section) : '');
+
+  let res;
+  try {
+    res = await fetch(url + path, { headers: { 'x-teacher-secret': secret } });
+  } catch (err) {
+    console.error('ERROR: cannot reach ' + url + ' (' + (err.message || 'network error') + ')');
+    process.exit(1);
+  }
+
+  if (res.status === 401) {
+    console.error('ERROR: forbidden — check the teacher secret.');
+    process.exit(1);
+  }
+  if (res.status === 404) {
+    console.error('ERROR: /roster/list returned 404 — roster-server Sprint TR1 is not');
+    console.error('       deployed yet. Apply 0003 + set ROSTER_PW_ENC_KEY + redeploy');
+    console.error('       (roster-server/README.md, "TR1"). Until then use enroll mode.');
+    process.exit(1);
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    console.error('ERROR: roster service returned a non-JSON response (HTTP ' + res.status + ').');
+    console.error('       If this persists, confirm Sprint TR1 is deployed.');
+    process.exit(1);
+  }
+
+  if (!res.ok || !data || !data.ok) {
+    console.error('ERROR: roster list failed (HTTP ' + res.status + '): ' +
+      ((data && data.error) || 'unknown'));
+    process.exit(1);
+  }
+
+  const students = (data.students || []).map(s => ({
+    realName: s.realName,
+    section: s.section,
+    username: s.username,
+    password: s.currentPassword == null ? '(unavailable)' : s.currentPassword,
+    status: s.mustChangePassword ? 'must-change' : 'set'
+  }));
+
+  console.log((args.section ? 'Section ' + args.section + ': ' : 'All sections: ') + students.length + ' student(s)\n');
+  printTable(students);
+
+  if (args.out) {
+    const header = ['realName', 'section', 'username', 'currentPassword', 'mustChangePassword', 'createdAt'];
+    const lines = [csvRow(header)];
+    for (const s of data.students || []) {
+      lines.push(csvRow([s.realName, s.section, s.username,
+        s.currentPassword == null ? '' : s.currentPassword,
+        s.mustChangePassword ? 'yes' : 'no', s.createdAt || '']));
+    }
+    const outPath = resolve(process.cwd(), args.out);
+    writeFileSync(outPath, lines.join('\n') + '\n', 'utf8');
+    console.log('\nRoster CSV written: ' + outPath + '  (contains plaintext passwords — keep private)');
+  }
+
+  process.exit(0);
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -225,6 +306,12 @@ async function main() {
   if (args.help || process.argv.length <= 2) {
     console.log(HELP);
     process.exit(args.help ? 0 : 1);
+  }
+
+  // View mode — list the existing roster instead of enrolling.
+  if (args.view) {
+    await runView(args);
+    return;
   }
 
   // 1. Gather the class list.

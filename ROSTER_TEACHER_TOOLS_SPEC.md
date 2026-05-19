@@ -1,7 +1,8 @@
 # ROSTER_TEACHER_TOOLS_SPEC.md
 
-**Status: TR0 SHIPPED & live-verified. §3 security model SIGNED OFF 2026-05-19 (teacher chose
-reversible/encrypted). TR1 in progress.**
+**Status: TR0–TR4 all implemented (2026-05-19). §3 security model SIGNED OFF (reversible/encrypted).
+TR0+TR1 committed `92a0f46`; TR2–TR4 committed next. TR1 awaits the user deploy handoff (§5).
+Codex: TR1 SHIP; TR2 BLOCKED→fixed→re-review SHIP.**
 Brainstormed 2026-05-19. Builds on the live Phase 0 roster service (see `GRADEBOOK_PHASE0_BUILD.md`,
 `roster-server/README.md`). This spec adds the **teacher-facing** layer that Phase 0 never built:
 enrolling a class, handing out usernames, and recovering student logins.

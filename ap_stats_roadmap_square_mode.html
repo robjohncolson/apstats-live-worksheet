@@ -1267,6 +1267,26 @@
     </div>
 </div>
 
+<!-- ═══ Forced Change-Password Modal (TR2) — no dismiss; must set a new password ═══ -->
+<div class="dialog-overlay" id="pwchange-overlay" style="display:none">
+    <div class="dialog-box chicago" style="max-width:340px">
+        <div class="dialog-body" style="text-align:left">
+            <div class="dialog-icon" style="float:left;margin-right:10px">&#128272;</div>
+            <div class="dialog-msg geneva" style="font-size:11px">
+                <div class="chicago" style="font-size:12px;margin-bottom:4px">Set Your Password</div>
+                <div style="margin-bottom:8px">Your teacher gave you a temporary password. Choose a new one to continue (at least 6 characters).</div>
+                <input type="password" id="pwchange-new" class="geneva" autocomplete="new-password" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="new password">
+                <input type="password" id="pwchange-confirm" class="geneva" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitPwChange()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="confirm new password">
+                <div id="pwchange-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
+            </div>
+        </div>
+        <div class="dialog-btns">
+            <button class="s7btn" onclick="signOutStudent()">Sign Out</button>
+            <button class="s7btn s7btn-default" id="pwchange-ok" onclick="submitPwChange()">Set Password</button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Resource Panel ═══ -->
 <div id="resource-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeResourcePanel()">
     <div class="dialog-box" style="max-width:340px;width:90%;text-align:left;padding:12px 16px">
@@ -3316,6 +3336,7 @@ async function loadRegistry() {
   await loadSupabaseOverlay(cP);
   rCal();
   rProg();
+  if (typeof maybeForcePasswordChange === 'function') maybeForcePasswordChange(); // TR2 — gate BEFORE any feature render
   renderDoNow();
 }
 
@@ -3466,9 +3487,15 @@ async function submitSignIn() {
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     registerStudent(legacyKey);
     updateStudentMenu();
-    if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded so DN2c stays decoupled
     closeSignInModal();
-    showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + '.','OK');
+    // TR2: a teacher-issued default password must be changed before continuing.
+    // The welcome + Do Now refresh happen AFTER the new password is set.
+    if (result.mustChangePassword) {
+      openPwChangeModal();
+    } else {
+      if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded so DN2c stays decoupled
+      showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + '.','OK');
+    }
   } finally {
     submitSignIn._pending = false;
     if (okBtn) okBtn.disabled = false;
@@ -3480,6 +3507,89 @@ function signOutStudent() {
   localStorage.removeItem('apstats_desk_student_email');
   updateStudentMenu();
   location.reload();
+}
+
+// ═══ Forced change-password (TR2) ═══
+// Shown after sign-in (or on a returning session) when the roster account still
+// carries a teacher-issued default password. No dismiss path except Sign Out.
+function openPwChangeModal() {
+  var ov = document.getElementById('pwchange-overlay');
+  if (!ov) return;
+  var n = document.getElementById('pwchange-new');
+  var c = document.getElementById('pwchange-confirm');
+  var err = document.getElementById('pwchange-error');
+  if (n) n.value = '';
+  if (c) c.value = '';
+  if (err) err.textContent = '';
+  ov.style.display = 'flex';
+  if (n) n.focus();
+}
+
+function closePwChangeModal() {
+  var ov = document.getElementById('pwchange-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+// If signed in with a default password still pending, force the modal.
+// Guarded + never throws so it is safe to call from init.
+function maybeForcePasswordChange() {
+  try {
+    var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
+    if (who && who.mustChangePassword) {
+      openPwChangeModal();
+      return true;
+    }
+  } catch (e) { /* never block the Desk */ }
+  return false;
+}
+
+async function submitPwChange() {
+  if (submitPwChange._pending) return;          // in-flight guard (button + Enter)
+  var n = document.getElementById('pwchange-new');
+  var c = document.getElementById('pwchange-confirm');
+  var err = document.getElementById('pwchange-error');
+  if (err) err.textContent = '';
+
+  if (!window.rosterClient || !window.rosterClient.changePassword) {
+    if (err) err.textContent = 'Unavailable (offline). Try again on the school network.';
+    return;
+  }
+
+  // Passwords are intentionally NOT trimmed (leading/trailing chars are valid).
+  var pw = (n && n.value) || '';
+  var confirmPw = (c && c.value) || '';
+  if (pw.length < 6) {
+    if (err) err.textContent = 'Use at least 6 characters.';
+    return;
+  }
+  if (pw !== confirmPw) {
+    if (err) err.textContent = 'The two passwords do not match.';
+    return;
+  }
+
+  submitPwChange._pending = true;
+  var okBtn = document.getElementById('pwchange-ok');
+  if (okBtn) okBtn.disabled = true;
+  if (err) err.textContent = 'Saving…';
+  try {
+    var result;
+    try {
+      result = await window.rosterClient.changePassword(pw);
+    } catch (e) {
+      result = { ok: false, error: (e && e.message) || 'Network error' };
+    }
+    if (!result || !result.ok) {
+      if (err) err.textContent = (result && result.error) || 'Could not change password.';
+      return;
+    }
+    closePwChangeModal();
+    var who = (window.rosterClient.current && window.rosterClient.current()) || {};
+    if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded
+    showDialog('\u{1F511}','Password set. You are signed in as ' + (who.realName || who.username || 'student') + '.','OK');
+  } finally {
+    submitPwChange._pending = false;
+    if (okBtn) okBtn.disabled = false;
+  }
 }
 
 // ═══ Do Now card (DN3a) + calendar completion coloring (DN3b) ═══
@@ -3591,6 +3701,22 @@ async function renderDoNow() {
   }
 
   try {
+    // TR2 gate: a student with a teacher-issued default password is locked out
+    // of EVERY Desk feature until they change it. renderDoNow() is the single
+    // chokepoint — gating here covers init order, the visibilitychange refresh,
+    // and the post-sign-in path, and never fetches /donow for a must-change user.
+    var who = null;
+    try {
+      if (window.rosterClient && typeof window.rosterClient.current === 'function') {
+        who = window.rosterClient.current();
+      }
+    } catch (_) { who = null; }
+    if (who && who.mustChangePassword) {
+      show('Set your password to continue — see the prompt.', 'signin');
+      if (typeof maybeForcePasswordChange === 'function') maybeForcePasswordChange();
+      return;
+    }
+
     var token = null;
     try {
       if (window.rosterClient && typeof window.rosterClient.token === 'function') {
