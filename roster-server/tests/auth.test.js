@@ -17,7 +17,7 @@ function createFakeDb() {
   return {
     store,
 
-    async insertRoster({ realName, section, loginUsername, passwordHash, email }) {
+    async insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher }) {
       const key = loginUsername.toLowerCase();
 
       if (store.has(key)) {
@@ -28,13 +28,16 @@ function createFakeDb() {
       }
 
       const row = {
-        student_id:     `uuid-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        login_username: loginUsername,
-        password_hash:  passwordHash,
-        real_name:      realName,
+        student_id:           `uuid-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        login_username:       loginUsername,
+        password_hash:        passwordHash,
+        password_cipher:      passwordCipher ?? null,
+        must_change_password: true,
+        real_name:            realName,
         section,
-        email:          email || null,
-        status:         'active'
+        email:                email || null,
+        status:               'active',
+        created_at:           new Date().toISOString()
       };
       store.set(key, row);
 
@@ -50,6 +53,35 @@ function createFakeDb() {
       }
 
       return { data: row, error: null };
+    },
+
+    async updatePassword({ studentId, passwordHash, passwordCipher }) {
+      const row = [...store.values()].find(r => r.student_id === studentId);
+
+      if (!row) {
+        return { data: null, error: { code: 'PGRST116', message: 'Row not found' } };
+      }
+
+      row.password_hash = passwordHash;
+      row.password_cipher = passwordCipher ?? null;
+      row.must_change_password = false;
+
+      return { data: { student_id: studentId }, error: null };
+    },
+
+    async listRoster(section) {
+      const rows = [...store.values()]
+        .filter(r => !section || r.section === section)
+        .map(r => ({
+          real_name:            r.real_name,
+          login_username:       r.login_username,
+          section:              r.section,
+          password_cipher:      r.password_cipher,
+          must_change_password: r.must_change_password,
+          created_at:           r.created_at
+        }));
+
+      return { data: rows, error: null };
     }
   };
 }
@@ -107,6 +139,7 @@ beforeEach(async () => {
 
   process.env.ROSTER_TEACHER_SECRET = teacherSecret;
   process.env.ROSTER_TOKEN_SECRET   = tokenSecret;
+  process.env.ROSTER_PW_ENC_KEY     = 'a'.repeat(64);
   process.env.NODE_ENV              = 'test';
 
   db  = createFakeDb();
@@ -119,6 +152,7 @@ afterEach(async () => {
   await srv.stop();
   delete process.env.ROSTER_TEACHER_SECRET;
   delete process.env.ROSTER_TOKEN_SECRET;
+  delete process.env.ROSTER_PW_ENC_KEY;
 });
 
 // ── /health ──────────────────────────────────────────────────────────────────
@@ -331,5 +365,185 @@ describe('POST /roster/resolve', () => {
     });
     expect(status).toBe(401);
     expect(body.ok).toBe(false);
+  });
+});
+
+// ── TR1: enroll/verify additive deltas ───────────────────────────────────────
+
+describe('TR1 enroll/verify deltas', () => {
+  async function enroll(realName = 'Mara Vix', password = 'default-pw-1') {
+    const { body } = await srv.request('POST', '/roster/enroll', {
+      headers: { 'x-teacher-secret': teacherSecret },
+      body: { realName, section: 'TR1SEC', password }
+    });
+    return body;
+  }
+
+  it('enroll stores a password_cipher and must_change_password=true', async () => {
+    const e = await enroll('Nina Olu', 'startpass');
+    const row = [...db.store.values()].find(r => r.real_name === 'Nina Olu');
+    expect(row.must_change_password).toBe(true);
+    expect(typeof row.password_cipher).toBe('string');
+    expect(row.password_cipher.startsWith('v1:')).toBe(true);
+    expect(row.password_cipher).not.toContain('startpass');
+  });
+
+  it('fresh account: verify returns mustChangePassword:true and no hash leak', async () => {
+    const e = await enroll('Omar Pax', 'firstpass');
+    const { status, body } = await srv.request('POST', '/roster/verify', {
+      body: { username: e.username, password: 'firstpass' }
+    });
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.mustChangePassword).toBe(true);
+    const s = JSON.stringify(body);
+    expect(s).not.toContain('password_hash');
+    expect(s).not.toContain('hash');
+  });
+});
+
+// ── TR1: POST /roster/change-password ────────────────────────────────────────
+
+describe('POST /roster/change-password', () => {
+  async function enrollAndSignIn(password = 'default-pw-1') {
+    const { body: e } = await srv.request('POST', '/roster/enroll', {
+      headers: { 'x-teacher-secret': teacherSecret },
+      body: { realName: 'Pat Quill', section: 'TR1SEC', password }
+    });
+    const { body: v } = await srv.request('POST', '/roster/verify', {
+      body: { username: e.username, password }
+    });
+    return { username: e.username, token: v.token };
+  }
+
+  it('missing token → 401 invalid token', async () => {
+    const { status, body } = await srv.request('POST', '/roster/change-password', {
+      body: { newPassword: 'whatever1' }
+    });
+    expect(status).toBe(401);
+    expect(body.error).toBe('invalid token');
+  });
+
+  it('garbage token → 401 invalid token', async () => {
+    const { status, body } = await srv.request('POST', '/roster/change-password', {
+      body: { token: 'garbage.token', newPassword: 'whatever1' }
+    });
+    expect(status).toBe(401);
+    expect(body.error).toBe('invalid token');
+  });
+
+  it('short newPassword → 400', async () => {
+    const { token } = await enrollAndSignIn();
+    const { status, body } = await srv.request('POST', '/roster/change-password', {
+      body: { token, newPassword: 'abc' }
+    });
+    expect(status).toBe(400);
+    expect(body.ok).toBe(false);
+  });
+
+  it('happy path: 200, then old password fails and new works, flag cleared', async () => {
+    const { username, token } = await enrollAndSignIn('orig-pass');
+
+    const cp = await srv.request('POST', '/roster/change-password', {
+      body: { token, newPassword: 'brand-new-pass' }
+    });
+    expect(cp.status).toBe(200);
+    expect(cp.body.ok).toBe(true);
+    // Contract: response never echoes a password or any hash material.
+    const cpRaw = JSON.stringify(cp.body);
+    expect(cpRaw).not.toContain('hash');
+    expect(cpRaw).not.toContain('password');
+    expect(cpRaw).not.toContain('brand-new-pass');
+
+    const oldTry = await srv.request('POST', '/roster/verify', {
+      body: { username, password: 'orig-pass' }
+    });
+    expect(oldTry.status).toBe(401);
+
+    const newTry = await srv.request('POST', '/roster/verify', {
+      body: { username, password: 'brand-new-pass' }
+    });
+    expect(newTry.status).toBe(200);
+    expect(newTry.body.ok).toBe(true);
+    expect(newTry.body.mustChangePassword).toBe(false);
+  });
+});
+
+// ── TR1: GET /roster/list (teacher-gated) ────────────────────────────────────
+
+describe('GET /roster/list', () => {
+  async function seed(realName, section, password) {
+    await srv.request('POST', '/roster/enroll', {
+      headers: { 'x-teacher-secret': teacherSecret },
+      body: { realName, section, password }
+    });
+  }
+
+  it('missing teacher secret → 401 forbidden', async () => {
+    const { status, body } = await srv.request('GET', '/roster/list');
+    expect(status).toBe(401);
+    expect(body.error).toBe('forbidden');
+  });
+
+  it('wrong teacher secret → 401 forbidden', async () => {
+    const { status } = await srv.request('GET', '/roster/list', {
+      headers: { 'x-teacher-secret': makeSecret('wrong') }
+    });
+    expect(status).toBe(401);
+  });
+
+  it('returns students with the decrypted current password', async () => {
+    await seed('Rosa Tann', 'LISTSEC', 'rosapass1');
+
+    const { status, body } = await srv.request('GET', '/roster/list?section=LISTSEC', {
+      headers: { 'x-teacher-secret': teacherSecret }
+    });
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    const rosa = body.students.find(s => s.realName === 'Rosa Tann');
+    expect(rosa).toBeDefined();
+    expect(typeof rosa.username).toBe('string');
+    expect(rosa.currentPassword).toBe('rosapass1');
+    expect(rosa.mustChangePassword).toBe(true);
+    // currentPassword is the ONLY intentional plaintext; raw storage fields and
+    // the AES blob must never appear in the response.
+    const raw = JSON.stringify(body);
+    expect(raw).not.toContain('password_hash');
+    expect(raw).not.toContain('password_cipher');
+    expect(raw).not.toContain('v1:');
+  });
+
+  it('section filter narrows the result', async () => {
+    await seed('Sam Uli', 'SECA', 'pwa1234');
+    await seed('Tia Vale', 'SECB', 'pwb1234');
+
+    const { body } = await srv.request('GET', '/roster/list?section=SECB', {
+      headers: { 'x-teacher-secret': teacherSecret }
+    });
+    expect(body.students.every(s => s.section === 'SECB')).toBe(true);
+    expect(body.students.some(s => s.realName === 'Tia Vale')).toBe(true);
+    expect(body.students.some(s => s.realName === 'Sam Uli')).toBe(false);
+  });
+
+  it('reflects the new password after a change', async () => {
+    await seed('Uma Wynn', 'CHGSEC', 'before-pw');
+    const { body: list1 } = await srv.request('GET', '/roster/list?section=CHGSEC', {
+      headers: { 'x-teacher-secret': teacherSecret }
+    });
+    const uma = list1.students.find(s => s.realName === 'Uma Wynn');
+    const { body: v } = await srv.request('POST', '/roster/verify', {
+      body: { username: uma.username, password: 'before-pw' }
+    });
+    await srv.request('POST', '/roster/change-password', {
+      body: { token: v.token, newPassword: 'after-pw-9' }
+    });
+
+    const { body: list2 } = await srv.request('GET', '/roster/list?section=CHGSEC', {
+      headers: { 'x-teacher-secret': teacherSecret }
+    });
+    const uma2 = list2.students.find(s => s.realName === 'Uma Wynn');
+    expect(uma2.currentPassword).toBe('after-pw-9');
+    expect(uma2.mustChangePassword).toBe(false);
   });
 });

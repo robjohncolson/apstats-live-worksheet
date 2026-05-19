@@ -376,3 +376,75 @@ After a green `/donow`, clear the throwaway row (also cascades to any `item_ledg
 ```sql
 delete from roster where section='SMOKETEST';
 ```
+
+---
+
+## TR1 — password lifecycle (teacher login-recovery)
+
+Adds: default password + forced first-login change, and a teacher-gated view of each student's
+**current** password (`ROSTER_TEACHER_TOOLS_SPEC.md`, §3 signed off 2026-05-19 — reversible model).
+All additive; `/roster/verify` and `/roster/enroll` behavior is unchanged except `verify` now also
+returns `mustChangePassword`.
+
+### Step T1 — apply migration `0003_roster_pw.sql`
+
+Supabase SQL Editor (curriculum_render project). Optional sanity check first:
+
+```sql
+select column_name from information_schema.columns
+where table_name='roster' and column_name in ('password_cipher','must_change_password');
+-- expect 0 rows before applying
+```
+
+Paste `roster-server/migrations/0003_roster_pw.sql` and Run. It only `add column if not exists`
+on `roster` — it never touches `answers`/`users`/`item_ledger`/etc.
+
+### Step T2 — set `ROSTER_PW_ENC_KEY`
+
+Railway → `roster` service → Variables:
+
+```bash
+openssl rand -hex 32     # paste the output as ROSTER_PW_ENC_KEY
+```
+
+Server-only; never in git or any client file. **Keep it stable** — rotating it makes existing
+`password_cipher` values unreadable (students can still log in; each row re-encrypts the next time
+that password changes). If the variable is absent the service still runs and auth still works —
+teacher password-view just returns `null` until it is set.
+
+### Step T3 — redeploy
+
+`railway up -s roster` (or dashboard → Deployments → Deploy latest `master`). No other env changes.
+
+### Step T4 — smoke test
+
+```bash
+S=https://roster-production-12c1.up.railway.app
+
+# enroll a throwaway (SMOKETEST folds into the existing cleanup chore)
+curl -s -X POST $S/roster/enroll -H "Content-Type: application/json" \
+  -H "x-teacher-secret: $ROSTER_TEACHER_SECRET" \
+  -d '{"realName":"TR1 Smoke","section":"SMOKETEST","password":"default-pw-1"}'
+# → {ok:true, username:"<fruit_animal>", ...}
+
+# verify: mustChangePassword must be true on a fresh account
+curl -s -X POST $S/roster/verify -H "Content-Type: application/json" \
+  -d '{"username":"<u>","password":"default-pw-1"}'
+# → {ok:true, token:"<t>", mustChangePassword:true, ...}
+
+# student changes it
+curl -s -X POST $S/roster/change-password -H "Content-Type: application/json" \
+  -d '{"token":"<t>","newPassword":"my-new-pw"}'
+# → {ok:true}
+
+# verify again: old fails, new works, flag now false
+curl -s -X POST $S/roster/verify -H "Content-Type: application/json" \
+  -d '{"username":"<u>","password":"my-new-pw"}'
+# → {ok:true, mustChangePassword:false, ...}
+
+# teacher sees the CURRENT password
+curl -s "$S/roster/list?section=SMOKETEST" -H "x-teacher-secret: $ROSTER_TEACHER_SECRET"
+# → {ok:true, students:[{username:"<u>", currentPassword:"my-new-pw", mustChangePassword:false, ...}]}
+```
+
+Then clean up: `delete from roster where section='SMOKETEST';`
