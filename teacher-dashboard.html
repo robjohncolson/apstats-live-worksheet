@@ -353,6 +353,45 @@
       </div>
     </div>
 
+    <!-- Remediation (Phase 4b) -->
+    <div class="section">
+      <h2 class="section-title">Remediation</h2>
+      <div class="hint">
+        Proposed remediations come from the current mastery readout (or you can add them
+        manually via the API). Approve to assign to the student; complete on their behalf when
+        the re-check is closed; waive a row that is already covered by other evidence. A
+        re-check for a given skill unlocks when every assigned remediation for that skill is
+        completed or waived.
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="propose-from-mastery-btn">Propose from current mastery</button>
+        <button class="btn" id="propose-dryrun-btn" style="background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)">Dry run (preview)</button>
+        <button class="btn" id="remediation-refresh-btn" style="background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)">Refresh</button>
+        <span class="meta-row" id="remediation-meta"></span>
+      </div>
+      <div class="loading-note" id="remediation-loading" style="display:none">Loading remediation rows...</div>
+      <div class="table-wrap" id="remediation-wrap" style="display:none">
+        <table class="grades">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Unit</th>
+              <th>Skill</th>
+              <th>Status</th>
+              <th>Proposed by</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="remediation-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-note" id="remediation-empty" style="display:none">
+        No remediation rows for this section yet. Click "Propose from current mastery" to seed
+        them from the weak-skill readout above.
+      </div>
+    </div>
+
   </div>
 
   <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
@@ -719,6 +758,187 @@
     });
     $('section-filter').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') loadAll();
+    });
+
+    // ===== Phase 4b: remediation panel =====
+    async function postJson(path, body, secret) {
+      var headers = { 'Content-Type': 'application/json' };
+      if (secret) headers['x-teacher-secret'] = secret;
+      var res;
+      try {
+        res = await fetch(svcUrl() + path, {
+          method: 'POST', headers: headers, body: JSON.stringify(body || {}),
+        });
+      } catch (e) {
+        return { status: 0, data: null, networkError: (e && e.message) || 'network error' };
+      }
+      var data = null;
+      try { data = await res.json(); } catch (_) { data = null; }
+      return { status: res.status, data: data, networkError: null };
+    }
+
+    function statusBadge(s) {
+      var cls = 'pct-badge';
+      if (s === 'proposed') cls += ' heat-yellow';
+      else if (s === 'assigned') cls += ' heat-orange';
+      else if (s === 'completed') cls += ' heat-green';
+      else if (s === 'waived') cls += ' heat-red';
+      return '<span class="' + cls + '">' + escHtml(s) + '</span>';
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      try {
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString();
+      } catch (_) { return '—'; }
+    }
+
+    function renderRemediation(payload) {
+      var tbody = $('remediation-tbody');
+      tbody.innerHTML = '';
+      var rows = (payload && payload.assignments) || [];
+      if (rows.length === 0) {
+        $('remediation-wrap').style.display = 'none';
+        $('remediation-empty').style.display = '';
+        return;
+      }
+      $('remediation-empty').style.display = 'none';
+      $('remediation-wrap').style.display = '';
+
+      var actionBtnStyle = 'font-size:0.78rem;padding:4px 8px;margin-right:4px';
+      var html = rows.map(function (r) {
+        var rosterMeta = r.roster || {};
+        var name = rosterMeta.real_name || rosterMeta.login_username || r.student_id || '?';
+        var actions = '';
+        if (r.status === 'proposed') {
+          actions += '<button class="btn" style="' + actionBtnStyle + '" data-act="approve" data-id="' + escHtml(r.assignment_id) + '">Approve</button>';
+          actions += '<button class="btn" style="' + actionBtnStyle + 'background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)" data-act="waive" data-id="' + escHtml(r.assignment_id) + '">Waive</button>';
+        } else if (r.status === 'assigned') {
+          actions += '<button class="btn" style="' + actionBtnStyle + '" data-act="complete" data-id="' + escHtml(r.assignment_id) + '">Complete</button>';
+          actions += '<button class="btn" style="' + actionBtnStyle + 'background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)" data-act="waive" data-id="' + escHtml(r.assignment_id) + '">Waive</button>';
+        } else {
+          actions = '<span class="dim">—</span>';
+        }
+        return '<tr>' +
+          '<td>' + escHtml(name) + '</td>' +
+          '<td class="mono">' + escHtml(r.unit || '') + '</td>' +
+          '<td class="mono">' + escHtml(r.skill || '') + '</td>' +
+          '<td>' + statusBadge(r.status) + '</td>' +
+          '<td class="dim">' + escHtml(r.proposed_by || '—') + '</td>' +
+          '<td class="dim">' + escHtml(fmtDate(r.created_at)) + '</td>' +
+          '<td>' + actions + '</td>' +
+          '</tr>';
+      }).join('');
+      tbody.innerHTML = html;
+    }
+
+    async function loadRemediation() {
+      var secret = teacherSecret();
+      if (!secret) return;
+      var section = $('section-filter').value.trim();
+      var qs = section ? '?section=' + encodeURIComponent(section) : '';
+      $('remediation-loading').style.display = '';
+      $('remediation-wrap').style.display = 'none';
+      $('remediation-empty').style.display = 'none';
+      var res = await fetchJson('/remediation/list' + qs, secret);
+      $('remediation-loading').style.display = 'none';
+      if (res.networkError) {
+        $('remediation-meta').textContent = 'Network error: ' + res.networkError;
+        return;
+      }
+      if (res.status === 503) {
+        $('remediation-empty').style.display = '';
+        $('remediation-wrap').style.display = 'none';
+        $('remediation-meta').textContent = 'Migration pending: run roster-server/migrations/0004_remediation_assignment.sql to enable.';
+        return;
+      }
+      if (res.status === 401) {
+        showError('Invalid teacher secret');
+        return;
+      }
+      if (res.status !== 200 || !res.data || !res.data.ok) {
+        $('remediation-meta').textContent = 'Failed to load /remediation/list: ' + ((res.data && res.data.error) || ('HTTP ' + res.status));
+        return;
+      }
+      renderRemediation(res.data);
+      $('remediation-meta').textContent = (res.data.assignments || []).length + ' remediation row(s).';
+    }
+
+    async function handleRemediationAction(btn) {
+      var act = btn.getAttribute('data-act');
+      var id = btn.getAttribute('data-id');
+      var secret = teacherSecret();
+      if (!secret) { showError('Enter the teacher secret first.'); return; }
+      if (!id || !act) return;
+      btn.disabled = true;
+      var res = await postJson('/remediation/' + act, { assignmentId: id }, secret);
+      btn.disabled = false;
+      if (res.status === 503) {
+        showError('Migration pending: run 0004_remediation_assignment.sql.');
+        return;
+      }
+      if (res.status !== 200 || !res.data || !res.data.ok) {
+        showError(act + ' failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status)));
+        return;
+      }
+      clearBanners();
+      showInfo(act + ' applied.');
+      await loadRemediation();
+    }
+
+    async function handleProposeFromMastery(dryRun) {
+      var secret = teacherSecret();
+      if (!secret) { showError('Enter the teacher secret first.'); return; }
+      var section = $('section-filter').value.trim();
+      if (!section) {
+        showError('Enter a section first - propose-from-mastery is per-section.');
+        return;
+      }
+      var btn = dryRun ? $('propose-dryrun-btn') : $('propose-from-mastery-btn');
+      btn.disabled = true;
+      var res = await postJson('/remediation/propose-from-mastery', { section: section, dryRun: !!dryRun }, secret);
+      btn.disabled = false;
+      if (res.status === 503) {
+        showError('Migration pending: run 0004_remediation_assignment.sql.');
+        return;
+      }
+      if (res.status !== 200 || !res.data || !res.data.ok) {
+        showError('propose-from-mastery failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status)));
+        return;
+      }
+      var nProposed = (res.data.proposed || []).length;
+      var nSkipped = (res.data.skipped || []).length;
+      clearBanners();
+      showInfo((dryRun ? 'Dry run - would propose ' : 'Proposed ') + nProposed + ' new row(s); ' + nSkipped + ' already covered.');
+      if (!dryRun) await loadRemediation();
+    }
+
+    // Delegated click handler for action buttons in the remediation table.
+    document.body.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t && t.tagName === 'BUTTON' && t.getAttribute('data-act') && t.closest && t.closest('#remediation-tbody')) {
+        handleRemediationAction(t);
+      }
+    });
+
+    $('propose-from-mastery-btn').addEventListener('click', function () { handleProposeFromMastery(false); });
+    $('propose-dryrun-btn').addEventListener('click', function () { handleProposeFromMastery(true); });
+    // Codex Phase-4b MINOR-1: explicit panel-level Refresh affordance, plus
+    // refresh-on-section-change so the table follows the active section
+    // filter without requiring a full Load round-trip.
+    $('remediation-refresh-btn').addEventListener('click', loadRemediation);
+    $('section-filter').addEventListener('change', loadRemediation);
+
+    // Hook remediation refresh onto the same Load triggers (parallel
+    // listeners — the existing loadAll handler is left untouched).
+    $('load-btn').addEventListener('click', loadRemediation);
+    $('teacher-secret').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') loadRemediation();
+    });
+    $('section-filter').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') loadRemediation();
     });
   </script>
 </body>

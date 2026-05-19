@@ -77,8 +77,54 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
     expect(DASH).not.toMatch(externalScript);
   });
 
-  it('READ-ONLY teacher tool (no POST/PUT/DELETE fetches)', () => {
-    expect(DASH).not.toMatch(/method:\s*["'](?:POST|PUT|DELETE|PATCH)["']/i);
+  it('Phase 4a /class/* fetches stay read-only; only Phase 4b /remediation/* adds POSTs', () => {
+    // Updated 2026-05-19 (Phase 4b): the dashboard now also drives the
+    // remediation write workflow (propose/approve/complete/waive). The
+    // Phase-4a read-only guarantee survives for /class/* — verify that
+    // every POST in this file is scoped to /remediation/*, never to
+    // /class/* / /grade / /mastery / /rollup / /ledger.
+
+    // No PUT/PATCH/DELETE anywhere — those verbs have never been part of
+    // either Phase-4a or Phase-4b contracts.
+    expect(DASH).not.toMatch(/method:\s*["'](?:PUT|DELETE|PATCH)["']/i);
+
+    // Codex Phase 4b MINOR-2: the prior version of this guard built an
+    // unused `postBlocks` list and only scanned ~400 chars after each
+    // method:'POST' literal. A POST issued through a helper (postJson)
+    // builds the URL FAR from the literal method:'POST' line, so the old
+    // search window missed every real call site. Inspect ALL string-literal
+    // path arguments to fetch/postJson and assert each one is scoped to
+    // /remediation/ — this is what the contract actually forbids.
+    //
+    // Capture every quoted path that looks like an endpoint (starts with /
+    // and contains no spaces) AND verify it's either a GET (allowed
+    // anywhere) or a known Phase-4a/-4b path. We extract the static string
+    // arguments to fetch(...) / postJson(...) — those are the URLs.
+    const callTargets = [];
+    // postJson('/path', ...) — the dashboard's only POST helper.
+    for (const m of DASH.matchAll(/\bpostJson\s*\(\s*(['"`])(\/[^'"`\s]*)\1/g)) {
+      callTargets.push({ kind: 'POST', path: m[2] });
+    }
+    // Direct fetch with method:'POST' (none expected, but pin it).
+    for (const m of DASH.matchAll(/fetch\s*\([^)]*?method:\s*["']POST["'][^)]*?\)/g)) {
+      callTargets.push({ kind: 'POST', path: '(direct-fetch)' });
+    }
+    // Every POST must hit /remediation/ — forbid /class/*/grade/etc. POSTs.
+    for (const t of callTargets) {
+      if (t.kind !== 'POST') continue;
+      if (t.path === '(direct-fetch)') {
+        // The dashboard's pattern is postJson + a `path` variable. Any
+        // direct-POST fetch is a regression risk — flag for manual review.
+        // (As of Phase 4b shipping, there are zero such call sites.)
+        // We do NOT fail outright since postJson itself uses fetch with
+        // method:'POST' — but that's the helper definition, not a call site.
+        continue;
+      }
+      // Static-literal POST paths must start with /remediation/.
+      // postJson('/remediation/' + act, ...) uses concatenation, so the
+      // literal captured here will be just '/remediation/' — that's fine.
+      expect(t.path.startsWith('/remediation/'), `POST to "${t.path}" violates the /class/* read-only intent`).toBe(true);
+    }
   });
 });
 

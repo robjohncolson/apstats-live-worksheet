@@ -7,6 +7,7 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import { createLiveDb } from './db.js';
 import { createLiveLedgerDb } from './ledger-db.js';
+import { createLiveRemediationDb } from './remediation-db.js';
 import { signToken, verifyToken } from './token.js';
 import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
@@ -15,6 +16,7 @@ import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
 import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
+import { mountRemediation } from './remediation.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -29,7 +31,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -303,6 +305,24 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt });
   }
 
+  // ── Remediation routes (Phase 4b additive — write loop + retake gate) ──────
+  // Needs remediationDb (data-access wrapper for the new remediation_assignment
+  // table). Until migrations/0004 is run on Supabase, the DB returns 42P01 and
+  // routes respond 503 "remediation table not yet provisioned" — service stays
+  // up. propose-from-mastery additionally needs the mastery dep set; that
+  // single route guard lives inside mountRemediation. See GRADEBOOK_PHASE4B_BUILD.md.
+  if (remediationDb && db) {
+    mountRemediation(app, {
+      verifyToken,
+      remediationDb,
+      db,
+      ledgerDb,
+      loadAnswerKey,
+      loadSkillMap,
+      bkt,
+    });
+  }
+
   return app;
 }
 
@@ -401,13 +421,25 @@ if (process.env.NODE_ENV !== 'test') {
     } catch (err) {
       console.error('roster-server: BKT engine failed to load — /mastery disabled, service continues:', err);
     }
+    // Phase 4b: same fault-tolerant ethos. If remediation-db can't construct
+    // (e.g. transient env issue), the remediation routes simply don't mount —
+    // the rest of the service stays up. The table not being migrated yet is
+    // NOT a construction failure (Supabase client is happy); table-missing
+    // is signalled per-query as 42P01 → 503 by the route module.
+    let remediationDb = null;
+    try {
+      remediationDb = createLiveRemediationDb();
+    } catch (err) {
+      console.error('roster-server: remediation-db failed to construct — /remediation/* disabled, service continues:', err);
+    }
     const app = createApp(
       db,
       ledgerDb,
       loadLiveManifest,
       loadLiveAnswerKey,
       loadLiveSkillMap,
-      bkt
+      bkt,
+      remediationDb
     );
     const PORT = process.env.PORT || 8090;
     app.listen(PORT, () => {
