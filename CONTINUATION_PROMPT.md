@@ -1,4 +1,161 @@
-# Continuation Prompt — TI-84 CE Procedural Trainer
+# Continuation Prompt — Gradebook Autonomous Loop
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below the
+> "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
+> text; it is kept only as historical record.** Updated 2026-05-18 (session
+> 100, context-limit handoff). Recall memories first:
+> `project_gradebook_grading_model.md`, `project_desk_donow.md`,
+> `project_gradebook_phase0.md`, `project_ai_tutor_pilot.md`,
+> `feedback_curriculum_render_sacred.md`.
+
+## ➡ ON RELOAD: RUN THE AUTONOMOUS LOOP (user-authorized, session 100)
+
+The teacher gave **full standing authorization to execute the entire
+remaining gradebook roadmap unattended** — including all Railway work (no
+user involvement needed). Do not stop to ask permission; just run the loop,
+committing/pushing as you go. Two prior teacher-gates were explicitly
+resolved this session:
+- **T2 merge gate → AUTO-MERGE.** Run the full T2 disambiguation, do the
+  agreement + **stratified-sample audit**, and **merge ALL pools — including
+  the sacred-`curriculum.js`-derived pool — into canonical
+  `data/skill-map.json`**, with the audit recorded in the commit message.
+  Low irreversibility (Phase 3 resolves tags at rollup time → later
+  corrections retro-fix historical grades). Disagreements still go to a
+  Sprint **T3** teacher-verification surface (do NOT block on them).
+- **AI-tutor Desk-tile delivery → IN SCOPE.** The "🤖 Tutor prompt" Desk-tile
+  copy action + the `start-here.html` AI-tutor section are now a loop task
+  (artifacts already exist in `ai-tutor/`). No longer teacher-gated.
+
+### The loop algorithm (per task)
+
+1. **Plan** the task's dependency-aware implementation steps; freeze a
+   contract in a `*_BUILD.md` (per the proven method).
+2. **Dispatch parallel Sonnet subagents** for implementation of
+   *independent* sub-tasks (CLAUDE.md rule: NEVER parallelize sequential
+   dependencies — serialize those). **EXCEPTION (hard-won this session): a
+   cohesive change to ONE contended single file (esp. the Desk
+   `ap_stats_roadmap_square_mode.html`) is implemented by the PLANNER
+   directly — parallel-Sonnet on one file = clobber. Fan out only for
+   genuinely separable multi-file work.**
+3. **Cross-agent dispatch Codex** to verify/fix (read-only review):
+   `python C:/Users/rober/Downloads/Projects/Agent/runner/cross-agent.py
+   --direction cc-to-codex --task-type review --read-only --working-dir
+   <repo> --timeout 540 --prompt "...ASCII ONLY..."`. Codex caught a real
+   bug EVERY sprint this session — this gate is load-bearing.
+4. **Planner re-verify ON DISK** (NEVER trust result files — s88b). Run the
+   real test suites + guards. Codex also misses things (it missed the
+   DN3a→DN2c regression) — independently verify.
+5. If **green** → tight single-purpose commit (forensic HEAD before/after;
+   stage ONLY own paths) → **push** → next task. If **not green** → fix the
+   details yourself → re-verify → commit/push → next task.
+
+### Definition of GREEN (the loop gate)
+
+GREEN = no NEW failures beyond the two known pre-existing unrelated ones,
+and all relevant guards pass:
+- follow-alongs root suite: exactly **1** fail = `tests/study-guide.test.js`
+  "v3 structure / loads railway, curriculum, units, frameworks"
+  (`study_guide_diagnostic.html` is NOT touched — do NOT "fix" it).
+- curriculum_render suite: exactly **1** fail = `tests/redox-chat.test.js`
+  `max_tokens` (chat/server not touched).
+- Guards: `node scripts/audit-feeder-ids.mjs` → CLEAN 69 / MISMATCH 0;
+  the new sprint's test file passes; `roster-server` 80/80 if touched;
+  Desk/cr `index.html` stay **LF**.
+
+### Ordered task backlog (dependency-aware — do in order)
+
+1. **T2 full disambiguation run.** Harness shipped (`1dc5c05`, U1 pilot
+   ~98%). Run the controlled full ~2642-item Codex pipeline per
+   `GRADEBOOK_TAGGING_SPEC.md` §5; produce agreement stats + a fixed
+   stratified sample; **auto-merge all pools into canonical
+   `data/skill-map.json` (+`.js` wrapper)** with the audit in the commit;
+   route disagreements to a Sprint T3 surface file. ⚠ During T2 the
+   `data/skill-map.js`/`.json` change is **REAL and must be committed** (the
+   usual "revert GENERATED-header false-positive" rule does NOT apply to the
+   T2 commit — it applies to OTHER sprints where audit/regen scripts only
+   bump the timestamp). After merge: re-run `build-work-manifest.mjs` (+ its
+   bundled `roster-server/data/work-manifest.json` copy) and the
+   `work-manifest`/`audit-feeder-ids` guards; redeploy roster-server.
+2. **Phase 2 — curriculum_render quiz GRADE feeder rollup.** (DN2d already
+   WRITES cr answers to `item_ledger`; Phase 2 = the grade-of-record
+   aggregation/rollup side.) Recon the exact definition in
+   `GRADEBOOK_SPEC.md` §8 + `GRADEBOOK_GRADING_SPEC.md` v2 §2 before
+   freezing the contract.
+3. **Phase 3 — grade calc + diagnostic BKT.** `GRADEBOOK_GRADING_SPEC.md`
+   v2 §2 cap/uncap (`banked=min(B,C≈85)`, `unitGrade=max(banked,P)`;
+   proctored PC only-uncaps, only-raises) + v2 §3 diagnostic BKT
+   `skill_mastery` rollup (reuse study-guide BKT `.v4-logic-block.js`; tags
+   from T2). Depends on T2 + Phase 2. Roster-server endpoints; redeploy.
+4. **Phase 4 — teacher dashboard + `start-here.html` student render.**
+   v2 §4 cumulative framing, NO BKT jargon student-side. Depends on Phase 3.
+5. **§6.4 adoption + AI-tutor delivery.** Wire remaining feeder/roster
+   adoption per `GRADEBOOK_SPEC.md` §6.4; wire the AI-tutor Desk-tile
+   "🤖 Tutor prompt" copy action (`ai-tutor/u{U}_l{L}.md`) onto each lesson
+   tile + the `start-here.html` AI-tutor section (`AI_TUTOR_SPEC.md`
+   §31/§156; recommended mechanic = copy-to-clipboard button).
+
+### Carry-forward gotchas (hard-won — obey these)
+
+- **SACRED:** never write `curriculum_render/data/curriculum.js`. Supplements
+  → follow-alongs `data/formula-probe-supplement.js` (`U{N}-L{N}-QS{N}` ns).
+- **typeof-guard cross-sprint calls:** adding a call to a later-sprint
+  function inside an earlier sprint's tested function breaks that sprint's
+  `vm` test — wrap as `if (typeof fn === 'function') fn()`.
+- **Codex cross-agent:** ASCII-only prompts (`§`/`→`/em-dash → cp1252 0x97
+  crash). The runner echoes the whole prompt (~1.3MB) and writes the verdict
+  to `state/cross-agent/<id>.result.json` and/or the transcript tail —
+  parse THAT, never the wrapper `summary`/`files_changed`.
+- **EOL:** Desk + cr `index.html` are LF; ~30 older U1–U3 / some U8–U9
+  worksheets are CRLF — bulk edits MUST be EOL-preserving.
+- **cr-repo** (`C:/Users/rober/Downloads/Projects/school/curriculum_render`,
+  GH `curriculum_render`, branch `main`) has unrelated pre-existing dirty
+  files (AGENTS.md/CLAUDE.md/.claude/fix_justin/scripts/state/tmpclaude*) —
+  stage ONLY own paths. Its commits do NOT republish follow-alongs Pages.
+- **Railway** (no user needed): `cd roster-server && railway up --ci -s
+  roster` (project `apstats-roster`/env production; already linked + authed
+  as bobby; secrets incl. `ROSTER_TEACHER_SECRET`/`ROSTER_PROCTOR_SECRET` in
+  gitignored `roster-server/.env`). Redeploy after ANY roster-server change;
+  smoke-test `/health` + the changed endpoint with a `SMOKETEST`-section
+  account (cleaned by the standing `delete from roster where
+  section='SMOKETEST';` chore).
+- **Memory:** keep `project_gradebook_grading_model.md`,
+  `project_gradebook_phase0.md`, `project_desk_donow.md`, `MEMORY.md`
+  current as phases land (condense — MEMORY.md lines are hooks, not content).
+- **Concurrent AI-tutor session is idle/done** (`9207d24`); tight
+  single-purpose commits remain clobber-safe.
+
+### Current shipped state (the cold-reload baseline)
+
+- **follow-alongs `master` HEAD `52ac6a7`.** This-session commits:
+  DN2-prep `1179a05` (work-manifest bundled), DN2c `820c79f` (Desk roster
+  sign-in), DN3a `9a8ea22` (Do Now card), DN3b `08258c7` (4-state calendar
+  coloring), DN3c `52ac6a7` (one-calendar collapse + soft speed-bump).
+- **curriculum_render `main` HEAD `1ccd8a2`** (DN2d: cr quiz feeder + cr
+  roster sign-in; sacred `curriculum.js` untouched).
+- **roster-server LIVE & redeployed** (`https://roster-production-12c1.up.railway.app`;
+  `/donow` prod-verified HTTP 200; project `apstats-roster`).
+- **The entire DN1→DN3 Desk "Do Now" + completion-calendar loop-closer is
+  LIVE** (one fall calendar, 4-state coloring incl. gold "ahead", Do Now
+  card, soft speed-bump; D2 "ledger actually populated" wired across both
+  feeders + both identity surfaces).
+- Tagging: T1 shipped (`e6adf5d`), T2 harness shipped (`1dc5c05`).
+- Test baseline: follow-alongs root **1523/1524** (1 known study-guide);
+  cr **764/765** (1 known redox-chat); roster-server **80/80**;
+  `audit-feeder-ids` CLEAN 69. → **NEXT loop task = #1, the full T2 run.**
+
+### Specs to (re)read on reload, per task
+
+`GRADEBOOK_GRADING_SPEC.md` (v2 — Phase 3 grade math, AUTHORITATIVE),
+`GRADEBOOK_SPEC.md` (§8 phase sequencing, §6.4 adoption),
+`GRADEBOOK_TAGGING_SPEC.md` (§5 T2 pipeline knobs),
+`GRADEBOOK_PHASE1_BUILD.md`, `AI_TUTOR_SPEC.md` (§31/§156 delivery),
+`DESK_DONOW_SPEC.md`, and the per-sprint `DESK_DONOW_DN*_BUILD.md` /
+`DN2D_BUILD.md` build docs.
+
+---
+
+> **PRIOR PROVENANCE — superseded by the AUTONOMOUS LOOP section above.
+> Historical record only; do NOT act on the older NEXT-THREAD/SESSION text.**
 
 **Last updated**: 2026-05-18 (context-limit handoff). **Read the "➡ NEXT THREAD" block below first — it is the authoritative current state.** TL;DR: Phase 0 + Sprint 1 + grading-v2 + Tagging T1/T2 + Do-Now DN1 + DN2a-0 + **DN2a (`10ffa30`) + DN2b (`5fa2c79`)** all SHIPPED & LIVE on `master` (latest `5fa2c79`); AI-tutor U1–U9 75 artifacts done (separate session, idle). **DN2a/DN2b = the gradebook feeder is now wired across ALL 69 worksheets** (form-agnostic, EOL-safe; `audit-feeder-ids` CLEAN 69; `gradebook-feeder-wiring` 92/92). **NEXT = DN2c (rosterClient single sign-in into the Desk) — TEACHER-GATED *and* BLOCKED behind a DN1 roster-server redeploy (`GET /donow` is 404 on prod; user chose DEFER+track, must be done BEFORE DN2c).** Gradebook session OWNS the Desk file for DN2c/DN3; AI-tutor wiring serialized behind it. *(Older header text retained below for provenance.)* ~~s99:~~ Gradebook **Phase 0 LIVE** (`a7d7bbd`, `https://roster-production-12c1.up.railway.app`) + **grading spec signed off** (`e506b58`) + **Sprint 1 shipped** (`d461ebc`: tagging audit + item_ledger substrate + feeder client). **⚠ Audit verdict (planner-verified real): ZERO AP-skill tags in any pool → Phase 3 NOT READY. Next thread is forced = a TAGGING WORKSTREAM** before Phase 2/3. See "SESSION 99 — COMPLETE" + `project_gradebook_grading_model.md`.)
 **Status**: TI-84 trainer V3 shipped, Physical Calculator Mode primary. Study guide `study_guide_diagnostic.html` feature-complete at **v7**: FRQ decomposition, review queue, mastery map constellation, inline TI-84 procedure walkthroughs, login UX, official AP rubric disclosures, inline chart rendering (70 MCQ charts + solution charts), class scoreboard, **summer unit gating with hash-based unlock codes**, **AP date auto-roll**. Teacher-facing `teacher-code-generator.html` sibling tool. Test baseline: root suite **871/872** (1 fail = pre-existing, unrelated `study-guide.test.js` v3-structure snapshot; NOT a regression — `study_guide_diagnostic.html` untouched) **+ roster-server 28/28**.
