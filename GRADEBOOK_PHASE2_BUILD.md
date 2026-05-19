@@ -98,3 +98,31 @@ roster-server redeploy** + smoke → Task #3 (Phase 3).
 only); roster-server changes are additive (no Phase-0/1/donow regression);
 EOL LF for roster-server + bundled json; stage only own paths (this repo
 has unrelated dirty scratch).
+
+## 6. Status (2026-05-19, refined after TR fully landed)
+
+The concurrent TR session committed ALL of TR0–TR4 (`92a0f46`+`13c7026`,
+linear tree, no conflict — single-owner staged-paths discipline held). So
+the roster-server **code-editing** contention is GONE: Phase-2b was
+implemented additively on the TR-inclusive HEAD with zero clobber.
+
+- **2a DONE:** `scripts/build-answer-key.mjs` → 782 MCQ keys; sacred
+  `curriculum.js` git-clean before/after; dual-write byte-identical; all
+  782 ids ⊆ work-manifest. `tests/answer-key.test.js` 9/9.
+- **2b DONE (code):** `roster-server/rollup.js` + additive `server.js`
+  wiring (4th `loadAnswerKey` param, `mountRollup`, bundled-path loader).
+  `roster-server/tests/rollup.test.js` 13/13; roster-server full suite
+  **113/113** (no Phase-0/1/donow/TR regression); root suite 1576/1577
+  (1 known study-guide); `audit-feeder-ids` CLEAN 69.
+- **DEFERRED — the single roster-server redeploy.** roster-server's
+  committed HEAD now contains TR1 code requiring (user-driven) the `0003`
+  Supabase migration + `ROSTER_PW_ENC_KEY` Railway env. I must NOT redeploy
+  until the user completes that TR1 handoff (else TR1 code goes live without
+  prereqs and breaks live auth). When the user deploys TR1, that single
+  redeploy also brings Phase-2b `/rollup` live. Then smoke `/rollup` with a
+  SMOKETEST account (the §4 acceptance step) and clean up via the standing
+  `delete from roster where section='SMOKETEST';`.
+- **A-vs-C:** chose **A** (standalone server-authoritative `/rollup`) — TR
+  fully landed so the "minimize redeploys" pressure for C is moot; A gives
+  the spec's feeder readout separate from the grade + a tamper-resistant
+  re-scorable seam.

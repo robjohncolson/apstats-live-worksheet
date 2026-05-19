@@ -11,6 +11,7 @@ import { signToken, verifyToken } from './token.js';
 import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
 import { mountDonow } from './donow.js';
+import { mountRollup } from './rollup.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -25,7 +26,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -269,6 +270,13 @@ export function createApp(db, ledgerDb, loadManifest) {
     mountDonow(app, { verifyToken, ledgerDb, loadManifest });
   }
 
+  // ── Rollup route (Phase 2b additive) ─────────────────────────────────────────
+  // Mounts GET /rollup (cr-quiz feeder per-unit correctness rollup).
+  // ledgerDb + loadAnswerKey injected; tests pass fakes.
+  if (ledgerDb && loadAnswerKey) {
+    mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey });
+  }
+
   return app;
 }
 
@@ -303,11 +311,30 @@ async function loadLiveManifest() {
   return JSON.parse(raw);
 }
 
+// ── Live answer-key loader (production only) ──────────────────────────────────
+// Same priority + bundled-copy rationale as the manifest loader.
+// scripts/build-answer-key.mjs writes ./data/answer-key.json byte-identical.
+function resolveAnswerKeyPath() {
+  if (process.env.ANSWER_KEY_PATH) {
+    return process.env.ANSWER_KEY_PATH;
+  }
+  const bundledPath = resolve(__dirname, 'data', 'answer-key.json');
+  if (existsSync(bundledPath)) {
+    return bundledPath;
+  }
+  return resolve(__dirname, '..', 'data', 'answer-key.json');
+}
+
+async function loadLiveAnswerKey() {
+  const raw = await readFile(resolveAnswerKeyPath(), 'utf8');
+  return JSON.parse(raw);
+}
+
 // Only start listening when run directly (not imported by tests)
 if (process.env.NODE_ENV !== 'test') {
   const db = createLiveDb();
   const ledgerDb = createLiveLedgerDb();
-  const app = createApp(db, ledgerDb, loadLiveManifest);
+  const app = createApp(db, ledgerDb, loadLiveManifest, loadLiveAnswerKey);
   const PORT = process.env.PORT || 8090;
   app.listen(PORT, () => {
     console.log(`roster-server listening on port ${PORT}`);
