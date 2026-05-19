@@ -1,0 +1,113 @@
+# Gradebook Phase 3 — grade calc + diagnostic BKT (FROZEN CONTRACT)
+
+**Status:** Spec FROZEN 2026-05-19 (session 100) via a teacher brainstorm —
+every §7 knob is now decided. No implementation yet. This doc is the
+authoritative Phase-3 build contract; implement it loop-style (freeze →
+build → Codex review → planner verify on disk → commit/push → redeploy).
+Reads: `GRADEBOOK_GRADING_SPEC.md` v2 §2/§3/§7, `GRADEBOOK_PHASE2_BUILD.md`
+(the `/rollup` it consumes), `project_gradebook_grading_model.md`.
+
+Depends on (both DONE): Task #1 T2 skill-map merged (`4140afe`), Phase 2
+cr-quiz `/rollup` (`00e7a6c`, prod-verified).
+
+## 1. The grade model (fully parameterized — teacher-decided)
+
+**Per unit:** `unitGrade(u) = max( min(B(u), C), P(u) )`, with `C = 85` (flat,
+all units — the difficulty ramp lives entirely in the PC→P curve).
+
+**`B(u)` — feeder correctness aggregate, 0–100** (the thing `min(.,85)` caps):
+- TWO feeders, **weighted follow-along : cr-quiz = 1 : 2**
+  → `B = (1·W + 2·Q) / 3`.
+  - `W` = follow-along worksheet correctness % for the unit: fill-ins
+    (Railway `/api/submit-answer` → `item_ledger` source `worksheet`) +
+    AI-graded FRQ (`/api/ai/grade`/`appeal`, source `frq`). **AI FRQ E/P/I →
+    numeric E=100, P=70, I=35.**
+  - `Q` = cr-quiz correctness %: the Phase-2 `GET /rollup` per-unit
+    `crQuizPct` (source `curriculum_quiz`; PC excluded — that's `P`).
+- **Completion is a SEPARATE accountability readout, NOT in the grade.**
+- **B-loophole (perfect-on-few-items → B=100 → banked=85): ACCEPTED, no
+  gate-the-cap machinery.** Mitigation = the quarterly model itself: short
+  (~10wk) visible window + completion surfaced as accountability the teacher
+  acts on + the proctored PC is the real gate.
+
+**`P(u)` — proctored Progress Check, 0–100, ONLY EVER RAISES** (sits inside
+`max`; a bad PC never lowers banked work; retake freely until quarter-close).
+Criterion-referenced (NEVER cohort/norm/ t-test — that contradicts the
+mastery philosophy and degenerates under an optional PC). Mapping = an
+**AP-exam-curve proxy**, two anchors per quarter, **linear between, clamp
+≤100**; below the P=85 anchor, P scales linearly to 0 (mostly dominated by
+banked, but matters for low-`B` students):
+
+| Quarter | Units | raw% → P=85 | raw% → P=100 (earned the A) |
+|---------|-------|------------:|----------------------------:|
+| **Q1**  | U1–2  | 40 | **60** |
+| **Q2**  | U3–5  | 45 | **64** |
+| **Q3**  | U6–7  | 50 | **67** |
+| **Q4**  | U8–9  | 55 | **70** |
+
+Q4 = the published AP-Stats exam standard (a *5* ≈ ~70% composite — the
+documented ballpark; CB publishes NO Progress-Check curve). Q1–Q3 sit
+deliberately gentler — that gap IS the graduated-tightening "trust ramp"
+(Q1 teaches the recover-and-rise model before stakes feel real).
+**All anchors are §7 pilot-tunable** (esp. the ~70 Q4 number — adjust on
+first-cohort data; do not over-defend).
+
+**Per quarter:** `quarterGrade = mean( unitGrade(u) for u in that band )`
+(simple unweighted mean). Bands: **Q1=U1-2 · Q2=U3-5 · Q3=U6-7 · Q4=U8-9.**
+All units stay open all year (bands freeze *grades*, not content — May-exam
+prep safe; get-ahead allowed).
+
+**Quarter-close = HARD lock** (admin/SIS, out of teacher's hands). The honest
+promise = *"unlimited recovery WITHIN the quarter; the quarter is the unit
+of mastery."* Consciously accepted bend: late mastery of a prior quarter's
+unit cannot retro-lift it.
+
+## 2. Diagnostic engine (§3 — fully decoupled from the grade)
+
+- `skill_mastery` BKT rollup over the **T2 skill-map** tags
+  (`data/skill-map.json`, `4140afe`) from `item_ledger`.
+- **Reuse the study-guide BKT AS-IS** (`.v4-logic-block.js` — locate in
+  `study_guide_diagnostic.html`/repo; do NOT re-implement or re-tune params).
+- **Diagnostic θ = 0.65** (weak-skill flag cutoff; pilot-tunable;
+  GRADE-INDEPENDENT — θ never enters the grade). ⚠ teacher wrote
+  "Diagnostic c0 ?" — ambiguous; locked at 0.65; θ=0 would DISABLE
+  weak-skill flagging. On reload, if the teacher meant "skip the diagnostic
+  engine for now," it is cleanly separable — build the grade calc first
+  regardless; the diagnostic rollup is an independent sub-deliverable.
+- Powers (Phase 4): auto weak-skill detection post-PC, decision-B
+  remediation loop (re-check RAISES, never lowers), teacher heatmap.
+  Student sees a motivational per-skill view, NEVER BKT jargon/θ/probabilities.
+
+## 3. Implementation shape (loop-style; planner implements — server tooling)
+
+- **roster-server, additive** (mirror `mountLedger`/`mountDonow`/
+  `mountRollup`; injectable db; tests no-network; LF):
+  - A grade endpoint (e.g. `GET /grade?token=`): pull the student's
+    `item_ledger` (worksheet+frq feeders) + reuse the Phase-2 `/rollup`
+    cr-quiz aggregation; compute per-unit `B`, apply `min(.,C=85)`, compute
+    `P` from the quarter's PC anchors (PC rows = source `pc`; the
+    quarter→band + anchor table is a config constant), `unitGrade =
+    max(...)`, then per-quarter mean. Returns per-unit + per-quarter grades
+    + the separate completion readout. **Read-only w.r.t. item_ledger.**
+  - A diagnostic rollup (e.g. `GET /mastery?token=` or fold into the
+    teacher dashboard data): BKT over skill-map tags → per-skill pKnow →
+    weak-skill list at θ=0.65. Independent of the grade endpoint.
+- Quarter/anchor table + C + feeder weights + E/P/I + θ = ONE config
+  constant block (all §7 pilot-tunable in one place).
+- **GREEN gate** (unchanged): follow-alongs root suite only the 1 known
+  `study-guide.test.js` fail; roster-server full suite green (no Phase-0/1/
+  donow/rollup/TR regression) + new Phase-3 tests; `audit-feeder-ids`
+  CLEAN 69.
+- **Redeploy:** Phase 3 needs NO migration (`item_ledger` exists). After
+  GREEN: `cd roster-server && railway up --ci -s roster` (standing
+  authorization; roster-server is the LIVE auth service — additive only,
+  full regression first), smoke `/grade` + `/mastery` with a SMOKETEST
+  account, fold cleanup into the pending `delete from roster where
+  section='SMOKETEST';`.
+
+## 4. Guardrails
+
+Never write sacred `curriculum.js` (Phase 3 only reads ledger + the derived
+answer-key/skill-map). roster-server additive only. Stage own paths only
+(repo has unrelated dirty scratch + concurrent-session history). The
+diagnostic BKT must reuse the study-guide implementation, not fork it.

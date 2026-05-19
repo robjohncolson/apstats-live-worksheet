@@ -3,9 +3,11 @@
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below the
 > "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
 > text; it is kept only as historical record.** Updated 2026-05-19 (session
-> 100, mid-loop checkpoint: Task #1 T2 DONE+pushed; Phase 2 contract frozen;
-> ⚠ a CONCURRENT TR/teacher-roster-tools session now co-edits roster-server
-> — see the roster-server single-owner rule in gotchas). Recall memories
+> 100, checkpoint for context-reload: **Task #1 T2 DONE+pushed; Task #2
+> Phase-2 DONE+pushed+PROD-VERIFIED; Phase-3 spec FULLY FROZEN
+> (`GRADEBOOK_PHASE3_BUILD.md`) — next loop task = implement Phase 3**. The
+> concurrent TR session is DONE & deployed → roster-server contention
+> RELEASED). Recall memories
 > first: `project_gradebook_grading_model.md`, `project_desk_donow.md`,
 > `project_gradebook_phase0.md`, `project_ai_tutor_pilot.md`,
 > `project_roster_teacher_tools.md`, `feedback_curriculum_render_sacred.md`.
@@ -75,26 +77,29 @@ and all relevant guards pass:
    identical). Sprint T3 (teacher spot-review of the certifier pool +
    disagreement queue) is a FUTURE tagging sprint, NOT a loop blocker. Do NOT
    re-run T2. Build doc `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`.
-2. **Phase 2 — cr-quiz GRADE-feeder rollup. ⏳ CONTRACT FROZEN
-   (`GRADEBOOK_PHASE2_BUILD.md`); implementation split by the roster-server
-   contention boundary:**
-   - **2a (do now, parallel-safe):** `scripts/build-answer-key.mjs` —
-     READ-ONLY extract of MCQ answer keys from sacred `curriculum.js` →
-     `data/answer-key.json` + bundled `roster-server/data/answer-key.json`
-     (mirrors the DN2-prep bundled-manifest pattern). Pure follow-alongs
-     side, zero roster-server, **no collision with the TR session**.
-   - **2b (BLOCKED — serialize behind TR):** roster-server `GET /rollup`
-     (`roster-server/rollup.js` + `server.js` mount) scoring each student's
-     `curriculum_quiz` ledger rows vs the bundled key → per-unit correctness
-     %. **Must NOT be written until the concurrent TR session's roster-server
-     work (TR1 password lifecycle) is committed + Railway-redeployed**, then
-     rebase 2b on the post-TR `server.js` and do ONE combined redeploy. See
-     the roster-server single-owner gotcha.
-3. **Phase 3 — grade calc + diagnostic BKT.** `GRADEBOOK_GRADING_SPEC.md`
-   v2 §2 cap/uncap (`banked=min(B,C≈85)`, `unitGrade=max(banked,P)`;
-   proctored PC only-uncaps, only-raises) + v2 §3 diagnostic BKT
-   `skill_mastery` rollup (reuse study-guide BKT `.v4-logic-block.js`; tags
-   from T2). Depends on T2 + Phase 2. Roster-server endpoints; redeploy.
+2. **Phase 2 — cr-quiz GRADE-feeder rollup — ✅ DONE & PROD-VERIFIED
+   (`00e7a6c`).** `scripts/build-answer-key.mjs` (READ-ONLY, 782 MCQ keys,
+   sacred clean, dual-write bundled) + roster-server `GET /rollup` (additive;
+   scores `curriculum_quiz` rows vs bundled key, per-unit %; PC excluded =
+   Phase-3 `P`). Codex 1 MAJOR + 1 MINOR fixed. roster-server 114/114; live
+   `/rollup` smoke on roster-production ALL PASS (co-deployed by TR1's
+   `railway up`). Build doc `GRADEBOOK_PHASE2_BUILD.md`.
+3. **Phase 3 — grade calc + diagnostic BKT — ⏳ SPEC FULLY FROZEN, READY TO
+   BUILD: `GRADEBOOK_PHASE3_BUILD.md`** (every §7 knob teacher-decided via
+   s100 brainstorm). Summary: `unitGrade=max(min(B,85),P)`, `C=85` flat;
+   `B=(1·W+2·Q)/3` (worksheet:cr-quiz **1:2**; AI-FRQ E/P/I=100/70/35;
+   completion = separate accountability, B-loophole ACCEPTED); `P` =
+   AP-curve-proxy, **only raises**, retake-till-quarter-close, per-quarter
+   anchors raw%→P=85/100: Q1 40/60 · Q2 45/64 · Q3 50/67 · Q4 55/70
+   (Q4=AP-real ~70=a 5; pilot-tunable). Quarter grade = simple mean of the
+   band's `unitGrade`; bands Q1=U1-2/Q2=U3-5/Q3=U6-7/Q4=U8-9; quarter-close
+   HARD admin lock. Diagnostic (decoupled): BKT over T2 tags, reuse
+   study-guide `.v4-logic-block.js` AS-IS, θ=0.65 (⚠ "Diagnostic c0?"
+   teacher note — θ grade-independent; if they meant "skip diagnostic for
+   now" it's cleanly separable, build grade calc first). roster-server
+   additive endpoints (`/grade`,`/mastery`); NO migration; redeploy +
+   SMOKETEST smoke after GREEN. **This is the next loop task — implement
+   per `GRADEBOOK_PHASE3_BUILD.md` §3.**
 4. **Phase 4 — teacher dashboard + `start-here.html` student render.**
    v2 §4 cumulative framing, NO BKT jargon student-side. Depends on Phase 3.
 5. **§6.4 adoption + AI-tutor delivery.** Wire remaining feeder/roster
@@ -131,21 +136,19 @@ and all relevant guards pass:
   `project_gradebook_phase0.md`, `project_desk_donow.md`,
   `project_roster_teacher_tools.md`, `MEMORY.md` current as phases land
   (condense — MEMORY.md lines are hooks, not content).
-- **🔒 ROSTER-SERVER IS SINGLE-OWNER, CONTENDED (added s100 2026-05-19).** A
-  concurrent **TR / teacher-roster-tools** session (`project_roster_teacher_tools.md`)
-  is actively building TR1 (roster-server password lifecycle: `0003` migration,
-  change-pw/list/verify-flag endpoints, `ROSTER_PW_ENC_KEY` enc util,
-  `tests/auth.test.js`) — teacher-SIGNED-OFF (reversible AES-256-GCM store;
-  bcrypt stays sole auth path). It also redeploys the SAME Railway `roster`
-  service. **Both sessions editing `roster-server/server.js` or
-  redeploying `roster` concurrently = clobber/deploy-collision.** RULE: TR
-  owns roster-server until TR1 is committed + redeployed (with
-  `ROSTER_PW_ENC_KEY` set in Railway env); Phase-2b and any other roster-server
-  work serializes BEHIND that and rebases on the post-TR `server.js`. TR's
-  follow-alongs-root artifacts (`ROSTER_TEACHER_TOOLS_SPEC.md`,
-  `scripts/teacher-roster.mjs`/`sample-class-roster.csv` — **uncommitted in
-  the shared tree**) are disjoint from gradebook paths: keep staging ONLY
-  explicit own paths (never `git add -A`).
+- **🔒 ROSTER-SERVER: TR contention RELEASED; still additive-only +
+  stage-own-paths.** The concurrent TR/teacher-roster-tools session is
+  **DONE & deployed** (all TR0–TR4 committed `92a0f46`+`13c7026`; TR1
+  live in prod, `ROSTER_PW_ENC_KEY` set, 8-pt smoke pass; Phase-2 `/rollup`
+  co-deployed by that `railway up`). No active concurrent roster-server
+  editor now. BUT: roster-server is the LIVE auth service (Phase-0/1/donow/
+  rollup/TR all depend on it) — Phase-3 endpoints must be **additive only**,
+  full roster-server regression before any redeploy, and **stage ONLY
+  explicit own paths** (the shared tree carries other sessions' history;
+  never `git add -A`). The 6-commit interleave proved this discipline holds.
+  ⚠ **Pending USER chore (do NOT run — user-owned Supabase SQL):**
+  `delete from roster where section='SMOKETEST';` (clears TR + Phase-2 +
+  any Phase-3 smoke rows; cascades to item_ledger).
 - **Long unattended Codex runs MUST be detached** (`powershell.exe
   Start-Process -WindowStyle Hidden -RedirectStandardOutput ...`). A
   harness-tracked background Bash task is KILLED on session suspend/resume
@@ -159,36 +162,33 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `4140afe`** (T2 data/merge). Prior:
-  `1565fd5` (T2 tooling), `067103a` (this doc), `52ac6a7` (DN3c). The full
-  DN1→DN3 Desk loop-closer + T2 skill-map (2412 ai-constrained, CONDITIONAL)
-  are LIVE.
+- **follow-alongs `master` HEAD `00e7a6c`** (Phase 2). Lineage: `00e7a6c`
+  Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` checkpoint ←
+  `4140afe`/`1565fd5` T2 ← `52ac6a7` DN3c. Linear, local==origin. (Plus
+  this Phase-3-spec checkpoint commit on top.)
 - **curriculum_render `main` HEAD `1ccd8a2`** (DN2d; sacred `curriculum.js`
-  untouched). Not re-touched by Phase 2 (answer-key extract is READ-ONLY).
-- **roster-server LIVE** (`https://roster-production-12c1.up.railway.app`;
-  `/donow` 200; project `apstats-roster`). ⚠ A redeploy is PENDING from the
-  concurrent TR1 work — do not redeploy roster-server until TR1 lands (see
-  single-owner gotcha).
-- **Concurrent TR session:** TR0 shipped & live-verified but **UNCOMMITTED**
-  (`scripts/teacher-roster.mjs`, `scripts/sample-class-roster.csv`); TR1
-  (roster-server password lifecycle) IN FLIGHT. Spec
-  `ROSTER_TEACHER_TOOLS_SPEC.md`.
-- Test baseline (post-`4140afe`): follow-alongs root **1544/1545** (1 known
-  study-guide fail); cr **764/765** (1 known redox-chat); roster-server
-  **80/80** (will move with TR1); `audit-feeder-ids` CLEAN 69. → **NEXT =
-  Phase 2a (`scripts/build-answer-key.mjs`, parallel-safe NOW) then Phase 2b
-  `/rollup` SERIALIZED behind TR1's roster-server commit+redeploy.**
+  untouched — never re-touched; Phase-2/3 only READ it).
+- **roster-server LIVE & current** (`https://roster-production-12c1.up.railway.app`;
+  project `apstats-roster`): TR0–TR4 (incl. forced-password-change) + T2
+  + Phase-2 `/rollup` ALL deployed & prod-smoke-verified. No pending
+  redeploy until Phase-3 endpoints land.
+- **Concurrent TR session: DONE & deployed** (TR0–TR4 committed + live;
+  `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
+- **Concurrent AI-tutor session: idle/done** (`9207d24`).
+- Test baseline (post-`00e7a6c`): follow-alongs root **1576/1577** (1 known
+  study-guide); roster-server **114/114**; cr **764/765** (1 known
+  redox-chat); `audit-feeder-ids` CLEAN 69. → **NEXT loop task = Phase 3:
+  implement `GRADEBOOK_PHASE3_BUILD.md` (spec fully frozen) loop-style.**
 
 ### Specs to (re)read on reload, per task
 
-`GRADEBOOK_GRADING_SPEC.md` (v2 — Phase 3 grade math, AUTHORITATIVE),
-`GRADEBOOK_SPEC.md` (§8 phase sequencing, §6.4 adoption),
-`GRADEBOOK_TAGGING_SPEC.md` (§5 T2 pipeline knobs),
-`GRADEBOOK_PHASE1_BUILD.md`, `GRADEBOOK_PHASE2_BUILD.md` (frozen Phase-2
-contract — answer-key + /rollup split), `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`
-(T2 done), `ROSTER_TEACHER_TOOLS_SPEC.md` (the concurrent TR session),
-`AI_TUTOR_SPEC.md` (§31/§156 delivery), `DESK_DONOW_SPEC.md`, and the
-per-sprint `DESK_DONOW_DN*_BUILD.md` / `DN2D_BUILD.md` build docs.
+**`GRADEBOOK_PHASE3_BUILD.md` (THE frozen Phase-3 contract — read FIRST,
+implement this)**, `GRADEBOOK_GRADING_SPEC.md` (v2 §2/§3/§7 — Phase-3 grade
+math source), `GRADEBOOK_PHASE2_BUILD.md` (the `/rollup` Phase 3 consumes),
+`GRADEBOOK_SPEC.md` (§8/§6.4), `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`
+(T2 done), `ROSTER_TEACHER_TOOLS_SPEC.md` (TR — done/deployed),
+`AI_TUTOR_SPEC.md` (§31/§156, Task #5), `DESK_DONOW_SPEC.md` +
+per-sprint `DESK_DONOW_DN*_BUILD.md` / `DN2D_BUILD.md`.
 
 ---
 
