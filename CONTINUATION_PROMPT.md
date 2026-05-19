@@ -2,11 +2,13 @@
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below the
 > "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
-> text; it is kept only as historical record.** Updated 2026-05-18 (session
-> 100, context-limit handoff). Recall memories first:
-> `project_gradebook_grading_model.md`, `project_desk_donow.md`,
+> text; it is kept only as historical record.** Updated 2026-05-19 (session
+> 100, mid-loop checkpoint: Task #1 T2 DONE+pushed; Phase 2 contract frozen;
+> ⚠ a CONCURRENT TR/teacher-roster-tools session now co-edits roster-server
+> — see the roster-server single-owner rule in gotchas). Recall memories
+> first: `project_gradebook_grading_model.md`, `project_desk_donow.md`,
 > `project_gradebook_phase0.md`, `project_ai_tutor_pilot.md`,
-> `feedback_curriculum_render_sacred.md`.
+> `project_roster_teacher_tools.md`, `feedback_curriculum_render_sacred.md`.
 
 ## ➡ ON RELOAD: RUN THE AUTONOMOUS LOOP (user-authorized, session 100)
 
@@ -64,23 +66,30 @@ and all relevant guards pass:
 
 ### Ordered task backlog (dependency-aware — do in order)
 
-1. **T2 full disambiguation run.** Harness shipped (`1dc5c05`, U1 pilot
-   ~98%). Run the controlled full ~2642-item Codex pipeline per
-   `GRADEBOOK_TAGGING_SPEC.md` §5; produce agreement stats + a fixed
-   stratified sample; **auto-merge all pools into canonical
-   `data/skill-map.json` (+`.js` wrapper)** with the audit in the commit;
-   route disagreements to a Sprint T3 surface file. ⚠ During T2 the
-   `data/skill-map.js`/`.json` change is **REAL and must be committed** (the
-   usual "revert GENERATED-header false-positive" rule does NOT apply to the
-   T2 commit — it applies to OTHER sprints where audit/regen scripts only
-   bump the timestamp). After merge: re-run `build-work-manifest.mjs` (+ its
-   bundled `roster-server/data/work-manifest.json` copy) and the
-   `work-manifest`/`audit-feeder-ids` guards; redeploy roster-server.
-2. **Phase 2 — curriculum_render quiz GRADE feeder rollup.** (DN2d already
-   WRITES cr answers to `item_ledger`; Phase 2 = the grade-of-record
-   aggregation/rollup side.) Recon the exact definition in
-   `GRADEBOOK_SPEC.md` §8 + `GRADEBOOK_GRADING_SPEC.md` v2 §2 before
-   freezing the contract.
+1. **T2 full disambiguation run — ✅ DONE & PUSHED (`1565fd5` tooling +
+   `4140afe` data/merge).** 2412/2593 `ai-constrained` (93.0%), 0 violations,
+   merged into canonical `data/skill-map.json`; audit verdict NOT READY →
+   **CONDITIONAL**; 181 → Sprint T3 (`GRADEBOOK_TAGGING_T3_QUEUE.md` +
+   `data/skill-map.review-queue.json`). 2 Codex reviews → 7 fixes. roster
+   redeploy was a verified no-op (T2 = provenance-only; manifest semantically
+   identical). Sprint T3 (teacher spot-review of the certifier pool +
+   disagreement queue) is a FUTURE tagging sprint, NOT a loop blocker. Do NOT
+   re-run T2. Build doc `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`.
+2. **Phase 2 — cr-quiz GRADE-feeder rollup. ⏳ CONTRACT FROZEN
+   (`GRADEBOOK_PHASE2_BUILD.md`); implementation split by the roster-server
+   contention boundary:**
+   - **2a (do now, parallel-safe):** `scripts/build-answer-key.mjs` —
+     READ-ONLY extract of MCQ answer keys from sacred `curriculum.js` →
+     `data/answer-key.json` + bundled `roster-server/data/answer-key.json`
+     (mirrors the DN2-prep bundled-manifest pattern). Pure follow-alongs
+     side, zero roster-server, **no collision with the TR session**.
+   - **2b (BLOCKED — serialize behind TR):** roster-server `GET /rollup`
+     (`roster-server/rollup.js` + `server.js` mount) scoring each student's
+     `curriculum_quiz` ledger rows vs the bundled key → per-unit correctness
+     %. **Must NOT be written until the concurrent TR session's roster-server
+     work (TR1 password lifecycle) is committed + Railway-redeployed**, then
+     rebase 2b on the post-TR `server.js` and do ONE combined redeploy. See
+     the roster-server single-owner gotcha.
 3. **Phase 3 — grade calc + diagnostic BKT.** `GRADEBOOK_GRADING_SPEC.md`
    v2 §2 cap/uncap (`banked=min(B,C≈85)`, `unitGrade=max(banked,P)`;
    proctored PC only-uncaps, only-raises) + v2 §3 diagnostic BKT
@@ -119,38 +128,67 @@ and all relevant guards pass:
   account (cleaned by the standing `delete from roster where
   section='SMOKETEST';` chore).
 - **Memory:** keep `project_gradebook_grading_model.md`,
-  `project_gradebook_phase0.md`, `project_desk_donow.md`, `MEMORY.md`
-  current as phases land (condense — MEMORY.md lines are hooks, not content).
-- **Concurrent AI-tutor session is idle/done** (`9207d24`); tight
-  single-purpose commits remain clobber-safe.
+  `project_gradebook_phase0.md`, `project_desk_donow.md`,
+  `project_roster_teacher_tools.md`, `MEMORY.md` current as phases land
+  (condense — MEMORY.md lines are hooks, not content).
+- **🔒 ROSTER-SERVER IS SINGLE-OWNER, CONTENDED (added s100 2026-05-19).** A
+  concurrent **TR / teacher-roster-tools** session (`project_roster_teacher_tools.md`)
+  is actively building TR1 (roster-server password lifecycle: `0003` migration,
+  change-pw/list/verify-flag endpoints, `ROSTER_PW_ENC_KEY` enc util,
+  `tests/auth.test.js`) — teacher-SIGNED-OFF (reversible AES-256-GCM store;
+  bcrypt stays sole auth path). It also redeploys the SAME Railway `roster`
+  service. **Both sessions editing `roster-server/server.js` or
+  redeploying `roster` concurrently = clobber/deploy-collision.** RULE: TR
+  owns roster-server until TR1 is committed + redeployed (with
+  `ROSTER_PW_ENC_KEY` set in Railway env); Phase-2b and any other roster-server
+  work serializes BEHIND that and rebases on the post-TR `server.js`. TR's
+  follow-alongs-root artifacts (`ROSTER_TEACHER_TOOLS_SPEC.md`,
+  `scripts/teacher-roster.mjs`/`sample-class-roster.csv` — **uncommitted in
+  the shared tree**) are disjoint from gradebook paths: keep staging ONLY
+  explicit own paths (never `git add -A`).
+- **Long unattended Codex runs MUST be detached** (`powershell.exe
+  Start-Process -WindowStyle Hidden -RedirectStandardOutput ...`). A
+  harness-tracked background Bash task is KILLED on session suspend/resume
+  (lost 2 T2 runs that way). Watch via ONE bg watcher that exits on
+  terminal state (success/fatal/stalled). The cross-agent runner echo can
+  trigger the same; `state/cross-agent/<id>.result.json` may be a wrapper
+  fallback ("did not write a result file") with `files_changed` = an mtime
+  snapshot polluted by concurrent runs — read the actual verdict from the
+  transcript-tail / `notes` field, never the wrapper.
+- **Concurrent AI-tutor session is idle/done** (`9207d24`).
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `52ac6a7`.** This-session commits:
-  DN2-prep `1179a05` (work-manifest bundled), DN2c `820c79f` (Desk roster
-  sign-in), DN3a `9a8ea22` (Do Now card), DN3b `08258c7` (4-state calendar
-  coloring), DN3c `52ac6a7` (one-calendar collapse + soft speed-bump).
-- **curriculum_render `main` HEAD `1ccd8a2`** (DN2d: cr quiz feeder + cr
-  roster sign-in; sacred `curriculum.js` untouched).
-- **roster-server LIVE & redeployed** (`https://roster-production-12c1.up.railway.app`;
-  `/donow` prod-verified HTTP 200; project `apstats-roster`).
-- **The entire DN1→DN3 Desk "Do Now" + completion-calendar loop-closer is
-  LIVE** (one fall calendar, 4-state coloring incl. gold "ahead", Do Now
-  card, soft speed-bump; D2 "ledger actually populated" wired across both
-  feeders + both identity surfaces).
-- Tagging: T1 shipped (`e6adf5d`), T2 harness shipped (`1dc5c05`).
-- Test baseline: follow-alongs root **1523/1524** (1 known study-guide);
-  cr **764/765** (1 known redox-chat); roster-server **80/80**;
-  `audit-feeder-ids` CLEAN 69. → **NEXT loop task = #1, the full T2 run.**
+- **follow-alongs `master` HEAD `4140afe`** (T2 data/merge). Prior:
+  `1565fd5` (T2 tooling), `067103a` (this doc), `52ac6a7` (DN3c). The full
+  DN1→DN3 Desk loop-closer + T2 skill-map (2412 ai-constrained, CONDITIONAL)
+  are LIVE.
+- **curriculum_render `main` HEAD `1ccd8a2`** (DN2d; sacred `curriculum.js`
+  untouched). Not re-touched by Phase 2 (answer-key extract is READ-ONLY).
+- **roster-server LIVE** (`https://roster-production-12c1.up.railway.app`;
+  `/donow` 200; project `apstats-roster`). ⚠ A redeploy is PENDING from the
+  concurrent TR1 work — do not redeploy roster-server until TR1 lands (see
+  single-owner gotcha).
+- **Concurrent TR session:** TR0 shipped & live-verified but **UNCOMMITTED**
+  (`scripts/teacher-roster.mjs`, `scripts/sample-class-roster.csv`); TR1
+  (roster-server password lifecycle) IN FLIGHT. Spec
+  `ROSTER_TEACHER_TOOLS_SPEC.md`.
+- Test baseline (post-`4140afe`): follow-alongs root **1544/1545** (1 known
+  study-guide fail); cr **764/765** (1 known redox-chat); roster-server
+  **80/80** (will move with TR1); `audit-feeder-ids` CLEAN 69. → **NEXT =
+  Phase 2a (`scripts/build-answer-key.mjs`, parallel-safe NOW) then Phase 2b
+  `/rollup` SERIALIZED behind TR1's roster-server commit+redeploy.**
 
 ### Specs to (re)read on reload, per task
 
 `GRADEBOOK_GRADING_SPEC.md` (v2 — Phase 3 grade math, AUTHORITATIVE),
 `GRADEBOOK_SPEC.md` (§8 phase sequencing, §6.4 adoption),
 `GRADEBOOK_TAGGING_SPEC.md` (§5 T2 pipeline knobs),
-`GRADEBOOK_PHASE1_BUILD.md`, `AI_TUTOR_SPEC.md` (§31/§156 delivery),
-`DESK_DONOW_SPEC.md`, and the per-sprint `DESK_DONOW_DN*_BUILD.md` /
-`DN2D_BUILD.md` build docs.
+`GRADEBOOK_PHASE1_BUILD.md`, `GRADEBOOK_PHASE2_BUILD.md` (frozen Phase-2
+contract — answer-key + /rollup split), `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`
+(T2 done), `ROSTER_TEACHER_TOOLS_SPEC.md` (the concurrent TR session),
+`AI_TUTOR_SPEC.md` (§31/§156 delivery), `DESK_DONOW_SPEC.md`, and the
+per-sprint `DESK_DONOW_DN*_BUILD.md` / `DN2D_BUILD.md` build docs.
 
 ---
 
