@@ -4,15 +4,26 @@
 > "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
 > text; it is kept only as historical record.** Updated 2026-05-19 (session
 > 100, autonomous loop: T1 T2 DONE; T2 Phase-2 DONE+PROD; T3 Phase-3
-> DONE+PROD (`801dccc`); **T4 Phase-4a DONE+PROD (`d68e98b` + hotfix
-> `13cb326`, roster-server redeployed twice, live `/class/*` SMOKETEST smoke
-> ALL PASS) — NEXT loop task = Task #5 §6.4 adoption + AI-tutor Desk-tile
-> delivery; Phase 4b (remediation_assignment write loop + new Supabase
-> migration) is its own deferred contract**). The concurrent TR session is
-> DONE & deployed → roster-server contention RELEASED. Recall memories
-> first: `project_gradebook_grading_model.md`, `project_desk_donow.md`,
-> `project_gradebook_phase0.md`, `project_ai_tutor_pilot.md`,
-> `project_roster_teacher_tools.md`, `feedback_curriculum_render_sacred.md`.
+> DONE+PROD (`801dccc`); T4 Phase-4a DONE+PROD (`d68e98b`+`13cb326`);
+> **T5 Phase-5 DONE+PUSHED (`e592d1b`)** — AI-tutor Desk-tile delivery
+> ("🤖 Tutor prompt — copy to clipboard" button per lesson) + start-here.html
+> AI-tutor toolkit card + §6.4 close (study_guide_diagnostic.html adopted
+> roster+gradebook clients; student_id stamped on both /api/ai/grade bodies;
+> fire-and-forget gradebookClient.record('frq_studyguide') on graded-FRQ
+> success only). No roster-server change / no redeploy — Phase 5 is
+> client-side only. PC-tile wiring deferred to Phase 5.1 (lessons only in
+> v1; 9 unit-PC artifacts remain in ai-tutor/ unwired). **NEXT optional
+> loop task = Phase 4b** (`remediation_assignment` write loop + new
+> curriculum_render Supabase migration — own frozen contract, user-gated
+> DB step mirrors Phase 0/1 split). OR wrap session: Phase 5 closed the
+> most user-visible "wire it up" increment; Phase 4b is the architectural
+> "close the remediation loop" increment, but it's an independent contract.
+> The concurrent TR session is DONE & deployed → roster-server contention
+> RELEASED. The concurrent AI-tutor delivery is now LIVE (Phase 5 = the
+> approval). Recall memories first: `project_gradebook_grading_model.md`,
+> `project_desk_donow.md`, `project_gradebook_phase0.md`,
+> `project_ai_tutor_pilot.md`, `project_roster_teacher_tools.md`,
+> `feedback_curriculum_render_sacred.md`.
 
 ## ➡ ON RELOAD: RUN THE AUTONOMOUS LOOP (user-authorized, session 100)
 
@@ -140,29 +151,54 @@ and all relevant guards pass:
    exact; /class/mastery heatmap `3.A: weak=2/2 pctWeak=100` (single-obs
    BKT-skeptical, as expected). Build doc `GRADEBOOK_PHASE4_BUILD.md` §5 =
    guardrails; do NOT rebuild Phase 4a.
-5. **Phase 5 — §6.4 adoption + AI-tutor Desk-tile delivery — ⏳ THIS IS THE
-   NEXT LOOP TASK.** Wire remaining feeder/roster adoption per
-   `GRADEBOOK_SPEC.md` §6.4 (any apps still computing `student_id` locally
-   instead of via `rosterClient`; ensure `gradebookClient.record` is wired
-   everywhere it should be); wire the AI-tutor Desk-tile "🤖 Tutor prompt"
-   copy-to-clipboard action (`ai-tutor/u{U}_l{L}.md`) onto each lesson tile
-   in `ap_stats_roadmap_square_mode.html`; add the `start-here.html`
-   AI-tutor section per `AI_TUTOR_SPEC.md` §31/§156. No new build doc frozen
-   yet → loop step 1 = freeze a `GRADEBOOK_PHASE5_BUILD.md` (or similar)
-   first. 🔒 Desk file is contended — gradebook owns `ap_stats_roadmap_
-   square_mode.html` per the standing ownership protocol. **Phase 4b is a
-   parallel-or-after option:** the `remediation_assignment` write workflow
-   (system-proposes → teacher-approves → completing-gates-re-check); it
-   needs its own frozen contract + a user-gated curriculum_render Supabase
-   migration (additive table, mirrors Phase 0/1 sequencing). Either order
-   the loop wants is fine; Phase 5 is the more user-visible "wire it up"
-   increment, Phase 4b is the more architectural "close the remediation
-   loop" increment.
-5. **§6.4 adoption + AI-tutor delivery.** Wire remaining feeder/roster
-   adoption per `GRADEBOOK_SPEC.md` §6.4; wire the AI-tutor Desk-tile
-   "🤖 Tutor prompt" copy action (`ai-tutor/u{U}_l{L}.md`) onto each lesson
-   tile + the `start-here.html` AI-tutor section (`AI_TUTOR_SPEC.md`
-   §31/§156; recommended mechanic = copy-to-clipboard button).
+5. **Phase 5 — §6.4 adoption + AI-tutor Desk-tile delivery — ✅ DONE &
+   PUSHED (`e592d1b`).** Three deliverables. (1) Desk
+   `ap_stats_roadmap_square_mode.html` — `copyTutorPrompt(unit, lesson)`
+   async helper + per-lesson "🤖 Tutor prompt — copy to clipboard" button
+   inside `showResourcePanel` after worksheet/quiz/blooket links; uses
+   `navigator.clipboard.writeText` with a textarea `execCommand` fallback;
+   soft-fails on 404 / permission error; XSS-safe via regex-captured
+   `(\d+).(\d+)` groups from `inf.t` (raw `inf.t` never reaches the onclick
+   string). Lesson topic only — PC tile wiring deferred to Phase 5.1 (PC
+   topic-id shape not obviously regular; 9 unit-PC artifacts remain in
+   `ai-tutor/` ready to wire). (2) `start-here.html` — new "Your AI tutor
+   (per lesson)" `.tool` card added to existing toolkit section (Sonnet
+   parallel — genuinely independent file); explains the copy mechanic in
+   jargon-banned language. (3) `study_guide_diagnostic.html` — 3 sibling
+   scripts (`roster_config.js` + `roster-client.js` +
+   `gradebook-client.js`) loaded; `student_id` (via
+   `window.rosterClient.studentId()` || null) stamped on BOTH
+   `/api/ai/grade` bodies; fire-and-forget
+   `gradebookClient.record({source:'frq_studyguide', ...})` on the
+   graded-FRQ success path ONLY (focus-synthesis is non-graded — no record
+   call, prevents item_ledger pollution). All wrapped in try/catch +
+   `.catch(() => {})` per L-D ethos; never throws / blocks. Plus
+   `tests/phase5-structure.test.js` (26/26 — Desk button + helper +
+   try/catch + XSS regex; start-here jargon-ban + position; study guide
+   script order + both call sites stamp + record wrapped + non-graded
+   does NOT record; **exact 75-file ai-tutor inventory** + **topic-aware
+   header marker**). **Codex review = 0 BLOCKER + 2 MAJOR + 1 MINOR all
+   folded** (test too weak on safety contract; inventory was count-only;
+   Desk button label missing "— copy to clipboard" suffix). **NO
+   roster-server change / NO redeploy / NO `curriculum.js` touch.** GREEN:
+   root **1619/1620** (only known pre-existing study-guide.test.js fail —
+   unchanged; do NOT fix); roster-server **169/169** (untouched);
+   audit-feeder-ids CLEAN 69; all touched files LF/UTF-8 preserved;
+   stage-own-paths discipline held (5 files only). Build doc
+   `GRADEBOOK_PHASE5_BUILD.md` §1–§7. Do NOT rebuild Phase 5.
+6. **Phase 4b — remediation_assignment write loop — ⏳ OPTIONAL NEXT LOOP
+   TASK (or wrap session).** The `GRADEBOOK_GRADING_SPEC.md` §3
+   remediation learning loop: system-proposes weak-skill remediation
+   from /class/mastery → teacher-approves → completing it gates a
+   re-check that *raises* the unit grade (only-raises, per the §2 grade
+   model). Needs (a) its own frozen `GRADEBOOK_PHASE4B_BUILD.md`, (b) a
+   NEW curriculum_render Supabase table `remediation_assignment` +
+   user-gated migration (mirrors Phase 0/1 sequencing — DB migrations
+   are user-action handoffs), (c) additive roster-server endpoints, (d)
+   minimal teacher-dashboard.html UI for the approve action. Independent
+   of Phase 5; can run after a wrap if the user prefers. Phase 5 is the
+   "all the wiring's done" milestone — the system is now student-usable
+   end-to-end except for the remediation feedback loop.
 
 ### Carry-forward gotchas (hard-won — obey these)
 
@@ -218,35 +254,38 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `13cb326`** (Phase 4a hotfix). Lineage:
-  `13cb326` Phase-4a hotfix ← `d68e98b` Phase-4a ← `deff78b` ← `801dccc`
-  Phase-3 ← `4969715` ← `00e7a6c` Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ←
-  `469c4fd` ← `4140afe`/`1565fd5` T2 ← `52ac6a7` DN3c. Linear, local==origin.
+- **follow-alongs `master` HEAD `e592d1b`** (Phase 5). Lineage:
+  `e592d1b` Phase-5 ← `a0c7a93` (docs refresh) ← `13cb326` Phase-4a hotfix
+  ← `d68e98b` Phase-4a ← `deff78b` ← `801dccc` Phase-3 ← `4969715` ←
+  `00e7a6c` Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ←
+  `4140afe`/`1565fd5` T2 ← `52ac6a7` DN3c. Linear, local==origin.
 - **curriculum_render `main` HEAD `1ccd8a2`** (DN2d; sacred `curriculum.js`
   untouched — never re-touched; Phase-2/3/4 only READ it).
 - **roster-server LIVE & current** (`https://roster-production-12c1.up.railway.app`;
   project `apstats-roster`): TR0–TR4 + T2 + Phase-2 `/rollup` + Phase-3
-  `/grade`+`/mastery` + **Phase-4a `/class/grades`+`/class/mastery`** ALL
-  deployed (`railway up --ci -s roster` twice for Phase-4a — initial +
-  hotfix `13cb326`, Deploy complete each) & prod-smoke-verified. No pending
-  redeploy until Phase-5 wiring touches it (likely not — §6.4 is mostly
-  client/Desk).
+  `/grade`+`/mastery` + Phase-4a `/class/grades`+`/class/mastery` ALL
+  deployed & prod-smoke-verified. **Phase 5 did NOT touch roster-server —
+  no redeploy needed** (Phase 5 is client-side only: Desk tile button +
+  start-here card + study_guide_diagnostic.html script-loads). Next
+  redeploy = Phase 4b (when its server endpoints land).
 - **Concurrent TR session: DONE & deployed** (TR0–TR4 committed + live;
   `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
 - **Concurrent AI-tutor session: idle/done** (`9207d24`); its artifacts in
   `ai-tutor/u{U}_l{L}.md` are the source for the Phase-5 Desk-tile prompt.
-- Test baseline (post-`13cb326`): follow-alongs root **1593/1594** (1 known
-  study-guide untouched); roster-server **169/169**; cr **764/765** (1
+- Test baseline (post-`e592d1b`): follow-alongs root **1619/1620** (only
+  the same 1 known study-guide.test.js fail — `study_guide_diagnostic.html`
+  IS touched in Phase 5 but only in additive script-tag + body-field areas
+  the v3-structure test doesn't snapshot; do NOT "fix" that test);
+  roster-server **169/169** (untouched, no redeploy); cr **764/765** (1
   known redox-chat — not touched); `audit-feeder-ids` CLEAN 69;
-  phase4-structure 17/17 (structure + jargon-ban + additive-scope guards).
-  → **NEXT loop task = Phase 5** (§6.4 adoption + AI-tutor Desk-tile;
-  freeze a `GRADEBOOK_PHASE5_BUILD.md` first; OR Phase 4b
-  `remediation_assignment` write loop with its own user-gated migration —
-  either order, planner's call at next freeze). ⚠ user-owned pending SQL
-  chore (do NOT run — user-owned Supabase SQL): `delete from roster where
-  section='SMOKETEST';` (Phase-0/1/2/3/4a smoke rows: `peach_deer`,
-  `papaya_badger`, `pumpkin_tiger`, `banana_otter`, `mango_gecko`, and the
-  fresh "Probe" enrollment; cascades to item_ledger).
+  phase4-structure 17/17 + phase5-structure **26/26**. → **NEXT optional
+  loop task = Phase 4b** (`remediation_assignment` write loop + new
+  curriculum_render Supabase migration — own frozen contract; mirrors
+  Phase 0/1 split on DB migrations) OR wrap-session. Phase 5 closed the
+  most user-visible "wire it up" increment. ⚠ user-owned pending SQL
+  chore: the user **already ran** `delete from roster where
+  section='SMOKETEST';` (cleared session-100 smoke rows). No new SQL
+  needed for Phase 5 (no schema/DB change).
 - ⚠ Phase-4a operational gotcha (recorded): cross-agent runner has a
   sporadic UTF-8-decode bug on Codex's output (cp1252 0xa7/0x97 in the
   stream when files contain §/em-dash/→) — the prompt itself was ASCII
@@ -259,22 +298,23 @@ and all relevant guards pass:
 
 ### Specs to (re)read on reload, per task
 
-**Phase 5 (next):** `AI_TUTOR_SPEC.md` (§31/§156 — the Desk-tile copy
-action + `start-here.html` AI-tutor section; the actual ai-tutor/ artifacts
-are in `ai-tutor/u{U}_l{L}.md`), `GRADEBOOK_SPEC.md` §6.4 (single-sign-in
-adoption — verify every gradeable app uses `rosterClient.studentId()` +
-`gradebookClient.record`), `DESK_DONOW_SPEC.md` (Desk file ownership +
-the 4-state coloring; Phase-5 Desk-tile work plugs into the existing tile
-template). Phase 4b (parallel option): `GRADEBOOK_SPEC.md` §6
-(`remediation_assignment` table), `GRADEBOOK_GRADING_SPEC.md` §3 (the
-remediation learning loop) — will need its own frozen
-`GRADEBOOK_PHASE4B_BUILD.md` + a user-gated curriculum_render Supabase
-migration. Provenance (DONE, do not rebuild): `GRADEBOOK_PHASE4_BUILD.md`,
-`GRADEBOOK_PHASE3_BUILD.md`, `GRADEBOOK_PHASE2_BUILD.md`,
-`GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`,
+**Phase 4b (next optional):** `GRADEBOOK_SPEC.md` §6
+(`remediation_assignment` table — needs definition), `GRADEBOOK_GRADING_SPEC.md`
+§3 (the remediation learning loop — "completing it raises the grade,
+never lowers"), `GRADEBOOK_PHASE4_BUILD.md` §1 (the Phase 4a/4b scope
+split rationale). Will need its own frozen `GRADEBOOK_PHASE4B_BUILD.md` +
+a user-gated curriculum_render Supabase migration. **Phase 5.1 (PC tile
+wiring) is a smaller follow-up** — read the Desk-file's PC-tile shape
+(`ap_stats_roadmap_square_mode.html` schedule data structure; PC tiles
+are visible at lines 1595/2987/3179 area as quiz URLs with `l=PC`) +
+`ai-tutor/u{u}_pc.md` artifact convention. Provenance (DONE, do not
+rebuild): `GRADEBOOK_PHASE5_BUILD.md` (Task #5, this session),
+`GRADEBOOK_PHASE4_BUILD.md`, `GRADEBOOK_PHASE3_BUILD.md`,
+`GRADEBOOK_PHASE2_BUILD.md`, `GRADEBOOK_TAGGING_T2_FULLRUN_BUILD.md`,
 `ROSTER_TEACHER_TOOLS_SPEC.md` (TR — done/deployed),
-`AI_TUTOR_SPEC.md` (§31/§156, Task #5), `DESK_DONOW_SPEC.md` +
-per-sprint `DESK_DONOW_DN*_BUILD.md` / `DN2D_BUILD.md`.
+`AI_TUTOR_SPEC.md` (§31/§156 — wiring now LIVE per Phase 5),
+`DESK_DONOW_SPEC.md` + per-sprint `DESK_DONOW_DN*_BUILD.md` /
+`DN2D_BUILD.md`.
 
 ---
 
