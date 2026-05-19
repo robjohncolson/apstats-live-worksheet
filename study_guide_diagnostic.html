@@ -513,6 +513,10 @@
   <script src="./railway_config.js"></script>
   <script src="./railway_client.js"></script>
   <script>if (!window.RAILWAY_SERVER_URL) window.RAILWAY_SERVER_URL = 'https://curriculumrender-production.up.railway.app';</script>
+  <!-- Phase 5 §6.4: shared roster identity + gradebook ledger feeder. Best-effort; safe no-ops if the student isn't signed into the Desk's roster. -->
+  <script src="./roster_config.js"></script>
+  <script src="./roster-client.js"></script>
+  <script src="./gradebook-client.js"></script>
   <!-- MathJax config must appear before the MathJax script -->
   <script>window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [['$$','$$'],['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] } };</script>
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
@@ -5491,7 +5495,7 @@
         renderActiveProbe();
         try {
           const prompt = window.buildReflectionPromptSG(unit, question, answer);
-          const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Study Guide', questionId:gateId(unit), lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer }, prompt }) });
+          const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Study Guide', questionId:gateId(unit), lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer }, prompt, student_id: (window.rosterClient && typeof window.rosterClient.studentId === 'function' && window.rosterClient.studentId()) || null }) });
           if (!response.ok) throw new Error('Grading request failed');
           let result = normalizeGrade(await response.json()) || { score:'I', feedback:'The grading response was malformed. Try again.', matched:[], missing:[] };
           if (result.score === 'P' && Array.isArray(result.missing) && result.missing.length === 0) { result.score = 'E'; result.feedback = 'Nice work - you covered the key ideas.'; }
@@ -5499,6 +5503,8 @@
           data.focusSynthesis = null;
           saveNow();
           try { if (window.railwayClient && typeof window.railwayClient.submitAnswer === 'function') { const sent = window.railwayClient.submitAnswer({ worksheet:'study_guide_diagnostic', unit, gateId:gateId(unit), answer, grade:result }); if (sent && typeof sent.catch === 'function') sent.catch(() => {}); } } catch {}
+          // Phase 5 §6.4: fire-and-forget gradebook ledger write. No-op if not signed into roster (gradebookClient L-D). Never throws.
+          try { if (window.gradebookClient && typeof window.gradebookClient.record === 'function') { const rec = window.gradebookClient.record({ source:'frq_studyguide', itemId:gateId(unit), unit, response:answer, score:result.score, attempt:1 }); if (rec && typeof rec.catch === 'function') rec.catch(() => {}); } } catch {}
           showToast(`Unit ${unit} FRQ graded.`);
           await runFocus(unit);
         } catch (error) {
@@ -5529,7 +5535,7 @@
             : data.frqAnswer || '';
           const masterySnapshot = {...ensureMasteryState(unit)};
           const prompt = window.buildFocusSynthesisPromptSG({ unit, unitTitle:unitTitle(unit), unitTopic:unitTopic(unit), mcqResults, frqAnswer:frqAnswerForPrompt, frqGrade:data.frqGrade || null, frameworkContext, masterySnapshot });
-          const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Focus Synthesis', questionId:`SG-U${unit}-FOCUS`, lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer:'Focus synthesis request' }, prompt }) });
+          const response = await fetch(`${window.RAILWAY_SERVER_URL}/api/ai/grade`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ scenario:{ topic:'AP Statistics Diagnostic Focus Synthesis', questionId:`SG-U${unit}-FOCUS`, lessonContext:window.LESSON_CONTEXT_SG }, answers:{ answer:'Focus synthesis request' }, prompt, student_id: (window.rosterClient && typeof window.rosterClient.studentId === 'function' && window.rosterClient.studentId()) || null }) });
           if (!response.ok) throw new Error('Focus synthesis request failed');
           const rawFocus = await response.json();
           console.log('[StudyGuide] focus synthesis raw response:', rawFocus);

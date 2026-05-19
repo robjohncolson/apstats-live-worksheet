@@ -5275,6 +5275,14 @@ function showResourcePanel(inf, dateStr) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _doneBtn('blooket') + '</div>';
             }
         }
+
+        // Phase 5: AI-tutor copy button (per-lesson artifact in ai-tutor/u{U}_l{L}.md).
+        // Only rendered when inf.t matches the lesson dot-form (e.g. "1.2"); PC tiles deferred.
+        var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');
+        if (_aitm) {
+            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPrompt(\'' + _aitm[1] + '\',\'' + _aitm[2] + '\')">\u{1F916} Tutor prompt \u{2014} copy to clipboard</button> <span id="ai-tutor-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
+        }
+
         var _rpAll = getAllRegistryEntries(inf.t);
         var _rpFolder = null; var _rpSyncs = [];
         for (var _ri = 0; _ri < _rpAll.length; _ri++) {
@@ -5372,6 +5380,45 @@ async function studentMark(btn, topicId, artifact) {
 function closeResourcePanel() {
     MacSFX.play('click', 0.3);
     document.getElementById('resource-overlay').style.display = 'none';
+}
+
+// Phase 5: copy a per-lesson AI-tutor prompt to clipboard.
+// Fire-and-forget; never throws. Renders status into #ai-tutor-status (if present).
+async function copyTutorPrompt(unit, lesson) {
+    var status = document.getElementById('ai-tutor-status');
+    var path = 'ai-tutor/u' + unit + '_l' + lesson + '.md';
+    try {
+        var resp = await fetch(path);
+        if (!resp || !resp.ok) {
+            if (status) status.textContent = 'Tutor prompt not available for this lesson yet';
+            return;
+        }
+        var text = await resp.text();
+        var copied = false;
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(text);
+                copied = true;
+            } catch (_) { /* fall through to textarea fallback */ }
+        }
+        if (!copied) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { copied = document.execCommand('copy'); } catch (_) { copied = false; }
+            document.body.removeChild(ta);
+        }
+        if (status) {
+            status.textContent = copied
+                ? 'Copied - paste into ChatGPT, Claude, or Gemini'
+                : 'Could not copy - try again or open ' + path + ' directly';
+        }
+    } catch (_) {
+        if (status) status.textContent = 'Tutor prompt not available for this lesson yet';
+    }
 }
 
 /* ═══ MAC OS UI SOUND EFFECTS ═══ */
