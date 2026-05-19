@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<!-- Phase 4a of GRADEBOOK_PHASE4_BUILD.md §2.2. Read-only teacher dashboard:
+     class grade table, skill heatmap, weak-skill triage. Calls the teacher-
+     gated /class/grades and /class/mastery endpoints. The teacher secret is
+     typed at runtime and is NEVER persisted — no localStorage, no sessionStorage,
+     no cookies. It is read from the input on every request. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AP Stats — Teacher Dashboard</title>
+  <style>
+    :root {
+      --sg-bg: #f7f2e8;
+      --sg-text: #2a2520;
+      --sg-accent: #7a4a1f;
+      --sg-bar-track: #e2d6c0;
+      --sg-bg-card: #ffffff;
+      --sg-border: #d8ccb0;
+      --sg-text-dim: #5a5045;
+      --sg-low: #c0392b;
+      --sg-high: #2e7d32;
+      --heat-green: #c8e6c9;
+      --heat-yellow: #fff3a3;
+      --heat-orange: #ffcc80;
+      --heat-red: #ef9a9a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      min-height: 100vh;
+    }
+    .page-header {
+      background: var(--sg-bg-card);
+      border-bottom: 1px solid var(--sg-border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+    .page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--sg-accent); }
+    .page-header .subtitle { margin: 0; font-size: 0.82rem; color: var(--sg-text-dim); }
+    .security-banner {
+      background: #fff0f0;
+      border: 1px solid var(--sg-low);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #6a1b1b;
+      line-height: 1.5;
+    }
+    .error-banner {
+      background: #fff0f0;
+      border: 1px solid var(--sg-low);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: #6a1b1b;
+      line-height: 1.4;
+      display: none;
+    }
+    .error-banner.show { display: block; }
+    .info-banner {
+      background: #eef6ee;
+      border: 1px solid var(--sg-high);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: #1b4d1b;
+      line-height: 1.4;
+      display: none;
+    }
+    .info-banner.show { display: block; }
+    .main { max-width: 1400px; margin: 0 auto; padding: 24px 20px 60px; display: grid; gap: 24px; }
+    .section {
+      background: var(--sg-bg-card);
+      border: 1px solid var(--sg-border);
+      border-radius: 10px;
+      padding: 20px 22px;
+      display: grid;
+      gap: 16px;
+    }
+    .section-title {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--sg-text-dim);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--sg-border);
+    }
+    .form-row { display: grid; gap: 6px; }
+    .form-row label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--sg-text-dim);
+    }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--sg-accent); outline-offset: 2px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid var(--sg-accent);
+      background: var(--sg-accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn[disabled] { opacity: 0.5; cursor: default; }
+    .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .meta-row {
+      font-size: 0.82rem;
+      color: var(--sg-text-dim);
+      line-height: 1.4;
+    }
+    .table-wrap {
+      overflow: auto;
+      max-height: 70vh;
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+    }
+    table.grades { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    table.grades th {
+      text-align: left;
+      padding: 7px 9px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--sg-text-dim);
+      border-bottom: 2px solid var(--sg-border);
+      background: var(--sg-bg-card);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    table.grades td {
+      padding: 6px 9px;
+      border-bottom: 1px solid var(--sg-bar-track);
+      vertical-align: top;
+    }
+    table.grades tr:last-child td { border-bottom: none; }
+    table.grades td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    table.grades td.dim { color: var(--sg-text-dim); }
+    table.grades td.completion {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      color: var(--sg-text-dim);
+    }
+    table.grades .uname { font-weight: 700; color: var(--sg-accent); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .heat-tile {
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 4px;
+    }
+    .heat-tile .skill {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--sg-text);
+      word-break: break-word;
+    }
+    .heat-tile .pct {
+      font-size: 1.1rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    .heat-tile .frac {
+      font-size: 0.76rem;
+      color: var(--sg-text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+    .heat-green { background: var(--heat-green); }
+    .heat-yellow { background: var(--heat-yellow); }
+    .heat-orange { background: var(--heat-orange); }
+    .heat-red { background: var(--heat-red); }
+    .triage-list { display: grid; gap: 6px; }
+    .triage-row {
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      background: var(--sg-bg);
+    }
+    .triage-row summary {
+      cursor: pointer;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      list-style: none;
+    }
+    .triage-row summary::-webkit-details-marker { display: none; }
+    .triage-row summary::before {
+      content: '\25B8';
+      font-size: 0.75rem;
+      color: var(--sg-text-dim);
+      width: 10px;
+      display: inline-block;
+    }
+    .triage-row[open] summary::before { content: '\25BE'; }
+    .triage-row .skill-code { font-weight: 700; color: var(--sg-accent); min-width: 100px; }
+    .triage-row .pct-badge {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+    }
+    .triage-row .count {
+      font-size: 0.78rem;
+      color: var(--sg-text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+    .triage-row .student-list {
+      padding: 8px 18px 14px 36px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .triage-row .student-list .pill {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--sg-bg-card);
+      border: 1px solid var(--sg-border);
+      color: var(--sg-accent);
+    }
+    .triage-row .student-list .none { color: var(--sg-text-dim); font-style: italic; }
+    .empty-note { font-size: 0.85rem; color: var(--sg-text-dim); font-style: italic; }
+    .loading-note {
+      font-size: 0.9rem;
+      color: var(--sg-text-dim);
+      padding: 12px 0;
+    }
+    .hint { font-size: 0.8rem; color: var(--sg-text-dim); line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>AP Stats — Teacher Dashboard</h1>
+    <p class="subtitle">Class grades, completion, and weak-skill triage</p>
+  </div>
+
+  <div class="main">
+
+    <div class="security-banner">
+      &#9888; <strong>Local use only.</strong> This page calls the teacher-only class endpoints
+      and displays student grades. Do <strong>not</strong> deploy it publicly or share the URL with
+      students. The teacher secret you type is held only in this input field for the lifetime of
+      this page; it is never saved to disk, localStorage, sessionStorage, or cookies.
+    </div>
+
+    <!-- Auth & load -->
+    <div class="section">
+      <h2 class="section-title">Connection</h2>
+      <div class="row-2">
+        <div class="form-row">
+          <label for="teacher-secret">Teacher secret</label>
+          <input id="teacher-secret" type="password" autocomplete="off" spellcheck="false"
+                 placeholder="x-teacher-secret (not stored)">
+        </div>
+        <div class="form-row">
+          <label for="section-filter">Section filter (blank = all)</label>
+          <input id="section-filter" type="text" spellcheck="false"
+                 placeholder="e.g. PERIOD3">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="load-btn">Load class data</button>
+        <span class="meta-row" id="meta-line"></span>
+      </div>
+      <div class="error-banner" id="err-banner" role="alert"></div>
+      <div class="info-banner" id="info-banner" role="status"></div>
+    </div>
+
+    <!-- Class grade table -->
+    <div class="section">
+      <h2 class="section-title">Class Grades</h2>
+      <div class="loading-note" id="grades-loading" style="display:none">Loading class data...</div>
+      <div class="table-wrap" id="grades-wrap" style="display:none">
+        <table class="grades">
+          <thead id="grades-thead"></thead>
+          <tbody id="grades-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-note" id="grades-empty" style="display:none">
+        No students returned for this section.
+      </div>
+      <div class="hint">
+        Quarter columns show the cumulative quarter grade; unit columns show the per-unit grade
+        (Worksheet / Quiz feeders plus the Progress Check booster). Completion (ws / q / pc) is
+        the accountability readout: did the student finish the work, regardless of score.
+      </div>
+    </div>
+
+    <!-- Skill heatmap -->
+    <div class="section">
+      <h2 class="section-title">Skill Heatmap (class)</h2>
+      <div class="loading-note" id="heatmap-loading" style="display:none">Loading class data...</div>
+      <div class="heatmap-grid" id="heatmap-grid"></div>
+      <div class="empty-note" id="heatmap-empty" style="display:none">
+        No skill observations recorded yet for this section.
+      </div>
+      <div class="hint">
+        Tile color reflects the share of students currently flagged weak on that skill.
+        Green &lt;25%, yellow 25-50%, orange 50-75%, red &ge;75%. Sorted by %weak descending.
+      </div>
+    </div>
+
+    <!-- Weak-skill triage list -->
+    <div class="section">
+      <h2 class="section-title">Weak-Skill Triage</h2>
+      <div class="loading-note" id="triage-loading" style="display:none">Loading class data...</div>
+      <div class="triage-list" id="triage-list"></div>
+      <div class="empty-note" id="triage-empty" style="display:none">
+        No weak skills to triage.
+      </div>
+      <div class="hint">
+        Each row is a skill; expand it to see the usernames of students currently flagged weak
+        on it. Sorted by %weak descending so the highest-impact remediation rises to the top.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
+  <script src="roster_config.js"></script>
+
+  <script>
+    // ===== guardrails =====
+    // The x-teacher-secret is NEVER persisted client-side:
+    //   - no localStorage writes
+    //   - no sessionStorage writes
+    //   - no document.cookie writes
+    // It is read fresh from the input on every fetch (see api()).
+
+    // ===== helpers =====
+    var FALLBACK_SVC = 'https://roster-production-12c1.up.railway.app';
+    function svcUrl() {
+      var u = (typeof window !== 'undefined' && window.ROSTER_SERVICE_URL) || '';
+      if (!u) {
+        console.warn('[teacher-dashboard] window.ROSTER_SERVICE_URL not set; using fallback ' + FALLBACK_SVC);
+        u = FALLBACK_SVC;
+      }
+      return String(u).replace(/\/+$/, '');
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    function teacherSecret() {
+      // ALWAYS read from the input — never cached, never persisted.
+      var el = $('teacher-secret');
+      return el ? el.value : '';
+    }
+
+    function escHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showError(msg) {
+      var b = $('err-banner');
+      b.textContent = msg;
+      b.classList.add('show');
+      $('info-banner').classList.remove('show');
+    }
+    function clearBanners() {
+      $('err-banner').classList.remove('show');
+      $('err-banner').textContent = '';
+      $('info-banner').classList.remove('show');
+      $('info-banner').textContent = '';
+    }
+    function showInfo(msg) {
+      var b = $('info-banner');
+      b.textContent = msg;
+      b.classList.add('show');
+    }
+
+    function fmt1(x) {
+      if (x == null || isNaN(x)) return '—';
+      return (Math.round(Number(x) * 10) / 10).toFixed(1);
+    }
+
+    function heatClass(pct) {
+      if (pct >= 75) return 'heat-red';
+      if (pct >= 50) return 'heat-orange';
+      if (pct >= 25) return 'heat-yellow';
+      return 'heat-green';
+    }
+
+    async function fetchJson(path, secret) {
+      // Build a fresh Headers object each call. Secret is passed in by caller
+      // and is itself read fresh from the input — never cached.
+      var headers = {};
+      if (secret) headers['x-teacher-secret'] = secret;
+      var res;
+      try {
+        res = await fetch(svcUrl() + path, { method: 'GET', headers: headers });
+      } catch (e) {
+        return { status: 0, data: null, networkError: (e && e.message) || 'network error' };
+      }
+      var data = null;
+      try { data = await res.json(); } catch (_) { data = null; }
+      return { status: res.status, data: data, networkError: null };
+    }
+
+    // ===== rendering =====
+    var UNITS = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7', 'U8', 'U9'];
+    var QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
+
+    function renderGradesTable(payload) {
+      var thead = $('grades-thead');
+      var tbody = $('grades-tbody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      var students = (payload && payload.students) || [];
+      if (students.length === 0) {
+        $('grades-wrap').style.display = 'none';
+        $('grades-empty').style.display = '';
+        return;
+      }
+      $('grades-empty').style.display = 'none';
+      $('grades-wrap').style.display = '';
+
+      // Header row
+      var headCells = ['Name', 'Username', 'Section'];
+      QUARTERS.forEach(function (q) { headCells.push(q); });
+      UNITS.forEach(function (u) { headCells.push(u); });
+      headCells.push('Completion');
+      var trh = '<tr>' + headCells.map(function (h) {
+        return '<th>' + escHtml(h) + '</th>';
+      }).join('') + '</tr>';
+      thead.innerHTML = trh;
+
+      // Sort by realName ascending (stable, case-insensitive).
+      var sorted = students.slice().sort(function (a, b) {
+        var an = String(a.realName || '').toLowerCase();
+        var bn = String(b.realName || '').toLowerCase();
+        if (an < bn) return -1;
+        if (an > bn) return 1;
+        return 0;
+      });
+
+      var rowsHtml = [];
+      sorted.forEach(function (s) {
+        var cells = [];
+        cells.push('<td>' + escHtml(s.realName || '') + '</td>');
+        cells.push('<td class="uname mono">' + escHtml(s.username || '') + '</td>');
+        cells.push('<td class="dim">' + escHtml(s.section || '') + '</td>');
+
+        QUARTERS.forEach(function (q) {
+          var qrec = s.quarters && s.quarters[q];
+          var qg = qrec ? qrec.quarterGrade : null;
+          cells.push('<td class="num">' + escHtml(fmt1(qg)) + '</td>');
+        });
+
+        UNITS.forEach(function (u) {
+          var urec = s.units && s.units[u];
+          var ug = urec ? urec.unitGrade : null;
+          cells.push('<td class="num">' + escHtml(fmt1(ug)) + '</td>');
+        });
+
+        // Compact completion summary: ws:N · q:M · pc:K (sums across units present)
+        var ws = 0, q = 0, pc = 0;
+        var comp = s.completion || {};
+        Object.keys(comp).forEach(function (u) {
+          var c = comp[u] || {};
+          if (typeof c.worksheet === 'number') ws += c.worksheet;
+          if (typeof c.curriculum_quiz === 'number') q += c.curriculum_quiz;
+          if (typeof c.pc === 'number') pc += c.pc;
+        });
+        var compTxt = 'ws:' + ws + ' · q:' + q + ' · pc:' + pc;
+        cells.push('<td class="completion">' + escHtml(compTxt) + '</td>');
+
+        rowsHtml.push('<tr>' + cells.join('') + '</tr>');
+      });
+      tbody.innerHTML = rowsHtml.join('');
+    }
+
+    function renderHeatmap(payload) {
+      var grid = $('heatmap-grid');
+      grid.innerHTML = '';
+      var heatmap = (payload && payload.heatmap) || {};
+      var skills = Object.keys(heatmap);
+
+      if (skills.length === 0) {
+        $('heatmap-empty').style.display = '';
+        grid.style.display = 'none';
+        return;
+      }
+      $('heatmap-empty').style.display = 'none';
+      grid.style.display = '';
+
+      // Sort by pctWeak desc, then skill code asc.
+      var tiles = skills.map(function (k) {
+        var row = heatmap[k] || {};
+        return {
+          skill: k,
+          weak: Number(row.weak) || 0,
+          total: Number(row.total) || 0,
+          pctWeak: Number(row.pctWeak) || 0
+        };
+      });
+      tiles.sort(function (a, b) {
+        if (b.pctWeak !== a.pctWeak) return b.pctWeak - a.pctWeak;
+        return a.skill < b.skill ? -1 : a.skill > b.skill ? 1 : 0;
+      });
+
+      var html = tiles.map(function (t) {
+        var cls = heatClass(t.pctWeak);
+        return '<div class="heat-tile ' + cls + '">' +
+                 '<div class="skill mono">' + escHtml(t.skill) + '</div>' +
+                 '<div class="pct">' + escHtml(fmt1(t.pctWeak)) + '%</div>' +
+                 '<div class="frac">' + escHtml(t.weak) + ' / ' + escHtml(t.total) + ' weak</div>' +
+               '</div>';
+      }).join('');
+      grid.innerHTML = html;
+    }
+
+    function renderTriage(payload) {
+      var list = $('triage-list');
+      list.innerHTML = '';
+      var heatmap = (payload && payload.heatmap) || {};
+      var students = (payload && payload.students) || [];
+
+      var skills = Object.keys(heatmap);
+      if (skills.length === 0) {
+        $('triage-empty').style.display = '';
+        list.style.display = 'none';
+        return;
+      }
+      $('triage-empty').style.display = 'none';
+      list.style.display = '';
+
+      // Build skill -> [usernames who are weak] index from the per-student weak lists.
+      var weakBySkill = {};
+      students.forEach(function (s) {
+        var ws = Array.isArray(s.weakSkills) ? s.weakSkills : [];
+        ws.forEach(function (sk) {
+          if (!weakBySkill[sk]) weakBySkill[sk] = [];
+          weakBySkill[sk].push(s.username || s.studentId || '?');
+        });
+      });
+
+      var rows = skills.map(function (k) {
+        var row = heatmap[k] || {};
+        return {
+          skill: k,
+          weak: Number(row.weak) || 0,
+          total: Number(row.total) || 0,
+          pctWeak: Number(row.pctWeak) || 0
+        };
+      });
+      rows.sort(function (a, b) {
+        if (b.pctWeak !== a.pctWeak) return b.pctWeak - a.pctWeak;
+        return a.skill < b.skill ? -1 : a.skill > b.skill ? 1 : 0;
+      });
+
+      var html = rows.map(function (r) {
+        var cls = heatClass(r.pctWeak);
+        var users = weakBySkill[r.skill] || [];
+        users.sort();
+        var inner = users.length
+          ? users.map(function (u) {
+              return '<span class="pill mono">' + escHtml(u) + '</span>';
+            }).join('')
+          : '<span class="none">No students currently flagged weak.</span>';
+        return '<details class="triage-row">' +
+                 '<summary>' +
+                   '<span class="skill-code mono">' + escHtml(r.skill) + '</span>' +
+                   '<span class="pct-badge ' + cls + '">' + escHtml(fmt1(r.pctWeak)) + '%</span>' +
+                   '<span class="count">' + escHtml(r.weak) + ' / ' + escHtml(r.total) + ' weak</span>' +
+                 '</summary>' +
+                 '<div class="student-list">' + inner + '</div>' +
+               '</details>';
+      }).join('');
+      list.innerHTML = html;
+    }
+
+    function setLoading(on) {
+      var dispBlock = on ? '' : 'none';
+      $('grades-loading').style.display = dispBlock;
+      $('heatmap-loading').style.display = dispBlock;
+      $('triage-loading').style.display = dispBlock;
+      if (on) {
+        // Hide previous results while loading so the user sees the loading state.
+        $('grades-wrap').style.display = 'none';
+        $('grades-empty').style.display = 'none';
+        $('heatmap-grid').style.display = 'none';
+        $('heatmap-empty').style.display = 'none';
+        $('triage-list').style.display = 'none';
+        $('triage-empty').style.display = 'none';
+      }
+    }
+
+    // ===== load handler =====
+    async function loadAll() {
+      clearBanners();
+      var secret = teacherSecret();
+      if (!secret) {
+        showError('Enter the teacher secret first.');
+        return;
+      }
+      var section = $('section-filter').value.trim();
+      var qs = section ? '?section=' + encodeURIComponent(section) : '';
+
+      var btn = $('load-btn');
+      btn.disabled = true;
+      setLoading(true);
+      $('meta-line').textContent = '';
+
+      try {
+        // Fan-out both endpoints in parallel; each call re-reads the secret
+        // through teacherSecret() at fetch-time (no cached value).
+        var gradesP = fetchJson('/class/grades' + qs, teacherSecret());
+        var masteryP = fetchJson('/class/mastery' + qs, teacherSecret());
+        var results = await Promise.all([gradesP, masteryP]);
+        var gRes = results[0];
+        var mRes = results[1];
+
+        // 401 from either endpoint => clear, never persisting anything.
+        if (gRes.status === 401 || mRes.status === 401) {
+          showError('Invalid teacher secret');
+          setLoading(false);
+          renderGradesTable({ students: [] });
+          renderHeatmap({ heatmap: {} });
+          renderTriage({ heatmap: {}, students: [] });
+          return;
+        }
+
+        if (gRes.networkError) {
+          showError('Network error loading /class/grades: ' + gRes.networkError);
+        } else if (gRes.status !== 200 || !gRes.data || !gRes.data.ok) {
+          var errG = (gRes.data && gRes.data.error) || ('HTTP ' + gRes.status);
+          showError('Failed to load /class/grades: ' + errG);
+        }
+        if (mRes.networkError) {
+          showError('Network error loading /class/mastery: ' + mRes.networkError);
+        } else if (mRes.status !== 200 || !mRes.data || !mRes.data.ok) {
+          var errM = (mRes.data && mRes.data.error) || ('HTTP ' + mRes.status);
+          // Only overwrite if grades-side was OK.
+          if (!$('err-banner').classList.contains('show')) {
+            showError('Failed to load /class/mastery: ' + errM);
+          }
+        }
+
+        // Render whatever came back; render-empty for the failed half.
+        var gPayload = (gRes.status === 200 && gRes.data && gRes.data.ok)
+          ? gRes.data : { students: [] };
+        var mPayload = (mRes.status === 200 && mRes.data && mRes.data.ok)
+          ? mRes.data : { heatmap: {}, students: [] };
+
+        renderGradesTable(gPayload);
+        renderHeatmap(mPayload);
+        renderTriage(mPayload);
+
+        var bits = [];
+        if (gPayload.asOf) bits.push('grades as of ' + String(gPayload.asOf));
+        if (mPayload.asOf) bits.push('mastery as of ' + String(mPayload.asOf));
+        if (gPayload.section || mPayload.section) {
+          bits.push('section: ' + (gPayload.section || mPayload.section || '(all)'));
+        }
+        var nStudents = (gPayload.students || []).length;
+        bits.push(nStudents + ' student(s)');
+        $('meta-line').textContent = bits.join(' · ');
+
+        if (!$('err-banner').classList.contains('show')) {
+          showInfo('Loaded ' + nStudents + ' student(s).');
+        }
+      } catch (e) {
+        // Last-resort guard so the UI never throws uncaught.
+        showError('Unexpected error: ' + ((e && e.message) || String(e)));
+      } finally {
+        btn.disabled = false;
+        setLoading(false);
+      }
+    }
+
+    $('load-btn').addEventListener('click', loadAll);
+    $('teacher-secret').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') loadAll();
+    });
+    $('section-filter').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') loadAll();
+    });
+  </script>
+</body>
+</html>

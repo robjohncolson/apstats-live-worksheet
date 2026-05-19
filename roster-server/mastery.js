@@ -53,6 +53,58 @@ function correctnessSignal(row, answerKey, frqThreshold) {
   return null; // worksheet (no key/score) and unknown sources
 }
 
+// ── Pure compute (extracted for class fan-out reuse; behaviour-identical) ────
+// computeMastery(ledgerRows, answerKey, skillMap, bkt, config)
+//   → { skills, weakSkills, totalObservations }
+// Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
+export function computeMastery(ledgerRows, answerKey, skillMap, bkt, config = PHASE3_CONFIG) {
+  const theta = config.diagnosticTheta;
+  const pInit =
+    bkt && bkt.DEFAULT_PARAMS && Number.isFinite(bkt.DEFAULT_PARAMS.pInit)
+      ? bkt.DEFAULT_PARAMS.pInit
+      : 0.3;
+
+  // BKT consumes the FULL observation STREAM (every retry is evidence).
+  const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
+  const observations = [];
+  for (const row of rows) {
+    const signal = correctnessSignal(row, answerKey, config.frqDiagnosticCorrectThreshold);
+    if (signal == null) continue;
+    const entry = skillMap[row.item_id];
+    const skill = entry && entry.skill ? entry.skill : null;
+    if (!skill) continue;
+    observations.push({
+      skill,
+      correct: signal,
+      at: Date.parse(row.recorded_at || '') || 0,
+      attempt: Number(row.attempt) || 0,
+    });
+  }
+  observations.sort((a, b) => (a.at - b.at) || (a.attempt - b.attempt));
+
+  const skills = {};
+  for (const o of observations) {
+    const s = skills[o.skill] || (skills[o.skill] = { pKnow: pInit, observations: 0, correct: 0 });
+    s.pKnow = bkt.updateMastery(s.pKnow, o.correct);
+    s.observations += 1;
+    if (o.correct) s.correct += 1;
+  }
+
+  const skillsOut = {};
+  const weakSkills = [];
+  for (const skill of Object.keys(skills).sort()) {
+    const s = skills[skill];
+    if (s.pKnow < theta) weakSkills.push(skill); // raw posterior — not rounded
+    skillsOut[skill] = {
+      pKnow: Math.round(s.pKnow * 1000) / 1000,
+      observations: s.observations,
+      correct: s.correct,
+    };
+  }
+
+  return { skills: skillsOut, weakSkills, totalObservations: observations.length };
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountMastery(
@@ -116,67 +168,16 @@ export function mountMastery(
       return res.status(500).json({ ok: false, error: 'Skill map malformed' });
     }
 
-    const theta = config.diagnosticTheta;
-    const pInit =
-      bkt.DEFAULT_PARAMS && Number.isFinite(bkt.DEFAULT_PARAMS.pInit)
-        ? bkt.DEFAULT_PARAMS.pInit
-        : 0.3;
-
-    // BKT consumes the FULL observation STREAM: EVERY gradable attempt is
-    // evidence (a retry/recovery moves pKnow — Codex MAJOR; this is the
-    // diagnostic, distinct from /grade which is latest-attempt-wins). Each
-    // row with a usable correctness signal + a resolved (non-null) skill tag
-    // is one observation. Unresolved skills are excluded (tagging spec:
-    // unresolved → out of the diagnostic rollup).
-    const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
-    const observations = [];
-    for (const row of rows) {
-      const signal = correctnessSignal(row, answerKey, config.frqDiagnosticCorrectThreshold);
-      if (signal == null) continue;
-      const entry = skillMap[row.item_id];
-      const skill = entry && entry.skill ? entry.skill : null;
-      if (!skill) continue;
-      observations.push({
-        skill,
-        correct: signal,
-        at: Date.parse(row.recorded_at || '') || 0,
-        attempt: Number(row.attempt) || 0,
-      });
-    }
-
-    // Fold BKT per skill in chronological order (oldest evidence first; ties
-    // broken by attempt asc so attempt 1 folds before attempt 2 on one item).
-    observations.sort((a, b) => (a.at - b.at) || (a.attempt - b.attempt));
-    const skills = {};
-    for (const o of observations) {
-      const s = skills[o.skill] || (skills[o.skill] = { pKnow: pInit, observations: 0, correct: 0 });
-      s.pKnow = bkt.updateMastery(s.pKnow, o.correct);
-      s.observations += 1;
-      if (o.correct) s.correct += 1;
-    }
-
-    const skillsOut = {};
-    const weakSkills = [];
-    for (const skill of Object.keys(skills).sort()) {
-      const s = skills[skill];
-      // Compare the TRUE posterior to θ; round only for the response payload
-      // (else a 0.6496 posterior rounds to 0.650 and escapes the flag — Codex
-      // MINOR).
-      if (s.pKnow < theta) weakSkills.push(skill);
-      skillsOut[skill] = {
-        pKnow: Math.round(s.pKnow * 1000) / 1000,
-        observations: s.observations,
-        correct: s.correct,
-      };
-    }
+    const { skills, weakSkills, totalObservations } =
+      computeMastery(ledgerRows, answerKey, skillMap, bkt, config);
 
     return res.json({
       ok: true,
       asOf: new Date().toISOString(),
-      theta,
-      skills: skillsOut,
+      theta: config.diagnosticTheta,
+      skills,
       weakSkills,
-      totalObservations: observations.length,
+      totalObservations,
     });
   });
 }

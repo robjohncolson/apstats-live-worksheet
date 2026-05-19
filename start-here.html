@@ -182,6 +182,79 @@
     font-size: 0.92rem;
   }
   footer .signoff { color: var(--ink); font-weight: 600; }
+
+  /* "Where you stand" — live grade render (signed-in students only) */
+  .wys-loading { color: var(--muted); font-style: italic; }
+  .wys-signed-out {
+    background: #f4f7fc;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    margin-top: 0.5rem;
+  }
+  .wys-signed-out p { margin: 0 0 0.7rem; color: var(--muted); }
+  .wys-signed-out a.btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+  .wys-signed-out a.btn:hover { background: var(--accent-hover); }
+
+  .wys-quarters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0 1rem;
+  }
+  .wys-quarters .step small { display: block; font-weight: 400; color: var(--muted); }
+  .wys-quarters .step.empty { background: #fff; color: var(--muted); border-style: dashed; }
+
+  .wys-units {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 0.5rem 0 0;
+  }
+  @media (max-width: 600px) { .wys-units { grid-template-columns: 1fr; } }
+  .wys-unit {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 0.8rem 1rem;
+    background: #fbfcfe;
+  }
+  .wys-unit h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+  .wys-unit .grade {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0.1rem 0 0.4rem;
+  }
+  .wys-unit .grade.notyet {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .wys-unit .breakdown {
+    font-size: 0.88rem;
+    color: var(--muted);
+    margin: 0;
+  }
+  .wys-unit .completion {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 0.35rem 0 0;
+    border-top: 1px dashed var(--border);
+    padding-top: 0.4rem;
+  }
 </style>
 </head>
 <body>
@@ -252,6 +325,14 @@
     <p>So the move is simple: <strong>do the work, at your pace.</strong> Do it ahead — over the summer, even — and you carry a <strong>strong grade</strong> for that unit into the year before it starts, with the Progress Check waiting as the way to top it off — never a cliff.</p>
   </section>
 
+  <section id="where-you-stand">
+    <h2>Where you stand</h2>
+    <p>Once you start banking work, this is where you'll see it accumulate — your unit grades climb as you finish lessons, and the Progress Check is how you top each unit off.</p>
+    <div id="wys-status">
+      <p class="wys-loading">Loading your progress…</p>
+    </div>
+  </section>
+
   <section>
     <h2><span class="num">★</span>Your summer on-ramp <small style="color:var(--muted);font-weight:400">— optional</small></h2>
     <div class="lowstakes">
@@ -293,5 +374,175 @@
   </footer>
 
 </div>
+<script src="roster_config.js"></script>
+<script src="roster-client.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (k === 'class') node.className = attrs[k];
+        else if (k === 'text') node.textContent = attrs[k];
+        else if (k === 'html') node.innerHTML = attrs[k];
+        else node.setAttribute(k, attrs[k]);
+      }
+    }
+    if (children) {
+      for (var i = 0; i < children.length; i++) {
+        var c = children[i];
+        if (c == null) continue;
+        if (typeof c === 'string') node.appendChild(document.createTextNode(c));
+        else node.appendChild(c);
+      }
+    }
+    return node;
+  }
+
+  function renderSignedOut(host) {
+    host.innerHTML = '';
+    var wrap = el('div', { class: 'wys-signed-out' });
+    wrap.appendChild(el('p', { text: 'Sign in on the Desk to see your live progress here.' }));
+    wrap.appendChild(el('a', { class: 'btn', href: 'ap_stats_roadmap_square_mode.html', text: 'Open the Desk' }));
+    host.appendChild(wrap);
+  }
+
+  function fmtGrade(v) {
+    if (v == null || isNaN(v)) return null;
+    return (Math.round(v * 10) / 10).toFixed(1);
+  }
+
+  function unitNumberFromKey(uKey) {
+    var m = /^U(\d+)$/.exec(uKey);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
+  function renderQuarters(host, quarters) {
+    var strip = el('div', { class: 'wys-quarters' });
+    var order = ['Q1', 'Q2', 'Q3', 'Q4'];
+    for (var i = 0; i < order.length; i++) {
+      var qKey = order[i];
+      var q = quarters && quarters[qKey];
+      var grade = q ? fmtGrade(q.quarterGrade) : null;
+      var classes = 'step' + (grade == null ? ' empty' : '');
+      var pill = el('span', { class: classes });
+      pill.appendChild(document.createTextNode(qKey));
+      pill.appendChild(el('br'));
+      pill.appendChild(el('small', { html: grade == null ? '&mdash;' : grade }));
+      strip.appendChild(pill);
+    }
+    host.appendChild(strip);
+  }
+
+  function renderUnitCard(uKey, u, completion) {
+    var card = el('div', { class: 'wys-unit' });
+    var unitNum = unitNumberFromKey(uKey);
+    card.appendChild(el('h3', { text: unitNum ? 'Unit ' + unitNum : uKey }));
+
+    var ug = fmtGrade(u && u.unitGrade);
+    var graded = !!(u && u.graded) && ug != null;
+    if (graded) {
+      card.appendChild(el('div', { class: 'grade', text: ug }));
+    } else {
+      card.appendChild(el('div', { class: 'grade notyet', text: 'Not started yet' }));
+    }
+
+    var banked = fmtGrade(u && u.banked);
+    var P = u && typeof u.P === 'number' ? u.P : 0;
+    var pcText = P > 0 ? fmtGrade(P) : 'not yet';
+    var parts = [];
+    parts.push('Banked: ' + (banked == null ? '&mdash;' : banked));
+    parts.push('Progress Check: ' + pcText);
+    card.appendChild(el('p', { class: 'breakdown', html: parts.join(' &middot; ') }));
+
+    var c = completion && completion[uKey];
+    if (c) {
+      var sources = [];
+      var wsCount = (c.worksheet || 0) + (c.frq || 0);
+      if (wsCount > 0) sources.push(wsCount + ' worksheet item' + (wsCount === 1 ? '' : 's'));
+      if (c.curriculum_quiz > 0) sources.push(c.curriculum_quiz + ' quiz item' + (c.curriculum_quiz === 1 ? '' : 's'));
+      if (sources.length > 0) {
+        card.appendChild(el('p', { class: 'completion', html: 'Recorded: ' + sources.join(' &middot; ') }));
+      }
+    }
+    return card;
+  }
+
+  function renderSignedIn(host, body) {
+    host.innerHTML = '';
+    renderQuarters(host, body.quarters || {});
+
+    var units = body.units || {};
+    var keys = Object.keys(units).sort(function (a, b) {
+      var na = unitNumberFromKey(a);
+      var nb = unitNumberFromKey(b);
+      if (na != null && nb != null) return na - nb;
+      return a.localeCompare(b);
+    });
+
+    var grid = el('div', { class: 'wys-units' });
+    for (var i = 0; i < keys.length; i++) {
+      grid.appendChild(renderUnitCard(keys[i], units[keys[i]], body.completion || {}));
+    }
+    host.appendChild(grid);
+
+    host.appendChild(el('p', {
+      class: 'note',
+      html: '<em>This page reflects what we have recorded so far &mdash; the Progress Check at the end of each unit is how you top your grade off.</em>'
+    }));
+  }
+
+  async function init() {
+    var host = document.getElementById('wys-status');
+    if (!host) return;
+
+    if (!window.rosterClient || typeof window.rosterClient.token !== 'function') {
+      renderSignedOut(host);
+      return;
+    }
+
+    var token = null;
+    try {
+      token = window.rosterClient.token();
+    } catch (_) {
+      token = null;
+    }
+    if (!token) {
+      renderSignedOut(host);
+      return;
+    }
+
+    var baseUrl = window.ROSTER_SERVICE_URL || null;
+    if (!baseUrl) {
+      renderSignedOut(host);
+      return;
+    }
+
+    try {
+      var response = await fetch(baseUrl + '/grade?token=' + encodeURIComponent(token));
+      if (!response || !response.ok) {
+        renderSignedOut(host);
+        return;
+      }
+      var body = await response.json();
+      if (!body || !body.ok) {
+        renderSignedOut(host);
+        return;
+      }
+      renderSignedIn(host, body);
+    } catch (_) {
+      renderSignedOut(host);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>

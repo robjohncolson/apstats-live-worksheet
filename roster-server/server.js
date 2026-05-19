@@ -14,6 +14,7 @@ import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
 import { mountMastery } from './mastery.js';
+import { mountClass } from './class.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -291,6 +292,15 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Needs the bundled skill-map loader + the AS-IS bkt engine; tests inject fakes.
   if (ledgerDb && loadAnswerKey && loadSkillMap && bkt) {
     mountMastery(app, { verifyToken, ledgerDb, loadAnswerKey, loadSkillMap, bkt });
+  }
+
+  // ── Class routes (Phase 4a additive — teacher-gated class aggregation) ──────
+  // Mounts GET /class/grades (always, when grade deps present) and
+  // GET /class/mastery (only when diagnostic deps present too — same guard as
+  // /mastery). Auth = x-teacher-secret (mirrors /roster/list); reuses pure
+  // computeGrade / computeMastery so the math has a single source.
+  if (db && ledgerDb && loadAnswerKey) {
+    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt });
   }
 
   return app;

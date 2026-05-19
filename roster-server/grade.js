@@ -69,6 +69,114 @@ function frqScoreToPct(score, frqBand) {
   return frqBand.I;
 }
 
+// ── Pure compute (extracted for class fan-out reuse; behaviour-identical) ────
+// computeGrade(ledgerRows, answerKey, config) → { units, quarters, completion }
+// Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
+export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG) {
+  const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
+  const bySource = (s) => rows.filter((r) => r && r.source === s);
+
+  // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
+  const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
+  // ── PC raw %: proctored Progress Check, re-scored vs key ─────────────────
+  const pcAgg = scoreAgainstKey(bySource('pc'), answerKey);
+
+  // ── W: AI-FRQ pct per unit (worksheet fill-ins = completion-only, §5) ────
+  const wByUnit = {};       // U# → { sum, n }
+  for (const row of latestPerItem(bySource('frq'))) {
+    const pct = frqScoreToPct(row.score, config.frqBand);
+    if (pct == null) continue; // not yet graded → excluded from W denominator
+    const u = unitKeyOf(row);
+    const w = wByUnit[u] || (wByUnit[u] = { sum: 0, n: 0 });
+    w.sum += pct;
+    w.n += 1;
+  }
+
+  // ── Completion readout (SEPARATE accountability, NOT the grade) ──────────
+  const completion = {};
+  const bumpCompletion = (u, src) => {
+    const c = completion[u] || (completion[u] = { worksheet: 0, frq: 0, curriculum_quiz: 0, pc: 0 });
+    if (src in c) c[src] += 1;
+  };
+  for (const src of ['worksheet', 'frq']) {
+    for (const row of latestPerItem(bySource(src))) bumpCompletion(unitKeyOf(row), src);
+  }
+  for (const row of latestPerItem(bySource('curriculum_quiz'))) {
+    bumpCompletion(unitOf(row.item_id, answerKey[row.item_id]), 'curriculum_quiz');
+  }
+  for (const row of latestPerItem(bySource('pc'))) {
+    bumpCompletion(unitOf(row.item_id, answerKey[row.item_id]), 'pc');
+  }
+
+  // ── Per-unit grade math ──────────────────────────────────────────────────
+  const allUnitKeys = new Set([
+    ...Object.keys(qAgg.units),
+    ...Object.keys(pcAgg.units),
+    ...Object.keys(wByUnit),
+    ...Object.keys(completion),
+  ]);
+
+  const C = config.C;
+  const { W: wWeight, Q: qWeight } = config.feederWeights;
+
+  const units = {};
+  for (const uKey of allUnitKeys) {
+    const unitNum = unitNumber(uKey);
+
+    const W = wByUnit[uKey] ? Math.round((wByUnit[uKey].sum / wByUnit[uKey].n) * 10) / 10 : null;
+    const Q = qAgg.units[uKey] ? qAgg.units[uKey].pct : null;
+
+    let B = null;
+    {
+      let num = 0, den = 0;
+      if (W != null) { num += wWeight * W; den += wWeight; }
+      if (Q != null) { num += qWeight * Q; den += qWeight; }
+      if (den > 0) B = Math.round((num / den) * 10) / 10;
+    }
+    const banked = B == null ? null : Math.round(Math.min(B, C) * 10) / 10;
+
+    const pcRawPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
+    const q = unitNum == null ? null : quarterOfUnit(unitNum, config);
+    const P = q ? pcRawToP(pcRawPct, config.quarters[q].pcAnchor) : 0;
+
+    const graded = banked != null || P > 0;
+    const unitGrade = graded
+      ? Math.round(Math.max(banked == null ? 0 : banked, P) * 10) / 10
+      : null;
+
+    units[uKey] = { W, Q, B, banked, pcRawPct, P, unitGrade, graded };
+  }
+
+  // ── Per-quarter mean of the band's graded unitGrades ─────────────────────
+  const quarters = {};
+  for (const qKey of Object.keys(config.quarters)) {
+    const band = config.quarters[qKey].units;
+    const unitGrades = {};
+    const vals = [];
+    for (const n of band) {
+      const uKey = `U${n}`;
+      const ug = units[uKey] ? units[uKey].unitGrade : null;
+      unitGrades[uKey] = ug;
+      if (ug != null) vals.push(ug);
+    }
+    quarters[qKey] = {
+      units: band,
+      unitGrades,
+      quarterGrade: vals.length
+        ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+        : null,
+    };
+  }
+
+  // Stable sorted unit / completion order.
+  const unitsOut = {};
+  for (const u of Object.keys(units).sort()) unitsOut[u] = units[u];
+  const completionOut = {};
+  for (const u of Object.keys(completion).sort()) completionOut[u] = completion[u];
+
+  return { units: unitsOut, quarters, completion: completionOut };
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, config = PHASE3_CONFIG }) {
@@ -113,125 +221,20 @@ export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, config =
       return res.status(500).json({ ok: false, error: 'Answer key malformed' });
     }
 
-    const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
-    const bySource = (s) => rows.filter((r) => r && r.source === s);
-
-    // ── Q: cr-quiz correctness % per unit (re-scored vs key) ─────────────────
-    const qAgg = scoreAgainstKey(bySource('curriculum_quiz'), answerKey);
-    // ── PC raw %: proctored Progress Check, re-scored vs key ─────────────────
-    const pcAgg = scoreAgainstKey(bySource('pc'), answerKey);
-
-    // ── W: AI-FRQ pct per unit (worksheet fill-ins = completion-only, §5) ────
-    const wByUnit = {};       // U# → { sum, n }
-    for (const row of latestPerItem(bySource('frq'))) {
-      const pct = frqScoreToPct(row.score, config.frqBand);
-      if (pct == null) continue; // not yet graded → excluded from W denominator
-      const u = unitKeyOf(row);
-      const w = wByUnit[u] || (wByUnit[u] = { sum: 0, n: 0 });
-      w.sum += pct;
-      w.n += 1;
-    }
-
-    // ── Completion readout (SEPARATE accountability, NOT the grade) ──────────
-    // distinct latest items attempted per source per unit.
-    const completion = {};
-    const bumpCompletion = (u, src) => {
-      const c = completion[u] || (completion[u] = { worksheet: 0, frq: 0, curriculum_quiz: 0, pc: 0 });
-      if (src in c) c[src] += 1;
-    };
-    for (const src of ['worksheet', 'frq']) {
-      for (const row of latestPerItem(bySource(src))) bumpCompletion(unitKeyOf(row), src);
-    }
-    for (const row of latestPerItem(bySource('curriculum_quiz'))) {
-      bumpCompletion(unitOf(row.item_id, answerKey[row.item_id]), 'curriculum_quiz');
-    }
-    for (const row of latestPerItem(bySource('pc'))) {
-      bumpCompletion(unitOf(row.item_id, answerKey[row.item_id]), 'pc');
-    }
-
-    // ── Per-unit grade math ──────────────────────────────────────────────────
-    const allUnitKeys = new Set([
-      ...Object.keys(qAgg.units),
-      ...Object.keys(pcAgg.units),
-      ...Object.keys(wByUnit),
-      ...Object.keys(completion),
-    ]);
-
-    const C = config.C;
-    const { W: wWeight, Q: qWeight } = config.feederWeights;
-
-    const units = {};
-    for (const uKey of allUnitKeys) {
-      const unitNum = unitNumber(uKey);
-
-      const W = wByUnit[uKey] ? Math.round((wByUnit[uKey].sum / wByUnit[uKey].n) * 10) / 10 : null;
-      const Q = qAgg.units[uKey] ? qAgg.units[uKey].pct : null;
-
-      // B = weighted mean over feeders that HAVE graded data (renormalized).
-      // Neither present → B=null (ungraded; NOT 0 — non-punitive, cumulative).
-      let B = null;
-      {
-        let num = 0, den = 0;
-        if (W != null) { num += wWeight * W; den += wWeight; }
-        if (Q != null) { num += qWeight * Q; den += qWeight; }
-        if (den > 0) B = Math.round((num / den) * 10) / 10;
-      }
-      const banked = B == null ? null : Math.round(Math.min(B, C) * 10) / 10;
-
-      // P: quarter-anchor curve over PC raw%. Unit outside the bands → P=0.
-      const pcRawPct = pcAgg.units[uKey] ? pcAgg.units[uKey].pct : null;
-      const q = unitNum == null ? null : quarterOfUnit(unitNum, config);
-      const P = q ? pcRawToP(pcRawPct, config.quarters[q].pcAnchor) : 0;
-
-      // unitGrade = max(banked, P). A unit with no banked work AND no PC lift
-      // has no grade yet → excluded from the quarter mean (not counted as 0).
-      const graded = banked != null || P > 0;
-      const unitGrade = graded
-        ? Math.round(Math.max(banked == null ? 0 : banked, P) * 10) / 10
-        : null;
-
-      units[uKey] = { W, Q, B, banked, pcRawPct, P, unitGrade, graded };
-    }
-
-    // ── Per-quarter mean of the band's graded unitGrades ─────────────────────
-    const quarters = {};
-    for (const qKey of Object.keys(config.quarters)) {
-      const band = config.quarters[qKey].units;
-      const unitGrades = {};
-      const vals = [];
-      for (const n of band) {
-        const uKey = `U${n}`;
-        const ug = units[uKey] ? units[uKey].unitGrade : null;
-        unitGrades[uKey] = ug;
-        if (ug != null) vals.push(ug);
-      }
-      quarters[qKey] = {
-        units: band,
-        unitGrades,
-        quarterGrade: vals.length
-          ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
-          : null,
-      };
-    }
-
-    // Stable sorted unit order.
-    const unitsOut = {};
-    for (const u of Object.keys(units).sort()) unitsOut[u] = units[u];
-    const completionOut = {};
-    for (const u of Object.keys(completion).sort()) completionOut[u] = completion[u];
+    const { units, quarters, completion } = computeGrade(ledgerRows, answerKey, config);
 
     return res.json({
       ok: true,
       asOf: new Date().toISOString(),
       config: {
-        C,
+        C: config.C,
         feederWeights: config.feederWeights,
         frqBand: config.frqBand,
         quarters: config.quarters,
       },
-      units: unitsOut,
+      units,
       quarters,
-      completion: completionOut,
+      completion,
     });
   });
 }
