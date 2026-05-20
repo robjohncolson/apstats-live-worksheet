@@ -70,6 +70,57 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
     expect(DESK).toMatch(/\/\^\(\\d\+\)\\\.\(\\d\+\)\$\//);
   });
 
+  it('Phase 5.1: renders a parallel Progress-Check tutor button on each lesson tile', () => {
+    // Per-unit PC tutor button alongside the per-lesson one. Uses the same
+    // regex-captured unit number, so the XSS argument carries over.
+    expect(DESK).toMatch(/copyTutorPromptPc\(/);
+    expect(DESK).toMatch(/PC tutor/);
+    // The PC button must use a distinct status span so its message doesn't
+    // overwrite the lesson tutor's status.
+    expect(DESK).toMatch(/id=["']ai-tutor-pc-status["']/);
+  });
+
+  it('Phase 5.1: PC button is rendered in the lesson-regex branch, AFTER the lesson button, with onclick=copyTutorPromptPc(_aitm[1]) only (Codex MINOR-2 fold)', () => {
+    // Slice the if-block governing both buttons. The lesson regex match is
+    // `var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');` followed by
+    // `if (_aitm) { ... }`. We extract the if-body and assert layout/XSS.
+    const guardIdx = DESK.indexOf("var _aitm = /^(\\d+)\\.(\\d+)$/.exec(inf.t || '');");
+    expect(guardIdx, 'the inf.t regex guard must exist').toBeGreaterThan(0);
+    const ifOpen = DESK.indexOf('if (_aitm) {', guardIdx);
+    expect(ifOpen, 'the if (_aitm) block must follow the regex').toBeGreaterThan(0);
+    // Walk forward to the matching closing brace at the same nesting level.
+    // The block is short (two button-render lines + comments) — a 1500-char
+    // window is more than enough and we close at the first line that begins
+    // with a } at the same column as the if-open.
+    const ifBody = DESK.slice(ifOpen, ifOpen + 1500);
+    const closeIdx = ifBody.indexOf('\n        }');
+    expect(closeIdx, 'the if (_aitm) block must close').toBeGreaterThan(0);
+    const block = ifBody.slice(0, closeIdx);
+
+    // Lesson button is FIRST, PC button is SECOND.
+    const lessonCall = block.indexOf('copyTutorPrompt(');
+    const pcCall = block.indexOf('copyTutorPromptPc(');
+    expect(lessonCall, 'lesson onclick must appear inside the if-block').toBeGreaterThan(0);
+    expect(pcCall, 'PC onclick must appear inside the if-block').toBeGreaterThan(0);
+    expect(pcCall, 'PC button must come AFTER lesson button').toBeGreaterThan(lessonCall);
+
+    // PC onclick takes ONLY _aitm[1] (XSS-safety: same regex-captured numeric
+    // group as the lesson button). The onclick attribute is built via string
+    // concatenation, so we look for the canonical pattern with no other
+    // dynamic insertions between the open-paren and the close-paren.
+    const pcOnclickMatch = block.match(/copyTutorPromptPc\(\\'\s*'\s*\+\s*([^)]+?)\s*\+\s*'\\'\)/);
+    expect(pcOnclickMatch, 'PC onclick must use string-concat form with _aitm[1]').toBeTruthy();
+    expect(pcOnclickMatch[1].trim()).toBe('_aitm[1]');
+  });
+
+  it('Phase 5.1: copyTutorPromptPc is an async helper fetching ai-tutor/u{N}_pc.md', () => {
+    expect(DESK).toMatch(/async\s+function\s+copyTutorPromptPc\s*\(/);
+    // The PC path construction must end with _pc.md, not _l{N}.md.
+    const fnSlice = DESK.slice(DESK.indexOf('async function copyTutorPromptPc'));
+    expect(fnSlice).toMatch(/['"`]ai-tutor\/u['"`]\s*\+/);
+    expect(fnSlice).toMatch(/_pc\.md['"`]/);
+  });
+
   it('declares copyTutorPrompt as an async function and fetches ai-tutor/u{N}_l{N}.md', () => {
     expect(DESK).toMatch(/async\s+function\s+copyTutorPrompt\s*\(/);
     // Path construction must use the lesson form.
@@ -79,20 +130,20 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
   });
 
   it('uses navigator.clipboard.writeText with a textarea fallback', () => {
-    const fn = DESK.slice(DESK.indexOf('async function copyTutorPrompt'));
+    // Phase 5.1 refactored the clipboard logic into _copyTutorPromptByPath
+    // (shared between lesson + PC buttons). The contract is unchanged: both
+    // primary path + textarea fallback still exist.
+    const fn = DESK.slice(DESK.indexOf('async function _copyTutorPromptByPath'));
     expect(fn).toMatch(/navigator\.clipboard\s*\.\s*writeText/);
     expect(fn).toMatch(/document\.execCommand\(['"]copy['"]\)/);
   });
 
   it('copyTutorPrompt soft-fails: outer body wrapped in try/catch (never throws)', () => {
-    // Slice the body of copyTutorPrompt and prove the entire async path is
-    // protected. Without this, a 404 or a clipboard rejection could unhandled-
-    // reject and surface in the browser console.
-    const start = DESK.indexOf('async function copyTutorPrompt');
-    expect(start).toBeGreaterThan(0);
-    // Match up to the next top-level closing `}` followed by a newline +
-    // top-level code (the next function decl or major block). A tighter slice
-    // suffices — assert outer try/catch exists between fn-open and fn-end.
+    // Phase 5.1: the soft-fail / outer try/catch lives in
+    // _copyTutorPromptByPath (the shared helper). Both copyTutorPrompt and
+    // copyTutorPromptPc delegate to it, so the protection is shared.
+    const start = DESK.indexOf('async function _copyTutorPromptByPath');
+    expect(start, 'helper must exist').toBeGreaterThan(0);
     const fnSlice = DESK.slice(start, start + 2500);
     // Outer try AND outer catch (allow either catch (_) or catch (e)).
     expect(fnSlice).toMatch(/\btry\s*\{/);
@@ -100,6 +151,60 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
     // And the rejection path writes the "not available" status text — never
     // throws / logs uncaught.
     expect(fnSlice).toMatch(/Tutor prompt not available/);
+  });
+
+  it('Phase 5.1: lesson + PC functions are TRULY thin delegates to the shared helper (Codex MINOR-1 fold)', () => {
+    // The Phase-5 contract is that the soft-fail / clipboard logic lives
+    // EXACTLY ONCE — in _copyTutorPromptByPath. A regression that
+    // re-inlined navigator.clipboard.writeText or document.execCommand
+    // inside copyTutorPrompt or copyTutorPromptPc would let the two paths
+    // silently desync (e.g., a Phase-5 fix not propagating to the PC
+    // sibling). We prove THIN-ness by extracting each wrapper's body
+    // and asserting (a) the body length is small and (b) the body
+    // contains no clipboard / fetch / execCommand calls — only the
+    // delegate.
+
+    function bodyOf(declStart) {
+      // The wrappers are short single-await functions. We slice from `{`
+      // after the signature to the first top-level `}` (which is line-
+      // start `}` for our formatting).
+      const openBrace = DESK.indexOf('{', declStart);
+      expect(openBrace).toBeGreaterThan(declStart);
+      // Find the closing `}` at column 0 (top-level function close, given
+      // the file's flat formatting of these helpers).
+      const closeBrace = DESK.indexOf('\n}', openBrace);
+      expect(closeBrace).toBeGreaterThan(openBrace);
+      return DESK.slice(openBrace + 1, closeBrace);
+    }
+
+    const lessonStart = DESK.indexOf('async function copyTutorPrompt(unit, lesson)');
+    expect(lessonStart).toBeGreaterThan(0);
+    const lessonBody = bodyOf(lessonStart);
+
+    const pcStart = DESK.indexOf('async function copyTutorPromptPc(unit)');
+    expect(pcStart).toBeGreaterThan(0);
+    const pcBody = bodyOf(pcStart);
+
+    // Both bodies must delegate to the shared helper exactly once.
+    expect(lessonBody.match(/_copyTutorPromptByPath\s*\(/g) || []).toHaveLength(1);
+    expect(pcBody.match(/_copyTutorPromptByPath\s*\(/g) || []).toHaveLength(1);
+
+    // Neither body may contain clipboard / fetch / fallback logic — that
+    // ONLY lives in _copyTutorPromptByPath.
+    for (const banned of [
+      /\bnavigator\s*\.\s*clipboard\b/,
+      /\bdocument\.execCommand\b/,
+      /\bawait\s+fetch\b/,
+      /Tutor prompt not available/,
+    ]) {
+      expect(lessonBody, `lesson wrapper must not inline ${banned}`).not.toMatch(banned);
+      expect(pcBody, `PC wrapper must not inline ${banned}`).not.toMatch(banned);
+    }
+
+    // And each body must be short — guarding against a future edit that
+    // bloats either wrapper. ~250 chars is generous (mine are ~140).
+    expect(lessonBody.length).toBeLessThan(250);
+    expect(pcBody.length).toBeLessThan(250);
   });
 
   it('renders a status span with id="ai-tutor-status" for click feedback', () => {
@@ -128,10 +233,16 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
   it('never silently runs copyTutorPrompt on render — only on click', () => {
     // The render-time call would be a bare `copyTutorPrompt(` call site
     // outside an onclick=/event listener context. Allow the function decl
-    // itself, the onclick attribute, and the closure inside listeners.
-    const callSites = [...DESK.matchAll(/copyTutorPrompt\s*\(/g)];
+    // itself and the onclick attribute. Use a word-boundary to exclude the
+    // Phase-5.1 sibling `copyTutorPromptPc(` from this lesson-only count.
+    const callSites = [...DESK.matchAll(/copyTutorPrompt\b\s*\(/g)];
     // Exactly: 1 in the function declaration, 1 in the onclick attr.
     expect(callSites.length).toBe(2);
+  });
+
+  it('Phase 5.1: copyTutorPromptPc has exactly 2 call sites (decl + onclick)', () => {
+    const pcSites = [...DESK.matchAll(/copyTutorPromptPc\s*\(/g)];
+    expect(pcSites.length).toBe(2);
   });
 });
 

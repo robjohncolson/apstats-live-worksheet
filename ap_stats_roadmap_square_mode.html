@@ -5277,10 +5277,16 @@ function showResourcePanel(inf, dateStr) {
         }
 
         // Phase 5: AI-tutor copy button (per-lesson artifact in ai-tutor/u{U}_l{L}.md).
-        // Only rendered when inf.t matches the lesson dot-form (e.g. "1.2"); PC tiles deferred.
+        // Only rendered when inf.t matches the lesson dot-form (e.g. "1.2"); PC tiles
+        // are noted as strings in due/assigned columns rather than standalone tiles.
         var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');
         if (_aitm) {
             lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPrompt(\'' + _aitm[1] + '\',\'' + _aitm[2] + '\')">\u{1F916} Tutor prompt \u{2014} copy to clipboard</button> <span id="ai-tutor-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
+            // Phase 5.1: alongside the lesson tutor, expose the unit's PROGRESS CHECK
+            // tutor prompt (ai-tutor/u{U}_pc.md). Every U1-U9 has one. Students working
+            // through any lesson in the unit get ambient access to the unit's PC tutor
+            // without needing a separate surface (PCs aren't standalone tiles).
+            lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPromptPc(\'' + _aitm[1] + '\')">\u{1F916} Unit ' + _aitm[1] + ' PC tutor \u{2014} copy to clipboard</button> <span id="ai-tutor-pc-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
         }
 
         var _rpAll = getAllRegistryEntries(inf.t);
@@ -5382,15 +5388,16 @@ function closeResourcePanel() {
     document.getElementById('resource-overlay').style.display = 'none';
 }
 
-// Phase 5: copy a per-lesson AI-tutor prompt to clipboard.
-// Fire-and-forget; never throws. Renders status into #ai-tutor-status (if present).
-async function copyTutorPrompt(unit, lesson) {
-    var status = document.getElementById('ai-tutor-status');
-    var path = 'ai-tutor/u' + unit + '_l' + lesson + '.md';
+// Phase 5: copy an AI-tutor prompt to clipboard. Generic helper used by
+// both the per-lesson button (copyTutorPrompt) and the Phase-5.1 per-unit
+// Progress Check button (copyTutorPromptPc). Fire-and-forget; never throws.
+// statusElId names the inline span the panel renders next to the button.
+async function _copyTutorPromptByPath(path, statusElId) {
+    var status = document.getElementById(statusElId);
     try {
         var resp = await fetch(path);
         if (!resp || !resp.ok) {
-            if (status) status.textContent = 'Tutor prompt not available for this lesson yet';
+            if (status) status.textContent = 'Tutor prompt not available yet';
             return;
         }
         var text = await resp.text();
@@ -5417,8 +5424,23 @@ async function copyTutorPrompt(unit, lesson) {
                 : 'Could not copy - try again or open ' + path + ' directly';
         }
     } catch (_) {
-        if (status) status.textContent = 'Tutor prompt not available for this lesson yet';
+        if (status) status.textContent = 'Tutor prompt not available yet';
     }
+}
+
+// Per-lesson tutor prompt (ai-tutor/u{U}_l{L}.md). XSS-safe: unit/lesson
+// arrive as regex-captured numeric groups from the showResourcePanel branch.
+async function copyTutorPrompt(unit, lesson) {
+    var path = 'ai-tutor/u' + unit + '_l' + lesson + '.md';
+    await _copyTutorPromptByPath(path, 'ai-tutor-status');
+}
+
+// Phase 5.1: per-unit Progress Check tutor prompt (ai-tutor/u{U}_pc.md).
+// Rendered alongside the lesson button on every lesson tile; the unit comes
+// from the same regex capture so the same XSS-safety argument holds.
+async function copyTutorPromptPc(unit) {
+    var path = 'ai-tutor/u' + unit + '_pc.md';
+    await _copyTutorPromptByPath(path, 'ai-tutor-pc-status');
 }
 
 /* ═══ MAC OS UI SOUND EFFECTS ═══ */
