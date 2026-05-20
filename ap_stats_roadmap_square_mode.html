@@ -3392,25 +3392,85 @@ function getStudentMarks() {
   catch(e) { return {}; }
 }
 
+// How long the student has to spend on a resource before the Done button
+// becomes clickable. Default 5 min (Robert Colson 2026-05-19 — "the done
+// button cannot be pressed until ~5 or more minutes have passed since the
+// corresponding link has been clicked"). Override for testing via
+//   localStorage.setItem('apstats_desk_done_gate_ms', '0')
+const DESK_DONE_GATE_MS_DEFAULT = 5 * 60 * 1000;
+function deskDoneGateMs() {
+  try {
+    const v = localStorage.getItem('apstats_desk_done_gate_ms');
+    if (v != null && !isNaN(Number(v))) return Math.max(0, Number(v));
+  } catch (_) {}
+  return DESK_DONE_GATE_MS_DEFAULT;
+}
+
+// Latch the first visit to a (topic, artifact) resource. Called from the
+// link onclick BEFORE the new tab opens. Persists to the same _marks
+// store as Done clicks (same localStorage key), so visit + done state
+// share one round trip. Idempotent — first visit wins.
+function recordLinkVisit(topicId, artifact) {
+  try {
+    const email = getStudentEmail();
+    if (!email) return;
+    const marks = getStudentMarks();
+    const key = topicId + '|' + artifact;
+    const entry = marks[key] || {};
+    if (!entry.visitedAt) {
+      entry.visitedAt = new Date().toISOString();
+      marks[key] = entry;
+      localStorage.setItem('apstats_desk_marks_' + email, JSON.stringify(marks));
+    }
+  } catch (_) {}
+  // After the new tab opens, re-render the panel so the Done button picks
+  // up the visit timestamp + countdown. Tiny delay so we don't fight the
+  // browser's link-navigation.
+  setTimeout(function () {
+    if (_lastResourcePanel) showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
+  }, 120);
+}
+
 async function recordProgress(topicId, artifact, score) {
   const email = getStudentEmail();
   if (!email) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return false; }
-  const body = { student_email: email, topic_id: topicId, artifact: artifact, score: (score==null?null:Number(score)) };
+  // 2026-05-19 refactor: write localStorage FIRST as the source of truth so
+  // the Done button latches "✓ Saved" regardless of network state. The
+  // legacy student_progress Supabase POST is now best-effort cross-device
+  // sync — failures (legacy project unreachable, anon-key RLS shift, etc.)
+  // no longer eat the local persistence. The new gradebook ledger write
+  // already happens in studentMark() via gradebookClient.record.
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/student_progress', {
-      method: 'POST',
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
     const marks = getStudentMarks();
-    marks[topicId + '|' + artifact] = { ts: new Date().toISOString(), score: score };
+    const key = topicId + '|' + artifact;
+    const prev = marks[key] || {};
+    marks[key] = {
+      visitedAt: prev.visitedAt || new Date().toISOString(),
+      ts:        new Date().toISOString(),
+      score:     score
+    };
     localStorage.setItem('apstats_desk_marks_' + email, JSON.stringify(marks));
-    return true;
   } catch (e) {
-    showDialog('⚠️','Could not save: ' + e.message + '. Try again.','OK');
+    showDialog('⚠️','Could not save locally: ' + e.message + '. Try again.','OK');
     return false;
   }
+  // Best-effort cloud sync. Don't await; don't block the UI on failure.
+  (async function () {
+    try {
+      const body = { student_email: email, topic_id: topicId, artifact: artifact, score: (score==null?null:Number(score)) };
+      const res = await fetch(SUPABASE_URL + '/rest/v1/student_progress', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        console.warn('[desk] student_progress cloud sync failed: HTTP ' + res.status + ' (local save unaffected)');
+      }
+    } catch (e) {
+      console.warn('[desk] student_progress cloud sync error: ' + (e && e.message) + ' (local save unaffected)');
+    }
+  })();
+  return true;
 }
 
 async function registerStudent(email) {
@@ -5246,14 +5306,46 @@ function showResourcePanel(inf, dateStr) {
         const _stuTopicId = (inf.t && /^\d+\.\d+/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.');
         const _signedIn = !!getStudentEmail();
         const _marks = getStudentMarks();
+        const _gateMs = deskDoneGateMs();
+        // Returns one of four states:
+        //   unvisited  → disabled "Done" + tooltip "open the link first"
+        //   waiting    → disabled "Done in ~Xm" + tooltip "wait at least N min"
+        //   ready      → enabled "✓ Done" (clickable)
+        //   saved      → disabled "✓ Saved" + recorded-at tooltip
         function _doneBtn(artifact) {
             if (!_signedIn) return '';
             var key = _stuTopicId + '|' + artifact;
-            var saved = !!_marks[key];
-            if (saved) {
-                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6">&#10003; Saved</button>';
+            var entry = _marks[key] || {};
+            if (entry.ts) {
+                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + '">&#10003; Saved</button>';
+            }
+            if (!entry.visitedAt) {
+                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Open the link first">Done</button>';
+            }
+            var elapsed = Date.now() - new Date(entry.visitedAt).getTime();
+            if (_gateMs > 0 && elapsed < _gateMs) {
+                var remMin = Math.max(1, Math.ceil((_gateMs - elapsed) / 60000));
+                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Spend at least ' + Math.round(_gateMs/60000) + ' min on the resource, then click Done (override: localStorage.setItem(\'apstats_desk_done_gate_ms\',\'0\'))">Done in ~' + remMin + 'm</button>';
             }
             return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
+        }
+        // Visited indicator next to a link that's been clicked at least
+        // once in the past. Empty string if not yet visited (or not signed
+        // in — there'd be no per-student marks to read).
+        function _visitedTag(artifact) {
+            if (!_signedIn) return '';
+            var key = _stuTopicId + '|' + artifact;
+            var entry = _marks[key] || {};
+            if (!entry.visitedAt) return '';
+            return ' <span style="font-size:9px;color:#1f8b3b;margin-left:4px" title="Opened ' + new Date(entry.visitedAt).toLocaleString() + '">&#10003; visited</span>';
+        }
+        // Onclick fragment for each link (worksheet/quiz/blooket/video) —
+        // records the first visit + schedules a panel re-render so the
+        // Done countdown shows up. Topic id has no quotes/backslashes by
+        // construction (dot-form regex-validated upstream), so inline-
+        // concatenation is XSS-safe.
+        function _linkClick(artifact) {
+            return 'recordLinkVisit(\'' + _stuTopicId + '\',\'' + artifact + '\')';
         }
         let lessonHtml = '';
         for (const id of ids) {
@@ -5262,9 +5354,9 @@ function showResourcePanel(inf, dateStr) {
             if (r.videos && r.videos.length) {
                 r.videos.forEach((v, i) => {
                     lessonHtml += '<div style="margin:3px 0">';
-                    lessonHtml += '<a href="' + v.url + '" target="_blank" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
-                    if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
-                    if (i === 0) lessonHtml += _doneBtn('video');
+                    lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
+                    if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
+                    if (i === 0) { lessonHtml += _visitedTag('video') + _doneBtn('video'); }
                     lessonHtml += '</div>';
                 });
             }
@@ -5280,14 +5372,14 @@ function showResourcePanel(inf, dateStr) {
         if (regEntry && regEntry.urls) {
             const u = regEntry.urls;
             if (u.worksheet) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _doneBtn('worksheet') + '</div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + _doneBtn('worksheet') + '</div>';
             }
             // Drills deprecated — removed 2026-05
             if (u.quiz) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a>' + _doneBtn('quiz') + '</div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a>' + _visitedTag('quiz') + _doneBtn('quiz') + '</div>';
             }
             if (u.blooket) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _doneBtn('blooket') + '</div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _doneBtn('blooket') + '</div>';
             }
         }
 
