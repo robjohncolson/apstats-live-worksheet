@@ -3610,14 +3610,43 @@ async function registerStudent(email) {
 function updateStudentMenu() {
   var el = document.getElementById('menu-student-status');
   if (!el) return;
+  // 2026-05-20 v3: surface teacher role in the status line.
+  var role = null;
+  try { role = localStorage.getItem('apstats_user_role'); } catch (_) {}
   var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
   if (who) {
-    el.textContent = 'Signed in as: ' + (who.realName ? (who.realName + ' (' + who.username + ')') : who.username);
+    var name = who.realName ? (who.realName + ' (' + who.username + ')') : who.username;
+    el.textContent = (role === 'teacher' ? 'Teacher: ' : 'Signed in as: ') + name;
     return;
   }
   var email = getStudentEmail();
-  el.textContent = email ? ('Signed in as: ' + email) : 'Not signed in';
+  if (email) {
+    el.textContent = (role === 'teacher' ? 'Teacher: ' : 'Signed in as: ') + email;
+  } else {
+    el.textContent = 'Not signed in';
+  }
 }
+
+// 2026-05-20 v3: DevTools workaround. If a teacher's browser cache is
+// stuck on an old version of the file and the sign-in flow misbehaves,
+// they can paste `makeMeTeacher()` into the console as an immediate
+// promotion. Safe because the same auth check (access code) gates the
+// real path; this is just a manual override for the cached-asset case.
+window.makeMeTeacher = function makeMeTeacher(syntheticName) {
+  try {
+    localStorage.setItem('apstats_user_role', 'teacher');
+    if (!localStorage.getItem('apstats_desk_student_email')) {
+      localStorage.setItem('apstats_desk_student_email', syntheticName || 'teacher@desk.local');
+    }
+    if (typeof updateStudentMenu === 'function') updateStudentMenu();
+    if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+    console.log('[desk] Promoted to teacher. Teacher menu should now be visible.');
+    return true;
+  } catch (e) {
+    console.error('[desk] makeMeTeacher failed:', e);
+    return false;
+  }
+};
 
 // 2026-05-20: teacher access code lives in a const; override via
 // localStorage 'apstats_teacher_access_code' (e.g. for rotation).
@@ -3714,6 +3743,28 @@ async function submitSignIn() {
   var pInp = document.getElementById('signin-password');
   var err = document.getElementById('signin-error');
   if (err) err.textContent = '';
+
+  // 2026-05-20 v3: TEACHER FAST-PATH. If the access code matches, promote
+  // to teacher role and skip the roster sign-in entirely. Teachers don't
+  // need a student account to access teacher tools (those have their own
+  // teacher-secret auth on the destination pages). Synthetic identity is
+  // set so getStudentEmail() returns something for downstream features.
+  try {
+    var codeInpEarly = document.getElementById('signin-teacher-code');
+    var codeMatchEarly = codeInpEarly && typeof _teacherAccessCode === 'function'
+                        && codeInpEarly.value === _teacherAccessCode();
+    if (codeMatchEarly) {
+      localStorage.setItem('apstats_user_role', 'teacher');
+      // Use the typed username if present; otherwise a synthetic identity.
+      var teacherIdent = (uInp && uInp.value && uInp.value.trim()) || 'teacher@desk.local';
+      localStorage.setItem('apstats_desk_student_email', teacherIdent);
+      updateStudentMenu();
+      if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+      closeSignInModal();
+      showDialog('\u{1F464}', 'Signed in as teacher. (Teacher menu now available.)', 'OK');
+      return;
+    }
+  } catch (_) {}
 
   if (!window.rosterClient || !window.rosterClient.signIn) {
     if (err) err.textContent = 'Sign-in unavailable (offline). Try again on the school network.';

@@ -104,17 +104,40 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/chk\.disabled\s*=\s*true/);
   });
 
-  it('10: submitSignIn promotes role=teacher based on the CODE itself (checkbox is just a visual indicator)', () => {
-    // 2026-05-20 v2: the role gate is the code, not the checkbox.
-    // Resilient to live-UI glitches (autofill bypassing input events).
+  it('10: submitSignIn has a TEACHER FAST-PATH that runs BEFORE rosterClient.signIn', () => {
+    // 2026-05-20 v3: a valid access code is sufficient to promote to teacher
+    // — no roster account required. The fast-path returns early before any
+    // username/password validation or roster network call. Resilient to:
+    //   (a) checkbox-disabled UI glitches (Chrome autofill bypass)
+    //   (b) teachers who don't have a student account in the roster
     const body = fnBody(DESK, 'submitSignIn');
-    expect(body).toMatch(/codeInp\.value\s*===\s*_teacherAccessCode\s*\(\s*\)/);
-    // The conditional that persists 'teacher' is on codeMatch alone — no
-    // longer ANDed with chk.checked.
-    expect(body).toMatch(/if\s*\(\s*codeMatch\s*\)/);
+    // The fast-path reads the code input and matches against the configured code.
+    expect(body).toMatch(/codeInpEarly\.value\s*===\s*_teacherAccessCode\s*\(\s*\)/);
+    // Promotes the role + sets a synthetic identity if none typed.
     expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]\s*,\s*['"]teacher['"]/);
-    expect(body).toMatch(/removeItem\s*\(\s*['"]apstats_user_role['"]/);
-    expect(body).toMatch(/updateUserRoleUI\s*\(\s*\)/);
+    expect(body).toMatch(/teacher@desk\.local/);
+    // Closes the modal + early-returns before the roster auth path.
+    expect(body).toMatch(/closeSignInModal\s*\(\s*\)[\s\S]{0,400}return\s*;/);
+    // The fast-path must come BEFORE the rosterClient.signIn check.
+    const fastIdx = body.search(/codeMatchEarly/);
+    const rosterIdx = body.search(/rosterClient\.signIn/);
+    expect(fastIdx, 'fast-path must exist').toBeGreaterThan(-1);
+    expect(rosterIdx, 'roster signIn must exist').toBeGreaterThan(-1);
+    expect(fastIdx, 'fast-path must precede roster signIn').toBeLessThan(rosterIdx);
+  });
+
+  it('10a: makeMeTeacher DevTools helper exists for cache-stuck cases', () => {
+    // Workaround for users whose browser cache is stuck on an old version
+    // and the sign-in flow misbehaves. Paste `makeMeTeacher()` in the
+    // console → role promoted + menu shown.
+    expect(DESK).toMatch(/window\.makeMeTeacher\s*=\s*function\s+makeMeTeacher/);
+    expect(DESK).toMatch(/apstats_user_role['"]\s*,\s*['"]teacher['"]/);
+  });
+
+  it('10b: updateStudentMenu shows "Teacher:" prefix when role=teacher (status surfaces role)', () => {
+    const body = fnBody(DESK, 'updateStudentMenu');
+    expect(body).toMatch(/apstats_user_role/);
+    expect(body).toMatch(/Teacher:/);
   });
 
   it('13a: openSignInModal binds multiple event types for the access-code input (autofill resilience)', () => {
