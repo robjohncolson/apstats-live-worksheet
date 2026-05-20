@@ -1309,6 +1309,39 @@
     </div>
 </div>
 
+<!-- ═══ Blooket Flashcard Quiz (2026-05-20) ═══
+     Chain-of-custody verification for Blooket completion. Sources the
+     question set from the same _blooket.csv that built the Blooket game.
+     Student must pass >=80% on a single pass to unlock Done. -->
+<style>
+    #bf-overlay .bf-choice{display:block;width:100%;text-align:left;
+      padding:6px 10px;margin:3px 0;font-family:'Geneva',sans-serif;
+      font-size:11px;background:var(--white);border:1px solid var(--black);
+      cursor:pointer;border-radius:2px}
+    #bf-overlay .bf-choice:hover{background:#eef}
+    #bf-overlay .bf-choice.bf-correct{background:#d8f5d8;border-color:#1f8b3b}
+    #bf-overlay .bf-choice.bf-wrong{background:#ffd8d8;border-color:#c83838}
+    #bf-overlay .bf-choice:disabled{cursor:default}
+    #bf-overlay .bf-prog{font-size:10px;color:#666}
+    #bf-overlay .bf-feedback{margin-top:8px;font-size:11px;font-style:italic}
+    #bf-overlay .bf-result-pass{color:#1f8b3b;font-weight:bold}
+    #bf-overlay .bf-result-fail{color:#c83838;font-weight:bold}
+</style>
+<div id="bf-overlay" class="dialog-overlay" style="display:none">
+    <div class="dialog-box" style="max-width:480px;width:92%;text-align:left;padding:12px 16px">
+        <div id="bf-header" class="chicago" style="font-size:12px;margin-bottom:6px;border-bottom:1px solid var(--black);padding-bottom:6px"></div>
+        <div id="bf-progress" class="bf-prog geneva" style="margin-bottom:8px"></div>
+        <div id="bf-question" class="geneva" style="font-size:13px;margin-bottom:10px;min-height:32px"></div>
+        <div id="bf-choices"></div>
+        <div id="bf-feedback" class="bf-feedback geneva"></div>
+        <div id="bf-result" style="display:none;margin-top:12px;padding:8px;border:1px solid var(--black);background:#f8f8f8"></div>
+        <div style="text-align:right;margin-top:12px">
+            <button id="bf-next" class="s7btn s7btn-default" style="display:none" onclick="_bfNext()">Next</button>
+            <button class="s7btn" onclick="closeBlooketFlashcards()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Resource Panel ═══ -->
 <div id="resource-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeResourcePanel()">
     <div class="dialog-box" style="max-width:340px;width:90%;text-align:left;padding:12px 16px">
@@ -3446,7 +3479,21 @@ function _isApClassroomAvailable() {
 }
 
 const DESK_DONE_GATE_MS_DEFAULT = 5 * 60 * 1000;
-function deskDoneGateMs() {
+// 2026-05-20: Blooket gets a longer visit-gate (15 min) because completion
+// is harder to verify without Blooket's own dashboard. The flashcard-mastery
+// gate on top of this provides the actual chain of custody.
+const BLOOKET_GATE_MS = 15 * 60 * 1000;
+function deskDoneGateMs(artifact) {
+  if (artifact === 'blooket') {
+    try {
+      var v = localStorage.getItem('apstats_desk_done_gate_ms_blooket');
+      if (v != null && !isNaN(Number(v))) return Math.max(0, Number(v));
+    } catch (_) {}
+    return BLOOKET_GATE_MS;
+  }
+  return _deskDoneGateMsDefault();
+}
+function _deskDoneGateMsDefault() {
   try {
     const v = localStorage.getItem('apstats_desk_done_gate_ms');
     if (v != null && !isNaN(Number(v))) return Math.max(0, Number(v));
@@ -5447,12 +5494,12 @@ function showResourcePanel(inf, dateStr) {
         const _stuTopicId = (inf.t && /^\d+\.\d+/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.');
         const _signedIn = !!getStudentEmail();
         const _marks = getStudentMarks();
-        const _gateMs = deskDoneGateMs();
         // Returns one of four states:
         //   unvisited  → disabled "Done" + tooltip "open the link first"
         //   waiting    → disabled "Done in ~Xm" + tooltip "wait at least N min"
         //   ready      → enabled "✓ Done" (clickable)
         //   saved      → disabled "✓ Saved" + recorded-at tooltip
+        // 2026-05-20: gate duration is artifact-aware — Blooket gets 15 min.
         function _doneBtn(artifact) {
             if (!_signedIn) return '';
             var key = _stuTopicId + '|' + artifact;
@@ -5463,10 +5510,15 @@ function showResourcePanel(inf, dateStr) {
             if (!entry.visitedAt) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Open the link first">Done</button>';
             }
+            var gateMs = deskDoneGateMs(artifact);
             var elapsed = Date.now() - new Date(entry.visitedAt).getTime();
-            if (_gateMs > 0 && elapsed < _gateMs) {
-                var remMin = Math.max(1, Math.ceil((_gateMs - elapsed) / 60000));
-                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Spend at least ' + Math.round(_gateMs/60000) + ' min on the resource, then click Done (override: localStorage.setItem(\'apstats_desk_done_gate_ms\',\'0\'))">Done in ~' + remMin + 'm</button>';
+            if (gateMs > 0 && elapsed < gateMs) {
+                var remMin = Math.max(1, Math.ceil((gateMs - elapsed) / 60000));
+                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Spend at least ' + Math.round(gateMs/60000) + ' min on the resource, then click Done">Done in ~' + remMin + 'm</button>';
+            }
+            // Blooket: button label hints that flashcards open on click.
+            if (artifact === 'blooket') {
+                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Take the flashcard quiz to verify completion" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
             }
             return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
         }
@@ -5692,12 +5744,17 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
 
 async function studentMark(btn, topicId, artifact) {
     if (!getStudentEmail()) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return; }
-    // 2026-05-20: Blooket now uses the same inline-score-input UX as quiz —
-    // forces the student to look at their end-of-game % correct before the
-    // Done click latches. Blooket score still NOT recorded to the gradebook
-    // ledger (Phase 3 spec §6 exclusion preserved below); legacy
-    // student_progress captures it for teacher review.
-    if (artifact === 'quiz' || artifact === 'blooket') {
+    // 2026-05-20 v2: Blooket Done now opens a flashcard quiz sourced from
+    // the same Blooket CSV. Student must pass ≥80% on a single pass before
+    // Done is recorded. This is the actual chain-of-custody check — naked
+    // self-attest (and even self-reported scores) couldn't verify anything;
+    // we control the flashcard flow end-to-end, so we know they at least
+    // engaged with the material.
+    if (artifact === 'blooket') {
+        openBlooketFlashcards(btn, topicId);
+        return;
+    }
+    if (artifact === 'quiz') {
         // Inline score input: swap the slot's innerHTML instead of using
         // a native prompt() so the Done-button latch is immediate.
         var slot = btn ? btn.closest('.desk-quiz-done-slot') : null;
@@ -5705,9 +5762,8 @@ async function studentMark(btn, topicId, artifact) {
             // Fallback: slot not found — skip (should not happen in normal flow).
             return;
         }
-        var _labelText = artifact === 'blooket' ? 'Blooket % correct:' : 'Score:';
         slot.innerHTML =
-            _labelText + ' <input type="number" min="0" max="100" class="desk-quiz-score-input"'
+            'Score: <input type="number" min="0" max="100" class="desk-quiz-score-input"'
             + ' style="width:48px;font-size:9px;padding:1px 2px" autofocus>'
             + ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:2px"'
             + ' onclick="_studentMarkQuizSave(this,\'' + topicId + '\',\'' + artifact + '\')">Save</button>'
@@ -5730,8 +5786,261 @@ async function studentMark(btn, topicId, artifact) {
         }
         return;
     }
-    // Non-quiz path (worksheet, blooket, video): proceed directly.
+    // Non-quiz path (worksheet, video): proceed directly. Blooket is
+    // intercepted earlier and routed through openBlooketFlashcards.
     await _studentMarkSave(btn, topicId, artifact, null);
+}
+
+// ── Blooket flashcard verification (2026-05-20) ───────────────────────────────
+// Sources the same Blooket CSV that built the live Blooket game. Student
+// must score >=80% on a single pass to unlock Done. This is the actual
+// chain-of-custody check: self-attest and self-reported scores couldn't
+// verify anything; flashcards we control end-to-end can.
+const BLOOKET_PASS_THRESHOLD = 0.80;
+
+var _bfState = {
+    topic: null,    // "1.2" etc.
+    btn: null,      // the Done button (so we can mutate it on pass)
+    deck: [],       // [{q, choices[], correctIdx}]
+    idx: 0,         // current card index
+    score: 0,       // right answers so far
+    answered: false, // current card already answered?
+};
+
+// Resolve the Blooket CSV path for a topic via the registry's worksheet URL.
+// Topic 1.2 → registry.urls.worksheet = "...u1_lesson2_live.html" →
+// "u1_l2_blooket.csv". Combined: topic 4.1 → ".../u4_lesson1-2_live.html" →
+// "u4_l1_l2_blooket.csv".
+function _bfCsvPath(topicId) {
+    try {
+        var reg = (typeof getRegistryEntry === 'function') ? getRegistryEntry(topicId) : null;
+        if (!reg || !reg.urls || !reg.urls.worksheet) return null;
+        var m = /u(\d+)_lesson([\d-]+)_live\.html/.exec(reg.urls.worksheet);
+        if (!m) return null;
+        var unit = m[1];
+        var key = m[2].replace(/-/g, '_l');
+        return 'u' + unit + '_l' + key + '_blooket.csv';
+    } catch (_) { return null; }
+}
+
+// CSV walker that handles quoted fields including embedded newlines + commas.
+function _bfParseCsv(text) {
+    var rows = [];
+    var cur = '';
+    var row = [];
+    var inQuote = false;
+    for (var i = 0; i < text.length; i++) {
+        var c = text[i];
+        if (c === '"') {
+            if (inQuote && text[i+1] === '"') { cur += '"'; i++; }
+            else inQuote = !inQuote;
+        } else if (c === ',' && !inQuote) {
+            row.push(cur); cur = '';
+        } else if ((c === '\n' || c === '\r') && !inQuote) {
+            if (c === '\r' && text[i+1] === '\n') i++;
+            row.push(cur); cur = '';
+            if (row.length > 1 || row[0] !== '') rows.push(row);
+            row = [];
+        } else { cur += c; }
+    }
+    if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
+    return rows;
+}
+
+// Convert CSV rows to deck cards. Blooket Import Template columns:
+// 0=Question #, 1=Question Text, 2-5=Answers 1-4, 6=Time, 7=Correct #.
+// Skips header rows (the first 3 rows are template metadata + column headers).
+function _bfRowsToDeck(rows) {
+    var deck = [];
+    for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        // Skip rows without a numeric Q# in column 0 — gets us past header rows.
+        var qnum = parseInt((r[0] || '').trim(), 10);
+        if (!Number.isFinite(qnum)) continue;
+        var qText = (r[1] || '').trim();
+        if (!qText) continue;
+        var choices = [];
+        for (var j = 2; j <= 5; j++) {
+            var v = (r[j] || '').trim();
+            if (v) choices.push(v);
+        }
+        if (choices.length < 2) continue;
+        var correctIdx = parseInt((r[7] || '1').trim(), 10) - 1;
+        if (correctIdx < 0 || correctIdx >= choices.length) correctIdx = 0;
+        deck.push({ q: qText, choices: choices, correctIdx: correctIdx });
+    }
+    return deck;
+}
+
+function _bfShuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+}
+
+async function openBlooketFlashcards(btn, topicId) {
+    var csvPath = _bfCsvPath(topicId);
+    if (!csvPath) {
+        showDialog('⚠️', 'No flashcard deck available for this lesson yet.', 'OK');
+        return;
+    }
+    var text;
+    try {
+        var res = await fetch(csvPath);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        text = await res.text();
+    } catch (e) {
+        showDialog('⚠️', 'Could not load the flashcard deck. Try again.', 'OK');
+        return;
+    }
+    var deck = _bfRowsToDeck(_bfParseCsv(text));
+    if (!deck.length) {
+        showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK');
+        return;
+    }
+    _bfState.topic = topicId;
+    _bfState.btn = btn;
+    _bfState.deck = _bfShuffle(deck);
+    _bfState.idx = 0;
+    _bfState.score = 0;
+    _bfState.answered = false;
+    var header = document.getElementById('bf-header');
+    if (header) header.textContent = 'Flashcard quiz — ' + topicId + ' (pass ≥ 80%)';
+    document.getElementById('bf-result').style.display = 'none';
+    _bfRenderCard();
+    document.getElementById('bf-overlay').style.display = 'block';
+}
+
+function _bfRenderCard() {
+    var feedback = document.getElementById('bf-feedback');
+    var nextBtn = document.getElementById('bf-next');
+    var q = document.getElementById('bf-question');
+    var c = document.getElementById('bf-choices');
+    var p = document.getElementById('bf-progress');
+    if (feedback) feedback.textContent = '';
+    if (nextBtn) nextBtn.style.display = 'none';
+    _bfState.answered = false;
+    if (_bfState.idx >= _bfState.deck.length) {
+        _bfFinish();
+        return;
+    }
+    var card = _bfState.deck[_bfState.idx];
+    if (p) p.textContent = 'Question ' + (_bfState.idx + 1) + ' of ' + _bfState.deck.length
+                         + '  ·  Right so far: ' + _bfState.score;
+    if (q) q.textContent = card.q;
+    if (c) {
+        while (c.firstChild) c.removeChild(c.firstChild);
+        for (var i = 0; i < card.choices.length; i++) {
+            (function (idx) {
+                var b = document.createElement('button');
+                b.className = 'bf-choice';
+                b.textContent = String.fromCharCode(65 + idx) + '. ' + card.choices[idx];
+                b.onclick = function () { _bfAnswer(idx); };
+                c.appendChild(b);
+            })(i);
+        }
+    }
+}
+
+function _bfAnswer(idx) {
+    if (_bfState.answered) return;
+    _bfState.answered = true;
+    var card = _bfState.deck[_bfState.idx];
+    var isRight = idx === card.correctIdx;
+    if (isRight) _bfState.score += 1;
+    var c = document.getElementById('bf-choices');
+    var feedback = document.getElementById('bf-feedback');
+    var nextBtn = document.getElementById('bf-next');
+    if (c) {
+        var btns = c.querySelectorAll('button');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].disabled = true;
+            if (i === card.correctIdx) btns[i].classList.add('bf-correct');
+            else if (i === idx) btns[i].classList.add('bf-wrong');
+        }
+    }
+    if (feedback) {
+        feedback.textContent = isRight
+            ? 'Right.'
+            : 'Wrong. Correct answer: ' + String.fromCharCode(65 + card.correctIdx)
+              + '. ' + card.choices[card.correctIdx];
+    }
+    if (nextBtn) nextBtn.style.display = 'inline-block';
+}
+
+function _bfNext() {
+    _bfState.idx += 1;
+    _bfRenderCard();
+}
+
+async function _bfFinish() {
+    var pct = _bfState.deck.length > 0 ? (_bfState.score / _bfState.deck.length) : 0;
+    var passed = pct >= BLOOKET_PASS_THRESHOLD;
+    var q = document.getElementById('bf-question');
+    var c = document.getElementById('bf-choices');
+    var p = document.getElementById('bf-progress');
+    var feedback = document.getElementById('bf-feedback');
+    var nextBtn = document.getElementById('bf-next');
+    if (q) q.textContent = '';
+    if (c) while (c.firstChild) c.removeChild(c.firstChild);
+    if (p) p.textContent = '';
+    if (feedback) feedback.textContent = '';
+    if (nextBtn) nextBtn.style.display = 'none';
+    var result = document.getElementById('bf-result');
+    if (result) {
+        while (result.firstChild) result.removeChild(result.firstChild);
+        var pctRound = Math.round(pct * 1000) / 10;
+        var line1 = document.createElement('div');
+        line1.textContent = 'You scored ' + _bfState.score + ' of ' + _bfState.deck.length
+                          + ' (' + pctRound.toFixed(1) + '%).';
+        result.appendChild(line1);
+        var line2 = document.createElement('div');
+        line2.style.marginTop = '6px';
+        line2.className = passed ? 'bf-result-pass' : 'bf-result-fail';
+        line2.textContent = passed
+            ? '✓ Passed. Marking Done...'
+            : '✗ Need ≥ 80% to mark Done. Try again.';
+        result.appendChild(line2);
+        if (!passed) {
+            var retry = document.createElement('button');
+            retry.className = 's7btn s7btn-default';
+            retry.style.marginTop = '8px';
+            retry.textContent = 'Try again (new shuffle)';
+            retry.onclick = function () {
+                _bfState.deck = _bfShuffle(_bfState.deck);
+                _bfState.idx = 0;
+                _bfState.score = 0;
+                result.style.display = 'none';
+                _bfRenderCard();
+            };
+            result.appendChild(retry);
+        }
+        result.style.display = 'block';
+    }
+    if (passed) {
+        var btn = _bfState.btn;
+        var topicId = _bfState.topic;
+        var score = Math.round(pct * 1000) / 10;
+        // Brief pause so the student sees the pass message before the modal closes.
+        setTimeout(async function () {
+            closeBlooketFlashcards();
+            await _studentMarkSave(btn, topicId, 'blooket', score);
+        }, 1200);
+    }
+}
+
+function closeBlooketFlashcards() {
+    var ov = document.getElementById('bf-overlay');
+    if (ov) ov.style.display = 'none';
+    _bfState.topic = null;
+    _bfState.btn = null;
+    _bfState.deck = [];
+    _bfState.idx = 0;
+    _bfState.score = 0;
+    _bfState.answered = false;
 }
 
 // Called from the inline quiz/blooket Save button's onclick. The artifact
