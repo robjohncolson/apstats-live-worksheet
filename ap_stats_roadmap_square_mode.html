@@ -1104,6 +1104,15 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();signOutStudent()">&#128100; Sign Out</div>
         </div>
     </span>
+    <span class="menu-item" data-menu="teacher">Teacher
+        <div class="menu-dropdown" id="menu-teacher">
+            <div class="menu-dd-item disabled" style="font-style:italic;font-size:10px">Requires teacher secret</div>
+            <div class="menu-dd-sep"></div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-dashboard.html','_blank')">&#128202; Gradebook Dashboard</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-roster-console.html','_blank')">&#128221; Roster Console</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
+        </div>
+    </span>
     <span class="menu-item" data-menu="special">Special
         <div class="menu-dropdown" id="menu-special">
             <div class="menu-dd-item" data-sfx onclick="showDialog('&#128165;','All caches cleared! Your brain has been defragmented. You now have 12% more room for z-scores.','Excellent')">Empty Trash</div>
