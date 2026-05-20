@@ -104,26 +104,36 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/chk\.disabled\s*=\s*true/);
   });
 
-  it('10: submitSignIn has a TEACHER FAST-PATH that runs BEFORE rosterClient.signIn', () => {
-    // 2026-05-20 v3: a valid access code is sufficient to promote to teacher
-    // — no roster account required. The fast-path returns early before any
-    // username/password validation or roster network call. Resilient to:
-    //   (a) checkbox-disabled UI glitches (Chrome autofill bypass)
-    //   (b) teachers who don't have a student account in the roster
+  it('10: submitSignIn TEACHER FAST-PATH runs BEFORE rosterClient.signIn (v4 tolerant matching)', () => {
+    // 2026-05-20 v4: the fast-path checks ALL three input fields
+    // (teacher-code, password, username) for the access code. Trim + case-
+    // insensitive. Removes the "wrong field" footgun — paste the code
+    // anywhere in the modal and it works.
     const body = fnBody(DESK, 'submitSignIn');
-    // The fast-path reads the code input and matches against the configured code.
-    expect(body).toMatch(/codeInpEarly\.value\s*===\s*_teacherAccessCode\s*\(\s*\)/);
-    // Promotes the role + sets a synthetic identity if none typed.
+    expect(body).toMatch(/expectedCode\s*=/);
+    expect(body).toMatch(/_teacherAccessCode\s*\(\s*\)/);
+    // Iterates fieldsToCheck over the three input refs.
+    expect(body).toMatch(/fieldsToCheck/);
+    expect(body).toMatch(/signin-teacher-code/);
+    // Tolerant matching: trim + toLowerCase BOTH sides.
+    expect(body).toMatch(/\.trim\s*\(\s*\)\s*\.toLowerCase\s*\(\s*\)/);
+    // Sets role on match.
     expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]\s*,\s*['"]teacher['"]/);
     expect(body).toMatch(/teacher@desk\.local/);
     // Closes the modal + early-returns before the roster auth path.
     expect(body).toMatch(/closeSignInModal\s*\(\s*\)[\s\S]{0,400}return\s*;/);
     // The fast-path must come BEFORE the rosterClient.signIn check.
-    const fastIdx = body.search(/codeMatchEarly/);
+    const fastIdx = body.search(/matchField/);
     const rosterIdx = body.search(/rosterClient\.signIn/);
     expect(fastIdx, 'fast-path must exist').toBeGreaterThan(-1);
     expect(rosterIdx, 'roster signIn must exist').toBeGreaterThan(-1);
     expect(fastIdx, 'fast-path must precede roster signIn').toBeLessThan(rosterIdx);
+  });
+
+  it('10c: fast-path logs the match attempt to console (self-diagnosing for remote-debug)', () => {
+    const body = fnBody(DESK, 'submitSignIn');
+    // Looks for a console.log line that mentions the submit attempt.
+    expect(body).toMatch(/console\.log\s*\([^)]*submitSignIn/);
   });
 
   it('10a: makeMeTeacher DevTools helper exists for cache-stuck cases', () => {

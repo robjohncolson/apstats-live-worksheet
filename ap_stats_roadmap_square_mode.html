@@ -3744,19 +3744,45 @@ async function submitSignIn() {
   var err = document.getElementById('signin-error');
   if (err) err.textContent = '';
 
-  // 2026-05-20 v3: TEACHER FAST-PATH. If the access code matches, promote
-  // to teacher role and skip the roster sign-in entirely. Teachers don't
-  // need a student account to access teacher tools (those have their own
-  // teacher-secret auth on the destination pages). Synthetic identity is
-  // set so getStudentEmail() returns something for downstream features.
+  // 2026-05-20 v4: TEACHER FAST-PATH — TOLERANT MATCHING.
+  // The access code grants teacher role regardless of which of the three
+  // input fields (username, password, teacher-code) the teacher pasted it
+  // into. Trims whitespace; case-insensitive. Console-logs the check so
+  // failures are self-diagnosing. No roster account required.
   try {
-    var codeInpEarly = document.getElementById('signin-teacher-code');
-    var codeMatchEarly = codeInpEarly && typeof _teacherAccessCode === 'function'
-                        && codeInpEarly.value === _teacherAccessCode();
-    if (codeMatchEarly) {
+    var expectedCode = (typeof _teacherAccessCode === 'function')
+                       ? _teacherAccessCode() : null;
+    var fieldsToCheck = [
+      { name: 'teacher-code', el: document.getElementById('signin-teacher-code') },
+      { name: 'password',     el: pInp },
+      { name: 'username',     el: uInp },
+    ];
+    var matchField = null;
+    if (expectedCode) {
+      var expectedLc = String(expectedCode).trim().toLowerCase();
+      for (var i = 0; i < fieldsToCheck.length; i++) {
+        var f = fieldsToCheck[i];
+        if (!f.el) continue;
+        var typed = (f.el.value || '').trim().toLowerCase();
+        if (typed && typed === expectedLc) { matchField = f.name; break; }
+      }
+    }
+    // Console-log every submit attempt so the user (or me, debugging
+    // remotely) can see what was checked + the result. Safe — no
+    // password value is logged.
+    try {
+      console.log('[desk submitSignIn] expected code present:', !!expectedCode,
+                  ' match:', matchField || '(none)');
+    } catch (_) {}
+    if (matchField) {
       localStorage.setItem('apstats_user_role', 'teacher');
-      // Use the typed username if present; otherwise a synthetic identity.
-      var teacherIdent = (uInp && uInp.value && uInp.value.trim()) || 'teacher@desk.local';
+      // Synthetic identity — but only if the username field isn't the
+      // one holding the access code (don't make the teacher's identity
+      // be the code itself).
+      var typedUser = (uInp && uInp.value || '').trim();
+      var teacherIdent = (typedUser && typedUser.toLowerCase() !== expectedLc)
+                       ? typedUser
+                       : 'teacher@desk.local';
       localStorage.setItem('apstats_desk_student_email', teacherIdent);
       updateStudentMenu();
       if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
@@ -3764,7 +3790,9 @@ async function submitSignIn() {
       showDialog('\u{1F464}', 'Signed in as teacher. (Teacher menu now available.)', 'OK');
       return;
     }
-  } catch (_) {}
+  } catch (e) {
+    try { console.warn('[desk submitSignIn] teacher fast-path error:', e); } catch (_) {}
+  }
 
   if (!window.rosterClient || !window.rosterClient.signIn) {
     if (err) err.textContent = 'Sign-in unavailable (offline). Try again on the school network.';
