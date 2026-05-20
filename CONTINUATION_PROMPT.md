@@ -2,18 +2,31 @@
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below the
 > "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
-> text; it is kept only as historical record.** Updated 2026-05-19 (session
-> 100, autonomous loop: T1 T2 DONE; T2 Phase-2 DONE+PROD; T3 Phase-3
+> text; it is kept only as historical record.** Updated 2026-05-20 (session
+> 101, autonomous loop: T1 T2 DONE; T2 Phase-2 DONE+PROD; T3 Phase-3
 > DONE+PROD (`801dccc`); T4 Phase-4a DONE+PROD (`d68e98b`+`13cb326`);
 > T5 Phase-5 DONE+PUSHED (`e592d1b`); T6 Phase-4b CODE-COMPLETE+PUSHED
-> (`5a46f19`, deploy blocked on Railway outage); **T7 Phase-5.1
-> DONE+PUSHED (`66faaf1`)** — per-unit "🤖 Unit N PC tutor" copy button
-> rendered alongside each lesson tile's tutor button (PCs aren't
-> standalone tiles in the schedule so the lesson-tile surface is the
-> right home); shared `_copyTutorPromptByPath` helper now backs both
-> buttons; tests/phase5-structure.test.js tightened to 31/31 per Codex
-> MINOR folds. All 75 ai-tutor artifacts (66 lesson + 9 PC) now reachable
-> from the Desk. T6 Phase-4b shipped: `remediation_assignment` write loop —
+> (`5a46f19`, deploy blocked on Railway outage); T7 Phase-5.1
+> DONE+PUSHED (`66faaf1`); **T8 DESK_MODAL_POLISH DONE+PUSHED (`63d8559`,
+> 2026-05-20)** — inline quiz score input replacing native `prompt()` +
+> optimistic Done-button latch + modal-scoped keyboard shortcuts (letters
+> a-h jump to/open rows, numbers 1-3 fire within-row actions, visual
+> badges, focus-outline persists across the 120ms `recordLinkVisit`
+> re-render, active-element + modifier guards, ESC closes). Codex 0BLK+
+> 2MAJ+4MIN folded: (1) blank input was `Number('')`→0 silent zero-score
+> write → trim+empty-string check before coercion (pin 18); (2)
+> `_focusedLetter` was closure-level → re-render wiped focus → moved to
+> module scope with re-attach restore + closeResourcePanel reset (pins
+> 19/20). `tests/desk-modal-polish.test.js` 20/20; root **1672/1673**
+> (1 known unrelated fail); `phase5-structure` 32/32 unchanged; audit
+> CLEAN 69; LF preserved; Playwright smoke verified focus persistence +
+> blank-input rejection live in headless Chromium. Per-unit "🤖 Unit N PC
+> tutor" copy button (T7) rendered alongside each lesson tile's tutor
+> button (PCs aren't standalone tiles in the schedule so the lesson-tile
+> surface is the right home); shared `_copyTutorPromptByPath` helper now
+> backs both buttons; tests/phase5-structure.test.js tightened to 32/32
+> per Codex MINOR folds. All 75 ai-tutor artifacts (66 lesson + 9 PC) now
+> reachable from the Desk. T6 Phase-4b shipped: `remediation_assignment` write loop —
 > 8 additive
 > roster-server endpoints (propose/approve/complete/waive/
 > propose-from-mastery/list/student/unlocks), `teacher-dashboard.html`
@@ -37,37 +50,27 @@
 > `curl -H "x-teacher-secret: $S" $BASE/remediation/list` and expect a
 > `{ok:true, assignments:[]}` shape.
 >
-> **➡ NEXT LOOP TASK (queued by teacher 2026-05-20, ready for autonomous
-> execution on reload):** **DESK_MODAL_POLISH** — two-pronged UX fix in the
-> Desk resource modal:
-> (1) "Done" button immediate-feedback bug: clicking Done doesn't latch
-> "✓ Saved" until the teacher dismisses an intermediate dialog AND
-> reclicks the day. Likely root cause = the native `prompt('Score 0-100')`
-> for the quiz artifact interrupts the panel re-render flow; even on the
-> worksheet path (no prompt) the latch feels delayed.
-> (2) **Keyboard shortcuts in the resource modal** — letters (a, b, c, d,
-> e, f, g, h) navigate to/open visible link rows in order; numbers
-> (1, 2, 3, 4) drive contextual within-row actions (AP-classroom video /
-> Drive alt video / Done button). Visual `[letter]` / `[number]` badges
-> next to each clickable element.
+> **✅ TASK #8 DESK_MODAL_POLISH DONE+PUSHED (`63d8559`, 2026-05-20).**
+> See Task #8 below for the shipped detail. Loop method held: freeze
+> contract → ONE Sonnet for the contended file → planner re-verify on
+> disk (root tests + audit + Playwright headless smoke against
+> localhost:8000/8091) → Codex read-only review → fold all findings
+> (2 MAJOR this round, both caught by Codex) → tight commit + push.
+> NO roster-server change → auto-deploy on `roster-server/**` watch did
+> NOT fire (correct).
 >
-> **Execution discipline (teacher-specified for this task):** dispatch
-> **Sonnet sub-agent(s)** to implement (the Desk file is contended → ONE
-> Sonnet for both prongs — they touch the same surface), then
-> **cross-dispatch Codex** for read-only review (detached PowerShell, same
-> pattern as Phase 4b / Phase 5.1 reviews), then **planner final pass**:
-> fix any findings, re-verify all tests + audit-feeder-ids + EOL
-> preservation, manual smoke against localhost:8091 (the local roster-
-> server is still running on that port), then a tight single-purpose
-> commit + push. Full task spec in Task #8 below.
->
-> Other optional loop task = wrap session
-> OR Phase 5.1** (PC-tile AI-tutor wiring; 9 unit-PC artifacts remain
-> unwired) once user un-blocks deploy. The concurrent TR session is
-> DONE & deployed → roster-server contention RELEASED. The concurrent
-> AI-tutor delivery is now LIVE (Phase 5 = the approval). Recall
-> memories first: `project_gradebook_grading_model.md`,
-> `project_desk_donow.md`, `project_gradebook_phase0.md`,
+> **NEXT LOOP TASK = wrap session.** All shipped: Tasks #1-#7 (T2/Phase
+> 2/3/4a/5/4b/5.1) DONE. Task #8 DESK_MODAL_POLISH DONE (`63d8559`).
+> Phase 5.1 already shipped (`66faaf1`). The two user-owned handoffs
+> for Phase 4b to function in prod remain pending (both blocked on
+> Railway outage 2026-05-19 → recovery): (a) `railway login` + redeploy
+> roster-server; (b) Supabase migration is already DONE (user ran
+> `0004_remediation_assignment.sql` on 2026-05-19). Once Railway is back
+> + redeploy fires, `/remediation/*` returns 200 instead of 503. The
+> teacher-dashboard's Remediation panel will then show the proposed
+> assignments. No other open code work. Recall memories first:
+> `project_gradebook_grading_model.md`, `project_desk_donow.md` (now
+> includes Task #8 detail), `project_gradebook_phase0.md`,
 > `project_ai_tutor_pilot.md`, `project_roster_teacher_tools.md`,
 > `feedback_curriculum_render_sacred.md`.
 
@@ -276,8 +279,48 @@ and all relevant guards pass:
    provision the new table. Until BOTH done, /remediation/* returns 503
    "remediation table not yet provisioned" in prod (after redeploy);
    the rest of the service is unaffected.
-8. **DESK_MODAL_POLISH — Done-button latch + keyboard shortcuts — ⏳
-   QUEUED BY TEACHER 2026-05-20.** Two prongs in
+8. **DESK_MODAL_POLISH — Done-button latch + keyboard shortcuts — ✅
+   DONE & PUSHED (`63d8559`, 2026-05-20).** Two prongs shipped in
+   `ap_stats_roadmap_square_mode.html`'s `showResourcePanel` modal.
+   **PRONG A:** quiz `prompt()` replaced with inline `Score: <input>
+   [Save] [Cancel]` form inside `span.desk-quiz-done-slot`; optimistic
+   `✓ Saved` button mutation BEFORE the await recordProgress; Enter
+   submits, Escape cancels (with stopPropagation so modal ESC handler
+   doesn't fire). **PRONG B:** modal-scoped keydown listener attached
+   on open / detached on close; letters a-h jump+open primary link
+   (link-less rows click first button); numbers 1-3 act on focused
+   row (1=primary, 2=alt-video no-op if absent, 3=Done subject to
+   visit-gate); `[letter]` and `[number]` badges decorate each row;
+   focused-row outline; active-element guard
+   (INPUT/TEXTAREA/SELECT/isContentEditable) + modifier guard
+   (ctrl/meta/alt) + display-block guard. **Codex review = 0 BLOCKER +
+   2 MAJOR + 4 MINOR ALL FOLDED.** MAJOR-1: blank input → `Number('')`
+   ===0 silent zero-score write → trim+empty-string check before
+   `Number()` coercion (pin 18). MAJOR-2: `_focusedLetter` was
+   closure-level → 120ms `recordLinkVisit` re-render reset focus →
+   moved to module scope; `_attachResourcePanelKeyHandler` reads +
+   re-applies saved focus on re-attach (fallback to 'a' if saved
+   letter no longer maps); `closeResourcePanel` resets to 'a' (pins
+   19, 20). Removed the hardcoded "default focus = first row" from
+   `_decorateResourceRows` IIFE so it doesn't clobber persisted state.
+   Tests: `tests/desk-modal-polish.test.js` **20/20** (17 BUILD pins
+   + 3 Codex MAJOR folds). Root **1672/1673** (only known unrelated
+   `study-guide.test.js` fail, +3 from prior 1669/1670 baseline).
+   `phase5-structure` 32/32 unchanged. `desk-roster-signin` 44/44
+   unchanged. `audit-feeder-ids` CLEAN 69. EOL LF preserved.
+   Playwright headless smoke validated dynamic behaviors: badges
+   render after panel open; ESC closes + detaches listener; letter
+   'a' opens AP Classroom URL in new tab; active-element +
+   modifier guards work; **focus persists on row 'b' after 120ms
+   re-render**; `closeResourcePanel` resets `_focusedLetter`='a';
+   quiz Done click swaps to inline form; Enter submits; **blank +
+   whitespace input both rejected via showDialog**; localStorage gets
+   typed score on Save; Cancel restores bare Done button.
+   NO server change; NO migration; NO auto-deploy trigger. Build doc:
+   `DESK_MODAL_POLISH_BUILD.md` (§1-§8, frozen contract).
+
+   **DEPRECATED TASK-#8-OPEN spec (kept here for provenance only — DO
+   NOT RE-RUN):** Two prongs in
    `ap_stats_roadmap_square_mode.html`'s `showResourcePanel` modal:
 
    **PRONG A — Done button immediate visual feedback.** Teacher symptom
@@ -526,21 +569,21 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `633013c`** (per-quarter ceiling
-  projection). Lineage: `633013c` ceiling-projection ← `d82841b` roster-
-  prefill (all 69 worksheets inherit identity from Desk sign-in) ←
-  `540d168` Desk Done buttons (latched local + visit gate + visited
-  indicator) ← `366ca2b` Desk getStudentEmail bridge + AI-tutor
-  AI_TUTOR_LESSON_KEYS gate ← `3036bd5` roster_config auto-detect
-  localhost ← `d7232a0` teacher-tools URL dropdown + opt-in localStorage
-  secret + GLOBAL_OVERRIDE_KEY ← `45251ef` (docs refresh — SQL applied)
-  ← `83a750d` (docs refresh) ← `c3be95c` (docs refresh) ← `66faaf1`
-  Phase-5.1 ← `5a46f19` Phase-4b ← `ce864fe` (docs refresh) ←
-  `e592d1b` Phase-5 ←
-  `a0c7a93` (docs refresh) ← `13cb326` Phase-4a hotfix ← `d68e98b`
-  Phase-4a ← `deff78b` ← `801dccc` Phase-3 ← `4969715` ← `00e7a6c`
-  Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ←
-  `4140afe`/`1565fd5` T2 ← `52ac6a7` DN3c. Linear, local==origin.
+- **follow-alongs `master` HEAD `63d8559`** (Task #8 DESK_MODAL_POLISH).
+  Lineage: `63d8559` Task #8 ← `8f0ba44` (docs queue) ← `633013c`
+  per-quarter ceiling-projection ← `d82841b` roster-prefill (all 69
+  worksheets inherit identity from Desk sign-in) ← `540d168` Desk Done
+  buttons (latched local + visit gate + visited indicator) ← `366ca2b`
+  Desk getStudentEmail bridge + AI-tutor AI_TUTOR_LESSON_KEYS gate ←
+  `3036bd5` roster_config auto-detect localhost ← `d7232a0` teacher-tools
+  URL dropdown + opt-in localStorage secret + GLOBAL_OVERRIDE_KEY ←
+  `45251ef` (docs refresh — SQL applied) ← `83a750d` (docs refresh) ←
+  `c3be95c` (docs refresh) ← `66faaf1` Phase-5.1 ← `5a46f19` Phase-4b ←
+  `ce864fe` (docs refresh) ← `e592d1b` Phase-5 ← `a0c7a93` (docs refresh)
+  ← `13cb326` Phase-4a hotfix ← `d68e98b` Phase-4a ← `deff78b` ←
+  `801dccc` Phase-3 ← `4969715` ← `00e7a6c` Phase-2 ←
+  `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ← `4140afe`/`1565fd5` T2 ←
+  `52ac6a7` DN3c. Linear, local==origin.
 - **curriculum_render `main` HEAD `1ccd8a2`** (DN2d; sacred `curriculum.js`
   untouched — never re-touched; Phase-2/3/4 only READ it).
 - **roster-server PROD STATE UNCERTAIN** (was
@@ -565,17 +608,20 @@ and all relevant guards pass:
   `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
 - **Concurrent AI-tutor session: idle/done** (`9207d24`); its artifacts in
   `ai-tutor/u{U}_l{L}.md` are the source for the Phase-5 Desk-tile prompt.
-- Test baseline (post-`633013c`): follow-alongs root **1652/1653** (only
-  the same known unrelated study-guide.test.js fail; +11 from
-  `tests/roster-prefill.test.js` and +1 from the AI_TUTOR_LESSON_KEYS
-  gating assertion since the `66faaf1` baseline). roster-server
-  **223/223** (was 219 → +4 from the per-quarter ceiling tests in
-  `tests/grade.test.js`). `audit-feeder-ids` CLEAN 69; phase4-structure
-  17/17 + phase4b-structure 16/16 + phase5-structure 32/32. **Live
-  state in prod**: as of 2026-05-20 03:15 UTC, prod is on the Phase-4a
-  baseline (last working deploy) — Phase 4b code (`5a46f19`) and
-  everything after (Phase 5/5.1/Desk UX/roster-prefill/ceiling
-  projection) is pushed to `master` but NOT yet auto-deployed.
+- Test baseline (post-`63d8559`): follow-alongs root **1672/1673** (only
+  the same known unrelated study-guide.test.js fail; +20 from the new
+  `tests/desk-modal-polish.test.js` since the `633013c` baseline of
+  1652/1653). roster-server **223/223** (was 219 → +4 from the per-
+  quarter ceiling tests in `tests/grade.test.js`; Task #8 did not touch
+  roster-server). `audit-feeder-ids` CLEAN 69; phase4-structure 17/17 +
+  phase4b-structure 16/16 + phase5-structure 32/32 + desk-modal-polish
+  20/20. **Live state in prod**: as of 2026-05-20 14:35 UTC, prod is on
+  the Phase-4a baseline (last working deploy) — Phase 4b code
+  (`5a46f19`), Phase 5/5.1, Desk UX (Task #8), roster-prefill, and
+  ceiling projection are all pushed to `master` but the Phase 4b
+  endpoints are NOT yet auto-deployed (Task #8 does not touch
+  roster-server, so its push did not fire the auto-deploy either —
+  correct).
   Background: Railway suffered a major outage 2026-05-19 → 2026-05-20
   (GCP-side block + non-enterprise build pause); user configured
   GitHub auto-deploy on `roster-server/**` watch path during recovery.
