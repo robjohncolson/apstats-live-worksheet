@@ -1,5 +1,6 @@
 // desk-modal-polish.test.js — Task #8 DESK_MODAL_POLISH structure pins.
-// 20 pins: 17 per DESK_MODAL_POLISH_BUILD.md §3 + 3 Codex MAJOR folds (2026-05-20).
+// 22 pins: 17 per DESK_MODAL_POLISH_BUILD.md §3 + 3 Codex MAJOR folds
+// + 2 teacher-revision pins (2026-05-20): letter selects only, num=1 fallback.
 // Static parse of the Desk HTML source — no DOM execution.
 //
 // @vitest-environment node
@@ -34,7 +35,7 @@ function fnBody(src, name) {
 
 // ─── pins ─────────────────────────────────────────────────────────────────────
 
-describe('DESK_MODAL_POLISH — 20 structure pins (17 BUILD + 3 Codex MAJOR folds)', () => {
+describe('DESK_MODAL_POLISH — 22 structure pins (17 BUILD + 3 Codex MAJOR + 2 teacher revision)', () => {
 
   it('pin 01: the Desk file exists', () => {
     expect(DESK, 'Desk file must exist').toBeTypeOf('string');
@@ -201,5 +202,49 @@ describe('DESK_MODAL_POLISH — 20 structure pins (17 BUILD + 3 Codex MAJOR fold
   it('pin 20: closeResourcePanel resets _focusedLetter to "a" (Codex MAJOR 2 cleanup)', () => {
     const closeBody = fnBody(DESK, 'closeResourcePanel');
     expect(closeBody).toMatch(/_focusedLetter\s*=\s*['"]a['"]/);
+  });
+
+  // ── 2026-05-20 teacher revision: letter selects only, 1/2/3 opens action ─
+  it('pin 21: letter key handler body selects only (no window.open / recordLinkVisit / button.click)', () => {
+    // Extract the letter branch from the keydown handler. The branch is
+    // delimited by the lowerKey range check + the trailing `return;`.
+    const attachBody = fnBody(DESK, '_attachResourcePanelKeyHandler');
+    const letterStart = attachBody.search(/lowerKey\s*>=\s*['"]a['"]\s*&&\s*lowerKey\s*<=\s*['"]h['"]/);
+    expect(letterStart, 'letter range check must exist').toBeGreaterThan(-1);
+    // Find the matching `return;` that closes the letter branch — i.e. the
+    // first `return;` after the if-block's opening `{`.
+    const openBrace = attachBody.indexOf('{', letterStart);
+    expect(openBrace, 'letter branch opens with {').toBeGreaterThan(-1);
+    // Walk braces to find the matching close.
+    let depth = 0; let closeBrace = -1;
+    for (let j = openBrace; j < attachBody.length; j++) {
+      if (attachBody[j] === '{') depth++;
+      else if (attachBody[j] === '}') { depth--; if (depth === 0) { closeBrace = j; break; } }
+    }
+    expect(closeBrace, 'letter branch must close').toBeGreaterThan(openBrace);
+    const branch = attachBody.slice(openBrace, closeBrace + 1);
+    // Strip comments so explanation text doesn't trip the assertions.
+    const stripped = branch.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    expect(stripped, 'letter branch must not call window.open').not.toMatch(/window\.open\s*\(/);
+    expect(stripped, 'letter branch must not call recordLinkVisit').not.toMatch(/recordLinkVisit\s*\(/);
+    expect(stripped, 'letter branch must not call .click()').not.toMatch(/\.click\s*\(\s*\)/);
+    // It MUST call _setFocusedRow.
+    expect(stripped, 'letter branch must call _setFocusedRow').toMatch(/_setFocusedRow\s*\(/);
+  });
+
+  it('pin 22: num=1 handler falls back to first non-Done button when row has no link', () => {
+    const attachBody = fnBody(DESK, '_attachResourcePanelKeyHandler');
+    // Find the num === 1 branch.
+    const numOneIdx = attachBody.search(/num\s*===\s*1/);
+    expect(numOneIdx).toBeGreaterThan(-1);
+    // The branch must include both the link path AND the button-fallback path.
+    // Pin the fallback: look for a check on the onclick NOT starting with studentMark.
+    const slice = attachBody.slice(numOneIdx, numOneIdx + 1500);
+    expect(slice, 'num=1 must reference studentMark for the Done exclusion check')
+      .toMatch(/studentMark/);
+    expect(slice, 'num=1 must have an else branch (no-link fallback)')
+      .toMatch(/else/);
+    expect(slice, 'num=1 fallback must call .click() on a button')
+      .toMatch(/\.click\s*\(\s*\)/);
   });
 });

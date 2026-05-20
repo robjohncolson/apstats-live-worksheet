@@ -1196,12 +1196,23 @@
               @keyframes donowFlash{0%,100%{box-shadow:2px 2px 0 var(--black)}
                 50%{box-shadow:0 0 0 3px #2b6cb0,2px 2px 0 var(--black)}}
               @media (prefers-reduced-motion:reduce){#donow-card.donow-flash{animation:none}}
+              /* Q1-Q4 grade outlook strip (2026-05-20) — compact pills under the Do Now message */
+              #donow-grades{margin-top:6px;display:none;flex-wrap:wrap;gap:4px}
+              #donow-grades .qpill{display:inline-flex;align-items:baseline;gap:3px;
+                padding:1px 6px;border:1px solid var(--black);background:#f8f8f8;
+                font-family:'Chicago','Courier New',monospace;font-size:10px;
+                box-shadow:1px 1px 0 var(--black)}
+              #donow-grades .qpill .qkey{font-weight:bold}
+              #donow-grades .qpill .qgrade{}
+              #donow-grades .qpill .qceil{color:#1f8b3b;font-size:9px}
+              #donow-grades .qpill.empty{color:var(--plat-lo);background:#fff}
             </style>
             <div id="donow-card" class="donow-signin" style="display:none">
                 <span class="donow-ico">📌</span>
                 <div class="donow-body">
                     <div class="donow-ttl chicago">Do Now</div>
                     <div id="donow-msg" class="geneva">…</div>
+                    <div id="donow-grades" class="geneva" aria-label="Quarter grade outlook"></div>
                 </div>
             </div>
             <div class="cal-outer geneva">
@@ -3764,6 +3775,74 @@ function maybeBumpThenOpen(inf, ds) {
   }
 }
 
+// Quarter-band labels — mirror roster-server's PHASE3_CONFIG.quarters and
+// start-here.html's QUARTER_BAND_LABEL so the Do Now strip stays consistent
+// with the full breakdown render.
+const QUARTER_BAND_LABEL = {
+  Q1: 'U1, U2',
+  Q2: 'U3, U4, U5',
+  Q3: 'U6, U7',
+  Q4: 'U8, U9',
+};
+
+// Render the compact Q1-Q4 grade outlook strip inside the Do Now card.
+// Fire-and-forget; never throws. Hides the strip on any failure.
+async function renderDoNowGrades(baseUrl, token) {
+  var host = document.getElementById('donow-grades');
+  if (!host) return;
+  host.style.display = 'none';
+  host.innerHTML = '';
+  try {
+    var res = await fetch(baseUrl + '/grade?token=' + encodeURIComponent(token));
+    if (!res || !res.ok) return;
+    var data = await res.json();
+    if (!data || !data.ok) return;
+    var quarters = data.quarters || {};
+    var order = ['Q1', 'Q2', 'Q3', 'Q4'];
+    var anyRendered = false;
+    for (var i = 0; i < order.length; i++) {
+      var qKey = order[i];
+      var q = quarters[qKey] || null;
+      var gradeRaw = q && typeof q.quarterGrade === 'number' ? q.quarterGrade : null;
+      var ceilRaw = q && typeof q.ceiling === 'number' ? q.ceiling : null;
+      var graded = q && typeof q.unitsGraded === 'number' ? q.unitsGraded : null;
+      var total = q && typeof q.unitsTotal === 'number' ? q.unitsTotal : null;
+      var pill = document.createElement('span');
+      pill.className = 'qpill' + (gradeRaw == null ? ' empty' : '');
+      var keySpan = document.createElement('span');
+      keySpan.className = 'qkey';
+      keySpan.textContent = qKey + ':';
+      pill.appendChild(keySpan);
+      var gradeSpan = document.createElement('span');
+      gradeSpan.className = 'qgrade';
+      gradeSpan.textContent = gradeRaw == null ? '—' : (Math.round(gradeRaw * 10) / 10).toFixed(1);
+      pill.appendChild(gradeSpan);
+      if (ceilRaw != null && gradeRaw != null) {
+        var ceilSpan = document.createElement('span');
+        ceilSpan.className = 'qceil';
+        ceilSpan.textContent = '↑' + (Math.round(ceilRaw * 10) / 10).toFixed(1);
+        // Tooltip on the ceiling: "if you ace the remaining N unit(s)".
+        if (graded != null && total != null) {
+          var remaining = total - graded;
+          ceilSpan.title = 'If you ace the remaining ' + remaining + ' unit' + (remaining === 1 ? '' : 's') + ' in ' + qKey;
+        }
+        pill.appendChild(ceilSpan);
+      }
+      // Pill tooltip: band + progress fraction.
+      var tip = qKey + ' covers ' + (QUARTER_BAND_LABEL[qKey] || '');
+      if (graded != null && total != null) {
+        tip += ' — ' + graded + ' of ' + total + ' unit' + (total === 1 ? '' : 's') + ' graded';
+      }
+      pill.title = tip;
+      host.appendChild(pill);
+      anyRendered = true;
+    }
+    if (anyRendered) host.style.display = 'flex';
+  } catch (_) {
+    host.style.display = 'none';
+  }
+}
+
 async function renderDoNow() {
   var card = document.getElementById('donow-card');
   var msg = document.getElementById('donow-msg');
@@ -3774,6 +3853,12 @@ async function renderDoNow() {
     card.className = 'donow-' + (mode || 'signin');
     card.style.display = 'flex';
   }
+
+  // Hide the quarter strip on EVERY entry — only re-show after a successful
+  // /grade fetch. Prevents stale pills from showing when the student is
+  // signed-out / offline.
+  var gradesHost = document.getElementById('donow-grades');
+  if (gradesHost) { gradesHost.style.display = 'none'; gradesHost.innerHTML = ''; }
 
   try {
     // TR2 gate: a student with a teacher-issued default password is locked out
@@ -3827,6 +3912,15 @@ async function renderDoNow() {
     // typeof-guarded so DN3a's renderDoNow stays decoupled from the DN3b painter.
     _donowData = data;
     if (typeof paintDonowCells === 'function') paintDonowCells();
+
+    // Grade outlook strip (2026-05-20) — fire-and-forget so /grade latency or
+    // failure never blocks the Do Now message. Only renders for signed-in
+    // students who got past the /donow fetch. typeof-guarded so DN3a's
+    // vm-test of renderDoNow (which doesn't load this function) keeps
+    // passing — same cross-sprint pattern as paintDonowCells above.
+    if (typeof renderDoNowGrades === 'function') {
+        renderDoNowGrades(baseUrl, token).catch(function () { /* never throws */ });
+    }
 
     var nt = data.nextTask;
     if (!nt) {
@@ -5762,24 +5856,16 @@ function _attachResourcePanelKeyHandler() {
         var body = document.getElementById('resource-body');
         if (!body) return;
 
-        // Letter keys a-h: jump to row + open primary link.
+        // Letter keys a-h: SELECT the row (focus outline only — no link open).
+        // Two-step UX: press letter to select, then 1/2/3 to open the row's
+        // primary link / alt-video link / Done button. Revised 2026-05-20
+        // per teacher feedback — letter auto-opening misfired on stray
+        // keystrokes; explicit num=1 is more deliberate.
         var lowerKey = key.toLowerCase();
         if (lowerKey.length === 1 && lowerKey >= 'a' && lowerKey <= 'h') {
             var row = body.querySelector('div[data-desk-row-letter="' + lowerKey + '"]');
             if (!row) return;
             _setFocusedRow(lowerKey);
-            var topicId = row.getAttribute('data-desk-topic') || '';
-            var artifact = row.getAttribute('data-desk-artifact') || '';
-            var links = row.querySelectorAll('a');
-            var primaryLink = links.length > 0 ? links[0] : null;
-            if (primaryLink) {
-                window.open(primaryLink.getAttribute('href'), '_blank');
-                if (topicId && artifact) recordLinkVisit(topicId, artifact);
-            } else {
-                // No primary link (AI-tutor or Schoology status row): click first button.
-                var firstBtn = row.querySelector('button');
-                if (firstBtn) firstBtn.click();
-            }
             return;
         }
 
@@ -5806,12 +5892,25 @@ function _attachResourcePanelKeyHandler() {
                 if (roc.indexOf('studentMark') === 0) { rowDone = rowBtns[bi]; break; }
             }
             if (num === 1) {
-                // Primary link.
+                // Primary action of the focused row.
                 if (rowPrimary) {
                     var rTopicId = focusedRow.getAttribute('data-desk-topic') || '';
                     var rArtifact = focusedRow.getAttribute('data-desk-artifact') || '';
                     window.open(rowPrimary.getAttribute('href'), '_blank');
                     if (rTopicId && rArtifact) recordLinkVisit(rTopicId, rArtifact);
+                } else {
+                    // No link in the row — fall back to the first non-Done
+                    // button (e.g. AI-tutor copy-prompt). Done is reserved
+                    // for num=3 so 1 doesn't accidentally fire it.
+                    var firstNonDoneBtn = null;
+                    for (var bi2 = 0; bi2 < rowBtns.length; bi2++) {
+                        var roc2 = rowBtns[bi2].getAttribute('onclick') || '';
+                        if (roc2.indexOf('studentMark') !== 0) {
+                            firstNonDoneBtn = rowBtns[bi2];
+                            break;
+                        }
+                    }
+                    if (firstNonDoneBtn) firstNonDoneBtn.click();
                 }
             } else if (num === 2) {
                 // Secondary (alt) link — no-op if absent.
