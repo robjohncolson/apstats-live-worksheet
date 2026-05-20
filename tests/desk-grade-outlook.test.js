@@ -44,15 +44,16 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(DESK).toMatch(/#donow-grades\s*\{[^}]*display\s*:\s*none/);
   });
 
-  it('02: QUARTER_BAND_LABEL is declared with Q1-Q4 mapping (matches start-here.html semantics)', () => {
+  it('02: QUARTER_BAND_LABEL is declared with Q1-Q4 mapping (Phase 6 bands: Q1=U1-3, Q2=U4-5)', () => {
     // Must declare a top-level mapping object so the tooltip text stays in
     // sync with the server-side PHASE3_CONFIG.quarters and the existing
     // start-here.html render.
+    // Phase 6 update: Q1 now includes U3; Q2 is U4,U5.
     expect(DESK).toMatch(/const\s+QUARTER_BAND_LABEL\s*=\s*\{/);
-    // Pin the four keys + the literal Q1/Q2/Q3/Q4 band strings (loose match
-    // so the implementer could reorder/comment without breaking the test).
-    expect(DESK).toMatch(/Q1\s*:\s*['"]U1[^'"]*U2['"]/);
-    expect(DESK).toMatch(/Q2\s*:\s*['"]U3[^'"]*U4[^'"]*U5['"]/);
+    // Q1 must include U1, U2, U3.
+    expect(DESK).toMatch(/Q1\s*:\s*['"]U1[^'"]*U2[^'"]*U3['"]/);
+    // Q2 must include U4, U5 (no longer U3).
+    expect(DESK).toMatch(/Q2\s*:\s*['"]U4[^'"]*U5['"]/);
     expect(DESK).toMatch(/Q3\s*:\s*['"]U6[^'"]*U7['"]/);
     expect(DESK).toMatch(/Q4\s*:\s*['"]U8[^'"]*U9['"]/);
   });
@@ -157,5 +158,43 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(body, 'must use the baseUrl argument').toMatch(/baseUrl\s*\+/);
     expect(body, 'must NOT reference SUPABASE_URL').not.toMatch(/SUPABASE_URL/);
     expect(body, 'must NOT reference supabase').not.toMatch(/supabase\.co/i);
+  });
+
+  // ── Phase 6 pins (+5) ───────────────────────────────────────────────────────
+
+  it('14: renderDoNowGrades reads lessonsDue, lessonsGraded, lessonsTotal from response (Phase 6)', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    expect(body).toMatch(/\.lessonsDue\b/);
+    expect(body).toMatch(/\.lessonsGraded\b/);
+    expect(body).toMatch(/\.lessonsTotal\b/);
+  });
+
+  it('15: pill tooltip text includes lessons-graded and due-so-far (Phase 6 tooltip upgrade)', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    // The tooltip must reference "lesson" (singular or plural) for the lesson count.
+    expect(body).toMatch(/lesson/);
+    // Must include "due so far" phrasing.
+    expect(body).toMatch(/due so far/);
+  });
+
+  it('16: _gradeLessonsCache is populated with data.lessons when present (Phase 6 cache)', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    // Must cache the lessons array for the modal.
+    expect(body).toMatch(/_gradeLessonsCache\s*=/);
+    expect(body).toMatch(/data\.lessons/);
+  });
+
+  it('17: empty-state pill renders when lessonsDue is 0 (no quarters counted yet)', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    // The pill class includes "empty" when gradeRaw is null.
+    expect(body).toMatch(/qpill.*empty/);
+    // The empty pill text must be the dash character.
+    expect(body).toMatch(/['"]—['"]/);
+  });
+
+  it('18: renderDoNowGrades caches lessons array as _gradeLessonsCache (null for non-array)', () => {
+    // Must handle missing/non-array data.lessons gracefully.
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    expect(body).toMatch(/Array\.isArray\s*\(\s*data\.lessons\s*\)/);
   });
 });

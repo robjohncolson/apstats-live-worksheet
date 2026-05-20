@@ -61,7 +61,7 @@ function studentMeta(r) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, config = PHASE3_CONFIG }) {
+export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG }) {
 
   // ── GET /class/grades?section= ──────────────────────────────────────────────
   // Teacher-gated. Fans out computeGrade over the roster.
@@ -88,7 +88,15 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
 
     const fan = await fanLedger(ledgerDb, rows);
     const students = fan.map(({ roster, ledgerRows }) => {
-      const computed = computeGrade(ledgerRows, answerKey, config);
+      // Phase 6 (Codex MAJOR 1 fold): pass the lesson schedule + per-student
+      // section so /class/grades uses the same lesson-weighted, date-driven
+      // quarter math as /grade. Without these the teacher dashboard would
+      // silently fall back to the Phase 3 unit-mean and disagree with the
+      // student's own Desk pill.
+      const computed = computeGrade(ledgerRows, answerKey, config, {
+        lessonSchedule,
+        section: roster && roster.section ? roster.section : null,
+      });
       return { ...studentMeta(roster), ...computed };
     });
 

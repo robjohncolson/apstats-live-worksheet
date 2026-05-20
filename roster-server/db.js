@@ -21,7 +21,19 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, updatePassword, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, updatePassword, listRoster };
+
+  // Phase 6: look up a single roster row by student_id — used by /grade to
+  // resolve the student's section for the lesson-due date filter. The
+  // ledger doesn't persist `section`; the roster does. Returns {data, error}
+  // where data carries `section` (string) or null on no-match.
+  async function findByStudentId(studentId) {
+    return client
+      .from('roster')
+      .select('student_id, section')
+      .eq('student_id', studentId)
+      .maybeSingle();
+  }
 
   // Insert a new roster row.
   // Returns { data, error } — data has student_id on success.

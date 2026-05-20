@@ -22,15 +22,20 @@ export const PHASE3_CONFIG = {
   frqDiagnosticCorrectThreshold: 0.5,
 
   // Quarter → unit band + the proctored-PC curve anchors.
+  // Phase 6 update: Q1=[1,2,3], Q2=[4,5], Q3=[6,7], Q4=[8,9].
   // raw% (PC correct/graded ×100) maps: ≥p100 → 100; [p85,p100) → linear
   // 85..100; [0,p85) → linear 0..85. Q4 ≈ published AP-Stats real (~70 = a 5);
   // Q1–Q3 deliberately gentler = the graduated-trust ramp. ALL pilot-tunable.
   quarters: {
-    Q1: { units: [1, 2],    pcAnchor: { p85: 40, p100: 60 } },
-    Q2: { units: [3, 4, 5], pcAnchor: { p85: 45, p100: 64 } },
+    Q1: { units: [1, 2, 3], pcAnchor: { p85: 40, p100: 60 } },
+    Q2: { units: [4, 5],    pcAnchor: { p85: 45, p100: 64 } },
     Q3: { units: [6, 7],    pcAnchor: { p85: 50, p100: 67 } },
     Q4: { units: [8, 9],    pcAnchor: { p85: 55, p100: 70 } },
   },
+
+  // IANA timezone for computing "today" in the date filter (Phase 6).
+  // Server clock in this timezone determines which lessons are "due".
+  schoolTz: 'America/New_York',
 
   // Diagnostic weak-skill flag cutoff (pKnow < θ ⇒ weak). GRADE-INDEPENDENT —
   // θ never enters any grade arithmetic (GRADEBOOK_GRADING_SPEC.md §3).

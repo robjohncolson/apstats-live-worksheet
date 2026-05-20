@@ -95,10 +95,13 @@ describe('grade-config — frozen knobs + curves', () => {
     expect(PHASE3_CONFIG.diagnosticTheta).toBe(0.65);
   });
 
-  it('quarter bands Q1=U1-2 Q2=U3-5 Q3=U6-7 Q4=U8-9', () => {
+  it('quarter bands Q1=U1-2-3 Q2=U4-5 Q3=U6-7 Q4=U8-9 (Phase 6 update)', () => {
+    // Q1 now includes U3 (moved from Q2).
     expect(quarterOfUnit(1)).toBe('Q1');
     expect(quarterOfUnit(2)).toBe('Q1');
-    expect(quarterOfUnit(3)).toBe('Q2');
+    expect(quarterOfUnit(3)).toBe('Q1');
+    // Q2 is now U4-5.
+    expect(quarterOfUnit(4)).toBe('Q2');
     expect(quarterOfUnit(5)).toBe('Q2');
     expect(quarterOfUnit(6)).toBe('Q3');
     expect(quarterOfUnit(7)).toBe('Q3');
@@ -236,15 +239,18 @@ describe('GET /grade — model math', () => {
     const rows = [
       // U1 graded → unitGrade 85 (B=100→banked 85, no PC)
       makeRow('U1-L1-Q01', 'B'),
-      // U2 has zero evidence → ungraded → excluded from Q1 mean
+      // U2, U3 have zero evidence → ungraded → excluded from Q1 mean
     ];
     const ctx = await startServer(rows); srv = ctx.server;
     const { body } = await srv.get(`/grade?token=${ctx.token}`);
     expect(body.units.U1.unitGrade).toBe(85);
     expect(body.units.U2).toBeUndefined();
-    expect(body.quarters.Q1.units).toEqual([1, 2]);
-    expect(body.quarters.Q1.unitGrades).toEqual({ U1: 85, U2: null });
-    expect(body.quarters.Q1.quarterGrade).toBe(85);       // mean([85]) — not (85+0)/2
+    // Q1 now covers [1, 2, 3] per Phase 6 band update.
+    expect(body.quarters.Q1.units).toEqual([1, 2, 3]);
+    expect(body.quarters.Q1.unitGrades).toEqual({ U1: 85, U2: null, U3: null });
+    // No lesson schedule injected → falls back to old unit-mean logic.
+    // Unit-mean: only U1 graded → quarterGrade = 85 (only-graded-units mean).
+    expect(body.quarters.Q1.quarterGrade).toBe(85);       // mean([85]) — not (85+0)/3
     expect(body.quarters.Q2.quarterGrade).toBe(null);     // no graded units
   });
 
@@ -253,8 +259,10 @@ describe('GET /grade — model math', () => {
   // there's nothing to project from (no graded yet) or no room to grow
   // (every unit in the band already graded).
 
-  it('quarter ceiling: 1 of 2 units graded at 85 → ceiling 92.5 ((85+100)/2)', async () => {
-    // Q1's band is [U1, U2]. Only U1 graded at 85; ceiling = (85+100)/2 = 92.5.
+  it('quarter ceiling: 1 of 3 units graded at 85 → null without schedule (Codex MAJOR 2 fold 2026-05-20)', async () => {
+    // No lesson schedule injected → lesson-level fallback can't compute the
+    // ceiling because the total-lesson denominator isn't knowable without a
+    // schedule. The motivational ceiling lives in the WITH-schedule path.
     const rows = [
       makeRow('U1-L1-Q01', 'B'),   // U1 Q=100
       makeRow('WS-U1L1-b1', 'x'),  // U1 W=100; combined → U1 unitGrade ≤ 85 (C cap)
@@ -263,15 +271,18 @@ describe('GET /grade — model math', () => {
     const { body } = await srv.get(`/grade?token=${ctx.token}`);
     expect(body.units.U1.unitGrade).toBe(85);
     expect(body.quarters.Q1.unitsGraded).toBe(1);
-    expect(body.quarters.Q1.unitsTotal).toBe(2);
-    expect(body.quarters.Q1.ceiling).toBe(92.5);
+    expect(body.quarters.Q1.unitsTotal).toBe(3);
+    // Without schedule, ceiling is null (no denominator).
+    expect(body.quarters.Q1.ceiling).toBe(null);
+    // But quarterGrade still works — lesson "1.1" + "1.1" (synthetic) at 85.
+    expect(body.quarters.Q1.quarterGrade).toBe(85);
   });
 
   it('quarter ceiling: 0 units graded → ceiling null (nothing to project from)', async () => {
     const ctx = await startServer([]); srv = ctx.server;
     const { body } = await srv.get(`/grade?token=${ctx.token}`);
     expect(body.quarters.Q1.unitsGraded).toBe(0);
-    expect(body.quarters.Q1.unitsTotal).toBe(2);
+    expect(body.quarters.Q1.unitsTotal).toBe(3);
     expect(body.quarters.Q1.ceiling).toBe(null);
   });
 
@@ -297,7 +308,10 @@ describe('GET /grade — model math', () => {
     expect(body.quarters.Q3.ceiling).toBe(null);
   });
 
-  it('quarter ceiling: Q2 band size 3 — 1 of 3 at 85 → ceiling (85+100+100)/3 = 95.0', async () => {
+  it('Q1 band size 3 with U3 graded — quarterGrade=85; ceiling null without schedule (U3 moved to Q1)', async () => {
+    // Q1 now covers [U1, U2, U3]. Grade U3 only. Without schedule, ceiling
+    // can't be computed (no lesson denominator) but quarterGrade still works
+    // off the lesson-level fallback.
     const extendedKey = async () => ({
       generatedFrom: 'test',
       answerKey: {
@@ -313,9 +327,14 @@ describe('GET /grade — model math', () => {
     srv = ctx.server;
     const { body } = await srv.get(`/grade?token=${ctx.token}`);
     expect(body.units.U3.unitGrade).toBe(85);
-    expect(body.quarters.Q2.unitsGraded).toBe(1);
-    expect(body.quarters.Q2.unitsTotal).toBe(3);
-    expect(body.quarters.Q2.ceiling).toBe(95);
+    expect(body.quarters.Q1.unitsGraded).toBe(1);
+    expect(body.quarters.Q1.unitsTotal).toBe(3);
+    expect(body.quarters.Q1.quarterGrade).toBe(85);
+    // No-schedule fallback: ceiling is null.
+    expect(body.quarters.Q1.ceiling).toBe(null);
+    // Q2 is now [U4, U5] with 0 graded.
+    expect(body.quarters.Q2.unitsTotal).toBe(2);
+    expect(body.quarters.Q2.unitsGraded).toBe(0);
   });
 
   it('null/ungraded FRQ score is excluded from W (NOT scored as I), still completion', async () => {
@@ -400,5 +419,218 @@ describe('GET /grade — robustness', () => {
     await srv.get(`/grade?token=${ctx.token}`);
     expect(ctx.ledgerDb._store.length).toBe(before);
     expect(ctx.ledgerDb._store.some(r => r._written)).toBe(false);
+  });
+});
+
+// ── Phase 6: lessons[] field + lesson-weighted quarter grade ──────────────────
+// These tests inject a minimal lesson schedule so computeGrade uses the
+// date-driven path. No schedule = fall-back to unit-mean (already tested above).
+
+// Minimal fixture schedule: 2 lessons in U1, both with null dates (always-due
+// when section is unknown AND no period dates → treated as not-due for now).
+// For date-filter tests we use explicit dates.
+const FIXTURE_SCHEDULE_PAST = {
+  '1.1': { unit: 1, topicKey: '1.1', worksheetKey: '1', periods: { B: '2020-01-01', E: '2020-01-01' } },
+  '1.2': { unit: 1, topicKey: '1.2', worksheetKey: '2', periods: { B: '2020-01-01', E: '2020-01-01' } },
+};
+
+const FIXTURE_SCHEDULE_FUTURE = {
+  '1.1': { unit: 1, topicKey: '1.1', worksheetKey: '1', periods: { B: '2099-01-01', E: '2099-01-01' } },
+  '1.2': { unit: 1, topicKey: '1.2', worksheetKey: '2', periods: { B: '2099-01-01', E: '2099-01-01' } },
+};
+
+const FIXTURE_SCHEDULE_MIXED = {
+  '1.1': { unit: 1, topicKey: '1.1', worksheetKey: '1', periods: { B: '2020-01-01', E: '2020-01-01' } },
+  '1.2': { unit: 1, topicKey: '1.2', worksheetKey: '2', periods: { B: '2099-01-01', E: '2099-01-01' } },
+};
+
+async function startServerWithSchedule(rows = [], schedule = null, opts = {}) {
+  const { loadAnswerKey = okAnswerKey } = opts;
+  process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
+  process.env.NODE_ENV = 'test';
+  const studentId = `uuid-grade-p6-${randomBytes(8).toString('hex')}`;
+  const token = signToken(studentId);
+  const ledgerDb = createFakeLedgerDb(rows.map(r => ({ ...r, student_id: studentId })));
+  const app = createApp(
+    createFakeRosterDb(),
+    ledgerDb,
+    fakeLoadManifest,
+    loadAnswerKey,
+    undefined,
+    undefined,
+    undefined,
+    schedule    // Phase 6: lessonSchedule
+  );
+  const server = new TestServer(app);
+  await server.start();
+  return { server, studentId, token, ledgerDb };
+}
+
+describe('GET /grade — Phase 6 lessons[] field', () => {
+  it('response includes lessons[] array (present even when empty)', async () => {
+    const ctx = await startServerWithSchedule([], FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { status, body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(status).toBe(200);
+    expect(Array.isArray(body.lessons)).toBe(true);
+  });
+
+  it('lessons[] entries include lessonKey, unit, worksheetKey, due, lessonGrade, W, Q, items', async () => {
+    const ctx = await startServerWithSchedule([], FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const l = body.lessons[0];
+    expect(l).toHaveProperty('lessonKey');
+    expect(l).toHaveProperty('unit');
+    expect(l).toHaveProperty('worksheetKey');
+    expect(l).toHaveProperty('due');
+    expect(l).toHaveProperty('lessonGrade');
+    expect(l).toHaveProperty('W');
+    expect(l).toHaveProperty('Q');
+    expect(l).toHaveProperty('items');
+    expect(l.items).toHaveProperty('frq');
+    expect(l.items).toHaveProperty('quiz');
+    expect(l.items).toHaveProperty('worksheet');
+  });
+
+  it('FRQ item in 1.1 → lessonGrade for 1.1 is 35 (I score)', async () => {
+    const rows = [
+      makeRow('WS-U1L1-r1', 'weak', { source: 'frq', unit: 'U1', score: 0 }),
+    ];
+    const ctx = await startServerWithSchedule(rows, FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const l11 = body.lessons.find(l => l.lessonKey === '1.1');
+    expect(l11).toBeDefined();
+    expect(l11.lessonGrade).toBe(35);
+    expect(l11.W).toBe(35);
+    expect(l11.Q).toBe(null);
+  });
+
+  it('units[] UNCHANGED in shape and values after Phase 6 additions', async () => {
+    const rows = [
+      makeRow('U1-L1-Q01', 'B'),
+      makeRow('WS-U1L1-r1', 'a', { source: 'frq', unit: 'U1', score: 1 }),
+    ];
+    const ctx = await startServerWithSchedule(rows, FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const u1 = body.units.U1;
+    expect(u1).toHaveProperty('W');
+    expect(u1).toHaveProperty('Q');
+    expect(u1).toHaveProperty('B');
+    expect(u1).toHaveProperty('banked');
+    expect(u1).toHaveProperty('P');
+    expect(u1).toHaveProperty('unitGrade');
+    expect(u1).toHaveProperty('graded');
+    // Values: W=100, Q=100, B=100, banked=85.
+    expect(u1.W).toBe(100);
+    expect(u1.Q).toBe(100);
+    expect(u1.banked).toBe(85);
+  });
+});
+
+describe('GET /grade — Phase 6 lesson-weighted quarterGrade', () => {
+  it('quarter new fields present: lessonsDue, lessonsGraded, lessonsTotal', async () => {
+    const ctx = await startServerWithSchedule([], FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const q1 = body.quarters.Q1;
+    expect(q1).toHaveProperty('lessonsDue');
+    expect(q1).toHaveProperty('lessonsGraded');
+    expect(q1).toHaveProperty('lessonsTotal');
+  });
+
+  it('all lessons due, none graded → quarterGrade = 0 (0/due count), ceiling non-null', async () => {
+    // Both lessons are in the past (due), but no scored data → rawQuarter = 0/2 = 0.
+    const ctx = await startServerWithSchedule([], FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const q1 = body.quarters.Q1;
+    expect(q1.lessonsDue).toBe(2);
+    expect(q1.lessonsGraded).toBe(0);
+    // rawQuarter=0, banked=0, P_quarter=0 → quarterGrade = max(0,0) = 0.
+    expect(q1.quarterGrade).toBe(0);
+    // ceiling: remaining=0, unattempted=2, best=(0+2*100)/2=100.
+    expect(q1.ceiling).toBe(100);
+  });
+
+  it('all lessons future → quarterGrade null, lessonsDue=0', async () => {
+    const ctx = await startServerWithSchedule([], FIXTURE_SCHEDULE_FUTURE);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const q1 = body.quarters.Q1;
+    expect(q1.lessonsDue).toBe(0);
+    expect(q1.quarterGrade).toBe(null);
+    expect(q1.ceiling).toBe(null);
+  });
+
+  it('1 due+graded at 35, 1 due+ungraded → quarterGrade = 35/2 = 17.5', async () => {
+    // 1.1 is past, 1.2 is past; only 1.1 has a graded FRQ.
+    const rows = [
+      makeRow('WS-U1L1-r1', 'weak', { source: 'frq', unit: 'U1', score: 0 }), // 1.1 → 35
+    ];
+    const ctx = await startServerWithSchedule(rows, FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const q1 = body.quarters.Q1;
+    expect(q1.lessonsDue).toBe(2);
+    expect(q1.lessonsGraded).toBe(1);
+    // rawQuarter = 35/2 = 17.5; banked = min(17.5, 85) = 17.5.
+    expect(q1.quarterGrade).toBe(17.5);
+  });
+
+  it('1 due+graded at 35, 1 future → quarterGrade = 35/1 = 35', async () => {
+    const rows = [
+      makeRow('WS-U1L1-r1', 'weak', { source: 'frq', unit: 'U1', score: 0 }), // 1.1 → 35
+    ];
+    const ctx = await startServerWithSchedule(rows, FIXTURE_SCHEDULE_MIXED);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const q1 = body.quarters.Q1;
+    expect(q1.lessonsDue).toBe(1);
+    expect(q1.lessonsGraded).toBe(1);
+    // rawQuarter = 35/1 = 35; ceiling = (35 + 1*100)/2 = 67.5.
+    expect(q1.quarterGrade).toBe(35);
+    expect(q1.ceiling).toBe(67.5);
+  });
+
+  it('all due graded at 100 → banked at 85 (C cap still applies)', async () => {
+    // Both lessons past; grade them both at E (100).
+    const rows = [
+      makeRow('WS-U1L1-r1', 'e', { source: 'frq', unit: 'U1', score: 1 }), // 1.1 → 100
+      makeRow('WS-U1L2-r1', 'e', { source: 'frq', unit: 'U1', score: 1 }), // 1.2 → 100
+    ];
+    const ctx = await startServerWithSchedule(rows, FIXTURE_SCHEDULE_PAST);
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    const q1 = body.quarters.Q1;
+    expect(q1.lessonsDue).toBe(2);
+    expect(q1.lessonsGraded).toBe(2);
+    // rawQuarter=100, banked=85, P=0 → quarterGrade=85.
+    expect(q1.quarterGrade).toBe(85);
+    // Ceiling is null: remaining=0, unattempted=0.
+    expect(q1.ceiling).toBe(null);
+  });
+
+  it('no lesson schedule → graceful degrade to lesson-level math without date filter (no crash, Codex MAJOR 2 fold 2026-05-20)', async () => {
+    // null schedule still uses LESSON-LEVEL aggregation — just without the
+    // date filter and without zero-fill for missing lessons. The frozen
+    // contract said missing schedule disables ONLY the date filter, not the
+    // entire lesson-weighted shape.
+    const rows = [makeRow('U1-L1-Q01', 'B')];
+    const ctx = await startServerWithSchedule(rows, null);
+    srv = ctx.server;
+    const { status, body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(status).toBe(200);
+    // 1 quiz correct → lesson "1.1" lessonGrade=100 (Q only, W:Q renormalized).
+    // raw_quarter = 100/1 = 100. banked = min(100, 85) = 85.
+    expect(body.quarters.Q1.quarterGrade).toBe(85);
+    // With null schedule, lessons[] is empty (no schedule to enumerate from)
+    // and lessonsDue/lessonsTotal are null (not knowable without a schedule).
+    expect(Array.isArray(body.lessons)).toBe(true);
+    expect(body.lessons.length).toBe(0);
+    expect(body.quarters.Q1.lessonsTotal).toBe(null);
+    expect(body.quarters.Q1.lessonsDue).toBe(null);
   });
 });

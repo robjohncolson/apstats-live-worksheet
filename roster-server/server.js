@@ -19,7 +19,7 @@ import { mountClass } from './class.js';
 import { mountRemediation } from './remediation.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { readFile } from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -31,7 +31,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -282,11 +282,13 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey });
   }
 
-  // ── Grade route (Phase 3 additive) ───────────────────────────────────────────
+  // ── Grade route (Phase 3+6 additive) ─────────────────────────────────────────
   // Mounts GET /grade (cumulative + capped-booster grade of record).
   // Read-only; reuses the Phase-2 cr-quiz aggregation. Same injection as rollup.
+  // Phase 6: lessonSchedule is passed in for date-driven lesson-weighted quarter
+  // grade. If null/missing, /grade degrades gracefully to the old unit-mean logic.
   if (ledgerDb && loadAnswerKey) {
-    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey });
+    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db });
   }
 
   // ── Mastery route (Phase 3 additive — decoupled diagnostic) ──────────────────
@@ -302,7 +304,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // /mastery). Auth = x-teacher-secret (mirrors /roster/list); reuses pure
   // computeGrade / computeMastery so the math has a single source.
   if (db && ledgerDb && loadAnswerKey) {
-    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt });
+    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null });
   }
 
   // ── Remediation routes (Phase 4b additive — write loop + retake gate) ──────
@@ -406,6 +408,40 @@ async function loadLiveBkt() {
   return globalThis.BKT;
 }
 
+// ── Live lesson-schedule loader (Phase 6) ────────────────────────────────────
+// Mirrors the manifest/answer-key loader pattern. Returns the .lessons map from
+// lesson-schedule.json, or null on any failure (fault-tolerant degrade).
+//
+// Priority:
+//   1. LESSON_SCHEDULE_PATH env — explicit override.
+//   2. Bundled copy ./data/lesson-schedule.json (Railway container).
+//   3. Repo-root ../data/lesson-schedule.json (local dev full checkout).
+function resolveLessonSchedulePath() {
+  if (process.env.LESSON_SCHEDULE_PATH) {
+    return process.env.LESSON_SCHEDULE_PATH;
+  }
+  const bundledPath = resolve(__dirname, 'data', 'lesson-schedule.json');
+  if (existsSync(bundledPath)) {
+    return bundledPath;
+  }
+  return resolve(__dirname, '..', 'data', 'lesson-schedule.json');
+}
+
+function loadLiveLessonSchedule() {
+  try {
+    const raw = readFileSync(resolveLessonSchedulePath(), 'utf8');
+    const doc = JSON.parse(raw);
+    if (!doc || typeof doc !== 'object' || !doc.lessons || typeof doc.lessons !== 'object') {
+      console.warn('[phase6] lesson schedule malformed — date filter disabled');
+      return null;
+    }
+    return doc.lessons;
+  } catch (err) {
+    console.warn('[phase6] lesson schedule unavailable; date filter disabled:', err.message);
+    return null;
+  }
+}
+
 // Only start listening when run directly (not imported by tests)
 if (process.env.NODE_ENV !== 'test') {
   (async () => {
@@ -432,6 +468,9 @@ if (process.env.NODE_ENV !== 'test') {
     } catch (err) {
       console.error('roster-server: remediation-db failed to construct — /remediation/* disabled, service continues:', err);
     }
+    // Phase 6: lesson schedule — synchronous load at boot; fault-tolerant (null
+    // = date filter disabled, /grade still works). Same pattern as remediation-db.
+    const lessonSchedule = loadLiveLessonSchedule();
     const app = createApp(
       db,
       ledgerDb,
@@ -439,7 +478,8 @@ if (process.env.NODE_ENV !== 'test') {
       loadLiveAnswerKey,
       loadLiveSkillMap,
       bkt,
-      remediationDb
+      remediationDb,
+      lessonSchedule
     );
     const PORT = process.env.PORT || 8090;
     app.listen(PORT, () => {

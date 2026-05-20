@@ -1298,6 +1298,17 @@
     </div>
 </div>
 
+<!-- ═══ Day Grade Modal (Phase 6) ═══ -->
+<div id="day-grade-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeDayGrade()">
+    <div class="dialog-box" style="max-width:360px;width:90%;text-align:left;padding:12px 16px">
+        <div id="day-grade-header" class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px"></div>
+        <div id="day-grade-body" class="geneva" style="font-size:11px;max-height:60vh;overflow-y:auto"></div>
+        <div style="text-align:right;margin-top:10px">
+            <button class="s7btn s7btn-default" onclick="closeDayGrade()">OK</button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Resource Panel ═══ -->
 <div id="resource-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeResourcePanel()">
     <div class="dialog-box" style="max-width:340px;width:90%;text-align:left;padding:12px 16px">
@@ -3778,15 +3789,21 @@ function maybeBumpThenOpen(inf, ds) {
 // Quarter-band labels — mirror roster-server's PHASE3_CONFIG.quarters and
 // start-here.html's QUARTER_BAND_LABEL so the Do Now strip stays consistent
 // with the full breakdown render.
+// Phase 6 update: Q1=[1,2,3], Q2=[4,5], Q3=[6,7], Q4=[8,9].
 const QUARTER_BAND_LABEL = {
-  Q1: 'U1, U2',
-  Q2: 'U3, U4, U5',
+  Q1: 'U1, U2, U3',
+  Q2: 'U4, U5',
   Q3: 'U6, U7',
   Q4: 'U8, U9',
 };
 
+// Cache of the lessons[] array from the last /grade fetch.
+// Used by openDayGrade to look up per-lesson data without a second fetch.
+var _gradeLessonsCache = null;
+
 // Render the compact Q1-Q4 grade outlook strip inside the Do Now card.
 // Fire-and-forget; never throws. Hides the strip on any failure.
+// Phase 6: also caches lessons[] for the per-day click-through modal.
 async function renderDoNowGrades(baseUrl, token) {
   var host = document.getElementById('donow-grades');
   if (!host) return;
@@ -3797,6 +3814,8 @@ async function renderDoNowGrades(baseUrl, token) {
     if (!res || !res.ok) return;
     var data = await res.json();
     if (!data || !data.ok) return;
+    // Cache lessons[] for the per-day click-through (Phase 6).
+    _gradeLessonsCache = Array.isArray(data.lessons) ? data.lessons : null;
     var quarters = data.quarters || {};
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
     var anyRendered = false;
@@ -3807,6 +3826,10 @@ async function renderDoNowGrades(baseUrl, token) {
       var ceilRaw = q && typeof q.ceiling === 'number' ? q.ceiling : null;
       var graded = q && typeof q.unitsGraded === 'number' ? q.unitsGraded : null;
       var total = q && typeof q.unitsTotal === 'number' ? q.unitsTotal : null;
+      // Phase 6: lesson-level progress fields.
+      var lDue = q && typeof q.lessonsDue === 'number' ? q.lessonsDue : null;
+      var lGraded = q && typeof q.lessonsGraded === 'number' ? q.lessonsGraded : null;
+      var lTotal = q && typeof q.lessonsTotal === 'number' ? q.lessonsTotal : null;
       var pill = document.createElement('span');
       pill.className = 'qpill' + (gradeRaw == null ? ' empty' : '');
       var keySpan = document.createElement('span');
@@ -3821,16 +3844,14 @@ async function renderDoNowGrades(baseUrl, token) {
         var ceilSpan = document.createElement('span');
         ceilSpan.className = 'qceil';
         ceilSpan.textContent = '↑' + (Math.round(ceilRaw * 10) / 10).toFixed(1);
-        // Tooltip on the ceiling: "if you ace the remaining N unit(s)".
-        if (graded != null && total != null) {
-          var remaining = total - graded;
-          ceilSpan.title = 'If you ace the remaining ' + remaining + ' unit' + (remaining === 1 ? '' : 's') + ' in ' + qKey;
-        }
         pill.appendChild(ceilSpan);
       }
-      // Pill tooltip: band + progress fraction.
+      // Pill tooltip: band + lesson-level progress (Phase 6) or unit-level fallback.
       var tip = qKey + ' covers ' + (QUARTER_BAND_LABEL[qKey] || '');
-      if (graded != null && total != null) {
+      if (lGraded != null && lTotal != null) {
+        tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
+        if (lDue != null) tip += ' (' + lDue + ' due so far)';
+      } else if (graded != null && total != null) {
         tip += ' — ' + graded + ' of ' + total + ' unit' + (total === 1 ? '' : 's') + ' graded';
       }
       pill.title = tip;
@@ -5786,6 +5807,158 @@ function closeResourcePanel() {
     _focusedLetter = 'a';
     MacSFX.play('click', 0.3);
     document.getElementById('resource-overlay').style.display = 'none';
+}
+
+// ── Day Grade Modal (Phase 6) ─────────────────────────────────────────────────
+// Per-day click-through showing lesson grades from the /grade lessons[] cache.
+// Symmetric to closeResourcePanel. Modal-scoped Esc handler (additive).
+
+var _dayGradeKeyHandler = null;
+
+function _attachDayGradeKeyHandler() {
+    _detachDayGradeKeyHandler();
+    _dayGradeKeyHandler = function (e) {
+        var active = document.activeElement;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' ||
+            active.tagName === 'SELECT' || active.isContentEditable)) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeDayGrade();
+        }
+    };
+    document.addEventListener('keydown', _dayGradeKeyHandler);
+}
+
+function _detachDayGradeKeyHandler() {
+    if (_dayGradeKeyHandler) {
+        document.removeEventListener('keydown', _dayGradeKeyHandler);
+        _dayGradeKeyHandler = null;
+    }
+}
+
+function closeDayGrade() {
+    _detachDayGradeKeyHandler();
+    var ov = document.getElementById('day-grade-overlay');
+    if (ov) ov.style.display = 'none';
+}
+
+// openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
+// dateStr: display string like "Sep 3" (used in header).
+// Data: looks up _gradeLessonsCache (populated by renderDoNowGrades).
+function openDayGrade(dateStr) {
+    var ov = document.getElementById('day-grade-overlay');
+    var header = document.getElementById('day-grade-header');
+    var body = document.getElementById('day-grade-body');
+    if (!ov || !header || !body) return;
+
+    // Set header text.
+    header.textContent = 'Day grade — ' + dateStr;
+
+    // Clear body safely.
+    while (body.firstChild) body.removeChild(body.firstChild);
+
+    // Find lessons scheduled for this date.
+    var lessons = _gradeLessonsCache;
+    var matching = [];
+    if (Array.isArray(lessons)) {
+        for (var i = 0; i < lessons.length; i++) {
+            var l = lessons[i];
+            // Match by display date string (B or E period label matches dateStr).
+            // We also check the calendar date via data stored on the cell.
+            // The dateStr format is e.g. "Apr 6" — match against the lesson's
+            // due dates. Both B and E are checked.
+            var due = l.due || {};
+            var bDate = due.B;
+            var eDate = due.E;
+            // Format a date string from YYYY-MM-DD to match the calendar cell dateStr.
+            function fmtDate(d) {
+                if (!d) return null;
+                var parts = d.split('-');
+                if (parts.length < 3) return null;
+                var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                var m = parseInt(parts[1], 10) - 1;
+                return months[m] + ' ' + parseInt(parts[2], 10);
+            }
+            var bFmt = fmtDate(bDate);
+            var eFmt = fmtDate(eDate);
+            if (bFmt === dateStr || eFmt === dateStr) {
+                matching.push(l);
+            }
+        }
+    }
+
+    if (matching.length === 0) {
+        var empty = document.createElement('div');
+        empty.textContent = 'No lessons due this day.';
+        empty.style.color = '#888';
+        empty.style.fontStyle = 'italic';
+        body.appendChild(empty);
+    } else {
+        for (var j = 0; j < matching.length; j++) {
+            var lesson = matching[j];
+            var card = document.createElement('div');
+            card.style.cssText = 'border:1px solid #ccc;padding:6px 8px;margin-bottom:6px;background:#fafafa';
+
+            var titleEl = document.createElement('div');
+            titleEl.style.cssText = 'font-family:Chicago,monospace;font-size:11px;font-weight:bold;margin-bottom:3px';
+            titleEl.textContent = lesson.lessonKey + (lesson.topicName ? (' — ' + lesson.topicName) : '');
+            card.appendChild(titleEl);
+
+            var gradeEl = document.createElement('div');
+            gradeEl.style.marginBottom = '3px';
+            var lgVal = lesson.lessonGrade;
+            var gradeText = lgVal != null ? (Math.round(lgVal * 10) / 10).toFixed(1) : '—';
+            var glabel = document.createElement('span');
+            glabel.textContent = 'Lesson grade: ';
+            glabel.style.fontWeight = 'bold';
+            var gval = document.createElement('span');
+            gval.textContent = gradeText;
+            gradeEl.appendChild(glabel);
+            gradeEl.appendChild(gval);
+            card.appendChild(gradeEl);
+
+            var items = lesson.items || { frq: [], quiz: [], worksheet: [] };
+            var frqs = Array.isArray(items.frq) ? items.frq : [];
+            var quizzes = Array.isArray(items.quiz) ? items.quiz : [];
+            var worksheets = Array.isArray(items.worksheet) ? items.worksheet : [];
+
+            var gradedFrqs = frqs.filter(function (f) { return f.score != null; });
+            var frqMean = gradedFrqs.length > 0
+                ? (gradedFrqs.reduce(function (s, f) { return s + f.score; }, 0) / gradedFrqs.length)
+                : null;
+
+            var detailEl = document.createElement('div');
+            detailEl.style.color = '#555';
+            detailEl.style.fontSize = '10px';
+
+            var parts = [];
+            if (frqs.length > 0) {
+                var frqStr = 'FRQs graded: ' + gradedFrqs.length + '/' + frqs.length;
+                if (frqMean != null) frqStr += ' (mean ' + Math.round(frqMean * 10) / 10 + ')';
+                parts.push(frqStr);
+            } else {
+                parts.push('FRQs: not taken');
+            }
+            if (quizzes.length > 0) {
+                var correct = quizzes.filter(function (q) { return q.correct; }).length;
+                parts.push('Quiz: ' + correct + '/' + quizzes.length + ' correct');
+            } else {
+                parts.push('Quiz: not taken');
+            }
+            if (worksheets.length > 0) {
+                parts.push('Worksheet completed: ' + worksheets.length);
+            }
+
+            detailEl.textContent = parts.join(' · ');
+            card.appendChild(detailEl);
+
+            body.appendChild(card);
+        }
+    }
+
+    ov.style.display = 'block';
+    _attachDayGradeKeyHandler();
 }
 
 // Prong B: keyboard shortcut handler for the resource modal.
@@ -8994,7 +9167,7 @@ function rCal(){
               }
             }
             c.onmouseenter=(ev)=>sTip(ev,dt,inf,ds);c.onmouseleave=hTip;c.onmousemove=mTip;
-            if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){c.style.cursor='pointer';c.onclick=()=>{hTip();maybeBumpThenOpen(inf,ds);};}
+            if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){c.style.cursor='pointer';c.onclick=()=>{hTip();maybeBumpThenOpen(inf,ds);};c.ondblclick=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};c.oncontextmenu=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};}
             r.appendChild(c);
         }g.appendChild(r);
     }
