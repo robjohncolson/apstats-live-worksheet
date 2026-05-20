@@ -5376,7 +5376,7 @@ function showResourcePanel(inf, dateStr) {
             }
             // Drills deprecated — removed 2026-05
             if (u.quiz) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a>' + _visitedTag('quiz') + _doneBtn('quiz') + '</div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
             }
             if (u.blooket) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _doneBtn('blooket') + '</div>';
@@ -5468,21 +5468,114 @@ function showResourcePanel(inf, dateStr) {
     document.getElementById('resource-body').innerHTML = html;
     document.getElementById('resource-overlay').style.display = 'block';
     _lastResourcePanel = { inf: inf, dateStr: dateStr };
+
+    // Prong B: assign letter badges (a-h) and number badges (1-3) to rows.
+    // Letter badges go at the left of each row; number badges go to the right
+    // of the primary link, alt-video link, and Done button within the row.
+    (function _decorateResourceRows() {
+        var body = document.getElementById('resource-body');
+        if (!body) return;
+        var rows = body.querySelectorAll('div[style*="margin:3px 0"]');
+        var letters = 'abcdefgh';
+        var topicIdForRow = (ids.length > 0)
+            ? ((inf.t && /^\d+\.\d+/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.'))
+            : '';
+        for (var ri = 0; ri < rows.length && ri < letters.length; ri++) {
+            var row = rows[ri];
+            var letter = letters[ri];
+            // Store letter on the row for key handler lookup.
+            row.setAttribute('data-desk-row-letter', letter);
+
+            // Letter badge at left.
+            var lbadge = document.createElement('span');
+            lbadge.className = 'desk-row-letter-badge';
+            lbadge.textContent = '[' + letter + ']';
+            lbadge.style.cssText = 'font-size:9px;color:var(--plat-lo);margin-right:4px;border:1px solid var(--plat-lo);padding:0 3px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
+            row.insertBefore(lbadge, row.firstChild);
+
+            // Number badges: find primary link, alt link, Done button.
+            var links = row.querySelectorAll('a');
+            var primaryLink = links.length > 0 ? links[0] : null;
+            // Alt link is the second <a> with font-size:9px style (the "(alt)" link).
+            var altLink = null;
+            for (var li = 1; li < links.length; li++) {
+                if (links[li].style && links[li].style.fontSize === '9px') {
+                    altLink = links[li];
+                    break;
+                }
+            }
+            // Done button = button whose onclick starts with "studentMark".
+            var doneBtn = null;
+            var btns = row.querySelectorAll('button');
+            for (var bi = 0; bi < btns.length; bi++) {
+                var oc = btns[bi].getAttribute('onclick') || '';
+                if (oc.indexOf('studentMark') === 0) { doneBtn = btns[bi]; break; }
+            }
+            // Store topic id on row for key handler.
+            if (topicIdForRow) row.setAttribute('data-desk-topic', topicIdForRow);
+            // Store artifact on row by inspecting the primary link's onclick for
+            // the recordLinkVisit call, or fall back to reading the Done btn onclick.
+            var artifactOnRow = '';
+            if (primaryLink) {
+                var m = /recordLinkVisit\('[^']*','([^']*)'\)/.exec(primaryLink.getAttribute('onclick') || '');
+                if (m) artifactOnRow = m[1];
+            }
+            if (!artifactOnRow && doneBtn) {
+                var dm = /studentMark\(this,'[^']*','([^']*)'\)/.exec(doneBtn.getAttribute('onclick') || '');
+                if (dm) artifactOnRow = dm[1];
+            }
+            if (artifactOnRow) row.setAttribute('data-desk-artifact', artifactOnRow);
+
+            // [1] badge after primary link.
+            if (primaryLink) {
+                var n1 = document.createElement('span');
+                n1.className = 'desk-row-number-badge';
+                n1.textContent = '[1]';
+                n1.style.cssText = 'font-size:8px;color:var(--plat-lo);margin-left:2px;border:1px solid var(--plat-lo);padding:0 2px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
+                primaryLink.insertAdjacentElement('afterend', n1);
+            }
+            // [2] badge after alt link (only if alt link present).
+            if (altLink) {
+                var n2 = document.createElement('span');
+                n2.className = 'desk-row-number-badge';
+                n2.textContent = '[2]';
+                n2.style.cssText = 'font-size:8px;color:var(--plat-lo);margin-left:2px;border:1px solid var(--plat-lo);padding:0 2px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
+                altLink.insertAdjacentElement('afterend', n2);
+            }
+            // [3] badge after Done button (only if Done button present).
+            if (doneBtn) {
+                var n3 = document.createElement('span');
+                n3.className = 'desk-row-number-badge';
+                n3.textContent = '[3]';
+                n3.style.cssText = 'font-size:8px;color:var(--plat-lo);margin-left:2px;border:1px solid var(--plat-lo);padding:0 2px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
+                doneBtn.insertAdjacentElement('afterend', n3);
+            }
+        }
+        // Initial focus outline is applied later by _attachResourcePanelKeyHandler
+        // — it reads the module-level _focusedLetter (persisted across the
+        // 120ms recordLinkVisit re-render) and renders the outline on the
+        // correct row, falling back to 'a' if the saved letter no longer exists.
+    })();
+
+    _attachResourcePanelKeyHandler();
     MacSFX.play('sosumi', 0.5);
 }
 
 var _lastResourcePanel = null;
-async function studentMark(btn, topicId, artifact) {
-    if (!getStudentEmail()) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return; }
-    var score = null;
-    if (artifact === 'quiz') {
-        var raw = prompt('Score (0-100)?');
-        if (raw === null) return;
-        var n = Number(raw);
-        if (isNaN(n) || n < 0 || n > 100) { showDialog('⚠️','Score must be a number 0-100.','OK'); return; }
-        score = n;
+
+// Shared save path for both worksheet and quiz Done. Called after the score
+// has been validated (score === null for non-quiz artifacts).
+// Applies optimistic UI mutation before the async write, then re-renders or
+// rolls back depending on the result.
+async function _studentMarkSave(btn, topicId, artifact, score) {
+    // Optimistic mutation: go straight to "✓ Saved" — no interim state.
+    // localStorage write (the source of truth per 540d168) happens inside
+    // recordProgress FIRST, so this matches reality immediately.
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '✓ Saved';
+        btn.style.opacity = '0.6';
     }
-    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
     var ok = await recordProgress(topicId, artifact, score);
 
     // Phase 4a+ compat: ALSO write a row to item_ledger via the gradebook
@@ -5516,13 +5609,222 @@ async function studentMark(btn, topicId, artifact) {
         showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
     } else if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '✓ Done';
+        btn.innerHTML = '&#10003; Done';
+    }
+}
+
+async function studentMark(btn, topicId, artifact) {
+    if (!getStudentEmail()) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return; }
+    if (artifact === 'quiz') {
+        // Inline score input: swap the slot's innerHTML instead of using
+        // a native prompt() so the Done-button latch is immediate.
+        var slot = btn ? btn.closest('.desk-quiz-done-slot') : null;
+        if (!slot) {
+            // Fallback: slot not found — skip (should not happen in normal flow).
+            return;
+        }
+        slot.innerHTML =
+            'Score: <input type="number" min="0" max="100" class="desk-quiz-score-input"'
+            + ' style="width:48px;font-size:9px;padding:1px 2px" autofocus>'
+            + ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:2px"'
+            + ' onclick="_studentMarkQuizSave(this,\'' + topicId + '\')">Save</button>'
+            + ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:2px"'
+            + ' onclick="_studentMarkQuizCancel()">Cancel</button>';
+        var input = slot.querySelector('.desk-quiz-score-input');
+        if (input) {
+            input.focus();
+            // Enter submits; Escape cancels without closing the modal.
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var saveBtn = slot.querySelector('button');
+                    if (saveBtn) saveBtn.click();
+                } else if (e.key === 'Escape') {
+                    e.stopPropagation();
+                    _studentMarkQuizCancel();
+                }
+            });
+        }
+        return;
+    }
+    // Non-quiz path (worksheet, blooket, video): proceed directly.
+    await _studentMarkSave(btn, topicId, artifact, null);
+}
+
+// Called from the inline quiz Save button's onclick.
+async function _studentMarkQuizSave(saveBtn, topicId) {
+    var slot = saveBtn ? saveBtn.closest('.desk-quiz-done-slot') : null;
+    if (!slot) return;
+    var input = slot.querySelector('.desk-quiz-score-input');
+    // Reject blank input explicitly: Number('') === 0 would silently record
+    // a real zero score, which is a bad data write (Codex MAJOR 2026-05-20).
+    var raw = input ? input.value : '';
+    if (typeof raw === 'string') raw = raw.trim();
+    if (raw === '' || raw == null) {
+        showDialog('⚠️', 'Score must be a number 0-100.', 'OK');
+        return;
+    }
+    var n = Number(raw);
+    if (isNaN(n) || n < 0 || n > 100) {
+        showDialog('⚠️', 'Score must be a number 0-100.', 'OK');
+        return;
+    }
+    // Re-render the slot back to a real Done button so _studentMarkSave
+    // has a real btn reference for the optimistic mutation.
+    slot.innerHTML = '<button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + topicId + '\',\'quiz\')">&#10003; Done</button>';
+    var btn = slot.querySelector('button');
+    await _studentMarkSave(btn, topicId, 'quiz', n);
+}
+
+// Cancel the inline quiz score input: re-render the panel so the bare
+// Done button is restored (localStorage is unchanged — no write happened).
+function _studentMarkQuizCancel() {
+    if (_lastResourcePanel) {
+        showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
     }
 }
 
 function closeResourcePanel() {
+    _detachResourcePanelKeyHandler();
+    // Reset focus to 'a' for the next open. Module-level so the focused row
+    // survives the 120ms recordLinkVisit re-render of an OPEN panel (Codex
+    // MAJOR 2026-05-20); reset here so closing fully cleans up state.
+    _focusedLetter = 'a';
     MacSFX.play('click', 0.3);
     document.getElementById('resource-overlay').style.display = 'none';
+}
+
+// Prong B: keyboard shortcut handler for the resource modal.
+var _resourcePanelKeyHandler = null;
+// Module-level so the focused row persists across the 120ms recordLinkVisit
+// re-render of an OPEN panel. Reset to 'a' on closeResourcePanel.
+var _focusedLetter = 'a';
+
+function _detachResourcePanelKeyHandler() {
+    if (_resourcePanelKeyHandler) {
+        document.removeEventListener('keydown', _resourcePanelKeyHandler);
+        _resourcePanelKeyHandler = null;
+    }
+}
+
+function _setFocusedRow(letter) {
+    _focusedLetter = letter;
+    var body = document.getElementById('resource-body');
+    if (!body) return;
+    // Clear all row focus outlines first.
+    var rows = body.querySelectorAll('div[data-desk-row-letter]');
+    rows.forEach(function(r) {
+        r.style.boxShadow = '';
+        r.style.borderRadius = '';
+    });
+    // Apply outline to the newly focused row.
+    var target = body.querySelector('div[data-desk-row-letter="' + letter + '"]');
+    if (target) {
+        target.style.boxShadow = 'inset 0 0 0 2px var(--accent, #88f)';
+        target.style.borderRadius = '3px';
+    }
+}
+
+function _attachResourcePanelKeyHandler() {
+    // Idempotent: detach any existing handler before re-attaching.
+    _detachResourcePanelKeyHandler();
+
+    // Re-apply the (persisted) focused-row outline. If the saved letter no
+    // longer maps to a row (e.g. row count shrank), fall back to 'a'.
+    var body = document.getElementById('resource-body');
+    if (body) {
+        var saved = body.querySelector('div[data-desk-row-letter="' + _focusedLetter + '"]');
+        if (!saved) _focusedLetter = 'a';
+        _setFocusedRow(_focusedLetter);
+    }
+
+    _resourcePanelKeyHandler = function(e) {
+        // Guard: only active while the modal is open.
+        if (document.getElementById('resource-overlay').style.display !== 'block') return;
+        // Guard: let modifier-key combos pass to browser.
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        // Guard: don't intercept when typing in an input/textarea/select.
+        var ae = document.activeElement;
+        if (ae) {
+            var tag = ae.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (ae.isContentEditable) return;
+        }
+
+        var key = e.key;
+
+        // Escape: close the modal.
+        if (key === 'Escape') {
+            closeResourcePanel();
+            return;
+        }
+
+        var body = document.getElementById('resource-body');
+        if (!body) return;
+
+        // Letter keys a-h: jump to row + open primary link.
+        var lowerKey = key.toLowerCase();
+        if (lowerKey.length === 1 && lowerKey >= 'a' && lowerKey <= 'h') {
+            var row = body.querySelector('div[data-desk-row-letter="' + lowerKey + '"]');
+            if (!row) return;
+            _setFocusedRow(lowerKey);
+            var topicId = row.getAttribute('data-desk-topic') || '';
+            var artifact = row.getAttribute('data-desk-artifact') || '';
+            var links = row.querySelectorAll('a');
+            var primaryLink = links.length > 0 ? links[0] : null;
+            if (primaryLink) {
+                window.open(primaryLink.getAttribute('href'), '_blank');
+                if (topicId && artifact) recordLinkVisit(topicId, artifact);
+            } else {
+                // No primary link (AI-tutor or Schoology status row): click first button.
+                var firstBtn = row.querySelector('button');
+                if (firstBtn) firstBtn.click();
+            }
+            return;
+        }
+
+        // Number keys 1-3: act on focused row.
+        var num = Number(key);
+        if (num >= 1 && num <= 3) {
+            var focusedRow = body.querySelector('div[data-desk-row-letter="' + _focusedLetter + '"]');
+            if (!focusedRow) return;
+            var rowLinks = focusedRow.querySelectorAll('a');
+            var rowPrimary = rowLinks.length > 0 ? rowLinks[0] : null;
+            // Alt link = second <a> with font-size:9px.
+            var rowAlt = null;
+            for (var li = 1; li < rowLinks.length; li++) {
+                if (rowLinks[li].style && rowLinks[li].style.fontSize === '9px') {
+                    rowAlt = rowLinks[li];
+                    break;
+                }
+            }
+            // Done button = button whose onclick starts with "studentMark".
+            var rowDone = null;
+            var rowBtns = focusedRow.querySelectorAll('button');
+            for (var bi = 0; bi < rowBtns.length; bi++) {
+                var roc = rowBtns[bi].getAttribute('onclick') || '';
+                if (roc.indexOf('studentMark') === 0) { rowDone = rowBtns[bi]; break; }
+            }
+            if (num === 1) {
+                // Primary link.
+                if (rowPrimary) {
+                    var rTopicId = focusedRow.getAttribute('data-desk-topic') || '';
+                    var rArtifact = focusedRow.getAttribute('data-desk-artifact') || '';
+                    window.open(rowPrimary.getAttribute('href'), '_blank');
+                    if (rTopicId && rArtifact) recordLinkVisit(rTopicId, rArtifact);
+                }
+            } else if (num === 2) {
+                // Secondary (alt) link — no-op if absent.
+                if (rowAlt) rowAlt.click();
+            } else if (num === 3) {
+                // Done button — click if present (disabled or not: matches mouse parity).
+                if (rowDone) rowDone.click();
+            }
+            return;
+        }
+    };
+
+    document.addEventListener('keydown', _resourcePanelKeyHandler);
 }
 
 // Phase 5/5.1: the canonical set of (unit, lesson) pairs that have an
