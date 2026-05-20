@@ -139,8 +139,12 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(body).toMatch(/Done\s*\(flashcards\)/);
   });
 
-  it('14: closeBlooketFlashcards clears _bfState (no leak across attempts)', () => {
-    const body = fnBody(DESK, 'closeBlooketFlashcards');
+  it('14: _bfCloseUI clears _bfState (called by both close + finish; no leak)', () => {
+    // 2026-05-20: close path was refactored into closeBlooketFlashcards
+    // (which saves progress first) + _bfCloseUI (which clears in-memory
+    // state without touching localStorage). The state-clearing lives in
+    // _bfCloseUI now.
+    const body = fnBody(DESK, '_bfCloseUI');
     expect(body).toMatch(/_bfState\.topic\s*=\s*null/);
     expect(body).toMatch(/_bfState\.deck\s*=\s*\[\]/);
   });
@@ -150,5 +154,64 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(DESK).toMatch(/id="bf-question"/);
     expect(DESK).toMatch(/id="bf-choices"/);
     expect(DESK).toMatch(/id="bf-result"/);
+  });
+
+  // ── 2026-05-20: flashcard progress persistence ─────────────────────────────
+  it('16: progress storage helpers (_bfSaveProgress/_bfLoadProgress/_bfClearProgress) exist', () => {
+    expect(DESK).toMatch(/function\s+_bfSaveProgress\s*\(/);
+    expect(DESK).toMatch(/function\s+_bfLoadProgress\s*\(/);
+    expect(DESK).toMatch(/function\s+_bfClearProgress\s*\(/);
+  });
+
+  it('17: openBlooketFlashcards tries to resume saved progress before fetching CSV', () => {
+    const body = fnBody(DESK, 'openBlooketFlashcards');
+    expect(body).toMatch(/_bfLoadProgress\s*\(\s*topicId\s*\)/);
+    // The fetch must be in an else / fallback branch — saved progress
+    // bypasses it entirely.
+    const loadIdx = body.indexOf('_bfLoadProgress');
+    const fetchIdx = body.indexOf('await fetch');
+    expect(loadIdx, 'load attempt before fetch').toBeLessThan(fetchIdx);
+  });
+
+  it('18: _bfNext saves progress after each advance', () => {
+    const body = fnBody(DESK, '_bfNext');
+    expect(body).toMatch(/_bfSaveProgress\s*\(\s*\)/);
+    // Must increment idx and save together.
+    expect(body).toMatch(/_bfState\.idx\s*\+=\s*1/);
+  });
+
+  it('19: closeBlooketFlashcards saves progress (Cancel preserves resume state)', () => {
+    const body = fnBody(DESK, 'closeBlooketFlashcards');
+    expect(body).toMatch(/_bfSaveProgress\s*\(\s*\)/);
+  });
+
+  it('20: _bfFinish clears progress on pass (deck complete) before auto-mark', () => {
+    const body = fnBody(DESK, '_bfFinish');
+    expect(body).toMatch(/_bfClearProgress\s*\(\s*topicId\s*\)/);
+    // The clear must be inside the if(passed) block (before the auto-mark
+    // setTimeout). Walk backward from the clear call to confirm.
+    const clearIdx = body.indexOf('_bfClearProgress');
+    const slice = body.slice(0, clearIdx);
+    expect(slice.lastIndexOf('if (passed')).toBeGreaterThan(-1);
+  });
+
+  it('21: storage key is scoped per student email', () => {
+    const body = fnBody(DESK, '_bfStorageKey');
+    expect(body).toMatch(/getStudentEmail/);
+    expect(body).toMatch(/apstats_desk_bf_progress_/);
+  });
+
+  it('22: load defensively returns null if saved idx is past deck length (corruption guard)', () => {
+    const body = fnBody(DESK, '_bfLoadProgress');
+    // Must check that idx < deck.length before returning the entry.
+    expect(body).toMatch(/entry\.deck\.length/);
+    expect(body).toMatch(/idx\s*\|\|\s*0\s*\)\s*>=\s*entry\.deck\.length/);
+  });
+
+  it('23: retry button clears + reshuffles + saves new shuffle (fresh start)', () => {
+    const body = fnBody(DESK, '_bfFinish');
+    // Retry handler must reshuffle, reset idx/score, and save.
+    expect(body).toMatch(/_bfShuffle\s*\(\s*_bfState\.deck\s*\)/);
+    expect(body).toMatch(/_bfSaveProgress\s*\(\s*\)/);
   });
 });

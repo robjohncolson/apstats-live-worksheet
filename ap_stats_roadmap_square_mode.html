@@ -1096,7 +1096,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openProgress()" style="font-weight:bold">&#128202; My Progress</div> -->
         </div>
     </span>
-    <span class="menu-item" data-menu="student">Student
+    <span class="menu-item" data-menu="student">User
         <div class="menu-dropdown" id="menu-student">
             <div class="menu-dd-item disabled" id="menu-student-status">Not signed in</div>
             <div class="menu-dd-sep"></div>
@@ -1104,9 +1104,13 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();signOutStudent()">&#128100; Sign Out</div>
         </div>
     </span>
-    <span class="menu-item" data-menu="teacher">Teacher
+    <!-- 2026-05-20: Teacher menu is role-gated. Hidden by default; revealed
+         only when the signed-in user is a teacher (set via the teacher
+         access code on the sign-in modal). Hide rule lives in CSS so it's
+         immediate on page load — no flash of the menu before JS evaluates. -->
+    <span class="menu-item" data-menu="teacher" id="menu-item-teacher" style="display:none">Teacher
         <div class="menu-dropdown" id="menu-teacher">
-            <div class="menu-dd-item disabled" style="font-style:italic;font-size:10px">Requires teacher secret</div>
+            <div class="menu-dd-item disabled" style="font-style:italic;font-size:10px">Teacher tools</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-dashboard.html','_blank')">&#128202; Gradebook Dashboard</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-roster-console.html','_blank')">&#128221; Roster Console</div>
@@ -1277,6 +1281,19 @@
                 <div style="margin-bottom:8px">Sign in with the username &amp; password your teacher gave you.</div>
                 <input type="text" id="signin-username" class="geneva" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="username (e.g. coconut_shark)">
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
+                <!-- 2026-05-20: Teacher checkbox + access code. Checkbox is
+                     disabled by default; typing the correct access code in
+                     the field below enables (and auto-checks) it. Default
+                     code is "google231"; teacher can override via
+                     localStorage.apstats_teacher_access_code. -->
+                <div style="margin-top:8px;border-top:1px dashed var(--plat-lo);padding-top:6px">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:default">
+                        <input type="checkbox" id="signin-teacher" disabled style="margin:0">
+                        <span>Sign in as teacher</span>
+                        <span id="signin-teacher-status" style="font-size:9px;color:var(--plat-lo);font-style:italic">(enter access code)</span>
+                    </label>
+                    <input type="password" id="signin-teacher-code" autocomplete="off" placeholder="Teacher access code (optional)" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-top:4px">
+                </div>
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
             </div>
         </div>
@@ -3599,16 +3616,73 @@ function updateStudentMenu() {
   el.textContent = email ? ('Signed in as: ' + email) : 'Not signed in';
 }
 
+// 2026-05-20: teacher access code lives in a const; override via
+// localStorage 'apstats_teacher_access_code' (e.g. for rotation).
+const TEACHER_ACCESS_CODE_DEFAULT = 'google231';
+function _teacherAccessCode() {
+  try {
+    var v = localStorage.getItem('apstats_teacher_access_code');
+    if (v && v.length > 0) return v;
+  } catch (_) {}
+  return TEACHER_ACCESS_CODE_DEFAULT;
+}
+
+// Wire the access-code input → enables the Teacher checkbox when the
+// code matches. Auto-checks once enabled so the teacher doesn't have to
+// also click the checkbox.
+function _onTeacherCodeInput() {
+  var cInp = document.getElementById('signin-teacher-code');
+  var chk = document.getElementById('signin-teacher');
+  var status = document.getElementById('signin-teacher-status');
+  if (!cInp || !chk) return;
+  var match = (cInp.value || '') === _teacherAccessCode();
+  chk.disabled = !match;
+  if (match) {
+    chk.checked = true;
+    if (status) { status.textContent = '(code accepted)'; status.style.color = '#1f8b3b'; }
+  } else {
+    chk.checked = false;
+    if (status) { status.textContent = '(enter access code)'; status.style.color = ''; }
+  }
+}
+
+// Reflect the persisted user-role into the title bar (show/hide Teacher
+// menu). Called on page load + after sign-in/out.
+function updateUserRoleUI() {
+  var teacherMenu = document.getElementById('menu-item-teacher');
+  if (!teacherMenu) return;
+  var role = null;
+  try { role = localStorage.getItem('apstats_user_role'); } catch (_) {}
+  if (role === 'teacher') {
+    teacherMenu.style.display = '';
+  } else {
+    teacherMenu.style.display = 'none';
+  }
+}
+
 function openSignInModal() {
   var ov = document.getElementById('signin-overlay');
   if (!ov) return;
   var uInp = document.getElementById('signin-username');
   var pInp = document.getElementById('signin-password');
+  var cInp = document.getElementById('signin-teacher-code');
+  var chk = document.getElementById('signin-teacher');
   var err = document.getElementById('signin-error');
   if (err) err.textContent = '';
   var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
   if (uInp) { uInp.value = (who && who.username) || getStudentEmail() || ''; }
   if (pInp) { pInp.value = ''; }
+  // Reset the teacher fields every open so a fresh modal doesn't leak
+  // state. Wire the input listener (idempotent — oninput re-binds).
+  // typeof-guarded so DN2c's vm-test of openSignInModal (which doesn't
+  // load _onTeacherCodeInput into its sandbox) keeps passing.
+  if (cInp) {
+    cInp.value = '';
+    if (typeof _onTeacherCodeInput === 'function') cInp.oninput = _onTeacherCodeInput;
+    cInp.onkeydown = function (e) { if (e.key === 'Enter') submitSignIn(); };
+  }
+  if (chk) { chk.checked = false; chk.disabled = true; }
+  if (typeof _onTeacherCodeInput === 'function') _onTeacherCodeInput();
   ov.style.display = 'block';
   MacSFX.play('sosumi', 0.5);
   setTimeout(function(){ if (uInp) uInp.focus(); }, 50);
@@ -3665,7 +3739,25 @@ async function submitSignIn() {
     var legacyKey = who.username || username;
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     registerStudent(legacyKey);
+    // 2026-05-20: persist the user role from the Teacher checkbox.
+    // Defensive re-check: the checkbox can only be true if the access
+    // code matched at input time. We re-validate here so a manual DOM
+    // poke can't promote a student to teacher. typeof-guarded so DN2c's
+    // vm-test of submitSignIn (which loads only this function into its
+    // sandbox) keeps passing — same cross-sprint pattern as paintDonowCells.
+    try {
+      var chk = document.getElementById('signin-teacher');
+      var codeInp = document.getElementById('signin-teacher-code');
+      var codeMatch = codeInp && typeof _teacherAccessCode === 'function'
+                      && codeInp.value === _teacherAccessCode();
+      if (chk && chk.checked && codeMatch) {
+        localStorage.setItem('apstats_user_role', 'teacher');
+      } else {
+        localStorage.removeItem('apstats_user_role');
+      }
+    } catch (_) {}
     updateStudentMenu();
+    if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
     closeSignInModal();
     // TR2: a teacher-issued default password must be changed before continuing.
     // The welcome + Do Now refresh happen AFTER the new password is set.
@@ -3684,7 +3776,12 @@ async function submitSignIn() {
 function signOutStudent() {
   if (window.rosterClient && window.rosterClient.signOut) window.rosterClient.signOut();
   localStorage.removeItem('apstats_desk_student_email');
+  // 2026-05-20: also clear the teacher role on sign-out so the next
+  // student who signs in on the same machine doesn't inherit teacher
+  // privileges from the previous session.
+  try { localStorage.removeItem('apstats_user_role'); } catch (_) {}
   updateStudentMenu();
+  if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
   location.reload();
 }
 
@@ -5816,6 +5913,54 @@ var _bfState = {
     answered: false, // current card already answered?
 };
 
+// 2026-05-20: persist progress per (student, topic) so cancel/close
+// doesn't reset. Resumes the same shuffled deck at the same card.
+function _bfStorageKey() {
+    try {
+        var email = (typeof getStudentEmail === 'function') ? getStudentEmail() : null;
+        if (!email) return null;
+        return 'apstats_desk_bf_progress_' + email;
+    } catch (_) { return null; }
+}
+
+function _bfSaveProgress() {
+    var key = _bfStorageKey();
+    if (!key || !_bfState.topic || !Array.isArray(_bfState.deck) || _bfState.deck.length === 0) return;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key) || '{}');
+        saved[_bfState.topic] = {
+            deck: _bfState.deck,
+            idx: _bfState.idx,
+            score: _bfState.score,
+            ts: new Date().toISOString(),
+        };
+        localStorage.setItem(key, JSON.stringify(saved));
+    } catch (_) {}
+}
+
+function _bfLoadProgress(topic) {
+    var key = _bfStorageKey();
+    if (!key) return null;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key) || '{}');
+        var entry = saved[topic];
+        if (!entry || !Array.isArray(entry.deck) || entry.deck.length === 0) return null;
+        // Defensive: if idx is beyond the deck, treat as no resume.
+        if ((entry.idx || 0) >= entry.deck.length) return null;
+        return entry;
+    } catch (_) { return null; }
+}
+
+function _bfClearProgress(topic) {
+    var key = _bfStorageKey();
+    if (!key) return;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key) || '{}');
+        if (topic) delete saved[topic]; else saved = {};
+        localStorage.setItem(key, JSON.stringify(saved));
+    } catch (_) {}
+}
+
 // Resolve the Blooket CSV path for a topic via the registry's worksheet URL.
 // Topic 1.2 → registry.urls.worksheet = "...u1_lesson2_live.html" →
 // "u1_l2_blooket.csv". Combined: topic 4.1 → ".../u4_lesson1-2_live.html" →
@@ -5891,33 +6036,50 @@ function _bfShuffle(arr) {
 }
 
 async function openBlooketFlashcards(btn, topicId) {
-    var csvPath = _bfCsvPath(topicId);
-    if (!csvPath) {
-        showDialog('⚠️', 'No flashcard deck available for this lesson yet.', 'OK');
-        return;
+    // 2026-05-20: try to resume saved progress first. If present, use the
+    // saved deck (preserves the shuffle order so the student picks up at
+    // the same card) and skip the CSV fetch entirely.
+    var resumed = _bfLoadProgress(topicId);
+    var isResume = false;
+    if (resumed) {
+        _bfState.topic = topicId;
+        _bfState.btn = btn;
+        _bfState.deck = resumed.deck;
+        _bfState.idx = resumed.idx || 0;
+        _bfState.score = resumed.score || 0;
+        _bfState.answered = false;
+        isResume = true;
+    } else {
+        // Fresh load from CSV.
+        var csvPath = _bfCsvPath(topicId);
+        if (!csvPath) {
+            showDialog('⚠️', 'No flashcard deck available for this lesson yet.', 'OK');
+            return;
+        }
+        var text;
+        try {
+            var res = await fetch(csvPath);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            text = await res.text();
+        } catch (e) {
+            showDialog('⚠️', 'Could not load the flashcard deck. Try again.', 'OK');
+            return;
+        }
+        var deck = _bfRowsToDeck(_bfParseCsv(text));
+        if (!deck.length) {
+            showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK');
+            return;
+        }
+        _bfState.topic = topicId;
+        _bfState.btn = btn;
+        _bfState.deck = _bfShuffle(deck);
+        _bfState.idx = 0;
+        _bfState.score = 0;
+        _bfState.answered = false;
+        _bfSaveProgress();
     }
-    var text;
-    try {
-        var res = await fetch(csvPath);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        text = await res.text();
-    } catch (e) {
-        showDialog('⚠️', 'Could not load the flashcard deck. Try again.', 'OK');
-        return;
-    }
-    var deck = _bfRowsToDeck(_bfParseCsv(text));
-    if (!deck.length) {
-        showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK');
-        return;
-    }
-    _bfState.topic = topicId;
-    _bfState.btn = btn;
-    _bfState.deck = _bfShuffle(deck);
-    _bfState.idx = 0;
-    _bfState.score = 0;
-    _bfState.answered = false;
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Flashcard quiz — ' + topicId + ' (pass ≥ 80%)';
+    if (header) header.textContent = 'Flashcard quiz — ' + topicId + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%)';
     document.getElementById('bf-result').style.display = 'none';
     _bfRenderCard();
     document.getElementById('bf-overlay').style.display = 'block';
@@ -5982,6 +6144,7 @@ function _bfAnswer(idx) {
 
 function _bfNext() {
     _bfState.idx += 1;
+    _bfSaveProgress();   // persist advance so close/cancel resumes here
     _bfRenderCard();
 }
 
@@ -6023,6 +6186,7 @@ async function _bfFinish() {
                 _bfState.idx = 0;
                 _bfState.score = 0;
                 result.style.display = 'none';
+                _bfSaveProgress();   // new shuffle → save so close-mid-retry resumes here
                 _bfRenderCard();
             };
             result.appendChild(retry);
@@ -6033,15 +6197,21 @@ async function _bfFinish() {
         var btn = _bfState.btn;
         var topicId = _bfState.topic;
         var score = Math.round(pct * 1000) / 10;
+        // Deck is complete and passed — clear saved progress so a future
+        // re-do (e.g. for practice) starts a fresh shuffle.
+        _bfClearProgress(topicId);
         // Brief pause so the student sees the pass message before the modal closes.
         setTimeout(async function () {
-            closeBlooketFlashcards();
+            _bfCloseUI();   // don't re-save on close; we just cleared.
             await _studentMarkSave(btn, topicId, 'blooket', score);
         }, 1200);
     }
 }
 
-function closeBlooketFlashcards() {
+// Internal: close the modal + reset in-memory state. Does NOT save or
+// clear localStorage. Used by both Cancel (which DOES want to save
+// progress beforehand) and the pass path (which already cleared).
+function _bfCloseUI() {
     var ov = document.getElementById('bf-overlay');
     if (ov) ov.style.display = 'none';
     _bfState.topic = null;
@@ -6050,6 +6220,16 @@ function closeBlooketFlashcards() {
     _bfState.idx = 0;
     _bfState.score = 0;
     _bfState.answered = false;
+}
+
+function closeBlooketFlashcards() {
+    // Cancel path: persist progress before tearing down so a re-open
+    // resumes at the same card with the same shuffled deck and score.
+    // Skip if the deck is fully traversed (already handled by _bfFinish).
+    if (_bfState.topic && _bfState.idx < (_bfState.deck && _bfState.deck.length || 0)) {
+        _bfSaveProgress();
+    }
+    _bfCloseUI();
 }
 
 // Called from the inline quiz/blooket Save button's onclick. The artifact
@@ -9416,6 +9596,7 @@ uClock();setInterval(uClock,15e3);
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
 loadRegistry();
 updateStudentMenu();
+updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
 /* ── Boot Dismissal (click-to-start after progress bar) ── */
