@@ -160,6 +160,42 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/User\s*▸\s*Sign In/);
   });
 
+  // ── 2026-05-20: username datalist autocomplete ─────────────────────────────
+  it('11: username field has list="signin-username-list" + the datalist element exists', () => {
+    expect(DESK).toMatch(/id="signin-username"[^>]*list="signin-username-list"/);
+    expect(DESK).toMatch(/<datalist\s+id="signin-username-list">/);
+  });
+
+  it('12: known-user helpers exist (load / add / populate) with sane cap', () => {
+    expect(DESK).toMatch(/function\s+_loadKnownUsers\s*\(/);
+    expect(DESK).toMatch(/function\s+_addKnownUser\s*\(/);
+    expect(DESK).toMatch(/function\s+_populateUsernameDatalist\s*\(/);
+    expect(DESK).toMatch(/KNOWN_USERS_KEY\s*=\s*['"]apstats_desk_known_users['"]/);
+    expect(DESK).toMatch(/KNOWN_USERS_CAP\s*=\s*20/);
+  });
+
+  it('13: _addKnownUser dedupes case-insensitively + caps + skips synthetic teacher identity', () => {
+    const body = fnBody(DESK, '_addKnownUser');
+    expect(body).toMatch(/teacher@desk\.local/);     // skip synthetic
+    expect(body).toMatch(/toLowerCase\s*\(\s*\)/);   // case-insensitive dedupe
+    expect(body).toMatch(/unshift/);                  // most-recent first
+    expect(body).toMatch(/KNOWN_USERS_CAP/);          // cap applied
+  });
+
+  it('14: openSignInModal re-populates the datalist on every open', () => {
+    const body = fnBody(DESK, 'openSignInModal');
+    expect(body).toMatch(/_populateUsernameDatalist\s*\(\s*\)/);
+  });
+
+  it('15: both sign-in success paths add to known users (standalone teacher + roster signin)', () => {
+    const body = fnBody(DESK, 'submitSignIn');
+    // The standalone-teacher branch calls _addKnownUser when a real
+    // username (not the synthetic) was typed.
+    expect(body).toMatch(/_addKnownUser\s*\(\s*teacherIdent\s*\)/);
+    // The roster-signin success path calls _addKnownUser with the legacy key.
+    expect(body).toMatch(/_addKnownUser\s*\(\s*legacyKey\s*\)/);
+  });
+
   it('10c: fast-path logs the match attempt to console (self-diagnosing for remote-debug)', () => {
     const body = fnBody(DESK, 'submitSignIn');
     // Looks for a console.log line that mentions the submit attempt.

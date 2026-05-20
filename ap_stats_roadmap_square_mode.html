@@ -1279,7 +1279,13 @@
             <div class="dialog-msg geneva" style="font-size:11px">
                 <div class="chicago" style="font-size:12px;margin-bottom:4px">Sign In</div>
                 <div style="margin-bottom:8px">Sign in with the username &amp; password your teacher gave you.</div>
-                <input type="text" id="signin-username" class="geneva" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="username (e.g. coconut_shark)">
+                <!-- 2026-05-20: username field uses a native datalist for
+                     autocomplete. Each successful sign-in is remembered in
+                     localStorage; opening the modal repopulates suggestions
+                     so repeat users only type their password. Cap at 20
+                     entries, most-recent first. -->
+                <input type="text" id="signin-username" class="geneva" list="signin-username-list" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="username (e.g. coconut_shark) — click for suggestions">
+                <datalist id="signin-username-list"></datalist>
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
                 <!-- Teacher access (v4 UX restored after v5 detour 2026-05-20):
                      compact checkbox + access-code field. Type the correct
@@ -3645,6 +3651,48 @@ window.makeMeTeacher = function makeMeTeacher(syntheticName) {
   }
 };
 
+// 2026-05-20: per-device username history → datalist autocomplete.
+// Successful sign-ins push the username onto the list (deduped, capped
+// at 20, most-recent first). Pure client-side; no server endpoint
+// needed; doesn't leak the global roster.
+const KNOWN_USERS_KEY = 'apstats_desk_known_users';
+const KNOWN_USERS_CAP = 20;
+function _loadKnownUsers() {
+  try {
+    var raw = localStorage.getItem(KNOWN_USERS_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter(function (u) { return typeof u === 'string' && u.length > 0; }) : [];
+  } catch (_) { return []; }
+}
+function _addKnownUser(username) {
+  if (!username || typeof username !== 'string') return;
+  var clean = username.trim();
+  if (!clean) return;
+  // Skip the synthetic standalone-teacher identity — it's not a real
+  // student a teacher would pick from a list.
+  if (clean === 'teacher@desk.local') return;
+  try {
+    var arr = _loadKnownUsers();
+    // De-dupe case-insensitively, preserve original casing of the new entry.
+    arr = arr.filter(function (u) { return u.toLowerCase() !== clean.toLowerCase(); });
+    arr.unshift(clean);
+    if (arr.length > KNOWN_USERS_CAP) arr = arr.slice(0, KNOWN_USERS_CAP);
+    localStorage.setItem(KNOWN_USERS_KEY, JSON.stringify(arr));
+  } catch (_) {}
+}
+function _populateUsernameDatalist() {
+  var dl = document.getElementById('signin-username-list');
+  if (!dl) return;
+  while (dl.firstChild) dl.removeChild(dl.firstChild);
+  var users = _loadKnownUsers();
+  users.forEach(function (u) {
+    var opt = document.createElement('option');
+    opt.value = u;
+    dl.appendChild(opt);
+  });
+}
+
 // 2026-05-20: teacher access code lives in a const; override via
 // localStorage 'apstats_teacher_access_code' (e.g. for rotation).
 const TEACHER_ACCESS_CODE_DEFAULT = 'google231';
@@ -3705,6 +3753,10 @@ function openSignInModal() {
   var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
   if (uInp) { uInp.value = (who && who.username) || getStudentEmail() || ''; }
   if (pInp) { pInp.value = ''; }
+  // 2026-05-20: refresh the username dropdown suggestions every open
+  // so newly-remembered users show up immediately. Typeof-guarded for
+  // DN2c's vm-test which doesn't load this helper into its sandbox.
+  if (typeof _populateUsernameDatalist === 'function') _populateUsernameDatalist();
   // Reset the teacher code field + wire the visual feedback. Multiple
   // event types so paste / autofill / fast typing all trigger the
   // status update. typeof-guarded so DN2c's vm-test sandbox still works.
@@ -3786,6 +3838,10 @@ async function submitSignIn() {
                          ? typedUser
                          : 'teacher@desk.local';
         localStorage.setItem('apstats_desk_student_email', teacherIdent);
+        // Remember a real username if one was typed (skip the synthetic).
+        if (typeof _addKnownUser === 'function' && teacherIdent !== 'teacher@desk.local') {
+          _addKnownUser(teacherIdent);
+        }
         updateStudentMenu();
         if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
         closeSignInModal();
@@ -3837,6 +3893,8 @@ async function submitSignIn() {
     var legacyKey = who.username || username;
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     registerStudent(legacyKey);
+    // 2026-05-20: remember this username for the sign-in dropdown.
+    if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
     // 2026-05-20 v6: re-check teacher access code AFTER successful roster
     // signin, using the same tolerant v4 matching (any of 3 fields, trim,
     // case-insensitive). This is the "teacher with a real student account"
