@@ -20,21 +20,22 @@
 > Remediation panel, migration `0004_remediation_assignment.sql`,
 > `roster-server/tests/remediation.test.js` 50/50, `tests/phase4b-
 > structure.test.js` 16/16, all Codex 0BLK+4MAJ+2MIN folded.
-> **⚠ TWO USER-OWNED HANDOFFS pending before Phase 4b is functional in
-> prod (BOTH on hold during a confirmed Railway outage — IsDown reported
-> 1593 user reports / 24h on 2026-05-19 8:06 PM EDT):** (1) once Railway
-> is back up, `railway login` then `cd roster-server && railway up --ci
-> -s roster`. The OAuth-503/404, the silent `railway login`, and the
-> "Application not found" on `roster-production-12c1.up.railway.app/health`
-> (`X-Railway-Fallback: true`) are ALL symptoms of the outage — NOT an
-> auth-flow drift or a service-URL change. The service definitely
-> existed and was prod-verified through `13cb326`. Do NOT spend reload
-> debugging Railway plumbing; just retry the deploy once Railway is
-> green. (2) Run `roster-server/migrations/0004_remediation_assignment
-> .sql` in the curriculum_render Supabase SQL editor
-> (`bzqbhtrurzzavhqbgqrs`) to provision the new table. Until both done,
-> /remediation/* returns 503 "remediation table not yet provisioned" in
-> prod (after redeploy) — the rest of the service stays up. **NEXT optional loop task = wrap session
+> **⚠ ONE USER-OWNED HANDOFF still pending (blocked on confirmed Railway
+> outage — IsDown reported 1593 user reports / 24h on 2026-05-19 8:06 PM
+> EDT):** once Railway is back up, user runs `railway login` then I run
+> `cd roster-server && railway up --ci -s roster`. The OAuth-503/404, the
+> silent `railway login`, and the "Application not found" on
+> `roster-production-12c1.up.railway.app/health` (`X-Railway-Fallback:
+> true`) are ALL symptoms of the outage — NOT an auth-flow drift or a
+> service-URL change. The service was prod-verified through `13cb326`.
+> Do NOT spend reload debugging Railway plumbing; just retry the deploy
+> once Railway is green. **✅ The Supabase migration step is DONE: user
+> ran `roster-server/migrations/0004_remediation_assignment.sql` on
+> 2026-05-19 (curriculum_render Supabase, `bzqbhtrurzzavhqbgqrs`). The
+> `remediation_assignment` table is live in the DB.** Once the deploy
+> lands, /remediation/* should return 200 (not 503) — smoke-test with
+> `curl -H "x-teacher-secret: $S" $BASE/remediation/list` and expect a
+> `{ok:true, assignments:[]}` shape. **NEXT optional loop task = wrap session
 > OR Phase 5.1** (PC-tile AI-tutor wiring; 9 unit-PC artifacts remain
 > unwired) once user un-blocks deploy. The concurrent TR session is
 > DONE & deployed → roster-server contention RELEASED. The concurrent
