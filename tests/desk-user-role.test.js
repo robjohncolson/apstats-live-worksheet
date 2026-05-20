@@ -112,11 +112,12 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/cInp\.onkeydown\s*=\s*function[\s\S]{0,150}submitSignIn\s*\(\s*\)/);
   });
 
-  it('10: submitSignIn TEACHER FAST-PATH runs BEFORE rosterClient.signIn (v4 tolerant matching)', () => {
-    // 2026-05-20 v4: the fast-path checks ALL three input fields
-    // (teacher-code, password, username) for the access code. Trim + case-
-    // insensitive. Removes the "wrong field" footgun — paste the code
-    // anywhere in the modal and it works.
+  it('10: submitSignIn fast-path only takes the standalone teacher branch when credentials are EMPTY', () => {
+    // 2026-05-20 v6: when username+password are also typed, the fast-path
+    // FALLS THROUGH to the regular roster signin (so the teacher gets a
+    // token for /donow + /grade fetches). Only the code-only case takes
+    // the standalone fast-path. Teacher flag still set in the post-signin
+    // block when the code matches.
     const body = fnBody(DESK, 'submitSignIn');
     expect(body).toMatch(/expectedCode\s*=/);
     expect(body).toMatch(/_teacherAccessCode\s*\(\s*\)/);
@@ -125,17 +126,38 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/signin-teacher-code/);
     // Tolerant matching: trim + toLowerCase BOTH sides.
     expect(body).toMatch(/\.trim\s*\(\s*\)\s*\.toLowerCase\s*\(\s*\)/);
-    // Sets role on match.
+    // The standalone branch is GUARDED on empty username+password.
+    expect(body).toMatch(/if\s*\(\s*!typedUser\s*\|\|\s*!typedPass\s*\)/);
+    // Sets role on standalone match.
     expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]\s*,\s*['"]teacher['"]/);
     expect(body).toMatch(/teacher@desk\.local/);
-    // Closes the modal + early-returns before the roster auth path.
-    expect(body).toMatch(/closeSignInModal\s*\(\s*\)[\s\S]{0,400}return\s*;/);
     // The fast-path must come BEFORE the rosterClient.signIn check.
     const fastIdx = body.search(/matchField/);
     const rosterIdx = body.search(/rosterClient\.signIn/);
     expect(fastIdx, 'fast-path must exist').toBeGreaterThan(-1);
     expect(rosterIdx, 'roster signIn must exist').toBeGreaterThan(-1);
     expect(fastIdx, 'fast-path must precede roster signIn').toBeLessThan(rosterIdx);
+  });
+
+  it('10d: post-signin block also matches code across all 3 fields (tolerant, v6)', () => {
+    // The "teacher with a real student account" path: roster signin gives
+    // a token, then the code check sets the teacher flag too.
+    const body = fnBody(DESK, 'submitSignIn');
+    // Find the post-signin code-check block — it's identified by
+    // codeMatchAfter / expectedLcAfter / fieldsAfter.
+    expect(body).toMatch(/codeMatchAfter/);
+    expect(body).toMatch(/expectedLcAfter/);
+    expect(body).toMatch(/fieldsAfter/);
+    // Iterates the 3 fields (teacher-code, password, username).
+    expect(body).toMatch(/getElementById\s*\(\s*['"]signin-teacher-code['"]/);
+  });
+
+  it('10e: Do Now sign-in nudge points at the User menu (not the renamed Student menu)', () => {
+    // The renderDoNow nudge string was stale: "Student ▸ Gradebook" but
+    // the menu is now "User ▸ Sign In". Updated.
+    const body = fnBody(DESK, 'renderDoNow');
+    expect(body).not.toMatch(/Student\s*▸\s*Gradebook/);
+    expect(body).toMatch(/User\s*▸\s*Sign In/);
   });
 
   it('10c: fast-path logs the match attempt to console (self-diagnosing for remote-debug)', () => {

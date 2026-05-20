@@ -3770,20 +3770,31 @@ async function submitSignIn() {
                   ' match:', matchField || '(none)');
     } catch (_) {}
     if (matchField) {
-      localStorage.setItem('apstats_user_role', 'teacher');
-      // Synthetic identity — but only if the username field isn't the
-      // one holding the access code (don't make the teacher's identity
-      // be the code itself).
+      // 2026-05-20 v6: ONLY take the standalone teacher fast-path when no
+      // student credentials are provided. If username+password are also
+      // typed, fall through to the regular roster signin so the teacher
+      // gets a real roster TOKEN (needed for /donow + /grade fetches) AND
+      // the teacher flag set after. Previously the early-return here
+      // skipped roster auth, breaking the Do Now card for teachers who
+      // wanted to test the student experience.
       var typedUser = (uInp && uInp.value || '').trim();
-      var teacherIdent = (typedUser && typedUser.toLowerCase() !== expectedLc)
-                       ? typedUser
-                       : 'teacher@desk.local';
-      localStorage.setItem('apstats_desk_student_email', teacherIdent);
-      updateStudentMenu();
-      if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
-      closeSignInModal();
-      showDialog('\u{1F464}', 'Signed in as teacher. (Teacher menu now available.)', 'OK');
-      return;
+      var typedPass = (pInp && pInp.value || '');
+      if (!typedUser || !typedPass) {
+        // Standalone teacher: code only, no credentials. Synthetic identity.
+        localStorage.setItem('apstats_user_role', 'teacher');
+        var teacherIdent = (typedUser && typedUser.toLowerCase() !== expectedLc)
+                         ? typedUser
+                         : 'teacher@desk.local';
+        localStorage.setItem('apstats_desk_student_email', teacherIdent);
+        updateStudentMenu();
+        if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+        closeSignInModal();
+        showDialog('\u{1F464}', 'Signed in as teacher. (Teacher menu now available.)', 'OK');
+        return;
+      }
+      // Else: credentials are present. Fall through to roster signin.
+      // The teacher flag will be set in the post-signin block below
+      // (which already uses the same tolerant-matching check).
     }
   } catch (e) {
     try { console.warn('[desk submitSignIn] teacher fast-path error:', e); } catch (_) {}
@@ -3826,20 +3837,31 @@ async function submitSignIn() {
     var legacyKey = who.username || username;
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     registerStudent(legacyKey);
-    // 2026-05-20 v2: the access CODE is the gate, not the checkbox. If the
-    // user typed the right code into signin-teacher-code, promote to
-    // teacher regardless of whether the live UI got the checkbox checked.
-    // (Chrome's password autofill could bypass the input event and leave
-    // the checkbox visually disabled; we don't want a UI glitch to lock
-    // a teacher out of their role.) The checkbox now signals "yes, I
-    // entered the right code"; the code itself authorizes.
-    // typeof-guarded so DN2c's vm-test of submitSignIn (which loads only
-    // this function into its sandbox) keeps passing.
+    // 2026-05-20 v6: re-check teacher access code AFTER successful roster
+    // signin, using the same tolerant v4 matching (any of 3 fields, trim,
+    // case-insensitive). This is the "teacher with a real student account"
+    // path — token from roster + teacher flag from code. The earlier
+    // standalone fast-path handled "teacher without an account."
     try {
-      var codeInp = document.getElementById('signin-teacher-code');
-      var codeMatch = codeInp && typeof _teacherAccessCode === 'function'
-                      && codeInp.value === _teacherAccessCode();
-      if (codeMatch) {
+      var expectedAfter = (typeof _teacherAccessCode === 'function') ? _teacherAccessCode() : null;
+      var codeMatchAfter = false;
+      if (expectedAfter) {
+        var expectedLcAfter = String(expectedAfter).trim().toLowerCase();
+        var fieldsAfter = [
+          document.getElementById('signin-teacher-code'),
+          pInp,
+          uInp,
+        ];
+        for (var iAfter = 0; iAfter < fieldsAfter.length; iAfter++) {
+          var fEl = fieldsAfter[iAfter];
+          if (!fEl) continue;
+          if ((fEl.value || '').trim().toLowerCase() === expectedLcAfter) {
+            codeMatchAfter = true;
+            break;
+          }
+        }
+      }
+      if (codeMatchAfter) {
         localStorage.setItem('apstats_user_role', 'teacher');
       } else {
         localStorage.removeItem('apstats_user_role');
@@ -3854,7 +3876,9 @@ async function submitSignIn() {
       openPwChangeModal();
     } else {
       if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded so DN2c stays decoupled
-      showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + '.','OK');
+      var roleLabel = '';
+      try { if (localStorage.getItem('apstats_user_role') === 'teacher') roleLabel = ' (teacher mode)'; } catch (_) {}
+      showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + roleLabel + '.','OK');
     }
   } finally {
     submitSignIn._pending = false;
@@ -4174,7 +4198,7 @@ async function renderDoNow() {
     } catch (_) { token = null; }
 
     if (!token) {
-      show('Sign in (Student ▸ Gradebook) so your work counts and your Do Now appears here.', 'signin');
+      show('Sign in (User ▸ Sign In) so your work counts and your Do Now appears here.', 'signin');
       return;
     }
 
