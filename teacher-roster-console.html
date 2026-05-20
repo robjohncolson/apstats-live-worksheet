@@ -178,18 +178,24 @@
       <h2 class="section-title">Connection</h2>
       <div class="row-2">
         <div class="form-row">
-          <label for="svc-url">Roster service URL</label>
+          <label for="svc-url-select">Roster service URL</label>
+          <select id="svc-url-select" style="margin-bottom:6px">
+            <option value="http://localhost:8091">Local dev (localhost:8091)</option>
+            <option value="https://roster-production-12c1.up.railway.app">Railway production</option>
+            <option value="__custom__">Custom...</option>
+          </select>
           <input id="svc-url" type="text" spellcheck="false"
-                 value="https://roster-production-12c1.up.railway.app">
+                 value="http://localhost:8091" style="display:none">
         </div>
         <div class="form-row">
           <label for="teacher-secret">Teacher secret</label>
           <input id="teacher-secret" type="password" autocomplete="off" spellcheck="false"
-                 placeholder="x-teacher-secret (not stored)">
+                 placeholder="x-teacher-secret">
         </div>
       </div>
       <div class="btn-row">
-        <label class="hint"><input type="checkbox" id="remember-secret" style="width:auto;margin-right:6px">Remember for this tab session</label>
+        <label class="hint"><input type="checkbox" id="remember-secret" style="width:auto;margin-right:6px">Remember on this device (saves to localStorage — teacher-local machine only)</label>
+        <button class="btn-sm" id="clear-secret" style="display:none">Clear saved secret</button>
         <button class="btn-sm" id="test-conn">Test connection</button>
         <span class="msg" id="conn-msg"></span>
       </div>
@@ -288,7 +294,13 @@
   <script>
     // ── helpers ────────────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
-    const SECRET_KEY = 'roster_teacher_secret';   // sessionStorage only
+    // Persistence keys (shared with teacher-dashboard.html so both tools
+    // remember the same URL + opt-in secret). URL is not a secret and is
+    // saved unconditionally; teacher secret is saved ONLY when the user
+    // explicitly checks "Remember on this device" (localStorage, teacher's
+    // local machine only — never deploy these tools publicly).
+    const URL_KEY    = 'apstats_teacher_service_url';
+    const SECRET_KEY = 'apstats_teacher_secret';
 
     function svcUrl() { return $('svc-url').value.trim().replace(/\/+$/, ''); }
     function teacherSecret() { return $('teacher-secret').value; }
@@ -356,21 +368,90 @@
       return { status: res.status, data };
     }
 
-    // ── secret session memory ──────────────────────────────────────────────────
+    // ── URL dropdown wiring ────────────────────────────────────────────────────
+    // The dropdown writes BOTH:
+    //   - URL_KEY (apstats_teacher_service_url): drives this page's fetches
+    //   - GLOBAL_OVERRIDE_KEY (roster_service_url_override): consulted by
+    //     roster_config.js so the Desk, worksheets, and start-here all
+    //     talk to the same backend without a second DevTools step.
+    const GLOBAL_OVERRIDE_KEY = 'roster_service_url_override';
+    (function wireUrlDropdown() {
+      const sel = $('svc-url-select');
+      const inp = $('svc-url');
+
+      function persist(url) {
+        try {
+          localStorage.setItem(URL_KEY, url);
+          if (url) localStorage.setItem(GLOBAL_OVERRIDE_KEY, url);
+        } catch (_) {}
+      }
+
+      function syncFromSelect() {
+        if (sel.value === '__custom__') {
+          inp.style.display = '';
+          // Don't clobber an existing custom value if the user is typing.
+          if (!inp.value || inp.value === 'http://localhost:8091' || inp.value === 'https://roster-production-12c1.up.railway.app') {
+            inp.value = '';
+          }
+          persist(inp.value || '');
+        } else {
+          inp.style.display = 'none';
+          inp.value = sel.value;
+          persist(sel.value);
+        }
+      }
+
+      // Restore prior URL choice.
+      try {
+        const saved = localStorage.getItem(URL_KEY);
+        if (saved) {
+          const opt = [...sel.options].find(o => o.value === saved);
+          if (opt) {
+            sel.value = saved;
+          } else {
+            sel.value = '__custom__';
+            inp.value = saved;
+          }
+        }
+      } catch (_) {}
+      syncFromSelect();
+
+      sel.addEventListener('change', syncFromSelect);
+      inp.addEventListener('input', () => {
+        if (sel.value === '__custom__') { persist(inp.value); }
+      });
+    })();
+
+    // ── secret persistence (opt-in localStorage) ───────────────────────────────
     (function restoreSecret() {
       try {
-        const s = sessionStorage.getItem(SECRET_KEY);
-        if (s) { $('teacher-secret').value = s; $('remember-secret').checked = true; }
+        const s = localStorage.getItem(SECRET_KEY);
+        if (s) {
+          $('teacher-secret').value = s;
+          $('remember-secret').checked = true;
+          $('clear-secret').style.display = '';
+        }
       } catch (_) {}
     })();
     function persistSecretMaybe() {
       try {
-        if ($('remember-secret').checked) sessionStorage.setItem(SECRET_KEY, teacherSecret());
-        else sessionStorage.removeItem(SECRET_KEY);
+        if ($('remember-secret').checked && teacherSecret()) {
+          localStorage.setItem(SECRET_KEY, teacherSecret());
+          $('clear-secret').style.display = '';
+        } else {
+          localStorage.removeItem(SECRET_KEY);
+          $('clear-secret').style.display = $('remember-secret').checked ? 'none' : 'none';
+        }
       } catch (_) {}
     }
     $('remember-secret').addEventListener('change', persistSecretMaybe);
-    $('teacher-secret').addEventListener('change', persistSecretMaybe);
+    $('teacher-secret').addEventListener('input', persistSecretMaybe);
+    $('clear-secret').addEventListener('click', () => {
+      try { localStorage.removeItem(SECRET_KEY); } catch (_) {}
+      $('teacher-secret').value = '';
+      $('remember-secret').checked = false;
+      $('clear-secret').style.display = 'none';
+    });
 
     // ── connection test ────────────────────────────────────────────────────────
     $('test-conn').addEventListener('click', async () => {

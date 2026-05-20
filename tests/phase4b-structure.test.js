@@ -159,9 +159,19 @@ describe('Phase 4b — teacher-dashboard.html remediation panel', () => {
     expect(DASH).toMatch(/0004_remediation_assignment\.sql/);
   });
 
-  it('teacher secret stays unpersisted (Phase 4a security posture preserved)', () => {
-    expect(DASH).not.toMatch(/localStorage\.setItem/);
+  it('teacher secret persistence is opt-in only; localStorage scoped to known keys (Phase 4a security posture, updated 2026-05-19)', () => {
+    // Updated alongside the phase4-structure.test.js companion check.
+    // Auto-persistence is still forbidden; opt-in localStorage is allowed
+    // for exactly two known keys (URL_KEY = 'apstats_teacher_service_url',
+    // SECRET_KEY = 'apstats_teacher_secret'). No sessionStorage / cookies.
     expect(DASH).not.toMatch(/sessionStorage\.setItem/);
     expect(DASH).not.toMatch(/document\.cookie\s*=/);
+    // Any localStorage.setItem call must use one of the three known constants
+    // (URL_KEY, SECRET_KEY, GLOBAL_OVERRIDE_KEY).
+    const setItemCalls = [...DASH.matchAll(/localStorage\.setItem\s*\(\s*([A-Z_][A-Z0-9_]*|['"][^'"]+['"])/g)];
+    const ALLOWED = new Set(['URL_KEY', 'SECRET_KEY', 'GLOBAL_OVERRIDE_KEY']);
+    for (const m of setItemCalls) {
+      expect(ALLOWED.has(m[1]), `unexpected setItem key: ${m[1]}`).toBe(true);
+    }
   });
 });

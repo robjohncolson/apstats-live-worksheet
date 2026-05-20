@@ -278,8 +278,11 @@
     <div class="security-banner">
       &#9888; <strong>Local use only.</strong> This page calls the teacher-only class endpoints
       and displays student grades. Do <strong>not</strong> deploy it publicly or share the URL with
-      students. The teacher secret you type is held only in this input field for the lifetime of
-      this page; it is never saved to disk, localStorage, sessionStorage, or cookies.
+      students. By default the teacher secret is held only in this input field for the lifetime
+      of this page. You can opt into saving it on this device via the
+      <em>Remember on this device</em> checkbox below — that writes to <code>localStorage</code>
+      and survives browser restarts; use the <em>Clear saved secret</em> button to revoke. The
+      service-URL choice is saved unconditionally (URL is not a secret).
     </div>
 
     <!-- Auth & load -->
@@ -287,14 +290,30 @@
       <h2 class="section-title">Connection</h2>
       <div class="row-2">
         <div class="form-row">
+          <label for="svc-url-select">Roster service URL</label>
+          <select id="svc-url-select" style="margin-bottom:6px">
+            <option value="http://localhost:8091">Local dev (localhost:8091)</option>
+            <option value="https://roster-production-12c1.up.railway.app">Railway production</option>
+            <option value="__custom__">Custom...</option>
+          </select>
+          <input id="svc-url" type="text" spellcheck="false"
+                 value="http://localhost:8091" style="display:none">
+        </div>
+        <div class="form-row">
           <label for="teacher-secret">Teacher secret</label>
           <input id="teacher-secret" type="password" autocomplete="off" spellcheck="false"
-                 placeholder="x-teacher-secret (not stored)">
+                 placeholder="x-teacher-secret">
         </div>
+      </div>
+      <div class="row-2">
         <div class="form-row">
           <label for="section-filter">Section filter (blank = all)</label>
           <input id="section-filter" type="text" spellcheck="false"
                  placeholder="e.g. PERIOD3">
+        </div>
+        <div class="form-row">
+          <label class="hint" style="font-size:0.82rem"><input type="checkbox" id="remember-secret" style="width:auto;margin-right:6px">Remember on this device (saves to localStorage — teacher-local only)</label>
+          <button class="btn" id="clear-secret" style="display:none;font-size:0.78rem;padding:4px 10px;background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)">Clear saved secret</button>
         </div>
       </div>
       <div class="btn-row">
@@ -399,18 +418,34 @@
 
   <script>
     // ===== guardrails =====
-    // The x-teacher-secret is NEVER persisted client-side:
-    //   - no localStorage writes
-    //   - no sessionStorage writes
-    //   - no document.cookie writes
-    // It is read fresh from the input on every fetch (see api()).
+    // The x-teacher-secret is NEVER auto-persisted client-side. It is read
+    // fresh from the input on every fetch (see api()).
+    // EXCEPTION (opt-in, teacher-local only): if the user explicitly checks
+    // "Remember on this device", the secret is saved to localStorage under
+    // the key 'apstats_teacher_secret'. The dashboard is documented as
+    // local-use only (see security-banner) — this is acceptable convenience
+    // on a teacher-controlled machine. A "Clear saved secret" button is
+    // provided. The ROSTER_SERVICE_URL choice is similarly saved unconditionally
+    // under 'apstats_teacher_service_url' (URL is not a secret).
 
     // ===== helpers =====
+    var URL_KEY    = 'apstats_teacher_service_url';
+    var SECRET_KEY = 'apstats_teacher_secret';
+    // The dropdown writes BOTH URL_KEY (this page) and GLOBAL_OVERRIDE_KEY
+    // (the one roster_config.js consults so the Desk + worksheets + start-here
+    // pick up the same backend without a second DevTools step).
+    var GLOBAL_OVERRIDE_KEY = 'roster_service_url_override';
     var FALLBACK_SVC = 'https://roster-production-12c1.up.railway.app';
     function svcUrl() {
-      var u = (typeof window !== 'undefined' && window.ROSTER_SERVICE_URL) || '';
+      // Phase: prefer the dropdown/text input (if loaded), then fall back to
+      // window.ROSTER_SERVICE_URL (set by roster_config.js), then the hard
+      // fallback. The dropdown lets the teacher switch envs without editing
+      // the config file.
+      var el = document.getElementById('svc-url');
+      var u = (el && el.value && el.value.trim()) ||
+              (typeof window !== 'undefined' && window.ROSTER_SERVICE_URL) || '';
       if (!u) {
-        console.warn('[teacher-dashboard] window.ROSTER_SERVICE_URL not set; using fallback ' + FALLBACK_SVC);
+        console.warn('[teacher-dashboard] no ROSTER_SERVICE_URL configured; using fallback ' + FALLBACK_SVC);
         u = FALLBACK_SVC;
       }
       return String(u).replace(/\/+$/, '');
@@ -419,7 +454,8 @@
     function $(id) { return document.getElementById(id); }
 
     function teacherSecret() {
-      // ALWAYS read from the input — never cached, never persisted.
+      // ALWAYS read from the input — never cached. Persistence to
+      // localStorage is opt-in via the "Remember on this device" checkbox.
       var el = $('teacher-secret');
       return el ? el.value : '';
     }
@@ -758,6 +794,82 @@
     });
     $('section-filter').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') loadAll();
+    });
+
+    // ===== URL dropdown wiring (Phase: convenience) =====
+    (function wireUrlDropdown() {
+      var sel = $('svc-url-select');
+      var inp = $('svc-url');
+      function persist(url) {
+        try {
+          localStorage.setItem(URL_KEY, url);
+          if (url) localStorage.setItem(GLOBAL_OVERRIDE_KEY, url);
+        } catch (_) {}
+      }
+      function syncFromSelect() {
+        if (sel.value === '__custom__') {
+          inp.style.display = '';
+          if (!inp.value || inp.value === 'http://localhost:8091' || inp.value === 'https://roster-production-12c1.up.railway.app') {
+            inp.value = '';
+          }
+          persist(inp.value || '');
+        } else {
+          inp.style.display = 'none';
+          inp.value = sel.value;
+          persist(sel.value);
+        }
+      }
+      try {
+        var saved = localStorage.getItem(URL_KEY);
+        if (saved) {
+          var opt = null;
+          for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === saved) { opt = sel.options[i]; break; }
+          }
+          if (opt) {
+            sel.value = saved;
+          } else {
+            sel.value = '__custom__';
+            inp.value = saved;
+          }
+        }
+      } catch (_) {}
+      syncFromSelect();
+      sel.addEventListener('change', syncFromSelect);
+      inp.addEventListener('input', function () {
+        if (sel.value === '__custom__') { persist(inp.value); }
+      });
+    })();
+
+    // ===== Opt-in teacher secret persistence (local-use convenience) =====
+    (function restoreSecret() {
+      try {
+        var s = localStorage.getItem(SECRET_KEY);
+        if (s) {
+          $('teacher-secret').value = s;
+          $('remember-secret').checked = true;
+          $('clear-secret').style.display = '';
+        }
+      } catch (_) {}
+    })();
+    function persistSecretMaybe() {
+      try {
+        if ($('remember-secret').checked && teacherSecret()) {
+          localStorage.setItem(SECRET_KEY, teacherSecret());
+          $('clear-secret').style.display = '';
+        } else {
+          localStorage.removeItem(SECRET_KEY);
+          $('clear-secret').style.display = 'none';
+        }
+      } catch (_) {}
+    }
+    $('remember-secret').addEventListener('change', persistSecretMaybe);
+    $('teacher-secret').addEventListener('input', persistSecretMaybe);
+    $('clear-secret').addEventListener('click', function () {
+      try { localStorage.removeItem(SECRET_KEY); } catch (_) {}
+      $('teacher-secret').value = '';
+      $('remember-secret').checked = false;
+      $('clear-secret').style.display = 'none';
     });
 
     // ===== Phase 4b: remediation panel =====

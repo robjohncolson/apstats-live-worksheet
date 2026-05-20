@@ -64,11 +64,55 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
     expect(DASH).toMatch(/x-teacher-secret/i);
   });
 
-  it('NEVER persists the teacher secret (no localStorage/sessionStorage/cookie writes)', () => {
-    // Allow comment-style mentions; flag actual write API calls only.
-    expect(DASH).not.toMatch(/localStorage\.setItem/);
+  it('teacher-secret persistence is OPT-IN only; localStorage writes are scoped to two known keys', () => {
+    // Updated 2026-05-19: the original Phase-4a posture was zero persistence.
+    // To make local-only e2e testing usable (Railway-down day, plus general
+    // teacher convenience) the dashboard now:
+    //   (a) saves the service-URL choice to localStorage UNCONDITIONALLY
+    //       (URL is not a secret), and
+    //   (b) saves the teacher secret to localStorage ONLY when the user
+    //       explicitly checks an opt-in "Remember on this device" checkbox.
+    // The exact key names are pinned here so a future regression (e.g. an
+    // accidental rename or an extra setItem call) is caught — the assertion
+    // is now "ONLY these two keys may be set," not "no setItem at all."
+
+    // No sessionStorage / cookie writes — those were never opt-in surfaces.
     expect(DASH).not.toMatch(/sessionStorage\.setItem/);
     expect(DASH).not.toMatch(/document\.cookie\s*=/);
+
+    // Every localStorage.setItem call must target one of the three known
+    // keys: URL_KEY (this page's URL choice), SECRET_KEY (opt-in secret),
+    // and GLOBAL_OVERRIDE_KEY (the same key roster_config.js consults so
+    // Desk + worksheets + start-here pick up the same backend in one click).
+    const setItemCalls = [...DASH.matchAll(/localStorage\.setItem\s*\(\s*([A-Z_][A-Z0-9_]*|['"][^'"]+['"])/g)];
+    expect(setItemCalls.length, 'localStorage.setItem must appear at least once (for URL persistence)').toBeGreaterThan(0);
+    const ALLOWED_KEYS = new Set(['URL_KEY', 'SECRET_KEY', 'GLOBAL_OVERRIDE_KEY']);
+    for (const m of setItemCalls) {
+      const target = m[1];
+      expect(
+        ALLOWED_KEYS.has(target),
+        `localStorage.setItem(${target}, ...) targets an unknown key — only URL_KEY, SECRET_KEY, and GLOBAL_OVERRIDE_KEY are allowed`
+      ).toBe(true);
+    }
+
+    // The literal key strings must be exactly these — pins the
+    // dashboard/console to share the same storage namespace and the
+    // global-override contract that roster_config.js depends on.
+    expect(DASH).toMatch(/URL_KEY\s*=\s*['"]apstats_teacher_service_url['"]/);
+    expect(DASH).toMatch(/SECRET_KEY\s*=\s*['"]apstats_teacher_secret['"]/);
+    expect(DASH).toMatch(/GLOBAL_OVERRIDE_KEY\s*=\s*['"]roster_service_url_override['"]/);
+
+    // The SECRET_KEY write must be guarded by the remember-secret checkbox.
+    // Walk the persistSecretMaybe body and prove the setItem only fires when
+    // the checkbox is checked.
+    const fnStart = DASH.indexOf('function persistSecretMaybe');
+    expect(fnStart, 'persistSecretMaybe guard function must exist').toBeGreaterThan(0);
+    const fnSlice = DASH.slice(fnStart, fnStart + 800);
+    // The body must check 'remember-secret' (the checkbox) before the write.
+    expect(fnSlice).toMatch(/remember-secret['"]?\)\s*\.\s*checked/);
+    expect(fnSlice).toMatch(/localStorage\.setItem\s*\(\s*SECRET_KEY/);
+    // And the unchecked branch must call removeItem(SECRET_KEY).
+    expect(fnSlice).toMatch(/localStorage\.removeItem\s*\(\s*SECRET_KEY/);
   });
 
   it('no external CDN/script imports (self-contained)', () => {
