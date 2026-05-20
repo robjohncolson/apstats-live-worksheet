@@ -3367,7 +3367,22 @@ async function loadSupabaseOverlay(period){
 
 /* ═══ STUDENT PROGRESS (Supabase anon INSERT only) ═══ */
 function getStudentEmail() {
-  return localStorage.getItem('apstats_desk_student_email');
+  // Phase 0+ compat: the Done buttons (worksheet/quiz/blooket self-attest)
+  // and the legacy student_progress Supabase flow predate rosterClient and
+  // key on a free-text email in localStorage. After roster sign-in, no
+  // email is set — derive a stable proxy from rosterClient.username so the
+  // self-attest path works for roster-signed-in students too. The
+  // student_progress + students tables accept any string as the email key
+  // (no FK / no validation), so synthesizing username@roster.local is
+  // harmless and idempotent across reloads.
+  var legacy = localStorage.getItem('apstats_desk_student_email');
+  if (legacy) return legacy;
+  try {
+    var who = window.rosterClient && typeof window.rosterClient.current === 'function'
+      ? window.rosterClient.current() : null;
+    if (who && who.username) return who.username + '@roster.local';
+  } catch (_) {}
+  return null;
 }
 
 function getStudentMarks() {
@@ -5277,15 +5292,17 @@ function showResourcePanel(inf, dateStr) {
         }
 
         // Phase 5: AI-tutor copy button (per-lesson artifact in ai-tutor/u{U}_l{L}.md).
-        // Only rendered when inf.t matches the lesson dot-form (e.g. "1.2"); PC tiles
-        // are noted as strings in due/assigned columns rather than standalone tiles.
+        // Only rendered when inf.t matches the lesson dot-form (e.g. "1.2") AND the
+        // (unit, lesson) pair is in AI_TUTOR_LESSON_KEYS — gating on the canonical
+        // 66-entry artifact inventory so resource/intro tiles (U1-L1, U2-L1, etc.)
+        // don't get a button that would always 404.
+        // PC tiles are noted as strings in due/assigned columns rather than
+        // standalone tiles, so the unit PC tutor is rendered ALONGSIDE the lesson
+        // button (gated on the same lesson-keys set — ambient PC access is only
+        // contextually useful from a graded-lesson tile, not an intro tile).
         var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');
-        if (_aitm) {
+        if (_aitm && AI_TUTOR_LESSON_KEYS.has(inf.t)) {
             lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPrompt(\'' + _aitm[1] + '\',\'' + _aitm[2] + '\')">\u{1F916} Tutor prompt \u{2014} copy to clipboard</button> <span id="ai-tutor-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
-            // Phase 5.1: alongside the lesson tutor, expose the unit's PROGRESS CHECK
-            // tutor prompt (ai-tutor/u{U}_pc.md). Every U1-U9 has one. Students working
-            // through any lesson in the unit get ambient access to the unit's PC tutor
-            // without needing a separate surface (PCs aren't standalone tiles).
             lessonHtml += '<div style="margin:3px 0"><button class="s7btn chicago" style="font-size:10px;padding:2px 6px" onclick="copyTutorPromptPc(\'' + _aitm[1] + '\')">\u{1F916} Unit ' + _aitm[1] + ' PC tutor \u{2014} copy to clipboard</button> <span id="ai-tutor-pc-status" style="font-size:9px;margin-left:4px;color:var(--plat-lo)"></span></div>';
         }
 
@@ -5375,6 +5392,34 @@ async function studentMark(btn, topicId, artifact) {
     }
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
     var ok = await recordProgress(topicId, artifact, score);
+
+    // Phase 4a+ compat: ALSO write a row to item_ledger via the gradebook
+    // feeder so the new teacher-dashboard's completion + grade readouts
+    // reflect self-attested Done clicks. Skipped for 'blooket' (spec §6 —
+    // Blooket is excluded from the ledger). Fire-and-forget per L-D.
+    try {
+        if (ok && artifact !== 'blooket'
+            && window.gradebookClient
+            && typeof window.gradebookClient.record === 'function') {
+            var um = /^(\d+)\.(\d+)$/.exec(topicId || '');
+            var unit = um ? 'U' + um[1] : null;
+            var source = artifact === 'quiz' ? 'curriculum_quiz' : 'worksheet';
+            // The self-attest is a synthetic item, distinct from real
+            // worksheet/quiz items so it doesn't collide with actual
+            // submissions on the (student_id, source, item_id, attempt)
+            // upsert key. Per-topic suffix keeps it idempotent.
+            var idPrefix = artifact === 'quiz' ? 'CR-' : 'WS-';
+            var itemId = idPrefix + (unit || 'U?')
+                       + (um ? '-L' + um[2] : '')
+                       + '-DESK_DONE';
+            var rec = window.gradebookClient.record({
+                source: source, itemId: itemId, unit: unit, topic: topicId,
+                response: { selfAttest: artifact }, score: score, attempt: 1
+            });
+            if (rec && typeof rec.catch === 'function') rec.catch(function () {});
+        }
+    } catch (_) {}
+
     if (ok && _lastResourcePanel) {
         showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
     } else if (btn) {
@@ -5387,6 +5432,36 @@ function closeResourcePanel() {
     MacSFX.play('click', 0.3);
     document.getElementById('resource-overlay').style.display = 'none';
 }
+
+// Phase 5/5.1: the canonical set of (unit, lesson) pairs that have an
+// ai-tutor/u{U}_l{L}.md artifact on disk. Source = AI_TUTOR_FANOUT_BUILD.md
+// inventory (lessons-with-quizzes only; resource-type and FRQ-only lessons
+// like U1-L1, U2-L1, U5-L1, U5-L6, U9-L1, U9-L3 get no artifact per the
+// FANOUT RESOURCE RULE). The button-render guard in showResourcePanel
+// consults this set to avoid rendering a button that would always 404.
+// 66 entries; every U1-U9 unit has a corresponding `_pc.md` artifact so
+// the PC button is gated on the same lesson-key set (a tile with no
+// lesson tutor — i.e. an intro/resource tile — gets no PC tutor either,
+// since ambient access to the unit PC is only contextually useful from a
+// graded-lesson tile).
+const AI_TUTOR_LESSON_KEYS = (function buildKeys() {
+    var lessons = {
+        1: [2,3,4,5,6,7,8,9,10],
+        2: [2,3,4,5,6,7,8,9],
+        3: [2,3,4,5,6,7],
+        4: [2,3,4,5,6,7,8,9,10,11,12],
+        5: [2,3,4,5,7,8],          // no L1, no L6 (resource/no-quiz)
+        6: [2,3,4,5,6,7,8,9,10,11],
+        7: [2,3,4,5,6,7,8,9],
+        8: [2,3,4,5,6],
+        9: [2,4,5],                // no L1, no L3
+    };
+    var s = new Set();
+    Object.keys(lessons).forEach(function (u) {
+        lessons[u].forEach(function (l) { s.add(u + '.' + l); });
+    });
+    return s;
+})();
 
 // Phase 5: copy an AI-tutor prompt to clipboard. Generic helper used by
 // both the per-lesson button (copyTutorPrompt) and the Phase-5.1 per-unit

@@ -83,16 +83,18 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
   it('Phase 5.1: PC button is rendered in the lesson-regex branch, AFTER the lesson button, with onclick=copyTutorPromptPc(_aitm[1]) only (Codex MINOR-2 fold)', () => {
     // Slice the if-block governing both buttons. The lesson regex match is
     // `var _aitm = /^(\d+)\.(\d+)$/.exec(inf.t || '');` followed by
-    // `if (_aitm) { ... }`. We extract the if-body and assert layout/XSS.
+    // `if (_aitm && AI_TUTOR_LESSON_KEYS.has(inf.t)) { ... }`. We extract the
+    // if-body and assert layout/XSS.
     const guardIdx = DESK.indexOf("var _aitm = /^(\\d+)\\.(\\d+)$/.exec(inf.t || '');");
     expect(guardIdx, 'the inf.t regex guard must exist').toBeGreaterThan(0);
-    const ifOpen = DESK.indexOf('if (_aitm) {', guardIdx);
-    expect(ifOpen, 'the if (_aitm) block must follow the regex').toBeGreaterThan(0);
+    // Match either the original `if (_aitm) {` or the gated form
+    // `if (_aitm && AI_TUTOR_LESSON_KEYS.has(inf.t)) {`.
+    const ifOpen = DESK.indexOf('if (_aitm', guardIdx);
+    expect(ifOpen, 'the if (_aitm ...) block must follow the regex').toBeGreaterThan(0);
+    const ifBodyStart = DESK.indexOf('{', ifOpen);
+    expect(ifBodyStart).toBeGreaterThan(0);
     // Walk forward to the matching closing brace at the same nesting level.
-    // The block is short (two button-render lines + comments) — a 1500-char
-    // window is more than enough and we close at the first line that begins
-    // with a } at the same column as the if-open.
-    const ifBody = DESK.slice(ifOpen, ifOpen + 1500);
+    const ifBody = DESK.slice(ifBodyStart, ifBodyStart + 1500);
     const closeIdx = ifBody.indexOf('\n        }');
     expect(closeIdx, 'the if (_aitm) block must close').toBeGreaterThan(0);
     const block = ifBody.slice(0, closeIdx);
@@ -243,6 +245,25 @@ describe('ap_stats_roadmap_square_mode.html — Phase 5 AI-tutor wiring', () => 
   it('Phase 5.1: copyTutorPromptPc has exactly 2 call sites (decl + onclick)', () => {
     const pcSites = [...DESK.matchAll(/copyTutorPromptPc\s*\(/g)];
     expect(pcSites.length).toBe(2);
+  });
+
+  it('Phase 5.1+: both buttons are gated on AI_TUTOR_LESSON_KEYS so resource-type tiles get no button at all', () => {
+    // The Set is defined in the Desk file and is consulted by the
+    // if (_aitm && AI_TUTOR_LESSON_KEYS.has(inf.t)) { ... } branch in
+    // showResourcePanel. This guards against rendering a button that would
+    // always 404 on lessons that have no ai-tutor/u{U}_l{L}.md artifact
+    // (U1-L1, U2-L1, U5-L1, U5-L6, U9-L1, U9-L3 — the FANOUT RESOURCE RULE).
+    expect(DESK).toMatch(/AI_TUTOR_LESSON_KEYS\s*=/);
+    expect(DESK).toMatch(/AI_TUTOR_LESSON_KEYS\.has\(\s*inf\.t\s*\)/);
+    // Validate the explicit per-unit lesson-list literals — the omitted
+    // entries (U1-L1, U2-L1, U5-L1, U5-L6, U9-L1, U9-L3) are the
+    // no-artifact lessons per the FANOUT RESOURCE RULE. The U#: prefix
+    // identifies the unit's array. Pinned exactly so a future regression
+    // (e.g. someone accidentally including U1-L1) fails the test.
+    expect(DESK).toMatch(/1:\s*\[2,\s*3,\s*4,\s*5,\s*6,\s*7,\s*8,\s*9,\s*10\]/);   // U1: no L1
+    expect(DESK).toMatch(/2:\s*\[2,\s*3,\s*4,\s*5,\s*6,\s*7,\s*8,\s*9\]/);          // U2: no L1
+    expect(DESK).toMatch(/5:\s*\[2,\s*3,\s*4,\s*5,\s*7,\s*8\]/);                    // U5: no L1, no L6
+    expect(DESK).toMatch(/9:\s*\[2,\s*4,\s*5\]/);                                    // U9: no L1, no L3
   });
 });
 
