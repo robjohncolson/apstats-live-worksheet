@@ -75,12 +75,14 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/loadRegistry\(\);[\s\S]{0,200}updateUserRoleUI\(\)/);
   });
 
-  it('07: signin modal has the Teacher checkbox + access-code input', () => {
-    // The checkbox must be present with type=checkbox + disabled, and the
-    // access-code input + status span must be there. Attribute order
-    // varies across HTML formatters; don't pin order, pin presence.
+  it('07: signin modal has the Teacher checkbox + access-code input (type=text to dodge password autofill)', () => {
     expect(DESK).toMatch(/<input\s+type="checkbox"\s+id="signin-teacher"\s+disabled/);
-    expect(DESK).toMatch(/id="signin-teacher-code"/);
+    // 2026-05-20 v2: input is type=text now (was type=password). Chrome's
+    // password autofill bypasses the standard input event flow for
+    // type=password fields, leaving the visual feedback (checkbox enable)
+    // stuck. type=text avoids that. The access code is in the page source
+    // anyway, so masking is not security.
+    expect(DESK).toMatch(/<input\s+type="text"\s+id="signin-teacher-code"/);
     expect(DESK).toMatch(/id="signin-teacher-status"/);
   });
 
@@ -102,15 +104,28 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/chk\.disabled\s*=\s*true/);
   });
 
-  it('10: submitSignIn double-validates the code at save time (no DOM-poke promotion)', () => {
+  it('10: submitSignIn promotes role=teacher based on the CODE itself (checkbox is just a visual indicator)', () => {
+    // 2026-05-20 v2: the role gate is the code, not the checkbox.
+    // Resilient to live-UI glitches (autofill bypassing input events).
     const body = fnBody(DESK, 'submitSignIn');
-    // The role-persist block re-reads the input and compares to the
-    // configured code; a manual checkbox-toggle without a matching code
-    // does not persist 'teacher'.
     expect(body).toMatch(/codeInp\.value\s*===\s*_teacherAccessCode\s*\(\s*\)/);
+    // The conditional that persists 'teacher' is on codeMatch alone — no
+    // longer ANDed with chk.checked.
+    expect(body).toMatch(/if\s*\(\s*codeMatch\s*\)/);
     expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]\s*,\s*['"]teacher['"]/);
     expect(body).toMatch(/removeItem\s*\(\s*['"]apstats_user_role['"]/);
     expect(body).toMatch(/updateUserRoleUI\s*\(\s*\)/);
+  });
+
+  it('13a: openSignInModal binds multiple event types for the access-code input (autofill resilience)', () => {
+    const body = fnBody(DESK, 'openSignInModal');
+    // The wiring must use BOTH the property assignment (.oninput =) AND
+    // addEventListener for 'input', 'change', and 'keyup' so any one
+    // event source firing is enough to trigger the visual feedback.
+    expect(body).toMatch(/cInp\.oninput\s*=\s*_onTeacherCodeInput/);
+    expect(body).toMatch(/addEventListener\s*\(\s*['"]input['"]\s*,\s*_onTeacherCodeInput/);
+    expect(body).toMatch(/addEventListener\s*\(\s*['"]change['"]\s*,\s*_onTeacherCodeInput/);
+    expect(body).toMatch(/addEventListener\s*\(\s*['"]keyup['"]\s*,\s*_onTeacherCodeInput/);
   });
 
   it('11: signOutStudent clears the user role + refreshes the menu', () => {

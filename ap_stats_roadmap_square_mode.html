@@ -1281,18 +1281,21 @@
                 <div style="margin-bottom:8px">Sign in with the username &amp; password your teacher gave you.</div>
                 <input type="text" id="signin-username" class="geneva" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="username (e.g. coconut_shark)">
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
-                <!-- 2026-05-20: Teacher checkbox + access code. Checkbox is
-                     disabled by default; typing the correct access code in
-                     the field below enables (and auto-checks) it. Default
-                     code is "google231"; teacher can override via
-                     localStorage.apstats_teacher_access_code. -->
+                <!-- 2026-05-20: Teacher access code. The CODE itself is the
+                     gate — submitSignIn promotes role=teacher iff the code
+                     matches. Default code "google231"; teacher can override
+                     via localStorage.apstats_teacher_access_code. The
+                     checkbox is a visual indicator only (auto-toggles when
+                     the code is accepted). 2026-05-20 v2: switched from
+                     type=password → type=text so Chrome password autofill
+                     doesn't intercept the field. -->
                 <div style="margin-top:8px;border-top:1px dashed var(--plat-lo);padding-top:6px">
                     <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:default">
                         <input type="checkbox" id="signin-teacher" disabled style="margin:0">
                         <span>Sign in as teacher</span>
                         <span id="signin-teacher-status" style="font-size:9px;color:var(--plat-lo);font-style:italic">(enter access code)</span>
                     </label>
-                    <input type="password" id="signin-teacher-code" autocomplete="off" placeholder="Teacher access code (optional)" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-top:4px">
+                    <input type="text" id="signin-teacher-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Teacher access code (optional)" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-top:4px">
                 </div>
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
             </div>
@@ -3673,12 +3676,22 @@ function openSignInModal() {
   if (uInp) { uInp.value = (who && who.username) || getStudentEmail() || ''; }
   if (pInp) { pInp.value = ''; }
   // Reset the teacher fields every open so a fresh modal doesn't leak
-  // state. Wire the input listener (idempotent — oninput re-binds).
-  // typeof-guarded so DN2c's vm-test of openSignInModal (which doesn't
-  // load _onTeacherCodeInput into its sandbox) keeps passing.
+  // state. Wire the input listener via THREE redundant event types so
+  // browser-managed autofill / paste / programmatic .value sets don't
+  // miss the visual feedback. typeof-guarded so DN2c's vm-test of
+  // openSignInModal (which doesn't load _onTeacherCodeInput into its
+  // sandbox) keeps passing.
   if (cInp) {
     cInp.value = '';
-    if (typeof _onTeacherCodeInput === 'function') cInp.oninput = _onTeacherCodeInput;
+    if (typeof _onTeacherCodeInput === 'function') {
+      cInp.oninput = _onTeacherCodeInput;
+      // addEventListener doesn't replace; allow multiple binds across
+      // re-opens (the no-op cost is negligible vs. missing a teacher
+      // sign-in because the property assignment didn't catch the event).
+      cInp.addEventListener('input', _onTeacherCodeInput);
+      cInp.addEventListener('change', _onTeacherCodeInput);
+      cInp.addEventListener('keyup', _onTeacherCodeInput);
+    }
     cInp.onkeydown = function (e) { if (e.key === 'Enter') submitSignIn(); };
   }
   if (chk) { chk.checked = false; chk.disabled = true; }
@@ -3739,18 +3752,20 @@ async function submitSignIn() {
     var legacyKey = who.username || username;
     localStorage.setItem('apstats_desk_student_email', legacyKey);
     registerStudent(legacyKey);
-    // 2026-05-20: persist the user role from the Teacher checkbox.
-    // Defensive re-check: the checkbox can only be true if the access
-    // code matched at input time. We re-validate here so a manual DOM
-    // poke can't promote a student to teacher. typeof-guarded so DN2c's
-    // vm-test of submitSignIn (which loads only this function into its
-    // sandbox) keeps passing — same cross-sprint pattern as paintDonowCells.
+    // 2026-05-20 v2: the access CODE is the gate, not the checkbox. If the
+    // user typed the right code into signin-teacher-code, promote to
+    // teacher regardless of whether the live UI got the checkbox checked.
+    // (Chrome's password autofill could bypass the input event and leave
+    // the checkbox visually disabled; we don't want a UI glitch to lock
+    // a teacher out of their role.) The checkbox now signals "yes, I
+    // entered the right code"; the code itself authorizes.
+    // typeof-guarded so DN2c's vm-test of submitSignIn (which loads only
+    // this function into its sandbox) keeps passing.
     try {
-      var chk = document.getElementById('signin-teacher');
       var codeInp = document.getElementById('signin-teacher-code');
       var codeMatch = codeInp && typeof _teacherAccessCode === 'function'
                       && codeInp.value === _teacherAccessCode();
-      if (chk && chk.checked && codeMatch) {
+      if (codeMatch) {
         localStorage.setItem('apstats_user_role', 'teacher');
       } else {
         localStorage.removeItem('apstats_user_role');
