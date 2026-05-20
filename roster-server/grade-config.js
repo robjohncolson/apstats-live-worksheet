@@ -37,6 +37,15 @@ export const PHASE3_CONFIG = {
   // Server clock in this timezone determines which lessons are "due".
   schoolTz: 'America/New_York',
 
+  // Phase 6 (2026-05-20 fold): cohort-aware grading window. Any lesson
+  // whose due dates are ENTIRELY BEFORE this date is excluded from the
+  // active band — those are stale entries left over from a prior school
+  // year (e.g. SY25-26's April-2026 dates lingering when SY26-27 begins).
+  // A lesson with even ONE period date >= this start (or NULL dates =
+  // not-yet-scheduled-for-this-cohort) stays in the band.
+  // Update this once per year at cohort cutover.
+  gradingWindowStart: '2026-09-01',
+
   // Diagnostic weak-skill flag cutoff (pKnow < θ ⇒ weak). GRADE-INDEPENDENT —
   // θ never enters any grade arithmetic (GRADEBOOK_GRADING_SPEC.md §3).
   diagnosticTheta: 0.65,

@@ -296,19 +296,42 @@ export function computeQuarterFromLessons({
   section,
   pcBandData,
   C = 85,
+  gradingWindowStart = null,
 }) {
   const period = sectionToPeriod(section); // "B" | "E" | null
 
-  // All lessons in the band (those that exist in the schedule).
+  // Helper: is this lesson entry IN the active cohort's grading window?
+  // A lesson stays in the band if EITHER period date is unset (null/missing —
+  // not yet scheduled for this cohort) OR a period date is >= the window
+  // start. A lesson with BOTH dates strictly before the start is treated as
+  // a stale prior-year entry and excluded entirely. 2026-05-20 fold: prior
+  // SY25-26 dates (April-2026 etc.) were polluting Q3/Q4 with phantom
+  // "past-due" lessons that nobody in this cohort was supposed to do.
+  function inWindow(entry) {
+    if (!gradingWindowStart) return true;
+    const periods = (entry && entry.periods) || {};
+    const b = periods.B;
+    const e = periods.E;
+    // Null/missing dates are NOT excluded — those are "not yet scheduled"
+    // for this cohort and should stay in the band (so they count toward
+    // lessonsTotal once the teacher fills them in).
+    if (b == null && e == null) return true;
+    if (b != null && b >= gradingWindowStart) return true;
+    if (e != null && e >= gradingWindowStart) return true;
+    return false;
+  }
+
+  // All lessons in the band (those that exist in the schedule AND are in
+  // the active grading window).
   // Codex MAJOR 3 fold (2026-05-20): defensive skip on malformed entries —
   // per-entry corruption must not crash this loop or the iteration that
   // follows. Treat any entry missing `unit` as if it weren't in the schedule.
   const bandLessons = [];
   for (const [topicKey, entry] of Object.entries(schedule)) {
     if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
-    if (quarterBand.includes(entry.unit)) {
-      bandLessons.push(topicKey);
-    }
+    if (!quarterBand.includes(entry.unit)) continue;
+    if (!inWindow(entry)) continue;
+    bandLessons.push(topicKey);
   }
 
   const lessonsTotal = bandLessons.length;
@@ -407,7 +430,7 @@ export function computeQuarterFromLessons({
 //
 // schedule: topicKey → { unit, worksheetKey, periods }
 // topicNames: optional topicKey → topic name string
-export function buildLessonsArray(lessonMap, schedule, topicNames) {
+export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart) {
   const result = [];
 
   // Include every lesson from the schedule (not just those with data).
@@ -420,6 +443,16 @@ export function buildLessonsArray(lessonMap, schedule, topicNames) {
 
   for (const topicKey of sortedKeys) {
     const entry = schedule[topicKey];
+    // 2026-05-20 hotfix: exclude lessons whose dates are entirely before the
+    // active cohort's grading window. Mirrors the band filter in
+    // computeQuarterFromLessons so the day-grade modal also skips stale
+    // prior-year entries.
+    if (gradingWindowStart && entry && entry.periods) {
+      const b = entry.periods.B, e = entry.periods.E;
+      const bothBeforeStart = (b != null && b < gradingWindowStart) &&
+                              (e != null && e < gradingWindowStart);
+      if (bothBeforeStart) continue;
+    }
     // Codex MAJOR 3 fold (2026-05-20): defensive skip on malformed entries
     // — the loader only validates the top-level shape, so per-entry corruption
     // (missing unit / periods) reaches here. Per the contract, malformed data

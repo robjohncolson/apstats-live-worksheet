@@ -445,12 +445,16 @@ const FIXTURE_SCHEDULE_MIXED = {
 };
 
 async function startServerWithSchedule(rows = [], schedule = null, opts = {}) {
-  const { loadAnswerKey = okAnswerKey } = opts;
+  const { loadAnswerKey = okAnswerKey, configOverrides = { gradingWindowStart: null } } = opts;
   process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
   process.env.NODE_ENV = 'test';
   const studentId = `uuid-grade-p6-${randomBytes(8).toString('hex')}`;
   const token = signToken(studentId);
   const ledgerDb = createFakeLedgerDb(rows.map(r => ({ ...r, student_id: studentId })));
+  // 2026-05-20: default configOverrides nulls out gradingWindowStart so the
+  // test fixtures with 2020/2099 dates exercise the pure date filter without
+  // also hitting the cohort-window filter. Tests that explicitly want to
+  // exercise the window filter can override.
   const app = createApp(
     createFakeRosterDb(),
     ledgerDb,
@@ -459,7 +463,8 @@ async function startServerWithSchedule(rows = [], schedule = null, opts = {}) {
     undefined,
     undefined,
     undefined,
-    schedule    // Phase 6: lessonSchedule
+    schedule,    // Phase 6: lessonSchedule
+    configOverrides
   );
   const server = new TestServer(app);
   await server.start();
@@ -611,6 +616,64 @@ describe('GET /grade — Phase 6 lesson-weighted quarterGrade', () => {
     expect(q1.quarterGrade).toBe(85);
     // Ceiling is null: remaining=0, unattempted=0.
     expect(q1.ceiling).toBe(null);
+  });
+
+  // ── gradingWindowStart filter (2026-05-20 hotfix) ──────────────────────────
+  // Lessons whose dates are ENTIRELY before the window start are excluded
+  // from the band — those are stale prior-year entries from a finished
+  // cohort. Lessons with null dates OR with at least one period date >=
+  // window start stay in the band.
+
+  it('gradingWindowStart filter: lessons with BOTH dates before window are excluded from band', async () => {
+    // FIXTURE_SCHEDULE_PAST = 2020-01-01 dates (5+ years before any plausible
+    // window start). With window start at 2026-09-01, both lessons drop out.
+    const rows = [makeRow('U1-L1-Q01', 'B')];
+    const ctx = await startServerWithSchedule(rows, FIXTURE_SCHEDULE_PAST, {
+      configOverrides: { gradingWindowStart: '2026-09-01' },
+    });
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    // Both fixture lessons (2020-01-01) excluded → empty band.
+    expect(body.quarters.Q1.lessonsTotal).toBe(0);
+    expect(body.quarters.Q1.lessonsDue).toBe(0);
+    expect(body.quarters.Q1.quarterGrade).toBe(null);
+    expect(body.quarters.Q1.ceiling).toBe(null);
+    // And the lessons[] array also excludes them.
+    expect(body.lessons.length).toBe(0);
+  });
+
+  it('gradingWindowStart filter: lessons with null dates STAY in the band', async () => {
+    // U1-L1, U1-L2 with null dates → in band (not yet scheduled for this
+    // cohort, but still counted toward the band total).
+    const NULL_SCHEDULE = {
+      '1.1': { unit: 1, topicKey: '1.1', worksheetKey: '1', periods: { B: null, E: null } },
+      '1.2': { unit: 1, topicKey: '1.2', worksheetKey: '2', periods: { B: null, E: null } },
+    };
+    const ctx = await startServerWithSchedule([], NULL_SCHEDULE, {
+      configOverrides: { gradingWindowStart: '2026-09-01' },
+    });
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(body.quarters.Q1.lessonsTotal).toBe(2);
+    expect(body.quarters.Q1.lessonsDue).toBe(0);   // null dates = not yet due
+    expect(body.quarters.Q1.quarterGrade).toBe(null);
+    // Lessons[] includes the entries (with null due dates).
+    expect(body.lessons.length).toBe(2);
+  });
+
+  it('gradingWindowStart filter: lessons with ONE in-window date STAY in the band', async () => {
+    // Edge case: B is stale (2020), E is fresh (2027). Lesson must remain
+    // because at least one period covers the new cohort.
+    const MIXED = {
+      '1.1': { unit: 1, topicKey: '1.1', worksheetKey: '1', periods: { B: '2020-01-01', E: '2027-09-15' } },
+    };
+    const ctx = await startServerWithSchedule([], MIXED, {
+      configOverrides: { gradingWindowStart: '2026-09-01' },
+    });
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(body.quarters.Q1.lessonsTotal).toBe(1);
+    expect(body.lessons.length).toBe(1);
   });
 
   it('no lesson schedule → graceful degrade to lesson-level math without date filter (no crash, Codex MAJOR 2 fold 2026-05-20)', async () => {

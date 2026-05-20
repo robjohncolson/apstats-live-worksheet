@@ -17,6 +17,7 @@ import { mountGrade } from './grade.js';
 import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
 import { mountRemediation } from './remediation.js';
+import { PHASE3_CONFIG } from './grade-config.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
@@ -31,7 +32,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -288,7 +289,14 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Phase 6: lessonSchedule is passed in for date-driven lesson-weighted quarter
   // grade. If null/missing, /grade degrades gracefully to the old unit-mean logic.
   if (ledgerDb && loadAnswerKey) {
-    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db });
+    // 2026-05-20 hotfix: thread configOverrides so tests can disable the
+    // gradingWindowStart filter (whose default cutoff is in the future for
+    // real-clock tests). Production server doesn't pass overrides → uses
+    // PHASE3_CONFIG as-is.
+    const gradeConfig = configOverrides
+      ? { ...PHASE3_CONFIG, ...configOverrides }
+      : PHASE3_CONFIG;
+    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig });
   }
 
   // ── Mastery route (Phase 3 additive — decoupled diagnostic) ──────────────────
@@ -304,7 +312,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // /mastery). Auth = x-teacher-secret (mirrors /roster/list); reuses pure
   // computeGrade / computeMastery so the math has a single source.
   if (db && ledgerDb && loadAnswerKey) {
-    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null });
+    const classConfig = configOverrides
+      ? { ...PHASE3_CONFIG, ...configOverrides }
+      : PHASE3_CONFIG;
+    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig });
   }
 
   // ── Remediation routes (Phase 4b additive — write loop + retake gate) ──────

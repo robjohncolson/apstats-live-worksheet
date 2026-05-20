@@ -218,6 +218,11 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         section,
         pcBandData: { P_quarter },
         C,
+        // 2026-05-20 hotfix: gradingWindowStart filters out stale prior-year
+        // dates left in the schedule from a finished cohort. Without this
+        // Q3/Q4 showed 0% + ceiling 100 because U6-U9 still carried April-2026
+        // dates from SY25-26 and were flagged "past-due" for the new cohort.
+        gradingWindowStart: (config && config.gradingWindowStart) || null,
       });
     } else {
       // Codex MAJOR 2 fold (2026-05-20): the contract says missing schedule
@@ -273,7 +278,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   }
 
   // ── Phase 6: build the lessons[] array ────────────────────────────────────
-  const lessons = schedule ? buildLessonsArray(lessonMap, schedule) : [];
+  const lessons = schedule
+    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null)
+    : [];
 
   // Stable sorted unit / completion order.
   const unitsOut = {};
