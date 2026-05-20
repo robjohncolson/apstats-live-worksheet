@@ -3419,6 +3419,32 @@ function getStudentMarks() {
 // button cannot be pressed until ~5 or more minutes have passed since the
 // corresponding link has been clicked"). Override for testing via
 //   localStorage.setItem('apstats_desk_done_gate_ms', '0')
+// 2026-05-20: AP Classroom is locked to students until the school year
+// actually starts. Mirror the server's gradingWindowStart so the Desk
+// hides AP Classroom video links before the cutover and falls back to
+// the Drive alt copies. Bump this once per year at cohort cutover.
+const SCHOOL_YEAR_START = '2026-09-01';
+function _isApClassroomAvailable() {
+  try {
+    // Compare YYYY-MM-DD lexicographically; uses local time on the
+    // student's device. Override via localStorage for testing /
+    // teacher preview.
+    var override = null;
+    try { override = localStorage.getItem('apstats_desk_today_override'); } catch (_) {}
+    var d = override ? new Date(override) : new Date();
+    if (isNaN(d.getTime())) d = new Date();
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    var today = y + '-' + m + '-' + day;
+    return today >= SCHOOL_YEAR_START;
+  } catch (_) {
+    // On any error, default to "available" — fail-open so a bug in the
+    // date logic never strands students who legitimately have AP access.
+    return true;
+  }
+}
+
 const DESK_DONE_GATE_MS_DEFAULT = 5 * 60 * 1000;
 function deskDoneGateMs() {
   try {
@@ -5467,10 +5493,26 @@ function showResourcePanel(inf, dateStr) {
             const r = RESOURCES[id];
             if (!r) continue;
             if (r.videos && r.videos.length) {
+                // 2026-05-20: AP Classroom is locked until the school year
+                // starts. Before SCHOOL_YEAR_START → show the Drive alt copy
+                // as the primary "Video" link (if present); the AP Classroom
+                // URL is hidden / shown as a locked placeholder.
+                var _apAvail = _isApClassroomAvailable();
                 r.videos.forEach((v, i) => {
                     lessonHtml += '<div style="margin:3px 0">';
-                    lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
-                    if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
+                    if (_apAvail) {
+                        // Standard render: AP Classroom primary + Drive alt secondary.
+                        lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
+                        if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
+                    } else if (v.altUrl) {
+                        // Pre-cohort: Drive alt copy is the primary (and only) link.
+                        // Renders as plain "Video N" so the student doesn't need to
+                        // know about AP Classroom at all.
+                        lessonHtml += '<a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline" title="Drive copy — AP Classroom available when school starts">Video ' + (i + 1) + '</a>';
+                    } else {
+                        // Pre-cohort with no Drive copy: show locked placeholder.
+                        lessonHtml += '<span style="color:#888;text-decoration:line-through;cursor:not-allowed" title="Available when school starts (' + SCHOOL_YEAR_START + ')">Video ' + (i + 1) + ' (locked until ' + SCHOOL_YEAR_START + ')</span>';
+                    }
                     if (i === 0) { lessonHtml += _visitedTag('video') + _doneBtn('video'); }
                     lessonHtml += '</div>';
                 });
@@ -5494,7 +5536,13 @@ function showResourcePanel(inf, dateStr) {
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz (Previous Lesson)</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
             }
             if (u.blooket) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _doneBtn('blooket') + '</div>';
+                // 2026-05-20: Blooket Done now prompts for "% correct" via the
+                // same inline-score-input pattern as quiz (stronger verification
+                // than a naked Done click — forces the student to look at their
+                // end-of-game score before saving). Still excluded from the
+                // gradebook ledger per Phase 3 spec; the score is captured in
+                // legacy student_progress for teacher review.
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _doneBtn('blooket') + '</span></div>';
             }
         }
 
@@ -5644,7 +5692,12 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
 
 async function studentMark(btn, topicId, artifact) {
     if (!getStudentEmail()) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return; }
-    if (artifact === 'quiz') {
+    // 2026-05-20: Blooket now uses the same inline-score-input UX as quiz —
+    // forces the student to look at their end-of-game % correct before the
+    // Done click latches. Blooket score still NOT recorded to the gradebook
+    // ledger (Phase 3 spec §6 exclusion preserved below); legacy
+    // student_progress captures it for teacher review.
+    if (artifact === 'quiz' || artifact === 'blooket') {
         // Inline score input: swap the slot's innerHTML instead of using
         // a native prompt() so the Done-button latch is immediate.
         var slot = btn ? btn.closest('.desk-quiz-done-slot') : null;
@@ -5652,11 +5705,12 @@ async function studentMark(btn, topicId, artifact) {
             // Fallback: slot not found — skip (should not happen in normal flow).
             return;
         }
+        var _labelText = artifact === 'blooket' ? 'Blooket % correct:' : 'Score:';
         slot.innerHTML =
-            'Score: <input type="number" min="0" max="100" class="desk-quiz-score-input"'
+            _labelText + ' <input type="number" min="0" max="100" class="desk-quiz-score-input"'
             + ' style="width:48px;font-size:9px;padding:1px 2px" autofocus>'
             + ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:2px"'
-            + ' onclick="_studentMarkQuizSave(this,\'' + topicId + '\')">Save</button>'
+            + ' onclick="_studentMarkQuizSave(this,\'' + topicId + '\',\'' + artifact + '\')">Save</button>'
             + ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:2px"'
             + ' onclick="_studentMarkQuizCancel()">Cancel</button>';
         var input = slot.querySelector('.desk-quiz-score-input');
@@ -5680,8 +5734,13 @@ async function studentMark(btn, topicId, artifact) {
     await _studentMarkSave(btn, topicId, artifact, null);
 }
 
-// Called from the inline quiz Save button's onclick.
-async function _studentMarkQuizSave(saveBtn, topicId) {
+// Called from the inline quiz/blooket Save button's onclick. The artifact
+// arg is required so the Done button restored after Save knows what to
+// re-bind (quiz vs blooket) and so _studentMarkSave routes the score to
+// the right downstream (legacy student_progress for both; gradebook
+// ledger only for quiz, blooket is excluded per Phase 3 spec §6).
+async function _studentMarkQuizSave(saveBtn, topicId, artifact) {
+    artifact = artifact || 'quiz';  // backward-compat default
     var slot = saveBtn ? saveBtn.closest('.desk-quiz-done-slot') : null;
     if (!slot) return;
     var input = slot.querySelector('.desk-quiz-score-input');
@@ -5700,9 +5759,9 @@ async function _studentMarkQuizSave(saveBtn, topicId) {
     }
     // Re-render the slot back to a real Done button so _studentMarkSave
     // has a real btn reference for the optimistic mutation.
-    slot.innerHTML = '<button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + topicId + '\',\'quiz\')">&#10003; Done</button>';
+    slot.innerHTML = '<button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + topicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
     var btn = slot.querySelector('button');
-    await _studentMarkSave(btn, topicId, 'quiz', n);
+    await _studentMarkSave(btn, topicId, artifact, n);
 }
 
 // Cancel the inline quiz score input: re-render the panel so the bare

@@ -131,4 +131,39 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(DESK).toMatch(/_attachDayGradeKeyHandler/);
     expect(DESK).toMatch(/_detachDayGradeKeyHandler/);
   });
+
+  // ── 2026-05-20: Blooket inline score input (stronger verification) ─────────
+  it('pin 14: blooket Done button is wrapped in span.desk-quiz-done-slot like quiz', () => {
+    // Both artifacts now use the same inline-score-input slot. Pin both the
+    // shared class AND the data-artifact attr for blooket specifically.
+    expect(DESK).toMatch(/class="desk-quiz-done-slot"\s+data-topic="[^"]+"\s+data-artifact="blooket"/);
+  });
+
+  it('pin 15: studentMark routes blooket through the same inline-form branch as quiz', () => {
+    const body = fnBody(DESK, 'studentMark');
+    // Branch condition must include both artifacts.
+    expect(body).toMatch(/artifact\s*===\s*['"]quiz['"]\s*\|\|\s*artifact\s*===\s*['"]blooket['"]/);
+    // Inline form's Save onclick passes the artifact arg through.
+    expect(body).toMatch(/_studentMarkQuizSave\s*\(\s*this\s*,\s*\\'/);
+    // Blooket label differs from quiz (explicit "% correct" hint).
+    expect(body).toMatch(/Blooket %\s*correct/i);
+  });
+
+  it('pin 16: _studentMarkQuizSave accepts an artifact param and routes through it', () => {
+    const body = fnBody(DESK, '_studentMarkQuizSave');
+    // Signature includes the artifact arg.
+    expect(DESK).toMatch(/function\s+_studentMarkQuizSave\s*\(\s*saveBtn\s*,\s*topicId\s*,\s*artifact\s*\)/);
+    // The recreated Done button concatenates artifact into its onclick
+    // (not hardcoded 'quiz'). Loose substring check: the slot.innerHTML
+    // assignment contains "+ artifact +" somewhere.
+    expect(body).toMatch(/slot\.innerHTML\s*=[\s\S]{0,400}\+\s*artifact\s*\+/);
+    // _studentMarkSave call uses the artifact, not a hardcoded 'quiz'.
+    expect(body).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topicId\s*,\s*artifact\s*,\s*n\s*\)/);
+  });
+
+  it('pin 17: blooket is STILL excluded from the gradebook ledger (Phase 3 spec §6 preserved)', () => {
+    const body = fnBody(DESK, '_studentMarkSave');
+    // The ledger write block must skip blooket.
+    expect(body).toMatch(/artifact\s*!==\s*['"]blooket['"]/);
+  });
 });
