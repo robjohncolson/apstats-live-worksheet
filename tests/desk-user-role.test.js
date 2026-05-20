@@ -75,33 +75,35 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/loadRegistry\(\);[\s\S]{0,200}updateUserRoleUI\(\)/);
   });
 
-  it('07: signin modal has the Teacher checkbox + access-code input (type=text to dodge password autofill)', () => {
-    expect(DESK).toMatch(/<input\s+type="checkbox"\s+id="signin-teacher"\s+disabled/);
-    // 2026-05-20 v2: input is type=text now (was type=password). Chrome's
-    // password autofill bypasses the standard input event flow for
-    // type=password fields, leaving the visual feedback (checkbox enable)
-    // stuck. type=text avoids that. The access code is in the page source
-    // anyway, so masking is not security.
+  it('07: signin modal has the access-code input (type=text) + dedicated teacher button', () => {
+    // 2026-05-20 v5: removed the confusing greyed-out checkbox.
+    // Replaced with a dedicated "Sign in as teacher" button next to OK.
     expect(DESK).toMatch(/<input\s+type="text"\s+id="signin-teacher-code"/);
+    expect(DESK).toMatch(/id="signin-teacher-btn"[^>]*onclick="submitTeacherSignIn\(\)"/);
     expect(DESK).toMatch(/id="signin-teacher-status"/);
   });
 
-  it('08: _onTeacherCodeInput enables the checkbox when the code matches', () => {
-    const body = fnBody(DESK, '_onTeacherCodeInput');
+  it('08: submitTeacherSignIn validates code-only (no roster, no username/password)', () => {
+    expect(DESK).toMatch(/function\s+submitTeacherSignIn\s*\(/);
+    const body = fnBody(DESK, 'submitTeacherSignIn');
+    // Reads the access code input.
+    expect(body).toMatch(/getElementById\s*\(\s*['"]signin-teacher-code['"]/);
+    // Trim + case-insensitive compare to _teacherAccessCode().
+    expect(body).toMatch(/\.trim\s*\(\s*\)/);
+    expect(body).toMatch(/toLowerCase\s*\(\s*\)/);
     expect(body).toMatch(/_teacherAccessCode\s*\(\s*\)/);
-    // Disables when no match, enables (and auto-checks) when match.
-    expect(body).toMatch(/chk\.disabled\s*=\s*!match/);
-    expect(body).toMatch(/chk\.checked\s*=\s*true/);
+    // Promotes role + sets synthetic identity.
+    expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]\s*,\s*['"]teacher['"]/);
+    expect(body).toMatch(/teacher@desk\.local/);
+    // Does NOT call rosterClient.signIn.
+    expect(body).not.toMatch(/rosterClient\.signIn/);
   });
 
-  it('09: openSignInModal resets the teacher fields every open (no state leak)', () => {
+  it('09: openSignInModal wires the teacher-code input + Enter-key submits as teacher', () => {
     const body = fnBody(DESK, 'openSignInModal');
-    // Resets the access code value + binds the oninput listener.
     expect(body).toMatch(/cInp\.value\s*=\s*['"]['"]/);
-    expect(body).toMatch(/cInp\.oninput\s*=\s*_onTeacherCodeInput/);
-    // Resets the checkbox (unchecked + disabled).
-    expect(body).toMatch(/chk\.checked\s*=\s*false/);
-    expect(body).toMatch(/chk\.disabled\s*=\s*true/);
+    // The code field's Enter key triggers submitTeacherSignIn, not submitSignIn.
+    expect(body).toMatch(/submitTeacherSignIn\s*\(/);
   });
 
   it('10: submitSignIn TEACHER FAST-PATH runs BEFORE rosterClient.signIn (v4 tolerant matching)', () => {
@@ -150,11 +152,8 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/Teacher:/);
   });
 
-  it('13a: openSignInModal binds multiple event types for the access-code input (autofill resilience)', () => {
+  it('13a: openSignInModal binds multiple event types for the access-code input (visual feedback resilience)', () => {
     const body = fnBody(DESK, 'openSignInModal');
-    // The wiring must use BOTH the property assignment (.oninput =) AND
-    // addEventListener for 'input', 'change', and 'keyup' so any one
-    // event source firing is enough to trigger the visual feedback.
     expect(body).toMatch(/cInp\.oninput\s*=\s*_onTeacherCodeInput/);
     expect(body).toMatch(/addEventListener\s*\(\s*['"]input['"]\s*,\s*_onTeacherCodeInput/);
     expect(body).toMatch(/addEventListener\s*\(\s*['"]change['"]\s*,\s*_onTeacherCodeInput/);
