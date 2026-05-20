@@ -35,7 +35,33 @@
 > `remediation_assignment` table is live in the DB.** Once the deploy
 > lands, /remediation/* should return 200 (not 503) — smoke-test with
 > `curl -H "x-teacher-secret: $S" $BASE/remediation/list` and expect a
-> `{ok:true, assignments:[]}` shape. **NEXT optional loop task = wrap session
+> `{ok:true, assignments:[]}` shape.
+>
+> **➡ NEXT LOOP TASK (queued by teacher 2026-05-20, ready for autonomous
+> execution on reload):** **DESK_MODAL_POLISH** — two-pronged UX fix in the
+> Desk resource modal:
+> (1) "Done" button immediate-feedback bug: clicking Done doesn't latch
+> "✓ Saved" until the teacher dismisses an intermediate dialog AND
+> reclicks the day. Likely root cause = the native `prompt('Score 0-100')`
+> for the quiz artifact interrupts the panel re-render flow; even on the
+> worksheet path (no prompt) the latch feels delayed.
+> (2) **Keyboard shortcuts in the resource modal** — letters (a, b, c, d,
+> e, f, g, h) navigate to/open visible link rows in order; numbers
+> (1, 2, 3, 4) drive contextual within-row actions (AP-classroom video /
+> Drive alt video / Done button). Visual `[letter]` / `[number]` badges
+> next to each clickable element.
+>
+> **Execution discipline (teacher-specified for this task):** dispatch
+> **Sonnet sub-agent(s)** to implement (the Desk file is contended → ONE
+> Sonnet for both prongs — they touch the same surface), then
+> **cross-dispatch Codex** for read-only review (detached PowerShell, same
+> pattern as Phase 4b / Phase 5.1 reviews), then **planner final pass**:
+> fix any findings, re-verify all tests + audit-feeder-ids + EOL
+> preservation, manual smoke against localhost:8091 (the local roster-
+> server is still running on that port), then a tight single-purpose
+> commit + push. Full task spec in Task #8 below.
+>
+> Other optional loop task = wrap session
 > OR Phase 5.1** (PC-tile AI-tutor wiring; 9 unit-PC artifacts remain
 > unwired) once user un-blocks deploy. The concurrent TR session is
 > DONE & deployed → roster-server contention RELEASED. The concurrent
@@ -250,6 +276,175 @@ and all relevant guards pass:
    provision the new table. Until BOTH done, /remediation/* returns 503
    "remediation table not yet provisioned" in prod (after redeploy);
    the rest of the service is unaffected.
+8. **DESK_MODAL_POLISH — Done-button latch + keyboard shortcuts — ⏳
+   QUEUED BY TEACHER 2026-05-20.** Two prongs in
+   `ap_stats_roadmap_square_mode.html`'s `showResourcePanel` modal:
+
+   **PRONG A — Done button immediate visual feedback.** Teacher symptom
+   (verbatim 2026-05-20): "[the Done] button is clicked, it doesn't
+   immediately hold the pressed state, only once you click 'okay' and
+   then reclick the square does it show 'done'." The "okay" the teacher
+   dismissed is almost certainly the native `prompt('Score (0-100)?')`
+   inside `studentMark()` for `artifact === 'quiz'` (line ~5413 area).
+   Even on non-quiz paths the latch may feel delayed — the panel
+   re-render is supposed to be synchronous after `recordProgress`
+   returns true (see the prior commit `540d168` for the localStorage-
+   first refactor) but the UI tick may not be perceived as immediate.
+
+   **Fix design (sub-agent decides exact mechanism; this is a guidance,
+   not a contract):**
+   - A1. Replace the native `prompt()` for quiz score with an **inline
+     score input** rendered IN the resource panel (e.g., a `<input
+     type="number" min="0" max="100">` + a small "Save" button that
+     replaces the bare "✓ Done" button on click). No native dialog
+     interrupts the visual flow.
+   - A2. Make the latch **optimistic**: in `studentMark()`, BEFORE the
+     async `recordProgress()` call, DOM-mutate the button to its saved
+     state directly (`btn.disabled = true; btn.textContent = '✓ Saved';
+     btn.style.opacity = '0.6'`). The async work then either confirms
+     (no-op) or — if a future refactor adds a failure rollback —
+     reverts. Combined with the localStorage-first refactor, this
+     guarantees the saved state is visible the moment the click
+     completes.
+   - A3. After the async work, the existing `showResourcePanel()`
+     re-render still fires — but it now sees the localStorage-saved
+     state and re-renders the disabled "✓ Saved" button identically.
+     Zero flicker.
+
+   **Acceptance for prong A:**
+   - Click Done on a WORKSHEET row → button immediately says "✓ Saved"
+     (disabled, opacity 0.6), no flicker, no modal interruption.
+   - Click Done on a QUIZ row → inline score input appears in the
+     panel (NOT a native prompt). Type a score, hit Enter or click
+     Save → button immediately says "✓ Saved" with the score recorded.
+   - Saved state persists across modal close/re-open AND across page
+     reload (localStorage is source of truth — already true per
+     `540d168`).
+   - The visit-gate latch (the 5-min countdown from `540d168`) still
+     works: Done stays disabled until the gate elapses, regardless of
+     this prong's UI changes.
+
+   **PRONG B — Keyboard shortcuts in the resource modal.** Teacher spec
+   (verbatim): "a, b, c, d, e, f, g..for example..to go to that link/etc
+   ..and 1, 2, 3, 4 to select either the ap classroom video link, or the
+   alt video link, or the done button.. depending on context."
+
+   **Design proposal (sub-agent refines):**
+   - **Letter keys (a–h)** = jump-to-row. Each rendered `<div
+     style="margin:3px 0">` in the resource panel is assigned a
+     sequential letter at render time (a = first row, b = second, ...,
+     up to h or however many rows exist). A small `[a]` / `[b]` /
+     etc. badge sits at the left of each row. Pressing a letter
+     **opens the row's primary link in a new tab** (same as the
+     teacher would clicking it manually) AND fires the existing
+     `recordLinkVisit()` so the visit-gate counter starts.
+   - **Number keys (1–4)** = within-row context actions on the
+     **currently-focused row** (where "focused" = the most recent
+     letter-press OR mouse hover, whichever is later). The mapping:
+       1 = primary link (AP Classroom video, or worksheet, etc.)
+       2 = secondary link if the row has one (Drive alt video for
+           Video rows; otherwise no-op or repeat 1)
+       3 = Done button (if enabled per the visit-gate; otherwise
+           triggers the same dialog the teacher would see with an
+           unready Done click — "open the link first" or "wait Xm")
+       4 = (reserved — sub-agent may map to "open in this tab"
+           rather than new tab, or omit)
+   - Visual indicator: each row carries the letter badge at its
+     left edge; the focused row gets a subtle outline (e.g.
+     `box-shadow: inset 0 0 0 2px var(--accent)` or similar — match
+     System 7 aesthetic). Number-key targets within the row get
+     small `[1]` / `[2]` / `[3]` badges at the right edge of their
+     respective controls.
+   - **Modal-scoped only**: the keydown listener is attached when
+     the resource modal opens, removed when it closes. NEVER fires
+     when the modal is hidden. NEVER fires when the user is typing
+     in an input (check `document.activeElement.tagName !==
+     'INPUT'`/`'TEXTAREA'`). ESC closes the modal (already wired in
+     the existing close handler — verify still works).
+   - Letter / number key handling is **case-insensitive** and ignores
+     modifier-key combos (Ctrl+A should still select all text; only
+     unmodified single-key presses trigger).
+
+   **Acceptance for prong B:**
+   - Open any day with a worksheet — see letter badges (a, b, c, ...)
+     at the left of each row, and number badges (1, 2, 3) at the
+     right of any row with multiple actions.
+   - Press 'a' on the keyboard → first row's primary link opens in a
+     new tab AND the visit-counter starts AND the row gets a focus
+     outline.
+   - With a row focused, press '3' → its Done button fires (subject
+     to the visit-gate from `540d168`).
+   - Press ESC → modal closes; keydown listener detaches; subsequent
+     keyboard input on the Desk page has no surprise side-effects.
+   - Typing in any future inline score input (prong A1) → letter/
+     number shortcuts DO NOT fire (active element check protects).
+
+   **EXECUTION DISCIPLINE (teacher-specified for this task, 2026-05-20):**
+   This is the protocol the next loop run MUST follow on reload — the
+   teacher gave standing authorization for this entire sequence to run
+   unattended:
+
+   1. **Freeze a small `DESK_MODAL_POLISH_BUILD.md`** first (loop step 1
+      — proven method). 1-2 pages: scope, contract for the inline-score
+      input shape, the letter/number key map decided by the sub-agent,
+      acceptance test list, GREEN gate.
+   2. **Dispatch ONE Sonnet sub-agent** to implement both prongs.
+      RATIONALE for ONE not multiple: both prongs touch a SINGLE
+      contended file (`ap_stats_roadmap_square_mode.html`) → parallel-
+      Sonnet on one file = clobber (the standing s100 rule). The Sonnet
+      prompt includes the full prong-A and prong-B specs above + a
+      command to write the changes + run the relevant tests + report
+      diff stats.
+   3. **Planner re-verify on disk** (s88b — NEVER trust the result
+      file): root `npx vitest run` + `node scripts/audit-feeder-ids.mjs`
+      + manual smoke against `http://localhost:8000/ap_stats_roadmap_
+      square_mode.html` against the local roster-server on `:8091`.
+      Check: worksheet Done → "✓ Saved" instantly; quiz Done → inline
+      score input appears; ESC closes; letter keys open links; ESC
+      detaches listener.
+   4. **Cross-dispatch Codex read-only review** (detached PowerShell via
+      `Start-Process -WindowStyle Hidden`, same pattern as Phase 4b /
+      Phase 5.1). The Codex prompt covers: prong-A correctness (no
+      native dialogs left, optimistic latch DOES write localStorage
+      first, no race where async failure leaves saved state without a
+      ledger row), prong-B correctness (listener attached on modal open
+      / detached on close, active-element check protects inputs, ESC
+      still works, badge selectors are XSS-safe, letter/number keys
+      ignore modifiers), test coverage (acceptance items above are
+      pinned by automated assertions where possible — at minimum a
+      structure-style test that key handlers exist + the badges
+      render). ASCII-only prompt; parse `state/cross-agent/<id>
+      .result.json` findings, NEVER the wrapper.
+   5. **Fix any Codex BLOCKER/MAJOR/MINOR findings yourself** (planner-
+      direct on the contended file). Re-run tests after every fix.
+   6. **Final planner pass:** all root tests green (only the known
+      study-guide.test.js fail), all structure tests green, audit-
+      feeder-ids CLEAN 69, EOL LF preserved on the Desk file.
+   7. **Commit + push** with a tight single-purpose message. Per the
+      auto-deploy config, the push will NOT trigger a roster-server
+      redeploy (Desk file isn't under `roster-server/`) — that's
+      correct, this task touches no server code.
+   8. **Update memory + CONTINUATION_PROMPT.md** marking Task #8 DONE
+      with the commit SHA.
+
+   **Out of scope (explicit non-goals):**
+   - No changes to the gradebookClient feeder behavior, the ledger
+     schema, or `recordProgress`'s async path beyond what prong A
+     needs (optimistic UI mutation only).
+   - No changes to other modals or surfaces — the resource modal in
+     `showResourcePanel` only.
+   - No new server endpoints, no migration, no auto-deploy trigger.
+   - The visit-gate (5-min countdown from `540d168`) stays unchanged.
+   - Letter-key conflicts with the browser's own shortcuts (Ctrl-W,
+     etc.) — leave the browser's defaults intact; only handle
+     UNMODIFIED single-letter / single-digit presses.
+
+   **Recall on reload:** `feedback_curriculum_render_sacred.md`,
+   `project_gradebook_grading_model.md` (for the Desk-file ownership
+   protocol — gradebook session owns this file, AI-tutor lane defers).
+   This task is independent of Railway state; safe to run whether
+   Railway is up or down.
+
 7. **Phase 5.1 — PC-tile AI-tutor wiring — ✅ DONE & PUSHED (`66faaf1`).**
    Survey found PCs aren't standalone tiles in the Desk schedule —
    they appear as string mentions ("U6 PC", "U7 PC") in the due/
@@ -331,9 +526,17 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `66faaf1`** (Phase 5.1). Lineage:
-  `66faaf1` Phase-5.1 ← `83a750d` (docs refresh) ← `5a46f19` Phase-4b ←
-  `ce864fe` (docs refresh) ← `e592d1b` Phase-5 ←
+- **follow-alongs `master` HEAD `633013c`** (per-quarter ceiling
+  projection). Lineage: `633013c` ceiling-projection ← `d82841b` roster-
+  prefill (all 69 worksheets inherit identity from Desk sign-in) ←
+  `540d168` Desk Done buttons (latched local + visit gate + visited
+  indicator) ← `366ca2b` Desk getStudentEmail bridge + AI-tutor
+  AI_TUTOR_LESSON_KEYS gate ← `3036bd5` roster_config auto-detect
+  localhost ← `d7232a0` teacher-tools URL dropdown + opt-in localStorage
+  secret + GLOBAL_OVERRIDE_KEY ← `45251ef` (docs refresh — SQL applied)
+  ← `83a750d` (docs refresh) ← `c3be95c` (docs refresh) ← `66faaf1`
+  Phase-5.1 ← `5a46f19` Phase-4b ← `ce864fe` (docs refresh) ←
+  `e592d1b` Phase-5 ←
   `a0c7a93` (docs refresh) ← `13cb326` Phase-4a hotfix ← `d68e98b`
   Phase-4a ← `deff78b` ← `801dccc` Phase-3 ← `4969715` ← `00e7a6c`
   Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ←
@@ -362,7 +565,42 @@ and all relevant guards pass:
   `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
 - **Concurrent AI-tutor session: idle/done** (`9207d24`); its artifacts in
   `ai-tutor/u{U}_l{L}.md` are the source for the Phase-5 Desk-tile prompt.
-- Test baseline (post-`66faaf1`): follow-alongs root **1640/1641** (only
+- Test baseline (post-`633013c`): follow-alongs root **1652/1653** (only
+  the same known unrelated study-guide.test.js fail; +11 from
+  `tests/roster-prefill.test.js` and +1 from the AI_TUTOR_LESSON_KEYS
+  gating assertion since the `66faaf1` baseline). roster-server
+  **223/223** (was 219 → +4 from the per-quarter ceiling tests in
+  `tests/grade.test.js`). `audit-feeder-ids` CLEAN 69; phase4-structure
+  17/17 + phase4b-structure 16/16 + phase5-structure 32/32. **Live
+  state in prod**: as of 2026-05-20 03:15 UTC, prod is on the Phase-4a
+  baseline (last working deploy) — Phase 4b code (`5a46f19`) and
+  everything after (Phase 5/5.1/Desk UX/roster-prefill/ceiling
+  projection) is pushed to `master` but NOT yet auto-deployed.
+  Background: Railway suffered a major outage 2026-05-19 → 2026-05-20
+  (GCP-side block + non-enterprise build pause); user configured
+  GitHub auto-deploy on `roster-server/**` watch path during recovery.
+  Once Railway accepts deploys again, the next push touching
+  `roster-server/**` will fire the auto-deploy (or the user can
+  trigger a one-time manual redeploy from the dashboard). Task #8
+  (Desk modal polish) does NOT touch roster-server, so executing it
+  won't trigger an auto-deploy on its own.
+
+- ⚠ Local-only test rig: a fresh roster-server is running on
+  `http://localhost:8091` (started by the planner this session via
+  `cd roster-server && PORT=8091 node --env-file=.env server.js`)
+  + a Python static server on `http://localhost:8000` serving the
+  repo root. `roster_config.js` auto-detects localhost-served pages
+  and routes them to `:8091` (commit `3036bd5`). The teacher-roster-
+  console + teacher-dashboard both default the URL dropdown to
+  "Local dev (localhost:8091)" with opt-in localStorage persistence
+  (commit `d7232a0`). Test account: `date_tiger` /
+  `apstats2026` (sec=PeriodE, real_name="Robert Colson"). If those
+  servers are still running on reload, no need to restart — just
+  smoke-test against them. If they're not, restart via the same
+  command above + `python -m http.server 8000 --bind 127.0.0.1`.
+
+  → **PRIOR baseline (pre-`633013c`) — superseded**: follow-alongs
+  root **1640/1641** (only
   the same 1 known study-guide.test.js fail); roster-server
   **219/219** (untouched in Phase 5.1); cr **764/765** (1 known
   redox-chat — not touched); `audit-feeder-ids` CLEAN 69;
