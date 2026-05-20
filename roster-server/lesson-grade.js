@@ -367,7 +367,17 @@ export function computeQuarterFromLessons({
     return !!(bDue || eDue);
   }
 
-  const dueLessons = bandLessons.filter(isDue);
+  // 2026-05-20 v2: include any lesson with recorded work in dueLessons,
+  // even if its due date is in the future or null. The student's grade
+  // should reflect work they've actually completed — silently ignoring
+  // ahead-of-schedule work (or pre-cohort work) is confusing UX. The
+  // teacher's mental model: "if work is done, count it." After the cohort
+  // starts, due-by-date lessons join in (still counted as 0 if ungraded).
+  const dueLessons = bandLessons.filter((topicKey) => {
+    if (isDue(topicKey)) return true;
+    const result = lessonMap.get(topicKey);
+    return !!(result && result.lessonGrade != null);
+  });
   const lessonsDue = dueLessons.length;
 
   if (lessonsDue === 0) {

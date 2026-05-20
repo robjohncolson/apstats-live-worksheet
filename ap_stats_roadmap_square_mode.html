@@ -5584,95 +5584,9 @@ function showResourcePanel(inf, dateStr) {
     document.getElementById('resource-overlay').style.display = 'block';
     _lastResourcePanel = { inf: inf, dateStr: dateStr };
 
-    // Prong B: assign letter badges (a-h) and number badges (1-3) to rows.
-    // Letter badges go at the left of each row; number badges go to the right
-    // of the primary link, alt-video link, and Done button within the row.
-    (function _decorateResourceRows() {
-        var body = document.getElementById('resource-body');
-        if (!body) return;
-        var rows = body.querySelectorAll('div[style*="margin:3px 0"]');
-        var letters = 'abcdefgh';
-        var topicIdForRow = (ids.length > 0)
-            ? ((inf.t && /^\d+\.\d+/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.'))
-            : '';
-        for (var ri = 0; ri < rows.length && ri < letters.length; ri++) {
-            var row = rows[ri];
-            var letter = letters[ri];
-            // Store letter on the row for key handler lookup.
-            row.setAttribute('data-desk-row-letter', letter);
-
-            // Letter badge at left.
-            var lbadge = document.createElement('span');
-            lbadge.className = 'desk-row-letter-badge';
-            lbadge.textContent = '[' + letter + ']';
-            lbadge.style.cssText = 'font-size:9px;color:var(--plat-lo);margin-right:4px;border:1px solid var(--plat-lo);padding:0 3px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
-            row.insertBefore(lbadge, row.firstChild);
-
-            // Number badges: find primary link, alt link, Done button.
-            var links = row.querySelectorAll('a');
-            var primaryLink = links.length > 0 ? links[0] : null;
-            // Alt link is the second <a> with font-size:9px style (the "(alt)" link).
-            var altLink = null;
-            for (var li = 1; li < links.length; li++) {
-                if (links[li].style && links[li].style.fontSize === '9px') {
-                    altLink = links[li];
-                    break;
-                }
-            }
-            // Done button = button whose onclick starts with "studentMark".
-            var doneBtn = null;
-            var btns = row.querySelectorAll('button');
-            for (var bi = 0; bi < btns.length; bi++) {
-                var oc = btns[bi].getAttribute('onclick') || '';
-                if (oc.indexOf('studentMark') === 0) { doneBtn = btns[bi]; break; }
-            }
-            // Store topic id on row for key handler.
-            if (topicIdForRow) row.setAttribute('data-desk-topic', topicIdForRow);
-            // Store artifact on row by inspecting the primary link's onclick for
-            // the recordLinkVisit call, or fall back to reading the Done btn onclick.
-            var artifactOnRow = '';
-            if (primaryLink) {
-                var m = /recordLinkVisit\('[^']*','([^']*)'\)/.exec(primaryLink.getAttribute('onclick') || '');
-                if (m) artifactOnRow = m[1];
-            }
-            if (!artifactOnRow && doneBtn) {
-                var dm = /studentMark\(this,'[^']*','([^']*)'\)/.exec(doneBtn.getAttribute('onclick') || '');
-                if (dm) artifactOnRow = dm[1];
-            }
-            if (artifactOnRow) row.setAttribute('data-desk-artifact', artifactOnRow);
-
-            // [1] badge after primary link.
-            if (primaryLink) {
-                var n1 = document.createElement('span');
-                n1.className = 'desk-row-number-badge';
-                n1.textContent = '[1]';
-                n1.style.cssText = 'font-size:8px;color:var(--plat-lo);margin-left:2px;border:1px solid var(--plat-lo);padding:0 2px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
-                primaryLink.insertAdjacentElement('afterend', n1);
-            }
-            // [2] badge after alt link (only if alt link present).
-            if (altLink) {
-                var n2 = document.createElement('span');
-                n2.className = 'desk-row-number-badge';
-                n2.textContent = '[2]';
-                n2.style.cssText = 'font-size:8px;color:var(--plat-lo);margin-left:2px;border:1px solid var(--plat-lo);padding:0 2px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
-                altLink.insertAdjacentElement('afterend', n2);
-            }
-            // [3] badge after Done button (only if Done button present).
-            if (doneBtn) {
-                var n3 = document.createElement('span');
-                n3.className = 'desk-row-number-badge';
-                n3.textContent = '[3]';
-                n3.style.cssText = 'font-size:8px;color:var(--plat-lo);margin-left:2px;border:1px solid var(--plat-lo);padding:0 2px;border-radius:2px;font-family:\'Chicago\',monospace;cursor:default;user-select:none';
-                doneBtn.insertAdjacentElement('afterend', n3);
-            }
-        }
-        // Initial focus outline is applied later by _attachResourcePanelKeyHandler
-        // — it reads the module-level _focusedLetter (persisted across the
-        // 120ms recordLinkVisit re-render) and renders the outline on the
-        // correct row, falling back to 'a' if the saved letter no longer exists.
-    })();
-
-    _attachResourcePanelKeyHandler();
+    // 2026-05-20: removed the [a][b]/[1][2][3] letter+number badges and the
+    // modal-scoped keyboard handler. The decoration was visually noisy and
+    // the two-step letter-then-number UX felt strange. Mouse-only now.
     MacSFX.play('sosumi', 0.5);
 }
 
@@ -5800,11 +5714,6 @@ function _studentMarkQuizCancel() {
 }
 
 function closeResourcePanel() {
-    _detachResourcePanelKeyHandler();
-    // Reset focus to 'a' for the next open. Module-level so the focused row
-    // survives the 120ms recordLinkVisit re-render of an OPEN panel (Codex
-    // MAJOR 2026-05-20); reset here so closing fully cleans up state.
-    _focusedLetter = 'a';
     MacSFX.play('click', 0.3);
     document.getElementById('resource-overlay').style.display = 'none';
 }
@@ -5961,143 +5870,10 @@ function openDayGrade(dateStr) {
     _attachDayGradeKeyHandler();
 }
 
-// Prong B: keyboard shortcut handler for the resource modal.
-var _resourcePanelKeyHandler = null;
-// Module-level so the focused row persists across the 120ms recordLinkVisit
-// re-render of an OPEN panel. Reset to 'a' on closeResourcePanel.
-var _focusedLetter = 'a';
-
-function _detachResourcePanelKeyHandler() {
-    if (_resourcePanelKeyHandler) {
-        document.removeEventListener('keydown', _resourcePanelKeyHandler);
-        _resourcePanelKeyHandler = null;
-    }
-}
-
-function _setFocusedRow(letter) {
-    _focusedLetter = letter;
-    var body = document.getElementById('resource-body');
-    if (!body) return;
-    // Clear all row focus outlines first.
-    var rows = body.querySelectorAll('div[data-desk-row-letter]');
-    rows.forEach(function(r) {
-        r.style.boxShadow = '';
-        r.style.borderRadius = '';
-    });
-    // Apply outline to the newly focused row.
-    var target = body.querySelector('div[data-desk-row-letter="' + letter + '"]');
-    if (target) {
-        target.style.boxShadow = 'inset 0 0 0 2px var(--accent, #88f)';
-        target.style.borderRadius = '3px';
-    }
-}
-
-function _attachResourcePanelKeyHandler() {
-    // Idempotent: detach any existing handler before re-attaching.
-    _detachResourcePanelKeyHandler();
-
-    // Re-apply the (persisted) focused-row outline. If the saved letter no
-    // longer maps to a row (e.g. row count shrank), fall back to 'a'.
-    var body = document.getElementById('resource-body');
-    if (body) {
-        var saved = body.querySelector('div[data-desk-row-letter="' + _focusedLetter + '"]');
-        if (!saved) _focusedLetter = 'a';
-        _setFocusedRow(_focusedLetter);
-    }
-
-    _resourcePanelKeyHandler = function(e) {
-        // Guard: only active while the modal is open.
-        if (document.getElementById('resource-overlay').style.display !== 'block') return;
-        // Guard: let modifier-key combos pass to browser.
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        // Guard: don't intercept when typing in an input/textarea/select.
-        var ae = document.activeElement;
-        if (ae) {
-            var tag = ae.tagName;
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-            if (ae.isContentEditable) return;
-        }
-
-        var key = e.key;
-
-        // Escape: close the modal.
-        if (key === 'Escape') {
-            closeResourcePanel();
-            return;
-        }
-
-        var body = document.getElementById('resource-body');
-        if (!body) return;
-
-        // Letter keys a-h: SELECT the row (focus outline only — no link open).
-        // Two-step UX: press letter to select, then 1/2/3 to open the row's
-        // primary link / alt-video link / Done button. Revised 2026-05-20
-        // per teacher feedback — letter auto-opening misfired on stray
-        // keystrokes; explicit num=1 is more deliberate.
-        var lowerKey = key.toLowerCase();
-        if (lowerKey.length === 1 && lowerKey >= 'a' && lowerKey <= 'h') {
-            var row = body.querySelector('div[data-desk-row-letter="' + lowerKey + '"]');
-            if (!row) return;
-            _setFocusedRow(lowerKey);
-            return;
-        }
-
-        // Number keys 1-3: act on focused row.
-        var num = Number(key);
-        if (num >= 1 && num <= 3) {
-            var focusedRow = body.querySelector('div[data-desk-row-letter="' + _focusedLetter + '"]');
-            if (!focusedRow) return;
-            var rowLinks = focusedRow.querySelectorAll('a');
-            var rowPrimary = rowLinks.length > 0 ? rowLinks[0] : null;
-            // Alt link = second <a> with font-size:9px.
-            var rowAlt = null;
-            for (var li = 1; li < rowLinks.length; li++) {
-                if (rowLinks[li].style && rowLinks[li].style.fontSize === '9px') {
-                    rowAlt = rowLinks[li];
-                    break;
-                }
-            }
-            // Done button = button whose onclick starts with "studentMark".
-            var rowDone = null;
-            var rowBtns = focusedRow.querySelectorAll('button');
-            for (var bi = 0; bi < rowBtns.length; bi++) {
-                var roc = rowBtns[bi].getAttribute('onclick') || '';
-                if (roc.indexOf('studentMark') === 0) { rowDone = rowBtns[bi]; break; }
-            }
-            if (num === 1) {
-                // Primary action of the focused row.
-                if (rowPrimary) {
-                    var rTopicId = focusedRow.getAttribute('data-desk-topic') || '';
-                    var rArtifact = focusedRow.getAttribute('data-desk-artifact') || '';
-                    window.open(rowPrimary.getAttribute('href'), '_blank');
-                    if (rTopicId && rArtifact) recordLinkVisit(rTopicId, rArtifact);
-                } else {
-                    // No link in the row — fall back to the first non-Done
-                    // button (e.g. AI-tutor copy-prompt). Done is reserved
-                    // for num=3 so 1 doesn't accidentally fire it.
-                    var firstNonDoneBtn = null;
-                    for (var bi2 = 0; bi2 < rowBtns.length; bi2++) {
-                        var roc2 = rowBtns[bi2].getAttribute('onclick') || '';
-                        if (roc2.indexOf('studentMark') !== 0) {
-                            firstNonDoneBtn = rowBtns[bi2];
-                            break;
-                        }
-                    }
-                    if (firstNonDoneBtn) firstNonDoneBtn.click();
-                }
-            } else if (num === 2) {
-                // Secondary (alt) link — no-op if absent.
-                if (rowAlt) rowAlt.click();
-            } else if (num === 3) {
-                // Done button — click if present (disabled or not: matches mouse parity).
-                if (rowDone) rowDone.click();
-            }
-            return;
-        }
-    };
-
-    document.addEventListener('keydown', _resourcePanelKeyHandler);
-}
+// 2026-05-20: resource-modal keyboard navigation removed per teacher
+// feedback (letter+number badges were visually noisy and the two-step
+// UX felt strange). Modal closes via OK button or backdrop click. The
+// day-grade modal (separate feature) still has an Esc handler.
 
 // Phase 5/5.1: the canonical set of (unit, lesson) pairs that have an
 // ai-tutor/u{U}_l{L}.md artifact on disk. Source = AI_TUTOR_FANOUT_BUILD.md
