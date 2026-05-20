@@ -563,7 +563,17 @@
         QUARTERS.forEach(function (q) {
           var qrec = s.quarters && s.quarters[q];
           var qg = qrec ? qrec.quarterGrade : null;
-          cells.push('<td class="num">' + escHtml(fmt1(qg)) + '</td>');
+          var ceil = qrec ? qrec.ceiling : null;
+          var graded = qrec && typeof qrec.unitsGraded === 'number' ? qrec.unitsGraded : null;
+          var total = qrec && typeof qrec.unitsTotal === 'number' ? qrec.unitsTotal : null;
+          // Current grade (large) + motivational ceiling on a second line when
+          // the student has banked at least one unit and still has room to grow.
+          // Tooltip names the band fraction (graded/total) for at-a-glance reads.
+          var tip = total != null ? (graded + '/' + total + ' graded') : '';
+          var ceilHtml = (ceil != null && qg != null)
+            ? '<span class="dim" style="font-size:0.78rem">&uarr; ' + escHtml(fmt1(ceil)) + '</span>'
+            : '';
+          cells.push('<td class="num" title="' + escHtml(tip) + '">' + escHtml(fmt1(qg)) + (ceilHtml ? '<br>' + ceilHtml : '') + '</td>');
         });
 
         UNITS.forEach(function (u) {

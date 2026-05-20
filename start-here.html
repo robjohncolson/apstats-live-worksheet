@@ -427,6 +427,15 @@
     return m ? parseInt(m[1], 10) : null;
   }
 
+  // Quarter band labels (must match server-side PHASE3_CONFIG.quarters):
+  //   Q1 = U1-U2, Q2 = U3-U5, Q3 = U6-U7, Q4 = U8-U9
+  var QUARTER_BAND_LABEL = {
+    Q1: 'U1, U2',
+    Q2: 'U3, U4, U5',
+    Q3: 'U6, U7',
+    Q4: 'U8, U9',
+  };
+
   function renderQuarters(host, quarters) {
     var strip = el('div', { class: 'wys-quarters' });
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
@@ -434,11 +443,33 @@
       var qKey = order[i];
       var q = quarters && quarters[qKey];
       var grade = q ? fmtGrade(q.quarterGrade) : null;
+      var ceiling = q ? fmtGrade(q.ceiling) : null;
+      var graded = q && typeof q.unitsGraded === 'number' ? q.unitsGraded : null;
+      var total = q && typeof q.unitsTotal === 'number' ? q.unitsTotal : null;
+
       var classes = 'step' + (grade == null ? ' empty' : '');
       var pill = el('span', { class: classes });
+      // Tooltip: name the band + (if any work) the progress fraction.
+      var bandLabel = QUARTER_BAND_LABEL[qKey] || '';
+      var tip = qKey + ' covers ' + bandLabel;
+      if (graded != null && total != null) {
+        tip += ' — ' + graded + ' of ' + total + ' unit' + (total === 1 ? '' : 's') + ' graded';
+      }
+      pill.setAttribute('title', tip);
       pill.appendChild(document.createTextNode(qKey));
       pill.appendChild(el('br'));
       pill.appendChild(el('small', { html: grade == null ? '&mdash;' : grade }));
+      // Motivational ceiling: present only when there's a current grade AND
+      // at least one unit still to bank (ceiling > current). The server
+      // returns ceiling=null in both edge cases (0 graded / all graded).
+      if (ceiling != null && grade != null) {
+        pill.appendChild(el('br'));
+        var ceilEl = el('small', { html: '&uarr; ' + ceiling });
+        ceilEl.setAttribute('title', 'If you ace the remaining ' + (total - graded) + ' unit' + ((total - graded) === 1 ? '' : 's') + ' in ' + qKey);
+        ceilEl.style.color = '#1f8b3b';
+        ceilEl.style.fontSize = '0.85em';
+        pill.appendChild(ceilEl);
+      }
       strip.appendChild(pill);
     }
     host.appendChild(strip);

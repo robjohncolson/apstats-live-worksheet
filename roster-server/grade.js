@@ -147,7 +147,12 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG) {
     units[uKey] = { W, Q, B, banked, pcRawPct, P, unitGrade, graded };
   }
 
-  // ── Per-quarter mean of the band's graded unitGrades ─────────────────────
+  // ── Per-quarter mean of the band's graded unitGrades + motivational ceiling
+  // The ceiling projects "if you ace every remaining unit in this quarter's
+  // band" — sum(graded) + 100 * (missing) over the full band size. It's the
+  // upper bound a student can reach this quarter without redoing past work.
+  // null when no units in the band are graded yet (nothing to project from)
+  // or when every unit is already graded (current IS the final — no upside).
   const quarters = {};
   for (const qKey of Object.keys(config.quarters)) {
     const band = config.quarters[qKey].units;
@@ -159,12 +164,22 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG) {
       unitGrades[uKey] = ug;
       if (ug != null) vals.push(ug);
     }
+    const quarterGrade = vals.length
+      ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+      : null;
+    let ceiling = null;
+    if (vals.length > 0 && vals.length < band.length) {
+      const sum = vals.reduce((a, b) => a + b, 0);
+      const missing = band.length - vals.length;
+      ceiling = Math.round(((sum + missing * 100) / band.length) * 10) / 10;
+    }
     quarters[qKey] = {
       units: band,
       unitGrades,
-      quarterGrade: vals.length
-        ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
-        : null,
+      quarterGrade,
+      unitsGraded: vals.length,
+      unitsTotal: band.length,
+      ceiling,
     };
   }
 

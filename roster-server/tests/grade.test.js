@@ -248,6 +248,76 @@ describe('GET /grade — model math', () => {
     expect(body.quarters.Q2.quarterGrade).toBe(null);     // no graded units
   });
 
+  // ── Quarter ceiling projection ───────────────────────────────────────────
+  // The motivational "if you ace remaining units" projection. Null when
+  // there's nothing to project from (no graded yet) or no room to grow
+  // (every unit in the band already graded).
+
+  it('quarter ceiling: 1 of 2 units graded at 85 → ceiling 92.5 ((85+100)/2)', async () => {
+    // Q1's band is [U1, U2]. Only U1 graded at 85; ceiling = (85+100)/2 = 92.5.
+    const rows = [
+      makeRow('U1-L1-Q01', 'B'),   // U1 Q=100
+      makeRow('WS-U1L1-b1', 'x'),  // U1 W=100; combined → U1 unitGrade ≤ 85 (C cap)
+    ];
+    const ctx = await startServer(rows); srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(body.units.U1.unitGrade).toBe(85);
+    expect(body.quarters.Q1.unitsGraded).toBe(1);
+    expect(body.quarters.Q1.unitsTotal).toBe(2);
+    expect(body.quarters.Q1.ceiling).toBe(92.5);
+  });
+
+  it('quarter ceiling: 0 units graded → ceiling null (nothing to project from)', async () => {
+    const ctx = await startServer([]); srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(body.quarters.Q1.unitsGraded).toBe(0);
+    expect(body.quarters.Q1.unitsTotal).toBe(2);
+    expect(body.quarters.Q1.ceiling).toBe(null);
+  });
+
+  it('quarter ceiling: every unit in band graded → ceiling null (no room to grow)', async () => {
+    // Q3's band is [U6, U7]. Grade both via an extended answer-key fixture.
+    const extendedKey = async () => ({
+      generatedFrom: 'test',
+      answerKey: {
+        ...FIXTURE_ANSWER_KEY.answerKey,
+        'U6-L1-Q01': { answerKey: 'B', type: 'multiple-choice', unit: '6' },
+        'U7-L1-Q01': { answerKey: 'B', type: 'multiple-choice', unit: '7' },
+      },
+    });
+    const rows = [
+      makeRow('U6-L1-Q01', 'B'),
+      makeRow('U7-L1-Q01', 'B'),
+    ];
+    const ctx = await startServer(rows, { loadAnswerKey: extendedKey });
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(body.quarters.Q3.unitsGraded).toBe(2);
+    expect(body.quarters.Q3.unitsTotal).toBe(2);
+    expect(body.quarters.Q3.ceiling).toBe(null);
+  });
+
+  it('quarter ceiling: Q2 band size 3 — 1 of 3 at 85 → ceiling (85+100+100)/3 = 95.0', async () => {
+    const extendedKey = async () => ({
+      generatedFrom: 'test',
+      answerKey: {
+        ...FIXTURE_ANSWER_KEY.answerKey,
+        'U3-L1-Q01': { answerKey: 'B', type: 'multiple-choice', unit: '3' },
+      },
+    });
+    const rows = [
+      makeRow('U3-L1-Q01', 'B'),
+      makeRow('WS-U3L1-b1', 'x'),
+    ];
+    const ctx = await startServer(rows, { loadAnswerKey: extendedKey });
+    srv = ctx.server;
+    const { body } = await srv.get(`/grade?token=${ctx.token}`);
+    expect(body.units.U3.unitGrade).toBe(85);
+    expect(body.quarters.Q2.unitsGraded).toBe(1);
+    expect(body.quarters.Q2.unitsTotal).toBe(3);
+    expect(body.quarters.Q2.ceiling).toBe(95);
+  });
+
   it('null/ungraded FRQ score is excluded from W (NOT scored as I), still completion', async () => {
     const rows = [
       makeRow('WS-U1L1-r1', 'graded',   { source: 'frq', unit: 'U1', score: 1 }),    // E → 100
