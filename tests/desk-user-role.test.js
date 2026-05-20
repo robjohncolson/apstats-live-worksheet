@@ -75,35 +75,41 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/loadRegistry\(\);[\s\S]{0,200}updateUserRoleUI\(\)/);
   });
 
-  it('07: signin modal has the access-code input (type=text) + dedicated teacher button', () => {
-    // 2026-05-20 v5: removed the confusing greyed-out checkbox.
-    // Replaced with a dedicated "Sign in as teacher" button next to OK.
+  it('07: signin modal has the Teacher checkbox + access-code input (type=text to dodge password autofill)', () => {
+    // 2026-05-20 v6 (revert to v4 UX after the dedicated-button detour):
+    // user prefers the compact checkbox-and-code design. Visible bug
+    // was a typo ("googly" vs "google"), not a UX problem. We kept the
+    // v4 type=text on the code field for autofill resistance.
+    expect(DESK).toMatch(/<input\s+type="checkbox"\s+id="signin-teacher"\s+disabled/);
     expect(DESK).toMatch(/<input\s+type="text"\s+id="signin-teacher-code"/);
-    expect(DESK).toMatch(/id="signin-teacher-btn"[^>]*onclick="submitTeacherSignIn\(\)"/);
     expect(DESK).toMatch(/id="signin-teacher-status"/);
+    // Dedicated button is gone (single OK button now).
+    expect(DESK).not.toMatch(/id="signin-teacher-btn"/);
+    expect(DESK).not.toMatch(/submitTeacherSignIn/);
   });
 
-  it('08: submitTeacherSignIn validates code-only (no roster, no username/password)', () => {
-    expect(DESK).toMatch(/function\s+submitTeacherSignIn\s*\(/);
-    const body = fnBody(DESK, 'submitTeacherSignIn');
-    // Reads the access code input.
-    expect(body).toMatch(/getElementById\s*\(\s*['"]signin-teacher-code['"]/);
-    // Trim + case-insensitive compare to _teacherAccessCode().
-    expect(body).toMatch(/\.trim\s*\(\s*\)/);
-    expect(body).toMatch(/toLowerCase\s*\(\s*\)/);
+  it('08: _onTeacherCodeInput enables the checkbox + green status when code matches (tolerant)', () => {
+    const body = fnBody(DESK, '_onTeacherCodeInput');
+    // Tolerant: trim + case-insensitive both sides.
+    expect(body).toMatch(/\.trim\s*\(\s*\)\s*\.toLowerCase\s*\(\s*\)/);
     expect(body).toMatch(/_teacherAccessCode\s*\(\s*\)/);
-    // Promotes role + sets synthetic identity.
-    expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]\s*,\s*['"]teacher['"]/);
-    expect(body).toMatch(/teacher@desk\.local/);
-    // Does NOT call rosterClient.signIn.
-    expect(body).not.toMatch(/rosterClient\.signIn/);
+    // Enable + check the checkbox on match.
+    expect(body).toMatch(/chk\.disabled\s*=\s*!match/);
+    expect(body).toMatch(/chk\.checked\s*=\s*true/);
+    // Status text updates.
+    expect(body).toMatch(/code accepted/);
+    expect(body).toMatch(/#1f8b3b/);  // green color
   });
 
-  it('09: openSignInModal wires the teacher-code input + Enter-key submits as teacher', () => {
+  it('09: openSignInModal resets the teacher fields every open (no state leak)', () => {
     const body = fnBody(DESK, 'openSignInModal');
     expect(body).toMatch(/cInp\.value\s*=\s*['"]['"]/);
-    // The code field's Enter key triggers submitTeacherSignIn, not submitSignIn.
-    expect(body).toMatch(/submitTeacherSignIn\s*\(/);
+    expect(body).toMatch(/cInp\.oninput\s*=\s*_onTeacherCodeInput/);
+    expect(body).toMatch(/chk\.checked\s*=\s*false/);
+    expect(body).toMatch(/chk\.disabled\s*=\s*true/);
+    // Enter on the code field submits via the regular submitSignIn flow,
+    // which has the v4 fast-path that matches code in ANY field.
+    expect(body).toMatch(/cInp\.onkeydown\s*=\s*function[\s\S]{0,150}submitSignIn\s*\(\s*\)/);
   });
 
   it('10: submitSignIn TEACHER FAST-PATH runs BEFORE rosterClient.signIn (v4 tolerant matching)', () => {

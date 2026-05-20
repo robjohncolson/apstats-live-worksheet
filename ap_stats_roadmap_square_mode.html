@@ -1281,22 +1281,24 @@
                 <div style="margin-bottom:8px">Sign in with the username &amp; password your teacher gave you.</div>
                 <input type="text" id="signin-username" class="geneva" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="username (e.g. coconut_shark)">
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
-                <!-- 2026-05-20 v5: Dedicated teacher sign-in. The earlier
-                     checkbox + auto-enable UX confused users — too clever.
-                     Now there's just a labeled input + a dedicated button
-                     below (next to OK). Type the code, click the button,
-                     you're a teacher. -->
+                <!-- Teacher access (v4 UX restored after v5 detour 2026-05-20):
+                     compact checkbox + access-code field. Type the correct
+                     code → checkbox auto-checks, status turns green. Click OK
+                     to sign in as teacher. The code field is type=text so
+                     password autofill doesn't intercept it. -->
                 <div style="margin-top:8px;border-top:1px dashed var(--plat-lo);padding-top:6px">
-                    <div class="chicago" style="font-size:11px;margin-bottom:4px">Teacher access</div>
-                    <input type="text" id="signin-teacher-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Teacher access code (then click 'Sign in as teacher' below)" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box">
-                    <div id="signin-teacher-status" style="font-size:9px;color:var(--plat-lo);font-style:italic;margin-top:2px"></div>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:default">
+                        <input type="checkbox" id="signin-teacher" disabled style="margin:0">
+                        <span>Sign in as teacher</span>
+                        <span id="signin-teacher-status" style="font-size:9px;color:var(--plat-lo);font-style:italic">(enter access code)</span>
+                    </label>
+                    <input type="text" id="signin-teacher-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Teacher access code (optional)" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-top:4px">
                 </div>
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
             </div>
         </div>
-        <div class="dialog-btns" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        <div class="dialog-btns">
             <button class="s7btn" onclick="closeSignInModal()">Cancel</button>
-            <button class="s7btn" id="signin-teacher-btn" onclick="submitTeacherSignIn()" title="Type the teacher access code in the field above, then click here">Sign in as teacher</button>
             <button class="s7btn s7btn-default" id="signin-ok" onclick="submitSignIn()">OK</button>
         </div>
     </div>
@@ -3654,65 +3656,27 @@ function _teacherAccessCode() {
   return TEACHER_ACCESS_CODE_DEFAULT;
 }
 
-// 2026-05-20 v5: kept as a no-op shim so older tests / consumers don't
-// break if they reference this name. The status update on type happens
-// in submitTeacherSignIn instead — when the user clicks the button,
-// they get a clear pass/fail message right there.
+// Live feedback as the user types the access code: enables the checkbox
+// + turns the status text green when the code matches. Tolerant: trim +
+// case-insensitive. The actual role promotion happens in submitSignIn's
+// fast-path on click (or via the v4 tolerant-matching fast-path which
+// checks all 3 fields).
 function _onTeacherCodeInput() {
   var cInp = document.getElementById('signin-teacher-code');
+  var chk = document.getElementById('signin-teacher');
   var status = document.getElementById('signin-teacher-status');
-  if (!cInp || !status) return;
-  var match = (cInp.value || '').trim().toLowerCase()
-            === (_teacherAccessCode() || '').toLowerCase();
-  if (match) { status.textContent = '✓ code accepted — click "Sign in as teacher"'; status.style.color = '#1f8b3b'; }
-  else if (cInp.value) { status.textContent = ''; status.style.color = ''; }
-  else { status.textContent = ''; status.style.color = ''; }
-}
-
-// 2026-05-20 v5: dedicated teacher sign-in path triggered by the
-// "Sign in as teacher" button. ONLY validates the access code field
-// (does not touch username / password / roster). Eliminates the
-// "I typed the code but signed in as student" confusion — there's a
-// clearly-labeled button that does exactly one thing.
-function submitTeacherSignIn() {
-  var inp = document.getElementById('signin-teacher-code');
-  var status = document.getElementById('signin-teacher-status');
-  var err = document.getElementById('signin-error');
-  if (err) err.textContent = '';
-  var typed = (inp && inp.value || '').trim();
-  if (!typed) {
-    if (err) err.textContent = 'Type the teacher access code first.';
-    try { inp && inp.focus(); } catch (_) {}
-    return;
+  if (!cInp || !chk) return;
+  var typed = (cInp.value || '').trim().toLowerCase();
+  var expected = (_teacherAccessCode() || '').toLowerCase();
+  var match = typed && typed === expected;
+  chk.disabled = !match;
+  if (match) {
+    chk.checked = true;
+    if (status) { status.textContent = '(code accepted)'; status.style.color = '#1f8b3b'; }
+  } else {
+    chk.checked = false;
+    if (status) { status.textContent = '(enter access code)'; status.style.color = ''; }
   }
-  var expected = (typeof _teacherAccessCode === 'function') ? _teacherAccessCode() : null;
-  if (!expected) {
-    if (err) err.textContent = 'Teacher sign-in is not configured.';
-    return;
-  }
-  if (typed.toLowerCase() !== String(expected).toLowerCase()) {
-    if (err) err.textContent = 'Wrong access code.';
-    try { inp && inp.focus(); } catch (_) {}
-    try { console.log('[desk submitTeacherSignIn] wrong code attempt'); } catch (_) {}
-    return;
-  }
-  // Match → promote.
-  try {
-    localStorage.setItem('apstats_user_role', 'teacher');
-    // Synthetic identity if the user didn't also type a username.
-    var uInp = document.getElementById('signin-username');
-    var typedUser = (uInp && uInp.value || '').trim();
-    var teacherIdent = typedUser || 'teacher@desk.local';
-    localStorage.setItem('apstats_desk_student_email', teacherIdent);
-  } catch (e) {
-    if (err) err.textContent = 'Storage error: ' + (e && e.message || e);
-    return;
-  }
-  if (typeof updateStudentMenu === 'function') updateStudentMenu();
-  if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
-  closeSignInModal();
-  try { console.log('[desk submitTeacherSignIn] promoted to teacher'); } catch (_) {}
-  showDialog('\u{1F464}', 'Signed in as teacher. Teacher menu is now in the title bar.', 'OK');
 }
 
 // Reflect the persisted user-role into the title bar (show/hide Teacher
@@ -3735,15 +3699,15 @@ function openSignInModal() {
   var uInp = document.getElementById('signin-username');
   var pInp = document.getElementById('signin-password');
   var cInp = document.getElementById('signin-teacher-code');
-  var status = document.getElementById('signin-teacher-status');
+  var chk = document.getElementById('signin-teacher');
   var err = document.getElementById('signin-error');
   if (err) err.textContent = '';
   var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
   if (uInp) { uInp.value = (who && who.username) || getStudentEmail() || ''; }
   if (pInp) { pInp.value = ''; }
-  // 2026-05-20 v5: reset the teacher code field + wire the visual hint.
-  // Enter in this field now triggers the teacher sign-in (not OK), so
-  // pressing Enter after typing the code is a one-shot teacher login.
+  // Reset the teacher code field + wire the visual feedback. Multiple
+  // event types so paste / autofill / fast typing all trigger the
+  // status update. typeof-guarded so DN2c's vm-test sandbox still works.
   if (cInp) {
     cInp.value = '';
     if (typeof _onTeacherCodeInput === 'function') {
@@ -3752,13 +3716,10 @@ function openSignInModal() {
       cInp.addEventListener('change', _onTeacherCodeInput);
       cInp.addEventListener('keyup', _onTeacherCodeInput);
     }
-    cInp.onkeydown = function (e) {
-      if (e.key === 'Enter') {
-        if (typeof submitTeacherSignIn === 'function') submitTeacherSignIn();
-      }
-    };
+    cInp.onkeydown = function (e) { if (e.key === 'Enter') submitSignIn(); };
   }
-  if (status) { status.textContent = ''; status.style.color = ''; }
+  if (chk) { chk.checked = false; chk.disabled = true; }
+  if (typeof _onTeacherCodeInput === 'function') _onTeacherCodeInput();
   ov.style.display = 'block';
   MacSFX.play('sosumi', 0.5);
   setTimeout(function(){ if (uInp) uInp.focus(); }, 50);
