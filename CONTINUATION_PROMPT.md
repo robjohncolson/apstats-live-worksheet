@@ -59,20 +59,28 @@
 > NO roster-server change → auto-deploy on `roster-server/**` watch did
 > NOT fire (correct).
 >
-> **NEXT LOOP TASK = wrap session.** All shipped: Tasks #1-#7 (T2/Phase
-> 2/3/4a/5/4b/5.1) DONE. Task #8 DESK_MODAL_POLISH DONE (`63d8559`).
-> Phase 5.1 already shipped (`66faaf1`). The two user-owned handoffs
-> for Phase 4b to function in prod remain pending (both blocked on
-> Railway outage 2026-05-19 → recovery): (a) `railway login` + redeploy
-> roster-server; (b) Supabase migration is already DONE (user ran
-> `0004_remediation_assignment.sql` on 2026-05-19). Once Railway is back
-> + redeploy fires, `/remediation/*` returns 200 instead of 503. The
-> teacher-dashboard's Remediation panel will then show the proposed
-> assignments. No other open code work. Recall memories first:
-> `project_gradebook_grading_model.md`, `project_desk_donow.md` (now
-> includes Task #8 detail), `project_gradebook_phase0.md`,
-> `project_ai_tutor_pilot.md`, `project_roster_teacher_tools.md`,
-> `feedback_curriculum_render_sacred.md`.
+> **NEXT LOOP TASK = wrap session.** All shipped: Tasks #1-#8 DONE.
+> **✅ Phase 4b NOW LIVE IN PROD (2026-05-20 15:24 UTC, deploy
+> `f6305703-eb12-478d-bae9-ef9d1035fb0e` SUCCESS).** `/remediation/list`
+> returns 401 (route mounted, gated on teacher secret) — was 404 before
+> (route missing). Both user-owned handoffs CLOSED: (a) Railway redeploy
+> finally succeeded after 3 distinct Railway-side failures in 48h —
+> railpack v0.23.0 path-concat regression (deploy `e52eab15` failed at
+> snapshot-unpack with `directory .../snapshot-target-unpack/ roster-server
+> does not exist` — pure Railway bug, fixed by their upgrade to
+> `mise-2026.3.17`), then `f6305703` was stuck in DEPLOYING for 30+min
+> before traffic-switch lag resolved itself. (b) Supabase migration
+> already done 2026-05-19. **Strategic next**: user committed to
+> migrating Railway → DigitalOcean before next Railway billing cycle
+> (see [[railway-to-digitalocean]]). Tier 1 = roster-server only to a
+> $6/mo DO droplet, Supabase stays. ~3-4h work; client-code change is
+> just `ROSTER_SERVICE_URL` in `roster_config.js`. No other open code
+> work. Recall memories first: `project_gradebook_grading_model.md`,
+> `project_desk_donow.md` (now includes Task #8 detail),
+> `project_gradebook_phase0.md`, `project_ai_tutor_pilot.md`,
+> `project_roster_teacher_tools.md`,
+> `feedback_curriculum_render_sacred.md`,
+> **`project_railway_to_digitalocean.md`** (new — migration plan).
 
 ## ➡ ON RELOAD: RUN THE AUTONOMOUS LOOP (user-authorized, session 100)
 
