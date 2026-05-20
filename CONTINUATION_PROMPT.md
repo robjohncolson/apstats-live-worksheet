@@ -5,25 +5,36 @@
 > text; it is kept only as historical record.** Updated 2026-05-19 (session
 > 100, autonomous loop: T1 T2 DONE; T2 Phase-2 DONE+PROD; T3 Phase-3
 > DONE+PROD (`801dccc`); T4 Phase-4a DONE+PROD (`d68e98b`+`13cb326`);
-> T5 Phase-5 DONE+PUSHED (`e592d1b`); **T6 Phase-4b CODE-COMPLETE+PUSHED
-> (`5a46f19`)** — `remediation_assignment` write loop landed: 8 additive
+> T5 Phase-5 DONE+PUSHED (`e592d1b`); T6 Phase-4b CODE-COMPLETE+PUSHED
+> (`5a46f19`, deploy blocked on Railway outage); **T7 Phase-5.1
+> DONE+PUSHED (`66faaf1`)** — per-unit "🤖 Unit N PC tutor" copy button
+> rendered alongside each lesson tile's tutor button (PCs aren't
+> standalone tiles in the schedule so the lesson-tile surface is the
+> right home); shared `_copyTutorPromptByPath` helper now backs both
+> buttons; tests/phase5-structure.test.js tightened to 31/31 per Codex
+> MINOR folds. All 75 ai-tutor artifacts (66 lesson + 9 PC) now reachable
+> from the Desk. T6 Phase-4b shipped: `remediation_assignment` write loop —
+> 8 additive
 > roster-server endpoints (propose/approve/complete/waive/
 > propose-from-mastery/list/student/unlocks), `teacher-dashboard.html`
 > Remediation panel, migration `0004_remediation_assignment.sql`,
 > `roster-server/tests/remediation.test.js` 50/50, `tests/phase4b-
 > structure.test.js` 16/16, all Codex 0BLK+4MAJ+2MIN folded.
 > **⚠ TWO USER-OWNED HANDOFFS pending before Phase 4b is functional in
-> prod:** (1) `railway login` then `cd roster-server && railway up --ci
-> -s roster` — Railway OAuth backend was 503 at deploy time AND the
-> existing `roster-production-12c1.up.railway.app/health` returned
-> "Application not found" 404 (X-Railway-Fallback: true), suggesting
-> either a wider Railway issue or the service URL shifted; user re-auth
-> + check Railway service status. (2) Run
-> `roster-server/migrations/0004_remediation_assignment.sql` in the
-> curriculum_render Supabase SQL editor (`bzqbhtrurzzavhqbgqrs`) to
-> provision the new table. Until both done, /remediation/* returns 503
-> "remediation table not yet provisioned" in prod (after redeploy) — the
-> rest of the service stays up. **NEXT optional loop task = wrap session
+> prod (BOTH on hold during a confirmed Railway outage — IsDown reported
+> 1593 user reports / 24h on 2026-05-19 8:06 PM EDT):** (1) once Railway
+> is back up, `railway login` then `cd roster-server && railway up --ci
+> -s roster`. The OAuth-503/404, the silent `railway login`, and the
+> "Application not found" on `roster-production-12c1.up.railway.app/health`
+> (`X-Railway-Fallback: true`) are ALL symptoms of the outage — NOT an
+> auth-flow drift or a service-URL change. The service definitely
+> existed and was prod-verified through `13cb326`. Do NOT spend reload
+> debugging Railway plumbing; just retry the deploy once Railway is
+> green. (2) Run `roster-server/migrations/0004_remediation_assignment
+> .sql` in the curriculum_render Supabase SQL editor
+> (`bzqbhtrurzzavhqbgqrs`) to provision the new table. Until both done,
+> /remediation/* returns 503 "remediation table not yet provisioned" in
+> prod (after redeploy) — the rest of the service stays up. **NEXT optional loop task = wrap session
 > OR Phase 5.1** (PC-tile AI-tutor wiring; 9 unit-PC artifacts remain
 > unwired) once user un-blocks deploy. The concurrent TR session is
 > DONE & deployed → roster-server contention RELEASED. The concurrent
@@ -238,14 +249,32 @@ and all relevant guards pass:
    provision the new table. Until BOTH done, /remediation/* returns 503
    "remediation table not yet provisioned" in prod (after redeploy);
    the rest of the service is unaffected.
-7. **Phase 5.1 — PC-tile AI-tutor wiring — ⏳ OPTIONAL FOLLOW-UP.** The
-   9 unit-PC artifacts (`ai-tutor/u{1..9}_pc.md`) ship in the repo but
-   are not wired onto the Desk's PC tiles in Phase 5 v1 (lessons only —
-   the lesson topic id is dot-form `(\d+)\.(\d+)` which is regex-easy;
-   PC tiles' topic-id shape needs identification first). Small file —
-   needs reading the Desk schedule data structure for the PC representation
-   and adding a parallel `aiTutorPcPath(inf)` helper next to
-   `copyTutorPrompt`. Independent of Phase 4b; safe to do in either order.
+7. **Phase 5.1 — PC-tile AI-tutor wiring — ✅ DONE & PUSHED (`66faaf1`).**
+   Survey found PCs aren't standalone tiles in the Desk schedule —
+   they appear as string mentions ("U6 PC", "U7 PC") in the due/
+   assigned columns on the unit's last lesson day. So the design:
+   render a SECOND button alongside each lesson tile's tutor button.
+   Two deltas in `ap_stats_roadmap_square_mode.html`:
+   (a) `showResourcePanel`'s `if (_aitm)` lesson-regex branch now
+   renders both buttons (lesson first, PC second), where the PC
+   button's onclick passes ONLY `_aitm[1]` (the unit) to a new
+   `copyTutorPromptPc(unit)` helper. (b) Refactor: the shared
+   clipboard/fetch/textarea-fallback/soft-fail logic moved into a
+   private `_copyTutorPromptByPath(path, statusElId)` helper —
+   `copyTutorPrompt` and `copyTutorPromptPc` are 3-line delegates so
+   the Phase-5 soft-fail contract has a single source of truth.
+   Distinct status spans (`#ai-tutor-status` vs `#ai-tutor-pc-status`)
+   so messages don't clobber. tests/phase5-structure.test.js extended
+   to **31/31**: thin-delegate body check (extracts wrapper bodies +
+   asserts <250 chars + exactly 1 delegate call + forbids inlined
+   clipboard/fetch/execCommand); PC-button-branch position pin (must
+   be inside `if (_aitm)`, AFTER the lesson button); onclick-takes-
+   only-_aitm[1] XSS pin. **Codex review = 0 BLOCKER + 0 MAJOR + 2
+   MINOR ALL FOLDED** (both test-coverage tightening — code itself
+   was correct). All 75 ai-tutor artifacts (66 lesson + 9 PC) are
+   now reachable from the Desk. NO roster-server change. NO redeploy.
+   GREEN: root **1640/1641** (only known unrelated study-guide fail);
+   roster-server 219/219 (untouched); audit CLEAN 69; LF preserved.
 
 ### Carry-forward gotchas (hard-won — obey these)
 
@@ -301,8 +330,9 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `5a46f19`** (Phase 4b). Lineage:
-  `5a46f19` Phase-4b ← `ce864fe` (docs refresh) ← `e592d1b` Phase-5 ←
+- **follow-alongs `master` HEAD `66faaf1`** (Phase 5.1). Lineage:
+  `66faaf1` Phase-5.1 ← `83a750d` (docs refresh) ← `5a46f19` Phase-4b ←
+  `ce864fe` (docs refresh) ← `e592d1b` Phase-5 ←
   `a0c7a93` (docs refresh) ← `13cb326` Phase-4a hotfix ← `d68e98b`
   Phase-4a ← `deff78b` ← `801dccc` Phase-3 ← `4969715` ← `00e7a6c`
   Phase-2 ← `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ←
@@ -331,17 +361,18 @@ and all relevant guards pass:
   `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
 - **Concurrent AI-tutor session: idle/done** (`9207d24`); its artifacts in
   `ai-tutor/u{U}_l{L}.md` are the source for the Phase-5 Desk-tile prompt.
-- Test baseline (post-`5a46f19`): follow-alongs root **1635/1636** (only
+- Test baseline (post-`66faaf1`): follow-alongs root **1640/1641** (only
   the same 1 known study-guide.test.js fail); roster-server
-  **219/219** (was 169 → +50 new Phase-4b tests; no regression on prior
-  modules); cr **764/765** (1 known redox-chat — not touched);
-  `audit-feeder-ids` CLEAN 69; phase4-structure 17/17 + phase4b-structure
-  **16/16** + phase5-structure 26/26 + roster-server/tests/remediation
-  **50/50**. → **NEXT optional loop task = Phase 5.1** (PC-tile AI-tutor
-  wiring — small follow-up; 9 unit-PC artifacts already in `ai-tutor/`,
-  needs identifying the Desk's PC-tile topic-id shape and adding a
-  parallel helper to `copyTutorPrompt`) OR **wrap-session** until the
-  user un-blocks the Phase 4b deploy. **⚠ Two user-owned handoffs
+  **219/219** (untouched in Phase 5.1); cr **764/765** (1 known
+  redox-chat — not touched); `audit-feeder-ids` CLEAN 69;
+  phase4-structure 17/17 + phase4b-structure 16/16 + **phase5-structure
+  31/31** + roster-server/tests/remediation 50/50. → **NEXT optional
+  loop task = wrap-session** (Phase 5 + 5.1 + 4b all shipped; the only
+  pending work is the two user-owned handoffs that need Railway to
+  recover). Phase 5.1 closed out the final piece of the AI-tutor
+  delivery surface; the next architectural increment would be the
+  re-check ITEM (consumer of the `/remediation/unlocks` gate), which
+  is its own future workstream and not on the current backlog. **⚠ Two user-owned handoffs
   pending for Phase 4b to function in prod**: (a) `railway login` + the
   redeploy (Railway OAuth was 503; existing roster-production URL
   returned "Application not found"); (b) run `roster-server/migrations/
