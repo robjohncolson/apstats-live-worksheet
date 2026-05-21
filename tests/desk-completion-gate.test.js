@@ -105,11 +105,12 @@ describe('Desk: worksheet completion gate', () => {
     expect(body, 'old "Saved" latch must be gone').not.toMatch(/['"]✓ Saved['"]/);
   });
 
-  it('10: video/quiz (and off-pattern worksheets) still use the deskDoneGateMs timer', () => {
+  it('10: quiz (and off-pattern worksheets) still use the deskDoneGateMs timer', () => {
     expect(DESK).toMatch(/function\s+deskDoneGateMs\s*\(/);
     const body = fnBody(DESK, '_doneBtn');
-    // deskDoneGateMs no longer takes an artifact arg — Blooket skips the
-    // timer entirely (flashcards gate it); only video/quiz reach it.
+    // deskDoneGateMs no longer takes an artifact arg — worksheet uses the
+    // completion gate, Blooket the flashcard quiz, and the video has no Done
+    // button at all, so quiz is the only artifact that reaches this timer.
     expect(body).toMatch(/var\s+gateMs\s*=\s*deskDoneGateMs\s*\(\s*\)/);
   });
 

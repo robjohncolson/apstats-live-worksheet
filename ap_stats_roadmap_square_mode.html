@@ -461,6 +461,13 @@
             padding: 1px 3px;
         }
         .cell-past { opacity: 0.5; }
+        /* Sequential lesson gate (LESSON_GATE_BUILD.md) — a locked lesson is
+           dimmed with a small lock badge; still clickable to show the why. */
+        .cell-locked { position: relative; opacity: 0.4; }
+        .cell-lock {
+            position: absolute; top: 2px; right: 3px;
+            font-size: 11px; line-height: 1; pointer-events: none;
+        }
         /* DN3b — /donow completion overlay (D6 4 states; ring keeps unit color visible) */
         .dc-partial { box-shadow: inset 0 0 0 3px #d99a00; }
         .dc-done { box-shadow: inset 0 0 0 3px #1f8b3b; }
@@ -3492,6 +3499,48 @@ function getStudentMarks() {
   catch(e) { return {}; }
 }
 
+// ── Sequential lesson gate (2026-05-20, LESSON_GATE_BUILD.md) ────────────────
+// A lesson unlocks when the prior lesson is complete OR its scheduled date
+// arrives. Guides the summer self-pacer 1.1 -> onward; during the school year
+// lessons open on their dates so the gate only blocks jumping ahead. Teachers
+// and not-signed-in visitors bypass. Every function FAILS OPEN — a bug must
+// never hard-lock the calendar.
+function _deskIsTeacher() {
+  try { return localStorage.getItem('apstats_user_role') === 'teacher'; }
+  catch (_) { return false; }
+}
+// "Complete" = worksheet Done AND Blooket Done, counting only the artifacts
+// the lesson actually has (a missing artifact is vacuously satisfied).
+function _isLessonComplete(topic, marks) {
+  try {
+    if (!topic) return true;
+    var reg = (typeof getRegistryEntry === 'function') ? getRegistryEntry(topic) : null;
+    var urls = (reg && reg.urls) || {};
+    var m = marks || {};
+    var wsOk = !urls.worksheet || !!(m[topic + '|worksheet'] && m[topic + '|worksheet'].ts);
+    var blOk = !urls.blooket   || !!(m[topic + '|blooket']   && m[topic + '|blooket'].ts);
+    return wsOk && blOk;
+  } catch (_) { return true; }
+}
+// A lesson cell is unlocked per LESSON_GATE_BUILD.md §1. Fails OPEN.
+function _isLessonUnlocked(topic, lessonDate, prevTopic, today, marks, signedIn) {
+  try {
+    if (!signedIn) return true;          // no identity → no progression to gate
+    if (_deskIsTeacher()) return true;   // teachers see everything
+    if (!prevTopic) return true;         // first lesson in the schedule
+    if (lessonDate && today && lessonDate.getTime() <= today.getTime()) return true;
+    return _isLessonComplete(prevTopic, marks);
+  } catch (_) { return true; }
+}
+// Click handler for a locked lesson cell — explains why + how to unlock.
+function _showLessonLockedDialog(topic, prevTopic, dateStr) {
+  var msg = 'Lesson ' + topic + ' is locked. ';
+  msg += prevTopic ? ('Finish Lesson ' + prevTopic + ' first') : 'It is not open yet';
+  if (dateStr) msg += ' — or it unlocks on ' + dateStr;
+  msg += '.';
+  try { showDialog('🔒', msg, 'OK'); } catch (_) {}
+}
+
 // How long the student has to spend on a resource before the Done button
 // becomes clickable. Default 5 min (Robert Colson 2026-05-19 — "the done
 // button cannot be pressed until ~5 or more minutes have passed since the
@@ -5983,7 +6032,9 @@ function showResourcePanel(inf, dateStr) {
             if (artifact === 'blooket') {
                 return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Take the flashcard quiz to verify completion" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
             }
-            // Video / quiz: a short visit timer before Done becomes clickable.
+            // Quiz: a short visit timer before Done becomes clickable.
+            // (Worksheet uses the completion gate; Blooket the flashcard quiz;
+            // video has no Done button — so quiz is the only artifact here.)
             var gateMs = deskDoneGateMs();
             var elapsed = Date.now() - new Date(entry.visitedAt).getTime();
             if (gateMs > 0 && elapsed < gateMs) {
@@ -6001,6 +6052,15 @@ function showResourcePanel(inf, dateStr) {
             var entry = _marks[key] || {};
             if (!entry.visitedAt) return '';
             return ' <span style="font-size:9px;color:#1f8b3b;margin-left:4px" title="Opened ' + new Date(entry.visitedAt).toLocaleString() + '">&#10003; visited</span>';
+        }
+        // Video has no Done button — completing the worksheet presupposes the
+        // video. Show a checkmark next to each video link once this lesson's
+        // worksheet is marked Done (LESSON_GATE_BUILD.md §2).
+        function _videoDoneTag() {
+            if (!_signedIn) return '';
+            var ws = _marks[_stuTopicId + '|worksheet'] || {};
+            if (!ws.ts) return '';
+            return ' <span style="font-size:9px;color:#1f8b3b;margin-left:4px" title="Completed — the worksheet covers this video">&#10003; done</span>';
         }
         // Onclick fragment for each link (worksheet/quiz/blooket/video) —
         // records the first visit + schedules a panel re-render so the
@@ -6035,7 +6095,7 @@ function showResourcePanel(inf, dateStr) {
                         // Pre-cohort with no Drive copy: show locked placeholder.
                         lessonHtml += '<span style="color:#888;text-decoration:line-through;cursor:not-allowed" title="Available when school starts (' + SCHOOL_YEAR_START + ')">Video ' + (i + 1) + ' (locked until ' + SCHOOL_YEAR_START + ')</span>';
                     }
-                    if (i === 0) { lessonHtml += _visitedTag('video') + _doneBtn('video'); }
+                    lessonHtml += _videoDoneTag();
                     lessonHtml += '</div>';
                 });
             }
@@ -6206,6 +6266,9 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
 
     if (ok && _lastResourcePanel) {
         showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
+        // Re-render the calendar so the sequential lesson gate updates —
+        // completing a worksheet/blooket can unlock the next lesson live.
+        if (typeof rCal === 'function') { try { rCal(); } catch (_) {} }
     } else if (btn) {
         btn.disabled = false;
         btn.innerHTML = '&#10003; Done';
@@ -9927,6 +9990,11 @@ function rCal(){
         if(dw===1&&cw.length){W.push({m:lm,d:cw});cw=[];}if(dw===1)lm=dt;
         if(!lm){const md=new Date(dt);md.setDate(dt.getDate()-((dw+6)%7));lm=md;}cw.push(e);}
     if(cw.length)W.push({m:lm,d:cw});
+    // Sequential lesson gate state (LESSON_GATE_BUILD.md §4): cells render in
+    // chronological order, so _prevLessonTopic trails the last lesson cell.
+    const _gateMarks = getStudentMarks();
+    const _gateSignedIn = !!getStudentEmail();
+    let _prevLessonTopic = null;
     for(const wk of W){
         const r=document.createElement("div");r.className="wk-row";
         const l=document.createElement("div");l.className="wk-lbl";
@@ -9954,7 +10022,23 @@ function rCal(){
               }
             }
             c.onmouseenter=(ev)=>sTip(ev,dt,inf,ds);c.onmouseleave=hTip;c.onmousemove=mTip;
-            if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){c.style.cursor='pointer';c.onclick=()=>{hTip();maybeBumpThenOpen(inf,ds);};c.ondblclick=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};c.oncontextmenu=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};}
+            if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){
+                c.style.cursor='pointer';
+                // Sequential lesson gate: only real lesson cells (dot-form
+                // topic) are gated; Review / other cells stay click-through.
+                const _isLessonCell = (typeof inf === 'object' && /^\d+\.\d+/.test(inf.t));
+                if (_isLessonCell && !_isLessonUnlocked(inf.t, dt, _prevLessonTopic, t, _gateMarks, _gateSignedIn)) {
+                    const _lockTopic = inf.t, _lockPrev = _prevLessonTopic, _lockDs = ds;
+                    c.classList.add('cell-locked');
+                    c.insertAdjacentHTML('beforeend', '<span class="cell-lock">🔒</span>');
+                    c.onclick=()=>{hTip();_showLessonLockedDialog(_lockTopic,_lockPrev,_lockDs);};
+                } else {
+                    c.onclick=()=>{hTip();maybeBumpThenOpen(inf,ds);};
+                }
+                if (_isLessonCell) _prevLessonTopic = inf.t;
+                c.ondblclick=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};
+                c.oncontextmenu=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};
+            }
             r.appendChild(c);
         }g.appendChild(r);
     }

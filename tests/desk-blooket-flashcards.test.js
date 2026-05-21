@@ -55,7 +55,7 @@ describe('Desk: Blooket flashcard verification', () => {
     const blooketIdx = body.indexOf("artifact === 'blooket'");
     const gateIdx = body.indexOf('deskDoneGateMs');
     expect(blooketIdx, 'blooket branch present in _doneBtn').toBeGreaterThan(-1);
-    expect(gateIdx, 'deskDoneGateMs still used for video/quiz').toBeGreaterThan(-1);
+    expect(gateIdx, 'deskDoneGateMs still used for quiz').toBeGreaterThan(-1);
     expect(blooketIdx, 'blooket branch must return before the timer').toBeLessThan(gateIdx);
   });
 
