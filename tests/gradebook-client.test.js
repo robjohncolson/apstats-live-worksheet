@@ -512,3 +512,302 @@ describe('Security: no secret literals or x-proctor-secret in gradebook-client.j
     expect(CLIENT_SRC).not.toContain('ROSTER_PROCTOR_SECRET');
   });
 });
+
+// ── 7. fetchPrior — PERSISTENT_ANSWERS_BUILD.md §4 ───────────────────────────
+//
+// fetchPrior(prefix) NEVER throws. NEVER rejects. Always resolves to a Map.
+
+describe('gradebook-client.js — fetchPrior (no identity)', () => {
+  it('returns an empty Map when not signed in', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+
+    expect(out).toBeInstanceOf(Map);
+    expect(out.size).toBe(0);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty Map when rosterClient is absent entirely', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    win.rosterClient = undefined;
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+
+    expect(out).toBeInstanceOf(Map);
+    expect(out.size).toBe(0);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty Map when token() throws', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    win.rosterClient = {
+      token: () => { throw new Error('storage blocked'); },
+      studentId: () => 'uuid-test-student'
+    };
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+
+    expect(out).toBeInstanceOf(Map);
+    expect(out.size).toBe(0);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
+describe('gradebook-client.js — fetchPrior (bad args)', () => {
+  it('returns an empty Map when prefix is missing', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const out = await gradebookClient.fetchPrior();
+    expect(out).toBeInstanceOf(Map);
+    expect(out.size).toBe(0);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty Map when prefix is empty string', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const out = await gradebookClient.fetchPrior('');
+    expect(out.size).toBe(0);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty Map when prefix contains wildcards / special chars', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    for (const bad of ['WS-U4%', 'WS-U4*', 'WS-U4 OR 1=1', 'WS-U4;DROP']) {
+      const out = await gradebookClient.fetchPrior(bad);
+      expect(out).toBeInstanceOf(Map);
+      expect(out.size).toBe(0);
+    }
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty Map when prefix is not a string', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+
+    for (const bad of [null, 42, {}, [], true]) {
+      const out = await gradebookClient.fetchPrior(bad);
+      expect(out).toBeInstanceOf(Map);
+      expect(out.size).toBe(0);
+    }
+  });
+});
+
+describe('gradebook-client.js — fetchPrior (network / server errors)', () => {
+  it('returns an empty Map when fetch rejects', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    win.fetch = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out).toBeInstanceOf(Map);
+    expect(out.size).toBe(0);
+  });
+
+  it('does NOT throw when fetch rejects', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    win.fetch = vi.fn().mockRejectedValue(new Error('Network down'));
+
+    await expect(
+      gradebookClient.fetchPrior('WS-U4L1-2')
+    ).resolves.not.toThrow();
+  });
+
+  it('returns an empty Map on HTTP 401 / 403', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    mockFetch(win, { ok: false, error: 'forbidden' }, { ok: false, status: 401 });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(0);
+  });
+
+  it('returns an empty Map when ROSTER_SERVICE_URL is not set', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    // roster_config.js falls back to a prod URL by default — clear it AFTER load.
+    win.ROSTER_SERVICE_URL = null;
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(0);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty Map when JSON parse throws', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    win.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => { throw new SyntaxError('bad json'); }
+    });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(0);
+  });
+
+  it('returns an empty Map when server returns ok:false', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    mockFetch(win, { ok: false, error: 'bad prefix' });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(0);
+  });
+
+  it('returns an empty Map when rows is not an array', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+    mockFetch(win, { ok: true, rows: 'not-an-array' });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(0);
+  });
+});
+
+describe('gradebook-client.js — fetchPrior (happy path / dedup)', () => {
+  it('returns a Map of itemId → {response, score, source} on success', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'session.token.abc');
+
+    const fetchFn = mockFetch(win, {
+      ok: true,
+      rows: [
+        { item_id: 'WS-U4L1-2-Q1', response: 'first answer',  score: 1,  source: 'worksheet' },
+        { item_id: 'WS-U4L1-2-Q2', response: 'second answer', score: null, source: 'worksheet' }
+      ]
+    });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+
+    expect(out).toBeInstanceOf(Map);
+    expect(out.size).toBe(2);
+    expect(out.get('WS-U4L1-2-Q1')).toEqual({
+      response: 'first answer', score: 1, source: 'worksheet'
+    });
+    expect(out.get('WS-U4L1-2-Q2')).toEqual({
+      response: 'second answer', score: null, source: 'worksheet'
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    const [url, opts] = fetchFn.mock.calls[0];
+    expect(url).toContain('https://mock.test/ledger/student/');
+    expect(url).toContain('prefix=WS-U4L1-2');
+    // Token must NOT be in the URL (leaks into logs); it goes in the header.
+    expect(url).not.toContain('token=');
+    expect(opts.headers.Authorization).toBe('Bearer session.token.abc');
+  });
+
+  it('dedupes by item_id (newest-first wins)', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+
+    // Server returns rows newest-first; the first occurrence per item_id wins.
+    mockFetch(win, {
+      ok: true,
+      rows: [
+        { item_id: 'WS-U4L1-2-Q1', response: 'newest', score: 1, source: 'worksheet' },
+        { item_id: 'WS-U4L1-2-Q1', response: 'older',  score: 0, source: 'worksheet' },
+        { item_id: 'WS-U4L1-2-Q2', response: 'second', score: 1, source: 'worksheet' }
+      ]
+    });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(2);
+    expect(out.get('WS-U4L1-2-Q1').response).toBe('newest');
+    expect(out.get('WS-U4L1-2-Q2').response).toBe('second');
+  });
+
+  it('skips rows without item_id', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+
+    mockFetch(win, {
+      ok: true,
+      rows: [
+        { response: 'no-itemid', score: 1, source: 'worksheet' },                       // skipped
+        { item_id: '',          response: 'empty-id', score: 1, source: 'worksheet' }, // skipped (falsy)
+        { item_id: 'WS-U4L1-2-Q1', response: 'ok', score: 1, source: 'worksheet' }
+      ]
+    });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(1);
+    expect(out.get('WS-U4L1-2-Q1').response).toBe('ok');
+  });
+
+  it('sends URL-encoded prefix in the query and the raw token in the Authorization header', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok+with/special=chars');
+
+    const fetchFn = mockFetch(win, { ok: true, rows: [] });
+
+    await gradebookClient.fetchPrior('WS-U4L1-2');
+
+    const [url, opts] = fetchFn.mock.calls[0];
+    // Prefix is URL-encoded in the query string.
+    expect(url).toContain('prefix=WS-U4L1-2');
+    // Token is carried in the Authorization header, verbatim — never the URL.
+    expect(url).not.toContain('token=');
+    expect(opts.headers.Authorization).toBe('Bearer tok+with/special=chars');
+  });
+
+  it('handles object responses (not just strings) in row.response', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');
+
+    mockFetch(win, {
+      ok: true,
+      rows: [
+        { item_id: 'WS-U4L1-2-FRQ1', response: { text: 'multi-line answer' }, score: 0.5, source: 'frq' }
+      ]
+    });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+    expect(out.size).toBe(1);
+    expect(out.get('WS-U4L1-2-FRQ1').response).toEqual({ text: 'multi-line answer' });
+    expect(out.get('WS-U4L1-2-FRQ1').source).toBe('frq');
+  });
+});
+
+describe('gradebook-client.js — fetchPrior (source-level contract)', () => {
+  it('source contains a fetchPrior function on window.gradebookClient', () => {
+    expect(CLIENT_SRC).toContain('fetchPrior');
+    expect(CLIENT_SRC).toContain('function (prefix)');
+  });
+
+  it('source does NOT modify record() (additive only)', () => {
+    // The record path must still match the original signature pattern.
+    expect(CLIENT_SRC).toContain('record: async function (opts)');
+  });
+
+  it('fetchPrior source NEVER calls record() or any write endpoint', () => {
+    // Pull the fetchPrior function body and verify no writes.
+    const start = CLIENT_SRC.indexOf('fetchPrior:');
+    expect(start).toBeGreaterThan(0);
+    // Everything from fetchPrior: to the closing `})();`
+    const tail = CLIENT_SRC.slice(start);
+    expect(tail).not.toContain('/ledger/record');
+    expect(tail).not.toMatch(/method:\s*['"]POST['"]/);
+  });
+});

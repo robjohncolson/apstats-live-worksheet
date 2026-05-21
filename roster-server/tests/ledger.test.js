@@ -49,8 +49,14 @@ function createFakeLedgerDb() {
       return { data: { ledger_id: row.ledger_id, evidence_tier: row.evidence_tier }, error: null };
     },
 
-    async getLedgerByStudent(studentId) {
-      const rows = [...store.values()].filter(r => r.student_id === studentId);
+    async getLedgerByStudent(studentId, opts) {
+      const prefix = opts && opts.prefix;
+      let rows = [...store.values()].filter(r => r.student_id === studentId);
+      if (prefix) {
+        rows = rows.filter(r => typeof r.item_id === 'string' && r.item_id.startsWith(prefix));
+      }
+      // Newest first — sort by recorded_at descending
+      rows.sort((a, b) => (b.recorded_at || '').localeCompare(a.recorded_at || ''));
       return { data: rows, error: null };
     }
   };
@@ -362,5 +368,155 @@ describe('GET /ledger/student/:studentId', () => {
     expect(status).toBe(401);
     expect(body.ok).toBe(false);
     expect(body.error).toBe('forbidden');
+  });
+});
+
+// ── GET /ledger/student/:studentId — token auth + prefix filter (P-A-B §3) ───
+
+describe('GET /ledger/student/:studentId — token auth + prefix filter', () => {
+
+  function getStudent(studentId, { headers = {}, query = '' } = {}) {
+    const qs = query ? (query.startsWith('?') ? query : `?${query}`) : '';
+    return srv.request('GET', `/ledger/student/${studentId}${qs}`, { headers });
+  }
+
+  // ── 1. No auth → 401 ───────────────────────────────────────────────────────
+  it('no auth headers AND no token → 401 {ok:false, error:"forbidden"}', async () => {
+    const { status, body } = await getStudent(validStudentId);
+    expect(status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error).toBe('forbidden');
+  });
+
+  // ── 2. Teacher secret still works (unchanged behavior) ─────────────────────
+  it('teacher secret → 200 (unchanged behavior)', async () => {
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'x-teacher-secret': teacherSecret }
+    });
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.rows)).toBe(true);
+  });
+
+  // ── 3. Student token where sid == :studentId → 200 (self-fetch) ────────────
+  it('valid student token (Bearer) where sid == :studentId → 200', async () => {
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'Authorization': `Bearer ${validToken}` }
+    });
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.rows)).toBe(true);
+  });
+
+  it('valid student token via ?token= query where sid == :studentId → 200', async () => {
+    const { status, body } = await getStudent(validStudentId, {
+      query: `token=${encodeURIComponent(validToken)}`
+    });
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+  });
+
+  // ── 4. Cross-student token → 403 (clearer than 401) ────────────────────────
+  it('valid token but sid != :studentId → 403 {ok:false, error:"cross-student"}', async () => {
+    const otherStudentId = `uuid-other-${randomBytes(8).toString('hex')}`;
+    const { status, body } = await getStudent(otherStudentId, {
+      headers: { 'Authorization': `Bearer ${validToken}` }
+    });
+    expect(status).toBe(403);
+    expect(body.ok).toBe(false);
+    expect(body.error).toBe('cross-student');
+  });
+
+  it('garbage token → 401 (verifyToken returns null, treat as no auth)', async () => {
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'Authorization': 'Bearer not.a.token' }
+    });
+    expect(status).toBe(401);
+    expect(body.error).toBe('forbidden');
+  });
+
+  // ── 5. prefix filter narrows results ───────────────────────────────────────
+  it('?prefix=WS-U4L1-2 returns only matching rows', async () => {
+    // Seed three rows: one matching, two not.
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U4L1-2-Q1', response: 'a' }
+    });
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U4L1-2-Q2', response: 'b' }
+    });
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U5L1-Q1', response: 'c' }
+    });
+
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'x-teacher-secret': teacherSecret },
+      query: 'prefix=WS-U4L1-2'
+    });
+    expect(status).toBe(200);
+    expect(body.rows).toHaveLength(2);
+    for (const r of body.rows) {
+      expect(r.item_id.startsWith('WS-U4L1-2')).toBe(true);
+    }
+  });
+
+  // ── 6. Bad prefix → 400 (rejects wildcards / injection attempts) ───────────
+  it('?prefix=WS-U4L1-2% → 400 {ok:false, error:"bad prefix"}', async () => {
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'x-teacher-secret': teacherSecret },
+      query: 'prefix=WS-U4L1-2%25'      // encoded `%`
+    });
+    expect(status).toBe(400);
+    expect(body.ok).toBe(false);
+    expect(body.error).toBe('bad prefix');
+  });
+
+  it('?prefix=WS_FOO → 400 (underscore is a SQL LIKE wildcard, must be rejected)', async () => {
+    // Supabase .like() treats `_` as a single-char wildcard. Allowing it in the
+    // prefix would silently widen the filter (WS-U_ matching WS-U4, WS-U5...).
+    // Real item_ids only use [A-Za-z0-9-], so the sanitizer rejects underscore
+    // along with every other non-[A-Za-z0-9-] char. Pins the strict-prefix contract.
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'x-teacher-secret': teacherSecret },
+      query: 'prefix=WS_FOO'
+    });
+    expect(status).toBe(400);
+    expect(body.error).toBe('bad prefix');
+  });
+
+  it('?prefix=WS$U4 → 400 (special char rejected)', async () => {
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'x-teacher-secret': teacherSecret },
+      query: 'prefix=WS%24U4'   // encoded `$`
+    });
+    expect(status).toBe(400);
+    expect(body.error).toBe('bad prefix');
+  });
+
+  // ── 7. Most-recent-first ordering preserved ────────────────────────────────
+  it('rows are returned newest-first by recorded_at', async () => {
+    // Seed three rows with slight time offsets via separate inserts.
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U4L1-2-Qa', response: 'first' }
+    });
+    // Wait a hair so recorded_at differs (the fake stamps Date.now()-ish per call).
+    await new Promise((r) => setTimeout(r, 5));
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U4L1-2-Qb', response: 'second' }
+    });
+    await new Promise((r) => setTimeout(r, 5));
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U4L1-2-Qc', response: 'third' }
+    });
+
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'x-teacher-secret': teacherSecret },
+      query: 'prefix=WS-U4L1-2'
+    });
+    expect(status).toBe(200);
+    expect(body.rows).toHaveLength(3);
+    // Newest first
+    const times = body.rows.map(r => r.recorded_at);
+    const sortedDesc = [...times].sort().reverse();
+    expect(times).toEqual(sortedDesc);
   });
 });

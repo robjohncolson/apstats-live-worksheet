@@ -69,20 +69,68 @@ export function mountLedger(app, { db, verifyToken }) {
   });
 
   // ── GET /ledger/student/:studentId ──────────────────────────────────────────
-  // FROZEN CONTRACT 2:
-  //   Header: x-teacher-secret == process.env.ROSTER_TEACHER_SECRET; 401 otherwise.
-  //   → 200 { ok:true, rows:[ item_ledger rows ] }
+  // PERSISTENT_ANSWERS_BUILD.md §3 extension:
+  //   Query: prefix (optional) — strict prefix filter on item_id. Rejects any
+  //          non-[A-Za-z0-9-] characters with 400. Underscore is excluded too:
+  //          Supabase .like() treats _ as a single-char wildcard, so allowing it
+  //          would silently widen the filter. Real item_ids only use [A-Za-z0-9-].
+  //
+  //   Auth (EITHER):
+  //     - Header  x-teacher-secret == process.env.ROSTER_TEACHER_SECRET, OR
+  //     - Header  Authorization: Bearer <token> OR query ?token=<token>
+  //               AND verifyToken(token) === :studentId
+  //
+  //   Auth precedence: teacher secret beats token. If teacher header is absent
+  //   AND a token is present but verifyToken(token) !== :studentId → 403
+  //   (clearer signal than 401 for cross-student attempts).
+  //
+  //   → 200 { ok:true, rows:[ item_ledger rows ] }   newest first
+  //   → 400 { ok:false, error:'bad prefix' }          invalid prefix chars
+  //   → 401 { ok:false, error:'forbidden' }           no valid auth
+  //   → 403 { ok:false, error:'cross-student' }       token sid != :studentId
+  //   → 500 { ok:false, error:'Database error' }
   app.get('/ledger/student/:studentId', async (req, res) => {
-    const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
-    const provided = req.headers['x-teacher-secret'];
-
-    if (!teacherSecret || provided !== teacherSecret) {
-      return res.status(401).json({ ok: false, error: 'forbidden' });
-    }
-
     const { studentId } = req.params;
 
-    const { data, error } = await db.getLedgerByStudent(studentId);
+    // ── Auth resolution ────────────────────────────────────────────────────
+    const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
+    const providedTeacher = req.headers['x-teacher-secret'];
+    const teacherOk = teacherSecret && providedTeacher === teacherSecret;
+
+    // Extract token from Authorization: Bearer <t> OR ?token=<t>.
+    let token = null;
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim() || null;
+    }
+    if (!token && typeof req.query.token === 'string' && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!teacherOk) {
+      if (!token) {
+        return res.status(401).json({ ok: false, error: 'forbidden' });
+      }
+      const tokenSid = verifyToken(token);
+      if (!tokenSid) {
+        return res.status(401).json({ ok: false, error: 'forbidden' });
+      }
+      if (tokenSid !== studentId) {
+        return res.status(403).json({ ok: false, error: 'cross-student' });
+      }
+    }
+
+    // ── Optional prefix sanitization ───────────────────────────────────────
+    const prefixRaw = req.query.prefix;
+    let prefix;
+    if (prefixRaw !== undefined && prefixRaw !== null && prefixRaw !== '') {
+      if (typeof prefixRaw !== 'string' || !/^[A-Za-z0-9\-]+$/.test(prefixRaw)) {
+        return res.status(400).json({ ok: false, error: 'bad prefix' });
+      }
+      prefix = prefixRaw;
+    }
+
+    const { data, error } = await db.getLedgerByStudent(studentId, prefix ? { prefix } : undefined);
 
     if (error) {
       console.error('Ledger fetch error:', error);

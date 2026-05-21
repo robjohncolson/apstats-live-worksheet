@@ -1133,6 +1133,85 @@
             });
         }
 
+        // ==================== PRIOR-ANSWER HYDRATION ====================
+        // PERSISTENT_ANSWERS_BUILD.md §5 — fills empty .blank inputs +
+        // reflection textareas with this student's most-recent prior
+        // submissions, scoped to this worksheet's prefix. Fire-and-forget.
+        // Never clobbers in-progress edits. Marks restored inputs with a
+        // small badge so the student sees what was restored.
+        async function hydratePriorAnswers() {
+            try {
+                if (!window.gradebookClient || !window.gradebookClient.fetchPrior) return;
+                var prefix = gbWsPrefix();
+                if (!prefix) return;
+                var prior = await window.gradebookClient.fetchPrior(prefix);
+                if (!prior || prior.size === 0) return;
+
+                // Fill empty .blank inputs.
+                document.querySelectorAll('.blank[data-question-id]').forEach(function (blank) {
+                    var itemId = blank.dataset.questionId;
+                    var entry = prior.get(itemId);
+                    if (!entry || entry.response === undefined || entry.response === null) return;
+                    if (blank.value && blank.value.trim()) return;  // never clobber
+                    var v = typeof entry.response === 'string'
+                          ? entry.response
+                          : String(entry.response);
+                    blank.value = v;
+                    blank.dataset.restored = '1';
+                    if (typeof checkAnswer === 'function') checkAnswer(blank);
+                    _markRestored(blank);
+                });
+
+                // Fill empty reflection textareas (source:'frq', itemId = prefix + '-' + textareaId).
+                document.querySelectorAll('textarea[id]').forEach(function (ta) {
+                    var itemId = prefix + '-' + ta.id;
+                    var entry = prior.get(itemId);
+                    if (!entry || entry.response === undefined || entry.response === null) return;
+                    if (ta.value && ta.value.trim()) return;
+                    var v = typeof entry.response === 'string'
+                          ? entry.response
+                          : String(entry.response);
+                    ta.value = v;
+                    ta.dataset.restored = '1';
+                    _markRestored(ta);
+                });
+            } catch (_) { /* silent — never block the worksheet */ }
+        }
+
+        function _markRestored(el) {
+            try {
+                // Dedup per-element, not per-parent: a .question container can
+                // hold several blanks, and EACH restored input gets its own badge.
+                var sib = el.nextSibling;
+                if (sib && sib.nodeType === 1 && sib.className === 'restored-badge') return;
+                if (!el.parentNode) return;
+                var b = document.createElement('span');
+                b.className = 'restored-badge';
+                b.textContent = '↻ restored';
+                b.title = 'Filled from your prior submission. Edit freely to overwrite.';
+                b.style.cssText = 'display:inline-block;margin-left:6px;padding:1px 6px;' +
+                                  'font-size:0.75em;background:#fff7d6;border:1px solid #d9b800;' +
+                                  'border-radius:4px;color:#7a5a00;';
+                el.parentNode.insertBefore(b, el.nextSibling);
+            } catch (_) {}
+        }
+
+        // Hydration trigger: fire on DOMContentLoaded + on any roster-client signin event.
+        (function () {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hydratePriorAnswers);
+            } else {
+                setTimeout(hydratePriorAnswers, 0);
+            }
+            // Also fire on storage event so a different tab signin re-hydrates.
+            try {
+                window.addEventListener('storage', function (e) {
+                    if (e && e.key === 'apstats_roster.v1') hydratePriorAnswers();
+                });
+            } catch (_) {}
+        })();
+
+
         async function gradeAllReflections() {
             const btn = document.querySelector('.btn-ai');
             btn.disabled = true;

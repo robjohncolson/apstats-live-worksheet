@@ -49,11 +49,19 @@ export function createLedgerDb(client) {
 
   // Fetch all ledger rows for a student, newest first.
   // Returns { data, error } — data is an array of item_ledger rows.
-  async function getLedgerByStudent(studentId) {
-    return client
+  //
+  // Optional opts.prefix (string) filters rows whose item_id starts with prefix.
+  // Uses Supabase .like (case-sensitive); the route layer is responsible for
+  // sanitizing the prefix (no wildcards allowed in user input).
+  async function getLedgerByStudent(studentId, opts) {
+    const prefix = opts && opts.prefix;
+    let q = client
       .from('item_ledger')
       .select('*')
-      .eq('student_id', studentId)
-      .order('recorded_at', { ascending: false });
+      .eq('student_id', studentId);
+    if (prefix) {
+      q = q.like('item_id', prefix + '%');
+    }
+    return q.order('recorded_at', { ascending: false });
   }
 }

@@ -89,6 +89,64 @@
         console.warn('gradebook-client: record failed —', err && err.message);
         return { ok: false, reason: 'network' };
       }
+    },
+
+    // ── PERSISTENT_ANSWERS_BUILD.md §4 — fetchPrior(prefix) ─────────────────
+    // Read-only self-fetch of this student's prior ledger rows for the given
+    // itemId prefix (e.g. 'WS-U4L1-2'). Returns a Map<itemId, {response,score,source}>.
+    //
+    // NEVER throws. NEVER rejects. Always resolves to a Map (possibly empty).
+    // No-ops without identity or without a sane prefix. The server enforces
+    // self-only access — the client adds a token+sid so the server can verify.
+    fetchPrior: async function (prefix) {
+      try {
+        if (!prefix || typeof prefix !== 'string') return new Map();
+        // Mirror the server's strict-prefix charset: no underscore (it is a
+        // SQL LIKE wildcard server-side). Real item_ids use [A-Za-z0-9-] only.
+        if (!/^[A-Za-z0-9\-]+$/.test(prefix)) return new Map();
+
+        var token = null;
+        var sid = null;
+        try {
+          if (window.rosterClient && typeof window.rosterClient.token === 'function') {
+            token = window.rosterClient.token();
+          }
+          if (window.rosterClient && typeof window.rosterClient.studentId === 'function') {
+            sid = window.rosterClient.studentId();
+          }
+        } catch (_) {
+          return new Map();
+        }
+        if (!token || !sid) return new Map();
+
+        var baseUrl = window.ROSTER_SERVICE_URL || null;
+        if (!baseUrl) return new Map();
+
+        // Token goes in the Authorization header, NOT the query string —
+        // query strings leak into access logs / Referer / browser history.
+        var url = baseUrl + '/ledger/student/' + encodeURIComponent(sid)
+                + '?prefix=' + encodeURIComponent(prefix);
+
+        var res = await fetch(url, {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res || !res.ok) return new Map();
+        var data = await res.json();
+        if (!data || !data.ok || !Array.isArray(data.rows)) return new Map();
+
+        // Dedupe: rows are newest-first; first occurrence per item_id wins.
+        var out = new Map();
+        for (var i = 0; i < data.rows.length; i++) {
+          var r = data.rows[i];
+          if (!r || !r.item_id) continue;
+          if (out.has(r.item_id)) continue;
+          out.set(r.item_id, { response: r.response, score: r.score, source: r.source });
+        }
+        return out;
+      } catch (_) {
+        return new Map();
+      }
     }
 
   };
