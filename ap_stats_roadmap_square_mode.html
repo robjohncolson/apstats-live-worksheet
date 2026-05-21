@@ -6342,9 +6342,50 @@ function _bfRowsToDeck(rows) {
         if (choices.length < 2) continue;
         var correctIdx = parseInt((r[7] || '1').trim(), 10) - 1;
         if (correctIdx < 0 || correctIdx >= choices.length) correctIdx = 0;
-        deck.push({ q: qText, choices: choices, correctIdx: correctIdx });
+        // qnum carried so _bfSelectTop10 can look up the difficulty tag.
+        deck.push({ qnum: qnum, q: qText, choices: choices, correctIdx: correctIdx });
     }
     return deck;
+}
+
+// 2026-05-20: difficulty tags built by codex against the AP framework.
+// Cached once per session. Empty object on any fetch / parse failure so
+// the deck builder gracefully falls back to "first 10 cards" semantics.
+var _bfDifficultyTags = null;
+async function _bfLoadDifficultyTags() {
+    if (_bfDifficultyTags !== null) return _bfDifficultyTags;
+    try {
+        var res = await fetch('data/blooket-difficulty.json', { cache: 'no-cache' });
+        if (!res.ok) { _bfDifficultyTags = {}; return _bfDifficultyTags; }
+        var data = await res.json();
+        _bfDifficultyTags = (data && data.tags) || {};
+    } catch (_) { _bfDifficultyTags = {}; }
+    return _bfDifficultyTags;
+}
+
+// Select the top 10 cards from a parsed deck using the difficulty tags
+// for that CSV. Order: hard, then med, then easy, then untagged.
+// If the CSV has 10 or fewer cards, return them all unchanged.
+// If no tags are available for the file, fall back to first-10 (preserves
+// the pre-tagging UX for any lesson without coverage).
+function _bfSelectTop10(allCards, csvFilename, tagsForFile) {
+    var TARGET = 10;
+    if (!allCards || allCards.length === 0) return [];
+    if (allCards.length <= TARGET) return allCards.slice();
+    if (!tagsForFile || Object.keys(tagsForFile).length === 0) {
+        return allCards.slice(0, TARGET);
+    }
+    var hard = [], med = [], easy = [], untagged = [];
+    for (var i = 0; i < allCards.length; i++) {
+        var card = allCards[i];
+        var tag = card && card.qnum != null ? tagsForFile[String(card.qnum)] : null;
+        var diff = tag && tag.difficulty;
+        if (diff === 'hard') hard.push(card);
+        else if (diff === 'med') med.push(card);
+        else if (diff === 'easy') easy.push(card);
+        else untagged.push(card);
+    }
+    return hard.concat(med, easy, untagged).slice(0, TARGET);
 }
 
 function _bfShuffle(arr) {
@@ -6354,6 +6395,45 @@ function _bfShuffle(arr) {
         var t = a[i]; a[i] = a[j]; a[j] = t;
     }
     return a;
+}
+
+// 2026-05-20: modal-scoped keyboard nav. Attached on flashcard modal
+// open, detached on close. a-d (or 1-4) → answer that choice
+// immediately. Enter / Space → next card when one is queued.
+function _bfKeydownHandler(e) {
+    if (!e || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    var ae = document.activeElement;
+    if (ae) {
+        var tag = ae.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (ae.isContentEditable) return;
+    }
+    var ov = document.getElementById('bf-overlay');
+    if (!ov || ov.style.display === 'none') return;
+    var key = (e.key || '').toLowerCase();
+    // Already-answered branch: Enter / Space advance to the next card.
+    if (_bfState.answered) {
+        if (key === 'enter' || key === ' ') {
+            var nextBtn = document.getElementById('bf-next');
+            if (nextBtn && nextBtn.style.display !== 'none') {
+                e.preventDefault();
+                nextBtn.click();
+            }
+        }
+        return;
+    }
+    // Unanswered branch: letter or number selects immediately.
+    var idx = -1;
+    if (key === 'a' || key === 'b' || key === 'c' || key === 'd') {
+        idx = 'abcd'.indexOf(key);
+    } else if (key === '1' || key === '2' || key === '3' || key === '4') {
+        idx = parseInt(key, 10) - 1;
+    }
+    if (idx < 0) return;
+    var card = _bfState.deck && _bfState.deck[_bfState.idx];
+    if (!card || idx >= card.choices.length) return;
+    e.preventDefault();
+    _bfAnswer(idx);
 }
 
 async function openBlooketFlashcards(btn, topicId) {
@@ -6386,11 +6466,16 @@ async function openBlooketFlashcards(btn, topicId) {
             showDialog('⚠️', 'Could not load the flashcard deck. Try again.', 'OK');
             return;
         }
-        var deck = _bfRowsToDeck(_bfParseCsv(text));
-        if (!deck.length) {
+        var allCards = _bfRowsToDeck(_bfParseCsv(text));
+        if (!allCards.length) {
             showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK');
             return;
         }
+        // 2026-05-20: trim to top-10 by difficulty (hard > med > easy).
+        // If no tags available for this CSV, falls back to first-10.
+        var tags = await _bfLoadDifficultyTags();
+        var fileTags = tags[csvPath.split('/').pop()] || tags[csvPath] || {};
+        var deck = _bfSelectTop10(allCards, csvPath, fileTags);
         _bfState.topic = topicId;
         _bfState.btn = btn;
         _bfState.deck = _bfShuffle(deck);
@@ -6404,6 +6489,8 @@ async function openBlooketFlashcards(btn, topicId) {
     document.getElementById('bf-result').style.display = 'none';
     _bfRenderCard();
     document.getElementById('bf-overlay').style.display = 'block';
+    // Attach modal-scoped keyboard nav. Detached in _bfCloseUI.
+    document.addEventListener('keydown', _bfKeydownHandler);
 }
 
 function _bfRenderCard() {
@@ -6421,7 +6508,8 @@ function _bfRenderCard() {
     }
     var card = _bfState.deck[_bfState.idx];
     if (p) p.textContent = 'Question ' + (_bfState.idx + 1) + ' of ' + _bfState.deck.length
-                         + '  ·  Right so far: ' + _bfState.score;
+                         + '  ·  Right so far: ' + _bfState.score
+                         + '  ·  Keys: a-d or 1-4 to answer, Enter for next';
     if (q) q.textContent = card.q;
     if (c) {
         while (c.firstChild) c.removeChild(c.firstChild);
@@ -6535,6 +6623,8 @@ async function _bfFinish() {
 function _bfCloseUI() {
     var ov = document.getElementById('bf-overlay');
     if (ov) ov.style.display = 'none';
+    // Detach keyboard nav listener attached by openBlooketFlashcards.
+    document.removeEventListener('keydown', _bfKeydownHandler);
     _bfState.topic = null;
     _bfState.btn = null;
     _bfState.deck = [];
