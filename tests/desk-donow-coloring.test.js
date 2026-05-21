@@ -60,7 +60,7 @@ describe('DN3b — wiring', () => {
   it('paintDonowCells only toggles classes (no rCal rebuild → no flicker)', () => {
     const b = fnBody(html, 'paintDonowCells');
     expect(b).not.toMatch(/rCal\(/);
-    expect(b).toMatch(/classList\.remove\('dc-partial', 'dc-done', 'dc-ahead'\)/);
+    expect(b).toMatch(/classList\.remove\('dc-partial', 'dc-done', 'dc-ahead', 'cal-current'\)/);
   });
 });
 

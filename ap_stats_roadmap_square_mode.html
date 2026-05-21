@@ -478,6 +478,14 @@
           50%     { box-shadow: inset 0 0 0 3px #d4af00, 0 0 10px 2px #ffd84d; }
         }
         @media (prefers-reduced-motion: reduce) { .dc-ahead { animation: none; } }
+        /* Thread 2 (CALENDAR_POLISH) -- done lessons recede; current lesson stands out */
+        .dc-done:not(.cell-today):not(.cal-current) { filter: grayscale(1); }
+        .cal-current { outline: 3px solid var(--accent, #3a6ff0); outline-offset: -3px; }
+        .cal-qband {
+            padding: 3px 8px; font-size: 10px; font-weight: bold;
+            background: var(--black); color: var(--white);
+            border-bottom: 1px solid var(--black); letter-spacing: 0.5px;
+        }
         .dbl { position: absolute; bottom: 2px; right: 4px; font-size: 9px; font-weight: bold; }
 
         /* ── Progress ───────────────────────────────── */
@@ -1005,15 +1013,6 @@
             background: var(--black);
             color: var(--white);
         }
-
-        /* Registry link icons */
-        .link-row { display:flex; gap:3px; justify-content:center; margin-top:2px; }
-        .link-row a {
-          display:inline-block; width:16px; height:16px; text-decoration:none;
-          font-size:11px; text-align:center; line-height:16px; opacity:0.7;
-          border-radius:3px;
-        }
-        .link-row a:hover { opacity:1; background:rgba(255,255,255,0.2); }
 
         /* Status dots */
         .status-dot {
@@ -4150,12 +4149,17 @@ function paintDonowCells() {
     var cells = document.querySelectorAll('#cg .dc[data-topic]');
     for (var i = 0; i < cells.length; i++) {
       var c = cells[i];
-      c.classList.remove('dc-partial', 'dc-done', 'dc-ahead');
+      c.classList.remove('dc-partial', 'dc-done', 'dc-ahead', 'cal-current');
       var st = donowCellState(c.dataset.topic);
       if (st === 'partial') c.classList.add('dc-partial');
       else if (st === 'done') {
         var dts = Number(c.dataset.dts);
         c.classList.add((dts && dts > today) ? 'dc-ahead' : 'dc-done');
+      }
+      // Thread 2 -- mark the student's current lesson (the /donow nextTask).
+      var _nt = _donowData && _donowData.nextTask;
+      if (_nt && _nt.lesson && donowLessonCovers(_nt.lesson, c.dataset.topic)) {
+        c.classList.add('cal-current');
       }
     }
   } catch (_) { /* coloring must never break the Desk */ }
@@ -4215,6 +4219,17 @@ const QUARTER_BAND_LABEL = {
   Q3: 'U6, U7',
   Q4: 'U8, U9',
 };
+
+// Thread 2 (CALENDAR_POLISH) -- map a unit number to its quarter (1-4),
+// matching QUARTER_BAND_LABEL and roster-server's Phase 6 quarter bands.
+function unitQuarter(u) {
+  u = Number(u);
+  if (u >= 1 && u <= 3) return 1;
+  if (u >= 4 && u <= 5) return 2;
+  if (u >= 6 && u <= 7) return 3;
+  if (u >= 8 && u <= 9) return 4;
+  return 0;
+}
 
 // Cache of the lessons[] array from the last /grade fetch.
 // Used by openDayGrade to look up per-lesson data without a second fetch.
@@ -9847,20 +9862,7 @@ function htm(i,ds){
     if(i===NC||!i)return`<div class="dn" style="opacity:.4">${ds}</div>`;
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
     let db=i.db?'<span class="dbl">2x</span>':'';
-    let linkHtml='';
-    const entries=getAllRegistryEntries(i.t);
-    for(const re of entries){
-        if(re.status==='pending')continue;
-        let icons='';
-        if(re.urls){
-            if(re.urls.worksheet)icons+='<a href="'+re.urls.worksheet+'" target="_blank" title="Worksheet" onclick="event.stopPropagation()">📄</a>';
-            // Drills deprecated — removed 2026-05
-            if(re.urls.quiz)icons+='<a href="'+re.urls.quiz+'" target="_blank" title="Quiz" onclick="event.stopPropagation()">📝</a>';
-            if(re.urls.blooket)icons+='<a href="'+re.urls.blooket+'" target="_blank" title="Blooket" onclick="event.stopPropagation()">🟦</a>';
-        }
-        if(icons)linkHtml+='<div class="link-row">'+icons+'</div>';
-    }
-    return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+db+linkHtml;
+    return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+db;
 }
 function rCal(){
     const t=tdy(),g=document.getElementById("cg");g.innerHTML="";
@@ -9874,11 +9876,17 @@ function rCal(){
     const _gateMarks = getStudentMarks();
     const _gateSignedIn = !!getStudentEmail();
     let _prevLessonTopic = null;
+    let _lastQ = 0; // Thread 2 -- the quarter band already emitted
     for(const wk of W){
         const r=document.createElement("div");r.className="wk-row";
         const l=document.createElement("div");l.className="wk-lbl";
         l.textContent=MN[wk.m.getMonth()]+" "+wk.m.getDate();r.appendChild(l);
         const dm={};for(const e of wk.d){const dt=new Date(e[0],e[1],e[2]);dm[dt.getDay()]=e;}
+        // Thread 2 -- emit a quarter-band divider when the quarter changes.
+        let _wkMinU=0;
+        for(let _dw=1;_dw<=5;_dw++){const _en=dm[_dw];if(!_en)continue;const _winf=cP==="B"?_en[3]:_en[4];if(_winf&&typeof _winf==="object"&&_winf.u){if(!_wkMinU||_winf.u<_wkMinU)_wkMinU=_winf.u;}}
+        const _wkQ=unitQuarter(_wkMinU);
+        if(_wkQ&&_wkQ!==_lastQ){const _qb=document.createElement("div");_qb.className="cal-qband";_qb.textContent="Quarter "+_wkQ+"  ("+QUARTER_BAND_LABEL["Q"+_wkQ]+")";g.appendChild(_qb);_lastQ=_wkQ;}
         for(let dw=1;dw<=5;dw++){
             const c=document.createElement("div");c.className="dc";
             const en=dm[dw];if(!en){c.classList.add("cell-noclass");r.appendChild(c);continue;}
