@@ -1261,6 +1261,110 @@
             } catch (_) {}
         })();
 
+        // ==================== COMPLETION TRACKER ====================
+        // WORKSHEET_COMPLETION_GATE_BUILD.md §3-§4. Computes this worksheet's
+        // completion and writes apstats_ws_completion[<studentKey>][<filename>]
+        // so the Desk's Done button can gate on real progress. Student-scoped
+        // so a shared browser never leaks one student's completion to the next.
+        // Pure localStorage; no network.
+        function _wsCompletionKey() {
+            try { return (location.pathname || '').split('/').pop() || null; }
+            catch (_) { return null; }
+        }
+        // Student identity — mirrors the Desk's getStudentEmail(): a legacy
+        // free-text email if present, else <username>@roster.local from the
+        // shared rosterClient session. Null when nobody is signed in.
+        function _wsStudentKey() {
+            try {
+                var legacy = localStorage.getItem('apstats_desk_student_email');
+                if (legacy) return legacy;
+                var who = window.rosterClient && typeof window.rosterClient.current === 'function'
+                    ? window.rosterClient.current() : null;
+                if (who && who.username) return who.username + '@roster.local';
+            } catch (_) {}
+            return null;
+        }
+        function _wsReflectionTextareas() {
+            // Reflection / exit-ticket boxes: <textarea id> NOT inside an appeal form.
+            var out = [];
+            var all = document.querySelectorAll('textarea[id]');
+            for (var i = 0; i < all.length; i++) {
+                var ta = all[i];
+                if (ta.closest && ta.closest('.appeal-form')) continue;
+                out.push(ta);
+            }
+            return out;
+        }
+        function updateWorksheetCompletion() {
+            try {
+                var key = _wsCompletionKey();
+                if (!key) return;
+                // Student-scoped write. No identity -> nothing to record; the
+                // Desk's Done button only renders for signed-in students, and
+                // the worksheet shares rosterClient with the Desk (same origin).
+                var studentKey = _wsStudentKey();
+                if (!studentKey) return;
+                var blanks = document.querySelectorAll('.blank');
+                var blanksTotal = blanks.length;
+                var blanksFilled = 0;
+                for (var i = 0; i < blanks.length; i++) {
+                    if ((blanks[i].value || '').trim()) blanksFilled++;
+                }
+                var refs = _wsReflectionTextareas();
+                var reflectionsTotal = refs.length;
+                var reflectionsFilled = 0;
+                var allE = reflectionsTotal > 0;
+                for (var j = 0; j < refs.length; j++) {
+                    if ((refs[j].value || '').trim()) reflectionsFilled++;
+                    if (!refs[j].classList || !refs[j].classList.contains('graded-E')) allE = false;
+                }
+                var filled = blanksFilled + reflectionsFilled;
+                var total = blanksTotal + reflectionsTotal;
+                var pct = total > 0 ? filled / total : 0;
+                var eligible = allE || pct >= 0.80;
+                var store = {};
+                try { store = JSON.parse(localStorage.getItem('apstats_ws_completion') || '{}'); }
+                catch (_) { store = {}; }
+                if (!store || typeof store !== 'object') store = {};
+                if (!store[studentKey] || typeof store[studentKey] !== 'object') store[studentKey] = {};
+                store[studentKey][key] = {
+                    blanksFilled: blanksFilled, blanksTotal: blanksTotal,
+                    reflectionsFilled: reflectionsFilled, reflectionsTotal: reflectionsTotal,
+                    reflectionsAllE: allE,
+                    filled: filled, total: total,
+                    pct: pct, eligible: eligible,
+                    ts: new Date().toISOString()
+                };
+                localStorage.setItem('apstats_ws_completion', JSON.stringify(store));
+            } catch (_) { /* never block the worksheet */ }
+        }
+        (function () {
+            var _wsCompTimer = null;
+            function _wsCompDebounced() {
+                if (_wsCompTimer) clearTimeout(_wsCompTimer);
+                _wsCompTimer = setTimeout(updateWorksheetCompletion, 400);
+            }
+            // Manual typing in any blank / textarea.
+            document.addEventListener('input', _wsCompDebounced);
+            // Reflection grading (adds graded-E) + hydration (sets data-restored)
+            // are attribute mutations, not input events — catch them too.
+            try {
+                var mo = new MutationObserver(_wsCompDebounced);
+                mo.observe(document.body, {
+                    subtree: true, attributes: true,
+                    attributeFilter: ['class', 'data-restored']
+                });
+            } catch (_) {}
+            // Initial compute on load, plus a delayed pass to catch async hydration.
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', updateWorksheetCompletion);
+            } else {
+                updateWorksheetCompletion();
+            }
+            setTimeout(updateWorksheetCompletion, 2500);
+        })();
+
+
 
         async function gradeAllReflections() {
             const btn = document.querySelector('.btn-ai');

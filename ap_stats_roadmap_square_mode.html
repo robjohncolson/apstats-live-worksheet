@@ -3546,6 +3546,26 @@ function _deskDoneGateMsDefault() {
   return DESK_DONE_GATE_MS_DEFAULT;
 }
 
+// 2026-05-20: worksheet Done is gated on real completion, not a timer.
+// Each worksheet writes apstats_ws_completion[<studentKey>][<filename>] =
+// { pct, eligible, ... } (WORKSHEET_COMPLETION_GATE_BUILD.md §3). The store
+// is student-scoped (same getStudentEmail() identity as the Desk marks) so a
+// shared browser never leaks completion between students. Resolve the entry
+// for a given worksheet URL by its filename basename. Returns null if absent.
+function _wsCompletionFor(worksheetUrl) {
+  try {
+    if (!worksheetUrl) return null;
+    const file = String(worksheetUrl).split('?')[0].split('#')[0].split('/').pop();
+    if (!file) return null;
+    const studentKey = getStudentEmail();
+    if (!studentKey) return null;
+    const store = JSON.parse(localStorage.getItem('apstats_ws_completion') || '{}');
+    const perStudent = store && store[studentKey];
+    const entry = perStudent && perStudent[file];
+    return (entry && typeof entry === 'object') ? entry : null;
+  } catch (_) { return null; }
+}
+
 // Latch the first visit to a (topic, artifact) resource. Called from the
 // link onclick BEFORE the new tab opens. Persists to the same _marks
 // store as Done clicks (same localStorage key), so visit + done state
@@ -5921,21 +5941,48 @@ function showResourcePanel(inf, dateStr) {
         const _stuTopicId = (inf.t && /^\d+\.\d+/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.');
         const _signedIn = !!getStudentEmail();
         const _marks = getStudentMarks();
-        // Returns one of four states:
-        //   unvisited  → disabled "Done" + tooltip "open the link first"
-        //   waiting    → disabled "Done in ~Xm" + tooltip "wait at least N min"
-        //   ready      → enabled "✓ Done" (clickable)
-        //   saved      → disabled "✓ Saved" + recorded-at tooltip
-        // 2026-05-20: gate duration is artifact-aware — Blooket gets 15 min.
-        function _doneBtn(artifact) {
+        // Returns one of these states:
+        //   unvisited   → disabled "Done" + tooltip "open the link first"
+        //   incomplete  → disabled "Done (N%)" — worksheet below the 80%
+        //                 completion gate (see the artifact==='worksheet' branch)
+        //   waiting     → disabled "Done in ~Xm" — non-worksheet visit timer
+        //   ready       → enabled "✓ Done" (clickable)
+        //   completed   → disabled "✓ Completed" + recorded-at tooltip
+        // 2026-05-20: worksheet Done is gated on completion (not a timer);
+        // video keeps the 5-min timer; Blooket keeps its 15-min + flashcards.
+        function _doneBtn(artifact, worksheetUrl) {
             if (!_signedIn) return '';
             var key = _stuTopicId + '|' + artifact;
             var entry = _marks[key] || {};
             if (entry.ts) {
-                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + '">&#10003; Saved</button>';
+                return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + '">&#10003; Completed</button>';
             }
             if (!entry.visitedAt) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Open the link first">Done</button>';
+            }
+            // Worksheet: completion gate REPLACES the visit timer — but ONLY
+            // for the instrumented u*_lesson*_live.html follow-along worksheets
+            // (scripts/wire-completion-tracker.mjs rolls the tracker to exactly
+            // those — the regex MUST stay in sync with that script's glob).
+            // Off-pattern worksheets (e.g. the U6 conceptual driller) carry no
+            // completion tracker, so they fall through to the legacy visit
+            // timer below — their Done button behaves exactly as before.
+            // Eligible = >=80% of blanks+reflections attempted OR every
+            // reflection AI-rated E (WORKSHEET_COMPLETION_GATE_BUILD.md §5).
+            if (artifact === 'worksheet') {
+                var _wsFile = worksheetUrl
+                    ? String(worksheetUrl).split('?')[0].split('#')[0].split('/').pop()
+                    : '';
+                if (/^u\d+_lesson.+_live\.html$/.test(_wsFile)) {
+                    var comp = _wsCompletionFor(worksheetUrl);
+                    if (!comp || comp.eligible !== true) {
+                        var pctN = (comp && typeof comp.pct === 'number')
+                            ? Math.round(comp.pct * 100) : 0;
+                        return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Complete at least 80% of the worksheet (or get every reflection rated E). Currently ' + pctN + '% done.">Done (' + pctN + '%)</button>';
+                    }
+                    return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
+                }
+                // Off-pattern worksheet (no tracker) → legacy visit timer.
             }
             var gateMs = deskDoneGateMs(artifact);
             var elapsed = Date.now() - new Date(entry.visitedAt).getTime();
@@ -6008,7 +6055,7 @@ function showResourcePanel(inf, dateStr) {
         if (regEntry && regEntry.urls) {
             const u = regEntry.urls;
             if (u.worksheet) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + _doneBtn('worksheet') + '</div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + _doneBtn('worksheet', u.worksheet) + '</div>';
             }
             // Drills deprecated — removed 2026-05
             if (u.quiz) {
@@ -6124,12 +6171,12 @@ var _lastResourcePanel = null;
 // Applies optimistic UI mutation before the async write, then re-renders or
 // rolls back depending on the result.
 async function _studentMarkSave(btn, topicId, artifact, score) {
-    // Optimistic mutation: go straight to "✓ Saved" — no interim state.
+    // Optimistic mutation: go straight to "✓ Completed" — no interim state.
     // localStorage write (the source of truth per 540d168) happens inside
     // recordProgress FIRST, so this matches reality immediately.
     if (btn) {
         btn.disabled = true;
-        btn.textContent = '✓ Saved';
+        btn.textContent = '✓ Completed';
         btn.style.opacity = '0.6';
     }
     var ok = await recordProgress(topicId, artifact, score);

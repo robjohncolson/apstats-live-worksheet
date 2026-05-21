@@ -45,8 +45,9 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
 
   it('pin 03: _studentMarkSave contains the optimistic mutation BEFORE the first await recordProgress', () => {
     const body = fnBody(DESK, '_studentMarkSave');
-    const savedIdx = body.indexOf("btn.textContent = '✓ Saved'");
-    expect(savedIdx, "optimistic '✓ Saved' assignment must exist in _studentMarkSave").toBeGreaterThan(-1);
+    // 2026-05-20: optimistic latch label is "Completed" (was "Saved").
+    const savedIdx = body.indexOf("btn.textContent = '✓ Completed'");
+    expect(savedIdx, "optimistic '✓ Completed' assignment must exist in _studentMarkSave").toBeGreaterThan(-1);
     const awaitIdx = body.indexOf('await recordProgress');
     expect(awaitIdx, 'await recordProgress must exist in _studentMarkSave').toBeGreaterThan(-1);
     expect(savedIdx, 'optimistic mutation must appear BEFORE await recordProgress').toBeLessThan(awaitIdx);
