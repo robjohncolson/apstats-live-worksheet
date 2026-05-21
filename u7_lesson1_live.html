@@ -1223,6 +1223,7 @@
             var prefix = gbWsPrefix();
             if (!prefix) return;
             var itemId = prefix + '-' + textareaId;
+            if (!answer || !answer.trim()) return;
             var scoreMap = { E: 1, P: 0.5, I: 0 };
             window.gradebookClient.record({
                 source: 'frq', itemId: itemId,
@@ -1272,6 +1273,19 @@
                           : String(entry.response);
                     ta.value = v;
                     ta.dataset.restored = '1';
+                    // W2.4: restore grade class from ledger score (1->E, 0.5->P, 0->I).
+                    if (entry.score !== null && entry.score !== undefined) {
+                        var gradeMap = { 1: 'E', 0.5: 'P', 0: 'I' };
+                        var gradeClass = gradeMap[entry.score];
+                        if (gradeClass) {
+                            ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+                            ta.classList.add('graded-' + gradeClass);
+                            // W2.5: rebuild gradingState so a post-reload edit clears the stale grade.
+                            if (typeof gradingState !== 'undefined' && gradingState && typeof gradingState.set === 'function') {
+                                gradingState.set(ta.id, { result: { score: gradeClass, feedback: '' }, originalAnswer: v, appealCount: 0, history: [] });
+                            }
+                        }
+                    }
                     _markRestored(ta);
                 });
             } catch (_) { /* silent — never block the worksheet */ }
@@ -1411,6 +1425,43 @@
                 updateWorksheetCompletion();
             }
             setTimeout(updateWorksheetCompletion, 2500);
+        })();
+
+        // ==================== W2: reflection-edit listener ====================
+        // W2.1: draft-persist on edit. W2.2: stale-grade clear on edit.
+        // Debounced per-textarea-id (~400ms) so edits to one textarea never
+        // drop another's pending save. Mirrors the blank-feeder debounceMap.
+        (function () {
+            var _reflDebounce = {};
+            document.addEventListener('input', function (e) {
+                var ta = e.target;
+                if (!ta || ta.tagName !== 'TEXTAREA' || !ta.id) return;
+                if (ta.closest && ta.closest('.appeal-form')) return;
+                var id = ta.id;
+                var text = (ta.value || '').trim();
+                // W2.2: clear stale grade if text differs from the scored answer.
+                var state = (typeof gradingState !== 'undefined') ? gradingState.get(id) : null;
+                if (state && (ta.classList.contains('graded-E') ||
+                              ta.classList.contains('graded-P') ||
+                              ta.classList.contains('graded-I'))) {
+                    if (text !== (state.originalAnswer || '').trim()) {
+                        ta.classList.remove('graded-E', 'graded-P', 'graded-I');
+                        var fb = document.getElementById(id + '-feedback');
+                        if (fb) fb.innerHTML = '';
+                        gradingState.delete(id);
+                    }
+                }
+                // W2.1: draft-persist (skip if unchanged since grading, skip empty).
+                if (!text) return;
+                var graded = (typeof gradingState !== 'undefined') ? gradingState.get(id) : null;
+                if (graded && (graded.originalAnswer || '').trim() === text) return;
+                if (_reflDebounce[id]) clearTimeout(_reflDebounce[id]);
+                _reflDebounce[id] = setTimeout(function () {
+                    if (typeof recordReflectionToGradebook === 'function') {
+                        recordReflectionToGradebook(id, text, null);
+                    }
+                }, 400);
+            });
         })();
 
 
@@ -1671,6 +1722,7 @@
                 });
                 state.appealCount++;
                 state.result = appealResult;
+                recordReflectionToGradebook(questionId, state.originalAnswer, appealResult.score);
 
                 showFeedback(questionId, appealResult);
 
