@@ -1,10 +1,137 @@
+# Continuation Prompt — Desk Hardening (session 103)
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** —
+> the session-102 summary, the "ON RELOAD: RUN THE AUTONOMOUS LOOP"
+> section, and the "PRIOR PROVENANCE" block are all historical record
+> only; do not act on any older "NEXT THREAD"/SESSION text. Last updated
+> 2026-05-21 (session 103). HEAD = `764369b`. Linear, local==origin.
+>
+> ## ✅ Sessions ≤102 — all shipped & live
+> The full gradebook roadmap (T1–T8 + Phase 6 lesson-weighted
+> `quarterGrade`), the AI-tutor delivery, the roster teacher tools, the
+> Do-Now/Desk rework, and the session-102 Desk UX long-tail are all in
+> prod. Detail is in git history + the memory files; the session-102
+> summary below is kept only as history.
+>
+> ## ✅ Session 103 — Desk hardening for the Sept-1 cohort (6 commits)
+> Six tight commits, each its own workstream: freeze a `*_BUILD.md`
+> contract → planner-direct (the contended Desk file) and/or a Sonnet
+> rollout (the 69 worksheets) → Codex read-only review → fold findings →
+> planner reverify ON DISK → commit + push. Codex caught real defects on
+> two of them; one Codex MAJOR was a verified false positive.
+>
+> - **Persistent worksheet answers** (`1fbfcc1`): a signed-in student
+>   reopening any of the 69 live worksheets gets every fill-in-the-blank
+>   + AI-graded reflection auto-populated from their most-recent
+>   `item_ledger` submission (fill-empty only; `↻ restored` badge).
+>   roster-server `GET /ledger/student/:studentId` extended to accept a
+>   student token (self-only; 403 cross-student) + a strict `?prefix=`
+>   filter; NEW `gradebookClient.fetchPrior(prefix)`; hydration block
+>   rolled to all 69 via `scripts/wire-hydration.mjs`. Codex YELLOW →
+>   1 MAJOR (prefix sanitizer allowed `_`, a SQL LIKE wildcard) + 3 MINOR
+>   all folded.
+> - **Blooket flashcards → curated top-10 + keyboard nav** (`e22cf7c`):
+>   the verification flashcards trimmed from ~28 to the 10 most
+>   lesson-relevant. NEW `data/blooket-difficulty.json` — Codex tagged
+>   all 2264 Blooket questions hard/med/easy against the unit AP
+>   frameworks; `_bfSelectTop10` builds each deck hard-first. Keyboard:
+>   a-d / 1-4 commit a choice, Enter advances. Codex YELLOW: the first
+>   tagging pass templated rationales by lesson (one trivial item tagged
+>   `hard`) → re-dispatched Codex with a corrective prompt; the re-run
+>   (JSON `version: 2`) fixed all flagged cases.
+> - **Worksheet "Done" gated on real completion** (`de68a4b`): the Desk
+>   worksheet Done button no longer unlocks on a 5-min timer. Each
+>   worksheet computes its own completion (blanks + reflections
+>   attempted, plus whether every reflection is AI-rated E) and writes
+>   `apstats_ws_completion`, **student-scoped** (`getStudentEmail()` key)
+>   so a shared browser never leaks completion between students.
+>   Eligible = ≥80% attempted OR all-reflections-E. Codex RED → fixed →
+>   re-review GREEN (BLOCKER: an off-pattern driller worksheet; MAJOR:
+>   the store was global). The Desk gate pattern-guards to
+>   `^u\d+_lesson.+_live\.html$` so off-pattern worksheets keep the timer.
+> - **Blooket "Done" opens the flashcards immediately** (`6b15657`):
+>   dropped the redundant 15-min Blooket visit timer — the flashcard quiz
+>   IS the completion check. Removed the now-dead `BLOOKET_GATE_MS`.
+> - **Sequential lesson gate + video Done removed** (`d137c95`): calendar
+>   lessons lock (dimmed + 🔒) until the prior lesson is complete
+>   (worksheet + Blooket Done) OR the scheduled date arrives. Year-round;
+>   teachers + not-signed-in bypass; fails OPEN. The video Done button is
+>   gone — the video shows a `✓ done` once the worksheet is marked Done.
+>   Codex review GREEN (2 MINOR test-coverage folds).
+> - **Sign-in wall — no guest mode** (`764369b`): the Desk sign-in modal
+>   auto-opens after the boot splash and is non-dismissable until a real
+>   sign-in; all 69 worksheets show a blocking overlay (links to the
+>   Desk) if opened without a session. Both fail OPEN. Codex YELLOW: the
+>   one MAJOR (an alleged "37/32 mojibake split" across the worksheet
+>   blocks) was VERIFIED A FALSE POSITIVE — all 69 wall blocks are
+>   byte-identical + valid UTF-8 (the 🔒 emoji intact); it was the
+>   cross-agent runner's known UTF-8-decode artifact. A corpus
+>   byte-identity test + a UTF-8-validity test now prove it. 2 MINOR
+>   folded.
+>
+> ## Test baseline (post-`764369b`)
+> follow-alongs root **4163/4164** — the only fail is the long-standing
+> unrelated `tests/study-guide.test.js` v3-structure snapshot (NOT a
+> regression; `study_guide_diagnostic.html` is untouched). roster-server
+> **291/291** (+11 from the `/ledger/student` extension; otherwise
+> untouched this session). `node scripts/audit-feeder-ids.mjs` → CLEAN
+> 69 / MISMATCH 0. Desk file + all 69 worksheets LF. Session-103 build
+> docs: `PERSISTENT_ANSWERS_BUILD.md`, `FLASHCARD_REWORK_BUILD.md`,
+> `WORKSHEET_COMPLETION_GATE_BUILD.md`, `LESSON_GATE_BUILD.md`,
+> `SIGNIN_WALL_BUILD.md`.
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **EOL:** the Desk file + worksheets are LF; bulk edits MUST be
+>   EOL-preserving. The `scripts/wire-*.mjs` rollouts are the safe
+>   pattern — idempotent, per-file EOL detect, FAIL-not-skip on a
+>   non-unique anchor. Re-rolling = revert the worksheets + re-run.
+> - **Codex cross-agent:** ASCII-only prompts. The runner has a known
+>   UTF-8-decode bug — it mangled the 🔒 emoji in Codex's view this
+>   session and produced a false-positive MAJOR. `.result.json` is often
+>   a wrapper fallback ("did not write a result file"); parse the real
+>   verdict from the transcript tail, never the wrapper. ALWAYS
+>   re-verify Codex findings on disk — a corpus hash settled the
+>   mojibake claim definitively.
+> - **typeof-guard cross-sprint calls:** a new call inside a function a
+>   `vm`-test extracts into a partial sandbox breaks that test — wrap as
+>   `if (typeof fn === 'function')`. (Bit the sign-in wall:
+>   `openSignInModal` calling `_deskAccessGranted` broke
+>   `desk-roster-signin`'s vm-test until guarded.)
+> - **`data/skill-map.js`** regenerates a timestamp-only `// GENERATED:`
+>   header when the audit runs — `git checkout -- data/skill-map.js` if
+>   that is its only diff.
+> - **roster-server auto-deploys on git commit** (GitHub watch on
+>   `roster-server/**`) — no manual `railway up` needed.
+> - **Teacher bypass:** the completion gate, lesson gate, and sign-in
+>   wall all bypass for `apstats_user_role==='teacher'` — to test them as
+>   a student, clear that localStorage key.
+> - **Stage own paths only** — the repo carries unrelated pre-existing
+>   dirty/untracked scratch (`.ai-tutor-*`, `.batch-*`, `.session*`,
+>   `GRADEBOOK_TAGGING_AUDIT.md`, `state/cross-agent-log.json`); never
+>   `git add -A`.
+>
+> ## NEXT = wrap session — no open code work
+> Everything the teacher asked for this session is shipped + reviewed.
+> The Desk is hardened for the Sept-1 cohort: persistent answers,
+> completion-gated worksheet Done, the Blooket flashcard gate,
+> sequential lesson unlocking, and a hard sign-in wall (no silent
+> un-recorded work). Still queued (strategic, not urgent): the Railway →
+> DigitalOcean migration (Tier 1 — roster-server to a $6/mo droplet,
+> ~3-4h, trigger before the next Railway bill). Recall memories on
+> reload: `project_desk_donow.md`, `project_gradebook_grading_model.md`,
+> `feedback_diagnostic_first.md`, `feedback_curriculum_render_sacred.md`,
+> `feedback_edgar_separate_track.md`, `project_railway_to_digitalocean.md`.
+
+---
+
 # Continuation Prompt — Gradebook + Desk Polish (session 102)
 
-> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below the
-> "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
-> text; it is kept only as historical record.** Last updated 2026-05-20
-> (session 102, post-Task-#8 long-tail of Desk UX polish + Phase 6).
-> HEAD = `242c34f`. Linear, local==origin.
+> **SUPERSEDED — the "Desk Hardening (session 103)" block at the top of
+> this file is now the authoritative section. This session-102 summary
+> and everything below it are historical record only; do not act on the
+> "NEXT THREAD"/SESSION/AUTONOMOUS-LOOP text.** (session 102 — Task-#8
+> long-tail of Desk UX polish + Phase 6; HEAD then was `242c34f`.)
 >
 > ## ✅ Everything shipped through session 101 (gradebook autonomous loop)
 > All eight T1–T8 phases live in prod (`ccbf75f` baseline). Phase 4b
