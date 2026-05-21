@@ -391,6 +391,18 @@ describe('ClassroomBoard._assignCells -- collision handling', function () {
     expect(typeof cells['solo'].col).toBe('number');
     expect(typeof cells['solo'].row).toBe('number');
   });
+
+  it('reserves the gate hole region -- no avatar in the bottom-right 4x4', function () {
+    var names = [];
+    for (var i = 0; i < 40; i++) { names.push('s' + i); }
+    var cells = board.ClassroomBoard._assignCells(names);
+    for (var k in cells) {
+      var c = cells[k];
+      // The hole occupies cols 36-39, rows 26-29 (40x30 grid, 4x4 hole).
+      var inHole = (c.col >= 36) && (c.row >= 26);
+      expect(inHole).toBe(false);
+    }
+  });
 });
 
 // --- makeMount helper (timer-spy variant) -----------------------------
@@ -797,5 +809,718 @@ describe('ClassroomBoard handle.setNameMap', function () {
     }).not.toThrow();
 
     handle.destroy();
+  });
+});
+
+// ==========================================================================
+// v1b tests (the Gate)
+// ==========================================================================
+
+// --- v1b: _reduce -- classroom_gate -----------------------------------
+
+describe('ClassroomBoard._reduce -- classroom_gate (v1b)', function () {
+  var board;
+  var baseState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    // Start from a state with alice (checked in) and bob (present).
+    baseState = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    null,
+        poll:    null,
+        members: [
+          { username: 'alice', role: 'student', status: 'checkedIn', online: true },
+          { username: 'bob',   role: 'student', status: 'present',   online: true }
+        ]
+      }
+    );
+  });
+
+  it('sets gate from the message', function () {
+    var gateMsg = {
+      type: 'classroom_gate',
+      section: 'PeriodX',
+      gate: { armed: true, theme: 'mon' }
+    };
+    var s = board.ClassroomBoard._reduce(baseState, gateMsg);
+    expect(s.gate).not.toBeNull();
+    expect(s.gate.armed).toBe(true);
+    expect(s.gate.theme).toBe('mon');
+  });
+
+  it('resets all member statuses to "present" when gate is armed', function () {
+    // alice was checkedIn; arming a gate starts a fresh ritual.
+    var gateMsg = {
+      type: 'classroom_gate',
+      section: 'PeriodX',
+      gate: { armed: true, theme: 'tue' }
+    };
+    var s = board.ClassroomBoard._reduce(baseState, gateMsg);
+    expect(s.members['alice'].status).toBe('present');
+    expect(s.members['bob'].status).toBe('present');
+  });
+
+  it('preserves member online flags when gate is armed', function () {
+    var gateMsg = {
+      type: 'classroom_gate',
+      section: 'PeriodX',
+      gate: { armed: true, theme: 'wed' }
+    };
+    var s = board.ClassroomBoard._reduce(baseState, gateMsg);
+    expect(s.members['alice'].online).toBe(true);
+    expect(s.members['bob'].online).toBe(true);
+  });
+
+  it('handles a null gate payload without throwing', function () {
+    var gateMsg = { type: 'classroom_gate', section: 'PeriodX', gate: null };
+    expect(function () {
+      board.ClassroomBoard._reduce(baseState, gateMsg);
+    }).not.toThrow();
+  });
+});
+
+// --- v1b: _reduce -- classroom_member_update with checkedIn status ----
+
+describe('ClassroomBoard._reduce -- classroom_member_update checkedIn (v1b)', function () {
+  var board;
+  var baseState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    baseState = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      STATE_MSG
+    );
+  });
+
+  it('adopts status:"checkedIn" on an update', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'checkedIn', online: true }
+    });
+    expect(s.members['alice'].status).toBe('checkedIn');
+  });
+
+  it('preserves other members unchanged when alice checks in', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'checkedIn', online: true }
+    });
+    expect(s.members['bob'].status).toBe('present');
+    expect(s.members['carol'].status).toBe('present');
+  });
+});
+
+// --- v1b: _reduce -- classroom_state carries real gate + status -------
+
+describe('ClassroomBoard._reduce -- classroom_state with gate + status (v1b)', function () {
+  var board;
+
+  beforeEach(function () {
+    board = makeBoard();
+  });
+
+  it('adopts a non-null gate from the snapshot', function () {
+    var msg = {
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'thu', openedAt: 1234567890 },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present',   online: true },
+        { username: 'bob',   role: 'student', status: 'checkedIn', online: true }
+      ]
+    };
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      msg
+    );
+    expect(s.gate).not.toBeNull();
+    expect(s.gate.armed).toBe(true);
+    expect(s.gate.theme).toBe('thu');
+  });
+
+  it('stores each member status as-is from the snapshot', function () {
+    var msg = {
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'fri', openedAt: 9999 },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present',   online: true },
+        { username: 'bob',   role: 'student', status: 'checkedIn', online: false }
+      ]
+    };
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      msg
+    );
+    expect(s.members['alice'].status).toBe('present');
+    expect(s.members['bob'].status).toBe('checkedIn');
+  });
+});
+
+// --- v1b: _reduce -- classroom_greenlight -----------------------------
+
+describe('ClassroomBoard._reduce -- classroom_greenlight (v1b)', function () {
+  var board;
+  var baseState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    baseState = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      STATE_MSG
+    );
+  });
+
+  it('sets greenlight to boolean true (pure -- no timestamp / Date.now)', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_greenlight',
+      section: 'PeriodX'
+    });
+    expect(s.greenlight).toBe(true);
+  });
+
+  it('classroom_gate (a fresh arm) clears greenlight back to false', function () {
+    var lit = board.ClassroomBoard._reduce(baseState, {
+      type: 'classroom_greenlight', section: 'PeriodX'
+    });
+    expect(lit.greenlight).toBe(true);
+    var armed = board.ClassroomBoard._reduce(lit, {
+      type: 'classroom_gate', section: 'PeriodX', gate: { armed: true, theme: 'mon' }
+    });
+    expect(armed.greenlight).toBe(false);
+  });
+
+  it('preserves members and gate on greenlight', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_greenlight',
+      section: 'PeriodX'
+    });
+    expect(Object.keys(s.members).length).toBe(3);
+    expect(s.gate).toBeNull();
+  });
+});
+
+// --- v1b: checkedIn student not drawn (render contract) ---------------
+
+describe('ClassroomBoard -- checkedIn student drain contract (v1b)', function () {
+  var board;
+
+  beforeEach(function () {
+    board = makeBoard();
+  });
+
+  it('checkedIn student is excluded from the visible student set', function () {
+    // alice checks in; bob stays present.
+    var state = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    { armed: true, theme: 'mon' },
+        poll:    null,
+        members: [
+          { username: 'alice', role: 'student', status: 'checkedIn', online: true },
+          { username: 'bob',   role: 'student', status: 'present',   online: true }
+        ]
+      }
+    );
+
+    // Simulate the render filter: only present students get a cell.
+    var visible = Object.keys(state.members).filter(function (u) {
+      var m = state.members[u];
+      return m.role === 'student' && m.status !== 'checkedIn';
+    });
+
+    expect(visible).toContain('bob');
+    expect(visible).not.toContain('alice');
+  });
+
+  it('all students present -> all are visible', function () {
+    var state = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    null,
+        poll:    null,
+        members: [
+          { username: 'alice', role: 'student', status: 'present', online: true },
+          { username: 'bob',   role: 'student', status: 'present', online: true }
+        ]
+      }
+    );
+
+    var visible = Object.keys(state.members).filter(function (u) {
+      var m = state.members[u];
+      return m.role === 'student' && m.status !== 'checkedIn';
+    });
+
+    expect(visible.length).toBe(2);
+  });
+
+  it('all students checkedIn -> visible set is empty (board drained)', function () {
+    var state = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: null },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    { armed: true, theme: 'mon' },
+        poll:    null,
+        members: [
+          { username: 'alice', role: 'student', status: 'checkedIn', online: true },
+          { username: 'bob',   role: 'student', status: 'checkedIn', online: false }
+        ]
+      }
+    );
+
+    var visible = Object.keys(state.members).filter(function (u) {
+      var m = state.members[u];
+      return m.role === 'student' && m.status !== 'checkedIn';
+    });
+
+    expect(visible.length).toBe(0);
+  });
+});
+
+// --- v1b: check-in button (B3) ----------------------------------------
+
+describe('ClassroomBoard.mount -- check-in button (v1b)', function () {
+  it('button exists in the container after mount', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var btn = m.container.querySelector('[data-classroom-checkin]');
+    expect(btn).not.toBeNull();
+
+    handle.destroy();
+  });
+
+  it('button is hidden by default (no gate armed)', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var btn = m.container.querySelector('[data-classroom-checkin]');
+    expect(btn.style.display).toBe('none');
+
+    handle.destroy();
+  });
+
+  it('button shows when gate is armed and local student is present', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Server sends a state with a gate armed and alice present.
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'mon' },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    var btn = m.container.querySelector('[data-classroom-checkin]');
+    expect(btn.style.display).not.toBe('none');
+
+    handle.destroy();
+  });
+
+  it('button hides after alice checks in (status becomes checkedIn)', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Gate armed, alice present -> button visible.
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'mon' },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    var btn = m.container.querySelector('[data-classroom-checkin]');
+    expect(btn.style.display).not.toBe('none');
+
+    // Alice checks in -> button should hide.
+    ws._receive({
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'checkedIn', online: true }
+    });
+
+    expect(btn.style.display).toBe('none');
+
+    handle.destroy();
+  });
+
+  it('button is hidden for teacher role even when gate is armed', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'mon' },
+      poll:    null,
+      members: [
+        { username: 'carol', role: 'teacher', status: 'present', online: true }
+      ]
+    });
+
+    var btn = m.container.querySelector('[data-classroom-checkin]');
+    expect(btn.style.display).toBe('none');
+
+    handle.destroy();
+  });
+
+  it('button click sends classroom_checkin on the socket', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'mon' },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    var btn = m.container.querySelector('[data-classroom-checkin]');
+    btn.onclick();   // simulate a click
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var checkin = sent.find(function (msg) { return msg.type === 'classroom_checkin'; });
+    expect(checkin).toBeDefined();
+
+    handle.destroy();
+  });
+
+  it('destroy() removes the check-in button', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    expect(m.container.querySelector('[data-classroom-checkin]')).not.toBeNull();
+
+    handle.destroy();
+
+    expect(m.container.querySelector('[data-classroom-checkin]')).toBeNull();
+  });
+});
+
+// --- v1b: onStateChange callback (B4) ---------------------------------
+
+describe('ClassroomBoard.mount -- onStateChange callback (v1b)', function () {
+  it('fires after the socket delivers classroom_state', function () {
+    var m = makeMount();
+    var calls = [];
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:          'wss://test.example/ws',
+      section:        'PeriodX',
+      username:       'alice',
+      role:           'student',
+      onStateChange:  function (summary) { calls.push(summary); }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive(STATE_MSG);
+
+    expect(calls.length).toBeGreaterThanOrEqual(1);
+
+    handle.destroy();
+  });
+
+  it('summary has gate and members array', function () {
+    var m = makeMount();
+    var lastSummary = null;
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:          'wss://test.example/ws',
+      section:        'PeriodX',
+      username:       'alice',
+      role:           'student',
+      onStateChange:  function (summary) { lastSummary = summary; }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'fri' },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    expect(lastSummary).not.toBeNull();
+    expect(lastSummary.gate).not.toBeNull();
+    expect(lastSummary.gate.armed).toBe(true);
+    expect(Array.isArray(lastSummary.members)).toBe(true);
+    expect(lastSummary.members.length).toBe(1);
+    expect(lastSummary.members[0].username).toBe('alice');
+
+    handle.destroy();
+  });
+
+  it('summary includes the greenlight flag (v1b)', function () {
+    var m = makeMount();
+    var lastSummary = null;
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:          'wss://test.example/ws',
+      section:        'PeriodX',
+      username:       'alice',
+      role:           'teacher',
+      onStateChange:  function (summary) { lastSummary = summary; }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive(STATE_MSG);
+    expect('greenlight' in lastSummary).toBe(true);
+    expect(lastSummary.greenlight).toBe(false);
+
+    ws._receive({ type: 'classroom_greenlight', section: 'PeriodX' });
+    expect(lastSummary.greenlight).toBe(true);
+
+    handle.destroy();
+  });
+
+  it('summary members carry username, role, status, online', function () {
+    var m = makeMount();
+    var lastSummary = null;
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:          'wss://test.example/ws',
+      section:        'PeriodX',
+      username:       'alice',
+      role:           'student',
+      onStateChange:  function (summary) { lastSummary = summary; }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive(STATE_MSG);
+
+    var aliceSummary = lastSummary.members.find(function (m) { return m.username === 'alice'; });
+    expect(aliceSummary).toBeDefined();
+    expect(aliceSummary.role).toBe('student');
+    expect(aliceSummary.status).toBe('present');
+    expect(typeof aliceSummary.online).toBe('boolean');
+
+    handle.destroy();
+  });
+
+  it('fires with updated status after classroom_member_update', function () {
+    var m = makeMount();
+    var lastSummary = null;
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:          'wss://test.example/ws',
+      section:        'PeriodX',
+      username:       'alice',
+      role:           'student',
+      onStateChange:  function (summary) { lastSummary = summary; }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive(STATE_MSG);
+
+    ws._receive({
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'checkedIn', online: true }
+    });
+
+    var aliceSummary = lastSummary.members.find(function (m) { return m.username === 'alice'; });
+    expect(aliceSummary.status).toBe('checkedIn');
+
+    handle.destroy();
+  });
+
+  it('omitting onStateChange does not throw (v1a backward compat)', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+      // no onStateChange
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    expect(function () {
+      ws._receive(STATE_MSG);
+    }).not.toThrow();
+
+    handle.destroy();
+  });
+});
+
+// --- v1b: teacher handle methods (B4) ---------------------------------
+
+describe('ClassroomBoard handle -- teacher methods (v1b)', function () {
+  it('armGate() sends classroom_arm_gate with the given theme', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.armGate('mon');
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_arm_gate'; });
+    expect(msg).toBeDefined();
+    expect(msg.theme).toBe('mon');
+
+    handle.destroy();
+  });
+
+  it('greenLight() sends classroom_go', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.greenLight();
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_go'; });
+    expect(msg).toBeDefined();
+
+    handle.destroy();
+  });
+
+  it('reset() sends classroom_reset', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.reset();
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_reset'; });
+    expect(msg).toBeDefined();
+
+    handle.destroy();
+  });
+
+  it('v1a callers (no teacher methods used) still work', function () {
+    // Verify backward compat: a v1a caller that only calls destroy()/setNameMap()
+    // and passes no onStateChange does not throw.
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    expect(typeof handle.destroy).toBe('function');
+    expect(typeof handle.setNameMap).toBe('function');
+
+    // New v1b methods are present but caller does not call them.
+    expect(typeof handle.armGate).toBe('function');
+    expect(typeof handle.greenLight).toBe('function');
+    expect(typeof handle.reset).toBe('function');
+
+    expect(function () {
+      handle.setNameMap({ alice: 'Alice Smith' });
+      handle.destroy();
+    }).not.toThrow();
   });
 });

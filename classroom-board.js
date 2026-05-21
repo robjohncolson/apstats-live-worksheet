@@ -1,14 +1,19 @@
 /**
  * classroom-board.js
  *
- * Live Classroom board component (v1a).  PLAIN browser script -- no ES
+ * Live Classroom board component (v1b).  PLAIN browser script -- no ES
  * import/export.  Load via <script src="classroom-board.js">.
  *
- * Attaches window.ClassroomBoard with the frozen API from BUILD Section 6:
+ * Attaches window.ClassroomBoard with the frozen API from BUILD Sections 6 + 4:
  *
  *   ClassroomBoard.mount(container, opts) -> handle
  *   handle.destroy()
  *   handle.setNameMap(map)
+ *   handle.armGate(theme)      -- v1b teacher method
+ *   handle.greenLight()        -- v1b teacher method
+ *   handle.reset()             -- v1b teacher method
+ *
+ * opts gains an optional onStateChange(summary) callback (v1b).
  *
  * Internal state reduction is exposed as a pure function:
  *   ClassroomBoard._reduce(state, message) -> newState
@@ -19,9 +24,13 @@
  * Rendering: 320x240 backing-store canvas (TI-84 Plus CE resolution).
  * CSS-scaled to container width with image-rendering:pixelated.
  * Grid: 40 cols x 30 rows of 8x8 px cells.
- * Only role:"student" members are drawn.  online:false members are dimmed.
- * Placement is deterministic via a hash of username with linear-probe
- * collision resolution so every member gets a unique cell.
+ *
+ * Drawing rules:
+ *   - Only role:"student" members are drawn.
+ *   - A student with status:"checkedIn" has drained (spec D4) and is NOT drawn.
+ *   - online:false members render dimmed.
+ *   - When gate.armed, a doorway/hole sprite is drawn on the board.
+ *   - A brief green-light cue renders when state.greenlight is set.
  *
  * WS protocol: sends classroom_join on open, classroom_heartbeat every 30s.
  * Reconnects on drop with exponential backoff (starting at 1s, cap 30s).
@@ -49,6 +58,14 @@
   var COLOR_OFFLINE = '#7A9A60';   // dimmed (online:false)
   var COLOR_LABEL   = '#222222';
   var COLOR_BORDER  = '#4A5A30';
+
+  // Gate / hole colors
+  var COLOR_HOLE_BG  = '#222222';   // dark hole interior
+  var COLOR_HOLE_FRM = '#888844';   // doorway frame
+
+  // Green-light cue color (briefly shown after classroom_greenlight)
+  var COLOR_GREEN   = '#22AA22';
+  var GREENLIGHT_MS = 2000;         // fade out after 2 s
 
   // Avatar shape palette -- 8 distinct hues cycling deterministically
   var AVATAR_COLORS = [
@@ -99,6 +116,15 @@
     var occupied = {};  // cellIndex -> true
     var result   = {};  // username -> { col, row }
 
+    // Reserve the gate hole's 4x4 cell region (bottom-right) so a student
+    // avatar is never placed under the doorway sprite -- the hole is drawn
+    // on top of the avatar layer whenever the gate is armed.
+    for (var hr = GRID_ROWS - 4; hr < GRID_ROWS; hr++) {
+      for (var hc = GRID_COLS - 4; hc < GRID_COLS; hc++) {
+        occupied[hr * GRID_COLS + hc] = true;
+      }
+    }
+
     for (var i = 0; i < sorted.length; i++) {
       var name  = sorted[i];
       var start = hashStr(name) % GRID_SIZE;
@@ -130,7 +156,7 @@
     return AVATAR_COLORS[hashStr(username) % AVATAR_COLORS.length];
   }
 
-  // --- pure state reduction (B3) ----------------------------------------
+  // --- pure state reduction (B1 / B3) -----------------------------------
 
   /**
    * _reduce(state, message) -> state
@@ -139,12 +165,14 @@
    *
    * state shape:
    * {
-   *   members: { [username]: WireMember },   // indexed by username
-   *   gate:    null,                          // v1b
-   *   poll:    null,                          // v2
+   *   members:    { [username]: WireMember },  // indexed by username
+   *   gate:       { armed, theme, openedAt } | null,
+   *   poll:       null,                        // v2
+   *   greenlight: boolean,                     // true after a GO; the renderer owns the brief banner
    * }
    *
    * WireMember: { username, role, status, online }
+   *   status: "present" | "checkedIn"
    */
   function _reduce(state, message) {
     if (!message || !message.type) { return state; }
@@ -154,8 +182,10 @@
 
     switch (message.type) {
 
+      // ---- v1a handlers (extended for v1b) ----
+
       case 'classroom_state':
-        // Full snapshot.  Replace all members.
+        // Full snapshot.  Replace all members.  Now carries real gate + status.
         newMembers = {};
         var incoming = message.members || [];
         for (var i = 0; i < incoming.length; i++) {
@@ -168,13 +198,14 @@
           };
         }
         return {
-          members: newMembers,
-          gate:    message.gate    || null,
-          poll:    message.poll    || null
+          members:    newMembers,
+          gate:       message.gate  || null,
+          poll:       message.poll  || null,
+          greenlight: false
         };
 
       case 'classroom_member_update':
-        // Upsert.
+        // Upsert.  Now adopts the member's real status.
         var upd = message.member;
         if (!upd || !upd.username) { return state; }
         newMembers = {};
@@ -188,9 +219,10 @@
           online:   upd.online !== undefined ? upd.online !== false : (members[upd.username] ? members[upd.username].online : true)
         };
         return {
-          members: newMembers,
-          gate:    state.gate,
-          poll:    state.poll
+          members:    newMembers,
+          gate:       state.gate,
+          poll:       state.poll,
+          greenlight: state.greenlight
         };
 
       case 'classroom_member_left':
@@ -202,9 +234,42 @@
           if (k !== gone) { newMembers[k] = members[k]; }
         }
         return {
-          members: newMembers,
-          gate:    state.gate,
-          poll:    state.poll
+          members:    newMembers,
+          gate:       state.gate,
+          poll:       state.poll,
+          greenlight: state.greenlight
+        };
+
+      // ---- v1b new handlers ----
+
+      case 'classroom_gate':
+        // Gate armed.  Reset every member's status to "present" (fresh ritual).
+        newMembers = {};
+        for (var gk in members) {
+          var gm = members[gk];
+          newMembers[gk] = {
+            username: gm.username,
+            role:     gm.role,
+            status:   'present',
+            online:   gm.online
+          };
+        }
+        return {
+          members:    newMembers,
+          gate:       message.gate || null,
+          poll:       state.poll,
+          greenlight: false
+        };
+
+      case 'classroom_greenlight':
+        // Green-light broadcast.  PURE: set a boolean.  The brief on-canvas
+        // banner timing is owned by the renderer via a separate timestamp
+        // (greenlightShownAt) tracked in mount() -- never Date.now() here.
+        return {
+          members:    state.members,
+          gate:       state.gate,
+          poll:       state.poll,
+          greenlight: true
         };
 
       default:
@@ -215,7 +280,7 @@
   // --- initial state factory --------------------------------------------
 
   function emptyState() {
-    return { members: {}, gate: null, poll: null };
+    return { members: {}, gate: null, poll: null, greenlight: false };
   }
 
   // --- rendering --------------------------------------------------------
@@ -257,9 +322,83 @@
   }
 
   /**
-   * Render the full board state onto the backing canvas.
+   * Draw the doorway/hole sprite at the bottom-right corner of the board.
+   * The hole is a 4x4 cell region (32x32 px) so it is clearly visible.
+   * Its look may vary slightly by theme string (just a label for now).
    */
-  function renderState(ctx, state, nameMap) {
+  function drawHole(ctx, gate) {
+    // Place the hole in the bottom-right 4x4 cells.
+    var holeCol = GRID_COLS - 4;   // col 36, 4 cells wide
+    var holeRow = GRID_ROWS - 4;   // row 26, 4 cells tall
+    var hx = holeCol * CELL_W;     // px 288
+    var hy = holeRow * CELL_H;     // px 208
+    var hw = 4 * CELL_W;           // 32
+    var hh = 4 * CELL_H;           // 32
+
+    // Door frame
+    ctx.strokeStyle = COLOR_HOLE_FRM;
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(hx, hy, hw, hh);
+
+    // Hole interior
+    ctx.fillStyle = COLOR_HOLE_BG;
+    ctx.fillRect(hx + 2, hy + 2, hw - 4, hh - 4);
+
+    // Theme label at top of hole (up to 4 chars)
+    if (gate && gate.theme) {
+      var t = String(gate.theme).slice(0, 4);
+      ctx.fillStyle = '#AABB44';
+      ctx.font = '5px monospace';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(t, hx + 3, hy + 9);
+    }
+
+    // Arrow pointing down into hole
+    ctx.fillStyle = '#CCDD66';
+    // Arrow shaft
+    ctx.fillRect(hx + 14, hy + 10, 4, 10);
+    // Arrow head
+    ctx.fillRect(hx + 10, hy + 16, 12, 4);
+    ctx.fillRect(hx + 12, hy + 20, 8,  4);
+    ctx.fillRect(hx + 14, hy + 24, 4,  3);
+  }
+
+  /**
+   * Draw a brief green-light banner across the top of the canvas.
+   * shownAt is the wall-clock time (ms) the board last received a
+   * classroom_greenlight; the banner fades out over GREENLIGHT_MS.  This is
+   * render-layer only -- reading the clock here is fine; the reducer stays pure.
+   */
+  function drawGreenLight(ctx, shownAt) {
+    if (!shownAt) { return; }
+    var age = Date.now() - shownAt;
+    if (age > GREENLIGHT_MS) { return; }
+
+    // Alpha fades from 1.0 to 0 over GREENLIGHT_MS.
+    var alpha = 1 - (age / GREENLIGHT_MS);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle   = COLOR_GREEN;
+    ctx.fillRect(0, 0, CANVAS_W, 12);
+    ctx.fillStyle     = '#FFFFFF';
+    ctx.font          = '8px monospace';
+    ctx.textBaseline  = 'alphabetic';
+    ctx.fillText('GO!', CANVAS_W / 2 - 8, 10);
+    ctx.restore();
+  }
+
+  /**
+   * Render the full board state onto the backing canvas.
+   *
+   * Drawing rules:
+   *   - Student members with status:"present" get an avatar.
+   *   - Student members with status:"checkedIn" are NOT drawn (drained).
+   *   - Teacher members are never drawn.
+   *   - online:false members render dimmed.
+   *   - When gate.armed, the doorway/hole sprite is overlaid.
+   *   - greenlightShownAt (ms) drives the brief green-light banner.
+   */
+  function renderState(ctx, state, nameMap, greenlightShownAt) {
     // background
     ctx.fillStyle = COLOR_BG;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
@@ -269,18 +408,17 @@
     ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // Collect student-role members only.
+    // Collect present student-role members only (checkedIn students are hidden).
     var members = state.members;
     var studentNames = [];
     for (var username in members) {
-      if (members[username].role === 'student') {
+      var mb = members[username];
+      if (mb.role === 'student' && mb.status !== 'checkedIn') {
         studentNames.push(username);
       }
     }
 
-    // Compute collision-free cell assignments for ALL current students.
-    // assignCells sorts internally, so the layout is stable regardless
-    // of iteration order.
+    // Compute collision-free cell assignments for the visible students.
     var cellMap = assignCells(studentNames);
 
     for (var si = 0; si < studentNames.length; si++) {
@@ -298,6 +436,58 @@
       var label = (nameMap && nameMap[uname]) ? nameMap[uname] : uname;
       drawLabel(ctx, label, px, py, online);
     }
+
+    // Gate hole overlay (drawn on top of avatars so it is always visible).
+    if (state.gate && state.gate.armed) {
+      drawHole(ctx, state.gate);
+    }
+
+    // Green-light cue (topmost layer).
+    drawGreenLight(ctx, greenlightShownAt);
+  }
+
+  // --- check-in button logic (B3) ---------------------------------------
+
+  /**
+   * Decide whether the local check-in button should be visible.
+   *
+   * Visible when ALL of:
+   *   - gate is armed
+   *   - the local user is a student
+   *   - the local user's status is "present" (not yet checked in)
+   *
+   * Returns true/false.
+   */
+  function shouldShowCheckinButton(state, username, role) {
+    if (role !== 'student')                   { return false; }
+    if (!state.gate || !state.gate.armed)     { return false; }
+    var me = state.members[username];
+    if (!me || me.status !== 'present')       { return false; }
+    return true;
+  }
+
+  /**
+   * Build the summary object passed to onStateChange.
+   *
+   * summary = { gate, members: [{ username, role, status, online }], greenlight }
+   */
+  function buildSummary(state) {
+    var arr = [];
+    var members = state.members;
+    for (var u in members) {
+      var m = members[u];
+      arr.push({
+        username: m.username,
+        role:     m.role,
+        status:   m.status,
+        online:   m.online
+      });
+    }
+    return {
+      gate:       state.gate,
+      members:    arr,
+      greenlight: state.greenlight
+    };
   }
 
   // --- mount ------------------------------------------------------------
@@ -308,19 +498,23 @@
    * Creates a canvas inside `container`, opens a WebSocket to opts.wsUrl,
    * and starts rendering live classroom presence.
    *
-   * opts: { wsUrl, section, username, role, nameMap? }
-   * handle: { destroy(), setNameMap(map) }
+   * v1a opts: { wsUrl, section, username, role, nameMap? }
+   * v1b opts adds: { onStateChange? }
+   *
+   * v1a handle: { destroy(), setNameMap(map) }
+   * v1b handle adds: { armGate(theme), greenLight(), reset() }
    */
   function mount(container, opts) {
     if (!container || !opts) {
       throw new Error('ClassroomBoard.mount: container and opts are required');
     }
 
-    var wsUrl    = opts.wsUrl;
-    var section  = opts.section;
-    var username = opts.username;
-    var role     = opts.role || 'student';
-    var nameMap  = opts.nameMap || null;
+    var wsUrl          = opts.wsUrl;
+    var section        = opts.section;
+    var username       = opts.username;
+    var role           = opts.role || 'student';
+    var nameMap        = opts.nameMap || null;
+    var onStateChange  = opts.onStateChange || null;
 
     // canvas setup
     var canvas = (root.document || document).createElement('canvas');
@@ -330,6 +524,13 @@
     canvas.style.imageRendering  = 'pixelated';
     canvas.style.display         = 'block';
     container.appendChild(canvas);
+
+    // check-in button (v1b, B3) -- injected into the same container
+    var checkinBtn = (root.document || document).createElement('button');
+    checkinBtn.textContent = 'Check in';
+    checkinBtn.style.display = 'none';
+    checkinBtn.setAttribute('data-classroom-checkin', '1');
+    container.appendChild(checkinBtn);
 
     var ctx = canvas.getContext('2d');
 
@@ -341,16 +542,60 @@
     var reconnectTimer = null;
     var reconnectDelay = RECONNECT_BASE;
 
+    // Green-light banner timing (render-layer only -- NOT in `state`, so the
+    // _reduce reducer stays pure).  greenlightShownAt is the ms time of the
+    // last classroom_greenlight; greenlightTimer animates the brief fade-out.
+    var greenlightShownAt = 0;
+    var greenlightTimer   = null;
+
+    // Update the check-in button visibility.
+    function refreshButton() {
+      if (!checkinBtn) { return; }
+      checkinBtn.style.display = shouldShowCheckinButton(state, username, role)
+        ? 'inline-block'
+        : 'none';
+    }
+
     // draw on each state update
     function draw() {
-      if (!ctx) { return; }
-      renderState(ctx, state, nameMap);
+      if (ctx) {
+        renderState(ctx, state, nameMap, greenlightShownAt);
+      }
+      refreshButton();
+    }
+
+    // Repaint repeatedly for a short window so the green-light banner can
+    // animate its fade-out and then clear itself.  Without this the banner
+    // would linger frozen until the next unrelated WS message arrives.
+    function scheduleGreenlightFade() {
+      if (greenlightTimer) { clearInterval(greenlightTimer); }
+      greenlightTimer = setInterval(function () {
+        draw();
+        if (Date.now() - greenlightShownAt > GREENLIGHT_MS) {
+          clearInterval(greenlightTimer);
+          greenlightTimer = null;
+        }
+      }, 120);
+    }
+
+    // notify the caller (v1b B4)
+    function notifyStateChange() {
+      if (typeof onStateChange === 'function') {
+        onStateChange(buildSummary(state));
+      }
     }
 
     // apply a message and redraw
     function applyMessage(msg) {
       state = _reduce(state, msg);
+      // A greenlight is a brief render-layer cue: stamp the local clock and
+      // kick the fade animation.  _reduce itself stays pure (no Date.now).
+      if (msg.type === 'classroom_greenlight') {
+        greenlightShownAt = Date.now();
+        scheduleGreenlightFade();
+      }
       draw();
+      notifyStateChange();
     }
 
     // send helpers
@@ -367,6 +612,11 @@
     function sendHeartbeat() {
       safeSend({ type: 'classroom_heartbeat' });
     }
+
+    // Check-in button click handler (B3).
+    checkinBtn.onclick = function () {
+      safeSend({ type: 'classroom_checkin' });
+    };
 
     // WebSocket lifecycle
     function connect() {
@@ -414,14 +664,19 @@
     draw();
     connect();
 
-    // public handle
+    // public handle (v1a + v1b methods)
     var handle = {
+
+      // --- v1a methods ---
+
       destroy: function () {
         destroyed = true;
         clearInterval(heartbeatTimer);
         clearTimeout(reconnectTimer);
+        clearInterval(greenlightTimer);
         heartbeatTimer = null;
         reconnectTimer = null;
+        greenlightTimer = null;
         if (ws) {
           ws.onclose = null;  // prevent reconnect loop
           ws.close();
@@ -430,10 +685,28 @@
         if (canvas.parentNode) {
           canvas.parentNode.removeChild(canvas);
         }
+        if (checkinBtn.parentNode) {
+          checkinBtn.parentNode.removeChild(checkinBtn);
+        }
       },
+
       setNameMap: function (map) {
         nameMap = map || null;
         draw();
+      },
+
+      // --- v1b teacher methods (B4) ---
+
+      armGate: function (theme) {
+        safeSend({ type: 'classroom_arm_gate', theme: theme || '' });
+      },
+
+      greenLight: function () {
+        safeSend({ type: 'classroom_go' });
+      },
+
+      reset: function () {
+        safeSend({ type: 'classroom_reset' });
       }
     };
 
@@ -443,9 +716,9 @@
   // --- public API -------------------------------------------------------
 
   root.ClassroomBoard = {
-    mount:      mount,
-    _reduce:    _reduce,    // exposed for testing (B3)
-    _assignCells: assignCells  // exposed for collision-probing tests
+    mount:        mount,
+    _reduce:      _reduce,       // exposed for testing (B3)
+    _assignCells: assignCells    // exposed for collision-probing tests
   };
 
 }(typeof window !== 'undefined' ? window : this));

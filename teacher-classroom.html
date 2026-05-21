@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<!-- Live Classroom v1a cockpit shell - LIVE_CLASSROOM_V1A_BUILD.md Section 5.
+<!-- Live Classroom v1b cockpit - LIVE_CLASSROOM_V1B_BUILD.md Section 5.
      Teacher-only page launched from the Desk Teacher menu. Loads the classroom
-     board in teacher mode (real-name labels). No control strip in v1a -
-     Arm Gate / Green Light are v1b.
-     Security posture: identity comes from rosterClient (sign-in session) and
-     localStorage.apstats_user_role. The page guards itself: if the role is not
-     "teacher" or no session exists it shows a friendly message and does not
-     mount the board. The real-name fetch from /roster/section/:section is
-     teacher-cockpit-only; students never make that call. -->
+     board in teacher mode (real-name labels). v1b adds the control strip
+     (Arm Gate / Green Light / Reset) and the live checked-in panel.
+     Security posture: identity comes from rosterClient (sign-in session).
+     The page guards itself: if the role is not "teacher" or no session exists
+     it shows a friendly message and does not mount the board. The real-name
+     fetch from /roster/section/:section is teacher-cockpit-only; students
+     never make that call. -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -141,13 +141,97 @@
       min-height: 1.4em;
     }
     .hint { font-size: 0.8rem; color: var(--sg-text-dim); line-height: 1.5; }
+
+    /* --- v1b: control strip --- */
+    .control-strip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .ctrl-btn {
+      padding: 9px 18px;
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ctrl-btn:hover { background: var(--sg-bar-track); }
+    .ctrl-btn:active { background: var(--sg-border); }
+    .ctrl-btn.primary {
+      background: var(--sg-accent);
+      color: #fff;
+      border-color: var(--sg-accent);
+    }
+    .ctrl-btn.primary:hover { opacity: 0.88; }
+    .ctrl-btn.danger {
+      background: var(--sg-low);
+      color: #fff;
+      border-color: var(--sg-low);
+    }
+    .ctrl-btn.danger:hover { opacity: 0.88; }
+
+    /* --- v1b: green-light indicator --- */
+    .greenlight-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--sg-text-dim);
+    }
+    .greenlight-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ccc;
+      border: 1px solid var(--sg-border);
+      transition: background 0.3s;
+    }
+    .greenlight-dot.on { background: #2e7d32; border-color: #2e7d32; }
+
+    /* --- v1b: checked-in panel --- */
+    .checkin-panel {
+      display: grid;
+      gap: 10px;
+    }
+    .checkin-count {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--sg-accent);
+    }
+    .checkin-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .checkin-list li {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border: 1px solid #a5d6a7;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .checkin-empty {
+      font-size: 0.85rem;
+      color: var(--sg-text-dim);
+    }
   </style>
 </head>
 <body>
 
   <div class="page-header">
     <h1>AP Stats - Live Classroom</h1>
-    <p class="subtitle">Section presence board (v1a - read only)</p>
+    <p class="subtitle">Section presence board (v1b)</p>
   </div>
 
   <div class="main">
@@ -182,14 +266,42 @@
         </div>
       </div>
 
+      <!-- v1b: control strip -- hidden until the board actually mounts -->
+      <div class="section" id="control-section" style="display:none">
+        <h2 class="section-title">Gate Controls</h2>
+        <div class="control-strip">
+          <button class="ctrl-btn primary" id="btn-arm-gate">Arm Gate</button>
+          <button class="ctrl-btn" id="btn-green-light">Green Light</button>
+          <button class="ctrl-btn danger" id="btn-reset">Reset</button>
+          <span class="greenlight-indicator">
+            <span class="greenlight-dot" id="greenlight-dot"></span>
+            <span id="greenlight-label">Go not sent</span>
+          </span>
+        </div>
+        <div class="hint">
+          Arm Gate opens today's hole and clears all check-in status.
+          Green Light signals the room is ready to start (informational).
+          Reset clears the gate and returns all students to "present".
+        </div>
+      </div>
+
+      <!-- v1b: checked-in panel -- hidden until the board actually mounts -->
+      <div class="section" id="checkin-section" style="display:none">
+        <h2 class="section-title">Checked In</h2>
+        <div class="checkin-panel">
+          <div class="checkin-count" id="checkin-count">0 / 0 in</div>
+          <ul class="checkin-list" id="checkin-list"></ul>
+          <div class="checkin-empty" id="checkin-empty">No students checked in yet.</div>
+        </div>
+      </div>
+
       <div class="section">
         <h2 class="section-title">Live Board</h2>
         <div class="board-wrap" id="board-mount"></div>
         <div class="hint">
           Each avatar is a signed-in student in this section. Dimmed avatars are
           offline (no heartbeat in the last 45s). Real names are displayed only
-          in this teacher view -- students see usernames. Control features (arm
-          gate, green light) ship in v1b.
+          in this teacher view -- students see usernames.
         </div>
       </div>
 
@@ -263,15 +375,88 @@
       }
     }
 
+    // ===== v1b: gate theme =====
+
+    // Compute a short ASCII token deterministic from the current date.
+    // Cycles through a small fixed set so each day has a consistent theme.
+    function todayTheme() {
+      var d = new Date();
+      var daysSinceEpoch = Math.floor(d.getTime() / (1000 * 60 * 60 * 24));
+      var themes = ['STAR', 'MOON', 'WAVE', 'TREE', 'BOLT', 'RING', 'CUBE'];
+      return themes[daysSinceEpoch % themes.length];
+    }
+
+    // ===== v1b: checked-in panel rendering =====
+
+    // Reads the summary from onStateChange and updates the checked-in panel.
+    function renderCheckinPanel(summary, nameMap) {
+      var students = (summary.members || []).filter(function (m) {
+        return m.role === 'student';
+      });
+      var checkedIn = students.filter(function (m) {
+        return m.status === 'checkedIn';
+      });
+
+      var countEl = document.getElementById('checkin-count');
+      var listEl  = document.getElementById('checkin-list');
+      var emptyEl = document.getElementById('checkin-empty');
+
+      countEl.textContent = checkedIn.length + ' / ' + students.length + ' in';
+
+      // Rebuild the list.
+      listEl.innerHTML = '';
+      checkedIn.forEach(function (m) {
+        var li = document.createElement('li');
+        var displayName = (nameMap && nameMap[m.username]) ? nameMap[m.username] : m.username;
+        li.textContent = displayName;
+        listEl.appendChild(li);
+      });
+
+      emptyEl.style.display = (checkedIn.length === 0) ? '' : 'none';
+    }
+
+    // ===== v1b: green-light indicator =====
+
+    var greenlightOn = false;
+
+    function setGreenlightIndicator(on) {
+      greenlightOn = on;
+      var dot   = document.getElementById('greenlight-dot');
+      var label = document.getElementById('greenlight-label');
+      if (on) {
+        dot.classList.add('on');
+        label.textContent = 'Go sent';
+      } else {
+        dot.classList.remove('on');
+        label.textContent = 'Go not sent';
+      }
+    }
+
+    // ===== v1b: board-dependent section visibility =====
+
+    // The control strip + checked-in panel are only meaningful once the board
+    // is actually mounted. They start hidden; shown on mountBoard() success,
+    // hidden again on teardown / mount failure.
+    function setBoardSectionsVisible(on) {
+      var disp = on ? '' : 'none';
+      var ctrl = document.getElementById('control-section');
+      var chk  = document.getElementById('checkin-section');
+      if (ctrl) ctrl.style.display = disp;
+      if (chk)  chk.style.display  = disp;
+    }
+
     // ===== board lifecycle =====
 
     var boardHandle = null;   // ClassroomBoard.mount() return value, or null
+    var currentNameMap = {};  // kept for the onStateChange callback
 
     function teardown() {
       if (boardHandle) {
         try { boardHandle.destroy(); } catch (_) {}
         boardHandle = null;
       }
+      setGreenlightIndicator(false);
+      setBoardSectionsVisible(false);
     }
 
     async function mountBoard(section, session) {
@@ -283,7 +468,7 @@
       var statusRow = document.getElementById('status-row');
       statusRow.textContent = 'Fetching roster for ' + section + '...';
 
-      var nameMap = await fetchNameMap(section);
+      currentNameMap = await fetchNameMap(section);
 
       statusRow.textContent = 'Connecting to ' + section + '...';
 
@@ -299,8 +484,18 @@
           section: section,
           username: session.username,
           role: 'teacher',
-          nameMap: nameMap
+          nameMap: currentNameMap,
+          onStateChange: function (summary) {
+            renderCheckinPanel(summary, currentNameMap);
+            // The board includes greenlight in every summary (true after a
+            // GO broadcast, false after arm/reset). Mirror it directly so the
+            // indicator reflects real broadcast state -- it lights for a
+            // remote teacher's GO and never lies on a failed local click.
+            setGreenlightIndicator(!!summary.greenlight);
+          }
         });
+        // The board mounted -- now reveal the board-dependent sections.
+        setBoardSectionsVisible(true);
         statusRow.textContent = 'Connected to ' + section + '.';
       } catch (err) {
         statusRow.textContent = 'Board error: ' + (err && err.message ? err.message : String(err));
@@ -318,6 +513,30 @@
     }
 
     document.getElementById('section-select').addEventListener('change', onSectionChange);
+
+    // ===== v1b: control strip button wiring =====
+
+    document.getElementById('btn-arm-gate').addEventListener('click', function () {
+      if (!boardHandle || typeof boardHandle.armGate !== 'function') return;
+      var theme = todayTheme();
+      boardHandle.armGate(theme);
+      // The indicator clears via onStateChange when the classroom_gate
+      // broadcast arrives (the reducer sets greenlight false on arm).
+    });
+
+    document.getElementById('btn-green-light').addEventListener('click', function () {
+      if (!boardHandle || typeof boardHandle.greenLight !== 'function') return;
+      // The indicator lights from the broadcast-driven onStateChange summary,
+      // not optimistically here -- so it never lies if the send fails.
+      boardHandle.greenLight();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', function () {
+      if (!boardHandle || typeof boardHandle.reset !== 'function') return;
+      boardHandle.reset();
+      // The indicator clears via onStateChange when the reset classroom_state
+      // broadcast arrives.
+    });
 
     // ===== boot =====
 
