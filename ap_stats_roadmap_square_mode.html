@@ -1324,7 +1324,7 @@
             </div>
         </div>
         <div class="dialog-btns">
-            <button class="s7btn" onclick="closeSignInModal()">Cancel</button>
+            <button class="s7btn" id="signin-cancel-btn" onclick="closeSignInModal()">Cancel</button>
             <button class="s7btn s7btn-default" id="signin-ok" onclick="submitSignIn()">OK</button>
         </div>
     </div>
@@ -3509,6 +3509,16 @@ function _deskIsTeacher() {
   try { return localStorage.getItem('apstats_user_role') === 'teacher'; }
   catch (_) { return false; }
 }
+// ── No-guest-mode sign-in wall (2026-05-20, SIGNIN_WALL_BUILD.md) ────────────
+// Access to the Desk requires a signed-in student OR a teacher. Fails OPEN:
+// if the check throws, grant access — a bug must never hard-lock the Desk.
+function _deskAccessGranted() {
+  try { return !!getStudentEmail() || _deskIsTeacher(); }
+  catch (_) { return true; }
+}
+// True while the sign-in modal is up as a mandatory wall (not signed in).
+// closeSignInModal() refuses to dismiss the modal while this holds.
+var _signinWallActive = false;
 // "Complete" = worksheet Done AND Blooket Done, counting only the artifacts
 // the lesson actually has (a missing artifact is vacuously satisfied).
 function _isLessonComplete(topic, marks) {
@@ -3981,14 +3991,30 @@ function openSignInModal() {
   }
   if (chk) { chk.checked = false; chk.disabled = true; }
   if (typeof _onTeacherCodeInput === 'function') _onTeacherCodeInput();
+  // No-guest-mode wall: when the visitor is not yet signed in the modal is
+  // mandatory — hide Cancel; closeSignInModal() then refuses to dismiss it.
+  // typeof-guarded so the desk-roster-signin vm-test (which loads only a
+  // subset of helpers into its sandbox) keeps passing.
+  _signinWallActive = (typeof _deskAccessGranted === 'function')
+    ? !_deskAccessGranted() : false;
+  var cancelBtn = document.getElementById('signin-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = _signinWallActive ? 'none' : '';
   ov.style.display = 'block';
   MacSFX.play('sosumi', 0.5);
   setTimeout(function(){ if (uInp) uInp.focus(); }, 50);
 }
 
 function closeSignInModal() {
+  // No-guest-mode wall: refuse to dismiss while the wall is up and the
+  // visitor still is not signed in (blocks outside-click + a stray Cancel).
+  // The successful-sign-in path reaches here with access already granted
+  // (submitSignIn sets the roster session / teacher role first), so it closes.
+  // typeof-guarded for the desk-roster-signin vm-test sandbox.
+  if (_signinWallActive && typeof _deskAccessGranted === 'function'
+      && !_deskAccessGranted()) return;
   var ov = document.getElementById('signin-overlay');
   if (!ov) return;
+  _signinWallActive = false;
   MacSFX.play('click', 0.3);
   ov.style.display = 'none';
   if (typeof _closeRosterDropdown === 'function') _closeRosterDropdown();
@@ -10148,6 +10174,9 @@ setTimeout(function() {
         if (_bootChime) _bootChime.play().catch(function() {});
         boot.classList.add('fade-out');
         boot.addEventListener('transitionend', function() { boot.remove(); });
+        // No-guest-mode wall (SIGNIN_WALL_BUILD.md §2): once the boot splash
+        // is dismissed, require sign-in before any material is reachable.
+        try { if (!_deskAccessGranted()) openSignInModal(); } catch (_) {}
     });
 }, 1000);
 </script>

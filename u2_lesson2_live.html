@@ -757,6 +757,72 @@
     <script src="roster-client.js"></script>
     <script src="roster-prefill.js"></script>
     <script src="gradebook-client.js"></script>
+    <script>
+(function () {
+    // No-guest-mode wall (SIGNIN_WALL_BUILD.md §3). A worksheet opened
+    // without a signed-in roster session blocks until the student signs
+    // in at the Desk. Fails OPEN — if rosterClient is unavailable, do
+    // NOT wall (degrade, never brick).
+    function _wallAccessGranted() {
+        try {
+            if (localStorage.getItem('apstats_user_role') === 'teacher') return true;
+            return !!(window.rosterClient && typeof rosterClient.current === 'function'
+                      && rosterClient.current());
+        } catch (_) { return true; }
+    }
+    function _removeSigninWall() {
+        var el = document.getElementById('ws-signin-wall');
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
+    function _showSigninWall() {
+        if (document.getElementById('ws-signin-wall')) return;
+        if (!document.body) return;
+        var ov = document.createElement('div');
+        ov.id = 'ws-signin-wall';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:99999;'
+            + 'background:#eceff1;display:flex;align-items:center;'
+            + 'justify-content:center;font-family:Geneva,Verdana,sans-serif;';
+        var box = document.createElement('div');
+        box.style.cssText = 'max-width:380px;margin:16px;padding:22px 26px;'
+            + 'background:#fff;border:1px solid #999;border-radius:8px;'
+            + 'text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.25);';
+        var h = document.createElement('div');
+        h.textContent = '🔒 Sign in to open this worksheet';
+        h.style.cssText = 'font-size:15px;font-weight:bold;margin-bottom:10px;';
+        var p = document.createElement('div');
+        p.textContent = 'Your answers are only saved when you are signed in. '
+            + 'Sign in at the Desk, then come back to this page.';
+        p.style.cssText = 'font-size:12px;color:#444;margin-bottom:16px;line-height:1.5;';
+        var a = document.createElement('a');
+        a.href = 'ap_stats_roadmap_square_mode.html';
+        a.textContent = 'Open the Desk to sign in';
+        a.style.cssText = 'display:inline-block;padding:7px 16px;background:#0000cc;'
+            + 'color:#fff;text-decoration:none;border-radius:5px;font-size:12px;';
+        box.appendChild(h); box.appendChild(p); box.appendChild(a);
+        ov.appendChild(box);
+        document.body.appendChild(ov);
+    }
+    function _checkSigninWall() {
+        if (_wallAccessGranted()) _removeSigninWall();
+        else _showSigninWall();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _checkSigninWall);
+    } else {
+        _checkSigninWall();
+    }
+    // Self-dismiss / re-show: when sign-in state changes (often in another
+    // Desk tab) the storage event fires here — re-check. Watches the roster
+    // session key (student sign-in/out) AND the teacher-role key (standalone
+    // teacher sign-in/out), since _wallAccessGranted keys off both.
+    try {
+        window.addEventListener('storage', function (e) {
+            if (e && (e.key === 'apstats_roster.v1'
+                      || e.key === 'apstats_user_role')) _checkSigninWall();
+        });
+    } catch (_) {}
+})();
+</script>
     <script src="ai-grading-prompts-u2-l2.js"></script>
     <script>
         // ==================== CONFIG ====================
