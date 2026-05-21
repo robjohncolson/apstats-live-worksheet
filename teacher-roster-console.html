@@ -279,7 +279,7 @@
       </div>
       <div id="view-out" style="display:none">
         <table>
-          <thead><tr><th>Real Name</th><th>Username</th><th>Section</th><th>Current Password</th><th>Status</th><th>Created</th></tr></thead>
+          <thead><tr><th>Real Name</th><th>Username</th><th>Section</th><th>Current Password</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
           <tbody id="view-tbody"></tbody>
         </table>
       </div>
@@ -600,6 +600,164 @@
       else setMsg(msg, 'Failed: ' + out.error, 'err');
     });
 
+    // ── inline row editing ─────────────────────────────────────────────────────
+    // Exposed on window for testability (jsdom loads this script directly).
+    // Track the currently-open edit row so we can cancel it when another opens.
+    let _editingRow = null;
+
+    function enterEditMode(tr) {
+      // Cancel any open edit first.
+      if (_editingRow && _editingRow !== tr) exitEditMode(_editingRow);
+
+      _editingRow = tr;
+
+      const nameCell    = tr.querySelector('.cell-real-name');
+      const sectionCell = tr.querySelector('.cell-section');
+      const actionsCell = tr.querySelector('.cell-actions');
+
+      // Snapshot original text so Cancel can restore.
+      const origName    = tr.dataset.realName;
+      const origSection = tr.dataset.section;
+
+      // Replace cell text with inputs.
+      const nameInput = document.createElement('input');
+      nameInput.type  = 'text';
+      nameInput.value = origName;
+      nameInput.style.width = '100%';
+      nameInput.dataset.role = 'edit-name';
+      nameCell.textContent = '';
+      nameCell.appendChild(nameInput);
+
+      const sectionInput = document.createElement('input');
+      sectionInput.type  = 'text';
+      sectionInput.value = origSection;
+      sectionInput.style.width = '100%';
+      sectionInput.dataset.role = 'edit-section';
+      sectionCell.textContent = '';
+      sectionCell.appendChild(sectionInput);
+
+      // Swap buttons to Save / Cancel.
+      const errSpan = document.createElement('span');
+      errSpan.className = 'msg msg-err';
+      errSpan.style.display = 'block';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'btn-sm';
+      saveBtn.textContent = 'Save';
+      saveBtn.addEventListener('click', () => saveRow(tr, errSpan));
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn-sm';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.addEventListener('click', () => exitEditMode(tr));
+
+      actionsCell.innerHTML = '';
+      const row = document.createElement('span');
+      row.className = 'btn-row';
+      row.appendChild(saveBtn);
+      row.appendChild(cancelBtn);
+      actionsCell.appendChild(row);
+      actionsCell.appendChild(errSpan);
+
+      nameInput.focus();
+    }
+
+    function exitEditMode(tr) {
+      if (_editingRow === tr) _editingRow = null;
+
+      const nameCell    = tr.querySelector('.cell-real-name');
+      const sectionCell = tr.querySelector('.cell-section');
+      const actionsCell = tr.querySelector('.cell-actions');
+
+      // Restore original text from data attributes.
+      nameCell.textContent    = tr.dataset.realName;
+      sectionCell.textContent = tr.dataset.section;
+
+      // Restore Edit / Duplicate buttons.
+      actionsCell.innerHTML = '';
+      const row = document.createElement('span');
+      row.className = 'btn-row';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn-sm btn-edit';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => enterEditMode(tr));
+
+      const dupBtn = document.createElement('button');
+      dupBtn.className = 'btn-sm btn-dup';
+      dupBtn.textContent = 'Duplicate';
+      dupBtn.addEventListener('click', () => duplicateRow(tr));
+
+      row.appendChild(editBtn);
+      row.appendChild(dupBtn);
+      actionsCell.appendChild(row);
+    }
+
+    async function saveRow(tr, errSpan) {
+      const nameInput    = tr.querySelector('[data-role="edit-name"]');
+      const sectionInput = tr.querySelector('[data-role="edit-section"]');
+      const newName    = (nameInput    ? nameInput.value    : '').trim();
+      const newSection = (sectionInput ? sectionInput.value : '').trim();
+
+      if (!newName || !newSection) {
+        errSpan.textContent = 'Name and section must not be empty.';
+        return;
+      }
+
+      const studentId = tr.dataset.studentId;
+      if (!studentId) {
+        errSpan.textContent = 'Missing studentId -- reload the roster.';
+        return;
+      }
+
+      errSpan.textContent = 'Saving…';
+      let res;
+      try {
+        res = await api('PATCH', '/roster/' + studentId, {
+          body: { realName: newName, section: newSection },
+          secret: teacherSecret()
+        });
+      } catch (e) {
+        errSpan.textContent = 'Network error: ' + (e.message || '');
+        return;
+      }
+
+      if (res.status !== 200 || !res.data || !res.data.ok) {
+        errSpan.textContent = (res.data && res.data.error) || ('HTTP ' + res.status);
+        return;
+      }
+
+      // Success -- update the row's data attributes and exit edit mode.
+      const updated = res.data.student;
+      tr.dataset.realName = updated.realName || newName;
+      tr.dataset.section  = updated.section  || newSection;
+      exitEditMode(tr);
+    }
+
+    function duplicateRow(tr) {
+      const name    = tr.dataset.realName;
+      const section = tr.dataset.section;
+      $('one-name').value    = name;
+      $('one-section').value = section;
+      // Clear password + email so a stale value left in the Add form from a
+      // prior add attempt is never silently submitted with the duplicate.
+      $('one-password').value = '';
+      $('one-email').value    = '';
+      // Scroll to the "Add One Student" section and focus the name field.
+      // Guard: scrollIntoView is not available in all environments (e.g. jsdom).
+      const nameEl = $('one-name');
+      if (typeof nameEl.scrollIntoView === 'function') {
+        nameEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      nameEl.focus();
+    }
+
+    // Expose editing helpers on window for testability.
+    window.enterEditMode = enterEditMode;
+    window.exitEditMode  = exitEditMode;
+    window.saveRow       = saveRow;
+    window.duplicateRow  = duplicateRow;
+
     // ── view roster ────────────────────────────────────────────────────────────
     let lastViewRows = [];
     $('view-btn').addEventListener('click', async () => {
@@ -630,12 +788,23 @@
           ? '<span class="pill pill-must">must change</span>'
           : '<span class="pill pill-ok">set</span>';
         const tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + escHtml(s.realName) + '</td>' +
+        if (s.studentId) tr.dataset.studentId = s.studentId;
+        tr.dataset.realName = s.realName || '';
+        tr.dataset.section  = s.section  || '';
+        tr.innerHTML = '<td class="cell-real-name">' + escHtml(s.realName) + '</td>' +
           '<td class="uname mono">' + escHtml(s.username) + '</td>' +
-          '<td>' + escHtml(s.section) + '</td>' +
+          '<td class="cell-section">' + escHtml(s.section) + '</td>' +
           '<td>' + pw + '</td>' +
           '<td>' + pill + '</td>' +
-          '<td class="hint">' + escHtml((s.createdAt || '').slice(0, 10)) + '</td>';
+          '<td class="hint">' + escHtml((s.createdAt || '').slice(0, 10)) + '</td>' +
+          '<td class="cell-actions">' +
+            '<span class="btn-row">' +
+              '<button class="btn-sm btn-edit">Edit</button>' +
+              '<button class="btn-sm btn-dup">Duplicate</button>' +
+            '</span>' +
+          '</td>';
+        tr.querySelector('.btn-edit').addEventListener('click', () => enterEditMode(tr));
+        tr.querySelector('.btn-dup').addEventListener('click',  () => duplicateRow(tr));
         $('view-tbody').appendChild(tr);
         lastViewRows.push([s.realName, s.username, s.section,
           s.currentPassword == null ? '(unavailable)' : s.currentPassword,

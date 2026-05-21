@@ -258,6 +258,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     }
 
     const students = (data || []).map(row => ({
+      studentId:          row.student_id,
       realName:           row.real_name,
       username:           row.login_username,
       section:            row.section,
@@ -267,6 +268,69 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     }));
 
     return res.json({ ok: true, students });
+  });
+
+  // ── PATCH /roster/:studentId (Thread 3 — teacher-gated roster edit) ──────────
+  // Body: { realName?, section? }. At least one field required; each present
+  // field must be a non-empty string after trim.
+  //   → 200 { ok:true, student:{ studentId, realName, section, username } }
+  //   → 400 { ok:false, error } missing/blank field(s)
+  //   → 401               auth failure
+  //   → 404 { ok:false, error } no roster row with that student_id
+  //   → 500 { ok:false, error } unexpected DB error
+  // Writes ONLY real_name, section, updated_at. Never touches login_username,
+  // password_hash, password_cipher, must_change_password, role, status, email,
+  // or created_at.
+  app.patch('/roster/:studentId', async (req, res) => {
+    if (!await requireTeacher(req, db)) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+
+    const studentId = req.params.studentId;
+    const { realName, section } = req.body || {};
+
+    // At least one editable field must be present.
+    const hasRealName = realName !== undefined;
+    const hasSection  = section  !== undefined;
+
+    if (!hasRealName && !hasSection) {
+      return res.status(400).json({ ok: false, error: 'At least one of realName or section is required' });
+    }
+
+    // Each present field must be a non-empty STRING after trim. A non-string
+    // (object / boolean / number) is rejected with 400 -- never coerced -- so
+    // a payload like { realName: {} } cannot persist "[object Object]".
+    if (hasRealName && (typeof realName !== 'string' || !realName.trim())) {
+      return res.status(400).json({ ok: false, error: 'realName must be a non-empty string' });
+    }
+    if (hasSection && (typeof section !== 'string' || !section.trim())) {
+      return res.status(400).json({ ok: false, error: 'section must be a non-empty string' });
+    }
+
+    const updates = {};
+    if (hasRealName) updates.realName = realName.trim();
+    if (hasSection)  updates.section  = section.trim();
+
+    const { data, error } = await db.updateStudent({ studentId, ...updates });
+
+    if (error) {
+      console.error('PATCH /roster/:studentId DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    if (!data) {
+      return res.status(404).json({ ok: false, error: 'Student not found' });
+    }
+
+    return res.json({
+      ok: true,
+      student: {
+        studentId: data.student_id,
+        realName:  data.real_name,
+        section:   data.section,
+        username:  data.login_username
+      }
+    });
   });
 
   // ── GET /roster/section/:section — PUBLIC student picker (2026-05-20) ────────

@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, getRoleByStudentId, updatePassword, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, getRoleByStudentId, updatePassword, updateStudent, listRoster };
 
   // Phase 6: look up a single roster row by student_id — used by /grade to
   // resolve the student's section for the lesson-due date filter. The
@@ -99,6 +99,27 @@ export function createDb(client) {
       .eq('student_id', studentId)
       .select('student_id')
       .single();
+  }
+
+  // Update a student's real_name and/or section. Touches updated_at always.
+  // Returns { data, error } — data is the updated row on success, null when no
+  // row matched (so the route can answer 404). Never throws.
+  async function updateStudent({ studentId, realName, section }) {
+    const payload = { updated_at: new Date().toISOString() };
+
+    if (realName !== undefined) payload.real_name = realName;
+    if (section  !== undefined) payload.section   = section;
+
+    const result = await client
+      .from('roster')
+      .update(payload)
+      .eq('student_id', studentId)
+      .select('student_id, real_name, section, login_username')
+      .maybeSingle();
+
+    // maybeSingle() returns { data: null, error: null } when no row matched.
+    // Treat that as a not-found signal so the route can answer 404.
+    return result;
   }
 
   // Teacher roster view. Optional section filter. Ordered by section then created.
