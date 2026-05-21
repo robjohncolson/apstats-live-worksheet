@@ -1,3 +1,107 @@
+# Continuation Prompt -- session 105
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-104 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-21 (session 105). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (the Thread-1 work ended at `ffa5b63`);
+> curriculum_render HEAD = `120dbac` (untouched this session). Linear,
+> local==origin on follow-alongs.
+>
+> ## Shipped this session (105) -- Thread 1, the grade pipeline
+> `GRADE_PIPELINE_SPEC.md` Thread 1 is fully implemented, Codex-reviewed,
+> and shipped -- three commits that make doing a worksheet visibly and
+> reliably move the grade. Method: freeze `GRADE_PIPELINE_BUILD.md` ->
+> dependency-aware batches (the three 69-worksheet rollouts had to
+> serialize; server + prompt-file work ran parallel) -> Sonnet subagents
+> implement -> Codex read-only review per commit -> planner folds every
+> finding + re-verifies on disk -> commit + push. Codex caught a real
+> bug on EVERY commit: 1 BLOCKER + 3 MAJOR + 3 MINOR, all folded.
+>
+> - **W2 (`da750a3`)** -- FRQ-revision persistence. Reflections persist
+>   on every edit (new `recordReflectionDraft` sink), an appeal
+>   re-records the upgraded score, hydration restores the grade, and
+>   editing a graded reflection clears the stale grade. 69-worksheet
+>   rollout `scripts/wire-reflection-persistence.mjs` (W2.0-W2.5).
+>   u3_lesson6-7's W2.3 hand-applied (bespoke appeal architecture).
+>   Codex BLOCKER: hydration left `gradingState` empty so a post-reload
+>   edit never cleared the grade -- fixed by W2.5.
+> - **W3 (`a39f37d`)** -- unambiguous E/P/I. `scripts/wire-verdict-prompt.mjs`
+>   hardens the score instruction in all 69 in-scope
+>   `ai-grading-prompts-*.js`; `scripts/wire-verdict-parser.mjs` rolls
+>   `coerceVerdict` (first-character) + a TWO-SINK split --
+>   `recordReflectionDraft` for W2.1 drafts, `recordReflectionToGradebook`
+>   graded-only, which `console.error`s + skips a null/uncoercible
+>   verdict (never a silent no-score row). Also committed
+>   `GRADE_PIPELINE_BUILD.md` (new) + `GRADE_PIPELINE_SPEC.md` (the
+>   teacher's D1-D4 decisions).
+> - **W1 + W4 (`ffa5b63`)** -- worksheet blank scoring + grade-pill
+>   refresh. `recordBlankToGradebook` now records the blank's verdict
+>   score (`scripts/wire-blank-scores.mjs`); `roster-server/lesson-grade.js`
+>   gains the worksheet component `Cws` (over ALL blanks, manifest
+>   denominator); lesson grade = three-way weighted mean, weights
+>   `lessonFeederWeights ws:W:Q = 1:2:3` in `grade-config.js`; threaded
+>   through `/grade` + `/class/grades`. W4: `_studentMarkSave` re-invokes
+>   `renderDoNowGrades` on the Done success path. **This commit touches
+>   `roster-server/**` -> roster-server auto-deploys.**
+>
+> ## Test baseline (post-`ffa5b63`)
+> follow-alongs root **4421/4422** -- the only fail is the long-standing
+> unrelated `tests/study-guide.test.js` v3-structure snapshot (NOT a
+> regression). roster-server **362/362**. `node scripts/audit-feeder-ids.mjs`
+> -> CLEAN 69 / MISMATCH 0. New test files: `tests/grade-pipeline-w2.test.js`,
+> `-w3-parser`, `-w3-prompts`, `-w1`, `-w4`.
+>
+> ## Open / verify
+> - The `ffa5b63` push triggers the roster-server auto-deploy (GitHub
+>   watch on `roster-server/**`). The new grade math is live in prod
+>   only once that deploy lands -- confirm on Railway / smoke `/grade`.
+>
+> ## NEXT -- pick one (none spec'd yet)
+> - **Thread 2 -- Calendar polish**: done lessons go greyscale; the
+>   current lesson is emphasized; Q1-Q4 markers on the calendar; drop
+>   the direct-link icons on the calendar cells.
+> - **Thread 3 -- Roster management**: edit a student's period/section
+>   and real name, duplicate a student -- a roster-server PATCH-roster
+>   endpoint + inline editing in `teacher-roster-console.html`.
+> - **Live Classroom v1b** -- the Gate (`LIVE_CLASSROOM_SPEC.md` S10),
+>   then v1c (sync video start) + v2 (Poll).
+> - **Railway -> DigitalOcean migration** -- strategic, before the next
+>   Railway bill; see the `railway-to-digitalocean` memory.
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The loop method** is proven -- the Codex read-only eval gate
+>   caught a real bug on all 3 commits this session. The planner folds
+>   findings and ALWAYS re-verifies them on disk.
+> - **Wire-script rollouts** (`scripts/wire-*.mjs`): idempotent,
+>   per-file EOL-preserving, per-step sentinel, MANUAL on a non-unique
+>   anchor. To re-roll a CHANGED step: `git checkout` the worksheets +
+>   re-run (a plain re-run is a sentinel no-op).
+> - **Cross-agent runner:** ASCII-only prompts. The `<id>.result.json`
+>   is often a wrapper whose `notes` field holds the whole transcript --
+>   the real Codex verdict is at the transcript tail.
+> - **PowerShell 5.1 + git:** never pass a commit message containing a
+>   `"` via a here-string to `git commit -m` -- PS 5.1 mangles it into
+>   pathspecs and the commit fails. Use `git commit -F-` with a bash
+>   heredoc.
+> - **Stage own paths only** -- the repo carries pre-existing untracked
+>   scratch (`.ai-tutor-*`, `.codex-*`, `state/cross-agent*`). `git add`
+>   explicit paths, never `-A`. `data/skill-map.js` regenerates a
+>   timestamp-only header when the audit runs -- `git checkout` it.
+> - **roster-server** lives inside follow-alongs (`roster-server/`, own
+>   `package.json` + vitest); auto-deploys on a push touching
+>   `roster-server/**`.
+>
+> ## Recall on reload
+> `project_grade_pipeline.md`, `project_gradebook_grading_model.md`,
+> `project_desk_donow.md`, `project_live_classroom.md`,
+> `project_teacher_auth.md`, `feedback_diagnostic_first.md`,
+> `feedback_curriculum_render_sacred.md`,
+> `project_railway_to_digitalocean.md`.
+
+---
+
 # Continuation Prompt -- session 104
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
