@@ -50,7 +50,7 @@ function studentMeta(r) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG }) {
+export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null }) {
 
   // ── GET /class/grades?section= ──────────────────────────────────────────────
   // Teacher-gated. Fans out computeGrade over the roster.
@@ -85,6 +85,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
       const computed = computeGrade(ledgerRows, answerKey, config, {
         lessonSchedule,
         section: roster && roster.section ? roster.section : null,
+        worksheetBlankCounts,
       });
       return { ...studentMeta(roster), ...computed };
     });

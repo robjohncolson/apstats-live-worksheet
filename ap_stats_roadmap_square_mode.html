@@ -6128,6 +6128,18 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
         // Re-render the calendar so the sequential lesson gate updates —
         // completing a worksheet/blooket can unlock the next lesson live.
         if (typeof rCal === 'function') { try { rCal(); } catch (_) {} }
+        // W4: refresh the Do Now grade pills now that work was marked Done.
+        // typeof-guarded fire-and-forget, mirroring renderDoNow's call site.
+        try {
+            if (typeof renderDoNowGrades === 'function'
+                && window.rosterClient && typeof window.rosterClient.token === 'function') {
+                var _dnBase = window.ROSTER_SERVICE_URL;
+                var _dnTok = window.rosterClient.token();
+                if (_dnBase && _dnTok) {
+                    renderDoNowGrades(_dnBase, _dnTok).catch(function () {});
+                }
+            }
+        } catch (_) {}
     } else if (btn) {
         btn.disabled = false;
         btn.innerHTML = '&#10003; Done';
@@ -6788,8 +6800,16 @@ function openDayGrade(dateStr) {
             } else {
                 parts.push('Quiz: not taken');
             }
-            if (worksheets.length > 0) {
-                parts.push('Worksheet completed: ' + worksheets.length);
+            if (worksheets.length > 0 || lesson.Cws != null) {
+                // W1: items.worksheet is now blank-level score rows; show the
+                // worksheet score (Cws) rather than a misleading completion count.
+                var wsN = worksheets.length;
+                var wsLabel = wsN + ' blank' + (wsN === 1 ? '' : 's');
+                if (lesson.Cws != null) {
+                    parts.push('Worksheet: ' + (Math.round(lesson.Cws * 10) / 10) + '% (' + wsLabel + ')');
+                } else {
+                    parts.push('Worksheet: ' + wsLabel + ' attempted');
+                }
             }
 
             detailEl.textContent = parts.join(' · ');

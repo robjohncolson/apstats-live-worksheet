@@ -1,4 +1,4 @@
-// lesson-grade.js — Gradebook Phase 6.
+// lesson-grade.js — Gradebook Phase 6 + W1 (worksheet blank scoring).
 //
 // Pure functions for lesson-level aggregation + date filter.
 // No I/O. Designed to be unit-tested independently of the server.
@@ -6,7 +6,8 @@
 // Key design:
 //   - parseItemLesson(itemId)  → { unit, lessonKey } or null
 //   - expandLessonKey(unit, lessonKey, schedule) → [topicKey, ...]
-//   - computeLessonGrades(rows, frqBand) → Map<topicKey, lessonResult>
+//   - buildWorksheetBlankCounts(manifestDoc) → { "<unit>.<lessonKey>": <int> }
+//   - computeLessonGrades(rows, frqBand, answerKey, schedule, opts) → Map<topicKey, lessonResult>
 //   - computeQuarterFromLessons(quarterBand, lessonMap, schedule, todayDateStr, section, config)
 //   - buildLessonsArray(lessonMap, schedule) → lessons[]
 
@@ -95,6 +96,47 @@ export function expandLessonKey(unit, lessonKey, schedule) {
   return schedule[topicKey] ? [topicKey] : [];
 }
 
+// ── buildWorksheetBlankCounts ─────────────────────────────────────────────────
+//
+// Walk manifest.units[].lessons[].activities[] where activity === 'worksheet',
+// count itemIds matching /-Q\d+$/ (blanks only, not reflections/exitTickets),
+// key by the manifest lesson value ("1.1", "4.1-2", etc.).
+//
+// manifestDoc: the parsed work-manifest.json object.
+// Returns { "<unit>.<lessonKey>": <int> }
+//
+// Returns {} on any structural problem — callers treat missing keys as Cws null.
+export function buildWorksheetBlankCounts(manifestDoc) {
+  const counts = {};
+
+  if (!manifestDoc || !Array.isArray(manifestDoc.units)) return counts;
+
+  for (const unitEntry of manifestDoc.units) {
+    if (!unitEntry || !Array.isArray(unitEntry.lessons)) continue;
+
+    for (const lessonEntry of unitEntry.lessons) {
+      if (!lessonEntry || typeof lessonEntry.lesson !== 'string') continue;
+      if (!Array.isArray(lessonEntry.activities)) continue;
+
+      let blankCount = 0;
+      for (const activity of lessonEntry.activities) {
+        if (!activity || activity.activity !== 'worksheet') continue;
+        if (!Array.isArray(activity.itemIds)) continue;
+        for (const itemId of activity.itemIds) {
+          if (typeof itemId === 'string' && /-Q\d+$/.test(itemId)) {
+            blankCount += 1;
+          }
+        }
+      }
+
+      // Key is the manifest lesson value verbatim ("1.1", "4.1-2", etc.)
+      counts[lessonEntry.lesson] = blankCount;
+    }
+  }
+
+  return counts;
+}
+
 // ── FRQ score → percentage (mirrors grade.js frqScoreToPct) ───────────────────
 
 function frqScoreToPct(score, frqBand) {
@@ -106,18 +148,27 @@ function frqScoreToPct(score, frqBand) {
   return frqBand.I;
 }
 
+// ── Blank itemId pattern (W1) ─────────────────────────────────────────────────
+//
+// Real worksheet blanks: WS-U{N}L{key}-Q{n}  (e.g. WS-U4L1-2-Q5)
+// EXCLUDES: WS-U{N}-L{n}-DESK_DONE, WS-U{N}L{key}-reflect{n}, etc.
+const BLANK_ITEM_PATTERN = /^WS-U(\d+)L([\d-]+)-Q\d+$/;
+
 // ── computeLessonGrades ───────────────────────────────────────────────────────
 //
 // Walk the ledger rows (latest-per-item already resolved) and accumulate
-// per-lesson FRQ and quiz data. Returns a Map<topicKey, lessonResult> where:
+// per-lesson FRQ, quiz, and worksheet-blank data. Returns a Map<topicKey,
+// lessonResult> where:
 //
 //   lessonResult = {
 //     topicKey,
 //     frqItems: [{ itemId, score(pct|null), rawScore, ts }],
-//     quizItems: [{ itemId, correct(bool), ts }],  // scored against key
-//     worksheetItems: [{ itemId, ts }],             // completion-only
-//     W: number|null,   // mean frq pct (null if no gradable frq)
-//     Q: number|null,   // quiz correctness % (null if no scorable quiz)
+//     quizItems: [{ itemId, correct(bool), ts }],    // scored against key
+//     worksheetItems: [{ itemId, ts, score }],       // blanks w/ numeric score
+//     wsCountKey: string|null,                       // "<unit>.<lessonKey>"
+//     Cws: number|null,  // worksheet blank pct (null if no manifest count)
+//     W: number|null,    // mean frq pct (null if no gradable frq)
+//     Q: number|null,    // quiz correctness % (null if no scorable quiz)
 //     lessonGrade: number|null,  // weighted B, or null
 //   }
 //
@@ -125,10 +176,16 @@ function frqScoreToPct(score, frqBand) {
 // frqBand: { E, P, I } config.
 // answerKey: map of itemId → { answerKey, ... } (for quiz scoring).
 // schedule: topicKey → entry (to expand combined worksheets).
+// opts: { worksheetBlankCounts, weights }
+//   - worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } or null/undefined
+//   - weights: { ws, W, Q } — lessonFeederWeights; defaults to { ws:1, W:2, Q:3 }
 //
 // Note: this function intentionally does NOT filter by "due date" —
 // that is applied at the quarter level in computeQuarterFromLessons.
-export function computeLessonGrades(rows, frqBand, answerKey, schedule) {
+export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
+  const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
+  const weights = (opts && opts.weights) || { ws: 1, W: 2, Q: 3 };
+
   // lessonMap: topicKey → accumulator
   const byTopic = new Map();
 
@@ -139,6 +196,7 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule) {
         frqItems: [],
         quizItems: [],
         worksheetItems: [],
+        wsCountKey: null,
       });
     }
     return byTopic.get(topicKey);
@@ -197,15 +255,43 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule) {
         }
         // ungradable quiz item — don't add to quizItems
       } else if (src === 'worksheet') {
-        acc.worksheetItems.push({ itemId: row.item_id, ts });
+        // Only real blanks count for Cws. DESK_DONE and reflections are excluded.
+        if (BLANK_ITEM_PATTERN.test(row.item_id)) {
+          // Treat null or non-numeric score as 0 (unattempted blank = 0 points).
+          const rawScore = row.score;
+          const numScore = (rawScore !== null && rawScore !== undefined && Number.isFinite(Number(rawScore)))
+            ? Number(rawScore)
+            : 0;
+          acc.worksheetItems.push({ itemId: row.item_id, ts, score: numScore });
+          // Record the count key for manifest lookup.
+          // All blanks in a lesson share the same "<unit>.<lessonKey>".
+          if (acc.wsCountKey === null) {
+            acc.wsCountKey = `${unit}.${lessonKey}`;
+          }
+        }
       }
     }
   }
 
-  // Now compute W, Q, lessonGrade for each topic.
-  const { W: wWeight, Q: qWeight } = { W: 1, Q: 2 }; // spec §2.1: 1:2
+  // Now compute Cws, W, Q, lessonGrade for each topic.
+  const wsWeight = weights.ws;
+  const wWeight  = weights.W;
+  const qWeight  = weights.Q;
 
   for (const [, acc] of byTopic) {
+    // Cws = clamp((sum of blank scores) / blankCount, 0, 1) * 100
+    // blankCount = manifest count for this lesson (DENOMINATOR = ALL blanks,
+    // not just recorded ones — unattempted blanks contribute 0 to numerator).
+    let Cws = null;
+    if (worksheetBlankCounts && acc.wsCountKey !== null) {
+      const blankCount = worksheetBlankCounts[acc.wsCountKey];
+      if (blankCount && blankCount > 0) {
+        const scoreSum = acc.worksheetItems.reduce((s, w) => s + w.score, 0);
+        const rawFrac = scoreSum / blankCount;
+        Cws = Math.min(Math.max(rawFrac, 0), 1) * 100;
+      }
+    }
+
     // W = mean of graded frqItems (null-score items excluded from denominator)
     const gradableFrqs = acc.frqItems.filter(f => f.score != null);
     const W = gradableFrqs.length > 0
@@ -217,15 +303,17 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule) {
       ? (acc.quizItems.filter(q => q.correct).length / acc.quizItems.length) * 100
       : null;
 
-    // B = weighted mean, renormalized over present feeders
+    // B = three-way weighted mean, renormalized over PRESENT feeders
     let B = null;
     {
       let num = 0, den = 0;
-      if (W != null) { num += wWeight * W; den += wWeight; }
-      if (Q != null) { num += qWeight * Q; den += qWeight; }
+      if (Cws != null) { num += wsWeight * Cws; den += wsWeight; }
+      if (W   != null) { num += wWeight  * W;   den += wWeight; }
+      if (Q   != null) { num += qWeight  * Q;   den += qWeight; }
       if (den > 0) B = num / den;
     }
 
+    acc.Cws = Cws != null ? Math.round(Cws * 10) / 10 : null;
     acc.W = W != null ? Math.round(W * 10) / 10 : null;
     acc.Q = Q != null ? Math.round(Q * 10) / 10 : null;
     acc.lessonGrade = B != null ? Math.round(B * 10) / 10 : null;
@@ -478,13 +566,14 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       topicName: (topicNames && topicNames[topicKey]) || null,
       due: { B: periods.B || null, E: periods.E || null },
       lessonGrade: lessonResult ? lessonResult.lessonGrade : null,
+      Cws: lessonResult ? (lessonResult.Cws !== undefined ? lessonResult.Cws : null) : null,
       W: lessonResult ? lessonResult.W : null,
       Q: lessonResult ? lessonResult.Q : null,
       items: lessonResult
         ? {
             frq: lessonResult.frqItems.map(f => ({ itemId: f.itemId, score: f.score, ts: f.ts })),
             quiz: lessonResult.quizItems.map(q => ({ itemId: q.itemId, correct: q.correct, ts: q.ts })),
-            worksheet: lessonResult.worksheetItems.map(w => ({ itemId: w.itemId, score: null, ts: w.ts })),
+            worksheet: lessonResult.worksheetItems.map(w => ({ itemId: w.itemId, score: w.score !== undefined ? w.score : null, ts: w.ts })),
           }
         : { frq: [], quiz: [], worksheet: [] },
     });

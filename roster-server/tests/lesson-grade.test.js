@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   parseItemLesson,
   expandLessonKey,
+  buildWorksheetBlankCounts,
   computeLessonGrades,
   computeQuarterFromLessons,
   buildLessonsArray,
@@ -146,9 +147,9 @@ describe('computeLessonGrades — lesson math', () => {
     expect(l.lessonGrade).toBe(35);
   });
 
-  it('FRQ-E + quiz 0% → weighted W:Q=1:2, grade=(100+2*0)/3=33.3', () => {
-    // Codex 2026-05-20 fold: title was misleading ("80%" but actually tests
-    // 0% quiz). Renamed + corrected; the 80% case lives in the next test.
+  it('FRQ-E + quiz 0% → weighted W:Q=2:3 (lessonFeederWeights renorm), grade=(2*100+3*0)/5=40', () => {
+    // With lessonFeederWeights ws:W:Q=1:2:3, when ws absent W:Q renormalize to 2:3.
+    // grade = (2*100 + 3*0) / (2+3) = 200/5 = 40.
     const rows = [
       makeRow('WS-U1L2-r1', { source: 'frq', score: 1 }),                 // E → 100
       makeRow('U1-L2-Q01', { source: 'curriculum_quiz', response: 'X' }), // wrong → 0%
@@ -158,12 +159,12 @@ describe('computeLessonGrades — lesson math', () => {
     expect(l).toBeDefined();
     expect(l.W).toBe(100);
     expect(l.Q).toBe(0);   // 1 graded, 0 correct
-    expect(l.lessonGrade).toBeCloseTo(33.3, 1);
+    expect(l.lessonGrade).toBeCloseTo(40, 1);
   });
 
-  it('FRQ-E + quiz 80% (4/5) → weighted W:Q=1:2, grade=(100+2*80)/3=86.7', () => {
-    // Real 80%-mixed-feeder case. 5 quiz items, 4 correct → Q=80; W=100 from
-    // one FRQ-E → lessonGrade = (1*100 + 2*80) / 3 ≈ 86.67.
+  it('FRQ-E + quiz 80% (4/5) → weighted W:Q=2:3 (lessonFeederWeights renorm), grade=(2*100+3*80)/5=88', () => {
+    // With lessonFeederWeights ws:W:Q=1:2:3, when ws absent W:Q renormalize to 2:3.
+    // grade = (2*100 + 3*80) / (2+3) = (200+240)/5 = 88.
     const extendedKey = Object.assign({}, SAMPLE_ANSWER_KEY, {
       'U1-L2-Q01': { unit: 'U1', answerKey: 'B' },
       'U1-L2-Q02': { unit: 'U1', answerKey: 'B' },
@@ -184,7 +185,7 @@ describe('computeLessonGrades — lesson math', () => {
     expect(l).toBeDefined();
     expect(l.W).toBe(100);
     expect(l.Q).toBe(80);
-    expect(l.lessonGrade).toBeCloseTo(86.7, 1);
+    expect(l.lessonGrade).toBeCloseTo(88, 1);
   });
 
   it('FRQ-E only (no quiz) → W=100, Q=null, lessonGrade=100 (W-only renormalized)', () => {
@@ -422,5 +423,311 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
       C: 85,
     });
     expect(result.lessonsDue).toBe(2);
+  });
+});
+
+// ── W1: buildWorksheetBlankCounts ─────────────────────────────────────────────
+
+// Minimal manifest fixture for blank-count tests.
+const MANIFEST_FIXTURE = {
+  generatedFrom: 'fixture',
+  units: [
+    {
+      unit: 'U1',
+      lessons: [
+        {
+          lesson: '1.1',
+          activities: [
+            {
+              activity: 'worksheet',
+              source: 'worksheet',
+              itemIds: [
+                'WS-U1L1-Q1',
+                'WS-U1L1-Q2',
+                'WS-U1L1-Q3',
+                'WS-U1L1-reflect1',   // NOT a blank
+                'WS-U1L1-exitTicket', // NOT a blank
+              ],
+            },
+          ],
+        },
+        {
+          lesson: '1.2',
+          activities: [
+            {
+              activity: 'worksheet',
+              source: 'worksheet',
+              itemIds: [
+                'WS-U1L2-Q1',
+                'WS-U1L2-Q2',
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      unit: 'U4',
+      lessons: [
+        {
+          lesson: '4.1-2',
+          activities: [
+            {
+              activity: 'worksheet',
+              source: 'worksheet',
+              itemIds: [
+                'WS-U4L1-2-Q1',
+                'WS-U4L1-2-Q2',
+                'WS-U4L1-2-Q3',
+                'WS-U4L1-2-reflect1', // NOT a blank
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+describe('buildWorksheetBlankCounts — manifest parsing', () => {
+
+  it('counts only -Q# itemIds (not reflections or exitTickets)', () => {
+    const counts = buildWorksheetBlankCounts(MANIFEST_FIXTURE);
+    expect(counts['1.1']).toBe(3);  // Q1, Q2, Q3 only
+    expect(counts['1.2']).toBe(2);  // Q1, Q2
+    expect(counts['4.1-2']).toBe(3); // Q1, Q2, Q3 only
+  });
+
+  it('keys by the manifest lesson string verbatim', () => {
+    const counts = buildWorksheetBlankCounts(MANIFEST_FIXTURE);
+    expect(Object.keys(counts).sort()).toEqual(['1.1', '1.2', '4.1-2']);
+  });
+
+  it('returns {} on null/undefined manifest', () => {
+    expect(buildWorksheetBlankCounts(null)).toEqual({});
+    expect(buildWorksheetBlankCounts(undefined)).toEqual({});
+  });
+
+  it('returns {} on malformed manifest (missing units array)', () => {
+    expect(buildWorksheetBlankCounts({})).toEqual({});
+    expect(buildWorksheetBlankCounts({ units: 'notanarray' })).toEqual({});
+  });
+
+  it('skips lesson entries without a string lesson key', () => {
+    const badManifest = {
+      units: [
+        { unit: 'U1', lessons: [{ lesson: 42, activities: [] }] },
+      ],
+    };
+    expect(buildWorksheetBlankCounts(badManifest)).toEqual({});
+  });
+});
+
+// ── W1: computeLessonGrades with worksheet blank scoring ──────────────────────
+
+const W1_WEIGHTS = { ws: 1, W: 2, Q: 3 };
+const BLANK_COUNTS = { '1.1': 3, '4.1-2': 3 };
+
+function makeBlankRow(itemId, score, opts = {}) {
+  return {
+    item_id: itemId,
+    source: 'worksheet',
+    score: score,
+    response: null,
+    unit: opts.unit || null,
+    recorded_at: opts.recorded_at || '2026-01-01T00:00:00Z',
+  };
+}
+
+describe('W1: computeLessonGrades — worksheet blank scoring', () => {
+
+  it('three-way weighted mean: all feeders present → (Cws*1 + W*2 + Q*3)/6', () => {
+    // Lesson 1.1: 3 blanks in manifest (count key "1.1").
+    // 3 blank rows all correct (score=1): Cws = (3*1)/3 * 100 = 100.
+    // 1 FRQ-E: W = 100. 1 quiz correct/1: Q = 100.
+    // B = (1*100 + 2*100 + 3*100) / (1+2+3) = 600/6 = 100.
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', 1),
+      makeBlankRow('WS-U1L1-Q2', 1),
+      makeBlankRow('WS-U1L1-Q3', 1),
+      makeRow('WS-U1L1-r1', { source: 'frq', score: 1 }),                     // E → 100
+      makeRow('U1-L1-Q01', { source: 'curriculum_quiz', response: 'B' }),      // correct
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l).toBeDefined();
+    expect(l.Cws).toBe(100);
+    expect(l.W).toBe(100);
+    expect(l.Q).toBe(100);
+    expect(l.lessonGrade).toBe(100);
+  });
+
+  it('three-way weighted mean: mixed scores → (Cws*1 + W*2 + Q*3)/6', () => {
+    // 3-blank lesson: 1 correct (1), 1 partial (0.5), 1 wrong (0).
+    // sum = 1.5, blankCount = 3 → Cws = (1.5/3)*100 = 50.
+    // FRQ-E: W = 100. Quiz: 0% (wrong). Q = 0.
+    // B = (1*50 + 2*100 + 3*0) / 6 = (50+200+0)/6 = 250/6 ≈ 41.7
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', 1),    // correct
+      makeBlankRow('WS-U1L1-Q2', 0.5),  // partial
+      makeBlankRow('WS-U1L1-Q3', 0),    // wrong
+      makeRow('WS-U1L1-r1', { source: 'frq', score: 1 }),                     // E → 100
+      makeRow('U1-L1-Q01', { source: 'curriculum_quiz', response: 'X' }),     // wrong → 0%
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l.Cws).toBeCloseTo(50, 1);
+    expect(l.W).toBe(100);
+    expect(l.Q).toBe(0);
+    expect(l.lessonGrade).toBeCloseTo(41.7, 1);
+  });
+
+  it('worksheet-only lesson: only Cws present → lessonGrade=Cws', () => {
+    // 3 blanks, all scored 1. No FRQ, no quiz.
+    // Cws = 100. B = (1*100)/(1) = 100.
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', 1),
+      makeBlankRow('WS-U1L1-Q2', 1),
+      makeBlankRow('WS-U1L1-Q3', 1),
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l.Cws).toBe(100);
+    expect(l.W).toBe(null);
+    expect(l.Q).toBe(null);
+    expect(l.lessonGrade).toBe(100);
+  });
+
+  it('renormalization when ws feeder absent (no blank rows): W:Q = 2:3', () => {
+    // No blanks submitted. Cws = null. FRQ-E (W=100), quiz 0%.
+    // B = (2*100 + 3*0) / (2+3) = 200/5 = 40.
+    const rows = [
+      makeRow('WS-U1L1-r1', { source: 'frq', score: 1 }),                     // E → 100
+      makeRow('U1-L1-Q01', { source: 'curriculum_quiz', response: 'X' }),     // wrong → 0%
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l.Cws).toBe(null);
+    expect(l.W).toBe(100);
+    expect(l.Q).toBe(0);
+    expect(l.lessonGrade).toBeCloseTo(40, 1);
+  });
+
+  it('partial-credit blank (score=0.5) contributes 0.5 to the numerator', () => {
+    // 3 blanks: 1 correct, 1 partial, 1 unattempted (absent from ledger).
+    // sum recorded = 1 + 0.5 = 1.5; blankCount from manifest = 3.
+    // Cws = (1.5/3) * 100 = 50.
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', 1),
+      makeBlankRow('WS-U1L1-Q2', 0.5),
+      // Q3 absent — contributes 0 to numerator, still in denominator (count=3)
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l.Cws).toBeCloseTo(50, 1);
+  });
+
+  it('Cws denominator from manifest (unattempted blanks absent from ledger count as 0)', () => {
+    // 3 blanks in manifest. Only 1 recorded blank (score=1).
+    // Cws = (1/3) * 100 ≈ 33.3. The 2 absent blanks weigh down the score.
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', 1),
+      // Q2, Q3 never submitted — 0 in numerator, 3 in denominator
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l.Cws).toBeCloseTo(33.3, 1);
+  });
+
+  it('DESK_DONE row is excluded from blank scoring', () => {
+    // The synthetic DESK_DONE row must NOT appear in worksheetItems for blank scoring.
+    const rows = [
+      { item_id: 'WS-U1-L1-DESK_DONE', source: 'worksheet', score: null, response: null, recorded_at: '2026-01-01T00:00:00Z' },
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    // DESK_DONE parses to unit=1, lessonKey='1'. Schedule maps 1.1 → '1.1'
+    // but the item_id doesn't match BLANK_ITEM_PATTERN so worksheetItems is empty.
+    const l = map.get('1.1');
+    expect(l).toBeDefined();
+    expect(l.worksheetItems).toHaveLength(0);
+    expect(l.Cws).toBe(null);
+  });
+
+  it('null/undefined score on a blank row treated as 0', () => {
+    // A blank row with score=null (e.g. not yet wired by W1 client script).
+    // Should count as 0 in numerator but the blank still appears in worksheetItems.
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', null),
+      makeBlankRow('WS-U1L1-Q2', undefined),
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    // sum = 0 + 0 = 0; blankCount = 3 → Cws = 0.
+    expect(l.Cws).toBe(0);
+  });
+
+  it('missing manifest → Cws null, no crash, W/Q still compute', () => {
+    // opts.worksheetBlankCounts = null → Cws = null; B from W+Q only.
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', 1),
+      makeBlankRow('WS-U1L1-Q2', 1),
+      makeRow('WS-U1L1-r1', { source: 'frq', score: 1 }),
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: null,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l).toBeDefined();
+    expect(l.Cws).toBe(null);
+    expect(l.W).toBe(100);
+    expect(l.lessonGrade).toBe(100); // only W present → W-only renormalized
+  });
+
+  it('combined worksheet Cws lands on both topic keys (4.1 AND 4.2)', () => {
+    // WS-U4L1-2-Q1 expands to both 4.1 and 4.2 via the schedule.
+    // 3 blanks, all score 1 → Cws = 100 on both topics.
+    const rows = [
+      makeBlankRow('WS-U4L1-2-Q1', 1),
+      makeBlankRow('WS-U4L1-2-Q2', 1),
+      makeBlankRow('WS-U4L1-2-Q3', 1),
+    ];
+    const blanks = { '4.1-2': 3 };
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: blanks,
+      weights: W1_WEIGHTS,
+    });
+    const l41 = map.get('4.1');
+    const l42 = map.get('4.2');
+    expect(l41).toBeDefined();
+    expect(l42).toBeDefined();
+    expect(l41.Cws).toBe(100);
+    expect(l42.Cws).toBe(100);
+    expect(l41.lessonGrade).toBe(100);
+    expect(l42.lessonGrade).toBe(100);
   });
 });

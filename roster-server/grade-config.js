@@ -10,7 +10,12 @@ export const PHASE3_CONFIG = {
 
   // Feeder weights for B = (wW·W + wQ·Q) / (present weights).
   // follow-along worksheet : cr-quiz = 1 : 2.
+  // Used by the unit-level grade path (grade.js units{}) — unchanged.
   feederWeights: { W: 1, Q: 2 },
+
+  // Feeder weights for the lesson-level B = (ws*Cws + W*W + Q*Q) / (present weights).
+  // Spec D1: ws:W:Q = 1:2:3 (worksheet blanks : FRQ : quiz).
+  lessonFeederWeights: { ws: 1, W: 2, Q: 3 },
 
   // AI-graded FRQ band → numeric. DN2b records score ∈ {1,0.5,0} (E/P/I);
   // Phase 3 remaps that to the teacher's E/P/I numeric band.

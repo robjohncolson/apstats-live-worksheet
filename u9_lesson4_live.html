@@ -1250,9 +1250,19 @@
             if (!itemId) return;
             var value = (blank.value || '').trim();
             if (!value) return;
+            // W1.4.2: compute verdict and score for this blank.
+            // checkAnswer's CSS-class side effect is benign: it re-applies
+            // the class the blank already has (it was already called upstream).
+            var blankScoreMap = { correct: 1, partial: 0.5, incorrect: 0 };
+            var blankVerdict = (typeof checkAnswer === 'function') ? checkAnswer(blank) : null;
+            var blankScore = (blankVerdict !== null && blankVerdict in blankScoreMap)
+                ? blankScoreMap[blankVerdict]
+                : undefined;
             window.gradebookClient.record({
                 source: 'worksheet', itemId: itemId,
-                unit: gbUnitFromItemId(itemId), response: value, attempt: 1
+                unit: gbUnitFromItemId(itemId), response: value,
+                score: blankScore,
+                attempt: 1
             });
         }
         // W3.2a: tolerant verdict coercion -- trims, uppercases, reads the

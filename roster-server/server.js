@@ -18,6 +18,7 @@ import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
 import { mountRemediation } from './remediation.js';
 import { PHASE3_CONFIG } from './grade-config.js';
+import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { requireTeacher } from './teacher-auth.js';
 import { readFile } from 'fs/promises';
@@ -33,7 +34,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -330,7 +331,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     const gradeConfig = configOverrides
       ? { ...PHASE3_CONFIG, ...configOverrides }
       : PHASE3_CONFIG;
-    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig });
+    mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule: lessonSchedule || null, db, config: gradeConfig, worksheetBlankCounts: worksheetBlankCounts || null });
   }
 
   // ── Mastery route (Phase 3 additive — decoupled diagnostic) ──────────────────
@@ -349,7 +350,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     const classConfig = configOverrides
       ? { ...PHASE3_CONFIG, ...configOverrides }
       : PHASE3_CONFIG;
-    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig });
+    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null });
   }
 
   // ── Remediation routes (Phase 4b additive — write loop + retake gate) ──────
@@ -487,6 +488,32 @@ function loadLiveLessonSchedule() {
   }
 }
 
+// ── Live worksheet blank-count loader (W1) ────────────────────────────────────
+// Mirrors loadLiveLessonSchedule. Reads work-manifest.json synchronously at
+// boot and calls buildWorksheetBlankCounts to produce the count map.
+//
+// A missing or malformed manifest degrades gracefully: returns null so that
+// Cws is null for every lesson and W/Q renormalize. Never throws.
+//
+// Priority (same as resolveManifestPath above):
+//   1. WORK_MANIFEST_PATH env — explicit override.
+//   2. Bundled copy ./data/work-manifest.json (Railway container).
+//   3. Repo-root ../data/work-manifest.json (local dev full checkout).
+function loadLiveWorksheetBlankCounts() {
+  try {
+    const raw = readFileSync(resolveManifestPath(), 'utf8');
+    const doc = JSON.parse(raw);
+    if (!doc || typeof doc !== 'object' || !Array.isArray(doc.units)) {
+      console.warn('[W1] work manifest malformed — worksheet blank scoring disabled');
+      return null;
+    }
+    return buildWorksheetBlankCounts(doc);
+  } catch (err) {
+    console.warn('[W1] work manifest unavailable; worksheet blank scoring disabled:', err.message);
+    return null;
+  }
+}
+
 // Only start listening when run directly (not imported by tests)
 if (process.env.NODE_ENV !== 'test') {
   (async () => {
@@ -516,6 +543,9 @@ if (process.env.NODE_ENV !== 'test') {
     // Phase 6: lesson schedule — synchronous load at boot; fault-tolerant (null
     // = date filter disabled, /grade still works). Same pattern as remediation-db.
     const lessonSchedule = loadLiveLessonSchedule();
+    // W1: worksheet blank counts — synchronous load at boot; fault-tolerant (null
+    // = Cws null for all lessons, W/Q renormalize). Same pattern as lesson schedule.
+    const worksheetBlankCounts = loadLiveWorksheetBlankCounts();
     const app = createApp(
       db,
       ledgerDb,
@@ -524,7 +554,9 @@ if (process.env.NODE_ENV !== 'test') {
       loadLiveSkillMap,
       bkt,
       remediationDb,
-      lessonSchedule
+      lessonSchedule,
+      undefined,          // configOverrides — not used in production
+      worksheetBlankCounts
     );
     const PORT = process.env.PORT || 8090;
     app.listen(PORT, () => {

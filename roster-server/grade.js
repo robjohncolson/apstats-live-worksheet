@@ -24,6 +24,7 @@ import {
   scoreAgainstKey,
 } from './scoring.js';
 import {
+  buildWorksheetBlankCounts,
   computeLessonGrades,
   computeQuarterFromLessons,
   buildLessonsArray,
@@ -74,6 +75,8 @@ function frqScoreToPct(score, frqBand) {
 // Phase-3 tests pin behaviour; class.js fans out over the roster calling this.
 // opts.lessonSchedule: the lesson-schedule.json .lessons map (or null for graceful degrade).
 // opts.section: student's section string (e.g. "PeriodB") for date filter.
+// opts.worksheetBlankCounts: { "<unit>.<lessonKey>": <int> } from buildWorksheetBlankCounts.
+//   If null/missing, Cws is null for every lesson (W/Q renormalize without ws feeder).
 export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts = {}) {
   const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
   const bySource = (s) => rows.filter((r) => r && r.source === s);
@@ -166,8 +169,12 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   // so the lesson-level math works without a schedule. The fallback in the
   // quarter-aggregation block (below) then iterates this populated map and
   // produces a lesson-weighted quarter grade, not the old unit-mean.
+  const worksheetBlankCounts = (opts && opts.worksheetBlankCounts) || null;
   const allLatestRows = latestPerItem(rows);
-  const lessonMap = computeLessonGrades(allLatestRows, config.frqBand, answerKey, schedule);
+  const lessonMap = computeLessonGrades(allLatestRows, config.frqBand, answerKey, schedule, {
+    worksheetBlankCounts,
+    weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
+  });
 
   // ── Per-unit PC data needed for quarter-level P_quarter ──────────────────
   // Build unitPcData: unitNum → { P }
@@ -293,7 +300,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, db, config = PHASE3_CONFIG }) {
+export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSchedule, db, config = PHASE3_CONFIG, worksheetBlankCounts = null }) {
 
   // GET /grade
   //   Auth: roster token (Authorization: Bearer <t> OR ?token=).
@@ -354,7 +361,7 @@ export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSc
       ledgerRows,
       answerKey,
       config,
-      { lessonSchedule, section }
+      { lessonSchedule, section, worksheetBlankCounts }
     );
 
     return res.json({
