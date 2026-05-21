@@ -1279,13 +1279,26 @@
             <div class="dialog-msg geneva" style="font-size:11px">
                 <div class="chicago" style="font-size:12px;margin-bottom:4px">Sign In</div>
                 <div style="margin-bottom:8px">Sign in with the username &amp; password your teacher gave you.</div>
-                <!-- 2026-05-20: username field uses a native datalist for
-                     autocomplete. Each successful sign-in is remembered in
-                     localStorage; opening the modal repopulates suggestions
-                     so repeat users only type their password. Cap at 20
-                     entries, most-recent first. -->
-                <input type="text" id="signin-username" class="geneva" list="signin-username-list" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="username (e.g. coconut_shark) — click for suggestions">
-                <datalist id="signin-username-list"></datalist>
+                <!-- 2026-05-20 v7: roster-backed picker. Click the field →
+                     dropdown shows every classmate in the current period
+                     (fetched from /roster/section). Type to filter on
+                     name OR username. Native datalist kept as offline
+                     fallback (per-device sign-in history). -->
+                <div id="signin-username-row" style="position:relative;margin-bottom:5px">
+                    <input type="text" id="signin-username" class="geneva" list="signin-username-list" autocomplete="username" autocapitalize="off" spellcheck="false" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="Type your name or username — click for the class list">
+                    <datalist id="signin-username-list"></datalist>
+                    <div id="signin-roster-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--black);max-height:200px;overflow-y:auto;z-index:1000;box-shadow:2px 2px 0 var(--black)">
+                        <div id="signin-roster-list"></div>
+                    </div>
+                </div>
+                <style>
+                    #signin-roster-dropdown .sr-row{padding:4px 8px;cursor:pointer;font-size:11px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #eee}
+                    #signin-roster-dropdown .sr-row:hover{background:#eef}
+                    #signin-roster-dropdown .sr-row:last-child{border-bottom:none}
+                    #signin-roster-dropdown .sr-name{font-family:'Geneva',sans-serif}
+                    #signin-roster-dropdown .sr-uname{color:#666;font-family:'Geneva',sans-serif;font-size:10px;margin-left:8px}
+                    #signin-roster-dropdown .sr-empty{padding:6px 8px;font-style:italic;color:#888;font-size:10px}
+                </style>
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
                 <!-- Teacher access (v4 UX restored after v5 detour 2026-05-20):
                      compact checkbox + access-code field. Type the correct
@@ -3693,6 +3706,124 @@ function _populateUsernameDatalist() {
   });
 }
 
+// 2026-05-20 v7: server-backed roster picker — fetches the current
+// period's classmate list from /roster/section/:section so students
+// who remember their real name (but not their generated username) can
+// find themselves. Cached in localStorage with 1h TTL; refreshed in
+// the background after every successful signin.
+const ROSTER_CACHE_TTL_MS = 60 * 60 * 1000;
+function _periodToSection(period) {
+  if (period === 'B' || period === 'PeriodB') return 'PeriodB';
+  if (period === 'E' || period === 'PeriodE') return 'PeriodE';
+  return null;
+}
+async function _fetchPeriodRoster(period) {
+  var section = _periodToSection(period);
+  if (!section) return [];
+  var cacheKey = 'apstats_desk_roster_cache_' + section;
+  // Try cache first.
+  try {
+    var raw = localStorage.getItem(cacheKey);
+    if (raw) {
+      var cached = JSON.parse(raw);
+      if (cached && cached.ts && (Date.now() - cached.ts < ROSTER_CACHE_TTL_MS)) {
+        return cached.roster || [];
+      }
+    }
+  } catch (_) {}
+  // Cache miss / stale → fetch.
+  var baseUrl = (typeof window !== 'undefined' && window.ROSTER_SERVICE_URL) || null;
+  if (!baseUrl) return [];
+  try {
+    var res = await fetch(baseUrl + '/roster/section/' + encodeURIComponent(section));
+    if (!res.ok) return [];
+    var data = await res.json();
+    var students = (data && data.ok && Array.isArray(data.students)) ? data.students : [];
+    // Sort by realName for stable display.
+    students.sort(function (a, b) {
+      return (a.realName || '').localeCompare(b.realName || '');
+    });
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), roster: students }));
+    } catch (_) {}
+    return students;
+  } catch (_) {
+    return [];
+  }
+}
+
+var _rosterDropdownData = [];  // last-fetched roster for the open modal
+
+function _renderRosterDropdown(filterText) {
+  var list = document.getElementById('signin-roster-list');
+  if (!list) return;
+  while (list.firstChild) list.removeChild(list.firstChild);
+  var ft = (filterText || '').toLowerCase();
+  var matches = _rosterDropdownData.filter(function (r) {
+    if (!ft) return true;
+    var name = (r.realName || '').toLowerCase();
+    var uname = (r.username || '').toLowerCase();
+    return name.indexOf(ft) >= 0 || uname.indexOf(ft) >= 0;
+  });
+  if (matches.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'sr-empty';
+    empty.textContent = _rosterDropdownData.length === 0
+      ? 'No class list loaded (offline?). Type your username manually.'
+      : 'No matches.';
+    list.appendChild(empty);
+    return;
+  }
+  // Cap to 50 rows so a huge roster doesn't blow up the modal.
+  var capped = matches.slice(0, 50);
+  capped.forEach(function (r) {
+    var row = document.createElement('div');
+    row.className = 'sr-row';
+    var name = document.createElement('span');
+    name.className = 'sr-name';
+    name.textContent = r.realName || '(unnamed)';
+    var uname = document.createElement('span');
+    uname.className = 'sr-uname';
+    uname.textContent = r.username;
+    row.appendChild(name);
+    row.appendChild(uname);
+    row.onclick = function () {
+      var uInp = document.getElementById('signin-username');
+      if (uInp) {
+        uInp.value = r.username;
+        uInp.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      _closeRosterDropdown();
+      var pInp = document.getElementById('signin-password');
+      if (pInp) pInp.focus();
+    };
+    list.appendChild(row);
+  });
+  if (matches.length > 50) {
+    var more = document.createElement('div');
+    more.className = 'sr-empty';
+    more.textContent = '... ' + (matches.length - 50) + ' more (refine search)';
+    list.appendChild(more);
+  }
+}
+
+async function _openRosterDropdown() {
+  var dd = document.getElementById('signin-roster-dropdown');
+  if (!dd) return;
+  // Determine current period (cP is the global). Fall back to Period B.
+  var period = (typeof cP === 'string') ? cP : 'B';
+  // Fetch (cached) then render.
+  _rosterDropdownData = await _fetchPeriodRoster(period);
+  var uInp = document.getElementById('signin-username');
+  _renderRosterDropdown(uInp ? uInp.value : '');
+  dd.style.display = 'block';
+}
+
+function _closeRosterDropdown() {
+  var dd = document.getElementById('signin-roster-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+
 // 2026-05-20: teacher access code lives in a const; override via
 // localStorage 'apstats_teacher_access_code' (e.g. for rotation).
 const TEACHER_ACCESS_CODE_DEFAULT = 'google231';
@@ -3757,6 +3888,24 @@ function openSignInModal() {
   // so newly-remembered users show up immediately. Typeof-guarded for
   // DN2c's vm-test which doesn't load this helper into its sandbox.
   if (typeof _populateUsernameDatalist === 'function') _populateUsernameDatalist();
+  // 2026-05-20 v7: wire the server-backed roster dropdown. Focus opens
+  // it; typing filters; Escape or outside-click closes it. Typeof-
+  // guarded so DN2c's vm-test sandbox keeps passing.
+  if (uInp && typeof _openRosterDropdown === 'function') {
+    uInp.onfocus = function () { _openRosterDropdown(); };
+    uInp.onclick = function () { _openRosterDropdown(); };
+    uInp.oninput = function () {
+      if (typeof _renderRosterDropdown === 'function') _renderRosterDropdown(uInp.value);
+    };
+  }
+  // Outside click closes the dropdown — but only when the click is
+  // outside the username row container.
+  var row = document.getElementById('signin-username-row');
+  if (row && typeof _closeRosterDropdown === 'function') {
+    document.addEventListener('mousedown', function _outsideClick(e) {
+      if (!row.contains(e.target)) _closeRosterDropdown();
+    });
+  }
   // Reset the teacher code field + wire the visual feedback. Multiple
   // event types so paste / autofill / fast typing all trigger the
   // status update. typeof-guarded so DN2c's vm-test sandbox still works.
@@ -3782,6 +3931,7 @@ function closeSignInModal() {
   if (!ov) return;
   MacSFX.play('click', 0.3);
   ov.style.display = 'none';
+  if (typeof _closeRosterDropdown === 'function') _closeRosterDropdown();
 }
 
 async function submitSignIn() {

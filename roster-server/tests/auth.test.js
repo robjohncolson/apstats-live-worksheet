@@ -547,3 +547,54 @@ describe('GET /roster/list', () => {
     expect(uma2.mustChangePassword).toBe(false);
   });
 });
+
+// ── 2026-05-20: GET /roster/section/:section (PUBLIC) ───────────────────────
+// Student-facing sign-in dropdown. Returns username + realName + section
+// only; NO password info; NO email; NO mustChangePassword. No auth required.
+
+describe('GET /roster/section/:section (public)', () => {
+  async function seedPub(realName, section, password) {
+    await srv.request('POST', '/roster/enroll', {
+      headers: { 'x-teacher-secret': teacherSecret },
+      body: { realName, section, password }
+    });
+  }
+
+  it('returns 200 + students array with NO password info', async () => {
+    await seedPub('Pub Pierce', 'PUBSEC1', 'pubpass11');
+    const { status, body } = await srv.request('GET', '/roster/section/PUBSEC1');
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.students)).toBe(true);
+    const p = body.students.find(s => s.realName === 'Pub Pierce');
+    expect(p).toBeDefined();
+    expect(typeof p.username).toBe('string');
+    expect(p.section).toBe('PUBSEC1');
+    // No sensitive fields anywhere in the response.
+    const raw = JSON.stringify(body);
+    expect(raw).not.toContain('password');
+    expect(raw).not.toContain('cipher');
+    expect(raw).not.toContain('hash');
+    expect(raw).not.toContain('email');
+    expect(raw).not.toContain('mustChangePassword');
+    expect(raw).not.toContain('createdAt');
+    expect(raw).not.toContain('v1:');
+  });
+
+  it('does NOT require x-teacher-secret (publicly accessible)', async () => {
+    await seedPub('Norma Open', 'PUBSEC2', 'normapass1');
+    // No auth header.
+    const { status } = await srv.request('GET', '/roster/section/PUBSEC2');
+    expect(status).toBe(200);
+  });
+
+  it('section param scopes the result (other sections excluded)', async () => {
+    await seedPub('Anya A', 'PUBSEC_A', 'pwA-12345');
+    await seedPub('Bob B', 'PUBSEC_B', 'pwB-12345');
+    const { body } = await srv.request('GET', '/roster/section/PUBSEC_A');
+    expect(body.students.every(s => s.section === 'PUBSEC_A')).toBe(true);
+    expect(body.students.some(s => s.realName === 'Anya A')).toBe(true);
+    expect(body.students.some(s => s.realName === 'Bob B')).toBe(false);
+  });
+
+});

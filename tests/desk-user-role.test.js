@@ -196,6 +196,76 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/_addKnownUser\s*\(\s*legacyKey\s*\)/);
   });
 
+  // ── 2026-05-20 v7: server-backed roster picker dropdown ────────────────────
+  it('16: roster dropdown markup exists (#signin-roster-dropdown + #signin-roster-list)', () => {
+    expect(DESK).toMatch(/id="signin-roster-dropdown"/);
+    expect(DESK).toMatch(/id="signin-roster-list"/);
+    // CSS classes are scoped to the dropdown.
+    expect(DESK).toMatch(/#signin-roster-dropdown\s+\.sr-row/);
+  });
+
+  it('17: _fetchPeriodRoster hits /roster/section/:section with the current period', () => {
+    expect(DESK).toMatch(/async\s+function\s+_fetchPeriodRoster\s*\(/);
+    const body = fnBody(DESK, '_fetchPeriodRoster');
+    expect(body).toMatch(/\/roster\/section\//);
+    expect(body).toMatch(/encodeURIComponent\s*\(\s*section\s*\)/);
+    // Cache + TTL.
+    expect(body).toMatch(/apstats_desk_roster_cache_/);
+    expect(body).toMatch(/ROSTER_CACHE_TTL_MS/);
+    // Sorts by realName.
+    expect(body).toMatch(/realName.*localeCompare/);
+  });
+
+  it('18: _periodToSection maps cP letters to roster section strings', () => {
+    const body = fnBody(DESK, '_periodToSection');
+    expect(body).toMatch(/['"]B['"]/);
+    expect(body).toMatch(/['"]E['"]/);
+    expect(body).toMatch(/PeriodB/);
+    expect(body).toMatch(/PeriodE/);
+  });
+
+  it('19: _renderRosterDropdown filters by realName OR username + caps at 50 rows', () => {
+    const body = fnBody(DESK, '_renderRosterDropdown');
+    expect(body).toMatch(/r\.realName/);
+    expect(body).toMatch(/r\.username/);
+    expect(body).toMatch(/toLowerCase\s*\(\s*\)/);
+    // 50-row cap.
+    expect(body).toMatch(/slice\s*\(\s*0\s*,\s*50\s*\)/);
+    // Empty state when no data loaded.
+    expect(body).toMatch(/No class list loaded/);
+  });
+
+  it('20: row click fills the username field and focuses the password field', () => {
+    const body = fnBody(DESK, '_renderRosterDropdown');
+    // Sets the username input value.
+    expect(body).toMatch(/uInp\.value\s*=\s*r\.username/);
+    // Closes the dropdown.
+    expect(body).toMatch(/_closeRosterDropdown/);
+    // Focuses the password field for one-keystroke continuation.
+    expect(body).toMatch(/getElementById\s*\(\s*['"]signin-password['"]/);
+    expect(body).toMatch(/pInp\.focus/);
+  });
+
+  it('21: openSignInModal wires focus + click + input events on the username field', () => {
+    const body = fnBody(DESK, 'openSignInModal');
+    expect(body).toMatch(/uInp\.onfocus\s*=/);
+    expect(body).toMatch(/uInp\.onclick\s*=/);
+    // The username field's oninput is re-bound to filter the dropdown.
+    expect(body).toMatch(/uInp\.oninput\s*=\s*function/);
+    expect(body).toMatch(/_renderRosterDropdown/);
+  });
+
+  it('22: outside-click closes the dropdown (mousedown listener on document)', () => {
+    const body = fnBody(DESK, 'openSignInModal');
+    expect(body).toMatch(/addEventListener\s*\(\s*['"]mousedown['"]/);
+    expect(body).toMatch(/_closeRosterDropdown/);
+  });
+
+  it('23: closeSignInModal also closes the roster dropdown', () => {
+    const body = fnBody(DESK, 'closeSignInModal');
+    expect(body).toMatch(/_closeRosterDropdown/);
+  });
+
   it('10c: fast-path logs the match attempt to console (self-diagnosing for remote-debug)', () => {
     const body = fnBody(DESK, 'submitSignIn');
     // Looks for a console.log line that mentions the submit attempt.

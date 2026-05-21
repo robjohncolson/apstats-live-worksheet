@@ -261,6 +261,33 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     return res.json({ ok: true, students });
   });
 
+  // ── GET /roster/section/:section — PUBLIC student picker (2026-05-20) ────────
+  // Returns { username, realName, section } for one period. NO password
+  // info, NO email. Powers the Desk's sign-in dropdown so students who
+  // remember their real name (but not their generated username) can
+  // find themselves. Privacy posture: usernames + real names are not
+  // secret — students see their classmates in the classroom. No
+  // password hashes or recoverable ciphers are exposed.
+  app.get('/roster/section/:section', async (req, res) => {
+    const section = req.params.section;
+    if (!section || typeof section !== 'string') {
+      return res.status(400).json({ ok: false, error: 'section parameter required' });
+    }
+    const { data, error } = await db.listRoster(section);
+    if (error) {
+      console.error('roster public section DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    const students = (data || []).map(row => ({
+      username: row.login_username,
+      realName: row.real_name,
+      section:  row.section,
+    }));
+    // Send a soft cache hint — the roster doesn't change often.
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.json({ ok: true, section, students });
+  });
+
   // ── Ledger routes (Sprint 1 additive) ────────────────────────────────────────
   // Mounts POST /ledger/record and GET /ledger/student/:studentId.
   // ledgerDb must be passed in (tests inject a fake; production passes createLiveLedgerDb()).
