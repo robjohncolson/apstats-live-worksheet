@@ -1,11 +1,14 @@
-// desk-user-role.test.js — 2026-05-20: user-role gating on the Desk.
+// desk-user-role.test.js -- 2026-05-20: user-role gating on the Desk.
 // - "Student" menu label renamed to "User"
 // - Teacher menu hidden by default; revealed via updateUserRoleUI() when
-//   localStorage.apstats_user_role === 'teacher'
-// - Sign-in modal: Teacher checkbox + access-code input. Checkbox is
-//   disabled until the entered code matches TEACHER_ACCESS_CODE_DEFAULT
-//   (default 'google231'; overridable via localStorage).
+//   rosterClient.current().role === 'teacher' (server-verified, not access code)
 // - signOutStudent clears the role.
+//
+// Tests for retired access-code behavior have been removed (Connected Teacher
+// Auth, 2026-05-21): TEACHER_ACCESS_CODE_DEFAULT, _teacherAccessCode,
+// _onTeacherCodeInput, signin-teacher checkbox+code input, makeMeTeacher,
+// the standalone fast-path in submitSignIn, and the post-signin code re-check
+// are all gone.
 //
 // @vitest-environment node
 
@@ -50,24 +53,18 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/id="menu-item-teacher"[^>]*style="display:none"/);
   });
 
-  it('03: TEACHER_ACCESS_CODE_DEFAULT constant is "google231"', () => {
-    expect(DESK).toMatch(/const\s+TEACHER_ACCESS_CODE_DEFAULT\s*=\s*['"]google231['"]/);
-  });
-
-  it('04: _teacherAccessCode reads localStorage override before falling back to default', () => {
-    const body = fnBody(DESK, '_teacherAccessCode');
-    expect(body).toMatch(/apstats_teacher_access_code/);
-    expect(body).toMatch(/TEACHER_ACCESS_CODE_DEFAULT/);
-  });
-
-  it('05: updateUserRoleUI shows the Teacher menu only when role === "teacher"', () => {
+  it('05: updateUserRoleUI derives teacher from rosterClient session role', () => {
     const body = fnBody(DESK, 'updateUserRoleUI');
+    // Reads the roster session.
+    expect(body).toMatch(/rosterClient/);
+    expect(body).toMatch(/current\s*\(\s*\)/);
+    // Derives isTeacher from the server-verified role field.
+    expect(body).toMatch(/\.role\s*===\s*['"]teacher['"]/);
+    // Syncs the apstats_user_role cache.
     expect(body).toMatch(/apstats_user_role/);
-    expect(body).toMatch(/===\s*['"]teacher['"]/);
+    // Shows or hides the Teacher menu item.
     expect(body).toMatch(/menu-item-teacher/);
-    // Both the show + hide branches must set style.display.
-    expect(body).toMatch(/style\.display\s*=\s*['"]['"]/);
-    expect(body).toMatch(/style\.display\s*=\s*['"]none['"]/);
+    expect(body).toMatch(/style\.display/);
   });
 
   it('06: updateUserRoleUI is called on page init (so the Teacher menu reflects persisted role)', () => {
@@ -75,92 +72,15 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/loadRegistry\(\);[\s\S]{0,200}updateUserRoleUI\(\)/);
   });
 
-  it('07: signin modal has the Teacher checkbox + access-code input (type=text to dodge password autofill)', () => {
-    // 2026-05-20 v6 (revert to v4 UX after the dedicated-button detour):
-    // user prefers the compact checkbox-and-code design. Visible bug
-    // was a typo ("googly" vs "google"), not a UX problem. We kept the
-    // v4 type=text on the code field for autofill resistance.
-    expect(DESK).toMatch(/<input\s+type="checkbox"\s+id="signin-teacher"\s+disabled/);
-    expect(DESK).toMatch(/<input\s+type="text"\s+id="signin-teacher-code"/);
-    expect(DESK).toMatch(/id="signin-teacher-status"/);
-    // Dedicated button is gone (single OK button now).
-    expect(DESK).not.toMatch(/id="signin-teacher-btn"/);
-    expect(DESK).not.toMatch(/submitTeacherSignIn/);
-  });
-
-  it('08: _onTeacherCodeInput enables the checkbox + green status when code matches (tolerant)', () => {
-    const body = fnBody(DESK, '_onTeacherCodeInput');
-    // Tolerant: trim + case-insensitive both sides.
-    expect(body).toMatch(/\.trim\s*\(\s*\)\s*\.toLowerCase\s*\(\s*\)/);
-    expect(body).toMatch(/_teacherAccessCode\s*\(\s*\)/);
-    // Enable + check the checkbox on match.
-    expect(body).toMatch(/chk\.disabled\s*=\s*!match/);
-    expect(body).toMatch(/chk\.checked\s*=\s*true/);
-    // Status text updates.
-    expect(body).toMatch(/code accepted/);
-    expect(body).toMatch(/#1f8b3b/);  // green color
-  });
-
-  it('09: openSignInModal resets the teacher fields every open (no state leak)', () => {
-    const body = fnBody(DESK, 'openSignInModal');
-    expect(body).toMatch(/cInp\.value\s*=\s*['"]['"]/);
-    expect(body).toMatch(/cInp\.oninput\s*=\s*_onTeacherCodeInput/);
-    expect(body).toMatch(/chk\.checked\s*=\s*false/);
-    expect(body).toMatch(/chk\.disabled\s*=\s*true/);
-    // Enter on the code field submits via the regular submitSignIn flow,
-    // which has the v4 fast-path that matches code in ANY field.
-    expect(body).toMatch(/cInp\.onkeydown\s*=\s*function[\s\S]{0,150}submitSignIn\s*\(\s*\)/);
-  });
-
-  it('10: submitSignIn fast-path only takes the standalone teacher branch when credentials are EMPTY', () => {
-    // 2026-05-20 v6: when username+password are also typed, the fast-path
-    // FALLS THROUGH to the regular roster signin (so the teacher gets a
-    // token for /donow + /grade fetches). Only the code-only case takes
-    // the standalone fast-path. Teacher flag still set in the post-signin
-    // block when the code matches.
-    const body = fnBody(DESK, 'submitSignIn');
-    expect(body).toMatch(/expectedCode\s*=/);
-    expect(body).toMatch(/_teacherAccessCode\s*\(\s*\)/);
-    // Iterates fieldsToCheck over the three input refs.
-    expect(body).toMatch(/fieldsToCheck/);
-    expect(body).toMatch(/signin-teacher-code/);
-    // Tolerant matching: trim + toLowerCase BOTH sides.
-    expect(body).toMatch(/\.trim\s*\(\s*\)\s*\.toLowerCase\s*\(\s*\)/);
-    // The standalone branch is GUARDED on empty username+password.
-    expect(body).toMatch(/if\s*\(\s*!typedUser\s*\|\|\s*!typedPass\s*\)/);
-    // Sets role on standalone match.
-    expect(body).toMatch(/setItem\s*\(\s*['"]apstats_user_role['"]\s*,\s*['"]teacher['"]/);
-    expect(body).toMatch(/teacher@desk\.local/);
-    // The fast-path must come BEFORE the rosterClient.signIn check.
-    const fastIdx = body.search(/matchField/);
-    const rosterIdx = body.search(/rosterClient\.signIn/);
-    expect(fastIdx, 'fast-path must exist').toBeGreaterThan(-1);
-    expect(rosterIdx, 'roster signIn must exist').toBeGreaterThan(-1);
-    expect(fastIdx, 'fast-path must precede roster signIn').toBeLessThan(rosterIdx);
-  });
-
-  it('10d: post-signin block also matches code across all 3 fields (tolerant, v6)', () => {
-    // The "teacher with a real student account" path: roster signin gives
-    // a token, then the code check sets the teacher flag too.
-    const body = fnBody(DESK, 'submitSignIn');
-    // Find the post-signin code-check block — it's identified by
-    // codeMatchAfter / expectedLcAfter / fieldsAfter.
-    expect(body).toMatch(/codeMatchAfter/);
-    expect(body).toMatch(/expectedLcAfter/);
-    expect(body).toMatch(/fieldsAfter/);
-    // Iterates the 3 fields (teacher-code, password, username).
-    expect(body).toMatch(/getElementById\s*\(\s*['"]signin-teacher-code['"]/);
-  });
-
   it('10e: Do Now sign-in nudge points at the User menu (not the renamed Student menu)', () => {
-    // The renderDoNow nudge string was stale: "Student ▸ Gradebook" but
-    // the menu is now "User ▸ Sign In". Updated.
+    // The renderDoNow nudge string was stale: "Student > Gradebook" but
+    // the menu is now "User > Sign In". Updated.
     const body = fnBody(DESK, 'renderDoNow');
-    expect(body).not.toMatch(/Student\s*▸\s*Gradebook/);
-    expect(body).toMatch(/User\s*▸\s*Sign In/);
+    expect(body).not.toMatch(/Student\s*[▸>]\s*Gradebook/);
+    expect(body).toMatch(/User\s*[▸>]\s*Sign In/);
   });
 
-  // ── 2026-05-20: username datalist autocomplete ─────────────────────────────
+  // -- 2026-05-20: username datalist autocomplete ---------------------------
   it('11: username field has list="signin-username-list" + the datalist element exists', () => {
     expect(DESK).toMatch(/id="signin-username"[^>]*list="signin-username-list"/);
     expect(DESK).toMatch(/<datalist\s+id="signin-username-list">/);
@@ -174,9 +94,11 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/KNOWN_USERS_CAP\s*=\s*20/);
   });
 
-  it('13: _addKnownUser dedupes case-insensitively + caps + skips synthetic teacher identity', () => {
+  it('13: _addKnownUser dedupes case-insensitively + caps; no synthetic-identity special case', () => {
     const body = fnBody(DESK, '_addKnownUser');
-    expect(body).toMatch(/teacher@desk\.local/);     // skip synthetic
+    // The retired standalone-teacher identity (teacher@desk.local) is gone --
+    // _addKnownUser must not carry that special case any more.
+    expect(body).not.toMatch(/teacher@desk\.local/);
     expect(body).toMatch(/toLowerCase\s*\(\s*\)/);   // case-insensitive dedupe
     expect(body).toMatch(/unshift/);                  // most-recent first
     expect(body).toMatch(/KNOWN_USERS_CAP/);          // cap applied
@@ -187,16 +109,13 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/_populateUsernameDatalist\s*\(\s*\)/);
   });
 
-  it('15: both sign-in success paths add to known users (standalone teacher + roster signin)', () => {
+  it('15: roster sign-in success path adds to known users', () => {
     const body = fnBody(DESK, 'submitSignIn');
-    // The standalone-teacher branch calls _addKnownUser when a real
-    // username (not the synthetic) was typed.
-    expect(body).toMatch(/_addKnownUser\s*\(\s*teacherIdent\s*\)/);
     // The roster-signin success path calls _addKnownUser with the legacy key.
     expect(body).toMatch(/_addKnownUser\s*\(\s*legacyKey\s*\)/);
   });
 
-  // ── 2026-05-20 v7: server-backed roster picker dropdown ────────────────────
+  // -- 2026-05-20 v7: server-backed roster picker dropdown ------------------
   it('16: roster dropdown markup exists (#signin-roster-dropdown + #signin-roster-list)', () => {
     expect(DESK).toMatch(/id="signin-roster-dropdown"/);
     expect(DESK).toMatch(/id="signin-roster-list"/);
@@ -273,32 +192,10 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/_closeRosterDropdown/);
   });
 
-  it('10c: fast-path logs the match attempt to console (self-diagnosing for remote-debug)', () => {
-    const body = fnBody(DESK, 'submitSignIn');
-    // Looks for a console.log line that mentions the submit attempt.
-    expect(body).toMatch(/console\.log\s*\([^)]*submitSignIn/);
-  });
-
-  it('10a: makeMeTeacher DevTools helper exists for cache-stuck cases', () => {
-    // Workaround for users whose browser cache is stuck on an old version
-    // and the sign-in flow misbehaves. Paste `makeMeTeacher()` in the
-    // console → role promoted + menu shown.
-    expect(DESK).toMatch(/window\.makeMeTeacher\s*=\s*function\s+makeMeTeacher/);
-    expect(DESK).toMatch(/apstats_user_role['"]\s*,\s*['"]teacher['"]/);
-  });
-
   it('10b: updateStudentMenu shows "Teacher:" prefix when role=teacher (status surfaces role)', () => {
     const body = fnBody(DESK, 'updateStudentMenu');
     expect(body).toMatch(/apstats_user_role/);
     expect(body).toMatch(/Teacher:/);
-  });
-
-  it('13a: openSignInModal binds multiple event types for the access-code input (visual feedback resilience)', () => {
-    const body = fnBody(DESK, 'openSignInModal');
-    expect(body).toMatch(/cInp\.oninput\s*=\s*_onTeacherCodeInput/);
-    expect(body).toMatch(/addEventListener\s*\(\s*['"]input['"]\s*,\s*_onTeacherCodeInput/);
-    expect(body).toMatch(/addEventListener\s*\(\s*['"]change['"]\s*,\s*_onTeacherCodeInput/);
-    expect(body).toMatch(/addEventListener\s*\(\s*['"]keyup['"]\s*,\s*_onTeacherCodeInput/);
   });
 
   it('11: signOutStudent clears the user role + refreshes the menu', () => {

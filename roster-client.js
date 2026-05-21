@@ -46,7 +46,8 @@
 
   window.rosterClient = {
 
-    // Returns { studentId, username, realName, section } from localStorage, or null.
+    // Returns { studentId, username, realName, section, role } from localStorage,
+    // or null. role defaults to 'student' when absent (old sessions are safe).
     // Never throws even if localStorage is blocked.
     current: function () {
       var session = readSession();
@@ -56,6 +57,7 @@
         username: session.username,
         realName: session.realName,
         section: session.section,
+        role: session.role || 'student',
         mustChangePassword: !!session.mustChangePassword
       };
     },
@@ -87,6 +89,7 @@
           realName: data.realName,
           section: data.section,
           token: data.token,
+          role: data.role || 'student',
           mustChangePassword: !!data.mustChangePassword,
           signedInAt: new Date().toISOString()
         });

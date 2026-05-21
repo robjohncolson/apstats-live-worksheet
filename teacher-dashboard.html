@@ -303,6 +303,7 @@
           <label for="teacher-secret">Teacher secret</label>
           <input id="teacher-secret" type="password" autocomplete="off" spellcheck="false"
                  placeholder="x-teacher-secret">
+          <span class="hint" id="session-status"></span>
         </div>
       </div>
       <div class="row-2">
@@ -415,6 +416,8 @@
 
   <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
   <script src="roster_config.js"></script>
+  <!-- Roster identity client; provides window.rosterClient.token() and .current() -->
+  <script src="roster-client.js"></script>
 
   <script>
     // ===== guardrails =====
@@ -452,6 +455,24 @@
     }
 
     function $(id) { return document.getElementById(id); }
+
+    // Show "Signed in as <name> (teacher)" or hint when a roster session exists.
+    function renderSessionStatus() {
+      var el = $('session-status');
+      if (!el) return;
+      var session = (typeof window !== 'undefined' && window.rosterClient)
+        ? window.rosterClient.current() : null;
+      if (session && session.role === 'teacher') {
+        el.textContent = 'Signed in as ' + session.realName + ' (teacher) — secret is optional.';
+        el.style.color = '#2e7d32';
+      } else if (session) {
+        el.textContent = '(signed in as student — enter the teacher secret above)';
+        el.style.color = '#5a5045';
+      } else {
+        el.textContent = 'Optional when signed in as a teacher via the Desk.';
+        el.style.color = '#5a5045';
+      }
+    }
 
     function teacherSecret() {
       // ALWAYS read from the input — never cached. Persistence to
@@ -504,6 +525,12 @@
       // and is itself read fresh from the input — never cached.
       var headers = {};
       if (secret) headers['x-teacher-secret'] = secret;
+      // If a roster teacher session is active, also send the Bearer token.
+      // The server accepts either; sending both is fine and covers the
+      // pre-migration window where the secret is still required by the human.
+      var _tok = (typeof window !== 'undefined' && window.rosterClient)
+        ? window.rosterClient.token() : null;
+      if (_tok) headers['Authorization'] = 'Bearer ' + _tok;
       var res;
       try {
         res = await fetch(svcUrl() + path, { method: 'GET', headers: headers });
@@ -719,8 +746,12 @@
     async function loadAll() {
       clearBanners();
       var secret = teacherSecret();
-      if (!secret) {
-        showError('Enter the teacher secret first.');
+      // If the teacher is signed in via a roster session, the Bearer token
+      // in fetchJson/postJson is enough — the secret is optional.
+      var _hasTok = (typeof window !== 'undefined' && window.rosterClient)
+        ? !!window.rosterClient.token() : false;
+      if (!secret && !_hasTok) {
+        showError('Enter the teacher secret, or sign in as a teacher via the Desk first.');
         return;
       }
       var section = $('section-filter').value.trim();
@@ -886,6 +917,10 @@
     async function postJson(path, body, secret) {
       var headers = { 'Content-Type': 'application/json' };
       if (secret) headers['x-teacher-secret'] = secret;
+      // Same Bearer token logic as fetchJson.
+      var _tok = (typeof window !== 'undefined' && window.rosterClient)
+        ? window.rosterClient.token() : null;
+      if (_tok) headers['Authorization'] = 'Bearer ' + _tok;
       var res;
       try {
         res = await fetch(svcUrl() + path, {
@@ -958,7 +993,9 @@
 
     async function loadRemediation() {
       var secret = teacherSecret();
-      if (!secret) return;
+      var _hasTok2 = (typeof window !== 'undefined' && window.rosterClient)
+        ? !!window.rosterClient.token() : false;
+      if (!secret && !_hasTok2) return;
       var section = $('section-filter').value.trim();
       var qs = section ? '?section=' + encodeURIComponent(section) : '';
       $('remediation-loading').style.display = '';
@@ -992,7 +1029,9 @@
       var act = btn.getAttribute('data-act');
       var id = btn.getAttribute('data-id');
       var secret = teacherSecret();
-      if (!secret) { showError('Enter the teacher secret first.'); return; }
+      var _hasTok3 = (typeof window !== 'undefined' && window.rosterClient)
+        ? !!window.rosterClient.token() : false;
+      if (!secret && !_hasTok3) { showError('Enter the teacher secret, or sign in as a teacher via the Desk first.'); return; }
       if (!id || !act) return;
       btn.disabled = true;
       var res = await postJson('/remediation/' + act, { assignmentId: id }, secret);
@@ -1012,7 +1051,9 @@
 
     async function handleProposeFromMastery(dryRun) {
       var secret = teacherSecret();
-      if (!secret) { showError('Enter the teacher secret first.'); return; }
+      var _hasTok4 = (typeof window !== 'undefined' && window.rosterClient)
+        ? !!window.rosterClient.token() : false;
+      if (!secret && !_hasTok4) { showError('Enter the teacher secret, or sign in as a teacher via the Desk first.'); return; }
       var section = $('section-filter').value.trim();
       if (!section) {
         showError('Enter a section first - propose-from-mastery is per-section.');
@@ -1062,6 +1103,9 @@
     $('section-filter').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') loadRemediation();
     });
+
+    // Render session status on page load (after roster-client.js has run).
+    renderSessionStatus();
   </script>
 </body>
 </html>

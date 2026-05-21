@@ -20,14 +20,7 @@
 import { computeMastery } from './mastery.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { answerKeyMapOrNull, skillMapValidOrNull } from './scoring.js';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function checkTeacherSecret(req) {
-  const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
-  const provided = req.headers['x-teacher-secret'];
-  return !!(teacherSecret && provided === teacherSecret);
-}
+import { requireTeacher } from './teacher-auth.js';
 
 function isTableMissing(error) {
   return !!(error && (error.code === '42P01' || /relation .* does not exist/i.test(error.message || '')));
@@ -93,7 +86,7 @@ export function mountRemediation(app, {
 
   // ── POST /remediation/propose (teacher-gated) ───────────────────────────────
   app.post('/remediation/propose', safeAsync(async (req, res) => {
-    if (!checkTeacherSecret(req)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
     const { studentId, unit, skill, sourceAttempt, assignedRefs, unlocks, notes, proposedBy } = req.body || {};
     if (!studentId || !unit || !skill) {
@@ -126,7 +119,7 @@ export function mountRemediation(app, {
 
   // ── POST /remediation/approve (teacher-gated) ───────────────────────────────
   app.post('/remediation/approve', safeAsync(async (req, res) => {
-    if (!checkTeacherSecret(req)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
     const { assignmentId, approvedBy } = req.body || {};
     if (!assignmentId) return res.status(400).json({ ok: false, error: 'assignmentId is required' });
@@ -172,7 +165,7 @@ export function mountRemediation(app, {
     if (!assignmentId) return res.status(400).json({ ok: false, error: 'assignmentId is required' });
 
     const token = extractTokenFromQueryOrBody(req);
-    const teacherOk = checkTeacherSecret(req);
+    const teacherOk = await requireTeacher(req, db);
     let verifiedStudentId = null;
     if (token) {
       try { verifiedStudentId = verifyToken(token); } catch (_) { verifiedStudentId = null; }
@@ -222,7 +215,7 @@ export function mountRemediation(app, {
 
   // ── POST /remediation/waive (teacher-gated) ─────────────────────────────────
   app.post('/remediation/waive', safeAsync(async (req, res) => {
-    if (!checkTeacherSecret(req)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
     const { assignmentId, notes } = req.body || {};
     if (!assignmentId) return res.status(400).json({ ok: false, error: 'assignmentId is required' });
@@ -271,7 +264,7 @@ export function mountRemediation(app, {
 
   // ── GET /remediation/list?section=&status= (teacher-gated) ──────────────────
   app.get('/remediation/list', safeAsync(async (req, res) => {
-    if (!checkTeacherSecret(req)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
     const section = (typeof req.query.section === 'string' && req.query.section.trim()) || null;
     const status = (typeof req.query.status === 'string' && req.query.status.trim()) || null;
@@ -314,7 +307,7 @@ export function mountRemediation(app, {
   // mount entirely (the other routes still mount). See server.js guard.
   if (db && ledgerDb && loadAnswerKey && loadSkillMap && bkt) {
     app.post('/remediation/propose-from-mastery', safeAsync(async (req, res) => {
-      if (!checkTeacherSecret(req)) return res.status(401).json({ ok: false, error: 'forbidden' });
+      if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
       const { section, dryRun, proposedBy } = req.body || {};
       if (!section) return res.status(400).json({ ok: false, error: 'section is required' });

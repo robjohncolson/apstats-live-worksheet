@@ -13,18 +13,7 @@ import { PHASE3_CONFIG } from './grade-config.js';
 import { answerKeyMapOrNull, skillMapValidOrNull } from './scoring.js';
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function checkTeacherSecret(req, res) {
-  const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
-  const provided = req.headers['x-teacher-secret'];
-  if (!teacherSecret || provided !== teacherSecret) {
-    res.status(401).json({ ok: false, error: 'forbidden' });
-    return false;
-  }
-  return true;
-}
+import { requireTeacher } from './teacher-auth.js';
 
 // Pull all roster rows for the (optional) section, defensively.
 async function listRoster(db, section) {
@@ -66,7 +55,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
   // ── GET /class/grades?section= ──────────────────────────────────────────────
   // Teacher-gated. Fans out computeGrade over the roster.
   app.get('/class/grades', async (req, res) => {
-    if (!checkTeacherSecret(req, res)) return;
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
     let answerKeyDoc;
     try { answerKeyDoc = await loadAnswerKey(); }
@@ -120,7 +109,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
   if (!loadSkillMap || !bkt) return;
 
   app.get('/class/mastery', async (req, res) => {
-    if (!checkTeacherSecret(req, res)) return;
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
     let answerKeyDoc, skillMap;
     try { answerKeyDoc = await loadAnswerKey(); }

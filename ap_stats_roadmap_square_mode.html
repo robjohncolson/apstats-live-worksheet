@@ -1309,19 +1309,6 @@
                     #signin-roster-dropdown .sr-empty{padding:6px 8px;font-style:italic;color:#888;font-size:10px}
                 </style>
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
-                <!-- Teacher access (v4 UX restored after v5 detour 2026-05-20):
-                     compact checkbox + access-code field. Type the correct
-                     code → checkbox auto-checks, status turns green. Click OK
-                     to sign in as teacher. The code field is type=text so
-                     password autofill doesn't intercept it. -->
-                <div style="margin-top:8px;border-top:1px dashed var(--plat-lo);padding-top:6px">
-                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:default">
-                        <input type="checkbox" id="signin-teacher" disabled style="margin:0">
-                        <span>Sign in as teacher</span>
-                        <span id="signin-teacher-status" style="font-size:9px;color:var(--plat-lo);font-style:italic">(enter access code)</span>
-                    </label>
-                    <input type="text" id="signin-teacher-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Teacher access code (optional)" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-top:4px">
-                </div>
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
             </div>
         </div>
@@ -3716,27 +3703,6 @@ function updateStudentMenu() {
   }
 }
 
-// 2026-05-20 v3: DevTools workaround. If a teacher's browser cache is
-// stuck on an old version of the file and the sign-in flow misbehaves,
-// they can paste `makeMeTeacher()` into the console as an immediate
-// promotion. Safe because the same auth check (access code) gates the
-// real path; this is just a manual override for the cached-asset case.
-window.makeMeTeacher = function makeMeTeacher(syntheticName) {
-  try {
-    localStorage.setItem('apstats_user_role', 'teacher');
-    if (!localStorage.getItem('apstats_desk_student_email')) {
-      localStorage.setItem('apstats_desk_student_email', syntheticName || 'teacher@desk.local');
-    }
-    if (typeof updateStudentMenu === 'function') updateStudentMenu();
-    if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
-    console.log('[desk] Promoted to teacher. Teacher menu should now be visible.');
-    return true;
-  } catch (e) {
-    console.error('[desk] makeMeTeacher failed:', e);
-    return false;
-  }
-};
-
 // 2026-05-20: per-device username history → datalist autocomplete.
 // Successful sign-ins push the username onto the list (deduped, capped
 // at 20, most-recent first). Pure client-side; no server endpoint
@@ -3755,9 +3721,6 @@ function _addKnownUser(username) {
   if (!username || typeof username !== 'string') return;
   var clean = username.trim();
   if (!clean) return;
-  // Skip the synthetic standalone-teacher identity — it's not a real
-  // student a teacher would pick from a list.
-  if (clean === 'teacher@desk.local') return;
   try {
     var arr = _loadKnownUsers();
     // De-dupe case-insensitively, preserve original casing of the new entry.
@@ -3903,52 +3866,21 @@ function _closeRosterDropdown() {
   if (dd) dd.style.display = 'none';
 }
 
-// 2026-05-20: teacher access code lives in a const; override via
-// localStorage 'apstats_teacher_access_code' (e.g. for rotation).
-const TEACHER_ACCESS_CODE_DEFAULT = 'google231';
-function _teacherAccessCode() {
-  try {
-    var v = localStorage.getItem('apstats_teacher_access_code');
-    if (v && v.length > 0) return v;
-  } catch (_) {}
-  return TEACHER_ACCESS_CODE_DEFAULT;
-}
-
-// Live feedback as the user types the access code: enables the checkbox
-// + turns the status text green when the code matches. Tolerant: trim +
-// case-insensitive. The actual role promotion happens in submitSignIn's
-// fast-path on click (or via the v4 tolerant-matching fast-path which
-// checks all 3 fields).
-function _onTeacherCodeInput() {
-  var cInp = document.getElementById('signin-teacher-code');
-  var chk = document.getElementById('signin-teacher');
-  var status = document.getElementById('signin-teacher-status');
-  if (!cInp || !chk) return;
-  var typed = (cInp.value || '').trim().toLowerCase();
-  var expected = (_teacherAccessCode() || '').toLowerCase();
-  var match = typed && typed === expected;
-  chk.disabled = !match;
-  if (match) {
-    chk.checked = true;
-    if (status) { status.textContent = '(code accepted)'; status.style.color = '#1f8b3b'; }
-  } else {
-    chk.checked = false;
-    if (status) { status.textContent = '(enter access code)'; status.style.color = ''; }
-  }
-}
-
-// Reflect the persisted user-role into the title bar (show/hide Teacher
-// menu). Called on page load + after sign-in/out.
+// Reflect the server-verified teacher role into the title bar (show or
+// hide the Teacher menu) and keep the apstats_user_role cache in sync
+// with the roster session. Called on page load + after sign-in/out, so
+// a stale or hand-set cache value is corrected on every call.
 function updateUserRoleUI() {
   var teacherMenu = document.getElementById('menu-item-teacher');
+  var who = (window.rosterClient && window.rosterClient.current
+             && window.rosterClient.current()) || null;
+  var isTeacher = !!(who && who.role === 'teacher');
+  try {
+    if (isTeacher) localStorage.setItem('apstats_user_role', 'teacher');
+    else localStorage.removeItem('apstats_user_role');
+  } catch (_) {}
   if (!teacherMenu) return;
-  var role = null;
-  try { role = localStorage.getItem('apstats_user_role'); } catch (_) {}
-  if (role === 'teacher') {
-    teacherMenu.style.display = '';
-  } else {
-    teacherMenu.style.display = 'none';
-  }
+  teacherMenu.style.display = isTeacher ? '' : 'none';
 }
 
 function openSignInModal() {
@@ -3956,8 +3888,6 @@ function openSignInModal() {
   if (!ov) return;
   var uInp = document.getElementById('signin-username');
   var pInp = document.getElementById('signin-password');
-  var cInp = document.getElementById('signin-teacher-code');
-  var chk = document.getElementById('signin-teacher');
   var err = document.getElementById('signin-error');
   if (err) err.textContent = '';
   var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
@@ -3985,21 +3915,6 @@ function openSignInModal() {
       if (!row.contains(e.target)) _closeRosterDropdown();
     });
   }
-  // Reset the teacher code field + wire the visual feedback. Multiple
-  // event types so paste / autofill / fast typing all trigger the
-  // status update. typeof-guarded so DN2c's vm-test sandbox still works.
-  if (cInp) {
-    cInp.value = '';
-    if (typeof _onTeacherCodeInput === 'function') {
-      cInp.oninput = _onTeacherCodeInput;
-      cInp.addEventListener('input', _onTeacherCodeInput);
-      cInp.addEventListener('change', _onTeacherCodeInput);
-      cInp.addEventListener('keyup', _onTeacherCodeInput);
-    }
-    cInp.onkeydown = function (e) { if (e.key === 'Enter') submitSignIn(); };
-  }
-  if (chk) { chk.checked = false; chk.disabled = true; }
-  if (typeof _onTeacherCodeInput === 'function') _onTeacherCodeInput();
   // No-guest-mode wall: when the visitor is not yet signed in the modal is
   // mandatory — hide Cancel; closeSignInModal() then refuses to dismiss it.
   // typeof-guarded so the desk-roster-signin vm-test (which loads only a
@@ -4035,71 +3950,6 @@ async function submitSignIn() {
   var pInp = document.getElementById('signin-password');
   var err = document.getElementById('signin-error');
   if (err) err.textContent = '';
-
-  // 2026-05-20 v4: TEACHER FAST-PATH — TOLERANT MATCHING.
-  // The access code grants teacher role regardless of which of the three
-  // input fields (username, password, teacher-code) the teacher pasted it
-  // into. Trims whitespace; case-insensitive. Console-logs the check so
-  // failures are self-diagnosing. No roster account required.
-  try {
-    var expectedCode = (typeof _teacherAccessCode === 'function')
-                       ? _teacherAccessCode() : null;
-    var fieldsToCheck = [
-      { name: 'teacher-code', el: document.getElementById('signin-teacher-code') },
-      { name: 'password',     el: pInp },
-      { name: 'username',     el: uInp },
-    ];
-    var matchField = null;
-    if (expectedCode) {
-      var expectedLc = String(expectedCode).trim().toLowerCase();
-      for (var i = 0; i < fieldsToCheck.length; i++) {
-        var f = fieldsToCheck[i];
-        if (!f.el) continue;
-        var typed = (f.el.value || '').trim().toLowerCase();
-        if (typed && typed === expectedLc) { matchField = f.name; break; }
-      }
-    }
-    // Console-log every submit attempt so the user (or me, debugging
-    // remotely) can see what was checked + the result. Safe — no
-    // password value is logged.
-    try {
-      console.log('[desk submitSignIn] expected code present:', !!expectedCode,
-                  ' match:', matchField || '(none)');
-    } catch (_) {}
-    if (matchField) {
-      // 2026-05-20 v6: ONLY take the standalone teacher fast-path when no
-      // student credentials are provided. If username+password are also
-      // typed, fall through to the regular roster signin so the teacher
-      // gets a real roster TOKEN (needed for /donow + /grade fetches) AND
-      // the teacher flag set after. Previously the early-return here
-      // skipped roster auth, breaking the Do Now card for teachers who
-      // wanted to test the student experience.
-      var typedUser = (uInp && uInp.value || '').trim();
-      var typedPass = (pInp && pInp.value || '');
-      if (!typedUser || !typedPass) {
-        // Standalone teacher: code only, no credentials. Synthetic identity.
-        localStorage.setItem('apstats_user_role', 'teacher');
-        var teacherIdent = (typedUser && typedUser.toLowerCase() !== expectedLc)
-                         ? typedUser
-                         : 'teacher@desk.local';
-        localStorage.setItem('apstats_desk_student_email', teacherIdent);
-        // Remember a real username if one was typed (skip the synthetic).
-        if (typeof _addKnownUser === 'function' && teacherIdent !== 'teacher@desk.local') {
-          _addKnownUser(teacherIdent);
-        }
-        updateStudentMenu();
-        if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
-        closeSignInModal();
-        showDialog('\u{1F464}', 'Signed in as teacher. (Teacher menu now available.)', 'OK');
-        return;
-      }
-      // Else: credentials are present. Fall through to roster signin.
-      // The teacher flag will be set in the post-signin block below
-      // (which already uses the same tolerant-matching check).
-    }
-  } catch (e) {
-    try { console.warn('[desk submitSignIn] teacher fast-path error:', e); } catch (_) {}
-  }
 
   if (!window.rosterClient || !window.rosterClient.signIn) {
     if (err) err.textContent = 'Sign-in unavailable (offline). Try again on the school network.';
@@ -4140,36 +3990,9 @@ async function submitSignIn() {
     registerStudent(legacyKey);
     // 2026-05-20: remember this username for the sign-in dropdown.
     if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
-    // 2026-05-20 v6: re-check teacher access code AFTER successful roster
-    // signin, using the same tolerant v4 matching (any of 3 fields, trim,
-    // case-insensitive). This is the "teacher with a real student account"
-    // path — token from roster + teacher flag from code. The earlier
-    // standalone fast-path handled "teacher without an account."
-    try {
-      var expectedAfter = (typeof _teacherAccessCode === 'function') ? _teacherAccessCode() : null;
-      var codeMatchAfter = false;
-      if (expectedAfter) {
-        var expectedLcAfter = String(expectedAfter).trim().toLowerCase();
-        var fieldsAfter = [
-          document.getElementById('signin-teacher-code'),
-          pInp,
-          uInp,
-        ];
-        for (var iAfter = 0; iAfter < fieldsAfter.length; iAfter++) {
-          var fEl = fieldsAfter[iAfter];
-          if (!fEl) continue;
-          if ((fEl.value || '').trim().toLowerCase() === expectedLcAfter) {
-            codeMatchAfter = true;
-            break;
-          }
-        }
-      }
-      if (codeMatchAfter) {
-        localStorage.setItem('apstats_user_role', 'teacher');
-      } else {
-        localStorage.removeItem('apstats_user_role');
-      }
-    } catch (_) {}
+    // Teacher-ness comes from the server-verified roster role. updateUserRoleUI()
+    // below re-derives it from rosterClient.current().role and syncs the
+    // apstats_user_role cache -- there is no access code anymore.
     updateStudentMenu();
     if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
     closeSignInModal();

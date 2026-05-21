@@ -112,14 +112,17 @@ describe('Phase 4b — roster-server modules ship', () => {
     expect(REM_MOD).toMatch(/remediation table not yet provisioned/);
   });
 
-  it('/remediation/complete accepts EITHER a student token OR a teacher secret', () => {
-    // Look for both gate checks in the same handler.
+  it('/remediation/complete accepts EITHER a student token OR a teacher (requireTeacher)', () => {
+    // WI-2: checkTeacherSecret replaced by imported requireTeacher from teacher-auth.js.
+    // Both paths must be present in the same handler.
     const completeIdx = REM_MOD.indexOf("app.post('/remediation/complete'");
     expect(completeIdx).toBeGreaterThan(0);
     const handler = REM_MOD.slice(completeIdx, completeIdx + 2500);
+    // Student-token path.
     expect(handler).toMatch(/verifyToken/);
-    expect(handler).toMatch(/checkTeacherSecret/);
-    // Token-branch cross-student check (403)
+    // Teacher path via requireTeacher (the new implementation of the teacher gate).
+    expect(handler).toMatch(/requireTeacher/);
+    // Token-branch cross-student check (403).
     expect(handler).toMatch(/status\(403\)/);
   });
 });

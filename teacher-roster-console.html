@@ -191,6 +191,7 @@
           <label for="teacher-secret">Teacher secret</label>
           <input id="teacher-secret" type="password" autocomplete="off" spellcheck="false"
                  placeholder="x-teacher-secret">
+          <span class="hint" id="session-status"></span>
         </div>
       </div>
       <div class="btn-row">
@@ -291,6 +292,11 @@
 
   </div>
 
+  <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
+  <script src="roster_config.js"></script>
+  <!-- Roster identity client; provides window.rosterClient.token() and .current() -->
+  <script src="roster-client.js"></script>
+
   <script>
     // ── helpers ────────────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
@@ -358,6 +364,12 @@
     async function api(method, path, { body, secret } = {}) {
       const headers = { 'Content-Type': 'application/json' };
       if (secret) headers['x-teacher-secret'] = secret;
+      // If a roster teacher session is active, also send the Bearer token.
+      // The server accepts either; sending both is fine and covers the
+      // pre-migration window where the secret is still required by the human.
+      const _tok = (typeof window !== 'undefined' && window.rosterClient)
+        ? window.rosterClient.token() : null;
+      if (_tok) headers['Authorization'] = 'Bearer ' + _tok;
       const res = await fetch(svcUrl() + path, {
         method,
         headers,
@@ -479,11 +491,34 @@
       return { ok: false, error: (data && data.error) || ('HTTP ' + status) };
     }
 
+    // Helper: true when there is an active roster session token (teacher or not).
+    function hasTok() {
+      return !!(typeof window !== 'undefined' && window.rosterClient && window.rosterClient.token());
+    }
+
+    // Show "Signed in as <name> (teacher)" or hint in the Connection section.
+    function renderSessionStatus() {
+      const el = $('session-status');
+      if (!el) return;
+      const session = (typeof window !== 'undefined' && window.rosterClient)
+        ? window.rosterClient.current() : null;
+      if (session && session.role === 'teacher') {
+        el.textContent = 'Signed in as ' + session.realName + ' (teacher) — secret is optional.';
+        el.style.color = '#2e7d32';
+      } else if (session) {
+        el.textContent = '(signed in as student — enter the teacher secret above)';
+        el.style.color = '#5a5045';
+      } else {
+        el.textContent = 'Optional when signed in as a teacher via the Desk.';
+        el.style.color = '#5a5045';
+      }
+    }
+
     // ── enroll a class ─────────────────────────────────────────────────────────
     let lastEnrollRows = [];
     $('enroll-btn').addEventListener('click', async () => {
       const msg = $('enroll-msg');
-      if (!teacherSecret()) { setMsg(msg, 'Enter the teacher secret first.', 'err'); return; }
+      if (!teacherSecret() && !hasTok()) { setMsg(msg, 'Enter the teacher secret, or sign in as a teacher via the Desk first.', 'err'); return; }
 
       const lines = $('class-list').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       if (lines.length === 0) { setMsg(msg, 'Paste at least one student.', 'err'); return; }
@@ -550,7 +585,7 @@
     // ── add one ────────────────────────────────────────────────────────────────
     $('one-btn').addEventListener('click', async () => {
       const msg = $('one-msg');
-      if (!teacherSecret()) { setMsg(msg, 'Enter the teacher secret first.', 'err'); return; }
+      if (!teacherSecret() && !hasTok()) { setMsg(msg, 'Enter the teacher secret, or sign in as a teacher via the Desk first.', 'err'); return; }
       const realName = $('one-name').value.trim();
       const section = $('one-section').value.trim();
       const password = $('one-password').value;
@@ -569,7 +604,7 @@
     let lastViewRows = [];
     $('view-btn').addEventListener('click', async () => {
       const msg = $('view-msg');
-      if (!teacherSecret()) { setMsg(msg, 'Enter the teacher secret first.', 'err'); return; }
+      if (!teacherSecret() && !hasTok()) { setMsg(msg, 'Enter the teacher secret, or sign in as a teacher via the Desk first.', 'err'); return; }
 
       const section = $('view-section').value.trim();
       const path = '/roster/list' + (section ? '?section=' + encodeURIComponent(section) : '');
@@ -615,6 +650,9 @@
       const stamp = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
       downloadCsv('roster-view-' + stamp + '.csv', lastViewRows);
     });
+
+    // Render session status on page load (after roster-client.js has run).
+    renderSessionStatus();
   </script>
 </body>
 </html>

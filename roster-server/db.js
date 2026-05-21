@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, updatePassword, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, getRoleByStudentId, updatePassword, listRoster };
 
   // Phase 6: look up a single roster row by student_id — used by /grade to
   // resolve the student's section for the lesson-due date filter. The
@@ -33,6 +33,24 @@ export function createDb(client) {
       .select('student_id, section')
       .eq('student_id', studentId)
       .maybeSingle();
+  }
+
+  // Defensive role lookup. Returns 'teacher' or 'student'.
+  // Degrades to 'student' on ANY error (missing column pre-migration, missing
+  // row, DB error) -- never throws. Sign-in is NEVER modified to call this.
+  async function getRoleByStudentId(studentId) {
+    try {
+      const result = await client
+        .from('roster')
+        .select('role')
+        .eq('student_id', studentId)
+        .maybeSingle();
+      if (result.error || !result.data) return 'student';
+      const role = result.data.role;
+      return role === 'teacher' ? 'teacher' : 'student';
+    } catch (_) {
+      return 'student';
+    }
   }
 
   // Insert a new roster row.

@@ -19,6 +19,7 @@ import { mountClass } from './class.js';
 import { mountRemediation } from './remediation.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
+import { requireTeacher } from './teacher-auth.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -52,10 +53,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   //   → 200 { ok:true, studentId, username, realName, section }
   //   → 400 missing field · → 401 bad teacher secret · → 500 on failure
   app.post('/roster/enroll', async (req, res) => {
-    // Teacher auth check
-    const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
-    const provided = req.headers['x-teacher-secret'];
-    if (!teacherSecret || provided !== teacherSecret) {
+    // Teacher auth check (WI-2d: secret OR verified teacher token).
+    if (!await requireTeacher(req, db)) {
       return res.status(401).json({ ok: false, error: 'forbidden' });
     }
 
@@ -154,13 +153,23 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       return res.status(500).json({ ok: false, error: 'Failed to issue token' });
     }
 
+    // WI-2b: look up role defensively -- degrades to 'student' on any error.
+    // Sign-in never depends on this; a failure here must not break sign-in.
+    let role = 'student';
+    try {
+      role = await db.getRoleByStudentId(data.student_id);
+    } catch (_) {
+      role = 'student';
+    }
+
     return res.json({
       ok: true,
       studentId: data.student_id,
       token,
       realName: data.real_name,
       section: data.section,
-      mustChangePassword: !!data.must_change_password
+      mustChangePassword: !!data.must_change_password,
+      role
     });
   });
 
@@ -233,10 +242,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // currentPassword is the decrypted current password (teacher login-recovery),
   // or null when the cipher is absent / undecryptable / ROSTER_PW_ENC_KEY unset.
   app.get('/roster/list', async (req, res) => {
-    const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
-    const provided = req.headers['x-teacher-secret'];
-
-    if (!teacherSecret || provided !== teacherSecret) {
+    // Teacher auth check (WI-2d: secret OR verified teacher token).
+    if (!await requireTeacher(req, db)) {
       return res.status(401).json({ ok: false, error: 'forbidden' });
     }
 

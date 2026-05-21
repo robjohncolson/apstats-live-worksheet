@@ -214,8 +214,12 @@
     }
 
     function currentRole() {
+      // Teacher-ness comes from the server-verified roster session role,
+      // not a client-set localStorage flag.
       try {
-        return localStorage.getItem('apstats_user_role') || null;
+        var s = (typeof window.rosterClient !== 'undefined')
+          ? window.rosterClient.current() : null;
+        return (s && s.role) ? s.role : null;
       } catch (_) {
         return null;
       }
