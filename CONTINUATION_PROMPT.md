@@ -1,86 +1,178 @@
-# Continuation Prompt — Gradebook Autonomous Loop
+# Continuation Prompt — Gradebook + Desk Polish (session 102)
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below the
 > "PRIOR PROVENANCE" divider — do not act on any older "NEXT THREAD"/SESSION
-> text; it is kept only as historical record.** Updated 2026-05-20 (session
-> 101, autonomous loop: T1 T2 DONE; T2 Phase-2 DONE+PROD; T3 Phase-3
-> DONE+PROD (`801dccc`); T4 Phase-4a DONE+PROD (`d68e98b`+`13cb326`);
-> T5 Phase-5 DONE+PUSHED (`e592d1b`); T6 Phase-4b CODE-COMPLETE+PUSHED
-> (`5a46f19`, deploy blocked on Railway outage); T7 Phase-5.1
-> DONE+PUSHED (`66faaf1`); **T8 DESK_MODAL_POLISH DONE+PUSHED (`63d8559`,
-> 2026-05-20)** — inline quiz score input replacing native `prompt()` +
-> optimistic Done-button latch + modal-scoped keyboard shortcuts (letters
-> a-h jump to/open rows, numbers 1-3 fire within-row actions, visual
-> badges, focus-outline persists across the 120ms `recordLinkVisit`
-> re-render, active-element + modifier guards, ESC closes). Codex 0BLK+
-> 2MAJ+4MIN folded: (1) blank input was `Number('')`→0 silent zero-score
-> write → trim+empty-string check before coercion (pin 18); (2)
-> `_focusedLetter` was closure-level → re-render wiped focus → moved to
-> module scope with re-attach restore + closeResourcePanel reset (pins
-> 19/20). `tests/desk-modal-polish.test.js` 20/20; root **1672/1673**
-> (1 known unrelated fail); `phase5-structure` 32/32 unchanged; audit
-> CLEAN 69; LF preserved; Playwright smoke verified focus persistence +
-> blank-input rejection live in headless Chromium. Per-unit "🤖 Unit N PC
-> tutor" copy button (T7) rendered alongside each lesson tile's tutor
-> button (PCs aren't standalone tiles in the schedule so the lesson-tile
-> surface is the right home); shared `_copyTutorPromptByPath` helper now
-> backs both buttons; tests/phase5-structure.test.js tightened to 32/32
-> per Codex MINOR folds. All 75 ai-tutor artifacts (66 lesson + 9 PC) now
-> reachable from the Desk. T6 Phase-4b shipped: `remediation_assignment` write loop —
-> 8 additive
-> roster-server endpoints (propose/approve/complete/waive/
-> propose-from-mastery/list/student/unlocks), `teacher-dashboard.html`
-> Remediation panel, migration `0004_remediation_assignment.sql`,
-> `roster-server/tests/remediation.test.js` 50/50, `tests/phase4b-
-> structure.test.js` 16/16, all Codex 0BLK+4MAJ+2MIN folded.
-> **⚠ ONE USER-OWNED HANDOFF still pending (blocked on confirmed Railway
-> outage — IsDown reported 1593 user reports / 24h on 2026-05-19 8:06 PM
-> EDT):** once Railway is back up, user runs `railway login` then I run
-> `cd roster-server && railway up --ci -s roster`. The OAuth-503/404, the
-> silent `railway login`, and the "Application not found" on
-> `roster-production-12c1.up.railway.app/health` (`X-Railway-Fallback:
-> true`) are ALL symptoms of the outage — NOT an auth-flow drift or a
-> service-URL change. The service was prod-verified through `13cb326`.
-> Do NOT spend reload debugging Railway plumbing; just retry the deploy
-> once Railway is green. **✅ The Supabase migration step is DONE: user
-> ran `roster-server/migrations/0004_remediation_assignment.sql` on
-> 2026-05-19 (curriculum_render Supabase, `bzqbhtrurzzavhqbgqrs`). The
-> `remediation_assignment` table is live in the DB.** Once the deploy
-> lands, /remediation/* should return 200 (not 503) — smoke-test with
-> `curl -H "x-teacher-secret: $S" $BASE/remediation/list` and expect a
-> `{ok:true, assignments:[]}` shape.
+> text; it is kept only as historical record.** Last updated 2026-05-20
+> (session 102, post-Task-#8 long-tail of Desk UX polish + Phase 6).
+> HEAD = `242c34f`. Linear, local==origin.
 >
-> **✅ TASK #8 DESK_MODAL_POLISH DONE+PUSHED (`63d8559`, 2026-05-20).**
-> See Task #8 below for the shipped detail. Loop method held: freeze
-> contract → ONE Sonnet for the contended file → planner re-verify on
-> disk (root tests + audit + Playwright headless smoke against
-> localhost:8000/8091) → Codex read-only review → fold all findings
-> (2 MAJOR this round, both caught by Codex) → tight commit + push.
-> NO roster-server change → auto-deploy on `roster-server/**` watch did
-> NOT fire (correct).
+> ## ✅ Everything shipped through session 101 (gradebook autonomous loop)
+> All eight T1–T8 phases live in prod (`ccbf75f` baseline). Phase 4b
+> finally rolled (`f6305703` deploy SUCCESS 2026-05-20 15:24 UTC) after
+> Railway recovered from a 48h-stretch of 3 distinct failure modes
+> (24h OAuth/GCP outage; railpack v0.23.0 path-concat regression on
+> deploy `e52eab15`; then a stuck-DEPLOYING traffic-switch lag). Both
+> user-owned handoffs CLOSED (Supabase migration `0004` was already
+> done 2026-05-19). `/remediation/list` returns 401 now (route mounted,
+> teacher-gated) — was 404 before.
 >
-> **NEXT LOOP TASK = wrap session.** All shipped: Tasks #1-#8 DONE.
-> **✅ Phase 4b NOW LIVE IN PROD (2026-05-20 15:24 UTC, deploy
-> `f6305703-eb12-478d-bae9-ef9d1035fb0e` SUCCESS).** `/remediation/list`
-> returns 401 (route mounted, gated on teacher secret) — was 404 before
-> (route missing). Both user-owned handoffs CLOSED: (a) Railway redeploy
-> finally succeeded after 3 distinct Railway-side failures in 48h —
-> railpack v0.23.0 path-concat regression (deploy `e52eab15` failed at
-> snapshot-unpack with `directory .../snapshot-target-unpack/ roster-server
-> does not exist` — pure Railway bug, fixed by their upgrade to
-> `mise-2026.3.17`), then `f6305703` was stuck in DEPLOYING for 30+min
-> before traffic-switch lag resolved itself. (b) Supabase migration
-> already done 2026-05-19. **Strategic next**: user committed to
-> migrating Railway → DigitalOcean before next Railway billing cycle
-> (see [[railway-to-digitalocean]]). Tier 1 = roster-server only to a
-> $6/mo DO droplet, Supabase stays. ~3-4h work; client-code change is
-> just `ROSTER_SERVICE_URL` in `roster_config.js`. No other open code
-> work. Recall memories first: `project_gradebook_grading_model.md`,
-> `project_desk_donow.md` (now includes Task #8 detail),
-> `project_gradebook_phase0.md`, `project_ai_tutor_pilot.md`,
-> `project_roster_teacher_tools.md`,
+> ## ✅ Phase 6 SHIPPED — lesson-weighted, date-driven `quarterGrade`
+> Three commits + two hotfixes implemented the user's cumulative-progress
+> grading model. Replaced Phase 3's "mean of GRADED units" with a
+> lesson-level engine that counts lessons due-by-today (per student
+> section), with un-attempted due lessons contributing 0.
+>
+> - **Phase 6 base** (`7f93ab1`): NEW `roster-server/lesson-grade.js`
+>   (pure: item-ID parser for 5 patterns; combined-worksheet expansion;
+>   lesson aggregation; date filter; lessons[] builder). NEW
+>   `scripts/build-lesson-schedule.mjs` → bundled
+>   `roster-server/data/lesson-schedule.json` (77 lessons; 7
+>   combined-worksheet groups: 3.6-7, 4.1-2, 4.3-4-5, 4.7-8, 4.10-11-12,
+>   5.1-2, 6.1-2). `roster-server/grade.js` integrates lesson-level
+>   math; `units` field stays unchanged for the teacher dashboard.
+>   `grade-config.js` bands updated: Q1=[1,2,3] Q2=[4,5] Q3=[6,7]
+>   Q4=[8,9]; `schoolTz='America/New_York'`. Desk gets per-day
+>   click-through modal (dblclick / right-click any calendar cell →
+>   shows lesson grades for that day). Codex 1BLK+3MAJ+1MIN folded:
+>   BLK = section was being read from ledger rows (which don't persist
+>   it) → added `db.findByStudentId`; MAJ1 = `/class/grades` not
+>   passing schedule → threaded through; MAJ2 = missing-schedule
+>   fallback reverted to unit-mean → now uses lesson-level math
+>   without date filter (`expandLessonKey` synthesizes topicKey on
+>   null schedule); MAJ3 = malformed-entry crash guards; MIN =
+>   contextmenu missing stopPropagation.
+> - **Phase 6 hotfix** (`368ff11`): `gradingWindowStart='2026-09-01'`
+>   excludes stale prior-year dates left in the schedule from a finished
+>   cohort. Q3/Q4 lessons in roadmap carried April-2026 dates from
+>   SY25-26; without the filter they all flagged "past-due" for the new
+>   cohort and showed 0% ↑100. Filter removes any band lesson whose
+>   period dates are ENTIRELY before the window start. Lessons with
+>   null dates OR with at least one date >= window stay in the band.
+>   Annual cutover knob — bump to '2027-09-01' next year.
+> - **Phase 6 v2** (`aaa7ca0`): ahead-of-schedule work counts.
+>   `dueLessons = (due-by-date) ∪ (lessons-with-recorded-work)`. So a
+>   student who did 2 FRQs in lesson 1.1 today (May 2026, pre-cohort)
+>   sees Q1 reflect that work instead of an empty pill. Same commit
+>   stripped the resource-modal keyboard navigation (the [a][b][1][2][3]
+>   badge UX from Task #8) — teacher said "looks weird, feels weird."
+>   Modal-scoped keydown handler + `_focusedLetter` + badges all gone;
+>   regression guards added.
+>
+> Phase 6 GREEN: roster-server **280/280** (was 223 → +57 across
+> Phase 6 + v2 + hotfix + roster picker); root **1769/1770** (only known
+> pre-existing study-guide.test.js fail).
+>
+> ## ✅ Long-tail Desk UX polish (sessions 102 follow-on)
+>
+> Many small commits driven by teacher feedback. The Desk file
+> (`ap_stats_roadmap_square_mode.html`) is the contended surface; all
+> changes are planner-direct (no Sonnet fan-out since v5 detour) and
+> EOL LF preserved.
+>
+> - **Keyboard rework + Q1-Q4 grade outlook strip** (`381a442`): letters
+>   a-h SELECT only, no auto-open (then later removed entirely in
+>   `aaa7ca0`); compact `[Q1: X.X ↑Y.Y]` quarter pills inside the Do Now
+>   card; XSS-safe via createElement+textContent; typeof-guarded fire-
+>   and-forget call from renderDoNow.
+> - **Blooket flashcard verification** (`a24bacc`): replaces the
+>   self-attest score-prompt with a flashcard quiz sourced from the
+>   same `u{U}_l{L}_blooket.csv` that built the live Blooket game.
+>   Single pass ≥80% to unlock Done; auto-mark on pass; retry on fail.
+>   15-min visit gate for Blooket specifically (vs 5-min default for
+>   worksheet/quiz). Phase-3 spec preserved: Blooket score still NOT
+>   recorded to gradebook ledger; only legacy student_progress for
+>   teacher review. 15 structure pins in
+>   `tests/desk-blooket-flashcards.test.js`; Playwright smoke loops
+>   through all 28 cards of u8_l1_blooket.csv → modal auto-closes → Done
+>   mark persisted with score=100.
+> - **Date-aware AP Classroom video links** (`ee38ca9`): before
+>   `SCHOOL_YEAR_START='2026-09-01'`, AP Classroom URLs hidden; Drive
+>   `altUrl` rendered as the primary "Video N" link (no "(alt)" suffix).
+>   If a video has no altUrl AND AP isn't available yet: rendered as a
+>   locked strike-through placeholder. `localStorage.apstats_desk_today_override`
+>   for teacher preview. Fails open (any error → returns true).
+> - **Teacher menu** (`3160606`): new menu next to "Student" with three
+>   items — Gradebook Dashboard, Roster Console, Unlock Code Generator.
+>   Opens in new tabs; auth handled by destination pages.
+> - **Flashcard progress save+resume + user-role gating** (`db4fe30`):
+>   per-(student,topic) flashcard state persisted; "Student" menu
+>   renamed to "User"; Teacher menu hidden by default unless
+>   `apstats_user_role==='teacher'`. Initial sign-in modal got a Teacher
+>   checkbox + access-code input.
+>
+> ## 🪤 The typo episode (six iterations, one wasted afternoon)
+>
+> Teacher reported "can't sign in as teacher, checkbox always greyed
+> out." I shipped six progressive code fixes (`ee4b60b` →
+> `da693c7` → `05dbd2a` → `02ddf0b` → `b7d5932`) chasing speculation:
+> type=password→text, redundant addEventListeners, code-is-gate (not
+> checkbox), standalone fast-path (no roster required), tolerant
+> matching across all 3 fields, dedicated "Sign in as teacher" button.
+> When I finally asked for diagnostic output, the console said
+> `match: (none)` — teacher was typing **"googly231"** instead of
+> **"google231"** (`googL`y vs `google`). A typo. Every UI change was
+> wasted motion. **Reverted to v4 checkbox UX** (`b7d5932`); kept the
+> defensive scaffolding (tolerant matching, makeMeTeacher fallback,
+> type=text, console diagnostics).
+>
+> Lesson saved to memory as `feedback_diagnostic_first.md`:
+> when a user says "X doesn't work" twice in a row, **STOP coding and
+> ask for diagnostic data** (console output, what's being typed,
+> screenshot). One round of inspection beats N rounds of speculation.
+>
+> ## ✅ Teacher+student combo signin + Do Now nudge text (`31f5195`)
+>
+> Bug: teacher signing in with username+password+code got
+> `role=teacher` but no roster token → Do Now card showed "Sign in"
+> nudge because /donow couldn't authenticate. Fix: fast-path
+> early-return ONLY when credentials are empty (standalone teacher
+> mode); else fall through to roster signin AND set teacher flag in
+> the post-signin block (which now uses the same tolerant v4 matching
+> across all 3 fields). Also: Do Now nudge text "Student ▸ Gradebook"
+> updated to "User ▸ Sign In" to match the renamed menu. Welcome
+> dialog now reads "Signed in as X (teacher mode)" when role is set.
+>
+> ## ✅ Sign-in username dropdown — TWO layers
+>
+> - **Local history** (`da866ca`): native `<datalist>` backed by
+>   `localStorage.apstats_desk_known_users` (cap 20, dedup case-
+>   insensitively, most-recent-first, skip synthetic
+>   `teacher@desk.local`). Each successful sign-in remembers the
+>   username on THAT device.
+> - **Server-backed roster picker** (`242c34f`): NEW public endpoint
+>   `GET /roster/section/:section` on roster-server (no auth; no
+>   password info — pinned by tests). Custom dropdown below the
+>   username input opens on focus/click; shows every classmate in the
+>   current period (B or E) sorted by real name; type to filter on
+>   either real name OR username; click a row → fills username, focuses
+>   password. 1h localStorage TTL; outside-click + Escape close.
+>   Solves "students remember their name but not their username."
+>
+> Combined: a student opens the modal → dropdown shows everyone in
+> their period → they find their name → one click fills username →
+> they only have to type their password.
+>
+> ## 📦 Strategic — Railway → DigitalOcean migration still queued
+>
+> Tier 1 plan unchanged ([[railway-to-digitalocean]]): roster-server
+> only → $6/mo DO droplet (Ubuntu 24.04 + Caddy + systemd + Node 22);
+> Supabase stays as managed DB; ~3-4h work; client change is just
+> `ROSTER_SERVICE_URL` in `roster_config.js`. Trigger: before next
+> Railway bill OR user invokes. Railway is functional right now; no
+> rush.
+>
+> ## NEXT LOOP TASK = wrap session
+>
+> No open code work. The Desk is in a good shape for the Sept-1 cohort
+> cutover; the gradebook engine is at Phase 6; teacher tooling
+> accessible from the Desk; flashcard mastery gates Blooket; the
+> roster picker dropdown unblocks first-time sign-ins. Recall memories
+> first: `project_gradebook_grading_model.md`, `project_desk_donow.md`
+> (Task #8 detail), `project_gradebook_phase0.md`,
+> `project_ai_tutor_pilot.md`, `project_roster_teacher_tools.md`,
 > `feedback_curriculum_render_sacred.md`,
-> **`project_railway_to_digitalocean.md`** (new — migration plan).
+> `project_railway_to_digitalocean.md`, **`feedback_diagnostic_first.md`**
+> (the diagnostic-first lesson from the typo episode).
 
 ## ➡ ON RELOAD: RUN THE AUTONOMOUS LOOP (user-authorized, session 100)
 
@@ -577,59 +669,65 @@ and all relevant guards pass:
 
 ### Current shipped state (the cold-reload baseline)
 
-- **follow-alongs `master` HEAD `63d8559`** (Task #8 DESK_MODAL_POLISH).
-  Lineage: `63d8559` Task #8 ← `8f0ba44` (docs queue) ← `633013c`
-  per-quarter ceiling-projection ← `d82841b` roster-prefill (all 69
-  worksheets inherit identity from Desk sign-in) ← `540d168` Desk Done
-  buttons (latched local + visit gate + visited indicator) ← `366ca2b`
-  Desk getStudentEmail bridge + AI-tutor AI_TUTOR_LESSON_KEYS gate ←
-  `3036bd5` roster_config auto-detect localhost ← `d7232a0` teacher-tools
-  URL dropdown + opt-in localStorage secret + GLOBAL_OVERRIDE_KEY ←
-  `45251ef` (docs refresh — SQL applied) ← `83a750d` (docs refresh) ←
-  `c3be95c` (docs refresh) ← `66faaf1` Phase-5.1 ← `5a46f19` Phase-4b ←
-  `ce864fe` (docs refresh) ← `e592d1b` Phase-5 ← `a0c7a93` (docs refresh)
-  ← `13cb326` Phase-4a hotfix ← `d68e98b` Phase-4a ← `deff78b` ←
-  `801dccc` Phase-3 ← `4969715` ← `00e7a6c` Phase-2 ←
-  `13c7026`/`92a0f46` TR0–TR4 ← `469c4fd` ← `4140afe`/`1565fd5` T2 ←
-  `52ac6a7` DN3c. Linear, local==origin.
+- **follow-alongs `master` HEAD `242c34f`** (server-backed roster
+  picker dropdown). Lineage (most-recent first):
+  `242c34f` roster picker server endpoint + searchable client dropdown
+  ← `da866ca` local datalist autocomplete ← `31f5195` teacher+student
+  combo signin + Do Now nudge text fix
+  ← `b7d5932` revert to checkbox UX (the typo episode end)
+  ← `02ddf0b` → `05dbd2a` → `da693c7` → `ee4b60b` (4 wasted iterations
+  on teacher signin UX, kept for provenance)
+  ← `db4fe30` flashcard progress save+resume + user-role gating +
+  teacher checkbox ← `3160606` Teacher menu ← `a24bacc` Blooket
+  flashcard verification + 15-min gate ← `ee38ca9` Blooket inline
+  %-correct prompt (later removed) + date-aware AP Classroom video
+  links ← `aaa7ca0` Phase 6 v2 (ahead-of-schedule + strip keyboard
+  nav) ← `368ff11` Phase 6 hotfix (gradingWindowStart filter) ←
+  `7f93ab1` Phase 6 base (lesson-weighted date-driven quarterGrade +
+  per-day click-through) ← `381a442` keyboard rework + grade outlook
+  strip ← `3de5fd1` Phase 4b live docs ← `ccbf75f` (docs queue —
+  was previous baseline) ← `63d8559` Task #8 ← (earlier lineage
+  preserved in prior provenance below). Linear, local==origin.
 - **curriculum_render `main` HEAD `1ccd8a2`** (DN2d; sacred `curriculum.js`
-  untouched — never re-touched; Phase-2/3/4 only READ it).
-- **roster-server PROD STATE UNCERTAIN** (was
-  `https://roster-production-12c1.up.railway.app`; project
-  `apstats-roster`): all Phase-0/1/donow/rollup/grade/mastery/class/TR
-  code was previously deployed & prod-smoke-verified through `13cb326`.
-  Phase 5 did NOT touch roster-server (client-side only). **Phase 4b
-  redeploy was BLOCKED** at end of session 100: `railway up --ci -s
-  roster` errored with "OAuth Token refresh failed: HTTP 503 Service
-  Unavailable. Please run `railway login` again." AND a `curl
-  https://roster-production-12c1.up.railway.app/health` returned 404
-  "Application not found" (X-Railway-Fallback: true). This suggests
-  EITHER a wider Railway outage at deploy time, OR the production
-  service URL drifted. User must: (a) re-run `railway login` (fresh
-  OAuth), (b) check the Railway dashboard for `apstats-roster` /
-  `roster` service health + the current public URL (`railway domain` or
-  the dashboard), (c) re-run `cd roster-server && railway up --ci -s
-  roster` to ship Phase 4b. If the URL has drifted, the
-  client-side `roster_config.js`'s `ROSTER_SERVICE_URL` may also need
-  update (search the repo for the URL string).
+  untouched — never re-touched; Phase-2/3/4/6 only READ it).
+- **roster-server PROD STATE: LIVE** (`https://roster-production-12c1.up.railway.app`;
+  project `apstats-roster`; svc `roster`). Last successful deploy =
+  `f6305703` (2026-05-20 15:24 UTC) for Phase 4b. NEW endpoints since
+  then need a redeploy: Phase 6 (`/grade` lesson-level + lessons[]
+  + `/class/grades` schedule), Phase 6 hotfix (gradingWindowStart),
+  Phase 6 v2 (no roster-server change — client-only), and the
+  roster picker (`/roster/section/:section`). The auto-deploy on
+  `roster-server/**` watch path should have fired on each Phase 6
+  commit. **VERIFY:** `curl https://roster-production-12c1.up.railway.app/roster/section/PeriodB`
+  should return `{ok:true, section:"PeriodB", students:[...]}` —
+  if 404, the auto-deploy hasn't landed yet (wait ~3 min after
+  the last roster-server push or trigger a manual redeploy).
+  Health endpoint always works; the question is whether the NEW
+  endpoints from Phase 6 + roster picker are live.
 - **Concurrent TR session: DONE & deployed** (TR0–TR4 committed + live;
   `ROSTER_PW_ENC_KEY` set; reversible AES-256-GCM, bcrypt sole auth). Idle.
 - **Concurrent AI-tutor session: idle/done** (`9207d24`); its artifacts in
   `ai-tutor/u{U}_l{L}.md` are the source for the Phase-5 Desk-tile prompt.
-- Test baseline (post-`63d8559`): follow-alongs root **1672/1673** (only
-  the same known unrelated study-guide.test.js fail; +20 from the new
-  `tests/desk-modal-polish.test.js` since the `633013c` baseline of
-  1652/1653). roster-server **223/223** (was 219 → +4 from the per-
-  quarter ceiling tests in `tests/grade.test.js`; Task #8 did not touch
-  roster-server). `audit-feeder-ids` CLEAN 69; phase4-structure 17/17 +
-  phase4b-structure 16/16 + phase5-structure 32/32 + desk-modal-polish
-  20/20. **Live state in prod**: as of 2026-05-20 14:35 UTC, prod is on
-  the Phase-4a baseline (last working deploy) — Phase 4b code
-  (`5a46f19`), Phase 5/5.1, Desk UX (Task #8), roster-prefill, and
-  ceiling projection are all pushed to `master` but the Phase 4b
-  endpoints are NOT yet auto-deployed (Task #8 does not touch
-  roster-server, so its push did not fire the auto-deploy either —
-  correct).
+- Test baseline (post-`242c34f`): follow-alongs root **1769/1770**
+  (only the same known unrelated study-guide.test.js fail; +97 from the
+  `63d8559` Task-#8 baseline of 1672/1673 across all the Phase 6 +
+  Desk polish + roster picker work). roster-server **280/280**
+  (was 223 → +57 from Phase 6 + Phase 6 v2 + hotfix + the new public
+  `/roster/section/:section` endpoint). `audit-feeder-ids` CLEAN 69;
+  phase4-structure 17/17 + phase4b-structure 16/16 + phase5-structure
+  32/32 + desk-modal-polish 17/17 (revised down from 22 after
+  keyboard-nav removal; regression guards added) + desk-blooket-flashcards
+  24/24 (new) + desk-day-grade-modal 15/15 (new) + desk-grade-outlook
+  18/18 + desk-video-availability 10/10 (new) + desk-user-role 32/32
+  (new + heavily extended through the teacher-signin saga). **Live
+  state in prod**: Phase 4b confirmed live (`f6305703` 2026-05-20
+  15:24 UTC) — `/remediation/list` returns 401. Phase 6 endpoints
+  (`/grade` lesson-level + lessons[]; `/class/grades` schedule;
+  `/roster/section/:section`) should be live too if the auto-deploy
+  watch on `roster-server/**` fired correctly on each push since.
+  **Verify with**: `curl https://roster-production-12c1.up.railway.app/roster/section/PeriodB`
+  → expect `{ok:true, section:"PeriodB", students:[...]}` or empty
+  array. If 404, auto-deploy missed; trigger manually.
   Background: Railway suffered a major outage 2026-05-19 → 2026-05-20
   (GCP-side block + non-enterprise build pause); user configured
   GitHub auto-deploy on `roster-server/**` watch path during recovery.
