@@ -1,3 +1,136 @@
+# Continuation Prompt -- session 106
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-105 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-21 (session 106). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (the feature work ended at `8e2aef7`:
+> Thread 2 `bc8c436`, Thread 3 `985d11e`, v1b board/cockpit `8e2aef7`).
+> curriculum_render HEAD = `10515c4` (v1b WS server). Linear,
+> local==origin on both.
+>
+> ## Shipped this session (106) -- the post-grade-pipeline backlog
+> Three workstreams, run as one pipeline with the proven loop: spec ->
+> freeze a `*_BUILD.md` contract -> dependency-aware dispatch (5
+> parallel Sonnet subagents on disjoint files + planner-direct on the
+> contended Desk) -> 4 read-only Codex reviews -> planner folds every
+> finding + re-verifies on disk -> 4 tight commits -> push. Codex found
+> 0 BLOCKER + 6 MAJOR + 4 MINOR; all folded (1 MAJOR was a verified
+> false positive -- see gotchas).
+>
+> - **Thread 2 -- Calendar polish (`bc8c436`)** -- four Desk
+>   (`ap_stats_roadmap_square_mode.html`) calendar-grid changes: done
+>   lessons render greyscale (`.dc-done`), the `/donow` current lesson
+>   gets a `.cal-current` accent outline, `rCal` emits a `.cal-qband`
+>   quarter divider at each Q1-Q4 boundary (new `unitQuarter` helper),
+>   and the redundant per-cell direct-link icons were removed from
+>   `htm()`. Planner-direct. `CALENDAR_POLISH_SPEC.md` +
+>   `CALENDAR_POLISH_BUILD.md`; new `tests/calendar-polish.test.js`.
+>   Codex review: clean, no findings.
+> - **Thread 3 -- Roster management (`985d11e`)** -- a teacher can edit
+>   a student's real name + section and quick-duplicate a student from
+>   the roster console, no SQL. roster-server `PATCH /roster/:studentId`
+>   (`requireTeacher`-gated; writes ONLY `real_name`/`section`/`updated_at`),
+>   new `db.updateStudent`, `studentId` added to `GET /roster/list`;
+>   `teacher-roster-console.html` gains per-row Edit (inline inputs +
+>   Save/Cancel) and Duplicate (prefills the Add-Student form).
+>   `ROSTER_MGMT_SPEC.md` + `ROSTER_MGMT_BUILD.md`; new
+>   `roster-server/tests/roster-edit.test.js` +
+>   `tests/roster-console-structure.test.js`. Codex 2 MAJOR + 1 MINOR
+>   folded (PATCH rejects non-string values with 400 instead of
+>   coercing; Duplicate clears stale password/email; a live-payload
+>   test drives the real `db.updateStudent`). **This commit touches
+>   `roster-server/**` -> roster-server auto-deploys.**
+> - **Live Classroom v1b -- the Gate (`8e2aef7` follow-alongs +
+>   `10515c4` curriculum_render)** -- the once-per-session check-in
+>   ritual. WS server: per-room `gate` + per-member `status`
+>   (present|checkedIn); `armGate`/`checkin`/`greenLight`/`reset`
+>   registry methods + 4 additive `server.js` switch cases. Board
+>   (`classroom-board.js`): draws the gate hole, drains checked-in
+>   students, injects a check-in button; new `onStateChange` callback +
+>   `armGate`/`greenLight`/`reset` handle methods. Cockpit
+>   (`teacher-classroom.html`): Arm Gate / Green Light / Reset control
+>   strip + a live checked-in panel. `LIVE_CLASSROOM_V1B_BUILD.md`
+>   (design = the existing `LIVE_CLASSROOM_SPEC.md`). Codex 3 MAJOR + 2
+>   MINOR folded -- the green-light was reworked: `_reduce` is now pure
+>   (greenlight is a boolean), the banner fade is render-layer with a
+>   repaint timer, the cockpit indicator is broadcast-driven from
+>   `summary.greenlight`. **The `10515c4` push deploys the
+>   curriculum_render WS service.**
+>
+> ## Test baseline (post-fold)
+> follow-alongs root **4505/4506** -- the only fail is the long-standing
+> unrelated `tests/study-guide.test.js` v3-structure snapshot (NOT a
+> regression). roster-server **381/381**. curriculum_render **795/796**
+> -- the only fail is the long-standing unrelated
+> `tests/redox-chat.test.js` `max_tokens` (NOT a regression).
+> `node scripts/audit-feeder-ids.mjs` -> CLEAN 69 / MISMATCH 0. New
+> test files: `tests/calendar-polish.test.js`,
+> `tests/roster-console-structure.test.js`,
+> `roster-server/tests/roster-edit.test.js`; extended:
+> `tests/classroom-board.test.js`, `tests/classroom-structure.test.js`,
+> `tests/desk-donow-coloring.test.js`, curriculum_render
+> `tests/classroom.test.js`.
+>
+> ## Open / verify
+> - `985d11e` (touches `roster-server/**`) triggers the roster-server
+>   auto-deploy. `PATCH /roster/:studentId` is live in prod only once
+>   that lands -- smoke it (401 without auth; a real edit round-trip).
+> - `10515c4` deploys the curriculum_render WS service. The v1b gate
+>   handlers are live only once that lands -- smoke a
+>   `classroom_arm_gate` round-trip; confirm DogePresence / Tetris
+>   unregressed.
+>
+> ## NEXT -- pick one (none spec'd yet)
+> - **Live Classroom v1c** -- synchronized video start (the D5 option;
+>   `LIVE_CLASSROOM_SPEC.md` S10): the `classroom_greenlight`
+>   `startVideo` path -- student Desks navigate to / focus today's
+>   lesson video. Note browser autoplay policy.
+> - **Live Classroom v2** -- Poll mode + the data-driven `ti84-plot.js`
+>   (`LIVE_CLASSROOM_SPEC.md` S7/S10).
+> - **Railway -> DigitalOcean migration** -- strategic, before the next
+>   Railway bill; see the `railway-to-digitalocean` memory.
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The loop method** is proven again -- the Codex read-only eval
+>   gate caught real bugs in 3 of 4 workstreams. The planner folds
+>   findings and ALWAYS re-verifies on disk (this session that caught a
+>   stale test pin the fold itself broke).
+> - **Codex cross-repo false positive:** a feature spanning two repos,
+>   reviewed per-repo, can draw a false-positive MAJOR -- Codex sees
+>   only one repo. (v1b: the WS reviewer flagged `armGate` for not
+>   broadcasting a status reset; the board `_reduce` already resets on
+>   `classroom_gate` per the frozen contract.) Verify a cross-repo
+>   finding against BOTH halves before folding.
+> - **Cross-agent runner:** ASCII-only prompts. The background task
+>   `.output` is often a wrapper whose `notes` field holds the whole
+>   Codex transcript -- read the real verdict from the transcript tail
+>   (`tail -c`), not the wrapper `summary`.
+> - **PowerShell 5.1 + git:** never pass a commit message via
+>   `git commit -m` from PowerShell -- it mangles quotes. Use
+>   `git commit -F-` with a bash heredoc (the Bash tool).
+> - **The Bash tool is bash, not PowerShell** -- use `tail`/`grep`/`sed`;
+>   `Select-Object` fails. The separate PowerShell tool is for PS.
+> - **Stage own paths only** -- the repo carries pre-existing untracked
+>   scratch (`.ai-tutor-*`, `.codex-*`, `.batch-*`, `state/cross-agent*`).
+>   `git add` explicit paths, never `-A`. `data/skill-map.js` +
+>   `GRADEBOOK_FEEDER_ID_AUDIT.md` regenerate when the audit runs --
+>   `git checkout` them.
+> - **roster-server** lives inside follow-alongs (`roster-server/`, own
+>   `package.json` + vitest); auto-deploys on a push touching
+>   `roster-server/**`. curriculum_render is a SEPARATE repo;
+>   `railway-server/**` deploys the `curriculumrender-production`
+>   Railway WS service.
+>
+> ## Recall on reload
+> `project_live_classroom.md`, `project_grade_pipeline.md`,
+> `project_desk_donow.md`, `project_gradebook_grading_model.md`,
+> `project_teacher_auth.md`, `project_railway_to_digitalocean.md`,
+> `feedback_diagnostic_first.md`, `feedback_curriculum_render_sacred.md`.
+
+---
+
 # Continuation Prompt -- session 105
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
