@@ -1,10 +1,10 @@
 # GRADE_PIPELINE_SPEC.md
 
-> Status: DRAFT -- written 2026-05-21 (session 104). The "Thread 1"
-> grade work: make worksheet work score, fix FRQ-revision persistence,
-> make the AI verdict unambiguous, and refresh the grade after work.
-> ONE teacher decision gates implementation -- the weights (Section 6,
-> D1).
+> Status: DECISIONS LOCKED -- written 2026-05-21 (session 104),
+> teacher-confirmed 2026-05-21. The "Thread 1" grade work: make
+> worksheet work score, fix FRQ-revision persistence, make the AI
+> verdict unambiguous, and refresh the grade after work. Section 6
+> records the teacher's confirmed answers; implementation is unblocked.
 
 ## 1. Goal
 
@@ -47,9 +47,11 @@ it and feeds it into the grade.
   `lessonGrade = (Cws * w_ws + W * w_w + Q * w_q) / (present weights)`,
   where `Cws` = the lesson's worksheet score, 0-100, from the share of
   blanks correct (partial-credit per D2).
-- The weights live in `grade-config.js` as a knob. Proposed default
-  `w_ws : w_w : w_q = 1 : 1 : 2` -- see Section 6 (D1); the teacher
-  confirms.
+- The weights live in `grade-config.js` as a knob. Confirmed
+  `w_ws : w_w : w_q = 1 : 2 : 3` (teacher, 2026-05-21): worksheet
+  ~17% / reflections ~33% / quiz 50% of the lesson grade when all
+  three feeders are present, renormalized over present feeders
+  otherwise. See Section 6 (D1).
 - The cap/uncap is unchanged: `Cws` feeds B, B is still capped at 85,
   the Progress Check still uncaps. Scoring the worksheet is never
   punitive -- a weak worksheet cannot pull the grade below what the
@@ -109,21 +111,23 @@ loop: freeze a `*_BUILD.md` contract -> parallel Sonnet subagents +
 planner-direct for the contended Desk -> Codex read-only eval ->
 planner final review -> commit + push.
 
-## 6. Open decisions (teacher)
+## 6. Open decisions -- RESOLVED (teacher, 2026-05-21)
 
-- **D1 -- WEIGHTS.** With the worksheet scored, `w_ws : w_w : w_q`.
-  Proposed default `1 : 1 : 2` (the quiz still leads; the worksheet and
-  the reflections each matter). Confirm or adjust.
-- **D2 -- Partial-credit blanks.** A "yellow"/partial blank scores as
-  what fraction of correct? Proposed: 0.5.
-- **D3 -- Correctness basis.** `Cws` over ALL the lesson's blanks (an
-  unattempted blank counts 0) or over ATTEMPTED blanks only. Proposed:
-  over all blanks, so the worksheet score reflects the whole worksheet.
-- **D4 -- Trust.** Blank correctness is computed client-side by the
-  worksheet. v1 records that verdict directly -- consistent with the
-  honor-banked cap/uncap model (the Progress Check is the real check).
-  A future hardening could re-score blanks server-side against a
-  bundled worksheet answer key. Proposed: client-recorded for v1.
+- **D1 -- WEIGHTS. CONFIRMED `w_ws : w_w : w_q = 1 : 2 : 3`.**
+  Worksheet ~17% / reflections ~33% / quiz 50% of the lesson grade
+  (renormalized over present feeders when one is absent). The teacher
+  chose the worksheet to count least -- it is the lowest-stakes,
+  fill-while-watching feeder -- with the quiz still leading at half.
+  (The proposed default had been `1 : 1 : 2`.)
+- **D2 -- Partial-credit blanks. CONFIRMED 0.5.** A "yellow"/partial
+  blank scores half credit.
+- **D3 -- Correctness basis. CONFIRMED: over ALL the lesson's blanks.**
+  An unattempted blank counts 0, so `Cws` reflects the whole worksheet.
+- **D4 -- Trust. CONFIRMED: client-recorded for v1.** Blank correctness
+  is the worksheet's own client-side verdict, recorded directly --
+  consistent with the honor-banked cap/uncap model (the Progress Check
+  is the real check). Server-side re-scoring against a bundled
+  worksheet answer key is noted as future hardening, out of scope here.
 
 ## 7. Risks
 

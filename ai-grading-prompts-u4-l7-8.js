@@ -185,7 +185,7 @@ Grade this response using the E/P/I scoring system. Be generous but accurate.
 
 Respond in JSON format:
 {
-  "score": "E" or "P" or "I",
+  "score": "E", "P", or "I", // EXACTLY one uppercase letter -- no words, no lowercase, no extra text
   "feedback": "1-2 sentence explanation of the grade",
   "matched": ["list of rubric elements the student addressed"],
   "missing": ["list of required rubric elements the student missed"],

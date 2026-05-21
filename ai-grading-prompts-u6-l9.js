@@ -191,7 +191,7 @@ Grade this response and provide:
 
 Respond in JSON format:
 {
-    "score": "E|P|I",
+    "score": "E", "P", or "I", // EXACTLY one uppercase letter -- no words, no lowercase, no extra text
     "feedback": "Brief explanation of score",
     "matched": ["element1", "element2"],
     "missing": ["element3"],

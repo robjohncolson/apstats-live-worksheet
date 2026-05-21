@@ -223,14 +223,50 @@ for (const cfg of FUNCTIONAL) {
       }
     });
 
-    it('unknown reflection score → score omitted (not 0)', async () => {
+    it('uncoercible reflection score → no record, console.error logged (W3.2 Case 3)', async () => {
+      // W3.2: an uncoercible non-null verdict (e.g. 'X' -- no E/P/I letter) must NOT
+      // silently record score:undefined. It must log a console.error and skip the write.
       seedRoster(win);
       const calls = captureFetch(win);
+      const errors = [];
+      const origError = win.console.error;
+      win.console.error = (...args) => errors.push(args);
       win.recordReflectionToGradebook(cfg.reflections[0], 'answer text here', 'X');
       await new Promise((r) => setTimeout(r, 0));
+      win.console.error = origError;
       const rec = calls.find((c) => c.url === `${ROSTER_URL}/ledger/record`);
-      expect(rec).toBeTruthy();
-      expect(JSON.parse(rec.options.body)).not.toHaveProperty('score');
+      expect(rec, 'no record should be written for an uncoercible verdict').toBeUndefined();
+      expect(errors.length, 'console.error should be called once').toBeGreaterThan(0);
+    });
+
+    it('null reflection verdict (AI returned no score) → no record, console.error (W3.2 graded sink)', async () => {
+      // The graded path passes result.score; a malformed AI response makes it
+      // null. recordReflectionToGradebook must NOT silently record that as a
+      // no-score row -- it must console.error and skip the write.
+      seedRoster(win);
+      const calls = captureFetch(win);
+      const errors = [];
+      const origError = win.console.error;
+      win.console.error = (...args) => errors.push(args);
+      win.recordReflectionToGradebook(cfg.reflections[0], 'answer text here', null);
+      await new Promise((r) => setTimeout(r, 0));
+      win.console.error = origError;
+      const rec = calls.find((c) => c.url === `${ROSTER_URL}/ledger/record`);
+      expect(rec, 'no record for a null verdict').toBeUndefined();
+      expect(errors.length, 'console.error called for a null verdict').toBeGreaterThan(0);
+    });
+
+    it('recordReflectionDraft records an frq draft with no score (W3.2 draft sink)', async () => {
+      seedRoster(win);
+      const calls = captureFetch(win);
+      win.recordReflectionDraft(cfg.reflections[0], 'an in-progress draft answer');
+      await new Promise((r) => setTimeout(r, 0));
+      const rec = calls.find((c) => c.url === `${ROSTER_URL}/ledger/record`);
+      expect(rec, 'the draft is recorded').toBeTruthy();
+      const body = JSON.parse(rec.options.body);
+      expect(body.source).toBe('frq');
+      expect(body).not.toHaveProperty('score');
+      expect(body.response).toBe('an in-progress draft answer');
     });
 
     it('no roster identity → fire-and-forget no-op, ZERO network', async () => {

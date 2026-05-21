@@ -125,7 +125,7 @@ Grade the response as E, P, or I. Be encouraging but accurate. Identify which el
 
 Respond in JSON format:
 {
-    "score": "E" | "P" | "I",
+    "score": "E", "P", or "I", // EXACTLY one uppercase letter -- no words, no lowercase, no extra text
     "feedback": "Brief explanation of the grade",
     "matched": ["list of elements the student addressed"],
     "missing": ["list of elements the student missed"],

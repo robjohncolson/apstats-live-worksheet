@@ -1211,17 +1211,53 @@
                 unit: gbUnitFromItemId(itemId), response: value, attempt: 1
             });
         }
+        // W3.2a: tolerant verdict coercion -- trims, uppercases, reads the
+        // FIRST character. E/P/I (any case, trailing junk, or as a word like
+        // "Essentially"/"partial"/"incorrect") maps to that letter; any other
+        // first character (e.g. "maybe", "correct", "", numbers) -> null.
+        function coerceVerdict(raw) {
+            if (raw === null || raw === undefined) return null;
+            var s = String(raw).trim().toUpperCase();
+            if (!s) return null;
+            var c = s.charAt(0);
+            return (c === 'E' || c === 'P' || c === 'I') ? c : null;
+        }
+        // W3.2a: dedicated draft sink for W2.1 in-progress edits -- records
+        // the answer with NO score and runs no verdict logic. Kept separate
+        // from recordReflectionToGradebook so a graded write with a null or
+        // missing AI verdict is never silently mistaken for a draft.
+        function recordReflectionDraft(textareaId, answer) {
+            if (!window.gradebookClient || !window.gradebookClient.record) return;
+            if (!answer || !answer.trim()) return;
+            var prefix = gbWsPrefix();
+            if (!prefix) return;
+            var itemId = prefix + '-' + textareaId;
+            window.gradebookClient.record({
+                source: 'frq', itemId: itemId,
+                unit: gbUnitFromItemId(itemId), response: answer,
+                score: undefined,
+                attempt: 1
+            });
+        }
         function recordReflectionToGradebook(textareaId, answer, scoreLetter) {
             if (!window.gradebookClient || !window.gradebookClient.record) return;
             var prefix = gbWsPrefix();
             if (!prefix) return;
             var itemId = prefix + '-' + textareaId;
             if (!answer || !answer.trim()) return;
+            // W3.2: graded verdict -- coerce or loudly skip (never silent).
+            // recordReflectionToGradebook is the GRADED/appeal sink; a null
+            // or unparseable AI verdict is an error, not a draft.
+            var verdict = coerceVerdict(scoreLetter);
+            if (verdict === null) {
+                console.error('[recordReflectionToGradebook] ambiguous or missing AI verdict:', scoreLetter, 'itemId:', itemId);
+                return;
+            }
             var scoreMap = { E: 1, P: 0.5, I: 0 };
             window.gradebookClient.record({
                 source: 'frq', itemId: itemId,
                 unit: gbUnitFromItemId(itemId), response: answer,
-                score: (scoreLetter in scoreMap) ? scoreMap[scoreLetter] : undefined,
+                score: scoreMap[verdict],
                 attempt: 1
             });
         }
@@ -1450,8 +1486,8 @@
                 if (graded && (graded.originalAnswer || '').trim() === text) return;
                 if (_reflDebounce[id]) clearTimeout(_reflDebounce[id]);
                 _reflDebounce[id] = setTimeout(function () {
-                    if (typeof recordReflectionToGradebook === 'function') {
-                        recordReflectionToGradebook(id, text, null);
+                    if (typeof recordReflectionDraft === 'function') {
+                        recordReflectionDraft(id, text);
                     }
                 }, 400);
             });

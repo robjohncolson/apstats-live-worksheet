@@ -166,7 +166,7 @@ ${rubric.contextFromVideo}
 ## Instructions
 Grade the student's response. Return JSON:
 {
-    "score": "E" or "P" or "I",
+    "score": "E", "P", or "I", // EXACTLY one uppercase letter -- no words, no lowercase, no extra text
     "feedback": "brief explanation of the score",
     "matched": ["list of required elements the student addressed"],
     "missing": ["list of required elements the student missed"],
