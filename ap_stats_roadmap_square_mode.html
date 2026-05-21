@@ -1122,6 +1122,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-dashboard.html','_blank')">&#128202; Gradebook Dashboard</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-roster-console.html','_blank')">&#128221; Roster Console</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-classroom.html','_blank')">&#128101; Live Classroom</div>
         </div>
     </span>
     <span class="menu-item" data-menu="special">Special
@@ -1246,6 +1247,7 @@
                 <div class="prog-bar geneva" id="pb"></div>
                 <div class="prog-lbl geneva" id="pl"></div>
             </div>
+            <div id="classroom-board-mount" style="margin-top:8px"></div>
         </div>
     </div>
 </div>
@@ -1520,6 +1522,7 @@
 <!-- ═══ Shared roster identity (DN2c) — flat paths, Desk is at repo root (same as roster-client-demo.html). Config before client. ═══ -->
 <script src="roster_config.js"></script>
 <script src="roster-client.js"></script>
+<script src="classroom-board.js"></script>
 
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
@@ -3783,9 +3786,15 @@ function _populateUsernameDatalist() {
 // the background after every successful signin.
 const ROSTER_CACHE_TTL_MS = 60 * 60 * 1000;
 function _periodToSection(period) {
-  if (period === 'B' || period === 'PeriodB') return 'PeriodB';
-  if (period === 'E' || period === 'PeriodE') return 'PeriodE';
-  return null;
+  // Never return a falsy section (that would yield an empty roster
+  // picker). An already-namespaced section passes through; a bare
+  // period letter maps to Period<LETTER> (future-proof for when real
+  // periods are assigned); anything missing or unrecognized resolves
+  // to PeriodX, the single current section.
+  if (typeof period !== 'string' || !period) return 'PeriodX';
+  if (/^Period/.test(period)) return period;
+  if (/^[A-Za-z]$/.test(period)) return 'Period' + period.toUpperCase();
+  return 'PeriodX';
 }
 async function _fetchPeriodRoster(period) {
   var section = _periodToSection(period);
@@ -4170,6 +4179,7 @@ async function submitSignIn() {
       openPwChangeModal();
     } else {
       if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded so DN2c stays decoupled
+      if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard(); // Live Classroom v1a
       var roleLabel = '';
       try { if (localStorage.getItem('apstats_user_role') === 'teacher') roleLabel = ' (teacher mode)'; } catch (_) {}
       showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + roleLabel + '.','OK');
@@ -10145,6 +10155,29 @@ function mTip(e){tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY+12)
 function hTip(){tip.style.display="none";}
 
 /* ═══ INIT ═══ */
+/* Live Classroom v1a -- board mount helper. Mounts the section
+   presence board once a student is signed in; tolerates the optional
+   classroom-board.js component being absent. */
+var _classroomBoardHandle = null;
+function _mountClassroomBoard(){
+  try {
+    if (_classroomBoardHandle) return;
+    if (typeof window.ClassroomBoard === 'undefined') return;
+    var s = (window.rosterClient && window.rosterClient.current)
+      ? window.rosterClient.current() : null;
+    if (!s || !s.username || !s.section) return;
+    var mount = document.getElementById('classroom-board-mount');
+    if (!mount) return;
+    var wsUrl = (window.RAILWAY_SERVER_URL
+      || 'https://curriculumrender-production.up.railway.app').replace(/^http/, 'ws');
+    // The Desk embed always mounts the student board (BUILD D4). The
+    // teacher real-name view lives in teacher-classroom.html.
+    _classroomBoardHandle = window.ClassroomBoard.mount(mount, {
+      wsUrl: wsUrl, section: s.section, username: s.username, role: 'student'
+    });
+  } catch (_) {}
+}
+
 (function(){
   var ps=new URLSearchParams(window.location.search);
   var pp=(ps.get('period')||'').toUpperCase();
@@ -10161,6 +10194,7 @@ if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById(
 loadRegistry();
 updateStudentMenu();
 updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
+if(typeof _mountClassroomBoard==='function')_mountClassroomBoard();   // Live Classroom v1a
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
 /* ── Boot Dismissal (click-to-start after progress bar) ── */

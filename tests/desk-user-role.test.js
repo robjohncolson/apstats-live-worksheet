@@ -217,11 +217,18 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
   });
 
   it('18: _periodToSection maps cP letters to roster section strings', () => {
-    const body = fnBody(DESK, '_periodToSection');
-    expect(body).toMatch(/['"]B['"]/);
-    expect(body).toMatch(/['"]E['"]/);
-    expect(body).toMatch(/PeriodB/);
-    expect(body).toMatch(/PeriodE/);
+    // _periodToSection is a pure, DOM-free function -- evaluate it in
+    // isolation and check the actual mapping. This is more robust than
+    // grepping the body, which was generalized in the Live Classroom
+    // v1a work (explicit B/E literals -> a bare-letter rule).
+    const fn = new Function('return (' + fnBody(DESK, '_periodToSection') + ')')();
+    expect(fn('B')).toBe('PeriodB');
+    expect(fn('E')).toBe('PeriodE');
+    expect(fn('X')).toBe('PeriodX');
+    expect(fn('PeriodB')).toBe('PeriodB');
+    // Never returns a falsy section (that would empty the roster picker).
+    expect(fn('')).toBe('PeriodX');
+    expect(fn(null)).toBe('PeriodX');
   });
 
   it('19: _renderRosterDropdown filters by realName OR username + caps at 50 rows', () => {

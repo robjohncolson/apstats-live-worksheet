@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<!-- Live Classroom v1a cockpit shell - LIVE_CLASSROOM_V1A_BUILD.md Section 5.
+     Teacher-only page launched from the Desk Teacher menu. Loads the classroom
+     board in teacher mode (real-name labels). No control strip in v1a -
+     Arm Gate / Green Light are v1b.
+     Security posture: identity comes from rosterClient (sign-in session) and
+     localStorage.apstats_user_role. The page guards itself: if the role is not
+     "teacher" or no session exists it shows a friendly message and does not
+     mount the board. The real-name fetch from /roster/section/:section is
+     teacher-cockpit-only; students never make that call. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AP Stats - Live Classroom</title>
+  <style>
+    :root {
+      --sg-bg: #f7f2e8;
+      --sg-text: #2a2520;
+      --sg-accent: #7a4a1f;
+      --sg-bar-track: #e2d6c0;
+      --sg-bg-card: #ffffff;
+      --sg-border: #d8ccb0;
+      --sg-text-dim: #5a5045;
+      --sg-low: #c0392b;
+      --sg-high: #2e7d32;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      min-height: 100vh;
+    }
+    .page-header {
+      background: var(--sg-bg-card);
+      border-bottom: 1px solid var(--sg-border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .page-header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--sg-accent);
+    }
+    .page-header .subtitle {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--sg-text-dim);
+    }
+    .security-banner {
+      background: #fff0f0;
+      border: 1px solid var(--sg-low);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #6a1b1b;
+      line-height: 1.5;
+    }
+    .access-denied {
+      background: var(--sg-bg-card);
+      border: 1px solid var(--sg-border);
+      border-radius: 10px;
+      padding: 32px 28px;
+      font-size: 1rem;
+      color: var(--sg-text-dim);
+      text-align: center;
+    }
+    .access-denied strong {
+      display: block;
+      font-size: 1.1rem;
+      color: var(--sg-accent);
+      margin-bottom: 8px;
+    }
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+      display: grid;
+      gap: 24px;
+    }
+    .section {
+      background: var(--sg-bg-card);
+      border: 1px solid var(--sg-border);
+      border-radius: 10px;
+      padding: 20px 22px;
+      display: grid;
+      gap: 16px;
+    }
+    .section-title {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--sg-text-dim);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--sg-border);
+    }
+    .form-row { display: grid; gap: 6px; }
+    .form-row label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--sg-text-dim);
+    }
+    select {
+      width: auto;
+      min-width: 160px;
+      padding: 9px 11px;
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    select:focus { outline: 2px solid var(--sg-accent); outline-offset: 2px; }
+    .meta-row {
+      font-size: 0.82rem;
+      color: var(--sg-text-dim);
+      line-height: 1.4;
+    }
+    .board-wrap {
+      /* The board component CSS-scales its 320x240 canvas to fill this width.
+         A max-width keeps it from becoming enormous on wide displays. */
+      width: 100%;
+      max-width: 640px;
+    }
+    .status-row {
+      font-size: 0.88rem;
+      color: var(--sg-text-dim);
+      min-height: 1.4em;
+    }
+    .hint { font-size: 0.8rem; color: var(--sg-text-dim); line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>AP Stats - Live Classroom</h1>
+    <p class="subtitle">Section presence board (v1a - read only)</p>
+  </div>
+
+  <div class="main">
+
+    <div class="security-banner">
+      &#9888; <strong>Teacher view only.</strong> This page shows real student names.
+      It must be opened from the Desk after signing in as a teacher.
+      Do <strong>not</strong> share this URL with students.
+    </div>
+
+    <!-- Access denied: shown only when role check fails -->
+    <div class="access-denied" id="access-denied-panel" style="display:none">
+      <strong>Access restricted</strong>
+      Open this from the Desk after signing in as a teacher.
+    </div>
+
+    <!-- Controls + board: shown only when role check passes -->
+    <div id="board-region" style="display:none">
+
+      <div class="section">
+        <h2 class="section-title">Section</h2>
+        <div class="form-row">
+          <label for="section-select">Active section</label>
+          <select id="section-select">
+            <option value="PeriodX">PeriodX</option>
+          </select>
+        </div>
+        <div class="status-row" id="status-row"></div>
+        <div class="hint">
+          Select the section to view. The board connects automatically when you
+          change the selection.
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title">Live Board</h2>
+        <div class="board-wrap" id="board-mount"></div>
+        <div class="hint">
+          Each avatar is a signed-in student in this section. Dimmed avatars are
+          offline (no heartbeat in the last 45s). Real names are displayed only
+          in this teacher view -- students see usernames. Control features (arm
+          gate, green light) ship in v1b.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Sibling configs / clients. roster_config.js sets window.ROSTER_SERVICE_URL;
+       roster-client.js sets window.rosterClient with current() / signIn() / etc.;
+       classroom-board.js sets window.ClassroomBoard with mount() / _reduce(). -->
+  <script src="roster_config.js"></script>
+  <script src="roster-client.js"></script>
+  <script src="classroom-board.js"></script>
+
+  <script>
+    // ===== identity helpers =====
+
+    function currentSession() {
+      // rosterClient is declared by roster-client.js.
+      if (typeof window.rosterClient === 'undefined') return null;
+      return window.rosterClient.current();   // { studentId, username, realName, section } | null
+    }
+
+    function currentRole() {
+      try {
+        return localStorage.getItem('apstats_user_role') || null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // ===== URL helpers =====
+
+    function rosterServiceUrl() {
+      // window.ROSTER_SERVICE_URL is set by roster_config.js.
+      return (window.ROSTER_SERVICE_URL || 'https://roster-production-12c1.up.railway.app')
+        .replace(/\/+$/, '');
+    }
+
+    function wsUrl() {
+      // Same derivation DogePresence uses (ap_stats_roadmap_square_mode.html line 7560).
+      return (window.RAILWAY_SERVER_URL || 'https://curriculumrender-production.up.railway.app')
+        .replace(/^http/, 'ws');
+    }
+
+    // ===== roster name-map fetch =====
+
+    // Returns a { username: realName } map from GET /roster/section/:section.
+    // Returns an empty map on any error -- the board still works with usernames.
+    async function fetchNameMap(section) {
+      var url = rosterServiceUrl() + '/roster/section/' + encodeURIComponent(section);
+      try {
+        var res = await fetch(url);
+        if (!res.ok) return {};
+        var data = await res.json();
+        // The endpoint returns { ok:true, section, students:[ { username, realName, section } ] }.
+        var roster = (data && data.students) || (data && data.roster) || (Array.isArray(data) ? data : []);
+        var map = {};
+        roster.forEach(function (row) {
+          var uname = row.username || row.login_username || '';
+          var name  = row.real_name || row.realName || row.username || '';
+          if (uname) map[uname] = name;
+        });
+        return map;
+      } catch (_) {
+        return {};
+      }
+    }
+
+    // ===== board lifecycle =====
+
+    var boardHandle = null;   // ClassroomBoard.mount() return value, or null
+
+    function teardown() {
+      if (boardHandle) {
+        try { boardHandle.destroy(); } catch (_) {}
+        boardHandle = null;
+      }
+    }
+
+    async function mountBoard(section, session) {
+      teardown();
+
+      var container = document.getElementById('board-mount');
+      container.innerHTML = '';
+
+      var statusRow = document.getElementById('status-row');
+      statusRow.textContent = 'Fetching roster for ' + section + '...';
+
+      var nameMap = await fetchNameMap(section);
+
+      statusRow.textContent = 'Connecting to ' + section + '...';
+
+      // Guard: classroom-board.js may not be present yet (parallel build).
+      if (typeof window.ClassroomBoard === 'undefined' || typeof window.ClassroomBoard.mount !== 'function') {
+        statusRow.textContent = 'classroom-board.js not loaded -- board unavailable.';
+        return;
+      }
+
+      try {
+        boardHandle = window.ClassroomBoard.mount(container, {
+          wsUrl: wsUrl(),
+          section: section,
+          username: session.username,
+          role: 'teacher',
+          nameMap: nameMap
+        });
+        statusRow.textContent = 'Connected to ' + section + '.';
+      } catch (err) {
+        statusRow.textContent = 'Board error: ' + (err && err.message ? err.message : String(err));
+      }
+    }
+
+    // ===== section selector =====
+
+    function onSectionChange() {
+      var session = currentSession();
+      // Session should still be valid; re-check defensively.
+      if (!session) return;
+      var section = document.getElementById('section-select').value;
+      mountBoard(section, session);
+    }
+
+    document.getElementById('section-select').addEventListener('change', onSectionChange);
+
+    // ===== boot =====
+
+    (function boot() {
+      var session = currentSession();
+      var role = currentRole();
+
+      var boardRegion   = document.getElementById('board-region');
+      var accessDenied  = document.getElementById('access-denied-panel');
+
+      // Guard: must be signed in as a teacher.
+      var isTeacher = (role === 'teacher') && (session !== null);
+      if (!isTeacher) {
+        accessDenied.style.display = '';
+        boardRegion.style.display  = 'none';
+        return;
+      }
+
+      boardRegion.style.display  = '';
+      accessDenied.style.display = 'none';
+
+      // Use the section from the selector (defaults to PeriodX).
+      var section = document.getElementById('section-select').value;
+      mountBoard(section, session);
+    })();
+  </script>
+</body>
+</html>
