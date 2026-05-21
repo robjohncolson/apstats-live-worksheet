@@ -1,3 +1,100 @@
+# Continuation Prompt -- session 104
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-103 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-21 (session 104). follow-alongs HEAD = the commit carrying
+> this refresh + `GRADE_PIPELINE_SPEC.md` (prior was `42033ac`);
+> curriculum_render HEAD = `120dbac`. Linear, local==origin on both.
+>
+> ## Shipped this session (104)
+> Two features, each built with the loop: freeze a `*_BUILD.md`
+> contract -> parallel Sonnet subagents + planner-direct for the
+> contended Desk -> Codex cross-agent eval (read-only) -> planner final
+> review -> commit + push. Codex caught real bugs both times.
+>
+> - **Live Classroom v1a (Foundation)** -- a shared, section-scoped
+>   student-presence board rendered as a 320x240 TI-84 screen.
+>   curriculum_render `120dbac` (WS server: new `railway-server/classroom.js`
+>   room registry + additive `server.js` -- section-aware
+>   `classroom_join`/`_leave`/`_heartbeat`, section-scoped broadcast,
+>   liveness/GC sweep). follow-alongs `f74c94e` (`classroom-board.js`
+>   board component, `teacher-classroom.html` cockpit, Desk embed +
+>   Teacher-menu item). Spec `LIVE_CLASSROOM_SPEC.md`, build doc
+>   `LIVE_CLASSROOM_V1A_BUILD.md`. Codex eval found 2 BLOCKER + 6 MAJOR,
+>   all folded. v1a is section PRESENCE only -- no gate, no poll.
+> - **Connected Teacher Auth** -- follow-alongs `42033ac`. A `roster.role`
+>   column (migration `roster-server/migrations/0005_roster_role.sql` --
+>   the teacher RAN it); `roster-server/teacher-auth.js` exports
+>   `requireTeacher`, which authorizes a request via the `x-teacher-secret`
+>   OR a roster token whose account has `role:'teacher'`; all 9
+>   teacher-gated endpoints use it. `/roster/verify` returns `role`;
+>   `roster-client.js` `current()` exposes it. The Desk teacher access
+>   code, `makeMeTeacher`, and the standalone teacher mode are RETIRED;
+>   `updateUserRoleUI` derives teacher-ness from the roster session.
+>   `x-teacher-secret` stays as a break-glass fallback. Build doc
+>   `TEACHER_AUTH_BUILD.md`. Codex eval: 0 BLOCKER, 1 MAJOR + 1 MINOR
+>   folded.
+>
+> ## NEXT = Thread 1, the grade pipeline (`GRADE_PIPELINE_SPEC.md`)
+> Spec'd this session (DRAFT). Make worksheet work score (the fill-in
+> blanks already carry answers + validation -- score their correctness,
+> currently discarded as `score:null`), fix the FRQ-revision
+> persistence bug, make the AI grader return an unambiguous E/P/I, and
+> refresh the grade pill after work. ONE teacher decision gates
+> implementation -- the weights `w_ws:w_w:w_q` (proposed `1:1:2`); see
+> `GRADE_PIPELINE_SPEC.md` Section 6.
+>
+> ## Queued (not yet spec'd)
+> - **Thread 2 -- Calendar polish**: done lessons go greyscale; the
+>   current lesson is emphasized; Q1-Q4 markers on the calendar; drop
+>   the direct-link icons on the calendar cells (clicking the cell
+>   opens the resource modal, which covers it).
+> - **Thread 3 -- Roster management**: edit a student's period/section
+>   and real name, duplicate a student -- a roster-server PATCH-roster
+>   endpoint + inline editing in `teacher-roster-console.html`.
+> - **Live Classroom v1b** -- the Gate (arm today's hole, check-in,
+>   drain-to-empty, the green light). Then v1c (synchronized video
+>   start), v2 (Poll mode + the data-driven `ti84-plot.js`). See
+>   `LIVE_CLASSROOM_SPEC.md` Section 10.
+> - **Railway -> DigitalOcean migration** -- strategic, before the next
+>   Railway bill; see the `railway-to-digitalocean` memory.
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The loop method** (above) is proven -- the Codex read-only eval
+>   gate catches a real bug nearly every cycle; the planner folds the
+>   findings and ALWAYS re-verifies them on disk.
+> - **Cross-agent runner:** ASCII-only prompts (it has a UTF-8-decode
+>   bug). New files must be ASCII-clean -- a subagent shipped
+>   box-drawing comment separators twice this session; caught + stripped
+>   at final review. Codex's `.result.json` can be a wrapper fallback;
+>   read the real verdict from the transcript.
+> - **The Desk** (`ap_stats_roadmap_square_mode.html`) is the contended
+>   ~10k-line single file -- planner-direct, never parallel-Sonnet on it.
+> - **Stage own paths only** -- never `git add -A`; the repo carries
+>   pre-existing untracked scratch (`.ai-tutor-*`, `.batch-*`,
+>   `state/cross-agent*`, `.codex-*`, etc.). `data/skill-map.js`
+>   regenerates a timestamp-only header when the feeder audit runs --
+>   `git checkout` it if that is its only diff.
+> - **roster-server** lives inside follow-alongs (`roster-server/`, its
+>   own `package.json` + vitest) and auto-deploys on a push touching
+>   `roster-server/**`. Two test suites: follow-alongs root `npm test`
+>   (one known unrelated fail, `tests/study-guide.test.js`) and
+>   `npm --prefix roster-server test`.
+> - The Live Classroom WS server is in the SEPARATE curriculum_render
+>   repo (`railway-server/server.js`, the `curriculumrender-production`
+>   Railway service) -- additive only; must not regress DogePresence or
+>   Tetris.
+>
+> ## Recall on reload
+> `project_live_classroom.md`, `project_teacher_auth.md`,
+> `project_gradebook_grading_model.md`, `project_desk_donow.md`,
+> `feedback_diagnostic_first.md`, `feedback_curriculum_render_sacred.md`,
+> `project_railway_to_digitalocean.md`.
+
+---
+
 # Continuation Prompt — Desk Hardening (session 103)
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** —
