@@ -41,14 +41,22 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(DESK).toMatch(/const\s+BLOOKET_PASS_THRESHOLD\s*=\s*0\.80/);
   });
 
-  it('02: BLOOKET_GATE_MS is 15 minutes', () => {
-    expect(DESK).toMatch(/const\s+BLOOKET_GATE_MS\s*=\s*15\s*\*\s*60\s*\*\s*1000/);
+  it('02: blooket Done opens the flashcard quiz with NO visit timer', () => {
+    // 2026-05-20: the 15-min visit timer was removed — the flashcard quiz
+    // IS the completion gate, so the timer was a redundant weak proxy.
+    expect(DESK, 'the BLOOKET_GATE_MS constant must be gone').not.toMatch(/BLOOKET_GATE_MS/);
+    const body = fnBody(DESK, '_doneBtn');
+    expect(body).toMatch(/artifact\s*===\s*['"]blooket['"]/);
+    expect(body).toMatch(/Done \(flashcards\)/);
   });
 
-  it('03: deskDoneGateMs(artifact) returns BLOOKET_GATE_MS for blooket', () => {
-    const body = fnBody(DESK, 'deskDoneGateMs');
-    expect(body).toMatch(/artifact\s*===\s*['"]blooket['"]/);
-    expect(body).toMatch(/BLOOKET_GATE_MS/);
+  it('03: the blooket branch fires BEFORE the deskDoneGateMs timer (blooket skips it)', () => {
+    const body = fnBody(DESK, '_doneBtn');
+    const blooketIdx = body.indexOf("artifact === 'blooket'");
+    const gateIdx = body.indexOf('deskDoneGateMs');
+    expect(blooketIdx, 'blooket branch present in _doneBtn').toBeGreaterThan(-1);
+    expect(gateIdx, 'deskDoneGateMs still used for video/quiz').toBeGreaterThan(-1);
+    expect(blooketIdx, 'blooket branch must return before the timer').toBeLessThan(gateIdx);
   });
 
   it('04: studentMark routes blooket to openBlooketFlashcards (NOT the inline score prompt)', () => {

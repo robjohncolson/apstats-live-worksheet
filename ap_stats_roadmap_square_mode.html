@@ -3524,18 +3524,9 @@ function _isApClassroomAvailable() {
 }
 
 const DESK_DONE_GATE_MS_DEFAULT = 5 * 60 * 1000;
-// 2026-05-20: Blooket gets a longer visit-gate (15 min) because completion
-// is harder to verify without Blooket's own dashboard. The flashcard-mastery
-// gate on top of this provides the actual chain of custody.
-const BLOOKET_GATE_MS = 15 * 60 * 1000;
-function deskDoneGateMs(artifact) {
-  if (artifact === 'blooket') {
-    try {
-      var v = localStorage.getItem('apstats_desk_done_gate_ms_blooket');
-      if (v != null && !isNaN(Number(v))) return Math.max(0, Number(v));
-    } catch (_) {}
-    return BLOOKET_GATE_MS;
-  }
+// Visit timer for the video / quiz Done buttons. Worksheets use the
+// completion gate and Blooket uses the flashcard quiz — neither uses this.
+function deskDoneGateMs() {
   return _deskDoneGateMsDefault();
 }
 function _deskDoneGateMsDefault() {
@@ -5949,7 +5940,8 @@ function showResourcePanel(inf, dateStr) {
         //   ready       → enabled "✓ Done" (clickable)
         //   completed   → disabled "✓ Completed" + recorded-at tooltip
         // 2026-05-20: worksheet Done is gated on completion (not a timer);
-        // video keeps the 5-min timer; Blooket keeps its 15-min + flashcards.
+        // Blooket Done opens the flashcard quiz on click (no timer);
+        // video/quiz keep the 5-min visit timer.
         function _doneBtn(artifact, worksheetUrl) {
             if (!_signedIn) return '';
             var key = _stuTopicId + '|' + artifact;
@@ -5984,15 +5976,19 @@ function showResourcePanel(inf, dateStr) {
                 }
                 // Off-pattern worksheet (no tracker) → legacy visit timer.
             }
-            var gateMs = deskDoneGateMs(artifact);
+            // Blooket: the flashcard quiz IS the completion check. Clicking
+            // Done opens the quiz immediately; a >=80% pass is what records
+            // the mark. No visit timer — the flashcards supersede that weak
+            // proxy (same reasoning as the worksheet completion gate above).
+            if (artifact === 'blooket') {
+                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Take the flashcard quiz to verify completion" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
+            }
+            // Video / quiz: a short visit timer before Done becomes clickable.
+            var gateMs = deskDoneGateMs();
             var elapsed = Date.now() - new Date(entry.visitedAt).getTime();
             if (gateMs > 0 && elapsed < gateMs) {
                 var remMin = Math.max(1, Math.ceil((gateMs - elapsed) / 60000));
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Spend at least ' + Math.round(gateMs/60000) + ' min on the resource, then click Done">Done in ~' + remMin + 'm</button>';
-            }
-            // Blooket: button label hints that flashcards open on click.
-            if (artifact === 'blooket') {
-                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Take the flashcard quiz to verify completion" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
             }
             return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
         }
