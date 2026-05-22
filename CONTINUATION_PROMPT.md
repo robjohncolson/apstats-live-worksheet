@@ -1,3 +1,116 @@
+# Continuation Prompt -- session 109
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-108 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-22 (session 109). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (the feature work ended at `c7951fb`).
+> curriculum_render HEAD = `c490cff` -- UNTOUCHED this session. Linear,
+> local==origin on follow-alongs.
+>
+> ## Shipped this session (109) -- four commits, all on `master`
+> Two themes: the Desk calendar, then Live Classroom v2.1. The proven
+> loop throughout: spec -> freeze a `*_BUILD.md` -> dependency-aware
+> dispatch -> Codex read-only review -> planner folds every finding +
+> re-verifies on disk -> tight commits.
+>
+> - **Date-driven calendar quarter dividers (`2d3797b`)** -- the Desk
+>   `.cal-qband` divider was placed at unit seams (`unitQuarter`); it is
+>   now date-driven (`quarterOfDate` + a `QUARTER_WINDOWS` const
+>   mirroring `grade-config.js`), so the band snaps to the real
+>   quarter-close dates. The band label keeps the unit list. Desk-only.
+> - **CALENDAR_FOCUS (`ac3a6c3`)** -- a completed lesson recedes
+>   (greyscale + 0.6 opacity); the next-up lesson pops with a synthwave
+>   neon treatment. Driven by EITHER `/donow` OR the local completion
+>   registry (new `localLessonState`, `.dc-localdone`/`.dc-localpartial`)
+>   so it shows in Preview-as-student. Spec `CALENDAR_FOCUS_SPEC.md`.
+> - **CALENDAR_FOCUS fix (`6ffd1c5`)** -- the next-up neon followed the
+>   `/donow` nextTask, which sticks on a just-completed lesson (a Desk
+>   "Done" self-attest never satisfies the lesson manifest). Now `rCal`
+>   owns `.cal-current` via `calNextUpTopic` (the first lesson, in
+>   calendar order, not locally completed); `paintDonowCells` no longer
+>   touches it. Same local signal as the greyscale.
+> - **Live Classroom v2.1 (`c7951fb`)** -- the three v2-deferred pieces:
+>   a student pull-down "classroom screen" (the board's on-demand TI-84
+>   result surface, slides over the avatar scene on poll close); a
+>   durable roster-server poll archive (`poll_archive` table); poll
+>   history pinned to the calendar day each poll ran (the Desk calendar
+>   marks poll days, a click replays the poll). All follow-alongs -- NO
+>   curriculum_render / WS-server change. Spec `LIVE_CLASSROOM_V2_1_SPEC.md`
+>   / contract `LIVE_CLASSROOM_V2_1_BUILD.md`. **Touches `roster-server/**`
+>   -> roster-server auto-deploys.**
+>
+> ## Migration -- ONE, user-run
+> `roster-server/migrations/0007_poll_archive.sql` -- the teacher runs it
+> in the curriculum_render Supabase SQL editor (like `0004`-`0006`).
+> Until then `/poll-archive` returns `503` (the `42P01 -> 503` degrade);
+> nothing else is affected. The rest of v2.1 is GH Pages, live on push.
+>
+> ## Test baseline
+> roster-server **476/476**. follow-alongs root **4760/4761** -- the only
+> fail is the long-standing unrelated `tests/study-guide.test.js` (NOT a
+> regression).
+>
+> ## Open / verify
+> - `c7951fb` deploys roster-server (`roster-server/**`) + republishes
+>   GH Pages. Smoke once it lands: `POST /poll-archive` 401 without a
+>   teacher token; a poll close -> the pull-down screen + an archive
+>   row; a calendar poll-day click -> the screen replays it.
+>   DogePresence / Tetris unregressed (v2.1 did NOT touch the WS server).
+> - **Run migration `0007`** in Supabase to take `/poll-archive` off the
+>   503 degrade.
+> - **Live Classroom avatars** -- a session-109 diagnostic confirmed the
+>   board + r3 sprite scene WORK (mounts, canvas, `sprite.png` HTTP 200).
+>   An empty board = a presence board with no students connected (a
+>   teacher account is an observer, never drawn). To see avatars, sign a
+>   STUDENT into the section. Not a bug.
+>
+> ## NEXT -- queued
+> - **v2.1 verify-in-prod** -- once `0007` is run, smoke the archive +
+>   the calendar history end to end with a real student session.
+> - **Railway -> DigitalOcean migration** -- still queued; strategic,
+>   before the next Railway bill. See the `railway-to-digitalocean` memory.
+> - **Preview-as-student v2** -- worksheet-level preview (still Desk-only).
+> - v2.1 deferred knobs (K12-K16): a teacher poll re-tag/edit
+>   (`PATCH /poll-archive`); a dated archive auto-prune.
+> - Optional cosmetic: the Desk `.cal-qband` band LABEL still lists units
+>   (the divider POSITION is now date-driven).
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The loop method** held again -- the Codex read-only review caught a
+>   real BLOCKER in v2.1 (the cockpit archived a stale tally). The
+>   planner folds every finding and ALWAYS re-verifies on disk; the
+>   planner-run integration test (after the parallel units) caught a
+>   cross-function-call regression the unit-local test runs missed.
+> - **The `file://` trap** -- the teacher SSHes from a work laptop; the
+>   local `file://` Desk copy is a separate origin (empty localStorage =
+>   NOT signed in, `fetch()` CORS-blocked) -- not a valid test surface.
+>   Commit+push promptly so the teacher tests the public GH Pages URL.
+>   See the `test-on-public-url` memory.
+> - **browser-harness does NOT run on this Windows host** (`socket.AF_UNIX`
+>   missing) -- use a console-paste diagnostic snippet instead.
+> - **Cross-function calls in the Desk MUST be `typeof`-guarded** -- an
+>   un-guarded call inside a tested function breaks that function's vm
+>   tests (v2.1 U4 hit exactly this).
+> - **PowerShell 5.1 + git:** never `git commit -m` from PowerShell --
+>   use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- `git add` explicit paths, never `-A`; the
+>   repo carries pre-existing untracked scratch; `data/skill-map.js`
+>   regenerates on an audit test run -- `git checkout` it before staging.
+> - **roster-server** lives inside follow-alongs (`roster-server/`, own
+>   `package.json` + vitest); auto-deploys on a push touching
+>   `roster-server/**`. curriculum_render is a SEPARATE repo, untouched
+>   this session.
+>
+> ## Recall on reload
+> `project_live_classroom.md`, `project_gradebook_grading_model.md`,
+> `project_desk_donow.md`, `project_railway_to_digitalocean.md`,
+> `feedback_test_on_public_url.md`, `feedback_diagnostic_first.md`,
+> `feedback_curriculum_render_sacred.md`.
+
+---
+
 # Continuation Prompt -- session 108
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
