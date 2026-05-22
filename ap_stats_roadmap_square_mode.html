@@ -4273,14 +4273,28 @@ const QUARTER_BAND_LABEL = {
   Q4: 'U8, U9',
 };
 
-// Thread 2 (CALENDAR_POLISH) -- map a unit number to its quarter (1-4),
-// matching QUARTER_BAND_LABEL and roster-server's Phase 6 quarter bands.
-function unitQuarter(u) {
-  u = Number(u);
-  if (u >= 1 && u <= 3) return 1;
-  if (u >= 4 && u <= 5) return 2;
-  if (u >= 6 && u <= 7) return 3;
-  if (u >= 8 && u <= 9) return 4;
+// Quarter calendar windows -- mirror roster-server's grade-config.js
+// PHASE3_CONFIG.quarters start/end dates. F2 made the GRADE math
+// date-driven; this lets the calendar's quarter divider snap to the
+// same real dates instead of unit boundaries. Months are 1-indexed
+// here (Sep = 9), matching the ISO dates in grade-config.js. Re-edit
+// both files together once per school year.
+const QUARTER_WINDOWS = [
+  { q: 1, start: [2026, 9, 9],   end: [2026, 11, 13] },
+  { q: 2, start: [2026, 11, 14], end: [2027, 1, 29]  },
+  { q: 3, start: [2027, 1, 30],  end: [2027, 4, 9]   },
+  { q: 4, start: [2027, 4, 10],  end: [2027, 6, 23]  },
+];
+
+// Which quarter (1-4) a calendar Date falls in; 0 if outside every
+// window. The date-driven counterpart of grade-config.js quarterOfDate.
+function quarterOfDate(dt) {
+  const key = dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate();
+  for (const w of QUARTER_WINDOWS) {
+    const lo = w.start[0] * 10000 + w.start[1] * 100 + w.start[2];
+    const hi = w.end[0] * 10000 + w.end[1] * 100 + w.end[2];
+    if (key >= lo && key <= hi) return w.q;
+  }
   return 0;
 }
 
@@ -9935,10 +9949,11 @@ function rCal(){
         const l=document.createElement("div");l.className="wk-lbl";
         l.textContent=MN[wk.m.getMonth()]+" "+wk.m.getDate();r.appendChild(l);
         const dm={};for(const e of wk.d){const dt=new Date(e[0],e[1],e[2]);dm[dt.getDay()]=e;}
-        // Thread 2 -- emit a quarter-band divider when the quarter changes.
-        let _wkMinU=0;
-        for(let _dw=1;_dw<=5;_dw++){const _en=dm[_dw];if(!_en)continue;const _winf=cP==="B"?_en[3]:_en[4];if(_winf&&typeof _winf==="object"&&_winf.u){if(!_wkMinU||_winf.u<_wkMinU)_wkMinU=_winf.u;}}
-        const _wkQ=unitQuarter(_wkMinU);
+        // Thread 2 + F2 -- emit a quarter-band divider when the quarter
+        // changes. F2: the quarter is date-driven (the week's Monday vs
+        // grade-config's windows), matching the date-driven grade math --
+        // no longer the week's unit band. Label keeps the unit list.
+        const _wkQ=quarterOfDate(wk.m);
         if(_wkQ&&_wkQ!==_lastQ){const _qb=document.createElement("div");_qb.className="cal-qband";_qb.textContent="Quarter "+_wkQ+"  ("+QUARTER_BAND_LABEL["Q"+_wkQ]+")";g.appendChild(_qb);_lastQ=_wkQ;}
         for(let dw=1;dw<=5;dw++){
             const c=document.createElement("div");c.className="dc";

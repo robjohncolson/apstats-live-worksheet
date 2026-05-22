@@ -5,7 +5,7 @@
  * ap_stats_roadmap_square_mode.html. Frozen contract: CALENDAR_POLISH_BUILD.md.
  *
  * Source assertions + Node `vm` runtime of the real helpers
- * (unitQuarter / paintDonowCells), matching tests/desk-donow-coloring.test.js.
+ * (quarterOfDate / paintDonowCells), matching tests/desk-donow-coloring.test.js.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -124,30 +124,40 @@ describe('C2 -- current lesson emphasis', () => {
 
 // --- C3: Q1-Q4 quarter dividers ---------------------------------------------
 
-describe('C3 -- Q1-Q4 quarter markers', () => {
+describe('C3 -- Q1-Q4 quarter markers (F2: date-driven)', () => {
   it('.cal-qband CSS rule exists', () => {
     expect(html).toMatch(/\.cal-qband\s*\{/);
   });
-  it('rCal emits a .cal-qband divider sourced from QUARTER_BAND_LABEL', () => {
+  it('rCal emits a .cal-qband divider, date-driven via quarterOfDate', () => {
     const b = fnBody(html, 'rCal');
     expect(b).toMatch(/cal-qband/);
-    expect(b).toMatch(/QUARTER_BAND_LABEL/);
-    expect(b).toMatch(/unitQuarter\(/);
+    expect(b).toMatch(/QUARTER_BAND_LABEL/);  // label keeps the unit list
+    expect(b).toMatch(/quarterOfDate\(/);     // F2: position is date-driven
+    expect(b).not.toMatch(/unitQuarter\(/);   // ...not the unit band
   });
 
-  function loadUnitQuarter() {
+  function loadQuarterOfDate() {
     const sandbox = {};
     createContext(sandbox);
-    runInContext(fnBody(html, 'unitQuarter') + '\nthis.__q = unitQuarter;', sandbox);
+    // quarterOfDate reads the QUARTER_WINDOWS const -- load both.
+    const winSrc = /const QUARTER_WINDOWS = \[[\s\S]*?\n\];/.exec(html)[0];
+    runInContext(winSrc + '\n' + fnBody(html, 'quarterOfDate') +
+      '\nthis.__q = quarterOfDate;', sandbox);
     return sandbox.__q;
   }
-  it('unitQuarter maps units to the Phase-6 quarter bands', () => {
-    const q = loadUnitQuarter();
-    expect([q(1), q(2), q(3)]).toEqual([1, 1, 1]);
-    expect([q(4), q(5)]).toEqual([2, 2]);
-    expect([q(6), q(7)]).toEqual([3, 3]);
-    expect([q(8), q(9)]).toEqual([4, 4]);
-    expect(q(0)).toBe(0);
+  it('quarterOfDate maps calendar dates to the right quarter', () => {
+    const q = loadQuarterOfDate();
+    // JS Date month arg is 0-indexed: month 8 = September.
+    expect(q(new Date(2026, 8, 9))).toBe(1);    // Sep 9 2026 -- Q1 opens
+    expect(q(new Date(2026, 10, 13))).toBe(1);  // Nov 13 2026 -- Q1 closes
+    expect(q(new Date(2026, 10, 14))).toBe(2);  // Nov 14 2026 -- Q2 opens
+    expect(q(new Date(2027, 0, 29))).toBe(2);   // Jan 29 2027 -- Q2 closes
+    expect(q(new Date(2027, 0, 30))).toBe(3);   // Jan 30 2027 -- Q3 opens
+    expect(q(new Date(2027, 3, 9))).toBe(3);    // Apr 9 2027 -- Q3 closes
+    expect(q(new Date(2027, 3, 10))).toBe(4);   // Apr 10 2027 -- Q4 opens
+    expect(q(new Date(2027, 5, 23))).toBe(4);   // Jun 23 2027 -- Q4 closes
+    expect(q(new Date(2026, 7, 31))).toBe(0);   // Aug 31 2026 -- before Q1
+    expect(q(new Date(2027, 6, 1))).toBe(0);    // Jul 1 2027 -- after Q4
   });
 });
 
