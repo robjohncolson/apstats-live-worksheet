@@ -1,3 +1,138 @@
+# Continuation Prompt -- session 107
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-106 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-21 (session 107). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (the r3 feature work ended at `e90755e`).
+> curriculum_render HEAD = `2626015`. Linear, local==origin on both.
+>
+> ## Shipped this session (107) -- Live Classroom r3 (the Presentation Revamp)
+> One feature, built with the proven loop: brainstorm -> spec
+> (`LIVE_CLASSROOM_SPEC.md` Revision 3 / Section 15) -> freeze
+> `LIVE_CLASSROOM_R3_BUILD.md` -> 4 parallel Sonnet subagents on disjoint
+> files (U1-U4) -> 3 read-only Codex reviews -> planner folds every
+> finding + re-verifies on disk -> 3 tight per-purpose commits -> push.
+> Codex found 1 BLOCKER + 5 MAJOR + 3 MINOR; all folded (+ 2 planner nits).
+>
+> - **r3 replaces the Live Classroom board's presentation.** The board
+>   was a 320x240 TI-84 LCD with hand-drawn 8px avatars; it is now an
+>   animated side-view sprite SCENE reusing curriculum_render's avatars.
+>   `canvas_engine.js` + `sprite_sheet.js` were lifted verbatim from
+>   curriculum_render into follow-alongs root (`sprite.png` was already
+>   tracked). `classroom-board.js` got a render-layer rewrite -- a
+>   `CanvasEngine` RAF loop + a slim `BoardSprite` (idle-blink +
+>   walk-into-the-gate-door drain), `GateDoor`, green-light overlay. The
+>   pure `_reduce` reducer, the WS protocol, and the public board API
+>   are UNCHANGED (additive `hue` only). The TI-84 calculator screen is
+>   no longer the board substrate -- it becomes an on-demand surface for
+>   v2 poll stat-plots (spec decisions D14-D17 supersede D3/K6; D16 = 2D
+>   canvas, not WebGL).
+> - **Avatar colour persists cross-app via `roster.sprite_hue`.** A new
+>   nullable column (migration `0006` -- RUN, see below). cr's hue
+>   picker writes it best-effort (`PATCH /roster/:studentId/sprite-hue`,
+>   student-own-token auth); `/roster/verify` returns `spriteHue`;
+>   `roster-client.js` `current()`/`signIn()` surface it; the WS
+>   `classroom_join` + Member + member broadcasts carry an additive
+>   durable `hue` (NOT cleared by armGate/reset); the board tints each
+>   sprite by it, with a username-hash fallback for un-picked students.
+> - **Commits:** follow-alongs `c9d2ebf` (roster-server sprite_hue
+>   column + endpoint -- touches `roster-server/**`, auto-deploys) +
+>   `e90755e` (the board + spec + BUILD doc + lifted files + Desk and
+>   cockpit mount wiring). curriculum_render `2626015` (WS `hue` field +
+>   picker roster write -- touches `railway-server/**`, deploys the WS
+>   service).
+>
+> ## Migration -- DONE
+> `roster-server/migrations/0006_roster_sprite_hue.sql` was RUN by the
+> teacher in the curriculum_render Supabase SQL editor this session. r3
+> is FULLY live -- no longer in the degrade-safe (`spriteHue:null` /
+> 503) fallback mode.
+>
+> ## Test baseline
+> roster-server **416/416**. curriculum_render **828/829** -- the only
+> fail is the long-standing unrelated `redox-chat.test.js` (NOT a
+> regression). follow-alongs root **4535/4536** -- the only fail is the
+> long-standing unrelated `tests/study-guide.test.js` (NOT a
+> regression). New/extended tests: `roster-server/tests/sprite-hue.test.js`,
+> curriculum_render `tests/classroom.test.js` +
+> `tests/u3-sprite-hue-persist.test.js`, `tests/classroom-board.test.js`,
+> `tests/classroom-structure.test.js`.
+>
+> ## Open / verify
+> - Both pushes triggered deploys: `c9d2ebf` -> roster-server,
+>   `2626015` -> the curriculum_render WS service. Smoke once they land:
+>   `/roster/verify` returns `spriteHue`; `PATCH /roster/:id/sprite-hue`
+>   returns 200 (the migration ran -- no longer 503); a `classroom_join`
+>   carries `hue`; DogePresence / Tetris unregressed.
+> - The board sprite scene is GH Pages (follow-alongs). Eyeball that the
+>   board fits its host panel on the Desk + the cockpit (the BLOCKER fix
+>   re-pointed the lifted engine off the full viewport onto the
+>   container).
+>
+> ## NEXT -- queued (two were raised + parked THIS session)
+> - **"Preview as student" Desk toggle** -- the teacher cannot see the
+>   lesson-gating / Do-Now focus because the teacher role bypasses every
+>   gate. Diagnosis done (s107): `_deskIsTeacher()` is the single
+>   chokepoint -- it reads the `apstats_user_role` localStorage cache,
+>   which `updateUserRoleUI()` re-derives from the server role on every
+>   load, so a DevTools poke evaporates on reload. Plan: a Teacher-menu
+>   "Preview as student" item flipping a `sessionStorage` flag that
+>   `_deskIsTeacher()` honours (per-tab, auto-clears, survives reloads).
+>   ~15 lines, Desk-only. Not yet spec'd.
+> - **Quarters by DATE, not material** -- the teacher's correction:
+>   `roster-server/grade-config.js` defines quarters as unit bands
+>   (Q1=[1,2,3]...) but a quarter is a calendar window. Teacher provided
+>   the Lynn Public Schools SY26-27 calendar (full JSON in the
+>   session-107 transcript): first day 2026-09-09; quarter closes Q1
+>   2026-11-13 / Q2 2027-01-29 / Q3 2027-04-09 / Q4 2027-06-23; plus
+>   holidays + half-days. CATCH found: `roster-server/data/lesson-schedule.json`
+>   has NO dates (all `periods` null) -- so "quarters by date" is
+>   coupled to laying out the real SY26-27 schedule. Not yet spec'd.
+> - **Live Classroom v1c** -- synchronized video start
+>   (`LIVE_CLASSROOM_SPEC.md` S10).
+> - **Live Classroom v2** -- Poll mode + the data-driven `ti84-plot.js`;
+>   this is where the on-demand TI-84 surface (r3 D15) actually gets
+>   built.
+> - **Railway -> DigitalOcean migration** -- strategic, before the next
+>   Railway bill; see the `railway-to-digitalocean` memory.
+> - **Cleanup (optional):** cr's `roster-client.js` has drifted from
+>   follow-alongs' (it predates the `role` + `changePassword`
+>   additions); re-sync the shared file.
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The loop method** is proven again -- the Codex read-only review
+>   gate caught the r3 BLOCKER + 5 MAJOR. The planner folds every
+>   finding and ALWAYS re-verifies on disk.
+> - **Lifted files:** `canvas_engine.js` / `sprite_sheet.js` /
+>   `sprite.png` in follow-alongs root are verbatim copies from
+>   curriculum_render -- cr is their source of truth; re-copy if cr
+>   changes them, do not "improve" them in place.
+> - **Cross-agent runner:** ASCII-only prompts. A Codex review wrote a
+>   483 KB `.output`; the clean verdict is in
+>   `state/cross-agent/<id>.result.json`, not the wrapper.
+> - **PowerShell 5.1 + git:** never `git commit -m` from PowerShell --
+>   use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- the repos carry pre-existing untracked
+>   scratch (`.ai-tutor-*`, `.codex-*`, `.batch-*`, `state/cross-agent*`,
+>   cr's `AGENTS.md`/`CLAUDE.md`/`.claude/**`). `git add` explicit
+>   paths, never `-A`. `data/skill-map.js` regenerates when the audit
+>   runs -- `git checkout` it.
+> - **roster-server** lives inside follow-alongs (`roster-server/`, own
+>   `package.json` + vitest); auto-deploys on a push touching
+>   `roster-server/**`. curriculum_render is a SEPARATE repo;
+>   `railway-server/**` deploys the `curriculumrender-production` WS
+>   service.
+>
+> ## Recall on reload
+> `project_live_classroom.md`, `project_gradebook_grading_model.md`,
+> `project_desk_donow.md`, `project_grade_pipeline.md`,
+> `project_teacher_auth.md`, `project_railway_to_digitalocean.md`,
+> `feedback_diagnostic_first.md`, `feedback_curriculum_render_sacred.md`.
+
+---
+
 # Continuation Prompt -- session 106
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
