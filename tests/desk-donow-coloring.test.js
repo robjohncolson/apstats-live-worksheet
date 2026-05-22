@@ -60,7 +60,8 @@ describe('DN3b — wiring', () => {
   it('paintDonowCells only toggles classes (no rCal rebuild → no flicker)', () => {
     const b = fnBody(html, 'paintDonowCells');
     expect(b).not.toMatch(/rCal\(/);
-    expect(b).toMatch(/classList\.remove\('dc-partial', 'dc-done', 'dc-ahead', 'cal-current'\)/);
+    expect(b).toMatch(/classList\.remove\('dc-partial', 'dc-done', 'dc-ahead'\)/);
+    expect(b).not.toMatch(/'cal-current'/);  // CALENDAR_FOCUS -- rCal owns the class now
   });
 });
 

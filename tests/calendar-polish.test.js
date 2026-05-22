@@ -46,79 +46,42 @@ describe('C1 -- done lessons render greyscale', () => {
   });
 });
 
-// --- C2: current lesson emphasis --------------------------------------------
+// --- C2: current lesson emphasis (CALENDAR_FOCUS -- rCal owns cal-current) ---
 
 describe('C2 -- current lesson emphasis', () => {
-  it('.cal-current CSS rule exists (a bright accent outline)', () => {
+  it('.cal-current CSS rule exists', () => {
     expect(html).toMatch(/\.cal-current\s*\{[^}]*outline/);
   });
-  it('paintDonowCells clears cal-current on every repaint', () => {
+  it('paintDonowCells no longer touches cal-current (rCal owns it now)', () => {
     const b = fnBody(html, 'paintDonowCells');
-    expect(b).toMatch(/classList\.remove\([^)]*'cal-current'[^)]*\)/);
+    // the quoted class literal -- a comment mentioning .cal-current is fine.
+    expect(b).not.toMatch(/'cal-current'/);
   });
-  it('paintDonowCells marks the /donow nextTask lesson via donowLessonCovers', () => {
-    const b = fnBody(html, 'paintDonowCells');
-    expect(b).toMatch(/_donowData\s*&&\s*_donowData\.nextTask/);
-    expect(b).toMatch(/donowLessonCovers\([^)]*\.lesson/);
+  it('rCal marks one cell -- the calNextUpTopic lesson -- as cal-current', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/calNextUpTopic\(/);
+    expect(b).toMatch(/inf\.t\s*===\s*_nextUpTopic/);
     expect(b).toMatch(/classList\.add\('cal-current'\)/);
   });
 
-  function paintWith(donow, cells) {
-    const sandbox = {
-      tdy: () => new Date(2026, 5, 15),
-      document: { querySelectorAll: () => cells },
-      console,
-    };
+  // behavioral: calNextUpTopic skips non-lesson (review) cells + done lessons.
+  function loadCalNextUp() {
+    const sandbox = {};
     createContext(sandbox);
     runInContext(
-      'var _donowData = ' + JSON.stringify(donow) + ';\n' +
-      fnBody(html, 'donowLessonCovers') + '\n' +
-      fnBody(html, 'donowCellState') + '\n' +
-      fnBody(html, 'paintDonowCells') + '\nthis.__p = paintDonowCells;', sandbox);
-    sandbox.__p();
+      fnBody(html, 'localLessonState') + '\n' +
+      fnBody(html, 'calNextUpTopic') + '\nthis.__n = calNextUpTopic;', sandbox);
+    return sandbox.__n;
   }
-  function cell(topic) {
-    const classes = new Set();
-    return {
-      dataset: { topic, dts: String(+new Date(2026, 5, 1)) },
-      classList: {
-        add: (...c) => c.forEach(x => classes.add(x)),
-        remove: (...c) => c.forEach(x => classes.delete(x)),
-        has: x => classes.has(x),
-      },
-      _classes: classes,
-    };
-  }
-
-  it('marks the cell whose topic is the current nextTask lesson', () => {
-    const c = cell('1.2');
-    paintWith({ nextTask: { lesson: '1.2' } }, [c]);
-    expect(c._classes.has('cal-current')).toBe(true);
-  });
-  it('a combined-lesson nextTask marks the cell donowLessonCovers matches', () => {
-    // donowLessonCovers('4.1-2','4.1') is true (first dash-segment). cal-current
-    // uses the same shipped helper as the done/partial coloring, so it marks
-    // exactly the cells that helper matches -- staying consistent with it.
-    const a = cell('4.1'), b = cell('9.9');
-    paintWith({ nextTask: { lesson: '4.1-2' } }, [a, b]);
-    expect(a._classes.has('cal-current')).toBe(true);
-    expect(b._classes.has('cal-current')).toBe(false);
-  });
-  it('a non-current cell is not marked', () => {
-    const c = cell('9.9');
-    paintWith({ nextTask: { lesson: '1.2' } }, [c]);
-    expect(c._classes.has('cal-current')).toBe(false);
-  });
-  it('no nextTask (all caught up) -> nothing marked', () => {
-    const c = cell('1.2');
-    paintWith({ lessons: [] }, [c]);
-    expect(c._classes.has('cal-current')).toBe(false);
-  });
-  it('clears a stale cal-current when the nextTask moves on', () => {
-    const c = cell('1.2');
-    c.classList.add('cal-current');
-    paintWith({ nextTask: { lesson: '9.9' } }, [c]);
-    expect(c._classes.has('cal-current')).toBe(false);
+  it('calNextUpTopic -- first not-done lesson; skips review cells; null when all done', () => {
+    const n = loadCalNextUp();
+    const done = { '1.1|worksheet': { ts: 'y' } };
+    expect(n(['1.1', '1.2', '1.3'], done)).toBe('1.2');           // 1.1 done -> 1.2
+    expect(n(['1.1', 'REVIEW', '1.2'], done)).toBe('1.2');        // review cell skipped
+    expect(n(['1.1', '1.2'], {})).toBe('1.1');                    // fresh -> first lesson
+    const allDone = { '1.1|w': { ts: 'y' }, '1.2|w': { ts: 'y' } };
+    expect(n(['1.1', '1.2', 'REVIEW'], allDone)).toBe(null);      // all done -> null
+    expect(n(['1.1'], { '1.1|worksheet': { visitedAt: 'x' } })).toBe('1.1');  // partial counts
   });
 });
 

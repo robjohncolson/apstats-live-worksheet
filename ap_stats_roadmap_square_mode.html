@@ -3554,6 +3554,20 @@ function localLessonState(topic, marks) {
   return '';
 }
 
+// CALENDAR_FOCUS -- the next-up lesson (the synthwave cell): the FIRST entry in
+// orderedTopics (chronological) that is a real lesson -- topic shaped N.N, so
+// review / off / exam cells are skipped -- AND is not 'done' per the student's
+// local marks. Returns the topic string, or null when every lesson is done.
+// Same local signal as the greyscale, so a done lesson is never also next-up.
+function calNextUpTopic(orderedTopics, marks) {
+  if (!Array.isArray(orderedTopics)) return null;
+  for (const t of orderedTopics) {
+    if (typeof t !== 'string' || !/^\d+\.\d+/.test(t)) continue;
+    if (localLessonState(t, marks) !== 'done') return t;
+  }
+  return null;
+}
+
 // ── Sequential lesson gate (2026-05-20, LESSON_GATE_BUILD.md) ────────────────
 // A lesson unlocks when the prior lesson is complete OR its scheduled date
 // arrives. Guides the summer self-pacer 1.1 -> onward; during the school year
@@ -4258,18 +4272,17 @@ function paintDonowCells() {
     var cells = document.querySelectorAll('#cg .dc[data-topic]');
     for (var i = 0; i < cells.length; i++) {
       var c = cells[i];
-      c.classList.remove('dc-partial', 'dc-done', 'dc-ahead', 'cal-current');
+      c.classList.remove('dc-partial', 'dc-done', 'dc-ahead');
       var st = donowCellState(c.dataset.topic);
       if (st === 'partial') c.classList.add('dc-partial');
       else if (st === 'done') {
         var dts = Number(c.dataset.dts);
         c.classList.add((dts && dts > today) ? 'dc-ahead' : 'dc-done');
       }
-      // Thread 2 -- mark the student's current lesson (the /donow nextTask).
-      var _nt = _donowData && _donowData.nextTask;
-      if (_nt && _nt.lesson && donowLessonCovers(_nt.lesson, c.dataset.topic)) {
-        c.classList.add('cal-current');
-      }
+      // CALENDAR_FOCUS -- .cal-current (the synthwave next-up) is owned by rCal
+      // now, driven by LOCAL completion. paintDonowCells no longer touches it:
+      // the /donow nextTask lagged a student's Done click and pinned the
+      // highlight to the just-completed lesson.
     }
   } catch (_) { /* coloring must never break the Desk */ }
 }
@@ -9998,6 +10011,14 @@ function rCal(){
     // chronological order, so _prevLessonTopic trails the last lesson cell.
     const _gateMarks = getStudentMarks();
     const _gateSignedIn = !!getStudentEmail();
+    // CALENDAR_FOCUS -- the one next-up lesson, by the student's local marks.
+    // Computed once over S (chronological); the matching cell gets .cal-current.
+    const _nextUpTopic = calNextUpTopic(
+      S.map(function (e) { return cP === 'B' ? e[3] : e[4]; })
+       .filter(function (x) { return x && typeof x === 'object' && x.t; })
+       .map(function (x) { return x.t; }),
+      _gateMarks
+    );
     let _prevLessonTopic = null;
     let _lastQ = 0; // Thread 2 -- the quarter band already emitted
     for(const wk of W){
@@ -10044,6 +10065,13 @@ function rCal(){
               const _localState = localLessonState(inf.t, _gateMarks);
               if (_localState) {
                 c.classList.add(_localState === 'done' ? 'dc-localdone' : 'dc-localpartial');
+              }
+              // CALENDAR_FOCUS -- the synthwave next-up cell, computed once above
+              // via calNextUpTopic (first not-locally-done real lesson; review /
+              // off / exam cells excluded). rCal owns .cal-current; paintDonowCells
+              // no longer touches it.
+              if (inf.t === _nextUpTopic) {
+                c.classList.add('cal-current');
               }
             }
             c.onmouseenter=(ev)=>sTip(ev,dt,inf,ds);c.onmouseleave=hTip;c.onmousemove=mTip;

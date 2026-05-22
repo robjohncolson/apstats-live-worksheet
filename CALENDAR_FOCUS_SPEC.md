@@ -108,3 +108,23 @@ Pages only (the Desk is not under `roster-server/` -- no backend redeploy).
 - `.cell-past` mild dimming is unchanged.
 - A per-cell "completed" checkmark glyph (deferred -- D6 keeps this
   pure-CSS).
+
+## 7. Follow-up fix (session 109, post-ship)
+
+Shipped `ac3a6c3` drove the next-up neon (`.cal-current`) from the
+`/donow` server `nextTask` (D2) and deferred local-aware next-up (the
+first bullet of section 6). A teacher bug report exposed that as wrong:
+a student who completed lesson 1.1 still saw the neon on 1.1. A Desk
+"Done" click writes a synthetic `DESK_DONE` ledger row that matches no
+manifest item, so `/donow`'s `nextTask` never advanced off 1.1; the
+done lesson then carried both `.dc-localdone` and `.cal-current`, and
+`:not(.cal-current)` suppressed its greyscale.
+
+Fix (Codex-investigated): `.cal-current` is now owned by `rCal` and
+driven by the SAME local signal as the greyscale: the pure helper
+`calNextUpTopic` returns the first entry, in calendar order, that is a
+real lesson (topic `N.N`; review / off / exam cells excluded -- a Codex
+review catch) and is not `'done'` per the local marks; `rCal` tags it.
+`paintDonowCells` no longer touches `.cal-current`. `/donow` still
+drives the Do Now card and the server `dc-*` rings. This supersedes
+D2's `/donow` basis and closes the section-6 deferral.
