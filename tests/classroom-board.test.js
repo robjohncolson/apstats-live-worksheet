@@ -2062,3 +2062,344 @@ describe('ClassroomBoard r3 -- engineReady fallback', function () {
     expect(function () { handle.destroy(); }).not.toThrow();
   });
 });
+
+// ==========================================================================
+// v1c tests -- greenLight opts + onStartVideo callback
+// ==========================================================================
+
+// --- v1c: greenLight sends startVideo + videoRef on the wire ----------
+
+describe('ClassroomBoard handle.greenLight -- v1c opts (wire)', function () {
+
+  it('greenLight({startVideo:true, videoRef:"x"}) sends classroom_go with both fields', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.greenLight({ startVideo: true, videoRef: 'x' });
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_go'; });
+    expect(msg).toBeDefined();
+    expect(msg.startVideo).toBe(true);
+    expect(msg.videoRef).toBe('x');
+
+    handle.destroy();
+  });
+
+  it('greenLight() with no args sends startVideo:false and videoRef:null', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.greenLight();
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_go'; });
+    expect(msg).toBeDefined();
+    expect(msg.startVideo).toBe(false);
+    expect(msg.videoRef).toBeNull();
+
+    handle.destroy();
+  });
+
+  it('greenLight({}) (empty opts) sends startVideo:false and videoRef:null', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.greenLight({});
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_go'; });
+    expect(msg).toBeDefined();
+    expect(msg.startVideo).toBe(false);
+    expect(msg.videoRef).toBeNull();
+
+    handle.destroy();
+  });
+
+  it('greenLight({startVideo:false}) sends startVideo:false', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.greenLight({ startVideo: false });
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_go'; });
+    expect(msg).toBeDefined();
+    expect(msg.startVideo).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('non-string videoRef is coerced to null on the wire', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.greenLight({ startVideo: true, videoRef: 42 });
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_go'; });
+    expect(msg).toBeDefined();
+    expect(msg.videoRef).toBeNull();
+
+    handle.destroy();
+  });
+});
+
+// --- v1c: onStartVideo callback fires on inbound greenlight -----------
+
+describe('ClassroomBoard.mount -- onStartVideo callback (v1c)', function () {
+
+  it('fires onStartVideo with videoRef when classroom_greenlight has startVideo:true', function () {
+    var m = makeMount();
+    var calls = [];
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:         'wss://test.example/ws',
+      section:       'PeriodX',
+      username:      'alice',
+      role:          'student',
+      onStartVideo:  function (ref) { calls.push(ref); }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:       'classroom_greenlight',
+      section:    'PeriodX',
+      startVideo: true,
+      videoRef:   'u4l2'
+    });
+
+    expect(calls.length).toBe(1);
+    expect(calls[0]).toBe('u4l2');
+
+    handle.destroy();
+  });
+
+  it('fires onStartVideo with null when videoRef is absent but startVideo:true', function () {
+    var m = makeMount();
+    var calls = [];
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:         'wss://test.example/ws',
+      section:       'PeriodX',
+      username:      'alice',
+      role:          'student',
+      onStartVideo:  function (ref) { calls.push(ref); }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:       'classroom_greenlight',
+      section:    'PeriodX',
+      startVideo: true
+      // videoRef absent
+    });
+
+    expect(calls.length).toBe(1);
+    expect(calls[0]).toBeNull();
+
+    handle.destroy();
+  });
+
+  it('does NOT fire onStartVideo when startVideo is false', function () {
+    var m = makeMount();
+    var calls = [];
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:         'wss://test.example/ws',
+      section:       'PeriodX',
+      username:      'alice',
+      role:          'student',
+      onStartVideo:  function (ref) { calls.push(ref); }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:       'classroom_greenlight',
+      section:    'PeriodX',
+      startVideo: false,
+      videoRef:   'u4l2'
+    });
+
+    expect(calls.length).toBe(0);
+
+    handle.destroy();
+  });
+
+  it('does NOT fire onStartVideo when startVideo is absent', function () {
+    var m = makeMount();
+    var calls = [];
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:         'wss://test.example/ws',
+      section:       'PeriodX',
+      username:      'alice',
+      role:          'student',
+      onStartVideo:  function (ref) { calls.push(ref); }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_greenlight',
+      section: 'PeriodX'
+      // startVideo absent
+    });
+
+    expect(calls.length).toBe(0);
+
+    handle.destroy();
+  });
+
+  it('omitting onStartVideo does not throw when a startVideo greenlight arrives', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+      // no onStartVideo
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    expect(function () {
+      ws._receive({
+        type:       'classroom_greenlight',
+        section:    'PeriodX',
+        startVideo: true,
+        videoRef:   'ref'
+      });
+    }).not.toThrow();
+
+    handle.destroy();
+  });
+
+  it('a throwing onStartVideo does not break the board (swallowed)', function () {
+    var m = makeMount();
+    var afterCalled = false;
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:         'wss://test.example/ws',
+      section:       'PeriodX',
+      username:      'alice',
+      role:          'student',
+      onStartVideo:  function () { throw new Error('boom'); }
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    expect(function () {
+      ws._receive({
+        type:       'classroom_greenlight',
+        section:    'PeriodX',
+        startVideo: true,
+        videoRef:   null
+      });
+    }).not.toThrow();
+
+    // The state reduction + onStateChange path still completed -- the board
+    // is still alive.  Send another message to confirm no silent crash.
+    expect(function () {
+      ws._receive({
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    null,
+        poll:    null,
+        members: [{ username: 'alice', role: 'student', status: 'present', online: true }]
+      });
+    }).not.toThrow();
+
+    handle.destroy();
+  });
+});
+
+// --- v1c: _reduce stays pure -- startVideo/videoRef NOT stored in state
+
+describe('ClassroomBoard._reduce -- v1c startVideo/videoRef NOT in state', function () {
+  var board;
+  var baseState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    baseState = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      STATE_MSG
+    );
+  });
+
+  it('greenlight is still a boolean true after a startVideo greenlight message', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:       'classroom_greenlight',
+      section:    'PeriodX',
+      startVideo: true,
+      videoRef:   'u4l2'
+    });
+    expect(s.greenlight).toBe(true);
+  });
+
+  it('startVideo is NOT stored on state', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:       'classroom_greenlight',
+      section:    'PeriodX',
+      startVideo: true,
+      videoRef:   'u4l2'
+    });
+    expect(s.startVideo).toBeUndefined();
+  });
+
+  it('videoRef is NOT stored on state', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:       'classroom_greenlight',
+      section:    'PeriodX',
+      startVideo: true,
+      videoRef:   'u4l2'
+    });
+    expect(s.videoRef).toBeUndefined();
+  });
+});

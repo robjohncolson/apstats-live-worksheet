@@ -134,9 +134,10 @@ describe('Live Classroom v1b - cockpit control strip', () => {
     expect(COCKPIT).toMatch(/armGate\(theme\)/);
   });
 
-  it('Green Light button calls boardHandle.greenLight()', () => {
+  it('Green Light button calls boardHandle.greenLight with opts (v1c)', () => {
     expect(COCKPIT).toMatch(/boardHandle\.greenLight/);
-    expect(COCKPIT).toMatch(/greenLight\(\)/);
+    // v1c: greenLight is now called with an opts object ({ startVideo }).
+    expect(COCKPIT).toMatch(/greenLight\(\s*\{/);
   });
 
   it('Reset button calls boardHandle.reset()', () => {
@@ -309,5 +310,46 @@ describe('Live Classroom r3 - Desk loads engine scripts', () => {
     expect(idxBoard).toBeGreaterThan(-1);
     expect(idxEngine).toBeLessThan(idxBoard);
     expect(idxSprite).toBeLessThan(idxBoard);
+  });
+});
+
+// =============================================================
+// v1c structure pins -- synchronized video start
+// =============================================================
+
+describe('Live Classroom v1c - synchronized video start', () => {
+  it('cockpit has a Sync video start checkbox (id=sync-video-start)', () => {
+    expect(COCKPIT).toMatch(/id=["']sync-video-start["']/);
+    expect(COCKPIT).toMatch(/type=["']checkbox["']/);
+  });
+
+  it('cockpit Green Light passes startVideo read from the checkbox', () => {
+    expect(COCKPIT).toMatch(/greenLight\(\s*\{/);
+    expect(COCKPIT).toMatch(/startVideo\s*:/);
+    expect(COCKPIT).toMatch(/sync-video-start/);
+  });
+
+  it('the board greenLight accepts an opts object and sends startVideo/videoRef', () => {
+    expect(BOARD).toMatch(/greenLight\s*:\s*function\s*\(\s*opts\s*\)/);
+    expect(BOARD).toMatch(/startVideo\s*:/);
+    expect(BOARD).toMatch(/videoRef\s*:/);
+  });
+
+  it('the board mount reads an optional onStartVideo opt', () => {
+    expect(BOARD).toMatch(/opts\.onStartVideo/);
+  });
+
+  it('Desk _mountClassroomBoard passes onStartVideo into the board mount', () => {
+    const body = fnBody(DESK, '_mountClassroomBoard');
+    expect(body).toMatch(/onStartVideo\s*:/);
+  });
+
+  it('Desk _focusTodayLessonVideo opens the resource panel directly (no synthetic click)', () => {
+    expect(DESK).toMatch(/function\s+_focusTodayLessonVideo\s*\(/);
+    const body = fnBody(DESK, '_focusTodayLessonVideo');
+    // Codex F3 MAJOR: must call showResourcePanel directly, NOT cell.click()
+    // -- a synthetic click re-enters the lock-dialog / Do-Now-bump guards.
+    expect(body).toMatch(/showResourcePanel\s*\(/);
+    expect(body).not.toMatch(/\.click\s*\(\s*\)/);
   });
 });

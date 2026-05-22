@@ -13,13 +13,16 @@
  *   handle.destroy()
  *   handle.setNameMap(map)
  *   handle.armGate(theme)      -- v1b teacher method
- *   handle.greenLight()        -- v1b teacher method
+ *   handle.greenLight(opts?)   -- v1c teacher method (opts: {startVideo?,videoRef?})
  *   handle.reset()             -- v1b teacher method
  *
  * opts (r3): { wsUrl, section, username, role, nameMap?, onStateChange?,
- *              hue? }
+ *              hue?, onStartVideo? }
  *   hue: integer 0-359 or null.  Sent in classroom_join; used to tint this
  *   user's own avatar on the board.
+ *   onStartVideo: optional function(videoRef).  Called once per inbound
+ *   classroom_greenlight whose startVideo === true.  videoRef is the string
+ *   the broadcast carried (or null).
  *
  * Internal state reduction is exposed as a pure function:
  *   ClassroomBoard._reduce(state, message) -> newState
@@ -550,6 +553,7 @@
     var nameMap       = opts.nameMap || null;
     var onStateChange = opts.onStateChange || null;
     var mountHue      = (opts.hue != null) ? opts.hue : null;
+    var onStartVideo  = (typeof opts.onStartVideo === 'function') ? opts.onStartVideo : null;
 
     // --- canvas setup ---------------------------------------------------
 
@@ -874,6 +878,9 @@
       if (msg.type === 'classroom_greenlight') {
         showGreenlight();
       }
+      if (msg.type === 'classroom_greenlight' && msg.startVideo === true && onStartVideo) {
+        try { onStartVideo(msg.videoRef || null); } catch (_) {}
+      }
       syncScene(state);
       refreshButton();
       notifyStateChange();
@@ -992,8 +999,13 @@
         safeSend({ type: 'classroom_arm_gate', theme: theme || '' });
       },
 
-      greenLight: function () {
-        safeSend({ type: 'classroom_go' });
+      greenLight: function (opts) {
+        var o = opts || {};
+        safeSend({
+          type:       'classroom_go',
+          startVideo: o.startVideo === true,
+          videoRef:   (typeof o.videoRef === 'string') ? o.videoRef : null
+        });
       },
 
       reset: function () {

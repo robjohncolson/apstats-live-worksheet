@@ -272,11 +272,18 @@
         <div class="control-strip">
           <button class="ctrl-btn primary" id="btn-arm-gate">Arm Gate</button>
           <button class="ctrl-btn" id="btn-green-light">Green Light</button>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:0.88rem;color:var(--sg-text-dim);cursor:pointer;">
+            <input type="checkbox" id="sync-video-start">
+            Sync video start
+          </label>
           <button class="ctrl-btn danger" id="btn-reset">Reset</button>
           <span class="greenlight-indicator">
             <span class="greenlight-dot" id="greenlight-dot"></span>
             <span id="greenlight-label">Go not sent</span>
           </span>
+        </div>
+        <div class="hint">
+          When checked, Green Light also opens today's lesson video on every student Desk.
         </div>
         <div class="hint">
           Arm Gate opens today's hole and clears all check-in status.
@@ -531,7 +538,9 @@
       if (!boardHandle || typeof boardHandle.greenLight !== 'function') return;
       // The indicator lights from the broadcast-driven onStateChange summary,
       // not optimistically here -- so it never lies if the send fails.
-      boardHandle.greenLight();
+      boardHandle.greenLight({
+        startVideo: !!document.getElementById('sync-video-start').checked
+      });
     });
 
     document.getElementById('btn-reset').addEventListener('click', function () {

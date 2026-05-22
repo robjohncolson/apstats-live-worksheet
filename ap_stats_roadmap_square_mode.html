@@ -9946,7 +9946,13 @@ function rCal(){
             const dt=new Date(en[0],en[1],en[2]),ds=MN[dt.getMonth()]+" "+dt.getDate();
             const inf=cP==="B"?en[3]:en[4];
             c.classList.add(cls(inf));c.innerHTML=htm(inf,ds);
-            if(eq(dt,t))c.classList.add("cell-today");
+            if(eq(dt,t)){
+              c.classList.add("cell-today");
+              // v1c: stash today's lesson so _focusTodayLessonVideo opens its
+              // resource panel directly (no synthetic cell click -- that would
+              // re-enter the lock-dialog / Do-Now-bump guards).
+              if(typeof inf==='object'&&inf.t){_todayLessonInf=inf;_todayLessonDS=ds;}
+            }
             if(dt<t&&!eq(dt,t))c.classList.add("cell-past");
             if (typeof inf === 'object' && inf.t) {
               c.dataset.topic = inf.t; c.dataset.dts = +dt; // DN3b — completion overlay hooks
@@ -10063,6 +10069,21 @@ function hTip(){tip.style.display="none";}
    presence board once a student is signed in; tolerates the optional
    classroom-board.js component being absent. */
 var _classroomBoardHandle = null;
+var _todayLessonInf = null, _todayLessonDS = null;  // v1c: today's lesson, stashed by the calendar renderer
+// v1c (LIVE_CLASSROOM_V1C_BUILD.md): the board fires onStartVideo on every
+// student Desk when the teacher Green-Lights with "sync video start" on.
+// Surface today's lesson by opening its resource panel DIRECTLY -- not via a
+// synthetic cell click, which would re-enter the calendar's lock-dialog /
+// Do-Now-bump guards and could stop a synced green-light short (Codex F3
+// review, MAJOR). Never autoplays (browser policy) and never throws.
+function _focusTodayLessonVideo() {
+  try {
+    if (!_todayLessonInf || typeof showResourcePanel !== 'function') return;
+    showResourcePanel(_todayLessonInf, _todayLessonDS);
+    var cell = document.querySelector('.cell-today');
+    if (cell) { try { cell.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {} }
+  } catch (_) {}
+}
 function _mountClassroomBoard(){
   try {
     if (_classroomBoardHandle) return;
@@ -10078,7 +10099,8 @@ function _mountClassroomBoard(){
     // teacher real-name view lives in teacher-classroom.html.
     _classroomBoardHandle = window.ClassroomBoard.mount(mount, {
       wsUrl: wsUrl, section: s.section, username: s.username, role: 'student',
-      hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null
+      hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null,
+      onStartVideo: _focusTodayLessonVideo   // v1c: synchronized video start
     });
   } catch (_) {}
 }
