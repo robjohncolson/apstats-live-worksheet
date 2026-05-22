@@ -173,3 +173,74 @@ describe('C4 -- per-cell direct-link icons removed', () => {
     expect(html).not.toMatch(/\.link-row\s*\{/);
   });
 });
+
+// --- C5: CALENDAR_FOCUS synthwave next-up + local-done greyscale ------------
+
+describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () => {
+  // A1: done-greyscale rule covers BOTH .dc-done and .dc-localdone, with grayscale + opacity
+  it('A1 -- greyscale rule covers .dc-done AND .dc-localdone with grayscale + opacity', () => {
+    expect(html).toMatch(/\.dc-done:not\(\.cell-today\):not\(\.cal-current\)\s*\{[^}]*grayscale[^}]*opacity/);
+    expect(html).toMatch(/\.dc-localdone:not\(\.cell-today\):not\(\.cal-current\)\s*\{[^}]*grayscale[^}]*opacity/);
+  });
+  // A2: .dc-done and .dc-localdone both DEFINE a box-shadow ring in green #1f8b3b
+  it('A2 -- .dc-done and .dc-localdone both have a box-shadow green ring (#1f8b3b)', () => {
+    expect(html).toMatch(/\.dc-done\s*\{[^}]*box-shadow[^}]*#1f8b3b/);
+    expect(html).toMatch(/\.dc-localdone\s*\{[^}]*box-shadow[^}]*#1f8b3b/);
+  });
+  // A3: .dc-partial and .dc-localpartial both DEFINE a box-shadow ring in amber #d99a00
+  it('A3 -- .dc-partial and .dc-localpartial both have a box-shadow amber ring (#d99a00)', () => {
+    expect(html).toMatch(/\.dc-partial\s*\{[^}]*box-shadow[^}]*#d99a00/);
+    expect(html).toMatch(/\.dc-localpartial\s*\{[^}]*box-shadow[^}]*#d99a00/);
+  });
+  // A4: .cal-current uses synthwave magenta #ff2e97, a box-shadow, AND animation: calCurrentPulse
+  it('A4 -- .cal-current has #ff2e97, box-shadow, and animation: calCurrentPulse', () => {
+    expect(html).toMatch(/\.cal-current\s*\{[^}]*#ff2e97/s);
+    expect(html).toMatch(/\.cal-current\s*\{[^}]*box-shadow/s);
+    expect(html).toMatch(/\.cal-current\s*\{[^}]*animation:\s*calCurrentPulse/s);
+  });
+  // A5: @keyframes calCurrentPulse exists
+  it('A5 -- @keyframes calCurrentPulse block exists', () => {
+    expect(html).toMatch(/@keyframes\s+calCurrentPulse/);
+  });
+  // A6: the OLD plain .cal-current rule is gone
+  it('A6 -- old plain .cal-current with outline: 3px solid var(--accent is gone', () => {
+    expect(html).not.toMatch(/\.cal-current\s*\{\s*outline:\s*3px solid var\(--accent/);
+  });
+  // A7: prefers-reduced-motion disables .cal-current animation
+  it('A7 -- prefers-reduced-motion media query disables .cal-current animation', () => {
+    expect(html).toMatch(/prefers-reduced-motion[^{]*\{[^}]*\.cal-current\s*\{[^}]*animation:\s*none/);
+  });
+  // A8: localLessonState rolls a topic up from the STUDENT completion marks
+  // (apstats_desk_marks_), where recordProgress() stamps `ts` on a Done --
+  // NOT from REGISTRY readiness. Behavioral test of the real helper.
+  function loadLocalLessonState() {
+    const sandbox = {};
+    createContext(sandbox);
+    runInContext(fnBody(html, 'localLessonState') + '\nthis.__s = localLessonState;', sandbox);
+    return sandbox.__s;
+  }
+  it('A8 -- localLessonState: done from a Done mark, partial from a visit-only mark', () => {
+    const s = loadLocalLessonState();
+    // a Done mark carries `ts` (recordProgress); a visit-only mark (recordLinkVisit) does not.
+    expect(s('1.2', { '1.2|worksheet': { visitedAt: 'x', ts: 'y', score: null } })).toBe('done');
+    expect(s('1.2', { '1.2|worksheet': { visitedAt: 'x' } })).toBe('partial');
+    expect(s('1.2', {})).toBe('');
+    expect(s('1.2', { '9.9|worksheet': { ts: 'y' } })).toBe('');   // a different topic
+    expect(s('1.2', { '1.20|worksheet': { ts: 'y' } })).toBe('');  // prefix is exact: 1.2 != 1.20
+    // multi-resource rollup: ANY resource with a ts -> done; all visited, none done -> partial
+    expect(s('1.2', { '1.2|worksheet': { visitedAt: 'x' }, '1.2|blooket': { visitedAt: 'x', ts: 'y' } })).toBe('done');
+    expect(s('1.2', { '1.2|worksheet': { visitedAt: 'x' }, '1.2|quiz': { visitedAt: 'x' } })).toBe('partial');
+  });
+  // A8b: the recede class is wired to localLessonState, NOT the REGISTRY `worst`
+  it('A8b -- rCal derives the recede class from localLessonState(inf.t, _gateMarks), not REGISTRY worst', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/localLessonState\(\s*inf\.t\s*,\s*_gateMarks\s*\)/);
+    expect(b).toMatch(/_localState\s*===\s*'done'\s*\?\s*'dc-localdone'/);
+    expect(b).not.toMatch(/worst\s*===\s*'ready'\s*\?\s*'dc-localdone'/);
+  });
+  // A9: .dc-ahead is preserved -- @keyframes dcAheadPulse exists; greyscale rule does NOT mention .dc-ahead
+  it('A9 -- .dc-ahead preserved; greyscale rule does not mention .dc-ahead', () => {
+    expect(html).toMatch(/@keyframes\s+dcAheadPulse/);
+    expect(html).not.toMatch(/\.dc-ahead[^{]*:not\(\.cell-today\)/);
+  });
+});

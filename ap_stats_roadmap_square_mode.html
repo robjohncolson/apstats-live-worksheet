@@ -468,9 +468,14 @@
             position: absolute; top: 2px; right: 3px;
             font-size: 11px; line-height: 1; pointer-events: none;
         }
-        /* DN3b — /donow completion overlay (D6 4 states; ring keeps unit color visible) */
+        /* DN3b + CALENDAR_FOCUS -- /donow completion overlay (4 states). The
+           .dc-local* classes mirror the same states from the LOCAL completion
+           registry (set in rCal), so a done lesson recedes even in
+           Preview-as-student, where /donow returns the teacher's empty ledger. */
         .dc-partial { box-shadow: inset 0 0 0 3px #d99a00; }
+        .dc-localpartial { box-shadow: inset 0 0 0 3px #d99a00; }
         .dc-done { box-shadow: inset 0 0 0 3px #1f8b3b; }
+        .dc-localdone { box-shadow: inset 0 0 0 3px #1f8b3b; }
         .dc-ahead { box-shadow: inset 0 0 0 3px #d4af00, 0 0 7px 1px #ffcf33;
                     animation: dcAheadPulse 1.8s ease-in-out infinite; }
         @keyframes dcAheadPulse {
@@ -478,9 +483,35 @@
           50%     { box-shadow: inset 0 0 0 3px #d4af00, 0 0 10px 2px #ffd84d; }
         }
         @media (prefers-reduced-motion: reduce) { .dc-ahead { animation: none; } }
-        /* Thread 2 (CALENDAR_POLISH) -- done lessons recede; current lesson stands out */
-        .dc-done:not(.cell-today):not(.cal-current) { filter: grayscale(1); }
-        .cal-current { outline: 3px solid var(--accent, #3a6ff0); outline-offset: -3px; }
+        /* CALENDAR_FOCUS -- a completed lesson RECEDES (greyscale + dim); the
+           next-up lesson POPS with a synthwave neon glow. Today and the
+           next-up cell itself never grey. */
+        .dc-done:not(.cell-today):not(.cal-current) {
+            filter: grayscale(1); opacity: 0.6;
+        }
+        .dc-localdone:not(.cell-today):not(.cal-current) {
+            filter: grayscale(1); opacity: 0.6;
+        }
+        .cal-current {
+            z-index: 3;
+            outline: 2px solid #0ff0fc; outline-offset: -2px;
+            box-shadow: inset 0 0 0 3px #ff2e97,
+                        inset 0 0 11px 2px rgba(255, 46, 151, 0.55),
+                        0 0 9px 2px #ff2e97,
+                        0 0 17px 5px rgba(15, 240, 252, 0.5);
+            animation: calCurrentPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes calCurrentPulse {
+          0%,100% { box-shadow: inset 0 0 0 3px #ff2e97,
+                                inset 0 0 8px 1px rgba(255, 46, 151, 0.45),
+                                0 0 7px 1px #ff2e97,
+                                0 0 13px 3px rgba(15, 240, 252, 0.4); }
+          50%     { box-shadow: inset 0 0 0 3px #ff2e97,
+                                inset 0 0 13px 3px rgba(255, 46, 151, 0.7),
+                                0 0 12px 3px #ff2e97,
+                                0 0 22px 7px rgba(15, 240, 252, 0.62); }
+        }
+        @media (prefers-reduced-motion: reduce) { .cal-current { animation: none; } }
         .cal-qband {
             padding: 3px 8px; font-size: 10px; font-weight: bold;
             background: var(--black); color: var(--white);
@@ -3496,6 +3527,31 @@ function getStudentMarks() {
   if (!email) return {};
   try { return JSON.parse(localStorage.getItem('apstats_desk_marks_' + email) || '{}'); }
   catch(e) { return {}; }
+}
+
+// CALENDAR_FOCUS -- roll a lesson topic up to ''|'partial'|'done' from the
+// student's OWN completion marks (the object getStudentMarks() returns from
+// apstats_desk_marks_<email>). recordProgress() stamps a `ts` field on every
+// Done; a visit-only mark (recordLinkVisit) has no `ts`. So 'done' = at least
+// one resource of this lesson was marked Done, 'partial' = visited but nothing
+// done yet, '' = untouched. This is the LOCAL signal: unlike the /donow
+// ledger it reflects the signed-in student (or, in Preview-as-student, the
+// teacher). It is distinct from the REGISTRY lesson-readiness that feeds the
+// status dot -- that is teacher-side "materials posted", not student work.
+function localLessonState(topic, marks) {
+  if (!topic || !marks || typeof marks !== 'object') return '';
+  const prefix = topic + '|';
+  let anyVisit = false, anyDone = false;
+  for (const key in marks) {
+    if (key.indexOf(prefix) !== 0) continue;
+    const m = marks[key];
+    if (!m || typeof m !== 'object') continue;
+    anyVisit = true;
+    if (m.ts) anyDone = true;
+  }
+  if (anyDone) return 'done';
+  if (anyVisit) return 'partial';
+  return '';
 }
 
 // ── Sequential lesson gate (2026-05-20, LESSON_GATE_BUILD.md) ────────────────
@@ -9980,6 +10036,14 @@ function rCal(){
                   const dotClass = worst === 'ready' ? 'status-ready' : 'status-partial';
                   c.insertAdjacentHTML('beforeend', '<span class="status-dot ' + dotClass + '"></span>');
                 }
+              }
+              // CALENDAR_FOCUS -- recede colour from the STUDENT's own completion
+              // marks (apstats_desk_marks_, read once into _gateMarks), NOT the
+              // REGISTRY readiness above. This reflects the signed-in student --
+              // or, in Preview-as-student, the teacher -- so a done lesson greys.
+              const _localState = localLessonState(inf.t, _gateMarks);
+              if (_localState) {
+                c.classList.add(_localState === 'done' ? 'dc-localdone' : 'dc-localpartial');
               }
             }
             c.onmouseenter=(ev)=>sTip(ev,dt,inf,ds);c.onmouseleave=hTip;c.onmousemove=mTip;
