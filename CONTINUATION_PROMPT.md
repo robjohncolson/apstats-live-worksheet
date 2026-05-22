@@ -1,3 +1,144 @@
+# Continuation Prompt -- session 108
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-107 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-22 (session 108). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (the feature work ended at `602baf9`).
+> curriculum_render HEAD = `c490cff`. Linear, local==origin on both.
+>
+> ## Shipped this session (108) -- the session-107 NEXT queue, cleared
+> Five workstreams, each run with the proven loop: spec -> freeze a
+> `*_BUILD.md` contract -> dependency-aware dispatch (parallel Sonnet
+> subagents on disjoint files; planner-direct on the contended Desk) ->
+> Codex read-only review (`cross-agent.py`) -> planner folds every
+> finding + re-verifies on disk -> tight per-purpose commits -> push.
+> Across the session Codex found 2 MINOR (F1) + 1 MAJOR (F2) + 1 MAJOR
+> (F3) + 3 MAJOR + 1 MINOR (F4) -- ALL folded. F5 was verified by a
+> byte-diff (a verbatim re-sync), no Codex round.
+>
+> - **F1 -- Preview-as-student Desk toggle (`73d311c`)** -- a Teacher-menu
+>   "Preview as student" item flips a per-tab `sessionStorage` flag
+>   (`apstats_preview_as_student`); `_deskIsTeacher()` honours it, so the
+>   lesson gate / Do-Now focus treat the teacher as a student; a fixed
+>   indicator badge shows while active. Spec `PREVIEW_AS_STUDENT_SPEC.md`.
+>   Desk-only (planner-direct).
+> - **F2 -- Quarters-by-date + the SY26-27 schedule (`cc70b24`)** --
+>   grade-quarter assignment is now date-driven: a lesson belongs to the
+>   quarter whose calendar window contains its scheduled date, not its
+>   unit band. `grade-config.js` gains `start`/`end` windows +
+>   `quarterOfDate()`; `lesson-grade.js` gains `quarterOfLesson()`
+>   (date-driven, unit-band fallback for a null-date lesson) and
+>   `computeQuarterFromLessons` takes `quarterKey` not `quarterBand`.
+>   `scripts/build-sy2627-schedule.mjs` lays out real B/E dates for all
+>   77 lessons over the Lynn SY26-27 calendar. Specs
+>   `QUARTERS_BY_DATE_SPEC.md` / `QUARTERS_BY_DATE_BUILD.md`. **Touches
+>   `roster-server/**` -> roster-server auto-deploys.**
+> - **F5 -- roster-client.js re-sync (cr `5621f3f`)** -- cr's
+>   `roster-client.js` is now byte-identical to follow-alongs' (it
+>   predated the `role`/`spriteHue`/`changePassword` additions). Purely
+>   additive.
+> - **F3 -- Live Classroom v1c, synchronized video start (cr `626499f`
+>   + fa `cf97bef`)** -- the cockpit Green Light gains a "Sync video
+>   start" checkbox; `classroom_go` / `classroom_greenlight` carry
+>   `startVideo` / `videoRef` (additive, ride only the live broadcast,
+>   never room state); the board fires a new `onStartVideo` callback;
+>   the Desk's `_focusTodayLessonVideo` opens today's lesson resource
+>   panel DIRECTLY (the Codex MAJOR fold -- not a synthetic cell click,
+>   which would re-enter the lock-dialog / Do-Now-bump guards). Design =
+>   `LIVE_CLASSROOM_SPEC.md` S5/S10; contract `LIVE_CLASSROOM_V1C_BUILD.md`.
+> - **F4 -- Live Classroom v2, Poll mode (cr `c490cff` + fa `602baf9`)**
+>   -- the teacher opens a poll (2-8 options, optionally blind); students
+>   vote; avatars cluster under the chosen option column; the cockpit
+>   shows a TI-84-style bar chart via the NEW data-driven `ti84-plot.js`.
+>   Gate and poll are mutually exclusive. Blind polls are role-aware --
+>   every `classroom_member_update` broadcast splits a student bucket
+>   (votes masked) / a teacher bucket (real votes). Codex 3 MAJOR + 1
+>   MINOR folded (blind-poll own-vote restored optimistically
+>   client-side; the blind-poll leak on join/detach/heartbeat/sweep
+>   closed; the `classroom_poll` reducer resets member status so a 2nd
+>   poll is votable; `reveal` gated to blind). Contract
+>   `LIVE_CLASSROOM_V2_BUILD.md`.
+>
+> ## Migration -- NONE this session
+> No new DB migration. F4's poll state is in-memory in the WS server;
+> F2/F3 add no schema. roster-server migrations `0001`-`0006` were
+> already run (session <=107).
+>
+> ## Test baseline
+> roster-server **443/443**. curriculum_render **894/895** -- the only
+> fail is the long-standing unrelated `tests/redox-chat.test.js` (NOT a
+> regression). follow-alongs root **4666/4667** -- the only fail is the
+> long-standing unrelated `tests/study-guide.test.js` (NOT a regression).
+>
+> ## Open / verify
+> - The pushes triggered deploys: the F2 push (`roster-server/**`) ->
+>   roster-server; the cr `626499f` + `c490cff` pushes -> the
+>   curriculum_render WS service. Smoke once they land: `/grade` returns
+>   date-driven quarter grades; a `classroom_go {startVideo:true}`
+>   reaches student Desks; `classroom_open_poll` -> a vote -> the cockpit
+>   bar chart; DogePresence / Tetris unregressed.
+> - **The teacher's session-107 report ("no sprite-scene board / no
+>   cockpit link on the Desk")** was investigated -- NOT a code bug: the
+>   board mount (`#classroom-board-mount`, `_mountClassroomBoard`) and
+>   the "Live Classroom" Teacher-menu item (opens `teacher-classroom.html`)
+>   are both wired in the Desk. `_mountClassroomBoard` bails unless the
+>   signed-in user has a `section` -- a teacher account with no section
+>   mounts nothing (the teacher's intended view is the cockpit). Likely
+>   a GH-Pages cache or a sectionless teacher account. To verify:
+>   hard-refresh; confirm the teacher's roster row has a section; open
+>   the cockpit via Teacher menu -> Live Classroom.
+> - **The SY26-27 lesson schedule** (`roster-server/data/lesson-schedule.json`,
+>   generated by `scripts/build-sy2627-schedule.mjs`) is an even
+>   first-pass spread across each quarter's school days. The teacher
+>   should review/adjust pacing -- the dates are plain editable JSON and
+>   the generator is re-runnable.
+>
+> ## NEXT -- queued
+> - **Railway -> DigitalOcean migration** -- the one session-107 queue
+>   item deliberately NOT done this session; strategic, before the next
+>   Railway bill. See the `railway-to-digitalocean` memory.
+> - **Live Classroom v2.1 (deferred from F4):** a student-facing TI-84
+>   poll-result surface (K11 -- F4 renders the result only in the
+>   cockpit); per-lesson tagging of saved poll graphs; poll history.
+> - **Preview-as-student v2 (deferred from F1):** worksheet-level
+>   preview (F1 is Desk-only; the 69 worksheets carry their own teacher
+>   bypasses).
+> - Optional: a date-aligned Desk calendar quarter divider (F2 left the
+>   Desk's `unitQuarter` visual dividers unit-based -- the grade math is
+>   date-driven, the calendar divider is cosmetic).
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The loop method** is proven again -- the Codex read-only review
+>   gate caught a real correctness bug in 4 of 5 workstreams. The planner
+>   folds every finding and ALWAYS re-verifies on disk.
+> - **The Grep tool mangles `/` in `-A`/`-B` context lines** (renders
+>   `//` as `\`) -- a DISPLAY artifact, NOT file corruption; confirm any
+>   suspicious slash with Read before "fixing" anything.
+> - **Cross-agent runner:** ASCII-only prompts; give Codex focused
+>   "review the `git diff` only" prompts + a 600s `--timeout` (a review
+>   timed out at 300s reading a 10k-line file). The clean verdict is in
+>   `state/cross-agent/<id>.result.json`.
+> - **PowerShell 5.1 + git:** never `git commit -m` from PowerShell --
+>   use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- `git add` explicit paths, never `-A`;
+>   the repos carry pre-existing untracked scratch, and root
+>   `data/skill-map.js` regenerates when an audit test runs --
+>   `git checkout` it before staging.
+> - **roster-server** lives inside follow-alongs (`roster-server/`, own
+>   `package.json` + vitest); auto-deploys on a push touching
+>   `roster-server/**`. curriculum_render is a SEPARATE repo;
+>   `railway-server/**` deploys the `curriculumrender-production` WS
+>   service. A cross-repo feature: review BOTH halves of the contract.
+>
+> ## Recall on reload
+> `project_live_classroom.md`, `project_gradebook_grading_model.md`,
+> `project_desk_donow.md`, `project_railway_to_digitalocean.md`,
+> `feedback_diagnostic_first.md`, `feedback_curriculum_render_sacred.md`.
+
+---
+
 # Continuation Prompt -- session 107
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
