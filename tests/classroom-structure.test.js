@@ -313,6 +313,40 @@ describe('Live Classroom r3 - Desk loads engine scripts', () => {
   });
 });
 
+describe('Live Classroom r3 - board bridges engine classes onto window', () => {
+  // canvas_engine.js / sprite_sheet.js are verbatim cr copies: bare top-level
+  // `class` declarations. As classic <script>s a top-level class is a global
+  // LEXICAL binding, NOT a window property -- so mount()'s
+  // `new root.CanvasEngine(...)` would throw and the board would silently
+  // never render (engineReady=false). classroom-board.js must bridge the
+  // lexical bindings onto root at IIFE entry. (Regression guard: this bug
+  // shipped in r3 because classroom-board.test.js injects CanvasEngine as a
+  // window PROPERTY, masking the lexical-binding reality of a real browser.)
+  it('classroom-board.js copies CanvasEngine onto root', () => {
+    expect(BOARD).toMatch(/root\.CanvasEngine\s*=\s*CanvasEngine/);
+  });
+
+  it('classroom-board.js copies SpriteSheet onto root', () => {
+    expect(BOARD).toMatch(/root\.SpriteSheet\s*=\s*SpriteSheet/);
+  });
+
+  it('the bridge is typeof-guarded so a missing engine file does not throw', () => {
+    expect(BOARD).toMatch(/typeof\s+CanvasEngine\s*!==\s*['"]undefined['"]/);
+    expect(BOARD).toMatch(/typeof\s+SpriteSheet\s*!==\s*['"]undefined['"]/);
+  });
+
+  it('the bridge runs before mount() reads root.CanvasEngine', () => {
+    const idxBridge = BOARD.search(/root\.CanvasEngine\s*=\s*CanvasEngine/);
+    // The real call site is `engine = new root.CanvasEngine(canvasId)` inside
+    // mount() -- matched specifically so the regex cannot hit the prose
+    // `new root.CanvasEngine(...)` in the bridge's own comment above.
+    const idxUse    = BOARD.search(/engine\s*=\s*new\s+root\.CanvasEngine/);
+    expect(idxBridge).toBeGreaterThan(-1);
+    expect(idxUse).toBeGreaterThan(-1);
+    expect(idxBridge).toBeLessThan(idxUse);
+  });
+});
+
 // =============================================================
 // v2 structure pins -- cockpit poll section
 // =============================================================

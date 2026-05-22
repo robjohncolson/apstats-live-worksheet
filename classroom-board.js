@@ -45,6 +45,23 @@
 (function (root) {
   'use strict';
 
+  // --- engine globals bridge (r3 render-layer fix) ----------------------
+  // canvas_engine.js / sprite_sheet.js are verbatim curriculum_render copies:
+  // bare top-level `class` declarations. As classic <script>s, a top-level
+  // class is a global LEXICAL binding -- NOT a window property. mount() reads
+  // them as root.CanvasEngine / root.SpriteSheet (root === window), so without
+  // this bridge the lookup is undefined, `new root.CanvasEngine(...)` throws,
+  // engineReady stays false, and the board silently never renders. Copy the
+  // lexical bindings onto root. typeof-guarded so a missing engine file cannot
+  // throw at IIFE top (window.ClassroomBoard must still get defined); the
+  // !root.X guard leaves a test-injected window stub unclobbered.
+  if (typeof CanvasEngine !== 'undefined' && !root.CanvasEngine) {
+    root.CanvasEngine = CanvasEngine;
+  }
+  if (typeof SpriteSheet !== 'undefined' && !root.SpriteSheet) {
+    root.SpriteSheet = SpriteSheet;
+  }
+
   // --- WS timing knobs --------------------------------------------------
 
   var HEARTBEAT_MS    = 30000;   // 30 s
