@@ -1122,6 +1122,8 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-roster-console.html','_blank')">&#128221; Roster Console</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-classroom.html','_blank')">&#128101; Live Classroom</div>
+            <div class="menu-dd-sep"></div>
+            <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
         </div>
     </span>
     <span class="menu-item" data-menu="special">Special
@@ -1263,6 +1265,12 @@
             <button class="s7btn s7btn-default" id="dialog-btn" onclick="closeDialog()">OK</button>
         </div>
     </div>
+</div>
+
+<!-- Preview-as-student indicator (PREVIEW_AS_STUDENT_SPEC.md) -->
+<div id="preview-as-student-badge" style="display:none;position:fixed;left:8px;bottom:8px;z-index:9000;align-items:center;gap:8px;background:#1a1a1a;color:#fff;border:2px solid #fff;border-radius:4px;padding:5px 9px;font:11px Geneva,Helvetica,sans-serif;box-shadow:2px 2px 0 rgba(0,0,0,0.4)">
+  <span>&#128065; Previewing as student</span>
+  <button data-sfx onclick="_togglePreviewAsStudent()" style="font:bold 10px Geneva,Helvetica,sans-serif;cursor:pointer;padding:2px 7px">Exit</button>
 </div>
 
 <!-- ═══ Do Now speed-bump (DN3c / D1) — soft, never a hard gate ═══ -->
@@ -3497,8 +3505,51 @@ function getStudentMarks() {
 // and not-signed-in visitors bypass. Every function FAILS OPEN — a bug must
 // never hard-lock the calendar.
 function _deskIsTeacher() {
+  // Preview-as-student (PREVIEW_AS_STUDENT_SPEC.md): a teacher can flip a
+  // per-tab sessionStorage flag to view the Desk through the student gates.
+  // While set, _deskIsTeacher() reports false so every gate (lesson unlock,
+  // Do-Now focus, ...) treats the viewer as a student.
+  try {
+    if (sessionStorage.getItem('apstats_preview_as_student') === '1') return false;
+  } catch (_) {}
   try { return localStorage.getItem('apstats_user_role') === 'teacher'; }
   catch (_) { return false; }
+}
+// Preview-as-student toggle (PREVIEW_AS_STUDENT_SPEC.md). The Teacher-menu
+// item flips the per-tab flag _deskIsTeacher() honours, then reloads so every
+// gate re-evaluates on load. The flag survives the reload (sessionStorage)
+// but auto-clears when the tab closes.
+function _previewAsStudentActive() {
+  try { return sessionStorage.getItem('apstats_preview_as_student') === '1'; }
+  catch (_) { return false; }
+}
+function _togglePreviewAsStudent() {
+  var wasActive = _previewAsStudentActive();
+  try {
+    if (wasActive) sessionStorage.removeItem('apstats_preview_as_student');
+    else sessionStorage.setItem('apstats_preview_as_student', '1');
+  } catch (_) { return; }   // flag write blocked -> nothing changed, nothing to undo
+  try {
+    location.reload();
+  } catch (_) {
+    // reload failed: roll the flag back so sessionStorage always matches what
+    // the (un-reloaded) page is actually rendering -- no stale inconsistent state.
+    try {
+      if (wasActive) sessionStorage.setItem('apstats_preview_as_student', '1');
+      else sessionStorage.removeItem('apstats_preview_as_student');
+    } catch (_) {}
+  }
+}
+// Reflect preview mode into the Teacher-menu label + the indicator badge.
+// Called on load after the menu DOM exists.
+function _renderPreviewAsStudentUI() {
+  var active = _previewAsStudentActive();
+  var item = document.getElementById('menu-preview-as-student');
+  if (item) item.textContent = active
+    ? '\u{1F441} Exit student preview'
+    : '\u{1F441} Preview as student';
+  var badge = document.getElementById('preview-as-student-badge');
+  if (badge) badge.style.display = active ? 'flex' : 'none';
 }
 // ── No-guest-mode sign-in wall (2026-05-20, SIGNIN_WALL_BUILD.md) ────────────
 // Access to the Desk requires a signed-in student OR a teacher. Fails OPEN:
@@ -10048,6 +10099,7 @@ if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById(
 loadRegistry();
 updateStudentMenu();
 updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
+if(typeof _renderPreviewAsStudentUI==='function')_renderPreviewAsStudentUI();   // Preview-as-student: badge + menu label
 if(typeof _mountClassroomBoard==='function')_mountClassroomBoard();   // Live Classroom v1a
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
