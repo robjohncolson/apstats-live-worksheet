@@ -601,6 +601,51 @@
       if (poll) poll.style.display  = disp;
     }
 
+    // ===== v2.1: poll archive tracking =====
+
+    // Captured from summary.poll while a poll is active.
+    // Cleared after archiving on close.
+    var _lastArchivedPollId = null;  // dedup -- the last poll id archived this session
+
+    // Returns today as YYYY-MM-DD in local time.
+    function todayIsoDate() {
+      var d = new Date();
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
+    // Fire-and-forget POST to /poll-archive.
+    // Fully guarded -- a network failure must never throw in the cockpit.
+    function archivePoll(pollId, section, pollDate, question, options, tally, blind) {
+      try {
+        var baseUrl = rosterServiceUrl();
+        var token = (window.rosterClient && typeof window.rosterClient.token === 'function')
+          ? window.rosterClient.token()
+          : null;
+        var body = JSON.stringify({
+          pollId:   pollId,
+          section:  section,
+          pollDate: pollDate,
+          question: question,
+          options:  options,
+          tally:    tally,
+          blind:    !!blind
+        });
+        fetch(baseUrl + '/poll-archive', {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': 'Bearer ' + (token || '')
+          },
+          body: body
+        }).catch(function () {});
+      } catch (_) {
+        // Guarded -- archive failure must never surface.
+      }
+    }
+
     // ===== board lifecycle =====
 
     var boardHandle = null;   // ClassroomBoard.mount() return value, or null
@@ -611,6 +656,7 @@
         try { boardHandle.destroy(); } catch (_) {}
         boardHandle = null;
       }
+      _lastArchivedPollId = null;
       setGreenlightIndicator(false);
       setBoardSectionsVisible(false);
     }
@@ -652,6 +698,19 @@
             // v2: drive the live poll tally canvas and gate-exclusivity guard.
             renderPollTally(summary);
             updateOpenPollGuard(summary);
+            // v2.1: archive a closed poll from the board's authoritative
+            // summary.closedPoll payload -- it carries the FINAL
+            // classroom_poll_closed tally (summary.tally is cleared once the
+            // poll closes, so it cannot be used). Dedup by poll id: the
+            // post-close summaries repeat closedPoll, and a reset / remount
+            // has no closedPoll -- so this archives exactly once and never
+            // false-fires.
+            var cp = summary.closedPoll;
+            if (cp && cp.id && cp.id !== _lastArchivedPollId) {
+              _lastArchivedPollId = cp.id;
+              archivePoll(cp.id, section, todayIsoDate(),
+                cp.question, cp.options || [], cp.tally || [], !!cp.blind);
+            }
           }
         });
         // The board mounted -- now reveal the board-dependent sections.

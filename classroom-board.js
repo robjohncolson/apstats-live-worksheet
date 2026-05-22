@@ -162,6 +162,7 @@
    *   gate:       { armed, theme, openedAt } | null,
    *   poll:       { id, question, options, blind } | null,
    *   greenlight: boolean,
+   *   closedPoll: { id, question, options, blind, tally } | null,
    * }
    *
    * WireMember (v2): { username, role, status, online, hue, vote }
@@ -195,7 +196,12 @@
           members:    newMembers,
           gate:       message.gate  || null,
           poll:       message.poll  || null,
-          greenlight: false
+          greenlight: false,
+          // A classroom_state snapshot is sent on JOIN or RESET
+          // (LIVE_CLASSROOM_SPEC S5.3) -- there is no classroom_reset
+          // broadcast. A fresh snapshot carries no closed-poll concept, so
+          // clear it: this is what dismisses the result screen on a reset.
+          closedPoll: null
         };
 
       case 'classroom_member_update':
@@ -218,7 +224,8 @@
           members:    newMembers,
           gate:       state.gate,
           poll:       state.poll,
-          greenlight: state.greenlight
+          greenlight: state.greenlight,
+          closedPoll: state.closedPoll != null ? state.closedPoll : null
         };
 
       case 'classroom_member_left':
@@ -232,7 +239,8 @@
           members:    newMembers,
           gate:       state.gate,
           poll:       state.poll,
-          greenlight: state.greenlight
+          greenlight: state.greenlight,
+          closedPoll: state.closedPoll != null ? state.closedPoll : null
         };
 
       case 'classroom_gate':
@@ -253,7 +261,8 @@
           members:    newMembers,
           gate:       message.gate || null,
           poll:       state.poll,
-          greenlight: false
+          greenlight: false,
+          closedPoll: null
         };
 
       case 'classroom_greenlight':
@@ -261,7 +270,8 @@
           members:    state.members,
           gate:       state.gate,
           poll:       state.poll,
-          greenlight: true
+          greenlight: true,
+          closedPoll: state.closedPoll != null ? state.closedPoll : null
         };
 
       // --- v2 poll cases (pure) -----------------------------------------
@@ -292,16 +302,30 @@
             options:  message.options || [],
             blind:    message.blind === true
           },
-          greenlight: state.greenlight
+          greenlight: state.greenlight,
+          closedPoll: null
         };
 
       case 'classroom_poll_closed':
         // Poll closed: clear poll, preserve members as-is.
+        // Capture the pre-close poll + the message tally into closedPoll so
+        // the render layer can show the result screen.
+        var closedSnapshot = null;
+        if (state.poll) {
+          closedSnapshot = {
+            id:       state.poll.id,
+            question: state.poll.question,
+            options:  state.poll.options,
+            blind:    state.poll.blind,
+            tally:    message.tally || []
+          };
+        }
         return {
           members:    state.members,
           gate:       state.gate,
           poll:       null,
-          greenlight: state.greenlight
+          greenlight: state.greenlight,
+          closedPoll: closedSnapshot
         };
 
       case 'classroom_poll_reveal':
@@ -334,8 +358,13 @@
           members:    newMembers,
           gate:       state.gate,
           poll:       state.poll,
-          greenlight: state.greenlight
+          greenlight: state.greenlight,
+          closedPoll: state.closedPoll != null ? state.closedPoll : null
         };
+
+      // NOTE: there is no 'classroom_reset' broadcast -- a teacher reset is
+      // delivered to clients AS a classroom_state snapshot (handled above,
+      // which clears closedPoll). See LIVE_CLASSROOM_SPEC S5.2/S5.3.
 
       default:
         return state;
@@ -345,7 +374,7 @@
   // --- initial state factory --------------------------------------------
 
   function emptyState() {
-    return { members: {}, gate: null, poll: null, greenlight: false };
+    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null };
   }
 
   // --- check-in button logic (B3) -- unchanged --------------------------
@@ -392,6 +421,7 @@
       gate:       state.gate,
       poll:       state.poll  || null,
       tally:      tally,
+      closedPoll: state.closedPoll || null,
       members:    arr,
       greenlight: state.greenlight
     };
@@ -707,6 +737,14 @@
     var mountHue      = (opts.hue != null) ? opts.hue : null;
     var onStartVideo  = (typeof opts.onStartVideo === 'function') ? opts.onStartVideo : null;
 
+    // Ensure the container clips the off-screen pull-down panel.
+    if (container.style.position !== 'relative' &&
+        container.style.position !== 'absolute' &&
+        container.style.position !== 'fixed') {
+      container.style.position = 'relative';
+    }
+    container.style.overflow = 'hidden';
+
     // --- canvas setup ---------------------------------------------------
 
     var canvasId = nextCanvasId();
@@ -734,6 +772,152 @@
     pollVoteContainer.setAttribute('data-classroom-poll-votes', '1');
     pollVoteContainer.style.display = 'none';
     container.appendChild(pollVoteContainer);
+
+    // --- result screen (v2.1) ------------------------------------------
+    // A pull-down <div> that slides into view when a poll closes.
+    // hidden: transform translateY(-100%)  shown: translateY(0)
+    // Created here; shown/hidden via showResultScreen / hideResultScreen.
+
+    var resultScreen = doc.createElement('div');
+    resultScreen.setAttribute('data-classroom-result-screen', '1');
+    resultScreen.style.position   = 'absolute';
+    resultScreen.style.left       = '0';
+    resultScreen.style.top        = '0';
+    resultScreen.style.width      = '100%';
+    resultScreen.style.background = '#1a1a2e';
+    resultScreen.style.zIndex     = '10';
+    resultScreen.style.transform  = 'translateY(-100%)';
+    resultScreen.style.transition = 'transform 0.3s ease';
+    resultScreen.style.padding    = '8px';
+    resultScreen.style.boxSizing  = 'border-box';
+
+    var resultCanvas = doc.createElement('canvas');
+    resultCanvas.setAttribute('data-classroom-result-canvas', '1');
+    resultCanvas.style.display = 'block';
+    resultCanvas.style.width   = '100%';
+    resultCanvas.width  = 320;
+    resultCanvas.height = 160;
+    resultScreen.appendChild(resultCanvas);
+
+    var resultQuestion = doc.createElement('div');
+    resultQuestion.setAttribute('data-classroom-result-question', '1');
+    resultQuestion.style.color      = '#ffffff';
+    resultQuestion.style.fontSize   = '12px';
+    resultQuestion.style.marginTop  = '4px';
+    resultQuestion.style.textAlign  = 'center';
+    resultScreen.appendChild(resultQuestion);
+
+    var resultStepper = doc.createElement('div');
+    resultStepper.setAttribute('data-classroom-result-stepper', '1');
+    resultStepper.style.display    = 'none';
+    resultStepper.style.textAlign  = 'center';
+    resultStepper.style.marginTop  = '4px';
+    resultScreen.appendChild(resultStepper);
+
+    var resultClose = doc.createElement('button');
+    resultClose.setAttribute('data-classroom-result-close', '1');
+    resultClose.textContent      = 'close';
+    resultClose.style.display    = 'block';
+    resultClose.style.margin     = '4px auto 0';
+    resultClose.style.fontSize   = '11px';
+    resultClose.style.cursor     = 'pointer';
+    resultScreen.appendChild(resultClose);
+
+    container.appendChild(resultScreen);
+
+    // Internal stepper state for showResultScreen.
+    var _resultPolls  = [];
+    var _resultIndex  = 0;
+
+    function _drawResultPoll(poll) {
+      resultQuestion.textContent = poll.question || '';
+      if (window.Ti84Plot && resultCanvas.getContext) {
+        var ctx2d = resultCanvas.getContext('2d');
+        if (ctx2d) {
+          window.Ti84Plot.drawBarChart(ctx2d, {
+            labels: poll.options || [],
+            counts: poll.tally  || [],
+            title:  poll.question || ''
+          });
+        }
+      }
+    }
+
+    function _renderStepper() {
+      var total = _resultPolls.length;
+      if (total <= 1) {
+        resultStepper.style.display = 'none';
+        return;
+      }
+      resultStepper.style.display = 'block';
+      // Clear and rebuild stepper controls.
+      resultStepper.innerHTML = '';
+
+      var prevBtn = doc.createElement('button');
+      prevBtn.textContent = '<';
+      prevBtn.setAttribute('data-classroom-result-prev', '1');
+      prevBtn.disabled = (_resultIndex === 0);
+      prevBtn.onclick  = function () {
+        if (_resultIndex > 0) {
+          _resultIndex -= 1;
+          _drawResultPoll(_resultPolls[_resultIndex]);
+          _renderStepper();
+        }
+      };
+      resultStepper.appendChild(prevBtn);
+
+      var label = doc.createElement('span');
+      label.textContent = ' ' + (_resultIndex + 1) + '/' + total + ' ';
+      label.style.color = '#ffffff';
+      label.style.fontSize = '11px';
+      resultStepper.appendChild(label);
+
+      var nextBtn = doc.createElement('button');
+      nextBtn.textContent = '>';
+      nextBtn.setAttribute('data-classroom-result-next', '1');
+      nextBtn.disabled = (_resultIndex === total - 1);
+      nextBtn.onclick  = function () {
+        if (_resultIndex < _resultPolls.length - 1) {
+          _resultIndex += 1;
+          _drawResultPoll(_resultPolls[_resultIndex]);
+          _renderStepper();
+        }
+      };
+      resultStepper.appendChild(nextBtn);
+    }
+
+    function showResultScreen(polls) {
+      if (!polls || polls.length === 0) { return; }
+      _resultPolls = polls;
+      _resultIndex = polls.length - 1;
+      _drawResultPoll(_resultPolls[_resultIndex]);
+      _renderStepper();
+      resultScreen.style.transform = 'translateY(0)';
+    }
+
+    function hideResultScreen() {
+      resultScreen.style.transform = 'translateY(-100%)';
+      _resultPolls = [];
+      _resultIndex = 0;
+    }
+
+    resultClose.onclick = function () { hideResultScreen(); };
+
+    // Snapshot of closedPoll from the previous applyMessage call so the
+    // render layer can detect changes and avoid redundant show/hide calls.
+    var _prevClosedPoll = null;
+
+    function refreshResultScreen() {
+      var cp = state.closedPoll;
+      if (cp !== _prevClosedPoll) {
+        _prevClosedPoll = cp;
+        if (cp) {
+          showResultScreen([cp]);
+        } else {
+          hideResultScreen();
+        }
+      }
+    }
 
     // --- CanvasEngine setup --------------------------------------------
 
@@ -1167,6 +1351,7 @@
       syncScene(state);
       refreshButton();
       refreshVoteButtons();
+      refreshResultScreen();
       notifyStateChange();
     }
 
@@ -1269,6 +1454,9 @@
         if (pollVoteContainer && pollVoteContainer.parentNode) {
           pollVoteContainer.parentNode.removeChild(pollVoteContainer);
         }
+        if (resultScreen && resultScreen.parentNode) {
+          resultScreen.parentNode.removeChild(resultScreen);
+        }
       },
 
       setNameMap: function (map) {
@@ -1316,7 +1504,12 @@
 
       reveal: function () {
         safeSend({ type: 'classroom_reveal' });
-      }
+      },
+
+      // --- v2.1 result screen methods ---
+
+      showResultScreen: showResultScreen,
+      hideResultScreen: hideResultScreen
     };
 
     return handle;

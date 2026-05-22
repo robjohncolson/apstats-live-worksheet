@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import { createLiveDb } from './db.js';
 import { createLiveLedgerDb } from './ledger-db.js';
 import { createLiveRemediationDb } from './remediation-db.js';
+import { createLivePollArchiveDb } from './poll-archive-db.js';
 import { signToken, verifyToken } from './token.js';
 import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
@@ -17,6 +18,7 @@ import { mountGrade } from './grade.js';
 import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
 import { mountRemediation } from './remediation.js';
+import { mountPollArchive } from './poll-archive.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
@@ -34,7 +36,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -537,6 +539,15 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     });
   }
 
+  // ── Poll-archive routes (v2.1 additive -- Live Classroom) ─────────────────
+  // Needs pollArchiveDb (data-access wrapper for the new poll_archive table).
+  // Until migrations/0007 is run on Supabase, the DB returns 42P01 and
+  // routes respond 503 "poll_archive not provisioned -- run migration 0007" --
+  // service stays up. See LIVE_CLASSROOM_V2_1_BUILD.md section 1.2.
+  if (pollArchiveDb && db) {
+    mountPollArchive(app, { pollArchiveDb, db });
+  }
+
   return app;
 }
 
@@ -706,6 +717,13 @@ if (process.env.NODE_ENV !== 'test') {
     } catch (err) {
       console.error('roster-server: remediation-db failed to construct — /remediation/* disabled, service continues:', err);
     }
+    // v2.1: same fault-tolerant ethos for poll-archive-db.
+    let pollArchiveDb = null;
+    try {
+      pollArchiveDb = createLivePollArchiveDb();
+    } catch (err) {
+      console.error('roster-server: poll-archive-db failed to construct — /poll-archive disabled, service continues:', err);
+    }
     // Phase 6: lesson schedule — synchronous load at boot; fault-tolerant (null
     // = date filter disabled, /grade still works). Same pattern as remediation-db.
     const lessonSchedule = loadLiveLessonSchedule();
@@ -721,8 +739,9 @@ if (process.env.NODE_ENV !== 'test') {
       bkt,
       remediationDb,
       lessonSchedule,
-      undefined,          // configOverrides — not used in production
-      worksheetBlankCounts
+      undefined,          // configOverrides -- not used in production
+      worksheetBlankCounts,
+      pollArchiveDb
     );
     const PORT = process.env.PORT || 8090;
     app.listen(PORT, () => {

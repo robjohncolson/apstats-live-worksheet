@@ -1052,6 +1052,12 @@
         }
         .status-ready { background:#4caf50; }
         .status-partial { background:#ff9800; }
+        /* Poll archive indicator (v2.1 U4) */
+        .poll-dot {
+          position:absolute; bottom:3px; right:3px;
+          width:7px; height:7px; border-radius:2px;
+          background:#7c4dff; cursor:pointer; z-index:1;
+        }
 
         /* Tooltip enhancements */
         .tt-links { margin-top:4px; font-size:11px; }
@@ -1550,6 +1556,7 @@
 <script src="canvas_engine.js"></script>
 <script src="sprite_sheet.js"></script>
 <script src="classroom-board.js"></script>
+<script src="ti84-plot.js"></script>
 
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
@@ -4125,6 +4132,7 @@ async function submitSignIn() {
     } else {
       if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded so DN2c stays decoupled
       if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard(); // Live Classroom v1a
+      if (typeof _fetchPollArchive === 'function') _fetchPollArchive(); // v2.1 U4: poll archive (guarded, like its neighbors)
       var roleLabel = '';
       try { if (localStorage.getItem('apstats_user_role') === 'teacher') roleLabel = ' (teacher mode)'; } catch (_) {}
       showDialog('\u{1F464}','Signed in as ' + (who.realName || legacyKey) + roleLabel + '.','OK');
@@ -10075,6 +10083,36 @@ function rCal(){
               }
             }
             c.onmouseenter=(ev)=>sTip(ev,dt,inf,ds);c.onmouseleave=hTip;c.onmousemove=mTip;
+            // v2.1 U4 -- poll archive indicator: a small purple dot on days
+            // that have archived polls. Click opens the result screen on the
+            // classroom board. stopPropagation() prevents opening the resource panel.
+            (function(cellDt, cellC) {
+              var _y = cellDt.getFullYear();
+              var _m = String(cellDt.getMonth() + 1).padStart(2, '0');
+              var _d = String(cellDt.getDate()).padStart(2, '0');
+              var _dateKey = _y + '-' + _m + '-' + _d;
+              var _dayPolls = _pollArchive[_dateKey];
+              if (_dayPolls && _dayPolls.length) {
+                cellC.style.position = 'relative';
+                var _dot = document.createElement('span');
+                _dot.className = 'poll-dot';
+                _dot.title = _dayPolls.length + ' poll' + (_dayPolls.length > 1 ? 's' : '');
+                _dot.addEventListener('click', function(ev) {
+                  ev.stopPropagation();
+                  try {
+                    if (_classroomBoardHandle &&
+                        typeof _classroomBoardHandle.showResultScreen === 'function') {
+                      _classroomBoardHandle.showResultScreen(_dayPolls);
+                    }
+                  } catch (_) {}
+                  try {
+                    var _mount = document.getElementById('classroom-board-mount');
+                    if (_mount) _mount.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                  } catch (_) {}
+                });
+                cellC.appendChild(_dot);
+              }
+            }(dt, c));
             if(inf&&inf!==OFF&&inf!==NC&&inf!==EX&&inf!==PO&&inf.t){
                 c.style.cursor='pointer';
                 // Sequential lesson gate: only real lesson cells (dot-form
@@ -10177,6 +10215,46 @@ function hTip(){tip.style.display="none";}
    classroom-board.js component being absent. */
 var _classroomBoardHandle = null;
 var _todayLessonInf = null, _todayLessonDS = null;  // v1c: today's lesson, stashed by the calendar renderer
+
+/* ═══ Poll archive (v2.1 U4) ═══
+   Keyed by YYYY-MM-DD -> array of poll objects from GET /poll-archive.
+   Populated once on Desk load (signed-in only). Never throws; fails quiet. */
+var _pollArchive = {};
+
+function _groupPollsByDate(polls) {
+  var out = {};
+  if (!Array.isArray(polls)) return out;
+  for (var i = 0; i < polls.length; i++) {
+    var p = polls[i];
+    var d = p && p.pollDate;
+    if (!d) continue;
+    if (!out[d]) out[d] = [];
+    out[d].push(p);
+  }
+  return out;
+}
+
+async function _fetchPollArchive() {
+  try {
+    var token = null;
+    try {
+      if (window.rosterClient && typeof window.rosterClient.token === 'function') {
+        token = window.rosterClient.token();
+      }
+    } catch (_) {}
+    if (!token) return;
+    var baseUrl = window.ROSTER_SERVICE_URL || null;
+    if (!baseUrl) return;
+    var res = await fetch(baseUrl + '/poll-archive', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) return;
+    var data = await res.json();
+    if (!data || !data.ok || !Array.isArray(data.polls)) return;
+    _pollArchive = _groupPollsByDate(data.polls);
+    rCal();
+  } catch (_) {}
+}
 // v1c (LIVE_CLASSROOM_V1C_BUILD.md): the board fires onStartVideo on every
 // student Desk when the teacher Green-Lights with "sync video start" on.
 // Surface today's lesson by opening its resource panel DIRECTLY -- not via a
@@ -10230,6 +10308,7 @@ updateStudentMenu();
 updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 if(typeof _renderPreviewAsStudentUI==='function')_renderPreviewAsStudentUI();   // Preview-as-student: badge + menu label
 if(typeof _mountClassroomBoard==='function')_mountClassroomBoard();   // Live Classroom v1a
+_fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
 /* ── Boot Dismissal (click-to-start after progress bar) ── */

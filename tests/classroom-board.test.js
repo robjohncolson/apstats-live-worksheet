@@ -3411,3 +3411,591 @@ describe('ClassroomBoard.mount -- optimistic self-vote on option click (Finding 
     handle.destroy();
   });
 });
+
+// ==========================================================================
+// v2.1 Unit 2 tests -- pull-down result screen
+// ==========================================================================
+
+// --- v2.1: _reduce closedPoll set on classroom_poll_closed ---------------
+
+describe('ClassroomBoard._reduce -- closedPoll (v2.1 Unit 2)', function () {
+  var board;
+  var pollState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      STATE_MSG
+    );
+    pollState = board.ClassroomBoard._reduce(base, {
+      type:     'classroom_poll',
+      id:       'poll-1',
+      question: 'Best option?',
+      options:  ['A', 'B', 'C'],
+      blind:    false
+    });
+  });
+
+  it('closedPoll is null in emptyState', function () {
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      { type: 'unknown_message_type' }
+    );
+    // unknown type returns state unchanged; closedPoll stays null
+    expect(s.closedPoll).toBeNull();
+  });
+
+  it('closedPoll is null after classroom_poll opens', function () {
+    expect(pollState.closedPoll).toBeNull();
+  });
+
+  it('classroom_poll_closed sets closedPoll from pre-close poll + message tally', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type:  'classroom_poll_closed',
+      id:    'poll-1',
+      tally: [3, 1, 2]
+    });
+    expect(s.closedPoll).not.toBeNull();
+    expect(s.closedPoll.question).toBe('Best option?');
+    expect(s.closedPoll.options).toEqual(['A', 'B', 'C']);
+    expect(s.closedPoll.tally).toEqual([3, 1, 2]);
+    expect(s.closedPoll.blind).toBe(false);
+  });
+
+  it('classroom_poll_closed preserves blind flag from the poll', function () {
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      STATE_MSG
+    );
+    var withBlindPoll = board.ClassroomBoard._reduce(base, {
+      type:     'classroom_poll',
+      id:       'bp1',
+      question: 'Secret?',
+      options:  ['Yes', 'No'],
+      blind:    true
+    });
+    var s = board.ClassroomBoard._reduce(withBlindPoll, {
+      type:  'classroom_poll_closed',
+      id:    'bp1',
+      tally: [2, 3]
+    });
+    expect(s.closedPoll).not.toBeNull();
+    expect(s.closedPoll.blind).toBe(true);
+  });
+
+  it('classroom_poll_closed with no prior poll leaves closedPoll null', function () {
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      STATE_MSG
+    );
+    // No poll open -- poll is already null.
+    var s = board.ClassroomBoard._reduce(base, {
+      type:  'classroom_poll_closed',
+      id:    'x',
+      tally: []
+    });
+    expect(s.closedPoll).toBeNull();
+  });
+
+  it('classroom_poll_closed still clears state.poll', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type:  'classroom_poll_closed',
+      id:    'poll-1',
+      tally: [1, 2, 3]
+    });
+    expect(s.poll).toBeNull();
+  });
+
+  it('closedPoll carries the poll id (for cockpit dedup)', function () {
+    var opened = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      { type: 'classroom_poll', id: 'poll-42', question: 'Q?', options: ['A', 'B'], blind: false }
+    );
+    var closed = board.ClassroomBoard._reduce(opened, {
+      type: 'classroom_poll_closed', id: 'poll-42', tally: [1, 0]
+    });
+    expect(closed.closedPoll).not.toBeNull();
+    expect(closed.closedPoll.id).toBe('poll-42');
+  });
+
+  it('classroom_poll clears closedPoll when a new poll opens', function () {
+    // First close a poll to populate closedPoll.
+    var withClosed = board.ClassroomBoard._reduce(pollState, {
+      type:  'classroom_poll_closed',
+      id:    'poll-1',
+      tally: [1, 2, 3]
+    });
+    expect(withClosed.closedPoll).not.toBeNull();
+
+    // A new poll opens -- closedPoll must clear.
+    var s = board.ClassroomBoard._reduce(withClosed, {
+      type:     'classroom_poll',
+      id:       'poll-2',
+      question: 'New Q?',
+      options:  ['X', 'Y'],
+      blind:    false
+    });
+    expect(s.closedPoll).toBeNull();
+  });
+
+  it('classroom_gate clears closedPoll', function () {
+    var withClosed = board.ClassroomBoard._reduce(pollState, {
+      type:  'classroom_poll_closed',
+      id:    'poll-1',
+      tally: [0, 0, 0]
+    });
+    expect(withClosed.closedPoll).not.toBeNull();
+
+    var s = board.ClassroomBoard._reduce(withClosed, {
+      type: 'classroom_gate',
+      gate: { armed: true, theme: 'mon' }
+    });
+    expect(s.closedPoll).toBeNull();
+  });
+
+  it('a classroom_state reset snapshot clears closedPoll', function () {
+    var withClosed = board.ClassroomBoard._reduce(pollState, {
+      type:  'classroom_poll_closed',
+      id:    'poll-1',
+      tally: [1, 2, 3]
+    });
+    expect(withClosed.closedPoll).not.toBeNull();
+
+    // A real reset is delivered AS classroom_state (LIVE_CLASSROOM_SPEC S5.3),
+    // not a classroom_reset message -- a fresh snapshot carries no closedPoll.
+    var s = board.ClassroomBoard._reduce(withClosed, {
+      type: 'classroom_state', section: 'PeriodX', gate: null, poll: null, members: []
+    });
+    expect(s.closedPoll).toBeNull();
+  });
+
+  it('_reduce is still pure: no Date.now on classroom_poll_closed', function () {
+    var originalDateNow = Date.now;
+    var dateCalled = false;
+    Date.now = function () { dateCalled = true; return 0; };
+    try {
+      board.ClassroomBoard._reduce(pollState, {
+        type:  'classroom_poll_closed',
+        id:    'poll-1',
+        tally: [1, 0, 0]
+      });
+    } finally {
+      Date.now = originalDateNow;
+    }
+    expect(dateCalled).toBe(false);
+  });
+
+  it('_reduce classroom_poll_closed does not mutate the prior state', function () {
+    var before = pollState;
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type:  'classroom_poll_closed',
+      id:    'poll-1',
+      tally: [1, 2, 3]
+    });
+    expect(s).not.toBe(before);
+    expect(before.poll).not.toBeNull();   // prior state unchanged
+    expect(before.closedPoll).toBeNull(); // prior closedPoll unchanged
+  });
+});
+
+// --- v2.1: showResultScreen / hideResultScreen DOM toggle ----------------
+
+describe('ClassroomBoard handle -- showResultScreen / hideResultScreen (v2.1 Unit 2)', function () {
+
+  it('handle exposes showResultScreen and hideResultScreen', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    expect(typeof handle.showResultScreen).toBe('function');
+    expect(typeof handle.hideResultScreen).toBe('function');
+    handle.destroy();
+  });
+
+  it('result screen element exists in the container after mount', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    expect(screen).not.toBeNull();
+    handle.destroy();
+  });
+
+  it('result screen is hidden by default (transform translateY(-100%))', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    expect(screen.style.transform).toBe('translateY(-100%)');
+    handle.destroy();
+  });
+
+  it('showResultScreen([poll]) slides the screen down (translateY(0))', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    handle.showResultScreen([
+      { question: 'Q?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    expect(screen.style.transform).toBe('translateY(0)');
+    handle.destroy();
+  });
+
+  it('hideResultScreen() slides the screen back up (translateY(-100%))', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    handle.showResultScreen([
+      { question: 'Q?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    expect(screen.style.transform).toBe('translateY(0)');
+    handle.hideResultScreen();
+    expect(screen.style.transform).toBe('translateY(-100%)');
+    handle.destroy();
+  });
+
+  it('showResultScreen renders the question text', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Favorite color?', options: ['Red', 'Blue'], tally: [3, 1], blind: false }
+    ]);
+    var questionEl = m.container.querySelector('[data-classroom-result-question]');
+    expect(questionEl).not.toBeNull();
+    expect(questionEl.textContent).toBe('Favorite color?');
+    handle.destroy();
+  });
+
+  it('result screen contains a canvas element', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var canvas = m.container.querySelector('[data-classroom-result-canvas]');
+    expect(canvas).not.toBeNull();
+    handle.destroy();
+  });
+
+  it('result screen contains a close control', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var closeBtn = m.container.querySelector('[data-classroom-result-close]');
+    expect(closeBtn).not.toBeNull();
+    handle.destroy();
+  });
+
+  it('clicking the close control hides the screen', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    var screen   = m.container.querySelector('[data-classroom-result-screen]');
+    var closeBtn = m.container.querySelector('[data-classroom-result-close]');
+    expect(screen.style.transform).toBe('translateY(0)');
+    closeBtn.onclick();
+    expect(screen.style.transform).toBe('translateY(-100%)');
+    handle.destroy();
+  });
+
+  it('destroy() removes the result screen from the container', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    expect(m.container.querySelector('[data-classroom-result-screen]')).not.toBeNull();
+    handle.destroy();
+    expect(m.container.querySelector('[data-classroom-result-screen]')).toBeNull();
+  });
+
+  it('showResultScreen with an empty array does not show the screen', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    handle.showResultScreen([]);
+    expect(screen.style.transform).toBe('translateY(-100%)');
+    handle.destroy();
+  });
+});
+
+// --- v2.1: render-layer auto show/hide driven by closedPoll in state -----
+
+describe('ClassroomBoard mount -- render-layer closedPoll auto show/hide (v2.1 Unit 2)', function () {
+
+  it('result screen slides down automatically when classroom_poll_closed is received', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'p1', question: 'Best?', options: ['A', 'B'], blind: false },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    expect(screen.style.transform).toBe('translateY(-100%)');
+
+    ws._receive({ type: 'classroom_poll_closed', id: 'p1', tally: [1, 0] });
+
+    expect(screen.style.transform).toBe('translateY(0)');
+
+    handle.destroy();
+  });
+
+  it('result screen hides automatically when classroom_poll opens (new poll clears closedPoll)', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'p1', question: 'Q1?', options: ['A', 'B'], blind: false },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+    ws._receive({ type: 'classroom_poll_closed', id: 'p1', tally: [1, 0] });
+
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    expect(screen.style.transform).toBe('translateY(0)');
+
+    ws._receive({
+      type: 'classroom_poll', id: 'p2', question: 'Q2?',
+      options: ['X', 'Y'], blind: false
+    });
+    expect(screen.style.transform).toBe('translateY(-100%)');
+
+    handle.destroy();
+  });
+
+  it('result screen hides automatically when classroom_gate is received', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+    ws._receive({ type: 'classroom_poll_closed', id: 'p1', tally: [1, 0] });
+
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    expect(screen.style.transform).toBe('translateY(0)');
+
+    ws._receive({ type: 'classroom_gate', gate: { armed: true, theme: 'mon' } });
+    expect(screen.style.transform).toBe('translateY(-100%)');
+
+    handle.destroy();
+  });
+
+  it('result screen hides on a classroom_state reset snapshot (the real reset path)', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+    ws._receive({ type: 'classroom_poll_closed', id: 'p1', tally: [0, 1] });
+
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    expect(screen.style.transform).toBe('translateY(0)');
+
+    // A real teacher reset is broadcast AS classroom_state (poll + gate null),
+    // not a classroom_reset message -- the result screen must clear on it.
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null, poll: null,
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+    expect(screen.style.transform).toBe('translateY(-100%)');
+
+    handle.destroy();
+  });
+});
+
+// --- v2.1: internal stepper for multi-poll array -------------------------
+
+describe('ClassroomBoard handle -- showResultScreen stepper (v2.1 Unit 2)', function () {
+
+  it('stepper is hidden when polls array has exactly one entry', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q1?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    var stepper = m.container.querySelector('[data-classroom-result-stepper]');
+    expect(stepper).not.toBeNull();
+    expect(stepper.style.display).toBe('none');
+    handle.destroy();
+  });
+
+  it('stepper is visible when polls array has two or more entries', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q1?', options: ['A', 'B'], tally: [1, 0], blind: false },
+      { question: 'Q2?', options: ['X', 'Y'], tally: [0, 2], blind: false }
+    ]);
+    var stepper = m.container.querySelector('[data-classroom-result-stepper]');
+    expect(stepper.style.display).not.toBe('none');
+    handle.destroy();
+  });
+
+  it('showResultScreen([p1, p2]) shows the last poll (p2) initially', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'First question', options: ['A', 'B'], tally: [1, 0], blind: false },
+      { question: 'Second question', options: ['X', 'Y'], tally: [0, 2], blind: false }
+    ]);
+    var questionEl = m.container.querySelector('[data-classroom-result-question]');
+    expect(questionEl.textContent).toBe('Second question');
+    handle.destroy();
+  });
+
+  it('prev button pages backward in the array', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'First', options: ['A', 'B'], tally: [1, 0], blind: false },
+      { question: 'Second', options: ['X', 'Y'], tally: [0, 2], blind: false }
+    ]);
+    // Currently showing index 1 (Second).  Click prev to go to index 0 (First).
+    var prevBtn = m.container.querySelector('[data-classroom-result-prev]');
+    expect(prevBtn).not.toBeNull();
+    prevBtn.onclick();
+    var questionEl = m.container.querySelector('[data-classroom-result-question]');
+    expect(questionEl.textContent).toBe('First');
+    handle.destroy();
+  });
+
+  it('next button pages forward in the array', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'First', options: ['A', 'B'], tally: [1, 0], blind: false },
+      { question: 'Second', options: ['X', 'Y'], tally: [0, 2], blind: false },
+      { question: 'Third',  options: ['P', 'Q'], tally: [1, 1], blind: false }
+    ]);
+    var questionEl = m.container.querySelector('[data-classroom-result-question]');
+    // Currently at index 2 (Third). Navigate back two then forward one.
+    // Re-query each button after click because _renderStepper replaces DOM.
+    m.container.querySelector('[data-classroom-result-prev]').onclick();  // -> index 1
+    m.container.querySelector('[data-classroom-result-prev]').onclick();  // -> index 0 (First)
+    expect(questionEl.textContent).toBe('First');
+
+    m.container.querySelector('[data-classroom-result-next]').onclick();  // -> index 1 (Second)
+    expect(questionEl.textContent).toBe('Second');
+    handle.destroy();
+  });
+
+  it('stepper label shows N/M correctly at each position', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q1', options: ['A', 'B'], tally: [1, 0], blind: false },
+      { question: 'Q2', options: ['C', 'D'], tally: [0, 2], blind: false }
+    ]);
+    // Currently at index 1 (last), so label should be "2/2" (with spaces).
+    var stepper = m.container.querySelector('[data-classroom-result-stepper]');
+    expect(stepper.textContent).toMatch(/2\/2/);
+    handle.destroy();
+  });
+
+  it('prev button is disabled at the first entry', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q1', options: ['A', 'B'], tally: [1, 0], blind: false },
+      { question: 'Q2', options: ['C', 'D'], tally: [0, 2], blind: false }
+    ]);
+    // Start at last (index 1). Go back to first.
+    // Re-query after click because _renderStepper replaces the button DOM.
+    m.container.querySelector('[data-classroom-result-prev]').onclick();
+    var prevBtnAfter = m.container.querySelector('[data-classroom-result-prev]');
+    expect(prevBtnAfter.disabled).toBe(true);
+    handle.destroy();
+  });
+
+  it('next button is disabled at the last entry', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q1', options: ['A', 'B'], tally: [1, 0], blind: false },
+      { question: 'Q2', options: ['C', 'D'], tally: [0, 2], blind: false }
+    ]);
+    // Start at last (index 1). Next should be disabled.
+    // Re-query after showResultScreen because _renderStepper just rebuilt the DOM.
+    var nextBtn = m.container.querySelector('[data-classroom-result-next]');
+    expect(nextBtn.disabled).toBe(true);
+    handle.destroy();
+  });
+});
