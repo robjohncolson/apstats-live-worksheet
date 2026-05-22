@@ -207,3 +207,36 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
     expect(html).not.toMatch(/\.dc-ahead[^{]*:not\(\.cell-today\)/);
   });
 });
+
+// --- CALENDAR_COMPACT -- focus window so the calendar never buries the board ---
+
+describe('Calendar compaction -- always show a focus window', () => {
+  it('rCal defines CAL_FOCUS_WEEKS = 2', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/CAL_FOCUS_WEEKS\s*=\s*2/);
+  });
+
+  it('rCal slices W down to the focus window', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/W\s*=\s*W\.slice\(/);
+  });
+
+  it('rCal anchors the window on the today-week index when in school', () => {
+    const b = fnBody(html, 'rCal');
+    // Source pin: the function scans W looking for the week whose days
+    // include today, then uses that index as the focus anchor.
+    expect(b).toMatch(/_todayWk\s*=\s*i/);
+  });
+
+  it('rCal clamps the start so the window always has CAL_FOCUS_WEEKS rows', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/Math\.max\(0,\s*Math\.min\(/);
+  });
+
+  it('rCal falls back by date when today has no week (pre/post-school)', () => {
+    const b = fnBody(html, 'rCal');
+    // Pre-school: t < W[0].m -> start 0. Post-school: -> last window.
+    expect(b).toMatch(/t\s*<\s*W\[0\]\.m/);
+    expect(b).toMatch(/W\.length\s*-\s*CAL_FOCUS_WEEKS/);
+  });
+});

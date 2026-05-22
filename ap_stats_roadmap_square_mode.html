@@ -10015,6 +10015,31 @@ function rCal(){
         if(dw===1&&cw.length){W.push({m:lm,d:cw});cw=[];}if(dw===1)lm=dt;
         if(!lm){const md=new Date(dt);md.setDate(dt.getDate()-((dw+6)%7));lm=md;}cw.push(e);}
     if(cw.length)W.push({m:lm,d:cw});
+    // CALENDAR_COMPACT -- always show a small focus window (this week + the
+    // next) instead of every week of the school year. Without this the
+    // calendar spills past every panel below it and buries the Live
+    // Classroom board off-screen. Clamped at edges: pre-school shows the
+    // first weeks; post-school shows the last. No conditional toggle --
+    // user picked "always" in the brainstorm.
+    const CAL_FOCUS_WEEKS = 2;
+    if (W.length > CAL_FOCUS_WEEKS) {
+        // Find the week containing today. -1 = today is on a non-school day
+        // (weekend / holiday) or outside the school year entirely; both are
+        // handled by the date-based fallback below.
+        let _todayWk = -1;
+        for (let i = 0; i < W.length; i++) {
+            if (W[i].d.some(function (en) {
+                return eq(new Date(en[0], en[1], en[2]), t);
+            })) { _todayWk = i; break; }
+        }
+        // In-school: anchor at today's week (today in row 1, next week in row 2
+        // -- the "what's now + what's coming" view a student needs). Pre/post:
+        // clamp to either end. The Math.max/Math.min guard then snaps the
+        // start so the window always has exactly CAL_FOCUS_WEEKS rows.
+        let _start = (_todayWk >= 0) ? _todayWk : ((t < W[0].m) ? 0 : W.length - CAL_FOCUS_WEEKS);
+        _start = Math.max(0, Math.min(_start, W.length - CAL_FOCUS_WEEKS));
+        W = W.slice(_start, _start + CAL_FOCUS_WEEKS);
+    }
     // Sequential lesson gate state (LESSON_GATE_BUILD.md §4): cells render in
     // chronological order, so _prevLessonTopic trails the last lesson cell.
     const _gateMarks = getStudentMarks();
