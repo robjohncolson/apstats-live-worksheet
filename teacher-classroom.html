@@ -314,6 +314,8 @@
        classroom-board.js sets window.ClassroomBoard with mount() / _reduce(). -->
   <script src="roster_config.js"></script>
   <script src="roster-client.js"></script>
+  <script src="canvas_engine.js"></script>
+  <script src="sprite_sheet.js"></script>
   <script src="classroom-board.js"></script>
 
   <script>
@@ -484,6 +486,7 @@
           section: section,
           username: session.username,
           role: 'teacher',
+          hue: (session.spriteHue != null) ? session.spriteHue : null,
           nameMap: currentNameMap,
           onStateChange: function (summary) {
             renderCheckinPanel(summary, currentNameMap);

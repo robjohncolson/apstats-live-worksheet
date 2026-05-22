@@ -1508,6 +1508,8 @@
 <!-- ═══ Shared roster identity (DN2c) — flat paths, Desk is at repo root (same as roster-client-demo.html). Config before client. ═══ -->
 <script src="roster_config.js"></script>
 <script src="roster-client.js"></script>
+<script src="canvas_engine.js"></script>
+<script src="sprite_sheet.js"></script>
 <script src="classroom-board.js"></script>
 
 <script>
@@ -10024,7 +10026,8 @@ function _mountClassroomBoard(){
     // The Desk embed always mounts the student board (BUILD D4). The
     // teacher real-name view lives in teacher-classroom.html.
     _classroomBoardHandle = window.ClassroomBoard.mount(mount, {
-      wsUrl: wsUrl, section: s.section, username: s.username, role: 'student'
+      wsUrl: wsUrl, section: s.section, username: s.username, role: 'student',
+      hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null
     });
   } catch (_) {}
 }

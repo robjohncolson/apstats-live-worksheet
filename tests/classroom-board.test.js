@@ -9,6 +9,10 @@
  * that requires no canvas context, so every state-reduction assertion
  * runs without a real 2d canvas.
  *
+ * r3: CanvasEngine and SpriteSheet are injected as stubs before the
+ * script runs so mount() exercises the render-layer wiring without
+ * needing a real RAF loop or image loading.
+ *
  * A mock WebSocket class is injected into the context so mount() can
  * connect without a real server.
  *
@@ -21,22 +25,17 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
 
-const REPO_ROOT   = resolve(import.meta.dirname, '..');
-const BOARD_SRC   = readFileSync(resolve(REPO_ROOT, 'classroom-board.js'), 'utf8');
+const REPO_ROOT  = resolve(import.meta.dirname, '..');
+const BOARD_SRC  = readFileSync(resolve(REPO_ROOT, 'classroom-board.js'), 'utf8');
 
 // --- mock WebSocket factory -------------------------------------------
 
-/**
- * Returns a constructor that behaves like the browser WebSocket API
- * but never makes real network calls.  An instance is accessible via
- * MockWebSocket.last so tests can control it.
- */
 function makeMockWSClass() {
   var last = null;
 
   function MockWebSocket(url) {
     this.url        = url;
-    this.readyState = 0;  // CONNECTING
+    this.readyState = 0;
     this.sent       = [];
     this.onopen     = null;
     this.onmessage  = null;
@@ -50,20 +49,18 @@ function makeMockWSClass() {
   };
 
   MockWebSocket.prototype.close = function () {
-    this.readyState = 3;  // CLOSED
+    this.readyState = 3;
     if (this.onclose) { this.onclose({}); }
   };
 
-  // Helper: simulate server -> client message
   MockWebSocket.prototype._receive = function (obj) {
     if (this.onmessage) {
       this.onmessage({ data: JSON.stringify(obj) });
     }
   };
 
-  // Helper: simulate successful open
   MockWebSocket.prototype._open = function () {
-    this.readyState = 1;  // OPEN
+    this.readyState = 1;
     if (this.onopen) { this.onopen({}); }
   };
 
@@ -77,15 +74,83 @@ function makeMockWSClass() {
   return MockWebSocket;
 }
 
-// --- boot helper (reduce tests, no timers needed) ---------------------
+// --- stub CanvasEngine + SpriteSheet factory --------------------------
 
 /**
- * Load classroom-board.js into a fresh jsdom window context.
- * Returns { win, ClassroomBoard, MockWS }.
+ * Build stub CanvasEngine and SpriteSheet classes to inject into the
+ * test window before classroom-board.js runs.
  *
- * The mock WebSocket is injected as win.WebSocket before the script runs,
- * so mount() will use it instead of the real WebSocket.
+ * CanvasEngine stub:
+ *   - Resolves canvas by getElementById (the canvas must already be in the DOM).
+ *   - Does NOT call requestAnimationFrame (keeps tests synchronous).
+ *   - Provides addEntity / removeEntity / stop / groundY.
+ *
+ * SpriteSheet stub:
+ *   - Sets loaded = true immediately so drawFrame is always a no-op.
+ *   - drawFrame() is a no-op.
  */
+function makeEngineStubs(win) {
+  // CanvasEngine stub -- does NOT call getContext (not implemented in jsdom).
+  function StubCanvasEngine(canvasId) {
+    this.canvas   = win.document.getElementById(canvasId);
+    this.ctx      = null;   // no real canvas context needed for tests
+    this.entities = new Map();
+    this.running  = false;
+  }
+
+  StubCanvasEngine.prototype.addEntity = function (id, entity) {
+    this.entities.set(id, entity);
+    entity.engine = this;
+    if (entity.onAdded) { entity.onAdded(); }
+  };
+
+  StubCanvasEngine.prototype.removeEntity = function (id) {
+    var entity = this.entities.get(id);
+    this.entities.delete(id);
+    if (entity && entity.onRemoved) { entity.onRemoved(); }
+  };
+
+  StubCanvasEngine.prototype.start = function () { this.running = true; };
+  StubCanvasEngine.prototype.stop  = function () { this.running = false; };
+
+  Object.defineProperty(StubCanvasEngine.prototype, 'groundY', {
+    get: function () {
+      var h = (this.canvas && this.canvas.height) || 300;
+      return h - 50;
+    }
+  });
+
+  // SpriteSheet stub -- loaded = true immediately; drawFrame is a no-op.
+  function StubSpriteSheet(src, fw, fh, opts) {
+    this.loaded      = true;
+    this.frameWidth  = fw;
+    this.frameHeight = fh;
+    this.columns     = (opts && opts.columns) || 11;
+    this.rows        = (opts && opts.rows)    || 2;
+  }
+  StubSpriteSheet.prototype.drawFrame = function () { /* no-op */ };
+
+  win.CanvasEngine  = StubCanvasEngine;
+  win.SpriteSheet   = StubSpriteSheet;
+}
+
+// --- boot helper (reduce tests, no timers needed) ---------------------
+
+function injectEnvStubs(win) {
+  // Some properties are read-only on jsdom Window; use defineProperty.
+  try { win.devicePixelRatio = 1; } catch (_) {}
+  try { win.innerWidth = 800; } catch (_) {}
+  try { win.innerHeight = 600; } catch (_) {}
+  try {
+    Object.defineProperty(win, 'performance', {
+      value: { now: function () { return 0; } },
+      writable: true, configurable: true
+    });
+  } catch (_) {}
+  try { win.requestAnimationFrame = function () {}; } catch (_) {}
+  win.Map = Map;
+}
+
 function makeBoard() {
   var dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
     url: 'https://example.com'
@@ -93,12 +158,13 @@ function makeBoard() {
   var win  = dom.window;
   var MockWS = makeMockWSClass();
 
-  // Inject dependencies the script needs
   win.WebSocket    = MockWS;
-  win.setInterval  = function (fn, ms) { return 0; };  // no-op for _reduce tests
+  win.setInterval  = function () { return 0; };
   win.clearInterval = function () {};
-  win.setTimeout   = function (fn, ms) { return 0; };
+  win.setTimeout   = function () { return 0; };
   win.clearTimeout  = function () {};
+  injectEnvStubs(win);
+  makeEngineStubs(win);
 
   var ctx = createContext(win);
   runInContext(BOARD_SRC, ctx);
@@ -153,6 +219,29 @@ describe('ClassroomBoard._reduce -- classroom_state', function () {
     expect(s.members['alice'].role).toBe('student');
     expect(s.members['alice'].online).toBe(true);
     expect(s.members['carol'].role).toBe('teacher');
+  });
+
+  it('stores hue on each member (r3 additive field)', function () {
+    var msg = {
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, hue: 120 },
+        { username: 'bob',   role: 'student', status: 'present', online: true, hue: null }
+      ]
+    };
+    var s = board.ClassroomBoard._reduce({ members: {}, gate: null, poll: null }, msg);
+    expect(s.members['alice'].hue).toBe(120);
+    expect(s.members['bob'].hue).toBeNull();
+  });
+
+  it('hue defaults to null when absent from wire message', function () {
+    var s = board.ClassroomBoard._reduce({ members: {}, gate: null, poll: null }, STATE_MSG);
+    // MEMBER_ALICE/BOB/CAROL have no hue field -- should default to null.
+    expect(s.members['alice'].hue).toBeNull();
+    expect(s.members['bob'].hue).toBeNull();
   });
 
   it('replaces existing members on a second snapshot', function () {
@@ -222,6 +311,33 @@ describe('ClassroomBoard._reduce -- classroom_member_update (upsert)', function 
     });
     expect(Object.keys(s.members)).toEqual(Object.keys(baseState.members));
   });
+
+  it('carries hue through on upsert (r3)', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'present', online: true, hue: 200 }
+    });
+    expect(s.members['alice'].hue).toBe(200);
+  });
+
+  it('preserves existing hue when update omits it (durable)', function () {
+    // First set alice's hue.
+    var s1 = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'present', online: true, hue: 180 }
+    });
+    expect(s1.members['alice'].hue).toBe(180);
+
+    // Update without hue -- should keep existing value.
+    var s2 = board.ClassroomBoard._reduce(s1, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'present', online: false }
+    });
+    expect(s2.members['alice'].hue).toBe(180);
+  });
 });
 
 describe('ClassroomBoard._reduce -- classroom_member_left (delete)', function () {
@@ -280,17 +396,13 @@ describe('ClassroomBoard -- student-only rendering contract', function () {
   });
 
   it('teacher members are NOT in the student-avatar set', function () {
-    // The render path filters by role === "student" before calling assignCells.
-    // We verify this through state: only student-role members should appear
-    // in the cell assignment returned by _assignCells.
     var studentNames = Object.keys(state.members).filter(function (u) {
       return state.members[u].role === 'student';
     });
     expect(studentNames).toContain('alice');
     expect(studentNames).toContain('bob');
-    expect(studentNames).not.toContain('carol');   // carol is teacher
+    expect(studentNames).not.toContain('carol');
 
-    // _assignCells only receives student names -- verify carol is absent.
     var cells = board.ClassroomBoard._assignCells(studentNames);
     expect(cells['alice']).toBeDefined();
     expect(cells['bob']).toBeDefined();
@@ -317,7 +429,6 @@ describe('ClassroomBoard -- student-only rendering contract', function () {
   });
 
   it('offline student is assigned a cell (renders dimmed, not absent)', function () {
-    // After an online flip alice is still a student, so she still gets a cell.
     var s = board.ClassroomBoard._reduce(state, {
       type:    'classroom_member_update',
       section: 'PeriodX',
@@ -328,7 +439,6 @@ describe('ClassroomBoard -- student-only rendering contract', function () {
     });
     var cells = board.ClassroomBoard._assignCells(students);
     expect(cells['alice']).toBeDefined();
-    // The online flag is false -- the render path dims but still draws her.
     expect(s.members['alice'].online).toBe(false);
   });
 });
@@ -343,7 +453,6 @@ describe('ClassroomBoard._assignCells -- collision handling', function () {
   });
 
   it('assigns every username a unique cell', function () {
-    // Generate 30 usernames (max expected class size).
     var names = [];
     for (var i = 0; i < 30; i++) {
       names.push('student' + i);
@@ -398,7 +507,6 @@ describe('ClassroomBoard._assignCells -- collision handling', function () {
     var cells = board.ClassroomBoard._assignCells(names);
     for (var k in cells) {
       var c = cells[k];
-      // The hole occupies cols 36-39, rows 26-29 (40x30 grid, 4x4 hole).
       var inHole = (c.col >= 36) && (c.row >= 26);
       expect(inHole).toBe(false);
     }
@@ -407,15 +515,7 @@ describe('ClassroomBoard._assignCells -- collision handling', function () {
 
 // --- makeMount helper (timer-spy variant) -----------------------------
 
-/**
- * Creates a board context with real spy-able timer functions.
- * Returns timer spies alongside the board handle so tests can assert
- * on heartbeat scheduling, reconnect scheduling, and cleanup.
- *
- * The container div lives in the same jsdom window as the script so
- * root.document.createElement works correctly.
- */
-function makeMountWithSpies() {
+function makeMount_spies() {
   var dom = new JSDOM(
     '<!DOCTYPE html><html><body><div id="mount"></div></body></html>',
     { url: 'https://example.com' }
@@ -423,19 +523,17 @@ function makeMountWithSpies() {
   var win    = dom.window;
   var MockWS = makeMockWSClass();
 
-  // Timer bookkeeping
   var _nextId       = 1;
-  var _intervals    = {};  // id -> { fn, ms }
-  var _timeouts     = {};  // id -> { fn, ms }
+  var _intervals    = {};
+  var _timeouts     = {};
   var _clearedIntervals = [];
   var _clearedTimeouts  = [];
 
   var timerSpies = {
-    setIntervalCalls:    [],   // each entry: { fn, ms }
-    setTimeoutCalls:     [],   // each entry: { fn, ms }
+    setIntervalCalls:    [],
+    setTimeoutCalls:     [],
     clearedIntervals:    _clearedIntervals,
     clearedTimeouts:     _clearedTimeouts,
-    // Run all currently-pending timeouts (one-shot).
     flushTimeouts: function () {
       var ids = Object.keys(_timeouts);
       for (var i = 0; i < ids.length; i++) {
@@ -475,6 +573,8 @@ function makeMountWithSpies() {
   };
 
   win.WebSocket = MockWS;
+  injectEnvStubs(win);
+  makeEngineStubs(win);
 
   var ctx = createContext(win);
   runInContext(BOARD_SRC, ctx);
@@ -505,6 +605,8 @@ function makeMount() {
   win.clearInterval = function () {};
   win.setTimeout    = function () { return 0; };
   win.clearTimeout  = function () {};
+  injectEnvStubs(win);
+  makeEngineStubs(win);
 
   var ctx = createContext(win);
   runInContext(BOARD_SRC, ctx);
@@ -518,6 +620,9 @@ function makeMount() {
     container:      container
   };
 }
+
+// --- makeMountWithSpies alias (used by existing tests) ----------------
+function makeMountWithSpies() { return makeMount_spies(); }
 
 // --- mount() creates a canvas element ---------------------------------
 
@@ -534,9 +639,9 @@ describe('ClassroomBoard.mount -- DOM wiring', function () {
 
     var canvas = m.container.querySelector('canvas');
     expect(canvas).not.toBeNull();
-    expect(Number(canvas.width)).toBe(320);
-    expect(Number(canvas.height)).toBe(240);
-    expect(canvas.style.imageRendering).toBe('pixelated');
+    // r3: canvas is responsive, no longer 320x240 / pixelated.
+    expect(canvas.id).toMatch(/classroom-board-canvas-/);
+    expect(canvas.style.display).toBe('block');
 
     handle.destroy();
   });
@@ -554,6 +659,21 @@ describe('ClassroomBoard.mount -- DOM wiring', function () {
     expect(m.container.querySelector('canvas')).not.toBeNull();
     handle.destroy();
     expect(m.container.querySelector('canvas')).toBeNull();
+  });
+
+  it('mount accepts hue opt without throwing (r3)', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://example.com/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student',
+      hue:      120
+    });
+
+    expect(m.container.querySelector('canvas')).not.toBeNull();
+    handle.destroy();
   });
 });
 
@@ -584,6 +704,50 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
     handle.destroy();
   });
 
+  it('classroom_join includes hue from opts (r3)', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student',
+      hue:      200
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var join = sent.find(function (msg) { return msg.type === 'classroom_join'; });
+    expect(join).toBeDefined();
+    expect(join.hue).toBe(200);
+
+    handle.destroy();
+  });
+
+  it('classroom_join carries null hue when not provided', function () {
+    var m = makeMount();
+
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+      // no hue
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var join = sent.find(function (msg) { return msg.type === 'classroom_join'; });
+    expect(join).toBeDefined();
+    expect(join.hue).toBeNull();
+
+    handle.destroy();
+  });
+
   it('updates state when classroom_state is received over the socket', function () {
     var m = makeMount();
 
@@ -598,7 +762,6 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
     ws._open();
     ws._receive(STATE_MSG);
 
-    // Verify indirectly: destroy() should not throw (clean state)
     expect(function () { handle.destroy(); }).not.toThrow();
   });
 
@@ -636,13 +799,11 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
     var ws = m.MockWS.last;
     ws._open();
 
-    // Find the heartbeat interval callback and fire it manually.
     var heartbeatCall = m.timerSpies.setIntervalCalls.find(function (c) {
       return c.ms === 30000;
     });
     expect(heartbeatCall).toBeDefined();
 
-    // Fire the heartbeat -- the WS is open (readyState 1) so it should send.
     heartbeatCall.fn();
 
     var sent = ws.sent.map(function (s) { return JSON.parse(s); });
@@ -667,12 +828,9 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
 
     var timeoutsBefore = m.timerSpies.setTimeoutCalls.length;
 
-    // Simulate drop WITHOUT destroying -- close fires onclose.
-    // We null out onclose before calling the raw close to avoid the loop.
     var savedOnClose = ws.onclose;
     ws.onclose = null;
     ws.readyState = 3;
-    // Manually invoke the board's onclose handler.
     savedOnClose({});
 
     var timeoutsAfter = m.timerSpies.setTimeoutCalls.length;
@@ -693,23 +851,20 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
 
     var ws1 = m.MockWS.last;
     ws1._open();
-    // Capture classroom_join count on first socket.
     var joinsBefore = ws1.sent.filter(function (s) {
       return JSON.parse(s).type === 'classroom_join';
     }).length;
     expect(joinsBefore).toBe(1);
 
-    // Simulate socket drop: save and call onclose, then flush the
-    // reconnect timeout so connect() runs again and creates ws2.
     var savedOnClose = ws1.onclose;
     ws1.onclose = null;
     ws1.readyState = 3;
-    savedOnClose({});          // schedules the reconnect timeout
+    savedOnClose({});
 
-    m.timerSpies.flushTimeouts();  // fires the reconnect, creates ws2
+    m.timerSpies.flushTimeouts();
 
     var ws2 = m.MockWS.last;
-    expect(ws2).not.toBe(ws1);   // a new socket was created
+    expect(ws2).not.toBe(ws1);
 
     ws2._open();
 
@@ -734,16 +889,11 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
     var ws = m.MockWS.last;
     ws._open();
 
-    // At least one setInterval (heartbeat) must have been registered.
-    var intervalIds = m.timerSpies.setIntervalCalls.map(function (_, i) { return i + 1; });
     expect(m.timerSpies.setIntervalCalls.length).toBeGreaterThanOrEqual(1);
 
     handle.destroy();
 
-    // Every interval that was set must have been cleared.
     expect(m.timerSpies.clearedIntervals.length).toBeGreaterThanOrEqual(1);
-
-    // The socket should be closed (readyState CLOSED).
     expect(ws.readyState).toBe(3);
   });
 
@@ -752,7 +902,6 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
     var constructorCalls = 0;
     var OrigMockWS = m.MockWS;
 
-    // Wrap the MockWS to count constructor calls.
     var wsInstances = [];
     m.win.WebSocket = function (url) {
       constructorCalls++;
@@ -765,7 +914,6 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
     m.win.WebSocket.CLOSING    = 2;
     m.win.WebSocket.CLOSED     = 3;
 
-    // Reload the script with the wrapped WS.
     var ctx2 = createContext(m.win);
     runInContext(BOARD_SRC, ctx2);
 
@@ -782,10 +930,8 @@ describe('ClassroomBoard.mount -- WebSocket behaviour', function () {
 
     handle.destroy();
 
-    // Flush any pending timeouts (e.g. a reconnect that was scheduled before destroy).
     m.timerSpies.flushTimeouts();
 
-    // No new WebSocket should be created after destroy().
     expect(constructorCalls).toBe(countAfterOpen);
   });
 });
@@ -824,7 +970,6 @@ describe('ClassroomBoard._reduce -- classroom_gate (v1b)', function () {
 
   beforeEach(function () {
     board = makeBoard();
-    // Start from a state with alice (checked in) and bob (present).
     baseState = board.ClassroomBoard._reduce(
       { members: {}, gate: null, poll: null, greenlight: null },
       {
@@ -853,7 +998,6 @@ describe('ClassroomBoard._reduce -- classroom_gate (v1b)', function () {
   });
 
   it('resets all member statuses to "present" when gate is armed', function () {
-    // alice was checkedIn; arming a gate starts a fresh ritual.
     var gateMsg = {
       type: 'classroom_gate',
       section: 'PeriodX',
@@ -873,6 +1017,22 @@ describe('ClassroomBoard._reduce -- classroom_gate (v1b)', function () {
     var s = board.ClassroomBoard._reduce(baseState, gateMsg);
     expect(s.members['alice'].online).toBe(true);
     expect(s.members['bob'].online).toBe(true);
+  });
+
+  it('hue is preserved (durable) when gate is armed (r3)', function () {
+    // Give alice a hue first.
+    var withHue = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'present', online: true, hue: 90 }
+    });
+    var gateMsg = {
+      type: 'classroom_gate',
+      section: 'PeriodX',
+      gate: { armed: true, theme: 'thu' }
+    };
+    var s = board.ClassroomBoard._reduce(withHue, gateMsg);
+    expect(s.members['alice'].hue).toBe(90);
   });
 
   it('handles a null gate payload without throwing', function () {
@@ -1019,7 +1179,6 @@ describe('ClassroomBoard -- checkedIn student drain contract (v1b)', function ()
   });
 
   it('checkedIn student is excluded from the visible student set', function () {
-    // alice checks in; bob stays present.
     var state = board.ClassroomBoard._reduce(
       { members: {}, gate: null, poll: null, greenlight: null },
       {
@@ -1034,7 +1193,6 @@ describe('ClassroomBoard -- checkedIn student drain contract (v1b)', function ()
       }
     );
 
-    // Simulate the render filter: only present students get a cell.
     var visible = Object.keys(state.members).filter(function (u) {
       var m = state.members[u];
       return m.role === 'student' && m.status !== 'checkedIn';
@@ -1139,7 +1297,6 @@ describe('ClassroomBoard.mount -- check-in button (v1b)', function () {
     var ws = m.MockWS.last;
     ws._open();
 
-    // Server sends a state with a gate armed and alice present.
     ws._receive({
       type:    'classroom_state',
       section: 'PeriodX',
@@ -1169,7 +1326,6 @@ describe('ClassroomBoard.mount -- check-in button (v1b)', function () {
     var ws = m.MockWS.last;
     ws._open();
 
-    // Gate armed, alice present -> button visible.
     ws._receive({
       type:    'classroom_state',
       section: 'PeriodX',
@@ -1183,7 +1339,6 @@ describe('ClassroomBoard.mount -- check-in button (v1b)', function () {
     var btn = m.container.querySelector('[data-classroom-checkin]');
     expect(btn.style.display).not.toBe('none');
 
-    // Alice checks in -> button should hide.
     ws._receive({
       type:    'classroom_member_update',
       section: 'PeriodX',
@@ -1248,7 +1403,7 @@ describe('ClassroomBoard.mount -- check-in button (v1b)', function () {
     });
 
     var btn = m.container.querySelector('[data-classroom-checkin]');
-    btn.onclick();   // simulate a click
+    btn.onclick();
 
     var sent = ws.sent.map(function (s) { return JSON.parse(s); });
     var checkin = sent.find(function (msg) { return msg.type === 'classroom_checkin'; });
@@ -1418,7 +1573,6 @@ describe('ClassroomBoard.mount -- onStateChange callback (v1b)', function () {
       section:  'PeriodX',
       username: 'alice',
       role:     'student'
-      // no onStateChange
     });
 
     var ws = m.MockWS.last;
@@ -1499,8 +1653,6 @@ describe('ClassroomBoard handle -- teacher methods (v1b)', function () {
   });
 
   it('v1a callers (no teacher methods used) still work', function () {
-    // Verify backward compat: a v1a caller that only calls destroy()/setNameMap()
-    // and passes no onStateChange does not throw.
     var m = makeMount();
 
     var handle = m.ClassroomBoard.mount(m.container, {
@@ -1512,8 +1664,6 @@ describe('ClassroomBoard handle -- teacher methods (v1b)', function () {
 
     expect(typeof handle.destroy).toBe('function');
     expect(typeof handle.setNameMap).toBe('function');
-
-    // New v1b methods are present but caller does not call them.
     expect(typeof handle.armGate).toBe('function');
     expect(typeof handle.greenLight).toBe('function');
     expect(typeof handle.reset).toBe('function');
@@ -1522,5 +1672,393 @@ describe('ClassroomBoard handle -- teacher methods (v1b)', function () {
       handle.setNameMap({ alice: 'Alice Smith' });
       handle.destroy();
     }).not.toThrow();
+  });
+});
+
+// ==========================================================================
+// r3 tests -- render layer: CanvasEngine + sprite scene
+// ==========================================================================
+
+describe('ClassroomBoard r3 -- render layer engine wiring', function () {
+
+  it('CanvasEngine.start() is called on mount', function () {
+    var m = makeMount();
+    var startCalled = false;
+
+    // Override CanvasEngine stub to track start().
+    var Orig = m.win.CanvasEngine;
+    m.win.CanvasEngine = function (id) {
+      var inst = new Orig(id);
+      inst.start = function () { startCalled = true; };
+      return inst;
+    };
+
+    // Re-run the board script with the patched engine.
+    var ctx2 = createContext(m.win);
+    runInContext(BOARD_SRC, ctx2);
+
+    var handle = m.win.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    expect(startCalled).toBe(true);
+    handle.destroy();
+  });
+
+  it('engine.stop() is called on destroy', function () {
+    var m = makeMount();
+    var stopCalled = false;
+
+    var Orig = m.win.CanvasEngine;
+    m.win.CanvasEngine = function (id) {
+      var inst = new Orig(id);
+      inst.stop = function () { stopCalled = true; };
+      return inst;
+    };
+
+    var ctx2 = createContext(m.win);
+    runInContext(BOARD_SRC, ctx2);
+
+    var handle = m.win.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    handle.destroy();
+    expect(stopCalled).toBe(true);
+  });
+
+  it('receiving a classroom_state with student adds a sprite entity', function () {
+    var m = makeMount();
+    var addedIds = [];
+
+    var Orig = m.win.CanvasEngine;
+    m.win.CanvasEngine = function (id) {
+      var inst = new Orig(id);
+      inst.addEntity = function (eid, entity) {
+        addedIds.push(eid);
+        Orig.prototype.addEntity.call(inst, eid, entity);
+      };
+      return inst;
+    };
+
+    var ctx2 = createContext(m.win);
+    runInContext(BOARD_SRC, ctx2);
+
+    var handle = m.win.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    // At least a sprite entity for alice should have been added.
+    expect(addedIds.some(function (id) { return id === 'sprite_alice'; })).toBe(true);
+
+    handle.destroy();
+  });
+
+  it('teacher members never get a sprite entity', function () {
+    var m = makeMount();
+    var addedIds = [];
+
+    var Orig = m.win.CanvasEngine;
+    m.win.CanvasEngine = function (id) {
+      var inst = new Orig(id);
+      inst.addEntity = function (eid, entity) {
+        addedIds.push(eid);
+        Orig.prototype.addEntity.call(inst, eid, entity);
+      };
+      return inst;
+    };
+
+    var ctx2 = createContext(m.win);
+    runInContext(BOARD_SRC, ctx2);
+
+    var handle = m.win.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'carol',
+      role:     'teacher'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    null,
+      members: [
+        { username: 'carol', role: 'teacher', status: 'present', online: true },
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    expect(addedIds.some(function (id) { return id === 'sprite_carol'; })).toBe(false);
+    expect(addedIds.some(function (id) { return id === 'sprite_alice'; })).toBe(true);
+
+    handle.destroy();
+  });
+
+  it('gate armed -> gate_door entity is added', function () {
+    var m = makeMount();
+    var addedIds = [];
+
+    var Orig = m.win.CanvasEngine;
+    m.win.CanvasEngine = function (id) {
+      var inst = new Orig(id);
+      inst.addEntity = function (eid, entity) {
+        addedIds.push(eid);
+        Orig.prototype.addEntity.call(inst, eid, entity);
+      };
+      return inst;
+    };
+
+    var ctx2 = createContext(m.win);
+    runInContext(BOARD_SRC, ctx2);
+
+    var handle = m.win.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'mon' },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    expect(addedIds.some(function (id) { return id === 'gate_door'; })).toBe(true);
+
+    handle.destroy();
+  });
+});
+
+// --- r3: present->checkedIn transition triggers walk-then-drain -------
+
+describe('ClassroomBoard r3 -- present->checkedIn triggers walk-then-drain', function () {
+
+  it('a member transitioning to checkedIn has its sprite set to walking state', function () {
+    var m = makeMount();
+    var spriteRef = null;
+
+    var Orig = m.win.CanvasEngine;
+    m.win.CanvasEngine = function (id) {
+      var inst = new Orig(id);
+      inst.addEntity = function (eid, entity) {
+        if (eid === 'sprite_alice') { spriteRef = entity; }
+        Orig.prototype.addEntity.call(inst, eid, entity);
+      };
+      return inst;
+    };
+
+    var ctx2 = createContext(m.win);
+    runInContext(BOARD_SRC, ctx2);
+
+    var handle = m.win.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // alice joins as present
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'mon' },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    expect(spriteRef).not.toBeNull();
+    expect(spriteRef.state).toBe('idle');
+
+    // alice checks in -> present->checkedIn transition
+    ws._receive({
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'checkedIn', online: true }
+    });
+
+    // After the update the sprite should be in 'walking' state.
+    expect(spriteRef.state).toBe('walking');
+
+    handle.destroy();
+  });
+
+  it('on walk completion, the sprite entity is removed from the engine', function () {
+    var m = makeMount();
+    var spriteRef = null;
+    var removedIds = [];
+
+    var Orig = m.win.CanvasEngine;
+    m.win.CanvasEngine = function (id) {
+      var inst = new Orig(id);
+      inst.addEntity = function (eid, entity) {
+        if (eid === 'sprite_alice') { spriteRef = entity; }
+        Orig.prototype.addEntity.call(inst, eid, entity);
+      };
+      inst.removeEntity = function (eid) {
+        removedIds.push(eid);
+        Orig.prototype.removeEntity.call(inst, eid);
+      };
+      return inst;
+    };
+
+    var ctx2 = createContext(m.win);
+    runInContext(BOARD_SRC, ctx2);
+
+    var handle = m.win.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test.example/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // alice joins as present
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'mon' },
+      poll:    null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    expect(spriteRef).not.toBeNull();
+
+    // alice checks in
+    ws._receive({
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'checkedIn', online: true }
+    });
+
+    // The sprite is walking.  Simulate completion by calling onDrained directly.
+    // (In production the RAF loop calls update() until arrived, then onDrained fires.)
+    expect(typeof spriteRef.onDrained).toBe('function');
+    spriteRef.onDrained();
+
+    expect(removedIds.some(function (id) { return id === 'sprite_alice'; })).toBe(true);
+
+    handle.destroy();
+  });
+});
+
+// --- r3: hue tinting via hashStringToHue fallback ---------------------
+
+describe('ClassroomBoard r3 -- hue / hashStringToHue', function () {
+
+  it('_hashStringToHue is deterministic and returns a hue in [0, 359]', function () {
+    var board = makeBoard();
+    var h = board.ClassroomBoard._hashStringToHue;
+    expect(typeof h).toBe('function');
+
+    // Deterministic: the same username always maps to the same hue.
+    expect(h('alice')).toBe(h('alice'));
+    expect(h('bob')).toBe(h('bob'));
+
+    // Range: every result is an integer in [0, 359].
+    ['alice', 'bob', 'carol', 'dave', 'eve', '', 'x'].forEach(function (name) {
+      var hue = h(name);
+      expect(Number.isInteger(hue)).toBe(true);
+      expect(hue).toBeGreaterThanOrEqual(0);
+      expect(hue).toBeLessThanOrEqual(359);
+    });
+
+    // Distinct usernames are not collapsed to a single constant hue.
+    expect(h('alice')).not.toBe(h('zzzzzz'));
+  });
+
+  it('member.hue in wire message is carried into state', function () {
+    var board = makeBoard();
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    null,
+        poll:    null,
+        members: [
+          { username: 'alice', role: 'student', status: 'present', online: true, hue: 270 }
+        ]
+      }
+    );
+    expect(s.members['alice'].hue).toBe(270);
+  });
+});
+
+// --- r3: engineReady fallback (canvas_engine.js / sprite_sheet.js absent) ---
+
+describe('ClassroomBoard r3 -- engineReady fallback', function () {
+
+  it('mount degrades gracefully when the engine deps are missing', function () {
+    var m = makeBoard();
+    // Simulate canvas_engine.js / sprite_sheet.js not being loaded.
+    delete m.win.CanvasEngine;
+    delete m.win.SpriteSheet;
+
+    var container = m.win.document.createElement('div');
+    m.win.document.body.appendChild(container);
+
+    var handle;
+    expect(function () {
+      handle = m.ClassroomBoard.mount(container, {
+        wsUrl:    'wss://test.example/ws',
+        section:  'PeriodX',
+        username: 'alice',
+        role:     'student'
+      });
+    }).not.toThrow();
+
+    // The board still connects its WebSocket and reduces state.
+    var ws = m.MockWS.last;
+    expect(ws).not.toBeNull();
+    expect(function () {
+      ws._open();
+      ws._receive({
+        type: 'classroom_state', section: 'PeriodX', gate: null, poll: null,
+        members: [{ username: 'alice', role: 'student', status: 'present', online: true }]
+      });
+    }).not.toThrow();
+
+    // destroy() cleans up without an engine.
+    expect(function () { handle.destroy(); }).not.toThrow();
   });
 });

@@ -46,9 +46,9 @@
 
   window.rosterClient = {
 
-    // Returns { studentId, username, realName, section, role } from localStorage,
-    // or null. role defaults to 'student' when absent (old sessions are safe).
-    // Never throws even if localStorage is blocked.
+    // Returns { studentId, username, realName, section, role, spriteHue } from
+    // localStorage, or null. role defaults to 'student' when absent (old sessions
+    // are safe); spriteHue is null when unset. Never throws.
     current: function () {
       var session = readSession();
       if (!session || !session.studentId) return null;
@@ -58,12 +58,13 @@
         realName: session.realName,
         section: session.section,
         role: session.role || 'student',
+        spriteHue: (typeof session.spriteHue === 'number') ? session.spriteHue : null,
         mustChangePassword: !!session.mustChangePassword
       };
     },
 
     // POST /roster/verify — persists the session key on success.
-    // Returns { ok, studentId, realName, section, error? }
+    // Returns { ok, studentId, realName, section, spriteHue, error? }
     signIn: async function (username, password) {
       var baseUrl = serviceUrl();
       if (!baseUrl) {
@@ -90,6 +91,7 @@
           section: data.section,
           token: data.token,
           role: data.role || 'student',
+          spriteHue: (typeof data.spriteHue === 'number') ? data.spriteHue : null,
           mustChangePassword: !!data.mustChangePassword,
           signedInAt: new Date().toISOString()
         });
@@ -99,6 +101,7 @@
           studentId: data.studentId,
           realName: data.realName,
           section: data.section,
+          spriteHue: (typeof data.spriteHue === 'number') ? data.spriteHue : null,
           mustChangePassword: !!data.mustChangePassword
         };
       } catch (err) {

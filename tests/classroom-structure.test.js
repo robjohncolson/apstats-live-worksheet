@@ -226,3 +226,88 @@ describe('Live Classroom v1b - checked-in panel', () => {
     expect(COCKPIT).toMatch(/nameMap\[m\.username\]|nameMap && nameMap\[m\.username\]/);
   });
 });
+
+// =============================================================
+// r3 structure pins -- lifted files + hue wiring
+// =============================================================
+
+describe('Live Classroom r3 - lifted engine files exist', () => {
+  it('canvas_engine.js exists in the repo root', () => {
+    const path = resolve(repo, 'canvas_engine.js');
+    expect(existsSync(path), 'canvas_engine.js must exist').toBe(true);
+  });
+
+  it('sprite_sheet.js exists in the repo root', () => {
+    const path = resolve(repo, 'sprite_sheet.js');
+    expect(existsSync(path), 'sprite_sheet.js must exist').toBe(true);
+  });
+
+  it('sprite.png exists in the repo root', () => {
+    const path = resolve(repo, 'sprite.png');
+    expect(existsSync(path), 'sprite.png must exist').toBe(true);
+  });
+});
+
+describe('Live Classroom r3 - cockpit loads engine scripts', () => {
+  it('teacher-classroom.html loads canvas_engine.js before classroom-board.js', () => {
+    expect(COCKPIT).toMatch(/<script\s+src=["']canvas_engine\.js["']/i);
+  });
+
+  it('teacher-classroom.html loads sprite_sheet.js before classroom-board.js', () => {
+    expect(COCKPIT).toMatch(/<script\s+src=["']sprite_sheet\.js["']/i);
+  });
+
+  it('canvas_engine.js and sprite_sheet.js appear before classroom-board.js in document order', () => {
+    // Use the <script src="..."> tag positions to avoid matching comments.
+    const idxEngine = COCKPIT.indexOf('src="canvas_engine.js"');
+    const idxSprite = COCKPIT.indexOf('src="sprite_sheet.js"');
+    const idxBoard  = COCKPIT.indexOf('src="classroom-board.js"');
+    expect(idxEngine).toBeGreaterThan(-1);
+    expect(idxSprite).toBeGreaterThan(-1);
+    expect(idxBoard).toBeGreaterThan(-1);
+    expect(idxEngine).toBeLessThan(idxBoard);
+    expect(idxSprite).toBeLessThan(idxBoard);
+  });
+});
+
+describe('Live Classroom r3 - hue opt in mount call', () => {
+  it('classroom-board.js mount accepts a hue opt (hue: present in mount source)', () => {
+    expect(BOARD).toMatch(/opts\.hue/);
+  });
+
+  it('classroom_join message includes hue in board source', () => {
+    expect(BOARD).toMatch(/hue\s*:/);
+    expect(BOARD).toMatch(/classroom_join/);
+  });
+
+  it('teacher-classroom.html mountBoard passes hue from session.spriteHue', () => {
+    expect(COCKPIT).toMatch(/spriteHue/);
+    expect(COCKPIT).toMatch(/hue\s*:/);
+  });
+
+  it('_reduce WireMember carries hue field (additive)', () => {
+    // The _reduce source must reference member.hue for both classroom_state
+    // and classroom_member_update handlers.
+    expect(BOARD).toMatch(/m\.hue/);
+    expect(BOARD).toMatch(/upd\.hue/);
+  });
+
+  it('Desk _mountClassroomBoard passes hue from rosterClient.current().spriteHue', () => {
+    const body = fnBody(DESK, '_mountClassroomBoard');
+    expect(body).toMatch(/hue\s*:/);
+    expect(body).toMatch(/spriteHue/);
+  });
+});
+
+describe('Live Classroom r3 - Desk loads engine scripts', () => {
+  it('the Desk loads canvas_engine.js and sprite_sheet.js before classroom-board.js', () => {
+    const idxEngine = DESK.indexOf('src="canvas_engine.js"');
+    const idxSprite = DESK.indexOf('src="sprite_sheet.js"');
+    const idxBoard  = DESK.indexOf('src="classroom-board.js"');
+    expect(idxEngine).toBeGreaterThan(-1);
+    expect(idxSprite).toBeGreaterThan(-1);
+    expect(idxBoard).toBeGreaterThan(-1);
+    expect(idxEngine).toBeLessThan(idxBoard);
+    expect(idxSprite).toBeLessThan(idxBoard);
+  });
+});

@@ -1,10 +1,15 @@
 # LIVE_CLASSROOM_SPEC.md
 
-> Status: DRAFT -- written 2026-05-21 (session 104). Revision 2.
-> Codex gap-review (round 1) found 4 gaps before timing out; this
-> revision applies all 4 plus a planner gap pass. Next: optional Codex
-> verification pass -> planner final look -> implementation. Do not
-> relitigate the Section 3 locked decisions.
+> Status: DRAFT -- written 2026-05-21 (session 104), revised 2026-05-21
+> (session 107). Revision 3. v1a (Foundation) and v1b (the Gate) have
+> SHIPPED. r3 adds the Presentation Revamp (Section 15): the board
+> becomes an animated side-view sprite scene reusing curriculum_render's
+> avatars, the TI-84 screen becomes an on-demand surface for statistical
+> visuals, and avatar color persists cross-app via the roster account.
+> Section 15 is AUTHORITATIVE over what it supersedes (D3, K6, Section 7's
+> "TI-84 board" framing, the Section 4.1 "roster-server is NOT changed"
+> boundary); the other Section 3 locked decisions stand. Next: planner
+> review -> freeze a *_BUILD.md contract -> dependency-aware dispatch.
 >
 > Revision log:
 > - r1 -- initial draft from the session-104 brainstorm.
@@ -15,6 +20,11 @@
 >   cockpit checked-in readout; poll option bounds; client
 >   reconnect/backoff; server-restart behavior; the v1/v2 message
 >   split).
+> - r3 -- Presentation Revamp (Section 15), from the session-107
+>   brainstorm: cr-style animated sprite avatars, the TI-84 screen as an
+>   on-demand stat-visual surface (not the board substrate), 2D canvas
+>   (not WebGL), and a roster-persisted avatar hue. Adds decisions
+>   D14-D17.
 
 ## 1. Overview
 
@@ -41,8 +51,9 @@ in-world ritual that keeps students' hands on the keyboard.
 Goals:
 - Give the teacher a fast, glanceable read of who is present and engaged.
 - Funnel every student onto the correct lesson with a low-friction ritual.
-- Build TI-84 fluency passively by rendering all output as calculator
-  screens (see D8).
+- Build TI-84 fluency by rendering STATISTICAL output -- the v2 poll
+  plots -- as authentic calculator screens (see D8, D15). [r3: refined;
+  the presence board itself is a sprite scene, not a calculator screen.]
 - Stay cheap and lag-free for 25-30 concurrent students (see D2).
 
 Non-goals (v1):
@@ -66,7 +77,9 @@ Non-goals (v1):
   wire. Authoritative shared state is tiny.
 - D3. The board renders as a 320x240 TI-84 Plus CE screen -- the
   calculator's pixel grid and font -- nested inside the Desk's System 7
-  window chrome.
+  window chrome. [SUPERSEDED by D14 / Section 15 (r3): the board is an
+  animated side-view sprite scene; the TI-84 screen becomes an on-demand
+  surface for statistical visuals -- D15.]
 - D4. GATE: a student checks in -> their avatar enters the hole and is
   removed from the board. The canvas drains to empty. The teacher
   watches it drain.
@@ -95,6 +108,22 @@ Non-goals (v1):
   server. Sacred `curriculum_render/data/curriculum.js` is never touched
   (the WS server is `railway-server/server.js`).
 - D13. v1 ships the GATE; v2 ships the POLL on the same substrate.
+- D14. (r3) The board is an animated side-view sprite SCENE, not a
+  TI-84 screen. Avatars are curriculum_render's sprite-sheet characters,
+  reused verbatim -- `sprite.png`, `sprite_sheet.js`, and the 79-line
+  `canvas_engine.js` are lifted from curriculum_render into follow-alongs.
+  Supersedes D3. See Section 15.2.
+- D15. (r3) The TI-84 calculator screen is an ON-DEMAND surface for
+  statistical visuals (the v2 poll plots), not the board substrate. It
+  still reuses `screen-renderer.js` (D8); D15 only relocates it. See
+  Section 15.3.
+- D16. (r3) 2D canvas, not WebGL -- both the avatar scene and the TI-84
+  surface. The reused cr stack and `screen-renderer.js` are already 2D
+  canvas; ~25-30 idle sprites is far below any GPU need. See Section 15.1.
+- D17. (r3) Avatar color is a per-student HUE that persists cross-app
+  via the roster account (`roster.sprite_hue`). The picker stays in
+  curriculum_render; follow-alongs consumes the hue. Supersedes K6. See
+  Section 15.4.
 
 ## 4. Architecture
 
@@ -375,6 +404,11 @@ Contents:
 - v1b -- The Gate. `classroom_arm_gate`, today's themed hole, check-in,
   drain-to-empty, the cockpit checked-in panel, the green light in
   informational mode.
+- Presentation Revamp (r3) -- the board becomes an animated side-view
+  sprite scene (curriculum_render's avatars), the TI-84 screen becomes
+  an on-demand surface for statistical visuals, and avatar color
+  persists cross-app via the roster account. See Section 15. Slotted
+  here so v1c and v2 build on the new presentation.
 - v1c -- Synchronized start (the D5 option). The `classroom_greenlight`
   `startVideo` path: student Desks navigate to / focus today's lesson
   video. NOTE: browser autoplay policy may block true autoplay without a
@@ -411,7 +445,10 @@ Contents:
   set of themed doorway sprites.
 - K6. Avatar art -- PROPOSED DEFAULT: auto-assigned, deterministic from a
   username hash (a color + a simple shape). A student-chosen avatar is
-  deferred.
+  deferred. [SUPERSEDED by D17 / Section 15.4 (r3): the avatar is
+  curriculum_render's sprite character; its color is a roster-persisted,
+  student-chosen hue, with a username-hash hue as the fallback for
+  students who have not picked.]
 - K7. Blind poll -- PROPOSED DEFAULT: polls are non-blind (the live
   cluster is visible); blind is a per-poll teacher toggle.
 - K8. Session-idle GC window -- PROPOSED DEFAULT: 45 min. A member
@@ -492,3 +529,252 @@ Two parts:
    real periods work with no further code change. The classroom board
    reads `section` from the signed-in `rosterClient`, so it needs the
    same non-hardcoded handling.
+
+## 15. Presentation Revamp (r3)
+
+> AUTHORITATIVE over what it supersedes. From the session-107 brainstorm.
+> v1a + v1b shipped against the r1/r2 design (the board AS a 320x240
+> TI-84 screen, hand-drawn 8x8 avatars); r3 replaces that presentation.
+> Supersedes D3, K6, Section 7's "TI-84 board" framing, and the Section
+> 4.1 "roster-server is NOT changed" boundary. It does NOT touch the WS
+> protocol (Section 5), the pure `_reduce` reducer, the
+> gate/check-in/green-light STATE MACHINE, or the curriculum_render WS
+> server logic -- all rendering-agnostic, all survive (Section 15.5).
+
+### 15.1 Motivation
+
+v1a/v1b render the whole board as a 320x240 TI-84 LCD; student avatars
+are hand-drawn 8x8-pixel `fillRect` blobs (`classroom-board.js`
+`drawAvatar`). They look crude BECAUSE of that raster -- 8 px per cell
+leaves no room for a real character. curriculum_render meanwhile already
+has a polished animated avatar: a sprite-sheet character, hue-tinted per
+student, with idle-blink / walk / jump animations.
+
+One fix for two problems: (a) a TI-84 screen and good animated avatars
+are in direct tension -- you cannot have both in one 320x240 surface;
+(b) the TI-84 aesthetic earns its keep showing STATISTICS (a dotplot, a
+histogram) -- the real exam-fluency payoff -- not as ambient wallpaper.
+So the presence board becomes a full-color animated sprite scene reusing
+cr's avatars, and the TI-84 screen becomes a separate on-demand surface
+reserved for statistical visuals (the v2 poll plots).
+
+WebGL was considered and rejected (D16): the cr avatar stack and
+`screen-renderer.js` are already 2D canvas; a section is ~25-30
+idle-blinking sprites, far below any GPU need; WebGL would add
+shader/context-loss/build complexity to a single-file, no-build project
+for zero payoff. If per-sprite hue tinting ever stutters at scale, the
+escape hatch is pre-baked tinted sheets -- still 2D canvas.
+
+### 15.2 The avatar scene (supersedes D3 + Section 7)
+
+Reuse, do not re-create. Three curriculum_render files are LIFTED
+VERBATIM into follow-alongs as read-only copies:
+
+- `canvas_engine.js` -- cr's `CanvasEngine` (79 lines): a
+  `requestAnimationFrame` loop that calls `entity.update(deltaTime)`
+  then `entity.render(ctx)` on each registered entity; `addEntity` /
+  `removeEntity`; a `groundY` getter; DPR-aware; per-entity label
+  rendering via an optional `getLabelSpec()`. Self-contained -- no cr
+  globals -- so it lifts wholesale (one small adaptation: it takes a
+  canvas id; `classroom-board.js` creates its canvas inside `mount()`).
+- `sprite_sheet.js` -- cr's `SpriteSheet` (35 lines):
+  `drawFrame(ctx, frameIndex, x, y, scale, hueDegrees)`, hue via
+  `ctx.filter: hue-rotate()`. The sheet is 11 cols x 2 rows of 80x96 px
+  frames, 4 px padding (cr's exact constructor args).
+- `sprite.png` -- the avatar sprite-sheet image. A BINARY asset: it MUST
+  be committed to follow-alongs before any code references it (repo
+  deployment checklist).
+
+NOT lifted: cr's `PlayerSprite` (keyboard + platformer physics + IDB),
+`PeerSprite`, `SpriteManager` (turbo-mode / presence-event coupling).
+The board gets a NEW slim sprite entity (idle-blink + a walk cycle) --
+cr's entities are the reference design, not imported code.
+
+Scene layout (D14, "like cr"): a side-view scene -- student avatars
+stand in a row on a ground line, as cr's `SpriteManager` lays out online
+peers. Idle avatars blink (cr `idle` frames [0, 10]); `online:false`
+members render dimmed (carried from v1a); username-vs-realname labels
+(D6) render via the engine's `getLabelSpec()` hook.
+
+The gate as a scene (supersedes the `drawHole` doorway): the armed gate
+is a DOOR in the scene. On check-in, the student's avatar plays a walk
+cycle (cr `walk` frames [2,3,4,5]) toward the door, then drains
+(removed) -- a richer rendering of D4's "drain to empty," and the reason
+the side-view layout was chosen. The green-light cue (D5) is a
+scene-layer overlay, unchanged in meaning.
+
+State flow is unchanged: a `classroom_*` message -> the pure `_reduce`
+-> a member diff -> the render layer adds/removes/updates board sprite
+entities -> `CanvasEngine`'s RAF loop animates them. `_reduce` stays
+pure (no `Date.now`, no canvas); the `present`->`checkedIn` transition
+is a flag, and the render layer INTERPRETS that flag as "walk, then
+drain." The fixed 320x240 `image-rendering:pixelated` backing store is
+gone -- the scene canvas is normally sized and responsive.
+
+### 15.3 The TI-84 surface, on demand (supersedes D3; builds on D8)
+
+The TI-84 calculator screen is no longer the board. It is a separate
+surface, shown ON DEMAND when a statistical visual is needed -- the v2
+poll-result plots. It still reuses `ti84-trainer-v2/native/screen-renderer.js`
+made data-driven (D8); D15 only relocates it from "the always-on board
+substrate" to "an on-demand panel." Its presentation form (overlay
+modal, or a drop-down "pull-down classroom screen") is a v2 detail
+(K11).
+
+Scope: v1a/v1b (presence + gate) need NO TI-84 surface under the revamp
+-- they are pure avatar-scene work. The TI-84 surface first appears at
+v2 (Poll); `ti84-plot.js` and the surface itself are built then (Section
+7's poll-graph paragraph still applies). r3's job here is the DECISION
+(D15) plus removing TI-84-as-board.
+
+### 15.4 Avatar color -- the hue pipeline (supersedes K6)
+
+curriculum_render has a hue picker (`index.html` `spriteConfigModal` --
+a 0-360 hue slider -> `saveSpriteConfig()` -> `PlayerSprite.setHue()` ->
+localStorage `spriteColorHue` + IDB). r3 makes that chosen hue persist
+into the Desk's Live Classroom.
+
+cr and the Desk are different origins (no shared localStorage/IDB) but
+both authenticate against roster-server, so the hue rides on the ROSTER
+ACCOUNT. Seven additive touch points:
+
+| # | Surface | Change |
+|---|---------|--------|
+| 1 | roster-server migration | NEW `migrations/0006_roster_sprite_hue.sql` -- `ALTER TABLE roster ADD COLUMN IF NOT EXISTS sprite_hue integer` + a 0-359 CHECK. User-run in Supabase, like 0004/0005. |
+| 2 | roster-server db | NEW `getSpriteHueByStudentId` + `updateSpriteHue` in `db.js`. |
+| 3 | roster-server API | `/roster/verify` returns `spriteHue`; NEW `PATCH /roster/:studentId/sprite-hue` (self-token-authed). |
+| 4 | roster-client.js | `current()` surfaces `spriteHue`. |
+| 5 | curriculum_render WS | `classroom_join` + the Member + `toWireMember` + the member broadcasts carry an additive `hue`. |
+| 6 | curriculum_render picker | `saveSpriteConfig()` also writes the hue to roster-server. |
+| 7 | follow-alongs board | `mount` gains a `hue` opt; both mount sites pass `rosterClient.current().spriteHue`; the render layer tints by `member.hue`. |
+
+Deploy safety: `getSpriteHueByStudentId` degrades to `null` on ANY error
+(mirrors `getRoleByStudentId`), and `sprite_hue` is NOT added to the
+`findByUsername` login projection -- so a deploy that lands before the
+teacher runs migration 0006 cannot break sign-in. `PATCH .../sprite-hue`
+and the picker write both fail soft (best-effort; never block a user).
+
+Auth: `PATCH /roster/:studentId/sprite-hue` follows the
+`GET /ledger/student/:studentId` pattern -- the student's own roster
+token, which must match `:studentId` (403 on cross-student); body
+`{ spriteHue: integer 0-359 | null }`.
+
+WS field: `hue` is DURABLE -- unlike `status`, it is NOT reset by
+`armGate` / `reset`. The WS server stays a pure relay (15.5): it never
+calls roster-server; each client supplies its own hue on `classroom_join`.
+
+Fallback: a null `member.hue` (student never picked) falls back to a
+username-hash hue -- lift cr's exact `hashStringToHue()` from
+`sprite_manager.js` so an un-picked student looks IDENTICAL in cr and on
+the board. A student who uses cr without a roster session keeps a
+local-only color until they sign in, then it syncs.
+
+`roster-client.js` is byte-identical across follow-alongs AND
+curriculum_render (per DN2d) -- the `current()` change applies to BOTH
+copies. The picker STAYS in curriculum_render; a Desk-side picker later
+is a trivial add against the same endpoint, out of r3 scope.
+
+### 15.5 Preserved vs reworked
+
+| Preserved unchanged | Reworked |
+|---------------------|----------|
+| The WS protocol (Section 5) + every `classroom_*` type (only the additive `hue`, 15.4) | `classroom-board.js` render layer: `renderState`, `drawAvatar`, `drawHole`, `drawLabel`, `drawGreenLight`, canvas setup |
+| The pure `_reduce` reducer (+ an additive `hue` on WireMember) | `classroom-board.js` `mount()`: gains a `hue` opt; drives a `CanvasEngine` RAF loop instead of draw-on-message |
+| The gate / check-in / green-light STATE MACHINE | The Desk `_mountClassroomBoard` + cockpit `mountBoard`: pass the `hue` opt |
+| The curriculum_render WS server LOGIC (rooms, liveness, sweep) -- only the additive `hue` threads through | curriculum_render `railway-server`: the additive `hue` field |
+| The cockpit DOM -- control strip (Arm/Green/Reset) + checked-in panel -- both pure DOM, not canvas | roster-server: the additive column + endpoint (15.4) |
+| The public board API: `mount/destroy/setNameMap/armGate/greenLight/reset` | curriculum_render `index.html` picker: one additive roster write |
+
+The render rewrite is contained to one follow-alongs file's draw layer
+plus three lifted files -- not a teardown.
+
+### 15.6 Repos, files, boundaries (updates Section 4.1)
+
+| Piece | Repo | Path | Status |
+|-------|------|------|--------|
+| Lifted engine | follow-alongs | `canvas_engine.js` | NEW (verbatim from cr) |
+| Lifted sprite sheet | follow-alongs | `sprite_sheet.js` | NEW (verbatim from cr) |
+| Lifted asset | follow-alongs | `sprite.png` | NEW (binary -- commit first) |
+| Board component | follow-alongs | `classroom-board.js` | EDIT (render-layer rewrite) |
+| Desk embed | follow-alongs | `ap_stats_roadmap_square_mode.html` | EDIT (`_mountClassroomBoard` +hue) |
+| Cockpit | follow-alongs | `teacher-classroom.html` | EDIT (`mountBoard` +hue) |
+| Roster client | follow-alongs + curriculum_render | `roster-client.js` | EDIT (both byte-identical copies) |
+| Hue migration | follow-alongs | `roster-server/migrations/0006_roster_sprite_hue.sql` | NEW (user-run) |
+| Hue db + API | follow-alongs | `roster-server/db.js`, `roster-server/server.js` | EDIT (additive) |
+| WS hue field | curriculum_render | `railway-server/classroom.js`, `railway-server/server.js` | EDIT (additive) |
+| Picker roster write | curriculum_render | `index.html` | EDIT (additive) |
+
+Boundary updates:
+- Section 4.1's "roster-server is NOT changed" is superseded: the hue
+  pipeline adds one additive column + one additive endpoint.
+  roster-server auto-deploys on a push touching `roster-server/**`.
+- Sacred `curriculum_render/data/curriculum.js` is still never touched.
+- Lifting `canvas_engine.js` / `sprite_sheet.js` / `sprite.png` COPIES
+  them; cr stays their source of truth. Accepted trade-off (copy +
+  commit, per the repo's "copy, do not re-introduce" guidance) -- the
+  alternative, loading the asset cross-origin from cr's deployment,
+  couples the Desk's uptime to cr. If cr changes the sprite, re-copy.
+- The WS change still must not regress DogePresence / Tetris and must be
+  independently deployable; the Section 4.1 boundaries otherwise stand.
+
+### 15.7 Phasing and dependency-aware dispatch
+
+The revamp is one phase -- the Presentation Revamp -- slotted after v1b
+and before v1c (Section 10), so v1c and v2 build on the new
+presentation. The wire contract (the additive `hue` field + the
+`PATCH .../sprite-hue` shape, 15.4) is frozen FIRST in the `*_BUILD.md`;
+then four units build in parallel against it:
+
+- U1 -- roster-server: migration 0006, the two db helpers,
+  `/roster/verify` + `spriteHue`, `PATCH /roster/:studentId/sprite-hue`.
+  Self-contained.
+- U2 -- curriculum_render WS server: thread the additive `hue` field.
+  Self-contained.
+- U3 -- curriculum_render picker: `saveSpriteConfig()` writes the hue to
+  roster-server. Depends on U1's endpoint CONTRACT, not its deploy.
+- U4 -- follow-alongs board revamp: lift the three cr files, rewrite the
+  `classroom-board.js` render layer (sprite scene, walk-to-door gate),
+  thread the `hue` opt through both mount sites. The largest unit;
+  renders by `member.hue` with the hash fallback, so it is buildable
+  before the hue pipeline lands end-to-end.
+
+U4 touches the contended Desk file -> planner-direct (never
+parallel-Sonnet on `ap_stats_roadmap_square_mode.html`). U1/U2/U3 are
+separable -> Sonnet subagents. Then the standard loop: Codex read-only
+review per repo -> planner folds + re-verifies on disk -> tight per-repo
+commits. Cross-repo caveat (Section 13): a per-repo reviewer sees only
+half a cross-repo contract -- verify cross-repo findings against both
+halves before folding. `roster-client.js` is one shared byte-identical
+file -- change it once, copy to both repos (the `*_BUILD.md` assigns the
+owner).
+
+User-owned handoff: migration `0006` is run by the teacher in the
+Supabase SQL editor (like 0004/0005). The deploy-before-migration window
+is safe by the 15.4 degrade rule.
+
+### 15.8 Testing
+
+- `tests/classroom-board.test.js` -- extended: the render layer
+  exercised through `CanvasEngine` against a 2d-canvas stub; `_reduce`
+  tests unchanged (still pure) + an additive `hue` on WireMember; the
+  `present`->`checkedIn` transition triggers the walk-then-drain path.
+- `tests/classroom-structure.test.js` -- extended: the three lifted
+  files are present; both mount sites pass the `hue` opt.
+- roster-server tests -- new: `0006` column, the two db helpers,
+  `/roster/verify` returns `spriteHue`, `PATCH .../sprite-hue` happy /
+  401 / 403-cross-student / 400-bad-range, pre-migration safe-degrade.
+- curriculum_render WS tests -- new: `hue` rides `classroom_join` ->
+  `classroom_state` / `classroom_member_update`; `hue` survives
+  `armGate` / `reset` (durability); DogePresence / Tetris unregressed.
+- A hue end-to-end pin + `hashStringToHue` fallback parity with cr.
+
+### 15.9 Open knobs (continue Section 11)
+
+- K9. Board sprite scale -- cr uses 0.25 for peers, 0.5 for the player.
+  PROPOSED: one uniform peer scale tuned so ~30 avatars fit the Desk
+  board width. Tunable.
+- K10. Live hue update -- if a student re-picks mid-class, the board
+  reflects it on their next `classroom_join` (reconnect). PROPOSED:
+  accept that for r3; a live re-broadcast is a later nicety.
+- K11. The TI-84 surface presentation form -- overlay modal vs a
+  drop-down "pull-down screen." A v2 decision, not r3 (15.3).
