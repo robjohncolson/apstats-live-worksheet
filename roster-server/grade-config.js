@@ -26,16 +26,19 @@ export const PHASE3_CONFIG = {
   // Grade-side frq uses frqBand directly; this is the diagnostic binary only.
   frqDiagnosticCorrectThreshold: 0.5,
 
-  // Quarter → unit band + the proctored-PC curve anchors.
+  // Quarter → unit band + calendar window + the proctored-PC curve anchors.
   // Phase 6 update: Q1=[1,2,3], Q2=[4,5], Q3=[6,7], Q4=[8,9].
+  // F2 update: each quarter gains start/end ISO date windows (inclusive).
+  // A lesson dated within a window belongs to that quarter (date-driven).
+  // quarterOfUnit() stays for PCs and null-date fallback.
   // raw% (PC correct/graded ×100) maps: ≥p100 → 100; [p85,p100) → linear
   // 85..100; [0,p85) → linear 0..85. Q4 ≈ published AP-Stats real (~70 = a 5);
   // Q1–Q3 deliberately gentler = the graduated-trust ramp. ALL pilot-tunable.
   quarters: {
-    Q1: { units: [1, 2, 3], pcAnchor: { p85: 40, p100: 60 } },
-    Q2: { units: [4, 5],    pcAnchor: { p85: 45, p100: 64 } },
-    Q3: { units: [6, 7],    pcAnchor: { p85: 50, p100: 67 } },
-    Q4: { units: [8, 9],    pcAnchor: { p85: 55, p100: 70 } },
+    Q1: { units: [1, 2, 3], start: '2026-09-09', end: '2026-11-13', pcAnchor: { p85: 40, p100: 60 } },
+    Q2: { units: [4, 5],    start: '2026-11-14', end: '2027-01-29', pcAnchor: { p85: 45, p100: 64 } },
+    Q3: { units: [6, 7],    start: '2027-01-30', end: '2027-04-09', pcAnchor: { p85: 50, p100: 67 } },
+    Q4: { units: [8, 9],    start: '2027-04-10', end: '2027-06-23', pcAnchor: { p85: 55, p100: 70 } },
   },
 
   // IANA timezone for computing "today" in the date filter (Phase 6).
@@ -67,6 +70,18 @@ export function unitNumber(u) {
 export function quarterOfUnit(unitNum, cfg = PHASE3_CONFIG) {
   for (const q of Object.keys(cfg.quarters)) {
     if (cfg.quarters[q].units.includes(unitNum)) return q;
+  }
+  return null;
+}
+
+// Which quarter a calendar date falls in ('Q1'..'Q4'), or null if the
+// date is outside every quarter window. Boundaries inclusive. ISO
+// YYYY-MM-DD strings compare correctly lexicographically.
+export function quarterOfDate(dateStr, cfg = PHASE3_CONFIG) {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  for (const q of Object.keys(cfg.quarters)) {
+    const w = cfg.quarters[q];
+    if (w.start && w.end && dateStr >= w.start && dateStr <= w.end) return q;
   }
   return null;
 }

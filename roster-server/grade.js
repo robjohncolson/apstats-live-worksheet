@@ -214,11 +214,14 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     }
     if (pcUnitCount > 0) P_quarter = P_quarter / pcUnitCount;
 
-    // Lesson-weighted date-driven quarter grade (Phase 6).
+    // Lesson-weighted date-driven quarter grade (Phase 6 + F2).
+    // F2: pass quarterKey + config instead of quarterBand so
+    // computeQuarterFromLessons uses date-driven quarter assignment.
     let qResult;
     if (schedule) {
       qResult = computeQuarterFromLessons({
-        quarterBand: band,
+        quarterKey: qKey,
+        config,
         lessonMap,
         schedule,
         todayDateStr: todayStr,

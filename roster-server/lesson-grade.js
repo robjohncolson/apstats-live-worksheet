@@ -1,4 +1,4 @@
-// lesson-grade.js — Gradebook Phase 6 + W1 (worksheet blank scoring).
+// lesson-grade.js — Gradebook Phase 6 + W1 (worksheet blank scoring) + F2 (quarters-by-date).
 //
 // Pure functions for lesson-level aggregation + date filter.
 // No I/O. Designed to be unit-tested independently of the server.
@@ -8,8 +8,11 @@
 //   - expandLessonKey(unit, lessonKey, schedule) → [topicKey, ...]
 //   - buildWorksheetBlankCounts(manifestDoc) → { "<unit>.<lessonKey>": <int> }
 //   - computeLessonGrades(rows, frqBand, answerKey, schedule, opts) → Map<topicKey, lessonResult>
-//   - computeQuarterFromLessons(quarterBand, lessonMap, schedule, todayDateStr, section, config)
+//   - quarterOfLesson(entry, period, config) → 'Q1'..'Q4'
+//   - computeQuarterFromLessons({ quarterKey, config, lessonMap, schedule, ... })
 //   - buildLessonsArray(lessonMap, schedule) → lessons[]
+
+import { quarterOfDate, quarterOfUnit } from './grade-config.js';
 
 // ── Item-ID → lesson parsing ───────────────────────────────────────────────────
 
@@ -355,11 +358,46 @@ export function sectionToPeriod(section) {
   return m ? m[1].toUpperCase() : null;
 }
 
+// ── quarterOfLesson ───────────────────────────────────────────────────────────
+//
+// The quarter a scheduled lesson belongs to. Date-driven, with a
+// unit-band fallback for a lesson that has no usable date.
+//   entry  -- a lesson-schedule entry { unit, periods: {B,E}, ... }
+//   period -- 'B' | 'E' | null  (from sectionToPeriod)
+// Returns 'Q1'..'Q4' (quarterOfUnit always resolves for units 1-9).
+export function quarterOfLesson(entry, period, config) {
+  const periods = (entry && entry.periods) || {};
+  // A known section uses ONLY that section's date. A null there means
+  // "not scheduled for this section" -> fall through to the unit-band
+  // path; do NOT borrow the other section's date (that would disagree
+  // with isDue and break the F2 contract). The B/E union is used only
+  // when the section itself is unknown (Codex F2 review, MAJOR).
+  let date = period ? (periods[period] || null)
+                    : (periods.B || periods.E || null);
+  if (date) {
+    const q = quarterOfDate(date, config);
+    if (q) return q;
+  }
+  return quarterOfUnit(entry && entry.unit, config);
+}
+
 // ── computeQuarterFromLessons ─────────────────────────────────────────────────
 //
-// Given a quarter's band (array of unit numbers), the per-lesson grade map,
-// the schedule, today's date string, and the student's section, compute the
-// lesson-weighted, date-driven quarterGrade + ceiling.
+// F2 (quarters-by-date): the quarter a lesson belongs to is date-driven.
+// A lesson whose scheduled date falls in a quarter window is assigned to
+// that quarter, regardless of its unit band. A lesson with no usable date
+// falls back to quarterOfUnit (graceful degradation).
+//
+// params:
+//   quarterKey  -- 'Q1'..'Q4' (replaces the old quarterBand array)
+//   config      -- PHASE3_CONFIG (or a test config)
+//   lessonMap   -- Map<topicKey, { lessonGrade, ... }>
+//   schedule    -- topicKey → { unit, periods: { B, E }, ... }
+//   todayDateStr -- "YYYY-MM-DD"
+//   section     -- "PeriodB" / "PeriodE" / "B" / "E" / null
+//   pcBandData  -- { P_quarter: number }
+//   C           -- cap (default 85)
+//   gradingWindowStart -- cohort window start (or null)
 //
 // Returns:
 //   {
@@ -369,15 +407,9 @@ export function sectionToPeriod(section) {
 //     lessonsGraded: number,
 //     lessonsTotal: number,
 //   }
-//
-// schedule: topicKey → { unit, periods: { B, E }, ... }
-// lessonMap: Map<topicKey, { lessonGrade, ... }>
-// todayDateStr: "YYYY-MM-DD"
-// section: "PeriodB" / "PeriodE" / "B" / "E" / null
-// pcBandData: { P_quarter: number } — the PC-derived P for this quarter (may be 0)
-// C: cap (default 85)
 export function computeQuarterFromLessons({
-  quarterBand,
+  quarterKey,
+  config,
   lessonMap,
   schedule,
   todayDateStr,
@@ -409,15 +441,16 @@ export function computeQuarterFromLessons({
     return false;
   }
 
-  // All lessons in the band (those that exist in the schedule AND are in
-  // the active grading window).
+  // All lessons assigned to this quarter (those that exist in the schedule AND
+  // are in the active grading window). F2: assignment is date-driven via
+  // quarterOfLesson (falls back to unit band for null-date entries).
   // Codex MAJOR 3 fold (2026-05-20): defensive skip on malformed entries —
   // per-entry corruption must not crash this loop or the iteration that
   // follows. Treat any entry missing `unit` as if it weren't in the schedule.
   const bandLessons = [];
   for (const [topicKey, entry] of Object.entries(schedule)) {
     if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
-    if (!quarterBand.includes(entry.unit)) continue;
+    if (quarterOfLesson(entry, period, config) !== quarterKey) continue;
     if (!inWindow(entry)) continue;
     bandLessons.push(topicKey);
   }

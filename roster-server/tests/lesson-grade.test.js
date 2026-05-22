@@ -12,10 +12,12 @@ import {
   buildWorksheetBlankCounts,
   computeLessonGrades,
   computeQuarterFromLessons,
+  quarterOfLesson,
   buildLessonsArray,
   todayInTz,
   sectionToPeriod,
 } from '../lesson-grade.js';
+import { PHASE3_CONFIG } from '../grade-config.js';
 
 // ── parseItemLesson ────────────────────────────────────────────────────────────
 
@@ -295,7 +297,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
 
   it('empty band → quarterGrade null, lessonsDue=0, lessonsTotal=0', () => {
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: new Map(),
       schedule: {},
       todayDateStr: TODAY,
@@ -310,7 +313,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
 
   it('all lessons future → quarterGrade null, lessonsDue=0', () => {
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: new Map(),
       schedule: ALL_FUTURE_SCHEDULE,
       todayDateStr: TODAY,
@@ -326,7 +330,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
   it('1 lesson due-and-graded at 35, 1 due-ungraded → quarterGrade = 35/2 = 17.5', () => {
     const map = lessonMap({ '1.1': { lessonGrade: 35, W: 35, Q: null, frqItems: [], quizItems: [], worksheetItems: [] } });
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: map,
       schedule: ALL_PAST_SCHEDULE,
       todayDateStr: TODAY,
@@ -342,7 +347,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
   it('1 due graded at 35, 1 future → quarterGrade=35, ceiling=(35+100)/2=67.5', () => {
     const map = lessonMap({ '1.1': { lessonGrade: 35, W: 35, Q: null, frqItems: [], quizItems: [], worksheetItems: [] } });
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: map,
       schedule: MIXED_SCHEDULE,
       todayDateStr: TODAY,
@@ -366,7 +372,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
       lm.set(k, { lessonGrade: 100, W: 100, Q: null, frqItems: [], quizItems: [], worksheetItems: [] });
     }
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: lm,
       schedule: schedule26,
       todayDateStr: TODAY,
@@ -383,7 +390,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
 
   it('PC-only data: P_quarter > 0 with nothing due → quarterGrade = P_quarter', () => {
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: new Map(),
       schedule: ALL_FUTURE_SCHEDULE,
       todayDateStr: TODAY,
@@ -399,7 +407,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
     // banked=35 from one graded lesson; P_quarter=92.5.
     const map = lessonMap({ '1.1': { lessonGrade: 35, W: 35, Q: null, frqItems: [], quizItems: [], worksheetItems: [] } });
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: map,
       schedule: MIXED_SCHEDULE,    // 1.1 is past, 1.2 is future
       todayDateStr: TODAY,
@@ -414,7 +423,8 @@ describe('computeQuarterFromLessons — date-driven quarter grade', () => {
   it('unknown section → uses union of B+E dates', () => {
     // Both B and E are in the past → lessons are due even without knowing section.
     const result = computeQuarterFromLessons({
-      quarterBand: [1],
+      quarterKey: 'Q1',
+      config: PHASE3_CONFIG,
       lessonMap: new Map(),
       schedule: ALL_PAST_SCHEDULE,
       todayDateStr: TODAY,
