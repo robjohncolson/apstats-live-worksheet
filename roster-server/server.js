@@ -163,6 +163,15 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       role = 'student';
     }
 
+    // r3 U1: look up sprite hue defensively -- degrades to null on any error.
+    // getSpriteHueByStudentId never throws; the try/catch is an extra belt-and-suspenders guard.
+    let spriteHue = null;
+    try {
+      spriteHue = await db.getSpriteHueByStudentId(data.student_id);
+    } catch (_) {
+      spriteHue = null;
+    }
+
     return res.json({
       ok: true,
       studentId: data.student_id,
@@ -170,7 +179,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       realName: data.real_name,
       section: data.section,
       mustChangePassword: !!data.must_change_password,
-      role
+      role,
+      spriteHue
     });
   });
 
@@ -331,6 +341,98 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
         username:  data.login_username
       }
     });
+  });
+
+  // ── PATCH /roster/:studentId/sprite-hue (r3 U1 -- student-own-token auth) ────
+  // Persists a student's chosen avatar hue to the roster DB.
+  //   Auth: Bearer token (or ?token=) verified by verifyToken. The token's
+  //         studentId MUST equal the :studentId path param -- same pattern as
+  //         GET /ledger/student/:studentId. Cross-student attempts get 403.
+  //   Body: { spriteHue: integer 0-359 | null }
+  //   Responses:
+  //     200 { ok:true, spriteHue }
+  //     400 spriteHue not (integer 0-359 or null)
+  //     401 missing / invalid token
+  //     403 { ok:false, error:'cross-student' } token studentId != path id
+  //     503 { ok:false, error:'sprite_hue not provisioned' } pre-migration
+  app.patch('/roster/:studentId/sprite-hue', async (req, res) => {
+    const { studentId } = req.params;
+
+    // ── Auth resolution (mirrors GET /ledger/student/:studentId) ────────────
+    // Extract token from Authorization: Bearer <t> OR ?token=<t>.
+    let token = null;
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim() || null;
+    }
+    if (!token && typeof req.query.token === 'string' && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+
+    const tokenSid = verifyToken(token);
+    if (!tokenSid) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+
+    if (tokenSid !== studentId) {
+      return res.status(403).json({ ok: false, error: 'cross-student' });
+    }
+
+    // ── Body validation ──────────────────────────────────────────────────────
+    // The contract body is { spriteHue: integer 0-359 | null }. The spriteHue
+    // key MUST be present -- a missing field is a 400, never a silent
+    // hue-clearing write (Codex r3 review, MAJOR).
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    if (!Object.prototype.hasOwnProperty.call(body, 'spriteHue')) {
+      return res.status(400).json({ ok: false, error: 'spriteHue is required (integer 0-359 or null)' });
+    }
+    const spriteHue = body.spriteHue;
+
+    // spriteHue must be exactly null or an integer in [0, 359].
+    if (spriteHue !== null) {
+      const isValidInt = Number.isInteger(spriteHue) && spriteHue >= 0 && spriteHue <= 359;
+      if (!isValidInt) {
+        return res.status(400).json({ ok: false, error: 'spriteHue must be an integer 0-359 or null' });
+      }
+    }
+
+    // ── Write ────────────────────────────────────────────────────────────────
+    // Only the specific "sprite_hue column does not exist yet" (pre-migration)
+    // condition maps to 503. Every other error or throw is a real 500 -- a
+    // constraint violation or a generic DB failure must not be mislabelled
+    // "not provisioned" (Codex r3 review, MINOR).
+    function isSpriteHueColumnMissing(e) {
+      if (!e) return false;
+      const code = String(e.code || '');
+      const msg  = String(e.message || '').toLowerCase();
+      if (code === '42703') return true;   // undefined_column
+      return msg.includes('sprite_hue') && msg.includes('does not exist');
+    }
+
+    let data, error;
+    try {
+      ({ data, error } = await db.updateSpriteHue({ studentId, spriteHue }));
+    } catch (err) {
+      if (isSpriteHueColumnMissing(err)) {
+        return res.status(503).json({ ok: false, error: 'sprite_hue not provisioned' });
+      }
+      console.error('PATCH /roster/:studentId/sprite-hue threw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    if (error) {
+      if (isSpriteHueColumnMissing(error)) {
+        return res.status(503).json({ ok: false, error: 'sprite_hue not provisioned' });
+      }
+      console.error('PATCH /roster/:studentId/sprite-hue DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    return res.json({ ok: true, spriteHue: data ? data.sprite_hue : spriteHue });
   });
 
   // ── GET /roster/section/:section — PUBLIC student picker (2026-05-20) ────────

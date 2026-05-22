@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, getRoleByStudentId, updatePassword, updateStudent, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, getRoleByStudentId, getSpriteHueByStudentId, updatePassword, updateStudent, updateSpriteHue, listRoster };
 
   // Phase 6: look up a single roster row by student_id — used by /grade to
   // resolve the student's section for the lesson-due date filter. The
@@ -51,6 +51,42 @@ export function createDb(client) {
     } catch (_) {
       return 'student';
     }
+  }
+
+  // Defensive sprite hue lookup. Returns integer 0-359 or null.
+  // Degrades to null on ANY error (missing column pre-migration, missing
+  // row, DB error) -- never throws. Mirrors getRoleByStudentId.
+  async function getSpriteHueByStudentId(studentId) {
+    try {
+      const result = await client
+        .from('roster')
+        .select('sprite_hue')
+        .eq('student_id', studentId)
+        .maybeSingle();
+      if (result.error || !result.data) return null;
+      const hue = result.data.sprite_hue;
+      if (typeof hue !== 'number') return null;
+      return hue;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Write only sprite_hue for one student (+ updated_at via the existing trigger).
+  // Returns { data, error } -- data is the updated row on success, null when no
+  // row matched. Mirrors updateStudent.
+  async function updateSpriteHue({ studentId, spriteHue }) {
+    const payload = {
+      sprite_hue: spriteHue,
+      updated_at: new Date().toISOString()
+    };
+
+    return client
+      .from('roster')
+      .update(payload)
+      .eq('student_id', studentId)
+      .select('student_id, sprite_hue')
+      .maybeSingle();
   }
 
   // Insert a new roster row.
