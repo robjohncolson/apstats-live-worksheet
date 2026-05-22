@@ -314,6 +314,115 @@ describe('Live Classroom r3 - Desk loads engine scripts', () => {
 });
 
 // =============================================================
+// v2 structure pins -- cockpit poll section
+// =============================================================
+
+describe('Live Classroom v2 - cockpit poll section exists', () => {
+  it('has a poll section element (id=poll-section)', () => {
+    expect(COCKPIT).toMatch(/id=["']poll-section["']/);
+  });
+
+  it('has a poll question input (id=poll-question-input)', () => {
+    expect(COCKPIT).toMatch(/id=["']poll-question-input["']/);
+  });
+
+  it('has a poll options list container (id=poll-options-list)', () => {
+    expect(COCKPIT).toMatch(/id=["']poll-options-list["']/);
+  });
+
+  it('has option input elements with class poll-option-input', () => {
+    expect(COCKPIT).toMatch(/class=["']poll-option-input["']/);
+  });
+
+  it('has an add-option button (id=poll-add-option)', () => {
+    expect(COCKPIT).toMatch(/id=["']poll-add-option["']/);
+  });
+
+  it('has a Blind checkbox (id=poll-blind-checkbox)', () => {
+    expect(COCKPIT).toMatch(/id=["']poll-blind-checkbox["']/);
+    expect(COCKPIT).toMatch(/type=["']checkbox["']/);
+  });
+
+  it('has an Open Poll button (id=btn-open-poll)', () => {
+    expect(COCKPIT).toMatch(/id=["']btn-open-poll["']/);
+    expect(COCKPIT).toMatch(/Open Poll/);
+  });
+
+  it('has a Close Poll button (id=btn-close-poll)', () => {
+    expect(COCKPIT).toMatch(/id=["']btn-close-poll["']/);
+    expect(COCKPIT).toMatch(/Close Poll/);
+  });
+
+  it('has a Reveal button (id=btn-reveal-poll)', () => {
+    expect(COCKPIT).toMatch(/id=["']btn-reveal-poll["']/);
+    expect(COCKPIT).toMatch(/Reveal/);
+  });
+
+  it('has a poll result canvas (id=poll-result-canvas)', () => {
+    expect(COCKPIT).toMatch(/id=["']poll-result-canvas["']/);
+  });
+
+  it('has a poll tally label (id=poll-tally-label)', () => {
+    expect(COCKPIT).toMatch(/id=["']poll-tally-label["']/);
+  });
+});
+
+describe('Live Classroom v2 - cockpit poll button wiring', () => {
+  it('Open Poll button calls boardHandle.openPoll', () => {
+    expect(COCKPIT).toMatch(/boardHandle\.openPoll/);
+  });
+
+  it('Close Poll button calls boardHandle.closePoll', () => {
+    expect(COCKPIT).toMatch(/boardHandle\.closePoll/);
+  });
+
+  it('Reveal button calls boardHandle.reveal', () => {
+    expect(COCKPIT).toMatch(/boardHandle\.reveal/);
+  });
+
+  it('Open Poll is guarded disabled while gate is armed (mode exclusivity)', () => {
+    expect(COCKPIT).toMatch(/btn-open-poll/);
+    // The guard disables the button; check that disabled assignment is present.
+    expect(COCKPIT).toMatch(/btn\.disabled\s*=\s*gateArmed/);
+  });
+
+  it('renderPollTally is called from onStateChange', () => {
+    expect(COCKPIT).toMatch(/renderPollTally\s*\(\s*summary\s*\)/);
+  });
+
+  it('renderPollTally calls Ti84Plot.drawBarChart with labels and counts', () => {
+    expect(COCKPIT).toMatch(/Ti84Plot\.drawBarChart/);
+    expect(COCKPIT).toMatch(/labels\s*:/);
+    expect(COCKPIT).toMatch(/counts\s*:/);
+  });
+});
+
+describe('Live Classroom v2 - ti84-plot.js script load', () => {
+  it('teacher-classroom.html loads ti84-plot.js as a sibling script', () => {
+    expect(COCKPIT).toMatch(/<script\s+src=["']ti84-plot\.js["']/i);
+  });
+
+  it('ti84-plot.js appears after classroom-board.js in document order', () => {
+    const idxBoard = COCKPIT.indexOf('src="classroom-board.js"');
+    const idxPlot  = COCKPIT.indexOf('src="ti84-plot.js"');
+    expect(idxBoard).toBeGreaterThan(-1);
+    expect(idxPlot).toBeGreaterThan(-1);
+    expect(idxPlot).toBeGreaterThan(idxBoard);
+  });
+
+  it('ti84-plot.js file exists in the repo root', () => {
+    const path = resolve(repo, 'ti84-plot.js');
+    // This will be true after U3 (ti84-plot.js) is integrated.
+    // We pin the expectation now so the integrated suite enforces it.
+    expect(existsSync(path), 'ti84-plot.js must exist (built by U3)').toBe(true);
+  });
+
+  it('window.Ti84Plot is referenced in the cockpit source', () => {
+    expect(COCKPIT).toMatch(/window\.Ti84Plot/);
+  });
+});
+
+// =============================================================
 // v1c structure pins -- synchronized video start
 // =============================================================
 
@@ -351,5 +460,58 @@ describe('Live Classroom v1c - synchronized video start', () => {
     // -- a synthetic click re-enters the lock-dialog / Do-Now-bump guards.
     expect(body).toMatch(/showResourcePanel\s*\(/);
     expect(body).not.toMatch(/\.click\s*\(\s*\)/);
+  });
+});
+
+// ==========================================================================
+// F4 code-review structural pins
+// ==========================================================================
+
+describe('F4 code-review -- Finding 4: Reveal button disabled for non-blind polls', () => {
+  it('updateOpenPollGuard in cockpit checks poll.blind and disables the Reveal button', () => {
+    // The function body must reference btn-reveal-poll and poll.blind.
+    const body = fnBody(COCKPIT, 'updateOpenPollGuard');
+    expect(body).toMatch(/btn-reveal-poll/);
+    expect(body).toMatch(/poll\.blind/);
+    // The button must be disabled when the poll is not blind.
+    expect(body).toMatch(/revealBtn\.disabled/);
+  });
+
+  it('cockpit updateOpenPollGuard is called from onStateChange', () => {
+    // The onStateChange callback in mountBoard must call updateOpenPollGuard.
+    expect(COCKPIT).toMatch(/updateOpenPollGuard\s*\(/);
+  });
+});
+
+describe('F4 code-review -- Finding 2: Blind-poll secrecy on non-vote broadcasts', () => {
+  it('classroom-board.js _reduce classroom_poll resets status to present', () => {
+    // The classroom_poll case must set status to "present" (not preserve it).
+    const pollCaseEnd = BOARD.split("case 'classroom_poll':")[1] || '';
+    const caseBody = pollCaseEnd.split("case 'classroom_poll_closed':")[0];
+    // The fix sets status: 'present' explicitly.
+    expect(caseBody).toMatch(/status\s*:\s*['"]present['"]/);
+  });
+
+  it('classroom-board.js _reduce classroom_poll also resets vote to null', () => {
+    const pollCaseEnd = BOARD.split("case 'classroom_poll':")[1] || '';
+    const caseBody = pollCaseEnd.split("case 'classroom_poll_closed':")[0];
+    expect(caseBody).toMatch(/vote\s*:\s*null/);
+  });
+});
+
+describe('F4 code-review -- Finding 1: Optimistic self-vote on option click', () => {
+  it('classroom-board.js vote button onclick calls applyMessage before safeSend', () => {
+    // The vote button onclick must call applyMessage with a synthetic
+    // classroom_member_update BEFORE calling safeSend / classroom_vote.
+    const onclickSection = BOARD.split('btn.onclick = function ()')[1] || '';
+    const fnBody2 = onclickSection.split('};')[0];
+    expect(fnBody2).toMatch(/applyMessage/);
+    expect(fnBody2).toMatch(/classroom_member_update/);
+    expect(fnBody2).toMatch(/status.*voted|voted.*status/);
+    // safeSend also present (sends the real WS message).
+    expect(fnBody2).toMatch(/safeSend/);
+    expect(fnBody2).toMatch(/classroom_vote/);
+    // applyMessage must appear before safeSend in the source.
+    expect(fnBody2.indexOf('applyMessage')).toBeLessThan(fnBody2.indexOf('safeSend'));
   });
 });

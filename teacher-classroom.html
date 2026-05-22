@@ -225,13 +225,95 @@
       font-size: 0.85rem;
       color: var(--sg-text-dim);
     }
+
+    /* --- v2: poll authoring form --- */
+    .poll-form { display: grid; gap: 12px; }
+    .poll-question-input {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    .poll-question-input:focus { outline: 2px solid var(--sg-accent); outline-offset: 2px; }
+    .poll-options-list { display: grid; gap: 6px; }
+    .poll-option-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .poll-option-input {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+    .poll-option-input:focus { outline: 2px solid var(--sg-accent); outline-offset: 2px; }
+    .poll-remove-btn {
+      padding: 4px 8px;
+      border: 1px solid var(--sg-border);
+      border-radius: 6px;
+      background: var(--sg-bg);
+      color: var(--sg-text-dim);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .poll-remove-btn:hover { background: var(--sg-bar-track); }
+    .poll-add-btn {
+      padding: 6px 14px;
+      border: 1px dashed var(--sg-border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--sg-text-dim);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .poll-add-btn:hover { background: var(--sg-bar-track); }
+    .poll-blind-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--sg-text-dim);
+    }
+    .poll-action-strip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .poll-tally {
+      display: grid;
+      gap: 8px;
+    }
+    .poll-tally-label {
+      font-size: 0.82rem;
+      color: var(--sg-text-dim);
+      min-height: 1.2em;
+    }
+    #poll-result-canvas {
+      width: 100%;
+      max-width: 480px;
+      height: 160px;
+      border: 1px solid var(--sg-border);
+      border-radius: 8px;
+      background: #0a0a0a;
+      display: block;
+    }
   </style>
 </head>
 <body>
 
   <div class="page-header">
     <h1>AP Stats - Live Classroom</h1>
-    <p class="subtitle">Section presence board (v1b)</p>
+    <p class="subtitle">Section presence board (v2)</p>
   </div>
 
   <div class="main">
@@ -292,6 +374,68 @@
         </div>
       </div>
 
+      <!-- v2: poll section -- hidden until the board actually mounts -->
+      <div class="section" id="poll-section" style="display:none">
+        <h2 class="section-title">Poll</h2>
+
+        <div class="poll-form" id="poll-form">
+          <!-- Question input -->
+          <div class="form-row">
+            <label for="poll-question-input">Question</label>
+            <input
+              type="text"
+              id="poll-question-input"
+              class="poll-question-input"
+              placeholder="Type your poll question..."
+            >
+          </div>
+
+          <!-- Option inputs (start with 3) -->
+          <div class="form-row">
+            <label>Options</label>
+            <div class="poll-options-list" id="poll-options-list">
+              <div class="poll-option-row">
+                <input type="text" class="poll-option-input" placeholder="Option A">
+                <button class="poll-remove-btn" type="button" aria-label="Remove option">x</button>
+              </div>
+              <div class="poll-option-row">
+                <input type="text" class="poll-option-input" placeholder="Option B">
+                <button class="poll-remove-btn" type="button" aria-label="Remove option">x</button>
+              </div>
+              <div class="poll-option-row">
+                <input type="text" class="poll-option-input" placeholder="Option C">
+                <button class="poll-remove-btn" type="button" aria-label="Remove option">x</button>
+              </div>
+            </div>
+            <button class="poll-add-btn" id="poll-add-option" type="button">+ Add option</button>
+          </div>
+
+          <!-- Blind checkbox -->
+          <label class="poll-blind-row">
+            <input type="checkbox" id="poll-blind-checkbox">
+            Blind (hide votes from students until revealed)
+          </label>
+
+          <!-- Action buttons -->
+          <div class="poll-action-strip">
+            <button class="ctrl-btn primary" id="btn-open-poll">Open Poll</button>
+            <button class="ctrl-btn" id="btn-close-poll">Close Poll</button>
+            <button class="ctrl-btn" id="btn-reveal-poll">Reveal</button>
+          </div>
+        </div>
+
+        <!-- Live tally readout -->
+        <div class="poll-tally" id="poll-tally">
+          <div class="poll-tally-label" id="poll-tally-label">No poll active.</div>
+          <canvas id="poll-result-canvas" width="480" height="160"></canvas>
+        </div>
+
+        <div class="hint">
+          Open Poll starts a new question. Close Poll ends voting and broadcasts the tally.
+          Reveal (blind polls only) shows all votes to everyone.
+        </div>
+      </div>
+
       <!-- v1b: checked-in panel -- hidden until the board actually mounts -->
       <div class="section" id="checkin-section" style="display:none">
         <h2 class="section-title">Checked In</h2>
@@ -324,6 +468,7 @@
   <script src="canvas_engine.js"></script>
   <script src="sprite_sheet.js"></script>
   <script src="classroom-board.js"></script>
+  <script src="ti84-plot.js"></script>
 
   <script>
     // ===== identity helpers =====
@@ -450,8 +595,10 @@
       var disp = on ? '' : 'none';
       var ctrl = document.getElementById('control-section');
       var chk  = document.getElementById('checkin-section');
+      var poll = document.getElementById('poll-section');
       if (ctrl) ctrl.style.display = disp;
       if (chk)  chk.style.display  = disp;
+      if (poll) poll.style.display  = disp;
     }
 
     // ===== board lifecycle =====
@@ -502,6 +649,9 @@
             // indicator reflects real broadcast state -- it lights for a
             // remote teacher's GO and never lies on a failed local click.
             setGreenlightIndicator(!!summary.greenlight);
+            // v2: drive the live poll tally canvas and gate-exclusivity guard.
+            renderPollTally(summary);
+            updateOpenPollGuard(summary);
           }
         });
         // The board mounted -- now reveal the board-dependent sections.
@@ -509,6 +659,169 @@
         statusRow.textContent = 'Connected to ' + section + '.';
       } catch (err) {
         statusRow.textContent = 'Board error: ' + (err && err.message ? err.message : String(err));
+      }
+    }
+
+    // ===== v2: poll tally rendering =====
+
+    // Reads summary.poll and summary.tally from the board's onStateChange,
+    // updates the tally label, and redraws the result canvas via Ti84Plot.
+    function renderPollTally(summary) {
+      var labelEl  = document.getElementById('poll-tally-label');
+      var canvas   = document.getElementById('poll-result-canvas');
+
+      var poll  = summary && summary.poll;
+      var tally = summary && summary.tally;
+
+      if (!poll) {
+        if (labelEl) labelEl.textContent = 'No poll active.';
+        if (canvas) {
+          var ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        return;
+      }
+
+      // Build a readable tally string.
+      var options  = poll.options || [];
+      var counts   = tally || options.map(function () { return 0; });
+      var total    = counts.reduce(function (a, b) { return a + b; }, 0);
+      var tallyStr = options.map(function (opt, i) {
+        return opt + ': ' + (counts[i] || 0);
+      }).join('  |  ');
+      if (labelEl) labelEl.textContent = tallyStr + '  (' + total + ' vote' + (total !== 1 ? 's' : '') + ')';
+
+      // Draw the bar chart if Ti84Plot is available.
+      if (!canvas) return;
+      var ctx2d = canvas.getContext('2d');
+      if (typeof window.Ti84Plot !== 'undefined' && typeof window.Ti84Plot.drawBarChart === 'function') {
+        window.Ti84Plot.drawBarChart(ctx2d, {
+          labels: options,
+          counts: counts,
+          title: poll.question || ''
+        });
+      } else {
+        // Fallback: clear the canvas (Ti84Plot not yet loaded).
+        ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    // ===== v2: poll form helpers =====
+
+    var MAX_POLL_OPTIONS = 8;
+
+    // Returns all non-empty option strings from the option inputs.
+    function getPollOptions() {
+      var inputs = document.querySelectorAll('#poll-options-list .poll-option-input');
+      var opts = [];
+      inputs.forEach(function (inp) {
+        var v = inp.value.trim();
+        if (v) opts.push(v);
+      });
+      return opts;
+    }
+
+    // Adds a new option row (up to MAX_POLL_OPTIONS).
+    function addPollOptionRow() {
+      var list = document.getElementById('poll-options-list');
+      var current = list.querySelectorAll('.poll-option-row').length;
+      if (current >= MAX_POLL_OPTIONS) return;
+      var letter = String.fromCharCode(65 + current);   // A, B, C, ...
+      var row = document.createElement('div');
+      row.className = 'poll-option-row';
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'poll-option-input';
+      inp.placeholder = 'Option ' + letter;
+      var btn = document.createElement('button');
+      btn.className = 'poll-remove-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Remove option');
+      btn.textContent = 'x';
+      btn.addEventListener('click', function () { removePollOptionRow(row); });
+      row.appendChild(inp);
+      row.appendChild(btn);
+      list.appendChild(row);
+      // Hide the Add button once capped.
+      if (list.querySelectorAll('.poll-option-row').length >= MAX_POLL_OPTIONS) {
+        var addBtn = document.getElementById('poll-add-option');
+        if (addBtn) addBtn.style.display = 'none';
+      }
+    }
+
+    // Removes an option row (minimum 2 remain).
+    function removePollOptionRow(row) {
+      var list = document.getElementById('poll-options-list');
+      var rows = list.querySelectorAll('.poll-option-row');
+      if (rows.length <= 2) return;   // keep at least 2
+      list.removeChild(row);
+      // Re-show Add button.
+      var addBtn = document.getElementById('poll-add-option');
+      if (addBtn) addBtn.style.display = '';
+    }
+
+    // Wires up remove buttons on the initial static rows.
+    (function wireInitialRemoveButtons() {
+      var rows = document.querySelectorAll('#poll-options-list .poll-option-row');
+      rows.forEach(function (row) {
+        var btn = row.querySelector('.poll-remove-btn');
+        if (btn) {
+          btn.addEventListener('click', function () { removePollOptionRow(row); });
+        }
+      });
+    })();
+
+    // The "Add option" button.
+    document.getElementById('poll-add-option').addEventListener('click', function () {
+      addPollOptionRow();
+    });
+
+    // ===== v2: poll Open / Close / Reveal button wiring =====
+
+    // Open Poll: disabled while a gate is armed (mode exclusivity per Section 1.5).
+    document.getElementById('btn-open-poll').addEventListener('click', function () {
+      if (!boardHandle || typeof boardHandle.openPoll !== 'function') return;
+      var question = document.getElementById('poll-question-input').value.trim();
+      if (!question) { alert('Please enter a question.'); return; }
+      var options = getPollOptions();
+      if (options.length < 2) { alert('Please enter at least 2 options.'); return; }
+      var blind = !!document.getElementById('poll-blind-checkbox').checked;
+      boardHandle.openPoll(question, options, blind);
+    });
+
+    document.getElementById('btn-close-poll').addEventListener('click', function () {
+      if (!boardHandle || typeof boardHandle.closePoll !== 'function') return;
+      boardHandle.closePoll();
+    });
+
+    document.getElementById('btn-reveal-poll').addEventListener('click', function () {
+      if (!boardHandle || typeof boardHandle.reveal !== 'function') return;
+      boardHandle.reveal();
+    });
+
+    // ===== v2: gate exclusivity guard on Open Poll button =====
+
+    // Disable "Open Poll" while a gate is armed, re-enable otherwise.
+    // The board's onStateChange summary carries the gate state.
+    // We monkey-patch setBoardSectionsVisible is not needed -- instead we
+    // hook into the existing onStateChange render path by tracking gate state.
+    var gateArmed = false;
+
+    function updateOpenPollGuard(summary) {
+      var btn = document.getElementById('btn-open-poll');
+      if (!btn) return;
+      // The board summary exposes gate via summary.gate (non-null when armed).
+      gateArmed = !!(summary && summary.gate);
+      btn.disabled = gateArmed;
+      btn.title = gateArmed ? 'Disarmed gate first to open a poll.' : '';
+
+      // Reveal is blind-only (Finding 4 / Section 1.4).
+      // Disable the Reveal button unless the current poll has blind:true.
+      var revealBtn = document.getElementById('btn-reveal-poll');
+      if (revealBtn) {
+        var pollIsBlind = !!(summary && summary.poll && summary.poll.blind);
+        revealBtn.disabled = !pollIsBlind;
+        revealBtn.title = pollIsBlind ? '' : 'Reveal is only available for blind polls.';
       }
     }
 

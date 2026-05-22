@@ -160,13 +160,14 @@
    * {
    *   members:    { [username]: WireMember },
    *   gate:       { armed, theme, openedAt } | null,
-   *   poll:       null,
+   *   poll:       { id, question, options, blind } | null,
    *   greenlight: boolean,
    * }
    *
-   * WireMember (r3): { username, role, status, online, hue }
-   *   status: "present" | "checkedIn"
+   * WireMember (v2): { username, role, status, online, hue, vote }
+   *   status: "present" | "checkedIn" | "voted"
    *   hue:    integer | null  (additive in r3; durable -- never cleared)
+   *   vote:   integer | null  (option index; null if not voted or masked)
    */
   function _reduce(state, message) {
     if (!message || !message.type) { return state; }
@@ -186,7 +187,8 @@
             role:     m.role,
             status:   m.status || 'present',
             online:   m.online !== false,
-            hue:      m.hue != null ? m.hue : null
+            hue:      m.hue  != null ? m.hue  : null,
+            vote:     m.vote != null ? m.vote : null
           };
         }
         return {
@@ -209,7 +211,8 @@
           role:     upd.role   !== undefined ? upd.role   : (prev.role   !== undefined ? prev.role   : 'student'),
           status:   upd.status !== undefined ? upd.status : (prev.status !== undefined ? prev.status : 'present'),
           online:   upd.online !== undefined ? (upd.online !== false) : (prev.online !== undefined ? prev.online : true),
-          hue:      upd.hue != null ? upd.hue : (prev.hue != null ? prev.hue : null)
+          hue:      upd.hue  != null ? upd.hue  : (prev.hue  != null ? prev.hue  : null),
+          vote:     upd.vote != null ? upd.vote : (prev.vote != null ? prev.vote : null)
         };
         return {
           members:    newMembers,
@@ -242,7 +245,8 @@
             role:     gm.role,
             status:   'present',
             online:   gm.online,
-            hue:      gm.hue != null ? gm.hue : null
+            hue:      gm.hue != null ? gm.hue : null,
+            vote:     null
           };
         }
         return {
@@ -258,6 +262,79 @@
           gate:       state.gate,
           poll:       state.poll,
           greenlight: true
+        };
+
+      // --- v2 poll cases (pure) -----------------------------------------
+
+      case 'classroom_poll':
+        // Poll opened: store poll metadata, reset every member vote to null
+        // AND status to 'present' (mirrors the server openPoll reset).
+        // Without the status reset, a second poll opens with members still
+        // showing status:'voted' and vote buttons hidden (Finding 3).
+        newMembers = {};
+        for (var pk in members) {
+          var pm = members[pk];
+          newMembers[pk] = {
+            username: pm.username,
+            role:     pm.role,
+            status:   'present',
+            online:   pm.online,
+            hue:      pm.hue,
+            vote:     null
+          };
+        }
+        return {
+          members:    newMembers,
+          gate:       state.gate,
+          poll: {
+            id:       message.id,
+            question: message.question,
+            options:  message.options || [],
+            blind:    message.blind === true
+          },
+          greenlight: state.greenlight
+        };
+
+      case 'classroom_poll_closed':
+        // Poll closed: clear poll, preserve members as-is.
+        return {
+          members:    state.members,
+          gate:       state.gate,
+          poll:       null,
+          greenlight: state.greenlight
+        };
+
+      case 'classroom_poll_reveal':
+        // Blind poll revealed: no state change needed beyond member votes
+        // (which arrive in the member list if provided).
+        // The reveal message carries members: [{username, vote}].
+        if (!message.members || !message.members.length) {
+          return state;
+        }
+        newMembers = {};
+        for (var rk in members) {
+          newMembers[rk] = members[rk];
+        }
+        var revealList = message.members;
+        for (var ri = 0; ri < revealList.length; ri++) {
+          var rv = revealList[ri];
+          if (rv.username && newMembers[rv.username]) {
+            var existing = newMembers[rv.username];
+            newMembers[rv.username] = {
+              username: existing.username,
+              role:     existing.role,
+              status:   existing.status,
+              online:   existing.online,
+              hue:      existing.hue,
+              vote:     rv.vote != null ? rv.vote : existing.vote
+            };
+          }
+        }
+        return {
+          members:    newMembers,
+          gate:       state.gate,
+          poll:       state.poll,
+          greenlight: state.greenlight
         };
 
       default:
@@ -281,7 +358,7 @@
     return true;
   }
 
-  // --- summary builder (B4) -- unchanged --------------------------------
+  // --- summary builder (B4) -- extended with poll + tally ---------------
 
   function buildSummary(state) {
     var arr = [];
@@ -295,8 +372,26 @@
         online:   m.online
       });
     }
+
+    // Compute per-option tally from current member votes.
+    var tally = null;
+    if (state.poll && state.poll.options) {
+      tally = [];
+      for (var oi = 0; oi < state.poll.options.length; oi++) {
+        tally.push(0);
+      }
+      for (var mu in members) {
+        var mv = members[mu];
+        if (mv.vote != null && mv.vote >= 0 && mv.vote < tally.length) {
+          tally[mv.vote] += 1;
+        }
+      }
+    }
+
     return {
       gate:       state.gate,
+      poll:       state.poll  || null,
+      tally:      tally,
       members:    arr,
       greenlight: state.greenlight
     };
@@ -508,6 +603,63 @@
     ctx.restore();
   };
 
+  // --- PollColumnsOverlay entity (v2) -----------------------------------
+
+  /**
+   * Draws evenly spaced option label columns when a poll is open.
+   * Each option label is shown at the top of its column zone.
+   * The label is a thin strip -- full-width dividers would occlude sprites.
+   */
+  function PollColumnsOverlay(getPoll, getViewportW) {
+    this.getPoll      = getPoll;
+    this.getViewportW = getViewportW;
+    this.engine       = null;
+  }
+
+  PollColumnsOverlay.prototype.update = function () {};
+
+  PollColumnsOverlay.prototype.render = function (ctx) {
+    var poll = this.getPoll();
+    if (!poll || !poll.options || poll.options.length < 2) { return; }
+
+    var options = poll.options;
+    var count   = options.length;
+    var vw      = this.getViewportW();
+    var colW    = vw / count;
+
+    ctx.save();
+    for (var i = 0; i < count; i++) {
+      var cx = i * colW;
+
+      // Light alternating column shade so columns are visible but not harsh.
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle   = (i % 2 === 0) ? '#4488FF' : '#44AAFF';
+      ctx.fillRect(cx, 0, colW, 40);
+
+      // Column separator line.
+      ctx.globalAlpha = 0.3;
+      ctx.strokeStyle = '#AACCFF';
+      ctx.lineWidth   = 1;
+      if (i > 0) {
+        ctx.beginPath();
+        ctx.moveTo(cx, 0);
+        ctx.lineTo(cx, 40);
+        ctx.stroke();
+      }
+
+      // Option label text.
+      ctx.globalAlpha  = 1.0;
+      ctx.fillStyle    = '#FFFFFF';
+      ctx.font         = 'bold 11px Arial';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      var label = options[i];
+      if (label.length > 12) { label = label.slice(0, 11) + '…'; }
+      ctx.fillText(label, cx + colW / 2, 20);
+    }
+    ctx.restore();
+  };
+
   // --- scene layout helpers ---------------------------------------------
 
   /**
@@ -572,6 +724,16 @@
     checkinBtn.style.display = 'none';
     checkinBtn.setAttribute('data-classroom-checkin', '1');
     container.appendChild(checkinBtn);
+
+    // --- poll vote buttons (v2) ----------------------------------------
+    // One <button> per option, shown only when a poll is open and this
+    // client is a student who has not yet voted.  Mirrors the check-in
+    // button pattern.
+
+    var pollVoteContainer = doc.createElement('div');
+    pollVoteContainer.setAttribute('data-classroom-poll-votes', '1');
+    pollVoteContainer.style.display = 'none';
+    container.appendChild(pollVoteContainer);
 
     // --- CanvasEngine setup --------------------------------------------
 
@@ -655,21 +817,54 @@
       return cw - DOOR_W - 10;
     }
 
-    // Reposition all present sprites in a row.
+    // Reposition all present sprites in a row (or poll columns when active).
     function repositionSprites() {
       if (!engineReady) { return; }
       var usernames = Object.keys(spriteEntities);
       if (usernames.length === 0) { return; }
+
       var sw  = getSpriteWidth();
       var cw  = engine.canvas.width / (root.devicePixelRatio || 1);
-      var xs  = computeSlots(usernames.length, sw, cw);
       var sy  = getSpriteY();
-      for (var i = 0; i < usernames.length; i++) {
-        var sp = spriteEntities[usernames[i]];
-        // Only reposition idle sprites; do not interrupt a walk.
-        if (sp && sp.state === 'idle') {
-          sp.x = xs[i];
-          sp.y = sy;
+
+      if (state.poll && state.poll.options && state.poll.options.length > 0) {
+        // Poll mode: voted students walk to their column; unvoted stay in idle row.
+        var optCount = state.poll.options.length;
+        var colW     = cw / optCount;
+
+        // Compute the idle row x slots (all sprites regardless of vote status).
+        var idleXs = computeSlots(usernames.length, sw, cw);
+
+        for (var pi = 0; pi < usernames.length; pi++) {
+          var puname = usernames[pi];
+          var psp    = spriteEntities[puname];
+          if (!psp) { continue; }
+
+          var pmember = state.members[puname];
+          if (pmember && pmember.status === 'voted' && pmember.vote != null) {
+            // Walk toward the column center for their chosen option.
+            var colCenter = pmember.vote * colW + colW / 2 - sw / 2;
+            if (psp.state === 'idle' && Math.abs(psp.x - colCenter) > 2) {
+              psp.walkTo(colCenter);
+            }
+          } else {
+            // Unvoted: stay in idle row position.
+            if (psp.state === 'idle') {
+              psp.x = idleXs[pi];
+              psp.y = sy;
+            }
+          }
+        }
+      } else {
+        // No poll: normal idle row.
+        var xs = computeSlots(usernames.length, sw, cw);
+        for (var i = 0; i < usernames.length; i++) {
+          var sp = spriteEntities[usernames[i]];
+          // Only reposition idle sprites; do not interrupt a walk.
+          if (sp && sp.state === 'idle') {
+            sp.x = xs[i];
+            sp.y = sy;
+          }
         }
       }
     }
@@ -780,6 +975,87 @@
       }, GREENLIGHT_MS + 200);
     }
 
+    // --- poll columns overlay (v2) -------------------------------------
+
+    var pollColumnsOverlay = null;
+
+    function showPollColumns() {
+      if (!engineReady) { return; }
+      if (pollColumnsOverlay) { return; }
+      pollColumnsOverlay = new PollColumnsOverlay(
+        function () { return state.poll; },
+        function () {
+          if (!engine || !engine.canvas) { return 400; }
+          return engine.canvas.width / (root.devicePixelRatio || 1);
+        }
+      );
+      engine.addEntity('poll_columns', pollColumnsOverlay);
+    }
+
+    function hidePollColumns() {
+      if (!engineReady) { return; }
+      if (!pollColumnsOverlay) { return; }
+      engine.removeEntity('poll_columns');
+      pollColumnsOverlay = null;
+    }
+
+    // --- poll vote button refresh (v2) ----------------------------------
+
+    function refreshVoteButtons() {
+      if (!pollVoteContainer) { return; }
+
+      var shouldShow = (
+        role === 'student' &&
+        state.poll !== null &&
+        state.members[username] &&
+        state.members[username].status !== 'voted'
+      );
+
+      if (!shouldShow) {
+        pollVoteContainer.style.display = 'none';
+        // Clear existing buttons so they don't accumulate across polls.
+        pollVoteContainer.innerHTML = '';
+        return;
+      }
+
+      var options = state.poll.options || [];
+
+      // Only rebuild the buttons when the option count changes (simple guard
+      // against rebuilding on every heartbeat while a poll is open).
+      var existingBtns = pollVoteContainer.querySelectorAll('[data-vote-index]');
+      if (existingBtns.length !== options.length) {
+        pollVoteContainer.innerHTML = '';
+        for (var bi = 0; bi < options.length; bi++) {
+          (function (choiceIndex) {
+            var btn = doc.createElement('button');
+            btn.textContent = options[choiceIndex];
+            btn.setAttribute('data-vote-index', choiceIndex);
+            btn.onclick = function () {
+              // Optimistic local update (Finding 1): in a blind poll the
+              // server echos the voter a classroom_member_update with vote:null
+              // (blind secrecy).  Without a local update the voter's own
+              // avatar never moves to its column until a reconnect.
+              // Route a synthetic update through applyMessage/_reduce BEFORE
+              // sending so the board renders immediately.  The vote field in
+              // _reduce is durable -- a later vote:null echo preserves it.
+              applyMessage({
+                type:   'classroom_member_update',
+                member: {
+                  username: username,
+                  status:   'voted',
+                  vote:     choiceIndex
+                }
+              });
+              safeSend({ type: 'classroom_vote', choice: choiceIndex });
+            };
+            pollVoteContainer.appendChild(btn);
+          })(bi);
+        }
+      }
+
+      pollVoteContainer.style.display = 'block';
+    }
+
     // --- full scene sync from state ------------------------------------
 
     function syncScene(newState) {
@@ -792,6 +1068,13 @@
         showGateDoor();
       } else {
         hideGateDoor();
+      }
+
+      // Show/hide poll columns overlay.
+      if (newState.poll) {
+        showPollColumns();
+      } else {
+        hidePollColumns();
       }
 
       // Determine which students should be present (drawn).
@@ -883,6 +1166,7 @@
       }
       syncScene(state);
       refreshButton();
+      refreshVoteButtons();
       notifyStateChange();
     }
 
@@ -982,6 +1266,9 @@
         if (checkinBtn.parentNode) {
           checkinBtn.parentNode.removeChild(checkinBtn);
         }
+        if (pollVoteContainer && pollVoteContainer.parentNode) {
+          pollVoteContainer.parentNode.removeChild(pollVoteContainer);
+        }
       },
 
       setNameMap: function (map) {
@@ -1010,6 +1297,25 @@
 
       reset: function () {
         safeSend({ type: 'classroom_reset' });
+      },
+
+      // --- v2 poll teacher methods ---
+
+      openPoll: function (question, options, blind) {
+        safeSend({
+          type:     'classroom_open_poll',
+          question: question  || '',
+          options:  options   || [],
+          blind:    blind === true
+        });
+      },
+
+      closePoll: function () {
+        safeSend({ type: 'classroom_close_poll' });
+      },
+
+      reveal: function () {
+        safeSend({ type: 'classroom_reveal' });
       }
     };
 

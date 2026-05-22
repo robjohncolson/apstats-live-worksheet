@@ -2403,3 +2403,1011 @@ describe('ClassroomBoard._reduce -- v1c startVideo/videoRef NOT in state', funct
     expect(s.videoRef).toBeUndefined();
   });
 });
+
+// ==========================================================================
+// v2 tests -- poll mechanic (Unit U2)
+// ==========================================================================
+
+// --- v2: _reduce -- classroom_poll (pure) ---------------------------------
+
+describe('ClassroomBoard._reduce -- classroom_poll (v2 pure)', function () {
+  var board;
+  var baseState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    baseState = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      STATE_MSG
+    );
+  });
+
+  it('sets state.poll from the message', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:     'classroom_poll',
+      id:       'poll-1',
+      question: 'Favorite color?',
+      options:  ['Red', 'Blue', 'Green'],
+      blind:    false
+    });
+    expect(s.poll).not.toBeNull();
+    expect(s.poll.id).toBe('poll-1');
+    expect(s.poll.question).toBe('Favorite color?');
+    expect(s.poll.options).toEqual(['Red', 'Blue', 'Green']);
+    expect(s.poll.blind).toBe(false);
+  });
+
+  it('sets blind:true when the message carries blind:true', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:     'classroom_poll',
+      id:       'poll-2',
+      question: 'Secret?',
+      options:  ['Yes', 'No'],
+      blind:    true
+    });
+    expect(s.poll.blind).toBe(true);
+  });
+
+  it('resets every member vote to null when poll opens', function () {
+    // First give alice a vote.
+    var withVote = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'voted', online: true, vote: 1 }
+    });
+    expect(withVote.members['alice'].vote).toBe(1);
+
+    // Opening a new poll must reset all votes.
+    var s = board.ClassroomBoard._reduce(withVote, {
+      type:     'classroom_poll',
+      id:       'poll-3',
+      question: 'Q?',
+      options:  ['A', 'B'],
+      blind:    false
+    });
+    expect(s.members['alice'].vote).toBeNull();
+    expect(s.members['bob'].vote).toBeNull();
+  });
+
+  it('preserves members, gate, and greenlight when poll opens', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:     'classroom_poll',
+      id:       'poll-4',
+      question: 'Q?',
+      options:  ['A', 'B'],
+      blind:    false
+    });
+    expect(Object.keys(s.members).length).toBe(3);
+    expect(s.gate).toBeNull();
+    expect(s.greenlight).toBe(false);
+  });
+
+  it('returns a new state object (no mutation)', function () {
+    var s0 = baseState;
+    var s1 = board.ClassroomBoard._reduce(s0, {
+      type:     'classroom_poll',
+      id:       'poll-5',
+      question: 'Q?',
+      options:  ['A', 'B'],
+      blind:    false
+    });
+    expect(s1).not.toBe(s0);
+    expect(s0.poll).toBeNull();
+  });
+});
+
+// --- v2: _reduce -- classroom_poll_closed (pure) --------------------------
+
+describe('ClassroomBoard._reduce -- classroom_poll_closed (v2 pure)', function () {
+  var board;
+  var pollState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      STATE_MSG
+    );
+    pollState = board.ClassroomBoard._reduce(base, {
+      type:     'classroom_poll',
+      id:       'poll-1',
+      question: 'Q?',
+      options:  ['A', 'B'],
+      blind:    false
+    });
+  });
+
+  it('clears state.poll to null', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type: 'classroom_poll_closed',
+      id:   'poll-1',
+      tally: [2, 1]
+    });
+    expect(s.poll).toBeNull();
+  });
+
+  it('preserves members and gate on close', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type: 'classroom_poll_closed',
+      id:   'poll-1',
+      tally: [2, 1]
+    });
+    expect(Object.keys(s.members).length).toBe(3);
+    expect(s.gate).toBeNull();
+  });
+
+  it('returns a new state object (no mutation)', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type: 'classroom_poll_closed',
+      id:   'poll-1',
+      tally: [0, 0]
+    });
+    expect(s).not.toBe(pollState);
+    expect(pollState.poll).not.toBeNull();  // original unchanged
+  });
+});
+
+// --- v2: _reduce -- classroom_poll_reveal (pure) --------------------------
+
+describe('ClassroomBoard._reduce -- classroom_poll_reveal (v2 pure)', function () {
+  var board;
+  var pollState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      STATE_MSG
+    );
+    pollState = board.ClassroomBoard._reduce(base, {
+      type:     'classroom_poll',
+      id:       'poll-1',
+      question: 'Q?',
+      options:  ['A', 'B'],
+      blind:    true
+    });
+  });
+
+  it('updates member votes from the reveal members list', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type:    'classroom_poll_reveal',
+      id:      'poll-1',
+      tally:   [1, 1],
+      members: [
+        { username: 'alice', vote: 0 },
+        { username: 'bob',   vote: 1 }
+      ]
+    });
+    expect(s.members['alice'].vote).toBe(0);
+    expect(s.members['bob'].vote).toBe(1);
+  });
+
+  it('preserves poll metadata after reveal', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type:    'classroom_poll_reveal',
+      id:      'poll-1',
+      tally:   [1, 1],
+      members: [{ username: 'alice', vote: 0 }]
+    });
+    expect(s.poll).not.toBeNull();
+    expect(s.poll.id).toBe('poll-1');
+  });
+
+  it('is a no-op when members list is absent or empty', function () {
+    var s1 = board.ClassroomBoard._reduce(pollState, {
+      type: 'classroom_poll_reveal',
+      id:   'poll-1',
+      tally: []
+      // members absent
+    });
+    expect(s1).toBe(pollState);
+
+    var s2 = board.ClassroomBoard._reduce(pollState, {
+      type:    'classroom_poll_reveal',
+      id:      'poll-1',
+      tally:   [],
+      members: []
+    });
+    expect(s2).toBe(pollState);
+  });
+
+  it('returns a new state object when members list is provided', function () {
+    var s = board.ClassroomBoard._reduce(pollState, {
+      type:    'classroom_poll_reveal',
+      id:      'poll-1',
+      tally:   [1, 0],
+      members: [{ username: 'alice', vote: 0 }]
+    });
+    expect(s).not.toBe(pollState);
+  });
+});
+
+// --- v2: _reduce -- vote field threaded through classroom_state ----------
+
+describe('ClassroomBoard._reduce -- vote field on classroom_state (v2)', function () {
+  var board;
+
+  beforeEach(function () { board = makeBoard(); });
+
+  it('carries vote from the wire member onto state', function () {
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    null,
+        poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+        members: [
+          { username: 'alice', role: 'student', status: 'voted', online: true, hue: null, vote: 1 },
+          { username: 'bob',   role: 'student', status: 'present', online: true, hue: null, vote: null }
+        ]
+      }
+    );
+    expect(s.members['alice'].vote).toBe(1);
+    expect(s.members['bob'].vote).toBeNull();
+  });
+
+  it('defaults vote to null when absent from wire message', function () {
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      STATE_MSG
+    );
+    expect(s.members['alice'].vote).toBeNull();
+    expect(s.members['bob'].vote).toBeNull();
+  });
+});
+
+// --- v2: _reduce -- vote field threaded through classroom_member_update --
+
+describe('ClassroomBoard._reduce -- vote field on classroom_member_update (v2)', function () {
+  var board;
+  var baseState;
+
+  beforeEach(function () {
+    board = makeBoard();
+    baseState = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      STATE_MSG
+    );
+  });
+
+  it('adopts vote from an update message', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'voted', online: true, vote: 2 }
+    });
+    expect(s.members['alice'].vote).toBe(2);
+    expect(s.members['alice'].status).toBe('voted');
+  });
+
+  it('preserves existing vote when update omits it (durable, like hue)', function () {
+    var s1 = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'voted', online: true, vote: 0 }
+    });
+    expect(s1.members['alice'].vote).toBe(0);
+
+    var s2 = board.ClassroomBoard._reduce(s1, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'voted', online: false }
+    });
+    expect(s2.members['alice'].vote).toBe(0);
+  });
+
+  it('does not bleed a vote to other members', function () {
+    var s = board.ClassroomBoard._reduce(baseState, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'voted', online: true, vote: 1 }
+    });
+    expect(s.members['bob'].vote).toBeNull();
+  });
+});
+
+// --- v2: _reduce stays pure (no Date.now, no side effects) ---------------
+
+describe('ClassroomBoard._reduce -- poll cases stay pure (v2)', function () {
+  var board;
+
+  beforeEach(function () { board = makeBoard(); });
+
+  it('classroom_poll does not call Date.now or access the DOM', function () {
+    // Replacing Date.now with a sentinel -- if _reduce called it, the
+    // test would catch the call via wrapper tracking or simply not throw.
+    var base = { members: {}, gate: null, poll: null, greenlight: false };
+    var originalDateNow = Date.now;
+    var dateCalled = false;
+    Date.now = function () { dateCalled = true; return 0; };
+    try {
+      board.ClassroomBoard._reduce(base, {
+        type:     'classroom_poll',
+        id:       'p1',
+        question: 'Q?',
+        options:  ['A', 'B'],
+        blind:    false
+      });
+    } finally {
+      Date.now = originalDateNow;
+    }
+    expect(dateCalled).toBe(false);
+  });
+
+  it('classroom_poll_closed does not call Date.now', function () {
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      STATE_MSG
+    );
+    var withPoll = board.ClassroomBoard._reduce(base, {
+      type: 'classroom_poll', id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false
+    });
+    var originalDateNow = Date.now;
+    var dateCalled = false;
+    Date.now = function () { dateCalled = true; return 0; };
+    try {
+      board.ClassroomBoard._reduce(withPoll, {
+        type: 'classroom_poll_closed', id: 'p1', tally: [0, 0]
+      });
+    } finally {
+      Date.now = originalDateNow;
+    }
+    expect(dateCalled).toBe(false);
+  });
+});
+
+// --- v2: handle.openPoll / closePoll / reveal send correct messages ------
+
+describe('ClassroomBoard handle -- poll teacher methods (v2)', function () {
+
+  it('handle exposes openPoll, closePoll, reveal', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'carol', role: 'teacher'
+    });
+    expect(typeof handle.openPoll).toBe('function');
+    expect(typeof handle.closePoll).toBe('function');
+    expect(typeof handle.reveal).toBe('function');
+    handle.destroy();
+  });
+
+  it('openPoll() sends classroom_open_poll with question, options, blind', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'carol', role: 'teacher'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.openPoll('Favorite color?', ['Red', 'Blue'], false);
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_open_poll'; });
+    expect(msg).toBeDefined();
+    expect(msg.question).toBe('Favorite color?');
+    expect(msg.options).toEqual(['Red', 'Blue']);
+    expect(msg.blind).toBe(false);
+    handle.destroy();
+  });
+
+  it('openPoll() with blind:true sends blind:true', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'carol', role: 'teacher'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.openPoll('Q?', ['A', 'B', 'C'], true);
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_open_poll'; });
+    expect(msg).toBeDefined();
+    expect(msg.blind).toBe(true);
+    handle.destroy();
+  });
+
+  it('closePoll() sends classroom_close_poll', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'carol', role: 'teacher'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.closePoll();
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_close_poll'; });
+    expect(msg).toBeDefined();
+    handle.destroy();
+  });
+
+  it('reveal() sends classroom_reveal', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'carol', role: 'teacher'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    handle.reveal();
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var msg = sent.find(function (msg) { return msg.type === 'classroom_reveal'; });
+    expect(msg).toBeDefined();
+    handle.destroy();
+  });
+});
+
+// --- v2: student vote affordance (vote button) ----------------------------
+
+describe('ClassroomBoard.mount -- student vote affordance (v2)', function () {
+
+  it('poll vote container exists in the DOM after mount', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var container = m.container.querySelector('[data-classroom-poll-votes]');
+    expect(container).not.toBeNull();
+    handle.destroy();
+  });
+
+  it('poll vote container is hidden by default (no poll open)', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var container = m.container.querySelector('[data-classroom-poll-votes]');
+    expect(container.style.display).toBe('none');
+    handle.destroy();
+  });
+
+  it('vote buttons appear when a poll opens and student has not voted', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // State with alice as present student and poll open.
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B', 'C'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    expect(pollDiv.style.display).not.toBe('none');
+
+    var btns = pollDiv.querySelectorAll('[data-vote-index]');
+    expect(btns.length).toBe(3);
+
+    handle.destroy();
+  });
+
+  it('vote button labels match the poll options', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Fav?', options: ['Red', 'Blue'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    var btns = pollDiv.querySelectorAll('[data-vote-index]');
+    expect(btns[0].textContent).toBe('Red');
+    expect(btns[1].textContent).toBe('Blue');
+
+    handle.destroy();
+  });
+
+  it('clicking a vote button sends classroom_vote with the choice index', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    var btns = pollDiv.querySelectorAll('[data-vote-index]');
+    expect(btns.length).toBe(2);
+    btns[1].onclick();
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var voteMsg = sent.find(function (msg) { return msg.type === 'classroom_vote'; });
+    expect(voteMsg).toBeDefined();
+    expect(voteMsg.choice).toBe(1);
+
+    handle.destroy();
+  });
+
+  it('vote buttons hidden after alice is marked as voted', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    expect(pollDiv.style.display).not.toBe('none');
+
+    // alice's status becomes "voted"
+    ws._receive({
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'voted', online: true, vote: 0 }
+    });
+
+    expect(pollDiv.style.display).toBe('none');
+
+    handle.destroy();
+  });
+
+  it('vote buttons hidden after poll closes', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    expect(pollDiv.style.display).not.toBe('none');
+
+    ws._receive({ type: 'classroom_poll_closed', id: 'p1', tally: [1, 0] });
+
+    expect(pollDiv.style.display).toBe('none');
+
+    handle.destroy();
+  });
+
+  it('vote buttons not shown to teacher even when poll is open', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'carol', role: 'teacher'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [
+        { username: 'carol', role: 'teacher', status: 'present', online: true }
+      ]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    expect(pollDiv.style.display).toBe('none');
+
+    handle.destroy();
+  });
+
+  it('destroy() removes the poll vote container', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    expect(m.container.querySelector('[data-classroom-poll-votes]')).not.toBeNull();
+    handle.destroy();
+    expect(m.container.querySelector('[data-classroom-poll-votes]')).toBeNull();
+  });
+});
+
+// --- v2: onStateChange summary includes poll + tally --------------------
+
+describe('ClassroomBoard -- onStateChange summary poll + tally (v2)', function () {
+
+  it('summary.poll is null when no poll is open', function () {
+    var m = makeMount();
+    var lastSummary = null;
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { lastSummary = summary; }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive(STATE_MSG);
+    expect(lastSummary.poll).toBeNull();
+    handle.destroy();
+  });
+
+  it('summary.poll is set when a poll is open', function () {
+    var m = makeMount();
+    var lastSummary = null;
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { lastSummary = summary; }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+    expect(lastSummary.poll).not.toBeNull();
+    expect(lastSummary.poll.id).toBe('p1');
+    expect(lastSummary.poll.options).toEqual(['A', 'B']);
+    handle.destroy();
+  });
+
+  it('summary.tally is null when no poll is open', function () {
+    var m = makeMount();
+    var lastSummary = null;
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { lastSummary = summary; }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive(STATE_MSG);
+    expect(lastSummary.tally).toBeNull();
+    handle.destroy();
+  });
+
+  it('summary.tally is a per-option count array when poll is open', function () {
+    var m = makeMount();
+    var lastSummary = null;
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { lastSummary = summary; }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B', 'C'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'voted',   online: true, vote: 0 },
+        { username: 'bob',   role: 'student', status: 'voted',   online: true, vote: 2 },
+        { username: 'carol', role: 'teacher', status: 'present', online: true, vote: null }
+      ]
+    });
+    expect(Array.isArray(lastSummary.tally)).toBe(true);
+    expect(lastSummary.tally.length).toBe(3);
+    expect(lastSummary.tally[0]).toBe(1);  // alice voted A
+    expect(lastSummary.tally[1]).toBe(0);  // nobody voted B
+    expect(lastSummary.tally[2]).toBe(1);  // bob voted C
+    handle.destroy();
+  });
+
+  it('summary.tally updates when a member casts a vote', function () {
+    var m = makeMount();
+    var lastSummary = null;
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { lastSummary = summary; }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null },
+        { username: 'bob',   role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+
+    // tally starts at [0, 0]
+    expect(lastSummary.tally).toEqual([0, 0]);
+
+    // alice votes for option 1
+    ws._receive({
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'voted', online: true, vote: 1 }
+    });
+    expect(lastSummary.tally).toEqual([0, 1]);
+
+    handle.destroy();
+  });
+
+  it('summary.tally clears to null when poll closes', function () {
+    var m = makeMount();
+    var lastSummary = null;
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { lastSummary = summary; }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    { id: 'p1', question: 'Q?', options: ['A', 'B'], blind: false },
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true, vote: null }
+      ]
+    });
+    expect(lastSummary.tally).not.toBeNull();
+
+    ws._receive({ type: 'classroom_poll_closed', id: 'p1', tally: [1, 0] });
+    expect(lastSummary.tally).toBeNull();
+    handle.destroy();
+  });
+});
+
+// ==========================================================================
+// F4 code-review fixes
+// ==========================================================================
+
+// --- Finding 3 (MAJOR): classroom_poll _reduce must reset status to 'present'
+
+describe('ClassroomBoard._reduce -- classroom_poll resets member status (Finding 3)', function () {
+  var board;
+
+  beforeEach(function () { board = makeBoard(); });
+
+  it('resets status to "present" on every member when a new poll opens', function () {
+    // Set up state with alice as "voted" from a prior poll.
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    null,
+        poll:    null,
+        members: [
+          { username: 'alice', role: 'student', status: 'voted', online: true, vote: 0 },
+          { username: 'bob',   role: 'student', status: 'voted', online: true, vote: 1 }
+        ]
+      }
+    );
+    expect(base.members['alice'].status).toBe('voted');
+    expect(base.members['bob'].status).toBe('voted');
+
+    // A second poll opens -- every member must reset to 'present'.
+    var s = board.ClassroomBoard._reduce(base, {
+      type:     'classroom_poll',
+      id:       'poll-2',
+      question: 'Next Q?',
+      options:  ['X', 'Y'],
+      blind:    false
+    });
+    expect(s.members['alice'].status).toBe('present');
+    expect(s.members['bob'].status).toBe('present');
+  });
+
+  it('vote buttons re-appear after a second poll opens (status reset unblocks them)', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // First poll -- alice votes.
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'p1', question: 'Q1?', options: ['A', 'B'], blind: false },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+    ws._receive({
+      type: 'classroom_member_update', section: 'PeriodX',
+      member: { username: 'alice', role: 'student', status: 'voted', online: true, vote: 0 }
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    // Alice has voted -- buttons should be hidden.
+    expect(pollDiv.style.display).toBe('none');
+
+    // Second poll opens -- classroom_poll resets status to 'present'.
+    ws._receive({
+      type: 'classroom_poll', id: 'p2', question: 'Q2?',
+      options: ['X', 'Y', 'Z'], blind: false
+    });
+
+    // Buttons must re-appear so alice can vote in the new poll.
+    expect(pollDiv.style.display).not.toBe('none');
+    var btns = pollDiv.querySelectorAll('[data-vote-index]');
+    expect(btns.length).toBe(3);
+
+    handle.destroy();
+  });
+
+  it('_reduce classroom_poll status reset does not mutate the prior state', function () {
+    var base = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false },
+      {
+        type: 'classroom_state', section: 'PeriodX', gate: null, poll: null,
+        members: [
+          { username: 'alice', role: 'student', status: 'voted', online: true, vote: 1 }
+        ]
+      }
+    );
+    var s = board.ClassroomBoard._reduce(base, {
+      type: 'classroom_poll', id: 'p99', question: 'Q?', options: ['A', 'B'], blind: false
+    });
+    // Pure: base is unchanged.
+    expect(base.members['alice'].status).toBe('voted');
+    // New state has the reset.
+    expect(s.members['alice'].status).toBe('present');
+    expect(s).not.toBe(base);
+  });
+});
+
+// --- Finding 1 (MAJOR): blind-poll own-vote optimistic update on vote click
+
+describe('ClassroomBoard.mount -- optimistic self-vote on option click (Finding 1)', function () {
+
+  it('clicking a vote button immediately sets own avatar to voted status before server echo', function () {
+    var m = makeMount();
+    var summaries = [];
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { summaries.push(summary); }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Blind poll opens.
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'bp1', question: 'Secret?', options: ['A', 'B'], blind: true },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    var btns = pollDiv.querySelectorAll('[data-vote-index]');
+    expect(btns.length).toBe(2);
+
+    summaries.length = 0;  // reset tracking
+
+    // Click option B (index 1).
+    btns[1].onclick();
+
+    // An onStateChange MUST have fired BEFORE the server echo.
+    expect(summaries.length).toBeGreaterThanOrEqual(1);
+
+    // Alice's own state must show status:'voted' and vote:1 optimistically.
+    var lastSummary = summaries[summaries.length - 1];
+    var aliceSummary = lastSummary.members.find(function (m) { return m.username === 'alice'; });
+    expect(aliceSummary).toBeDefined();
+    expect(aliceSummary.status).toBe('voted');
+
+    handle.destroy();
+  });
+
+  it('optimistic vote is preserved after a blind echo with vote:null arrives', function () {
+    var m = makeMount();
+    var summaries = [];
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student',
+      onStateChange: function (summary) { summaries.push(summary); }
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'bp1', question: 'Q?', options: ['A', 'B'], blind: true },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    var btns = pollDiv.querySelectorAll('[data-vote-index]');
+    btns[0].onclick();
+
+    // Server echoes with vote:null (blind masking).
+    ws._receive({
+      type: 'classroom_member_update', section: 'PeriodX',
+      member: { username: 'alice', role: 'student', status: 'voted', online: true, vote: null }
+    });
+
+    // The vote field in _reduce is durable -- the optimistic vote (0) must
+    // still be present even after the masked echo.
+    var lastSummary = summaries[summaries.length - 1];
+    var aliceSummary = lastSummary.members.find(function (mb) { return mb.username === 'alice'; });
+    // status should still be 'voted' (the echo carries voted status).
+    expect(aliceSummary.status).toBe('voted');
+    // Vote buttons should be hidden (status=voted hides them).
+    expect(pollDiv.style.display).toBe('none');
+
+    handle.destroy();
+  });
+
+  it('clicking a vote button still sends classroom_vote to the server', function () {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test.example/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      poll: { id: 'bp1', question: 'Q?', options: ['A', 'B'], blind: true },
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true, vote: null }]
+    });
+
+    var pollDiv = m.container.querySelector('[data-classroom-poll-votes]');
+    var btns = pollDiv.querySelectorAll('[data-vote-index]');
+    btns[0].onclick();
+
+    var sent = ws.sent.map(function (s) { return JSON.parse(s); });
+    var voteMsg = sent.find(function (msg) { return msg.type === 'classroom_vote'; });
+    expect(voteMsg).toBeDefined();
+    expect(voteMsg.choice).toBe(0);
+
+    handle.destroy();
+  });
+});
