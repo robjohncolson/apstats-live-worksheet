@@ -708,6 +708,13 @@
 
     var boardHandle = null;   // ClassroomBoard.mount() return value, or null
     var currentNameMap = {};  // kept for the onStateChange callback
+    // s111 P4 HOTFIX: cache the last summary so the mode-switching
+    // buttons (Arm Gate / Open Doorways / Open Poll) can detect a
+    // stale conflicting mode + auto-reset before sending. Without
+    // this, the server's mutual-exclusion guards silently reject + the
+    // teacher gets no feedback (e.g. gate armed from a prior session
+    // blocks Open Doorways forever until manual Reset).
+    var _lastSummary = null;
 
     function teardown() {
       if (boardHandle) {
@@ -747,6 +754,7 @@
           hue: (session.spriteHue != null) ? session.spriteHue : null,
           nameMap: currentNameMap,
           onStateChange: function (summary) {
+            _lastSummary = summary;
             renderCheckinPanel(summary, currentNameMap);
             // The board includes greenlight in every summary (true after a
             // GO broadcast, false after arm/reset). Mirror it directly so the
@@ -887,6 +895,15 @@
       if (vals.options.length > 8) { alert('Max 8 doorways.'); return; }
       var id = 'doorways-' + Date.now();
       _activeDoorwaysId = id;
+      // s111 P4 HOTFIX: clear any stale gate / poll first so the
+      // server's mutual-exclusion guards don't silently reject. The
+      // server processes WS messages in FIFO order, so the reset
+      // lands BEFORE openDoorways and the room is clean by then.
+      if (_lastSummary && ((_lastSummary.gate && _lastSummary.gate.armed) || _lastSummary.poll)) {
+        if (typeof boardHandle.reset === 'function') {
+          try { boardHandle.reset(); } catch (_) {}
+        }
+      }
       boardHandle.openDoorways(id, vals.question, vals.options);
       document.getElementById('btn-open-doorways').style.display = 'none';
       document.getElementById('btn-close-doorways').style.display = '';
@@ -1543,6 +1560,13 @@
     document.getElementById('btn-arm-gate').addEventListener('click', function () {
       if (!boardHandle || typeof boardHandle.armGate !== 'function') return;
       var theme = todayTheme();
+      // s111 P4 HOTFIX: clear any stale doorways / poll first so
+      // armGate's mutual-exclusion guards don't silently reject.
+      if (_lastSummary && (_lastSummary.doorways || _lastSummary.poll)) {
+        if (typeof boardHandle.reset === 'function') {
+          try { boardHandle.reset(); } catch (_) {}
+        }
+      }
       boardHandle.armGate(theme);
       // The indicator clears via onStateChange when the classroom_gate
       // broadcast arrives (the reducer sets greenlight false on arm).
