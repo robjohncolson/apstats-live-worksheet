@@ -3999,3 +3999,134 @@ describe('ClassroomBoard handle -- showResultScreen stepper (v2.1 Unit 2)', func
     handle.destroy();
   });
 });
+
+// =============================================================
+// PlayerSprite (Phase 1) -- keyboard-controlled local sprite
+// =============================================================
+
+describe('PlayerSprite -- Phase 1 local controller', () => {
+  function makePS(extra) {
+    var m  = makeBoard();
+    var ss = new m.win.SpriteSheet('sprite.png', 80, 96, {});
+    var opts = {
+      x: 100, y: 200, scale: 0.25, hue: 0, online: true, label: 'me',
+      input:   { left: false, right: false, jump: false, up: false },
+      peers:   function () { return {}; },
+      canvasW: function () { return 400; }
+    };
+    if (extra) { for (var k in extra) { opts[k] = extra[k]; } }
+    var p = new m.ClassroomBoard._PlayerSprite(ss, opts);
+    return { p: p, opts: opts, m: m };
+  }
+
+  it('Right input -> x increases at WALK_SPEED (120 px/s)', () => {
+    var t = makePS();
+    t.opts.input.right = true;
+    var x0 = t.p.x;
+    t.p.update(1.0);
+    expect(t.p.x - x0).toBeCloseTo(120, 1);
+  });
+
+  it('Left input -> x decreases at WALK_SPEED', () => {
+    var t = makePS({ x: 300 });
+    t.opts.input.left = true;
+    var x0 = t.p.x;
+    t.p.update(1.0);
+    expect(x0 - t.p.x).toBeCloseTo(120, 1);
+  });
+
+  it('Right then released -> _moved stays true (D2: keep last walked spot)', () => {
+    var t = makePS();
+    t.opts.input.right = true;
+    t.p.update(0.5);
+    expect(t.p._moved).toBe(true);
+    t.opts.input.right = false;
+    t.p.update(0.5);
+    expect(t.p._moved).toBe(true);   // sticky once set
+  });
+
+  it('Space (grounded) -> jumps; gravity returns to ground; state idle again', () => {
+    var t = makePS();
+    t.opts.input.jump = true;
+    expect(t.p.state).toBe('idle');
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+    expect(t.p.vy).toBeLessThan(0);
+    t.opts.input.jump = false;       // release so it does not auto-repeat on land
+    var safety = 0;
+    while (t.p.state === 'jumping' && safety < 500) {
+      t.p.update(0.016);
+      safety++;
+    }
+    expect(safety).toBeLessThan(500);
+    expect(t.p.state).toBe('idle');
+    expect(t.p.y).toBeCloseTo(200, 1);
+  });
+
+  it('Space does NOT auto-repeat while held (one-shot per press)', () => {
+    var t = makePS();
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+    var safety = 0;
+    while (t.p.state === 'jumping' && safety < 500) {
+      t.p.update(0.016);
+      safety++;
+    }
+    expect(t.p.state).toBe('idle');
+    t.p.update(0.016);               // tick with jump still held
+    expect(t.p.state).toBe('idle');  // must NOT jump again
+  });
+
+  it('Up edge-triggered: fires onUpPressed once per press, not on hold', () => {
+    var calls = 0;
+    var t = makePS({ onUpPressed: function () { calls++; } });
+    t.p.update(0.016);
+    expect(calls).toBe(0);
+    t.opts.input.up = true;
+    t.p.update(0.016);
+    expect(calls).toBe(1);
+    t.p.update(0.016);
+    expect(calls).toBe(1);           // hold does NOT auto-repeat
+    t.opts.input.up = false;
+    t.p.update(0.016);
+    t.opts.input.up = true;
+    t.p.update(0.016);
+    expect(calls).toBe(2);           // new press fires again
+  });
+
+  it('drain (walkTo) overrides keyboard -- one way out the door', () => {
+    var t = makePS();
+    t.opts.input.left = true;        // keyboard says left
+    t.p.walkTo(300);                 // drain target to the right
+    expect(t.p.state).toBe('walking');
+    var x0 = t.p.x;
+    t.p.update(0.016);
+    // walkTo direction is +1 toward 300; keyboard says left. Drain wins.
+    expect(t.p.x).toBeGreaterThan(x0);
+  });
+
+  it('soft-push: peer at same x nudges the player away (PUSH_DELTA)', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    expect(t.p.x).toBe(100);
+    t.p.update(0.016);
+    expect(t.p.x).toBeGreaterThan(100);
+    expect(t.p._moved).toBe(true);
+  });
+
+  it('clamps x to the viewport right edge', () => {
+    var t = makePS({ x: 380 });
+    t.opts.input.right = true;
+    t.p.update(1.0);
+    // canvasW=400, spriteSize=80*0.25=20 -> maxX=380. Walked right but clamped.
+    expect(t.p.x).toBe(380);
+  });
+
+  it('clamps x to the viewport left edge', () => {
+    var t = makePS({ x: 0 });
+    t.opts.input.left = true;
+    t.p.update(1.0);
+    expect(t.p.x).toBe(0);
+  });
+});

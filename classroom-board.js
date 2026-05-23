@@ -96,6 +96,13 @@
   var IDLE_BLINK_SPEED  = 3.0;  // seconds between blinks
   var WALK_FRAME_SPEED  = 0.12; // seconds per walk frame
 
+  // --- player controller knobs (Phase 1) --------------------------------
+  // KEYBOARD_AVATAR_SPEC -- locked Phase 1 kinematics.
+
+  var JUMP_V0    = -280;     // initial vertical velocity (negative = up)
+  var GRAVITY    = 800;      // px/s^2 downward
+  var PUSH_DELTA = 0.6;      // px lateral nudge per overlapping tick
+
   // --- unique canvas id generator ---------------------------------------
 
   var _canvasSeq = 0;
@@ -571,6 +578,136 @@
     };
   };
 
+  // --- PlayerSprite (Phase 1: local keyboard-controlled) -----------------
+  //
+  // Extends BoardSprite. Reads from a shared {left, right, jump, up} object
+  // updated by mount()'s keyboard listener; applies vx + jump physics +
+  // soft-push every tick. When state === 'walking' (drain animation set
+  // by walkTo), the inherited _updateWalk path runs and keyboard input is
+  // ignored -- one way out the door.
+  //
+  // Extra opts (in addition to BoardSprite's):
+  //   input        -- shared {left, right, jump, up} booleans
+  //   peers        -- () -> map<username, BoardSprite>
+  //   onUpPressed  -- edge-triggered callback(player) when Up is pressed
+  //   canvasW      -- () -> current viewport width in CSS px
+
+  function PlayerSprite(spriteSheet, opts) {
+    BoardSprite.call(this, spriteSheet, opts);
+    this.input        = opts.input || { left: false, right: false, jump: false, up: false };
+    this.peers        = (typeof opts.peers === 'function') ? opts.peers : function () { return {}; };
+    this.onUpPressed  = (typeof opts.onUpPressed === 'function') ? opts.onUpPressed : null;
+    this._canvasW     = (typeof opts.canvasW === 'function') ? opts.canvasW : function () { return DEFAULT_BOARD_W; };
+    this.groundY      = opts.y;
+    this.vx           = 0;
+    this.vy           = 0;
+    this._jumpHandled = false;
+    this._upHandled   = false;
+    this._moved       = false;
+    this._spriteSize  = SPRITE_W * (opts.scale || SPRITE_SCALE);
+  }
+  PlayerSprite.prototype = Object.create(BoardSprite.prototype);
+  PlayerSprite.prototype.constructor = PlayerSprite;
+
+  PlayerSprite.prototype.update = function (dt) {
+    // Drain (walkTo target-based) overrides keyboard -- one way out the door.
+    if (this.state === 'walking') { this._updateWalk(dt); return; }
+
+    // Up edge-trigger: fire the action callback once per press, never on hold.
+    if (this.input.up && !this._upHandled) {
+      this._upHandled = true;
+      if (this.onUpPressed) {
+        try { this.onUpPressed(this); } catch (_) {}
+      }
+    } else if (!this.input.up) {
+      this._upHandled = false;
+    }
+
+    // Horizontal velocity from L/R.
+    var vxNext = 0;
+    if (this.input.left)  { vxNext -= WALK_SPEED; }
+    if (this.input.right) { vxNext += WALK_SPEED; }
+    this.vx = vxNext;
+
+    // Jump edge-trigger: only when grounded; no auto-repeat while Space held.
+    if (this.input.jump && !this._jumpHandled) {
+      this._jumpHandled = true;
+      if (this.state !== 'jumping' && this.y >= this.groundY - 0.01) {
+        this.vy    = JUMP_V0;
+        this.state = 'jumping';
+      }
+    } else if (!this.input.jump) {
+      this._jumpHandled = false;
+    }
+
+    // Track active motion -- once true, repositionSprites stops auto-laying
+    // the player out (D2: stays where last walked).
+    if (this.vx !== 0 || this.state === 'jumping') {
+      this._moved = true;
+    }
+
+    // Horizontal motion.
+    this.x += this.vx * dt;
+
+    // Vertical motion (jump arc).
+    if (this.state === 'jumping') {
+      this.vy += GRAVITY * dt;
+      this.y  += this.vy * dt;
+      if (this.y >= this.groundY) {
+        this.y     = this.groundY;
+        this.vy    = 0;
+        this.state = 'idle';
+        this.idleTimer        = 0;
+        this.currentIdleFrame = 0;
+      }
+    }
+
+    // Soft-push: self-resolution against overlapping peers. Each client
+    // pushes its OWN player; in Phase 2 the broadcast loop converges both
+    // ends (peers are not pushed back here).
+    var peersMap = this.peers();
+    for (var u in peersMap) {
+      var p = peersMap[u];
+      if (!p || p === this) { continue; }
+      var dx = this.x - p.x;
+      if (Math.abs(dx) < this._spriteSize) {
+        this.x += (dx >= 0 ? 1 : -1) * PUSH_DELTA;
+        this._moved = true;
+      }
+    }
+
+    // Clamp x to viewport.
+    var cw   = this._canvasW();
+    var maxX = cw - this._spriteSize;
+    if (this.x < 0)    { this.x = 0; }
+    if (this.x > maxX) { this.x = maxX; }
+
+    // Frame selection.
+    if (this.state === 'jumping') {
+      this.frameIndex = IDLE_FRAMES[0];   // static airborne pose (v1)
+    } else if (this.vx !== 0) {
+      this.walkTimer += dt;
+      if (this.walkTimer >= WALK_FRAME_SPEED) {
+        this.walkTimer -= WALK_FRAME_SPEED;
+        this.currentWalkFrame = (this.currentWalkFrame + 1) % WALK_FRAMES.length;
+      }
+      this.frameIndex = WALK_FRAMES[this.currentWalkFrame];
+    } else {
+      this._updateIdle(dt);
+    }
+  };
+
+  // Re-anchor groundY when the engine resizes (the platform under the
+  // sprite shifts as the canvas height changes).
+  PlayerSprite.prototype.onResize = function () {
+    if (this.engine && typeof this.engine.groundY === 'number') {
+      this.groundY = this.engine.groundY - SPRITE_H * this.scale;
+      if (this.y > this.groundY && this.state !== 'jumping') {
+        this.y = this.groundY;
+      }
+    }
+  };
+
   // --- GreenLightOverlay entity -----------------------------------------
 
   /**
@@ -1000,6 +1137,78 @@
     var greenlightShownAt = 0;
     var greenlightTimer   = null;
 
+    // --- player controller (Phase 1) -----------------------------------
+    // Shared input state object -- the keyboard listener writes into it
+    // and the local PlayerSprite reads from it on every update tick.
+    var playerInput = { left: false, right: false, jump: false, up: false };
+
+    // Edge-trigger callback the PlayerSprite calls when Up is pressed.
+    // Fires classroom_checkin when the player's foot is inside the gate
+    // door x-range AND state.gate.armed; otherwise no-op (no door, no
+    // check-in). The server's present->checkedIn transition then drives
+    // the drain animation through syncScene as today -- one way out.
+    function handlePlayerUp(player) {
+      if (!state.gate || !state.gate.armed) { return; }
+      if (!engineReady) { return; }
+      var cw     = engine.canvas.width / (root.devicePixelRatio || 1);
+      var doorXL = cw - DOOR_W - 10;
+      var doorXR = cw - 10;
+      var footX  = player.x + (SPRITE_W * (player.scale || SPRITE_SCALE)) / 2;
+      if (footX >= doorXL && footX <= doorXR) {
+        safeSend({ type: 'classroom_checkin' });
+      }
+    }
+
+    // Keyboard listener -- document-level. Phase 1 captures arrows + Space
+    // globally on the Desk. Acceptable because the calendar is compact
+    // (2 weeks) so the page rarely needs keyboard scrolling. Gates input
+    // when an <input>/<textarea> has focus or any modal overlay is open;
+    // Space + Up also lock out while an open poll awaits this student's
+    // vote (commit a choice before bouncing around).
+    function _isInputFocused() {
+      var ae = doc.activeElement;
+      if (!ae) { return false; }
+      var tag = (ae.tagName || '').toLowerCase();
+      return tag === 'input' || tag === 'textarea' || ae.isContentEditable === true;
+    }
+    function _isModalOpen() {
+      var ids = ['day-grade-overlay', 'donow-bump-overlay', 'signin-overlay', 'pwchange-overlay', 'resource-panel'];
+      for (var i = 0; i < ids.length; i++) {
+        var el = doc.getElementById(ids[i]);
+        if (!el) { continue; }
+        var disp = (el.style && el.style.display) || '';
+        if (disp && disp !== 'none') { return true; }
+      }
+      return false;
+    }
+    function _keyToInputProp(e) {
+      switch (e.key) {
+        case 'ArrowLeft':  return 'left';
+        case 'ArrowRight': return 'right';
+        case 'ArrowUp':    return 'up';
+        case ' ':
+        case 'Spacebar':   return 'jump';
+        default:           return null;
+      }
+    }
+    function _keyHandler(e, pressed) {
+      if (_isInputFocused() || _isModalOpen()) { return; }
+      var prop = _keyToInputProp(e);
+      if (!prop) { return; }
+      if ((prop === 'jump' || prop === 'up') && state.poll &&
+          state.members[username] && state.members[username].status !== 'voted') {
+        return;
+      }
+      playerInput[prop] = pressed;
+      if (e.preventDefault) { e.preventDefault(); }
+    }
+    var _kdHandler = function (e) { _keyHandler(e, true);  };
+    var _kuHandler = function (e) { _keyHandler(e, false); };
+    if (doc.addEventListener) {
+      doc.addEventListener('keydown', _kdHandler);
+      doc.addEventListener('keyup',   _kuHandler);
+    }
+
     // --- layout helpers ------------------------------------------------
 
     function getSpriteWidth() {
@@ -1049,7 +1258,10 @@
               psp.walkTo(colCenter);
             }
           } else {
-            // Unvoted: stay in idle row position.
+            // Unvoted: stay in idle row position. D2 -- once the local
+            // PlayerSprite has moved via keyboard, they keep their last
+            // position even while unvoted (instanceof + _moved check).
+            if (psp instanceof PlayerSprite && psp._moved) { continue; }
             if (psp.state === 'idle') {
               psp.x = idleXs[pi];
               psp.y = sy;
@@ -1061,6 +1273,9 @@
         var xs = computeSlots(usernames.length, sw, cw);
         for (var i = 0; i < usernames.length; i++) {
           var sp = spriteEntities[usernames[i]];
+          // D2 -- once the local PlayerSprite has moved via keyboard, they
+          // own their position. Skip the auto-layout pass for them.
+          if (sp instanceof PlayerSprite && sp._moved) { continue; }
           // Only reposition idle sprites; do not interrupt a walk.
           if (sp && sp.state === 'idle') {
             sp.x = xs[i];
@@ -1083,7 +1298,11 @@
       var label  = (nameMap && nameMap[member.username]) ? nameMap[member.username] : member.username;
       var sy     = getSpriteY();
       var hue    = resolveHue(member);
-      var sp = new BoardSprite(spriteSheet, {
+      // Phase 1 (D1): the local signed-in student gets a PlayerSprite
+      // (keyboard-controlled). All other members -- peers + teacher
+      // observers -- stay an auto-layout BoardSprite.
+      var isLocal = (member.username === username && role === 'student');
+      var baseOpts = {
         x:      0,
         y:      sy,
         scale:  SPRITE_SCALE,
@@ -1092,14 +1311,31 @@
         label:  label,
         onDrained: (function (uname) {
           return function () {
-            // Walk completed -- remove from engine and registry, reflow the row.
+            // Drain animation completed (present -> checkedIn walk to door).
+            // Guard: only an explicit drain (draining[uname] set by
+            // startDrain) removes the sprite. A v2 poll-voted walkTo also
+            // arrives here on arrival -- without this guard it would wipe
+            // the voter's sprite at the column.
+            if (!draining[uname]) { return; }
             engine.removeEntity('sprite_' + uname);
             delete spriteEntities[uname];
             delete draining[uname];
             repositionSprites();
           };
         })(member.username)
-      });
+      };
+      var sp;
+      if (isLocal) {
+        baseOpts.input       = playerInput;
+        baseOpts.peers       = function () { return spriteEntities; };
+        baseOpts.onUpPressed = handlePlayerUp;
+        baseOpts.canvasW     = function () {
+          return engine.canvas.width / (root.devicePixelRatio || 1);
+        };
+        sp = new PlayerSprite(spriteSheet, baseOpts);
+      } else {
+        sp = new BoardSprite(spriteSheet, baseOpts);
+      }
       spriteEntities[member.username] = sp;
       engine.addEntity('sprite_' + member.username, sp);
       repositionSprites();
@@ -1462,6 +1698,11 @@
         // Drop the resize listener installed in mount() -- harmless no-op if
         // engine setup failed before it was added (Codex r3 review, MAJOR).
         root.removeEventListener('resize', resizeBoardToContainer);
+        // Phase 1 -- detach the player keyboard listeners installed above.
+        if (doc.removeEventListener) {
+          doc.removeEventListener('keydown', _kdHandler);
+          doc.removeEventListener('keyup',   _kuHandler);
+        }
         if (canvas.parentNode) {
           canvas.parentNode.removeChild(canvas);
         }
@@ -1538,7 +1779,8 @@
     mount:            mount,
     _reduce:          _reduce,
     _assignCells:     assignCells,
-    _hashStringToHue: hashStringToHue   // exposed for tests
+    _hashStringToHue: hashStringToHue,  // exposed for tests
+    _PlayerSprite:    PlayerSprite      // Phase 1 -- exposed for unit tests
   };
 
 }(typeof window !== 'undefined' ? window : this));

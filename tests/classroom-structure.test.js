@@ -549,3 +549,91 @@ describe('F4 code-review -- Finding 1: Optimistic self-vote on option click', ()
     expect(fnBody2.indexOf('applyMessage')).toBeLessThan(fnBody2.indexOf('safeSend'));
   });
 });
+
+// ==========================================================================
+// KEYBOARD_AVATAR Phase 1 -- local controller wiring (KEYBOARD_AVATAR_SPEC.md)
+// ==========================================================================
+
+describe('KEYBOARD_AVATAR Phase 1 -- player controller wiring', () => {
+  it('classroom-board.js defines PlayerSprite', () => {
+    expect(BOARD).toMatch(/function\s+PlayerSprite\s*\(\s*spriteSheet\s*,\s*opts\s*\)/);
+  });
+
+  it('PlayerSprite inherits from BoardSprite', () => {
+    expect(BOARD).toMatch(/PlayerSprite\.prototype\s*=\s*Object\.create\(\s*BoardSprite\.prototype\s*\)/);
+  });
+
+  it('exposes _PlayerSprite on the public API for tests', () => {
+    expect(BOARD).toMatch(/_PlayerSprite\s*:\s*PlayerSprite/);
+  });
+
+  it('defines the kinematics constants (JUMP_V0, GRAVITY, PUSH_DELTA)', () => {
+    expect(BOARD).toMatch(/var\s+JUMP_V0\s*=\s*-280/);
+    expect(BOARD).toMatch(/var\s+GRAVITY\s*=\s*800/);
+    expect(BOARD).toMatch(/var\s+PUSH_DELTA\s*=\s*0\.6/);
+  });
+
+  it('mount() declares the shared playerInput state object', () => {
+    expect(BOARD).toMatch(/var\s+playerInput\s*=\s*\{\s*left:\s*false/);
+  });
+
+  it('handlePlayerUp sends classroom_checkin when in the gate-door hitbox + gate armed', () => {
+    expect(BOARD).toMatch(/function\s+handlePlayerUp/);
+    // The guard pattern + the safeSend call.
+    expect(BOARD).toMatch(/state\.gate\s*\.\s*armed/);
+    expect(BOARD).toMatch(/safeSend\(\s*\{\s*type\s*:\s*['"]classroom_checkin['"]\s*\}\s*\)/);
+  });
+
+  it('input gating: skips when an input/textarea is focused or a modal is open', () => {
+    expect(BOARD).toMatch(/function\s+_isInputFocused/);
+    expect(BOARD).toMatch(/function\s+_isModalOpen/);
+    // Maps the 3 used arrow keys (Down is reserved per spec).
+    expect(BOARD).toMatch(/['"]ArrowLeft['"]/);
+    expect(BOARD).toMatch(/['"]ArrowRight['"]/);
+    expect(BOARD).toMatch(/['"]ArrowUp['"]/);
+  });
+
+  it('attaches keydown + keyup listeners on the document', () => {
+    expect(BOARD).toMatch(/doc\.addEventListener\(\s*['"]keydown['"]/);
+    expect(BOARD).toMatch(/doc\.addEventListener\(\s*['"]keyup['"]/);
+  });
+
+  it('addSprite branches on isLocal student to create a PlayerSprite', () => {
+    expect(BOARD).toMatch(/var\s+isLocal\s*=\s*\(\s*member\.username\s*===\s*username\s*&&\s*role\s*===\s*['"]student['"]\s*\)/);
+    expect(BOARD).toMatch(/new\s+PlayerSprite\s*\(/);
+  });
+
+  it('repositionSprites skips PlayerSprite instances that have moved', () => {
+    // The instanceof + _moved check appears twice -- once in the no-poll
+    // branch (variable `sp`) and once in the poll-unvoted branch (`psp`).
+    var matches = (BOARD.match(/[a-z]+\s+instanceof\s+PlayerSprite\s*&&\s*[a-z]+\._moved/g) || []);
+    expect(matches.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('destroy() detaches the keyboard listeners', () => {
+    expect(BOARD).toMatch(/doc\.removeEventListener\(\s*['"]keydown['"]/);
+    expect(BOARD).toMatch(/doc\.removeEventListener\(\s*['"]keyup['"]/);
+  });
+
+  it("Desk has the keyboard help-text strip below the board mount", () => {
+    expect(DESK).toMatch(/id=["']classroom-board-controls["']/);
+    expect(DESK).toMatch(/Arrows walk/);
+    expect(DESK).toMatch(/Space jump/);
+    expect(DESK).toMatch(/Up to check in/);
+  });
+});
+
+// =============================================================
+// Pre-existing onDrained bug -- guard added in the Phase 1 fold
+// =============================================================
+//
+// onDrained was firing unconditionally on walkTo arrival. v2 added the
+// poll-voted column walk via walkTo WITHOUT going through startDrain
+// (which sets the draining[uname] flag) -- so the voter's sprite would
+// have been removed at the column. The Phase 1 fold guards onDrained to
+// only act on actual drains.
+describe('onDrained guard -- only removes on an actual drain', () => {
+  it('the closure rejects when draining[uname] is falsy', () => {
+    expect(BOARD).toMatch(/if\s*\(\s*!\s*draining\[\s*uname\s*\]\s*\)\s*\{?\s*return/);
+  });
+});
