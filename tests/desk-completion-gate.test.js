@@ -189,3 +189,31 @@ describe('Desk: worksheet completion gate', () => {
     expect(fn(undefined)).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Stale-panel fix: a storage event on apstats_ws_completion re-renders the
+// open resource panel so the Done (N%) button reflects live worksheet
+// progress without forcing the student to close + reopen the panel.
+// ---------------------------------------------------------------------------
+
+describe('stale-panel fix -- storage event re-renders the open resource panel', () => {
+  it('Desk has a window storage listener gated on apstats_ws_completion', () => {
+    expect(DESK).toMatch(/addEventListener\(\s*['"]storage['"]/);
+    expect(DESK).toMatch(/e\.key\s*!==?\s*['"]apstats_ws_completion['"]/);
+  });
+
+  it('the listener re-invokes showResourcePanel with the cached inf + dateStr', () => {
+    // The listener must use _lastResourcePanel (the cached render context)
+    // so it can call showResourcePanel(inf, dateStr) again with the same args.
+    expect(DESK).toMatch(/showResourcePanel\(\s*_lastResourcePanel\.inf\s*,\s*_lastResourcePanel\.dateStr\s*\)/);
+  });
+
+  it('the listener is gated on the panel being visible (display !== "none")', () => {
+    // The listener must check the resource-overlay display before re-rendering
+    // -- a closed panel should not pop open on a worksheet write.
+    var stalePanelBlock = DESK.match(/addEventListener\(\s*['"]storage['"][\s\S]*?\}\);/);
+    expect(stalePanelBlock).not.toBeNull();
+    expect(stalePanelBlock[0]).toMatch(/resource-overlay/);
+    expect(stalePanelBlock[0]).toMatch(/display/);
+  });
+});

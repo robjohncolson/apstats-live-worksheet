@@ -6281,6 +6281,25 @@ function showResourcePanel(inf, dateStr) {
 
 var _lastResourcePanel = null;
 
+// Stale-panel fix: when the worksheet tab writes apstats_ws_completion
+// (the student is filling blanks), a storage event fires in this (Desk)
+// tab. If the resource panel is open we re-call showResourcePanel so the
+// Done (N%) button reflects live worksheet progress -- no more "have to
+// close + reopen the panel to see the % move." Only triggers cross-tab
+// (storage events don't fire in the writing tab); same-tab Done clicks
+// already re-render via studentMark.
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('storage', function (e) {
+    if (!e || e.key !== 'apstats_ws_completion') return;
+    var ov = document.getElementById('resource-overlay');
+    if (!ov) return;
+    var disp = (ov.style && ov.style.display) || '';
+    if (!disp || disp === 'none') return;
+    if (!_lastResourcePanel) return;
+    try { showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr); } catch (_) {}
+  });
+}
+
 // Shared save path for both worksheet and quiz Done. Called after the score
 // has been validated (score === null for non-quiz artifacts).
 // Applies optimistic UI mutation before the async write, then re-renders or
