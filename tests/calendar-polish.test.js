@@ -237,6 +237,55 @@ describe('Calendar compaction -- always show a focus window', () => {
     const b = fnBody(html, 'rCal');
     // Pre-school: t < W[0].m -> start 0. Post-school: -> last window.
     expect(b).toMatch(/t\s*<\s*W\[0\]\.m/);
-    expect(b).toMatch(/W\.length\s*-\s*CAL_FOCUS_WEEKS/);
+    // After CALENDAR_NAV the compaction uses _origLen (a snapshot of W.length
+    // taken before the slice) so _displayStart can be referenced after.
+    expect(b).toMatch(/_origLen\s*-\s*CAL_FOCUS_WEEKS/);
+  });
+});
+
+// --- CALENDAR_NAV -- prev/next arrows above the compacted grid ---
+
+describe('Calendar nav -- prev/next arrows page the focus window', () => {
+  it('has a .cal-nav bar styled in CSS', () => {
+    expect(html).toMatch(/\.cal-nav\s*\{[^}]*display:\s*flex/);
+  });
+
+  it('has the press-feedback style (black background on :active / .cal-nav-active)', () => {
+    expect(html).toMatch(/\.cal-nav-btn:active[^{]*,\s*\.cal-nav-btn\.cal-nav-active\s*\{[^}]*background:\s*var\(--black\)/);
+  });
+
+  it('hides one arrow at an edge via visibility:hidden (slot preserved)', () => {
+    expect(html).toMatch(/\.cal-nav-btn\.cal-nav-hidden\s*\{[^}]*visibility:\s*hidden/);
+  });
+
+  it('renders two button elements with ids cal-prev and cal-next', () => {
+    expect(html).toMatch(/id=["']cal-prev["'][^>]*onclick=["']calStep\(-1\)/);
+    expect(html).toMatch(/id=["']cal-next["'][^>]*onclick=["']calStep\(1\)/);
+  });
+
+  it('defines _calPageOffset and calStep at module scope', () => {
+    expect(html).toMatch(/let\s+_calPageOffset\s*=\s*0/);
+    expect(html).toMatch(/function\s+calStep\s*\(\s*dir\s*\)/);
+  });
+
+  it('calStep bumps _calPageOffset by 2 and re-runs rCal', () => {
+    const b = fnBody(html, 'calStep');
+    expect(b).toMatch(/_calPageOffset\s*\+=\s*dir\s*\*\s*2/);
+    expect(b).toMatch(/rCal\(\)/);
+  });
+
+  it("rCal applies _calPageOffset on top of today's anchor", () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/_todayAnchor\s*\+\s*_calPageOffset/);
+  });
+
+  it('rCal toggles cal-nav-hidden on the prev arrow at the left edge', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/_np\.classList\.toggle\(\s*['"]cal-nav-hidden['"]\s*,\s*_displayStart\s*<=\s*0/);
+  });
+
+  it('rCal toggles cal-nav-hidden on the next arrow at the right edge', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/_nn\.classList\.toggle\(\s*['"]cal-nav-hidden['"]\s*,\s*_displayStart\s*\+\s*CAL_FOCUS_WEEKS\s*>=\s*_origLen/);
   });
 });

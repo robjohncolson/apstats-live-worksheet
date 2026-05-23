@@ -403,6 +403,40 @@
             border-left: 1px solid var(--black);
             margin-bottom: 16px;
         }
+        /* CALENDAR_NAV -- prev/next arrow bar above the calendar grid. */
+        .cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 3px 6px;
+            background: var(--platinum);
+            border-bottom: 1px solid var(--black);
+            border-right: 1px solid var(--black);
+            box-shadow: inset 1px 1px 0 var(--plat-hi);
+            min-height: 18px;
+        }
+        .cal-nav-btn {
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            padding: 1px 8px;
+            background: transparent;
+            border: 1px solid var(--black);
+            color: var(--black);
+            user-select: none;
+            font-family: inherit;
+            outline: none;
+        }
+        .cal-nav-btn:active,
+        .cal-nav-btn.cal-nav-active {
+            background: var(--black);
+            color: var(--white);
+        }
+        /* visibility:hidden -- keeps the corner slot so the other arrow does
+           not slide to the middle on edge pages. */
+        .cal-nav-btn.cal-nav-hidden {
+            visibility: hidden;
+        }
         .hdr-row, .wk-row { display: grid; grid-template-columns: 66px repeat(5, 1fr); }
         .hdr-row span, .wk-lbl, .dc {
             border-bottom: 1px solid var(--black);
@@ -1275,6 +1309,10 @@
                 </div>
             </div>
             <div class="cal-outer geneva">
+                <div class="cal-nav">
+                    <button id="cal-prev" class="cal-nav-btn" onclick="calStep(-1)" type="button" aria-label="Previous 2 weeks">&#9664;</button>
+                    <button id="cal-next" class="cal-nav-btn" onclick="calStep(1)" type="button" aria-label="Next 2 weeks">&#9654;</button>
+                </div>
                 <div class="hdr-row">
                     <span>Week of</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
                 </div>
@@ -10008,6 +10046,15 @@ function htm(i,ds){
     let db=i.db?'<span class="dbl">2x</span>':'';
     return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+db;
 }
+// Calendar page navigation -- the prev/next arrows above the calendar grid
+// bump _calPageOffset by CAL_FOCUS_WEEKS weeks (2). rCal() applies the
+// offset on top of today's anchor and clamps absolutely, so calStep() can
+// never scroll past either edge of the school year. Reloads reset to 0.
+let _calPageOffset = 0;
+function calStep(dir) {
+  _calPageOffset += dir * 2;
+  rCal();
+}
 function rCal(){
     const t=tdy(),g=document.getElementById("cg");g.innerHTML="";
     let W=[],cw=[],lm=null;
@@ -10015,30 +10062,35 @@ function rCal(){
         if(dw===1&&cw.length){W.push({m:lm,d:cw});cw=[];}if(dw===1)lm=dt;
         if(!lm){const md=new Date(dt);md.setDate(dt.getDate()-((dw+6)%7));lm=md;}cw.push(e);}
     if(cw.length)W.push({m:lm,d:cw});
-    // CALENDAR_COMPACT -- always show a small focus window (this week + the
-    // next) instead of every week of the school year. Without this the
-    // calendar spills past every panel below it and buries the Live
-    // Classroom board off-screen. Clamped at edges: pre-school shows the
-    // first weeks; post-school shows the last. No conditional toggle --
-    // user picked "always" in the brainstorm.
+    // CALENDAR_COMPACT -- always show a focus window (this week + the next)
+    // instead of every week of the school year. Without this the calendar
+    // spills past every panel below it and buries the Live Classroom board.
+    // Clamped at edges: pre-school -> first weeks; post-school -> last weeks.
+    // The nav arrows above the calendar bump _calPageOffset (in weeks);
+    // _displayStart is then today's anchor + that offset, clamped absolutely,
+    // so the arrows cannot run past either end of the school year.
     const CAL_FOCUS_WEEKS = 2;
-    if (W.length > CAL_FOCUS_WEEKS) {
+    const _origLen = W.length;
+    let _displayStart = 0;
+    if (_origLen > CAL_FOCUS_WEEKS) {
         // Find the week containing today. -1 = today is on a non-school day
         // (weekend / holiday) or outside the school year entirely; both are
         // handled by the date-based fallback below.
         let _todayWk = -1;
-        for (let i = 0; i < W.length; i++) {
+        for (let i = 0; i < _origLen; i++) {
             if (W[i].d.some(function (en) {
                 return eq(new Date(en[0], en[1], en[2]), t);
             })) { _todayWk = i; break; }
         }
         // In-school: anchor at today's week (today in row 1, next week in row 2
         // -- the "what's now + what's coming" view a student needs). Pre/post:
-        // clamp to either end. The Math.max/Math.min guard then snaps the
-        // start so the window always has exactly CAL_FOCUS_WEEKS rows.
-        let _start = (_todayWk >= 0) ? _todayWk : ((t < W[0].m) ? 0 : W.length - CAL_FOCUS_WEEKS);
-        _start = Math.max(0, Math.min(_start, W.length - CAL_FOCUS_WEEKS));
-        W = W.slice(_start, _start + CAL_FOCUS_WEEKS);
+        // clamp to either end. _calPageOffset (set by the nav arrows) shifts
+        // the window; the Math.max/Math.min guard then snaps the start so the
+        // window always has exactly CAL_FOCUS_WEEKS rows.
+        const _todayAnchor = (_todayWk >= 0) ? _todayWk : ((t < W[0].m) ? 0 : _origLen - CAL_FOCUS_WEEKS);
+        _displayStart = _todayAnchor + _calPageOffset;
+        _displayStart = Math.max(0, Math.min(_displayStart, _origLen - CAL_FOCUS_WEEKS));
+        W = W.slice(_displayStart, _displayStart + CAL_FOCUS_WEEKS);
     }
     // Sequential lesson gate state (LESSON_GATE_BUILD.md §4): cells render in
     // chronological order, so _prevLessonTopic trails the last lesson cell.
@@ -10158,6 +10210,15 @@ function rCal(){
             r.appendChild(c);
         }g.appendChild(r);
     }
+    // CALENDAR_NAV -- show/hide the prev/next arrow buttons above the grid.
+    // _displayStart is the absolute clamped start of the displayed window
+    // (set in the compaction block above), so the edges read directly from
+    // it. visibility:hidden via .cal-nav-hidden preserves the corner slot so
+    // the other arrow stays in place at an edge page.
+    const _np = document.getElementById('cal-prev');
+    const _nn = document.getElementById('cal-next');
+    if (_np) _np.classList.toggle('cal-nav-hidden', _displayStart <= 0);
+    if (_nn) _nn.classList.toggle('cal-nav-hidden', _displayStart + CAL_FOCUS_WEEKS >= _origLen);
     paintDonowCells(); // DN3b — overlay completion state onto the fresh grid
 }
 function rCD(){
