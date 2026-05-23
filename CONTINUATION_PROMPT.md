@@ -1,3 +1,170 @@
+# Continuation Prompt -- session 111
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-110 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-23 (session 111). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (feature work ended at `e8f9ac7`).
+> curriculum_render HEAD = `25a970b`. Linear, local==origin on both.
+>
+> ## Shipped this session (111) -- two distinct epics
+>
+> ### Epic 1 -- Live Classroom Scaling Knob 1 (rate adaptation)
+> The first request of the session. `LIVE_CLASSROOM_SCALING_SPEC.md` (s110)
+> had three knobs; this implemented Knob 1 (emit-cadence scaled to room
+> size). Single repo, one tight loop:
+>
+> - **`22a78d3`** -- `feat: Live Classroom rate-adapt cadence to room size`.
+>   `POS_RATE_TABLE` replaces the fixed `POS_RATE_MS = 100` constant;
+>   `_currentEmitRateMs(memberCount)` looks up the threshold-mapped
+>   interval; `PlayerSprite` gains an `opts.getMemberCount` (default
+>   returns 1 for back-compat); `addSprite` wires a live closure over
+>   `state.members`. Thresholds: `<=8 -> 100ms`, `9-20 -> 200ms`,
+>   `21-40 -> 300ms`, `>40 -> 500ms`. Codex review folded 1 MAJOR +
+>   2 MINOR. Planner-verify (first vitest run) caught 7 buggy boundary
+>   tests in the contract's Unit C and folded the corrected
+>   advance-past-the-first-gate pattern. 16 new tests.
+>
+> ### Epic 2 -- Live Classroom v3 P1+P2 (global presence + Live button)
+> User pivoted to a bigger architectural conversation: WebRTC for
+> in-class data modes + section-agnostic cockpit default + Live mode
+> toggle. Spec'd, then implemented P1+P2 (the WS-only foundation work;
+> P3 WebRTC + P4 vote-with-feet are queued).
+>
+> - **`e8f9ac7`** (follow-alongs) -- `feat: Live Classroom v3 P1+P2 client`.
+>   Cockpit (`teacher-classroom.html`) restructured: global presence
+>   list of everyone online (grouped by section) is the default;
+>   `Go Live` button reveals the section picker; `Exit Live` returns.
+>   Cockpit subscribes via `classroom_monitor_start`; renders deltas
+>   from `classroom_member_update / _member_left / _live_state`.
+>   `classroom-board.js` `_reduce` gains a `classroom_live_state` case
+>   and a new `live` state field preserved through every other case.
+>   Desk (`ap_stats_roadmap_square_mode.html`) renders a "Live with
+>   Mr. Colson" pill via a new `_renderLiveIndicator` helper attached
+>   to `ClassroomBoard.mount`'s `onStateChange`. Tests +13.
+> - **`25a970b`** (curriculum_render) -- `feat: Live Classroom v3 P1+P2 server`.
+>   `railway-server/classroom.js` gains `monitorSockets`,
+>   `subscribeMonitor`, `unsubscribeMonitor`, `setLive`,
+>   `getAllSectionsState`, and a `_fanoutToMonitors` helper wired into
+>   every existing method that returns broadcasts (join, detach,
+>   heartbeat, armGate, checkin, greenLight, reset, openPoll, castVote,
+>   closePoll, revealPoll, position, sweep). A new `room.live` field
+>   defaults to false and is preserved across existing v1b/v2 events.
+>   `buildStatePayload` includes `live` so the join snapshot lets a
+>   late-joining student see Live state immediately. server.js gains
+>   four new case handlers. Tests +15.
+> - **Spec + contract committed**: `LIVE_CLASSROOM_V3_SPEC.md` (design,
+>   the full 4-phase roadmap) + `LIVE_CLASSROOM_V3_P12_BUILD.md` (the
+>   frozen P1+P2 contract). Both in `e8f9ac7`.
+> - **Codex review folded**: 1 BLOCKER (`buildStatePayload` was missing
+>   `live` -- late joiners saw `live:false` on a Live room), 1 MAJOR
+>   (`stopMonitorMode` left the WS open but unsubscribed; the next
+>   `startMonitorMode` early-returned without re-subscribing), 2 MINOR
+>   (setLive bypassed `_fanoutToMonitors` dedup; `_ensureMonitorWs`
+>   lacked try/catch + close/error handlers).
+>
+> ## Migration -- DONE this session (NONE outstanding)
+> Session 109's `0007_poll_archive.sql` was run by the user this
+> session (per the opening "migration has already been implemented"
+> note). No new migrations in s111.
+>
+> ## Test baselines
+> - curriculum_render **917/918** -- the only fail is the long-standing
+>   unrelated `redox-chat.test.js` (NOT a regression). +15 over baseline.
+> - follow-alongs root **4912/4913** -- the only fail is the long-standing
+>   unrelated `study-guide.test.js` (NOT a regression). +29 over baseline
+>   (16 from scaling + 13 from v3 P1+P2). roster-server unchanged.
+>
+> ## Open / verify
+> - cr `25a970b` deploys the `curriculumrender-production` WS service
+>   (Railway). Smoke once it lands: `classroom_monitor_start` returns
+>   a `classroom_state_all` snapshot; `classroom_live_start` broadcasts
+>   `classroom_live_state` to the section's sockets + every monitor;
+>   the Desk shows the Live pill; the cockpit's global view updates
+>   incrementally as students join/leave. DogePresence / Tetris
+>   unregressed (no shared handler changes).
+> - follow-alongs `e8f9ac7` republishes GH Pages. Eyeball the cockpit:
+>   default view shows the global presence list; the Go Live button
+>   transitions cleanly; Exit Live re-subscribes monitor mode.
+>
+> ## NEXT -- queued (the v3 spec's remaining phases + sibling work)
+> - **v3 P3 -- WebRTC star transport.** Replaces `classroom_pos` in
+>   Live mode with a per-student DataChannel to the cockpit. Tetris
+>   precedent verbatim for the signaling (`rtc_offer/answer/ice`).
+>   Adds the network probe + per-student WS fallback per
+>   `LIVE_CLASSROOM_V3_SPEC.md` Section 6. **Blocks P4.**
+> - **v3 P4 -- vote-with-your-feet (first data mode).** Generalizes the
+>   single GateDoor to N labelled doorways; cockpit shows live histogram
+>   via the existing `ti84-plot.js`. Three new WS messages:
+>   `classroom_open_doorways`, `classroom_doorway_vote`,
+>   `classroom_close_doorways`. The PEDAGOGICAL KILLER feature.
+>   Requires P3.
+> - **Teacher -> Student Console.** Sibling feature, separate spec NOT
+>   YET DRAFTED. Per-student contextual surface launched from clicking
+>   an avatar (Live mode) OR a row in `/class/grades` (outside Live).
+>   Actions: View as (read-only impersonation), View grade, View
+>   recent submissions, Apply remediation, Send nudge (free text,
+>   teacher to one or many students), Override lesson gate (TBD).
+>   Bidirectional messaging: students reply via a palette of presets
+>   (asymmetric — teacher free text, students preset for moderation
+>   safety). Teacher avatar visible on the board in Live mode.
+>   Draft a spec when ready; the conversation in s111 captured the
+>   shape but no spec doc yet.
+> - **Railway -> DigitalOcean migration.** Still strategic, before next
+>   Railway billing cycle. See `project_railway_to_digitalocean.md`.
+> - **Preview-as-student v2 (worksheet-level).** Deferred from s108;
+>   may fold into the Teacher -> Student Console "View as" action.
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **Live Classroom = self-directed, not problem-by-problem intimacy**
+>   (`feedback_live_classroom_self_directed.md`). Whole-class data /
+>   presence modes only; NO voice / screen-share / peer-pair channels.
+>   The classroom style is self-directed and ambient -- voice/share
+>   modes break that. Reject any future proposal that violates this.
+> - **The lifted engine files** (`canvas_engine.js`/`sprite_sheet.js`
+>   in follow-alongs root) declare `class` at top level; bare
+>   classic-script class declarations do NOT attach to `window`. The
+>   IIFE-entry bridge in `classroom-board.js` handles this; do NOT
+>   remove. cr is the source of truth; re-copy if cr changes them.
+> - **Cross-repo Codex finding gotcha** (s106 lesson, exercised in s111):
+>   a finding that looks like a bug in ONE half may be resolved by the
+>   other half. Verify cross-repo before folding. (s111 BLOCKER was a
+>   real cross-repo issue: the server-side `buildStatePayload` omitted
+>   `live`, which manifested as the client never seeing Live mode on a
+>   join.)
+> - **The cockpit's runtime test pattern** (`tests/poll-archive-cockpit.test.js`):
+>   it loads `teacher-classroom.html`'s inline script in jsdom + vm.
+>   Any new HTML element the cockpit references MUST also be added to
+>   the test's HTML scaffolding (otherwise `getElementById('btn-go-live').addEventListener`
+>   throws on null). jsdom also doesn't provide `WebSocket` -- the
+>   cockpit's `new WebSocket(...)` calls require a stub.
+> - **PowerShell 5.1 + git** -- never `git commit -m` from PowerShell.
+>   Use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- `git add` explicit paths, never `-A`.
+>   `data/skill-map.js` regenerates on the audit test -- `git checkout`
+>   before staging.
+> - **roster-server** lives inside follow-alongs (`roster-server/`,
+>   own `package.json` + vitest); auto-deploys on a push touching
+>   `roster-server/**`. curriculum_render is a SEPARATE repo;
+>   `railway-server/**` deploys the `curriculumrender-production` WS
+>   service.
+> - **The proven loop is still earning its keep**: planner-verify caught
+>   a test pattern bug (7 failures) before Codex; Codex caught a
+>   cross-repo BLOCKER + MAJOR + 2 MINOR; the planner folded all four
+>   and re-verified on disk. Don't skip the loop.
+>
+> ## Recall on reload
+> `project_live_classroom.md`, `project_desk_donow.md`,
+> `project_gradebook_grading_model.md`,
+> `project_railway_to_digitalocean.md`,
+> `feedback_live_classroom_self_directed.md` (new this session),
+> `feedback_diagnostic_first.md`,
+> `feedback_curriculum_render_sacred.md`,
+> `feedback_test_on_public_url.md`.
+
+---
+
 # Continuation Prompt -- session 110
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
