@@ -1,3 +1,123 @@
+# Continuation Prompt -- session 110
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-109 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-23 (session 110). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (feature work ended at `e9ff6e9`).
+> curriculum_render HEAD = `8b166d0`. Linear, local==origin on both.
+>
+> ## Shipped this session (110) -- 15 commits across two epics
+> Two themes: (1) the Live Classroom keyboard-avatar feature shipped
+> fully end-to-end; (2) a string of UX bug fixes the teacher caught
+> while playing with it. Loop throughout: bug -> diagnostic-first
+> inspection -> minimal fix -> tight commit -> push.
+>
+> ### Avatar feature (the headline epic)
+> Session opened by discovering that r3 sprites had NEVER actually
+> rendered -- the session-109 "diagnostic confirmed it works" was a
+> false positive. The lifted `canvas_engine.js` / `sprite_sheet.js`
+> are bare top-level `class` declarations; in classic `<script>`s a
+> top-level `class` creates a global LEXICAL binding but NOT a
+> property of `window`. classroom-board.js's IIFE looked them up as
+> `root.CanvasEngine` -> `undefined` -> `new undefined(...)` threw ->
+> `engineReady=false` -> board mounted + WS-connected but rendered
+> nothing. Fix landed first:
+>
+> - **r3 render-layer bridge (`fc7995a`)** -- two `if (typeof X !== 'undefined' && !root.X) root.X = X` lines at the IIFE top bridge the engine classes onto `window`. Verbatim cr files untouched. The vitest stubs masked this bug by injecting CanvasEngine as a window PROPERTY; regression pins added so it can't ship dark again.
+>
+> Then full keyboard-controlled avatars per `KEYBOARD_AVATAR_SPEC.md`
+> (frozen `0cd4a34`):
+>
+> - **Phase 1 (`005d5f9`)** -- PlayerSprite class (Object.create over BoardSprite), document-level keyboard listener, jump physics (JUMP_V0=-280, GRAVITY=800), soft-push, Up = `classroom_checkin` when inside the gate-door hitbox. Down reserved.
+> - **Phase 1.5 (`76f8547`)** -- direction-aware frames (+11 row-mirror offset per cr/player_sprite.js line 182), stackable one-way head platforms, soft-push gated on `_sameLevel`. Folded a latent v2 bug: `onDrained` was unconditional, so the poll-voted column walkTo would have wiped the voter's sprite -- now guarded on `draining[uname]`.
+> - **Phase 2 server (`8b166d0`, curriculum_render)** -- `classroom_pos` WS message + `classroomRegistry.position(ws, x, y, state, vx, now)`. `pos` field on Member. `classroom_state` join snapshot carries each member.pos. Forwards to all OTHER sockets in the room (sender excluded).
+> - **Phase 2 client (`bdb54df`)** -- emit at 10 Hz / 0 Hz idle with a one-shot "rest" snapshot; `applyPos` walkTo chase for x + direct y; `_reduce` threads `pos` through `classroom_state`, `classroom_member_update`, `classroom_gate`, `classroom_poll`, `classroom_poll_reveal`. `addSprite` restores from `member.pos` for late-joiner + reconnect.
+> - **Phase 2.1 (`9453f7a`)** -- solid horizontal collision (snap to peer edge, skipped while airborne) + carry-while-standing (`standingOn` + `_standingOnLastX`, Mario rules). `_moved` skipping unified across both sprite classes in `repositionSprites`.
+> - **Phase 2.2 + 2.3 (`ffab093`)** -- `BoardSprite._yTarget` + `_chaseY(dt)` so peer jumps interpolate smoothly between 10 Hz broadcasts (Y_CHASE_SPEED=600). `PlayerSprite._jumpInheritedVx` for Mario-style platform-velocity inheritance.
+> - **Carry-emit reliability fix (`49ce66d`)** -- the Phase 2.1 `beingCarried = standingOn.state === 'walking'` heuristic was fragile on slower clients (the 'arrived' window between broadcasts could span most of the cycle, leaving the passenger silent). Added `_carriedThisTick`: emit whenever the carrier's x actually moved this tick. Belt and suspenders.
+> - **Phase 2.4 jump-block (`8d3c5f5`)** -- jump is REFUSED while a peer is on the player's head (`_someoneOnTop()` with tight 3 px tolerance). Mario's one-way platforms can't carry upward, so without the gate the carrier's jump would drop the passenger to ground level.
+> - **Blocked-jump twitch (`e9ff6e9`)** -- a refused jump now triggers a brief sine-decayed y-jitter (~3 px / 150 ms / ~30 Hz) on the local sprite. `PlayerSprite.render` override applies the offset; the actual physics y never moves, so peers don't see it. Local feedback only.
+>
+> ### UX bug fixes (the second epic)
+> - **Calendar 2-week focus (`2572adf`)** -- `rCal` slices `W` to a 2-week window anchored on today's week; pre-school clamps to first 2, post-school to last 2. Without this the calendar buried the avatar board.
+> - **Calendar nav arrows (`a28ea24`)** -- prev/next page arrows above the calendar; `calStep(dir)` bumps `_calPageOffset` by `CAL_FOCUS_WEEKS` weeks; hides at edges via `.cal-nav-hidden` (visibility:hidden so the surviving arrow stays anchored).
+> - **Stale-panel fix (`05982a3`)** -- one window `storage` event listener for `apstats_ws_completion` that re-renders the open resource panel via `_lastResourcePanel`. Live "Done (N%)" updates as students fill blanks in the worksheet tab.
+> - **Sign-in dropdown fix (`ed6f70d`)** -- extracted `_fetchSectionRoster(section)`; `_fetchPeriodRoster` falls back to PeriodX (the universal section while real periods aren't yet assigned); `_openRosterDropdown` bails out on empty so the "No class list loaded" hint no longer overlays the password field.
+>
+> ## Migration -- NONE this session
+> No new DB migration. Session 109's `0007_poll_archive.sql` is still
+> outstanding (user-run; until then `/poll-archive` returns 503).
+>
+> ## Test baselines
+> roster-server: unchanged. follow-alongs root **4883/4884** -- the
+> only fail is the long-standing unrelated `study-guide.test.js` (NOT
+> a regression). curriculum_render **902/903** -- the only fail is
+> the long-standing unrelated `redox-chat.test.js` (NOT a regression).
+>
+> ## Open / verify
+> - curriculum_render `8b166d0` deployed the Phase 2 WS service. User
+>   has been actively smoke-testing the feature end-to-end -- two
+>   browser windows, John + Jane on PeriodX, walking + jumping +
+>   stacking. Carry has a ~200-300 ms round-trip lag (network +
+>   broadcast cadence + interpolation); accepted as the natural floor.
+> - follow-alongs HEAD republishes GH Pages on every push.
+> - Session 109's `0007_poll_archive.sql` still pending user-run.
+>
+> ## NEXT -- queued
+> - **`LIVE_CLASSROOM_SCALING_SPEC.md`** -- frozen this session. Three
+>   knobs: (1) rate adaptation (emit Hz scaled to room size; ~50 LOC
+>   when implemented), (2) idle suppression (already in place;
+>   documentation only), (3) interest filtering (out of scope while one
+>   section == one room). Implement (1) only if a real classroom
+>   stress-test surfaces a need.
+> - **CSP** considered + DECLINED this session. User prefers the
+>   natural broadcast-roundtrip lag over CSP's rubber-band-on-direction-
+>   change failure mode. Students don't watch each other's screens, so
+>   the perceived lag is ~zero per student.
+> - **Railway -> DigitalOcean migration** -- still strategic, before
+>   next billing cycle. See the `railway-to-digitalocean` memory.
+> - **Run migration 0007** in Supabase to take `/poll-archive` off the
+>   503 degrade.
+> - **Preview-as-student v2** -- worksheet-level preview (still
+>   Desk-only).
+>
+> ## Carry-forward gotchas (still load-bearing)
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The lifted engine files** (`canvas_engine.js` / `sprite_sheet.js`
+>   in follow-alongs root) declare `class` at top level; bare
+>   classic-script class declarations do NOT attach to `window`.
+>   `classroom-board.js`'s IIFE-entry bridge handles this; do NOT
+>   remove it. cr is the source of truth; re-copy if cr changes them,
+>   don't "improve" in place.
+> - **Avatar carry round-trip lag** -- ~200-300 ms inherent at 10 Hz.
+>   CSP would smooth it with snap-on-direction-change as a tradeoff;
+>   user prefers the lag. Don't add CSP without re-asking.
+> - **The diagnostic-first discipline** -- session-109 logged "avatars
+>   WORK" but they did not (the bridge was missing). Future "it works"
+>   claims need an end-to-end sprite-actually-rendered check, not just
+>   "the canvas exists" + "sprite.png HTTP 200".
+> - **PowerShell 5.1 + git** -- never `git commit -m` from PowerShell.
+>   Use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- `git add` explicit paths, never `-A`.
+>   `data/skill-map.js` regenerates on the audit test -- `git checkout`
+>   before staging.
+> - **roster-server** lives inside follow-alongs (`roster-server/`,
+>   own `package.json` + vitest); auto-deploys on a push touching
+>   `roster-server/**`. curriculum_render is a SEPARATE repo;
+>   `railway-server/**` deploys the `curriculumrender-production` WS
+>   service.
+>
+> ## Recall on reload
+> `project_live_classroom.md`, `project_desk_donow.md`,
+> `project_gradebook_grading_model.md`,
+> `project_railway_to_digitalocean.md`,
+> `feedback_diagnostic_first.md`,
+> `feedback_curriculum_render_sacred.md`,
+> `feedback_test_on_public_url.md`.
+
+---
+
 # Continuation Prompt -- session 109
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
