@@ -794,11 +794,20 @@ describe('KEYBOARD_AVATAR Phase 2.1 -- side collision + carry', () => {
     expect(BOARD).toMatch(/this\._standingOnLastX\s*=\s*this\.standingOn\s*\?\s*this\.standingOn\.x\s*:\s*null/);
   });
 
-  it('Phase 2.4: jump trigger is gated on !_someoneOnTop() (no jump while ridden)', () => {
+  it('Phase 2.4: jump trigger is gated by _someoneOnTop() (no jump while ridden)', () => {
     // A peer standing on the player's head blocks the jump -- otherwise the
     // peer would fall through (Mario one-way platforms do not carry upward).
+    // The check can be inline-bang (`!_someoneOnTop()`) OR a nested if/else
+    // (refusal branch sets the twitch timer) -- either form is valid.
     expect(BOARD).toMatch(/PlayerSprite\.prototype\._someoneOnTop\s*=\s*function/);
-    expect(BOARD).toMatch(/!\s*this\._someoneOnTop\(\s*\)/);
+    expect(BOARD).toMatch(/this\._someoneOnTop\(\s*\)/);
+  });
+
+  it('Phase 2.4: a refused jump arms _blockedTwitchMs for the visual jitter', () => {
+    expect(BOARD).toMatch(/this\._blockedTwitchMs\s*=\s*150/);
+    // Render override applies a sine-based y offset while the timer is alive.
+    expect(BOARD).toMatch(/PlayerSprite\.prototype\.render\s*=\s*function/);
+    expect(BOARD).toMatch(/this\._blockedTwitchMs\s*>\s*0/);
   });
 });
 

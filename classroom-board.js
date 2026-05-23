@@ -664,6 +664,12 @@
     // ground or from a stationary carrier.
     this._jumpInheritedVx = 0;
 
+    // Phase 2.4 -- "blocked" visual feedback. When a jump is refused because
+    // someone is riding our head, this timer (ms) drives a brief y-jitter in
+    // render() so the local player sees their press registered. Local-only;
+    // the actual physics y never moves, so peers don't see the twitch.
+    this._blockedTwitchMs = 0;
+
     // Phase 2 -- position broadcast hook + rate-limit clock.
     // onPos -- function({x, y, state, vx}); mount() wires it to safeSend.
     // _now  -- injectable clock for deterministic tests (default Date.now).
@@ -705,20 +711,33 @@
     // fall through the moment we launch.
     if (this.input.jump && !this._jumpHandled) {
       this._jumpHandled = true;
-      if (this.state !== 'jumping' && this._onFloor() && !this._someoneOnTop()) {
-        this.vy    = JUMP_V0;
-        this.state = 'jumping';
-        // Capture the carrier's vx (from the carry delta) before we cut
-        // the standingOn link. dt > 0 guard avoids /0 in degenerate ticks.
-        if (this.standingOn && typeof this._standingOnLastX === 'number' && dt > 0) {
-          this._jumpInheritedVx = (this.standingOn.x - this._standingOnLastX) / dt;
+      if (this.state !== 'jumping' && this._onFloor()) {
+        if (this._someoneOnTop()) {
+          // Refused: someone's riding us. Brief visual twitch so the user
+          // sees their press registered even though we can't take off.
+          this._blockedTwitchMs = 150;
         } else {
-          this._jumpInheritedVx = 0;
+          this.vy    = JUMP_V0;
+          this.state = 'jumping';
+          // Capture the carrier's vx (from the carry delta) before we cut
+          // the standingOn link. dt > 0 guard avoids /0 in degenerate ticks.
+          if (this.standingOn && typeof this._standingOnLastX === 'number' && dt > 0) {
+            this._jumpInheritedVx = (this.standingOn.x - this._standingOnLastX) / dt;
+          } else {
+            this._jumpInheritedVx = 0;
+          }
+          this.standingOn = null;
         }
-        this.standingOn = null;
       }
     } else if (!this.input.jump) {
       this._jumpHandled = false;
+    }
+
+    // Phase 2.4 -- tick down the "blocked" twitch timer. render() reads this
+    // to apply a brief y-jitter offset; the timer reaches 0 and the sprite
+    // settles back to its real y.
+    if (this._blockedTwitchMs > 0) {
+      this._blockedTwitchMs = Math.max(0, this._blockedTwitchMs - dt * 1000);
     }
 
     // Track active motion -- repositionSprites stops auto-laying the player
@@ -929,6 +948,23 @@
       if (Math.abs(p.y - headY) < 3) { return true; }
     }
     return false;
+  };
+
+  // Phase 2.4 -- render override that applies the "blocked" jitter offset
+  // when _blockedTwitchMs > 0. Damped sine: amplitude ~3 px, frequency ~30 Hz
+  // over the 150 ms lifetime, fades to zero. Local-only -- the actual y
+  // (and therefore the broadcast y) never moves, so peers don't see it.
+  PlayerSprite.prototype.render = function (ctx) {
+    var yOffset = 0;
+    if (this._blockedTwitchMs > 0) {
+      var phase = this._blockedTwitchMs / 1000 * 30; // ~30 Hz oscillation
+      var decay = this._blockedTwitchMs / 150;       // 1.0 -> 0 over lifetime
+      yOffset = Math.sin(phase * Math.PI * 2) * 3 * decay;
+    }
+    var alpha = this.online ? 1.0 : 0.35;
+    if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
+    this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y + yOffset, this.scale, this.hue);
+    if (alpha !== 1.0) { ctx.restore(); }
   };
 
   // --- GreenLightOverlay entity -----------------------------------------

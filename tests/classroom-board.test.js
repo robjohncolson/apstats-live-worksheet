@@ -4372,6 +4372,37 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
     expect(t.p.state).toBe('jumping');
   });
 
+  it('Phase 2.4 twitch: a refused jump arms the _blockedTwitchMs timer', () => {
+    var peer = { x: 100, y: 176 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    expect(t.p._blockedTwitchMs).toBe(0);
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('idle');         // jump refused as before
+    expect(t.p._blockedTwitchMs).toBeGreaterThan(0);
+  });
+
+  it('Phase 2.4 twitch: a successful jump does NOT arm the timer', () => {
+    var t = makePS();                       // no peers, jumping from ground
+    expect(t.p._blockedTwitchMs).toBe(0);
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+    expect(t.p._blockedTwitchMs).toBe(0);
+  });
+
+  it('Phase 2.4 twitch: timer ticks down to 0 over time', () => {
+    var peer = { x: 100, y: 176 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p._blockedTwitchMs).toBeGreaterThan(0);
+    t.opts.input.jump = false;
+    // ~150 ms total lifetime; 20 ticks of 16 ms covers it comfortably.
+    for (var i = 0; i < 20; i++) { t.p.update(0.016); }
+    expect(t.p._blockedTwitchMs).toBe(0);
+  });
+
   it("Phase 2.1 fix: carry emits when peer x moves even if peer state isn't 'walking'", () => {
     // Reproduces the "suspended passenger" bug: on slower clients (or in the
     // 'arrived' window between the carrier's broadcasts) the peer's BoardSprite
