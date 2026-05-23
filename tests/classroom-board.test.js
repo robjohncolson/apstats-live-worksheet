@@ -4329,6 +4329,26 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
     expect(t.emitted.length).toBeGreaterThanOrEqual(n0 + 1);
   });
 
+  it("Phase 2.1 fix: carry emits when peer x moves even if peer state isn't 'walking'", () => {
+    // Reproduces the "suspended passenger" bug: on slower clients (or in the
+    // 'arrived' window between the carrier's broadcasts) the peer's BoardSprite
+    // state is NOT 'walking', so the old gate (`standingOn.state === 'walking'`)
+    // refused to fire and the passenger went silent in observers' views.
+    // The _carriedThisTick fallback now triggers whenever the peer's x
+    // actually moved this tick.
+    var peer = { x: 100, y: 200, state: 'arrived' };  // explicitly NOT 'walking'
+    var t = makePSpec({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176; t.p.vy = 0;
+    t.p.update(0.016);                              // establish standingOn + lastX=100
+    expect(t.p.standingOn).toBe(peer);
+    // Peer moves while remaining in the non-'walking' state.
+    peer.x = 110;
+    var n0 = t.emitted.length;
+    t.advance(100);
+    t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n0 + 1);
+  });
+
   // ----- Phase 2.3: platform velocity on jump -----
 
   it('Phase 2.3: jump from a moving peer captures _jumpInheritedVx', () => {

@@ -727,11 +727,19 @@
     // The peer's x change since our last tick gets added to our x BEFORE we
     // apply our own input motion. Mario-style platform carry. carryDx is 0
     // when we're not on anyone or the cache hasn't been seeded yet.
+    // _carriedThisTick is read below by the emit gate -- when carry actually
+    // moved us we must broadcast so observers see the carried motion. The
+    // earlier `standingOn.state === 'walking'` heuristic missed the windows
+    // where the carrier's BoardSprite was in 'arrived' state between
+    // broadcasts (especially on slower clients where a single _updateWalk
+    // tick reaches the target).
+    this._carriedThisTick = false;
     if (this.standingOn && typeof this._standingOnLastX === 'number') {
       var carryDx = this.standingOn.x - this._standingOnLastX;
       if (carryDx !== 0) {
         this.x += carryDx;
         this._moved = true;
+        this._carriedThisTick = true;
       }
     }
 
@@ -836,16 +844,19 @@
     }
 
     // Phase 2 -- broadcast position. 10 Hz while moving (any input held OR
-    // airborne OR being carried by a walking peer); ONE final "rest" snapshot
-    // when motion ends; then 0 Hz until the next input. The carry-emit lets
-    // a passenger's view stay in sync at the peer's broadcast cadence even
-    // though the passenger's own input is released.
+    // airborne OR carry actually moved us this tick OR the carrier's
+    // BoardSprite is in 'walking' state); ONE final "rest" snapshot when
+    // motion ends; then 0 Hz until the next input. The two carry signals
+    // are belt-and-suspenders -- _carriedThisTick is the precise signal
+    // (we just moved), beingCarried is the heuristic (the carrier is being
+    // chased via walkTo). Without _carriedThisTick the passenger went
+    // silent in the 'arrived' window between the carrier's broadcasts.
     if (this.onPos) {
       var beingCarried = (this.standingOn && this.standingOn.state === 'walking');
       var moving = (this.vx !== 0) || (this.state === 'jumping') ||
                    this.input.left  || this.input.right ||
                    this.input.jump  || this.input.up ||
-                   !!beingCarried;
+                   !!beingCarried || this._carriedThisTick;
       var now = this._now();
       if (moving) {
         if (now - this._lastPosMs >= POS_RATE_MS) {

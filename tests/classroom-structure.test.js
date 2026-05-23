@@ -782,6 +782,14 @@ describe('KEYBOARD_AVATAR Phase 2.1 -- side collision + carry', () => {
     expect(BOARD).toMatch(/this\.standingOn\.state\s*===\s*['"]walking['"]/);
   });
 
+  it('Phase 2 emit ALSO triggers on _carriedThisTick (the precise carry signal)', () => {
+    // The 'walking'-state heuristic alone misses the 'arrived' window between
+    // the carrier's broadcasts; _carriedThisTick fires whenever the peer's x
+    // actually moved this tick, keeping the passenger broadcasting at 10 Hz.
+    expect(BOARD).toMatch(/this\._carriedThisTick\s*=\s*true/);
+    expect(BOARD).toMatch(/\|\|\s*this\._carriedThisTick/);
+  });
+
   it('cache update at tick end: _standingOnLastX = standingOn?.x : null', () => {
     expect(BOARD).toMatch(/this\._standingOnLastX\s*=\s*this\.standingOn\s*\?\s*this\.standingOn\.x\s*:\s*null/);
   });
