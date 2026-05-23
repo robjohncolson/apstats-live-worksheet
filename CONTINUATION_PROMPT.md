@@ -7,7 +7,7 @@
 > this CONTINUATION refresh (feature work ended at `e8f9ac7`).
 > curriculum_render HEAD = `25a970b`. Linear, local==origin on both.
 >
-> ## Shipped this session (111) -- two distinct epics
+> ## Shipped this session (111) -- THREE distinct epics
 >
 > ### Epic 1 -- Live Classroom Scaling Knob 1 (rate adaptation)
 > The first request of the session. `LIVE_CLASSROOM_SCALING_SPEC.md` (s110)
@@ -63,17 +63,48 @@
 >   (setLive bypassed `_fanoutToMonitors` dedup; `_ensureMonitorWs`
 >   lacked try/catch + close/error handlers).
 >
+> ### Epic 3 -- Live Classroom v3 P3 (WebRTC star transport)
+> User asked to continue down the v3 chain. P3 swaps `classroom_pos`
+> from WS to WebRTC DataChannels in Live mode; cockpit is the hub.
+>
+> - **`acf986e`** (follow-alongs) -- `feat: Live Classroom v3 P3 client`.
+>   Cockpit gains a `studentPeers` Map + `_initPeerFor` per-student
+>   negotiation + DC relay loop. `_reconcileStudentPeers` driven from
+>   the board's `onStateChange` keeps the peer set in sync with the
+>   active section's roster (new joiners get a peer; departed students
+>   get a teardown). Board's `sendSignaling` queues payloads pre-open
+>   and flushes on `ws.onopen`. Student-side: `_handleP3Offer` (guest
+>   peer) + `_handleP3Ice` + `_teardownPeer`; outgoing classroom_pos
+>   prefers DC. Frozen contract: `LIVE_CLASSROOM_V3_P3_BUILD.md`. Tests
+>   +16 (including a NEW `tests/v3-p3-webrtc.test.js`).
+> - **`c64704e`** (curriculum_render) -- `feat: Live Classroom v3 P3 server`.
+>   Three new WS handlers (rtc_offer / rtc_answer / rtc_ice) route by
+>   section + `to: username`. classroom.js gains `findSocketByUsername`
+>   + `_wsEntry` helpers. Cross-section isolation verified by tests.
+> - **Codex review folded**: 1 BLOCKER (peer init raced the board WS
+>   readiness -- sendSignaling silently dropped + 3 s timeout left a
+>   dead stub; fix queues signaling + DELETES the entry on timeout so
+>   retry works); 2 MAJORs folded (late-joiner path was wired to the
+>   unsubscribed monitor delta -- moved to `_reconcileStudentPeers`
+>   off the board's `onStateChange`; and trickle-ICE ordering --
+>   per-peer pendingIce queue drained in setRemoteDescription's
+>   .then). One MAJOR DEFERRED to P3.1 (split-brain DC ↔ WS relay:
+>   WS-fallback students don't receive DC peers' positions; documented
+>   in the BUILD Correction; impact small in primary use where
+>   everyone's on the school network).
+>
 > ## Migration -- DONE this session (NONE outstanding)
 > Session 109's `0007_poll_archive.sql` was run by the user this
 > session (per the opening "migration has already been implemented"
 > note). No new migrations in s111.
 >
 > ## Test baselines
-> - curriculum_render **917/918** -- the only fail is the long-standing
->   unrelated `redox-chat.test.js` (NOT a regression). +15 over baseline.
-> - follow-alongs root **4912/4913** -- the only fail is the long-standing
->   unrelated `study-guide.test.js` (NOT a regression). +29 over baseline
->   (16 from scaling + 13 from v3 P1+P2). roster-server unchanged.
+> - curriculum_render **923/924** -- the only fail is the long-standing
+>   unrelated `redox-chat.test.js` (NOT a regression). +21 over baseline
+>   (15 from v3 P1+P2 + 6 from v3 P3 signaling helpers).
+> - follow-alongs root **4927/4928** -- the only fail is the long-standing
+>   unrelated `study-guide.test.js` (NOT a regression). +44 over baseline
+>   (16 scaling + 13 v3 P1+P2 + 15 v3 P3). roster-server unchanged.
 >
 > ## Open / verify
 > - cr `25a970b` deploys the `curriculumrender-production` WS service
@@ -88,17 +119,18 @@
 >   transitions cleanly; Exit Live re-subscribes monitor mode.
 >
 > ## NEXT -- queued (the v3 spec's remaining phases + sibling work)
-> - **v3 P3 -- WebRTC star transport.** Replaces `classroom_pos` in
->   Live mode with a per-student DataChannel to the cockpit. Tetris
->   precedent verbatim for the signaling (`rtc_offer/answer/ice`).
->   Adds the network probe + per-student WS fallback per
->   `LIVE_CLASSROOM_V3_SPEC.md` Section 6. **Blocks P4.**
+> - **v3 P3.1 (DEFERRED MAJOR fold)** -- the cockpit's DC.onmessage
+>   relays classroom_pos only to OTHER DC peers; WS-fallback students
+>   don't receive DC peers' positions. Fix: add `classroom_pos_relay`
+>   server route (teacher-only `from` override) so the cockpit can
+>   dual-send. ~30 lines. Implement only if real classroom usage
+>   surfaces a need.
 > - **v3 P4 -- vote-with-your-feet (first data mode).** Generalizes the
 >   single GateDoor to N labelled doorways; cockpit shows live histogram
 >   via the existing `ti84-plot.js`. Three new WS messages:
 >   `classroom_open_doorways`, `classroom_doorway_vote`,
 >   `classroom_close_doorways`. The PEDAGOGICAL KILLER feature.
->   Requires P3.
+>   Now unblocked (P3 shipped).
 > - **Teacher -> Student Console.** Sibling feature, separate spec NOT
 >   YET DRAFTED. Per-student contextual surface launched from clicking
 >   an avatar (Live mode) OR a row in `/class/grades` (outside Live).
