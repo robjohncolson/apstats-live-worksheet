@@ -793,6 +793,13 @@ describe('KEYBOARD_AVATAR Phase 2.1 -- side collision + carry', () => {
   it('cache update at tick end: _standingOnLastX = standingOn?.x : null', () => {
     expect(BOARD).toMatch(/this\._standingOnLastX\s*=\s*this\.standingOn\s*\?\s*this\.standingOn\.x\s*:\s*null/);
   });
+
+  it('Phase 2.4: jump trigger is gated on !_someoneOnTop() (no jump while ridden)', () => {
+    // A peer standing on the player's head blocks the jump -- otherwise the
+    // peer would fall through (Mario one-way platforms do not carry upward).
+    expect(BOARD).toMatch(/PlayerSprite\.prototype\._someoneOnTop\s*=\s*function/);
+    expect(BOARD).toMatch(/!\s*this\._someoneOnTop\(\s*\)/);
+  });
 });
 
 // ==========================================================================

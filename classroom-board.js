@@ -695,13 +695,17 @@
     if (this.input.right) { vxNext += WALK_SPEED; this.facingRight = true;  }
     this.vx = vxNext;
 
-    // Jump edge-trigger: only when on a floor (ground OR a peer's head);
-    // no auto-repeat while Space held. Jumping hops us OFF the carrier
-    // and inherits the carrier's horizontal velocity (Phase 2.3) so a
-    // jump from a moving peer sails with them, Mario-style.
+    // Jump edge-trigger: only when on a floor (ground OR a peer's head)
+    // AND no peer is standing on top of us; no auto-repeat while Space
+    // held. Jumping hops us OFF the carrier and inherits the carrier's
+    // horizontal velocity (Phase 2.3) so a jump from a moving peer sails
+    // with them, Mario-style. The someone-on-top check exists because a
+    // peer standing on our head has no way to track our upward motion
+    // (Mario platforms don't move up under you) -- without this they'd
+    // fall through the moment we launch.
     if (this.input.jump && !this._jumpHandled) {
       this._jumpHandled = true;
-      if (this.state !== 'jumping' && this._onFloor()) {
+      if (this.state !== 'jumping' && this._onFloor() && !this._someoneOnTop()) {
         this.vy    = JUMP_V0;
         this.state = 'jumping';
         // Capture the carrier's vx (from the carry delta) before we cut
@@ -902,6 +906,27 @@
       if (!this._horizontalOverlap(p)) { continue; }
       var landingY = p.y - this._spriteHeight;
       if (Math.abs(this.y - landingY) < 1) { return true; }
+    }
+    return false;
+  };
+
+  // True when a peer is standing on this player's head (their y matches our
+  // head y within sprite tolerance AND they horizontally overlap us). Used
+  // to gate jump: if someone's riding us, we can't launch -- they have no
+  // way to follow our upward motion (one-way platforms don't go up under
+  // you in Mario rules) and would fall through to ground level on every jump.
+  // The tolerance is intentionally tight (~3 px) so a peer FLOATING BELOW
+  // the head line doesn't count as riding -- only an actual head-stack does.
+  // 3 px covers interpolation jitter (_chaseY toward the broadcast y) plus
+  // the per-tick gravity bump on the rider.
+  PlayerSprite.prototype._someoneOnTop = function () {
+    var peersMap = this.peers();
+    var headY = this.y - this._spriteHeight;
+    for (var u in peersMap) {
+      var p = peersMap[u];
+      if (!p || p === this) { continue; }
+      if (!this._horizontalOverlap(p)) { continue; }
+      if (Math.abs(p.y - headY) < 3) { return true; }
     }
     return false;
   };

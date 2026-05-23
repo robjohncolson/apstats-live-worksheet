@@ -4329,6 +4329,49 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
     expect(t.emitted.length).toBeGreaterThanOrEqual(n0 + 1);
   });
 
+  // ----- Phase 2.4: jump-blocked when a peer is riding -----
+
+  it('Phase 2.4: jump is BLOCKED when a peer is standing on the player head', () => {
+    // Realistic scenario: Jane has landed on John's head (peer.y = John.y -
+    // spriteHeight). John presses Space -- the new gate refuses the jump
+    // because Jane would have no way to follow John's upward motion and
+    // would fall to the ground every time John launched.
+    var peer = { x: 100, y: 176 };   // exactly headY for a player at y=200
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('idle');         // jump refused
+    expect(t.p.vy).toBe(0);
+    expect(t.p._jumpInheritedVx).toBe(0);
+  });
+
+  it('Phase 2.4: jump fires normally when no peer is at head level', () => {
+    // Peer well below head -- not on top, jump goes through.
+    var peer = { x: 100, y: 200 };          // peer on the ground, NOT on head
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+  });
+
+  it('Phase 2.4: jump fires when a peer is floating high above (not riding)', () => {
+    // Peer well above head (smaller y = physically higher). Not on top.
+    var peer = { x: 100, y: 100 };          // floating up high
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+  });
+
+  it('Phase 2.4: jump fires when a peer is at head level but NOT horizontally overlapping', () => {
+    // Peer at the right y but far away in x -- not riding.
+    var peer = { x: 300, y: 176 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+  });
+
   it("Phase 2.1 fix: carry emits when peer x moves even if peer state isn't 'walking'", () => {
     // Reproduces the "suspended passenger" bug: on slower clients (or in the
     // 'arrived' window between the carrier's broadcasts) the peer's BoardSprite
