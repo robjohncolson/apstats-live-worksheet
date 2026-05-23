@@ -625,6 +625,13 @@
     this._spriteSize   = SPRITE_W * (opts.scale || SPRITE_SCALE);
     this._spriteHeight = SPRITE_H * (opts.scale || SPRITE_SCALE);
 
+    // Phase 2.1 -- carry-while-standing. standingOn is the peer sprite we're
+    // resting on top of (or null = ground / airborne). _standingOnLastX caches
+    // that peer's x at the END of the prior tick so update() can apply the
+    // peer's delta this tick (Mario-style platform carry).
+    this.standingOn       = null;
+    this._standingOnLastX = null;
+
     // Phase 2 -- position broadcast hook + rate-limit clock.
     // onPos -- function({x, y, state, vx}); mount() wires it to safeSend.
     // _now  -- injectable clock for deterministic tests (default Date.now).
@@ -657,12 +664,13 @@
     this.vx = vxNext;
 
     // Jump edge-trigger: only when on a floor (ground OR a peer's head);
-    // no auto-repeat while Space held.
+    // no auto-repeat while Space held. Jumping hops us OFF the carrier.
     if (this.input.jump && !this._jumpHandled) {
       this._jumpHandled = true;
       if (this.state !== 'jumping' && this._onFloor()) {
-        this.vy    = JUMP_V0;
-        this.state = 'jumping';
+        this.vy         = JUMP_V0;
+        this.state      = 'jumping';
+        this.standingOn = null;
       }
     } else if (!this.input.jump) {
       this._jumpHandled = false;
@@ -674,7 +682,19 @@
       this._moved = true;
     }
 
-    // Horizontal motion.
+    // -- Carry-while-standing (Phase 2.1) -- ride the peer we're on top of.
+    // The peer's x change since our last tick gets added to our x BEFORE we
+    // apply our own input motion. Mario-style platform carry. carryDx is 0
+    // when we're not on anyone or the cache hasn't been seeded yet.
+    if (this.standingOn && typeof this._standingOnLastX === 'number') {
+      var carryDx = this.standingOn.x - this._standingOnLastX;
+      if (carryDx !== 0) {
+        this.x += carryDx;
+        this._moved = true;
+      }
+    }
+
+    // Player's own horizontal motion.
     this.x += this.vx * dt;
 
     // Gravity + vertical integrate, always. The floor snap below puts us
@@ -687,8 +707,10 @@
     // Floor candidates: the ground (always blocks) + each peer's head as a
     // one-way platform. Land at the highest (smallest y) candidate the
     // player just crossed FROM ABOVE this tick (prevY <= floor && y >= floor).
-    var peersMap  = this.peers();
-    var bestFloor = null;
+    // Track which peer (if any) we landed on -- becomes the new standingOn.
+    var peersMap    = this.peers();
+    var bestFloor   = null;
+    var landingPeer = null;
     if (prevY <= this.groundY && this.y >= this.groundY) {
       bestFloor = this.groundY;
     }
@@ -699,7 +721,8 @@
       var landingY = p.y - this._spriteHeight;
       if (prevY <= landingY && this.y >= landingY) {
         if (bestFloor === null || landingY < bestFloor) {
-          bestFloor = landingY;
+          bestFloor   = landingY;
+          landingPeer = p;
         }
       }
     }
@@ -711,19 +734,32 @@
         this.idleTimer       = 0;
         this.currentIdleFrame = 0;
       }
+      this.standingOn = landingPeer;   // peer ref, or null (= on the ground)
     } else if (this.vy > 0 && this.state !== 'jumping') {
       // Falling without a floor (walked off a peer / off a ledge) -- mark
-      // airborne so the frame select uses the jump pose.
-      this.state = 'jumping';
+      // airborne so the frame select uses the jump pose AND drop the carry.
+      this.state      = 'jumping';
+      this.standingOn = null;
     }
 
-    // Soft-push: SAME-LEVEL peers only (don't kick the player off a head).
-    for (var u2 in peersMap) {
-      var pp = peersMap[u2];
-      if (!pp || pp === this) { continue; }
-      if (this._sameLevel(pp) && this._horizontalOverlap(pp)) {
-        var dx = this.x - pp.x;
-        this.x += (dx >= 0 ? 1 : -1) * PUSH_DELTA;
+    // -- Solid horizontal collision (Phase 2.1) -- a same-level peer in
+    // the path stops motion: snap self to just-touching the peer's edge.
+    // Skipped while airborne -- mid-jump you pass each other laterally.
+    if (this.state !== 'jumping') {
+      for (var u2 in peersMap) {
+        var pp = peersMap[u2];
+        if (!pp || pp === this) { continue; }
+        if (!this._sameLevel(pp) || !this._horizontalOverlap(pp)) { continue; }
+        if (this.vx > 0) {
+          this.x = pp.x - this._spriteSize;
+        } else if (this.vx < 0) {
+          this.x = pp.x + this._spriteSize;
+        } else {
+          // Stationary but overlapping (peer walked into us). Push self
+          // outward by the smaller distance.
+          var dxC = this.x - pp.x;
+          this.x = (dxC >= 0) ? (pp.x + this._spriteSize) : (pp.x - this._spriteSize);
+        }
         this._moved = true;
       }
     }
@@ -733,6 +769,9 @@
     var maxX = cw - this._spriteSize;
     if (this.x < 0)    { this.x = 0; }
     if (this.x > maxX) { this.x = maxX; }
+
+    // Cache the carrier's x for next tick's carry math.
+    this._standingOnLastX = this.standingOn ? this.standingOn.x : null;
 
     // Frame selection -- direction-aware via _directedFrame.
     if (this.state === 'jumping') {
@@ -750,13 +789,16 @@
     }
 
     // Phase 2 -- broadcast position. 10 Hz while moving (any input held OR
-    // airborne OR carrying horizontal velocity); ONE final "rest" snapshot
-    // when motion ends; then 0 Hz until the next input. The "rest" snapshot
-    // lets peers see exactly where we landed without polling at idle.
+    // airborne OR being carried by a walking peer); ONE final "rest" snapshot
+    // when motion ends; then 0 Hz until the next input. The carry-emit lets
+    // a passenger's view stay in sync at the peer's broadcast cadence even
+    // though the passenger's own input is released.
     if (this.onPos) {
+      var beingCarried = (this.standingOn && this.standingOn.state === 'walking');
       var moving = (this.vx !== 0) || (this.state === 'jumping') ||
                    this.input.left  || this.input.right ||
-                   this.input.jump  || this.input.up;
+                   this.input.jump  || this.input.up ||
+                   !!beingCarried;
       var now = this._now();
       if (moving) {
         if (now - this._lastPosMs >= POS_RATE_MS) {

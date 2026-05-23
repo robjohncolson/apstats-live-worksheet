@@ -4211,6 +4211,124 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
     expect(t.p.y).toBeCloseTo(156, 0);
   });
 
+  // ----- Phase 2.1: solid side collision + carry-while-standing -----
+
+  it('side collision: walking right into a same-level peer is blocked', () => {
+    var peer = { x: 150, y: 200 };
+    var t = makePS({ x: 100, peers: function () { return { peer: peer }; } });
+    t.opts.input.right = true;
+    for (var i = 0; i < 200; i++) { t.p.update(0.016); }
+    // Player can't pass; rests against the peer's left edge (peer.x - spriteSize).
+    expect(t.p.x).toBeCloseTo(peer.x - 20, 0);
+  });
+
+  it('side collision: walking left into a same-level peer is blocked', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ x: 200, peers: function () { return { peer: peer }; } });
+    t.opts.input.left = true;
+    for (var i = 0; i < 200; i++) { t.p.update(0.016); }
+    // Rests against the peer's right edge.
+    expect(t.p.x).toBeCloseTo(peer.x + 20, 0);
+  });
+
+  it('side collision: skipped while airborne (pass laterally during a jump)', () => {
+    // Peer to the right at the same y. Player jumps and walks right; in the
+    // air the side collision is skipped, so player should sail past peer.x.
+    var peer = { x: 150, y: 200 };
+    var t = makePS({ x: 100, peers: function () { return { peer: peer }; } });
+    t.opts.input.jump  = true;
+    t.opts.input.right = true;
+    t.p.update(0.016);
+    t.opts.input.jump = false;
+    var maxX = t.p.x;
+    for (var i = 0; i < 100; i++) {
+      t.p.update(0.016);
+      if (t.p.x > maxX) maxX = t.p.x;
+      if (t.p.state !== 'jumping') break;
+    }
+    // During the jump the player should have passed peer.x - spriteSize (130).
+    expect(maxX).toBeGreaterThan(peer.x - 20);
+  });
+
+  it('carry: standing on a peer, peer.x moves -> player x tracks the delta', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    // Place player on the peer's head.
+    t.p.y = 176;
+    t.p.vy = 0;
+    t.p.update(0.016);                   // first tick establishes standingOn + lastX
+    expect(t.p.standingOn).toBe(peer);
+    // Peer moves 50 to the right.
+    peer.x = 150;
+    t.p.update(0.016);
+    // Player should have moved with the peer (delta 50).
+    expect(t.p.x).toBeCloseTo(150, 0);
+  });
+
+  it('carry: player input ADDS on top of carry (not replaced)', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176;
+    t.p.vy = 0;
+    t.p.update(0.016);
+    expect(t.p.standingOn).toBe(peer);
+    var x0 = t.p.x;
+    // Peer moves +50; player also presses Right (own delta ~1.92).
+    peer.x += 50;
+    t.opts.input.right = true;
+    t.p.update(0.016);
+    // Player moved by carry (+50) PLUS own walk step.
+    expect(t.p.x).toBeGreaterThan(x0 + 50);
+  });
+
+  it('carry: jumping off clears standingOn (player is airborne)', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176;
+    t.p.vy = 0;
+    t.p.update(0.016);
+    expect(t.p.standingOn).toBe(peer);
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.standingOn).toBeNull();
+    expect(t.p.state).toBe('jumping');
+  });
+
+  it('carry: walking off the edge clears standingOn (player falls)', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176;
+    t.p.vy = 0;
+    t.opts.input.right = true;
+    // Walk far enough that x-overlap is lost.
+    for (var i = 0; i < 30; i++) { t.p.update(0.016); }
+    // No longer on the peer; falling toward the ground.
+    expect(t.p.standingOn).toBeNull();
+    expect(t.p.y).toBeGreaterThan(176);
+  });
+
+  it('standingOn = null after landing on the ground (not on any peer)', () => {
+    var t = makePS({ x: 50, peers: function () { return {}; } });
+    // First tick: drop onto ground from initial y=200.
+    t.p.update(0.016);
+    expect(t.p.standingOn).toBeNull();
+  });
+
+  it('Phase 2: emits at 10 Hz while being carried by a walking peer (no input)', () => {
+    var peer = { x: 100, y: 200, state: 'walking' };  // peer is walking somewhere
+    var t = makePSpec({ peers: function () { return { peer: peer }; } });
+    // Place player on peer head and establish standingOn.
+    t.p.y = 176;
+    t.p.vy = 0;
+    t.p.update(0.016);
+    expect(t.p.standingOn).toBe(peer);
+    // No player input; but standingOn.state === 'walking' counts as moving.
+    var n0 = t.emitted.length;
+    t.advance(100);
+    t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n0 + 1);
+  });
+
   // ----- Phase 2: cross-client position broadcast -----
 
   function makePSpec(extra) {

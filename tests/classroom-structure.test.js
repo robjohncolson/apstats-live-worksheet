@@ -680,8 +680,14 @@ describe('KEYBOARD_AVATAR Phase 1.5 -- direction + stackable head-jumping', () =
     expect(BOARD).toMatch(/prevY\s*<=\s*landingY\s*&&\s*this\.y\s*>=\s*landingY/);
   });
 
-  it('soft-push is gated on _sameLevel so it cannot kick off peer heads', () => {
-    expect(BOARD).toMatch(/this\._sameLevel\(\s*pp\s*\)\s*&&\s*this\._horizontalOverlap\(\s*pp\s*\)/);
+  it('side collision is gated on _sameLevel so it cannot kick off peer heads', () => {
+    // Phase 2.1 reshaped the soft-push inline-AND into a guard early-return,
+    // but the predicate is the same: only act when on the same level AND
+    // horizontally overlapping. Match both the OLD (Phase 1.5) and NEW
+    // (Phase 2.1) forms so the contract is the invariant, not the syntax.
+    var newForm = /!\s*this\._sameLevel\(\s*pp\s*\)\s*\|\|\s*!\s*this\._horizontalOverlap\(\s*pp\s*\)/;
+    var oldForm = /this\._sameLevel\(\s*pp\s*\)\s*&&\s*this\._horizontalOverlap\(\s*pp\s*\)/;
+    expect(newForm.test(BOARD) || oldForm.test(BOARD)).toBe(true);
   });
 });
 
@@ -732,5 +738,49 @@ describe('KEYBOARD_AVATAR Phase 2 -- position broadcast wiring', () => {
   it('_reduce threads pos through classroom_state and classroom_member_update', () => {
     expect(BOARD).toMatch(/pos:\s*m\.pos\s*!=\s*null\s*\?\s*m\.pos\s*:\s*null/);
     expect(BOARD).toMatch(/pos:\s*upd\.pos\s*!=\s*null/);
+  });
+});
+
+// ==========================================================================
+// KEYBOARD_AVATAR Phase 2.1 -- solid side collision + carry-while-standing
+// ==========================================================================
+
+describe('KEYBOARD_AVATAR Phase 2.1 -- side collision + carry', () => {
+  it('PlayerSprite carries standingOn + _standingOnLastX state', () => {
+    expect(BOARD).toMatch(/this\.standingOn\s*=\s*null/);
+    expect(BOARD).toMatch(/this\._standingOnLastX\s*=\s*null/);
+  });
+
+  it('carry: applies (standingOn.x - _standingOnLastX) as a horizontal delta', () => {
+    expect(BOARD).toMatch(/this\.standingOn\.x\s*-\s*this\._standingOnLastX/);
+  });
+
+  it('floor check tracks the landing peer as the new standingOn', () => {
+    expect(BOARD).toMatch(/landingPeer\s*=\s*p/);
+    expect(BOARD).toMatch(/this\.standingOn\s*=\s*landingPeer/);
+  });
+
+  it('jumping clears standingOn (hops off the carrier)', () => {
+    expect(BOARD).toMatch(/this\.state\s*=\s*['"]jumping['"];\s*\n?\s*this\.standingOn\s*=\s*null/);
+  });
+
+  it('solid side collision snaps player to the peer edge (not soft-push)', () => {
+    // The snap-to-edge form: this.x = pp.x - this._spriteSize (right-hit)
+    // and this.x = pp.x + this._spriteSize (left-hit). Both must appear.
+    expect(BOARD).toMatch(/this\.x\s*=\s*pp\.x\s*-\s*this\._spriteSize/);
+    expect(BOARD).toMatch(/this\.x\s*=\s*pp\.x\s*\+\s*this\._spriteSize/);
+  });
+
+  it('side collision is skipped while airborne (state !== "jumping" gate)', () => {
+    // The gate appears before the side-collision loop.
+    expect(BOARD).toMatch(/if\s*\(\s*this\.state\s*!==\s*['"]jumping['"]\s*\)\s*\{[\s\S]*?_sameLevel/);
+  });
+
+  it('Phase 2 emit includes the "being carried" signal (peer.state === walking)', () => {
+    expect(BOARD).toMatch(/this\.standingOn\.state\s*===\s*['"]walking['"]/);
+  });
+
+  it('cache update at tick end: _standingOnLastX = standingOn?.x : null', () => {
+    expect(BOARD).toMatch(/this\._standingOnLastX\s*=\s*this\.standingOn\s*\?\s*this\.standingOn\.x\s*:\s*null/);
   });
 });
