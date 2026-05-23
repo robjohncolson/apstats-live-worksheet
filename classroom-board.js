@@ -818,7 +818,27 @@
 
   PlayerSprite.prototype.update = function (dt) {
     // Drain (walkTo target-based) overrides keyboard -- one way out the door.
-    if (this.state === 'walking') { this._updateWalk(dt); return; }
+    // s111 P4 UX: doorway walks are user-initiated optimistic drains.
+    // Pressing Up DURING a doorway walk aborts it (the user changed
+    // their mind). state -> idle so keyboard input works again. The
+    // server-side vote stays cast; the user can walk to a different
+    // doorway + Up to switch votes (server's castDoorwayVote handles
+    // the decrement/increment). The gate drain (also 'walking' state)
+    // is NOT cancelable -- it's server-driven, not optimistic.
+    if (this.state === 'walking') {
+      if (this._isDoorwayWalk && this.input.up && !this._upHandled) {
+        this._upHandled       = true;
+        this._isDoorwayWalk   = false;
+        this.state            = 'idle';
+        this.idleTimer        = 0;
+        this.currentIdleFrame = 0;
+        this.targetX          = null;
+        return;
+      }
+      if (!this.input.up) { this._upHandled = false; }
+      this._updateWalk(dt);
+      return;
+    }
 
     // Up edge-trigger: fire the action callback once per press, never on hold.
     if (this.input.up && !this._upHandled) {
@@ -1197,7 +1217,7 @@
   function Doorway(getGroundY, opts) {
     this.getGroundY = getGroundY;
     this.x          = opts.x;        // center x of the hole
-    this.width      = opts.width || 24;
+    this.width      = opts.width || 28;
     this.label      = opts.label || '';
     this.doorId     = opts.doorId || '';
     this.count      = 0;             // updated from state.doorways.tally
@@ -1205,17 +1225,29 @@
   Doorway.prototype.update = function () {};
   Doorway.prototype.render = function (ctx) {
     var groundY = this.getGroundY();
-    var holeH   = 30;
+    var holeH   = 32;
     var holeW   = this.width;
-    // Hole (visually the same dark slot as GateDoor).
+    var halfW   = holeW / 2;
+    // s111 P4 visual: tom-and-jerry mouse hole -- black rectangle
+    // sitting on the ground with a black semicircular dome on top.
+    // Single fill path so the two shapes blend cleanly.
     ctx.fillStyle = '#000';
-    ctx.fillRect(this.x - holeW / 2, groundY - holeH, holeW, holeH);
-    // Label above.
-    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(this.x - halfW, groundY);
+    ctx.lineTo(this.x - halfW, groundY - holeH);
+    // Dome arch: half-circle above the rectangle's top edge. Canvas
+    // angles run clockwise from +x; using counterclockwise:true draws
+    // the upper half (the dome) from left back around to right.
+    ctx.arc(this.x, groundY - holeH, halfW, Math.PI, 0, true);
+    ctx.lineTo(this.x + halfW, groundY);
+    ctx.closePath();
+    ctx.fill();
+    // Label above the dome.
+    ctx.fillStyle = '#000';
     ctx.font = 'bold 11px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(this.label, this.x, groundY - holeH - 6);
-    // Count below.
+    ctx.fillText(this.label, this.x, groundY - holeH - halfW - 6);
+    // Count below the baseline.
     ctx.font = '10px Arial';
     ctx.fillText(String(this.count), this.x, groundY + 14);
   };
@@ -1596,10 +1628,14 @@
             safeSend({ type: 'classroom_doorway_vote', id: state.doorways.id, doorId: d.doorId });
             // Optimistic local drain: walk through the doorway and out.
             // Mirror the gate drain (a walkTo target outside the canvas).
+            // Mark the walk as a doorway walk so the player's update()
+            // knows to allow Up-to-cancel (gate drain is server-driven;
+            // doorway walk is optimistic and the user might change mind).
             var cwd = engine.canvas.width / (root.devicePixelRatio || 1);
             player.targetX = (d.x < cwd / 2) ? -d.width : cwd + d.width;
             player.walkDir = (player.targetX < player.x) ? -1 : 1;
             player.state   = 'walking';
+            player._isDoorwayWalk = true;
             return;
           }
         }
