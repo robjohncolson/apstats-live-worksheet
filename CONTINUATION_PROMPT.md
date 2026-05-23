@@ -160,13 +160,26 @@
 >   eating INTO the rectangle); flipped to false. Vertical absorption
 >   replaced the legacy horizontal-walk-off-canvas: 'entering-doorway'
 >   state animates the sprite up by sprite-height over 350 ms.
-> - **`23585c4`** + **`7f1c1b0`** revised -- `fix: in-place fade absorb`.
+> - **`23585c4`** + **`da4db53`** -- `fix: in-place fade absorb`.
 >   Teacher feedback: drop the y translation, scale + fade in place.
->   Then `23585c4`: scale was indistinguishable in practice -- just
->   alpha fade. The PlayerSprite has its OWN render override
->   (`_blockedTwitchMs` is local-only too) -- the fade math had to be
->   added there, not on BoardSprite. _absorbProgress 0->1 drives the
->   alpha multiply; close-hook resets `_hidden` + state on close.
+>   Then `da4db53` discovered the PlayerSprite has its OWN render
+>   override (`_blockedTwitchMs` is local-only too) so the fade math
+>   had to be added there, not on BoardSprite. Drop the scale too
+>   (indistinguishable in practice); just alpha fade.
+> - **`8fa7be6`** -- `fix: doorway absorb is bidirectional + non-physical`.
+>   Final piece -- the absorbed state was LOCAL only, so peers saw
+>   Jane at full opacity, walked INTO her, and could stand on her
+>   head. Plus a cancel bug: `_hidden=true` was never cleared when
+>   she pressed Up to come back. Fix is five-part: (a) emit path
+>   translates `entering-doorway` -> `in-doorway` on the wire;
+>   (b) `applyPos` snaps `peer.state='in-doorway'` and skips walkTo
+>   (the absorbed peer is stationary); (c) `BoardSprite.update`
+>   animates `_peerAbsorbProgress` 0->1 over 350 ms (and back on
+>   exit); (d) `BoardSprite.render` multiplies alpha by
+>   `(1 - _peerAbsorbProgress)`; (e) `PlayerSprite` collision /
+>   floor / `_someoneOnTop` checks skip peers in `in-doorway` state
+>   so Joe walks through where Jane was. Cancel bug: clear `_hidden`
+>   whenever `_absorbProgress < 1`.
 >
 > ## Migration -- DONE this session (NONE outstanding)
 > Session 109's `0007_poll_archive.sql` was run by the user this
@@ -188,10 +201,10 @@
 >   doorways + role-overwrite fixes are LIVE; user verified end-to-end:
 >   armGate works, openDoorways works, mouse-hole renders, fade-on-Up
 >   absorption works, Up-to-cancel works.
-> - follow-alongs HEAD = `23585c4` republishes GH Pages. All cockpit
+> - follow-alongs HEAD = `8fa7be6` republishes GH Pages. All cockpit
 >   surfaces verified by the user during the s111 P4 smoke test (the
->   diagnostic loop in messages 5-15 of session 111 caught + fixed
->   every issue in real time).
+>   diagnostic loop in messages 5-20 of session 111 caught + fixed
+>   every issue in real time, incl. the bidirectional absorb).
 > - One observation worth a note (NOT a confirmed bug): user briefly
 >   saw two browser tabs disagreeing on a peer's avatar position
 >   during a fresh Live session. A refresh resolved it; likely a brief
