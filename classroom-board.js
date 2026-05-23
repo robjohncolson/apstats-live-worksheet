@@ -667,6 +667,16 @@
     // Set by applyPos for an inbound classroom_pos; chase smooths the 10 Hz
     // broadcast cadence into a continuous y motion. Idle when _yTarget is null.
     this._chaseY(dt);
+    // s111 P4 UX rev4: peer-side doorway fade. When state is set to
+    // 'in-doorway' (via applyPos), animate _peerAbsorbProgress 0->1
+    // over 350 ms; on exit (state changes), reverse 1->0. The render
+    // multiplies alpha by (1 - _peerAbsorbProgress).
+    var pStep = dt * 1000 / 350;
+    if (this.state === 'in-doorway') {
+      this._peerAbsorbProgress = Math.min(1, (this._peerAbsorbProgress || 0) + pStep);
+    } else if ((this._peerAbsorbProgress || 0) > 0) {
+      this._peerAbsorbProgress = Math.max(0, this._peerAbsorbProgress - pStep);
+    }
   };
 
   // Phase 2.2 -- step y toward _yTarget at Y_CHASE_SPEED. When the gap is
@@ -730,11 +740,14 @@
   };
 
   BoardSprite.prototype.render = function (ctx) {
-    // s111 P4: peers don't carry _absorbProgress (only the LOCAL
-    // PlayerSprite enters doorways), but keep the _hidden guard
-    // here for symmetry / defense-in-depth.
     if (this._hidden) { return; }
     var alpha = this.online ? 1.0 : 0.35;
+    // s111 P4 UX rev4: peer in 'in-doorway' state -> fade out via
+    // _peerAbsorbProgress (animated in update()).
+    if ((this._peerAbsorbProgress || 0) > 0) {
+      alpha *= (1 - this._peerAbsorbProgress);
+    }
+    if (alpha <= 0) { return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
     this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
@@ -844,11 +857,12 @@
       return;
     }
 
-    // s111 P4 UX rev3: in-place doorway absorption (no translation).
-    // _absorbProgress (0..1) drives scale 1->0.5 and alpha 1->0 in
-    // BoardSprite.render. Press Up again to reverse direction; when
-    // progress hits 1 the sprite is _hidden (render skips); when
-    // progress hits 0 with dir<0, cancelled -> back to idle.
+    // s111 P4 UX rev4: in-place doorway absorption. _absorbProgress
+    // (0..1) drives alpha fade in render. Press Up again to reverse.
+    // - progress reaches 1: _hidden=true (local render skips).
+    // - progress reaches 0 with dir<0: cancel complete, back to idle.
+    // - _hidden CLEARED whenever progress < 1 (so a cancel from full
+    //   absorb correctly fades the sprite back in).
     if (this.state === 'entering-doorway') {
       if (this.input.up && !this._upHandled) {
         this._upHandled = true;
@@ -860,6 +874,9 @@
       this._absorbProgress += this._absorbDir * (stepMs / this._absorbDurationMs);
       if (this._absorbProgress < 0) { this._absorbProgress = 0; }
       if (this._absorbProgress > 1) { this._absorbProgress = 1; }
+      // s111 hotfix: cancel from full absorb left _hidden=true forever.
+      // Clear it whenever progress drops below 1.
+      if (this._absorbProgress < 1) { this._hidden = false; }
       if (this._absorbProgress === 0 && this._absorbDir < 0) {
         this.state = 'idle';
         this._isDoorwayWalk = false;
@@ -982,6 +999,9 @@
     for (var u in peersMap) {
       var p = peersMap[u];
       if (!p || p === this) { continue; }
+      // s111 P4 UX rev4: a peer in 'in-doorway' is non-physical.
+      // Skip them for floor / head-platform candidates.
+      if (p.state === 'in-doorway') { continue; }
       if (!this._horizontalOverlap(p)) { continue; }
       var landingY = p.y - this._spriteHeight;
       if (prevY <= landingY && this.y >= landingY) {
@@ -1015,6 +1035,10 @@
       for (var u2 in peersMap) {
         var pp = peersMap[u2];
         if (!pp || pp === this) { continue; }
+        // s111 P4 UX rev4: a peer in 'in-doorway' is non-physical.
+        // Skip the horizontal collision so the local player can walk
+        // through where the absorbed peer was standing.
+        if (pp.state === 'in-doorway') { continue; }
         if (!this._sameLevel(pp) || !this._horizontalOverlap(pp)) { continue; }
         if (this.vx > 0) {
           this.x = pp.x - this._spriteSize;
@@ -1069,6 +1093,12 @@
                    this.input.jump  || this.input.up ||
                    !!beingCarried || this._carriedThisTick;
       var now = this._now();
+      // s111 P4 UX rev4: translate local 'entering-doorway' state to
+      // the wire-side 'in-doorway' so peers know to fade + skip the
+      // collision check. Same string both before and after the absorb
+      // animation completes; the local _absorbProgress / _hidden flags
+      // stay LOCAL.
+      var wireState = (this.state === 'entering-doorway') ? 'in-doorway' : this.state;
       if (moving) {
         // Clear the rest-emitted latch UNCONDITIONALLY on a moving tick so a
         // brief move that doesn't trip the cadence gate (more likely at the
@@ -1077,11 +1107,11 @@
         // emits NOTHING -- peers miss the entire displacement.
         this._restEmitted = false;
         if (now - this._lastPosMs >= _currentEmitRateMs(this._getMemberCount())) {
-          try { this.onPos({ x: this.x, y: this.y, state: this.state, vx: this.vx }); } catch (_) {}
+          try { this.onPos({ x: this.x, y: this.y, state: wireState, vx: this.vx }); } catch (_) {}
           this._lastPosMs   = now;
         }
       } else if (!this._restEmitted) {
-        try { this.onPos({ x: this.x, y: this.y, state: this.state, vx: 0 }); } catch (_) {}
+        try { this.onPos({ x: this.x, y: this.y, state: wireState, vx: 0 }); } catch (_) {}
         this._lastPosMs   = now;
         this._restEmitted = true;
       }
@@ -1137,6 +1167,9 @@
     for (var u in peersMap) {
       var p = peersMap[u];
       if (!p || p === this) { continue; }
+      // s111 P4 UX rev4: an in-doorway peer is non-physical -- don't
+      // block our jump just because they happen to be at our head y.
+      if (p.state === 'in-doorway') { continue; }
       if (!this._horizontalOverlap(p)) { continue; }
       if (Math.abs(p.y - headY) < 3) { return true; }
     }
@@ -2354,6 +2387,18 @@
       if (!peer) { return; }
       if (peer instanceof PlayerSprite) { return; } // never overwrite the local player
       peer._moved = true;
+      // s111 P4 UX rev4: 'in-doorway' is a non-physical state. Snap
+      // the peer's state field so render fades + the local player's
+      // collision/floor checks skip them; DON'T trigger walkTo (the
+      // peer is stationary while absorbed).
+      if (msg.state === 'in-doorway') {
+        peer.state = 'in-doorway';
+        return;
+      }
+      // Peer just exited the doorway -- restore state from the wire.
+      if (peer.state === 'in-doorway' && typeof msg.state === 'string') {
+        peer.state = msg.state;
+      }
       if (typeof msg.x === 'number' && Math.abs(peer.x - msg.x) > 1) {
         peer.walkTo(msg.x);
       }
