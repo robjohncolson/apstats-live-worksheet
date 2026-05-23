@@ -103,7 +103,27 @@
   var GRAVITY       = 800;    // px/s^2 downward
   var PUSH_DELTA    = 0.6;    // legacy soft-push (kept for Phase-1 structure pin)
   var JUMP_FRAME    = 5;      // sprite frame for the airborne pose (cr-matching)
-  var POS_RATE_MS   = 100;    // Phase 2: 10 Hz position broadcast while moving
+  // LIVE_CLASSROOM_SCALING knob 1 -- emit cadence scales to room size.
+  // Each row is [memberCountUpperBound, intervalMs]; the LAST row's bound
+  // is Infinity so any larger room maps to its interval. Tuning is
+  // one-line: edit a row's intervalMs to widen/narrow the cadence.
+  var POS_RATE_TABLE = [
+    [8,        100],   // <= 8 members         -> 10 Hz   (was POS_RATE_MS)
+    [20,       200],   //  9 - 20 members      ->  5 Hz
+    [40,       300],   // 21 - 40 members      ->  3.33 Hz
+    [Infinity, 500]    // > 40 members         ->  2 Hz
+  ];
+
+  // Look up the broadcast interval for a given room size. Linear scan --
+  // POS_RATE_TABLE has 4 rows, branch-prediction-friendly. Falls through
+  // to the last row's value (the Infinity bound guarantees a match).
+  function _currentEmitRateMs(memberCount) {
+    var n = (typeof memberCount === 'number' && memberCount > 0) ? memberCount : 1;
+    for (var i = 0; i < POS_RATE_TABLE.length; i++) {
+      if (n <= POS_RATE_TABLE[i][0]) { return POS_RATE_TABLE[i][1]; }
+    }
+    return POS_RATE_TABLE[POS_RATE_TABLE.length - 1][1];
+  }
   var Y_CHASE_SPEED = 600;    // Phase 2.2: peer y interpolation speed (px/s)
 
   // --- unique canvas id generator ---------------------------------------
@@ -677,6 +697,15 @@
     this._now          = (typeof opts.now === 'function') ? opts.now : function () { return Date.now(); };
     this._lastPosMs    = 0;
     this._restEmitted  = false;
+
+    // LIVE_CLASSROOM_SCALING knob 1 -- room-size source. mount() supplies
+    // a closure over state.members so the emit gate can read the live
+    // count each tick. Default returns 1 -- a sprite with no roommates
+    // is just the local player, so 10 Hz is the right back-compat rate
+    // for tests / harness code that omits this opt.
+    this._getMemberCount = (typeof opts.getMemberCount === 'function')
+      ? opts.getMemberCount
+      : function () { return 1; };
   }
   PlayerSprite.prototype = Object.create(BoardSprite.prototype);
   PlayerSprite.prototype.constructor = PlayerSprite;
@@ -882,10 +911,15 @@
                    !!beingCarried || this._carriedThisTick;
       var now = this._now();
       if (moving) {
-        if (now - this._lastPosMs >= POS_RATE_MS) {
+        // Clear the rest-emitted latch UNCONDITIONALLY on a moving tick so a
+        // brief move that doesn't trip the cadence gate (more likely at the
+        // scaled 200/300/500 ms intervals) still produces a final rest
+        // snapshot on the next idle tick. Without this, a sub-gate burst
+        // emits NOTHING -- peers miss the entire displacement.
+        this._restEmitted = false;
+        if (now - this._lastPosMs >= _currentEmitRateMs(this._getMemberCount())) {
           try { this.onPos({ x: this.x, y: this.y, state: this.state, vx: this.vx }); } catch (_) {}
           this._lastPosMs   = now;
-          this._restEmitted = false;
         }
       } else if (!this._restEmitted) {
         try { this.onPos({ x: this.x, y: this.y, state: this.state, vx: 0 }); } catch (_) {}
@@ -1591,6 +1625,13 @@
         baseOpts.onUpPressed = handlePlayerUp;
         baseOpts.canvasW     = function () {
           return engine.canvas.width / (root.devicePixelRatio || 1);
+        };
+        // LIVE_CLASSROOM_SCALING knob 1 -- live room-size source.
+        // Reads state.members through the mount-scope closure on each
+        // tick; no protocol change, no caching (Object.keys is cheap at
+        // class scale).
+        baseOpts.getMemberCount = function () {
+          return Object.keys(state.members).length;
         };
         // Phase 2 -- broadcast position to roommates.
         baseOpts.onPos = function (msg) {

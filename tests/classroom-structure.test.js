@@ -696,8 +696,14 @@ describe('KEYBOARD_AVATAR Phase 1.5 -- direction + stackable head-jumping', () =
 // ==========================================================================
 
 describe('KEYBOARD_AVATAR Phase 2 -- position broadcast wiring', () => {
-  it('defines POS_RATE_MS (100 ms = 10 Hz)', () => {
-    expect(BOARD).toMatch(/var\s+POS_RATE_MS\s*=\s*100/);
+  it('defines POS_RATE_TABLE (size -> interval, ms) replacing POS_RATE_MS', () => {
+    expect(BOARD).toMatch(/var\s+POS_RATE_TABLE\s*=\s*\[/);
+    expect(BOARD).toMatch(/\[\s*8\s*,\s*100\s*\]/);
+    expect(BOARD).toMatch(/\[\s*20\s*,\s*200\s*\]/);
+    expect(BOARD).toMatch(/\[\s*40\s*,\s*300\s*\]/);
+    expect(BOARD).toMatch(/\[\s*Infinity\s*,\s*500\s*\]/);
+    // The pre-scaling constant must be GONE -- no transitional alias.
+    expect(BOARD).not.toMatch(/var\s+POS_RATE_MS\b/);
   });
 
   it('PlayerSprite carries onPos + an injectable _now clock', () => {
@@ -705,11 +711,22 @@ describe('KEYBOARD_AVATAR Phase 2 -- position broadcast wiring', () => {
     expect(BOARD).toMatch(/this\._now\s*=\s*\(\s*typeof\s+opts\.now\s*===\s*['"]function['"]\s*\)/);
   });
 
-  it('PlayerSprite.update emits at 10 Hz while moving + one rest snapshot', () => {
-    // The emit block is at the bottom of update; check the gating logic
-    // (moving flag + POS_RATE_MS interval + restEmitted one-shot).
-    expect(BOARD).toMatch(/now\s*-\s*this\._lastPosMs\s*>=\s*POS_RATE_MS/);
+  it('PlayerSprite.update emits at the room-size-scaled cadence + one rest snapshot', () => {
+    // Emit gate reads the threshold-mapped interval; rest-snapshot rule unchanged.
+    expect(BOARD).toMatch(/now\s*-\s*this\._lastPosMs\s*>=\s*_currentEmitRateMs\(\s*this\._getMemberCount\(\)\s*\)/);
     expect(BOARD).toMatch(/this\._restEmitted\s*=\s*true/);
+  });
+
+  it('exposes _currentEmitRateMs(memberCount) -> intervalMs helper', () => {
+    expect(BOARD).toMatch(/function\s+_currentEmitRateMs\s*\(\s*memberCount\s*\)/);
+  });
+
+  it('PlayerSprite reads opts.getMemberCount (default returns 1)', () => {
+    expect(BOARD).toMatch(/this\._getMemberCount\s*=\s*\(\s*typeof\s+opts\.getMemberCount\s*===\s*['"]function['"]\s*\)/);
+  });
+
+  it('addSprite wires baseOpts.getMemberCount on the local PlayerSprite branch', () => {
+    expect(BOARD).toMatch(/baseOpts\.getMemberCount\s*=\s*function\s*\(\s*\)\s*\{\s*\n?\s*return\s+Object\.keys\(\s*state\.members\s*\)\.length\s*;\s*\}/);
   });
 
   it('mount() wires onPos -> safeSend({type: classroom_pos, ...})', () => {

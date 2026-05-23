@@ -4507,7 +4507,8 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
       peers:   function () { return {}; },
       canvasW: function () { return 400; },
       onPos:   function (msg) { emitted.push({ x: msg.x, y: msg.y, state: msg.state, vx: msg.vx, t: stubClock }); },
-      now:     function () { return stubClock; }
+      now:     function () { return stubClock; },
+      getMemberCount: function () { return 1; }   // default: small room => 10 Hz (back-compat)
     };
     if (extra) { for (var k in extra) { opts[k] = extra[k]; } }
     var p = new m.ClassroomBoard._PlayerSprite(ss, opts);
@@ -4711,3 +4712,241 @@ describe('classroom-board _reduce -- Phase 2 pos in WireMember', () => {
     expect(s2.members.bob.status).toBe('voted');   // status DID change
   });
 });
+
+// =============================================================
+// LIVE_CLASSROOM_SCALING knob 1 -- room-size-scaled emit cadence
+// =============================================================
+
+describe('classroom-board -- scaling: rate adaptation by room size', () => {
+
+  // Re-declare the helpers needed by this block; they mirror the harness
+  // used by the Phase-2 emit-cadence tests above so the cadence math is
+  // exercised end-to-end through the real PlayerSprite.update path.
+  function makeBoardLocal() { return makeBoard(); }
+  function makePSpecMembers(memberCount) {
+    var m  = makeBoardLocal();
+    var ss = new m.win.SpriteSheet('sprite.png', 80, 96, {});
+    var emitted   = [];
+    var stubClock = 0;
+    var opts = {
+      x: 100, y: 200, scale: 0.25, hue: 0, online: true, label: 'me',
+      input:   { left: false, right: false, jump: false, up: false },
+      peers:   function () { return {}; },
+      canvasW: function () { return 400; },
+      onPos:   function (msg) { emitted.push({ x: msg.x, y: msg.y, state: msg.state, vx: msg.vx, t: stubClock }); },
+      now:     function () { return stubClock; },
+      getMemberCount: function () { return memberCount; }
+    };
+    var p = new m.ClassroomBoard._PlayerSprite(ss, opts);
+    return {
+      p: p, opts: opts, emitted: emitted,
+      advance: function (ms) { stubClock += ms; }
+    };
+  }
+
+  // -- threshold map --
+
+  it('threshold map: <=8 members -> 100 ms (10 Hz)', () => {
+    var t = makePSpecMembers(8);
+    t.opts.input.right = true;
+    // First moving tick: emits immediately (lastPosMs starts at 0).
+    t.advance(100); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    // After 99 ms, gate must NOT release (100 ms threshold).
+    t.advance(99);  t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);
+    // After +1 ms (total 100 ms since last emit), it WILL release.
+    t.advance(1);   t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('threshold map: 9-20 members -> 200 ms (5 Hz)', () => {
+    var t = makePSpecMembers(15);
+    t.opts.input.right = true;
+    // Advance past the FIRST gate so an emit anchors n1 -- at 200 ms the
+    // initial 100 ms advance pattern leaves emitted.length at 0.
+    t.advance(200); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(199); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);
+    t.advance(1);   t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('threshold map: 21-40 members -> 300 ms (3.33 Hz)', () => {
+    var t = makePSpecMembers(30);
+    t.opts.input.right = true;
+    t.advance(300); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(299); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);
+    t.advance(1);   t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('threshold map: >40 members -> 500 ms (2 Hz)', () => {
+    var t = makePSpecMembers(50);
+    t.opts.input.right = true;
+    t.advance(500); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(499); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);
+    t.advance(1);   t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  // -- boundary values: confirm the table is left-closed (n <= bound) --
+
+  it('boundary: 1 member maps to 100 ms (10 Hz)', () => {
+    var t = makePSpecMembers(1);
+    t.opts.input.right = true;
+    t.advance(100); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    t.advance(99);  t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);
+    t.advance(1);   t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('boundary: 20 members maps to 200 ms (upper bound of the 5 Hz row)', () => {
+    var t = makePSpecMembers(20);
+    t.opts.input.right = true;
+    t.advance(200); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(199); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);
+    t.advance(1);   t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('boundary: 40 members maps to 300 ms (upper bound of the 3.33 Hz row)', () => {
+    var t = makePSpecMembers(40);
+    t.opts.input.right = true;
+    t.advance(300); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(299); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);
+    t.advance(1);   t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('boundary: 9 members maps to 200 ms (just past the 10 Hz row)', () => {
+    var t = makePSpecMembers(9);
+    t.opts.input.right = true;
+    // Advance past the 200 ms gate so the first emit anchors n1.
+    t.advance(200); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(150); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);          // still below 200 ms since last emit
+    t.advance(50);  t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('boundary: 21 members maps to 300 ms (just past the 5 Hz row)', () => {
+    var t = makePSpecMembers(21);
+    t.opts.input.right = true;
+    t.advance(300); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(250); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);          // still below 300 ms since last emit
+    t.advance(50);  t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('boundary: 41 members maps to 500 ms (just past the 3.33 Hz row)', () => {
+    var t = makePSpecMembers(41);
+    t.opts.input.right = true;
+    t.advance(500); t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(400); t.p.update(0.016);
+    expect(t.emitted.length).toBe(n1);          // still below 500 ms since last emit
+    t.advance(100); t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  // -- the rest-snapshot rule is independent of the cadence --
+
+  it('rest snapshot still fires exactly once when motion stops (large room)', () => {
+    var t = makePSpecMembers(30);
+    t.opts.input.right = true;
+    // Advance past the 300 ms gate so a moving emit anchors nMoving.
+    t.advance(300); t.p.update(0.016);
+    var nMoving = t.emitted.length;
+    expect(nMoving).toBeGreaterThanOrEqual(1);
+    // Release; one rest snapshot expected -- the rest path is unconditional
+    // on the cadence row, so the very next idle tick fires it.
+    t.opts.input.right = false;
+    t.advance(100); t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(nMoving + 1);
+    var nAfterRest = t.emitted.length;
+    // Long quiet -- no re-emit regardless of cadence row.
+    t.advance(2000); t.p.update(0.016);
+    expect(t.emitted.length).toBe(nAfterRest);
+  });
+
+  it('rest snapshot fires after a brief move that does not trip the cadence gate (large room)', () => {
+    // Codex MAJOR fold: at the scaled 300 ms gate a sub-gate burst (press +
+    // release inside 300 ms) used to emit NOTHING -- the gate never opened,
+    // and the rest-emitted latch was left true from the prior idle tick, so
+    // the next idle tick suppressed the rest snapshot too. Observers missed
+    // the entire displacement. With the fix, _restEmitted is cleared on
+    // every moving tick (before the gate check), so the next idle tick
+    // guarantees one rest snapshot.
+    var t = makePSpecMembers(30);                // gate = 300 ms
+    // Initial idle tick fires the construction rest snapshot.
+    t.p.update(0.016);
+    expect(t.emitted.length).toBe(1);
+    // Brief move: 100 ms < 300 ms gate -- no moving emit fires.
+    t.opts.input.right = true;
+    t.advance(100); t.p.update(0.016);
+    expect(t.emitted.length).toBe(1);
+    // Release; the next idle tick MUST emit a rest snapshot at the new
+    // position (vx field = 0 in the snapshot per the rest path).
+    t.opts.input.right = false;
+    t.advance(50);  t.p.update(0.016);
+    expect(t.emitted.length).toBe(2);
+    var last = t.emitted[t.emitted.length - 1];
+    expect(last.vx).toBe(0);
+    // Long quiet -- no re-emit regardless of cadence row.
+    t.advance(2000); t.p.update(0.016);
+    expect(t.emitted.length).toBe(2);
+  });
+
+  // -- back-compat: no getMemberCount supplied --
+
+  it('back-compat: PlayerSprite without opts.getMemberCount defaults to 10 Hz', () => {
+    var m  = makeBoardLocal();
+    var ss = new m.win.SpriteSheet('sprite.png', 80, 96, {});
+    var emitted   = [];
+    var stubClock = 0;
+    var opts = {
+      x: 100, y: 200, scale: 0.25, hue: 0, online: true, label: 'me',
+      input:   { left: false, right: false, jump: false, up: false },
+      peers:   function () { return {}; },
+      canvasW: function () { return 400; },
+      onPos:   function (msg) { emitted.push({ x: msg.x, y: msg.y, state: msg.state, vx: msg.vx, t: stubClock }); },
+      now:     function () { return stubClock; }
+      // NOTE: getMemberCount intentionally omitted.
+    };
+    var p = new m.ClassroomBoard._PlayerSprite(ss, opts);
+    opts.input.right = true;
+    stubClock += 100; p.update(0.016);
+    var n1 = emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    stubClock += 99;  p.update(0.016);
+    expect(emitted.length).toBe(n1);             // gate at 100 ms not yet open
+    stubClock += 1;   p.update(0.016);
+    expect(emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+});
+
