@@ -730,27 +730,13 @@
   };
 
   BoardSprite.prototype.render = function (ctx) {
-    // s111 P4 UX rev2: skip render when fully absorbed into a doorway.
+    // s111 P4: peers don't carry _absorbProgress (only the LOCAL
+    // PlayerSprite enters doorways), but keep the _hidden guard
+    // here for symmetry / defense-in-depth.
     if (this._hidden) { return; }
     var alpha = this.online ? 1.0 : 0.35;
-    var renderScale = this.scale;
-    var renderX     = this.x;
-    var renderY     = this.y;
-    // s111 P4 UX rev3: scale-to-50% + fade-to-0 during doorway absorb.
-    // Recenter the shrinking sprite so it appears to shrink TOWARD
-    // its own center, not toward the top-left corner.
-    if (typeof this._absorbProgress === 'number' && this._absorbProgress > 0) {
-      var p = this._absorbProgress;
-      alpha *= (1 - p);
-      renderScale = this.scale * (1 - p * 0.5);
-      var dW = (SPRITE_W * (this.scale - renderScale)) / 2;
-      var dH = (SPRITE_H * (this.scale - renderScale)) / 2;
-      renderX = this.x + dW;
-      renderY = this.y + dH;
-    }
-    if (alpha <= 0) { return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
-    this.spriteSheet.drawFrame(ctx, this.frameIndex, renderX, renderY, renderScale, this.hue);
+    this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
   };
 
@@ -1162,6 +1148,8 @@
   // over the 150 ms lifetime, fades to zero. Local-only -- the actual y
   // (and therefore the broadcast y) never moves, so peers don't see it.
   PlayerSprite.prototype.render = function (ctx) {
+    // s111 P4 UX rev4: skip when fully absorbed into a doorway.
+    if (this._hidden) { return; }
     var yOffset = 0;
     if (this._blockedTwitchMs > 0) {
       var phase = this._blockedTwitchMs / 1000 * 30; // ~30 Hz oscillation
@@ -1169,6 +1157,13 @@
       yOffset = Math.sin(phase * Math.PI * 2) * 3 * decay;
     }
     var alpha = this.online ? 1.0 : 0.35;
+    // s111 P4 UX rev4: doorway absorption is fade-only (the prior
+    // scale-down was indistinguishable in practice; just the alpha
+    // fade reads as "entering the hole"). Multiply alpha by (1-p).
+    if (typeof this._absorbProgress === 'number' && this._absorbProgress > 0) {
+      alpha *= (1 - this._absorbProgress);
+    }
+    if (alpha <= 0) { return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
     this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y + yOffset, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }

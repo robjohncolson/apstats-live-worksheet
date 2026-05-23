@@ -7,7 +7,7 @@
 > this CONTINUATION refresh (feature work ended at `e8f9ac7`).
 > curriculum_render HEAD = `25a970b`. Linear, local==origin on both.
 >
-> ## Shipped this session (111) -- FOUR distinct epics
+> ## Shipped this session (111) -- FIVE distinct epics
 >
 > ### Epic 1 -- Live Classroom Scaling Knob 1 (rate adaptation)
 > The first request of the session. `LIVE_CLASSROOM_SCALING_SPEC.md` (s110)
@@ -124,30 +124,79 @@
 >   exclusion ENFORCED on both sides. MAJOR -- local sprite respawns to
 >   canvas center if the optimistic doorway-walk left it off-canvas.
 >
+> ### Epic 5 -- P4 smoke-test hotfix series (commits 5ef360d -> 23585c4)
+> Real-classroom smoke test of P4 surfaced 5 distinct bugs the test
+> suite didn't catch. Each was diagnosed via the diagnostic-first
+> protocol (WS.prototype.send / onmessage monkey-patch in console) +
+> fixed inline. No new specs / BUILD docs -- direct patches.
+>
+> - **`8a9d103`** (cr) -- `fix: re-join overwrites member.role`. The
+>   ROOT CAUSE behind everything: classroom_join's else-branch
+>   preserved member.role across re-joins (only hue was overwritten).
+>   A teacher who first joined as student (e.g. via the Desk) then
+>   later as teacher (cockpit) stayed registered as student forever.
+>   armGate / openDoorways / closeDoorways all failed the role check
+>   SILENTLY (return {broadcasts:[]} -- no error to the client).
+>   v1a-era latent bug (since session 104); only surfaced now because
+>   the same Lynn account hit both surfaces. Fix: `member.role = role;`
+>   on re-join (same pattern as hue). +2 regression tests.
+> - **`5ef360d`** (fa) -- `fix: cockpit never tries to peer with itself`.
+>   Caused by the role bug: server saw cockpit user as 'student',
+>   so `_reconcileStudentPeers` iterated the cockpit's own member +
+>   called `_initPeerFor` on its own username. Defense-in-depth: skip
+>   self in `_initPeerFor`.
+> - **`1283be1`** (fa) -- `feat: doorway mouse-hole visual + Up-to-cancel`.
+>   First teacher-feedback pass: rectangle gained a semicircular dome
+>   on top (Tom & Jerry mouse hole); Up during the walk-out cancels +
+>   returns to idle (`_isDoorwayWalk` flag distinguishes from server-
+>   driven gate drain).
+> - **`3b4f1ff`** (fa) -- `fix: cockpit auto-resets stale mode state`.
+>   P4 smoke test stuck on an armed gate from earlier: openDoorways
+>   silently rejected. cockpit now tracks `_lastSummary` in
+>   `onStateChange` and the Open Doorways / Arm Gate buttons issue a
+>   `boardHandle.reset()` first when a conflicting mode is detected.
+> - **`7f1c1b0`** (fa) -- `fix: doorway visual + walk-into-doorway absorb`.
+>   Dome was inverted (counterclockwise=true traced the bottom half,
+>   eating INTO the rectangle); flipped to false. Vertical absorption
+>   replaced the legacy horizontal-walk-off-canvas: 'entering-doorway'
+>   state animates the sprite up by sprite-height over 350 ms.
+> - **`23585c4`** + **`7f1c1b0`** revised -- `fix: in-place fade absorb`.
+>   Teacher feedback: drop the y translation, scale + fade in place.
+>   Then `23585c4`: scale was indistinguishable in practice -- just
+>   alpha fade. The PlayerSprite has its OWN render override
+>   (`_blockedTwitchMs` is local-only too) -- the fade math had to be
+>   added there, not on BoardSprite. _absorbProgress 0->1 drives the
+>   alpha multiply; close-hook resets `_hidden` + state on close.
+>
 > ## Migration -- DONE this session (NONE outstanding)
 > Session 109's `0007_poll_archive.sql` was run by the user this
 > session (per the opening "migration has already been implemented"
 > note). No new migrations in s111.
 >
 > ## Test baselines
-> - curriculum_render **934/935** -- the only fail is the long-standing
->   unrelated `redox-chat.test.js` (NOT a regression). +32 over baseline
->   (15 v3 P1+P2 + 6 v3 P3 + 11 v3 P4).
+> - curriculum_render **936/937** -- the only fail is the long-standing
+>   unrelated `redox-chat.test.js` (NOT a regression). +34 over baseline
+>   (15 v3 P1+P2 + 6 v3 P3 + 11 v3 P4 + 2 hotfix-regression).
 > - follow-alongs root **4941/4942** -- the only fail is the long-standing
 >   unrelated `study-guide.test.js` (NOT a regression). +58 over baseline
 >   (16 scaling + 13 v3 P1+P2 + 15 v3 P3 + 14 v3 P4). roster-server unchanged.
+>   The hotfix series added no new follow-alongs tests (existing 398
+>   classroom-board + classroom-structure stayed green throughout).
 >
 > ## Open / verify
-> - cr `25a970b` deploys the `curriculumrender-production` WS service
->   (Railway). Smoke once it lands: `classroom_monitor_start` returns
->   a `classroom_state_all` snapshot; `classroom_live_start` broadcasts
->   `classroom_live_state` to the section's sockets + every monitor;
->   the Desk shows the Live pill; the cockpit's global view updates
->   incrementally as students join/leave. DogePresence / Tetris
->   unregressed (no shared handler changes).
-> - follow-alongs `e8f9ac7` republishes GH Pages. Eyeball the cockpit:
->   default view shows the global presence list; the Go Live button
->   transitions cleanly; Exit Live re-subscribes monitor mode.
+> - cr HEAD = `8a9d103` deploys the WS service (Railway). The P4
+>   doorways + role-overwrite fixes are LIVE; user verified end-to-end:
+>   armGate works, openDoorways works, mouse-hole renders, fade-on-Up
+>   absorption works, Up-to-cancel works.
+> - follow-alongs HEAD = `23585c4` republishes GH Pages. All cockpit
+>   surfaces verified by the user during the s111 P4 smoke test (the
+>   diagnostic loop in messages 5-15 of session 111 caught + fixed
+>   every issue in real time).
+> - One observation worth a note (NOT a confirmed bug): user briefly
+>   saw two browser tabs disagreeing on a peer's avatar position
+>   during a fresh Live session. A refresh resolved it; likely a brief
+>   pre-DataChannel window where one tab is on WS and the other on
+>   WebRTC. If it recurs after both tabs settle, dig deeper.
 >
 > ## NEXT -- queued (the v3 spec's remaining phases + sibling work)
 > - **v3 P3.1 (DEFERRED MAJOR fold)** -- the cockpit's DC.onmessage
