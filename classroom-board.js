@@ -733,8 +733,24 @@
     // s111 P4 UX rev2: skip render when fully absorbed into a doorway.
     if (this._hidden) { return; }
     var alpha = this.online ? 1.0 : 0.35;
+    var renderScale = this.scale;
+    var renderX     = this.x;
+    var renderY     = this.y;
+    // s111 P4 UX rev3: scale-to-50% + fade-to-0 during doorway absorb.
+    // Recenter the shrinking sprite so it appears to shrink TOWARD
+    // its own center, not toward the top-left corner.
+    if (typeof this._absorbProgress === 'number' && this._absorbProgress > 0) {
+      var p = this._absorbProgress;
+      alpha *= (1 - p);
+      renderScale = this.scale * (1 - p * 0.5);
+      var dW = (SPRITE_W * (this.scale - renderScale)) / 2;
+      var dH = (SPRITE_H * (this.scale - renderScale)) / 2;
+      renderX = this.x + dW;
+      renderY = this.y + dH;
+    }
+    if (alpha <= 0) { return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
-    this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y, this.scale, this.hue);
+    this.spriteSheet.drawFrame(ctx, this.frameIndex, renderX, renderY, renderScale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
   };
 
@@ -842,11 +858,11 @@
       return;
     }
 
-    // s111 P4 UX rev2: vertical doorway absorption.
-    // The sprite moves UP from _absorbStartY toward _absorbTargetY
-    // over _absorbDurationMs. Press Up again to reverse direction.
-    // When progress hits 1: _hidden=true (render skips the sprite).
-    // When progress hits 0 with dir<0: cancelled, back to idle.
+    // s111 P4 UX rev3: in-place doorway absorption (no translation).
+    // _absorbProgress (0..1) drives scale 1->0.5 and alpha 1->0 in
+    // BoardSprite.render. Press Up again to reverse direction; when
+    // progress hits 1 the sprite is _hidden (render skips); when
+    // progress hits 0 with dir<0, cancelled -> back to idle.
     if (this.state === 'entering-doorway') {
       if (this.input.up && !this._upHandled) {
         this._upHandled = true;
@@ -858,17 +874,13 @@
       this._absorbProgress += this._absorbDir * (stepMs / this._absorbDurationMs);
       if (this._absorbProgress < 0) { this._absorbProgress = 0; }
       if (this._absorbProgress > 1) { this._absorbProgress = 1; }
-      this.y = this._absorbStartY + (this._absorbTargetY - this._absorbStartY) * this._absorbProgress;
       if (this._absorbProgress === 0 && this._absorbDir < 0) {
-        // Cancelled all the way back -- return to idle.
         this.state = 'idle';
         this._isDoorwayWalk = false;
         this._absorbDir = 1;
         return;
       }
       if (this._absorbProgress === 1) {
-        // Fully absorbed -- hide; the dome covers any residual draw,
-        // but skip drawing entirely as a tiny optimization.
         this._hidden = true;
         return;
       }
@@ -1664,18 +1676,13 @@
           var d = doorwayEntities[i];
           if (d.containsX(px, player._spriteSize / 2)) {
             safeSend({ type: 'classroom_doorway_vote', id: state.doorways.id, doorId: d.doorId });
-            // s111 P4 UX rev2: VERTICAL absorption -- the sprite walks
-            // UP into the doorway and the dome (drawn on top of
-            // sprites) swallows them. Press Up again to reverse + step
-            // back out. No horizontal slide off the canvas.
+            // s111 P4 UX rev3: scale-to-50% + fade-to-0 in place.
+            // No y translation -- the sprite stays where they walked
+            // to and visually shrinks + fades, suggesting they have
+            // entered the doorway. Press Up again to reverse.
             player._absorbProgress = 0;
             player._absorbDir = 1;
             player._absorbDurationMs = 350;
-            player._absorbStartY = player.y;
-            // Move up by sprite-height so the sprite is fully inside
-            // the doorway region (rectangle + dome) and hidden behind
-            // the black fill.
-            player._absorbTargetY = player.y - (player._spriteHeight || 24);
             player.state = 'entering-doorway';
             player._isDoorwayWalk = true;
             return;
