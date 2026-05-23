@@ -730,6 +730,19 @@
               archivePoll(cp.id, section, todayIsoDate(),
                 cp.question, cp.options || [], cp.tally || [], !!cp.blind);
             }
+            // v3 P3 Codex MAJOR fold: track members via the board's
+            // authoritative state (NOT the monitor delta, which is
+            // unsubscribed during Live). On every state-change, ensure
+            // a peer connection exists for each online student in the
+            // section, and tear down peers for students who left.
+            _reconcileStudentPeers(summary);
+          },
+          onSignaling: function (msg) {
+            // v3 P3: rtc_answer / rtc_ice from a student peer; route to
+            // the cockpit's hub manager. The board's role is 'teacher'
+            // so the WS handler delegates these instead of consuming
+            // them locally.
+            _handleRtcSignaling(msg);
           }
         });
         // The board mounted -- now reveal the board-dependent sections.
@@ -1008,6 +1021,13 @@
           }
         }
         if (!found) room.members.push(msg.member);
+        // v3 P3: a new student in the active Live section -> open WebRTC.
+        if (_cockpitMode === 'live'
+            && msg.section === _liveSectionRef
+            && msg.member && msg.member.role === 'student'
+            && msg.member.online !== false) {
+          _initPeerFor(msg.member.username);
+        }
       } else if (msg.type === 'classroom_member_left') {
         room.members = room.members.filter(function(m) { return m.username !== msg.username; });
       } else if (msg.type === 'classroom_live_state') {
@@ -1070,6 +1090,20 @@
       // Tell the server this section is Live now.
       _sendLiveStart(section);
       _liveSectionRef = section;
+      // v3 P3: open WebRTC to every student currently in the section.
+      // _globalState carries the monitor snapshot per section; pull the
+      // student usernames for the active section and initiate.
+      var sec = (_globalState.sections || []).filter(function(s) {
+        return s.section === section;
+      })[0];
+      if (sec && sec.members) {
+        for (var mi = 0; mi < sec.members.length; mi++) {
+          var m = sec.members[mi];
+          if (m && m.role === 'student' && m.online !== false) {
+            _initPeerFor(m.username);
+          }
+        }
+      }
     }
 
     function exitLiveMode() {
@@ -1079,6 +1113,7 @@
       teardown();
       if (section) _sendLiveStop(section);
       _liveSectionRef = null;
+      _teardownAllPeers();
       startMonitorMode();
     }
 
@@ -1103,6 +1138,184 @@
           setTimeout(function() { try { s.close(); } catch (_) {} }, 250);
         });
       } catch (_) {}
+    }
+
+    // ===== v3 P3: WebRTC star -- cockpit is the hub for Live mode =====
+    //
+    // On Live entry, the cockpit opens an RTCPeerConnection per student
+    // in the active section + a 'livedata' DataChannel; classroom_pos
+    // flows via DC when open, falling back to WS per-student. The
+    // cockpit RELAYS each incoming DC classroom_pos to the OTHER
+    // students' DCs (server is not in this path); WS-arrived
+    // classroom_pos messages are already broadcast by the server, so
+    // the cockpit does NOT re-relay them via DC.
+
+    var STUN_ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
+    var P3_DC_TIMEOUT_MS = 3000;     // 3 s to negotiate; else fall back
+
+    // studentPeers[username] = { pc, dc, dcOpen, timeoutId }
+    var studentPeers = {};
+
+    function _initPeerFor(username) {
+      if (studentPeers[username]) { return studentPeers[username]; }
+      if (typeof RTCPeerConnection === 'undefined') { return null; }
+      // v3 P3 Codex BLOCKER fold (part B): the timeout deletes the
+      // entry from studentPeers so a later _initPeerFor (e.g. on the
+      // next onStateChange tick once the board WS is actually open)
+      // can retry rather than returning the dead stub.
+      // Codex MAJOR fold: per-peer ICE queue. ICE candidates from the
+      // student can arrive BEFORE the answer's setRemoteDescription
+      // resolves; without queuing, addIceCandidate rejects.
+      var entry = {
+        pc: null, dc: null, dcOpen: false, timeoutId: null,
+        remoteDescSet: false, pendingIce: []
+      };
+      try {
+        entry.pc = new RTCPeerConnection({ iceServers: STUN_ICE_SERVERS });
+      } catch (_) {
+        return null;   // WebRTC unavailable -- cockpit stays in WS mode
+      }
+      entry.dc = entry.pc.createDataChannel('livedata');
+      _wireDataChannel(entry.dc, username);
+      entry.pc.onicecandidate = function(ev) {
+        if (ev.candidate) {
+          _sendSignalingOverWs({ type: 'rtc_ice', to: username, candidate: ev.candidate });
+        }
+      };
+      // Fallback timeout: if the DC isn't open in 3 s, the peer is
+      // assumed WS-fallback. Tear down + DELETE the entry so a later
+      // onStateChange-driven retry can re-initiate.
+      entry.timeoutId = setTimeout(function() {
+        if (!entry.dcOpen) {
+          try { entry.pc.close(); } catch (_) {}
+          if (studentPeers[username] === entry) {
+            delete studentPeers[username];
+          }
+        }
+      }, P3_DC_TIMEOUT_MS);
+      studentPeers[username] = entry;
+      // Initiate the offer.
+      entry.pc.createOffer().then(function(offer) {
+        return entry.pc.setLocalDescription(offer);
+      }).then(function() {
+        _sendSignalingOverWs({ type: 'rtc_offer', to: username, sdp: entry.pc.localDescription });
+      }).catch(function() { /* offer creation failed -- fall back to WS */ });
+      return entry;
+    }
+
+    function _wireDataChannel(dc, username) {
+      dc.onopen = function() {
+        if (studentPeers[username]) {
+          studentPeers[username].dcOpen = true;
+          if (studentPeers[username].timeoutId) {
+            clearTimeout(studentPeers[username].timeoutId);
+            studentPeers[username].timeoutId = null;
+          }
+        }
+      };
+      dc.onclose = function() {
+        if (studentPeers[username]) { studentPeers[username].dcOpen = false; }
+      };
+      dc.onmessage = function(ev) {
+        var msg = null;
+        try { msg = JSON.parse(ev.data); } catch (_) { return; }
+        if (!msg || msg.type !== 'classroom_pos') return;
+        // Relay this position to every OTHER student's DC. Skip the
+        // sender. WS path is not touched -- the sender did not use it,
+        // and the server therefore did not broadcast.
+        for (var other in studentPeers) {
+          if (other === username) continue;
+          var p = studentPeers[other];
+          if (p && p.dcOpen && p.dc) {
+            try { p.dc.send(JSON.stringify({
+              type: 'classroom_pos',
+              from: username,
+              x: msg.x, y: msg.y, state: msg.state, vx: msg.vx
+            })); } catch (_) {}
+          }
+        }
+      };
+    }
+
+    function _handleRtcSignaling(msg) {
+      if (!msg || !msg.from || !msg.type) return;
+      var fromUser = msg.from;
+      var entry = studentPeers[fromUser];
+      if (!entry || !entry.pc) return;
+      if (msg.type === 'rtc_answer' && msg.sdp) {
+        // v3 P3 Codex MAJOR fold: queue ICE until the remote-description
+        // promise resolves; otherwise ICE that arrived first would reject
+        // via the unhandled-rejection path.
+        entry.pc.setRemoteDescription(msg.sdp).then(function() {
+          entry.remoteDescSet = true;
+          while (entry.pendingIce.length > 0) {
+            var cand = entry.pendingIce.shift();
+            try { entry.pc.addIceCandidate(cand).catch(function() {}); } catch (_) {}
+          }
+        }).catch(function() {});
+      } else if (msg.type === 'rtc_ice' && msg.candidate) {
+        if (!entry.remoteDescSet) {
+          entry.pendingIce.push(msg.candidate);
+          return;
+        }
+        try { entry.pc.addIceCandidate(msg.candidate).catch(function() {}); } catch (_) {}
+      }
+    }
+
+    function _teardownAllPeers() {
+      for (var u in studentPeers) {
+        var p = studentPeers[u];
+        if (p) {
+          if (p.timeoutId) { clearTimeout(p.timeoutId); }
+          if (p.dc) { try { p.dc.close(); } catch (_) {} }
+          if (p.pc) { try { p.pc.close(); } catch (_) {} }
+        }
+      }
+      studentPeers = {};
+    }
+
+    // v3 P3 Codex MAJOR fold: reconcile the peer set against the board's
+    // authoritative onStateChange summary. Adds peers for new online
+    // students, tears down peers for students who left or went offline.
+    // Idempotent: if the student already has a peer, this is a no-op for
+    // that entry; if a peer is gone, it closes + deletes it.
+    function _reconcileStudentPeers(summary) {
+      if (_cockpitMode !== 'live' || !summary || !summary.members) { return; }
+      var members = summary.members;
+      // Add peers for online students that don't have one.
+      for (var uname in members) {
+        var mem = members[uname];
+        if (!mem) continue;
+        if (mem.role === 'student' && mem.online !== false) {
+          if (!studentPeers[uname]) {
+            _initPeerFor(uname);
+          }
+        }
+      }
+      // Tear down peers for students who are gone / offline.
+      for (var existing in studentPeers) {
+        var m = members[existing];
+        if (!m || m.online === false || m.role !== 'student') {
+          var p = studentPeers[existing];
+          if (p) {
+            if (p.timeoutId) { clearTimeout(p.timeoutId); }
+            if (p.dc) { try { p.dc.close(); } catch (_) {} }
+            if (p.pc) { try { p.pc.close(); } catch (_) {} }
+          }
+          delete studentPeers[existing];
+        }
+      }
+    }
+
+    // _sendSignalingOverWs: routed through the BOARD's WS, exposed via
+    // boardHandle.sendSignaling. The board has done classroom_join with
+    // (section, teacherUsername, role: 'teacher') so its wsIndex entry
+    // lets the server's rtc_* relay find it. The monitor WS does NOT
+    // have a section binding -- it would be dropped server-side.
+    function _sendSignalingOverWs(payload) {
+      if (boardHandle && typeof boardHandle.sendSignaling === 'function') {
+        try { boardHandle.sendSignaling(payload); } catch (_) {}
+      }
     }
 
     document.getElementById('btn-go-live').addEventListener('click', function() {

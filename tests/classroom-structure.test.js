@@ -729,8 +729,18 @@ describe('KEYBOARD_AVATAR Phase 2 -- position broadcast wiring', () => {
     expect(BOARD).toMatch(/baseOpts\.getMemberCount\s*=\s*function\s*\(\s*\)\s*\{\s*\n?\s*return\s+Object\.keys\(\s*state\.members\s*\)\.length\s*;\s*\}/);
   });
 
-  it('mount() wires onPos -> safeSend({type: classroom_pos, ...})', () => {
-    expect(BOARD).toMatch(/safeSend\(\s*\{\s*\n?\s*type:\s*['"]classroom_pos['"]/);
+  it('mount() wires onPos -> prefer DC then fall back to safeSend({type: classroom_pos, ...})', () => {
+    // v3 P3: onPos builds a classroom_pos payload, prefers
+    // _peerDataChannel.send when _peerDcOpen is true, and falls back to
+    // safeSend(payload) on either a closed DC or a thrown send.
+    // The payload literal carries type:'classroom_pos' (no longer inlined
+    // inside safeSend's argument list -- safeSend now takes `payload`).
+    expect(BOARD).toMatch(/type:\s*['"]classroom_pos['"]/);
+    // DC-preferred send path.
+    expect(BOARD).toMatch(/_peerDcOpen\s*&&\s*_peerDataChannel/);
+    expect(BOARD).toMatch(/_peerDataChannel\.send\s*\(\s*JSON\.stringify\s*\(\s*payload\s*\)\s*\)/);
+    // WS fallback path is still present.
+    expect(BOARD).toMatch(/safeSend\s*\(\s*payload\s*\)/);
   });
 
   it('applyMessage dispatches classroom_pos to applyPos (transient, NOT reduced)', () => {

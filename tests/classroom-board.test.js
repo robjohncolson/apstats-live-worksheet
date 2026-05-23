@@ -5113,3 +5113,416 @@ describe('classroom-board -- v3 P1+P2 live state', function () {
   });
 });
 
+// =============================================================
+// classroom-board -- v3 P3 student WebRTC receiver
+// =============================================================
+// LIVE_CLASSROOM_V3_P3_BUILD.md C5: student side handles incoming
+// rtc_offer/rtc_ice from the cockpit, opens an RTCPeerConnection as
+// guest, replies with rtc_answer, hooks the DataChannel, and routes
+// classroom_pos through the DC when open. classroom_live_state
+// {live:false} triggers _teardownPeer for the student role.
+
+// ----- mock RTCPeerConnection + DataChannel ------------------------------
+// Mirror tests/v3-p3-webrtc.test.js's mocks; the cockpit + board files
+// share the same wire shape.
+
+function makeBoardMockRTC() {
+  var allPcs = [];
+  var allDcs = [];
+
+  function MockDataChannel(label) {
+    this.label = label;
+    this.readyState = 'connecting';
+    this.onopen = null;
+    this.onclose = null;
+    this.onmessage = null;
+    this.sent = [];
+    this._closed = false;
+    var self = this;
+    this.send = function (payload) { self.sent.push(payload); };
+    this.close = function () {
+      self.readyState = 'closed';
+      self._closed = true;
+      if (self.onclose) { self.onclose(); }
+    };
+    this._open = function () {
+      self.readyState = 'open';
+      if (self.onopen) { self.onopen(); }
+    };
+    this._receive = function (obj) {
+      if (self.onmessage) { self.onmessage({ data: JSON.stringify(obj) }); }
+    };
+  }
+
+  function MockPC(config) {
+    this.iceServers = config && config.iceServers;
+    this.onicecandidate = null;
+    this.ondatachannel = null;
+    this.localDescription = null;
+    this.remoteDescription = null;
+    this._iceCandidates = [];
+    this._channels = [];
+    this._closed = false;
+    var self = this;
+    this.createDataChannel = function (label) {
+      var dc = new MockDataChannel(label);
+      self._channels.push(dc);
+      allDcs.push(dc);
+      return dc;
+    };
+    this.createOffer = function () {
+      return Promise.resolve({ type: 'offer', sdp: 'student-offer-sdp' });
+    };
+    this.createAnswer = function () {
+      return Promise.resolve({ type: 'answer', sdp: 'student-answer-sdp' });
+    };
+    this.setLocalDescription = function (desc) {
+      self.localDescription = desc;
+      return Promise.resolve();
+    };
+    this.setRemoteDescription = function (desc) {
+      self.remoteDescription = desc;
+      return Promise.resolve();
+    };
+    this.addIceCandidate = function (c) {
+      self._iceCandidates.push(c);
+      return Promise.resolve();
+    };
+    this.close = function () { self._closed = true; };
+    // Test helper: simulate the cockpit's DataChannel arriving on the
+    // student's PC. The student's _handleP3Offer wires
+    // _peerConnection.ondatachannel -- we call it here to deliver the DC.
+    this._deliverDataChannel = function () {
+      var dc = new MockDataChannel('livedata');
+      allDcs.push(dc);
+      if (typeof self.ondatachannel === 'function') {
+        self.ondatachannel({ channel: dc });
+      }
+      return dc;
+    };
+    allPcs.push(self);
+  }
+
+  return { MockPC: MockPC, MockDataChannel: MockDataChannel, allPcs: allPcs, allDcs: allDcs };
+}
+
+// makeMount() variant that injects RTCPeerConnection BEFORE the BOARD_SRC
+// runs (so the student-side _handleP3Offer doesn't bail at the typeof check).
+// Also wraps CanvasEngine to expose the most recent engine instance so
+// tests can inspect spriteEntities + invoke their onPos hooks directly.
+function makeMountWithRTC() {
+  var dom = new JSDOM(
+    '<!DOCTYPE html><html><body><div id="mount"></div></body></html>',
+    { url: 'https://example.com' }
+  );
+  var win    = dom.window;
+  var MockWS = makeMockWSClass();
+  var rtc    = makeBoardMockRTC();
+
+  win.WebSocket     = MockWS;
+  win.RTCPeerConnection = rtc.MockPC;
+  win.setInterval   = function () { return 0; };
+  win.clearInterval = function () {};
+  win.setTimeout    = function () { return 0; };
+  win.clearTimeout  = function () {};
+  injectEnvStubs(win);
+  makeEngineStubs(win);
+
+  // Wrap CanvasEngine so the test can reach the latest instance.
+  var lastEngine = null;
+  var RealEngine = win.CanvasEngine;
+  function TracingEngine(canvasId) {
+    RealEngine.call(this, canvasId);
+    lastEngine = this;
+  }
+  TracingEngine.prototype = Object.create(RealEngine.prototype);
+  TracingEngine.prototype.constructor = TracingEngine;
+  win.CanvasEngine = TracingEngine;
+
+  var ctx = createContext(win);
+  runInContext(BOARD_SRC, ctx);
+
+  var container = win.document.getElementById('mount');
+
+  return {
+    win:            win,
+    ClassroomBoard: win.ClassroomBoard,
+    MockWS:         MockWS,
+    rtc:            rtc,
+    container:      container,
+    getEngine:      function () { return lastEngine; }
+  };
+}
+
+// Yield event-loop ticks so vm-context Promise chains settle.
+async function yieldP3(n) {
+  for (var i = 0; i < (n || 8); i++) {
+    await new Promise(function (r) { setTimeout(r, 0); });
+  }
+}
+
+describe('classroom-board -- v3 P3 student WebRTC receiver', function () {
+  it('_handleP3Offer creates an RTCPeerConnection + sends rtc_answer with the right `to`', async () => {
+    var m = makeMountWithRTC();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Cockpit sends an rtc_offer to alice; the student board handles it.
+    var fakeSdp = { type: 'offer', sdp: 'cockpit-offer-sdp' };
+    ws._receive({ type: 'rtc_offer', from: 'teacher1', sdp: fakeSdp });
+    await yieldP3(8);
+
+    // A PC was created.
+    expect(m.rtc.allPcs.length).toBe(1);
+    var pc = m.rtc.allPcs[0];
+    expect(pc.iceServers).toEqual([{ urls: 'stun:stun.l.google.com:19302' }]);
+    // Remote description was set to the cockpit's offer.
+    expect(pc.remoteDescription).toEqual(fakeSdp);
+    // Local description (the answer) was set.
+    expect(pc.localDescription).toEqual({ type: 'answer', sdp: 'student-answer-sdp' });
+
+    // The student sent an rtc_answer back over the WS with to=teacher1.
+    var rtcAnswers = ws.sent
+      .map(function (s) { try { return JSON.parse(s); } catch (_) { return null; } })
+      .filter(function (m) { return m && m.type === 'rtc_answer'; });
+    expect(rtcAnswers.length).toBe(1);
+    expect(rtcAnswers[0].to).toBe('teacher1');
+    expect(rtcAnswers[0].sdp).toEqual({ type: 'answer', sdp: 'student-answer-sdp' });
+
+    handle.destroy();
+  });
+
+  it('_handleP3Ice calls addIceCandidate on the existing PC', async () => {
+    var m = makeMountWithRTC();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // First create the PC via an rtc_offer.
+    ws._receive({ type: 'rtc_offer', from: 'teacher1', sdp: { type: 'offer', sdp: 'sdp-1' } });
+    await yieldP3(8);
+    var pc = m.rtc.allPcs[0];
+    expect(pc._iceCandidates).toHaveLength(0);
+
+    // Then deliver an ICE candidate.
+    var candidate = { candidate: 'candidate-from-cockpit', sdpMid: '0' };
+    ws._receive({ type: 'rtc_ice', from: 'teacher1', candidate: candidate });
+
+    expect(pc._iceCandidates).toHaveLength(1);
+    expect(pc._iceCandidates[0]).toEqual(candidate);
+
+    handle.destroy();
+  });
+
+  it('DC.onmessage routes classroom_pos to applyPos as the named peer', async () => {
+    var m = makeMountWithRTC();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Establish a PC + DC.
+    ws._receive({ type: 'rtc_offer', from: 'teacher1', sdp: { type: 'offer', sdp: 'sdp-1' } });
+    await yieldP3(8);
+    var pc = m.rtc.allPcs[0];
+    var dc = pc._deliverDataChannel();
+    dc._open();
+
+    // Seed the room with bob so applyPos has a peer entity to mutate.
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null, poll: null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true },
+        { username: 'bob',   role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    // The cockpit relays a classroom_pos through the DC tagged from:'bob'.
+    // The student's DC.onmessage must NOT crash and must route through
+    // applyPos with username = pos.from (i.e. bob).
+    expect(function () {
+      dc._receive({
+        type: 'classroom_pos',
+        from: 'bob',
+        x: 250, y: 220, state: 'walking', vx: 120
+      });
+    }).not.toThrow();
+
+    handle.destroy();
+  });
+
+  it('outgoing classroom_pos prefers DC when _peerDcOpen is true', async () => {
+    var m = makeMountWithRTC();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Seed the room with the local user so the alice PlayerSprite is created.
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null, poll: null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    // Establish PC + DC + open it (so _peerDcOpen flips true on the student).
+    ws._receive({ type: 'rtc_offer', from: 'teacher1', sdp: { type: 'offer', sdp: 'sdp-1' } });
+    await yieldP3(8);
+    var pc = m.rtc.allPcs[0];
+    var dc = pc._deliverDataChannel();
+    dc._open();
+    expect(dc.readyState).toBe('open');
+
+    // Reach the local PlayerSprite via the captured CanvasEngine instance
+    // and fire its onPos directly -- this is the exact lambda mount() wired
+    // (see classroom-board.js's baseOpts.onPos on the local PlayerSprite).
+    var engine = m.getEngine();
+    expect(engine).not.toBeNull();
+    var aliceSprite = engine.entities.get('sprite_alice');
+    expect(aliceSprite).toBeDefined();
+    expect(typeof aliceSprite.onPos).toBe('function');
+
+    var wsSendsBefore = ws.sent.length;
+    var dcSendsBefore = dc.sent.length;
+    aliceSprite.onPos({ x: 200, y: 220, state: 'walking', vx: 120 });
+
+    // DC path was taken: dc.sent grew, ws.sent did NOT.
+    expect(dc.sent.length).toBe(dcSendsBefore + 1);
+    expect(ws.sent.length).toBe(wsSendsBefore);
+    var dcPayload = JSON.parse(dc.sent[dc.sent.length - 1]);
+    expect(dcPayload.type).toBe('classroom_pos');
+    expect(dcPayload.x).toBe(200);
+    expect(dcPayload.y).toBe(220);
+    expect(dcPayload.state).toBe('walking');
+    expect(dcPayload.vx).toBe(120);
+
+    handle.destroy();
+  });
+
+  it('outgoing classroom_pos falls back to WS when _peerDcOpen is false', async () => {
+    var m = makeMountWithRTC();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Seed the local PlayerSprite (no PC; _peerDcOpen stays false).
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null, poll: null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true }
+      ]
+    });
+
+    // No PC/DC exist, so the impl onPos must take the safeSend fallback.
+    expect(m.rtc.allPcs.length).toBe(0);
+    expect(m.rtc.allDcs.length).toBe(0);
+
+    var engine = m.getEngine();
+    var aliceSprite = engine.entities.get('sprite_alice');
+    expect(aliceSprite).toBeDefined();
+
+    var wsSendsBefore = ws.sent.length;
+    aliceSprite.onPos({ x: 300, y: 180, state: 'walking', vx: 80 });
+
+    // WS path: ws.sent grew by one classroom_pos.
+    expect(ws.sent.length).toBe(wsSendsBefore + 1);
+    var wsPayload = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(wsPayload.type).toBe('classroom_pos');
+    expect(wsPayload.x).toBe(300);
+    expect(wsPayload.y).toBe(180);
+    expect(wsPayload.state).toBe('walking');
+    expect(wsPayload.vx).toBe(80);
+
+    handle.destroy();
+  });
+
+  it('_teardownPeer closes the DC + PC and clears state', async () => {
+    var m = makeMountWithRTC();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Establish PC + DC.
+    ws._receive({ type: 'rtc_offer', from: 'teacher1', sdp: { type: 'offer', sdp: 'sdp-1' } });
+    await yieldP3(8);
+    var pc = m.rtc.allPcs[0];
+    var dc = pc._deliverDataChannel();
+    dc._open();
+
+    expect(pc._closed).toBe(false);
+    expect(dc._closed).toBe(false);
+
+    // destroy() invokes _teardownPeer per the C5 contract.
+    handle.destroy();
+
+    expect(pc._closed).toBe(true);
+    expect(dc._closed).toBe(true);
+  });
+
+  it('classroom_live_state {live:false} triggers _teardownPeer (student role)', async () => {
+    var m = makeMountWithRTC();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Establish PC + DC.
+    ws._receive({ type: 'rtc_offer', from: 'teacher1', sdp: { type: 'offer', sdp: 'sdp-1' } });
+    await yieldP3(8);
+    var pc = m.rtc.allPcs[0];
+    var dc = pc._deliverDataChannel();
+    dc._open();
+
+    expect(pc._closed).toBe(false);
+    expect(dc._closed).toBe(false);
+
+    // Cockpit exits Live -> classroom_live_state{live:false} reaches the student.
+    ws._receive({
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    false
+    });
+
+    // Per C5 spec: the student-role WS handler invokes _teardownPeer on
+    // classroom_live_state{live:false}. The PC + DC are now closed.
+    expect(pc._closed).toBe(true);
+    expect(dc._closed).toBe(true);
+
+    handle.destroy();
+  });
+});
+

@@ -1656,13 +1656,18 @@
         };
         // Phase 2 -- broadcast position to roommates.
         baseOpts.onPos = function (msg) {
-          safeSend({
+          var payload = {
             type:  'classroom_pos',
             x:     msg.x,
             y:     msg.y,
             state: msg.state,
             vx:    msg.vx
-          });
+          };
+          // v3 P3: prefer DC when open; fall back to WS.
+          if (_peerDcOpen && _peerDataChannel) {
+            try { _peerDataChannel.send(JSON.stringify(payload)); return; } catch (_) {}
+          }
+          safeSend(payload);
         };
         sp = new PlayerSprite(spriteSheet, baseOpts);
       } else {
@@ -1922,6 +1927,86 @@
     var reconnectTimer = null;
     var reconnectDelay = RECONNECT_BASE;
 
+    // v3 P3: WebRTC peer connection (student-as-guest). Receives an
+    // rtc_offer from the cockpit when its section enters Live mode;
+    // creates a PC, sets remote, sends rtc_answer. The DC is opened
+    // by the cockpit; ondatachannel hooks it. Once open, classroom_pos
+    // sends prefer DC; otherwise WS.
+    var _peerConnection = null;
+    var _peerDataChannel = null;
+    var _peerDcOpen = false;
+    var _peerTeacherUsername = null;
+    // v3 P3 Codex MAJOR fold: trickle-ICE ordering. ICE candidates can
+    // arrive BEFORE setRemoteDescription completes -- addIceCandidate
+    // would then reject. Queue any pre-remote-set ICE here; drain after
+    // setRemoteDescription's promise resolves.
+    var _peerRemoteDescSet = false;
+    var _peerPendingIce = [];
+
+    function _handleP3Offer(fromUsername, sdp) {
+      if (typeof RTCPeerConnection === 'undefined') { return; }
+      if (_peerConnection) { _teardownPeer(); }
+      _peerTeacherUsername = fromUsername;
+      try {
+        _peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+      } catch (_) { _peerConnection = null; return; }
+      _peerConnection.onicecandidate = function(ev) {
+        if (ev.candidate && ws && ws.readyState === 1) {
+          try { ws.send(JSON.stringify({ type: 'rtc_ice', to: fromUsername, candidate: ev.candidate })); } catch (_) {}
+        }
+      };
+      _peerConnection.ondatachannel = function(ev) {
+        _peerDataChannel = ev.channel;
+        _peerDataChannel.onopen = function() { _peerDcOpen = true; };
+        _peerDataChannel.onclose = function() { _peerDcOpen = false; };
+        _peerDataChannel.onmessage = function(mev) {
+          var pos = null;
+          try { pos = JSON.parse(mev.data); } catch (_) { return; }
+          if (!pos || pos.type !== 'classroom_pos') return;
+          // Route through the same applyPos path as the WS classroom_pos
+          // handler. The `from` field identifies which peer this is.
+          if (typeof applyPos === 'function') {
+            applyPos({ username: pos.from, x: pos.x, y: pos.y, state: pos.state, vx: pos.vx });
+          }
+        };
+      };
+      _peerConnection.setRemoteDescription(sdp).then(function() {
+        _peerRemoteDescSet = true;
+        // Drain any ICE that arrived before the remote description settled.
+        while (_peerPendingIce.length > 0) {
+          var cand = _peerPendingIce.shift();
+          try { _peerConnection.addIceCandidate(cand).catch(function() {}); } catch (_) {}
+        }
+        return _peerConnection.createAnswer();
+      }).then(function(answer) {
+        return _peerConnection.setLocalDescription(answer);
+      }).then(function() {
+        if (ws && ws.readyState === 1) {
+          try { ws.send(JSON.stringify({ type: 'rtc_answer', to: fromUsername, sdp: _peerConnection.localDescription })); } catch (_) {}
+        }
+      }).catch(function() { _teardownPeer(); });
+    }
+
+    function _handleP3Ice(candidate) {
+      if (!_peerConnection || !candidate) { return; }
+      if (!_peerRemoteDescSet) {
+        // Buffer until setRemoteDescription completes; otherwise
+        // addIceCandidate rejects with an unhandled promise rejection.
+        _peerPendingIce.push(candidate);
+        return;
+      }
+      try { _peerConnection.addIceCandidate(candidate).catch(function() {}); } catch (_) {}
+    }
+
+    function _teardownPeer() {
+      if (_peerDataChannel) { try { _peerDataChannel.close(); } catch (_) {} _peerDataChannel = null; }
+      if (_peerConnection)  { try { _peerConnection.close(); }  catch (_) {} _peerConnection  = null; }
+      _peerDcOpen = false;
+      _peerTeacherUsername = null;
+      _peerRemoteDescSet = false;
+      _peerPendingIce = [];
+    }
+
     function refreshButton() {
       if (!checkinBtn) { return; }
       checkinBtn.style.display = shouldShowCheckinButton(state, username, role)
@@ -1986,6 +2071,23 @@
       }
     }
 
+    // v3 P3 Codex BLOCKER fold: queue signaling sent before the WS is
+    // ready. enterLiveMode kicks off _initPeerFor immediately after
+    // mountBoard, but the board's WS connection is still negotiating
+    // (and classroom_join hasn't completed). Without queuing, the
+    // rtc_offer is dropped silently + the cockpit's 3 s timeout fires +
+    // the studentPeers entry is left as a dead stub. Queue + flush in
+    // ws.onopen (after sendJoin) so signaling lands on the server with
+    // the wsIndex entry already populated.
+    var _pendingSignaling = [];
+    function _flushPendingSignaling() {
+      if (!ws || ws.readyState !== 1) { return; }
+      while (_pendingSignaling.length > 0) {
+        var payload = _pendingSignaling.shift();
+        try { ws.send(JSON.stringify(payload)); } catch (_) {}
+      }
+    }
+
     function sendJoin() {
       safeSend({
         type:     'classroom_join',
@@ -2015,6 +2117,8 @@
         reconnectDelay = RECONNECT_BASE;
         sendJoin();
         heartbeatTimer = setInterval(sendHeartbeat, HEARTBEAT_MS);
+        // v3 P3: flush any signaling queued before the WS was ready.
+        _flushPendingSignaling();
       };
 
       ws.onmessage = function (event) {
@@ -2026,6 +2130,27 @@
         }
         if (msg && msg.type && msg.type.indexOf('classroom_') === 0) {
           applyMessage(msg);
+          if (msg.type === 'classroom_live_state' && msg.live === false) {
+            if (role !== 'teacher') { _teardownPeer(); }
+            // Note: the existing _reduce dispatch above handles
+            // classroom_live_state for state.live (preserved through
+            // every case). This teardown is purely the WebRTC side.
+          }
+        } else if (msg && (msg.type === 'rtc_offer' || msg.type === 'rtc_answer' || msg.type === 'rtc_ice')) {
+          if (role === 'teacher') {
+            // Cockpit: delegate to the user's onSignaling callback.
+            if (typeof opts.onSignaling === 'function') {
+              try { opts.onSignaling(msg); } catch (_) {}
+            }
+          } else {
+            // Student: handle locally as a guest peer.
+            if (msg.type === 'rtc_offer' && msg.from && msg.sdp) {
+              _handleP3Offer(msg.from, msg.sdp);
+            } else if (msg.type === 'rtc_ice' && msg.candidate) {
+              _handleP3Ice(msg.candidate);
+            }
+            // rtc_answer is teacher-bound; students drop it silently.
+          }
         }
       };
 
@@ -2059,6 +2184,8 @@
         heartbeatTimer  = null;
         reconnectTimer  = null;
         greenlightTimer = null;
+        // v3 P3: close any RTCPeerConnection + DataChannel before the WS.
+        _teardownPeer();
         if (ws) {
           ws.onclose = null;
           ws.close();
@@ -2095,6 +2222,21 @@
         for (var u in spriteEntities) {
           var sp = spriteEntities[u];
           sp.labelText = (nameMap && nameMap[u]) ? nameMap[u] : u;
+        }
+      },
+
+      sendSignaling: function (payload) {
+        // Pass-through send over the board's WS. Used by the cockpit
+        // to route rtc_offer / rtc_ice to specific students. The board
+        // has the right wsIndex entry (classroom_join'd as 'teacher'
+        // for the active section) so the server's rtc_* relay can
+        // find it. If the ws is NOT yet ready (cockpit just called
+        // mountBoard + enterLiveMode kicked off peer init before the
+        // connection settled), queue the payload and flush in ws.onopen.
+        if (ws && ws.readyState === 1) {
+          try { ws.send(JSON.stringify(payload)); } catch (_) {}
+        } else {
+          _pendingSignaling.push(payload);
         }
       },
 
