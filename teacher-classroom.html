@@ -455,6 +455,43 @@
         </div>
       </div>
 
+      <!-- v3 P4: Doorways (vote-with-your-feet) -->
+      <div class="section" id="doorways-section" style="display:none">
+        <h2 class="section-title">Doorways (Vote with your feet)</h2>
+
+        <div class="form-row">
+          <label for="doorways-question-input">Question</label>
+          <input type="text" id="doorways-question-input" class="poll-question-input" placeholder="Type your question...">
+        </div>
+
+        <div class="form-row">
+          <label>Options (2-8 doorways)</label>
+          <div class="poll-options-list" id="doorways-options-list">
+            <div class="poll-option-row">
+              <input type="text" class="poll-option-input" placeholder="Option A">
+              <button class="poll-remove-btn" type="button" aria-label="Remove">x</button>
+            </div>
+            <div class="poll-option-row">
+              <input type="text" class="poll-option-input" placeholder="Option B">
+              <button class="poll-remove-btn" type="button" aria-label="Remove">x</button>
+            </div>
+          </div>
+          <button type="button" id="doorways-add-option" class="ctrl-btn">+ Add doorway</button>
+        </div>
+
+        <div class="control-strip">
+          <button id="btn-open-doorways" class="ctrl-btn primary">Open Doorways</button>
+          <button id="btn-close-doorways" class="ctrl-btn danger" style="display:none">Close + Archive</button>
+        </div>
+
+        <canvas id="doorways-tally-canvas" width="480" height="160" style="display:none"></canvas>
+
+        <div class="hint">
+          Students walk their avatar through their chosen doorway + press Up.
+          Mutually exclusive with the poll above. Closing archives the result.
+        </div>
+      </div>
+
       <!-- v1b: checked-in panel -- hidden until the board actually mounts -->
       <div class="section" id="checkin-section" style="display:none">
         <h2 class="section-title">Checked In</h2>
@@ -615,9 +652,11 @@
       var ctrl = document.getElementById('control-section');
       var chk  = document.getElementById('checkin-section');
       var poll = document.getElementById('poll-section');
+      var dw   = document.getElementById('doorways-section');
       if (ctrl) ctrl.style.display = disp;
       if (chk)  chk.style.display  = disp;
       if (poll) poll.style.display  = disp;
+      if (dw)   dw.style.display   = disp;
     }
 
     // ===== v2.1: poll archive tracking =====
@@ -730,6 +769,34 @@
               archivePoll(cp.id, section, todayIsoDate(),
                 cp.question, cp.options || [], cp.tally || [], !!cp.blind);
             }
+            // v3 P4: doorways live tally + archive-on-close.
+            renderDoorwaysTally(summary);
+            // Codex MAJOR 1 fold: derive _activeDoorwaysId + button
+            // visibility from summary.doorways on every state change.
+            // This way a cockpit refresh / second teacher / late mount
+            // all hydrate the active session (without this, the local
+            // _activeDoorwaysId was only set by the Open click).
+            if (summary.doorways && summary.doorways.id) {
+              _activeDoorwaysId = summary.doorways.id;
+              document.getElementById('btn-open-doorways').style.display = 'none';
+              document.getElementById('btn-close-doorways').style.display = '';
+            } else if (!summary.closedDoorways) {
+              // No active + no closing -- idle state -> show the form.
+              _activeDoorwaysId = null;
+              document.getElementById('btn-open-doorways').style.display = '';
+              document.getElementById('btn-close-doorways').style.display = 'none';
+            }
+            var cd = summary.closedDoorways;
+            if (cd && cd.id && cd.id !== _lastArchivedDoorwaysId) {
+              _lastArchivedDoorwaysId = cd.id;
+              archivePoll(cd.id, section, todayIsoDate(),
+                cd.question, (cd.options || []).map(function(o) { return o.label; }),
+                (cd.tally || []).map(function(t) { return t.count; }), false);
+              // Reset cockpit UI back to the form.
+              _activeDoorwaysId = null;
+              document.getElementById('btn-open-doorways').style.display = '';
+              document.getElementById('btn-close-doorways').style.display = 'none';
+            }
             // v3 P3 Codex MAJOR fold: track members via the board's
             // authoritative state (NOT the monitor delta, which is
             // unsubscribed during Live). On every state-change, ensure
@@ -796,6 +863,114 @@
         ctx2d.clearRect(0, 0, canvas.width, canvas.height);
       }
     }
+
+    // ===== v3 P4: doorways =====
+
+    var _activeDoorwaysId = null;
+    var _lastArchivedDoorwaysId = null;
+
+    function getDoorwaysFormValues() {
+      var q = (document.getElementById('doorways-question-input').value || '').trim();
+      var inputs = document.querySelectorAll('#doorways-options-list .poll-option-input');
+      var options = [];
+      for (var i = 0; i < inputs.length; i++) {
+        var label = (inputs[i].value || '').trim();
+        if (label) options.push({ label: label, doorId: 'd' + i });
+      }
+      return { question: q, options: options };
+    }
+
+    document.getElementById('btn-open-doorways').addEventListener('click', function() {
+      if (!boardHandle) return;
+      var vals = getDoorwaysFormValues();
+      if (vals.options.length < 2) { alert('Need at least 2 doorways.'); return; }
+      if (vals.options.length > 8) { alert('Max 8 doorways.'); return; }
+      var id = 'doorways-' + Date.now();
+      _activeDoorwaysId = id;
+      boardHandle.openDoorways(id, vals.question, vals.options);
+      document.getElementById('btn-open-doorways').style.display = 'none';
+      document.getElementById('btn-close-doorways').style.display = '';
+      document.getElementById('doorways-tally-canvas').style.display = '';
+    });
+
+    document.getElementById('btn-close-doorways').addEventListener('click', function() {
+      if (!boardHandle || !_activeDoorwaysId) return;
+      boardHandle.closeDoorways(_activeDoorwaysId);
+    });
+
+    // Tally rendering -- reuse Ti84Plot.drawBarChart (the v2 poll API,
+    // signature: drawBarChart(ctx, { labels, counts, title? })).
+    function renderDoorwaysTally(summary) {
+      var canvas = document.getElementById('doorways-tally-canvas');
+      if (!canvas) return;
+      if (!summary || !summary.doorways) {
+        canvas.style.display = 'none';
+        return;
+      }
+      canvas.style.display = '';
+      if (typeof window.Ti84Plot === 'undefined' || typeof window.Ti84Plot.drawBarChart !== 'function') return;
+      var d = summary.doorways;
+      var labels = d.options.map(function(o) { return o.label; });
+      // Align counts to labels via doorId.
+      var byId = {};
+      (d.tally || []).forEach(function(t) { byId[t.doorId] = t.count; });
+      var counts = d.options.map(function(o) { return byId[o.doorId] || 0; });
+      var ctx = canvas.getContext('2d');
+      window.Ti84Plot.drawBarChart(ctx, { labels: labels, counts: counts, title: d.question || '' });
+    }
+
+    // ===== v3 P4: doorways form helpers (mirror the v2 poll add/remove pattern) =====
+
+    var MAX_DOORWAYS_OPTIONS = 8;
+
+    function addDoorwaysOptionRow() {
+      var list = document.getElementById('doorways-options-list');
+      var current = list.querySelectorAll('.poll-option-row').length;
+      if (current >= MAX_DOORWAYS_OPTIONS) return;
+      var letter = String.fromCharCode(65 + current);   // A, B, C, ...
+      var row = document.createElement('div');
+      row.className = 'poll-option-row';
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'poll-option-input';
+      inp.placeholder = 'Option ' + letter;
+      var btn = document.createElement('button');
+      btn.className = 'poll-remove-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Remove');
+      btn.textContent = 'x';
+      btn.addEventListener('click', function () { removeDoorwaysOptionRow(row); });
+      row.appendChild(inp);
+      row.appendChild(btn);
+      list.appendChild(row);
+      if (list.querySelectorAll('.poll-option-row').length >= MAX_DOORWAYS_OPTIONS) {
+        var addBtn = document.getElementById('doorways-add-option');
+        if (addBtn) addBtn.style.display = 'none';
+      }
+    }
+
+    function removeDoorwaysOptionRow(row) {
+      var list = document.getElementById('doorways-options-list');
+      var rows = list.querySelectorAll('.poll-option-row');
+      if (rows.length <= 2) return;   // keep at least 2
+      list.removeChild(row);
+      var addBtn = document.getElementById('doorways-add-option');
+      if (addBtn) addBtn.style.display = '';
+    }
+
+    (function wireInitialDoorwaysRemoveButtons() {
+      var rows = document.querySelectorAll('#doorways-options-list .poll-option-row');
+      rows.forEach(function (row) {
+        var btn = row.querySelector('.poll-remove-btn');
+        if (btn) {
+          btn.addEventListener('click', function () { removeDoorwaysOptionRow(row); });
+        }
+      });
+    })();
+
+    document.getElementById('doorways-add-option').addEventListener('click', function () {
+      addDoorwaysOptionRow();
+    });
 
     // ===== v2: poll form helpers =====
 

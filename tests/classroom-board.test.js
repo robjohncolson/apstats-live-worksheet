@@ -5114,6 +5114,212 @@ describe('classroom-board -- v3 P1+P2 live state', function () {
 });
 
 // =============================================================
+// classroom-board -- v3 P4 doorways reducer
+// =============================================================
+// LIVE_CLASSROOM_V3_P4_BUILD.md C4: _reduce gains three doorways cases
+// (classroom_open_doorways / classroom_doorway_tally / classroom_close_doorways)
+// + a new state.doorways slot, with closedDoorways as the one-shot
+// summary surface. Every other case preserves state.doorways.
+
+describe('classroom-board -- v3 P4 doorways reducer', function () {
+  var board;
+
+  beforeEach(function () {
+    board = makeBoard();
+  });
+
+  // --- emptyState shape -------------------------------------------------
+
+  it('emptyState includes doorways: null + closedDoorways: null', function () {
+    // emptyState() lives at classroom-board.js line ~530. The literal pin
+    // is checked in tests/classroom-structure.test.js -- here we verify that
+    // a classroom_state snapshot (which is how the board first seeds itself
+    // from the wire) DOES NOT carry doorways/closedDoorways unless the
+    // snapshot brings them. The seed-and-snapshot path is the canonical
+    // "this is what an empty board looks like" check.
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null },
+      {
+        type:    'classroom_state',
+        section: 'PeriodX',
+        gate:    null,
+        poll:    null,
+        members: []
+      }
+    );
+    // classroom_state with no doorways field defaults to null + null.
+    expect(s.doorways).toBeNull();
+    expect(s.closedDoorways).toBeNull();
+  });
+
+  // --- _reduce(classroom_open_doorways) ---------------------------------
+
+  it('_reduce(classroom_open_doorways) sets state.doorways with id/question/options/tally(0s)', function () {
+    var s = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null },
+      {
+        type:     'classroom_open_doorways',
+        section:  'PeriodX',
+        id:       'doorways-1',
+        question: 'Best snack?',
+        options:  [
+          { label: 'Apple',  doorId: 'd0' },
+          { label: 'Banana', doorId: 'd1' }
+        ],
+        openedAt: 1000
+      }
+    );
+    expect(s.doorways).not.toBeNull();
+    expect(s.doorways.id).toBe('doorways-1');
+    expect(s.doorways.question).toBe('Best snack?');
+    expect(s.doorways.options).toEqual([
+      { label: 'Apple',  doorId: 'd0' },
+      { label: 'Banana', doorId: 'd1' }
+    ]);
+    // Initial tally is zeroed and aligned to options by doorId.
+    expect(s.doorways.tally).toEqual([
+      { doorId: 'd0', count: 0 },
+      { doorId: 'd1', count: 0 }
+    ]);
+    expect(s.doorways.closed).toBe(false);
+    // open clears any closedPoll surface (mutual-exclusion sibling).
+    expect(s.closedPoll).toBeNull();
+  });
+
+  // --- _reduce(classroom_doorway_tally) ---------------------------------
+
+  it('_reduce(classroom_doorway_tally) updates tally; id mismatch is a no-op', function () {
+    // Open doorways first.
+    var open = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null },
+      {
+        type:    'classroom_open_doorways',
+        section: 'PeriodX',
+        id:      'doorways-1',
+        question: 'Q?',
+        options: [
+          { label: 'A', doorId: 'd0' },
+          { label: 'B', doorId: 'd1' }
+        ],
+        openedAt: 1000
+      }
+    );
+    // Matching id -- the tally is replaced.
+    var updated = board.ClassroomBoard._reduce(open, {
+      type:    'classroom_doorway_tally',
+      section: 'PeriodX',
+      id:      'doorways-1',
+      tally:   [
+        { doorId: 'd0', count: 3 },
+        { doorId: 'd1', count: 2 }
+      ]
+    });
+    expect(updated.doorways.tally).toEqual([
+      { doorId: 'd0', count: 3 },
+      { doorId: 'd1', count: 2 }
+    ]);
+
+    // Mismatched id -- no-op (state returned unchanged).
+    var noop = board.ClassroomBoard._reduce(open, {
+      type:    'classroom_doorway_tally',
+      section: 'PeriodX',
+      id:      'doorways-NOT-MINE',
+      tally:   [
+        { doorId: 'd0', count: 9 },
+        { doorId: 'd1', count: 9 }
+      ]
+    });
+    expect(noop).toBe(open);
+    expect(noop.doorways.tally).toEqual([
+      { doorId: 'd0', count: 0 },
+      { doorId: 'd1', count: 0 }
+    ]);
+  });
+
+  // --- _reduce(classroom_close_doorways) --------------------------------
+
+  it('_reduce(classroom_close_doorways) clears state.doorways + sets closedDoorways', function () {
+    // Open first, then close.
+    var open = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null },
+      {
+        type:    'classroom_open_doorways',
+        section: 'PeriodX',
+        id:      'doorways-1',
+        question: 'Q?',
+        options: [
+          { label: 'A', doorId: 'd0' },
+          { label: 'B', doorId: 'd1' }
+        ],
+        openedAt: 1000
+      }
+    );
+    var closed = board.ClassroomBoard._reduce(open, {
+      type:     'classroom_close_doorways',
+      section:  'PeriodX',
+      id:       'doorways-1',
+      question: 'Q?',
+      options:  [
+        { label: 'A', doorId: 'd0' },
+        { label: 'B', doorId: 'd1' }
+      ],
+      tally:    [
+        { doorId: 'd0', count: 4 },
+        { doorId: 'd1', count: 1 }
+      ]
+    });
+    expect(closed.doorways).toBeNull();
+    expect(closed.closedDoorways).not.toBeNull();
+    expect(closed.closedDoorways.id).toBe('doorways-1');
+    expect(closed.closedDoorways.tally).toEqual([
+      { doorId: 'd0', count: 4 },
+      { doorId: 'd1', count: 1 }
+    ]);
+    expect(closed.closedDoorways.options).toEqual([
+      { label: 'A', doorId: 'd0' },
+      { label: 'B', doorId: 'd1' }
+    ]);
+  });
+
+  // --- state.doorways preserved through unrelated cases -----------------
+
+  it('state.doorways preserved through unrelated cases (member_update, gate)', function () {
+    // Open doorways so state.doorways is non-null.
+    var open = board.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null },
+      {
+        type:    'classroom_open_doorways',
+        section: 'PeriodX',
+        id:      'doorways-1',
+        question: 'Q?',
+        options: [
+          { label: 'A', doorId: 'd0' },
+          { label: 'B', doorId: 'd1' }
+        ],
+        openedAt: 1000
+      }
+    );
+    expect(open.doorways).not.toBeNull();
+
+    // A member_update must NOT clear state.doorways.
+    var afterUpdate = board.ClassroomBoard._reduce(open, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'present', online: true }
+    });
+    expect(afterUpdate.doorways).toBe(open.doorways);
+
+    // A classroom_gate must NOT clear state.doorways.
+    var afterGate = board.ClassroomBoard._reduce(open, {
+      type:    'classroom_gate',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'apple' }
+    });
+    expect(afterGate.doorways).toBe(open.doorways);
+  });
+});
+
+// =============================================================
 // classroom-board -- v3 P3 student WebRTC receiver
 // =============================================================
 // LIVE_CLASSROOM_V3_P3_BUILD.md C5: student side handles incoming

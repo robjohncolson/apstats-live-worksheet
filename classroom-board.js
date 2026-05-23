@@ -250,7 +250,9 @@
           // broadcast. A fresh snapshot carries no closed-poll concept, so
           // clear it: this is what dismisses the result screen on a reset.
           closedPoll: null,
-          live:       !!message.live
+          live:       !!message.live,
+          doorways:   message.doorways || null,
+          closedDoorways: null
         };
 
       case 'classroom_live_state':
@@ -262,7 +264,9 @@
           poll:       state.poll,
           greenlight: state.greenlight,
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
-          live:       !!message.live
+          live:       !!message.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
         };
 
       case 'classroom_member_update':
@@ -288,7 +292,9 @@
           poll:       state.poll,
           greenlight: state.greenlight,
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
-          live:       state.live
+          live:       state.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
         };
 
       case 'classroom_member_left':
@@ -304,7 +310,9 @@
           poll:       state.poll,
           greenlight: state.greenlight,
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
-          live:       state.live
+          live:       state.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
         };
 
       case 'classroom_gate':
@@ -329,7 +337,9 @@
           poll:       state.poll,
           greenlight: false,
           closedPoll: null,
-          live:       state.live
+          live:       state.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
         };
 
       case 'classroom_greenlight':
@@ -339,7 +349,9 @@
           poll:       state.poll,
           greenlight: true,
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
-          live:       state.live
+          live:       state.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
         };
 
       // --- v2 poll cases (pure) -----------------------------------------
@@ -374,7 +386,9 @@
           },
           greenlight: state.greenlight,
           closedPoll: null,
-          live:       state.live
+          live:       state.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
         };
 
       case 'classroom_poll_closed':
@@ -397,7 +411,9 @@
           poll:       null,
           greenlight: state.greenlight,
           closedPoll: closedSnapshot,
-          live:       state.live
+          live:       state.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
         };
 
       case 'classroom_poll_reveal':
@@ -433,7 +449,71 @@
           poll:       state.poll,
           greenlight: state.greenlight,
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
-          live:       state.live
+          live:       state.live,
+          doorways:   state.doorways,
+          closedDoorways: state.closedDoorways || null
+        };
+
+      // --- v3 P4 doorways cases (vote-with-your-feet) -------------------
+
+      case 'classroom_open_doorways':
+        // v3 P4: a fresh data mode is opening. Mutually exclusive with
+        // poll (server enforces); clear any closedPoll surface.
+        return {
+          members:    state.members,
+          gate:       state.gate,
+          poll:       null,
+          greenlight: state.greenlight,
+          closedPoll: null,
+          live:       state.live,
+          doorways:   {
+            id:       message.id,
+            question: message.question || '',
+            options:  Array.isArray(message.options) ? message.options.slice() : [],
+            tally:    (Array.isArray(message.options) ? message.options : []).map(function(o) { return { doorId: o.doorId, count: 0 }; }),
+            closed:   false
+          }
+        };
+
+      case 'classroom_doorway_tally':
+        // Update the tally on the active doorways state. If no doorways
+        // open or id mismatch, no-op.
+        if (!state.doorways || state.doorways.id !== message.id) { return state; }
+        return {
+          members:    state.members,
+          gate:       state.gate,
+          poll:       state.poll,
+          greenlight: state.greenlight,
+          closedPoll: state.closedPoll,
+          live:       state.live,
+          doorways:   {
+            id:       state.doorways.id,
+            question: state.doorways.question,
+            options:  state.doorways.options,
+            tally:    Array.isArray(message.tally) ? message.tally.slice() : state.doorways.tally,
+            closed:   state.doorways.closed
+          }
+        };
+
+      case 'classroom_close_doorways':
+        // The data mode is closing. Carry the final tally on a one-shot
+        // closedDoorways snapshot (mirroring closedPoll); the active
+        // doorways slot is cleared on the next state-driven path or a
+        // fresh open.
+        return {
+          members:    state.members,
+          gate:       state.gate,
+          poll:       state.poll,
+          greenlight: state.greenlight,
+          closedPoll: state.closedPoll,
+          live:       state.live,
+          doorways:   null,
+          closedDoorways: {
+            id:       message.id,
+            question: message.question || '',
+            options:  Array.isArray(message.options) ? message.options.slice() : [],
+            tally:    Array.isArray(message.tally) ? message.tally.slice() : []
+          }
         };
 
       // NOTE: there is no 'classroom_reset' broadcast -- a teacher reset is
@@ -448,7 +528,7 @@
   // --- initial state factory --------------------------------------------
 
   function emptyState() {
-    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false };
+    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null };
   }
 
   // --- check-in button logic (B3) -- unchanged --------------------------
@@ -456,6 +536,9 @@
   function shouldShowCheckinButton(state, username, role) {
     if (role !== 'student')                   { return false; }
     if (!state.gate || !state.gate.armed)     { return false; }
+    // v3 P4 Codex MAJOR 3 fold: doorways suspend the gate ritual --
+    // hide the check-in button when a data mode is active.
+    if (state.doorways)                       { return false; }
     var me = state.members[username];
     if (!me || me.status !== 'present')       { return false; }
     return true;
@@ -498,7 +581,9 @@
       closedPoll: state.closedPoll || null,
       members:    arr,
       greenlight: state.greenlight,
-      live:       state.live
+      live:       state.live,
+      doorways:   state.doorways,
+      closedDoorways: state.closedDoorways || null
     };
   }
 
@@ -1101,6 +1186,45 @@
     ctx.restore();
   };
 
+  // --- Doorway entity (v3 P4) ------------------------------------------
+  //
+  // One labelled doorway. Multiple instances spread evenly across the
+  // canvas when state.doorways is open. Each renders a vertical hole
+  // identical visually to GateDoor; the label sits above and a count
+  // sits below. Walking into the doorway's x range + pressing Up casts
+  // a vote (the matched doorway's doorId is the choice).
+
+  function Doorway(getGroundY, opts) {
+    this.getGroundY = getGroundY;
+    this.x          = opts.x;        // center x of the hole
+    this.width      = opts.width || 24;
+    this.label      = opts.label || '';
+    this.doorId     = opts.doorId || '';
+    this.count      = 0;             // updated from state.doorways.tally
+  }
+  Doorway.prototype.update = function () {};
+  Doorway.prototype.render = function (ctx) {
+    var groundY = this.getGroundY();
+    var holeH   = 30;
+    var holeW   = this.width;
+    // Hole (visually the same dark slot as GateDoor).
+    ctx.fillStyle = '#000';
+    ctx.fillRect(this.x - holeW / 2, groundY - holeH, holeW, holeH);
+    // Label above.
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.label, this.x, groundY - holeH - 6);
+    // Count below.
+    ctx.font = '10px Arial';
+    ctx.fillText(String(this.count), this.x, groundY + 14);
+  };
+  Doorway.prototype.containsX = function (x, halfPlayerW) {
+    // Hit-test: is the player's center inside the doorway's hole?
+    var slack = halfPlayerW || 8;
+    return Math.abs(x - this.x) <= (this.width / 2 + slack);
+  };
+
   // --- PollColumnsOverlay entity (v2) -----------------------------------
 
   /**
@@ -1462,6 +1586,24 @@
     // check-in). The server's present->checkedIn transition then drives
     // the drain animation through syncScene as today -- one way out.
     function handlePlayerUp(player) {
+      // v3 P4: doorways take priority over the gate (a doorways data
+      // mode is mutually exclusive with the gate ritual on the server).
+      if (state.doorways && doorwayEntities.length > 0) {
+        var px = player.x + player._spriteSize / 2;
+        for (var i = 0; i < doorwayEntities.length; i++) {
+          var d = doorwayEntities[i];
+          if (d.containsX(px, player._spriteSize / 2)) {
+            safeSend({ type: 'classroom_doorway_vote', id: state.doorways.id, doorId: d.doorId });
+            // Optimistic local drain: walk through the doorway and out.
+            // Mirror the gate drain (a walkTo target outside the canvas).
+            var cwd = engine.canvas.width / (root.devicePixelRatio || 1);
+            player.targetX = (d.x < cwd / 2) ? -d.width : cwd + d.width;
+            player.walkDir = (player.targetX < player.x) ? -1 : 1;
+            player.state   = 'walking';
+            return;
+          }
+        }
+      }
       if (!state.gate || !state.gate.armed) { return; }
       if (!engineReady) { return; }
       var cw     = engine.canvas.width / (root.devicePixelRatio || 1);
@@ -1733,6 +1875,48 @@
       if (!gateDoor) { return; }
       engine.removeEntity('gate_door');
       gateDoor = null;
+    }
+
+    // --- v3 P4 doorway entities (vote-with-your-feet) ----------------
+
+    var doorwayEntities = [];
+
+    function showDoorways(options) {
+      hideDoorways();
+      if (!engineReady || !options || options.length === 0) { return; }
+      var cw = engine.canvas.width / (root.devicePixelRatio || 1);
+      var n  = options.length;
+      // Even spread across the canvas, leaving a margin on each side.
+      var margin = 40;
+      var span   = cw - margin * 2;
+      for (var i = 0; i < n; i++) {
+        var xCenter = margin + (span * (i + 0.5) / n);
+        var d = new Doorway(function () { return engine.groundY; }, {
+          x: xCenter, width: 28, label: options[i].label, doorId: options[i].doorId
+        });
+        doorwayEntities.push(d);
+        engine.addEntity('doorway_' + options[i].doorId, d);
+      }
+    }
+
+    function hideDoorways() {
+      if (!engineReady) { doorwayEntities = []; return; }
+      for (var i = 0; i < doorwayEntities.length; i++) {
+        var d = doorwayEntities[i];
+        engine.removeEntity('doorway_' + d.doorId);
+      }
+      doorwayEntities = [];
+    }
+
+    function updateDoorwayCounts(tally) {
+      if (!tally || !doorwayEntities.length) { return; }
+      // Map by doorId.
+      var byId = {};
+      for (var i = 0; i < tally.length; i++) { byId[tally[i].doorId] = tally[i].count; }
+      for (var j = 0; j < doorwayEntities.length; j++) {
+        var d = doorwayEntities[j];
+        if (typeof byId[d.doorId] === 'number') { d.count = byId[d.doorId]; }
+      }
     }
 
     // Greenlight overlay entity
@@ -2028,12 +2212,39 @@
         applyPos(msg);
         return;
       }
-      state = _reduce(state, msg);
+      var prevState = state;
+      var newState  = _reduce(state, msg);
+      state = newState;
       if (msg.type === 'classroom_greenlight') {
         showGreenlight();
       }
       if (msg.type === 'classroom_greenlight' && msg.startVideo === true && onStartVideo) {
         try { onStartVideo(msg.videoRef || null); } catch (_) {}
+      }
+      // v3 P4: doorways visibility + count refresh.
+      if (newState.doorways && (!prevState.doorways || newState.doorways.id !== (prevState.doorways && prevState.doorways.id))) {
+        showDoorways(newState.doorways.options);
+        updateDoorwayCounts(newState.doorways.tally);
+      } else if (newState.doorways) {
+        updateDoorwayCounts(newState.doorways.tally);
+      } else if (!newState.doorways && prevState.doorways) {
+        hideDoorways();
+        // v3 P4 Codex MAJOR 4 fold: respawn the local sprite if its
+        // optimistic doorway walk left it off-canvas. Without this the
+        // sprite stays at its off-canvas targetX across close cycles.
+        // Reset to canvas center + idle state -- the student can then
+        // walk freely with arrow keys.
+        if (engineReady && username && spriteEntities[username]) {
+          var meSprite = spriteEntities[username];
+          var cw = engine.canvas.width / (root.devicePixelRatio || 1);
+          var maxX = cw - (meSprite._spriteSize || (SPRITE_W * (meSprite.scale || 1)));
+          if (meSprite.x < 0 || meSprite.x > maxX) {
+            meSprite.x = Math.max(0, Math.min(maxX, (cw - (meSprite._spriteSize || 0)) / 2));
+          }
+          if (meSprite.state === 'walking' || meSprite.state === 'arrived') {
+            meSprite.state = 'idle';
+          }
+        }
       }
       syncScene(state);
       refreshButton();
@@ -2276,6 +2487,15 @@
 
       reveal: function () {
         safeSend({ type: 'classroom_reveal' });
+      },
+
+      // --- v3 P4 doorways teacher methods (vote-with-your-feet) ---
+
+      openDoorways: function (id, question, options) {
+        safeSend({ type: 'classroom_open_doorways', id: id, question: question, options: options });
+      },
+      closeDoorways: function (id) {
+        safeSend({ type: 'classroom_close_doorways', id: id });
       },
 
       // --- v2.1 result screen methods ---

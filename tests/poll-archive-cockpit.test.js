@@ -185,6 +185,18 @@ function makeTestEnv({ fetchImpl, token, rosterServiceUrl } = {}) {
   <button id="btn-green-light"></button>
   <input id="sync-video-start" type="checkbox">
   <button id="btn-reset"></button>
+  <!-- v3 P4: doorways scaffolding -->
+  <div id="doorways-section" style="display:none">
+    <input id="doorways-question-input" type="text">
+    <div id="doorways-options-list">
+      <div class="poll-option-row"><input class="poll-option-input" type="text" value="A"><button class="poll-remove-btn">x</button></div>
+      <div class="poll-option-row"><input class="poll-option-input" type="text" value="B"><button class="poll-remove-btn">x</button></div>
+    </div>
+    <button id="doorways-add-option"></button>
+    <button id="btn-open-doorways"></button>
+    <button id="btn-close-doorways" style="display:none"></button>
+    <canvas id="doorways-tally-canvas" width="480" height="160" style="display:none"></canvas>
+  </div>
 </body></html>`,
     { url: 'https://example.com' }
   );

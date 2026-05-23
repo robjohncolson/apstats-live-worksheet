@@ -907,3 +907,41 @@ describe('LIVE_CLASSROOM_V3 P1+P2 -- live state pins', () => {
     expect(BOARD).toMatch(/live:\s*state\.live/);
   });
 });
+
+// ==========================================================================
+// LIVE_CLASSROOM_V3 P4 -- doorways structure pins
+// ==========================================================================
+// LIVE_CLASSROOM_V3_P4_BUILD.md C4 + C5 + C6 + C9:
+//   - Doorway entity is defined in classroom-board.js (C5)
+//   - _reduce has cases for classroom_open_doorways / _doorway_tally / _close_doorways (C4)
+//   - emptyState seeds doorways: null (C4)
+//   - mount() exposes openDoorways + closeDoorways via the handle (C9)
+// Source-level pins; behavior tests live in tests/classroom-board.test.js
+// + tests/v3-p4-doorways.test.js.
+
+describe('LIVE_CLASSROOM_V3 P4 -- doorways pins', () => {
+  it('defines Doorway entity', () => {
+    // The C5 Doorway constructor at classroom-board.js.
+    expect(BOARD).toMatch(/function\s+Doorway\s*\(/);
+  });
+
+  it('_reduce has cases for classroom_open_doorways / _doorway_tally / _close_doorways', () => {
+    expect(BOARD).toMatch(/case\s+['"]classroom_open_doorways['"]/);
+    expect(BOARD).toMatch(/case\s+['"]classroom_doorway_tally['"]/);
+    expect(BOARD).toMatch(/case\s+['"]classroom_close_doorways['"]/);
+  });
+
+  it('emptyState includes doorways: null', () => {
+    // The literal in emptyState() includes `doorways: null` alongside the
+    // other slots. The regex tolerates surrounding whitespace.
+    expect(BOARD).toMatch(/doorways:\s*null/);
+  });
+
+  it('mount() exposes openDoorways + closeDoorways via the handle', () => {
+    // The boardHandle object literal at the end of mount() declares both
+    // teacher methods. Source-level: an `openDoorways: function` and
+    // `closeDoorways: function` line must exist.
+    expect(BOARD).toMatch(/openDoorways\s*:\s*function/);
+    expect(BOARD).toMatch(/closeDoorways\s*:\s*function/);
+  });
+});
