@@ -123,9 +123,13 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(DESK).toMatch(/#signin-roster-dropdown\s+\.sr-row/);
   });
 
-  it('17: _fetchPeriodRoster hits /roster/section/:section with the current period', () => {
+  it('17: roster fetch hits /roster/section/:section with the current period', () => {
     expect(DESK).toMatch(/async\s+function\s+_fetchPeriodRoster\s*\(/);
-    const body = fnBody(DESK, '_fetchPeriodRoster');
+    // After the PeriodX-fallback refactor (sign-in dropdown fix) the actual
+    // per-section fetch lives in _fetchSectionRoster which _fetchPeriodRoster
+    // calls -- once for the primary section, again for PeriodX on empty.
+    expect(DESK).toMatch(/async\s+function\s+_fetchSectionRoster\s*\(/);
+    const body = fnBody(DESK, '_fetchSectionRoster');
     expect(body).toMatch(/\/roster\/section\//);
     expect(body).toMatch(/encodeURIComponent\s*\(\s*section\s*\)/);
     // Cache + TTL.

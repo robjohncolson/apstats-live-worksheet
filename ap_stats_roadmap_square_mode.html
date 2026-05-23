@@ -3929,8 +3929,10 @@ function _periodToSection(period) {
   if (/^[A-Za-z]$/.test(period)) return 'Period' + period.toUpperCase();
   return 'PeriodX';
 }
-async function _fetchPeriodRoster(period) {
-  var section = _periodToSection(period);
+// Fetch one specific section's roster (cached). Returns [] on miss/error.
+// Extracted from _fetchPeriodRoster so the period -> section call can fall
+// back to the universal "PeriodX" section.
+async function _fetchSectionRoster(section) {
   if (!section) return [];
   var cacheKey = 'apstats_desk_roster_cache_' + section;
   // Try cache first.
@@ -3962,6 +3964,20 @@ async function _fetchPeriodRoster(period) {
   } catch (_) {
     return [];
   }
+}
+
+async function _fetchPeriodRoster(period) {
+  var primarySection = _periodToSection(period);
+  var primary = await _fetchSectionRoster(primarySection);
+  if (primary.length > 0) return primary;
+  // Fallback: PeriodX is the universal section while real periods aren't
+  // yet assigned. Without this fallback the sign-in dropdown is empty
+  // whenever cP defaults to "B" (yielding section "PeriodB" which has
+  // no students), even though every student is registered in PeriodX.
+  if (primarySection !== 'PeriodX') {
+    return _fetchSectionRoster('PeriodX');
+  }
+  return [];
 }
 
 var _rosterDropdownData = [];  // last-fetched roster for the open modal
@@ -4026,6 +4042,14 @@ async function _openRosterDropdown() {
   var period = (typeof cP === 'string') ? cP : 'B';
   // Fetch (cached) then render.
   _rosterDropdownData = await _fetchPeriodRoster(period);
+  // Empty roster -> bail out and leave the dropdown closed. The previous
+  // behaviour was to open it and show a "No class list loaded" hint that
+  // visually overlaid the password field beneath. The student can still
+  // type their username manually -- nothing in the field is blocked.
+  if (_rosterDropdownData.length === 0) {
+    _closeRosterDropdown();
+    return;
+  }
   var uInp = document.getElementById('signin-username');
   _renderRosterDropdown(uInp ? uInp.value : '');
   dd.style.display = 'block';

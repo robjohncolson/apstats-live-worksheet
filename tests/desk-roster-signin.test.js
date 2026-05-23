@@ -599,3 +599,35 @@ describe('TR2 runtime — renderDoNow gating', () => {
     expect(d.el('donow-msg').textContent).toMatch(/sign in/i);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sign-in dropdown fix -- PeriodX fallback + bail-on-empty
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// The roster dropdown used to call /roster/section/PeriodB (cP defaults to
+// 'B') even though every student is registered in 'PeriodX' while real
+// periods aren't yet assigned. The dropdown opened empty and showed
+// "No class list loaded" -- visually overlaid the password field below.
+// Two-part fix:
+//   1. _fetchPeriodRoster falls back to PeriodX when the configured section
+//      returns 0 students.
+//   2. _openRosterDropdown bails out (keeps the dropdown closed) when the
+//      roster is empty so the hint never overlays the password field.
+
+describe('sign-in dropdown -- PeriodX fallback + bail-on-empty', () => {
+  it('exposes a _fetchSectionRoster helper (single-section fetch) for reuse', () => {
+    expect(html).toMatch(/async\s+function\s+_fetchSectionRoster\s*\(\s*section\s*\)/);
+  });
+
+  it('_fetchPeriodRoster falls back to PeriodX when the primary section is empty', () => {
+    // Two anchors -- the fallback call + the no-double-fetch guard.
+    expect(html).toMatch(/if\s*\(\s*primarySection\s*!==\s*['"]PeriodX['"]\s*\)/);
+    expect(html).toMatch(/_fetchSectionRoster\(\s*['"]PeriodX['"]\s*\)/);
+  });
+
+  it('_openRosterDropdown bails out when _rosterDropdownData is empty', () => {
+    // After the await fetch, if the data is empty the dropdown must close.
+    expect(html).toMatch(/_rosterDropdownData\s*=\s*await\s+_fetchPeriodRoster/);
+    expect(html).toMatch(/if\s*\(\s*_rosterDropdownData\.length\s*===\s*0\s*\)\s*\{\s*_closeRosterDropdown\(\s*\);\s*return/);
+  });
+});
