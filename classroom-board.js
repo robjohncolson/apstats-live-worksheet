@@ -102,6 +102,7 @@
   var JUMP_V0    = -280;     // initial vertical velocity (negative = up)
   var GRAVITY    = 800;      // px/s^2 downward
   var PUSH_DELTA = 0.6;      // px lateral nudge per overlapping tick
+  var JUMP_FRAME = 5;        // sprite frame for the airborne pose (cr-matching)
 
   // --- unique canvas id generator ---------------------------------------
 
@@ -479,6 +480,7 @@
     this.state        = 'idle';
     this.targetX      = 0;
     this.walkDir      = 1;   // 1 = right, -1 = left
+    this.facingRight  = true; // sheet bottom row = left-facing; +11 offset via _directedFrame
 
     // Idle-blink animation
     this.idleTimer        = 0;
@@ -498,9 +500,17 @@
     this.state        = 'walking';
     this.targetX      = targetX;
     this.walkDir      = (targetX > this.x) ? 1 : -1;
+    this.facingRight  = (this.walkDir > 0);   // peers walking left now face left
     this.walkTimer    = 0;
     this.currentWalkFrame = 0;
-    this.frameIndex   = WALK_FRAMES[0];
+    this.frameIndex   = this._directedFrame(WALK_FRAMES[0]);
+  };
+
+  // Direction-aware frame select: sprite sheet has both directions baked
+  // in (top row 0-10 right-facing, bottom row 11-21 left-facing, mirrored).
+  // Add +11 to any base frame to flip. Per cr/player_sprite.js line 182.
+  BoardSprite.prototype._directedFrame = function (baseFrame) {
+    return this.facingRight ? baseFrame : baseFrame + 11;
   };
 
   // Cancel an in-flight walk and return to the idle blink loop.
@@ -532,7 +542,7 @@
       this.currentIdleFrame = 1;
       this.idleTimer = 0;
     }
-    this.frameIndex = IDLE_FRAMES[this.currentIdleFrame];
+    this.frameIndex = this._directedFrame(IDLE_FRAMES[this.currentIdleFrame]);
   };
 
   BoardSprite.prototype._updateWalk = function (dt) {
@@ -541,7 +551,7 @@
     if (this.walkTimer >= WALK_FRAME_SPEED) {
       this.walkTimer -= WALK_FRAME_SPEED;
       this.currentWalkFrame = (this.currentWalkFrame + 1) % WALK_FRAMES.length;
-      this.frameIndex = WALK_FRAMES[this.currentWalkFrame];
+      this.frameIndex = this._directedFrame(WALK_FRAMES[this.currentWalkFrame]);
     }
 
     // Move toward targetX
@@ -604,7 +614,8 @@
     this._jumpHandled = false;
     this._upHandled   = false;
     this._moved       = false;
-    this._spriteSize  = SPRITE_W * (opts.scale || SPRITE_SCALE);
+    this._spriteSize   = SPRITE_W * (opts.scale || SPRITE_SCALE);
+    this._spriteHeight = SPRITE_H * (opts.scale || SPRITE_SCALE);
   }
   PlayerSprite.prototype = Object.create(BoardSprite.prototype);
   PlayerSprite.prototype.constructor = PlayerSprite;
@@ -623,16 +634,17 @@
       this._upHandled = false;
     }
 
-    // Horizontal velocity from L/R.
+    // Horizontal velocity from L/R; flip facing for direction-aware frames.
     var vxNext = 0;
-    if (this.input.left)  { vxNext -= WALK_SPEED; }
-    if (this.input.right) { vxNext += WALK_SPEED; }
+    if (this.input.left)  { vxNext -= WALK_SPEED; this.facingRight = false; }
+    if (this.input.right) { vxNext += WALK_SPEED; this.facingRight = true;  }
     this.vx = vxNext;
 
-    // Jump edge-trigger: only when grounded; no auto-repeat while Space held.
+    // Jump edge-trigger: only when on a floor (ground OR a peer's head);
+    // no auto-repeat while Space held.
     if (this.input.jump && !this._jumpHandled) {
       this._jumpHandled = true;
-      if (this.state !== 'jumping' && this.y >= this.groundY - 0.01) {
+      if (this.state !== 'jumping' && this._onFloor()) {
         this.vy    = JUMP_V0;
         this.state = 'jumping';
       }
@@ -640,8 +652,8 @@
       this._jumpHandled = false;
     }
 
-    // Track active motion -- once true, repositionSprites stops auto-laying
-    // the player out (D2: stays where last walked).
+    // Track active motion -- repositionSprites stops auto-laying the player
+    // out once this flips (D2: stays where last walked).
     if (this.vx !== 0 || this.state === 'jumping') {
       this._moved = true;
     }
@@ -649,28 +661,52 @@
     // Horizontal motion.
     this.x += this.vx * dt;
 
-    // Vertical motion (jump arc).
-    if (this.state === 'jumping') {
-      this.vy += GRAVITY * dt;
-      this.y  += this.vy * dt;
-      if (this.y >= this.groundY) {
-        this.y     = this.groundY;
-        this.vy    = 0;
-        this.state = 'idle';
-        this.idleTimer        = 0;
-        this.currentIdleFrame = 0;
-      }
-    }
+    // Gravity + vertical integrate, always. The floor snap below puts us
+    // back on whichever surface we crossed (re-lands each tick when at rest
+    // -- cheap and self-correcting if a peer moves under us in Phase 2).
+    this.vy += GRAVITY * dt;
+    var prevY = this.y;
+    this.y   += this.vy * dt;
 
-    // Soft-push: self-resolution against overlapping peers. Each client
-    // pushes its OWN player; in Phase 2 the broadcast loop converges both
-    // ends (peers are not pushed back here).
-    var peersMap = this.peers();
+    // Floor candidates: the ground (always blocks) + each peer's head as a
+    // one-way platform. Land at the highest (smallest y) candidate the
+    // player just crossed FROM ABOVE this tick (prevY <= floor && y >= floor).
+    var peersMap  = this.peers();
+    var bestFloor = null;
+    if (prevY <= this.groundY && this.y >= this.groundY) {
+      bestFloor = this.groundY;
+    }
     for (var u in peersMap) {
       var p = peersMap[u];
       if (!p || p === this) { continue; }
-      var dx = this.x - p.x;
-      if (Math.abs(dx) < this._spriteSize) {
+      if (!this._horizontalOverlap(p)) { continue; }
+      var landingY = p.y - this._spriteHeight;
+      if (prevY <= landingY && this.y >= landingY) {
+        if (bestFloor === null || landingY < bestFloor) {
+          bestFloor = landingY;
+        }
+      }
+    }
+    if (bestFloor !== null) {
+      this.y  = bestFloor;
+      this.vy = 0;
+      if (this.state === 'jumping') {
+        this.state           = 'idle';
+        this.idleTimer       = 0;
+        this.currentIdleFrame = 0;
+      }
+    } else if (this.vy > 0 && this.state !== 'jumping') {
+      // Falling without a floor (walked off a peer / off a ledge) -- mark
+      // airborne so the frame select uses the jump pose.
+      this.state = 'jumping';
+    }
+
+    // Soft-push: SAME-LEVEL peers only (don't kick the player off a head).
+    for (var u2 in peersMap) {
+      var pp = peersMap[u2];
+      if (!pp || pp === this) { continue; }
+      if (this._sameLevel(pp) && this._horizontalOverlap(pp)) {
+        var dx = this.x - pp.x;
         this.x += (dx >= 0 ? 1 : -1) * PUSH_DELTA;
         this._moved = true;
       }
@@ -682,17 +718,18 @@
     if (this.x < 0)    { this.x = 0; }
     if (this.x > maxX) { this.x = maxX; }
 
-    // Frame selection.
+    // Frame selection -- direction-aware via _directedFrame.
     if (this.state === 'jumping') {
-      this.frameIndex = IDLE_FRAMES[0];   // static airborne pose (v1)
+      this.frameIndex = this._directedFrame(JUMP_FRAME);
     } else if (this.vx !== 0) {
       this.walkTimer += dt;
       if (this.walkTimer >= WALK_FRAME_SPEED) {
         this.walkTimer -= WALK_FRAME_SPEED;
         this.currentWalkFrame = (this.currentWalkFrame + 1) % WALK_FRAMES.length;
       }
-      this.frameIndex = WALK_FRAMES[this.currentWalkFrame];
+      this.frameIndex = this._directedFrame(WALK_FRAMES[this.currentWalkFrame]);
     } else {
+      // Inherited _updateIdle already routes through _directedFrame.
       this._updateIdle(dt);
     }
   };
@@ -706,6 +743,29 @@
         this.y = this.groundY;
       }
     }
+  };
+
+  // Collision helpers (Phase 1.5).
+  PlayerSprite.prototype._horizontalOverlap = function (peer) {
+    return Math.abs(this.x - peer.x) < this._spriteSize;
+  };
+  PlayerSprite.prototype._sameLevel = function (peer) {
+    // "Same level" = at the same y to within half a sprite. Soft-push only
+    // applies horizontally; when stacked, the y delta is a full sprite and
+    // this returns false (no kicking off heads).
+    return Math.abs(this.y - peer.y) < (this._spriteHeight / 2);
+  };
+  PlayerSprite.prototype._onFloor = function () {
+    if (this.y >= this.groundY - 0.01) { return true; }
+    var peersMap = this.peers();
+    for (var u in peersMap) {
+      var p = peersMap[u];
+      if (!p || p === this) { continue; }
+      if (!this._horizontalOverlap(p)) { continue; }
+      var landingY = p.y - this._spriteHeight;
+      if (Math.abs(this.y - landingY) < 1) { return true; }
+    }
+    return false;
   };
 
   // --- GreenLightOverlay entity -----------------------------------------

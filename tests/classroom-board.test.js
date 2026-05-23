@@ -4129,4 +4129,85 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
     t.p.update(1.0);
     expect(t.p.x).toBe(0);
   });
+
+  // ----- Phase 1.5: direction + stackable one-way platforms -----
+
+  it('facingRight: flips to false on Left input; back to true on Right', () => {
+    var t = makePS();
+    expect(t.p.facingRight).toBe(true);
+    t.opts.input.left = true;
+    t.p.update(0.016);
+    expect(t.p.facingRight).toBe(false);
+    t.opts.input.left = false;
+    t.opts.input.right = true;
+    t.p.update(0.016);
+    expect(t.p.facingRight).toBe(true);
+  });
+
+  it('walking left -> frameIndex picks the bottom-row mirror (+11 offset)', () => {
+    var t = makePS();
+    t.opts.input.left = true;
+    t.p.update(0.016);
+    // WALK_FRAMES = [2,3,4,5]; left-facing adds +11 -> indices in [13, 16].
+    expect(t.p.frameIndex).toBeGreaterThanOrEqual(13);
+    expect(t.p.frameIndex).toBeLessThanOrEqual(16);
+  });
+
+  it('stack: drop onto a peer head -> lands at peerTop (peer.y - spriteHeight)', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    // Player starts above the peer; groundY stays at 200 (from opts.y).
+    t.p.y  = 150;
+    t.p.vy = 0;
+    var safety = 0;
+    while (safety < 500) {
+      t.p.update(0.016);
+      if (t.p.vy === 0 && t.p.state !== 'jumping' && safety > 0) break;
+      safety++;
+    }
+    // peerTop = 200 - 24 = 176 (spriteHeight = 96 * 0.25).
+    expect(t.p.y).toBeCloseTo(176, 0);
+    expect(t.p.state).toBe('idle');
+  });
+
+  it('stack: walk off a peer head -> falls past it and lands on the ground', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y  = 176;        // already standing on the peer head
+    t.p.vy = 0;
+    t.opts.input.right = true;
+    for (var i = 0; i < 200; i++) { t.p.update(0.016); }
+    // Walked off, fell, landed on the real ground (groundY=200).
+    expect(t.p.y).toBeCloseTo(200, 0);
+  });
+
+  it('one-way platform: rising UP through a peer does NOT collide', () => {
+    var peer = { x: 100, y: 180 }; // peerTop=156; between ground (200) and peak (~151)
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    t.opts.input.jump = false;
+    var peakY = t.p.y;
+    for (var i = 0; i < 100 && t.p.vy < 0; i++) {
+      t.p.update(0.016);
+      if (t.p.y < peakY) peakY = t.p.y;
+    }
+    // Smaller y = physically higher. Player rose past peerTop=156 without snapping.
+    expect(peakY).toBeLessThan(156);
+  });
+
+  it('one-way platform: descending lands on the peer head, not the ground', () => {
+    var peer = { x: 100, y: 180 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    t.opts.input.jump = false;
+    var safety = 0;
+    while (t.p.state === 'jumping' && safety < 500) {
+      t.p.update(0.016);
+      safety++;
+    }
+    // Landed on the peer's head (peerTop=156), NOT on the ground (200).
+    expect(t.p.y).toBeCloseTo(156, 0);
+  });
 });

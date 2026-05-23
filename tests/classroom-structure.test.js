@@ -637,3 +637,49 @@ describe('onDrained guard -- only removes on an actual drain', () => {
     expect(BOARD).toMatch(/if\s*\(\s*!\s*draining\[\s*uname\s*\]\s*\)\s*\{?\s*return/);
   });
 });
+
+// ==========================================================================
+// KEYBOARD_AVATAR Phase 1.5 -- direction-aware frames + stackable platforms
+// ==========================================================================
+
+describe('KEYBOARD_AVATAR Phase 1.5 -- direction + stackable head-jumping', () => {
+  it('defines JUMP_FRAME constant (= 5; cr-matching airborne pose)', () => {
+    expect(BOARD).toMatch(/var\s+JUMP_FRAME\s*=\s*5/);
+  });
+
+  it('BoardSprite._directedFrame applies the +11 offset for left-facing', () => {
+    expect(BOARD).toMatch(/BoardSprite\.prototype\._directedFrame\s*=\s*function/);
+    expect(BOARD).toMatch(/this\.facingRight\s*\?\s*baseFrame\s*:\s*baseFrame\s*\+\s*11/);
+  });
+
+  it('BoardSprite.walkTo sets facingRight from walkDir', () => {
+    expect(BOARD).toMatch(/this\.facingRight\s*=\s*\(\s*this\.walkDir\s*>\s*0\s*\)/);
+  });
+
+  it('_updateIdle and _updateWalk route frames through _directedFrame', () => {
+    expect(BOARD).toMatch(/this\.frameIndex\s*=\s*this\._directedFrame\(\s*IDLE_FRAMES/);
+    expect(BOARD).toMatch(/this\.frameIndex\s*=\s*this\._directedFrame\(\s*WALK_FRAMES/);
+  });
+
+  it('PlayerSprite tracks _spriteHeight for collision math', () => {
+    expect(BOARD).toMatch(/this\._spriteHeight\s*=\s*SPRITE_H\s*\*/);
+  });
+
+  it('PlayerSprite._onFloor checks ground + each peer head', () => {
+    expect(BOARD).toMatch(/PlayerSprite\.prototype\._onFloor\s*=\s*function/);
+  });
+
+  it('PlayerSprite._horizontalOverlap and _sameLevel exist', () => {
+    expect(BOARD).toMatch(/PlayerSprite\.prototype\._horizontalOverlap/);
+    expect(BOARD).toMatch(/PlayerSprite\.prototype\._sameLevel/);
+  });
+
+  it('stack landing: floor candidate is peer.y - spriteHeight, gated on prevY <= landingY && y >= landingY', () => {
+    expect(BOARD).toMatch(/landingY\s*=\s*p\.y\s*-\s*this\._spriteHeight/);
+    expect(BOARD).toMatch(/prevY\s*<=\s*landingY\s*&&\s*this\.y\s*>=\s*landingY/);
+  });
+
+  it('soft-push is gated on _sameLevel so it cannot kick off peer heads', () => {
+    expect(BOARD).toMatch(/this\._sameLevel\(\s*pp\s*\)\s*&&\s*this\._horizontalOverlap\(\s*pp\s*\)/);
+  });
+});
