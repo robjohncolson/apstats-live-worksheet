@@ -140,11 +140,23 @@ function makeTestEnv({ fetchImpl, token, rosterServiceUrl } = {}) {
 <html><body>
   <div id="board-region" style="display:none"></div>
   <div id="access-denied-panel" style="display:none"></div>
+  <!-- v3 P1+P2: global presence + Go Live elements -->
+  <div id="global-presence-section">
+    <div id="global-presence-list"><div id="global-presence-empty"></div></div>
+    <button id="btn-go-live"></button>
+    <div id="go-live-hint"></div>
+  </div>
+  <div id="section-region" style="display:none">
+    <h2 id="section-region-title">Live -- Period <span id="live-section-label">?</span></h2>
+    <button id="btn-exit-live"></button>
+  </div>
   <select id="section-select"><option value="PeriodE">PeriodE</option></select>
   <div id="status-row"></div>
   <div id="board-mount"></div>
   <div id="control-section" style="display:none"></div>
   <div id="checkin-section" style="display:none"></div>
+  <div id="checkin-panel-section" style="display:none"></div>
+  <div id="poll-history-section" style="display:none"></div>
   <div id="poll-section" style="display:none"></div>
   <div id="checkin-count"></div>
   <ul id="checkin-list"></ul>
@@ -232,6 +244,19 @@ function makeTestEnv({ fetchImpl, token, rosterServiceUrl } = {}) {
   // Stub ROSTER_SERVICE_URL.
   win.ROSTER_SERVICE_URL = rosterServiceUrl || 'https://roster-test.example.com';
 
+  // v3 P1+P2: stub WebSocket -- jsdom doesn't provide it, and the cockpit
+  // now opens its own WS for monitor mode + classroom_live_start/stop
+  // signaling. The stub does nothing -- no events fire; the open/send/close
+  // calls are no-ops. This is enough to keep the cockpit script from
+  // throwing on the bare `new WebSocket(...)` calls.
+  win.WebSocket = function StubWebSocket(_url) {
+    this.readyState = 0;  // CONNECTING -- never advances; send() / close() no-op
+    this.addEventListener = function () {};
+    this.removeEventListener = function () {};
+    this.send = function () {};
+    this.close = function () {};
+  };
+
   // Stub RAILWAY_SERVER_URL (used by wsUrl helper).
   win.RAILWAY_SERVER_URL = 'https://curriculum-test.example.com';
 
@@ -262,6 +287,13 @@ const INLINE_SCRIPT = extractInlineScript(COCKPIT_SRC);
 
 // Run the cockpit inline script in a fresh environment.
 // Returns { win, fireStateChange } after boot() + async mount settle.
+//
+// v3 P1+P2: the cockpit no longer auto-mounts on boot -- it starts in
+// the Idle "global presence" view. To capture the onStateChange callback
+// these tests need, we explicitly enter Live mode after boot by clicking
+// the "Go Live" button. The button reads the section picker (default
+// option "PeriodX"), invokes enterLiveMode -> mountBoard, which calls
+// the stubbed ClassroomBoard.mount that captures onStateChange.
 async function runCockpit(envOpts) {
   const { win, fireStateChange } = makeTestEnv(envOpts);
   const ctx = createContext(win);
@@ -270,9 +302,22 @@ async function runCockpit(envOpts) {
   } catch (_) {
     // Boot may fail due to stubbing limits; acceptable for these tests.
   }
-  // Yield to let mountBoard()'s async fetchNameMap() resolve and
-  // ClassroomBoard.mount() to be called (capturing onStateChange).
+  // Yield once so the access-check + startMonitorMode async paths settle.
   await new Promise(function (resolve) { setTimeout(resolve, 0); });
+  // v3: trigger Live mode so the board mounts + onStateChange is captured.
+  // The cockpit no longer auto-mounts on boot -- it starts in Idle (global
+  // presence) mode and only mounts the section board when Go Live is pressed.
+  try {
+    var goLiveBtn = win.document.getElementById('btn-go-live');
+    if (goLiveBtn) { goLiveBtn.click(); }
+  } catch (_) { /* tolerate missing button on legacy / partial loads */ }
+  // The click chain is: btn-go-live -> enterLiveMode -> mountBoard ->
+  // (await fetchNameMap) -> ClassroomBoard.mount. Several promise ticks
+  // sit between the click and the onStateChange capture, so yield enough
+  // microtasks for the chain to settle.
+  for (var i = 0; i < 10; i++) {
+    await new Promise(function (resolve) { setTimeout(resolve, 0); });
+  }
   return { win, fireStateChange };
 }
 

@@ -249,7 +249,20 @@
           // (LIVE_CLASSROOM_SPEC S5.3) -- there is no classroom_reset
           // broadcast. A fresh snapshot carries no closed-poll concept, so
           // clear it: this is what dismisses the result screen on a reset.
-          closedPoll: null
+          closedPoll: null,
+          live:       !!message.live
+        };
+
+      case 'classroom_live_state':
+        // v3 P1+P2: room.live transitions. Carries section + live bool.
+        // The state.live field is new (defaults to false in emptyState).
+        return {
+          members:    state.members,
+          gate:       state.gate,
+          poll:       state.poll,
+          greenlight: state.greenlight,
+          closedPoll: state.closedPoll != null ? state.closedPoll : null,
+          live:       !!message.live
         };
 
       case 'classroom_member_update':
@@ -274,7 +287,8 @@
           gate:       state.gate,
           poll:       state.poll,
           greenlight: state.greenlight,
-          closedPoll: state.closedPoll != null ? state.closedPoll : null
+          closedPoll: state.closedPoll != null ? state.closedPoll : null,
+          live:       state.live
         };
 
       case 'classroom_member_left':
@@ -289,7 +303,8 @@
           gate:       state.gate,
           poll:       state.poll,
           greenlight: state.greenlight,
-          closedPoll: state.closedPoll != null ? state.closedPoll : null
+          closedPoll: state.closedPoll != null ? state.closedPoll : null,
+          live:       state.live
         };
 
       case 'classroom_gate':
@@ -313,7 +328,8 @@
           gate:       message.gate || null,
           poll:       state.poll,
           greenlight: false,
-          closedPoll: null
+          closedPoll: null,
+          live:       state.live
         };
 
       case 'classroom_greenlight':
@@ -322,7 +338,8 @@
           gate:       state.gate,
           poll:       state.poll,
           greenlight: true,
-          closedPoll: state.closedPoll != null ? state.closedPoll : null
+          closedPoll: state.closedPoll != null ? state.closedPoll : null,
+          live:       state.live
         };
 
       // --- v2 poll cases (pure) -----------------------------------------
@@ -356,7 +373,8 @@
             blind:    message.blind === true
           },
           greenlight: state.greenlight,
-          closedPoll: null
+          closedPoll: null,
+          live:       state.live
         };
 
       case 'classroom_poll_closed':
@@ -378,7 +396,8 @@
           gate:       state.gate,
           poll:       null,
           greenlight: state.greenlight,
-          closedPoll: closedSnapshot
+          closedPoll: closedSnapshot,
+          live:       state.live
         };
 
       case 'classroom_poll_reveal':
@@ -413,7 +432,8 @@
           gate:       state.gate,
           poll:       state.poll,
           greenlight: state.greenlight,
-          closedPoll: state.closedPoll != null ? state.closedPoll : null
+          closedPoll: state.closedPoll != null ? state.closedPoll : null,
+          live:       state.live
         };
 
       // NOTE: there is no 'classroom_reset' broadcast -- a teacher reset is
@@ -428,7 +448,7 @@
   // --- initial state factory --------------------------------------------
 
   function emptyState() {
-    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null };
+    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false };
   }
 
   // --- check-in button logic (B3) -- unchanged --------------------------
@@ -477,7 +497,8 @@
       tally:      tally,
       closedPoll: state.closedPoll || null,
       members:    arr,
-      greenlight: state.greenlight
+      greenlight: state.greenlight,
+      live:       state.live
     };
   }
 

@@ -333,19 +333,38 @@
     <!-- Controls + board: shown only when role check passes -->
     <div id="board-region" style="display:none">
 
-      <div class="section">
-        <h2 class="section-title">Section</h2>
+      <!-- v3 P1+P2: Global presence -- shown by default; hidden in Live mode. -->
+      <div class="section" id="global-presence-section">
+        <h2 class="section-title">Everyone online</h2>
+        <div id="global-presence-list">
+          <div class="hint" id="global-presence-empty">Connecting...</div>
+        </div>
         <div class="form-row">
-          <label for="section-select">Active section</label>
+          <button class="ctrl-btn primary" id="btn-go-live">Go Live</button>
+          <div class="hint" id="go-live-hint">
+            Pick a section to enter Live mode. The board mounts and students see a "Live" indicator.
+          </div>
+        </div>
+      </div>
+
+      <!-- v1b: Section + board -- hidden by default in v3, shown after Go Live. -->
+      <div class="section" id="section-region" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <h2 class="section-title" id="section-region-title">Live -- Period <span id="live-section-label">?</span></h2>
+          <button class="ctrl-btn" id="btn-exit-live">Exit Live</button>
+        </div>
+        <div class="form-row">
+          <label for="section-select">Section</label>
           <select id="section-select">
             <option value="PeriodX">PeriodX</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
           </select>
         </div>
         <div class="status-row" id="status-row"></div>
-        <div class="hint">
-          Select the section to view. The board connects automatically when you
-          change the selection.
-        </div>
       </div>
 
       <!-- v1b: control strip -- hidden until the board actually mounts -->
@@ -884,6 +903,223 @@
       }
     }
 
+    // ===== v3 P1+P2: cockpit state =====
+
+    // v3 P1+P2 cockpit state.
+    //   'global'  -- showing the global presence view (default; not live)
+    //   'live'    -- mounted on a specific section (live mode)
+    var _cockpitMode = 'global';
+    var _monitorWs = null;    // separate WS for monitor mode (or reuse boardHandle's)
+    var _globalState = { sections: [] };
+    var _liveSectionRef = null;
+
+    // ===== v3 P1+P2: global presence wiring =====
+
+    function startMonitorMode() {
+      _cockpitMode = 'global';
+      document.getElementById('global-presence-section').style.display = '';
+      document.getElementById('section-region').style.display = 'none';
+      // The control-section + poll-section + remaining cards hide too --
+      // they only make sense in Live mode.
+      var hideInGlobal = ['control-section', 'poll-section',
+                          'checkin-panel-section', 'poll-history-section'];
+      hideInGlobal.forEach(function(id) {
+        var n = document.getElementById(id);
+        if (n) n.style.display = 'none';
+      });
+      _ensureMonitorWs();  // open WS + send classroom_monitor_start
+    }
+
+    function stopMonitorMode() {
+      if (_monitorWs && _monitorWs.readyState === 1) {
+        try { _monitorWs.send(JSON.stringify({ type: 'classroom_monitor_stop' })); } catch (_) {}
+      }
+      // Do NOT close the socket -- the about-to-mount board may reuse it.
+    }
+
+    function _ensureMonitorWs() {
+      // Re-subscribe on an already-open socket. After stopMonitorMode()
+      // (which sends classroom_monitor_stop but leaves the socket open),
+      // the server has removed us from monitorSockets -- so we must
+      // always re-send classroom_monitor_start when entering monitor
+      // mode again, even if the socket is still up. Codex MAJOR fold.
+      if (_monitorWs && _monitorWs.readyState <= 1) {
+        if (_monitorWs.readyState === 1) {
+          try { _monitorWs.send(JSON.stringify({ type: 'classroom_monitor_start' })); } catch (_) {}
+        }
+        // readyState 0 (CONNECTING): the onopen handler will send it.
+        return;
+      }
+      // Guard the constructor: a bad URL or no WebSocket should not
+      // crash the cockpit. On error / close, clear the ref so the
+      // next entry into monitor mode opens a fresh socket. Codex MINOR fold.
+      try {
+        _monitorWs = new WebSocket(wsUrl());
+      } catch (_) {
+        _monitorWs = null;
+        return;
+      }
+      _monitorWs.addEventListener('open', function() {
+        try { _monitorWs.send(JSON.stringify({ type: 'classroom_monitor_start' })); } catch (_) {}
+      });
+      _monitorWs.addEventListener('close', function() {
+        if (_monitorWs && _monitorWs.readyState >= 2) { _monitorWs = null; }
+      });
+      _monitorWs.addEventListener('error', function() {
+        // Surface no UI; the close handler clears the ref so a later
+        // startMonitorMode() can retry on demand.
+      });
+      _monitorWs.addEventListener('message', function(ev) {
+        var msg = null;
+        try { msg = JSON.parse(ev.data); } catch (_) { return; }
+        if (!msg || !msg.type) return;
+        if (msg.type === 'classroom_state_all') {
+          _globalState = { sections: msg.sections || [] };
+          _renderGlobalPresence();
+        } else if (msg.type === 'classroom_member_update'
+                || msg.type === 'classroom_member_left'
+                || msg.type === 'classroom_live_state') {
+          _applyMonitorDelta(msg);
+          _renderGlobalPresence();
+        }
+      });
+    }
+
+    function _applyMonitorDelta(msg) {
+      var sections = _globalState.sections;
+      var sec = msg.section;
+      var idx = -1;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].section === sec) { idx = i; break; }
+      }
+      if (idx === -1) {
+        // New section -- shouldn't happen often but is safe to add.
+        sections.push({ section: sec, gate: null, poll: null, live: false, members: [] });
+        idx = sections.length - 1;
+      }
+      var room = sections[idx];
+      if (msg.type === 'classroom_member_update') {
+        var found = false;
+        for (var j = 0; j < room.members.length; j++) {
+          if (room.members[j].username === msg.member.username) {
+            room.members[j] = msg.member;
+            found = true;
+            break;
+          }
+        }
+        if (!found) room.members.push(msg.member);
+      } else if (msg.type === 'classroom_member_left') {
+        room.members = room.members.filter(function(m) { return m.username !== msg.username; });
+      } else if (msg.type === 'classroom_live_state') {
+        room.live = !!msg.live;
+      }
+    }
+
+    function _renderGlobalPresence() {
+      var listEl  = document.getElementById('global-presence-list');
+      var emptyEl = document.getElementById('global-presence-empty');
+      if (!listEl) return;
+      var sections = _globalState.sections;
+      // Build the section blocks.
+      var html = '';
+      var any = false;
+      for (var i = 0; i < sections.length; i++) {
+        var sec = sections[i];
+        var onlineCount = 0;
+        for (var j = 0; j < sec.members.length; j++) {
+          if (sec.members[j].online !== false) onlineCount++;
+        }
+        if (onlineCount === 0) continue;
+        any = true;
+        html += '<div style="margin:8px 0;">'
+          + '<strong>' + _escHtml(sec.section) + '</strong>'
+          + ' &mdash; ' + onlineCount + ' online'
+          + (sec.live ? ' <span style="color:#c0392b;font-weight:bold">[LIVE]</span>' : '')
+          + '<ul style="margin:4px 0 0 18px;padding:0;font-size:0.88rem;color:var(--sg-text-dim);">';
+        for (var k = 0; k < sec.members.length; k++) {
+          var m = sec.members[k];
+          if (m.online === false) continue;
+          html += '<li>' + _escHtml(m.username) + '</li>';
+        }
+        html += '</ul></div>';
+      }
+      if (!any) {
+        listEl.innerHTML = '';
+        if (emptyEl) emptyEl.textContent = 'No students currently online.';
+        listEl.appendChild(emptyEl);
+      } else {
+        listEl.innerHTML = html;
+      }
+    }
+
+    function _escHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s == null ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    function enterLiveMode(section) {
+      if (!section) return;
+      _cockpitMode = 'live';
+      stopMonitorMode();
+      document.getElementById('global-presence-section').style.display = 'none';
+      document.getElementById('section-region').style.display = '';
+      document.getElementById('live-section-label').textContent = section;
+      // Reveal the board-dependent cards (mountBoard will show control-section etc).
+      mountBoard(section, rosterClient.current());
+      // Tell the server this section is Live now.
+      _sendLiveStart(section);
+      _liveSectionRef = section;
+    }
+
+    function exitLiveMode() {
+      if (_cockpitMode !== 'live') return;
+      var sel = document.getElementById('section-select');
+      var section = sel ? sel.value : '';
+      teardown();
+      if (section) _sendLiveStop(section);
+      _liveSectionRef = null;
+      startMonitorMode();
+    }
+
+    function _sendLiveStart(section) {
+      // Routed through the (about-to-mount) board's WS or a fresh one --
+      // simplest: open a tiny WS, send, close. The board itself opens its
+      // own WS so this is fire-and-forget signaling.
+      try {
+        var s = new WebSocket(wsUrl());
+        s.addEventListener('open', function() {
+          try { s.send(JSON.stringify({ type: 'classroom_live_start', section: section })); } catch (_) {}
+          setTimeout(function() { try { s.close(); } catch (_) {} }, 250);
+        });
+      } catch (_) {}
+    }
+
+    function _sendLiveStop(section) {
+      try {
+        var s = new WebSocket(wsUrl());
+        s.addEventListener('open', function() {
+          try { s.send(JSON.stringify({ type: 'classroom_live_stop', section: section })); } catch (_) {}
+          setTimeout(function() { try { s.close(); } catch (_) {} }, 250);
+        });
+      } catch (_) {}
+    }
+
+    document.getElementById('btn-go-live').addEventListener('click', function() {
+      // Open the section picker by simply revealing the Section card --
+      // the user then picks a section from the dropdown and the existing
+      // onSectionChange handler mounts the board. Re-targeted so the
+      // mount fires immediately on the next change OR if the dropdown
+      // is already at a valid value, fire it now.
+      var sel = document.getElementById('section-select');
+      var section = sel ? sel.value : '';
+      if (section) {
+        enterLiveMode(section);
+      }
+    });
+
+    document.getElementById('btn-exit-live').addEventListener('click', exitLiveMode);
+
     // ===== section selector =====
 
     function onSectionChange() {
@@ -891,6 +1127,11 @@
       // Session should still be valid; re-check defensively.
       if (!session) return;
       var section = document.getElementById('section-select').value;
+      // v3 P1+P2: changing the section is implicitly an exit + re-enter Live.
+      var prev = _liveSectionRef;
+      if (prev && prev !== section) _sendLiveStop(prev);
+      if (section) _sendLiveStart(section);
+      _liveSectionRef = section;
       mountBoard(section, session);
     }
 
@@ -942,9 +1183,8 @@
       boardRegion.style.display  = '';
       accessDenied.style.display = 'none';
 
-      // Use the section from the selector (defaults to PeriodX).
-      var section = document.getElementById('section-select').value;
-      mountBoard(section, session);
+      // v3 P1+P2: default to the global presence view; no auto-mount.
+      startMonitorMode();
     })();
   </script>
 </body>

@@ -4950,3 +4950,166 @@ describe('classroom-board -- scaling: rate adaptation by room size', () => {
 
 });
 
+// ==========================================================================
+// classroom-board -- v3 P1+P2 live state
+// ==========================================================================
+// LIVE_CLASSROOM_V3_P12_BUILD.md C4: _reduce gains a classroom_live_state
+// case + a new state.live field; emptyState seeds live:false; every other
+// case preserves state.live; buildSummary carries live:state.live.
+
+describe('classroom-board -- v3 P1+P2 live state', function () {
+  var board;
+
+  // Empty-state literal mirroring emptyState() at classroom-board.js line 450.
+  // Used as the baseline for behavior tests. The companion structure pin in
+  // tests/classroom-structure.test.js asserts the real emptyState() shape.
+  function emptyLit() {
+    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false };
+  }
+
+  beforeEach(function () {
+    board = makeBoard();
+  });
+
+  it('empty-state literal carries live:false through an unknown-type passthrough', function () {
+    // Mirrors the existing "closedPoll is null in emptyState" test pattern:
+    // an unknown message type returns state unchanged, so a baseline empty
+    // state with live:false stays live:false.
+    var s = board.ClassroomBoard._reduce(emptyLit(), { type: 'unknown_message_type' });
+    expect(s.live).toBe(false);
+  });
+
+  it('_reduce(classroom_live_state) sets state.live to true', function () {
+    var s = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    true
+    });
+    expect(s.live).toBe(true);
+    // Other fields preserved from the prior state.
+    expect(s.members).toEqual({});
+    expect(s.gate).toBeNull();
+    expect(s.poll).toBeNull();
+    expect(s.greenlight).toBe(false);
+    expect(s.closedPoll).toBeNull();
+  });
+
+  it('_reduce(classroom_live_state) sets state.live to false from a live:true state', function () {
+    var liveState = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    true
+    });
+    expect(liveState.live).toBe(true);
+    var s = board.ClassroomBoard._reduce(liveState, {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    false
+    });
+    expect(s.live).toBe(false);
+  });
+
+  it('_reduce(classroom_state) reads message.live', function () {
+    var s = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    null,
+      members: [],
+      live:    true
+    });
+    expect(s.live).toBe(true);
+  });
+
+  it('_reduce(classroom_state) defaults state.live to false when message.live is omitted', function () {
+    // The !!message.live coercion: undefined -> false.
+    var s = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_state',
+      section: 'PeriodX',
+      gate:    null,
+      poll:    null,
+      members: []
+    });
+    expect(s.live).toBe(false);
+  });
+
+  it('_reduce(classroom_member_update) preserves state.live', function () {
+    // Start from a live:true state, then apply a member update.
+    var base = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    true
+    });
+    var s = board.ClassroomBoard._reduce(base, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'present', online: true }
+    });
+    expect(s.live).toBe(true);
+  });
+
+  it('_reduce(classroom_member_left) preserves state.live', function () {
+    // Seed a member into the live:true state so the member_left branch fires.
+    var live = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    true
+    });
+    var withAlice = board.ClassroomBoard._reduce(live, {
+      type:    'classroom_member_update',
+      section: 'PeriodX',
+      member:  { username: 'alice', role: 'student', status: 'present', online: true }
+    });
+    var s = board.ClassroomBoard._reduce(withAlice, {
+      type:     'classroom_member_left',
+      section:  'PeriodX',
+      username: 'alice'
+    });
+    expect(s.live).toBe(true);
+  });
+
+  it('_reduce(classroom_gate) preserves state.live', function () {
+    var live = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    true
+    });
+    var s = board.ClassroomBoard._reduce(live, {
+      type:    'classroom_gate',
+      section: 'PeriodX',
+      gate:    { armed: true, theme: 'apple' }
+    });
+    expect(s.live).toBe(true);
+  });
+
+  it('_reduce(classroom_poll) preserves state.live', function () {
+    var live = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    true
+    });
+    var s = board.ClassroomBoard._reduce(live, {
+      type:     'classroom_poll',
+      section:  'PeriodX',
+      id:       'poll-1',
+      question: 'Pick one',
+      options:  ['A', 'B'],
+      blind:    false
+    });
+    expect(s.live).toBe(true);
+  });
+
+  it('_reduce(classroom_greenlight) preserves state.live', function () {
+    var live = board.ClassroomBoard._reduce(emptyLit(), {
+      type:    'classroom_live_state',
+      section: 'PeriodX',
+      live:    true
+    });
+    var s = board.ClassroomBoard._reduce(live, {
+      type:    'classroom_greenlight',
+      section: 'PeriodX'
+    });
+    expect(s.live).toBe(true);
+  });
+});
+

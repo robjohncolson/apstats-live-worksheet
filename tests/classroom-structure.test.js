@@ -873,3 +873,27 @@ describe('KEYBOARD_AVATAR Phase 2.3 -- platform velocity on jump', () => {
     expect(BOARD).toMatch(/this\._jumpInheritedVx\s*=\s*0/);
   });
 });
+
+// ==========================================================================
+// LIVE_CLASSROOM_V3 P1+P2 -- live state structure pins
+// ==========================================================================
+// LIVE_CLASSROOM_V3_P12_BUILD.md C4: _reduce gains a classroom_live_state
+// case, emptyState seeds live:false, and buildSummary carries state.live.
+// These are source-level pins; behavior tests live in tests/classroom-board.test.js.
+
+describe('LIVE_CLASSROOM_V3 P1+P2 -- live state pins', () => {
+  it('emptyState seeds the live field to false', () => {
+    // The literal in emptyState() at classroom-board.js line 450 includes
+    // `live: false` as the last field. The regex tolerates surrounding
+    // commas/whitespace so re-ordering fields stays green.
+    expect(BOARD).toMatch(/live:\s*false/);
+  });
+
+  it('_reduce has a classroom_live_state case', () => {
+    expect(BOARD).toMatch(/case\s+['"]classroom_live_state['"]/);
+  });
+
+  it('buildSummary carries state.live in the returned object', () => {
+    expect(BOARD).toMatch(/live:\s*state\.live/);
+  });
+});
