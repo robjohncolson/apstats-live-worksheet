@@ -4210,4 +4210,221 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
     // Landed on the peer's head (peerTop=156), NOT on the ground (200).
     expect(t.p.y).toBeCloseTo(156, 0);
   });
+
+  // ----- Phase 2: cross-client position broadcast -----
+
+  function makePSpec(extra) {
+    var m  = makeBoard();
+    var ss = new m.win.SpriteSheet('sprite.png', 80, 96, {});
+    var emitted   = [];
+    var stubClock = 0;
+    var opts = {
+      x: 100, y: 200, scale: 0.25, hue: 0, online: true, label: 'me',
+      input:   { left: false, right: false, jump: false, up: false },
+      peers:   function () { return {}; },
+      canvasW: function () { return 400; },
+      onPos:   function (msg) { emitted.push({ x: msg.x, y: msg.y, state: msg.state, vx: msg.vx, t: stubClock }); },
+      now:     function () { return stubClock; }
+    };
+    if (extra) { for (var k in extra) { opts[k] = extra[k]; } }
+    var p = new m.ClassroomBoard._PlayerSprite(ss, opts);
+    return {
+      p: p, opts: opts, emitted: emitted,
+      advance: function (ms) { stubClock += ms; }
+    };
+  }
+
+  it('Phase 2: no emit when onPos is omitted (back-compat with Phase 1 tests)', () => {
+    var m  = makeBoard();
+    var ss = new m.win.SpriteSheet('sprite.png', 80, 96, {});
+    var p = new m.ClassroomBoard._PlayerSprite(ss, {
+      x: 0, y: 200, scale: 0.25, hue: 0, online: true, label: 'me',
+      input:   { left: false, right: true, jump: false, up: false },
+      canvasW: function () { return 400; }
+    });
+    expect(function () { p.update(0.016); }).not.toThrow();
+  });
+
+  it('Phase 2: at rest -> exactly ONE snapshot emitted (then 0 Hz)', () => {
+    var t = makePSpec();
+    t.p.update(0.016);
+    expect(t.emitted.length).toBe(1);
+    t.advance(200);
+    t.p.update(0.016);
+    t.advance(200);
+    t.p.update(0.016);
+    expect(t.emitted.length).toBe(1);  // still at rest -- no re-emit
+  });
+
+  it('Phase 2: moving -> emit at >= 10 Hz cadence', () => {
+    var t = makePSpec();
+    t.opts.input.right = true;
+    t.advance(100);
+    t.p.update(0.016);
+    var n1 = t.emitted.length;
+    expect(n1).toBeGreaterThanOrEqual(1);
+    t.advance(100);
+    t.p.update(0.016);
+    expect(t.emitted.length).toBeGreaterThanOrEqual(n1 + 1);
+  });
+
+  it('Phase 2: motion stops -> one rest snapshot, then 0 Hz again', () => {
+    var t = makePSpec();
+    t.opts.input.right = true;
+    t.advance(100);
+    t.p.update(0.016);
+    var nMoving = t.emitted.length;
+    expect(nMoving).toBeGreaterThanOrEqual(1);
+    // Release.
+    t.opts.input.right = false;
+    t.advance(100);
+    t.p.update(0.016);
+    var nAfterRest = t.emitted.length;
+    expect(nAfterRest).toBeGreaterThanOrEqual(nMoving + 1);
+    // Subsequent idle ticks must not re-emit.
+    t.advance(500);
+    t.p.update(0.016);
+    expect(t.emitted.length).toBe(nAfterRest);
+  });
+
+  it('Phase 2: emit carries x, y, state, vx', () => {
+    var t = makePSpec();
+    t.opts.input.right = true;
+    t.advance(100);
+    t.p.update(0.016);
+    var last = t.emitted[t.emitted.length - 1];
+    expect(typeof last.x).toBe('number');
+    expect(typeof last.y).toBe('number');
+    expect(typeof last.state).toBe('string');
+    expect(typeof last.vx).toBe('number');
+    expect(last.vx).toBeCloseTo(120, 1);
+  });
+});
+
+// =============================================================
+// Phase 2: inbound classroom_pos + reducer pos preservation
+// =============================================================
+
+describe('classroom-board -- Phase 2 inbound classroom_pos dispatch', () => {
+  it('an inbound classroom_pos does not crash applyMessage', () => {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true },
+        { username: 'bob',   role: 'student', status: 'present', online: true }
+      ]
+    });
+    expect(function () {
+      ws._receive({
+        type: 'classroom_pos', section: 'PeriodX', username: 'bob',
+        x: 250, y: 200, state: 'walking', vx: 120
+      });
+    }).not.toThrow();
+    handle.destroy();
+  });
+
+  it('an inbound classroom_pos for the local username is ignored', () => {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    // self echo -- no crash, no effect.
+    expect(function () {
+      ws._receive({
+        type: 'classroom_pos', section: 'PeriodX', username: 'alice',
+        x: 999, y: 999, state: 'walking', vx: 120
+      });
+    }).not.toThrow();
+    handle.destroy();
+  });
+
+  it('an inbound classroom_pos for an unknown peer is a clean no-op', () => {
+    var m = makeMount();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl:    'wss://test/ws',
+      section:  'PeriodX',
+      username: 'alice',
+      role:     'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+    expect(function () {
+      ws._receive({
+        type: 'classroom_pos', section: 'PeriodX', username: 'unknown_user',
+        x: 50, y: 50, state: 'idle', vx: 0
+      });
+    }).not.toThrow();
+    handle.destroy();
+  });
+});
+
+describe('classroom-board _reduce -- Phase 2 pos in WireMember', () => {
+  it('classroom_state with member.pos stores pos on state.members', () => {
+    var m = makeBoard();
+    var s = m.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      {
+        type: 'classroom_state',
+        members: [{
+          username: 'bob', role: 'student', status: 'present', online: true,
+          pos: { x: 50, y: 100, state: 'idle', vx: 0 }
+        }]
+      }
+    );
+    expect(s.members.bob.pos).toBeTruthy();
+    expect(s.members.bob.pos.x).toBe(50);
+    expect(s.members.bob.pos.y).toBe(100);
+  });
+
+  it('classroom_gate preserves pos through the status reset', () => {
+    var m = makeBoard();
+    var s1 = m.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      {
+        type: 'classroom_state',
+        members: [{
+          username: 'bob', role: 'student', status: 'present', online: true,
+          pos: { x: 50, y: 100, state: 'idle', vx: 0 }
+        }]
+      }
+    );
+    var s2 = m.ClassroomBoard._reduce(s1, { type: 'classroom_gate', gate: { armed: true } });
+    expect(s2.members.bob.pos).toBeTruthy();
+    expect(s2.members.bob.pos.x).toBe(50);
+  });
+
+  it('classroom_member_update preserves pos when upd lacks the field', () => {
+    var m = makeBoard();
+    var s1 = m.ClassroomBoard._reduce(
+      { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null },
+      {
+        type: 'classroom_state',
+        members: [{
+          username: 'bob', role: 'student', status: 'present', online: true,
+          pos: { x: 50, y: 100, state: 'idle', vx: 0 }
+        }]
+      }
+    );
+    var s2 = m.ClassroomBoard._reduce(s1, {
+      type: 'classroom_member_update',
+      member: { username: 'bob', status: 'voted', vote: 1 }  // no pos in the update
+    });
+    expect(s2.members.bob.pos).toBeTruthy();
+    expect(s2.members.bob.pos.x).toBe(50);
+    expect(s2.members.bob.status).toBe('voted');   // status DID change
+  });
 });

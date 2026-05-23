@@ -603,10 +603,11 @@ describe('KEYBOARD_AVATAR Phase 1 -- player controller wiring', () => {
     expect(BOARD).toMatch(/new\s+PlayerSprite\s*\(/);
   });
 
-  it('repositionSprites skips PlayerSprite instances that have moved', () => {
-    // The instanceof + _moved check appears twice -- once in the no-poll
-    // branch (variable `sp`) and once in the poll-unvoted branch (`psp`).
-    var matches = (BOARD.match(/[a-z]+\s+instanceof\s+PlayerSprite\s*&&\s*[a-z]+\._moved/g) || []);
+  it('repositionSprites skips any sprite that has moved (_moved flag)', () => {
+    // Phase 2 unified the check across both sprite classes (PlayerSprite OR
+    // a peer BoardSprite that received a classroom_pos broadcast). Appears
+    // twice -- once in the no-poll branch, once in the poll-unvoted branch.
+    var matches = (BOARD.match(/\w+\._moved\s*\)\s*\{\s*continue/g) || []);
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -681,5 +682,55 @@ describe('KEYBOARD_AVATAR Phase 1.5 -- direction + stackable head-jumping', () =
 
   it('soft-push is gated on _sameLevel so it cannot kick off peer heads', () => {
     expect(BOARD).toMatch(/this\._sameLevel\(\s*pp\s*\)\s*&&\s*this\._horizontalOverlap\(\s*pp\s*\)/);
+  });
+});
+
+// ==========================================================================
+// KEYBOARD_AVATAR Phase 2 -- cross-client position broadcast
+// ==========================================================================
+
+describe('KEYBOARD_AVATAR Phase 2 -- position broadcast wiring', () => {
+  it('defines POS_RATE_MS (100 ms = 10 Hz)', () => {
+    expect(BOARD).toMatch(/var\s+POS_RATE_MS\s*=\s*100/);
+  });
+
+  it('PlayerSprite carries onPos + an injectable _now clock', () => {
+    expect(BOARD).toMatch(/this\.onPos\s*=\s*\(\s*typeof\s+opts\.onPos\s*===\s*['"]function['"]\s*\)/);
+    expect(BOARD).toMatch(/this\._now\s*=\s*\(\s*typeof\s+opts\.now\s*===\s*['"]function['"]\s*\)/);
+  });
+
+  it('PlayerSprite.update emits at 10 Hz while moving + one rest snapshot', () => {
+    // The emit block is at the bottom of update; check the gating logic
+    // (moving flag + POS_RATE_MS interval + restEmitted one-shot).
+    expect(BOARD).toMatch(/now\s*-\s*this\._lastPosMs\s*>=\s*POS_RATE_MS/);
+    expect(BOARD).toMatch(/this\._restEmitted\s*=\s*true/);
+  });
+
+  it('mount() wires onPos -> safeSend({type: classroom_pos, ...})', () => {
+    expect(BOARD).toMatch(/safeSend\(\s*\{\s*\n?\s*type:\s*['"]classroom_pos['"]/);
+  });
+
+  it('applyMessage dispatches classroom_pos to applyPos (transient, NOT reduced)', () => {
+    expect(BOARD).toMatch(/msg\.type\s*===\s*['"]classroom_pos['"]/);
+    expect(BOARD).toMatch(/function\s+applyPos/);
+  });
+
+  it('applyPos ignores self echoes and overwriting the local PlayerSprite', () => {
+    expect(BOARD).toMatch(/msg\.username\s*===\s*username/);
+    expect(BOARD).toMatch(/peer\s+instanceof\s+PlayerSprite/);
+  });
+
+  it('applyPos uses walkTo for x chase, direct assign for y', () => {
+    expect(BOARD).toMatch(/peer\.walkTo\(\s*msg\.x\s*\)/);
+    expect(BOARD).toMatch(/peer\.y\s*=\s*msg\.y/);
+  });
+
+  it('addSprite restores member.pos to the new sprite (join-snapshot late peer)', () => {
+    expect(BOARD).toMatch(/member\.pos\s*&&\s*typeof\s+member\.pos\.x\s*===\s*['"]number['"]/);
+  });
+
+  it('_reduce threads pos through classroom_state and classroom_member_update', () => {
+    expect(BOARD).toMatch(/pos:\s*m\.pos\s*!=\s*null\s*\?\s*m\.pos\s*:\s*null/);
+    expect(BOARD).toMatch(/pos:\s*upd\.pos\s*!=\s*null/);
   });
 });

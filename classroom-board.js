@@ -103,6 +103,7 @@
   var GRAVITY    = 800;      // px/s^2 downward
   var PUSH_DELTA = 0.6;      // px lateral nudge per overlapping tick
   var JUMP_FRAME = 5;        // sprite frame for the airborne pose (cr-matching)
+  var POS_RATE_MS = 100;     // Phase 2: 10 Hz position broadcast while moving
 
   // --- unique canvas id generator ---------------------------------------
 
@@ -214,7 +215,8 @@
             status:   m.status || 'present',
             online:   m.online !== false,
             hue:      m.hue  != null ? m.hue  : null,
-            vote:     m.vote != null ? m.vote : null
+            vote:     m.vote != null ? m.vote : null,
+            pos:      m.pos  != null ? m.pos  : null   // Phase 2 -- last-known pos
           };
         }
         return {
@@ -243,7 +245,8 @@
           status:   upd.status !== undefined ? upd.status : (prev.status !== undefined ? prev.status : 'present'),
           online:   upd.online !== undefined ? (upd.online !== false) : (prev.online !== undefined ? prev.online : true),
           hue:      upd.hue  != null ? upd.hue  : (prev.hue  != null ? prev.hue  : null),
-          vote:     upd.vote != null ? upd.vote : (prev.vote != null ? prev.vote : null)
+          vote:     upd.vote != null ? upd.vote : (prev.vote != null ? prev.vote : null),
+          pos:      upd.pos  != null ? upd.pos  : (prev.pos  != null ? prev.pos  : null)
         };
         return {
           members:    newMembers,
@@ -269,7 +272,8 @@
         };
 
       case 'classroom_gate':
-        // Reset every member's status to "present"; hue is durable (not reset).
+        // Reset every member's status to "present"; hue and pos are durable
+        // (not reset by armGate).
         newMembers = {};
         for (var gk in members) {
           var gm = members[gk];
@@ -279,7 +283,8 @@
             status:   'present',
             online:   gm.online,
             hue:      gm.hue != null ? gm.hue : null,
-            vote:     null
+            vote:     null,
+            pos:      gm.pos != null ? gm.pos : null
           };
         }
         return {
@@ -306,6 +311,7 @@
         // AND status to 'present' (mirrors the server openPoll reset).
         // Without the status reset, a second poll opens with members still
         // showing status:'voted' and vote buttons hidden (Finding 3).
+        // hue + pos are durable (carried across the reset).
         newMembers = {};
         for (var pk in members) {
           var pm = members[pk];
@@ -315,7 +321,8 @@
             status:   'present',
             online:   pm.online,
             hue:      pm.hue,
-            vote:     null
+            vote:     null,
+            pos:      pm.pos != null ? pm.pos : null
           };
         }
         return {
@@ -375,7 +382,8 @@
               status:   existing.status,
               online:   existing.online,
               hue:      existing.hue,
-              vote:     rv.vote != null ? rv.vote : existing.vote
+              vote:     rv.vote != null ? rv.vote : existing.vote,
+              pos:      existing.pos != null ? existing.pos : null
             };
           }
         }
@@ -616,6 +624,14 @@
     this._moved       = false;
     this._spriteSize   = SPRITE_W * (opts.scale || SPRITE_SCALE);
     this._spriteHeight = SPRITE_H * (opts.scale || SPRITE_SCALE);
+
+    // Phase 2 -- position broadcast hook + rate-limit clock.
+    // onPos -- function({x, y, state, vx}); mount() wires it to safeSend.
+    // _now  -- injectable clock for deterministic tests (default Date.now).
+    this.onPos         = (typeof opts.onPos === 'function') ? opts.onPos : null;
+    this._now          = (typeof opts.now === 'function') ? opts.now : function () { return Date.now(); };
+    this._lastPosMs    = 0;
+    this._restEmitted  = false;
   }
   PlayerSprite.prototype = Object.create(BoardSprite.prototype);
   PlayerSprite.prototype.constructor = PlayerSprite;
@@ -731,6 +747,28 @@
     } else {
       // Inherited _updateIdle already routes through _directedFrame.
       this._updateIdle(dt);
+    }
+
+    // Phase 2 -- broadcast position. 10 Hz while moving (any input held OR
+    // airborne OR carrying horizontal velocity); ONE final "rest" snapshot
+    // when motion ends; then 0 Hz until the next input. The "rest" snapshot
+    // lets peers see exactly where we landed without polling at idle.
+    if (this.onPos) {
+      var moving = (this.vx !== 0) || (this.state === 'jumping') ||
+                   this.input.left  || this.input.right ||
+                   this.input.jump  || this.input.up;
+      var now = this._now();
+      if (moving) {
+        if (now - this._lastPosMs >= POS_RATE_MS) {
+          try { this.onPos({ x: this.x, y: this.y, state: this.state, vx: this.vx }); } catch (_) {}
+          this._lastPosMs   = now;
+          this._restEmitted = false;
+        }
+      } else if (!this._restEmitted) {
+        try { this.onPos({ x: this.x, y: this.y, state: this.state, vx: 0 }); } catch (_) {}
+        this._lastPosMs   = now;
+        this._restEmitted = true;
+      }
     }
   };
 
@@ -1318,10 +1356,11 @@
               psp.walkTo(colCenter);
             }
           } else {
-            // Unvoted: stay in idle row position. D2 -- once the local
-            // PlayerSprite has moved via keyboard, they keep their last
-            // position even while unvoted (instanceof + _moved check).
-            if (psp instanceof PlayerSprite && psp._moved) { continue; }
+            // Unvoted: stay in idle row position. D2 -- skip any sprite
+            // that has moved (PlayerSprite via keyboard, OR a peer who has
+            // received a classroom_pos broadcast in Phase 2). _moved is
+            // sticky once set.
+            if (psp._moved) { continue; }
             if (psp.state === 'idle') {
               psp.x = idleXs[pi];
               psp.y = sy;
@@ -1333,9 +1372,9 @@
         var xs = computeSlots(usernames.length, sw, cw);
         for (var i = 0; i < usernames.length; i++) {
           var sp = spriteEntities[usernames[i]];
-          // D2 -- once the local PlayerSprite has moved via keyboard, they
-          // own their position. Skip the auto-layout pass for them.
-          if (sp instanceof PlayerSprite && sp._moved) { continue; }
+          // D2 -- skip any sprite that has moved (PlayerSprite via keyboard
+          // OR a peer who has received a Phase 2 classroom_pos broadcast).
+          if (sp && sp._moved) { continue; }
           // Only reposition idle sprites; do not interrupt a walk.
           if (sp && sp.state === 'idle') {
             sp.x = xs[i];
@@ -1392,12 +1431,32 @@
         baseOpts.canvasW     = function () {
           return engine.canvas.width / (root.devicePixelRatio || 1);
         };
+        // Phase 2 -- broadcast position to roommates.
+        baseOpts.onPos = function (msg) {
+          safeSend({
+            type:  'classroom_pos',
+            x:     msg.x,
+            y:     msg.y,
+            state: msg.state,
+            vx:    msg.vx
+          });
+        };
         sp = new PlayerSprite(spriteSheet, baseOpts);
       } else {
         sp = new BoardSprite(spriteSheet, baseOpts);
       }
       spriteEntities[member.username] = sp;
       engine.addEntity('sprite_' + member.username, sp);
+      // Phase 2 -- restore last-known position from the join snapshot
+      // (a reconnecting local user OR a peer who was already broadcasting
+      // when we joined). Without this they'd spawn at the auto-layout slot
+      // and snap back into formation. _moved=true gates repositionSprites
+      // off them; applyPos will overwrite both x/y on the next broadcast.
+      if (member.pos && typeof member.pos.x === 'number' && typeof member.pos.y === 'number') {
+        sp.x = member.pos.x;
+        sp.y = member.pos.y;
+        sp._moved = true;
+      }
       repositionSprites();
     }
 
@@ -1654,6 +1713,13 @@
     }
 
     function applyMessage(msg) {
+      // Phase 2 -- position broadcasts are transient: applied to the peer
+      // sprite directly, NOT reduced into state (they fire at 10 Hz and
+      // reducing would rebuild state.members 10x/s per peer for no win).
+      if (msg && msg.type === 'classroom_pos') {
+        applyPos(msg);
+        return;
+      }
       state = _reduce(state, msg);
       if (msg.type === 'classroom_greenlight') {
         showGreenlight();
@@ -1666,6 +1732,27 @@
       refreshVoteButtons();
       refreshResultScreen();
       notifyStateChange();
+    }
+
+    // Phase 2 -- handle inbound peer positions. The peer's BoardSprite
+    // chases the broadcast x via the existing walkTo target machinery
+    // (at 10 Hz the per-broadcast delta is small and the WALK_SPEED chase
+    // looks fluid); y is set directly so jumps register visually. Marks
+    // the sprite _moved=true so repositionSprites stops yanking it back
+    // to the auto-layout slot.
+    function applyPos(msg) {
+      if (!msg || !msg.username) { return; }
+      if (msg.username === username) { return; }    // ignore self echoes
+      var peer = spriteEntities[msg.username];
+      if (!peer) { return; }
+      if (peer instanceof PlayerSprite) { return; } // never overwrite the local player
+      peer._moved = true;
+      if (typeof msg.x === 'number' && Math.abs(peer.x - msg.x) > 1) {
+        peer.walkTo(msg.x);
+      }
+      if (typeof msg.y === 'number') {
+        peer.y = msg.y;
+      }
     }
 
     function safeSend(obj) {
