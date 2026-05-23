@@ -1334,6 +1334,19 @@
     function _initPeerFor(username) {
       if (studentPeers[username]) { return studentPeers[username]; }
       if (typeof RTCPeerConnection === 'undefined') { return null; }
+      // s111 HOTFIX: never peer with yourself. If the server has the
+      // teacher's member listed (e.g. due to the pre-hotfix role bug
+      // where re-join didn't update role), the reconcile loop would
+      // otherwise try to open an RTC connection to the cockpit's own
+      // username. Pull the teacher's own username from rosterClient
+      // and skip.
+      try {
+        var meSession = (window.rosterClient && window.rosterClient.current)
+          ? window.rosterClient.current() : null;
+        if (meSession && meSession.username && username === meSession.username) {
+          return null;
+        }
+      } catch (_) { /* fall through if rosterClient unavailable */ }
       // v3 P3 Codex BLOCKER fold (part B): the timeout deletes the
       // entry from studentPeers so a later _initPeerFor (e.g. on the
       // next onStateChange tick once the board WS is actually open)
