@@ -4329,6 +4329,77 @@ describe('PlayerSprite -- Phase 1 local controller', () => {
     expect(t.emitted.length).toBeGreaterThanOrEqual(n0 + 1);
   });
 
+  // ----- Phase 2.3: platform velocity on jump -----
+
+  it('Phase 2.3: jump from a moving peer captures _jumpInheritedVx', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176; t.p.vy = 0;
+    t.p.update(0.016);                       // establish standingOn + _lastX=100
+    expect(t.p.standingOn).toBe(peer);
+    // Peer delta MUST stay within spriteSize (20 px) or the player loses
+    // x-overlap with the peer and _onFloor() rejects the jump.
+    peer.x = 110;                            // delta = 10 px
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+    expect(t.p.standingOn).toBeNull();
+    expect(t.p._jumpInheritedVx).toBeGreaterThan(0);
+  });
+
+  it('Phase 2.3: jump from a stationary peer -> _jumpInheritedVx is 0', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176; t.p.vy = 0;
+    t.p.update(0.016);
+    // Peer didn't move; jump.
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p._jumpInheritedVx).toBe(0);
+  });
+
+  it('Phase 2.3: jump from the ground (no carrier) -> _jumpInheritedVx is 0', () => {
+    var t = makePS();
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p._jumpInheritedVx).toBe(0);
+  });
+
+  it('Phase 2.3: landing clears _jumpInheritedVx', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176; t.p.vy = 0;
+    t.p.update(0.016);
+    peer.x = 110;                            // delta within spriteSize -- jump fires
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p._jumpInheritedVx).toBeGreaterThan(0);
+    t.opts.input.jump = false;
+    var safety = 0;
+    while (t.p.state === 'jumping' && safety < 500) {
+      t.p.update(0.016);
+      safety++;
+    }
+    expect(t.p._jumpInheritedVx).toBe(0);
+  });
+
+  it('Phase 2.3: inherited Vx advances x during the airborne arc', () => {
+    var peer = { x: 100, y: 200 };
+    var t = makePS({ peers: function () { return { peer: peer }; } });
+    t.p.y = 176; t.p.vy = 0;
+    t.p.update(0.016);
+    peer.x = 110;                            // small delta -> moderate inherited vx
+    t.opts.input.jump = true;
+    t.p.update(0.016);
+    expect(t.p.state).toBe('jumping');
+    var x0 = t.p.x;
+    t.opts.input.jump = false;
+    for (var i = 0; i < 5; i++) { t.p.update(0.016); }
+    // Even with no player input mid-jump, x should have advanced via the
+    // inherited platform velocity.
+    expect(t.p.x).toBeGreaterThan(x0);
+  });
+
   // ----- Phase 2: cross-client position broadcast -----
 
   function makePSpec(extra) {

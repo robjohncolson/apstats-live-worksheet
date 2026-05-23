@@ -726,9 +726,11 @@ describe('KEYBOARD_AVATAR Phase 2 -- position broadcast wiring', () => {
     expect(BOARD).toMatch(/peer\s+instanceof\s+PlayerSprite/);
   });
 
-  it('applyPos uses walkTo for x chase, direct assign for y', () => {
+  it('applyPos uses walkTo for x chase and the _yTarget chase for y (Phase 2.2)', () => {
     expect(BOARD).toMatch(/peer\.walkTo\(\s*msg\.x\s*\)/);
-    expect(BOARD).toMatch(/peer\.y\s*=\s*msg\.y/);
+    // Phase 2 originally did `peer.y = msg.y`; Phase 2.2 switched to a
+    // chased target via _yTarget so peer jumps render as a smooth arc.
+    expect(BOARD).toMatch(/peer\._yTarget\s*=\s*msg\.y/);
   });
 
   it('addSprite restores member.pos to the new sprite (join-snapshot late peer)', () => {
@@ -782,5 +784,51 @@ describe('KEYBOARD_AVATAR Phase 2.1 -- side collision + carry', () => {
 
   it('cache update at tick end: _standingOnLastX = standingOn?.x : null', () => {
     expect(BOARD).toMatch(/this\._standingOnLastX\s*=\s*this\.standingOn\s*\?\s*this\.standingOn\.x\s*:\s*null/);
+  });
+});
+
+// ==========================================================================
+// KEYBOARD_AVATAR Phase 2.2 -- peer y interpolation (smooth jumps)
+// ==========================================================================
+
+describe('KEYBOARD_AVATAR Phase 2.2 -- peer y interpolation', () => {
+  it('defines Y_CHASE_SPEED (px/s)', () => {
+    expect(BOARD).toMatch(/var\s+Y_CHASE_SPEED\s*=\s*600/);
+  });
+
+  it('BoardSprite initializes _yTarget to null', () => {
+    expect(BOARD).toMatch(/this\._yTarget\s*=\s*null/);
+  });
+
+  it('BoardSprite.update calls _chaseY every tick (after the state branch)', () => {
+    expect(BOARD).toMatch(/this\._chaseY\s*\(\s*dt\s*\)/);
+  });
+
+  it('_chaseY exists and steps at Y_CHASE_SPEED * dt toward the target', () => {
+    expect(BOARD).toMatch(/BoardSprite\.prototype\._chaseY\s*=\s*function/);
+    expect(BOARD).toMatch(/Y_CHASE_SPEED\s*\*\s*dt/);
+  });
+});
+
+// ==========================================================================
+// KEYBOARD_AVATAR Phase 2.3 -- platform velocity on jump (Mario-style)
+// ==========================================================================
+
+describe('KEYBOARD_AVATAR Phase 2.3 -- platform velocity on jump', () => {
+  it('PlayerSprite initializes _jumpInheritedVx to 0', () => {
+    expect(BOARD).toMatch(/this\._jumpInheritedVx\s*=\s*0/);
+  });
+
+  it('jump-from-carrier captures (peer.x - lastX) / dt as _jumpInheritedVx', () => {
+    expect(BOARD).toMatch(/this\._jumpInheritedVx\s*=\s*\(\s*this\.standingOn\.x\s*-\s*this\._standingOnLastX\s*\)\s*\/\s*dt/);
+  });
+
+  it('airborne motion adds _jumpInheritedVx * dt to x', () => {
+    expect(BOARD).toMatch(/this\.x\s*\+=\s*this\._jumpInheritedVx\s*\*\s*dt/);
+  });
+
+  it('landing clears _jumpInheritedVx (arc ends)', () => {
+    // After bestFloor lands and state was 'jumping', _jumpInheritedVx is 0.
+    expect(BOARD).toMatch(/this\._jumpInheritedVx\s*=\s*0/);
   });
 });

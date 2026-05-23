@@ -99,11 +99,12 @@
   // --- player controller knobs (Phase 1) --------------------------------
   // KEYBOARD_AVATAR_SPEC -- locked Phase 1 kinematics.
 
-  var JUMP_V0    = -280;     // initial vertical velocity (negative = up)
-  var GRAVITY    = 800;      // px/s^2 downward
-  var PUSH_DELTA = 0.6;      // px lateral nudge per overlapping tick
-  var JUMP_FRAME = 5;        // sprite frame for the airborne pose (cr-matching)
-  var POS_RATE_MS = 100;     // Phase 2: 10 Hz position broadcast while moving
+  var JUMP_V0       = -280;   // initial vertical velocity (negative = up)
+  var GRAVITY       = 800;    // px/s^2 downward
+  var PUSH_DELTA    = 0.6;    // legacy soft-push (kept for Phase-1 structure pin)
+  var JUMP_FRAME    = 5;      // sprite frame for the airborne pose (cr-matching)
+  var POS_RATE_MS   = 100;    // Phase 2: 10 Hz position broadcast while moving
+  var Y_CHASE_SPEED = 600;    // Phase 2.2: peer y interpolation speed (px/s)
 
   // --- unique canvas id generator ---------------------------------------
 
@@ -489,6 +490,7 @@
     this.targetX      = 0;
     this.walkDir      = 1;   // 1 = right, -1 = left
     this.facingRight  = true; // sheet bottom row = left-facing; +11 offset via _directedFrame
+    this._yTarget     = null; // Phase 2.2: chased toward by _chaseY when set
 
     // Idle-blink animation
     this.idleTimer        = 0;
@@ -534,6 +536,30 @@
       this._updateIdle(dt);
     } else if (this.state === 'walking') {
       this._updateWalk(dt);
+    }
+    // Phase 2.2 -- chase _yTarget if set (peer y interpolation for jumps).
+    // Set by applyPos for an inbound classroom_pos; chase smooths the 10 Hz
+    // broadcast cadence into a continuous y motion. Idle when _yTarget is null.
+    this._chaseY(dt);
+  };
+
+  // Phase 2.2 -- step y toward _yTarget at Y_CHASE_SPEED. When the gap is
+  // smaller than this tick's step (or negligible), snap and clear the target.
+  // No-op when _yTarget is null (PlayerSprite never sets it; peers only).
+  BoardSprite.prototype._chaseY = function (dt) {
+    if (this._yTarget == null) { return; }
+    var dy = this._yTarget - this.y;
+    if (Math.abs(dy) < 0.5) {
+      this.y        = this._yTarget;
+      this._yTarget = null;
+      return;
+    }
+    var step = Y_CHASE_SPEED * dt;
+    if (Math.abs(dy) <= step) {
+      this.y        = this._yTarget;
+      this._yTarget = null;
+    } else {
+      this.y += (dy > 0 ? 1 : -1) * step;
     }
   };
 
@@ -632,6 +658,12 @@
     this.standingOn       = null;
     this._standingOnLastX = null;
 
+    // Phase 2.3 -- platform velocity on jump. When the player jumps from a
+    // moving peer, this carries the peer's vx (derived from the carry delta)
+    // through the airborne arc; cleared on landing. 0 for jumps from the
+    // ground or from a stationary carrier.
+    this._jumpInheritedVx = 0;
+
     // Phase 2 -- position broadcast hook + rate-limit clock.
     // onPos -- function({x, y, state, vx}); mount() wires it to safeSend.
     // _now  -- injectable clock for deterministic tests (default Date.now).
@@ -664,12 +696,21 @@
     this.vx = vxNext;
 
     // Jump edge-trigger: only when on a floor (ground OR a peer's head);
-    // no auto-repeat while Space held. Jumping hops us OFF the carrier.
+    // no auto-repeat while Space held. Jumping hops us OFF the carrier
+    // and inherits the carrier's horizontal velocity (Phase 2.3) so a
+    // jump from a moving peer sails with them, Mario-style.
     if (this.input.jump && !this._jumpHandled) {
       this._jumpHandled = true;
       if (this.state !== 'jumping' && this._onFloor()) {
-        this.vy         = JUMP_V0;
-        this.state      = 'jumping';
+        this.vy    = JUMP_V0;
+        this.state = 'jumping';
+        // Capture the carrier's vx (from the carry delta) before we cut
+        // the standingOn link. dt > 0 guard avoids /0 in degenerate ticks.
+        if (this.standingOn && typeof this._standingOnLastX === 'number' && dt > 0) {
+          this._jumpInheritedVx = (this.standingOn.x - this._standingOnLastX) / dt;
+        } else {
+          this._jumpInheritedVx = 0;
+        }
         this.standingOn = null;
       }
     } else if (!this.input.jump) {
@@ -694,8 +735,13 @@
       }
     }
 
-    // Player's own horizontal motion.
+    // Player's own horizontal motion + inherited platform velocity (if any).
+    // The inherited Vx is set on jump-from-a-moving-peer (Phase 2.3) and is
+    // 0 in every other case; while airborne it adds to each tick's x step.
     this.x += this.vx * dt;
+    if (this.state === 'jumping' && this._jumpInheritedVx) {
+      this.x += this._jumpInheritedVx * dt;
+    }
 
     // Gravity + vertical integrate, always. The floor snap below puts us
     // back on whichever surface we crossed (re-lands each tick when at rest
@@ -730,9 +776,10 @@
       this.y  = bestFloor;
       this.vy = 0;
       if (this.state === 'jumping') {
-        this.state           = 'idle';
-        this.idleTimer       = 0;
+        this.state            = 'idle';
+        this.idleTimer        = 0;
         this.currentIdleFrame = 0;
+        this._jumpInheritedVx = 0;     // Phase 2.3 -- arc ends, drop inheritance
       }
       this.standingOn = landingPeer;   // peer ref, or null (= on the ground)
     } else if (this.vy > 0 && this.state !== 'jumping') {
@@ -1792,8 +1839,10 @@
       if (typeof msg.x === 'number' && Math.abs(peer.x - msg.x) > 1) {
         peer.walkTo(msg.x);
       }
+      // Phase 2.2 -- y is chased smoothly (not snapped) so peer jumps look
+      // like an arc, not a 10 Hz teleport. _chaseY runs on every tick.
       if (typeof msg.y === 'number') {
-        peer.y = msg.y;
+        peer._yTarget = msg.y;
       }
     }
 
