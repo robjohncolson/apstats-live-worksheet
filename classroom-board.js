@@ -730,6 +730,8 @@
   };
 
   BoardSprite.prototype.render = function (ctx) {
+    // s111 P4 UX rev2: skip render when fully absorbed into a doorway.
+    if (this._hidden) { return; }
     var alpha = this.online ? 1.0 : 0.35;
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
     this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y, this.scale, this.hue);
@@ -837,6 +839,39 @@
       }
       if (!this.input.up) { this._upHandled = false; }
       this._updateWalk(dt);
+      return;
+    }
+
+    // s111 P4 UX rev2: vertical doorway absorption.
+    // The sprite moves UP from _absorbStartY toward _absorbTargetY
+    // over _absorbDurationMs. Press Up again to reverse direction.
+    // When progress hits 1: _hidden=true (render skips the sprite).
+    // When progress hits 0 with dir<0: cancelled, back to idle.
+    if (this.state === 'entering-doorway') {
+      if (this.input.up && !this._upHandled) {
+        this._upHandled = true;
+        this._absorbDir = -this._absorbDir;
+      } else if (!this.input.up) {
+        this._upHandled = false;
+      }
+      var stepMs = (dt * 1000);
+      this._absorbProgress += this._absorbDir * (stepMs / this._absorbDurationMs);
+      if (this._absorbProgress < 0) { this._absorbProgress = 0; }
+      if (this._absorbProgress > 1) { this._absorbProgress = 1; }
+      this.y = this._absorbStartY + (this._absorbTargetY - this._absorbStartY) * this._absorbProgress;
+      if (this._absorbProgress === 0 && this._absorbDir < 0) {
+        // Cancelled all the way back -- return to idle.
+        this.state = 'idle';
+        this._isDoorwayWalk = false;
+        this._absorbDir = 1;
+        return;
+      }
+      if (this._absorbProgress === 1) {
+        // Fully absorbed -- hide; the dome covers any residual draw,
+        // but skip drawing entirely as a tiny optimization.
+        this._hidden = true;
+        return;
+      }
       return;
     }
 
@@ -1229,16 +1264,19 @@
     var holeW   = this.width;
     var halfW   = holeW / 2;
     // s111 P4 visual: tom-and-jerry mouse hole -- black rectangle
-    // sitting on the ground with a black semicircular dome on top.
-    // Single fill path so the two shapes blend cleanly.
+    // sitting on the ground with a black semicircular dome ON TOP
+    // (a half-circle bulging UPWARD, away from the rectangle).
+    //
+    // Canvas convention: y-axis flipped. Angles measured CLOCKWISE
+    // from +x. So 0=right, pi/2=DOWN, pi=left, 3pi/2=UP. Drawing arc
+    // from pi to 0 with counterclockwise=FALSE goes pi -> 3pi/2 (up)
+    // -> 0 -- the UPPER half-circle (the dome). counterclockwise=true
+    // would go through pi/2 (down) -- inverted, eating INTO the rect.
     ctx.fillStyle = '#000';
     ctx.beginPath();
     ctx.moveTo(this.x - halfW, groundY);
     ctx.lineTo(this.x - halfW, groundY - holeH);
-    // Dome arch: half-circle above the rectangle's top edge. Canvas
-    // angles run clockwise from +x; using counterclockwise:true draws
-    // the upper half (the dome) from left back around to right.
-    ctx.arc(this.x, groundY - holeH, halfW, Math.PI, 0, true);
+    ctx.arc(this.x, groundY - holeH, halfW, Math.PI, 0, false);
     ctx.lineTo(this.x + halfW, groundY);
     ctx.closePath();
     ctx.fill();
@@ -1626,15 +1664,19 @@
           var d = doorwayEntities[i];
           if (d.containsX(px, player._spriteSize / 2)) {
             safeSend({ type: 'classroom_doorway_vote', id: state.doorways.id, doorId: d.doorId });
-            // Optimistic local drain: walk through the doorway and out.
-            // Mirror the gate drain (a walkTo target outside the canvas).
-            // Mark the walk as a doorway walk so the player's update()
-            // knows to allow Up-to-cancel (gate drain is server-driven;
-            // doorway walk is optimistic and the user might change mind).
-            var cwd = engine.canvas.width / (root.devicePixelRatio || 1);
-            player.targetX = (d.x < cwd / 2) ? -d.width : cwd + d.width;
-            player.walkDir = (player.targetX < player.x) ? -1 : 1;
-            player.state   = 'walking';
+            // s111 P4 UX rev2: VERTICAL absorption -- the sprite walks
+            // UP into the doorway and the dome (drawn on top of
+            // sprites) swallows them. Press Up again to reverse + step
+            // back out. No horizontal slide off the canvas.
+            player._absorbProgress = 0;
+            player._absorbDir = 1;
+            player._absorbDurationMs = 350;
+            player._absorbStartY = player.y;
+            // Move up by sprite-height so the sprite is fully inside
+            // the doorway region (rectangle + dome) and hidden behind
+            // the black fill.
+            player._absorbTargetY = player.y - (player._spriteHeight || 24);
+            player.state = 'entering-doorway';
             player._isDoorwayWalk = true;
             return;
           }
@@ -2265,11 +2307,11 @@
         updateDoorwayCounts(newState.doorways.tally);
       } else if (!newState.doorways && prevState.doorways) {
         hideDoorways();
-        // v3 P4 Codex MAJOR 4 fold: respawn the local sprite if its
-        // optimistic doorway walk left it off-canvas. Without this the
-        // sprite stays at its off-canvas targetX across close cycles.
-        // Reset to canvas center + idle state -- the student can then
-        // walk freely with arrow keys.
+        // s111 P4 UX: on close, respawn the local sprite. Reset all
+        // doorway-walk + absorption state and put the sprite back on
+        // the ground at its standing-y. Covers: a stale off-canvas X
+        // from the legacy horizontal walk, the new vertical-absorb
+        // _hidden flag, and any in-flight 'entering-doorway' state.
         if (engineReady && username && spriteEntities[username]) {
           var meSprite = spriteEntities[username];
           var cw = engine.canvas.width / (root.devicePixelRatio || 1);
@@ -2277,8 +2319,16 @@
           if (meSprite.x < 0 || meSprite.x > maxX) {
             meSprite.x = Math.max(0, Math.min(maxX, (cw - (meSprite._spriteSize || 0)) / 2));
           }
-          if (meSprite.state === 'walking' || meSprite.state === 'arrived') {
+          if (meSprite.state === 'walking' || meSprite.state === 'arrived' || meSprite.state === 'entering-doorway') {
             meSprite.state = 'idle';
+          }
+          meSprite._hidden          = false;
+          meSprite._absorbProgress  = 0;
+          meSprite._absorbDir       = 1;
+          meSprite._isDoorwayWalk   = false;
+          // Restore y to the standing ground position.
+          if (typeof meSprite.groundY === 'number') {
+            meSprite.y = meSprite.groundY;
           }
         }
       }
