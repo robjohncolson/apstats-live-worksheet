@@ -928,7 +928,10 @@
       if (typeof window.Ti84Plot === 'undefined' || typeof window.Ti84Plot.drawBarChart !== 'function') return;
       var d = summary.doorways;
       var labels = d.options.map(function(o) { return o.label; });
-      // Align counts to labels via doorId.
+      // Bars stay categorical even when a column has 0 votes (empty
+      // bar still labelled). Switched from drawDotplot which hides
+      // unvoted categories -- students would lose sight of B/C as
+      // options until someone voted for them.
       var byId = {};
       (d.tally || []).forEach(function(t) { byId[t.doorId] = t.count; });
       var counts = d.options.map(function(o) { return byId[o.doorId] || 0; });

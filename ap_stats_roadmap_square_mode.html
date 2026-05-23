@@ -1327,6 +1327,10 @@
             <div id="classroom-board-controls" class="geneva" style="font-size:9px;color:#888;margin-top:2px;text-align:center;user-select:none">
                 Arrows walk &middot; Space jump &middot; Up to check in
             </div>
+            <!-- v3 P4: live doorways tally (dotplot). Hidden until a
+                 vote-with-your-feet event is open in this section. -->
+            <canvas id="classroom-doorways-tally" width="320" height="160"
+                    style="display:none;margin-top:6px;width:100%;max-width:320px;background:#9eb39e;border:1px solid #555"></canvas>
         </div>
     </div>
 </div>
@@ -10425,6 +10429,31 @@ function _renderLiveIndicator(isLive) {
     document.body.appendChild(el);
   }
 }
+// v3 P4: render the live doorways tally as a TI-84 bar chart on the
+// Desk so students see their own + their classmates' votes pile up
+// in real time. Each bar height = vote count; empty categories show
+// as a labelled bar of height 0 (so students see B/C as options even
+// before anyone has voted for them). Hidden when no doorways are
+// open in this section.
+function _renderDeskDoorwaysTally(summary){
+  var canvas = document.getElementById('classroom-doorways-tally');
+  if (!canvas) return;
+  var d = summary && summary.doorways;
+  if (!d || !d.options || d.options.length === 0) {
+    canvas.style.display = 'none';
+    return;
+  }
+  canvas.style.display = '';
+  if (typeof window.Ti84Plot === 'undefined' || typeof window.Ti84Plot.drawBarChart !== 'function') return;
+  var byId = {};
+  (d.tally || []).forEach(function(t){ byId[t.doorId] = t.count; });
+  var labels = d.options.map(function(o){ return o.label; });
+  var counts = d.options.map(function(o){ return byId[o.doorId] || 0; });
+  var ctx = canvas.getContext('2d');
+  try {
+    window.Ti84Plot.drawBarChart(ctx, { labels: labels, counts: counts, title: d.question || '' });
+  } catch (_) {}
+}
 function _mountClassroomBoard(){
   try {
     if (_classroomBoardHandle) return;
@@ -10447,6 +10476,9 @@ function _mountClassroomBoard(){
         // when the room transitions to live. _renderLiveIndicator
         // is a fire-and-forget no-throw helper (defined alongside).
         _renderLiveIndicator(!!summary.live);
+        // v3 P4: render the live doorways dotplot when a vote-with-
+        // your-feet event is open in this section.
+        _renderDeskDoorwaysTally(summary);
       }
     });
   } catch (_) {}
