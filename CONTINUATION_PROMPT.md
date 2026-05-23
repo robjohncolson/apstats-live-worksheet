@@ -7,7 +7,7 @@
 > this CONTINUATION refresh (feature work ended at `e8f9ac7`).
 > curriculum_render HEAD = `25a970b`. Linear, local==origin on both.
 >
-> ## Shipped this session (111) -- THREE distinct epics
+> ## Shipped this session (111) -- FOUR distinct epics
 >
 > ### Epic 1 -- Live Classroom Scaling Knob 1 (rate adaptation)
 > The first request of the session. `LIVE_CLASSROOM_SCALING_SPEC.md` (s110)
@@ -93,18 +93,49 @@
 >   in the BUILD Correction; impact small in primary use where
 >   everyone's on the school network).
 >
+> ### Epic 4 -- Live Classroom v3 P4 (vote-with-your-feet doorways)
+> The pedagogical killer feature, unblocked by P3 (though it doesn't
+> use WebRTC -- vote messages ride WS like v2 polls). Teacher opens
+> N labelled doorways (2-8); students walk avatars through their choice
+> + press Up to vote; cockpit shows a live bar chart.
+>
+> - **`16e85af`** (follow-alongs) -- `feat: Live Classroom v3 P4 client`.
+>   Cockpit gains a `#doorways-section` form (question + 2-8 options
+>   with the v2-poll add/remove mirror), Open/Close buttons, a
+>   `#doorways-tally-canvas` rendered via `Ti84Plot.drawBarChart`.
+>   Board gains a new `Doorway` entity + `showDoorways` /
+>   `hideDoorways` / `updateDoorwayCounts` helpers + multi-hitbox
+>   check in `handlePlayerUp` (priority over the gate). 3 new
+>   `_reduce` cases with `state.doorways` + `state.closedDoorways`
+>   preserved through every other case. Frozen contract:
+>   `LIVE_CLASSROOM_V3_P4_BUILD.md`. Tests +14.
+> - **`35f211a`** (curriculum_render) -- `feat: Live Classroom v3 P4 server`.
+>   `room.doorways` state + three methods (`openDoorways` /
+>   `castDoorwayVote` / `closeDoorways`) + three WS handlers. Mutually
+>   exclusive with the v2 poll AND the v1b gate. Vote-switching
+>   correctly decrements prior + increments new. Tests +11.
+> - **Codex review folded**: 1 BLOCKER + 4 MAJOR, ALL inline:
+>   BLOCKER -- `buildStatePayload` + `_all` omitted `doorways`;
+>   `reset()` left `room.doorways` + every `member.doorVote` live
+>   (snapshots now carry doorways, reset clears both). MAJOR -- cockpit
+>   `_activeDoorwaysId` now derived from `summary.doorways` (refresh /
+>   second teacher hydrate cleanly). MAJOR -- `openDoorways` rejects
+>   re-open + clears stale doorVote. MAJOR -- gate vs doorways mutual
+>   exclusion ENFORCED on both sides. MAJOR -- local sprite respawns to
+>   canvas center if the optimistic doorway-walk left it off-canvas.
+>
 > ## Migration -- DONE this session (NONE outstanding)
 > Session 109's `0007_poll_archive.sql` was run by the user this
 > session (per the opening "migration has already been implemented"
 > note). No new migrations in s111.
 >
 > ## Test baselines
-> - curriculum_render **923/924** -- the only fail is the long-standing
->   unrelated `redox-chat.test.js` (NOT a regression). +21 over baseline
->   (15 from v3 P1+P2 + 6 from v3 P3 signaling helpers).
-> - follow-alongs root **4927/4928** -- the only fail is the long-standing
->   unrelated `study-guide.test.js` (NOT a regression). +44 over baseline
->   (16 scaling + 13 v3 P1+P2 + 15 v3 P3). roster-server unchanged.
+> - curriculum_render **934/935** -- the only fail is the long-standing
+>   unrelated `redox-chat.test.js` (NOT a regression). +32 over baseline
+>   (15 v3 P1+P2 + 6 v3 P3 + 11 v3 P4).
+> - follow-alongs root **4941/4942** -- the only fail is the long-standing
+>   unrelated `study-guide.test.js` (NOT a regression). +58 over baseline
+>   (16 scaling + 13 v3 P1+P2 + 15 v3 P3 + 14 v3 P4). roster-server unchanged.
 >
 > ## Open / verify
 > - cr `25a970b` deploys the `curriculumrender-production` WS service
@@ -125,12 +156,13 @@
 >   server route (teacher-only `from` override) so the cockpit can
 >   dual-send. ~30 lines. Implement only if real classroom usage
 >   surfaces a need.
-> - **v3 P4 -- vote-with-your-feet (first data mode).** Generalizes the
->   single GateDoor to N labelled doorways; cockpit shows live histogram
->   via the existing `ti84-plot.js`. Three new WS messages:
->   `classroom_open_doorways`, `classroom_doorway_vote`,
->   `classroom_close_doorways`. The PEDAGOGICAL KILLER feature.
->   Now unblocked (P3 shipped).
+> - **v3 P4.1 (deferred future polish)** -- doorways can grow theming
+>   (per-option colour), >8 doorway count via canvas scrolling, anonymous /
+>   blind voting mode. Not load-bearing for the v1 ship.
+> - **Additional data modes (v3.x)** -- the spec calls out sliders,
+>   2D-axes drop, sampling-distribution-live, CI coverage simulation.
+>   Doorways is the proof; the rest reuse the same WS infrastructure
+>   (or the WebRTC DataChannel for high-frequency continuous data).
 > - **Teacher -> Student Console.** Sibling feature, separate spec NOT
 >   YET DRAFTED. Per-student contextual surface launched from clicking
 >   an avatar (Live mode) OR a row in `/class/grades` (outside Live).
