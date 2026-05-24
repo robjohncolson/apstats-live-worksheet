@@ -498,7 +498,7 @@
           <ul id="tsc-recent-list" class="tsc-recent-list"></ul>
         </section>
         <nav class="tsc-actions" aria-label="Console actions">
-          <button type="button" class="tsc-action-btn" id="tsc-action-view-as" disabled title="Phase 2">View as student</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-view-as" title="Open this student's Desk in a new tab (read-only)">View as student</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-nudge" disabled title="Phase 3 (Live only)">Send nudge</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-remediation" disabled title="Phase 4 wiring">Apply remediation</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-gate" disabled title="Phase 5">Override gate</button>
@@ -1296,11 +1296,16 @@
     // close is dropped.
     var _tscReqSeq = 0;
 
+    // P2: stash the studentId of the currently-open drawer so the View-as
+    // button click handler (wired once at script-eval) can read it.
+    var _tscCurrentStudentId = null;
+
     function openTscDrawer(stub) {
       var drawer = $('tsc-drawer');
       if (!drawer) return;
 
       var reqId = ++_tscReqSeq;
+      _tscCurrentStudentId = stub && stub.studentId ? stub.studentId : null;
 
       // Populate header from the stub immediately so the user sees something.
       $('tsc-drawer-title').textContent = stub.realName || stub.username || 'Student';
@@ -1359,6 +1364,19 @@
     // Overlay-click and close-button click close the drawer.
     document.getElementById('tsc-drawer').addEventListener('click', function(e) {
       if (e.target && e.target.getAttribute('data-tsc-close')) closeTscDrawer();
+    });
+
+    // P2: View as student -> open the Desk in a new tab with the impersonation
+    // query param. The Desk's _viewAsBootstrap detects the param + hydrates
+    // viewAsContext into sessionStorage + reloads as the target student.
+    function _openViewAsTab(studentId) {
+      if (!studentId) return;
+      var url = './ap_stats_roadmap_square_mode.html?viewAsUserId=' + encodeURIComponent(studentId);
+      try { window.open(url, '_blank', 'noopener'); } catch (_) {}
+    }
+    var __viewAsBtn = document.getElementById('tsc-action-view-as');
+    if (__viewAsBtn) __viewAsBtn.addEventListener('click', function() {
+      _openViewAsTab(_tscCurrentStudentId);
     });
 
     // Render session status on page load (after roster-client.js has run).

@@ -99,7 +99,11 @@ describe('_fetchPollArchive function', () => {
 
   it('08: fetches GET /poll-archive via ROSTER_SERVICE_URL', () => {
     const body = fnBody(DESK, '_fetchPollArchive');
-    expect(body).toMatch(/fetch\s*\(\s*baseUrl\s*\+\s*['"]\/poll-archive['"]/);
+    // P2 (TEACHER_STUDENT_CONSOLE_P2_BUILD.md §3.6): the fetch is now wrapped
+    // by _maybeViewAsFetch (typeof-guarded). The literal '/poll-archive'
+    // endpoint remains in the source as the argument to _maybeViewAsFetch.
+    expect(body).toMatch(/_maybeViewAsFetch\(\s*['"]\/poll-archive['"]/);
+    expect(body).toMatch(/await\s+fetch\s*\(\s*baseUrl\s*\+\s*__va\.endpoint/);
   });
 
   it('09: sends Authorization: Bearer token header', () => {

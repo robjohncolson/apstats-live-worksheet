@@ -63,6 +63,120 @@ function rollupLessonState(activities) {
   return 'partial';
 }
 
+// ── computeDonow: pure helper, no HTTP ───────────────────────────────────────
+// Accepts ledgerRows (array) and manifest (object). Returns the full
+// { nextTask, lessons, units, earlierGapFlag } payload verbatim.
+// Exported so teacher.js can reuse it for the per-student teacher endpoint.
+
+export function computeDonow(ledgerRows, manifest) {
+  const doneSet = buildDoneSet(ledgerRows || []);
+
+  const lessonsOut = [];
+  const unitsOut   = [];
+  const allActivities = [];
+  const manifestUnits = Array.isArray(manifest?.units) ? manifest.units : [];
+
+  for (const unit of manifestUnits) {
+    const lessons = Array.isArray(unit?.lessons) ? unit.lessons : [];
+
+    // Per-lesson activities
+    for (const lesson of lessons) {
+      const activitiesOut = [];
+      const lessonActivities = Array.isArray(lesson?.activities) ? lesson.activities : [];
+
+      for (const act of lessonActivities) {
+        const itemIds = Array.isArray(act?.itemIds) ? act.itemIds : [];
+        const stats = activityStats(act, doneSet);
+        activitiesOut.push({
+          activity: act.activity,
+          source:   act.source,
+          done:     stats.done,
+          total:    stats.total,
+          state:    stats.state
+        });
+        allActivities.push({
+          unit:     unit.unit,
+          lesson:   lesson.lesson,
+          activity: act.activity,
+          source:   act.source,
+          itemIds,
+          done:     stats.done,
+          total:    stats.total,
+          state:    stats.state
+        });
+      }
+
+      const lessonState = rollupLessonState(activitiesOut);
+      lessonsOut.push({
+        unit:         unit.unit,
+        lesson:       lesson.lesson,
+        activities:   activitiesOut,
+        lessonState
+      });
+    }
+
+    // Per-unit progress-check (pc), after all lessons for that unit
+    if (unit?.pc) {
+      const pcItemIds = Array.isArray(unit.pc.itemIds) ? unit.pc.itemIds : [];
+      const pcStats = activityStats(unit.pc, doneSet);
+      unitsOut.push({
+        unit: unit.unit,
+        pc: {
+          done:  pcStats.done,
+          total: pcStats.total,
+          state: pcStats.state
+        }
+      });
+      allActivities.push({
+        unit:     unit.unit,
+        lesson:   null,
+        activity: unit.pc.activity,
+        source:   unit.pc.source,
+        itemIds:  pcItemIds,
+        done:     pcStats.done,
+        total:    pcStats.total,
+        state:    pcStats.state
+      });
+    }
+    // Unit has no pc — CONTRACT 3 only shows units with pc entries, so skip.
+  }
+
+  // ── nextTask: earliest incomplete activity ────────────────────────────────
+  const firstIncomplete = allActivities.find(a => a.state !== 'done');
+  const nextTask = firstIncomplete
+    ? {
+        unit:     firstIncomplete.unit,
+        lesson:   firstIncomplete.lesson,
+        activity: firstIncomplete.activity,
+        source:   firstIncomplete.source,
+        progress: { done: firstIncomplete.done, total: firstIncomplete.total },
+        reason:   'earliest-incomplete'
+      }
+    : null;
+
+  // ── earlierGapFlag ────────────────────────────────────────────────────────
+  let earlierGapFlag = false;
+
+  const lastTouchedIdx = (() => {
+    let idx = -1;
+    for (let i = 0; i < allActivities.length; i++) {
+      if (allActivities[i].done > 0) idx = i;
+    }
+    return idx;
+  })();
+
+  if (lastTouchedIdx >= 0) {
+    for (let i = 0; i < lastTouchedIdx; i++) {
+      if (allActivities[i].state !== 'done') {
+        earlierGapFlag = true;
+        break;
+      }
+    }
+  }
+
+  return { nextTask, lessons: lessonsOut, units: unitsOut, earlierGapFlag };
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountDonow(app, { verifyToken, ledgerDb, loadManifest }) {
@@ -101,8 +215,6 @@ export function mountDonow(app, { verifyToken, ledgerDb, loadManifest }) {
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
 
-    const doneSet = buildDoneSet(ledgerRows || []);
-
     // ── Load work-manifest ───────────────────────────────────────────────────
     let manifest;
     try {
@@ -112,133 +224,9 @@ export function mountDonow(app, { verifyToken, ledgerDb, loadManifest }) {
       return res.status(500).json({ ok: false, error: 'Could not load work manifest' });
     }
 
-    // ── Walk manifest in CONTRACT-2 order: unit → lesson → activity (pc last) ─
-    // Collect all activities in order so we can compute nextTask and earlierGapFlag.
-    // ORDER: for each unit, all lessons in order (each lesson's activities in order:
-    //        worksheet before quiz), then that unit's pc.
+    // ── Compute + respond ─────────────────────────────────────────────────────
+    const computed = computeDonow(ledgerRows || [], manifest);
 
-    const lessonsOut = [];  // CONTRACT 3 "lessons" array
-    const unitsOut   = [];  // CONTRACT 3 "units" array
-
-    // Flat ordered list of { unit, lesson|null, activity, source, itemIds, done, total, state }
-    // for nextTask and earlierGapFlag computation.
-    const allActivities = [];
-    const manifestUnits = Array.isArray(manifest?.units) ? manifest.units : [];
-
-    for (const unit of manifestUnits) {
-      const lessons = Array.isArray(unit?.lessons) ? unit.lessons : [];
-
-      // Per-lesson activities
-      for (const lesson of lessons) {
-        const activitiesOut = [];
-        const lessonActivities = Array.isArray(lesson?.activities) ? lesson.activities : [];
-
-        for (const act of lessonActivities) {
-          const itemIds = Array.isArray(act?.itemIds) ? act.itemIds : [];
-          const stats = activityStats(act, doneSet);
-          activitiesOut.push({
-            activity: act.activity,
-            source:   act.source,
-            done:     stats.done,
-            total:    stats.total,
-            state:    stats.state
-          });
-          allActivities.push({
-            unit:     unit.unit,
-            lesson:   lesson.lesson,
-            activity: act.activity,
-            source:   act.source,
-            itemIds,
-            done:     stats.done,
-            total:    stats.total,
-            state:    stats.state
-          });
-        }
-
-        const lessonState = rollupLessonState(activitiesOut);
-        lessonsOut.push({
-          unit:         unit.unit,
-          lesson:       lesson.lesson,
-          activities:   activitiesOut,
-          lessonState
-        });
-      }
-
-      // Per-unit progress-check (pc), after all lessons for that unit
-      if (unit?.pc) {
-        const pcItemIds = Array.isArray(unit.pc.itemIds) ? unit.pc.itemIds : [];
-        const pcStats = activityStats(unit.pc, doneSet);
-        unitsOut.push({
-          unit: unit.unit,
-          pc: {
-            done:  pcStats.done,
-            total: pcStats.total,
-            state: pcStats.state
-          }
-        });
-        allActivities.push({
-          unit:     unit.unit,
-          lesson:   null,
-          activity: unit.pc.activity,
-          source:   unit.pc.source,
-          itemIds:  pcItemIds,
-          done:     pcStats.done,
-          total:    pcStats.total,
-          state:    pcStats.state
-        });
-      } else {
-        // Unit has no pc — still emit a units entry with null pc for contract shape.
-        // (CONTRACT 3 shows units array with pc field; if absent, omit the entry.)
-        // Actually CONTRACT 3 only shows units with pc entries, so only push if pc exists.
-      }
-    }
-
-    // ── nextTask: earliest incomplete activity in allActivities order ─────────
-    // "incomplete" = state !== "done"
-    const firstIncomplete = allActivities.find(a => a.state !== 'done');
-    const nextTask = firstIncomplete
-      ? {
-          unit:     firstIncomplete.unit,
-          lesson:   firstIncomplete.lesson,
-          activity: firstIncomplete.activity,
-          source:   firstIncomplete.source,
-          progress: { done: firstIncomplete.done, total: firstIncomplete.total },
-          reason:   'earliest-incomplete'
-        }
-      : null;
-
-    // ── earlierGapFlag ────────────────────────────────────────────────────────
-    // true iff there is any incomplete activity that comes BEFORE the student's
-    // most-advanced touched activity (any activity with done > 0).
-    // "most-advanced touched" = last index in allActivities where done > 0.
-    // "earlier gap" = an incomplete activity at a lower index than that.
-    let earlierGapFlag = false;
-
-    const lastTouchedIdx = (() => {
-      let idx = -1;
-      for (let i = 0; i < allActivities.length; i++) {
-        if (allActivities[i].done > 0) idx = i;
-      }
-      return idx;
-    })();
-
-    if (lastTouchedIdx >= 0) {
-      // Any incomplete activity (state !== 'done') before lastTouchedIdx?
-      for (let i = 0; i < lastTouchedIdx; i++) {
-        if (allActivities[i].state !== 'done') {
-          earlierGapFlag = true;
-          break;
-        }
-      }
-    }
-
-    // ── Response ─────────────────────────────────────────────────────────────
-    return res.json({
-      ok:              true,
-      nextTask,
-      lessons:         lessonsOut,
-      units:           unitsOut,
-      earlierGapFlag
-    });
+    return res.json({ ok: true, ...computed });
   });
 }

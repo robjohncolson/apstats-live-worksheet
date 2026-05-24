@@ -1100,9 +1100,56 @@
         .tt-status.ready { color:#4caf50; }
         .tt-status.partial { color:#ff9800; }
         .tt-status.pending { color:#888; }
+
+        /* Teacher -> Student Console view-as banner (P2 of TEACHER_STUDENT_CONSOLE_SPEC.md) */
+        #view-as-banner {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+          background: #d97706; color: #fff;
+          font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
+          letter-spacing: 0.04em;
+          padding: 8px 14px;
+          display: flex; align-items: center; gap: 12px;
+          border-bottom: 2px solid #92400e;
+          box-shadow: 0 2px 0 rgba(0,0,0,0.18);
+        }
+        #view-as-banner .vab-label { font-weight: 800; letter-spacing: 0.12em; opacity: 0.95; font-size: 11px; }
+        #view-as-banner .vab-name { font-weight: 800; }
+        #view-as-banner .vab-meta { opacity: 0.85; font-size: 12px; }
+        #view-as-banner .vab-readonly {
+          margin-left: auto;
+          background: #92400e; color: #fff;
+          padding: 2px 8px; border-radius: 3px;
+          font-weight: 700; font-size: 11px; letter-spacing: 0.1em;
+        }
+        #view-as-banner .vab-exit {
+          background: #fff; color: #92400e; border: 1px solid #fff;
+          padding: 3px 12px; border-radius: 3px;
+          font: inherit; font-weight: 700; cursor: pointer;
+        }
+        #view-as-banner .vab-exit:hover { background: #fed7aa; }
+        body.view-as-active { padding-top: 40px; }
+
+        /* Pre-hydration body hide (Codex BLOCKER fold P2): when the page loads
+           with ?viewAsUserId but sessionStorage isn't yet hydrated, the
+           bootstrap will fetch the profile + reload. Hide the body during
+           that brief window so the teacher's own Desk doesn't flash before
+           the reload lands. The class is set synchronously inside the
+           bootstrap IIFE and removed on any non-reload exit path. */
+        html.view-as-loading body { visibility: hidden; }
     </style>
 </head>
 <body>
+
+<!-- Teacher -> Student Console view-as banner (P2). Hidden unless
+     sessionStorage holds apstats_view_as_context. Placed first so the
+     fixed-position element layers above every other UI. -->
+<div id="view-as-banner" style="display:none">
+  <span class="vab-label">VIEWING AS</span>
+  <strong class="vab-name" id="view-as-banner-name"></strong>
+  <span class="vab-meta" id="view-as-banner-meta"></span>
+  <span class="vab-readonly">READ-ONLY</span>
+  <button type="button" class="vab-exit" id="view-as-exit" aria-label="Exit view-as">Exit</button>
+</div>
 
 <div id="boot-overlay">
   <div class="boot-monitor">
@@ -3622,6 +3669,182 @@ function calNextUpTopic(orderedTopics, marks) {
 
 // ── Sequential lesson gate (2026-05-20, LESSON_GATE_BUILD.md) ────────────────
 // A lesson unlocks when the prior lesson is complete OR its scheduled date
+// ── Teacher -> Student Console: View-As (P2 of TEACHER_STUDENT_CONSOLE_SPEC.md) ──
+// A teacher opens this Desk in a new tab via ?viewAsUserId=<sid> from the
+// dashboard drawer; the Desk hydrates a per-tab sessionStorage object
+// (apstats_view_as_context) and renders as that student, READ-ONLY. Every
+// function below FAILS OPEN -- bad sessionStorage / missing helpers / fetch
+// errors leave the Desk rendering normally for the signed-in user.
+
+function _viewAsContext() {
+  try {
+    var raw = sessionStorage.getItem('apstats_view_as_context');
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.studentId !== 'string') return null;
+    return parsed;
+  } catch (_) { return null; }
+}
+
+function _maybeViewAsFetch(endpoint, headers) {
+  var ctx = _viewAsContext();
+  if (!ctx) return { endpoint: endpoint, headers: headers || {} };
+  var sid = encodeURIComponent(ctx.studentId);
+  var teacherToken = null;
+  try {
+    teacherToken = (window.rosterClient && window.rosterClient.token)
+      ? window.rosterClient.token() : null;
+  } catch (_) { teacherToken = null; }
+  var newHeaders = {};
+  if (headers) for (var k in headers) if (Object.prototype.hasOwnProperty.call(headers, k)) newHeaders[k] = headers[k];
+  if (teacherToken) newHeaders['Authorization'] = 'Bearer ' + teacherToken;
+  // Strip any student ?token= -- teacher token rides in the header.
+  if (endpoint.indexOf('/grade') === 0) {
+    return { endpoint: '/teacher/student/' + sid + '/grade', headers: newHeaders };
+  }
+  if (endpoint.indexOf('/donow') === 0) {
+    return { endpoint: '/teacher/student/' + sid + '/donow', headers: newHeaders };
+  }
+  if (endpoint.indexOf('/poll-archive') === 0) {
+    return { endpoint: '/teacher/student/' + sid + '/poll-archive', headers: newHeaders };
+  }
+  return { endpoint: endpoint, headers: newHeaders };
+}
+
+function _renderViewAsBanner() {
+  var ctx = _viewAsContext();
+  var banner = document.getElementById('view-as-banner');
+  if (!banner) return;
+  if (!ctx) {
+    banner.style.display = 'none';
+    try { document.body.classList.remove('view-as-active'); } catch (_) {}
+    return;
+  }
+  var nameEl = document.getElementById('view-as-banner-name');
+  var metaEl = document.getElementById('view-as-banner-meta');
+  if (nameEl) nameEl.textContent = ctx.realName || ctx.username || 'Student';
+  if (metaEl) metaEl.textContent =
+    (ctx.username ? '@' + ctx.username : '') +
+    (ctx.section ? ' — ' + ctx.section : '');
+  banner.style.display = 'flex';
+  try { document.body.classList.add('view-as-active'); } catch (_) {}
+}
+
+function _exitViewAs() {
+  try { sessionStorage.removeItem('apstats_view_as_context'); } catch (_) {}
+  try {
+    var url = new URL(window.location.href);
+    url.searchParams.delete('viewAsUserId');
+    window.location.href = url.toString();
+  } catch (_) {
+    try { window.location.reload(); } catch (_) {}
+  }
+}
+
+function _applyViewAsReadOnly() {
+  if (!_viewAsContext()) return;
+  try {
+    var els = document.querySelectorAll('input, textarea');
+    for (var i = 0; i < els.length; i++) {
+      els[i].setAttribute('disabled', 'true');
+      els[i].style.opacity = '0.55';
+      els[i].style.cursor = 'not-allowed';
+    }
+  } catch (_) {}
+  // Hide sign-out + change-password menu items so the teacher cannot
+  // accidentally sign the student account out OR change its password.
+  try {
+    var hideIds = ['menu-sign-out', 'menu-change-password'];
+    for (var j = 0; j < hideIds.length; j++) {
+      var n = document.getElementById(hideIds[j]);
+      if (n) n.style.display = 'none';
+    }
+  } catch (_) {}
+}
+
+function _showViewAsToast(msg) {
+  try {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fef3c7;color:#78350f;padding:10px 16px;border:1px solid #fbbf24;border-radius:6px;z-index:9999;font:13px system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.18);';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { try { t.remove(); } catch (_) {} }, 3000);
+  } catch (_) {}
+}
+
+// View-as bootstrap (IIFE). Detect ?viewAsUserId; verify teacher auth;
+// hydrate viewAsContext into sessionStorage (per-tab) + reload so the
+// rest of the page renders cleanly with the context set. Idempotent --
+// a reload with the same sid is a no-op (sessionStorage already matches).
+(async function _viewAsBootstrap() {
+  var params;
+  try { params = new URLSearchParams(window.location.search); }
+  catch (_) { return; }
+  var sid = params.get('viewAsUserId');
+  if (!sid) return;
+  var existing = null;
+  try { existing = JSON.parse(sessionStorage.getItem('apstats_view_as_context') || 'null'); }
+  catch (_) { existing = null; }
+  if (existing && existing.studentId === sid) return;
+  var me;
+  try { me = (window.rosterClient && window.rosterClient.current) ? window.rosterClient.current() : null; }
+  catch (_) { me = null; }
+  if (!me || me.role !== 'teacher') return;
+  var base = window.ROSTER_SERVICE_URL;
+  if (!base) return;
+  var token = null;
+  try { token = (window.rosterClient.token) ? window.rosterClient.token() : null; }
+  catch (_) { token = null; }
+  if (!token) return;
+  // Codex BLOCKER fold P2: set the pre-hydration class SYNCHRONOUSLY (before
+  // any await) so CSS hides body until the reload lands. Without this the
+  // teacher's own Do Now / calendar can flash on first paint. The class
+  // gets cleared if the fetch fails so the page stays usable.
+  try { document.documentElement.classList.add('view-as-loading'); } catch (_) {}
+  var willReload = false;
+  try {
+    var res = await fetch(base + '/teacher/student/' + encodeURIComponent(sid) + '/profile', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) return;
+    var data = await res.json();
+    if (!data || !data.ok) return;
+    sessionStorage.setItem('apstats_view_as_context', JSON.stringify({
+      studentId: data.studentId,
+      username: data.username,
+      realName: data.realName,
+      section: data.section,
+      readOnly: true,
+      enteredAt: Date.now()
+    }));
+    willReload = true;
+    window.location.reload();
+  } catch (_) { /* failure -> Desk renders normally for the teacher */ }
+  finally {
+    // Any non-reload exit removes the class so body becomes visible. If
+    // willReload is true, removal is harmless -- the page is about to
+    // reload anyway.
+    if (!willReload) {
+      try { document.documentElement.classList.remove('view-as-loading'); } catch (_) {}
+    }
+  }
+})();
+
+// Wire view-as banner + read-only application. Banner render runs
+// synchronously (banner div is parsed before this script); read-only scan
+// runs in DOMContentLoaded to catch inputs in the rest of the body markup.
+try { _renderViewAsBanner(); } catch (_) {}
+try {
+  document.addEventListener('DOMContentLoaded', function () {
+    try { _renderViewAsBanner(); } catch (_) {}
+    try { _applyViewAsReadOnly(); } catch (_) {}
+    try {
+      var exitBtn = document.getElementById('view-as-exit');
+      if (exitBtn) exitBtn.addEventListener('click', _exitViewAs);
+    } catch (_) {}
+  });
+} catch (_) {}
+
 // arrives. Guides the summer self-pacer 1.1 -> onward; during the school year
 // lessons open on their dates so the gate only blocks jumping ahead. Teachers
 // and not-signed-in visitors bypass. Every function FAILS OPEN — a bug must
@@ -3633,6 +3856,11 @@ function _deskIsTeacher() {
   // Do-Now focus, ...) treats the viewer as a student.
   try {
     if (sessionStorage.getItem('apstats_preview_as_student') === '1') return false;
+    // P2 (TEACHER_STUDENT_CONSOLE_SPEC.md §7): a teacher in view-as mode is
+    // treated as the student for every existing gate (lesson unlock, Do-Now
+    // focus, gradebook teacher menu, ...). One sessionStorage write extends
+    // every gate-site implicitly -- no per-site change needed.
+    if (sessionStorage.getItem('apstats_view_as_context')) return false;
   } catch (_) {}
   try { return localStorage.getItem('apstats_user_role') === 'teacher'; }
   catch (_) { return false; }
@@ -3785,6 +4013,11 @@ function _wsCompletionFor(worksheetUrl) {
 // store as Done clicks (same localStorage key), so visit + done state
 // share one round trip. Idempotent — first visit wins.
 function recordLinkVisit(topicId, artifact) {
+  // View-as: short-circuit so the teacher's localStorage never inherits
+  // student-attributed visit timestamps (P2 of TEACHER_STUDENT_CONSOLE_SPEC.md).
+  // typeof-guarded so the existing vm-based tests don't need to inject the
+  // helper (s111 carry-forward: cross-sprint calls guarded).
+  if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
   try {
     const email = getStudentEmail();
     if (!email) return;
@@ -3806,6 +4039,16 @@ function recordLinkVisit(topicId, artifact) {
 }
 
 async function recordProgress(topicId, artifact, score) {
+  // View-as: short-circuit completely (P2 of TEACHER_STUDENT_CONSOLE_SPEC.md).
+  // The teacher must NEVER record progress on the student's behalf.
+  // typeof-guarded so the existing vm-based tests don't need to inject the
+  // helper (s111 carry-forward: cross-sprint calls guarded).
+  if (typeof _viewAsContext === 'function' && _viewAsContext()) {
+    if (typeof _showViewAsToast === 'function') {
+      _showViewAsToast('Read-only view: cannot record progress for this student.');
+    }
+    return false;
+  }
   const email = getStudentEmail();
   if (!email) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return false; }
   // 2026-05-19 refactor: write localStorage FIRST as the source of truth so
@@ -4457,7 +4700,15 @@ async function renderDoNowGrades(baseUrl, token) {
   host.style.display = 'none';
   host.innerHTML = '';
   try {
-    var res = await fetch(baseUrl + '/grade?token=' + encodeURIComponent(token));
+    // P2 view-as rewrite: in view-as mode, swap to /teacher/student/:id/grade
+    // with the teacher's token in the Authorization header. _maybeViewAsFetch
+    // is identity-transform when view-as is inactive (student token in URL).
+    // typeof-guarded so the existing vm-based tests don't need to inject the
+    // helper to keep passing (s111 carry-forward: cross-sprint calls guarded).
+    var __va = (typeof _maybeViewAsFetch === 'function')
+      ? _maybeViewAsFetch('/grade?token=' + encodeURIComponent(token), {})
+      : { endpoint: '/grade?token=' + encodeURIComponent(token), headers: {} };
+    var res = await fetch(baseUrl + __va.endpoint, { headers: __va.headers });
     if (!res || !res.ok) return;
     var data = await res.json();
     if (!data || !data.ok) return;
@@ -4562,9 +4813,13 @@ async function renderDoNow() {
 
     var data;
     try {
-      var res = await fetch(baseUrl + '/donow', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
+      // P2 view-as rewrite: in view-as mode, swap to /teacher/student/:id/donow.
+      // typeof-guarded so the existing vm-based DN3a tests don't need to inject
+      // the helper (s111 carry-forward: cross-sprint calls guarded).
+      var __va = (typeof _maybeViewAsFetch === 'function')
+        ? _maybeViewAsFetch('/donow', { 'Authorization': 'Bearer ' + token })
+        : { endpoint: '/donow', headers: { 'Authorization': 'Bearer ' + token } };
+      var res = await fetch(baseUrl + __va.endpoint, { headers: __va.headers });
       data = await res.json();
     } catch (_) {
       show('Could not load your Do Now right now. It will refresh automatically.', 'signin');
@@ -6319,6 +6574,11 @@ var _lastResourcePanel = null;
 if (typeof window !== 'undefined' && window.addEventListener) {
   window.addEventListener('storage', function (e) {
     if (!e || e.key !== 'apstats_ws_completion') return;
+    // P2: in view-as mode the teacher's localStorage isn't the student's
+    // source of truth; re-rendering off this event would show the teacher's
+    // own completion overlay on top of the student's panel. Skip the re-render.
+    // typeof-guarded so existing storage-listener tests don't need to inject.
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
     var ov = document.getElementById('resource-overlay');
     if (!ov) return;
     var disp = (ov.style && ov.style.display) || '';
@@ -6394,6 +6654,15 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
 }
 
 async function studentMark(btn, topicId, artifact) {
+    // Codex BLOCKER fold P2: view-as is read-only -- the teacher must never
+    // mark progress on the student's behalf. typeof-guarded so existing
+    // vm-based studentMark tests don't need to inject the helper.
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) {
+      if (typeof _showViewAsToast === 'function') {
+        _showViewAsToast('Read-only view: cannot mark progress for this student.');
+      }
+      return;
+    }
     if (!getStudentEmail()) { showDialog('\u{1F464}','Please sign in first (Student menu).','OK'); return; }
     // 2026-05-20 v2: Blooket Done now opens a flashcard quiz sourced from
     // the same Blooket CSV. Student must pass ≥80% on a single pass before
@@ -6469,6 +6738,11 @@ function _bfStorageKey() {
 }
 
 function _bfSaveProgress() {
+    // Codex BLOCKER fold P2: gating the Blooket progress write prevents the
+    // teacher's localStorage from being polluted with student-attributed
+    // progress while in view-as mode (the key includes the teacher's email,
+    // not the student's, so it'd cross-contaminate the teacher's real tabs).
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
     var key = _bfStorageKey();
     if (!key || !_bfState.topic || !Array.isArray(_bfState.deck) || _bfState.deck.length === 0) return;
     try {
@@ -6497,6 +6771,10 @@ function _bfLoadProgress(topic) {
 }
 
 function _bfClearProgress(topic) {
+    // Codex BLOCKER fold P2: gating the Blooket progress clear matches
+    // _bfSaveProgress -- prevents touching the teacher's localStorage at all
+    // while view-as is active.
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return;
     var key = _bfStorageKey();
     if (!key) return;
     try {
@@ -6661,6 +6939,15 @@ function _bfKeydownHandler(e) {
 }
 
 async function openBlooketFlashcards(btn, topicId) {
+    // Codex BLOCKER fold P2: opening the Blooket flashcard quiz in view-as
+    // mode would let the teacher drive a quiz that writes back as themselves
+    // -- block at the entry point.
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) {
+      if (typeof _showViewAsToast === 'function') {
+        _showViewAsToast('Read-only view: cannot open the flashcard quiz for this student.');
+      }
+      return;
+    }
     // 2026-05-20: try to resume saved progress first. If present, use the
     // saved deck (preserves the shuffle order so the student picks up at
     // the same card) and skip the CSV fetch entirely.
@@ -6858,6 +7145,13 @@ function _bfCloseUI() {
 }
 
 function closeBlooketFlashcards() {
+    // Codex BLOCKER fold P2: if view-as somehow got the quiz open, close it
+    // without persisting any progress (the open-gate above should prevent
+    // this, but defense-in-depth).
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) {
+      try { if (typeof _bfCloseUI === 'function') _bfCloseUI(); } catch (_) {}
+      return;
+    }
     // Cancel path: persist progress before tearing down so a re-open
     // resumes at the same card with the same shuffled deck and score.
     // Skip if the deck is fully traversed (already handled by _bfFinish).
@@ -10381,9 +10675,13 @@ async function _fetchPollArchive() {
     if (!token) return;
     var baseUrl = window.ROSTER_SERVICE_URL || null;
     if (!baseUrl) return;
-    var res = await fetch(baseUrl + '/poll-archive', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
+    // P2 view-as rewrite: in view-as mode, swap to /teacher/student/:id/poll-archive.
+    // typeof-guarded so the existing vm-based poll-archive-desk tests don't need
+    // to inject the helper (s111 carry-forward: cross-sprint calls guarded).
+    var __va = (typeof _maybeViewAsFetch === 'function')
+      ? _maybeViewAsFetch('/poll-archive', { 'Authorization': 'Bearer ' + token })
+      : { endpoint: '/poll-archive', headers: { 'Authorization': 'Bearer ' + token } };
+    var res = await fetch(baseUrl + __va.endpoint, { headers: __va.headers });
     if (!res.ok) return;
     var data = await res.json();
     if (!data || !data.ok || !Array.isArray(data.polls)) return;

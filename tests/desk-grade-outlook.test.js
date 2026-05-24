@@ -64,8 +64,13 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
 
   it('04: renderDoNowGrades calls /grade with the token query param', () => {
     const body = fnBody(DESK, 'renderDoNowGrades');
-    expect(body).toMatch(/fetch\s*\(\s*baseUrl\s*\+\s*['"]\/grade\?token=['"]\s*\+/);
-    expect(body).toMatch(/encodeURIComponent\s*\(\s*token\s*\)/);
+    // P2 (TEACHER_STUDENT_CONSOLE_P2_BUILD.md §3.6): the fetch is now wrapped
+    // by _maybeViewAsFetch (typeof-guarded), so the literal pattern is split
+    // across endpoint construction + fetch invocation. The endpoint string
+    // `/grade?token=` + encodeURIComponent(token) remains present in the source.
+    expect(body).toMatch(/['"]\/grade\?token=['"]\s*\+\s*encodeURIComponent\s*\(\s*token\s*\)/);
+    expect(body).toMatch(/_maybeViewAsFetch/);
+    expect(body).toMatch(/await\s+fetch\s*\(\s*baseUrl\s*\+\s*__va\.endpoint/);
   });
 
   it('05: renderDoNowGrades iterates Q1, Q2, Q3, Q4 in order', () => {

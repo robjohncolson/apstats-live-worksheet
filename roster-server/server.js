@@ -522,15 +522,18 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null });
   }
 
-  // ── Teacher Student Console (Phase 1 of TEACHER_STUDENT_CONSOLE_SPEC.md) ───
+  // ── Teacher Student Console (Phase 1+2A of TEACHER_STUDENT_CONSOLE_SPEC.md) ─
   // Per-student READ endpoints for the Console drawer. Reuses the same
   // loadAnswerKey + computeGrade pipeline as /class/grades.
+  // Phase 2A adds /donow (needs loadManifest) and /poll-archive (needs pollArchiveDb).
   if (loadAnswerKey) {
     mountTeacherStudent(app, {
       db, ledgerDb, loadAnswerKey,
       lessonSchedule: lessonSchedule || null,
       config: configOverrides ? { ...PHASE3_CONFIG, ...configOverrides } : PHASE3_CONFIG,
       worksheetBlankCounts: worksheetBlankCounts || null,
+      loadManifest: loadManifest || null,
+      pollArchiveDb: pollArchiveDb || null,
     });
   }
 

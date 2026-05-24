@@ -12,6 +12,7 @@
 import { PHASE3_CONFIG } from './grade-config.js';
 import { answerKeyMapOrNull } from './scoring.js';
 import { computeGrade } from './grade.js';
+import { computeDonow } from './donow.js';
 import { requireTeacher } from './teacher-auth.js';
 
 // Studentizer: roster columns → the dashboard's per-student header.
@@ -26,7 +27,7 @@ function studentMeta(r) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountTeacherStudent(app, { db, ledgerDb, loadAnswerKey, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null }) {
+export function mountTeacherStudent(app, { db, ledgerDb, loadAnswerKey, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null, loadManifest = null, pollArchiveDb = null }) {
 
   // ── GET /teacher/student/:studentId/profile ─────────────────────────────────
   // Returns identity tuple: studentId, username, realName, section, role.
@@ -197,5 +198,138 @@ export function mountTeacherStudent(app, { db, ledgerDb, loadAnswerKey, lessonSc
       ...studentMeta(roster),
       submissions,
     });
+  });
+
+  // ── GET /teacher/student/:studentId/donow ────────────────────────────────────
+  // Mirror of GET /donow but teacher-authed and student resolved from path param.
+  // Requires loadManifest dep (passed through from server.js). Degrades to 500 if
+  // loadManifest is not provided.
+  // → 200 { ok:true, nextTask, lessons, units, earlierGapFlag }
+  app.get('/teacher/student/:studentId/donow', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    const { studentId } = req.params;
+
+    let roster;
+    try {
+      const { data, error } = await db.findByStudentId(studentId);
+      if (error) {
+        console.error('GET /teacher/student/:studentId/donow roster error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (!data) return res.status(404).json({ ok: false, error: 'student not found' });
+      roster = data;
+    } catch (err) {
+      console.error('GET /teacher/student/:studentId/donow roster throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    // Load ledger rows for the target student.
+    let ledgerRows = [];
+    try {
+      const { data, error } = await ledgerDb.getLedgerByStudent(studentId);
+      if (error) {
+        console.error('GET /teacher/student/:studentId/donow ledger error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      ledgerRows = Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error('GET /teacher/student/:studentId/donow ledger throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    // Load work-manifest.
+    if (!loadManifest) {
+      return res.status(500).json({ ok: false, error: 'Work manifest not available' });
+    }
+    let manifest;
+    try {
+      manifest = await loadManifest();
+    } catch (err) {
+      console.error('GET /teacher/student/:studentId/donow manifest error:', err);
+      return res.status(500).json({ ok: false, error: 'Could not load work manifest' });
+    }
+
+    const computed = computeDonow(ledgerRows, manifest);
+
+    return res.json({ ok: true, ...computed });
+  });
+
+  // ── GET /teacher/student/:studentId/poll-archive ─────────────────────────────
+  // Mirror of GET /poll-archive but teacher-authed and student resolved from path
+  // param. pollArchiveDb is optional: degrades to 503 when absent or when the
+  // underlying table is missing (42P01), mirroring mountPollArchive's degrade.
+  // → 200 { ok:true, polls: [...] }
+  app.get('/teacher/student/:studentId/poll-archive', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    // Graceful degrade when pollArchiveDb was not provided at mount time.
+    if (!pollArchiveDb) {
+      return res.status(503).json({
+        ok: false,
+        error: 'poll_archive not provisioned -- run migration 0007',
+      });
+    }
+
+    const { studentId } = req.params;
+
+    let roster;
+    try {
+      const { data, error } = await db.findByStudentId(studentId);
+      if (error) {
+        console.error('GET /teacher/student/:studentId/poll-archive roster error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (!data) return res.status(404).json({ ok: false, error: 'student not found' });
+      roster = data;
+    } catch (err) {
+      console.error('GET /teacher/student/:studentId/poll-archive roster throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    const section = roster.section;
+    if (!section) {
+      return res.status(500).json({ ok: false, error: 'Student has no section' });
+    }
+
+    let data, dbError;
+    try {
+      ({ data, error: dbError } = await pollArchiveDb.listPollArchive(section, null));
+    } catch (err) {
+      // Thrown 42P01 (table missing) — treat the same as an error return.
+      if (err && (err.code === '42P01' || /relation .* does not exist/i.test(err.message || ''))) {
+        return res.status(503).json({
+          ok: false,
+          error: 'poll_archive not provisioned -- run migration 0007',
+        });
+      }
+      console.error('GET /teacher/student/:studentId/poll-archive DB throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    if (dbError) {
+      if (dbError.code === '42P01' || /relation .* does not exist/i.test(dbError.message || '')) {
+        return res.status(503).json({
+          ok: false,
+          error: 'poll_archive not provisioned -- run migration 0007',
+        });
+      }
+      console.error('GET /teacher/student/:studentId/poll-archive DB error:', dbError);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    // Map snake_case DB columns to camelCase contract shape (mirrors /poll-archive exactly).
+    const polls = (data || []).map(row => ({
+      id:        row.id,
+      pollId:    row.poll_id,
+      pollDate:  row.poll_date,
+      question:  row.question,
+      options:   Array.isArray(row.options) ? row.options : [],
+      tally:     Array.isArray(row.tally) ? row.tally : [],
+      blind:     !!row.blind,
+      createdAt: row.created_at,
+    }));
+
+    return res.json({ ok: true, polls });
   });
 }

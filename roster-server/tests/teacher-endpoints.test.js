@@ -102,13 +102,16 @@ async function startServer({
   roster = [], ledger = {},
   loadAnswerKey = okAnswerKey, loadSkillMap = okSkillMap, bkt,
   rosterOpts = {}, ledgerOpts = {},
+  pollArchiveDb = null,
 } = {}) {
   process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
   process.env.ROSTER_TEACHER_SECRET = TEACHER;
   process.env.NODE_ENV = 'test';
   const rosterDb = createFakeRosterDb(roster, rosterOpts);
   const ledgerDb = createFakeLedgerDb(ledger, ledgerOpts);
-  const app = createApp(rosterDb, ledgerDb, fakeLoadManifest, loadAnswerKey, loadSkillMap, bkt === undefined ? realBkt : bkt);
+  // createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt,
+  //           remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb)
+  const app = createApp(rosterDb, ledgerDb, fakeLoadManifest, loadAnswerKey, loadSkillMap, bkt === undefined ? realBkt : bkt, null, null, null, null, pollArchiveDb);
   const server = new TestServer(app);
   await server.start();
   return { server, rosterDb, ledgerDb };
@@ -496,5 +499,254 @@ describe('Edge cases on /recent (Codex MINOR fold)', () => {
     expect(r.body.submissions.length).toBe(3);
     // V8 stable sort + comparator returning 0 on equality keeps input order.
     expect(r.body.submissions.map(s => s.itemId)).toEqual(['Q1', 'Q2', 'Q3']);
+  });
+});
+
+// ── Wave 2A: GET /teacher/student/:studentId/donow ────────────────────────────
+
+// A minimal manifest with one unit + one lesson so computeDonow produces a
+// meaningful nextTask (instead of null from an empty manifest).
+const FIXTURE_MANIFEST = {
+  generatedFrom: 'fixture',
+  units: [
+    {
+      unit: 'U1',
+      lessons: [
+        {
+          lesson: 'L1',
+          activities: [
+            { activity: 'worksheet', source: 'u1_lesson1_live', itemIds: ['WS-U1L1-Q1', 'WS-U1L1-Q2'] },
+            { activity: 'quiz',      source: 'curriculum_quiz',  itemIds: ['U1-L1-Q01', 'U1-L1-Q02'] },
+          ],
+        },
+      ],
+      pc: { activity: 'pc', source: 'curriculum_pc', itemIds: ['U1-PC-MCQ-A-Q01'] },
+    },
+  ],
+};
+
+const okManifest = async () => FIXTURE_MANIFEST;
+
+describe('GET /teacher/student/:studentId/donow', () => {
+  it('401 without teacher auth', async () => {
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT] });
+    srv = ctx.server;
+    const r = await srv.get('/teacher/student/stu_abc123/donow');
+    expect(r.status).toBe(401);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toBe('forbidden');
+  });
+
+  it('200 with teacher secret — response has ok, nextTask, lessons, units, earlierGapFlag', async () => {
+    // Build server with a richer manifest so nextTask is populated.
+    await (async () => {
+      process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
+      process.env.ROSTER_TEACHER_SECRET = TEACHER;
+      process.env.NODE_ENV = 'test';
+      const rosterDb = createFakeRosterDb([FIXTURE_STUDENT]);
+      const ledgerDb = createFakeLedgerDb({});
+      const app = createApp(rosterDb, ledgerDb, okManifest, okAnswerKey, okSkillMap, realBkt, null, null, null, null, null);
+      const server = new TestServer(app);
+      await server.start();
+      srv = server;
+    })();
+    const r = await srv.get('/teacher/student/stu_abc123/donow', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(r.body).toHaveProperty('nextTask');
+    expect(r.body).toHaveProperty('lessons');
+    expect(r.body).toHaveProperty('units');
+    expect(r.body).toHaveProperty('earlierGapFlag');
+    // nextTask points to the first activity since ledger is empty.
+    expect(r.body.nextTask).not.toBeNull();
+    expect(r.body.nextTask.unit).toBe('U1');
+    expect(r.body.nextTask.activity).toBe('worksheet');
+  });
+
+  it('200 with token-auth (Bearer) — same envelope', async () => {
+    const TEACHER_ROW = { student_id: 'stu_teacher2', login_username: 'mango-fox', real_name: 'Mr. T', section: 'PeriodB' };
+    process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
+    process.env.ROSTER_TEACHER_SECRET = TEACHER;
+    process.env.NODE_ENV = 'test';
+    const rosterDb = createFakeRosterDb([FIXTURE_STUDENT, TEACHER_ROW], { roleMap: { stu_teacher2: 'teacher' } });
+    const ledgerDb = createFakeLedgerDb({});
+    const app = createApp(rosterDb, ledgerDb, okManifest, okAnswerKey, okSkillMap, realBkt, null, null, null, null, null);
+    const server = new TestServer(app);
+    await server.start();
+    srv = server;
+    const token = signToken('stu_teacher2');
+    const r = await srv.get('/teacher/student/stu_abc123/donow', { 'Authorization': `Bearer ${token}` });
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(r.body).toHaveProperty('nextTask');
+  });
+
+  it('401 with student-role token', async () => {
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT] });
+    srv = ctx.server;
+    const token = signToken('stu_abc123');
+    const r = await srv.get('/teacher/student/stu_abc123/donow', { 'Authorization': `Bearer ${token}` });
+    expect(r.status).toBe(401);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toBe('forbidden');
+  });
+
+  it('404 when studentId unknown', async () => {
+    const ctx = await startServer({ roster: [] });
+    srv = ctx.server;
+    const r = await srv.get('/teacher/student/no-such/donow', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(404);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toBe('student not found');
+  });
+
+  it('200 with empty ledger — nextTask is the first lesson activity', async () => {
+    process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
+    process.env.ROSTER_TEACHER_SECRET = TEACHER;
+    process.env.NODE_ENV = 'test';
+    const rosterDb = createFakeRosterDb([FIXTURE_STUDENT]);
+    const ledgerDb = createFakeLedgerDb({});
+    const app = createApp(rosterDb, ledgerDb, okManifest, okAnswerKey, okSkillMap, realBkt, null, null, null, null, null);
+    const server = new TestServer(app);
+    await server.start();
+    srv = server;
+    const r = await srv.get('/teacher/student/stu_abc123/donow', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(Array.isArray(r.body.lessons)).toBe(true);
+    // With an empty ledger every activity is 'none', so nextTask is the first one.
+    expect(r.body.nextTask).not.toBeNull();
+    expect(r.body.earlierGapFlag).toBe(false);
+  });
+});
+
+// ── Wave 2A: GET /teacher/student/:studentId/poll-archive ─────────────────────
+
+// Minimal fake pollArchiveDb (mirrors poll-archive.test.js pattern exactly).
+function makeTableMissingError() {
+  return { code: '42P01', message: 'relation "poll_archive" does not exist' };
+}
+
+function createFakePollArchiveDb({ tableMissing = false, rows = [] } = {}) {
+  const store = [...rows];
+  const state = { tableMissing };
+  function maybeMissing() {
+    return state.tableMissing ? { data: null, error: makeTableMissingError() } : null;
+  }
+  return {
+    state,
+    async listPollArchive(section, _date) {
+      const miss = maybeMissing(); if (miss) return miss;
+      return { data: store.filter(r => r.section === section), error: null };
+    },
+    // insertPollArchive / deletePollArchive are not exercised by the teacher endpoint
+    // but must exist if other routes call them (no-op stubs are fine here).
+    async insertPollArchive() { const miss = maybeMissing(); if (miss) return miss; return { data: {}, error: null }; },
+    async deletePollArchive() { const miss = maybeMissing(); if (miss) return miss; return { data: null, error: null }; },
+  };
+}
+
+const FIXTURE_POLL_ROW = {
+  id: 'pa-001',
+  poll_id: 'poll-abc',
+  section: 'PeriodB',
+  poll_date: '2026-05-22',
+  question: 'What is the p-value?',
+  options: ['< 0.05', '> 0.05'],
+  tally: [10, 2],
+  blind: false,
+  created_at: '2026-05-22T12:00:00.000Z',
+};
+
+describe('GET /teacher/student/:studentId/poll-archive', () => {
+  it('401 without teacher auth', async () => {
+    const pollDb = createFakePollArchiveDb({ rows: [FIXTURE_POLL_ROW] });
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT], pollArchiveDb: pollDb });
+    srv = ctx.server;
+    const r = await srv.get('/teacher/student/stu_abc123/poll-archive');
+    expect(r.status).toBe(401);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toBe('forbidden');
+  });
+
+  it('200 with teacher secret — response has ok + polls array matching the section', async () => {
+    const pollDb = createFakePollArchiveDb({ rows: [FIXTURE_POLL_ROW] });
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT], pollArchiveDb: pollDb });
+    srv = ctx.server;
+    const r = await srv.get('/teacher/student/stu_abc123/poll-archive', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(Array.isArray(r.body.polls)).toBe(true);
+    expect(r.body.polls).toHaveLength(1);
+    const poll = r.body.polls[0];
+    // camelCase shape matches /poll-archive exactly
+    expect(poll.id).toBe('pa-001');
+    expect(poll.pollId).toBe('poll-abc');
+    expect(poll.pollDate).toBe('2026-05-22');
+    expect(poll.question).toBe('What is the p-value?');
+    expect(Array.isArray(poll.options)).toBe(true);
+    expect(Array.isArray(poll.tally)).toBe(true);
+    expect(typeof poll.blind).toBe('boolean');
+    expect(poll.createdAt).toBeDefined();
+  });
+
+  it('200 with token-auth (Bearer) — same envelope', async () => {
+    const TEACHER_ROW = { student_id: 'stu_teacher3', login_username: 'lime-wolf', real_name: 'Ms. T', section: 'PeriodB' };
+    process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
+    process.env.ROSTER_TEACHER_SECRET = TEACHER;
+    process.env.NODE_ENV = 'test';
+    const rosterDb = createFakeRosterDb([FIXTURE_STUDENT, TEACHER_ROW], { roleMap: { stu_teacher3: 'teacher' } });
+    const ledgerDb = createFakeLedgerDb({});
+    const pollDb = createFakePollArchiveDb({ rows: [FIXTURE_POLL_ROW] });
+    const app = createApp(rosterDb, ledgerDb, fakeLoadManifest, okAnswerKey, okSkillMap, realBkt, null, null, null, null, pollDb);
+    const server = new TestServer(app);
+    await server.start();
+    srv = server;
+    const token = signToken('stu_teacher3');
+    const r = await srv.get('/teacher/student/stu_abc123/poll-archive', { 'Authorization': `Bearer ${token}` });
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(Array.isArray(r.body.polls)).toBe(true);
+  });
+
+  it('401 with student-role token', async () => {
+    const pollDb = createFakePollArchiveDb({ rows: [FIXTURE_POLL_ROW] });
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT], pollArchiveDb: pollDb });
+    srv = ctx.server;
+    const token = signToken('stu_abc123');
+    const r = await srv.get('/teacher/student/stu_abc123/poll-archive', { 'Authorization': `Bearer ${token}` });
+    expect(r.status).toBe(401);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toBe('forbidden');
+  });
+
+  it('404 when studentId unknown', async () => {
+    const pollDb = createFakePollArchiveDb();
+    const ctx = await startServer({ roster: [], pollArchiveDb: pollDb });
+    srv = ctx.server;
+    const r = await srv.get('/teacher/student/no-such/poll-archive', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(404);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toBe('student not found');
+  });
+
+  it('503 when pollArchiveDb is null (missing dep — graceful degrade)', async () => {
+    // No pollArchiveDb provided: startServer defaults to null.
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT] });
+    srv = ctx.server;
+    const r = await srv.get('/teacher/student/stu_abc123/poll-archive', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(503);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toContain('poll_archive not provisioned');
+  });
+
+  it('503 when pollArchiveDb.listPollArchive returns 42P01 error (table missing)', async () => {
+    const pollDb = createFakePollArchiveDb({ tableMissing: true });
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT], pollArchiveDb: pollDb });
+    srv = ctx.server;
+    const r = await srv.get('/teacher/student/stu_abc123/poll-archive', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(503);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.error).toContain('poll_archive not provisioned');
   });
 });
