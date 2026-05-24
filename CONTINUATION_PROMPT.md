@@ -3,44 +3,73 @@
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
 > the session-112 block and every older block are historical record
 > only; do not act on any older "NEXT"/SESSION text. Last updated
-> 2026-05-24 (session 113, post-loop). follow-alongs HEAD = the commit
-> carrying this CONTINUATION refresh (feature work ended at `f1cae5a`).
-> curriculum_render HEAD = `753f523` (unchanged through s113). Linear,
-> local==origin on both.
+> 2026-05-24 (session 113, post-double-loop). follow-alongs HEAD = the
+> commit carrying this CONTINUATION refresh (feature work ended at
+> `0c2c179`). curriculum_render HEAD = `753f523` (unchanged through
+> s113). Linear, local==origin on both.
 >
-> ## Shipped this session (113) -- Phases 6 + 7 + 8 + 9 (autonomous loop)
+> ## Shipped this session (113) -- Phases 6-13 (TWO autonomous loops)
 >
-> Session 113 closed FOUR Teacher Student Console phases:
+> Session 113 closed EIGHT Teacher Student Console phases across two
+> autonomous loops:
+>
+> **Loop 1 (P6 manual + P7-P9 auto)** -- shipped end of "spec section
+> 4.1" surface + the s112 deferred items.
 > - P6 (polish trio): items #1 + #6 + #7 from s112's NEXT queue
 > - P7 (nudge history): item #5
 > - P8 (broadcast nudge): item #9
 > - P9 (floating popup): item #2 (subsumes item #8)
 >
-> P6 was a manual user-driven phase early in the session. P7+P8+P9 ran
-> as an autonomous agent loop after the user confirmed scope -- each
-> iteration was: recon -> freeze `P{n}_BUILD.md` contract -> dispatch
-> parallel Sonnet waves -> planner smoke -> Codex review via
-> cross-agent.py -> fold findings inline -> commit + push. The loop ran
-> back-to-back in a single session without user intervention beyond the
-> initial scope confirmation. Each iteration's Codex review caught real
-> bugs (some load-bearing); fold quality stayed high.
+> **Loop 2 (P10-P13 auto)** -- shipped the remaining s113 NEXT queue.
+> - P10 (cockpit polish): items #4 + #6 (item #5 was already shipped
+>   via the existing fetchNameMap + nameMap plumbing)
+> - P11 (popup inline expansions): item #3
+> - P12 (nudge history pagination): item #7
+> - P13 (student-initiated DM): item #2 -- the user explicitly chose
+>   full-text compose for students, NO presets, reversing the
+>   asymmetric design from earlier sessions
+>
+> P6 was manual; P7-P9 ran as Loop 1 after the user confirmed scope;
+> P10-P13 ran as Loop 2 after the user said "let's go" on items
+> 3 through 7 + item 2 with full text. Each iteration was: recon ->
+> freeze `P{n}_BUILD.md` contract -> dispatch parallel Sonnet waves
+> -> planner smoke -> Codex review via cross-agent.py -> fold findings
+> inline -> commit + push. Both loops ran back-to-back without user
+> intervention beyond the initial scope confirmation.
+>
+> Codex review caught material bugs every iteration; folds were
+> concrete and decision-free. Notable load-bearing finds:
+> - P7 BLOCKER: db.findByStudentId only projected (student_id,
+>   section), silently breaking P3/P5/P6/P7 Bearer-auth paths. Single
+>   DAL fix repaired all four.
+> - P10 BLOCKER (cross-cutting): summary.members is an ARRAY not an
+>   object; the broken Object.keys pattern existed in P3's
+>   _refreshNudgeRecipients since P3 shipped, making the nudge dropdown
+>   silently populate with index strings. Test fixtures used the
+>   wrong shape and pre-fed the bug.
+> - P9 BLOCKER: Wave A re-saved two files with UTF-8 BOM + mojibake.
+> - P11 BLOCKER: Submit-button-disabled never re-enabled on success.
+> - P12 BLOCKER: in-flight older-page fetch race could pollute new
+>   drawer.
+> - P13 MAJOR: in-flight history fetch race.
 >
 > Cumulative test deltas across the session:
-> - roster-server: 550 -> 589 (+39: +14 lesson-unlock-revoke + +1 db
->   live-projection regression + +22 nudge-history endpoint + +2
->   nudge-history DAL units)
-> - root: 5129 -> 5293 (+164 net: +18 toast-stack + 45 dashboard
->   remediation/unlocks + 4 P6 fold regressions + 15 nudge-history
->   client + 24 broadcast cockpit (incl. 4 P8 fold regressions) + 38
->   avatar popup + 10 dashboard deeplink + 16 desk auto-open-override
->   - 6 from removed singleton-pinning tests in desk-nudge-toast)
+> - roster-server: 550 -> 613 (+63 net: +14 lesson-unlock-revoke +
+>   +1 db live-projection regression + +22 nudge-history + +2 DAL +
+>   +23 student-dm + +1 fold-regression source pin)
+> - root: 5129 -> 5405 (+276 net across all 8 phases)
 >
-> Four feature commits + one docs commit:
+> Eight feature commits + two docs commits:
 > - `c4cbde0` -- feat: P6 polish trio
-> - `0b9c246` -- docs: CONTINUATION refresh (mid-session)
+> - `0b9c246` -- docs: CONTINUATION refresh (Loop 1 mid-session)
 > - `b3d0d3a` -- feat: P7 nudge history
 > - `0d236ca` -- feat: P8 broadcast nudge
 > - `f1cae5a` -- feat: P9 floating popup
+> - `0947f5d` -- docs: CONTINUATION refresh (end of Loop 1)
+> - `1c1541e` -- feat: P10 cockpit polish (+ P3 silent fix)
+> - `8b7d6d6` -- feat: P11 popup inline expansions
+> - `1c41796` -- feat: P12 nudge history pagination
+> - `0c2c179` -- feat: P13 student-initiated DM
 >
 > ## Phase 6 (polish trio, `c4cbde0`)
 >
@@ -250,22 +279,186 @@
 > data point: agent reports are NOT always trustworthy; verify by
 > grep before declaring a wave complete.
 >
+> ## Phase 10 (cockpit polish, `1c1541e`)
+>
+> Items #4 (proactive currentIdMap re-hydration) + #6 (popup
+> fade-in animation). Item #5 (real-name avatar labels) recon
+> revealed already-shipped via the existing fetchNameMap +
+> classroom-board.js nameMap plumbing -- no code change.
+>
+> - T1: _maybeRefreshIdMap walks summary.members on every
+>   onStateChange, debounces a /roster/list re-fetch when any
+>   online student is missing from the map. _idMapRefreshToken
+>   bumped on teardown to invalidate in-flight fetches across
+>   section switches.
+> - T2: @keyframes avatar-popup-fade-in (140 ms ease-out, fade +
+>   4 px slide-in).
+>
+> Codex 1 BLOCKER + 1 MAJOR folded:
+> - **BLOCKER (load-bearing)**: summary.members is an ARRAY of
+>   records (per classroom-board.js buildSummary lines 549-582),
+>   not an object keyed by username. _maybeRefreshIdMap used
+>   `Object.keys` + index lookups -> "gap" predicate was always
+>   true -> would have polled /roster/list every 2 s forever.
+>   **Cross-cutting**: the same bug existed in P3's
+>   _refreshNudgeRecipients since P3 shipped. The nudge dropdown
+>   silently populated with "0", "1" index strings. The P3 + P8
+>   test fixtures used the WRONG shape and pre-fed the broken
+>   code path. Repaired both functions to iterate the array;
+>   updated the P3 + P8 fixtures to match.
+> - **MAJOR**: in-flight fetchIdMap could clobber the new
+>   section's map after a teardown + remount. Fix: refresh-token
+>   guard inside the .then() before assigning.
+>
+> ## Phase 11 (popup inline expansions, `8b7d6d6`)
+>
+> Item #3. The P9 popup's Send Nudge / Apply Remediation /
+> Override Gate actions now expand inline within the popup
+> (instead of cross-tab routing). View as / View grade / View
+> recent KEEP their cross-tab behavior. Popup grows 220 -> 280 px
+> when expanded; _avatarPopupSpritePos caches the canvas-local
+> sprite position so _switchAvatarPopupView can reposition.
+>
+> All three inline submits reuse existing endpoints (P3 /teacher/
+> nudge, P4b /remediation/propose, P5 /teacher/lesson-unlock).
+> NO new server code.
+>
+> Codex 1 BLOCKER + 2 MAJOR + 1 MINOR folded:
+> - **BLOCKER**: submit buttons disabled at start of submit but
+>   never re-enabled on success path. After the first successful
+>   submit, the button stayed permanently disabled. Fix: new
+>   _resetAvatarPopupTransientState helper re-enables all 3
+>   buttons + clears form values + cancels pending auto-close
+>   timer. Called from BOTH _openAvatarPopup AND _closeAvatarPopup.
+> - **MAJOR M1**: switching between students re-opened the popup
+>   without resetting state; form drafts + disabled state leaked.
+>   Fix: _openAvatarPopup also calls
+>   _resetAvatarPopupTransientState.
+> - **MAJOR M2**: auto-close setTimeout had no cancellation.
+>   Re-clicking an avatar before the timer fired closed the
+>   freshly opened popup. Fix: stash the timer id in
+>   _avatarPopupAutoCloseTimer; reset clears it.
+> - **MINOR**: HTML5 pattern attrs (`^U\d+$` on unit input,
+>   `^\d+\.\d+$` on gate-key input) were omitted from the initial
+>   wave. Restored.
+>
+> ## Phase 12 (nudge history pagination, `1c41796`)
+>
+> Item #7. Adds a "Load older" button at the bottom of the P7
+> drawer's Nudge History section. The button is hidden by default;
+> visible when the initial page returns >=20 rows; appends the
+> next 20 on click; hides itself when a fetch returns <20 rows.
+>
+> Pure client-side -- the existing /teacher/nudge-history endpoint
+> already supports limit + offset. _buildNudgeLi factored out of
+> renderTscNudges (behavior-preserving).
+>
+> Codex 1 BLOCKER + 1 MAJOR + 1 MINOR folded:
+> - **BLOCKER**: in-flight older-page fetch did not bind to the
+>   drawer's current student. A fast A -> B drawer switch while
+>   the older fetch was in flight would pollute B's drawer with
+>   A's rows + corrupt B's offset. Fix: capture expectedUsername
+>   at click time; after each await re-check stillOurDrawer()
+>   before mutating DOM/state. Drawer-open also restores
+>   button.textContent.
+> - **MAJOR**: the original stale-click test mutated
+>   window._tscNudgeHistoryStudentUsername directly to fake a
+>   mismatch -- not the real post-switch behavior. Replaced with
+>   a regression test exercising the REAL A -> B switch case
+>   with a deferred A fetch.
+> - **MINOR**: in-flight guard test now asserts the second click
+>   does NOT issue an additional /nudge-history fetch.
+>
+> ## Phase 13 (student-initiated DM, `0c2c179`)
+>
+> Item #2. Students can compose a free-text DM to the teacher
+> from the Desk via a new File-menu item. Per the user's
+> explicit call: FULL TEXT, NO presets (reversing the asymmetric
+> design from earlier sessions). Persists with direction='student'
+> + parent_nudge_id=NULL; the teacher reads via the existing P7
+> drawer.
+>
+> - Wave A (server): new findTeacherUsername helper +
+>   insertStudentDm DAL + POST /student/nudge + GET
+>   /student/nudge-history. Single-teacher prod: server picks the
+>   oldest row with role='teacher' as the recipient. 503 if no
+>   teacher in roster.
+> - Wave B (Desk): new "Message teacher..." File-menu item + new
+>   #student-dm-modal (System 7 aesthetic) + textarea + Send +
+>   inline conversation history (last 20). ESC capture-phase.
+>
+> NO live notification to the cockpit in this MVP. The teacher
+> discovers the DM by opening the P7 drawer. Audit trail in
+> nudges_log either way.
+>
+> Codex 0 BLOCKER + 1 MAJOR + 2 MINOR folded:
+> - **MAJOR**: history-fetch race. _openStudentDmModal +
+>   _sendStudentDm both fired _fetchStudentDmHistory. On a slow
+>   network an older fetch could resolve AFTER a newer one and
+>   overwrite fresh rows with stale data. Fix: _sdmHistoryEpoch
+>   counter bumped on every call; the awaits re-check before
+>   rendering.
+> - **MINOR 1**: GET /student/nudge-history was masking
+>   findTeacherUsername DB errors as {ok:true, rows:[]}.
+>   Now surfaces 500 on real DB errors; only data:null + null
+>   error falls through to the empty-thread response.
+> - **MINOR 2**: 1 box-drawing character in the Desk P13 banner
+>   comment. Replaced with ASCII hyphens (P9 BOM lesson).
+>
 > ## Migrations
-> - **0009_lesson_unlock.sql** -- confirmed run by user mid-session.
->   P5 + P6 T3 both fully live.
-> - No new migrations from P6, P7, P8, or P9.
+> - **0009_lesson_unlock.sql** -- confirmed run by user mid-session
+>   (loop 1). P5 + P6 T3 both fully live.
+> - No new migrations from P6, P7, P8, P9, P10, P11, P12, or P13.
 >
 > ## Test baselines (session-end)
-> - roster-server: **589/589** (+39 vs s112 baseline of 550). Zero
+> - roster-server: **613/613** (+63 vs s112 baseline of 550). Zero
 >   failures.
-> - root: **5293/5294** (+164 net vs s112 baseline of 5129; 1 known
+> - root: **5405/5406** (+276 net vs s112 baseline of 5129; 1 known
 >   long-standing `study-guide.test.js` fail unchanged, NOT a
 >   regression).
 >
-> ## NEXT -- queued (Teacher Student Console)
+> ## NEXT -- queued
 >
-> The major spec items are SHIPPED across s112 + s113. Remaining
-> items from the s112 NEXT queue:
+> The Teacher Student Console feature is essentially COMPLETE
+> across P1-P13. Only follow-ups remain:
+>
+> 1. **Live smoke of P3-P13 with real students** -- nudges,
+>    select-students, override-gate, apply-remediation, revoke,
+>    nudge-history, broadcast, floating popup with 6 inline
+>    actions, pagination, student-initiated DM. Cannot be
+>    agent-automated; needs a teacher + students in a classroom
+>    session. Should land in the next class period.
+>
+> 2. **Live notification of student-initiated DM to the cockpit**
+>    (deferred from P13). Would require a cr WS server change
+>    (new `classroom_student_dm` message type, fan-out to teacher)
+>    + a cockpit-side incoming handler. The MVP teacher
+>    discovery path (P7 drawer) works but is poll-based. Add
+>    real-time live-notification surface if classroom usage shows
+>    the gap.
+>
+> 3. **studentId resolution edges** (P10 didn't fully solve --
+>    proactive idMap re-hydration via debounce closes most cases,
+>    but a brand-new student between debounce ticks still gets
+>    the "Student id not yet loaded" error in the popup's Apply
+>    Remediation form). Improve if real classroom use shows it.
+>
+> 4. **Multi-teacher routing for student DMs** -- P13
+>    findTeacherUsername picks the OLDEST teacher row. Add
+>    section-aware / per-section teacher lookup if the deployment
+>    ever runs multi-teacher.
+>
+> 5. **Read receipts** -- the teacher reading a DM doesn't
+>    notify the student. Same for the teacher reading a reply.
+>    Out of scope; add if pedagogy demands.
+>
+> 6. **Inline action expansions for the dashboard drawer**
+>    (mirroring P11 popup's inline forms in the dashboard's
+>    drawer surface). Today the drawer's Apply Remediation
+>    action is a modal; making it inline would unify the surface.
+>    Polish only.
+>
+> ## NEXT -- carried forward from session 112 (still open)
 >
 > 1. **Live smoke of P3-P9 with real students** -- nudges (P3),
 >    select-students (P4), override-gate (P5), apply-remediation
