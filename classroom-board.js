@@ -887,6 +887,16 @@
         this._isDoorwayWalk = false;
         this._absorbDir = 1;
         this._restEmitted = false;
+        // s111 P4 HOTFIX: retract the vote on cancel. handlePlayerUp
+        // stashed a closure with the captured doorway id; calling it
+        // sends classroom_doorway_retract so the count decrements
+        // server-side. Without this, the avatar leaves the hole but
+        // the vote stays attached to that door until the student
+        // votes elsewhere -- incongruent UX.
+        if (typeof this._cancelHandler === 'function') {
+          try { this._cancelHandler(); } catch (_) {}
+          this._cancelHandler = null;
+        }
         return;
       }
       if (this._absorbProgress === 1) {
@@ -1719,6 +1729,17 @@
             player._absorbDurationMs = 350;
             player.state = 'entering-doorway';
             player._isDoorwayWalk = true;
+            // s111 P4 HOTFIX: closure that retracts THIS vote if the
+            // student cancels out of the doorway. Captures the current
+            // doorways id so the retract targets the right session
+            // even if the teacher closes + reopens between cast and
+            // cancel (then the server's id-match check rejects the
+            // stale retract). PlayerSprite.update calls this on
+            // cancel-complete and clears it.
+            var capturedDoorwayId = state.doorways.id;
+            player._cancelHandler = function() {
+              safeSend({ type: 'classroom_doorway_retract', id: capturedDoorwayId });
+            };
             // s111 P4 HOTFIX: force-broadcast state='in-doorway' RIGHT
             // NOW so the server records it before any rate-limit can
             // eat the next emit. Once state='entering-doorway' the
