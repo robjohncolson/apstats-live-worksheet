@@ -403,6 +403,21 @@
     .tsc-nudges-list .tsc-nudge-meta { color: var(--sg-text-dim); font-size: 0.78rem; }
     .tsc-nudges-list .tsc-nudge-text { white-space: pre-wrap; word-wrap: break-word; line-height: 1.35; }
     .tsc-nudges-list .tsc-nudge-empty { color: var(--sg-text-dim); font-style: italic; }
+
+    /* P12 (TEACHER_STUDENT_CONSOLE_P12_BUILD.md section 3): Load older button */
+    .tsc-nudges-older {
+      margin-top: 6px;
+      padding: 6px 10px;
+      font: inherit; font-size: 0.82rem;
+      background: var(--sg-bg, #fff);
+      color: var(--sg-accent, #7a4a1f);
+      border: 1px solid var(--sg-border, #d8ccb0);
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .tsc-nudges-older:hover { background: var(--sg-bg-card, #ffffff); border-color: var(--sg-accent, #7a4a1f); }
+    .tsc-nudges-older[disabled] { opacity: 0.55; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -582,6 +597,8 @@
         <section class="tsc-section" id="tsc-section-nudges">
           <h3 class="tsc-section-title">Nudge History</h3>
           <ul id="tsc-nudges-list" class="tsc-nudges-list"></ul>
+          <button type="button" id="tsc-nudges-older" class="tsc-nudges-older"
+                  style="display:none">Load older</button>
         </section>
         <nav class="tsc-actions" aria-label="Console actions">
           <button type="button" class="tsc-action-btn" id="tsc-action-view-as" title="Open this student's Desk in a new tab (read-only)">View as student</button>
@@ -1418,6 +1435,18 @@
     // _tscCurrentStudentId from P1). Populated by openTscDrawer.
     var _tscCurrentStudentStub = null;
 
+    // P12: pagination state for the Nudge History drawer section.
+    //   _tscNudgeHistoryOffset = number of rows already loaded for the
+    //     currently-open student. Reset to 0 on each openTscDrawer.
+    //   _tscNudgeHistoryStudentUsername = the username this offset
+    //     belongs to. Set on each openTscDrawer so a stale "Older" click
+    //     from a prior drawer can't query the new student.
+    //   _tscNudgeHistoryLoading = true while a fetch is in flight.
+    var _tscNudgeHistoryOffset = 0;
+    var _tscNudgeHistoryStudentUsername = null;
+    var _tscNudgeHistoryLoading = false;
+    var TSC_NUDGE_PAGE_SIZE = 20;
+
     function openTscDrawer(stub) {
       var drawer = $('tsc-drawer');
       if (!drawer) return;
@@ -1425,6 +1454,20 @@
       var reqId = ++_tscReqSeq;
       _tscCurrentStudentId = stub && stub.studentId ? stub.studentId : null;
       _tscCurrentStudentStub = stub || null;
+
+      // P12: reset nudge pagination state and hide the "Older" button for this new open.
+      _tscNudgeHistoryOffset = 0;
+      _tscNudgeHistoryStudentUsername = stub && stub.username ? stub.username : null;
+      _tscNudgeHistoryLoading = false;
+      var _olderBtnReset = $('tsc-nudges-older');
+      // Codex P12 BLOCKER fold: also restore the button text in case a
+      // stale in-flight older fetch left it on "Loading..." when the
+      // teacher switched students.
+      if (_olderBtnReset) {
+        _olderBtnReset.style.display = 'none';
+        _olderBtnReset.disabled = false;
+        _olderBtnReset.textContent = 'Load older';
+      }
 
       // Populate header from the stub immediately so the user sees something.
       $('tsc-drawer-title').textContent = stub.realName || stub.username || 'Student';
@@ -1588,36 +1631,118 @@
     // P7 (TEACHER_STUDENT_CONSOLE_P7_BUILD.md section 3.3): Render nudge history.
     // XSS safety: all text from the row goes through textContent, never innerHTML.
     // Arrow glyphs (>> / <<) are inline ASCII.
+    //
+    // P12: factored _buildNudgeLi so _loadOlderNudges can reuse the row builder
+    // without duplicating the DOM construction. renderTscNudges now also tracks
+    // the current offset and controls "Load older" button visibility.
+    function _buildNudgeLi(row) {
+      var li = document.createElement('li');
+      var arrow = document.createElement('span');
+      arrow.className = 'tsc-nudge-arrow ' +
+        (row.direction === 'teacher' ? 'tsc-nudge-teacher' : 'tsc-nudge-student');
+      arrow.textContent = row.direction === 'teacher' ? '>>' : '<<';
+      var block = document.createElement('div');
+      block.className = 'tsc-nudge-text-block';
+      var meta = document.createElement('span');
+      meta.className = 'tsc-nudge-meta';
+      var when = (row.created_at || '').slice(0, 16).replace('T', ' ');
+      var who = row.sender_username || 'unknown';
+      meta.textContent = when + ' \xB7 ' + who;
+      var text = document.createElement('span');
+      text.className = 'tsc-nudge-text';
+      text.textContent = row.text || '';
+      block.appendChild(meta);
+      block.appendChild(text);
+      li.appendChild(arrow);
+      li.appendChild(block);
+      return li;
+    }
+
     function renderTscNudges(payload) {
       var el = $('tsc-nudges-list');
       if (!el) return;
       el.innerHTML = '';
+      var olderBtn = $('tsc-nudges-older');
       if (!payload || !payload.ok || !payload.rows || payload.rows.length === 0) {
         el.innerHTML = '<li class="tsc-nudge-empty">No nudges yet.</li>';
+        if (olderBtn) olderBtn.style.display = 'none';
         return;
       }
       payload.rows.forEach(function (row) {
-        var li = document.createElement('li');
-        var arrow = document.createElement('span');
-        arrow.className = 'tsc-nudge-arrow ' +
-          (row.direction === 'teacher' ? 'tsc-nudge-teacher' : 'tsc-nudge-student');
-        arrow.textContent = row.direction === 'teacher' ? '>>' : '<<';
-        var block = document.createElement('div');
-        block.className = 'tsc-nudge-text-block';
-        var meta = document.createElement('span');
-        meta.className = 'tsc-nudge-meta';
-        var when = (row.created_at || '').slice(0, 16).replace('T', ' ');
-        var who = row.sender_username || 'unknown';
-        meta.textContent = when + ' \xB7 ' + who;
-        var text = document.createElement('span');
-        text.className = 'tsc-nudge-text';
-        text.textContent = row.text || '';
-        block.appendChild(meta);
-        block.appendChild(text);
-        li.appendChild(arrow);
-        li.appendChild(block);
-        el.appendChild(li);
+        el.appendChild(_buildNudgeLi(row));
       });
+      // P12: if this page came back full, more history MIGHT exist.
+      _tscNudgeHistoryOffset = payload.rows.length;
+      if (olderBtn) {
+        olderBtn.style.display = (payload.rows.length >= TSC_NUDGE_PAGE_SIZE) ? '' : 'none';
+        olderBtn.disabled = false;
+      }
+    }
+
+    // P12: async function to fetch and append the next page of nudge history.
+    async function _loadOlderNudges() {
+      if (!_tscCurrentStudentStub) return;
+      if (_tscNudgeHistoryLoading) return;
+      // Codex P12 BLOCKER fold: capture the username at click time. After
+      // each await the handler re-checks ownership before touching the DOM
+      // or the shared pagination state. Without this guard, a fast drawer
+      // switch (A -> B) while an older fetch was in flight would pollute
+      // B's drawer with A's older rows + corrupt _tscNudgeHistoryOffset.
+      var expectedUsername = _tscCurrentStudentStub.username;
+      // Sanity precondition: the click should only fire when the drawer
+      // is currently on this username (matches the state set by openTscDrawer).
+      if (expectedUsername !== _tscNudgeHistoryStudentUsername) return;
+
+      var olderBtn = $('tsc-nudges-older');
+      _tscNudgeHistoryLoading = true;
+      if (olderBtn) { olderBtn.disabled = true; olderBtn.textContent = 'Loading...'; }
+
+      // Helper: confirm the drawer is STILL on the captured student. Used
+      // after each await to abort the rest of the handler on a stale resolve.
+      function stillOurDrawer() {
+        return !!_tscCurrentStudentStub &&
+               _tscCurrentStudentStub.username === expectedUsername &&
+               _tscNudgeHistoryStudentUsername === expectedUsername;
+      }
+
+      try {
+        var headers = teacherAuthHeaders();
+        var url = svcUrl() + '/teacher/nudge-history?studentUsername=' +
+                  encodeURIComponent(expectedUsername) +
+                  '&limit=' + TSC_NUDGE_PAGE_SIZE +
+                  '&offset=' + _tscNudgeHistoryOffset;
+        var res = await fetch(url, { headers: headers });
+        if (!stillOurDrawer()) { _tscNudgeHistoryLoading = false; return; }
+        var j = null;
+        try { j = await res.json(); } catch (_) {}
+        if (!stillOurDrawer()) { _tscNudgeHistoryLoading = false; return; }
+        if (!res.ok || !j || !j.ok) {
+          // Re-enable + leave button in place so user can retry.
+          if (olderBtn) { olderBtn.disabled = false; olderBtn.textContent = 'Load older'; }
+          _tscNudgeHistoryLoading = false;
+          return;
+        }
+        var rows = Array.isArray(j.rows) ? j.rows : [];
+        var el = $('tsc-nudges-list');
+        if (el) { rows.forEach(function (row) { el.appendChild(_buildNudgeLi(row)); }); }
+        _tscNudgeHistoryOffset += rows.length;
+        if (olderBtn) {
+          olderBtn.textContent = 'Load older';
+          if (rows.length < TSC_NUDGE_PAGE_SIZE) {
+            // No more pages.
+            olderBtn.style.display = 'none';
+          } else {
+            olderBtn.disabled = false;
+          }
+        }
+      } catch (_) {
+        if (stillOurDrawer() && olderBtn) {
+          olderBtn.disabled = false;
+          olderBtn.textContent = 'Load older';
+        }
+      } finally {
+        _tscNudgeHistoryLoading = false;
+      }
     }
 
     // T1 (P6 BUILD section 4.1): Apply Remediation modal handlers.
@@ -1699,6 +1824,12 @@
         confirmBtn.disabled = false;
       }
     }
+
+    // P12: Wire the "Load older" nudge history button on DOMContentLoaded.
+    document.addEventListener('DOMContentLoaded', function () {
+      var olderBtn = $('tsc-nudges-older');
+      if (olderBtn) olderBtn.addEventListener('click', _loadOlderNudges);
+    });
 
     // Wire the remediation modal button + close affordances on DOMContentLoaded.
     document.addEventListener('DOMContentLoaded', function () {
