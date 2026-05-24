@@ -1,10 +1,215 @@
-# Continuation Prompt -- session 112
+# Continuation Prompt -- session 113
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
-> the session-111 block and every older block are historical record
+> the session-112 block and every older block are historical record
 > only; do not act on any older "NEXT"/SESSION text. Last updated
-> 2026-05-24 (session 112). follow-alongs HEAD = the commit carrying
-> this CONTINUATION refresh (feature work ended at `aa95fcf`).
+> 2026-05-24 (session 113). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (feature work ended at `c4cbde0`).
+> curriculum_render HEAD = `753f523` (unchanged from s112). Linear,
+> local==origin on both.
+>
+> ## Shipped this session (113) -- Teacher Student Console Phase 6 polish trio
+>
+> Session 113 closes the three deferred polish items from s112's NEXT
+> queue (items #1, #6, #7). One unified commit (`c4cbde0`) across 11
+> files (+3734 / -360). Migration 0009 was confirmed run by the user at
+> the start of the session, fully activating P5's override-gate path.
+>
+> Cumulative test deltas across the session:
+> - roster-server: 550 -> 566 (+16)
+> - root: 5129 -> 5190 (+61 net)
+>
+> ### T1 -- Apply Remediation modal (Wave C, `c4cbde0`)
+> P1 reserved a disabled "Apply remediation" button in the drawer; T1
+> wires it to the existing Phase 4b `/remediation/propose` endpoint.
+> - `teacher-dashboard.html`: removed the `disabled` attribute from
+>   `#tsc-action-remediation`, added `#tsc-remediation-modal` DOM,
+>   `.tsc-modal*` CSS, `_tscCurrentStudentStub` sibling variable
+>   (additive; P2's View-as continues to read `_tscCurrentStudentId`),
+>   `openRemediationModal` / `closeRemediationModal` /
+>   `submitRemediationProposal` helpers, capture-phase ESC handler so
+>   ESC dismisses the modal without also closing the drawer behind.
+> - 27 new cases in `tests/teacher-student-console-remediation.test.js`.
+>
+> ### T2 -- Stacked nudge toasts (Wave B, `c4cbde0`)
+> P3 shipped a single-slot toast; a 2nd incoming nudge replaced the 1st.
+> T2 turns it into a stack: up to `MAX_NUDGE_STACK = 4` toasts co-exist,
+> oldest drops on overflow with a `console.warn`, each toast has
+> independent close + reply, chime plays for every arrival.
+> - `ap_stats_roadmap_square_mode.html`: replaced `#nudge-toast`
+>   singleton DOM + ID-scoped CSS with `#nudge-toast-stack` container
+>   + `#nudge-toast-template` clone target + class-scoped `.nudge-toast`
+>   styles + `nudge-slide-in` keyframe. JS singleton (`_activeNudge`)
+>   replaced with `_activeNudges` Map keyed by nudgeId; per-toast close
+>   + send handlers closure-captured over the specific nudgeId.
+> - Public `_showNudgeToast` + `_hideNudgeToast` signatures preserved
+>   so the existing `_mountClassroomBoard` typeof-guarded call at line
+>   11170 continues to work unchanged.
+> - 18 new cases in `tests/nudge-toast-stack.test.js`. The existing
+>   `tests/desk-nudge-toast.test.js` was reduced from 20 to 16 cases
+>   because 4 of the originals pinned the now-removed singleton DOM;
+>   the other 16 now pin the new stack structure.
+>
+> ### T3 -- Lesson unlock revocation (Wave A + Wave C, `c4cbde0`)
+> P5 added `lesson_unlock` rows but no revoke path. T3 closes that gap
+> with a server endpoint + DAL method + drawer UI.
+> - `roster-server/lesson-unlock-db.js`: new `revokeUnlock` DAL with a
+>   two-step read-modify-write (Supabase update doesn't concatenate).
+>   Reason-append: existing reason gets `" | revoked by <name>"`
+>   suffix; null prior reason becomes `"revoked by <name>"`.
+> - `roster-server/lesson-unlock.js`: new
+>   `POST /teacher/lesson-unlock/revoke` route. Auth + `LESSON_KEY_RE`
+>   validation + `revokedBy`-from-token derivation all mirror the
+>   existing POST handler verbatim.
+> - `teacher-dashboard.html`: new "Lesson Unlocks" `#tsc-section-unlocks`
+>   between Recent Submissions and the actions nav. `openTscDrawer`'s
+>   `Promise.allSettled` extended to a 3rd fetch
+>   (`/teacher/student/:id/lesson-unlocks`). On 503 the section
+>   silently renders empty (migration may not exist in dev). Each row
+>   has a [Revoke] button -> `window.confirm` -> POST -> optimistic
+>   fade.
+> - 14 new cases in `tests/lesson-unlock-revoke.test.js` (Wave A) plus
+>   18 in `tests/teacher-student-console-unlocks.test.js` (Wave C).
+>
+> ### Codex review folds (1 BLOCKER + 2 MAJOR + 1 MINOR, all inline)
+> - **BLOCKER**: box-drawing characters in
+>   `roster-server/tests/lesson-unlock-revoke.test.js` (lines 28, 51,
+>   60, 104, 176, 364) replaced with ASCII hyphen separators. The s112
+>   lesson: a `§` symbol once broke the cross-agent.py pipeline. Every
+>   new file is ASCII-only.
+> - **MAJOR M1**: `revokeUnlock` TOCTOU window. The original code
+>   selected by `(student_username, lesson_key, status='active')` then
+>   updated by `id` only. A concurrent `upsertUnlock` could re-refresh
+>   the row's `unlocked_at` / `unlocked_by` / `reason` between the two
+>   steps; the revoke would then silently overwrite the newer state +
+>   return 200. Fix: the UPDATE now carries optimistic-concurrency
+>   filters `eq('id', X).eq('status', 'active').eq('unlocked_at', Y)`
+>   + uses `maybeSingle()`. 0 rows -> `data: null` -> route returns
+>   404 -> UI refreshes. Two regression tests added: one verifies the
+>   eq() chain shape; one simulates the race by giving SELECT a
+>   different `unlocked_at` than the store has and asserting null.
+> - **MAJOR M2**: `openTscDrawer` cleared `tsc-grade-card` +
+>   `tsc-recent-list` at drawer open but NOT `tsc-unlocks-list`.
+>   Switching from student A to student B left A's unlock rows visible
+>   under B's header until B's fetch settled. Fix: clear
+>   `tsc-unlocks-list` synchronously at open, before the 3-fetch
+>   `Promise.allSettled` fires. One regression test that opens A,
+>   then deferred-opens B + asserts the list is empty immediately
+>   after the synchronous call returns.
+> - **MINOR m1**: revoking the LAST visible unlock left the section
+>   blank with no placeholder. Fix: after the 240ms fade-and-remove,
+>   if the list has 0 children, re-inject the
+>   `"No active overrides."` empty-state li. One regression test
+>   covering the single-row revoke -> placeholder restoration.
+>
+> ## Migrations
+> - **0009_lesson_unlock.sql** -- confirmed run by user mid-session
+>   113. P5 + P6 T3 both fully live.
+> - No new migrations from session 113.
+>
+> ## Test baselines
+> - roster-server: 566/566 (+16 vs s112 baseline of 550). Zero
+>   failures.
+> - root: 5190/5191 (+61 net vs s112 baseline of 5129; 1 known
+>   long-standing `study-guide.test.js` fail unchanged, NOT a
+>   regression).
+>
+> ## NEXT -- queued (Teacher Student Console)
+>
+> P6 ships #1 + #6 + #7. Items #3 (run migration 0009) was done
+> mid-session. Remaining from s112's NEXT queue:
+>
+> 1. **Floating avatar-click 6-action popup** (spec §4.1). Unify
+>    View-as / View grade / View recent / Apply remediation / Send
+>    nudge / Override gate into one floating menu next to the clicked
+>    avatar in Live mode. P3 + P4 use a side-panel + dropdown instead;
+>    the popup is the spec's preferred entry but not load-bearing now
+>    that all six actions ship in P1-P6. Subsumes item #8 (single-
+>    student avatar popup). Bigger UX consolidation; touches cockpit +
+>    classroom-board + drawer overlap.
+> 2. **Live smoke of P3-P5 (now P3-P6) with a real student** -- nudges
+>    + select-students + override-gate + remediation modal all
+>    unverified in a real classroom setting. Should land in the next
+>    class session. Cannot be agent-automated.
+> 3. **Nudge history view** (spec §15). `nudges_log` rows exist; no UI
+>    to browse them. Read-only surface on top of the existing log.
+>    Small, independent.
+> 4. **Section-wide broadcast nudge** (spec §15). Cockpit-side fan-out
+>    to every online student in the section. Small, independent.
+> 5. **Student-initiated DM** (spec §15, deferred). Currently students
+>    can only reply, not initiate. Needs UX decisions on the preset
+>    palette (asymmetric design from s111 conversation: teacher free
+>    text, students preset for moderation safety).
+>
+> ## NEXT -- the project's other tracks (carried forward from s112)
+>
+> - **v3 P3.1** (DC <-> WS split-brain relay) -- still parked.
+> - **v3 P4.1 doorway polish** -- still parked.
+> - **Additional v3.x data modes** (sliders, 2D-axes drop,
+>   sampling-distribution-live, CI coverage simulation).
+> - **Railway -> DigitalOcean migration -- DEPRECATED INDEFINITELY**
+>   per s112 user decision. Do NOT propose unless the user reopens it.
+>
+> ## Carry-forward gotchas (still load-bearing)
+>
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The lifted engine files** (`canvas_engine.js` / `sprite_sheet.js`
+>   in follow-alongs root) declare `class` at top level; the IIFE-entry
+>   bridge in `classroom-board.js` handles this; do NOT remove. cr is
+>   the source of truth; re-copy if cr changes them.
+> - **Cross-repo Codex finding gotcha** -- a finding that looks like a
+>   bug in ONE half may be resolved by the other half. Verify
+>   cross-repo before folding.
+> - **Typeof-guard cross-sprint calls** -- continues to pay off in P6
+>   (Wave B's preserved public function signatures meant
+>   `_mountClassroomBoard` line 11170 needed zero change).
+> - **The cockpit's runtime test pattern**
+>   (`tests/poll-archive-cockpit.test.js`): loads `teacher-classroom.html`'s
+>   inline script in jsdom + vm. Any new HTML element the cockpit
+>   references MUST also be added to the test's HTML scaffolding.
+>   jsdom doesn't provide WebSocket; stub it.
+> - **PowerShell 5.1 + git** -- never `git commit -m` from PowerShell.
+>   Use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- `git add` explicit paths, never `-A`.
+>   `data/skill-map.js` regenerates on the audit test -- `git checkout`
+>   before staging. `state/cross-agent-log.json` is normally tracked
+>   but gets touched by every cross-agent.py call; if it's incidental
+>   to the work, leave it out of the feature commit.
+> - **roster-server** lives inside follow-alongs; auto-deploys on a
+>   push touching `roster-server/**`. curriculum_render is a SEPARATE
+>   repo; `railway-server/**` deploys the `curriculumrender-production`
+>   WS service.
+> - **The proven loop keeps earning its keep**: P6 added 1 BLOCKER + 2
+>   MAJOR + 1 MINOR Codex findings. The MAJOR TOCTOU was a real bug
+>   ONLY identifiable by independent review. Do not skip the review
+>   step.
+> - **Cross-agent prompts ASCII-only** (s112 lesson, reinforced in s113
+>   by the fact that the Wave A agent introduced box-drawing chars
+>   that Codex caught as the BLOCKER).
+>
+> ## Recall on reload
+>
+> Spec: `TEACHER_STUDENT_CONSOLE_SPEC.md`. Per-phase contracts:
+> `TEACHER_STUDENT_CONSOLE_P[1-6]_BUILD.md` (P6 = the polish trio).
+> Project memory: `project_live_classroom.md`, `project_desk_donow.md`,
+> `project_gradebook_grading_model.md`,
+> `feedback_live_classroom_self_directed.md`,
+> `feedback_diagnostic_first.md`,
+> `feedback_curriculum_render_sacred.md`,
+> `feedback_test_on_public_url.md`.
+
+---
+
+# Continuation Prompt -- session 112
+
+> **THIS SECTION IS HISTORICAL RECORD as of session 113**. The
+> session-113 block above is authoritative; the text below is
+> preserved for traceability only. Do not act on its "NEXT" queue --
+> follow the s113 NEXT queue instead.
+>
+> Last updated 2026-05-24 (session 112). follow-alongs HEAD at the
+> close of session 112 was `aa95fcf` (Phase 5 ship); the s112 doc
+> refresh commit was `341d290`.
 > curriculum_render HEAD = `753f523`. Linear, local==origin on both.
 >
 > ## Shipped this session (112) -- Teacher Student Console FEATURE COMPLETE
