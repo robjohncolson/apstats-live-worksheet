@@ -264,6 +264,67 @@
       padding: 12px 0;
     }
     .hint { font-size: 0.8rem; color: var(--sg-text-dim); line-height: 1.5; }
+
+    /* Teacher -> Student Console drawer (P1 of TEACHER_STUDENT_CONSOLE_SPEC.md) */
+    .tsc-drawer { position: fixed; inset: 0; z-index: 200; display: none; }
+    .tsc-drawer.tsc-open { display: block; }
+    .tsc-drawer-overlay {
+      position: absolute; inset: 0;
+      background: rgba(42, 37, 32, 0.32);
+      opacity: 0;
+      transition: opacity 180ms ease-out;
+    }
+    .tsc-drawer.tsc-open .tsc-drawer-overlay { opacity: 1; }
+    .tsc-drawer-panel {
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: 420px; max-width: 92vw;
+      background: var(--sg-bg-card);
+      border-left: 1px solid var(--sg-border);
+      box-shadow: -4px 0 16px rgba(42, 37, 32, 0.18);
+      transform: translateX(100%);
+      transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .tsc-drawer.tsc-open .tsc-drawer-panel { transform: translateX(0); }
+    .tsc-drawer-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--sg-border);
+      background: var(--sg-bg-card);
+    }
+    .tsc-drawer-title-wrap h2 { margin: 0; font-size: 1.05rem; color: var(--sg-accent); }
+    .tsc-drawer-subtitle { margin: 4px 0 0; font-size: 0.82rem; color: var(--sg-text-dim); }
+    .tsc-drawer-close {
+      background: transparent; border: 0; font-size: 1.5rem;
+      color: var(--sg-text-dim); cursor: pointer; line-height: 1;
+      padding: 0 4px;
+    }
+    .tsc-drawer-body { padding: 16px 18px; overflow-y: auto; display: grid; gap: 18px; }
+    .tsc-section-title {
+      margin: 0 0 8px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--sg-text-dim);
+    }
+    .tsc-grade-card { font-size: 0.9rem; color: var(--sg-text); display: grid; gap: 6px; }
+    .tsc-recent-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.85rem; }
+    .tsc-recent-list li {
+      border: 1px solid var(--sg-border); border-radius: 6px;
+      padding: 8px 10px; background: var(--sg-bg);
+      display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center;
+    }
+    .tsc-actions { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--sg-border); }
+    .tsc-action-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--sg-border); border-radius: 6px;
+      background: var(--sg-bg);
+      font: inherit; cursor: pointer;
+      text-align: left;
+    }
+    .tsc-action-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+    .tsc-action-btn:not([disabled]):hover { background: var(--sg-bg-card); border-color: var(--sg-accent); }
+    .grades-row-clickable { cursor: pointer; }
+    .grades-row-clickable:hover { background: rgba(122, 74, 31, 0.06); }
   </style>
 </head>
 <body>
@@ -412,6 +473,38 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Teacher -> Student Console drawer (P1 of TEACHER_STUDENT_CONSOLE_SPEC.md).
+       Must be in the DOM before the inline script runs so that
+       document.getElementById('tsc-drawer') resolves at script-eval time. -->
+  <div id="tsc-drawer" class="tsc-drawer" aria-hidden="true">
+    <div class="tsc-drawer-overlay" data-tsc-close="overlay"></div>
+    <aside class="tsc-drawer-panel" role="dialog" aria-labelledby="tsc-drawer-title">
+      <header class="tsc-drawer-header">
+        <div class="tsc-drawer-title-wrap">
+          <h2 id="tsc-drawer-title">Loading...</h2>
+          <p id="tsc-drawer-subtitle" class="tsc-drawer-subtitle"></p>
+        </div>
+        <button class="tsc-drawer-close" data-tsc-close="button" aria-label="Close drawer">&times;</button>
+      </header>
+      <div class="tsc-drawer-body">
+        <section class="tsc-section" id="tsc-section-grade">
+          <h3 class="tsc-section-title">Grade Summary</h3>
+          <div id="tsc-grade-card" class="tsc-grade-card">Loading...</div>
+        </section>
+        <section class="tsc-section" id="tsc-section-recent">
+          <h3 class="tsc-section-title">Recent Submissions</h3>
+          <ul id="tsc-recent-list" class="tsc-recent-list"></ul>
+        </section>
+        <nav class="tsc-actions" aria-label="Console actions">
+          <button type="button" class="tsc-action-btn" id="tsc-action-view-as" disabled title="Phase 2">View as student</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-nudge" disabled title="Phase 3 (Live only)">Send nudge</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-remediation" disabled title="Phase 4 wiring">Apply remediation</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-gate" disabled title="Phase 5">Override gate</button>
+        </nav>
+      </div>
+    </aside>
   </div>
 
   <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
@@ -621,9 +714,34 @@
         var compTxt = 'ws:' + ws + ' · q:' + q + ' · pc:' + pc;
         cells.push('<td class="completion">' + escHtml(compTxt) + '</td>');
 
-        rowsHtml.push('<tr>' + cells.join('') + '</tr>');
+        rowsHtml.push(
+          '<tr class="grades-row-clickable"' +
+          ' data-student-id="' + escHtml(s.studentId || '') + '"' +
+          ' data-username="' + escHtml(s.username || '') + '"' +
+          ' data-real-name="' + escHtml(s.realName || '') + '"' +
+          ' data-section="' + escHtml(s.section || '') + '">' +
+          cells.join('') + '</tr>'
+        );
       });
       tbody.innerHTML = rowsHtml.join('');
+
+      // Delegated click handler: open the TSC drawer for the clicked row.
+      // __tscWired guard prevents double-binding on re-render.
+      if (!tbody.__tscWired) {
+        tbody.__tscWired = true;
+        tbody.addEventListener('click', function(e) {
+          var tr = e.target.closest('tr.grades-row-clickable');
+          if (!tr) return;
+          var sid = tr.getAttribute('data-student-id');
+          if (!sid) return;
+          openTscDrawer({
+            studentId: sid,
+            username: tr.getAttribute('data-username') || '',
+            realName: tr.getAttribute('data-real-name') || '',
+            section: tr.getAttribute('data-section') || ''
+          });
+        });
+      }
     }
 
     function renderHeatmap(payload) {
@@ -1102,6 +1220,145 @@
     });
     $('section-filter').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') loadRemediation();
+    });
+
+    // ===== Teacher -> Student Console (TSC) drawer =====
+
+    function teacherAuthHeaders() {
+      // Codex MAJOR fold: forward BOTH credentials when present so a teacher
+      // signed in via rosterClient (Bearer token) isn't forced to also type
+      // the break-glass secret. requireTeacher checks header A first; if A is
+      // present-but-wrong it falls through to Path B (token), so sending both
+      // is safe.
+      var headers = {};
+      var sec = teacherSecret();
+      if (sec) headers['x-teacher-secret'] = sec;
+      var token = (window.rosterClient && typeof window.rosterClient.token === 'function')
+        ? window.rosterClient.token() : null;
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return headers;
+    }
+
+    function jsonOrErr(res) {
+      if (!res.ok) return res.json().then(function(j) { throw new Error(j && j.error ? j.error : res.statusText); });
+      return res.json();
+    }
+
+    function renderTscGrade(payload) {
+      var el = $('tsc-grade-card');
+      if (!payload || !payload.ok) { el.textContent = 'No grade data.'; return; }
+      var q = (payload.quarters && payload.quarters.Q4) || (payload.quarters && Object.values(payload.quarters).find(Boolean));
+      var html = [];
+      if (q) {
+        html.push('<div><strong>Current quarter:</strong> ' + escHtml(fmt1(q.quarterGrade)) +
+                  (q.ceiling != null ? ' &uarr; ' + escHtml(fmt1(q.ceiling)) : '') + '</div>');
+      }
+      // Per-unit grades
+      var units = payload.units || {};
+      var unitLine = Object.keys(units).sort().map(function(k) {
+        return k + ': ' + fmt1(units[k] && units[k].unitGrade);
+      }).join(' &nbsp; ');
+      if (unitLine) html.push('<div class="dim" style="font-size:0.82rem">' + unitLine + '</div>');
+      el.innerHTML = html.join('');
+    }
+
+    function renderTscRecent(payload) {
+      var el = $('tsc-recent-list');
+      el.innerHTML = '';
+      if (!payload || !payload.ok) {
+        el.innerHTML = '<li class="dim">No recent submissions.</li>';
+        return;
+      }
+      var items = payload.submissions || [];
+      if (items.length === 0) {
+        el.innerHTML = '<li class="dim">No recent submissions.</li>';
+        return;
+      }
+      items.forEach(function(row) {
+        var li = document.createElement('li');
+        var when = document.createElement('span');
+        when.className = 'dim mono';
+        when.style.fontSize = '0.78rem';
+        when.textContent = (row.recordedAt || '').slice(0, 10);
+        var what = document.createElement('span');
+        what.textContent = (row.itemId || '') + ' · ' + (row.source || '');
+        var score = document.createElement('span');
+        score.className = 'dim mono';
+        score.textContent = row.score == null ? '-' : String(row.score);
+        li.appendChild(when); li.appendChild(what); li.appendChild(score);
+        el.appendChild(li);
+      });
+    }
+
+    // Codex MAJOR fold: per-open request sequence number. Each open bumps
+    // _tscReqSeq; in-flight fetches verify they're still the active request
+    // before rendering. closeTscDrawer also bumps so a late response after
+    // close is dropped.
+    var _tscReqSeq = 0;
+
+    function openTscDrawer(stub) {
+      var drawer = $('tsc-drawer');
+      if (!drawer) return;
+
+      var reqId = ++_tscReqSeq;
+
+      // Populate header from the stub immediately so the user sees something.
+      $('tsc-drawer-title').textContent = stub.realName || stub.username || 'Student';
+      $('tsc-drawer-subtitle').textContent =
+        (stub.username ? '@' + stub.username : '') +
+        (stub.section ? ' -- ' + stub.section : '');
+
+      // Body: loading state.
+      $('tsc-grade-card').textContent = 'Loading...';
+      $('tsc-recent-list').innerHTML = '';
+
+      drawer.setAttribute('aria-hidden', 'false');
+      drawer.classList.add('tsc-open');
+
+      // Fetch grade + recent in parallel. Codex MAJOR fold: allSettled so a
+      // failure of one pane doesn't wipe the other's successful payload.
+      var base = svcUrl();
+      var headers = teacherAuthHeaders();
+      var sid = encodeURIComponent(stub.studentId);
+
+      Promise.allSettled([
+        fetch(base + '/teacher/student/' + sid + '/grade', { headers: headers }).then(jsonOrErr),
+        fetch(base + '/teacher/student/' + sid + '/recent?limit=20', { headers: headers }).then(jsonOrErr)
+      ]).then(function(results) {
+        // Stale-result guard.
+        if (reqId !== _tscReqSeq) return;
+        var gradeRes = results[0], recentRes = results[1];
+        if (gradeRes.status === 'fulfilled') {
+          renderTscGrade(gradeRes.value);
+        } else {
+          var gErr = gradeRes.reason;
+          $('tsc-grade-card').textContent = 'Error: ' + (gErr && gErr.message ? gErr.message : 'failed');
+        }
+        if (recentRes.status === 'fulfilled') {
+          renderTscRecent(recentRes.value);
+        } else {
+          $('tsc-recent-list').innerHTML = '<li class="dim">Error loading recent submissions.</li>';
+        }
+      });
+    }
+
+    function closeTscDrawer() {
+      var drawer = $('tsc-drawer');
+      if (!drawer) return;
+      // Codex MAJOR fold: invalidate any in-flight fetches.
+      _tscReqSeq++;
+      drawer.classList.remove('tsc-open');
+      drawer.setAttribute('aria-hidden', 'true');
+    }
+
+    // ESC closes the drawer.
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeTscDrawer();
+    });
+
+    // Overlay-click and close-button click close the drawer.
+    document.getElementById('tsc-drawer').addEventListener('click', function(e) {
+      if (e.target && e.target.getAttribute('data-tsc-close')) closeTscDrawer();
     });
 
     // Render session status on page load (after roster-client.js has run).

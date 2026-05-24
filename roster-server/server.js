@@ -17,6 +17,7 @@ import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
 import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
+import { mountTeacherStudent } from './teacher.js';
 import { mountRemediation } from './remediation.js';
 import { mountPollArchive } from './poll-archive.js';
 import { PHASE3_CONFIG } from './grade-config.js';
@@ -519,6 +520,18 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       ? { ...PHASE3_CONFIG, ...configOverrides }
       : PHASE3_CONFIG;
     mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null });
+  }
+
+  // ── Teacher Student Console (Phase 1 of TEACHER_STUDENT_CONSOLE_SPEC.md) ───
+  // Per-student READ endpoints for the Console drawer. Reuses the same
+  // loadAnswerKey + computeGrade pipeline as /class/grades.
+  if (loadAnswerKey) {
+    mountTeacherStudent(app, {
+      db, ledgerDb, loadAnswerKey,
+      lessonSchedule: lessonSchedule || null,
+      config: configOverrides ? { ...PHASE3_CONFIG, ...configOverrides } : PHASE3_CONFIG,
+      worksheetBlankCounts: worksheetBlankCounts || null,
+    });
   }
 
   // ── Remediation routes (Phase 4b additive — write loop + retake gate) ──────
