@@ -308,7 +308,7 @@
       display: block;
     }
 
-    /* P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11). */
+    /* P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md section 11). */
     canvas.classroom-select-mode {
       filter: grayscale(0.7) brightness(0.85);
       cursor: crosshair;
@@ -358,6 +358,45 @@
     }
     .nudge-broadcast-toggle input { cursor: pointer; }
     .nudge-recipient-broadcast-dim { opacity: 0.45; }
+    /* P9: Floating avatar popup (TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1). */
+    .avatar-popup {
+      position: fixed;
+      z-index: 10000;
+      width: 220px;
+      background: var(--sg-bg-card, #fffbe6);
+      border: 1px solid var(--sg-border, #d97706);
+      border-radius: 8px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24);
+      padding: 10px 12px;
+      font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
+    }
+    .avatar-popup .ap-close {
+      position: absolute; top: 6px; right: 8px;
+      background: transparent; border: 0; cursor: pointer;
+      font-size: 18px; line-height: 1; color: var(--sg-text-dim, #5a5045);
+      padding: 0 4px;
+    }
+    .avatar-popup .ap-header {
+      display: flex; flex-direction: column; gap: 2px;
+      margin-bottom: 8px; padding-right: 22px;
+      border-bottom: 1px solid var(--sg-border, #d97706);
+      padding-bottom: 6px;
+    }
+    .avatar-popup .ap-name { color: var(--sg-accent, #92400e); font-size: 0.92rem; }
+    .avatar-popup .ap-meta { color: var(--sg-text-dim, #5a5045); font-size: 0.78rem; }
+    .avatar-popup .ap-actions { display: grid; gap: 4px; }
+    .avatar-popup .ap-action {
+      text-align: left; padding: 6px 10px;
+      font: inherit; cursor: pointer;
+      background: var(--sg-bg, #fff);
+      border: 1px solid var(--sg-border, #d97706);
+      border-radius: 4px;
+    }
+    .avatar-popup .ap-action:hover {
+      background: var(--sg-bg-card, #fff5d6);
+      border-color: var(--sg-accent, #92400e);
+    }
+    .avatar-popup .ap-action[disabled] { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -554,7 +593,7 @@
         </div>
       </div>
 
-      <!-- P3: Send Nudge (TEACHER_STUDENT_CONSOLE_SPEC.md §6) -->
+      <!-- P3: Send Nudge (TEACHER_STUDENT_CONSOLE_SPEC.md section 6) -->
       <div class="section" id="nudge-section" style="display:none">
         <h2 class="section-title">Send Nudge</h2>
         <div class="form-row">
@@ -609,7 +648,22 @@
     </div>
 
   </div>
-
+  <!-- P9: Floating avatar popup (TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1). -->
+  <div id="avatar-popup" class="avatar-popup" style="display:none" role="dialog" aria-hidden="true">
+    <button type="button" class="ap-close" id="avatar-popup-close" aria-label="Close popup">&times;</button>
+    <div class="ap-header">
+      <strong class="ap-name" id="avatar-popup-name">Student</strong>
+      <span class="ap-meta" id="avatar-popup-meta"></span>
+    </div>
+    <div class="ap-actions">
+      <button type="button" class="ap-action" data-ap-action="view-as">View as student</button>
+      <button type="button" class="ap-action" data-ap-action="view-grade">View grade</button>
+      <button type="button" class="ap-action" data-ap-action="view-recent">View recent</button>
+      <button type="button" class="ap-action" data-ap-action="send-nudge">Send nudge</button>
+      <button type="button" class="ap-action" data-ap-action="apply-remediation">Apply remediation</button>
+      <button type="button" class="ap-action" data-ap-action="override-gate">Override gate</button>
+    </div>
+  </div>
   <!-- Sibling configs / clients. roster_config.js sets window.ROSTER_SERVICE_URL;
        roster-client.js sets window.rosterClient with current() / signIn() / etc.;
        classroom-board.js sets window.ClassroomBoard with mount() / _reduce(). -->
@@ -679,6 +733,32 @@
       }
     }
 
+    // P9: build a username -> studentId map from the teacher-gated /roster/list
+    // endpoint. Falls back to {} gracefully when not signed in or the server
+    // returns an error. Used by the avatar popup to resolve studentId for
+    // cross-tab actions (view-as, view-grade, apply-remediation, override-gate).
+    async function fetchIdMap(section) {
+      try {
+        var rsBase = rosterServiceUrl();
+        var rosterToken = (window.rosterClient && typeof window.rosterClient.token === 'function')
+          ? window.rosterClient.token() : null;
+        if (!rsBase || !rosterToken) return {};
+        var url = rsBase + '/roster/list' + (section ? ('?section=' + encodeURIComponent(section)) : '');
+        var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + rosterToken } });
+        if (!res.ok) return {};
+        var data = await res.json();
+        var students = (data && data.students) || [];
+        var map = {};
+        students.forEach(function (row) {
+          var uname = row.username || '';
+          var sid = row.studentId || '';
+          if (uname && sid) map[uname] = sid;
+        });
+        return map;
+      } catch (_) {
+        return {};
+      }
+    }
     // ===== v1b: gate theme =====
 
     // Compute a short ASCII token deterministic from the current date.
@@ -806,6 +886,7 @@
 
     var boardHandle = null;   // ClassroomBoard.mount() return value, or null
     var currentNameMap = {};  // kept for the onStateChange callback
+    var currentIdMap = {};    // P9: username -> studentId, populated from /roster/list (teacher-gated)
     // s111 P4 HOTFIX: cache the last summary so the mode-switching
     // buttons (Arm Gate / Open Doorways / Open Poll) can detect a
     // stale conflicting mode + auto-reset before sending. Without
@@ -815,6 +896,8 @@
     var _lastSummary = null;
 
     function teardown() {
+      // P9: close avatar popup before destroying the board.
+      try { if (typeof _closeAvatarPopup === 'function') _closeAvatarPopup(); } catch (_) {}
       // Codex MAJOR fold P4: exit select mode FIRST so the bar/markers
       // overlay + selected set don't outlive the boardHandle. Without
       // this, switching sections / exiting Live with select mode active
@@ -856,6 +939,8 @@
       statusRow.textContent = 'Fetching roster for ' + section + '...';
 
       currentNameMap = await fetchNameMap(section);
+      // P9: fetch the teacher-gated id map in parallel (best-effort; {} on failure).
+      currentIdMap = await fetchIdMap(section);
 
       statusRow.textContent = 'Connecting to ' + section + '...';
 
@@ -941,7 +1026,7 @@
             // them locally.
             _handleRtcSignaling(msg);
           },
-          // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6): raw classroom_*
+          // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md section 6): raw classroom_*
           // message hook. Surfaces student replies into the cockpit panel
           // + shows offline ack as a status note. typeof-guarded so the
           // cockpit's existing tests don't need to inject the helpers.
@@ -953,12 +1038,13 @@
               try { _renderNudgeAck(msg); } catch (_) {}
             }
           },
-          // P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11): canvas
-          // click hit-tests onto an avatar. typeof-guarded for tests that
-          // mount the board without loading the select-mode helpers.
-          onAvatarClick: function (uname) {
-            if (typeof _toggleSelectAvatar === 'function') {
-              try { _toggleSelectAvatar(uname); } catch (_) {}
+          // P4+P9 (TEACHER_STUDENT_CONSOLE_SPEC.md): canvas click hit-tests onto
+          // an avatar. typeof-guarded for tests that mount without loading helpers.
+          onAvatarClick: function (hit) {
+            // Routes: select mode -> _toggleSelectAvatar (P4 multi-pick);
+            //         normal mode -> _openAvatarPopup floating popup (P9).
+            if (typeof _handleAvatarClickRouted === 'function') {
+              try { _handleAvatarClickRouted(hit); } catch (_) {}
             }
           }
         });
@@ -1081,7 +1167,7 @@
       window.Ti84Plot.drawBarChart(ctx, { labels: labels, counts: counts, title: d.question || '' });
     }
 
-    // ===== P3: nudge panel helpers (TEACHER_STUDENT_CONSOLE_SPEC.md §6) =====
+    // ===== P3: nudge panel helpers (TEACHER_STUDENT_CONSOLE_SPEC.md section 6) =====
     // Cockpit-side. Populate recipient dropdown from onStateChange.members
     // (online students). Send: WS classroom_teacher_nudge for live delivery
     // + POST /teacher/nudge to roster-server for log persistence. Listen for
@@ -1309,7 +1395,7 @@
       }
     }
 
-    // ===== P4: Select Students mode (TEACHER_STUDENT_CONSOLE_SPEC.md §11) =====
+    // ===== P4: Select Students mode (TEACHER_STUDENT_CONSOLE_SPEC.md section 11) =====
     // Cockpit-side multi-pick + group-nudge. Teacher clicks "Select Students",
     // canvas freezes + desaturates, click avatars to toggle membership, bar
     // at bottom shows count + textarea + Send. ESC or Cancel exits.
@@ -1323,6 +1409,11 @@
 
     function _enterSelectMode() {
       if (_selectModeActive) return;
+      // Codex P9 MINOR fold: close any open avatar popup before entering
+      // select mode. Otherwise the popup stays over the board and the
+      // first ESC press only closes the popup (its capture handler
+      // stopPropagation'd) -- not select mode.
+      try { if (typeof _closeAvatarPopup === 'function') _closeAvatarPopup(); } catch (_) {}
       _selectModeActive = true;
       _selectedUsernames.clear();
       if (boardHandle && typeof boardHandle.setSelectMode === 'function') {
@@ -2160,7 +2251,7 @@
       startMonitorMode();
     })();
 
-    // ===== P3: nudge panel button wiring (TEACHER_STUDENT_CONSOLE_SPEC.md §6) =====
+    // ===== P3: nudge panel button wiring (TEACHER_STUDENT_CONSOLE_SPEC.md section 6) =====
 
     (function() {
       try {
@@ -2200,7 +2291,187 @@
       } catch (_) {}
     })();
 
-    // ===== P4: Select Students wiring (TEACHER_STUDENT_CONSOLE_SPEC.md §11) =====
+        // ===== P9: Floating avatar popup (TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1) =====
+    // Single-state singleton; one popup at a time. Opened by avatar click in
+    // Live mode (when NOT in Select-Students mode).
+
+    var _avatarPopupStudent = null;  // { username, realName, section, studentId }
+
+    function _openAvatarPopup(hit, screenPos) {
+      // hit: { username } from classroom-board onAvatarClick.
+      // screenPos: precomputed viewport position { x, y } for the popup.
+      var popup = document.getElementById('avatar-popup');
+      if (!popup) return;
+      var realName = (currentNameMap && currentNameMap[hit.username]) ? currentNameMap[hit.username] : hit.username;
+      var section = (_lastSummary && _lastSummary.section) || '';
+      _avatarPopupStudent = {
+        username: hit.username,
+        realName: realName,
+        section: section,
+        studentId: (currentIdMap && currentIdMap[hit.username]) ? currentIdMap[hit.username] : null,
+      };
+      document.getElementById('avatar-popup-name').textContent = realName;
+      document.getElementById('avatar-popup-meta').textContent =
+        '@' + hit.username + (section ? ' -- ' + section : '');
+      popup.style.left = screenPos.x + 'px';
+      popup.style.top = screenPos.y + 'px';
+      popup.style.display = 'block';
+      popup.setAttribute('aria-hidden', 'false');
+    }
+
+    function _closeAvatarPopup() {
+      var popup = document.getElementById('avatar-popup');
+      if (!popup) return;
+      popup.style.display = 'none';
+      popup.setAttribute('aria-hidden', 'true');
+      _avatarPopupStudent = null;
+    }
+
+    function _avatarPopupIsOpen() {
+      var popup = document.getElementById('avatar-popup');
+      return !!(popup && popup.style.display !== 'none');
+    }
+
+    // Position the popup next to a canvas-local sprite position, with edge
+    // auto-flip. canvas is the cockpit's classroom canvas; (sx, sy) are
+    // canvas-local sprite coords.
+    function _computeAvatarPopupPos(canvas, sx, sy) {
+      var rect = canvas.getBoundingClientRect();
+      var popup = document.getElementById('avatar-popup');
+      var popupW = popup ? (popup.offsetWidth || 220) : 220;
+      var popupH = popup ? (popup.offsetHeight || 200) : 200;
+      // Default: place to the RIGHT of the sprite, vertically centered.
+      var x = rect.left + sx + 24;
+      var y = rect.top + sy - popupH / 2;
+      // Flip horizontally if the popup would go off the right edge.
+      if (x + popupW > window.innerWidth - 8) {
+        x = rect.left + sx - popupW - 24;
+      }
+      // Clamp vertical so it stays in viewport.
+      if (y < 8) y = 8;
+      if (y + popupH > window.innerHeight - 8) y = window.innerHeight - popupH - 8;
+      return { x: x, y: y };
+    }
+
+    // Wire avatar-click to popup vs select-toggle. P4 wins precedence.
+    function _handleAvatarClickRouted(hit) {
+      // hit: { username, selectMode } from classroom-board.
+      if (!hit || !hit.username) return;
+      // P4 wins precedence.
+      if (_selectModeActive) {
+        if (typeof _toggleSelectAvatar === 'function') {
+          try { _toggleSelectAvatar(hit.username); } catch (_) {}
+        }
+        return;
+      }
+      // Toggle: same-avatar click closes; different-avatar click repositions.
+      if (_avatarPopupIsOpen() && _avatarPopupStudent && _avatarPopupStudent.username === hit.username) {
+        _closeAvatarPopup();
+        return;
+      }
+      // Resolve sprite screen position via the board handle.
+      var pos = (boardHandle && typeof boardHandle.getSpritePosition === 'function')
+        ? boardHandle.getSpritePosition(hit.username) : null;
+      var cvs = (boardHandle && typeof boardHandle.getCanvas === 'function')
+        ? boardHandle.getCanvas() : null;
+      if (!pos || !cvs) return;
+      var screenPos = _computeAvatarPopupPos(cvs, pos.x, pos.y);
+      _openAvatarPopup(hit, screenPos);
+    }
+
+    // Action button handlers. Actions resolve to cross-tab routing or
+    // in-cockpit pre-fill; no inline modals in MVP.
+    function _handleAvatarPopupAction(action) {
+      if (!_avatarPopupStudent) return;
+      var s = _avatarPopupStudent;
+      var sid = s.studentId;
+      var uname = s.username;
+      switch (action) {
+        case 'view-as':
+          if (sid) window.open('./ap_stats_roadmap_square_mode.html?viewAsUserId=' + encodeURIComponent(sid), '_blank', 'noopener');
+          break;
+        case 'view-grade':
+        case 'view-recent':
+          if (sid) window.open('./teacher-dashboard.html?openDrawerFor=' + encodeURIComponent(sid), '_blank', 'noopener');
+          break;
+        case 'send-nudge':
+          _prefillNudgePanelForStudent(uname);
+          _closeAvatarPopup();
+          return;  // already closed above
+        case 'apply-remediation':
+          if (sid) window.open('./teacher-dashboard.html?openDrawerFor=' + encodeURIComponent(sid) + '&openRemediation=1', '_blank', 'noopener');
+          break;
+        case 'override-gate':
+          if (sid) window.open('./ap_stats_roadmap_square_mode.html?viewAsUserId=' + encodeURIComponent(sid) + '&autoOpenOverride=1', '_blank', 'noopener');
+          break;
+      }
+      _closeAvatarPopup();
+    }
+
+    // Pre-fill the existing nudge panel for the clicked student. Sets the
+    // dropdown value (not broadcast mode), then focuses the textarea.
+    function _prefillNudgePanelForStudent(username) {
+      // Ensure broadcast is off so the dropdown is functional.
+      var bcastBox = document.getElementById('nudge-broadcast');
+      if (bcastBox && bcastBox.checked) {
+        bcastBox.checked = false;
+        if (typeof _nudgeBroadcastActive !== 'undefined') _nudgeBroadcastActive = false;
+        var recipSel0 = document.getElementById('nudge-recipient');
+        if (recipSel0) recipSel0.classList.remove('nudge-recipient-broadcast-dim');
+      }
+      var recipSel = document.getElementById('nudge-recipient');
+      if (recipSel) {
+        recipSel.disabled = false;
+        recipSel.value = username;
+      }
+      var textEl = document.getElementById('nudge-text');
+      if (textEl) {
+        textEl.focus();
+        try { textEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
+      }
+      if (typeof _updateNudgeSendButton === 'function') _updateNudgeSendButton();
+    }
+
+    // P9: Wire popup button events on DOMContentLoaded.
+    document.addEventListener('DOMContentLoaded', function () {
+      // Wire close button.
+      var closeBtn = document.getElementById('avatar-popup-close');
+      if (closeBtn) closeBtn.addEventListener('click', _closeAvatarPopup);
+
+      // Wire action buttons via delegated click on the popup container.
+      var apPopup = document.getElementById('avatar-popup');
+      if (apPopup) {
+        apPopup.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-ap-action]');
+          if (!btn) return;
+          var action = btn.getAttribute('data-ap-action');
+          if (action) _handleAvatarPopupAction(action);
+        });
+      }
+
+      // ESC closes the popup (capture phase so it fires before other ESC handlers).
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && _avatarPopupIsOpen()) {
+          e.stopPropagation();
+          _closeAvatarPopup();
+        }
+      }, true);
+
+      // Click outside the popup closes it. Ignore canvas clicks: the canvas
+      // click handler already routes through _handleAvatarClickRouted which
+      // will toggle/reposition on its own.
+      document.addEventListener('click', function (e) {
+        if (!_avatarPopupIsOpen()) return;
+        var popupEl = document.getElementById('avatar-popup');
+        if (popupEl && !popupEl.contains(e.target)) {
+          var cvs = (boardHandle && typeof boardHandle.getCanvas === 'function')
+            ? boardHandle.getCanvas() : null;
+          if (cvs && cvs.contains(e.target)) return;
+          _closeAvatarPopup();
+        }
+      }, true);
+    });
+// ===== P4: Select Students wiring (TEACHER_STUDENT_CONSOLE_SPEC.md section 11) =====
     (function () {
       try {
         var sBtn = document.getElementById('btn-select-students');

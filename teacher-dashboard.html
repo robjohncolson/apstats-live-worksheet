@@ -1722,6 +1722,51 @@
       }, true);
     });
 
+    // P9 Wave B: deep-link via URL params (TEACHER_STUDENT_CONSOLE_P9_BUILD.md section 3).
+    // ?openDrawerFor=<sid> -> fetch profile + open drawer
+    // ?openRemediation=1   -> after drawer opens, click the Apply Remediation button
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var deeplinkSid = params.get('openDrawerFor');
+        var deeplinkRemediation = params.get('openRemediation') === '1';
+        if (!deeplinkSid) return;
+        function tryOpen() {
+          var headers = teacherAuthHeaders();
+          return fetch(svcUrl() + '/teacher/student/' + encodeURIComponent(deeplinkSid) + '/profile', { headers: headers })
+            .then(function (res) {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              return res.json();
+            })
+            .then(function (j) {
+              if (!j || !j.ok) throw new Error(j && j.error ? j.error : 'profile load failed');
+              openTscDrawer({
+                studentId: j.studentId,
+                username: j.username,
+                realName: j.realName,
+                section: j.section,
+              });
+              if (deeplinkRemediation) {
+                // Wait for the drawer animation (220 ms cubic-bezier) + the
+                // remediation-button click handler to be wired before firing.
+                setTimeout(function () {
+                  var btn = $('tsc-action-remediation');
+                  if (btn && !btn.disabled) btn.click();
+                }, 250);
+              }
+            })
+            .catch(function (err) {
+              // If the teacher secret is missing or the profile lookup fails,
+              // log and move on. The teacher can enter the secret + re-click
+              // the source link to retry. Don't crash the page.
+              console.warn('[deeplink] could not open drawer for', deeplinkSid, ':', err && err.message ? err.message : err);
+            });
+        }
+        // Allow the rest of the page (renderSessionStatus etc.) to render first.
+        setTimeout(tryOpen, 50);
+      } catch (_) {}
+    });
+
     // Render session status on page load (after roster-client.js has run).
     renderSessionStatus();
   </script>

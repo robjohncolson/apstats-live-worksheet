@@ -1402,7 +1402,7 @@
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'middle';
       var label = options[i];
-      if (label.length > 12) { label = label.slice(0, 11) + '…'; }
+      if (label.length > 12) { label = label.slice(0, 11) + '...'; }
       ctx.fillText(label, cx + colW / 2, 20);
     }
     ctx.restore();
@@ -1454,12 +1454,12 @@
     var onStateChange = opts.onStateChange || null;
     var mountHue      = (opts.hue != null) ? opts.hue : null;
     var onStartVideo  = (typeof opts.onStartVideo === 'function') ? opts.onStartVideo : null;
-    // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6): caller-supplied raw-
+    // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md section 6): caller-supplied raw-
     // message hook. Fires for every classroom_* message BEFORE _reduce runs.
     // Used by the Desk to surface 'classroom_teacher_nudge' as a toast, and
     // by the cockpit to surface 'classroom_student_nudge_reply' as a reply.
     var onClassroomMessage = (typeof opts.onClassroomMessage === 'function') ? opts.onClassroomMessage : null;
-    // P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11): caller-supplied
+    // P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md section 11): caller-supplied
     // avatar-click callback + select-mode toggle. While selectModeActive is
     // true, peer position updates are gated (applyPos) so the teacher can
     // click reliably, AND canvas clicks fire onAvatarClick with the hit
@@ -1485,11 +1485,12 @@
     canvas.style.width   = '100%';
     container.appendChild(canvas);
 
-    // P4: canvas click -> avatar hit-test. Only fires onAvatarClick when
-    // select mode is active so normal-mode clicks don't surprise the user.
+    // P4+P9: canvas click -> avatar hit-test. Always fires onAvatarClick when
+    // one is registered; the cockpit consumer decides routing (select-toggle
+    // vs popup). selectMode flag is passed so the cockpit can branch.
     // Hit zone is generous (40x40) since rendered sprites are ~20x24 px.
     canvas.addEventListener('click', function (ev) {
-      if (!selectModeActive || !onAvatarClick) return;
+      if (!onAvatarClick) return;
       var rect = canvas.getBoundingClientRect();
       var cssX = (ev.clientX != null) ? (ev.clientX - rect.left) : 0;
       var cssY = (ev.clientY != null) ? (ev.clientY - rect.top) : 0;
@@ -1506,7 +1507,9 @@
         var dy = Math.abs(cy - sp.y);
         if (dx <= HIT && dy <= HIT) { hit = u; break; }
       }
-      if (hit) { try { onAvatarClick(hit); } catch (_) {} }
+      if (hit) {
+        try { onAvatarClick({ username: hit, selectMode: selectModeActive }); } catch (_) {}
+      }
     });
 
     // --- check-in button (B3) ------------------------------------------
@@ -2749,7 +2752,7 @@
       showResultScreen: showResultScreen,
       hideResultScreen: hideResultScreen,
 
-      // --- P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6) ---
+      // --- P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md section 6) ---
       // Pass-through send over the board's WS. Used by both the cockpit
       // (classroom_teacher_nudge) and the student Desk (classroom_student_nudge_reply)
       // to ride the existing classroom connection without re-implementing
@@ -2767,7 +2770,7 @@
       // include the active section without re-computing it.
       section: section,
 
-      // --- P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11) ---
+      // --- P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md section 11) ---
       // Cockpit toggles select mode via this. ON freezes applyPos (peers
       // stop moving so the teacher can click reliably) + adds a CSS class
       // on the canvas for the desaturation effect. The visual selection

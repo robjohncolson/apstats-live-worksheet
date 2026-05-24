@@ -3998,6 +3998,14 @@ async function _confirmOverrideGate() {
   var params;
   try { params = new URLSearchParams(window.location.search); }
   catch (_) { return; }
+  // P9 Wave C: stash autoOpenOverride flag BEFORE any async work so
+  // the flag survives the reload that the bootstrap triggers.
+  // One-shot: the DOMContentLoaded handler removes it right before clicking.
+  try {
+    if (params.get('autoOpenOverride') === '1') {
+      sessionStorage.setItem('apstats_auto_open_override', '1');
+    }
+  } catch (_) {}
   var sid = params.get('viewAsUserId');
   if (!sid) return;
   var existing = null;
@@ -4059,6 +4067,18 @@ try {
     try {
       var exitBtn = document.getElementById('view-as-exit');
       if (exitBtn) exitBtn.addEventListener('click', _exitViewAs);
+    } catch (_) {}
+    // P9 Wave C: if the page was opened with ?autoOpenOverride=1, auto-click
+    // the override-gate button once the banner is ready. One-shot: remove the
+    // flag BEFORE the click so a refresh does NOT re-open the modal.
+    try {
+      if (sessionStorage.getItem('apstats_auto_open_override') === '1') {
+        sessionStorage.removeItem('apstats_auto_open_override');
+        setTimeout(function () {
+          var autoBtn = document.getElementById('view-as-override-gate');
+          if (autoBtn) autoBtn.click();
+        }, 300);
+      }
     } catch (_) {}
     // P5: wire the override-gate flow (only meaningful in view-as).
     try {
