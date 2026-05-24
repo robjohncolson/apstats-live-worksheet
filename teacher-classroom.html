@@ -404,6 +404,42 @@
       border-color: var(--sg-accent, #92400e);
     }
     .avatar-popup .ap-action[disabled] { opacity: 0.5; cursor: not-allowed; }
+    /* P11: popup grows when an inline view is active. */
+    .avatar-popup[data-view="nudge"],
+    .avatar-popup[data-view="remediation"],
+    .avatar-popup[data-view="gate"] { width: 280px; }
+    /* Form inputs (shared across the 3 inline views). */
+    .avatar-popup .ap-view { display: grid; gap: 6px; }
+    .avatar-popup .ap-form-label {
+      font-size: 0.78rem; color: var(--sg-text-dim, #5a5045);
+      margin-top: 4px;
+    }
+    .avatar-popup .ap-form-input {
+      font: inherit; padding: 6px 8px;
+      border: 1px solid var(--sg-border, #d97706); border-radius: 4px;
+      background: var(--sg-bg, #fff); width: 100%; box-sizing: border-box;
+    }
+    .avatar-popup .ap-form-input:invalid { border-color: #b91c1c; }
+    .avatar-popup .ap-form-status {
+      min-height: 18px; font-size: 0.78rem;
+      color: var(--sg-text-dim, #5a5045);
+    }
+    .avatar-popup .ap-form-status.is-error { color: #b91c1c; }
+    .avatar-popup .ap-form-status.is-success { color: #15803d; }
+    .avatar-popup .ap-form-actions {
+      display: flex; justify-content: space-between; gap: 6px;
+      margin-top: 6px;
+    }
+    .avatar-popup .ap-back, .avatar-popup .ap-submit {
+      padding: 6px 12px; font: inherit; cursor: pointer;
+      border: 1px solid var(--sg-border, #d97706); border-radius: 4px;
+      background: var(--sg-bg, #fff);
+    }
+    .avatar-popup .ap-submit {
+      background: var(--sg-accent, #92400e); color: #fff;
+      border-color: var(--sg-accent, #92400e);
+    }
+    .avatar-popup .ap-submit[disabled] { opacity: 0.55; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -655,20 +691,64 @@
     </div>
 
   </div>
-  <!-- P9: Floating avatar popup (TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1). -->
-  <div id="avatar-popup" class="avatar-popup" style="display:none" role="dialog" aria-hidden="true">
+  <!-- P9: Floating avatar popup (TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1).
+       P11: Multi-view structure (send-nudge / apply-remediation / override-gate expand inline). -->
+  <div id="avatar-popup" class="avatar-popup" style="display:none" role="dialog" aria-hidden="true" data-view="main">
     <button type="button" class="ap-close" id="avatar-popup-close" aria-label="Close popup">&times;</button>
     <div class="ap-header">
       <strong class="ap-name" id="avatar-popup-name">Student</strong>
       <span class="ap-meta" id="avatar-popup-meta"></span>
     </div>
-    <div class="ap-actions">
-      <button type="button" class="ap-action" data-ap-action="view-as">View as student</button>
-      <button type="button" class="ap-action" data-ap-action="view-grade">View grade</button>
-      <button type="button" class="ap-action" data-ap-action="view-recent">View recent</button>
-      <button type="button" class="ap-action" data-ap-action="send-nudge">Send nudge</button>
-      <button type="button" class="ap-action" data-ap-action="apply-remediation">Apply remediation</button>
-      <button type="button" class="ap-action" data-ap-action="override-gate">Override gate</button>
+
+    <!-- View: main (P9 6-button menu) -->
+    <div class="ap-view ap-view-main" data-ap-view="main">
+      <div class="ap-actions">
+        <button type="button" class="ap-action" data-ap-action="view-as">View as student</button>
+        <button type="button" class="ap-action" data-ap-action="view-grade">View grade</button>
+        <button type="button" class="ap-action" data-ap-action="view-recent">View recent</button>
+        <button type="button" class="ap-action" data-ap-action="send-nudge">Send nudge</button>
+        <button type="button" class="ap-action" data-ap-action="apply-remediation">Apply remediation</button>
+        <button type="button" class="ap-action" data-ap-action="override-gate">Override gate</button>
+      </div>
+    </div>
+
+    <!-- View: nudge (P11) -->
+    <div class="ap-view ap-view-nudge" data-ap-view="nudge" style="display:none">
+      <label class="ap-form-label" for="ap-nudge-text">Nudge to this student</label>
+      <textarea id="ap-nudge-text" class="ap-form-input" rows="3" maxlength="280" placeholder="Type your nudge (280 chars max)"></textarea>
+      <div class="ap-form-status" id="ap-nudge-status"></div>
+      <div class="ap-form-actions">
+        <button type="button" class="ap-back" data-ap-back="main">Back</button>
+        <button type="button" class="ap-submit" id="ap-nudge-send">Send</button>
+      </div>
+    </div>
+
+    <!-- View: remediation (P11) -->
+    <div class="ap-view ap-view-remediation" data-ap-view="remediation" style="display:none">
+      <label class="ap-form-label" for="ap-rem-unit">Unit (e.g. U3)</label>
+      <input type="text" id="ap-rem-unit" class="ap-form-input" maxlength="8" pattern="^U\d+$" title='Unit must look like "U3"' placeholder="U3">
+      <label class="ap-form-label" for="ap-rem-skill">Skill code (e.g. 3.A)</label>
+      <input type="text" id="ap-rem-skill" class="ap-form-input" maxlength="16" placeholder="3.A">
+      <label class="ap-form-label" for="ap-rem-notes">Notes (optional)</label>
+      <textarea id="ap-rem-notes" class="ap-form-input" rows="2" maxlength="500" placeholder="Optional context"></textarea>
+      <div class="ap-form-status" id="ap-rem-status"></div>
+      <div class="ap-form-actions">
+        <button type="button" class="ap-back" data-ap-back="main">Back</button>
+        <button type="button" class="ap-submit" id="ap-rem-submit">Propose</button>
+      </div>
+    </div>
+
+    <!-- View: gate (P11) -->
+    <div class="ap-view ap-view-gate" data-ap-view="gate" style="display:none">
+      <label class="ap-form-label" for="ap-gate-key">Lesson key (e.g. 1.7)</label>
+      <input type="text" id="ap-gate-key" class="ap-form-input" maxlength="20" pattern="^\d+\.\d+$" title='Lesson key must look like "1.7" or "5.3"' placeholder="1.7">
+      <label class="ap-form-label" for="ap-gate-reason">Reason (optional)</label>
+      <textarea id="ap-gate-reason" class="ap-form-input" rows="2" maxlength="500" placeholder="Optional reason"></textarea>
+      <div class="ap-form-status" id="ap-gate-status"></div>
+      <div class="ap-form-actions">
+        <button type="button" class="ap-back" data-ap-back="main">Back</button>
+        <button type="button" class="ap-submit" id="ap-gate-submit">Override</button>
+      </div>
     </div>
   </div>
   <!-- Sibling configs / clients. roster_config.js sets window.ROSTER_SERVICE_URL;
@@ -2387,13 +2467,56 @@
     // Single-state singleton; one popup at a time. Opened by avatar click in
     // Live mode (when NOT in Select-Students mode).
 
-    var _avatarPopupStudent = null;  // { username, realName, section, studentId }
+    var _avatarPopupStudent = null;     // { username, realName, section, studentId }
+    var _avatarPopupSpritePos = null;   // canvas-local { x, y } at open time (P11)
+    // Codex P11 MAJOR M2 fold: hold the auto-close setTimeout id so a new
+    // popup open (different student, or re-click on the same one) cancels
+    // a pending auto-close from a prior success. Without this, a stale
+    // setTimeout would close the freshly opened popup.
+    var _avatarPopupAutoCloseTimer = null;
+
+    // Codex P11 fold helper: reset every popup-internal piece of state that
+    // would otherwise leak between students (form values, status banners,
+    // disabled submit buttons, pending auto-close timer). Called from both
+    // _openAvatarPopup (so a new open always starts clean) AND
+    // _closeAvatarPopup (so the next manual open is also clean).
+    function _resetAvatarPopupTransientState() {
+      if (_avatarPopupAutoCloseTimer) {
+        clearTimeout(_avatarPopupAutoCloseTimer);
+        _avatarPopupAutoCloseTimer = null;
+      }
+      ['ap-nudge-text', 'ap-rem-unit', 'ap-rem-skill', 'ap-rem-notes',
+       'ap-gate-key', 'ap-gate-reason'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      ['ap-nudge-status', 'ap-rem-status', 'ap-gate-status'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.textContent = '';
+          el.classList.remove('is-error', 'is-success');
+        }
+      });
+      // BLOCKER fold: re-enable the inline submit buttons. Without this, a
+      // successful submit on student A leaves the button disabled, so opening
+      // the popup for student B (or even re-opening for A) shows a permanently
+      // disabled Send/Propose/Override button until full page reload.
+      ['ap-nudge-send', 'ap-rem-submit', 'ap-gate-submit'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.disabled = false;
+      });
+    }
 
     function _openAvatarPopup(hit, screenPos) {
       // hit: { username } from classroom-board onAvatarClick.
       // screenPos: precomputed viewport position { x, y } for the popup.
       var popup = document.getElementById('avatar-popup');
       if (!popup) return;
+      // Codex P11 MAJOR M1 + BLOCKER fold: reset transient state on EVERY
+      // open so a draft, status, or disabled-button from a prior student
+      // can't leak into the new popup. (The different-avatar code path
+      // doesn't call _closeAvatarPopup first.)
+      try { if (typeof _resetAvatarPopupTransientState === 'function') _resetAvatarPopupTransientState(); } catch (_) {}
       var realName = (currentNameMap && currentNameMap[hit.username]) ? currentNameMap[hit.username] : hit.username;
       var section = (_lastSummary && _lastSummary.section) || '';
       _avatarPopupStudent = {
@@ -2402,11 +2525,19 @@
         section: section,
         studentId: (currentIdMap && currentIdMap[hit.username]) ? currentIdMap[hit.username] : null,
       };
+      // P11: cache sprite canvas-local position for reposition after view-switch.
+      _avatarPopupSpritePos = hit.canvasPos || null;
       document.getElementById('avatar-popup-name').textContent = realName;
       document.getElementById('avatar-popup-meta').textContent =
         '@' + hit.username + (section ? ' -- ' + section : '');
       popup.style.left = screenPos.x + 'px';
       popup.style.top = screenPos.y + 'px';
+      // Ensure popup starts at main view on each open.
+      popup.setAttribute('data-view', 'main');
+      var views = popup.querySelectorAll('.ap-view');
+      views.forEach(function (el) {
+        el.style.display = (el.getAttribute('data-ap-view') === 'main') ? '' : 'none';
+      });
       popup.style.display = 'block';
       popup.setAttribute('aria-hidden', 'false');
     }
@@ -2416,7 +2547,15 @@
       if (!popup) return;
       popup.style.display = 'none';
       popup.setAttribute('aria-hidden', 'true');
+      // P11: reset to main view + clear all transient state.
+      popup.setAttribute('data-view', 'main');
+      var views = popup.querySelectorAll('.ap-view');
+      views.forEach(function (el) {
+        el.style.display = (el.getAttribute('data-ap-view') === 'main') ? '' : 'none';
+      });
+      try { if (typeof _resetAvatarPopupTransientState === 'function') _resetAvatarPopupTransientState(); } catch (_) {}
       _avatarPopupStudent = null;
+      _avatarPopupSpritePos = null;
     }
 
     function _avatarPopupIsOpen() {
@@ -2468,36 +2607,75 @@
         ? boardHandle.getCanvas() : null;
       if (!pos || !cvs) return;
       var screenPos = _computeAvatarPopupPos(cvs, pos.x, pos.y);
-      _openAvatarPopup(hit, screenPos);
+      // P11: attach canvas-local coords so _switchAvatarPopupView can reposition.
+      _openAvatarPopup({ username: hit.username, canvasPos: { x: pos.x, y: pos.y } }, screenPos);
     }
 
-    // Action button handlers. Actions resolve to cross-tab routing or
-    // in-cockpit pre-fill; no inline modals in MVP.
+    // P11: Action button handlers. View-as / View grade / View recent keep
+    // cross-tab behavior; send-nudge / apply-remediation / override-gate
+    // now expand the popup inline instead.
     function _handleAvatarPopupAction(action) {
       if (!_avatarPopupStudent) return;
       var s = _avatarPopupStudent;
       var sid = s.studentId;
-      var uname = s.username;
       switch (action) {
         case 'view-as':
           if (sid) window.open('./ap_stats_roadmap_square_mode.html?viewAsUserId=' + encodeURIComponent(sid), '_blank', 'noopener');
+          _closeAvatarPopup();
           break;
         case 'view-grade':
         case 'view-recent':
           if (sid) window.open('./teacher-dashboard.html?openDrawerFor=' + encodeURIComponent(sid), '_blank', 'noopener');
+          _closeAvatarPopup();
           break;
         case 'send-nudge':
-          _prefillNudgePanelForStudent(uname);
-          _closeAvatarPopup();
-          return;  // already closed above
+          _switchAvatarPopupView('nudge');
+          break;
         case 'apply-remediation':
-          if (sid) window.open('./teacher-dashboard.html?openDrawerFor=' + encodeURIComponent(sid) + '&openRemediation=1', '_blank', 'noopener');
+          _switchAvatarPopupView('remediation');
           break;
         case 'override-gate':
-          if (sid) window.open('./ap_stats_roadmap_square_mode.html?viewAsUserId=' + encodeURIComponent(sid) + '&autoOpenOverride=1', '_blank', 'noopener');
+          _switchAvatarPopupView('gate');
           break;
       }
-      _closeAvatarPopup();
+    }
+
+    // P11: switch the popup to a new view (main / nudge / remediation / gate).
+    function _switchAvatarPopupView(view) {
+      var popup = document.getElementById('avatar-popup');
+      if (!popup) return;
+      // Update the dataset attribute which the CSS uses for the width grow.
+      popup.setAttribute('data-view', view);
+      var views = popup.querySelectorAll('.ap-view');
+      views.forEach(function (el) {
+        var thisView = el.getAttribute('data-ap-view');
+        el.style.display = (thisView === view) ? '' : 'none';
+      });
+      // Clear status lines.
+      ['ap-nudge-status', 'ap-rem-status', 'ap-gate-status'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.textContent = '';
+          el.classList.remove('is-error', 'is-success');
+        }
+      });
+      // Focus the first input in the new view.
+      var focusMap = { nudge: 'ap-nudge-text', remediation: 'ap-rem-unit', gate: 'ap-gate-key' };
+      if (focusMap[view]) {
+        setTimeout(function () {
+          var inp = document.getElementById(focusMap[view]);
+          if (inp) inp.focus();
+        }, 30);
+      }
+      // Reposition to keep popup visible after width change (P11 section 4.4).
+      if (boardHandle && _avatarPopupSpritePos) {
+        var canvas = (typeof boardHandle.getCanvas === 'function') ? boardHandle.getCanvas() : null;
+        if (canvas) {
+          var pos = _computeAvatarPopupPos(canvas, _avatarPopupSpritePos.x, _avatarPopupSpritePos.y);
+          popup.style.left = pos.x + 'px';
+          popup.style.top = pos.y + 'px';
+        }
+      }
     }
 
     // Pre-fill the existing nudge panel for the clicked student. Sets the
@@ -2522,6 +2700,203 @@
         try { textEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
       }
       if (typeof _updateNudgeSendButton === 'function') _updateNudgeSendButton();
+    }
+
+    // P11: inline Send nudge submission. Reuses the P3 classroom_teacher_nudge
+    // WS message + POST /teacher/nudge. Single-recipient (the clicked student).
+    async function _submitInlineNudge() {
+      if (!_avatarPopupStudent) return;
+      var s = _avatarPopupStudent;
+      var textEl = document.getElementById('ap-nudge-text');
+      var statusEl = document.getElementById('ap-nudge-status');
+      var btn = document.getElementById('ap-nudge-send');
+      var rawText = textEl ? String(textEl.value || '').trim() : '';
+      if (!rawText) {
+        statusEl.textContent = 'Type a message first.';
+        statusEl.classList.add('is-error');
+        return;
+      }
+      if (rawText.length > 280) rawText = rawText.slice(0, 280);
+      btn.disabled = true;
+      statusEl.classList.remove('is-error', 'is-success');
+      statusEl.textContent = 'Sending...';
+
+      var nudgeId = _newNudgeId();
+      var wsSent = false;
+      try {
+        if (boardHandle && typeof boardHandle.sendMessage === 'function') {
+          wsSent = !!boardHandle.sendMessage({
+            type: 'classroom_teacher_nudge',
+            nudgeId: nudgeId,
+            recipientUsernames: [s.username],
+            text: rawText,
+          });
+        }
+      } catch (_) { wsSent = false; }
+
+      try {
+        var rsBase = (typeof window.ROSTER_SERVICE_URL === 'string') ? window.ROSTER_SERVICE_URL : '';
+        var rosterToken = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+        if (rsBase && rosterToken) {
+          var resp = await fetch(rsBase + '/teacher/nudge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + rosterToken },
+            body: JSON.stringify({
+              nudgeId: nudgeId,
+              recipientUsernames: [s.username],
+              text: rawText,
+              deliveredUsernames: wsSent ? [s.username] : [],
+            }),
+          });
+          await resp.json().catch(function () { return {}; });
+        }
+      } catch (_) {}
+
+      if (wsSent) {
+        statusEl.textContent = 'Sent.';
+        statusEl.classList.add('is-success');
+        // Codex P11 MAJOR M2 fold: stash the timer id so re-opening the
+        // popup before it fires cancels the stale close.
+        _avatarPopupAutoCloseTimer = setTimeout(_closeAvatarPopup, 800);
+      } else {
+        statusEl.textContent = 'Not connected -- nudge not delivered.';
+        statusEl.classList.add('is-error');
+        btn.disabled = false;
+      }
+    }
+
+    // P11: inline Apply Remediation submission. Reuses P4b's /remediation/propose.
+    async function _submitInlineRemediation() {
+      if (!_avatarPopupStudent) return;
+      var s = _avatarPopupStudent;
+      var unit = document.getElementById('ap-rem-unit').value.trim();
+      var skill = document.getElementById('ap-rem-skill').value.trim();
+      var notes = document.getElementById('ap-rem-notes').value.trim();
+      var statusEl = document.getElementById('ap-rem-status');
+      var btn = document.getElementById('ap-rem-submit');
+      statusEl.classList.remove('is-error', 'is-success');
+      if (!unit || !/^U\d+$/.test(unit)) {
+        statusEl.textContent = 'Unit must look like "U3".';
+        statusEl.classList.add('is-error');
+        return;
+      }
+      if (!skill) {
+        statusEl.textContent = 'Skill code is required.';
+        statusEl.classList.add('is-error');
+        return;
+      }
+      if (!s.studentId) {
+        statusEl.textContent = 'Student id not yet loaded -- refresh + try again.';
+        statusEl.classList.add('is-error');
+        return;
+      }
+      btn.disabled = true;
+      statusEl.textContent = 'Submitting...';
+
+      try {
+        var rsBase = (typeof window.ROSTER_SERVICE_URL === 'string') ? window.ROSTER_SERVICE_URL : '';
+        var rosterToken = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+        if (!rsBase || !rosterToken) {
+          statusEl.textContent = 'Not signed in -- cannot submit.';
+          statusEl.classList.add('is-error');
+          btn.disabled = false;
+          return;
+        }
+        var resp = await fetch(rsBase + '/remediation/propose', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + rosterToken },
+          body: JSON.stringify({
+            studentId: s.studentId,
+            unit: unit,
+            skill: skill,
+            notes: notes || undefined,
+            proposedBy: 'cockpit-popup',
+          }),
+        });
+        var j = await resp.json().catch(function () { return {}; });
+        if (resp.status === 503) {
+          statusEl.textContent = (j && j.error) || 'Remediation table not provisioned.';
+          statusEl.classList.add('is-error');
+          btn.disabled = false;
+          return;
+        }
+        if (!resp.ok || !j.ok) {
+          statusEl.textContent = (j && j.error) || ('HTTP ' + resp.status);
+          statusEl.classList.add('is-error');
+          btn.disabled = false;
+          return;
+        }
+        statusEl.textContent = 'Proposed (' + (j.assignmentId || 'ok') + ').';
+        statusEl.classList.add('is-success');
+        _avatarPopupAutoCloseTimer = setTimeout(_closeAvatarPopup, 1200);
+      } catch (err) {
+        statusEl.textContent = 'Network error: ' + (err && err.message ? err.message : 'unknown');
+        statusEl.classList.add('is-error');
+        btn.disabled = false;
+      }
+    }
+
+    // P11: inline Override Gate submission. Reuses P5's /teacher/lesson-unlock.
+    async function _submitInlineGate() {
+      if (!_avatarPopupStudent) return;
+      var s = _avatarPopupStudent;
+      var lessonKey = document.getElementById('ap-gate-key').value.trim();
+      var reason = document.getElementById('ap-gate-reason').value.trim();
+      var statusEl = document.getElementById('ap-gate-status');
+      var btn = document.getElementById('ap-gate-submit');
+      statusEl.classList.remove('is-error', 'is-success');
+      if (!lessonKey || !/^\d+\.\d+$/.test(lessonKey)) {
+        statusEl.textContent = 'Lesson key must look like "1.7" or "5.3".';
+        statusEl.classList.add('is-error');
+        return;
+      }
+      if (!s.username) {
+        statusEl.textContent = 'Student username not loaded -- refresh + try again.';
+        statusEl.classList.add('is-error');
+        return;
+      }
+      btn.disabled = true;
+      statusEl.textContent = 'Overriding...';
+
+      try {
+        var rsBase = (typeof window.ROSTER_SERVICE_URL === 'string') ? window.ROSTER_SERVICE_URL : '';
+        var rosterToken = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+        if (!rsBase || !rosterToken) {
+          statusEl.textContent = 'Not signed in -- cannot submit.';
+          statusEl.classList.add('is-error');
+          btn.disabled = false;
+          return;
+        }
+        var resp = await fetch(rsBase + '/teacher/lesson-unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + rosterToken },
+          body: JSON.stringify({
+            studentUsername: s.username,
+            lessonKey: lessonKey,
+            reason: reason || undefined,
+          }),
+        });
+        var j = await resp.json().catch(function () { return {}; });
+        if (resp.status === 503) {
+          statusEl.textContent = (j && j.error) || 'lesson_unlock table not provisioned.';
+          statusEl.classList.add('is-error');
+          btn.disabled = false;
+          return;
+        }
+        if (!resp.ok || !j.ok) {
+          statusEl.textContent = (j && j.error) || ('HTTP ' + resp.status);
+          statusEl.classList.add('is-error');
+          btn.disabled = false;
+          return;
+        }
+        statusEl.textContent = 'Override saved.';
+        statusEl.classList.add('is-success');
+        _avatarPopupAutoCloseTimer = setTimeout(_closeAvatarPopup, 1000);
+      } catch (err) {
+        statusEl.textContent = 'Network error: ' + (err && err.message ? err.message : 'unknown');
+        statusEl.classList.add('is-error');
+        btn.disabled = false;
+      }
     }
 
     // P9: Wire popup button events on DOMContentLoaded.
@@ -2562,6 +2937,23 @@
           _closeAvatarPopup();
         }
       }, true);
+
+      // P11: inline view submit + back button wiring.
+      var nudgeSendBtn = document.getElementById('ap-nudge-send');
+      if (nudgeSendBtn) nudgeSendBtn.addEventListener('click', _submitInlineNudge);
+      var remSubmitBtn = document.getElementById('ap-rem-submit');
+      if (remSubmitBtn) remSubmitBtn.addEventListener('click', _submitInlineRemediation);
+      var gateSubmitBtn = document.getElementById('ap-gate-submit');
+      if (gateSubmitBtn) gateSubmitBtn.addEventListener('click', _submitInlineGate);
+      // Back buttons: delegated via data-ap-back attribute.
+      var apPopupForBack = document.getElementById('avatar-popup');
+      if (apPopupForBack) {
+        apPopupForBack.addEventListener('click', function (e) {
+          var backBtn = e.target.closest('[data-ap-back]');
+          if (!backBtn) return;
+          _switchAvatarPopupView(backBtn.getAttribute('data-ap-back'));
+        });
+      }
     });
 // ===== P4: Select Students wiring (TEACHER_STUDENT_CONSOLE_SPEC.md section 11) =====
     (function () {

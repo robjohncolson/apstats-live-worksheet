@@ -80,8 +80,34 @@ function makeLifecycleSandbox() {
   let popupAriaHidden = 'true';
   let popupLeft = '';
   let popupTop = '';
+  let popupDataView = 'main';
   const nameEl = { textContent: '' };
   const metaEl = { textContent: '' };
+
+  // P11: views array for querySelectorAll stub.
+  const viewItems = [
+    { _name: 'main', _display: '' },
+    { _name: 'nudge', _display: 'none' },
+    { _name: 'remediation', _display: 'none' },
+    { _name: 'gate', _display: 'none' },
+  ].map(function (v) {
+    return {
+      getAttribute: (k) => (k === 'data-ap-view' ? v._name : null),
+      get style() {
+        const self = this;
+        const store = v;
+        return {
+          get display() { return store._display; },
+          set display(val) { store._display = val; },
+        };
+      },
+    };
+  });
+
+  // P11: form field stubs for _closeAvatarPopup clear.
+  const formFieldIds = ['ap-nudge-text','ap-rem-unit','ap-rem-skill','ap-rem-notes','ap-gate-key','ap-gate-reason'];
+  const formEls = {};
+  formFieldIds.forEach(function (id) { formEls[id] = { value: 'prefilled' }; });
 
   const popup = {
     get style() {
@@ -94,9 +120,17 @@ function makeLifecycleSandbox() {
         set top(v) { popupTop = v; },
       };
     },
-    getAttribute: (k) => (k === 'aria-hidden' ? popupAriaHidden : null),
-    setAttribute: (k, v) => { if (k === 'aria-hidden') popupAriaHidden = v; },
+    getAttribute: (k) => {
+      if (k === 'aria-hidden') return popupAriaHidden;
+      if (k === 'data-view') return popupDataView;
+      return null;
+    },
+    setAttribute: (k, v) => {
+      if (k === 'aria-hidden') popupAriaHidden = v;
+      if (k === 'data-view') popupDataView = v;
+    },
     contains: () => false,
+    querySelectorAll: () => viewItems,
   };
 
   const sandbox = {
@@ -105,6 +139,7 @@ function makeLifecycleSandbox() {
         if (id === 'avatar-popup') return popup;
         if (id === 'avatar-popup-name') return nameEl;
         if (id === 'avatar-popup-meta') return metaEl;
+        if (formEls[id]) return formEls[id];
         return null;
       },
     },
@@ -114,6 +149,7 @@ function makeLifecycleSandbox() {
     _lastSummary: { section: 'PeriodB' },
     _selectModeActive: false,
     _avatarPopupStudent: null,
+    _avatarPopupSpritePos: null,
     window: { innerWidth: 1024, innerHeight: 768 },
     String,
     Object,
@@ -121,7 +157,13 @@ function makeLifecycleSandbox() {
   sandbox.window = sandbox;
 
   createContext(sandbox);
+  // P11 fold: include _resetAvatarPopupTransientState so the typeof-guarded
+  // calls inside _openAvatarPopup + _closeAvatarPopup actually fire in the
+  // sandbox (and clear the form values that the P11 regression tests check).
+  // Also include _avatarPopupAutoCloseTimer state.
   runInContext(
+    'var _avatarPopupAutoCloseTimer = null;\n' +
+    fnBody(html, '_resetAvatarPopupTransientState') + '\n' +
     fnBody(html, '_openAvatarPopup') + '\n' +
     fnBody(html, '_closeAvatarPopup') + '\n' +
     fnBody(html, '_avatarPopupIsOpen') + '\n' +
@@ -131,7 +173,9 @@ function makeLifecycleSandbox() {
     sandbox
   );
 
-  return { sandbox, popup, nameEl, metaEl, getDisplay: () => popupDisplay, getAriaHidden: () => popupAriaHidden };
+  return { sandbox, popup, nameEl, metaEl, formEls, viewItems,
+           getDisplay: () => popupDisplay, getAriaHidden: () => popupAriaHidden,
+           getDataView: () => popupDataView };
 }
 
 describe('Open/close lifecycle', () => {
@@ -160,6 +204,22 @@ describe('Open/close lifecycle', () => {
     sandbox.__close();
     expect(getDisplay()).toBe('none');
     expect(sandbox._avatarPopupStudent).toBeNull();
+  });
+
+  it('P11: _closeAvatarPopup resets data-view to "main"', () => {
+    const { sandbox, getDataView } = makeLifecycleSandbox();
+    sandbox.__open({ username: 'alice' }, { x: 0, y: 0 });
+    sandbox.__close();
+    expect(getDataView()).toBe('main');
+  });
+
+  it('P11: _closeAvatarPopup clears all form input values', () => {
+    const { sandbox, formEls } = makeLifecycleSandbox();
+    sandbox.__open({ username: 'alice' }, { x: 0, y: 0 });
+    sandbox.__close();
+    Object.values(formEls).forEach(function (el) {
+      expect(el.value).toBe('');
+    });
   });
 
   it('_avatarPopupIsOpen returns true when display is block', () => {
@@ -245,10 +305,24 @@ function makeRoutingSandbox({ selectModeActive = false, popupOpen = false, popup
   let _avatarPopupStudentVal = popupOpen ? { username: popupUsername } : null;
   let displayVal = popupOpen ? 'block' : 'none';
 
+  // P11: stub querySelectorAll for _openAvatarPopup / _closeAvatarPopup.
+  const viewItemsR = ['main','nudge','remediation','gate'].map(function (n) {
+    const store = { _display: n === 'main' ? '' : 'none' };
+    return {
+      getAttribute: (k) => (k === 'data-ap-view' ? n : null),
+      get style() { return { get display() { return store._display; }, set display(v) { store._display = v; } }; },
+    };
+  });
+  const formFieldIdsR = ['ap-nudge-text','ap-rem-unit','ap-rem-skill','ap-rem-notes','ap-gate-key','ap-gate-reason'];
+  const formElsR = {};
+  formFieldIdsR.forEach(function (id) { formElsR[id] = { value: '' }; });
+
+  let dataViewR = 'main';
   const popupEl = {
     style: { get display() { return displayVal; }, set display(v) { displayVal = v; } },
-    getAttribute: () => 'false',
-    setAttribute: () => {},
+    getAttribute: (k) => { if (k === 'data-view') return dataViewR; return 'false'; },
+    setAttribute: (k, v) => { if (k === 'data-view') dataViewR = v; },
+    querySelectorAll: () => viewItemsR,
   };
 
   const sandbox = {
@@ -257,6 +331,7 @@ function makeRoutingSandbox({ selectModeActive = false, popupOpen = false, popup
         if (id === 'avatar-popup') return popupEl;
         if (id === 'avatar-popup-name') return { textContent: '' };
         if (id === 'avatar-popup-meta') return { textContent: '' };
+        if (formElsR[id]) return formElsR[id];
         return null;
       },
     },
@@ -264,6 +339,7 @@ function makeRoutingSandbox({ selectModeActive = false, popupOpen = false, popup
     _selectModeActive: selectModeActive,
     get _avatarPopupStudent() { return _avatarPopupStudentVal; },
     set _avatarPopupStudent(v) { _avatarPopupStudentVal = v; },
+    _avatarPopupSpritePos: null,
     currentNameMap: {},
     currentIdMap: {},
     _lastSummary: null,
@@ -338,16 +414,28 @@ describe('Click routing', () => {
 
 function makeActionSandbox({ studentId = 'stu_001', username = 'alice' } = {}) {
   const openedWindows = [];
+  const switchedViews = [];
   let popupDisplay = 'block';
-  let dropdownVal = '';
-  let dropdownDisabled = false;
-  let textFocused = false;
-  let textScrolled = false;
+  let dataViewA = 'main';
   let _nudgeBroadcastActive = false;
+
+  // P11: stub querySelectorAll + setAttribute for _closeAvatarPopup.
+  const viewItemsA = ['main','nudge','remediation','gate'].map(function (n) {
+    const store = { _display: n === 'main' ? '' : 'none' };
+    return {
+      getAttribute: (k) => (k === 'data-ap-view' ? n : null),
+      get style() { return { get display() { return store._display; }, set display(v) { store._display = v; } }; },
+    };
+  });
+  const formFieldIdsA = ['ap-nudge-text','ap-rem-unit','ap-rem-skill','ap-rem-notes','ap-gate-key','ap-gate-reason'];
+  const formElsA = {};
+  formFieldIdsA.forEach(function (id) { formElsA[id] = { value: '' }; });
+
   const popupEl = {
     style: { get display() { return popupDisplay; }, set display(v) { popupDisplay = v; } },
-    getAttribute: () => 'false',
-    setAttribute: () => {},
+    getAttribute: (k) => { if (k === 'data-view') return dataViewA; return 'false'; },
+    setAttribute: (k, v) => { if (k === 'data-view') dataViewA = v; },
+    querySelectorAll: () => viewItemsA,
   };
 
   // window.open, innerWidth, innerHeight must be on the sandbox directly
@@ -358,30 +446,21 @@ function makeActionSandbox({ studentId = 'stu_001', username = 'alice' } = {}) {
         if (id === 'avatar-popup') return popupEl;
         if (id === 'avatar-popup-name') return { textContent: '' };
         if (id === 'avatar-popup-meta') return { textContent: '' };
+        if (formElsA[id]) return formElsA[id];
+        // nudge-broadcast / nudge-recipient / nudge-text kept for _prefillNudgePanelForStudent
         if (id === 'nudge-broadcast') return {
           get checked() { return _nudgeBroadcastActive; },
           set checked(v) { _nudgeBroadcastActive = v; },
         };
         if (id === 'nudge-recipient') return {
-          get value() { return dropdownVal; },
-          set value(v) { dropdownVal = v; },
-          get disabled() { return dropdownDisabled; },
-          set disabled(v) { dropdownDisabled = v; },
-          classList: {
-            remove: () => {},
-            add: () => {},
-          },
+          get value() { return ''; }, set value(v) {},
+          get disabled() { return false; }, set disabled(v) {},
+          classList: { remove: () => {}, add: () => {} },
         };
-        if (id === 'nudge-text') return {
-          value: '',
-          focus: () => { textFocused = true; },
-          scrollIntoView: () => { textScrolled = true; },
-        };
+        if (id === 'nudge-text') return { value: '', focus: () => {}, scrollIntoView: () => {} };
         return null;
       },
     },
-    // These go on sandbox directly so window.X resolves correctly
-    // (sandbox.window = sandbox, so window === sandbox in the vm).
     innerWidth: 1024,
     innerHeight: 768,
     open: (url, target, opts) => { openedWindows.push({ url, target, opts }); },
@@ -391,8 +470,12 @@ function makeActionSandbox({ studentId = 'stu_001', username = 'alice' } = {}) {
       section: 'PeriodB',
       studentId: studentId,
     },
+    _avatarPopupSpritePos: null,
+    boardHandle: null,
     _nudgeBroadcastActive: _nudgeBroadcastActive,
     _updateNudgeSendButton: () => {},
+    // P11: stub _switchAvatarPopupView so action tests can verify which view was requested.
+    _switchAvatarPopupView: (v) => { switchedViews.push(v); },
     String, Object, encodeURIComponent,
   };
   sandbox.window = sandbox;
@@ -408,9 +491,7 @@ function makeActionSandbox({ studentId = 'stu_001', username = 'alice' } = {}) {
   );
 
   return {
-    sandbox, openedWindows,
-    getDropdownVal: () => dropdownVal,
-    getTextFocused: () => textFocused,
+    sandbox, openedWindows, switchedViews,
     getPopupDisplay: () => popupDisplay,
   };
 }
@@ -434,34 +515,26 @@ describe('Action routing', () => {
     expect(openedWindows.some(w => w.url.includes('openDrawerFor=stu_001'))).toBe(true);
   });
 
-  it('apply-remediation opens ?openDrawerFor=<sid>&openRemediation=1 in a new tab', () => {
-    const { openedWindows, sandbox } = makeActionSandbox();
+  it('P11: apply-remediation calls _switchAvatarPopupView("remediation") instead of opening a new tab', () => {
+    const { switchedViews, openedWindows, sandbox } = makeActionSandbox();
     sandbox.__action('apply-remediation');
-    expect(openedWindows.some(w => w.url.includes('openDrawerFor=stu_001') && w.url.includes('openRemediation=1'))).toBe(true);
+    expect(switchedViews).toContain('remediation');
+    // Must NOT open a new tab for this action in P11.
+    expect(openedWindows.length).toBe(0);
   });
 
-  it('override-gate opens ?viewAsUserId=<sid>&autoOpenOverride=1 in a new tab', () => {
-    const { openedWindows, sandbox } = makeActionSandbox();
+  it('P11: override-gate calls _switchAvatarPopupView("gate") instead of opening a new tab', () => {
+    const { switchedViews, openedWindows, sandbox } = makeActionSandbox();
     sandbox.__action('override-gate');
-    expect(openedWindows.some(w => w.url.includes('viewAsUserId=stu_001') && w.url.includes('autoOpenOverride=1'))).toBe(true);
+    expect(switchedViews).toContain('gate');
+    expect(openedWindows.length).toBe(0);
   });
 
-  it('send-nudge sets nudge-recipient.value to the student username', () => {
-    const { sandbox, getDropdownVal } = makeActionSandbox({ username: 'alice' });
+  it('P11: send-nudge calls _switchAvatarPopupView("nudge") and does NOT pre-fill panel', () => {
+    const { switchedViews, openedWindows, sandbox } = makeActionSandbox({ username: 'alice' });
     sandbox.__action('send-nudge');
-    expect(getDropdownVal()).toBe('alice');
-  });
-
-  it('send-nudge focuses the nudge textarea', () => {
-    const { sandbox, getTextFocused } = makeActionSandbox();
-    sandbox.__action('send-nudge');
-    expect(getTextFocused()).toBe(true);
-  });
-
-  it('send-nudge closes the popup', () => {
-    const { sandbox, getPopupDisplay } = makeActionSandbox();
-    sandbox.__action('send-nudge');
-    expect(getPopupDisplay()).toBe('none');
+    expect(switchedViews).toContain('nudge');
+    expect(openedWindows.length).toBe(0);
   });
 
   it('actions that need sid no-op when studentId is null', () => {
