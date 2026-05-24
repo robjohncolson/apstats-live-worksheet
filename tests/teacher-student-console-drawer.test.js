@@ -75,16 +75,20 @@ describe('TSC drawer DOM presence', () => {
     expect(DASH).toMatch(/data-tsc-close="button"/);
   });
 
-  it('all four action buttons are present and disabled', () => {
+  it('all four action buttons are present; nudge and gate are disabled (P6: remediation is now enabled)', () => {
     expect(DASH).toMatch(/id="tsc-action-view-as"/);
     expect(DASH).toMatch(/id="tsc-action-nudge"/);
     expect(DASH).toMatch(/id="tsc-action-remediation"/);
     expect(DASH).toMatch(/id="tsc-action-gate"/);
-    // Each action button must carry the disabled attribute.
-    const matches = DASH.match(/class="tsc-action-btn"[^>]*disabled/g) ||
-                    DASH.match(/disabled[^>]*class="tsc-action-btn"/g);
+    // nudge + gate carry disabled. remediation was enabled in P6 Wave C.
+    // The CSS rule .tsc-action-btn[disabled] also contains the text "tsc-action-btn" + "disabled",
+    // so the count is at minimum 3 (CSS rule + nudge + gate).
     expect((DASH.match(/tsc-action-btn[^>]*disabled|disabled[^>]*tsc-action-btn/g) || []).length)
-      .toBeGreaterThanOrEqual(4);
+      .toBeGreaterThanOrEqual(3);
+    // Remediation button must NOT be disabled (P6 Wave C enables it).
+    const remBtn = DASH.match(/id="tsc-action-remediation"[^>]*/);
+    expect(remBtn).not.toBeNull();
+    expect(remBtn[0]).not.toMatch(/disabled/);
   });
 
   it('drawer title placeholder element exists', () => {
@@ -239,10 +243,10 @@ describe('Row click opens drawer', () => {
 // ---------------------------------------------------------------------------
 
 describe('Fetch wiring', () => {
-  it('openTscDrawer fires two fetch calls: /grade and /recent', async () => {
+  it('openTscDrawer fires three fetch calls: /grade, /recent, and /lesson-unlocks (P6 Wave C)', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [] }),
+      json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),
     });
     const dom = makeDom(fetchMock);
     const { window } = dom;
@@ -257,10 +261,11 @@ describe('Fetch wiring', () => {
     // Allow microtasks to flush.
     await new Promise(r => setTimeout(r, 0));
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     const urls = fetchMock.mock.calls.map(c => c[0]);
     expect(urls.some(u => u.includes('/teacher/student/stu_test/grade'))).toBe(true);
     expect(urls.some(u => u.includes('/teacher/student/stu_test/recent'))).toBe(true);
+    expect(urls.some(u => u.includes('/teacher/student/stu_test/lesson-unlocks'))).toBe(true);
   });
 
   it('fetch calls include x-teacher-secret header when a secret is set', async () => {

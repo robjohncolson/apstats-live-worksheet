@@ -1,21 +1,16 @@
 /**
  * tests/desk-nudge-toast.test.js
  *
- * P3 -- Teacher to Student Console: nudge toast (TEACHER_STUDENT_CONSOLE_SPEC.md
- * Section 6 + TEACHER_STUDENT_CONSOLE_P3_BUILD.md Section 4.1).
- *
- * Student-side toast that appears when a 'classroom_teacher_nudge' WS message
- * arrives via the ClassroomBoard mount's onClassroomMessage callback. Includes
- * a soft chime, reply textarea, and send/dismiss buttons.
- *
- * Source assertions + Node `vm` runtime of the real helpers (mirrors
- * tests/desk-view-as.test.js).
+ * P3 -> T2 (P6) -- Teacher to Student Console: nudge toast structure pins.
+ * Updated for the stacked-toast refactor (T2 of TEACHER_STUDENT_CONSOLE_P6_BUILD.md
+ * section 3). The singleton #nudge-toast is replaced by #nudge-toast-stack +
+ * #nudge-toast-template. All behavioral tests moved to nudge-toast-stack.test.js.
+ * This file keeps the source structure + ClassroomBoard hook pins.
  */
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { createContext, runInContext } from 'vm';
 
 const REPO_ROOT = resolve(__dirname, '..');
 const html = readFileSync(resolve(REPO_ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf-8');
@@ -39,30 +34,49 @@ function fnBody(src, name) {
 }
 
 // ============================================================================
-// 1. Structure pins
+// 1. DOM structure pins (T2 -- stack + template)
 // ============================================================================
 
-describe('nudge toast -- structure', () => {
-  it('toast DOM is present in <body>, hidden by default', () => {
-    expect(html).toMatch(/id="nudge-toast"\s+style="display:none"/);
+describe('nudge toast -- structure (T2 stacked)', () => {
+  it('stack container #nudge-toast-stack is present in <body>', () => {
+    expect(html).toMatch(/id="nudge-toast-stack"/);
   });
 
-  it('toast has required IDs: from-name, text, reply textarea, send button, close', () => {
-    const m = /id="nudge-toast"[\s\S]*?<\/div>\s*<\/div>/.exec(html);
-    expect(m).toBeTruthy();
-    expect(html).toMatch(/id="nudge-toast-from"/);
-    expect(html).toMatch(/id="nudge-toast-text"/);
-    expect(html).toMatch(/id="nudge-toast-reply"/);
-    expect(html).toMatch(/id="nudge-toast-send"/);
-    expect(html).toMatch(/id="nudge-toast-close"/);
+  it('template #nudge-toast-template is present in <body>', () => {
+    expect(html).toMatch(/id="nudge-toast-template"/);
   });
 
-  it('reply textarea enforces maxlength=280', () => {
-    expect(html).toMatch(/id="nudge-toast-reply"[^>]*maxlength="280"/);
+  it('template contains .nt-from-name, .nt-text, .nt-close, .nt-send, textarea', () => {
+    const tmplMatch = html.match(/<template id="nudge-toast-template">([\s\S]*?)<\/template>/);
+    expect(tmplMatch).toBeTruthy();
+    const inner = tmplMatch[1];
+    expect(inner).toMatch(/class="[^"]*nt-from-name/);
+    expect(inner).toMatch(/class="[^"]*nt-text/);
+    expect(inner).toMatch(/class="[^"]*nt-close/);
+    expect(inner).toMatch(/class="[^"]*nt-send/);
+    expect(inner).toMatch(/<textarea/);
+    expect(inner).toMatch(/maxlength="280"/);
   });
 
-  it('toast CSS rule is present', () => {
-    expect(html).toMatch(/#nudge-toast\s*\{[\s\S]*?position:\s*fixed/);
+  it('OLD singleton #nudge-toast is gone', () => {
+    expect(html).not.toMatch(/id="nudge-toast"\s+style="display:none"/);
+    expect(html).not.toMatch(/id="nudge-toast-from"/);
+    expect(html).not.toMatch(/id="nudge-toast-text"/);
+    expect(html).not.toMatch(/id="nudge-toast-reply"/);
+    expect(html).not.toMatch(/id="nudge-toast-send"/);
+    expect(html).not.toMatch(/id="nudge-toast-close"/);
+  });
+
+  it('CSS uses .nudge-toast class (not #nudge-toast ID) for per-toast styling', () => {
+    expect(html).toMatch(/\.nudge-toast\s*\{[\s\S]*?pointer-events/);
+  });
+
+  it('stack container CSS is position:fixed', () => {
+    expect(html).toMatch(/#nudge-toast-stack\s*\{[\s\S]*?position:\s*fixed/);
+  });
+
+  it('nudge-slide-in keyframe animation is present', () => {
+    expect(html).toMatch(/@keyframes\s+nudge-slide-in/);
   });
 
   it('ClassroomBoard.mount call includes onClassroomMessage hook for teacher nudge', () => {
@@ -73,274 +87,50 @@ describe('nudge toast -- structure', () => {
 
   it('_playNudgeChime, _showNudgeToast, _hideNudgeToast, _sendNudgeReply functions exist', () => {
     expect(fnBody(html, '_playNudgeChime')).toMatch(/AudioContext|webkitAudioContext/);
-    expect(fnBody(html, '_showNudgeToast')).toMatch(/_activeNudge/);
-    expect(fnBody(html, '_hideNudgeToast')).toMatch(/display\s*=\s*['"]none['"]/);
-    expect(fnBody(html, '_sendNudgeReply')).toMatch(/_activeNudge/);
+    expect(fnBody(html, '_showNudgeToast')).toMatch(/_activeNudges/);
+    expect(fnBody(html, '_hideNudgeToast')).toMatch(/_hideNudgeToastById/);
+    expect(fnBody(html, '_sendNudgeReply')).toMatch(/oldestId/);
+  });
+
+  it('_hideNudgeToastById and _sendNudgeReplyForId helpers exist', () => {
+    expect(fnBody(html, '_hideNudgeToastById')).toMatch(/_activeNudges/);
+    expect(fnBody(html, '_sendNudgeReplyForId')).toMatch(/nudge-reply/);
+  });
+
+  it('MAX_NUDGE_STACK is defined as 4', () => {
+    expect(html).toMatch(/var\s+MAX_NUDGE_STACK\s*=\s*4/);
+  });
+
+  it('_activeNudges is a Map (not the old singleton _activeNudge)', () => {
+    expect(html).toMatch(/var\s+_activeNudges\s*=\s*new\s+Map\s*\(\s*\)/);
+    // Old singleton variable should be gone (outside of comments).
+    const noComments = html.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(noComments).not.toMatch(/var\s+_activeNudge\s*=/);
+  });
+
+  it('DOMContentLoaded static hook for old toast buttons is removed', () => {
+    // The old hook attached close/send event listeners by static ID.
+    // Per T2, per-toast handlers attach inside _showNudgeToast instead.
+    expect(html).not.toMatch(/nudge-toast-close[\s\S]{0,50}addEventListener/);
+    expect(html).not.toMatch(/nudge-toast-send[\s\S]{0,50}addEventListener/);
   });
 });
 
 // ============================================================================
-// 2. _showNudgeToast behavioral
+// 2. CSS shape
 // ============================================================================
 
-function makeFakeDoc(els) {
-  return {
-    getElementById: (id) => els[id] || null,
-  };
-}
-
-function loadShowToast(elsBuilder) {
-  const els = elsBuilder();
-  const sandbox = {
-    document: makeFakeDoc(els),
-    _playNudgeChime: () => { els._chimeCalled = (els._chimeCalled || 0) + 1; },
-    _activeNudge: null,
-  };
-  createContext(sandbox);
-  // Patch in the var _activeNudge declaration + _showNudgeToast body.
-  runInContext(
-    'var _activeNudge = null;\n' +
-    fnBody(html, '_showNudgeToast') + '\n' +
-    'this.__f = _showNudgeToast; this.__getActiveNudge = function() { return _activeNudge; };',
-    sandbox);
-  return { f: sandbox.__f, els, getActiveNudge: sandbox.__getActiveNudge };
-}
-
-describe('nudge toast -- _showNudgeToast', () => {
-  it('reveals the toast + populates from + text + chime', () => {
-    const { f, els, getActiveNudge } = loadShowToast(() => ({
-      'nudge-toast': { style: { display: 'none' } },
-      'nudge-toast-from': { textContent: '' },
-      'nudge-toast-text': { textContent: '' },
-      'nudge-toast-reply': { value: 'stale' },
-      'nudge-toast-send': { disabled: true },
-    }));
-    f({ nudgeId: 'nudge_1', text: 'Try problem 3', fromUsername: 'mr_colson', ts: 123 });
-    expect(els['nudge-toast'].style.display).toBe('block');
-    expect(els['nudge-toast-from'].textContent).toBe('mr_colson');
-    expect(els['nudge-toast-text'].textContent).toBe('Try problem 3');
-    expect(els['nudge-toast-reply'].value).toBe('');
-    expect(els['nudge-toast-send'].disabled).toBe(false);
-    expect(els._chimeCalled).toBe(1);
-    const active = getActiveNudge();
-    expect(active.nudgeId).toBe('nudge_1');
-    expect(active.fromUsername).toBe('mr_colson');
+describe('nudge toast -- CSS (T2)', () => {
+  it('stack container is pointer-events:none (layout shell)', () => {
+    expect(html).toMatch(/#nudge-toast-stack\s*\{[\s\S]*?pointer-events:\s*none/);
   });
 
-  it('falls back to "Teacher" when fromUsername is missing', () => {
-    const { f, els } = loadShowToast(() => ({
-      'nudge-toast': { style: { display: 'none' } },
-      'nudge-toast-from': { textContent: '' },
-      'nudge-toast-text': { textContent: '' },
-      'nudge-toast-reply': { value: '' },
-      'nudge-toast-send': { disabled: false },
-    }));
-    f({ nudgeId: 'n', text: 'hi' });
-    expect(els['nudge-toast-from'].textContent).toBe('Teacher');
+  it('individual toast has pointer-events:auto', () => {
+    expect(html).toMatch(/\.nudge-toast\s*\{[\s\S]*?pointer-events:\s*auto/);
   });
 
-  it('tolerates a missing toast root (no throw)', () => {
-    const sandbox = {
-      document: { getElementById: () => null },
-      _playNudgeChime: () => {},
-    };
-    createContext(sandbox);
-    runInContext(
-      'var _activeNudge = null;\n' +
-      fnBody(html, '_showNudgeToast') + '\n' +
-      'this.__f = _showNudgeToast;',
-      sandbox);
-    expect(() => sandbox.__f({ nudgeId: 'n', text: 't' })).not.toThrow();
-  });
-});
-
-// ============================================================================
-// 3. _hideNudgeToast behavioral
-// ============================================================================
-
-function loadHideToast(toastEl) {
-  const sandbox = {
-    document: { getElementById: (id) => (id === 'nudge-toast' ? toastEl : null) },
-    _activeNudge: { nudgeId: 'x', fromUsername: 'y' },
-  };
-  createContext(sandbox);
-  runInContext(
-    'var _activeNudge = { nudgeId: "x", fromUsername: "y" };\n' +
-    fnBody(html, '_hideNudgeToast') + '\n' +
-    'this.__f = _hideNudgeToast; this.__getActive = function() { return _activeNudge; };',
-    sandbox);
-  return { f: sandbox.__f, getActive: sandbox.__getActive };
-}
-
-describe('nudge toast -- _hideNudgeToast', () => {
-  it('hides the toast + clears _activeNudge', () => {
-    const toast = { style: { display: 'block' } };
-    const { f, getActive } = loadHideToast(toast);
-    f();
-    expect(toast.style.display).toBe('none');
-    expect(getActive()).toBe(null);
-  });
-
-  it('tolerates a missing toast root (no throw)', () => {
-    const { f } = loadHideToast(null);
-    expect(() => f()).not.toThrow();
-  });
-});
-
-// ============================================================================
-// 4. _playNudgeChime behavioral
-// ============================================================================
-
-describe('nudge toast -- _playNudgeChime', () => {
-  it('tolerates absent AudioContext (no throw, silent)', () => {
-    const sandbox = { window: {} };
-    createContext(sandbox);
-    runInContext(fnBody(html, '_playNudgeChime') + '\nthis.__f = _playNudgeChime;', sandbox);
-    expect(() => sandbox.__f()).not.toThrow();
-  });
-
-  it('creates oscillator + gain when AudioContext exists', () => {
-    let oscStarted = false;
-    let oscStopped = false;
-    function FakeAC() {
-      this.currentTime = 0;
-      this.destination = {};
-      this.createOscillator = function () {
-        return {
-          type: '', frequency: { value: 0 },
-          connect: () => {},
-          start: () => { oscStarted = true; },
-          stop: () => { oscStopped = true; }
-        };
-      };
-      this.createGain = function () {
-        return {
-          gain: {
-            setValueAtTime: () => {},
-            linearRampToValueAtTime: () => {},
-            exponentialRampToValueAtTime: () => {}
-          },
-          connect: () => {}
-        };
-      };
-    }
-    const sandbox = { window: { AudioContext: FakeAC } };
-    createContext(sandbox);
-    runInContext(fnBody(html, '_playNudgeChime') + '\nthis.__f = _playNudgeChime;', sandbox);
-    sandbox.__f();
-    expect(oscStarted).toBe(true);
-    expect(oscStopped).toBe(true);
-  });
-});
-
-// ============================================================================
-// 5. _sendNudgeReply behavioral
-// ============================================================================
-
-function loadSendReply({ activeNudge, replyText, fetchMock, sendMessageMock, token = 'TOK' }) {
-  const sentMessages = [];
-  const fetches = [];
-  const els = {
-    'nudge-toast': { style: { display: 'block' } },
-    'nudge-toast-reply': { value: replyText },
-    'nudge-toast-send': { disabled: false },
-    'nudge-toast-from': { textContent: '' },
-    'nudge-toast-text': { textContent: '' },
-  };
-  const sandbox = {
-    document: { getElementById: (id) => els[id] || null },
-    _activeNudge: activeNudge,
-    _classroomBoardHandle: sendMessageMock ? { sendMessage: (m) => sentMessages.push(m) } : null,
-    window: {
-      ROSTER_SERVICE_URL: 'https://x',
-      rosterClient: { token: () => token },
-    },
-    fetch: fetchMock || ((url, opts) => { fetches.push({ url, opts }); return Promise.resolve({ json: async () => ({ ok: true }) }); }),
-    JSON,
-    String,
-    setTimeout: (fn) => fn(),
-  };
-  createContext(sandbox);
-  runInContext(
-    'var _activeNudge = ' + JSON.stringify(activeNudge) + ';\n' +
-    fnBody(html, '_hideNudgeToast') + '\n' +
-    fnBody(html, '_sendNudgeReply') + '\n' +
-    'this.__f = _sendNudgeReply;',
-    sandbox);
-  return { f: sandbox.__f, sentMessages, fetches, els };
-}
-
-describe('nudge toast -- _sendNudgeReply', () => {
-  it('sends WS message + POSTs to roster when text is non-empty', async () => {
-    const { f, sentMessages, fetches } = loadSendReply({
-      activeNudge: { nudgeId: 'n1', fromUsername: 'teacher' },
-      replyText: 'On it!',
-      sendMessageMock: true,
-    });
-    await f();
-    expect(sentMessages.length).toBe(1);
-    expect(sentMessages[0].type).toBe('classroom_student_nudge_reply');
-    expect(sentMessages[0].nudgeId).toBe('n1');
-    expect(sentMessages[0].text).toBe('On it!');
-    expect(fetches.length).toBe(1);
-    expect(fetches[0].url).toMatch(/\/student\/nudge-reply$/);
-    expect(fetches[0].opts.method).toBe('POST');
-  });
-
-  it('no-ops when text is empty / whitespace-only', async () => {
-    const { f, sentMessages, fetches } = loadSendReply({
-      activeNudge: { nudgeId: 'n1', fromUsername: 'teacher' },
-      replyText: '   ',
-      sendMessageMock: true,
-    });
-    await f();
-    expect(sentMessages.length).toBe(0);
-    expect(fetches.length).toBe(0);
-  });
-
-  it('truncates text > 280 chars before sending', async () => {
-    const longText = 'x'.repeat(400);
-    const { f, sentMessages } = loadSendReply({
-      activeNudge: { nudgeId: 'n1', fromUsername: 'teacher' },
-      replyText: longText,
-      sendMessageMock: true,
-    });
-    await f();
-    expect(sentMessages[0].text.length).toBe(280);
-  });
-
-  it('skips WS + POST when _activeNudge is null', async () => {
-    const { f, sentMessages, fetches } = loadSendReply({
-      activeNudge: null,
-      replyText: 'hi',
-      sendMessageMock: true,
-    });
-    await f();
-    expect(sentMessages.length).toBe(0);
-    expect(fetches.length).toBe(0);
-  });
-
-  it('hides the toast after sending', async () => {
-    const { f, els } = loadSendReply({
-      activeNudge: { nudgeId: 'n1', fromUsername: 't' },
-      replyText: 'reply',
-      sendMessageMock: true,
-    });
-    await f();
-    expect(els['nudge-toast'].style.display).toBe('none');
-  });
-});
-
-// ============================================================================
-// 6. CSS shape
-// ============================================================================
-
-describe('nudge toast -- CSS', () => {
-  it('toast is position:fixed in the top-right corner', () => {
-    expect(html).toMatch(/#nudge-toast\s*\{[\s\S]*?position:\s*fixed;\s*top:[\s\S]*?right:/);
-  });
-
-  it('send button styling is present', () => {
-    expect(html).toMatch(/#nudge-toast\s+\.nt-send/);
+  it('send button hover + disabled styles are present', () => {
+    expect(html).toMatch(/\.nudge-toast\s+\.nt-send:hover/);
+    expect(html).toMatch(/\.nudge-toast\s+\.nt-send:disabled/);
   });
 });

@@ -1181,34 +1181,47 @@
            bootstrap IIFE and removed on any non-reload exit path. */
         html.view-as-loading body { visibility: hidden; }
 
-        /* Nudge toast (P3 of TEACHER_STUDENT_CONSOLE_SPEC.md §6). Hidden
-           until a classroom_teacher_nudge WS message arrives. */
-        #nudge-toast {
+        /* Nudge toast stack (T2 of P6 BUILD). Container positions
+           itself; individual toasts are children stacked with flex column +
+           gap. The MAX_NUDGE_STACK cap is enforced in JS, not CSS. */
+        #nudge-toast-stack {
           position: fixed; top: 60px; right: 18px; z-index: 9500;
+          display: flex; flex-direction: column; gap: 10px;
           width: 320px; max-width: 88vw;
+          pointer-events: none;             /* container is a layout shell only -- children re-enable */
+        }
+        .nudge-toast {
+          pointer-events: auto;
           background: #fffbe6; color: #2a2520;
           border: 1px solid #d97706; border-radius: 8px;
           box-shadow: 0 6px 20px rgba(0,0,0,0.22);
           padding: 12px 14px;
           font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
+          /* Subtle slide-in so successive arrivals feel sequenced.
+             Falls back gracefully if animations are off. */
+          animation: nudge-slide-in 180ms ease-out;
         }
-        #nudge-toast .nt-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-        #nudge-toast .nt-from-label { color: #92400e; font-weight: 700; letter-spacing: 0.08em; font-size: 10px; }
-        #nudge-toast .nt-from-name { color: #92400e; }
-        #nudge-toast .nt-close { margin-left: auto; background: transparent; border: 0; font-size: 18px; cursor: pointer; color: #92400e; line-height: 1; padding: 0 4px; }
-        #nudge-toast .nt-text { margin: 4px 0 8px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
-        #nudge-toast .nt-reply { display: flex; gap: 6px; }
-        #nudge-toast .nt-reply textarea {
+        @keyframes nudge-slide-in {
+          from { transform: translateX(20px); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+        .nudge-toast .nt-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .nudge-toast .nt-from-label { color: #92400e; font-weight: 700; letter-spacing: 0.08em; font-size: 10px; }
+        .nudge-toast .nt-from-name { color: #92400e; }
+        .nudge-toast .nt-close { margin-left: auto; background: transparent; border: 0; font-size: 18px; cursor: pointer; color: #92400e; line-height: 1; padding: 0 4px; }
+        .nudge-toast .nt-text { margin: 4px 0 8px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+        .nudge-toast .nt-reply { display: flex; gap: 6px; }
+        .nudge-toast .nt-reply textarea {
           flex: 1; resize: vertical; min-height: 36px; max-height: 80px;
           border: 1px solid #d97706; border-radius: 4px; padding: 6px;
           font: inherit; box-sizing: border-box;
         }
-        #nudge-toast .nt-send {
+        .nudge-toast .nt-send {
           padding: 6px 10px; background: #d97706; color: #fff;
           border: 0; border-radius: 4px; cursor: pointer; font: inherit; font-weight: 700;
         }
-        #nudge-toast .nt-send:hover { background: #92400e; }
-        #nudge-toast .nt-send:disabled { background: #e5d3a8; cursor: not-allowed; }
+        .nudge-toast .nt-send:hover { background: #92400e; }
+        .nudge-toast .nt-send:disabled { background: #e5d3a8; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -1248,21 +1261,24 @@
   </div>
 </div>
 
-<!-- Nudge toast (P3 of TEACHER_STUDENT_CONSOLE_SPEC.md §6). Hidden by
-     default; revealed by _showNudgeToast when a classroom_teacher_nudge
-     WS message arrives. -->
-<div id="nudge-toast" style="display:none" aria-live="polite">
-  <div class="nt-header">
-    <span class="nt-from-label">FROM</span>
-    <strong class="nt-from-name" id="nudge-toast-from">Mr. Colson</strong>
-    <button type="button" class="nt-close" id="nudge-toast-close" aria-label="Dismiss">&times;</button>
+<!-- Nudge toast stack (T2 of P6 BUILD). Container holds up to
+     MAX_NUDGE_STACK live toasts; the template is cloned per arrival. -->
+<div id="nudge-toast-stack" aria-live="polite"></div>
+
+<template id="nudge-toast-template">
+  <div class="nudge-toast" role="status">
+    <div class="nt-header">
+      <span class="nt-from-label">FROM</span>
+      <strong class="nt-from-name">Mr. Colson</strong>
+      <button type="button" class="nt-close" aria-label="Dismiss">&times;</button>
+    </div>
+    <p class="nt-text"></p>
+    <div class="nt-reply">
+      <textarea maxlength="280" rows="2" placeholder="Reply (optional, 280 chars max)..."></textarea>
+      <button type="button" class="nt-send">Send</button>
+    </div>
   </div>
-  <p class="nt-text" id="nudge-toast-text"></p>
-  <div class="nt-reply">
-    <textarea id="nudge-toast-reply" maxlength="280" rows="2" placeholder="Reply (optional, 280 chars max)..."></textarea>
-    <button type="button" class="nt-send" id="nudge-toast-send">Send</button>
-  </div>
-</div>
+</template>
 
 <div id="boot-overlay">
   <div class="boot-monitor">
@@ -4073,6 +4089,16 @@ try {
 // the toast + plays a soft chime. Reply rides the same WS connection back
 // to the teacher's cockpit AND posts to roster-server for the log row.
 
+// -- P3+T2 (P6): stacked nudge toasts --
+// Stack semantics: up to MAX_NUDGE_STACK toasts co-exist; oldest
+// drops on overflow. Each toast has its own DOM node + own reply
+// textarea + own close handler. Chime plays for every arrival.
+
+var MAX_NUDGE_STACK = 4;
+// Map keyed by nudgeId; each value:
+//   { fromUsername: string, toastEl: HTMLElement, createdAt: number }
+var _activeNudges = new Map();
+
 // Soft chime helper. Single short sine-wave tone via Web Audio API; mirrors
 // the TI-84 keystroke beep at low volume. Tolerates missing AudioContext.
 function _playNudgeChime() {
@@ -4092,54 +4118,95 @@ function _playNudgeChime() {
   } catch (_) { /* audio disabled / context unavailable -> silent */ }
 }
 
-// Active nudge state (single nudge at a time in P3; future P3.1 may stack).
-var _activeNudge = null;
-
 function _showNudgeToast(payload) {
   // payload: { nudgeId, text, fromUsername, ts }
-  var toast = document.getElementById('nudge-toast');
-  if (!toast) return;
-  _activeNudge = {
-    nudgeId: (payload && payload.nudgeId) || '',
-    fromUsername: (payload && payload.fromUsername) || ''
-  };
-  var fromEl = document.getElementById('nudge-toast-from');
-  var textEl = document.getElementById('nudge-toast-text');
-  var replyEl = document.getElementById('nudge-toast-reply');
-  var sendBtn = document.getElementById('nudge-toast-send');
-  if (fromEl) fromEl.textContent = _activeNudge.fromUsername || 'Teacher';
+  var container = document.getElementById('nudge-toast-stack');
+  var tmpl = document.getElementById('nudge-toast-template');
+  if (!container || !tmpl) return;
+
+  var nudgeId = (payload && payload.nudgeId) || ('nudge-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7));
+
+  // Idempotency: if the same nudgeId is already showing (server retry,
+  // double-deliver), no-op. The server's recentNudges TTL prevents the
+  // realistic case, but defense-in-depth.
+  if (_activeNudges.has(nudgeId)) return;
+
+  // Clone the template.
+  var clone = tmpl.content.firstElementChild.cloneNode(true);
+  clone.setAttribute('data-nudge-id', nudgeId);
+  var fromEl = clone.querySelector('.nt-from-name');
+  var textEl = clone.querySelector('.nt-text');
+  var closeBtn = clone.querySelector('.nt-close');
+  var sendBtn = clone.querySelector('.nt-send');
+  if (fromEl) fromEl.textContent = (payload && payload.fromUsername) || 'Teacher';
   if (textEl) textEl.textContent = (payload && payload.text) || '';
-  if (replyEl) replyEl.value = '';
-  if (sendBtn) sendBtn.disabled = false;
-  toast.style.display = 'block';
+
+  // Per-toast handlers -- close + send are closures over THIS nudgeId.
+  if (closeBtn) closeBtn.addEventListener('click', function () { _hideNudgeToastById(nudgeId); });
+  if (sendBtn) sendBtn.addEventListener('click', function () { _sendNudgeReplyForId(nudgeId); });
+
+  // Register state BEFORE appending so an overflow-eviction does not race the new toast.
+  _activeNudges.set(nudgeId, {
+    fromUsername: (payload && payload.fromUsername) || '',
+    toastEl: clone,
+    createdAt: Date.now(),
+  });
+
+  container.appendChild(clone);
+
+  // Overflow: drop the OLDEST until size <= MAX_NUDGE_STACK.
+  while (_activeNudges.size > MAX_NUDGE_STACK) {
+    var oldestId = null;
+    var oldestTs = Infinity;
+    _activeNudges.forEach(function (v, k) {
+      if (v.createdAt < oldestTs) { oldestTs = v.createdAt; oldestId = k; }
+    });
+    if (oldestId == null) break;
+    console.warn('[nudge-stack] dropping oldest nudge', oldestId, 'to make room');
+    _hideNudgeToastById(oldestId);
+  }
+
   _playNudgeChime();
 }
 
-function _hideNudgeToast() {
-  var toast = document.getElementById('nudge-toast');
-  if (!toast) return;
-  toast.style.display = 'none';
-  _activeNudge = null;
+// Backward-compatible: existing callers that did _hideNudgeToast()
+// (with no arg) used to hide the singleton. Preserve that exact
+// shape -- hide ALL active toasts when called with no args.
+function _hideNudgeToast(nudgeId) {
+  if (typeof nudgeId === 'string') return _hideNudgeToastById(nudgeId);
+  // No-arg: clear everything (matches prior singleton semantics).
+  var ids = Array.from(_activeNudges.keys());
+  ids.forEach(_hideNudgeToastById);
 }
 
-async function _sendNudgeReply() {
-  if (!_activeNudge) return;
-  var textEl = document.getElementById('nudge-toast-reply');
-  var rawText = textEl ? String(textEl.value || '').trim() : '';
+function _hideNudgeToastById(nudgeId) {
+  var entry = _activeNudges.get(nudgeId);
+  if (!entry) return;
+  try { entry.toastEl.parentNode && entry.toastEl.parentNode.removeChild(entry.toastEl); } catch (_) {}
+  _activeNudges.delete(nudgeId);
+}
+
+async function _sendNudgeReplyForId(nudgeId) {
+  var entry = _activeNudges.get(nudgeId);
+  if (!entry) return;
+  var replyEl = entry.toastEl.querySelector('.nt-reply textarea');
+  var rawText = replyEl ? String(replyEl.value || '').trim() : '';
   if (!rawText) return;
   if (rawText.length > 280) rawText = rawText.slice(0, 280);
-  var sendBtn = document.getElementById('nudge-toast-send');
+  var sendBtn = entry.toastEl.querySelector('.nt-send');
   if (sendBtn) sendBtn.disabled = true;
+
   // 1) Live delivery via the existing classroom WS.
   try {
     if (typeof _classroomBoardHandle !== 'undefined' && _classroomBoardHandle && typeof _classroomBoardHandle.sendMessage === 'function') {
       _classroomBoardHandle.sendMessage({
         type: 'classroom_student_nudge_reply',
-        nudgeId: _activeNudge.nudgeId,
-        text: rawText
+        nudgeId: nudgeId,
+        text: rawText,
       });
     }
   } catch (_) {}
+
   // 2) Log to roster-server.
   try {
     var base = window.ROSTER_SERVICE_URL;
@@ -4149,26 +4216,27 @@ async function _sendNudgeReply() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({
-          parentNudgeId: _activeNudge.nudgeId,
-          recipientUsername: _activeNudge.fromUsername,
-          text: rawText
-        })
+          parentNudgeId: nudgeId,
+          recipientUsername: entry.fromUsername,
+          text: rawText,
+        }),
       });
     }
   } catch (_) {}
-  _hideNudgeToast();
+  _hideNudgeToastById(nudgeId);
 }
 
-try {
-  document.addEventListener('DOMContentLoaded', function () {
-    try {
-      var closeBtn = document.getElementById('nudge-toast-close');
-      if (closeBtn) closeBtn.addEventListener('click', _hideNudgeToast);
-      var sendBtn = document.getElementById('nudge-toast-send');
-      if (sendBtn) sendBtn.addEventListener('click', _sendNudgeReply);
-    } catch (_) {}
+// Backward-compatible name -- some older code paths or tests may call it.
+async function _sendNudgeReply() {
+  // No-arg call: send the OLDEST active reply if the user filled it in.
+  // Matches the prior singleton semantics for code that hasn't migrated.
+  var oldestId = null;
+  var oldestTs = Infinity;
+  _activeNudges.forEach(function (v, k) {
+    if (v.createdAt < oldestTs) { oldestTs = v.createdAt; oldestId = k; }
   });
-} catch (_) {}
+  if (oldestId) return _sendNudgeReplyForId(oldestId);
+}
 
 // arrives. Guides the summer self-pacer 1.1 -> onward; during the school year
 // lessons open on their dates so the gate only blocks jumping ahead. Teachers

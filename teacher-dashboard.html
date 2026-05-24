@@ -325,6 +325,66 @@
     .tsc-action-btn:not([disabled]):hover { background: var(--sg-bg-card); border-color: var(--sg-accent); }
     .grades-row-clickable { cursor: pointer; }
     .grades-row-clickable:hover { background: rgba(122, 74, 31, 0.06); }
+
+    /* T1 (P6 BUILD section 4.1): Remediation modal -- shared shell that T3's
+       future modals (if any) can also adopt. Variant of the drawer's palette. */
+    .tsc-modal { position: fixed; inset: 0; z-index: 250; display: none; }
+    .tsc-modal.tsc-modal-open { display: block; }
+    .tsc-modal-overlay {
+      position: absolute; inset: 0;
+      background: rgba(42, 37, 32, 0.42);
+    }
+    .tsc-modal-panel {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 440px; max-width: 92vw; max-height: 86vh;
+      background: var(--sg-bg-card);
+      border: 1px solid var(--sg-border); border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(42, 37, 32, 0.24);
+      padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 8px;
+      overflow-y: auto;
+    }
+    .tsc-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .tsc-modal-header h3 { margin: 0; color: var(--sg-accent); font-size: 1rem; }
+    .tsc-modal-close {
+      background: transparent; border: 0; font-size: 1.4rem; line-height: 1;
+      color: var(--sg-text-dim); cursor: pointer; padding: 0 4px;
+    }
+    .tsc-modal-desc { margin: 4px 0 8px; color: var(--sg-text-dim); font-size: 0.85rem; }
+    .tsc-modal-panel label { font-size: 0.78rem; color: var(--sg-text-dim); margin-top: 4px; }
+    .tsc-modal-panel input, .tsc-modal-panel textarea {
+      font: inherit; padding: 6px 8px;
+      border: 1px solid var(--sg-border); border-radius: 4px;
+      background: var(--sg-bg);
+    }
+    .tsc-modal-status { min-height: 18px; font-size: 0.82rem; color: var(--sg-text-dim); }
+    .tsc-modal-status.is-error { color: #b91c1c; }
+    .tsc-modal-status.is-success { color: #15803d; }
+    .tsc-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+    .tsc-modal-cancel, .tsc-modal-confirm {
+      padding: 8px 14px; border: 1px solid var(--sg-border); border-radius: 6px;
+      font: inherit; cursor: pointer; background: var(--sg-bg);
+    }
+    .tsc-modal-confirm { background: var(--sg-accent); color: #fff; border-color: var(--sg-accent); }
+    .tsc-modal-confirm[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+    /* T3 (P6 BUILD section 4.2): Lesson Unlocks drawer section */
+    .tsc-unlocks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.85rem; }
+    .tsc-unlocks-list li {
+      border: 1px solid var(--sg-border); border-radius: 6px;
+      padding: 8px 10px; background: var(--sg-bg);
+      display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center;
+    }
+    .tsc-unlocks-list .tsc-unlock-key { font-family: var(--sg-mono, monospace); color: var(--sg-accent); }
+    .tsc-unlocks-list .tsc-unlock-meta { color: var(--sg-text-dim); font-size: 0.78rem; }
+    .tsc-unlocks-list .tsc-unlock-revoke {
+      padding: 4px 10px; font: inherit; font-size: 0.78rem;
+      background: transparent; color: #b91c1c;
+      border: 1px solid #fca5a5; border-radius: 4px; cursor: pointer;
+    }
+    .tsc-unlocks-list .tsc-unlock-revoke:hover { background: #fee2e2; }
+    .tsc-unlocks-list .tsc-unlock-empty { color: var(--sg-text-dim); font-style: italic; }
   </style>
 </head>
 <body>
@@ -497,14 +557,46 @@
           <h3 class="tsc-section-title">Recent Submissions</h3>
           <ul id="tsc-recent-list" class="tsc-recent-list"></ul>
         </section>
+        <section class="tsc-section" id="tsc-section-unlocks">
+          <h3 class="tsc-section-title">Lesson Unlocks</h3>
+          <ul id="tsc-unlocks-list" class="tsc-unlocks-list"></ul>
+        </section>
         <nav class="tsc-actions" aria-label="Console actions">
           <button type="button" class="tsc-action-btn" id="tsc-action-view-as" title="Open this student's Desk in a new tab (read-only)">View as student</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-nudge" disabled title="Phase 3 (Live only)">Send nudge</button>
-          <button type="button" class="tsc-action-btn" id="tsc-action-remediation" disabled title="Phase 4 wiring">Apply remediation</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-remediation" title="Open the remediation form for this student">Apply remediation</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-gate" disabled title="Phase 5">Override gate</button>
         </nav>
       </div>
     </aside>
+  </div>
+
+  <!-- T1 (P6 BUILD section 4.1): Apply Remediation modal. Hidden until the
+       drawer's "Apply remediation" button is clicked. -->
+  <div id="tsc-remediation-modal" class="tsc-modal" aria-hidden="true">
+    <div class="tsc-modal-overlay" data-tsc-modal-close="overlay"></div>
+    <div class="tsc-modal-panel" role="dialog" aria-labelledby="tsc-remediation-title">
+      <header class="tsc-modal-header">
+        <h3 id="tsc-remediation-title">Apply remediation</h3>
+        <button type="button" class="tsc-modal-close" data-tsc-modal-close="button" aria-label="Close">&times;</button>
+      </header>
+      <p class="tsc-modal-desc">Propose a remediation assignment for
+         <strong id="tsc-remediation-student-name">Student</strong>.
+         Status will be <code>proposed</code>; approve from the
+         Remediation tab to push it to the student.</p>
+      <label for="tsc-rem-unit">Unit (required, e.g. <code>U3</code>):</label>
+      <input type="text" id="tsc-rem-unit" maxlength="8" pattern="^U\d+$" title='Format like "U3"' placeholder="U3">
+      <label for="tsc-rem-skill">Skill code (required, e.g. <code>3.A</code>):</label>
+      <input type="text" id="tsc-rem-skill" maxlength="16" placeholder="3.A">
+      <label for="tsc-rem-notes">Notes (optional):</label>
+      <textarea id="tsc-rem-notes" rows="3" maxlength="500"
+                placeholder="Free-form context for the student or for the approval review."></textarea>
+      <div class="tsc-modal-status" id="tsc-remediation-status"></div>
+      <div class="tsc-modal-actions">
+        <button type="button" class="tsc-modal-cancel" data-tsc-modal-close="button">Cancel</button>
+        <button type="button" class="tsc-modal-confirm" id="tsc-remediation-confirm">Propose</button>
+      </div>
+    </div>
   </div>
 
   <!-- Sibling config; sets window.ROSTER_SERVICE_URL -->
@@ -1300,12 +1392,17 @@
     // button click handler (wired once at script-eval) can read it.
     var _tscCurrentStudentId = null;
 
+    // P6 section 4: full stub of the currently-open drawer (sibling to
+    // _tscCurrentStudentId from P1). Populated by openTscDrawer.
+    var _tscCurrentStudentStub = null;
+
     function openTscDrawer(stub) {
       var drawer = $('tsc-drawer');
       if (!drawer) return;
 
       var reqId = ++_tscReqSeq;
       _tscCurrentStudentId = stub && stub.studentId ? stub.studentId : null;
+      _tscCurrentStudentStub = stub || null;
 
       // Populate header from the stub immediately so the user sees something.
       $('tsc-drawer-title').textContent = stub.realName || stub.username || 'Student';
@@ -1313,9 +1410,13 @@
         (stub.username ? '@' + stub.username : '') +
         (stub.section ? ' -- ' + stub.section : '');
 
-      // Body: loading state.
+      // Body: loading state. Codex P6 MAJOR fold: clear unlocks-list too so
+      // stale rows from a prior student do not linger between the open and
+      // the resolution of the /lesson-unlocks fetch.
       $('tsc-grade-card').textContent = 'Loading...';
       $('tsc-recent-list').innerHTML = '';
+      var unlocksList = $('tsc-unlocks-list');
+      if (unlocksList) unlocksList.innerHTML = '';
 
       drawer.setAttribute('aria-hidden', 'false');
       drawer.classList.add('tsc-open');
@@ -1328,11 +1429,12 @@
 
       Promise.allSettled([
         fetch(base + '/teacher/student/' + sid + '/grade', { headers: headers }).then(jsonOrErr),
-        fetch(base + '/teacher/student/' + sid + '/recent?limit=20', { headers: headers }).then(jsonOrErr)
+        fetch(base + '/teacher/student/' + sid + '/recent?limit=20', { headers: headers }).then(jsonOrErr),
+        fetch(base + '/teacher/student/' + sid + '/lesson-unlocks', { headers: headers }).then(jsonOrErr)
       ]).then(function(results) {
         // Stale-result guard.
         if (reqId !== _tscReqSeq) return;
-        var gradeRes = results[0], recentRes = results[1];
+        var gradeRes = results[0], recentRes = results[1], unlocksRes = results[2];
         if (gradeRes.status === 'fulfilled') {
           renderTscGrade(gradeRes.value);
         } else {
@@ -1344,6 +1446,12 @@
         } else {
           $('tsc-recent-list').innerHTML = '<li class="dim">Error loading recent submissions.</li>';
         }
+        if (unlocksRes.status === 'fulfilled') {
+          renderTscUnlocks(unlocksRes.value);
+        } else {
+          // unlocks endpoint may 503 if migration not run -- silently render empty state.
+          renderTscUnlocks({ ok: false, lessonKeys: [], rows: [] });
+        }
       });
     }
 
@@ -1352,6 +1460,7 @@
       if (!drawer) return;
       // Codex MAJOR fold: invalidate any in-flight fetches.
       _tscReqSeq++;
+      _tscCurrentStudentStub = null;
       drawer.classList.remove('tsc-open');
       drawer.setAttribute('aria-hidden', 'true');
     }
@@ -1377,6 +1486,173 @@
     var __viewAsBtn = document.getElementById('tsc-action-view-as');
     if (__viewAsBtn) __viewAsBtn.addEventListener('click', function() {
       _openViewAsTab(_tscCurrentStudentId);
+    });
+
+    // T3 (P6 BUILD section 4.2): Render active lesson unlocks in the drawer section.
+    function renderTscUnlocks(payload) {
+      var el = $('tsc-unlocks-list');
+      if (!el) return;
+      el.innerHTML = '';
+      if (!payload || !payload.ok || !payload.rows || payload.rows.length === 0) {
+        el.innerHTML = '<li class="tsc-unlock-empty">No active overrides.</li>';
+        return;
+      }
+      payload.rows.forEach(function (row) {
+        var li = document.createElement('li');
+        var key = document.createElement('span');
+        key.className = 'tsc-unlock-key';
+        key.textContent = row.lesson_key;
+        var meta = document.createElement('span');
+        meta.className = 'tsc-unlock-meta';
+        var when = (row.unlocked_at || '').slice(0, 10);
+        var by = row.unlocked_by || 'teacher';
+        meta.textContent = when + ' \xB7 by ' + by + (row.reason ? ' \xB7 ' + row.reason : '');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tsc-unlock-revoke';
+        btn.textContent = 'Revoke';
+        btn.addEventListener('click', function () { revokeUnlock(row, li); });
+        li.appendChild(key); li.appendChild(meta); li.appendChild(btn);
+        el.appendChild(li);
+      });
+    }
+
+    // T3 (P6 BUILD section 4.2): Revoke a single lesson unlock row.
+    async function revokeUnlock(row, liEl) {
+      if (!_tscCurrentStudentStub) return;
+      // Confirm before destructive op.
+      if (!window.confirm('Revoke override for lesson ' + row.lesson_key + '?')) return;
+      try {
+        var res = await fetch(svcUrl() + '/teacher/lesson-unlock/revoke', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, teacherAuthHeaders()),
+          body: JSON.stringify({
+            studentUsername: _tscCurrentStudentStub.username,
+            lessonKey: row.lesson_key,
+          }),
+        });
+        var j = await res.json().catch(function () { return {}; });
+        if (!res.ok || !j.ok) {
+          showError('Revoke failed: ' + (j && j.error ? j.error : ('HTTP ' + res.status)));
+          return;
+        }
+        // Optimistic: fade the row out, then remove from DOM.
+        liEl.style.opacity = '0.4';
+        liEl.style.pointerEvents = 'none';
+        setTimeout(function () {
+          try { liEl.remove(); } catch (_) {}
+          // Codex P6 MINOR fold: if this was the last visible unlock, re-render
+          // the empty-state placeholder so the section does not end up blank.
+          var listEl = $('tsc-unlocks-list');
+          if (listEl && listEl.children.length === 0) {
+            listEl.innerHTML = '<li class="tsc-unlock-empty">No active overrides.</li>';
+          }
+        }, 240);
+      } catch (err) {
+        showError('Network error revoking: ' + (err && err.message ? err.message : 'unknown'));
+      }
+    }
+
+    // T1 (P6 BUILD section 4.1): Apply Remediation modal handlers.
+
+    function openRemediationModal() {
+      var modal = $('tsc-remediation-modal');
+      if (!modal || !_tscCurrentStudentStub) return;
+      // Populate the header with the student name from the drawer stub.
+      $('tsc-remediation-student-name').textContent =
+        _tscCurrentStudentStub.realName || _tscCurrentStudentStub.username || 'Student';
+      // Reset fields + status.
+      $('tsc-rem-unit').value = '';
+      $('tsc-rem-skill').value = '';
+      $('tsc-rem-notes').value = '';
+      var statusEl = $('tsc-remediation-status');
+      statusEl.textContent = '';
+      statusEl.classList.remove('is-error', 'is-success');
+      $('tsc-remediation-confirm').disabled = false;
+      modal.classList.add('tsc-modal-open');
+      modal.setAttribute('aria-hidden', 'false');
+      setTimeout(function () { $('tsc-rem-unit').focus(); }, 30);
+    }
+
+    function closeRemediationModal() {
+      var modal = $('tsc-remediation-modal');
+      if (!modal) return;
+      modal.classList.remove('tsc-modal-open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    async function submitRemediationProposal() {
+      if (!_tscCurrentStudentStub) return;
+      var unit = $('tsc-rem-unit').value.trim();
+      var skill = $('tsc-rem-skill').value.trim();
+      var notes = $('tsc-rem-notes').value.trim();
+      var statusEl = $('tsc-remediation-status');
+      statusEl.classList.remove('is-error', 'is-success');
+      if (!unit) { statusEl.textContent = 'Unit is required.'; statusEl.classList.add('is-error'); return; }
+      if (!/^U\d+$/.test(unit)) { statusEl.textContent = 'Unit must look like "U3".'; statusEl.classList.add('is-error'); return; }
+      if (!skill) { statusEl.textContent = 'Skill code is required.'; statusEl.classList.add('is-error'); return; }
+
+      var confirmBtn = $('tsc-remediation-confirm');
+      confirmBtn.disabled = true;
+      statusEl.textContent = 'Submitting...';
+
+      try {
+        var res = await fetch(svcUrl() + '/remediation/propose', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, teacherAuthHeaders()),
+          body: JSON.stringify({
+            studentId: _tscCurrentStudentStub.studentId,
+            unit: unit,
+            skill: skill,
+            notes: notes || undefined,
+            proposedBy: 'teacher-dashboard',
+          }),
+        });
+        if (res.status === 503) {
+          var j503 = await res.json().catch(function () { return {}; });
+          statusEl.textContent = (j503 && j503.error) || 'Remediation table not provisioned (run migration 0004).';
+          statusEl.classList.add('is-error');
+          confirmBtn.disabled = false;
+          return;
+        }
+        var j = await res.json().catch(function () { return {}; });
+        if (!res.ok || !j.ok) {
+          statusEl.textContent = (j && j.error) || ('HTTP ' + res.status);
+          statusEl.classList.add('is-error');
+          confirmBtn.disabled = false;
+          return;
+        }
+        statusEl.textContent = 'Proposed (assignment ' + (j.assignmentId || 'created') + ').';
+        statusEl.classList.add('is-success');
+        // Auto-close after 1.4 s so the user reads the success line.
+        setTimeout(closeRemediationModal, 1400);
+      } catch (err) {
+        statusEl.textContent = 'Network error: ' + (err && err.message ? err.message : 'unknown');
+        statusEl.classList.add('is-error');
+        confirmBtn.disabled = false;
+      }
+    }
+
+    // Wire the remediation modal button + close affordances on DOMContentLoaded.
+    document.addEventListener('DOMContentLoaded', function () {
+      var btn = $('tsc-action-remediation');
+      if (btn) btn.addEventListener('click', openRemediationModal);
+      var confirm = $('tsc-remediation-confirm');
+      if (confirm) confirm.addEventListener('click', submitRemediationProposal);
+      document.querySelectorAll('#tsc-remediation-modal [data-tsc-modal-close]')
+        .forEach(function (el) { el.addEventListener('click', closeRemediationModal); });
+      // ESC closes the modal when open. The capture-phase listener fires BEFORE
+      // the bubble-phase drawer ESC handler, and stopPropagation prevents the
+      // drawer from also closing behind the modal.
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          var modal = $('tsc-remediation-modal');
+          if (modal && modal.classList.contains('tsc-modal-open')) {
+            e.stopPropagation();
+            closeRemediationModal();
+          }
+        }
+      }, true);
     });
 
     // Render session status on page load (after roster-client.js has run).

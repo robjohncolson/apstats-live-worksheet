@@ -92,6 +92,65 @@ export function mountLessonUnlock(app, { db, lessonUnlockDb }) {
     }
   });
 
+  // POST /teacher/lesson-unlock/revoke { studentUsername, lessonKey }
+  // Auth: teacher (x-teacher-secret OR Bearer token resolving to role='teacher').
+  // Flips status from 'active' to 'revoked'. Returns 404 when no active row
+  // exists for that (student, lesson) -- idempotent against already-revoked rows.
+  app.post('/teacher/lesson-unlock/revoke', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    var body = req.body || {};
+    var studentUsername = (typeof body.studentUsername === 'string') ? body.studentUsername.trim() : '';
+    var lessonKey = (typeof body.lessonKey === 'string') ? body.lessonKey.trim() : '';
+    if (!studentUsername || !lessonKey) {
+      return res.status(400).json({ ok: false, error: 'studentUsername + lessonKey required' });
+    }
+    if (!LESSON_KEY_RE.test(lessonKey)) {
+      return res.status(400).json({ ok: false, error: 'lessonKey must match topic format like "1.7" or "5.3"' });
+    }
+
+    // Derive revokedBy from the authenticated teacher token (mirror of POST /teacher/lesson-unlock).
+    var revokedBy = '';
+    var authHeader = req.headers['authorization'] || req.headers['Authorization'] || '';
+    var token = '';
+    if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    }
+    if (token) {
+      try {
+        var sid = verifyToken(token);
+        if (sid) {
+          var { data: rosterRow } = await db.findByStudentId(sid);
+          if (rosterRow) revokedBy = rosterRow.login_username || '';
+        }
+      } catch (_) {}
+    }
+    if (!revokedBy && req.headers['x-teacher-secret']) {
+      revokedBy = 'teacher-secret';
+    }
+    if (!revokedBy) {
+      return res.status(400).json({ ok: false, error: 'could not resolve revokedBy from auth' });
+    }
+
+    try {
+      var { data, error } = await lessonUnlockDb.revokeUnlock({
+        studentUsername, lessonKey, revokedBy,
+      });
+      if (error) {
+        if (error.code === '42P01') return res.status(503).json({ ok: false, error: 'lesson_unlock not provisioned -- run migration 0009' });
+        console.error('POST /teacher/lesson-unlock/revoke error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (!data) {
+        return res.status(404).json({ ok: false, error: 'no active unlock for that (student, lesson)' });
+      }
+      return res.json({ ok: true, row: data });
+    } catch (err) {
+      console.error('POST /teacher/lesson-unlock/revoke throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
+
   // GET /student/lesson-unlocks
   // Auth: student token. Returns caller's OWN active unlocks.
   app.get('/student/lesson-unlocks', async (req, res) => {
