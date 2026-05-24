@@ -1454,6 +1454,11 @@
     var onStateChange = opts.onStateChange || null;
     var mountHue      = (opts.hue != null) ? opts.hue : null;
     var onStartVideo  = (typeof opts.onStartVideo === 'function') ? opts.onStartVideo : null;
+    // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6): caller-supplied raw-
+    // message hook. Fires for every classroom_* message BEFORE _reduce runs.
+    // Used by the Desk to surface 'classroom_teacher_nudge' as a toast, and
+    // by the cockpit to surface 'classroom_student_nudge_reply' as a reply.
+    var onClassroomMessage = (typeof opts.onClassroomMessage === 'function') ? opts.onClassroomMessage : null;
 
     // Ensure the container clips the off-screen pull-down panel.
     if (container.style.position !== 'relative' &&
@@ -2539,6 +2544,12 @@
           return;
         }
         if (msg && msg.type && msg.type.indexOf('classroom_') === 0) {
+          // P3: fire raw-message hook BEFORE _reduce. Caller may inspect
+          // the message and trigger side effects (toast, reply panel)
+          // without polluting the reducer state shape.
+          if (onClassroomMessage) {
+            try { onClassroomMessage(msg); } catch (_) {}
+          }
           applyMessage(msg);
           if (msg.type === 'classroom_live_state' && msg.live === false) {
             if (role !== 'teacher') { _teardownPeer(); }
@@ -2700,7 +2711,25 @@
       // --- v2.1 result screen methods ---
 
       showResultScreen: showResultScreen,
-      hideResultScreen: hideResultScreen
+      hideResultScreen: hideResultScreen,
+
+      // --- P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6) ---
+      // Pass-through send over the board's WS. Used by both the cockpit
+      // (classroom_teacher_nudge) and the student Desk (classroom_student_nudge_reply)
+      // to ride the existing classroom connection without re-implementing
+      // socket management. Codex BLOCKER fold: returns true if the send
+      // actually went out, false if the WS wasn't ready (caller can decide
+      // whether to mark delivery in the audit log).
+      sendMessage: function (payload) {
+        if (ws && ws.readyState === 1) {
+          try { ws.send(JSON.stringify(payload)); return true; } catch (_) { return false; }
+        }
+        return false;
+      },
+
+      // Section is exposed so the cockpit's POST /teacher/nudge body can
+      // include the active section without re-computing it.
+      section: section
     };
 
     return handle;

@@ -1136,6 +1136,35 @@
            the reload lands. The class is set synchronously inside the
            bootstrap IIFE and removed on any non-reload exit path. */
         html.view-as-loading body { visibility: hidden; }
+
+        /* Nudge toast (P3 of TEACHER_STUDENT_CONSOLE_SPEC.md §6). Hidden
+           until a classroom_teacher_nudge WS message arrives. */
+        #nudge-toast {
+          position: fixed; top: 60px; right: 18px; z-index: 9500;
+          width: 320px; max-width: 88vw;
+          background: #fffbe6; color: #2a2520;
+          border: 1px solid #d97706; border-radius: 8px;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+          padding: 12px 14px;
+          font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
+        }
+        #nudge-toast .nt-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        #nudge-toast .nt-from-label { color: #92400e; font-weight: 700; letter-spacing: 0.08em; font-size: 10px; }
+        #nudge-toast .nt-from-name { color: #92400e; }
+        #nudge-toast .nt-close { margin-left: auto; background: transparent; border: 0; font-size: 18px; cursor: pointer; color: #92400e; line-height: 1; padding: 0 4px; }
+        #nudge-toast .nt-text { margin: 4px 0 8px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+        #nudge-toast .nt-reply { display: flex; gap: 6px; }
+        #nudge-toast .nt-reply textarea {
+          flex: 1; resize: vertical; min-height: 36px; max-height: 80px;
+          border: 1px solid #d97706; border-radius: 4px; padding: 6px;
+          font: inherit; box-sizing: border-box;
+        }
+        #nudge-toast .nt-send {
+          padding: 6px 10px; background: #d97706; color: #fff;
+          border: 0; border-radius: 4px; cursor: pointer; font: inherit; font-weight: 700;
+        }
+        #nudge-toast .nt-send:hover { background: #92400e; }
+        #nudge-toast .nt-send:disabled { background: #e5d3a8; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -1149,6 +1178,22 @@
   <span class="vab-meta" id="view-as-banner-meta"></span>
   <span class="vab-readonly">READ-ONLY</span>
   <button type="button" class="vab-exit" id="view-as-exit" aria-label="Exit view-as">Exit</button>
+</div>
+
+<!-- Nudge toast (P3 of TEACHER_STUDENT_CONSOLE_SPEC.md §6). Hidden by
+     default; revealed by _showNudgeToast when a classroom_teacher_nudge
+     WS message arrives. -->
+<div id="nudge-toast" style="display:none" aria-live="polite">
+  <div class="nt-header">
+    <span class="nt-from-label">FROM</span>
+    <strong class="nt-from-name" id="nudge-toast-from">Mr. Colson</strong>
+    <button type="button" class="nt-close" id="nudge-toast-close" aria-label="Dismiss">&times;</button>
+  </div>
+  <p class="nt-text" id="nudge-toast-text"></p>
+  <div class="nt-reply">
+    <textarea id="nudge-toast-reply" maxlength="280" rows="2" placeholder="Reply (optional, 280 chars max)..."></textarea>
+    <button type="button" class="nt-send" id="nudge-toast-send">Send</button>
+  </div>
 </div>
 
 <div id="boot-overlay">
@@ -3841,6 +3886,109 @@ try {
     try {
       var exitBtn = document.getElementById('view-as-exit');
       if (exitBtn) exitBtn.addEventListener('click', _exitViewAs);
+    } catch (_) {}
+  });
+} catch (_) {}
+
+// ── Teacher -> Student Console: nudge toast (P3 of TEACHER_STUDENT_CONSOLE_SPEC.md §6) ──
+// Student-side receiver. A 'classroom_teacher_nudge' WS message arrives via
+// the ClassroomBoard mount's onClassroomMessage callback; this code reveals
+// the toast + plays a soft chime. Reply rides the same WS connection back
+// to the teacher's cockpit AND posts to roster-server for the log row.
+
+// Soft chime helper. Single short sine-wave tone via Web Audio API; mirrors
+// the TI-84 keystroke beep at low volume. Tolerates missing AudioContext.
+function _playNudgeChime() {
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    var ctx = new AC();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  } catch (_) { /* audio disabled / context unavailable -> silent */ }
+}
+
+// Active nudge state (single nudge at a time in P3; future P3.1 may stack).
+var _activeNudge = null;
+
+function _showNudgeToast(payload) {
+  // payload: { nudgeId, text, fromUsername, ts }
+  var toast = document.getElementById('nudge-toast');
+  if (!toast) return;
+  _activeNudge = {
+    nudgeId: (payload && payload.nudgeId) || '',
+    fromUsername: (payload && payload.fromUsername) || ''
+  };
+  var fromEl = document.getElementById('nudge-toast-from');
+  var textEl = document.getElementById('nudge-toast-text');
+  var replyEl = document.getElementById('nudge-toast-reply');
+  var sendBtn = document.getElementById('nudge-toast-send');
+  if (fromEl) fromEl.textContent = _activeNudge.fromUsername || 'Teacher';
+  if (textEl) textEl.textContent = (payload && payload.text) || '';
+  if (replyEl) replyEl.value = '';
+  if (sendBtn) sendBtn.disabled = false;
+  toast.style.display = 'block';
+  _playNudgeChime();
+}
+
+function _hideNudgeToast() {
+  var toast = document.getElementById('nudge-toast');
+  if (!toast) return;
+  toast.style.display = 'none';
+  _activeNudge = null;
+}
+
+async function _sendNudgeReply() {
+  if (!_activeNudge) return;
+  var textEl = document.getElementById('nudge-toast-reply');
+  var rawText = textEl ? String(textEl.value || '').trim() : '';
+  if (!rawText) return;
+  if (rawText.length > 280) rawText = rawText.slice(0, 280);
+  var sendBtn = document.getElementById('nudge-toast-send');
+  if (sendBtn) sendBtn.disabled = true;
+  // 1) Live delivery via the existing classroom WS.
+  try {
+    if (typeof _classroomBoardHandle !== 'undefined' && _classroomBoardHandle && typeof _classroomBoardHandle.sendMessage === 'function') {
+      _classroomBoardHandle.sendMessage({
+        type: 'classroom_student_nudge_reply',
+        nudgeId: _activeNudge.nudgeId,
+        text: rawText
+      });
+    }
+  } catch (_) {}
+  // 2) Log to roster-server.
+  try {
+    var base = window.ROSTER_SERVICE_URL;
+    var token = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+    if (base && token) {
+      await fetch(base + '/student/nudge-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          parentNudgeId: _activeNudge.nudgeId,
+          recipientUsername: _activeNudge.fromUsername,
+          text: rawText
+        })
+      });
+    }
+  } catch (_) {}
+  _hideNudgeToast();
+}
+
+try {
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      var closeBtn = document.getElementById('nudge-toast-close');
+      if (closeBtn) closeBtn.addEventListener('click', _hideNudgeToast);
+      var sendBtn = document.getElementById('nudge-toast-send');
+      if (sendBtn) sendBtn.addEventListener('click', _sendNudgeReply);
     } catch (_) {}
   });
 } catch (_) {}
@@ -10777,6 +10925,15 @@ function _mountClassroomBoard(){
         // v3 P4: render the live doorways dotplot when a vote-with-
         // your-feet event is open in this section.
         _renderDeskDoorwaysTally(summary);
+      },
+      // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6): raw classroom_*
+      // message hook. Surfaces a teacher_nudge as a toast in the corner.
+      // typeof-guarded so existing _mountClassroomBoard tests pass without
+      // needing to inject _showNudgeToast.
+      onClassroomMessage: function(msg) {
+        if (msg && msg.type === 'classroom_teacher_nudge' && typeof _showNudgeToast === 'function') {
+          try { _showNudgeToast(msg); } catch (_) {}
+        }
       }
     });
   } catch (_) {}

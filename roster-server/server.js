@@ -20,6 +20,8 @@ import { mountClass } from './class.js';
 import { mountTeacherStudent } from './teacher.js';
 import { mountRemediation } from './remediation.js';
 import { mountPollArchive } from './poll-archive.js';
+import { mountNudge } from './nudge.js';
+import { createLiveNudgesDb } from './nudge-db.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
@@ -37,7 +39,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -564,6 +566,16 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountPollArchive(app, { pollArchiveDb, db });
   }
 
+  // ── Nudge routes (Phase 3 of TEACHER_STUDENT_CONSOLE_SPEC.md) ─────────────
+  // Needs nudgesDb (data-access wrapper for the new nudges_log table).
+  // Until migrations/0008 is run on Supabase, the DB returns 42P01 and
+  // routes respond 503 "nudges_log not provisioned -- run migration 0008" --
+  // service stays up.
+  const nudgesDb = (typeof nudgesDbOverride !== 'undefined') ? nudgesDbOverride : createLiveNudgesDb();
+  if (nudgesDb && db) {
+    mountNudge(app, { db, nudgesDb });
+  }
+
   return app;
 }
 
@@ -740,6 +752,14 @@ if (process.env.NODE_ENV !== 'test') {
     } catch (err) {
       console.error('roster-server: poll-archive-db failed to construct — /poll-archive disabled, service continues:', err);
     }
+    // Phase 3 (TEACHER_STUDENT_CONSOLE_SPEC.md): nudge-db. createLiveNudgesDb
+    // returns null when env vars are absent (no throw). The mount block in
+    // createApp handles the null case -- routes simply don't mount until the
+    // table is provisioned.
+    // NOTE: nudgesDb is resolved inside createApp via createLiveNudgesDb() when
+    // nudgesDbOverride is undefined. Passing undefined here lets the factory
+    // pick it up automatically, so no explicit construction is needed in the
+    // production entrypoint.
     // Phase 6: lesson schedule — synchronous load at boot; fault-tolerant (null
     // = date filter disabled, /grade still works). Same pattern as remediation-db.
     const lessonSchedule = loadLiveLessonSchedule();

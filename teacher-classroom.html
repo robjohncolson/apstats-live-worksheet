@@ -492,6 +492,30 @@
         </div>
       </div>
 
+      <!-- P3: Send Nudge (TEACHER_STUDENT_CONSOLE_SPEC.md §6) -->
+      <div class="section" id="nudge-section" style="display:none">
+        <h2 class="section-title">Send Nudge</h2>
+        <div class="form-row">
+          <label for="nudge-recipient">Student</label>
+          <select id="nudge-recipient" disabled>
+            <option value="">(no students online)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="nudge-text">Message (280 chars max)</label>
+          <textarea id="nudge-text" maxlength="280" rows="3" placeholder="Type your nudge..."></textarea>
+        </div>
+        <div class="control-strip">
+          <button class="ctrl-btn primary" id="btn-send-nudge" disabled>Send Nudge</button>
+          <span id="nudge-status" class="hint" style="margin-left:8px"></span>
+        </div>
+        <div id="nudge-replies-list" class="nudge-replies"></div>
+        <div class="hint">
+          Free-text message. Delivered live to online students; offline students don't receive (no queue).
+          Students see a toast on their Desk with a Reply box. All exchanges log to nudges_log.
+        </div>
+      </div>
+
       <!-- v1b: checked-in panel -- hidden until the board actually mounts -->
       <div class="section" id="checkin-section" style="display:none">
         <h2 class="section-title">Checked In</h2>
@@ -653,10 +677,12 @@
       var chk  = document.getElementById('checkin-section');
       var poll = document.getElementById('poll-section');
       var dw   = document.getElementById('doorways-section');
+      var nudge = document.getElementById('nudge-section');
       if (ctrl) ctrl.style.display = disp;
       if (chk)  chk.style.display  = disp;
       if (poll) poll.style.display  = disp;
       if (dw)   dw.style.display   = disp;
+      if (nudge) nudge.style.display = disp;
     }
 
     // ===== v2.1: poll archive tracking =====
@@ -811,6 +837,8 @@
             // a peer connection exists for each online student in the
             // section, and tear down peers for students who left.
             _reconcileStudentPeers(summary);
+            // P3 nudges: refresh the recipient dropdown when members change.
+            try { _refreshNudgeRecipients(summary); } catch (_) {}
           },
           onSignaling: function (msg) {
             // v3 P3: rtc_answer / rtc_ice from a student peer; route to
@@ -818,6 +846,18 @@
             // so the WS handler delegates these instead of consuming
             // them locally.
             _handleRtcSignaling(msg);
+          },
+          // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6): raw classroom_*
+          // message hook. Surfaces student replies into the cockpit panel
+          // + shows offline ack as a status note. typeof-guarded so the
+          // cockpit's existing tests don't need to inject the helpers.
+          onClassroomMessage: function (msg) {
+            if (!msg || !msg.type) return;
+            if (msg.type === 'classroom_student_nudge_reply' && typeof _renderReplyInList === 'function') {
+              try { _renderReplyInList(msg); } catch (_) {}
+            } else if (msg.type === 'classroom_teacher_nudge_ack' && typeof _renderNudgeAck === 'function') {
+              try { _renderNudgeAck(msg); } catch (_) {}
+            }
           }
         });
         // The board mounted -- now reveal the board-dependent sections.
@@ -937,6 +977,156 @@
       var counts = d.options.map(function(o) { return byId[o.doorId] || 0; });
       var ctx = canvas.getContext('2d');
       window.Ti84Plot.drawBarChart(ctx, { labels: labels, counts: counts, title: d.question || '' });
+    }
+
+    // ===== P3: nudge panel helpers (TEACHER_STUDENT_CONSOLE_SPEC.md §6) =====
+    // Cockpit-side. Populate recipient dropdown from onStateChange.members
+    // (online students). Send: WS classroom_teacher_nudge for live delivery
+    // + POST /teacher/nudge to roster-server for log persistence. Listen for
+    // student replies + offline ack via onClassroomMessage.
+
+    var _nudgeIdSeq = 0;
+    function _newNudgeId() {
+      _nudgeIdSeq += 1;
+      return 'nudge_' + Date.now() + '_' + _nudgeIdSeq;
+    }
+
+    function _refreshNudgeRecipients(summary) {
+      var sel = document.getElementById('nudge-recipient');
+      if (!sel) return;
+      var members = (summary && summary.members) || {};
+      var onlineStudents = Object.keys(members).filter(function (u) {
+        var m = members[u];
+        return m && m.role === 'student' && m.online !== false;
+      });
+      var prev = sel.value;
+      sel.innerHTML = '';
+      if (onlineStudents.length === 0) {
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '(no students online)';
+        sel.appendChild(opt);
+        sel.disabled = true;
+      } else {
+        onlineStudents.sort();
+        onlineStudents.forEach(function (u) {
+          var o = document.createElement('option');
+          o.value = u;
+          var realName = (currentNameMap && currentNameMap[u]) ? currentNameMap[u] : u;
+          o.textContent = realName + ' (@' + u + ')';
+          sel.appendChild(o);
+        });
+        sel.disabled = false;
+        if (onlineStudents.indexOf(prev) >= 0) sel.value = prev;
+      }
+      _updateNudgeSendButton();
+    }
+
+    function _updateNudgeSendButton() {
+      var sel = document.getElementById('nudge-recipient');
+      var text = document.getElementById('nudge-text');
+      var btn = document.getElementById('btn-send-nudge');
+      if (!sel || !text || !btn) return;
+      btn.disabled = !sel.value || !String(text.value || '').trim();
+    }
+
+    async function _sendNudgeFromCockpit() {
+      var sel = document.getElementById('nudge-recipient');
+      var textEl = document.getElementById('nudge-text');
+      var status = document.getElementById('nudge-status');
+      if (!sel || !textEl) return;
+      var recipient = sel.value;
+      var rawText = String(textEl.value || '').trim();
+      if (!recipient || !rawText) return;
+      if (rawText.length > 280) rawText = rawText.slice(0, 280);
+      var nudgeId = _newNudgeId();
+      var btn = document.getElementById('btn-send-nudge');
+      if (btn) btn.disabled = true;
+      // 1) Live delivery via the existing classroom WS. Codex BLOCKER fold:
+      // capture the boolean return so we DON'T mark delivered_at in the log
+      // when the WS wasn't ready.
+      var wsSent = false;
+      try {
+        if (boardHandle && typeof boardHandle.sendMessage === 'function') {
+          wsSent = !!boardHandle.sendMessage({
+            type: 'classroom_teacher_nudge',
+            nudgeId: nudgeId,
+            recipientUsernames: [recipient],
+            text: rawText
+          });
+        }
+      } catch (_) { wsSent = false; }
+      // 2) Log to roster-server. The server derives senderUsername + section
+      // from the authenticated teacher token (MAJOR fold), so we no longer
+      // pass them in the body. deliveredUsernames is empty when the WS
+      // send dropped -- the log row's delivered_at stays NULL.
+      try {
+        var rsBase = (typeof window.ROSTER_SERVICE_URL === 'string') ? window.ROSTER_SERVICE_URL : '';
+        var rosterToken = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+        if (rsBase && rosterToken) {
+          var resp = await fetch(rsBase + '/teacher/nudge', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + rosterToken
+            },
+            body: JSON.stringify({
+              nudgeId: nudgeId,
+              recipientUsernames: [recipient],
+              text: rawText,
+              deliveredUsernames: wsSent ? [recipient] : []
+            })
+          });
+          var data = null;
+          try { data = await resp.json(); } catch (_) {}
+          if (status) {
+            // Codex BLOCKER fold: status reflects what ACTUALLY happened --
+            // wsSent=false means the live delivery dropped, regardless of
+            // log success. The log row's delivered_at will be NULL in that
+            // case (we passed deliveredUsernames: []).
+            if (!wsSent) status.textContent = 'Not connected -- nudge not delivered.';
+            else status.textContent = (data && data.ok) ? 'Sent.' : 'Sent (log failed).';
+            setTimeout(function () { if (status) status.textContent = ''; }, 3500);
+          }
+        } else if (status) {
+          status.textContent = wsSent ? 'Sent (no log -- not signed in).' : 'Not connected -- nudge not delivered.';
+          setTimeout(function () { if (status) status.textContent = ''; }, 3500);
+        }
+      } catch (_) {
+        if (status) {
+          status.textContent = wsSent ? 'Sent (log failed).' : 'Not connected -- nudge not delivered.';
+          setTimeout(function () { if (status) status.textContent = ''; }, 3500);
+        }
+      }
+      textEl.value = '';
+      _updateNudgeSendButton();
+    }
+
+    function _renderReplyInList(payload) {
+      var list = document.getElementById('nudge-replies-list');
+      if (!list || !payload) return;
+      var row = document.createElement('div');
+      row.className = 'nudge-reply-row';
+      row.style.cssText = 'padding:6px 8px;border-bottom:1px solid var(--sg-border);font-size:0.88rem';
+      var who = document.createElement('strong');
+      var name = (currentNameMap && currentNameMap[payload.fromUsername]) ? currentNameMap[payload.fromUsername] : payload.fromUsername;
+      who.textContent = (name || 'Student') + ': ';
+      var msg = document.createElement('span');
+      msg.textContent = payload.text || '';
+      row.appendChild(who);
+      row.appendChild(msg);
+      list.insertBefore(row, list.firstChild);
+      while (list.children.length > 20) list.removeChild(list.lastChild);
+    }
+
+    function _renderNudgeAck(payload) {
+      var status = document.getElementById('nudge-status');
+      if (!status || !payload) return;
+      var offline = Array.isArray(payload.offline) ? payload.offline : [];
+      if (offline.length > 0) {
+        status.textContent = 'Offline (not delivered): ' + offline.join(', ');
+        setTimeout(function () { if (status) status.textContent = ''; }, 5000);
+      }
     }
 
     // ===== v3 P4: doorways form helpers (mirror the v2 poll add/remove pattern) =====
@@ -1613,6 +1803,19 @@
 
       // v3 P1+P2: default to the global presence view; no auto-mount.
       startMonitorMode();
+    })();
+
+    // ===== P3: nudge panel button wiring (TEACHER_STUDENT_CONSOLE_SPEC.md §6) =====
+
+    (function() {
+      try {
+        var sel = document.getElementById('nudge-recipient');
+        var text = document.getElementById('nudge-text');
+        var btn = document.getElementById('btn-send-nudge');
+        if (sel) sel.addEventListener('change', _updateNudgeSendButton);
+        if (text) text.addEventListener('input', _updateNudgeSendButton);
+        if (btn) btn.addEventListener('click', _sendNudgeFromCockpit);
+      } catch (_) {}
     })();
   </script>
 </body>
