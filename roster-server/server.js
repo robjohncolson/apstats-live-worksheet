@@ -22,6 +22,8 @@ import { mountRemediation } from './remediation.js';
 import { mountPollArchive } from './poll-archive.js';
 import { mountNudge } from './nudge.js';
 import { createLiveNudgesDb } from './nudge-db.js';
+import { mountLessonUnlock } from './lesson-unlock.js';
+import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
@@ -39,7 +41,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -574,6 +576,16 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const nudgesDb = (typeof nudgesDbOverride !== 'undefined') ? nudgesDbOverride : createLiveNudgesDb();
   if (nudgesDb && db) {
     mountNudge(app, { db, nudgesDb });
+  }
+
+  // ── Lesson-unlock routes (Phase 5 of TEACHER_STUDENT_CONSOLE_SPEC.md) ─────
+  // Needs lessonUnlockDb (data-access wrapper for the new lesson_unlock table).
+  // Until migrations/0009 is run on Supabase, the DB returns 42P01 and
+  // routes respond 503 "lesson_unlock not provisioned -- run migration 0009" --
+  // service stays up.
+  const lessonUnlockDb = (typeof lessonUnlockDbOverride !== 'undefined') ? lessonUnlockDbOverride : createLiveLessonUnlockDb();
+  if (lessonUnlockDb && db) {
+    mountLessonUnlock(app, { db, lessonUnlockDb });
   }
 
   return app;

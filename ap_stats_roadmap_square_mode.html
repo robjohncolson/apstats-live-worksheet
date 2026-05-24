@@ -1127,7 +1127,51 @@
           font: inherit; font-weight: 700; cursor: pointer;
         }
         #view-as-banner .vab-exit:hover { background: #fed7aa; }
+        #view-as-banner .vab-override {
+          background: #fef3c7; color: #92400e; border: 1px solid #fff;
+          padding: 3px 12px; border-radius: 3px;
+          font: inherit; font-weight: 700; cursor: pointer;
+        }
+        #view-as-banner .vab-override:hover { background: #fed7aa; }
         body.view-as-active { padding-top: 40px; }
+
+        /* Override gate modal (P5 of TEACHER_STUDENT_CONSOLE_SPEC.md §9) */
+        #override-gate-modal {
+          position: fixed; inset: 0; z-index: 10100;
+          display: none;
+        }
+        #override-gate-modal .ogm-backdrop {
+          position: absolute; inset: 0;
+          background: rgba(0,0,0,0.45);
+        }
+        #override-gate-modal .ogm-panel {
+          position: absolute; top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          width: 360px; max-width: 92vw;
+          background: #fffbe6; color: #2a2520;
+          border: 1px solid #d97706; border-radius: 8px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.32);
+          padding: 18px 20px;
+          font: 14px "Geneva", "Lucida Grande", system-ui, sans-serif;
+        }
+        #override-gate-modal h3 { margin: 0 0 8px; color: #92400e; font-size: 1.05rem; }
+        #override-gate-modal .ogm-desc { margin: 0 0 12px; font-size: 0.88rem; line-height: 1.4; }
+        #override-gate-modal label { display: block; font-weight: 700; font-size: 0.82rem; margin: 8px 0 4px; color: #92400e; }
+        #override-gate-modal input[type="text"],
+        #override-gate-modal textarea {
+          width: 100%; box-sizing: border-box;
+          border: 1px solid #d97706; border-radius: 4px;
+          padding: 6px; font: inherit;
+        }
+        #override-gate-modal .ogm-status { margin: 8px 0; min-height: 18px; font-size: 0.85rem; color: #6a1b1b; }
+        #override-gate-modal .ogm-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+        #override-gate-modal .ogm-cancel, #override-gate-modal .ogm-confirm {
+          padding: 6px 14px; border-radius: 4px; font: inherit; font-weight: 700; cursor: pointer;
+        }
+        #override-gate-modal .ogm-cancel { background: #fff; color: #92400e; border: 1px solid #d97706; }
+        #override-gate-modal .ogm-confirm { background: #d97706; color: #fff; border: 0; }
+        #override-gate-modal .ogm-confirm:hover { background: #92400e; }
+        #override-gate-modal .ogm-confirm:disabled { background: #e5d3a8; cursor: not-allowed; }
 
         /* Pre-hydration body hide (Codex BLOCKER fold P2): when the page loads
            with ?viewAsUserId but sessionStorage isn't yet hydrated, the
@@ -1177,7 +1221,31 @@
   <strong class="vab-name" id="view-as-banner-name"></strong>
   <span class="vab-meta" id="view-as-banner-meta"></span>
   <span class="vab-readonly">READ-ONLY</span>
+  <button type="button" class="vab-override" id="view-as-override-gate" aria-label="Override lesson gate">Override gate</button>
   <button type="button" class="vab-exit" id="view-as-exit" aria-label="Exit view-as">Exit</button>
+</div>
+
+<!-- P5: Override lesson gate modal (TEACHER_STUDENT_CONSOLE_SPEC.md §9).
+     Hidden until the teacher clicks "Override gate" in the view-as banner. -->
+<div id="override-gate-modal" style="display:none">
+  <div class="ogm-backdrop" data-ogm-close="backdrop"></div>
+  <div class="ogm-panel" role="dialog" aria-labelledby="ogm-title">
+    <h3 id="ogm-title">Override lesson gate</h3>
+    <p class="ogm-desc">Unlock a lesson for <strong id="ogm-student-name">Student</strong>.
+       The override is sticky and applies on their next page load.</p>
+    <label for="ogm-lesson-key">Lesson (format: N.M, e.g. "1.7", "5.3"):</label>
+    <!-- Codex MAJOR fold P5: pattern attr gives early client-side
+         feedback so the teacher sees "Please match the requested format"
+         before hitting Submit. The server enforces the same regex. -->
+    <input type="text" id="ogm-lesson-key" maxlength="20" pattern="^\d+\.\d+$" title="Topic format like 1.7 or 5.3" placeholder="1.7">
+    <label for="ogm-reason">Reason (optional, 500 chars):</label>
+    <textarea id="ogm-reason" maxlength="500" rows="3"></textarea>
+    <div class="ogm-status" id="ogm-status"></div>
+    <div class="ogm-actions">
+      <button type="button" class="ogm-cancel" id="ogm-cancel">Cancel</button>
+      <button type="button" class="ogm-confirm" id="ogm-confirm">Override</button>
+    </div>
+  </div>
 </div>
 
 <!-- Nudge toast (P3 of TEACHER_STUDENT_CONSOLE_SPEC.md §6). Hidden by
@@ -3817,6 +3885,95 @@ function _showViewAsToast(msg) {
   } catch (_) {}
 }
 
+// ── P5: Override gate modal (TEACHER_STUDENT_CONSOLE_SPEC.md §9) ─────────────
+// Inside view-as, teacher clicks the banner's "Override gate" button -> modal
+// opens -> teacher enters lesson key + reason -> POST /teacher/lesson-unlock.
+// The student's gate clears on their next page load (and immediately in the
+// current view-as tab via optimistic sessionStorage update).
+
+function _showOverrideGateModal(prefillTopic) {
+  var modal = document.getElementById('override-gate-modal');
+  if (!modal) return;
+  var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+  if (!ctx) return;   // override only meaningful inside view-as
+  var nameEl = document.getElementById('ogm-student-name');
+  var keyEl = document.getElementById('ogm-lesson-key');
+  var reasonEl = document.getElementById('ogm-reason');
+  var statusEl = document.getElementById('ogm-status');
+  var btn = document.getElementById('ogm-confirm');
+  if (nameEl) nameEl.textContent = ctx.realName || ctx.username || 'Student';
+  if (keyEl) keyEl.value = prefillTopic || '';
+  if (reasonEl) reasonEl.value = '';
+  if (statusEl) statusEl.textContent = '';
+  if (btn) btn.disabled = false;
+  modal.style.display = 'block';
+}
+
+function _hideOverrideGateModal() {
+  var modal = document.getElementById('override-gate-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function _confirmOverrideGate() {
+  var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+  if (!ctx) { _hideOverrideGateModal(); return; }
+  var keyEl = document.getElementById('ogm-lesson-key');
+  var reasonEl = document.getElementById('ogm-reason');
+  var statusEl = document.getElementById('ogm-status');
+  var btn = document.getElementById('ogm-confirm');
+  var lessonKey = keyEl ? String(keyEl.value || '').trim() : '';
+  var reason = reasonEl ? String(reasonEl.value || '').trim().slice(0, 500) : '';
+  if (!lessonKey) {
+    if (statusEl) statusEl.textContent = 'Enter a lesson key (e.g. 1.7).';
+    return;
+  }
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.textContent = 'Posting...';
+  try {
+    var base = window.ROSTER_SERVICE_URL;
+    var token = (window.rosterClient && typeof window.rosterClient.token === 'function')
+      ? window.rosterClient.token() : null;
+    if (!base || !token) {
+      if (statusEl) statusEl.textContent = 'Not signed in.';
+      if (btn) btn.disabled = false;
+      return;
+    }
+    var resp = await fetch(base + '/teacher/lesson-unlock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        studentUsername: ctx.username,
+        lessonKey: lessonKey,
+        reason: reason
+      })
+    });
+    var data = null;
+    try { data = await resp.json(); } catch (_) {}
+    if (resp.ok && data && data.ok) {
+      if (statusEl) statusEl.textContent = 'Override saved.';
+      // Optimistically add to the in-tab cache so the gate clears NOW
+      // without a reload (the student still needs to reload their own
+      // Desk to see it, but the impersonating teacher sees the effect
+      // immediately).
+      try {
+        var raw = sessionStorage.getItem('apstats_view_as_lesson_unlocks') || '[]';
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.indexOf(lessonKey) < 0) {
+          arr.push(lessonKey);
+          sessionStorage.setItem('apstats_view_as_lesson_unlocks', JSON.stringify(arr));
+        }
+      } catch (_) {}
+      setTimeout(_hideOverrideGateModal, 1500);
+    } else {
+      if (statusEl) statusEl.textContent = 'Error: ' + ((data && data.error) || ('HTTP ' + (resp && resp.status)));
+      if (btn) btn.disabled = false;
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Network error: ' + ((err && err.message) || 'failed');
+    if (btn) btn.disabled = false;
+  }
+}
+
 // View-as bootstrap (IIFE). Detect ?viewAsUserId; verify teacher auth;
 // hydrate viewAsContext into sessionStorage (per-tab) + reload so the
 // rest of the page renders cleanly with the context set. Idempotent --
@@ -3886,6 +4043,26 @@ try {
     try {
       var exitBtn = document.getElementById('view-as-exit');
       if (exitBtn) exitBtn.addEventListener('click', _exitViewAs);
+    } catch (_) {}
+    // P5: wire the override-gate flow (only meaningful in view-as).
+    try {
+      var ovrBtn = document.getElementById('view-as-override-gate');
+      if (ovrBtn) ovrBtn.addEventListener('click', function () { _showOverrideGateModal(''); });
+      var ogmCancel = document.getElementById('ogm-cancel');
+      if (ogmCancel) ogmCancel.addEventListener('click', _hideOverrideGateModal);
+      var ogmConfirm = document.getElementById('ogm-confirm');
+      if (ogmConfirm) ogmConfirm.addEventListener('click', _confirmOverrideGate);
+      var ogmModal = document.getElementById('override-gate-modal');
+      if (ogmModal) ogmModal.addEventListener('click', function (e) {
+        if (e.target && e.target.getAttribute && e.target.getAttribute('data-ogm-close')) _hideOverrideGateModal();
+      });
+    } catch (_) {}
+    // P5: fetch the unlock list (both modes -- normal mode = own list;
+    // view-as mode = target student's list). Fire-and-forget.
+    try {
+      if (typeof _refreshLessonUnlocks === 'function') {
+        _refreshLessonUnlocks().catch(function () {});
+      }
     } catch (_) {}
   });
 } catch (_) {}
@@ -4072,11 +4249,70 @@ function _isLessonComplete(topic, marks) {
     return wsOk && blOk;
   } catch (_) { return true; }
 }
+// ── P5: lesson-unlock cache (TEACHER_STUDENT_CONSOLE_SPEC.md §9) ─────────────
+// A teacher in View-As can override the sequential gate by writing a row
+// to roster-server's lesson_unlock table. The Desk caches the unlock list
+// at sign-in (normal mode -> localStorage; view-as -> per-tab sessionStorage)
+// and `_isLessonUnlocked` consults it before applying the usual gate rules.
+// Every function fails OPEN -- a bad fetch / parse never blocks a lesson.
+
+function _readLessonUnlocks() {
+  try {
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) {
+      var vRaw = sessionStorage.getItem('apstats_view_as_lesson_unlocks');
+      if (!vRaw) return [];
+      var vArr = JSON.parse(vRaw);
+      return Array.isArray(vArr) ? vArr : [];
+    }
+    var raw = localStorage.getItem('apstats_lesson_unlocks');
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (_) { return []; }
+}
+
+function _isTopicLessonUnlocked(topic) {
+  if (!topic) return false;
+  var unlocks = _readLessonUnlocks();
+  return unlocks.indexOf(topic) >= 0;
+}
+
+async function _refreshLessonUnlocks() {
+  try {
+    var base = window.ROSTER_SERVICE_URL;
+    if (!base) return;
+    var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+    var token = (window.rosterClient && typeof window.rosterClient.token === 'function')
+      ? window.rosterClient.token() : null;
+    if (!token) return;
+    var url, storageKey, storageObj;
+    if (ctx) {
+      url = base + '/teacher/student/' + encodeURIComponent(ctx.studentId) + '/lesson-unlocks';
+      storageKey = 'apstats_view_as_lesson_unlocks';
+      storageObj = sessionStorage;
+    } else {
+      url = base + '/student/lesson-unlocks';
+      storageKey = 'apstats_lesson_unlocks';
+      storageObj = localStorage;
+    }
+    var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) return;
+    var data = await res.json();
+    if (data && data.ok && Array.isArray(data.lessonKeys)) {
+      try { storageObj.setItem(storageKey, JSON.stringify(data.lessonKeys)); } catch (_) {}
+    }
+  } catch (_) { /* fails open; gate logic still runs */ }
+}
+
 // A lesson cell is unlocked per LESSON_GATE_BUILD.md §1. Fails OPEN.
 function _isLessonUnlocked(topic, lessonDate, prevTopic, today, marks, signedIn) {
   try {
     if (!signedIn) return true;          // no identity → no progression to gate
     if (_deskIsTeacher()) return true;   // teachers see everything
+    // P5: teacher-applied override (typeof-guarded so existing vm-based
+    // tests that load _isLessonUnlocked alone don't have to inject the
+    // unlock helpers).
+    if (typeof _isTopicLessonUnlocked === 'function' && _isTopicLessonUnlocked(topic)) return true;
     if (!prevTopic) return true;         // first lesson in the schedule
     if (lessonDate && today && lessonDate.getTime() <= today.getTime()) return true;
     return _isLessonComplete(prevTopic, marks);
