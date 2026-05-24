@@ -11,6 +11,7 @@ export function createNudgesDb(client) {
     listForStudent,      // student viewing nudges they received
     markDelivered,       // update delivered_at for a (nudge_id, recipient) pair
     findParent,          // Codex BLOCKER fold P3: ownership check for replies
+    listConversation,    // P7: dyadic thread for GET /teacher/nudge-history
   };
 
   // findParent({ nudgeId, recipientUsername }) -> { data: row|null, error }
@@ -86,6 +87,32 @@ export function createNudgesDb(client) {
       .eq('recipient_username', recipientUsername)
       .select('*')
       .single();
+  }
+
+  // listConversation({ teacherUsername, studentUsername, limit, offset })
+  // -> { data: [row, ...], error }
+  //
+  // Returns every row in nudges_log that belongs to the conversation
+  // between THIS teacher and THIS student, regardless of direction.
+  // Newest-first by created_at. Used by GET /teacher/nudge-history.
+  //
+  // The conversation set is the UNION of:
+  //   (direction='teacher' AND sender_username=teacher AND recipient_username=student)
+  //   (direction='student' AND sender_username=student AND recipient_username=teacher)
+  //
+  // Caller MUST validate teacherUsername and studentUsername against
+  // /^[a-zA-Z0-9_-]+$/ before calling this (PostgREST injection guard).
+  async function listConversation({ teacherUsername, studentUsername, limit = 20, offset = 0 }) {
+    return client
+      .from('nudges_log')
+      .select('*')
+      .or(
+        'and(direction.eq.teacher,sender_username.eq.' + teacherUsername + ',recipient_username.eq.' + studentUsername + ')' +
+        ',' +
+        'and(direction.eq.student,sender_username.eq.' + studentUsername + ',recipient_username.eq.' + teacherUsername + ')'
+      )
+      .order('created_at', { ascending: false })
+      .range(offset, offset + Math.max(0, limit) - 1);
   }
 }
 

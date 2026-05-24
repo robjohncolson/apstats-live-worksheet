@@ -23,14 +23,24 @@ export function createLiveDb() {
 export function createDb(client) {
   return { insertRoster, findByUsername, findByStudentId, getRoleByStudentId, getSpriteHueByStudentId, updatePassword, updateStudent, updateSpriteHue, listRoster };
 
-  // Phase 6: look up a single roster row by student_id — used by /grade to
-  // resolve the student's section for the lesson-due date filter. The
-  // ledger doesn't persist `section`; the roster does. Returns {data, error}
-  // where data carries `section` (string) or null on no-match.
+  // Phase 6: look up a single roster row by student_id -- used by /grade to
+  // resolve the student's section, and by the Console routes (P3 nudges,
+  // P5/P6 lesson-unlock, P7 nudge-history) to resolve the caller's
+  // login_username from the Bearer token. The ledger doesn't persist
+  // `section` or identity strings; the roster does. Returns {data, error}
+  // where data carries `student_id`, `section`, `login_username`, `real_name`,
+  // or null on no-match.
+  //
+  // Codex P7 BLOCKER fold: login_username MUST be in the SELECT projection.
+  // Without it, every route that derives the caller's username from a Bearer
+  // token (POST /teacher/nudge, POST /teacher/lesson-unlock, POST /teacher/
+  // lesson-unlock/revoke, GET /teacher/nudge-history) silently fails to
+  // resolve identity and returns 400. The x-teacher-secret break-glass path
+  // bypasses this lookup so the bug was invisible until P7 caught it.
   async function findByStudentId(studentId) {
     return client
       .from('roster')
-      .select('student_id, section')
+      .select('student_id, section, login_username, real_name')
       .eq('student_id', studentId)
       .maybeSingle();
   }

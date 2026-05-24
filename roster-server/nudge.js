@@ -79,6 +79,84 @@ export function mountNudge(app, { db, nudgesDb }) {
     }
   });
 
+  // GET /teacher/nudge-history?studentUsername=X&limit=N&offset=N
+  // Auth: teacher (x-teacher-secret OR Bearer token resolving to role='teacher').
+  // Returns the conversation thread between the calling teacher and the
+  // specified student. Newest-first; limit defaults to 20, max 100;
+  // offset defaults to 0.
+  app.get('/teacher/nudge-history', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    var rawStudent = typeof req.query.studentUsername === 'string' ? req.query.studentUsername.trim() : '';
+    // Defense: PostgREST .or() filter is built by interpolation; reject any
+    // value that could escape the filter syntax (commas, parens, dots, quotes).
+    if (!rawStudent || !/^[a-zA-Z0-9_-]+$/.test(rawStudent)) {
+      return res.status(400).json({ ok: false, error: 'studentUsername must be alphanumeric (with - or _)' });
+    }
+    var limit = Number(req.query.limit);
+    if (!Number.isFinite(limit) || limit <= 0) limit = 20;
+    if (limit > 100) limit = 100;
+    var offset = Number(req.query.offset);
+    if (!Number.isFinite(offset) || offset < 0) offset = 0;
+
+    // Resolve calling teacher's identity from the Bearer token (same pattern as P3).
+    var teacherUsername = '';
+    var authHeader = req.headers['authorization'] || req.headers['Authorization'] || '';
+    var token = '';
+    if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    }
+    if (token) {
+      try {
+        var sid = verifyToken(token);
+        if (sid) {
+          var { data: rosterRow } = await db.findByStudentId(sid);
+          if (rosterRow) teacherUsername = rosterRow.login_username || '';
+        }
+      } catch (_) {}
+    }
+    // Break-glass: x-teacher-secret callers can pass ?teacherUsername= as a
+    // last resort (NOT required; the secret is single-teacher anyway).
+    if (!teacherUsername && req.headers['x-teacher-secret']) {
+      var bodyTeacher = typeof req.query.teacherUsername === 'string' ? req.query.teacherUsername.trim() : '';
+      if (bodyTeacher && /^[a-zA-Z0-9_-]+$/.test(bodyTeacher)) teacherUsername = bodyTeacher;
+    }
+    if (!teacherUsername) {
+      return res.status(400).json({ ok: false, error: 'could not resolve teacherUsername from auth' });
+    }
+    // Codex P7 MINOR fold: defense-in-depth. teacherUsername arrives from
+    // rosterRow.login_username on the Bearer path; that column has only a
+    // UNIQUE constraint today, not a character-set CHECK. Reject anything
+    // that would let a stored username escape the PostgREST .or() filter
+    // syntax. Today the API-generated usernames are safe; this guards against
+    // future schema drift.
+    if (!/^[a-zA-Z0-9_-]+$/.test(teacherUsername)) {
+      return res.status(400).json({ ok: false, error: 'resolved teacherUsername has invalid characters' });
+    }
+
+    try {
+      var { data, error } = await nudgesDb.listConversation({
+        teacherUsername, studentUsername: rawStudent, limit, offset,
+      });
+      if (error) {
+        if (error.code === '42P01') return res.status(503).json({ ok: false, error: 'nudges_log not provisioned -- run migration 0008' });
+        console.error('GET /teacher/nudge-history error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      return res.json({
+        ok: true,
+        teacherUsername: teacherUsername,
+        studentUsername: rawStudent,
+        limit: limit,
+        offset: offset,
+        rows: data || [],
+      });
+    } catch (err) {
+      console.error('GET /teacher/nudge-history throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
+
   // POST /student/nudge-reply { parentNudgeId, recipientUsername, text, section }
   // Auth: student token (resolves to senderUsername via roster lookup).
   app.post('/student/nudge-reply', async (req, res) => {

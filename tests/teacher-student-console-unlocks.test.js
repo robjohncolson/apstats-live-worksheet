@@ -117,7 +117,7 @@ describe('Lesson Unlocks section DOM presence', () => {
 // ---------------------------------------------------------------------------
 
 describe('Fetch wiring', () => {
-  it('openTscDrawer fires 3 fetches: grade + recent + lesson-unlocks', async () => {
+  it('openTscDrawer fires 4 fetches: grade + recent + lesson-unlocks + nudge-history (P7)', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),
@@ -134,14 +134,15 @@ describe('Fetch wiring', () => {
 
     await new Promise(r => setTimeout(r, 20));
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
     const urls = fetchMock.mock.calls.map(c => c[0]);
     expect(urls.some(u => u.includes('/teacher/student/stu_3fetch/grade'))).toBe(true);
     expect(urls.some(u => u.includes('/teacher/student/stu_3fetch/recent'))).toBe(true);
     expect(urls.some(u => u.includes('/teacher/student/stu_3fetch/lesson-unlocks'))).toBe(true);
+    expect(urls.some(u => u.includes('/teacher/nudge-history'))).toBe(true);
   });
 
-  it('all 3 fetches carry x-teacher-secret when a secret is set', async () => {
+  it('all 4 fetches carry x-teacher-secret when a secret is set', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, quarters: {}, units: {}, submissions: [], rows: [] }),

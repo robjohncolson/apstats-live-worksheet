@@ -385,6 +385,24 @@
     }
     .tsc-unlocks-list .tsc-unlock-revoke:hover { background: #fee2e2; }
     .tsc-unlocks-list .tsc-unlock-empty { color: var(--sg-text-dim); font-style: italic; }
+
+    /* P7 (TEACHER_STUDENT_CONSOLE_P7_BUILD.md section 3.2): Nudge History drawer section */
+    .tsc-nudges-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.85rem; }
+    .tsc-nudges-list li {
+      border: 1px solid var(--sg-border); border-radius: 6px;
+      padding: 8px 10px; background: var(--sg-bg);
+      display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start;
+    }
+    .tsc-nudges-list .tsc-nudge-arrow {
+      font-weight: 700; line-height: 1.4;
+      font-family: var(--sg-mono, monospace);
+    }
+    .tsc-nudges-list .tsc-nudge-teacher { color: var(--sg-accent); }
+    .tsc-nudges-list .tsc-nudge-student { color: #15803d; }
+    .tsc-nudges-list .tsc-nudge-text-block { display: grid; gap: 2px; }
+    .tsc-nudges-list .tsc-nudge-meta { color: var(--sg-text-dim); font-size: 0.78rem; }
+    .tsc-nudges-list .tsc-nudge-text { white-space: pre-wrap; word-wrap: break-word; line-height: 1.35; }
+    .tsc-nudges-list .tsc-nudge-empty { color: var(--sg-text-dim); font-style: italic; }
   </style>
 </head>
 <body>
@@ -560,6 +578,10 @@
         <section class="tsc-section" id="tsc-section-unlocks">
           <h3 class="tsc-section-title">Lesson Unlocks</h3>
           <ul id="tsc-unlocks-list" class="tsc-unlocks-list"></ul>
+        </section>
+        <section class="tsc-section" id="tsc-section-nudges">
+          <h3 class="tsc-section-title">Nudge History</h3>
+          <ul id="tsc-nudges-list" class="tsc-nudges-list"></ul>
         </section>
         <nav class="tsc-actions" aria-label="Console actions">
           <button type="button" class="tsc-action-btn" id="tsc-action-view-as" title="Open this student's Desk in a new tab (read-only)">View as student</button>
@@ -1413,10 +1435,13 @@
       // Body: loading state. Codex P6 MAJOR fold: clear unlocks-list too so
       // stale rows from a prior student do not linger between the open and
       // the resolution of the /lesson-unlocks fetch.
+      // P7: same pattern for nudges-list.
       $('tsc-grade-card').textContent = 'Loading...';
       $('tsc-recent-list').innerHTML = '';
       var unlocksList = $('tsc-unlocks-list');
       if (unlocksList) unlocksList.innerHTML = '';
+      var nudgesList = $('tsc-nudges-list');
+      if (nudgesList) nudgesList.innerHTML = '';
 
       drawer.setAttribute('aria-hidden', 'false');
       drawer.classList.add('tsc-open');
@@ -1430,11 +1455,12 @@
       Promise.allSettled([
         fetch(base + '/teacher/student/' + sid + '/grade', { headers: headers }).then(jsonOrErr),
         fetch(base + '/teacher/student/' + sid + '/recent?limit=20', { headers: headers }).then(jsonOrErr),
-        fetch(base + '/teacher/student/' + sid + '/lesson-unlocks', { headers: headers }).then(jsonOrErr)
+        fetch(base + '/teacher/student/' + sid + '/lesson-unlocks', { headers: headers }).then(jsonOrErr),
+        fetch(base + '/teacher/nudge-history?studentUsername=' + encodeURIComponent(stub.username || '') + '&limit=20', { headers: headers }).then(jsonOrErr)
       ]).then(function(results) {
         // Stale-result guard.
         if (reqId !== _tscReqSeq) return;
-        var gradeRes = results[0], recentRes = results[1], unlocksRes = results[2];
+        var gradeRes = results[0], recentRes = results[1], unlocksRes = results[2], nudgesRes = results[3];
         if (gradeRes.status === 'fulfilled') {
           renderTscGrade(gradeRes.value);
         } else {
@@ -1451,6 +1477,12 @@
         } else {
           // unlocks endpoint may 503 if migration not run -- silently render empty state.
           renderTscUnlocks({ ok: false, lessonKeys: [], rows: [] });
+        }
+        if (nudgesRes.status === 'fulfilled') {
+          renderTscNudges(nudgesRes.value);
+        } else {
+          // nudge-history endpoint may 503 if migration not run -- silently render empty state.
+          renderTscNudges({ ok: false, rows: [] });
         }
       });
     }
@@ -1551,6 +1583,41 @@
       } catch (err) {
         showError('Network error revoking: ' + (err && err.message ? err.message : 'unknown'));
       }
+    }
+
+    // P7 (TEACHER_STUDENT_CONSOLE_P7_BUILD.md section 3.3): Render nudge history.
+    // XSS safety: all text from the row goes through textContent, never innerHTML.
+    // Arrow glyphs (>> / <<) are inline ASCII.
+    function renderTscNudges(payload) {
+      var el = $('tsc-nudges-list');
+      if (!el) return;
+      el.innerHTML = '';
+      if (!payload || !payload.ok || !payload.rows || payload.rows.length === 0) {
+        el.innerHTML = '<li class="tsc-nudge-empty">No nudges yet.</li>';
+        return;
+      }
+      payload.rows.forEach(function (row) {
+        var li = document.createElement('li');
+        var arrow = document.createElement('span');
+        arrow.className = 'tsc-nudge-arrow ' +
+          (row.direction === 'teacher' ? 'tsc-nudge-teacher' : 'tsc-nudge-student');
+        arrow.textContent = row.direction === 'teacher' ? '>>' : '<<';
+        var block = document.createElement('div');
+        block.className = 'tsc-nudge-text-block';
+        var meta = document.createElement('span');
+        meta.className = 'tsc-nudge-meta';
+        var when = (row.created_at || '').slice(0, 16).replace('T', ' ');
+        var who = row.sender_username || 'unknown';
+        meta.textContent = when + ' \xB7 ' + who;
+        var text = document.createElement('span');
+        text.className = 'tsc-nudge-text';
+        text.textContent = row.text || '';
+        block.appendChild(meta);
+        block.appendChild(text);
+        li.appendChild(arrow);
+        li.appendChild(block);
+        el.appendChild(li);
+      });
     }
 
     // T1 (P6 BUILD section 4.1): Apply Remediation modal handlers.
