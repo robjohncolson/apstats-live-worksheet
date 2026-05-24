@@ -359,6 +359,12 @@
     .nudge-broadcast-toggle input { cursor: pointer; }
     .nudge-recipient-broadcast-dim { opacity: 0.45; }
     /* P9: Floating avatar popup (TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1). */
+    /* P10 T2: fade-in keyframe. Fires each time the popup re-enters the rendering
+       tree (display:none -> display:block), so no JS change is needed. */
+    @keyframes avatar-popup-fade-in {
+      from { opacity: 0; transform: translateX(4px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
     .avatar-popup {
       position: fixed;
       z-index: 10000;
@@ -369,6 +375,7 @@
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24);
       padding: 10px 12px;
       font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
+      animation: avatar-popup-fade-in 140ms ease-out;
     }
     .avatar-popup .ap-close {
       position: absolute; top: 6px; right: 8px;
@@ -887,6 +894,69 @@
     var boardHandle = null;   // ClassroomBoard.mount() return value, or null
     var currentNameMap = {};  // kept for the onStateChange callback
     var currentIdMap = {};    // P9: username -> studentId, populated from /roster/list (teacher-gated)
+    // P10 T1: re-hydration timer for currentIdMap when new students join after mountBoard.
+    var _idMapRefreshTimer = null;
+    var _IDMAP_REFRESH_DEBOUNCE_MS = 2000;
+    // P10 MAJOR fold: token bumped on every teardown so in-flight fetchIdMap
+    // promises that resolve LATER cannot clobber the new section's currentIdMap.
+    var _idMapRefreshToken = 0;
+
+    // P10 T1: walk summary.members after every onStateChange; if any student
+    // username is absent from currentIdMap, schedule a debounced re-fetch of
+    // /roster/list for that section. Debounced so a burst of joins fires at
+    // most one /roster/list call per 2 s.
+    //
+    // Codex P10 BLOCKER fold: summary.members is an ARRAY of records (see
+    // classroom-board.js buildSummary at lines 549-582), NOT an
+    // object keyed by username. The earlier draft used Object.keys + index
+    // lookups, which always saw a "gap" (index strings never matched real
+    // usernames in currentIdMap) and would have polled /roster/list every
+    // 2 s forever. Iterate the array, extract m.username, check the map
+    // against the real username.
+    //
+    // Codex P10 MAJOR fold: a fetchIdMap promise that is in-flight when
+    // the teacher switches sections can resolve LATER and clobber the new
+    // section's currentIdMap. The token-based guard inside the .then()
+    // re-checks the section after the fetch resolves.
+    function _maybeRefreshIdMap(summary) {
+      if (!summary || !Array.isArray(summary.members)) return;
+      var section = summary.section;
+      if (!section) return;
+      // Find any online student username that is NOT in the current id map.
+      var gap = false;
+      for (var i = 0; i < summary.members.length; i++) {
+        var m = summary.members[i];
+        if (m && m.role === 'student' && m.online !== false &&
+            m.username && !currentIdMap[m.username]) {
+          gap = true;
+          break;
+        }
+      }
+      if (!gap) return;
+      if (_idMapRefreshTimer) return;  // already pending
+      // Capture the refresh token so a stale fetch resolution can't clobber
+      // a new section's map. teardown() bumps _idMapRefreshToken, which
+      // invalidates any in-flight refresh.
+      var refreshToken = _idMapRefreshToken;
+      var refreshSection = section;
+      _idMapRefreshTimer = setTimeout(function () {
+        _idMapRefreshTimer = null;
+        // Re-fetch ONLY if we still have a board mounted for the same section
+        // AND no teardown has fired since this timer was scheduled.
+        if (refreshToken !== _idMapRefreshToken) return;
+        if (!boardHandle || !_lastSummary || _lastSummary.section !== refreshSection) return;
+        fetchIdMap(refreshSection).then(function (fresh) {
+          // Re-check the token AFTER the fetch resolves -- if a section
+          // switch happened during the in-flight fetch, the new section's
+          // currentIdMap (just populated by mountBoard) must NOT be clobbered.
+          if (refreshToken !== _idMapRefreshToken) return;
+          if (!boardHandle || !_lastSummary || _lastSummary.section !== refreshSection) return;
+          if (fresh && typeof fresh === 'object') {
+            currentIdMap = fresh;
+          }
+        }).catch(function () { /* silent -- next refresh will try again */ });
+      }, _IDMAP_REFRESH_DEBOUNCE_MS);
+    }
     // s111 P4 HOTFIX: cache the last summary so the mode-switching
     // buttons (Arm Gate / Open Doorways / Open Poll) can detect a
     // stale conflicting mode + auto-reset before sending. Without
@@ -896,6 +966,15 @@
     var _lastSummary = null;
 
     function teardown() {
+      // P10 T1: cancel any pending idMap re-hydration so a stale timer can't
+      // fire after the teacher has switched to a different section.
+      // Bumping the refresh token ALSO invalidates any in-flight fetchIdMap
+      // promise that already fired before this teardown (Codex P10 MAJOR fold).
+      if (_idMapRefreshTimer) {
+        clearTimeout(_idMapRefreshTimer);
+        _idMapRefreshTimer = null;
+      }
+      _idMapRefreshToken++;
       // P9: close avatar popup before destroying the board.
       try { if (typeof _closeAvatarPopup === 'function') _closeAvatarPopup(); } catch (_) {}
       // Codex MAJOR fold P4: exit select mode FIRST so the bar/markers
@@ -1018,6 +1097,9 @@
             _reconcileStudentPeers(summary);
             // P3 nudges: refresh the recipient dropdown when members change.
             try { _refreshNudgeRecipients(summary); } catch (_) {}
+            // P10 T1: proactively re-hydrate currentIdMap if a new student
+            // joined after mountBoard (debounced to avoid spamming /roster/list).
+            try { _maybeRefreshIdMap(summary); } catch (_) {}
           },
           onSignaling: function (msg) {
             // v3 P3: rtc_answer / rtc_ice from a student peer; route to
@@ -1190,11 +1272,21 @@
     function _refreshNudgeRecipients(summary) {
       var sel = document.getElementById('nudge-recipient');
       if (!sel) return;
-      var members = (summary && summary.members) || {};
-      var onlineStudents = Object.keys(members).filter(function (u) {
-        var m = members[u];
-        return m && m.role === 'student' && m.online !== false;
-      });
+      // Codex P10 BLOCKER discovery: summary.members from classroom-board.js
+      // buildSummary is an ARRAY of records, not an object keyed by username.
+      // The original P3 code used Object.keys(members) which returned index
+      // strings, so the dropdown silently populated with "0", "1", etc.
+      // instead of real usernames. Existing P3 tests pre-fed object-shaped
+      // fixtures and missed the bug. Fix: iterate the array, extract
+      // m.username directly. (Same fix as _maybeRefreshIdMap.)
+      var membersArr = (summary && Array.isArray(summary.members)) ? summary.members : [];
+      var onlineStudents = [];
+      for (var i = 0; i < membersArr.length; i++) {
+        var memb = membersArr[i];
+        if (memb && memb.role === 'student' && memb.online !== false && memb.username) {
+          onlineStudents.push(memb.username);
+        }
+      }
       var prev = sel.value;
       sel.innerHTML = '';
       if (onlineStudents.length === 0) {

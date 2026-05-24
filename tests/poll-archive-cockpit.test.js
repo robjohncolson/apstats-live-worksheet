@@ -91,7 +91,7 @@ describe('U3 -- cockpit source structure: poll-close trigger', () => {
     // to 1500 after P8 Codex MAJOR fold added the broadcast-state clear
     // block (clears _nudgeBroadcastActive + _nudgeLastOnlineList +
     // resets the checkbox + dim class) at the top of teardown.
-    expect(COCKPIT_SRC.slice(idx, idx + 2000)).toMatch(/_lastArchivedPollId\s*=\s*null/);
+    expect(COCKPIT_SRC.slice(idx, idx + 2500)).toMatch(/_lastArchivedPollId\s*=\s*null/);
   });
 
   it('todayIsoDate() is defined and used for pollDate', () => {

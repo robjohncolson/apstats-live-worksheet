@@ -134,6 +134,7 @@ function loadRefresh(summary, prevValue, nameMap) {
       createElement: (tag) => ({ value: '', textContent: '', tagName: tag.toUpperCase() }),
     },
     currentNameMap: nameMap || {},
+    Array,
     String,
     Object,
   };
@@ -148,14 +149,17 @@ function loadRefresh(summary, prevValue, nameMap) {
 }
 
 describe('cockpit nudge panel -- _refreshNudgeRecipients', () => {
+  // Codex P10 BLOCKER fold: summary.members is an ARRAY of records (see
+  // classroom-board.js buildSummary), NOT an object keyed by username.
+  // The fixtures were updated to match the live shape.
   it('populates dropdown with online students only', () => {
     const summary = {
-      members: {
-        alice: { role: 'student', online: true },
-        bob: { role: 'student', online: false },
-        carol: { role: 'student' },
-        teach: { role: 'teacher', online: true },
-      },
+      members: [
+        { username: 'alice', role: 'student', online: true },
+        { username: 'bob',   role: 'student', online: false },
+        { username: 'carol', role: 'student' },
+        { username: 'teach', role: 'teacher', online: true },
+      ],
     };
     const { sel } = loadRefresh(summary, '', { alice: 'Alice A', carol: 'Carol C' });
     // alice (online: true) + carol (online: undefined treated as online) -> 2 options.
@@ -166,7 +170,7 @@ describe('cockpit nudge panel -- _refreshNudgeRecipients', () => {
   });
 
   it('shows (no students online) + disables when no online students', () => {
-    const { sel } = loadRefresh({ members: { teach: { role: 'teacher' } } }, '');
+    const { sel } = loadRefresh({ members: [{ username: 'teach', role: 'teacher', online: true }] }, '');
     expect(sel.options.length).toBe(1);
     expect(sel.options[0].value).toBe('');
     expect(sel.options[0].textContent).toMatch(/no students/i);
@@ -174,21 +178,23 @@ describe('cockpit nudge panel -- _refreshNudgeRecipients', () => {
   });
 
   it('preserves previous selection when student still online', () => {
-    const summary = { members: { alice: { role: 'student', online: true }, bob: { role: 'student', online: true } } };
+    const summary = {
+      members: [
+        { username: 'alice', role: 'student', online: true },
+        { username: 'bob',   role: 'student', online: true },
+      ],
+    };
     const { sel } = loadRefresh(summary, 'bob');
     expect(sel.value).toBe('bob');
   });
 
   it('does NOT restore previous selection when student no longer online', () => {
-    const summary = { members: { alice: { role: 'student', online: true } } };
+    const summary = { members: [{ username: 'alice', role: 'student', online: true }] };
     const { sel } = loadRefresh(summary, 'bob');
     // The options list does NOT include bob.
     expect(sel.options.map(o => o.value)).toEqual(['alice']);
     // The code only restores sel.value when prev is in onlineStudents,
-    // so sel.value is NOT explicitly re-set to 'bob' by the refresh
-    // (the real <select> element would discard the stale value once
-    // its options changed -- our fake retains it, but the options
-    // assertion above is what guarantees correctness in the real DOM).
+    // so sel.value is NOT explicitly re-set to 'bob' by the refresh.
   });
 });
 

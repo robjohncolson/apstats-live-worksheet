@@ -101,6 +101,7 @@ function makeRefreshSandbox({ summary, prevValue } = {}) {
       createElement: (tag) => ({ value: '', textContent: '', tagName: tag.toUpperCase() }),
     },
     currentNameMap: {},
+    Array,
     String,
     Object,
     // P8 module-scope state
@@ -115,19 +116,24 @@ function makeRefreshSandbox({ summary, prevValue } = {}) {
     'this.__refresh = _refreshNudgeRecipients;',
     sandbox
   );
-  sandbox.__refresh(summary || { members: {} });
+  sandbox.__refresh(summary || { members: [] });
   return { sel, text, btn, countEl, sandbox };
 }
 
+// Codex P10 BLOCKER fold: summary.members is an ARRAY from classroom-board.js
+// buildSummary, NOT an object keyed by username. The original P8 fixtures
+// here used the wrong shape and were passing only because the broken
+// Object.keys path returned numeric indices that the assertions never
+// inspected closely. Fixtures updated to match the live shape.
 describe('Recipient count label', () => {
   it('shows "(3 online)" when 3 online students are present', () => {
     const summary = {
-      members: {
-        alice: { role: 'student', online: true },
-        bob: { role: 'student', online: true },
-        carol: { role: 'student' },    // online:undefined treated as online
-        teach: { role: 'teacher', online: true },
-      },
+      members: [
+        { username: 'alice', role: 'student', online: true },
+        { username: 'bob',   role: 'student', online: true },
+        { username: 'carol', role: 'student' },                  // online:undefined -> online
+        { username: 'teach', role: 'teacher', online: true },
+      ],
     };
     const { countEl } = makeRefreshSandbox({ summary });
     expect(countEl.textContent).toBe('(3 online)');
@@ -135,10 +141,10 @@ describe('Recipient count label', () => {
 
   it('shows "(no students online)" when no online students exist', () => {
     const summary = {
-      members: {
-        teach: { role: 'teacher', online: true },
-        bob: { role: 'student', online: false },
-      },
+      members: [
+        { username: 'teach', role: 'teacher', online: true },
+        { username: 'bob',   role: 'student', online: false },
+      ],
     };
     const { countEl } = makeRefreshSandbox({ summary });
     expect(countEl.textContent).toBe('(no students online)');
@@ -146,10 +152,10 @@ describe('Recipient count label', () => {
 
   it('stashes online usernames into _nudgeLastOnlineList', () => {
     const summary = {
-      members: {
-        alice: { role: 'student', online: true },
-        bob: { role: 'student', online: true },
-      },
+      members: [
+        { username: 'alice', role: 'student', online: true },
+        { username: 'bob',   role: 'student', online: true },
+      ],
     };
     const { sandbox } = makeRefreshSandbox({ summary });
     expect(sandbox._nudgeLastOnlineList.sort()).toEqual(['alice', 'bob']);
