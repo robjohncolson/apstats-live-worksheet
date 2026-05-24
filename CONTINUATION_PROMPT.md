@@ -124,11 +124,13 @@
 >   exclusion ENFORCED on both sides. MAJOR -- local sprite respawns to
 >   canvas center if the optimistic doorway-walk left it off-canvas.
 >
-> ### Epic 5 -- P4 smoke-test hotfix series (commits 5ef360d -> 23585c4)
-> Real-classroom smoke test of P4 surfaced 5 distinct bugs the test
-> suite didn't catch. Each was diagnosed via the diagnostic-first
+> ### Epic 5 -- P4 smoke-test hotfix series (12 commits, 8a9d103 -> 144ac11)
+> Real-classroom smoke test of P4 surfaced TWELVE distinct bugs the
+> test suite didn't catch. Each was diagnosed via the diagnostic-first
 > protocol (WS.prototype.send / onmessage monkey-patch in console) +
-> fixed inline. No new specs / BUILD docs -- direct patches.
+> fixed inline. No new specs / BUILD docs -- direct patches. The
+> diagnostic loop pattern repeatedly earned its keep: every fix was
+> grounded in observed WS traffic, not speculation.
 >
 > - **`8a9d103`** (cr) -- `fix: re-join overwrites member.role`. The
 >   ROOT CAUSE behind everything: classroom_join's else-branch
@@ -167,19 +169,71 @@
 >   had to be added there, not on BoardSprite. Drop the scale too
 >   (indistinguishable in practice); just alpha fade.
 > - **`8fa7be6`** -- `fix: doorway absorb is bidirectional + non-physical`.
->   Final piece -- the absorbed state was LOCAL only, so peers saw
->   Jane at full opacity, walked INTO her, and could stand on her
->   head. Plus a cancel bug: `_hidden=true` was never cleared when
->   she pressed Up to come back. Fix is five-part: (a) emit path
->   translates `entering-doorway` -> `in-doorway` on the wire;
->   (b) `applyPos` snaps `peer.state='in-doorway'` and skips walkTo
->   (the absorbed peer is stationary); (c) `BoardSprite.update`
->   animates `_peerAbsorbProgress` 0->1 over 350 ms (and back on
->   exit); (d) `BoardSprite.render` multiplies alpha by
->   `(1 - _peerAbsorbProgress)`; (e) `PlayerSprite` collision /
->   floor / `_someoneOnTop` checks skip peers in `in-doorway` state
->   so Joe walks through where Jane was. Cancel bug: clear `_hidden`
->   whenever `_absorbProgress < 1`.
+>   The absorbed state was LOCAL only, so peers saw Jane at full
+>   opacity, walked INTO her, and could stand on her head. Plus a
+>   cancel bug: `_hidden=true` was never cleared when she pressed Up
+>   to come back. Five-part fix: (a) emit path translates
+>   `entering-doorway` -> `in-doorway` on the wire; (b) `applyPos`
+>   snaps `peer.state='in-doorway'` and skips walkTo (the absorbed
+>   peer is stationary); (c) `BoardSprite.update` animates
+>   `_peerAbsorbProgress` 0->1 over 350 ms (and back on exit);
+>   (d) `BoardSprite.render` multiplies alpha by
+>   `(1 - _peerAbsorbProgress)`; (e) `PlayerSprite` collision / floor
+>   / `_someoneOnTop` checks skip peers in `in-doorway` state so Joe
+>   walks through where Jane was. Cancel bug: clear `_hidden` whenever
+>   `_absorbProgress < 1`.
+> - **`7bbd527`** (fa) -- `feat: doorways tally on Desk + cockpit`.
+>   The tally was cockpit-only; students couldn't see live votes.
+>   Added a `#classroom-doorways-tally <canvas>` to the Desk + a
+>   `_renderDeskDoorwaysTally` helper wired to the board's
+>   `onStateChange`. Bar chart (not dotplot -- `drawDotplot` hides
+>   zero-vote categories, students would lose sight of B/C as options
+>   until someone voted for them). Both surfaces now show the same
+>   bar chart with all options labelled.
+> - **`87523e4`** (cr) -- `fix: classroom_state snapshot normalizes doorways shape`.
+>   On cockpit refresh: votes lingered server-side (correct) but the
+>   bar chart showed all zeros. Cause: snapshot path delivered
+>   `doorways.options[{label,doorId,count}]` (counts inline) while
+>   open/tally/close broadcasts shipped `tally:[{doorId,count}]`
+>   separately. Client `renderDoorwaysTally` read `(d.tally || [])`
+>   = `[]` from the snapshot. Fix: new `_wireDoorways` helper
+>   normalizes the snapshot to match the broadcast shape (separate
+>   options + tally arrays). +2 regression tests on cr.
+> - **`3b0efab`** (fa) -- `fix: in-doorway state persists across refresh`.
+>   After 87523e4 votes persisted, but on every cockpit refresh the
+>   absorbed students "came back out of the holes" -- `addSprite`
+>   restored x/y from `member.pos` but ignored `pos.state`. Fix: when
+>   `pos.state === 'in-doorway'`, restore the full absorb state on the
+>   reconstructed sprite (local PlayerSprite gets _absorbProgress=1 /
+>   _hidden=true; peer BoardSprite gets _peerAbsorbProgress=1). Same
+>   commit also fixes: cancel-complete state transition didn't emit,
+>   so server kept 'in-doorway' after cancel + a later refresh would
+>   restore Jane back into the hole. Clear `_restEmitted` on
+>   cancel-complete so the next idle tick emits `state='idle'`.
+> - **`9a87a7f`** (fa) -- `fix: force-broadcast 'in-doorway' on transition tick`.
+>   Joe could press Up at a doorway + refresh, and reappear OUTSIDE
+>   the doorway despite his vote being counted. Cause: the cadence
+>   rate-limit could swallow the only transition-tick emit + every
+>   subsequent tick the `entering-doorway` block returned early in
+>   `update()`, so no follow-up broadcast ever caught up. Server kept
+>   pos.state at the pre-transition value. Fix: `handlePlayerUp`'s
+>   doorway-vote branch now FORCE-calls `player.onPos(...)` directly
+>   with `state='in-doorway'` immediately after the state transition,
+>   bypassing both the rate-limit and the early-return.
+> - **`318e019`** (cr) + **`144ac11`** (fa) -- `feat: retractDoorwayVote`.
+>   Final UX gap: avatar exits a doorway (cancel-complete) but the
+>   vote stayed attached to that door until the student voted
+>   elsewhere -- incongruent. New `classroom_doorway_retract` WS
+>   message (student-only, id-match-required) decrements the prior
+>   doorId's count + clears `member.doorVote` + broadcasts the new
+>   tally. Client wiring: `handlePlayerUp` stashes a closure
+>   `player._cancelHandler` capturing the doorways id at cast time;
+>   `PlayerSprite.update`'s cancel-complete invokes it (then clears
+>   to one-shot). Capturing the id (rather than reading
+>   `state.doorways.id` at cancel time) means a stale retract --
+>   teacher closed + reopened doorways between cast and cancel --
+>   targets the OLD session, which the server rejects via the
+>   id-match guard. +5 regression tests on cr.
 >
 > ## Migration -- DONE this session (NONE outstanding)
 > Session 109's `0007_poll_archive.sql` was run by the user this
@@ -187,24 +241,30 @@
 > note). No new migrations in s111.
 >
 > ## Test baselines
-> - curriculum_render **936/937** -- the only fail is the long-standing
->   unrelated `redox-chat.test.js` (NOT a regression). +34 over baseline
->   (15 v3 P1+P2 + 6 v3 P3 + 11 v3 P4 + 2 hotfix-regression).
+> - curriculum_render **164/165** for classroom.test.js -- the only fail
+>   is the long-standing unrelated `redox-chat.test.js` (NOT a regression).
+>   Includes +2 role-overwrite + +2 snapshot-normalization + +5 retract
+>   regression tests from the s111 hotfix series.
 > - follow-alongs root **4941/4942** -- the only fail is the long-standing
->   unrelated `study-guide.test.js` (NOT a regression). +58 over baseline
->   (16 scaling + 13 v3 P1+P2 + 15 v3 P3 + 14 v3 P4). roster-server unchanged.
->   The hotfix series added no new follow-alongs tests (existing 398
->   classroom-board + classroom-structure stayed green throughout).
+>   unrelated `study-guide.test.js` (NOT a regression). The hotfix series
+>   added no NEW follow-alongs tests (the 398-test classroom-board +
+>   classroom-structure baseline stayed green through all 12 hotfix
+>   commits; the changes were render-layer + state-management bugs that
+>   the existing pure-reducer + structure tests don't exercise).
 >
 > ## Open / verify
-> - cr HEAD = `8a9d103` deploys the WS service (Railway). The P4
->   doorways + role-overwrite fixes are LIVE; user verified end-to-end:
->   armGate works, openDoorways works, mouse-hole renders, fade-on-Up
->   absorption works, Up-to-cancel works.
-> - follow-alongs HEAD = `8fa7be6` republishes GH Pages. All cockpit
->   surfaces verified by the user during the s111 P4 smoke test (the
->   diagnostic loop in messages 5-20 of session 111 caught + fixed
->   every issue in real time, incl. the bidirectional absorb).
+> - cr HEAD = `318e019` deploys the WS service (Railway). All P4 +
+>   hotfix server-side changes are LIVE; user verified end-to-end via
+>   two-browser smoke test (Joe + Jane on PeriodX with teacher
+>   cockpit).
+> - follow-alongs HEAD = `144ac11` republishes GH Pages. All cockpit +
+>   Desk surfaces verified by the user during the s111 P4 smoke loop.
+>   Verified flows: armGate; openDoorways; mouse-hole renders;
+>   walk-into-doorway with fade-on-Up; press-Up-to-cancel fades back;
+>   bidirectional fade on peer screen; non-physical (Joe walks through
+>   where Jane was); vote persists on cockpit refresh; in-doorway
+>   sprite persists on student-own + peer refresh; tally on Desk;
+>   retract on cancel.
 > - One observation worth a note (NOT a confirmed bug): user briefly
 >   saw two browser tabs disagreeing on a peer's avatar position
 >   during a fresh Live session. A refresh resolved it; likely a brief
