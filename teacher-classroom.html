@@ -1119,13 +1119,18 @@
           nameMap: currentNameMap,
           onStateChange: function (summary) {
             _lastSummary = summary;
-            // 2026-05-24 diagnostic: expose summary + select-mode flag so a
-            // teacher with a board-render bug can dump state from DevTools
-            // without rebuilding. Remove once the "0/N in + single dimmed
-            // avatar" report is diagnosed.
+            // 2026-05-24 diagnostic: expose summary + select-mode flag + the
+            // canvas element + boardHandle so a teacher with a board-render
+            // bug can dump state from DevTools without rebuilding. Remove
+            // once the "no sprites visible" report is diagnosed.
             try {
               window.__lcSummary = summary;
               window.__lcSelectMode = _selectModeActive;
+              window.__lcBoardHandle = boardHandle;
+              var mountEl = document.getElementById('board-mount');
+              var canvasEl = mountEl ? mountEl.querySelector('canvas') : null;
+              window.__lcCanvas = canvasEl;
+              window.__lcMount = mountEl;
             } catch (_) {}
             renderCheckinPanel(summary, currentNameMap);
             // The board includes greenlight in every summary (true after a
