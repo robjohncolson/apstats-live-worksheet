@@ -1,3 +1,320 @@
+# Continuation Prompt -- session 112
+
+> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
+> the session-111 block and every older block are historical record
+> only; do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-24 (session 112). follow-alongs HEAD = the commit carrying
+> this CONTINUATION refresh (feature work ended at `aa95fcf`).
+> curriculum_render HEAD = `753f523`. Linear, local==origin on both.
+>
+> ## Shipped this session (112) -- Teacher Student Console FEATURE COMPLETE
+>
+> Session 112 spans the entire 5-phase Teacher Student Console feature.
+> The spec was drafted, frozen at `TEACHER_STUDENT_CONSOLE_SPEC.md`,
+> then each phase ran through the proven loop (recon -> freeze
+> `P{n}_BUILD.md` contract -> dispatch waves -> Codex review -> fold
+> -> commit -> push). User-run migrations: `0008_nudges_log.sql` (run
+> mid-session) + `0009_lesson_unlock.sql` (still pending; degrade to
+> 503 until run, rest of feature works).
+>
+> Cumulative test deltas across the session:
+> - cr: 944 -> 964 (+20, all P3)
+> - roster-server: 503 -> 550 (+47)
+> - root: 4941 -> 5129 (+188)
+>
+> ### P1 -- Drawer + read endpoints (`9168375`)
+> Per-student contextual surface launched from clicking a student row
+> in `teacher-dashboard.html`'s `/class/grades` table. Slide-in side
+> drawer with grade summary + recent submissions + 4 disabled action
+> buttons (P2-P5 enable them).
+> - `roster-server/teacher.js` -- 3 endpoints: profile, grade, recent.
+>   Teacher-authed via `requireTeacher` (x-teacher-secret OR Bearer
+>   token resolving to role='teacher').
+> - `teacher-dashboard.html` -- drawer DOM + CSS + row click handler +
+>   data-* attrs on grades-tbody rows.
+> - Codex 4 MAJOR + 1 MINOR folded: drawer forwards both
+>   x-teacher-secret AND Bearer (was secret-only); request-seq guard
+>   against stale fetches; Promise.allSettled so one failed pane does
+>   not wipe the other; token-auth path test coverage; limit=Infinity
+>   clamp + sort comparator returns 0 on equality.
+> - Spec amended inline based on recon: `roster.real_name` is already
+>   ONE column (no first/last split), so the spec's "migration 0009
+>   for real names" was dropped. Drawer lives in `teacher-dashboard.html`
+>   (NOT the Desk). NO migration for P1.
+>
+> ### P2 -- View as Desk impersonation (`9c42a0d`)
+> Teacher clicks "View as student" in the drawer -> new tab opens at
+> `?viewAsUserId=<sid>` -> Desk hydrates a per-tab sessionStorage
+> object + renders the student's view, read-only. Absorbs the deferred
+> Preview-as-student v2 (worksheet-level).
+> - **Server**: 2 new teacher-authed READ endpoints in
+>   `roster-server/teacher.js`: `/teacher/student/:id/donow` (mirror of
+>   `/donow`; required factoring `computeDonow` out of `donow.js` as
+>   an exported helper) + `/teacher/student/:id/poll-archive`.
+> - **Desk** (`ap_stats_roadmap_square_mode.html`): `_viewAsBootstrap`
+>   IIFE; `viewAsContext` + `_maybeViewAsFetch` helpers; `_deskIsTeacher`
+>   extended; orange "VIEWING AS ... READ-ONLY" banner + Exit button;
+>   `renderDoNow` + `renderDoNowGrades` + `_fetchPollArchive` routed
+>   through `_maybeViewAsFetch` (typeof-guarded so existing vm-based
+>   tests don't need to inject the helper); recordProgress +
+>   recordLinkVisit + studentMark + openBlooketFlashcards +
+>   _bfSaveProgress + _bfClearProgress + closeBlooketFlashcards all
+>   short-circuit on `_viewAsContext` (Codex BLOCKER fold).
+> - **Dashboard**: `_openViewAsTab` wires the drawer's previously-
+>   disabled View-as button.
+> - Codex 2 BLOCKER + 1 MAJOR + 1 MINOR folded: pre-hydration render
+>   race (CSS `html.view-as-loading body{visibility:hidden}` set
+>   synchronously in bootstrap before await, removed in finally if
+>   reload doesn't fire); Blooket localStorage leak (5 helpers
+>   typeof-guarded); tests-too-source-grep-only (+13 behavioral
+>   tests); typeof-guard fallback source pins (+3 tests).
+>
+> ### P3 -- Nudges (follow-alongs `94ae791` + cr `753f523`)
+> Free-text bidirectional messaging between teacher (cockpit) and
+> online students. Cockpit panel (NOT spec's avatar-click popup --
+> deferred) with dropdown of online students + textarea + Send.
+> Student Desk shows toast with TI-84-style soft chime + reply box.
+> All exchanges log to `nudges_log` Supabase table (migration 0008,
+> RUN BY USER MID-SESSION).
+> - **cr** (`curriculum_render/railway-server/classroom.js`):
+>   teacherNudge + studentNudgeReply methods + 2 new server.js switch
+>   cases. teacher role-gated; section-isolated; truncates to 280
+>   chars; fans out to online recipients only (offline silently
+>   dropped); returns ack to sender with delivered + offline arrays.
+>   Plus `recentNudges` Map per room: teacherNudge populates;
+>   studentNudgeReply verifies sender was an actual recipient before
+>   broadcasting (prevents unsolicited student->teacher DM spam).
+>   Aged out in sweep at NUDGE_TTL_MS=10min.
+> - **roster-server** (`nudge.js` + `nudge-db.js` + migration 0008):
+>   POST /teacher/nudge + POST /student/nudge-reply. /teacher/nudge
+>   derives senderUsername + section FROM THE TOKEN (body ignored
+>   except for break-glass x-teacher-secret). /student/nudge-reply
+>   verifies the parent-nudge ownership via nudgesDb.findParent
+>   before persisting the reply.
+> - **classroom-board.js**: ClassroomBoard.mount gains
+>   `onClassroomMessage` callback + handle.sendMessage(payload)
+>   returns boolean + handle.section. (No cr counterpart; the file is
+>   follow-alongs-native -- recon confirmed cr does NOT have
+>   `classroom-board.js`.)
+> - **Desk + cockpit**: toast component + cockpit panel + helpers
+>   (`_newNudgeId`, `_refreshNudgeRecipients`, `_sendNudgeFromCockpit`,
+>   `_renderReplyInList`, `_renderNudgeAck`, `_playNudgeChime`,
+>   `_showNudgeToast`, `_hideNudgeToast`, `_sendNudgeReply`).
+> - Codex 4 BLOCKER + 1 MAJOR folded: BLOCKER 2 (nudges no longer fan
+>   out to monitor sockets -- private DMs); BLOCKER 3 (recentNudges
+>   ownership check + nudges_log findParent on roster); BLOCKER 4
+>   (sendMessage returns boolean; cockpit uses it to set
+>   deliveredUsernames=[] when WS not ready); MAJOR 5 (derive sender
+>   from token, not body). **BLOCKER 1 (WS classroom_join trusts
+>   client-asserted role)** ACCEPTED as pre-existing arch limitation
+>   -- documented in P3 BUILD section 7.5. Nudges weaponize the
+>   existing vulnerability (impersonators can spam ephemeral DMs) but
+>   the AUDIT LOG (gated by real teacher auth) is secure. Separate
+>   hardening task.
+>
+> ### P4 -- Select Students multi-nudge (`cc6d6f4`)
+> Cockpit-side UX layer on top of P3's nudge plumbing. Teacher clicks
+> "Select Students" -> canvas freezes + desaturates -> click avatars
+> toggles selection -> selection bar at bottom (count + textarea +
+> Send) -> Send fires one classroom_teacher_nudge with the selected
+> usernames + one POST /teacher/nudge. ESC or Cancel exits.
+> NO server changes. NO migration.
+> - `classroom-board.js`: opts.onAvatarClick callback + canvas click
+>   handler with 40x40 hit-test (skip self) + handle.setSelectMode +
+>   handle.getCanvas + handle.getSpritePosition + selectModeActive
+>   freeze gate in applyPos.
+> - `teacher-classroom.html`: Select Students panel + selection bar
+>   overlay (fixed-bottom) + markers overlay (viewport-fixed) + 6
+>   helpers + onAvatarClick mount wiring + ESC handler.
+> - **P4 scope cuts (documented in BUILD section 0)**: spec's full
+>   6-action avatar popup deferred (cockpit panel + dropdown is the
+>   P3+P4 MVP; the unified Console wrapper is a later task); spec's
+>   real-name toggle skipped (cockpit already shows real names via
+>   nameMap); markers ship as DOM overlay (not canvas render-path).
+> - Codex 2 MAJOR + 2 MINOR folded: teardown() now calls
+>   `_exitSelectMode()` FIRST so the bar/markers do not outlive
+>   boardHandle on section switch; `_sendSelectedNudge` surfaces
+>   success/error status + only auto-exits on confirmed send;
+>   resize listener attached on _enter / removed on _exit; BUILD doc
+>   CSS for #select-markers updated to match shipped viewport-fixed.
+>
+> ### P5 -- Override lesson gate (`aa95fcf`)
+> Teacher in View-as mode overrides the sequential lesson gate for
+> the impersonated student. Sticky -- writes to new `lesson_unlock`
+> Supabase table (migration 0009, USER-RUN STILL PENDING); the
+> student's Desk consults the unlock list at sign-in.
+> - `roster-server/migrations/0009_lesson_unlock.sql` (USER-RUN):
+>   table with student_username + lesson_key + unlocked_by +
+>   unlocked_at + reason + status; UNIQUE (student_username,
+>   lesson_key); status check('active' | 'revoked').
+> - `roster-server/lesson-unlock.js` (NEW) -- 3 endpoints:
+>   POST /teacher/lesson-unlock (teacher-authed, derives unlockedBy
+>   from token, REJECTS non-`^\d+\.\d+$` lessonKey); GET
+>   /student/lesson-unlocks (student-token); GET
+>   /teacher/student/:id/lesson-unlocks (teacher-authed, 404 unknown).
+> - `roster-server/lesson-unlock-db.js` -- DAL with upsertUnlock
+>   (Supabase .upsert onConflict student_username,lesson_key) +
+>   listActiveForStudent.
+> - `roster-server/server.js` -- 13th positional createApp param +
+>   mount block.
+> - **Desk** (`ap_stats_roadmap_square_mode.html`): `_readLessonUnlocks`
+>   (localStorage in normal mode, sessionStorage in view-as);
+>   `_isTopicLessonUnlocked`; `_refreshLessonUnlocks` (fired on
+>   DOMContentLoaded); `_isLessonUnlocked` extended (typeof-guarded
+>   override check). View-as banner gains "Override gate" button.
+>   Modal: lesson-key input + reason textarea + Confirm. Optimistic
+>   sessionStorage update on POST success.
+> - Codex 1 BLOCKER (accepted) + 1 MAJOR folded: BLOCKER (no
+>   teacher-to-section ownership check on /teacher/lesson-unlock + the
+>   teacher-side GET) ACCEPTED as pre-existing arch -- this is
+>   CONSISTENT with the rest of the roster-server's teacher-gated
+>   surface (/class/*, /remediation/*); none of those check section
+>   ownership. Single-teacher project, theoretical risk only.
+>   Documented in lesson-unlock.js comments. MAJOR (lesson-key format
+>   validation): server-side `^\d+\.\d+$` regex gate prevents typos
+>   from saving silently; Desk modal gets matching pattern attr for
+>   early client-side feedback.
+>
+> ## Migrations
+> - **0008_nudges_log.sql** -- RUN BY USER DURING SESSION 112.
+>   `/teacher/nudge` + `/student/nudge-reply` now 200 in prod.
+> - **0009_lesson_unlock.sql** -- STILL USER-RUN PENDING.
+>   `/teacher/lesson-unlock` + `/student/lesson-unlocks` +
+>   `/teacher/student/:id/lesson-unlocks` return 503 until run.
+>   Rest of P5 feature works (gate falls back to normal sequential
+>   completion when the unlock fetch returns 503).
+>
+> ## Test baselines
+> - curriculum_render: 964/965 (1 known unrelated redox-chat fail; no
+>   regression). P3 was the only phase to touch cr.
+> - roster-server: 550/550 (zero failures; +47 vs pre-P1 baseline).
+> - follow-alongs root: 5129/5130 (1 known unrelated study-guide fail;
+>   no regression; +188 vs pre-P1 baseline).
+>
+> ## Open / verify
+> - Migration 0009 needs to be run by the user in Supabase before
+>   gate overrides persist. The 503 degrade is graceful; the rest of
+>   the Console works without it.
+> - All 5 phases verified working end-to-end during the session via
+>   the proven loop. P3's user-facing live smoke (teacher sends a
+>   real nudge to a real student in the production cockpit) deferred
+>   to the user's next classroom session; everything else has been
+>   smoke-tested.
+>
+> ## NEXT -- queued (Teacher Student Console)
+>
+> The 5 spec phases are SHIPPED. Remaining work is polish + the spec's
+> §15 explicitly-out-of-scope items. Listed roughly by leverage:
+>
+> 1. **Apply Remediation modal wiring.** The 4th disabled drawer
+>    button (P1 reserved space). Wire it to the existing Phase 4b
+>    `/remediation/propose` endpoint. Small (~30 LOC + modal UI),
+>    pure UI plumbing.
+> 2. **Floating avatar-click 6-action popup** (spec §4.1). Unify
+>    View-as / View grade / View recent / Apply remediation / Send
+>    nudge / Override gate into one floating menu next to the
+>    clicked avatar in Live mode. P3 + P4 use a side-panel +
+>    dropdown instead; the popup is the spec's preferred entry but
+>    not load-bearing now that the actions work.
+> 3. **Run migration 0009** (user) so the gate-override path goes
+>    live.
+> 4. **Live smoke of P3-P5 with a real student.** Nudges + select-
+>    students + override-gate all unverified in a real classroom
+>    setting; should land in the next class session.
+> 5. **Nudge history view** (spec §15 deferred). nudges_log rows
+>    exist; no UI to browse them.
+> 6. **Stacked toasts on the student side** (P3 §15 polish).
+>    Currently a second incoming nudge REPLACES the first if not
+>    dismissed.
+> 7. **lesson_unlock revocation UI** (P5 §6 out-of-scope). Schema
+>    has `status='revoked'` reserved; no UI to flip it.
+> 8. **Teacher avatar-click for single-student popup** (P4 used the
+>    Select Students mode + dropdown; single-click open-popup is
+>    deferred to the unified Console wrapper).
+> 9. **Section-wide broadcast nudge** (spec §15).
+> 10. **Student-initiated DM** (spec §15, deferred). Currently
+>     students can only reply, not initiate.
+>
+> ## NEXT -- the project's other tracks (carried forward from s111)
+>
+> The following items survive from earlier sessions and are NOT
+> Console-related:
+>
+> - **v3 P3.1** (DC <-> WS split-brain relay) -- still parked.
+>   Implement only if real classroom usage surfaces the problem.
+> - **v3 P4.1 doorway polish** -- still parked.
+> - **Additional v3.x data modes** (sliders, 2D-axes drop,
+>   sampling-distribution-live, CI coverage simulation). Independent
+>   of the Console; share the v3 WS infra.
+> - **Railway -> DigitalOcean migration -- DEPRECATED INDEFINITELY**
+>   per session 112 user decision (early in this session). User has
+>   tabled the migration; Railway stays. The
+>   `project_railway_to_digitalocean.md` memory entry is preserved
+>   but flagged as out-of-deck.
+>
+> ## Carry-forward gotchas (still load-bearing)
+>
+> - **SACRED:** never write `curriculum_render/data/curriculum.js`.
+> - **The lifted engine files** (`canvas_engine.js` / `sprite_sheet.js`
+>   in follow-alongs root) declare `class` at top level; bare
+>   classic-script class declarations do NOT attach to `window`. The
+>   IIFE-entry bridge in `classroom-board.js` handles this; do NOT
+>   remove. cr is the source of truth; re-copy if cr changes them.
+>   `classroom-board.js` itself is follow-alongs-native (does NOT
+>   exist in cr).
+> - **Cross-repo Codex finding gotcha** (s106 lesson): a finding that
+>   looks like a bug in ONE half may be resolved by the other half.
+>   Verify cross-repo before folding. (P3's BUILD section 7.5
+>   documents an accepted pre-existing cross-cutting limitation in
+>   the cr WS auth model.)
+> - **Typeof-guard cross-sprint calls** -- s111's pattern continues to
+>   pay off. Every cross-function reference from new code to existing
+>   code uses `typeof X === 'function'` guards so existing vm-based
+>   tests don't need to inject helpers. The pattern saved fold time
+>   in P2 + P3 + P4 + P5.
+> - **The cockpit's runtime test pattern** (`tests/poll-archive-cockpit.test.js`):
+>   loads `teacher-classroom.html`'s inline script in jsdom + vm. Any
+>   new HTML element the cockpit references MUST also be added to
+>   the test's HTML scaffolding (otherwise getElementById throws on
+>   null). jsdom also doesn't provide `WebSocket`; stub it.
+> - **PowerShell 5.1 + git** -- never `git commit -m` from
+>   PowerShell. Use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- `git add` explicit paths, never `-A`.
+>   `data/skill-map.js` regenerates on the audit test -- `git checkout`
+>   before staging. cr has its own dirty files (`fix_justin/`,
+>   `node_modules/`, etc.) -- skip them.
+> - **roster-server** lives inside follow-alongs (own `package.json`
+>   + vitest); auto-deploys on a push touching `roster-server/**`.
+>   curriculum_render is a SEPARATE repo at
+>   `C:/Users/rober/Downloads/Projects/school/curriculum_render` with
+>   its own remote; `railway-server/**` deploys the
+>   `curriculumrender-production` WS service.
+> - **The proven loop continues to earn its keep**: across 5 phases,
+>   Codex caught 11 BLOCKER + 8 MAJOR + 6 MINOR findings. Most were
+>   folded inline; 2 BLOCKERs (P3 WS role-trust + P5 section-ownership)
+>   were accepted as pre-existing arch and documented. Don't skip
+>   the review step.
+> - **Cross-agent prompts ASCII-only.** A section symbol `§` in the
+>   P3 review prompt caused the cross-agent runner to fail with a
+>   UTF-8 decode error mid-session; recovered by re-writing prompts
+>   in pure ASCII. Future prompts must avoid `§ — ` and other
+>   non-ASCII glyphs.
+>
+> ## Recall on reload
+>
+> Spec: `TEACHER_STUDENT_CONSOLE_SPEC.md`. Per-phase contracts:
+> `TEACHER_STUDENT_CONSOLE_P[1-5]_BUILD.md`. Project memory:
+> `project_live_classroom.md`, `project_desk_donow.md`,
+> `project_gradebook_grading_model.md`,
+> `feedback_live_classroom_self_directed.md`,
+> `feedback_diagnostic_first.md`,
+> `feedback_curriculum_render_sacred.md`,
+> `feedback_test_on_public_url.md`,
+> `project_railway_to_digitalocean.md` (DEPRECATED -- preserved for
+> historical context only; do NOT propose).
+
+---
+
 # Continuation Prompt -- session 111
 
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
