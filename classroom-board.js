@@ -1459,6 +1459,13 @@
     // Used by the Desk to surface 'classroom_teacher_nudge' as a toast, and
     // by the cockpit to surface 'classroom_student_nudge_reply' as a reply.
     var onClassroomMessage = (typeof opts.onClassroomMessage === 'function') ? opts.onClassroomMessage : null;
+    // P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11): caller-supplied
+    // avatar-click callback + select-mode toggle. While selectModeActive is
+    // true, peer position updates are gated (applyPos) so the teacher can
+    // click reliably, AND canvas clicks fire onAvatarClick with the hit
+    // sprite's username.
+    var onAvatarClick = (typeof opts.onAvatarClick === 'function') ? opts.onAvatarClick : null;
+    var selectModeActive = false;
 
     // Ensure the container clips the off-screen pull-down panel.
     if (container.style.position !== 'relative' &&
@@ -1477,6 +1484,30 @@
     canvas.style.display = 'block';
     canvas.style.width   = '100%';
     container.appendChild(canvas);
+
+    // P4: canvas click -> avatar hit-test. Only fires onAvatarClick when
+    // select mode is active so normal-mode clicks don't surprise the user.
+    // Hit zone is generous (40x40) since rendered sprites are ~20x24 px.
+    canvas.addEventListener('click', function (ev) {
+      if (!selectModeActive || !onAvatarClick) return;
+      var rect = canvas.getBoundingClientRect();
+      var cssX = (ev.clientX != null) ? (ev.clientX - rect.left) : 0;
+      var cssY = (ev.clientY != null) ? (ev.clientY - rect.top) : 0;
+      var cx = cssX * (canvas.width / Math.max(1, canvas.clientWidth || rect.width || 1));
+      var cy = cssY * (canvas.height / Math.max(1, canvas.clientHeight || rect.height || 1));
+      var HIT = 20;
+      var hit = null;
+      for (var u in spriteEntities) {
+        if (!Object.prototype.hasOwnProperty.call(spriteEntities, u)) continue;
+        var sp = spriteEntities[u];
+        if (!sp) continue;
+        if (u === username) continue;   // never select self
+        var dx = Math.abs(cx - sp.x);
+        var dy = Math.abs(cy - sp.y);
+        if (dx <= HIT && dy <= HIT) { hit = u; break; }
+      }
+      if (hit) { try { onAvatarClick(hit); } catch (_) {} }
+    });
 
     // --- check-in button (B3) ------------------------------------------
 
@@ -2452,6 +2483,11 @@
     // the sprite _moved=true so repositionSprites stops yanking it back
     // to the auto-layout slot.
     function applyPos(msg) {
+      // P4 Select Students: freeze peer movement so the teacher can click
+      // sprites reliably while selecting. The local player isn't affected
+      // (this handler explicitly ignores self below). Frozen positions
+      // catch up when select mode exits (next applyPos call applies).
+      if (selectModeActive) return;
       if (!msg || !msg.username) { return; }
       if (msg.username === username) { return; }    // ignore self echoes
       var peer = spriteEntities[msg.username];
@@ -2729,7 +2765,29 @@
 
       // Section is exposed so the cockpit's POST /teacher/nudge body can
       // include the active section without re-computing it.
-      section: section
+      section: section,
+
+      // --- P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11) ---
+      // Cockpit toggles select mode via this. ON freezes applyPos (peers
+      // stop moving so the teacher can click reliably) + adds a CSS class
+      // on the canvas for the desaturation effect. The visual selection
+      // markers are rendered by the cockpit (DOM overlay), not the board.
+      setSelectMode: function (on) {
+        selectModeActive = !!on;
+        if (canvas && canvas.classList) {
+          if (selectModeActive) canvas.classList.add('classroom-select-mode');
+          else canvas.classList.remove('classroom-select-mode');
+        }
+      },
+
+      // P4: expose the canvas + per-sprite positions so the cockpit can
+      // place absolutely-positioned selection markers over the canvas.
+      getCanvas: function () { return canvas; },
+      getSpritePosition: function (uname) {
+        var sp = spriteEntities[uname];
+        if (!sp) return null;
+        return { x: sp.x, y: sp.y, canvasW: canvas.width, canvasH: canvas.height };
+      }
     };
 
     return handle;

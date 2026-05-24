@@ -307,6 +307,49 @@
       background: #0a0a0a;
       display: block;
     }
+
+    /* P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11). */
+    canvas.classroom-select-mode {
+      filter: grayscale(0.7) brightness(0.85);
+      cursor: crosshair;
+    }
+    #select-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 9000;
+      background: var(--sg-bg-card); border-top: 2px solid var(--sg-accent);
+      padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.18);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    #select-bar .sb-count {
+      font-weight: 700; color: var(--sg-accent); font-size: 0.95rem;
+      min-width: 110px;
+    }
+    #select-bar textarea {
+      flex: 1; resize: vertical; min-height: 40px; max-height: 100px;
+      border: 1px solid var(--sg-border); border-radius: 4px;
+      padding: 6px; font: inherit; box-sizing: border-box;
+    }
+    #select-markers {
+      position: fixed; top: 0; left: 0; pointer-events: none; z-index: 50;
+      width: 100vw; height: 100vh;
+    }
+    #select-markers .sel-marker {
+      position: absolute;
+      width: 40px; height: 40px; margin-left: -20px; margin-top: -32px;
+      border: 3px solid #d97706; border-radius: 4px;
+      background: rgba(217, 119, 6, 0.18);
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    #select-markers .sel-marker::after {
+      content: "\2713";  /* check mark */
+      position: absolute; top: -22px; left: 50%;
+      transform: translateX(-50%);
+      background: #d97706; color: #fff;
+      width: 18px; height: 18px; line-height: 18px;
+      border-radius: 50%; font-weight: 700; font-size: 12px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -489,6 +532,17 @@
         <div class="hint">
           Students walk their avatar through their chosen doorway + press Up.
           Mutually exclusive with the poll above. Closing archives the result.
+        </div>
+      </div>
+
+      <!-- P4: Select Students (multi-nudge) -- toggle for entering select mode -->
+      <div class="section" id="select-students-section" style="display:none">
+        <h2 class="section-title">Select Students (multi-nudge)</h2>
+        <div class="control-strip">
+          <button class="ctrl-btn" id="btn-select-students">Select Students</button>
+          <span id="select-students-hint" class="hint" style="margin-left:8px">
+            Freeze the board + multi-pick avatars for a group nudge. ESC or Cancel exits.
+          </span>
         </div>
       </div>
 
@@ -678,11 +732,13 @@
       var poll = document.getElementById('poll-section');
       var dw   = document.getElementById('doorways-section');
       var nudge = document.getElementById('nudge-section');
+      var sel = document.getElementById('select-students-section');
       if (ctrl) ctrl.style.display = disp;
       if (chk)  chk.style.display  = disp;
       if (poll) poll.style.display  = disp;
       if (dw)   dw.style.display   = disp;
       if (nudge) nudge.style.display = disp;
+      if (sel) sel.style.display = disp;
     }
 
     // ===== v2.1: poll archive tracking =====
@@ -743,6 +799,12 @@
     var _lastSummary = null;
 
     function teardown() {
+      // Codex MAJOR fold P4: exit select mode FIRST so the bar/markers
+      // overlay + selected set don't outlive the boardHandle. Without
+      // this, switching sections / exiting Live with select mode active
+      // could leave the bar visible + let the teacher Send against a
+      // dead handle.
+      try { if (typeof _exitSelectMode === 'function') _exitSelectMode(); } catch (_) {}
       if (boardHandle) {
         try { boardHandle.destroy(); } catch (_) {}
         boardHandle = null;
@@ -857,6 +919,14 @@
               try { _renderReplyInList(msg); } catch (_) {}
             } else if (msg.type === 'classroom_teacher_nudge_ack' && typeof _renderNudgeAck === 'function') {
               try { _renderNudgeAck(msg); } catch (_) {}
+            }
+          },
+          // P4 Select Students (TEACHER_STUDENT_CONSOLE_SPEC.md §11): canvas
+          // click hit-tests onto an avatar. typeof-guarded for tests that
+          // mount the board without loading the select-mode helpers.
+          onAvatarClick: function (uname) {
+            if (typeof _toggleSelectAvatar === 'function') {
+              try { _toggleSelectAvatar(uname); } catch (_) {}
             }
           }
         });
@@ -1127,6 +1197,181 @@
         status.textContent = 'Offline (not delivered): ' + offline.join(', ');
         setTimeout(function () { if (status) status.textContent = ''; }, 5000);
       }
+    }
+
+    // ===== P4: Select Students mode (TEACHER_STUDENT_CONSOLE_SPEC.md §11) =====
+    // Cockpit-side multi-pick + group-nudge. Teacher clicks "Select Students",
+    // canvas freezes + desaturates, click avatars to toggle membership, bar
+    // at bottom shows count + textarea + Send. ESC or Cancel exits.
+
+    var _selectModeActive = false;
+    var _selectedUsernames = new Set();
+
+    // Codex MINOR fold P4: rerender markers on window resize while select
+    // mode is active so check-marks track the canvas as it reflows.
+    var _selectResizeHandler = null;
+
+    function _enterSelectMode() {
+      if (_selectModeActive) return;
+      _selectModeActive = true;
+      _selectedUsernames.clear();
+      if (boardHandle && typeof boardHandle.setSelectMode === 'function') {
+        boardHandle.setSelectMode(true);
+      }
+      var bar = document.getElementById('select-bar');
+      if (bar) bar.style.display = 'flex';
+      var markers = document.getElementById('select-markers');
+      if (markers) markers.style.display = 'block';
+      var btn = document.getElementById('btn-select-students');
+      if (btn) btn.textContent = 'Exit Select Mode';
+      // Attach resize listener for marker re-positioning.
+      _selectResizeHandler = function () {
+        try { _renderSelectMarkers(); } catch (_) {}
+      };
+      try { window.addEventListener('resize', _selectResizeHandler); } catch (_) {}
+      _updateSelectBar();
+    }
+
+    function _exitSelectMode() {
+      if (!_selectModeActive) return;
+      _selectModeActive = false;
+      _selectedUsernames.clear();
+      if (boardHandle && typeof boardHandle.setSelectMode === 'function') {
+        boardHandle.setSelectMode(false);
+      }
+      var bar = document.getElementById('select-bar');
+      if (bar) bar.style.display = 'none';
+      var markers = document.getElementById('select-markers');
+      if (markers) {
+        markers.style.display = 'none';
+        markers.innerHTML = '';
+      }
+      var btn = document.getElementById('btn-select-students');
+      if (btn) btn.textContent = 'Select Students';
+      var textEl = document.getElementById('select-bar-text');
+      if (textEl) textEl.value = '';
+      // Detach resize listener.
+      if (_selectResizeHandler) {
+        try { window.removeEventListener('resize', _selectResizeHandler); } catch (_) {}
+        _selectResizeHandler = null;
+      }
+      _updateSelectBar();
+    }
+
+    function _toggleSelectAvatar(uname) {
+      if (!_selectModeActive || !uname) return;
+      if (_selectedUsernames.has(uname)) _selectedUsernames.delete(uname);
+      else _selectedUsernames.add(uname);
+      _renderSelectMarkers();
+      _updateSelectBar();
+    }
+
+    function _updateSelectBar() {
+      var count = _selectedUsernames.size;
+      var countEl = document.getElementById('select-bar-count');
+      if (countEl) countEl.textContent = count + ' selected';
+      var textEl = document.getElementById('select-bar-text');
+      var sendBtn = document.getElementById('btn-select-send');
+      if (sendBtn) {
+        sendBtn.disabled = (count === 0) || !textEl || !String(textEl.value || '').trim();
+      }
+    }
+
+    function _renderSelectMarkers() {
+      var markers = document.getElementById('select-markers');
+      if (!markers) return;
+      markers.innerHTML = '';
+      if (!_selectModeActive || _selectedUsernames.size === 0) return;
+      if (!boardHandle || typeof boardHandle.getSpritePosition !== 'function') return;
+      var canvas = (typeof boardHandle.getCanvas === 'function') ? boardHandle.getCanvas() : null;
+      if (!canvas) return;
+      var rect = canvas.getBoundingClientRect();
+      var scaleX = rect.width / Math.max(1, canvas.width);
+      var scaleY = rect.height / Math.max(1, canvas.height);
+      _selectedUsernames.forEach(function (u) {
+        var pos = boardHandle.getSpritePosition(u);
+        if (!pos) return;
+        var div = document.createElement('div');
+        div.className = 'sel-marker';
+        div.style.left = (rect.left + pos.x * scaleX) + 'px';
+        div.style.top = (rect.top + pos.y * scaleY) + 'px';
+        div.setAttribute('data-username', u);
+        markers.appendChild(div);
+      });
+    }
+
+    async function _sendSelectedNudge() {
+      if (!_selectModeActive || _selectedUsernames.size === 0) return;
+      var textEl = document.getElementById('select-bar-text');
+      var rawText = textEl ? String(textEl.value || '').trim() : '';
+      if (!rawText) return;
+      if (rawText.length > 280) rawText = rawText.slice(0, 280);
+      var recipients = Array.from(_selectedUsernames);
+      var nudgeId = (typeof _newNudgeId === 'function') ? _newNudgeId() : ('nudge_' + Date.now());
+      var sendBtn = document.getElementById('btn-select-send');
+      var countEl = document.getElementById('select-bar-count');
+      if (sendBtn) sendBtn.disabled = true;
+      // 1) Live delivery via WS.
+      var wsSent = false;
+      try {
+        if (boardHandle && typeof boardHandle.sendMessage === 'function') {
+          wsSent = !!boardHandle.sendMessage({
+            type: 'classroom_teacher_nudge',
+            nudgeId: nudgeId,
+            recipientUsernames: recipients,
+            text: rawText
+          });
+        }
+      } catch (_) { wsSent = false; }
+      // 2) Log to roster-server. Codex MAJOR fold P4: surface success/error
+      // status; only auto-exit on confirmed success. WS-drop keeps the
+      // user in select mode so they can adjust + retry.
+      var logOk = false;
+      var logErr = null;
+      try {
+        var rsBase = (typeof window.ROSTER_SERVICE_URL === 'string') ? window.ROSTER_SERVICE_URL : '';
+        var rosterToken = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+        if (rsBase && rosterToken) {
+          var resp = await fetch(rsBase + '/teacher/nudge', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + rosterToken
+            },
+            body: JSON.stringify({
+              nudgeId: nudgeId,
+              recipientUsernames: recipients,
+              text: rawText,
+              deliveredUsernames: wsSent ? recipients : []
+            })
+          });
+          if (resp && resp.ok) {
+            var data = null;
+            try { data = await resp.json(); } catch (_) {}
+            logOk = !!(data && data.ok);
+            if (!logOk) logErr = (data && data.error) || 'log returned not-ok';
+          } else {
+            logErr = 'log HTTP ' + (resp && resp.status);
+          }
+        } else {
+          logErr = 'no log -- not signed in';
+        }
+      } catch (err) { logErr = (err && err.message) || 'fetch failed'; }
+      // Decide UX: auto-exit only when BOTH WS delivered AND log persisted.
+      // Otherwise keep the bar open so the user knows what happened and can
+      // adjust the message or retry.
+      if (wsSent && logOk) {
+        _exitSelectMode();
+        return;
+      }
+      // Status pinned to the count slot (no nudge-status element in the bar).
+      if (countEl) {
+        var n = _selectedUsernames.size;
+        if (!wsSent) countEl.textContent = n + ' selected -- not connected';
+        else if (logErr) countEl.textContent = n + ' selected -- sent (log failed)';
+        else countEl.textContent = n + ' selected';
+      }
+      if (sendBtn) sendBtn.disabled = false;
     }
 
     // ===== v3 P4: doorways form helpers (mirror the v2 poll add/remove pattern) =====
@@ -1817,6 +2062,38 @@
         if (btn) btn.addEventListener('click', _sendNudgeFromCockpit);
       } catch (_) {}
     })();
+
+    // ===== P4: Select Students wiring (TEACHER_STUDENT_CONSOLE_SPEC.md §11) =====
+    (function () {
+      try {
+        var sBtn = document.getElementById('btn-select-students');
+        if (sBtn) sBtn.addEventListener('click', function () {
+          if (_selectModeActive) _exitSelectMode();
+          else _enterSelectMode();
+        });
+        var sSend = document.getElementById('btn-select-send');
+        if (sSend) sSend.addEventListener('click', _sendSelectedNudge);
+        var sCancel = document.getElementById('btn-select-cancel');
+        if (sCancel) sCancel.addEventListener('click', _exitSelectMode);
+        var sText = document.getElementById('select-bar-text');
+        if (sText) sText.addEventListener('input', _updateSelectBar);
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && _selectModeActive) _exitSelectMode();
+        });
+      } catch (_) {}
+    })();
   </script>
+
+  <!-- P4: Select Students overlay layer + selection bar.
+       Markers are absolute-positioned divs over the canvas; bar is
+       fixed at the bottom of the viewport. Both hidden until select
+       mode is active. -->
+  <div id="select-markers" style="display:none"></div>
+  <div id="select-bar" style="display:none">
+    <span class="sb-count" id="select-bar-count">0 selected</span>
+    <textarea id="select-bar-text" maxlength="280" rows="2" placeholder="Nudge to selected (280 chars max)..."></textarea>
+    <button type="button" class="ctrl-btn primary" id="btn-select-send" disabled>Send to selected</button>
+    <button type="button" class="ctrl-btn" id="btn-select-cancel">Cancel</button>
+  </div>
 </body>
 </html>

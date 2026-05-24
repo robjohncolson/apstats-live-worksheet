@@ -86,7 +86,9 @@ describe('U3 -- cockpit source structure: poll-close trigger', () => {
   it('teardown clears _lastArchivedPollId', () => {
     const idx = COCKPIT_SRC.indexOf('function teardown');
     expect(idx).toBeGreaterThan(-1);
-    expect(COCKPIT_SRC.slice(idx, idx + 400)).toMatch(/_lastArchivedPollId\s*=\s*null/);
+    // Widened from 400 to 800 after P4 fold added _exitSelectMode call +
+    // its multi-line comment at the top of teardown().
+    expect(COCKPIT_SRC.slice(idx, idx + 800)).toMatch(/_lastArchivedPollId\s*=\s*null/);
   });
 
   it('todayIsoDate() is defined and used for pollDate', () => {
