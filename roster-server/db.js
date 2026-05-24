@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, getRoleByStudentId, getSpriteHueByStudentId, updatePassword, updateStudent, updateSpriteHue, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, updatePassword, updateStudent, updateSpriteHue, listRoster };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -42,6 +42,24 @@ export function createDb(client) {
       .from('roster')
       .select('student_id, section, login_username, real_name')
       .eq('student_id', studentId)
+      .maybeSingle();
+  }
+
+  // P13: find the teacher's roster row (single-teacher prod assumed).
+  // Returns { data: row|null, error }. Used by /student/nudge to
+  // resolve the DM recipient since the student doesn't pick one.
+  //
+  // In a multi-teacher deployment, this would need a section filter +
+  // a way to pick the section's teacher (e.g. roster carries
+  // teacher_id_for_section). Today's single-teacher posture is
+  // explicit per P13 BUILD section 0.
+  async function findTeacherUsername() {
+    return client
+      .from('roster')
+      .select('login_username, real_name, section, student_id')
+      .eq('role', 'teacher')
+      .order('created_at', { ascending: true })
+      .limit(1)
       .maybeSingle();
   }
 

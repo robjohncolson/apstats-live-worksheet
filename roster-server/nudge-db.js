@@ -7,6 +7,7 @@ export function createNudgesDb(client) {
   return {
     insertNudges,        // batch insert (one row per recipient)
     insertReply,         // single reply row
+    insertStudentDm,     // P13: student-initiated DM (fresh thread, parent_nudge_id=null)
     listForTeacher,      // teacher viewing their sent nudges
     listForStudent,      // student viewing nudges they received
     markDelivered,       // update delivered_at for a (nudge_id, recipient) pair
@@ -57,6 +58,22 @@ export function createNudgesDb(client) {
       section: section,
       created_at: nowIso,
       delivered_at: nowIso,  // student replies are sent live; delivery confirmed if teacher online
+    }).select('*').single();
+  }
+
+  // P13: insert a student-initiated DM. Mirrors insertReply but with
+  // parent_nudge_id=NULL (this is a fresh thread, not a reply).
+  async function insertStudentDm({ nudgeId, senderUsername, recipientUsername, text, section }) {
+    return client.from('nudges_log').insert({
+      nudge_id: nudgeId,
+      parent_nudge_id: null,
+      sender_username: senderUsername,
+      recipient_username: recipientUsername,
+      text: text,
+      direction: 'student',
+      section: section,
+      created_at: new Date().toISOString(),
+      delivered_at: null,   // live delivery deferred; teacher polls via P7 dashboard surface
     }).select('*').single();
   }
 

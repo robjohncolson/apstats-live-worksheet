@@ -157,6 +157,156 @@ export function mountNudge(app, { db, nudgesDb }) {
     }
   });
 
+  // POST /student/nudge { text }  -- student-initiated DM to teacher.
+  // Auth: student Bearer token. Resolves the teacher recipient
+  // server-side via db.findTeacherUsername (single-teacher prod).
+  // Persists with direction='student' + parent_nudge_id=NULL.
+  app.post('/student/nudge', async (req, res) => {
+    var authHeader = req.headers['authorization'] || req.headers['Authorization'] || '';
+    var token = '';
+    if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    }
+    if (!token) return res.status(401).json({ ok: false, error: 'unauthorized' });
+
+    var studentId;
+    try { studentId = verifyToken(token); } catch (_) { return res.status(401).json({ ok: false, error: 'unauthorized' }); }
+    if (!studentId) return res.status(401).json({ ok: false, error: 'unauthorized' });
+
+    // Resolve the student's identity from their roster row.
+    var roster;
+    try {
+      var { data: rosterRow, error: rosterErr } = await db.findByStudentId(studentId);
+      if (rosterErr || !rosterRow) return res.status(401).json({ ok: false, error: 'unauthorized' });
+      roster = rosterRow;
+    } catch (_) { return res.status(401).json({ ok: false, error: 'unauthorized' }); }
+
+    var body = req.body || {};
+    var text = (typeof body.text === 'string') ? body.text : '';
+    if (!text.trim()) {
+      return res.status(400).json({ ok: false, error: 'text required' });
+    }
+    if (text.length > 280) text = text.slice(0, 280);
+
+    // Resolve the teacher recipient.
+    var teacher;
+    try {
+      var { data: teacherRow, error: teacherErr } = await db.findTeacherUsername();
+      if (teacherErr) {
+        console.error('POST /student/nudge findTeacher error:', teacherErr);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (!teacherRow) {
+        return res.status(503).json({ ok: false, error: 'no teacher available' });
+      }
+      teacher = teacherRow;
+    } catch (err) {
+      console.error('POST /student/nudge findTeacher throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    // Insert the DM.
+    var nudgeId = 'student-dm-' + studentId + '-' + Date.now();
+    try {
+      var { data, error } = await nudgesDb.insertStudentDm({
+        nudgeId: nudgeId,
+        senderUsername: roster.login_username,
+        recipientUsername: teacher.login_username,
+        text: text,
+        section: roster.section,
+      });
+      if (error) {
+        if (error.code === '42P01') return res.status(503).json({ ok: false, error: 'nudges_log not provisioned -- run migration 0008' });
+        console.error('POST /student/nudge insert error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      return res.json({ ok: true, nudgeId: nudgeId, row: data });
+    } catch (err) {
+      console.error('POST /student/nudge throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
+
+  // GET /student/nudge-history?limit=&offset=  -- student's own dyad
+  // thread with the teacher (both directions). Mirrors the teacher-side
+  // GET /teacher/nudge-history but the dyad is fixed by the auth token.
+  app.get('/student/nudge-history', async (req, res) => {
+    var authHeader = req.headers['authorization'] || req.headers['Authorization'] || '';
+    var token = '';
+    if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    } else if (req.query && typeof req.query.token === 'string') {
+      token = req.query.token;
+    }
+    if (!token) return res.status(401).json({ ok: false, error: 'unauthorized' });
+
+    var studentId;
+    try { studentId = verifyToken(token); } catch (_) { return res.status(401).json({ ok: false, error: 'unauthorized' }); }
+    if (!studentId) return res.status(401).json({ ok: false, error: 'unauthorized' });
+
+    var roster;
+    try {
+      var { data: rosterRow2, error: rosterErr2 } = await db.findByStudentId(studentId);
+      if (rosterErr2 || !rosterRow2) return res.status(401).json({ ok: false, error: 'unauthorized' });
+      roster = rosterRow2;
+    } catch (_) { return res.status(401).json({ ok: false, error: 'unauthorized' }); }
+
+    // Resolve the teacher recipient.
+    var teacher2;
+    try {
+      var { data: teacherRow2, error: teacherErr2 } = await db.findTeacherUsername();
+      // Codex P13 MINOR fold: do NOT mask a DB error as "no teacher". A real
+      // 5xx from the DB lookup must surface so the client knows to retry,
+      // not silently return an empty thread.
+      if (teacherErr2) {
+        console.error('GET /student/nudge-history findTeacher error:', teacherErr2);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (!teacherRow2) return res.json({ ok: true, rows: [] });  // no teacher -> empty thread (acceptable)
+      teacher2 = teacherRow2;
+    } catch (err) {
+      console.error('GET /student/nudge-history findTeacher throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    var limit = Number(req.query.limit);
+    if (!Number.isFinite(limit) || limit <= 0) limit = 20;
+    if (limit > 100) limit = 100;
+    var offset = Number(req.query.offset);
+    if (!Number.isFinite(offset) || offset < 0) offset = 0;
+
+    // Validate usernames before passing to PostgREST (same gate as P7).
+    if (!/^[a-zA-Z0-9_-]+$/.test(roster.login_username) || !/^[a-zA-Z0-9_-]+$/.test(teacher2.login_username)) {
+      return res.status(400).json({ ok: false, error: 'resolved usernames have invalid characters' });
+    }
+
+    try {
+      // Reuse listConversation -- the dyad is teacherUsername / studentUsername.
+      var { data: histData, error: histError } = await nudgesDb.listConversation({
+        teacherUsername: teacher2.login_username,
+        studentUsername: roster.login_username,
+        limit: limit,
+        offset: offset,
+      });
+      if (histError) {
+        if (histError.code === '42P01') return res.status(503).json({ ok: false, error: 'nudges_log not provisioned -- run migration 0008' });
+        console.error('GET /student/nudge-history error:', histError);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      return res.json({
+        ok: true,
+        studentUsername: roster.login_username,
+        teacherUsername: teacher2.login_username,
+        limit: limit,
+        offset: offset,
+        rows: histData || [],
+      });
+    } catch (err) {
+      console.error('GET /student/nudge-history throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
+
   // POST /student/nudge-reply { parentNudgeId, recipientUsername, text, section }
   // Auth: student token (resolves to senderUsername via roster lookup).
   app.post('/student/nudge-reply', async (req, res) => {
