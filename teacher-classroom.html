@@ -350,6 +350,14 @@
       border-radius: 50%; font-weight: 700; font-size: 12px;
       text-align: center;
     }
+
+    /* P8: broadcast nudge toggle (TEACHER_STUDENT_CONSOLE_P8_BUILD.md section 2.1) */
+    .nudge-broadcast-toggle {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.88rem; cursor: pointer; user-select: none;
+    }
+    .nudge-broadcast-toggle input { cursor: pointer; }
+    .nudge-recipient-broadcast-dim { opacity: 0.45; }
   </style>
 </head>
 <body>
@@ -554,6 +562,14 @@
           <select id="nudge-recipient" disabled>
             <option value="">(no students online)</option>
           </select>
+        </div>
+        <!-- P8: broadcast toggle (TEACHER_STUDENT_CONSOLE_P8_BUILD.md section 2.1) -->
+        <div class="form-row" id="nudge-broadcast-row">
+          <label class="nudge-broadcast-toggle">
+            <input type="checkbox" id="nudge-broadcast">
+            <span>Broadcast to all online students</span>
+            <span id="nudge-broadcast-count" class="hint" style="margin-left:6px"></span>
+          </label>
         </div>
         <div class="form-row">
           <label for="nudge-text">Message (280 chars max)</label>
@@ -805,6 +821,22 @@
       // could leave the bar visible + let the teacher Send against a
       // dead handle.
       try { if (typeof _exitSelectMode === 'function') _exitSelectMode(); } catch (_) {}
+      // Codex P8 MAJOR fold: clear broadcast state on section change.
+      // Without this, _nudgeLastOnlineList carries usernames from the prior
+      // section; if the teacher switches sections with broadcast still on,
+      // the first Send would POST those stale usernames to /teacher/nudge
+      // (the WS layer would drop them as cross-section, but the audit log
+      // would still insert incorrect rows).
+      try {
+        if (typeof _nudgeBroadcastActive !== 'undefined') _nudgeBroadcastActive = false;
+        if (typeof _nudgeLastOnlineList !== 'undefined') _nudgeLastOnlineList = [];
+        var bcastBox = document.getElementById('nudge-broadcast');
+        if (bcastBox) bcastBox.checked = false;
+        var sel = document.getElementById('nudge-recipient');
+        if (sel) sel.classList.remove('nudge-recipient-broadcast-dim');
+        var countEl = document.getElementById('nudge-broadcast-count');
+        if (countEl) countEl.textContent = '';
+      } catch (_) {}
       if (boardHandle) {
         try { boardHandle.destroy(); } catch (_) {}
         boardHandle = null;
@@ -1056,6 +1088,14 @@
     // student replies + offline ack via onClassroomMessage.
 
     var _nudgeIdSeq = 0;
+    // P8: broadcast toggle state + stashed online list.
+    // _nudgeBroadcastActive: true when the checkbox is checked.
+    // _nudgeLastOnlineList: the online student list from the most recent
+    //   _refreshNudgeRecipients call. Read at send time so we never need
+    //   a second walk of summary.members.
+    var _nudgeBroadcastActive = false;
+    var _nudgeLastOnlineList = [];
+
     function _newNudgeId() {
       _nudgeIdSeq += 1;
       return 'nudge_' + Date.now() + '_' + _nudgeIdSeq;
@@ -1086,8 +1126,27 @@
           o.textContent = realName + ' (@' + u + ')';
           sel.appendChild(o);
         });
-        sel.disabled = false;
+        // Codex P8 MAJOR fold: keep the dropdown functionally disabled while
+        // broadcast mode is active. Without this, a subsequent member-update
+        // event would re-enable the dropdown even though the visual dim class
+        // says otherwise -- and a click on the now-functional dropdown could
+        // bypass the broadcast intent. typeof guard preserves behavior for
+        // the isolated-vm test harness that lacks _nudgeBroadcastActive.
+        sel.disabled = (typeof _nudgeBroadcastActive !== 'undefined') && _nudgeBroadcastActive;
         if (onlineStudents.indexOf(prev) >= 0) sel.value = prev;
+      }
+      // P8: keep the broadcast count label in sync and stash the online list
+      // so _sendNudgeFromCockpit can resolve recipients without re-walking members.
+      var countEl = document.getElementById('nudge-broadcast-count');
+      if (countEl) {
+        countEl.textContent = onlineStudents.length === 0
+          ? '(no students online)'
+          : '(' + onlineStudents.length + ' online)';
+      }
+      // typeof-guard: in isolated vm sandboxes the module-scope var is absent;
+      // skip the assignment rather than throw ReferenceError.
+      if (typeof _nudgeLastOnlineList !== 'undefined') {
+        _nudgeLastOnlineList = onlineStudents.slice();
       }
       _updateNudgeSendButton();
     }
@@ -1097,7 +1156,17 @@
       var text = document.getElementById('nudge-text');
       var btn = document.getElementById('btn-send-nudge');
       if (!sel || !text || !btn) return;
-      btn.disabled = !sel.value || !String(text.value || '').trim();
+      var hasText = !!String(text.value || '').trim();
+      // P8: broadcast mode gates on online-list length instead of dropdown value.
+      // Use typeof guards so isolated test sandboxes (which don't inject the
+      // module-scope broadcast vars) fall through to the single-recipient path.
+      var broadcastOn = (typeof _nudgeBroadcastActive !== 'undefined') && !!_nudgeBroadcastActive;
+      var onlineList = (typeof _nudgeLastOnlineList !== 'undefined') ? _nudgeLastOnlineList : [];
+      if (broadcastOn) {
+        btn.disabled = !hasText || onlineList.length === 0;
+      } else {
+        btn.disabled = !sel.value || !hasText;
+      }
     }
 
     async function _sendNudgeFromCockpit() {
@@ -1105,10 +1174,29 @@
       var textEl = document.getElementById('nudge-text');
       var status = document.getElementById('nudge-status');
       if (!sel || !textEl) return;
-      var recipient = sel.value;
       var rawText = String(textEl.value || '').trim();
-      if (!recipient || !rawText) return;
+      if (!rawText) return;
       if (rawText.length > 280) rawText = rawText.slice(0, 280);
+
+      // P8: resolve the recipient list. Broadcast -> the live online list
+      // captured by the most recent _refreshNudgeRecipients. Single ->
+      // the dropdown selection (P3 unchanged path).
+      var recipientList;
+      if (_nudgeBroadcastActive) {
+        recipientList = _nudgeLastOnlineList.slice();
+        if (recipientList.length === 0) {
+          if (status) {
+            status.textContent = 'No students online -- nothing to broadcast.';
+            setTimeout(function () { if (status) status.textContent = ''; }, 3500);
+          }
+          return;
+        }
+      } else {
+        var recipient = sel.value;
+        if (!recipient) return;
+        recipientList = [recipient];
+      }
+
       var nudgeId = _newNudgeId();
       var btn = document.getElementById('btn-send-nudge');
       if (btn) btn.disabled = true;
@@ -1121,7 +1209,7 @@
           wsSent = !!boardHandle.sendMessage({
             type: 'classroom_teacher_nudge',
             nudgeId: nudgeId,
-            recipientUsernames: [recipient],
+            recipientUsernames: recipientList,
             text: rawText
           });
         }
@@ -1142,9 +1230,9 @@
             },
             body: JSON.stringify({
               nudgeId: nudgeId,
-              recipientUsernames: [recipient],
+              recipientUsernames: recipientList,
               text: rawText,
-              deliveredUsernames: wsSent ? [recipient] : []
+              deliveredUsernames: wsSent ? recipientList : []
             })
           });
           var data = null;
@@ -1152,19 +1240,41 @@
           if (status) {
             // Codex BLOCKER fold: status reflects what ACTUALLY happened --
             // wsSent=false means the live delivery dropped, regardless of
-            // log success. The log row's delivered_at will be NULL in that
-            // case (we passed deliveredUsernames: []).
-            if (!wsSent) status.textContent = 'Not connected -- nudge not delivered.';
-            else status.textContent = (data && data.ok) ? 'Sent.' : 'Sent (log failed).';
+            // log success.
+            if (!wsSent) {
+              status.textContent = 'Not connected -- nudge not delivered.';
+            } else if (_nudgeBroadcastActive) {
+              status.textContent = (data && data.ok)
+                ? ('Broadcast sent to ' + recipientList.length + '.')
+                : ('Broadcast sent to ' + recipientList.length + ' (log failed).');
+            } else {
+              status.textContent = (data && data.ok) ? 'Sent.' : 'Sent (log failed).';
+            }
             setTimeout(function () { if (status) status.textContent = ''; }, 3500);
           }
         } else if (status) {
-          status.textContent = wsSent ? 'Sent (no log -- not signed in).' : 'Not connected -- nudge not delivered.';
+          if (!wsSent) {
+            status.textContent = 'Not connected -- nudge not delivered.';
+          } else if (_nudgeBroadcastActive) {
+            status.textContent = 'Broadcast sent to ' + recipientList.length + ' (no log -- not signed in).';
+          } else {
+            status.textContent = 'Sent (no log -- not signed in).';
+          }
           setTimeout(function () { if (status) status.textContent = ''; }, 3500);
         }
       } catch (_) {
         if (status) {
-          status.textContent = wsSent ? 'Sent (log failed).' : 'Not connected -- nudge not delivered.';
+          // Codex P8 MINOR fold: branch on broadcast mode so the outer catch
+          // path reports a consistent status (matches the data.ok-false branch
+          // inside the try; otherwise a fetch throw silently produces the
+          // single-recipient "Sent (log failed)." string in broadcast mode).
+          if (!wsSent) {
+            status.textContent = 'Not connected -- nudge not delivered.';
+          } else if ((typeof _nudgeBroadcastActive !== 'undefined') && _nudgeBroadcastActive) {
+            status.textContent = 'Broadcast sent to ' + recipientList.length + ' (log failed).';
+          } else {
+            status.textContent = 'Sent (log failed).';
+          }
           setTimeout(function () { if (status) status.textContent = ''; }, 3500);
         }
       }
@@ -2060,6 +2170,33 @@
         if (sel) sel.addEventListener('change', _updateNudgeSendButton);
         if (text) text.addEventListener('input', _updateNudgeSendButton);
         if (btn) btn.addEventListener('click', _sendNudgeFromCockpit);
+      } catch (_) {}
+    })();
+
+    // ===== P8: broadcast toggle wiring (TEACHER_STUDENT_CONSOLE_P8_BUILD.md section 2.4) =====
+
+    (function () {
+      try {
+        var bcastBox = document.getElementById('nudge-broadcast');
+        if (bcastBox) {
+          bcastBox.addEventListener('change', function () {
+            _nudgeBroadcastActive = !!bcastBox.checked;
+            var recipSel = document.getElementById('nudge-recipient');
+            if (recipSel) {
+              if (_nudgeBroadcastActive) {
+                recipSel.setAttribute('disabled', '');
+                recipSel.classList.add('nudge-recipient-broadcast-dim');
+              } else {
+                recipSel.removeAttribute('disabled');
+                recipSel.classList.remove('nudge-recipient-broadcast-dim');
+                // Re-run _refreshNudgeRecipients logic: if no online students
+                // the dropdown stays disabled via normal path on next state change.
+                // For now just re-gate the send button with current online list.
+              }
+            }
+            _updateNudgeSendButton();
+          });
+        }
       } catch (_) {}
     })();
 
