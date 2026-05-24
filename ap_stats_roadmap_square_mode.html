@@ -11442,27 +11442,13 @@ function _focusTodayLessonVideo() {
 }
 // v3 P1+P2 -- "Live" pill, top-right, shown only while the
 // student's section is in Live mode.
+// 2026-05-24: bubble disabled per teacher feedback (visually intrusive;
+// the section header + classroom board already communicate live state).
+// Defensively removes any pre-existing element so the change applies
+// even if a prior render left one in the DOM.
 function _renderLiveIndicator(isLive) {
-  var EL_ID = 'desk-live-indicator';
-  var el = document.getElementById(EL_ID);
-  if (!isLive) {
-    if (el) el.remove();
-    return;
-  }
-  if (!el) {
-    el = document.createElement('div');
-    el.id = EL_ID;
-    el.style.cssText = [
-      'position:fixed', 'top:8px', 'right:8px',
-      'z-index:9999', 'pointer-events:none',
-      'background:#c0392b', 'color:#fff', 'font-weight:700',
-      'padding:6px 12px', 'border-radius:6px',
-      'font-family:Arial,sans-serif', 'font-size:0.85rem',
-      'box-shadow:0 2px 6px rgba(0,0,0,0.3)'
-    ].join(';');
-    el.textContent = '⚫ Live with Mr. Colson';
-    document.body.appendChild(el);
-  }
+  var el = document.getElementById('desk-live-indicator');
+  if (el) el.remove();
 }
 // v3 P4: render the live doorways tally as a TI-84 bar chart on the
 // Desk so students see their own + their classmates' votes pile up
