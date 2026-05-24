@@ -3,21 +3,50 @@
 > **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
 > the session-112 block and every older block are historical record
 > only; do not act on any older "NEXT"/SESSION text. Last updated
-> 2026-05-24 (session 113). follow-alongs HEAD = the commit carrying
-> this CONTINUATION refresh (feature work ended at `c4cbde0`).
-> curriculum_render HEAD = `753f523` (unchanged from s112). Linear,
+> 2026-05-24 (session 113, post-loop). follow-alongs HEAD = the commit
+> carrying this CONTINUATION refresh (feature work ended at `f1cae5a`).
+> curriculum_render HEAD = `753f523` (unchanged through s113). Linear,
 > local==origin on both.
 >
-> ## Shipped this session (113) -- Teacher Student Console Phase 6 polish trio
+> ## Shipped this session (113) -- Phases 6 + 7 + 8 + 9 (autonomous loop)
 >
-> Session 113 closes the three deferred polish items from s112's NEXT
-> queue (items #1, #6, #7). One unified commit (`c4cbde0`) across 11
-> files (+3734 / -360). Migration 0009 was confirmed run by the user at
-> the start of the session, fully activating P5's override-gate path.
+> Session 113 closed FOUR Teacher Student Console phases:
+> - P6 (polish trio): items #1 + #6 + #7 from s112's NEXT queue
+> - P7 (nudge history): item #5
+> - P8 (broadcast nudge): item #9
+> - P9 (floating popup): item #2 (subsumes item #8)
+>
+> P6 was a manual user-driven phase early in the session. P7+P8+P9 ran
+> as an autonomous agent loop after the user confirmed scope -- each
+> iteration was: recon -> freeze `P{n}_BUILD.md` contract -> dispatch
+> parallel Sonnet waves -> planner smoke -> Codex review via
+> cross-agent.py -> fold findings inline -> commit + push. The loop ran
+> back-to-back in a single session without user intervention beyond the
+> initial scope confirmation. Each iteration's Codex review caught real
+> bugs (some load-bearing); fold quality stayed high.
 >
 > Cumulative test deltas across the session:
-> - roster-server: 550 -> 566 (+16)
-> - root: 5129 -> 5190 (+61 net)
+> - roster-server: 550 -> 589 (+39: +14 lesson-unlock-revoke + +1 db
+>   live-projection regression + +22 nudge-history endpoint + +2
+>   nudge-history DAL units)
+> - root: 5129 -> 5293 (+164 net: +18 toast-stack + 45 dashboard
+>   remediation/unlocks + 4 P6 fold regressions + 15 nudge-history
+>   client + 24 broadcast cockpit (incl. 4 P8 fold regressions) + 38
+>   avatar popup + 10 dashboard deeplink + 16 desk auto-open-override
+>   - 6 from removed singleton-pinning tests in desk-nudge-toast)
+>
+> Four feature commits + one docs commit:
+> - `c4cbde0` -- feat: P6 polish trio
+> - `0b9c246` -- docs: CONTINUATION refresh (mid-session)
+> - `b3d0d3a` -- feat: P7 nudge history
+> - `0d236ca` -- feat: P8 broadcast nudge
+> - `f1cae5a` -- feat: P9 floating popup
+>
+> ## Phase 6 (polish trio, `c4cbde0`)
+>
+> Closes items #1, #6, #7 from s112's NEXT queue. One unified commit
+> across 11 files (+3734 / -360). Migration 0009 confirmed run by the
+> user at session start, fully activating P5's override-gate path.
 >
 > ### T1 -- Apply Remediation modal (Wave C, `c4cbde0`)
 > P1 reserved a disabled "Apply remediation" button in the drawer; T1
@@ -102,22 +131,194 @@
 >   `"No active overrides."` empty-state li. One regression test
 >   covering the single-row revoke -> placeholder restoration.
 >
-> ## Migrations
-> - **0009_lesson_unlock.sql** -- confirmed run by user mid-session
->   113. P5 + P6 T3 both fully live.
-> - No new migrations from session 113.
+> ## Phase 7 (nudge history, `b3d0d3a`)
 >
-> ## Test baselines
-> - roster-server: 566/566 (+16 vs s112 baseline of 550). Zero
+> Closes item #5. Read-only conversation thread between teacher and
+> one student, surfaced as a 4th section in the P1 drawer alongside
+> Grade/Recent/Unlocks.
+>
+> - **Wave A (server)**: new `listConversation` DAL method on the
+>   existing `nudges_log` table using a PostgREST `.or()` filter with
+>   two `and()` branches (captures both directions of the dyad).
+>   New `GET /teacher/nudge-history?studentUsername=&limit=&offset=`
+>   endpoint with auth + regex-validated studentUsername (PostgREST
+>   filter injection guard).
+> - **Wave B (dashboard)**: new `#tsc-section-nudges` + `.tsc-nudges-
+>   list` CSS + `renderTscNudges`. `openTscDrawer`'s
+>   `Promise.allSettled` extended from 3 to 4 fetches. Teacher rows
+>   render `>>` + accent color; student replies render `<<` + green.
+>
+> Codex 2 BLOCKER + 1 MAJOR + 1 MINOR folded:
+> - **BLOCKER 1 (load-bearing fix)**: `db.findByStudentId()` only
+>   projected `(student_id, section)`. P3/P5/P6/P7 routes all derive
+>   the caller's `login_username` from this row. Production routes
+>   would 400 on the Bearer-token path. Fix: widen the SELECT to
+>   include `login_username + real_name`. **This silently repairs
+>   P3 nudges + P5 lesson-unlock + P6 revoke + P7 nudge-history all
+>   at once.** The `x-teacher-secret` break-glass path masked the
+>   bug for three phases.
+> - **BLOCKER 2**: box-drawing chars in `nudge-history.test.js`
+>   (P6 ASCII lesson reinforced).
+> - **MAJOR**: route tests masked the live adapter bug because the
+>   fake roster DB returns a full row. Added live-projection
+>   regression test pinning the real `findByStudentId` shape.
+> - **MINOR**: defense-in-depth -- resolved `teacherUsername`
+>   regex-validated before PostgREST .or() interpolation.
+>
+> ## Phase 8 (broadcast nudge, `0d236ca`)
+>
+> Closes item #9. Cockpit gains "Broadcast to all online students"
+> checkbox; when checked, Send fans out to every currently-online
+> student in the section. Pure cockpit UX layer; NO server change
+> (P3's multi-recipient handling already supports it).
+>
+> - Single wave touched `teacher-classroom.html` + new
+>   `tests/broadcast-nudge-cockpit.test.js`.
+> - `_nudgeBroadcastActive` + `_nudgeLastOnlineList` at module scope.
+>   The checkbox handler swaps disabled state + dim class on the
+>   dropdown.
+> - Status text branches: "Broadcast sent to N", "Broadcast sent to
+>   N (log failed)", "Not connected -- nudge not delivered", "No
+>   students online -- nothing to broadcast".
+>
+> Codex 1 BLOCKER + 2 MAJOR + 1 MINOR folded:
+> - **BLOCKER**: 3 section-sign chars introduced by the wave agent.
+>   Replaced with "section ".
+> - **MAJOR M1**: `_refreshNudgeRecipients` unconditionally
+>   re-enabled the dropdown on every member-update event, defeating
+>   the broadcast disabled state. Fix: `sel.disabled` now respects
+>   `_nudgeBroadcastActive`.
+> - **MAJOR M2**: broadcast state survived section change via
+>   `teardown()`. After switching sections with broadcast still on,
+>   the first Send would POST stale recipients from the prior
+>   section. Fix: `teardown()` clears broadcast state.
+> - **MINOR**: outer-catch status text in `_sendNudgeFromCockpit`
+>   branches on broadcast mode for consistency.
+>
+> Sibling-test widening: `tests/poll-archive-cockpit.test.js`
+> widened its teardown-scan window from 800 to 2000 chars because
+> the broadcast-clear block pushed `_lastArchivedPollId` past the
+> prior limit.
+>
+> ## Phase 9 (floating popup, `f1cae5a`)
+>
+> Closes item #2 (subsumes item #8). Spec section 4.1 -- in cockpit
+> Live mode, clicking an avatar (when NOT in P4 Select-Students
+> mode) opens a small floating popup with 6 action buttons.
+>
+> - **Wave A (cockpit)**: `classroom-board.js` fires `onAvatarClick`
+>   unconditionally now (was: only when selectMode was on). The
+>   cockpit's `_handleAvatarClickRouted` checks `_selectModeActive`
+>   first and routes to selection; otherwise opens the popup. New
+>   `#avatar-popup` DOM + CSS + JS (Open/Close, position with edge-
+>   flip, ESC + click-outside close). New `fetchIdMap` builds a
+>   `username -> studentId` map so cross-tab routing works.
+> - **Wave B (dashboard)**: new `DOMContentLoaded` handler reads
+>   `?openDrawerFor=<sid>` + `?openRemediation=1`. Fetches the
+>   profile, calls `openTscDrawer`, optionally clicks the
+>   Remediation button.
+> - **Wave C (Desk)**: `_viewAsBootstrap` IIFE reads
+>   `?autoOpenOverride=1` SYNCHRONOUSLY (before any await), stashes
+>   `apstats_auto_open_override` in sessionStorage so it survives
+>   the view-as reload. After banner renders, DOMContentLoaded
+>   handler removes the flag (one-shot) + setTimeout 300ms +
+>   clicks `#view-as-override-gate`.
+>
+> The 6 popup actions:
+> - View as -> `?viewAsUserId=<sid>` (existing P2)
+> - View grade / View recent -> `?openDrawerFor=<sid>` (Wave B)
+> - Send nudge -> in-cockpit prefill of existing P3 panel
+> - Apply remediation -> `?openDrawerFor=<sid>&openRemediation=1`
+> - Override gate -> `?viewAsUserId=<sid>&autoOpenOverride=1`
+>
+> Codex 1 BLOCKER + 1 MINOR folded:
+> - **BLOCKER**: Wave A re-saved `classroom-board.js` +
+>   `teacher-classroom.html` with UTF-8 BOM AND mojibake corruption.
+>   The ellipsis at `classroom-board.js:1405` rendered as garbage on
+>   long avatar labels. Multiple section-sign glyphs across both
+>   files corrupted similarly. Fix: stripped BOMs, replaced ellipsis
+>   mojibake with `...`, replaced section-sign mojibake with plain
+>   ASCII "section ". User-visible regression is gone.
+> - **MINOR**: entering Select Students mode didn't close an
+>   already-open avatar popup. Fix: `_enterSelectMode` now calls
+>   `_closeAvatarPopup` before flipping state.
+>
+> Wave B partial dispatch failure: the Sonnet agent reported the
+> dashboard edit landed but it did NOT actually appear in
+> `teacher-dashboard.html`. CC manually added the handler after
+> Wave B's 6 tests failed in combined smoke. Worth noting as a
+> data point: agent reports are NOT always trustworthy; verify by
+> grep before declaring a wave complete.
+>
+> ## Migrations
+> - **0009_lesson_unlock.sql** -- confirmed run by user mid-session.
+>   P5 + P6 T3 both fully live.
+> - No new migrations from P6, P7, P8, or P9.
+>
+> ## Test baselines (session-end)
+> - roster-server: **589/589** (+39 vs s112 baseline of 550). Zero
 >   failures.
-> - root: 5190/5191 (+61 net vs s112 baseline of 5129; 1 known
+> - root: **5293/5294** (+164 net vs s112 baseline of 5129; 1 known
 >   long-standing `study-guide.test.js` fail unchanged, NOT a
 >   regression).
 >
 > ## NEXT -- queued (Teacher Student Console)
 >
-> P6 ships #1 + #6 + #7. Items #3 (run migration 0009) was done
-> mid-session. Remaining from s112's NEXT queue:
+> The major spec items are SHIPPED across s112 + s113. Remaining
+> items from the s112 NEXT queue:
+>
+> 1. **Live smoke of P3-P9 with real students** -- nudges (P3),
+>    select-students (P4), override-gate (P5), apply-remediation
+>    (P6), revoke (P6), nudge-history (P7), broadcast (P8), floating
+>    popup (P9). All unverified in a real classroom setting. Cannot
+>    be agent-automated; needs a teacher + students. Should land in
+>    the next class session.
+> 2. **Student-initiated DM** (spec section 15, deferred). Students
+>    can reply but not initiate. Needs UX decisions on the preset
+>    palette (asymmetric design: free-text teacher, presets for
+>    moderation safety). Could spec but not implement until you pick
+>    the presets.
+> 3. **Inline action expansions** for the P9 floating popup (spec
+>    section 4.1 v2). P9 MVP routes all 6 actions via cross-tab or
+>    cockpit prefill. The spec's preferred design has inline
+>    expansion (Send nudge becomes a popup textarea, Apply
+>    remediation becomes an inline modal, Override gate becomes an
+>    inline modal). Polish-only; the MVP works.
+> 4. **studentId resolution improvements** for the popup. Wave A
+>    added `fetchIdMap` (calls /roster/list); for some edge cases
+>    (recently-joined students before the next refresh) the id map
+>    may not have an entry. Today: the popup silently no-ops for
+>    sid-required actions; the teacher can refresh. Could be
+>    proactively hydrated.
+> 5. **Real-name overhead labels on avatars** (spec section 4.3).
+>    The popup header shows real_name but the cockpit canvas labels
+>    avatars by username. v1 polish.
+> 6. **Animation transitions** on popup open/close. Plain show/hide
+>    today.
+> 7. **Nudge history pagination UI**. Limit=20 default; no "older"
+>    button.
+>
+> If the loop is invoked again, candidate items: #2 (specing only),
+> #3 (inline expansions). Item #1 (live smoke) cannot be agent-
+> automated.
+>
+> ## NEXT -- defunct queue (will be removed next refresh)
+>
+> The text below this point is preserved purely for traceability of
+> what s112 said. The current authoritative queue is the one above.
+>
+> Old session-112 NEXT items that ARE NOW SHIPPED via s113's loop:
+>
+> - ~~Floating avatar-click 6-action popup~~ -> P9 shipped
+> - ~~Live smoke~~ -> still queued (cannot be agent-automated)
+> - ~~Nudge history view~~ -> P7 shipped
+> - ~~Stacked toasts~~ -> P6 T2 shipped
+> - ~~lesson_unlock revocation UI~~ -> P6 T3 shipped
+> - ~~Teacher avatar-click single-student popup~~ -> subsumed by P9
+> - ~~Section-wide broadcast nudge~~ -> P8 shipped
+> - ~~Student-initiated DM~~ -> still queued (needs UX decisions)
+>
+> Older defunct text follows:
 >
 > 1. **Floating avatar-click 6-action popup** (spec §4.1). Unify
 >    View-as / View grade / View recent / Apply remediation / Send
