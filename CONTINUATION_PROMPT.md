@@ -1,12 +1,13 @@
 # Continuation Prompt -- session 113
 
-> **THIS SECTION IS AUTHORITATIVE. It supersedes EVERYTHING below it** --
-> the session-112 block and every older block are historical record
-> only; do not act on any older "NEXT"/SESSION text. Last updated
-> 2026-05-24 (session 113, post-double-loop). follow-alongs HEAD = the
-> commit carrying this CONTINUATION refresh (feature work ended at
-> `0c2c179`). curriculum_render HEAD = `753f523` (unchanged through
-> s113). Linear, local==origin on both.
+> **SESSION 113 CLOSED.** **THIS SECTION IS AUTHORITATIVE. It
+> supersedes EVERYTHING below it** -- the session-112 block and every
+> older block are historical record only; do not act on any older
+> "NEXT"/SESSION text. Last updated 2026-05-24 (session 113 close).
+> follow-alongs HEAD = the commit carrying this CONTINUATION refresh
+> (feature work ended at `0c2c179`; docs polish in this commit).
+> curriculum_render HEAD = `753f523` (unchanged through s113). Linear,
+> local==origin on both.
 >
 > ## Shipped this session (113) -- Phases 6-13 (TWO autonomous loops)
 >
@@ -457,83 +458,6 @@
 >    drawer surface). Today the drawer's Apply Remediation
 >    action is a modal; making it inline would unify the surface.
 >    Polish only.
->
-> ## NEXT -- carried forward from session 112 (still open)
->
-> 1. **Live smoke of P3-P9 with real students** -- nudges (P3),
->    select-students (P4), override-gate (P5), apply-remediation
->    (P6), revoke (P6), nudge-history (P7), broadcast (P8), floating
->    popup (P9). All unverified in a real classroom setting. Cannot
->    be agent-automated; needs a teacher + students. Should land in
->    the next class session.
-> 2. **Student-initiated DM** (spec section 15, deferred). Students
->    can reply but not initiate. Needs UX decisions on the preset
->    palette (asymmetric design: free-text teacher, presets for
->    moderation safety). Could spec but not implement until you pick
->    the presets.
-> 3. **Inline action expansions** for the P9 floating popup (spec
->    section 4.1 v2). P9 MVP routes all 6 actions via cross-tab or
->    cockpit prefill. The spec's preferred design has inline
->    expansion (Send nudge becomes a popup textarea, Apply
->    remediation becomes an inline modal, Override gate becomes an
->    inline modal). Polish-only; the MVP works.
-> 4. **studentId resolution improvements** for the popup. Wave A
->    added `fetchIdMap` (calls /roster/list); for some edge cases
->    (recently-joined students before the next refresh) the id map
->    may not have an entry. Today: the popup silently no-ops for
->    sid-required actions; the teacher can refresh. Could be
->    proactively hydrated.
-> 5. **Real-name overhead labels on avatars** (spec section 4.3).
->    The popup header shows real_name but the cockpit canvas labels
->    avatars by username. v1 polish.
-> 6. **Animation transitions** on popup open/close. Plain show/hide
->    today.
-> 7. **Nudge history pagination UI**. Limit=20 default; no "older"
->    button.
->
-> If the loop is invoked again, candidate items: #2 (specing only),
-> #3 (inline expansions). Item #1 (live smoke) cannot be agent-
-> automated.
->
-> ## NEXT -- defunct queue (will be removed next refresh)
->
-> The text below this point is preserved purely for traceability of
-> what s112 said. The current authoritative queue is the one above.
->
-> Old session-112 NEXT items that ARE NOW SHIPPED via s113's loop:
->
-> - ~~Floating avatar-click 6-action popup~~ -> P9 shipped
-> - ~~Live smoke~~ -> still queued (cannot be agent-automated)
-> - ~~Nudge history view~~ -> P7 shipped
-> - ~~Stacked toasts~~ -> P6 T2 shipped
-> - ~~lesson_unlock revocation UI~~ -> P6 T3 shipped
-> - ~~Teacher avatar-click single-student popup~~ -> subsumed by P9
-> - ~~Section-wide broadcast nudge~~ -> P8 shipped
-> - ~~Student-initiated DM~~ -> still queued (needs UX decisions)
->
-> Older defunct text follows:
->
-> 1. **Floating avatar-click 6-action popup** (spec §4.1). Unify
->    View-as / View grade / View recent / Apply remediation / Send
->    nudge / Override gate into one floating menu next to the clicked
->    avatar in Live mode. P3 + P4 use a side-panel + dropdown instead;
->    the popup is the spec's preferred entry but not load-bearing now
->    that all six actions ship in P1-P6. Subsumes item #8 (single-
->    student avatar popup). Bigger UX consolidation; touches cockpit +
->    classroom-board + drawer overlap.
-> 2. **Live smoke of P3-P5 (now P3-P6) with a real student** -- nudges
->    + select-students + override-gate + remediation modal all
->    unverified in a real classroom setting. Should land in the next
->    class session. Cannot be agent-automated.
-> 3. **Nudge history view** (spec §15). `nudges_log` rows exist; no UI
->    to browse them. Read-only surface on top of the existing log.
->    Small, independent.
-> 4. **Section-wide broadcast nudge** (spec §15). Cockpit-side fan-out
->    to every online student in the section. Small, independent.
-> 5. **Student-initiated DM** (spec §15, deferred). Currently students
->    can only reply, not initiate. Needs UX decisions on the preset
->    palette (asymmetric design from s111 conversation: teacher free
->    text, students preset for moderation safety).
 >
 > ## NEXT -- the project's other tracks (carried forward from s112)
 >
