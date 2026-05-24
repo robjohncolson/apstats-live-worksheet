@@ -878,9 +878,15 @@
       // Clear it whenever progress drops below 1.
       if (this._absorbProgress < 1) { this._hidden = false; }
       if (this._absorbProgress === 0 && this._absorbDir < 0) {
+        // s111 P4 HOTFIX: cancel-complete transitions state to 'idle'
+        // but the early return below skipped the emit path, so the
+        // server kept us as 'in-doorway' and a later refresh would
+        // restore us back into the hole. Clear _restEmitted so the
+        // next idle tick fires a rest snapshot with state='idle'.
         this.state = 'idle';
         this._isDoorwayWalk = false;
         this._absorbDir = 1;
+        this._restEmitted = false;
         return;
       }
       if (this._absorbProgress === 1) {
@@ -1939,6 +1945,27 @@
         sp.x = member.pos.x;
         sp.y = member.pos.y;
         sp._moved = true;
+        // s111 P4 HOTFIX: restore in-doorway state on refresh. The
+        // server records member.pos.state ('in-doorway' for absorbed
+        // students); without restoring it, on every cockpit refresh
+        // the peer BoardSprite would be created in default state and
+        // students would appear to "come back out of the hole." For
+        // the LOCAL student PlayerSprite (refresh of own browser),
+        // restore the full absorb state so they stay invisible until
+        // they press Up to cancel.
+        if (member.pos.state === 'in-doorway') {
+          if (sp instanceof PlayerSprite) {
+            sp.state                = 'entering-doorway';
+            sp._absorbProgress      = 1;
+            sp._absorbDir           = 1;
+            sp._absorbDurationMs    = 350;
+            sp._isDoorwayWalk       = true;
+            sp._hidden              = true;
+          } else {
+            sp.state                 = 'in-doorway';
+            sp._peerAbsorbProgress   = 1;
+          }
+        }
       }
       repositionSprites();
     }
