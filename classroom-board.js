@@ -1719,6 +1719,24 @@
             player._absorbDurationMs = 350;
             player.state = 'entering-doorway';
             player._isDoorwayWalk = true;
+            // s111 P4 HOTFIX: force-broadcast state='in-doorway' RIGHT
+            // NOW so the server records it before any rate-limit can
+            // eat the next emit. Once state='entering-doorway' the
+            // update() block returns early before the emit logic --
+            // so without this immediate send, the wire might never
+            // see 'in-doorway' and a refresh would restore the avatar
+            // OUTSIDE the hole (incongruent with the vote tally).
+            if (typeof player.onPos === 'function') {
+              try {
+                player.onPos({
+                  x: player.x, y: player.y, state: 'in-doorway', vx: 0
+                });
+              } catch (_) {}
+              if (typeof player._now === 'function') {
+                player._lastPosMs = player._now();
+              }
+              player._restEmitted = true;
+            }
             return;
           }
         }
