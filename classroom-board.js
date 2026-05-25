@@ -2684,6 +2684,16 @@
           return;
         }
         if (msg && msg.type && msg.type.indexOf('classroom_') === 0) {
+          // 2026-05-25 V7.1 diagnostic: log every inbound classroom_activity_*
+          // frame so testers can verify the Desk WS is actually receiving
+          // broadcasts. The session-115 "student Desk shows no activity"
+          // bug was unresolvable without this -- the cockpit saw the
+          // timeout but the Desk's _lastClassroomSummary.activity stayed
+          // undefined; we couldn't tell if the message arrived + was
+          // dropped by _reduce vs never arrived at all.
+          if (msg.type.indexOf('classroom_activity') === 0) {
+            try { console.log('[Desk WS<-server]', msg.type, msg); } catch (_) {}
+          }
           // P3: fire raw-message hook BEFORE _reduce. Caller may inspect
           // the message and trigger side effects (toast, reply panel)
           // without polluting the reducer state shape.
