@@ -1492,10 +1492,14 @@
     canvas.addEventListener('click', function (ev) {
       if (!onAvatarClick) return;
       var rect = canvas.getBoundingClientRect();
-      var cssX = (ev.clientX != null) ? (ev.clientX - rect.left) : 0;
-      var cssY = (ev.clientY != null) ? (ev.clientY - rect.top) : 0;
-      var cx = cssX * (canvas.width / Math.max(1, canvas.clientWidth || rect.width || 1));
-      var cy = cssY * (canvas.height / Math.max(1, canvas.clientHeight || rect.height || 1));
+      // 2026-05-24 fix: sprite.x is in CSS-pixel space (engine.ctx applies a
+      // setTransform(dpr,...) so drawFrame at sp.x lands at pixel sp.x*dpr).
+      // ev.clientX is also in CSS space. The previous formula multiplied
+      // cssX by canvas.width/clientWidth (= DPR), pushing the click coord
+      // into pixel space and mismatching by a factor of DPR on HiDPI
+      // displays. jsdom's DPR is always 1 so no test caught it.
+      var cx = (ev.clientX != null) ? (ev.clientX - rect.left) : 0;
+      var cy = (ev.clientY != null) ? (ev.clientY - rect.top)  : 0;
       var HIT = 20;
       var hit = null;
       for (var u in spriteEntities) {
@@ -1868,6 +1872,22 @@
       return SPRITE_W * SPRITE_SCALE;
     }
 
+    // 2026-05-24 fix: clamp an incoming sprite x to the local canvas bounds.
+    // The server persists member.pos.x from whichever client wrote it last;
+    // a student who walked to x=919 on a wider canvas would push their
+    // sprite off the right edge of a narrower cockpit canvas (and out of
+    // hit-test range). Receivers should always clamp -- they own their own
+    // viewport. NaN / non-finite x falls back to 0.
+    function clampSpriteX(x, sp) {
+      if (typeof x !== 'number' || !isFinite(x)) { return 0; }
+      var cw = (engine && engine.canvas)
+        ? (engine.canvas.width / (root.devicePixelRatio || 1))
+        : DEFAULT_BOARD_W;
+      var sw = (sp && sp._spriteSize) || getSpriteWidth();
+      var maxX = Math.max(0, cw - sw);
+      return Math.max(0, Math.min(maxX, x));
+    }
+
     function getSpriteY() {
       if (!engineReady) { return 200; }
       var gy = engine.groundY;
@@ -2020,7 +2040,10 @@
       // and snap back into formation. _moved=true gates repositionSprites
       // off them; applyPos will overwrite both x/y on the next broadcast.
       if (member.pos && typeof member.pos.x === 'number' && typeof member.pos.y === 'number') {
-        sp.x = member.pos.x;
+        // 2026-05-24 fix: server-persisted pos may have been written from a
+        // wider canvas (other client, prior session). Clamp to local bounds
+        // so the spawn lands on-screen + clickable.
+        sp.x = clampSpriteX(member.pos.x, sp);
         sp.y = member.pos.y;
         sp._moved = true;
         // s111 P4 HOTFIX: restore in-doorway state on refresh. The
@@ -2509,8 +2532,14 @@
       if (peer.state === 'in-doorway' && typeof msg.state === 'string') {
         peer.state = msg.state;
       }
-      if (typeof msg.x === 'number' && Math.abs(peer.x - msg.x) > 1) {
-        peer.walkTo(msg.x);
+      if (typeof msg.x === 'number') {
+        // 2026-05-24 fix: clamp to local canvas bounds. A sender on a wider
+        // canvas can broadcast an x past our right edge; we own our own
+        // viewport so we clamp before walking.
+        var clampedX = clampSpriteX(msg.x, peer);
+        if (Math.abs(peer.x - clampedX) > 1) {
+          peer.walkTo(clampedX);
+        }
       }
       // Phase 2.2 -- y is chased smoothly (not snapped) so peer jumps look
       // like an arc, not a 10 Hz teleport. _chaseY runs on every tick.

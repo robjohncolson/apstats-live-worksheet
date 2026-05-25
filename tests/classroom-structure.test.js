@@ -754,7 +754,10 @@ describe('KEYBOARD_AVATAR Phase 2 -- position broadcast wiring', () => {
   });
 
   it('applyPos uses walkTo for x chase and the _yTarget chase for y (Phase 2.2)', () => {
-    expect(BOARD).toMatch(/peer\.walkTo\(\s*msg\.x\s*\)/);
+    // 2026-05-24: clampSpriteX now wraps msg.x so the call site is
+    // peer.walkTo(clampedX) where clampedX = clampSpriteX(msg.x, peer).
+    expect(BOARD).toMatch(/var\s+clampedX\s*=\s*clampSpriteX\(\s*msg\.x/);
+    expect(BOARD).toMatch(/peer\.walkTo\(\s*clampedX\s*\)/);
     // Phase 2 originally did `peer.y = msg.y`; Phase 2.2 switched to a
     // chased target via _yTarget so peer jumps render as a smooth arc.
     expect(BOARD).toMatch(/peer\._yTarget\s*=\s*msg\.y/);
