@@ -2069,12 +2069,22 @@
         };
         // Phase 2 -- broadcast position to roommates.
         baseOpts.onPos = function (msg) {
+          // 2026-05-24 V5 Codex BLOCKER fold: include canvasW so the
+          // server can interpret x in the SENDER's coord space. The
+          // colorbox-hue plugin (and any future position-driven plugin)
+          // needs to know the client's actual canvas width to bin
+          // positions into zones, since the responsive board may render
+          // wider than DEFAULT_BOARD_W=320 on a wide Desk sidebar.
+          var senderCw = (engine && engine.canvas)
+            ? (engine.canvas.width / (root.devicePixelRatio || 1))
+            : DEFAULT_BOARD_W;
           var payload = {
-            type:  'classroom_pos',
-            x:     msg.x,
-            y:     msg.y,
-            state: msg.state,
-            vx:    msg.vx
+            type:    'classroom_pos',
+            x:       msg.x,
+            y:       msg.y,
+            state:   msg.state,
+            vx:      msg.vx,
+            canvasW: senderCw
           };
           // v3 P3: prefer DC when open; fall back to WS.
           if (_peerDcOpen && _peerDataChannel) {

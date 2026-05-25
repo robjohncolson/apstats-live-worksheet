@@ -1850,6 +1850,7 @@
 <script src="classroom-board.js"></script>
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
+<script src="activity-colorbox.js"></script>
 
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
@@ -11494,6 +11495,8 @@ function _renderDeskDoorwaysTally(summary){
 // being absent (best-effort).
 function _activityRendererForType(type){
   if (type === 'bridge-mean' && typeof window.ActivityBridge !== 'undefined') return window.ActivityBridge;
+  // V5: colorbox-hue plugin -- sorts students into colored zones by sprite hue.
+  if (type === 'colorbox-hue' && typeof window.ActivityColorbox !== 'undefined') return window.ActivityColorbox;
   return null;
 }
 function _handleActivityState(summary){

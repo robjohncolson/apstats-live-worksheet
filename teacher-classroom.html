@@ -632,6 +632,7 @@
           <label>Activity:
             <select id="activity-type">
               <option value="bridge-mean">U1.1 Lift the Bridge (mean)</option>
+              <option value="colorbox-hue">U1.3 Sort by Color (categorical)</option>
             </select>
           </label>
           <label>Duration (s): <input id="activity-duration" type="number" min="30" max="300" value="90"></label>
@@ -1435,20 +1436,61 @@
         btnCancel.style.display = '';
 
         var state = activity.state || {};
-        var mean  = (typeof state.currentMean === 'number') ? state.currentMean : 0;
-        var target = (typeof state.target === 'number') ? state.target : 0;
         var holdMs = (typeof state.holdMs === 'number') ? state.holdMs : 0;
         var holdTargetMs = (typeof state.holdTargetMs === 'number') ? state.holdTargetMs : 3000;
         var startedAt = (typeof activity.startedAt === 'number') ? activity.startedAt : 0;
         var durationMs = (typeof activity.durationMs === 'number') ? activity.durationMs : 0;
         var elapsedMs = Math.max(0, Date.now() - startedAt);
         var remainingMs = Math.max(0, durationMs - elapsedMs);
+        var remainingStr = '   remaining: ' + Math.ceil(remainingMs / 1000) + ' s';
+        // V5: branch per activity type for the readout + roster shape.
+        var typ = activity.type || 'bridge-mean';
+        if (typ === 'colorbox-hue') {
+          // Categorical: "In correct zone: X/N | tally per zone"
+          var assignments = (state.assignments && typeof state.assignments === 'object') ? state.assignments : {};
+          var currentZone = (state.currentZone && typeof state.currentZone === 'object') ? state.currentZone : {};
+          var tally = Array.isArray(state.tally) ? state.tally : [0, 0, 0, 0];
+          var keys = Object.keys(assignments);
+          var correct = 0;
+          for (var ci = 0; ci < keys.length; ci++) {
+            if (currentZone[keys[ci]] === assignments[keys[ci]]) correct++;
+          }
+          if (readout) {
+            readout.textContent =
+              'In correct zone: ' + correct + '/' + keys.length +
+              '   hold: ' + Math.round(holdMs) + ' / ' + holdTargetMs + ' ms' +
+              '   tally: R=' + (tally[0]||0) + ' Y=' + (tally[1]||0) +
+              ' G=' + (tally[2]||0) + ' B=' + (tally[3]||0) +
+              remainingStr;
+          }
+          if (roster) {
+            roster.innerHTML = '';
+            var zoneLabels = ['R', 'Y', 'G', 'B'];
+            var sorted = keys.slice().sort();
+            for (var ki = 0; ki < sorted.length; ki++) {
+              var uname = sorted[ki];
+              var li = document.createElement('li');
+              var wantZ = assignments[uname];
+              var curZ = currentZone[uname];
+              var inZone = (typeof curZ === 'number' && curZ === wantZ);
+              li.textContent = uname + ': want ' + zoneLabels[wantZ] +
+                (typeof curZ === 'number' && curZ >= 0 && curZ < 4
+                  ? ', in ' + zoneLabels[curZ] + (inZone ? ' [OK]' : '')
+                  : ', not in zone');
+              roster.appendChild(li);
+            }
+          }
+          return;
+        }
+        // Default branch (bridge-mean): mean + target readout.
+        var mean  = (typeof state.currentMean === 'number') ? state.currentMean : 0;
+        var target = (typeof state.target === 'number') ? state.target : 0;
         if (readout) {
           readout.textContent =
             'mean: '      + mean +
             '   target: ' + target +
             '   hold: '   + Math.round(holdMs) + ' / ' + holdTargetMs + ' ms' +
-            '   remaining: ' + Math.ceil(remainingMs / 1000) + ' s';
+            remainingStr;
         }
         if (roster) {
           // Build username: value (nudges) entries from state.values + state.nudges.
@@ -1520,8 +1562,12 @@
       var resultText = document.getElementById('activity-result-text');
       if (!resultText) return;
       var type = (_lastSummary && _lastSummary.activity && _lastSummary.activity.type) || '';
-      var hint = 'Hint: mean = (v1 + v2 + ... + vN) / N. Move toward the target by nudging values up/down.';
-      if (type !== 'bridge-mean') {
+      var hint = '';
+      if (type === 'bridge-mean') {
+        hint = 'Hint: mean = (v1 + v2 + ... + vN) / N. Move toward the target by nudging values up/down.';
+      } else if (type === 'colorbox-hue') {
+        hint = 'Hint: walk your avatar into the zone matching your sprite color (Red 0-89, Yellow 90-179, Green 180-269, Blue 270-359 hue).';
+      } else {
         hint = 'Hint not available for activity type "' + type + '".';
       }
       resultText.textContent = hint;
