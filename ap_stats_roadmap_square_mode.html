@@ -11614,16 +11614,20 @@ function _handleActivityState(summary){
         _activityHandleType = act.type;
       }
       if (_activityHandle && typeof _activityHandle.updateState === 'function') {
-        // V7: include the LevelDef (act.level) + levelKey + lessonKey
-        // alongside the inner state. V4/V5/V6 renderers ignore the
-        // extra fields; V7's level renderer reads them on first call.
+        // V4/V5/V6: renderers expect the inner engine state directly.
         var payloadForRenderer = act.state;
+        // V7's level renderer expects { state, level, levelKey, lessonKey }
+        // -- renderScene reads activityState.state.coins, so the inner
+        // state MUST be nested under `state`. The previous flatten via
+        // Object.assign({}, act.state, { level }) silently dropped coins/
+        // reflection because activityState.state was undefined.
         if (act.type === 'level' && act.level) {
-          payloadForRenderer = Object.assign({}, act.state || {}, {
+          payloadForRenderer = {
+            state:     act.state || {},
             level:     act.level,
-            levelKey:  act.levelKey  || (act.level && act.level.levelKey),
-            lessonKey: act.lessonKey || (act.level && act.level.lessonKey)
-          });
+            levelKey:  act.levelKey  || act.level.levelKey  || null,
+            lessonKey: act.lessonKey || act.level.lessonKey || null
+          };
         }
         try {
           _activityHandle.updateState(payloadForRenderer);
