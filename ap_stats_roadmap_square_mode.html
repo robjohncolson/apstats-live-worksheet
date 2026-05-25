@@ -11514,8 +11514,14 @@ function _activityRendererForType(type){
   return null;
 }
 function _handleActivityState(summary){
+  // 2026-05-25 V7.1 diagnostic: surface which branch we hit + whether
+  // Renderer.mount throws. The s115 outer try/catch swallowed every
+  // failure silently, so a mount throw looked identical to the renderer
+  // not being loaded. _activityHandle ended up null either way.
+  var __dbgTag = '[Desk activity]';
   try {
     var act = summary && summary.activity;
+    try { if (act) { console.log(__dbgTag, 'tick', { type: act.type, finished: !!act.finished, hasState: !!act.state, hasLevel: !!act.level, hdl: !!_activityHandle, hdlType: _activityHandleType }); } } catch (_) {}
     if (act && !act.finished) {
       // Live activity. Mount renderer if not already, update state.
       // Codex MAJOR fold: cancel any stale teardown timer from a prior
@@ -11539,7 +11545,8 @@ function _handleActivityState(summary){
       }
       if (!_activityHandle) {
         var Renderer = _activityRendererForType(act.type);
-        if (!Renderer) return;
+        try { console.log(__dbgTag, 'mount path', { rendererLoaded: !!Renderer, rendererType: typeof Renderer }); } catch (_) {}
+        if (!Renderer) { try { console.warn(__dbgTag, 'NO RENDERER for type', act.type); } catch (_) {} return; }
         _activityMount = document.createElement('div');
         _activityMount.id = 'activity-bridge-mount';
         _activityMount.style.cssText = 'margin-top:8px;width:100%';
@@ -11547,6 +11554,7 @@ function _handleActivityState(summary){
         if (board && board.parentNode) {
           board.parentNode.insertBefore(_activityMount, board);
         } else {
+          try { console.warn(__dbgTag, 'no board mount; bailing'); } catch (_) {}
           return;
         }
         // V7.1 redesign: classroom-board-mount is NEVER hidden. The
@@ -11561,10 +11569,16 @@ function _handleActivityState(summary){
             ? window.rosterClient.current() : null;
           _myName = (_cur && _cur.username) ? _cur.username : null;
         } catch (_) {}
-        _activityHandle = Renderer.mount(_activityMount, {
-          currentUsername: _myName,
-          boardHandle:     _classroomBoardHandle
-        });
+        try {
+          _activityHandle = Renderer.mount(_activityMount, {
+            currentUsername: _myName,
+            boardHandle:     _classroomBoardHandle
+          });
+          try { console.log(__dbgTag, 'mount OK', { handle: !!_activityHandle, hasUpdate: !!(_activityHandle && _activityHandle.updateState) }); } catch (_) {}
+        } catch (mountErr) {
+          try { console.warn(__dbgTag, 'mount THREW', mountErr); } catch (_) {}
+          _activityHandle = null;
+        }
         _activityHandleType = act.type;
       }
       if (_activityHandle && typeof _activityHandle.updateState === 'function') {
@@ -11579,7 +11593,11 @@ function _handleActivityState(summary){
             lessonKey: act.lessonKey || (act.level && act.level.lessonKey)
           });
         }
-        _activityHandle.updateState(payloadForRenderer);
+        try {
+          _activityHandle.updateState(payloadForRenderer);
+        } catch (updErr) {
+          try { console.warn(__dbgTag, 'updateState THREW', updErr); } catch (_) {}
+        }
       }
     } else if (act && act.finished) {
       // Finished activity. Show outcome, then tear down after 2.5s.
@@ -11616,7 +11634,9 @@ function _handleActivityState(summary){
       }
       _activityMount = null;
     }
-  } catch (_) {}
+  } catch (outerErr) {
+    try { console.warn(__dbgTag, 'outer THREW', outerErr); } catch (_) {}
+  }
 }
 // V4 spec C5.2 arrow-key gate. When an activity is live AND this
 // Desk's user is in the activity's values map, ArrowUp/ArrowDown is
