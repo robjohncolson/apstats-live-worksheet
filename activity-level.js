@@ -120,21 +120,37 @@
     resetText(ctx);
   }
 
-  function drawTextActor(ctx, actor, chipSize) {
+  function drawTextActor(ctx, actor, chipSize, cssW) {
     var px   = actor.x * chipSize;
     var py   = actor.y * chipSize;
     var label = (actor.text != null) ? String(actor.text) : '';
     var boxW = approxTextWidth(label, 6) + 6;
     var boxH = 14;
 
+    // Clamp horizontally so the box stays inside the canvas. If the
+    // string is wider than the canvas (long welcome / explanation
+    // strings authored at chip x=4 etc.), flush-left at x=2 and let the
+    // text run rightward; otherwise center on the actor coord.
+    var boxX = px - boxW / 2;
+    if (typeof cssW === 'number' && cssW > 0) {
+      if (boxW + 4 >= cssW) {
+        boxX = 2;
+      } else if (boxX < 2) {
+        boxX = 2;
+      } else if (boxX + boxW > cssW - 2) {
+        boxX = Math.max(2, cssW - boxW - 2);
+      }
+    }
+    var boxY = py - boxH / 2;
+
     ctx.fillStyle = C.textBg;
-    ctx.fillRect(px - boxW / 2, py - boxH / 2, boxW, boxH);
+    ctx.fillRect(boxX, boxY, boxW, boxH);
 
     ctx.fillStyle    = C.label;
     ctx.font         = '10px monospace';
-    ctx.textAlign    = 'center';
+    ctx.textAlign    = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(label, px, py);
+    ctx.fillText(label, boxX + 3, boxY + boxH / 2);
     resetText(ctx);
   }
 
@@ -240,11 +256,19 @@
     var phase      = sState.phase || null;
     var reflection = sState.reflection || { active: false };
     var actors     = Array.isArray(levelDef.actors) ? levelDef.actors : [];
+    var yOffset    = (typeof handle.contentYOffset === 'number') ? handle.contentYOffset : 0;
+    var cssW       = handle.cssW;
+
+    // Apply the y-offset for chip-coord paints so y=0 actors don't clip
+    // above the canvas top. Reflection panel + outcome paint at the full
+    // canvas so they stay outside the save/restore.
+    var canSaveRestore = (typeof ctx.save === 'function' && typeof ctx.translate === 'function' && typeof ctx.restore === 'function');
+    if (canSaveRestore && yOffset !== 0) { ctx.save(); ctx.translate(0, yOffset); }
 
     // Text actors (always visible)
     for (var i = 0; i < actors.length; i++) {
       if (actors[i] && actors[i].type === 'Text') {
-        drawTextActor(ctx, actors[i], chipSize);
+        drawTextActor(ctx, actors[i], chipSize, cssW);
       }
     }
 
@@ -263,7 +287,9 @@
       if (goal) { drawGoalFlag(ctx, goal, chipSize); }
     }
 
-    // Reflection panel
+    if (canSaveRestore && yOffset !== 0) { ctx.restore(); }
+
+    // Reflection panel (covers the whole canvas, no y-offset)
     if (reflection && reflection.active) {
       drawReflectionPanel(ctx, handle.cssW, handle.cssH, reflection);
     }
@@ -354,16 +380,35 @@
     opts = opts || {};
     var canvas = ownerDoc.createElement('canvas');
 
-    // Mirror the existing classroom-board canvas dims when present.
+    // Mirror the existing classroom-board canvas WIDTH so the overlay
+    // spans the full board horizontally. For HEIGHT, prefer the level's
+    // own natural dims (mapHeight * chipSize + margin) so the overlay
+    // sits as a compact strip near the top of the board instead of
+    // stretching to the full 220 px board height. The empty space below
+    // the overlay stays interactive for the avatar scene underneath.
     var boardCanvas = findBoardCanvas(mountEl);
     var cssW, cssH;
     if (boardCanvas) {
       cssW = boardCanvas.clientWidth  || parseInt(boardCanvas.style.width,  10) || boardCanvas.width  || DEFAULT_OVERLAY_W;
-      cssH = boardCanvas.clientHeight || parseInt(boardCanvas.style.height, 10) || boardCanvas.height || DEFAULT_OVERLAY_H;
     } else {
       cssW = (typeof opts.width  === 'number' && opts.width  > 0) ? opts.width  : (mountEl.clientWidth  || DEFAULT_OVERLAY_W);
-      cssH = (typeof opts.height === 'number' && opts.height > 0) ? opts.height : (mountEl.clientHeight || DEFAULT_OVERLAY_H);
     }
+    // V7.1 sizing rev (2026-05-25): cssH from level.map dims if known.
+    // The TOP_MARGIN gives the y=0 Text actors room so their boxes (which
+    // center vertically on py=0) don't clip above the canvas top.
+    var TOP_MARGIN = 10;
+    var levelChip   = (opts.level && opts.level.map && opts.level.map.chipSize) || DEFAULT_CHIP_SIZE;
+    var levelHeight = (opts.level && opts.level.map && opts.level.map.height)   || 0;
+    if (levelHeight > 0) {
+      cssH = levelHeight * levelChip + TOP_MARGIN;
+    } else if (typeof opts.height === 'number' && opts.height > 0) {
+      cssH = opts.height;
+    } else {
+      cssH = DEFAULT_OVERLAY_H + TOP_MARGIN;
+    }
+    // Shift the entire scene down by TOP_MARGIN so chip-y coords paint
+    // inside the canvas (y=0 Text actors get their top half back).
+    var contentYOffset = TOP_MARGIN;
 
     var st = canvas.style;
     st.position = 'absolute'; st.left = '0'; st.top = '0';
@@ -377,12 +422,13 @@
     var handle = {
       _canvas:         canvas,
       _mountEl:        mountEl,
-      _levelDef:       null,
+      _levelDef:       (opts.level && typeof opts.level === 'object') ? opts.level : null,
       _tooltip:        null,
       ctx:             (typeof canvas.getContext === 'function') ? canvas.getContext('2d') : null,
       cssW:            cssW,
       cssH:            cssH,
-      chipSize:        DEFAULT_CHIP_SIZE,
+      chipSize:        (opts.level && opts.level.map && opts.level.map.chipSize) || DEFAULT_CHIP_SIZE,
+      contentYOffset:  contentYOffset,
       currentUsername: opts.currentUsername || null,
       boardHandle:     opts.boardHandle    || null,
       destroyed:       false

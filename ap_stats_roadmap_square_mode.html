@@ -11591,9 +11591,22 @@ function _handleActivityState(summary){
         try {
           _activityHandle = Renderer.mount(_activityMount, {
             currentUsername: _myName,
-            boardHandle:     _classroomBoardHandle
+            boardHandle:     _classroomBoardHandle,
+            // V7.1 sizing fix: pass the level def so the renderer can size
+            // its overlay canvas to the level's natural dims (mapHeight *
+            // chipSize) rather than stretching to the full board height.
+            // The board is 220 px tall but levels are only 80 px tall
+            // (8 chips * 10 chipSize) -- without this the overlay covered
+            // the whole board and the welcome Text at y=0 clipped offscreen.
+            level:           act.level || null
           });
           try { console.log(__dbgTag, 'mount OK', { handle: !!_activityHandle, hasUpdate: !!(_activityHandle && _activityHandle.updateState) }); } catch (_) {}
+          // Match _activityMount height to the renderer's chosen overlay
+          // height so the overlay only blocks pointer-events over the
+          // level region (not the full board).
+          if (_activityHandle && typeof _activityHandle.cssH === 'number' && _activityHandle.cssH > 0) {
+            _activityMount.style.height = _activityHandle.cssH + 'px';
+          }
         } catch (mountErr) {
           try { console.warn(__dbgTag, 'mount THREW', mountErr); } catch (_) {}
           _activityHandle = null;
