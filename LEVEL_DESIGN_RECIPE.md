@@ -3,10 +3,10 @@
 Session 115, 2026-05-25. Recipe for unit-author agents to produce
 the ~80 lesson-levels in batch. Each unit gets one agent; each agent
 produces ~10 JSON files (one per topic) into
-`curriculum_render/activities/UN.X.json`.
+`curriculum_render/railway-server/activities/UN.X.json`.
 
 Reference spec: `LIVE_CLASSROOM_V7_BUILD.md` (frozen).
-Canonical example: `curriculum_render/activities/U1.1.json` (Cola Mystery).
+Canonical example: `curriculum_render/railway-server/activities/U1.1.json` (Cola Mystery). NOTE: levels MUST live inside `railway-server/` because Railway deploys that folder as the project root -- a sibling `cr/activities/` at the repo root is invisible to the running server.
 
 ## How a level teaches
 
@@ -313,7 +313,7 @@ points (encoded in `drink` as a numeric pair). Doors ask about slope.
 2. For each `## TOPIC N.X` heading, identify Skill / LO / EK / available
    resource / required content. ~10 topics per unit typically.
 3. Match the topic to a Pattern (A-F) above.
-4. Author a JSON file `curriculum_render/activities/UN.X.json`.
+4. Author a JSON file `curriculum_render/railway-server/activities/UN.X.json`.
 5. ASCII only. LF line endings. Max map.height = 9.
 6. Output ALL files for the unit + a 200-word report summarizing
    any topics where Pattern-fit was imperfect or new actors are needed.
