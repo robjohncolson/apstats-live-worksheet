@@ -1642,7 +1642,21 @@
     }
 
     function startActivity() {
-      if (!boardHandle || typeof boardHandle.sendMessage !== 'function') return;
+      // 2026-05-25: diagnostic surface for the "click does nothing" pattern.
+      // Without this, a missing boardHandle (cockpit not in Live mode for
+      // this section, or boardHandle.sendMessage swapped out) silently
+      // early-returns. Now we log + surface via activity-status DOM.
+      var _statusEl = document.getElementById('activity-status');
+      if (!boardHandle) {
+        if (_statusEl) _statusEl.textContent = 'Cannot start: boardHandle is null. Click Go Live for this section first.';
+        try { console.warn('[startActivity] boardHandle is null'); } catch (_) {}
+        return;
+      }
+      if (typeof boardHandle.sendMessage !== 'function') {
+        if (_statusEl) _statusEl.textContent = 'Cannot start: boardHandle.sendMessage is not a function. Check WS connection.';
+        try { console.warn('[startActivity] boardHandle has no sendMessage method:', boardHandle); } catch (_) {}
+        return;
+      }
       var typeEl = document.getElementById('activity-type');
       var durEl  = document.getElementById('activity-duration');
       var rawType = typeEl ? typeEl.value : 'bridge-mean';
@@ -1674,11 +1688,19 @@
           delete opts.durationMs;
         }
       }
-      boardHandle.sendMessage({
+      var startPayload = {
         type: 'classroom_activity_start',
         activityType: type,
         opts: opts
-      });
+      };
+      try { console.log('[startActivity] sending:', startPayload); } catch (_) {}
+      var sent = boardHandle.sendMessage(startPayload);
+      if (sent === false) {
+        if (_statusEl) _statusEl.textContent = 'sendMessage returned false (WS not OPEN?). Check Network -> WS for the section socket.';
+        try { console.warn('[startActivity] sendMessage returned false'); } catch (_) {}
+      } else if (_statusEl) {
+        _statusEl.textContent = 'Sent classroom_activity_start (' + type + (opts.levelKey ? ':' + opts.levelKey : '') + '). Waiting for server reply...';
+      }
     }
 
     function cancelActivity() {

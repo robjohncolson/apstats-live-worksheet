@@ -86,7 +86,7 @@ describe('Unit C source structure: setBoardSectionsVisible extends to activity',
   it('setBoardSectionsVisible toggles #activity-section', () => {
     var idx = COCKPIT_SRC.indexOf('function setBoardSectionsVisible');
     expect(idx).toBeGreaterThan(-1);
-    var slice = COCKPIT_SRC.slice(idx, idx + 1500);
+    var slice = COCKPIT_SRC.slice(idx, idx + 3500);
     expect(slice).toMatch(/getElementById\(\s*['"]activity-section['"]\s*\)/);
   });
 });
@@ -112,7 +112,7 @@ describe('Unit C source structure: renderActivity / startActivity / cancelActivi
     expect(idx).toBeGreaterThan(-1);
     // V6 expanded the function body (variant parsing for colorbox-grid):'hand'/'group').
     // Widen the slice window so the sendMessage call still fits inside.
-    var slice = COCKPIT_SRC.slice(idx, idx + 1500);
+    var slice = COCKPIT_SRC.slice(idx, idx + 3500);
     expect(slice).toMatch(/boardHandle\.sendMessage\s*\(/);
     expect(slice).toMatch(/classroom_activity_start/);
   });

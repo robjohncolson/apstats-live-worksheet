@@ -70,14 +70,14 @@ describe('V7 Unit C: startActivity sets opts.levelKey for type === level', () =>
     expect(idx).toBeGreaterThan(-1);
     // The whole function body fits comfortably inside a 2 KB window;
     // V7's branch is ~3 lines below the existing colorbox-grid block.
-    var body = COCKPIT_SRC.slice(idx, idx + 2000);
+    var body = COCKPIT_SRC.slice(idx, idx + 2800);
     expect(body).toMatch(/type\s*===\s*['"]level['"]/);
     expect(body).toMatch(/opts\.levelKey\s*=\s*variant/);
   });
 
   it('the level branch is positioned AFTER the existing variant parser (parts[0]/parts[1])', () => {
     var idx = COCKPIT_SRC.indexOf('function startActivity');
-    var body = COCKPIT_SRC.slice(idx, idx + 2000);
+    var body = COCKPIT_SRC.slice(idx, idx + 2800);
     var splitIdx  = body.search(/var\s+parts\s*=\s*String\(rawType\)\.split\(['"]:["']\)/);
     var levelIdx  = body.search(/type\s*===\s*['"]level['"]/);
     expect(splitIdx).toBeGreaterThan(-1);
@@ -87,7 +87,7 @@ describe('V7 Unit C: startActivity sets opts.levelKey for type === level', () =>
 
   it('the colorbox-grid variant parsing is still in place (additive change)', () => {
     var idx = COCKPIT_SRC.indexOf('function startActivity');
-    var body = COCKPIT_SRC.slice(idx, idx + 2000);
+    var body = COCKPIT_SRC.slice(idx, idx + 2800);
     expect(body).toMatch(/type\s*===\s*['"]colorbox-grid['"]/);
     expect(body).toMatch(/secondAxis/);
   });
@@ -186,13 +186,13 @@ describe('V7 Unit C: showActivityHint covers the level type', () => {
   it('showActivityHint contains a "type === \'level\'" branch', () => {
     var idx = COCKPIT_SRC.indexOf('function showActivityHint');
     expect(idx).toBeGreaterThan(-1);
-    var body = COCKPIT_SRC.slice(idx, idx + 2000);
+    var body = COCKPIT_SRC.slice(idx, idx + 2800);
     expect(body).toMatch(/type\s*===\s*['"]level['"]/);
   });
 
   it('the level hint text mentions sip stations and question doors (so students know what to do)', () => {
     var idx = COCKPIT_SRC.indexOf('function showActivityHint');
-    var body = COCKPIT_SRC.slice(idx, idx + 2000);
+    var body = COCKPIT_SRC.slice(idx, idx + 2800);
     var lvlIdx = body.search(/type\s*===\s*['"]level['"]/);
     // The hint string runs roughly 5-15 lines after the branch start.
     var lvlBody = body.slice(lvlIdx, lvlIdx + 800);
@@ -202,7 +202,7 @@ describe('V7 Unit C: showActivityHint covers the level type', () => {
 
   it('the existing bridge-mean / colorbox-hue / colorbox-grid hints are still present (additive change)', () => {
     var idx = COCKPIT_SRC.indexOf('function showActivityHint');
-    var body = COCKPIT_SRC.slice(idx, idx + 2000);
+    var body = COCKPIT_SRC.slice(idx, idx + 2800);
     expect(body).toMatch(/type\s*===\s*['"]bridge-mean['"]/);
     expect(body).toMatch(/type\s*===\s*['"]colorbox-hue['"]/);
     expect(body).toMatch(/type\s*===\s*['"]colorbox-grid['"]/);
