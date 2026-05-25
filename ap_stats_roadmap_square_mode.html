@@ -1570,7 +1570,7 @@
                 <div class="prog-bar geneva" id="pb"></div>
                 <div class="prog-lbl geneva" id="pl"></div>
             </div>
-            <div id="classroom-board-mount" style="margin-top:8px"></div>
+            <div id="classroom-board-mount" style="margin-top:8px;position:relative"></div>
             <div id="classroom-board-controls" class="geneva" style="font-size:9px;color:#888;margin-top:2px;text-align:center;user-select:none">
                 Arrows walk &middot; Space jump &middot; Up to check in
             </div>
@@ -11549,13 +11549,32 @@ function _handleActivityState(summary){
         if (!Renderer) { try { console.warn(__dbgTag, 'NO RENDERER for type', act.type); } catch (_) {} return; }
         _activityMount = document.createElement('div');
         _activityMount.id = 'activity-bridge-mount';
-        _activityMount.style.cssText = 'margin-top:8px;width:100%';
         var board = document.getElementById('classroom-board-mount');
-        if (board && board.parentNode) {
-          board.parentNode.insertBefore(_activityMount, board);
+        // V7.1 additive-overlay path: level renderer's canvas is
+        // `position:absolute; left:0; top:0` and assumes its parent is a
+        // positioning context overlaying the board canvas. Mount AS a
+        // child of #classroom-board-mount (which carries position:relative)
+        // so the overlay aligns with the board. V4 bridge-mean + V5
+        // colorbox-hue render in normal flow as a sibling beneath the
+        // board -- keep that path for them. V6 colorbox-grid also wants
+        // overlay positioning (its wrap is position:absolute).
+        var asOverlay = (act.type === 'level' || act.type === 'colorbox-grid');
+        if (asOverlay) {
+          _activityMount.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none';
+          if (board) {
+            board.appendChild(_activityMount);
+          } else {
+            try { console.warn(__dbgTag, 'no board mount; bailing'); } catch (_) {}
+            return;
+          }
         } else {
-          try { console.warn(__dbgTag, 'no board mount; bailing'); } catch (_) {}
-          return;
+          _activityMount.style.cssText = 'margin-top:8px;width:100%';
+          if (board && board.parentNode) {
+            board.parentNode.insertBefore(_activityMount, board);
+          } else {
+            try { console.warn(__dbgTag, 'no board mount; bailing'); } catch (_) {}
+            return;
+          }
         }
         // V7.1 redesign: classroom-board-mount is NEVER hidden. The
         // level renderer is an additive overlay on top of the existing
