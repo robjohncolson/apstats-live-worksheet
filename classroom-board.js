@@ -1435,8 +1435,7 @@
    */
   var COIN_COLLISION_PX = 18;   // tighter than server's 16+slack so visual contact ~= server overlap
   var COIN_DEFAULT_SIZE = 24;   // render dim; source PNG is 32x32
-  var COIN_FRAME_MS     = 140;  // ~7 Hz cycle -> 420 ms per full spin; reads as a fast Pico Park coin
-  var COIN_VANISH_MS    = 180;  // V7.3.2: pop-and-vanish duration on collect; instant enough to feel snappy
+  var COIN_FRAME_MS     = 280;  // V7.3.3: half the previous 140 -> ~3.5 Hz cycle, ~840 ms per full spin
 
   function CoinSprite(opts) {
     this.images         = Array.isArray(opts.images) ? opts.images : [];
@@ -1452,14 +1451,25 @@
     this._frameMs       = 0;     // accumulator for spin frame advance
     this._frameIdx      = 0;
     this._sentCollect   = false;
-    // V7.3.2 pop-and-vanish: starts ticking as soon as the coin is
-    // collected (local optimistic via _sentCollect OR authoritative
-    // via server-broadcast `collected`). Render scales the sprite from
-    // 1x down to 0 over COIN_VANISH_MS, then renders nothing.
-    this._vanishMs      = opts.collected === true ? COIN_VANISH_MS : 0;
     this.engine         = null;
   }
 
+  // V7.3.3 cross-screen disappearance contract:
+  //
+  //   1. Local player walks into coin -> CoinSprite.update sets
+  //      _sentCollect=true and fires onCollect (sends
+  //      classroom_activity_value {kind:'collect',coinId}). render
+  //      starts returning early -> coin gone for the local player.
+  //   2. Server (level-engine.applyInput) validates + sets the
+  //      coin's `collected` flag, bumps the tally.
+  //   3. Next classroom_activity_state tick (5 Hz) broadcasts the
+  //      updated state.coins[] to every client in the section.
+  //   4. Each client's _reduce updates state.activity.state, then
+  //      syncLevelCoins (in mount()) does `existing.collected =
+  //      c.collected === true` for every coin -- peer CoinSprite
+  //      instances flip their `collected` to true.
+  //   5. _isCollecting() returns true on peers -> render returns
+  //      early there too -> coin gone on every screen.
   CoinSprite.prototype._isCollecting = function () {
     return this.collected || this._sentCollect;
   };
@@ -1467,51 +1477,36 @@
   CoinSprite.prototype.update = function (dt) {
     this._bobT += dt;
     var collecting = this._isCollecting();
-    // V7.3.1: advance spin frame while NOT collecting. Vanishing /
-    // collected coins freeze on frame 0 -- the scale-down telegraphs
-    // the state cleanly without competing with the spin.
+    // Advance spin frame while NOT collecting. Collected coins are
+    // hidden from render entirely, so the frame counter doesn't matter.
     if (!collecting) {
       this._frameMs += dt * 1000;
       while (this._frameMs >= COIN_FRAME_MS) {
         this._frameMs -= COIN_FRAME_MS;
         this._frameIdx = (this._frameIdx + 1) % Math.max(1, this.images.length);
       }
-    } else {
-      this._frameIdx = 0;
-      // Advance the vanish timer; cap at COIN_VANISH_MS so render bails
-      // permanently once we hit it.
-      this._vanishMs = Math.min(COIN_VANISH_MS, this._vanishMs + dt * 1000);
-    }
-    if (collecting) return;
-    var me = this.getLocalSprite();
-    if (!me) return;
-    var myCx   = me.x + (me._spriteSize || 24) / 2;
-    var coinCx = this.x + this.size / 2;
-    if (Math.abs(myCx - coinCx) <= COIN_COLLISION_PX) {
-      this._sentCollect = true;   // one-shot; server-side re-broadcast will set collected=true authoritatively
-      if (this.onCollect) {
-        try { this.onCollect(this.coinId); } catch (_) {}
+      var me = this.getLocalSprite();
+      if (!me) return;
+      var myCx   = me.x + (me._spriteSize || 24) / 2;
+      var coinCx = this.x + this.size / 2;
+      if (Math.abs(myCx - coinCx) <= COIN_COLLISION_PX) {
+        this._sentCollect = true;   // one-shot; server-side re-broadcast will set collected=true authoritatively
+        if (this.onCollect) {
+          try { this.onCollect(this.coinId); } catch (_) {}
+        }
       }
     }
   };
 
   CoinSprite.prototype.render = function (ctx) {
-    // V7.3.2 pop-and-vanish: once the vanish timer hits COIN_VANISH_MS
-    // the coin is gone -- syncLevelCoins keeps the entity around so the
-    // sprite engine still ticks update(), but render is a no-op.
-    if (this._vanishMs >= COIN_VANISH_MS) return;
+    // V7.3.3: collected / locally-collected coins disappear instantly.
+    // No animation -- the absence IS the feedback.
+    if (this._isCollecting()) return;
     var img = this.images[this._frameIdx] || this.images[0];
     if (!img || !img.complete || img.naturalWidth === 0) return;
-    var bobOffset = this._isCollecting() ? 0 : Math.sin(this._bobT * 4) * 2;
-    // Scale the sprite by (1 - vanish-progress) so it shrinks to nothing
-    // and centers on its original midpoint as it goes.
-    var progress = (this._vanishMs > 0) ? (this._vanishMs / COIN_VANISH_MS) : 0;
-    var scale    = 1 - progress;
-    var renderSize = this.size * scale;
-    var renderX = this.x + (this.size - renderSize) / 2;
-    var renderY = this.y + bobOffset + (this.size - renderSize) / 2;
+    var bobOffset = Math.sin(this._bobT * 4) * 2;
     try {
-      ctx.drawImage(img, renderX, renderY, renderSize, renderSize);
+      ctx.drawImage(img, this.x, this.y + bobOffset, this.size, this.size);
     } catch (_) {}
   };
 
