@@ -1419,22 +1419,26 @@
    * Coin sprite rendered ON the avatar canvas (NOT the activity overlay)
    * so collision with avatars is native sprite-vs-sprite proximity, not
    * server-side abstract math. Pico-park feel: walk into the coin to
-   * collect it.
+   * collect it. V7.3.1: cycles through a 3-frame spin animation
+   * (bright / mid / dark) at COIN_FRAME_MS cadence; collected state
+   * freezes on frame 0 + greys out.
    *
    * opts:
-   *   x, y          -- canvas pixel coords (top-left of the sprite)
-   *   size          -- render size in px (sprite is 32x32 source)
-   *   coinId        -- stable id from the level state (e.g. 's1')
-   *   drink         -- the drink label ('A'/'B') rendered above the coin
-   *   collected     -- initial collected flag from server (true = grey)
-   *   getLocalSprite-- () -> BoardSprite (the local player) for collision
-   *   onCollect     -- (coinId) -> void; fired ONCE on first collision
+   *   x, y           -- canvas pixel coords (top-left of the sprite)
+   *   size           -- render size in px (sprite is 32x32 source)
+   *   coinId         -- stable id from the level state (e.g. 's1')
+   *   drink          -- the drink label ('A'/'B') rendered above the coin
+   *   collected      -- initial collected flag from server (true = grey)
+   *   getLocalSprite -- () -> BoardSprite (the local player) for collision
+   *   onCollect      -- (coinId) -> void; fired ONCE on first collision
+   *   images         -- [Image, Image, Image] -- 3 spin frames in order
    */
   var COIN_COLLISION_PX = 18;   // tighter than server's 16+slack so visual contact ~= server overlap
   var COIN_DEFAULT_SIZE = 24;   // render dim; source PNG is 32x32
+  var COIN_FRAME_MS     = 140;  // ~7 Hz cycle -> 420 ms per full spin; reads as a fast Pico Park coin
 
-  function CoinSprite(image, opts) {
-    this.image          = image;
+  function CoinSprite(opts) {
+    this.images         = Array.isArray(opts.images) ? opts.images : [];
     this.x              = opts.x;
     this.y              = opts.y;
     this.size           = opts.size || COIN_DEFAULT_SIZE;
@@ -1444,12 +1448,26 @@
     this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
     this.onCollect      = (typeof opts.onCollect === 'function') ? opts.onCollect : null;
     this._bobT          = 0;
+    this._frameMs       = 0;     // accumulator for spin frame advance
+    this._frameIdx      = 0;
     this._sentCollect   = false;
     this.engine         = null;
   }
 
   CoinSprite.prototype.update = function (dt) {
     this._bobT += dt;
+    // V7.3.1: advance spin frame while uncollected. Collected coins
+    // freeze on frame 0 (the brightest) -- the grey-out alpha telegraphs
+    // the state, no need for the spin to keep going.
+    if (!this.collected) {
+      this._frameMs += dt * 1000;
+      while (this._frameMs >= COIN_FRAME_MS) {
+        this._frameMs -= COIN_FRAME_MS;
+        this._frameIdx = (this._frameIdx + 1) % Math.max(1, this.images.length);
+      }
+    } else {
+      this._frameIdx = 0;
+    }
     if (this.collected || this._sentCollect) return;
     var me = this.getLocalSprite();
     if (!me) return;
@@ -1464,14 +1482,15 @@
   };
 
   CoinSprite.prototype.render = function (ctx) {
-    if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
+    var img = this.images[this._frameIdx] || this.images[0];
+    if (!img || !img.complete || img.naturalWidth === 0) return;
     var bobOffset = this.collected ? 0 : Math.sin(this._bobT * 4) * 2;
     var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
     if (this.collected) {
       ctx.globalAlpha = 0.35;
     }
     try {
-      ctx.drawImage(this.image, this.x, this.y + bobOffset, this.size, this.size);
+      ctx.drawImage(img, this.x, this.y + bobOffset, this.size, this.size);
     } catch (_) {}
     ctx.globalAlpha = prevAlpha;
   };
@@ -1482,15 +1501,21 @@
     return { text: this.drink || '', x: cx, y: topY, isGold: !this.collected };
   };
 
-  // Module-scope coin image loader. Loads once; CoinSprite.render is a
-  // no-op until the image is ready. Sized 32x32 RGBA (see coin.png).
-  var _coinImage = null;
-  function _ensureCoinImage(doc) {
-    if (_coinImage) return _coinImage;
-    if (typeof Image === 'undefined') return null;   // jsdom may stub Image; OK either way
-    _coinImage = new Image();
-    _coinImage.src = 'coin.png';
-    return _coinImage;
+  // Module-scope coin frame loader. Loads all 3 spin frames once;
+  // CoinSprite.render is a no-op until the frames are ready. Each
+  // PNG is 32x32 RGBA (see coin_0.png / coin_1.png / coin_2.png --
+  // bright / mid / dark frames of the source-atlas spin strip).
+  var _coinFrames = null;
+  function _ensureCoinFrames() {
+    if (_coinFrames) return _coinFrames;
+    if (typeof Image === 'undefined') return [];   // jsdom may stub Image; OK either way
+    _coinFrames = [];
+    for (var i = 0; i < 3; i++) {
+      var im = new Image();
+      im.src = 'coin_' + i + '.png';
+      _coinFrames.push(im);
+    }
+    return _coinFrames;
   }
 
   // --- GoalSprite entity (V7.2 sprite-collide) --------------------------
@@ -2516,7 +2541,8 @@
         var cx   = _coinCanvasX(c, levelW, chipSize, canvasW, size);
         var cy   = _coinCanvasY(size);
         if (!coinEntities[c.id]) {
-          var sprite = new CoinSprite(_ensureCoinImage(doc), {
+          var sprite = new CoinSprite({
+            images: _ensureCoinFrames(),
             x: cx, y: cy, size: size, coinId: c.id, drink: c.drink, collected: c.collected === true,
             getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
             onCollect: function (coinId) {
