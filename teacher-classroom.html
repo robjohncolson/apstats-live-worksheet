@@ -625,6 +625,34 @@
         </div>
       </div>
 
+      <!-- v4 Unit C: Run Activity (LIVE_CLASSROOM_V4_BUILD.md C4.1) -->
+      <div class="section" id="activity-section" style="display:none">
+        <h3>Run Activity</h3>
+        <div class="row">
+          <label>Activity:
+            <select id="activity-type">
+              <option value="bridge-mean">U1.1 Lift the Bridge (mean)</option>
+            </select>
+          </label>
+          <label>Duration (s): <input id="activity-duration" type="number" min="30" max="300" value="90"></label>
+        </div>
+        <div class="row">
+          <button type="button" id="btn-activity-start">Run Activity</button>
+          <button type="button" id="btn-activity-cancel" style="display:none">Cancel Activity</button>
+        </div>
+        <div id="activity-status"></div>
+        <div id="activity-live" style="display:none">
+          <pre id="activity-readout"></pre>
+          <ul id="activity-roster"></ul>
+        </div>
+        <div id="activity-result" style="display:none">
+          <p id="activity-result-text"></p>
+          <button type="button" id="btn-activity-advance">Manual Advance</button>
+          <button type="button" id="btn-activity-hint">Show Hint</button>
+          <button type="button" id="btn-activity-retry">Retry</button>
+        </div>
+      </div>
+
       <!-- P4: Select Students (multi-nudge) -- toggle for entering select mode -->
       <div class="section" id="select-students-section" style="display:none">
         <h2 class="section-title">Select Students (multi-nudge)</h2>
@@ -916,12 +944,14 @@
       var dw   = document.getElementById('doorways-section');
       var nudge = document.getElementById('nudge-section');
       var sel = document.getElementById('select-students-section');
+      var act = document.getElementById('activity-section');
       if (ctrl) ctrl.style.display = disp;
       if (chk)  chk.style.display  = disp;
       if (poll) poll.style.display  = disp;
       if (dw)   dw.style.display   = disp;
       if (nudge) nudge.style.display = disp;
       if (sel) sel.style.display = disp;
+      if (act) act.style.display = disp;
     }
 
     // ===== v2.1: poll archive tracking =====
@@ -1143,6 +1173,8 @@
             }
             // v3 P4: doorways live tally + archive-on-close.
             renderDoorwaysTally(summary);
+            // v4 Unit C: activity panel (Run Activity / live readout / result).
+            renderActivity(summary);
             // Codex MAJOR 1 fold: derive _activeDoorwaysId + button
             // visibility from summary.doorways on every state change.
             // This way a cockpit refresh / second teacher / late mount
@@ -1328,6 +1360,195 @@
       var ctx = canvas.getContext('2d');
       window.Ti84Plot.drawBarChart(ctx, { labels: labels, counts: counts, title: d.question || '' });
     }
+
+    // ===== v4 Unit C: activity panel (LIVE_CLASSROOM_V4_BUILD.md C4) =====
+    //
+    // The Run Activity panel ships next to Poll / Doorways. It launches a
+    // server-side activity plugin (v4 ships only `bridge-mean`), shows the
+    // live readout, and surfaces the result on success / timeout / cancel.
+    //
+    // Read path: summary.activity from the board's onStateChange callback.
+    // Write path: boardHandle.sendMessage({ type: 'classroom_activity_start' / '_cancel', ... }).
+    //
+    // Mutex parity with the rest of the section: Start is disabled when any
+    // of { gate-armed, poll, doorways, activity } is live, or when fewer
+    // than 2 online students are in the room.
+
+    // Count online students in a summary.members array (the board's shape
+    // since the P3 nudge-recipient fix). Defensive against undefined /
+    // non-array shapes that legacy fixtures might pass.
+    function _countOnlineStudents(summary) {
+      if (!summary || !Array.isArray(summary.members)) return 0;
+      var n = 0;
+      for (var i = 0; i < summary.members.length; i++) {
+        var m = summary.members[i];
+        if (m && m.role === 'student' && m.online !== false) n += 1;
+      }
+      return n;
+    }
+
+    // Mutex gate -- a Start button is "blocked" when another mode is live.
+    function _anyModeLive(summary) {
+      if (!summary) return false;
+      if (summary.gate && summary.gate.armed) return true;
+      if (summary.poll) return true;
+      if (summary.doorways) return true;
+      if (summary.activity && !summary.activity.finished) return true;
+      return false;
+    }
+
+    function renderActivity(summary) {
+      var live   = document.getElementById('activity-live');
+      var result = document.getElementById('activity-result');
+      var btnStart  = document.getElementById('btn-activity-start');
+      var btnCancel = document.getElementById('btn-activity-cancel');
+      var readout   = document.getElementById('activity-readout');
+      var roster    = document.getElementById('activity-roster');
+      var resultText = document.getElementById('activity-result-text');
+      if (!btnStart || !btnCancel) return;
+
+      var activity = summary && summary.activity;
+
+      // FINISHED -- show result panel, hide live + cancel.
+      if (activity && activity.finished) {
+        if (live)   live.style.display   = 'none';
+        if (result) result.style.display = '';
+        btnCancel.style.display = 'none';
+        btnStart.style.display  = '';
+        btnStart.disabled       = false;
+        if (resultText) {
+          var outcome = activity.outcome || 'finished';
+          var label = (outcome === 'success') ? 'Success -- bridge held in the target band.'
+                    : (outcome === 'timeout') ? 'Time up -- target band not held for 3 seconds.'
+                    : (outcome === 'cancel')  ? 'Activity cancelled.'
+                                              : 'Activity finished.';
+          resultText.textContent = label;
+        }
+        return;
+      }
+
+      // LIVE -- show readout + cancel, hide start + result.
+      if (activity && !activity.finished) {
+        if (result) result.style.display = 'none';
+        if (live)   live.style.display   = '';
+        btnStart.style.display  = 'none';
+        btnCancel.style.display = '';
+
+        var state = activity.state || {};
+        var mean  = (typeof state.currentMean === 'number') ? state.currentMean : 0;
+        var target = (typeof state.target === 'number') ? state.target : 0;
+        var holdMs = (typeof state.holdMs === 'number') ? state.holdMs : 0;
+        var holdTargetMs = (typeof state.holdTargetMs === 'number') ? state.holdTargetMs : 3000;
+        var startedAt = (typeof activity.startedAt === 'number') ? activity.startedAt : 0;
+        var durationMs = (typeof activity.durationMs === 'number') ? activity.durationMs : 0;
+        var elapsedMs = Math.max(0, Date.now() - startedAt);
+        var remainingMs = Math.max(0, durationMs - elapsedMs);
+        if (readout) {
+          readout.textContent =
+            'mean: '      + mean +
+            '   target: ' + target +
+            '   hold: '   + Math.round(holdMs) + ' / ' + holdTargetMs + ' ms' +
+            '   remaining: ' + Math.ceil(remainingMs / 1000) + ' s';
+        }
+        if (roster) {
+          // Build username: value (nudges) entries from state.values + state.nudges.
+          // state.nudges is optional (plugin may not expose it); default to "".
+          roster.innerHTML = '';
+          var values = (state.values && typeof state.values === 'object') ? state.values : {};
+          var nudges = (state.nudges && typeof state.nudges === 'object') ? state.nudges : {};
+          var usernames = Object.keys(values).sort();
+          for (var i = 0; i < usernames.length; i++) {
+            var u = usernames[i];
+            var li = document.createElement('li');
+            var nudgeCount = (u in nudges) ? nudges[u] : '';
+            var nudgeStr = (nudgeCount === '' || nudgeCount == null) ? '' : ' (' + nudgeCount + ')';
+            li.textContent = u + ': ' + values[u] + nudgeStr;
+            roster.appendChild(li);
+          }
+        }
+        return;
+      }
+
+      // IDLE -- no activity. Hide live + result, show start, mutex-gate it.
+      if (live)   live.style.display   = 'none';
+      if (result) result.style.display = 'none';
+      btnStart.style.display  = '';
+      btnCancel.style.display = 'none';
+      var online = _countOnlineStudents(summary);
+      var blocked = _anyModeLive(summary);
+      btnStart.disabled = (online < 2) || blocked;
+    }
+
+    function startActivity() {
+      if (!boardHandle || typeof boardHandle.sendMessage !== 'function') return;
+      var typeEl = document.getElementById('activity-type');
+      var durEl  = document.getElementById('activity-duration');
+      var type   = typeEl ? typeEl.value : 'bridge-mean';
+      var seconds = durEl ? parseInt(durEl.value, 10) : 90;
+      if (!isFinite(seconds)) seconds = 90;
+      var durationMs = Math.max(30000, Math.min(300000, seconds * 1000));
+      boardHandle.sendMessage({
+        type: 'classroom_activity_start',
+        activityType: type,
+        opts: { durationMs: durationMs }
+      });
+    }
+
+    function cancelActivity() {
+      if (!boardHandle || typeof boardHandle.sendMessage !== 'function') return;
+      boardHandle.sendMessage({ type: 'classroom_activity_cancel' });
+    }
+
+    // 2026-05-24 V4 Codex MAJOR fold: wire the 3 result-panel buttons so
+    // they're not dead UI. Minimal v4 behavior; v5 can extend.
+    //   Manual Advance: cancel the activity (server broadcasts), then
+    //     surface a note instructing the teacher to use the dashboard's
+    //     existing P5 override-gate UI for per-student unlock.
+    //   Show Hint:      replace the result text with a static formula
+    //     hint specific to the current activity type.
+    //   Retry:          re-send classroom_activity_start with the same
+    //     activityType + opts (reads them from the dropdown + duration
+    //     input, which still reflect the last launch).
+    function manualAdvanceActivity() {
+      cancelActivity();
+      var statusEl = document.getElementById('activity-status');
+      if (statusEl) {
+        statusEl.textContent = 'Activity cancelled. Use the dashboard override-gate to unlock the lesson for specific students.';
+      }
+    }
+    function showActivityHint() {
+      var resultText = document.getElementById('activity-result-text');
+      if (!resultText) return;
+      var type = (_lastSummary && _lastSummary.activity && _lastSummary.activity.type) || '';
+      var hint = 'Hint: mean = (v1 + v2 + ... + vN) / N. Move toward the target by nudging values up/down.';
+      if (type !== 'bridge-mean') {
+        hint = 'Hint not available for activity type "' + type + '".';
+      }
+      resultText.textContent = hint;
+    }
+    function retryActivity() {
+      // Reuse the existing startActivity helper which reads from the
+      // dropdown + duration input. Hide the result panel pre-emptively
+      // so the new activity's live panel is the only one visible.
+      var resultEl = document.getElementById('activity-result');
+      if (resultEl) resultEl.style.display = 'none';
+      startActivity();
+    }
+
+    // Wire the buttons -- guarded so the cockpit test harness (which boots
+    // without the V4 panel present in some legacy fixtures) won't throw.
+    (function _wireActivityButtons() {
+      var btnStart   = document.getElementById('btn-activity-start');
+      var btnCancel  = document.getElementById('btn-activity-cancel');
+      var btnAdvance = document.getElementById('btn-activity-advance');
+      var btnHint    = document.getElementById('btn-activity-hint');
+      var btnRetry   = document.getElementById('btn-activity-retry');
+      if (btnStart)   btnStart.addEventListener('click',   startActivity);
+      if (btnCancel)  btnCancel.addEventListener('click',  cancelActivity);
+      if (btnAdvance) btnAdvance.addEventListener('click', manualAdvanceActivity);
+      if (btnHint)    btnHint.addEventListener('click',    showActivityHint);
+      if (btnRetry)   btnRetry.addEventListener('click',   retryActivity);
+    })();
 
     // ===== P3: nudge panel helpers (TEACHER_STUDENT_CONSOLE_SPEC.md section 6) =====
     // Cockpit-side. Populate recipient dropdown from onStateChange.members

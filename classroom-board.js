@@ -252,7 +252,8 @@
           closedPoll: null,
           live:       !!message.live,
           doorways:   message.doorways || null,
-          closedDoorways: null
+          closedDoorways: null,
+          activity:   message.activity || null
         };
 
       case 'classroom_live_state':
@@ -266,7 +267,8 @@
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
           live:       !!message.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       case 'classroom_member_update':
@@ -294,7 +296,8 @@
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
           live:       state.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       case 'classroom_member_left':
@@ -312,7 +315,8 @@
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
           live:       state.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       case 'classroom_gate':
@@ -339,7 +343,8 @@
           closedPoll: null,
           live:       state.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       case 'classroom_greenlight':
@@ -351,7 +356,8 @@
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
           live:       state.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       // --- v2 poll cases (pure) -----------------------------------------
@@ -388,7 +394,8 @@
           closedPoll: null,
           live:       state.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       case 'classroom_poll_closed':
@@ -413,7 +420,8 @@
           closedPoll: closedSnapshot,
           live:       state.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       case 'classroom_poll_reveal':
@@ -451,7 +459,8 @@
           closedPoll: state.closedPoll != null ? state.closedPoll : null,
           live:       state.live,
           doorways:   state.doorways,
-          closedDoorways: state.closedDoorways || null
+          closedDoorways: state.closedDoorways || null,
+          activity:   state.activity || null
         };
 
       // --- v3 P4 doorways cases (vote-with-your-feet) -------------------
@@ -472,7 +481,8 @@
             options:  Array.isArray(message.options) ? message.options.slice() : [],
             tally:    (Array.isArray(message.options) ? message.options : []).map(function(o) { return { doorId: o.doorId, count: 0 }; }),
             closed:   false
-          }
+          },
+          activity:   state.activity || null
         };
 
       case 'classroom_doorway_tally':
@@ -492,7 +502,8 @@
             options:  state.doorways.options,
             tally:    Array.isArray(message.tally) ? message.tally.slice() : state.doorways.tally,
             closed:   state.doorways.closed
-          }
+          },
+          activity:   state.activity || null
         };
 
       case 'classroom_close_doorways':
@@ -513,8 +524,50 @@
             question: message.question || '',
             options:  Array.isArray(message.options) ? message.options.slice() : [],
             tally:    Array.isArray(message.tally) ? message.tally.slice() : []
-          }
+          },
+          activity:   state.activity || null
         };
+
+      // --- v4 activity cases (LIVE_CLASSROOM_V4_BUILD.md C3) ------------
+
+      case 'classroom_activity_start':
+        // Engine-driven start; replaces any existing activity slot.
+        return Object.assign({}, state, {
+          activity: {
+            type:       message.activity.type,
+            startedAt:  message.activity.startedAt,
+            durationMs: message.activity.durationMs,
+            state:      message.activity.state,
+            finished:   false
+          }
+        });
+
+      case 'classroom_activity_state':
+        // 5 Hz tick payload. Only mutates the plugin-managed inner state
+        // and only while an activity is live + unfinished.
+        if (!state.activity || state.activity.finished) { return state; }
+        return Object.assign({}, state, {
+          activity: Object.assign({}, state.activity, {
+            state: message.state
+          })
+        });
+
+      case 'classroom_activity_success':
+      case 'classroom_activity_timeout':
+      case 'classroom_activity_cancel':
+        // Terminal lifecycle messages. Mark the slot finished + label the
+        // outcome; preserve the final plugin state so the render layer
+        // can show the result panel.
+        if (!state.activity) { return state; }
+        return Object.assign({}, state, {
+          activity: Object.assign({}, state.activity, {
+            finished:   true,
+            finalState: message.finalState || state.activity.state,
+            outcome:    message.type === 'classroom_activity_success' ? 'success'
+                      : message.type === 'classroom_activity_timeout' ? 'timeout'
+                      : 'cancel'
+          })
+        });
 
       // NOTE: there is no 'classroom_reset' broadcast -- a teacher reset is
       // delivered to clients AS a classroom_state snapshot (handled above,
@@ -528,7 +581,7 @@
   // --- initial state factory --------------------------------------------
 
   function emptyState() {
-    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null };
+    return { members: {}, gate: null, poll: null, greenlight: false, closedPoll: null, live: false, doorways: null, closedDoorways: null, activity: null };
   }
 
   // --- check-in button logic (B3) -- unchanged --------------------------
@@ -583,7 +636,8 @@
       greenlight: state.greenlight,
       live:       state.live,
       doorways:   state.doorways,
-      closedDoorways: state.closedDoorways || null
+      closedDoorways: state.closedDoorways || null,
+      activity:   state.activity || null
     };
   }
 
@@ -2810,6 +2864,19 @@
           if (selectModeActive) canvas.classList.add('classroom-select-mode');
           else canvas.classList.remove('classroom-select-mode');
         }
+      },
+
+      // --- v4 activity student-input channel ---
+      // Student-side handle for the activity plugin. The Desk's arrow-key
+      // binding (LIVE_CLASSROOM_V4_BUILD.md C5.2) calls this with
+      // { delta: +1 | -1 } for bridge-mean; other plugins may use other
+      // payload shapes. Returns false when the WS is not ready (caller
+      // can decide whether to retry).
+      sendActivityValue: function (payload) {
+        if (!ws || ws.readyState !== 1) { return false; }
+        try { ws.send(JSON.stringify({ type: 'classroom_activity_value', payload: payload })); }
+        catch (_) { return false; }
+        return true;
       },
 
       // P4: expose the canvas + per-sprite positions so the cockpit can

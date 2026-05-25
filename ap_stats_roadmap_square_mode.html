@@ -1849,6 +1849,7 @@
 <script src="sprite_sheet.js"></script>
 <script src="classroom-board.js"></script>
 <script src="ti84-plot.js"></script>
+<script src="activity-bridge.js"></script>
 
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
@@ -11382,6 +11383,17 @@ function hTip(){tip.style.display="none";}
    classroom-board.js component being absent. */
 var _classroomBoardHandle = null;
 var _todayLessonInf = null, _todayLessonDS = null;  // v1c: today's lesson, stashed by the calendar renderer
+// V4: activity engine plumbing. The summary is stashed so the capture-
+// phase arrow-key handler can read activity.state without re-entering
+// the board's IIFE. _activityHandle holds the per-activity renderer
+// (e.g., ActivityBridge.mount()) while the activity is live.
+var _lastClassroomSummary = null;
+var _activityHandle = null;
+var _activityMount = null;
+// 2026-05-24 V4 Codex MAJOR fold: cache the teardown timer id so a
+// new live activity (started before the 2.5s tearDown fires) can
+// cancel the stale timer instead of destroying the new renderer.
+var _activityTeardownTimer = null;
 
 /* ═══ Poll archive (v2.1 U4) ═══
    Keyed by YYYY-MM-DD -> array of poll objects from GET /poll-archive.
@@ -11475,6 +11487,108 @@ function _renderDeskDoorwaysTally(summary){
     window.Ti84Plot.drawBarChart(ctx, { labels: labels, counts: counts, title: d.question || '' });
   } catch (_) {}
 }
+// V4 spec C5.2: handle activity state transitions. Mounts the per-
+// activity-type renderer when an activity starts, updates it on
+// state ticks, shows the outcome animation on finish, and tears down
+// when the activity slot is cleared. Tolerates the renderer scripts
+// being absent (best-effort).
+function _activityRendererForType(type){
+  if (type === 'bridge-mean' && typeof window.ActivityBridge !== 'undefined') return window.ActivityBridge;
+  return null;
+}
+function _handleActivityState(summary){
+  try {
+    var act = summary && summary.activity;
+    if (act && !act.finished) {
+      // Live activity. Mount renderer if not already, update state.
+      // Codex MAJOR fold: cancel any stale teardown timer from a prior
+      // finished activity so its 2.5s callback can't destroy the new
+      // renderer we're about to mount.
+      if (_activityTeardownTimer) {
+        try { clearTimeout(_activityTeardownTimer); } catch (_) {}
+        _activityTeardownTimer = null;
+      }
+      if (!_activityHandle) {
+        var Renderer = _activityRendererForType(act.type);
+        if (!Renderer) return;
+        _activityMount = document.createElement('div');
+        _activityMount.id = 'activity-bridge-mount';
+        _activityMount.style.cssText = 'margin-top:8px;width:100%';
+        var board = document.getElementById('classroom-board-mount');
+        if (board && board.parentNode) {
+          board.parentNode.insertBefore(_activityMount, board);
+        } else {
+          return;
+        }
+        _activityHandle = Renderer.mount(_activityMount, {});
+      }
+      if (_activityHandle && typeof _activityHandle.updateState === 'function') {
+        _activityHandle.updateState(act.state);
+      }
+    } else if (act && act.finished) {
+      // Finished activity. Show outcome, then tear down after 2.5s.
+      if (_activityHandle && typeof _activityHandle.showOutcome === 'function') {
+        _activityHandle.showOutcome(act.outcome || 'cancel');
+      }
+      // Cancel any prior pending teardown before scheduling a new one
+      // (defense-in-depth; the live-branch above clears it too).
+      if (_activityTeardownTimer) {
+        try { clearTimeout(_activityTeardownTimer); } catch (_) {}
+        _activityTeardownTimer = null;
+      }
+      _activityTeardownTimer = setTimeout(function(){
+        _activityTeardownTimer = null;
+        if (_activityHandle && typeof _activityHandle.destroy === 'function') {
+          try { _activityHandle.destroy(); } catch (_) {}
+        }
+        _activityHandle = null;
+        if (_activityMount && _activityMount.parentNode) {
+          _activityMount.parentNode.removeChild(_activityMount);
+        }
+        _activityMount = null;
+      }, 2500);
+    } else {
+      // No activity. Ensure clean teardown of anything stale.
+      if (_activityHandle && typeof _activityHandle.destroy === 'function') {
+        try { _activityHandle.destroy(); } catch (_) {}
+      }
+      _activityHandle = null;
+      if (_activityMount && _activityMount.parentNode) {
+        _activityMount.parentNode.removeChild(_activityMount);
+      }
+      _activityMount = null;
+    }
+  } catch (_) {}
+}
+// V4 spec C5.2 arrow-key gate. When an activity is live AND this
+// Desk's user is in the activity's values map, ArrowUp/ArrowDown is
+// intercepted and routed to sendActivityValue. Uses capture: true +
+// stopImmediatePropagation to prevent the PlayerSprite's bubble-phase
+// document keydown listener (in classroom-board.js) from also firing.
+// No-op when not signed in, no activity, or activity has finished.
+document.addEventListener('keydown', function(e){
+  try {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    if (!_classroomBoardHandle) return;
+    var sum = _lastClassroomSummary;
+    if (!sum || !sum.activity || sum.activity.finished) return;
+    var st = sum.activity.state;
+    if (!st || !st.values) return;
+    var me = null;
+    try {
+      var cur = window.rosterClient && typeof window.rosterClient.current === 'function'
+        ? window.rosterClient.current() : null;
+      me = cur && cur.username ? cur.username : null;
+    } catch (_) {}
+    if (!me || !(me in st.values)) return;
+    // Activity is live AND I am in the values map. Intercept.
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+    if (typeof _classroomBoardHandle.sendActivityValue === 'function') {
+      _classroomBoardHandle.sendActivityValue({ delta: (e.key === 'ArrowUp') ? 1 : -1 });
+    }
+  } catch (_) {}
+}, true);
 function _mountClassroomBoard(){
   try {
     if (_classroomBoardHandle) return;
@@ -11493,6 +11607,9 @@ function _mountClassroomBoard(){
       hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null,
       onStartVideo: _focusTodayLessonVideo,   // v1c: synchronized video start
       onStateChange: function(summary) {
+        // V4: stash the latest summary so the capture-phase keydown
+        // handler can read activity state without entering the board IIFE.
+        _lastClassroomSummary = summary;
         // v3 P1+P2: render the "Live with Mr. Colson" indicator
         // when the room transitions to live. _renderLiveIndicator
         // is a fire-and-forget no-throw helper (defined alongside).
@@ -11500,6 +11617,9 @@ function _mountClassroomBoard(){
         // v3 P4: render the live doorways dotplot when a vote-with-
         // your-feet event is open in this section.
         _renderDeskDoorwaysTally(summary);
+        // V4: activity engine. Mount/update/teardown the per-type
+        // activity renderer (e.g., ActivityBridge for bridge-mean).
+        _handleActivityState(summary);
       },
       // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6): raw classroom_*
       // message hook. Surfaces a teacher_nudge as a toast in the corner.
