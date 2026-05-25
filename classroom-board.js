@@ -1439,8 +1439,13 @@
   // to JUMP up into a coin to grab it, so deciding WHICH coin matters.
   // X-tolerance stays generous so the moment of contact is forgiving;
   // Y-tolerance is sized to the natural jump arc.
+  //
+  // V7.3.5 tune: jump physics give peak height = JUMP_V0^2 / (2*GRAVITY)
+  // = 280^2 / 1600 = 49 px above standing. Coin is positioned so peak
+  // jump lands inside Y-tolerance and standing is well outside. See
+  // _coinCanvasY below for the resulting math.
   var COIN_COLLISION_X_PX = 18;
-  var COIN_COLLISION_Y_PX = 20;
+  var COIN_COLLISION_Y_PX = 24;
   var COIN_DEFAULT_SIZE   = 24;   // render dim; source PNG is 32x32
   var COIN_FRAME_MS       = 280;  // V7.3.3: half the previous 140 -> ~3.5 Hz cycle, ~840 ms per full spin
 
@@ -2480,13 +2485,20 @@
     }
 
     function _coinCanvasY(coinSize) {
-      // Position coins ABOVE the avatar's head so the visual reads as
-      // "coin floats over the floor; walk under it to grab." Avatar
-      // groundY puts the sprite bottom at the floor line; we sit the
-      // coin slightly above the sprite top.
+      // V7.3.5: position coins clearly above the avatar's head so a
+      // jump is required to reach them, not just walking past. Math:
+      //   groundY ~= 146, spriteHeight ~= 24, coinSize = 24
+      //   standing player center y = groundY - spriteHeight/2 = 134
+      //   peak jump player center y = standing - 49 px = 85
+      // Coin center is positioned at y ~= 90:
+      //   diff at standing = 44 px (outside COIN_COLLISION_Y_PX = 24)
+      //   diff at peak     =  5 px (well inside tolerance)
+      // The extra COIN_VERTICAL_PADDING (20, was 4) lifts the coin 16 px
+      // further from the avatar's head than the s115 placement.
+      var COIN_VERTICAL_PADDING = 20;
       var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
       var spriteHeight = SPRITE_H * SPRITE_SCALE;
-      return groundY - spriteHeight - coinSize - 4;
+      return groundY - spriteHeight - coinSize - COIN_VERTICAL_PADDING;
     }
 
     // GoalSprite is a singleton per active level; mirrors the coin lifecycle
