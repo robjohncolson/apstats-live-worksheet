@@ -1234,6 +1234,23 @@
               try { _renderReplyInList(msg); } catch (_) {}
             } else if (msg.type === 'classroom_teacher_nudge_ack' && typeof _renderNudgeAck === 'function') {
               try { _renderNudgeAck(msg); } catch (_) {}
+            } else if (msg.type === 'classroom_activity_error') {
+              // 2026-05-25 V7 follow-up: surface server-side activity start
+              // rejections so the cockpit doesn't silently appear "stuck"
+              // when (e.g.) the level JSON isn't deployed or the activity
+              // type is unknown. Without this branch the error was dropped
+              // and the activity-status field stayed on "Waiting for server
+              // reply..." forever.
+              var es = document.getElementById('activity-status');
+              if (es) {
+                var detail = '';
+                if (msg.code) detail = ' [code=' + msg.code + ']';
+                if (msg.minMembers != null && msg.online != null) {
+                  detail += ' (have ' + msg.online + ', need >= ' + msg.minMembers + ')';
+                }
+                es.textContent = 'Server rejected activity start' + detail + '. Check that cr (curriculumrender-production) deployed the V7 build + activities/<key>.json file.';
+              }
+              try { console.warn('[classroom_activity_error]', msg); } catch (_) {}
             }
           },
           // P4+P9 (TEACHER_STUDENT_CONSOLE_SPEC.md): canvas click hit-tests onto
