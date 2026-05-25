@@ -37,8 +37,13 @@ describe('V7 Unit C: activity-type dropdown adds the level option', () => {
   });
 
   it('the new option text labels the activity as a level', () => {
-    // Spec C5: 'U1.1 The Cola Mystery (level)'.
-    expect(COCKPIT_SRC).toMatch(/U1\.1[^<]*Cola Mystery[^<]*\(level\)/i);
+    // V7.1 + 80-level batch: option labels were consolidated under
+    // <optgroup label="Levels -- Unit N ..."> headers; the "(level)"
+    // suffix on each option text was moved into the optgroup label so
+    // the dropdown stays readable at 80 options. The option text still
+    // identifies U1.1 with its title.
+    expect(COCKPIT_SRC).toMatch(/<optgroup\s+label="Levels[^"]*Unit 1/);
+    expect(COCKPIT_SRC).toMatch(/U1\.1[^<]*Cola Mystery/i);
   });
 
   it('the existing bridge-mean / colorbox-hue / colorbox-grid options are still present (additive change)', () => {
