@@ -1413,6 +1413,86 @@
     return Math.abs(x - this.x) <= (this.width / 2 + slack);
   };
 
+  // --- CoinSprite entity (V7.2 sprite-collide) --------------------------
+
+  /**
+   * Coin sprite rendered ON the avatar canvas (NOT the activity overlay)
+   * so collision with avatars is native sprite-vs-sprite proximity, not
+   * server-side abstract math. Pico-park feel: walk into the coin to
+   * collect it.
+   *
+   * opts:
+   *   x, y          -- canvas pixel coords (top-left of the sprite)
+   *   size          -- render size in px (sprite is 32x32 source)
+   *   coinId        -- stable id from the level state (e.g. 's1')
+   *   drink         -- the drink label ('A'/'B') rendered above the coin
+   *   collected     -- initial collected flag from server (true = grey)
+   *   getLocalSprite-- () -> BoardSprite (the local player) for collision
+   *   onCollect     -- (coinId) -> void; fired ONCE on first collision
+   */
+  var COIN_COLLISION_PX = 18;   // tighter than server's 16+slack so visual contact ~= server overlap
+  var COIN_DEFAULT_SIZE = 24;   // render dim; source PNG is 32x32
+
+  function CoinSprite(image, opts) {
+    this.image          = image;
+    this.x              = opts.x;
+    this.y              = opts.y;
+    this.size           = opts.size || COIN_DEFAULT_SIZE;
+    this.coinId         = opts.coinId;
+    this.drink          = opts.drink || '';
+    this.collected      = opts.collected === true;
+    this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
+    this.onCollect      = (typeof opts.onCollect === 'function') ? opts.onCollect : null;
+    this._bobT          = 0;
+    this._sentCollect   = false;
+    this.engine         = null;
+  }
+
+  CoinSprite.prototype.update = function (dt) {
+    this._bobT += dt;
+    if (this.collected || this._sentCollect) return;
+    var me = this.getLocalSprite();
+    if (!me) return;
+    var myCx   = me.x + (me._spriteSize || 24) / 2;
+    var coinCx = this.x + this.size / 2;
+    if (Math.abs(myCx - coinCx) <= COIN_COLLISION_PX) {
+      this._sentCollect = true;   // one-shot; server-side re-broadcast will set collected=true authoritatively
+      if (this.onCollect) {
+        try { this.onCollect(this.coinId); } catch (_) {}
+      }
+    }
+  };
+
+  CoinSprite.prototype.render = function (ctx) {
+    if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
+    var bobOffset = this.collected ? 0 : Math.sin(this._bobT * 4) * 2;
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    if (this.collected) {
+      ctx.globalAlpha = 0.35;
+    }
+    try {
+      ctx.drawImage(this.image, this.x, this.y + bobOffset, this.size, this.size);
+    } catch (_) {}
+    ctx.globalAlpha = prevAlpha;
+  };
+
+  CoinSprite.prototype.getLabelSpec = function () {
+    var cx   = this.x + this.size / 2;
+    var topY = this.y - 4;
+    return { text: this.drink || '', x: cx, y: topY, isGold: !this.collected };
+  };
+
+  // Module-scope coin image loader. Loads once; CoinSprite.render is a
+  // no-op until the image is ready. Sized 32x32 RGBA (see coin.png).
+  var _coinImage = null;
+  function _ensureCoinImage(doc) {
+    if (_coinImage) return _coinImage;
+    if (typeof Image === 'undefined') return null;   // jsdom may stub Image; OK either way
+    _coinImage = new Image();
+    _coinImage.src = 'coin.png';
+    return _coinImage;
+  }
+
   // --- PollColumnsOverlay entity (v2) -----------------------------------
 
   /**
@@ -2232,6 +2312,98 @@
       }
     }
 
+    // --- V7.2 sprite-collide coin entities ----------------------------
+    //
+    // Coins are sprites on the avatar canvas (not paintings on the
+    // activity overlay) so collision is native sprite-vs-sprite. The
+    // local player's CoinSprite.update fires onCollect on contact, which
+    // emits classroom_activity_value { kind: 'collect', coinId }; the
+    // server's level-engine.applyInput validates + flips the coin's
+    // collected flag + bumps the tally. Next tick broadcasts the new
+    // state; syncLevelCoins re-applies the collected status here so all
+    // clients see the coin go grey.
+
+    var coinEntities = {};   // coinId -> CoinSprite
+
+    function _coinCanvasX(coin, levelW, levelChipSize, canvasW, coinSize) {
+      // Map chip-x (level coords, e.g. 4) to canvas pixels. Coins are
+      // drawn with their TOP-LEFT at the returned x. The chip center
+      // (coin.x * chipSize + chipSize/2) is rescaled to canvas X; we
+      // then subtract half the rendered size so the sprite centers on
+      // the chip center pixel.
+      var levelCenterPx = (coin.x * levelChipSize) + (levelChipSize / 2);
+      var canvasCenter  = (levelCenterPx / levelW) * canvasW;
+      return canvasCenter - coinSize / 2;
+    }
+
+    function _coinCanvasY(coinSize) {
+      // Position coins ABOVE the avatar's head so the visual reads as
+      // "coin floats over the floor; walk under it to grab." Avatar
+      // groundY puts the sprite bottom at the floor line; we sit the
+      // coin slightly above the sprite top.
+      var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      return groundY - spriteHeight - coinSize - 4;
+    }
+
+    function syncLevelCoins(state) {
+      if (!engineReady) return;
+      var act = state && state.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var coins   = (act && act.state && Array.isArray(act.state.coins)) ? act.state.coins : null;
+
+      if (!isLevel || !coins) {
+        // Despawn all coins (no level, or level ended).
+        for (var k in coinEntities) {
+          if (!Object.prototype.hasOwnProperty.call(coinEntities, k)) continue;
+          try { engine.removeEntity('coin_' + k); } catch (_) {}
+          delete coinEntities[k];
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
+      var levelW   = mapW * chipSize;
+      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
+
+      var seenIds = {};
+      for (var i = 0; i < coins.length; i++) {
+        var c = coins[i];
+        if (!c || !c.id) continue;
+        seenIds[c.id] = true;
+        var size = COIN_DEFAULT_SIZE;
+        var cx   = _coinCanvasX(c, levelW, chipSize, canvasW, size);
+        var cy   = _coinCanvasY(size);
+        if (!coinEntities[c.id]) {
+          var sprite = new CoinSprite(_ensureCoinImage(doc), {
+            x: cx, y: cy, size: size, coinId: c.id, drink: c.drink, collected: c.collected === true,
+            getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
+            onCollect: function (coinId) {
+              safeSend({ type: 'classroom_activity_value', payload: { kind: 'collect', coinId: coinId } });
+            }
+          });
+          coinEntities[c.id] = sprite;
+          try { engine.addEntity('coin_' + c.id, sprite); } catch (_) {}
+        } else {
+          // Server is source of truth; re-apply collected + position.
+          var existing = coinEntities[c.id];
+          existing.collected = c.collected === true;
+          existing.x = cx;
+          existing.y = cy;
+        }
+      }
+      // Despawn coins that vanished from state (shouldn't usually happen
+      // mid-activity but covers level swap / reset).
+      for (var id in coinEntities) {
+        if (!Object.prototype.hasOwnProperty.call(coinEntities, id)) continue;
+        if (!seenIds[id]) {
+          try { engine.removeEntity('coin_' + id); } catch (_) {}
+          delete coinEntities[id];
+        }
+      }
+    }
+
     // Greenlight overlay entity
     var greenlightOverlay = null;
     var greenlightStartMs = 0;
@@ -2571,6 +2743,10 @@
       refreshButton();
       refreshVoteButtons();
       refreshResultScreen();
+      // V7.2: spawn/despawn/sync coin sprites on the avatar canvas based
+      // on the current activity state. Cheap when no activity is running
+      // (early return on the !isLevel branch).
+      syncLevelCoins(state);
       notifyStateChange();
     }
 

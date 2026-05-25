@@ -231,19 +231,19 @@ describe('ActivityLevel.mount() handle shape', function () {
 });
 
 describe('updateState renders decoration overlays', function () {
-  it('draws Coin rects -- live coins use COIN_FILL_LIVE, collected coins use COIN_FILL_GREY at alpha 0.4', function () {
+  it('V7.2 sprite-collide: coin rendering moved to the avatar canvas; overlay no longer draws coin rects', function () {
     var env = loadModule();
     var handle = env.module.mount(getMount(env), { currentUsername: 'alice' });
     handle.updateState(makeActivityState());
     var stub = env.lastStub();
-
+    // The live-coin fill (#55ccbb) and grey-coin fill (#5a5a5a) MUST NOT
+    // appear on the overlay -- coins are CoinSprite engine entities on
+    // the classroom-board canvas now. classroom-board.test.js owns the
+    // coin rendering contract.
     var liveCoin = stub.rects.find(function (r) { return r.fill === '#55ccbb'; });
-    expect(liveCoin).toBeDefined();
-
-    var greyCoin = stub.rects.find(function (r) {
-      return r.fill === '#5a5a5a' && Math.abs(r.alpha - 0.4) < 0.01;
-    });
-    expect(greyCoin).toBeDefined();
+    expect(liveCoin).toBeUndefined();
+    var greyCoin = stub.rects.find(function (r) { return r.fill === '#5a5a5a'; });
+    expect(greyCoin).toBeUndefined();
   });
 
   it('renders Text actors as a dark rect + light text label', function () {
@@ -357,17 +357,18 @@ describe('updateState renders decoration overlays', function () {
     expect(stub.clears.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('uses chipSize from the level def (V7.1 dial = 10) for actor coordinates', function () {
+  it('V7.2: chipSize used by Text/Goal actors on the overlay (coin chipSize math moved to classroom-board)', function () {
     var env = loadModule();
     var handle = env.module.mount(getMount(env), {});
-    handle.updateState(makeActivityState());
+    handle.updateState(makeActivityState({ phase: 'GOAL_AVAILABLE' }));
     var stub = env.lastStub();
-    // Coin s1 is at chip (4, 2), chipSize=10 -> px (40, 20).  Rect drawn at
-    // center, so top-left = (40 - 5, 20 - 5) = (35, 15) with w=h=10.
-    var s1Rect = stub.rects.find(function (r) {
-      return r.fill === '#55ccbb' && r.x === 35 && r.y === 15 && r.w === 10 && r.h === 10;
+    // Goal at chip (16, 7) with chipSize=10 -> px center (160, 70). The
+    // overlay shifts the whole scene down by TOP_MARGIN=10 (V7.1 sizing
+    // rev) so the actual goal rect lands at y = 70 + 10 - 5 = 75 top-edge.
+    var goalRect = stub.rects.find(function (r) {
+      return r.fill === '#ffcc33' && r.x === 155 && r.w === 10 && r.h === 10;
     });
-    expect(s1Rect).toBeDefined();
+    expect(goalRect).toBeDefined();
   });
 
   it('is a no-op on empty / null state and survives missing level def', function () {

@@ -272,14 +272,11 @@
       }
     }
 
-    // Coins (always visible during the level)
-    var coins = Array.isArray(sState.coins) ? sState.coins : [];
-    for (var c = 0; c < coins.length; c++) {
-      var coin = coins[c];
-      if (coin && typeof coin.x === 'number' && typeof coin.y === 'number') {
-        drawCoin(ctx, coin, chipSize);
-      }
-    }
+    // V7.2 sprite-collide: coins moved off the overlay onto the avatar
+    // canvas as engine entities (classroom-board CoinSprite). Skipped
+    // here so coins don't double-render.
+    // var coins = Array.isArray(sState.coins) ? sState.coins : [];
+    // for (var c = 0; c < coins.length; c++) { ... drawCoin ... }
 
     // Goal flag (only when reachable or cleared)
     if (phase === 'GOAL_AVAILABLE' || phase === 'LEVEL_CLEARED') {
