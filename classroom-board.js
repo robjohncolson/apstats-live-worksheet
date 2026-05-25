@@ -1499,21 +1499,25 @@
    * Goal sprite rendered ON the avatar canvas (mirrors CoinSprite). The
    * goal flag was a paint on the activity overlay in V7.1; V7.2 moves
    * it onto the sprite engine so completion is native collision (walk
-   * into the door to clear the level). Door visual reads as 'exit
-   * through here' -- closest pico-park analog among the asset set.
+   * into the door to clear the level). V7.3 swap: two-state door art
+   * (canonical pico park asset) -- door_closed.png while !reached,
+   * door_open.png once reached. Reads as 'walk through to exit'.
    *
    * opts:
-   *   x, y          -- canvas pixel coords (top-left of the sprite)
-   *   size          -- render size in px
-   *   reached       -- initial reached flag from server
-   *   getLocalSprite-- () -> BoardSprite (the local player) for collision
-   *   onReach       -- () -> void; fired ONCE on first collision
+   *   x, y           -- canvas pixel coords (top-left of the sprite)
+   *   size           -- render size in px
+   *   reached        -- initial reached flag from server
+   *   getLocalSprite -- () -> BoardSprite (the local player) for collision
+   *   onReach        -- () -> void; fired ONCE on first collision
+   *   imageClosed    -- Image() for the locked / not-yet-reached state
+   *   imageOpen      -- Image() for the unlocked / reached state
    */
   var GOAL_COLLISION_PX = 20;
   var GOAL_DEFAULT_SIZE = 28;
 
-  function GoalSprite(image, opts) {
-    this.image          = image;
+  function GoalSprite(opts) {
+    this.imageClosed    = opts.imageClosed || null;
+    this.imageOpen      = opts.imageOpen   || null;
     this.x              = opts.x;
     this.y              = opts.y;
     this.size           = opts.size || GOAL_DEFAULT_SIZE;
@@ -1541,7 +1545,8 @@
   };
 
   GoalSprite.prototype.render = function (ctx) {
-    if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
+    var img = this.reached ? this.imageOpen : this.imageClosed;
+    if (!img || !img.complete || img.naturalWidth === 0) return;
     var bobOffset = this.reached ? 0 : Math.sin(this._bobT * 3) * 1.5;
     var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
     if (this.reached) {
@@ -1549,7 +1554,7 @@
       ctx.globalAlpha = 0.85 + 0.15 * Math.sin(this._bobT * 6);
     }
     try {
-      ctx.drawImage(this.image, this.x, this.y + bobOffset, this.size, this.size);
+      ctx.drawImage(img, this.x, this.y + bobOffset, this.size, this.size);
     } catch (_) {}
     ctx.globalAlpha = prevAlpha;
   };
@@ -1560,13 +1565,21 @@
     return { text: this.reached ? 'CLEARED!' : 'GOAL', x: cx, y: topY, isGold: true };
   };
 
-  var _goalImage = null;
-  function _ensureGoalImage(doc) {
-    if (_goalImage) return _goalImage;
+  var _doorClosedImage = null;
+  function _ensureDoorClosedImage() {
+    if (_doorClosedImage) return _doorClosedImage;
     if (typeof Image === 'undefined') return null;
-    _goalImage = new Image();
-    _goalImage.src = 'door.png';
-    return _goalImage;
+    _doorClosedImage = new Image();
+    _doorClosedImage.src = 'door_closed.png';
+    return _doorClosedImage;
+  }
+  var _doorOpenImage = null;
+  function _ensureDoorOpenImage() {
+    if (_doorOpenImage) return _doorOpenImage;
+    if (typeof Image === 'undefined') return null;
+    _doorOpenImage = new Image();
+    _doorOpenImage.src = 'door_open.png';
+    return _doorOpenImage;
   }
 
   // --- PollColumnsOverlay entity (v2) -----------------------------------
@@ -2456,7 +2469,9 @@
       var gy = groundY - spriteHeight - size - 4;
 
       if (!goalEntity) {
-        goalEntity = new GoalSprite(_ensureGoalImage(doc), {
+        goalEntity = new GoalSprite({
+          imageClosed: _ensureDoorClosedImage(),
+          imageOpen:   _ensureDoorOpenImage(),
           x: gx, y: gy, size: size, reached: goal.reached === true,
           getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
           onReach: function () {
@@ -2986,16 +3001,6 @@
           return;
         }
         if (msg && msg.type && msg.type.indexOf('classroom_') === 0) {
-          // 2026-05-25 V7.1 diagnostic: log every inbound classroom_activity_*
-          // frame so testers can verify the Desk WS is actually receiving
-          // broadcasts. The session-115 "student Desk shows no activity"
-          // bug was unresolvable without this -- the cockpit saw the
-          // timeout but the Desk's _lastClassroomSummary.activity stayed
-          // undefined; we couldn't tell if the message arrived + was
-          // dropped by _reduce vs never arrived at all.
-          if (msg.type.indexOf('classroom_activity') === 0) {
-            try { console.log('[Desk WS<-server]', msg.type, msg); } catch (_) {}
-          }
           // P3: fire raw-message hook BEFORE _reduce. Caller may inspect
           // the message and trigger side effects (toast, reply panel)
           // without polluting the reducer state shape.

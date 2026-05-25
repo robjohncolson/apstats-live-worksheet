@@ -11514,14 +11514,8 @@ function _activityRendererForType(type){
   return null;
 }
 function _handleActivityState(summary){
-  // 2026-05-25 V7.1 diagnostic: surface which branch we hit + whether
-  // Renderer.mount throws. The s115 outer try/catch swallowed every
-  // failure silently, so a mount throw looked identical to the renderer
-  // not being loaded. _activityHandle ended up null either way.
-  var __dbgTag = '[Desk activity]';
   try {
     var act = summary && summary.activity;
-    try { if (act) { console.log(__dbgTag, 'tick', { type: act.type, finished: !!act.finished, hasState: !!act.state, hasLevel: !!act.level, hdl: !!_activityHandle, hdlType: _activityHandleType }); } } catch (_) {}
     if (act && !act.finished) {
       // Live activity. Mount renderer if not already, update state.
       // Codex MAJOR fold: cancel any stale teardown timer from a prior
@@ -11545,8 +11539,7 @@ function _handleActivityState(summary){
       }
       if (!_activityHandle) {
         var Renderer = _activityRendererForType(act.type);
-        try { console.log(__dbgTag, 'mount path', { rendererLoaded: !!Renderer, rendererType: typeof Renderer }); } catch (_) {}
-        if (!Renderer) { try { console.warn(__dbgTag, 'NO RENDERER for type', act.type); } catch (_) {} return; }
+        if (!Renderer) return;
         _activityMount = document.createElement('div');
         _activityMount.id = 'activity-bridge-mount';
         var board = document.getElementById('classroom-board-mount');
@@ -11564,7 +11557,6 @@ function _handleActivityState(summary){
           if (board) {
             board.appendChild(_activityMount);
           } else {
-            try { console.warn(__dbgTag, 'no board mount; bailing'); } catch (_) {}
             return;
           }
         } else {
@@ -11572,7 +11564,6 @@ function _handleActivityState(summary){
           if (board && board.parentNode) {
             board.parentNode.insertBefore(_activityMount, board);
           } else {
-            try { console.warn(__dbgTag, 'no board mount; bailing'); } catch (_) {}
             return;
           }
         }
@@ -11600,15 +11591,13 @@ function _handleActivityState(summary){
             // the whole board and the welcome Text at y=0 clipped offscreen.
             level:           act.level || null
           });
-          try { console.log(__dbgTag, 'mount OK', { handle: !!_activityHandle, hasUpdate: !!(_activityHandle && _activityHandle.updateState) }); } catch (_) {}
           // Match _activityMount height to the renderer's chosen overlay
           // height so the overlay only blocks pointer-events over the
           // level region (not the full board).
           if (_activityHandle && typeof _activityHandle.cssH === 'number' && _activityHandle.cssH > 0) {
             _activityMount.style.height = _activityHandle.cssH + 'px';
           }
-        } catch (mountErr) {
-          try { console.warn(__dbgTag, 'mount THREW', mountErr); } catch (_) {}
+        } catch (_) {
           _activityHandle = null;
         }
         _activityHandleType = act.type;
@@ -11631,9 +11620,7 @@ function _handleActivityState(summary){
         }
         try {
           _activityHandle.updateState(payloadForRenderer);
-        } catch (updErr) {
-          try { console.warn(__dbgTag, 'updateState THREW', updErr); } catch (_) {}
-        }
+        } catch (_) {}
       }
     } else if (act && act.finished) {
       // Finished activity. Show outcome, then tear down after 2.5s.
@@ -11670,9 +11657,7 @@ function _handleActivityState(summary){
       }
       _activityMount = null;
     }
-  } catch (outerErr) {
-    try { console.warn(__dbgTag, 'outer THREW', outerErr); } catch (_) {}
-  }
+  } catch (_) {}
 }
 // V4 spec C5.2 arrow-key gate. When an activity is live AND this
 // Desk's user is in the activity's values map, ArrowUp/ArrowDown is
