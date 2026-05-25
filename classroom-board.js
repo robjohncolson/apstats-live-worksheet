@@ -1430,14 +1430,23 @@
    * (bright / mid / dark) at COIN_FRAME_MS cadence; collected state
    * freezes on frame 0 + greys out.
    *
+   * V7.4 blind-test: when `revealed` is false, the drink label renders
+   * as '?' so the kids have to discover the identity by collecting.
+   * Defaults to true so legacy (non-hidden) levels see no change.
+   *
    * opts:
    *   x, y           -- canvas pixel coords (top-left of the sprite)
    *   size           -- render size in px (sprite is 32x32 source)
    *   coinId         -- stable id from the level state (e.g. 's1')
    *   drink          -- the drink label ('A'/'B') rendered above the coin
    *   collected      -- initial collected flag from server (true = grey)
+   *   revealed       -- (V7.4) identity visible flag; default true. When
+   *                     false, getLabelSpec returns '?' instead of drink.
    *   getLocalSprite -- () -> BoardSprite (the local player) for collision
    *   onCollect      -- (coinId) -> void; fired ONCE on first collision
+   *   spawnReveal    -- (coinId, drink, x, y) -> void; (V7.4) fired ONCE
+   *                     when the local player triggers a collect, so the
+   *                     mount-scope wiring can spawn a RevealTextSprite.
    *   images         -- [Image, Image, Image] -- 3 spin frames in order
    */
   // V7.3.4: X+Y collision (was X-only). Without the Y check, walking
@@ -1455,6 +1464,12 @@
   var COIN_COLLISION_Y_PX = 24;
   var COIN_DEFAULT_SIZE   = 24;   // render dim; source PNG is 32x32
   var COIN_FRAME_MS       = 280;  // V7.3.3: half the previous 140 -> ~3.5 Hz cycle, ~840 ms per full spin
+  // V7.4 Codex MAJOR fold: if the optimistic local _sentCollect isn't
+  // confirmed by the server within this window, the collect was rejected
+  // (anti-cheat fail, race, stale position). syncLevelCoins clears the
+  // flag so the coin reappears for the local player and a later
+  // legitimate collect can still pop the reveal text.
+  var COIN_SENT_TTL_MS    = 600;
 
   function CoinSprite(opts) {
     this.images         = Array.isArray(opts.images) ? opts.images : [];
@@ -1464,12 +1479,21 @@
     this.coinId         = opts.coinId;
     this.drink          = opts.drink || '';
     this.collected      = opts.collected === true;
+    // V7.4 blind-test: default true so existing levels (no hidden field
+    // on the server-side SipStation) keep identity visible from t=0.
+    this._revealed      = opts.revealed !== false;
     this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
     this.onCollect      = (typeof opts.onCollect === 'function') ? opts.onCollect : null;
+    // V7.4: optional callback fired ONCE when the local player triggers
+    // collect. syncLevelCoins wires it to spawn a RevealTextSprite at
+    // the coin's position so the floating '+A' / '+B' appears for the
+    // collecting client (peers spawn their own from the wire transition).
+    this.spawnReveal    = (typeof opts.spawnReveal === 'function') ? opts.spawnReveal : null;
     this._bobT          = 0;
     this._frameMs       = 0;     // accumulator for spin frame advance
     this._frameIdx      = 0;
     this._sentCollect   = false;
+    this._sentCollectAt = 0;     // V7.4: ms timestamp; gated by COIN_SENT_TTL_MS
     // V7.3.6 z-order: above doorways/default, below avatars.
     this.zIndex         = 5;
     this.engine         = null;
@@ -1518,9 +1542,17 @@
       var coinCy = this.y + this.size / 2;
       if (Math.abs(myCx - coinCx) <= COIN_COLLISION_X_PX &&
           Math.abs(myCy - coinCy) <= COIN_COLLISION_Y_PX) {
-        this._sentCollect = true;   // one-shot; server-side re-broadcast will set collected=true authoritatively
+        this._sentCollect   = true;   // optimistic; cleared by syncLevelCoins if server doesn't confirm within COIN_SENT_TTL_MS
+        this._sentCollectAt = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
         if (this.onCollect) {
           try { this.onCollect(this.coinId); } catch (_) {}
+        }
+        // V7.4 blind-test: also fire the local reveal-text spawn so the
+        // collecting client sees '+A' / '+B' float up immediately. Peers
+        // get their own spawn when syncLevelCoins observes the wire
+        // collected=false->true transition (see syncLevelCoins).
+        if (this.spawnReveal) {
+          try { this.spawnReveal(this.coinId, this.drink, this.x + this.size / 2, this.y + this.size / 2); } catch (_) {}
         }
       }
     }
@@ -1541,7 +1573,13 @@
   CoinSprite.prototype.getLabelSpec = function () {
     var cx   = this.x + this.size / 2;
     var topY = this.y - 4;
-    return { text: this.drink || '', x: cx, y: topY, isGold: !this.collected };
+    // V7.4 blind-test: pre-reveal coins show '?' instead of the drink
+    // identity. isGold stays true pre-reveal so the gold '?' reads as a
+    // collectible target. Post-reveal the drink letter ('A' / 'B') paints
+    // in the normal label color band (isGold == !collected as before).
+    var text = (this._revealed === false) ? '?' : (this.drink || '');
+    var isGold = (this._revealed === false) ? true : !this.collected;
+    return { text: text, x: cx, y: topY, isGold: isGold };
   };
 
   // Module-scope coin frame loader. Loads all 3 spin frames once;
@@ -1560,6 +1598,185 @@
     }
     return _coinFrames;
   }
+
+  // --- RevealTextSprite entity (V7.4 blind-test) ------------------------
+
+  /**
+   * Floating "+A" / "+B" text that pops on coin collect. Pure visual --
+   * NO collision logic. Spawns at the coin's center, drifts up, and
+   * fades out over durationMs (default 900 ms), then schedules its own
+   * removal via engine.removeEntity. The caller is responsible for
+   * generating a unique entity id (sprite is registered as
+   * 'reveal_<id>' in syncLevelCoins).
+   *
+   * opts:
+   *   x, y       -- canvas pixel coords (TEXT IS CENTERED at (x, y))
+   *   text       -- the label (e.g. '+A' or '+B')
+   *   color      -- CSS color string (gold for A, cyan for B)
+   *   durationMs -- ms before auto-despawn (default 900)
+   */
+  var REVEAL_DEFAULT_MS    = 900;
+  var REVEAL_RISE_PX       = 24;
+  var REVEAL_COLOR_DEFAULT = '#FFD700';   // gold
+
+  function RevealTextSprite(opts) {
+    this.x          = opts.x;
+    this.y          = opts.y;
+    this.text       = opts.text || '';
+    this.color      = opts.color || REVEAL_COLOR_DEFAULT;
+    this.durationMs = (typeof opts.durationMs === 'number' && opts.durationMs > 0) ? opts.durationMs : REVEAL_DEFAULT_MS;
+    this._elapsedMs = 0;
+    this._id        = null;   // set by syncLevelCoins so update() can self-remove
+    this._removed   = false;
+    // zIndex = 20 -- paint above everything else (avatars/coins/goal).
+    this.zIndex     = 20;
+    this.engine     = null;
+  }
+
+  RevealTextSprite.prototype.update = function (dt) {
+    if (this._removed) return;
+    this._elapsedMs += dt * 1000;
+    if (this._elapsedMs >= this.durationMs) {
+      this._removed = true;
+      if (this.engine && this._id) {
+        try { this.engine.removeEntity('reveal_' + this._id); } catch (_) {}
+      }
+    }
+  };
+
+  RevealTextSprite.prototype.render = function (ctx) {
+    if (this._removed) return;
+    if (!ctx || typeof ctx.fillText !== 'function') return;
+    var progress = Math.min(1, this._elapsedMs / this.durationMs);
+    var dy       = progress * REVEAL_RISE_PX;
+    var alpha    = 1 - progress;
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFont  = ctx.font;
+    var prevAlign = ctx.textAlign;
+    var prevFill  = ctx.fillStyle;
+    ctx.globalAlpha = Math.max(0, alpha);
+    ctx.font        = 'bold 14px monospace';
+    ctx.textAlign   = 'center';
+    ctx.fillStyle   = this.color;
+    try {
+      ctx.fillText(this.text, this.x, this.y - dy);
+    } catch (_) {}
+    ctx.globalAlpha = prevAlpha;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    ctx.fillStyle   = prevFill;
+  };
+
+  // The reveal text draws itself; the engine's label-pass should skip it.
+  RevealTextSprite.prototype.getLabelSpec = function () { return null; };
+
+  // V7.4: color pick for the floating "+<drink>" pop. Gold reads as
+  // 'good' / canonical-A; cyan distinguishes B without screaming. Add
+  // more letters here if a level ever introduces drink C/D/etc.
+  function _revealColorForDrink(drink) {
+    if (drink === 'A') return '#FFD700';   // gold
+    if (drink === 'B') return '#55ccff';   // cyan
+    return '#FFFFFF';                      // fallback: plain white
+  }
+
+  // --- TallyDisplay entity (V7.4 blind-test) ----------------------------
+
+  /**
+   * Live tally chip rendered on the avatar canvas. Shows the running
+   * count of sips per drink letter (e.g. "Sips - A: 2  B: 1"). Spawns
+   * when state.activity.level.actors contains a TallyDisplay actor
+   * bound to tally.sips and an activity is live; despawns when the
+   * level ends. The actor's chip-X position is rescaled into canvas
+   * pixel space (same mapping as coins) and Y sits above the coin row.
+   *
+   * opts:
+   *   x, y     -- canvas pixel coords (center-bottom of the chip)
+   *   getTally -- () -> { A: number, B: number, ... }; null/missing OK
+   */
+  var TALLY_FONT   = '10px monospace';
+  var TALLY_PAD_X  = 6;
+  var TALLY_PAD_Y  = 3;
+  var TALLY_ALPHA  = 0.85;
+  var TALLY_BG     = '#222';
+  var TALLY_FG     = '#FFFFFF';
+
+  function TallyDisplay(opts) {
+    this.x        = opts.x;
+    this.y        = opts.y;
+    this.getTally = (typeof opts.getTally === 'function') ? opts.getTally : function () { return null; };
+    // zIndex = 5 -- same band as coins/goal; below avatars (z >= 10).
+    this.zIndex   = 5;
+    this.engine   = null;
+  }
+
+  TallyDisplay.prototype.update = function (/* dt */) { /* no-op */ };
+
+  // Tally has no separate label; render draws the text inside its own
+  // background rect so the engine's label pass should skip it.
+  TallyDisplay.prototype.getLabelSpec = function () { return null; };
+
+  // Build the display string: "Sips - A: N  B: N  ...". A and B are
+  // always shown (canonical drinks) even if zero; any other non-zero
+  // letters tag onto the end so future drinks render without a code
+  // change.
+  TallyDisplay.prototype._buildText = function () {
+    var sips = this.getTally() || {};
+    var parts = [];
+    var aCount = (typeof sips.A === 'number') ? sips.A : 0;
+    var bCount = (typeof sips.B === 'number') ? sips.B : 0;
+    parts.push('A: ' + aCount);
+    parts.push('B: ' + bCount);
+    var keys = Object.keys(sips);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k === 'A' || k === 'B') continue;
+      var v = sips[k];
+      if (typeof v === 'number' && v > 0) {
+        parts.push(k + ': ' + v);
+      }
+    }
+    return 'Sips - ' + parts.join('  ');
+  };
+
+  TallyDisplay.prototype.render = function (ctx) {
+    if (!ctx || typeof ctx.fillText !== 'function') return;
+    var text = this._buildText();
+
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFont  = ctx.font;
+    var prevAlign = ctx.textAlign;
+    var prevFill  = ctx.fillStyle;
+
+    ctx.font      = TALLY_FONT;
+    ctx.textAlign = 'center';
+
+    // Measure for the background rect. measureText can be missing in
+    // some test stubs -- fall back to a rough estimate so we still draw.
+    var textW = 0;
+    if (typeof ctx.measureText === 'function') {
+      try { textW = ctx.measureText(text).width || 0; } catch (_) { textW = text.length * 6; }
+    } else {
+      textW = text.length * 6;
+    }
+    var rectW = textW + TALLY_PAD_X * 2;
+    var rectH = 14   + TALLY_PAD_Y * 2;
+    var rectX = this.x - rectW / 2;
+    var rectY = this.y - rectH;
+
+    ctx.globalAlpha = TALLY_ALPHA;
+    ctx.fillStyle   = TALLY_BG;
+    if (typeof ctx.fillRect === 'function') {
+      try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle   = TALLY_FG;
+    try { ctx.fillText(text, this.x, this.y - TALLY_PAD_Y - 2); } catch (_) {}
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    ctx.fillStyle   = prevFill;
+  };
 
   // --- GoalSprite entity (V7.2 sprite-collide) --------------------------
 
@@ -2563,6 +2780,22 @@
       }
     }
 
+    // V7.4 blind-test: monotonic id source for RevealTextSprite entries.
+    // Each spawned reveal-text gets its own entity id so multiple pops
+    // (rapid local collect + parallel peer collect on the same coin's
+    // sibling) don't collide. The entity self-removes after durationMs.
+    var _revealIdCounter = 0;
+    function _spawnRevealAt(drink, cx, cy) {
+      if (!engineReady) return;
+      _revealIdCounter += 1;
+      var id   = _revealIdCounter;
+      var text = '+' + (drink || '?');
+      var color = _revealColorForDrink(drink);
+      var sprite = new RevealTextSprite({ x: cx, y: cy, text: text, color: color });
+      sprite._id = id;
+      try { engine.addEntity('reveal_' + id, sprite); } catch (_) {}
+    }
+
     function syncLevelCoins(state) {
       if (!engineReady) return;
       var act = state && state.activity;
@@ -2592,23 +2825,65 @@
         var size = COIN_DEFAULT_SIZE;
         var cx   = _coinCanvasX(c, levelW, chipSize, canvasW, size);
         var cy   = _coinCanvasY(size);
+        // V7.4: wire `revealed` from the server. Default true so legacy
+        // (non-hidden) coins behave as before.
+        var coinRevealed = c.revealed !== false;
         if (!coinEntities[c.id]) {
           var sprite = new CoinSprite({
             images: _ensureCoinFrames(),
-            x: cx, y: cy, size: size, coinId: c.id, drink: c.drink, collected: c.collected === true,
+            x: cx, y: cy, size: size, coinId: c.id, drink: c.drink,
+            collected: c.collected === true,
+            revealed:  coinRevealed,
             getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
             onCollect: function (coinId) {
               safeSend({ type: 'classroom_activity_value', payload: { kind: 'collect', coinId: coinId } });
+            },
+            // V7.4 blind-test: local-collect path -- spawn the floating
+            // "+A" / "+B" the moment the player touches the coin (before
+            // the server round-trip), so the kid sees instant feedback.
+            spawnReveal: function (coinId, drink, rcx, rcy) {
+              _spawnRevealAt(drink, rcx, rcy);
             }
           });
+          // Track collected status so we can detect peer-collect
+          // transitions on subsequent ticks and spawn matching reveal text.
+          sprite._wasCollected = c.collected === true;
           coinEntities[c.id] = sprite;
           try { engine.addEntity('coin_' + c.id, sprite); } catch (_) {}
         } else {
-          // Server is source of truth; re-apply collected + position.
+          // Server is source of truth; re-apply collected + revealed + position.
           var existing = coinEntities[c.id];
+          var prevCollected = existing._wasCollected === true;
           existing.collected = c.collected === true;
+          existing._revealed = coinRevealed;
           existing.x = cx;
           existing.y = cy;
+          // V7.4 Codex MAJOR fold: clear stale optimistic _sentCollect.
+          // If the local player set _sentCollect but the server hasn't
+          // confirmed within COIN_SENT_TTL_MS, the collect was rejected
+          // (anti-cheat fail, race, etc). Reset so:
+          //   - coin reappears for the local player (_isCollecting flips)
+          //   - a later legitimate server-side collect can still fire
+          //     the peer-pop block below
+          if (existing._sentCollect && !existing.collected) {
+            var nowMs = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+            if (nowMs - (existing._sentCollectAt || 0) > COIN_SENT_TTL_MS) {
+              existing._sentCollect   = false;
+              existing._sentCollectAt = 0;
+            }
+          }
+          // V7.4: peer-collect path -- if this coin just flipped to
+          // collected from the server AND the local player didn't fire
+          // the local spawn (i.e. _sentCollect is still false), pop a
+          // floating reveal-text so peers see the same animation. The
+          // _sentCollect guard prevents the local collector seeing two
+          // identical pops (one from the local fire + one from the
+          // server echo).
+          if (!prevCollected && existing.collected && !existing._sentCollect) {
+            var drinkRev = existing.drink || c.drink || '';
+            _spawnRevealAt(drinkRev, existing.x + existing.size / 2, existing.y + existing.size / 2);
+          }
+          existing._wasCollected = existing.collected;
         }
       }
       // Despawn coins that vanished from state (shouldn't usually happen
@@ -2619,6 +2894,75 @@
           try { engine.removeEntity('coin_' + id); } catch (_) {}
           delete coinEntities[id];
         }
+      }
+    }
+
+    // V7.4 blind-test: TallyDisplay sprite -- single entity per active
+    // level. Spawns when the level def includes a TallyDisplay actor
+    // bound to tally.sips AND tally state exists; despawns on level end.
+    // Mirrors goalEntity / syncLevelGoal pattern.
+    var tallyEntity = null;
+
+    // V7.4 Codex MAJOR fold: parameter renamed from `state` to `curr` so
+    // the getTally closure created below reaches the MOUNT-SCOPE `state`
+    // (reassigned every tick by applyMessage) instead of capturing the
+    // function-parameter binding (frozen at construction time, never
+    // updates as sips come in).
+    function syncLevelTally(curr) {
+      if (!engineReady) return;
+      var act = curr && curr.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var sips    = (act && act.state && act.state.tally && act.state.tally.sips) ? act.state.tally.sips : null;
+      var actors  = (act && act.level && Array.isArray(act.level.actors)) ? act.level.actors : null;
+
+      // Find the level's TallyDisplay actor bound to tally.sips (if any).
+      var tallyActor = null;
+      if (actors) {
+        for (var i = 0; i < actors.length; i++) {
+          var a = actors[i];
+          if (a && a.type === 'TallyDisplay' && a.binds === 'tally.sips') {
+            tallyActor = a;
+            break;
+          }
+        }
+      }
+
+      var shouldShow = isLevel && tallyActor && sips;
+      if (!shouldShow) {
+        if (tallyEntity) {
+          try { engine.removeEntity('level_tally'); } catch (_) {}
+          tallyEntity = null;
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
+      var levelW   = mapW * chipSize;
+      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
+
+      // X: rescale the actor's chip-X center into canvas pixels (same
+      // mapping the coins use). Y: sit ABOVE the coin row by ~2.5 sprite
+      // heights -- visually clear of the avatars + jump arc.
+      var levelCenterPx = (tallyActor.x * chipSize) + (chipSize / 2);
+      var tx = (levelCenterPx / levelW) * canvasW;
+      var size = COIN_DEFAULT_SIZE;
+      var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var ty = groundY - spriteHeight * 2.5 - size;
+
+      if (!tallyEntity) {
+        tallyEntity = new TallyDisplay({
+          x: tx, y: ty,
+          getTally: function () {
+            var s = state && state.activity && state.activity.state && state.activity.state.tally;
+            return (s && s.sips) ? s.sips : null;
+          }
+        });
+        try { engine.addEntity('level_tally', tallyEntity); } catch (_) {}
+      } else {
+        tallyEntity.x = tx;
+        tallyEntity.y = ty;
       }
     }
 
@@ -2964,8 +3308,11 @@
       // V7.2: spawn/despawn/sync coin + goal sprites on the avatar canvas
       // based on the current activity state. Cheap when no activity is
       // running (early return on the !isLevel branch).
+      // V7.4 blind-test: also spawn/despawn the TallyDisplay chip when
+      // the level def includes a TallyDisplay actor.
       syncLevelCoins(state);
       syncLevelGoal(state);
+      syncLevelTally(state);
       notifyStateChange();
     }
 
@@ -3308,11 +3655,14 @@
   // --- public API -------------------------------------------------------
 
   root.ClassroomBoard = {
-    mount:            mount,
-    _reduce:          _reduce,
-    _assignCells:     assignCells,
-    _hashStringToHue: hashStringToHue,  // exposed for tests
-    _PlayerSprite:    PlayerSprite      // Phase 1 -- exposed for unit tests
+    mount:             mount,
+    _reduce:           _reduce,
+    _assignCells:      assignCells,
+    _hashStringToHue:  hashStringToHue,  // exposed for tests
+    _PlayerSprite:     PlayerSprite,     // Phase 1 -- exposed for unit tests
+    _CoinSprite:       CoinSprite,       // V7.4 -- exposed for unit tests
+    _RevealTextSprite: RevealTextSprite, // V7.4 -- exposed for unit tests
+    _TallyDisplay:     TallyDisplay      // V7.4 -- exposed for unit tests
   };
 
 }(typeof window !== 'undefined' ? window : this));

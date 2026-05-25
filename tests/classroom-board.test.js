@@ -5883,3 +5883,204 @@ describe('ClassroomBoard.mount -- off-canvas sprite clamping (2026-05-24)', func
   });
 });
 
+// =============================================================
+// V7.4 cola-blind-test -- CoinSprite / RevealTextSprite / TallyDisplay
+// =============================================================
+
+// Minimal canvas-context stub for the V7.4 render-path tests. We only
+// need to know that fillText / fillRect were called with sensible args;
+// none of the new classes depend on a real 2d context.
+function makeCtxStub() {
+  var calls = { fillText: [], fillRect: [] };
+  return {
+    globalAlpha: 1,
+    font:        '',
+    textAlign:   '',
+    fillStyle:   '',
+    fillText:    function (text, x, y) { calls.fillText.push({ text: text, x: x, y: y }); },
+    fillRect:    function (x, y, w, h) { calls.fillRect.push({ x: x, y: y, w: w, h: h }); },
+    measureText: function (s)          { return { width: s.length * 6 }; },
+    _calls:      calls
+  };
+}
+
+describe('V7.4 CoinSprite -- blind-test label swap', () => {
+  it('getLabelSpec returns "?" when revealed===false (pre-collect)', () => {
+    var m = makeBoard();
+    var coin = new m.ClassroomBoard._CoinSprite({
+      x: 100, y: 50, size: 24, coinId: 's1', drink: 'A',
+      collected: false, revealed: false
+    });
+    var spec = coin.getLabelSpec();
+    expect(spec.text).toBe('?');
+    expect(spec.isGold).toBe(true);   // gold "?" reads as collectible
+  });
+
+  it('getLabelSpec returns the drink letter when revealed===true (post-collect / non-hidden)', () => {
+    var m = makeBoard();
+    var coin = new m.ClassroomBoard._CoinSprite({
+      x: 100, y: 50, size: 24, coinId: 's1', drink: 'A',
+      collected: false, revealed: true
+    });
+    var spec = coin.getLabelSpec();
+    expect(spec.text).toBe('A');
+    expect(spec.isGold).toBe(true);   // still gold while uncollected
+  });
+
+  it('revealed defaults to true so legacy (non-hidden) coins keep V7.3 behaviour', () => {
+    var m = makeBoard();
+    // No `revealed` opt -- expect identity-visible.
+    var coin = new m.ClassroomBoard._CoinSprite({
+      x: 0, y: 0, size: 24, coinId: 's1', drink: 'B', collected: false
+    });
+    expect(coin._revealed).toBe(true);
+    expect(coin.getLabelSpec().text).toBe('B');
+  });
+
+  it('local-player collision fires onCollect AND spawnReveal (one-shot)', () => {
+    var m = makeBoard();
+    var collectFired = 0;
+    var revealCalls  = [];
+    var localStub = {
+      x: 100, y: 50,
+      _spriteSize: 24, _spriteHeight: 24
+    };
+    var coin = new m.ClassroomBoard._CoinSprite({
+      x: 100, y: 50, size: 24, coinId: 's1', drink: 'A',
+      collected: false, revealed: false,
+      getLocalSprite: function () { return localStub; },
+      onCollect:      function () { collectFired++; },
+      spawnReveal:    function (id, drink, cx, cy) { revealCalls.push({ id: id, drink: drink, cx: cx, cy: cy }); }
+    });
+    coin.update(0.016);
+    expect(collectFired).toBe(1);
+    expect(revealCalls.length).toBe(1);
+    expect(revealCalls[0].id).toBe('s1');
+    expect(revealCalls[0].drink).toBe('A');
+    // Second tick must NOT re-fire (one-shot via _sentCollect).
+    coin.update(0.016);
+    expect(collectFired).toBe(1);
+    expect(revealCalls.length).toBe(1);
+  });
+});
+
+describe('V7.4 RevealTextSprite -- ephemeral floating label', () => {
+  it('removes itself from the engine after durationMs elapses', () => {
+    var m = makeBoard();
+    var removed = [];
+    var stubEngine = {
+      removeEntity: function (eid) { removed.push(eid); }
+    };
+    var sprite = new m.ClassroomBoard._RevealTextSprite({
+      x: 100, y: 50, text: '+A', color: '#FFD700', durationMs: 900
+    });
+    sprite._id    = 42;
+    sprite.engine = stubEngine;
+    // 500 ms in -- not yet expired.
+    sprite.update(0.5);
+    expect(sprite._removed).toBe(false);
+    expect(removed.length).toBe(0);
+    // Another 500 ms -- past 900 ms threshold; auto-removes.
+    sprite.update(0.5);
+    expect(sprite._removed).toBe(true);
+    expect(removed.length).toBe(1);
+    expect(removed[0]).toBe('reveal_42');
+  });
+
+  it('render fades alpha and floats y upward over time; no-op after _removed', () => {
+    var m = makeBoard();
+    var sprite = new m.ClassroomBoard._RevealTextSprite({
+      x: 100, y: 50, text: '+B', color: '#55ccff', durationMs: 1000
+    });
+    var ctx = makeCtxStub();
+    sprite.render(ctx);
+    expect(ctx._calls.fillText.length).toBe(1);
+    expect(ctx._calls.fillText[0].text).toBe('+B');
+    expect(ctx._calls.fillText[0].y).toBeCloseTo(50, 1);   // dy=0 at t=0
+    // Halfway through -- y should rise (ctx.y < initial y).
+    sprite.update(0.5);
+    sprite.render(ctx);
+    expect(ctx._calls.fillText[1].y).toBeLessThan(50);
+    // Now flag _removed and re-render -- must NOT push another fillText call.
+    sprite._removed = true;
+    var beforeLen = ctx._calls.fillText.length;
+    sprite.render(ctx);
+    expect(ctx._calls.fillText.length).toBe(beforeLen);
+  });
+
+  it('getLabelSpec returns null (the engine label pass should skip reveal text)', () => {
+    var m = makeBoard();
+    var sprite = new m.ClassroomBoard._RevealTextSprite({
+      x: 0, y: 0, text: '+A', color: '#FFD700'
+    });
+    expect(sprite.getLabelSpec()).toBeNull();
+  });
+
+  it('zIndex is 20 so reveal text paints above coins, goal, avatars', () => {
+    var m = makeBoard();
+    var sprite = new m.ClassroomBoard._RevealTextSprite({
+      x: 0, y: 0, text: '+A', color: '#FFD700'
+    });
+    expect(sprite.zIndex).toBe(20);
+  });
+});
+
+describe('V7.4 TallyDisplay -- live sips chip', () => {
+  it('render text reflects getTally() return shape (A then B counts)', () => {
+    var m = makeBoard();
+    var sips = { A: 2, B: 1 };
+    var tally = new m.ClassroomBoard._TallyDisplay({
+      x: 200, y: 90, getTally: function () { return sips; }
+    });
+    var ctx = makeCtxStub();
+    tally.render(ctx);
+    expect(ctx._calls.fillText.length).toBe(1);
+    var text = ctx._calls.fillText[0].text;
+    expect(text).toBe('Sips - A: 2  B: 1');
+  });
+
+  it('handles null / missing tally (renders zero counts; never throws)', () => {
+    var m = makeBoard();
+    var tally = new m.ClassroomBoard._TallyDisplay({
+      x: 0, y: 0, getTally: function () { return null; }
+    });
+    var ctx = makeCtxStub();
+    expect(function () { tally.render(ctx); }).not.toThrow();
+    expect(ctx._calls.fillText[0].text).toBe('Sips - A: 0  B: 0');
+  });
+
+  it('appends any non-A/B drink letters that have non-zero counts', () => {
+    var m = makeBoard();
+    var tally = new m.ClassroomBoard._TallyDisplay({
+      x: 0, y: 0, getTally: function () { return { A: 1, B: 0, C: 3 }; }
+    });
+    var ctx = makeCtxStub();
+    tally.render(ctx);
+    expect(ctx._calls.fillText[0].text).toBe('Sips - A: 1  B: 0  C: 3');
+  });
+
+  it('getLabelSpec returns null (chip draws its own text inside the render)', () => {
+    var m = makeBoard();
+    var tally = new m.ClassroomBoard._TallyDisplay({
+      x: 0, y: 0, getTally: function () { return { A: 0, B: 0 }; }
+    });
+    expect(tally.getLabelSpec()).toBeNull();
+  });
+
+  it('update(dt) is a no-op (the chip has no animation state)', () => {
+    var m = makeBoard();
+    var tally = new m.ClassroomBoard._TallyDisplay({
+      x: 0, y: 0, getTally: function () { return { A: 0, B: 0 }; }
+    });
+    expect(function () { tally.update(0.5); }).not.toThrow();
+  });
+
+  it('zIndex is 5 so the chip paints with coins/goal (below avatars)', () => {
+    var m = makeBoard();
+    var tally = new m.ClassroomBoard._TallyDisplay({
+      x: 0, y: 0, getTally: function () { return { A: 0, B: 0 }; }
+    });
+    expect(tally.zIndex).toBe(5);
+  });
+});
+
