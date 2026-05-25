@@ -673,6 +673,10 @@
     this.online       = opts.online   !== false;
     this.labelText    = opts.label    || '';
     this.onDrained    = opts.onDrained || null;
+    // V7.3.6: avatars render ON TOP of doorways + coins + goal so the
+    // doorway mouse-hole shape doesn't occlude the sprite walking past.
+    // See canvas_engine.js render() for the sort.
+    this.zIndex       = 10;
 
     this.state        = 'idle';
     this.targetX      = 0;
@@ -1374,6 +1378,9 @@
     this.label      = opts.label || '';
     this.doorId     = opts.doorId || '';
     this.count      = 0;             // updated from state.doorways.tally
+    // V7.3.6 z-order: doorways are background -- avatars + coins paint
+    // on top so the mouse-hole black doesn't occlude characters.
+    this.zIndex     = 1;
   }
   Doorway.prototype.update = function () {};
   Doorway.prototype.render = function (ctx) {
@@ -1463,6 +1470,8 @@
     this._frameMs       = 0;     // accumulator for spin frame advance
     this._frameIdx      = 0;
     this._sentCollect   = false;
+    // V7.3.6 z-order: above doorways/default, below avatars.
+    this.zIndex         = 5;
     this.engine         = null;
   }
 
@@ -1585,6 +1594,8 @@
     this.onReach        = (typeof opts.onReach === 'function') ? opts.onReach : null;
     this._bobT          = 0;
     this._sentReach     = false;
+    // V7.3.6 z-order: same band as coins (above doorways, below avatars).
+    this.zIndex         = 5;
     this.engine         = null;
   }
 

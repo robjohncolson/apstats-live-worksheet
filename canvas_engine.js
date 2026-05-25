@@ -62,13 +62,22 @@ class CanvasEngine {
   }
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.entities.forEach((entity) => {
+    // V7.3.6: render entities sorted by (entity.zIndex || 0) ascending so
+    // sprites with higher zIndex paint LAST (on top). This fixes the
+    // doorway-occludes-avatar bug: doorways were added after avatars (when
+    // a vote opens), so Map insertion order put them on top in the original
+    // render loop. With zIndex, avatars get a higher z and stay visually
+    // in front. Stable-sort fallback if Array.prototype.sort isn't stable
+    // is fine -- ties are by insertion order, matching old behavior.
+    const ordered = Array.from(this.entities.values());
+    ordered.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    ordered.forEach((entity) => {
       if (entity.render) entity.render(this.ctx);
     });
     this.ctx.save();
     this.ctx.font = this.labelFont;
     this.ctx.textAlign = 'center';
-    this.entities.forEach((entity) => {
+    ordered.forEach((entity) => {
       if (!entity.getLabelSpec) return;
       const spec = entity.getLabelSpec();
       if (!spec) return;
