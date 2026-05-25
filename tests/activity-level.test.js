@@ -271,16 +271,16 @@ describe('updateState renders decoration overlays', function () {
     expect(goalRect).toBeUndefined();
   });
 
-  it('renders Goal flag (gold base + red pennant) when phase is GOAL_AVAILABLE', function () {
+  it('V7.2 sprite-collide: Goal rendering moved to the avatar canvas; overlay no longer draws the gold flag', function () {
     var env = loadModule();
     var handle = env.module.mount(getMount(env), {});
     handle.updateState(makeActivityState({ phase: 'GOAL_AVAILABLE' }));
     var stub = env.lastStub();
+    // Gold flag base (#ffcc33) MUST NOT appear on the overlay. The goal
+    // is now a GoalSprite engine entity in classroom-board.js; that
+    // module's tests own the goal-render contract.
     var base = stub.rects.find(function (r) { return r.fill === '#ffcc33'; });
-    expect(base).toBeDefined();
-    // Pennant triangle is path-filled, not a rect.  Assert beginPath + fill
-    // happened at least once and that the pennant fillStyle was set.
-    expect(stub.begins).toBeGreaterThan(0);
+    expect(base).toBeUndefined();
   });
 
   it('does NOT render any player-shaped rect (players are owned by classroom-board)', function () {
@@ -357,18 +357,18 @@ describe('updateState renders decoration overlays', function () {
     expect(stub.clears.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('V7.2: chipSize used by Text/Goal actors on the overlay (coin chipSize math moved to classroom-board)', function () {
+  it('V7.2: chipSize from level def drives Text actor positioning on the overlay (coins + goal moved to avatar canvas)', function () {
     var env = loadModule();
     var handle = env.module.mount(getMount(env), {});
-    handle.updateState(makeActivityState({ phase: 'GOAL_AVAILABLE' }));
+    handle.updateState(makeActivityState());
     var stub = env.lastStub();
-    // Goal at chip (16, 7) with chipSize=10 -> px center (160, 70). The
-    // overlay shifts the whole scene down by TOP_MARGIN=10 (V7.1 sizing
-    // rev) so the actual goal rect lands at y = 70 + 10 - 5 = 75 top-edge.
-    var goalRect = stub.rects.find(function (r) {
-      return r.fill === '#ffcc33' && r.x === 155 && r.w === 10 && r.h === 10;
-    });
-    expect(goalRect).toBeDefined();
+    // Welcome Text actor at chip (4, 0) -- the only chip-positioned
+    // element left on the overlay (coins + goal moved to the avatar
+    // canvas as engine sprites). With long text the clamp pins it
+    // flush-left at boxX=2; baseline y=14/2 with TOP_MARGIN=10 -> 17.
+    var welcomeText = stub.texts.find(function (t) { return t.text === 'Welcome to AP Stats!'; });
+    expect(welcomeText).toBeDefined();
+    expect(welcomeText.fill).toBe('#ffffff');
   });
 
   it('is a no-op on empty / null state and survives missing level def', function () {

@@ -278,11 +278,14 @@
     // var coins = Array.isArray(sState.coins) ? sState.coins : [];
     // for (var c = 0; c < coins.length; c++) { ... drawCoin ... }
 
-    // Goal flag (only when reachable or cleared)
-    if (phase === 'GOAL_AVAILABLE' || phase === 'LEVEL_CLEARED') {
-      var goal = findActorOfType(levelDef, 'Goal');
-      if (goal) { drawGoalFlag(ctx, goal, chipSize); }
-    }
+    // V7.2 sprite-collide: goal flag moved off the overlay onto the
+    // avatar canvas as a GoalSprite entity (classroom-board.js). The
+    // door visual now reads as 'walk into to clear'. Skipped here so
+    // the overlay doesn't double-render the goal.
+    // if (phase === 'GOAL_AVAILABLE' || phase === 'LEVEL_CLEARED') {
+    //   var goal = findActorOfType(levelDef, 'Goal');
+    //   if (goal) { drawGoalFlag(ctx, goal, chipSize); }
+    // }
 
     if (canSaveRestore && yOffset !== 0) { ctx.restore(); }
 

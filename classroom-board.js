@@ -1493,6 +1493,82 @@
     return _coinImage;
   }
 
+  // --- GoalSprite entity (V7.2 sprite-collide) --------------------------
+
+  /**
+   * Goal sprite rendered ON the avatar canvas (mirrors CoinSprite). The
+   * goal flag was a paint on the activity overlay in V7.1; V7.2 moves
+   * it onto the sprite engine so completion is native collision (walk
+   * into the door to clear the level). Door visual reads as 'exit
+   * through here' -- closest pico-park analog among the asset set.
+   *
+   * opts:
+   *   x, y          -- canvas pixel coords (top-left of the sprite)
+   *   size          -- render size in px
+   *   reached       -- initial reached flag from server
+   *   getLocalSprite-- () -> BoardSprite (the local player) for collision
+   *   onReach       -- () -> void; fired ONCE on first collision
+   */
+  var GOAL_COLLISION_PX = 20;
+  var GOAL_DEFAULT_SIZE = 28;
+
+  function GoalSprite(image, opts) {
+    this.image          = image;
+    this.x              = opts.x;
+    this.y              = opts.y;
+    this.size           = opts.size || GOAL_DEFAULT_SIZE;
+    this.reached        = opts.reached === true;
+    this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
+    this.onReach        = (typeof opts.onReach === 'function') ? opts.onReach : null;
+    this._bobT          = 0;
+    this._sentReach     = false;
+    this.engine         = null;
+  }
+
+  GoalSprite.prototype.update = function (dt) {
+    this._bobT += dt;
+    if (this.reached || this._sentReach) return;
+    var me = this.getLocalSprite();
+    if (!me) return;
+    var myCx   = me.x + (me._spriteSize || 24) / 2;
+    var goalCx = this.x + this.size / 2;
+    if (Math.abs(myCx - goalCx) <= GOAL_COLLISION_PX) {
+      this._sentReach = true;
+      if (this.onReach) {
+        try { this.onReach(); } catch (_) {}
+      }
+    }
+  };
+
+  GoalSprite.prototype.render = function (ctx) {
+    if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
+    var bobOffset = this.reached ? 0 : Math.sin(this._bobT * 3) * 1.5;
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    if (this.reached) {
+      // Brighten / pulse on reached so the moment of completion reads.
+      ctx.globalAlpha = 0.85 + 0.15 * Math.sin(this._bobT * 6);
+    }
+    try {
+      ctx.drawImage(this.image, this.x, this.y + bobOffset, this.size, this.size);
+    } catch (_) {}
+    ctx.globalAlpha = prevAlpha;
+  };
+
+  GoalSprite.prototype.getLabelSpec = function () {
+    var cx   = this.x + this.size / 2;
+    var topY = this.y - 4;
+    return { text: this.reached ? 'CLEARED!' : 'GOAL', x: cx, y: topY, isGold: true };
+  };
+
+  var _goalImage = null;
+  function _ensureGoalImage(doc) {
+    if (_goalImage) return _goalImage;
+    if (typeof Image === 'undefined') return null;
+    _goalImage = new Image();
+    _goalImage.src = 'door.png';
+    return _goalImage;
+  }
+
   // --- PollColumnsOverlay entity (v2) -----------------------------------
 
   /**
@@ -2346,6 +2422,55 @@
       return groundY - spriteHeight - coinSize - 4;
     }
 
+    // GoalSprite is a singleton per active level; mirrors the coin lifecycle
+    // pattern but only spawns when phase is GOAL_AVAILABLE / LEVEL_CLEARED.
+    var goalEntity = null;
+
+    function syncLevelGoal(state) {
+      if (!engineReady) return;
+      var act = state && state.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var goal    = (act && act.state && act.state.goal) ? act.state.goal : null;
+      var phase   = (act && act.state && act.state.phase) || null;
+      var goalVisible = isLevel && goal && (phase === 'GOAL_AVAILABLE' || phase === 'LEVEL_CLEARED');
+
+      if (!goalVisible) {
+        if (goalEntity) {
+          try { engine.removeEntity('level_goal'); } catch (_) {}
+          goalEntity = null;
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
+      var levelW   = mapW * chipSize;
+      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
+      var size     = GOAL_DEFAULT_SIZE;
+
+      var levelCenterPx = (goal.x * chipSize) + (chipSize / 2);
+      var canvasCenter  = (levelCenterPx / levelW) * canvasW;
+      var gx = canvasCenter - size / 2;
+      var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var gy = groundY - spriteHeight - size - 4;
+
+      if (!goalEntity) {
+        goalEntity = new GoalSprite(_ensureGoalImage(doc), {
+          x: gx, y: gy, size: size, reached: goal.reached === true,
+          getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
+          onReach: function () {
+            safeSend({ type: 'classroom_activity_value', payload: { kind: 'reach-goal' } });
+          }
+        });
+        try { engine.addEntity('level_goal', goalEntity); } catch (_) {}
+      } else {
+        goalEntity.reached = goal.reached === true;
+        goalEntity.x = gx;
+        goalEntity.y = gy;
+      }
+    }
+
     function syncLevelCoins(state) {
       if (!engineReady) return;
       var act = state && state.activity;
@@ -2743,10 +2868,11 @@
       refreshButton();
       refreshVoteButtons();
       refreshResultScreen();
-      // V7.2: spawn/despawn/sync coin sprites on the avatar canvas based
-      // on the current activity state. Cheap when no activity is running
-      // (early return on the !isLevel branch).
+      // V7.2: spawn/despawn/sync coin + goal sprites on the avatar canvas
+      // based on the current activity state. Cheap when no activity is
+      // running (early return on the !isLevel branch).
       syncLevelCoins(state);
+      syncLevelGoal(state);
       notifyStateChange();
     }
 
