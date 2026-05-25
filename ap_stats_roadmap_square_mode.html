@@ -11402,10 +11402,9 @@ var _activityHandleType = null;
 // new live activity (started before the 2.5s tearDown fires) can
 // cancel the stale timer instead of destroying the new renderer.
 var _activityTeardownTimer = null;
-// V7: cache the classroom-board-mount's display value before a level
-// activity hides it, so we can restore it when the level ends.
-// null = not currently hidden by a level.
-var _boardPrevDisplay = null;
+// V7.1 redesign: classroom-board-mount is NEVER hidden under any
+// activity (additive-overlay rule -- see feedback_lc_additive_overlay).
+// The V7 _boardPrevDisplay hide/restore logic was removed.
 
 /* ═══ Poll archive (v2.1 U4) ═══
    Keyed by YYYY-MM-DD -> array of poll objects from GET /poll-archive.
@@ -11527,8 +11526,8 @@ function _handleActivityState(summary){
         _activityTeardownTimer = null;
       }
       // V7 Codex MAJOR 5 fold: if the live handle was mounted for a
-      // DIFFERENT activity type (fast restart across types), destroy it
-      // + restore the classroom-board before remounting fresh.
+      // DIFFERENT activity type (fast restart across types), destroy
+      // it + remove the mount before remounting fresh.
       if (_activityHandle && _activityHandleType && _activityHandleType !== act.type) {
         try { _activityHandle.destroy(); } catch (_) {}
         _activityHandle = null;
@@ -11537,11 +11536,6 @@ function _handleActivityState(summary){
           _activityMount.parentNode.removeChild(_activityMount);
         }
         _activityMount = null;
-        if (_boardPrevDisplay !== null) {
-          var _bRest = document.getElementById('classroom-board-mount');
-          if (_bRest) { _bRest.style.display = _boardPrevDisplay; }
-          _boardPrevDisplay = null;
-        }
       }
       if (!_activityHandle) {
         var Renderer = _activityRendererForType(act.type);
@@ -11555,16 +11549,9 @@ function _handleActivityState(summary){
         } else {
           return;
         }
-        // V7: full-scene level renderer takes over the visual area --
-        // hide the classroom-board canvas while a level is live. The
-        // board stays MOUNTED + WS-connected; just visually hidden.
-        // Restored to its prior display value when the level ends.
-        if (act.type === 'level' && board) {
-          if (typeof _boardPrevDisplay === 'undefined' || _boardPrevDisplay === null) {
-            _boardPrevDisplay = board.style.display || '';
-          }
-          board.style.display = 'none';
-        }
+        // V7.1 redesign: classroom-board-mount is NEVER hidden. The
+        // level renderer is an additive overlay on top of the existing
+        // LC scene, not a scene replacement. See feedback_lc_additive_overlay.
         // V6: pass currentUsername + boardHandle so the colorbox-grid
         // prompt modal can fire sendActivityValue with the student's pick.
         // V4/V5 renderers ignore these opts.
@@ -11616,12 +11603,6 @@ function _handleActivityState(summary){
           _activityMount.parentNode.removeChild(_activityMount);
         }
         _activityMount = null;
-        // V7: restore the classroom-board-mount display if a level had hidden it.
-        if (_boardPrevDisplay !== null) {
-          var _board = document.getElementById('classroom-board-mount');
-          if (_board) { _board.style.display = _boardPrevDisplay; }
-          _boardPrevDisplay = null;
-        }
       }, 2500);
     } else {
       // No activity. Ensure clean teardown of anything stale.
@@ -11630,12 +11611,6 @@ function _handleActivityState(summary){
       }
       _activityHandle = null;
       _activityHandleType = null;
-      // V7: restore the classroom-board-mount display if a level had hidden it.
-      if (_boardPrevDisplay !== null) {
-        var _boardElse = document.getElementById('classroom-board-mount');
-        if (_boardElse) { _boardElse.style.display = _boardPrevDisplay; }
-        _boardPrevDisplay = null;
-      }
       if (_activityMount && _activityMount.parentNode) {
         _activityMount.parentNode.removeChild(_activityMount);
       }

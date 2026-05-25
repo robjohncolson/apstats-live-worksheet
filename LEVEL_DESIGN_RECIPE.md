@@ -1,11 +1,23 @@
-# Level Design Recipe -- AP Stats lesson-levels for the V7 engine
+# Level Design Recipe -- AP Stats lesson-levels for the V7.1 engine
 
-Session 115, 2026-05-25. Recipe for unit-author agents to produce
-the ~80 lesson-levels in batch. Each unit gets one agent; each agent
-produces ~10 JSON files (one per topic) into
+Session 115, 2026-05-25 (updated for V7.1 additive-overlay redesign).
+Recipe for unit-author agents to produce the ~80 lesson-levels in
+batch. Each unit gets one agent; each agent produces ~10 JSON files
+(one per topic) into
 `curriculum_render/railway-server/activities/UN.X.json`.
 
-Reference spec: `LIVE_CLASSROOM_V7_BUILD.md` (frozen).
+Reference specs: `LIVE_CLASSROOM_V7_1_BUILD.md` (frozen redesign).
+V7.1 supersedes V7 visually but the JSON schema field names are
+unchanged. The key V7.1 deltas for authors:
+- `chipSize: 10` (was 24). The level pixel space is now 320 x 80 px
+  native, matching the existing LC canvas. Levels overlay on top of
+  the existing avatar/doorway scene; they do NOT replace it.
+- `map.height: <= 8` chips (= 80 px). Width up to 32 chips (= 320 px).
+- `QuestionDoor` actors are still authored in JSON the same way
+  (`x, y, text, correct, reflection`) BUT the server-side engine
+  reuses the existing v3 P4 doorways mechanic for the visual + vote
+  (open + walk-through + press-Up). Authors DO NOT think about door
+  visuals -- just the labels + correctness.
 Canonical example: `curriculum_render/railway-server/activities/U1.1.json` (Cola Mystery). NOTE: levels MUST live inside `railway-server/` because Railway deploys that folder as the project root -- a sibling `cr/activities/` at the repo root is invisible to the running server.
 
 ## How a level teaches
@@ -65,15 +77,15 @@ Coin; multiple QuestionDoors in place of Switch+Gate puzzles).
   "duration":   180,                              // seconds, default 180
   "map": {
     "width":    32,                                // chips wide
-    "height":   9,                                  // chips tall -- KEEP <= 9
+    "height":   8,                                  // chips tall -- KEEP <= 8 (= 80 CSS px native)
                                                    //  (V7 doesn't scale Y -- BOARD_H = 220 px ceiling)
-    "chipSize": 24                                  // px per chip
+    "chipSize": 10                                  // px per chip (V7.1 = 10; was 24)
   },
   "actors": [
     /* ...placed actors per the recipes below... */
   ],
   "reflection_room": {
-    "map":     { "width": 16, "height": 8, "chipSize": 24 },
+    "map":     { "width": 16, "height": 8, "chipSize": 10 },
     "actors":  [
       { "type": "Text",       "x": 8, "y": 2, "text": "[reflection text shown by renderer]" },
       { "type": "ReturnWarp", "x": 8, "y": 6 }
@@ -87,15 +99,15 @@ Coin; multiple QuestionDoors in place of Switch+Gate puzzles).
 }
 ```
 
-## Y-axis budget (V7 constraint)
+## V7.1 coordinate budget (HARD CONSTRAINT)
 
-The level engine doesn't yet scale Y -- player Y comes from
-classroom-board's BOARD_H = 220 px space. So:
-- `map.height * chipSize <= 220` -> max height 9 chips at chipSize=24.
-- ALL actor `y` values must be in `[0, 9)` chip units.
-- The X axis IS scaled (per-canvasW), so map.width can be 32+ freely.
+With chipSize=10 and the LC canvas at 320 x ~80 CSS px:
+- `map.width <= 32` chips (= 320 px native -- matches LC canvas width)
+- `map.height <= 8` chips (= 80 px -- comfortably inside BOARD_H=220)
+- ALL actor `x` values in `[0, 32)`, `y` values in `[0, 8)`.
 
-Build wide-and-short levels (32 chips wide x ~8 chips tall).
+Build wide-and-short levels (32 chips wide x ~8 chips tall). Coords
+map 1:1 to LC canvas pixels -- no rescaling needed at render time.
 
 ## Per-unit thematic anchors
 
@@ -219,7 +231,7 @@ Pattern: B ("Compute a statistic"). 5 SipStations with values [2, 5,
   "schema": "v7-level-1", "levelKey": "U1.7", "lessonKey": "1.7",
   "title": "Mean Hunt", "skill": "2.B", "lo": "UNC-1.J", "ek": ["UNC-1.J.1"],
   "duration": 180,
-  "map": { "width": 32, "height": 9, "chipSize": 24 },
+  "map": { "width": 32, "height": 8, "chipSize": 10 },
   "actors": [
     { "type": "Text", "x": 6, "y": 1, "text": "Sip each cup. Count its number. What is the MEAN?" },
     { "type": "SipStation", "id": "s1", "x":  4, "y": 3, "drink": "2" },
@@ -227,14 +239,14 @@ Pattern: B ("Compute a statistic"). 5 SipStations with values [2, 5,
     { "type": "SipStation", "id": "s3", "x": 14, "y": 3, "drink": "5" },
     { "type": "SipStation", "id": "s4", "x": 19, "y": 3, "drink": "7" },
     { "type": "SipStation", "id": "s5", "x": 24, "y": 3, "drink": "8" },
-    { "type": "PlayerSpawn", "x": 4, "y": 6 },
-    { "type": "QuestionDoor", "id": "d1", "x":  6, "y": 8, "text": "Mean = 5.4", "correct": true },
-    { "type": "QuestionDoor", "id": "d2", "x": 16, "y": 8, "text": "Mean = 5", "correct": false, "reflection": "5 is the MEDIAN (middle value), not the mean. Mean = sum / count = 27 / 5 = 5.4." },
-    { "type": "QuestionDoor", "id": "d3", "x": 26, "y": 8, "text": "Mean = 7", "correct": false, "reflection": "7 is one of the data points but not the mean. Mean = (2+5+5+7+8)/5 = 5.4." },
-    { "type": "Goal", "x": 16, "y": 8 }
+    { "type": "PlayerSpawn", "x": 4, "y": 4 },
+    { "type": "QuestionDoor", "id": "d1", "x":  6, "y": 7, "text": "Mean = 5.4", "correct": true },
+    { "type": "QuestionDoor", "id": "d2", "x": 16, "y": 7, "text": "Mean = 5", "correct": false, "reflection": "5 is the MEDIAN (middle value), not the mean. Mean = sum / count = 27 / 5 = 5.4." },
+    { "type": "QuestionDoor", "id": "d3", "x": 26, "y": 7, "text": "Mean = 7", "correct": false, "reflection": "7 is one of the data points but not the mean. Mean = (2+5+5+7+8)/5 = 5.4." },
+    { "type": "Goal", "x": 16, "y": 7 }
   ],
   "reflection_room": {
-    "map": { "width": 16, "height": 8, "chipSize": 24 },
+    "map": { "width": 16, "height": 8, "chipSize": 10 },
     "actors": [
       { "type": "Text", "x": 8, "y": 2, "text": "[reflection text shown by renderer]" },
       { "type": "ReturnWarp", "x": 8, "y": 6 }
@@ -258,17 +270,17 @@ actor shows pre-computed CI; doors are interpretation choices.
   "schema": "v7-level-1", "levelKey": "U6.3", "lessonKey": "6.3",
   "title": "CI Reading", "skill": "4.B", "lo": "UNC-4.E",
   "duration": 180,
-  "map": { "width": 32, "height": 9, "chipSize": 24 },
+  "map": { "width": 32, "height": 8, "chipSize": 10 },
   "actors": [
     { "type": "Text", "x": 4, "y": 1, "text": "A 95% CI for p is (0.42, 0.58). Read the doors -- which interpretation is correct?" },
     { "type": "SipStation", "id": "s1", "x": 16, "y": 3, "drink": "A" },
-    { "type": "PlayerSpawn", "x": 4, "y": 6 },
-    { "type": "QuestionDoor", "id": "d1", "x":  6, "y": 8, "text": "We are 95% sure that p is in (0.42, 0.58)", "correct": false, "reflection": "Common but wrong. The 95% is about the METHOD, not the specific interval. p is fixed; the interval is the random thing." },
-    { "type": "QuestionDoor", "id": "d2", "x": 16, "y": 8, "text": "If we repeated, 95% of intervals would capture p", "correct": true },
-    { "type": "QuestionDoor", "id": "d3", "x": 26, "y": 8, "text": "95% of the data falls in (0.42, 0.58)", "correct": false, "reflection": "The CI is about the PARAMETER p, not the data values. Data range is unrelated." },
-    { "type": "Goal", "x": 16, "y": 8 }
+    { "type": "PlayerSpawn", "x": 4, "y": 4 },
+    { "type": "QuestionDoor", "id": "d1", "x":  6, "y": 7, "text": "We are 95% sure that p is in (0.42, 0.58)", "correct": false, "reflection": "Common but wrong. The 95% is about the METHOD, not the specific interval. p is fixed; the interval is the random thing." },
+    { "type": "QuestionDoor", "id": "d2", "x": 16, "y": 7, "text": "If we repeated, 95% of intervals would capture p", "correct": true },
+    { "type": "QuestionDoor", "id": "d3", "x": 26, "y": 7, "text": "95% of the data falls in (0.42, 0.58)", "correct": false, "reflection": "The CI is about the PARAMETER p, not the data values. Data range is unrelated." },
+    { "type": "Goal", "x": 16, "y": 7 }
   ],
-  "reflection_room": { "map": { "width": 16, "height": 8, "chipSize": 24 }, "actors": [ { "type": "Text", "x": 8, "y": 2, "text": "[reflection text]" }, { "type": "ReturnWarp", "x": 8, "y": 6 } ] },
+  "reflection_room": { "map": { "width": 16, "height": 8, "chipSize": 10 }, "actors": [ { "type": "Text", "x": 8, "y": 2, "text": "[reflection text]" }, { "type": "ReturnWarp", "x": 8, "y": 6 } ] },
   "completion": { "kind": "lock-and-switch-state + goal-overlap", "rule": "any correct QuestionDoor switch pressed by >= 1/3 of online players, then any Player walks onto Goal" },
   "min_students": 2
 }
@@ -287,7 +299,7 @@ points (encoded in `drink` as a numeric pair). Doors ask about slope.
   "schema": "v7-level-1", "levelKey": "U2.5", "lessonKey": "2.5",
   "title": "LSRL Slope", "skill": "2.D", "lo": "DAT-1.G",
   "duration": 180,
-  "map": { "width": 32, "height": 9, "chipSize": 24 },
+  "map": { "width": 32, "height": 8, "chipSize": 10 },
   "actors": [
     { "type": "Text", "x": 4, "y": 1, "text": "Each cup shows (x, y). As x grows, y grows too. What is the slope?" },
     { "type": "SipStation", "id": "s1", "x":  3, "y": 3, "drink": "(1,3)" },
@@ -295,13 +307,13 @@ points (encoded in `drink` as a numeric pair). Doors ask about slope.
     { "type": "SipStation", "id": "s3", "x": 13, "y": 3, "drink": "(3,7)" },
     { "type": "SipStation", "id": "s4", "x": 18, "y": 3, "drink": "(4,9)" },
     { "type": "SipStation", "id": "s5", "x": 23, "y": 3, "drink": "(5,11)" },
-    { "type": "PlayerSpawn", "x": 4, "y": 6 },
-    { "type": "QuestionDoor", "id": "d1", "x":  6, "y": 8, "text": "Slope = +2",  "correct": true },
-    { "type": "QuestionDoor", "id": "d2", "x": 16, "y": 8, "text": "Slope = -2",  "correct": false, "reflection": "As x rises (1->5), y rises (3->11). The slope is POSITIVE, not negative." },
-    { "type": "QuestionDoor", "id": "d3", "x": 26, "y": 8, "text": "Slope = 0",   "correct": false, "reflection": "Zero slope would mean y stays constant. Here y changes from 3 to 11 -- the slope is not zero." },
-    { "type": "Goal", "x": 16, "y": 8 }
+    { "type": "PlayerSpawn", "x": 4, "y": 4 },
+    { "type": "QuestionDoor", "id": "d1", "x":  6, "y": 7, "text": "Slope = +2",  "correct": true },
+    { "type": "QuestionDoor", "id": "d2", "x": 16, "y": 7, "text": "Slope = -2",  "correct": false, "reflection": "As x rises (1->5), y rises (3->11). The slope is POSITIVE, not negative." },
+    { "type": "QuestionDoor", "id": "d3", "x": 26, "y": 7, "text": "Slope = 0",   "correct": false, "reflection": "Zero slope would mean y stays constant. Here y changes from 3 to 11 -- the slope is not zero." },
+    { "type": "Goal", "x": 16, "y": 7 }
   ],
-  "reflection_room": { "map": { "width": 16, "height": 8, "chipSize": 24 }, "actors": [ { "type": "Text", "x": 8, "y": 2, "text": "[reflection text]" }, { "type": "ReturnWarp", "x": 8, "y": 6 } ] },
+  "reflection_room": { "map": { "width": 16, "height": 8, "chipSize": 10 }, "actors": [ { "type": "Text", "x": 8, "y": 2, "text": "[reflection text]" }, { "type": "ReturnWarp", "x": 8, "y": 6 } ] },
   "completion": { "kind": "lock-and-switch-state + goal-overlap", "rule": "any correct QuestionDoor switch pressed by >= 1/3 of online players, then any Player walks onto Goal" },
   "min_students": 2
 }

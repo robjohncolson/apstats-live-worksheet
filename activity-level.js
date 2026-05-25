@@ -1,50 +1,17 @@
 /**
- * activity-level.js
- *
- * Live Classroom V7 -- Unit D level scene renderer.
+ * activity-level.js -- Live Classroom V7.1 additive-overlay renderer.
  *
  * Public API (attached to window.ActivityLevel):
- *
  *   var handle = ActivityLevel.mount(mountEl, opts);
- *   handle.updateState(activityState);     // redraw scene + actors + players + tooltip
+ *   handle.updateState(activityState);
  *   handle.showOutcome('success' | 'timeout' | 'cancel');
- *   handle.destroy();                      // remove canvas, tooltip, drop refs
+ *   handle.destroy();
  *
- * The renderer is plain 2D canvas + a single DOM tooltip overlay so it works
- * in jsdom tests with a recording context stub as well as on the real Desk page.
- *
- * activityState shape (per LIVE_CLASSROOM_V7_BUILD.md C4 wire protocol):
- *   {
- *     levelKey:   'U1.1',
- *     lessonKey:  '1.1',
- *     startedAt:  <ms>,
- *     durationMs: 180000,
- *     state: {
- *       players:    { [username]: { x, y, inReflection } },
- *       coins:      [{ id, collected }],
- *       switches:   [{ id, voteCount, pressed }],
- *       gates:      [{ id, opened }],
- *       goal:       { reached, reachedBy },
- *       reflection: { active, doorId, returnedCount, totalCount },
- *       tally:      { sips, votes }
- *     },
- *     level: <LevelDef from C3 -- sent ONCE on start>
- *   }
- *
- * Actor rendering (v7 = programmatic colored rects + text labels):
- *   - Text         -- small dark background + white text label
- *   - SipStation   -- cup-icon rect with the drink letter (A/B) inside; greyed when collected
- *   - PlayerSpawn  -- NOT rendered (marker only)
- *   - TallyDisplay -- panel showing the bound value (e.g., for binds: 'tally.sips' shows "A: 3   B: 2")
- *   - QuestionDoor -- portal-arch rect + text label below; opened gate => tint
- *   - Goal         -- gold rect with "GOAL" label
- *   - ReturnWarp   -- concentric circles + "RETURN" label
- *
- * Players are rendered as 16x16 filled rects tinted by hashStringToHue(username),
- * matching classroom-board.js's parity hash exactly.
- *
- * Tooltip: when the LOCAL player (opts.currentUsername) is within proximity=32 px
- * of a Text actor, an absolutely-positioned DOM div appears above the player.
+ * V7.1 (LIVE_CLASSROOM_V7_1_BUILD.md):
+ *   - Additive overlay on TOP of the existing classroom-board canvas.
+ *   - Players + QuestionDoors are NOT rendered here.
+ *   - We paint Text actors, Coins (SipStations), the Goal flag (gated by
+ *     phase), the Reflection panel, and a DOM proximity Tooltip.
  *
  * ASCII-only.  LF line endings.
  */
@@ -52,526 +19,281 @@
 (function () {
   'use strict';
 
-  // ---------------------------------------------------------------------------
-  // Constants
-  // ---------------------------------------------------------------------------
+  var DEFAULT_CHIP_SIZE = 10;     // V7.1: 10 px chips
+  var DEFAULT_OVERLAY_W = 320;
+  var DEFAULT_OVERLAY_H = 80;
+  var TOOLTIP_PROXIMITY = 32;
 
-  var DEFAULT_CHIP_SIZE   = 24;
-  var DEFAULT_MOUNT_W     = 320;
-  var DEFAULT_MOUNT_H     = 240;
-
-  var PLAYER_SIZE_PX      = 16;
-  var TOOLTIP_PROXIMITY   = 32;     // CSS px between local player center and Text actor center
-
-  // Scene palette
-  var BG_COLOR            = '#1a1f2e';
-  var GRID_LINE_COLOR     = 'rgba(255, 255, 255, 0.05)';
-  var TEXT_LABEL_BG       = 'rgba(34, 34, 34, 0.85)';
-  var TEXT_LABEL_COLOR    = '#ffffff';
-
-  var SIPSTATION_FILL     = '#55ccbb';
-  var SIPSTATION_BORDER   = '#226e62';
-  var SIPSTATION_LETTER   = '#0a2926';
-  var SIPSTATION_GREY     = '#5a5a5a';
-  var SIPSTATION_FADED_A  = 0.4;
-
-  var TALLY_BG            = 'rgba(40, 40, 80, 0.85)';
-  var TALLY_COLOR         = '#fff8c0';
-
-  var DOOR_BORDER         = '#a8a8d8';
-  var DOOR_INTERIOR_CLOSED= '#332244';
-  var DOOR_INTERIOR_OPEN  = '#cccc66';
-  var DOOR_LABEL_COLOR    = '#f0f0ff';
-
-  var GOAL_FILL           = '#ffcc33';
-  var GOAL_BORDER         = '#8a6a00';
-  var GOAL_LABEL_COLOR    = '#3a2400';
-
-  var RETURN_WARP_OUTER   = '#88ccff';
-  var RETURN_WARP_INNER   = '#bbeeff';
-  var RETURN_LABEL_COLOR  = '#dde9ff';
-
-  var PLAYER_BORDER       = '#000000';
-  var PLAYER_LABEL_COLOR  = '#ffffff';
-  var PLAYER_LABEL_BG     = 'rgba(0, 0, 0, 0.6)';
-
-  // Outcome overlays
-  var SUCCESS_OVERLAY     = 'rgba(40, 200, 90, 0.45)';
-  var TIMEOUT_OVERLAY     = 'rgba(230, 140, 40, 0.45)';
-  var CANCEL_OVERLAY      = 'rgba(120, 120, 120, 0.5)';
-  var SUCCESS_TEXT_COLOR  = '#0a3d18';
-  var TIMEOUT_TEXT_COLOR  = '#3a1f00';
-  var CANCEL_TEXT_COLOR   = '#1a1a1a';
-
-  // Fonts
-  var TEXT_LABEL_FONT     = '11px monospace';
-  var TALLY_FONT          = 'bold 11px monospace';
-  var DOOR_LABEL_FONT     = 'bold 10px monospace';
-  var GOAL_LABEL_FONT     = 'bold 12px monospace';
-  var RETURN_LABEL_FONT   = 'bold 10px monospace';
-  var PLAYER_LABEL_FONT   = 'bold 9px monospace';
-  var SIPSTATION_FONT     = 'bold 12px monospace';
-  var OUTCOME_FONT        = 'bold 22px sans-serif';
-
-  // Reflection overlay
-  var REFLECTION_PANEL_BG = 'rgba(20, 40, 50, 0.85)';
+  var C = {
+    coinLive:    '#55ccbb',
+    coinGrey:    '#5a5a5a',
+    coinBorder:  '#226e62',
+    coinLetter:  '#0a2926',
+    coinAlpha:   0.4,
+    textBg:      'rgba(34, 34, 34, 0.85)',
+    label:       '#ffffff',
+    goalBase:    '#ffcc33',
+    goalEdge:    '#8a6a00',
+    goalFlag:    '#cc2222',
+    reflDim:     'rgba(0, 0, 0, 0.55)',
+    reflBox:     'rgba(20, 40, 50, 0.95)',
+    reflEdge:    '#88ccff',
+    success:     'rgba(40, 200, 90, 0.45)',
+    timeout:     'rgba(230, 140, 40, 0.45)',
+    cancel:      'rgba(120, 120, 120, 0.5)',
+    successText: '#0a3d18',
+    timeoutText: '#3a1f00',
+    cancelText:  '#1a1a1a'
+  };
 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 
+  function resetText(ctx) {
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function approxTextWidth(text, pxPerChar) {
+    return (text == null) ? 0 : String(text).length * (pxPerChar || 6);
+  }
+
   /**
-   * Resolve devicePixelRatio.  In jsdom there is no devicePixelRatio,
-   * so we fall back to 1.  Matches the V4/V5/V6 helpers.
+   * Find the existing classroom-board canvas so the overlay can mirror its
+   * dims.  Search order: parent's #classroom-board-mount canvas, then
+   * document-wide, then a sibling canvas of mountEl.
    */
-  function resolveDpr() {
-    if (typeof window !== 'undefined' && typeof window.devicePixelRatio === 'number') {
-      var dpr = window.devicePixelRatio;
-      if (isFinite(dpr) && dpr > 0) { return dpr; }
+  function findBoardCanvas(mountEl) {
+    if (!mountEl) { return null; }
+    var doc = mountEl.ownerDocument;
+    if (mountEl.parentNode && mountEl.parentNode.querySelector) {
+      var p = mountEl.parentNode.querySelector('#classroom-board-mount canvas');
+      if (p) { return p; }
     }
-    return 1;
-  }
-
-  /**
-   * Hash a username to a hue in [0, 359].  EXACT copy from
-   * classroom-board.js's hashStringToHue.  Used to tint Player rects so a
-   * Desk's local player always matches its classroom-board avatar.
-   */
-  function hashStringToHue(input) {
-    var hash = 0;
-    if (input == null) { return 0; }
-    var s = String(input);
-    for (var i = 0; i < s.length; i++) {
-      hash = ((hash << 5) - hash) + s.charCodeAt(i);
-      hash = hash | 0;  // keep 32-bit signed
+    if (doc && doc.querySelector) {
+      var d = doc.querySelector('#classroom-board-mount canvas');
+      if (d) { return d; }
     }
-    return Math.abs(hash) % 360;
-  }
-
-  function fallbackHueForUsername(username) {
-    return hashStringToHue(username);
-  }
-
-  /**
-   * Read a dotted-path value from an object (e.g. "tally.sips" -> obj.tally.sips).
-   * Returns null if any segment is missing.
-   */
-  function readBinding(obj, path) {
-    if (!obj || !path) { return null; }
-    var parts = String(path).split('.');
-    var cur = obj;
-    for (var i = 0; i < parts.length; i++) {
-      if (cur == null) { return null; }
-      cur = cur[parts[i]];
-    }
-    return (cur == null) ? null : cur;
-  }
-
-  /**
-   * Get the active map: either the main map (default) or the reflection room
-   * map (when reflection.active === true).
-   */
-  function activeMap(levelDef, reflection) {
-    if (reflection && reflection.active && levelDef && levelDef.reflection_room
-        && levelDef.reflection_room.map) {
-      return levelDef.reflection_room.map;
-    }
-    return (levelDef && levelDef.map) ? levelDef.map : null;
-  }
-
-  /**
-   * Get the active actor list: main `actors` (default) or
-   * reflection_room.actors when reflection.active === true.
-   */
-  function activeActors(levelDef, reflection) {
-    if (reflection && reflection.active && levelDef && levelDef.reflection_room) {
-      return levelDef.reflection_room.actors || [];
-    }
-    return (levelDef && levelDef.actors) ? levelDef.actors : [];
-  }
-
-  /**
-   * For a given door id, find the matching QuestionDoor actor in the level's
-   * main actors and return its `reflection` field.  Returns null if not found.
-   */
-  function reflectionTextForDoor(levelDef, doorId) {
-    if (!levelDef || !doorId) { return null; }
-    var actors = levelDef.actors || [];
-    for (var i = 0; i < actors.length; i++) {
-      var a = actors[i];
-      if (a && a.type === 'QuestionDoor' && a.id === doorId) {
-        return (a.reflection != null) ? String(a.reflection) : null;
+    if (mountEl.parentNode && mountEl.parentNode.childNodes) {
+      var kids = mountEl.parentNode.childNodes;
+      for (var i = 0; i < kids.length; i++) {
+        var k = kids[i];
+        if (k && k !== mountEl && k.tagName && String(k.tagName).toLowerCase() === 'canvas') {
+          return k;
+        }
       }
     }
     return null;
   }
 
   // ---------------------------------------------------------------------------
-  // Actor renderers (canvas)
+  // Decoration draws
   // ---------------------------------------------------------------------------
 
-  function drawBackground(ctx, cssW, cssH) {
-    ctx.fillStyle = BG_COLOR;
-    ctx.fillRect(0, 0, cssW, cssH);
-  }
+  function drawCoin(ctx, coin, chipSize) {
+    var px = coin.x * chipSize;
+    var py = coin.y * chipSize;
+    var s  = chipSize;
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
 
-  function drawGrid(ctx, cssW, cssH, chipSize) {
-    ctx.strokeStyle = GRID_LINE_COLOR;
+    if (coin.collected) {
+      ctx.fillStyle   = C.coinGrey;
+      ctx.globalAlpha = C.coinAlpha;
+    } else {
+      ctx.fillStyle = C.coinLive;
+    }
+    ctx.fillRect(px - s / 2, py - s / 2, s, s);
+
+    ctx.strokeStyle = C.coinBorder;
     ctx.lineWidth   = 1;
-    for (var gx = 0; gx <= cssW; gx += chipSize) {
-      ctx.beginPath();
-      ctx.moveTo(gx, 0);
-      ctx.lineTo(gx, cssH);
-      ctx.stroke();
+    ctx.strokeRect(px - s / 2, py - s / 2, s, s);
+
+    if (coin.drink != null) {
+      ctx.fillStyle    = C.coinLetter;
+      ctx.font         = 'bold 10px monospace';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(coin.drink), px, py);
     }
-    for (var gy = 0; gy <= cssH; gy += chipSize) {
-      ctx.beginPath();
-      ctx.moveTo(0,    gy);
-      ctx.lineTo(cssW, gy);
-      ctx.stroke();
-    }
+    ctx.globalAlpha = prevAlpha;
+    resetText(ctx);
   }
 
   function drawTextActor(ctx, actor, chipSize) {
-    var px = actor.x * chipSize;
-    var py = actor.y * chipSize;
+    var px   = actor.x * chipSize;
+    var py   = actor.y * chipSize;
     var label = (actor.text != null) ? String(actor.text) : '';
-    var measureW = approxTextWidth(label, 7);
-    var boxW = measureW + 8;
-    var boxH = 18;
-    ctx.fillStyle = TEXT_LABEL_BG;
+    var boxW = approxTextWidth(label, 6) + 6;
+    var boxH = 14;
+
+    ctx.fillStyle = C.textBg;
     ctx.fillRect(px - boxW / 2, py - boxH / 2, boxW, boxH);
-    ctx.fillStyle    = TEXT_LABEL_COLOR;
-    ctx.font         = TEXT_LABEL_FONT;
+
+    ctx.fillStyle    = C.label;
+    ctx.font         = '10px monospace';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, px, py);
-    resetTextDefaults(ctx);
+    resetText(ctx);
   }
 
-  function drawSipStation(ctx, actor, chipSize, collected) {
-    var px = actor.x * chipSize;
-    var py = actor.y * chipSize;
-    var w = chipSize;
-    var h = chipSize;
-    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
-    if (collected) {
-      ctx.fillStyle = SIPSTATION_GREY;
-      ctx.globalAlpha = SIPSTATION_FADED_A;
-    } else {
-      ctx.fillStyle = SIPSTATION_FILL;
-    }
-    ctx.fillRect(px - w / 2, py - h / 2, w, h);
+  function drawGoalFlag(ctx, goal, chipSize) {
+    var px = goal.x * chipSize;
+    var py = goal.y * chipSize;
+    var s  = chipSize;
 
-    ctx.strokeStyle = SIPSTATION_BORDER;
+    ctx.fillStyle = C.goalBase;
+    ctx.fillRect(px - s / 2, py - s / 2, s, s);
+    ctx.strokeStyle = C.goalEdge;
     ctx.lineWidth   = 1;
-    ctx.strokeRect(px - w / 2, py - h / 2, w, h);
+    ctx.strokeRect(px - s / 2, py - s / 2, s, s);
 
-    var drink = (actor.drink != null) ? String(actor.drink) : '?';
-    ctx.fillStyle    = SIPSTATION_LETTER;
-    ctx.font         = SIPSTATION_FONT;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(drink, px, py);
-
-    ctx.globalAlpha = prevAlpha;
-    resetTextDefaults(ctx);
-  }
-
-  function drawTallyDisplay(ctx, actor, chipSize, state) {
-    var px = actor.x * chipSize;
-    var py = actor.y * chipSize;
-    var binds = (actor.binds != null) ? String(actor.binds) : '';
-    var value = readBinding(state, binds);
-    var label = formatTallyValue(binds, value);
-    var measureW = approxTextWidth(label, 7);
-    var boxW = measureW + 10;
-    var boxH = 20;
-    ctx.fillStyle = TALLY_BG;
-    ctx.fillRect(px - boxW / 2, py - boxH / 2, boxW, boxH);
-    ctx.fillStyle    = TALLY_COLOR;
-    ctx.font         = TALLY_FONT;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, px, py);
-    resetTextDefaults(ctx);
-  }
-
-  function drawQuestionDoor(ctx, actor, chipSize, opened) {
-    var px = actor.x * chipSize;
-    var py = actor.y * chipSize;
-    var w = chipSize;
-    var h = chipSize + 6;
-
-    // Interior (tinted based on opened/closed)
-    ctx.fillStyle = opened ? DOOR_INTERIOR_OPEN : DOOR_INTERIOR_CLOSED;
-    ctx.fillRect(px - w / 2, py - h / 2, w, h);
-    // Border
-    ctx.strokeStyle = DOOR_BORDER;
-    ctx.lineWidth   = 2;
-    ctx.strokeRect(px - w / 2, py - h / 2, w, h);
-
-    var label = (actor.text != null) ? String(actor.text) : '';
-    // Compose a short label that fits roughly under the arch.
-    var trimmed = (label.length > 32) ? (label.substring(0, 29) + '...') : label;
-    ctx.fillStyle    = DOOR_LABEL_COLOR;
-    ctx.font         = DOOR_LABEL_FONT;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(trimmed, px, py + h / 2 + 2);
-    resetTextDefaults(ctx);
-  }
-
-  function drawGoal(ctx, actor, chipSize) {
-    var px = actor.x * chipSize;
-    var py = actor.y * chipSize;
-    var w = chipSize;
-    var h = chipSize;
-    ctx.fillStyle = GOAL_FILL;
-    ctx.fillRect(px - w / 2, py - h / 2, w, h);
-    ctx.strokeStyle = GOAL_BORDER;
-    ctx.lineWidth   = 2;
-    ctx.strokeRect(px - w / 2, py - h / 2, w, h);
-    ctx.fillStyle    = GOAL_LABEL_COLOR;
-    ctx.font         = GOAL_LABEL_FONT;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('GOAL', px, py);
-    resetTextDefaults(ctx);
-  }
-
-  function drawReturnWarp(ctx, actor, chipSize) {
-    var px = actor.x * chipSize;
-    var py = actor.y * chipSize;
-    var radii = [chipSize * 0.5, chipSize * 0.35, chipSize * 0.2];
-    ctx.strokeStyle = RETURN_WARP_OUTER;
-    ctx.lineWidth   = 2;
-    for (var i = 0; i < radii.length; i++) {
+    // Triangle pennant on top of the post.
+    ctx.fillStyle = C.goalFlag;
+    if (typeof ctx.beginPath === 'function') {
       ctx.beginPath();
-      ctx.arc(px, py, radii[i], 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.moveTo(px - s / 2, py - s / 2);
+      ctx.lineTo(px + s / 2, py - s / 2 - s * 0.4);
+      ctx.lineTo(px - s / 2, py - s);
+      if (typeof ctx.closePath === 'function') { ctx.closePath(); }
+      if (typeof ctx.fill === 'function')      { ctx.fill();      }
     }
-    // Center dot
-    ctx.fillStyle = RETURN_WARP_INNER;
-    ctx.beginPath();
-    ctx.arc(px, py, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle    = RETURN_LABEL_COLOR;
-    ctx.font         = RETURN_LABEL_FONT;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText('RETURN', px, py + chipSize * 0.55);
-    resetTextDefaults(ctx);
   }
 
-  function drawReflectionPanel(ctx, cssW, cssH, levelDef, doorId) {
-    var text = reflectionTextForDoor(levelDef, doorId);
-    if (text == null) { return; }
-    var boxH = 50;
-    var boxY = cssH * 0.15;
-    ctx.fillStyle = REFLECTION_PANEL_BG;
-    ctx.fillRect(8, boxY, cssW - 16, boxH);
+  function drawReflectionPanel(ctx, cssW, cssH, reflection) {
+    ctx.fillStyle = C.reflDim;
+    ctx.fillRect(0, 0, cssW, cssH);
 
-    ctx.fillStyle    = TEXT_LABEL_COLOR;
-    ctx.font         = TEXT_LABEL_FONT;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    // Render the reflection text (wrap mock -- we don't truly wrap here; the
-    // panel is wide enough for short reflection lines).
-    var trimmed = (text.length > 80) ? (text.substring(0, 77) + '...') : text;
-    ctx.fillText(trimmed, cssW / 2, boxY + boxH / 2);
-    resetTextDefaults(ctx);
-  }
+    var boxW = Math.max(180, cssW - 24);
+    var boxH = Math.max(40,  cssH - 24);
+    var boxX = (cssW - boxW) / 2;
+    var boxY = (cssH - boxH) / 2;
 
-  function drawPlayer(ctx, username, posX, posY) {
-    var hue = fallbackHueForUsername(username);
-    var fill = 'hsl(' + hue + ', 70%, 50%)';
-    var w = PLAYER_SIZE_PX;
-    var h = PLAYER_SIZE_PX;
-    var px = posX - w / 2;
-    var py = posY - h / 2;
-
-    ctx.fillStyle = fill;
-    ctx.fillRect(px, py, w, h);
-    ctx.strokeStyle = PLAYER_BORDER;
+    ctx.fillStyle = C.reflBox;
+    ctx.fillRect(boxX, boxY, boxW, boxH);
+    ctx.strokeStyle = C.reflEdge;
     ctx.lineWidth   = 1;
-    ctx.strokeRect(px, py, w, h);
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
 
-    // Username label above
-    var nameW = approxTextWidth(username, 6);
-    var labelBoxW = nameW + 6;
-    var labelBoxH = 12;
-    var labelX = posX - labelBoxW / 2;
-    var labelY = posY - h / 2 - labelBoxH - 2;
+    var text    = (reflection && reflection.reflectionText != null) ? String(reflection.reflectionText) : '';
+    var trimmed = (text.length > 64) ? (text.substring(0, 61) + '...') : text;
 
-    ctx.fillStyle = PLAYER_LABEL_BG;
-    ctx.fillRect(labelX, labelY, labelBoxW, labelBoxH);
-
-    ctx.fillStyle    = PLAYER_LABEL_COLOR;
-    ctx.font         = PLAYER_LABEL_FONT;
+    ctx.fillStyle    = C.label;
+    ctx.font         = 'bold 12px monospace';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(username), posX, labelY + labelBoxH / 2);
-    resetTextDefaults(ctx);
-  }
+    ctx.fillText(trimmed, cssW / 2, boxY + boxH * 0.4);
 
-  // ---------------------------------------------------------------------------
-  // Helpers (text formatting + measure)
-  // ---------------------------------------------------------------------------
-
-  function approxTextWidth(text, pxPerChar) {
-    if (text == null) { return 0; }
-    return String(text).length * (pxPerChar || 7);
-  }
-
-  function resetTextDefaults(ctx) {
-    ctx.textAlign    = 'left';
-    ctx.textBaseline = 'alphabetic';
-  }
-
-  function formatTallyValue(binds, value) {
-    if (value == null) { return ''; }
-    if (typeof value === 'number' || typeof value === 'string') {
-      return String(value);
+    if (reflection && typeof reflection.autoCloseAt === 'number') {
+      var secs = Math.max(0, Math.ceil((reflection.autoCloseAt - Date.now()) / 1000));
+      ctx.font = '10px monospace';
+      ctx.fillText(secs + 's', cssW / 2, boxY + boxH * 0.75);
     }
-    // Object -> "K: v   K: v"
-    var keys = Object.keys(value);
-    var out = [];
-    for (var i = 0; i < keys.length; i++) {
-      out.push(keys[i] + ': ' + String(value[keys[i]]));
+    resetText(ctx);
+  }
+
+  function renderOutcome(handle, outcome) {
+    var ctx = handle.ctx;
+    if (!ctx) { return; }
+    var fill = C.cancel, text = 'CANCELLED', textColor = C.cancelText;
+    if (outcome === 'success') {
+      fill = C.success; text = 'LEVEL CLEARED!'; textColor = C.successText;
+    } else if (outcome === 'timeout') {
+      fill = C.timeout; text = 'TIME UP';        textColor = C.timeoutText;
     }
-    return out.join('   ');
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, handle.cssW, handle.cssH);
+
+    ctx.fillStyle    = textColor;
+    ctx.font         = 'bold 22px sans-serif';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, handle.cssW / 2, handle.cssH / 2);
+    resetText(ctx);
   }
 
   // ---------------------------------------------------------------------------
-  // Render passes
+  // Scene render
   // ---------------------------------------------------------------------------
 
-  /**
-   * Render the static actor layer (background, grid, all non-Player actors).
-   * Called every updateState (we redraw the whole canvas to keep things
-   * simple; the actor list is small and the canvas is small).
-   */
+  function findActorOfType(levelDef, type) {
+    var actors = (levelDef && Array.isArray(levelDef.actors)) ? levelDef.actors : [];
+    for (var i = 0; i < actors.length; i++) {
+      if (actors[i] && actors[i].type === type) { return actors[i]; }
+    }
+    return null;
+  }
+
   function renderScene(handle, activityState) {
     var ctx = handle.ctx;
     if (!ctx) { return; }
-    var levelDef   = handle._levelDef;
-    if (!levelDef) {
-      // No level def yet; just paint the background.
-      drawBackground(ctx, handle.cssW, handle.cssH);
-      return;
+    if (typeof ctx.clearRect === 'function') {
+      ctx.clearRect(0, 0, handle.cssW, handle.cssH);
     }
 
-    var sState = (activityState && activityState.state) ? activityState.state : {};
+    var levelDef = handle._levelDef;
+    if (!levelDef) { return; }
+
+    var sState     = (activityState && activityState.state) ? activityState.state : {};
+    var chipSize   = handle.chipSize || DEFAULT_CHIP_SIZE;
+    var phase      = sState.phase || null;
     var reflection = sState.reflection || { active: false };
-    var map  = activeMap(levelDef, reflection)   || levelDef.map || { chipSize: DEFAULT_CHIP_SIZE };
-    var chipSize = (map && typeof map.chipSize === 'number' && map.chipSize > 0)
-                   ? map.chipSize : DEFAULT_CHIP_SIZE;
-    var actors = activeActors(levelDef, reflection);
+    var actors     = Array.isArray(levelDef.actors) ? levelDef.actors : [];
 
-    drawBackground(ctx, handle.cssW, handle.cssH);
-    drawGrid(ctx, handle.cssW, handle.cssH, chipSize);
-
-    // Build lookup tables for dynamic per-actor state.
-    var coinCollected = {};
-    if (Array.isArray(sState.coins)) {
-      for (var c = 0; c < sState.coins.length; c++) {
-        var coin = sState.coins[c];
-        if (coin && coin.id != null) { coinCollected[coin.id] = !!coin.collected; }
-      }
-    }
-    var gateOpened = {};
-    if (Array.isArray(sState.gates)) {
-      for (var g = 0; g < sState.gates.length; g++) {
-        var gate = sState.gates[g];
-        if (gate && gate.id != null) { gateOpened[gate.id] = !!gate.opened; }
-      }
-    }
-
-    // Actor pass
+    // Text actors (always visible)
     for (var i = 0; i < actors.length; i++) {
-      var a = actors[i];
-      if (!a || !a.type) { continue; }
-      switch (a.type) {
-        case 'Text':
-          drawTextActor(ctx, a, chipSize);
-          break;
-        case 'SipStation':
-          drawSipStation(ctx, a, chipSize, !!coinCollected[a.id]);
-          break;
-        case 'PlayerSpawn':
-          // marker only -- not rendered
-          break;
-        case 'TallyDisplay':
-          drawTallyDisplay(ctx, a, chipSize, sState);
-          break;
-        case 'QuestionDoor':
-          drawQuestionDoor(ctx, a, chipSize, !!gateOpened[a.id]);
-          break;
-        case 'Goal':
-          drawGoal(ctx, a, chipSize);
-          break;
-        case 'ReturnWarp':
-          drawReturnWarp(ctx, a, chipSize);
-          break;
-        default:
-          break;
+      if (actors[i] && actors[i].type === 'Text') {
+        drawTextActor(ctx, actors[i], chipSize);
       }
     }
 
-    // Reflection panel: render the chosen door's reflection text on top.
-    if (reflection.active && reflection.doorId) {
-      drawReflectionPanel(ctx, handle.cssW, handle.cssH, levelDef, reflection.doorId);
+    // Coins (always visible during the level)
+    var coins = Array.isArray(sState.coins) ? sState.coins : [];
+    for (var c = 0; c < coins.length; c++) {
+      var coin = coins[c];
+      if (coin && typeof coin.x === 'number' && typeof coin.y === 'number') {
+        drawCoin(ctx, coin, chipSize);
+      }
     }
 
-    // Player pass
-    var players = sState.players || {};
-    var names = Object.keys(players);
-    for (var p = 0; p < names.length; p++) {
-      var name = names[p];
-      var pos = players[name] || {};
-      var x = (typeof pos.x === 'number') ? pos.x : 0;
-      var y = (typeof pos.y === 'number') ? pos.y : 0;
-      drawPlayer(ctx, name, x, y);
+    // Goal flag (only when reachable or cleared)
+    if (phase === 'GOAL_AVAILABLE' || phase === 'LEVEL_CLEARED') {
+      var goal = findActorOfType(levelDef, 'Goal');
+      if (goal) { drawGoalFlag(ctx, goal, chipSize); }
     }
+
+    // Reflection panel
+    if (reflection && reflection.active) {
+      drawReflectionPanel(ctx, handle.cssW, handle.cssH, reflection);
+    }
+
+    // DOM tooltip
+    syncTooltip(handle, activityState);
   }
 
   // ---------------------------------------------------------------------------
-  // Tooltip
+  // Tooltip (DOM)
   // ---------------------------------------------------------------------------
 
-  /**
-   * Decide whether the tooltip should be visible based on local player
-   * proximity to any Text actor.  Returns the matching Text actor (or null).
-   */
   function nearestTextActor(handle, activityState) {
-    if (!handle.currentUsername) { return null; }
-    var levelDef = handle._levelDef;
-    if (!levelDef) { return null; }
+    if (!handle.currentUsername || !handle._levelDef) { return null; }
     var sState = (activityState && activityState.state) ? activityState.state : {};
-    var players = sState.players || {};
-    var local = players[handle.currentUsername];
+    var local  = (sState.players || {})[handle.currentUsername];
     if (!local) { return null; }
-    var reflection = sState.reflection || { active: false };
-    var map = activeMap(levelDef, reflection) || levelDef.map
-              || { chipSize: DEFAULT_CHIP_SIZE };
-    var chipSize = (map && typeof map.chipSize === 'number' && map.chipSize > 0)
-                   ? map.chipSize : DEFAULT_CHIP_SIZE;
-    var actors = activeActors(levelDef, reflection);
 
+    var chipSize = handle.chipSize || DEFAULT_CHIP_SIZE;
+    var actors   = Array.isArray(handle._levelDef.actors) ? handle._levelDef.actors : [];
     var lx = (typeof local.x === 'number') ? local.x : 0;
     var ly = (typeof local.y === 'number') ? local.y : 0;
-
     var best = null;
     var bestDist = TOOLTIP_PROXIMITY + 1;
+
     for (var i = 0; i < actors.length; i++) {
       var a = actors[i];
       if (!a || a.type !== 'Text') { continue; }
-      var ax = a.x * chipSize;
-      var ay = a.y * chipSize;
-      var dx = ax - lx;
-      var dy = ay - ly;
+      var dx = a.x * chipSize - lx;
+      var dy = a.y * chipSize - ly;
       var dist = Math.sqrt(dx * dx + dy * dy);
       if (dist <= TOOLTIP_PROXIMITY && dist < bestDist) {
         bestDist = dist;
@@ -583,41 +305,29 @@
 
   function syncTooltip(handle, activityState) {
     var target = nearestTextActor(handle, activityState);
-    if (!target) {
-      removeTooltip(handle);
-      return;
-    }
-
+    if (!target) { removeTooltip(handle); return; }
     var ownerDoc = handle._mountEl && handle._mountEl.ownerDocument;
     if (!ownerDoc) { return; }
 
-    // Build or reuse the tooltip element.
     var tip;
     if (handle._tooltip && handle._tooltip.el) {
       tip = handle._tooltip.el;
     } else {
       tip = ownerDoc.createElement('div');
-      tip.className              = 'activity-level-tooltip';
-      tip.style.position         = 'absolute';
-      tip.style.zIndex           = '30';
-      tip.style.maxWidth         = '240px';
-      tip.style.padding          = '6px 10px';
-      tip.style.background       = '#222230';
-      tip.style.color            = '#f4f4f4';
-      tip.style.border           = '1px solid #555577';
-      tip.style.borderRadius     = '4px';
-      tip.style.fontFamily       = 'monospace';
-      tip.style.fontSize         = '12px';
-      tip.style.pointerEvents    = 'none';
-      tip.style.boxShadow        = '0 2px 8px rgba(0,0,0,0.4)';
+      tip.className = 'activity-level-tooltip';
+      var s = tip.style;
+      s.position = 'absolute'; s.zIndex = '30'; s.maxWidth = '240px';
+      s.padding = '6px 10px';  s.background = '#222230'; s.color = '#f4f4f4';
+      s.border = '1px solid #555577'; s.borderRadius = '4px';
+      s.fontFamily = 'monospace'; s.fontSize = '12px';
+      s.pointerEvents = 'none';   s.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
       handle._mountEl.appendChild(tip);
       handle._tooltip = { el: tip };
     }
     tip.textContent = String(target.text || '');
 
-    // Position above the local player.
     var sState = (activityState && activityState.state) ? activityState.state : {};
-    var local = (sState.players || {})[handle.currentUsername] || { x: 0, y: 0 };
+    var local  = (sState.players || {})[handle.currentUsername] || { x: 0, y: 0 };
     var lx = (typeof local.x === 'number') ? local.x : 0;
     var ly = (typeof local.y === 'number') ? local.y : 0;
     tip.style.left = (lx - 30) + 'px';
@@ -633,86 +343,46 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Outcome overlay
-  // ---------------------------------------------------------------------------
-
-  function renderOutcome(handle, outcome) {
-    var ctx = handle.ctx;
-    if (!ctx) { return; }
-    var fill, text, textColor;
-    if (outcome === 'success') {
-      fill = SUCCESS_OVERLAY;
-      text = 'LEVEL CLEARED!';
-      textColor = SUCCESS_TEXT_COLOR;
-    } else if (outcome === 'timeout') {
-      fill = TIMEOUT_OVERLAY;
-      text = 'TIME UP';
-      textColor = TIMEOUT_TEXT_COLOR;
-    } else {
-      fill = CANCEL_OVERLAY;
-      text = 'CANCELLED';
-      textColor = CANCEL_TEXT_COLOR;
-    }
-
-    ctx.fillStyle = fill;
-    ctx.fillRect(0, 0, handle.cssW, handle.cssH);
-
-    ctx.fillStyle    = textColor;
-    ctx.font         = OUTCOME_FONT;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, handle.cssW / 2, handle.cssH / 2);
-    resetTextDefaults(ctx);
-  }
-
-  // ---------------------------------------------------------------------------
   // mount()
   // ---------------------------------------------------------------------------
 
   function mount(mountEl, opts) {
-    if (!mountEl) {
-      return noopHandle();
-    }
-    var ownerDoc = mountEl.ownerDocument
-                || (typeof document !== 'undefined' ? document : null);
-    if (!ownerDoc) {
-      return noopHandle();
-    }
+    if (!mountEl) { return noopHandle(); }
+    var ownerDoc = mountEl.ownerDocument || (typeof document !== 'undefined' ? document : null);
+    if (!ownerDoc) { return noopHandle(); }
 
     opts = opts || {};
     var canvas = ownerDoc.createElement('canvas');
-    var cssW = (typeof opts.width  === 'number' && opts.width  > 0) ? opts.width
-             : (mountEl.clientWidth || DEFAULT_MOUNT_W);
-    var cssH = (typeof opts.height === 'number' && opts.height > 0) ? opts.height
-             : (mountEl.clientHeight || DEFAULT_MOUNT_H);
-    var dpr  = resolveDpr();
 
-    canvas.style.position      = 'absolute';
-    canvas.style.left          = '0';
-    canvas.style.top           = '0';
-    canvas.style.width         = cssW + 'px';
-    canvas.style.height        = cssH + 'px';
-    canvas.style.pointerEvents = 'none';
-    canvas.style.display       = 'block';
-    canvas.width  = Math.max(1, Math.floor(cssW * dpr));
-    canvas.height = Math.max(1, Math.floor(cssH * dpr));
+    // Mirror the existing classroom-board canvas dims when present.
+    var boardCanvas = findBoardCanvas(mountEl);
+    var cssW, cssH;
+    if (boardCanvas) {
+      cssW = boardCanvas.clientWidth  || parseInt(boardCanvas.style.width,  10) || boardCanvas.width  || DEFAULT_OVERLAY_W;
+      cssH = boardCanvas.clientHeight || parseInt(boardCanvas.style.height, 10) || boardCanvas.height || DEFAULT_OVERLAY_H;
+    } else {
+      cssW = (typeof opts.width  === 'number' && opts.width  > 0) ? opts.width  : (mountEl.clientWidth  || DEFAULT_OVERLAY_W);
+      cssH = (typeof opts.height === 'number' && opts.height > 0) ? opts.height : (mountEl.clientHeight || DEFAULT_OVERLAY_H);
+    }
+
+    var st = canvas.style;
+    st.position = 'absolute'; st.left = '0'; st.top = '0';
+    st.width  = cssW + 'px';  st.height = cssH + 'px';
+    st.pointerEvents = 'none'; st.display = 'block';
+    canvas.width  = Math.max(1, Math.floor(cssW));
+    canvas.height = Math.max(1, Math.floor(cssH));
 
     mountEl.appendChild(canvas);
-
-    var ctx = (typeof canvas.getContext === 'function') ? canvas.getContext('2d') : null;
-    if (ctx && dpr !== 1 && typeof ctx.scale === 'function') {
-      ctx.scale(dpr, dpr);
-    }
 
     var handle = {
       _canvas:         canvas,
       _mountEl:        mountEl,
-      _tooltip:        null,
       _levelDef:       null,
-      _heightAuto:     !(typeof opts.height === 'number' && opts.height > 0),
-      ctx:             ctx,
+      _tooltip:        null,
+      ctx:             (typeof canvas.getContext === 'function') ? canvas.getContext('2d') : null,
       cssW:            cssW,
       cssH:            cssH,
+      chipSize:        DEFAULT_CHIP_SIZE,
       currentUsername: opts.currentUsername || null,
       boardHandle:     opts.boardHandle    || null,
       destroyed:       false
@@ -720,15 +390,14 @@
 
     handle.updateState = function (activityState) {
       if (handle.destroyed || !handle.ctx) { return; }
-
-      // First call: stash the level def if present and (optionally) auto-size.
       if (!handle._levelDef && activityState && activityState.level) {
         handle._levelDef = activityState.level;
-        maybeResizeForLevel(handle);
+        var map = activityState.level.map;
+        if (map && typeof map.chipSize === 'number' && map.chipSize > 0) {
+          handle.chipSize = map.chipSize;
+        }
       }
-
       renderScene(handle, activityState);
-      syncTooltip(handle, activityState);
     };
 
     handle.showOutcome = function (outcome) {
@@ -744,41 +413,12 @@
       if (handle._canvas && handle._canvas.parentNode) {
         handle._canvas.parentNode.removeChild(handle._canvas);
       }
-      handle._canvas = null;
+      handle._canvas  = null;
       handle._mountEl = null;
-      handle.ctx = null;
+      handle.ctx      = null;
     };
 
-    // Initial empty render so the canvas is not blank before the first
-    // activity state arrives.
-    if (handle.ctx) {
-      drawBackground(handle.ctx, cssW, cssH);
-    }
-
     return handle;
-  }
-
-  /**
-   * If the level was mounted without an explicit height, derive the height
-   * from the level's map.height * map.chipSize so the scene actually fits.
-   */
-  function maybeResizeForLevel(handle) {
-    if (!handle._heightAuto) { return; }
-    var def = handle._levelDef;
-    if (!def || !def.map) { return; }
-    var chipSize = (typeof def.map.chipSize === 'number' && def.map.chipSize > 0)
-                   ? def.map.chipSize : DEFAULT_CHIP_SIZE;
-    var newH = (typeof def.map.height === 'number' && def.map.height > 0)
-               ? def.map.height * chipSize : handle.cssH;
-    if (newH === handle.cssH) { return; }
-    var canvas = handle._canvas;
-    var dpr = resolveDpr();
-    canvas.style.height = newH + 'px';
-    canvas.height = Math.max(1, Math.floor(newH * dpr));
-    if (handle.ctx && dpr !== 1 && typeof handle.ctx.scale === 'function') {
-      handle.ctx.scale(dpr, dpr);
-    }
-    handle.cssH = newH;
   }
 
   function noopHandle() {
@@ -789,20 +429,7 @@
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // Export
-  // ---------------------------------------------------------------------------
-
-  var ActivityLevel = {
-    mount:               mount,
-    _hashStringToHue:    hashStringToHue,      // exposed for tests / cross-renderer parity
-    _fallbackHueForUser: fallbackHueForUsername
-  };
-
-  if (typeof window !== 'undefined') {
-    window.ActivityLevel = ActivityLevel;
-  }
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ActivityLevel;
-  }
+  var ActivityLevel = { mount: mount };
+  if (typeof window !== 'undefined') { window.ActivityLevel = ActivityLevel; }
+  if (typeof module !== 'undefined' && module.exports) { module.exports = ActivityLevel; }
 })();

@@ -1,8 +1,8 @@
-// desk-level-integration.test.js -- V7 spec C9 Unit E (planner-direct).
-// Structural pins for the Desk's V7 wiring: script tag for
-// activity-level.js, _activityRendererForType 'level' branch, the
-// classroom-board-mount hide/restore on level activity start/end,
-// the level + levelKey + lessonKey shipping in updateState's payload.
+// desk-level-integration.test.js -- V7.1 spec (additive overlay).
+// Structural pins for the planner-direct Desk wiring AFTER the V7.1
+// redesign: the level renderer is an additive overlay on top of the
+// classroom-board scene. The classroom-board canvas is NEVER hidden.
+// The hide/restore _boardPrevDisplay logic from V7 has been removed.
 //
 // @vitest-environment node
 
@@ -31,7 +31,7 @@ function fnBody(src, name) {
   throw new Error('unbalanced braces for ' + name);
 }
 
-describe('V7 Desk integration (C7 planner-direct)', () => {
+describe('V7.1 Desk integration (additive overlay -- C7 + planner-direct revert)', () => {
 
   it('pin 01: the Desk file exists', () => {
     expect(DESK, 'Desk file must exist').toBeTypeOf('string');
@@ -41,62 +41,56 @@ describe('V7 Desk integration (C7 planner-direct)', () => {
     expect(DESK).toMatch(/<script\s+src="activity-level\.js"><\/script>/);
   });
 
-  it('pin 03: _activityRendererForType has a level -> ActivityLevel branch', () => {
+  it('pin 03: _activityRendererForType maps level -> window.ActivityLevel', () => {
     const body = fnBody(DESK, '_activityRendererForType');
     expect(body).toMatch(/type\s*===\s*['"]level['"]/);
     expect(body).toMatch(/window\.ActivityLevel/);
   });
 
-  it('pin 04: _boardPrevDisplay module-scope variable is declared', () => {
-    expect(DESK).toMatch(/var\s+_boardPrevDisplay\s*=\s*null/);
+  it('pin 04: _activityHandleType module-scope variable is declared (fast-restart guard kept)', () => {
+    expect(DESK).toMatch(/var\s+_activityHandleType\s*=\s*null/);
   });
 
-  it('pin 05: _handleActivityState hides classroom-board-mount on type === level', () => {
-    const body = fnBody(DESK, '_handleActivityState');
-    expect(body).toMatch(/act\.type\s*===\s*['"]level['"]/);
-    expect(body).toMatch(/_boardPrevDisplay\s*=/);
-    // The hide path sets display='none' on the board.
-    expect(body).toMatch(/board\.style\.display\s*=\s*['"]none['"]/);
+  it('pin 05: V7 _boardPrevDisplay variable is REMOVED (V7.1 additive overlay -- no hiding)', () => {
+    // Only the comment line referencing the removal is allowed; the
+    // variable declaration + read/write sites must be gone.
+    var decl = DESK.match(/var\s+_boardPrevDisplay\s*=/g);
+    expect(decl, '_boardPrevDisplay declaration must be removed').toBeNull();
+    var refs = DESK.match(/_boardPrevDisplay\s*[!=<>]/g);
+    expect(refs, '_boardPrevDisplay references must be removed').toBeNull();
   });
 
-  it('pin 06: _handleActivityState restores classroom-board-mount when level ends (teardown)', () => {
+  it('pin 06: _handleActivityState does NOT set classroom-board.style.display = none', () => {
     const body = fnBody(DESK, '_handleActivityState');
-    // The restore path runs at teardown (setTimeout callback) AND
-    // in the no-activity else branch. Confirm BOTH restore _boardPrevDisplay.
-    var matches = body.match(/_boardPrevDisplay\s*!==\s*null/g) || [];
-    expect(matches.length).toBeGreaterThanOrEqual(2);
-    // The restore writes the prior display back to the board element.
-    expect(body).toMatch(/\.style\.display\s*=\s*_boardPrevDisplay/);
+    // The whole function body must NOT contain a "style.display = 'none'"
+    // applied to the board element. (Other elements may set display=none;
+    // we scope the assertion to mentions of "board".)
+    var hideRe = /board[\s\S]{0,40}\.style\.display\s*=\s*['"]none['"]/;
+    expect(body).not.toMatch(hideRe);
   });
 
-  it('pin 07: updateState payload extended with level + levelKey + lessonKey for level activities', () => {
+  it('pin 07: _handleActivityState fast-restart-across-types path keeps destroy + remount logic', () => {
     const body = fnBody(DESK, '_handleActivityState');
-    // The level renderer needs the LevelDef on first call to build the
-    // static actor layer. V4/V5/V6 renderers ignore the extra fields.
+    // The Codex MAJOR 5 fold pattern: _activityHandleType !== act.type
+    // triggers destroy + null + mount-removal.
+    expect(body).toMatch(/_activityHandleType\s*!==\s*act\.type/);
+    expect(body).toMatch(/_activityHandle\s*=\s*null/);
+  });
+
+  it('pin 08: updateState payload still extends with level + levelKey + lessonKey for level activities', () => {
+    const body = fnBody(DESK, '_handleActivityState');
     expect(body).toMatch(/act\.type\s*===\s*['"]level['"]\s*&&\s*act\.level/);
     expect(body).toMatch(/level:\s*act\.level/);
     expect(body).toMatch(/levelKey/);
     expect(body).toMatch(/lessonKey/);
   });
 
-  it('pin 08: V4/V5/V6 renderers still receive act.state directly (no breakage)', () => {
+  it('pin 09: V4/V5/V6 renderers still receive act.state directly (no breakage)', () => {
     const body = fnBody(DESK, '_handleActivityState');
-    // The default payload is act.state for non-level activities.
     expect(body).toMatch(/var\s+payloadForRenderer\s*=\s*act\.state/);
   });
 
-  it('pin 09: classroom-board-mount restore happens in the teardown setTimeout AND the no-activity else branch', () => {
-    const body = fnBody(DESK, '_handleActivityState');
-    // Both teardown paths must run the restore: the setTimeout (post-finished)
-    // and the immediate no-activity branch.
-    var setTimeoutIdx = body.indexOf('setTimeout');
-    expect(setTimeoutIdx).toBeGreaterThan(-1);
-    // After setTimeout: there must be a restore block.
-    var afterSetTimeout = body.slice(setTimeoutIdx, setTimeoutIdx + 800);
-    expect(afterSetTimeout).toMatch(/_boardPrevDisplay/);
-  });
-
-  it('pin 10: the level renderer mount call propagates currentUsername and boardHandle (V6 convention)', () => {
+  it('pin 10: the level renderer mount call propagates currentUsername + boardHandle', () => {
     const body = fnBody(DESK, '_handleActivityState');
     expect(body).toMatch(/Renderer\.mount\(\s*_activityMount\s*,\s*\{[\s\S]*currentUsername[\s\S]*boardHandle[\s\S]*\}\s*\)/);
   });
