@@ -1433,9 +1433,16 @@
    *   onCollect      -- (coinId) -> void; fired ONCE on first collision
    *   images         -- [Image, Image, Image] -- 3 spin frames in order
    */
-  var COIN_COLLISION_PX = 18;   // tighter than server's 16+slack so visual contact ~= server overlap
-  var COIN_DEFAULT_SIZE = 24;   // render dim; source PNG is 32x32
-  var COIN_FRAME_MS     = 280;  // V7.3.3: half the previous 140 -> ~3.5 Hz cycle, ~840 ms per full spin
+  // V7.3.4: X+Y collision (was X-only). Without the Y check, walking
+  // left-right past a coin counted as collecting it -- the "race to
+  // mash arrow keys" anti-pattern (teacher feedback). Now players have
+  // to JUMP up into a coin to grab it, so deciding WHICH coin matters.
+  // X-tolerance stays generous so the moment of contact is forgiving;
+  // Y-tolerance is sized to the natural jump arc.
+  var COIN_COLLISION_X_PX = 18;
+  var COIN_COLLISION_Y_PX = 20;
+  var COIN_DEFAULT_SIZE   = 24;   // render dim; source PNG is 32x32
+  var COIN_FRAME_MS       = 280;  // V7.3.3: half the previous 140 -> ~3.5 Hz cycle, ~840 ms per full spin
 
   function CoinSprite(opts) {
     this.images         = Array.isArray(opts.images) ? opts.images : [];
@@ -1487,9 +1494,16 @@
       }
       var me = this.getLocalSprite();
       if (!me) return;
-      var myCx   = me.x + (me._spriteSize || 24) / 2;
+      // V7.3.4 X+Y collision: player must jump up to coin's vertical band.
+      // Walking under the coin (player y is ~28 px below coin y when
+      // standing) stays outside Y-tolerance and doesn't collide. Jumping
+      // brings player y closer to coin y; collision fires mid-jump.
+      var myCx   = me.x + (me._spriteSize   || 24) / 2;
+      var myCy   = me.y + (me._spriteHeight || 24) / 2;
       var coinCx = this.x + this.size / 2;
-      if (Math.abs(myCx - coinCx) <= COIN_COLLISION_PX) {
+      var coinCy = this.y + this.size / 2;
+      if (Math.abs(myCx - coinCx) <= COIN_COLLISION_X_PX &&
+          Math.abs(myCy - coinCy) <= COIN_COLLISION_Y_PX) {
         this._sentCollect = true;   // one-shot; server-side re-broadcast will set collected=true authoritatively
         if (this.onCollect) {
           try { this.onCollect(this.coinId); } catch (_) {}
