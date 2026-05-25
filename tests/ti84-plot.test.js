@@ -366,3 +366,270 @@ describe('Ti84Plot.drawDotplot', function () {
     expect(stub.arcs.length).toBe(3);
   });
 });
+
+// ── drawHistogram ──────────────────────────────────────────────────────────
+
+describe('Ti84Plot.drawHistogram', function () {
+  var Ti84Plot;
+
+  beforeEach(function () { Ti84Plot = loadTi84Plot(); });
+
+  it('attaches drawHistogram to the public API', function () {
+    expect(typeof Ti84Plot.drawHistogram).toBe('function');
+  });
+
+  it('does not throw on empty values', function () {
+    var stub = makeCtxStub();
+    expect(function () { Ti84Plot.drawHistogram(stub, { values: [] }); }).not.toThrow();
+  });
+
+  it('does not throw on null opts or missing ctx', function () {
+    var stub = makeCtxStub();
+    expect(function () { Ti84Plot.drawHistogram(stub, null); }).not.toThrow();
+    expect(function () { Ti84Plot.drawHistogram(null, { values: [1] }); }).not.toThrow();
+  });
+
+  it('draws the LCD background frame even with empty data', function () {
+    var stub = makeCtxStub();
+    Ti84Plot.drawHistogram(stub, { values: [] });
+    var bg = stub.rects.find(function (r) { return r.w > 50 && r.h > 50; });
+    expect(bg).toBeDefined();
+  });
+
+  it('draws N filled bars when opts.bins is N (explicit count)', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawHistogram(stub, { values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], bins: 4 });
+    var bars = stub.rects.filter(function (r) { return !r.stroke && r.h > 0 && r.w < 150; });
+    expect(bars.length).toBe(4);
+  });
+
+  it('respects explicit bin edges array', function () {
+    var stub = makeCtxStub(300, 200);
+    // Edges [0,10,20,30] -> 3 bins
+    Ti84Plot.drawHistogram(stub, { values: [5, 15, 25, 5, 15], bins: [0, 10, 20, 30] });
+    var bars = stub.rects.filter(function (r) { return !r.stroke && r.h > 0 && r.w < 150; });
+    expect(bars.length).toBe(3);
+  });
+
+  it('bars are flush (no gap between adjacent left edges)', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawHistogram(stub, { values: [1, 2, 3, 4, 5, 6], bins: 3 });
+    var bars = stub.rects
+      .filter(function (r) { return !r.stroke && r.h > 0 && r.w < 150; })
+      .sort(function (a, b) { return a.x - b.x; });
+    expect(bars.length).toBe(3);
+    // Adjacent bars: bar[1].x ~= bar[0].x + bar[0].w (flush means no gap)
+    expect(bars[1].x).toBeCloseTo(bars[0].x + bars[0].w, 0);
+    expect(bars[2].x).toBeCloseTo(bars[1].x + bars[1].w, 0);
+  });
+
+  it('defaults bin count to ceil(sqrt(n)) when bins not specified', function () {
+    var stub = makeCtxStub(400, 250);
+    // n = 9 -> sqrt = 3
+    Ti84Plot.drawHistogram(stub, { values: [1, 2, 3, 4, 5, 6, 7, 8, 9] });
+    var bars = stub.rects.filter(function (r) { return !r.stroke && r.h > 0 && r.w < 150; });
+    expect(bars.length).toBe(3);
+  });
+
+  it('handles a single-value degenerate dataset without throwing', function () {
+    var stub = makeCtxStub();
+    expect(function () { Ti84Plot.drawHistogram(stub, { values: [7, 7, 7] }); }).not.toThrow();
+  });
+
+  it('renders a title when provided', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawHistogram(stub, { values: [1, 2, 3], bins: 2, title: 'Test Heights' });
+    var titleText = stub.texts.find(function (t) { return t.text === 'Test Heights'; });
+    expect(titleText).toBeDefined();
+  });
+});
+
+// ── drawBoxplot ────────────────────────────────────────────────────────────
+
+describe('Ti84Plot.drawBoxplot', function () {
+  var Ti84Plot;
+
+  beforeEach(function () { Ti84Plot = loadTi84Plot(); });
+
+  it('attaches drawBoxplot to the public API', function () {
+    expect(typeof Ti84Plot.drawBoxplot).toBe('function');
+  });
+
+  it('does not throw on null opts or missing ctx', function () {
+    var stub = makeCtxStub();
+    expect(function () { Ti84Plot.drawBoxplot(stub, null); }).not.toThrow();
+    expect(function () { Ti84Plot.drawBoxplot(null, { five: { min:0,q1:1,median:2,q3:3,max:4 } }); }).not.toThrow();
+  });
+
+  it('does not throw on missing five-num summary', function () {
+    var stub = makeCtxStub();
+    expect(function () { Ti84Plot.drawBoxplot(stub, {}); }).not.toThrow();
+  });
+
+  it('renders one box outline for a single five-num summary', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawBoxplot(stub, { five: { min: 0, q1: 10, median: 20, q3: 30, max: 40 } });
+    // The box itself is the only strokeRect (the LCD bezel is also a strokeRect,
+    // distinguished by being much larger). Box width spans Q1 -> Q3 in the plot area.
+    var boxRects = stub.rects.filter(function (r) {
+      return r.stroke && r.w < 200 && r.h < 100;
+    });
+    expect(boxRects.length).toBe(1);
+  });
+
+  it('renders N box outlines for N parallel datasets', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawBoxplot(stub, {
+      datasets: [
+        { label: 'A', five: { min: 0, q1: 5,  median: 10, q3: 15, max: 20 } },
+        { label: 'B', five: { min: 2, q1: 8,  median: 12, q3: 18, max: 24 } },
+        { label: 'C', five: { min: 1, q1: 6,  median: 11, q3: 16, max: 22 } }
+      ]
+    });
+    var boxRects = stub.rects.filter(function (r) {
+      return r.stroke && r.w < 200 && r.h < 100;
+    });
+    expect(boxRects.length).toBe(3);
+  });
+
+  it('stacks parallel boxes vertically (different y centers)', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawBoxplot(stub, {
+      datasets: [
+        { label: 'A', five: { min: 0, q1: 5, median: 10, q3: 15, max: 20 } },
+        { label: 'B', five: { min: 0, q1: 5, median: 10, q3: 15, max: 20 } }
+      ]
+    });
+    var boxes = stub.rects
+      .filter(function (r) { return r.stroke && r.w < 200 && r.h < 100; })
+      .sort(function (a, b) { return a.y - b.y; });
+    expect(boxes.length).toBe(2);
+    expect(boxes[1].y).toBeGreaterThan(boxes[0].y);
+  });
+
+  it('skips boxes with non-finite five-num components', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawBoxplot(stub, {
+      datasets: [
+        { label: 'A', five: { min: NaN, q1: 5, median: 10, q3: 15, max: 20 } },
+        { label: 'B', five: { min: 0,   q1: 5, median: 10, q3: 15, max: 20 } }
+      ]
+    });
+    var boxRects = stub.rects.filter(function (r) {
+      return r.stroke && r.w < 200 && r.h < 100;
+    });
+    expect(boxRects.length).toBe(1);
+  });
+
+  it('renders a title when provided', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawBoxplot(stub, {
+      five: { min: 0, q1: 1, median: 2, q3: 3, max: 4 },
+      title: 'Box Test'
+    });
+    var titleText = stub.texts.find(function (t) { return t.text === 'Box Test'; });
+    expect(titleText).toBeDefined();
+  });
+
+  it('handles a degenerate five-num where all values equal', function () {
+    var stub = makeCtxStub(300, 200);
+    expect(function () {
+      Ti84Plot.drawBoxplot(stub, { five: { min: 5, q1: 5, median: 5, q3: 5, max: 5 } });
+    }).not.toThrow();
+  });
+});
+
+// ── drawNormalCurve ────────────────────────────────────────────────────────
+
+describe('Ti84Plot.drawNormalCurve', function () {
+  var Ti84Plot;
+
+  beforeEach(function () { Ti84Plot = loadTi84Plot(); });
+
+  it('attaches drawNormalCurve to the public API', function () {
+    expect(typeof Ti84Plot.drawNormalCurve).toBe('function');
+  });
+
+  it('does not throw on null opts or missing ctx', function () {
+    var stub = makeCtxStub();
+    expect(function () { Ti84Plot.drawNormalCurve(stub, null); }).not.toThrow();
+    expect(function () { Ti84Plot.drawNormalCurve(null, {}); }).not.toThrow();
+  });
+
+  it('defaults to a standard normal (mean=0, sd=1) and draws the curve', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawNormalCurve(stub, {});
+    // The curve is one polyline stroked once -- expect at least one stroke()
+    // and many moveTo/lineTo (sampled along the domain).
+    expect(stub.strokes).toBeGreaterThanOrEqual(2); // axes + curve at minimum
+    var lineToCount = stub.lines.filter(function (l) { return l.type === 'lineTo'; }).length;
+    expect(lineToCount).toBeGreaterThan(20);
+  });
+
+  it('returns silently when sd <= 0 without drawing the curve', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawNormalCurve(stub, { mean: 0, sd: 0 });
+    // Frame still drawn, but no curve polyline -> very few lineTo entries.
+    var lineToCount = stub.lines.filter(function (l) { return l.type === 'lineTo'; }).length;
+    expect(lineToCount).toBeLessThan(10);
+  });
+
+  it('shading produces at least one filled region (closed path + fill)', function () {
+    var stubNo = makeCtxStub(300, 200);
+    var stubYes = makeCtxStub(300, 200);
+    // Track fill() calls explicitly on each stub.
+    var fillsNo = 0, fillsYes = 0;
+    stubNo.fill  = function () { fillsNo++; };
+    stubYes.fill = function () { fillsYes++; };
+
+    Ti84Plot.drawNormalCurve(stubNo,  { mean: 0, sd: 1 });
+    Ti84Plot.drawNormalCurve(stubYes, { mean: 0, sd: 1, shadeLow: -1, shadeHigh: 1 });
+
+    // The shaded version must have at least one more fill() than the unshaded.
+    expect(fillsYes).toBeGreaterThan(fillsNo);
+  });
+
+  it('shadeLow only (no shadeHigh) shades the right tail', function () {
+    var stub = makeCtxStub(300, 200);
+    var fills = 0;
+    stub.fill = function () { fills++; };
+    Ti84Plot.drawNormalCurve(stub, { mean: 0, sd: 1, shadeLow: 1.5 });
+    expect(fills).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shadeHigh only (no shadeLow) shades the left tail', function () {
+    var stub = makeCtxStub(300, 200);
+    var fills = 0;
+    stub.fill = function () { fills++; };
+    Ti84Plot.drawNormalCurve(stub, { mean: 0, sd: 1, shadeHigh: -1.5 });
+    expect(fills).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders title when provided', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawNormalCurve(stub, { mean: 100, sd: 15, title: 'IQ Scores' });
+    var titleText = stub.texts.find(function (t) { return t.text === 'IQ Scores'; });
+    expect(titleText).toBeDefined();
+  });
+
+  it('labels the x-axis at multiples of sd from the mean (default range)', function () {
+    var stub = makeCtxStub(300, 200);
+    Ti84Plot.drawNormalCurve(stub, { mean: 100, sd: 15 });
+    // +/- 3 sd: 55, 70, 85, 100, 115, 130, 145
+    var marks = ['55', '70', '85', '100', '115', '130', '145'];
+    marks.forEach(function (m) {
+      var hit = stub.texts.some(function (t) { return t.text === m; });
+      expect(hit).toBe(true);
+    });
+  });
+
+  it('respects xMin / xMax overrides for the plot domain', function () {
+    var stub = makeCtxStub(300, 200);
+    expect(function () {
+      Ti84Plot.drawNormalCurve(stub, { mean: 0, sd: 1, xMin: -2, xMax: 2 });
+    }).not.toThrow();
+    // -3 sd label should NOT appear since it's outside the [-2, 2] domain.
+    var hasMinus3 = stub.texts.some(function (t) { return t.text === '-3.0' || t.text === '-3'; });
+    expect(hasMinus3).toBe(false);
+  });
+});
