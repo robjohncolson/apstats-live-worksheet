@@ -532,19 +532,27 @@
 
       case 'classroom_activity_start':
         // Engine-driven start; replaces any existing activity slot.
+        // V7 (LIVE_CLASSROOM_V7_BUILD.md C4): optional `level` block shipped
+        // once on start (full LevelDef from JSON). Subsequent
+        // classroom_activity_state ticks omit level for payload size; the
+        // Object.assign in that case preserves the stashed value.
         return Object.assign({}, state, {
           activity: {
             type:       message.activity.type,
             startedAt:  message.activity.startedAt,
             durationMs: message.activity.durationMs,
             state:      message.activity.state,
-            finished:   false
+            finished:   false,
+            level:      message.activity.level || null
           }
         });
 
       case 'classroom_activity_state':
         // 5 Hz tick payload. Only mutates the plugin-managed inner state
         // and only while an activity is live + unfinished.
+        // V7: level is preserved by Object.assign({}, state.activity, ...)
+        // because it copies every own property from state.activity (the
+        // `level` field stashed on start) before overlaying the new state.
         if (!state.activity || state.activity.finished) { return state; }
         return Object.assign({}, state, {
           activity: Object.assign({}, state.activity, {

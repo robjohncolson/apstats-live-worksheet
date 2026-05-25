@@ -635,6 +635,7 @@
               <option value="colorbox-hue">U1.3 Sort by Color (categorical)</option>
               <option value="colorbox-grid:hand">U1.4 Hue x Handedness (two-way table, prompt)</option>
               <option value="colorbox-grid:group">U1.4 Hue x Group (two-way table, random A/B)</option>
+              <option value="level:U1.1">U1.1 The Cola Mystery (level)</option>
             </select>
           </label>
           <label>Duration (s): <input id="activity-duration" type="number" min="30" max="300" value="90"></label>
@@ -1484,6 +1485,77 @@
           }
           return;
         }
+        // V7: level -- Cola Mystery + future level scenes. Readout shows
+        // live sip tally + door votes + which doors opened + reflection
+        // state + goal status. State shape (per V7 C4 serialize):
+        //   { players, coins, switches, gates, goal, reflection, tally }
+        if (typ === 'level') {
+          var lvlTally = (state.tally && typeof state.tally === 'object') ? state.tally : {};
+          var sips     = (lvlTally.sips && typeof lvlTally.sips === 'object') ? lvlTally.sips : {};
+          var votes    = (lvlTally.votes && typeof lvlTally.votes === 'object') ? lvlTally.votes : {};
+          var gates    = Array.isArray(state.gates) ? state.gates : [];
+          var lvlReflection = (state.reflection && typeof state.reflection === 'object') ? state.reflection : {};
+          var lvlGoal       = (state.goal && typeof state.goal === 'object') ? state.goal : {};
+          var lvlPlayers    = (state.players && typeof state.players === 'object') ? state.players : {};
+
+          // Sips line: "A=3 B=2" (sorted by drink key).
+          var sipKeys = Object.keys(sips).sort();
+          var sipsParts = [];
+          for (var li7 = 0; li7 < sipKeys.length; li7++) {
+            sipsParts.push(sipKeys[li7] + '=' + (sips[sipKeys[li7]] || 0));
+          }
+          var sipsStr = sipsParts.join(' ');
+
+          // Votes line: "d1=1 d2=3 d3=0" (sorted by door id).
+          var voteKeys = Object.keys(votes).sort();
+          var votesParts = [];
+          for (var vk7 = 0; vk7 < voteKeys.length; vk7++) {
+            votesParts.push(voteKeys[vk7] + '=' + (votes[voteKeys[vk7]] || 0));
+          }
+          var votesStr = votesParts.join(' ');
+
+          // Doors opened: list ids of any gate with opened=true.
+          var openedIds = [];
+          for (var gi7 = 0; gi7 < gates.length; gi7++) {
+            if (gates[gi7] && gates[gi7].opened) openedIds.push(gates[gi7].id);
+          }
+          var openedStr = '[' + openedIds.join(', ') + ']';
+
+          // Reflection: count of players currently in the reflection room
+          // over total online (use players map size for total).
+          var totalPlayers = Object.keys(lvlPlayers).length;
+          var inReflection = 0;
+          for (var pn7 in lvlPlayers) {
+            if (Object.prototype.hasOwnProperty.call(lvlPlayers, pn7) &&
+                lvlPlayers[pn7] && lvlPlayers[pn7].inReflection) {
+              inReflection++;
+            }
+          }
+
+          var goalReached = lvlGoal.reached ? 'yes' : 'no';
+
+          if (readout) {
+            readout.textContent =
+              'Sips: ' + sipsStr + '\n' +
+              'Door votes: ' + votesStr + '\n' +
+              'Doors opened: ' + openedStr + '\n' +
+              'Players in reflection: ' + inReflection + '/' + totalPlayers + '\n' +
+              'Goal reached: ' + goalReached +
+              remainingStr;
+          }
+          if (roster) {
+            roster.innerHTML = '';
+            var sortedNames7 = Object.keys(lvlPlayers).sort();
+            for (var si7 = 0; si7 < sortedNames7.length; si7++) {
+              var u7 = sortedNames7[si7];
+              var p7 = lvlPlayers[u7] || {};
+              var li7r = document.createElement('li');
+              li7r.textContent = u7 + (p7.inReflection ? ' (in reflection)' : '');
+              roster.appendChild(li7r);
+            }
+          }
+          return;
+        }
         // V6: colorbox-grid -- 2-D contingency table readout.
         if (typ === 'colorbox-grid') {
           var assignments6 = (state.assignments && typeof state.assignments === 'object') ? state.assignments : {};
@@ -1590,6 +1662,18 @@
           opts.secondAxis = { mode: 'auto', labels: ['Group A', 'Group B'] };
         }
       }
+      // V7 Unit C: 'level' activity type carries the levelKey (e.g.,
+      // 'U1.1') so the server-side level-engine knows which JSON to load.
+      if (type === 'level') {
+        opts.levelKey = variant; // e.g., 'U1.1'
+        // 2026-05-25 V7 Codex MAJOR 6 fold: levels carry their own
+        // duration in the LevelDef (e.g., U1.1 is 180s). Only override
+        // when the teacher explicitly changed the UI input from the
+        // 90s default. Otherwise let the server pick from the JSON.
+        if (seconds === 90) {
+          delete opts.durationMs;
+        }
+      }
       boardHandle.sendMessage({
         type: 'classroom_activity_start',
         activityType: type,
@@ -1630,6 +1714,8 @@
         hint = 'Hint: walk your avatar into the zone matching your sprite color (Red 0-89, Yellow 90-179, Green 180-269, Blue 270-359 hue).';
       } else if (type === 'colorbox-grid') {
         hint = 'Hint: a two-way table cell is the intersection of TWO categorical variables. Pick your second-axis answer (prompt) or check your auto-assigned group, then walk to the cell at (your hue row, your column).';
+      } else if (type === 'level') {
+        hint = 'Hint: explore the scene. Walk onto sip stations to collect data, then walk onto a question door to vote. The right question is the one the data CAN answer.';
       } else {
         hint = 'Hint not available for activity type "' + type + '".';
       }

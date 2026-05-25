@@ -1852,6 +1852,7 @@
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
 <script src="activity-colorbox-grid.js"></script>
+<script src="activity-level.js"></script>
 
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
@@ -11392,10 +11393,19 @@ var _todayLessonInf = null, _todayLessonDS = null;  // v1c: today's lesson, stas
 var _lastClassroomSummary = null;
 var _activityHandle = null;
 var _activityMount = null;
+// 2026-05-25 V7 Codex MAJOR 5 fold: track which activity type the
+// current handle is rendering so a fast-restart across activity types
+// (e.g., end bridge, start level before the 2.5s teardown fires) tears
+// down the old handle + remounts the right renderer for the new type.
+var _activityHandleType = null;
 // 2026-05-24 V4 Codex MAJOR fold: cache the teardown timer id so a
 // new live activity (started before the 2.5s tearDown fires) can
 // cancel the stale timer instead of destroying the new renderer.
 var _activityTeardownTimer = null;
+// V7: cache the classroom-board-mount's display value before a level
+// activity hides it, so we can restore it when the level ends.
+// null = not currently hidden by a level.
+var _boardPrevDisplay = null;
 
 /* ═══ Poll archive (v2.1 U4) ═══
    Keyed by YYYY-MM-DD -> array of poll objects from GET /poll-archive.
@@ -11500,6 +11510,8 @@ function _activityRendererForType(type){
   if (type === 'colorbox-hue' && typeof window.ActivityColorbox !== 'undefined') return window.ActivityColorbox;
   // V6: colorbox-grid plugin -- two-way table (hue x second categorical axis).
   if (type === 'colorbox-grid' && typeof window.ActivityColorboxGrid !== 'undefined') return window.ActivityColorboxGrid;
+  // V7: level plugin -- avatar-driven scene with Players + Coins + Doors + Goal.
+  if (type === 'level' && typeof window.ActivityLevel !== 'undefined') return window.ActivityLevel;
   return null;
 }
 function _handleActivityState(summary){
@@ -11514,6 +11526,23 @@ function _handleActivityState(summary){
         try { clearTimeout(_activityTeardownTimer); } catch (_) {}
         _activityTeardownTimer = null;
       }
+      // V7 Codex MAJOR 5 fold: if the live handle was mounted for a
+      // DIFFERENT activity type (fast restart across types), destroy it
+      // + restore the classroom-board before remounting fresh.
+      if (_activityHandle && _activityHandleType && _activityHandleType !== act.type) {
+        try { _activityHandle.destroy(); } catch (_) {}
+        _activityHandle = null;
+        _activityHandleType = null;
+        if (_activityMount && _activityMount.parentNode) {
+          _activityMount.parentNode.removeChild(_activityMount);
+        }
+        _activityMount = null;
+        if (_boardPrevDisplay !== null) {
+          var _bRest = document.getElementById('classroom-board-mount');
+          if (_bRest) { _bRest.style.display = _boardPrevDisplay; }
+          _boardPrevDisplay = null;
+        }
+      }
       if (!_activityHandle) {
         var Renderer = _activityRendererForType(act.type);
         if (!Renderer) return;
@@ -11525,6 +11554,16 @@ function _handleActivityState(summary){
           board.parentNode.insertBefore(_activityMount, board);
         } else {
           return;
+        }
+        // V7: full-scene level renderer takes over the visual area --
+        // hide the classroom-board canvas while a level is live. The
+        // board stays MOUNTED + WS-connected; just visually hidden.
+        // Restored to its prior display value when the level ends.
+        if (act.type === 'level' && board) {
+          if (typeof _boardPrevDisplay === 'undefined' || _boardPrevDisplay === null) {
+            _boardPrevDisplay = board.style.display || '';
+          }
+          board.style.display = 'none';
         }
         // V6: pass currentUsername + boardHandle so the colorbox-grid
         // prompt modal can fire sendActivityValue with the student's pick.
@@ -11539,9 +11578,21 @@ function _handleActivityState(summary){
           currentUsername: _myName,
           boardHandle:     _classroomBoardHandle
         });
+        _activityHandleType = act.type;
       }
       if (_activityHandle && typeof _activityHandle.updateState === 'function') {
-        _activityHandle.updateState(act.state);
+        // V7: include the LevelDef (act.level) + levelKey + lessonKey
+        // alongside the inner state. V4/V5/V6 renderers ignore the
+        // extra fields; V7's level renderer reads them on first call.
+        var payloadForRenderer = act.state;
+        if (act.type === 'level' && act.level) {
+          payloadForRenderer = Object.assign({}, act.state || {}, {
+            level:     act.level,
+            levelKey:  act.levelKey  || (act.level && act.level.levelKey),
+            lessonKey: act.lessonKey || (act.level && act.level.lessonKey)
+          });
+        }
+        _activityHandle.updateState(payloadForRenderer);
       }
     } else if (act && act.finished) {
       // Finished activity. Show outcome, then tear down after 2.5s.
@@ -11560,10 +11611,17 @@ function _handleActivityState(summary){
           try { _activityHandle.destroy(); } catch (_) {}
         }
         _activityHandle = null;
+        _activityHandleType = null;
         if (_activityMount && _activityMount.parentNode) {
           _activityMount.parentNode.removeChild(_activityMount);
         }
         _activityMount = null;
+        // V7: restore the classroom-board-mount display if a level had hidden it.
+        if (_boardPrevDisplay !== null) {
+          var _board = document.getElementById('classroom-board-mount');
+          if (_board) { _board.style.display = _boardPrevDisplay; }
+          _boardPrevDisplay = null;
+        }
       }, 2500);
     } else {
       // No activity. Ensure clean teardown of anything stale.
@@ -11571,6 +11629,13 @@ function _handleActivityState(summary){
         try { _activityHandle.destroy(); } catch (_) {}
       }
       _activityHandle = null;
+      _activityHandleType = null;
+      // V7: restore the classroom-board-mount display if a level had hidden it.
+      if (_boardPrevDisplay !== null) {
+        var _boardElse = document.getElementById('classroom-board-mount');
+        if (_boardElse) { _boardElse.style.display = _boardPrevDisplay; }
+        _boardPrevDisplay = null;
+      }
       if (_activityMount && _activityMount.parentNode) {
         _activityMount.parentNode.removeChild(_activityMount);
       }
