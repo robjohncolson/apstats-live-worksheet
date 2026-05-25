@@ -633,6 +633,8 @@
             <select id="activity-type">
               <option value="bridge-mean">U1.1 Lift the Bridge (mean)</option>
               <option value="colorbox-hue">U1.3 Sort by Color (categorical)</option>
+              <option value="colorbox-grid:hand">U1.4 Hue x Handedness (two-way table, prompt)</option>
+              <option value="colorbox-grid:group">U1.4 Hue x Group (two-way table, random A/B)</option>
             </select>
           </label>
           <label>Duration (s): <input id="activity-duration" type="number" min="30" max="300" value="90"></label>
@@ -1482,6 +1484,52 @@
           }
           return;
         }
+        // V6: colorbox-grid -- 2-D contingency table readout.
+        if (typ === 'colorbox-grid') {
+          var assignments6 = (state.assignments && typeof state.assignments === 'object') ? state.assignments : {};
+          var picks6 = (state.picks && typeof state.picks === 'object') ? state.picks : {};
+          var currentCell6 = (state.currentCell && typeof state.currentCell === 'object') ? state.currentCell : {};
+          var colCount6 = (typeof state.colCount === 'number') ? state.colCount : 2;
+          var keys6 = Object.keys(assignments6);
+          var picked6 = 0;
+          var correct6 = 0;
+          for (var ki6 = 0; ki6 < keys6.length; ki6++) {
+            var u6 = keys6[ki6];
+            if (picks6[u6] != null) picked6++;
+            var cc6 = currentCell6[u6];
+            if (cc6 && assignments6[u6] && cc6.row === assignments6[u6].row && cc6.col === picks6[u6]) {
+              correct6++;
+            }
+          }
+          if (readout) {
+            readout.textContent =
+              'Picked: ' + picked6 + '/' + keys6.length +
+              '   In correct cell: ' + correct6 + '/' + keys6.length +
+              '   hold: ' + Math.round(holdMs) + ' / ' + holdTargetMs + ' ms' +
+              '   ' + colCount6 + ' cols' +
+              remainingStr;
+          }
+          if (roster) {
+            roster.innerHTML = '';
+            var sortedNames6 = keys6.slice().sort();
+            for (var si6 = 0; si6 < sortedNames6.length; si6++) {
+              var u6r = sortedNames6[si6];
+              var li6 = document.createElement('li');
+              var wantR6 = (assignments6[u6r] && typeof assignments6[u6r].row === 'number') ? assignments6[u6r].row : -1;
+              var wantC6 = picks6[u6r];
+              var cur6 = currentCell6[u6r];
+              var rowLbl6 = ['R', 'Y', 'G', 'B'][wantR6] || '?';
+              var pickLbl6 = (wantC6 == null) ? '?' : String(wantC6);
+              var inCell6 = (cur6 && cur6.row === wantR6 && cur6.col === wantC6);
+              li6.textContent = u6r + ': want (' + rowLbl6 + ',' + pickLbl6 + ')' +
+                (cur6 && typeof cur6.row === 'number' && cur6.row >= 0
+                  ? ' in (' + (['R','Y','G','B'][cur6.row] || '?') + ',' + cur6.col + ')' + (inCell6 ? ' [OK]' : '')
+                  : '');
+              roster.appendChild(li6);
+            }
+          }
+          return;
+        }
         // Default branch (bridge-mean): mean + target readout.
         var mean  = (typeof state.currentMean === 'number') ? state.currentMean : 0;
         var target = (typeof state.target === 'number') ? state.target : 0;
@@ -1525,14 +1573,27 @@
       if (!boardHandle || typeof boardHandle.sendMessage !== 'function') return;
       var typeEl = document.getElementById('activity-type');
       var durEl  = document.getElementById('activity-duration');
-      var type   = typeEl ? typeEl.value : 'bridge-mean';
+      var rawType = typeEl ? typeEl.value : 'bridge-mean';
       var seconds = durEl ? parseInt(durEl.value, 10) : 90;
       if (!isFinite(seconds)) seconds = 90;
       var durationMs = Math.max(30000, Math.min(300000, seconds * 1000));
+      // V6: dropdown values like 'colorbox-grid:hand' / 'colorbox-grid:group'
+      // use a ':variant' suffix to pick the secondAxis shape at launch time.
+      var parts = String(rawType).split(':');
+      var type = parts[0];
+      var variant = parts[1] || '';
+      var opts = { durationMs: durationMs };
+      if (type === 'colorbox-grid') {
+        if (variant === 'hand') {
+          opts.secondAxis = { mode: 'prompt', question: 'Are you left-handed?', options: ['No', 'Yes'] };
+        } else if (variant === 'group') {
+          opts.secondAxis = { mode: 'auto', labels: ['Group A', 'Group B'] };
+        }
+      }
       boardHandle.sendMessage({
         type: 'classroom_activity_start',
         activityType: type,
-        opts: { durationMs: durationMs }
+        opts: opts
       });
     }
 
@@ -1567,6 +1628,8 @@
         hint = 'Hint: mean = (v1 + v2 + ... + vN) / N. Move toward the target by nudging values up/down.';
       } else if (type === 'colorbox-hue') {
         hint = 'Hint: walk your avatar into the zone matching your sprite color (Red 0-89, Yellow 90-179, Green 180-269, Blue 270-359 hue).';
+      } else if (type === 'colorbox-grid') {
+        hint = 'Hint: a two-way table cell is the intersection of TWO categorical variables. Pick your second-axis answer (prompt) or check your auto-assigned group, then walk to the cell at (your hue row, your column).';
       } else {
         hint = 'Hint not available for activity type "' + type + '".';
       }

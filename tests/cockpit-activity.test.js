@@ -110,7 +110,9 @@ describe('Unit C source structure: renderActivity / startActivity / cancelActivi
   it('startActivity sends classroom_activity_start via boardHandle.sendMessage', () => {
     var idx = COCKPIT_SRC.indexOf('function startActivity');
     expect(idx).toBeGreaterThan(-1);
-    var slice = COCKPIT_SRC.slice(idx, idx + 800);
+    // V6 expanded the function body (variant parsing for colorbox-grid):'hand'/'group').
+    // Widen the slice window so the sendMessage call still fits inside.
+    var slice = COCKPIT_SRC.slice(idx, idx + 1500);
     expect(slice).toMatch(/boardHandle\.sendMessage\s*\(/);
     expect(slice).toMatch(/classroom_activity_start/);
   });

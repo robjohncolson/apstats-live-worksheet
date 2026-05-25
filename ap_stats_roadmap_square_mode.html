@@ -1851,6 +1851,7 @@
 <script src="ti84-plot.js"></script>
 <script src="activity-bridge.js"></script>
 <script src="activity-colorbox.js"></script>
+<script src="activity-colorbox-grid.js"></script>
 
 <script>
 /* ═══ BAKED REGISTRY (injected by build-roadmap-data.mjs) ═══ */
@@ -11497,6 +11498,8 @@ function _activityRendererForType(type){
   if (type === 'bridge-mean' && typeof window.ActivityBridge !== 'undefined') return window.ActivityBridge;
   // V5: colorbox-hue plugin -- sorts students into colored zones by sprite hue.
   if (type === 'colorbox-hue' && typeof window.ActivityColorbox !== 'undefined') return window.ActivityColorbox;
+  // V6: colorbox-grid plugin -- two-way table (hue x second categorical axis).
+  if (type === 'colorbox-grid' && typeof window.ActivityColorboxGrid !== 'undefined') return window.ActivityColorboxGrid;
   return null;
 }
 function _handleActivityState(summary){
@@ -11523,7 +11526,19 @@ function _handleActivityState(summary){
         } else {
           return;
         }
-        _activityHandle = Renderer.mount(_activityMount, {});
+        // V6: pass currentUsername + boardHandle so the colorbox-grid
+        // prompt modal can fire sendActivityValue with the student's pick.
+        // V4/V5 renderers ignore these opts.
+        var _myName = null;
+        try {
+          var _cur = (window.rosterClient && typeof window.rosterClient.current === 'function')
+            ? window.rosterClient.current() : null;
+          _myName = (_cur && _cur.username) ? _cur.username : null;
+        } catch (_) {}
+        _activityHandle = Renderer.mount(_activityMount, {
+          currentUsername: _myName,
+          boardHandle:     _classroomBoardHandle
+        });
       }
       if (_activityHandle && typeof _activityHandle.updateState === 'function') {
         _activityHandle.updateState(act.state);
