@@ -1,9 +1,337 @@
+# Continuation Prompt -- session 115 (multi-arc continuation)
+
+> **SESSIONS 114 + 115 CLOSED.** **THIS SECTION IS AUTHORITATIVE.
+> It supersedes EVERYTHING below it** -- the session-113 block and
+> every older block are historical record only; do not act on any
+> older "NEXT"/SESSION text. Last updated 2026-05-25 (session 115
+> close / 116 ready). follow-alongs HEAD = `37f4591` (Desk WS
+> diagnostic helper). curriculum_render HEAD = `936ddec` (80-level
+> batch ship). Linear, local==origin on both.
+>
+> ## Shipped this 2-session arc -- a complete LC activity engine
+>
+> Sessions 114 + 115 took the Live Classroom from "presence board +
+> doorways" to "lesson-level gameplay" by shipping FOUR activity-engine
+> versions (V4 abstract -> V5 colorbox -> V6 colorbox-grid -> V7
+> level-engine + V7.1 additive-overlay redesign), then AUTHORING 80
+> lesson-levels (one per AP Stats topic, U1.1 - U9.6) via a parallel
+> 9-unit-author dispatch. Plus TI-84 Phase 1 widgets earlier in s114.
+>
+> 10+ feature commits across both repos. Codex review every phase
+> except V6 (caught real bugs each time). One unresolved bug parked
+> for the next session (task #17).
+>
+> ## Session 114 (2026-05-24) -- TI-84 widgets + V4/V5/V6 activity engine
+>
+> ### Day-1 fixes (`7d15711`, `96643af`, `b1cfbe9`)
+> - Hide "Live with Mr. Colson" red pill on the Desk (visually
+>   intrusive per teacher).
+> - Diagnose cockpit "single dimmed sprite + clicks no-op" via a
+>   temporary `window.__lcSummary` surface. Found TWO root causes:
+>   * Off-canvas sprite position (server-stored x=919 on a 640 CSS
+>     canvas). Fix: `clampSpriteX(x, sp)` helper applied in `addSprite`
+>     (member.pos.x rehydration) + `applyPos` (classroom_pos receive).
+>   * HiDPI hit-test bug: `cx = cssX * (canvas.width / clientWidth)`
+>     scaled click coords to PIXEL space while `sprite.x` lives in CSS
+>     space. On DPR=1.25 every click missed by 25 px. jsdom tests pin
+>     DPR=1 so it didn't catch. Fix: `cx = cssX`, no scaling.
+> - +3 behavioral tests in `tests/classroom-board.test.js` (HiDPI gap
+>   pinned for future).
+>
+> ### TI-84 Phase 1 widgets (`9bf77c9`)
+> Extended `window.Ti84Plot` (was: `drawBarChart` + `drawDotplot`) with
+> 3 new draw functions following the same TI-84 LCD aesthetic + pure
+> data-driven style:
+> - `drawHistogram(ctx, {values, bins?, title?})` -- flush-bar
+>   histogram with auto-binning (ceil(sqrt(n)) default) OR explicit
+>   bin count OR explicit edges array.
+> - `drawBoxplot(ctx, {five | datasets, title?})` -- single OR parallel
+>   boxplots from a five-num summary. Parallel layout shares one x-axis.
+> - `drawNormalCurve(ctx, {mean?, sd?, shadeLow?, shadeHigh?, ...})` --
+>   density curve with optional shaded region (left/right tail/between).
+>
+> +30 tests in `tests/ti84-plot.test.js` (53 total).
+>
+> ### V4 activity engine + bridge-mean plugin (cr `6bce3ad`, fa `cd36db2`)
+> First version of the LC activity engine. Plugin registry on the
+> server (`activityPlugins[type] = {minMembers, initActivity, ...}`),
+> 200ms global tick loop, lifecycle messages
+> (`classroom_activity_start/_state/_success/_timeout/_cancel/_error`),
+> override-gate auto-fire on success.
+> - bridge-mean plugin: students get value [1,10]; the cockpit shows
+>   a "bridge" rising with `mean(values)`; class hits target+/-0.3 for
+>   3 sustained seconds -> override-gate unlocks U1.1.
+> - 4 file-disjoint Sonnet waves (Unit A cr engine, Unit B
+>   classroom-board reducer, Unit C cockpit, Unit D Desk renderer);
+>   Codex 2 BLOCKER + 3 MAJOR folded
+>   (`studentUsername` field name in override-gate POST; reverse mutex
+>   on armGate/openPoll/openDoorways; empty-room timeout; teardown
+>   timer cancel; result-panel buttons wired).
+> - 60 cr tests + 96 fa tests added; full suite green.
+>
+> ### V5 colorbox-hue (cr `cff429d`, fa `cc42569`)
+> Second plugin: sort students into 4 colored zones by their existing
+> sprite_hue. Engine signature extended (`onTick(state, dt, room)` +
+> `onMemberJoin(state, username, room)` -- V4 bridge-mean ignores
+> extra args).
+> - Codex 1 BLOCKER + 1 MAJOR folded: per-member canvasW added to
+>   `classroom_pos` payload (server stores `member.canvasW` so
+>   position-driven plugins can rescale into level coord space);
+>   `fallbackHueForUsername` replaced with verbatim copy of the
+>   board's `hashStringToHue` for tint parity.
+> - 42 cr tests + 19 fa renderer tests.
+>
+> ### V6 colorbox-grid (cr `478958f`, fa `11e24c8`)
+> Third plugin: 2-D contingency-table grid. Row = hue quadrant.
+> Column = plugin-configurable second categorical (`opts.secondAxis`
+> mode='prompt' for student modal pick, OR mode='auto' for server
+> random A/B). Engine UNCHANGED (V5's signature extensions covered it).
+> NO new WS message types (reuses V4's `classroom_activity_value` for
+> the prompt pick). Cockpit dropdown options:
+> `colorbox-grid:hand` / `colorbox-grid:group`.
+> - Codex review skipped (V5 already covered the cross-cutting
+>   concerns; V6 is a thin extension).
+> - 47 cr tests + 21 fa renderer tests.
+>
+> ## Session 115 (2026-05-25) -- V7 level engine + V7.1 redesign + 80 levels
+>
+> ### V7 BUILD + the scene-replacement misstep (fa `79c0216`, cr `fe0034e`, fa `55a9666`)
+> Spec-then-dispatch loop. Wrote `LIVE_CLASSROOM_V7_BUILD.md` to ship
+> a "level engine" -- per-lesson JSON files in `activities/`, the
+> Desk renders a full scene with Coins / Switches / Gates / Goal / Text,
+> avatars walk the puzzle. First level: U1.1 "The Cola Mystery" (Coke
+> vs Pepsi framework-named resource; 4 sip stations + 3 question
+> doors + reflection rooms for wrong votes).
+> - Dispatch: Unit A (cr engine + activities/U1.1.json + tests),
+>   Unit B (classroom-board reducer), Unit C (cockpit), Unit D
+>   (NEW `activity-level.js` renderer 808 LoC), Unit E planner-direct
+>   (Desk integration).
+> - Codex 3 BLOCKER + 3 MAJOR + 1 MINOR; 5 folded inline (canvasW
+>   scaling, reflection auto-clear timer replacing physical walk-back,
+>   buildStatePayload snapshot includes level, fast-restart stale
+>   handle, duration override).
+>
+> ### `activities/` relocation (cr `061b484`)
+> First field test: cockpit `[code=level-missing]` on Run Activity.
+> Root cause: Railway deploys `railway-server/` as the project root;
+> the `activities/` folder at cr ROOT was outside the bundle. Fix:
+> moved `activities/` INTO `railway-server/activities/`, updated
+> `level-engine.js` path. **Future levels MUST land in
+> `cr/railway-server/activities/<key>.json`.**
+>
+> ### V7 was REJECTED visually (s115 mid-session)
+> Teacher tested V7: "the avatars are missing, the visual language
+> is completely different, the arrows do not control... the game
+> interface is meant to be additive on top of the avatar/doorway
+> visual language." V7 had built a SCENE-REPLACEMENT design --
+> classroom-board hidden, separate canvas, players re-rendered as
+> plain rects, arrow keys gated.
+>
+> **New hard rule saved to memory**:
+> `feedback_lc_additive_overlay.md` -- LC features must be ADDITIVE
+> overlays on the existing avatar/doorway scene, NEVER replace it.
+> Indexed in MEMORY.md.
+>
+> ### V7.1 BUILD: additive-overlay redesign (fa `3d67947`, then cr `6c8f96b`, fa `e424993`)
+> Pivoted V7's full-scene renderer to a transparent overlay on top of
+> the existing LC scene. The big visual + architectural deltas:
+> - Players + arrow keys + hue tinting UNCHANGED (classroom-board's
+>   sprite engine owns them).
+> - QuestionDoors REUSE the existing v3 P4 doorways mechanic
+>   (open/walk-through/press-Up vote) via server-side
+>   `_openDoorwaysServerSide` driven by `state.sideEffects.openDoorways`
+>   emitted from the level-engine's SIPPING->VOTING transition.
+> - `chipSize = 10` (was 24), `map.height <= 8`, `map.width <= 32`
+>   -- levels fit the existing LC canvas (320x80 native).
+> - `classroom-board-mount` NEVER hidden (revert V7's
+>   `_boardPrevDisplay` logic).
+> - Reflection panel = DOM overlay, time-based 8s auto-clear
+>   (the V7 "physical walk-back to ReturnWarp" wasn't durable;
+>   hidden classroom-board kept broadcasting positions that
+>   overwrote the warp).
+> - Phase field added to level state (Codex V7 BLOCKER 1 finally
+>   folded): SIPPING -> VOTING -> {REFLECTION -> VOTING}* ->
+>   GOAL_AVAILABLE -> LEVEL_CLEARED.
+> - `activity-level.js` shrunk from 808 -> 378 LoC. Renders ONLY
+>   level decorations (Coins / Goal / Text / Reflection panel).
+>   NEVER renders Players. NEVER renders QuestionDoors.
+> - 44 cr level-engine tests + 25 plugin tests + 24 fa renderer
+>   tests + 10 Desk integration tests.
+>
+> ### 80-level batch -- 9 parallel unit-author agents (cr `936ddec`, fa `4e7e856`)
+> User awake-then-asleep request: "look at the rest of lessons of
+> which there are around 80 if I recall... draft the rest of the
+> levels that will drive home the concept covered through
+> cooperative gameplay in the pico park fashion." Running
+> autonomously per the explicit mandate.
+>
+> Drafted `LEVEL_DESIGN_RECIPE.md` (~320 lines, covers actor
+> vocabulary, JSON schema, 6 mechanic Patterns A-F, per-unit thematic
+> anchors, 3 fully worked walkthroughs). Then dispatched 9 unit-author
+> agents IN PARALLEL -- one per AP Stats unit -- to read
+> `apstat_N_framework.md` + author level JSONs file-disjoint into
+> `cr/railway-server/activities/UN.X.json`.
+>
+> Output:
+> | Unit | New levels | Patterns used |
+> |---|---|---|
+> | U1 | 9 (1.2-1.10; 1.1 was already shipped) | A + B + F |
+> | U2 | 9 (2.1-2.9) | A + B + C |
+> | U3 | 7 (3.1-3.7) | A + D + E |
+> | U4 | 12 (4.1-4.12) | B + C + A + D |
+> | U5 | 8 (5.1-5.8) | A + B + C + F |
+> | U6 | 11 (6.1-6.11) | A + C + D + E |
+> | U7 | 10 (7.1-7.10) | A + C + D |
+> | U8 | 7 (8.1-8.7) | A + B + C + D + F |
+> | U9 | 6 (9.1-9.6) | A + C + D + E |
+> | **Total** | **79 new + U1.1 = 80** | |
+>
+> 80/80 files validate clean:
+> - All parse as valid JSON
+> - All use `v7-level-1` schema
+> - All have `chipSize: 10`, `map.height <= 8`, `map.width <= 32`
+> - All actor `x` in `[0, 32)`, `y` in `[0, 8)`
+> - All have exactly ONE `correct: true` QuestionDoor + `reflection`
+>   strings on every wrong door
+> - ASCII-only, LF line endings, no emojis
+>
+> Cockpit dropdown extended with 9 `<optgroup>` headers ("Levels --
+> Unit N: ...") exposing all 80 levels in `teacher-classroom.html`.
+>
+> ### Diagnostic patches shipped during the V7-V7.1 arc
+> - fa `0b14dd2` -- cockpit surfaces `classroom_activity_error`
+>   inbound (was silently dropped pre-fix; "Waiting for server
+>   reply..." stayed forever).
+> - fa `729f5e3` -- `startActivity` failure reasons in
+>   `#activity-status` field (boardHandle null / sendMessage missing
+>   / sendMessage returned false / success).
+> - fa `37f4591` -- Desk classroom-board logs every inbound
+>   `classroom_activity_*` frame as `[Desk WS<-server]` console line
+>   BEFORE _reduce, so the next test session can decisively diagnose
+>   the unresolved bug below.
+>
+> ## NEXT -- queued (task #17)
+>
+> **UNRESOLVED BUG**: Teacher tested V7.1 U1.1. Cockpit successfully
+> sent `classroom_activity_start` + the server processed (180s
+> timeout fired) + the cockpit got the timeout broadcast. BUT the
+> student Desk's `_lastClassroomSummary.activity` stayed `undefined`
+> throughout. Both sides confirmed on section "PeriodX".
+>
+> Possible causes (the s115-close diagnostic `37f4591` will pinpoint
+> in one refresh):
+> 1. **Cached pre-V4 classroom-board.js** on the student Desk -- WS
+>    receives the frame but the reducer doesn't know the case +
+>    silently no-ops. The new `[Desk WS<-server]` console log will
+>    show frames arriving IF this is the cause.
+> 2. **Server broadcast targets miss the student socket** -- the
+>    student is in `room.members` but their socket isn't in
+>    `member.sockets` for some reason, OR the broadcast loop skips
+>    them. If `37f4591` shows NO `[Desk WS<-server]` lines at all
+>    after Run Activity, this is the cause.
+> 3. **V7.1 activityTick wrapper has a broadcast-collection bug** --
+>    the `nextState.sideEffects` consumption logic somehow swallowing
+>    state broadcasts. Less likely given the V4/V5/V6 tests still
+>    pass.
+>
+> Next-session diagnostic flow:
+> 1. Hard-refresh student Desk (Ctrl+Shift+R + maybe disable cache in
+>    DevTools to be safe).
+> 2. Open DevTools console on student Desk.
+> 3. Have teacher launch U1.1 from cockpit.
+> 4. Look for `[Desk WS<-server]` lines on the Desk console. The
+>    answer is in those lines (or their absence).
+>
+> ### Other follow-ups (lower priority)
+> - **Cockpit `renderActivity` FINISHED branch uses bridge-mean
+>   labels for ALL activity types** -- "Time up -- target band not
+>   held for 3 seconds" appears even for level timeouts. Cosmetic but
+>   confusing. Should branch on `activity.type` for per-type labels.
+> - **V7.2 actor vocabulary wishlist** (from unit-author agent
+>   reports, none blocking):
+>   * `Coin` actor with numeric `value` field (distinct from
+>     `SipStation`'s string `drink`) -- helps U1.7 / U1.8 / U4.10 /
+>     U4.12 / U8.4
+>   * `ChartActor` (live histogram / boxplot / scatter render) --
+>     would visualize what U1.4 / U1.5 / U1.8 / U2.4 currently encode
+>     as text
+>   * `LabelGroup` (visually cluster strata) -- helps U3.3 / U3.6
+>   * Typed math-formula `Text` variant -- for U4.8 / U4.11 / U4.12
+> - **`U5.5 Diff of p-hats` -- the level uses N=2 SipStations as a
+>   tally** -- pedagogy-light; V8.0 could add multi-sample mechanics
+>
+> ## Frozen contracts on file (for cross-reference)
+>
+> | Contract | Status | Commit | Notes |
+> |---|---|---|---|
+> | `LIVE_CLASSROOM_V4_BUILD.md` | SHIPPED | `79c0216` | engine + bridge-mean |
+> | `LIVE_CLASSROOM_V5_BUILD.md` | SHIPPED | `d095906` | colorbox-hue |
+> | `LIVE_CLASSROOM_V6_BUILD.md` | SHIPPED | `c507942` | colorbox-grid |
+> | `LIVE_CLASSROOM_V7_BUILD.md` | SUPERSEDED | `8dc58ae` | scene-replacement (rejected) |
+> | `LIVE_CLASSROOM_V7_1_BUILD.md` | SHIPPED (with unresolved bug) | `3d67947` | additive overlay |
+> | `LEVEL_DESIGN_RECIPE.md` | LIVE | `d0923c0` initial; updated `e424993` for chipSize=10 | 80-level batch authoring guide |
+>
+> ## Carry-forward gotchas (load-bearing for next session)
+>
+> - **LC features = ADDITIVE OVERLAYS only.** Never replace the
+>   existing avatar/doorway/arrow-key scene. See
+>   `feedback_lc_additive_overlay.md`. V7 wasted a wave learning this.
+> - **Levels live in `cr/railway-server/activities/<key>.json`** --
+>   Railway deploys `railway-server/` as the project root, so any
+>   `cr/activities/` at the cr ROOT is invisible.
+> - **chipSize=10 is the V7.1 budget** -- mapWidth <= 32,
+>   mapHeight <= 8, actor y in [0, 8). V7's chipSize=24 examples are
+>   stale; the V7.1 recipe corrected the samples.
+> - **Per-member `canvasW` rides classroom_pos** -- the server
+>   rescales x by canvasW into level space. V5 fix; V7+ depends on it.
+> - **Codex review caught real bugs every phase** (2+ BLOCKERs each
+>   in V4/V5/V7). Skip it ONLY for tiny extensions like V6 or test-
+>   pin updates.
+> - **V7.1 question-doors REUSE v3 P4 doorways** -- the engine emits
+>   `state.sideEffects.openDoorways` at SIPPING->VOTING; the
+>   classroom.js activityTick wrapper calls
+>   `_openDoorwaysServerSide(...)` to fan to the room. The level's
+>   `doorways[]` array carries `{id, x, y, text, correct, reflection}`
+>   from the JSON but the VISUAL is the existing doorway pillar (NOT
+>   a new question-door rectangle).
+> - **Reflection in V7.1 is TIME-BASED auto-clear at 8s**, not
+>   physical walk-back. V7's walk-back wasn't durable.
+>
+> ## Test baselines (session-end)
+>
+> - cr: **1183/1184** (+13 from V7.1 over V7's 1170; +47 from 80-level
+>   batch is data-only, no new tests). 1 long-standing redox-chat fail
+>   unchanged.
+> - fa: **5642/5643** (+net 89 from V4/V5/V6/V7.1; 1 long-standing
+>   study-guide fail unchanged).
+>
+> ## Recall on reload
+>
+> - **Current contracts**: V7.1 is the active LC activity engine.
+>   80 levels in `cr/railway-server/activities/U*.json` cover ~94%
+>   of AP Stats topics.
+> - **Unresolved**: student-Desk-doesn't-see-activity bug
+>   (task #17). Diagnostic helper `[Desk WS<-server]` lands in
+>   `37f4591`; next test session should hard-refresh student Desk +
+>   look for those lines.
+> - **Memory files of note for this work**:
+>   `feedback_lc_additive_overlay.md`,
+>   `project_live_classroom.md` (covers v1a-r3 history),
+>   `feedback_curriculum_render_sacred.md`,
+>   `feedback_diagnostic_first.md`,
+>   `feedback_test_on_public_url.md`.
+> - **The proven loop kept earning its keep** across V4-V7 -- Codex
+>   review caught a real BLOCKER or MAJOR every single phase except
+>   V6 (which was a thin V5 extension). Future big features should
+>   keep that step in the loop.
+
+---
+
 # Continuation Prompt -- session 113
 
-> **SESSION 113 CLOSED.** **THIS SECTION IS AUTHORITATIVE. It
-> supersedes EVERYTHING below it** -- the session-112 block and every
-> older block are historical record only; do not act on any older
-> "NEXT"/SESSION text. Last updated 2026-05-24 (session 113 close).
+> **THIS SECTION IS HISTORICAL RECORD as of session 115**. The
+> session-115 block above is authoritative; the text below is
+> preserved for traceability only. Last updated 2026-05-24 (session 113 close).
 > follow-alongs HEAD = the commit carrying this CONTINUATION refresh
 > (feature work ended at `0c2c179`; docs polish in this commit).
 > curriculum_render HEAD = `753f523` (unchanged through s113). Linear,
