@@ -1,287 +1,381 @@
-# Live Classroom V7 Pico Parity -- master spec
+# Live Classroom V7 Pico Parity -- master spec (REVISED)
 
-Session 118 (2026-05-26). Author: CC. Status: DRAFT (awaiting user "go").
+Session 118 (2026-05-26). Status: REVISED -- mechanic-first framing.
 
-The user has selected **Tier 3 Pico parity** for deepening the 79
-non-U1.1 levels in `cr/railway-server/activities/`. This file is the
-master plan covering:
+This file supersedes the V7.7-era version of itself (which framed the
+arc around "voting with HUD aids"). After playing the shipped V7.7
+U1.2 the user identified the structural problem -- the game was a
+flashcard delivery system, not a teaching mechanic -- and the design
+was redirected by Codex's critique
+(see `U1_1_MECHANIC_FIRST_DESIGN.md` for the canonical example).
 
-1. Pico-mechanic actor palette and the AP-Stats topic mapping.
-2. Engine sprint order (V7.7 ... V7.12, six sprints across cr + fa).
-3. Per-unit mechanic assignment for the 79 authoring tasks.
-4. Hard constraints carried forward from the V7 .. V7.6.1 arc.
+The shipped V7.7 Tally actor is NOT obsoleted -- it survives as a
+cascade fallback in the V7.8 `_isSippingComplete` precedence list
+(ChoicePad > Tally-threshold > all-coins). U1.2 ships unchanged in
+V7.8; future levels can opt into Tally if their pedagogy fits.
 
-Reference source: `C:/Users/rober/Downloads/Projects/hermes/old-app/recovered/lua_sources/`
--- 104 carved Lua stage scripts from decompiled Pico Park
-(`pico_park64_dx9.pdb`). The mechanic palette below mirrors the actor
-types Pico Park uses (`Coin` + `CoinObserver`, `Switch` + `Block`,
-`WeightedLift`, `Watch`, `Seesaw`, etc.) and matches the V7.1
-"candidates" list in `LEVEL_DESIGN_RECIPE.md`.
+## 1. Pedagogical principle (the headline change)
 
-Canonical depth baseline: `cr/railway-server/activities/U1.1.json`
-(V7.5 / V7.6 -- 4 stages, multi-doorway voting, hidden SipStations,
-Key + Goal). Every other level reaches this depth or deeper.
+**The mechanic IS the lesson.**
 
-## 1. Mechanic palette -- 6 new actors
+Voting is a flashcard. The previous V7 arc treated the game as a
+walkable quiz delivery system -- kids collected sips, then clicked
+through 4 stages of multiple-choice questions to "demonstrate" the
+concept. The walking was theater; the lesson was the multiple choice.
 
-Each new actor is a single bounded engine change (cr level-engine.js
-+ classroom.js wrapper + fa classroom-board.js sprite/UI). All
-actors integrate with the existing V7.5 phase machine (SIPPING ->
-VOTING -> REFLECTION -> KEY_HUNT -> GOAL_AVAILABLE -> LEVEL_CLEARED).
+The new arc treats cooperation primitives as the lesson. A platform
+that requires N players to push it. A gate that only opens when every
+player has a complete row of data. A door that physically can't open
+because the data doesn't measure that question. The concept lives in
+the mechanic; the mechanic gives the kid no choice but to live the
+concept.
 
-| Actor | Pico source | What it does | Phase it lives in | AP topic style fit |
+Voting is demoted to an OPTIONAL reflection beat at the end of some
+levels -- never the primary mechanic, never the gate. Wrong-vote
+reflection (V7.5/V7.6) is preserved as a tool but used sparingly --
+most levels won't have a vote at all.
+
+## 2. Why we re-grounded
+
+Three sources triangulated the re-design:
+
+1. **The user playing V7.7 U1.2 in live PeriodX** -- "even though we
+   have voting + Key + Goal, the questions still feel like flashcards
+   with extra steps." The mechanic wasn't teaching; the voting was.
+2. **The Pico Park stages I mined** in `hermes/old-app/recovered/
+   lua_sources/` (104 stages) -- every stage embeds the cooperation
+   primitive IN the mechanic. There's no "vote to advance." There's
+   only "the platform won't tilt without you."
+3. **Codex's pedagogy critique** (session 118) -- pointed out that an
+   earlier sketch (CC's "balanced or fall" tilt platform) was
+   teaching the WRONG concept for U1.1. The 1.1 lesson is "which
+   questions can these data answer?" not "is your sample balanced?"
+   The complete-row gate is the right primitive: data needs to be
+   complete observations, not balanced ones.
+
+## 3. Reference: browser_port TypeScript port
+
+`C:/Users/rober/Downloads/Projects/hermes/old-app/recovered/browser_port/`
+is a working TypeScript port of Pico Park. It's the product of an
+autonomous-agent reverse-engineering loop (see
+`SLEEP_AGENT_LOOP_PROMPT.md` / `CONTINUOUS_WORKER_PROMPT.md` /
+`LEVEL_STATE_MACHINE_PRIORITY.md` in that dir -- not our work, but
+deeply useful).
+
+We use the port as a **semantic reference only**. The TS code is
+read-only; we re-implement each actor in our own engine style (ES
+modules for `cr/railway-server/`, sprite engine entities for
+`fa/classroom-board.js`). Reasons:
+- TS + PIXI.js doesn't fit the existing LC engine (vanilla JS sprite
+  engine + plain canvas).
+- The port is single-player; LC is multiplayer via `room.members`.
+- License clarity -- the port is a decompiled reconstruction; safest
+  to extract semantics, not source.
+
+Per-actor reference table:
+
+| Browser_port TS | Status | LC actor (our impl) | Sprint |
+|---|---|---|---|
+| `Player.ts` | Stable, single-player platformer | Existing LC avatar (already multiplayer) | (prereq -- no new sprint) |
+| `Switch.ts` | Stable | `ChoicePad` (V7.8 -- semantically a labeled switch); future generic `SwitchPad` for non-binary choices | V7.8 |
+| `KeyGate.ts -- Key` | Stable | Existing LC `Key` actor (V7.5) | (already shipped) |
+| `KeyGate.ts -- Gate` + `resolveClosedGateCollision` | Stable | New `Gate` actor (per-door predicate; physical block) | V7.9 |
+| `PushBox.ts` | Stable | `RowBlock` (V7.10 -- semantically a pushable carrying choice payload); generic `PushBox` (V7.11) | V7.10/V7.11 |
+| `StopWatch.ts` | Mostly visual + activation state | Defer; greenfield ours when needed | V7.13+ |
+| `Watch.ts` | Mostly visual | Same -- defer | V7.13+ |
+| `WeightedLift.ts` | Mostly render / params (no movement yet) | Greenfield ours when needed; visual reference only | V7.14+ |
+| `Thunder.ts` | Has extensive RE investigation docs (`.json` byte evidence) | Not needed for AP Stats levels | -- |
+| `Warp.ts` / `WarpAll.ts` | Stable | Could power `ReturnWarp` (already exists in LC schema as a placeholder) | V7.12 |
+| `ColorBox.ts` | Stable | Could power per-category visual sorting | V7.13+ |
+| `FallBox.ts` | Stable | Hazard / fail-state platform | V7.13+ |
+| `JumpStand.ts` | Stable | Bounce pad (mobility helper) | V7.13+ |
+| `PlaneObstacle.ts` | Stable | Generic blocker | V7.13+ |
+| `StepEnemy.ts` | Stable | Could power "bias" / "confounding" antagonists | V7.13+ |
+
+The browser_port also has `levelStateMachine.ts` (5720 LoC). Worth
+reading the API shape if we end up re-thinking our phase machine,
+but our V7.5 phase machine (SIPPING/VOTING/REFLECTION/KEY_HUNT/
+GOAL_AVAILABLE/LEVEL_CLEARED) maps cleanly to the zone-based design.
+
+## 4. Sprint plan (revised)
+
+Each sprint adds one or more actors mapped to a U1.1-template zone.
+The sprint order is driven by U1.1's zones (because U1.1 is the
+prototype and ships first); other levels reuse the primitives from
+existing sprints + add their own as needed.
+
+| Sprint | Adds | Powers U1.1 zone | Powers other-level usage | Sessions |
 |---|---|---|---|---|
-| `Tally` | `CoinObserver` | Singleton meta-entity. Reads `state.coins[]` and `state.tally`. Renders a live count panel; gates `state.key.spawned` on a `threshold` rule (e.g. `tally['A'] >= 3`). | SIPPING/VOTING | U1.2, U1.7, U2.1, U5.1 -- "count what category each cup is" |
-| `Watch` | `Watch` | Singleton HUD timer. Counts down a per-stage `duration_s` window. On expiry: VOTING auto-closes with current tally; engine emits `state.sideEffects.timeoutAt = stage_idx`. | VOTING | U6.4 setting up sig tests under time pressure; U7.6 means-test timing |
-| `WeightedLift` | `WeightedLift` | A vertical platform sprite whose Y depends on `n_players_on_it`. When `n >= threshold`, lift reaches Goal-column Y and Goal becomes reachable. Pure visual gating (does not replace Key/Goal logic). | KEY_HUNT/GOAL | U3.2 random samples, U5.3 CLT (more samples = lift lifts further) |
-| `Seesaw` | `Seesaw` | Horizontal balance beam centered at `pivot_x`. Tilts by `sum(player_x - pivot_x)`. Player positions on the beam mean the visible tilt shows the mean of player x. Targets a `balance_target` angle to unlock Key. | KEY_HUNT | U1.7 mean/median; U1.8 measures of variability; U4.10 / U4.12 expected value intuition |
-| `Switch` + `Block` | `Puzzle` + `Block` | Local sub-puzzle: N `Block` sprites with `userData` codes are pushed/swapped by player X-position. When the row's userData sequence matches `target_sequence[]`, Switch flips and Key spawns. | KEY_HUNT | U1.4 representing data (order chart parts); U3.3 / U3.6 sampling design ordering |
-| `TrafficLight` + `Bound` | `TrafficLight`, `Bound` | (a) `TrafficLight` flips RED/GREEN on a cycle; moving on RED triggers a setback. (b) `Bound` leashes two players: if `|p1.x - p2.x| > leash_px`, both freeze briefly. | SIPPING | U2.3 bivariate / correlation (leash = correlation strength); U4.4 conditional prob; U6.3 / U6.7 sampling timing |
+| **V7.7** (shipped) | `Tally` actor + `TallyDisplay` threshold render | -- (repurposed in V7.8 cascade) | U1.2 (W/N category gate) | 1 |
+| **V7.8** | `ChoicePad` actor + per-player marks + `rowComplete` cascade | Zone 1 (Blind Sip Line) + stub Zone 2 (row-complete VOTING gate) | Any "preference / observation" level | 1 |
+| **V7.9** | `Gate` actor (per-door predicate, physical block) + Zone-2 visible scanner + Zone-4 three-door hall | Zones 2, 4 (Row Scanner + Question Door Hall) | Any "what can data answer" level | 1-2 |
+| **V7.10** | `RowBlock` + `TallyChute` actors (pushable data row + visible column) | Zone 3 (Tally Machine) | Any "see the pattern" level | 1 |
+| **V7.11** | `GoalPad` (presence-of-all-players timer) + `BridgePiece` / `BridgeSlot` actors | Zone 5 (Context Bridge + class goal) | Any "assemble the claim" level | 1 |
+| **V7.12** | True horizontal scroll (camera follows players) IF feedback demands it | Visual upgrade for all zones | All side-scrolling levels | 1-2 |
+| **V7.13** | Generic `PushBox`, `JumpStand`, `FallBox` for varied platforming | (none in U1.1) | U2/U3 levels with cooperation puzzles | 1 |
+| **V7.14** | `WeightedLift` (moving carrier) | (none in U1.1) | U3 random samples, U5 CLT (sample-size = lift height) | 2 |
+| **V7.15** | `StopWatch` / `Watch` (real countdown) | (none in U1.1) | U6 sigtest timing, U7 means timing | 1 |
+| **V7.16+** | Other Pico primitives as level designs demand | -- | -- | varies |
 
-### Existing actors that stay unchanged
+Total engine sessions: ~12-15.
 
-`Text`, `SipStation`, `PlayerSpawn`, `TallyDisplay`, `QuestionDoor`,
-`Goal`, `Key`, `ReturnWarp`, `CoinSprite`, `GoalSprite`, `KeySprite`
-(client-side sprites for Coin/Goal/Key).
+After engine: 78 levels x mechanic-first redesign each. Each level
+gets its own design doc (template: `U1_1_MECHANIC_FIRST_DESIGN.md`)
+before its JSON is authored. Authoring per-unit can fan out in
+parallel; design per-level needs more pedagogical thought.
 
-V7.5's `stages[]` shape stays as the per-level structure -- the new
-mechanics ride INSIDE stages where appropriate (e.g., a `Watch`
-applies to a single stage's VOTING window; a `Seesaw` is a KEY_HUNT
-gate inside one stage; a `Switch` puzzle is a stage-terminal gate).
+## 5. Per-level design template
 
-## 2. Engine sprint order (V7.7 .. V7.12)
+Every level follows the U1.1 template: a 3-5 zone left-to-right
+sequence (true scroll or stage-swap), each zone is one cooperation
+primitive embodying one sub-concept. Each level needs its own design
+doc on disk BEFORE its JSON is authored.
 
-Each sprint is a full V4-style cycle: spec freeze (BUILD .md) ->
-parallel agent dispatch (CC engine + Sonnet client + Sonnet JSON +
-Sonnet tests) -> Codex review via cross-agent.py -> fold findings ->
-commit + push. Each sprint targets ONE new actor type; the level
-designer JSON schema gains exactly one new actor stanza per sprint.
+Template (steal from `U1_1_MECHANIC_FIRST_DESIGN.md`):
 
-| Sprint | Actor(s) | Engine surface (cr) | Client surface (fa) | Sessions est. |
-|---|---|---|---|---|
-| **V7.7** | `Tally` | `level-engine.js` adds `tally` state + threshold check; `applyInput {kind:'collect'}` updates tally; key spawn gate adds `tally meets threshold` rule. | `classroom-board.js` adds `TallySprite` (HUD panel with live counts + threshold progress bar). | 1 |
-| **V7.8** | `Watch` | `level-engine.js` adds per-stage `duration_s`; `activityTick` decrements; on 0 auto-transition VOTING -> REFLECTION with current tally; `state.sideEffects.timeoutAt` emitted. | `classroom-board.js` adds `WatchSprite` (zIndex 18 HUD timer); flash on <10 s remaining. | 1 |
-| **V7.9** | `WeightedLift` | `level-engine.js` adds `lift` state (Y position = f(players_on_x_band)); Goal accessibility gated by `lift.y <= lift.target_y`. | `classroom-board.js` adds `WeightedLiftSprite` (vertical platform; Y interpolated); Goal reachability halo. | 1 |
-| **V7.10** | `Seesaw` | `level-engine.js` adds `seesaw` state (tilt = f(sum(players_x - pivot_x))); Key gate on `|tilt| <= balance_target_deg`. | `classroom-board.js` adds `SeesawSprite` (rotating beam); KeySprite spawn animation when balanced. | 1 |
-| **V7.11** | `Switch` + `Block` | `level-engine.js` adds `puzzle` sub-state (Block userData[] sequence; Switch fires when sequence matches `target_sequence[]`). `applyInput {kind:'push-block', blockId, direction}`. | `classroom-board.js` adds `BlockSprite` (pushable) + `SwitchSprite` (toggled by player overlap on a switch tile). | 2 (more engine logic) |
-| **V7.12** | `TrafficLight` + `Bound` | `level-engine.js` adds (a) `trafficLight` state with `phase: 'red'|'green'` cycling on `cycle_s`; on-RED player movement records to `state.violations`. (b) `bound` state with `leash_px`; over-leash triggers `state.frozen[]`. | `classroom-board.js` adds `TrafficLightSprite` (HUD top-right) + `BoundLineSprite` (line between leashed players). | 1 |
+1. **Lesson framework anchoring** -- which AP Stats sub-concepts is
+   this level teaching? Quote the framework.
+2. **The do-NOT list** -- what wrong concepts could the level
+   accidentally teach? Name them and reject them. (For U1.1: "balanced
+   sampling," "data reveals brand.")
+3. **Zone-by-zone breakdown** -- mechanic + concept + pass condition
+   + fail condition + actor list per zone.
+4. **State machine mapping** -- which V7.5 phase each zone lives in.
+5. **Open structural questions** -- defer items for later sprints.
 
-Total estimate: **7 sessions** for engine sprints + **2-3 sessions**
-for level authoring fan-out = **~10 sessions** for full Tier 3.
+## 6. Per-level mechanic assignment (high-level palette)
 
-Per session: each sprint follows the proven loop (BUILD freeze ->
-parallel dispatch -> Codex review -> fold -> commit + push) with full
-test coverage. Existing 246 cr + 363 fa subset tests remain green;
-each sprint adds ~10-25 new tests.
-
-## 3. Per-unit mechanic assignment (79 levels)
-
-Each level is assigned ONE primary mechanic from the palette (or
-"plain" = V7.5 shape with no new actor). Assignment is by pedagogical
-fit -- if the AP topic teaches "count what kind", it gets `Tally`;
-if it teaches "samples accumulate", it gets `WeightedLift`; if it
-teaches "balance/center", it gets `Seesaw`; etc.
-
-Authoring still produces `stages[]` with multi-doorway QuestionDoors
-(matching U1.1's V7.5 depth) -- the new actor is the KEY_HUNT or
-SIPPING-phase mechanic that LIVES INSIDE the stage flow.
+Each entry is the DOMINANT mechanic for that level's pedagogy. The
+full 3-5 zone design happens in the level's own design doc. Many
+levels will reuse the U1.1 zone shape (Sip + Choice + Gate + Tally
++ Doors + Bridge) with topic-specific variations.
 
 ### Unit 1 -- Exploring 1-variable data
 
-| Level | Topic (short) | Mechanic | Notes |
-|---|---|---|---|
-| 1.1 | Cola Mystery | (already V7.6 -- baseline) | -- |
-| 1.2 | Variable / Indiv | `Tally` | Cups labeled W=word/N=number, tally each category, gate key |
-| 1.3 | Categorical Display | `Tally` | Bar/pie variants as collect-targets |
-| 1.4 | Representing Data | `Switch` + `Block` | Re-order chart parts into correct freq-table order |
-| 1.5 | Describing Distrib | `Seesaw` | Players stand on number line; seesaw tilt = sample mean |
-| 1.6 | Numerical Summary | `Seesaw` | Same as 1.5 but with explicit median marker |
-| 1.7 | Mean & Median | `Seesaw` | The canonical seesaw mechanic level |
-| 1.8 | Measures of Variability | `Seesaw` + `Tally` | Combined: tilt + spread |
-| 1.9 | Boxplots | `Switch` + `Block` | 5 blocks (min, Q1, med, Q3, max) -- order them |
-| 1.10 | Outliers | `Tally` | Coin labeled (in, low_out, high_out) -- tally each |
+| Level | Topic | Dominant mechanic + concept embodiment |
+|---|---|---|
+| 1.1 | Variables & Individuals | **CANONICAL** -- 5-zone Cola Mystery Conveyor. See U1_1_MECHANIC_FIRST_DESIGN.md |
+| 1.2 | Categorical variables | V7.7 Tally cascade (already shipped). Future: convert to ChoicePad multi-value |
+| 1.3 | Categorical displays | Tally + Gate -- choose the right display type before advancing |
+| 1.4 | Representing data | Switch + Gate sequence -- order chart parts correctly to open the gate |
+| 1.5 | Describing distributions | RowBlock physics -- spread/cluster blocks to match a target shape |
+| 1.6 | Numerical summary | Seesaw center-finding (when V7.14+ Seesaw ships) |
+| 1.7 | Mean & Median | Seesaw -- player positions form the mean; pivot point is median |
+| 1.8 | Variability | Spread mechanic -- multiple players' positions, low/high spread platform |
+| 1.9 | Boxplots | RowBlock + slots -- 5 blocks (min/Q1/med/Q3/max) into correct order |
+| 1.10 | Outliers | Tally + outlier-aware gate -- an outlier block visually + numerically distinct |
 
 ### Unit 2 -- Exploring 2-variable data
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 2.1 | Two Variables | `Tally` | Pairs of cups (x_value, y_value) |
-| 2.2 | Scatter Plots | `WeightedLift` | Each (x,y) is a player position; lift to plot |
-| 2.3 | Correlation | `Bound` | Two players leashed; leash length = 1 - |r|. Wide leash = weak correlation |
-| 2.4 | Linear Reg | `WeightedLift` | Fit line position responds to player x-positions |
-| 2.5 | Residuals | `Tally` + `Watch` | Time-pressured residual sign call |
-| 2.6 | Squared Residuals | `Switch` + `Block` | Move blocks to minimize sum-of-squares |
-| 2.7 | Influential Pts | `WeightedLift` | One "leverage" player position shifts the lift dramatically |
-| 2.8 | Categorical Bivariate | `Tally` | 2-D contingency tally (count per cell) |
-| 2.9 | Stratified Analysis | `Switch` + `Block` | Order strata by metric |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 2.1 | Two-variable data | Paired ChoicePad -- record (x, y) pair per player |
+| 2.2 | Scatter plots | WeightedLift positioned by (x, y) per player |
+| 2.3 | Correlation | Bound (leashed players) -- leash length = 1 - |r|; weak corr = wide leash |
+| 2.4 | Linear regression | WeightedLift line -- player positions fit a moving line |
+| 2.5 | Residuals | Per-point distance to line -- visible residual rendering |
+| 2.6 | Squared residuals | PushBox to minimize sum-of-squares (the line moves; players push to align) |
+| 2.7 | Influential points | One "leverage" player drastically shifts the WeightedLift line |
+| 2.8 | Categorical bivariate | 2-D ChoicePad grid (Tally + 2nd axis) |
+| 2.9 | Stratified analysis | Switch + Gate sequence -- order strata by metric |
 
-### Unit 3 -- Sampling
+### Unit 3 -- Sampling & experimentation
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 3.1 | Intro Planning | plain V7.5 | -- |
-| 3.2 | Random Samples | `WeightedLift` | N players on the sampling platform = lift height |
-| 3.3 | Sampling Strategies | `Switch` + `Block` | Pick the right strategy order (SRS / strat / cluster / systematic) |
-| 3.4 | Bias | `Tally` + `TrafficLight` | "Bias" = TrafficLight phase distorts collect timing |
-| 3.5 | Experimental Design | `Switch` + `Block` | Order: random assign / blind / replicate |
-| 3.6 | Confounding | `Bound` | Two "lurking" players leashed to the treatment |
-| 3.7 | Generalization | plain V7.5 | Conceptual; voting depth suffices |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 3.1 | Intro / planning | Plain V7.5 (voting may survive here -- it's a conceptual intro) |
+| 3.2 | Random samples | WeightedLift -- N players on sampling platform = lift height |
+| 3.3 | Sampling strategies | Switch + Gate sequence -- pick the right strategy order |
+| 3.4 | Bias | Tally + TrafficLight -- bias = TrafficLight phase distorts collect timing |
+| 3.5 | Experimental design | Switch + Gate -- order random-assign / blind / replicate |
+| 3.6 | Confounding | Bound -- lurking variable leashed to treatment |
+| 3.7 | Generalization | Plain V7.5 (conceptual) |
 
 ### Unit 4 -- Probability
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 4.1 | Random Patterns | `Tally` + `Watch` | Speeded random-trial tally |
-| 4.2 | Simulation | `Tally` | Many trials, see frequency stabilize |
-| 4.3 | Intro Prob | `Tally` | -- |
-| 4.4 | Conditional Prob | `TrafficLight` | RED = condition fails; collect only on GREEN |
-| 4.5 | Independence | `Bound` + `Tally` | Leash forces dependence; release to see independence |
-| 4.6 | Addition Rule | `Tally` | Combined-category coin counts |
-| 4.7 | Random Variables | `Tally` + `Seesaw` | Expected value = seesaw balance |
-| 4.8 | Probability Distributions | `Seesaw` | E[X] visualization |
-| 4.9 | Discrete RV | `Seesaw` + `Tally` | Same |
-| 4.10 | Geometric | `Watch` + `Tally` | "Trials until first success" |
-| 4.11 | Binomial | `Tally` + `Switch` + `Block` | Order outcome blocks by count |
-| 4.12 | Expected Value calc | `Seesaw` | Canonical |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 4.1 | Random patterns | Tally + Watch -- speeded random-trial tally |
+| 4.2 | Simulation | Tally -- many trials, frequency stabilizes |
+| 4.3 | Intro probability | Tally |
+| 4.4 | Conditional probability | TrafficLight -- RED = condition fails; collect only on GREEN |
+| 4.5 | Independence | Bound + Tally -- leash forces dependence; release to see independence |
+| 4.6 | Addition rule | Tally combined-category |
+| 4.7 | Random variables | Tally + Seesaw -- expected value = seesaw balance |
+| 4.8 | Probability distributions | Seesaw -- E[X] visualization |
+| 4.9 | Discrete RV | Seesaw + Tally |
+| 4.10 | Geometric | Watch + Tally -- trials until first success |
+| 4.11 | Binomial | Tally + Switch -- order outcome blocks by count |
+| 4.12 | Expected value calc | Seesaw (canonical) |
 
-### Unit 5 -- Sampling Distributions
+### Unit 5 -- Sampling distributions
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 5.1 | Sampling Variability | `WeightedLift` + `Tally` | Each sample = a coin; tally many samples |
-| 5.2 | Normal Distrib Revisit | `Seesaw` | Center / spread visualization |
-| 5.3 | CLT | `WeightedLift` | The MOST canonical lift mechanic -- more samples lift the platform higher AND tighter |
-| 5.4 | Bias / Variability | `WeightedLift` + `Seesaw` | -- |
-| 5.5 | Diff of p-hats | `WeightedLift` x 2 | Two side-by-side lifts |
-| 5.6 | Sampling Distr for p | `WeightedLift` | -- |
-| 5.7 | Sampling Distr for sum | `Seesaw` | -- |
-| 5.8 | Diff of x-bars | `WeightedLift` x 2 | -- |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 5.1 | Sampling variability | WeightedLift + Tally |
+| 5.2 | Normal distribution revisit | Seesaw -- center / spread |
+| 5.3 | CLT | WeightedLift -- **MOST canonical lift mechanic** -- more samples lifts higher AND tighter |
+| 5.4 | Bias / variability | WeightedLift + Seesaw |
+| 5.5 | Diff of p-hats | WeightedLift x 2 (side-by-side) |
+| 5.6 | Sampling distr for p | WeightedLift |
+| 5.7 | Sampling distr for sum | Seesaw |
+| 5.8 | Diff of x-bars | WeightedLift x 2 |
 
-### Unit 6 -- Inference (proportions)
+### Unit 6 -- Inference for proportions
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 6.1 | Why Be Normal | plain V7.5 | Conceptual setup |
-| 6.2 | Constructing CI for p | `WeightedLift` + `Watch` | Build the interval before timer expires |
-| 6.3 | Justifying claim with CI | `Switch` + `Block` | Match interval to claim |
-| 6.4 | Setting Up a Test | `Watch` | Speeded test-setup |
-| 6.5 | Carrying Out Test | `WeightedLift` | Lift = sample evidence |
-| 6.6 | Concluding Test | `Switch` + `Block` | Order conclusion steps |
-| 6.7 | Type I / II Error | `TrafficLight` | RED = wrong decision; GREEN = correct |
-| 6.8 | Test for diff of 2 p | `WeightedLift` x 2 | -- |
-| 6.9 | CI for diff of 2 p | `WeightedLift` x 2 | -- |
-| 6.10 | Justifying Test result | `Switch` + `Block` | -- |
-| 6.11 | Putting it Together | `Watch` + `Switch` + `Block` | Composite challenge |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 6.1 | Why be normal? | Plain V7.5 (conceptual setup) |
+| 6.2 | Constructing CI for p | WeightedLift + Watch -- build interval before timer |
+| 6.3 | Justifying claim w/ CI | Switch + Gate -- match interval to claim |
+| 6.4 | Setting up a test | Watch -- speeded test-setup |
+| 6.5 | Carrying out test | WeightedLift -- lift = sample evidence |
+| 6.6 | Concluding test | Switch + Gate -- order conclusion steps |
+| 6.7 | Type I / II error | TrafficLight -- RED = wrong decision |
+| 6.8 | Test for diff of 2 p | WeightedLift x 2 |
+| 6.9 | CI for diff of 2 p | WeightedLift x 2 |
+| 6.10 | Justifying test result | Switch + Gate |
+| 6.11 | Putting it together | Watch + Switch + Gate composite |
 
-### Unit 7 -- Inference (means)
+### Unit 7 -- Inference for means
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 7.1 | Intro for Means | plain V7.5 | -- |
-| 7.2 | CI for one mean | `WeightedLift` | -- |
-| 7.3 | Justifying CI for mean | `Switch` + `Block` | -- |
-| 7.4 | Setting Test for mean | `Watch` | -- |
-| 7.5 | Carrying Out Test for mean | `WeightedLift` | -- |
-| 7.6 | Concluding Test for mean | `Switch` + `Block` | -- |
-| 7.7 | Test for diff of 2 means | `WeightedLift` x 2 | -- |
-| 7.8 | CI for diff of 2 means | `WeightedLift` x 2 | -- |
-| 7.9 | Test for diff of paired means | `WeightedLift` + `Bound` | Pairs are bound |
-| 7.10 | Putting it Together | `Watch` + `Switch` + `Block` | -- |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 7.1 | Intro for means | Plain V7.5 |
+| 7.2 | CI for one mean | WeightedLift |
+| 7.3 | Justifying CI for mean | Switch + Gate |
+| 7.4 | Setting up test for mean | Watch |
+| 7.5 | Carrying out test for mean | WeightedLift |
+| 7.6 | Concluding test for mean | Switch + Gate |
+| 7.7 | Test for diff of 2 means | WeightedLift x 2 |
+| 7.8 | CI for diff of 2 means | WeightedLift x 2 |
+| 7.9 | Test for diff of paired means | WeightedLift + Bound (pairs bound) |
+| 7.10 | Putting it together | Watch + Switch + Gate composite |
 
 ### Unit 8 -- Chi-square
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 8.1 | Intro: Are Results Unexpected | `Tally` + `Watch` | -- |
-| 8.2 | Chi-sq Distrib + GOF Setup | `Switch` + `Block` | -- |
-| 8.3 | Carrying Out GOF | `Tally` + `WeightedLift` | -- |
-| 8.4 | Test for Homogeneity | `Tally` (2-D) + `Switch` | -- |
-| 8.5 | Test for Independence | `Bound` + `Tally` | -- |
-| 8.6 | Putting it Together | `Switch` + `Block` | -- |
-| 8.7 | Composite Drill | `Watch` + `Switch` + `Block` | -- |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 8.1 | Intro: are results unexpected? | Tally + Watch |
+| 8.2 | Chi-sq distrib + GOF setup | Switch + Gate |
+| 8.3 | Carrying out GOF | Tally + WeightedLift |
+| 8.4 | Test for homogeneity | Tally (2-D) + Switch |
+| 8.5 | Test for independence | Bound + Tally |
+| 8.6 | Putting it together | Switch + Gate |
+| 8.7 | Composite drill | Watch + Switch + Gate |
 
 ### Unit 9 -- Slopes (LSRL)
 
-| Level | Topic | Mechanic | Notes |
-|---|---|---|---|
-| 9.1 | Confidence Interval for Slope | `WeightedLift` | -- |
-| 9.2 | Setting Test for Slope | `Watch` | -- |
-| 9.3 | Carrying Out Test for Slope | `WeightedLift` | -- |
-| 9.4 | Concluding Test for Slope | `Switch` + `Block` | -- |
-| 9.5 | Putting it Together | `Watch` + `Switch` + `Block` | -- |
-| 9.6 | Composite Drill | composite | -- |
+| Level | Topic | Mechanic |
+|---|---|---|
+| 9.1 | CI for slope | WeightedLift |
+| 9.2 | Setting up test for slope | Watch |
+| 9.3 | Carrying out test for slope | WeightedLift |
+| 9.4 | Concluding test for slope | Switch + Gate |
+| 9.5 | Putting it together | Watch + Switch + Gate |
+| 9.6 | Composite drill | Composite |
 
-Mechanic distribution: 21 plain/Tally, 17 WeightedLift, 14 Seesaw,
-15 Switch+Block, 6 Watch, 5 TrafficLight, 5 Bound (counts include
-composite levels where a level uses 2 mechanics).
-
-## 4. Hard constraints (carry-forward)
+## 7. Hard constraints (carry-forward -- unchanged)
 
 - LC features are **ADDITIVE OVERLAYS** -- never replace the avatar /
   doorway / arrow-key scene. (`feedback_lc_additive_overlay.md`.)
 - Levels live in `cr/railway-server/activities/<key>.json`. Railway
   deploys `railway-server/` as project root.
-- `chipSize: 10`, `map.width <= 32`, `map.height <= 8`, actor `x` in
-  `[0, 32)`, `y` in `[0, 8)`.
+- `chipSize: 10`, `map.width <= 32`, `map.height <= 8` for single-
+  screen levels. True scroll (V7.12) may relax this -- TBD.
 - Activity overlay canvas is ABOVE the avatar canvas in DOM order --
-  full-overlay paints occlude sprite-engine entities. Use sprite
-  engine entities (zIndex) for HUD displays (V7.6.1 lesson).
-- Per-member `canvasW` rides `classroom_pos`; the server rescales
-  player x into level coord space (V5 fix). Any new actor that reads
-  player positions MUST use the rescaled coord.
+  full-overlay paints occlude sprite engine entities. Use sprite
+  engine entities (zIndex) for HUDs (V7.6.1 lesson).
+- Per-member `canvasW` rides `classroom_pos`. Any new actor reading
+  player positions MUST use the rescaled coord (V5 fix).
 - `curriculum_render/data/curriculum.js` is **SACRED** -- never edit.
   (`feedback_curriculum_render_sacred.md`.)
-- ASCII-only in cross-agent prompts AND in level JSON / test files
-  (s112/s113 lesson; the box-drawing chars + section-sign mojibake
-  cost a Wave A roll-back in s113).
-- LF line endings on new files (`/cr/` + new `/fa/` files; older
-  U1-U3 / U8-U9 worksheets stay CRLF -- EOL-preserve).
+- ASCII-only in cross-agent prompts, level JSON, and test files
+  (s112/s113 lesson).
+- LF line endings on new files. Older U1-U3 / U8-U9 worksheets stay
+  CRLF -- EOL-preserve.
 - PowerShell 5.1: never `git commit -m` from PS; use `git commit -F-`
   with a Bash-tool heredoc.
 - Stage own paths explicitly with `git add <path>`, never `-A`.
-- Codex review is unreliable on diffs > ~35 KB (V7.5 + V7.6 both
-  timed out at 280 s). Keep sprint diffs bounded; fall back to CC
-  self-review of documented risk areas when needed.
-- Edge CDP rig MUST pass `--remote-allow-origins=*` (Chromium 144+
-  rejects WS handshakes from non-allowlisted origins).
-- Never kill Edge from bash via `taskkill /F ...`; use PowerShell:
-  `Get-Process msedge | Stop-Process -Force`.
+- Codex review is unreliable on diffs > ~35 KB. Keep sprint diffs
+  bounded; fall back to CC self-review when needed.
+- Edge CDP rig MUST pass `--remote-allow-origins=*`.
+- Never kill Edge from bash via `taskkill /F ...`; use PowerShell.
 
-## 5. Sprint 1 = V7.7 (start here)
+## 8. Pedagogy rules (new)
 
-See `LIVE_CLASSROOM_V7_7_BUILD.md` for the frozen contract once
-written. Scope:
+These apply to every level design:
 
-- One new actor type: `Tally`.
-- Engine: `level-engine.js` adds threshold-gated Key spawn.
-- Client: `classroom-board.js` adds `TallySprite` HUD.
-- JSON schema: `actors[]` allows `{type:'Tally', x, y, threshold:{...}}`
-  + `SipStation` already carries `drink` (no JSON change for tally
-  source).
-- One pilot level: rewrite U1.2 to use Tally. Authoring of the
-  remaining 78 levels happens in the post-engine fan-out batch.
-- Codex review per the loop; fold inline.
+1. **The mechanic IS the lesson.** If a level's pedagogy depends on
+   the kid clicking the right vote option, you've made a flashcard,
+   not a lesson. Re-design until the mechanic forces the lived
+   experience.
+2. **Voting is a reflection, not a gate.** If voting survives in a
+   level, it's at the end as a single optional reflection beat -- not
+   the path through.
+3. **Failure must teach, not punish.** A fail-state should be
+   pedagogically meaningful (the platform tilts because data needs
+   complete observations, not because you weren't fast enough).
+4. **Imbalance is not failure.** Topic 1.1 lesson: data is what was
+   observed; imbalanced data is valid data. Failure is INTERPRETING
+   imbalance as proof of value or causation.
+5. **Don't teach the wrong concept by accident.** Every level needs
+   a do-NOT list -- what wrong concepts COULD this mechanic
+   accidentally teach? Reject them explicitly.
 
-## 6. Open questions (defer until V7.7 ships)
+## 9. V7.7 status (historical note)
 
-1. Per-level `min_students` -- some Pico mechanics (Bound, paired
-   tests in U7.9 / U8.5) genuinely need >= 2 players; the engine
-   currently auto-fires success on solo. Should V7.12's `Bound` raise
-   `min_students` to 2 by default for any level that includes it?
-2. Authoring fan-out cadence -- ship engine sprints in series and
-   author levels in series after, OR author levels for already-shipped
-   mechanics in parallel with the next engine sprint? The former is
-   simpler; the latter is faster.
-3. Test deployment cadence -- the existing 80 levels are live in
-   PeriodX; adding Tally to U1.2 will need a one-off teacher test
-   before bulk authoring. Probably worth pausing after V7.7 ships
-   for a single-level smoke before V7.8.
+V7.7 shipped the `Tally` actor with threshold-gated SIPPING ->
+VOTING transition (sprint 1 of the previous, voting-with-HUDs arc).
+It's not obsoleted -- the V7.8 `_isSippingComplete` cascade puts
+ChoicePad first, falls back to Tally-threshold, then to all-coins.
+U1.2 (which V7.7 piloted) ships unchanged.
 
-## 7. Rollback / backout
+For new levels: prefer ChoicePad (V7.8+) over Tally when the lesson
+is about individual observations / preferences. Use Tally when the
+lesson is about category counts at the class level (e.g., U1.2's
+categorical-vs-numerical distinction, where the lesson is "the data
+shows two TYPES of variables" not "you personally chose A vs B").
 
-Each sprint is a single commit on cr and a single commit on fa. If
-any sprint regresses live behavior, revert the cr commit only --
+## 10. Rollback / backout
+
+Each sprint is a single commit on cr + one on fa. Each new actor
+type is no-op if absent from a level's JSON. The 78 legacy levels
+that have neither ChoicePad nor Tally nor any new actor continue to
+fire the V7.5 all-coins-collected SIPPING gate unchanged.
+
+If any sprint regresses live behavior, revert the cr commit only --
 the engine falls back to the previous mechanic palette and the new
 JSON actor type is treated as a no-op. The fa client gracefully
 handles unknown actor types in `_classifyActor` (returns null +
 console.warn).
+
+## 11. Open questions (defer until V7.8 ships)
+
+1. **True horizontal scroll vs stage-swap.** V7.8 stays single-screen.
+   Decide in V7.12 based on classroom feel.
+2. **Per-level mark schema.** V7.8 hard-codes `sampledA/sampledB/
+   choice`. V7.8.1+ may add per-level configurable mark categories
+   (e.g. U2.x needs `sampledX, sampledY`).
+3. **Per-player visual mark badge.** Deferred to V7.8.1 polish.
+4. **Teacher-cockpit "force advance" override** for stuck cooperation.
+   Plan to ship as part of V7.8 if a single uncooperative kid soft-
+   locks the room.
+5. **The 78 other levels' design docs.** Each needs a
+   `U<N>_<L>_MECHANIC_FIRST_DESIGN.md` written BEFORE the JSON is
+   authored. That's a separate parallel track -- can start once V7.8
+   ships and the pattern is validated in PeriodX.
+
+## 12. Where this lives in the doc tree
+
+| Doc | What |
+|---|---|
+| `LIVE_CLASSROOM_V7_PICO_PARITY_SPEC.md` (this file) | Master arc, framing, browser_port reference, sprint plan, per-unit mechanic palette |
+| `U1_1_MECHANIC_FIRST_DESIGN.md` | Canonical 5-zone Cola Mystery Conveyor design -- the TEMPLATE for every other level |
+| `LIVE_CLASSROOM_V7_8_BUILD.md` | V7.8 frozen contract (ChoicePad + per-player marks + cascade) |
+| `LIVE_CLASSROOM_V7_7_BUILD.md` | V7.7 frozen contract (Tally actor) -- shipped; survives as cascade fallback |
+| `LEVEL_DESIGN_RECIPE.md` | Per-actor reference for level authors. Tally row added V7.7; ChoicePad row added V7.8 |
+| `cr/railway-server/activities/U1.1.json` | Will be replaced incrementally as V7.8 / V7.9 / V7.10 ship. Voting flow stays until V7.9 |
+| `cr/railway-server/activities/U1.2.json` | V7.7 Tally-threshold pilot. Unchanged in V7.8 |
+| `cr/railway-server/activities/U*.json` (other 78) | Single-stage no-key. Each will get its own mechanic-first redesign post-V7.10 |
+| `hermes/old-app/recovered/browser_port/src/engine/actors/*.ts` | Reference-only TS. Read for semantics, re-implement in our style |
