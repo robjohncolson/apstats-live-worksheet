@@ -1788,10 +1788,17 @@
    * (canonical pico park asset) -- door_closed.png while !reached,
    * door_open.png once reached. Reads as 'walk through to exit'.
    *
+   * V7.5 key-gate: the goal can also be "locked" -- a third render state
+   * where the door is closed AND collision is a no-op. Set by the
+   * server's goal.locked flag (true while key && !key.collected). Once
+   * the key is collected, locked flips false; render returns to the
+   * standard reached / not-reached two-state logic.
+   *
    * opts:
    *   x, y           -- canvas pixel coords (top-left of the sprite)
    *   size           -- render size in px
    *   reached        -- initial reached flag from server
+   *   locked         -- (V7.5) initial locked flag from server (default false)
    *   getLocalSprite -- () -> BoardSprite (the local player) for collision
    *   onReach        -- () -> void; fired ONCE on first collision
    *   imageClosed    -- Image() for the locked / not-yet-reached state
@@ -1807,6 +1814,9 @@
     this.y              = opts.y;
     this.size           = opts.size || GOAL_DEFAULT_SIZE;
     this.reached        = opts.reached === true;
+    // V7.5 key-gate: locked stays false for legacy levels (no key actor on
+    // the server side -> server emits locked=false on every state tick).
+    this.locked         = opts.locked === true;
     this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
     this.onReach        = (typeof opts.onReach === 'function') ? opts.onReach : null;
     this._bobT          = 0;
@@ -1818,6 +1828,9 @@
 
   GoalSprite.prototype.update = function (dt) {
     this._bobT += dt;
+    // V7.5 key-gate: locked goal is a no-op for collision -- player walks
+    // up to it but cannot fire reach-goal until the key is collected.
+    if (this.locked) return;
     if (this.reached || this._sentReach) return;
     var me = this.getLocalSprite();
     if (!me) return;
@@ -1832,7 +1845,18 @@
   };
 
   GoalSprite.prototype.render = function (ctx) {
-    var img = this.reached ? this.imageOpen : this.imageClosed;
+    // V7.5 three-state render:
+    //   locked === true                  -> door_closed (key not yet collected)
+    //   locked === false && !reached     -> door_open   (unlocked, walking toward it)
+    //   reached === true                 -> door_open + pulse alpha (existing)
+    var img;
+    if (this.locked) {
+      img = this.imageClosed;
+    } else if (this.reached) {
+      img = this.imageOpen;
+    } else {
+      img = this.imageOpen;
+    }
     if (!img || !img.complete || img.naturalWidth === 0) return;
     var bobOffset = this.reached ? 0 : Math.sin(this._bobT * 3) * 1.5;
     var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
@@ -1849,7 +1873,13 @@
   GoalSprite.prototype.getLabelSpec = function () {
     var cx   = this.x + this.size / 2;
     var topY = this.y - 4;
-    return { text: this.reached ? 'CLEARED!' : 'GOAL', x: cx, y: topY, isGold: true };
+    // V7.5: locked goal reads as 'LOCKED' so the player can see the door
+    // is gated on the key (not just visually closed-and-broken).
+    var text;
+    if (this.reached) { text = 'CLEARED!'; }
+    else if (this.locked) { text = 'LOCKED'; }
+    else { text = 'GOAL'; }
+    return { text: text, x: cx, y: topY, isGold: true };
   };
 
   var _doorClosedImage = null;
@@ -1868,6 +1898,189 @@
     _doorOpenImage.src = 'door_open.png';
     return _doorOpenImage;
   }
+
+  // --- KeySprite entity (V7.5 key-gate) ---------------------------------
+
+  /**
+   * Single shared key sprite rendered ON the avatar canvas (mirrors
+   * CoinSprite's collision shape). Only one key per level -- spawned
+   * when state.activity.state.phase === 'KEY_HUNT' AND state.key is
+   * present AND !state.key.collected. The first player to JUMP into it
+   * (X+Y collision, same tolerances as a coin) fires onCollect which
+   * sends `classroom_activity_value { kind: 'collect-key' }` and sets
+   * _sentCollect=true so render bails immediately (instant vanish).
+   *
+   * NO coinId on the wire payload -- key is the singleton.
+   *
+   * opts:
+   *   x, y           -- canvas pixel coords (top-left of the sprite)
+   *   size           -- render size in px (default 24, same as a coin)
+   *   getLocalSprite -- () -> BoardSprite (the local player) for collision
+   *   onCollect      -- () -> void; fired ONCE on first collision
+   *   images         -- [Image, ...] -- first frame is rendered. If a
+   *                     non-empty array is passed, additional frames are
+   *                     not animated (the key art is static at V7.5);
+   *                     accepting an array keeps the wiring symmetric
+   *                     with CoinSprite for future spin support.
+   */
+  var KEY_COLLISION_X_PX = 18;   // same as coin
+  var KEY_COLLISION_Y_PX = 24;   // same as coin
+  var KEY_DEFAULT_SIZE   = 24;
+  var KEY_SENT_TTL_MS    = 600;  // same TTL as coin; clears stale optimistic
+
+  function KeySprite(opts) {
+    this.images         = Array.isArray(opts.images) ? opts.images : [];
+    this.x              = opts.x;
+    this.y              = opts.y;
+    this.size           = opts.size || KEY_DEFAULT_SIZE;
+    this.collected      = opts.collected === true;
+    this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
+    this.onCollect      = (typeof opts.onCollect === 'function') ? opts.onCollect : null;
+    this._bobT          = 0;
+    this._sentCollect   = false;
+    this._sentCollectAt = 0;     // ms timestamp; gated by KEY_SENT_TTL_MS
+    // zIndex 5 -- same band as coins/goal; below avatars.
+    this.zIndex         = 5;
+    this.engine         = null;
+  }
+
+  KeySprite.prototype._isCollecting = function () {
+    return this.collected || this._sentCollect;
+  };
+
+  KeySprite.prototype.update = function (dt) {
+    this._bobT += dt;
+    if (this._isCollecting()) return;
+    var me = this.getLocalSprite();
+    if (!me) return;
+    // X+Y collision (identical to CoinSprite). Player must JUMP up into
+    // the key's vertical band; walking under it does not trigger.
+    var myCx  = me.x + (me._spriteSize   || 24) / 2;
+    var myCy  = me.y + (me._spriteHeight || 24) / 2;
+    var keyCx = this.x + this.size / 2;
+    var keyCy = this.y + this.size / 2;
+    if (Math.abs(myCx - keyCx) <= KEY_COLLISION_X_PX &&
+        Math.abs(myCy - keyCy) <= KEY_COLLISION_Y_PX) {
+      this._sentCollect   = true;   // optimistic; vanish instantly
+      this._sentCollectAt = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+      if (this.onCollect) {
+        try { this.onCollect(); } catch (_) {}
+      }
+    }
+  };
+
+  KeySprite.prototype.render = function (ctx) {
+    // Collected / locally-collected keys disappear instantly (same as a coin).
+    if (this._isCollecting()) return;
+    var img = this.images[0];
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+    var bobOffset = Math.sin(this._bobT * 3) * 2;
+    try {
+      ctx.drawImage(img, this.x, this.y + bobOffset, this.size, this.size);
+    } catch (_) {}
+  };
+
+  KeySprite.prototype.getLabelSpec = function () {
+    // Hide the label once the key is collected (or pending collection),
+    // so a transient 'KEY' floater doesn't outlive the sprite render.
+    if (this._isCollecting()) return null;
+    var cx   = this.x + this.size / 2;
+    var topY = this.y - 4;
+    return { text: 'KEY', x: cx, y: topY, isGold: true };
+  };
+
+  var _keyImage = null;
+  function _ensureKeyImage() {
+    if (_keyImage) return _keyImage;
+    if (typeof Image === 'undefined') return null;
+    _keyImage = new Image();
+    _keyImage.src = 'key.png';
+    return _keyImage;
+  }
+
+  // --- StageIndicator entity (V7.5 sequential-stages) -------------------
+
+  /**
+   * Tiny "Stage N / M" panel pinned top-right of the avatar canvas. Shows
+   * during VOTING phase for any multi-stage level (stagesTotal > 1).
+   * Hidden otherwise. The text is built from getter callbacks so the
+   * sprite reads the latest state on every render tick (no need to
+   * rebuild the entity when currentStage advances).
+   *
+   * opts:
+   *   getCurrent   -- () -> number (1-based for display; computed from
+   *                   currentStage + 1 by the caller).
+   *   getTotal     -- () -> number (stagesTotal).
+   *   getViewportW -- () -> number (canvas width in CSS pixels). Used to
+   *                   compute the right-aligned x position on every render.
+   */
+  var STAGE_FONT     = '10px monospace';
+  var STAGE_PAD_X    = 6;
+  var STAGE_PAD_Y    = 3;
+  var STAGE_ALPHA    = 0.85;
+  var STAGE_BG       = '#222';
+  var STAGE_FG       = '#FFD700';   // gold reads as 'progress meter'
+  var STAGE_TOP_Y    = 12;          // px from the top of the canvas
+  var STAGE_RIGHT_PX = 6;           // px gap from the right edge
+
+  function StageIndicator(opts) {
+    this.getCurrent   = (typeof opts.getCurrent === 'function') ? opts.getCurrent : function () { return 1; };
+    this.getTotal     = (typeof opts.getTotal === 'function') ? opts.getTotal : function () { return 1; };
+    this.getViewportW = (typeof opts.getViewportW === 'function') ? opts.getViewportW : function () { return 320; };
+    // zIndex 5 -- same band as coins/goal/tally; above doorways, below avatars.
+    this.zIndex       = 5;
+    this.engine       = null;
+  }
+
+  StageIndicator.prototype.update = function (/* dt */) { /* no-op */ };
+
+  // Indicator paints its own text+bg; engine's label pass should skip it.
+  StageIndicator.prototype.getLabelSpec = function () { return null; };
+
+  StageIndicator.prototype._buildText = function () {
+    var n = this.getCurrent() || 1;
+    var m = this.getTotal()   || 1;
+    return n + ' / ' + m;
+  };
+
+  StageIndicator.prototype.render = function (ctx) {
+    if (!ctx || typeof ctx.fillText !== 'function') return;
+    var text = this._buildText();
+
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFont  = ctx.font;
+    var prevAlign = ctx.textAlign;
+    var prevFill  = ctx.fillStyle;
+
+    ctx.font      = STAGE_FONT;
+    ctx.textAlign = 'left';
+
+    var textW = 0;
+    if (typeof ctx.measureText === 'function') {
+      try { textW = ctx.measureText(text).width || 0; } catch (_) { textW = text.length * 6; }
+    } else {
+      textW = text.length * 6;
+    }
+    var rectW = textW + STAGE_PAD_X * 2;
+    var rectH = 14    + STAGE_PAD_Y * 2;
+    var vw    = this.getViewportW() || 320;
+    var rectX = vw - rectW - STAGE_RIGHT_PX;
+    var rectY = STAGE_TOP_Y;
+
+    ctx.globalAlpha = STAGE_ALPHA;
+    ctx.fillStyle   = STAGE_BG;
+    if (typeof ctx.fillRect === 'function') {
+      try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle   = STAGE_FG;
+    try { ctx.fillText(text, rectX + STAGE_PAD_X, rectY + STAGE_PAD_Y + 10); } catch (_) {}
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    ctx.fillStyle   = prevFill;
+  };
 
   // --- PollColumnsOverlay entity (v2) -----------------------------------
 
@@ -2108,6 +2321,13 @@
     var _resultPolls  = [];
     var _resultIndex  = 0;
 
+    // V7.5: histogram auto-dismiss timer. Each showResultScreen schedules
+    // a 2 s setTimeout to call hideResultScreen; the timer is cleared if
+    // hideResultScreen runs first (user-driven, close-button, refresh on
+    // a new poll) so we never double-fire. Also cleared on destroy.
+    var _resultDismissTimer = null;
+    var _RESULT_AUTO_DISMISS_MS = 2000;
+
     function _drawResultPoll(poll) {
       resultQuestion.textContent = poll.question || '';
       if (window.Ti84Plot && resultCanvas.getContext) {
@@ -2172,12 +2392,30 @@
       _drawResultPoll(_resultPolls[_resultIndex]);
       _renderStepper();
       resultScreen.style.transform = 'translateY(0)';
+      // V7.5: arm the 2 s auto-dismiss timer. Cancels any previously
+      // scheduled tick (back-to-back polls) before scheduling the new one.
+      if (_resultDismissTimer != null) {
+        try { clearTimeout(_resultDismissTimer); } catch (_) {}
+        _resultDismissTimer = null;
+      }
+      try {
+        _resultDismissTimer = setTimeout(function () {
+          _resultDismissTimer = null;
+          hideResultScreen();
+        }, _RESULT_AUTO_DISMISS_MS);
+      } catch (_) {}
     }
 
     function hideResultScreen() {
       resultScreen.style.transform = 'translateY(-100%)';
       _resultPolls = [];
       _resultIndex = 0;
+      // V7.5: cancel any pending auto-dismiss tick (user-initiated close,
+      // explicit hide, or new-poll refresh all flow through this path).
+      if (_resultDismissTimer != null) {
+        try { clearTimeout(_resultDismissTimer); } catch (_) {}
+        _resultDismissTimer = null;
+      }
     }
 
     resultClose.onclick = function () { hideResultScreen(); };
@@ -2730,7 +2968,11 @@
     }
 
     // GoalSprite is a singleton per active level; mirrors the coin lifecycle
-    // pattern but only spawns when phase is GOAL_AVAILABLE / LEVEL_CLEARED.
+    // pattern. V7.5 key-gate widens the phase set so the door is visible
+    // BEFORE the key is collected (phase === 'KEY_HUNT' while goal.locked
+    // is true) -- otherwise the kids wouldn't know what they're hunting
+    // the key for. Legacy levels (no key actor) never enter KEY_HUNT and
+    // see no visible-window change.
     var goalEntity = null;
 
     function syncLevelGoal(state) {
@@ -2739,7 +2981,11 @@
       var isLevel = !!(act && act.type === 'level' && !act.finished);
       var goal    = (act && act.state && act.state.goal) ? act.state.goal : null;
       var phase   = (act && act.state && act.state.phase) || null;
-      var goalVisible = isLevel && goal && (phase === 'GOAL_AVAILABLE' || phase === 'LEVEL_CLEARED');
+      // V7.5: KEY_HUNT also shows the (locked) door so the locked-state
+      // is a visible affordance, not an empty room. GOAL_AVAILABLE +
+      // LEVEL_CLEARED keep their existing behaviour.
+      var goalVisible = isLevel && goal &&
+        (phase === 'GOAL_AVAILABLE' || phase === 'LEVEL_CLEARED' || phase === 'KEY_HUNT');
 
       if (!goalVisible) {
         if (goalEntity) {
@@ -2762,11 +3008,17 @@
       var spriteHeight = SPRITE_H * SPRITE_SCALE;
       var gy = groundY - spriteHeight - size - 4;
 
+      // V7.5: server-side `goal.locked` is true while the key is uncollected,
+      // false otherwise. Always false for legacy no-key levels.
+      var lockedNow = goal.locked === true;
+
       if (!goalEntity) {
         goalEntity = new GoalSprite({
           imageClosed: _ensureDoorClosedImage(),
           imageOpen:   _ensureDoorOpenImage(),
-          x: gx, y: gy, size: size, reached: goal.reached === true,
+          x: gx, y: gy, size: size,
+          reached: goal.reached === true,
+          locked:  lockedNow,
           getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
           onReach: function () {
             safeSend({ type: 'classroom_activity_value', payload: { kind: 'reach-goal' } });
@@ -2775,8 +3027,118 @@
         try { engine.addEntity('level_goal', goalEntity); } catch (_) {}
       } else {
         goalEntity.reached = goal.reached === true;
+        goalEntity.locked  = lockedNow;
         goalEntity.x = gx;
         goalEntity.y = gy;
+      }
+    }
+
+    // KeySprite is a singleton per active level; mirrors goalEntity /
+    // syncLevelGoal. Spawned only while phase === 'KEY_HUNT' AND
+    // state.key is present AND !state.key.collected. Despawned when
+    // any of those conditions stop holding (server flips collected,
+    // phase advances past KEY_HUNT, or the level ends).
+    var keyEntity = null;
+
+    function syncLevelKey(curr) {
+      if (!engineReady) return;
+      var act = curr && curr.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var key     = (act && act.state && act.state.key) ? act.state.key : null;
+      var phase   = (act && act.state && act.state.phase) || null;
+      var keyVisible = isLevel && key && phase === 'KEY_HUNT' && key.collected !== true;
+
+      if (!keyVisible) {
+        if (keyEntity) {
+          try { engine.removeEntity('level_key'); } catch (_) {}
+          keyEntity = null;
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
+      var levelW   = mapW * chipSize;
+      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
+      var size     = KEY_DEFAULT_SIZE;
+
+      // Rescale chip-coord to canvas pixels -- same mapping as coins.
+      var levelCenterPx = (key.x * chipSize) + (chipSize / 2);
+      var canvasCenter  = (levelCenterPx / levelW) * canvasW;
+      var kx = canvasCenter - size / 2;
+      // Y placement: lift the key into the jump arc, same shape as a coin.
+      var COIN_VERTICAL_PADDING = 20;
+      var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var ky = groundY - spriteHeight - size - COIN_VERTICAL_PADDING;
+
+      if (!keyEntity) {
+        keyEntity = new KeySprite({
+          images: [ _ensureKeyImage() ],
+          x: kx, y: ky, size: size,
+          collected: key.collected === true,
+          getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
+          onCollect: function () {
+            safeSend({ type: 'classroom_activity_value', payload: { kind: 'collect-key' } });
+          }
+        });
+        try { engine.addEntity('level_key', keyEntity); } catch (_) {}
+      } else {
+        keyEntity.collected = key.collected === true;
+        keyEntity.x = kx;
+        keyEntity.y = ky;
+        // Clear stale optimistic _sentCollect (mirrors CoinSprite TTL).
+        if (keyEntity._sentCollect && !keyEntity.collected) {
+          var nowMs = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+          if (nowMs - (keyEntity._sentCollectAt || 0) > KEY_SENT_TTL_MS) {
+            keyEntity._sentCollect   = false;
+            keyEntity._sentCollectAt = 0;
+          }
+        }
+      }
+    }
+
+    // StageIndicator -- singleton per active level. Spawn during VOTING
+    // phase when stagesTotal > 1. Hidden otherwise (legacy single-stage
+    // levels show nothing). Reads currentStage / stagesTotal from the
+    // mount-scope state via closures so the panel updates on every tick
+    // without needing a fresh entity per stage transition.
+    var stageEntity = null;
+
+    function syncStageIndicator(curr) {
+      if (!engineReady) return;
+      var act         = curr && curr.activity;
+      var isLevel     = !!(act && act.type === 'level' && !act.finished);
+      var phase       = (act && act.state && act.state.phase) || null;
+      var stagesTotal = (act && act.state && typeof act.state.stagesTotal === 'number') ? act.state.stagesTotal : 1;
+      // Only show during VOTING for multi-stage levels.
+      var shouldShow = isLevel && phase === 'VOTING' && stagesTotal > 1;
+
+      if (!shouldShow) {
+        if (stageEntity) {
+          try { engine.removeEntity('level_stage'); } catch (_) {}
+          stageEntity = null;
+        }
+        return;
+      }
+
+      if (!stageEntity) {
+        stageEntity = new StageIndicator({
+          getCurrent: function () {
+            var s = state && state.activity && state.activity.state;
+            var i = (s && typeof s.currentStage === 'number') ? s.currentStage : 0;
+            return i + 1;
+          },
+          getTotal: function () {
+            var s = state && state.activity && state.activity.state;
+            return (s && typeof s.stagesTotal === 'number') ? s.stagesTotal : 1;
+          },
+          getViewportW: function () {
+            if (!engine || !engine.canvas) return DEFAULT_BOARD_W;
+            return engine.canvas.width / (root.devicePixelRatio || 1);
+          }
+        });
+        try { engine.addEntity('level_stage', stageEntity); } catch (_) {}
       }
     }
 
@@ -3310,9 +3672,13 @@
       // running (early return on the !isLevel branch).
       // V7.4 blind-test: also spawn/despawn the TallyDisplay chip when
       // the level def includes a TallyDisplay actor.
+      // V7.5 key-gate + sequential-stages: also spawn/despawn the shared
+      // key (KEY_HUNT phase) and the stage indicator (multi-stage VOTING).
       syncLevelCoins(state);
       syncLevelGoal(state);
       syncLevelTally(state);
+      syncLevelKey(state);
+      syncStageIndicator(state);
       notifyStateChange();
     }
 
@@ -3484,6 +3850,13 @@
         clearInterval(heartbeatTimer);
         clearTimeout(reconnectTimer);
         clearTimeout(greenlightTimer);
+        // V7.5: cancel histogram auto-dismiss if it's pending so the
+        // destroy path doesn't strand a callback that would later try
+        // to mutate a removed DOM element.
+        if (_resultDismissTimer != null) {
+          try { clearTimeout(_resultDismissTimer); } catch (_) {}
+          _resultDismissTimer = null;
+        }
         heartbeatTimer  = null;
         reconnectTimer  = null;
         greenlightTimer = null;
@@ -3662,7 +4035,10 @@
     _PlayerSprite:     PlayerSprite,     // Phase 1 -- exposed for unit tests
     _CoinSprite:       CoinSprite,       // V7.4 -- exposed for unit tests
     _RevealTextSprite: RevealTextSprite, // V7.4 -- exposed for unit tests
-    _TallyDisplay:     TallyDisplay      // V7.4 -- exposed for unit tests
+    _TallyDisplay:     TallyDisplay,     // V7.4 -- exposed for unit tests
+    _GoalSprite:       GoalSprite,       // V7.5 -- exposed for unit tests
+    _KeySprite:        KeySprite,        // V7.5 -- exposed for unit tests
+    _StageIndicator:   StageIndicator    // V7.5 -- exposed for unit tests
   };
 
 }(typeof window !== 'undefined' ? window : this));

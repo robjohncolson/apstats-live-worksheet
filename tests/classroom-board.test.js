@@ -6084,3 +6084,724 @@ describe('V7.4 TallyDisplay -- live sips chip', () => {
   });
 });
 
+// =============================================================
+// V7.5 key-gate + sequential-stages -- KeySprite / GoalSprite
+// locked / syncLevelKey lifecycle / StageIndicator / histogram
+// auto-dismiss
+// =============================================================
+
+// makeMountWithEngine: same as makeMount but installs a tracing wrapper
+// around CanvasEngine so the test can reach the latest engine instance
+// (and through it, the entities Map). Mirrors makeMountWithRTC's pattern.
+function makeMountWithEngine() {
+  var dom = new JSDOM(
+    '<!DOCTYPE html><html><body><div id="mount"></div></body></html>',
+    { url: 'https://example.com' }
+  );
+  var win    = dom.window;
+  var MockWS = makeMockWSClass();
+
+  win.WebSocket     = MockWS;
+  win.setInterval   = function () { return 0; };
+  win.clearInterval = function () {};
+  win.setTimeout    = function () { return 0; };
+  win.clearTimeout  = function () {};
+  injectEnvStubs(win);
+  makeEngineStubs(win);
+
+  // Wrap CanvasEngine so the test can reach the latest instance.
+  var lastEngine = null;
+  var RealEngine = win.CanvasEngine;
+  function TracingEngine(canvasId) {
+    RealEngine.call(this, canvasId);
+    lastEngine = this;
+  }
+  TracingEngine.prototype = Object.create(RealEngine.prototype);
+  TracingEngine.prototype.constructor = TracingEngine;
+  win.CanvasEngine = TracingEngine;
+
+  var ctx = createContext(win);
+  runInContext(BOARD_SRC, ctx);
+
+  var container = win.document.getElementById('mount');
+
+  return {
+    win:            win,
+    ClassroomBoard: win.ClassroomBoard,
+    MockWS:         MockWS,
+    container:      container,
+    getEngine:      function () { return lastEngine; }
+  };
+}
+
+// makeMountWithEngineAndSpies: combines the tracing engine pattern with
+// recorded setTimeout/clearTimeout calls so histogram auto-dismiss tests
+// can assert the 2 s tick is scheduled + cancelled.
+function makeMountWithEngineAndSpies() {
+  var dom = new JSDOM(
+    '<!DOCTYPE html><html><body><div id="mount"></div></body></html>',
+    { url: 'https://example.com' }
+  );
+  var win    = dom.window;
+  var MockWS = makeMockWSClass();
+
+  var _nextId   = 1;
+  var _timeouts = {};
+
+  var timerSpies = {
+    setTimeoutCalls:  [],
+    clearedTimeouts:  [],
+    flushTimeout: function (id) {
+      if (_timeouts[id]) {
+        var fn = _timeouts[id].fn;
+        delete _timeouts[id];
+        try { fn(); } catch (_) {}
+      }
+    },
+    flushAll: function () {
+      var ids = Object.keys(_timeouts);
+      for (var i = 0; i < ids.length; i++) {
+        var fn = _timeouts[ids[i]].fn;
+        delete _timeouts[ids[i]];
+        try { fn(); } catch (_) {}
+      }
+    }
+  };
+
+  win.setInterval   = function () { return 0; };
+  win.clearInterval = function () {};
+  win.setTimeout    = function (fn, ms) {
+    var id = _nextId++;
+    _timeouts[id] = { fn: fn, ms: ms };
+    timerSpies.setTimeoutCalls.push({ id: id, fn: fn, ms: ms });
+    return id;
+  };
+  win.clearTimeout  = function (id) {
+    if (id != null && _timeouts[id]) {
+      timerSpies.clearedTimeouts.push(id);
+      delete _timeouts[id];
+    }
+  };
+  win.WebSocket = MockWS;
+  injectEnvStubs(win);
+  makeEngineStubs(win);
+
+  var lastEngine = null;
+  var RealEngine = win.CanvasEngine;
+  function TracingEngine(canvasId) {
+    RealEngine.call(this, canvasId);
+    lastEngine = this;
+  }
+  TracingEngine.prototype = Object.create(RealEngine.prototype);
+  TracingEngine.prototype.constructor = TracingEngine;
+  win.CanvasEngine = TracingEngine;
+
+  var ctx = createContext(win);
+  runInContext(BOARD_SRC, ctx);
+
+  var container = win.document.getElementById('mount');
+
+  return {
+    win:            win,
+    ClassroomBoard: win.ClassroomBoard,
+    MockWS:         MockWS,
+    container:      container,
+    getEngine:      function () { return lastEngine; },
+    timerSpies:     timerSpies
+  };
+}
+
+describe('V7.5 KeySprite -- shared single-key entity', () => {
+  it('getLabelSpec returns "KEY" in gold pre-collect', () => {
+    var m = makeBoard();
+    var key = new m.ClassroomBoard._KeySprite({
+      x: 100, y: 50, size: 24
+    });
+    var spec = key.getLabelSpec();
+    expect(spec.text).toBe('KEY');
+    expect(spec.isGold).toBe(true);
+  });
+
+  it('getLabelSpec returns null once the key is collected (label suppressed)', () => {
+    var m = makeBoard();
+    var key = new m.ClassroomBoard._KeySprite({
+      x: 100, y: 50, size: 24
+    });
+    key.collected = true;
+    expect(key.getLabelSpec()).toBeNull();
+  });
+
+  it('local-player X+Y collision fires onCollect (one-shot) and sets _sentCollect', () => {
+    var m = makeBoard();
+    var collected = 0;
+    var localStub = { x: 100, y: 50, _spriteSize: 24, _spriteHeight: 24 };
+    var key = new m.ClassroomBoard._KeySprite({
+      x: 100, y: 50, size: 24,
+      getLocalSprite: function () { return localStub; },
+      onCollect:      function () { collected += 1; }
+    });
+    key.update(0.016);
+    expect(collected).toBe(1);
+    expect(key._sentCollect).toBe(true);
+    // Second tick must NOT re-fire (one-shot via _sentCollect / _isCollecting).
+    key.update(0.016);
+    expect(collected).toBe(1);
+  });
+
+  it('walking-under (X aligned, Y far) does NOT trigger collect -- jump required', () => {
+    var m = makeBoard();
+    var collected = 0;
+    // local player Y is well below the key center -> outside KEY_COLLISION_Y_PX
+    var localStub = { x: 100, y: 150, _spriteSize: 24, _spriteHeight: 24 };
+    var key = new m.ClassroomBoard._KeySprite({
+      x: 100, y: 50, size: 24,
+      getLocalSprite: function () { return localStub; },
+      onCollect:      function () { collected += 1; }
+    });
+    key.update(0.016);
+    expect(collected).toBe(0);
+    expect(key._sentCollect).toBe(false);
+  });
+
+  it('render returns early once _isCollecting() is true (instant vanish)', () => {
+    var m = makeBoard();
+    // Force a complete-image stub so the only reason render bails is
+    // _isCollecting; this guards the "vanishes on collect" contract.
+    var fakeImg = { complete: true, naturalWidth: 32 };
+    var drawn = 0;
+    var ctx2 = {
+      drawImage: function () { drawn += 1; }
+    };
+    var key = new m.ClassroomBoard._KeySprite({
+      x: 0, y: 0, size: 24, images: [fakeImg]
+    });
+    key.render(ctx2);
+    expect(drawn).toBe(1);
+    key._sentCollect = true;
+    key.render(ctx2);
+    expect(drawn).toBe(1);   // bailed, no second draw
+  });
+
+  it('zIndex is 5 (same band as coins/goal/tally; below avatars)', () => {
+    var m = makeBoard();
+    var key = new m.ClassroomBoard._KeySprite({ x: 0, y: 0 });
+    expect(key.zIndex).toBe(5);
+  });
+});
+
+describe('V7.5 GoalSprite locked-mode -- key-gated door', () => {
+  it('locked defaults to false (legacy levels see no behaviour change)', () => {
+    var m = makeBoard();
+    var goal = new m.ClassroomBoard._GoalSprite({ x: 0, y: 0 });
+    expect(goal.locked).toBe(false);
+  });
+
+  it('renders door_closed.png while locked=true (even if !reached)', () => {
+    var m = makeBoard();
+    var closedImg = { complete: true, naturalWidth: 32 };
+    var openImg   = { complete: true, naturalWidth: 32 };
+    var lastImg   = null;
+    var ctx2 = { drawImage: function (img) { lastImg = img; } };
+    var goal = new m.ClassroomBoard._GoalSprite({
+      x: 0, y: 0,
+      imageClosed: closedImg, imageOpen: openImg,
+      locked: true
+    });
+    goal.render(ctx2);
+    expect(lastImg).toBe(closedImg);
+  });
+
+  it('renders door_open.png while locked=false (door has been unlocked)', () => {
+    var m = makeBoard();
+    var closedImg = { complete: true, naturalWidth: 32 };
+    var openImg   = { complete: true, naturalWidth: 32 };
+    var lastImg   = null;
+    var ctx2 = { drawImage: function (img) { lastImg = img; } };
+    var goal = new m.ClassroomBoard._GoalSprite({
+      x: 0, y: 0,
+      imageClosed: closedImg, imageOpen: openImg,
+      locked: false
+    });
+    goal.render(ctx2);
+    expect(lastImg).toBe(openImg);
+  });
+
+  it('locked=true makes update() a no-op for collision (no onReach even if player is on top)', () => {
+    var m = makeBoard();
+    var reached = 0;
+    var localStub = { x: 0, y: 0, _spriteSize: 24, _spriteHeight: 24 };
+    var goal = new m.ClassroomBoard._GoalSprite({
+      x: 0, y: 0, size: 28,
+      imageClosed: null, imageOpen: null,
+      locked: true,
+      getLocalSprite: function () { return localStub; },
+      onReach:        function () { reached += 1; }
+    });
+    goal.update(0.016);
+    expect(reached).toBe(0);
+    expect(goal._sentReach).toBe(false);
+  });
+
+  it('locked flips false -> onReach fires on the next collision', () => {
+    var m = makeBoard();
+    var reached = 0;
+    var localStub = { x: 0, y: 0, _spriteSize: 24, _spriteHeight: 24 };
+    var goal = new m.ClassroomBoard._GoalSprite({
+      x: 0, y: 0, size: 28,
+      imageClosed: null, imageOpen: null,
+      locked: true,
+      getLocalSprite: function () { return localStub; },
+      onReach:        function () { reached += 1; }
+    });
+    goal.update(0.016);
+    expect(reached).toBe(0);
+    // Server unlocks the goal (syncLevelGoal would mutate .locked).
+    goal.locked = false;
+    goal.update(0.016);
+    expect(reached).toBe(1);
+  });
+
+  it('getLabelSpec reads "LOCKED" while locked, "GOAL" while unlocked, "CLEARED!" once reached', () => {
+    var m = makeBoard();
+    var goal = new m.ClassroomBoard._GoalSprite({ x: 0, y: 0, locked: true });
+    expect(goal.getLabelSpec().text).toBe('LOCKED');
+    goal.locked = false;
+    expect(goal.getLabelSpec().text).toBe('GOAL');
+    goal.reached = true;
+    expect(goal.getLabelSpec().text).toBe('CLEARED!');
+  });
+});
+
+describe('V7.5 syncLevelKey -- spawn / despawn lifecycle', () => {
+  // Helper: drive the board to the KEY_HUNT phase with a key.
+  function _keyHuntMsg(opts) {
+    opts = opts || {};
+    return {
+      type: 'classroom_activity_start',
+      activity: {
+        type: 'level',
+        startedAt: 1000,
+        durationMs: 60000,
+        level: {
+          schema: 'v7.5-level-1', levelKey: 'U1.1', lessonKey: '1.1',
+          title: 'Key gate', duration: 60,
+          map: { width: 32, height: 8, chipSize: 10 },
+          actors: []
+        },
+        state: {
+          phase: opts.phase || 'KEY_HUNT',
+          currentStage: 0,
+          stagesTotal:  1,
+          coins: [],
+          key: opts.key === undefined ? { x: 10, y: 3, collected: false, collectedBy: null } : opts.key,
+          goal: { x: 16, y: 7, reached: false, locked: opts.goalLocked !== false }
+        }
+      }
+    };
+  }
+
+  it('spawns level_key when phase=KEY_HUNT and key is present + !collected', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_keyHuntMsg());
+
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_key')).toBe(true);
+    var key = engine.entities.get('level_key');
+    expect(key).toBeInstanceOf(m.ClassroomBoard._KeySprite);
+    expect(key.collected).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('does NOT spawn level_key when phase != KEY_HUNT (e.g. GOAL_AVAILABLE)', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_keyHuntMsg({ phase: 'GOAL_AVAILABLE', goalLocked: false }));
+
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_key')).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('does NOT spawn level_key when key.collected === true (post-collect)', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_keyHuntMsg({
+      key: { x: 10, y: 3, collected: true, collectedBy: 'bob' }
+    }));
+
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_key')).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('does NOT spawn level_key for legacy levels (no key field on state)', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Legacy level: no key field, phase GOAL_AVAILABLE.
+    ws._receive(_keyHuntMsg({ phase: 'GOAL_AVAILABLE', key: null, goalLocked: false }));
+
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_key')).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('despawns level_key when phase advances past KEY_HUNT', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_keyHuntMsg());
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_key')).toBe(true);
+
+    // Server advances phase to GOAL_AVAILABLE (key collected, door open).
+    ws._receive({
+      type: 'classroom_activity_state',
+      state: {
+        phase: 'GOAL_AVAILABLE',
+        currentStage: 0,
+        stagesTotal: 1,
+        coins: [],
+        key:  { x: 10, y: 3, collected: true, collectedBy: 'alice' },
+        goal: { x: 16, y: 7, reached: false, locked: false }
+      }
+    });
+    expect(engine.entities.has('level_key')).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('despawns level_key on activity end (cancel / success / timeout)', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_keyHuntMsg());
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_key')).toBe(true);
+
+    ws._receive({ type: 'classroom_activity_success' });
+    expect(engine.entities.has('level_key')).toBe(false);
+
+    handle.destroy();
+  });
+});
+
+describe('V7.5 StageIndicator -- multi-stage VOTING display', () => {
+  function _stageMsg(currentStage, stagesTotal, phase) {
+    return {
+      type: 'classroom_activity_start',
+      activity: {
+        type: 'level',
+        startedAt: 1000,
+        durationMs: 60000,
+        level: {
+          schema: 'v7.5-level-1', levelKey: 'U1.1', lessonKey: '1.1',
+          title: 'Sequential', duration: 60,
+          map: { width: 32, height: 8, chipSize: 10 }, actors: []
+        },
+        state: {
+          phase: phase || 'VOTING',
+          currentStage: currentStage,
+          stagesTotal:  stagesTotal,
+          voteQuestion: 'Q?',
+          coins: [],
+          key: null,
+          goal: { x: 16, y: 7, reached: false, locked: false }
+        }
+      }
+    };
+  }
+
+  it('spawns level_stage during VOTING for multi-stage levels (stagesTotal > 1)', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_stageMsg(0, 4, 'VOTING'));
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_stage')).toBe(true);
+    var stage = engine.entities.get('level_stage');
+    expect(stage).toBeInstanceOf(m.ClassroomBoard._StageIndicator);
+    expect(stage.getCurrent()).toBe(1);
+    expect(stage.getTotal()).toBe(4);
+
+    handle.destroy();
+  });
+
+  it('does NOT spawn level_stage for legacy single-stage levels (stagesTotal === 1)', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_stageMsg(0, 1, 'VOTING'));
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_stage')).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('hides level_stage when phase leaves VOTING (e.g. enters KEY_HUNT)', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    ws._receive(_stageMsg(3, 4, 'VOTING'));
+    var engine = m.getEngine();
+    expect(engine.entities.has('level_stage')).toBe(true);
+
+    // Server transitions VOTING -> KEY_HUNT.
+    ws._receive({
+      type: 'classroom_activity_state',
+      state: {
+        phase: 'KEY_HUNT',
+        currentStage: 3, stagesTotal: 4,
+        coins: [],
+        key: { x: 10, y: 3, collected: false, collectedBy: null },
+        goal: { x: 16, y: 7, reached: false, locked: true }
+      }
+    });
+    expect(engine.entities.has('level_stage')).toBe(false);
+
+    handle.destroy();
+  });
+
+  it('getCurrent reflects currentStage + 1 (1-based for display)', () => {
+    var m = makeBoard();
+    var current = 0;
+    var total = 4;
+    var stage = new m.ClassroomBoard._StageIndicator({
+      getCurrent: function () { return current + 1; },
+      getTotal:   function () { return total; }
+    });
+    expect(stage.getCurrent()).toBe(1);
+    current = 2;
+    expect(stage.getCurrent()).toBe(3);
+  });
+
+  it('render text format is "N / M"', () => {
+    var m = makeBoard();
+    var stage = new m.ClassroomBoard._StageIndicator({
+      getCurrent: function () { return 2; },
+      getTotal:   function () { return 4; },
+      getViewportW: function () { return 320; }
+    });
+    var ctx2 = makeCtxStub();
+    stage.render(ctx2);
+    expect(ctx2._calls.fillText.length).toBe(1);
+    expect(ctx2._calls.fillText[0].text).toBe('2 / 4');
+  });
+});
+
+describe('V7.5 syncLevelKey -- collect-key wire payload', () => {
+  // Pin: when the local KeySprite fires onCollect, the board sends
+  // classroom_activity_value with payload { kind: 'collect-key' } and
+  // NO coinId field (key is the singleton).
+  it('local key collision sends classroom_activity_value { kind: "collect-key" } over the WS', () => {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // Seed the room with alice as a present student so the local PlayerSprite exists.
+    ws._receive({
+      type: 'classroom_state', section: 'PeriodX', gate: null, poll: null,
+      members: [{ username: 'alice', role: 'student', status: 'present', online: true }]
+    });
+
+    // Drive KEY_HUNT so syncLevelKey spawns level_key.
+    ws._receive({
+      type: 'classroom_activity_start',
+      activity: {
+        type: 'level', startedAt: 1000, durationMs: 60000,
+        level: {
+          schema: 'v7.5-level-1', levelKey: 'U1.1', lessonKey: '1.1',
+          title: 'KG', duration: 60,
+          map: { width: 32, height: 8, chipSize: 10 }, actors: []
+        },
+        state: {
+          phase: 'KEY_HUNT', currentStage: 0, stagesTotal: 1,
+          coins: [],
+          key:  { x: 10, y: 3, collected: false, collectedBy: null },
+          goal: { x: 16, y: 7, reached: false, locked: true }
+        }
+      }
+    });
+
+    var engine = m.getEngine();
+    var key    = engine.entities.get('level_key');
+    expect(key).toBeDefined();
+
+    // Force the local-sprite getter to return a stub overlapping the key.
+    key.getLocalSprite = function () {
+      return { x: key.x, y: key.y, _spriteSize: 24, _spriteHeight: 24 };
+    };
+
+    var sentBefore = ws.sent.length;
+    key.update(0.016);
+    expect(ws.sent.length).toBeGreaterThan(sentBefore);
+    var msg = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(msg.type).toBe('classroom_activity_value');
+    expect(msg.payload).toBeDefined();
+    expect(msg.payload.kind).toBe('collect-key');
+    // Pin: NO coinId field on the collect-key payload (key is singleton).
+    expect(msg.payload.coinId).toBeUndefined();
+
+    handle.destroy();
+  });
+});
+
+describe('V7.5 histogram auto-dismiss timer', () => {
+  it('showResultScreen schedules a 2 s setTimeout to call hideResultScreen', () => {
+    var m = makeMountWithEngineAndSpies();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var beforeCount = m.timerSpies.setTimeoutCalls.length;
+    handle.showResultScreen([
+      { question: 'Q?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    var newTimers = m.timerSpies.setTimeoutCalls.slice(beforeCount);
+    // Find the 2 s timer (other timers might exist for greenlight etc.).
+    var auto = newTimers.filter(function (t) { return t.ms === 2000; });
+    expect(auto.length).toBe(1);
+    handle.destroy();
+  });
+
+  it('the auto-dismiss tick hides the result screen (translateY(-100%))', () => {
+    var m = makeMountWithEngineAndSpies();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var screen = m.container.querySelector('[data-classroom-result-screen]');
+    handle.showResultScreen([
+      { question: 'Q?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    expect(screen.style.transform).toBe('translateY(0)');
+
+    // Find + fire the 2 s timer manually (jsdom doesn't tick real time).
+    var auto = m.timerSpies.setTimeoutCalls.filter(function (t) { return t.ms === 2000; });
+    expect(auto.length).toBeGreaterThan(0);
+    m.timerSpies.flushTimeout(auto[auto.length - 1].id);
+
+    expect(screen.style.transform).toBe('translateY(-100%)');
+
+    handle.destroy();
+  });
+
+  it('manual hideResultScreen cancels the pending auto-dismiss timer', () => {
+    var m = makeMountWithEngineAndSpies();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    var auto = m.timerSpies.setTimeoutCalls.filter(function (t) { return t.ms === 2000; });
+    expect(auto.length).toBeGreaterThan(0);
+    var autoId = auto[auto.length - 1].id;
+
+    handle.hideResultScreen();
+
+    // The 2 s timer must have been cleared so the callback never fires.
+    expect(m.timerSpies.clearedTimeouts.indexOf(autoId)).toBeGreaterThanOrEqual(0);
+
+    handle.destroy();
+  });
+
+  it('back-to-back showResultScreen calls cancel the previous tick before scheduling a new one', () => {
+    var m = makeMountWithEngineAndSpies();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q1?', options: ['A', 'B'], tally: [1, 0], blind: false }
+    ]);
+    var firstAuto = m.timerSpies.setTimeoutCalls.filter(function (t) { return t.ms === 2000; });
+    expect(firstAuto.length).toBe(1);
+    var firstId = firstAuto[0].id;
+
+    handle.showResultScreen([
+      { question: 'Q2?', options: ['X', 'Y'], tally: [0, 1], blind: false }
+    ]);
+    expect(m.timerSpies.clearedTimeouts.indexOf(firstId)).toBeGreaterThanOrEqual(0);
+    var allAuto = m.timerSpies.setTimeoutCalls.filter(function (t) { return t.ms === 2000; });
+    // Two scheduled, one cleared -> the second is still live.
+    expect(allAuto.length).toBe(2);
+
+    handle.destroy();
+  });
+
+  it('destroy() cancels the auto-dismiss timer so the callback never fires on a removed DOM', () => {
+    var m = makeMountWithEngineAndSpies();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    handle.showResultScreen([
+      { question: 'Q?', options: ['A', 'B'], tally: [1, 2], blind: false }
+    ]);
+    var auto = m.timerSpies.setTimeoutCalls.filter(function (t) { return t.ms === 2000; });
+    var autoId = auto[auto.length - 1].id;
+    expect(m.timerSpies.clearedTimeouts.indexOf(autoId)).toBe(-1);
+
+    handle.destroy();
+    expect(m.timerSpies.clearedTimeouts.indexOf(autoId)).toBeGreaterThanOrEqual(0);
+  });
+});
