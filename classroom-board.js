@@ -1701,12 +1701,16 @@
   var TALLY_FG     = '#FFFFFF';
 
   function TallyDisplay(opts) {
-    this.x        = opts.x;
-    this.y        = opts.y;
-    this.getTally = (typeof opts.getTally === 'function') ? opts.getTally : function () { return null; };
+    this.x            = opts.x;
+    this.y            = opts.y;
+    this.getTally     = (typeof opts.getTally === 'function')     ? opts.getTally     : function () { return null; };
+    // V7.7 -- optional threshold source. When present + non-null, the
+    // tally text appends "/N" to each letter's count ("A: 2/3" instead
+    // of "A: 2"). Default = () => null so legacy levels render unchanged.
+    this.getThreshold = (typeof opts.getThreshold === 'function') ? opts.getThreshold : function () { return null; };
     // zIndex = 5 -- same band as coins/goal; below avatars (z >= 10).
-    this.zIndex   = 5;
-    this.engine   = null;
+    this.zIndex       = 5;
+    this.engine       = null;
   }
 
   TallyDisplay.prototype.update = function (/* dt */) { /* no-op */ };
@@ -1719,22 +1723,46 @@
   // always shown (canonical drinks) even if zero; any other non-zero
   // letters tag onto the end so future drinks render without a code
   // change.
+  //
+  // V7.7 -- when getThreshold() returns a non-null map, append "/N" to
+  // each letter that has an entry in the threshold map ("A: 2/3").
+  // Letters without a threshold entry render without the slash even in
+  // mixed levels. Letters with ONLY a threshold entry (no tally) still
+  // appear ("A: 0/3") so authors can preview the goal up front.
   TallyDisplay.prototype._buildText = function () {
-    var sips = this.getTally() || {};
+    var sips   = this.getTally() || {};
+    var thresh = this.getThreshold() || null;
+
+    function fmt(letter) {
+      var have = (typeof sips[letter]    === 'number') ? sips[letter]    : 0;
+      var need = (thresh && typeof thresh[letter] === 'number') ? thresh[letter] : null;
+      return letter + ': ' + have + (need != null ? '/' + need : '');
+    }
+
     var parts = [];
-    var aCount = (typeof sips.A === 'number') ? sips.A : 0;
-    var bCount = (typeof sips.B === 'number') ? sips.B : 0;
-    parts.push('A: ' + aCount);
-    parts.push('B: ' + bCount);
-    var keys = Object.keys(sips);
-    for (var i = 0; i < keys.length; i++) {
-      var k = keys[i];
-      if (k === 'A' || k === 'B') continue;
-      var v = sips[k];
-      if (typeof v === 'number' && v > 0) {
-        parts.push(k + ': ' + v);
+    var seen  = { A: true, B: true };
+    parts.push(fmt('A'));
+    parts.push(fmt('B'));
+
+    // Append any other non-A/non-B letter present in tally or threshold.
+    // Tally entries appear only if their value is > 0 (legacy behavior).
+    // Threshold entries always appear (so authors see the goal up front).
+    function appendLetters(obj, requireNonZero) {
+      if (!obj) return;
+      var keys = Object.keys(obj);
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (seen[k]) continue;
+        var v = obj[k];
+        if (typeof v !== 'number') continue;
+        if (requireNonZero && !(v > 0)) continue;
+        parts.push(fmt(k));
+        seen[k] = true;
       }
     }
+    appendLetters(sips,   true);   // legacy: only non-zero tally letters
+    appendLetters(thresh, false);  // threshold letters always shown
+
     return 'Sips - ' + parts.join('  ');
   };
 
@@ -3640,6 +3668,14 @@
           getTally: function () {
             var s = state && state.activity && state.activity.state && state.activity.state.tally;
             return (s && s.sips) ? s.sips : null;
+          },
+          // V7.7 -- read the engine's per-level threshold gate from the
+          // wire field added by serialize(): state.activity.state.tallyConfig.
+          // Null-safe walk; returns null for legacy levels so TallyDisplay
+          // renders the no-slash form.
+          getThreshold: function () {
+            var cfg = state && state.activity && state.activity.state && state.activity.state.tallyConfig;
+            return (cfg && cfg.threshold) ? cfg.threshold : null;
           }
         });
         try { engine.addEntity('level_tally', tallyEntity); } catch (_) {}
