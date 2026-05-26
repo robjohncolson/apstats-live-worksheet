@@ -312,7 +312,15 @@ describe('updateState renders decoration overlays', function () {
     expect(labels.indexOf('Is Coke better than Pepsi?')).toBe(-1);
   });
 
-  it('renders the reflection panel (dim + box) when reflection.active is true', function () {
+  it('V7.6: reflection panel removed from activity overlay (ResultPanel in classroom-board owns it)', function () {
+    // V7.6 moves reflection display to the in-canvas ResultPanel in
+    // classroom-board.js (monochrome dot plot + reflection text). The
+    // old dim-grey full-overlay drawReflectionPanel call in activity-
+    // level.js was occluding the ResultPanel from above (activity
+    // overlay canvas is layered above the avatar canvas), so the call
+    // was removed. This test pins the new contract: NEITHER the dim
+    // backdrop NOR the dark-cyan reflection box paints from the
+    // activity overlay anymore.
     var env = loadModule();
     var handle = env.module.mount(getMount(env), {});
     handle.updateState(makeActivityState({
@@ -320,18 +328,16 @@ describe('updateState renders decoration overlays', function () {
       reflection: { active: true, reflectionText: 'Numbers do not say what is in cups.', autoCloseAt: Date.now() + 8000 }
     }));
     var stub = env.lastStub();
-    // Full-overlay dim: rgba(0, 0, 0, 0.55).
     var dim = stub.rects.find(function (r) {
       return typeof r.fill === 'string' && r.fill.indexOf('0, 0, 0, 0.55') !== -1;
     });
-    expect(dim).toBeDefined();
-    // Reflection box bg: rgba(20, 40, 50, 0.95).
+    expect(dim).toBeUndefined();
     var box = stub.rects.find(function (r) {
       return typeof r.fill === 'string' && r.fill.indexOf('20, 40, 50') !== -1;
     });
-    expect(box).toBeDefined();
+    expect(box).toBeUndefined();
     var labels = stub.texts.map(function (t) { return t.text; });
-    expect(labels.some(function (s) { return s.indexOf('Numbers do not say') !== -1; })).toBe(true);
+    expect(labels.some(function (s) { return s.indexOf('Numbers do not say') !== -1; })).toBe(false);
   });
 
   it('does NOT render the reflection panel when reflection.active is false', function () {

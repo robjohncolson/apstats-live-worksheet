@@ -1574,10 +1574,15 @@
             <div id="classroom-board-controls" class="geneva" style="font-size:9px;color:#888;margin-top:2px;text-align:center;user-select:none">
                 Arrows walk &middot; Space jump &middot; Up to check in
             </div>
-            <!-- v3 P4: live doorways tally (dotplot). Hidden until a
-                 vote-with-your-feet event is open in this section. -->
-            <canvas id="classroom-doorways-tally" width="320" height="160"
-                    style="display:none;margin-top:6px;width:100%;max-width:320px;background:#9eb39e;border:1px solid #555"></canvas>
+            <!-- V7.6: v3 P4 live-doorways-tally canvas REMOVED. The
+                 in-canvas ResultPanel (classroom-board.js) shows the
+                 dot plot inside the avatar canvas on close. The old
+                 green TI-84 LCD canvas appearing below the board was
+                 a leftover from v3 P4 and competed visually with the
+                 ResultPanel. _renderDeskDoorwaysTally is a no-op
+                 now (the canvas it looked for is gone). -->
+            <!-- <canvas id="classroom-doorways-tally" ...></canvas> -->
+
         </div>
     </div>
 </div>

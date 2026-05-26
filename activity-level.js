@@ -289,10 +289,15 @@
 
     if (canSaveRestore && yOffset !== 0) { ctx.restore(); }
 
-    // Reflection panel (covers the whole canvas, no y-offset)
-    if (reflection && reflection.active) {
-      drawReflectionPanel(ctx, handle.cssW, handle.cssH, reflection);
-    }
+    // V7.6: the in-canvas ResultPanel (classroom-board.js) owns the
+    // reflection display now -- dot plot + reflection text in one
+    // monochrome panel. The dim-grey full-overlay drawReflectionPanel
+    // used to occlude the ResultPanel from above (activity overlay
+    // canvas is layered above the avatar canvas in DOM order), which
+    // hid the dot plot entirely. Reflection panel call removed.
+    // if (reflection && reflection.active) {
+    //   drawReflectionPanel(ctx, handle.cssW, handle.cssH, reflection);
+    // }
 
     // DOM tooltip
     syncTooltip(handle, activityState);
