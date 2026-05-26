@@ -2026,6 +2026,19 @@
     return _keyImage;
   }
 
+  // V7.8.1: button.png was ported to fa root in V7.3 (alongside coin/key/
+  // door PNGs) but the V7.8 ChoicePadSprite ship used Graphics shapes. The
+  // user flagged the visual mismatch in PeriodX smoke -- swap to the
+  // Pico Park button asset for visual continuity with coins/keys/doors.
+  var _buttonImage = null;
+  function _ensureButtonImage() {
+    if (_buttonImage) return _buttonImage;
+    if (typeof Image === 'undefined') return null;
+    _buttonImage = new Image();
+    _buttonImage.src = 'button.png';
+    return _buttonImage;
+  }
+
   // --- ChoicePadSprite entity (V7.8 mechanic-first / Zone 1) ------------
 
   /**
@@ -2079,6 +2092,10 @@
     this.value          = (typeof opts.value === 'string') ? opts.value : 'A';
     this.size           = opts.size || CHOICEPAD_DEFAULT_SIZE;
     this.id             = (typeof opts.id === 'string') ? opts.id : '';
+    // V7.8.1: Pico Park button.png (loaded by syncLevelChoicePads via
+    // _ensureButtonImage). render() falls back to a colored rect if the
+    // image hasn't loaded yet OR isn't supplied (tests stub).
+    this.images         = Array.isArray(opts.images) ? opts.images : [];
     this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
     this.getLocalMarks  = (typeof opts.getLocalMarks === 'function')  ? opts.getLocalMarks  : function () { return null; };
     this.onChoose       = (typeof opts.onChoose === 'function')       ? opts.onChoose       : null;
@@ -2177,22 +2194,42 @@
     }
     ctx.globalAlpha = alpha;
 
-    // Recorded -> solid color fill matching the pad's value. Idle/Hover
-    // -> white interior with a gray border. Letter centered in either case.
-    var fill = CHOICEPAD_COLOR_BG;
-    var stroke = CHOICEPAD_COLOR_BORDER;
-    if (visual === 'RECORDED') {
-      fill   = (this.value === 'B') ? CHOICEPAD_COLOR_B : CHOICEPAD_COLOR_A;
-      stroke = fill;
+    // V7.8.1: prefer the Pico Park button.png. Fallback (image not loaded
+    // or absent in test stubs): the V7.8 colored-rect render so the sprite
+    // is always visible. RECORDED state overlays a colored tint regardless
+    // of which path renders the base.
+    var img = this.images[0];
+    var imgReady = img && img.complete && img.naturalWidth > 0;
+    if (imgReady && typeof ctx.drawImage === 'function') {
+      try { ctx.drawImage(img, this.x, this.y, this.size, this.size); } catch (_) { imgReady = false; }
     }
-    if (typeof ctx.fillRect === 'function') {
-      ctx.fillStyle = fill;
+    if (!imgReady) {
+      // Fallback shape render (test stubs without Image / asset miss).
+      var fill = CHOICEPAD_COLOR_BG;
+      var stroke = CHOICEPAD_COLOR_BORDER;
+      if (visual === 'RECORDED') {
+        fill   = (this.value === 'B') ? CHOICEPAD_COLOR_B : CHOICEPAD_COLOR_A;
+        stroke = fill;
+      }
+      if (typeof ctx.fillRect === 'function') {
+        ctx.fillStyle = fill;
+        try { ctx.fillRect(this.x, this.y, this.size, this.size); } catch (_) {}
+      }
+      if (typeof ctx.strokeRect === 'function') {
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth   = 2;
+        try { ctx.strokeRect(this.x, this.y, this.size, this.size); } catch (_) {}
+      }
+    } else if (visual === 'RECORDED' && typeof ctx.fillRect === 'function') {
+      // Image rendered AND player picked this pad -- overlay a translucent
+      // value-colored wash so the chosen pad reads as "yours" at a glance.
+      var prevComposite = (typeof ctx.globalCompositeOperation === 'string') ? ctx.globalCompositeOperation : 'source-over';
+      ctx.fillStyle = (this.value === 'B') ? CHOICEPAD_COLOR_B : CHOICEPAD_COLOR_A;
+      var prevWashAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = Math.min(prevWashAlpha, 0.45);
       try { ctx.fillRect(this.x, this.y, this.size, this.size); } catch (_) {}
-    }
-    if (typeof ctx.strokeRect === 'function') {
-      ctx.strokeStyle = stroke;
-      ctx.lineWidth   = 2;
-      try { ctx.strokeRect(this.x, this.y, this.size, this.size); } catch (_) {}
+      ctx.globalAlpha = prevWashAlpha;
+      try { ctx.globalCompositeOperation = prevComposite; } catch (_) {}
     }
 
     if (typeof ctx.fillText === 'function') {
@@ -3938,6 +3975,10 @@
           var padId = p.id;
           var sprite = new ChoicePadSprite({
             id: padId, x: px, y: py, size: size, value: p.value,
+            // V7.8.1: hand the Pico Park button.png to render(). Falls
+            // back to the colored-rect path when the image hasn't loaded
+            // yet OR the test stubs out Image (jsdom env).
+            images: [ _ensureButtonImage() ],
             getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
             getLocalMarks: (function (capturedUsername) {
               return function () {
