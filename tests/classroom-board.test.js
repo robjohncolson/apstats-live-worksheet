@@ -6805,3 +6805,180 @@ describe('V7.5 histogram auto-dismiss timer', () => {
     expect(m.timerSpies.clearedTimeouts.indexOf(autoId)).toBeGreaterThanOrEqual(0);
   });
 });
+
+// ----------------------------------------------------------------------
+// V7.6: in-canvas ResultPanel (dot plot + dynamic reflection text)
+// ----------------------------------------------------------------------
+
+// Minimal canvas stub that captures fill/stroke calls + text + arc calls
+// so we can assert on the dot count + title text without needing jsdom.
+function makeResultPanelCtx() {
+  var calls = { fills: [], rects: [], texts: [], arcs: [], lines: [] };
+  return {
+    _calls: calls,
+    font: '', textAlign: 'start', fillStyle: '#000', strokeStyle: '#000',
+    lineWidth: 1, globalAlpha: 1,
+    measureText: function (s) { return { width: String(s).length * 6 }; },
+    fillRect: function (x, y, w, h) { calls.rects.push({ x: x, y: y, w: w, h: h, fill: this.fillStyle }); },
+    strokeRect: function () {},
+    beginPath: function () {},
+    moveTo: function (x, y) { calls.lines.push({ x: x, y: y, op: 'move' }); },
+    lineTo: function (x, y) { calls.lines.push({ x: x, y: y, op: 'line' }); },
+    arc: function (x, y, r) { calls.arcs.push({ x: x, y: y, r: r, fill: this.fillStyle }); },
+    fill: function () {},
+    stroke: function () {},
+    fillText: function (text, x, y) { calls.texts.push({ text: String(text), x: x, y: y, fill: this.fillStyle, font: this.font }); }
+  };
+}
+
+describe('V7.6 ResultPanel -- in-canvas dot plot + reflection text', () => {
+  it('zIndex is 15 (above coins/goal/key/tally band; below RevealText)', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({});
+    expect(panel.zIndex).toBe(15);
+  });
+
+  it('getLabelSpec returns null -- panel paints its own labels', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({});
+    expect(panel.getLabelSpec()).toBeNull();
+  });
+
+  it('render is a no-op when no closedDoorways is set', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({
+      getClosedDoorways: function () { return null; },
+      getReflection:     function () { return null; },
+      getViewportW:      function () { return 432; }
+    });
+    var ctx = makeResultPanelCtx();
+    panel.render(ctx);
+    expect(ctx._calls.texts.length).toBe(0);
+    expect(ctx._calls.arcs.length).toBe(0);
+  });
+
+  it('render draws one dot per vote count across all options', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({
+      getClosedDoorways: function () {
+        return {
+          id: 'x', question: '?',
+          options: [{ label: 'A', doorId: 'd1' }, { label: 'B', doorId: 'd2' }, { label: 'C', doorId: 'd3' }],
+          tally:   [{ doorId: 'd1', count: 3 }, { doorId: 'd2', count: 1 }, { doorId: 'd3', count: 0 }]
+        };
+      },
+      getReflection: function () { return null; },
+      getViewportW:  function () { return 432; }
+    });
+    var ctx = makeResultPanelCtx();
+    panel.render(ctx);
+    // Total dots = 3 + 1 + 0 = 4 arc-based dots.
+    expect(ctx._calls.arcs.length).toBe(4);
+  });
+
+  it('render paints the "Class Vote" title (centered)', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({
+      getClosedDoorways: function () {
+        return {
+          id: 't', question: '?',
+          options: [{ label: 'A', doorId: 'd1' }, { label: 'B', doorId: 'd2' }],
+          tally:   [{ doorId: 'd1', count: 1 }, { doorId: 'd2', count: 0 }]
+        };
+      },
+      getReflection: function () { return null; },
+      getViewportW:  function () { return 432; }
+    });
+    var ctx = makeResultPanelCtx();
+    panel.render(ctx);
+    var title = ctx._calls.texts.find(function (t) { return t.text === 'Class Vote'; });
+    expect(title).toBeDefined();
+  });
+
+  it('renders the door labels under each column', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({
+      getClosedDoorways: function () {
+        return {
+          id: 'l', question: '?',
+          options: [{ label: 'Cup A?', doorId: 'd1' }, { label: 'Tell A/B', doorId: 'd2' }],
+          tally:   [{ doorId: 'd1', count: 2 }, { doorId: 'd2', count: 1 }]
+        };
+      },
+      getReflection: function () { return null; },
+      getViewportW:  function () { return 432; }
+    });
+    var ctx = makeResultPanelCtx();
+    panel.render(ctx);
+    var lA = ctx._calls.texts.find(function (t) { return t.text === 'Cup A?'; });
+    var lB = ctx._calls.texts.find(function (t) { return t.text === 'Tell A/B'; });
+    expect(lA).toBeDefined();
+    expect(lB).toBeDefined();
+  });
+
+  it('renders reflection text when reflection.active is true', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({
+      getClosedDoorways: function () {
+        return {
+          id: 'r', question: '?',
+          options: [{ label: 'A', doorId: 'd1' }, { label: 'B', doorId: 'd2' }],
+          tally:   [{ doorId: 'd1', count: 2 }, { doorId: 'd2', count: 0 }]
+        };
+      },
+      getReflection: function () {
+        return { active: true, doorId: 'd1', reflectionText: 'Two of two thought wrong.' };
+      },
+      getViewportW: function () { return 432; }
+    });
+    var ctx = makeResultPanelCtx();
+    panel.render(ctx);
+    var refl = ctx._calls.texts.find(function (t) { return /thought wrong/.test(t.text); });
+    expect(refl).toBeDefined();
+  });
+
+  it('skips reflection text when reflection.active is false', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({
+      getClosedDoorways: function () {
+        return {
+          id: 'rf', question: '?',
+          options: [{ label: 'A', doorId: 'd1' }],
+          tally:   [{ doorId: 'd1', count: 1 }]
+        };
+      },
+      getReflection: function () {
+        return { active: false, doorId: null, reflectionText: 'should not appear' };
+      },
+      getViewportW: function () { return 432; }
+    });
+    var ctx = makeResultPanelCtx();
+    panel.render(ctx);
+    var leaked = ctx._calls.texts.find(function (t) { return /should not appear/.test(t.text); });
+    expect(leaked).toBeUndefined();
+  });
+
+  it('paints monochrome only: text fills are white (#FFFFFF) or black (#000000)', () => {
+    var m = makeBoard();
+    var panel = new m.ClassroomBoard._ResultPanel({
+      getClosedDoorways: function () {
+        return {
+          id: 'm', question: '?',
+          options: [{ label: 'A', doorId: 'd1' }, { label: 'B', doorId: 'd2' }],
+          tally:   [{ doorId: 'd1', count: 1 }, { doorId: 'd2', count: 1 }]
+        };
+      },
+      getReflection: function () { return null; },
+      getViewportW:  function () { return 432; }
+    });
+    var ctx = makeResultPanelCtx();
+    panel.render(ctx);
+    // No green / red / blue palette anywhere -- title + labels + dots all
+    // use #000000 (foreground) or #FFFFFF (background fill behind text).
+    var allFills = ctx._calls.texts.map(function (t) { return String(t.fill).toUpperCase(); })
+      .concat(ctx._calls.arcs.map(function (a) { return String(a.fill).toUpperCase(); }))
+      .concat(ctx._calls.rects.map(function (r) { return String(r.fill).toUpperCase(); }));
+    var nonMono = allFills.filter(function (c) { return c !== '#000000' && c !== '#FFFFFF'; });
+    expect(nonMono).toEqual([]);
+  });
+});

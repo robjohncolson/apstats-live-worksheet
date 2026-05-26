@@ -2082,6 +2082,236 @@
     ctx.fillStyle   = prevFill;
   };
 
+  // --- ResultPanel entity (V7.6 doorways-close in-canvas) ---------------
+
+  /**
+   * Monochrome in-canvas panel rendered above the avatar scene when the
+   * server closes a doorways round. Shows the per-option dot plot tally
+   * and (when the engine emits reflection.active===true for a wrong-door
+   * win) the substituted reflection text below the chart.
+   *
+   * Replaces the legacy DOM histogram pulldown on the doorways-close path.
+   * The v2.1 poll pulldown (showResultScreen / hideResultScreen) is
+   * preserved for the closedPoll path -- ResultPanel is doorways-only.
+   *
+   * opts:
+   *   getClosedDoorways -- () -> { question, options:[{label, doorId}],
+   *                                 tally:[{doorId, count}] } | null
+   *   getReflection     -- () -> { active, reflectionText, ... } | null
+   *   getViewportW      -- () -> number (canvas width, CSS px)
+   *
+   * Styling is pure black on white. zIndex 15 -- above coins/goal/key/tally
+   * (band 5) but below RevealTextSprite which paints on top of everything.
+   */
+  var RP_FONT_TITLE    = 'bold 11px monospace';
+  var RP_FONT_LABEL    = '10px monospace';
+  var RP_FONT_REFL     = '10px monospace';
+  var RP_BG            = '#FFFFFF';
+  var RP_FG            = '#000000';
+  var RP_STROKE        = '#000000';
+  var RP_DOT_R         = 3;       // radius -> ~6 px diameter
+  var RP_DOT_GAP       = 1;
+  var RP_DOT_COL_STACK = 15;      // wrap a stack into a new column after N
+  var RP_PAD_X         = 10;
+  var RP_PAD_Y         = 8;
+  var RP_DEFAULT_W     = 280;
+  var RP_TOP_Y         = 6;
+  var RP_LABEL_GAP     = 4;
+  var RP_TITLE_TEXT    = 'Class Vote';
+
+  function ResultPanel(opts) {
+    this.getClosedDoorways = (typeof opts.getClosedDoorways === 'function') ? opts.getClosedDoorways : function () { return null; };
+    this.getReflection     = (typeof opts.getReflection === 'function')     ? opts.getReflection     : function () { return null; };
+    this.getViewportW      = (typeof opts.getViewportW === 'function')      ? opts.getViewportW      : function () { return DEFAULT_BOARD_W; };
+    // zIndex 15: above the band-5 cluster (coins/goal/key/tally/stage),
+    // below RevealTextSprite (typically renders without a zIndex, so it
+    // ends up on top via insertion order; ResultPanel never overlaps a
+    // reveal anyway -- doors close after a vote, reveals fire from coins).
+    this.zIndex = 15;
+    this.engine = null;
+  }
+
+  ResultPanel.prototype.update = function (/* dt */) { /* no-op */ };
+
+  // Panel paints its own title + labels + body; engine label pass skips it.
+  ResultPanel.prototype.getLabelSpec = function () { return null; };
+
+  ResultPanel.prototype._wrapText = function (ctx, text, maxWidth) {
+    if (!text) { return []; }
+    var words = String(text).split(/\s+/);
+    var lines = [];
+    var cur   = '';
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      if (!w) { continue; }
+      var trial = cur ? (cur + ' ' + w) : w;
+      var width = 0;
+      if (typeof ctx.measureText === 'function') {
+        try { width = ctx.measureText(trial).width || 0; } catch (_) { width = trial.length * 6; }
+      } else {
+        width = trial.length * 6;
+      }
+      if (width <= maxWidth || !cur) {
+        cur = trial;
+      } else {
+        lines.push(cur);
+        cur = w;
+      }
+    }
+    if (cur) { lines.push(cur); }
+    return lines;
+  };
+
+  ResultPanel.prototype.render = function (ctx) {
+    if (!ctx || typeof ctx.fillText !== 'function') return;
+    var doorways = this.getClosedDoorways();
+    if (!doorways || !Array.isArray(doorways.options) || doorways.options.length === 0) return;
+
+    var options = doorways.options;
+    var tally   = Array.isArray(doorways.tally) ? doorways.tally : [];
+    var reflection = this.getReflection();
+    var reflActive = !!(reflection && reflection.active);
+    var reflText   = reflActive ? String(reflection.reflectionText || '') : '';
+
+    // Build counts-by-doorId for fast lookup.
+    var countByDoor = {};
+    for (var t = 0; t < tally.length; t++) {
+      var row = tally[t];
+      if (row && row.doorId != null) { countByDoor[row.doorId] = row.count || 0; }
+    }
+
+    // Layout: width = min(RP_DEFAULT_W, 70% of canvas), centered horizontally.
+    var vw    = this.getViewportW() || DEFAULT_BOARD_W;
+    var panelW = Math.min(RP_DEFAULT_W, Math.max(160, Math.floor(vw * 0.7)));
+    var panelX = Math.floor((vw - panelW) / 2);
+    var panelY = RP_TOP_Y;
+
+    // Compute max stack height across options so columns share a baseline.
+    var maxCount = 0;
+    for (var i = 0; i < options.length; i++) {
+      var c = countByDoor[options[i].doorId] || 0;
+      if (c > maxCount) { maxCount = c; }
+    }
+    var stackRows  = Math.min(maxCount, RP_DOT_COL_STACK);
+    var stackCols  = Math.ceil(Math.max(1, maxCount) / RP_DOT_COL_STACK);
+    var dotPitch   = (RP_DOT_R * 2) + RP_DOT_GAP;
+    var dotsH      = Math.max(dotPitch, stackRows * dotPitch);
+    var labelH     = 12;
+
+    // Reflection text wrap (only when active).
+    var prevFont = ctx.font;
+    ctx.font = RP_FONT_REFL;
+    var reflLines = reflActive ? this._wrapText(ctx, reflText, panelW - RP_PAD_X * 2) : [];
+    var reflH     = reflLines.length * 12;
+    ctx.font = prevFont;
+
+    var hrH       = 6;
+    var titleH    = 14;
+    var bodyH     = dotsH + RP_LABEL_GAP + labelH;
+    var panelH    = RP_PAD_Y * 2 + titleH + hrH + bodyH + hrH + (reflActive ? (reflH + 4) : 0);
+
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevAlign = ctx.textAlign;
+    var prevFill  = ctx.fillStyle;
+    var prevStroke = ctx.strokeStyle;
+    var prevLineW = ctx.lineWidth;
+
+    // Background + border.
+    ctx.globalAlpha = 1;
+    ctx.fillStyle   = RP_BG;
+    if (typeof ctx.fillRect === 'function') {
+      try { ctx.fillRect(panelX, panelY, panelW, panelH); } catch (_) {}
+    }
+    ctx.strokeStyle = RP_STROKE;
+    ctx.lineWidth   = 1;
+    if (typeof ctx.strokeRect === 'function') {
+      try { ctx.strokeRect(panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1); } catch (_) {}
+    }
+
+    // Title.
+    ctx.fillStyle = RP_FG;
+    ctx.font      = RP_FONT_TITLE;
+    ctx.textAlign = 'center';
+    try { ctx.fillText(RP_TITLE_TEXT, panelX + panelW / 2, panelY + RP_PAD_Y + 10); } catch (_) {}
+
+    // Top horizontal rule.
+    var hr1Y = panelY + RP_PAD_Y + titleH;
+    if (typeof ctx.beginPath === 'function' && typeof ctx.moveTo === 'function') {
+      try {
+        ctx.beginPath();
+        ctx.moveTo(panelX + RP_PAD_X, hr1Y);
+        ctx.lineTo(panelX + panelW - RP_PAD_X, hr1Y);
+        ctx.stroke();
+      } catch (_) {}
+    }
+
+    // Dot columns + labels.
+    var colCount = options.length;
+    var colW     = (panelW - RP_PAD_X * 2) / colCount;
+    var colsBaseY = hr1Y + hrH + dotsH;       // dots stack UP from this baseline
+    var labelY    = colsBaseY + RP_LABEL_GAP + 10;
+
+    ctx.font      = RP_FONT_LABEL;
+    ctx.textAlign = 'center';
+    for (var k = 0; k < colCount; k++) {
+      var opt   = options[k];
+      var label = (opt && opt.label != null) ? String(opt.label) : '';
+      var count = countByDoor[opt && opt.doorId] || 0;
+      var colCx = panelX + RP_PAD_X + colW * (k + 0.5);
+
+      // Stack dots upward from baseline; wrap into extra columns at RP_DOT_COL_STACK.
+      for (var d = 0; d < count; d++) {
+        var stackIdx = Math.floor(d / RP_DOT_COL_STACK);
+        var rowIdx   = d % RP_DOT_COL_STACK;
+        var dotX     = colCx + (stackIdx - (stackCols - 1) / 2) * (RP_DOT_R * 2 + RP_DOT_GAP);
+        var dotY     = colsBaseY - rowIdx * dotPitch - RP_DOT_R;
+        if (typeof ctx.beginPath === 'function' && typeof ctx.arc === 'function') {
+          try {
+            ctx.beginPath();
+            ctx.fillStyle = RP_FG;
+            ctx.arc(dotX, dotY, RP_DOT_R, 0, Math.PI * 2);
+            ctx.fill();
+          } catch (_) {}
+        } else if (typeof ctx.fillRect === 'function') {
+          try { ctx.fillRect(dotX - RP_DOT_R, dotY - RP_DOT_R, RP_DOT_R * 2, RP_DOT_R * 2); } catch (_) {}
+        }
+      }
+      // Column label (door short label).
+      ctx.fillStyle = RP_FG;
+      try { ctx.fillText(label, colCx, labelY); } catch (_) {}
+    }
+
+    // Bottom horizontal rule.
+    var hr2Y = labelY + 4;
+    if (typeof ctx.beginPath === 'function' && typeof ctx.moveTo === 'function') {
+      try {
+        ctx.beginPath();
+        ctx.moveTo(panelX + RP_PAD_X, hr2Y);
+        ctx.lineTo(panelX + panelW - RP_PAD_X, hr2Y);
+        ctx.stroke();
+      } catch (_) {}
+    }
+
+    // Reflection text (only when active).
+    if (reflActive && reflLines.length > 0) {
+      ctx.font      = RP_FONT_REFL;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = RP_FG;
+      var ry = hr2Y + 12;
+      for (var r = 0; r < reflLines.length; r++) {
+        try { ctx.fillText(reflLines[r], panelX + RP_PAD_X, ry); } catch (_) {}
+        ry += 12;
+      }
+    }
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    ctx.fillStyle   = prevFill;
+    ctx.strokeStyle = prevStroke;
+    ctx.lineWidth   = prevLineW;
+  };
+
   // --- PollColumnsOverlay entity (v2) -----------------------------------
 
   /**
@@ -3142,6 +3372,97 @@
       }
     }
 
+    // ResultPanel (V7.6) -- singleton in-canvas vote-result panel. Spawns
+    // when state.closedDoorways flips from null to a fresh snapshot (the
+    // server just closed a doorways round). Auto-dismisses after
+    // RESULT_PANEL_DISMISS_FAST_MS (correct vote, no reflection) or
+    // RESULT_PANEL_DISMISS_SLOW_MS (wrong vote, reflection text below the
+    // dot plot needs reading time). Also clears on activity teardown so a
+    // fast level restart doesn't strand a stale panel.
+    var RESULT_PANEL_DISMISS_FAST_MS = 2000;
+    var RESULT_PANEL_DISMISS_SLOW_MS = 8000;
+    var resultPanelEntity     = null;
+    var _resultPanelTimer     = null;
+    var _resultPanelHasRefl   = false;   // upgrades a fast timer to slow when reflection flips active
+    var _prevClosedDoorwaysId = null;    // detect a new doorways-close to (re)spawn
+
+    function _despawnResultPanel() {
+      if (_resultPanelTimer != null) {
+        try { clearTimeout(_resultPanelTimer); } catch (_) {}
+        _resultPanelTimer = null;
+      }
+      if (resultPanelEntity) {
+        try { engine.removeEntity('result_panel'); } catch (_) {}
+        resultPanelEntity = null;
+      }
+      _resultPanelHasRefl = false;
+    }
+
+    function _armResultPanelTimer(ms) {
+      if (_resultPanelTimer != null) {
+        try { clearTimeout(_resultPanelTimer); } catch (_) {}
+        _resultPanelTimer = null;
+      }
+      try {
+        _resultPanelTimer = setTimeout(function () {
+          _resultPanelTimer = null;
+          _despawnResultPanel();
+        }, ms);
+      } catch (_) {}
+    }
+
+    function syncResultPanel(curr) {
+      if (!engineReady) return;
+
+      var closed = (curr && curr.closedDoorways) ? curr.closedDoorways : null;
+      var act    = curr && curr.activity;
+      var refl   = (act && act.state && act.state.reflection) ? act.state.reflection : null;
+      var reflActive = !!(refl && refl.active);
+
+      // Activity teardown clears the panel (level finished or fast restart).
+      var activityGone = !act || act.finished === true;
+      if (activityGone && !closed) {
+        _despawnResultPanel();
+        _prevClosedDoorwaysId = null;
+        return;
+      }
+
+      // Fresh closedDoorways id -> (re)spawn the panel.
+      var freshClose = closed && closed.id !== _prevClosedDoorwaysId;
+      if (freshClose) {
+        _prevClosedDoorwaysId = closed.id;
+
+        if (resultPanelEntity) {
+          try { engine.removeEntity('result_panel'); } catch (_) {}
+          resultPanelEntity = null;
+        }
+        resultPanelEntity = new ResultPanel({
+          getClosedDoorways: function () { return state && state.closedDoorways; },
+          getReflection:     function () {
+            var a = state && state.activity;
+            return (a && a.state && a.state.reflection) ? a.state.reflection : null;
+          },
+          getViewportW: function () {
+            if (!engine || !engine.canvas) return DEFAULT_BOARD_W;
+            return engine.canvas.width / (root.devicePixelRatio || 1);
+          }
+        });
+        try { engine.addEntity('result_panel', resultPanelEntity); } catch (_) {}
+        // Arm dismiss based on current reflection state; upgrade later if
+        // reflection.active flips true after the spawn.
+        _resultPanelHasRefl = reflActive;
+        _armResultPanelTimer(reflActive ? RESULT_PANEL_DISMISS_SLOW_MS : RESULT_PANEL_DISMISS_FAST_MS);
+        return;
+      }
+
+      // If the panel is up and reflection just flipped active, upgrade the
+      // dismiss timer to the slow window so students can read the prompt.
+      if (resultPanelEntity && reflActive && !_resultPanelHasRefl) {
+        _resultPanelHasRefl = true;
+        _armResultPanelTimer(RESULT_PANEL_DISMISS_SLOW_MS);
+      }
+    }
+
     // V7.4 blind-test: monotonic id source for RevealTextSprite entries.
     // Each spawned reveal-text gets its own entity id so multiple pops
     // (rapid local collect + parallel peer collect on the same coin's
@@ -3679,6 +4000,10 @@
       syncLevelTally(state);
       syncLevelKey(state);
       syncStageIndicator(state);
+      // V7.6: spawn/despawn the in-canvas ResultPanel (doorways close +
+      // optional reflection text). Runs after the level-overlay sync so
+      // the panel reads the freshest closedDoorways + reflection state.
+      syncResultPanel(state);
       notifyStateChange();
     }
 
@@ -3856,6 +4181,12 @@
         if (_resultDismissTimer != null) {
           try { clearTimeout(_resultDismissTimer); } catch (_) {}
           _resultDismissTimer = null;
+        }
+        // V7.6: cancel the ResultPanel auto-dismiss timer so its callback
+        // doesn't fire on a torn-down engine.
+        if (_resultPanelTimer != null) {
+          try { clearTimeout(_resultPanelTimer); } catch (_) {}
+          _resultPanelTimer = null;
         }
         heartbeatTimer  = null;
         reconnectTimer  = null;
@@ -4038,7 +4369,8 @@
     _TallyDisplay:     TallyDisplay,     // V7.4 -- exposed for unit tests
     _GoalSprite:       GoalSprite,       // V7.5 -- exposed for unit tests
     _KeySprite:        KeySprite,        // V7.5 -- exposed for unit tests
-    _StageIndicator:   StageIndicator    // V7.5 -- exposed for unit tests
+    _StageIndicator:   StageIndicator,   // V7.5 -- exposed for unit tests
+    _ResultPanel:      ResultPanel       // V7.6 -- exposed for unit tests
   };
 
 }(typeof window !== 'undefined' ? window : this));
