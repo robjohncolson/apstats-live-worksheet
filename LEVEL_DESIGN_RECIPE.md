@@ -51,12 +51,21 @@ pedagogy:
 | `Goal` | Mastery target. Player walks here after at least one correct gate opens to fire success. | `x, y` |
 | `ReturnWarp` | Lives in `reflection_room.actors`. V7 doesn't use it for walk-back (replaced with time-based auto-clear) but the field is reserved. | `x, y` |
 | `Tally` | Threshold gate for SIPPING -> VOTING. Reads `tally.sips`; advances when every key in `threshold` meets its min count. Pair with `TallyDisplay` actor for live progress UI. | `x, y`, `threshold` (object mapping drink letter -> min count). Optional `binds` (default `"tally.sips"`). |
+| `ChoicePad` | Per-player preference recorder. Player must have both sampledA and sampledB marks; walking onto a ChoicePad sets `player.marks.choice = value`. Pair with SipStation actors (one per category letter). Engine cascade: ChoicePad presence overrides V7.7 Tally threshold + V7.5 all-coins gate. | `x, y, value` (string -- 'A' or 'B' for binary preference). Optional `id`. |
 
 V7.7 (sprint 1 of Pico Parity arc). Authors should pair a `Tally`
 actor with a `TallyDisplay` actor at the same chip position when the
 level uses per-category coins (W/N, R/B, etc.) and wants students to
 feel the sampling threshold. Levels without a `Tally` actor keep the
 legacy 'all coins collected' trigger.
+
+V7.8 (sprint 1 of mechanic-first arc). Use ChoicePad when the level
+teaches "what does the data measure?" -- the act of CHOOSING is the
+variable. Pair with 1 A-SipStation + 1 B-SipStation (per-player
+required) and one ChoicePad per choice value. The level advances from
+SIPPING to VOTING only when EVERY online player has a complete row
+(sampledA + sampledB + choice). Do NOT also use a Tally actor on a
+ChoicePad level -- the ChoicePad cascade overrides the Tally one.
 
 ### V7.1 actors (NOT YET implemented -- log if you need them, but
 DON'T use in v7-level-1 schema levels):

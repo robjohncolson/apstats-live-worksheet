@@ -2026,6 +2026,203 @@
     return _keyImage;
   }
 
+  // --- ChoicePadSprite entity (V7.8 mechanic-first / Zone 1) ------------
+
+  /**
+   * Per-player preference recorder. Player walks onto the pad WITH both
+   * marks.sampledA AND marks.sampledB true -> server records
+   * player.marks.choice = this.value. One-shot per instance: a player
+   * who stepped on pad A then walks onto pad B keeps the FIRST choice
+   * (BUILD doc section 4 risk area).
+   *
+   * Rendered on the avatar canvas at zIndex 5 (same band as coins,
+   * key, goal, tally; below avatars at zIndex 10). Three visual states:
+   *
+   *   IDLE                   default; light platform with a centered
+   *                          letter (A or B).
+   *   HOVERED-WITHOUT-MARKS  local player overlaps but lacks one or
+   *                          both sample marks -- pulse alpha as a
+   *                          cue: "sip both cups first".
+   *   RECORDED               local player's marks.choice === this.value
+   *                          (they chose this pad) -- solid color
+   *                          (warm amber for A, cool blue for B) with
+   *                          a checkmark glyph.
+   *
+   * opts:
+   *   x, y           -- canvas pixel coords (top-left of the sprite)
+   *   value          -- 'A' or 'B' (pad's preference value)
+   *   size           -- render size in px (default 28)
+   *   getLocalSprite -- () -> BoardSprite (the local player) for collision
+   *   getLocalMarks  -- () -> { sampledA, sampledB, choice } | null
+   *   onChoose       -- (choicePadId) -> void; fired ONCE on first
+   *                     valid contact (both samples + no prior choice)
+   *
+   * V7.4 _sentCollect Codex MAJOR fold is mirrored as _sentChoice: TTL
+   * 600 ms; clears either via timeout OR when server-confirmed
+   * marks.choice flips to a truthy value.
+   */
+  var CHOICEPAD_COLLISION_X_PX = 22;   // generous X for "walk onto pad"
+  var CHOICEPAD_COLLISION_Y_PX = 28;   // generous Y -- pad sits at floor level, no jump required
+  var CHOICEPAD_DEFAULT_SIZE   = 28;
+  var CHOICEPAD_SENT_TTL_MS    = 600;  // mirror COIN_SENT_TTL_MS / KEY_SENT_TTL_MS
+  var CHOICEPAD_COLOR_A        = '#FFB74D';   // warm amber
+  var CHOICEPAD_COLOR_B        = '#64B5F6';   // cool blue
+  var CHOICEPAD_COLOR_BORDER   = '#BBBBBB';   // light gray idle border
+  var CHOICEPAD_COLOR_BG       = '#FFFFFF';   // white idle interior
+  var CHOICEPAD_COLOR_TEXT     = '#222222';   // dark letter on idle
+  var CHOICEPAD_COLOR_CHECK    = '#FFFFFF';   // checkmark on recorded
+  var CHOICEPAD_PULSE_HZ       = 2.5;         // hover-without-marks pulse
+
+  function ChoicePadSprite(opts) {
+    this.x              = opts.x;
+    this.y              = opts.y;
+    this.value          = (typeof opts.value === 'string') ? opts.value : 'A';
+    this.size           = opts.size || CHOICEPAD_DEFAULT_SIZE;
+    this.id             = (typeof opts.id === 'string') ? opts.id : '';
+    this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
+    this.getLocalMarks  = (typeof opts.getLocalMarks === 'function')  ? opts.getLocalMarks  : function () { return null; };
+    this.onChoose       = (typeof opts.onChoose === 'function')       ? opts.onChoose       : null;
+    this._sentChoice    = false;
+    this._sentChoiceAt  = 0;     // ms timestamp; gated by CHOICEPAD_SENT_TTL_MS
+    this._pulseT        = 0;     // accumulator for hover pulse
+    // zIndex 5 -- same band as coins/key/goal/tally; below avatars.
+    this.zIndex         = 5;
+    this.engine         = null;
+  }
+
+  // Local-only "we already fired" predicate. Server-confirmed
+  // marks.choice flips _sentChoice false (cleared by syncLevelChoicePads
+  // on the wire transition) so the visual state can switch IDLE ->
+  // RECORDED without keeping the local guard stuck.
+  ChoicePadSprite.prototype._isChoosing = function () {
+    return this._sentChoice === true;
+  };
+
+  // Local player has both samples + has NOT yet recorded a choice.
+  ChoicePadSprite.prototype._canChoose = function () {
+    var marks = this.getLocalMarks();
+    if (!marks) return false;
+    if (!marks.sampledA || !marks.sampledB) return false;
+    if (marks.choice) return false;   // already chose (one-shot per player)
+    return true;
+  };
+
+  // Local player overlaps this pad's pixel band.
+  ChoicePadSprite.prototype._isOverlapping = function () {
+    var me = this.getLocalSprite();
+    if (!me) return false;
+    var myCx  = me.x + (me._spriteSize   || 24) / 2;
+    var myCy  = me.y + (me._spriteHeight || 24) / 2;
+    var padCx = this.x + this.size / 2;
+    var padCy = this.y + this.size / 2;
+    return (Math.abs(myCx - padCx) <= CHOICEPAD_COLLISION_X_PX &&
+            Math.abs(myCy - padCy) <= CHOICEPAD_COLLISION_Y_PX);
+  };
+
+  ChoicePadSprite.prototype.update = function (dt) {
+    this._pulseT += dt;
+    // Already fired (one-shot per instance, TTL-guarded). The TTL is
+    // cleared by syncLevelChoicePads on the server-confirmed marks.choice
+    // transition (mirrors syncLevelCoins / syncLevelKey TTL clear).
+    if (this._isChoosing()) return;
+    var marks = this.getLocalMarks();
+    // No marks at all (player not joined, or wire shape missing) -- no fire.
+    if (!marks) return;
+    // Local player already chose a value (could be this pad's OR the
+    // sibling pad's) -- no fire. One-shot per player.
+    if (marks.choice) return;
+    // Missing at least one sample -- visual cue only (pulse), no fire.
+    if (!marks.sampledA || !marks.sampledB) return;
+    // Not overlapping -- no fire.
+    if (!this._isOverlapping()) return;
+    // Eligible: both samples + no choice yet + overlapping. Fire once.
+    this._sentChoice   = true;
+    this._sentChoiceAt = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+    if (this.onChoose) {
+      try { this.onChoose(this.id); } catch (_) {}
+    }
+  };
+
+  // Returns 'IDLE' | 'HOVER' | 'RECORDED' for the local player's current
+  // state. RECORDED takes precedence (sticky) once marks.choice matches.
+  // HOVER means overlapping but lacks samples (pulse cue). IDLE is
+  // everything else.
+  ChoicePadSprite.prototype._visualState = function () {
+    var marks = this.getLocalMarks();
+    if (marks && marks.choice === this.value) return 'RECORDED';
+    if (this._isOverlapping() && marks && (!marks.sampledA || !marks.sampledB)) {
+      return 'HOVER';
+    }
+    return 'IDLE';
+  };
+
+  ChoicePadSprite.prototype.render = function (ctx) {
+    if (!ctx) return;
+    var visual = this._visualState();
+    var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFill  = ctx.fillStyle;
+    var prevStroke = ctx.strokeStyle;
+    var prevLine  = ctx.lineWidth;
+    var prevFont  = ctx.font;
+    var prevAlign = ctx.textAlign;
+    var prevBase  = (typeof ctx.textBaseline === 'string') ? ctx.textBaseline : '';
+
+    // Alpha modulation: HOVER pulses (0.5 .. 1.0) to cue "sip both first".
+    // IDLE + RECORDED render at full alpha.
+    var alpha = 1;
+    if (visual === 'HOVER') {
+      alpha = 0.75 + Math.sin(this._pulseT * CHOICEPAD_PULSE_HZ * Math.PI * 2) * 0.25;
+      if (alpha < 0.5) alpha = 0.5;
+      if (alpha > 1)   alpha = 1;
+    }
+    ctx.globalAlpha = alpha;
+
+    // Recorded -> solid color fill matching the pad's value. Idle/Hover
+    // -> white interior with a gray border. Letter centered in either case.
+    var fill = CHOICEPAD_COLOR_BG;
+    var stroke = CHOICEPAD_COLOR_BORDER;
+    if (visual === 'RECORDED') {
+      fill   = (this.value === 'B') ? CHOICEPAD_COLOR_B : CHOICEPAD_COLOR_A;
+      stroke = fill;
+    }
+    if (typeof ctx.fillRect === 'function') {
+      ctx.fillStyle = fill;
+      try { ctx.fillRect(this.x, this.y, this.size, this.size); } catch (_) {}
+    }
+    if (typeof ctx.strokeRect === 'function') {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth   = 2;
+      try { ctx.strokeRect(this.x, this.y, this.size, this.size); } catch (_) {}
+    }
+
+    if (typeof ctx.fillText === 'function') {
+      ctx.font        = 'bold 14px monospace';
+      ctx.textAlign   = 'center';
+      try { ctx.textBaseline = 'middle'; } catch (_) {}
+      ctx.fillStyle   = (visual === 'RECORDED') ? CHOICEPAD_COLOR_CHECK : CHOICEPAD_COLOR_TEXT;
+      // RECORDED uses 'x' as an ASCII-safe checkmark stand-in (BUILD doc
+      // hard constraint: no non-ASCII bytes anywhere). The pad value
+      // letter ('A' / 'B') prints in IDLE / HOVER.
+      var label = (visual === 'RECORDED') ? 'x' : (this.value || '');
+      try {
+        ctx.fillText(label, this.x + this.size / 2, this.y + this.size / 2);
+      } catch (_) {}
+    }
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.fillStyle   = prevFill;
+    ctx.strokeStyle = prevStroke;
+    ctx.lineWidth   = prevLine;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    if (prevBase) { try { ctx.textBaseline = prevBase; } catch (_) {} }
+  };
+
+  ChoicePadSprite.prototype.getLabelSpec = function () {
+    // Pad paints its own centered letter; engine's label pass should skip.
+    return null;
+  };
+
   // --- StageIndicator entity (V7.5 sequential-stages) -------------------
 
   /**
@@ -3685,6 +3882,120 @@
       }
     }
 
+    // V7.8 mechanic-first: ChoicePadSprite map. One ChoicePadSprite per
+    // state.activity.state.choicePads[] entry; spawned only during
+    // SIPPING phase, despawned when the level ends or phase advances.
+    // Mirrors coinEntities + syncLevelCoins lifecycle.
+    var choicePadEntities = {};   // padId -> ChoicePadSprite
+
+    function syncLevelChoicePads(curr) {
+      if (!engineReady) return;
+      var act     = curr && curr.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var pads    = (act && act.state && Array.isArray(act.state.choicePads)) ? act.state.choicePads : null;
+      var phase   = (act && act.state && act.state.phase) || null;
+
+      // shouldShow: must be in an active level WITH at least one
+      // ChoicePad AND phase === 'SIPPING'. Outside SIPPING, the pads
+      // despawn (the level moves on to VOTING / KEY_HUNT / GOAL_AVAILABLE
+      // and the pads are no longer part of the active mechanic).
+      var shouldShow = isLevel && pads && pads.length > 0 && phase === 'SIPPING';
+
+      if (!shouldShow) {
+        for (var k in choicePadEntities) {
+          if (!Object.prototype.hasOwnProperty.call(choicePadEntities, k)) continue;
+          try { engine.removeEntity('choicepad_' + k); } catch (_) {}
+          delete choicePadEntities[k];
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
+      var levelW   = mapW * chipSize;
+      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
+      var size     = CHOICEPAD_DEFAULT_SIZE;
+
+      // Y placement: pad sits at floor level (no jump required, just
+      // walk onto it). Mirror the goal sprite's ground placement.
+      var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var py = groundY - spriteHeight;
+
+      var seenIds = {};
+      for (var i = 0; i < pads.length; i++) {
+        var p = pads[i];
+        if (!p || !p.id) continue;
+        seenIds[p.id] = true;
+
+        // Rescale chip-X center into canvas pixels (same mapping coins use).
+        var levelCenterPx = (p.x * chipSize) + (chipSize / 2);
+        var canvasCenter  = (levelCenterPx / levelW) * canvasW;
+        var px = canvasCenter - size / 2;
+
+        if (!choicePadEntities[p.id]) {
+          // Closure-capture the pad id so onChoose ships the right id.
+          var padId = p.id;
+          var sprite = new ChoicePadSprite({
+            id: padId, x: px, y: py, size: size, value: p.value,
+            getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
+            getLocalMarks: (function (capturedUsername) {
+              return function () {
+                var s = state && state.activity && state.activity.state;
+                var players = (s && s.players) ? s.players : null;
+                if (!players || !capturedUsername) return null;
+                var me = players[capturedUsername];
+                return (me && me.marks) ? me.marks : null;
+              };
+            }(username)),
+            onChoose: (function (capturedPadId) {
+              return function () {
+                safeSend({ type: 'classroom_activity_value', payload: { kind: 'record-choice', choicePadId: capturedPadId } });
+              };
+            }(padId))
+          });
+          choicePadEntities[p.id] = sprite;
+          try { engine.addEntity('choicepad_' + p.id, sprite); } catch (_) {}
+        } else {
+          // Server is source of truth for position + value; re-apply.
+          var existing = choicePadEntities[p.id];
+          existing.x = px;
+          existing.y = py;
+          existing.value = (typeof p.value === 'string') ? p.value : existing.value;
+          // Clear stale optimistic _sentChoice when the server has NOT
+          // confirmed the choice within CHOICEPAD_SENT_TTL_MS (mirrors
+          // CoinSprite / KeySprite TTL clear). Also clear immediately
+          // when the server-confirmed marks.choice flips truthy (the
+          // local guard's job is done; the visual state can transition
+          // via _visualState reading the marks).
+          if (existing._sentChoice) {
+            var localMarks = existing.getLocalMarks();
+            var serverConfirmed = !!(localMarks && localMarks.choice);
+            if (serverConfirmed) {
+              existing._sentChoice   = false;
+              existing._sentChoiceAt = 0;
+            } else {
+              var nowMs = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+              if (nowMs - (existing._sentChoiceAt || 0) > CHOICEPAD_SENT_TTL_MS) {
+                existing._sentChoice   = false;
+                existing._sentChoiceAt = 0;
+              }
+            }
+          }
+        }
+      }
+
+      // Despawn pads that vanished from state (shouldn't usually happen
+      // mid-activity but covers level swap / reset).
+      for (var id in choicePadEntities) {
+        if (!Object.prototype.hasOwnProperty.call(choicePadEntities, id)) continue;
+        if (!seenIds[id]) {
+          try { engine.removeEntity('choicepad_' + id); } catch (_) {}
+          delete choicePadEntities[id];
+        }
+      }
+    }
+
     // Greenlight overlay entity
     var greenlightOverlay = null;
     var greenlightStartMs = 0;
@@ -4035,6 +4346,10 @@
       syncLevelGoal(state);
       syncLevelTally(state);
       syncLevelKey(state);
+      // V7.8 mechanic-first: spawn/despawn ChoicePadSprite entities for
+      // the SIPPING-phase preference recorder. Despawns on phase
+      // advance past SIPPING (and on activity end).
+      syncLevelChoicePads(state);
       syncStageIndicator(state);
       // V7.6: spawn/despawn the in-canvas ResultPanel (doorways close +
       // optional reflection text). Runs after the level-overlay sync so
@@ -4406,7 +4721,8 @@
     _GoalSprite:       GoalSprite,       // V7.5 -- exposed for unit tests
     _KeySprite:        KeySprite,        // V7.5 -- exposed for unit tests
     _StageIndicator:   StageIndicator,   // V7.5 -- exposed for unit tests
-    _ResultPanel:      ResultPanel       // V7.6 -- exposed for unit tests
+    _ResultPanel:      ResultPanel,      // V7.6 -- exposed for unit tests
+    _ChoicePadSprite:  ChoicePadSprite   // V7.8 -- exposed for unit tests
   };
 
 }(typeof window !== 'undefined' ? window : this));
