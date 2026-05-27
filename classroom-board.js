@@ -1365,10 +1365,32 @@
       }
     }
 
-    // Clamp x to viewport.
-    var cw   = this._canvasW();
-    var maxX = cw - this._spriteSize;
-    if (this.x < 0)    { this.x = 0; }
+    // V7.16 viewport-bounded clamp (Pico Park forced-teamwork). LOCAL
+    // player x is clamped to [camera.x, camera.x + viewportW - spriteW]
+    // instead of [0, levelW]. Combined with the V7.15 shared camera
+    // (camera follows leftmost student), this enforces: nobody can
+    // disappear off the right edge of the viewport because the camera
+    // won't advance until the leftmost catches up. Slowest player
+    // constrains the group's forward progress.
+    //
+    // Peers are unaffected (their positions arrive via classroom_pos
+    // broadcasts; each client clamps its OWN player only). Without a
+    // shared camera (legacy / V7.9.0 fallback), fall back to the
+    // V7.9.0 [0, levelW - spriteW] clamp.
+    var minX, maxX;
+    var camActive = (typeof _camera !== 'undefined' && _camera && _camera.enabled
+                     && _camera.cameraStateFn && typeof _camera.cameraStateFn === 'function');
+    var camSt = camActive ? _camera.cameraStateFn() : null;
+    if (camSt && typeof camSt.x === 'number') {
+      var vw = (camSt.viewportFloor && camSt.viewportFloor > 0) ? camSt.viewportFloor : (_camera.vw || this._canvasW());
+      minX = camSt.x;
+      maxX = camSt.x + vw - this._spriteSize;
+    } else {
+      var cw = this._canvasW();
+      minX = 0;
+      maxX = cw - this._spriteSize;
+    }
+    if (this.x < minX) { this.x = minX; }
     if (this.x > maxX) { this.x = maxX; }
 
     // Cache the carrier's x for next tick's carry math.
