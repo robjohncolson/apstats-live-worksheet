@@ -126,6 +126,168 @@
   }
   var Y_CHASE_SPEED = 600;    // Phase 2.2: peer y interpolation speed (px/s)
 
+  // --- V7.9 side-scroll camera ------------------------------------------
+  // Per BUILD doc sections 4-9. Module-scope camera state; each mount()
+  // reconfigures followFn + enabled. World sprites call
+  // _translateForCamera(ctx) as the first line of render() and
+  // ctx.restore() at the end. HUD sprites do NOT call the helper -- they
+  // render at their own (screen-anchored) coordinates.
+  //
+  // Two render modes:
+  //   - _camera.enabled = true  -> per-client follow with deadzone (student/peer)
+  //                                ctx.translate(-_camera.x, 0)
+  //   - _camera.enabled = false -> cockpit fit-to-width (teacher sees all)
+  //                                ctx.scale(vw/levelW, 1)
+  //
+  // levelW defaults to vw for legacy single-screen levels (map.width=32 +
+  // chipSize=10 -> levelW=320 -> camera.x stays clamped to 0; identity).
+  //
+  // Deadzone math: target screenX in [DEADZONE_L, DEADZONE_R] for the
+  // local player. Per BUILD doc, lerp camera.x toward target with
+  // CAM_LERP per tick for smoothness without jerk.
+  var DEADZONE_L = 100;
+  var DEADZONE_R = 220;
+  var CAM_LERP   = 0.15;
+  var DEFAULT_BOARD_W_LOCAL = 320;  // mirrors DEFAULT_BOARD_W (declared above)
+
+  var _camera = {
+    x:        0,
+    vw:       DEFAULT_BOARD_W_LOCAL,
+    levelW:   DEFAULT_BOARD_W_LOCAL,
+    enabled:  true,
+    followFn: null,
+    // Optional per-tick refresh callbacks. mount() installs these so the
+    // camera reads the latest viewport + level dims (canvas can resize;
+    // levelW changes when state.activity starts/stops). When null, the
+    // current vw/levelW fields are used as-is.
+    vwFn:     null,
+    levelWFn: null
+  };
+
+  // Reset the camera back to defaults. Called from mount() so a fresh
+  // mount cycle starts with x=0 and a stale followFn from a prior mount
+  // doesn't leak in. Tests that build multiple boards in one module
+  // context rely on this.
+  function _resetCamera() {
+    _camera.x        = 0;
+    _camera.vw       = DEFAULT_BOARD_W_LOCAL;
+    _camera.levelW   = DEFAULT_BOARD_W_LOCAL;
+    _camera.enabled  = true;
+    _camera.followFn = null;
+    _camera.vwFn     = null;
+    _camera.levelWFn = null;
+  }
+
+  // _updateCamera(dt). Per BUILD doc section 5. Refreshes vw + levelW
+  // from the optional callbacks so a resize / activity start lands
+  // before the deadzone math runs. No-op when disabled (cockpit fit-to-
+  // width handles its own scale, no follow). Computes targetCamX so the
+  // local player's screenX lands inside the deadzone, clamps to
+  // [0, levelW - vw], and lerps camera.x toward target. Clamp upper
+  // bound goes to 0 when levelW <= vw (single-screen level).
+  function _updateCamera(/* dt */) {
+    if (typeof _camera.vwFn === 'function') {
+      var v = _camera.vwFn();
+      if (typeof v === 'number' && v > 0) { _camera.vw = v; }
+    }
+    if (typeof _camera.levelWFn === 'function') {
+      var lw = _camera.levelWFn();
+      if (typeof lw === 'number' && lw > 0) { _camera.levelW = lw; }
+    }
+    if (!_camera.enabled) return;
+    var player = (typeof _camera.followFn === 'function') ? _camera.followFn() : null;
+    if (!player || typeof player.x !== 'number') return;
+    var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
+    var levelW = _camera.levelW || vw;
+    var maxCam = Math.max(0, levelW - vw);
+
+    // Where does the player land on the screen right now?
+    var screenX = player.x - _camera.x;
+    var targetCamX = _camera.x;
+    if (screenX > DEADZONE_R) {
+      targetCamX = player.x - DEADZONE_R;
+    } else if (screenX < DEADZONE_L) {
+      targetCamX = player.x - DEADZONE_L;
+    }
+    if (targetCamX < 0)      { targetCamX = 0; }
+    if (targetCamX > maxCam) { targetCamX = maxCam; }
+
+    _camera.x = _camera.x + (targetCamX - _camera.x) * CAM_LERP;
+    if (_camera.x < 0)      { _camera.x = 0; }
+    if (_camera.x > maxCam) { _camera.x = maxCam; }
+  }
+
+  // _translateForCamera(ctx). Per BUILD doc section 6. Called as the
+  // FIRST line of every world-sprite render(); the sprite MUST call
+  // _restoreFromCamera(ctx) at the end of its render() to balance.
+  // When enabled, slides the world left by camera.x (side-scroll).
+  // When disabled (cockpit), scales the world horizontally by vw/levelW
+  // so the entire level fits the viewport (teacher sees all).
+  //
+  // Defensive against test stubs that omit save/restore/translate/scale:
+  // when any required ctx method is missing, the helper silently no-ops
+  // and _restoreFromCamera() also no-ops. Production canvases always
+  // have all four; jsdom test stubs may not.
+  function _translateForCamera(ctx) {
+    if (!ctx || typeof ctx.save !== 'function' || typeof ctx.restore !== 'function') return;
+    ctx.save();
+    var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
+    var levelW = _camera.levelW || vw;
+    if (_camera.enabled) {
+      if (typeof ctx.translate === 'function') {
+        try { ctx.translate(-_camera.x, 0); } catch (_) {}
+      }
+    } else if (levelW > 0 && levelW !== vw) {
+      // Cockpit fit-to-width. Horizontal scale only; vertical is
+      // unchanged (HUD heights are screen-anchored).
+      if (typeof ctx.scale === 'function') {
+        try { ctx.scale(vw / levelW, 1); } catch (_) {}
+      }
+    }
+    // Cockpit with levelW == vw -> identity, but we still need the save/
+    // restore balance, which is already in place via the save() above.
+  }
+
+  // _restoreFromCamera(ctx). Balances the save() in _translateForCamera.
+  // Defensive: no-op when ctx lacks restore (test stub). Sprites call
+  // this as the LAST line of render() (or before any early-return after
+  // _translateForCamera ran).
+  function _restoreFromCamera(ctx) {
+    if (!ctx || typeof ctx.save !== 'function' || typeof ctx.restore !== 'function') return;
+    try { ctx.restore(); } catch (_) {}
+  }
+
+  // Project a world-space x into the screen pixel that _translateForCamera
+  // will place it at. Used by getLabelSpec() for world sprites so labels
+  // (drawn by the engine in a SEPARATE pass with NO translate) land at
+  // the same on-screen position as the rendered sprite.
+  function _projectWorldX(worldX) {
+    var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
+    var levelW = _camera.levelW || vw;
+    if (_camera.enabled) {
+      return worldX - _camera.x;
+    }
+    if (levelW > 0 && levelW !== vw) {
+      return worldX * (vw / levelW);
+    }
+    return worldX;
+  }
+
+  // Tiny "controller" entity that lives in the engine's entity Map so
+  // _updateCamera(dt) gets ticked alongside every other update(). render
+  // is a no-op (camera is renderer state, not a paint). zIndex is set
+  // so it doesn't affect sort order semantically -- it never paints.
+  // engine assigns this.engine when addEntity is called.
+  function CameraController() {
+    this.zIndex = 0;
+    this.engine = null;
+  }
+  CameraController.prototype.update = function (dt) {
+    _updateCamera(dt);
+  };
+  CameraController.prototype.render = function () { /* no paint */ };
+  CameraController.prototype.getLabelSpec = function () { return null; };
+
   // --- unique canvas id generator ---------------------------------------
 
   var _canvasSeq = 0;
@@ -806,22 +968,29 @@
   };
 
   BoardSprite.prototype.render = function (ctx) {
-    if (this._hidden) { return; }
+    // V7.9 side-scroll: world sprite -- translate by the camera before
+    // drawing; restore to balance below.
+    _translateForCamera(ctx);
+    if (this._hidden) { _restoreFromCamera(ctx); return; }
     var alpha = this.online ? 1.0 : 0.35;
     // s111 P4 UX rev4: peer in 'in-doorway' state -> fade out via
     // _peerAbsorbProgress (animated in update()).
     if ((this._peerAbsorbProgress || 0) > 0) {
       alpha *= (1 - this._peerAbsorbProgress);
     }
-    if (alpha <= 0) { return; }
+    if (alpha <= 0) { _restoreFromCamera(ctx); return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
     this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
+    _restoreFromCamera(ctx);
   };
 
   BoardSprite.prototype.getLabelSpec = function () {
     var sw = SPRITE_W * this.scale;
-    var centerX = this.x + sw / 2;
+    // V7.9 side-scroll: world sprite -- the engine draws labels in a
+    // separate pass with NO camera translate, so project this.x into
+    // screen-pixel space here so the label sits over the rendered sprite.
+    var centerX = _projectWorldX(this.x) + sw / 2;
     var topY    = this.y;
     return {
       text:  this.labelText,
@@ -1263,8 +1432,11 @@
   // over the 150 ms lifetime, fades to zero. Local-only -- the actual y
   // (and therefore the broadcast y) never moves, so peers don't see it.
   PlayerSprite.prototype.render = function (ctx) {
+    // V7.9 side-scroll: world sprite -- translate by the camera before
+    // drawing; restore to balance below.
+    _translateForCamera(ctx);
     // s111 P4 UX rev4: skip when fully absorbed into a doorway.
-    if (this._hidden) { return; }
+    if (this._hidden) { _restoreFromCamera(ctx); return; }
     var yOffset = 0;
     if (this._blockedTwitchMs > 0) {
       var phase = this._blockedTwitchMs / 1000 * 30; // ~30 Hz oscillation
@@ -1278,10 +1450,11 @@
     if (typeof this._absorbProgress === 'number' && this._absorbProgress > 0) {
       alpha *= (1 - this._absorbProgress);
     }
-    if (alpha <= 0) { return; }
+    if (alpha <= 0) { _restoreFromCamera(ctx); return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
     this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y + yOffset, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
+    _restoreFromCamera(ctx);
   };
 
   // --- GreenLightOverlay entity -----------------------------------------
@@ -1384,6 +1557,13 @@
   }
   Doorway.prototype.update = function () {};
   Doorway.prototype.render = function (ctx) {
+    // V7.9 side-scroll: world sprite -- translate by the camera, restore
+    // at the end. Doorways are still positioned in viewport pixels at the
+    // time a doorways round opens (showDoorways spreads them across the
+    // viewport width); during a doorways round there's no active level
+    // (mutually exclusive on the server), so levelW defaults to viewport
+    // width and the translate is identity (no visual change).
+    _translateForCamera(ctx);
     var groundY = this.getGroundY();
     var holeH   = 32;
     var holeW   = this.width;
@@ -1413,6 +1593,7 @@
     // Count below the baseline.
     ctx.font = '10px Arial';
     ctx.fillText(String(this.count), this.x, groundY + 14);
+    _restoreFromCamera(ctx);
   };
   Doorway.prototype.containsX = function (x, halfPlayerW) {
     // Hit-test: is the player's center inside the doorway's hole?
@@ -1559,19 +1740,25 @@
   };
 
   CoinSprite.prototype.render = function (ctx) {
+    // V7.9 side-scroll: world sprite -- translate, restore at end.
+    _translateForCamera(ctx);
     // V7.3.3: collected / locally-collected coins disappear instantly.
     // No animation -- the absence IS the feedback.
-    if (this._isCollecting()) return;
+    if (this._isCollecting()) { _restoreFromCamera(ctx); return; }
     var img = this.images[this._frameIdx] || this.images[0];
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+    if (!img || !img.complete || img.naturalWidth === 0) { _restoreFromCamera(ctx); return; }
     var bobOffset = Math.sin(this._bobT * 4) * 2;
     try {
       ctx.drawImage(img, this.x, this.y + bobOffset, this.size, this.size);
     } catch (_) {}
+    _restoreFromCamera(ctx);
   };
 
   CoinSprite.prototype.getLabelSpec = function () {
-    var cx   = this.x + this.size / 2;
+    // V7.9 side-scroll: project the world-space x into screen pixels so
+    // the label rides over the rendered coin (engine label pass has no
+    // camera translate of its own).
+    var cx   = _projectWorldX(this.x) + this.size / 2;
     var topY = this.y - 4;
     // V7.4 blind-test: pre-reveal coins show '?' instead of the drink
     // identity. isGold stays true pre-reveal so the gold '?' reads as a
@@ -1647,6 +1834,10 @@
   RevealTextSprite.prototype.render = function (ctx) {
     if (this._removed) return;
     if (!ctx || typeof ctx.fillText !== 'function') return;
+    // V7.9 side-scroll: world sprite -- it follows the coin it spawned
+    // at, so the floater should scroll with the camera too. Translate +
+    // restore at the end.
+    _translateForCamera(ctx);
     var progress = Math.min(1, this._elapsedMs / this.durationMs);
     var dy       = progress * REVEAL_RISE_PX;
     var alpha    = 1 - progress;
@@ -1665,6 +1856,7 @@
     ctx.font        = prevFont;
     ctx.textAlign   = prevAlign;
     ctx.fillStyle   = prevFill;
+    _restoreFromCamera(ctx);
   };
 
   // The reveal text draws itself; the engine's label-pass should skip it.
@@ -1873,6 +2065,8 @@
   };
 
   GoalSprite.prototype.render = function (ctx) {
+    // V7.9 side-scroll: world sprite -- translate + restore.
+    _translateForCamera(ctx);
     // V7.5 three-state render:
     //   locked === true                  -> door_closed (key not yet collected)
     //   locked === false && !reached     -> door_open   (unlocked, walking toward it)
@@ -1885,7 +2079,7 @@
     } else {
       img = this.imageOpen;
     }
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+    if (!img || !img.complete || img.naturalWidth === 0) { _restoreFromCamera(ctx); return; }
     var bobOffset = this.reached ? 0 : Math.sin(this._bobT * 3) * 1.5;
     var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
     if (this.reached) {
@@ -1896,10 +2090,13 @@
       ctx.drawImage(img, this.x, this.y + bobOffset, this.size, this.size);
     } catch (_) {}
     ctx.globalAlpha = prevAlpha;
+    _restoreFromCamera(ctx);
   };
 
   GoalSprite.prototype.getLabelSpec = function () {
-    var cx   = this.x + this.size / 2;
+    // V7.9 side-scroll: project to screen space so the label rides over
+    // the rendered goal door.
+    var cx   = _projectWorldX(this.x) + this.size / 2;
     var topY = this.y - 4;
     // V7.5: locked goal reads as 'LOCKED' so the player can see the door
     // is gated on the key (not just visually closed-and-broken).
@@ -1998,21 +2195,26 @@
   };
 
   KeySprite.prototype.render = function (ctx) {
+    // V7.9 side-scroll: world sprite -- translate + restore.
+    _translateForCamera(ctx);
     // Collected / locally-collected keys disappear instantly (same as a coin).
-    if (this._isCollecting()) return;
+    if (this._isCollecting()) { _restoreFromCamera(ctx); return; }
     var img = this.images[0];
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+    if (!img || !img.complete || img.naturalWidth === 0) { _restoreFromCamera(ctx); return; }
     var bobOffset = Math.sin(this._bobT * 3) * 2;
     try {
       ctx.drawImage(img, this.x, this.y + bobOffset, this.size, this.size);
     } catch (_) {}
+    _restoreFromCamera(ctx);
   };
 
   KeySprite.prototype.getLabelSpec = function () {
     // Hide the label once the key is collected (or pending collection),
     // so a transient 'KEY' floater doesn't outlive the sprite render.
     if (this._isCollecting()) return null;
-    var cx   = this.x + this.size / 2;
+    // V7.9 side-scroll: project to screen space so the label rides over
+    // the rendered key sprite.
+    var cx   = _projectWorldX(this.x) + this.size / 2;
     var topY = this.y - 4;
     return { text: 'KEY', x: cx, y: topY, isGold: true };
   };
@@ -2175,6 +2377,11 @@
 
   ChoicePadSprite.prototype.render = function (ctx) {
     if (!ctx) return;
+    // V7.9 side-scroll: world sprite -- translate before drawing; the
+    // ctx.restore() at the end of render() balances the save in
+    // _translateForCamera (matched OUTSIDE the existing prev* save/restore
+    // shape that ChoicePadSprite already uses internally).
+    _translateForCamera(ctx);
     var visual = this._visualState();
     var prevAlpha = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
     var prevFill  = ctx.fillStyle;
@@ -2253,6 +2460,11 @@
     ctx.font        = prevFont;
     ctx.textAlign   = prevAlign;
     if (prevBase) { try { ctx.textBaseline = prevBase; } catch (_) {} }
+    // V7.9 side-scroll: balance the save in _translateForCamera at the top
+    // of render(). The save/restore wraps the entire pad render so the
+    // camera translate applies to BOTH the image draw and the fallback
+    // shape + letter paths.
+    _restoreFromCamera(ctx);
   };
 
   ChoicePadSprite.prototype.getLabelSpec = function () {
@@ -2977,6 +3189,60 @@
       engineReady = false;
     }
 
+    // --- V7.9 side-scroll camera wiring --------------------------------
+    // Helpers: viewport (canvas CSS px width) and level pixel width
+    // (chipSize * mapWidth from state.activity; falls back to viewport).
+    // _camera state lives at module scope so the world-sprite render path
+    // can reach it without per-sprite plumbing. _resetCamera() clears any
+    // residue from a prior mount; mount() reconfigures followFn + enabled
+    // role-by-role below.
+    function _viewportW() {
+      if (engine && engine.canvas) {
+        var dpr = root.devicePixelRatio || 1;
+        var w = engine.canvas.width / dpr;
+        if (w > 0) return w;
+      }
+      var ccw = container && container.clientWidth;
+      return (ccw > 0) ? ccw : DEFAULT_BOARD_W;
+    }
+    function _levelWidthPx() {
+      // Prefer the server-emitted derived field (Unit A levelPxWidth on
+      // state.activity.state) when present; fall back to chipSize * mapW
+      // computed from the level def. When no activity is running, the
+      // level "is" the viewport -- camera stays at 0 (single-screen).
+      var act = state && state.activity;
+      if (act && act.state && typeof act.state.levelPxWidth === 'number' && act.state.levelPxWidth > 0) {
+        return act.state.levelPxWidth;
+      }
+      if (act && act.level && act.level.map) {
+        var ch = act.level.map.chipSize || 10;
+        var mw = act.level.map.width    || 32;
+        var lw = mw * ch;
+        if (lw > 0) return lw;
+      }
+      return _viewportW();
+    }
+    function _refreshCameraDims() {
+      _camera.vw     = _viewportW();
+      _camera.levelW = _levelWidthPx();
+    }
+    _resetCamera();
+    if (engineReady) {
+      _refreshCameraDims();
+      // Teacher cockpit fits the level to the viewport so they see all
+      // students at once (no follow). Student / peer rows scroll with
+      // their own avatar.
+      _camera.enabled = (role !== 'teacher');
+      _camera.followFn = function () {
+        // Local player exists only after addSprite runs for the local
+        // student. Until then, follow no-one (camera stays at 0).
+        return (username && spriteEntities && spriteEntities[username]) || null;
+      };
+      _camera.vwFn     = _viewportW;
+      _camera.levelWFn = _levelWidthPx;
+      try { engine.addEntity('camera_controller', new CameraController()); } catch (_) {}
+    }
+
     // --- sprite entity registry ----------------------------------------
 
     // spriteEntities: username -> BoardSprite (only "present" students)
@@ -3120,19 +3386,22 @@
       return SPRITE_W * SPRITE_SCALE;
     }
 
-    // 2026-05-24 fix: clamp an incoming sprite x to the local canvas bounds.
-    // The server persists member.pos.x from whichever client wrote it last;
-    // a student who walked to x=919 on a wider canvas would push their
-    // sprite off the right edge of a narrower cockpit canvas (and out of
-    // hit-test range). Receivers should always clamp -- they own their own
-    // viewport. NaN / non-finite x falls back to 0.
+    // 2026-05-24 fix: clamp an incoming sprite x to the local bounds.
+    // The server persists member.pos.x from whichever client wrote it
+    // last; a stale entry from a wider canvas/level would push the
+    // sprite past the right edge. Receivers always clamp -- they own
+    // their own viewport. NaN / non-finite x falls back to 0.
+    //
+    // V7.9 side-scroll: sprite.x is now in LEVEL pixels (not canvas
+    // pixels). Clamp to [0, levelW - sw] so a wider level than the
+    // viewport doesn't force the sprite into the camera's idle zone.
+    // For legacy single-screen levels (levelW == viewportW = 320) the
+    // clamp behavior is preserved exactly (maxX = 320 - 20 = 300).
     function clampSpriteX(x, sp) {
       if (typeof x !== 'number' || !isFinite(x)) { return 0; }
-      var cw = (engine && engine.canvas)
-        ? (engine.canvas.width / (root.devicePixelRatio || 1))
-        : DEFAULT_BOARD_W;
+      var lw = _levelWidthPx();
       var sw = (sp && sp._spriteSize) || getSpriteWidth();
-      var maxX = Math.max(0, cw - sw);
+      var maxX = Math.max(0, lw - sw);
       return Math.max(0, Math.min(maxX, x));
     }
 
@@ -3251,9 +3520,11 @@
         baseOpts.input       = playerInput;
         baseOpts.peers       = function () { return spriteEntities; };
         baseOpts.onUpPressed = handlePlayerUp;
-        baseOpts.canvasW     = function () {
-          return engine.canvas.width / (root.devicePixelRatio || 1);
-        };
+        // V7.9 side-scroll: this is the clamp upper bound for the local
+        // player's x. The player now walks in LEVEL coords (not canvas
+        // viewport coords), so canvasW must return levelPxWidth. Falls
+        // back to the viewport for legacy single-screen levels (=320).
+        baseOpts.canvasW     = function () { return _levelWidthPx(); };
         // LIVE_CLASSROOM_SCALING knob 1 -- live room-size source.
         // Reads state.members through the mount-scope closure on each
         // tick; no protocol change, no caching (Object.keys is cheap at
@@ -3263,15 +3534,15 @@
         };
         // Phase 2 -- broadcast position to roommates.
         baseOpts.onPos = function (msg) {
-          // 2026-05-24 V5 Codex BLOCKER fold: include canvasW so the
-          // server can interpret x in the SENDER's coord space. The
-          // colorbox-hue plugin (and any future position-driven plugin)
-          // needs to know the client's actual canvas width to bin
-          // positions into zones, since the responsive board may render
-          // wider than DEFAULT_BOARD_W=320 on a wide Desk sidebar.
-          var senderCw = (engine && engine.canvas)
-            ? (engine.canvas.width / (root.devicePixelRatio || 1))
-            : DEFAULT_BOARD_W;
+          // V7.9 side-scroll: msg.x is now in LEVEL pixels (the player's
+          // own x lives in level coords post-V7.9, since canvasW above
+          // clamps to levelPxWidth). canvasW broadcast = levelPxWidth so
+          // the server's _playerNearActorX rescale `(x / canvasW) * levelW`
+          // becomes identity (`x / levelW * levelW = x`) -- anti-cheat
+          // works unchanged for any plugin that reads canvasW. Fallback
+          // when no activity: levelPxWidth defaults to the viewport
+          // width (legacy single-screen behavior preserved).
+          var senderCw = _levelWidthPx();
           var payload = {
             type:    'classroom_pos',
             x:       msg.x,
@@ -3432,14 +3703,15 @@
     var coinEntities = {};   // coinId -> CoinSprite
 
     function _coinCanvasX(coin, levelW, levelChipSize, canvasW, coinSize) {
-      // Map chip-x (level coords, e.g. 4) to canvas pixels. Coins are
-      // drawn with their TOP-LEFT at the returned x. The chip center
-      // (coin.x * chipSize + chipSize/2) is rescaled to canvas X; we
-      // then subtract half the rendered size so the sprite centers on
-      // the chip center pixel.
+      // V7.9 side-scroll: coins are world sprites and their this.x is
+      // now stored in LEVEL pixels (not canvas pixels). The camera
+      // translate handles the on-screen offset at render time, so this
+      // helper just returns the LEVEL pixel x of the coin's top-left.
+      // The levelW + canvasW arguments are kept for signature stability
+      // (and read by tests that might still pass them) -- they're no
+      // longer used here.
       var levelCenterPx = (coin.x * levelChipSize) + (levelChipSize / 2);
-      var canvasCenter  = (levelCenterPx / levelW) * canvasW;
-      return canvasCenter - coinSize / 2;
+      return levelCenterPx - coinSize / 2;
     }
 
     function _coinCanvasY(coinSize) {
@@ -3489,13 +3761,12 @@
 
       var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
       var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
-      var levelW   = mapW * chipSize;
-      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
       var size     = GOAL_DEFAULT_SIZE;
 
+      // V7.9 side-scroll: goal is a world sprite -- store x in LEVEL
+      // pixels. Camera translate handles the on-screen offset at render.
       var levelCenterPx = (goal.x * chipSize) + (chipSize / 2);
-      var canvasCenter  = (levelCenterPx / levelW) * canvasW;
-      var gx = canvasCenter - size / 2;
+      var gx = levelCenterPx - size / 2;
       var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
       var spriteHeight = SPRITE_H * SPRITE_SCALE;
       var gy = groundY - spriteHeight - size - 4;
@@ -3550,14 +3821,13 @@
 
       var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
       var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
-      var levelW   = mapW * chipSize;
-      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
       var size     = KEY_DEFAULT_SIZE;
 
-      // Rescale chip-coord to canvas pixels -- same mapping as coins.
+      // V7.9 side-scroll: key is a world sprite -- store x in LEVEL
+      // pixels. Same shape as coins; camera translate handles the
+      // on-screen offset at render.
       var levelCenterPx = (key.x * chipSize) + (chipSize / 2);
-      var canvasCenter  = (levelCenterPx / levelW) * canvasW;
-      var kx = canvasCenter - size / 2;
+      var kx = levelCenterPx - size / 2;
       // Y placement: lift the key into the jump arc, same shape as a coin.
       var COIN_VERTICAL_PADDING = 20;
       var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
@@ -3759,8 +4029,8 @@
 
       var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
       var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
-      var levelW   = mapW * chipSize;
-      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
+      var levelW   = mapW * chipSize;   // kept for _coinCanvasX signature compat
+      var canvasW  = levelW;            // V7.9: world sprites store x in LEVEL px
 
       var seenIds = {};
       for (var i = 0; i < coins.length; i++) {
@@ -3949,8 +4219,7 @@
 
       var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
       var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
-      var levelW   = mapW * chipSize;
-      var canvasW  = (engine && engine.canvas) ? (engine.canvas.width / (root.devicePixelRatio || 1)) : (container.clientWidth || DEFAULT_BOARD_W);
+      var levelW   = mapW * chipSize;   // kept for downstream readers
       var size     = CHOICEPAD_DEFAULT_SIZE;
 
       // Y placement: pad sits at floor level (no jump required, just
@@ -3965,10 +4234,10 @@
         if (!p || !p.id) continue;
         seenIds[p.id] = true;
 
-        // Rescale chip-X center into canvas pixels (same mapping coins use).
+        // V7.9 side-scroll: pad is a world sprite -- store x in LEVEL
+        // pixels. Camera translate handles the on-screen offset at render.
         var levelCenterPx = (p.x * chipSize) + (chipSize / 2);
-        var canvasCenter  = (levelCenterPx / levelW) * canvasW;
-        var px = canvasCenter - size / 2;
+        var px = levelCenterPx - size / 2;
 
         if (!choicePadEntities[p.id]) {
           // Closure-capture the pad id so onChoose ships the right id.
@@ -4763,7 +5032,22 @@
     _KeySprite:        KeySprite,        // V7.5 -- exposed for unit tests
     _StageIndicator:   StageIndicator,   // V7.5 -- exposed for unit tests
     _ResultPanel:      ResultPanel,      // V7.6 -- exposed for unit tests
-    _ChoicePadSprite:  ChoicePadSprite   // V7.8 -- exposed for unit tests
+    _ChoicePadSprite:  ChoicePadSprite,  // V7.8 -- exposed for unit tests
+    // V7.9 side-scroll camera -- exposed for the scroll test pinning.
+    // The camera state lives at module scope so tests can poke vw/levelW/
+    // followFn fields before invoking _updateCamera + assert against
+    // _camera.x. _translateForCamera + _projectWorldX let tests pin the
+    // world-sprite ctx.save/translate/restore shape without driving a
+    // full mount() each time.
+    _camera:             _camera,
+    _updateCamera:       _updateCamera,
+    _translateForCamera: _translateForCamera,
+    _restoreFromCamera:  _restoreFromCamera,
+    _projectWorldX:      _projectWorldX,
+    _resetCamera:        _resetCamera,
+    _CameraController:   CameraController,
+    _BoardSprite:        BoardSprite,    // V7.9 -- exposed for world-sprite scroll pins
+    _Doorway:            Doorway         // V7.9 -- exposed for doorway-scroll pins
   };
 
 }(typeof window !== 'undefined' ? window : this));

@@ -67,6 +67,15 @@ SIPPING to VOTING only when EVERY online player has a complete row
 (sampledA + sampledB + choice). Do NOT also use a Tally actor on a
 ChoicePad level -- the ChoicePad cascade overrides the Tally one.
 
+V7.9 (side-scroll engine). Levels MAY declare `map.width > 32` to
+get a horizontal scroll. The canvas viewport stays 320 px wide; the
+camera follows the local player with a deadzone. To author multi-
+zone levels, place actors in chip x bands and let the natural
+player movement scroll them through. World actors (Coin, Key, Goal,
+ChoicePad, Doorway) scroll with the camera. HUD actors (TallyDisplay,
+ResultPanel, StageIndicator) stay screen-anchored. Cockpit gets a
+fit-to-width view automatically -- teacher sees everyone at once.
+
 ### V7.1 actors (NOT YET implemented -- log if you need them, but
 DON'T use in v7-level-1 schema levels):
 
