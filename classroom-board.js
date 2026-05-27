@@ -233,26 +233,42 @@
     ctx.save();
     var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
     var levelW = _camera.levelW || vw;
-    // V7.9.1 student fit-to-width: when the viewport is WIDER than the
-    // level, the camera has no room to scroll (camera.x stays at 0) and
-    // sprites render at native level x. On a 1147-wide desk-modal canvas
-    // with a 480-wide level, that leaves ~670 px of empty space on the
-    // right -- the "invisible wall" smoke bug (PeriodX, V7.9.0). Fix:
-    // mirror cockpit fit-to-width when student viewport >= levelW. The
-    // level scales up to fill the canvas; sprites/positions stay in
-    // level coords. Same trick the cockpit fit-to-width branch uses.
-    var fitToWidth = (!_camera.enabled) || (levelW > 0 && levelW < vw);
-    if (fitToWidth && levelW > 0 && levelW !== vw) {
+    // V7.10.2 LETTERBOX (student-only). Per PeriodX feedback on the
+    // V7.9.1 fit-to-width scale: "everything magnified 2x vertically,
+    // 3x horizontally." The ctx.scale(vw/levelW, 1) stretched sprites
+    // horizontally so a 480-px-wide level on a 1147-px canvas read as
+    // 2.4x wider but unchanged height -- the visual distortion the
+    // user pushed back on. LETTERBOX instead: keep sprites at native
+    // size, translate the world horizontally so the level is CENTERED
+    // in the viewport with empty desk-mod background on each side.
+    //
+    // Cockpit (teacher) keeps the scale-to-fit behavior so they see
+    // the WHOLE level at once (zoom-out works for both narrower and
+    // wider levels). Students get letterbox because they're focused
+    // on their immediate band of play; the level's native scale
+    // matches the Pico Park aesthetic of every other sprite.
+    if (_camera.enabled) {
+      // Student path.
+      if (levelW > 0 && levelW < vw) {
+        // Viewport wider than level -> letterbox (translate to center).
+        if (typeof ctx.translate === 'function') {
+          var offset = (vw - levelW) / 2;
+          try { ctx.translate(offset, 0); } catch (_) {}
+        }
+      } else if (levelW > vw) {
+        // Viewport narrower than level -> camera follows local player.
+        if (typeof ctx.translate === 'function') {
+          try { ctx.translate(-_camera.x, 0); } catch (_) {}
+        }
+      }
+      // levelW == vw -> identity (perfect fit).
+    } else if (levelW > 0 && levelW !== vw) {
+      // Cockpit fit-to-width (unchanged from V7.9.0 / V7.9.1).
       if (typeof ctx.scale === 'function') {
         try { ctx.scale(vw / levelW, 1); } catch (_) {}
       }
-    } else if (_camera.enabled) {
-      if (typeof ctx.translate === 'function') {
-        try { ctx.translate(-_camera.x, 0); } catch (_) {}
-      }
     }
-    // levelW == vw (legacy single-screen + perfect-fit) -> identity. The
-    // save() above still pairs with _restoreFromCamera's restore().
+    // The save() above pairs with _restoreFromCamera's restore().
   }
 
   // _restoreFromCamera(ctx). Balances the save() in _translateForCamera.
@@ -271,15 +287,21 @@
   function _projectWorldX(worldX) {
     var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
     var levelW = _camera.levelW || vw;
-    // V7.9.1: mirror the _translateForCamera fit-to-width branch -- when
-    // student viewport >= levelW, scale labels by vw/levelW so they land
-    // at the same on-screen x as the (now-scaled) sprite.
-    var fitToWidth = (!_camera.enabled) || (levelW > 0 && levelW < vw);
-    if (fitToWidth && levelW > 0 && levelW !== vw) {
-      return worldX * (vw / levelW);
-    }
+    // V7.10.2 LETTERBOX (student): label projection matches the
+    // _translateForCamera transform. Student wide-screen = letterbox
+    // (add offset); student narrow-screen = camera follow (subtract
+    // camera.x); cockpit = scale (multiply).
     if (_camera.enabled) {
-      return worldX - _camera.x;
+      if (levelW > 0 && levelW < vw) {
+        return worldX + (vw - levelW) / 2;
+      }
+      if (levelW > vw) {
+        return worldX - _camera.x;
+      }
+      return worldX;
+    }
+    if (levelW > 0 && levelW !== vw) {
+      return worldX * (vw / levelW);
     }
     return worldX;
   }
