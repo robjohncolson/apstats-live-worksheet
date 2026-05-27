@@ -1,9 +1,1174 @@
-# Continuation Prompt -- session 115 (multi-arc continuation)
+# Continuation Prompt -- session 120 (Schoology Sync v1 -- P0 Discovery)
 
-> **SESSIONS 114 + 115 CLOSED.** **THIS SECTION IS AUTHORITATIVE.
-> It supersedes EVERYTHING below it** -- the session-113 block and
-> every older block are historical record only; do not act on any
-> older "NEXT"/SESSION text. Last updated 2026-05-25 (session 115
+> **SESSION 120 CLOSED.** **THIS SECTION IS AUTHORITATIVE.
+> It supersedes EVERYTHING below it** -- the s119 block (level
+> editor v1) and every older block are historical record only;
+> do not act on any older "NEXT"/SESSION text. Last updated
+> 2026-05-27 (s120 close / 121 ready). follow-alongs HEAD post-
+> commit: a fresh commit on top of `ad24c4c` adding the Schoology
+> P0 fixtures + discovery report. curriculum_render HEAD = `32c7d36`
+> (unchanged from s118 -- no cr changes in s119 or s120). Linear,
+> local==origin on both.
+>
+> ## Shipped this session -- Schoology Sync v1, P0 Discovery
+>
+> User pivoted off the s119 level-editor track to address the
+> bigger-leverage workstream: stop manually retyping grades into
+> Schoology that already exist as structured data in Supabase.
+> The plan, `SCHOOLOGY_SYNC_V1_BUILD.md`, was already drafted at
+> session start (committed earlier). This session executed P0 --
+> answer the 6 open questions with concrete selectors + IDs +
+> fixtures, end-to-end via the existing `tools/cdp/edge.py` rig.
+>
+> 1 commit (this one), 6 fixture files + 1 BUILD-doc append.
+> The rig automated MS SSO email + password + KMSI-Yes; user
+> handled 2FA. Cookie now persists in `%TEMP%/edge-claude-cdp`
+> for ~90 days.
+>
+> ## What the discovery shipped
+>
+> 1. **`SCHOOLOGY_SYNC_V1_BUILD.md` ## P0 DISCOVERY section** --
+>    appended ~200 lines under the existing build spec, answering
+>    all 6 open questions (Q1 URL pattern through Q6 UI version
+>    baseline) with selectors, screenshots, and a P1-readiness
+>    checklist. Three user-actions identified as P1 blockers.
+>
+> 2. **`tests/fixtures/schoology-*` (6 files)** -- empty-state
+>    gradebook (Algebra II Sec 10, baseline) + AP Stats Sec 1
+>    gradebook + `/courses/mycourses` + Add Assignment popup form
+>    + Add Test/Quiz popup form + a structured `schoology-
+>    courses-map.json` mapping all 12 course IDs to their
+>    course-name / section-text and flagging the 2 sync targets.
+>
+> 3. **Key concrete findings** (the durable ones for s121):
+>    - AP Stats sync targets are course IDs `7945275782` (Sec 1,
+>      10 students) and `7945275798` (Sec 2). The URL the user
+>      originally pasted (`7945312369`) is actually Algebra II
+>      Section 10 -- used as the empty-baseline fixture only.
+>    - Add Assignment / Add Test direct URL pattern:
+>      `course/<ID>/materials/assignments/{add,add_assessment}?is_popup=1`
+>      -- no dropdown clicking needed. Both forms have identical
+>      schema (form id `s-grade-item-add-form`, required fields:
+>      title + factor).
+>    - Stable selectors: `[data-uid="<user_id>"]` (student rows),
+>      `[role="gridcell"]` with `data-x`/`data-y` (grade cells),
+>      `[aria-label="Marking Period N: M/D/YY - M/D/YY"]` (MP
+>      headers).
+>    - Marking-period IDs harvested from the form (per-section,
+>      lookup at runtime): MP1=`1134333`, MP2=`1134331`,
+>      MP3=`1134334`, MP4=`1134332` for AP Stats Sec 1.
+>    - **Category gap**: BUILD spec assumed 3 categories
+>      (Lessons / Progress Checks / Tests) but only "Classwork"
+>      exists -- teacher pre-create is the recommended unblock
+>      vs auto-create-from-form.
+>    - The Schoology gradebook is an AngularJS SPA
+>      (`s-app-gradebook-app-beta`) -- horizontal virtual scroll
+>      behaviour with many assignments is UNTESTED (empty
+>      gradebooks during P0). P1 with the first 5 lessons will
+>      surface this.
+>
+> ## NEXT -- queued for s121 / s122
+>
+> Two parallel workstreams now in the queue. User confirmed at
+> end of s119 that the editor stress-test is the priority, but
+> the s120 Schoology pivot moved THAT track ahead in the order.
+> Both are still alive.
+>
+> 1. **Schoology P1 -- manual one-shot grade write.** Per the
+>    BUILD spec ship gate: edge.py opens, ONE grade lands in ONE
+>    cell for ONE student in ONE assignment, verified visually
+>    in the browser. Blocks on 3 USER-ACTION items first:
+>    a. **Pre-create 3 grading categories** in Schoology Grade
+>       Setup for AP Stats Sec 1 + Sec 2: "Lessons",
+>       "Progress Checks", "Tests". One-time, ~3 min in the
+>       Schoology UI. The sync looks them up by name.
+>    b. **Decide SIS-sync checkbox default** -- yes/no on
+>       `sync_to_sis_wrapper[sync_to_sis_option]`. Yes means
+>       Schoology grades auto-push to PowerSchool district SIS;
+>       no means the teacher would handle PowerSchool entry
+>       separately. Default Schoology UI state is unchecked.
+>    c. **Confirm section -> period mapping** -- which Schoology
+>       section (Sec 1 = `7945275782` vs Sec 2 = `7945275798`)
+>       is Period B vs Period E per the
+>       `unit4_schedule_v4.html` schedule.
+>
+>    Once unblocked, P1 implements `tools/schoology-sync.py`
+>    against fixtures first (vitest tests using the 6 captured
+>    HTML files), then live one-shot test against a "Sync Test"
+>    assignment (NOT a real lesson, NOT a real student) before
+>    touching real grades.
+>
+> 2. **Editor stress-test on 2-3 real levels** (CARRY-FORWARD
+>    from s119 NEXT #1, [[authoring-tool-stress-test]]). Still
+>    queued. Redesign U1.2 + U2.1 + U3.1 in the level editor;
+>    log every point of friction; decide V1.1 polish vs straight
+>    into 79-level fan-out. Independent of the Schoology track
+>    -- can run in parallel with P1 if priorities shift.
+>
+> 3. **Carry-forwards from s119 still in the queue** (unchanged
+>    by s120): the 79-level fan-out (s119 #2), CC state probe
+>    fix (s119 #3), sprite atlas mapping (s119 #4),
+>    real-classroom V7.16/V7.15 smoke (s119 #5), editor V1.1
+>    polish (s119 #6). See the s119 historical block below for
+>    each item's full context.
+>
+> ## P1 risks surfaced by P0 (load-bearing for s121)
+>
+> 1. **OAuth state token is single-use + session-bound.** First
+>    navigation after sign-in MUST be the gradebook URL; do not
+>    reuse a pre-auth state token. If state validation fails,
+>    re-nav fresh -- MS round-trips silently because the user
+>    is signed in.
+> 2. **Grading categories don't exist yet** in AP Stats Sec 1 or
+>    Sec 2 (only "Classwork"). P1 blocked until teacher creates
+>    them OR the auto-create-category sub-form is probed (P0
+>    didn't probe it).
+> 3. **Per-section MP id lookup mandatory** -- the IDs harvested
+>    in P0 are for Sec 1 only. P1's first action per course must
+>    GET the Add Assignment form to extract that section's MP
+>    IDs into a per-run cache.
+> 4. **`publish_scores` defaults to UNCHECKED.** Without this
+>    box ticked, grades land in Schoology but stay hidden from
+>    students. P1 MUST always set it.
+> 5. **Horizontal virtual scrolling untested.** When a real
+>    gradebook has dozens of assignment columns, cells may not
+>    all be in the DOM at once. First P2 full sync will
+>    surface this; if needed, scroll the grid container into
+>    view before clicking each cell.
+> 6. **Bot detection.** P0 ran 3 page loads + ~10 DOM probes +
+>    2 form loads in ~5 minutes with no captcha or rate limit.
+>    Realistic delays (~500ms between cells) still required for
+>    P2 / many-cell runs.
+>
+> ## Carry-forward gotchas (load-bearing for s121)
+>
+> - **CDP rig is at `tools/cdp/edge.py`** -- launches Edge on
+>   port 9223 with the dedicated profile dir at
+>   `%TEMP%/edge-claude-cdp`. Schoology session cookie now
+>   lives there. `--remote-allow-origins=*` is mandatory for
+>   Chromium 144+. To reset cleanly: send `Browser.close` via
+>   the browser-level WS at `/json/version`, then re-launch.
+> - **Form-fill via `cdp.type_into(selector, text)`** sets value
+>   via the React-compatible setter + dispatches `input` /
+>   `change`. Works on MS login forms; should work on the
+>   Schoology Add Assignment form too (Drupal/jQuery era, not
+>   React). Test on a fixture-loaded jsdom first.
+> - **The `is_popup=1` flag on Add Assignment URLs** strips the
+>   header/footer chrome so the form renders standalone. Use
+>   this URL pattern, not the click-through dropdown.
+> - **Direct URLs work for create forms** -- no need to expand
+>   the "Add Materials" dropdown via UI click. The sync just
+>   navigates to `course/<ID>/materials/assignments/add?is_popup=1`.
+> - **`tools/cdp/` is gitignored** (carry from s119) -- the rig
+>   and the screenshots in `_shots/` stay local. Only the form
+>   /gradebook HTML fixtures in `tests/fixtures/schoology-*`
+>   ship.
+> - **Stage own paths only** (carry from s119) -- pre-existing
+>   dirty files (`.gitignore`, `CONTINUATION_PROMPT.md` had
+>   pre-existing diff at session start, `GRADEBOOK_TAGGING_AUDIT.md`,
+>   `data/skill-map.js`, `state/cross-agent-log.json`, plus 70+
+>   `.ai-tutor-*.result.md` untracked files) are NOT mine and
+>   stay out of the s120 commit. The s120 commit only adds
+>   Schoology files + my CONTINUATION_PROMPT.md update.
+> - **MS SSO will not bot-detect a CDP-controlled Edge** for
+>   email/password if you use `eval_js` setters + button
+>   `.click()` -- no synthetic keystrokes needed. 2FA still
+>   requires the user's phone; KMSI=Yes locks in ~90 day cookie.
+>
+> ## Test baselines (session-end)
+>
+> - **No new tests this session** -- P0 was pure discovery.
+>   Vitest test suite for the parsing helpers ships with P1.
+> - **Level editor: 182/182** (unchanged from s119).
+> - **cr railway-server: 350/350** (unchanged).
+> - **Full fa repo: ~6102 pass + 2 known fails** (unchanged
+>   from s119). Run `npx vitest run` to confirm.
+>
+> ## Recall on reload
+>
+> - **Active spec**: `SCHOOLOGY_SYNC_V1_BUILD.md` -- the P0
+>   Discovery section at the bottom is the definitive answer to
+>   the 6 open questions and the gate to P1.
+> - **Active fixtures**: 6 files in `tests/fixtures/schoology-*`
+>   (5 HTML + 1 JSON map). These are the unit-test mock targets
+>   for P1's parsing helpers.
+> - **Active rig**: `tools/cdp/edge.py` -- reused as-is. Profile
+>   dir at `%TEMP%/edge-claude-cdp` now holds both the Desk
+>   cookie and the Schoology cookie (KMSI=Yes ~90 days).
+> - **Memory file to add in s121** if P1 ships: `project_schoology_sync.md`
+>   recording the discovery findings + selectors + the
+>   3-user-action blocker pattern. Until then, the build doc
+>   is the source of truth.
+> - **The level-editor s119 work is intact** -- HEAD is still
+>   `ad24c4c`; the editor is live at the GH Pages URL; the
+>   stress-test track is queued (NEXT #2) but not started.
+
+---
+
+# Continuation Prompt -- session 119 (level editor v1, end-to-end)
+
+> **THIS SECTION IS HISTORICAL RECORD as of session 120**. The
+> session-120 block above is authoritative; the text below is
+> preserved for traceability only. Original header was:
+> "Continuation Prompt -- session 119 (level editor v1,
+> end-to-end)". Last updated 2026-05-27 (s119 close / 120
+> ready). follow-alongs HEAD = `ad24c4c` (level editor P3 sim
+> mode). curriculum_render HEAD = `32c7d36` (unchanged from s118 --
+> no cr changes in s119). Linear, local==origin on both.
+>
+> ## Shipped this session -- Level Editor v1, P1 through P3
+>
+> Pivoted from s118's mechanic-first U1.1 prototype to **building
+> the tool that makes the remaining 79 levels tractable**. The
+> JSON-by-hand workflow that powered U1.1 does not scale to U1.2
+> through U9.6; an in-editor walk-test verification step replaces
+> the cockpit-redeploy-refresh loop for each iteration.
+>
+> 3 commits, ~9300 insertions, 182 tests across 3 files. The
+> orchestration ran with 8 parallel Sonnet subagents, 2 Codex
+> reviews (1 timeout, 1 success), 1 CC self-review subagent
+> fallback, 4 Edge-CDP visual smokes.
+>
+> ## What the editor ships post-`ad24c4c`
+>
+> Live at `https://robjohncolson.github.io/apstats-live-worksheet/
+> tools/level-editor.html` (GH Pages auto-deployed on push).
+> Single-file HTML + per-concern split JS modules, no build,
+> opens at file:// AND on the public URL.
+>
+> 1. **P1 painter + IO (`f9b89e5`)** -- 3-pane layout (palette /
+>    grid / props), atlas-faithful render where pico_sprite1.json
+>    has a region (PlayerSpawn / SipStation / QuestionDoor / Key /
+>    Goal), procedural draws for the rest (Gate / ContextSlot /
+>    GoalPad / TallyChute / TallyDisplay / Tally / Text /
+>    ReturnWarp). Top toolbar metadata form, camera viewport
+>    slider, tab strip (main vs reflection_room sub-editor),
+>    bottom toolbar (Save downloads `<key>.json` / Load via file
+>    picker / Undo / Redo / Copy JSON). Schema-aware props form
+>    per actor type. Click-place, drag-move, Esc/Del/arrows
+>    keyboard shortcuts. 125 tests covering 80 semantic
+>    round-trips against `cr/railway-server/activities/*.json` +
+>    actor mutations + undo/redo + DOM interactions.
+> 2. **P2 lint + playtest launcher (`903f743`)** -- 11
+>    pedagogical rules (missing PlayerSpawn, dup IDs, off-grid,
+>    no-advance-path, completion-kind cross-checks, etc.)
+>    rendered into the warnings panel. Click a warning ->
+>    navigate to the offending actor. Launch-in-cockpit button
+>    copies serialized JSON to clipboard + opens the dev URL
+>    (`?dev=1&devActivity=<key>`) in a new tab; manual JSON-
+>    shuttle to `cr/railway-server/activities/` remains the user
+>    step. 30 tests covering each rule + warnings panel render +
+>    launch button mock.
+> 3. **P3 sim mode (`ad24c4c`)** -- single-player walk simulator
+>    that mirrors cr-engine actor mechanics. Play button starts
+>    sim; arrow keys move avatar; Gate predicate eval blocks
+>    walls; ContextSlots light one-way on touch; GoalPad presence
+>    timer + all-context-lit -> LEVEL_CLEARED; SipStation V7.13
+>    auto-choice on 2nd sip; legacy QuestionDoor / Key / Goal
+>    handlers preserved. Phase HUD overlay on canvas. fakeTally
+>    toggle forces `tally_nonzero` gates open without actual
+>    sips. 27 tests including full U1.1 walkthrough integration.
+>
+> ## Per-phase roll-up
+>
+> | Phase | Commit | Files | Insertions | Tests |
+> |---|---|---|---|---|
+> | P1 painter+IO | `f9b89e5` | 10 | 6116 | 125 |
+> | P2 lint+launcher | `903f743` | 5 | 1320 | +30 |
+> | P3 sim mode | `ad24c4c` | 5 | 1857 | +27 |
+> | **Total** | | **20** | **~9300** | **182/182** |
+>
+> ## How the orchestration loop held up
+>
+> The proven pattern: spec doc -> dispatch 2-3 file-disjoint
+> parallel Sonnets -> integration smoke via Edge CDP rig ->
+> review (Codex on small diffs, CC self-review subagent on
+> >35 KB) -> fold blockers/majors inline -> commit + push ->
+> next phase.
+>
+> Specific review outcomes:
+> - **P1 Codex**: timed out at 280s on the ~150 KB total diff
+>   (as predicted by s116-118 carry-forwards). Dispatched a CC
+>   self-review subagent as fallback. Found 1 BLOCKER (Gate /
+>   ContextSlot / QuestionDoor unplaceable because
+>   `buildDefaultActor` used `label:''` / `text:''` but
+>   `validateActor` rejected empty required strings) + 1 MAJOR
+>   (atlas race -- if `<img>` was still decoding when sync setup
+>   ran, `render()` never re-fired after `atlasReady` flipped,
+>   leaving all atlas-backed actors as red "?" boxes
+>   permanently). Both folded inline.
+> - **P2 self-review** (skipped Codex despite small diff,
+>   architectural changes warranted focus): found 1 BLOCKER
+>   (auto-lint ran every frame -- `paint()` called
+>   `runLintNow()` unconditionally so hover+drag re-linted
+>   ~60x/sec) + 1 MAJOR (warning row click race -- stale
+>   `lastLintResult` index could navigate to wrong actor after
+>   a state mutation between paint and click). Folded via
+>   `stateMutatedSinceLastLint` flag set in
+>   `pushHistorySnapshot` + 4 other state= sites.
+> - **P3 Codex**: SUCCEEDED with NOTHING-FOUND across 4 spot-
+>   check risk areas (sync-RAF guard, sim-mode mutation
+>   lockout, draw ordering, phase transitions). First clean
+>   Codex pass of the level-editor arc. The protocol parsing
+>   got confused by Codex writing a non-standard `result.json`
+>   shape, but the findings are in the notes tail.
+>
+> ## Tactical findings during the build
+>
+> - **`pico_sprite1.json` was malformed JSON** -- it had raw
+>   CR/LF inside string literal values which `JSON.parse`
+>   rejects. Re-formatted to valid JSON before P1 ship.
+> - **Atlas image at `cr/railway-server/sprite.png` was wrong**
+>   -- it is a 920x196 sub-strip (just the player frames row),
+>   but sprite regions reference coords up to y=622. Correct
+>   full atlas (1024x1024) lives at
+>   `C:/Users/rober/Downloads/Projects/hermes/old-app/
+>   recovered/tga_carved/tga_0002_0x4a1018.png`. Copied to
+>   `tools/pico_park_atlas.png`.
+> - **`fetch()` is CORS-blocked under `file://`** -- the sprite
+>   region map could not load via fetch in a `file://` editor
+>   instance. Solution: auto-generated `tools/sprite-regions.js`
+>   as an inline `window.LE_SPRITE_REGIONS = [...]` script;
+>   renderer prefers inline data, falls back to fetch for HTTPS
+>   environments.
+> - **80-corpus byte-identical round-trip is impossible** --
+>   the s115 batch-authored levels have heterogeneous intra-
+>   file whitespace (mixed single-line vs multi-line actors in
+>   the same file, padded vs unpadded type columns). Spec
+>   softened from byte-identical to SEMANTIC round-trip (parse
+>   + serialize + parse = deep-equal). Editor's canonical
+>   format matches the dominant U6.x/U7.x/U9.x style.
+>
+> ## NEXT -- queued for s120
+>
+> 1. **Editor stress-test on 2-3 real levels FIRST** (revised
+>    per user feedback after s119 ship -- see
+>    [[authoring-tool-stress-test]]). Before grinding the 79-
+>    level fan-out, redesign U1.2 + U2.1 + U3.1 in the editor
+>    (3 instances spanning 3 actor palette mixes: mechanic-
+>    first stages, legacy voting, abstract). Log every point
+>    of friction (clicks per actor, props form rhythm, save/
+>    load tedium, lint noise, missing keyboard shortcuts,
+>    sprite mis-scale). Decide whether to ship V1.1 polish
+>    OR proceed straight to fan-out. Tests + CDP smoke do NOT
+>    catch authoring-time friction; 10-15 items in is when
+>    real tools start to drag.
+> 2. **The 79-level fan-out** (the original s118 NEXT item).
+>    After the stress test + any V1.1 polish, author U1.4 ->
+>    U9.6 via the editor. ~9 sessions estimated for the full
+>    batch. Editor lint catches missing pedagogy primitives
+>    (no-advance-path / missing GoalPad) automatically. Per-
+>    unit fan-out -- author 6-12 levels per session in a
+>    single editor tab.
+> 2. **Fix CC's state probe** for autonomous playtest (carry-
+>    forward from s118 #2). `window._lcLastClassroomSummary`
+>    returns null even when activity is visually live; need
+>    to introspect `_classroomBoardHandle`. Independent of
+>    the editor work.
+> 3. **Sprite atlas mapping for procedural actors** (carry-
+>    forward from s118 #3) -- once user runs Gemini on the
+>    atlas image to extract coords for Scanner / Gate /
+>    ContextSlot / GoalPad / TallyChute sprites, the editor's
+>    renderer + the cr renderer can both move from procedural
+>    to atlas-backed. Add the new regions to
+>    `pico_sprite1.json` + regenerate `sprite-regions.js`.
+> 4. **Real-classroom smoke V7.16 + V7.15** (carry-forward
+>    from s118 #1). PeriodB / PeriodE next school day with
+>    >=2 students, to stress-test the Pico Park forced
+>    teamwork.
+> 5. **Optional editor V1.1 polish** (defer until fan-out
+>    surfaces concrete pain):
+>    - `placeActorAt` test handle guarded by `simActive`
+>      (currently ungated; only user-facing entry points are
+>      gated -- intentional for test seeding but worth a one-
+>      liner if fan-out work hits it)
+>    - Camera viewport dimming visual (P1 minor -- the
+>      `cameraStart` dim overlay does not visually appear in
+>      screenshots; verify renderer's dim code path)
+>    - Coin sprite aspect-ratio preservation (12x22 stretched
+>      into 30x30 chip looks pill-shaped; preserve aspect in
+>      `drawAtlasSipStation`)
+>
+> ## Carry-forward gotchas (load-bearing for s120)
+>
+> - **Edit the level editor like any other follow-alongs HTML
+>   feature** -- single-file or per-concern split, no build,
+>   ASCII-only, LF line endings. Files are `tools/level-
+>   editor.{html,css}` + `tools/level-editor-{model,render,ui,
+>   lint,sim}.js` + `tools/sprite-regions.js` (auto-gen) +
+>   `tools/pico_park_atlas.png` (atlas).
+> - **Test handles** at `LE.ui._test`, `LE.model`, `LE.render`,
+>   `LE.lint`, `LE.sim` -- jsdom + `win.eval` pattern in
+>   `tests/level-editor*.test.js` mirror the existing test
+>   pattern. `placeActorAt(type, x, y)` test handle is NOT
+>   gated by `simActive` -- intentional so tests can seed
+>   actors before starting sim. Real user surfaces (palette /
+>   canvas / keyboard) all guard.
+> - **Round-trip is SEMANTIC, not byte-identical** -- the
+>   80-corpus round-trip test asserts deep-equal parse, not
+>   string equality. Don't try to "fix" the editor to
+>   preserve exact whitespace; the s115 corpus is
+>   heterogeneous.
+> - **Sprite regions inline-first** -- if you add new sprites
+>   to the atlas, update `pico_sprite1.json` AND regenerate
+>   `tools/sprite-regions.js` (auto-gen comment at top of the
+>   file shows the python one-liner). Otherwise file://
+>   instances won't see new regions.
+> - **Atlas image path** -- `tools/pico_park_atlas.png` is
+>   the 1024x1024 source from `hermes/old-app/recovered/
+>   tga_carved/tga_0002_0x4a1018.png`. NOT `cr/sprite.png`
+>   (that's a 920x196 sub-strip and the sprite regions don't
+>   fit).
+> - **Auto-lint dirty flag** at `stateMutatedSinceLastLint`
+>   -- set in `pushHistorySnapshot` (the central pre-mutation
+>   chokepoint, 13 sites) + 4 other state= sites
+>   (`handleUndo` / `handleRedo` / `handleLoad` /
+>   `setStateForTest`). `paint()` only re-lints when flag is
+>   true, then clears. Don't add new mutation paths without
+>   setting the flag.
+> - **Sim loop sync-RAF guard** -- the `schedulingFlag` guard
+>   in `startSimLoop` prevents infinite recursion when tests
+>   mock RAF to fire synchronously. Don't remove without
+>   updating the sim tests.
+> - **Codex review reliable on small diffs (~25 KB or less),
+>   unreliable on >35 KB** -- pattern held for the 3rd
+>   consecutive session. P3's ~2 KB targeted-spot-check
+>   prompt succeeded. P1 timed out at 280s. Fall back to a
+>   CC self-review subagent with the same focused risk-area
+>   list for large diffs.
+> - **`tools/cdp/` is gitignored** -- the Edge CDP rig
+>   (`edge.py` + `_shots` dir) lives in `tools/cdp/` which is
+>   in `.gitignore`. Don't try to commit `edge.py` or smoke
+>   screenshots.
+> - **PowerShell 5.1 + git commit message** -- still NEVER
+>   `git commit -m` from PS. Use `git commit -F-` with a
+>   Bash-tool heredoc.
+> - **Stage own paths only** -- `git add <path>`, never
+>   `-A`. Pre-existing dirty files (`.gitignore`,
+>   `CONTINUATION_PROMPT.md`, `GRADEBOOK_TAGGING_AUDIT.md`,
+>   `data/skill-map.js`, `state/cross-agent-log.json`) stay
+>   untouched in P1/P2/P3 commits.
+> - **ASCII-only on cross-agent prompts AND on the editor's
+>   source files** -- LF line endings, no emojis, no smart
+>   quotes. Editor adheres throughout.
+>
+> ## Test baselines (session-end)
+>
+> - **Level editor: 182/182** across 3 test files
+>   (`tests/level-editor.test.js` 125 + `tests/level-editor-
+>   lint.test.js` 30 + `tests/level-editor-sim.test.js` 27).
+>   Run time 1.79s -> 2.03s.
+> - **cr railway-server: 350/350** (unchanged from s118 -- no
+>   cr changes in s119).
+> - **Full fa repo: ~6102 pass + 2 known fails** (the existing
+>   2 known fails per s118 plus the new 182 editor tests).
+>   Run `npx vitest run` to confirm.
+>
+> ## Recall on reload
+>
+> - **Current contracts**: Level Editor v1 is the active tool
+>   for any level authoring or redesign. The 79-level
+>   mechanic-first fan-out is the immediate next workstream.
+>   V7.16 LC engine (from s118) is still the active runtime.
+> - **Master spec**: `LEVEL_EDITOR_V1_BUILD.md` covers all 3
+>   phases. The round-trip section was updated mid-build from
+>   byte-identical to semantic.
+> - **Memory files of note**: `project_level_editor.md` (NEW;
+>   indexed in `MEMORY.md` as "Level Editor (session 119)").
+>   `project_live_classroom.md`,
+>   `feedback_lc_additive_overlay.md`,
+>   `feedback_curriculum_render_sacred.md`,
+>   `feedback_diagnostic_first.md`,
+>   `feedback_test_on_public_url.md` remain authoritative
+>   (no edits this session).
+> - **The proven loop** (3rd session running): spec ->
+>   dispatch file-disjoint parallel Sonnets -> CDP smoke ->
+>   Codex on small / CC self-review on big -> fold -> commit
+>   + push. Held across 3 phases with 8 Sonnet dispatches.
+
+---
+
+# Continuation Prompt -- session 118 (mechanic-first arc, end-to-end)
+
+> **THIS SECTION IS HISTORICAL RECORD as of session 119**. The
+> session-119 block above is authoritative; the text below is
+> preserved for traceability only. Original header was:
+> "Continuation Prompt -- session 118 (mechanic-first arc,
+> end-to-end)". Last updated 2026-05-27 (s118 close / 119
+> ready). follow-alongs HEAD = `9467c1a` (V7.16 viewport-
+> bounded player). curriculum_render HEAD = `32c7d36` (V7.15.1
+> dev-test username whitelist). Linear, local==origin on both.
+>
+> ## Shipped this session -- the mechanic-first arc, end-to-end U1.1
+>
+> Session 118 took U1.1 from "voting-with-coins on a single screen"
+> to a complete Pico Park-style cooperative platformer with EVERY
+> beat embodying the AP Stats Topic 1.1 lesson. **The pedagogical
+> thesis -- "the mechanic IS the lesson; voting is a flashcard" --
+> is now provably shippable end-to-end.** No voting anywhere in
+> U1.1; the game itself teaches.
+>
+> 16 sprints (V7.7 -> V7.16) including 4 bugfix points (.1 / .2
+> variants), ~25 commits across both repos, ~400+ new tests. Plus
+> autonomous-playtest tooling that lets CC drive U1.1 via CDP
+> without teacher cockpit access.
+>
+> ## The U1.1 student experience post-V7.16
+>
+> Side-scrolling 96-chip-wide level on a 640-px-CSS-capped canvas
+> (V7.12). Shared camera tracks the leftmost STUDENT (V7.15);
+> nobody can leave the viewport because the local player x clamps
+> to camera bounds (V7.16). Pico Park forced teamwork: slowest
+> student constrains the group's forward motion.
+>
+> 1. **Zone 1 -- Blind Sip Line.** Sip cup A (chip 8), sip cup B
+>    (chip 24). The cup you END at = your recorded preference
+>    (V7.13 SipStation auto-records on second sip; ChoicePad
+>    eliminated). Tally HUD shows live A:N B:N.
+> 2. **Zone 2 -- Row Scanner Gate (chip 40).** Predicate
+>    `every_player_row_complete` blocks until ALL classmates have
+>    sampledA + sampledB + choice. CLOSED-SCAN visual variant with
+>    A/B/C checklist icons turning green as the local player
+>    completes each mark.
+> 3. **Zone 3 -- TallyChutes (chips 50 + 54).** Two vertical
+>    columns (amber A, blue B) growing with stacked blocks as the
+>    class records preferences. Pure visualization; not a gate.
+>    Persists into Zone 4 so the "data shows" reading is grounded
+>    in still-visible columns.
+> 4. **Zone 4 -- Three-Door Knowability Hall.** Three gates spread
+>    wide (chips 64, 76, 88) so each is its own camera-frame beat:
+>    * "Open if Cup A is Coke" -- predicate `always_false`, red
+>      Pico door art with red tint + X overlay, shakes on attempt
+>    * "Open if Coke is better than Pepsi" -- same
+>    * "Open if data show which cup this class chose more" --
+>      predicate `tally_nonzero`, opens when class has recorded any
+>      rows; walk-through transitions phase to GOAL_AVAILABLE
+> 5. **Zone 5 -- Context Bridge + GoalPad (chips 89/91/93 + 95).**
+>    Walk past 3 ContextSlots labeled "QUESTION: which cup did
+>    students prefer?" / "VARIABLE: blind sip choice (A or B)" /
+>    "CONTEXT: this class, this trial, mystery cups" -- each lights
+>    green one-way on any-player overlap. After all 3 lit, the
+>    GoalPad activates (pulsing green ring). ALL online students
+>    stand on it together for 1500 ms -> LEVEL_CLEARED. Replaces
+>    legacy single-player Key+Goal touch.
+>
+> No voting. No legacy Key+Goal. No flashcards. Every beat is a
+> cooperation primitive embodying the lesson.
+>
+> ## Per-sprint roll-up
+>
+> | Sprint | cr commit | fa commit | Ships |
+> |---|---|---|---|
+> | V7.7 | `1f50937` | `c9abd97` | Tally actor + threshold cascade (kept as backward-compat for U1.2 W/N levels) |
+> | V7.8 | `1c6e29c` | `447c730` | ChoicePad + per-player marks (sampledA / sampledB / choice). U1.1 Zone-1 pilot. |
+> | V7.8.1 | -- | `cb7c7af` | Real Pico Park `button.png` (1092 B) replacing the 126 B placeholder stub. |
+> | V7.9 | `b471dcd` | `354bb76` | Side-scroll camera engine: level coord decoupled from canvas pixel; `levelPxWidth` wire field; per-client camera-follow. |
+> | V7.9.1 | -- | `a5331e5` | Student fit-to-width when viewport > levelW (avoided sprite cluster-left on wide screens). |
+> | V7.10 | `d808c80` | `ce1d0da` | **Gate actor with predicate whitelist** (`always_false` / `every_player_row_complete` / `tally_nonzero`). **Voting KILLED for U1.1**: stages[] deleted; 4 Gates added; walk-through-gate -> KEY_HUNT. |
+> | V7.10.1 | -- | `efe1bdf` | X-only collision (gates are full-height walls; scanner stops avatars from jumping over) + door_closed.png/door_open.png for Zone 4 doors (red tint overlay for always_false). |
+> | V7.10.2 | -- | `c19d7f5` | Letterbox (replaced the V7.9.1 stretch -- student wide screens render native-size level centered, empty bars on either side, no horizontal distortion). |
+> | V7.11 | `1dc66da` | `388ca94` | TallyChute actor (Zone 3 visual pattern emergence). Pure render layer reading state.tally.sips[label]. |
+> | V7.12 | `6540d60` | `328c60c` | Canvas cap at 640 px CSS + U1.1 widened to map.width=96. Side-scroll now visible on wide desktops; Zone 4 doors land as three separate camera-frame beats. |
+> | V7.13 | `0ebd98d` | -- | SipStation auto-records choice on the SECOND sip (the cup you end at = preference). ChoicePad dropped from U1.1 (13 actors, gated by `!hasChoicePads` so U1.2 keeps V7.8 mechanic). |
+> | V7.14 | `48b5698` | `0600ce8` | **Zone 5 ContextSlot + GoalPad.** 3 ContextSlots (Question/Variable/Context) light one-way on player overlap in KEY_HUNT/GOAL_AVAILABLE phases. GoalPad presence-of-all-players timer (1500 ms default) -> LEVEL_CLEARED. Legacy Key+Goal endgame REPLACED for V7.14+ levels; backward compat preserved for the 78 legacy levels. |
+> | V7.15 | `36bf41a` | `a1473ea` | **Shared camera (Pico Park forced teamwork) + spectator gates.** Server tracks `state.camera.x` from leftmost ONLINE student; teachers excluded (not in state.players via classroom.js role filter); forward-only ratchet; client reads via `_camera.cameraStateFn` closure. 4 applyInput handlers (collect / record-choice / walk-through-gate / attempt-gate) gated on `!state.players[username]` so teachers/spectators can't trigger mechanics. Plus dev-start hook in Desk: `?dev=1&devActivity=U1.1` auto-fires classroom_activity_start. |
+> | V7.15.1 | `32c7d36` | -- | Dev-test username whitelist (`olive_whale`, `papaya_beaver`) bypasses the teacher-role gate on classroom_activity_start. Lets CC autonomously playtest via CDP. Production user gate unchanged. |
+> | V7.16 | -- | `9467c1a` | **Viewport-bounded local player x.** Local player clamped to `[camera.x, camera.x + viewportFloor - spriteW]` instead of `[0, levelW]` when shared camera active. Combined with V7.15: nobody can leave the viewport; slowest student constrains group forward motion. Legacy fallback for single-screen levels preserved. |
+> | spec docs | -- | `892bdca` | `U1_1_MECHANIC_FIRST_DESIGN.md` (5-zone canon) + `LIVE_CLASSROOM_V7_PICO_PARITY_SPEC.md` (revised: mechanic-first framing, browser_port reference table, per-unit mechanic palette for 79 levels) + `LIVE_CLASSROOM_V7_8_BUILD.md` (V7.8 contract). |
+>
+> Plus per-sprint BUILD docs (V7_7 through V7_15) on disk in
+> `follow-alongs/LIVE_CLASSROOM_V7_*_BUILD.md`.
+>
+> ## How the proven loop held up
+>
+> Most sprints followed: spec freeze (BUILD.md) -> parallel agent
+> dispatch (CC engine + Sonnet client + Sonnet JSON, file-disjoint)
+> -> Codex review via cross-agent.py -> fold inline -> commit + push.
+>
+> **Codex review was unreliable on diffs >35 KB** -- a pattern that
+> started in s116+117 and held all session. Specifically V7.7
+> (~50 KB), V7.8 (~60 KB), V7.9 (~80 KB), V7.10 (~60 KB), V7.14
+> (~55 KB) all timed out at 280 s. CC self-review iteration filled
+> the gap on every sprint -- usually surfacing 1-3 real
+> regressions per sprint that the iterative test-failure cycle
+> caught. **The proven loop now is: spec -> dispatch -> CC
+> self-review (skip Codex on large diffs) -> iterative test-fold
+> -> commit.**
+>
+> Hermes agent strategic critique came in twice mid-session:
+> - After V7.7 ship: Hermes called out my "balanced-sampling tilt
+>   platform" sketch as teaching the wrong Topic-1.1 lesson. The
+>   correct pedagogy is "which question can these data answer";
+>   imbalanced data is valid data. We pivoted the level-design
+>   doc accordingly. (`9 of 10 chose A` is valid; the failure is
+>   interpreting that as "A is Coke" or "A is better".)
+> - After V7.10 ship: Hermes affirmed the Zone 2 + Zone 4 work was
+>   the right move + recommended V7.11 ship Zone 3 next (visual
+>   pattern emergence) so students see the data shape BEFORE the
+>   question doors. We followed; V7.11 shipped exactly that.
+>
+> ## Autonomous playtest (V7.15 + V7.15.1)
+>
+> CC CDP-played U1.1 end-to-end without teacher cockpit intervention:
+> 1. Hard reload Desk with `?dev=1&devActivity=U1.1`
+> 2. Sign in olive_whale via `tools/cdp/edge.py` helpers
+> 3. Dev hook auto-fires `classroom_activity_start` on first
+>    `onStateChange` (V7.15 client + V7.15.1 server-side whitelist
+>    accept)
+> 4. Activity launches; all V7.10-V7.14 sprites render correctly:
+>    Cola Mystery welcome text + Sips A:0/B:0 HUD + [ABC] scanner
+>    + 2 SipStation coins + 2 red X locked doors + gray Door 3
+>    + (TallyChutes hidden until SIPPING phase ends).
+>
+> **State probe is broken** -- `window._lcLastClassroomSummary`
+> returns null even though activity is visually live. The
+> classroom-board exposes state via callback / handle method, not
+> a window-cached global. Visual smoke OK; numeric verification
+> blocked. Fix in s119: find the right state hook via
+> `_classroomBoardHandle` introspection.
+>
+> ## User observations carried forward to s119
+>
+> 1. **Scanner doesn't open in single-player smoke.** Could be:
+>    (a) avatar didn't actually reach SipStations (collision
+>    tolerance OVERLAP_PX=16); (b) V7.13 auto-choice didn't fire
+>    (needs both samples + a SECOND sip event after both done);
+>    (c) `min_students: 2` U1.1 setting + only 1 student signed
+>    in. Most likely (b) -- needs investigation with 2 students.
+> 2. **Sprite mapping incomplete.** Scanner gate is still
+>    procedural (no Pico Park "scanner" asset exists in the
+>    atlas). User to submit atlas image to Gemini with a prompt
+>    CC drafted (in s118 closing message) for coord extraction.
+> 3. **Level editor.** Deferred per s118 closing convo. JSON-by-
+>    hand workflow stays. CC offered a static HTML preview page
+>    (`tools/level-preview.html`) as a 1-hour alternative -- not
+>    built; queued for s119 if user wants it.
+>
+> ## NEXT -- queued for s119
+>
+> 1. **Smoke V7.16 + V7.15 in real classroom** (PeriodB / PeriodE
+>    next school day). The mechanic-first thesis needs >=2 actual
+>    students to truly stress-test (1-player auto-rowComplete is
+>    a degenerate case). If scanner still doesn't open with 2
+>    students, dig in.
+> 2. **Fix CC's state probe** so the autonomous playtest can
+>    actually verify mechanic correctness (not just visual). Need
+>    to find the right state-access hook via
+>    `_classroomBoardHandle` introspection or add a debug method.
+> 3. **Sprite atlas mapping** once user runs Gemini on the atlas
+>    image + sends back JSON coords. Replace procedural scanner +
+>    any other non-Pico-arted sprites with atlas-region drawImage
+>    calls.
+> 4. **The 79-level fan-out.** Each remaining level (U1.2 - U9.6)
+>    gets its own `U<N>_<L>_MECHANIC_FIRST_DESIGN.md` doc + JSON
+>    rewrite using the V7.10-V7.14 actor palette. The per-unit
+>    mechanic table in `LIVE_CLASSROOM_V7_PICO_PARITY_SPEC.md` is
+>    the starting plan. Parallel-author fan-out per unit; ~9
+>    sessions estimated for the full 79-level batch.
+> 5. **Optional V7.17+ polish:**
+>    - Soft-lock teacher override (cockpit button to force-advance
+>      camera if a stuck student holds the class)
+>    - Static HTML level-preview tool (see #3 above)
+>    - PushBox + carry mechanic (BridgePiece carried physically
+>      into BridgeSlot instead of auto-light-on-overlap)
+>    - Additional Pico primitives (Watch / WeightedLift / Seesaw /
+>      TrafficLight / Bound) for topics that need them
+>
+> ## Carry-forward gotchas (load-bearing for s119)
+>
+> - **Codex review unreliable on >35 KB diffs.** Default to CC
+>   self-review via iterative test-failure fold for big sprints.
+> - **Synthetic V7.5-shape fixture for cr tests** (V7.10
+>   refactor). setupCola loads an IN-MEMORY synthetic def instead
+>   of `loadLevel('U1.1')` so test breakage doesn't cascade on
+>   every U1.1 rewrite. Future U1.1 rewrites (V7.17+) don't need
+>   to update legacy tests because they use the synthetic
+>   fixture. Pattern lives in
+>   `cr/railway-server/tests/level-engine.test.js` line ~75
+>   (`_buildLegacyColaDef` helper) and is mirrored in
+>   `classroom.activity.level.test.js` via the new test-only
+>   `_injectLevelDef(key, def)` API.
+> - **`state.players` filters to STUDENTS only** (classroom.js
+>   startActivity `m.role === 'student'`). Teachers walk around
+>   but aren't in state.players -> camera ignores them
+>   (V7.15) + 4 applyInput handlers no-op for them (V7.15
+>   spectator gate). This is load-bearing -- don't denormalize
+>   role onto state.players[u] (was in V7.15 BUILD spec but
+>   cleanly skipped after realizing this).
+> - **V7.9 wire convention:** client broadcasts `canvasW =
+>   levelPxWidth` so server `_playerNearActorX` rescale becomes
+>   identity. Test helpers (`makeRoom` in level-engine.test.js;
+>   `setPos` in classroom.activity.level.test.js) auto-derive
+>   canvasW from the active level so individual tests don't need
+>   per-call updates. `_currentLevelState` module-scope cache
+>   in level-engine.test.js + room.activity.state lookup in
+>   classroom.activity.level.test.js.
+> - **V7.10 Gate cascade short-circuits SIPPING -> VOTING.**
+>   Levels with Gates SKIP the voting cascade; progression via
+>   walk-through-gate on the advance (tally_nonzero) gate.
+>   Legacy levels (no Gates) keep V7.5 voting. Cascade order in
+>   `_isSippingComplete`: ChoicePad (V7.8) > Tally-threshold
+>   (V7.7) > all-coins (V7.5 legacy). Each is opt-in via actor
+>   presence.
+> - **V7.10.1 gates are full-height walls.** X-only collision +
+>   push-out; player CANNOT jump over a gate. Pedagogical intent
+>   (matches Pico Park). Don't add Y tolerance back without
+>   discussion.
+> - **V7.10.2 letterbox vs cockpit scale.** Student wide-screen =
+>   letterbox (translate, no stretch). Cockpit (teacher role) =
+>   scale-to-fit (zoom-out so teacher sees whole level). Both
+>   handled in `_translateForCamera` + `_projectWorldX` based on
+>   `_camera.enabled`.
+> - **V7.12 canvas cap: 640 px CSS** on
+>   `#classroom-board-mount` via inline `style="max-width:640px"`.
+>   Combined with U1.1 map.width=96 (960 level px) the camera
+>   ALWAYS scrolls on desktop.
+> - **V7.13 SipStation auto-choice GATED by `!hasChoicePads`.**
+>   ChoicePad-level (U1.2 if hypothetically using ChoicePads;
+>   currently no level does) keeps V7.8 explicit-pad mechanic.
+>   ChoicePad-free + 2-A/B-SipStation levels (U1.1) get auto-
+>   choice on the second-sipped drink.
+> - **V7.14 GoalPad skips KEY_HUNT.** Levels with GoalPad
+>   transition walk-through-gate directly to GOAL_AVAILABLE
+>   (Key not collected). Legacy Key+Goal levels keep V7.5
+>   KEY_HUNT path. Both branches in `_handleWalkThroughGate`.
+> - **V7.15 shared camera is forward-only ratchet.** Camera
+>   never retreats once advanced. If the leader walks back,
+>   camera stays put. If a student disconnects and the leftmost
+>   becomes someone way ahead, camera stays at the prior
+>   position. Document if this becomes a problem (could drop the
+>   Math.max guard to make it follow-leftmost-always).
+> - **V7.15.1 dev-test whitelist:** `_DEV_TEST_USERNAMES = Set
+>   {'olive_whale', 'papaya_beaver'}` in classroom.js startActivity.
+>   These accounts bypass the teacher-role gate. Update the set if
+>   the user adds more dev-test accounts to test-credentials.json.
+> - **V7.16 viewport bounds use shared-camera state.** When
+>   `_camera.cameraStateFn` returns a camera object with `x`, the
+>   local player x is clamped to `[camera.x, camera.x +
+>   viewportFloor - spriteW]`. Legacy fallback `[0, levelW -
+>   spriteW]` when no shared camera. Don't break the fallback for
+>   single-screen levels.
+> - **Activity overlay canvas is ABOVE the avatar canvas in DOM
+>   order** -- full-overlay paints occlude sprite-engine entities.
+>   Use sprite engine entities (zIndex) for HUDs / world actors.
+>   Carry-forward from V7.6.1.
+> - **PowerShell 5.1 + git** -- never `git commit -m` from PS.
+>   Use `git commit -F-` with a Bash-tool heredoc.
+> - **Stage own paths only** -- `git add <path>`, never `-A`.
+>   Pre-existing dirty files (`.gitignore`, `GRADEBOOK_TAGGING_
+>   AUDIT.md`, `data/skill-map.js`, `state/cross-agent-log.json`)
+>   should NOT be in feature commits.
+> - **ASCII-only on cross-agent prompts AND on level JSON / test
+>   files** (s112/s113 lesson, reinforced multiple times in s118
+>   when agents tried to introduce smart quotes / box-drawing
+>   chars).
+> - **Edge CDP rig** at `tools/cdp/edge.py` -- MUST pass
+>   `--remote-allow-origins=*` (Chromium 144+ rejects WS handshakes
+>   from non-allowlisted origins). Built into the rig; don't
+>   forget for any new launch flow.
+> - **Browser MCP is unreliable** (stays stuck on Browser MCP
+>   landing page in s118). Use CDP rig for any autonomous browser
+>   work; Browser MCP only when user has it open + verified.
+>
+> ## Test baselines (session-end)
+>
+> - **cr railway-server: 350/350** (was 246 at s117 close;
+>   +104 across V7.7/V7.8/V7.9/V7.10/V7.11/V7.13/V7.14/V7.15
+>   + the synthetic-fixture refactor that absorbed legacy-test
+>   carrier breakage).
+> - **fa LC subset: 585+** (varies by test-file set counted;
+>   587 covered the V7.15 baseline subset; +24 V7.16 not added
+>   to a separate file so unchanged count there).
+> - **Full fa repo: 5920 pass + 2 known fails**
+>   (`poll-archive-desk.test.js` script-ordering + `study-guide.
+>   test.js` railway_config string -- both confirmed pre-existing
+>   per memory).
+>
+> ## Recall on reload
+>
+> - **Current contracts**: V7.16 is the active LC engine. U1.1 is
+>   the COMPLETE mechanic-first prototype (no voting; no legacy
+>   Key+Goal; Pico Park forced teamwork via shared camera +
+>   viewport-bounded player). U1.2 still uses V7.7 Tally
+>   threshold (kept as backward-compat example). 78 legacy levels
+>   still use V7.5 voting + Key + Goal -- those need per-level
+>   redesign in s119+.
+> - **Master spec**: `LIVE_CLASSROOM_V7_PICO_PARITY_SPEC.md`
+>   (revised mid-session for mechanic-first framing).
+> - **Per-level template**: `U1_1_MECHANIC_FIRST_DESIGN.md`
+>   (canonical 5-zone Cola Mystery Conveyor design).
+> - **Per-sprint BUILD docs**: `LIVE_CLASSROOM_V7_*_BUILD.md`
+>   for V7.7 through V7.15 in follow-alongs root.
+> - **Memory files of note**: `feedback_lc_additive_overlay.md`,
+>   `project_live_classroom.md`, `feedback_curriculum_render_
+>   sacred.md`, `feedback_diagnostic_first.md`, `feedback_test_
+>   on_public_url.md`. The s118 work doesn't invalidate any
+>   existing memory (the additive-overlay rule was honored
+>   throughout).
+> - **Autonomous playtest entry point**: `tools/cdp/edge.py` +
+>   `https://robjohncolson.github.io/apstats-live-worksheet/ap_
+>   stats_roadmap_square_mode.html?year=SY26-27&dev=1&devActivity
+>   =U1.1` -- sign in as `olive_whale` (password in
+>   `C:\Users\rober\.claude\test-credentials.json`). Dev hook
+>   auto-fires the activity. State probe broken (s119 fix).
+> - **The proven loop**: spec -> dispatch parallel agents -> CC
+>   self-review on diffs > ~35 KB (skip Codex) -> iterative
+>   test-fold -> commit + push. Held up across all 16 sprints.
+
+---
+
+# Continuation Prompt -- sessions 116 + 117 (multi-arc continuation)
+
+> **THIS SECTION IS HISTORICAL RECORD as of session 118**. The
+> session-118 block above is authoritative; the text below is
+> preserved for traceability only. Original header was:
+> "Continuation Prompt -- sessions 116 + 117 (multi-arc
+> continuation)". Last updated 2026-05-26 (s117
+> close / 118 ready). follow-alongs HEAD = `cb0ddaa` (V7.6.1
+> UI cleanup). curriculum_render HEAD = `66f28ea` (V7.6 reflection
+> substitution). Linear, local==origin on both.
+>
+> ## Shipped this 2-session arc -- end-to-end U1.1 cooperative loop
+>
+> Sessions 116 + 117 took U1.1 from "renders but isn't really playable"
+> (the s115 task #17 carry-forward) to a complete cooperative
+> class-opener: 4 sequential voting stages with dynamic reflection
+> text, a shared key gate after the last correct vote, and a
+> monochrome in-canvas dot-plot result panel that replaces the green
+> TI-84 pulldown. 19 fa commits + 9 cr commits across V7.1.x ->
+> V7.2 -> V7.3 -> V7.4 -> V7.5 -> V7.5.1 -> V7.6 -> V7.6.1. Plus
+> the Edge-CDP visual-testing rig at `tools/cdp/edge.py`.
+>
+> Codex review hit-and-miss this arc: V7.4 review caught 2 real
+> MAJORs (folded). V7.5 + V7.6 reviews both timed out twice each on
+> the 35-77 KB diffs (Codex stuck in exploration loops); CC's self-
+> review of the documented risk areas covered the gap each time
+> and the live testing has not surfaced anything Codex would have
+> caught.
+>
+> ## Session 116 (2026-05-25) -- task #17 fix + sprite-collide architecture + canonical sprites
+>
+> ### V7.1.x: resolved s115 task #17 (Desk doesn't see activity)
+>
+> The s115 diagnostic `[Desk WS<-server]` (37f4591) confirmed frames
+> were arriving at the student Desk and the reducer was firing; the
+> bug was downstream rendering. Three commits fixed it:
+>
+> - **fa `5d619cb`** -- the level overlay was inserted as a sibling
+>   before #classroom-board-mount with no `position:relative` parent,
+>   so its `position:absolute; left:0; top:0` canvas anchored to the
+>   page body (not the board). Fix: `#classroom-board-mount` gets
+>   `position:relative` + the activity overlay is appended as a child
+>   for `level` / `colorbox-grid` types (kept sibling-mount for V4/V5).
+> - **fa `92b3ca4`** -- the overlay canvas sized to match the FULL
+>   220 px board height; levels are only 8 chips * 10 px = 80 px tall,
+>   so the overlay covered the avatar walking area for no reason. Fix:
+>   pass `level` to `Renderer.mount(...)` and size cssH from
+>   mapHeight + TOP_MARGIN. Welcome Text at chip y=0 got a y-offset
+>   so its box no longer clips the canvas top; long Text strings get
+>   horizontal-clamp instead of centering off-screen.
+> - **fa `7256705`** -- `_handleActivityState` was flattening the
+>   payload via `Object.assign({}, act.state, { level, levelKey })`
+>   so `activityState.state` was `undefined` on the renderer side;
+>   coins/goal/reflection branches all silently no-op'd. Fix: pass
+>   `{ state: act.state, level, levelKey, lessonKey }` so renderScene
+>   reads `activityState.state.coins` correctly.
+> - **cr `f20774d`** -- engine `_overlapsActor` required BOTH X and
+>   Y to be within 16 px of the actor's chip-pixel coord. Players sit
+>   at canvas y=146; coins at chip y=2 -> pixel y=20; |146-20|=126
+>   >> 16, so Y check could NEVER succeed. Fix: X-only overlap
+>   (player is a vertical column; walking under triggers).
+>
+> ### V7.2 sprite-collide: coins + goal become real entities on the avatar canvas
+>
+> The teacher: "the coins aren't on the same canvas as the avatars
+> ... we need to use the collision detection routines that the avatars
+> have with each other with the coins, to accurately collect votes."
+> Right architectural call. Coins were paintings on the activity
+> overlay (separate canvas); players never visually touched them.
+>
+> - **fa `b912d63`** -- new `CoinSprite` class in classroom-board.js
+>   (engine entity, zIndex 5, sprite-vs-sprite collision via
+>   getLocalSprite + X-distance check). `syncLevelCoins` lifecycle
+>   spawns from `state.activity.state.coins[]`. On collision the
+>   client sends `classroom_activity_value {kind:'collect',coinId}`;
+>   server `applyInput` validates X-overlap (anti-cheat) and flips
+>   `coin.collected = true`. Server-side auto-collect on tick REMOVED
+>   (cr `638b47f`): players spawn at chip 4,4 and the auto-overlap
+>   was greying coins out the instant the level loaded.
+> - **fa `1d4b319` + cr `fa8d6cf`** -- same treatment for Goal:
+>   GoalSprite entity on the avatar canvas, applyInput
+>   `{kind:'reach-goal'}`, server auto-overlap on tick removed.
+> - **cr `33fa9b4`** -- engine applyInput now dispatches by
+>   `payload.kind` ('collect' -> coin, 'reach-goal' -> goal).
+> - **cr `51cfa24`** -- activityValue role gate lifted (was
+>   `role !== 'student' return`). Teachers participate as avatars
+>   and need to be able to fire collect/reach-goal too.
+>
+> ### V7.3: canonical Pico Park sprites + animation + collision tuning
+>
+> - **fa `bcdccb9`** -- swapped 5 placeholder PNGs (coin/key/button/
+>   door_closed/door_open) for sprites extracted from the user's
+>   recovered Pico Park atlas via Pillow nearest-neighbor. Also
+>   stripped the V7.1 `[Desk activity]` + V7.2 `[Desk WS<-server]`
+>   diagnostic console.log spam.
+> - **fa `4ca8715`** -- coin was a flat orange tile; user pointed at
+>   the actual coin spin-strip at atlas y=319-341 (3 frames). Tight-
+>   cropped frame 0.
+> - **fa `da72a32`** -- coin animation: 3-frame spin at 140 ms cadence.
+>   CoinSprite constructor takes `images: [Image, Image, Image]` + a
+>   `_frameIdx` counter; `_ensureCoinFrames()` loads coin_0/1/2.png.
+> - **fa `70f642b`** -- collected coins shrunk-vanish over 180 ms
+>   (pop animation).
+> - **fa `61e25b9`** -- teacher rejected the shrink: "should just
+>   disappear." Plus halved spin (140 -> 280 ms). Plus a pinned
+>   block comment over `_isCollecting` documenting the full local-
+>   collision -> server -> peer-disappear propagation contract.
+> - **fa `c8c0430`** -- collision was X-only; walking past auto-
+>   collected. Fix: X+Y both required (jump into coin to collect).
+> - **fa `a392537`** -- raised coins 16 px so a jump actually reaches
+>   them; bumped COIN_COLLISION_Y_PX from 20 to 24 for forgiveness.
+>   Math: standing player center 134, peak jump 85, coin center 90,
+>   diff 5 at peak (well inside tolerance), 44 standing (well outside).
+> - **fa `9229029`** -- entity z-order. Canvas engine sorted by
+>   `entity.zIndex` (default 0). BoardSprite zIndex=10 (avatars always
+>   on top); CoinSprite/GoalSprite zIndex=5; Doorway zIndex=1
+>   (background). Fixed avatars-behind-doorway-mouse-hole occlusion.
+>
+> ## Session 117 (2026-05-26) -- cola-blind-test + multi-stage + dot-plot ResultPanel
+>
+> ### V7.4: cola-blind-test (hidden coins reveal on collect)
+>
+> Teacher: U1.1's coins labeled A/B were too on-the-nose; the
+> pedagogy is that statistics observes patterns rather than deciding
+> facts. Make the kid LIVE the blindness.
+>
+> - **cr `76f3656`** -- SipStation actor gets optional `hidden:true`
+>   field -> state.coins[i] adds `hidden + revealed`. createLevelState
+>   sets revealed = !hidden. applyInput {kind:'collect'} flips
+>   revealed = true alongside collected. serialize wires both fields.
+>   U1.1.json: all 4 SipStations get hidden:true; welcome Text
+>   rewritten to "Cola Mystery: 4 mystery cups -- sip each, data
+>   reveals what kind." Wrong-door reflection text tightened.
+> - **fa `12c9a63`** -- CoinSprite gets `_revealed` field;
+>   getLabelSpec returns '?' pre-reveal, 'A'/'B' post-reveal.
+>   New RevealTextSprite (ephemeral entity, zIndex 20): floats +A/+B
+>   up + fades over 900 ms then self-removes. Spawned at local
+>   collision AND when syncLevelCoins observes a peer-collect
+>   transition. New TallyDisplay entity (the V7.1 placeholder actor)
+>   renders the live "Sips - A:N B:N" panel. Codex review caught 2
+>   MAJORs both folded inline: `_sentCollect` never cleared on server
+>   rejection (added 600 ms TTL stale-reset); `syncLevelTally`
+>   getTally closure froze on parameter (renamed parameter so
+>   closure reaches mount-scope state).
+>
+> ### V7.5: sequential stages + KEY_HUNT phase + shared-key gate
+>
+> Teacher feedback after V7.4: "make it a series of stages students
+> answer all of them correctly to progress; then a key appears, any
+> kid can get it and unlock the door so we can start class."
+>
+> - **cr `7b89c6f`** -- new PHASE_KEY_HUNT between VOTING (last
+>   correct vote) and GOAL_AVAILABLE. Level def gets top-level
+>   `stages: [{ questionText, doorways:[...] }]`. createLevelState
+>   reads stages[] OR auto-wraps actors[] QuestionDoors into a
+>   synthetic single-stage (backward compat for 79 other levels).
+>   state.currentStage indexes the active stage; on correct vote
+>   either advances stage OR transitions to KEY_HUNT (if Key actor
+>   exists). Optional Key actor + state.key + applyInput
+>   {kind:'collect-key'}. serialize adds currentStage / stagesTotal
+>   / voteQuestion / key / goal.locked.
+>   U1.1.json: 4 stages -- the original "what question?" + 3 drill
+>   variants (sips measure preference / data tells you / statistics
+>   observes _ in data). Key actor at chip (10, 4).
+> - **fa `5259ae3`** -- KeySprite (singleton, X+Y collide like
+>   CoinSprite). GoalSprite extended with `locked` opt -- swaps
+>   door_closed.png / door_open.png. syncLevelKey lifecycle.
+>   StageIndicator UI ("N / M" pinned top-right during multi-stage
+>   VOTING). Histogram auto-dismiss timer in showResultScreen.
+>
+> ### V7.5.1: doorways auto-close on all-voted (cr `d50bbca`)
+>
+> Teacher: "two players are in the wrong doors, nothing happens,
+> is that supposed to be that way?" Yes -- doorways used to require
+> a teacher cockpit click to close. For a class-opener that's
+> babysitting. Fix: castDoorwayVote auto-closes when
+> `_allOnlineStudentsHaveVoted(room)` returns true. Teacher manual
+> close still works (force-close early). Extracted
+> _closeDoorwaysServerSide helper for both paths.
+>
+> ### V7.6: in-canvas ResultPanel (dot plot, monochrome) + dynamic reflection
+>
+> Teacher: TI-84 histogram pulldown looked clinical; dot plot is
+> more pedagogically appropriate (matches what kids will learn to
+> draw themselves); strip the green LCD palette; make reflection
+> text reference the actual vote counts.
+>
+> - **cr `66f28ea`** -- new `_substituteReflectionPlaceholders` helper
+>   swaps {N}/{TOTAL}/{PCT} in winnerDoor.reflection at REFLECTION-
+>   phase entry using closedDoorways.tally. Zero-vote guard prevents
+>   div-by-zero. Static strings (no placeholders) pass through
+>   unchanged (backward compat). U1.1.json: 8 wrong-door reflections
+>   rewritten to LEAD with "{N} of {TOTAL} of you ({PCT}%) ..."
+>   then the existing pedagogical message.
+> - **fa `4920ba1`** -- new ResultPanel entity (zIndex 15) renders
+>   in-canvas: "Class Vote" title, horizontal rule, dot plot
+>   (one black dot per vote, stacked above each door's label, wraps
+>   into a second column after 15 dots), horizontal rule, reflection
+>   text wrap below. Pure black + white (no green). Width =
+>   min(280, 70% of canvas), centered. syncResultPanel singleton
+>   lifecycle with fast (2 s, no reflection) / slow (8 s, reflection)
+>   auto-dismiss timer. The DOM pulldown (showResultScreen) is
+>   poll-only and was untouched -- doorways-close already had its
+>   own state path (state.closedDoorways), the V7.5 dismiss timer
+>   on it became a no-op.
+>
+> ### V7.6.1: removed competing UI surfaces (fa `cb0ddaa`)
+>
+> Teacher: "TI-84 plot shows up below the canvas... text above
+> avatars... overlay occludes that text... TI-84 plot shouldn't
+> exist!" Three competing surfaces leftover from earlier versions:
+>
+> 1. `<canvas id="classroom-doorways-tally">` in the Desk HTML --
+>    a v3 P4 live-tally bar chart on a green TI-84 LCD background
+>    that appeared below the avatar canvas the moment doorways
+>    opened. Removed (canvas element commented out;
+>    _renderDeskDoorwaysTally early-returns now).
+> 2. `drawReflectionPanel` in activity-level.js -- the dim-grey
+>    full-overlay reflection panel painted on the activity overlay
+>    canvas (which sits ABOVE the avatar canvas in DOM order). It
+>    was occluding the V7.6 ResultPanel from above; the dot plot
+>    was rendering but invisible. Call removed; ResultPanel owns
+>    reflection display now. activity-level test pin flipped to
+>    assert the panel does NOT render from the overlay.
+> 3. (Verified, no change needed): activity-level overlay's Text
+>    actors still paint the welcome message. Mostly transparent in
+>    the area ResultPanel occupies.
+>
+> ### Edge-CDP visual-testing rig (`tools/cdp/edge.py`)
+>
+> User: "a lot of this can be done by you, right? by launching edge
+> browser with cdp." Built. `tools/cdp/edge.py` (~280 LoC, gitignored
+> at `tools/cdp/`):
+>
+> - Launches msedge.exe with `--remote-debugging-port=9223` + a
+>   dedicated profile dir (`%TEMP%/edge-claude-cdp`) so it doesn't
+>   trample the user's real Edge.
+> - **MUST pass `--remote-allow-origins=*`** -- Chromium 144+ rejects
+>   WS handshakes from non-allowlisted origins (gave 403 on first
+>   attempt; error message specifies the fix).
+> - CLI: `--shot`, `--eval`, `--signin <username>`, `--keep`, `--fresh`.
+> - `type_into(selector, text)` uses HTMLInputElement.prototype.value
+>   setter + dispatchEvent('input'/'change') to bypass key-sim flake
+>   on password fields.
+> - signin() drives the Desk modal via window.openSignInModal +
+>   submitSignIn(); returns rosterClient.current() so callers verify
+>   the right account stuck.
+> - Credentials at `C:\Users\rober\.claude\test-credentials.json`
+>   (outside any repo). User shared password `googly231` for all
+>   classroom test accounts; CC has it loaded.
+>
+> Smoke-tested: boot screen captured cleanly. Sign-in step + first
+> full U1.1 visual loop is the next-session entry point (parked
+> pending user choice on test-account username + section).
+>
+> ## NEXT -- queued for s118
+>
+> 1. **Pick a test username + section for the CDP rig.** Two options
+>    in priority: (a) re-use `olive_whale` or `papaya_beaver` from
+>    the teacher's existing test set in `PeriodX` -- CC becomes a
+>    3rd avatar in the live test room, useful for the >=2 player
+>    cooperative loop. (b) dedicated `cc_tester` in a clearly-
+>    distinct section so CC doesn't add noise to live class tests.
+>    Once decided, CC self-iterates on visual bugs (post-signin
+>    screenshots after each fa push) without user-in-loop.
+>
+> 2. **Visually verify V7.6.1.** Three checks:
+>    - No green TI-84 panel below the avatar canvas at any point.
+>    - Dot plot ResultPanel is visible at vote close (not occluded
+>      by activity overlay anymore).
+>    - Reflection text after wrong vote shows actual {N}/{TOTAL}/
+>      ({PCT}%) substituted from the room's vote tally.
+>
+> 3. **Potential V7.7 polish (open):**
+>    - Welcome Text actor may still partially overlap the
+>      ResultPanel at the top. Either shift ResultPanel lower or
+>      suppress welcome Text rendering once doorways close.
+>    - ResultPanel position is hardcoded near top -- could be smarter
+>      about avoiding the dot plot landing on top of avatars during
+>      simultaneous KEY_HUNT spawn (unlikely overlap given y bands).
+>    - Bulk-apply V7.5 stages[] + Key actor patterns to the other
+>      79 levels (one stage each currently; add 1-3 drill stages
+>      per level + a Key actor for the cooperative beat).
+>
+> ## Carry-forward gotchas (load-bearing for s118)
+>
+> - **Activity overlay canvas is ABOVE avatar canvas in DOM order**
+>   -- anything that paints full-overlay there will occlude entities
+>   on the avatar canvas. Use sprite engine entities (zIndex) for
+>   ResultPanel-style displays rather than overlay paints.
+> - **V7.5.1 auto-close: doorways close the instant `_allOnline
+>   StudentsHaveVoted(room) === true`** -- tests that vote N
+>   students and then call closeDoorways explicitly need the
+>   manual close to be optional (already a no-op since room.doorways
+>   is null post-auto-close).
+> - **V7.5 multi-stage means correct vote on stage N != GOAL_AVAILABLE
+>   directly** -- tests + helpers that drove single-stage VOTING
+>   need `advanceFullLevel` (drives stages + key collect). See the
+>   helper rewrites in cr `7b89c6f` test file.
+> - **V7.6 reflection text uses {N}/{TOTAL}/{PCT} templates** --
+>   any new level that wants dynamic reflection lands the syntax in
+>   its JSON; engine substitutes at REFLECTION entry. Static
+>   strings still pass through.
+> - **Edge CDP rig MUST pass --remote-allow-origins=*** -- without
+>   this Chromium rejects the WS handshake with 403. Built into
+>   tools/cdp/edge.py; don't forget for any new launch flow.
+> - **NEVER kill Edge from bash via `taskkill /F ...`** -- bash
+>   interprets `/F` as a path. Use the PowerShell tool:
+>   `Get-Process msedge | Stop-Process -Force`.
+> - **Codex review is unreliable on diffs > ~35 KB** -- two V7.5
+>   and two V7.6 attempts both timed out at 280 s. Fall back to
+>   CC self-review of the documented risk areas; tests cover the
+>   regressions cleanly.
+>
+> ## Test baselines (session-end)
+>
+> - cr: **246/246** (was 240 at s115; +6 from V7.4/V7.5/V7.6
+>   substitution / multi-stage / Key actor coverage + V7.5.1
+>   auto-close pin + V7.4 fixture debt repairs).
+> - fa: **363/363** (was 5642/5643 at s115; the 363 is the
+>   classroom-board + activity-level + desk-level-integration +
+>   desk-activity-kbd subset run regularly during the V7.4-V7.6
+>   arc; full suite likely still 5642/5643 + the new V7.4/V7.5/V7.6
+>   coverage layered on top).
+>
+> ## Recall on reload
+>
+> - **Current contracts**: V7.6.1 is the active LC level mechanic.
+>   U1.1 is the only multi-stage + Key-actor level so far; other
+>   79 levels are still single-stage no-key (engine has full
+>   backward compat).
+> - **Edge CDP rig**: `tools/cdp/edge.py` ready; awaiting user
+>   choice of test username + section before going hands-off.
+> - **Memory files of note**: `feedback_lc_additive_overlay.md`,
+>   `project_live_classroom.md`, `feedback_curriculum_render_sacred.md`,
+>   `feedback_diagnostic_first.md`, `feedback_test_on_public_url.md`.
+> - **The proven loop**: spec -> dispatch parallel agents (CC engine
+>   + Sonnet client + Sonnet JSON in parallel) -> Codex review ->
+>   fold -> commit + push. Codex flakiness this arc didn't matter
+>   because the changes were well-bounded and CC's self-review caught
+>   the same risk areas Codex would have flagged.
+
+---
+
+# Continuation Prompt -- session 115
+
+> **THIS SECTION IS HISTORICAL RECORD as of session 117**. The
+> session-116+117 block above is authoritative; the text below is
+> preserved for traceability only.
+>
+> Original header was: "Continuation Prompt -- session 115
+> (multi-arc continuation)". Last updated 2026-05-25 (session 115
 > close / 116 ready). follow-alongs HEAD = `37f4591` (Desk WS
 > diagnostic helper). curriculum_render HEAD = `936ddec` (80-level
 > batch ship). Linear, local==origin on both.
