@@ -2252,6 +2252,28 @@
     return _buttonImage;
   }
 
+  // V7.10.1: door_closed.png and door_open.png are the Pico Park door
+  // sprites the Goal already uses (V7.3 ship). GateSprite reuses them
+  // for the Zone 4 doors: closed render for always_false (red tint
+  // overlay) and tally_nonzero locked state; open render when the
+  // tally_nonzero door's predicate flips true. Loaded singletons.
+  var _doorClosedImageForGate = null;
+  var _doorOpenImageForGate   = null;
+  function _ensureDoorClosedImage() {
+    if (_doorClosedImageForGate) return _doorClosedImageForGate;
+    if (typeof Image === 'undefined') return null;
+    _doorClosedImageForGate = new Image();
+    _doorClosedImageForGate.src = 'door_closed.png';
+    return _doorClosedImageForGate;
+  }
+  function _ensureDoorOpenImage() {
+    if (_doorOpenImageForGate) return _doorOpenImageForGate;
+    if (typeof Image === 'undefined') return null;
+    _doorOpenImageForGate = new Image();
+    _doorOpenImageForGate.src = 'door_open.png';
+    return _doorOpenImageForGate;
+  }
+
   // --- ChoicePadSprite entity (V7.8 mechanic-first / Zone 1) ------------
 
   /**
@@ -2557,6 +2579,13 @@
     this.value          = (typeof opts.value === 'string') ? opts.value : '';
     this.size           = opts.size || GATE_DEFAULT_SIZE;
     this.predicate      = (typeof opts.predicate === 'string') ? opts.predicate : 'always_false';
+    // V7.10.1: optional Pico Park door images for the door-style
+    // variants (always_false + tally_nonzero). Wired by syncLevelGates
+    // via _ensureDoorClosedImage / _ensureDoorOpenImage. Falls back to
+    // the V7.10.0 procedural shape render when images are absent /
+    // not yet loaded / on jsdom test stubs.
+    this.imageClosed    = (opts && opts.imageClosed) || null;
+    this.imageOpen      = (opts && opts.imageOpen) || null;
     this.getOpened      = (typeof opts.getOpened === 'function') ? opts.getOpened : function () { return false; };
     this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
     this.getLocalMarks  = (typeof opts.getLocalMarks === 'function')  ? opts.getLocalMarks  : function () { return null; };
@@ -2597,18 +2626,24 @@
     return 'CLOSED-LOCKED';
   };
 
-  // _isOverlapping(): local player's center within the gate's X+Y bbox.
-  // Mirrors ChoicePadSprite._isOverlapping (X+Y, no jump required since
-  // gate occupies the full floor-to-jump vertical band).
+  // _isOverlapping(): local player's X center within the gate's X bbox.
+  //
+  // V7.10.1 fix: dropped the Y check. Gates are FULL-HEIGHT WALLS --
+  // a player who walks INTO a gate's x band (even on the floor below
+  // the gate's visual sprite, or at jump peak above it) is blocked.
+  // The V7.10.0 X+Y check meant a scanner gate at chip y=3 (level
+  // pixel 30) was unreachable from the floor (player y~146): the
+  // gate sprite floated visually but never collided. User smoke
+  // ("the avatar slides right past the scanner"): exactly this bug.
+  //
+  // Cooperative pedagogy intent: the scanner is a wall; you can't
+  // walk through OR jump over it. X-only is the correct primitive.
   GateSprite.prototype._isOverlapping = function () {
     var me = this.getLocalSprite();
     if (!me) return false;
-    var myCx   = me.x + (me._spriteSize   || 24) / 2;
-    var myCy   = me.y + (me._spriteHeight || 24) / 2;
+    var myCx   = me.x + (me._spriteSize || 24) / 2;
     var gateCx = this.x + this.size / 2;
-    var gateCy = this.y + this.size / 2;
-    return (Math.abs(myCx - gateCx) <= GATE_COLLISION_X_PX &&
-            Math.abs(myCy - gateCy) <= GATE_COLLISION_Y_PX);
+    return Math.abs(myCx - gateCx) <= GATE_COLLISION_X_PX;
   };
 
   // Collision push-out: when the local player's bbox overlaps a CLOSED
@@ -2700,46 +2735,82 @@
     var rectW  = this.size;
     var rectH  = this.size;
 
+    // V7.10.1: prefer Pico Park door art for door-style variants.
+    // OPEN uses door_open.png; CLOSED-LOCKED + CLOSED-DOOR use
+    // door_closed.png with a tint overlay distinguishing locked vs
+    // openable. Fallback to V7.10.0 procedural shape render if the
+    // image isn't loaded yet OR not supplied (jsdom test stubs).
+    var imgOpen   = this.imageOpen;
+    var imgClosed = this.imageClosed;
+    var imgOpenReady   = imgOpen   && imgOpen.complete   && imgOpen.naturalWidth   > 0;
+    var imgClosedReady = imgClosed && imgClosed.complete && imgClosed.naturalWidth > 0;
+
     // OPEN gates fade out (scanner) or glow green (door). Always_false
     // can't reach OPEN, but defensive paint as a green glow if it does.
     if (visual === 'OPEN') {
-      // Fade out: alpha tapers toward 0.25 to read as "walk through me".
-      ctx.globalAlpha = 0.35;
-      ctx.fillStyle   = GATE_COLOR_DOOR_OPEN;
-      if (typeof ctx.fillRect === 'function') {
-        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
-      }
-      // Pulse a thin green border to draw the eye through the open door.
-      var pulse = 0.7 + 0.3 * Math.sin(this._bobT * 4);
-      ctx.globalAlpha = pulse;
-      ctx.strokeStyle = GATE_COLOR_DOOR_OPEN;
-      ctx.lineWidth   = 2;
-      if (typeof ctx.strokeRect === 'function') {
-        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
-      }
-      // Centered green check glyph ('+' as ASCII-safe stand-in).
-      if (typeof ctx.fillText === 'function') {
+      if (imgOpenReady && typeof ctx.drawImage === 'function') {
         ctx.globalAlpha = 1;
-        ctx.font        = 'bold 14px monospace';
-        ctx.textAlign   = 'center';
-        try { ctx.textBaseline = 'middle'; } catch (_) {}
+        try { ctx.drawImage(imgOpen, rectX, rectY, rectW, rectH); } catch (_) {}
+        // Pulse a thin green border to draw the eye through the open door.
+        var pulseImg = 0.7 + 0.3 * Math.sin(this._bobT * 4);
+        ctx.globalAlpha = pulseImg;
+        ctx.strokeStyle = GATE_COLOR_DOOR_OPEN;
+        ctx.lineWidth   = 2;
+        if (typeof ctx.strokeRect === 'function') {
+          try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
+      } else {
+        // Fallback: alpha-faded green rect.
+        ctx.globalAlpha = 0.35;
         ctx.fillStyle   = GATE_COLOR_DOOR_OPEN;
-        try { ctx.fillText('+', rectX + rectW / 2, rectY + rectH / 2); } catch (_) {}
+        if (typeof ctx.fillRect === 'function') {
+          try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
+        var pulse = 0.7 + 0.3 * Math.sin(this._bobT * 4);
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = GATE_COLOR_DOOR_OPEN;
+        ctx.lineWidth   = 2;
+        if (typeof ctx.strokeRect === 'function') {
+          try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
+        if (typeof ctx.fillText === 'function') {
+          ctx.globalAlpha = 1;
+          ctx.font        = 'bold 14px monospace';
+          ctx.textAlign   = 'center';
+          try { ctx.textBaseline = 'middle'; } catch (_) {}
+          ctx.fillStyle   = GATE_COLOR_DOOR_OPEN;
+          try { ctx.fillText('+', rectX + rectW / 2, rectY + rectH / 2); } catch (_) {}
+        }
       }
     } else if (visual === 'CLOSED-LOCKED') {
-      // Red pillar (always_false). Solid fill + 'X' overlay.
-      ctx.globalAlpha = 1;
-      ctx.fillStyle   = GATE_COLOR_LOCKED;
-      if (typeof ctx.fillRect === 'function') {
-        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      // Pico Park door + RED tint overlay + 'X' (perma-locked
+      // wrong-question door).
+      if (imgClosedReady && typeof ctx.drawImage === 'function') {
+        ctx.globalAlpha = 1;
+        try { ctx.drawImage(imgClosed, rectX, rectY, rectW, rectH); } catch (_) {}
+        // Red tint overlay so always_false reads as "blocked / wrong"
+        // distinct from the openable tally_nonzero door.
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle   = GATE_COLOR_LOCKED;
+        if (typeof ctx.fillRect === 'function') {
+          try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
+      } else {
+        // Fallback shape.
+        ctx.globalAlpha = 1;
+        ctx.fillStyle   = GATE_COLOR_LOCKED;
+        if (typeof ctx.fillRect === 'function') {
+          try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
+        ctx.strokeStyle = GATE_COLOR_BORDER;
+        ctx.lineWidth   = 2;
+        if (typeof ctx.strokeRect === 'function') {
+          try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
       }
-      ctx.strokeStyle = GATE_COLOR_BORDER;
-      ctx.lineWidth   = 2;
-      if (typeof ctx.strokeRect === 'function') {
-        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
-      }
-      // 'X' overlay centered.
+      // 'X' overlay centered (over the image OR the fallback).
       if (typeof ctx.fillText === 'function') {
+        ctx.globalAlpha = 1;
         ctx.font        = 'bold 18px monospace';
         ctx.textAlign   = 'center';
         try { ctx.textBaseline = 'middle'; } catch (_) {}
@@ -2789,18 +2860,26 @@
         }
       }
     } else {
-      // CLOSED-DOOR (tally_nonzero, locked). Blue body + 'L' (lock) glyph.
-      ctx.globalAlpha = 1;
-      ctx.fillStyle   = GATE_COLOR_DOOR_CLOSED;
-      if (typeof ctx.fillRect === 'function') {
-        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
-      }
-      ctx.strokeStyle = GATE_COLOR_BORDER;
-      ctx.lineWidth   = 2;
-      if (typeof ctx.strokeRect === 'function') {
-        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      // CLOSED-DOOR (tally_nonzero, locked). Pico Park door image +
+      // 'L' (lock) glyph. No tint -- this door can open; players read
+      // it as "the openable one" once the data has any rows.
+      if (imgClosedReady && typeof ctx.drawImage === 'function') {
+        ctx.globalAlpha = 1;
+        try { ctx.drawImage(imgClosed, rectX, rectY, rectW, rectH); } catch (_) {}
+      } else {
+        ctx.globalAlpha = 1;
+        ctx.fillStyle   = GATE_COLOR_DOOR_CLOSED;
+        if (typeof ctx.fillRect === 'function') {
+          try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
+        ctx.strokeStyle = GATE_COLOR_BORDER;
+        ctx.lineWidth   = 2;
+        if (typeof ctx.strokeRect === 'function') {
+          try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+        }
       }
       if (typeof ctx.fillText === 'function') {
+        ctx.globalAlpha = 1;
         ctx.font        = 'bold 18px monospace';
         ctx.textAlign   = 'center';
         try { ctx.textBaseline = 'middle'; } catch (_) {}
@@ -4727,6 +4806,12 @@
           var sprite = new GateSprite({
             id: gateId, x: gx, y: gy, size: size,
             value: label, predicate: predicate,
+            // V7.10.1: pass Pico Park door art for door-style variants.
+            // CLOSED-SCAN uses procedural shapes (no good Pico asset
+            // for a scanner with checklist icons -- the rendering
+            // gracefully ignores these images for that branch).
+            imageClosed: _ensureDoorClosedImage(),
+            imageOpen:   _ensureDoorOpenImage(),
             // Closure: read the LATEST opened flag from mount-scope state
             // every tick (no diff detection; the wire is source of truth).
             getOpened: (function (capturedGateId) {
