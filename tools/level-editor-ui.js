@@ -46,6 +46,11 @@
   // Toast auto-hide delay (ms).
   var TOAST_HIDE_MS = 3000;
 
+  // Launch-in-cockpit target URL. The levelKey is appended as the
+  // ?devActivity= parameter at click time.
+  var LAUNCH_BASE_URL = 'https://robjohncolson.github.io/apstats-live-worksheet/ap_stats_roadmap_square_mode.html';
+  var LAUNCH_YEAR = 'SY26-27';
+
   // ---------------------------------------------------------------------------
   // Module state.
   // ---------------------------------------------------------------------------
@@ -60,6 +65,8 @@
   var hoverChip = null;      // { x, y } | null -- last mousemove chip
   var contextMenu = null;    // DOM node for the floating context menu, or null
   var renderRequested = false; // RAF dedupe flag
+  var lastLintResult = [];   // Most recent LE.lint.runLint() output (for tests + dedupe)
+  var stateMutatedSinceLastLint = false; // gate auto-lint so it doesn't fire per-frame
 
   // DOM references (populated by cacheDom on init).
   var dom = {};
@@ -127,8 +134,12 @@
     dom.btnUndo = document.getElementById('le-btn-undo');
     dom.btnRedo = document.getElementById('le-btn-redo');
     dom.btnCopy = document.getElementById('le-btn-copy-json');
+    dom.btnLaunch = document.getElementById('le-btn-launch');
     dom.fileInput = document.getElementById('le-file-input');
     dom.toast = document.getElementById('le-toast');
+    dom.warnings = document.getElementById('le-warnings');
+    dom.warningsHeader = document.getElementById('le-warnings-header');
+    dom.warningsList = document.getElementById('le-warnings-list');
     dom.propsEmpty = document.getElementById('le-props-empty');
     dom.propsForm = document.getElementById('le-props-form');
     dom.paletteEntries = document.querySelectorAll('.le-palette-entry');
@@ -1026,7 +1037,9 @@
     if (dom.btnUndo) dom.btnUndo.addEventListener('click', handleUndo);
     if (dom.btnRedo) dom.btnRedo.addEventListener('click', handleRedo);
     if (dom.btnCopy) dom.btnCopy.addEventListener('click', handleCopyJson);
+    if (dom.btnLaunch) dom.btnLaunch.addEventListener('click', handleLaunch);
     if (dom.fileInput) dom.fileInput.addEventListener('change', handleFileInputChange);
+    if (dom.warningsHeader) dom.warningsHeader.addEventListener('click', toggleWarningsCollapse);
   }
 
   function handleSave() {
@@ -1087,6 +1100,7 @@
         syncMetadataFormFromState();
         syncCameraSliderFromState();
         showPropsEmpty();
+        stateMutatedSinceLastLint = true;
         render();
         showToast('Loaded ' + file.name, 'success');
       } catch (err) {
@@ -1118,6 +1132,151 @@
     showToast('Clipboard API unavailable', 'error');
   }
 
+  function handleLaunch() {
+    // Step 1: levelKey must be set or we can't construct the dev URL.
+    var levelKey = (state && typeof state.levelKey === 'string') ? state.levelKey.trim() : '';
+    if (levelKey.length === 0) {
+      showToast('Set levelKey in metadata before launching', 'error');
+      return;
+    }
+
+    // Step 2: serialize state for the clipboard. Bail early on a model error.
+    var json;
+    try {
+      json = LE.model.serialize(state);
+    } catch (err) {
+      showToast('Launch failed: ' + (err && err.message ? err.message : 'serialize error'), 'error');
+      return;
+    }
+
+    // Step 3: open the cockpit URL in a new tab. Do this BEFORE the clipboard
+    // promise resolves so we are still inside the user-gesture window (some
+    // browsers block popups after an async hop).
+    var url = LAUNCH_BASE_URL
+      + '?year=' + encodeURIComponent(LAUNCH_YEAR)
+      + '&dev=1'
+      + '&devActivity=' + encodeURIComponent(levelKey);
+    try {
+      if (typeof window.open === 'function') window.open(url, '_blank');
+    } catch (e) { /* popup-blocked or missing; toast still informs the user */ }
+
+    // Step 4: copy JSON to clipboard and toast the next-step instructions.
+    var toastMsg = 'JSON in clipboard. Drop into cr/railway-server/activities/'
+      + levelKey + '.json, commit, push, then visit the cockpit URL (opening now).';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(json).then(function () {
+        showToast(toastMsg, 'success');
+      }, function (err) {
+        showToast('Clipboard write failed: ' + (err && err.message ? err.message : 'denied'), 'error');
+      });
+      return;
+    }
+    showToast('Clipboard API unavailable -- copy JSON manually then visit ' + url, 'error');
+  }
+
+  function toggleWarningsCollapse() {
+    if (!dom.warnings) return;
+    if (dom.warnings.classList.contains('is-collapsed')) {
+      dom.warnings.classList.remove('is-collapsed');
+    } else {
+      dom.warnings.classList.add('is-collapsed');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Warnings panel.
+  // ---------------------------------------------------------------------------
+
+  function runLintNow() {
+    var issues = [];
+    if (LE.lint && typeof LE.lint.runLint === 'function') {
+      try {
+        issues = LE.lint.runLint(state) || [];
+      } catch (err) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('LE.ui: lint pass threw', err);
+        }
+        issues = [];
+      }
+    }
+    lastLintResult = Array.isArray(issues) ? issues : [];
+    renderWarningsPanel(lastLintResult);
+    return lastLintResult;
+  }
+
+  function renderWarningsPanel(issues) {
+    if (!dom.warnings || !dom.warningsList) return;
+
+    // Hide panel entirely when there are no issues.
+    if (!issues || issues.length === 0) {
+      dom.warnings.hidden = true;
+      dom.warningsList.innerHTML = '';
+      if (dom.warningsHeader) dom.warningsHeader.textContent = 'Warnings (0)';
+      return;
+    }
+
+    dom.warnings.hidden = false;
+    if (dom.warningsHeader) {
+      dom.warningsHeader.textContent = 'Warnings (' + issues.length + ')';
+    }
+
+    // Rebuild the list. Each row is a small DOM tree with textContent for
+    // user-controlled fields (XSS-safe).
+    dom.warningsList.innerHTML = '';
+    for (var i = 0; i < issues.length; i++) {
+      var issue = issues[i];
+      var row = document.createElement('div');
+      row.className = 'le-warning le-warning-' + safeSeverityClass(issue.severity);
+      if (issue.actorIndex !== null && typeof issue.actorIndex === 'number') {
+        row.setAttribute('data-actor-index', String(issue.actorIndex));
+      }
+      row.setAttribute('data-scope', (issue.scope === 'reflection') ? 'reflection' : 'main');
+      row.setAttribute('data-rule-id', String(issue.id || ''));
+
+      var sev = document.createElement('span');
+      sev.className = 'le-warning-severity';
+      sev.textContent = '[' + String(issue.severity || '').toUpperCase() + ']';
+      row.appendChild(sev);
+
+      var msg = document.createElement('span');
+      msg.className = 'le-warning-message';
+      msg.textContent = ' ' + String(issue.message || '');
+      row.appendChild(msg);
+
+      row.addEventListener('click', buildWarningClickHandler(issue));
+      dom.warningsList.appendChild(row);
+    }
+  }
+
+  function safeSeverityClass(severity) {
+    if (severity === 'error' || severity === 'warn' || severity === 'info') return severity;
+    return 'info';
+  }
+
+  function buildWarningClickHandler(issue) {
+    return function () {
+      // Level-wide issues (no actorIndex) just no-op the click; the row is
+      // still selectable to read the message.
+      if (issue.actorIndex === null || typeof issue.actorIndex !== 'number') return;
+      var targetScope = (issue.scope === 'reflection') ? 'reflection' : 'main';
+      // Re-run lint NOW so the index we navigate to matches current state
+      // (avoids stale-index races when mutations happened between paint and click).
+      if (LE.lint) {
+        stateMutatedSinceLastLint = true;
+        runLintNow();
+        stateMutatedSinceLastLint = false;
+      }
+      // Switch tabs if the warning lives in a different scope.
+      if (targetScope !== activeScope) {
+        switchScope(targetScope);
+      }
+      var arr = scopeActors(state, targetScope);
+      if (issue.actorIndex < 0 || issue.actorIndex >= arr.length) return;
+      selectActor(targetScope, issue.actorIndex);
+      render();
+    };
+  }
+
   function handleUndo() {
     var result = LE.model.undo(history, state);
     state = result[0];
@@ -1126,6 +1285,7 @@
     showPropsEmpty();
     syncMetadataFormFromState();
     syncCameraSliderFromState();
+    stateMutatedSinceLastLint = true;
     render();
   }
 
@@ -1137,6 +1297,7 @@
     showPropsEmpty();
     syncMetadataFormFromState();
     syncCameraSliderFromState();
+    stateMutatedSinceLastLint = true;
     render();
   }
 
@@ -1147,6 +1308,9 @@
   function pushHistorySnapshot() {
     if (!history) history = LE.model.createHistory();
     LE.model.pushHistory(history, state);
+    // Every mutation site calls this before swapping state -- this is the
+    // single chokepoint for the auto-lint dirty flag.
+    stateMutatedSinceLastLint = true;
   }
 
   // ---------------------------------------------------------------------------
@@ -1369,6 +1533,14 @@
     if (activeTool && hoverChip && !dragState) {
       drawHoverGhost(ctx, activeTool, hoverChip.x, hoverChip.y);
     }
+
+    // Refresh the lint warnings panel ONLY when state actually mutated since
+    // the last lint pass. Without this gate, paint() (which fires per-frame on
+    // hover + drag) would re-lint + rebuild the warnings DOM ~60x/sec.
+    if (LE.lint && stateMutatedSinceLastLint) {
+      runLintNow();
+      stateMutatedSinceLastLint = false;
+    }
   }
 
   function drawHoverGhost(ctx, type, chipX, chipY) {
@@ -1450,6 +1622,7 @@
         selectedActor = null;
         syncMetadataFormFromState();
         syncCameraSliderFromState();
+        stateMutatedSinceLastLint = true;
         render();
       },
       resetForTest: function () {
@@ -1486,8 +1659,14 @@
       handleSave: handleSave,
       handleLoadClick: handleLoadClick,
       handleCopyJson: handleCopyJson,
+      handleLaunch: handleLaunch,
       handleUndo: handleUndo,
       handleRedo: handleRedo,
+
+      // Warnings panel.
+      runLintNow: runLintNow,
+      getLastLintResult: function () { return lastLintResult.slice(); },
+      toggleWarningsCollapse: toggleWarningsCollapse,
 
       // Form sync.
       syncMetadataFormFromState: syncMetadataFormFromState,

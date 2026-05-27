@@ -335,18 +335,47 @@ textarea {
   padding: 6px 8px;
 }
 
+#le-warnings.is-collapsed #le-warnings-list {
+  display: none;
+}
+
+#le-warnings-list .le-warning,
 #le-warnings-list .le-warning-row {
   padding: 3px 0;
   border-bottom: 1px dotted #fca5a5;
   cursor: pointer;
 }
 
+#le-warnings-list .le-warning:last-child,
 #le-warnings-list .le-warning-row:last-child {
   border-bottom: none;
 }
 
+#le-warnings-list .le-warning:hover,
 #le-warnings-list .le-warning-row:hover {
   background: #fee2e2;
+}
+
+#le-warnings-list .le-warning-severity {
+  display: inline-block;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+#le-warnings-list .le-warning-message {
+  display: inline;
+}
+
+.le-warning.le-warning-error .le-warning-severity {
+  color: #dc2626;
+}
+
+.le-warning.le-warning-warn .le-warning-severity {
+  color: #b45309;
+}
+
+.le-warning.le-warning-info .le-warning-severity {
+  color: #1e3a8a;
 }
 
 .le-warning-severity-error {

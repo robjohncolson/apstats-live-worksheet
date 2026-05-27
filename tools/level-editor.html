@@ -59,11 +59,17 @@
     #le-btn-undo                          -- Undo
     #le-btn-redo                          -- Redo
     #le-btn-copy-json                     -- Copy JSON to clipboard
+    #le-btn-launch                        -- Launch in cockpit (clipboard + open dev URL)
     #le-file-input                        -- hidden file picker (.json)
 
     #le-warnings                          -- lint warnings panel; starts hidden via [hidden]
-    #le-warnings-header                   -- header bar / collapse target
+    #le-warnings.is-collapsed             -- collapsed state (header-only)
+    #le-warnings-header                   -- header bar / collapse target (click to toggle)
     #le-warnings-list                     -- container for individual warning rows
+    .le-warning                           -- individual warning row; carries data-actor-index + data-scope
+    .le-warning-{severity}                -- per-severity color class (error / warn / info)
+    .le-warning-severity                  -- the "[ERROR]" prefix span
+    .le-warning-message                   -- the human-readable message span
 
   Right pane (props):
     #le-props                             -- right pane, ~280px wide
@@ -250,6 +256,7 @@
         <button type="button" id="le-btn-undo">Undo</button>
         <button type="button" id="le-btn-redo">Redo</button>
         <button type="button" id="le-btn-copy-json">Copy JSON</button>
+        <button type="button" id="le-btn-launch">Launch in cockpit</button>
         <input type="file" id="le-file-input" accept=".json" hidden>
       </div>
 
@@ -272,6 +279,7 @@
   <script src="sprite-regions.js"></script>
   <script src="level-editor-model.js"></script>
   <script src="level-editor-render.js"></script>
+  <script src="level-editor-lint.js"></script>
   <script src="level-editor-ui.js"></script>
 </body>
 </html>
