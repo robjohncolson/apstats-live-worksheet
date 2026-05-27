@@ -53,6 +53,7 @@ pedagogy:
 | `Tally` | Threshold gate for SIPPING -> VOTING. Reads `tally.sips`; advances when every key in `threshold` meets its min count. Pair with `TallyDisplay` actor for live progress UI. | `x, y`, `threshold` (object mapping drink letter -> min count). Optional `binds` (default `"tally.sips"`). |
 | `ChoicePad` | Per-player preference recorder. Player must have both sampledA and sampledB marks; walking onto a ChoicePad sets `player.marks.choice = value`. Pair with SipStation actors (one per category letter). Engine cascade: ChoicePad presence overrides V7.7 Tally threshold + V7.5 all-coins gate. | `x, y, value` (string -- 'A' or 'B' for binary preference). Optional `id`. |
 | `Gate` | Physical blocker with a per-instance predicate. Closed gate clamps player X; opens (one-way) when predicate evaluates true. Three predicate types in V7.10: `always_false` (perma-locked tempting question), `every_player_row_complete` (Zone 2 row scanner), `tally_nonzero` (Zone 4 data-answerable door). Walking through the advance gate (tally_nonzero) transitions phase to KEY_HUNT. | `x, y, label, predicate` (one of the whitelist). Optional `id`. |
+| `TallyChute` | Pure-visual data column. Reads `state.tally.sips[label]` and renders a vertical stack of blocks (count = stack height). NOT a gate; doesn't affect phase. Pair with SipStation actors of matching drink letter. | `x, y, label` (drink letter to bind to). Optional `id`. |
 
 V7.7 (sprint 1 of Pico Parity arc). Authors should pair a `Tally`
 actor with a `TallyDisplay` actor at the same chip position when the
@@ -85,6 +86,14 @@ answerable door. Use `every_player_row_complete` for completeness
 gates. Levels with Gate actors SHORT-CIRCUIT the V7.5 voting
 path -- delete `stages[]` from such levels. The 78 legacy
 levels + U1.2 keep V7.5 voting.
+
+V7.11 (Zone 3 visual pattern). Use TallyChute pairs when the level
+needs students to SEE the data shape emerge before interpreting it
+(e.g., comparing A:B counts pre-Zone-4-doors). Place 2-4 chutes
+vertically aligned in a corridor between the row scanner Gate and
+the question doors. Each chute reads its own sip count -- no engine
+state required; pure client-side visualization. Heights scale 1:1
+with sip count (cap visible at 12; overflow shows 'N+').
 
 ### V7.1 actors (NOT YET implemented -- log if you need them, but
 DON'T use in v7-level-1 schema levels):

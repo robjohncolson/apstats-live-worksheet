@@ -2934,6 +2934,166 @@
     return { text: this.value, x: cx, y: topY, isGold: false };
   };
 
+  // --- TallyChuteSprite entity (V7.11 Zone 3 / TallyChute actor) --------
+
+  /**
+   * Vertical stacked-block column visualizing per-label sip counts.
+   * Pure display -- NOT a gate; players walk through it without
+   * collision. Reads its count via the getCount closure (which walks
+   * state.activity.state.tally.sips[label]); each tick rebuilds the
+   * stack from scratch. Mirrors KeySprite singleton lifecycle shape
+   * but with no collision / no onCollect / no TTL guard.
+   *
+   * Visual (per BUILD doc section 5):
+   *   - Vertical column rooted at (x, y) (floor anchor at sprite top-left).
+   *   - Each block is TALLYCHUTE_BLOCK_H px tall, stacked bottom-up.
+   *   - Count > 12 -> render 12 blocks + "12+" overflow indicator.
+   *   - Label glyph ("A" / "B") above the top of the stack.
+   *   - Count number above the label.
+   *   - Color per label: A = warm amber (matches ChoicePad-A);
+   *     B = cool blue (matches ChoicePad-B); any other letter falls
+   *     back to a neutral gray so future drinks render without crash.
+   *
+   * opts:
+   *   id        chute id (matches wire's tallyChutes[i].id)
+   *   x, y      canvas pixel coords (top-left of the sprite footprint)
+   *   size      render footprint width in px (default 28). Y stack
+   *             extends UPWARD from (y + size); count rows live above.
+   *   label     drink letter ('A', 'B', ...) bound to the chute
+   *   getCount  () -> number; reads state.tally.sips[label] each tick
+   */
+  var TALLYCHUTE_DEFAULT_SIZE = 28;
+  var TALLYCHUTE_BLOCK_H      = 6;       // px per stacked block
+  var TALLYCHUTE_BLOCK_GAP    = 1;       // px gap between blocks
+  var TALLYCHUTE_MAX_BLOCKS   = 12;      // overflow shows "12+" instead
+  var TALLYCHUTE_COLOR_A      = '#FFB74D';   // warm amber (mirror CHOICEPAD_COLOR_A)
+  var TALLYCHUTE_COLOR_B      = '#64B5F6';   // cool blue  (mirror CHOICEPAD_COLOR_B)
+  var TALLYCHUTE_COLOR_OTHER  = '#BBBBBB';   // neutral gray fallback
+  var TALLYCHUTE_COLOR_BORDER = '#222222';
+  var TALLYCHUTE_COLOR_LABEL  = '#FFFFFF';
+  var TALLYCHUTE_COLOR_COUNT  = '#FFD700';   // gold count number reads as "score"
+  var TALLYCHUTE_LABEL_FONT   = 'bold 10px monospace';
+  var TALLYCHUTE_COUNT_FONT   = 'bold 10px monospace';
+
+  function TallyChuteSprite(opts) {
+    this.id       = (typeof opts.id === 'string') ? opts.id : '';
+    this.x        = opts.x;
+    this.y        = opts.y;
+    this.size     = opts.size || TALLYCHUTE_DEFAULT_SIZE;
+    this.label    = (typeof opts.label === 'string') ? opts.label : 'A';
+    this.getCount = (typeof opts.getCount === 'function') ? opts.getCount : function () { return 0; };
+    // _bobT accumulates dt -- reserved for future subtle pulse on count
+    // increment. Not driving any animation in V7.11 MVP, but kept so the
+    // tick path matches the other world sprites (no API churn later).
+    this._bobT    = 0;
+    // zIndex 5 -- same band as coins / key / goal / tally / pads / gates; below avatars.
+    this.zIndex   = 5;
+    this.engine   = null;
+  }
+
+  TallyChuteSprite.prototype._colorForLabel = function () {
+    if (this.label === 'A') return TALLYCHUTE_COLOR_A;
+    if (this.label === 'B') return TALLYCHUTE_COLOR_B;
+    return TALLYCHUTE_COLOR_OTHER;
+  };
+
+  TallyChuteSprite.prototype.update = function (dt) {
+    this._bobT += dt;
+    // No collision / no onCollect. Pure visualization -- the count is
+    // pulled from the wire each render(). update() exists so the engine
+    // can tick the sprite alongside the others (uniform contract).
+  };
+
+  TallyChuteSprite.prototype.render = function (ctx) {
+    if (!ctx) return;
+    // V7.9 side-scroll: world sprite -- translate + restore wraps the
+    // entire render so the column paints in level-coord space.
+    _translateForCamera(ctx);
+
+    var prevAlpha   = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFill    = ctx.fillStyle;
+    var prevStroke  = ctx.strokeStyle;
+    var prevLine    = ctx.lineWidth;
+    var prevFont    = ctx.font;
+    var prevAlign   = ctx.textAlign;
+    var prevBase    = (typeof ctx.textBaseline === 'string') ? ctx.textBaseline : '';
+
+    var rawCount = 0;
+    try { rawCount = this.getCount() || 0; } catch (_) { rawCount = 0; }
+    if (typeof rawCount !== 'number' || !isFinite(rawCount) || rawCount < 0) rawCount = 0;
+    rawCount = Math.floor(rawCount);
+
+    var blocksToDraw = Math.min(rawCount, TALLYCHUTE_MAX_BLOCKS);
+    var overflow     = rawCount > TALLYCHUTE_MAX_BLOCKS;
+
+    var color       = this._colorForLabel();
+    var blockWidth  = this.size;
+    // Floor anchor: stack bottom sits at (y + size). Blocks march UP.
+    var floorY      = this.y + this.size;
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle   = color;
+    ctx.strokeStyle = TALLYCHUTE_COLOR_BORDER;
+    ctx.lineWidth   = 1;
+
+    // Draw the stacked blocks bottom-up.
+    for (var i = 0; i < blocksToDraw; i++) {
+      var blockY = floorY - (i + 1) * TALLYCHUTE_BLOCK_H - i * TALLYCHUTE_BLOCK_GAP;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(this.x, blockY, blockWidth, TALLYCHUTE_BLOCK_H); } catch (_) {}
+      }
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(this.x, blockY, blockWidth, TALLYCHUTE_BLOCK_H); } catch (_) {}
+      }
+    }
+
+    // Top-of-stack y -- where the label + count number live.
+    var topOfStackY;
+    if (blocksToDraw > 0) {
+      topOfStackY = floorY - blocksToDraw * TALLYCHUTE_BLOCK_H - (blocksToDraw - 1) * TALLYCHUTE_BLOCK_GAP;
+    } else {
+      // Empty column: anchor labels at the floor.
+      topOfStackY = floorY;
+    }
+
+    var centerX = this.x + blockWidth / 2;
+
+    if (typeof ctx.fillText === 'function') {
+      ctx.textAlign = 'center';
+      try { ctx.textBaseline = 'middle'; } catch (_) {}
+
+      // Label glyph (A / B) just above the stack top.
+      ctx.font      = TALLYCHUTE_LABEL_FONT;
+      ctx.fillStyle = TALLYCHUTE_COLOR_LABEL;
+      var labelY    = topOfStackY - 8;
+      try { ctx.fillText(this.label || '', centerX, labelY); } catch (_) {}
+
+      // Count number (or overflow indicator) above the label.
+      ctx.font      = TALLYCHUTE_COUNT_FONT;
+      ctx.fillStyle = TALLYCHUTE_COLOR_COUNT;
+      var countText = overflow ? '12+' : String(rawCount);
+      var countY    = labelY - 11;
+      try { ctx.fillText(countText, centerX, countY); } catch (_) {}
+    }
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.fillStyle   = prevFill;
+    ctx.strokeStyle = prevStroke;
+    ctx.lineWidth   = prevLine;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    if (prevBase) { try { ctx.textBaseline = prevBase; } catch (_) {} }
+
+    // V7.9 side-scroll: balance the save in _translateForCamera at top.
+    _restoreFromCamera(ctx);
+  };
+
+  TallyChuteSprite.prototype.getLabelSpec = function () {
+    // Chute paints its own label + count inside render(); engine's label
+    // pass should skip it (mirrors TallyDisplay / ChoicePadSprite).
+    return null;
+  };
+
   // --- StageIndicator entity (V7.5 sequential-stages) -------------------
 
   /**
@@ -4919,6 +5079,100 @@
       }
     }
 
+    // V7.11 Zone 3: TallyChuteSprite map. One TallyChuteSprite per
+    // state.activity.state.tallyChutes[] entry; despawned when the
+    // activity ends OR phase advances past SIPPING (the chute's job is
+    // to visualize the row data BEFORE the question doors). Each sprite
+    // reads its count via a closure that walks state.tally.sips[label]
+    // every tick -- no diff detection, the wire is source of truth.
+    // Mirrors gateEntities + syncLevelGates lifecycle.
+    var tallyChuteEntities = {};   // chuteId -> TallyChuteSprite
+
+    function syncLevelTallyChutes(curr) {
+      if (!engineReady) return;
+      var act     = curr && curr.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var chutes  = (act && act.state && Array.isArray(act.state.tallyChutes)) ? act.state.tallyChutes : null;
+      var phase   = (act && act.state && act.state.phase) || null;
+
+      // shouldShow: active level WITH at least one TallyChute AND phase
+      // is not LEVEL_CLEARED. Per BUILD doc section 7 -- the chutes are
+      // the Zone 3 visual; they persist across SIPPING / VOTING /
+      // KEY_HUNT / GOAL_AVAILABLE so the player keeps seeing the data
+      // shape as they walk past Zone 4. Despawn on LEVEL_CLEARED OR
+      // state.tallyChutes empties.
+      var shouldShow = isLevel && chutes && chutes.length > 0 && phase !== 'LEVEL_CLEARED';
+
+      if (!shouldShow) {
+        for (var k in tallyChuteEntities) {
+          if (!Object.prototype.hasOwnProperty.call(tallyChuteEntities, k)) continue;
+          try { engine.removeEntity('tallychute_' + k); } catch (_) {}
+          delete tallyChuteEntities[k];
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var size     = TALLYCHUTE_DEFAULT_SIZE;
+
+      // Y placement: chute footprint sits at floor level (the player
+      // walks under / through the visualization). Mirror choice-pad /
+      // gate ground placement. The block stack extends UPWARD from the
+      // footprint inside render().
+      var groundY      = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var cy           = groundY - spriteHeight;
+
+      var seenChuteIds = {};
+      for (var ci = 0; ci < chutes.length; ci++) {
+        var c = chutes[ci];
+        if (!c || !c.id) continue;
+        seenChuteIds[c.id] = true;
+
+        // V7.9 side-scroll: chute is a world sprite -- store x in LEVEL
+        // pixels. Camera translate handles the on-screen offset.
+        var levelCenterPxC = (c.x * chipSize) + (chipSize / 2);
+        var cx = levelCenterPxC - size / 2;
+
+        if (!tallyChuteEntities[c.id]) {
+          var chuteId = c.id;
+          var chuteLabel = (typeof c.label === 'string') ? c.label : 'A';
+          var sprite = new TallyChuteSprite({
+            id: chuteId, x: cx, y: cy, size: size, label: chuteLabel,
+            // Closure: read state.tally.sips[label] every tick (the wire's
+            // V7.4 TallyDisplay field is the source of truth -- no new
+            // wire data for V7.11). Triple-guarded for null state /
+            // missing tally / non-numeric value.
+            getCount: (function (capturedLabel) {
+              return function () {
+                var s = state && state.activity && state.activity.state;
+                var sips = (s && s.tally && s.tally.sips) || {};
+                return (typeof sips[capturedLabel] === 'number') ? sips[capturedLabel] : 0;
+              };
+            }(chuteLabel))
+          });
+          tallyChuteEntities[c.id] = sprite;
+          try { engine.addEntity('tallychute_' + c.id, sprite); } catch (_) {}
+        } else {
+          // Server is source of truth for position + label. Re-apply each
+          // tick (cheap; level hot-swap insurance).
+          var existingC = tallyChuteEntities[c.id];
+          existingC.x     = cx;
+          existingC.y     = cy;
+          existingC.label = (typeof c.label === 'string') ? c.label : existingC.label;
+        }
+      }
+
+      // Despawn chutes that vanished from state (level swap / reset).
+      for (var cid in tallyChuteEntities) {
+        if (!Object.prototype.hasOwnProperty.call(tallyChuteEntities, cid)) continue;
+        if (!seenChuteIds[cid]) {
+          try { engine.removeEntity('tallychute_' + cid); } catch (_) {}
+          delete tallyChuteEntities[cid];
+        }
+      }
+    }
+
     // Greenlight overlay entity
     var greenlightOverlay = null;
     var greenlightStartMs = 0;
@@ -5277,6 +5531,10 @@
       // Zones 2 + 4 physical-gate blockers. Despawns on activity end
       // or phase advance to LEVEL_CLEARED.
       syncLevelGates(state);
+      // V7.11 mechanic-first: spawn/despawn TallyChuteSprite entities
+      // for Zone 3 visual pattern columns (pure display; no collision).
+      // Despawns on activity end or phase advance to LEVEL_CLEARED.
+      syncLevelTallyChutes(state);
       syncStageIndicator(state);
       // V7.6: spawn/despawn the in-canvas ResultPanel (doorways close +
       // optional reflection text). Runs after the level-overlay sync so
@@ -5651,6 +5909,7 @@
     _ResultPanel:      ResultPanel,      // V7.6 -- exposed for unit tests
     _ChoicePadSprite:  ChoicePadSprite,  // V7.8 -- exposed for unit tests
     _GateSprite:       GateSprite,       // V7.10 -- exposed for unit tests
+    _TallyChuteSprite: TallyChuteSprite, // V7.11 -- exposed for unit tests
     // V7.9 side-scroll camera -- exposed for the scroll test pinning.
     // The camera state lives at module scope so tests can poke vw/levelW/
     // followFn fields before invoking _updateCamera + assert against
