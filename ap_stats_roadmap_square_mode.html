@@ -11693,6 +11693,33 @@ document.addEventListener('keydown', function(e){
     }
   } catch (_) {}
 }, true);
+// V7.15 DEV-START HOOK. CC drives PeriodX from a headless / CDP shell to
+// autonomously playtest a level (U1.1 by default) without needing teacher
+// cockpit access. Gated by BOTH ?dev=1 AND ?devActivity=<levelKey> so a
+// real student URL is never affected. The activity-start message is
+// teacher-only server-side today; if the role gate rejects the send the
+// failure is silent (logged to console, no retry) and a V7.15.1 follow-up
+// will add a server-side dev override. Re-fires on refresh while the
+// params remain in the URL -- the server will just reject the duplicate.
+function _tryDevAutoStartActivity() {
+  try {
+    var params = new URLSearchParams(location.search);
+    if (!params.has('dev')) return;
+    var devActivity = params.get('devActivity');
+    if (!devActivity) return;
+    if (!_classroomBoardHandle || typeof _classroomBoardHandle.sendMessage !== 'function') return;
+    console.log('[dev] auto-starting activity:', devActivity);
+    _classroomBoardHandle.sendMessage({
+      type:         'classroom_activity_start',
+      activityType: 'level',
+      opts:         { levelKey: devActivity }
+    });
+  } catch (e) {
+    try { console.log('[dev] auto-start error:', (e && e.message) || e); } catch (_) {}
+  }
+}
+var _devAutoStartFired = false;
+
 function _mountClassroomBoard(){
   try {
     if (_classroomBoardHandle) return;
@@ -11724,6 +11751,13 @@ function _mountClassroomBoard(){
         // V4: activity engine. Mount/update/teardown the per-type
         // activity renderer (e.g., ActivityBridge for bridge-mean).
         _handleActivityState(summary);
+        // V7.15 dev-start: first classroom_state arrival means the WS
+        // is connected + this client is joined to the section. Fire the
+        // auto-start once. Subsequent state changes are no-ops.
+        if (!_devAutoStartFired) {
+          _devAutoStartFired = true;
+          _tryDevAutoStartActivity();
+        }
       },
       // P3 nudges (TEACHER_STUDENT_CONSOLE_SPEC.md §6): raw classroom_*
       // message hook. Surfaces a teacher_nudge as a toast in the corner.

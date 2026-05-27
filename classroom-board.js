@@ -161,7 +161,18 @@
     // levelW changes when state.activity starts/stops). When null, the
     // current vw/levelW fields are used as-is.
     vwFn:     null,
-    levelWFn: null
+    levelWFn: null,
+    // V7.15 SHARED CAMERA. mount() installs this to expose the server-
+    // emitted state.activity.state.camera object (when present). When
+    // non-null and shape { x:<number> }, _updateCamera reads camera.x
+    // directly from the server -- no per-client follow lerp. This is
+    // Pico Park's shared-camera primitive: the leader cannot scroll
+    // off-screen-right past slower classmates because the camera tracks
+    // the leftmost STUDENT (teachers excluded server-side). Cockpit
+    // (_camera.enabled=false) bypasses shared-camera and uses its own
+    // fit-to-width scale at render time -- the read here only fires
+    // when enabled=true.
+    cameraStateFn: null
   };
 
   // Reset the camera back to defaults. Called from mount() so a fresh
@@ -169,13 +180,14 @@
   // doesn't leak in. Tests that build multiple boards in one module
   // context rely on this.
   function _resetCamera() {
-    _camera.x        = 0;
-    _camera.vw       = DEFAULT_BOARD_W_LOCAL;
-    _camera.levelW   = DEFAULT_BOARD_W_LOCAL;
-    _camera.enabled  = true;
-    _camera.followFn = null;
-    _camera.vwFn     = null;
-    _camera.levelWFn = null;
+    _camera.x             = 0;
+    _camera.vw            = DEFAULT_BOARD_W_LOCAL;
+    _camera.levelW        = DEFAULT_BOARD_W_LOCAL;
+    _camera.enabled       = true;
+    _camera.followFn      = null;
+    _camera.vwFn          = null;
+    _camera.levelWFn      = null;
+    _camera.cameraStateFn = null;
   }
 
   // _updateCamera(dt). Per BUILD doc section 5. Refreshes vw + levelW
@@ -195,6 +207,21 @@
       if (typeof lw === 'number' && lw > 0) { _camera.levelW = lw; }
     }
     if (!_camera.enabled) return;
+    // V7.15 SHARED CAMERA branch (high priority).
+    // When the server emits state.activity.state.camera.x, the client
+    // takes that value as the single source of truth and SKIPS the
+    // local follow lerp. Server-side, the engine tracks the leftmost
+    // STUDENT (teachers excluded) with a forward-only ratchet -- so the
+    // leader cannot scroll past slower classmates. Cockpit role gets
+    // _camera.enabled=false and exits above; cockpit fit-to-width is
+    // unaffected by shared-camera.
+    if (typeof _camera.cameraStateFn === 'function') {
+      var sharedCam = _camera.cameraStateFn();
+      if (sharedCam && typeof sharedCam.x === 'number') {
+        _camera.x = sharedCam.x;
+        return;
+      }
+    }
     var player = (typeof _camera.followFn === 'function') ? _camera.followFn() : null;
     if (!player || typeof player.x !== 'number') return;
     var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
@@ -4220,6 +4247,16 @@
       };
       _camera.vwFn     = _viewportW;
       _camera.levelWFn = _levelWidthPx;
+      // V7.15 SHARED CAMERA. Expose state.activity.state.camera to
+      // _updateCamera via a closure. When the engine emits the camera
+      // object (Unit A), the client reads camera.x directly instead of
+      // running the per-client follow lerp. Returns null when there is
+      // no activity (legacy single-screen levels) -> _updateCamera
+      // falls through to the legacy follow branch.
+      _camera.cameraStateFn = function () {
+        var act = state && state.activity;
+        return (act && act.state && act.state.camera) || null;
+      };
       try { engine.addEntity('camera_controller', new CameraController()); } catch (_) {}
     }
 
