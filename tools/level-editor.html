@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<!--
+  IDS CONTRACT -- Level Editor v1 layout (P1).
+  All stable IDs / classes exposed for the model/render/UI agents.
+  DO NOT remove or rename these without coordinating with the other agents.
+
+  Top-level structure:
+    body                                  -- no scroll
+    #le-app                               -- 3-pane flex container (palette | center | props)
+
+  Left pane (palette):
+    #le-palette                           -- left pane, ~200px wide, vertical scroll
+    #le-palette-mechanic                  -- group: V7.10-V7.14 mechanic-first actors
+    #le-palette-legacy                    -- group: V7.1-V7.5 legacy voting actors
+    #le-palette-universal                 -- group: PlayerSpawn, Text
+    .le-palette-group                     -- shared class for each sub-container
+    .le-palette-group-title               -- group header label
+    .le-palette-entries                   -- inner container for the buttons (grid)
+    .le-palette-entry                     -- individual actor-tool button; carries data-actor-type
+    .le-palette-entry.is-active           -- active tool visual state
+    .le-palette-entry-sprite              -- icon slot (UI agent fills with sprite/procedural)
+    .le-palette-entry-label               -- text label below the sprite
+
+  Center column (top to bottom):
+    #le-center                            -- center column, flex column
+    #le-metadata                          -- top toolbar form (level metadata)
+    .le-metadata-row                      -- a horizontal row of metadata fields
+    .le-metadata-field                    -- label + input wrapper
+    #le-meta-schema                       -- readonly text, always "v7-level-1"
+    #le-meta-levelKey                     -- text input, e.g. "U1.1"
+    #le-meta-lessonKey                    -- text input, e.g. "1.1"
+    #le-meta-title                        -- text input
+    #le-meta-skill                        -- text input
+    #le-meta-lo                           -- text input
+    #le-meta-ek                           -- text input (comma-separated)
+    #le-meta-duration                     -- number input, default 180
+    #le-meta-width                        -- number input, map.width
+    #le-meta-height                       -- number input, map.height
+    #le-meta-chipSize                     -- number input, map.chipSize (readonly)
+    #le-meta-min-students                 -- number input, min_students
+    #le-meta-completion-kind              -- select with 2 options
+    #le-meta-completion-rule              -- textarea
+
+    #le-camera-slider-wrap                -- camera viewport slider wrapper (hide on reflection tab)
+    #le-camera-slider                     -- input[type=range]
+    .le-camera-slider-hint                -- "Camera viewport (64 chips wide)" label
+
+    #le-grid-wrap                         -- horizontally scrolling wrapper for the canvas
+    #le-grid                              -- canvas where the level is painted
+
+    #le-tabs                              -- tab strip
+    #le-tab-main                          -- button: Main level (default active)
+    #le-tab-reflection                    -- button: Reflection room
+    .le-tab.is-active                     -- active-tab visual state
+
+    #le-bottom-toolbar                    -- bottom toolbar container
+    #le-btn-save                          -- Save (download JSON)
+    #le-btn-load                          -- Load (opens #le-file-input)
+    #le-btn-undo                          -- Undo
+    #le-btn-redo                          -- Redo
+    #le-btn-copy-json                     -- Copy JSON to clipboard
+    #le-file-input                        -- hidden file picker (.json)
+
+    #le-warnings                          -- lint warnings panel; starts hidden via [hidden]
+    #le-warnings-header                   -- header bar / collapse target
+    #le-warnings-list                     -- container for individual warning rows
+
+  Right pane (props):
+    #le-props                             -- right pane, ~280px wide
+    #le-props-empty                       -- placeholder shown when no actor is selected
+    #le-props-form                        -- dynamic form populated by UI agent on selection
+
+  Globals:
+    #le-atlas                             -- preloaded atlas <img>, hidden, for render agent
+    #le-toast                              -- toast notification slot (hidden initially)
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Level Editor v1</title>
+  <link rel="stylesheet" href="level-editor.css">
+</head>
+<body>
+  <img id="le-atlas" src="pico_park_atlas.png" alt="" hidden>
+
+  <div id="le-app">
+
+    <aside id="le-palette">
+      <section id="le-palette-mechanic" class="le-palette-group">
+        <h2 class="le-palette-group-title">MECHANIC-FIRST</h2>
+        <div class="le-palette-entries">
+          <button type="button" class="le-palette-entry" data-actor-type="SipStation">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">SipStation</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="Gate">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">Gate</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="ContextSlot">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">ContextSlot</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="GoalPad">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">GoalPad</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="TallyChute">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">TallyChute</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="TallyDisplay">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">TallyDisplay</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="le-palette-legacy" class="le-palette-group">
+        <h2 class="le-palette-group-title">LEGACY VOTING</h2>
+        <div class="le-palette-entries">
+          <button type="button" class="le-palette-entry" data-actor-type="QuestionDoor">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">QuestionDoor</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="Key">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">Key</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="Goal">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">Goal</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="Tally">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">Tally</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="le-palette-universal" class="le-palette-group">
+        <h2 class="le-palette-group-title">UNIVERSAL</h2>
+        <div class="le-palette-entries">
+          <button type="button" class="le-palette-entry" data-actor-type="PlayerSpawn">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">PlayerSpawn</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="Text">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">Text</span>
+          </button>
+          <button type="button" class="le-palette-entry" data-actor-type="ReturnWarp">
+            <span class="le-palette-entry-sprite"></span>
+            <span class="le-palette-entry-label">ReturnWarp</span>
+          </button>
+        </div>
+      </section>
+    </aside>
+
+    <main id="le-center">
+
+      <form id="le-metadata" onsubmit="return false;">
+        <div class="le-metadata-row">
+          <label class="le-metadata-field">
+            <span>schema</span>
+            <input type="text" id="le-meta-schema" value="v7-level-1" readonly>
+          </label>
+          <label class="le-metadata-field">
+            <span>levelKey</span>
+            <input type="text" id="le-meta-levelKey" placeholder="U1.1">
+          </label>
+          <label class="le-metadata-field">
+            <span>lessonKey</span>
+            <input type="text" id="le-meta-lessonKey" placeholder="1.1">
+          </label>
+          <label class="le-metadata-field le-metadata-field-wide">
+            <span>title</span>
+            <input type="text" id="le-meta-title">
+          </label>
+        </div>
+        <div class="le-metadata-row">
+          <label class="le-metadata-field">
+            <span>skill</span>
+            <input type="text" id="le-meta-skill">
+          </label>
+          <label class="le-metadata-field">
+            <span>lo</span>
+            <input type="text" id="le-meta-lo">
+          </label>
+          <label class="le-metadata-field le-metadata-field-wide">
+            <span>ek (comma-separated)</span>
+            <input type="text" id="le-meta-ek">
+          </label>
+        </div>
+        <div class="le-metadata-row">
+          <label class="le-metadata-field">
+            <span>duration</span>
+            <input type="number" id="le-meta-duration" value="180" step="1">
+          </label>
+          <label class="le-metadata-field">
+            <span>width</span>
+            <input type="number" id="le-meta-width" value="32" min="8" max="96" step="1">
+          </label>
+          <label class="le-metadata-field">
+            <span>height</span>
+            <input type="number" id="le-meta-height" value="8" min="4" max="16" step="1">
+          </label>
+          <label class="le-metadata-field">
+            <span>chipSize</span>
+            <input type="number" id="le-meta-chipSize" value="10" readonly>
+          </label>
+          <label class="le-metadata-field">
+            <span>min_students</span>
+            <input type="number" id="le-meta-min-students" value="2" step="1">
+          </label>
+        </div>
+        <div class="le-metadata-row">
+          <label class="le-metadata-field">
+            <span>completion.kind</span>
+            <select id="le-meta-completion-kind">
+              <option value="contextslots-lit-and-goalpad-presence">contextslots-lit-and-goalpad-presence</option>
+              <option value="lock-and-switch-state + goal-overlap">lock-and-switch-state + goal-overlap</option>
+            </select>
+          </label>
+          <label class="le-metadata-field le-metadata-field-fill">
+            <span>completion.rule</span>
+            <textarea id="le-meta-completion-rule" rows="2"></textarea>
+          </label>
+        </div>
+      </form>
+
+      <div id="le-camera-slider-wrap">
+        <span class="le-camera-slider-hint">Camera viewport (64 chips wide)</span>
+        <input type="range" id="le-camera-slider" min="0" max="100" value="0">
+      </div>
+
+      <div id="le-grid-wrap">
+        <canvas id="le-grid" width="2880" height="240"></canvas>
+      </div>
+
+      <div id="le-tabs">
+        <button type="button" id="le-tab-main" class="le-tab is-active">Main level</button>
+        <button type="button" id="le-tab-reflection" class="le-tab">Reflection room</button>
+      </div>
+
+      <div id="le-bottom-toolbar">
+        <button type="button" id="le-btn-save">Save</button>
+        <button type="button" id="le-btn-load">Load</button>
+        <button type="button" id="le-btn-undo">Undo</button>
+        <button type="button" id="le-btn-redo">Redo</button>
+        <button type="button" id="le-btn-copy-json">Copy JSON</button>
+        <input type="file" id="le-file-input" accept=".json" hidden>
+      </div>
+
+      <section id="le-warnings" hidden>
+        <header id="le-warnings-header">Warnings</header>
+        <div id="le-warnings-list"></div>
+      </section>
+
+    </main>
+
+    <aside id="le-props">
+      <div id="le-props-empty">No actor selected. Click an actor on the grid to edit its properties.</div>
+      <form id="le-props-form" onsubmit="return false;"></form>
+    </aside>
+
+  </div>
+
+  <div id="le-toast" hidden></div>
+
+  <script src="sprite-regions.js"></script>
+  <script src="level-editor-model.js"></script>
+  <script src="level-editor-render.js"></script>
+  <script src="level-editor-ui.js"></script>
+</body>
+</html>
