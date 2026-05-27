@@ -53,6 +53,12 @@
     #le-tab-reflection                    -- button: Reflection room
     .le-tab.is-active                     -- active-tab visual state
 
+    #le-sim-toolbar                       -- P3 sim toolbar (between tabs and bottom toolbar)
+    #le-btn-sim-play                      -- toggle Sim / Stop sim
+    #le-sim-phase                         -- span showing current sim phase (IDLE/SIPPING/...)
+    #le-sim-fake-tally                    -- checkbox: fake-tally override for tally_nonzero gates
+    #le-sim-reset                         -- button: reset sim to start of level
+
     #le-bottom-toolbar                    -- bottom toolbar container
     #le-btn-save                          -- Save (download JSON)
     #le-btn-load                          -- Load (opens #le-file-input)
@@ -250,6 +256,16 @@
         <button type="button" id="le-tab-reflection" class="le-tab">Reflection room</button>
       </div>
 
+      <div id="le-sim-toolbar">
+        <button type="button" id="le-btn-sim-play">Sim</button>
+        <span id="le-sim-phase">IDLE</span>
+        <label>
+          <input type="checkbox" id="le-sim-fake-tally">
+          fake tally
+        </label>
+        <button type="button" id="le-sim-reset">Reset</button>
+      </div>
+
       <div id="le-bottom-toolbar">
         <button type="button" id="le-btn-save">Save</button>
         <button type="button" id="le-btn-load">Load</button>
@@ -280,6 +296,7 @@
   <script src="level-editor-model.js"></script>
   <script src="level-editor-render.js"></script>
   <script src="level-editor-lint.js"></script>
+  <script src="level-editor-sim.js"></script>
   <script src="level-editor-ui.js"></script>
 </body>
 </html>

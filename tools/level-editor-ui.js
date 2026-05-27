@@ -68,6 +68,15 @@
   var lastLintResult = [];   // Most recent LE.lint.runLint() output (for tests + dedupe)
   var stateMutatedSinceLastLint = false; // gate auto-lint so it doesn't fire per-frame
 
+  // P3 -- sim mode state. Off by default; flipped by handleSimPlayToggle.
+  // When simActive is true: actor placement is disabled, arrow keys move
+  // the player avatar instead of nudging the selected actor, the warnings
+  // panel is hidden, and the paint loop overlays the avatar + phase HUD.
+  var simActive = false;
+  var sim = null;
+  var simRafId = null;
+  var simLastTickMs = 0;
+
   // DOM references (populated by cacheDom on init).
   var dom = {};
 
@@ -108,6 +117,7 @@
     wireTabs();
     wireCameraSlider();
     wireBottomToolbar();
+    wireSimToolbar();
     wireKeyboard();
     wireWindowMouseup();
 
@@ -162,6 +172,12 @@
     dom.metaMinStudents = document.getElementById('le-meta-min-students');
     dom.metaCompletionKind = document.getElementById('le-meta-completion-kind');
     dom.metaCompletionRule = document.getElementById('le-meta-completion-rule');
+    // P3 sim toolbar. All four optional -- defensively handled if absent.
+    dom.simToolbar = document.getElementById('le-sim-toolbar');
+    dom.btnSimPlay = document.getElementById('le-btn-sim-play');
+    dom.simPhase = document.getElementById('le-sim-phase');
+    dom.simFakeTally = document.getElementById('le-sim-fake-tally');
+    dom.simReset = document.getElementById('le-sim-reset');
   }
 
   // ---------------------------------------------------------------------------
@@ -262,6 +278,11 @@
   }
 
   function handlePaletteClick(type) {
+    if (simActive) {
+      // Placement is disabled during sim playback. The palette buttons
+      // stay clickable but no-op so the user gets predictable behavior.
+      return;
+    }
     if (activeScope === 'reflection' && !REFLECTION_ALLOWED[type]) {
       showToast('Reflection room only accepts Text or ReturnWarp', 'info');
       return;
@@ -371,6 +392,7 @@
 
   function handleCanvasMouseDown(ev) {
     if (ev.button !== 0) return; // only left button starts a drag
+    if (simActive) return; // sim mode disables drag-to-move actors
     closeContextMenu();
     if (activeTool) return; // placing, not dragging
 
@@ -396,6 +418,7 @@
 
   function handleCanvasClick(ev) {
     if (ev.button !== 0) return;
+    if (simActive) return; // sim mode disables grid clicks (placement + selection)
     closeContextMenu();
     var chip = eventToChip(ev);
     if (!chip) return;
@@ -420,6 +443,7 @@
 
   function handleCanvasContextMenu(ev) {
     ev.preventDefault();
+    if (simActive) return; // sim mode disables right-click context menu
     var chip = eventToChip(ev);
     if (!chip) return;
     var hit = hitTestActorAt(activeScope, chip.x, chip.y);
@@ -1359,6 +1383,28 @@
 
     if (isEditableTarget(ev.target)) return;
 
+    // Sim mode reroutes a few keys (arrows = walk, Escape = stop sim,
+    // Del/Backspace = no-op). All other keys fall through to editor.
+    if (simActive) {
+      if (key === 'Escape') {
+        ev.preventDefault();
+        simStop();
+        return;
+      }
+      if (key === 'ArrowLeft') { ev.preventDefault(); simMovePlayer(-1, 0); return; }
+      if (key === 'ArrowRight') { ev.preventDefault(); simMovePlayer(1, 0); return; }
+      if (key === 'ArrowUp') { ev.preventDefault(); simMovePlayer(0, -1); return; }
+      if (key === 'ArrowDown') { ev.preventDefault(); simMovePlayer(0, 1); return; }
+      if (key === 'Delete' || key === 'Backspace') {
+        ev.preventDefault();
+        return; // explicit no-op during sim
+      }
+      // Number quickselect is also disabled during sim (no palette clicks).
+      if (key >= '1' && key <= '9') return;
+      // Other keys (e.g. arrow modifiers) fall through.
+      return;
+    }
+
     if (key === 'Escape') {
       activeTool = null;
       closeContextMenu();
@@ -1488,6 +1534,200 @@
   }
 
   // ---------------------------------------------------------------------------
+  // P3 -- Sim toolbar wiring + sim mode lifecycle.
+  // ---------------------------------------------------------------------------
+
+  function wireSimToolbar() {
+    if (dom.btnSimPlay) {
+      dom.btnSimPlay.addEventListener('click', handleSimPlayToggle);
+    }
+    if (dom.simFakeTally) {
+      dom.simFakeTally.addEventListener('change', handleSimFakeTallyChange);
+    }
+    if (dom.simReset) {
+      dom.simReset.addEventListener('click', handleSimReset);
+    }
+    // Initial phase HUD = IDLE until the user starts sim.
+    if (dom.simPhase) dom.simPhase.textContent = 'IDLE';
+  }
+
+  function simAvailable() {
+    return !!(window.LE && window.LE.sim && typeof window.LE.sim.createSim === 'function');
+  }
+
+  function handleSimPlayToggle() {
+    if (simActive) {
+      simStop();
+    } else {
+      simStart();
+    }
+  }
+
+  function simStart() {
+    if (simActive) return sim;
+    if (!simAvailable()) {
+      showToast('Sim engine not loaded', 'error');
+      return null;
+    }
+    if (activeScope !== 'main') {
+      // Force back to main scope -- the sim only walks state.actors.
+      switchScope('main');
+    }
+    // Clear any active tool / selection so sim mode starts clean.
+    activeTool = null;
+    syncPaletteActiveState();
+    selectedActor = null;
+    showPropsEmpty();
+    closeContextMenu();
+
+    try {
+      sim = LE.sim.createSim(state);
+    } catch (err) {
+      showToast('Sim start failed: ' + (err && err.message ? err.message : 'unknown'), 'error');
+      sim = null;
+      return null;
+    }
+    simActive = true;
+    simLastTickMs = nowMs();
+    if (dom.btnSimPlay) {
+      dom.btnSimPlay.textContent = 'Stop sim';
+      dom.btnSimPlay.classList.add('is-sim-active');
+    }
+    if (dom.simFakeTally) {
+      dom.simFakeTally.checked = sim.fakeTally === true;
+    }
+    // Hide warnings panel during sim -- the level is being PLAYED, not
+    // edited, so author-time warnings are noise.
+    if (dom.warnings) dom.warnings.hidden = true;
+    syncSimPhase();
+    startSimLoop();
+    render();
+    return sim;
+  }
+
+  function simStop() {
+    if (!simActive) return;
+    simActive = false;
+    stopSimLoop();
+    sim = null;
+    if (dom.btnSimPlay) {
+      dom.btnSimPlay.textContent = 'Sim';
+      dom.btnSimPlay.classList.remove('is-sim-active');
+    }
+    if (dom.simPhase) dom.simPhase.textContent = 'IDLE';
+    // Restore the warnings panel state by re-running lint.
+    if (LE.lint) {
+      stateMutatedSinceLastLint = true;
+      runLintNow();
+      stateMutatedSinceLastLint = false;
+    }
+    render();
+  }
+
+  function handleSimReset() {
+    if (!simActive) {
+      // Reset before-start: no-op (nothing to reset).
+      return;
+    }
+    if (!simAvailable()) return;
+    try {
+      sim = LE.sim.createSim(state);
+    } catch (err) {
+      showToast('Sim reset failed: ' + (err && err.message ? err.message : 'unknown'), 'error');
+      return;
+    }
+    simLastTickMs = nowMs();
+    if (dom.simFakeTally) dom.simFakeTally.checked = sim.fakeTally === true;
+    syncSimPhase();
+    render();
+  }
+
+  function handleSimFakeTallyChange(ev) {
+    if (!simActive || !sim || !simAvailable()) return;
+    var on = !!(ev && ev.target && ev.target.checked);
+    LE.sim.setFakeTally(sim, on);
+    render();
+  }
+
+  function syncSimPhase() {
+    if (!dom.simPhase) return;
+    var phase = (sim && typeof sim.phase === 'string') ? sim.phase : 'IDLE';
+    dom.simPhase.textContent = phase;
+  }
+
+  function nowMs() {
+    if (typeof performance !== 'undefined' && performance.now) {
+      return performance.now();
+    }
+    return Date.now();
+  }
+
+  function startSimLoop() {
+    stopSimLoop();
+    var raf = (typeof requestAnimationFrame === 'function')
+      ? requestAnimationFrame
+      : function (cb) { return setTimeout(function () { cb(nowMs()); }, 16); };
+    // Sync-RAF detection. Some test shims call the callback before raf()
+    // returns; without this guard, the loop would infinitely recurse.
+    // We detect by setting a flag BEFORE raf() and clearing it AFTER --
+    // if step runs while the flag is set, RAF is synchronous and we
+    // bail (tests drive sim time via _test.simStep instead).
+    var schedulingFlag = false;
+    var step = function () {
+      if (schedulingFlag) return; // synchronous RAF; bail to avoid recursion
+      if (!simActive || !sim) return;
+      var now = nowMs();
+      var dt = now - simLastTickMs;
+      simLastTickMs = now;
+      // Cap dt to 100ms to avoid huge jumps from tab-switching pauses.
+      if (dt > 100) dt = 100;
+      if (dt > 0 && simAvailable()) {
+        try {
+          LE.sim.tick(sim, dt);
+        } catch (err) {
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('LE.ui sim.tick threw', err);
+          }
+        }
+      }
+      syncSimPhase();
+      paint();
+      if (simActive) {
+        schedulingFlag = true;
+        simRafId = raf(step);
+        schedulingFlag = false;
+      }
+    };
+    schedulingFlag = true;
+    simRafId = raf(step);
+    schedulingFlag = false;
+  }
+
+  function stopSimLoop() {
+    if (simRafId === null) return;
+    if (typeof cancelAnimationFrame === 'function') {
+      try { cancelAnimationFrame(simRafId); } catch (_) { /* noop */ }
+    }
+    simRafId = null;
+  }
+
+  // Sim-driven player movement. Called by arrow keys when sim is active.
+  function simMovePlayer(dx, dy) {
+    if (!simActive || !sim || !simAvailable()) return;
+    LE.sim.movePlayer(sim, dx, dy);
+    syncSimPhase();
+    render();
+  }
+
+  // Manual sim step -- used by tests to advance timers without RAF.
+  function simStep(dtMs) {
+    if (!simActive || !sim || !simAvailable()) return;
+    LE.sim.tick(sim, dtMs);
+    syncSimPhase();
+    render();
+  }
+
+  // ---------------------------------------------------------------------------
   // Render orchestration.
   // ---------------------------------------------------------------------------
 
@@ -1529,18 +1769,94 @@
     }
 
     // Hover ghost -- only when an active tool is selected AND mouse is on
-    // a chip AND no actor is being dragged.
-    if (activeTool && hoverChip && !dragState) {
+    // a chip AND no actor is being dragged AND sim is not playing.
+    if (!simActive && activeTool && hoverChip && !dragState) {
       drawHoverGhost(ctx, activeTool, hoverChip.x, hoverChip.y);
+    }
+
+    // P3 sim overlay -- player avatar, lit ContextSlots highlight, HUD.
+    if (simActive && sim) {
+      drawSimOverlay(ctx);
     }
 
     // Refresh the lint warnings panel ONLY when state actually mutated since
     // the last lint pass. Without this gate, paint() (which fires per-frame on
     // hover + drag) would re-lint + rebuild the warnings DOM ~60x/sec.
-    if (LE.lint && stateMutatedSinceLastLint) {
+    // During sim, skip lint entirely (warnings panel is hidden anyway).
+    if (!simActive && LE.lint && stateMutatedSinceLastLint) {
       runLintNow();
       stateMutatedSinceLastLint = false;
     }
+  }
+
+  // Sim overlay -- repaint lit ContextSlots with the lit visual, draw the
+  // player avatar on top of everything, and stamp a phase HUD onto the
+  // canvas (so the user sees the phase even if they minimize the toolbar).
+  function drawSimOverlay(ctx) {
+    if (!sim) return;
+    var actors = scopeActors(state, 'main');
+
+    // Repaint lit ContextSlots with the lit visual. We re-blit only the
+    // lit ones; unlit slots keep the renderGrid default.
+    for (var i = 0; i < actors.length; i++) {
+      var a = actors[i];
+      if (!a || a.type !== 'ContextSlot') continue;
+      if (!a.id || !sim.contextSlotsLit.has(a.id)) continue;
+      var litX = GRID_LEFT_PAD + (a.x | 0) * CHIP_PX;
+      var litY = GRID_TOP_PAD + (a.y | 0) * CHIP_PX;
+      try {
+        LE.render.drawActor(ctx, a, litX, litY, { chipPx: CHIP_PX, scale: 1, lit: true });
+      } catch (e) { /* noop */ }
+    }
+
+    // Player avatar -- draw at sim.player.{x,y}. Use the PlayerSpawn
+    // sprite so the avatar matches the cr engine's visual.
+    var px = GRID_LEFT_PAD + (sim.player.x | 0) * CHIP_PX;
+    var py = GRID_TOP_PAD + (sim.player.y | 0) * CHIP_PX;
+    try {
+      if (typeof LE.render.drawAtlasPlayerSpawn === 'function') {
+        LE.render.drawAtlasPlayerSpawn(ctx, px, py, { chipPx: CHIP_PX, scale: 1 });
+      } else {
+        LE.render.drawActor(ctx, { type: 'PlayerSpawn', x: sim.player.x | 0, y: sim.player.y | 0 }, px, py, { chipPx: CHIP_PX, scale: 1 });
+      }
+    } catch (e) { /* noop */ }
+
+    // Soft halo around the player so it pops on busy levels.
+    ctx.save();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 1, py + 1, CHIP_PX - 2, CHIP_PX - 2);
+    ctx.restore();
+
+    // Phase HUD -- bottom-right corner of the canvas, fixed coords (not
+    // chip-aligned) so it always reads regardless of map size.
+    var hudText = 'PHASE: ' + (sim.phase || 'IDLE');
+    if (sim.fakeTally === true) hudText += '  (fake tally)';
+    drawPhaseHud(ctx, hudText);
+  }
+
+  function drawPhaseHud(ctx, text) {
+    ctx.save();
+    var padX = 8;
+    var padY = 6;
+    ctx.font = 'bold 14px system-ui, -apple-system, "Segoe UI", sans-serif';
+    var metrics;
+    try { metrics = ctx.measureText(text); }
+    catch (e) { metrics = { width: text.length * 8 }; }
+    var w = (metrics.width || 200) + padX * 2;
+    var h = 14 + padY * 2;
+    var x = 8;
+    var y = 8;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(text, x + padX, y + padY);
+    ctx.restore();
   }
 
   function drawHoverGhost(ctx, type, chipX, chipY) {
@@ -1698,6 +2014,21 @@
 
       // Push a snapshot from a test (rare; primarily for history edge cases).
       pushHistorySnapshot: pushHistorySnapshot,
+
+      // P3 sim handles.
+      simStart: simStart,
+      simStop: simStop,
+      simGetSim: function () { return sim; },
+      simIsActive: function () { return simActive; },
+      simStep: simStep,
+      simMovePlayer: simMovePlayer,
+      simReset: handleSimReset,
+      simSetFakeTally: function (on) {
+        if (!simActive || !sim || !simAvailable()) return;
+        LE.sim.setFakeTally(sim, on === true);
+        if (dom.simFakeTally) dom.simFakeTally.checked = sim.fakeTally === true;
+        render();
+      },
     },
   };
 

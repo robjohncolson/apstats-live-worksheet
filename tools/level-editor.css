@@ -279,6 +279,62 @@ textarea {
   margin-bottom: -1px;
 }
 
+/* Sim toolbar (P3). Sits between #le-tabs and #le-bottom-toolbar. */
+#le-sim-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #fffaf0;
+  border-bottom: 1px solid #999;
+  font-size: 11px;
+}
+
+#le-sim-toolbar button {
+  padding: 3px 12px;
+  background: #f5f5f5;
+  border: 1px solid #999;
+  cursor: pointer;
+}
+
+#le-sim-toolbar button:hover {
+  background: #ffffff;
+}
+
+#le-sim-toolbar button:active {
+  background: #d0d0d0;
+}
+
+#le-sim-toolbar button:focus {
+  outline: 2px solid #1e3a8a;
+  outline-offset: -2px;
+}
+
+#le-sim-toolbar button.is-sim-active {
+  background: #1e3a8a;
+  color: #ffffff;
+  border-color: #1e3a8a;
+}
+
+#le-sim-phase {
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  background: #ffffff;
+  border: 1px solid #999;
+  min-width: 120px;
+  text-align: center;
+}
+
+#le-sim-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
 /* Bottom toolbar. */
 #le-bottom-toolbar {
   flex: 0 0 auto;
