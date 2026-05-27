@@ -54,6 +54,8 @@ pedagogy:
 | `ChoicePad` | Per-player preference recorder. Player must have both sampledA and sampledB marks; walking onto a ChoicePad sets `player.marks.choice = value`. Pair with SipStation actors (one per category letter). Engine cascade: ChoicePad presence overrides V7.7 Tally threshold + V7.5 all-coins gate. | `x, y, value` (string -- 'A' or 'B' for binary preference). Optional `id`. |
 | `Gate` | Physical blocker with a per-instance predicate. Closed gate clamps player X; opens (one-way) when predicate evaluates true. Three predicate types in V7.10: `always_false` (perma-locked tempting question), `every_player_row_complete` (Zone 2 row scanner), `tally_nonzero` (Zone 4 data-answerable door). Walking through the advance gate (tally_nonzero) transitions phase to KEY_HUNT. | `x, y, label, predicate` (one of the whitelist). Optional `id`. |
 | `TallyChute` | Pure-visual data column. Reads `state.tally.sips[label]` and renders a vertical stack of blocks (count = stack height). NOT a gate; doesn't affect phase. Pair with SipStation actors of matching drink letter. | `x, y, label` (drink letter to bind to). Optional `id`. |
+| `ContextSlot` | Lights green when ANY player walks within overlap distance (one-way). Use 3+ in a row labeled with statistical-claim components (Question, Variable, Context) for the Zone 5 assembly beat. Per-tick eval in KEY_HUNT or GOAL_AVAILABLE phase. | `x, y, label`. Optional `id`. |
+| `GoalPad` | Whole-class presence pad. Replaces legacy Goal for V7.14+ levels. LEVEL_CLEARED fires when ALL online players are within overlap of x for sustained `triggerMs` (default 1500). Resets if anyone steps off. Pair with 1+ ContextSlot actors (GoalPad waits for all slots lit before activating). | `x, y`. Optional `id, triggerMs`. |
 
 V7.7 (sprint 1 of Pico Parity arc). Authors should pair a `Tally`
 actor with a `TallyDisplay` actor at the same chip position when the
@@ -94,6 +96,17 @@ vertically aligned in a corridor between the row scanner Gate and
 the question doors. Each chute reads its own sip count -- no engine
 state required; pure client-side visualization. Heights scale 1:1
 with sip count (cap visible at 12; overflow shows 'N+').
+
+V7.14 (Zone 5 -- whole-class endgame). Use ContextSlot + GoalPad
+together to replace the legacy Key + Goal "single-player touch
+ends the level" mechanic. Place 2-4 ContextSlots in a row with
+labels that name COMPONENTS of the statistical claim being
+assembled (Question, Variable, Context for Topic 1.1; Sample,
+Distribution, Inference for sigtest topics; etc.). Walking past
+each lights it. After all are lit, the GoalPad activates; the
+CLASS together stands on it to fire LEVEL_CLEARED. Backward
+compat: levels with a Goal actor (no GoalPad) keep V7.5 single-
+player touch.
 
 ### V7.1 actors (NOT YET implemented -- log if you need them, but
 DON'T use in v7-level-1 schema levels):

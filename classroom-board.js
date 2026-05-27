@@ -3094,6 +3094,364 @@
     return null;
   };
 
+  // --- ContextSlotSprite entity (V7.14 Zone 5 / ContextSlot actor) ------
+
+  /**
+   * Walk-past-to-light slot embedded in the bridge. One of N labeled
+   * cells (typically 3: QUESTION / VARIABLE / CONTEXT) that students
+   * physically walk through to "read" the statistical claim. Server
+   * flips slot.lit on any-player overlap; client just renders the
+   * UNLIT / LIT state. No collision push-out; players walk through.
+   *
+   * Visual (per BUILD doc section 9):
+   *   - UNLIT: gray rect with label text below. When the LOCAL player
+   *     is near (overlapping), the rect pulses alpha as a "walk to me"
+   *     cue. The label sits below the rect so it doesn't overlap.
+   *   - LIT: green rect with a "+" ASCII checkmark glyph centered.
+   *     The label is still painted (so the student remembers what
+   *     claim component they just lit).
+   *
+   * opts:
+   *   id              slot id (matches wire's contextSlots[i].id)
+   *   x, y            canvas pixel coords (top-left of the sprite footprint)
+   *   label           full label text from the wire (e.g. "QUESTION: ...")
+   *   size            render footprint width in px (default 32)
+   *   getLit          () -> boolean; reads slot.lit from the wire each tick
+   *   getLocalSprite  () -> BoardSprite (the local player) for overlap pulse
+   */
+  var CONTEXTSLOT_DEFAULT_SIZE     = 32;
+  var CONTEXTSLOT_OVERLAP_PX       = 24;     // local-player overlap radius for pulse cue
+  var CONTEXTSLOT_PULSE_HZ         = 3;      // 3 Hz alpha pulse when near (gentle, not panicky)
+  var CONTEXTSLOT_COLOR_UNLIT      = '#9E9E9E';   // neutral gray (mirrors GATE_COLOR_SCANNER)
+  var CONTEXTSLOT_COLOR_LIT        = '#43A047';   // green (mirrors GATE_COLOR_DOOR_OPEN)
+  var CONTEXTSLOT_COLOR_BORDER     = '#222222';
+  var CONTEXTSLOT_COLOR_CHECK      = '#FFFFFF';
+  var CONTEXTSLOT_COLOR_LABEL      = '#FFFFFF';
+  var CONTEXTSLOT_LABEL_FONT       = 'bold 9px monospace';
+  var CONTEXTSLOT_CHECK_FONT       = 'bold 18px monospace';
+
+  function ContextSlotSprite(opts) {
+    this.id             = (typeof opts.id === 'string') ? opts.id : '';
+    this.x              = opts.x;
+    this.y              = opts.y;
+    this.label          = (typeof opts.label === 'string') ? opts.label : '';
+    this.size           = opts.size || CONTEXTSLOT_DEFAULT_SIZE;
+    this.getLit         = (typeof opts.getLit === 'function') ? opts.getLit : function () { return false; };
+    this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
+    // _bobT accumulates dt for the UNLIT "walk to me" pulse (mirrors
+    // GateSprite / TallyChuteSprite pattern).
+    this._bobT          = 0;
+    // zIndex 5 -- same band as coins / key / goal / tally / pads / gates / chutes; below avatars.
+    this.zIndex         = 5;
+    this.engine         = null;
+  }
+
+  // _visualState() returns 'LIT' or 'UNLIT'. One-way per server
+  // semantics (slot.lit only ever flips false -> true), but the client
+  // re-reads every render so a level reset / hot-swap cleanly redraws.
+  ContextSlotSprite.prototype._visualState = function () {
+    return this.getLit() ? 'LIT' : 'UNLIT';
+  };
+
+  // _isLocalPlayerNear(): local player's X center within the slot's
+  // overlap radius. Used only as the "walk to me" pulse cue; server
+  // owns the actual lit transition.
+  ContextSlotSprite.prototype._isLocalPlayerNear = function () {
+    var me = this.getLocalSprite();
+    if (!me) return false;
+    var myCx   = me.x + (me._spriteSize || 24) / 2;
+    var slotCx = this.x + this.size / 2;
+    return Math.abs(myCx - slotCx) <= CONTEXTSLOT_OVERLAP_PX;
+  };
+
+  ContextSlotSprite.prototype.update = function (dt) {
+    this._bobT += dt;
+    // No collision / no callback. Server lights the slot via per-tick
+    // overlap evaluation; client just animates the pulse + re-renders.
+  };
+
+  ContextSlotSprite.prototype.render = function (ctx) {
+    if (!ctx) return;
+    // V7.9 side-scroll: world sprite -- translate + restore wraps the
+    // entire render so the slot paints in level-coord space (camera
+    // helper handles the per-frame scroll / fit-to-width).
+    _translateForCamera(ctx);
+
+    var prevAlpha   = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFill    = ctx.fillStyle;
+    var prevStroke  = ctx.strokeStyle;
+    var prevLine    = ctx.lineWidth;
+    var prevFont    = ctx.font;
+    var prevAlign   = ctx.textAlign;
+    var prevBase    = (typeof ctx.textBaseline === 'string') ? ctx.textBaseline : '';
+
+    var visual = this._visualState();
+    var rectX  = this.x;
+    var rectY  = this.y;
+    var rectW  = this.size;
+    var rectH  = this.size;
+
+    if (visual === 'LIT') {
+      // Solid green rect (claim component acknowledged).
+      ctx.globalAlpha = 1;
+      ctx.fillStyle   = CONTEXTSLOT_COLOR_LIT;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      ctx.strokeStyle = CONTEXTSLOT_COLOR_BORDER;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      // "+" ASCII checkmark glyph centered in the rect.
+      if (typeof ctx.fillText === 'function') {
+        ctx.font        = CONTEXTSLOT_CHECK_FONT;
+        ctx.textAlign   = 'center';
+        try { ctx.textBaseline = 'middle'; } catch (_) {}
+        ctx.fillStyle   = CONTEXTSLOT_COLOR_CHECK;
+        try { ctx.fillText('+', rectX + rectW / 2, rectY + rectH / 2); } catch (_) {}
+      }
+    } else {
+      // UNLIT: gray rect; pulse alpha when local player is near as a
+      // "walk through me to light" cue. Far-away slots paint at flat
+      // alpha so the bridge reads as a row of cells, not a flashing
+      // disco floor.
+      var nearAlpha = 1;
+      if (this._isLocalPlayerNear()) {
+        // 0.55 -> 1.0 pulse so the cue is visible but not jarring.
+        nearAlpha = 0.55 + 0.45 * (0.5 + 0.5 * Math.sin(this._bobT * CONTEXTSLOT_PULSE_HZ * Math.PI * 2));
+      }
+      ctx.globalAlpha = nearAlpha;
+      ctx.fillStyle   = CONTEXTSLOT_COLOR_UNLIT;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = CONTEXTSLOT_COLOR_BORDER;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+    }
+
+    // Label below the rect (both visual states). The label is the
+    // FULL "QUESTION: Which cup did students prefer?" string from the
+    // wire; the engine wraps long labels by clipping.
+    if (this.label && typeof ctx.fillText === 'function') {
+      ctx.globalAlpha = 1;
+      ctx.font        = CONTEXTSLOT_LABEL_FONT;
+      ctx.textAlign   = 'center';
+      try { ctx.textBaseline = 'top'; } catch (_) {}
+      ctx.fillStyle   = CONTEXTSLOT_COLOR_LABEL;
+      var labelX = rectX + rectW / 2;
+      var labelY = rectY + rectH + 2;
+      try { ctx.fillText(this.label, labelX, labelY); } catch (_) {}
+    }
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.fillStyle   = prevFill;
+    ctx.strokeStyle = prevStroke;
+    ctx.lineWidth   = prevLine;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    if (prevBase) { try { ctx.textBaseline = prevBase; } catch (_) {} }
+    // V7.9 side-scroll: balance the save in _translateForCamera at top.
+    _restoreFromCamera(ctx);
+  };
+
+  ContextSlotSprite.prototype.getLabelSpec = function () {
+    // Slot paints its own label inside render(); engine's label pass
+    // should skip it (mirrors TallyChuteSprite / TallyDisplay).
+    return null;
+  };
+
+  // --- GoalPadSprite entity (V7.14 Zone 5 / GoalPad actor) --------------
+
+  /**
+   * Whole-class presence pad at the far end of the level. Replaces the
+   * V7.5 legacy GoalSprite for V7.14+ levels: instead of a single
+   * player touching a door to fire LEVEL_CLEARED, ALL online players
+   * must stand on the GoalPad simultaneously for `triggerMs` (default
+   * 1500 ms). If anyone steps off, the timer resets server-side and
+   * the ring snaps back to empty.
+   *
+   * Visual (per BUILD doc section 10):
+   *   - DORMANT: dim gray pad with "ALL CLASS" label. Renders while
+   *     ContextSlots are NOT all lit (the pad isn't accepting presence
+   *     yet -- there's no reason to stand there).
+   *   - ACTIVE: solid green pad with a pulsing 4 Hz outer ring. Renders
+   *     when all ContextSlots are lit (presence accumulation enabled);
+   *     the ring is at minimum thickness while presenceMs == 0.
+   *   - FILLING: same as ACTIVE but ring thickness scales with
+   *     presenceMs / triggerMs. Visual feedback that the class is
+   *     "filling up the timer" together.
+   *
+   * opts:
+   *   id              pad id (matches wire's goalPad.id)
+   *   x, y            canvas pixel coords (top-left of the sprite footprint)
+   *   size            render footprint width in px (default 36)
+   *   getActive       () -> boolean; true when all ContextSlots are lit
+   *                   (pad is accepting presence). Source: closure over
+   *                   state.contextSlots.every(s => s.lit).
+   *   getPresenceMs   () -> number; ms accumulated this sustained-presence
+   *                   session. Source: state.goalPad.presenceMs.
+   *   getTriggerMs    () -> number; ms required to fire LEVEL_CLEARED.
+   *                   Source: state.goalPad.triggerMs (default 1500).
+   *   getLocalSprite  () -> BoardSprite (the local player) -- reserved
+   *                   for future per-player cues (no V7.14 use yet).
+   */
+  var GOALPAD_DEFAULT_SIZE       = 36;
+  var GOALPAD_PULSE_HZ           = 4;        // 4 Hz pulse per BUILD doc
+  var GOALPAD_RING_MIN_PX        = 2;        // ring thickness at presenceMs == 0
+  var GOALPAD_RING_MAX_PX        = 8;        // ring thickness at presenceMs >= triggerMs
+  var GOALPAD_COLOR_DORMANT      = '#666666';   // dim gray
+  var GOALPAD_COLOR_ACTIVE       = '#43A047';   // solid green (mirrors ContextSlot LIT)
+  var GOALPAD_COLOR_RING         = '#66BB6A';   // lighter green for the pulsing ring
+  var GOALPAD_COLOR_BORDER       = '#222222';
+  var GOALPAD_COLOR_LABEL        = '#FFFFFF';
+  var GOALPAD_LABEL_FONT         = 'bold 9px monospace';
+
+  function GoalPadSprite(opts) {
+    this.id             = (typeof opts.id === 'string') ? opts.id : '';
+    this.x              = opts.x;
+    this.y              = opts.y;
+    this.size           = opts.size || GOALPAD_DEFAULT_SIZE;
+    this.getActive      = (typeof opts.getActive === 'function')     ? opts.getActive     : function () { return false; };
+    this.getPresenceMs  = (typeof opts.getPresenceMs === 'function') ? opts.getPresenceMs : function () { return 0; };
+    this.getTriggerMs   = (typeof opts.getTriggerMs === 'function')  ? opts.getTriggerMs  : function () { return 1500; };
+    this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
+    // _bobT accumulates dt for the ACTIVE 4 Hz ring pulse.
+    this._bobT          = 0;
+    // zIndex 5 -- same band as the other world sprites; below avatars.
+    this.zIndex         = 5;
+    this.engine         = null;
+  }
+
+  // _visualState() returns 'DORMANT' (slots not all lit), 'ACTIVE'
+  // (slots lit but presence empty), or 'FILLING' (slots lit AND
+  // presence accumulating).
+  GoalPadSprite.prototype._visualState = function () {
+    if (!this.getActive()) return 'DORMANT';
+    var pres = 0;
+    try { pres = this.getPresenceMs() || 0; } catch (_) { pres = 0; }
+    return (pres > 0) ? 'FILLING' : 'ACTIVE';
+  };
+
+  GoalPadSprite.prototype.update = function (dt) {
+    this._bobT += dt;
+    // No collision / no callback. Server owns the presence transition
+    // via broadcast-position evaluation; client just animates the ring.
+  };
+
+  GoalPadSprite.prototype.render = function (ctx) {
+    if (!ctx) return;
+    // V7.9 side-scroll: world sprite -- translate + restore wraps the
+    // entire render so the pad paints in level-coord space.
+    _translateForCamera(ctx);
+
+    var prevAlpha   = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFill    = ctx.fillStyle;
+    var prevStroke  = ctx.strokeStyle;
+    var prevLine    = ctx.lineWidth;
+    var prevFont    = ctx.font;
+    var prevAlign   = ctx.textAlign;
+    var prevBase    = (typeof ctx.textBaseline === 'string') ? ctx.textBaseline : '';
+
+    var visual = this._visualState();
+    var rectX  = this.x;
+    var rectY  = this.y;
+    var rectW  = this.size;
+    var rectH  = this.size;
+
+    if (visual === 'DORMANT') {
+      // Dim gray pad -- "this is where you'll need to gather, but not yet".
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle   = GOALPAD_COLOR_DORMANT;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = GOALPAD_COLOR_BORDER;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+    } else {
+      // ACTIVE or FILLING -- solid green pad with pulsing ring.
+      ctx.globalAlpha = 1;
+      ctx.fillStyle   = GOALPAD_COLOR_ACTIVE;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      ctx.strokeStyle = GOALPAD_COLOR_BORDER;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+
+      // FILLING: ring thickness scales with presenceMs / triggerMs
+      // progress. ACTIVE (presence == 0): ring sits at min thickness.
+      var ringThickness = GOALPAD_RING_MIN_PX;
+      if (visual === 'FILLING') {
+        var pres = 0;
+        var trig = 1500;
+        try { pres = this.getPresenceMs() || 0; } catch (_) { pres = 0; }
+        try { trig = this.getTriggerMs() || 1500; } catch (_) { trig = 1500; }
+        if (trig <= 0) trig = 1500;
+        var progress = Math.max(0, Math.min(1, pres / trig));
+        ringThickness = GOALPAD_RING_MIN_PX + (GOALPAD_RING_MAX_PX - GOALPAD_RING_MIN_PX) * progress;
+      }
+
+      // 4 Hz pulse on the ring alpha so the pad reads as "alive" even
+      // before anyone steps on it.
+      var pulseAlpha = 0.6 + 0.4 * (0.5 + 0.5 * Math.sin(this._bobT * GOALPAD_PULSE_HZ * Math.PI * 2));
+      ctx.globalAlpha = pulseAlpha;
+      ctx.strokeStyle = GOALPAD_COLOR_RING;
+      ctx.lineWidth   = ringThickness;
+      if (typeof ctx.strokeRect === 'function') {
+        // Outer ring sits just outside the pad rect so the inner fill
+        // is fully visible. Inset is half the ring thickness.
+        var inset = ringThickness / 2;
+        try {
+          ctx.strokeRect(rectX - inset, rectY - inset,
+                         rectW + ringThickness, rectH + ringThickness);
+        } catch (_) {}
+      }
+    }
+
+    // Label above the pad. DORMANT shows "ALL CLASS"; ACTIVE / FILLING
+    // shows "STAND HERE" so the class knows the pad is accepting
+    // presence (the visual ring also cues this, but the text is
+    // unambiguous for the first encounter).
+    if (typeof ctx.fillText === 'function') {
+      ctx.globalAlpha = 1;
+      ctx.font        = GOALPAD_LABEL_FONT;
+      ctx.textAlign   = 'center';
+      try { ctx.textBaseline = 'bottom'; } catch (_) {}
+      ctx.fillStyle   = GOALPAD_COLOR_LABEL;
+      var labelX = rectX + rectW / 2;
+      var labelY = rectY - 2;
+      var labelText = (visual === 'DORMANT') ? 'ALL CLASS' : 'STAND HERE';
+      try { ctx.fillText(labelText, labelX, labelY); } catch (_) {}
+    }
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.fillStyle   = prevFill;
+    ctx.strokeStyle = prevStroke;
+    ctx.lineWidth   = prevLine;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    if (prevBase) { try { ctx.textBaseline = prevBase; } catch (_) {} }
+    // V7.9 side-scroll: balance the save in _translateForCamera at top.
+    _restoreFromCamera(ctx);
+  };
+
+  GoalPadSprite.prototype.getLabelSpec = function () {
+    // Pad paints its own label inside render(); engine's label pass
+    // should skip it (mirrors TallyChuteSprite / ContextSlotSprite).
+    return null;
+  };
+
   // --- StageIndicator entity (V7.5 sequential-stages) -------------------
 
   /**
@@ -5173,6 +5531,172 @@
       }
     }
 
+    // V7.14 Zone 5: ContextSlotSprite map. One ContextSlotSprite per
+    // state.activity.state.contextSlots[] entry; despawned when the
+    // activity ends OR state.contextSlots empties OR phase advances to
+    // LEVEL_CLEARED. Each sprite reads its lit flag via a closure that
+    // walks state.contextSlots[].lit every render -- no diff detection,
+    // the wire is source of truth. Mirrors syncLevelTallyChutes pattern.
+    var contextSlotEntities = {};   // slotId -> ContextSlotSprite
+
+    function syncLevelContextSlots(curr) {
+      if (!engineReady) return;
+      var act     = curr && curr.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var slots   = (act && act.state && Array.isArray(act.state.contextSlots)) ? act.state.contextSlots : null;
+      var phase   = (act && act.state && act.state.phase) || null;
+
+      // shouldShow: active level WITH at least one ContextSlot AND phase
+      // is not LEVEL_CLEARED. Per BUILD doc section 9 -- slots persist
+      // across KEY_HUNT / GOAL_AVAILABLE so the player can still walk
+      // through them on the way to the GoalPad. Despawn on LEVEL_CLEARED
+      // OR state.contextSlots empties.
+      var shouldShow = isLevel && slots && slots.length > 0 && phase !== 'LEVEL_CLEARED';
+
+      if (!shouldShow) {
+        for (var k in contextSlotEntities) {
+          if (!Object.prototype.hasOwnProperty.call(contextSlotEntities, k)) continue;
+          try { engine.removeEntity('contextslot_' + k); } catch (_) {}
+          delete contextSlotEntities[k];
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var size     = CONTEXTSLOT_DEFAULT_SIZE;
+
+      // Y placement: slot footprint sits at floor level (the player
+      // walks through it). Mirror gate / chute / pad ground placement.
+      var groundY      = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var sy           = groundY - spriteHeight;
+
+      var seenSlotIds = {};
+      for (var si = 0; si < slots.length; si++) {
+        var s = slots[si];
+        if (!s || !s.id) continue;
+        seenSlotIds[s.id] = true;
+
+        // V7.9 side-scroll: slot is a world sprite -- store x in LEVEL
+        // pixels. Camera translate handles the on-screen offset.
+        var levelCenterPxS = (s.x * chipSize) + (chipSize / 2);
+        var sx = levelCenterPxS - size / 2;
+
+        if (!contextSlotEntities[s.id]) {
+          var slotId    = s.id;
+          var slotLabel = (typeof s.label === 'string') ? s.label : '';
+          var sprite = new ContextSlotSprite({
+            id: slotId, x: sx, y: sy, size: size, label: slotLabel,
+            // Closure: read state.contextSlots[].lit by id every tick
+            // (the wire is source of truth; server flips lit on overlap).
+            getLit: (function (capturedSlotId) {
+              return function () {
+                var st  = state && state.activity && state.activity.state;
+                var arr = (st && Array.isArray(st.contextSlots)) ? st.contextSlots : null;
+                if (!arr) return false;
+                for (var j = 0; j < arr.length; j++) {
+                  if (arr[j] && arr[j].id === capturedSlotId) return arr[j].lit === true;
+                }
+                return false;
+              };
+            }(slotId)),
+            getLocalSprite: function () { return (username && spriteEntities[username]) || null; }
+          });
+          contextSlotEntities[s.id] = sprite;
+          try { engine.addEntity('contextslot_' + s.id, sprite); } catch (_) {}
+        } else {
+          // Server is source of truth for position + label. Re-apply
+          // each tick (cheap; level hot-swap insurance).
+          var existingS = contextSlotEntities[s.id];
+          existingS.x     = sx;
+          existingS.y     = sy;
+          existingS.label = (typeof s.label === 'string') ? s.label : existingS.label;
+        }
+      }
+
+      // Despawn slots that vanished from state (level swap / reset).
+      for (var sid in contextSlotEntities) {
+        if (!Object.prototype.hasOwnProperty.call(contextSlotEntities, sid)) continue;
+        if (!seenSlotIds[sid]) {
+          try { engine.removeEntity('contextslot_' + sid); } catch (_) {}
+          delete contextSlotEntities[sid];
+        }
+      }
+    }
+
+    // V7.14 Zone 5: GoalPadSprite singleton. Spawned when
+    // state.activity.state.goalPad is non-null; despawned when null or
+    // the activity ends or phase advances to LEVEL_CLEARED. The pad
+    // reads its active / presenceMs / triggerMs fields via closures
+    // over the mount-scope state (no diff detection). Mirrors
+    // syncLevelKey / syncLevelGoal singleton lifecycle.
+    var goalPadEntity = null;
+
+    function syncLevelGoalPad(curr) {
+      if (!engineReady) return;
+      var act     = curr && curr.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var pad     = (act && act.state && act.state.goalPad) ? act.state.goalPad : null;
+      var phase   = (act && act.state && act.state.phase) || null;
+      var padVisible = isLevel && pad && phase !== 'LEVEL_CLEARED';
+
+      if (!padVisible) {
+        if (goalPadEntity) {
+          try { engine.removeEntity('level_goalpad'); } catch (_) {}
+          goalPadEntity = null;
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var size     = GOALPAD_DEFAULT_SIZE;
+
+      // Y placement: pad sits at floor level (the player stands on it).
+      // Mirror the gate / chute / slot ground placement.
+      var groundY      = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var py           = groundY - spriteHeight;
+
+      // V7.9 side-scroll: pad is a world sprite -- store x in LEVEL
+      // pixels. Camera translate handles the on-screen offset.
+      var levelCenterPxP = (pad.x * chipSize) + (chipSize / 2);
+      var px = levelCenterPxP - size / 2;
+
+      if (!goalPadEntity) {
+        goalPadEntity = new GoalPadSprite({
+          id: pad.id || 'goal-pad', x: px, y: py, size: size,
+          // getActive: closure over state.contextSlots; all slots lit
+          // = pad is accepting presence (BUILD doc section 10).
+          getActive: function () {
+            var st = state && state.activity && state.activity.state;
+            var arr = (st && Array.isArray(st.contextSlots)) ? st.contextSlots : null;
+            if (!arr || arr.length === 0) return false;
+            for (var j = 0; j < arr.length; j++) {
+              if (!arr[j] || arr[j].lit !== true) return false;
+            }
+            return true;
+          },
+          getPresenceMs: function () {
+            var st  = state && state.activity && state.activity.state;
+            var gp  = (st && st.goalPad) ? st.goalPad : null;
+            return (gp && typeof gp.presenceMs === 'number') ? gp.presenceMs : 0;
+          },
+          getTriggerMs: function () {
+            var st  = state && state.activity && state.activity.state;
+            var gp  = (st && st.goalPad) ? st.goalPad : null;
+            return (gp && typeof gp.triggerMs === 'number') ? gp.triggerMs : 1500;
+          },
+          getLocalSprite: function () { return (username && spriteEntities[username]) || null; }
+        });
+        try { engine.addEntity('level_goalpad', goalPadEntity); } catch (_) {}
+      } else {
+        // Server is source of truth for position. Re-apply each tick
+        // (cheap; level hot-swap insurance).
+        goalPadEntity.x = px;
+        goalPadEntity.y = py;
+      }
+    }
+
     // Greenlight overlay entity
     var greenlightOverlay = null;
     var greenlightStartMs = 0;
@@ -5535,6 +6059,15 @@
       // for Zone 3 visual pattern columns (pure display; no collision).
       // Despawns on activity end or phase advance to LEVEL_CLEARED.
       syncLevelTallyChutes(state);
+      // V7.14 mechanic-first / Zone 5: spawn/despawn ContextSlotSprite
+      // entities for the walk-past-to-light claim-component cells.
+      // Despawns on activity end or phase advance to LEVEL_CLEARED.
+      syncLevelContextSlots(state);
+      // V7.14 mechanic-first / Zone 5: spawn/despawn the singleton
+      // GoalPadSprite -- whole-class presence pad that replaces the
+      // legacy GoalSprite for V7.14+ levels. Despawns on activity end
+      // or phase advance to LEVEL_CLEARED.
+      syncLevelGoalPad(state);
       syncStageIndicator(state);
       // V7.6: spawn/despawn the in-canvas ResultPanel (doorways close +
       // optional reflection text). Runs after the level-overlay sync so
@@ -5910,6 +6443,8 @@
     _ChoicePadSprite:  ChoicePadSprite,  // V7.8 -- exposed for unit tests
     _GateSprite:       GateSprite,       // V7.10 -- exposed for unit tests
     _TallyChuteSprite: TallyChuteSprite, // V7.11 -- exposed for unit tests
+    _ContextSlotSprite: ContextSlotSprite, // V7.14 -- exposed for unit tests
+    _GoalPadSprite:    GoalPadSprite,    // V7.14 -- exposed for unit tests
     // V7.9 side-scroll camera -- exposed for the scroll test pinning.
     // The camera state lives at module scope so tests can poke vw/levelW/
     // followFn fields before invoking _updateCamera + assert against
