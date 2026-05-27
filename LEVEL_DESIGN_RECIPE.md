@@ -52,6 +52,7 @@ pedagogy:
 | `ReturnWarp` | Lives in `reflection_room.actors`. V7 doesn't use it for walk-back (replaced with time-based auto-clear) but the field is reserved. | `x, y` |
 | `Tally` | Threshold gate for SIPPING -> VOTING. Reads `tally.sips`; advances when every key in `threshold` meets its min count. Pair with `TallyDisplay` actor for live progress UI. | `x, y`, `threshold` (object mapping drink letter -> min count). Optional `binds` (default `"tally.sips"`). |
 | `ChoicePad` | Per-player preference recorder. Player must have both sampledA and sampledB marks; walking onto a ChoicePad sets `player.marks.choice = value`. Pair with SipStation actors (one per category letter). Engine cascade: ChoicePad presence overrides V7.7 Tally threshold + V7.5 all-coins gate. | `x, y, value` (string -- 'A' or 'B' for binary preference). Optional `id`. |
+| `Gate` | Physical blocker with a per-instance predicate. Closed gate clamps player X; opens (one-way) when predicate evaluates true. Three predicate types in V7.10: `always_false` (perma-locked tempting question), `every_player_row_complete` (Zone 2 row scanner), `tally_nonzero` (Zone 4 data-answerable door). Walking through the advance gate (tally_nonzero) transitions phase to KEY_HUNT. | `x, y, label, predicate` (one of the whitelist). Optional `id`. |
 
 V7.7 (sprint 1 of Pico Parity arc). Authors should pair a `Tally`
 actor with a `TallyDisplay` actor at the same chip position when the
@@ -75,6 +76,15 @@ player movement scroll them through. World actors (Coin, Key, Goal,
 ChoicePad, Doorway) scroll with the camera. HUD actors (TallyDisplay,
 ResultPanel, StageIndicator) stay screen-anchored. Cockpit gets a
 fit-to-width view automatically -- teacher sees everyone at once.
+
+V7.10 (Zones 2 + 4 of the mechanic-first arc). Gate actors are
+the canonical "this question is / isn't answerable" mechanic.
+Use `always_false` for tempting wrong-question doors (brand,
+value, causation in 1.1). Use `tally_nonzero` for the data-
+answerable door. Use `every_player_row_complete` for completeness
+gates. Levels with Gate actors SHORT-CIRCUIT the V7.5 voting
+path -- delete `stages[]` from such levels. The 78 legacy
+levels + U1.2 keep V7.5 voting.
 
 ### V7.1 actors (NOT YET implemented -- log if you need them, but
 DON'T use in v7-level-1 schema levels):

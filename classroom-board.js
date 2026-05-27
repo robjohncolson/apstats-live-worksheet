@@ -2483,6 +2483,356 @@
     return null;
   };
 
+  // --- GateSprite entity (V7.10 Zones 2 + 4 / Gate actor) ---------------
+
+  /**
+   * Physical block + walkthrough advance trigger. Three visual variants
+   * keyed off the wire's gate.predicate:
+   *
+   *   always_false               red pillar with the label text + 'X'
+   *                              overlay; on overlap fires onAttempt +
+   *                              shakes; never opens. Tempting wrong-
+   *                              question door (Zone 4 Door 1 + 2).
+   *
+   *   every_player_row_complete  gray scanner with A / B / CHOICE
+   *                              checklist icons; icons turn green as
+   *                              the LOCAL player completes each mark.
+   *                              Fades out when gate.opened flips true.
+   *                              Zone 2 row scanner.
+   *
+   *   tally_nonzero              blue door with the label text. Closed
+   *                              = locked icon; opens with green glow
+   *                              when the class tally has any rows.
+   *                              Walk-through fires onWalkThrough ->
+   *                              phase advances to KEY_HUNT. Zone 4
+   *                              Door 3 / advance gate.
+   *
+   * Collision push-out (CLOSED gate): player overlapping the bbox gets
+   * X-clamped to the gate's left or right edge depending on approach
+   * side. Mirrors recovered KeyGate.ts resolveClosedGateCollision but
+   * X-only (LC floor is fixed Y; no vertical push needed).
+   *
+   * Walk-through detection (OPEN gate): player overlapping the bbox
+   * fires onWalkThrough ONCE per overlap session (TTL guard mirrors
+   * V7.5 KeySprite _sentCollect pattern).
+   *
+   * opts:
+   *   id              gate id (matches wire's gates[i].id)
+   *   x, y            canvas pixel coords (top-left of the sprite)
+   *   value           label text (forwarded from wire's gates[i].label)
+   *   size            render size in px (default 32)
+   *   predicate       'always_false' | 'every_player_row_complete' | 'tally_nonzero'
+   *   getOpened       () -> bool. Wire's gates[i].opened, read each tick.
+   *   getLocalSprite  () -> BoardSprite (the local player) for collision
+   *   getLocalMarks   () -> { sampledA, sampledB, choice } | null. Only
+   *                   used by the every_player_row_complete variant to
+   *                   paint the per-mark checklist icons green.
+   *   onAttempt       () -> void. Fired ONCE per closed-gate overlap
+   *                   session (TTL-guarded, mirrors _sentChoice pattern).
+   *                   Wired by syncLevelGates to send attempt-gate input.
+   *   onWalkThrough   () -> void. Fired ONCE per open-gate overlap
+   *                   session (TTL-guarded). Wired to walk-through-gate.
+   */
+  var GATE_DEFAULT_SIZE        = 32;
+  var GATE_COLLISION_X_PX      = 22;   // generous X bbox (gate is a wall)
+  var GATE_COLLISION_Y_PX      = 32;   // generous Y bbox (gate is full-height)
+  var GATE_SENT_TTL_MS         = 600;  // mirror KEY_SENT_TTL_MS / CHOICEPAD_SENT_TTL_MS
+  var GATE_SHAKE_AMPLITUDE_PX  = 3;    // visible shake amplitude
+  var GATE_SHAKE_HZ            = 12;   // shake oscillation frequency
+  var GATE_SHAKE_DURATION_MS   = 1500; // shake + bubble lifespan per attempt
+  var GATE_COLOR_LOCKED        = '#C62828';  // red (always_false)
+  var GATE_COLOR_SCANNER       = '#9E9E9E';  // gray (every_player_row_complete)
+  var GATE_COLOR_DOOR_CLOSED   = '#1976D2';  // blue (tally_nonzero closed)
+  var GATE_COLOR_DOOR_OPEN     = '#43A047';  // green (tally_nonzero open glow)
+  var GATE_COLOR_CHECK_DONE    = '#66BB6A';  // checklist icon -- mark complete
+  var GATE_COLOR_CHECK_TODO    = '#BBBBBB';  // checklist icon -- mark missing
+  var GATE_COLOR_BORDER        = '#222222';
+  var GATE_COLOR_TEXT          = '#FFFFFF';
+  var GATE_COLOR_TEXT_DARK     = '#222222';
+
+  function GateSprite(opts) {
+    this.id             = (typeof opts.id === 'string') ? opts.id : '';
+    this.x              = opts.x;
+    this.y              = opts.y;
+    this.value          = (typeof opts.value === 'string') ? opts.value : '';
+    this.size           = opts.size || GATE_DEFAULT_SIZE;
+    this.predicate      = (typeof opts.predicate === 'string') ? opts.predicate : 'always_false';
+    this.getOpened      = (typeof opts.getOpened === 'function') ? opts.getOpened : function () { return false; };
+    this.getLocalSprite = (typeof opts.getLocalSprite === 'function') ? opts.getLocalSprite : function () { return null; };
+    this.getLocalMarks  = (typeof opts.getLocalMarks === 'function')  ? opts.getLocalMarks  : function () { return null; };
+    this.onAttempt      = (typeof opts.onAttempt === 'function')      ? opts.onAttempt      : null;
+    this.onWalkThrough  = (typeof opts.onWalkThrough === 'function')  ? opts.onWalkThrough  : null;
+    // _sentAttempt / _sentWalkThrough: single-fire guards mirroring
+    // KeySprite _sentCollect / ChoicePadSprite _sentChoice (TTL-cleared
+    // by syncLevelGates each tick + naturally by overlap exit).
+    this._sentAttempt        = false;
+    this._sentAttemptAt      = 0;
+    this._sentWalkThrough    = false;
+    this._sentWalkThroughAt  = 0;
+    // _shakeStartedAt: when the most recent attempt fired -- drives the
+    // sin-based shake amplitude in render(). Cleared after duration.
+    this._shakeStartedAt     = 0;
+    // _bobT accumulates dt for the open-door pulse glow.
+    this._bobT               = 0;
+    // zIndex 5 -- same band as coins / key / goal / tally / pads; below avatars.
+    this.zIndex              = 5;
+    this.engine              = null;
+  }
+
+  // _visualState() returns one of:
+  //   'OPEN'          gate.opened === true (any predicate). For the
+  //                   scanner this means "fade out + walk-through-able".
+  //                   For tally_nonzero this means "green glow door".
+  //                   For always_false this is never returned (predicate
+  //                   never opens), but the helper is defensive.
+  //   'CLOSED-LOCKED' always_false predicate (red pillar, never opens).
+  //   'CLOSED-SCAN'   every_player_row_complete predicate while closed
+  //                   (gray scanner with per-mark checklist).
+  //   'CLOSED-DOOR'   tally_nonzero predicate while closed (blue door
+  //                   with locked icon).
+  GateSprite.prototype._visualState = function () {
+    if (this.getOpened()) return 'OPEN';
+    if (this.predicate === 'every_player_row_complete') return 'CLOSED-SCAN';
+    if (this.predicate === 'tally_nonzero')             return 'CLOSED-DOOR';
+    return 'CLOSED-LOCKED';
+  };
+
+  // _isOverlapping(): local player's center within the gate's X+Y bbox.
+  // Mirrors ChoicePadSprite._isOverlapping (X+Y, no jump required since
+  // gate occupies the full floor-to-jump vertical band).
+  GateSprite.prototype._isOverlapping = function () {
+    var me = this.getLocalSprite();
+    if (!me) return false;
+    var myCx   = me.x + (me._spriteSize   || 24) / 2;
+    var myCy   = me.y + (me._spriteHeight || 24) / 2;
+    var gateCx = this.x + this.size / 2;
+    var gateCy = this.y + this.size / 2;
+    return (Math.abs(myCx - gateCx) <= GATE_COLLISION_X_PX &&
+            Math.abs(myCy - gateCy) <= GATE_COLLISION_Y_PX);
+  };
+
+  // Collision push-out: when the local player's bbox overlaps a CLOSED
+  // gate, clamp their x to the gate's near edge (mutates me.x in place,
+  // mirrors recovered KeyGate.ts resolveClosedGateCollision math). X-only
+  // since LC floor is fixed Y. Approach direction inferred from current
+  // player center vs. gate center (left -> push back left; right ->
+  // push back right).
+  GateSprite.prototype._resolveClosedCollision = function () {
+    var me = this.getLocalSprite();
+    if (!me) return;
+    if (!this._isOverlapping()) return;
+    var spriteW = me._spriteSize || 24;
+    var myCx    = me.x + spriteW / 2;
+    var gateCx  = this.x + this.size / 2;
+    if (myCx <= gateCx) {
+      // Approached from the left -- push player back to gate's left edge.
+      me.x = this.x - spriteW;
+    } else {
+      // Approached from the right -- push player back to gate's right edge.
+      me.x = this.x + this.size;
+    }
+  };
+
+  GateSprite.prototype.update = function (dt) {
+    this._bobT += dt;
+    var opened = this.getOpened();
+    if (!opened) {
+      // CLOSED branch: snapshot overlap BEFORE push-out (so we can fire
+      // onAttempt on the contact tick), then push the player back to
+      // the gate's near edge. The TTL is cleared by syncLevelGates each
+      // tick when the player has stepped off the gate (no overlap) so
+      // a second approach re-fires.
+      var wasOverlapping = this._isOverlapping();
+      if (wasOverlapping) this._resolveClosedCollision();
+      if (this._sentAttempt) return;
+      if (!wasOverlapping) return;
+      this._sentAttempt   = true;
+      this._sentAttemptAt = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+      this._shakeStartedAt = this._sentAttemptAt;
+      if (this.onAttempt) {
+        try { this.onAttempt(); } catch (_) {}
+      }
+      return;
+    }
+    // OPEN branch: fire onWalkThrough ONCE per overlap session. Mirrors
+    // KeySprite _sentCollect TTL: the guard prevents per-tick spam while
+    // the player stands on the open gate.
+    if (this._sentWalkThrough) return;
+    if (!this._isOverlapping()) return;
+    this._sentWalkThrough    = true;
+    this._sentWalkThroughAt  = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+    if (this.onWalkThrough) {
+      try { this.onWalkThrough(); } catch (_) {}
+    }
+  };
+
+  // _shakeOffsetX(): computes the per-frame x jitter while a recent
+  // attempt is within GATE_SHAKE_DURATION_MS. Decays linearly to 0 as
+  // the duration elapses. Returns 0 outside the window.
+  GateSprite.prototype._shakeOffsetX = function () {
+    if (!this._shakeStartedAt) return 0;
+    var nowMs = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+    var elapsed = nowMs - this._shakeStartedAt;
+    if (elapsed >= GATE_SHAKE_DURATION_MS) return 0;
+    var decay = 1 - (elapsed / GATE_SHAKE_DURATION_MS);
+    return Math.sin(elapsed / 1000 * GATE_SHAKE_HZ * Math.PI * 2) * GATE_SHAKE_AMPLITUDE_PX * decay;
+  };
+
+  GateSprite.prototype.render = function (ctx) {
+    if (!ctx) return;
+    // V7.9 side-scroll: world sprite -- translate + restore wraps the
+    // entire render so the gate paints in level-coord space (camera
+    // helper handles the per-frame scroll / fit-to-width).
+    _translateForCamera(ctx);
+
+    var visual = this._visualState();
+    var prevAlpha   = (typeof ctx.globalAlpha === 'number') ? ctx.globalAlpha : 1;
+    var prevFill    = ctx.fillStyle;
+    var prevStroke  = ctx.strokeStyle;
+    var prevLine    = ctx.lineWidth;
+    var prevFont    = ctx.font;
+    var prevAlign   = ctx.textAlign;
+    var prevBase    = (typeof ctx.textBaseline === 'string') ? ctx.textBaseline : '';
+
+    var shakeX = (visual === 'CLOSED-LOCKED') ? this._shakeOffsetX() : 0;
+    var rectX  = this.x + shakeX;
+    var rectY  = this.y;
+    var rectW  = this.size;
+    var rectH  = this.size;
+
+    // OPEN gates fade out (scanner) or glow green (door). Always_false
+    // can't reach OPEN, but defensive paint as a green glow if it does.
+    if (visual === 'OPEN') {
+      // Fade out: alpha tapers toward 0.25 to read as "walk through me".
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle   = GATE_COLOR_DOOR_OPEN;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      // Pulse a thin green border to draw the eye through the open door.
+      var pulse = 0.7 + 0.3 * Math.sin(this._bobT * 4);
+      ctx.globalAlpha = pulse;
+      ctx.strokeStyle = GATE_COLOR_DOOR_OPEN;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      // Centered green check glyph ('+' as ASCII-safe stand-in).
+      if (typeof ctx.fillText === 'function') {
+        ctx.globalAlpha = 1;
+        ctx.font        = 'bold 14px monospace';
+        ctx.textAlign   = 'center';
+        try { ctx.textBaseline = 'middle'; } catch (_) {}
+        ctx.fillStyle   = GATE_COLOR_DOOR_OPEN;
+        try { ctx.fillText('+', rectX + rectW / 2, rectY + rectH / 2); } catch (_) {}
+      }
+    } else if (visual === 'CLOSED-LOCKED') {
+      // Red pillar (always_false). Solid fill + 'X' overlay.
+      ctx.globalAlpha = 1;
+      ctx.fillStyle   = GATE_COLOR_LOCKED;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      ctx.strokeStyle = GATE_COLOR_BORDER;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      // 'X' overlay centered.
+      if (typeof ctx.fillText === 'function') {
+        ctx.font        = 'bold 18px monospace';
+        ctx.textAlign   = 'center';
+        try { ctx.textBaseline = 'middle'; } catch (_) {}
+        ctx.fillStyle   = GATE_COLOR_TEXT;
+        try { ctx.fillText('X', rectX + rectW / 2, rectY + rectH / 2); } catch (_) {}
+      }
+    } else if (visual === 'CLOSED-SCAN') {
+      // Gray scanner gate (every_player_row_complete) with 3-icon
+      // checklist (A / B / CHOICE). Icons turn green as the LOCAL
+      // player completes the corresponding mark.
+      ctx.globalAlpha = 1;
+      ctx.fillStyle   = GATE_COLOR_SCANNER;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      ctx.strokeStyle = GATE_COLOR_BORDER;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      // 3 mark-state indicators stacked vertically -- top: A, mid: B,
+      // bottom: CHOICE. Each is a tiny filled rect + letter glyph.
+      var marks = this.getLocalMarks() || {};
+      var iconLabels = ['A', 'B', 'C'];           // 'C' as ASCII stand-in for CHOICE
+      var iconStates = [
+        !!marks.sampledA,
+        !!marks.sampledB,
+        !!marks.choice
+      ];
+      var iconSize = Math.max(6, Math.floor(rectW / 4));
+      var iconGap  = 2;
+      var iconBlockH = iconSize * 3 + iconGap * 2;
+      var iconStartY = rectY + (rectH - iconBlockH) / 2;
+      var iconX      = rectX + (rectW - iconSize) / 2;
+      for (var i = 0; i < 3; i++) {
+        var iy = iconStartY + i * (iconSize + iconGap);
+        ctx.fillStyle = iconStates[i] ? GATE_COLOR_CHECK_DONE : GATE_COLOR_CHECK_TODO;
+        if (typeof ctx.fillRect === 'function') {
+          try { ctx.fillRect(iconX, iy, iconSize, iconSize); } catch (_) {}
+        }
+        if (typeof ctx.fillText === 'function') {
+          ctx.font        = 'bold 8px monospace';
+          ctx.textAlign   = 'center';
+          try { ctx.textBaseline = 'middle'; } catch (_) {}
+          ctx.fillStyle   = GATE_COLOR_TEXT_DARK;
+          try { ctx.fillText(iconLabels[i], iconX + iconSize / 2, iy + iconSize / 2); } catch (_) {}
+        }
+      }
+    } else {
+      // CLOSED-DOOR (tally_nonzero, locked). Blue body + 'L' (lock) glyph.
+      ctx.globalAlpha = 1;
+      ctx.fillStyle   = GATE_COLOR_DOOR_CLOSED;
+      if (typeof ctx.fillRect === 'function') {
+        try { ctx.fillRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      ctx.strokeStyle = GATE_COLOR_BORDER;
+      ctx.lineWidth   = 2;
+      if (typeof ctx.strokeRect === 'function') {
+        try { ctx.strokeRect(rectX, rectY, rectW, rectH); } catch (_) {}
+      }
+      if (typeof ctx.fillText === 'function') {
+        ctx.font        = 'bold 18px monospace';
+        ctx.textAlign   = 'center';
+        try { ctx.textBaseline = 'middle'; } catch (_) {}
+        ctx.fillStyle   = GATE_COLOR_TEXT;
+        // 'L' as ASCII-safe stand-in for a lock glyph.
+        try { ctx.fillText('L', rectX + rectW / 2, rectY + rectH / 2); } catch (_) {}
+      }
+    }
+
+    ctx.globalAlpha = prevAlpha;
+    ctx.fillStyle   = prevFill;
+    ctx.strokeStyle = prevStroke;
+    ctx.lineWidth   = prevLine;
+    ctx.font        = prevFont;
+    ctx.textAlign   = prevAlign;
+    if (prevBase) { try { ctx.textBaseline = prevBase; } catch (_) {} }
+    // V7.9 side-scroll: balance the save in _translateForCamera at top.
+    _restoreFromCamera(ctx);
+  };
+
+  GateSprite.prototype.getLabelSpec = function () {
+    // Gate's label is the wire's gate.label text, projected to screen
+    // space so it rides over the rendered sprite. Skipped while the
+    // gate is OPEN (the door has done its job; label would clutter the
+    // walk-through moment).
+    if (this.getOpened()) return null;
+    if (!this.value) return null;
+    var cx   = _projectWorldX(this.x) + this.size / 2;
+    var topY = this.y - 4;
+    return { text: this.value, x: cx, y: topY, isGold: false };
+  };
+
   // --- StageIndicator entity (V7.5 sequential-stages) -------------------
 
   /**
@@ -4317,6 +4667,151 @@
       }
     }
 
+    // V7.10 mechanic-first: GateSprite map. One GateSprite per
+    // state.activity.state.gates[] entry; spawned in any phase EXCEPT
+    // LEVEL_CLEARED, despawned when the activity ends. Each sprite's
+    // opened flag is pushed via the getOpened closure (no diff
+    // detection -- the sprite reads opened on every tick).
+    // Mirrors choicePadEntities + syncLevelChoicePads lifecycle.
+    var gateEntities = {};   // gateId -> GateSprite
+
+    function syncLevelGates(curr) {
+      if (!engineReady) return;
+      var act     = curr && curr.activity;
+      var isLevel = !!(act && act.type === 'level' && !act.finished);
+      var gates   = (act && act.state && Array.isArray(act.state.gates)) ? act.state.gates : null;
+      var phase   = (act && act.state && act.state.phase) || null;
+
+      // shouldShow: active level WITH gates AND phase is not LEVEL_CLEARED.
+      // Per BUILD doc section 10 -- despawn when phase advances to
+      // LEVEL_CLEARED OR state.gates empties. Gates persist across
+      // SIPPING/VOTING/KEY_HUNT/GOAL_AVAILABLE so the player can keep
+      // bumping closed wrong-doors after the right one opens.
+      var shouldShow = isLevel && gates && gates.length > 0 && phase !== 'LEVEL_CLEARED';
+
+      if (!shouldShow) {
+        for (var k in gateEntities) {
+          if (!Object.prototype.hasOwnProperty.call(gateEntities, k)) continue;
+          try { engine.removeEntity('gate_' + k); } catch (_) {}
+          delete gateEntities[k];
+        }
+        return;
+      }
+
+      var chipSize = (act.level && act.level.map && act.level.map.chipSize) || 10;
+      var mapW     = (act.level && act.level.map && act.level.map.width) || 32;
+      var levelW   = mapW * chipSize;   // kept for downstream readers
+      var size     = GATE_DEFAULT_SIZE;
+
+      // Y placement: gate sits at floor level (it's a wall the player
+      // walks into / through). Mirror the choice-pad ground placement.
+      var groundY = (engine && typeof engine.groundY === 'number') ? engine.groundY : (BOARD_H - 24);
+      var spriteHeight = SPRITE_H * SPRITE_SCALE;
+      var gy = groundY - spriteHeight;
+
+      var seenGateIds = {};
+      for (var gi = 0; gi < gates.length; gi++) {
+        var g = gates[gi];
+        if (!g || !g.id) continue;
+        seenGateIds[g.id] = true;
+
+        // V7.9 side-scroll: gate is a world sprite -- store x in LEVEL
+        // pixels. Camera translate handles the on-screen offset.
+        var levelCenterPxG = (g.x * chipSize) + (chipSize / 2);
+        var gx = levelCenterPxG - size / 2;
+
+        if (!gateEntities[g.id]) {
+          var gateId    = g.id;
+          var predicate = g.predicate;
+          var label     = (typeof g.label === 'string') ? g.label : '';
+          var sprite = new GateSprite({
+            id: gateId, x: gx, y: gy, size: size,
+            value: label, predicate: predicate,
+            // Closure: read the LATEST opened flag from mount-scope state
+            // every tick (no diff detection; the wire is source of truth).
+            getOpened: (function (capturedGateId) {
+              return function () {
+                var s = state && state.activity && state.activity.state;
+                var arr = (s && Array.isArray(s.gates)) ? s.gates : null;
+                if (!arr) return false;
+                for (var j = 0; j < arr.length; j++) {
+                  if (arr[j] && arr[j].id === capturedGateId) return arr[j].opened === true;
+                }
+                return false;
+              };
+            }(gateId)),
+            getLocalSprite: function () { return (username && spriteEntities[username]) || null; },
+            getLocalMarks: (function (capturedUsername) {
+              return function () {
+                var s = state && state.activity && state.activity.state;
+                var players = (s && s.players) ? s.players : null;
+                if (!players || !capturedUsername) return null;
+                var me = players[capturedUsername];
+                return (me && me.marks) ? me.marks : null;
+              };
+            }(username)),
+            onAttempt: (function (capturedGateId) {
+              return function () {
+                safeSend({ type: 'classroom_activity_value', payload: { kind: 'attempt-gate', gateId: capturedGateId } });
+              };
+            }(gateId)),
+            onWalkThrough: (function (capturedGateId) {
+              return function () {
+                safeSend({ type: 'classroom_activity_value', payload: { kind: 'walk-through-gate', gateId: capturedGateId } });
+              };
+            }(gateId))
+          });
+          gateEntities[g.id] = sprite;
+          try { engine.addEntity('gate_' + g.id, sprite); } catch (_) {}
+        } else {
+          // Server is source of truth for position + label + predicate.
+          // Re-apply each tick (cheap; predicate doesn't change in
+          // practice but guarding for level hot-swap).
+          var existingG = gateEntities[g.id];
+          existingG.x         = gx;
+          existingG.y         = gy;
+          existingG.value     = (typeof g.label === 'string') ? g.label : existingG.value;
+          existingG.predicate = (typeof g.predicate === 'string') ? g.predicate : existingG.predicate;
+
+          // Clear the stale optimistic _sentAttempt / _sentWalkThrough
+          // guards. Two paths: (a) the player has stepped OFF the gate
+          // (no overlap) -- clear immediately so a re-approach re-fires;
+          // (b) the TTL has elapsed (player still standing on the gate
+          // but the wire is being honest about gate.opened). Mirrors
+          // CoinSprite / KeySprite / ChoicePadSprite TTL clear shape.
+          var stillOverlapping = existingG._isOverlapping();
+          var nowMsG = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
+          if (existingG._sentAttempt) {
+            if (!stillOverlapping) {
+              existingG._sentAttempt   = false;
+              existingG._sentAttemptAt = 0;
+            } else if (nowMsG - (existingG._sentAttemptAt || 0) > GATE_SENT_TTL_MS) {
+              existingG._sentAttempt   = false;
+              existingG._sentAttemptAt = 0;
+            }
+          }
+          if (existingG._sentWalkThrough) {
+            if (!stillOverlapping) {
+              existingG._sentWalkThrough   = false;
+              existingG._sentWalkThroughAt = 0;
+            } else if (nowMsG - (existingG._sentWalkThroughAt || 0) > GATE_SENT_TTL_MS) {
+              existingG._sentWalkThrough   = false;
+              existingG._sentWalkThroughAt = 0;
+            }
+          }
+        }
+      }
+
+      // Despawn gates that vanished from state (level swap / reset).
+      for (var gid in gateEntities) {
+        if (!Object.prototype.hasOwnProperty.call(gateEntities, gid)) continue;
+        if (!seenGateIds[gid]) {
+          try { engine.removeEntity('gate_' + gid); } catch (_) {}
+          delete gateEntities[gid];
+        }
+      }
+    }
+
     // Greenlight overlay entity
     var greenlightOverlay = null;
     var greenlightStartMs = 0;
@@ -4671,6 +5166,10 @@
       // the SIPPING-phase preference recorder. Despawns on phase
       // advance past SIPPING (and on activity end).
       syncLevelChoicePads(state);
+      // V7.10 mechanic-first: spawn/despawn GateSprite entities for
+      // Zones 2 + 4 physical-gate blockers. Despawns on activity end
+      // or phase advance to LEVEL_CLEARED.
+      syncLevelGates(state);
       syncStageIndicator(state);
       // V7.6: spawn/despawn the in-canvas ResultPanel (doorways close +
       // optional reflection text). Runs after the level-overlay sync so
@@ -5044,6 +5543,7 @@
     _StageIndicator:   StageIndicator,   // V7.5 -- exposed for unit tests
     _ResultPanel:      ResultPanel,      // V7.6 -- exposed for unit tests
     _ChoicePadSprite:  ChoicePadSprite,  // V7.8 -- exposed for unit tests
+    _GateSprite:       GateSprite,       // V7.10 -- exposed for unit tests
     // V7.9 side-scroll camera -- exposed for the scroll test pinning.
     // The camera state lives at module scope so tests can poke vw/levelW/
     // followFn fields before invoking _updateCamera + assert against
