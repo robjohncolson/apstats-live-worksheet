@@ -233,19 +233,26 @@
     ctx.save();
     var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
     var levelW = _camera.levelW || vw;
-    if (_camera.enabled) {
-      if (typeof ctx.translate === 'function') {
-        try { ctx.translate(-_camera.x, 0); } catch (_) {}
-      }
-    } else if (levelW > 0 && levelW !== vw) {
-      // Cockpit fit-to-width. Horizontal scale only; vertical is
-      // unchanged (HUD heights are screen-anchored).
+    // V7.9.1 student fit-to-width: when the viewport is WIDER than the
+    // level, the camera has no room to scroll (camera.x stays at 0) and
+    // sprites render at native level x. On a 1147-wide desk-modal canvas
+    // with a 480-wide level, that leaves ~670 px of empty space on the
+    // right -- the "invisible wall" smoke bug (PeriodX, V7.9.0). Fix:
+    // mirror cockpit fit-to-width when student viewport >= levelW. The
+    // level scales up to fill the canvas; sprites/positions stay in
+    // level coords. Same trick the cockpit fit-to-width branch uses.
+    var fitToWidth = (!_camera.enabled) || (levelW > 0 && levelW < vw);
+    if (fitToWidth && levelW > 0 && levelW !== vw) {
       if (typeof ctx.scale === 'function') {
         try { ctx.scale(vw / levelW, 1); } catch (_) {}
       }
+    } else if (_camera.enabled) {
+      if (typeof ctx.translate === 'function') {
+        try { ctx.translate(-_camera.x, 0); } catch (_) {}
+      }
     }
-    // Cockpit with levelW == vw -> identity, but we still need the save/
-    // restore balance, which is already in place via the save() above.
+    // levelW == vw (legacy single-screen + perfect-fit) -> identity. The
+    // save() above still pairs with _restoreFromCamera's restore().
   }
 
   // _restoreFromCamera(ctx). Balances the save() in _translateForCamera.
@@ -264,11 +271,15 @@
   function _projectWorldX(worldX) {
     var vw     = _camera.vw     || DEFAULT_BOARD_W_LOCAL;
     var levelW = _camera.levelW || vw;
+    // V7.9.1: mirror the _translateForCamera fit-to-width branch -- when
+    // student viewport >= levelW, scale labels by vw/levelW so they land
+    // at the same on-screen x as the (now-scaled) sprite.
+    var fitToWidth = (!_camera.enabled) || (levelW > 0 && levelW < vw);
+    if (fitToWidth && levelW > 0 && levelW !== vw) {
+      return worldX * (vw / levelW);
+    }
     if (_camera.enabled) {
       return worldX - _camera.x;
-    }
-    if (levelW > 0 && levelW !== vw) {
-      return worldX * (vw / levelW);
     }
     return worldX;
   }
