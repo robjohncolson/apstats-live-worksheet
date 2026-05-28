@@ -1954,25 +1954,249 @@
     }
   },
   "progressChecks": {
-    "1": { "unit": 1, "title": "Unit 1 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "2": { "unit": 2, "title": "Unit 2 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "3": { "unit": 3, "title": "Unit 3 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "4": { "unit": 4, "title": "Unit 4 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "5": { "unit": 5, "title": "Unit 5 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "6": { "unit": 6, "title": "Unit 6 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "7": { "unit": 7, "title": "Unit 7 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "8": { "unit": 8, "title": "Unit 8 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } },
-    "9": { "unit": 9, "title": "Unit 9 Progress Check", "kind": "pc", "duration": { "adminDays": 2, "reviewDays": 1 }, "periods": { "B": null, "E": null } }
+    "1": {
+      "unit": 1,
+      "title": "Unit 1 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2026-10-06",
+        "E": "2026-10-06"
+      },
+      "adminDay2": "2026-10-07"
+    },
+    "2": {
+      "unit": 2,
+      "title": "Unit 2 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2026-10-29",
+        "E": "2026-10-29"
+      },
+      "adminDay2": "2026-10-30"
+    },
+    "3": {
+      "unit": 3,
+      "title": "Unit 3 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2026-11-17",
+        "E": "2026-11-17"
+      },
+      "adminDay2": "2026-11-18"
+    },
+    "4": {
+      "unit": 4,
+      "title": "Unit 4 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2026-12-16",
+        "E": "2026-12-16"
+      },
+      "adminDay2": "2026-12-17"
+    },
+    "5": {
+      "unit": 5,
+      "title": "Unit 5 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2027-02-02",
+        "E": "2027-02-02"
+      },
+      "adminDay2": "2027-02-03"
+    },
+    "6": {
+      "unit": 6,
+      "title": "Unit 6 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2027-03-12",
+        "E": "2027-03-12"
+      },
+      "adminDay2": "2027-03-15"
+    },
+    "7": {
+      "unit": 7,
+      "title": "Unit 7 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2027-04-13",
+        "E": "2027-04-13"
+      },
+      "adminDay2": "2027-04-14"
+    },
+    "8": {
+      "unit": 8,
+      "title": "Unit 8 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": "2027-05-24",
+        "E": "2027-05-24"
+      },
+      "adminDay2": "2027-05-25"
+    },
+    "9": {
+      "unit": 9,
+      "title": "Unit 9 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    }
   },
   "posters": {
-    "1": { "unit": 1, "title": "Unit 1 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "2": { "unit": 2, "title": "Unit 2 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "3": { "unit": 3, "title": "Unit 3 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "4": { "unit": 4, "title": "Unit 4 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "5": { "unit": 5, "title": "Unit 5 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "6": { "unit": 6, "title": "Unit 6 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "7": { "unit": 7, "title": "Unit 7 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "8": { "unit": 8, "title": "Unit 8 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } },
-    "9": { "unit": 9, "title": "Unit 9 Poster", "kind": "poster", "duration": { "longBlocks": 1, "shortBlocks": 2 }, "periods": { "B": null, "E": null } }
+    "1": {
+      "unit": 1,
+      "title": "Unit 1 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2026-10-05",
+        "E": "2026-10-05"
+      }
+    },
+    "2": {
+      "unit": 2,
+      "title": "Unit 2 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2026-10-28",
+        "E": "2026-10-28"
+      }
+    },
+    "3": {
+      "unit": 3,
+      "title": "Unit 3 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2026-11-16",
+        "E": "2026-11-16"
+      }
+    },
+    "4": {
+      "unit": 4,
+      "title": "Unit 4 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2026-12-15",
+        "E": "2026-12-15"
+      }
+    },
+    "5": {
+      "unit": 5,
+      "title": "Unit 5 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2027-02-01",
+        "E": "2027-02-01"
+      }
+    },
+    "6": {
+      "unit": 6,
+      "title": "Unit 6 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2027-03-11",
+        "E": "2027-03-11"
+      }
+    },
+    "7": {
+      "unit": 7,
+      "title": "Unit 7 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2027-04-12",
+        "E": "2027-04-12"
+      }
+    },
+    "8": {
+      "unit": 8,
+      "title": "Unit 8 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": "2027-05-21",
+        "E": "2027-05-21"
+      }
+    },
+    "9": {
+      "unit": 9,
+      "title": "Unit 9 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    }
   }
 }

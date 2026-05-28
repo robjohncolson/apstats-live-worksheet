@@ -3,6 +3,17 @@
 // Reads roster-server/data/lesson-schedule.json, assigns every lesson a
 // SY26-27 date using an even-spread algorithm, writes the file back.
 //
+// Grading Model v3 (s121) extension: ALSO places Progress Check + Poster
+// dates after each unit's last lesson. Cadence per unit:
+//   Day N    = last lesson date (already placed by lesson loop above)
+//   Day N+1  = Poster (gallery walk + peer grade, 1 day default)
+//   Day N+2  = PC Day 1 (administration)
+//   Day N+3  = PC Day 2 (administration)
+// PC and Poster dates are written to doc.progressChecks[unit].periods and
+// doc.posters[unit].periods using the same {B, E} string-date shape as
+// lessons. The 3-day cadence consumes school days from the same year-long
+// school-day pool; if a unit's +3 spills past the school year, it clamps.
+//
 // Run: node scripts/build-sy2627-schedule.mjs
 //
 // Algorithm (BUILD doc Section 4):
@@ -15,7 +26,9 @@
 //      or 0 for N===1. Enforce strictly increasing indices. Last slot on or
 //      before the quarter close date.
 //   6. Every topic in a slot gets the slot's date for both periods.B and periods.E.
-//   7. Write back with bumped generatedAt, 2-space indent, LF, trailing newline.
+//   7. PC + Poster placement: per unit, find its last-lesson date in the
+//      year's school-day pool, then place Poster (+1), PC1 (+2), PC2 (+3).
+//   8. Write back with bumped generatedAt, 2-space indent, LF, trailing newline.
 
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -23,6 +36,7 @@ import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCHEDULE_PATH = path.join(__dirname, '../roster-server/data/lesson-schedule.json');
+const ROADMAP_PATH = path.join(__dirname, '../roadmap-data.json');
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -177,6 +191,63 @@ function main() {
     }
   }
 
+  // ── Grading Model v3: PC + Poster placement (per unit) ─────────────────────
+  //
+  // For each unit, find the max lesson date among its placed lessons,
+  // then place Poster (+1 school day), PC Day 1 (+2), PC Day 2 (+3).
+  // School-day arithmetic uses the year's full school-day pool so the
+  // +3 cadence can carry across a quarter boundary if needed.
+
+  const yearWinStart = WINDOWS.Q1[0];
+  const yearWinEnd = WINDOWS.Q4[1];
+  const yearDays = schoolDays(yearWinStart, yearWinEnd);
+  const yearIndex = new Map();
+  for (let i = 0; i < yearDays.length; i++) yearIndex.set(yearDays[i], i);
+
+  function nextSchoolDay(iso, n) {
+    const idx = yearIndex.get(iso);
+    if (idx === undefined) return null;
+    const target = idx + n;
+    if (target >= yearDays.length) return null;
+    return yearDays[target];
+  }
+
+  const pcMap = doc.progressChecks || {};
+  const posterMap = doc.posters || {};
+  let pcWritten = 0;
+  let posterWritten = 0;
+
+  for (let unit = 1; unit <= 9; unit++) {
+    let lastLessonDate = null;
+    for (const tk of Object.keys(lessons)) {
+      const entry = lessons[tk];
+      if (!entry || entry.unit !== unit) continue;
+      const d = entry.periods && entry.periods.B;
+      if (d && (!lastLessonDate || d > lastLessonDate)) lastLessonDate = d;
+    }
+    if (!lastLessonDate) continue;
+
+    const posterDate = nextSchoolDay(lastLessonDate, 1);
+    const pcDay1 = nextSchoolDay(lastLessonDate, 2);
+    const pcDay2 = nextSchoolDay(lastLessonDate, 3);
+
+    if (posterMap[String(unit)] && posterDate) {
+      posterMap[String(unit)].periods = { B: posterDate, E: posterDate };
+      posterWritten++;
+    }
+    if (pcMap[String(unit)] && pcDay1 && pcDay2) {
+      // PC events span 2 school days; we store the FIRST admin day in
+      // periods.B/E, and the second day is implicit via the `duration`
+      // field (adminDays: 2). Future schedulers + renderers can expand
+      // the implicit range.
+      pcMap[String(unit)].periods = { B: pcDay1, E: pcDay1 };
+      // Capture the second admin day for renderers that want to show
+      // two consecutive PC tiles.
+      pcMap[String(unit)].adminDay2 = pcDay2;
+      pcWritten++;
+    }
+  }
+
   // Write back: bump generatedAt, preserve shape, 2-space indent, LF, trailing newline.
   doc.generatedAt = new Date().toISOString();
   const output = JSON.stringify(doc, null, 2) + '\n';
@@ -185,6 +256,56 @@ function main() {
 
   console.log(`\nWrote ${SCHEDULE_PATH}`);
   console.log(`Total lessons: ${Object.keys(lessons).length}`);
+  console.log(`PCs placed: ${pcWritten} / ${Object.keys(pcMap).length}`);
+  console.log(`Posters placed: ${posterWritten} / ${Object.keys(posterMap).length}`);
+
+  // ── Mirror PC + Poster dates back to roadmap-data.json ────────────────────
+  //
+  // BAKED_REGISTRY in ap_stats_roadmap_square_mode.html is derived from
+  // roadmap-data.json (via the Agent repo's export-registry.mjs). For the
+  // roadmap calendar to render PC + Poster tiles on their scheduled dates,
+  // the SAME dates must live in roadmap-data.json's progressChecks/posters
+  // maps. We dual-write here so a single `node build-sy2627-schedule.mjs`
+  // updates both sources of truth.
+  //
+  // Only the progressChecks/posters periods are mirrored. Lesson dates
+  // stay in lesson-schedule.json (the gradebook side) since roadmap-data
+  // .json's lesson periods are richer objects ({date, schoologyFolder, ...})
+  // that the Agent rebake owns end-to-end.
+
+  let roadmapDirty = false;
+  let roadmap;
+  try {
+    roadmap = JSON.parse(readFileSync(ROADMAP_PATH, 'utf8'));
+  } catch (e) {
+    console.log(`(skip roadmap-data.json mirror -- not readable: ${e.message})`);
+    return;
+  }
+
+  if (roadmap.progressChecks) {
+    for (const u of Object.keys(pcMap)) {
+      if (!roadmap.progressChecks[u]) continue;
+      const pc = pcMap[u];
+      roadmap.progressChecks[u].periods = pc.periods;
+      if (pc.adminDay2 !== undefined) {
+        roadmap.progressChecks[u].adminDay2 = pc.adminDay2;
+      }
+      roadmapDirty = true;
+    }
+  }
+  if (roadmap.posters) {
+    for (const u of Object.keys(posterMap)) {
+      if (!roadmap.posters[u]) continue;
+      roadmap.posters[u].periods = posterMap[u].periods;
+      roadmapDirty = true;
+    }
+  }
+
+  if (roadmapDirty) {
+    const roadmapOut = JSON.stringify(roadmap, null, 2) + '\n';
+    writeFileSync(ROADMAP_PATH, roadmapOut.replace(/\r\n/g, '\n'), 'utf8');
+    console.log(`Mirrored PC + Poster dates to ${ROADMAP_PATH}`);
+  }
 }
 
 main();
