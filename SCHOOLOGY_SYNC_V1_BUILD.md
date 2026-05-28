@@ -609,9 +609,100 @@ detection triggered (3 separate page loads + ~10 DOM probes
 - [x] Q6 UI version baseline (fixtures + user-agent)
 - [x] CDP rig confirmed to drive MS SSO email+password (with manual 2FA)
 - [x] KMSI=Yes locks in the cookie for ~90 days
-- [ ] Teacher creates the 3 grading categories in AP Stats Sec 1 + Sec 2 (one-time setup, blocks P1)
-- [ ] Teacher confirms SIS-sync checkbox decision (yes/no)
-- [ ] Teacher confirms which Schoology section maps to which AP class period (B vs E)
+- [x] Teacher creates the 3 grading categories in AP Stats Sec 1 + Sec 2 (s121 decision: in-flight by teacher)
+- [x] Teacher confirms SIS-sync checkbox decision (s121 decision: **YES** -- the sync ALWAYS checks `sync_to_sis_wrapper[sync_to_sis_option]` so Schoology grades auto-push to PowerSchool)
+- [x] Teacher confirms which Schoology section maps to which AP class period (s121 decision: **Sec 1 = Period B**, Sec 2 = Period E)
 
-P1 is unblocked the moment those three teacher-actions land.
+P1 is unblocked. P1a (fixture-driven scaffold) ships in s121.
+
+## P1a (2026-05-27) -- COMPLETE
+
+P1a is the no-blockers half of P1: build + test the DOM-parsing
+helpers and the Python entry point against the P0 fixtures. The
+live one-shot write (P1b) is the next step once the teacher has
+finished pre-creating the 3 grading categories.
+
+### Files added
+
+| File | Purpose |
+|---|---|
+| `tools/schoology-dom-helpers.js` | Pure DOM parsers (IIFE attaches to `window.SchoologyDomHelpers`); injected into the live page via `Runtime.evaluate`. 9 exports: `listStudents`, `listAssignments`, `findCellSelector`, `parseMarkingPeriods`, `parseAddAssignmentForm`, `findCategoryIdByName`, `findMarkingPeriodIdForDate`, `detectLoginState`, `AGGREGATE_KEYS`. |
+| `tests/schoology-dom-helpers.test.js` | 31 vitest cases across 8 groups, jsdom-loaded against the 6 P0 fixtures. |
+| `tools/schoology-sync.py` | P1 CLI: `--p1-discover` (read-only roster + columns dump) and `--p1-write` (one-shot grade write with `--dry-run` safety mode). |
+
+### Section name -> course id map (P1 hardcoded)
+
+```
+SECTION_TO_COURSE_ID = {
+    "PeriodB": "7945275782",   # AP Stats Sec 1
+    "PeriodE": "7945275798",   # AP Stats Sec 2
+}
+```
+
+V2 promotes this to a Supabase teacher-config table; V1 keeps it
+inline in `tools/schoology-sync.py`.
+
+### P0 gap surfaced by P1a tests
+
+The empty AP Stats Sec 1 gradebook renders **10 placeholder
+columns** with `data-x="0".."9"` and class
+`grader-grid-cell-type-none`. These are AngularJS grid padding;
+not real assignment columns. `listAssignments()` filters them out
+by checking for the `grader-grid-cell-type-none` class. Once real
+assignment columns exist (long numeric Schoology assignment ids
+as `data-x`), the filter still works because real columns have a
+different cell type class.
+
+### P1b ship-gate procedure (do this with the teacher present)
+
+1. Teacher confirms the 3 grading categories exist in AP Stats
+   Sec 1 + Sec 2 (Lessons / Progress Checks / Tests).
+2. Teacher manually creates ONE assignment in AP Stats Sec 1
+   titled `Sync Test 1`, points=100, category=`Lessons`,
+   marking period = whichever MP is current. (Auto-create via
+   form is P2 territory.)
+3. Run discover to read the new assignment's `data-x`:
+   ```
+   python tools/schoology-sync.py --p1-discover --course-id 7945275782
+   ```
+4. Run dry-run with a real student's uid to confirm the cell
+   selector resolves:
+   ```
+   python tools/schoology-sync.py --p1-write --course-id 7945275782 \\
+       --student-id <uid> --column-key <data-x> --value 85 --dry-run
+   ```
+5. Drop the `--dry-run`. Watch Edge: the cell should focus,
+   accept "85", and commit on Enter. The screenshot lands at
+   `tools/cdp/_shots/schoology-p1-after-write.png`.
+6. Teacher visually verifies the grade in the gradebook +
+   confirms the student's view also shows it (since
+   `publish_scores` was checked when the assignment was created).
+
+### P1b risks specific to the cell-write mechanism
+
+P0 did not probe the actual cell-edit mechanism (the gradebook
+was empty). Best-guess implementation in `p1_write()`:
+- `scrollIntoView` the cell
+- coordinate-click center
+- read `document.activeElement` to find the gradebook-mounted input
+- type via React-compatible value setter + `input`/`change` events
+- dispatch Enter
+
+If the click does NOT focus an editable input, the gradebook may
+require a different gesture (double-click, F2 key, or clicking a
+nested `.grader-grid-cell-edit` div). The script captures a
+screenshot of the failure state at
+`tools/cdp/_shots/schoology-p1-no-input.png` so the right gesture
+can be re-recorded here.
+
+### Auto-create form behavior to record at P2
+
+- `sync_to_sis_wrapper[sync_to_sis_option]` MUST be set to `1`
+  on every auto-create (s121 teacher decision: SIS sync ON).
+- `publish_scores` MUST be set to `1` (otherwise grades land but
+  stay hidden from students).
+- The form has a multi-course "additional courses" section that
+  could create the same assignment in BOTH AP Stats sections
+  with one form submission. P2 may use this for efficiency; for
+  P1 we stay single-section.
 
