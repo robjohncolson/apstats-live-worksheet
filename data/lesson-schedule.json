@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-05-20T17:31:10.548Z",
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-28T04:00:33.546Z",
   "lessons": {
     "1.1": {
       "unit": 1,
@@ -747,6 +747,244 @@
       "periods": {
         "B": "2026-04-30",
         "E": "2026-05-06"
+      }
+    }
+  },
+  "progressChecks": {
+    "1": {
+      "unit": 1,
+      "title": "Unit 1 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "2": {
+      "unit": 2,
+      "title": "Unit 2 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "3": {
+      "unit": 3,
+      "title": "Unit 3 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "4": {
+      "unit": 4,
+      "title": "Unit 4 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "5": {
+      "unit": 5,
+      "title": "Unit 5 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "6": {
+      "unit": 6,
+      "title": "Unit 6 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "7": {
+      "unit": 7,
+      "title": "Unit 7 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "8": {
+      "unit": 8,
+      "title": "Unit 8 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "9": {
+      "unit": 9,
+      "title": "Unit 9 Progress Check",
+      "kind": "pc",
+      "duration": {
+        "adminDays": 2,
+        "reviewDays": 1
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    }
+  },
+  "posters": {
+    "1": {
+      "unit": 1,
+      "title": "Unit 1 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "2": {
+      "unit": 2,
+      "title": "Unit 2 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "3": {
+      "unit": 3,
+      "title": "Unit 3 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "4": {
+      "unit": 4,
+      "title": "Unit 4 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "5": {
+      "unit": 5,
+      "title": "Unit 5 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "6": {
+      "unit": 6,
+      "title": "Unit 6 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "7": {
+      "unit": 7,
+      "title": "Unit 7 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "8": {
+      "unit": 8,
+      "title": "Unit 8 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
+      }
+    },
+    "9": {
+      "unit": 9,
+      "title": "Unit 9 Poster",
+      "kind": "poster",
+      "duration": {
+        "longBlocks": 1,
+        "shortBlocks": 2
+      },
+      "periods": {
+        "B": null,
+        "E": null
       }
     }
   }

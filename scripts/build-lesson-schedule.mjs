@@ -1,11 +1,19 @@
 /**
- * scripts/build-lesson-schedule.mjs — Gradebook Phase 6.
+ * scripts/build-lesson-schedule.mjs — Gradebook Phase 6 + Grading Model v3.
  *
  * Reads roadmap-data.json and emits a slim lesson-schedule.json with:
  *   - One entry per numeric topic (e.g. "1.1", "4.2")
  *   - unit, topicKey, worksheetKey (lesson-number string for item-id parsing)
  *   - periods: { B: "YYYY-MM-DD", E: "YYYY-MM-DD" } (null when date unknown)
  *   - combinedWith: [...topicKeys] when two or more topics share a worksheet
+ *
+ * Grading Model v3 (s121): also emits progressChecks and posters top-level
+ * maps when roadmap-data.json carries those keys. Each PC/poster entry is
+ * keyed by unit number ("1".."9") with shape:
+ *   { unit, title, kind, duration, periods: { B: "YYYY-MM-DD"|null, E: ... } }
+ * If roadmap-data.json lacks those keys, the build emits the legacy
+ * lessons-only schema (schemaVersion 1) -- safe to run against older
+ * roadmap exports.
  *
  * Dual-writes:
  *   data/lesson-schedule.json          (repo root)
@@ -128,13 +136,43 @@ for (const k of sortedKeys) {
   sortedLessons[k] = lessons[k];
 }
 
+// ── Build progressChecks + posters (Grading Model v3, optional) ──────────────
+
+function buildEventMap(rawMap, kind) {
+  if (!rawMap || typeof rawMap !== 'object') return null;
+  const out = {};
+  const sortedUnitKeys = Object.keys(rawMap).sort((a, b) => Number(a) - Number(b));
+  for (const unitKey of sortedUnitKeys) {
+    const data = rawMap[unitKey];
+    if (!data || typeof data !== 'object') continue;
+    const bDate = data.periods && data.periods.B && data.periods.B.date || null;
+    const eDate = data.periods && data.periods.E && data.periods.E.date || null;
+    const entry = {
+      unit: Number(unitKey),
+      title: data.title || null,
+      kind,
+      duration: data.duration || null,
+      periods: { B: bDate, E: eDate },
+    };
+    out[unitKey] = entry;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+const progressChecks = buildEventMap(roadmap.progressChecks, 'pc');
+const posters = buildEventMap(roadmap.posters, 'poster');
+
 // ── Emit ──────────────────────────────────────────────────────────────────────
 
+const hasV3Events = progressChecks !== null || posters !== null;
+
 const output = {
-  schemaVersion: 1,
+  schemaVersion: hasV3Events ? 2 : 1,
   generatedAt: new Date().toISOString(),
   lessons: sortedLessons,
 };
+if (progressChecks) output.progressChecks = progressChecks;
+if (posters) output.posters = posters;
 
 const json = JSON.stringify(output, null, 2) + '\n';
 
@@ -148,6 +186,11 @@ writeFileSync(OUT_ROOT, json, 'utf8');
 writeFileSync(OUT_BUNDLED, json, 'utf8');
 
 const count = sortedKeys.length;
-console.log(`build-lesson-schedule: wrote ${count} lessons to`);
+const pcCount = progressChecks ? Object.keys(progressChecks).length : 0;
+const posterCount = posters ? Object.keys(posters).length : 0;
+const eventSummary = (pcCount || posterCount)
+  ? ` + ${pcCount} PCs + ${posterCount} posters (v3)`
+  : '';
+console.log(`build-lesson-schedule: wrote ${count} lessons${eventSummary} to`);
 console.log(`  ${OUT_ROOT}`);
 console.log(`  ${OUT_BUNDLED}`);
