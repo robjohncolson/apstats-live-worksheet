@@ -484,6 +484,18 @@
         }
         .cell-noclass { background: var(--white); color: var(--plat-lo); }
         .cell-post { background: var(--white); color: var(--black); }
+        /* Grading Model v3 (s121): PC tiles (red) + Poster tiles (yellow). */
+        .cell-pc {
+            background: #c0392b; color: #fff;
+            background-image: linear-gradient(135deg, transparent 0, transparent 6px, rgba(255,255,255,0.18) 6px, rgba(255,255,255,0.18) 7px, transparent 7px);
+            background-size: 12px 12px;
+        }
+        .cell-pc .tl::before { content: '\25C6 '; }   /* red diamond glyph */
+        .cell-poster {
+            background: #f4d03f; color: #6b5400;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12);
+        }
+        .cell-poster .tl::before { content: '\1F3A8 '; }  /* artist palette glyph */
         .cell-today { box-shadow: inset 0 0 0 2px var(--black); }
         .cell-today::after {
             content: '\25C0 TODAY';
@@ -5847,6 +5859,31 @@ const SUPABASE_URL='https://hgvnytaqmuybzbotosyj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhndm55dGFxbXV5Ynpib3Rvc3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNTE5MTMsImV4cCI6MjA4MDcyNzkxM30.-LcH_zly4pXoX_2Vra-RbH9twPvUj6xAJp66xPi02tU';
 const _supaCache={};
 function d(t,n,u,due,as,db){return{t,n,u,due:due||"",as:as||"",db:db||false}}
+// Grading Model v3 (s121): inject Poster + PC Day 1 + PC Day 2 pseudo-lessons
+// at every unit transition (and at the array end). generateSchedule treats
+// them like lessons and places them on consecutive meeting days so each
+// unit's last lesson is followed by Poster + 2-day PC before the next unit
+// begins. The pseudo-lesson's `kind` ('poster' / 'pc') drives the
+// distinct red-diamond / yellow-card cell styling in cls() + htm().
+function injectPcPosterEvents(pacing){
+    const out=[];
+    let prevU=0;
+    function appendPcPosterFor(u){
+        out.push({t:'U'+u+'-Poster',n:'Unit '+u+' Poster',u:u,kind:'poster'});
+        out.push({t:'U'+u+'-PC1',n:'Unit '+u+' Progress Check (Day 1)',u:u,kind:'pc',admin:1});
+        out.push({t:'U'+u+'-PC2',n:'Unit '+u+' Progress Check (Day 2)',u:u,kind:'pc',admin:2});
+    }
+    for(const item of pacing){
+        // Transition from a real unit to anything else (next real unit OR
+        // a u=0 Review block) -- flush the previous unit's Poster + PCs.
+        if(prevU>0&&item.u!==prevU)appendPcPosterFor(prevU);
+        out.push(item);
+        prevU=item.u;
+    }
+    // Final flush if the last entry was a real unit.
+    if(prevU>0)appendPcPosterFor(prevU);
+    return out;
+}
 const SY2627_PACING_B = [
   {t:"1.1",n:"Individuals & Variables",u:1},
   {t:"1.2",n:"Categorical Displays",u:1},
@@ -6038,7 +6075,7 @@ const SCHEDULE_DEFS = {
       [[2027,1,15],[2027,1,19]],
       [[2027,3,19],[2027,3,23]]
     ],
-    pacing: { B: SY2627_PACING_B, E: SY2627_PACING_E },
+    pacing: { B: injectPcPosterEvents(SY2627_PACING_B), E: injectPcPosterEvents(SY2627_PACING_E) },
     units: [
       {id:1,label:"1-Var Data"},{id:2,label:"2-Var Data"},{id:3,label:"Sampling"},
       {id:4,label:"Probability"},{id:5,label:"Distributions"},{id:6,label:"Proportions"},
@@ -11126,12 +11163,23 @@ function setP(p){
 }
 function tdy(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
 function eq(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
-function cls(i){if(i===OFF)return"cell-off";if(i===EX)return"cell-exam";if(i===PO)return"cell-post";if(i===NC||!i)return"cell-noclass";if(i.t===R)return"cell-rev";return"cell-u"+i.u}
+function cls(i){
+    if(i===OFF)return"cell-off";
+    if(i===EX)return"cell-exam";
+    if(i===PO)return"cell-post";
+    if(i===NC||!i)return"cell-noclass";
+    if(i.kind==='pc')return"cell-pc";
+    if(i.kind==='poster')return"cell-poster";
+    if(i.t===R)return"cell-rev";
+    return"cell-u"+i.u;
+}
 function htm(i,ds){
     if(i===OFF)return`<div class="dn">${ds}</div><div class="tl"></div>`;
     if(i===EX)return`<div class="dn">${ds}</div><div class="tl">AP EXAM</div>`;
     if(i===PO)return`<div class="dn">${ds}</div><div class="tl">Done!</div>`;
     if(i===NC||!i)return`<div class="dn" style="opacity:.4">${ds}</div>`;
+    if(i.kind==='pc')return`<div class="dn">${ds}</div><div class="tl">U${i.u} PC ${i.admin||1}/2</div><div class="tt">Progress Check</div>`;
+    if(i.kind==='poster')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Poster</div><div class="tt">Gallery walk</div>`;
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
     let db=i.db?'<span class="dbl">2x</span>':'';
     return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+db;
