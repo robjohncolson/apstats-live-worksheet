@@ -132,30 +132,41 @@ function main() {
   const raw = readFileSync(SCHEDULE_PATH, 'utf8');
   const doc = JSON.parse(raw);
   const lessons = doc.lessons;
+  const pcMap = doc.progressChecks || {};
+  const posterMap = doc.posters || {};
 
-  // For each quarter, collect its topics in sorted order and build slots.
-  // A slot = all topics sharing the same (unit, worksheetKey).
-  // Slot order = order of each group's first topic.
+  // ── PACK-LEFT ALGORITHM (Grading Model v3, s121 refinement) ────────────────
+  //
+  // Front-load all content from Sept 9. Iterate units 1..9 in order; for
+  // each unit, pack its lesson slots onto consecutive school days, then
+  // append its Poster (next day) and PC Day 1 + Day 2 (two days after).
+  // The remainder of the school year past the last placed event is buffer
+  // for AP review, practice exams, and post-AP activities.
+  //
+  // Unit -> quarter mapping (UNIT_QUARTER) is NOT used for date placement
+  // -- it only determines which marking-period bucket a unit's grade
+  // contributes to (handled in roster-server's lesson-grade.js). A unit's
+  // events can land on any school day regardless of the quarter window;
+  // the quarter mapping is static (Q1=U1+U2+U3, Q2=U4+U5, etc.).
 
-  const quarterResults = {}; // qKey -> Map<slotId, [topicKey, ...]>
+  const yearDays = schoolDays(WINDOWS.Q1[0], WINDOWS.Q4[1]);
+  let cursor = 0;
+  let pcWritten = 0;
+  let posterWritten = 0;
 
-  for (const qKey of Object.keys(WINDOWS)) {
-    const [winStart, winEnd] = WINDOWS[qKey];
-    const days = schoolDays(winStart, winEnd);
+  function placeNext() {
+    return cursor < yearDays.length ? yearDays[cursor++] : null;
+  }
 
-    // Collect topics in this quarter (by UNIT_QUARTER mapping).
-    const qTopics = Object.keys(lessons).filter(tk => {
-      const entry = lessons[tk];
-      return entry && UNIT_QUARTER[entry.unit] === qKey;
-    });
-    const sortedTopics = sortTopics(qTopics);
+  for (let unit = 1; unit <= 9; unit++) {
+    const unitTopics = Object.keys(lessons).filter(tk => lessons[tk] && lessons[tk].unit === unit);
+    const sortedTopics = sortTopics(unitTopics);
 
-    // Build ordered slots (preserving first-appearance order).
-    const slotOrder = [];       // slot IDs in order
-    const slotTopics = {};      // slotId -> [topicKey, ...]
+    // Group topics by worksheetKey -- one slot = one school day.
+    const slotOrder = [];
+    const slotTopics = {};
     for (const tk of sortedTopics) {
-      const entry = lessons[tk];
-      const slotId = `${entry.unit}/${entry.worksheetKey}`;
+      const slotId = `${unit}/${lessons[tk].worksheetKey}`;
       if (!slotTopics[slotId]) {
         slotTopics[slotId] = [];
         slotOrder.push(slotId);
@@ -163,90 +174,53 @@ function main() {
       slotTopics[slotId].push(tk);
     }
 
-    const N = slotOrder.length;
-    const D = days.length;
+    const unitStartCursor = cursor;
 
-    console.log(`${qKey}: ${N} slots, ${D} school days (${winStart} to ${winEnd})`);
-
-    if (N === 0) {
-      quarterResults[qKey] = slotTopics;
-      continue;
-    }
-
-    // Place each slot at an even-spread day index; enforce strictly increasing.
-    let prevIndex = -1;
-    for (let i = 0; i < N; i++) {
-      let dayIndex = (N === 1) ? 0 : Math.round(i * (D - 1) / (N - 1));
-      // Enforce strictly increasing; clamp to D-1.
-      if (dayIndex <= prevIndex) dayIndex = prevIndex + 1;
-      if (dayIndex >= D) dayIndex = D - 1;
-      prevIndex = dayIndex;
-
-      const date = days[dayIndex];
-      const slotId = slotOrder[i];
-      // Assign date to all topics in this slot.
+    // Pack each slot on the next available school day.
+    for (const slotId of slotOrder) {
+      const date = placeNext();
+      if (!date) {
+        console.warn(`U${unit} ran past school year at slot ${slotId}`);
+        continue;
+      }
       for (const tk of slotTopics[slotId]) {
         lessons[tk].periods = { B: date, E: date };
       }
     }
+
+    // Append Poster (next school day after lessons).
+    if (posterMap[String(unit)]) {
+      const posterDate = placeNext();
+      if (posterDate) {
+        posterMap[String(unit)].periods = { B: posterDate, E: posterDate };
+        posterWritten++;
+      }
+    }
+
+    // Append PC Day 1 + Day 2 (two consecutive school days).
+    if (pcMap[String(unit)]) {
+      const pcDay1 = placeNext();
+      const pcDay2 = placeNext();
+      if (pcDay1 && pcDay2) {
+        pcMap[String(unit)].periods = { B: pcDay1, E: pcDay1 };
+        pcMap[String(unit)].adminDay2 = pcDay2;
+        pcWritten++;
+      }
+    }
+
+    const unitEndCursor = cursor;
+    console.log(`U${unit}: ${slotOrder.length} slots + Poster + PC (${unitStartCursor}..${unitEndCursor - 1}) -> ${yearDays[unitStartCursor]} to ${yearDays[unitEndCursor - 1]}`);
   }
 
-  // ── Grading Model v3: PC + Poster placement (per unit) ─────────────────────
-  //
-  // For each unit, find the max lesson date among its placed lessons,
-  // then place Poster (+1 school day), PC Day 1 (+2), PC Day 2 (+3).
-  // School-day arithmetic uses the year's full school-day pool so the
-  // +3 cadence can carry across a quarter boundary if needed.
+  const contentEndDate = cursor > 0 ? yearDays[cursor - 1] : null;
+  const bufferStartDate = cursor < yearDays.length ? yearDays[cursor] : null;
+  const bufferDays = yearDays.length - cursor;
 
-  const yearWinStart = WINDOWS.Q1[0];
-  const yearWinEnd = WINDOWS.Q4[1];
-  const yearDays = schoolDays(yearWinStart, yearWinEnd);
-  const yearIndex = new Map();
-  for (let i = 0; i < yearDays.length; i++) yearIndex.set(yearDays[i], i);
-
-  function nextSchoolDay(iso, n) {
-    const idx = yearIndex.get(iso);
-    if (idx === undefined) return null;
-    const target = idx + n;
-    if (target >= yearDays.length) return null;
-    return yearDays[target];
-  }
-
-  const pcMap = doc.progressChecks || {};
-  const posterMap = doc.posters || {};
-  let pcWritten = 0;
-  let posterWritten = 0;
-
-  for (let unit = 1; unit <= 9; unit++) {
-    let lastLessonDate = null;
-    for (const tk of Object.keys(lessons)) {
-      const entry = lessons[tk];
-      if (!entry || entry.unit !== unit) continue;
-      const d = entry.periods && entry.periods.B;
-      if (d && (!lastLessonDate || d > lastLessonDate)) lastLessonDate = d;
-    }
-    if (!lastLessonDate) continue;
-
-    const posterDate = nextSchoolDay(lastLessonDate, 1);
-    const pcDay1 = nextSchoolDay(lastLessonDate, 2);
-    const pcDay2 = nextSchoolDay(lastLessonDate, 3);
-
-    if (posterMap[String(unit)] && posterDate) {
-      posterMap[String(unit)].periods = { B: posterDate, E: posterDate };
-      posterWritten++;
-    }
-    if (pcMap[String(unit)] && pcDay1 && pcDay2) {
-      // PC events span 2 school days; we store the FIRST admin day in
-      // periods.B/E, and the second day is implicit via the `duration`
-      // field (adminDays: 2). Future schedulers + renderers can expand
-      // the implicit range.
-      pcMap[String(unit)].periods = { B: pcDay1, E: pcDay1 };
-      // Capture the second admin day for renderers that want to show
-      // two consecutive PC tiles.
-      pcMap[String(unit)].adminDay2 = pcDay2;
-      pcWritten++;
-    }
-  }
+  console.log(`\n--- pack-left summary ---`);
+  console.log(`Year school days: ${yearDays.length} (${yearDays[0]} -> ${yearDays[yearDays.length - 1]})`);
+  console.log(`Content cursor: ${cursor} (used ${cursor} days)`);
+  console.log(`Content ends: ${contentEndDate || '-'}`);
+  console.log(`Buffer starts: ${bufferStartDate || '-'} (${bufferDays} days for AP review + post-AP)`);
 
   // Write back: bump generatedAt, preserve shape, 2-space indent, LF, trailing newline.
   doc.generatedAt = new Date().toISOString();
