@@ -6131,7 +6131,7 @@ function generateSchedule(def){
     for(const pid in def.periods){
       const pDef=def.periods[pid];
       if(!pDef.meetsDays.includes(dow)) cells[pid]=NC;
-      else if(queues[pid].length>0){const tp=queues[pid].shift();cells[pid]=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false)}
+      else if(queues[pid].length>0){const tp=queues[pid].shift();const cell=d(tp.t,tp.n,tp.u,tp.due||"",tp.as||"",tp.db||false);if(tp.kind){cell.kind=tp.kind;if(tp.admin)cell.admin=tp.admin}cells[pid]=cell}
       else cells[pid]=NC;
     }
     result.push([...da,cells.B||NC,cells.E||NC]);
