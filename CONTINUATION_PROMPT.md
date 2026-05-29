@@ -1,3 +1,261 @@
+# Continuation Prompt -- session 121 (Schoology Sync v1 P1a + Grading Model v3 + Schedule pack-left + Calendar render)
+
+> **SESSION 121 CLOSED.** **THIS SECTION IS AUTHORITATIVE.
+> It supersedes EVERYTHING below it** -- the s120 block
+> (Schoology P0 Discovery) and every older block are historical
+> record only; do not act on any older "NEXT"/SESSION text.
+> Last updated 2026-05-28 (s121 close / 122 ready). follow-alongs
+> HEAD post-push: `a60ff38`. 7 commits this session, all pushed
+> to `origin/master`; GH Pages rebuilt + visually verified live.
+> Linear, local==origin.
+>
+> ## Shipped this session -- two intertwined workstreams
+>
+> ### 1. Schoology Sync v1 P1a (commit `44aa460`)
+>
+> The fixture-driven scaffold half of P1. Live one-shot grade
+> write (P1b) is the remaining shipgate; blocks only on a
+> teacher-created `Sync Test 1` assignment.
+>
+> - `tools/schoology-dom-helpers.js` (new) -- 9 pure DOM parsers
+>   in an IIFE that attaches to `window.SchoologyDomHelpers`.
+>   Same module loads into the live Schoology page via CDP
+>   `Runtime.evaluate` AND into jsdom for testing.
+> - `tests/schoology-dom-helpers.test.js` -- 31 vitest cases
+>   across 8 groups, all green against the 6 P0 fixtures.
+> - `tools/schoology-sync.py` -- P1 CLI. `--p1-discover` (read-
+>   only roster + columns dump) and `--p1-write` (one-shot with
+>   `--dry-run` safety mode). Reuses `tools/cdp/edge.py` for the
+>   cookie-warm Edge session.
+> - P0 gap surfaced + handled: empty gradebook renders 10
+>   placeholder columns with `data-x="0".."9"` + class
+>   `grader-grid-cell-type-none` -- `listAssignments` filters.
+> - **s121 teacher decisions locked**:
+>   - **SIS sync = ON**: sync always sets
+>     `sync_to_sis_wrapper[sync_to_sis_option]` -- Schoology
+>     grades auto-flow to PowerSchool district SIS
+>   - **Sec 1 = Period B** (course `7945275782`, 10 students);
+>     **Sec 2 = Period E** (`7945275798`)
+>   - **Categories live in Sec 1 (verified via CDP at
+>     gradesetup URL)**: Classwork=89825655, Lesson=93077673,
+>     Progress Check=93077674, Tests=93077676. Note singular
+>     "Lesson" and "Progress Check"; only Tests is plural.
+>
+> ### 2. Grading Model v3 -- LOCKED + spec'd + scheduled + visualized + deployed
+>
+> Replaces the Phase 6 `mean(lessonGrade)` quarterGrade with a
+> two-track max/mean conditional model. Six commits:
+> `6057e31` (spec), `17fd544` (schema), `9dbc409` (initial date
+> placement), `051ac2a` (pack-left algorithm), `2dd9c79`
+> (calendar tiles), `a60ff38` (kind-preservation fix).
+>
+> - **`GRADING_MODEL_V3_BUILD.md` (new, 444 lines)** -- formula:
+>   ```
+>   if pc_avg >= 0.40 AND work_avg >= 0.40:
+>       quarter = max(pc_avg, work_avg)
+>   else:
+>       quarter = max(0.7*pc_avg, 0.7*work_avg, mean(pc, work))
+>   work = 0.30*Lessons + 0.30*Quizzes + 0.30*Posters + 0.10*Blooket
+>   year = mean(Q1..Q4)
+>   ```
+> - **Pedagogy**: every student has a path to a defensible 100%
+>   via EITHER mastery (PCs, retakable until quarter close) OR
+>   engagement (Work), gated by minimum 40% on the OTHER track.
+>   The 70%-of-track ceiling below floor stops single-track
+>   gaming. AP-readiness is the primary aim; effort is the
+>   backup path.
+> - **5 Schoology categories at Weight Categories ON**:
+>   Lesson 15% / Quizzes 15% / Posters 15% / Blooket 5% /
+>   Progress Check 50%. Sync pushes per-assignment grades for
+>   student visibility, writes computed `quarter_grade` to
+>   `gp_override` per (student, MP) -- override is the
+>   official grade; flows to PowerSchool SIS.
+> - **Quizzes = curriculum.js Blooket-style MC per topic** (~63
+>   quizzes/year); **Blooket score = correct/total_questions**
+>   (accuracy x attempts capped). PC retake = latest attempt
+>   overwrites the same Schoology cell.
+> - **Schedule v3 schema** -- `roadmap-data.json` extended with
+>   `progressChecks` + `posters` top-level maps (9 entries
+>   each); `data/lesson-schedule.json` +
+>   `roster-server/data/lesson-schedule.json` bumped to
+>   schemaVersion=2 with the same shape;
+>   `build-lesson-schedule.mjs` backward-compatible (emits v1
+>   if source lacks the new keys); `build-sy2627-schedule.mjs`
+>   rewritten to **PACK-LEFT** (front-load all content from
+>   Sept 9; ignore quarter-marks-for-placement; unit -> quarter
+>   mapping only buckets grades). Auto-places Poster (+1) and
+>   PC1 (+2), PC2 (+3) after each unit's last lesson.
+> - **Calendar HTML render** -- `ap_stats_roadmap_square_mode.html`
+>   got `injectPcPosterEvents()` (transforms pacing arrays by
+>   inserting Poster + PC1 + PC2 pseudo-lessons at every unit
+>   transition); `cls(i)` + `htm(i, ds)` new branches for
+>   `kind: 'pc'` (red-diamond cell) + `kind: 'poster'` (yellow
+>   palette cell); CSS additions. **Load-bearing fix in
+>   `a60ff38`**: `generateSchedule` was silently stripping the
+>   `kind` + `admin` fields when calling `d(...)`; without the
+>   fix, pseudo-lessons rendered as plain unit-colored tiles.
+>   Now: cell builder preserves both fields.
+> - **Visually verified live** at
+>   `https://robjohncolson.github.io/apstats-live-worksheet/
+>   ap_stats_roadmap_square_mode.html?year=SY26-27` -- U1
+>   Poster (yellow + palette glyph) on Sep 21, U1 PC 1/2 +
+>   PC 2/2 (red + diamond glyph) on Sep 22 + Sep 24, U2.1
+>   starts Sep 25. Same pattern at every unit boundary U1-U9.
+>
+> ## Real schedule numbers -- two pipelines, two truths
+>
+> Critical: lesson-schedule.json (gradebook side, 68 deduped
+> slots at 5-meet/week) said "content ends Feb 5"; the actual
+> CALENDAR (107 entries for B at ~4-meet/week, 81 for E) says
+> different. The calendar is what students see.
+>
+> | Unit final PC2 | Period B | Period E |
+> |---|---|---|
+> | U6 | Jan 28 | Jan 29 |
+> | U7 | Feb 25 | Feb 26 |
+> | U8 | Mar 12 | Mar 17 |
+> | U9 | **Mar 26** | **Apr 2** |
+>
+> AP exam: **May 14, 2027**. Pre-AP review: ~7 weeks B / ~6
+> weeks E. April break (Apr 19-23) hosts the
+> official-but-unattended College Board mock. Weekly student-
+> facing mocks slot in at ~Apr 6 / Apr 13 / Apr 27 / May 4 /
+> May 11 -- 5 mocks total, each one feeding the study guide's
+> diagnostic loop. Post-AP: ~5 weeks for Pico Park / projects
+> / finals.
+>
+> ## NEXT -- queued for s122
+>
+> 1. **Schoology P1b -- live one-shot grade write.** The
+>    SCHOOLOGY_SYNC_V1_BUILD.md ship gate. Blocks on:
+>    a. Teacher creates `Sync Test 1` assignment in AP Stats
+>       Sec 1 via Schoology UI: category `Lesson` (id
+>       93077673), points=100, MP1, **publish_scores OFF** so
+>       the test row stays hidden from students
+>    b. Pick a real student uid (10 in `tests/fixtures/
+>       schoology-courses-map.json` notes) + a test grade
+>    c. `python tools/schoology-sync.py --p1-discover
+>       --course-id 7945275782` -- confirm the new
+>       assignment's data-x column key
+>    d. `--p1-write ... --dry-run` -- verify cell selector
+>       resolves
+>    e. Drop --dry-run; watch Edge land the grade; verify
+>       visually
+>    f. Document the actual cell-edit mechanism in the BUILD
+>       doc (click + activeElement + Enter is best-guess; P0
+>       didn't probe)
+>
+> 2. **Schoology Grade Setup -- 3 teacher actions** for v3:
+>    a. Enable `Weight Categories` checkbox in Sec 1 + Sec 2
+>    b. Set weights: Lesson=15 / Quizzes=15 / Posters=15 /
+>       Blooket=5 / Progress Check=50
+>    c. Rename categories + add new: `Tests -> Quizzes`,
+>       `Classwork -> Blooket`, ADD new category `Posters`
+>    Note: Schoology native weighted avg will display but is
+>    NOT the official grade. v3 sync writes the computed
+>    `quarter_grade(pc, work)` to `gp_override` per MP.
+>
+> 3. **Phase 6 -> v3 swap in `roster-server/lesson-grade.js`.**
+>    Replace `mean(lessonGrade)` with the v3 formula. Migrate
+>    behind `USE_V3_GRADING=true` env var (default off); flip
+>    in prod after verification; remove flag after one quarter
+>    cycle. Need: pcAvg + workAvg + quarter_grade helpers +
+>    tests at boundary cases (the worked examples table in
+>    GRADING_MODEL_V3_BUILD.md).
+>
+> 4. **Agent repo coordination** -- the Agent repo's
+>    `scripts/export-registry.mjs` generates BAKED_REGISTRY +
+>    roadmap-data.json. Currently doesn't know about the
+>    `progressChecks` + `posters` top-level keys. Without an
+>    update, the next Agent rebake will DROP my s121 PC/Poster
+>    entries. **Coordinate the schema extension on the Agent
+>    side BEFORE any rebake.**
+>
+> 5. **Polish / nice-to-have (s122 or later):**
+>    - Mock AP exam tiles in calendar (5 weekly mocks Apr 6 ->
+>      May 11) -- reuse PC-tile pattern, different color
+>    - Poster algorithm sub-spec (peer rubric + role + small-
+>      group handicap) -- defer until Posters category is live
+>    - Blooket CSV-upload pipeline (correct/total formula) --
+>      defer until Blooket category is live
+>    - Carry-forwards from s120 still queued: editor stress-
+>      test on U1.2/U2.1/U3.1, the 79-level fan-out, CC state
+>      probe fix, sprite atlas mapping, V7.16/V7.15 smoke,
+>      editor V1.1 polish
+>
+> ## Risks / gotchas (load-bearing for s122)
+>
+> 1. **Two schedule sources of truth.** `lesson-schedule.json`
+>    (gradebook math, 68 slots, dedup'd) and
+>    `SY2627_PACING_B/E` (HTML calendar, 107/81 entries) MAY
+>    DIVERGE. They've stayed consistent because pack-left in
+>    both follows unit order, but the gradebook side doesn't
+>    know about Posters/PCs in pacing-arrays -- it only knows
+>    via the schema additions in roadmap-data.json. If lessons
+>    are added/removed in roadmap-data.json without re-running
+>    both scripts, drift accumulates.
+>
+> 2. **Agent rebake will clobber roadmap-data.json's
+>    progressChecks + posters keys.** Until export-registry.mjs
+>    is updated, treat any Agent-driven rebake as destructive.
+>    The s121 schedule data sticks ONLY because we haven't
+>    rebaked since.
+>
+> 3. **HTML calendar render depends on `injectPcPosterEvents()`
+>    being called at SCHEDULE_DEFS construction.** Wired in the
+>    SY2627 def only (`pacing: { B:
+>    injectPcPosterEvents(SY2627_PACING_B), E:
+>    injectPcPosterEvents(SY2627_PACING_E) }`). Future school
+>    years need the same wrapping.
+>
+> 4. **The `kind` + `admin` fields must round-trip through
+>    `d(...)`.** Fixed in `a60ff38` -- generateSchedule now
+>    preserves them. ANY future change to `d()` or
+>    generateSchedule must preserve these fields, OR cells lose
+>    their PC/Poster identity and render as plain lessons.
+>
+> 5. **Stage-own-paths rule still applies.** Pre-existing dirty
+>    files (.gitignore, GRADEBOOK_TAGGING_AUDIT.md,
+>    data/skill-map.js, state/cross-agent-log.json,
+>    .ai-tutor-* / .codex-* / .batch-* / .session-* / .verify-*
+>    untracked) are NOT mine; stage explicitly.
+>
+> 6. **GH Pages cache.** Use `?cb=<timestamp>` cache-busting
+>    when verifying a fresh push, or the page may show stale
+>    cached JS for several minutes.
+>
+> 7. **CDP rig is per-session.** Each `python tools/cdp/edge.py
+>    --url X --eval Y` call re-navigates; state from previous
+>    call doesn't persist. For multi-step CDP orchestration,
+>    write a small inline Python script using `from edge
+>    import EdgeCDP` (the pattern used multiple times this
+>    session). Boot overlay must be dismissed before calendar
+>    renders -- `document.getElementById('boot-overlay').remove()`
+>    is the reliable path.
+>
+> ## Recall on reload
+>
+> - **Active specs**: `GRADING_MODEL_V3_BUILD.md` (grade model);
+>   `SCHOOLOGY_SYNC_V1_BUILD.md` (sync, P1 ship gate open).
+> - **Active code**: `tools/schoology-dom-helpers.js`,
+>   `tools/schoology-sync.py`, `tools/cdp/edge.py` (reused),
+>   `scripts/build-lesson-schedule.mjs`,
+>   `scripts/build-sy2627-schedule.mjs`,
+>   `ap_stats_roadmap_square_mode.html` (rCal + injectPcPosterEvents).
+> - **Active fixtures**: 6 files in `tests/fixtures/schoology-*`
+>   (5 HTML + 1 JSON map).
+> - **Active schedule artifacts**: `roadmap-data.json`,
+>   `data/lesson-schedule.json` (schemaVersion=2),
+>   `roster-server/data/lesson-schedule.json` (same + sy2627
+>   pack-left dates + PC/Poster placements).
+> - **Memory file to add in s122** if P1b ships:
+>   `project_schoology_sync.md`. **Memory file to add for
+>   grading**: `project_grading_model_v3.md`. The existing
+>   `gradebook-grading-model` memory should note v3 supersedes
+>   the v2 HYBRID design.
+
+---
+
 # Continuation Prompt -- session 120 (Schoology Sync v1 -- P0 Discovery)
 
 > **SESSION 120 CLOSED.** **THIS SECTION IS AUTHORITATIVE.
