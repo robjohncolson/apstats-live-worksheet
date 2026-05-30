@@ -210,6 +210,12 @@ def load_schedule(path: str = SCHEDULE_PATH) -> dict:
         return json.load(f)
 
 
+def _load_gradebook_page(ops, cdp, course_id: str) -> None:
+    """Return CDP to the gradebook after setup/create pages have navigated away."""
+    ops.navigate(cdp, ops.gradebook_url(course_id))
+    ops.inject_helpers(cdp)
+
+
 def build_scope(schedule: dict, section: str) -> list[dict]:
     """Return a list of scope items for the given section.
 
@@ -340,6 +346,11 @@ def _ensure_assignment(
         return None
 
     grading_period_id = lib.marking_period_for_date(due_date, mps)
+    if due_date and grading_period_id is None:
+        msg = f"No grading_period_id covering due_date={due_date!r} (key={key})"
+        print(f"  [ERROR] {msg}")
+        errors.append(msg)
+        return None
 
     result = ops.add_assignment(
         cdp,
@@ -353,26 +364,33 @@ def _ensure_assignment(
         sync_to_sis=True,
     )
 
-    if not (result and result.get("ok")):
+    _load_gradebook_page(ops, cdp, course_id)
+
+    result_ok = bool(result and result.get("ok"))
+    assignment_id = (result or {}).get("assignment_id")
+
+    # Fallback: look it up by title if id not returned. This is also the
+    # best-effort false-negative recovery path: the submit click may have landed
+    # even when add_assignment missed the transient confirmation JSON.
+    if not assignment_id:
+        assignment_id = ops.find_assignment_id_by_title(cdp, title)
+
+    if assignment_id:
+        state.upsert_assignment(section, key, {"schoology_assignment_id": assignment_id, "title": title})
+        label = "CREATED" if result_ok else "RECONCILED"
+        print(f"  [{label}] {title!r} -> id={assignment_id}")
+        return assignment_id
+
+    if not result_ok:
         err_msg = (result or {}).get("error") or "add_assignment returned not-ok"
         msg = f"Failed to create {title!r}: {err_msg}"
         print(f"  [ERROR] {msg}")
         errors.append(msg)
         return None
 
-    assignment_id = result.get("assignment_id")
-
-    # Fallback: look it up by title if id not returned
-    if not assignment_id:
-        assignment_id = ops.find_assignment_id_by_title(cdp, title)
-
-    if assignment_id:
-        state.upsert_assignment(section, key, {"schoology_assignment_id": assignment_id, "title": title})
-        print(f"  [CREATED] {title!r} -> id={assignment_id}")
-    else:
-        msg = f"Created {title!r} but could not resolve assignment_id"
-        print(f"  [WARN] {msg}")
-        errors.append(msg)
+    msg = f"Created {title!r} but could not resolve assignment_id"
+    print(f"  [WARN] {msg}")
+    errors.append(msg)
 
     return assignment_id
 
@@ -519,8 +537,7 @@ def sync_section(
     # -- connect + verify login --------------------------------------------
     print("[1/5] Connecting to Edge CDP ...")
     cdp = ops.connect(reuse=True)
-    ops.navigate(cdp, ops.gradebook_url(course_id))
-    ops.inject_helpers(cdp)
+    _load_gradebook_page(ops, cdp, course_id)
     login_state = ops.detect_login_state(cdp)
     if login_state != "authenticated":
         print(
@@ -533,6 +550,7 @@ def sync_section(
     print("[2/5] Reading live Schoology data ...")
     cats = ops.list_categories(cdp, course_id)
     mps = ops.list_marking_periods(cdp, course_id)
+    _load_gradebook_page(ops, cdp, course_id)
     students = ops.list_students(cdp)
     students_by_id = {str(s["studentId"]): s for s in students}
 
@@ -578,6 +596,7 @@ def sync_section(
         grades_skipped = 0
     else:
         print(f"[4/5] Pushing grades ({len(grades)} targets) ...")
+        _load_gradebook_page(ops, cdp, course_id)
         grades_pushed, grades_skipped = _push_grades(
             grades,
             scope_items_by_key,

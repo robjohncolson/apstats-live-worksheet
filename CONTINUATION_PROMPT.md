@@ -121,6 +121,42 @@
 > 5. **Stage-own-paths.** Many pre-existing dirty/untracked files
 >    (.ai-tutor-*, GRADEBOOK_TAGGING_AUDIT.md, etc.) are NOT mine.
 >
+> ## Independent review (Codex, 2026-05-30)
+>
+> Verdict: CONFIRM the eventual-consistency conclusion. The create submit
+> can land while synchronous DOM confirmation says `ok=False`, so live sync
+> must reconcile by re-reading the gradebook by title rather than trusting a
+> single call result. I found and fixed three P2 orchestration gaps:
+> `tools/schoology_sync_section.py:553` now reloads the gradebook after
+> category/MP readers navigate away; `:367` reloads it after create; `:599`
+> reloads it before grade push. Without those reloads,
+> `find_assignment_id_by_title`, `list_students`, and grade push could scrape
+> the add/setup page, causing duplicate creates or skipped pushes.
+> `tools/schoology_sync_section.py:376` now tries the title lookup even after
+> a best-effort create `ok=False`, recording the visible column as
+> `[RECONCILED]` instead of leaving state unrecorded. `:349` now blocks dated
+> creates with no matching `grading_period_id`, which confirms the SY26-27 MP
+> gate is data, not code: current SY25-26 MPs yield no MP for SY26-27 dates,
+> and the sync now errors before any invalid live create submit.
+>
+> Better confirmation channel: no stable assignment node id is exposed in the
+> gradebook DOM from the reviewed code; `data-x` is the column key used for
+> cell writes, not a durable delete nid. A CDP Network-domain capture of the
+> `assignment-creation-complete` response body would likely be a better create
+> nid fast-path than DOM text polling, but `tools/cdp/edge.py` currently drops
+> intermediate events and has no response-body buffer. I found no repo evidence
+> of a safer Schoology REST endpoint; even with Network capture, gradebook
+> visibility and delete state still need idempotent re-run reconciliation.
+>
+> Tests observed: `python` is not installed in this shell, so I used
+> `python3`. `python3 tests/test_schoology_sync_lib.py` = 74/74 pass;
+> `python3 tests/test_schoology_sync_section.py` = 29/29 pass (3 new coverage
+> tests); `python3 -m py_compile tools/schoology_*.py` = pass. `cd
+> roster-server && npx vitest run` initially hit missing Rollup optional
+> native deps, fixed by `npm install` in both repo root and `roster-server`
+> (no tracked package file diffs); final Vitest = 644/644 pass, and the older
+> `quarters-by-date.test.js` failure did not reproduce.
+>
 > ## Recall on reload
 >
 > - **Active specs**: `GRADING_MODEL_V3_BUILD.md`,

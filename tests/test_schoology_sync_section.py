@@ -135,7 +135,14 @@ class FakeOps:
     payloads.  Uses a simple counter to generate assignment ids.
     """
 
-    def __init__(self, students=None, existing_titles=None):
+    def __init__(
+        self,
+        students=None,
+        existing_titles=None,
+        marking_periods=None,
+        add_ok=True,
+        add_returns_id=True,
+    ):
         # students: list of {studentId, rowIndex, name}
         self._students = students or [
             {"studentId": "S1", "rowIndex": 0, "name": "Alice"},
@@ -143,7 +150,15 @@ class FakeOps:
         ]
         # existing_titles: set of titles already in Schoology (pre-existing)
         self._existing_titles = existing_titles or set()
+        self._marking_periods = (
+            {"MP1": {"start": "2026-01-01", "end": "2026-06-30"}}
+            if marking_periods is None else marking_periods
+        )
+        self._add_ok = add_ok
+        self._add_returns_id = add_returns_id
         self._id_counter = 100
+        self.current_page = None
+        self.page_history = []
 
         # Recorded calls (for assertions)
         self.created_assignments = []    # list of kwargs dicts
@@ -155,19 +170,32 @@ class FakeOps:
         return self.cdp
 
     def navigate(self, cdp, url):
-        pass
+        if url.endswith("/grades"):
+            self.current_page = "gradebook"
+        else:
+            self.current_page = url
+        self.page_history.append(self.current_page)
 
     def inject_helpers(self, cdp):
         pass
 
     def detect_login_state(self, cdp):
+        self._require_page("gradebook", "detect_login_state")
         return "authenticated"
+
+    def _require_page(self, page, operation):
+        if self.current_page != page:
+            raise AssertionError(
+                f"{operation} requires {page}; current_page={self.current_page!r}"
+            )
 
     # -- live-data reads ---------------------------------------------------
     def gradebook_url(self, course_id):
         return f"https://schoology.example.com/course/{course_id}/grades"
 
     def list_categories(self, cdp, course_id):
+        self.current_page = "gradesetup"
+        self.page_history.append(self.current_page)
         return {
             "Lesson": "CAT_LESSON",
             "Quizzes": "CAT_QUIZ",
@@ -177,18 +205,21 @@ class FakeOps:
         }
 
     def list_marking_periods(self, cdp, course_id):
-        return {
-            "MP1": {"start": "2026-01-01", "end": "2026-06-30"},
-        }
+        self.current_page = "add_form"
+        self.page_history.append(self.current_page)
+        return self._marking_periods
 
     def list_students(self, cdp):
+        self._require_page("gradebook", "list_students")
         return self._students
 
     def list_assignments(self, cdp):
+        self._require_page("gradebook", "list_assignments")
         return []
 
     # -- write operations --------------------------------------------------
     def find_assignment_id_by_title(self, cdp, title):
+        self._require_page("gradebook", "find_assignment_id_by_title")
         if title in self._existing_titles:
             return f"EXISTING_{title.replace(' ', '_')}"
         return None
@@ -196,6 +227,8 @@ class FakeOps:
     def add_assignment(self, cdp, course_id, *, title, points=100, category_id,
                        grading_period_id, due_date=None, publish_scores=True,
                        sync_to_sis=True):
+        self.current_page = "add_form"
+        self.page_history.append(self.current_page)
         self._id_counter += 1
         assignment_id = f"ASGN_{self._id_counter}"
         self.created_assignments.append({
@@ -208,9 +241,14 @@ class FakeOps:
         })
         # Register so find_assignment_id_by_title returns it next time
         self._existing_titles.add(title)
-        return {"ok": True, "assignment_id": assignment_id, "error": None}
+        return {
+            "ok": self._add_ok,
+            "assignment_id": assignment_id if self._add_returns_id else None,
+            "error": None if self._add_ok else "create not confirmed",
+        }
 
     def write_grade_to_cell(self, cdp, column_key, row_index, value):
+        self._require_page("gradebook", "write_grade_to_cell")
         self.written_grades.append((column_key, row_index, value))
         return {"ok": True}
 
@@ -424,6 +462,81 @@ class TestDryRunNoStateMutation(unittest.TestCase):
         # assignments_created reflects what would have been created only after
         # actual creation; dry-run returns 0
         self.assertEqual(summary["assignments_created"], 0)
+
+
+class TestLivePageNavigation(unittest.TestCase):
+    """Live ops readers must be called from the page they scrape."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.schedule_path = _write_schedule(self.tmpdir)
+
+    def test_reloads_gradebook_after_setup_readers(self):
+        state = FakeStateStore()
+        ops = FakeOps()
+        sync_section(
+            "PeriodB", "7945275782",
+            dry_run=False,
+            state=state,
+            grades={},
+            ops=ops,
+            schedule_path=self.schedule_path,
+            limit=1,
+        )
+        self.assertGreaterEqual(ops.page_history.count("gradebook"), 3)
+        self.assertEqual(ops.current_page, "gradebook")
+
+
+class TestMissingMarkingPeriod(unittest.TestCase):
+    """A dated sync item with no matching MP must not submit a create form."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.schedule_path = _write_schedule(self.tmpdir)
+
+    def test_missing_marking_period_skips_create(self):
+        state = FakeStateStore()
+        ops = FakeOps(marking_periods={
+            "OLD": {"start": "2025-01-01", "end": "2025-06-30"},
+        })
+        summary = sync_section(
+            "PeriodB", "7945275782",
+            dry_run=False,
+            state=state,
+            grades={},
+            ops=ops,
+            schedule_path=self.schedule_path,
+            limit=1,
+        )
+        self.assertEqual(summary["assignments_created"], 0)
+        self.assertEqual(len(ops.created_assignments), 0)
+        self.assertTrue(any("No grading_period_id" in e for e in summary["errors"]))
+
+
+class TestBestEffortCreateConfirmation(unittest.TestCase):
+    """A false negative create confirmation should reconcile by title."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.schedule_path = _write_schedule(self.tmpdir)
+
+    def test_false_negative_create_records_visible_column(self):
+        state = FakeStateStore()
+        ops = FakeOps(add_ok=False, add_returns_id=False)
+        summary = sync_section(
+            "PeriodB", "7945275782",
+            dry_run=False,
+            state=state,
+            grades={},
+            ops=ops,
+            schedule_path=self.schedule_path,
+            limit=1,
+        )
+        row = state.get_assignment("PeriodB", "6.1")
+        self.assertEqual(summary["assignments_created"], 1)
+        self.assertEqual(summary["errors"], [])
+        self.assertIsNotNone(row)
+        self.assertEqual(row["schoology_assignment_id"], "EXISTING_Topic_6.1")
 
 
 class TestGradesFixtureCellMapping(unittest.TestCase):
