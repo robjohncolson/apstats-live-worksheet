@@ -160,12 +160,26 @@ class LocalJsonStateStore(StateStore):
 
 
 class SupabaseStateStore(StateStore):
-    """Production stub -- raises NotImplementedError.
+    """Production stub -- raises NotImplementedError. DEFERRED: LocalJsonStateStore
+    covers every current dry-run/smoke need; this is only required for a real
+    --sync-section run (~Sept-2026), which is itself gated on the migration being
+    applied to the live DB. Do NOT build it blind -- there is a design decision.
 
-    To implement:
-    1. Run roster-server/migrations/0010_schoology_sync.sql against the Supabase project.
-    2. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.
-    3. Replace each method body with the appropriate supabase-py call.
+    To implement (it is NOT just "fill in the method bodies"):
+    1. Run roster-server/migrations/0010_schoology_sync.sql against Supabase
+       (user-owned) and set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
+    2. supabase-py is NOT a current dependency -- lazy-import it inside __init__
+       and accept an injected client so unit tests can pass a mock.
+    3. IMPEDANCE MISMATCH (the real work): get_last_synced / set_last_synced take
+       (student_id, lesson_key:str) with NO section, but schoology_grade_sync keys
+       on (student_id, assignment_id:uuid -> schoology_assignment.id), and
+       schoology_assignment is unique on (section, lesson_key). So the store must
+       CARRY section -- construct SupabaseStateStore(section=...) -- and resolve
+       (section, lesson_key) -> assignment uuid before touching grade-sync.
+       Alternative: a migration 0011 re-keying schoology_grade_sync on text
+       (section, lesson_key), which simplifies the store but changes the schema.
+    4. Map: upsert_assignment -> schoology_assignment (on-conflict section,lesson_key);
+       get/set_last_synced -> schoology_grade_sync; log_run -> schoology_sync_log.
     """
 
     def get_assignment(self, section: str, lesson_key: str) -> dict | None:
