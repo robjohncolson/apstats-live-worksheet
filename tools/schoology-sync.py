@@ -240,87 +240,103 @@ def p1_write(
         return
 
     # --- live write ------------------------------------------------------ #
-    # Strategy (best-guess; iterate on first live run):
-    #   1. scrollIntoView the cell so it's painted
-    #   2. coordinate-click the cell center to focus the editable input
-    #   3. wait briefly for AngularJS to mount the input
-    #   4. type the value into the focused input via the React-compatible
-    #      setter (cdp.type_into uses the same pattern)
-    #   5. dispatch Enter to commit
-    #
-    # If save fails, the actual commit mechanism (blur vs Enter vs explicit
-    # Save button) gets recorded in the BUILD doc.
-
-    cdp.eval_js(
-        f"document.querySelector({json.dumps(selector)}).scrollIntoView({{block:'center', inline:'center'}});"
-    )
-    time.sleep(0.3)
-
-    rect = cdp.eval_js(
-        f"(function(){{var r=document.querySelector({json.dumps(selector)}).getBoundingClientRect();"
-        "return {x: r.left + r.width/2, y: r.top + r.height/2};})()"
-    )
-    if not rect:
-        print("schoology-sync: could not read cell bounding rect", file=sys.stderr)
-        raise SystemExit(6)
-    cdp.click(int(rect["x"]), int(rect["y"]))
-    time.sleep(0.5)
-
-    # Find the active input that the gradebook mounted on click.
-    found_input = cdp.eval_js(
-        "(function(){var a=document.activeElement;"
-        "if(!a) return null;"
-        "return {tag:a.tagName, type:a.type||null, id:a.id||null, name:a.name||null};"
-        "})()"
-    )
-    print(f"  active element after click: {json.dumps(found_input)}")
-
-    if not found_input or found_input.get("tag") not in ("INPUT", "TEXTAREA"):
-        print(
-            "schoology-sync: click did not focus an editable input. The gradebook "
-            "may require a different activation gesture (double-click, F2, or a "
-            "specific .grader-grid-cell-edit element). Re-record in BUILD doc.",
-            file=sys.stderr,
-        )
+    # P1b-VERIFIED mechanism (s122, 2026-05-29). The grade cell holds a
+    # PERSISTENT <input class="grade grader-edit-input"> (always in the DOM,
+    # NO ng-model). Schoology saves the grade only on a REAL keystroke sequence
+    # committed with Enter -- synthetic value setters, insertText, and blur all
+    # FAIL to persist (the value lives locally but is discarded on reload).
+    # Working recipe (persistence confirmed by reloading the gradebook):
+    #   1. focus the input via JS .focus() -- deterministic. (A coordinate-click
+    #      also focuses it, but only after Angular binds its click handler, which
+    #      is flaky for the first clicks after load; .focus() never misses.)
+    #   2. clear the existing value with Backspace (so re-syncs overwrite).
+    #   3. type each character via Input.dispatchKeyEvent (full keyDown/keyUp
+    #      with text) so Angular's save handler fires.
+    #   4. commit with a real Enter key event.
+    input_sel = selector + " input.grader-edit-input"
+    if not cdp.eval_js(f"!!document.querySelector({json.dumps(input_sel)})"):
+        print(f"schoology-sync: grade input not found at {input_sel}", file=sys.stderr)
         cdp.screenshot(os.path.join(SCRIPT_DIR, "cdp", "_shots", "schoology-p1-no-input.png"))
         raise SystemExit(7)
 
-    # Type via the React-compatible setter on whatever input is focused.
-    cdp.eval_js(
-        "(function(v){var el=document.activeElement;"
-        "var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-        "setter.call(el, v);"
-        "el.dispatchEvent(new Event('input',{bubbles:true}));"
-        "el.dispatchEvent(new Event('change',{bubbles:true}));"
-        f"}})({json.dumps(str(value))})"
-    )
-    time.sleep(0.2)
+    def _focused() -> bool:
+        return bool(cdp.eval_js(
+            f"document.activeElement===document.querySelector({json.dumps(input_sel)})"
+        ))
 
-    # Commit via Enter key.
-    for ev_type in ("keyDown", "keyUp"):
-        cdp.send("Input.dispatchKeyEvent", {
-            "type": ev_type,
-            "key": "Enter",
-            "code": "Enter",
-            "windowsVirtualKeyCode": 13,
-            "nativeVirtualKeyCode": 13,
-        })
-    time.sleep(1.0)
+    # Focus the input. Angular's first-render timing is flaky, so retry a few
+    # times, trying BOTH JS .focus() and a trusted coordinate-click, re-querying
+    # the input fresh each attempt (the grid can re-render between CDP calls).
+    focused = False
+    for _ in range(6):
+        cdp.eval_js(
+            f"(function(){{var a=document.querySelector({json.dumps(input_sel)});"
+            "if(a){a.scrollIntoView({block:'center',inline:'center'});a.focus();}})()"
+        )
+        time.sleep(0.35)
+        if _focused():
+            focused = True
+            break
+        rect = cdp.eval_js(
+            f"(function(){{var a=document.querySelector({json.dumps(input_sel)});if(!a)return null;"
+            "var r=a.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};}})()"
+        )
+        if rect:
+            cdp.click(int(rect["x"]), int(rect["y"]))
+            time.sleep(0.45)
+            if _focused():
+                focused = True
+                break
 
-    # Re-read the cell text to verify the write.
-    after = cdp.eval_js(
-        f"(function(){{var c=document.querySelector({json.dumps(selector)});"
-        "if(!c) return null;"
-        "return (c.textContent||'').trim();"
-        "})()"
+    if not focused:
+        print("schoology-sync: could not focus the grade input after retries.", file=sys.stderr)
+        cdp.screenshot(os.path.join(SCRIPT_DIR, "cdp", "_shots", "schoology-p1-no-input.png"))
+        raise SystemExit(7)
+
+    def _key(vk: int, key: str, code: str, text: Optional[str] = None) -> None:
+        down = {"type": "keyDown", "key": key, "code": code,
+                "windowsVirtualKeyCode": vk, "nativeVirtualKeyCode": vk}
+        if text is not None:
+            down["text"] = text
+            down["unmodifiedText"] = text
+        cdp.send("Input.dispatchKeyEvent", down)
+        cdp.send("Input.dispatchKeyEvent", {"type": "keyUp", "key": key, "code": code,
+                                            "windowsVirtualKeyCode": vk, "nativeVirtualKeyCode": vk})
+
+    # Clear any existing value first so a re-sync overwrites cleanly.
+    existing = cdp.eval_js(
+        f"(function(){{var a=document.querySelector({json.dumps(input_sel)});return a?a.value:'';}})()"
+    ) or ""
+    for _ in range(len(str(existing)) + 1):
+        _key(8, "Backspace", "Backspace")
+
+    # Format the value: drop a trailing ".0" so a whole number types as "95".
+    val_str = str(int(value)) if float(value).is_integer() else str(value)
+
+    # Type each character via a real key event so Angular's save handler fires.
+    code_for = {"0": "Digit0", "1": "Digit1", "2": "Digit2", "3": "Digit3", "4": "Digit4",
+                "5": "Digit5", "6": "Digit6", "7": "Digit7", "8": "Digit8", "9": "Digit9",
+                ".": "Period", "-": "Minus"}
+    vk_for = {"0": 48, "1": 49, "2": 50, "3": 51, "4": 52, "5": 53, "6": 54, "7": 55,
+              "8": 56, "9": 57, ".": 190, "-": 189}
+    for ch in val_str:
+        _key(vk_for.get(ch, 0), ch, code_for.get(ch, ""), text=ch)
+    time.sleep(0.3)
+
+    typed = cdp.eval_js(
+        f"(function(){{var a=document.querySelector({json.dumps(input_sel)});return a?a.value:null;}})()"
     )
-    print(f"  cell text after write: {after!r}")
+    print(f"  input value after typing: {typed!r}")
+
+    # Commit with a real Enter key event (triggers Schoology's save).
+    _key(13, "Enter", "Enter", text="\r")
+    time.sleep(2.0)
 
     shot_path = os.path.join(SCRIPT_DIR, "cdp", "_shots", "schoology-p1-after-write.png")
     cdp.screenshot(shot_path)
     print(f"  screenshot saved: {shot_path}")
     print()
-    print("schoology-sync: P1 write complete. Verify visually in Edge before scripting more.")
+    print("schoology-sync: P1 write complete. Reload the gradebook to confirm the value persisted.")
 
 
 # --------------------------------------------------------------------------- #

@@ -706,3 +706,71 @@ can be re-recorded here.
   with one form submission. P2 may use this for efficiency; for
   P1 we stay single-section.
 
+## P1b (2026-05-29) -- COMPLETE
+
+The live one-shot grade write. **Ship gate MET**: a grade landed in a real
+gradebook cell and PERSISTED across a reload (server-saved), screenshot-verified.
+
+### What shipped
+
+- Grade `95` written to student Julissa Arbaiza Yanes (uid `126191360`,
+  rowIndex 0) in the `Sync Test 1` assignment of AP Stats Sec 1
+  (`7945275782`), column `data-x="0"`. Confirmed persisted: after a fresh
+  gradebook reload the cell still showed `95` and her OVERALL recomputed to
+  `98.33` (Calc. `95`). `publish_scores` was OFF, so it stays hidden from the
+  student.
+- `tools/schoology-sync.py` `p1_write()` rewritten to the VERIFIED mechanism
+  (the P1a best-guess React-setter did NOT save).
+
+### The verified cell-write mechanism (load-bearing)
+
+The grade cell (`#grader-grid-cell-<col>-<row>`) contains a PERSISTENT
+`<input class="grade grader-edit-input">` -- always in the DOM, **no
+`ng-model`**, not a click-to-mount editor. Schoology saves the grade ONLY on a
+**real keystroke sequence committed with Enter**. These all FAILED to persist
+(value showed locally but was discarded on reload):
+
+- React-compatible value setter + `input`/`change` events.
+- `Input.insertText` + `input`/`change` + blur (stuck locally, NOT saved).
+- `Input.insertText` + Enter (Enter cleared it).
+
+The WORKING recipe (in `p1_write`):
+
+1. **Focus** the input via JS `.focus()` (deterministic). A trusted
+   coordinate-click on the input's rect also focuses it, but only after Angular
+   binds its click handler -- the first clicks after load are flaky (often leave
+   `activeElement === BODY`). The script retries BOTH `.focus()` and a click, up
+   to 6 times, re-querying the input each attempt.
+2. **Clear** the existing value with Backspace (so re-syncs overwrite).
+3. **Type** each character via `Input.dispatchKeyEvent` (full keyDown/keyUp with
+   `text`) -- this fires Angular's save handler.
+4. **Commit** with a real Enter `Input.dispatchKeyEvent`.
+
+### Gotchas surfaced (carry into P2)
+
+- **`devicePixelRatio = 1.25`** on the rig host. `Input.dispatchMouseEvent`
+  takes CSS pixels (use `getBoundingClientRect` directly); device-pixel coords
+  (CSS x DPR) MISS. The ~1513-CSS-px viewport is downscaled in the PNG
+  screenshots (~954 px), so screenshot pixels != click coords.
+- **Focus is intermittent** -- even `.focus()` occasionally doesn't stick when
+  the grid re-renders between CDP calls; the retry-both loop is the mitigation.
+  P2 batch sync should re-focus per cell and keep the retry.
+- **3 duplicate `Sync Test 1` columns** (`data-x` 0,1,2) exist -- the Add
+  Assignment popup returned a raw JSON page (render hiccup) and the teacher
+  resubmitted, landing 3 copies. Teacher to delete 2. P2 auto-create MUST do the
+  lookup-by-title pre-flight (already specced) to avoid this.
+- **Student id mapping:** the teacher's `1_54123` was a `personal_id` (SIS id)
+  shown in the gradebook, NOT the `data-uid`. The sync keys on `data-uid` (long
+  numeric). P2 should resolve roster ids to `data-uid` up front (read the row's
+  `personal_id` span, or maintain a map).
+
+### P1b readiness checklist
+
+- [x] Session cookie valid (~2 days into the ~90-day window)
+- [x] `--p1-discover` lists roster + columns (read-only)
+- [x] `--p1-write --dry-run` resolves the cell selector
+- [x] live `--p1-write` lands a grade that PERSISTS across reload
+- [x] verified mechanism baked into `p1_write` + this doc
+- [ ] teacher deletes the 2 duplicate `Sync Test 1` columns
+- [ ] P2: section-loop sync, auto-create with lookup-by-title, roster id -> uid
+
