@@ -260,6 +260,30 @@ def write_grade_to_cell(
     return {"ok": True, "typed": typed, "focused": True}
 
 
+def write_override(cdp: EdgeCDP, row_index: int, value: float, *, gp: bool = True) -> dict:
+    """Write the computed quarter grade into the gradebook OVERRIDE column (v3.3).
+
+    The override cell holds the SAME persistent <input class="grade
+    grader-edit-input"> as a normal grade cell -- verified live 2026-05-30:
+    #grader-grid-cell-gp_override-<row> (and overall_override-<row>), type=text,
+    not read-only -- so this reuses the P1b-verified write_grade_to_cell
+    mechanism unchanged (focus + Backspace-clear + real key events + Enter).
+
+    gp=True  -> gp_override: the grading-PERIOD (quarter) override. This is the
+                official grade that flows to PowerSchool SIS -- the v3 delivery
+                target (the computed quarter_grade(pc, work) per student, MP).
+    gp=False -> overall_override: the year/overall column.
+
+    Returns write_grade_to_cell's {'ok', 'typed', 'focused'}.
+
+    NOT yet live-smoke-tested (the mechanism is identical to the verified grade
+    write, and a test override on a student is not cleanly revertible via this
+    path); do a single-shot live verify when there is a real value to write.
+    """
+    column_key = "gp_override" if gp else "overall_override"
+    return write_grade_to_cell(cdp, column_key, row_index, value)
+
+
 # --------------------------------------------------------------------------- #
 # Assignment lookup                                                            #
 # --------------------------------------------------------------------------- #

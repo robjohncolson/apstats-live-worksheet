@@ -129,5 +129,26 @@ class TestDeleteVerify(unittest.TestCase):
         self.assertTrue(res["ok"])
 
 
+class TestWriteOverride(unittest.TestCase):
+    def _capture(self):
+        calls = []
+        orig = ops.write_grade_to_cell
+        ops.write_grade_to_cell = lambda cdp, col, row, val: (
+            calls.append((col, row, val)), {"ok": True})[1]
+        self.addCleanup(lambda: setattr(ops, "write_grade_to_cell", orig))
+        return calls
+
+    def test_gp_override_by_default(self):
+        calls = self._capture()
+        res = ops.write_override(None, 2, 95)
+        self.assertEqual(calls, [("gp_override", 2, 95)])
+        self.assertTrue(res["ok"])
+
+    def test_overall_override_when_gp_false(self):
+        calls = self._capture()
+        ops.write_override(None, 4, 88, gp=False)
+        self.assertEqual(calls, [("overall_override", 4, 88)])
+
+
 if __name__ == "__main__":
     unittest.main()
