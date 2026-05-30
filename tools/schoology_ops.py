@@ -441,10 +441,12 @@ def add_assignment(
 
     # The create POSTs to /course/<id>/materials/assignments/add?is_popup=1, so
     # match THAT url. "assignment-creation-complete" is a token in the JSON
-    # response BODY, not the url (live smoke 2026-05-30, where the old value
-    # never matched). Caveat: the response is a redirect-away navigation, so
-    # getResponseBody can still lose the race -- the DOM poll below plus the
-    # find-by-title reconciliation remain the reliable create-confirmation paths.
+    # response BODY, not the url. Live-verified 2026-05-30: with a reliable
+    # submit, this filter matches that one response (out of ~100) and
+    # getResponseBody returns the JSON (status 200, assignment_nid present) --
+    # the is_popup form yields a normal capturable response, not an evicted
+    # navigation, so the fast-path fires. The DOM poll below + find-by-title
+    # reconciliation stay as fallback / safety net.
     if hasattr(cdp, "wait_for_response"):
         try:
             captured = cdp.wait_for_response("materials/assignments/add", timeout=8.0)

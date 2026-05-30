@@ -933,11 +933,14 @@ sync off) to confirm the create-nid Network fast-path. Findings:
   returned `None`. ROOT CAUSE: that string is a token in the JSON response BODY
   (`"path":...`), NOT in the response URL. The real create POSTs to
   `/course/<id>/materials/assignments/add?is_popup=1` (form `s-grade-item-add-form`
-  action). **Fix:** filter corrected to `materials/assignments/add`. CAVEAT: the
-  create response is a top-level navigation the page redirects away from, so even
-  with the right filter `getResponseBody` may lose the race ("No resource") -- the
-  fast-path is best-effort, and the DOM poll + find-by-title reconciliation remain
-  the reliable create-confirmation paths.
+  action). **Fix:** filter corrected to `materials/assignments/add`. **KEEP
+  (live-verified 2026-05-30, re-smoke with a reliable submit):** the corrected
+  filter matches that one response (out of ~100) and `getResponseBody` returns
+  the JSON (status 200, `assignment_nid` present) -- the `is_popup` form yields
+  a normal capturable response, NOT an evicted navigation, so the fast-path
+  FIRES and supplies the nid from the network. The earlier "redirect race"
+  worry did not materialize. DOM poll + find-by-title reconciliation stay as
+  fallback / safety net.
 - **Delete `ok` is a false-negative.** `delete_assignment` returned `ok=False`
   but the gradebook confirmed the column was GONE (`find_assignment_id_by_title`
   == None; count back to baseline). The confirm-form-renders check is unreliable.
@@ -946,5 +949,14 @@ sync off) to confirm the create-nid Network fast-path. Findings:
   form-renders check is only the fallback. This is the same false-negative that
   made the `P2 Retry Test` strays look outstanding when they were already gone.
 
-Both fixes are code-only + unit-tested (`tests/test_schoology_ops.py`); the
-corrected fast-path still needs a live re-smoke to decide keep-vs-strip.
+Both fixes are unit-tested (`tests/test_schoology_ops.py`) AND live-verified
+(re-smoke 2026-05-30): the corrected fast-path fired and captured the nid from
+the network; the gradebook-truth delete returned ok=True correctly. DECISION:
+KEEP the fast-path.
+
+**Flaky submit (separate finding, open):** in one re-smoke the coordinate-click
+on `input#edit-submit` MISSED (no create fired at all), while a JS `.click()` on
+the same button fired it reliably. The submit GESTURE -- not the capture -- is
+the weak link. Consider switching `add_assignment`'s submit to a JS
+`document.querySelector('input#edit-submit').click()`. The reconciliation re-run
+already tolerates a missed submit, so this is reliability, not correctness.
