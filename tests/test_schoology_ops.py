@@ -40,6 +40,7 @@ class FakeCDP:
         self.title_lookup = title_lookup     # what find_assignment_id_by_title sees
         self.clicks = []
         self.urls = []
+        self.evals = []
 
     def attach_url(self, url, wait_ms=0):
         self.urls.append(url)
@@ -52,10 +53,13 @@ class FakeCDP:
         return self.wfr_result
 
     def eval_js(self, expr):
+        self.evals.append(expr)
         if "s-grade-item-add-form" in expr:
             return True
         if "s-grade-item-delete-form" in expr:
             return self.delete_form_present
+        if "edit-submit" in expr:             # JS submit click -> "did I click it"
+            return True
         if "getBoundingClientRect" in expr:
             return {"x": 10, "y": 10}
         if "document.body" in expr and "textContent" in expr:
@@ -82,6 +86,14 @@ class TestAddAssignmentFilter(unittest.TestCase):
         self.assertTrue(res["ok"])
         self.assertEqual(res["assignment_id"], "777")
         self.assertEqual(fake.wfr_calls, ["materials/assignments/add"])
+
+    def test_submit_uses_js_click_not_coordinate(self):
+        # Live smoke showed the coordinate-click missed; the submit is now a JS
+        # click on input#edit-submit (no cdp.click(x,y)).
+        fake = FakeCDP(wfr_result={"body": json.dumps({"assignment_nid": "1"})})
+        ops.add_assignment(fake, "123", title="T", category_id="c", grading_period_id="g")
+        self.assertEqual(fake.clicks, [])
+        self.assertTrue(any("edit-submit" in e and "click()" in e for e in fake.evals))
 
     def test_corrected_filter_matches_real_post_url(self):
         # Documents the root cause: the filter must match the POST URL, not the
