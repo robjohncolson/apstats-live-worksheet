@@ -40,10 +40,8 @@ ASCII only. LF line endings.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
-import time
 from typing import Optional
 
 # Reuse the existing CDP rig.
@@ -51,8 +49,12 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(SCRIPT_DIR, "cdp"))
 from edge import EdgeCDP, DEFAULT_PORT  # type: ignore
 
+# Live-ops layer -- inject_helpers, helper_call, detect_login_state,
+# gradebook_url, and write_grade_to_cell live here so P2+ can import them.
+import schoology_ops as ops
 
-SCHOOLOGY_BASE = "https://lynnschools.schoology.com"
+
+SCHOOLOGY_BASE = ops.SCHOOLOGY_BASE
 
 # --- AP Stats sync targets per s120 P0 discovery + s121 user decision ---
 # Sec 1 = Period B; Sec 2 = Period E.
@@ -62,61 +64,16 @@ SECTION_TO_COURSE_ID = {
 }
 COURSE_ID_TO_SECTION = {v: k for k, v in SECTION_TO_COURSE_ID.items()}
 
-HELPERS_PATH = os.path.join(SCRIPT_DIR, "schoology-dom-helpers.js")
-
-
-# --------------------------------------------------------------------------- #
-# Page navigation                                                              #
-# --------------------------------------------------------------------------- #
-
-def gradebook_url(course_id: str) -> str:
-    """Return the gradebook URL for a Schoology course id."""
-    return f"{SCHOOLOGY_BASE}/course/{course_id}/grades"
-
-
-def add_assignment_url(course_id: str, is_test: bool = False) -> str:
-    """Return the Add Assignment popup form URL for a course."""
-    suffix = "add_assessment" if is_test else "add"
-    return f"{SCHOOLOGY_BASE}/course/{course_id}/materials/assignments/{suffix}?is_popup=1"
-
-
-# --------------------------------------------------------------------------- #
-# Helper injection                                                             #
-# --------------------------------------------------------------------------- #
-
-def inject_helpers(cdp: EdgeCDP) -> None:
-    """Read tools/schoology-dom-helpers.js and eval it in the live page.
-
-    The IIFE in the helpers file attaches window.SchoologyDomHelpers; once
-    evaluated, every subsequent helper call goes through Runtime.evaluate
-    on `window.SchoologyDomHelpers.<fn>`.
-    """
-    with open(HELPERS_PATH, "r", encoding="utf-8") as f:
-        src = f.read()
-    cdp.eval_js(src)
-
-
-def helper_call(cdp: EdgeCDP, expression: str):
-    """Evaluate `JSON.stringify(<expression>)` and JSON-decode on Python side.
-
-    Use this for all dom-helpers.js calls so the result is a plain Python
-    object instead of a CDP RemoteObject.
-    """
-    wrapped = f"JSON.stringify({expression})"
-    raw = cdp.eval_js(wrapped)
-    if raw is None:
-        return None
-    return json.loads(raw)
+# Re-export for any callers that imported these names from this module directly.
+inject_helpers   = ops.inject_helpers
+helper_call      = ops.helper_call
+detect_login_state = ops.detect_login_state
+gradebook_url    = ops.gradebook_url
 
 
 # --------------------------------------------------------------------------- #
 # Login detection                                                              #
 # --------------------------------------------------------------------------- #
-
-def detect_login_state(cdp: EdgeCDP) -> str:
-    state = helper_call(cdp, "window.SchoologyDomHelpers.detectLoginState(document)")
-    return state or "unknown"
-
 
 def assert_authenticated(cdp: EdgeCDP) -> None:
     state = detect_login_state(cdp)
@@ -151,12 +108,12 @@ def p1_discover(cdp: EdgeCDP, course_id: str) -> None:
     """
     section_name = COURSE_ID_TO_SECTION.get(course_id, "?")
     print(f"schoology-sync: discovering course {course_id} ({section_name})")
-    cdp.attach_url(gradebook_url(course_id), wait_ms=3500)
-    inject_helpers(cdp)
+    cdp.attach_url(ops.gradebook_url(course_id), wait_ms=3500)
+    ops.inject_helpers(cdp)
     assert_authenticated(cdp)
 
-    students = helper_call(cdp, "window.SchoologyDomHelpers.listStudents(document)") or []
-    columns = helper_call(cdp, "window.SchoologyDomHelpers.listAssignments(document)") or []
+    students = ops.list_students(cdp)
+    columns  = ops.list_assignments(cdp)
 
     print()
     print(f"Students ({len(students)}):")
@@ -190,14 +147,18 @@ def p1_write(
 
     With --dry-run, prints the resolved cell selector + the value that
     WOULD be typed, but does not click or type.
+
+    The live write delegates to ops.write_grade_to_cell which contains
+    the P1b-VERIFIED mechanism (byte-for-byte extraction from the original
+    p1_write body in schoology-sync.py, s122 2026-05-29).
     """
     section_name = COURSE_ID_TO_SECTION.get(course_id, "?")
     print(f"schoology-sync: P1 write into course {course_id} ({section_name})")
-    cdp.attach_url(gradebook_url(course_id), wait_ms=3500)
-    inject_helpers(cdp)
+    cdp.attach_url(ops.gradebook_url(course_id), wait_ms=3500)
+    ops.inject_helpers(cdp)
     assert_authenticated(cdp)
 
-    students = helper_call(cdp, "window.SchoologyDomHelpers.listStudents(document)") or []
+    students = ops.list_students(cdp)
     student = next((s for s in students if s.get("studentId") == student_id), None)
     if student is None:
         ids = ", ".join(s.get("studentId", "") for s in students)
@@ -208,7 +169,7 @@ def p1_write(
         )
         raise SystemExit(3)
 
-    columns = helper_call(cdp, "window.SchoologyDomHelpers.listAssignments(document)") or []
+    columns = ops.list_assignments(cdp)
     if not any(c.get("columnKey") == column_key for c in columns):
         keys = ", ".join(c.get("columnKey", "") for c in columns)
         print(
@@ -218,10 +179,7 @@ def p1_write(
         )
         raise SystemExit(4)
 
-    selector = helper_call(
-        cdp,
-        f"window.SchoologyDomHelpers.findCellSelector({{ columnKey: {json.dumps(column_key)}, rowIndex: {int(student['rowIndex'])} }})"
-    )
+    selector = ops.find_cell_selector(cdp, column_key, int(student["rowIndex"]))
     if not selector:
         print("schoology-sync: findCellSelector returned null", file=sys.stderr)
         raise SystemExit(5)
@@ -233,104 +191,27 @@ def p1_write(
 
     if dry_run:
         # Confirm the selector actually resolves on the live page.
-        exists = cdp.eval_js(
-            f"!!document.querySelector({json.dumps(selector)})"
-        )
+        import json as _json
+        exists = cdp.eval_js(f"!!document.querySelector({_json.dumps(selector)})")
         print(f"  dry-run: cell present in DOM = {exists}")
         return
 
     # --- live write ------------------------------------------------------ #
-    # P1b-VERIFIED mechanism (s122, 2026-05-29). The grade cell holds a
-    # PERSISTENT <input class="grade grader-edit-input"> (always in the DOM,
-    # NO ng-model). Schoology saves the grade only on a REAL keystroke sequence
-    # committed with Enter -- synthetic value setters, insertText, and blur all
-    # FAIL to persist (the value lives locally but is discarded on reload).
-    # Working recipe (persistence confirmed by reloading the gradebook):
-    #   1. focus the input via JS .focus() -- deterministic. (A coordinate-click
-    #      also focuses it, but only after Angular binds its click handler, which
-    #      is flaky for the first clicks after load; .focus() never misses.)
-    #   2. clear the existing value with Backspace (so re-syncs overwrite).
-    #   3. type each character via Input.dispatchKeyEvent (full keyDown/keyUp
-    #      with text) so Angular's save handler fires.
-    #   4. commit with a real Enter key event.
-    input_sel = selector + " input.grader-edit-input"
-    if not cdp.eval_js(f"!!document.querySelector({json.dumps(input_sel)})"):
-        print(f"schoology-sync: grade input not found at {input_sel}", file=sys.stderr)
-        cdp.screenshot(os.path.join(SCRIPT_DIR, "cdp", "_shots", "schoology-p1-no-input.png"))
-        raise SystemExit(7)
+    # Delegates to ops.write_grade_to_cell -- the P1b-VERIFIED mechanism.
+    # See schoology_ops.py write_grade_to_cell docstring for the full recipe.
+    result = ops.write_grade_to_cell(cdp, column_key, int(student["rowIndex"]), value)
 
-    def _focused() -> bool:
-        return bool(cdp.eval_js(
-            f"document.activeElement===document.querySelector({json.dumps(input_sel)})"
-        ))
-
-    # Focus the input. Angular's first-render timing is flaky, so retry a few
-    # times, trying BOTH JS .focus() and a trusted coordinate-click, re-querying
-    # the input fresh each attempt (the grid can re-render between CDP calls).
-    focused = False
-    for _ in range(6):
-        cdp.eval_js(
-            f"(function(){{var a=document.querySelector({json.dumps(input_sel)});"
-            "if(a){a.scrollIntoView({block:'center',inline:'center'});a.focus();}})()"
-        )
-        time.sleep(0.35)
-        if _focused():
-            focused = True
-            break
-        rect = cdp.eval_js(
-            f"(function(){{var a=document.querySelector({json.dumps(input_sel)});if(!a)return null;"
-            "var r=a.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};}})()"
-        )
-        if rect:
-            cdp.click(int(rect["x"]), int(rect["y"]))
-            time.sleep(0.45)
-            if _focused():
-                focused = True
-                break
-
-    if not focused:
+    if not result.get("focused"):
         print("schoology-sync: could not focus the grade input after retries.", file=sys.stderr)
         cdp.screenshot(os.path.join(SCRIPT_DIR, "cdp", "_shots", "schoology-p1-no-input.png"))
         raise SystemExit(7)
 
-    def _key(vk: int, key: str, code: str, text: Optional[str] = None) -> None:
-        down = {"type": "keyDown", "key": key, "code": code,
-                "windowsVirtualKeyCode": vk, "nativeVirtualKeyCode": vk}
-        if text is not None:
-            down["text"] = text
-            down["unmodifiedText"] = text
-        cdp.send("Input.dispatchKeyEvent", down)
-        cdp.send("Input.dispatchKeyEvent", {"type": "keyUp", "key": key, "code": code,
-                                            "windowsVirtualKeyCode": vk, "nativeVirtualKeyCode": vk})
+    if not result.get("ok"):
+        print("schoology-sync: write_grade_to_cell reported failure.", file=sys.stderr)
+        cdp.screenshot(os.path.join(SCRIPT_DIR, "cdp", "_shots", "schoology-p1-no-input.png"))
+        raise SystemExit(7)
 
-    # Clear any existing value first so a re-sync overwrites cleanly.
-    existing = cdp.eval_js(
-        f"(function(){{var a=document.querySelector({json.dumps(input_sel)});return a?a.value:'';}})()"
-    ) or ""
-    for _ in range(len(str(existing)) + 1):
-        _key(8, "Backspace", "Backspace")
-
-    # Format the value: drop a trailing ".0" so a whole number types as "95".
-    val_str = str(int(value)) if float(value).is_integer() else str(value)
-
-    # Type each character via a real key event so Angular's save handler fires.
-    code_for = {"0": "Digit0", "1": "Digit1", "2": "Digit2", "3": "Digit3", "4": "Digit4",
-                "5": "Digit5", "6": "Digit6", "7": "Digit7", "8": "Digit8", "9": "Digit9",
-                ".": "Period", "-": "Minus"}
-    vk_for = {"0": 48, "1": 49, "2": 50, "3": 51, "4": 52, "5": 53, "6": 54, "7": 55,
-              "8": 56, "9": 57, ".": 190, "-": 189}
-    for ch in val_str:
-        _key(vk_for.get(ch, 0), ch, code_for.get(ch, ""), text=ch)
-    time.sleep(0.3)
-
-    typed = cdp.eval_js(
-        f"(function(){{var a=document.querySelector({json.dumps(input_sel)});return a?a.value:null;}})()"
-    )
-    print(f"  input value after typing: {typed!r}")
-
-    # Commit with a real Enter key event (triggers Schoology's save).
-    _key(13, "Enter", "Enter", text="\r")
-    time.sleep(2.0)
+    print(f"  input value after typing: {result.get('typed')!r}")
 
     shot_path = os.path.join(SCRIPT_DIR, "cdp", "_shots", "schoology-p1-after-write.png")
     cdp.screenshot(shot_path)

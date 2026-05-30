@@ -774,3 +774,62 @@ The WORKING recipe (in `p1_write`):
 - [ ] teacher deletes the 2 duplicate `Sync Test 1` columns
 - [ ] P2: section-loop sync, auto-create with lookup-by-title, roster id -> uid
 
+## P2 (2026-05-29) -- section-sync ENGINE + dry-run (live create/push = P2b gate)
+
+Built via a parallel Sonnet fan-out (3 implementers against frozen contracts) +
+integration/review. Files:
+
+- `tools/schoology_sync_lib.py` -- PURE logic (classify_lesson_key,
+  assignment_title/points, marking_period_for_date, should_push,
+  plan_assignment_work, compute_sync_actions). `tests/test_schoology_sync_lib.py` (74).
+- `tools/schoology_ops.py` -- importable live ops EXTRACTED from the P1b verified
+  code: connect, navigate, inject_helpers, list_students/assignments/categories/
+  marking_periods, find_cell_selector, write_grade_to_cell (the verified P1b
+  mechanism, byte-identical), find_assignment_id_by_title, add_assignment.
+  `schoology-sync.py` refactored to import it; the P1 CLI is unchanged.
+- `tools/schoology_sync_section.py` -- the `--sync-section <Period> [--dry-run]`
+  CLI: scope from the schedule (lessons + progressChecks + posters for the
+  section's period), plan_assignment_work, auto-create, grade-push, a StateStore
+  abstraction (LocalJsonStateStore default at gitignored
+  `tools/.schoology-sync-state.json`; SupabaseStateStore is a stub pointing at
+  migration 0010). `tests/test_schoology_sync_section.py` (26).
+- `roster-server/migrations/0010_schoology_sync.sql` -- the 3 tracking tables
+  (named 0010 because 0008/0009 already exist; table DDL verbatim per the spec).
+
+**VERIFIED:** pure logic (74 + 26 tests, all green); **dry-run LIVE** -- it reads
+the real gradebook, resolves 95 scope items for Period B, and plans 95 correct
+creates (Topic 1.1 due 2026-09-09 ... Unit 9 Progress Check due 2027-02-04, right
+kinds/titles/dates from the SY26-27 pack-left schedule), with a clean summary and
+ZERO writes. State-based idempotency holds in tests: a 2nd run with the same
+state file plans 0 creates (plan_assignment_work sees stored ids) and 0 pushes
+(compute_sync_actions skips equal values).
+
+**Integration bugs found + fixed:** `ops.connect`/`ops.navigate` were missing
+(contract gap); the orchestration read the STALE root `data/lesson-schedule.json`
+(null U1-U5 dates + old SY25-26 U6-U9 dates) instead of the canonical
+`roster-server/data/lesson-schedule.json` (SY26-27 pack-left); the orchestration
+passed `None` as `cdp` to the live ops (BLOCKER -- the live path would crash).
+All fixed + re-verified.
+
+### P2b GATE -- run `--dry-run` ONLY until this is done
+
+The live create/push path is built but NOT live-verified (mirrors how P1a
+shipped a scaffold and P1b verified the live write). Two functions need a live
+create to nail:
+
+- **`find_assignment_id_by_title`** -- the header-title -> `data-x` mapping needs
+  live RE. The gradebook's column-header titles render in `ng-binding` spans
+  whose `closest('[data-x]')` is null, and `[role="columnheader"]` textContent
+  includes menu cruft, so the current exact-match likely returns null. Until
+  fixed, the lookup-by-title pre-flight may not detect existing columns ->
+  duplicate-create risk if the local state is lost.
+- **`add_assignment`** id-capture -- the `/assignment/(\d+)` URL regex likely
+  won't match; the real create returns a JSON blob with `assignment_nid` (per
+  the P1b incident). Needs a live create to confirm the form-fill + to capture
+  the id (parse `assignment_nid`, or diff `list_assignments` before/after).
+
+**P2b = one live create smoke**: create ONE test assignment via `add_assignment`,
+confirm the form-fill works + `find_assignment_id_by_title` finds it + the id/
+column is captured, then delete it -- then enable live `--sync-section`. This is
+the P1b-style live reverse-engineering for the CREATE path.
+

@@ -1,0 +1,539 @@
+"""schoology_ops.py -- importable live-ops layer for Schoology grade sync.
+
+Extracted from tools/schoology-sync.py (P1b verified, 2026-05-29) so that
+higher-level batch-sync code (P2+) can import these without re-implementing
+the proven CDP mechanics.
+
+All functions take an EdgeCDP instance as their first argument and perform
+I/O against the live page. None of them navigate unless documented.
+
+ASCII only. LF line endings.
+"""
+from __future__ import annotations
+
+import json
+import os
+import time
+from typing import Optional
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Insert the cdp dir so `from edge import EdgeCDP` resolves the same way
+# schoology-sync.py does (tools/cdp/edge.py).
+import sys
+sys.path.insert(0, os.path.join(SCRIPT_DIR, "cdp"))
+from edge import EdgeCDP, DEFAULT_PORT  # type: ignore
+
+SCHOOLOGY_BASE = "https://lynnschools.schoology.com"
+HELPERS_PATH   = os.path.join(SCRIPT_DIR, "schoology-dom-helpers.js")
+
+
+def connect(reuse: bool = True, port: int = DEFAULT_PORT) -> EdgeCDP:
+    """Launch/attach the Edge CDP rig for Schoology and return the client.
+
+    reuse=True attaches to an already-running debug session if present (keeps
+    the warm Schoology cookie); otherwise it launches Edge. Mirrors how
+    schoology-sync.py boots the rig, so P2 orchestration shares one entry point.
+    """
+    cdp = EdgeCDP(port=port)
+    cdp.launch(SCHOOLOGY_BASE, reuse=reuse)
+    return cdp
+
+
+def navigate(cdp, url: str, wait_ms: int = 3500) -> None:
+    """Navigate the attached page to `url` and wait for load (thin wrapper)."""
+    cdp.attach_url(url, wait_ms=wait_ms)
+
+
+# --------------------------------------------------------------------------- #
+# URLs                                                                         #
+# --------------------------------------------------------------------------- #
+
+def gradebook_url(course_id: str) -> str:
+    """Return the gradebook URL for a Schoology course id."""
+    return f"{SCHOOLOGY_BASE}/course/{course_id}/grades"
+
+
+def add_assignment_url(course_id: str, is_test: bool = False) -> str:
+    """Return the Add Assignment popup form URL for a course.
+
+    is_test=True uses the add_assessment variant (Test/Quiz form); both
+    forms share the same field schema (Q4 in P0 discovery).
+    """
+    suffix = "add_assessment" if is_test else "add"
+    return f"{SCHOOLOGY_BASE}/course/{course_id}/materials/assignments/{suffix}?is_popup=1"
+
+
+# --------------------------------------------------------------------------- #
+# Helper injection                                                             #
+# --------------------------------------------------------------------------- #
+
+def inject_helpers(cdp: EdgeCDP) -> None:
+    """Eval tools/schoology-dom-helpers.js in the live page.
+
+    Attaches window.SchoologyDomHelpers. Safe to call multiple times --
+    the IIFE overwrites the existing binding.
+    """
+    with open(HELPERS_PATH, "r", encoding="utf-8") as f:
+        src = f.read()
+    cdp.eval_js(src)
+
+
+def helper_call(cdp: EdgeCDP, expression: str):
+    """Eval JSON.stringify(<expression>) and JSON-decode the result.
+
+    Returns a plain Python object. Returns None if the page returns
+    undefined or the JSON is empty.
+    """
+    wrapped = f"JSON.stringify({expression})"
+    raw = cdp.eval_js(wrapped)
+    if raw is None:
+        return None
+    return json.loads(raw)
+
+
+# --------------------------------------------------------------------------- #
+# Login                                                                        #
+# --------------------------------------------------------------------------- #
+
+def detect_login_state(cdp: EdgeCDP) -> str:
+    """Return 'authenticated' | 'login_required' | 'unknown'.
+
+    Requires helpers already injected (call inject_helpers first).
+    """
+    state = helper_call(cdp, "window.SchoologyDomHelpers.detectLoginState(document)")
+    return state or "unknown"
+
+
+# --------------------------------------------------------------------------- #
+# Gradebook readers                                                            #
+# --------------------------------------------------------------------------- #
+
+def list_students(cdp: EdgeCDP) -> list:
+    """Return [{studentId, rowIndex, name}] from the live gradebook.
+
+    Requires helpers already injected and the gradebook page loaded.
+    """
+    return helper_call(cdp, "window.SchoologyDomHelpers.listStudents(document)") or []
+
+
+def list_assignments(cdp: EdgeCDP) -> list:
+    """Return [{columnKey, isAggregate}] from the live gradebook.
+
+    Filters out AngularJS placeholder columns (grader-grid-cell-type-none).
+    Requires helpers already injected and the gradebook page loaded.
+    """
+    return helper_call(cdp, "window.SchoologyDomHelpers.listAssignments(document)") or []
+
+
+def find_cell_selector(cdp: EdgeCDP, column_key: str, row_index: int) -> Optional[str]:
+    """Return the CSS selector for a specific grade cell, or None.
+
+    The selector is '#grader-grid-cell-<col>-<row>' -- stable, id-based.
+    Requires helpers already injected.
+    """
+    expr = (
+        f"window.SchoologyDomHelpers.findCellSelector("
+        f"{{ columnKey: {json.dumps(column_key)}, rowIndex: {int(row_index)} }})"
+    )
+    return helper_call(cdp, expr)
+
+
+# --------------------------------------------------------------------------- #
+# Grade write                                                                  #
+# --------------------------------------------------------------------------- #
+
+def write_grade_to_cell(
+    cdp: EdgeCDP,
+    column_key: str,
+    row_index: int,
+    value: float,
+) -> dict:
+    """Write a grade into one gradebook cell.  P1b-VERIFIED mechanism.
+
+    The grade cell (#grader-grid-cell-<col>-<row>) holds a PERSISTENT
+    <input class="grade grader-edit-input"> (always in DOM, no ng-model).
+    Schoology saves ONLY on a real keystroke sequence committed with Enter.
+    Synthetic value setters, insertText, and blur all fail to persist.
+
+    Steps:
+      1. Resolve the cell selector via find_cell_selector.
+      2. Verify the input exists in the DOM.
+      3. Focus via JS .focus() with a retry loop that also tries a
+         trusted coordinate-click on the input rect center (Angular init
+         is flaky). Up to 6 attempts, re-querying the input each time.
+      4. Backspace-clear the existing value.
+      5. Type each char via Input.dispatchKeyEvent (keyDown/keyUp with
+         text) -- Angular's save handler requires real keystrokes.
+      6. Commit with a real Enter key event.
+
+    Returns {'ok': bool, 'typed': <input value after typing>, 'focused': bool}.
+
+    This function is a byte-for-byte extraction of the working p1_write()
+    body in schoology-sync.py -- do not change the mechanism without
+    updating the P1b record in SCHOOLOGY_SYNC_V1_BUILD.md.
+    """
+    selector = find_cell_selector(cdp, column_key, row_index)
+    if not selector:
+        return {"ok": False, "typed": None, "focused": False}
+
+    input_sel = selector + " input.grader-edit-input"
+    if not cdp.eval_js(f"!!document.querySelector({json.dumps(input_sel)})"):
+        return {"ok": False, "typed": None, "focused": False}
+
+    def _focused() -> bool:
+        return bool(cdp.eval_js(
+            f"document.activeElement===document.querySelector({json.dumps(input_sel)})"
+        ))
+
+    # Focus the input. Angular's first-render timing is flaky, so retry a few
+    # times, trying BOTH JS .focus() and a trusted coordinate-click, re-querying
+    # the input fresh each attempt (the grid can re-render between CDP calls).
+    focused = False
+    for _ in range(6):
+        cdp.eval_js(
+            f"(function(){{var a=document.querySelector({json.dumps(input_sel)});"
+            "if(a){a.scrollIntoView({block:'center',inline:'center'});a.focus();}})()"
+        )
+        time.sleep(0.35)
+        if _focused():
+            focused = True
+            break
+        rect = cdp.eval_js(
+            f"(function(){{var a=document.querySelector({json.dumps(input_sel)});if(!a)return null;"
+            "var r=a.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};}})()"
+        )
+        if rect:
+            cdp.click(int(rect["x"]), int(rect["y"]))
+            time.sleep(0.45)
+            if _focused():
+                focused = True
+                break
+
+    if not focused:
+        return {"ok": False, "typed": None, "focused": False}
+
+    def _key(vk: int, key: str, code: str, text: Optional[str] = None) -> None:
+        down = {"type": "keyDown", "key": key, "code": code,
+                "windowsVirtualKeyCode": vk, "nativeVirtualKeyCode": vk}
+        if text is not None:
+            down["text"] = text
+            down["unmodifiedText"] = text
+        cdp.send("Input.dispatchKeyEvent", down)
+        cdp.send("Input.dispatchKeyEvent", {
+            "type": "keyUp", "key": key, "code": code,
+            "windowsVirtualKeyCode": vk, "nativeVirtualKeyCode": vk,
+        })
+
+    # Clear any existing value first so a re-sync overwrites cleanly.
+    existing = cdp.eval_js(
+        f"(function(){{var a=document.querySelector({json.dumps(input_sel)});return a?a.value:'';}})()"
+    ) or ""
+    for _ in range(len(str(existing)) + 1):
+        _key(8, "Backspace", "Backspace")
+
+    # Format the value: drop trailing ".0" so a whole number types as "95".
+    val_str = str(int(value)) if float(value).is_integer() else str(value)
+
+    # Type each character via a real key event so Angular's save handler fires.
+    code_for = {
+        "0": "Digit0", "1": "Digit1", "2": "Digit2", "3": "Digit3", "4": "Digit4",
+        "5": "Digit5", "6": "Digit6", "7": "Digit7", "8": "Digit8", "9": "Digit9",
+        ".": "Period", "-": "Minus",
+    }
+    vk_for = {
+        "0": 48, "1": 49, "2": 50, "3": 51, "4": 52, "5": 53, "6": 54, "7": 55,
+        "8": 56, "9": 57, ".": 190, "-": 189,
+    }
+    for ch in val_str:
+        _key(vk_for.get(ch, 0), ch, code_for.get(ch, ""), text=ch)
+    time.sleep(0.3)
+
+    typed = cdp.eval_js(
+        f"(function(){{var a=document.querySelector({json.dumps(input_sel)});return a?a.value:null;}})()"
+    )
+
+    # Commit with a real Enter key event (triggers Schoology's save).
+    _key(13, "Enter", "Enter", text="\r")
+    time.sleep(2.0)
+
+    return {"ok": True, "typed": typed, "focused": True}
+
+
+# --------------------------------------------------------------------------- #
+# Assignment lookup                                                            #
+# --------------------------------------------------------------------------- #
+
+def find_assignment_id_by_title(cdp: EdgeCDP, title: str) -> Optional[str]:
+    """Scan gradebook column headers for an assignment whose title matches.
+
+    Returns the data-x columnKey string, or None if not found.
+    Requires the gradebook page to be loaded and helpers injected.
+
+    Used as a lookup-by-title pre-flight for P2 auto-create to avoid
+    creating duplicate assignments (P1b gotcha: 3 duplicate Sync Test 1
+    columns appeared when the Add Assignment form was resubmitted).
+    """
+    found = cdp.eval_js(
+        "(function(){"
+        "var headers = document.querySelectorAll('.gradebook-period-title, "
+        "[data-testid=\"assignment-title\"], .grader-grid-header-title, "
+        ".assignment-title, [role=\"columnheader\"] .title, "
+        "[role=\"columnheader\"]');"
+        "var title = " + json.dumps(title) + ";"
+        "for (var i = 0; i < headers.length; i++) {"
+        "  var el = headers[i];"
+        "  var text = (el.textContent || el.getAttribute('aria-label') || '').trim();"
+        "  if (text === title) {"
+        "    var cell = el.closest('[data-x]');"
+        "    if (cell) return cell.getAttribute('data-x');"
+        "  }"
+        "}"
+        "return null;"
+        "})()"
+    )
+    return found or None
+
+
+# --------------------------------------------------------------------------- #
+# Add Assignment form                                                          #
+# --------------------------------------------------------------------------- #
+
+def add_assignment(
+    cdp: EdgeCDP,
+    course_id: str,
+    *,
+    title: str,
+    points: int = 100,
+    category_id: str,
+    grading_period_id: str,
+    due_date: Optional[str] = None,
+    publish_scores: bool = True,
+    sync_to_sis: bool = True,
+) -> dict:
+    """Navigate to the Add Assignment form and submit it.
+
+    Fills form id s-grade-item-add-form per the P0 Q4 schema:
+      - title (text, required)
+      - max_points (default 100)
+      - grading_category_id (select-one)
+      - grading_period_id (select-one)
+      - due_date[date] (optional, YYYY-MM-DD)
+      - publish_scores (checkbox, checked when publish_scores=True)
+      - sync_to_sis_wrapper[sync_to_sis_option] (checkbox, checked when sync_to_sis=True)
+
+    Sets <select>/<input> values via JS + dispatches change/input events,
+    then submits by clicking input#edit-submit (op=Create).
+
+    Returns {'ok': bool, 'assignment_id': str|None, 'error': str|None}.
+    assignment_id is captured from the post-submit URL or DOM if possible;
+    if not capturable, returns None with ok=True (caller falls back to
+    find_assignment_id_by_title).
+
+    s121 teacher decision: sync_to_sis ALWAYS True, publish_scores ALWAYS True.
+    """
+    cdp.attach_url(add_assignment_url(course_id), wait_ms=3000)
+
+    # Verify the form is present.
+    form_present = cdp.eval_js("!!document.querySelector('form#s-grade-item-add-form')")
+    if not form_present:
+        return {"ok": False, "assignment_id": None, "error": "Add Assignment form not found"}
+
+    def _set_input(name: str, val: str) -> None:
+        js = (
+            "(function(){"
+            f"  var el = document.querySelector('input[name=\"{name}\"], textarea[name=\"{name}\"]');"
+            "  if (!el) return;"
+            f"  el.value = {json.dumps(val)};"
+            "  el.dispatchEvent(new Event('input',  {bubbles:true}));"
+            "  el.dispatchEvent(new Event('change', {bubbles:true}));"
+            "})()"
+        )
+        cdp.eval_js(js)
+
+    def _set_select(name: str, val: str) -> None:
+        js = (
+            "(function(){"
+            f"  var el = document.querySelector('select[name=\"{name}\"]');"
+            "  if (!el) return;"
+            f"  el.value = {json.dumps(val)};"
+            "  el.dispatchEvent(new Event('change', {bubbles:true}));"
+            "})()"
+        )
+        cdp.eval_js(js)
+
+    def _set_checkbox(name: str, checked: bool) -> None:
+        js = (
+            "(function(){"
+            f"  var el = document.querySelector('input[name=\"{name}\"]');"
+            "  if (!el) return;"
+            f"  el.checked = {json.dumps(checked)};"
+            "  el.dispatchEvent(new Event('change', {bubbles:true}));"
+            "})()"
+        )
+        cdp.eval_js(js)
+
+    _set_input("title", title)
+    _set_input("max_points", str(points))
+    _set_select("grading_category_id", category_id)
+    _set_select("grading_period_id", grading_period_id)
+    if due_date:
+        _set_input("due_date[date]", due_date)
+    _set_checkbox("publish_scores", publish_scores)
+    _set_checkbox("sync_to_sis_wrapper[sync_to_sis_option]", sync_to_sis)
+
+    time.sleep(0.5)
+
+    # Submit by clicking input#edit-submit (op=Create).
+    submit_rect = cdp.eval_js(
+        "(function(){"
+        "  var el = document.querySelector('input#edit-submit');"
+        "  if (!el) return null;"
+        "  var r = el.getBoundingClientRect();"
+        "  return {x: r.left + r.width/2, y: r.top + r.height/2};"
+        "})()"
+    )
+    if not submit_rect:
+        return {"ok": False, "assignment_id": None, "error": "Submit button not found"}
+
+    cdp.click(int(submit_rect["x"]), int(submit_rect["y"]))
+    time.sleep(3.0)
+
+    # Try to capture the new assignment id from the current URL or DOM.
+    # After submit the popup may redirect to the gradebook or stay on the
+    # form with an error -- inspect both.
+    current_url = cdp.eval_js("window.location.href") or ""
+    assignment_id = None
+
+    # URL pattern after successful create often contains the new id.
+    import re
+    m = re.search(r"/assignment/(\d+)", current_url)
+    if m:
+        assignment_id = m.group(1)
+
+    # Check for a visible error message on the form.
+    error_text = cdp.eval_js(
+        "(function(){"
+        "  var el = document.querySelector('.messages.error, .error-messages, "
+        ".form-item--error-message');"
+        "  return el ? el.textContent.trim() : null;"
+        "})()"
+    )
+    if error_text:
+        return {"ok": False, "assignment_id": None, "error": error_text}
+
+    return {"ok": True, "assignment_id": assignment_id, "error": None}
+
+
+# --------------------------------------------------------------------------- #
+# Grade setup readers                                                          #
+# --------------------------------------------------------------------------- #
+
+def list_categories(cdp: EdgeCDP, course_id: str) -> dict:
+    """Navigate to grade setup and return {category_name: category_id}.
+
+    The weight inputs are named categories[<id>][weight]; each category
+    row also carries the category name in its title input or row text.
+    Returns an empty dict on parse failure.
+    """
+    cdp.attach_url(f"{SCHOOLOGY_BASE}/course/{course_id}/gradesetup", wait_ms=3000)
+
+    result = cdp.eval_js(
+        "(function(){"
+        "  var out = {};"
+        # Weight inputs: name="categories[<id>][weight]"
+        "  var inputs = document.querySelectorAll('input[name*=\"categories[\"]');"
+        "  for (var i = 0; i < inputs.length; i++) {"
+        "    var inp = inputs[i];"
+        "    var m = inp.name.match(/categories\\[(\\d+)\\]/);"
+        "    if (!m) continue;"
+        "    var id = m[1];"
+        # Walk up to the row container and look for the title input or text.
+        "    var row = inp.closest('tr, .category-row, li, .form-item');"
+        "    if (!row) row = inp.parentElement;"
+        "    var nameEl = row.querySelector('input[name*=\"[title]\"], "
+        "input[name*=\"[name]\"]');"
+        "    var name = nameEl ? nameEl.value.trim() : '';"
+        "    if (!name) {"
+        "      var spans = row.querySelectorAll('.title, .category-title, td, th');"
+        "      for (var j = 0; j < spans.length; j++) {"
+        "        var t = spans[j].textContent.trim();"
+        "        if (t && t.length < 80) { name = t; break; }"
+        "      }"
+        "    }"
+        "    if (name && id) out[name] = id;"
+        "  }"
+        "  return out;"
+        "})()"
+    )
+    return result or {}
+
+
+def list_marking_periods(cdp: EdgeCDP, course_id: str) -> dict:
+    """Navigate to the Add Assignment form and read the grading_period_id select.
+
+    Returns { grading_period_id(str): {'start':'YYYY-MM-DD','end':'YYYY-MM-DD'} }.
+
+    First tries to read Drupal.settings grading_period_dates (a JSON map
+    { id: {start: ISO8601, end: ISO8601} }). Falls back to parsing the
+    select option text (format 'MP N: M/D/YY - M/D/YY').
+
+    The IDs are per-section and differ between AP Stats Sec 1 and Sec 2;
+    call this once per course_id at the start of a sync run.
+    """
+    cdp.attach_url(add_assignment_url(course_id), wait_ms=3000)
+
+    # First try Drupal.settings (if the page exposes it).
+    drupal_result = cdp.eval_js(
+        "(function(){"
+        "  try {"
+        "    var s = Drupal.settings;"
+        "    if (!s) return null;"
+        "    var gp = s.grading_period_dates || (s.s_common && s.s_common.grading_period_dates);"
+        "    if (!gp) return null;"
+        "    var out = {};"
+        "    for (var id in gp) {"
+        "      var e = gp[id];"
+        "      if (!e) continue;"
+        "      var start = e.start || e.start_date || '';"
+        "      var end   = e.end   || e.end_date   || '';"
+        "      if (start && end) {"
+        "        out[String(id)] = {"
+        "          start: start.substring(0, 10),"
+        "          end:   end.substring(0, 10)"
+        "        };"
+        "      }"
+        "    }"
+        "    return Object.keys(out).length ? out : null;"
+        "  } catch(_) { return null; }"
+        "})()"
+    )
+    if drupal_result:
+        return drupal_result
+
+    # Fallback: parse the <select name="grading_period_id"> options.
+    # Option text format: "MP N: M/D/YY - M/D/YY"
+    select_result = cdp.eval_js(
+        "(function(){"
+        "  var sel = document.querySelector('select[name=\"grading_period_id\"]');"
+        "  if (!sel) return null;"
+        "  var out = {};"
+        "  var opts = sel.querySelectorAll('option');"
+        "  for (var i = 0; i < opts.length; i++) {"
+        "    var val = opts[i].value;"
+        "    if (!val) continue;"
+        "    var text = opts[i].textContent || '';"
+        "    var m = text.match(/(\\d+)\\/(\\d+)\\/(\\d{2,4})\\s*-\\s*(\\d+)\\/(\\d+)\\/(\\d{2,4})/);"
+        "    if (!m) continue;"
+        "    function twoDigitYear(y) { return y < 100 ? 2000 + y : y; }"
+        "    function pad(n) { return String(n).padStart(2,'0'); }"
+        "    var sy = twoDigitYear(parseInt(m[3],10));"
+        "    var ey = twoDigitYear(parseInt(m[6],10));"
+        "    var start = sy+'-'+pad(m[1])+'-'+pad(m[2]);"
+        "    var end   = ey+'-'+pad(m[4])+'-'+pad(m[5]);"
+        "    out[String(val)] = {start: start, end: end};"
+        "  }"
+        "  return Object.keys(out).length ? out : null;"
+        "})()"
+    )
+    return select_result or {}
