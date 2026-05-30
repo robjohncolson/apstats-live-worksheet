@@ -52,15 +52,22 @@
 >
 > ## NEXT -- queued for s123
 >
-> 1. **P2b -- live create/push smoke** (the P2 ship gate). The live
->    create path is built + the cdp-threading BLOCKER fixed, but
->    `find_assignment_id_by_title` (header-title -> data-x mapping) and
->    `add_assignment` id-capture (real create returns JSON
->    `assignment_nid`, not the `/assignment/<id>` URL) need a live
->    create to nail -- exactly the P1b-style RE. Do ONE live create
->    (1 test assignment -> verify add_assignment + find-by-title +
->    capture -> delete), fix what it reveals, THEN enable live
->    `--sync-section`. **Until then run `--dry-run` ONLY.**
+> 1. **P2b -- CREATE path VERIFIED (2026-05-30).** Live smoke created
+>    `P2 Smoke Test` + captured nid `8405518810`. Fixes folded
+>    (`schoology_ops.py` + `schoology_sync_section.py`):
+>    scrollIntoView the submit (the long form's button was below the
+>    fold -> click missed); parse `assignment_nid` from the success
+>    JSON; `find_assignment_id_by_title` rewritten to scan row-0
+>    grade-cell aria-labels for the column `data-x` (the header scan
+>    returned null); ISO due_date -> `m/dd/yy` + `due_date[time]` =
+>    11:59pm; grade-push resolves the column data-x LIVE by title.
+>    See `SCHOOLOGY_SYNC_V1_BUILD.md` ## P2b. **Still gated on SY26-27
+>    DATA, not code:** full live `--sync-section` WITH dates needs
+>    SY26-27 marking periods to exist (current MPs are SY25-26 ->
+>    SY26-27 dates map to no MP); grade-push is unexercised (no grade
+>    data). Date-LESS create works now. Assignment DELETE
+>    unimplemented -- 2 `P2 Smoke Test` smoke columns (Sec 1 data-x
+>    1,2) left for manual delete.
 > 2. **Flip `USE_V3_GRADING=true`** in prod after a real-data sanity
 >    check (currently no SY26-27 grade data -- it's a mockup).
 > 3. **Sec 2 v3 grade-setup** -- deferred (mockup, periods TBD); revisit

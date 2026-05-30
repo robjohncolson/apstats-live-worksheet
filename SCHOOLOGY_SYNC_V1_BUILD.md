@@ -833,3 +833,44 @@ confirm the form-fill works + `find_assignment_id_by_title` finds it + the id/
 column is captured, then delete it -- then enable live `--sync-section`. This is
 the P1b-style live reverse-engineering for the CREATE path.
 
+### P2b (2026-05-30) -- CREATE path VERIFIED
+
+Live-verified the auto-create path via a smoke (created `P2 Smoke Test` in AP
+Stats Sec 1, captured nid `8405518810`). Fixes folded into `schoology_ops.py` +
+`schoology_sync_section.py`:
+
+- **submit**: `add_assignment` now `scrollIntoView`s `input#edit-submit` before
+  the coordinate-click -- the form is long, so the raw below-the-fold click
+  silently MISSED (no create + a misleading ok=True). `ok` now reflects actual
+  completion.
+- **id-capture**: a successful Drupal submit returns a JSON blob
+  `{"assignment_nid":"<id>","path":"assignment-creation-complete",...}`;
+  `add_assignment` parses `assignment_nid` (the `/assignment/<id>` URL never
+  appears).
+- **find_assignment_id_by_title rewritten** to scan row-0 grade-cell
+  aria-labels (`<student>, <title>[, <grade> out of <pts> points]`) for the
+  `", <title>"` segment and return the column `data-x`. The old header-title
+  scan returned null (titles are ng-binding spans NOT inside `[data-x]`).
+  VERIFIED: `find_assignment_id_by_title('P2 Smoke Test')` -> the column data-x.
+- **due_date**: ISO `YYYY-MM-DD` is rejected ("Field Due date is invalid"); now
+  converted to `m/dd/yy`, with `due_date[time]` defaulting to `11:59pm` (a date
+  with no time fails "A time is required to enable submissions").
+- **grade-push targeting reconciled**: `_push_grades` resolves the column
+  `data-x` LIVE by title (write_grade_to_cell keys on data-x, NOT the nid).
+
+The orchestration's pre-flight (find_by_title BEFORE create) prevents duplicate
+columns + self-heals the occasional flaky `ok=False` (a transient -- the create
+actually lands; the next run's pre-flight reuses it).
+
+**Still gated (needs SY26-27 data, NOT code):**
+- Full live `--sync-section` WITH dates needs SY26-27 marking periods to exist
+  -- the current MPs are SY25-26, so SY26-27 lesson dates (Sept 2026+) map to no
+  MP (`marking_period_for_date -> None`). Date-LESS create works today; the
+  date+MP path is untested-live until SY26-27 MPs are set up.
+- Grade push is unexercised (no SY26-27 grade data yet); its pieces
+  (find_by_title data-x + the verified P1b write_grade_to_cell) are each proven.
+- Assignment DELETE is not implemented -- the 2 `P2 Smoke Test` smoke columns
+  (data-x 1, 2 in Sec 1) were left for manual cleanup.
+- Create is occasionally flaky (transient false); the pre-flight mitigates -- a
+  verify-after-create retry would harden it further.
+

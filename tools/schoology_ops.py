@@ -274,19 +274,25 @@ def find_assignment_id_by_title(cdp: EdgeCDP, title: str) -> Optional[str]:
     creating duplicate assignments (P1b gotcha: 3 duplicate Sync Test 1
     columns appeared when the Add Assignment form was resubmitted).
     """
+    # Robust mapping (P2b RE, 2026-05-29): the row-0 grade cells carry
+    #   aria-label="<student>, <assignment title>[, <grade> out of <pts> points]"
+    # so we scan [role=gridcell][data-y="0"] and match the ", <title>" segment.
+    # A header-title scan fails -- the title elements are ng-binding spans NOT
+    # inside a [data-x] ancestor, and [role=columnheader] textContent carries
+    # menu cruft.
     found = cdp.eval_js(
         "(function(){"
-        "var headers = document.querySelectorAll('.gradebook-period-title, "
-        "[data-testid=\"assignment-title\"], .grader-grid-header-title, "
-        ".assignment-title, [role=\"columnheader\"] .title, "
-        "[role=\"columnheader\"]');"
         "var title = " + json.dumps(title) + ";"
-        "for (var i = 0; i < headers.length; i++) {"
-        "  var el = headers[i];"
-        "  var text = (el.textContent || el.getAttribute('aria-label') || '').trim();"
-        "  if (text === title) {"
-        "    var cell = el.closest('[data-x]');"
-        "    if (cell) return cell.getAttribute('data-x');"
+        "var needle = ', ' + title;"
+        "var cells = document.querySelectorAll('[role=\"gridcell\"][data-y=\"0\"]');"
+        "for (var i = 0; i < cells.length; i++) {"
+        "  var al = cells[i].getAttribute('aria-label') || '';"
+        "  var idx = al.indexOf(needle);"
+        "  if (idx >= 0) {"
+        "    var after = al.substring(idx + needle.length);"
+        "    if (after === '' || after.charAt(0) === ',') {"
+        "      return cells[i].getAttribute('data-x');"
+        "    }"
         "  }"
         "}"
         "return null;"
@@ -378,13 +384,31 @@ def add_assignment(
     _set_select("grading_category_id", category_id)
     _set_select("grading_period_id", grading_period_id)
     if due_date:
-        _set_input("due_date[date]", due_date)
+        # Schoology's datepicker expects m/dd/y (e.g. 5/15/26), NOT ISO --
+        # submitting an ISO YYYY-MM-DD value yields "Field Due date is invalid".
+        due_fmt = due_date
+        try:
+            y, mo, d = due_date.split("-")
+            due_fmt = f"{int(mo)}/{d}/{y[2:]}"
+        except (ValueError, AttributeError):
+            pass
+        _set_input("due_date[date]", due_fmt)
+        # A date with no time fails validation ("A time is required to enable
+        # submissions"), so default to end-of-day.
+        _set_input("due_date[time]", "11:59pm")
     _set_checkbox("publish_scores", publish_scores)
     _set_checkbox("sync_to_sis_wrapper[sync_to_sis_option]", sync_to_sis)
 
     time.sleep(0.5)
 
-    # Submit by clicking input#edit-submit (op=Create).
+    # Submit by clicking input#edit-submit (op=Create). The form is long, so
+    # scroll the button into view first -- a coordinate-click at its raw
+    # (below-the-fold) rect would miss and the submit would silently no-op.
+    cdp.eval_js(
+        "(function(){var el=document.querySelector('input#edit-submit');"
+        "if(el)el.scrollIntoView({block:'center',inline:'center'});})()"
+    )
+    time.sleep(0.3)
     submit_rect = cdp.eval_js(
         "(function(){"
         "  var el = document.querySelector('input#edit-submit');"
@@ -399,19 +423,24 @@ def add_assignment(
     cdp.click(int(submit_rect["x"]), int(submit_rect["y"]))
     time.sleep(3.0)
 
-    # Try to capture the new assignment id from the current URL or DOM.
-    # After submit the popup may redirect to the gradebook or stay on the
-    # form with an error -- inspect both.
-    current_url = cdp.eval_js("window.location.href") or ""
-    assignment_id = None
-
-    # URL pattern after successful create often contains the new id.
+    # A successful Drupal popup submit returns a JSON blob:
+    #   {"assignment_nid":"<id>","path":"assignment-creation-complete",...}
+    # Capture the id from that (the /assignment/<id> URL pattern does NOT appear).
     import re
-    m = re.search(r"/assignment/(\d+)", current_url)
+    body = cdp.eval_js("(document.body && document.body.textContent) || ''") or ""
+    assignment_id = None
+    m = re.search(r'"assignment_nid"\s*:\s*"?(\d+)"?', body)
     if m:
         assignment_id = m.group(1)
+    if not assignment_id:
+        current_url = cdp.eval_js("window.location.href") or ""
+        m2 = re.search(r"/assignment/(\d+)", current_url)
+        if m2:
+            assignment_id = m2.group(1)
 
-    # Check for a visible error message on the form.
+    created = ("assignment-creation-complete" in body) or bool(assignment_id)
+
+    # Surface a real validation error only if the create did NOT complete.
     error_text = cdp.eval_js(
         "(function(){"
         "  var el = document.querySelector('.messages.error, .error-messages, "
@@ -419,10 +448,10 @@ def add_assignment(
         "  return el ? el.textContent.trim() : null;"
         "})()"
     )
-    if error_text:
+    if error_text and not created:
         return {"ok": False, "assignment_id": None, "error": error_text}
 
-    return {"ok": True, "assignment_id": assignment_id, "error": None}
+    return {"ok": created, "assignment_id": assignment_id, "error": None}
 
 
 # --------------------------------------------------------------------------- #

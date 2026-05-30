@@ -422,11 +422,14 @@ def _push_grades(
             errors.append(f"No scope item for lesson_key={lesson_key!r}")
             continue
 
-        column_key = (scope_item.get("schoology_assignment_id")
-                      or _lookup_assignment_id(section, lesson_key, state))
+        # Grade-push targets the COLUMN data-x (what write_grade_to_cell keys
+        # on), NOT the stored assignment node id. data-x is positional and can
+        # shift between runs, so resolve it live by title each run.
+        column_key = ops.find_assignment_id_by_title(cdp, scope_item.get("title"))
         if column_key is None:
             errors.append(
-                f"No assignment_id for lesson_key={lesson_key!r}; skipping grade push"
+                f"No gradebook column for lesson_key={lesson_key!r} "
+                f"(title={scope_item.get('title')!r}); skipping grade push"
             )
             continue
 
