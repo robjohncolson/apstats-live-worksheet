@@ -372,15 +372,24 @@ describe('lesson-schedule.json — SY26-27 date sanity', () => {
     }
   });
 
-  it("each lesson's date is within its unit's home quarter window", () => {
+  // Pack-left (s121) intentionally front-loads teaching dates, so a unit's
+  // lessons may be taught in an EARLIER calendar quarter than its report-card
+  // quarter. v3 grades bucket by unit→quarter band (computeQuarterV3 /
+  // quarterOfUnit) — a unit's lessons + PC land in the same quarter regardless
+  // of teaching date — so the old "date inside the unit's home-quarter window"
+  // invariant (UNIT_QUARTER_WINDOWS above) no longer holds and is not asserted.
+  it("each lesson's date is within the school year (pack-left decouples teaching date from grade quarter)", () => {
+    const yearStart = PHASE3_CONFIG.quarters.Q1.start;
+    const yearEnd = PHASE3_CONFIG.quarters.Q4.end;
     for (const [topicKey, entry] of Object.entries(lessons)) {
-      const win = UNIT_QUARTER_WINDOWS[entry.unit];
-      expect(win, `unit ${entry.unit} has a window`).toBeDefined();
       const b = entry.periods.B;
       expect(
-        b >= win.start && b <= win.end,
-        `${topicKey} B=${b} in [${win.start}, ${win.end}]`
+        b >= yearStart && b <= yearEnd,
+        `${topicKey} B=${b} in school year [${yearStart}, ${yearEnd}]`
       ).toBe(true);
+      // The unit→quarter band (what actually buckets v3 grades) must resolve.
+      expect(quarterOfUnit(entry.unit), `${topicKey} unit ${entry.unit} bands to a quarter`)
+        .toMatch(/^Q[1-4]$/);
     }
   });
 

@@ -442,3 +442,59 @@ Migration steps:
 
 The Desk's grade-outlook strip continues to display the same UI;
 only the underlying numbers change.
+
+## Implementation decisions (v3.1 — resolved s122, 2026-05-29)
+
+The v3.1 swap landed in `roster-server/lesson-grade.js` (`computeQuarterV3` +
+`quarterGradeV3` / `workAvgV3`), gated by `config.useV3` (env `USE_V3_GRADING`,
+default OFF) at a single point in `grade.js::computeGrade` — so `/grade`
+(student) and `/class/grades` (teacher) share one gate. The teacher signed off
+on every decision below (s122), each of which the spec above left ambiguous.
+
+1. **Lessons track EXCLUDES the curriculum-quiz feeder** (`v3LessonsExcludeQuiz:
+   true`). Quizzes is its own 15% track, so counting quizzes inside Lessons too
+   would double-count. `lessonsAvg` = the {blanks, FRQ} blend (weights 1:2);
+   `quizzesAvg` = the curriculum-quiz correctness. Set the flag `false` to fold
+   the quiz back into Lessons (the literal reading of the older "unified
+   lessonGrade is source of truth" sentence).
+
+2. **`pcAvg` uses RAW PC%** (correct/graded), NOT the Phase 6 `pcRawToP`
+   graduated-trust anchor curve. The worked examples ("40% PC ≈ D-level") only
+   hold for raw scores. PCs are therefore meaningfully harder than the Phase 6
+   ramp — intended; AP-readiness is the aim and the two-track max model lets
+   engagement carry the grade.
+
+3. **`pcAvg` counts only PCs DUE-BY-TODAY.** A unit's PC is "due" once that
+   unit's last lesson is due-by-today (proxy; the real PC date is +1–2 days).
+   due+attempted → raw score (clamped to [0,1]); due+un-attempted → 0; not-due
+   → skipped (an un-due PC must not leak into `pcAvg`, or a recorded-but-not-due
+   PC with no due work would bypass the 70% single-track ceiling). The due check
+   respects `gradingWindowStart`, so stale prior-cohort dates can't resurrect a
+   phantom 0.
+
+4. **Posters + Blooket have no data source yet** (v3.4 / v3.5). They are `null`
+   (absent) and excluded from `workAvg`, which renormalizes over present tracks
+   — so today `workAvg = mean(lessonsAvg, quizzesAvg)`. When those tracks ship,
+   the full 0.30/0.30/0.30/0.10 blend applies automatically.
+
+5. **Quarter bucketing is unit→quarter band, NOT calendar date.** Pack-left
+   front-loads teaching dates, so a unit's lessons may be taught in an earlier
+   calendar quarter than its report-card quarter. v3 buckets BOTH lessons and
+   PCs by `quarterOfUnit`, so a unit's work + PC land in the same quarter
+   ("unit → quarter mapping only buckets grades"). Phase 6's date-driven
+   `quarterOfLesson` is unchanged (used only when `useV3` is off). The
+   `quarters-by-date.test.js` "date in home-quarter window" data check was
+   retired (pack-left intentionally violates it). `isDue` still uses the real
+   teaching date.
+
+6. **Null-track gating.** Until BOTH tracks have due assignments, the present
+   track alone sets the grade (early-quarter work isn't capped at 70% just
+   because the PC isn't scheduled yet). `quarterGrade` / `ceiling` are null only
+   when nothing is due in either track.
+
+`quarterGrade`, `ceiling`, `pcAvg`, `workAvg` are returned on the 0–100 scale
+(`quarterGrade` shape unchanged from Phase 6; `pcAvg`/`workAvg` are new and are
+null on the Phase 6 path). An adversarial review (s122, 21 agents) folded 4 real
+defects before sign-off: the `unitPcDue` window filter, recorded-PC due-gating,
+the raw-% clamp, and doc comments. Tests pin all 14 worked examples plus the
+aggregation, gating, and bucketing cases.

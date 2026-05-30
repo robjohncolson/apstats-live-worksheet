@@ -57,6 +57,19 @@ export const PHASE3_CONFIG = {
   // Diagnostic weak-skill flag cutoff (pKnow < θ ⇒ weak). GRADE-INDEPENDENT —
   // θ never enters any grade arithmetic (GRADEBOOK_GRADING_SPEC.md §3).
   diagnosticTheta: 0.65,
+
+  // ── v3 grading model (GRADING_MODEL_V3_BUILD.md) — default OFF ──────────────
+  // When true, quarterGrade = quarter_grade(pcAvg, workAvg): a two-track
+  // max/mean conditional (PC mastery vs Work engagement, each gated by a 40%
+  // floor on the other) that supersedes the Phase 6 mean(lessonGrade). Flip via
+  // env USE_V3_GRADING=true; tests pass { useV3: true } via configOverrides.
+  useV3: process.env.USE_V3_GRADING === 'true',
+
+  // v3: exclude the curriculum-quiz feeder from the Lessons track. In v3's
+  // 5-category model Quizzes is its own 15% track, so counting quizzes inside
+  // Lessons too would double-count. Default true (the defensible reading; the
+  // spec prose is ambiguous on this one point — see GRADING_MODEL_V3_BUILD.md).
+  v3LessonsExcludeQuiz: true,
 };
 
 // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.

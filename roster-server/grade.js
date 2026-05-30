@@ -27,6 +27,7 @@ import {
   buildWorksheetBlankCounts,
   computeLessonGrades,
   computeQuarterFromLessons,
+  computeQuarterV3,
   buildLessonsArray,
   todayInTz,
   sectionToPeriod,
@@ -179,10 +180,14 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   // ── Per-unit PC data needed for quarter-level P_quarter ──────────────────
   // Build unitPcData: unitNum → { P }
   const unitPcData = {};
+  // v3: per-unit raw PC % (the PC track reads raw scores, NOT the pcRawToP
+  // graduated-trust curve that Phase 6 uses for P_quarter).
+  const unitPcRaw = {};
   for (const uKey of Object.keys(units)) {
     const uNum = unitNumber(uKey);
     if (uNum != null) {
       unitPcData[uNum] = { P: units[uKey].P || 0 };
+      unitPcRaw[uNum] = units[uKey].pcRawPct != null ? units[uKey].pcRawPct : null;
     }
   }
 
@@ -218,7 +223,25 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     // F2: pass quarterKey + config instead of quarterBand so
     // computeQuarterFromLessons uses date-driven quarter assignment.
     let qResult;
-    if (schedule) {
+    if (config.useV3 && schedule) {
+      // v3 (GRADING_MODEL_V3_BUILD.md): two-track max/mean conditional. Same
+      // single gate point covers /grade (student) and /class/grades (teacher)
+      // because both fan out through computeGrade.
+      // NOTE: v3 REQUIRES a schedule. If useV3 is on but the schedule failed to
+      // load (logged at boot), this branch is skipped and grades fall through
+      // to the Phase 6 no-schedule path below — different math, pcAvg/workAvg
+      // null. Normal operation ships the bundled schedule, so this is an edge.
+      qResult = computeQuarterV3({
+        quarterKey: qKey,
+        config,
+        lessonMap,
+        schedule,
+        todayDateStr: todayStr,
+        section,
+        unitPcData: unitPcRaw,
+        gradingWindowStart: (config && config.gradingWindowStart) || null,
+      });
+    } else if (schedule) {
       qResult = computeQuarterFromLessons({
         quarterKey: qKey,
         config,
@@ -284,6 +307,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       lessonsDue: qResult.lessonsDue,
       lessonsGraded: qResult.lessonsGraded,
       lessonsTotal: qResult.lessonsTotal,
+      // v3 additions (null on the Phase 6 path):
+      pcAvg: qResult.pcAvg != null ? qResult.pcAvg : null,
+      workAvg: qResult.workAvg != null ? qResult.workAvg : null,
     };
   }
 

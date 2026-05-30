@@ -554,6 +554,257 @@ export function computeQuarterFromLessons({
   };
 }
 
+// ── v3 grading model (GRADING_MODEL_V3_BUILD.md) ──────────────────────────────
+//
+// Two-track max/mean conditional that supersedes the Phase 6 mean(lessonGrade)
+// quarter grade. Gated behind config.useV3 (env USE_V3_GRADING); the Phase 6
+// path above is left untouched. See GRADING_MODEL_V3_BUILD.md for the formula,
+// worked examples, and pedagogy.
+
+// Work-track weights. A track contributes only when present (non-null); the
+// weights renormalize over present tracks (same pattern as computeLessonGrades'
+// B blend). Posters + Blooket have no data source yet (v3.4 / v3.5), so today
+// only Lessons + Quizzes are present → workAvg = mean(lessons, quizzes).
+export const V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+
+// The core v3 quarter formula. Both args on [0, 1]; returns [0, 1].
+//   both tracks >= 0.40 → max(pc, work)                       (either path → 100%)
+//   otherwise           → max(0.7*pc, 0.7*work, mean(pc, work))
+// The 40% floors gate the max-of-two; the 70%-of-track ceiling bounds
+// single-track gaming. Verbatim from the spec.
+export function quarterGradeV3(pcAvg, workAvg) {
+  if (pcAvg >= 0.40 && workAvg >= 0.40) return Math.max(pcAvg, workAvg);
+  return Math.max(0.7 * pcAvg, 0.7 * workAvg, (pcAvg + workAvg) / 2);
+}
+
+// Weighted blend of the four work tracks, renormalized over present tracks.
+// tracks: { lessons, quizzes, posters, blooket } each [0,1] or null (absent).
+// Returns [0,1], or null when no track is present.
+export function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
+  let num = 0, den = 0;
+  for (const key of Object.keys(weights)) {
+    const v = tracks ? tracks[key] : null;
+    if (v == null) continue;
+    num += weights[key] * v;
+    den += weights[key];
+  }
+  if (den === 0) return null;
+  return num / den;
+}
+
+// Combine a PC-track avg and a Work-track avg into a [0,1] quarter grade,
+// tolerating a missing (null) track. A track is null when nothing in it is due
+// yet — we must NOT penalize a student for an un-scheduled track, so the
+// present track alone sets the grade until BOTH tracks have due assignments.
+function combineV3(pcAvg, workAvg) {
+  if (pcAvg == null && workAvg == null) return null;
+  if (pcAvg == null) return workAvg;
+  if (workAvg == null) return pcAvg;
+  return quarterGradeV3(pcAvg, workAvg);
+}
+
+// Per-lesson grade EXCLUDING the curriculum-quiz feeder (v3 splits quizzes into
+// their own track). Weighted blend of {Cws, W} renormalized over present
+// feeders, on 0..100. null when neither feeder is present.
+function lessonGradeNoQuiz(result, weights) {
+  if (!result) return null;
+  let num = 0, den = 0;
+  if (result.Cws != null) { num += weights.ws * result.Cws; den += weights.ws; }
+  if (result.W   != null) { num += weights.W  * result.W;   den += weights.W; }
+  if (den === 0) return null;
+  return num / den;
+}
+
+// [0,1] → 0..100 with one-decimal rounding (the 0..100 response surface).
+function to100(x) { return x == null ? null : Math.round(x * 1000) / 10; }
+
+// computeQuarterV3 — the v3 replacement for computeQuarterFromLessons.
+//
+// Same inputs + a per-unit raw PC% map; returns the same shape PLUS pcAvg and
+// workAvg (0..100). Lessons are assigned to a quarter date-driven (like Phase
+// 6); PCs are bucketed by unit→quarter band (like Phase 6 P_quarter).
+//
+// params:
+//   quarterKey   -- 'Q1'..'Q4'
+//   config       -- PHASE3_CONFIG (or a test config)
+//   lessonMap    -- Map<topicKey, { Cws, W, Q, lessonGrade, ... }>
+//   schedule     -- topicKey → { unit, periods: { B, E }, ... }
+//   todayDateStr -- "YYYY-MM-DD"
+//   section      -- "PeriodB" / "PeriodE" / "B" / "E" / null
+//   unitPcData   -- { [unitNum]: rawPct|null }  (raw PC % per unit, or null)
+//   gradingWindowStart -- cohort window start (or null)
+//   workTracks   -- { posters, blooket } each [0,1] or null (future; default null)
+//
+// Returns { quarterGrade, ceiling, lessonsDue, lessonsGraded, lessonsTotal,
+//           pcAvg, workAvg } — quarterGrade/ceiling/pcAvg/workAvg on 0..100.
+export function computeQuarterV3({
+  quarterKey,
+  config,
+  lessonMap,
+  schedule,
+  todayDateStr,
+  section,
+  unitPcData,
+  gradingWindowStart = null,
+  workTracks = null,
+}) {
+  const period = sectionToPeriod(section);
+  const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
+  const excludeQuiz = !(config && config.v3LessonsExcludeQuiz === false); // default true
+
+  // The Lessons-track value for one topic (respects the exclude-quiz flag).
+  function lessonTrackValue(r) {
+    if (excludeQuiz) return lessonGradeNoQuiz(r, lessonWeights);
+    return r && r.lessonGrade != null ? r.lessonGrade : null;
+  }
+
+  // ── Band lessons in the active grading window (mirrors computeQuarterFromLessons) ──
+  function inWindow(entry) {
+    if (!gradingWindowStart) return true;
+    const periods = (entry && entry.periods) || {};
+    const b = periods.B, e = periods.E;
+    if (b == null && e == null) return true;
+    if (b != null && b >= gradingWindowStart) return true;
+    if (e != null && e >= gradingWindowStart) return true;
+    return false;
+  }
+
+  // v3 buckets lessons by unit→quarter band (NOT calendar date). Pack-left
+  // front-loads teaching dates, so a unit's lessons may be taught in an earlier
+  // calendar quarter than its report-card quarter; per the pack-left design
+  // ("unit → quarter mapping only buckets grades") a unit's lessons + PC must
+  // land in the SAME quarter. (Phase 6 / quarterOfLesson stays date-driven.)
+  const bandLessons = [];
+  for (const [topicKey, entry] of Object.entries(schedule)) {
+    if (!entry || typeof entry !== 'object' || typeof entry.unit !== 'number') continue;
+    if (quarterOfUnit(entry.unit, config) !== quarterKey) continue;
+    if (!inWindow(entry)) continue;
+    bandLessons.push(topicKey);
+  }
+  const lessonsTotal = bandLessons.length;
+
+  function isDue(topicKey) {
+    const entry = schedule[topicKey];
+    if (!entry || typeof entry !== 'object') return false;
+    const periods = entry.periods && typeof entry.periods === 'object' ? entry.periods : {};
+    if (period) {
+      const d = periods[period];
+      return !!d && d <= todayDateStr;
+    }
+    const bDue = periods.B && periods.B <= todayDateStr;
+    const eDue = periods.E && periods.E <= todayDateStr;
+    return !!(bDue || eDue);
+  }
+
+  // Due = scheduled-due OR has recorded work (same convention as Phase 6).
+  const dueLessons = bandLessons.filter((topicKey) => {
+    if (isDue(topicKey)) return true;
+    const r = lessonMap.get(topicKey);
+    return !!(r && r.lessonGrade != null);
+  });
+  const lessonsDue = dueLessons.length;
+
+  // ── Lessons track (worksheet blanks + FRQ; quiz excluded by default) ──
+  // ── Quizzes track (curriculum-quiz correctness) ──
+  // Shared denominator = due lessons (≈ one quiz per topic), un-attempted = 0.
+  let lessonSum = 0, lessonGradedCount = 0;
+  let quizSum = 0, quizGradedCount = 0;
+  for (const topicKey of dueLessons) {
+    const r = lessonMap.get(topicKey);
+    const lv = lessonTrackValue(r);
+    if (lv != null) { lessonSum += lv; lessonGradedCount += 1; }
+    const q = r && r.Q != null ? r.Q : null;
+    if (q != null) { quizSum += q; quizGradedCount += 1; }
+    // ungraded-due lesson / un-taken quiz contributes 0 (denominator = lessonsDue)
+  }
+  const lessonsAvg = lessonsDue > 0 ? (lessonSum / lessonsDue) / 100 : null;
+  const quizzesAvg = lessonsDue > 0 ? (quizSum / lessonsDue) / 100 : null;
+
+  // ── PC track (raw PC % per unit, bucketed by unit→quarter band) ──
+  // Per the spec, pcAvg is the mean of PCs DUE-BY-TODAY. A unit's PC is "due"
+  // once the unit's last lesson is due-by-today (the PC is scheduled 1-2 days
+  // after; this proxy avoids threading the PC-date channel and self-corrects
+  // daily). Only window-current entries count — mirrors the lessons-track
+  // inWindow filter so a stale prior-cohort date can't resurrect a phantom PC.
+  //   due + attempted  → raw score (clamped to [0,1])
+  //   due + no attempt → 0
+  //   not due          → skipped: an un-due PC must NOT leak into pcAvg, or a
+  //                      recorded-but-not-due PC with no due work would bypass
+  //                      the 70% single-track ceiling. (Once a PC is due, that
+  //                      unit's lessons are due too, so the floor engages.)
+  const band = (config.quarters[quarterKey] && config.quarters[quarterKey].units) || [];
+  function unitPcDue(unitNum) {
+    let latest = null;
+    for (const [, entry] of Object.entries(schedule)) {
+      if (!entry || entry.unit !== unitNum) continue;
+      if (!inWindow(entry)) continue; // ignore stale prior-cohort entries
+      const periods = (entry.periods && typeof entry.periods === 'object') ? entry.periods : {};
+      const d = period ? periods[period] : (periods.B || periods.E);
+      if (d && (latest === null || d > latest)) latest = d;
+    }
+    return !!latest && latest <= todayDateStr;
+  }
+  const pcVals = [];
+  let pcSumPct = 0, pcGradedCount = 0;
+  for (const unitNum of band) {
+    if (!unitPcDue(unitNum)) continue; // pcAvg covers PCs due-by-today only
+    const raw = unitPcData ? unitPcData[unitNum] : null;
+    if (raw != null && Number.isFinite(raw)) {
+      const frac = Math.min(1, Math.max(0, raw / 100)); // clamp out-of-range raw%
+      pcVals.push(frac);
+      pcSumPct += frac * 100;
+      pcGradedCount += 1;
+    } else {
+      pcVals.push(0); // due but no PC attempt
+    }
+  }
+  const pcAvg = pcVals.length ? pcVals.reduce((a, b) => a + b, 0) / pcVals.length : null;
+
+  // ── Combine to the quarter grade ──
+  const tracks = {
+    lessons: lessonsAvg,
+    quizzes: quizzesAvg,
+    posters: workTracks ? (workTracks.posters ?? null) : null,
+    blooket: workTracks ? (workTracks.blooket ?? null) : null,
+  };
+  const workAvg = workAvgV3(tracks);
+  const quarterGrade = to100(combineV3(pcAvg, workAvg));
+
+  // ── Ceiling: best case if every remaining/un-attempted item scores 100 ──
+  const lessonsAvgBest = lessonsTotal > 0
+    ? (lessonSum + (lessonsTotal - lessonGradedCount) * 100) / lessonsTotal / 100
+    : null;
+  const quizzesAvgBest = lessonsTotal > 0
+    ? (quizSum + (lessonsTotal - quizGradedCount) * 100) / lessonsTotal / 100
+    : null;
+  const pcTotal = band.length;
+  const pcAvgBest = pcTotal > 0
+    ? (pcSumPct + (pcTotal - pcGradedCount) * 100) / pcTotal / 100
+    : null;
+  const workAvgBest = workAvgV3({
+    lessons: lessonsAvgBest,
+    quizzes: quizzesAvgBest,
+    posters: tracks.posters,
+    blooket: tracks.blooket,
+  });
+  // Ceiling only when the quarter has signal (matches Phase 6: nothing due → null).
+  const ceiling = quarterGrade == null ? null : to100(combineV3(pcAvgBest, workAvgBest));
+
+  return {
+    quarterGrade,
+    ceiling,
+    lessonsDue,
+    // lessonsGraded counts lessons graded on the LESSONS-track feeders (blanks/
+    // FRQ). A quiz-only lesson feeds quizzesAvg instead, so it does NOT count
+    // here (differs from Phase 6, where the quiz folded into lessonGrade).
+    // Informational only — no grade depends on this field.
+    lessonsGraded: lessonGradedCount,
+    lessonsTotal,
+    pcAvg: to100(pcAvg),
+    workAvg: to100(workAvg),
+  };
+}
+
 // ── buildLessonsArray ─────────────────────────────────────────────────────────
 //
 // Converts the lessonMap (from computeLessonGrades) into the lessons[] array
