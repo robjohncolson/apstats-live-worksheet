@@ -869,8 +869,20 @@ actually lands; the next run's pre-flight reuses it).
   date+MP path is untested-live until SY26-27 MPs are set up.
 - Grade push is unexercised (no SY26-27 grade data yet); its pieces
   (find_by_title data-x + the verified P1b write_grade_to_cell) are each proven.
-- Assignment DELETE is not implemented -- the 2 `P2 Smoke Test` smoke columns
-  (data-x 1, 2 in Sec 1) were left for manual cleanup.
 - Create is occasionally flaky (transient false); the pre-flight mitigates -- a
   verify-after-create retry would harden it further.
+
+### Assignment DELETE (P2b RE, 2026-05-30) -- implemented
+
+`schoology_ops.delete_assignment(cdp, nid)`: GET `/assignment/delete/<nid>`
+renders a Drupal confirm form (id `s-grade-item-delete-form`) with a single
+"Delete" submit (`input#edit-submit`, op=Delete); scrollIntoView + coordinate-
+click it. Assignment node ids come from the materials page (anchors
+`/assignment/<nid>`) or the create JSON. **The action URL does NOT redirect on
+success and the confirm form lingers**, so `ok` is best-effort (a still-showing
+"Are you sure" = a missed click); the coordinate-click is occasionally flaky, so
+the robust pattern is a **delete-until-gone loop** (re-query the materials page
+until the title is absent). Deleting an assignment also deletes ALL its grades.
+The 2 `P2 Smoke Test` smoke columns were cleaned up via this; `Sync Test 1`
+(data-x=0, grade 95) was preserved.
 

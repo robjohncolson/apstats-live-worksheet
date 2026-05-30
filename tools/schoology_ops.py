@@ -454,6 +454,50 @@ def add_assignment(
     return {"ok": created, "assignment_id": assignment_id, "error": None}
 
 
+def delete_assignment(cdp: EdgeCDP, nid: str) -> dict:
+    """Delete an assignment by its node id (P2b RE, 2026-05-30).
+
+    GET /assignment/delete/<nid> renders a Drupal confirm form
+    (id s-grade-item-delete-form) with a single "Delete" submit
+    (input#edit-submit, op=Delete). Clicking it confirms -- and deletes ALL
+    grades for the assignment. Returns {'ok': bool, 'error': str|None}.
+
+    NOTE: the delete action URL does NOT redirect on success and the confirm
+    form can linger in the DOM, so `ok` is a best-effort signal (a still-showing
+    "Are you sure" = a missed submit). For certainty, callers should RE-QUERY
+    (the assignment is gone) -- a delete-until-gone loop is the robust pattern,
+    since the coordinate-click is occasionally flaky.
+    """
+    cdp.attach_url(f"{SCHOOLOGY_BASE}/assignment/delete/{nid}", wait_ms=3000)
+    if not cdp.eval_js("!!document.querySelector('form#s-grade-item-delete-form')"):
+        return {"ok": False, "error": "delete confirm form not found (already gone?)"}
+
+    # Scroll the submit into view, then trusted coordinate-click (same gotcha
+    # as add_assignment -- a raw click can miss a below-the-fold button).
+    cdp.eval_js(
+        "(function(){var el=document.querySelector('input#edit-submit');"
+        "if(el)el.scrollIntoView({block:'center',inline:'center'});})()"
+    )
+    time.sleep(0.3)
+    rect = cdp.eval_js(
+        "(function(){var el=document.querySelector('input#edit-submit');"
+        "if(!el)return null;var r=el.getBoundingClientRect();"
+        "return {x:r.left+r.width/2,y:r.top+r.height/2};})()"
+    )
+    if not rect:
+        return {"ok": False, "error": "delete submit button not found"}
+    cdp.click(int(rect["x"]), int(rect["y"]))
+    time.sleep(2.5)
+
+    # The action URL does NOT redirect and the form can linger, so the most
+    # reliable signal is whether the "Are you sure" confirmation is STILL
+    # showing (= the submit missed). Absent it, the delete was processed.
+    body = cdp.eval_js("(document.body && document.body.textContent) || ''") or ""
+    confirm_still = "Are you sure you want to delete" in body
+    return {"ok": not confirm_still,
+            "error": None if not confirm_still else "confirmation still showing (submit missed)"}
+
+
 # --------------------------------------------------------------------------- #
 # Grade setup readers                                                          #
 # --------------------------------------------------------------------------- #

@@ -65,9 +65,12 @@
 >    DATA, not code:** full live `--sync-section` WITH dates needs
 >    SY26-27 marking periods to exist (current MPs are SY25-26 ->
 >    SY26-27 dates map to no MP); grade-push is unexercised (no grade
->    data). Date-LESS create works now. Assignment DELETE
->    unimplemented -- 2 `P2 Smoke Test` smoke columns (Sec 1 data-x
->    1,2) left for manual delete.
+>    data). Date-LESS create works now. **Assignment DELETE
+>    implemented + RE'd** (`delete_assignment`: GET
+>    `/assignment/delete/<nid>` -> confirm form -> click Delete; action
+>    URL doesn't redirect so verify via re-query / delete-until-gone
+>    loop). The 2 `P2 Smoke Test` smoke columns were cleaned up;
+>    Sync Test 1 preserved.
 > 2. **Flip `USE_V3_GRADING=true`** in prod after a real-data sanity
 >    check (currently no SY26-27 grade data -- it's a mockup).
 > 3. **Sec 2 v3 grade-setup** -- deferred (mockup, periods TBD); revisit
