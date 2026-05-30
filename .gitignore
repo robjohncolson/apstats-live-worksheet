@@ -26,6 +26,9 @@ tmpclaude-*
 # Secrets
 .env
 .gitnexus
+
+# Schoology sync local state (use SupabaseStateStore in prod)
+tools/.schoology-sync-state.json
 TI-84_Plus_CE/ROM.transpiled.js
 
 # Large binaries / local-only artifacts
@@ -44,3 +47,11 @@ logs/
 # entries once export-registry is removed from the Agent pipeline DAG.
 lesson-registry-data.js
 registry-data.js
+
+# CC browser automation rig (Edge CDP). edge.py IS tracked -- the Schoology
+# grade-sync depends on it. Everything else here stays local: screenshots,
+# __pycache__, and other dev artifacts. Real test-account credentials live
+# OUTSIDE the repo (~/.claude/test-credentials.json); edge.py only holds a
+# path to them.
+tools/cdp/*
+!tools/cdp/edge.py

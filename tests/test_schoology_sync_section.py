@@ -658,7 +658,7 @@ class TestSupabaseStateStoreStub(unittest.TestCase):
     def _check_raises(self, method, *args):
         with self.assertRaises(NotImplementedError) as ctx:
             method(*args)
-        self.assertIn("0008_schoology_sync.sql", str(ctx.exception))
+        self.assertIn("0010_schoology_sync.sql", str(ctx.exception))
 
     def test_get_assignment_raises(self):
         self._check_raises(self.store.get_assignment, "PeriodB", "6.1")

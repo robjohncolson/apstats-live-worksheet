@@ -163,7 +163,7 @@ class SupabaseStateStore(StateStore):
     """Production stub -- raises NotImplementedError.
 
     To implement:
-    1. Run roster-server/migrations/0008_schoology_sync.sql against the Supabase project.
+    1. Run roster-server/migrations/0010_schoology_sync.sql against the Supabase project.
     2. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.
     3. Replace each method body with the appropriate supabase-py call.
     """
@@ -171,32 +171,32 @@ class SupabaseStateStore(StateStore):
     def get_assignment(self, section: str, lesson_key: str) -> dict | None:
         raise NotImplementedError(
             "SupabaseStateStore is a stub.  "
-            "Apply migration roster-server/migrations/0008_schoology_sync.sql first, "
+            "Apply migration roster-server/migrations/0010_schoology_sync.sql first, "
             "then implement get_assignment with supabase-py."
         )
 
     def upsert_assignment(self, section: str, lesson_key: str, fields: dict) -> None:
         raise NotImplementedError(
             "SupabaseStateStore is a stub.  "
-            "Apply migration roster-server/migrations/0008_schoology_sync.sql first."
+            "Apply migration roster-server/migrations/0010_schoology_sync.sql first."
         )
 
     def get_last_synced(self, student_id: str, assignment_key: str) -> Any | None:
         raise NotImplementedError(
             "SupabaseStateStore is a stub.  "
-            "Apply migration roster-server/migrations/0008_schoology_sync.sql first."
+            "Apply migration roster-server/migrations/0010_schoology_sync.sql first."
         )
 
     def set_last_synced(self, student_id: str, assignment_key: str, value: Any) -> None:
         raise NotImplementedError(
             "SupabaseStateStore is a stub.  "
-            "Apply migration roster-server/migrations/0008_schoology_sync.sql first."
+            "Apply migration roster-server/migrations/0010_schoology_sync.sql first."
         )
 
     def log_run(self, summary: dict) -> None:
         raise NotImplementedError(
             "SupabaseStateStore is a stub.  "
-            "Apply migration roster-server/migrations/0008_schoology_sync.sql first."
+            "Apply migration roster-server/migrations/0010_schoology_sync.sql first."
         )
 
 

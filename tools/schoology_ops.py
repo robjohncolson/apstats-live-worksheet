@@ -428,29 +428,49 @@ def add_assignment(
     # that the page redirects away from quickly, so it is easy to miss -- and
     # Schoology's gradebook/materials lists are eventually-consistent, so they
     # don't reflect a brand-new create synchronously either. We therefore poll
-    # for the JSON (and a validation error) but do NOT re-click (re-clicking
-    # could double-create). The RELIABILITY mechanism is the idempotent sync:
-    # a re-run reconciles via find_assignment_id_by_title once the column has
-    # rendered. So `ok`/`assignment_id` here are a fast-path, not a guarantee.
+    # Network response bodies first, then the DOM JSON (and validation errors),
+    # but do NOT re-click (re-clicking could double-create). The network
+    # fast-path is immune to gradebook DOM lag; live verification is still gated
+    # to the single-host Schoology rig. The RELIABILITY mechanism remains the
+    # idempotent sync: a re-run reconciles via find_assignment_id_by_title once
+    # the column has rendered. So `ok`/`assignment_id` here are a fast-path, not
+    # a guarantee.
     import re
     assignment_id = None
     created = False
-    for _ in range(16):  # poll ~5s
-        time.sleep(0.3)
-        body = cdp.eval_js("(document.body && document.body.textContent) || ''") or ""
-        m = re.search(r'"assignment_nid"\s*:\s*"?(\d+)"?', body)
-        if m:
-            assignment_id = m.group(1)
-        if assignment_id or ("assignment-creation-complete" in body):
-            created = True
-            break
-        error_text = cdp.eval_js(
-            "(function(){var el=document.querySelector('.messages.error, "
-            ".error-messages, .form-item--error-message');"
-            "return el ? el.textContent.trim() : null;})()"
-        )
-        if error_text:
-            return {"ok": False, "assignment_id": None, "error": error_text}
+
+    if hasattr(cdp, "wait_for_response"):
+        try:
+            captured = cdp.wait_for_response("assignment-creation-complete", timeout=8.0)
+        except Exception:
+            captured = None
+        if captured:
+            try:
+                payload = json.loads(captured.get("body") or "{}")
+                nid = payload.get("assignment_nid")
+                if nid:
+                    assignment_id = str(nid)
+                    created = True
+            except (TypeError, ValueError):
+                pass
+
+    if not created:
+        for _ in range(16):  # poll ~5s
+            time.sleep(0.3)
+            body = cdp.eval_js("(document.body && document.body.textContent) || ''") or ""
+            m = re.search(r'"assignment_nid"\s*:\s*"?(\d+)"?', body)
+            if m:
+                assignment_id = m.group(1)
+            if assignment_id or ("assignment-creation-complete" in body):
+                created = True
+                break
+            error_text = cdp.eval_js(
+                "(function(){var el=document.querySelector('.messages.error, "
+                ".error-messages, .form-item--error-message');"
+                "return el ? el.textContent.trim() : null;})()"
+            )
+            if error_text:
+                return {"ok": False, "assignment_id": None, "error": error_text}
 
     return {"ok": created, "assignment_id": assignment_id,
             "error": None if created else "create not confirmed (best-effort; reconcile via re-sync)"}

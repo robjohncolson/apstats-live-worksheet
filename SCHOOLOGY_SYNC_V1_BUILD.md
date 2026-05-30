@@ -89,7 +89,7 @@ roster-server/
   routes/
     schoology-log.js          # NEW read-only endpoints for dashboard
   migrations/
-    0008_schoology_sync.sql   # NEW tables (user-run)
+    0010_schoology_sync.sql   # NEW tables (user-run)
 SCHOOLOGY_SYNC_V1_BUILD.md    # this doc
 ```
 
@@ -120,7 +120,7 @@ the cookie before navigating to gradebook. Out of V1 scope.
 
 ## Data model (Supabase)
 
-Three new tables. Migration `0008_schoology_sync.sql`, user-run
+Three new tables. Migration `0010_schoology_sync.sql`, user-run
 (matches the s116-118 user-runs-migrations pattern).
 
 ```sql
@@ -920,4 +920,3 @@ deletes could not reliably remove (the cache made verification impossible).
 **These need MANUAL deletion via the live Schoology UI** (the teacher sees real
 state; the automation was fighting a stale cache). They are hidden (publish off,
 no grades).
-
