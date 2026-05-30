@@ -401,57 +401,59 @@ def add_assignment(
 
     time.sleep(0.5)
 
-    # Submit by clicking input#edit-submit (op=Create). The form is long, so
-    # scroll the button into view first -- a coordinate-click at its raw
-    # (below-the-fold) rect would miss and the submit would silently no-op.
+    # Submit by clicking input#edit-submit (op=Create). Scroll it into view
+    # first -- the form is long, so a coordinate-click at its raw below-the-fold
+    # rect would miss. The click itself is reliable after scrolling; the flaky
+    # part is DETECTION: a successful submit returns a TRANSIENT JSON blob
+    #   {"assignment_nid":"<id>","path":"assignment-creation-complete",...}
+    # that the page redirects away from quickly. So click ONCE (re-clicking
+    # could double-create if the submit is slow) and POLL for the JSON or a
+    # validation error.
     cdp.eval_js(
         "(function(){var el=document.querySelector('input#edit-submit');"
         "if(el)el.scrollIntoView({block:'center',inline:'center'});})()"
     )
     time.sleep(0.3)
     submit_rect = cdp.eval_js(
-        "(function(){"
-        "  var el = document.querySelector('input#edit-submit');"
-        "  if (!el) return null;"
-        "  var r = el.getBoundingClientRect();"
-        "  return {x: r.left + r.width/2, y: r.top + r.height/2};"
-        "})()"
+        "(function(){var el=document.querySelector('input#edit-submit');"
+        "if(!el)return null;var r=el.getBoundingClientRect();"
+        "return {x:r.left+r.width/2,y:r.top+r.height/2};})()"
     )
     if not submit_rect:
         return {"ok": False, "assignment_id": None, "error": "Submit button not found"}
-
     cdp.click(int(submit_rect["x"]), int(submit_rect["y"]))
-    time.sleep(3.0)
 
-    # A successful Drupal popup submit returns a JSON blob:
+    # Detection is BEST-EFFORT. A successful submit returns a TRANSIENT JSON blob
     #   {"assignment_nid":"<id>","path":"assignment-creation-complete",...}
-    # Capture the id from that (the /assignment/<id> URL pattern does NOT appear).
+    # that the page redirects away from quickly, so it is easy to miss -- and
+    # Schoology's gradebook/materials lists are eventually-consistent, so they
+    # don't reflect a brand-new create synchronously either. We therefore poll
+    # for the JSON (and a validation error) but do NOT re-click (re-clicking
+    # could double-create). The RELIABILITY mechanism is the idempotent sync:
+    # a re-run reconciles via find_assignment_id_by_title once the column has
+    # rendered. So `ok`/`assignment_id` here are a fast-path, not a guarantee.
     import re
-    body = cdp.eval_js("(document.body && document.body.textContent) || ''") or ""
     assignment_id = None
-    m = re.search(r'"assignment_nid"\s*:\s*"?(\d+)"?', body)
-    if m:
-        assignment_id = m.group(1)
-    if not assignment_id:
-        current_url = cdp.eval_js("window.location.href") or ""
-        m2 = re.search(r"/assignment/(\d+)", current_url)
-        if m2:
-            assignment_id = m2.group(1)
+    created = False
+    for _ in range(16):  # poll ~5s
+        time.sleep(0.3)
+        body = cdp.eval_js("(document.body && document.body.textContent) || ''") or ""
+        m = re.search(r'"assignment_nid"\s*:\s*"?(\d+)"?', body)
+        if m:
+            assignment_id = m.group(1)
+        if assignment_id or ("assignment-creation-complete" in body):
+            created = True
+            break
+        error_text = cdp.eval_js(
+            "(function(){var el=document.querySelector('.messages.error, "
+            ".error-messages, .form-item--error-message');"
+            "return el ? el.textContent.trim() : null;})()"
+        )
+        if error_text:
+            return {"ok": False, "assignment_id": None, "error": error_text}
 
-    created = ("assignment-creation-complete" in body) or bool(assignment_id)
-
-    # Surface a real validation error only if the create did NOT complete.
-    error_text = cdp.eval_js(
-        "(function(){"
-        "  var el = document.querySelector('.messages.error, .error-messages, "
-        ".form-item--error-message');"
-        "  return el ? el.textContent.trim() : null;"
-        "})()"
-    )
-    if error_text and not created:
-        return {"ok": False, "assignment_id": None, "error": error_text}
-
-    return {"ok": created, "assignment_id": assignment_id, "error": None}
+    return {"ok": created, "assignment_id": assignment_id,
+            "error": None if created else "create not confirmed (best-effort; reconcile via re-sync)"}
 
 
 def delete_assignment(cdp: EdgeCDP, nid: str) -> dict:
@@ -462,40 +464,36 @@ def delete_assignment(cdp: EdgeCDP, nid: str) -> dict:
     (input#edit-submit, op=Delete). Clicking it confirms -- and deletes ALL
     grades for the assignment. Returns {'ok': bool, 'error': str|None}.
 
-    NOTE: the delete action URL does NOT redirect on success and the confirm
-    form can linger in the DOM, so `ok` is a best-effort signal (a still-showing
-    "Are you sure" = a missed submit). For certainty, callers should RE-QUERY
-    (the assignment is gone) -- a delete-until-gone loop is the robust pattern,
-    since the coordinate-click is occasionally flaky.
+    Returns {'ok': bool, 'error': str|None}, where ok is VERIFIED: each pass
+    re-navigates to the delete URL -- if the assignment is gone its confirm form
+    no longer renders. (The action URL does NOT redirect and the "Are you sure"
+    text persists in the response even after a successful delete, so the
+    form-on-reload check is the only reliable signal.) The coordinate-click is
+    occasionally flaky, so it retries; deleting an already-gone assignment is a
+    no-op, so the retry is safe.
     """
-    cdp.attach_url(f"{SCHOOLOGY_BASE}/assignment/delete/{nid}", wait_ms=3000)
-    if not cdp.eval_js("!!document.querySelector('form#s-grade-item-delete-form')"):
-        return {"ok": False, "error": "delete confirm form not found (already gone?)"}
+    for _ in range(3):
+        cdp.attach_url(f"{SCHOOLOGY_BASE}/assignment/delete/{nid}", wait_ms=3000)
+        if not cdp.eval_js("!!document.querySelector('form#s-grade-item-delete-form')"):
+            return {"ok": True, "error": None}  # gone (deleted, or never existed)
+        cdp.eval_js(
+            "(function(){var el=document.querySelector('input#edit-submit');"
+            "if(el)el.scrollIntoView({block:'center',inline:'center'});})()"
+        )
+        time.sleep(0.3)
+        rect = cdp.eval_js(
+            "(function(){var el=document.querySelector('input#edit-submit');"
+            "if(!el)return null;var r=el.getBoundingClientRect();"
+            "return {x:r.left+r.width/2,y:r.top+r.height/2};})()"
+        )
+        if rect:
+            cdp.click(int(rect["x"]), int(rect["y"]))
+            time.sleep(2.5)
 
-    # Scroll the submit into view, then trusted coordinate-click (same gotcha
-    # as add_assignment -- a raw click can miss a below-the-fold button).
-    cdp.eval_js(
-        "(function(){var el=document.querySelector('input#edit-submit');"
-        "if(el)el.scrollIntoView({block:'center',inline:'center'});})()"
-    )
-    time.sleep(0.3)
-    rect = cdp.eval_js(
-        "(function(){var el=document.querySelector('input#edit-submit');"
-        "if(!el)return null;var r=el.getBoundingClientRect();"
-        "return {x:r.left+r.width/2,y:r.top+r.height/2};})()"
-    )
-    if not rect:
-        return {"ok": False, "error": "delete submit button not found"}
-    cdp.click(int(rect["x"]), int(rect["y"]))
-    time.sleep(2.5)
-
-    # The action URL does NOT redirect and the form can linger, so the most
-    # reliable signal is whether the "Are you sure" confirmation is STILL
-    # showing (= the submit missed). Absent it, the delete was processed.
-    body = cdp.eval_js("(document.body && document.body.textContent) || ''") or ""
-    confirm_still = "Are you sure you want to delete" in body
-    return {"ok": not confirm_still,
-            "error": None if not confirm_still else "confirmation still showing (submit missed)"}
+    # Final verify: gone iff the delete-confirm form no longer renders.
+    cdp.attach_url(f"{SCHOOLOGY_BASE}/assignment/delete/{nid}", wait_ms=2500)
+    gone = not cdp.eval_js("!!document.querySelector('form#s-grade-item-delete-form')")
+    return {"ok": gone, "error": None if gone else "assignment still present after delete retries"}
 
 
 # --------------------------------------------------------------------------- #

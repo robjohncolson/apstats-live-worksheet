@@ -70,7 +70,25 @@
 >    `/assignment/delete/<nid>` -> confirm form -> click Delete; action
 >    URL doesn't redirect so verify via re-query / delete-until-gone
 >    loop). The 2 `P2 Smoke Test` smoke columns were cleaned up;
->    Sync Test 1 preserved.
+>    Sync Test 1 preserved. **Retry hardening added** (best-effort
+>    transient-JSON poll on create; click-retry + re-nav verify on
+>    delete) -- but it surfaced an eventual-consistency WALL (see
+>    gotcha #6). ⚠ **Stray cleanup OUTSTANDING**: ~3 `P2 Retry Test`
+>    assignments (nids 8405581289 / 8405583046 / 8405583594) in Sec 1
+>    need MANUAL deletion via the live UI (automation could not reliably
+>    remove them through Schoology's cache).
+>
+> 6. **Schoology eventual-consistency WALL (load-bearing).** Create/
+>    delete confirmation is NOT reliable via DOM scraping: the create
+>    success JSON is transient (~1s then redirect), the gradebook
+>    columns lag 5-6s+ with render races, and the materials list is
+>    CACHED (shows DELETED assignments as present, lags new creates) --
+>    even `/assignment/delete/<nid>` can render the form for a deleted
+>    nid. The submit CLICK is reliable (creates land); only CONFIRMATION
+>    is unreliable. So the live sync MUST rely on IDEMPOTENT re-run
+>    reconciliation (find_assignment_id_by_title + delete-until-gone),
+>    never synchronous per-call `ok`. `add_assignment`/`delete_assignment`
+>    return best-effort `ok` by design.
 > 2. **Flip `USE_V3_GRADING=true`** in prod after a real-data sanity
 >    check (currently no SY26-27 grade data -- it's a mockup).
 > 3. **Sec 2 v3 grade-setup** -- deferred (mockup, periods TBD); revisit

@@ -886,3 +886,38 @@ until the title is absent). Deleting an assignment also deletes ALL its grades.
 The 2 `P2 Smoke Test` smoke columns were cleaned up via this; `Sync Test 1`
 (data-x=0, grade 95) was preserved.
 
+### Retry hardening + the eventual-consistency WALL (P2b, 2026-05-30)
+
+`add_assignment` now polls for the transient success JSON (best-effort nid +
+validation-error capture); `delete_assignment` retries the click and
+re-navigates the delete URL to verify. BUT the load-bearing finding from
+hardening: **Schoology's create/delete confirmation is fundamentally unreliable
+via DOM scraping** -- every signal is transient or eventually-consistent/cached:
+
+- the create success JSON (`assignment-creation-complete`) is TRANSIENT -- the
+  page redirects away from it within ~1s, so a poll often misses it;
+- the gradebook columns appear with a lag (5-6s+) and the grid render races
+  (a fresh load can momentarily show zero assignment columns);
+- the materials list is CACHED -- it lags new creates AND shows DELETED
+  assignments as still-present (a just-deleted nid reappeared on a later load);
+- even re-navigating `/assignment/delete/<nid>` can render the confirm form for
+  an apparently-deleted assignment, so it is not a hard signal either.
+
+Coordinate-click vs JS `.click()` made no consistent difference on these Drupal
+forms -- the flakiness is the backend consistency, not the gesture. The submit
+CLICK itself is reliable (creates land); only CONFIRMATION is unreliable.
+
+**Architectural consequence (load-bearing for the live sync):** do NOT rely on
+synchronous per-call confirmation. The reliability mechanism is the IDEMPOTENT
+re-run -- the sync reconciles state via `find_assignment_id_by_title` (and a
+delete-until-gone loop) across runs, tolerating that any single call's `ok` is
+best-effort. `add_assignment` / `delete_assignment` return best-effort `ok`;
+the orchestration's pre-flight + re-sync is the source of truth.
+
+**Stray cleanup OUTSTANDING:** P2b verification left ~3 `P2 Retry Test`
+assignments (nids 8405581289, 8405583046, 8405583594) in Sec 1 that automated
+deletes could not reliably remove (the cache made verification impossible).
+**These need MANUAL deletion via the live Schoology UI** (the teacher sees real
+state; the automation was fighting a stale cache). They are hidden (publish off,
+no grades).
+
