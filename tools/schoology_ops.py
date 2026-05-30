@@ -439,9 +439,15 @@ def add_assignment(
     assignment_id = None
     created = False
 
+    # The create POSTs to /course/<id>/materials/assignments/add?is_popup=1, so
+    # match THAT url. "assignment-creation-complete" is a token in the JSON
+    # response BODY, not the url (live smoke 2026-05-30, where the old value
+    # never matched). Caveat: the response is a redirect-away navigation, so
+    # getResponseBody can still lose the race -- the DOM poll below plus the
+    # find-by-title reconciliation remain the reliable create-confirmation paths.
     if hasattr(cdp, "wait_for_response"):
         try:
-            captured = cdp.wait_for_response("assignment-creation-complete", timeout=8.0)
+            captured = cdp.wait_for_response("materials/assignments/add", timeout=8.0)
         except Exception:
             captured = None
         if captured:
@@ -476,7 +482,8 @@ def add_assignment(
             "error": None if created else "create not confirmed (best-effort; reconcile via re-sync)"}
 
 
-def delete_assignment(cdp: EdgeCDP, nid: str) -> dict:
+def delete_assignment(cdp: EdgeCDP, nid: str, *, course_id: Optional[str] = None,
+                      title: Optional[str] = None) -> dict:
     """Delete an assignment by its node id (P2b RE, 2026-05-30).
 
     GET /assignment/delete/<nid> renders a Drupal confirm form
@@ -484,13 +491,13 @@ def delete_assignment(cdp: EdgeCDP, nid: str) -> dict:
     (input#edit-submit, op=Delete). Clicking it confirms -- and deletes ALL
     grades for the assignment. Returns {'ok': bool, 'error': str|None}.
 
-    Returns {'ok': bool, 'error': str|None}, where ok is VERIFIED: each pass
-    re-navigates to the delete URL -- if the assignment is gone its confirm form
-    no longer renders. (The action URL does NOT redirect and the "Are you sure"
-    text persists in the response even after a successful delete, so the
-    form-on-reload check is the only reliable signal.) The coordinate-click is
-    occasionally flaky, so it retries; deleting an already-gone assignment is a
-    no-op, so the retry is safe.
+    Verification: pass course_id + title to verify against GRADEBOOK TRUTH --
+    the column is gone iff find_assignment_id_by_title returns None. The
+    confirm-form-on-reload check is a FALSE-NEGATIVE: live smoke 2026-05-30
+    showed the "Are you sure" form re-renders/caches even after a successful
+    delete (the action URL does NOT redirect), so it is only the fallback when
+    course_id/title are absent. The coordinate-click is occasionally flaky, so
+    it retries; deleting an already-gone assignment is a no-op, so retry is safe.
     """
     for _ in range(3):
         cdp.attach_url(f"{SCHOOLOGY_BASE}/assignment/delete/{nid}", wait_ms=3000)
@@ -510,7 +517,18 @@ def delete_assignment(cdp: EdgeCDP, nid: str) -> dict:
             cdp.click(int(rect["x"]), int(rect["y"]))
             time.sleep(2.5)
 
-    # Final verify: gone iff the delete-confirm form no longer renders.
+    # Final verify. Prefer gradebook truth when we have the course + title: the
+    # column is gone iff find_assignment_id_by_title returns None. (The
+    # confirm-form check below is a known false-negative -- see the docstring.)
+    if course_id and title:
+        for _ in range(3):
+            cdp.attach_url(gradebook_url(course_id), wait_ms=4000)
+            inject_helpers(cdp)
+            if find_assignment_id_by_title(cdp, title) is None:
+                return {"ok": True, "error": None}
+            time.sleep(0.5)
+        return {"ok": False, "error": "assignment still present in gradebook after delete retries"}
+
     cdp.attach_url(f"{SCHOOLOGY_BASE}/assignment/delete/{nid}", wait_ms=2500)
     gone = not cdp.eval_js("!!document.querySelector('form#s-grade-item-delete-form')")
     return {"ok": gone, "error": None if gone else "assignment still present after delete retries"}

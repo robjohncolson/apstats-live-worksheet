@@ -919,4 +919,32 @@ assignments (nids 8405581289, 8405583046, 8405583594) in Sec 1 that automated
 deletes could not reliably remove (the cache made verification impossible).
 **These need MANUAL deletion via the live Schoology UI** (the teacher sees real
 state; the automation was fighting a stale cache). They are hidden (publish off,
-no grades).
+no grades). *(Update 2026-05-30: the teacher confirmed only `Sync Test 1`
+remains -- these strays were actually deleted; the `ok=False` was a delete-side
+false-negative, see below.)*
+
+### Network fast-path live smoke (s123, 2026-05-30)
+
+Ran a live date-less create on Sec 1 (`FastPath Smoke DELETE ME`, publish off /
+sync off) to confirm the create-nid Network fast-path. Findings:
+
+- **Create works; the fast-path did NOT fire.** `add_assignment` returned the
+  nid, but via the DOM-poll fallback -- `wait_for_response("assignment-creation-complete")`
+  returned `None`. ROOT CAUSE: that string is a token in the JSON response BODY
+  (`"path":...`), NOT in the response URL. The real create POSTs to
+  `/course/<id>/materials/assignments/add?is_popup=1` (form `s-grade-item-add-form`
+  action). **Fix:** filter corrected to `materials/assignments/add`. CAVEAT: the
+  create response is a top-level navigation the page redirects away from, so even
+  with the right filter `getResponseBody` may lose the race ("No resource") -- the
+  fast-path is best-effort, and the DOM poll + find-by-title reconciliation remain
+  the reliable create-confirmation paths.
+- **Delete `ok` is a false-negative.** `delete_assignment` returned `ok=False`
+  but the gradebook confirmed the column was GONE (`find_assignment_id_by_title`
+  == None; count back to baseline). The confirm-form-renders check is unreliable.
+  **Fix:** `delete_assignment(cdp, nid, *, course_id=None, title=None)` now
+  verifies against gradebook truth when course_id+title are passed; the
+  form-renders check is only the fallback. This is the same false-negative that
+  made the `P2 Retry Test` strays look outstanding when they were already gone.
+
+Both fixes are code-only + unit-tested (`tests/test_schoology_ops.py`); the
+corrected fast-path still needs a live re-smoke to decide keep-vs-strip.
