@@ -58,10 +58,10 @@ class FakeCDP:
             return True
         if "s-grade-item-delete-form" in expr:
             return self.delete_form_present
-        if "edit-submit" in expr:             # JS submit click -> "did I click it"
-            return True
-        if "getBoundingClientRect" in expr:
+        if "getBoundingClientRect" in expr:   # submit rect (delete coordinate click)
             return {"x": 10, "y": 10}
+        if "edit-submit" in expr:             # JS submit click (add) / scrollIntoView
+            return True
         if "document.body" in expr and "textContent" in expr:
             return self.body_text
         if "gridcell" in expr:                # find_assignment_id_by_title scan

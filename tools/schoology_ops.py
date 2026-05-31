@@ -513,19 +513,32 @@ def delete_assignment(cdp: EdgeCDP, nid: str, *, course_id: Optional[str] = None
     confirm-form-on-reload check is a FALSE-NEGATIVE: live smoke 2026-05-30
     showed the "Are you sure" form re-renders/caches even after a successful
     delete (the action URL does NOT redirect), so it is only the fallback when
-    course_id/title are absent. The submit is a reliable JS click; the retry
-    covers confirmation lag, and deleting an already-gone assignment is a no-op,
-    so the retry is safe.
+    course_id/title are absent. The submit is a real COORDINATE click: the Drupal
+    delete-confirm form does NOT submit on a JS .click() (verified 2026-05-31) --
+    unlike the long add form (which needs JS click to dodge a below-the-fold
+    miss), the short delete form needs the trusted gesture. It retries (the
+    coordinate click is occasionally flaky), and deleting an already-gone
+    assignment is a no-op, so the retry is safe.
     """
     for _ in range(3):
         cdp.attach_url(f"{SCHOOLOGY_BASE}/assignment/delete/{nid}", wait_ms=3000)
         if not cdp.eval_js("!!document.querySelector('form#s-grade-item-delete-form')"):
             return {"ok": True, "error": None}  # gone (deleted, or never existed)
-        clicked = cdp.eval_js(
+        # Coordinate click (NOT a JS .click()): the Drupal delete-confirm form
+        # does not submit on el.click() (verified 2026-05-31), unlike the add
+        # form. The button is short / in view, so no below-the-fold miss here.
+        cdp.eval_js(
             "(function(){var el=document.querySelector('input#edit-submit');"
-            "if(!el)return false;el.click();return true;})()"
+            "if(el)el.scrollIntoView({block:'center',inline:'center'});})()"
         )
-        if clicked:
+        time.sleep(0.3)
+        rect = cdp.eval_js(
+            "(function(){var el=document.querySelector('input#edit-submit');"
+            "if(!el)return null;var r=el.getBoundingClientRect();"
+            "return {x:r.left+r.width/2,y:r.top+r.height/2};})()"
+        )
+        if rect:
+            cdp.click(int(rect["x"]), int(rect["y"]))
             time.sleep(2.5)
 
     # Final verify. Prefer gradebook truth when we have the course + title: the
