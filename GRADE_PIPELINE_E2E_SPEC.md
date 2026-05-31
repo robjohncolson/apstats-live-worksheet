@@ -161,8 +161,17 @@ not silent loss); fix migration `0010` `schoology_assignment.kind` CHECK to incl
 
 ## 7. Status
 
-- **P1 — IN PROGRESS** (session 123). P2 SQL written alongside P1.
-- P3–P5 — not started.
+- **P1 — DONE** (curriculum_render `cd2ec6d`, session 123): the feeder is wired into
+  the live `window.submitAnswer` via `recordToGradebookLedger`; 22/22 DN2d tests pass
+  (now pinning the *live* wiring, not the dead function). ⚠ Takes effect once the cr
+  client (`index.html`) is redeployed/served to students. Scoped to MC quizzes + PC
+  MCQs; cr multi-part FRQ (`submitPartAnswer`) deferred.
+- **P2 — SQL WRITTEN, awaiting user run**:
+  `roster-server/migrations/0011_item_ledger_pc_source.sql` adds `'pc'` to the
+  item_ledger source CHECK. Run on Supabase → PC rows persist. (No effect until P1 is
+  live AND this runs.)
+- **P3–P5 — not started.** P3 (flip `USE_V3_GRADING`) only after P1+P2 produce real
+  rows and a sanity check.
 - Push primitives (E3) + grade engine (D1) are built + verified; the remaining work
   is **wiring**, not new mechanics.
 
