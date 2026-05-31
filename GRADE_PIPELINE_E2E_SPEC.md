@@ -161,17 +161,23 @@ not silent loss); fix migration `0010` `schoology_assignment.kind` CHECK to incl
 
 ## 7. Status
 
-- **P1 — DONE** (curriculum_render `cd2ec6d`, session 123): the feeder is wired into
-  the live `window.submitAnswer` via `recordToGradebookLedger`; 22/22 DN2d tests pass
-  (now pinning the *live* wiring, not the dead function). ⚠ Takes effect once the cr
-  client (`index.html`) is redeployed/served to students. Scoped to MC quizzes + PC
-  MCQs; cr multi-part FRQ (`submitPartAnswer`) deferred.
-- **P2 — SQL WRITTEN, awaiting user run**:
-  `roster-server/migrations/0011_item_ledger_pc_source.sql` adds `'pc'` to the
-  item_ledger source CHECK. Run on Supabase → PC rows persist. (No effect until P1 is
-  live AND this runs.)
-- **P3–P5 — not started.** P3 (flip `USE_V3_GRADING`) only after P1+P2 produce real
-  rows and a sanity check.
+- **P1 — DONE** (curriculum_render `cd2ec6d`): feeder wired into the live
+  `window.submitAnswer`; 22/22 DN2d tests pin the *live* wiring. ⚠ live e2e (a real
+  submit producing a ledger row) still UNCONFIRMED. Scoped to MC + PC-MCQ.
+- **P2 — DONE** (teacher ran `0011_item_ledger_pc_source.sql` on Supabase 2026-05-30):
+  `'pc'` source now allowed.
+- **P3 — DONE** (teacher set `USE_V3_GRADING=true` on Railway). ⚠ **SANITY CHECK
+  PENDING** — run `build_schoology_fixture.py --inspect` to confirm v3 is live AND
+  real quiz/PC data is flowing before trusting the grades.
+- **P4a — DONE** (`tools/build_schoology_fixture.py`, 7 tests): GETs `/class/grades`
+  → the `{student/lessonKey: value}` fixture; reads the teacher secret from the env
+  (headless-safe). `--inspect` detects v3 (via `pcAvg`/`workAvg`) + data coverage =
+  the P3 sanity check.
+- **P4b — TODO**: roster→Schoology-uid bridge (migration `roster.schoology_uid` +
+  populate via bulk-enroll) so fixture keys match Schoology uids; until then pass
+  `--uid-map`. Then wire the producer + `schoology_sync_section.py --grades-fixture`
+  into the daily laptop schtask (§4).
+- **P5 — not started** (posters/blooket tracks).
 - Push primitives (E3) + grade engine (D1) are built + verified; the remaining work
   is **wiring**, not new mechanics.
 
