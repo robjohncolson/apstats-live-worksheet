@@ -800,3 +800,55 @@ describe('computeQuizTotals — per-topic gradable quiz counts from the answer k
     expect(lessonsNoTotals.every(l => l.quizTotal === 0)).toBe(true);
   });
 });
+
+// ── Q = correct / TOTAL (unanswered counts as wrong) ──────────────────────────
+// Aligns the quiz track with the Desk button: 1 right of 3 = 33%, not 100%.
+// Requires a schedule so computeQuizTotals can resolve the denominator.
+
+describe('computeLessonGrades — Q scores correct/total (unanswered = wrong)', () => {
+  const KEY3 = {
+    'U1-L2-Q01': { answerKey: 'A', unit: '1' },
+    'U1-L2-Q02': { answerKey: 'B', unit: '1' },
+    'U1-L2-Q03': { answerKey: 'C', unit: '1' },
+  };
+
+  it('1 of 3 answered correctly → Q = 33.3 (NOT 100 — no longer correct/attempted)', () => {
+    const rows = [makeRow('U1-L2-Q01', { source: 'curriculum_quiz', response: 'A' })];
+    const map = computeLessonGrades(rows, FRQ_BAND, KEY3, SAMPLE_SCHEDULE, {});
+    expect(map.get('1.2').Q).toBe(33.3);
+  });
+
+  it('3 of 3 answered, 2 correct → Q = 66.7', () => {
+    const rows = [
+      makeRow('U1-L2-Q01', { source: 'curriculum_quiz', response: 'A' }),  // correct
+      makeRow('U1-L2-Q02', { source: 'curriculum_quiz', response: 'B' }),  // correct
+      makeRow('U1-L2-Q03', { source: 'curriculum_quiz', response: 'X' }),  // wrong
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, KEY3, SAMPLE_SCHEDULE, {});
+    expect(map.get('1.2').Q).toBe(66.7);
+  });
+
+  it('all 3 correct → Q = 100', () => {
+    const rows = [
+      makeRow('U1-L2-Q01', { source: 'curriculum_quiz', response: 'A' }),
+      makeRow('U1-L2-Q02', { source: 'curriculum_quiz', response: 'B' }),
+      makeRow('U1-L2-Q03', { source: 'curriculum_quiz', response: 'C' }),
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, KEY3, SAMPLE_SCHEDULE, {});
+    expect(map.get('1.2').Q).toBe(100);
+  });
+
+  it('no quiz attempted → Q stays null (never tanks a not-yet-taken lesson)', () => {
+    const rows = [makeRow('WS-U1L2-frq1', { source: 'frq', score: 1 })];
+    const map = computeLessonGrades(rows, FRQ_BAND, KEY3, SAMPLE_SCHEDULE, {});
+    expect(map.get('1.2').Q).toBe(null);
+  });
+
+  it('no schedule → defensive fallback to correct/attempted (1/1 = 100)', () => {
+    const rows = [makeRow('U1-L2-Q01', { source: 'curriculum_quiz', response: 'A' })];
+    const map = computeLessonGrades(rows, FRQ_BAND, KEY3, null, {});
+    // Without a schedule computeQuizTotals can't resolve the denominator, so Q
+    // falls back to correct/attempted. expandLessonKey synthesizes "1.2".
+    expect(map.get('1.2').Q).toBe(100);
+  });
+});

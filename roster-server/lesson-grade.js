@@ -296,6 +296,11 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
   const wWeight  = weights.W;
   const qWeight  = weights.Q;
 
+  // Per-topic total gradable quiz questions (the Q denominator), so Q scores
+  // correct / WHOLE-quiz (unanswered = wrong), mirroring how Cws uses the full
+  // blank count. Computed once from the answer key.
+  const quizTotals = computeQuizTotals(answerKey, schedule);
+
   for (const [, acc] of byTopic) {
     // Cws = clamp((sum of blank scores) / blankCount, 0, 1) * 100
     // blankCount = manifest count for this lesson (DENOMINATOR = ALL blanks,
@@ -316,10 +321,21 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
       ? gradableFrqs.reduce((s, f) => s + f.score, 0) / gradableFrqs.length
       : null;
 
-    // Q = correctness % over quiz items
-    const Q = acc.quizItems.length > 0
-      ? (acc.quizItems.filter(q => q.correct).length / acc.quizItems.length) * 100
-      : null;
+    // Q = correctness % over the WHOLE quiz (DENOMINATOR = total quiz questions
+    // from the answer key, mirroring Cws — unanswered questions contribute 0 to
+    // the numerator, so 1-right-of-3 = 33%, not 100%). Only when the student has
+    // ATTEMPTED the quiz; a wholly un-attempted quiz stays null so it never
+    // tanks a not-yet-taken lesson (the v3 due-by-today track logic decides
+    // whether an absent quiz counts as 0). Defensive fallback to attempted count
+    // if the topic's total is somehow unknown.
+    let Q = null;
+    if (acc.quizItems.length > 0) {
+      const correctCount = acc.quizItems.filter(q => q.correct).length;
+      const quizDenom = (quizTotals[acc.topicKey] && quizTotals[acc.topicKey] > 0)
+        ? quizTotals[acc.topicKey]
+        : acc.quizItems.length;
+      Q = (correctCount / quizDenom) * 100;
+    }
 
     // B = three-way weighted mean, renormalized over PRESENT feeders
     let B = null;
