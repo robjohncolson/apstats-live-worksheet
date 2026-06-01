@@ -2,9 +2,9 @@
 // 2026-05-20 rewrite: stripped the keyboard-nav pins (letter/number badges +
 // modal-scoped keydown handler) since the UX was removed per teacher feedback.
 // 2026-06 rewrite: the inline quiz self-report score input (prong A) was
-// REPLACED by an auto score+completion gate — the quiz Done button now reads
-// the recorded cr-quiz performance (_quizPerfFor) and unlocks only at
-// >=40% answered AND >=40% correct. Pins 05/06/16 updated accordingly.
+// REPLACED by an auto score gate — the quiz Done button reads the recorded
+// cr-quiz performance (_quizPerfFor), shows a simple score = correct/total
+// ("Done (nn%)"), and unlocks at >=40%. Pins 05/06/16 updated accordingly.
 // Kept: visit-gate preservation (off-pattern worksheets) + AI-tutor button
 // preservation + removal regression guards.
 //
@@ -72,22 +72,15 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(DESK, '_studentMarkQuizCancel removed').not.toMatch(/_studentMarkQuizCancel/);
   });
 
-  it('pin 06: the quiz Done gate requires BOTH answered>=40% AND scored>=40%', () => {
+  it('pin 06: quiz score = correct/total, shown as a simple "Done (nn%)", gate at >=40%', () => {
     const body = fnBody(DESK, '_quizPerfFor');
-    expect(body, 'gate reads the score %').toMatch(/scorePct/);
-    expect(body, 'gate reads completion %').toMatch(/completionPct/);
-    expect(body, 'eligible requires score >= threshold')
-      .toMatch(/scorePct\s*>=\s*DESK_QUIZ_DONE_THRESHOLD/);
-    expect(body, 'eligible requires completion >= threshold')
-      .toMatch(/completionPct\s*>=\s*DESK_QUIZ_DONE_THRESHOLD/);
+    expect(body, 'score is correct out of total (unanswered = wrong)').toMatch(/correct\s*\/\s*total/);
+    expect(body, 'eligible at >= threshold').toMatch(/scorePct\s*>=\s*DESK_QUIZ_DONE_THRESHOLD/);
     expect(DESK, 'threshold constant is 40').toMatch(/DESK_QUIZ_DONE_THRESHOLD\s*=\s*40/);
-    // The quiz Done label shows BOTH the answered fraction and the score %,
-    // and never mislabels "% correct of attempted" as "% complete" (which read
-    // as 100% off a single right answer — a lie about completion).
+    // Single simple score on the face — no "% complete", no answered fraction.
     const done = fnBody(DESK, '_doneBtn');
-    expect(done, 'quiz Done label shows the answered fraction').toMatch(/answered, /);
-    expect(done, 'quiz Done label shows the score as "% correct)"').toMatch(/% correct\)/);
-    expect(done, 'quiz Done label must NOT say "% complete)"').not.toMatch(/% complete\)/);
+    expect(done, 'quiz Done shows a simple score "Done (nn%)"').toContain("Done (' + _qnn + '%)");
+    expect(done, 'no "% complete" label').not.toMatch(/% complete\)/);
   });
 
   it('pin 07: visit-gate (540d168) is preserved — deskDoneGateMs and "Done in ~" are still present', () => {

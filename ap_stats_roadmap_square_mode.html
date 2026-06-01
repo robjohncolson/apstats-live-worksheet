@@ -5118,9 +5118,13 @@ var DESK_QUIZ_DONE_THRESHOLD = 40;
 // Quiz performance for a topic, read from the /grade lessons[] cache
 // (_gradeLessonsCache, populated by renderDoNowGrades). The recorded quiz
 // score flows automatically from the curriculum_render quiz (no self-report).
-// Returns { scorePct, attempted, total, completionPct, eligible } or null when
-// the lesson isn't in the cache. scorePct = lesson.Q (% correct of attempted);
-// completionPct = attempted / quizTotal; eligible = both >= the threshold.
+// Returns { correct, total, scorePct, eligible } or null when the topic has no
+// known quiz / the cache is cold.
+//   scorePct = correct / total  (out of the WHOLE quiz — unanswered counts as
+//   wrong, so it's a real quiz score: 1 right of 3 = 33%, 2 of 3 = 66%, not
+//   "100% of what you answered"). eligible = scorePct >= the threshold.
+// q.correct is set server-side when the answer key matches; (future) an
+// AI-granted exception should also flip an item's correct flag upstream.
 function _quizPerfFor(topicId) {
   try {
     if (!topicId || !Array.isArray(_gradeLessonsCache)) return null;
@@ -5133,18 +5137,15 @@ function _quizPerfFor(topicId) {
     }
     if (!lesson) return null;
     var quiz = (lesson.items && Array.isArray(lesson.items.quiz)) ? lesson.items.quiz : [];
-    var attempted = quiz.length;
     var total = typeof lesson.quizTotal === 'number' ? lesson.quizTotal : 0;
-    var scorePct = typeof lesson.Q === 'number' ? lesson.Q : null;
-    var completionPct = total > 0 ? (attempted / total) * 100 : null;
-    var eligible = scorePct != null && scorePct >= DESK_QUIZ_DONE_THRESHOLD
-                && completionPct != null && completionPct >= DESK_QUIZ_DONE_THRESHOLD;
+    if (total <= 0) return null;  // no known quiz for this topic
+    var correct = quiz.filter(function (q) { return q && q.correct; }).length;
+    var scorePct = (correct / total) * 100;
     return {
-      scorePct: scorePct,
-      attempted: attempted,
+      correct: correct,
       total: total,
-      completionPct: completionPct,
-      eligible: eligible,
+      scorePct: scorePct,
+      eligible: scorePct >= DESK_QUIZ_DONE_THRESHOLD,
     };
   } catch (_) { return null; }
 }
@@ -7550,20 +7551,17 @@ function showResourcePanel(inf, dateStr) {
             // student who hasn't taken the quiz signed-in sees a disabled Done.
             if (artifact === 'quiz') {
                 var perf = _quizPerfFor(_stuTopicId);
-                if (!perf || perf.attempted === 0) {
-                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Take the quiz while signed in — Done unlocks once you answer at least ' + DESK_QUIZ_DONE_THRESHOLD + '% of it and score at least ' + DESK_QUIZ_DONE_THRESHOLD + '%.">Done</button>';
+                if (!perf) {
+                    // No known quiz for this topic (or the grade cache is cold).
+                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Take the quiz while signed in — Done unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%.">Done</button>';
                 }
-                // Label shows BOTH truths: how much of the quiz was answered
-                // (answered X/Y) and how well (Z% correct). Never call a partial
-                // attempt "% complete" — "% correct of attempted" reads as 100%
-                // off a single right answer, which is a lie about completion.
-                var _qnn = perf.scorePct != null ? Math.round(perf.scorePct) : 0;
-                var _qcn = perf.completionPct != null ? Math.round(perf.completionPct) : 0;
-                var _qlabel = 'Done (' + perf.attempted + '/' + perf.total + ' answered, ' + _qnn + '% correct)';
+                // Just the score: correct out of the whole quiz (e.g. 2/3 = 66%).
+                var _qnn = Math.round(perf.scorePct);
+                var _qtip = perf.correct + ' of ' + perf.total + ' correct — unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%+.';
                 if (!perf.eligible) {
-                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%+ answered AND ' + DESK_QUIZ_DONE_THRESHOLD + '%+ correct. So far: answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%.">' + _qlabel + '</button>';
+                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="' + _qtip + '">Done (' + _qnn + '%)</button>';
                 }
-                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; ' + _qlabel + '</button>';
+                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="' + _qtip + '" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (' + _qnn + '%)</button>';
             }
             if (!entry.visitedAt) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Open the link first">Done</button>';
