@@ -111,6 +111,12 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
     expect(body).toMatch(/Blooket:\s/);
   });
 
+  it('pin 12c: openDayGrade shows the quiz SCORE % from lesson.Q (what feeds the grade)', () => {
+    const body = fnBody(DESK, 'openDayGrade');
+    expect(body).toMatch(/lesson\.Q\s*!=\s*null/);
+    expect(body).toMatch(/Quiz:\s/);
+  });
+
   it('pin 13: _gradeLessonsCache is declared and populated in renderDoNowGrades', () => {
     // Module-level var for the lessons cache.
     expect(DESK).toMatch(/var\s+_gradeLessonsCache\s*=\s*null/);

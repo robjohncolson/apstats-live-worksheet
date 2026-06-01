@@ -8524,7 +8524,11 @@ function openDayGrade(dateStr) {
             } else {
                 parts.push('FRQs: not taken');
             }
-            if (quizzes.length > 0) {
+            // Quiz: show the score % that feeds the grade (lesson.Q, 0..100),
+            // falling back to a raw correct/total count when Q isn't computed yet.
+            if (lesson.Q != null) {
+                parts.push('Quiz: ' + (Math.round(lesson.Q * 10) / 10) + '%');
+            } else if (quizzes.length > 0) {
                 var correct = quizzes.filter(function (q) { return q.correct; }).length;
                 parts.push('Quiz: ' + correct + '/' + quizzes.length + ' correct');
             } else {
