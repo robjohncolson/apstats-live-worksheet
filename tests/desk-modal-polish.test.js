@@ -81,9 +81,13 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(body, 'eligible requires completion >= threshold')
       .toMatch(/completionPct\s*>=\s*DESK_QUIZ_DONE_THRESHOLD/);
     expect(DESK, 'threshold constant is 40').toMatch(/DESK_QUIZ_DONE_THRESHOLD\s*=\s*40/);
-    // The Done button face shows the score % as "Done (nn% complete)".
+    // The quiz Done label shows BOTH the answered fraction and the score %,
+    // and never mislabels "% correct of attempted" as "% complete" (which read
+    // as 100% off a single right answer — a lie about completion).
     const done = fnBody(DESK, '_doneBtn');
-    expect(done, 'quiz Done label shows "% complete)"').toMatch(/% complete\)/);
+    expect(done, 'quiz Done label shows the answered fraction').toMatch(/answered, /);
+    expect(done, 'quiz Done label shows the score as "% correct)"').toMatch(/% correct\)/);
+    expect(done, 'quiz Done label must NOT say "% complete)"').not.toMatch(/% complete\)/);
   });
 
   it('pin 07: visit-gate (540d168) is preserved — deskDoneGateMs and "Done in ~" are still present', () => {

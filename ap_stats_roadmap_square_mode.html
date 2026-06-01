@@ -7553,12 +7553,17 @@ function showResourcePanel(inf, dateStr) {
                 if (!perf || perf.attempted === 0) {
                     return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Take the quiz while signed in — Done unlocks once you answer at least ' + DESK_QUIZ_DONE_THRESHOLD + '% of it and score at least ' + DESK_QUIZ_DONE_THRESHOLD + '%.">Done</button>';
                 }
+                // Label shows BOTH truths: how much of the quiz was answered
+                // (answered X/Y) and how well (Z% correct). Never call a partial
+                // attempt "% complete" — "% correct of attempted" reads as 100%
+                // off a single right answer, which is a lie about completion.
                 var _qnn = perf.scorePct != null ? Math.round(perf.scorePct) : 0;
                 var _qcn = perf.completionPct != null ? Math.round(perf.completionPct) : 0;
+                var _qlabel = 'Done (' + perf.attempted + '/' + perf.total + ' answered, ' + _qnn + '% correct)';
                 if (!perf.eligible) {
-                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Answer at least ' + DESK_QUIZ_DONE_THRESHOLD + '% of the quiz AND score at least ' + DESK_QUIZ_DONE_THRESHOLD + '%. So far: answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%.">Done (' + _qnn + '% complete)</button>';
+                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%+ answered AND ' + DESK_QUIZ_DONE_THRESHOLD + '%+ correct. So far: answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%.">' + _qlabel + '</button>';
                 }
-                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (' + _qnn + '% complete)</button>';
+                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; ' + _qlabel + '</button>';
             }
             if (!entry.visitedAt) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Open the link first">Done</button>';
