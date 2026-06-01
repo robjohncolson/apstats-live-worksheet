@@ -8488,6 +8488,20 @@ function openDayGrade(dateStr) {
             gradeEl.appendChild(gval);
             card.appendChild(gradeEl);
 
+            // Per-lesson Blooket score (graded warm-up), when recorded.
+            if (lesson.blooket != null) {
+                var blEl = document.createElement('div');
+                blEl.style.marginBottom = '3px';
+                var blLabel = document.createElement('span');
+                blLabel.textContent = 'Blooket: ';
+                blLabel.style.fontWeight = 'bold';
+                var blVal = document.createElement('span');
+                blVal.textContent = (Math.round(lesson.blooket * 10) / 10).toFixed(1) + '%';
+                blEl.appendChild(blLabel);
+                blEl.appendChild(blVal);
+                card.appendChild(blEl);
+            }
+
             var items = lesson.items || { frq: [], quiz: [], worksheet: [] };
             var frqs = Array.isArray(items.frq) ? items.frq : [];
             var quizzes = Array.isArray(items.quiz) ? items.quiz : [];

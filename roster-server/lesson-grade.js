@@ -890,6 +890,9 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       Cws: lessonResult ? (lessonResult.Cws !== undefined ? lessonResult.Cws : null) : null,
       W: lessonResult ? lessonResult.W : null,
       Q: lessonResult ? lessonResult.Q : null,
+      // Per-lesson Blooket score (0..100, mean-of-recorded), surfaced for the
+      // Desk day-grade modal; null when no blooket row attached.
+      blooket: lessonResult ? (lessonResult.blooket != null ? lessonResult.blooket : null) : null,
       items: lessonResult
         ? {
             frq: lessonResult.frqItems.map(f => ({ itemId: f.itemId, score: f.score, ts: f.ts })),

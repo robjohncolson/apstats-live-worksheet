@@ -13,6 +13,7 @@ import {
   parseItemLesson,
   computeLessonGrades,
   computeQuarterV3,
+  buildLessonsArray,
 } from '../lesson-grade.js';
 
 // ── blooketScore -- authoritative formula (spec section 1) ─────────────────────
@@ -106,6 +107,26 @@ describe('computeLessonGrades -- blooket attachment', () => {
     const map = computeLessonGrades([row('BLOOKET-U4L1-2', { score: 0.6 })], FRQ_BAND, {}, schedule, {});
     expect(map.get('4.1').blooket).toBe(60);
     expect(map.get('4.2').blooket).toBe(60);
+  });
+});
+
+// ── buildLessonsArray -- surfaces blooket in the per-lesson display ────────────
+
+describe('buildLessonsArray -- per-lesson blooket display', () => {
+  it('carries the blooket score into the lessons[] entry', () => {
+    const map = computeLessonGrades([row('BLOOKET-U1L2', { score: 0.8 })], FRQ_BAND, {}, SCHEDULE, {});
+    const lessons = buildLessonsArray(map, SCHEDULE);
+    const l12 = lessons.find((l) => l.lessonKey === '1.2');
+    expect(l12).toBeTruthy();
+    expect(l12.blooket).toBe(80);
+  });
+
+  it('a lesson with no blooket row has blooket null in the display', () => {
+    const map = computeLessonGrades([row('BLOOKET-U1L2', { score: 0.8 })], FRQ_BAND, {}, SCHEDULE, {});
+    const lessons = buildLessonsArray(map, SCHEDULE);
+    const l11 = lessons.find((l) => l.lessonKey === '1.1');
+    expect(l11).toBeTruthy();
+    expect(l11.blooket).toBe(null);
   });
 });
 

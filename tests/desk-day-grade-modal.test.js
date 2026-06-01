@@ -105,6 +105,12 @@ describe('DESK Day Grade Modal — Phase 6 structure pins', () => {
       .not.toMatch(/\.innerHTML\s*=\s*[^'"]*(?:lesson|dateStr|gradeText|frq)/);
   });
 
+  it('pin 12b: openDayGrade renders a per-lesson "Blooket:" line when lesson.blooket is present', () => {
+    const body = fnBody(DESK, 'openDayGrade');
+    expect(body).toMatch(/lesson\.blooket\s*!=\s*null/);
+    expect(body).toMatch(/Blooket:\s/);
+  });
+
   it('pin 13: _gradeLessonsCache is declared and populated in renderDoNowGrades', () => {
     // Module-level var for the lessons cache.
     expect(DESK).toMatch(/var\s+_gradeLessonsCache\s*=\s*null/);
