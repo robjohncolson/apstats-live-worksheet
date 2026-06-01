@@ -124,6 +124,25 @@ writes the fixture; (2) `schoology_sync_section.py --grades-fixture <file>` runs
 (dry-run guard → live). Hands-off once configured; the teacher just keeps Edge signed
 in (~90-day cookie).
 
+**The batch is built (P4b).** `tools/daily_schoology_sync.ps1` runs both steps and
+tees a timestamped log to `tools/.schoology-sync-logs/`;
+`tools/register_schoology_sync_task.ps1` registers it as a daily Scheduled Task.
+
+Setup (one-time):
+
+1. **Set the secret** for the task account (read from the env, never the CLI):
+   `setx ROSTER_TEACHER_SECRET <secret>`.
+2. **Register the task** (defaults: `-Section PeriodB -Time 16:30 -TaskName
+   ApStatsSchoologySync`, **dry-run**):
+   `powershell -NoProfile -File tools/register_schoology_sync_task.ps1`.
+   Delete with `schtasks /Delete /TN ApStatsSchoologySync /F`.
+3. **Dry-run → live gate.** The batch passes `--dry-run` to the connector unless
+   `-Live` is given, so it **stays dry-run by design**. Flip to live only once the
+   SY26-27 marking periods exist (PARKED to ~Sept-2026; `SCHOOLOGY_SYNC_V1_BUILD.md`
+   P2b gate) by re-registering with `-Live`
+   (`register_schoology_sync_task.ps1 -Live`), or run it ad hoc:
+   `powershell -NoProfile -File tools/daily_schoology_sync.ps1 -Live`.
+
 ## 5. Fix plan — sequenced (dependencies matter)
 
 | # | Fix | Effort | Owner | Depends |
@@ -173,10 +192,13 @@ not silent loss); fix migration `0010` `schoology_assignment.kind` CHECK to incl
   → the `{student/lessonKey: value}` fixture; reads the teacher secret from the env
   (headless-safe). `--inspect` detects v3 (via `pcAvg`/`workAvg`) + data coverage =
   the P3 sanity check.
-- **P4b — TODO**: roster→Schoology-uid bridge (migration `roster.schoology_uid` +
-  populate via bulk-enroll) so fixture keys match Schoology uids; until then pass
-  `--uid-map`. Then wire the producer + `schoology_sync_section.py --grades-fixture`
-  into the daily laptop schtask (§4).
+- **P4b — IN PROGRESS**: roster→Schoology-uid bridge (migration `roster.schoology_uid`
+  + populate via bulk-enroll) so fixture keys match Schoology uids; until then pass
+  `--uid-map`. **Daily-batch wiring DONE** — `tools/daily_schoology_sync.ps1`
+  (producer + `schoology_sync_section.py --grades-fixture`, dry-run by default,
+  timestamped logs) + `tools/register_schoology_sync_task.ps1` (daily schtask, §4).
+  Stays dry-run until SY26-27 marking periods exist (~Sept-2026); re-register with
+  `-Live` to go live.
 - **P5 — not started** (posters/blooket tracks).
 - Push primitives (E3) + grade engine (D1) are built + verified; the remaining work
   is **wiring**, not new mechanics.

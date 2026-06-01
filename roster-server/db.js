@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, updatePassword, updateStudent, updateSpriteHue, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, updateSpriteHue, updateSchoologyUid, listRoster };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -100,6 +100,30 @@ export function createDb(client) {
     }
   }
 
+  // Defensive batch lookup of schoology_uid for many students at once. Returns
+  // { [student_id]: uid } for rows whose schoology_uid is non-null. Degrades to
+  // {} on empty input, on ANY error (incl. 42703 undefined_column pre-migration),
+  // or on a throw -- NEVER throws. Mirrors getSpriteHueByStudentId. Kept OUT of
+  // listRoster's projection so /roster/list, /class/grades, /class/mastery don't
+  // 500 before migration 0012 runs.
+  async function getSchoologyUidMap(studentIds) {
+    try {
+      if (!Array.isArray(studentIds) || studentIds.length === 0) return {};
+      const { data, error } = await client
+        .from('roster')
+        .select('student_id, schoology_uid')
+        .in('student_id', studentIds);
+      if (error || !Array.isArray(data)) return {};
+      const out = {};
+      for (const r of data) {
+        if (r && r.schoology_uid != null) out[r.student_id] = r.schoology_uid;
+      }
+      return out;
+    } catch (_) {
+      return {};
+    }
+  }
+
   // Write only sprite_hue for one student (+ updated_at via the existing trigger).
   // Returns { data, error } -- data is the updated row on success, null when no
   // row matched. Mirrors updateStudent.
@@ -114,6 +138,19 @@ export function createDb(client) {
       .update(payload)
       .eq('student_id', studentId)
       .select('student_id, sprite_hue')
+      .maybeSingle();
+  }
+
+  // Write only schoology_uid for one student (+ updated_at). schoologyUid is
+  // already validated/normalized by the route (a non-empty string OR null).
+  // Returns { data, error } -- data is { student_id, schoology_uid } on success,
+  // null when no row matched. Mirrors updateSpriteHue.
+  async function updateSchoologyUid({ studentId, schoologyUid }) {
+    return client
+      .from('roster')
+      .update({ schoology_uid: schoologyUid, updated_at: new Date().toISOString() })
+      .eq('student_id', studentId)
+      .select('student_id, schoology_uid')
       .maybeSingle();
   }
 

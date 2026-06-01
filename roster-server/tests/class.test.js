@@ -32,8 +32,11 @@ const FIXTURE_SKILL_MAP = {
 };
 
 // Fake roster db exposing listRoster (used by /class/* and /roster/list).
-function createFakeRosterDb(roster, { error = null } = {}) {
-  return {
+// uidMap (optional): when provided the db exposes getSchoologyUidMap so
+// /class/grades can surface schoologyUid. When omitted the function is absent
+// entirely -- exercising class.js's typeof-guard back-compat path.
+function createFakeRosterDb(roster, { error = null, uidMap } = {}) {
+  const db = {
     async insertRoster() { return { data: null, error: null }; },
     async findByUsername() { return { data: null, error: null }; },
     async listRoster(section) {
@@ -42,6 +45,16 @@ function createFakeRosterDb(roster, { error = null } = {}) {
       return { data: rows, error: null };
     },
   };
+  if (uidMap) {
+    db.getSchoologyUidMap = async (studentIds) => {
+      const out = {};
+      for (const sid of studentIds || []) {
+        if (uidMap[sid] != null) out[sid] = uidMap[sid];
+      }
+      return out;
+    };
+  }
+  return db;
 }
 
 // Fake ledger db indexed by student_id.
@@ -187,6 +200,45 @@ describe('GET /class/grades — fan-out', () => {
     const ctx = await startServer({ roster: [], loadAnswerKey: async () => ({ answerKey: 'oops' }) });
     srv = ctx.server;
     expect((await srv.get('/class/grades', { 'x-teacher-secret': TEACHER })).status).toBe(500);
+  });
+});
+
+// ── P4b: schoologyUid bridge surfaced on /class/grades ─────────────────────────
+describe('GET /class/grades — schoologyUid bridge', () => {
+  const roster = [
+    { student_id: 's1', real_name: 'Alice', login_username: 'a', section: 'P1' },
+    { student_id: 's2', real_name: 'Bob',   login_username: 'b', section: 'P1' },
+  ];
+
+  it('carries schoologyUid when the db maps the student, null when unmapped', async () => {
+    const ctx = await startServer({
+      roster,
+      ledger: { s1: [makeRow('s1', 'U1-L1-Q01', 'B')] },
+      rosterOpts: { uidMap: { s1: '8405518810' } },  // s2 unmapped
+    });
+    srv = ctx.server;
+
+    const r = await srv.get('/class/grades', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    const byId = Object.fromEntries(r.body.students.map(s => [s.studentId, s]));
+    expect(byId.s1.schoologyUid).toBe('8405518810');
+    expect(byId.s2.schoologyUid).toBeNull();
+  });
+
+  it('every student carries schoologyUid:null when the db lacks getSchoologyUidMap (typeof-guard back-compat)', async () => {
+    const ctx = await startServer({
+      roster,
+      ledger: { s1: [makeRow('s1', 'U1-L1-Q01', 'B')] },
+      // no uidMap -> createFakeRosterDb omits getSchoologyUidMap entirely
+    });
+    srv = ctx.server;
+
+    const r = await srv.get('/class/grades', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    for (const s of r.body.students) {
+      expect(Object.prototype.hasOwnProperty.call(s, 'schoologyUid')).toBe(true);
+      expect(s.schoologyUid).toBeNull();
+    }
   });
 });
 

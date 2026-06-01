@@ -14,9 +14,12 @@ can run headless in the daily scheduled batch (see the spec's delivery model).
 --inspect doubles as the P3 sanity check: it reports whether v3 is actually live
 (pcAvg/workAvg present) and how much real grade data exists, before any push.
 
-The fixture is keyed by ROSTER student_id by default. The Schoology push keys on
-the SCHOOLOGY uid, so pass --uid-map (a JSON {rosterId: schoologyUid}) to translate
-until the durable roster.schoology_uid bridge (P4b) lands.
+The Schoology push keys on the SCHOOLOGY uid. Once the durable roster.schoology_uid
+bridge (P4b) is populated, /class/grades surfaces each student's schoologyUid and the
+fixture is keyed by it automatically -- so --uid-map is now OPTIONAL. Pass --uid-map
+(a JSON {rosterId: schoologyUid}) only to override the surfaced uid or to translate
+before the bridge is backfilled; an explicit map still takes precedence over the
+roster id, but the server-surfaced schoologyUid wins over both.
 
 ASCII only. LF line endings.
 """
@@ -51,13 +54,16 @@ def build_fixture(doc: dict, uid_map: dict | None = None,
 
     granularity 'lesson' (default) -> per-lesson lessonGrade keyed by topic;
     'quarter' -> per-quarter quarterGrade keyed by Q1..Q4; 'both' -> union.
-    Unmapped students fall through to their roster id (uid_map is optional).
+
+    Key resolution per student (highest priority first): the server-surfaced
+    schoologyUid (P4b bridge), then the explicit uid_map, then the roster id.
     """
     uid_map = uid_map or {}
     out = {}
     for s in doc.get("students", []) or []:
         rid = str(s.get("studentId"))
-        uid = uid_map.get(rid, rid)
+        surfaced = s.get("schoologyUid")
+        uid = str(surfaced) if surfaced not in (None, "") else uid_map.get(rid, rid)
         if granularity in ("lesson", "both"):
             for lesson in (s.get("lessons") or []):
                 key = _lesson_key(lesson)
@@ -92,6 +98,11 @@ def inspect_summary(doc: dict) -> dict:
         1 for s in students for u in (s.get("units") or {}).values()
         if isinstance(u, dict) and u.get("pcRawPct") is not None
     )
+    # P4b: how many students carry a server-surfaced schoologyUid. Zero means the
+    # roster.schoology_uid bridge is empty (migration 0012 not run, or not backfilled).
+    uid_bridge_covered = sum(
+        1 for s in students if s.get("schoologyUid") not in (None, "")
+    )
     return {
         "students": len(students),
         "v3_active": v3_active,
@@ -99,6 +110,7 @@ def inspect_summary(doc: dict) -> dict:
         "graded_lessons": len(graded),
         "units_with_quiz_data": quiz_signal,
         "units_with_pc_data": pc_signal,
+        "uid_bridge_covered": uid_bridge_covered,
     }
 
 
@@ -157,6 +169,11 @@ def main(argv=None) -> int:
         if summary["graded_lessons"] == 0:
             print("NOTE: zero graded lessons -- no work has reached the ledger yet "
                   "(P1 feeder live? students submitted since the cr redeploy?).", file=sys.stderr)
+        if summary["students"] > 0 and summary["uid_bridge_covered"] == 0:
+            print("NOTE: uid bridge is empty (no student carries a schoologyUid) -- run "
+                  "migration 0012 + backfill via "
+                  "`node scripts/teacher-roster.mjs --set-schoology-uids`, "
+                  "else pass --uid-map to key the fixture by Schoology uid.", file=sys.stderr)
         return 0
 
     uid_map = None

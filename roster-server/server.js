@@ -442,6 +442,92 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     return res.json({ ok: true, spriteHue: data ? data.sprite_hue : spriteHue });
   });
 
+  // -- PATCH /roster/:studentId/schoology-uid (grade-pipeline P4b -- teacher) ---
+  // Backfills the roster -> Schoology user-id bridge so the grade-sync producer
+  // (tools/build_schoology_fixture.py) can key the fixture by Schoology uid
+  // directly. ADDITIVE: the frozen PATCH /roster/:studentId (realName/section)
+  // is untouched; population goes through this dedicated sub-route.
+  //   Auth: requireTeacher (x-teacher-secret OR a verified teacher token).
+  //   Body: { schoologyUid: string | null }. The key MUST be present (a missing
+  //         key is 400, never a silent clear -- same rule as sprite-hue). A
+  //         number coerces to its string form (Schoology uids are numeric
+  //         strings). A non-empty trimmed string is stored trimmed. null clears.
+  //   Responses:
+  //     200 { ok:true, schoologyUid }
+  //     400 schoologyUid missing / bad type / empty-or-whitespace string
+  //     401 { ok:false, error:'forbidden' } not a teacher
+  //     404 { ok:false, error:'Student not found' } no row matched
+  //     503 { ok:false, error:'schoology_uid not provisioned' } pre-migration
+  //     500 { ok:false, error:'Database error' } any other DB failure
+  app.patch('/roster/:studentId/schoology-uid', async (req, res) => {
+    if (!await requireTeacher(req, db)) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+
+    const { studentId } = req.params;
+
+    // ── Body validation ──────────────────────────────────────────────────────
+    // The schoologyUid key MUST be present -- a missing field is a 400, never a
+    // silent clearing write (mirrors sprite-hue's required-key rule).
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    if (!Object.prototype.hasOwnProperty.call(body, 'schoologyUid')) {
+      return res.status(400).json({ ok: false, error: 'schoologyUid is required (string or null)' });
+    }
+    const raw = body.schoologyUid;
+
+    // Normalize to the value we store: null clears; a number coerces to its
+    // string form; a non-empty trimmed string is stored trimmed. Anything else
+    // (object / boolean / empty-or-whitespace string) is a 400.
+    let schoologyUid;
+    if (raw === null) {
+      schoologyUid = null;
+    } else if (typeof raw === 'number' && Number.isFinite(raw)) {
+      schoologyUid = String(raw);
+    } else if (typeof raw === 'string' && raw.trim()) {
+      schoologyUid = raw.trim();
+    } else {
+      return res.status(400).json({ ok: false, error: 'schoologyUid must be a non-empty string, a number, or null' });
+    }
+
+    // ── Write ────────────────────────────────────────────────────────────────
+    // Only the specific "schoology_uid column does not exist yet" (pre-migration)
+    // condition maps to 503. Every other error or throw is a real 500 -- a
+    // constraint violation (e.g. duplicate uid) or a generic DB failure must not
+    // be mislabelled "not provisioned" (mirrors isSpriteHueColumnMissing).
+    function isSchoologyUidColumnMissing(e) {
+      if (!e) return false;
+      const code = String(e.code || '');
+      const msg  = String(e.message || '').toLowerCase();
+      if (code === '42703') return true;   // undefined_column
+      return msg.includes('schoology_uid') && (msg.includes('does not exist') || msg.includes('column'));
+    }
+
+    let data, error;
+    try {
+      ({ data, error } = await db.updateSchoologyUid({ studentId, schoologyUid }));
+    } catch (err) {
+      if (isSchoologyUidColumnMissing(err)) {
+        return res.status(503).json({ ok: false, error: 'schoology_uid not provisioned' });
+      }
+      console.error('PATCH /roster/:studentId/schoology-uid threw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    if (error) {
+      if (isSchoologyUidColumnMissing(error)) {
+        return res.status(503).json({ ok: false, error: 'schoology_uid not provisioned' });
+      }
+      console.error('PATCH /roster/:studentId/schoology-uid DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    if (data === null) {
+      return res.status(404).json({ ok: false, error: 'Student not found' });
+    }
+
+    return res.json({ ok: true, schoologyUid: data.schoology_uid });
+  });
+
   // ── GET /roster/section/:section — PUBLIC student picker (2026-05-20) ────────
   // Returns { username, realName, section } for one period. NO password
   // info, NO email. Powers the Desk's sign-in dropdown so students who

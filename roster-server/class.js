@@ -76,6 +76,16 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
     }
 
     const fan = await fanLedger(ledgerDb, rows);
+
+    // P4b: surface the roster -> Schoology uid bridge so the grade-sync producer
+    // can key its fixture by Schoology uid directly. Batched ONCE (not per
+    // student) via the defensive getSchoologyUidMap. typeof-guarded so a fake
+    // db / pre-bridge db without the function doesn't throw -- absent => {} =>
+    // every student carries schoologyUid: null.
+    const uidMap = (db && typeof db.getSchoologyUidMap === 'function')
+      ? await db.getSchoologyUidMap(rows.map(r => r.student_id))
+      : {};
+
     const students = fan.map(({ roster, ledgerRows }) => {
       // Phase 6 (Codex MAJOR 1 fold): pass the lesson schedule + per-student
       // section so /class/grades uses the same lesson-weighted, date-driven
@@ -87,7 +97,9 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         section: roster && roster.section ? roster.section : null,
         worksheetBlankCounts,
       });
-      return { ...studentMeta(roster), ...computed };
+      // Merge schoologyUid at the call site so studentMeta stays a pure
+      // roster->header map (do NOT touch studentMeta).
+      return { ...studentMeta(roster), schoologyUid: uidMap[roster.student_id] ?? null, ...computed };
     });
 
     return res.json({

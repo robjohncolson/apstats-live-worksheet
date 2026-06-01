@@ -56,6 +56,15 @@ MODE
   --view           instead, list the existing roster (current passwords incl.)
                    from GET /roster/list; optional --section filter; --out CSV.
                    Needs roster-server Sprint TR1 deployed.
+  --set-schoology-uids <csv>
+                   instead, backfill each student's Schoology user id from a CSV
+                   (rows: username,schoologyUid; header auto-detected/skipped).
+                   Looks up student ids via GET /roster/list (case-insensitive on
+                   username, real name as fallback) then PATCHes
+                   /roster/:studentId/schoology-uid. An empty schoologyUid cell
+                   clears the mapping. Optional --section scopes the lookup.
+                   --dry-run prints the plan with no network call.
+                   Needs roster-server P4b (migration 0012) deployed.
 
 INPUT (choose one, enroll mode)
   --csv <path>     CSV file; each row: realName[,section[,email]] (header auto-skipped)
@@ -78,6 +87,8 @@ NOTES
   - The credentials CSV contains plaintext default passwords — keep it local/private.
   - Until server Sprint TR1 ships, "must change password" is not yet enforced; this
     sheet is the authoritative record of the default passwords for this run.
+  - --set-schoology-uids is the grade-pipeline P4b backfill: it populates
+    roster.schoology_uid so the daily Schoology grade sync needs no hand --uid-map.
 `;
 
 // ── Tiny arg parser ──────────────────────────────────────────────────────────
@@ -165,6 +176,28 @@ function parseRoster(text, defaultSection) {
   return rows;
 }
 
+// Returns [{ username, schoologyUid }] from raw CSV text (P4b uid backfill).
+// CSV rows: username,schoologyUid   (a header line is auto-detected/skipped).
+// An empty schoologyUid cell means "clear the mapping".
+// Exported for the parse-only unit test (no network).
+export function parseUidRoster(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) return [];
+
+  // Auto-detect a header row: first cell looks like a column name, not a username.
+  const firstCell = (splitCsvLine(lines[0])[0] || '').toLowerCase();
+  const startIdx = ['username', 'user', 'login', 'login_username'].includes(firstCell) ? 1 : 0;
+
+  const rows = [];
+  for (let i = startIdx; i < lines.length; i++) {
+    const parts = splitCsvLine(lines[i]);
+    const username = parts[0] || '';
+    const schoologyUid = parts[1] || '';
+    rows.push({ username, schoologyUid });
+  }
+  return rows;
+}
+
 // ── CSV output (RFC-4180 quoting per CLAUDE.md) ──────────────────────────────
 
 function csvCell(v) {
@@ -192,6 +225,19 @@ function randomPassword() {
 
 function printTable(rows) {
   const headers = ['realName', 'section', 'username', 'password', 'status'];
+  const widths = headers.map(h => h.length);
+  for (const r of rows) {
+    headers.forEach((h, i) => { widths[i] = Math.max(widths[i], String(r[h] || '').length); });
+  }
+  const fmt = cells => cells.map((c, i) => String(c).padEnd(widths[i])).join('  ');
+  console.log(fmt(headers));
+  console.log(widths.map(w => '-'.repeat(w)).join('  '));
+  for (const r of rows) console.log(fmt(headers.map(h => r[h] || '')));
+}
+
+// Aligned table for the uid backfill (columns: username, schoologyUid, status).
+function printUidTable(rows) {
+  const headers = ['username', 'schoologyUid', 'status'];
   const widths = headers.map(h => h.length);
   for (const r of rows) {
     headers.forEach((h, i) => { widths[i] = Math.max(widths[i], String(r[h] || '').length); });
@@ -298,6 +344,131 @@ async function runView(args) {
   process.exit(0);
 }
 
+// ── Schoology-uid backfill (P4b) ─────────────────────────────────────────────
+
+// Backfill roster.schoology_uid from a CSV (username,schoologyUid). Looks up
+// student ids via GET /roster/list, then PATCHes /roster/:studentId/schoology-uid.
+// --dry-run prints the plan only (no network). Exits non-zero if any row failed.
+async function runSetSchoologyUids(args) {
+  // 1. Read + parse the CSV (no network needed yet).
+  const csvPath = args['set-schoology-uids'];
+  const text = readFileSafe(resolve(process.cwd(), csvPath));
+  if (text == null) { console.error('ERROR: cannot read --set-schoology-uids file: ' + csvPath); process.exit(1); }
+
+  const rows = parseUidRoster(text);
+  const url = resolveUrl(args.url);
+  const secret = resolveSecret(args.secret);
+
+  // 2. Dry run — show the plan, no network.
+  if (args['dry-run']) {
+    console.log('DRY RUN — no Schoology uids will be written.\n');
+    console.log('Service URL : ' + url);
+    console.log('Secret      : ' + (secret ? '(resolved, hidden)' : 'NOT FOUND'));
+    console.log('Section     : ' + (args.section || '(all)'));
+    console.log('Rows        : ' + rows.length + '\n');
+    printUidTable(rows.map(r => ({
+      username: r.username,
+      schoologyUid: r.schoologyUid || '(clear)',
+      status: r.username ? 'would set' : 'SKIP: missing username'
+    })));
+    process.exit(0);
+  }
+
+  // 3. Live — need a secret to reach the teacher-gated endpoints.
+  if (!secret) {
+    console.error('ERROR: teacher secret not found. Pass --secret, set ROSTER_TEACHER_SECRET,');
+    console.error('       or ensure roster-server/.env has ROSTER_TEACHER_SECRET=...');
+    process.exit(1);
+  }
+  if (rows.length === 0) {
+    console.error('ERROR: no rows to set (CSV is empty).');
+    process.exit(1);
+  }
+
+  // 4. Pull the roster once and build username/realName -> studentId maps.
+  const byUsername = new Map();   // lowercased login_username -> studentId
+  const byRealName = new Map();   // lowercased real name      -> studentId (fallback)
+  const listPath = '/roster/list' + (args.section ? '?section=' + encodeURIComponent(args.section) : '');
+  let listRes;
+  try {
+    listRes = await fetch(url + listPath, { headers: { 'x-teacher-secret': secret } });
+  } catch (err) {
+    console.error('ERROR: cannot reach ' + url + ' (' + (err.message || 'network error') + ')');
+    process.exit(1);
+  }
+  if (listRes.status === 401) {
+    console.error('ERROR: forbidden — check the teacher secret.');
+    process.exit(1);
+  }
+  let listData;
+  try { listData = await listRes.json(); } catch { listData = null; }
+  if (!listRes.ok || !listData || !listData.ok) {
+    console.error('ERROR: /roster/list failed (HTTP ' + listRes.status + '): ' +
+      ((listData && listData.error) || 'unknown'));
+    process.exit(1);
+  }
+  for (const s of listData.students || []) {
+    if (s.username) byUsername.set(String(s.username).toLowerCase(), s.studentId);
+    if (s.realName) byRealName.set(String(s.realName).toLowerCase(), s.studentId);
+  }
+
+  // 5. Resolve + PATCH each row.
+  console.log('Setting Schoology uids for ' + rows.length + ' row(s) at ' + url + ' ...\n');
+  const results = [];
+  for (const r of rows) {
+    if (!r.username) {
+      results.push({ username: '', schoologyUid: r.schoologyUid, status: 'FAILED: missing username' });
+      continue;
+    }
+    const key = r.username.toLowerCase();
+    const studentId = byUsername.get(key) || byRealName.get(key);
+    if (!studentId) {
+      results.push({ username: r.username, schoologyUid: r.schoologyUid, status: 'FAILED: not in roster' });
+      continue;
+    }
+    // Empty cell clears the mapping (null); otherwise send the trimmed string.
+    const schoologyUid = r.schoologyUid ? r.schoologyUid : null;
+    try {
+      const out = await patchSchoologyUid(url, secret, studentId, schoologyUid);
+      results.push({
+        username: r.username,
+        schoologyUid: schoologyUid == null ? '(cleared)' : schoologyUid,
+        status: out.ok ? 'set' : 'FAILED: ' + out.error
+      });
+    } catch (err) {
+      results.push({ username: r.username, schoologyUid: r.schoologyUid, status: 'FAILED: ' + (err.message || 'network error') });
+    }
+  }
+
+  // 6. Summary.
+  const okCount = results.filter(r => r.status === 'set').length;
+  const failCount = results.length - okCount;
+  console.log('--- Summary ---');
+  printUidTable(results);
+  console.log('\nSet: ' + okCount + '   Failed: ' + failCount);
+
+  process.exit(failCount > 0 ? 1 : 0);
+}
+
+// PATCH /roster/:studentId/schoology-uid with { schoologyUid }. Returns
+// { ok:true } or { ok:false, error }. A 503 means migration 0012 has not run.
+async function patchSchoologyUid(url, secret, studentId, schoologyUid) {
+  const res = await fetch(url + '/roster/' + encodeURIComponent(studentId) + '/schoology-uid', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-teacher-secret': secret },
+    body: JSON.stringify({ schoologyUid })
+  });
+
+  let data;
+  try { data = await res.json(); } catch { data = null; }
+
+  if (!res.ok || !data || !data.ok) {
+    const reason = (data && data.error) || ('HTTP ' + res.status);
+    return { ok: false, error: reason };
+  }
+  return { ok: true };
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -311,6 +482,12 @@ async function main() {
   // View mode — list the existing roster instead of enrolling.
   if (args.view) {
     await runView(args);
+    return;
+  }
+
+  // Schoology-uid backfill mode (P4b) — populate roster.schoology_uid from a CSV.
+  if (args['set-schoology-uids']) {
+    await runSetSchoologyUids(args);
     return;
   }
 
@@ -434,4 +611,7 @@ async function main() {
   process.exit(failCount > 0 ? 1 : 0);
 }
 
-main().catch(err => { console.error('FATAL: ' + (err && err.stack || err)); process.exit(1); });
+// Run main() only when invoked as a CLI, not when imported by a test.
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  main().catch(err => { console.error('FATAL: ' + (err && err.stack || err)); process.exit(1); });
+}
