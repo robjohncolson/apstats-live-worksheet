@@ -5110,6 +5110,45 @@ function _wsCompletionFor(worksheetUrl) {
   } catch (_) { return null; }
 }
 
+// Quiz-Done gate threshold (percent): a quiz can be marked Done only once the
+// student has answered >=40% of its questions AND scored >=40% correct. 40
+// mirrors the v3 grading "floor" used elsewhere in the grade model.
+var DESK_QUIZ_DONE_THRESHOLD = 40;
+
+// Quiz performance for a topic, read from the /grade lessons[] cache
+// (_gradeLessonsCache, populated by renderDoNowGrades). The recorded quiz
+// score flows automatically from the curriculum_render quiz (no self-report).
+// Returns { scorePct, attempted, total, completionPct, eligible } or null when
+// the lesson isn't in the cache. scorePct = lesson.Q (% correct of attempted);
+// completionPct = attempted / quizTotal; eligible = both >= the threshold.
+function _quizPerfFor(topicId) {
+  try {
+    if (!topicId || !Array.isArray(_gradeLessonsCache)) return null;
+    var lesson = null;
+    for (var i = 0; i < _gradeLessonsCache.length; i++) {
+      if (_gradeLessonsCache[i] && _gradeLessonsCache[i].lessonKey === topicId) {
+        lesson = _gradeLessonsCache[i];
+        break;
+      }
+    }
+    if (!lesson) return null;
+    var quiz = (lesson.items && Array.isArray(lesson.items.quiz)) ? lesson.items.quiz : [];
+    var attempted = quiz.length;
+    var total = typeof lesson.quizTotal === 'number' ? lesson.quizTotal : 0;
+    var scorePct = typeof lesson.Q === 'number' ? lesson.Q : null;
+    var completionPct = total > 0 ? (attempted / total) * 100 : null;
+    var eligible = scorePct != null && scorePct >= DESK_QUIZ_DONE_THRESHOLD
+                && completionPct != null && completionPct >= DESK_QUIZ_DONE_THRESHOLD;
+    return {
+      scorePct: scorePct,
+      attempted: attempted,
+      total: total,
+      completionPct: completionPct,
+      eligible: eligible,
+    };
+  } catch (_) { return null; }
+}
+
 // Latch the first visit to a (topic, artifact) resource. Called from the
 // link onclick BEFORE the new tab opens. Persists to the same _marks
 // store as Done clicks (same localStorage key), so visit + done state
@@ -5825,6 +5864,15 @@ async function renderDoNowGrades(baseUrl, token) {
     if (!data || !data.ok) return;
     // Cache lessons[] for the per-day click-through (Phase 6).
     _gradeLessonsCache = Array.isArray(data.lessons) ? data.lessons : null;
+    // Auto-refresh an open resource panel so the quiz Done gate (which reads
+    // _quizPerfFor → this cache) reflects a freshly-recorded quiz score without
+    // a manual reopen. Guarded + fire-and-forget; showResourcePanel never
+    // re-enters this fetch, so there's no loop.
+    try {
+      if (_lastResourcePanel && typeof showResourcePanel === 'function') {
+        showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
+      }
+    } catch (_) { /* panel refresh is best-effort */ }
     var quarters = data.quarters || {};
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
     var anyRendered = false;
@@ -7470,8 +7518,11 @@ function showResourcePanel(inf, dateStr) {
 
     // Today's Lesson
     if (ids.length > 0) {
-        // topic id in dot format for student_progress (e.g. "1.7")
-        const _stuTopicId = (inf.t && /^\d+\.\d+/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.');
+        // topic id in dot format for student_progress (e.g. "1.7", or a
+        // combined "4.1-2"). FULLY anchored (^...$) so only digits/dot/dashes
+        // pass — _stuTopicId is concatenated into inline onclick handlers
+        // below, so a stray quote/semicolon must never survive into the HTML.
+        const _stuTopicId = (inf.t && /^\d+\.[\d-]+$/.test(inf.t)) ? inf.t : (ids[0] || '').replace('-', '.');
         const _signedIn = !!getStudentEmail();
         const _marks = getStudentMarks();
         // Returns one of these states:
@@ -7490,6 +7541,24 @@ function showResourcePanel(inf, dateStr) {
             var entry = _marks[key] || {};
             if (entry.ts) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + '">&#10003; Completed</button>';
+            }
+            // Quiz: gated on RECORDED performance (auto from the cr quiz), not a
+            // visit timer. Shows the score % and is pressable only once the
+            // student has answered >=40% of the questions AND scored >=40%
+            // (DESK_QUIZ_DONE_THRESHOLD) — mirrors the worksheet completion gate.
+            // The score flows from the /grade lessons[] cache (_quizPerfFor); a
+            // student who hasn't taken the quiz signed-in sees a disabled Done.
+            if (artifact === 'quiz') {
+                var perf = _quizPerfFor(_stuTopicId);
+                if (!perf || perf.attempted === 0) {
+                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Take the quiz while signed in — Done unlocks once you answer at least ' + DESK_QUIZ_DONE_THRESHOLD + '% of it and score at least ' + DESK_QUIZ_DONE_THRESHOLD + '%.">Done</button>';
+                }
+                var _qnn = perf.scorePct != null ? Math.round(perf.scorePct) : 0;
+                var _qcn = perf.completionPct != null ? Math.round(perf.completionPct) : 0;
+                if (!perf.eligible) {
+                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Answer at least ' + DESK_QUIZ_DONE_THRESHOLD + '% of the quiz AND score at least ' + DESK_QUIZ_DONE_THRESHOLD + '%. So far: answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%.">Done (' + _qnn + '% complete)</button>';
+                }
+                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Answered ' + perf.attempted + '/' + perf.total + ' (' + _qcn + '%), scored ' + _qnn + '%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (' + _qnn + '% complete)</button>';
             }
             if (!entry.visitedAt) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Open the link first">Done</button>';
@@ -7525,9 +7594,10 @@ function showResourcePanel(inf, dateStr) {
             if (artifact === 'blooket') {
                 return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Take the flashcard quiz to verify completion" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
             }
-            // Quiz: a short visit timer before Done becomes clickable.
-            // (Worksheet uses the completion gate; Blooket the flashcard quiz;
-            // video has no Done button — so quiz is the only artifact here.)
+            // Legacy visit timer — now only reached by OFF-PATTERN worksheets
+            // (no completion tracker). The instrumented worksheets use the
+            // completion gate above; Blooket the flashcard quiz; the quiz uses
+            // the score gate above; video has no Done button.
             var gateMs = deskDoneGateMs();
             var elapsed = Date.now() - new Date(entry.visitedAt).getTime();
             if (gateMs > 0 && elapsed < gateMs) {
@@ -7707,6 +7777,22 @@ function showResourcePanel(inf, dateStr) {
     document.getElementById('resource-overlay').style.display = 'block';
     _lastResourcePanel = { inf: inf, dateStr: dateStr };
 
+    // Quiz-gate freshness: if the /grade lessons cache hasn't loaded yet (the
+    // panel opened during initial load before renderDoNowGrades finished), kick
+    // a fetch now. On completion renderDoNowGrades re-renders THIS panel, so the
+    // quiz Done gate fills in its score instead of sitting at "take the quiz".
+    // Guarded on a NULL cache (an empty [] is a valid "no lessons" result, not a
+    // miss) so the auto-refresh can't loop. Fire-and-forget; never blocks.
+    try {
+      if (_gradeLessonsCache === null
+          && typeof renderDoNowGrades === 'function'
+          && window.rosterClient && typeof window.rosterClient.token === 'function') {
+        var _rpTok = window.rosterClient.token();
+        var _rpBase = window.ROSTER_SERVICE_URL;
+        if (_rpTok && _rpBase) renderDoNowGrades(_rpBase, _rpTok).catch(function () {});
+      }
+    } catch (_) { /* best-effort gate freshness */ }
+
     // 2026-05-20: removed the [a][b]/[1][2][3] letter+number badges and the
     // modal-scoped keyboard handler. The decoration was visually noisy and
     // the two-step letter-then-number UX felt strange. Mouse-only now.
@@ -7826,35 +7912,13 @@ async function studentMark(btn, topicId, artifact) {
         return;
     }
     if (artifact === 'quiz') {
-        // Inline score input: swap the slot's innerHTML instead of using
-        // a native prompt() so the Done-button latch is immediate.
-        var slot = btn ? btn.closest('.desk-quiz-done-slot') : null;
-        if (!slot) {
-            // Fallback: slot not found — skip (should not happen in normal flow).
-            return;
-        }
-        slot.innerHTML =
-            'Score: <input type="number" min="0" max="100" class="desk-quiz-score-input"'
-            + ' style="width:48px;font-size:9px;padding:1px 2px" autofocus>'
-            + ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:2px"'
-            + ' onclick="_studentMarkQuizSave(this,\'' + topicId + '\',\'' + artifact + '\')">Save</button>'
-            + ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:2px"'
-            + ' onclick="_studentMarkQuizCancel()">Cancel</button>';
-        var input = slot.querySelector('.desk-quiz-score-input');
-        if (input) {
-            input.focus();
-            // Enter submits; Escape cancels without closing the modal.
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    var saveBtn = slot.querySelector('button');
-                    if (saveBtn) saveBtn.click();
-                } else if (e.key === 'Escape') {
-                    e.stopPropagation();
-                    _studentMarkQuizCancel();
-                }
-            });
-        }
+        // The quiz score is recorded automatically from the curriculum_render
+        // quiz (no self-report). _doneBtn only enables this button once the
+        // recorded performance clears the gate (answered >=40% AND scored
+        // >=40%), so a click just records the Done mark — carrying the recorded
+        // score % for the teacher's legacy student_progress view.
+        var perf = (typeof _quizPerfFor === 'function') ? _quizPerfFor(topicId) : null;
+        await _studentMarkSave(btn, topicId, artifact, perf ? perf.scorePct : null);
         return;
     }
     // Non-quiz path (worksheet, video): proceed directly. Blooket is
@@ -8312,43 +8376,10 @@ function closeBlooketFlashcards() {
     _bfCloseUI();
 }
 
-// Called from the inline quiz/blooket Save button's onclick. The artifact
-// arg is required so the Done button restored after Save knows what to
-// re-bind (quiz vs blooket) and so _studentMarkSave routes the score to
-// the right downstream (legacy student_progress for both; gradebook
-// ledger only for quiz, blooket is excluded per Phase 3 spec §6).
-async function _studentMarkQuizSave(saveBtn, topicId, artifact) {
-    artifact = artifact || 'quiz';  // backward-compat default
-    var slot = saveBtn ? saveBtn.closest('.desk-quiz-done-slot') : null;
-    if (!slot) return;
-    var input = slot.querySelector('.desk-quiz-score-input');
-    // Reject blank input explicitly: Number('') === 0 would silently record
-    // a real zero score, which is a bad data write (Codex MAJOR 2026-05-20).
-    var raw = input ? input.value : '';
-    if (typeof raw === 'string') raw = raw.trim();
-    if (raw === '' || raw == null) {
-        showDialog('⚠️', 'Score must be a number 0-100.', 'OK');
-        return;
-    }
-    var n = Number(raw);
-    if (isNaN(n) || n < 0 || n > 100) {
-        showDialog('⚠️', 'Score must be a number 0-100.', 'OK');
-        return;
-    }
-    // Re-render the slot back to a real Done button so _studentMarkSave
-    // has a real btn reference for the optimistic mutation.
-    slot.innerHTML = '<button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + topicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
-    var btn = slot.querySelector('button');
-    await _studentMarkSave(btn, topicId, artifact, n);
-}
-
-// Cancel the inline quiz score input: re-render the panel so the bare
-// Done button is restored (localStorage is unchanged — no write happened).
-function _studentMarkQuizCancel() {
-    if (_lastResourcePanel) {
-        showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
-    }
-}
+// (2026-06: the inline quiz self-report score input was removed. The quiz
+// Done button is now gated on the RECORDED cr-quiz performance — see the
+// artifact==='quiz' branch in _doneBtn and the studentMark quiz path. Blooket
+// still verifies via the flashcard flow.)
 
 function closeResourcePanel() {
     MacSFX.play('click', 0.3);

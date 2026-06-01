@@ -29,6 +29,7 @@ import {
   computeQuarterFromLessons,
   computeQuarterV3,
   buildLessonsArray,
+  computeQuizTotals,
   todayInTz,
   sectionToPeriod,
 } from './lesson-grade.js';
@@ -314,8 +315,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   }
 
   // ── Phase 6: build the lessons[] array ────────────────────────────────────
+  const quizTotals = (schedule && answerKey) ? computeQuizTotals(answerKey, schedule) : {};
   const lessons = schedule
-    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null)
+    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals)
     : [];
 
   // Stable sorted unit / completion order.

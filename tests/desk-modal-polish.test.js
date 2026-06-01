@@ -1,8 +1,12 @@
 // desk-modal-polish.test.js — Task #8 DESK_MODAL_POLISH structure pins.
 // 2026-05-20 rewrite: stripped the keyboard-nav pins (letter/number badges +
 // modal-scoped keydown handler) since the UX was removed per teacher feedback.
-// Kept: inline quiz score input (prong A) + visit-gate preservation + AI-tutor
-// button preservation + removal regression guards.
+// 2026-06 rewrite: the inline quiz self-report score input (prong A) was
+// REPLACED by an auto score+completion gate — the quiz Done button now reads
+// the recorded cr-quiz performance (_quizPerfFor) and unlocks only at
+// >=40% answered AND >=40% correct. Pins 05/06/16 updated accordingly.
+// Kept: visit-gate preservation (off-pattern worksheets) + AI-tutor button
+// preservation + removal regression guards.
 //
 // @vitest-environment node
 
@@ -58,22 +62,28 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(DESK).toMatch(/data-artifact="quiz"/);
   });
 
-  it('pin 05: _studentMarkQuizSave helper exists and is referenced from the inline Save onclick', () => {
-    expect(DESK).toMatch(/function\s+_studentMarkQuizSave\s*\(/);
-    expect(DESK).toMatch(/_studentMarkQuizSave\s*\(/);
+  it('pin 05: quiz Done is gated on recorded performance (_quizPerfFor); self-report input removed', () => {
+    expect(DESK, '_quizPerfFor helper must exist').toMatch(/function\s+_quizPerfFor\s*\(/);
+    const done = fnBody(DESK, '_doneBtn');
+    expect(done, '_doneBtn must consult _quizPerfFor for the quiz gate').toMatch(/_quizPerfFor\s*\(/);
+    // The self-report inline score input + its helpers are gone.
+    expect(DESK, 'no inline quiz score input').not.toMatch(/desk-quiz-score-input/);
+    expect(DESK, '_studentMarkQuizSave removed').not.toMatch(/_studentMarkQuizSave/);
+    expect(DESK, '_studentMarkQuizCancel removed').not.toMatch(/_studentMarkQuizCancel/);
   });
 
-  it('pin 06: _studentMarkQuizSave rejects blank input BEFORE the Number() coercion', () => {
-    const body = fnBody(DESK, '_studentMarkQuizSave')
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\/\/[^\n]*/g, '');
-    expect(body).toMatch(/\.trim\s*\(\s*\)/);
-    expect(body).toMatch(/raw\s*===\s*['"]['"]/);
-    const trimIdx = body.indexOf('.trim(');
-    const numberIdx = body.search(/Number\s*\(\s*raw\s*\)/);
-    expect(trimIdx, 'trim() must exist').toBeGreaterThan(-1);
-    expect(numberIdx, 'Number(raw) must exist').toBeGreaterThan(-1);
-    expect(trimIdx, 'blank-input check must precede Number() coercion').toBeLessThan(numberIdx);
+  it('pin 06: the quiz Done gate requires BOTH answered>=40% AND scored>=40%', () => {
+    const body = fnBody(DESK, '_quizPerfFor');
+    expect(body, 'gate reads the score %').toMatch(/scorePct/);
+    expect(body, 'gate reads completion %').toMatch(/completionPct/);
+    expect(body, 'eligible requires score >= threshold')
+      .toMatch(/scorePct\s*>=\s*DESK_QUIZ_DONE_THRESHOLD/);
+    expect(body, 'eligible requires completion >= threshold')
+      .toMatch(/completionPct\s*>=\s*DESK_QUIZ_DONE_THRESHOLD/);
+    expect(DESK, 'threshold constant is 40').toMatch(/DESK_QUIZ_DONE_THRESHOLD\s*=\s*40/);
+    // The Done button face shows the score % as "Done (nn% complete)".
+    const done = fnBody(DESK, '_doneBtn');
+    expect(done, 'quiz Done label shows "% complete)"').toMatch(/% complete\)/);
   });
 
   it('pin 07: visit-gate (540d168) is preserved — deskDoneGateMs and "Done in ~" are still present', () => {
@@ -154,10 +164,13 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(body).not.toMatch(/Blooket %\s*correct/i);
   });
 
-  it('pin 16: _studentMarkQuizSave still exists for the quiz path and accepts an artifact arg', () => {
-    expect(DESK).toMatch(/function\s+_studentMarkQuizSave\s*\(\s*saveBtn\s*,\s*topicId\s*,\s*artifact\s*\)/);
-    const body = fnBody(DESK, '_studentMarkQuizSave');
-    expect(body).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topicId\s*,\s*artifact\s*,\s*n\s*\)/);
+  it('pin 16: studentMark quiz path marks Done with the recorded score (no inline input)', () => {
+    const body = fnBody(DESK, 'studentMark');
+    expect(body).toMatch(/artifact\s*===\s*['"]quiz['"]/);
+    // Auto score from _quizPerfFor, then _studentMarkSave — no slot swap.
+    expect(body).toMatch(/_quizPerfFor\s*\(\s*topicId\s*\)/);
+    expect(body).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topicId\s*,\s*artifact\s*,/);
+    expect(body, 'no inline score swap in studentMark').not.toMatch(/desk-quiz-score-input/);
   });
 
   it('pin 17: blooket is STILL excluded from the gradebook ledger (Phase 3 spec §6 preserved)', () => {

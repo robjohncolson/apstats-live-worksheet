@@ -842,6 +842,33 @@ export function computeQuarterV3({
   };
 }
 
+// ── computeQuizTotals ─────────────────────────────────────────────────────────
+//
+// Per-topic count of GRADABLE curriculum-quiz questions, derived from the
+// answer key. Buckets each quiz itemId to schedule topicKeys via the SAME
+// expandLessonKey mapping used for attempted items (buildLessonMap), so a
+// topic's "answered %" = attempted / total compares like-for-like — and a
+// combined-worksheet topic gets the sum of its constituent lessons' quizzes.
+// Returns { topicKey: number }. Quiz-only (FRQ/PC excluded by the L#-Q regex).
+export function computeQuizTotals(answerKey, schedule) {
+  const totals = {};
+  if (!answerKey || !schedule) return totals;
+  for (const itemId of Object.keys(answerKey)) {
+    const keyEntry = answerKey[itemId];
+    if (!keyEntry || keyEntry.answerKey == null) continue; // gradable only
+    // Curriculum-quiz items only. The ^U#-L#-Q structure excludes PC
+    // (U#-PC-Q) and worksheet blanks (WS-U#L#-Q) by shape — same itemId
+    // pattern parseItemLesson uses to bucket ATTEMPTED quiz rows.
+    const m = itemId.match(/^U(\d+)-L(\d+)-Q/i);
+    if (!m) continue;
+    const topicKeys = expandLessonKey(Number(m[1]), m[2], schedule);
+    for (const tk of topicKeys) {
+      totals[tk] = (totals[tk] || 0) + 1;
+    }
+  }
+  return totals;
+}
+
 // ── buildLessonsArray ─────────────────────────────────────────────────────────
 //
 // Converts the lessonMap (from computeLessonGrades) into the lessons[] array
@@ -849,7 +876,8 @@ export function computeQuarterV3({
 //
 // schedule: topicKey → { unit, worksheetKey, periods }
 // topicNames: optional topicKey → topic name string
-export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart) {
+// quizTotals: optional topicKey → gradable-quiz-question count (computeQuizTotals)
+export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}) {
   const result = [];
 
   // Include every lesson from the schedule (not just those with data).
@@ -890,6 +918,10 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       Cws: lessonResult ? (lessonResult.Cws !== undefined ? lessonResult.Cws : null) : null,
       W: lessonResult ? lessonResult.W : null,
       Q: lessonResult ? lessonResult.Q : null,
+      // Total gradable quiz questions for this topic (from the answer key),
+      // so the client can compute "% answered" = items.quiz.length / quizTotal.
+      // Independent of what the student attempted; 0 when the topic has no quiz.
+      quizTotal: quizTotals[topicKey] || 0,
       // Per-lesson Blooket score (0..100, mean-of-recorded), surfaced for the
       // Desk day-grade modal; null when no blooket row attached.
       blooket: lessonResult ? (lessonResult.blooket != null ? lessonResult.blooket : null) : null,

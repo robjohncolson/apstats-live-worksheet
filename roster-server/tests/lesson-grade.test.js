@@ -14,6 +14,7 @@ import {
   computeQuarterFromLessons,
   quarterOfLesson,
   buildLessonsArray,
+  computeQuizTotals,
   todayInTz,
   sectionToPeriod,
 } from '../lesson-grade.js';
@@ -739,5 +740,63 @@ describe('W1: computeLessonGrades — worksheet blank scoring', () => {
     expect(l42.Cws).toBe(100);
     expect(l41.lessonGrade).toBe(100);
     expect(l42.lessonGrade).toBe(100);
+  });
+});
+
+// ── computeQuizTotals + buildLessonsArray quizTotal ───────────────────────────
+// The Desk quiz-Done gate needs a per-topic total of gradable quiz questions
+// (the "% answered" denominator). computeQuizTotals derives it from the answer
+// key, bucketing via expandLessonKey so combined-worksheet topics sum their
+// constituent lessons.
+
+describe('computeQuizTotals — per-topic gradable quiz counts from the answer key', () => {
+  const KEY = {
+    'U1-L1-Q01': { answerKey: 'A', unit: '1' },     // → 1.1 (1)
+    'U1-L2-Q01': { answerKey: 'B', unit: '1' },     // → 1.2
+    'U1-L2-Q02': { answerKey: 'C', unit: '1' },     // → 1.2
+    'U1-L2-Q03': { answerKey: null, unit: '1' },    // ungradable → excluded
+    'U4-L1-Q01': { answerKey: 'D', unit: '4' },     // combined → 4.1 + 4.2
+    'U4-L2-Q01': { answerKey: 'E', unit: '4' },     // combined → 4.1 + 4.2
+    'U4-L6-Q01': { answerKey: 'A', unit: '4' },     // → 4.6
+    'U1-PC-Q01': { answerKey: 'B', unit: '1' },     // PC → excluded (no L#-Q)
+    'WS-U1L2-Q5': { answerKey: 'A' },               // worksheet blank → excluded
+  };
+
+  it('counts gradable L#-Q quiz items per topic, excluding ungradable/PC/worksheet', () => {
+    const totals = computeQuizTotals(KEY, SAMPLE_SCHEDULE);
+    expect(totals['1.1']).toBe(1);
+    expect(totals['1.2']).toBe(2);          // Q03 ungradable, excluded
+    expect(totals['4.6']).toBe(1);
+    expect(totals['1.PC']).toBeUndefined(); // PC not counted
+  });
+
+  it('buckets per-topic quizzes to their own topic, matching buildLessonMap bucketing', () => {
+    const totals = computeQuizTotals(KEY, SAMPLE_SCHEDULE);
+    // cr quiz itemIds use SOLO lesson keys (U4-L1-Q, U4-L2-Q), so expandLessonKey
+    // maps each to its own topic only — NOT the combined group. This is the same
+    // expandLessonKey buildLessonMap uses for attempted items, so a topic's
+    // "% answered" = attempted/total compares like-for-like even when 4.1/4.2
+    // share a worksheet.
+    expect(totals['4.1']).toBe(1);
+    expect(totals['4.2']).toBe(1);
+  });
+
+  it('null answerKey or schedule → {}', () => {
+    expect(computeQuizTotals(null, SAMPLE_SCHEDULE)).toEqual({});
+    expect(computeQuizTotals(KEY, null)).toEqual({});
+  });
+
+  it('buildLessonsArray surfaces quizTotal per lesson (0 when the topic has no quiz)', () => {
+    const totals = computeQuizTotals(KEY, SAMPLE_SCHEDULE);
+    const lessons = buildLessonsArray(new Map(), SAMPLE_SCHEDULE, undefined, null, totals);
+    const byKey = Object.fromEntries(lessons.map(l => [l.lessonKey, l]));
+    expect(byKey['1.2'].quizTotal).toBe(2);
+    expect(byKey['4.6'].quizTotal).toBe(1);
+    // A scheduled topic with no answer-key quiz items defaults to 0.
+    const l11 = byKey['1.1'];
+    expect(l11.quizTotal).toBe(1);
+    // Omitting quizTotals entirely defaults every lesson to 0 (back-compat).
+    const lessonsNoTotals = buildLessonsArray(new Map(), SAMPLE_SCHEDULE);
+    expect(lessonsNoTotals.every(l => l.quizTotal === 0)).toBe(true);
   });
 });
