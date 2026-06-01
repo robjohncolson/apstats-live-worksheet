@@ -10,7 +10,7 @@
 // mastery.js — single source of truth, Phase-3 tests pin the math. READ-ONLY.
 
 import { PHASE3_CONFIG } from './grade-config.js';
-import { answerKeyMapOrNull, skillMapValidOrNull } from './scoring.js';
+import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore } from './scoring.js';
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
 import { requireTeacher } from './teacher-auth.js';
@@ -46,6 +46,36 @@ async function fanLedger(ledgerDb, rosterRows) {
 // Studentizer: roster columns → the dashboard's per-student header.
 function studentMeta(r) {
   return { studentId: r.student_id, realName: r.real_name, username: r.login_username, section: r.section };
+}
+
+// Parse a lessonKey like "1.2", "U1.2", or "4.1-2" into { unit, lessonKey }.
+// Returns null on anything unparseable. The optional leading "U" is tolerated so
+// "U1.2" and "1.2" both resolve to { unit: 1, lessonKey: "2" }.
+function parseLessonKeyArg(lessonKeyRaw) {
+  if (typeof lessonKeyRaw !== 'string') return null;
+  const m = lessonKeyRaw.trim().match(/^U?(\d+)\.([\d-]+)$/i);
+  if (!m) return null;
+  return { unit: Number(m[1]), lessonKey: m[2] };
+}
+
+// Build the BLOOKET item id from a parsed lessonKey.
+//   { unit:1, lessonKey:"2" }   -> "BLOOKET-U1L2"
+//   { unit:4, lessonKey:"1-2" } -> "BLOOKET-U4L1-2"
+function blooketItemId(unit, lessonKey) {
+  return `BLOOKET-U${unit}L${lessonKey}`;
+}
+
+// Detect the "blooket source not provisioned" condition (the 0013 migration has
+// not been run yet, so the source CHECK still rejects 'blooket'). Mirrors the
+// sprite_hue / schoology_uid 503 precedent: only this specific pre-migration
+// condition maps to 503; every other DB error is a real 500.
+function isBlooketSourceMissing(e) {
+  if (!e) return false;
+  const code = String(e.code || '');
+  const msg = String(e.message || '').toLowerCase();
+  if (code === '42703') return true; // undefined_column (defensive)
+  if (code === '23514') return true; // check_violation (the source CHECK rejects 'blooket')
+  return msg.includes('item_ledger_source_check');
 }
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
@@ -114,6 +144,90 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         quarters: config.quarters,
       },
     });
+  });
+
+  // -- POST /class/blooket -- teacher-gated Blooket grade import ---------------
+  // Body: { lessonKey: "1.2", total: <int>, section?: <str>,
+  //         entries: [{ studentId, correct, attempted }] }
+  // Computes blooketScore (0..1) per entry and writes source='blooket' rows via
+  // the SAME ledger insert /ledger/record uses (attempt=1 so a re-import upserts
+  // onto (student_id, source, item_id, attempt)). Malformed entries are collected
+  // in `errors` and skipped -- one bad row never 500s the batch. Until migration
+  // 0013 runs, the source CHECK rejects 'blooket' -> 503 (mirrors the sprite-hue /
+  // schoology-uid pre-migration precedent).
+  app.post('/class/blooket', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    const body = req.body || {};
+    const parsed = parseLessonKeyArg(body.lessonKey);
+    if (!parsed) {
+      return res.status(400).json({ ok: false, error: 'lessonKey must look like "1.2", "U1.2", or "4.1-2"' });
+    }
+    const total = Number(body.total);
+    if (!Number.isInteger(total) || total <= 0) {
+      return res.status(400).json({ ok: false, error: 'total must be a positive integer' });
+    }
+    if (!Array.isArray(body.entries)) {
+      return res.status(400).json({ ok: false, error: 'entries must be an array' });
+    }
+
+    const itemId = blooketItemId(parsed.unit, parsed.lessonKey);
+    const unitLabel = `U${parsed.unit}`;
+
+    let recorded = 0;
+    let skipped = 0;
+    const errors = [];
+
+    for (let i = 0; i < body.entries.length; i++) {
+      const entry = body.entries[i] || {};
+      const studentId = entry.studentId;
+      const correct = Number(entry.correct);
+      const attempted = Number(entry.attempted);
+
+      // Validate (malformed -> collect, don't 500). studentId required;
+      // correct/attempted finite >= 0.
+      if (typeof studentId !== 'string' || !studentId) {
+        skipped += 1;
+        errors.push({ index: i, error: 'missing studentId' });
+        continue;
+      }
+      if (!Number.isFinite(correct) || correct < 0 || !Number.isFinite(attempted) || attempted < 0) {
+        skipped += 1;
+        errors.push({ index: i, studentId, error: 'correct/attempted must be finite numbers >= 0' });
+        continue;
+      }
+
+      const score = blooketScore(correct, attempted, total);
+
+      let error;
+      try {
+        const result = await ledgerDb.insertLedgerRow({
+          studentId,
+          source: 'blooket',
+          itemId,
+          unit: unitLabel,
+          response: { correct, attempted, total },
+          score,
+          evidenceTier: 'practice', // teacher-imported in-class work; matches other recorded rows (no cap-tier effect)
+          attempt: 1,
+        });
+        error = result && result.error;
+      } catch (err) {
+        error = err;
+      }
+
+      if (error) {
+        if (isBlooketSourceMissing(error)) {
+          return res.status(503).json({ ok: false, error: 'blooket source not provisioned' });
+        }
+        console.error('POST /class/blooket insert error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+
+      recorded += 1;
+    }
+
+    return res.json({ ok: true, itemId, recorded, skipped, errors });
   });
 
   // ── GET /class/mastery?section= ─────────────────────────────────────────────

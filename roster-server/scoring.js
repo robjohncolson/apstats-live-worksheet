@@ -4,6 +4,31 @@
 // Phase-2 /rollup cr-quiz aggregation", not a fork). Logic is byte-equivalent
 // to rollup.js's original local helpers — the 13 rollup tests pin it.
 
+// blooketScore -- the authoritative per-student per-Blooket score on [0,1].
+// SINGLE SOURCE OF TRUTH: the POST /class/blooket endpoint, the import tool, and
+// the unit tests all import THIS function (BLOOKET_IMPORT_P2_BUILD.md section 1).
+//
+//   given correct, attempted, and the Blooket's total questions:
+//     attempted <= 0           -> 0  (a no-show / walkaway records an honest 0)
+//     acc = correct / attempted
+//     cov = min(1, attempted / total)   (walkaway penalty; over-total -> pure acc)
+//     score = clamp(acc * cov, 0, 1)    (== correct/total when attempted <= total)
+//
+// Worked: 30/30 of 30 -> 1.0 ; 20/25 of 30 -> 0.6667 ; 15/15 of 30 -> 0.5 ;
+//         33/35 of 30 -> 0.9429 ; 0 attempted -> 0.
+export function blooketScore(correct, attempted, total) {
+  const c = Number(correct);
+  const a = Number(attempted);
+  const t = Number(total);
+  if (!Number.isFinite(a) || a <= 0) return 0;
+  if (!Number.isFinite(c) || c < 0) return 0;
+  if (!Number.isFinite(t) || t <= 0) return 0;
+  const acc = c / a;
+  const cov = Math.min(1, a / t);
+  const score = acc * cov;
+  return Math.min(1, Math.max(0, score));
+}
+
 // Normalize a jsonb `response` to a comparable scalar string. DN2d records
 // `response: answer` where `answer` is cr's letter-style value (cr's own
 // checkIfAnswerCorrect compares String(value).trim().toLowerCase() to the

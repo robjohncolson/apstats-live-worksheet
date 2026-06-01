@@ -34,6 +34,13 @@ export function parseItemLesson(itemId) {
     return { unit: Number(wsMatch[1]), lessonKey: wsMatch[2] };
   }
 
+  // BLOOKET-U{N}L{key} (per-lesson Blooket, teacher-imported)
+  // e.g. BLOOKET-U1L2 -> {unit:1, lessonKey:"2"}; BLOOKET-U4L1-2 -> {unit:4, lessonKey:"1-2"}
+  const blMatch = itemId.match(/^BLOOKET-U(\d+)L([\d-]+)$/);
+  if (blMatch) {
+    return { unit: Number(blMatch[1]), lessonKey: blMatch[2] };
+  }
+
   // WS-U{N}-L{n}-DESK_DONE
   const wsDeskMatch = itemId.match(/^WS-U(\d+)-L(\d+)-DESK_DONE/);
   if (wsDeskMatch) {
@@ -200,6 +207,7 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
         quizItems: [],
         worksheetItems: [],
         wsCountKey: null,
+        blooket: null, // 0..100 (latest blooket row for this topic), or null
       });
     }
     return byTopic.get(topicKey);
@@ -272,6 +280,13 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
             acc.wsCountKey = `${unit}.${lessonKey}`;
           }
         }
+      } else if (src === 'blooket') {
+        // Stored score is the authoritative 0..1 blooketScore (no re-scoring;
+        // there is no answer key). Latest row wins (rows arrive pre-deduped via
+        // latestPerItem). Keep on 0..100 to match the lessonMap convention
+        // (lessonGrade/Cws/W/Q are all 0..100).
+        const s = Number(row.score);
+        if (Number.isFinite(s)) acc.blooket = Math.min(1, Math.max(0, s)) * 100;
       }
     }
   }
@@ -320,6 +335,9 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     acc.W = W != null ? Math.round(W * 10) / 10 : null;
     acc.Q = Q != null ? Math.round(Q * 10) / 10 : null;
     acc.lessonGrade = B != null ? Math.round(B * 10) / 10 : null;
+    // Blooket track (0..100, latest recorded row) carried through verbatim;
+    // null when no blooket row attached. Rounded for the response surface.
+    acc.blooket = acc.blooket != null ? Math.round(acc.blooket * 10) / 10 : null;
   }
 
   return byTopic;
@@ -720,6 +738,20 @@ export function computeQuarterV3({
   const lessonsAvg = lessonsDue > 0 ? (lessonSum / lessonsDue) / 100 : null;
   const quizzesAvg = lessonsDue > 0 ? (quizSum / lessonsDue) / 100 : null;
 
+  // -- Blooket track (MEAN OF RECORDED blooket scores over due lessons) --
+  // NOT divided by lessonsDue: a missing blooket is EXCLUDED, never counted as
+  // 0. blooketAvg is null when nothing is recorded -> workAvgV3 renormalizes it
+  // away, so a quarter with zero blooket rows is byte-identical to today (no
+  // tanking the instant this deploys, before any blooket exists). A skip is
+  // penalized only when the teacher imports a 0 row (correct=0, attempted=0).
+  let blooketSum = 0, blooketRecorded = 0;
+  for (const topicKey of dueLessons) {
+    const r = lessonMap.get(topicKey);
+    const bl = r && r.blooket != null ? r.blooket : null;
+    if (bl != null) { blooketSum += bl; blooketRecorded += 1; }
+  }
+  const blooketAvg = blooketRecorded > 0 ? (blooketSum / blooketRecorded) / 100 : null;
+
   // ── PC track (raw PC % per unit, bucketed by unit→quarter band) ──
   // Per the spec, pcAvg is the mean of PCs DUE-BY-TODAY. A unit's PC is "due"
   // once the unit's last lesson is due-by-today (the PC is scheduled 1-2 days
@@ -765,7 +797,9 @@ export function computeQuarterV3({
     lessons: lessonsAvg,
     quizzes: quizzesAvg,
     posters: workTracks ? (workTracks.posters ?? null) : null,
-    blooket: workTracks ? (workTracks.blooket ?? null) : null,
+    // Blooket now flows from the ledger (per-topic, mean-of-recorded), NOT the
+    // workTracks channel. null -> renormalized away by workAvgV3.
+    blooket: blooketAvg,
   };
   const workAvg = workAvgV3(tracks);
   const quarterGrade = to100(combineV3(pcAvg, workAvg));
@@ -785,7 +819,10 @@ export function computeQuarterV3({
     lessons: lessonsAvgBest,
     quizzes: quizzesAvgBest,
     posters: tracks.posters,
-    blooket: tracks.blooket,
+    // No inflation for the ceiling: blooket's best case is its recorded mean.
+    // We do NOT assume future blookets score 100 (unlike lessons/quizzes/PC,
+    // which have a known remaining count). A missing blooket stays excluded.
+    blooket: blooketAvg,
   });
   // Ceiling only when the quarter has signal (matches Phase 6: nothing due → null).
   const ceiling = quarterGrade == null ? null : to100(combineV3(pcAvgBest, workAvgBest));
