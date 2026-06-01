@@ -249,9 +249,11 @@ describe('start-here.html — Phase 4a student render', () => {
     }
   });
 
-  it('only ONE new section is added (id="where-you-stand"); no other id-bearing sections appeared', () => {
+  it('id-bearing sections are exactly the intended ones (no accidental sections appeared)', () => {
     const sectionIds = [...START.matchAll(/<section\s[^>]*id=["']([^"']+)["']/gi)].map(m => m[1]);
-    // The pre-existing page had no id-bearing sections; Phase 4a adds exactly one.
-    expect(sectionIds).toEqual(['where-you-stand']);
+    // Phase 4a added 'where-you-stand'. grade-clarity (2026-05-31) added the
+    // 'how-your-grade' anchor target for the Desk "how grades work" deep-link.
+    // Document order: how-your-grade precedes where-you-stand.
+    expect(sectionIds).toEqual(['how-your-grade', 'where-you-stand']);
   });
 });

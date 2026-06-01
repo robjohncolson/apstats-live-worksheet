@@ -1703,6 +1703,25 @@
     </div>
 </div>
 
+<!-- ═══ How Grades Work Modal (grade-clarity, 2026-05-31) ═══ -->
+<div id="grade-help-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeGradeHelp()">
+    <div class="dialog-box" style="max-width:390px;width:90%;text-align:left;padding:12px 16px">
+        <div class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px">How your grade works</div>
+        <div class="geneva" style="font-size:11px;max-height:60vh;overflow-y:auto;line-height:1.5">
+            <p style="margin:0 0 6px">Your quarter grade is the <b>higher of two tracks</b>:</p>
+            <p style="margin:0 0 4px">&#9312; <b>Your work</b> &mdash; worksheets, quizzes, posters, and Blookets.</p>
+            <p style="margin:0 0 6px">&#9313; <b>Progress Checks</b> &mdash; one per unit, AP-exam-style, retakable until the quarter closes.</p>
+            <p style="margin:0 0 6px">You need at least about <b>40% on each</b> side, or your grade is <b>capped at 70%</b>. Clear that low bar and you keep the higher of the two &mdash; either track can reach 100%.</p>
+            <p style="margin:0 0 6px">The <b>&uarr;</b> next to a quarter is your <b>ceiling</b> &mdash; the best grade you can still reach if you ace what's left.</p>
+            <p style="margin:0 0 6px">This is your <b>official grade</b> &mdash; the same number Schoology shows as your quarter grade. It updates live here, so it's usually a step ahead of Schoology's once-a-day sync.</p>
+            <p style="margin:6px 0 0"><a href="start-here.html#how-your-grade" target="_blank" rel="noopener" style="color:#0000cc;text-decoration:underline">Full explanation &rarr;</a></p>
+        </div>
+        <div style="text-align:right;margin-top:10px">
+            <button class="s7btn s7btn-default" onclick="closeGradeHelp()">OK</button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Blooket Flashcard Quiz (2026-05-20) ═══
      Chain-of-custody verification for Blooket completion. Sources the
      question set from the same _blooket.csv that built the Blooket game.
@@ -5839,7 +5858,22 @@ async function renderDoNowGrades(baseUrl, token) {
       host.appendChild(pill);
       anyRendered = true;
     }
-    if (anyRendered) host.style.display = 'flex';
+    if (anyRendered) {
+      // grade-clarity (2026-05-31): a subtle link to the "how grades work" explainer.
+      var help = document.createElement('span');
+      help.className = 'qhelp';
+      help.setAttribute('role', 'button');
+      help.setAttribute('tabindex', '0');
+      help.title = 'How your quarter grade is calculated';
+      help.textContent = 'ⓘ how grades work';
+      help.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline';
+      help.onclick = function () { if (typeof openGradeHelp === 'function') openGradeHelp(); };
+      help.onkeydown = function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openGradeHelp === 'function') openGradeHelp(); }
+      };
+      host.appendChild(help);
+      host.style.display = 'flex';
+    }
   } catch (_) {
     host.style.display = 'none';
   }
@@ -8343,6 +8377,39 @@ function _detachDayGradeKeyHandler() {
 function closeDayGrade() {
     _detachDayGradeKeyHandler();
     var ov = document.getElementById('day-grade-overlay');
+    if (ov) ov.style.display = 'none';
+}
+
+// "How grades work" modal (grade-clarity, 2026-05-31). Static content; mirrors
+// the Day Grade modal's open/close + modal-scoped Esc handler.
+var _gradeHelpKeyHandler = null;
+
+function _attachGradeHelpKeyHandler() {
+    _detachGradeHelpKeyHandler();
+    _gradeHelpKeyHandler = function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeGradeHelp(); }
+    };
+    document.addEventListener('keydown', _gradeHelpKeyHandler);
+}
+
+function _detachGradeHelpKeyHandler() {
+    if (_gradeHelpKeyHandler) {
+        document.removeEventListener('keydown', _gradeHelpKeyHandler);
+        _gradeHelpKeyHandler = null;
+    }
+}
+
+function openGradeHelp() {
+    var ov = document.getElementById('grade-help-overlay');
+    if (!ov) return;
+    ov.style.display = 'block';
+    _attachGradeHelpKeyHandler();
+}
+
+function closeGradeHelp() {
+    _detachGradeHelpKeyHandler();
+    var ov = document.getElementById('grade-help-overlay');
     if (ov) ov.style.display = 'none';
 }
 
