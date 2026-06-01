@@ -255,6 +255,269 @@
     border-top: 1px dashed var(--border);
     padding-top: 0.4rem;
   }
+
+  /* -- Grade Playground (interactive v3 toy) -- */
+  .gp {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fbfcfe;
+    margin: 1rem 0 0.5rem;
+    overflow: hidden;
+  }
+  .gp-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.55rem 0.6rem 0;
+    background: #eef3fb;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .gp-tab {
+    appearance: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 0.5rem 0.95rem;
+    border-radius: 7px 7px 0 0;
+    cursor: pointer;
+  }
+  .gp-tab:hover { background: #e2ebf8; }
+  .gp-tab[aria-selected="true"] {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--ink);
+    position: relative;
+    top: 1px;
+  }
+  .gp-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .gp-panel { padding: 1.1rem 1.15rem 1.25rem; }
+  .gp-panel[hidden] { display: none; }
+
+  /* Sliders (Tab 1) */
+  .gp-slider { margin: 0 0 0.9rem; }
+  .gp-slider label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .gp-slider label .gp-val {
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .gp-slider input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .gp-slider input[type="range"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* Preset buttons */
+  .gp-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.2rem 0 1rem;
+  }
+  .gp-preset {
+    appearance: none;
+    border: 1px solid #cdddf2;
+    background: #eef3fb;
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .gp-preset:hover { background: #e2ebf8; }
+  .gp-preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Live result block */
+  .gp-result {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--card);
+    padding: 1rem 1.1rem;
+    text-align: center;
+  }
+  .gp-result .gp-big {
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+  .gp-result .gp-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.2rem;
+  }
+  .gp-branch {
+    margin: 0.7rem 0 0;
+    font-size: 0.96rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .gp-branch.warn { color: #8a6400; }
+  .gp-branch .gp-win {
+    background: #e8f5ea;
+    border-radius: 4px;
+    padding: 0 0.3rem;
+  }
+  .gp-branch.warn .gp-win {
+    background: var(--flag);
+  }
+
+  /* Two-bar visual with 40% floor marker */
+  .gp-bars {
+    display: flex;
+    gap: 1.1rem;
+    align-items: flex-end;
+    justify-content: center;
+    height: 130px;
+    position: relative;
+    margin: 1.1rem 0 0.2rem;
+    padding-top: 0.4rem;
+  }
+  .gp-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    width: 64px;
+    height: 100%;
+  }
+  .gp-bar-track {
+    width: 38px;
+    height: 100%;
+    background: #eef3fb;
+    border: 1px solid var(--border);
+    border-radius: 5px 5px 0 0;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .gp-bar-fill {
+    width: 100%;
+    background: var(--accent);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.18s ease;
+  }
+  .gp-bar-fill.low { background: #d9a521; }
+  .gp-bar-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    text-align: center;
+  }
+  .gp-floor {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 2px dashed #c0392b;
+    pointer-events: none;
+  }
+  .gp-floor span {
+    position: absolute;
+    right: 0;
+    top: -1.05rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #c0392b;
+    background: var(--card);
+    padding: 0 0.25rem;
+  }
+
+  /* Tab 2 — real-grade inputs */
+  .gp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem 1.2rem;
+    margin: 0 0 1rem;
+  }
+  @media (max-width: 560px) { .gp-grid { grid-template-columns: 1fr; } }
+  .gp-grid h4 {
+    grid-column: 1 / -1;
+    margin: 0.3rem 0 0;
+    font-size: 0.95rem;
+    color: var(--accent);
+  }
+  .gp-field { display: flex; flex-direction: column; }
+  .gp-field label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+  }
+  .gp-field input[type="number"] {
+    font: inherit;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--ink);
+    width: 100%;
+  }
+  .gp-field input[type="number"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .gp-readout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--card);
+    padding: 0.9rem 1rem;
+  }
+  .gp-readout .gp-stat {
+    flex: 1;
+    min-width: 7rem;
+    text-align: center;
+  }
+  .gp-readout .gp-stat .gp-label { margin: 0 0 0.15rem; }
+  .gp-readout .gp-stat .gp-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .gp-readout .gp-stat.final .gp-num { font-size: 2rem; }
+  .gp-blanknote {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0.7rem 0 0;
+  }
+
+  /* Video slot */
+  .gp-video {
+    border: 2px dashed var(--accent);
+    border-radius: 10px;
+    background: #f4f7fc;
+    text-align: center;
+    padding: 1.6rem 1.2rem;
+    margin: 1.1rem 0 0;
+    color: var(--muted);
+  }
+  .gp-video strong { color: var(--accent); display: block; font-size: 1.05rem; }
+  .gp-video span { font-size: 0.9rem; }
 </style>
 </head>
 <body>
@@ -319,13 +582,324 @@
     <div class="lowstakes">
       Make no mistake — <strong>this is for a grade.</strong> Everything you do here is tracked, and it all counts. There is no "busywork that doesn't matter" in this class.
     </div>
-    <p><strong>All of Units 1–9 are open to you from day one</strong>, and you work at your own pace. The work has a destination, not a nightly deadline.</p>
-    <p>Your grade is built from <strong>two tracks</strong>, and it takes <strong>whichever one you're stronger at</strong>:</p>
-    <p><strong>① Your work</strong> — your everyday graded pieces: each lesson's <strong>worksheet</strong> and <strong>quiz</strong>, your unit <strong>posters</strong>, and each lesson's <strong>Blooket</strong> (a small slice, scored on how many questions you answer and how accurate you are — answer them all correctly and it's full marks; the in-game points you race for are just for fun). Steady effort, banked as you go.</p>
-    <p><strong>② The Progress Checks</strong> — one per unit, in class, AP-exam-style, and <strong>retakable until the quarter closes</strong>. Pure mastery: prove you know the material and this alone can carry you.</p>
-    <p><strong>Your grade is the higher of the two.</strong> Lead with your strength — ace the AP checks <em>or</em> put in the steady work, and either path goes all the way to 100%.</p>
-    <p><strong>One catch, and it's a low bar:</strong> you have to at least <strong>show up</strong> for both sides — about <strong>40% on each</strong> (roughly D-level; an honest attempt clears it). Blow off a whole side once it's in play — never take a Progress Check that's due, or stop doing the work — and your grade is <strong>capped at 70%</strong> until you put in that minimum. It isn't a punishment for struggling; it's so no one can skip half the class and still claim full marks. Make a real attempt at both and the cap is gone — you keep the higher of your two scores.</p>
-    <p>So the move is simple: <strong>do the work at your pace, and take the Progress Checks when they come.</strong> Work ahead — over the summer, even — and that work stands on its own until a unit's Progress Check actually arrives in class; then the check is your shot to top it off. The <strong>↑ number</strong> on each quarter is your <strong>ceiling</strong> — the best grade you can still reach if you ace what's left. As long as it's above where you are now, the door is open.</p>
+
+    <p>Your grade is the <strong>better of two tracks</strong> — your everyday <strong>Work</strong> and your <strong>Progress Checks</strong>. Clear a low bar (about <strong>40%</strong>) on each side and you keep the higher of the two, all the way to 100%; blow off a whole side and you <strong>cap at 70%</strong> until you put a little in. Don't just read it — <strong>play with it below.</strong></p>
+
+    <!-- THE GRADE PLAYGROUND -->
+    <div class="gp" id="grade-playground">
+      <div class="gp-tabs" role="tablist" aria-label="Grade playground">
+        <button class="gp-tab" id="gp-tab-toy" role="tab" type="button"
+                aria-selected="true" tabindex="0" aria-controls="gp-panel-toy">Quick toy</button>
+        <button class="gp-tab" id="gp-tab-real" role="tab" type="button"
+                aria-selected="false" tabindex="-1" aria-controls="gp-panel-real">Plug in real Q1 grades</button>
+      </div>
+
+      <!-- TAB 1: Quick toy -->
+      <div class="gp-panel" id="gp-panel-toy" role="tabpanel" aria-labelledby="gp-tab-toy">
+        <div class="gp-slider">
+          <label for="gp-pc">Progress Checks <span class="gp-val" id="gp-pc-val">80</span></label>
+          <input type="range" id="gp-pc" min="0" max="100" step="1" value="80"
+                 aria-describedby="gp-toy-result">
+        </div>
+        <div class="gp-slider">
+          <label for="gp-work">Your work <span class="gp-val" id="gp-work-val">65</span></label>
+          <input type="range" id="gp-work" min="0" max="100" step="1" value="65"
+                 aria-describedby="gp-toy-result">
+        </div>
+
+        <div class="gp-presets">
+          <button class="gp-preset" type="button" data-pc="100" data-work="50">Ace the checks</button>
+          <button class="gp-preset" type="button" data-pc="50" data-work="100">Do all the work</button>
+          <button class="gp-preset" type="button" data-pc="0" data-work="90">Skip the checks</button>
+          <button class="gp-preset" type="button" data-pc="0" data-work="0">Do nothing</button>
+        </div>
+
+        <div class="gp-result" id="gp-toy-result" aria-live="polite">
+          <p class="gp-label">Your quarter grade</p>
+          <div class="gp-big" id="gp-toy-grade">80.0%</div>
+          <p class="gp-branch" id="gp-toy-branch"></p>
+
+          <div class="gp-bars" aria-hidden="true">
+            <div class="gp-floor" id="gp-floor" style="bottom:40%"><span>40% floor</span></div>
+            <div class="gp-bar-col">
+              <div class="gp-bar-track"><div class="gp-bar-fill" id="gp-bar-pc"></div></div>
+              <div class="gp-bar-name">Checks</div>
+            </div>
+            <div class="gp-bar-col">
+              <div class="gp-bar-track"><div class="gp-bar-fill" id="gp-bar-work"></div></div>
+              <div class="gp-bar-name">Work</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Plug in real Q1 grades -->
+      <div class="gp-panel" id="gp-panel-real" role="tabpanel" aria-labelledby="gp-tab-real" hidden>
+        <div class="gp-grid">
+          <h4>Progress Checks <small style="color:var(--muted);font-weight:400">— Q1 covers Units 1&ndash;3</small></h4>
+          <div class="gp-field">
+            <label for="gp-pc-u1">Unit 1 PC</label>
+            <input type="number" id="gp-pc-u1" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
+          </div>
+          <div class="gp-field">
+            <label for="gp-pc-u2">Unit 2 PC</label>
+            <input type="number" id="gp-pc-u2" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
+          </div>
+          <div class="gp-field">
+            <label for="gp-pc-u3">Unit 3 PC</label>
+            <input type="number" id="gp-pc-u3" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
+          </div>
+          <div class="gp-field"></div>
+
+          <h4>Your work</h4>
+          <div class="gp-field">
+            <label for="gp-w-lessons">Worksheets</label>
+            <input type="number" id="gp-w-lessons" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
+          </div>
+          <div class="gp-field">
+            <label for="gp-w-quizzes">Quizzes</label>
+            <input type="number" id="gp-w-quizzes" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
+          </div>
+          <div class="gp-field">
+            <label for="gp-w-posters">Posters</label>
+            <input type="number" id="gp-w-posters" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
+          </div>
+          <div class="gp-field">
+            <label for="gp-w-blooket">Blooket</label>
+            <input type="number" id="gp-w-blooket" min="0" max="100" step="any" inputmode="decimal" placeholder="blank">
+          </div>
+        </div>
+
+        <div class="gp-readout" id="gp-real-result" aria-live="polite">
+          <div class="gp-stat">
+            <p class="gp-label">PC avg</p>
+            <div class="gp-num" id="gp-real-pc">&mdash;</div>
+          </div>
+          <div class="gp-stat">
+            <p class="gp-label">Work avg</p>
+            <div class="gp-num" id="gp-real-work">&mdash;</div>
+          </div>
+          <div class="gp-stat final">
+            <p class="gp-label">Quarter grade</p>
+            <div class="gp-num" id="gp-real-grade">&mdash;</div>
+          </div>
+        </div>
+        <p class="gp-blanknote">Blank = not counted yet.</p>
+      </div>
+    </div>
+
+    <!-- The full rules, demoted to opt-in read-more -->
+    <details>
+      <summary>The full rules, in words</summary>
+      <p><strong>All of Units 1–9 are open to you from day one</strong>, and you work at your own pace. The work has a destination, not a nightly deadline.</p>
+      <p>Your grade is built from <strong>two tracks</strong>, and it takes <strong>whichever one you're stronger at</strong>:</p>
+      <p><strong>① Your work</strong> — your everyday graded pieces: each lesson's <strong>worksheet</strong> and <strong>quiz</strong>, your unit <strong>posters</strong>, and each lesson's <strong>Blooket</strong> (a small slice, scored on how many questions you answer and how accurate you are — answer them all correctly and it's full marks; the in-game points you race for are just for fun). Steady effort, banked as you go.</p>
+      <p><strong>② The Progress Checks</strong> — one per unit, in class, AP-exam-style, and <strong>retakable until the quarter closes</strong>. Pure mastery: prove you know the material and this alone can carry you.</p>
+      <p><strong>Your grade is the higher of the two.</strong> Lead with your strength — ace the AP checks <em>or</em> put in the steady work, and either path goes all the way to 100%.</p>
+      <p><strong>One catch, and it's a low bar:</strong> you have to at least <strong>show up</strong> for both sides — about <strong>40% on each</strong> (roughly D-level; an honest attempt clears it). Blow off a whole side once it's in play — never take a Progress Check that's due, or stop doing the work — and your grade is <strong>capped at 70%</strong> until you put in that minimum. It isn't a punishment for struggling; it's so no one can skip half the class and still claim full marks. Make a real attempt at both and the cap is gone — you keep the higher of your two scores.</p>
+      <p>So the move is simple: <strong>do the work at your pace, and take the Progress Checks when they come.</strong> Work ahead — over the summer, even — and that work stands on its own until a unit's Progress Check actually arrives in class; then the check is your shot to top it off. The <strong>↑ number</strong> on each quarter is your <strong>ceiling</strong> — the best grade you can still reach if you ace what's left. As long as it's above where you are now, the door is open.</p>
+    </details>
+
+    <!-- Video slot (paste embed later) -->
+    <div class="gp-video">
+      <strong>Watch Mr. Colson walk through it</strong>
+      <span>Video coming soon.</span>
+      <!--
+        PASTE THE VIDEO EMBED HERE. Replace the <span> above (or this comment)
+        with a responsive iframe, e.g.:
+        <iframe width="100%" height="360"
+                src="https://www.youtube.com/embed/VIDEO_ID"
+                title="How your grade works"
+                frameborder="0" allowfullscreen></iframe>
+        (For a Google Drive video use the file's /preview share URL as src.)
+      -->
+    </div>
+
+    <!-- Grade Playground engine (verbatim v3 from roster-server/lesson-grade.js) -->
+    <script>
+    (function () {
+      'use strict';
+
+      // === v3 ENGINE (copied verbatim; displayed numbers MUST equal the server's) ===
+      var V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
+      function quarterGradeV3(pc, work) { // both on 0..1
+        if (pc >= 0.40 && work >= 0.40) return Math.max(pc, work);
+        return Math.max(0.7 * pc, 0.7 * work, (pc + work) / 2);
+      }
+      function workAvgV3(tracks) { // {lessons,quizzes,posters,blooket} each 0..1 or null; renormalizes over present
+        var num = 0, den = 0;
+        for (var k in V3_WORK_WEIGHTS) {
+          var v = tracks[k]; if (v == null) continue;
+          num += V3_WORK_WEIGHTS[k] * v; den += V3_WORK_WEIGHTS[k];
+        }
+        return den === 0 ? null : num / den;
+      }
+      function combineV3(pc, work) { // tolerates a null track
+        if (pc == null && work == null) return null;
+        if (pc == null) return work;
+        if (work == null) return pc;
+        return quarterGradeV3(pc, work);
+      }
+      // === END v3 ENGINE ===
+
+      // Round exactly like the rest of the page: (Math.round(v*10)/10).toFixed(1).
+      function fmtPct(frac) { // frac on 0..1 -> "NN.N"
+        if (frac == null || isNaN(frac)) return null;
+        return (Math.round(frac * 100 * 10) / 10).toFixed(1);
+      }
+
+      // Read a number input as a 0..1 fraction (blank/non-numeric -> null), clamped.
+      function readPct(id) {
+        var inp = document.getElementById(id);
+        if (!inp) return null;
+        var raw = (inp.value == null ? '' : String(inp.value)).trim();
+        if (raw === '') return null;
+        var n = Number(raw);
+        if (isNaN(n)) return null;
+        if (n < 0) n = 0;
+        if (n > 100) n = 100;
+        return n / 100;
+      }
+
+      // -- Tabs --
+      var tabToy = document.getElementById('gp-tab-toy');
+      var tabReal = document.getElementById('gp-tab-real');
+      var panelToy = document.getElementById('gp-panel-toy');
+      var panelReal = document.getElementById('gp-panel-real');
+
+      function selectTab(which) {
+        var toy = which === 'toy';
+        tabToy.setAttribute('aria-selected', toy ? 'true' : 'false');
+        tabReal.setAttribute('aria-selected', toy ? 'false' : 'true');
+        tabToy.tabIndex = toy ? 0 : -1;
+        tabReal.tabIndex = toy ? -1 : 0;
+        panelToy.hidden = !toy;
+        panelReal.hidden = toy;
+      }
+      tabToy.addEventListener('click', function () { selectTab('toy'); });
+      tabReal.addEventListener('click', function () { selectTab('real'); });
+      // Arrow-key navigation across the tablist.
+      function onTabKey(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          var goReal = (e.currentTarget === tabToy);
+          selectTab(goReal ? 'real' : 'toy');
+          (goReal ? tabReal : tabToy).focus();
+        }
+      }
+      tabToy.addEventListener('keydown', onTabKey);
+      tabReal.addEventListener('keydown', onTabKey);
+
+      // -- Tab 1: Quick toy --
+      var pcSlider = document.getElementById('gp-pc');
+      var workSlider = document.getElementById('gp-work');
+      var pcValOut = document.getElementById('gp-pc-val');
+      var workValOut = document.getElementById('gp-work-val');
+      var toyGradeOut = document.getElementById('gp-toy-grade');
+      var toyBranchOut = document.getElementById('gp-toy-branch');
+      var barPc = document.getElementById('gp-bar-pc');
+      var barWork = document.getElementById('gp-bar-work');
+
+      function renderToy() {
+        var pc = Number(pcSlider.value) / 100;   // 0..1
+        var work = Number(workSlider.value) / 100;
+        pcValOut.textContent = String(Math.round(pc * 100));
+        workValOut.textContent = String(Math.round(work * 100));
+
+        var grade = quarterGradeV3(pc, work);
+        toyGradeOut.textContent = fmtPct(grade) + '%';
+
+        // Bars + low-side colouring.
+        barPc.style.height = Math.round(pc * 100) + '%';
+        barWork.style.height = Math.round(work * 100) + '%';
+        barPc.className = 'gp-bar-fill' + (pc < 0.40 ? ' low' : '');
+        barWork.className = 'gp-bar-fill' + (work < 0.40 ? ' low' : '');
+
+        // Branch explainer.
+        if (pc >= 0.40 && work >= 0.40) {
+          toyBranchOut.className = 'gp-branch';
+          var pcWins = pc >= work;
+          var trackName = pcWins ? 'Progress Checks' : 'your Work';
+          toyBranchOut.innerHTML = 'We take your stronger track ('
+            + '<span class="gp-win">' + trackName + '</span>): ' + fmtPct(grade) + '%';
+        } else {
+          toyBranchOut.className = 'gp-branch warn';
+          var lowTrack = (pc < 0.40 && work < 0.40)
+            ? 'both tracks'
+            : (pc < 0.40 ? 'Progress Checks' : 'your Work');
+          toyBranchOut.innerHTML = '&#9888; below 40% on '
+            + '<span class="gp-win">' + lowTrack + '</span> &rarr; capped at 70% '
+            + 'until you put a little more in.';
+        }
+      }
+
+      pcSlider.addEventListener('input', renderToy);
+      workSlider.addEventListener('input', renderToy);
+
+      var presets = document.querySelectorAll('#gp-panel-toy .gp-preset');
+      for (var i = 0; i < presets.length; i++) {
+        presets[i].addEventListener('click', function () {
+          pcSlider.value = this.getAttribute('data-pc');
+          workSlider.value = this.getAttribute('data-work');
+          renderToy();
+        });
+      }
+
+      // -- Tab 2: Plug in real Q1 grades --
+      var realPcOut = document.getElementById('gp-real-pc');
+      var realWorkOut = document.getElementById('gp-real-work');
+      var realGradeOut = document.getElementById('gp-real-grade');
+      var realInputIds = [
+        'gp-pc-u1', 'gp-pc-u2', 'gp-pc-u3',
+        'gp-w-lessons', 'gp-w-quizzes', 'gp-w-posters', 'gp-w-blooket'
+      ];
+
+      function meanOf(vals) { // vals already filtered to non-null
+        if (vals.length === 0) return null;
+        var s = 0;
+        for (var j = 0; j < vals.length; j++) s += vals[j];
+        return s / vals.length;
+      }
+
+      function show(out, frac) {
+        var f = fmtPct(frac);
+        out.innerHTML = (f == null) ? '&mdash;' : (f + '%');
+      }
+
+      function renderReal() {
+        // PC avg = mean of the ENTERED PCs.
+        var pcs = [];
+        var pcRaw = [readPct('gp-pc-u1'), readPct('gp-pc-u2'), readPct('gp-pc-u3')];
+        for (var a = 0; a < pcRaw.length; a++) if (pcRaw[a] != null) pcs.push(pcRaw[a]);
+        var pcAvg = meanOf(pcs);
+
+        // Work avg = workAvgV3 over the ENTERED components (renormalized).
+        var tracks = {
+          lessons: readPct('gp-w-lessons'),
+          quizzes: readPct('gp-w-quizzes'),
+          posters: readPct('gp-w-posters'),
+          blooket: readPct('gp-w-blooket')
+        };
+        var workAvg = workAvgV3(tracks);
+
+        // Quarter grade = combineV3 (tolerates a null track).
+        var grade = combineV3(pcAvg, workAvg);
+
+        show(realPcOut, pcAvg);
+        show(realWorkOut, workAvg);
+        show(realGradeOut, grade);
+      }
+
+      for (var b = 0; b < realInputIds.length; b++) {
+        var node = document.getElementById(realInputIds[b]);
+        if (node) node.addEventListener('input', renderReal);
+      }
+
+      // Initial paint.
+      renderToy();
+      renderReal();
+    })();
+    </script>
   </section>
 
   <section id="where-you-stand">
