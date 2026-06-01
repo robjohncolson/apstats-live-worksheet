@@ -78,7 +78,11 @@ def worksheet_url_if_exists(unit: int, lesson: int) -> str | None:
     return None
 
 
-def quiz_url(unit: int, lesson) -> str:
+def quiz_url(unit: int, lesson) -> str | None:
+    # Each topic links to its OWN quiz (cr renders topic X.N at ?u=X&l=N).
+    # Unit-opener topics (X.1) have no quiz in curriculum_render -> NULL.
+    if lesson == 1:
+        return None
     return f"{QUIZ_BASE}?u={unit}&l={lesson}"
 
 
@@ -188,7 +192,8 @@ def main() -> int:
     for unit, lessons in TARGET_TOPICS:
         for lesson in lessons:
             q = quiz_url(unit, lesson)
-            if q != f"{QUIZ_BASE}?u={unit}&l={lesson}":
+            expected = None if lesson == 1 else f"{QUIZ_BASE}?u={unit}&l={lesson}"
+            if q != expected:
                 bad_q.append(f"{unit}.{lesson}")
     if bad_q:
         print(f"WARNING: quiz_url format anomalies: {bad_q}")
