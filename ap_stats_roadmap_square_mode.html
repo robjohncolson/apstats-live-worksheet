@@ -5725,6 +5725,15 @@ function maybeBumpThenOpen(inf, ds) {
     var topic = inf && inf.t;
     var gap = _donowData && _donowData.earlierGapFlag === true;
     var nt = _donowData && _donowData.nextTask;
+    // BUG B fix: the server's earlierGapFlag is computed at page load and can lag
+    // the student's LOCAL completion. If the Do-Now lesson is already marked done
+    // locally (the greyed calendar cell), the gap is stale -- don't nag. Keeps the
+    // speed-bump consistent with the cell greying (both now read local marks).
+    if (gap && nt && nt.lesson) {
+      try {
+        if (localLessonState(nt.lesson, getStudentMarks()) === 'done') gap = false;
+      } catch (_) {}
+    }
     var isDoNow = nt && topic && donowLessonCovers(nt.lesson, topic);
     var ov = document.getElementById('donow-bump-overlay');
 

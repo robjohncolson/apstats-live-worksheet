@@ -114,7 +114,7 @@ describe('DN3c — D1 speed-bump wiring', () => {
 
 // ─── D1 runtime ──────────────────────────────────────────────────────────────
 
-function makeBump({ donow, brokenDom } = {}) {
+function makeBump({ donow, brokenDom, doNowLocalState } = {}) {
   const els = new Map();
   function el(id) {
     if (!els.has(id)) {
@@ -134,6 +134,8 @@ function makeBump({ donow, brokenDom } = {}) {
     document: { getElementById: getById },
     setTimeout: (fn) => fn(),
     showResourcePanel: (inf, ds) => opened.push({ inf, ds }),
+    getStudentMarks: () => ({}),
+    localLessonState: () => (doNowLocalState != null ? doNowLocalState : null),
     console,
   };
   createContext(sandbox);
@@ -166,6 +168,14 @@ describe('DN3c — D1 speed-bump runtime', () => {
     b.run({ t: '5.7' }, 'Jul 1');
     expect(b.opened).toHaveLength(0);
     expect(b.el('donow-bump-overlay').style.display).toBe('block');
+  });
+
+  it('BUG B: earlierGapFlag but the Do Now is marked DONE locally → no bump (honors local completion)', () => {
+    // Server flag lags; the student already finished the Do Now (greyed cell).
+    const b = makeBump({ donow: { earlierGapFlag: true, nextTask: { lesson: '1.2' } }, doNowLocalState: 'done' });
+    b.run({ t: '5.7' }, 'Jul 1');   // far-ahead lesson, but 1.2 is locally done
+    expect(b.opened).toHaveLength(1);                               // opened directly
+    expect(b.el('donow-bump-overlay').style.display).toBe('none');  // NO nag
   });
 
   it('Continue anyway → acks (no repeat nag this session) + opens', () => {
