@@ -852,3 +852,36 @@ describe('computeLessonGrades — Q scores correct/total (unanswered = wrong)', 
     expect(map.get('1.2').Q).toBe(100);
   });
 });
+
+// ── AI-granted quiz exceptions (source='quiz_exception', item_id `<base>#exc`) ──
+// A wrong quiz item the AI accepted on appeal counts correct, lifting Q.
+
+describe('computeLessonGrades — AI-granted quiz exceptions flip an item correct', () => {
+  const KEY3 = {
+    'U1-L2-Q01': { answerKey: 'A', unit: '1' },
+    'U1-L2-Q02': { answerKey: 'B', unit: '1' },
+    'U1-L2-Q03': { answerKey: 'C', unit: '1' },
+  };
+
+  it('an exception row flips a wrong item to correct (1/3 → 2/3)', () => {
+    const rows = [
+      makeRow('U1-L2-Q01', { source: 'curriculum_quiz', response: 'A' }),  // correct
+      makeRow('U1-L2-Q02', { source: 'curriculum_quiz', response: 'X' }),  // wrong (key B)
+      makeRow('U1-L2-Q03', { source: 'curriculum_quiz', response: 'Y' }),  // wrong (key C)
+    ];
+    expect(computeLessonGrades(rows, FRQ_BAND, KEY3, SAMPLE_SCHEDULE, {}).get('1.2').Q).toBe(33.3);
+
+    const withExc = computeLessonGrades(
+      [...rows, makeRow('U1-L2-Q02#exc', { source: 'quiz_exception', response: 'X' })],
+      FRQ_BAND, KEY3, SAMPLE_SCHEDULE, {}
+    );
+    expect(withExc.get('1.2').Q).toBe(66.7);                 // Q02 forgiven → 2 of 3
+    expect(withExc.get('1.2').quizItems.length).toBe(3);     // no phantom quiz item added
+  });
+
+  it('exception with no matching quiz row is inert (cannot manufacture a score)', () => {
+    const rows = [makeRow('U1-L2-Q99#exc', { source: 'quiz_exception', response: 'Z' })];
+    const acc = computeLessonGrades(rows, FRQ_BAND, KEY3, SAMPLE_SCHEDULE, {}).get('1.2');
+    expect(acc ? acc.Q : null).toBe(null);
+  });
+});

@@ -236,6 +236,18 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     return null;
   }
 
+  // AI-granted quiz exceptions (source='quiz_exception', item_id `<base>#exc`):
+  // collect the BASE item ids they forgive, so a wrong quiz item the AI accepted
+  // on appeal scores correct. Built before the scoring loop so row order doesn't
+  // matter. (The exception rows themselves match no scoring branch below, so they
+  // are never double-counted; #exc keeps them distinct under latestPerItem.)
+  const exceptionSet = new Set();
+  for (const row of (Array.isArray(rows) ? rows : [])) {
+    if (row && row.source === 'quiz_exception' && typeof row.item_id === 'string') {
+      exceptionSet.add(row.item_id.replace(/#exc$/i, ''));
+    }
+  }
+
   for (const row of (Array.isArray(rows) ? rows : [])) {
     if (!row || !row.item_id) continue;
     const parsed = parseItemLesson(row.item_id);
@@ -260,7 +272,9 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
         if (keyEntry && keyEntry.answerKey != null) {
           acc.quizItems.push({
             itemId: row.item_id,
-            correct: isCorrect(row.response, keyEntry),
+            // OR in an AI-granted exception: a wrong answer the AI accepted on
+            // appeal counts correct (the #exc row's base item id is in the set).
+            correct: isCorrect(row.response, keyEntry) || exceptionSet.has(row.item_id),
             ts,
           });
         }
