@@ -1,9 +1,10 @@
-// blooket.test.js -- pure-function tests for the Blooket track (Unit A of
-// BLOOKET_IMPORT_P2_BUILD.md): blooketScore (the authoritative formula),
-// parseItemLesson's BLOOKET-* pattern, computeLessonGrades attaching the
-// per-topic blooket score, and computeQuarterV3's mean-of-recorded Blooket
-// track -- INCLUDING the load-bearing NO-REGRESSION + renormalization proofs.
-// NO network, NO server, NO I/O.
+// blooket.test.js -- pure-function tests for the Blooket track: blooketScore
+// (the authoritative game formula, BLOOKET_IMPORT_P2_BUILD.md), parseItemLesson's
+// BLOOKET-* pattern, computeLessonGrades attaching the per-topic blooket score,
+// and computeQuarterV3's make-up Blooket track (BLOOKET_MAKEUP_BUILD.md) --
+// denominator = due lessons that HAVE a Blooket, a missing-but-due Blooket = 0
+// (replaces the old mean-of-recorded/missing-excluded track). INCLUDING the
+// load-bearing back-compat + renormalization proofs. NO network, NO server, NO I/O.
 //
 // @vitest-environment node
 
@@ -108,6 +109,20 @@ describe('computeLessonGrades -- blooket attachment', () => {
     expect(map.get('4.1').blooket).toBe(60);
     expect(map.get('4.2').blooket).toBe(60);
   });
+
+  it('a null/blank/non-numeric score leaves blooket ABSENT (not a spurious 0)', () => {
+    // Number(null)===0 and Number('')===0 are finite, so the guard must reject
+    // null/blank BEFORE coercion or a score-less row writes a real 0. The topic's
+    // accumulator still exists (the row parsed to a lesson) but blooket stays null.
+    const nullGame = computeLessonGrades([row('BLOOKET-U1L2', { score: null })], FRQ_BAND, {}, SCHEDULE, {});
+    expect(nullGame.get('1.2').blooket).toBe(null);
+
+    const blankFlash = computeLessonGrades(
+      [{ item_id: 'BL-U1-L2-DESK_DONE', source: 'worksheet', score: '', response: null, attempt: 1, recorded_at: '2026-09-10T00:00:00Z' }],
+      FRQ_BAND, {}, SCHEDULE, {}
+    );
+    expect(blankFlash.get('1.2').blooket).toBe(null);
+  });
 });
 
 // ── buildLessonsArray -- surfaces blooket in the per-lesson display ────────────
@@ -146,15 +161,15 @@ function lessonMapOf(obj) {
   return new Map(Object.entries(obj));
 }
 
-describe('computeQuarterV3 -- Blooket track (mean-of-recorded)', () => {
+describe('computeQuarterV3 -- Blooket track (make-up; missing-due = 0)', () => {
   const schedule = {
     '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } },
     '1.2': { unit: 1, periods: { B: '2026-09-11', E: '2026-09-11' } },
   };
 
-  it('NO REGRESSION: with ZERO blooket rows, workAvg == lessons+quizzes only', () => {
-    // Lessons-track value (noQuiz): Cws=80, W=null -> 80 -> .8; quizzes Q=60 -> .6.
-    // No blooket attached anywhere. workAvg must renormalize over {lessons,quizzes}.
+  it('BACK-COMPAT: no blooketLessons -> track null, workAvg == lessons+quizzes only', () => {
+    // An older caller that never passes blooketLessons gets the empty-set path:
+    // blooketAvg null -> renormalized away. Byte-identical to the pre-blooket grade.
     const lessonMap = lessonMapOf({
       '1.1': { Cws: 80, W: null, Q: 60, lessonGrade: 80, blooket: null },
       '1.2': { Cws: 80, W: null, Q: 60, lessonGrade: 80, blooket: null },
@@ -163,13 +178,14 @@ describe('computeQuarterV3 -- Blooket track (mean-of-recorded)', () => {
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
     });
-    // lessons .8, quizzes .6 -> mean = .7 -> 70.0 (byte-identical to pre-blooket)
+    // lessons .8, quizzes .6 -> mean = .7 -> 70.0
     expect(r.workAvg).toBeCloseTo(70.0, 1);
   });
 
-  it('RENORMALIZATION: one recorded blooket engages the track and re-weights workAvg', () => {
+  it('a played game score on a Blooket-bearing due lesson engages the track', () => {
+    // blooketLessons = ['1.1']: only 1.1 counts toward the Blooket denominator.
     // lessons .8, quizzes .6, blooket 1.0 ->
-    //   workAvg = (.30*.8 + .30*.6 + .10*1.0)/(.70) = .52/.70 = .742857 -> 74.3
+    //   workAvg = (.30*.8 + .30*.6 + .10*1.0)/.70 = .52/.70 = .742857 -> 74.3
     const lessonMap = lessonMapOf({
       '1.1': { Cws: 80, W: null, Q: 60, lessonGrade: 80, blooket: 100 },
       '1.2': { Cws: 80, W: null, Q: 60, lessonGrade: 80, blooket: null },
@@ -177,14 +193,15 @@ describe('computeQuarterV3 -- Blooket track (mean-of-recorded)', () => {
     const r = computeQuarterV3({
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
+      blooketLessons: ['1.1'],
     });
-    // exactly one blooket recorded (the 1.1 row) -> blooket track = its mean = 1.0
     expect(r.workAvg).toBeCloseTo(74.3, 1);
   });
 
-  it('mean-of-RECORDED: a missing blooket is EXCLUDED, never counted as 0', () => {
-    // Two due lessons; only one has a blooket (0.4). The track mean is 0.4, NOT
-    // 0.2 -- the un-recorded lesson must NOT drag the blooket track to half.
+  it('MISSING-DUE = 0: a Blooket-bearing due lesson with no score drags the track', () => {
+    // NEW semantics (BLOOKET_MAKEUP_BUILD.md): unlike the old mean-of-recorded
+    // track, a missing-but-due Blooket counts as 0 (like the lessons/quizzes
+    // tracks). Both 1.1 and 1.2 HAVE a Blooket; only 1.1 was played (0.4).
     const lessonMap = lessonMapOf({
       '1.1': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: 40 },
       '1.2': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: null },
@@ -192,13 +209,54 @@ describe('computeQuarterV3 -- Blooket track (mean-of-recorded)', () => {
     const r = computeQuarterV3({
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
+      blooketLessons: ['1.1', '1.2'],
     });
-    // lessons 1.0, quizzes 1.0, blooket 0.4 ->
-    //   (.30*1 + .30*1 + .10*.4)/.70 = (.30+.30+.04)/.70 = .64/.70 = .914286 -> 91.4
-    expect(r.workAvg).toBeCloseTo(91.4, 1);
+    // blooket track = (0.4 + 0)/2 = 0.2 (missing counted as 0, NOT excluded) ->
+    //   (.30*1 + .30*1 + .10*.2)/.70 = .62/.70 = .885714 -> 88.6
+    expect(r.workAvg).toBeCloseTo(88.6, 1);
   });
 
-  it('two recorded blookets -> the track is their MEAN (not the sum / lessonsDue)', () => {
+  it('a due lesson WITHOUT a Blooket is excluded from the denominator (no unfair 0)', () => {
+    // 1.2 is NOT in blooketLessons, so it never contributes a 0. Only 1.1
+    // (played 1.0) counts -> track = 1.0, not (1.0 + 0)/2.
+    const lessonMap = lessonMapOf({
+      '1.1': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: 100 },
+      '1.2': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: null },
+    });
+    const r = computeQuarterV3({
+      quarterKey: 'Q1', config: CFG, lessonMap, schedule,
+      todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
+      blooketLessons: ['1.1'], // only 1.1 has a Blooket
+    });
+    // blooket track = mean(1.0) = 1.0 -> (.30*1 + .30*1 + .10*1)/.70 = 1.0 -> 100.0
+    expect(r.workAvg).toBeCloseTo(100.0, 1);
+  });
+
+  it('a combined-worksheet Blooket counts as ONE slot (constituents collapsed)', () => {
+    // 1.1 + 1.2 share worksheetKey "1-2" (a combined worksheet); a single
+    // combined Blooket attaches the same score to BOTH. The track must count it
+    // ONCE, not once per constituent, so it isn't over-weighted vs a solo Blooket.
+    const combinedSchedule = {
+      '1.1': { unit: 1, worksheetKey: '1-2', periods: { B: '2026-09-09', E: '2026-09-09' } },
+      '1.2': { unit: 1, worksheetKey: '1-2', periods: { B: '2026-09-09', E: '2026-09-09' } },
+      '1.3': { unit: 1, worksheetKey: '3',   periods: { B: '2026-09-11', E: '2026-09-11' } },
+    };
+    const lessonMap = lessonMapOf({
+      '1.1': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: 60 },  // combined game 60
+      '1.2': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: 60 },  // same game, same score
+      '1.3': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: 100 }, // solo game 100
+    });
+    const r = computeQuarterV3({
+      quarterKey: 'Q1', config: CFG, lessonMap, schedule: combinedSchedule,
+      todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
+      blooketLessons: ['1.1', '1.2', '1.3'],
+    });
+    // Collapsed: blooket track = mean(60, 100) = 0.80 (NOT (60+60+100)/3 = 73.3).
+    // workAvg = (.30*1 + .30*1 + .10*.80)/.70 = .68/.70 = .971429 -> 97.1
+    expect(r.workAvg).toBeCloseTo(97.1, 1);
+  });
+
+  it('two played Blookets -> the track is their MEAN', () => {
     const lessonMap = lessonMapOf({
       '1.1': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: 100 },
       '1.2': { Cws: 100, W: null, Q: 100, lessonGrade: 100, blooket: 0 },
@@ -206,6 +264,7 @@ describe('computeQuarterV3 -- Blooket track (mean-of-recorded)', () => {
     const r = computeQuarterV3({
       quarterKey: 'Q1', config: CFG, lessonMap, schedule,
       todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
+      blooketLessons: ['1.1', '1.2'],
     });
     // blooket track = mean(1.0, 0.0) = 0.5
     // workAvg = (.30*1 + .30*1 + .10*.5)/.70 = .65/.70 = .928571 -> 92.9
@@ -213,8 +272,9 @@ describe('computeQuarterV3 -- Blooket track (mean-of-recorded)', () => {
   });
 
   it('blooket ceiling does NOT inflate: the ceiling uses the recorded mean, not 100', () => {
-    // One due lesson, recorded blooket 0.5. The ceiling assumes lessons/quizzes
-    // reach 100 for un-attempted items, but the blooket stays at its mean (0.5).
+    // One due Blooket-bearing lesson, recorded blooket 0.5. The ceiling assumes
+    // lessons/quizzes reach 100 for un-attempted items, but the blooket stays at
+    // its recorded mean (0.5) -- a future blooket is never assumed to be a 100.
     const oneLesson = { '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } } };
     const lessonMap = lessonMapOf({
       '1.1': { Cws: 50, W: null, Q: 50, lessonGrade: 50, blooket: 50 },
@@ -222,6 +282,7 @@ describe('computeQuarterV3 -- Blooket track (mean-of-recorded)', () => {
     const withBlooket = computeQuarterV3({
       quarterKey: 'Q1', config: CFG, lessonMap, schedule: oneLesson,
       todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: { 1: 50 },
+      blooketLessons: ['1.1'],
     });
     // ceiling is bounded by 100 and >= the current grade
     expect(withBlooket.ceiling).toBeLessThanOrEqual(100);

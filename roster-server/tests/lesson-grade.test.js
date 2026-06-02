@@ -52,6 +52,10 @@ describe('parseItemLesson — item-ID pattern coverage', () => {
     expect(parseItemLesson('WS-U2-L4-DESK_DONE')).toEqual({ unit: 2, lessonKey: '4' });
   });
 
+  it('BL-U1-L1-DESK_DONE (blooket flashcard make-up) → unit=1, lessonKey="1"', () => {
+    expect(parseItemLesson('BL-U1-L1-DESK_DONE')).toEqual({ unit: 1, lessonKey: '1' });
+  });
+
   it('U1-PC-Q3 → unit=1, lessonKey=null (PC is unit-scoped)', () => {
     expect(parseItemLesson('U1-PC-Q3')).toEqual({ unit: 1, lessonKey: null });
   });
@@ -618,26 +622,37 @@ describe('W1: computeLessonGrades — worksheet blank scoring', () => {
     expect(l.lessonGrade).toBe(100);
   });
 
-  it('a blooket DESK_DONE self-attest (BL-…-DESK_DONE) is grade-inert', () => {
-    // The cross-device blooket Done writes BL-U{u}-L{l}-DESK_DONE with source
-    // 'worksheet' (CALENDAR_SYNC). It must NOT feed Cws (classifyItem returns
-    // null for it; and it fails BLANK_ITEM_PATTERN) NOR the blooket track
-    // (source !== 'blooket'). 3 correct blanks → Cws 100; the BL- row changes
-    // nothing.
+  it('a flashcard self-attest (BL-…-DESK_DONE) is the Blooket MAKE-UP, but stays out of Cws/lessonGrade', () => {
+    // BLOOKET_MAKEUP_BUILD.md: the BL- row no longer touches Cws (fails
+    // BLANK_ITEM_PATTERN) or lessonGrade, but it NOW stands in as the Blooket
+    // score (make-up) when there's no game score. Score is 0..100 (the pass %).
     const rows = [
       makeBlankRow('WS-U1L1-Q1', 1),
       makeBlankRow('WS-U1L1-Q2', 1),
       makeBlankRow('WS-U1L1-Q3', 1),
-      makeRow('BL-U1-L1-DESK_DONE', { source: 'worksheet', score: 0.8 }),
+      makeRow('BL-U1-L1-DESK_DONE', { source: 'worksheet', score: 80 }),
     ];
     const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
       worksheetBlankCounts: BLANK_COUNTS,
       weights: W1_WEIGHTS,
     });
     const l = map.get('1.1');
-    expect(l.Cws).toBe(100);        // unchanged by the BL- self-attest
-    expect(l.blooket).toBe(null);   // BL-…-DESK_DONE is NOT a blooket grade row
-    expect(l.lessonGrade).toBe(100);
+    expect(l.Cws).toBe(100);          // Cws untouched (BL- is not a blank)
+    expect(l.blooket).toBe(80);       // make-up Blooket from the flashcard pass
+    expect(l.lessonGrade).toBe(100);  // lessonGrade is Cws/W/Q only — no blooket
+  });
+
+  it('a real Blooket GAME score wins over a flashcard make-up', () => {
+    const rows = [
+      makeRow('BLOOKET-U1L1', { source: 'blooket', score: 0.6 }),        // game 60% (0..1)
+      makeRow('BL-U1-L1-DESK_DONE', { source: 'worksheet', score: 80 }), // flashcard 80%
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l.blooket).toBe(60);   // game preferred, NOT the higher flashcard
   });
 
   it('renormalization when ws feeder absent (no blank rows): W:Q = 2:3', () => {

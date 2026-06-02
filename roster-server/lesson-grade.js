@@ -53,6 +53,15 @@ export function parseItemLesson(itemId) {
     return { unit: Number(crDeskMatch[1]), lessonKey: crDeskMatch[2] };
   }
 
+  // BL-U{N}-L{key}-DESK_DONE — Blooket flashcard make-up self-attest. Bucketed
+  // so the flashcard can stand in as the Blooket score when there's no game
+  // score (BLOOKET_MAKEUP_BUILD.md). Still grade-INERT for Cws/quiz (it fails
+  // BLANK_ITEM_PATTERN + isn't a curriculum_quiz). [key] allows combined topics.
+  const blDeskMatch = itemId.match(/^BL-U(\d+)-L([\d-]+)-DESK_DONE/);
+  if (blDeskMatch) {
+    return { unit: Number(blDeskMatch[1]), lessonKey: blDeskMatch[2] };
+  }
+
   // U{N}-PC-Q{n} (Progress Check — unit-scoped, no lesson)
   if (/^U\d+-PC-/i.test(itemId)) {
     const pcMatch = itemId.match(/^U(\d+)-PC-/i);
@@ -207,7 +216,9 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
         quizItems: [],
         worksheetItems: [],
         wsCountKey: null,
-        blooket: null, // 0..100 (latest blooket row for this topic), or null
+        blooket: null,          // 0..100 — RESOLVED: game score, else flashcard make-up, else null
+        blooketGame: null,      // 0..100 from a real Blooket game row (source 'blooket')
+        blooketFlashcard: null, // 0..100 from a BL-…-DESK_DONE flashcard pass (make-up)
       });
     }
     return byTopic.get(topicKey);
@@ -273,6 +284,21 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     for (const topicKey of topicKeys) {
       const acc = ensure(topicKey);
 
+      // Blooket flashcard MAKE-UP (BL-…-DESK_DONE): a passed flashcard quiz that
+      // stands in for the Blooket score when there's no game score. Its score is
+      // 0..100 (the pass %, pinned at 80 by the 8/10 early-stop). Detected by
+      // itemId so it works regardless of source; it never feeds Cws (fails
+      // BLANK_ITEM_PATTERN) or the quiz track. (BLOOKET_MAKEUP_BUILD.md)
+      if (/^BL-U\d+-L[\d-]+-DESK_DONE/.test(row.item_id)) {
+        // Reject null/blank/non-numeric BEFORE coercion: Number(null)===0 and
+        // Number('')===0 are finite, so a score-less row would otherwise write a
+        // spurious 0 instead of leaving the make-up absent. Mirrors frqScoreToPct.
+        const raw = row.score;
+        if (raw !== null && raw !== undefined && raw !== '' && Number.isFinite(Number(raw))) {
+          acc.blooketFlashcard = Math.min(100, Math.max(0, Number(raw)));
+        }
+      }
+
       if (src === 'frq') {
         const pct = frqScoreToPct(row.score, frqBand);
         acc.frqItems.push({ itemId: row.item_id, score: pct, rawScore: row.score, ts });
@@ -304,12 +330,15 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
           }
         }
       } else if (src === 'blooket') {
-        // Stored score is the authoritative 0..1 blooketScore (no re-scoring;
-        // there is no answer key). Latest row wins (rows arrive pre-deduped via
-        // latestPerItem). Keep on 0..100 to match the lessonMap convention
-        // (lessonGrade/Cws/W/Q are all 0..100).
-        const s = Number(row.score);
-        if (Number.isFinite(s)) acc.blooket = Math.min(1, Math.max(0, s)) * 100;
+        // Real Blooket GAME score (teacher CSV import), stored 0..1 (no answer
+        // key). Latest row wins (pre-deduped via latestPerItem). Kept on 0..100.
+        // The GAME score is preferred over the flashcard make-up at finalize.
+        // Reject null/blank/non-numeric before coercion (Number(null)===0 would
+        // write a spurious 0 = "played and bombed" for a score-less row).
+        const raw = row.score;
+        if (raw !== null && raw !== undefined && raw !== '' && Number.isFinite(Number(raw))) {
+          acc.blooketGame = Math.min(1, Math.max(0, Number(raw))) * 100;
+        }
       }
     }
   }
@@ -374,8 +403,12 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     acc.W = W != null ? Math.round(W * 10) / 10 : null;
     acc.Q = Q != null ? Math.round(Q * 10) / 10 : null;
     acc.lessonGrade = B != null ? Math.round(B * 10) / 10 : null;
-    // Blooket track (0..100, latest recorded row) carried through verbatim;
-    // null when no blooket row attached. Rounded for the response surface.
+    // Blooket (0..100): resolve the real GAME score first, else the flashcard
+    // MAKE-UP, else null. Game wins so a flashcard pass never overrides a played
+    // game (BLOOKET_MAKEUP_BUILD.md). The quarter track turns a missing-but-due
+    // Blooket into 0; null here just means "no evidence yet for this topic."
+    acc.blooket = acc.blooketGame != null ? acc.blooketGame
+                : (acc.blooketFlashcard != null ? acc.blooketFlashcard : null);
     acc.blooket = acc.blooket != null ? Math.round(acc.blooket * 10) / 10 : null;
   }
 
@@ -704,6 +737,7 @@ export function computeQuarterV3({
   unitPcData,
   gradingWindowStart = null,
   workTracks = null,
+  blooketLessons = null,   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
 }) {
   const period = sectionToPeriod(section);
   const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -777,19 +811,35 @@ export function computeQuarterV3({
   const lessonsAvg = lessonsDue > 0 ? (lessonSum / lessonsDue) / 100 : null;
   const quizzesAvg = lessonsDue > 0 ? (quizSum / lessonsDue) / 100 : null;
 
-  // -- Blooket track (MEAN OF RECORDED blooket scores over due lessons) --
-  // NOT divided by lessonsDue: a missing blooket is EXCLUDED, never counted as
-  // 0. blooketAvg is null when nothing is recorded -> workAvgV3 renormalizes it
-  // away, so a quarter with zero blooket rows is byte-identical to today (no
-  // tanking the instant this deploys, before any blooket exists). A skip is
-  // penalized only when the teacher imports a 0 row (correct=0, attempted=0).
-  let blooketSum = 0, blooketRecorded = 0;
+  // -- Blooket track (BLOOKET_MAKEUP_BUILD.md) -- now a real per-lesson grade:
+  // denominator = due lessons that HAVE a Blooket (blooketLessons), and a
+  // missing-but-due Blooket counts as 0 (mirrors the lessons/quizzes tracks).
+  // r.blooket is the real game score, else the flashcard make-up (80%), else
+  // null→0. A lesson with NO Blooket is excluded from the denominator, so it is
+  // never an unfair 0. If blooketLessons isn't supplied (older caller), the set
+  // is empty → blooketAvg null → renormalized away (back-compat, no tank).
+  const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
+  const seenBlooketGroups = new Set();
+  let blooketSum = 0, blooketDue = 0;
   for (const topicKey of dueLessons) {
+    if (!blooketSet.has(topicKey)) continue;
+    // Collapse combined-worksheet constituents into ONE slot. A single combined
+    // Blooket (e.g. BLOOKET-U4L1-2) attaches the SAME score to every constituent
+    // topic (4.1 AND 4.2), so counting each separately would over-weight it vs a
+    // solo Blooket. Group by unit|worksheetKey; fall back to the topicKey for
+    // solo lessons (and test schedules with no worksheetKey) so solos are never
+    // collapsed. No-op for today's all-solo Blooket set — guards a future rebake.
+    const entry = schedule[topicKey];
+    const groupKey = (entry && entry.worksheetKey != null)
+      ? `${entry.unit}|${entry.worksheetKey}`
+      : topicKey;
+    if (seenBlooketGroups.has(groupKey)) continue;
+    seenBlooketGroups.add(groupKey);
+    blooketDue += 1;
     const r = lessonMap.get(topicKey);
-    const bl = r && r.blooket != null ? r.blooket : null;
-    if (bl != null) { blooketSum += bl; blooketRecorded += 1; }
+    blooketSum += (r && r.blooket != null) ? r.blooket : 0;   // missing-but-due → 0
   }
-  const blooketAvg = blooketRecorded > 0 ? (blooketSum / blooketRecorded) / 100 : null;
+  const blooketAvg = blooketDue > 0 ? (blooketSum / blooketDue) / 100 : null;
 
   // ── PC track (raw PC % per unit, bucketed by unit→quarter band) ──
   // Per the spec, pcAvg is the mean of PCs DUE-BY-TODAY. A unit's PC is "due"

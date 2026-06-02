@@ -288,3 +288,73 @@ describe('computeQuarterV3 — aggregation', () => {
     expect(r.ceiling).toBeLessThanOrEqual(100);
   });
 });
+
+// ── computeQuarterV3 — Blooket make-up track (BLOOKET_MAKEUP_BUILD.md) ─────────
+//
+// The Blooket is now a real per-lesson grade an absent student can make up via
+// the Desk flashcards. The track's denominator = due lessons that HAVE a Blooket
+// (`blooketLessons`); a missing-but-due Blooket counts as 0 (mirrors lessons/
+// quizzes). r.blooket carries the resolved score (game, else flashcard make-up,
+// else null→0). The blooketAvg folds into workAvg — it is NOT returned directly,
+// so these assert via r.workAvg.
+//
+// Blooket weight is 10% (V3_WORK_WEIGHTS.blooket), lessons + quizzes 30% each.
+// With lessons=100, quizzes=100 the arithmetic is:
+//   no Blooket in denominator → workAvg = (.30+.30)/.60          = 100.0
+//   Blooket due, 0 evidence   → workAvg = (.30+.30+.10·0)/.70    =  85.7
+//   Blooket made up (80%)     → workAvg = (.30+.30+.10·0.8)/.70  =  97.1
+describe('computeQuarterV3 — Blooket make-up track', () => {
+  // 1.1 is due; 1.2 is future-dated so the unit's PC is NOT due → pcAvg stays
+  // null → quarterGrade == workAvg (keeps the Blooket effect easy to read).
+  const SCHEDULE = {
+    '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } }, // due
+    '1.2': { unit: 1, periods: { B: '2026-11-20', E: '2026-11-20' } }, // future
+  };
+  // Perfect lessons + quizzes on the one due lesson (Cws/W → noQuiz 100; Q 100).
+  function mapWith(blooket) {
+    const lesson = { Cws: 100, W: 100, Q: 100, lessonGrade: 100 };
+    if (blooket != null) lesson.blooket = blooket;
+    return lessonMapOf({ '1.1': lesson });
+  }
+  function run(blooketLessons, blooket) {
+    return computeQuarterV3({
+      quarterKey: 'Q1', config: CFG, lessonMap: mapWith(blooket), schedule: SCHEDULE,
+      todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
+      blooketLessons,
+    });
+  }
+
+  it('a due lesson NOT in blooketLessons is excluded from the Blooket denominator', () => {
+    const r = run([], null); // no Blooket-bearing lessons
+    expect(r.pcAvg).toBe(null);             // PC not due (1.2 future)
+    expect(r.workAvg).toBeCloseTo(100.0, 1); // mean(lessons 100, quizzes 100) only
+    expect(r.quarterGrade).toBeCloseTo(100.0, 1);
+  });
+
+  it('a due Blooket-bearing lesson with NO evidence counts as 0 (drops workAvg)', () => {
+    const r = run(['1.1'], null); // 1.1 has a Blooket, student has no game/flashcard
+    // blooketAvg = 0 → workAvg = (.30·1 + .30·1 + .10·0)/.70 = 85.7
+    expect(r.workAvg).toBeCloseTo(85.7, 1);
+    expect(r.workAvg).toBeLessThan(100); // strictly below the no-Blooket case
+  });
+
+  it('the flashcard make-up (r.blooket=80) lifts workAvg above the 0 case', () => {
+    const zero = run(['1.1'], null);
+    const made = run(['1.1'], 80); // flashcard pass pinned at 80%
+    // blooketAvg = 0.8 → workAvg = (.30·1 + .30·1 + .10·0.8)/.70 = 97.1
+    expect(made.workAvg).toBeCloseTo(97.1, 1);
+    expect(made.workAvg).toBeGreaterThan(zero.workAvg); // make-up helps
+    expect(made.workAvg).toBeLessThan(100);             // but never a full 100 (no game)
+  });
+
+  it('back-compat: omitting blooketLessons leaves the Blooket track null (no tank)', () => {
+    // Older callers that never pass blooketLessons → empty set → blooketAvg null
+    // → renormalized away. Even a lesson with a recorded r.blooket is ignored.
+    const r = computeQuarterV3({
+      quarterKey: 'Q1', config: CFG, lessonMap: mapWith(80), schedule: SCHEDULE,
+      todayDateStr: '2026-09-15', section: 'PeriodB', unitPcData: {},
+      // blooketLessons omitted entirely
+    });
+    expect(r.workAvg).toBeCloseTo(100.0, 1); // Blooket excluded → lessons+quizzes only
+  });
+});
