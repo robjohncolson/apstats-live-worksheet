@@ -1,6 +1,7 @@
 // desk-completion-gate.test.js — the Desk worksheet "Done" button is gated
-// on real completion (>=80% of blanks+reflections attempted, OR every
-// reflection rated E), NOT a 5-minute visit timer. The gate applies only to
+// on real completion (>= DESK_WORKSHEET_DONE_THRESHOLD% of blanks+reflections
+// filled, OR every reflection rated E), NOT a 5-minute visit timer. (The
+// threshold lives on the Desk now — 60% — not the worksheet's own 80% flag.) The gate applies only to
 // the instrumented u*_lesson*_live.html worksheets; off-pattern worksheets
 // (e.g. the U6 conceptual driller) keep the legacy timer. The completion
 // store is student-scoped so a shared browser never leaks one student's
@@ -64,8 +65,10 @@ describe('Desk: worksheet completion gate', () => {
     const body = fnBody(DESK, '_doneBtn');
     expect(body).toMatch(/artifact\s*===\s*['"]worksheet['"]/);
     expect(body).toMatch(/_wsCompletionFor\s*\(\s*worksheetUrl\s*\)/);
-    // Gate keys on the .eligible flag.
-    expect(body).toMatch(/\.eligible\s*!==\s*true/);
+    // Gate keys on the DESK threshold (comp.pct vs DESK_WORKSHEET_DONE_THRESHOLD),
+    // not the worksheet's own 80% `eligible` flag (moved to the Desk so it's tunable).
+    expect(body).toMatch(/_wsPct \* 100 >= DESK_WORKSHEET_DONE_THRESHOLD/);
+    expect(body).toMatch(/reflectionsAllE === true/);
   });
 
   it('05: the completion gate only applies to instrumented u*_lesson*_live.html worksheets', () => {

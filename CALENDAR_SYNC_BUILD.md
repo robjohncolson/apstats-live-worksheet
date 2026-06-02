@@ -53,6 +53,23 @@ device, and fixes the next-up highlight too (both read local marks).
   no-op when signed out / no lessons; `renderDoNow` re-renders only when marks changed.
 - Full suites green (only the 3 known pre-existing fails).
 
+## Follow-up: per-resource sync + worksheet Done gate (2026-06-02)
+Teacher: the 1.1 worksheet Done button was disabled at >40% filled, and Done state didn't carry
+across devices. Extended the sync to the per-resource Done button:
+- **Server**: `computeDonow` now returns `selfDoneArtifacts: []` per lesson (which resources were
+  self-done — artifact from the DESK_DONE itemId prefix, `CR-`=quiz / `WS-`=worksheet), alongside
+  the lesson-level `selfDone`.
+- **Client**: `_hydrateMarksFromDonow` seeds the real `<topic>|<artifact>` marks (e.g. `1.1|worksheet`)
+  from `selfDoneArtifacts`, so a resource marked Done on any device shows **"Completed"** on every
+  device (`_doneBtn`'s first `if (entry.ts)` check) — not just greyed. Falls back to `<topic>|server`
+  for an older payload.
+- **Worksheet Done gate** (`_doneBtn`): threshold moved off the worksheet's own 80% `eligible` flag
+  to a tunable Desk const `DESK_WORKSHEET_DONE_THRESHOLD = 60` (gate = `reflectionsAllE || pct ≥ 60%`).
+  Instrumented `u*_lesson*_live.html` worksheets are **exempt from the per-device "open the link
+  first" visit gate** (the completion signal now syncs cross-device, so a fresh computer shouldn't
+  demand a local link-open). Off-pattern worksheets keep the visit timer. Focused adversarial review:
+  no bugs (precedence, null-comp, off-pattern fallback, per-artifact precision all confirmed).
+
 ## Known limitation (accepted)
 Like the pre-existing per-device grey-out, the synced grey-out has **no un-do**: DESK_DONE rows are
 append-only (no DELETE/tombstone), and `_hydrateMarksFromDonow` only seeds (never removes), so a

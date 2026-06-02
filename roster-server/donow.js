@@ -71,13 +71,15 @@ function rollupLessonState(activities) {
 export function computeDonow(ledgerRows, manifest) {
   const doneSet = buildDoneSet(ledgerRows || []);
 
-  // Topics the student self-attested "Done" on (a DESK_DONE row written by the
-  // Desk's Done button). These drive the CROSS-DEVICE calendar grey-out: a
-  // lesson is "self-done" if ANY of its resources was marked Done — the same
-  // lenient signal as the per-device localStorage marks, now surfaced from the
-  // per-identity ledger so it follows the student's login. (DESK_DONE rows live
-  // in doneSet but never match a manifest activity, so they're otherwise unused.)
-  const selfDoneTopics = new Set();
+  // Which RESOURCES the student self-attested "Done" on, per topic (a DESK_DONE
+  // row written by the Desk's Done button). Drives the CROSS-DEVICE calendar
+  // grey-out AND the per-resource Done button: the client hydrates a local
+  // '<topic>|<artifact>' mark from this, so a worksheet/quiz marked Done on ANY
+  // device shows greyed + "Completed" on every device (per-identity, follows the
+  // login). Artifact comes from the itemId prefix (CR- = quiz, WS- = worksheet);
+  // topic from row.topic, fallback to parsing the itemId. (DESK_DONE rows live in
+  // doneSet but never match a manifest activity, so they're otherwise unused.)
+  const selfDoneByTopic = new Map();
   for (const row of (Array.isArray(ledgerRows) ? ledgerRows : [])) {
     if (typeof row?.item_id !== 'string' || !/-DESK_DONE$/.test(row.item_id)) continue;
     let topic = (typeof row.topic === 'string' && row.topic) ? row.topic : null;
@@ -85,7 +87,10 @@ export function computeDonow(ledgerRows, manifest) {
       const m = /^(?:WS|CR)-U(\d+)-L([\d-]+)-DESK_DONE$/.exec(row.item_id);
       if (m) topic = m[1] + '.' + m[2];
     }
-    if (topic) selfDoneTopics.add(topic);
+    if (!topic) continue;
+    const artifact = /^CR-/.test(row.item_id) ? 'quiz' : 'worksheet';
+    if (!selfDoneByTopic.has(topic)) selfDoneByTopic.set(topic, new Set());
+    selfDoneByTopic.get(topic).add(artifact);
   }
 
   const lessonsOut = [];
@@ -124,13 +129,16 @@ export function computeDonow(ledgerRows, manifest) {
       }
 
       const lessonState = rollupLessonState(activitiesOut);
+      const _sdSet = selfDoneByTopic.get(lesson.lesson);
       lessonsOut.push({
         unit:         unit.unit,
         lesson:       lesson.lesson,
         activities:   activitiesOut,
         lessonState,
-        // Per-resource "marked Done" (lenient) — drives the cross-device grey-out.
-        selfDone:     selfDoneTopics.has(lesson.lesson)
+        // Cross-device self-attest: which resources were marked Done (any device)
+        // + the lenient lesson-level flag. The client hydrates local marks from these.
+        selfDone:           !!(_sdSet && _sdSet.size),
+        selfDoneArtifacts:  _sdSet ? Array.from(_sdSet) : []
       });
     }
 

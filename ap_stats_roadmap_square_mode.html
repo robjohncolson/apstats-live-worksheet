@@ -4238,13 +4238,21 @@ function _hydrateMarksFromDonow(data) {
     if (!marks || typeof marks !== 'object') marks = {};
     let changed = false;
     const stamp = new Date().toISOString();
+    const _seed = function (mk) {
+      if (!marks[mk] || !marks[mk].ts) { marks[mk] = { ts: stamp, src: 'donow-sync' }; changed = true; }
+    };
     for (let i = 0; i < data.lessons.length; i++) {
       const L = data.lessons[i];
-      if (!L || L.selfDone !== true || !L.lesson) continue;
-      const mk = L.lesson + '|server';
-      if (!marks[mk] || !marks[mk].ts) {
-        marks[mk] = { ts: stamp, src: 'donow-sync' };
-        changed = true;
+      if (!L || !L.lesson) continue;
+      // Per-RESOURCE marks ("1.1|worksheet") so BOTH the calendar grey-out AND
+      // the per-resource Done button ("Completed") follow the login across
+      // devices. Fall back to a generic "<topic>|server" mark (greys the lesson
+      // only) for an older server payload that lacks selfDoneArtifacts.
+      const arts = Array.isArray(L.selfDoneArtifacts) ? L.selfDoneArtifacts : [];
+      if (arts.length) {
+        for (let a = 0; a < arts.length; a++) if (arts[a]) _seed(L.lesson + '|' + arts[a]);
+      } else if (L.selfDone === true) {
+        _seed(L.lesson + '|server');
       }
     }
     if (changed) {
@@ -5192,6 +5200,12 @@ function _getCwsForTopic(topicId) {
 // student has answered >=40% of its questions AND scored >=40% correct. 40
 // mirrors the v3 grading "floor" used elsewhere in the grade model.
 var DESK_QUIZ_DONE_THRESHOLD = 40;
+
+// Worksheet-Done gate threshold (percent filled). A follow-along worksheet can
+// be marked Done once >= this fraction of its blanks+reflections are filled (or
+// every reflection is AI-rated E). Lives on the Desk (not the worksheet's own
+// 80% `eligible` flag) so it's tunable in one place + matches the quiz pattern.
+var DESK_WORKSHEET_DONE_THRESHOLD = 60;
 
 // Quiz performance for a topic, read from the /grade lessons[] cache
 // (_gradeLessonsCache, populated by renderDoNowGrades). The recorded quiz
@@ -8026,7 +8040,13 @@ function showResourcePanel(inf, dateStr) {
                 }
                 return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="' + _qtip + '" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (' + _qnn + '%)</button>';
             }
-            if (!entry.visitedAt) {
+            // Instrumented worksheets gate on completion below (which now syncs
+            // across devices), so they DON'T also require a per-device link open —
+            // otherwise a fresh computer would say "Open the link first" even
+            // though the work is synced. Off-pattern resources keep the gate.
+            var _isInstrumentedWs = (artifact === 'worksheet' && worksheetUrl
+                && /^u\d+_lesson.+_live\.html$/.test(String(worksheetUrl).split('?')[0].split('#')[0].split('/').pop()));
+            if (!entry.visitedAt && !_isInstrumentedWs) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Open the link first">Done</button>';
             }
             // Worksheet: completion gate REPLACES the visit timer — but ONLY
@@ -8044,10 +8064,15 @@ function showResourcePanel(inf, dateStr) {
                     : '';
                 if (/^u\d+_lesson.+_live\.html$/.test(_wsFile)) {
                     var comp = _wsCompletionFor(worksheetUrl);
-                    if (!comp || comp.eligible !== true) {
-                        var pctN = (comp && typeof comp.pct === 'number')
-                            ? Math.round(comp.pct * 100) : 0;
-                        return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Complete at least 80% of the worksheet (or get every reflection rated E). Currently ' + pctN + '% done.">Done (' + pctN + '%)</button>';
+                    // Gate on the DESK threshold (not the worksheet's own 80%
+                    // `eligible` flag), so it's tunable here. >= threshold filled,
+                    // OR every reflection rated E.
+                    var _wsPct = (comp && typeof comp.pct === 'number') ? comp.pct : 0;
+                    var _wsOk = comp && (comp.reflectionsAllE === true
+                        || _wsPct * 100 >= DESK_WORKSHEET_DONE_THRESHOLD);
+                    if (!_wsOk) {
+                        var pctN = Math.round(_wsPct * 100);
+                        return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Fill in at least ' + DESK_WORKSHEET_DONE_THRESHOLD + '% of the worksheet (or get every reflection rated E). Currently ' + pctN + '% done.">Done (' + pctN + '%)</button>';
                     }
                     return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done</button>';
                 }

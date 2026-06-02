@@ -41,13 +41,27 @@ function makeCtx(email) {
 }
 
 describe('_hydrateMarksFromDonow — cross-device grey-out sync', () => {
-  it('seeds a <topic>|server mark for a selfDone lesson + returns true', () => {
+  it('seeds per-resource <topic>|<artifact> marks from selfDoneArtifacts', () => {
     const { win, hydrate } = makeCtx('s@roster.local');
-    const changed = hydrate({ lessons: [{ lesson: '1.1', selfDone: true }, { lesson: '1.2', selfDone: false }] });
+    const changed = hydrate({ lessons: [
+      { lesson: '1.1', selfDone: true, selfDoneArtifacts: ['worksheet'] },
+      { lesson: '1.2', selfDone: true, selfDoneArtifacts: ['quiz'] },
+      { lesson: '1.3', selfDone: false, selfDoneArtifacts: [] },
+    ] });
     expect(changed).toBe(true);
     const marks = JSON.parse(win.localStorage.getItem(KEY('s@roster.local')));
-    expect(marks['1.1|server'] && marks['1.1|server'].ts).toBeTruthy();
-    expect(marks['1.2|server']).toBeUndefined(); // not selfDone → not seeded
+    expect(marks['1.1|worksheet'] && marks['1.1|worksheet'].ts).toBeTruthy(); // greys + worksheet Done "Completed"
+    expect(marks['1.2|quiz'] && marks['1.2|quiz'].ts).toBeTruthy();
+    expect(marks['1.1|server']).toBeUndefined(); // per-artifact, not the generic fallback
+    expect(marks['1.3|worksheet']).toBeUndefined(); // not self-done → not seeded
+  });
+
+  it('falls back to <topic>|server when selfDoneArtifacts is absent (older payload)', () => {
+    const { win, hydrate } = makeCtx('s@roster.local');
+    const changed = hydrate({ lessons: [{ lesson: '1.1', selfDone: true }] }); // no selfDoneArtifacts
+    expect(changed).toBe(true);
+    const marks = JSON.parse(win.localStorage.getItem(KEY('s@roster.local')));
+    expect(marks['1.1|server'].ts).toBeTruthy();
   });
 
   it('is idempotent — a 2nd pass adds nothing + returns false', () => {
@@ -85,12 +99,12 @@ describe('_hydrateMarksFromDonow — wiring + key format', () => {
     expect(DESK).toMatch(/_syncedMarks && typeof rCal === 'function'/);
   });
 
-  it('seeds a synthetic <topic>|server mark, gated on selfDone === true', () => {
+  it('seeds per-artifact marks (+ <topic>|server fallback), additive only', () => {
     const body = extractFn(DESK, '_hydrateMarksFromDonow');
-    expect(body).toMatch(/\|server/);
-    expect(body).toMatch(/selfDone !== true/);
-    // never removes a mark (additive only)
-    expect(body).not.toMatch(/delete\s+marks/);
+    expect(body).toMatch(/selfDoneArtifacts/);   // per-resource path (e.g. "1.1|worksheet")
+    expect(body).toMatch(/\|server/);            // fallback for an older payload
+    expect(body).toMatch(/selfDone === true/);   // fallback gate
+    expect(body).not.toMatch(/delete\s+marks/);  // never removes a mark
   });
 
   it('short-circuits in view-as (never seeds the teacher\'s marks from a viewed student)', () => {
@@ -102,5 +116,25 @@ describe('_hydrateMarksFromDonow — wiring + key format', () => {
     // The unit/lesson parse must accept combined topics like "4.1-2" ([\d-], not \d)
     // so each combined lesson gets its own DESK_DONE itemId.
     expect(DESK).toContain('var um = /^(\\d+)\\.([\\d-]+)$/.exec(topicId');
+  });
+});
+
+describe('worksheet Done gate — 60% threshold + cross-device', () => {
+  it('DESK_WORKSHEET_DONE_THRESHOLD is 60 (was an 80% gate)', () => {
+    expect(DESK).toMatch(/var DESK_WORKSHEET_DONE_THRESHOLD = 60;/);
+  });
+
+  it('_doneBtn gates the worksheet on the Desk threshold, not the worksheet 80% eligible flag', () => {
+    const body = extractFn(DESK, '_doneBtn');
+    expect(body).toMatch(/_wsPct \* 100 >= DESK_WORKSHEET_DONE_THRESHOLD/);
+    expect(body).toMatch(/reflectionsAllE === true/);
+    // the old 80% `comp.eligible` gate must be gone from the worksheet branch
+    expect(body).not.toMatch(/comp\.eligible !== true/);
+  });
+
+  it('instrumented worksheets are exempt from the per-device "open the link first" gate', () => {
+    const body = extractFn(DESK, '_doneBtn');
+    expect(body).toMatch(/_isInstrumentedWs/);
+    expect(body).toMatch(/!entry\.visitedAt && !_isInstrumentedWs/);
   });
 });

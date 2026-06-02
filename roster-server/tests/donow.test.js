@@ -733,6 +733,22 @@ describe('computeDonow — selfDone (per-resource DESK_DONE → cross-device gre
     expect(out.lessons.every(l => l.selfDone === false)).toBe(true);
   });
 
+  it('records WHICH artifacts were self-done (WS-→worksheet, CR-→quiz)', () => {
+    const rows = [
+      { item_id: 'WS-U1-L1-DESK_DONE', topic: '1.1', source: 'worksheet' },
+      { item_id: 'CR-U1-L1-DESK_DONE', topic: '1.1', source: 'curriculum_quiz' },
+    ];
+    const out = computeDonow(rows, FIXTURE_MANIFEST);
+    const l11 = out.lessons.find(l => l.lesson === '1.1');
+    expect(l11.selfDone).toBe(true);
+    expect([...l11.selfDoneArtifacts].sort()).toEqual(['quiz', 'worksheet']);
+  });
+
+  it('selfDoneArtifacts is an empty array when nothing is self-done', () => {
+    const out = computeDonow([], FIXTURE_MANIFEST);
+    expect(out.lessons.every(l => Array.isArray(l.selfDoneArtifacts) && l.selfDoneArtifacts.length === 0)).toBe(true);
+  });
+
   it('combined-topic lessons each get their own selfDone (no upsert collision)', () => {
     // Guards the client fix: combined topics ("4.1-2") must write UNIQUE
     // DESK_DONE itemIds so two of them don't collide on upsert and overwrite
