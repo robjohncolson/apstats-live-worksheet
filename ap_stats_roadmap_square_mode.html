@@ -6105,7 +6105,7 @@ function _buildCoachContext(curQ, q) {
         return l && typeof l.lessonGrade === 'number' && l.lessonGrade < 75;
       }).sort(function (a, b) { return a.lessonGrade - b.lessonGrade; }).slice(0, 6);
       ctx.weakLessons = weak.map(function (l) {
-        return {
+        var w = {
           lesson: l.lessonKey,
           // quizTotal distinguishes "no quiz exists" (0 — e.g. X.1 openers) from
           // "quiz exists but not attempted" (>0, Q null). Without it the coach
@@ -6116,7 +6116,26 @@ function _buildCoachContext(curQ, q) {
           work: (typeof l.W === 'number') ? l.W : null,
           grade: l.lessonGrade
         };
+        // The lesson's LOWEST graded component = its biggest fixable deficit.
+        // (Count a quiz only when one exists.) Used to rank by IMPACT, so the
+        // coach points at the worst component (e.g. a 1% worksheet) rather than
+        // the earliest-incomplete lesson or the overall lesson grade.
+        var comps = [];
+        if (w.quizTotal > 0 && w.quiz != null) comps.push({ label: 'quiz', score: w.quiz });
+        if (w.worksheet != null) comps.push({ label: 'worksheet', score: w.worksheet });
+        if (w.work != null) comps.push({ label: 'FRQ', score: w.work });
+        w.low = comps.length ? comps.reduce(function (a, b) { return b.score < a.score ? b : a; }) : null;
+        return w;
       });
+      // Rank worst-component-first (biggest grade opportunity), not by overall
+      // grade — that's what the student should fix FIRST.
+      ctx.weakLessons.sort(function (a, b) {
+        var as = a.low ? a.low.score : a.grade;
+        var bs = b.low ? b.low.score : b.grade;
+        return as - bs;
+      });
+      var _bw = ctx.weakLessons.filter(function (w) { return w.low; })[0];
+      if (_bw) ctx.biggestWin = { lesson: _bw.lesson, label: _bw.low.label, score: _bw.low.score };
     }
   } catch (_) { /* weakLessons is optional */ }
   return ctx;
@@ -6167,6 +6186,17 @@ function _renderCoachPanel(panel, ctx) {
   diag.textContent = _coachBottleneckText(ctx);
   facts.appendChild(diag);
 
+  // The single biggest grade opportunity — the lowest-scoring component. Leads
+  // the "what to fix" so the coach points at the real bottleneck (e.g. a 1%
+  // worksheet) instead of the earliest-incomplete lesson.
+  if (ctx.biggestWin) {
+    var bw = document.createElement('div');
+    bw.style.cssText = 'font-weight:bold;margin-top:3px';
+    bw.textContent = '🎯 Biggest win: your Topic ' + ctx.biggestWin.lesson + ' ' + ctx.biggestWin.label +
+      ' is at ' + Math.round(ctx.biggestWin.score) + '% — fixing that lifts your grade the most.';
+    facts.appendChild(bw);
+  }
+
   if (typeof ctx.lessonsGraded === 'number' && typeof ctx.lessonsTotal === 'number') {
     var prog = document.createElement('div');
     var dueTxt = (typeof ctx.lessonsDue === 'number') ? ctx.lessonsDue : ctx.lessonsTotal;
@@ -6174,7 +6204,9 @@ function _renderCoachPanel(panel, ctx) {
     facts.appendChild(prog);
   }
 
-  if (ctx.nextTask && ctx.nextTask.unit) {
+  // Only show the earliest-incomplete "start here" when there's no low-scoring
+  // component to fix first (otherwise it competes with the biggest win above).
+  if (!ctx.biggestWin && ctx.nextTask && ctx.nextTask.unit) {
     var nt = document.createElement('div');
     nt.textContent = 'Start here: Unit ' + ctx.nextTask.unit +
       (ctx.nextTask.lesson ? ', Topic ' + ctx.nextTask.lesson : '') +

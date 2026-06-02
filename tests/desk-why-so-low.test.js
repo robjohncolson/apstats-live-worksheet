@@ -218,3 +218,25 @@ describe('Why-so-low coach: review folds (open-panel preservation, races, a11y)'
     expect(body).toMatch(/w\.quizTotal\s*>\s*0/);
   });
 });
+
+describe('Why-so-low coach: prioritize by biggest deficit (worst component)', () => {
+  it('80: _buildCoachContext computes each lesson lowest component + a biggestWin', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    expect(body).toMatch(/w\.low/);
+    expect(body).toMatch(/comps\.reduce/);
+    expect(body).toMatch(/ctx\.biggestWin\s*=/);
+  });
+
+  it('81: weakLessons are ranked worst-component-first, not by overall grade', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    // sort key falls back to grade only when a lesson has no graded component
+    expect(body).toMatch(/a\.low \? a\.low\.score : a\.grade/);
+  });
+
+  it('82: _renderCoachPanel leads with the biggest win + suppresses nextTask when present', () => {
+    const body = fnBody(DESK, '_renderCoachPanel');
+    expect(body).toMatch(/ctx\.biggestWin/);
+    expect(body).toMatch(/Biggest win/);
+    expect(body).toMatch(/if \(!ctx\.biggestWin && ctx\.nextTask/);
+  });
+});
