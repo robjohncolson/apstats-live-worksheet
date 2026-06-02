@@ -6078,7 +6078,8 @@ function _buildCoachContext(curQ, q) {
   try {
     if (_donowData && _donowData.nextTask && _donowData.nextTask.unit) {
       var n = _donowData.nextTask;
-      ctx.nextTask = { unit: n.unit, lesson: n.lesson || null, activity: n.activity || null };
+      // unit arrives as "U1"; strip the leading U so renders read "Unit 1", not "Unit U1".
+      ctx.nextTask = { unit: String(n.unit).replace(/^[Uu]/, ''), lesson: n.lesson || null, activity: n.activity || null };
     }
   } catch (_) { /* nextTask is optional */ }
   try {
@@ -6089,6 +6090,10 @@ function _buildCoachContext(curQ, q) {
       ctx.weakLessons = weak.map(function (l) {
         return {
           lesson: l.lessonKey,
+          // quizTotal distinguishes "no quiz exists" (0 — e.g. X.1 openers) from
+          // "quiz exists but not attempted" (>0, Q null). Without it the coach
+          // wrongly says "quiz not done" for a topic that has no quiz.
+          quizTotal: (typeof l.quizTotal === 'number') ? l.quizTotal : 0,
           quiz: (typeof l.Q === 'number') ? l.Q : null,
           worksheet: (typeof l.Cws === 'number') ? l.Cws : null,
           work: (typeof l.W === 'number') ? l.W : null,
@@ -6168,9 +6173,11 @@ function _renderCoachPanel(panel, ctx) {
     ctx.weakLessons.slice(0, 4).forEach(function (w) {
       var li = document.createElement('li');
       var bits = [];
-      bits.push((w.quiz != null) ? 'quiz ' + Math.round(w.quiz) + '%' : 'quiz not done');
+      // Only mention the quiz when one actually exists (quizTotal > 0).
+      if (w.quizTotal > 0) bits.push((w.quiz != null) ? 'quiz ' + Math.round(w.quiz) + '%' : 'quiz not done');
       if (w.worksheet != null) bits.push('worksheet ' + Math.round(w.worksheet) + '%');
-      li.textContent = 'Topic ' + w.lesson + ' (' + bits.join(', ') + ')';
+      if (!bits.length && typeof w.grade === 'number') bits.push('grade ' + Math.round(w.grade) + '%');
+      li.textContent = 'Topic ' + w.lesson + (bits.length ? ' (' + bits.join(', ') + ')' : '');
       ul.appendChild(li);
     });
     facts.appendChild(ul);

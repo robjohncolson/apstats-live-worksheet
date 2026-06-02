@@ -206,4 +206,15 @@ describe('Why-so-low coach: review folds (open-panel preservation, races, a11y)'
     const body = fnBody(DESK, '_renderCoachPanel');
     expect(body).toMatch(/never your name/);
   });
+
+  it('70: _buildCoachContext carries quizTotal + strips the unit U-prefix', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    expect(body).toMatch(/quizTotal/);
+    expect(body).toMatch(/replace\(\/\^\[Uu\]\//);
+  });
+
+  it('71: _renderCoachPanel only shows a quiz line when quizTotal > 0 (no "quiz not done" for no-quiz topics)', () => {
+    const body = fnBody(DESK, '_renderCoachPanel');
+    expect(body).toMatch(/w\.quizTotal\s*>\s*0/);
+  });
 });
