@@ -5131,6 +5131,23 @@ function _wsCompletionFor(worksheetUrl) {
   } catch (_) { return null; }
 }
 
+// Official worksheet CORRECTNESS (Cws, 0-100) for a topic, read from the /grade
+// lessons cache — the same ledger-backed number the day modal + coach show.
+// Distinct from _wsCompletionFor (LOCAL completion %, which drives the Done
+// gate). Returns the number, or null when there's no recorded score yet.
+function _getCwsForTopic(topicId) {
+  try {
+    if (!topicId || !Array.isArray(_gradeLessonsCache)) return null;
+    for (var i = 0; i < _gradeLessonsCache.length; i++) {
+      if (_gradeLessonsCache[i] && _gradeLessonsCache[i].lessonKey === topicId) {
+        var c = _gradeLessonsCache[i].Cws;
+        return (typeof c === 'number') ? c : null;
+      }
+    }
+    return null;
+  } catch (_) { return null; }
+}
+
 // Quiz-Done gate threshold (percent): a quiz can be marked Done only once the
 // student has answered >=40% of its questions AND scored >=40% correct. 40
 // mirrors the v3 grading "floor" used elsewhere in the grade model.
@@ -8039,7 +8056,7 @@ function showResourcePanel(inf, dateStr) {
         if (regEntry && regEntry.urls) {
             const u = regEntry.urls;
             if (u.worksheet) {
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + _doneBtn('worksheet', u.worksheet) + '</div>';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + '<span class="worksheet-done-slot" data-topic="' + _stuTopicId + '">' + _doneBtn('worksheet', u.worksheet) + '</span></div>';
             }
             // Drills deprecated — removed 2026-05
             if (u.quiz) {
@@ -8157,6 +8174,37 @@ function showResourcePanel(inf, dateStr) {
         if (_rpTok && _rpBase) renderDoNowGrades(_rpBase, _rpTok).catch(function () {});
       }
     } catch (_) { /* best-effort gate freshness */ }
+
+    // Persistent grade chip (LEDGER_HEAL_BUILD.md Part B): show the OFFICIAL
+    // ledger CORRECTNESS next to each resource, surviving the Done click. The
+    // Done button shows COMPLETION (the eligibility gate); this chip shows the
+    // recorded correctness (worksheet Cws / quiz score) — the same number the
+    // day modal + coach use. XSS-safe (createElement + textContent). null → "—"
+    // (signals "not recorded yet", which after the ledger heal fills in).
+    // Rebuilt on every panel render, so it survives the Done re-render.
+    try {
+      var _chipBody = document.getElementById('resource-body');
+      if (_chipBody) {
+        var _mkGradeChip = function (pct) {
+          var c = document.createElement('span');
+          c.className = 'ws-grade-chip';
+          c.style.cssText = 'display:inline-block;margin-left:8px;padding:1px 6px;font-size:10px;' +
+            'border:1px solid var(--black,#000);background:#eef7ee;font-family:Chicago,"Courier New",monospace;' +
+            'box-shadow:1px 1px 0 var(--black,#000)';
+          c.textContent = 'Grade: ' + (pct == null ? '—' : (Math.round(pct * 10) / 10) + '%');
+          c.title = 'Your recorded grade for this item (correctness — counts toward your class grade). "—" means nothing is recorded yet.';
+          return c;
+        };
+        _chipBody.querySelectorAll('.worksheet-done-slot[data-topic]').forEach(function (slot) {
+          slot.appendChild(_mkGradeChip(_getCwsForTopic(slot.getAttribute('data-topic'))));
+        });
+        // Quiz rows only (Blooket is excluded from the ledger per Phase 3).
+        _chipBody.querySelectorAll('.desk-quiz-done-slot[data-artifact="quiz"][data-topic]').forEach(function (slot) {
+          var perf = (typeof _quizPerfFor === 'function') ? _quizPerfFor(slot.getAttribute('data-topic')) : null;
+          slot.appendChild(_mkGradeChip(perf ? perf.scorePct : null));
+        });
+      }
+    } catch (_) { /* grade chip is best-effort */ }
 
     // 2026-05-20: removed the [a][b]/[1][2][3] letter+number badges and the
     // modal-scoped keyboard handler. The decoration was visually noisy and

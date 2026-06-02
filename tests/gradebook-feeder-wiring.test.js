@@ -63,11 +63,14 @@ describe('DN2b: all-69 structural wiring sweep', () => {
       expect(h).toContain('function recordReflectionToGradebook');
       expect(h, 'old DN2a helper must be gone').not.toContain('function unitFromItemId');
 
-      // all three hook call sites, each exactly once
+      // hook call sites. recordBlankToGradebook(blank) now has TWO call sites:
+      // the live blur/Enter feeder (handleLiveUpdate) AND the ledger heal
+      // (healLocalAnswersToLedger, LEDGER_HEAL_BUILD.md, wired by
+      // scripts/wire-ledger-heal.mjs). The reflection hooks remain single sites.
       const blankCalls = (h.match(/recordBlankToGradebook\(blank\);/g) || []).length;
       const enrCalls = (h.match(/recordReflectionToGradebook\(id, answer, 'E'\)/g) || []).length;
       const normCalls = (h.match(/recordReflectionToGradebook\(id, answer, result\.score\)/g) || []).length;
-      expect(blankCalls, 'recordBlankToGradebook(blank) call count').toBe(1);
+      expect(blankCalls, 'recordBlankToGradebook(blank) call sites (feeder + heal)').toBe(2);
       expect(enrCalls, "recordReflectionToGradebook 'E' call count").toBe(1);
       expect(normCalls, 'recordReflectionToGradebook result.score call count').toBe(1);
 
@@ -234,7 +237,11 @@ for (const cfg of FUNCTIONAL) {
       win.recordReflectionToGradebook(cfg.reflections[0], 'answer text here', 'X');
       await new Promise((r) => setTimeout(r, 0));
       win.console.error = origError;
-      const rec = calls.find((c) => c.url === `${ROSTER_URL}/ledger/record`);
+      // Scope to THIS reflection's itemId: a background ledger heal (the new
+      // healLocalAnswersToLedger) may re-record an UNRELATED blank, which must
+      // not be mistaken for "the bad verdict got recorded."
+      const badId = `${cfg.wsPrefix}-${cfg.reflections[0]}`;
+      const rec = calls.find((c) => c.url === `${ROSTER_URL}/ledger/record` && JSON.parse(c.options.body).itemId === badId);
       expect(rec, 'no record should be written for an uncoercible verdict').toBeUndefined();
       expect(errors.length, 'console.error should be called once').toBeGreaterThan(0);
     });
@@ -251,7 +258,10 @@ for (const cfg of FUNCTIONAL) {
       win.recordReflectionToGradebook(cfg.reflections[0], 'answer text here', null);
       await new Promise((r) => setTimeout(r, 0));
       win.console.error = origError;
-      const rec = calls.find((c) => c.url === `${ROSTER_URL}/ledger/record`);
+      // Scope to THIS reflection's itemId (see uncoercible test above — the
+      // background ledger heal may re-record an unrelated blank).
+      const badId = `${cfg.wsPrefix}-${cfg.reflections[0]}`;
+      const rec = calls.find((c) => c.url === `${ROSTER_URL}/ledger/record` && JSON.parse(c.options.body).itemId === badId);
       expect(rec, 'no record for a null verdict').toBeUndefined();
       expect(errors.length, 'console.error called for a null verdict').toBeGreaterThan(0);
     });

@@ -1152,6 +1152,54 @@
             } catch (_) {}
         })();
 
+        // ==================== LEDGER HEAL ====================
+        // LEDGER_HEAL_BUILD.md Part A — re-record locally-answered blanks that
+        // are MISSING from (or unscored in) the ledger, so worksheet correctness
+        // is never silently lost (answers filled before sign-in, under a prior
+        // identity, or recorded with no score). Reuses recordBlankToGradebook
+        // (correct scoring via checkAnswer) + fetchPrior (dedup). Fire-and-forget;
+        // runs only when signed in; never blocks the worksheet.
+        async function healLocalAnswersToLedger() {
+            try {
+                if (!window.gradebookClient || !window.gradebookClient.fetchPrior) return;
+                if (typeof recordBlankToGradebook !== 'function' || typeof gbWsPrefix !== 'function') return;
+                var signedIn = false;
+                try { signedIn = !!(window.rosterClient && typeof rosterClient.token === 'function' && rosterClient.token()); } catch (_) { signedIn = false; }
+                if (!signedIn) return;
+                var prefix = gbWsPrefix();
+                if (!prefix) return;
+                var prior = await window.gradebookClient.fetchPrior(prefix);
+                document.querySelectorAll('.blank[data-question-id]').forEach(function (blank) {
+                    try {
+                        var value = (blank.value || '').trim();
+                        if (!value) return;                                  // only answered blanks
+                        var id = blank.dataset.questionId;
+                        var entry = (prior && typeof prior.get === 'function') ? prior.get(id) : null;
+                        // Skip ONLY when the ledger already holds this exact answer WITH a
+                        // numeric score. Otherwise (missing / null-score / edited) re-record.
+                        if (entry && typeof entry.score === 'number' && entry.response === value) return;
+                        recordBlankToGradebook(blank);                       // checkAnswer -> score -> record
+                    } catch (_) { /* per-blank best-effort */ }
+                });
+            } catch (_) { /* heal is best-effort; never block the worksheet */ }
+        }
+
+        // Heal trigger: after hydration settles (DOMContentLoaded), + on roster
+        // signin (storage event). setTimeout lets hydratePriorAnswers run first.
+        (function () {
+            function _kickHeal() { try { setTimeout(healLocalAnswersToLedger, 400); } catch (_) {} }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', _kickHeal);
+            } else {
+                _kickHeal();
+            }
+            try {
+                window.addEventListener('storage', function (e) {
+                    if (e && e.key === 'apstats_roster.v1') _kickHeal();
+                });
+            } catch (_) {}
+        })();
+
         // ==================== COMPLETION TRACKER ====================
         // WORKSHEET_COMPLETION_GATE_BUILD.md §3-§4. Computes this worksheet's
         // completion and writes apstats_ws_completion[<studentKey>][<filename>]
