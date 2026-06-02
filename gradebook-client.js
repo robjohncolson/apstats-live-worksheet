@@ -14,6 +14,52 @@
 (function () {
   'use strict';
 
+  // ── No-identity nudge (defense-in-depth backstop) ───────────────────────────
+  // Worksheets normally gate behind the sign-in wall, but that wall FAILS OPEN
+  // (roster-client unavailable, teacher-role bypass, or sign-out mid-session).
+  // If a real recording attempt is ever dropped for no-identity, the student
+  // MUST see it — a silently dropped write is lost work with no warning (this is
+  // what made a worksheet's score "disappear"). Fires at most ONCE per page;
+  // never throws, never blocks — record()'s return contract is unchanged.
+  var _noIdentityNudgeShown = false;
+  function _showNoIdentityNudge() {
+    try {
+      if (_noIdentityNudgeShown) return;
+      if (typeof document === 'undefined' || !document.body) return;
+      if (document.getElementById('gb-no-identity-nudge')) return;
+      _noIdentityNudgeShown = true;
+
+      var bar = document.createElement('div');
+      bar.id = 'gb-no-identity-nudge';
+      bar.setAttribute('role', 'alert');
+      bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99998;'
+        + 'background:#b00020;color:#fff;font-family:Geneva,Verdana,sans-serif;'
+        + 'font-size:13px;padding:10px 14px;display:flex;align-items:center;'
+        + 'gap:12px;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+
+      var msg = document.createElement('span');
+      msg.textContent = '⚠️ You are not signed in — your answers are NOT being saved to your grade.';
+      bar.appendChild(msg);
+
+      var link = document.createElement('a');
+      link.href = 'ap_stats_roadmap_square_mode.html';
+      link.textContent = 'Open the Desk to sign in';
+      link.style.cssText = 'color:#fff;font-weight:bold;text-decoration:underline;white-space:nowrap;';
+      bar.appendChild(link);
+
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.textContent = '×';
+      x.setAttribute('aria-label', 'Dismiss');
+      x.style.cssText = 'background:transparent;border:0;color:#fff;font-size:18px;'
+        + 'line-height:1;cursor:pointer;padding:0 4px;';
+      x.onclick = function () { if (bar.parentNode) bar.parentNode.removeChild(bar); };
+      bar.appendChild(x);
+
+      document.body.appendChild(bar);
+    } catch (_) { /* nudge is best-effort; never block or throw from record() */ }
+  }
+
   window.gradebookClient = {
 
     // Fire-and-forget ledger write.
@@ -45,6 +91,7 @@
         }
 
         if (!token) {
+          _showNoIdentityNudge(); // surface the dropped write (never silent)
           return { ok: false, reason: 'no-identity' };
         }
 

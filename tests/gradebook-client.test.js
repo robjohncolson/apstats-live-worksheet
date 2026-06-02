@@ -811,3 +811,75 @@ describe('gradebook-client.js — fetchPrior (source-level contract)', () => {
     expect(tail).not.toMatch(/method:\s*['"]POST['"]/);
   });
 });
+
+// ── 8. No-identity nudge (defense-in-depth backstop) ─────────────────────────
+//
+// A dropped write must NEVER be silent: when record() can't find an identity,
+// it shows a one-time visible banner so the student knows their work isn't
+// saving (the cause of a worksheet's score "disappearing").
+
+describe('gradebook-client.js — no-identity nudge', () => {
+  it('shows a visible nudge banner when a write is dropped for no-identity', async () => {
+    const { win, gradebookClient } = makeWindow();
+    await gradebookClient.record({ source: 'worksheet', itemId: 'WS-U1L1-Q1', response: 'ans' });
+    const bar = win.document.getElementById('gb-no-identity-nudge');
+    expect(bar).not.toBeNull();
+    expect(bar.getAttribute('role')).toBe('alert');
+    // points the student at the Desk to sign in, and is dismissible
+    const link = bar.querySelector('a');
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toContain('ap_stats_roadmap_square_mode.html');
+    expect(bar.querySelector('button')).not.toBeNull();
+  });
+
+  it('still returns { ok:false, reason:"no-identity" } (return contract unchanged)', async () => {
+    const { gradebookClient } = makeWindow();
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'a' });
+    expect(result).toEqual({ ok: false, reason: 'no-identity' });
+  });
+
+  it('shows the nudge at most ONCE across repeated no-identity writes (no spam)', async () => {
+    const { win, gradebookClient } = makeWindow();
+    await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'a' });
+    await gradebookClient.record({ source: 'worksheet', itemId: 'Q2', response: 'b' });
+    await gradebookClient.record({ source: 'worksheet', itemId: 'Q3', response: 'c' });
+    expect(win.document.querySelectorAll('#gb-no-identity-nudge').length).toBe(1);
+  });
+
+  it('does NOT show the nudge on a happy-path write (token present)', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock-service.test');
+    setToken(win, 'tok');
+    mockFetch(win, { ok: true, ledgerId: 'uuid-x', evidenceTier: 'practice' });
+    await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'a' });
+    expect(win.document.getElementById('gb-no-identity-nudge')).toBeNull();
+  });
+
+  it('the dismiss button removes the banner', async () => {
+    const { win, gradebookClient } = makeWindow();
+    await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'a' });
+    const bar = win.document.getElementById('gb-no-identity-nudge');
+    expect(bar).not.toBeNull();
+    bar.querySelector('button').click();
+    expect(win.document.getElementById('gb-no-identity-nudge')).toBeNull();
+  });
+
+  it('does NOT show the nudge when args are bad (bad-args precedes the identity check)', async () => {
+    const { win, gradebookClient } = makeWindow();
+    await gradebookClient.record({ source: 'worksheet' }); // missing itemId + response
+    expect(win.document.getElementById('gb-no-identity-nudge')).toBeNull();
+  });
+
+  it('record() still never throws even though it now touches the DOM', async () => {
+    const { gradebookClient } = makeWindow();
+    await expect(
+      gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'a' })
+    ).resolves.not.toThrow();
+  });
+});
+
+describe('gradebook-client.js — nudge source contract', () => {
+  it('defines the nudge helper and keeps record() additive (signature unchanged)', () => {
+    expect(CLIENT_SRC).toContain('_showNoIdentityNudge');
+    expect(CLIENT_SRC).toContain('record: async function (opts)');
+  });
+});
