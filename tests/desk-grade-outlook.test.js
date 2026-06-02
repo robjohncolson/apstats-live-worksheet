@@ -1,4 +1,6 @@
-// desk-grade-outlook.test.js — Q1-Q4 grade prediction strip in the Do Now card.
+// desk-grade-outlook.test.js — current-quarter grade prediction + the two v3
+// tracks (PC mastery vs Work engagement) in the Do Now card. (2026-06: was a
+// Q1-Q4 strip; now shows only the current quarter + which track drives it.)
 // Static parse of the Desk HTML source; no DOM execution.
 //
 // @vitest-environment node
@@ -80,12 +82,14 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     expect(body).toMatch(/\[\s*['"]Q1['"]\s*,\s*['"]Q2['"]\s*,\s*['"]Q3['"]\s*,\s*['"]Q4['"]\s*\]/);
   });
 
-  it('06: renderDoNowGrades reads quarterGrade, ceiling, unitsGraded, unitsTotal from the response', () => {
+  it('06: renderDoNowGrades reads quarterGrade, ceiling, pcAvg, workAvg (v3 tracks) from the response', () => {
     const body = fnBody(DESK, 'renderDoNowGrades');
     expect(body).toMatch(/\.quarterGrade\b/);
     expect(body).toMatch(/\.ceiling\b/);
-    expect(body).toMatch(/\.unitsGraded\b/);
-    expect(body).toMatch(/\.unitsTotal\b/);
+    // 2026-06: now shows the current quarter + the two v3 tracks (PC vs Work),
+    // not a per-quarter unit count.
+    expect(body).toMatch(/\.pcAvg\b/);
+    expect(body).toMatch(/\.workAvg\b/);
   });
 
   it('07: renderDoNowGrades creates pills via createElement (no innerHTML XSS surface)', () => {
@@ -201,5 +205,23 @@ describe('Desk grade outlook (Q1-Q4 strip in Do Now card)', () => {
     // Must handle missing/non-array data.lessons gracefully.
     const body = fnBody(DESK, 'renderDoNowGrades');
     expect(body).toMatch(/Array\.isArray\s*\(\s*data\.lessons\s*\)/);
+  });
+
+  // ── 2026-06: show only the CURRENT quarter + the two v3 tracks ───────────────
+
+  it('19: shows only the CURRENT quarter (quarterOfDate(today)), with a fallback', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    expect(body, 'picks the current quarter via quarterOfDate').toMatch(/quarterOfDate\s*\(/);
+    expect(body, 'renders a single current-quarter pill keyed by curQ').toMatch(/curQ/);
+    // No per-quarter render loop anymore (the order array remains only as the
+    // fallback scan for the first graded quarter).
+    expect(body, 'no per-quarter render loop').not.toMatch(/for\s*\(\s*var\s+i\s*=\s*0;[^)]*order\.length/);
+  });
+
+  it('20: renders the two v3 tracks (PC mastery + Work engagement) for the current quarter', () => {
+    const body = fnBody(DESK, 'renderDoNowGrades');
+    expect(body).toMatch(/_trackChip\s*\(/);
+    expect(body).toMatch(/['"]PC['"]/);
+    expect(body).toMatch(/['"]Work['"]/);
   });
 });

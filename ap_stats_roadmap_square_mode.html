@@ -5703,6 +5703,10 @@ async function submitPwChange() {
 // Server-mediated via roster-server /donow (D7): the Desk renders + polls only,
 // NEVER touches Supabase. Self-contained; never throws/blocks the Desk.
 var _donowData = null; // latest /donow payload (DN3b cell coloring reads this)
+// The calendar's current next-up lesson topic (calNextUpTopic, LOCAL done
+// signal) — set by rCal, read by renderDoNow so the Do Now message always
+// agrees with the greyed calendar (never points at a locally-done lesson).
+var _calNextUp = null;
 
 // DN3b — does a /donow lesson string L cover the Desk cell topic T?
 // Exact, or first dash-segment (combined U4/U5 worksheets: cell "4.1" ↔
@@ -5883,62 +5887,84 @@ async function renderDoNowGrades(baseUrl, token) {
     } catch (_) { /* panel refresh is best-effort */ }
     var quarters = data.quarters || {};
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
-    var anyRendered = false;
-    for (var i = 0; i < order.length; i++) {
-      var qKey = order[i];
-      var q = quarters[qKey] || null;
-      var gradeRaw = q && typeof q.quarterGrade === 'number' ? q.quarterGrade : null;
-      var ceilRaw = q && typeof q.ceiling === 'number' ? q.ceiling : null;
-      var graded = q && typeof q.unitsGraded === 'number' ? q.unitsGraded : null;
-      var total = q && typeof q.unitsTotal === 'number' ? q.unitsTotal : null;
-      // Phase 6: lesson-level progress fields.
-      var lDue = q && typeof q.lessonsDue === 'number' ? q.lessonsDue : null;
-      var lGraded = q && typeof q.lessonsGraded === 'number' ? q.lessonsGraded : null;
-      var lTotal = q && typeof q.lessonsTotal === 'number' ? q.lessonsTotal : null;
-      var pill = document.createElement('span');
-      pill.className = 'qpill' + (gradeRaw == null ? ' empty' : '');
-      var keySpan = document.createElement('span');
-      keySpan.className = 'qkey';
-      keySpan.textContent = qKey + ':';
-      pill.appendChild(keySpan);
-      var gradeSpan = document.createElement('span');
-      gradeSpan.className = 'qgrade';
-      gradeSpan.textContent = gradeRaw == null ? '—' : (Math.round(gradeRaw * 10) / 10).toFixed(1);
-      pill.appendChild(gradeSpan);
-      if (ceilRaw != null && gradeRaw != null) {
-        var ceilSpan = document.createElement('span');
-        ceilSpan.className = 'qceil';
-        ceilSpan.textContent = '↑' + (Math.round(ceilRaw * 10) / 10).toFixed(1);
-        pill.appendChild(ceilSpan);
-      }
-      // Pill tooltip: band + lesson-level progress (Phase 6) or unit-level fallback.
-      var tip = qKey + ' covers ' + (QUARTER_BAND_LABEL[qKey] || '');
-      if (lGraded != null && lTotal != null) {
-        tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
-        if (lDue != null) tip += ' (' + lDue + ' due so far)';
-      } else if (graded != null && total != null) {
-        tip += ' — ' + graded + ' of ' + total + ' unit' + (total === 1 ? '' : 's') + ' graded';
-      }
-      pill.title = tip;
-      host.appendChild(pill);
-      anyRendered = true;
+    // Show ONLY the current quarter (the relevant one). Current = the quarter
+    // containing today (quarterOfDate); if today is outside all bands (e.g. summer
+    // / before the year starts), fall back to the first quarter that has a grade,
+    // else Q1.
+    var curN = (typeof quarterOfDate === 'function') ? quarterOfDate(new Date()) : null;
+    var curQ = curN ? ('Q' + curN) : null;
+    if (!curQ || !quarters[curQ]) {
+      curQ = order.filter(function (k) {
+        return quarters[k] && typeof quarters[k].quarterGrade === 'number';
+      })[0] || 'Q1';
     }
-    if (anyRendered) {
-      // grade-clarity (2026-05-31): a subtle link to the "how grades work" explainer.
-      var help = document.createElement('span');
-      help.className = 'qhelp';
-      help.setAttribute('role', 'button');
-      help.setAttribute('tabindex', '0');
-      help.title = 'How your quarter grade is calculated';
-      help.textContent = 'ⓘ how grades work';
-      help.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline';
-      help.onclick = function () { if (typeof openGradeHelp === 'function') openGradeHelp(); };
-      help.onkeydown = function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openGradeHelp === 'function') openGradeHelp(); }
-      };
-      host.appendChild(help);
-      host.style.display = 'flex';
+    var q = quarters[curQ] || null;
+    var gradeRaw = q && typeof q.quarterGrade === 'number' ? q.quarterGrade : null;
+    var ceilRaw  = q && typeof q.ceiling === 'number' ? q.ceiling : null;
+    var pcAvg    = q && typeof q.pcAvg === 'number' ? q.pcAvg : null;
+    var workAvg  = q && typeof q.workAvg === 'number' ? q.workAvg : null;
+    var lDue     = q && typeof q.lessonsDue === 'number' ? q.lessonsDue : null;
+    var lGraded  = q && typeof q.lessonsGraded === 'number' ? q.lessonsGraded : null;
+    var lTotal   = q && typeof q.lessonsTotal === 'number' ? q.lessonsTotal : null;
+
+    // Current-quarter grade pill (with the ↑ceiling).
+    var pill = document.createElement('span');
+    pill.className = 'qpill' + (gradeRaw == null ? ' empty' : '');
+    var keySpan = document.createElement('span');
+    keySpan.className = 'qkey';
+    keySpan.textContent = curQ + ':';
+    pill.appendChild(keySpan);
+    var gradeSpan = document.createElement('span');
+    gradeSpan.className = 'qgrade';
+    gradeSpan.textContent = gradeRaw == null ? '—' : (Math.round(gradeRaw * 10) / 10).toFixed(1);
+    pill.appendChild(gradeSpan);
+    if (ceilRaw != null && gradeRaw != null) {
+      var ceilSpan = document.createElement('span');
+      ceilSpan.className = 'qceil';
+      ceilSpan.textContent = '↑' + (Math.round(ceilRaw * 10) / 10).toFixed(1);
+      pill.appendChild(ceilSpan);
     }
+    var tip = curQ + ' covers ' + (QUARTER_BAND_LABEL[curQ] || '');
+    if (lGraded != null && lTotal != null) {
+      tip += ' — ' + lGraded + ' of ' + lTotal + ' lesson' + (lTotal === 1 ? '' : 's') + ' graded';
+      if (lDue != null) tip += ' (' + lDue + ' due so far)';
+    }
+    pill.title = tip;
+    host.appendChild(pill);
+
+    // The two v3 tracks (PC mastery vs Work engagement). The quarter grade is the
+    // HIGHER of the two (40% floor + ceiling), so showing both tells the student
+    // which track is driving the grade + where the headroom is.
+    function _trackChip(label, val, title) {
+      var chip = document.createElement('span');
+      chip.className = 'qtrack';
+      chip.style.cssText = 'font-size:10px;margin-left:8px;align-self:center';
+      var pct = (typeof val === 'number') ? (Math.round(val * 10) / 10).toFixed(1) + '%' : '—';
+      var k = document.createElement('span'); k.style.color = '#888'; k.textContent = label + ' ';
+      var v = document.createElement('span'); v.style.cssText = 'color:#333;font-weight:bold'; v.textContent = pct;
+      chip.appendChild(k); chip.appendChild(v);
+      chip.title = title;
+      return chip;
+    }
+    if (pcAvg != null || workAvg != null) {
+      host.appendChild(_trackChip('PC', pcAvg, 'Progress-Check mastery track'));
+      host.appendChild(_trackChip('Work', workAvg, 'Work-engagement track (worksheets, quizzes, Blooket)'));
+    }
+
+    // grade-clarity (2026-05-31): a subtle link to the "how grades work" explainer.
+    var help = document.createElement('span');
+    help.className = 'qhelp';
+    help.setAttribute('role', 'button');
+    help.setAttribute('tabindex', '0');
+    help.title = 'How your quarter grade is calculated';
+    help.textContent = 'ⓘ how grades work';
+    help.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
+    help.onclick = function () { if (typeof openGradeHelp === 'function') openGradeHelp(); };
+    help.onkeydown = function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openGradeHelp === 'function') openGradeHelp(); }
+    };
+    host.appendChild(help);
+    host.style.display = 'flex';
   } catch (_) {
     host.style.display = 'none';
   }
@@ -6028,6 +6054,24 @@ async function renderDoNow() {
     }
 
     var nt = data.nextTask;
+    // Sync with the calendar's LOCAL done signal (same as the grey-out): if the
+    // server's nextTask is a lesson you've already marked Done locally (greyed),
+    // the server is behind (it counts a lesson done only when EVERY item has a
+    // ledger row; the calendar greys on ANY resource Done). Show the calendar's
+    // next-up lesson instead so the Do Now never points at a greyed lesson.
+    // Same fix family as the speed-bump's BUG-B local-done check.
+    try {
+      var _dnMarks = (typeof getStudentMarks === 'function') ? getStudentMarks() : null;
+      if (nt && nt.lesson && _dnMarks && typeof localLessonState === 'function'
+          && localLessonState(nt.lesson, _dnMarks) === 'done') {
+        if (_calNextUp) {
+          show('Do Now: Topic ' + _calNextUp + ' — keep going.', 'todo');
+        } else {
+          show('All caught up — every assigned item is done. 🎉', 'done');
+        }
+        return;
+      }
+    } catch (_) { /* best-effort; fall through to the server nextTask below */ }
     if (!nt) {
       show('All caught up — every assigned item is done. 🎉', 'done');
       return;
@@ -7895,6 +7939,12 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
                 }
             }
         } catch (_) {}
+        // Refresh the Do Now MESSAGE too (not just the pills) so it advances off
+        // the just-completed lesson. rCal ran first, so _calNextUp is fresh and the
+        // reconciliation in renderDoNow points at the new next-up. Fire-and-forget.
+        // (Placed AFTER the W4 block so it doesn't shift that block out of the
+        // grade-pipeline-w4 test's fixed-length _studentMarkSave slice.)
+        try { if (typeof renderDoNow === 'function') renderDoNow(); } catch (_) {}
     } else if (btn) {
         btn.disabled = false;
         btn.innerHTML = '&#10003; Done';
@@ -11703,6 +11753,8 @@ function rCal(){
        .map(function (x) { return x.t; }),
       _gateMarks
     );
+    // Publish for renderDoNow so the Do Now message tracks the same next-up cell.
+    _calNextUp = _nextUpTopic;
     let _prevLessonTopic = null;
     let _lastQ = 0; // Thread 2 -- the quarter band already emitted
     for(const wk of W){
