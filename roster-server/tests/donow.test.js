@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import http from 'http';
 import { randomBytes } from 'crypto';
 import { createApp } from '../server.js';
+import { computeDonow } from '../donow.js';
 import { signToken } from '../token.js';
 
 // ── Fixture manifest (CONTRACT 2 schema, inline) ──────────────────────────────
@@ -699,5 +700,53 @@ describe('GET /donow — existing routes unaffected', () => {
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.service).toBe('roster');
+  });
+});
+
+// ── selfDone (cross-device grey-out, CALENDAR_SYNC_BUILD.md) ──────────────────
+// A DESK_DONE self-attest row → that topic's selfDone=true, so the calendar
+// greys on EVERY device for the signed-in student (the client hydrates a local
+// mark from it). Per-resource/lenient: ANY Done click sets it.
+describe('computeDonow — selfDone (per-resource DESK_DONE → cross-device grey-out)', () => {
+  it('marks a topic selfDone when a DESK_DONE row exists (keyed by row.topic)', () => {
+    const rows = [{ item_id: 'WS-U1-L1-DESK_DONE', topic: '1.1', source: 'worksheet' }];
+    const out = computeDonow(rows, FIXTURE_MANIFEST);
+    expect(out.lessons.find(l => l.lesson === '1.1').selfDone).toBe(true);
+    expect(out.lessons.find(l => l.lesson === '1.2').selfDone).toBe(false);
+  });
+
+  it('falls back to parsing the itemId when the topic field is absent', () => {
+    const rows = [{ item_id: 'CR-U1-L1-DESK_DONE' }]; // no topic field
+    const out = computeDonow(rows, FIXTURE_MANIFEST);
+    expect(out.lessons.find(l => l.lesson === '1.1').selfDone).toBe(true);
+  });
+
+  it('a real (non-DESK_DONE) ledger row does NOT set selfDone', () => {
+    const rows = [{ item_id: 'WS-U1L1-Q1', topic: '1.1', source: 'worksheet' }];
+    const out = computeDonow(rows, FIXTURE_MANIFEST);
+    expect(out.lessons.find(l => l.lesson === '1.1').selfDone).toBe(false);
+  });
+
+  it('every lesson carries a boolean selfDone (default false with no rows)', () => {
+    const out = computeDonow([], FIXTURE_MANIFEST);
+    for (const l of out.lessons) expect(typeof l.selfDone).toBe('boolean');
+    expect(out.lessons.every(l => l.selfDone === false)).toBe(true);
+  });
+
+  it('combined-topic lessons each get their own selfDone (no upsert collision)', () => {
+    // Guards the client fix: combined topics ("4.1-2") must write UNIQUE
+    // DESK_DONE itemIds so two of them don't collide on upsert and overwrite
+    // each other's topic. Here both rows carry distinct topics → both selfDone.
+    const manifest = { units: [{ unit: 'U4', lessons: [
+      { lesson: '4.1-2', activities: [{ activity: 'worksheet', source: 'worksheet', itemIds: ['WS-U4L1-2-Q1'] }] },
+      { lesson: '4.7-8', activities: [{ activity: 'worksheet', source: 'worksheet', itemIds: ['WS-U4L7-8-Q1'] }] },
+    ] }] };
+    const rows = [
+      { item_id: 'WS-U4-L1-2-DESK_DONE', topic: '4.1-2', source: 'worksheet' },
+      { item_id: 'WS-U4-L7-8-DESK_DONE', topic: '4.7-8', source: 'worksheet' },
+    ];
+    const out = computeDonow(rows, manifest);
+    expect(out.lessons.find(l => l.lesson === '4.1-2').selfDone).toBe(true);
+    expect(out.lessons.find(l => l.lesson === '4.7-8').selfDone).toBe(true);
   });
 });

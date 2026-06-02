@@ -16,9 +16,10 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const desk = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'utf8');
 
 // _studentMarkSave body -- generous slice; the next function carries no
-// renderDoNowGrades reference, so a small overshoot is harmless.
+// renderDoNowGrades reference, so a small overshoot is harmless. (Bumped to
+// 3600 after the combined-topic DESK_DONE comment grew the function body.)
 const saveIdx = desk.indexOf('function _studentMarkSave');
-const saveBody = saveIdx === -1 ? '' : desk.slice(saveIdx, saveIdx + 3000);
+const saveBody = saveIdx === -1 ? '' : desk.slice(saveIdx, saveIdx + 3600);
 
 describe('W4 -- Do Now grade pills refresh after Done', () => {
     it('_studentMarkSave exists', () => {

@@ -4214,6 +4214,46 @@ function getStudentMarks() {
   catch(e) { return {}; }
 }
 
+// CALENDAR_SYNC -- seed local marks from the server's per-resource self-done
+// flag (data.lessons[].selfDone from /donow). Makes the calendar grey-out follow
+// the student's LOGIN, not the browser: a lesson marked Done on ANY device greys
+// on every device. Additive + idempotent -- only SEEDS a synthetic
+// '<topic>|server' mark (never removes one), so it never clobbers a real local
+// mark and a 2nd pass is a no-op. localLessonState matches any '<topic>|*' with a
+// ts, so the synthetic mark greys the lesson exactly like a local Done. Returns
+// true if it added anything (the caller then re-renders the calendar). Never throws.
+function _hydrateMarksFromDonow(data) {
+  try {
+    // View-as guard (mirrors recordProgress / recordLinkVisit): in Preview-as-
+    // student the teacher stays signed in as themselves but /donow returns the
+    // VIEWED STUDENT's completion. Seeding here would write the student's
+    // done-state into the TEACHER's localStorage marks. Never do that.
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return false;
+    if (!data || !Array.isArray(data.lessons)) return false;
+    const email = getStudentEmail();
+    if (!email) return false;
+    const key = 'apstats_desk_marks_' + email;
+    let marks;
+    try { marks = JSON.parse(localStorage.getItem(key) || '{}'); } catch (_) { marks = {}; }
+    if (!marks || typeof marks !== 'object') marks = {};
+    let changed = false;
+    const stamp = new Date().toISOString();
+    for (let i = 0; i < data.lessons.length; i++) {
+      const L = data.lessons[i];
+      if (!L || L.selfDone !== true || !L.lesson) continue;
+      const mk = L.lesson + '|server';
+      if (!marks[mk] || !marks[mk].ts) {
+        marks[mk] = { ts: stamp, src: 'donow-sync' };
+        changed = true;
+      }
+    }
+    if (changed) {
+      try { localStorage.setItem(key, JSON.stringify(marks)); } catch (_) { return false; }
+    }
+    return changed;
+  } catch (_) { return false; }
+}
+
 // CALENDAR_FOCUS -- roll a lesson topic up to ''|'partial'|'done' from the
 // student's OWN completion marks (the object getStudentMarks() returns from
 // apstats_desk_marks_<email>). recordProgress() stamps a `ts` field on every
@@ -6401,7 +6441,19 @@ async function renderDoNow() {
     // DN3b — stash + repaint the calendar completion overlay (all success paths).
     // typeof-guarded so DN3a's renderDoNow stays decoupled from the DN3b painter.
     _donowData = data;
+
+    // Cross-device grey-out (CALENDAR_SYNC_BUILD.md): seed local marks from the
+    // server's per-resource self-done flag so a lesson marked Done on ANY device
+    // greys here too. If anything was newly seeded (a fresh device's first load),
+    // re-render the calendar so the grey-out AND the next-up highlight reflect
+    // it. Idempotent (no change on later passes → no re-render → no loop).
+    var _syncedMarks = false;
+    try {
+      if (typeof _hydrateMarksFromDonow === 'function') _syncedMarks = _hydrateMarksFromDonow(data);
+    } catch (_) { /* sync is best-effort */ }
+
     if (typeof paintDonowCells === 'function') paintDonowCells();
+    if (_syncedMarks && typeof rCal === 'function') { try { rCal(); } catch (_) {} }
 
     // Grade outlook strip (2026-05-20) — fire-and-forget so /grade latency or
     // failure never blocks the Do Now message. Only renders for signed-in
@@ -8293,7 +8345,13 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
         if (ok && artifact !== 'blooket'
             && window.gradebookClient
             && typeof window.gradebookClient.record === 'function') {
-            var um = /^(\d+)\.(\d+)$/.exec(topicId || '');
+            // Accept combined topics ("4.1-2") too — [\d-] not just \d — so each
+            // combined lesson gets a UNIQUE DESK_DONE itemId. Otherwise um=null
+            // and every combined Done collapses to "WS-U?-DESK_DONE", colliding
+            // on the (student_id,source,item_id,attempt) upsert key so only the
+            // last one survives — which broke the cross-device grey-out for
+            // combined lessons (CALENDAR_SYNC_BUILD.md). Mirrors _stuTopicId.
+            var um = /^(\d+)\.([\d-]+)$/.exec(topicId || '');
             var unit = um ? 'U' + um[1] : null;
             var source = artifact === 'quiz' ? 'curriculum_quiz' : 'worksheet';
             // The self-attest is a synthetic item, distinct from real

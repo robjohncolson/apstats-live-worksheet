@@ -71,6 +71,23 @@ function rollupLessonState(activities) {
 export function computeDonow(ledgerRows, manifest) {
   const doneSet = buildDoneSet(ledgerRows || []);
 
+  // Topics the student self-attested "Done" on (a DESK_DONE row written by the
+  // Desk's Done button). These drive the CROSS-DEVICE calendar grey-out: a
+  // lesson is "self-done" if ANY of its resources was marked Done — the same
+  // lenient signal as the per-device localStorage marks, now surfaced from the
+  // per-identity ledger so it follows the student's login. (DESK_DONE rows live
+  // in doneSet but never match a manifest activity, so they're otherwise unused.)
+  const selfDoneTopics = new Set();
+  for (const row of (Array.isArray(ledgerRows) ? ledgerRows : [])) {
+    if (typeof row?.item_id !== 'string' || !/-DESK_DONE$/.test(row.item_id)) continue;
+    let topic = (typeof row.topic === 'string' && row.topic) ? row.topic : null;
+    if (!topic) {
+      const m = /^(?:WS|CR)-U(\d+)-L([\d-]+)-DESK_DONE$/.exec(row.item_id);
+      if (m) topic = m[1] + '.' + m[2];
+    }
+    if (topic) selfDoneTopics.add(topic);
+  }
+
   const lessonsOut = [];
   const unitsOut   = [];
   const allActivities = [];
@@ -111,7 +128,9 @@ export function computeDonow(ledgerRows, manifest) {
         unit:         unit.unit,
         lesson:       lesson.lesson,
         activities:   activitiesOut,
-        lessonState
+        lessonState,
+        // Per-resource "marked Done" (lenient) — drives the cross-device grey-out.
+        selfDone:     selfDoneTopics.has(lesson.lesson)
       });
     }
 
