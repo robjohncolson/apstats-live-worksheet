@@ -1558,6 +1558,26 @@
               #donow-grades .qpill .qgrade{}
               #donow-grades .qpill .qceil{color:#1f8b3b;font-size:9px}
               #donow-grades .qpill.empty{color:var(--plat-lo);background:#fff}
+              /* "Why so low?" grade coach (2026-06-01) — instant facts + optional AI follow-up */
+              #donow-helper{margin-top:6px;font-size:11px}
+              #donow-helper .wsl-btn,#donow-helper .wsl-ask{font-family:'Chicago','Courier New',monospace;
+                font-size:10px;padding:2px 8px;border:1px solid var(--black);background:#eef3ff;
+                cursor:pointer;box-shadow:1px 1px 0 var(--black)}
+              #donow-helper .wsl-btn:hover,#donow-helper .wsl-ask:hover{background:#dde8ff}
+              #donow-helper .wsl-ask[disabled]{opacity:.5;cursor:default}
+              #donow-helper .wsl-panel{margin-top:6px;padding:8px 10px;border:1px solid var(--black);
+                background:#fbfbfb;box-shadow:1px 1px 0 var(--black)}
+              #donow-helper .wsl-facts{font-size:11px;line-height:1.45}
+              #donow-helper .wsl-facts .wsl-head{font-weight:bold;margin-bottom:3px}
+              #donow-helper .wsl-facts ul{margin:4px 0 4px 16px;padding:0}
+              #donow-helper .wsl-sep{border-top:1px dashed #bbb;margin:8px 0}
+              #donow-helper .wsl-chat-q{display:flex;gap:4px;align-items:center}
+              #donow-helper .wsl-chat-q input{flex:1 1 auto;font-size:11px;padding:2px 4px;
+                border:1px solid var(--black);font-family:'Geneva','Helvetica',sans-serif}
+              #donow-helper .wsl-msg{margin-top:6px;font-size:11px;line-height:1.45;white-space:pre-wrap}
+              #donow-helper .wsl-msg.student{color:#0000aa}
+              #donow-helper .wsl-msg.coach{color:#222;background:#fff;border:1px solid #ddd;padding:6px 8px}
+              #donow-helper .wsl-note{color:var(--plat-lo);font-size:9px;margin-top:3px}
             </style>
             <div id="donow-card" class="donow-signin" style="display:none">
                 <span class="donow-ico">📌</span>
@@ -1565,6 +1585,7 @@
                     <div class="donow-ttl chicago">Do Now</div>
                     <div id="donow-msg" class="geneva">…</div>
                     <div id="donow-grades" class="geneva" aria-label="Quarter grade outlook"></div>
+                    <div id="donow-helper" class="geneva"></div>
                 </div>
             </div>
             <div class="cal-outer geneva">
@@ -5852,6 +5873,7 @@ function quarterOfDate(dt) {
 // Cache of the lessons[] array from the last /grade fetch.
 // Used by openDayGrade to look up per-lesson data without a second fetch.
 var _gradeLessonsCache = null;
+var _gradeQuartersCache = null; // latest /grade quarters{} — read by the "Why so low?" coach
 
 // Render the compact Q1-Q4 grade outlook strip inside the Do Now card.
 // Fire-and-forget; never throws. Hides the strip on any failure.
@@ -5861,6 +5883,13 @@ async function renderDoNowGrades(baseUrl, token) {
   if (!host) return;
   host.style.display = 'none';
   host.innerHTML = '';
+  // The "Why so low?" coach lives in its own host; clear it on every entry so a
+  // stale breakdown never lingers when signed-out / offline — UNLESS a coach
+  // conversation is currently open, in which case we preserve it across the
+  // /grade refresh (the instant facts are deterministic; don't wipe a chat in
+  // progress). renderWhySoLow below likewise bails when a panel is open.
+  var _wslHost = document.getElementById('donow-helper');
+  if (_wslHost && !_coachPanelOpen()) _wslHost.innerHTML = '';
   try {
     // P2 view-as rewrite: in view-as mode, swap to /teacher/student/:id/grade
     // with the teacher's token in the Authorization header. _maybeViewAsFetch
@@ -5886,6 +5915,7 @@ async function renderDoNowGrades(baseUrl, token) {
       }
     } catch (_) { /* panel refresh is best-effort */ }
     var quarters = data.quarters || {};
+    _gradeQuartersCache = quarters; // cache for the "Why so low?" coach
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
     // Show ONLY the current quarter (the relevant one). Current = the quarter
     // containing today (quarterOfDate); if today is outside all bands (e.g. summer
@@ -5965,8 +5995,281 @@ async function renderDoNowGrades(baseUrl, token) {
     };
     host.appendChild(help);
     host.style.display = 'flex';
+
+    // "Why so low?" grade coach — render alongside the strip (q is in scope).
+    // typeof-guarded so the existing renderDoNowGrades tests don't need it.
+    if (typeof renderWhySoLow === 'function') renderWhySoLow(curQ, q);
   } catch (_) {
     host.style.display = 'none';
+    var _wh = document.getElementById('donow-helper');
+    if (_wh && !_coachPanelOpen()) _wh.innerHTML = '';
+  }
+}
+
+// True when the coach panel is currently expanded — used to preserve an open
+// conversation (transcript + in-flight request) across a renderDoNowGrades
+// re-render (Done click / tab refocus), instead of wiping it.
+function _coachPanelOpen() {
+  var host = document.getElementById('donow-helper');
+  if (!host) return false;
+  var p = host.querySelector('.wsl-panel');
+  return !!(p && p.style.display !== 'none');
+}
+
+// ═══ "Why so low?" grade coach (2026-06-01) ═══════════════════════════════
+// Hybrid: an INSTANT deterministic breakdown (computed from the cached /grade +
+// /donow data — accurate, free, works even if the AI is down) PLUS an OPTIONAL
+// grounded AI follow-up mini-chat. The v3 engine is deterministic, so the facts
+// are knowable client-side with no hallucination risk; the AI only phrases +
+// prioritizes the handed facts. Called at the end of renderDoNowGrades, where
+// the current-quarter object is in scope. Never throws.
+function renderWhySoLow(curQ, q) {
+  var host = document.getElementById('donow-helper');
+  if (!host) return;
+  // Preserve an open conversation across re-renders — don't wipe a chat in
+  // progress (instant facts are deterministic and need no mid-chat refresh).
+  if (_coachPanelOpen()) return;
+  host.innerHTML = '';
+  try {
+    var grade = (q && typeof q.quarterGrade === 'number') ? q.quarterGrade : null;
+    if (grade == null) return; // nothing to explain yet
+    var ctx = _buildCoachContext(curQ, q);
+
+    // Adaptive label: "Why so low?" only when the grade actually is low; a
+    // healthy grade gets a neutral "Grade breakdown" so it never reads as a put-down.
+    var low = grade < 80;
+    var btn = document.createElement('button');
+    btn.className = 'wsl-btn';
+    btn.type = 'button';
+    btn.textContent = low ? '🤔 Why so low? · what to do' : '📊 Grade breakdown · what to do';
+    btn.title = 'See exactly what is affecting your grade and what to do next.';
+    host.appendChild(btn);
+
+    var panel = document.createElement('div');
+    panel.className = 'wsl-panel';
+    panel.style.display = 'none';
+    host.appendChild(panel);
+
+    var built = false;
+    btn.onclick = function () {
+      var openNow = panel.style.display !== 'none';
+      if (openNow) { panel.style.display = 'none'; return; }
+      if (!built) { _renderCoachPanel(panel, ctx); built = true; }
+      panel.style.display = 'block';
+    };
+  } catch (_) { /* coach is best-effort */ }
+}
+
+// Assemble the deterministic breakdown the coach is grounded in. Reads the
+// cached current-quarter object + the lessons cache + the latest /donow task.
+function _buildCoachContext(curQ, q) {
+  var ctx = {
+    quarter: curQ || null,
+    grade: (q && typeof q.quarterGrade === 'number') ? q.quarterGrade : null,
+    ceiling: (q && typeof q.ceiling === 'number') ? q.ceiling : null,
+    pcAvg: (q && typeof q.pcAvg === 'number') ? q.pcAvg : null,
+    workAvg: (q && typeof q.workAvg === 'number') ? q.workAvg : null,
+    lessonsGraded: (q && typeof q.lessonsGraded === 'number') ? q.lessonsGraded : null,
+    lessonsDue: (q && typeof q.lessonsDue === 'number') ? q.lessonsDue : null,
+    lessonsTotal: (q && typeof q.lessonsTotal === 'number') ? q.lessonsTotal : null,
+    nextTask: null,
+    weakLessons: []
+  };
+  try {
+    if (_donowData && _donowData.nextTask && _donowData.nextTask.unit) {
+      var n = _donowData.nextTask;
+      ctx.nextTask = { unit: n.unit, lesson: n.lesson || null, activity: n.activity || null };
+    }
+  } catch (_) { /* nextTask is optional */ }
+  try {
+    if (Array.isArray(_gradeLessonsCache)) {
+      var weak = _gradeLessonsCache.filter(function (l) {
+        return l && typeof l.lessonGrade === 'number' && l.lessonGrade < 75;
+      }).sort(function (a, b) { return a.lessonGrade - b.lessonGrade; }).slice(0, 6);
+      ctx.weakLessons = weak.map(function (l) {
+        return {
+          lesson: l.lessonKey,
+          quiz: (typeof l.Q === 'number') ? l.Q : null,
+          worksheet: (typeof l.Cws === 'number') ? l.Cws : null,
+          work: (typeof l.W === 'number') ? l.W : null,
+          grade: l.lessonGrade
+        };
+      });
+    }
+  } catch (_) { /* weakLessons is optional */ }
+  return ctx;
+}
+
+// One-line diagnosis of the bottleneck from the two-track / 40%-gate model.
+function _coachBottleneckText(ctx) {
+  var pc = ctx.pcAvg, wk = ctx.workAvg;
+  var pcNum = (typeof pc === 'number'), wkNum = (typeof wk === 'number');
+  var pcLow = (pcNum && pc < 40);
+  var wkLow = (wkNum && wk < 40);
+  if (pcLow && wkLow) return 'Both tracks are below the 40% gate — that is capping your grade. Getting either one past 40% is your biggest win.';
+  if (pcLow) return 'Your PC track is below the 40% gate, which is capping your grade. Lifting it past 40% is your biggest single win.';
+  if (wkLow) return 'Your Work track is below the 40% gate, which is capping your grade. Lifting it past 40% is your biggest single win.';
+  // Single-track cases (the other not yet attempted) — common early in a quarter.
+  if (wkNum && !pcNum) return 'Your PC track has not started yet — your grade is set by your Work track alone, so finishing your due work is what lifts it.';
+  if (pcNum && !wkNum) return 'Your Work track has not started yet — your grade is set by your PC (Progress-Check) track alone, so doing well on Progress Checks is what lifts it.';
+  if (pcNum && wkNum) {
+    var higher = pc >= wk ? 'PC mastery' : 'Work';
+    return 'Your grade follows your stronger track (' + higher + '). Finishing your due work is what lifts it toward the ceiling.';
+  }
+  return 'Finishing your due work is what lifts your grade toward the ceiling.';
+}
+
+// Build the expanded panel: instant deterministic facts + the AI mini-chat.
+// XSS-safe — createElement + textContent only (no innerHTML with data).
+function _renderCoachPanel(panel, ctx) {
+  panel.innerHTML = '';
+
+  // ----- instant facts (deterministic, no AI call) -----
+  var facts = document.createElement('div');
+  facts.className = 'wsl-facts';
+
+  var head = document.createElement('div');
+  head.className = 'wsl-head';
+  var gradeTxt = (ctx.grade != null) ? (Math.round(ctx.grade * 10) / 10) + '%' : '—';
+  head.textContent = 'Your ' + (ctx.quarter || 'current') + ' grade is ' + gradeTxt +
+    (ctx.ceiling != null ? ' (could reach ' + (Math.round(ctx.ceiling * 10) / 10) + '%).' : '.');
+  facts.appendChild(head);
+
+  var tracks = document.createElement('div');
+  var pcTxt = (ctx.pcAvg != null) ? (Math.round(ctx.pcAvg * 10) / 10) + '%' : 'not started';
+  var wkTxt = (ctx.workAvg != null) ? (Math.round(ctx.workAvg * 10) / 10) + '%' : 'not started';
+  tracks.textContent = 'PC mastery: ' + pcTxt + ' · Work: ' + wkTxt + '.';
+  facts.appendChild(tracks);
+
+  var diag = document.createElement('div');
+  diag.textContent = _coachBottleneckText(ctx);
+  facts.appendChild(diag);
+
+  if (typeof ctx.lessonsGraded === 'number' && typeof ctx.lessonsTotal === 'number') {
+    var prog = document.createElement('div');
+    var dueTxt = (typeof ctx.lessonsDue === 'number') ? ctx.lessonsDue : ctx.lessonsTotal;
+    prog.textContent = ctx.lessonsGraded + ' of ' + dueTxt + ' due lessons graded — the rest count as 0 until you do them.';
+    facts.appendChild(prog);
+  }
+
+  if (ctx.nextTask && ctx.nextTask.unit) {
+    var nt = document.createElement('div');
+    nt.textContent = 'Start here: Unit ' + ctx.nextTask.unit +
+      (ctx.nextTask.lesson ? ', Topic ' + ctx.nextTask.lesson : '') +
+      (ctx.nextTask.activity ? ' — ' + ctx.nextTask.activity : '') + '.';
+    facts.appendChild(nt);
+  }
+
+  if (Array.isArray(ctx.weakLessons) && ctx.weakLessons.length) {
+    var wlHead = document.createElement('div');
+    wlHead.textContent = 'Lowest lessons to fix:';
+    facts.appendChild(wlHead);
+    var ul = document.createElement('ul');
+    ctx.weakLessons.slice(0, 4).forEach(function (w) {
+      var li = document.createElement('li');
+      var bits = [];
+      bits.push((w.quiz != null) ? 'quiz ' + Math.round(w.quiz) + '%' : 'quiz not done');
+      if (w.worksheet != null) bits.push('worksheet ' + Math.round(w.worksheet) + '%');
+      li.textContent = 'Topic ' + w.lesson + ' (' + bits.join(', ') + ')';
+      ul.appendChild(li);
+    });
+    facts.appendChild(ul);
+  }
+  panel.appendChild(facts);
+
+  // ----- AI mini-chat (optional, grounded follow-ups) -----
+  var sep = document.createElement('div'); sep.className = 'wsl-sep'; panel.appendChild(sep);
+
+  var label = document.createElement('div');
+  label.textContent = 'Ask the AI coach:';
+  label.style.cssText = 'font-size:11px;margin-bottom:3px';
+  panel.appendChild(label);
+
+  var transcript = document.createElement('div');
+  // role=log + aria-live=polite so a screen reader announces each appended turn
+  // and the "thinking…" → answer swap (matches the nudge-toast pattern elsewhere).
+  transcript.setAttribute('role', 'log');
+  transcript.setAttribute('aria-live', 'polite');
+  panel.appendChild(transcript);
+
+  var row = document.createElement('div');
+  row.className = 'wsl-chat-q';
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.value = (typeof ctx.grade === 'number' && ctx.grade < 80) ? 'Why so low?' : 'What should I focus on?';
+  input.setAttribute('aria-label', 'Ask the grade coach');
+  var ask = document.createElement('button');
+  ask.className = 'wsl-ask';
+  ask.type = 'button';
+  ask.textContent = 'Ask';
+  row.appendChild(input);
+  row.appendChild(ask);
+  panel.appendChild(row);
+
+  var note = document.createElement('div');
+  note.className = 'wsl-note';
+  note.textContent = 'The coach only sees your grade summary — never your name.';
+  panel.appendChild(note);
+
+  var history = [];
+  function send() {
+    if (ask.disabled) return; // in-flight guard — gate the Enter path like the button
+    var msg = (input.value || '').trim();
+    if (!msg) return;
+    input.value = '';
+    _coachAsk(ctx, msg, transcript, history, ask);
+  }
+  ask.onclick = send;
+  input.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } };
+}
+
+// POST a coach turn to the cr AI server (/api/ai/coach). Grounded by the handed
+// context; soft-fails to the still-visible instant facts (mirrors the
+// tutor-prompt soft-fail contract). The endpoint is CORS-open + unauthenticated
+// like the other /api/ai/* routes, so no token is needed.
+async function _coachAsk(ctx, message, transcriptEl, history, askBtn) {
+  var sEl = document.createElement('div');
+  sEl.className = 'wsl-msg student';
+  sEl.textContent = 'You: ' + message;
+  transcriptEl.appendChild(sEl);
+
+  var cEl = document.createElement('div');
+  cEl.className = 'wsl-msg coach';
+  cEl.textContent = 'Coach is thinking…';
+  transcriptEl.appendChild(cEl);
+  // A concurrent re-render could detach cEl before the AI lands; only write if
+  // it's still in the DOM, so a stale reply silently no-ops instead of
+  // mutating an orphaned node.
+  function setCoach(t) { if (cEl.isConnected) cEl.textContent = t; }
+  var unavailable = 'AI coach is unavailable right now — the breakdown above still shows what to do.';
+
+  if (askBtn) askBtn.disabled = true;
+  try {
+    var base = (typeof window !== 'undefined' && window.RAILWAY_SERVER_URL)
+      ? window.RAILWAY_SERVER_URL
+      : 'https://curriculumrender-production.up.railway.app';
+    var resp = await fetch(base + '/api/ai/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context: ctx, message: message, history: history })
+    });
+    if (!resp || !resp.ok) {
+      setCoach((resp && resp.status === 503)
+        ? 'AI coach is not set up right now — the breakdown above still shows what to do.'
+        : unavailable);
+      return;
+    }
+    var data = await resp.json();
+    var answer = (data && data.response) ? String(data.response) : '';
+    if (!answer) { setCoach(unavailable); return; }
+    setCoach(answer);
+    history.push({ role: 'user', content: message });
+    history.push({ role: 'assistant', content: answer });
+    if (history.length > 12) history.splice(0, history.length - 12);
+  } catch (_) {
+    setCoach(unavailable);
+  } finally {
+    if (askBtn && askBtn.isConnected) askBtn.disabled = false;
   }
 }
 
