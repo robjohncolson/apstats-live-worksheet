@@ -5,11 +5,20 @@ AI** and argue their reasoning; if the AI grants an **exception**, that item **c
 as correct**, and the quiz score (correct/total) + grade update automatically.
 
 **Teacher decisions (2026-06-01):**
-- **Any wrong quiz item is appealable** (incl. plain MCQ — a student may argue a
-  non-key choice into being accepted).
-- Mirror the worksheet appeal UX: a **cap of 3 appeals per item**, and every granted
-  exception is **auditable** (a real ledger row the teacher can see).
-- A granted exception = **full credit** for that item.
+- **Any wrong quiz item is appealable** (incl. plain MCQ).
+- **Exception granted ONLY when the AI judges the QUESTION itself defensible** — i.e.
+  the question is genuinely ambiguous or the student's choice is valid under a
+  reasonable interpretation. NOT merely because the student explains the concept well.
+  A clearly-wrong answer to an unambiguous question is NOT forgiven, however good the
+  reasoning. (Strictest of the offered bars.)
+- **cr's existing guardrail STAYS for the visible score**: a wrong MCQ is still capped
+  at P (server prompt + hard cap at server.js:836). The exception is a SEPARATE
+  gradebook flip gated on a new strict `exceptionGranted` AI signal — so we don't
+  weaken the "wrong MCQ ≠ E" display rule.
+- Mirror the worksheet appeal UX: a **cap of 3 appeals per item**; every granted
+  exception is **auditable** (the `quiz_exception` ledger row + the AI's reasoning).
+- A granted exception = **full credit**; **AI + cap + audit is sufficient** (no
+  teacher-approval queue).
 
 ## Architecture (reuse-heavy — most pieces already exist)
 
