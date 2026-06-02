@@ -126,8 +126,11 @@ describe('worksheet Done gate — 60% threshold + cross-device', () => {
 
   it('_doneBtn gates the worksheet on the Desk threshold, not the worksheet 80% eligible flag', () => {
     const body = extractFn(DESK, '_doneBtn');
-    expect(body).toMatch(/_wsPct \* 100 >= DESK_WORKSHEET_DONE_THRESHOLD/);
+    expect(body).toMatch(/_effPct >= DESK_WORKSHEET_DONE_THRESHOLD/);
     expect(body).toMatch(/reflectionsAllE === true/);
+    // cross-device: the gate falls back to the synced ledger Cws when the local
+    // fill tracker is absent (worksheet never opened on this device).
+    expect(body).toMatch(/_getCwsForTopic/);
     // the old 80% `comp.eligible` gate must be gone from the worksheet branch
     expect(body).not.toMatch(/comp\.eligible !== true/);
   });

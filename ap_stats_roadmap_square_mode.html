@@ -8067,11 +8067,20 @@ function showResourcePanel(inf, dateStr) {
                     // Gate on the DESK threshold (not the worksheet's own 80%
                     // `eligible` flag), so it's tunable here. >= threshold filled,
                     // OR every reflection rated E.
-                    var _wsPct = (comp && typeof comp.pct === 'number') ? comp.pct : 0;
-                    var _wsOk = comp && (comp.reflectionsAllE === true
-                        || _wsPct * 100 >= DESK_WORKSHEET_DONE_THRESHOLD);
+                    var _wsPct = (comp && typeof comp.pct === 'number') ? comp.pct * 100 : 0;
+                    // Cross-device fallback: _wsCompletionFor is the LOCAL fill
+                    // tracker — only written while the worksheet page is open on
+                    // THIS device. The recorded correctness (Cws, synced via /grade)
+                    // is a floor on how much was filled (can't be 69% correct without
+                    // filling >=69%), so gate on the HIGHER of the two — a worksheet
+                    // done on another computer unlocks here even if its page was
+                    // never opened in this browser.
+                    var _cws = (typeof _getCwsForTopic === 'function') ? _getCwsForTopic(_stuTopicId) : null;
+                    var _effPct = Math.max(_wsPct, (typeof _cws === 'number') ? _cws : 0);
+                    var _wsOk = (comp && comp.reflectionsAllE === true)
+                        || _effPct >= DESK_WORKSHEET_DONE_THRESHOLD;
                     if (!_wsOk) {
-                        var pctN = Math.round(_wsPct * 100);
+                        var pctN = Math.round(_effPct);
                         return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="Fill in at least ' + DESK_WORKSHEET_DONE_THRESHOLD + '% of the worksheet (or get every reflection rated E). Currently ' + pctN + '% done.">Done (' + pctN + '%)</button>';
                     }
                     return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done</button>';

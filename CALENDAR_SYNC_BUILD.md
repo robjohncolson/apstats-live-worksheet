@@ -69,6 +69,12 @@ across devices. Extended the sync to the per-resource Done button:
   first" visit gate** (the completion signal now syncs cross-device, so a fresh computer shouldn't
   demand a local link-open). Off-pattern worksheets keep the visit timer. Focused adversarial review:
   no bugs (precedence, null-comp, off-pattern fallback, per-artifact precision all confirmed).
+- **Cross-device completion fallback**: the local fill tracker (`apstats_ws_completion`) is per-device
+  and only written while the worksheet page is open on that device — so a Desk-only computer reads 0%
+  even when the gradebook knows the work was done. `_doneBtn` now gates on `max(local fill %, ledger
+  Cws)` via `_getCwsForTopic` (Cws is the synced correctness floor — can't score 69% without filling
+  ≥69%), so a worksheet done on any computer unlocks the Done button here too. typeof-guarded (cold
+  `_gradeLessonsCache` → falls back to the local %; the panel re-renders when `/grade` lands).
 
 ## Known limitation (accepted)
 Like the pre-existing per-device grey-out, the synced grey-out has **no un-do**: DESK_DONE rows are

@@ -65,10 +65,12 @@ describe('Desk: worksheet completion gate', () => {
     const body = fnBody(DESK, '_doneBtn');
     expect(body).toMatch(/artifact\s*===\s*['"]worksheet['"]/);
     expect(body).toMatch(/_wsCompletionFor\s*\(\s*worksheetUrl\s*\)/);
-    // Gate keys on the DESK threshold (comp.pct vs DESK_WORKSHEET_DONE_THRESHOLD),
-    // not the worksheet's own 80% `eligible` flag (moved to the Desk so it's tunable).
-    expect(body).toMatch(/_wsPct \* 100 >= DESK_WORKSHEET_DONE_THRESHOLD/);
+    // Gate keys on the DESK threshold (vs DESK_WORKSHEET_DONE_THRESHOLD), not the
+    // worksheet's own 80% `eligible` flag. Uses the HIGHER of the local fill % and
+    // the synced ledger Cws (cross-device), or all reflections rated E.
+    expect(body).toMatch(/_effPct >= DESK_WORKSHEET_DONE_THRESHOLD/);
     expect(body).toMatch(/reflectionsAllE === true/);
+    expect(body).toMatch(/_getCwsForTopic/);
   });
 
   it('05: the completion gate only applies to instrumented u*_lesson*_live.html worksheets', () => {
