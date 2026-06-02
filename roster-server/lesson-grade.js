@@ -818,11 +818,25 @@ export function computeQuarterV3({
   // null→0. A lesson with NO Blooket is excluded from the denominator, so it is
   // never an unfair 0. If blooketLessons isn't supplied (older caller), the set
   // is empty → blooketAvg null → renormalized away (back-compat, no tank).
+  // blooketDone = due Blooket lessons WITH a score (game or flashcard make-up);
+  // blooketTodo = due Blooket lessons with NO score yet — the flashcard make-up
+  // opportunities the grade coach surfaces (each can become an 80%).
+  // Iterate bandLessons (NOT dueLessons): a Blooket-bearing lesson counts once
+  // it's scheduled-due OR the student has already earned a Blooket score for it
+  // (game or flashcard make-up). This mirrors the lessons track's "if the work is
+  // done, count it" rule — lessonGrade EXCLUDES blooket, so an ahead-of-schedule
+  // blooket-only lesson would otherwise be dropped and the earned score lost. A
+  // not-due lesson with NO blooket score is skipped (future blookets are never
+  // surfaced as missing). Drawing from bandLessons (not dueLessons) also keeps a
+  // phantom 0 out of the lessons/quizzes tracks for that ahead-of-schedule lesson.
   const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
   const seenBlooketGroups = new Set();
-  let blooketSum = 0, blooketDue = 0;
-  for (const topicKey of dueLessons) {
+  let blooketSum = 0, blooketDue = 0, blooketDone = 0;
+  const blooketTodo = [];
+  for (const topicKey of bandLessons) {
     if (!blooketSet.has(topicKey)) continue;
+    const r = lessonMap.get(topicKey);
+    if (!(isDue(topicKey) || (r && r.blooket != null))) continue;
     // Collapse combined-worksheet constituents into ONE slot. A single combined
     // Blooket (e.g. BLOOKET-U4L1-2) attaches the SAME score to every constituent
     // topic (4.1 AND 4.2), so counting each separately would over-weight it vs a
@@ -836,8 +850,8 @@ export function computeQuarterV3({
     if (seenBlooketGroups.has(groupKey)) continue;
     seenBlooketGroups.add(groupKey);
     blooketDue += 1;
-    const r = lessonMap.get(topicKey);
-    blooketSum += (r && r.blooket != null) ? r.blooket : 0;   // missing-but-due → 0
+    if (r && r.blooket != null) { blooketSum += r.blooket; blooketDone += 1; }
+    else { blooketTodo.push(topicKey); }   // due but no score → 0, a make-up opportunity
   }
   const blooketAvg = blooketDue > 0 ? (blooketSum / blooketDue) / 100 : null;
 
@@ -928,6 +942,20 @@ export function computeQuarterV3({
     lessonsTotal,
     pcAvg: to100(pcAvg),
     workAvg: to100(workAvg),
+    // Work sub-track breakdown (0..100 or null), so the "Why so low?" coach can
+    // show what's inside the Work track — esp. the Blooket track, which the
+    // student can't otherwise see. null tracks are renormalized away in workAvg.
+    workTracks: {
+      lessons: to100(lessonsAvg),
+      quizzes: to100(quizzesAvg),
+      blooket: to100(blooketAvg),
+      posters: to100(tracks.posters),
+    },
+    // Blooket make-up surface: how many Blooket-bearing lessons are due, how many
+    // have a score, and the topicKeys still needing one (the flashcard make-ups).
+    blooketDue,
+    blooketDone,
+    blooketTodo,
   };
 }
 
@@ -966,8 +994,10 @@ export function computeQuizTotals(answerKey, schedule) {
 // schedule: topicKey → { unit, worksheetKey, periods }
 // topicNames: optional topicKey → topic name string
 // quizTotals: optional topicKey → gradable-quiz-question count (computeQuizTotals)
-export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}) {
+// blooketLessons: optional [topicKey] that HAVE a Blooket → sets hasBlooket per lesson
+export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindowStart, quizTotals = {}, blooketLessons = []) {
   const result = [];
+  const blooketSet = new Set(Array.isArray(blooketLessons) ? blooketLessons : []);
 
   // Include every lesson from the schedule (not just those with data).
   const sortedKeys = Object.keys(schedule).sort((a, b) => {
@@ -1011,9 +1041,12 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       // so the client can compute "% answered" = items.quiz.length / quizTotal.
       // Independent of what the student attempted; 0 when the topic has no quiz.
       quizTotal: quizTotals[topicKey] || 0,
-      // Per-lesson Blooket score (0..100, mean-of-recorded), surfaced for the
-      // Desk day-grade modal; null when no blooket row attached.
+      // Per-lesson Blooket score (0..100), surfaced for the Desk day-grade modal
+      // + the grade coach; null when no game/flashcard score attached.
       blooket: lessonResult ? (lessonResult.blooket != null ? lessonResult.blooket : null) : null,
+      // Whether this lesson HAS a Blooket at all (in the make-up denominator), so
+      // the coach can tell "Blooket not done yet" apart from "no Blooket exists".
+      hasBlooket: blooketSet.has(topicKey),
       items: lessonResult
         ? {
             frq: lessonResult.frqItems.map(f => ({ itemId: f.itemId, score: f.score, ts: f.ts })),

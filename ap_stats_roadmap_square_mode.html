@@ -6140,12 +6140,28 @@ function _buildCoachContext(curQ, q) {
     ceiling: (q && typeof q.ceiling === 'number') ? q.ceiling : null,
     pcAvg: (q && typeof q.pcAvg === 'number') ? q.pcAvg : null,
     workAvg: (q && typeof q.workAvg === 'number') ? q.workAvg : null,
+    // Work sub-track breakdown {lessons,quizzes,blooket,posters} so the coach can
+    // explain what's INSIDE the Work track (esp. Blooket, otherwise invisible).
+    workTracks: (q && q.workTracks && typeof q.workTracks === 'object') ? q.workTracks : null,
     lessonsGraded: (q && typeof q.lessonsGraded === 'number') ? q.lessonsGraded : null,
     lessonsDue: (q && typeof q.lessonsDue === 'number') ? q.lessonsDue : null,
     lessonsTotal: (q && typeof q.lessonsTotal === 'number') ? q.lessonsTotal : null,
     nextTask: null,
+    // Blooket make-up summary {track,due,done,todo[]} — set below when any Blooket
+    // is due. todo = Blooket-bearing due lessons with no score (flashcard make-ups).
+    blooket: null,
     weakLessons: []
   };
+  try {
+    if (q && typeof q.blooketDue === 'number' && q.blooketDue > 0) {
+      ctx.blooket = {
+        track: (q.workTracks && typeof q.workTracks.blooket === 'number') ? q.workTracks.blooket : null,
+        due: q.blooketDue,
+        done: (typeof q.blooketDone === 'number') ? q.blooketDone : 0,
+        todo: Array.isArray(q.blooketTodo) ? q.blooketTodo.slice(0, 6) : []
+      };
+    }
+  } catch (_) { /* blooket summary optional */ }
   try {
     if (_donowData && _donowData.nextTask && _donowData.nextTask.unit) {
       var n = _donowData.nextTask;
@@ -6168,6 +6184,10 @@ function _buildCoachContext(curQ, q) {
           quiz: (typeof l.Q === 'number') ? l.Q : null,
           worksheet: (typeof l.Cws === 'number') ? l.Cws : null,
           work: (typeof l.W === 'number') ? l.W : null,
+          // Per-lesson Blooket: hasBlooket distinguishes "Blooket not done" from
+          // "no Blooket exists" (so the coach never invents a missing Blooket).
+          blooket: (typeof l.blooket === 'number') ? l.blooket : null,
+          hasBlooket: !!l.hasBlooket,
           grade: l.lessonGrade
         };
         // The lesson's LOWEST graded component = its biggest fixable deficit.
@@ -6258,6 +6278,20 @@ function _renderCoachPanel(panel, ctx) {
     facts.appendChild(prog);
   }
 
+  // Blooket make-up — a real Work-track component (10%) the student can't see
+  // anywhere else. Show the standing; when any are undone, point at the flashcard
+  // make-up (a pass = 80%), which is often the fastest Work-track lift.
+  if (ctx.blooket && ctx.blooket.due > 0) {
+    var blk = document.createElement('div');
+    var bTrk = (ctx.blooket.track != null) ? (Math.round(ctx.blooket.track) + '%') : '—';
+    var bMsg = 'Blooket: ' + bTrk + ' (' + ctx.blooket.done + ' of ' + ctx.blooket.due + ' done).';
+    if (ctx.blooket.todo && ctx.blooket.todo.length) {
+      bMsg += ' Make one up to 80% with the Desk flashcards — e.g. Topic ' + ctx.blooket.todo.slice(0, 3).join(', Topic ') + '.';
+    }
+    blk.textContent = bMsg;
+    facts.appendChild(blk);
+  }
+
   // Only show the earliest-incomplete "start here" when there's no low-scoring
   // component to fix first (otherwise it competes with the biggest win above).
   if (!ctx.biggestWin && ctx.nextTask && ctx.nextTask.unit) {
@@ -6279,6 +6313,8 @@ function _renderCoachPanel(panel, ctx) {
       // Only mention the quiz when one actually exists (quizTotal > 0).
       if (w.quizTotal > 0) bits.push((w.quiz != null) ? 'quiz ' + Math.round(w.quiz) + '%' : 'quiz not done');
       if (w.worksheet != null) bits.push('worksheet ' + Math.round(w.worksheet) + '%');
+      // Mention Blooket only when the lesson actually HAS one (never invent it).
+      if (w.hasBlooket) bits.push((w.blooket != null) ? 'Blooket ' + Math.round(w.blooket) + '%' : 'Blooket not done');
       if (!bits.length && typeof w.grade === 'number') bits.push('grade ' + Math.round(w.grade) + '%');
       li.textContent = 'Topic ' + w.lesson + (bits.length ? ' (' + bits.join(', ') + ')' : '');
       ul.appendChild(li);

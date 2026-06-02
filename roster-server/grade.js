@@ -331,13 +331,19 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       // v3 additions (null on the Phase 6 path):
       pcAvg: qResult.pcAvg != null ? qResult.pcAvg : null,
       workAvg: qResult.workAvg != null ? qResult.workAvg : null,
+      // Work sub-track breakdown + Blooket make-up surface (v3 only; the "Why so
+      // low?" coach reads these). Undefined on the Phase 6 path → client guards.
+      workTracks: qResult.workTracks || null,
+      blooketDue: typeof qResult.blooketDue === 'number' ? qResult.blooketDue : null,
+      blooketDone: typeof qResult.blooketDone === 'number' ? qResult.blooketDone : null,
+      blooketTodo: Array.isArray(qResult.blooketTodo) ? qResult.blooketTodo : [],
     };
   }
 
   // ── Phase 6: build the lessons[] array ────────────────────────────────────
   const quizTotals = (schedule && answerKey) ? computeQuizTotals(answerKey, schedule) : {};
   const lessons = schedule
-    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals)
+    ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketLessons)
     : [];
 
   // Stable sorted unit / completion order.

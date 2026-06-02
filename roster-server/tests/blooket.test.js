@@ -143,6 +143,19 @@ describe('buildLessonsArray -- per-lesson blooket display', () => {
     expect(l11).toBeTruthy();
     expect(l11.blooket).toBe(null);
   });
+
+  it('marks hasBlooket per lesson from the blooketLessons set', () => {
+    const map = computeLessonGrades([row('BLOOKET-U1L2', { score: 0.8 })], FRQ_BAND, {}, SCHEDULE, {});
+    const lessons = buildLessonsArray(map, SCHEDULE, undefined, null, {}, ['1.2']);
+    expect(lessons.find((l) => l.lessonKey === '1.2').hasBlooket).toBe(true);
+    expect(lessons.find((l) => l.lessonKey === '1.1').hasBlooket).toBe(false); // not in the set
+  });
+
+  it('hasBlooket defaults to false when no blooketLessons passed (back-compat)', () => {
+    const map = computeLessonGrades([row('BLOOKET-U1L2', { score: 0.8 })], FRQ_BAND, {}, SCHEDULE, {});
+    const lessons = buildLessonsArray(map, SCHEDULE);
+    expect(lessons.find((l) => l.lessonKey === '1.2').hasBlooket).toBe(false);
+  });
 });
 
 // ── computeQuarterV3 -- the Blooket track ──────────────────────────────────────

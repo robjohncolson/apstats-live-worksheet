@@ -357,4 +357,55 @@ describe('computeQuarterV3 — Blooket make-up track', () => {
     });
     expect(r.workAvg).toBeCloseTo(100.0, 1); // Blooket excluded → lessons+quizzes only
   });
+
+  it('exposes workTracks + blooketDue/Done/Todo for the grade coach', () => {
+    const made = run(['1.1'], 80);   // 1.1 has a Blooket, made up to 80
+    expect(made.workTracks).toBeTruthy();
+    expect(made.workTracks.lessons).toBeCloseTo(100, 1);
+    expect(made.workTracks.quizzes).toBeCloseTo(100, 1);
+    expect(made.workTracks.blooket).toBeCloseTo(80, 1);
+    expect(made.workTracks.posters).toBe(null); // no poster source yet
+    expect(made.blooketDue).toBe(1);
+    expect(made.blooketDone).toBe(1);
+    expect(made.blooketTodo).toEqual([]);
+
+    const todo = run(['1.1'], null); // due Blooket, not done → a make-up opportunity
+    expect(todo.workTracks.blooket).toBeCloseTo(0, 1);
+    expect(todo.blooketDue).toBe(1);
+    expect(todo.blooketDone).toBe(0);
+    expect(todo.blooketTodo).toEqual(['1.1']);
+
+    const none = run([], null);      // no Blooket-bearing lesson in the denominator
+    expect(none.workTracks.blooket).toBe(null);
+    expect(none.blooketDue).toBe(0);
+    expect(none.blooketTodo).toEqual([]);
+  });
+
+  it('counts an ahead-of-schedule Blooket-only lesson (make-up before the due date)', () => {
+    // A FUTURE-dated lesson whose ONLY work is a passed flashcard make-up
+    // (blooket 80, no worksheet/quiz → lessonGrade null). The earned 80 must
+    // still count — mirrors the lessons track's "if the work is done, count it"
+    // rule. Pre-fix this was dropped (the Blooket track iterated dueLessons, and
+    // lessonGrade — which gates an undated lesson into dueLessons — excludes blooket).
+    const futureSchedule = {
+      '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2027-09-01', E: '2027-09-01' } },
+    };
+    const lessonMap = lessonMapOf({
+      '1.1': { Cws: null, W: null, Q: null, lessonGrade: null, blooket: 80 },
+    });
+    const r = computeQuarterV3({
+      quarterKey: 'Q1', config: CFG, lessonMap, schedule: futureSchedule,
+      todayDateStr: '2026-09-10', section: 'PeriodB', unitPcData: {},
+      blooketLessons: ['1.1'],
+    });
+    expect(r.blooketDue).toBe(1);
+    expect(r.blooketDone).toBe(1);
+    expect(r.blooketTodo).toEqual([]);
+    expect(r.workTracks.blooket).toBeCloseTo(80, 1);
+    // The lessons/quizzes tracks must NOT get a phantom 0 from this lesson — it's
+    // not in dueLessons, so they stay null (only the Blooket track sees it).
+    expect(r.workTracks.lessons).toBe(null);
+    expect(r.workTracks.quizzes).toBe(null);
+    expect(r.workAvg).toBeCloseTo(80, 1); // Blooket alone → workAvg = 80
+  });
 });

@@ -240,3 +240,33 @@ describe('Why-so-low coach: prioritize by biggest deficit (worst component)', ()
     expect(body).toMatch(/if \(!ctx\.biggestWin && ctx\.nextTask/);
   });
 });
+
+describe('Why-so-low coach: Blooket make-up awareness', () => {
+  it('90: _buildCoachContext carries workTracks + a blooket summary (track/due/done/todo)', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    expect(body).toMatch(/workTracks/);
+    expect(body).toMatch(/q\.blooketDue/);
+    expect(body).toMatch(/blooketTodo/);
+    expect(body).toMatch(/ctx\.blooket\s*=/);
+  });
+
+  it('91: weakLessons carry per-lesson blooket + hasBlooket (vs "no Blooket exists")', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    expect(body).toMatch(/blooket:\s*\(typeof l\.blooket/);
+    expect(body).toMatch(/hasBlooket:\s*!!l\.hasBlooket/);
+  });
+
+  it('92: _renderCoachPanel surfaces the Blooket make-up line (80% via flashcards)', () => {
+    const body = fnBody(DESK, '_renderCoachPanel');
+    expect(body).toMatch(/ctx\.blooket\s*&&\s*ctx\.blooket\.due\s*>\s*0/);
+    expect(body).toMatch(/Blooket:/);
+    expect(body).toMatch(/flashcards/);
+    expect(body).toMatch(/80%/);
+  });
+
+  it('93: a weak-lesson line mentions Blooket ONLY when the lesson has one', () => {
+    const body = fnBody(DESK, '_renderCoachPanel');
+    expect(body).toMatch(/w\.hasBlooket/);
+    expect(body).toMatch(/Blooket not done/);
+  });
+});
