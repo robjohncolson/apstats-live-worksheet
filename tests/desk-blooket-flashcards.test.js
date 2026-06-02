@@ -121,6 +121,14 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(body).toMatch(/bf-wrong/);
   });
 
+  it('10b: _bfAnswer early-stops once the pass is secured (8 of 10) — no need to answer the rest', () => {
+    const body = fnBody(DESK, '_bfAnswer');
+    // Pass count = ceil(threshold * deck length); once score reaches it, finish.
+    expect(body).toMatch(/Math\.ceil\(BLOOKET_PASS_THRESHOLD \* _bfState\.deck\.length\)/);
+    expect(body).toMatch(/_bfState\.score\s*>=\s*_passCount/);
+    expect(body).toMatch(/_bfFinish/);
+  });
+
   it('11: _bfFinish gates auto-mark on ≥ 80% pass', () => {
     const body = fnBody(DESK, '_bfFinish');
     expect(body).toMatch(/BLOOKET_PASS_THRESHOLD/);

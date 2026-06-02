@@ -8820,6 +8820,16 @@ function _bfAnswer(idx) {
             : 'Wrong. Correct answer: ' + String.fromCharCode(65 + card.correctIdx)
               + '. ' + card.choices[card.correctIdx];
     }
+    // Early-stop: once enough cards are correct to PASS (>=80% of the deck —
+    // 8 of 10), stop here. The remaining cards can't change the pass, so don't
+    // make the student answer them; show the result + mark complete.
+    var _passCount = Math.ceil(BLOOKET_PASS_THRESHOLD * _bfState.deck.length);
+    if (_bfState.score >= _passCount) {
+        if (feedback) feedback.textContent += '  ✓ That’s a pass!';
+        if (nextBtn) nextBtn.style.display = 'none';
+        setTimeout(_bfFinish, 900);   // brief beat so the student sees the feedback
+        return;
+    }
     if (nextBtn) nextBtn.style.display = 'inline-block';
 }
 
