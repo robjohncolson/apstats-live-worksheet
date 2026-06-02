@@ -172,8 +172,14 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(body, 'no inline score swap in studentMark').not.toMatch(/desk-quiz-score-input/);
   });
 
-  it('pin 17: blooket is STILL excluded from the gradebook ledger (Phase 3 spec §6 preserved)', () => {
+  it('pin 17: blooket self-attest is grade-INERT — §6 grade exclusion preserved (BL- prefix, source never "blooket")', () => {
     const body = fnBody(DESK, '_studentMarkSave');
-    expect(body).toMatch(/artifact\s*!==\s*['"]blooket['"]/);
+    // Blooket now writes a CROSS-DEVICE DESK_DONE (CALENDAR_SYNC) so flashcard
+    // completion follows the login — but it stays out of the GRADE: its own BL-
+    // prefix (distinct itemId; classifies to null in lesson-grade) AND its source
+    // is the worksheet/quiz ternary, NEVER 'blooket', so it can't feed the Blooket
+    // grade track (which keys on source==='blooket'). §6 grade-exclusion intact.
+    expect(body).toMatch(/artifact === 'blooket' \? 'BL-'/);
+    expect(body).toMatch(/var source = artifact === 'quiz' \? 'curriculum_quiz' : 'worksheet'/);
   });
 });

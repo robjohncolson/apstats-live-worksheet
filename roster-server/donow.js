@@ -84,11 +84,14 @@ export function computeDonow(ledgerRows, manifest) {
     if (typeof row?.item_id !== 'string' || !/-DESK_DONE$/.test(row.item_id)) continue;
     let topic = (typeof row.topic === 'string' && row.topic) ? row.topic : null;
     if (!topic) {
-      const m = /^(?:WS|CR)-U(\d+)-L([\d-]+)-DESK_DONE$/.exec(row.item_id);
+      const m = /^(?:WS|CR|BL)-U(\d+)-L([\d-]+)-DESK_DONE$/.exec(row.item_id);
       if (m) topic = m[1] + '.' + m[2];
     }
     if (!topic) continue;
-    const artifact = /^CR-/.test(row.item_id) ? 'quiz' : 'worksheet';
+    // CR- = quiz, BL- = blooket (flashcard pass), WS- = worksheet.
+    const artifact = /^CR-/.test(row.item_id) ? 'quiz'
+      : /^BL-/.test(row.item_id) ? 'blooket'
+      : 'worksheet';
     if (!selfDoneByTopic.has(topic)) selfDoneByTopic.set(topic, new Set());
     selfDoneByTopic.get(topic).add(artifact);
   }

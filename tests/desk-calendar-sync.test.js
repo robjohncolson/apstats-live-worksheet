@@ -44,13 +44,14 @@ describe('_hydrateMarksFromDonow — cross-device grey-out sync', () => {
   it('seeds per-resource <topic>|<artifact> marks from selfDoneArtifacts', () => {
     const { win, hydrate } = makeCtx('s@roster.local');
     const changed = hydrate({ lessons: [
-      { lesson: '1.1', selfDone: true, selfDoneArtifacts: ['worksheet'] },
+      { lesson: '1.1', selfDone: true, selfDoneArtifacts: ['worksheet', 'blooket'] },
       { lesson: '1.2', selfDone: true, selfDoneArtifacts: ['quiz'] },
       { lesson: '1.3', selfDone: false, selfDoneArtifacts: [] },
     ] });
     expect(changed).toBe(true);
     const marks = JSON.parse(win.localStorage.getItem(KEY('s@roster.local')));
     expect(marks['1.1|worksheet'] && marks['1.1|worksheet'].ts).toBeTruthy(); // greys + worksheet Done "Completed"
+    expect(marks['1.1|blooket'] && marks['1.1|blooket'].ts).toBeTruthy();     // blooket flashcards "Completed" cross-device
     expect(marks['1.2|quiz'] && marks['1.2|quiz'].ts).toBeTruthy();
     expect(marks['1.1|server']).toBeUndefined(); // per-artifact, not the generic fallback
     expect(marks['1.3|worksheet']).toBeUndefined(); // not self-done → not seeded

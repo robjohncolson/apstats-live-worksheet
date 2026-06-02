@@ -8371,12 +8371,15 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
     }
     var ok = await recordProgress(topicId, artifact, score);
 
-    // Phase 4a+ compat: ALSO write a row to item_ledger via the gradebook
-    // feeder so the new teacher-dashboard's completion + grade readouts
-    // reflect self-attested Done clicks. Skipped for 'blooket' (spec §6 —
-    // Blooket is excluded from the ledger). Fire-and-forget per L-D.
+    // Phase 4a+ compat: ALSO write a self-attest row to item_ledger via the
+    // gradebook feeder so the teacher-dashboard's completion readouts AND the
+    // CROSS-DEVICE Done/grey-out reflect Done clicks. Now INCLUDES blooket (the
+    // flashcard pass) so it follows the login too — the row is grade-INERT: its
+    // itemId (BL-/WS-/CR-…-DESK_DONE) never matches a manifest blank/quiz, and
+    // its source is NEVER 'blooket', so it can't feed any grade track (Cws keys
+    // on WS-…-Q; the Blooket track keys on source==='blooket'). Fire-and-forget.
     try {
-        if (ok && artifact !== 'blooket'
+        if (ok
             && window.gradebookClient
             && typeof window.gradebookClient.record === 'function') {
             // Accept combined topics ("4.1-2") too — [\d-] not just \d — so each
@@ -8387,12 +8390,12 @@ async function _studentMarkSave(btn, topicId, artifact, score) {
             // combined lessons (CALENDAR_SYNC_BUILD.md). Mirrors _stuTopicId.
             var um = /^(\d+)\.([\d-]+)$/.exec(topicId || '');
             var unit = um ? 'U' + um[1] : null;
+            // Per-artifact prefix keeps the three DESK_DONE rows distinct on the
+            // upsert key (a lesson can have worksheet + quiz + blooket all done).
+            // Blooket uses BL-; its source stays 'worksheet' (NOT 'blooket') so it
+            // is grade-inert. The server maps BL-→'blooket' for selfDoneArtifacts.
+            var idPrefix = artifact === 'quiz' ? 'CR-' : artifact === 'blooket' ? 'BL-' : 'WS-';
             var source = artifact === 'quiz' ? 'curriculum_quiz' : 'worksheet';
-            // The self-attest is a synthetic item, distinct from real
-            // worksheet/quiz items so it doesn't collide with actual
-            // submissions on the (student_id, source, item_id, attempt)
-            // upsert key. Per-topic suffix keeps it idempotent.
-            var idPrefix = artifact === 'quiz' ? 'CR-' : 'WS-';
             var itemId = idPrefix + (unit || 'U?')
                        + (um ? '-L' + um[2] : '')
                        + '-DESK_DONE';

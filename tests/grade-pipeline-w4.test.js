@@ -17,9 +17,10 @@ const desk = readFileSync(resolve(ROOT, 'ap_stats_roadmap_square_mode.html'), 'u
 
 // _studentMarkSave body -- generous slice; the next function carries no
 // renderDoNowGrades reference, so a small overshoot is harmless. (Bumped to
-// 3600 after the combined-topic DESK_DONE comment grew the function body.)
+// 4400 as the DESK_DONE block grew: combined-topic regex + the blooket
+// cross-device self-attest comments.)
 const saveIdx = desk.indexOf('function _studentMarkSave');
-const saveBody = saveIdx === -1 ? '' : desk.slice(saveIdx, saveIdx + 3600);
+const saveBody = saveIdx === -1 ? '' : desk.slice(saveIdx, saveIdx + 4400);
 
 describe('W4 -- Do Now grade pills refresh after Done', () => {
     it('_studentMarkSave exists', () => {

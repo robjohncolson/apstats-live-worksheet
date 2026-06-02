@@ -618,6 +618,28 @@ describe('W1: computeLessonGrades — worksheet blank scoring', () => {
     expect(l.lessonGrade).toBe(100);
   });
 
+  it('a blooket DESK_DONE self-attest (BL-…-DESK_DONE) is grade-inert', () => {
+    // The cross-device blooket Done writes BL-U{u}-L{l}-DESK_DONE with source
+    // 'worksheet' (CALENDAR_SYNC). It must NOT feed Cws (classifyItem returns
+    // null for it; and it fails BLANK_ITEM_PATTERN) NOR the blooket track
+    // (source !== 'blooket'). 3 correct blanks → Cws 100; the BL- row changes
+    // nothing.
+    const rows = [
+      makeBlankRow('WS-U1L1-Q1', 1),
+      makeBlankRow('WS-U1L1-Q2', 1),
+      makeBlankRow('WS-U1L1-Q3', 1),
+      makeRow('BL-U1-L1-DESK_DONE', { source: 'worksheet', score: 0.8 }),
+    ];
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
+      worksheetBlankCounts: BLANK_COUNTS,
+      weights: W1_WEIGHTS,
+    });
+    const l = map.get('1.1');
+    expect(l.Cws).toBe(100);        // unchanged by the BL- self-attest
+    expect(l.blooket).toBe(null);   // BL-…-DESK_DONE is NOT a blooket grade row
+    expect(l.lessonGrade).toBe(100);
+  });
+
   it('renormalization when ws feeder absent (no blank rows): W:Q = 2:3', () => {
     // No blanks submitted. Cws = null. FRQ-E (W=100), quiz 0%.
     // B = (2*100 + 3*0) / (2+3) = 200/5 = 40.

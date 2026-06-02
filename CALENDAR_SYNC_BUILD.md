@@ -76,6 +76,19 @@ across devices. Extended the sync to the per-resource Done button:
   ≥69%), so a worksheet done on any computer unlocks the Done button here too. typeof-guarded (cold
   `_gradeLessonsCache` → falls back to the local %; the panel re-renders when `/grade` lands).
 
+## Follow-up: Blooket flashcards sync too (2026-06-02)
+Teacher: completed the 1.1 flashcards, then had to redo them on another computer. Blooket was the
+ONE resource excluded from the sync (its completion lived only in per-device localStorage). Now
+synced like worksheet/quiz, but kept **grade-inert**:
+- `_studentMarkSave` no longer skips `blooket` — it writes a DESK_DONE with a **`BL-`** prefix
+  (`BL-U{u}-L{l}-DESK_DONE`, distinct from `WS-`/`CR-` so the three don't collide on the upsert key)
+  and **source `'worksheet'` (never `'blooket'`)**.
+- Grade safety (verified + test-guarded): the `BL-…-DESK_DONE` itemId classifies to `null` in
+  `lesson-grade.js` (skipped), fails `BLANK_ITEM_PATTERN` (excluded from `Cws`), and its source isn't
+  `'blooket'` (can't feed the Blooket grade track). So §6 grade-exclusion is preserved.
+- `computeDonow` maps `BL-`→`'blooket'` in `selfDoneArtifacts`; the client hydrates `<topic>|blooket`,
+  so a flashcard pass on any computer shows "✓ Completed" everywhere (no redo).
+
 ## Known limitation (accepted)
 Like the pre-existing per-device grey-out, the synced grey-out has **no un-do**: DESK_DONE rows are
 append-only (no DELETE/tombstone), and `_hydrateMarksFromDonow` only seeds (never removes), so a

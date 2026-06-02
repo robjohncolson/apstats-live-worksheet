@@ -733,15 +733,16 @@ describe('computeDonow — selfDone (per-resource DESK_DONE → cross-device gre
     expect(out.lessons.every(l => l.selfDone === false)).toBe(true);
   });
 
-  it('records WHICH artifacts were self-done (WS-→worksheet, CR-→quiz)', () => {
+  it('records WHICH artifacts were self-done (WS-→worksheet, CR-→quiz, BL-→blooket)', () => {
     const rows = [
       { item_id: 'WS-U1-L1-DESK_DONE', topic: '1.1', source: 'worksheet' },
       { item_id: 'CR-U1-L1-DESK_DONE', topic: '1.1', source: 'curriculum_quiz' },
+      { item_id: 'BL-U1-L1-DESK_DONE', topic: '1.1', source: 'worksheet' }, // blooket flashcard pass
     ];
     const out = computeDonow(rows, FIXTURE_MANIFEST);
     const l11 = out.lessons.find(l => l.lesson === '1.1');
     expect(l11.selfDone).toBe(true);
-    expect([...l11.selfDoneArtifacts].sort()).toEqual(['quiz', 'worksheet']);
+    expect([...l11.selfDoneArtifacts].sort()).toEqual(['blooket', 'quiz', 'worksheet']);
   });
 
   it('selfDoneArtifacts is an empty array when nothing is self-done', () => {
