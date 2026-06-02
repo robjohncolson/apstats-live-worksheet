@@ -96,21 +96,19 @@ describe('Desk: sequential lesson gate', () => {
     expect(DESK).toMatch(/\.cell-locked\s*\{/);
   });
 
-  // ── video Done button removed ─────────────────────────────────────────────
-  it('07: video no longer renders a Done button or a visited tag', () => {
-    // The video render loop must NOT call _doneBtn('video') / _visitedTag('video').
+  // ── video shows "visited", never "done" ───────────────────────────────────
+  it('07: video renders a visited tag, never a Done button', () => {
+    // A video can't be verified as watched, so it shows "visited" (opened),
+    // never "done"/"Completed". The render loop uses _visitedTag('video').
     expect(DESK).not.toMatch(/_doneBtn\(\s*['"]video['"]\s*\)/);
-    expect(DESK).not.toMatch(/_visitedTag\(\s*['"]video['"]\s*\)/);
+    expect(DESK).toMatch(/lessonHtml\s*\+=\s*_visitedTag\(\s*['"]video['"]\s*\)/);
   });
 
-  it('08: _videoDoneTag exists and is rendered in the video loop', () => {
-    expect(DESK).toMatch(/function\s+_videoDoneTag\s*\(/);
-    const body = fnBody(DESK, '_videoDoneTag');
-    // Keys off the worksheet mark — video completion derives from the worksheet.
-    expect(body).toMatch(/worksheet/);
-    expect(body).toMatch(/\.ts/);
-    // It is invoked when building the lesson HTML for videos.
-    expect(DESK).toMatch(/lessonHtml\s*\+=\s*_videoDoneTag\s*\(\s*\)/);
+  it('08: the worksheet-derived "done" video tag is gone', () => {
+    // _videoDoneTag (which marked a video "done" once the worksheet was done) is
+    // removed — we never claim a video is done, only visited.
+    expect(DESK).not.toMatch(/function\s+_videoDoneTag\s*\(/);
+    expect(DESK).not.toMatch(/_videoDoneTag\s*\(\s*\)/);
   });
 
   // ── _isLessonComplete real-execution smoke tests ──────────────────────────

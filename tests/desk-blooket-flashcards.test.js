@@ -155,6 +155,18 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(body).toMatch(/Done\s*\(flashcards\)/);
   });
 
+  it('13b: blooket Done button shows the recorded SCORE (like the worksheet), via _blooketScoreFor', () => {
+    // The Blooket button surfaces a real score ("Done (N%)") from the /grade
+    // lessons[] cache once a game/flashcard score exists — not a bare "Completed".
+    expect(DESK).toMatch(/function\s+_blooketScoreFor\s*\(/);
+    const helper = fnBody(DESK, '_blooketScoreFor');
+    expect(helper).toMatch(/_gradeLessonsCache/);
+    expect(helper).toMatch(/\.blooket/);
+    const body = fnBody(DESK, 'showResourcePanel');
+    expect(body).toMatch(/_blooketScoreFor\(/);
+    expect(body).toMatch(/Done \(' \+ _bnn/); // the score rendered into the label
+  });
+
   it('14: _bfCloseUI clears _bfState (called by both close + finish; no leak)', () => {
     // 2026-05-20: close path was refactored into closeBlooketFlashcards
     // (which saves progress first) + _bfCloseUI (which clears in-memory

@@ -5196,6 +5196,24 @@ function _getCwsForTopic(topicId) {
   } catch (_) { return null; }
 }
 
+// Blooket score for a topic, read from the /grade lessons[] cache. Returns the
+// resolved Blooket grade (the real game score, else the 80% flashcard make-up)
+// on 0..100, or null when the topic has no recorded Blooket / the cache is cold.
+// Same source + shape as _getCwsForTopic so the Desk Done button can show a real
+// score (like the worksheet/quiz) instead of a bare "Completed".
+function _blooketScoreFor(topicId) {
+  try {
+    if (!topicId || !Array.isArray(_gradeLessonsCache)) return null;
+    for (var i = 0; i < _gradeLessonsCache.length; i++) {
+      if (_gradeLessonsCache[i] && _gradeLessonsCache[i].lessonKey === topicId) {
+        var b = _gradeLessonsCache[i].blooket;
+        return (typeof b === 'number') ? b : null;
+      }
+    }
+    return null;
+  } catch (_) { return null; }
+}
+
 // Quiz-Done gate threshold (percent): a quiz can be marked Done only once the
 // student has answered >=40% of its questions AND scored >=40% correct. 40
 // mirrors the v3 grading "floor" used elsewhere in the grade model.
@@ -8052,6 +8070,26 @@ function showResourcePanel(inf, dateStr) {
             if (!_signedIn) return '';
             var key = _stuTopicId + '|' + artifact;
             var entry = _marks[key] || {};
+            // Blooket: show the recorded SCORE (real game score, else the 80%
+            // flashcard make-up) like the worksheet/quiz Done buttons — not a bare
+            // "Completed". Score flows from the /grade lessons[] cache; handled
+            // before the generic Completed branch so the % always shows.
+            if (artifact === 'blooket') {
+                var bScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(_stuTopicId) : null;
+                if (bScore != null) {
+                    var _bnn = Math.round(bScore);
+                    var _btip = 'Blooket score ' + _bnn + '% (real game score, or 80% for a flashcard make-up).'
+                        + (entry.ts ? ' Recorded ' + new Date(entry.ts).toLocaleString() + '.' : '');
+                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.7" title="' + _btip + '">&#10003; Done (' + _bnn + '%)</button>';
+                }
+                if (entry.ts) {
+                    // Marked done locally but the score hasn't synced into the cache yet.
+                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + ' — score syncing">&#10003; Completed</button>';
+                }
+                // No score yet → the flashcard quiz IS the make-up. Clicking Done
+                // opens the flashcards; an 8/10 pass records 80%.
+                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Play the Blooket, or take the flashcard quiz to make it up to 80%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
+            }
             if (entry.ts) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + '">&#10003; Completed</button>';
             }
@@ -8123,13 +8161,8 @@ function showResourcePanel(inf, dateStr) {
                 }
                 // Off-pattern worksheet (no tracker) → legacy visit timer.
             }
-            // Blooket: the flashcard quiz IS the completion check. Clicking
-            // Done opens the quiz immediately; a >=80% pass is what records
-            // the mark. No visit timer — the flashcards supersede that weak
-            // proxy (same reasoning as the worksheet completion gate above).
-            if (artifact === 'blooket') {
-                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Take the flashcard quiz to verify completion" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
-            }
+            // (Blooket is fully handled at the top of _doneBtn — it shows the
+            // recorded score, or the clickable flashcard make-up when none yet.)
             // Legacy visit timer — now only reached by OFF-PATTERN worksheets
             // (no completion tracker). The instrumented worksheets use the
             // completion gate above; Blooket the flashcard quiz; the quiz uses
@@ -8152,15 +8185,10 @@ function showResourcePanel(inf, dateStr) {
             if (!entry.visitedAt) return '';
             return ' <span style="font-size:9px;color:#1f8b3b;margin-left:4px" title="Opened ' + new Date(entry.visitedAt).toLocaleString() + '">&#10003; visited</span>';
         }
-        // Video has no Done button — completing the worksheet presupposes the
-        // video. Show a checkmark next to each video link once this lesson's
-        // worksheet is marked Done (LESSON_GATE_BUILD.md §2).
-        function _videoDoneTag() {
-            if (!_signedIn) return '';
-            var ws = _marks[_stuTopicId + '|worksheet'] || {};
-            if (!ws.ts) return '';
-            return ' <span style="font-size:9px;color:#1f8b3b;margin-left:4px" title="Completed — the worksheet covers this video">&#10003; done</span>';
-        }
+        // Video shows only a "visited" tag (via _visitedTag('video')) — never a
+        // "done"/"Completed" mark, since there's no way to verify a video was
+        // actually watched. (Replaces the old _videoDoneTag, which inferred "done"
+        // from the worksheet being completed.)
         // Onclick fragment for each link (worksheet/quiz/blooket/video) —
         // records the first visit + schedules a panel re-render so the
         // Done countdown shows up. Topic id has no quotes/backslashes by
@@ -8194,7 +8222,7 @@ function showResourcePanel(inf, dateStr) {
                         // Pre-cohort with no Drive copy: show locked placeholder.
                         lessonHtml += '<span style="color:#888;text-decoration:line-through;cursor:not-allowed" title="Available when school starts (' + SCHOOL_YEAR_START + ')">Video ' + (i + 1) + ' (locked until ' + SCHOOL_YEAR_START + ')</span>';
                     }
-                    lessonHtml += _videoDoneTag();
+                    lessonHtml += _visitedTag('video');
                     lessonHtml += '</div>';
                 });
             }
