@@ -3,8 +3,9 @@
 // modal-scoped keydown handler) since the UX was removed per teacher feedback.
 // 2026-06 rewrite: the inline quiz self-report score input (prong A) was
 // REPLACED by an auto score gate — the quiz Done button reads the recorded
-// cr-quiz performance (_quizPerfFor), shows a simple score = correct/total
-// ("Done (nn%)"), and unlocks at >=40%. Pins 05/06/16 updated accordingly.
+// cr-quiz performance (_quizPerfFor), shows a simple score = sum(credit)/total
+// (partial credit: E=1, P=2/3, I=1/3 from an AI review; "Done (nn%)"), unlocks
+// at >=40%. Pins 05/06/16 updated accordingly.
 // Kept: visit-gate preservation (off-pattern worksheets) + AI-tutor button
 // preservation + removal regression guards.
 //
@@ -72,9 +73,10 @@ describe('DESK_MODAL_POLISH — prong A inline quiz score + removal regression p
     expect(DESK, '_studentMarkQuizCancel removed').not.toMatch(/_studentMarkQuizCancel/);
   });
 
-  it('pin 06: quiz score = correct/total, shown as a simple "Done (nn%)", gate at >=40%', () => {
+  it('pin 06: quiz score = sum(credit)/total (partial credit), "Done (nn%)", gate >=40%', () => {
     const body = fnBody(DESK, '_quizPerfFor');
-    expect(body, 'score is correct out of total (unanswered = wrong)').toMatch(/correct\s*\/\s*total/);
+    expect(body, 'score sums per-item credit over total').toMatch(/creditSum\s*\/\s*total/);
+    expect(body, 'reads a per-item credit field (E=1 / P=2⁄3 / I=1⁄3)').toMatch(/q\.credit/);
     expect(body, 'eligible at >= threshold').toMatch(/scorePct\s*>=\s*DESK_QUIZ_DONE_THRESHOLD/);
     expect(DESK, 'threshold constant is 40').toMatch(/DESK_QUIZ_DONE_THRESHOLD\s*=\s*40/);
     // Single simple score on the face — no "% complete", no answered fraction.

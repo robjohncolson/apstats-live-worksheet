@@ -5139,8 +5139,15 @@ function _quizPerfFor(topicId) {
     var quiz = (lesson.items && Array.isArray(lesson.items.quiz)) ? lesson.items.quiz : [];
     var total = typeof lesson.quizTotal === 'number' ? lesson.quizTotal : 0;
     if (total <= 0) return null;  // no known quiz for this topic
+    // Partial credit: sum each item's credit (E=1, P=2/3, I=1/3 from an AI
+    // review). Fall back to the binary correct flag for older /grade payloads
+    // that predate the credit field.
+    var creditSum = quiz.reduce(function (s, q) {
+      if (!q) return s;
+      return s + (typeof q.credit === 'number' ? q.credit : (q.correct ? 1 : 0));
+    }, 0);
     var correct = quiz.filter(function (q) { return q && q.correct; }).length;
-    var scorePct = (correct / total) * 100;
+    var scorePct = (creditSum / total) * 100;
     return {
       correct: correct,
       total: total,
@@ -7555,9 +7562,10 @@ function showResourcePanel(inf, dateStr) {
                     // No known quiz for this topic (or the grade cache is cold).
                     return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.45" title="Take the quiz while signed in — Done unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%.">Done</button>';
                 }
-                // Just the score: correct out of the whole quiz (e.g. 2/3 = 66%).
+                // Score = credit out of the whole quiz (E=1, P=2/3, I=1/3 from an
+                // AI review), e.g. 2 full of 3 = 66%.
                 var _qnn = Math.round(perf.scorePct);
-                var _qtip = perf.correct + ' of ' + perf.total + ' correct — unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%+.';
+                var _qtip = 'Quiz score ' + _qnn + '% (partial credit for AI-reviewed answers) — unlocks at ' + DESK_QUIZ_DONE_THRESHOLD + '%+.';
                 if (!perf.eligible) {
                     return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.5" title="' + _qtip + '">Done (' + _qnn + '%)</button>';
                 }

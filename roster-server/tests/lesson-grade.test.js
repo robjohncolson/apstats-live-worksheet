@@ -885,3 +885,54 @@ describe('computeLessonGrades — AI-granted quiz exceptions flip an item correc
     expect(acc ? acc.Q : null).toBe(null);
   });
 });
+
+// ── quiz_review partial credit (E=1, P=2/3, I=1/3) ────────────────────────────
+// AI-review rows (source='quiz_review', item_id <base>#rev, score=credit) give a
+// wrong quiz item partial credit; per-item credit = MAX(answer-key, review).
+
+describe('computeLessonGrades — quiz_review partial credit (E=1, P=2/3, I=1/3)', () => {
+  const PKEY = {
+    'U1-L2-Q01': { answerKey: 'A', unit: '1' },
+    'U1-L2-Q02': { answerKey: 'B', unit: '1' },
+    'U1-L2-Q03': { answerKey: 'C', unit: '1' },
+  };
+  const base = [
+    makeRow('U1-L2-Q01', { source: 'curriculum_quiz', response: 'A' }),  // correct → 1
+    makeRow('U1-L2-Q02', { source: 'curriculum_quiz', response: 'X' }),  // wrong
+    makeRow('U1-L2-Q03', { source: 'curriculum_quiz', response: 'Y' }),  // wrong
+  ];
+
+  it('a P review (2/3) lifts a wrong item to partial credit: 1 + 2/3 of 3 = 55.6', () => {
+    const rows = [...base, makeRow('U1-L2-Q02#rev', { source: 'quiz_review', response: 'X', score: 2 / 3 })];
+    expect(computeLessonGrades(rows, FRQ_BAND, PKEY, SAMPLE_SCHEDULE, {}).get('1.2').Q).toBe(55.6);
+  });
+
+  it('P + I reviews stack: 1 + 2/3 + 1/3 = 2 of 3 = 66.7', () => {
+    const rows = [
+      ...base,
+      makeRow('U1-L2-Q02#rev', { source: 'quiz_review', response: 'X', score: 2 / 3 }),
+      makeRow('U1-L2-Q03#rev', { source: 'quiz_review', response: 'Y', score: 1 / 3 }),
+    ];
+    expect(computeLessonGrades(rows, FRQ_BAND, PKEY, SAMPLE_SCHEDULE, {}).get('1.2').Q).toBe(66.7);
+  });
+
+  it('credit = MAX(key, review): a correct item is not lowered by a low review', () => {
+    const rows = [...base, makeRow('U1-L2-Q01#rev', { source: 'quiz_review', response: 'A', score: 1 / 3 })];
+    const acc = computeLessonGrades(rows, FRQ_BAND, PKEY, SAMPLE_SCHEDULE, {}).get('1.2');
+    expect(acc.Q).toBe(33.3); // Q01 stays 1; Q02/Q03 = 0
+    expect(acc.quizItems.find(q => q.itemId === 'U1-L2-Q01').credit).toBe(1);
+  });
+
+  it('legacy quiz_exception still reads as full credit (1.0)', () => {
+    const rows = [...base, makeRow('U1-L2-Q02#exc', { source: 'quiz_exception', response: 'X' })];
+    expect(computeLessonGrades(rows, FRQ_BAND, PKEY, SAMPLE_SCHEDULE, {}).get('1.2').Q).toBe(66.7);
+  });
+
+  it('buildLessonsArray surfaces a per-item credit field', () => {
+    const rows = [...base, makeRow('U1-L2-Q02#rev', { source: 'quiz_review', response: 'X', score: 2 / 3 })];
+    const map = computeLessonGrades(rows, FRQ_BAND, PKEY, SAMPLE_SCHEDULE, {});
+    const lessons = buildLessonsArray(map, SAMPLE_SCHEDULE, undefined, null, computeQuizTotals(PKEY, SAMPLE_SCHEDULE));
+    const q02 = lessons.find(x => x.lessonKey === '1.2').items.quiz.find(q => q.itemId === 'U1-L2-Q02');
+    expect(q02.credit).toBeCloseTo(2 / 3, 5);
+  });
+});

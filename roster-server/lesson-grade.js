@@ -236,16 +236,25 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     return null;
   }
 
-  // AI-granted quiz exceptions (source='quiz_exception', item_id `<base>#exc`):
-  // collect the BASE item ids they forgive, so a wrong quiz item the AI accepted
-  // on appeal scores correct. Built before the scoring loop so row order doesn't
-  // matter. (The exception rows themselves match no scoring branch below, so they
-  // are never double-counted; #exc keeps them distinct under latestPerItem.)
-  const exceptionSet = new Set();
+  // AI-review partial credit per quiz item (generalizes the s125 quiz_exception):
+  //   source='quiz_review',    item_id `<base>#rev`, score = earned credit (1 / 2/3 / 1/3)
+  //   source='quiz_exception', item_id `<base>#exc` (legacy E-only flip) = credit 1.0
+  // Built before the scoring loop so row order doesn't matter. The review rows
+  // match no scoring branch below (never double-counted); the #rev/#exc suffixes
+  // keep them distinct from the quiz row under latestPerItem.
+  const reviewCredit = new Map();
   for (const row of (Array.isArray(rows) ? rows : [])) {
-    if (row && row.source === 'quiz_exception' && typeof row.item_id === 'string') {
-      exceptionSet.add(row.item_id.replace(/#exc$/i, ''));
+    if (!row || typeof row.item_id !== 'string') continue;
+    let base = null, credit = 0;
+    if (row.source === 'quiz_review') {
+      base = row.item_id.replace(/#rev$/i, '');
+      const c = Number(row.score);
+      credit = Number.isFinite(c) ? Math.min(Math.max(c, 0), 1) : 0;
+    } else if (row.source === 'quiz_exception') {
+      base = row.item_id.replace(/#exc$/i, '');
+      credit = 1;
     }
+    if (base) reviewCredit.set(base, Math.max(reviewCredit.get(base) || 0, credit));
   }
 
   for (const row of (Array.isArray(rows) ? rows : [])) {
@@ -270,13 +279,13 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
       } else if (src === 'curriculum_quiz') {
         const keyEntry = answerKey && answerKey[row.item_id];
         if (keyEntry && keyEntry.answerKey != null) {
-          acc.quizItems.push({
-            itemId: row.item_id,
-            // OR in an AI-granted exception: a wrong answer the AI accepted on
-            // appeal counts correct (the #exc row's base item id is in the set).
-            correct: isCorrect(row.response, keyEntry) || exceptionSet.has(row.item_id),
-            ts,
-          });
+          // Partial credit = max of the answer-key result (1/0) and any AI-review
+          // credit (E=1, P=2/3, I=1/3) for this item. "correct" = full credit.
+          const credit = Math.max(
+            isCorrect(row.response, keyEntry) ? 1 : 0,
+            reviewCredit.get(row.item_id) || 0
+          );
+          acc.quizItems.push({ itemId: row.item_id, correct: credit >= 1, credit, ts });
         }
         // ungradable quiz item — don't add to quizItems
       } else if (src === 'worksheet') {
@@ -344,11 +353,11 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     // if the topic's total is somehow unknown.
     let Q = null;
     if (acc.quizItems.length > 0) {
-      const correctCount = acc.quizItems.filter(q => q.correct).length;
+      const creditSum = acc.quizItems.reduce((s, q) => s + (q.credit || 0), 0);
       const quizDenom = (quizTotals[acc.topicKey] && quizTotals[acc.topicKey] > 0)
         ? quizTotals[acc.topicKey]
         : acc.quizItems.length;
-      Q = (correctCount / quizDenom) * 100;
+      Q = (creditSum / quizDenom) * 100;
     }
 
     // B = three-way weighted mean, renormalized over PRESENT feeders
@@ -958,7 +967,7 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       items: lessonResult
         ? {
             frq: lessonResult.frqItems.map(f => ({ itemId: f.itemId, score: f.score, ts: f.ts })),
-            quiz: lessonResult.quizItems.map(q => ({ itemId: q.itemId, correct: q.correct, ts: q.ts })),
+            quiz: lessonResult.quizItems.map(q => ({ itemId: q.itemId, correct: q.correct, credit: q.credit, ts: q.ts })),
             worksheet: lessonResult.worksheetItems.map(w => ({ itemId: w.itemId, score: w.score !== undefined ? w.score : null, ts: w.ts })),
           }
         : { frq: [], quiz: [], worksheet: [] },
