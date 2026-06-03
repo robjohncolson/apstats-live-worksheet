@@ -56,6 +56,10 @@ function installShippedFlow(overrides = {}) {
     record: vi.fn(async () => ({ ok: true, ledgerId: 'x' })),
     fetchPrior: vi.fn(async () => new Map()),
     fetch: vi.fn(),
+    // class-view drawer deps
+    loadAggregateData: vi.fn(),
+    spawnPeerSnow: vi.fn(),
+    rosterToken: null,                              // null = not signed in
     ...overrides
   };
 
@@ -75,9 +79,17 @@ function installShippedFlow(overrides = {}) {
   globalThis.recordBlankToGradebook = mocks.recordBlankToGradebook;
   globalThis.gradingState = gradingState;
 
+  // class-view drawer globals
+  globalThis.loadAggregateData = mocks.loadAggregateData;
+  globalThis.currentQuestionBlanks = [];
+  globalThis.spawnPeerSnow = mocks.spawnPeerSnow;
+  globalThis.normalize = (s) => String(s == null ? '' : s).toLowerCase().trim().replace(/[^\w\s./-]/g, '');
+
   // window.* the IIFE reads/writes.
   window.checkAnswers = mocks.checkAnswersOrig;
   window.gradebookClient = { record: mocks.record, fetchPrior: mocks.fetchPrior };
+  window.rosterClient = { token: () => mocks.rosterToken };
+  window.ROSTER_SERVICE_URL = 'https://roster.example';
   window.RAILWAY_SERVER_URL = 'https://ai.example';
   globalThis.fetch = mocks.fetch;
 
@@ -106,6 +118,16 @@ function addBlank(id, { answer = 'evidence', value = '', verdict = 'incorrect', 
   return input;
 }
 
+function makeDrawerContent() {
+  const dc = document.createElement('div');
+  dc.id = 'drawerContent';
+  document.body.appendChild(dc);
+  return dc;
+}
+function classFetch(responses) {
+  return { ok: true, json: async () => ({ ok: true, itemId: 'x', section: 'B', total: responses.length, responses }) };
+}
+
 function addTextarea(id, value) {
   const ta = document.createElement('textarea');
   ta.id = id;
@@ -126,11 +148,11 @@ afterEach(() => {
   for (const k of ['UNIT_ID', 'checkAnswer', 'gradeReflection', 'fetchEnrichedAnswer',
     'renderEnrichedPass', 'showFeedback', 'recordReflectionToGradebook', 'recordBlankToGradebook',
     'updateWorksheetCompletion', 'gbUnitFromItemId', 'gbWsPrefix', '_wsReflectionTextareas',
-    'gradingState', 'fetch']) {
+    'gradingState', 'fetch', 'loadAggregateData', 'currentQuestionBlanks', 'spawnPeerSnow', 'normalize']) {
     try { delete globalThis[k]; } catch (_) {}
   }
-  for (const k of ['aiGradeWorksheet', 'checkAnswers', 'gradebookClient',
-    'RAILWAY_SERVER_URL', '_aiGradeBusy', '_aiLastGradedHash', '__aiWorksheetGradeWired']) {
+  for (const k of ['aiGradeWorksheet', 'checkAnswers', 'gradebookClient', 'rosterClient',
+    'ROSTER_SERVICE_URL', 'RAILWAY_SERVER_URL', '_aiGradeBusy', '_aiLastGradedHash', '__aiWorksheetGradeWired']) {
     try { delete window[k]; } catch (_) {}
   }
 });
@@ -487,6 +509,71 @@ describe('merged button — polish fold + win feedback', () => {
   });
 });
 
+describe('class view drawer — named dotplot / frequency table', () => {
+  it('signed in: dotplot with labels, counts, and the key highlighted (≤10 distinct)', async () => {
+    const b = addBlank('WS-U6L1-2-Q1', { value: 'x', answer: '0.728|.728' });
+    const dc = makeDrawerContent();
+    installShippedFlow({ rosterToken: 'tok' });
+    globalThis.currentQuestionBlanks = [b];
+    mocks.fetch.mockResolvedValue(classFetch([
+      { answer: '0.728', label: 'Ana S.' },
+      { answer: '0.728', label: 'Ben J.' },
+      { answer: '0.73', label: 'Cara' },
+    ]));
+
+    await window.loadAggregateData();
+
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/class\/blank\/WS-U6L1-2-Q1$/), expect.any(Object));
+    const html = dc.innerHTML;
+    expect(html).toContain('dotplot');
+    expect(html).toContain('●●');            // two dots for the "0.728" column
+    expect(html).toContain('Ana S.');
+    expect(html).toContain('Ben J.');
+    expect(html).toMatch(/0\.728 ✓/);        // the key answer is highlighted correct
+    expect(html).not.toMatch(/0\.73 ✓/);     // a wrong value is not
+  });
+
+  it('switches to a frequency table when there are >10 distinct answers', async () => {
+    const b = addBlank('WS-U6L1-2-Q1', { value: 'x', answer: 'whatever' });
+    const dc = makeDrawerContent();
+    installShippedFlow({ rosterToken: 'tok' });
+    globalThis.currentQuestionBlanks = [b];
+    const many = [];
+    for (let i = 0; i < 12; i++) many.push({ answer: 'ans' + i, label: 'S' + i });
+    mocks.fetch.mockResolvedValue(classFetch(many));
+
+    await window.loadAggregateData();
+
+    expect(dc.innerHTML).toContain('freq-table');
+    expect(dc.innerHTML).not.toContain('class="dotplot"');
+  });
+
+  it('not signed in: falls back to the original anonymous drawer', async () => {
+    const b = addBlank('WS-U6L1-2-Q1', { value: 'x', answer: '0.728' });
+    makeDrawerContent();
+    installShippedFlow({ rosterToken: null });
+    globalThis.currentQuestionBlanks = [b];
+
+    await window.loadAggregateData();
+
+    expect(mocks.loadAggregateData).toHaveBeenCalled();   // original anonymous renderer
+    expect(mocks.fetch).not.toHaveBeenCalled();           // no roster call when signed out
+  });
+
+  it('signed in but nobody answered: shows the empty class message', async () => {
+    const b = addBlank('WS-U6L1-2-Q1', { value: 'x', answer: '0.728' });
+    const dc = makeDrawerContent();
+    installShippedFlow({ rosterToken: 'tok' });
+    globalThis.currentQuestionBlanks = [b];
+    mocks.fetch.mockResolvedValue(classFetch([]));
+
+    await window.loadAggregateData();
+
+    expect(dc.innerHTML).toMatch(/No one in your class has answered/);
+  });
+});
+
 describe('auto-on-Done — checkAnswers is wrapped', () => {
   it('calling the (wrapped) checkAnswers runs the original AND kicks the AI pass', async () => {
     addBlank('WS-U6L1-2-Q1', { value: 'proof', verdict: 'incorrect' });
@@ -578,6 +665,14 @@ describe('INJECTED_JS invariants (load-bearing)', () => {
   it('win toast reports the accepted count + score delta', () => {
     expect(INJECTED_JS).toMatch(/accepted ' \+ aiAccepted/);
     expect(INJECTED_JS).toMatch(/Score ' \+ pre/);
+  });
+  it('class view: named dotplot/table from roster /class/blank, with anon fallback', () => {
+    expect(INJECTED_JS).toMatch(/\/class\/blank\//);
+    expect(INJECTED_JS).toMatch(/function _aiRenderClassNamed/);
+    expect(INJECTED_JS).toMatch(/distinct <= 10/);          // dotplot vs table cutoff
+    expect(INJECTED_JS).toMatch(/freq-table/);
+    expect(INJECTED_JS).toMatch(/window\.loadAggregateData = async function/);
+    expect(INJECTED_JS).toMatch(/Authorization': 'Bearer '/);  // signed-in only
   });
 });
 

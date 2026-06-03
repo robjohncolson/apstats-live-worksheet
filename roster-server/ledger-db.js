@@ -21,7 +21,7 @@ export function createLiveLedgerDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createLedgerDb(client) {
-  return { insertLedgerRow, getLedgerByStudent };
+  return { insertLedgerRow, getLedgerByStudent, getLedgerByItem };
 
   // Upsert a ledger row on (student_id, source, item_id, attempt).
   // Returns { data, error } — data has ledger_id and evidence_tier on success.
@@ -61,6 +61,21 @@ export function createLedgerDb(client) {
       .eq('student_id', studentId);
     if (prefix) {
       q = q.like('item_id', prefix + '%');
+    }
+    return q.order('recorded_at', { ascending: false });
+  }
+
+  // Fetch all ledger rows for ONE item_id, newest first. Optional source filter.
+  // Used by the section-scoped /class/blank class-answers view. Returns
+  // { data, error } — data rows carry student_id, response, source, recorded_at.
+  async function getLedgerByItem(itemId, opts) {
+    const source = opts && opts.source;
+    let q = client
+      .from('item_ledger')
+      .select('student_id, response, source, recorded_at')
+      .eq('item_id', itemId);
+    if (source) {
+      q = q.eq('source', source);
     }
     return q.order('recorded_at', { ascending: false });
   }

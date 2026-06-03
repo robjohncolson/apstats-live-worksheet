@@ -609,7 +609,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     const classConfig = configOverrides
       ? { ...PHASE3_CONFIG, ...configOverrides }
       : PHASE3_CONFIG;
-    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null });
+    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null, verifyToken });
   }
 
   // ── Teacher Student Console (Phase 1+2A of TEACHER_STUDENT_CONSOLE_SPEC.md) ─

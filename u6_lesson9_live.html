@@ -2422,6 +2422,148 @@
                 });
             } catch (_) {}
 
+            // ==================== CLASS VIEW (named dotplot / frequency table) ===
+            // Upgrades the "📊 Class" drawer. When SIGNED IN, show this student's
+            // SECTION's actual answers to each blank as a dotplot (≤10 distinct
+            // answers) or a frequency table (more), each tagged with a friendly
+            // first-name + last-initial (from roster-server /class/blank), with the
+            // key answer highlighted. NOT signed in → the original anonymous count
+            // view is kept (soft fallback).
+            function _aiClassEsc(s) {
+                return String(s == null ? '' : s)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            }
+            function _aiClassToken() {
+                try { return (window.rosterClient && typeof rosterClient.token === 'function') ? rosterClient.token() : null; }
+                catch (_) { return null; }
+            }
+            async function _aiFetchClassNamed(itemId) {
+                try {
+                    var base = window.ROSTER_SERVICE_URL, token = _aiClassToken();
+                    if (!base || !token) return null;
+                    var res = await fetch(base + '/class/blank/' + encodeURIComponent(itemId),
+                        { headers: { 'Authorization': 'Bearer ' + token } });
+                    if (!res.ok) return null;
+                    var data = await res.json();
+                    return (data && data.ok && Array.isArray(data.responses)) ? data : null;
+                } catch (_) { return null; }
+            }
+            function _aiNormAns(s) {
+                if (typeof normalize === 'function') { try { return normalize(s); } catch (_) {} }
+                return String(s == null ? '' : s).toLowerCase().trim();
+            }
+            function _aiBlankAccepted(blank) {
+                var set = {}, raw = (blank && blank.dataset && blank.dataset.answer) ? blank.dataset.answer : '';
+                raw.split('|').forEach(function (a) { var n = _aiNormAns(a); if (n) set[n] = true; });
+                return set;
+            }
+            function _aiClassPrompt(blank, itemId) {
+                var q = (typeof _aiExtractQuestion === 'function') ? _aiExtractQuestion(blank) : '';
+                q = (q || '').slice(0, 90);
+                return q || itemId;
+            }
+            function _aiGroupResponses(responses) {
+                var groups = {}, order = [];
+                responses.forEach(function (r) {
+                    var a = String(r && r.answer != null ? r.answer : '');
+                    if (!(a in groups)) { groups[a] = []; order.push(a); }
+                    groups[a].push((r && r.label) ? r.label : 'Someone');
+                });
+                order.sort(function (a, b) { return groups[b].length - groups[a].length; });
+                return { groups: groups, order: order };
+            }
+            function _aiRenderClassNamed(blank, itemId, responses) {
+                var g = _aiGroupResponses(responses);
+                var accepted = _aiBlankAccepted(blank);
+                var total = responses.length, distinct = g.order.length;
+                var head = '<div class="class-view"><div class="class-view-head"><strong>' +
+                    _aiClassEsc(_aiClassPrompt(blank, itemId)) + '</strong> <span class="class-view-meta">' +
+                    total + ' answer' + (total === 1 ? '' : 's') + ' · your class</span></div>';
+                if (distinct <= 10) {
+                    // DOTPLOT: one column per distinct answer, a stacked dot per student.
+                    var cols = g.order.map(function (a) {
+                        var who = g.groups[a], n = who.length, correct = !!accepted[_aiNormAns(a)];
+                        var shown = Math.min(n, 40), dots = '';
+                        for (var k = 0; k < shown; k++) dots += '●';
+                        if (n > shown) dots += '…';
+                        return '<div class="dot-col">' +
+                            '<div class="dot-stack" title="' + _aiClassEsc(who.join(', ')) + '">' + dots + '</div>' +
+                            '<div class="dot-count">' + n + '</div>' +
+                            '<div class="dot-label' + (correct ? ' correct' : '') + '" title="' + _aiClassEsc(a) + '">' +
+                            _aiClassEsc(a) + (correct ? ' ✓' : '') + '</div>' +
+                            '<div class="dot-who">' + _aiClassEsc(who.join(', ')) + '</div>' +
+                            '</div>';
+                    }).join('');
+                    return head + '<div class="dotplot">' + cols + '</div></div>';
+                }
+                // FREQUENCY TABLE: too many distinct / free-text answers for a dotplot.
+                var rows = g.order.map(function (a) {
+                    var who = g.groups[a], correct = !!accepted[_aiNormAns(a)];
+                    return '<tr><td class="freq-ans' + (correct ? ' correct' : '') + '">' + _aiClassEsc(a) +
+                        (correct ? ' ✓' : '') + '</td><td class="freq-n">' + who.length +
+                        '</td><td class="freq-who">' + _aiClassEsc(who.join(', ')) + '</td></tr>';
+                }).join('');
+                return head + '<table class="freq-table"><thead><tr><th>Answer</th><th>#</th><th>Who</th></tr></thead><tbody>' +
+                    rows + '</tbody></table></div>';
+            }
+            function _aiRenderClassEmpty(blank, itemId) {
+                return '<div class="class-view"><div class="class-view-head"><strong>' +
+                    _aiClassEsc(_aiClassPrompt(blank, itemId)) + '</strong></div>' +
+                    '<p class="class-empty">No one in your class has answered this yet.</p></div>';
+            }
+            function _aiInjectClassStyles() {
+                if (document.getElementById('ai-class-view-styles')) return;
+                var s = document.createElement('style');
+                s.id = 'ai-class-view-styles';
+                s.textContent = [
+                    '.class-view{margin:0 0 16px 0;padding:8px;border:1px solid #d7ddea;border-radius:8px;background:#fbfcff}',
+                    '.class-view-head{font-size:0.92em;margin-bottom:6px;color:#243}',
+                    '.class-view-meta{color:#789;font-weight:normal;font-size:0.85em}',
+                    '.class-empty{color:#789;font-size:0.85em;margin:4px 2px}',
+                    '.dotplot{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;padding:4px 2px}',
+                    '.dot-col{display:flex;flex-direction:column;align-items:center;min-width:46px;max-width:130px}',
+                    '.dot-stack{font-size:12px;line-height:1.05;color:#6b7a99;letter-spacing:1px;word-break:break-all;text-align:center;min-height:14px}',
+                    '.dot-count{font-weight:bold;font-size:0.85em;margin-top:2px;color:#334}',
+                    '.dot-label{font-size:0.78em;margin-top:2px;text-align:center;overflow-wrap:anywhere}',
+                    '.dot-label.correct,.freq-ans.correct{color:#2e7d32;font-weight:bold}',
+                    '.dot-who{font-size:0.72em;color:#667;margin-top:3px;text-align:center;overflow-wrap:anywhere}',
+                    '.freq-table{width:100%;border-collapse:collapse;font-size:0.82em}',
+                    '.freq-table th,.freq-table td{border:1px solid #e2e6f0;padding:3px 6px;text-align:left;vertical-align:top}',
+                    '.freq-table td.freq-n{text-align:center;font-weight:bold;width:34px}',
+                    '.freq-who{color:#667}'
+                ].join('');
+                (document.head || document.documentElement).appendChild(s);
+            }
+            // Override the drawer loader: named class view when signed in, else the
+            // original anonymous bars.
+            if (typeof window.loadAggregateData === 'function') {
+                var _aiOrigLoadAggregate = window.loadAggregateData;
+                window.loadAggregateData = async function () {
+                    try {
+                        if (!_aiClassToken() || !window.ROSTER_SERVICE_URL) return _aiOrigLoadAggregate.apply(this, arguments);
+                        var content = document.getElementById('drawerContent');
+                        var blanks = (typeof currentQuestionBlanks !== 'undefined' && currentQuestionBlanks) ? currentQuestionBlanks : [];
+                        if (!content || !blanks.length) return _aiOrigLoadAggregate.apply(this, arguments);
+                        _aiInjectClassStyles();
+                        var html = '';
+                        for (var i = 0; i < blanks.length; i++) {
+                            var blank = blanks[i];
+                            var itemId = (blank && blank.dataset) ? blank.dataset.questionId : null;
+                            if (!itemId) continue;
+                            var named = await _aiFetchClassNamed(itemId);
+                            html += (named && named.responses && named.responses.length)
+                                ? _aiRenderClassNamed(blank, itemId, named.responses)
+                                : _aiRenderClassEmpty(blank, itemId);
+                        }
+                        content.innerHTML = html || '<p>No responses yet.</p>';
+                        if (typeof spawnPeerSnow === 'function') { try { spawnPeerSnow(); } catch (_) {} }
+                    } catch (_) {
+                        try { return _aiOrigLoadAggregate.apply(this, arguments); } catch (__) {}
+                    }
+                };
+            }
+
             // -- auto-on-Done: "Check Answers" IS the worksheet's grade/done
             //    action. Wrap it so a check also kicks the AI pass — guarded by
             //    hash dedup + single-flight, so repeat checks don't spam the API.

@@ -78,9 +78,82 @@ function isBlooketSourceMissing(e) {
   return msg.includes('item_ledger_source_check');
 }
 
+// First name + last initial (e.g. "Ana Smith" → "Ana S."). Friendlier and softer
+// than the full name; first-name collisions stay distinguishable. Used by the
+// student-facing /class/blank view so peers see a friendly label, not the opaque
+// fruit_animal login or the full real name.
+function friendlyLabel(realName) {
+  const parts = String(realName || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'Someone';
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  return parts[0] + ' ' + last.charAt(0).toUpperCase() + '.';
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null }) {
+export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken }) {
+
+  // ── GET /class/blank/:itemId ────────────────────────────────────────────────
+  // STUDENT-accessible (NOT teacher-gated). Returns the requester's SECTION's
+  // answers to one worksheet blank, each tagged with a friendly first-name +
+  // last-initial label — NOT the full name, NOT scores, NOT other sections.
+  // Powers the "📊 Class" dotplot / frequency-table drawer. Reuses item_ledger +
+  // roster — no migration.
+  //   Auth: Authorization: Bearer <token> OR ?token=<token>; verifyToken → studentId.
+  //   → 200 { ok:true, itemId, section, total, responses:[{ answer, label }] }
+  //   → 400 bad itemId · 401 forbidden (no valid token) · 500 db error
+  app.get('/class/blank/:itemId', async (req, res) => {
+    try {
+      let token = null;
+      const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+      if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+        token = authHeader.replace(/^Bearer\s+/i, '').trim() || null;
+      }
+      if (!token && typeof req.query.token === 'string' && req.query.token) token = req.query.token;
+
+      const studentId = (token && typeof verifyToken === 'function') ? verifyToken(token) : null;
+      if (!studentId) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+      const itemId = req.params.itemId;
+      if (!itemId || !/^[A-Za-z0-9._-]+$/.test(itemId)) {
+        return res.status(400).json({ ok: false, error: 'bad itemId' });
+      }
+
+      // The requester's section (defines "your class").
+      const meRes = await db.findByStudentId(studentId);
+      const me = meRes && meRes.data;
+      const section = me && me.section ? me.section : null;
+      if (!section) return res.json({ ok: true, itemId, section: null, total: 0, responses: [] });
+
+      // Section roster → student_id → real_name.
+      const rosterRes = await db.listRoster(section);
+      const rosterRows = (rosterRes && rosterRes.data) || [];
+      const nameById = {};
+      rosterRows.forEach((r) => { if (r && r.student_id) nameById[r.student_id] = r.real_name || ''; });
+
+      // Every recorded answer to this blank (worksheet source), newest first.
+      const ledRes = await ledgerDb.getLedgerByItem(itemId, { source: 'worksheet' });
+      const ledRows = (ledRes && ledRes.data) || [];
+
+      // Keep the LATEST answer per IN-SECTION student.
+      const seen = {};
+      const responses = [];
+      for (const row of ledRows) {
+        if (!row || !(row.student_id in nameById)) continue;   // not in this section
+        if (seen[row.student_id]) continue;                    // newest already taken
+        seen[row.student_id] = true;
+        const ans = (row.response === null || row.response === undefined) ? '' : String(row.response).trim();
+        if (!ans) continue;
+        responses.push({ answer: ans, label: friendlyLabel(nameById[row.student_id]) });
+      }
+
+      return res.json({ ok: true, itemId, section, total: responses.length, responses });
+    } catch (err) {
+      console.error('GET /class/blank error:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
 
   // ── GET /class/grades?section= ──────────────────────────────────────────────
   // Teacher-gated. Fans out computeGrade over the roster.
