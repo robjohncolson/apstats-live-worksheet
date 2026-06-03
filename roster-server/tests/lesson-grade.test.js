@@ -642,17 +642,19 @@ describe('W1: computeLessonGrades — worksheet blank scoring', () => {
     expect(l.lessonGrade).toBe(100);  // lessonGrade is Cws/W/Q only — no blooket
   });
 
-  it('a real Blooket GAME score wins over a flashcard make-up', () => {
-    const rows = [
-      makeRow('BLOOKET-U1L1', { source: 'blooket', score: 0.6 }),        // game 60% (0..1)
+  it('blooket = the BETTER of the game and the flashcard (max, not game-wins)', () => {
+    // FLASHCARD_TIMED_DECK_BUILD.md: a strong timed-deck run beats a mediocre game.
+    const higherFlash = computeLessonGrades([
+      makeRow('BLOOKET-U1L1', { source: 'blooket', score: 0.6 }),        // game 60%
       makeRow('BL-U1-L1-DESK_DONE', { source: 'worksheet', score: 80 }), // flashcard 80%
-    ];
-    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE, {
-      worksheetBlankCounts: BLANK_COUNTS,
-      weights: W1_WEIGHTS,
-    });
-    const l = map.get('1.1');
-    expect(l.blooket).toBe(60);   // game preferred, NOT the higher flashcard
+    ], FRQ_BAND, {}, SAMPLE_SCHEDULE, { worksheetBlankCounts: BLANK_COUNTS, weights: W1_WEIGHTS });
+    expect(higherFlash.get('1.1').blooket).toBe(80);  // flashcard wins (it's higher)
+
+    const higherGame = computeLessonGrades([
+      makeRow('BLOOKET-U1L1', { source: 'blooket', score: 0.9 }),        // game 90%
+      makeRow('BL-U1-L1-DESK_DONE', { source: 'worksheet', score: 80 }), // flashcard 80%
+    ], FRQ_BAND, {}, SAMPLE_SCHEDULE, { worksheetBlankCounts: BLANK_COUNTS, weights: W1_WEIGHTS });
+    expect(higherGame.get('1.1').blooket).toBe(90);   // game wins (it's higher)
   });
 
   it('renormalization when ws feeder absent (no blank rows): W:Q = 2:3', () => {

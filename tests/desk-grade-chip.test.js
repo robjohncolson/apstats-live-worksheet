@@ -68,8 +68,9 @@ describe('Desk grade chip — source', () => {
 
   it('06: the worksheet chip uses ledger Cws, NOT the local completion gate', () => {
     // _getCwsForTopic feeds the worksheet chip; _wsCompletionFor stays the gate.
+    // (Window widened 2026-06: _mkGradeChip grew when it gained gate-coloring.)
     const idx = DESK.indexOf('var _mkGradeChip');
-    const block = DESK.slice(idx, idx + 1400);
+    const block = DESK.slice(idx, idx + 2000);
     expect(block).toMatch(/_getCwsForTopic\(slot\.getAttribute\('data-topic'\)\)/);
     expect(block).toMatch(/_quizPerfFor\(slot\.getAttribute\('data-topic'\)\)/);
   });

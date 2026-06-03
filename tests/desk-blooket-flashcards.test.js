@@ -41,22 +41,24 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(DESK).toMatch(/const\s+BLOOKET_PASS_THRESHOLD\s*=\s*0\.80/);
   });
 
-  it('02: blooket Done opens the flashcard quiz with NO visit timer', () => {
-    // 2026-05-20: the 15-min visit timer was removed — the flashcard quiz
-    // IS the completion gate, so the timer was a redundant weak proxy.
+  it('02: blooket has NO visit timer + is launched via the always-available Flashcards button', () => {
+    // 2026-05-20: the 15-min visit timer was removed. 2026-06-02: the blooket Done
+    // button became a persistent "Flashcards" launcher (mode picker) — the score
+    // shows in a separate colored chip (FLASHCARD_TIMED_DECK_BUILD.md).
     expect(DESK, 'the BLOOKET_GATE_MS constant must be gone').not.toMatch(/BLOOKET_GATE_MS/);
-    const body = fnBody(DESK, '_doneBtn');
-    expect(body).toMatch(/artifact\s*===\s*['"]blooket['"]/);
-    expect(body).toMatch(/Done \(flashcards\)/);
+    const body = fnBody(DESK, 'showResourcePanel');
+    // The launcher routes to studentMark(..., 'blooket') and is always clickable.
+    expect(body).toMatch(/studentMark\(this,[^\n]*blooket/);
+    expect(body).toMatch(/Do flashcards/);
+    expect(body).toMatch(/Improve \(flashcards\)/);
   });
 
-  it('03: the blooket branch fires BEFORE the deskDoneGateMs timer (blooket skips it)', () => {
+  it('03: _doneBtn no longer handles blooket (it is launcher + chip in its row now)', () => {
     const body = fnBody(DESK, '_doneBtn');
-    const blooketIdx = body.indexOf("artifact === 'blooket'");
-    const gateIdx = body.indexOf('deskDoneGateMs');
-    expect(blooketIdx, 'blooket branch present in _doneBtn').toBeGreaterThan(-1);
-    expect(gateIdx, 'deskDoneGateMs still used for quiz').toBeGreaterThan(-1);
-    expect(blooketIdx, 'blooket branch must return before the timer').toBeLessThan(gateIdx);
+    expect(body).not.toMatch(/artifact\s*===\s*['"]blooket['"]/);
+    // quiz + worksheet branches are untouched.
+    expect(body).toMatch(/artifact\s*===\s*['"]quiz['"]/);
+    expect(body).toMatch(/artifact\s*===\s*['"]worksheet['"]/);
   });
 
   it('04: studentMark routes blooket to openBlooketFlashcards (NOT the inline score prompt)', () => {
@@ -129,42 +131,43 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(body).toMatch(/_bfFinish/);
   });
 
-  it('11: _bfFinish gates auto-mark on ≥ 80% pass', () => {
+  it('11: _bfFinish gates auto-mark on ≥ 80% pass + commits via _blooketCommit', () => {
     const body = fnBody(DESK, '_bfFinish');
     expect(body).toMatch(/BLOOKET_PASS_THRESHOLD/);
-    expect(body).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topicId\s*,\s*['"]blooket['"]\s*,/);
+    // The quick pass now commits through _blooketCommit (best-wins + refresh).
+    expect(body).toMatch(/_blooketCommit\s*\(\s*btn\s*,\s*topicId\s*,\s*score\s*\)/);
     // Fail path provides a retry button.
     expect(body).toMatch(/Try again/);
   });
 
-  it('12: _bfFinish only calls _studentMarkSave when passed===true', () => {
+  it('12: _bfFinish only commits the score when passed===true', () => {
     const body = fnBody(DESK, '_bfFinish');
-    // The save call must be inside an `if (passed)` block.
-    const saveIdx = body.indexOf('_studentMarkSave');
-    expect(saveIdx).toBeGreaterThan(-1);
-    // Walk backward to find the nearest `if (` — should reference `passed`.
-    const slice = body.slice(0, saveIdx);
-    const lastIf = slice.lastIndexOf('if (passed');
-    expect(lastIf, 'save must be guarded by if (passed)').toBeGreaterThan(-1);
+    const commitIdx = body.indexOf('_blooketCommit');
+    expect(commitIdx).toBeGreaterThan(-1);
+    const slice = body.slice(0, commitIdx);
+    expect(slice.lastIndexOf('if (passed'), 'commit must be guarded by if (passed)').toBeGreaterThan(-1);
   });
 
-  it('13: blooket Done button label hints at the flashcard quiz', () => {
-    // The _doneBtn function emits "Done (flashcards)" for blooket so students
-    // know the click won't immediately mark them done.
+  it('13: blooket row shows a launcher (not an immediate Done) + best-wins commit exists', () => {
+    // The launcher label tells the student the click opens flashcards, not a mark.
     const body = fnBody(DESK, 'showResourcePanel');
-    expect(body).toMatch(/Done\s*\(flashcards\)/);
+    expect(body).toMatch(/Do flashcards/);
+    // _blooketCommit implements best-wins (re-running can't lower the score).
+    expect(DESK).toMatch(/async\s+function\s+_blooketCommit\s*\(/);
+    const commit = fnBody(DESK, '_blooketCommit');
+    expect(commit).toMatch(/score\s*>\s*floor/);              // only save a NEW best
+    expect(commit).toMatch(/_studentMarkSave\s*\(\s*btn\s*,\s*topic\s*,\s*['"]blooket['"]/);
   });
 
-  it('13b: blooket Done button shows the recorded SCORE (like the worksheet), via _blooketScoreFor', () => {
-    // The Blooket button surfaces a real score ("Done (N%)") from the /grade
-    // lessons[] cache once a game/flashcard score exists — not a bare "Completed".
+  it('13b: the blooket SCORE shows as a colored chip from _blooketScoreFor (not a bare Done)', () => {
     expect(DESK).toMatch(/function\s+_blooketScoreFor\s*\(/);
     const helper = fnBody(DESK, '_blooketScoreFor');
     expect(helper).toMatch(/_gradeLessonsCache/);
     expect(helper).toMatch(/\.blooket/);
     const body = fnBody(DESK, 'showResourcePanel');
+    // The chip is built from the blooket score against the 80% gate.
+    expect(body).toMatch(/_scoreChip\(\s*_blScore\s*,\s*80\s*\)/);
     expect(body).toMatch(/_blooketScoreFor\(/);
-    expect(body).toMatch(/Done \(' \+ _bnn/); // the score rendered into the label
   });
 
   it('14: _bfCloseUI clears _bfState (called by both close + finish; no leak)', () => {
@@ -191,11 +194,11 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(DESK).toMatch(/function\s+_bfClearProgress\s*\(/);
   });
 
-  it('17: openBlooketFlashcards tries to resume saved progress before fetching CSV', () => {
-    const body = fnBody(DESK, 'openBlooketFlashcards');
+  it('17: the quick check (_bfStartQuick) tries to resume saved progress before fetching CSV', () => {
+    // The quick-mode load logic moved from openBlooketFlashcards (now the mode
+    // picker) into _bfStartQuick (FLASHCARD_TIMED_DECK_BUILD.md).
+    const body = fnBody(DESK, '_bfStartQuick');
     expect(body).toMatch(/_bfLoadProgress\s*\(\s*topicId\s*\)/);
-    // The fetch must be in an else / fallback branch — saved progress
-    // bypasses it entirely.
     const loadIdx = body.indexOf('_bfLoadProgress');
     const fetchIdx = body.indexOf('await fetch');
     expect(loadIdx, 'load attempt before fetch').toBeLessThan(fetchIdx);
@@ -290,8 +293,8 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(body).toMatch(/allCards\.slice\s*\(\s*0\s*,\s*TARGET\s*\)/);
   });
 
-  it('30: openBlooketFlashcards calls _bfSelectTop10 in the fresh-load branch', () => {
-    const body = fnBody(DESK, 'openBlooketFlashcards');
+  it('30: the quick check (_bfStartQuick) calls _bfSelectTop10 in the fresh-load branch', () => {
+    const body = fnBody(DESK, '_bfStartQuick');
     expect(body).toMatch(/_bfLoadDifficultyTags\s*\(/);
     expect(body).toMatch(/_bfSelectTop10\s*\(/);
     // Selection happens BEFORE the shuffle.
@@ -300,6 +303,14 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(selIdx).toBeGreaterThan(-1);
     expect(shufIdx).toBeGreaterThan(-1);
     expect(selIdx).toBeLessThan(shufIdx);
+  });
+
+  it('30b: the FULL timed deck (_ftStart) does NOT trim to top-10 (uses every card)', () => {
+    expect(DESK).toMatch(/async\s+function\s+_ftStart\s*\(/);
+    const body = fnBody(DESK, '_ftStart');
+    expect(body).toMatch(/_bfRowsToDeck\s*\(\s*_bfParseCsv/);
+    expect(body, 'full deck must not call _bfSelectTop10').not.toMatch(/_bfSelectTop10/);
+    expect(body).toMatch(/_ftCreateRound/);
   });
 
   it('31: _bfSelectTop10 smoke-test — hard-first ordering on synthetic input', () => {
@@ -410,8 +421,8 @@ describe('Desk: Blooket flashcard verification', () => {
     expect(body).toMatch(/nextBtn\.click/);
   });
 
-  it('40: openBlooketFlashcards attaches keydown listener after rendering', () => {
-    const body = fnBody(DESK, 'openBlooketFlashcards');
+  it('40: the quick check (_bfStartQuick) attaches the keydown listener after rendering', () => {
+    const body = fnBody(DESK, '_bfStartQuick');
     expect(body).toMatch(/addEventListener\s*\(\s*['"]keydown['"]\s*,\s*_bfKeydownHandler\s*\)/);
     // Attach AFTER first render call (so initial card is showing).
     const renderIdx = body.indexOf('_bfRenderCard()');

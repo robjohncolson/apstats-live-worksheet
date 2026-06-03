@@ -403,12 +403,21 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     acc.W = W != null ? Math.round(W * 10) / 10 : null;
     acc.Q = Q != null ? Math.round(Q * 10) / 10 : null;
     acc.lessonGrade = B != null ? Math.round(B * 10) / 10 : null;
-    // Blooket (0..100): resolve the real GAME score first, else the flashcard
-    // MAKE-UP, else null. Game wins so a flashcard pass never overrides a played
-    // game (BLOOKET_MAKEUP_BUILD.md). The quarter track turns a missing-but-due
-    // Blooket into 0; null here just means "no evidence yet for this topic."
-    acc.blooket = acc.blooketGame != null ? acc.blooketGame
-                : (acc.blooketFlashcard != null ? acc.blooketFlashcard : null);
+    // Blooket (0..100): the BETTER of the two efforts — the real game score OR the
+    // flashcard score (the timed full deck can legitimately reach 100%, so a strong
+    // flashcard run beats a mediocre game, and vice-versa). Either may be null; the
+    // present one wins, both null → null. Learning is rewarded, not penalized
+    // (FLASHCARD_TIMED_DECK_BUILD.md, supersedes the old "game wins"). The quarter
+    // track turns a missing-but-due Blooket into 0; null here = "no evidence yet."
+    if (acc.blooketGame != null && acc.blooketFlashcard != null) {
+      acc.blooket = Math.max(acc.blooketGame, acc.blooketFlashcard);
+    } else if (acc.blooketGame != null) {
+      acc.blooket = acc.blooketGame;
+    } else if (acc.blooketFlashcard != null) {
+      acc.blooket = acc.blooketFlashcard;
+    } else {
+      acc.blooket = null;
+    }
     acc.blooket = acc.blooket != null ? Math.round(acc.blooket * 10) / 10 : null;
   }
 

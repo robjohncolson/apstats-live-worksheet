@@ -1764,6 +1764,8 @@
 <div id="bf-overlay" class="dialog-overlay" style="display:none">
     <div class="dialog-box" style="max-width:480px;width:92%;text-align:left;padding:12px 16px">
         <div id="bf-header" class="chicago" style="font-size:12px;margin-bottom:6px;border-bottom:1px solid var(--black);padding-bottom:6px"></div>
+        <div id="bf-modepick" style="display:none;margin-bottom:8px"></div>
+        <div id="bf-timer" class="geneva" style="display:none;font-size:14px;font-weight:bold;text-align:right;margin-bottom:6px"></div>
         <div id="bf-progress" class="bf-prog geneva" style="margin-bottom:8px"></div>
         <div id="bf-question" class="geneva" style="font-size:13px;margin-bottom:10px;min-height:32px"></div>
         <div id="bf-choices"></div>
@@ -5214,6 +5216,27 @@ function _blooketScoreFor(topicId) {
   } catch (_) { return null; }
 }
 
+// Shared red/yellow/green color for a score vs its asset gate (the teacher's
+// ask): 🔴 red below the gate, 🟡 amber at/above the gate but < 100, 🟢 green at
+// 100. Returns the hex, or null when there's no numeric score. Single source of
+// truth for both chip renderers (_scoreChip string + _mkGradeChip DOM node).
+function _scoreColor(score, gate) {
+  if (typeof score !== 'number' || !isFinite(score)) return null;
+  var n = Math.round(score);
+  return n >= 100 ? '#1f8b3b' : (n >= gate ? '#b8860b' : '#c0392b');
+}
+
+// Colored, always-on score chip (HTML string) — used for the Blooket row (the
+// persistent _mkGradeChip block excludes Blooket). '' when no score.
+function _scoreChip(score, gate) {
+  var color = _scoreColor(score, gate);
+  if (color == null) return '';
+  var n = Math.round(score);
+  var state = n >= 100 ? 'perfected' : (n >= gate ? 'passing' : 'below the ' + gate + '% gate');
+  return ' <span class="s7chip geneva" style="font-size:9px;font-weight:bold;color:' + color +
+         ';margin-left:6px" title="Score ' + n + '% — ' + state + '">' + n + '%</span>';
+}
+
 // Quiz-Done gate threshold (percent): a quiz can be marked Done only once the
 // student has answered >=40% of its questions AND scored >=40% correct. 40
 // mirrors the v3 grading "floor" used elsewhere in the grade model.
@@ -8070,26 +8093,8 @@ function showResourcePanel(inf, dateStr) {
             if (!_signedIn) return '';
             var key = _stuTopicId + '|' + artifact;
             var entry = _marks[key] || {};
-            // Blooket: show the recorded SCORE (real game score, else the 80%
-            // flashcard make-up) like the worksheet/quiz Done buttons — not a bare
-            // "Completed". Score flows from the /grade lessons[] cache; handled
-            // before the generic Completed branch so the % always shows.
-            if (artifact === 'blooket') {
-                var bScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(_stuTopicId) : null;
-                if (bScore != null) {
-                    var _bnn = Math.round(bScore);
-                    var _btip = 'Blooket score ' + _bnn + '% (real game score, or 80% for a flashcard make-up).'
-                        + (entry.ts ? ' Recorded ' + new Date(entry.ts).toLocaleString() + '.' : '');
-                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.7" title="' + _btip + '">&#10003; Done (' + _bnn + '%)</button>';
-                }
-                if (entry.ts) {
-                    // Marked done locally but the score hasn't synced into the cache yet.
-                    return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + ' — score syncing">&#10003; Completed</button>';
-                }
-                // No score yet → the flashcard quiz IS the make-up. Clicking Done
-                // opens the flashcards; an 8/10 pass records 80%.
-                return ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Play the Blooket, or take the flashcard quiz to make it up to 80%" onclick="studentMark(this,\'' + _stuTopicId + '\',\'' + artifact + '\')">&#10003; Done (flashcards)</button>';
-            }
+            // (Blooket is handled in its row by the always-available Flashcards
+            // launcher + a colored score chip — NOT this generic Done button.)
             if (entry.ts) {
                 return ' <button class="s7btn chicago" disabled style="font-size:9px;padding:1px 4px;margin-left:4px;opacity:0.6" title="Recorded ' + new Date(entry.ts).toLocaleString() + '">&#10003; Completed</button>';
             }
@@ -8238,20 +8243,27 @@ function showResourcePanel(inf, dateStr) {
         if (regEntry && regEntry.urls) {
             const u = regEntry.urls;
             if (u.worksheet) {
+                // Score chip is appended by the persistent _mkGradeChip block below
+                // (colored vs the 60% gate) — no inline chip here, to avoid a duplicate.
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.worksheet + '" target="_blank" onclick="' + _linkClick('worksheet') + '" style="color:#0000cc;text-decoration:underline">Follow-Along Worksheet</a>' + _visitedTag('worksheet') + '<span class="worksheet-done-slot" data-topic="' + _stuTopicId + '">' + _doneBtn('worksheet', u.worksheet) + '</span></div>';
             }
             // Drills deprecated — removed 2026-05
             if (u.quiz) {
+                // Score chip appended by the _mkGradeChip block below (colored vs the 40% gate).
                 lessonHtml += '<div style="margin:3px 0"><a href="' + u.quiz + '" target="_blank" onclick="' + _linkClick('quiz') + '" style="color:#0000cc;text-decoration:underline">Quiz</a>' + _visitedTag('quiz') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="quiz">' + _doneBtn('quiz') + '</span></div>';
             }
             if (u.blooket) {
-                // 2026-05-20: Blooket Done now prompts for "% correct" via the
-                // same inline-score-input pattern as quiz (stronger verification
-                // than a naked Done click — forces the student to look at their
-                // end-of-game score before saving). Still excluded from the
-                // gradebook ledger per Phase 3 spec; the score is captured in
-                // legacy student_progress for teacher review.
-                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _doneBtn('blooket') + '</span></div>';
+                // The Blooket grade = max(real game, flashcard). The chip shows the
+                // current score (colored vs the 80% gate); the launcher is ALWAYS
+                // available so a student can re-run the flashcards to IMPROVE — the
+                // quick check caps at 80%, the full timed deck reaches 100%
+                // (FLASHCARD_TIMED_DECK_BUILD.md).
+                var _blScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(_stuTopicId) : null;
+                var _blLabel = (typeof _blScore === 'number') ? (_blScore >= 100 ? 'Flashcards (practice)' : 'Improve (flashcards)') : 'Do flashcards';
+                var _blBtn = _signedIn
+                    ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Quick check (caps 80%) or the full timed deck (up to 100%)" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
+                    : '';
+                lessonHtml += '<div style="margin:3px 0"><a href="' + u.blooket + '" target="_blank" onclick="' + _linkClick('blooket') + '" style="color:#0000cc;text-decoration:underline">Blooket Review</a>' + _visitedTag('blooket') + _scoreChip(_blScore, 80) + '<span class="desk-quiz-done-slot" data-topic="' + _stuTopicId + '" data-artifact="blooket">' + _blBtn + '</span></div>';
             }
         }
 
@@ -8367,23 +8379,26 @@ function showResourcePanel(inf, dateStr) {
     try {
       var _chipBody = document.getElementById('resource-body');
       if (_chipBody) {
-        var _mkGradeChip = function (pct) {
+        var _mkGradeChip = function (pct, gate) {
           var c = document.createElement('span');
           c.className = 'ws-grade-chip';
           c.style.cssText = 'display:inline-block;margin-left:8px;padding:1px 6px;font-size:10px;' +
             'border:1px solid var(--black,#000);background:#eef7ee;font-family:Chicago,"Courier New",monospace;' +
             'box-shadow:1px 1px 0 var(--black,#000)';
           c.textContent = 'Grade: ' + (pct == null ? '—' : (Math.round(pct * 10) / 10) + '%');
+          // Color the grade red/yellow/green vs this asset's gate (the teacher's ask).
+          var col = (typeof _scoreColor === 'function') ? _scoreColor(pct, gate) : null;
+          if (col) c.style.color = col;
           c.title = 'Your recorded grade for this item (correctness — counts toward your class grade). "—" means nothing is recorded yet.';
           return c;
         };
         _chipBody.querySelectorAll('.worksheet-done-slot[data-topic]').forEach(function (slot) {
-          slot.appendChild(_mkGradeChip(_getCwsForTopic(slot.getAttribute('data-topic'))));
+          slot.appendChild(_mkGradeChip(_getCwsForTopic(slot.getAttribute('data-topic')), DESK_WORKSHEET_DONE_THRESHOLD));
         });
-        // Quiz rows only (Blooket is excluded from the ledger per Phase 3).
+        // Quiz rows only (Blooket has its own colored chip inline in its row).
         _chipBody.querySelectorAll('.desk-quiz-done-slot[data-artifact="quiz"][data-topic]').forEach(function (slot) {
           var perf = (typeof _quizPerfFor === 'function') ? _quizPerfFor(slot.getAttribute('data-topic')) : null;
-          slot.appendChild(_mkGradeChip(perf ? perf.scorePct : null));
+          slot.appendChild(_mkGradeChip(perf ? perf.scorePct : null, DESK_QUIZ_DONE_THRESHOLD));
         });
       }
     } catch (_) { /* grade chip is best-effort */ }
@@ -8763,6 +8778,8 @@ function _bfKeydownHandler(e) {
     _bfAnswer(idx);
 }
 
+// Entry point (from studentMark): show the mode picker, then route to the
+// quick check (existing) or the new full timed deck (FLASHCARD_TIMED_DECK_BUILD.md).
 async function openBlooketFlashcards(btn, topicId) {
     // Codex BLOCKER fold P2: opening the Blooket flashcard quiz in view-as
     // mode would let the teacher drive a quiz that writes back as themselves
@@ -8773,6 +8790,62 @@ async function openBlooketFlashcards(btn, topicId) {
       }
       return;
     }
+    _bfShowModePicker(btn, topicId);
+}
+
+// Show/hide the quiz UI vs the mode picker (both share the bf-overlay modal).
+function _bfHideQuizUI() {
+    ['bf-progress', 'bf-question', 'bf-choices', 'bf-feedback', 'bf-timer'].forEach(function (id) {
+        var el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    var r = document.getElementById('bf-result'); if (r) r.style.display = 'none';
+    var n = document.getElementById('bf-next'); if (n) n.style.display = 'none';
+}
+function _bfShowQuizUI(timed) {
+    var mp = document.getElementById('bf-modepick'); if (mp) mp.style.display = 'none';
+    ['bf-progress', 'bf-question', 'bf-choices', 'bf-feedback'].forEach(function (id) {
+        var el = document.getElementById(id); if (el) el.style.display = '';
+    });
+    var t = document.getElementById('bf-timer'); if (t) t.style.display = timed ? 'block' : 'none';
+}
+
+// The mode picker: Quick check (top-10, untimed, caps 80%) vs Full deck (all
+// cards, timed, up to 100% — the real Blooket substitute).
+function _bfShowModePicker(btn, topicId) {
+    var header = document.getElementById('bf-header');
+    if (header) header.textContent = 'Flashcards — ' + topicId;
+    _bfHideQuizUI();
+    var mp = document.getElementById('bf-modepick');
+    if (mp) {
+        while (mp.firstChild) mp.removeChild(mp.firstChild);
+        mp.style.display = 'block';
+        var intro = document.createElement('div');
+        intro.className = 'geneva';
+        intro.style.cssText = 'font-size:12px;margin-bottom:10px';
+        intro.textContent = 'How do you want to do this Blooket?';
+        mp.appendChild(intro);
+        function modeBtn(titleTxt, descTxt, onPick) {
+            var b = document.createElement('button');
+            b.className = 's7btn s7btn-default';
+            b.style.cssText = 'display:block;width:100%;text-align:left;margin-bottom:8px;padding:8px';
+            var t = document.createElement('div'); t.style.fontWeight = 'bold'; t.textContent = titleTxt;
+            var d = document.createElement('div'); d.style.fontSize = '11px'; d.textContent = descTxt;
+            b.appendChild(t); b.appendChild(d);
+            b.onclick = onPick;
+            return b;
+        }
+        mp.appendChild(modeBtn('⚡ Quick check', 'Top 10 cards, untimed. Caps at 80%.',
+            function () { _bfStartQuick(btn, topicId); }));
+        mp.appendChild(modeBtn('\u{1F3AF} Full deck — timed',
+            'Every card, ' + BLOOKET_FULLDECK_SECONDS + 's each. Earn up to 100% — replaces the in-class Blooket.',
+            function () { _ftStart(btn, topicId); }));
+    }
+    document.getElementById('bf-overlay').style.display = 'block';
+}
+
+// Quick check (top-10, untimed, early-stop 8/10, caps 80%). Unchanged behavior,
+// extracted from the old openBlooketFlashcards so the picker can route to it.
+async function _bfStartQuick(btn, topicId) {
     // 2026-05-20: try to resume saved progress first. If present, use the
     // saved deck (preserves the shuffle order so the student picks up at
     // the same card) and skip the CSV fetch entirely.
@@ -8821,7 +8894,8 @@ async function openBlooketFlashcards(btn, topicId) {
         _bfSaveProgress();
     }
     var header = document.getElementById('bf-header');
-    if (header) header.textContent = 'Flashcard quiz — ' + topicId + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%)';
+    if (header) header.textContent = 'Quick check — ' + topicId + (isResume ? ' (resuming)' : '') + ' (pass ≥ 80%, caps at 80%)';
+    _bfShowQuizUI(false);  // hide the picker, show the quiz, no timer
     document.getElementById('bf-result').style.display = 'none';
     _bfRenderCard();
     document.getElementById('bf-overlay').style.display = 'block';
@@ -8958,7 +9032,7 @@ async function _bfFinish() {
         // Brief pause so the student sees the pass message before the modal closes.
         setTimeout(async function () {
             _bfCloseUI();   // don't re-save on close; we just cleared.
-            await _studentMarkSave(btn, topicId, 'blooket', score);
+            await _blooketCommit(btn, topicId, score);   // best-wins + grade refresh
         }, 1200);
     }
 }
@@ -8969,14 +9043,20 @@ async function _bfFinish() {
 function _bfCloseUI() {
     var ov = document.getElementById('bf-overlay');
     if (ov) ov.style.display = 'none';
-    // Detach keyboard nav listener attached by openBlooketFlashcards.
+    // Detach keyboard nav listeners (quick + timed) and stop any countdown.
     document.removeEventListener('keydown', _bfKeydownHandler);
+    document.removeEventListener('keydown', _ftKeydownHandler);
+    _ftClearTimer();
     _bfState.topic = null;
     _bfState.btn = null;
     _bfState.deck = [];
     _bfState.idx = 0;
     _bfState.score = 0;
     _bfState.answered = false;
+    _ftState.topic = null;
+    _ftState.btn = null;
+    _ftState.round = null;
+    _ftState.answered = false;
 }
 
 function closeBlooketFlashcards() {
@@ -8994,6 +9074,332 @@ function closeBlooketFlashcards() {
         _bfSaveProgress();
     }
     _bfCloseUI();
+}
+
+// ── Full timed deck (FLASHCARD_TIMED_DECK_BUILD.md) ────────────────────────────
+// A rigorous Blooket substitute: ALL cards, BLOOKET_FULLDECK_SECONDS each, no
+// early-stop, up to 100%. A miss (wrong OR timeout) costs 1/3 credit and re-queues
+// the card (no answer revealed); 3 misses = 0 and the card drops. The credit/queue
+// logic is pure (_ft* fns) so it's unit-testable; the DOM/timer layer is thin.
+const BLOOKET_FULLDECK_SECONDS = 40;
+
+var _ftState = {
+    topic: null, btn: null, round: null,
+    answered: false, timerId: null, advanceId: null, remaining: 0, cardStartMs: 0
+};
+
+// ── Pure round logic (no DOM; unit-tested) ──
+function _ftCreateRound(deck) {
+    var d = (deck || []).slice();
+    return {
+        deck: d,
+        order: d.map(function (_, i) { return i; }),               // queue of unresolved card indices
+        status: d.map(function () { return { misses: 0, resolved: false, earned: 0 }; }),
+        log: [],
+        total: d.length
+    };
+}
+function _ftCurrentIdx(round) {
+    return (round && round.order.length) ? round.order[0] : -1;
+}
+// outcome ∈ 'correct' | 'wrong' | 'timeout'. Operates on the FRONT card.
+function _ftRecordOutcome(round, outcome, latencyMs) {
+    if (!round || !round.order.length) return round;
+    var i = round.order.shift();
+    var st = round.status[i];
+    var card = round.deck[i];
+    var correct = (outcome === 'correct');
+    round.log.push({
+        qnum: card.qnum, correct: correct,
+        latencyMs: (typeof latencyMs === 'number' ? latencyMs : 0),
+        wasTimeout: (outcome === 'timeout'), missIndex: st.misses
+    });
+    if (correct) {
+        st.earned = Math.max(0, 1 - st.misses / 3);   // 1, 2/3, 1/3 by PRIOR misses
+        st.resolved = true;
+    } else {
+        st.misses += 1;
+        if (st.misses >= 3) { st.earned = 0; st.resolved = true; }   // struck out → removed
+        else round.order.push(i);                                    // re-queue to the back
+    }
+    return round;
+}
+function _ftScore(round) {
+    if (!round || round.total <= 0) return 0;
+    var sum = 0;
+    for (var i = 0; i < round.status.length; i++) sum += round.status[i].earned;
+    return (sum / round.total) * 100;
+}
+function _ftMisses(round) {
+    var out = [];
+    if (!round) return out;
+    for (var i = 0; i < round.status.length; i++) {
+        if (round.status[i].misses > 0) {
+            var card = round.deck[i];
+            out.push({
+                q: card.q,
+                correctAnswer: card.choices[card.correctIdx],
+                earned: round.status[i].earned,
+                struck: round.status[i].misses >= 3
+            });
+        }
+    }
+    return out;
+}
+function _ftDone(round) {
+    return !round || round.order.length === 0;
+}
+
+// ── Timer ──
+function _ftClearTimer() {
+    if (_ftState.timerId) { clearInterval(_ftState.timerId); _ftState.timerId = null; }
+    // Also cancel the pending 800ms auto-advance — otherwise closing the modal
+    // mid-beat fires _ftRenderCard against a torn-down round (null-round crash).
+    if (_ftState.advanceId) { clearTimeout(_ftState.advanceId); _ftState.advanceId = null; }
+}
+function _ftRenderTimer() {
+    var t = document.getElementById('bf-timer');
+    if (!t) return;
+    t.style.display = 'block';
+    var s = Math.max(0, _ftState.remaining);
+    t.textContent = '⏱ ' + s + 's';
+    t.style.color = s <= 10 ? '#c0392b' : '#333';
+}
+function _ftStartTimer() {
+    _ftClearTimer();
+    _ftState.remaining = BLOOKET_FULLDECK_SECONDS;
+    _ftState.cardStartMs = Date.now();
+    _ftRenderTimer();
+    _ftState.timerId = setInterval(function () {
+        _ftState.remaining -= 1;
+        _ftRenderTimer();
+        if (_ftState.remaining <= 0) {
+            _ftClearTimer();
+            _ftHandle('timeout');
+        }
+    }, 1000);
+}
+
+// ── UI flow ──
+async function _ftStart(btn, topicId) {
+    var csvPath = _bfCsvPath(topicId);
+    if (!csvPath) { showDialog('⚠️', 'No flashcard deck available for this lesson yet.', 'OK'); return; }
+    var text;
+    try {
+        var res = await fetch(csvPath);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        text = await res.text();
+    } catch (e) {
+        showDialog('⚠️', 'Could not load the flashcard deck. Try again.', 'OK');
+        return;
+    }
+    var allCards = _bfRowsToDeck(_bfParseCsv(text));
+    if (!allCards.length) { showDialog('⚠️', 'The flashcard deck for this lesson is empty.', 'OK'); return; }
+    _ftState.topic = topicId;
+    _ftState.btn = btn;
+    _ftState.round = _ftCreateRound(_bfShuffle(allCards));   // FULL deck — no top-10 trim
+    _ftState.answered = false;
+    var header = document.getElementById('bf-header');
+    if (header) header.textContent = 'Timed deck — ' + topicId + ' · ' + BLOOKET_FULLDECK_SECONDS + 's/card · up to 100%';
+    _bfShowQuizUI(true);   // show the quiz + the timer
+    document.getElementById('bf-result').style.display = 'none';
+    document.addEventListener('keydown', _ftKeydownHandler);
+    _ftRenderCard();
+}
+
+function _ftRenderCard() {
+    _ftClearTimer();
+    var round = _ftState.round;
+    if (_ftDone(round)) { _ftFinish(); return; }
+    _ftState.answered = false;
+    var idx = _ftCurrentIdx(round);
+    var card = round.deck[idx];
+    var q = document.getElementById('bf-question');
+    var c = document.getElementById('bf-choices');
+    var p = document.getElementById('bf-progress');
+    var feedback = document.getElementById('bf-feedback');
+    var nextBtn = document.getElementById('bf-next');
+    if (nextBtn) nextBtn.style.display = 'none';   // timed mode auto-advances; no Next
+    if (feedback) feedback.textContent = '';
+    if (p) p.textContent = round.order.length + ' card' + (round.order.length === 1 ? '' : 's') + ' left'
+                         + '  ·  Keys: a-d or 1-4';
+    if (q) q.textContent = card.q;
+    if (c) {
+        while (c.firstChild) c.removeChild(c.firstChild);
+        for (var i = 0; i < card.choices.length; i++) {
+            (function (ci) {
+                var b = document.createElement('button');
+                b.className = 'bf-choice';
+                b.textContent = String.fromCharCode(65 + ci) + '. ' + card.choices[ci];
+                b.onclick = function () { _ftAnswer(ci); };
+                c.appendChild(b);
+            })(i);
+        }
+    }
+    _ftStartTimer();
+}
+
+function _ftAnswer(choiceIdx) {
+    if (_ftState.answered) return;
+    var round = _ftState.round;
+    var idx = _ftCurrentIdx(round);
+    if (idx < 0) return;
+    var card = round.deck[idx];
+    _ftHandle(choiceIdx === card.correctIdx ? 'correct' : 'wrong');
+}
+
+// Records the outcome WITHOUT revealing the correct answer (a revealed answer
+// would make the re-queue trivial). Brief feedback, then auto-advance.
+function _ftHandle(outcome) {
+    if (_ftState.answered) return;
+    _ftState.answered = true;
+    _ftClearTimer();
+    var latency = Date.now() - _ftState.cardStartMs;
+    var round = _ftState.round;
+    var c = document.getElementById('bf-choices');
+    if (c) { var bs = c.querySelectorAll('button'); for (var i = 0; i < bs.length; i++) bs[i].disabled = true; }
+    var st = round.status[_ftCurrentIdx(round)];
+    var willStrike = (outcome !== 'correct') && (st.misses + 1 >= 3);
+    var feedback = document.getElementById('bf-feedback');
+    if (feedback) {
+        feedback.textContent = outcome === 'correct' ? '✓ Correct'
+            : outcome === 'timeout' ? (willStrike ? '⏱ Too slow — out (0 for this card)' : '⏱ Too slow — it’ll come back')
+            : (willStrike ? '✗ Out (0 for this card)' : '✗ Not quite — it’ll come back');
+    }
+    _ftRecordOutcome(round, outcome, latency);
+    // Cancellable auto-advance: store the id so _ftClearTimer (close/teardown) can
+    // cancel it — a stale fire would render against a null round.
+    _ftState.advanceId = setTimeout(function () { _ftState.advanceId = null; _ftRenderCard(); }, 800);
+}
+
+function _ftKeydownHandler(e) {
+    if (!e || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    if (_ftState.answered) return;
+    var key = (e.key || '').toLowerCase();
+    var idx = -1;
+    if (key >= 'a' && key <= 'd') idx = key.charCodeAt(0) - 97;
+    else if (key >= '1' && key <= '4') idx = parseInt(key, 10) - 1;
+    if (idx < 0) return;
+    var round = _ftState.round;
+    var cur = _ftCurrentIdx(round);
+    if (cur < 0) return;
+    if (idx >= round.deck[cur].choices.length) return;
+    e.preventDefault();
+    _ftAnswer(idx);
+}
+
+async function _ftFinish() {
+    _ftClearTimer();
+    document.removeEventListener('keydown', _ftKeydownHandler);
+    var round = _ftState.round;
+    if (!round) return;   // torn down mid auto-advance (modal closed) — nothing to commit
+    var score = Math.round(_ftScore(round) * 10) / 10;
+    var topic = _ftState.topic, btn = _ftState.btn;
+    _ftLogToStore(topic, round.log);   // per-card log (SRS/BKT foundation)
+    _ftRenderRecap(round, score);      // "review your misses"
+    await _blooketCommit(btn, topic, score);   // best-wins + grade refresh
+}
+
+function _ftRenderRecap(round, score) {
+    var q = document.getElementById('bf-question'); if (q) q.textContent = '';
+    var c = document.getElementById('bf-choices'); if (c) while (c.firstChild) c.removeChild(c.firstChild);
+    var p = document.getElementById('bf-progress'); if (p) p.textContent = '';
+    var feedback = document.getElementById('bf-feedback'); if (feedback) feedback.textContent = '';
+    var t = document.getElementById('bf-timer'); if (t) t.style.display = 'none';
+    var nextBtn = document.getElementById('bf-next'); if (nextBtn) nextBtn.style.display = 'none';
+    var result = document.getElementById('bf-result');
+    if (!result) return;
+    while (result.firstChild) result.removeChild(result.firstChild);
+    var head = document.createElement('div');
+    head.style.fontWeight = 'bold';
+    head.textContent = 'You scored ' + score.toFixed(1) + '% on the full timed deck.';
+    result.appendChild(head);
+    var misses = _ftMisses(round);
+    if (misses.length) {
+        var sub = document.createElement('div'); sub.style.cssText = 'margin:6px 0 4px';
+        sub.textContent = 'Review your misses:';
+        result.appendChild(sub);
+        var ul = document.createElement('ul'); ul.style.cssText = 'margin:0;padding-left:18px';
+        misses.forEach(function (m) {
+            var li = document.createElement('li'); li.style.marginBottom = '4px';
+            var qd = document.createElement('div'); qd.textContent = m.q;
+            var ad = document.createElement('div'); ad.style.color = '#1f8b3b';
+            ad.textContent = 'Answer: ' + m.correctAnswer + (m.struck ? '  (out — 0 credit)' : '');
+            li.appendChild(qd); li.appendChild(ad); ul.appendChild(li);
+        });
+        result.appendChild(ul);
+    } else {
+        var perfect = document.createElement('div'); perfect.style.color = '#1f8b3b';
+        perfect.textContent = 'Perfect — no misses!';
+        result.appendChild(perfect);
+    }
+    result.style.display = 'block';
+}
+
+// Per-card answer log → localStorage (the SRS / BKT foundation; v2 schedules
+// cross-session, v3 models mastery). Bounded so it can't grow without limit.
+function _ftLogToStore(topic, log) {
+    try {
+        var email = getStudentEmail();
+        if (!email || !Array.isArray(log) || !log.length) return;
+        var k = 'apstats_srs_log_' + email;
+        var arr = JSON.parse(localStorage.getItem(k) || '[]');
+        if (!Array.isArray(arr)) arr = [];
+        var stamp = Date.now();
+        for (var i = 0; i < log.length; i++) {
+            arr.push({
+                topic: topic, qnum: log[i].qnum, correct: log[i].correct,
+                latencyMs: log[i].latencyMs, wasTimeout: log[i].wasTimeout,
+                missIndex: log[i].missIndex, ts: stamp
+            });
+        }
+        if (arr.length > 2000) arr = arr.slice(arr.length - 2000);
+        localStorage.setItem(k, JSON.stringify(arr));
+    } catch (_) {}
+}
+
+// Record a flashcard blooket score with BEST-WINS semantics — re-practicing must
+// never LOWER the grade (latest-row-wins in the ledger would otherwise let a
+// casual re-run downgrade a strong result). Floors at the displayed blooket
+// (game OR prior flashcard, via /grade) + a synchronous local best. Then refreshes
+// /grade and re-renders the panel so the score chip updates immediately.
+async function _blooketCommit(btn, topic, score) {
+    // Refresh /grade FIRST so the best-wins floor sees the latest CROSS-DEVICE
+    // score. A stale 2nd-device cache could otherwise let a worse run clobber a
+    // better recorded score (the BL row is upserted in place). Re-practicing must
+    // never LOWER the grade.
+    async function _refreshGrade() {
+        try {
+            if (typeof renderDoNowGrades === 'function'
+                && window.rosterClient && typeof window.rosterClient.token === 'function') {
+                var base = window.ROSTER_SERVICE_URL, tok = window.rosterClient.token();
+                if (base && tok) await renderDoNowGrades(base, tok);
+            }
+        } catch (_) {}
+    }
+    await _refreshGrade();   // floor now reflects the latest cross-device best
+    // Floor on the BEST already recorded: the displayed /grade blooket AND the local
+    // mark's last-saved score (recordProgress writes mark.score synchronously, and we
+    // only ever save a NEW best below, so that stored score IS the prior best).
+    var floor = 0;
+    try {
+        var g = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(topic) : null;
+        if (typeof g === 'number') floor = Math.max(floor, g);
+        var marks = (typeof getStudentMarks === 'function') ? getStudentMarks() : {};
+        var m = marks[topic + '|blooket'];
+        if (m && typeof m.score === 'number') floor = Math.max(floor, m.score);
+    } catch (_) {}
+    if (score > floor) {
+        await _studentMarkSave(btn, topic, 'blooket', score);   // records mark.score = score
+    }
+    // Conversion fix: refresh /grade again + re-render the panel so the chip
+    // reflects the just-saved score now, not on the next manual open.
+    await _refreshGrade();
+    try {
+        if (_lastResourcePanel && typeof showResourcePanel === 'function') {
+            showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
+        }
+    } catch (_) {}
 }
 
 // (2026-06: the inline quiz self-report score input was removed. The quiz
