@@ -460,6 +460,7 @@
 
     <div class="controls">
         <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>
+        <button class="btn-ai-recheck" onclick="aiGradeWorksheet({manual:true})" title="Re-grade with AI — accepts answers that mean the same thing, and re-checks your written answers (only ever raises your grade)">&#10024; AI re-check</button>
         <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
         <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
         <button class="btn-print" onclick="window.print()">&#128424; Print</button>
@@ -1857,5 +1858,475 @@
         }
     </script>
 
+    <script>
+        // ==================== AI WORKSHEET GRADING (semantic blanks + folded FRQ) ====================
+        // AI_WORKSHEET_GRADING_WIRED — AI_WORKSHEET_GRADING_BUILD.md.
+        // A SECOND layer on top of the verbatim check. A blank whose answer MEANS
+        // the same thing as the key is upgraded to FULL credit; the FRQ section is
+        // re-graded E/P/I UPGRADE-ONLY. ONE batched call for all blanks + hash
+        // dedup + single-flight = anti-spam. AI NEVER downgrades (verbatim grade +
+        // original FRQ grade are the floor). Soft-fails to the verbatim grade.
+        (function () {
+            if (window.__aiWorksheetGradeWired) return;     // runtime idempotency
+            window.__aiWorksheetGradeWired = true;
+
+            // -- scenario: unit/lesson for framework grounding ----------------
+            function _aiUnitLesson() {
+                if (typeof UNIT_ID !== 'undefined' && UNIT_ID) return String(UNIT_ID);
+                if (typeof WORKSHEET_ID !== 'undefined' && WORKSHEET_ID) return String(WORKSHEET_ID);
+                return '';
+            }
+            function _aiFindLessonContext() {
+                try {
+                    for (var k in window) {
+                        if (k.indexOf('LESSON_CONTEXT_') === 0 && typeof window[k] === 'string') return window[k];
+                    }
+                } catch (_) {}
+                return '';
+            }
+            function _aiScenario() {
+                var ul = _aiUnitLesson();
+                var unit = null, lessons = [];
+                var um = /(\d+)/.exec(ul);
+                if (um) unit = parseInt(um[1], 10);
+                var after = ul.replace(/^[^0-9]*\d+/, '');
+                var lm = after.match(/\d+/g);
+                if (lm) lessons = lm.map(function (n) { return parseInt(n, 10); });
+                return {
+                    topic: (document.title || 'AP Statistics worksheet'),
+                    unitLesson: ul,
+                    unit: (unit == null || isNaN(unit)) ? null : unit,
+                    lessons: lessons,
+                    lessonContext: _aiFindLessonContext()
+                };
+            }
+
+            // -- per-blank question prose (a blank carries no question text).
+            //    ~60 blanks across 12 worksheets live in tables / lists / concept
+            //    boxes with NO .question ancestor; widen the host to a meaningful
+            //    container (and, for a table cell, prepend the row + column labels)
+            //    so the AI still gets usable context instead of a bare fragment.
+            function _aiExtractQuestion(blank) {
+                try {
+                    var host = (blank.closest ? (blank.closest('.question')
+                        || blank.closest('li, td, th, p, .concept-box, .model-box, .note-box, .step, .question-box')) : null)
+                        || blank.parentElement;
+                    if (!host) return '';
+                    var prefix = '';
+                    // Table cell: prepend the row's first cell + the column header so
+                    // a numeric/short cell is self-describing (e.g. "Expected | A").
+                    try {
+                        var cell = blank.closest ? blank.closest('td, th') : null;
+                        if (cell) {
+                            var row = cell.closest ? cell.closest('tr') : null;
+                            var rowLabel = row ? (row.querySelector('th, td') || {}).textContent : '';
+                            var table = cell.closest ? cell.closest('table') : null;
+                            var headRow = table ? table.querySelector('tr') : null;
+                            var colLabel = '';
+                            if (headRow && row) {
+                                var cells = Array.prototype.slice.call(row.children);
+                                var idx = cells.indexOf(cell);
+                                var heads = Array.prototype.slice.call(headRow.children);
+                                if (idx >= 0 && heads[idx]) colLabel = heads[idx].textContent || '';
+                            }
+                            var lbl = [String(rowLabel || '').trim(), String(colLabel || '').trim()]
+                                .filter(Boolean).join(' / ');
+                            if (lbl) prefix = '[' + lbl.replace(/\s+/g, ' ').slice(0, 80) + '] ';
+                        }
+                    } catch (_) {}
+                    var clone = host.cloneNode(true);
+                    clone.querySelectorAll('.save-indicator, .restored-badge, .ai-credit-badge, button, .aggregate-btn, .aggregate-trigger')
+                        .forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+                    return (prefix + (clone.textContent || '').replace(/\s+/g, ' ').trim()).slice(0, 600);
+                } catch (_) { return ''; }
+            }
+
+            var _AI_BLANK_SCORE = { correct: 1, partial: 0.5, incorrect: 0 };
+            function _aiBlankScore(blank) {
+                if (typeof checkAnswer !== 'function') return 0;
+                var v = checkAnswer(blank);
+                return (v in _AI_BLANK_SCORE) ? _AI_BLANK_SCORE[v] : 0;
+            }
+
+            function _aiReflectionTextareas() {
+                if (typeof _wsReflectionTextareas === 'function') return _wsReflectionTextareas();
+                return Array.prototype.slice.call(document.querySelectorAll('textarea[id]'));
+            }
+
+            // -- dedup key: every blank + FRQ answer --------------------------
+            function _aiHash() {
+                var parts = [];
+                document.querySelectorAll('.blank').forEach(function (b) {
+                    parts.push((b.dataset.questionId || '') + '=' + ((b.value || '').trim()));
+                });
+                _aiReflectionTextareas().forEach(function (t) {
+                    parts.push((t.id || '') + '=' + ((t.value || '').trim()));
+                });
+                return parts.join('|');
+            }
+
+            // -- persisted ledger scores = the FLOOR (so a re-grade can never
+            //    write BELOW what is already recorded, even after the student
+            //    edits an FRQ — which clears gradingState). Self-fetch via the
+            //    existing gradebookClient.fetchPrior; no-ops when not signed in.
+            async function _aiFetchPriorScores() {
+                try {
+                    if (!window.gradebookClient || !window.gradebookClient.fetchPrior) return new Map();
+                    var prefix = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : null;
+                    if (!prefix) return new Map();
+                    var m = await window.gradebookClient.fetchPrior(prefix);
+                    return (m && typeof m.get === 'function') ? m : new Map();
+                } catch (_) { return new Map(); }
+            }
+            function _aiLedgerRank(score) {
+                if (score === 1) return 2;      // E
+                if (score === 0.5) return 1;    // P
+                if (score === 0) return 0;      // I
+                return -1;                      // no recorded grade
+            }
+
+            // -- central FRQ floor: best rank ever recorded for an FRQ item this
+            //    session, seeded from the ledger on load. The recordReflectionToGradebook
+            //    wrap below consults this so NO FRQ record path (the new pass, the
+            //    legacy "Grade My Reflections" button, or an appeal) can ever write
+            //    BELOW the recorded grade. itemId = gbWsPrefix + '-' + textareaId.
+            var _AI_FRQ_RANK = { I: 0, P: 1, E: 2 };
+            var _aiFrqFloor = {};
+            function _aiVerdictRank(scoreLetter) {
+                var c = (scoreLetter == null) ? '' : String(scoreLetter).trim().charAt(0).toUpperCase();
+                return (c in _AI_FRQ_RANK) ? _AI_FRQ_RANK[c] : undefined;
+            }
+            function _aiFrqItemId(taId) {
+                var p = (typeof gbWsPrefix === 'function') ? gbWsPrefix() : null;
+                return p ? p + '-' + taId : null;
+            }
+            function _aiSeedFrqFloor(prior) {
+                try {
+                    if (!prior || typeof prior.get !== 'function') return;
+                    _aiReflectionTextareas().forEach(function (ta) {
+                        if (!ta || !ta.id) return;
+                        var itemId = _aiFrqItemId(ta.id);
+                        if (!itemId) return;
+                        var led = prior.get(itemId);
+                        if (!led) return;
+                        var r = _aiLedgerRank(led.score);
+                        if (r > (itemId in _aiFrqFloor ? _aiFrqFloor[itemId] : -1)) _aiFrqFloor[itemId] = r;
+                    });
+                } catch (_) {}
+            }
+
+            // -- apply AI credit to one blank: FORCE full credit (upgrade-only) -
+            function _aiRecordBlankFull(blank) {
+                if (!window.gradebookClient || !window.gradebookClient.record) return;
+                var itemId = blank && blank.dataset ? blank.dataset.questionId : null;
+                if (!itemId) return;
+                var value = (blank.value || '').trim();
+                if (!value) return;
+                // Same source/itemId as the verbatim write (WS-...-Q{n}, source
+                // 'worksheet') — latest-wins, so this 1.0 supersedes the verbatim
+                // score. No new ledger source / no migration.
+                window.gradebookClient.record({
+                    source: 'worksheet', itemId: itemId,
+                    unit: (typeof gbUnitFromItemId === 'function' ? gbUnitFromItemId(itemId) : undefined),
+                    response: value, score: 1, attempt: 1
+                });
+            }
+            // UI only: green class + the data-ai-credit flag (+ value) + badge.
+            // NO ledger write — used both when the AI grants credit (paired with
+            // _aiRecordBlankFull) and when restoring credit from the ledger.
+            function _aiApplyCreditUi(blank, reason) {
+                try {
+                    blank.classList.remove('incorrect', 'partial');
+                    blank.classList.add('correct');
+                    blank.dataset.aiCredit = '1';
+                    blank.dataset.aiCreditValue = (blank.value || '').trim();
+                    var label = '✨ AI-accepted' + (reason ? ': ' + reason : '');
+                    var sib = blank.nextSibling;
+                    if (sib && sib.nodeType === 1 && sib.className === 'ai-credit-badge') {
+                        sib.textContent = label; return;
+                    }
+                    if (!blank.parentNode) return;
+                    var b = document.createElement('span');
+                    b.className = 'ai-credit-badge';
+                    b.textContent = label;
+                    b.style.cssText = 'display:inline-block;margin-left:6px;padding:1px 6px;' +
+                        'font-size:0.75em;background:#e8f5e9;border:1px solid #66bb6a;' +
+                        'border-radius:4px;color:#2e7d32;';
+                    blank.parentNode.insertBefore(b, blank.nextSibling);
+                } catch (_) {}
+            }
+            function _aiApplyBlankCredit(blank, reason) {
+                _aiApplyCreditUi(blank, reason);
+                _aiRecordBlankFull(blank);         // upgrade-only: writes score 1
+            }
+            // Re-assert AI greens after a verbatim "Check Answers" wipes them.
+            // Drops the credit if the student edited the blank since it was earned.
+            function _aiReassertCredits() {
+                try {
+                    document.querySelectorAll('.blank[data-ai-credit="1"]').forEach(function (b) {
+                        var val = (b.value || '').trim();
+                        if (val && val === (b.dataset.aiCreditValue || '')) {
+                            b.classList.remove('incorrect', 'partial');
+                            b.classList.add('correct');
+                        } else {
+                            delete b.dataset.aiCredit;
+                            var sib = b.nextSibling;
+                            if (sib && sib.nodeType === 1 && sib.className === 'ai-credit-badge' && sib.parentNode) {
+                                sib.parentNode.removeChild(sib);
+                            }
+                        }
+                    });
+                } catch (_) {}
+            }
+            // After a RELOAD the DOM is fresh: hydration re-fills an AI-credited
+            // blank from the ledger and checkAnswer repaints it RED (verbatim ≠
+            // key), and the data-ai-credit flag is gone — so a stray blur would
+            // clobber the persisted 1.0. Re-establish the AI-credit flag + green
+            // from the ledger: a filled blank whose LEDGER score is 1 but whose
+            // VERBATIM verdict is not 'correct' was AI-credited. No re-record —
+            // the ledger already holds 1.0; this only restores the UI + the flag
+            // that the recordBlankToGradebook wrap relies on.
+            async function _aiRestoreBlankCredits() {
+                try {
+                    var prior = await _aiFetchPriorScores();
+                    if (!prior || typeof prior.get !== 'function' || !prior.size) return;
+                    document.querySelectorAll('.blank[data-question-id]').forEach(function (b) {
+                        try {
+                            if (b.dataset.aiCredit === '1') return;          // already flagged
+                            var val = (b.value || '').trim();
+                            if (!val) return;
+                            var led = prior.get(b.dataset.questionId);
+                            if (!led || led.score !== 1) return;             // ledger isn't full credit
+                            if (String(led.response || '').trim() !== val) return; // value changed since
+                            var verdict = (typeof checkAnswer === 'function') ? checkAnswer(b) : null;
+                            if (verdict === 'correct') return;               // verbatim-correct, not AI credit
+                            _aiApplyCreditUi(b, '');                         // restore green + flag, NO re-record
+                        } catch (_) {}
+                    });
+                } catch (_) {}
+            }
+
+            // -- FRQ fold: re-grade ungraded/changed reflections, UPGRADE ONLY.
+            //    The recordReflectionToGradebook wrap enforces the persisted
+            //    ledger floor, so this can never write below the recorded grade
+            //    even after an edit clears gradingState. Extra guards here:
+            //    in-session floor, per-text dedup (no wasted re-calls), and — on
+            //    the AUTO (Done) path — never PERSIST a fresh "I" for an FRQ the
+            //    student never asked to grade (manual still records everything).
+            function _aiRememberFrqText(taId, answer) {
+                if (typeof gradingState === 'undefined' || !gradingState) return;
+                var keep = gradingState.get(taId) || {};
+                keep.originalAnswer = answer;          // so the next pass dedups
+                gradingState.set(taId, keep);
+            }
+            async function _aiGradeFrqs(manual) {
+                if (typeof gradeReflection !== 'function') return;   // some worksheets grade FRQs inline
+                var refs = _aiReflectionTextareas();
+                var gradable = refs.filter(function (ta) {
+                    return ta && ta.id && (ta.value || '').trim().length >= 20;
+                });
+                if (!gradable.length) return;
+                var prior = await _aiFetchPriorScores();             // the persisted floor
+                _aiSeedFrqFloor(prior);
+                for (var i = 0; i < gradable.length; i++) {
+                    var ta = gradable[i];
+                    var answer = (ta.value || '').trim();
+                    var prev = (typeof gradingState !== 'undefined' && gradingState) ? gradingState.get(ta.id) : null;
+                    // Dedup: already graded THIS exact answer → skip (no re-call).
+                    if (prev && prev.result && prev.result.score && (prev.originalAnswer || '').trim() === answer) continue;
+                    var itemId = _aiFrqItemId(ta.id);
+                    // floor = max(in-session grade, persisted ledger grade).
+                    var prevScore = (prev && prev.result && prev.result.score) ? prev.result.score : null;
+                    var floor = (prevScore && _AI_FRQ_RANK[prevScore] !== undefined) ? _AI_FRQ_RANK[prevScore] : -1;
+                    if (itemId && (itemId in _aiFrqFloor)) floor = Math.max(floor, _aiFrqFloor[itemId]);
+                    try {
+                        var result = await gradeReflection(ta.id, answer);
+                        if (!result || !result.score) continue;
+                        var newRank = _aiVerdictRank(result.score);
+                        if (newRank === undefined) continue;
+                        if (newRank <= floor) { _aiRememberFrqText(ta.id, answer); continue; }   // never downgrade; remember text so we don't re-call
+                        // AUTO path: never persist a FIRST-EVER "I" — the student
+                        // didn't ask to grade this; just show it + remember it.
+                        if (!manual && floor < 0 && newRank === 0) {
+                            if (typeof showFeedback === 'function') showFeedback(ta.id, result);
+                            _aiRememberFrqText(ta.id, answer);
+                            continue;
+                        }
+                        if (typeof gradingState !== 'undefined' && gradingState) {
+                            gradingState.set(ta.id, {
+                                result: result, originalAnswer: answer,
+                                appealCount: prev ? prev.appealCount : 0,
+                                history: prev ? (prev.history || []) : []
+                            });
+                        }
+                        if (typeof showFeedback === 'function') showFeedback(ta.id, result);
+                        if (typeof recordReflectionToGradebook === 'function') recordReflectionToGradebook(ta.id, answer, result.score);
+                    } catch (_) { /* soft-fail per FRQ */ }
+                }
+            }
+
+            // -- UI: button busy state + toast -------------------------------
+            function _aiSetBusy(busy) {
+                try {
+                    var btn = document.querySelector('.btn-ai-recheck');
+                    if (!btn) return;
+                    btn.disabled = busy;
+                    btn.innerHTML = busy ? '✨ grading…' : '✨ AI re-check';
+                } catch (_) {}
+            }
+            function _aiToast(msg) {
+                try {
+                    var t = document.createElement('div');
+                    t.textContent = msg;
+                    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);' +
+                        'z-index:99999;background:#323232;color:#fff;font-size:13px;padding:10px 16px;' +
+                        'border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:Geneva,Verdana,sans-serif;';
+                    document.body.appendChild(t);
+                    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
+                } catch (_) {}
+            }
+
+            // -- main pass ----------------------------------------------------
+            window.aiGradeWorksheet = async function (opts) {
+                opts = opts || {};
+                var manual = !!opts.manual;
+                if (window._aiGradeBusy) { if (manual) _aiToast('AI grading is already running…'); return; }
+                var hash = _aiHash();
+                if (hash === window._aiLastGradedHash) { if (manual) _aiToast('No changes since the last AI check.'); return; }
+
+                // Collect filled blanks. Send ALL (coherent context); ACT only on
+                // those below full credit (upgrade-only).
+                var send = [];
+                var actMap = {};
+                document.querySelectorAll('.blank').forEach(function (b) {
+                    if (!b.dataset || !b.dataset.questionId) return;
+                    if (b.classList && b.classList.contains('revealed')) return;   // Show-Answers, not the student's
+                    var val = (b.value || '').trim();
+                    if (!val) return;
+                    var cur = _aiBlankScore(b);
+                    send.push({
+                        id: b.dataset.questionId,
+                        question: _aiExtractQuestion(b),
+                        acceptedAnswers: (b.dataset.answer || '').split('|'),
+                        studentAnswer: val,
+                        currentScore: cur
+                    });
+                    if (cur < 1) actMap[b.dataset.questionId] = b;
+                });
+
+                window._aiGradeBusy = true;
+                _aiSetBusy(true);
+                try {
+                    // BLANKS pass — one batched call, but ONLY when at least one
+                    // blank is actually upgradeable (below full verbatim credit).
+                    // No upgradeable blank ⇒ no API call (anti-spam). Soft-fail
+                    // keeps the verbatim grade.
+                    if (send.length && Object.keys(actMap).length && window.RAILWAY_SERVER_URL) {
+                        try {
+                            var resp = await fetch(window.RAILWAY_SERVER_URL + '/api/ai/grade-worksheet', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ scenario: _aiScenario(), blanks: send })
+                            });
+                            if (resp.ok) {
+                                var data = await resp.json();
+                                var graded = (data && Array.isArray(data.blanks)) ? data.blanks : [];
+                                graded.forEach(function (g) {
+                                    if (!g || g.credit !== true) return;         // strict: only explicit true
+                                    var b = actMap[g.id];
+                                    if (!b) return;                              // already full credit / unknown id
+                                    _aiApplyBlankCredit(b, g.reason);
+                                });
+                            }
+                        } catch (_) { /* soft-fail: verbatim grade stands */ }
+                    }
+                    // FRQ pass (upgrade-only; auto path won't persist a fresh "I").
+                    try { await _aiGradeFrqs(manual); } catch (_) {}
+                    window._aiLastGradedHash = hash;
+                    if (manual) _aiToast('AI check complete.');
+                } finally {
+                    window._aiGradeBusy = false;
+                    _aiSetBusy(false);
+                    try { if (typeof updateWorksheetCompletion === 'function') updateWorksheetCompletion(); } catch (_) {}
+                }
+            };
+
+            // -- GUARD 1 (blanks never downgrade): the verbatim blur/Enter feeder
+            //    (handleLiveUpdate → recordBlankToGradebook) recomputes the score
+            //    purely from value-vs-key and would clobber an AI-credited 1.0 on
+            //    a routine re-blur (no edit). Wrap it: if the blank still holds its
+            //    AI-credited value, record the full credit instead of the verbatim
+            //    score. Editing the blank drops data-ai-credit (via _aiReassertCredits
+            //    / the value mismatch), so a genuinely changed answer is graded normally.
+            if (typeof window.recordBlankToGradebook === 'function') {
+                var _aiOrigRecordBlank = window.recordBlankToGradebook;
+                window.recordBlankToGradebook = function (blank) {
+                    try {
+                        if (blank && blank.dataset && blank.dataset.aiCredit === '1') {
+                            var v = (blank.value || '').trim();
+                            if (v && v === (blank.dataset.aiCreditValue || '')) {
+                                _aiRecordBlankFull(blank);     // honor the earned AI credit
+                                return;
+                            }
+                        }
+                    } catch (_) {}
+                    return _aiOrigRecordBlank.apply(this, arguments);
+                };
+            }
+
+            // -- GUARD 2 (FRQs never downgrade): wrap the single graded-FRQ sink so
+            //    EVERY caller — the new AI pass, the legacy "Grade My Reflections"
+            //    button, and the per-question appeal — is upgrade-only against the
+            //    session+ledger floor (_aiFrqFloor). A verdict at-or-below the floor
+            //    is not written; the recorded grade is the floor.
+            if (typeof window.recordReflectionToGradebook === 'function') {
+                var _aiOrigRecordReflection = window.recordReflectionToGradebook;
+                window.recordReflectionToGradebook = function (taId, answer, scoreLetter) {
+                    try {
+                        var itemId = _aiFrqItemId(taId);
+                        var nr = _aiVerdictRank(scoreLetter);
+                        if (itemId && nr !== undefined) {
+                            var floor = (itemId in _aiFrqFloor) ? _aiFrqFloor[itemId] : -1;
+                            if (nr <= floor) return;           // never downgrade a recorded FRQ
+                            _aiFrqFloor[itemId] = nr;          // remember the new best
+                        }
+                    } catch (_) {}
+                    return _aiOrigRecordReflection.apply(this, arguments);
+                };
+            }
+
+            // -- on load: restore AI-credit flags + greens from the ledger (so a
+            //    post-reload blur can't clobber them) and seed the FRQ floor (so
+            //    the legacy button can't downgrade before any AI pass runs).
+            function _aiOnLoad() {
+                try { _aiRestoreBlankCredits(); } catch (_) {}
+                try { _aiFetchPriorScores().then(_aiSeedFrqFloor); } catch (_) {}
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { setTimeout(_aiOnLoad, 600); });
+            } else {
+                setTimeout(_aiOnLoad, 600);   // let hydration settle first
+            }
+            try {
+                window.addEventListener('storage', function (e) {
+                    if (e && e.key === 'apstats_roster.v1') setTimeout(_aiOnLoad, 600);
+                });
+            } catch (_) {}
+
+            // -- auto-on-Done: "Check Answers" IS the worksheet's grade/done
+            //    action. Wrap it so a check also kicks the AI pass — guarded by
+            //    hash dedup + single-flight, so repeat checks don't spam the API.
+            //    _aiReassertCredits keeps earned greens stable when the verbatim
+            //    pass re-paints (the AI pass skips on an unchanged hash).
+            if (typeof window.checkAnswers === 'function') {
+                var _aiOrigCheckAnswers = window.checkAnswers;
+                window.checkAnswers = function () {
+                    var r = _aiOrigCheckAnswers.apply(this, arguments);
+                    _aiReassertCredits();
+                    try { window.aiGradeWorksheet({ manual: false }); } catch (_) {}
+                    return r;
+                };
+            }
+        })();
+    </script>
 </body>
 </html>
