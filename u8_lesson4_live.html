@@ -2247,9 +2247,14 @@
                     if (!el) return;
                     var s = _aiBlankStats();
                     if (s.filled > 0) {
-                        var pct = Math.round((s.correct / s.filled) * 100);
-                        el.textContent = 'Score: ' + s.correct + '/' + s.filled + ' (' + pct + '%)' +
-                            (s.partial > 0 ? ' +' + s.partial + ' partial' : '');
+                        // Grade-equivalent %: a partial is HALF credit (matches the
+                        // gradebook). Relabelled so it's clearly THIS page's blanks,
+                        // not the student's class grade (which lives on the Desk).
+                        var pct = Math.round(((s.correct + 0.5 * s.partial) / s.filled) * 100);
+                        el.textContent = "This worksheet's blanks: " + pct + '% — ' + s.correct + ' correct' +
+                            (s.partial > 0 ? ', ' + s.partial + ' partial' : '') + ' of ' + s.filled;
+                        el.title = "Just this page's fill-in-the-blanks (a partial counts as half). " +
+                            'Your real class grade is on the Desk.';
                         el.classList.add('visible');
                     }
                 } catch (_) {}

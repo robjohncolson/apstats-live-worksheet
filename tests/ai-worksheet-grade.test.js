@@ -470,7 +470,8 @@ describe('merged button — polish fold + win feedback', () => {
 
     await window.aiGradeWorksheet({ manual: true });
 
-    expect(sd.textContent).toMatch(/Score: 2\/2 \(100%\)/);        // counts the AI-accepted blank
+    expect(sd.textContent).toMatch(/This worksheet's blanks: 100%/);  // counts the AI-accepted blank
+    expect(sd.textContent).toMatch(/2 correct of 2/);
     expect(document.body.textContent).toMatch(/AI accepted 1 more answer/);
     expect(document.body.textContent).toMatch(/Score 50% → 100%/);
   });
