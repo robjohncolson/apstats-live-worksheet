@@ -33,6 +33,9 @@ sys.path.insert(0, TOOLS_DIR)
 import schoology_sync_lib as lib
 from schoology_sync_section import (
     LocalJsonStateStore,
+    PERIOD_LETTER,
+    SECTION_FORCE_MP_DATE,
+    SECTION_TO_COURSE_ID,
     StateStore,
     build_scope,
     sync_section,
@@ -697,6 +700,96 @@ class TestLimitFlag(unittest.TestCase):
         )
         self.assertEqual(summary["scope_items"], 2)
         self.assertEqual(len(ops.created_assignments), 2)
+
+
+# ---------------------------------------------------------------------------
+# Summer mock-grading: PeriodY config + forced marking period (-> MP4)
+# ---------------------------------------------------------------------------
+
+# A single lesson dated in SY26-27 (Sept 2026). Its own due-date falls in the
+# FALL marking period, NOT MP4 -- which is exactly why the summer mock needs the
+# force override to land it in MP4.
+SUMMER_SCHEDULE = {
+    "schemaVersion": 2,
+    "lessons": {
+        "1.2": {
+            "unit": 1,
+            "topicKey": "1.2",
+            "worksheetKey": "1-2",
+            "periods": {"B": "2026-09-15", "E": "2026-09-17"},
+        },
+    },
+    "progressChecks": {},
+    "posters": {},
+}
+
+# Two live marking periods: the fall MP that COVERS the Sept lesson date, and MP4
+# (4/11/26-6/30/26, per the teacher). The force date 2026-05-15 lands in MP4.
+MP_RANGES_FALL_AND_MP4 = {
+    "GP_FALL": {"start": "2026-09-01", "end": "2026-11-13"},
+    "GP_MP4":  {"start": "2026-04-11", "end": "2026-06-30"},
+}
+
+
+class TestForceMarkingPeriod(unittest.TestCase):
+    """PeriodY routes to Period B's course + forces every assignment into MP4."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.schedule_path = _write_schedule(self.tmpdir, SUMMER_SCHEDULE)
+        self.state = FakeStateStore()
+
+    def test_periodY_targets_periodB_course_and_dates(self):
+        # Cutover seam #1: PeriodY -> Period B's real course, Period B's dates.
+        self.assertEqual(SECTION_TO_COURSE_ID["PeriodY"], "7945275782")
+        self.assertEqual(SECTION_TO_COURSE_ID["PeriodY"], SECTION_TO_COURSE_ID["PeriodB"])
+        self.assertEqual(PERIOD_LETTER["PeriodY"], "B")
+
+    def test_force_date_is_inside_mp4(self):
+        # The forced date must sit inside MP4 (4/11/26-6/30/26) or it would file
+        # the mock into the wrong period.
+        d = SECTION_FORCE_MP_DATE["PeriodY"]
+        self.assertTrue("2026-04-11" <= d <= "2026-06-30", f"force date {d!r} not in MP4")
+
+    def test_without_force_uses_the_due_date_marking_period(self):
+        # Baseline: a normal section files the Sept lesson into the FALL MP
+        # (proving the force test below actually changes behavior).
+        ops = FakeOps(marking_periods=MP_RANGES_FALL_AND_MP4)
+        sync_section(
+            "PeriodB", "7945275782",
+            dry_run=False, state=self.state, grades={},
+            ops=ops, schedule_path=self.schedule_path,
+        )
+        self.assertEqual(len(ops.created_assignments), 1)
+        self.assertEqual(ops.created_assignments[0]["grading_period_id"], "GP_FALL")
+        self.assertEqual(ops.created_assignments[0]["due_date"], "2026-09-15")
+
+    def test_force_routes_assignment_into_mp4(self):
+        # The summer mock: force_mp_date overrides the Sept due-date, filing the
+        # assignment into MP4 and dating it inside MP4.
+        ops = FakeOps(marking_periods=MP_RANGES_FALL_AND_MP4)
+        sync_section(
+            "PeriodY", "7945275782",
+            dry_run=False, state=self.state, grades={},
+            ops=ops, schedule_path=self.schedule_path,
+            force_mp_date="2026-05-15",
+        )
+        self.assertEqual(len(ops.created_assignments), 1)
+        self.assertEqual(ops.created_assignments[0]["grading_period_id"], "GP_MP4")
+        self.assertEqual(ops.created_assignments[0]["due_date"], "2026-05-15")
+
+    def test_force_dry_run_creates_nothing(self):
+        # Dry-run still resolves the MP (so the printed plan shows MP4) but writes
+        # nothing.
+        ops = FakeOps(marking_periods=MP_RANGES_FALL_AND_MP4)
+        summary = sync_section(
+            "PeriodY", "7945275782",
+            dry_run=True, state=self.state, grades={},
+            ops=ops, schedule_path=self.schedule_path,
+            force_mp_date="2026-05-15",
+        )
+        self.assertEqual(summary["assignments_created"], 0)
+        self.assertEqual(len(ops.created_assignments), 0)
 
 
 # ---------------------------------------------------------------------------

@@ -56,11 +56,30 @@ import schoology_sync_lib as lib
 SECTION_TO_COURSE_ID = {
     "PeriodB": "7945275782",
     "PeriodE": "7945275798",
+    # Summer mock-grading (2026-06). PeriodY is a roster TEST section whose 3
+    # fruit_animal students map (via roster.schoology_uid) to real Period B
+    # students, so a mock push lands in Period B's REAL gradebook. Same course as
+    # Period B. Fall cutover = repoint this entry + the per-student schoology_uid
+    # map (and clear SECTION_FORCE_MP_DATE below); the sync code stays unchanged.
+    "PeriodY": "7945275782",
 }
 
 PERIOD_LETTER = {
     "PeriodB": "B",
     "PeriodE": "E",
+    "PeriodY": "B",  # summer mock builds its scope from Period B's lesson dates
+}
+
+# Force EVERY assignment for a section into the marking period that COVERS this
+# date, instead of resolving the MP per-lesson from its own due-date. Needed for
+# the summer mock: the lessons carry SY26-27 dates (Sept 2026+) that would
+# resolve to MP1, but the mock must land in MP4 (4/11/26-6/30/26). 2026-05-15 is
+# safely inside MP4. Resolved against the LIVE marking periods at sync time, so
+# no Schoology-internal grading_period_id is hard-coded here (and it survives an
+# id change). None / absent = resolve per due-date as usual -> PeriodB & PeriodE
+# behavior is unchanged.
+SECTION_FORCE_MP_DATE = {
+    "PeriodY": "2026-05-15",
 }
 
 
@@ -325,23 +344,41 @@ def _ensure_assignment(
     cdp,
     dry_run: bool,
     errors: list,
+    force_mp_date: str | None = None,
 ) -> str | None:
     """Return the Schoology assignment id for this scope item (creating if needed).
+
+    force_mp_date: when set (summer mock -> MP4), EVERY assignment is filed into
+    the marking period covering this date and dated there too, instead of
+    resolving the MP from the lesson's own due-date. None -> resolve per due-date.
 
     Returns None on failure (error appended to errors list).
     """
     key = item["key"]
     kind = item["kind"]
     title = item["title"]
-    due_date = item["due_date"]
+    # A forced MP date overrides the lesson's own due-date both for marking-period
+    # resolution AND as the assignment's due-date, so the assignment sits cleanly
+    # inside the forced MP (no Sept-due-date-in-an-MP4-that-ends-in-June mismatch).
+    due_date = force_mp_date or item["due_date"]
 
     # Check state store first (idempotency: already created in a prior run)
     stored = state.get_assignment(section, key)
     if stored and stored.get("schoology_assignment_id"):
         return stored["schoology_assignment_id"]
 
+    # Resolve the marking period up front (also shown in the dry-run line, so a
+    # dry-run proves WHICH MP each assignment would land in -- e.g. MP4 -- before
+    # any live write).
+    grading_period_id = lib.marking_period_for_date(due_date, mps)
+    if due_date and grading_period_id is None:
+        msg = f"No grading_period_id covering due_date={due_date!r} (key={key})"
+        print(f"  [ERROR] {msg}")
+        errors.append(msg)
+        return None
+
     if dry_run:
-        print(f"  [DRY-RUN] WOULD CREATE: {title!r} (kind={kind}, due={due_date})")
+        print(f"  [DRY-RUN] WOULD CREATE: {title!r} (kind={kind}, due={due_date}, mp={grading_period_id})")
         return None
 
     # Pre-flight: does the assignment already exist in Schoology?
@@ -351,17 +388,10 @@ def _ensure_assignment(
         state.upsert_assignment(section, key, {"schoology_assignment_id": existing_id, "title": title})
         return existing_id
 
-    # Resolve category and marking period
+    # Resolve category
     category_id = _resolve_category_id(cats, kind)
     if category_id is None:
         msg = f"No category_id for kind={kind!r} (key={key})"
-        print(f"  [ERROR] {msg}")
-        errors.append(msg)
-        return None
-
-    grading_period_id = lib.marking_period_for_date(due_date, mps)
-    if due_date and grading_period_id is None:
-        msg = f"No grading_period_id covering due_date={due_date!r} (key={key})"
         print(f"  [ERROR] {msg}")
         errors.append(msg)
         return None
@@ -514,6 +544,7 @@ def sync_section(
     ops=None,
     schedule_path: str = SCHEDULE_PATH,
     limit: int | None = None,
+    force_mp_date: str | None = None,
 ) -> dict:
     """Orchestrate one full sync for a single section.
 
@@ -588,7 +619,8 @@ def sync_section(
     for key in plan["create"]:
         item = scope_items_by_key[key]
         assignment_id = _ensure_assignment(
-            item, section, course_id, cats, mps, state, ops, cdp, dry_run, errors
+            item, section, course_id, cats, mps, state, ops, cdp, dry_run, errors,
+            force_mp_date=force_mp_date,
         )
         if assignment_id and not dry_run:
             assignments_created += 1
@@ -731,6 +763,11 @@ def main(argv=None):
 
     state = LocalJsonStateStore()
 
+    force_mp_date = SECTION_FORCE_MP_DATE.get(section)
+    if force_mp_date:
+        print(f"[force-mp] section={section}: filing every assignment into the "
+              f"marking period covering {force_mp_date} (summer mock -> MP4).")
+
     sync_section(
         section,
         course_id,
@@ -739,6 +776,7 @@ def main(argv=None):
         grades=grades,
         ops=None,  # imported lazily inside sync_section
         limit=args.limit,
+        force_mp_date=force_mp_date,
     )
 
 
