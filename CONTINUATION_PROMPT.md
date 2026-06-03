@@ -1,7 +1,22 @@
-# CONTINUATION PROMPT — 2 tasks queued: (A) cross-device greying fix, (B) Schoology summer mock-grading
+# CONTINUATION PROMPT — (A) cross-device greying ✅ SHIPPED, (B) Schoology summer mock-grading — Phase A seam ✅ SHIPPED, live steps gated on rig sign-in
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-03.
-> follow-alongs HEAD = `0dea2ae`; curriculum_render HEAD = `767ccf4`.
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-03 (session 2).
+> follow-alongs HEAD = `f74bac9`; curriculum_render HEAD = `767ccf4`.
+
+## ⏭ DO NEXT (Task B Phase A — gated on the rig)
+The Schoology rig profile (`%TEMP%/edge-claude-cdp`) is **LOGIN_REQUIRED** as of 2026-06-03 (cookie
+expired since s123). **Re-sign into Schoology in the home-laptop rig Edge window FIRST.** Then:
+1. **Verify (read-only):** `python tools/_probe_periodb.py` → confirm `authenticated`, the live MP4 range
+   (4/11/26–6/30/26), and that UIDs 193718 / 203434 / 195239 are in the Period B roster.
+2. **Enroll** 3 PeriodY fruit_animal test students: `node scripts/teacher-roster.mjs --name "..." --section PeriodY --random`
+   (×3, or a CSV) → record the auto-generated usernames from the credentials CSV.
+3. **Map UIDs:** build a `username,schoologyUid` CSV (the 3 usernames → 193718 / 203434 / 195239) →
+   `node scripts/teacher-roster.mjs --set-schoology-uids <csv> --section PeriodY`.
+4. **Grades:** `python tools/build_schoology_fixture.py` for section PeriodY → fixture keyed by schoology_uid/lesson.
+5. **DRY-RUN then LIVE:** `python tools/schoology_sync_section.py --sync-section PeriodY --grades-fixture <f> --dry-run`
+   (confirm every line shows `mp=<MP4 id>`), then drop `--dry-run` + `--limit 1` for the first real cell.
+The config seam is DONE (`f74bac9`): PeriodY→Period B course + `SECTION_FORCE_MP_DATE` forces MP4 by date.
+Cleanup when done: `delete from roster where section='PeriodY';` + delete the test assignments/columns.
 
 Ultracode is on. Repos: **follow-alongs** (`apstats-live-worksheet`, branch `master`, GH Pages +
 `roster-server/` auto-deploys to Railway) and **curriculum_render** (cr, branch `main`, AI server on
@@ -11,9 +26,30 @@ implement (the user reviews the plan). Commit own paths only (both repos have un
 files incl. many `.ai-tutor-*.result.md`). Memory dir:
 `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 
-## ⏳ NEXT — two tasks queued (the user will say "go" + pick the order)
+## ✅ DONE THIS SESSION (2026-06-03 session 2)
 
-### A. Cross-device lesson-greying fix (Desk `ap_stats_roadmap_square_mode.html`)
+### A. Cross-device lesson-greying fix — ✅ SHIPPED (`da85a12`)
+`_isLessonComplete` now counts an artifact done when the local `.ts` mark exists OR the SYNCED `/grade`
+score clears the Done-button bar (worksheet `Cws≥60`, Blooket `≥80`); `typeof`-guarded → isolated vm
+tests fall back to strict local-only (A8c preserved); quiz stays OUT of the gate (the `0dea2ae` fix
+holds). New `paintLocalDoneCells()` + `_orderedPeriodTopics()`: repaint after the async `_gradeLessonsCache`
+warms (rCal runs before it) — flicker-free greying class toggle, escalating to ONE `rCal` rebuild ONLY
+when a lesson's lock flips (never on a plain poll; self-converging). Wired into `renderDoNowGrades`.
++10 tests (calendar-polish C5b/A8d). Full root suite 6850 pass (3 known fails). 4-dim adversarial
+Workflow: 6 findings → 5 refuted, 1 confirmed (stale lock) → folded by the lock-flip escalation.
+**Teacher: verify on the WORK computer — a lesson done elsewhere should now grey + unlock without a
+local Done-click once /grade loads.**
+
+### B. Schoology summer mock-grading — ✅ Phase A config seam SHIPPED (`f74bac9`); live steps gated (see "DO NEXT" up top)
+Inputs locked: 3 real Period B UIDs → 193718 Jefferson Cruz / 203434 Stephanie Granados Alvarez /
+195239 Isaias Pablo Castillo; 3 fruit_animal PeriodY students will map to them. MP4 = 4/11/26–6/30/26.
+Config seam built dry-run-safe + unit-tested (130 py tests). Enroll + UID-map + live push remain — all
+gated on the rig being signed in (currently LOGIN_REQUIRED).
+
+---
+## 🗂 ORIGINAL TASK BRIEFS (for reference)
+
+### A. Cross-device lesson-greying fix (Desk `ap_stats_roadmap_square_mode.html`) — DONE, see above
 **Symptom (teacher, live):** the SAME Desk + SAME student greys completed lessons on the HOME computer
 but NOT on the work computer (1.1 is done, should grey, doesn't on work).
 **Root cause:** the gating fix `0dea2ae` made greying STRICT — `localLessonState` now defers to
