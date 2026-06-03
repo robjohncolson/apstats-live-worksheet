@@ -190,9 +190,27 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
     expect(s('1.2', {})).toBe('');
     expect(s('1.2', { '9.9|worksheet': { ts: 'y' } })).toBe('');   // a different topic
     expect(s('1.2', { '1.20|worksheet': { ts: 'y' } })).toBe('');  // prefix is exact: 1.2 != 1.20
-    // multi-resource rollup: ANY resource with a ts -> done; all visited, none done -> partial
+    // No registry in this sandbox → localLessonState fails OPEN to the lenient
+    // "any artifact Done -> done" path. The STRICT (registry-aware) behavior is
+    // pinned by A8c below.
     expect(s('1.2', { '1.2|worksheet': { visitedAt: 'x' }, '1.2|blooket': { visitedAt: 'x', ts: 'y' } })).toBe('done');
     expect(s('1.2', { '1.2|worksheet': { visitedAt: 'x' }, '1.2|quiz': { visitedAt: 'x' } })).toBe('partial');
+  });
+  // A8c: with the registry present, 'done' requires the lesson's GATE artifacts
+  // (worksheet + Blooket) — the quiz ALONE must NOT mark a lesson done (the
+  // reported bug: a quiz-only 1.2 greyed out + unlocked 1.3).
+  it('A8c -- localLessonState is STRICT when the registry has gate artifacts', () => {
+    const sandbox = {};
+    createContext(sandbox);
+    runInContext(
+      'function getRegistryEntry(t){ return t === "1.2" ? { urls: { worksheet: "w", blooket: "b" } } : { urls: {} }; }\n' +
+      fnBody(html, '_isLessonComplete') + '\n' +
+      fnBody(html, 'localLessonState') + '\nthis.__s = localLessonState;', sandbox);
+    const s = sandbox.__s;
+    expect(s('1.2', { '1.2|quiz': { ts: 'y' } })).toBe('partial');                              // quiz alone ≠ done
+    expect(s('1.2', { '1.2|worksheet': { ts: 'y' } })).toBe('partial');                         // worksheet but no Blooket
+    expect(s('1.2', { '1.2|worksheet': { ts: 'y' }, '1.2|blooket': { ts: 'y' } })).toBe('done'); // both gate artifacts
+    expect(s('9.9', { '9.9|quiz': { ts: 'y' } })).toBe('done');                                  // no gate artifacts → any-done
   });
   // A8b: the recede class is wired to localLessonState, NOT the REGISTRY `worst`
   it('A8b -- rCal derives the recede class from localLessonState(inf.t, _gateMarks), not REGISTRY worst', () => {
