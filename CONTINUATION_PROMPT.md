@@ -3,20 +3,25 @@
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-03 (session 2).
 > follow-alongs HEAD = `f74bac9`; curriculum_render HEAD = `767ccf4`.
 
-## ⏭ DO NEXT (Task B Phase A — gated on the rig)
-The Schoology rig profile (`%TEMP%/edge-claude-cdp`) is **LOGIN_REQUIRED** as of 2026-06-03 (cookie
-expired since s123). **Re-sign into Schoology in the home-laptop rig Edge window FIRST.** Then:
-1. **Verify (read-only):** `python tools/_probe_periodb.py` → confirm `authenticated`, the live MP4 range
-   (4/11/26–6/30/26), and that UIDs 193718 / 203434 / 195239 are in the Period B roster.
-2. **Enroll** 3 PeriodY fruit_animal test students: `node scripts/teacher-roster.mjs --name "..." --section PeriodY --random`
-   (×3, or a CSV) → record the auto-generated usernames from the credentials CSV.
-3. **Map UIDs:** build a `username,schoologyUid` CSV (the 3 usernames → 193718 / 203434 / 195239) →
-   `node scripts/teacher-roster.mjs --set-schoology-uids <csv> --section PeriodY`.
-4. **Grades:** `python tools/build_schoology_fixture.py` for section PeriodY → fixture keyed by schoology_uid/lesson.
-5. **DRY-RUN then LIVE:** `python tools/schoology_sync_section.py --sync-section PeriodY --grades-fixture <f> --dry-run`
-   (confirm every line shows `mp=<MP4 id>`), then drop `--dry-run` + `--limit 1` for the first real cell.
-The config seam is DONE (`f74bac9`): PeriodY→Period B course + `SECTION_FORCE_MP_DATE` forces MP4 by date.
-Cleanup when done: `delete from roster where section='PeriodY';` + delete the test assignments/columns.
+## ✅ Task B Phase A — LIVE-PROVEN end-to-end (2026-06-03 session 2)
+Teacher re-signed into the rig. The full summer-mock push WORKS: 3 mock grades landed in REAL Period B /
+MP4 cells and were independently re-read (Justin Lim 88, Emily Nguyen 92, Keily Ovalle Merida 75).
+- The 3 names given (Jefferson/Stephanie/Isaias) are NOT in any known course; the 6-digit ids are
+  SIS/PowerSchool, not Schoology data-uids. Teacher: "pick names at random to map the new kids to."
+- Enrolled 3 PeriodY fruit_animal students (lemon_gecko/olive_fox/tomato_whale), mapped `schoology_uid`
+  → 3 random real B uids (96403370 / 96400318 / 96400271). **⚠ enroll needs
+  `--url https://roster-production-12c1.up.railway.app`** (default config URL is bad).
+- Live MP4 = `gp_id 1134332` (4/18–6/30/26); force date 2026-05-15 routes there. Created assignment
+  `Topic 1.1` (nid 8409898181, column data-x=1) in MP4 via `--limit 1`. See memory `project_schoology_sync`.
+
+### ⏭ DO NEXT (Task B — teacher's call)
+- **Cleanup** (when done inspecting): delete the `Topic 1.1` assignment (removes the 3 grades) +
+  `delete from roster where section='PeriodY';` + remove untracked `tools/_probe_periodb.py`,
+  `tools/_verify_periody.py`, `tools/_periody_fixture.json`.
+- **More scope** (optional): drop `--limit 1` to push the full PeriodY schedule into MP4.
+- **Phase B (the literal Desk button):** needs a local bridge (Desk→roster-server flag→laptop watcher
+  runs the sync); the web Desk can't drive the laptop's Edge directly.
+- **Real fall cutover:** repoint `schoology_uid` per real student + edit `SECTION_*` config; sync unchanged.
 
 Ultracode is on. Repos: **follow-alongs** (`apstats-live-worksheet`, branch `master`, GH Pages +
 `roster-server/` auto-deploys to Railway) and **curriculum_render** (cr, branch `main`, AI server on
