@@ -35,6 +35,8 @@ function installShippedFlow(overrides = {}) {
     gradingState,
     checkAnswer: vi.fn((blank) => blank.dataset.verdict || 'incorrect'),
     gradeReflection: vi.fn(async () => ({ score: 'E', feedback: 'good', matched: [], missing: [] })),
+    fetchEnrichedAnswer: vi.fn(async () => ({ score: 'E', suggestion: 'polished answer' })),
+    renderEnrichedPass: vi.fn(),
     showFeedback: vi.fn(),
     recordReflectionToGradebook: vi.fn(),
     updateWorksheetCompletion: vi.fn(),
@@ -62,6 +64,8 @@ function installShippedFlow(overrides = {}) {
   globalThis.UNIT_ID = overrides.UNIT_ID || 'U6L1-2';
   globalThis.checkAnswer = mocks.checkAnswer;
   globalThis.gradeReflection = mocks.gradeReflection;
+  globalThis.fetchEnrichedAnswer = mocks.fetchEnrichedAnswer;
+  globalThis.renderEnrichedPass = mocks.renderEnrichedPass;
   globalThis.showFeedback = mocks.showFeedback;
   globalThis.recordReflectionToGradebook = mocks.recordReflectionToGradebook;
   globalThis.updateWorksheetCompletion = mocks.updateWorksheetCompletion;
@@ -119,9 +123,10 @@ afterEach(() => {
   vi.restoreAllMocks();
   // Defensive: clear the worksheet globals we injected so nothing leaks to
   // another test file (vitest isolates files, but keep this hermetic anyway).
-  for (const k of ['UNIT_ID', 'checkAnswer', 'gradeReflection', 'showFeedback',
-    'recordReflectionToGradebook', 'recordBlankToGradebook', 'updateWorksheetCompletion',
-    'gbUnitFromItemId', 'gbWsPrefix', '_wsReflectionTextareas', 'gradingState', 'fetch']) {
+  for (const k of ['UNIT_ID', 'checkAnswer', 'gradeReflection', 'fetchEnrichedAnswer',
+    'renderEnrichedPass', 'showFeedback', 'recordReflectionToGradebook', 'recordBlankToGradebook',
+    'updateWorksheetCompletion', 'gbUnitFromItemId', 'gbWsPrefix', '_wsReflectionTextareas',
+    'gradingState', 'fetch']) {
     try { delete globalThis[k]; } catch (_) {}
   }
   for (const k of ['aiGradeWorksheet', 'checkAnswers', 'gradebookClient',
@@ -426,6 +431,61 @@ describe('anti-spam — blanks endpoint skipped when nothing is upgradeable (#8)
   });
 });
 
+describe('merged button — polish fold + win feedback', () => {
+  it('manual polish: a close-P written answer is rewritten to full-credit E', async () => {
+    addTextarea('reflect1', 'A decent but incomplete reflection answer about evidence here.');
+    installShippedFlow();
+    mocks.fetch.mockResolvedValue(okFetch([]));
+    mocks.fetchPrior.mockResolvedValue(new Map());
+    mocks.gradeReflection.mockResolvedValue({ score: 'P', matched: ['a', 'b'], missing: ['c'] });
+    mocks.fetchEnrichedAnswer.mockResolvedValue({ score: 'E', suggestion: 'polished with <strong>c</strong>' });
+
+    await window.aiGradeWorksheet({ manual: true });
+
+    expect(mocks.fetchEnrichedAnswer).toHaveBeenCalledWith('reflect1', expect.any(String), ['c']);
+    expect(mocks.renderEnrichedPass).toHaveBeenCalled();
+    expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'E');
+  });
+
+  it('AUTO (Done) path does NOT run the polish (keeps Check Answers cheap)', async () => {
+    addTextarea('reflect1', 'A decent but incomplete reflection answer about evidence here.');
+    installShippedFlow();
+    mocks.fetch.mockResolvedValue(okFetch([]));
+    mocks.fetchPrior.mockResolvedValue(new Map());
+    mocks.gradeReflection.mockResolvedValue({ score: 'P', matched: ['a', 'b'], missing: ['c'] });
+
+    await window.aiGradeWorksheet({ manual: false });
+
+    expect(mocks.fetchEnrichedAnswer).not.toHaveBeenCalled();
+    expect(mocks.recordReflectionToGradebook).toHaveBeenCalledWith('reflect1', expect.any(String), 'P');
+  });
+
+  it('updates the visible Score to count AI-accepted blanks + toasts the win', async () => {
+    const sd = document.createElement('div'); sd.id = 'scoreDisplay'; document.body.appendChild(sd);
+    addBlank('WS-U6L1-2-Q1', { value: 'proof', verdict: 'incorrect' });
+    addBlank('WS-U6L1-2-Q2', { value: 'evidence', answer: 'evidence', verdict: 'correct' });
+    installShippedFlow();
+    mocks.fetch.mockResolvedValue(okFetch([{ id: 'WS-U6L1-2-Q1', credit: true, reason: 'syn' }]));
+    mocks.fetchPrior.mockResolvedValue(new Map());
+
+    await window.aiGradeWorksheet({ manual: true });
+
+    expect(sd.textContent).toMatch(/Score: 2\/2 \(100%\)/);        // counts the AI-accepted blank
+    expect(document.body.textContent).toMatch(/AI accepted 1 more answer/);
+    expect(document.body.textContent).toMatch(/Score 50% → 100%/);
+  });
+
+  it('toasts "no new credit" when nothing was upgraded', async () => {
+    addBlank('WS-U6L1-2-Q1', { value: 'wrong', verdict: 'incorrect' });
+    installShippedFlow();
+    mocks.fetch.mockResolvedValue(okFetch([{ id: 'WS-U6L1-2-Q1', credit: false, reason: 'no' }]));
+    mocks.fetchPrior.mockResolvedValue(new Map());
+
+    await window.aiGradeWorksheet({ manual: true });
+    expect(document.body.textContent).toMatch(/no new credit/);
+  });
+});
+
 describe('auto-on-Done — checkAnswers is wrapped', () => {
   it('calling the (wrapped) checkAnswers runs the original AND kicks the AI pass', async () => {
     addBlank('WS-U6L1-2-Q1', { value: 'proof', verdict: 'incorrect' });
@@ -505,12 +565,26 @@ describe('INJECTED_JS invariants (load-bearing)', () => {
   it('auto path never persists a fresh I (#10)', () => {
     expect(INJECTED_JS).toMatch(/!manual && floor < 0 && newRank === 0/);
   });
+  it('folds the "polish" pass into the one button (manual only)', () => {
+    expect(INJECTED_JS).toMatch(/fetchEnrichedAnswer/);
+    expect(INJECTED_JS).toMatch(/renderEnrichedPass/);
+    expect(INJECTED_JS).toMatch(/manual && result\.score === 'P'/);
+  });
+  it('updates the local Score to include AI-accepted blanks', () => {
+    expect(INJECTED_JS).toMatch(/function _aiUpdateScoreDisplay/);
+    expect(INJECTED_JS).toMatch(/getElementById\('scoreDisplay'\)/);
+  });
+  it('win toast reports the accepted count + score delta', () => {
+    expect(INJECTED_JS).toMatch(/accepted ' \+ aiAccepted/);
+    expect(INJECTED_JS).toMatch(/Score ' \+ pre/);
+  });
 });
 
-describe('RECHECK_BUTTON (manual trigger)', () => {
-  it('calls aiGradeWorksheet({manual:true})', () => {
+describe('RECHECK_BUTTON (the single "Grade with AI" button)', () => {
+  it('calls aiGradeWorksheet({manual:true}) and is labelled "Grade with AI"', () => {
     expect(RECHECK_BUTTON).toMatch(/aiGradeWorksheet\(\{manual:true\}\)/);
     expect(RECHECK_BUTTON).toMatch(/btn-ai-recheck/);
+    expect(RECHECK_BUTTON).toMatch(/Grade with AI/);
   });
 });
 
@@ -521,9 +595,9 @@ const SAMPLE = [
   '<html>', '<body>',
   '  <div class="controls">',
   '    <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>',
-  '    <button class="btn-ai" onclick="gradeAllReflections()">Grade</button>',
+  '    <button class="btn-ai" onclick="gradeAllReflections()">&#129302; Grade My Reflections</button>',
   '  </div>',
-  '  <script>const UNIT_ID="U6L1-2";</script>',
+  '  <script>const UNIT_ID="U6L1-2"; function gradeReflection(){}</script>',
   '</body>', '</html>'
 ].join('\n');
 
@@ -535,6 +609,20 @@ describe('wireHtml', () => {
     expect(html.indexOf('btn-ai-recheck')).toBeGreaterThan(html.indexOf('checkAnswers()'));
     expect(html.indexOf(SENTINEL)).toBeGreaterThan(-1);
     expect(html.indexOf(SENTINEL)).toBeLessThan(html.lastIndexOf('</body>'));
+  });
+
+  it('removes the legacy "Grade My Reflections" button (worksheet has gradeReflection)', () => {
+    const { html } = wireHtml(SAMPLE);
+    // the legacy button element is gone (its onclick + class no longer appear)
+    expect(html).not.toMatch(/gradeAllReflections\(\)/);
+    expect(html).not.toMatch(/class="btn-ai"/);
+  });
+
+  it('KEEPS the legacy button when the worksheet grades FRQs inline (no gradeReflection)', () => {
+    const noGR = SAMPLE.replace(' function gradeReflection(){}', '');
+    const { html } = wireHtml(noGR);
+    expect(html).toMatch(/gradeAllReflections\(\)/);   // its only FRQ path — preserved
+    expect(html).toContain('btn-ai-recheck');          // unified button still added
   });
 
   it('is idempotent (second pass is a no-op)', () => {

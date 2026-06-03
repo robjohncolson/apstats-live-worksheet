@@ -459,11 +459,10 @@
 
     <div class="controls">
         <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>
-        <button class="btn-ai-recheck" onclick="aiGradeWorksheet({manual:true})" title="Re-grade with AI — accepts answers that mean the same thing, and re-checks your written answers (only ever raises your grade)">&#10024; AI re-check</button>
+        <button class="btn-ai-recheck" onclick="aiGradeWorksheet({manual:true})" title="Grade everything with AI — accepts blanks that mean the same thing, grades + polishes your written answers, and only ever raises your grade">&#10024; Grade with AI</button>
         <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
         <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
         <button class="btn-print" onclick="window.print()">&#128424; Print</button>
-        <button class="btn-ai" onclick="gradeAllReflections()">&#129302; Grade My Reflections</button>
         <span id="scoreDisplay"></span>
     </div>
 
@@ -2020,15 +2019,17 @@
                 keep.originalAnswer = answer;          // so the next pass dedups
                 gradingState.set(taId, keep);
             }
+            // Returns the number of FRQs whose grade was RAISED (for the toast).
             async function _aiGradeFrqs(manual) {
-                if (typeof gradeReflection !== 'function') return;   // some worksheets grade FRQs inline
+                if (typeof gradeReflection !== 'function') return 0;   // some worksheets grade FRQs inline
                 var refs = _aiReflectionTextareas();
                 var gradable = refs.filter(function (ta) {
                     return ta && ta.id && (ta.value || '').trim().length >= 20;
                 });
-                if (!gradable.length) return;
+                if (!gradable.length) return 0;
                 var prior = await _aiFetchPriorScores();             // the persisted floor
                 _aiSeedFrqFloor(prior);
+                var upgrades = 0;
                 for (var i = 0; i < gradable.length; i++) {
                     var ta = gradable[i];
                     var answer = (ta.value || '').trim();
@@ -2043,6 +2044,39 @@
                     try {
                         var result = await gradeReflection(ta.id, answer);
                         if (!result || !result.score) continue;
+                        // The worksheet's "enriched pass" rule: a P with nothing
+                        // missing is really an E.
+                        if (result.score === 'P' && Array.isArray(result.missing) && result.missing.length === 0) {
+                            result = Object.assign({}, result, { score: 'E', feedback: 'Nice work — you covered the key ideas.' });
+                        }
+                        // POLISH (manual only): a close-P answer gets rewritten into
+                        // a full-credit E with the missing pieces highlighted for the
+                        // student's notes — the old "Grade My Reflections" nicety,
+                        // now folded into the one button. Only when E would actually
+                        // raise the grade (floor below E) and the helpers exist.
+                        if (manual && result.score === 'P' && floor < 2 &&
+                            typeof fetchEnrichedAnswer === 'function' && typeof renderEnrichedPass === 'function') {
+                            var matchedCount = (result.matched || []).length;
+                            var missingCount = (result.missing || []).length;
+                            var hitRate = (matchedCount + missingCount) > 0 ? matchedCount / (matchedCount + missingCount) : 0;
+                            if (hitRate >= 0.3 && missingCount > 0) {
+                                try {
+                                    var enriched = await fetchEnrichedAnswer(ta.id, answer, result.missing);
+                                    if (enriched && enriched.score === 'E' && enriched.suggestion) {
+                                        if (typeof gradingState !== 'undefined' && gradingState) {
+                                            gradingState.set(ta.id, {
+                                                result: Object.assign({}, result, { score: 'E' }), originalAnswer: answer,
+                                                appealCount: prev ? prev.appealCount : 0, history: prev ? (prev.history || []) : []
+                                            });
+                                        }
+                                        renderEnrichedPass(ta.id, enriched);
+                                        if (typeof recordReflectionToGradebook === 'function') recordReflectionToGradebook(ta.id, answer, 'E');
+                                        upgrades++;
+                                        continue;
+                                    }
+                                } catch (_) { /* polish is best-effort; fall through to the plain grade */ }
+                            }
+                        }
                         var newRank = _aiVerdictRank(result.score);
                         if (newRank === undefined) continue;
                         if (newRank <= floor) { _aiRememberFrqText(ta.id, answer); continue; }   // never downgrade; remember text so we don't re-call
@@ -2062,8 +2096,10 @@
                         }
                         if (typeof showFeedback === 'function') showFeedback(ta.id, result);
                         if (typeof recordReflectionToGradebook === 'function') recordReflectionToGradebook(ta.id, answer, result.score);
+                        if (floor >= 0) upgrades++;   // an actual RAISE over a prior grade (not a first-ever grade)
                     } catch (_) { /* soft-fail per FRQ */ }
                 }
+                return upgrades;
             }
 
             // -- UI: button busy state + toast -------------------------------
@@ -2072,7 +2108,36 @@
                     var btn = document.querySelector('.btn-ai-recheck');
                     if (!btn) return;
                     btn.disabled = busy;
-                    btn.innerHTML = busy ? '✨ grading…' : '✨ AI re-check';
+                    btn.innerHTML = busy ? '✨ grading…' : '✨ Grade with AI';
+                } catch (_) {}
+            }
+
+            // Local worksheet "Score: X/Y (Z%)" — counts blanks the AI accepted
+            // (the .correct class) alongside verbatim-correct ones, so the visible
+            // score reflects the AI credit (it otherwise shows only the verbatim
+            // count from checkAnswers).
+            function _aiBlankStats() {
+                var filled = 0, correct = 0, partial = 0;
+                document.querySelectorAll('.blank').forEach(function (b) {
+                    if (b.classList && b.classList.contains('revealed')) return;
+                    if (!(b.value || '').trim()) return;
+                    filled++;
+                    if (b.classList && b.classList.contains('correct')) correct++;
+                    else if (b.classList && b.classList.contains('partial')) partial++;
+                });
+                return { filled: filled, correct: correct, partial: partial };
+            }
+            function _aiUpdateScoreDisplay() {
+                try {
+                    var el = document.getElementById('scoreDisplay');
+                    if (!el) return;
+                    var s = _aiBlankStats();
+                    if (s.filled > 0) {
+                        var pct = Math.round((s.correct / s.filled) * 100);
+                        el.textContent = 'Score: ' + s.correct + '/' + s.filled + ' (' + pct + '%)' +
+                            (s.partial > 0 ? ' +' + s.partial + ' partial' : '');
+                        el.classList.add('visible');
+                    }
                 } catch (_) {}
             }
             function _aiToast(msg) {
@@ -2099,12 +2164,14 @@
                 // those below full credit (upgrade-only).
                 var send = [];
                 var actMap = {};
+                var preCorrect = 0;             // verbatim-correct count (for the win toast)
                 document.querySelectorAll('.blank').forEach(function (b) {
                     if (!b.dataset || !b.dataset.questionId) return;
                     if (b.classList && b.classList.contains('revealed')) return;   // Show-Answers, not the student's
                     var val = (b.value || '').trim();
                     if (!val) return;
                     var cur = _aiBlankScore(b);
+                    if (cur === 1) preCorrect++;
                     send.push({
                         id: b.dataset.questionId,
                         question: _aiExtractQuestion(b),
@@ -2114,9 +2181,11 @@
                     });
                     if (cur < 1) actMap[b.dataset.questionId] = b;
                 });
+                var filledTotal = send.length;
 
                 window._aiGradeBusy = true;
                 _aiSetBusy(true);
+                var aiAccepted = 0, frqUpgraded = 0;
                 try {
                     // BLANKS pass — one batched call, but ONLY when at least one
                     // blank is actually upgradeable (below full verbatim credit).
@@ -2136,17 +2205,34 @@
                                     var b = actMap[g.id];
                                     if (!b) return;                              // already full credit / unknown id
                                     _aiApplyBlankCredit(b, g.reason);
+                                    aiAccepted++;
                                 });
                             }
                         } catch (_) { /* soft-fail: verbatim grade stands */ }
                     }
                     // FRQ pass (upgrade-only; auto path won't persist a fresh "I").
-                    try { await _aiGradeFrqs(manual); } catch (_) {}
+                    try { frqUpgraded = (await _aiGradeFrqs(manual)) || 0; } catch (_) {}
                     window._aiLastGradedHash = hash;
-                    if (manual) _aiToast('AI check complete.');
+                    if (manual) {
+                        var parts = [];
+                        if (aiAccepted > 0) parts.push('accepted ' + aiAccepted + ' more answer' + (aiAccepted > 1 ? 's' : ''));
+                        if (frqUpgraded > 0) parts.push('polished ' + frqUpgraded + ' written response' + (frqUpgraded > 1 ? 's' : ''));
+                        if (parts.length) {
+                            var scorePart = '';
+                            if (aiAccepted > 0 && filledTotal > 0) {
+                                var pre = Math.round(preCorrect / filledTotal * 100);
+                                var post = Math.round((preCorrect + aiAccepted) / filledTotal * 100);
+                                scorePart = ' — Score ' + pre + '% → ' + post + '%';
+                            }
+                            _aiToast('✨ AI ' + parts.join(' and ') + scorePart);
+                        } else {
+                            _aiToast('✨ AI check complete — no new credit this time.');
+                        }
+                    }
                 } finally {
                     window._aiGradeBusy = false;
                     _aiSetBusy(false);
+                    _aiUpdateScoreDisplay();   // visible score now counts the AI-accepted blanks
                     try { if (typeof updateWorksheetCompletion === 'function') updateWorksheetCompletion(); } catch (_) {}
                 }
             };
@@ -2223,6 +2309,7 @@
                 window.checkAnswers = function () {
                     var r = _aiOrigCheckAnswers.apply(this, arguments);
                     _aiReassertCredits();
+                    _aiUpdateScoreDisplay();   // keep the visible Score counting AI greens
                     try { window.aiGradeWorksheet({ manual: false }); } catch (_) {}
                     return r;
                 };
