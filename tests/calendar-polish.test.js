@@ -226,6 +226,93 @@ describe('C5 -- CALENDAR_FOCUS: synthwave next-up + local-done greyscale', () =>
   });
 });
 
+// --- C5b: CROSS-DEVICE grey-out (synced /grade score completes a lesson) -----
+// The 2026-06-03 follow-on to 0dea2ae's strict gating: a lesson finished on the
+// HOME computer must grey + unlock on the WORK computer too. The local Done-click
+// marks (apstats_desk_marks_) don't sync across devices, but the /grade scores
+// follow the LOGIN. So _isLessonComplete now counts an artifact done when the
+// local .ts mark exists OR the SYNCED score clears the same bar the Done button
+// uses (worksheet Cws >= 60, Blooket >= 80). The quiz is NOT in the gate, so the
+// quiz-alone-completes bug stays fixed. The strict local-only behavior (A8c) is
+// preserved when the synced helpers are absent (isolated vm load).
+describe('C5b -- cross-device grey-out from the synced /grade score', () => {
+  // Load _isLessonComplete WITH stubbed synced helpers + the registry — the way
+  // the real Desk has it once the /grade cache is warm. cws / blooket are the
+  // synced scores (omit → the helper returns null, i.e. no synced signal).
+  function loadIsLessonComplete(opts) {
+    opts = opts || {};
+    const sandbox = {};
+    createContext(sandbox);
+    const cwsLit = typeof opts.cws === 'number' ? String(opts.cws) : 'null';
+    const blLit = typeof opts.blooket === 'number' ? String(opts.blooket) : 'null';
+    runInContext(
+      'function getRegistryEntry(t){ return t === "1.2" ? { urls: { worksheet: "w", blooket: "b" } } : { urls: {} }; }\n' +
+      'var DESK_WORKSHEET_DONE_THRESHOLD = 60;\n' +
+      'function _getCwsForTopic(t){ return ' + cwsLit + '; }\n' +
+      'function _blooketScoreFor(t){ return ' + blLit + '; }\n' +
+      fnBody(html, '_isLessonComplete') + '\nthis.__c = _isLessonComplete;', sandbox);
+    return sandbox.__c;
+  }
+
+  it('A8d -- synced worksheet+Blooket scores complete the lesson with NO local marks', () => {
+    const c = loadIsLessonComplete({ cws: 85, blooket: 80 });
+    expect(c('1.2', {})).toBe(true);              // both synced scores clear the bar
+  });
+  it('A8d -- worksheet synced but Blooket below 80 is NOT complete', () => {
+    const c = loadIsLessonComplete({ cws: 85, blooket: 60 });
+    expect(c('1.2', {})).toBe(false);             // Blooket 60 < 80
+  });
+  it('A8d -- worksheet synced below 60 is NOT complete even with Blooket synced', () => {
+    const c = loadIsLessonComplete({ cws: 59, blooket: 90 });
+    expect(c('1.2', {})).toBe(false);             // Cws 59 < 60
+  });
+  it('A8d -- a local Done mark still completes when the synced score is absent', () => {
+    const c = loadIsLessonComplete({});           // _getCwsForTopic/_blooketScoreFor → null
+    expect(c('1.2', { '1.2|worksheet': { ts: 'y' }, '1.2|blooket': { ts: 'y' } })).toBe(true);
+  });
+  it('A8d -- mixed sources: local worksheet Done + synced Blooket completes', () => {
+    const c = loadIsLessonComplete({ blooket: 80 });
+    expect(c('1.2', { '1.2|worksheet': { ts: 'y' } })).toBe(true);
+  });
+  it('A8d -- the quiz is NOT in the gate: a quiz mark never completes on its own', () => {
+    const c = loadIsLessonComplete({});           // no worksheet/Blooket signal at all
+    expect(c('1.2', { '1.2|quiz': { ts: 'y' } })).toBe(false);
+  });
+
+  // The repaint that makes the synced greying actually appear: rCal runs before
+  // the /grade cache warms, so we repaint after it loads. Greying is a
+  // flicker-free class toggle; a lock change (a synced score unlocking the next
+  // lesson) escalates to ONE rCal rebuild — only when the unlock state flips.
+  it('paintLocalDoneCells repaints greying flicker-free (class toggles)', () => {
+    const b = fnBody(html, 'paintLocalDoneCells');
+    expect(b).toMatch(/querySelectorAll\('#cg \.dc\[data-topic\]'\)/);
+    expect(b).toMatch(/localLessonState\(/);
+    expect(b).toMatch(/dc-localdone/);
+    expect(b).toMatch(/dc-localpartial/);
+    expect(b).toMatch(/cal-current/);
+  });
+  it('paintLocalDoneCells escalates to rCal ONLY when a lesson lock flips', () => {
+    const b = fnBody(html, 'paintLocalDoneCells');
+    // detects a stale lock via the same gate rCal uses...
+    expect(b).toMatch(/_isLessonUnlocked\(/);
+    expect(b).toMatch(/cell-locked/);
+    expect(b).toMatch(/lockChanged/);
+    // ...and the rCal rebuild is GUARDED by that flip (not unconditional —
+    // renderDoNowGrades runs on every visibilitychange, so an unconditional
+    // rCal here would reintroduce per-poll flicker).
+    expect(b).toMatch(/lockChanged\s*&&\s*typeof rCal === 'function'\)\s*rCal\(\)/);
+  });
+  it('renderDoNowGrades repaints local-done cells after the grade cache loads', () => {
+    const b = fnBody(html, 'renderDoNowGrades');
+    expect(b).toMatch(/_gradeLessonsCache = Array\.isArray/);
+    expect(b).toMatch(/paintLocalDoneCells\(\)/);
+  });
+  it('_orderedPeriodTopics is shared by rCal and paintLocalDoneCells (one next-up source)', () => {
+    expect(fnBody(html, 'rCal')).toMatch(/calNextUpTopic\(_orderedPeriodTopics\(\)/);
+    expect(fnBody(html, 'paintLocalDoneCells')).toMatch(/_orderedPeriodTopics\(\)/);
+  });
+});
+
 // --- CALENDAR_COMPACT -- focus window so the calendar never buries the board ---
 
 describe('Calendar compaction -- always show a focus window', () => {

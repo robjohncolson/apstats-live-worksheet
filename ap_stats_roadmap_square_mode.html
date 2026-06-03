@@ -5055,14 +5055,36 @@ function _deskAccessGranted() {
 var _signinWallActive = false;
 // "Complete" = worksheet Done AND Blooket Done, counting only the artifacts
 // the lesson actually has (a missing artifact is vacuously satisfied).
+//
+// CROSS-DEVICE (2026-06-03): an artifact is "done" when the LOCAL Done-click
+// mark exists (.ts in apstats_desk_marks_<email>) OR its SYNCED score clears the
+// same bar the Done button uses. The local marks don't sync across devices, but
+// the /grade scores follow the LOGIN, not the browser — so a lesson finished on
+// the home computer now greys + unlocks on the work computer too, without an
+// explicit Done-click there. We do NOT add the quiz to the gate, so the
+// "quiz-alone completes a lesson" bug killed in 0dea2ae stays fixed.
+//   worksheet: recorded correctness Cws >= DESK_WORKSHEET_DONE_THRESHOLD (60)
+//   blooket:   recorded Blooket score >= 80 (the same gate the score chip uses)
+// The synced helpers/threshold are typeof-guarded: when absent (the isolated vm
+// tests load _isLessonComplete alone) only the local .ts mark counts, preserving
+// the strict behavior A8c pins. Reuses the EXACT signals _doneBtn's eligibility
+// check already uses (_getCwsForTopic / _blooketScoreFor), so greying agrees with
+// the Done button.
 function _isLessonComplete(topic, marks) {
   try {
     if (!topic) return true;
     var reg = (typeof getRegistryEntry === 'function') ? getRegistryEntry(topic) : null;
     var urls = (reg && reg.urls) || {};
     var m = marks || {};
-    var wsOk = !urls.worksheet || !!(m[topic + '|worksheet'] && m[topic + '|worksheet'].ts);
-    var blOk = !urls.blooket   || !!(m[topic + '|blooket']   && m[topic + '|blooket'].ts);
+    var cws = (typeof _getCwsForTopic === 'function') ? _getCwsForTopic(topic) : null;
+    var blScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(topic) : null;
+    var wsGate = (typeof DESK_WORKSHEET_DONE_THRESHOLD === 'number') ? DESK_WORKSHEET_DONE_THRESHOLD : 60;
+    var wsDone = !!(m[topic + '|worksheet'] && m[topic + '|worksheet'].ts)
+      || (typeof cws === 'number' && cws >= wsGate);
+    var blDone = !!(m[topic + '|blooket'] && m[topic + '|blooket'].ts)
+      || (typeof blScore === 'number' && blScore >= 80);
+    var wsOk = !urls.worksheet || wsDone;
+    var blOk = !urls.blooket   || blDone;
     return wsOk && blOk;
   } catch (_) { return true; }
 }
@@ -5921,6 +5943,74 @@ function paintDonowCells() {
   } catch (_) { /* coloring must never break the Desk */ }
 }
 
+// CALENDAR_FOCUS — the chronological lesson-topic list for the ACTIVE period
+// (cP), the sequence calNextUpTopic walks to pick the synthwave next-up cell.
+// Shared by rCal and paintLocalDoneCells so both agree on which cell is next-up.
+// Never throws (returns [] on any error).
+function _orderedPeriodTopics() {
+  try {
+    return S.map(function (e) { return cP === 'B' ? e[3] : e[4]; })
+            .filter(function (x) { return x && typeof x === 'object' && x.t; })
+            .map(function (x) { return x.t; });
+  } catch (_) { return []; }
+}
+
+// CROSS-DEVICE grey-out repaint (2026-06-03). rCal applies the local-done
+// greyscale + the synthwave next-up cell from localLessonState, but it runs at
+// page load BEFORE the async /grade cache (_gradeLessonsCache) warms — and
+// localLessonState now also derives "done" from those SYNCED scores
+// (_isLessonComplete). So after grades land we must repaint, or a lesson
+// finished on another device never greys here.
+//
+// GREYING + next-up: a flicker-free class toggle over the already-rendered
+// cells (like paintDonowCells) — NO rCal rebuild, so no flicker / scroll-loss on
+// poll/visibility.
+//
+// LOCK gate: a synced score can newly COMPLETE a lesson, which UNLOCKS the next
+// one (_isLessonComplete also feeds _isLessonUnlocked). rCal owns the lock
+// visuals (.cell-locked / the 🔒 span / the locked-dialog onclick), so we don't
+// rewire them here — we only DETECT a stale lock and, if any cell's unlock state
+// flipped, escalate to ONE rCal rebuild. That fires only when the calendar
+// STRUCTURALLY changed (rare — a lesson just unlocked), never on a plain poll,
+// so the no-flicker contract holds. Self-converging: rCal and this repaint both
+// derive the lock from _isLessonUnlocked with identical inputs, so after one
+// rebuild the next paint finds no mismatch. Idempotent + never throws.
+function paintLocalDoneCells() {
+  try {
+    var marks = (typeof getStudentMarks === 'function') ? getStudentMarks() : {};
+    var signedIn = (typeof getStudentEmail === 'function') ? !!getStudentEmail() : false;
+    var today = (typeof tdy === 'function') ? tdy() : null;
+    var nextUp = (typeof calNextUpTopic === 'function')
+      ? calNextUpTopic(_orderedPeriodTopics(), marks) : null;
+    _calNextUp = nextUp; // keep renderDoNow's message in sync with the highlight
+    var cells = document.querySelectorAll('#cg .dc[data-topic]');
+    var prevLessonTopic = null;
+    var lockChanged = false;
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      var topic = c.dataset.topic;
+      // Greying + next-up — the flicker-free common path.
+      c.classList.remove('dc-localdone', 'dc-localpartial', 'cal-current');
+      if (topic) {
+        var st = localLessonState(topic, marks);
+        if (st) c.classList.add(st === 'done' ? 'dc-localdone' : 'dc-localpartial');
+        if (topic === nextUp) c.classList.add('cal-current');
+      }
+      // Lock-change detection (mirrors rCal's sequential gate: prevLessonTopic
+      // trails the last dot-form lesson in chronological/DOM order).
+      var isDotLesson = !!(topic && /^\d+\.\d+/.test(topic));
+      if (isDotLesson && signedIn && typeof _isLessonUnlocked === 'function') {
+        var dt = new Date(Number(c.dataset.dts));
+        var unlocked = _isLessonUnlocked(topic, dt, prevLessonTopic, today, marks, signedIn);
+        var shownUnlocked = !c.classList.contains('cell-locked');
+        if (unlocked !== shownUnlocked) lockChanged = true;
+      }
+      if (isDotLesson) prevLessonTopic = topic;
+    }
+    if (lockChanged && typeof rCal === 'function') rCal();
+  } catch (_) { /* repaint must never break the Desk */ }
+}
+
 // DN3c / D1 — soft speed-bump. Opening a lesson that ISN'T your Do Now while
 // you have earlier unfinished work shows a gentle, non-blocking nudge. Units
 // stay open (never a hard gate); shown at most once per session.
@@ -6060,6 +6150,14 @@ async function renderDoNowGrades(baseUrl, token) {
         showResourcePanel(_lastResourcePanel.inf, _lastResourcePanel.dateStr);
       }
     } catch (_) { /* panel refresh is best-effort */ }
+    // CROSS-DEVICE grey-out (2026-06-03): the calendar's local-done greyscale +
+    // next-up cell now derive "done" from these freshly-loaded synced scores
+    // (_isLessonComplete → _getCwsForTopic / _blooketScoreFor). Repaint so a
+    // lesson finished on another device greys + unlocks here once its /grade
+    // lands — flicker-free greying, escalating to a single rCal only when a
+    // lesson's lock state actually flips (never on a plain poll). typeof-guarded
+    // so the existing vm-test of renderDoNowGrades doesn't need the painter.
+    if (typeof paintLocalDoneCells === 'function') paintLocalDoneCells();
     var quarters = data.quarters || {};
     _gradeQuartersCache = quarters; // cache for the "Why so low?" coach
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
@@ -12746,12 +12844,7 @@ function rCal(){
     const _gateSignedIn = !!getStudentEmail();
     // CALENDAR_FOCUS -- the one next-up lesson, by the student's local marks.
     // Computed once over S (chronological); the matching cell gets .cal-current.
-    const _nextUpTopic = calNextUpTopic(
-      S.map(function (e) { return cP === 'B' ? e[3] : e[4]; })
-       .filter(function (x) { return x && typeof x === 'object' && x.t; })
-       .map(function (x) { return x.t; }),
-      _gateMarks
-    );
+    const _nextUpTopic = calNextUpTopic(_orderedPeriodTopics(), _gateMarks);
     // Publish for renderDoNow so the Do Now message tracks the same next-up cell.
     _calNextUp = _nextUpTopic;
     let _prevLessonTopic = null;
