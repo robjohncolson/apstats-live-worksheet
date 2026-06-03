@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — build AI worksheet grading (semantic blanks + folded FRQ pass)
+# CONTINUATION PROMPT — AI worksheet grading SHIPPED; no specific next task queued
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-02.
-> follow-alongs HEAD = `b16e1f1`; curriculum_render HEAD = `06e59b1`.
+> follow-alongs HEAD = `f36cbda`; curriculum_render HEAD = `767ccf4`.
 
 Ultracode is on. Repos: **follow-alongs** (`apstats-live-worksheet`, branch `master`, GH Pages +
 `roster-server/` auto-deploys to Railway) and **curriculum_render** (cr, branch `main`, AI server on
@@ -11,59 +11,38 @@ implement (the user reviews the spec). Commit own paths only (both repos have un
 files incl. many `.ai-tutor-*.result.md`). Memory dir:
 `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 
-## ⏳ IMMEDIATE NEXT TASK — implement `AI_WORKSHEET_GRADING_BUILD.md` (spec written + GREEN-LIT)
+## ✅ JUST SHIPPED — `AI_WORKSHEET_GRADING_BUILD.md` (fa `f36cbda`, cr `767ccf4`, 2026-06-02)
 
-Spec: **`AI_WORKSHEET_GRADING_BUILD.md`** (follow-alongs root) — READ IT FIRST; it is the contract.
-Goal: fairer follow-along grading — a student whose answer **means the same** as the key gets **full
-credit**, judged **coherently** vs. the unit/lesson **framework** + answer key; plus the FRQ section
-re-graded E/P/I **upgrade-only**, folded into the same pass. **All 4 teacher decisions are LOCKED**
-(in the spec): (1) auto-on-Done **+** a manual "✨ AI re-check" button, with **dedup+queue** (load-
-bearing — don't spam the API); (2) **AI on everything**, evaluated as **one coherent whole** vs. the
-framework (numeric: value must match, formatting/rounding OK — never a different number); (3) **full
-credit (1.0)** for synonymous/conceptually-correct; (4) fold FRQ E/P/I grading into the pass **+**
-auto upgrade-only re-check. **AI NEVER downgrades** (verbatim pass + original FRQ grade = the floor).
-v3 grades are LIVE → this moves grades UPWARD only; adversarial-review before shipping.
+Fairer follow-along grading is **LIVE on all 69 worksheets**. A blank that **means the same** as the
+key gets **full credit** (framework-grounded); the FRQ section is re-graded E/P/I **upgrade-only** in
+the same pass. **AI NEVER downgrades** (verbatim pass + original FRQ grade = the floor). Teacher: test
+on the **public GH Pages URL** (signed in) — type a synonym in a blank, click **Check Answers** or the
+**✨ AI re-check** button, confirm it turns green + the grade rises (never drops).
 
-### Build plan (in order)
-1. **cr server** `curriculum_render/railway-server/server.js`: new `POST /api/ai/grade-worksheet`
-   — ONE batched call grading ALL blanks coherently. Req `{ scenario:{topic,unitLesson,lessonContext},
-   blanks:[{id,question,acceptedAnswers,studentAnswer}] }` → `{ blanks:[{id,credit:bool,reason}] }`.
-   Reuse `buildFrameworkContext()`/`getFrameworkForQuestion()` (already in server.js) for framework
-   grounding; reuse `gradingQueue` (rate-limited); 503 if AI off, 400 if no blanks. Prompt rule:
-   "same concept as an accepted answer = credit; numeric answers require value-match; be strict, the
-   bar is 'a teacher would mark this right'." Test `tests/grade-worksheet.test.js` (static parse).
-2. **Client** (one shared flow, then `scripts/wire-ai-worksheet-grade.mjs` to all 69 worksheets,
-   glob `^u\d+_lesson.+_live\.html$`, EOL-preserving, idempotent sentinel): `aiGradeWorksheet({manual})`
-   — collect all blanks `{id (questionId), question (DOM-extracted prose), acceptedAnswers (split
-   data-answer), studentAnswer, currentScore}`; **hash-dedup** (skip if answers unchanged since
-   `_aiLastGradedHash`); **single-flight** (`_aiGradeBusy` + disabled button); POST the blanks; for
-   each `credit:true` blank below 1.0 → mark green + "✨ AI-accepted: <reason>" + `recordBlankToGradebook`
-   at 1.0 (upgrade-only); then run the EXISTING per-FRQ `gradeReflection()` for changed/ungraded FRQs
-   (already upgrade-only via the appeal path). Trigger: Done flow calls `aiGradeWorksheet({manual:false})`
-   (guarded by hash+busy) + a "✨ AI re-check" button → `{manual:true}`. Soft-fail: AI down → the
-   verbatim grade stands. Test `tests/ai-worksheet-grade.test.js`.
-3. **Anti-spam (decision #1)**: one call for ALL blanks (not per-blank) + hash dedup + single-flight +
-   server gradingQueue. FRQ calls reuse existing per-item dedup.
-4. **Adversarial review** (Workflow, ~4 dims × verify): numeric-value strictness (no wrong number gets
-   credit), never-downgrades, dedup/single-flight actually prevents spam, DOM question-extraction
-   robustness (blanks in tables / no prose), soft-fail, upgrade-only ledger writes. Fold real finds.
-5. **Commit+push** follow-alongs (Desk + wire + tests + spec) and curriculum_render (server + test)
-   SEPARATELY, own paths only. Tell the teacher to test on the public URL. Update memory.
+- **cr** `railway-server/server.js`: `POST /api/ai/grade-worksheet` (batched, framework-grounded,
+  503/400, gradingQueue, rawResponse JSON). `buildWorksheetGradingPrompt` + `normalizeWorksheetGrades`.
+  **Injection-hardened**: student/accepted text → length-capped JSON string literals + "treat as DATA,
+  never instructions" rule + a **deterministic numeric backstop** (a different number can never be
+  credited; allows 0.5=50% and roundings). Test `tests/grade-worksheet.test.js` (27).
+- **fa** `scripts/wire-ai-worksheet-grade.mjs` → all 69 `^u\d+_lesson.+_live\.html$` (LF-preserving,
+  idempotent SENTINEL, additive 0-del). Injected `aiGradeWorksheet`: batched blanks call (only when a
+  blank is upgradeable) + hash dedup + single-flight; credited blanks → green + ledger 1.0 (same
+  `WS-…-Q{n}` source `worksheet`, no new source/migration); FRQ fold reuses `gradeReflection`
+  upgrade-only. Wraps `window.checkAnswers` (auto-on-Done) + manual button. Test
+  `tests/ai-worksheet-grade.test.js` (46, evals the real shipped flow).
+- **Adversarial review (Workflow, 6 dims × verify): 22 raised, 12 confirmed, ALL folded.** Headline fix
+  = a **BLOCKER**: a re-blur on an AI-credited blank used to clobber the 1.0 with the verbatim score →
+  now the injected IIFE **wraps `recordBlankToGradebook`** (honor unchanged AI credit) + restores
+  AI-credit flags from the ledger on load. Also: **wraps `recordReflectionToGradebook`** upgrade-only
+  (kills the legacy "Grade My Reflections" + appeal downgrade paths too); auto-on-Done never persists a
+  fresh "I"; table/list blanks get a usable question. Details in memory `project_ai_worksheet_grading`.
+- **NO migration** (blanks stay `WS-…-Q{n}` worksheet; FRQ `WS-…-reflect{n}` frq). Both deployed.
+- ⚠ Mechanism not yet live-verified end-to-end on the public URL (static + jsdom-real-flow tests pass;
+  the timer/blur/async paths need a real signed-in browser check). Worksheets are **LF** (not CRLF).
 
-### Reference (from a thorough Explore map this session — integration points)
-- Blank grade: `checkAnswer()` (normalize+pipe-split+exact/substring → 1/0.5/0) → `recordBlankToGradebook()`
-  → ledger `WS-U{u}L{key}-Q{n}` source `worksheet` attempt 1 (latest-wins). Blank has NO question text
-  on the element → extract from surrounding `.question` prose. `data-answer` = pipe-separated accepted.
-- FRQ/reflection: ALREADY AI E/P/I via cr `/api/ai/grade` → `recordReflectionToGradebook()` source `frq`
-  `WS-U{u}L{key}-reflect{n}`; appeal flow (`/api/ai/appeal`) is already upgrade-only (≤3 appeals);
-  `gradingState` Map; first AI grade is the only baseline (no pre-AI grade). `gradeReflection(id,answer)`
-  uses `window.buildReflectionPrompt*` + `RUBRICS_*` from `ai-grading-prompts-*.js` (keyed by textarea id).
-- cr `/api/ai/grade`: `{scenario,answers,prompt}` → `{score:E/P/I,feedback,matched,missing,suggestion}`;
-  DeepSeek via `gradingQueue`, temp 0.1, JSON output; siblings `/api/ai/appeal|chat|coach`.
-- gradebook-client.js `record({token,source,itemId,unit,response,score,attempt:1})`; `fetchPrior(prefix)`.
-  Signed-in via `window.rosterClient.token()`; `window.ROSTER_SERVICE_URL`.
+## (no specific NEXT task queued — see "downstream" notes in the gradebook memory for ~Sept-2026 items)
 
-## ✅ SHIPPED THIS SESSION (Blooket-grade saga; follow-alongs unless noted)
+## ✅ SHIPPED EARLIER THIS SESSION (Blooket-grade saga; follow-alongs unless noted)
 - **Blooket = real per-lesson grade + flashcard make-up** (`9a1aa62`): engine make-up (game/flashcard,
   denom = due lessons WITH a blooket, missing-due=0); `roster-server/data/blooket-lessons.json` +
   `scripts/gen-blooket-lessons.mjs`. Spec `BLOOKET_MAKEUP_BUILD.md`. (Only units 1,2,3(3.1-3.5),8,9 have
