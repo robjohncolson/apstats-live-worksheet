@@ -158,7 +158,9 @@ export function createDb(client) {
   // Returns { data, error } — data has student_id on success.
   // TR1 additive: also stores the reversible password_cipher and marks the
   // student as must_change_password (default password handed out at enroll).
-  async function insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher }) {
+  // mustChangePassword defaults TRUE (teacher-issued default password). Student
+  // self-signup passes FALSE — they pick their own PIN, so nothing is forced.
+  async function insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher, mustChangePassword = true }) {
     return client
       .from('roster')
       .insert([{
@@ -168,7 +170,7 @@ export function createDb(client) {
         password_hash:        passwordHash,
         email:                email || null,
         password_cipher:      passwordCipher ?? null,
-        must_change_password: true
+        must_change_password: mustChangePassword
       }])
       .select('student_id, login_username, real_name, section')
       .single();

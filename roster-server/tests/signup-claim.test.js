@@ -1,0 +1,356 @@
+// signup-claim.test.js — student self-signup: POST /roster/claim,
+// GET /roster/open-sections, and the pure helpers (signup-config, rate-limit).
+// Injects a fake in-memory db — NO network, NO real Supabase.
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import http from 'http';
+import { randomBytes } from 'crypto';
+import { createApp } from '../server.js';
+import { verifyToken } from '../token.js';
+import { parseOpenSections, getOpenSections, isOpenSection } from '../signup-config.js';
+import { createRateLimiter, createLoginThrottle } from '../rate-limit.js';
+
+// ── Fake in-memory db (honors the mustChangePassword flag) ────────────────────
+
+function createFakeDb() {
+  const store = new Map();
+  return {
+    store,
+    async insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher, mustChangePassword = true }) {
+      const key = loginUsername.toLowerCase();
+      if (store.has(key)) {
+        return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
+      }
+      const row = {
+        student_id:           `uuid-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        login_username:       loginUsername,
+        password_hash:        passwordHash,
+        password_cipher:      passwordCipher ?? null,
+        must_change_password: mustChangePassword,
+        real_name:            realName,
+        section,
+        email:                email || null,
+        status:               'active',
+        created_at:           new Date().toISOString()
+      };
+      store.set(key, row);
+      return { data: row, error: null };
+    },
+    async findByUsername(username) {
+      const row = store.get(username.toLowerCase());
+      if (!row) return { data: null, error: { code: 'PGRST116', message: 'Row not found' } };
+      return { data: row, error: null };
+    },
+    async getRoleByStudentId() { return 'student'; },
+    async getSpriteHueByStudentId() { return null; }
+  };
+}
+
+// ── Lightweight test server ──────────────────────────────────────────────────
+
+class TestServer {
+  constructor(app) { this.server = http.createServer(app); this.baseUrl = null; }
+  start() {
+    return new Promise((resolve) => {
+      this.server.listen(0, '127.0.0.1', () => {
+        this.baseUrl = `http://127.0.0.1:${this.server.address().port}`;
+        resolve();
+      });
+    });
+  }
+  stop() { return new Promise((resolve) => this.server.close(resolve)); }
+  async request(method, path, { body, headers = {} } = {}) {
+    const opts = { method, headers: { 'Content-Type': 'application/json', ...headers } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(`${this.baseUrl}${path}`, opts);
+    const json = await res.json();
+    return { status: res.status, body: json };
+  }
+}
+
+const validClaim = (over = {}) => ({
+  realName: 'Jordan Lee',
+  section:  'PeriodX',
+  username: 'mango_otter',
+  pin:      '1234',
+  ...over
+});
+
+// ── Lifecycle ────────────────────────────────────────────────────────────────
+
+let db, srv;
+
+beforeEach(async () => {
+  process.env.ROSTER_TOKEN_SECRET = `token-${randomBytes(16).toString('hex')}`;
+  process.env.ROSTER_PW_ENC_KEY   = 'a'.repeat(64);
+  process.env.NODE_ENV            = 'test';
+  delete process.env.OPEN_SIGNUP_SECTIONS;
+  delete process.env.SIGNUP_CLAIM_MAX;
+  delete process.env.SIGNUP_CLAIM_WINDOW_MS;
+
+  db = createFakeDb();
+  srv = new TestServer(createApp(db));
+  await srv.start();
+});
+
+afterEach(async () => {
+  await srv.stop();
+  delete process.env.ROSTER_TOKEN_SECRET;
+  delete process.env.ROSTER_PW_ENC_KEY;
+  delete process.env.OPEN_SIGNUP_SECTIONS;
+  delete process.env.SIGNUP_CLAIM_MAX;
+  delete process.env.SIGNUP_CLAIM_WINDOW_MS;
+});
+
+// ── GET /roster/open-sections ─────────────────────────────────────────────────
+
+describe('GET /roster/open-sections', () => {
+  it('defaults to one hidden period (PeriodE shown as "Period X")', async () => {
+    const res = await srv.request('GET', '/roster/open-sections');
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.sections).toEqual([{ value: 'PeriodX', label: 'Period X' }]);
+  });
+
+  it('honors OPEN_SIGNUP_SECTIONS env (value:label list)', async () => {
+    process.env.OPEN_SIGNUP_SECTIONS = 'PeriodA:Period A;PeriodB:Period B';
+    const res = await srv.request('GET', '/roster/open-sections');
+    expect(res.body.sections).toEqual([
+      { value: 'PeriodA', label: 'Period A' },
+      { value: 'PeriodB', label: 'Period B' }
+    ]);
+  });
+});
+
+// ── POST /roster/claim ────────────────────────────────────────────────────────
+
+describe('POST /roster/claim', () => {
+  it('claims a username, returns a verify-shaped session, and signs in (mustChangePassword=false)', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim() });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.username).toBe('mango_otter');
+    expect(res.body.realName).toBe('Jordan Lee');
+    expect(res.body.section).toBe('PeriodX');
+    expect(res.body.role).toBe('student');
+    expect(res.body.mustChangePassword).toBe(false);
+    // token resolves to the new student id
+    expect(verifyToken(res.body.token)).toBe(res.body.studentId);
+    // the stored row is NOT forced to change password
+    expect(db.store.get('mango_otter').must_change_password).toBe(false);
+  });
+
+  it('lets the student sign in afterwards with username + the 4-digit PIN', async () => {
+    await srv.request('POST', '/roster/claim', { body: validClaim() });
+    const verify = await srv.request('POST', '/roster/verify', { body: { username: 'mango_otter', password: '1234' } });
+    expect(verify.status).toBe(200);
+    expect(verify.body.ok).toBe(true);
+    expect(verify.body.mustChangePassword).toBe(false);
+  });
+
+  it('rejects a taken username with 409 username-taken (first-come-first-serve)', async () => {
+    await srv.request('POST', '/roster/claim', { body: validClaim() });
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ realName: 'Someone Else' }) });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('username-taken');
+  });
+
+  it('rejects a section not in the allowlist with 403 (never trusts the client)', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ section: 'PeriodZ' }) });
+    expect(res.status).toBe(403);
+    expect(db.store.size).toBe(0);
+  });
+
+  it('rejects a non-4-digit PIN with 400', async () => {
+    for (const pin of ['123', '12345', 'abcd', '12a4', '']) {
+      const res = await srv.request('POST', '/roster/claim', { body: validClaim({ pin, username: `u_${pin || 'x'}` }) });
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it('rejects a missing/blank real name with 400', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ realName: '   ' }) });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a bad username charset with 400', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 'Bad Name!' }) });
+    expect(res.status).toBe(400);
+  });
+
+  it('strips angle brackets from the real name so no tag can form (XSS defense-in-depth)', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ realName: 'Jo<script>rdan' }) });
+    expect(res.status).toBe(200);
+    expect(res.body.realName).not.toMatch(/[<>]/);
+    expect(res.body.realName).toBe('Joscriptrdan');
+  });
+
+  it('rate-limits once the per-IP cap is exceeded (429)', async () => {
+    process.env.SIGNUP_CLAIM_MAX = '2';
+    const limited = new TestServer(createApp(createFakeDb()));
+    await limited.start();
+    try {
+      const a = await limited.request('POST', '/roster/claim', { body: validClaim({ username: 'a_one' }) });
+      const b = await limited.request('POST', '/roster/claim', { body: validClaim({ username: 'b_two' }) });
+      const c = await limited.request('POST', '/roster/claim', { body: validClaim({ username: 'c_three' }) });
+      expect(a.status).toBe(200);
+      expect(b.status).toBe(200);
+      expect(c.status).toBe(429);
+    } finally {
+      await limited.stop();
+    }
+  });
+
+  it('a forged X-Forwarded-For PREFIX does not reset the limiter (trust proxy is bounded to 1 hop)', async () => {
+    // With trust proxy:1, req.ip is the proxy-appended (rightmost) hop. We simulate
+    // Railway's edge proxy with a FIXED real-client hop and rotate a forged prefix;
+    // the limiter must still bucket on the fixed hop and trip. (Under the old
+    // trust proxy:true this rotated the bucket and the cap never fired.)
+    process.env.SIGNUP_CLAIM_MAX = '2';
+    const limited = new TestServer(createApp(createFakeDb()));
+    await limited.start();
+    try {
+      const mk = (i) => limited.request('POST', '/roster/claim', {
+        body: validClaim({ username: `xff_${i}` }),
+        headers: { 'X-Forwarded-For': `9.9.9.${i}, 203.0.113.7` }
+      });
+      const a = await mk(1);
+      const b = await mk(2);
+      const c = await mk(3);
+      expect(a.status).toBe(200);
+      expect(b.status).toBe(200);
+      expect(c.status).toBe(429);
+    } finally {
+      await limited.stop();
+    }
+  });
+});
+
+// ── POST /roster/verify — brute-force lockout ──────────────────────────────────
+
+describe('POST /roster/verify brute-force lockout', () => {
+  it('locks a username after too many failed PIN attempts, then refuses even the correct PIN', async () => {
+    process.env.VERIFY_LOCKOUT_MAX = '3';
+    const fdb = createFakeDb();
+    const app = new TestServer(createApp(fdb));
+    await app.start();
+    try {
+      await app.request('POST', '/roster/claim', { body: validClaim({ username: 'lock_me' }) });
+      for (let i = 0; i < 3; i++) {
+        const r = await app.request('POST', '/roster/verify', { body: { username: 'lock_me', password: '0000' } });
+        expect(r.status).toBe(401);
+      }
+      const locked = await app.request('POST', '/roster/verify', { body: { username: 'lock_me', password: '0000' } });
+      expect(locked.status).toBe(429);
+      // correct PIN is refused while locked (no enumeration of which half failed)
+      const correctButLocked = await app.request('POST', '/roster/verify', { body: { username: 'lock_me', password: '1234' } });
+      expect(correctButLocked.status).toBe(429);
+    } finally {
+      await app.stop();
+      delete process.env.VERIFY_LOCKOUT_MAX;
+    }
+  });
+
+  it('a correct sign-in clears the failure counter (no premature lock for a fat-fingered student)', async () => {
+    process.env.VERIFY_LOCKOUT_MAX = '3';
+    const fdb = createFakeDb();
+    const app = new TestServer(createApp(fdb));
+    await app.start();
+    try {
+      await app.request('POST', '/roster/claim', { body: validClaim({ username: 'clear_me' }) });
+      await app.request('POST', '/roster/verify', { body: { username: 'clear_me', password: '0000' } });
+      await app.request('POST', '/roster/verify', { body: { username: 'clear_me', password: '0000' } });
+      const good = await app.request('POST', '/roster/verify', { body: { username: 'clear_me', password: '1234' } });
+      expect(good.status).toBe(200);
+      // counter reset → 3 more failures are allowed before the next lock
+      for (let i = 0; i < 3; i++) {
+        const r = await app.request('POST', '/roster/verify', { body: { username: 'clear_me', password: '0000' } });
+        expect(r.status).toBe(401);
+      }
+    } finally {
+      await app.stop();
+      delete process.env.VERIFY_LOCKOUT_MAX;
+    }
+  });
+});
+
+// ── signup-config (pure) ───────────────────────────────────────────────────────
+
+describe('signup-config parseOpenSections', () => {
+  it('falls back to the default when env is empty/garbage', () => {
+    expect(parseOpenSections(undefined)).toEqual([{ value: 'PeriodX', label: 'Period X' }]);
+    expect(parseOpenSections('')).toEqual([{ value: 'PeriodX', label: 'Period X' }]);
+    expect(parseOpenSections(';;')).toEqual([{ value: 'PeriodX', label: 'Period X' }]);
+  });
+
+  it('parses value:label pairs and keeps spaces in labels', () => {
+    expect(parseOpenSections('PeriodE:Period X')).toEqual([{ value: 'PeriodE', label: 'Period X' }]);
+    expect(parseOpenSections('A:Period A;B:Period B')).toEqual([
+      { value: 'A', label: 'Period A' },
+      { value: 'B', label: 'Period B' }
+    ]);
+  });
+
+  it('uses the value as the label when no colon is given', () => {
+    expect(parseOpenSections('SUMMER26')).toEqual([{ value: 'SUMMER26', label: 'SUMMER26' }]);
+  });
+
+  it('isOpenSection reflects the live env', () => {
+    process.env.OPEN_SIGNUP_SECTIONS = 'PeriodE:Period X';
+    expect(isOpenSection('PeriodE')).toBe(true);
+    expect(isOpenSection('PeriodB')).toBe(false);
+    delete process.env.OPEN_SIGNUP_SECTIONS;
+    expect(getOpenSections()).toEqual([{ value: 'PeriodX', label: 'Period X' }]);
+  });
+});
+
+// ── rate-limit (pure) ──────────────────────────────────────────────────────────
+
+describe('rate-limit createRateLimiter', () => {
+  it('allows up to max, then blocks within the window', () => {
+    const allow = createRateLimiter({ windowMs: 1000, max: 3 });
+    expect(allow('ip', 0)).toBe(true);
+    expect(allow('ip', 0)).toBe(true);
+    expect(allow('ip', 0)).toBe(true);
+    expect(allow('ip', 0)).toBe(false);
+  });
+
+  it('resets after the window elapses', () => {
+    const allow = createRateLimiter({ windowMs: 1000, max: 1 });
+    expect(allow('ip', 0)).toBe(true);
+    expect(allow('ip', 500)).toBe(false);
+    expect(allow('ip', 1000)).toBe(true);
+  });
+
+  it('buckets per key independently', () => {
+    const allow = createRateLimiter({ windowMs: 1000, max: 1 });
+    expect(allow('a', 0)).toBe(true);
+    expect(allow('b', 0)).toBe(true);
+    expect(allow('a', 0)).toBe(false);
+  });
+});
+
+describe('rate-limit createLoginThrottle', () => {
+  it('locks after maxFailures and clears on succeed', () => {
+    const t = createLoginThrottle({ windowMs: 1000, maxFailures: 3 });
+    expect(t.isLocked('u', 0)).toBe(false);
+    t.fail('u', 0); t.fail('u', 0); t.fail('u', 0);
+    expect(t.isLocked('u', 0)).toBe(true);
+    t.succeed('u');
+    expect(t.isLocked('u', 0)).toBe(false);
+  });
+
+  it('unlocks after the window elapses', () => {
+    const t = createLoginThrottle({ windowMs: 1000, maxFailures: 1 });
+    t.fail('u', 0);
+    expect(t.isLocked('u', 500)).toBe(true);
+    expect(t.isLocked('u', 1000)).toBe(false);
+  });
+
+  it('buckets failures per key (one victim cannot lock another account)', () => {
+    const t = createLoginThrottle({ windowMs: 1000, maxFailures: 1 });
+    t.fail('a', 0);
+    expect(t.isLocked('a', 0)).toBe(true);
+    expect(t.isLocked('b', 0)).toBe(false);
+  });
+});

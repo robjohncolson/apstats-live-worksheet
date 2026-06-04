@@ -611,3 +611,68 @@ describe('roster-client.js — TR2 mustChangePassword + changePassword()', () =>
     expect(r.error).toContain('Network error');
   });
 });
+
+describe('roster-client.js — claim() (student self-signup)', () => {
+  it('POSTs to /roster/claim and persists the session on ok:true (claim == sign-in)', async () => {
+    const { win, localStorage, rosterClient } = makeWindow('https://mock-service.test');
+    const fetchFn = mockFetch(win, {
+      ok: true, studentId: 'uuid-claim', username: 'mango_otter',
+      realName: 'Jordan Lee', section: 'PeriodX', token: 'claim.token',
+      role: 'student', spriteHue: null, mustChangePassword: false
+    });
+
+    const result = await rosterClient.claim({ realName: 'Jordan Lee', section: 'PeriodX', username: 'mango_otter', pin: '1234' });
+
+    expect(result.ok).toBe(true);
+    expect(result.username).toBe('mango_otter');
+    expect(result.section).toBe('PeriodX');
+
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.studentId).toBe('uuid-claim');
+    expect(stored.token).toBe('claim.token');
+    expect(stored.mustChangePassword).toBe(false);
+    expect(rosterClient.studentId()).toBe('uuid-claim');
+
+    const [url, opts] = fetchFn.mock.calls[0];
+    expect(url).toBe('https://mock-service.test/roster/claim');
+    expect(JSON.parse(opts.body)).toEqual({ realName: 'Jordan Lee', section: 'PeriodX', username: 'mango_otter', pin: '1234' });
+  });
+
+  it('surfaces username-taken as a code and does NOT persist a session', async () => {
+    const { win, localStorage, rosterClient } = makeWindow('https://mock-service.test');
+    mockFetch(win, { ok: false, error: 'username-taken' }, { ok: false, status: 409 });
+
+    const result = await rosterClient.claim({ realName: 'X', section: 'PeriodX', username: 'taken_name', pin: '1111' });
+
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe('username-taken');
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it('returns ok:false (no throw) on a network error', async () => {
+    const { win, rosterClient } = makeWindow('https://mock-service.test');
+    win.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+    const r = await rosterClient.claim({ realName: 'X', section: 'PeriodX', username: 'foo_bar', pin: '1234' });
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain('Network error');
+  });
+});
+
+describe('roster-client.js — openSections()', () => {
+  it('GETs /roster/open-sections and returns the sections array', async () => {
+    const { win, rosterClient } = makeWindow('https://mock-service.test');
+    const fetchFn = mockFetch(win, { ok: true, sections: [{ value: 'PeriodX', label: 'Period X' }] });
+    const sections = await rosterClient.openSections();
+    expect(sections).toEqual([{ value: 'PeriodX', label: 'Period X' }]);
+    expect(fetchFn.mock.calls[0][0]).toBe('https://mock-service.test/roster/open-sections');
+  });
+
+  it('returns [] (no throw) on a network error or bad payload', async () => {
+    const { win, rosterClient } = makeWindow('https://mock-service.test');
+    win.fetch = vi.fn().mockRejectedValue(new Error('down'));
+    expect(await rosterClient.openSections()).toEqual([]);
+
+    mockFetch(win, { ok: false });
+    expect(await rosterClient.openSections()).toEqual([]);
+  });
+});

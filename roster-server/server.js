@@ -28,6 +28,8 @@ import { PHASE3_CONFIG } from './grade-config.js';
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
 import { requireTeacher } from './teacher-auth.js';
+import { getOpenSections, isOpenSection } from './signup-config.js';
+import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -45,6 +47,29 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const app = express();
   app.use(cors());
   app.use(express.json());
+  // Railway runs behind a SINGLE edge proxy — trust exactly ONE hop so req.ip is
+  // the proxy-appended client address. `true` (trust the whole chain) would let a
+  // client forge X-Forwarded-For and rotate it to defeat the limiter; a bounded
+  // hop count ignores any client-supplied XFF prefix. If Railway's proxy depth
+  // changes, log req.ip for a known client and set the smallest matching value.
+  app.set('trust proxy', 1);
+
+  // Per-IP throttle for the un-authed self-signup claim. Generous on purpose: a
+  // whole class shares one school NAT, so a low cap would block real students.
+  // Tunable via env for tests / future tightening. See rate-limit.js.
+  const signupClaimLimiter = createRateLimiter({
+    windowMs: Number(process.env.SIGNUP_CLAIM_WINDOW_MS) || 15 * 60 * 1000,
+    max:      Number(process.env.SIGNUP_CLAIM_MAX) || 120
+  });
+
+  // Per-USERNAME failed-attempt lockout for /roster/verify. A self-signup account's
+  // credential is a 4-digit PIN (10k keyspace) and usernames are publicly listable,
+  // so without this a classmate's account is brute-forceable. IP throttling can't
+  // help (NAT-shared + XFF-spoofable), so this is keyed on the username instead.
+  const verifyThrottle = createLoginThrottle({
+    windowMs:    Number(process.env.VERIFY_LOCKOUT_WINDOW_MS) || 15 * 60 * 1000,
+    maxFailures: Number(process.env.VERIFY_LOCKOUT_MAX) || 10
+  });
 
   // ── GET /health ─────────────────────────────────────────────────────────────
   // FROZEN CONTRACT 2: → 200 { ok:true, service:"roster", time:"<iso>" }
@@ -111,7 +136,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       // DB unique violation on login_username → retry with a new name
       const isUniqueViolation =
         error.code === '23505' ||
-        (error.message && error.message.includes('unique'));
+        (error.message && error.message.includes('duplicate key'));
 
       if (!isUniqueViolation) {
         console.error('Enroll DB error:', error);
@@ -140,19 +165,32 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     }
 
     const INVALID_MSG = 'Invalid username or password';
+    const throttleKey = String(username).toLowerCase();
+
+    // Brute-force lockout: after too many failures on this username, refuse for the
+    // window (turns a 10k-PIN brute force into maxFailures/window). Generic 429 so
+    // it doesn't reveal whether the username exists.
+    if (verifyThrottle.isLocked(throttleKey)) {
+      return res.status(429).json({ ok: false, error: 'Too many sign-in attempts — please wait a few minutes and try again.' });
+    }
 
     const { data, error } = await db.findByUsername(username);
 
     // Unknown user — same generic message (no user enumeration)
     if (error || !data) {
+      verifyThrottle.fail(throttleKey);
       return res.status(401).json({ ok: false, error: INVALID_MSG });
     }
 
     // Bcrypt compare — never plaintext
     const passwordMatch = await bcrypt.compare(password, data.password_hash);
     if (!passwordMatch) {
+      verifyThrottle.fail(throttleKey);
       return res.status(401).json({ ok: false, error: INVALID_MSG });
     }
+
+    // Correct credential — clear the failure counter for this username.
+    verifyThrottle.succeed(throttleKey);
 
     let token;
     try {
@@ -250,6 +288,116 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     }
 
     return res.json({ ok: true });
+  });
+
+  // ── GET /roster/open-sections (public — student self-signup) ─────────────────
+  // Returns the value:label section list students may self-enroll into.
+  //   value = gradebook section written to roster.section
+  //   label = what the student SEES (the real period is never revealed; e.g. value
+  //           "PeriodX" shows as "Period X")
+  // Configured via env OPEN_SIGNUP_SECTIONS; defaults to one hidden period.
+  //   → 200 { ok:true, sections:[{ value, label }] }
+  app.get('/roster/open-sections', (_req, res) => {
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    return res.json({ ok: true, sections: getOpenSections() });
+  });
+
+  // ── POST /roster/claim (public, rate-limited — student self-signup) ──────────
+  //   Body: { realName, section, username, pin }
+  //   Behavior:
+  //     - section MUST be in the open-sections allowlist (the server NEVER trusts
+  //       the client's section — that would let anyone write any bucket).
+  //     - username charset ^[a-z0-9_]{3,40}$, lowercased — the student picked it
+  //       via client-side re-roll; the claim is the authoritative availability check.
+  //     - pin exactly 4 digits; hashed with bcrypt cost 12 (a PIN is just a
+  //       4-digit password — it flows through /roster/verify unchanged).
+  //     - reversible password_cipher stored so the teacher can recover a forgotten
+  //       PIN via /roster/list. must_change_password=false (the student set it).
+  //   First-come-first-serve: the DB UNIQUE on login_username arbitrates. A taken
+  //   username returns 409 {error:'username-taken'} so the client re-rolls.
+  //   → 200 { ok, studentId, username, token, realName, section, role, spriteHue, mustChangePassword }
+  //         (mirrors /roster/verify so the client persists the session and signs in)
+  //   → 400 bad field · 403 section not open · 409 username taken · 429 rate-limited · 500 failure
+  app.post('/roster/claim', async (req, res) => {
+    if (!signupClaimLimiter(req.ip || 'unknown')) {
+      return res.status(429).json({ ok: false, error: 'Too many sign-up attempts — please wait a few minutes and try again.' });
+    }
+
+    const body = req.body || {};
+
+    // realName — strip control chars + angle brackets (defense-in-depth), trim, 1..80.
+    const realName = String(body.realName || '').replace(/[^\p{L}\p{M} .'\-]/gu, '').trim();
+    if (!realName || realName.length > 80) {
+      return res.status(400).json({ ok: false, error: 'Please enter your real name.' });
+    }
+
+    // section — authoritative allowlist gate.
+    const section = String(body.section || '').trim();
+    if (!isOpenSection(section)) {
+      return res.status(403).json({ ok: false, error: 'That class is not open for signup.' });
+    }
+
+    // username — the re-rolled candidate.
+    const username = String(body.username || '').trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,40}$/.test(username)) {
+      return res.status(400).json({ ok: false, error: 'Please pick a username (tap Re-roll).' });
+    }
+
+    // pin — exactly 4 digits.
+    const pin = String(body.pin || '');
+    if (!/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ ok: false, error: 'Your PIN must be exactly 4 digits.' });
+    }
+
+    let passwordHash;
+    try {
+      passwordHash = await bcrypt.hash(pin, 12);
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: 'Failed to secure your PIN' });
+    }
+
+    // Reversible copy for teacher PIN-recovery (null if ROSTER_PW_ENC_KEY unset).
+    const passwordCipher = encryptPassword(pin);
+
+    const { data, error } = await db.insertRoster({
+      realName,
+      section,
+      loginUsername: username,
+      passwordHash,
+      passwordCipher,
+      mustChangePassword: false
+    });
+
+    if (error) {
+      const isUniqueViolation =
+        error.code === '23505' ||
+        (error.message && error.message.includes('duplicate key'));
+      if (isUniqueViolation) {
+        // First-come-first-serve: someone claimed this name first. Re-roll, re-claim.
+        return res.status(409).json({ ok: false, error: 'username-taken' });
+      }
+      console.error('Claim DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error during signup' });
+    }
+
+    let token;
+    try {
+      token = signToken(data.student_id);
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: 'Failed to issue token' });
+    }
+
+    return res.json({
+      ok: true,
+      studentId: data.student_id,
+      username: data.login_username,
+      token,
+      realName: data.real_name,
+      section: data.section,
+      role: 'student',
+      spriteHue: null,
+      mustChangePassword: false
+    });
   });
 
   // ── GET /roster/list (TR1 — teacher-gated) ───────────────────────────────────

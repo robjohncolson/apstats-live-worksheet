@@ -1417,7 +1417,7 @@
     </span>
     <span class="menu-item" data-menu="view">View
         <div class="menu-dropdown" id="menu-view">
-            <div class="menu-dd-item" id="menu-period-x" onclick="setP('B');closeMenus()">&#10003; Period X &#8212; actual periods TBD</div>
+            <div class="menu-dd-item" id="menu-period-x" onclick="setP('E');closeMenus()">&#10003; Period X &#8212; actual periods TBD</div>
             <!-- Period B/E hidden until periods are assigned: setP('B')/setP('E') still work internally -->
             <div class="menu-dd-sep"></div>
             <!-- DN3c / D5: one school-year calendar — year switching removed -->
@@ -1543,7 +1543,7 @@
                 <div class="cd-box cd-dark" id="cd-exam"><div class="num">&mdash;</div><div class="lbl geneva">Exam Day</div></div>
             </div>
             <div class="per-tog chicago">
-                <button class="s7btn s7btn-default s7btn-inv" id="btn-b" onclick="setP('B')">Period X &#8212; actual periods TBD</button>
+                <button class="s7btn s7btn-default s7btn-inv" id="btn-b" onclick="setP('E')">Period X &#8212; actual periods TBD</button>
                 <!-- btn-e hidden until periods are assigned -->
                 <button class="s7btn" id="btn-e" onclick="setP('E')" style="display:none">Period E</button>
             </div>
@@ -1699,11 +1699,50 @@
                 </style>
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
+                <div style="margin-top:6px;font-size:10px;border-top:1px solid #ddd;padding-top:6px">New student? <a href="#" id="signin-to-signup" onclick="_switchToSignUp();return false;">&#127922; Create your account</a></div>
             </div>
         </div>
         <div class="dialog-btns">
             <button class="s7btn" id="signin-cancel-btn" onclick="closeSignInModal()">Cancel</button>
             <button class="s7btn s7btn-default" id="signin-ok" onclick="submitSignIn()">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Student Self-Signup Modal — open self-signup with re-roll + 4-digit PIN ═══
+     First-come-first-serve usernames (DB UNIQUE on login_username arbitrates the
+     claim). The period the student picks shows a LABEL only ("Period X"); the real
+     section value is hidden. Auto-opens on a first-time device (see boot). -->
+<div class="dialog-overlay" id="signup-overlay" style="display:none" onclick="if(event.target===this)_switchToSignIn()">
+    <div class="dialog-box chicago" onclick="event.stopPropagation()" style="max-width:360px">
+        <div class="dialog-body" style="text-align:left">
+            <div class="dialog-icon" style="float:left;margin-right:10px">&#127881;</div>
+            <div class="dialog-msg geneva" style="font-size:11px">
+                <div class="chicago" style="font-size:12px;margin-bottom:4px">Create your account</div>
+                <div style="margin-bottom:8px">Welcome! Pick a fun username, set a 4-digit PIN, and you're in.</div>
+
+                <div style="font-size:10px;margin-bottom:2px">Your real name (your teacher needs this)</div>
+                <input type="text" id="signup-realname" class="geneva" autocomplete="name" maxlength="80" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:6px" placeholder="e.g. Jordan Lee">
+
+                <div id="signup-period-row" style="margin-bottom:6px"></div>
+
+                <div style="font-size:10px;margin-bottom:2px">Your username</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <div id="signup-username-card" class="chicago" style="flex:1;font-size:14px;text-align:center;padding:6px;border:1px solid var(--black);background:var(--white)">&hellip;</div>
+                    <button class="s7btn" type="button" id="signup-reroll" onclick="_spinUsername()">&#127922; Re-roll</button>
+                </div>
+
+                <div style="font-size:10px;margin-bottom:2px">Choose a 4-digit PIN (you'll use it to sign in)</div>
+                <div style="display:flex;gap:8px;margin-bottom:4px">
+                    <input type="password" id="signup-pin" class="geneva" inputmode="numeric" maxlength="4" autocomplete="off" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="PIN">
+                    <input type="password" id="signup-pin2" class="geneva" inputmode="numeric" maxlength="4" autocomplete="off" onkeydown="if(event.key==='Enter')submitSignUp()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="confirm PIN">
+                </div>
+                <div id="signup-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
+            </div>
+        </div>
+        <div class="dialog-btns">
+            <button class="s7btn" type="button" onclick="_switchToSignIn()">Sign in instead</button>
+            <button class="s7btn s7btn-default" type="button" id="signup-ok" onclick="submitSignUp()">Create account</button>
         </div>
     </div>
 </div>
@@ -5802,6 +5841,205 @@ async function submitSignIn() {
   } finally {
     submitSignIn._pending = false;
     if (okBtn) okBtn.disabled = false;
+  }
+}
+
+// ═══ Student Self-Signup (open signup + 🎲 re-roll + 4-digit PIN) ═══
+// Candidates spin CLIENT-SIDE for instant re-roll; the server's POST /roster/claim
+// is the authoritative first-come-first-serve check (DB UNIQUE on login_username).
+// Word lists mirror roster-server/username.js (single source there; copied here so
+// re-roll needs no round-trip + works if the server is slow). The claim endpoint
+// validates charset only, so these need not byte-match the server lists.
+var _SIGNUP_FRUITS = ['apple','banana','cherry','grape','kiwi','lemon','lime','mango','melon','peach','pear','plum','berry','fig','date','guava','lychee','papaya','orange','apricot','coconut','pineapple','pomelo','quince','raisin','olive','tomato','avocado','pumpkin','cranberry'];
+var _SIGNUP_ANIMALS = ['koala','panda','tiger','lion','bear','wolf','fox','otter','seal','whale','shark','eagle','hawk','owl','duck','swan','deer','moose','zebra','horse','llama','sloth','gecko','turtle','frog','toad','rabbit','hamster','badger','beaver'];
+var _signupCandidate = '';
+// Fallback period if the server's /roster/open-sections is unreachable. "PeriodX"
+// is the live section convention + what the sign-in dropdown queries; "Period X"
+// is the label. The schedule shown is forced to E elsewhere (cP='E').
+var _signupSections = [{ value: 'PeriodX', label: 'Period X' }];
+var _signupSectionValue = 'PeriodX';
+
+function _signupPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Spin a new fruit_animal candidate and show it on the card.
+function _spinUsername() {
+  _signupCandidate = _signupPick(_SIGNUP_FRUITS) + '_' + _signupPick(_SIGNUP_ANIMALS);
+  var el = document.getElementById('signup-username-card');
+  if (el) el.textContent = _signupCandidate;
+  return _signupCandidate;
+}
+
+// Render the period field. One option → a read-only label ("Period X"); many →
+// a real <select>. The student only ever sees labels; section values stay hidden.
+function _renderSignupSections(sections) {
+  var row = document.getElementById('signup-period-row');
+  if (!row) return;
+  while (row.firstChild) row.removeChild(row.firstChild);
+  if (!sections || !sections.length) sections = [{ value: 'PeriodX', label: 'Period X' }];
+  _signupSections = sections;
+  _signupSectionValue = sections[0].value;
+
+  if (sections.length === 1) {
+    var d = document.createElement('div');
+    d.style.cssText = 'font-size:11px';
+    d.appendChild(document.createTextNode('Class period: '));
+    var b = document.createElement('b');
+    b.textContent = sections[0].label;
+    d.appendChild(b);
+    row.appendChild(d);
+    return;
+  }
+
+  var lab = document.createElement('div');
+  lab.style.cssText = 'font-size:10px;margin-bottom:2px';
+  lab.textContent = 'Class period';
+  row.appendChild(lab);
+  var sel = document.createElement('select');
+  sel.id = 'signup-period';
+  sel.className = 'geneva';
+  sel.style.cssText = 'width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box';
+  sections.forEach(function (s) {
+    var o = document.createElement('option');
+    o.value = s.value;
+    o.textContent = s.label;
+    sel.appendChild(o);
+  });
+  sel.onchange = function () { _signupSectionValue = sel.value; };
+  row.appendChild(sel);
+}
+
+async function openSignupModal() {
+  var ov = document.getElementById('signup-overlay');
+  if (!ov) return;
+  var rn = document.getElementById('signup-realname'); if (rn) rn.value = '';
+  var p1 = document.getElementById('signup-pin'); if (p1) p1.value = '';
+  var p2 = document.getElementById('signup-pin2'); if (p2) p2.value = '';
+  var err = document.getElementById('signup-error'); if (err) err.textContent = '';
+  _spinUsername();
+  // Render the fallback period field + SHOW the modal instantly — never gate the
+  // display on a network fetch (a hanging /open-sections must not hide the modal,
+  // especially since this auto-pops on a first-time device). Refine the period
+  // list from the server afterwards, in the background.
+  _renderSignupSections(_signupSections);
+  ov.style.display = 'block';
+  try { MacSFX.play('sosumi', 0.5); } catch (_) {}
+  setTimeout(function () { var n = document.getElementById('signup-realname'); if (n) n.focus(); }, 50);
+  try {
+    if (window.rosterClient && typeof window.rosterClient.openSections === 'function') {
+      var sections = await window.rosterClient.openSections();
+      if (sections && sections.length) {
+        // Preserve an in-progress choice if the student already picked a period
+        // during the (network-bound) refine and it's still offered.
+        var prev = _signupSectionValue;
+        _renderSignupSections(sections);
+        if (prev && sections.some(function (s) { return s.value === prev; })) {
+          _signupSectionValue = prev;
+          var selEl = document.getElementById('signup-period');
+          if (selEl) selEl.value = prev;
+        }
+      }
+    }
+  } catch (_) {}
+}
+
+function closeSignupModal() {
+  var ov = document.getElementById('signup-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+// Switch between the two modals. Each directly hides the other overlay — moving
+// BETWEEN the two mandatory modals never lands on the bare Desk, so it is safe to
+// bypass the sign-in wall's dismiss guard here.
+function _switchToSignUp() {
+  var so = document.getElementById('signin-overlay'); if (so) so.style.display = 'none';
+  openSignupModal();
+}
+function _switchToSignIn() {
+  var su = document.getElementById('signup-overlay'); if (su) su.style.display = 'none';
+  openSignInModal();
+}
+
+async function submitSignUp() {
+  if (submitSignUp._pending) return;
+  var err = document.getElementById('signup-error');
+  if (err) err.textContent = '';
+
+  if (!window.rosterClient || !window.rosterClient.claim) {
+    if (err) err.textContent = 'Signup unavailable (offline). Try again on the school network.';
+    return;
+  }
+
+  var realName = (document.getElementById('signup-realname') || {}).value || '';
+  realName = realName.trim();
+  // PINs are intentionally NOT trimmed.
+  var pin = (document.getElementById('signup-pin') || {}).value || '';
+  var pin2 = (document.getElementById('signup-pin2') || {}).value || '';
+  if (!_signupCandidate) _spinUsername();
+  var username = _signupCandidate;
+  var section = _signupSectionValue;
+
+  if (!realName) { if (err) err.textContent = 'Enter your real name.'; return; }
+  if (!/^\d{4}$/.test(pin)) { if (err) err.textContent = 'Your PIN must be exactly 4 digits.'; return; }
+  if (pin !== pin2) { if (err) err.textContent = 'The two PINs do not match.'; return; }
+
+  submitSignUp._pending = true;
+  var okBtn = document.getElementById('signup-ok');
+  if (okBtn) okBtn.disabled = true;
+  if (err) err.textContent = 'Creating your account…';
+  try {
+    var result;
+    try {
+      result = await window.rosterClient.claim({ realName: realName, section: section, username: username, pin: pin });
+    } catch (e) {
+      result = { ok: false, error: (e && e.message) || 'Network error' };
+    }
+    if (!result || !result.ok) {
+      if (result && (result.code === 'username-taken' || result.error === 'username-taken')) {
+        var taken = username;
+        _spinUsername();
+        if (err) err.textContent = '“' + taken + '” was just taken. Here’s a new one: “' + _signupCandidate + '”. Tap Create account.';
+      } else {
+        if (err) err.textContent = (result && result.error) || 'Signup failed.';
+      }
+      return;
+    }
+    _applySignedUpSession(result);
+  } finally {
+    submitSignUp._pending = false;
+    if (okBtn) okBtn.disabled = false;
+  }
+}
+
+// Post-claim: claim already persisted the session (claim == sign-in). Mirror the
+// identity into the legacy key + refresh the Desk, like submitSignIn's tail, but
+// must_change_password is always false for self-signup (the student set their PIN).
+function _applySignedUpSession(result) {
+  var who = (window.rosterClient.current && window.rosterClient.current()) || null;
+  // Fail-closed: claim() succeeded on the SERVER, but if writeSession could not
+  // persist locally (localStorage blocked/full — private mode, quota) the session
+  // isn't really here. Do NOT drop the wall onto a bare Desk; show an error and
+  // keep the signup modal up (mirrors submitSignIn's fail-closed behavior).
+  if (!who || !who.studentId) {
+    var serr = document.getElementById('signup-error');
+    if (serr) serr.textContent = 'Could not save your account on this device. Allow cookies / site data for this site, then try again.';
+    return;
+  }
+  var legacyKey = who.username || (result && result.username);
+  try { localStorage.setItem('apstats_desk_student_email', legacyKey); } catch (_) {}
+  try { registerStudent(legacyKey); } catch (_) {}
+  if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
+  try { updateStudentMenu(); } catch (_) {}
+  if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+  // Access is granted now — drop the wall and close both modals.
+  _signinWallActive = false;
+  var su = document.getElementById('signup-overlay'); if (su) su.style.display = 'none';
+  var so = document.getElementById('signin-overlay'); if (so) so.style.display = 'none';
+  if (typeof renderDoNow === 'function') renderDoNow();
+  if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard();
+  if (typeof _fetchPollArchive === 'function') _fetchPollArchive();
+  var uname = who.username || (result && result.username) || legacyKey;
+  if (typeof showDialog === 'function') {
+    showDialog('\u{1F389}', 'Welcome, ' + (who.realName || (result && result.realName) || legacyKey) + '! Your username is ' + uname + '. Remember your 4-digit PIN — you’ll sign in with your username + PIN next time.', 'OK');
   }
 }
 
@@ -13613,12 +13851,16 @@ function _mountClassroomBoard(){
 }
 
 (function(){
-  var ps=new URLSearchParams(window.location.search);
-  var pp=(ps.get('period')||'').toUpperCase();
   // DN3c / D5: ONE calendar — ignore ?year= and the persisted ap-roadmap-year
   // override; always the real school year. Legacy defs kept as dead code.
   var py=computeDefaultYear();
-  if(pp==='E') cP='E';
+  // 2026-06-03: collapse the B/E ambiguity. "Period X" is a SINGLE hidden period
+  // (= E) until the new school year's real periods are assigned. ?period= is now
+  // ignored exactly like ?year= already is — so BOTH the ...&period=B and
+  // ...&period=E links resolve to the SAME X=E schedule, and students never see
+  // two different schedules. To re-enable real period routing later, restore the
+  // ?period read here and point the "Period X" controls back at their periods.
+  cP='E';
   if(SCHEDULE_DEFS[py]) cYear=py;
   loadYear(cYear);
 })();
@@ -13646,7 +13888,16 @@ setTimeout(function() {
         boot.addEventListener('transitionend', function() { boot.remove(); });
         // No-guest-mode wall (SIGNIN_WALL_BUILD.md §2): once the boot splash
         // is dismissed, require sign-in before any material is reachable.
-        try { if (!_deskAccessGranted()) openSignInModal(); } catch (_) {}
+        // First-load → signup; returning-but-signed-out → sign-in. A brand-new
+        // device has no sign-in history (_loadKnownUsers empty), so new students
+        // who open tomorrow's link land straight on "Create your account".
+        try {
+          if (!_deskAccessGranted()) {
+            var _firstTime = (typeof _loadKnownUsers === 'function') ? (_loadKnownUsers().length === 0) : false;
+            if (_firstTime && typeof openSignupModal === 'function') openSignupModal();
+            else openSignInModal();
+          }
+        } catch (_) {}
     });
 }, 1000);
 </script>

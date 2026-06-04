@@ -72,9 +72,14 @@ describe('Desk: no-guest-mode sign-in wall', () => {
     expect(body).toMatch(/_signinWallActive\s*&&\s*typeof\s+_deskAccessGranted\s*===\s*'function'\s*&&\s*!_deskAccessGranted\s*\(\s*\)\s*\)\s*return/);
   });
 
-  it('06: the boot splash dismissal opens the sign-in wall when not signed in', () => {
+  it('06: the boot splash dismissal opens the wall when not signed in (signup for a new device, sign-in for a returning one)', () => {
     // After the boot-overlay click-to-start is dismissed, the wall opens.
-    expect(DESK).toMatch(/if\s*\(\s*!_deskAccessGranted\s*\(\s*\)\s*\)\s*openSignInModal\s*\(\s*\)/);
+    // Still gated on !_deskAccessGranted(); a first-time device (no sign-in
+    // history) gets the signup modal, a returning-but-signed-out device gets
+    // the sign-in modal.
+    expect(DESK).toMatch(/if\s*\(\s*!_deskAccessGranted\(\)\s*\)\s*\{/);
+    expect(DESK).toMatch(/_firstTime && typeof openSignupModal === 'function'\) openSignupModal\(\)/);
+    expect(DESK).toMatch(/else openSignInModal\(\)/);
   });
 
   // ── _deskAccessGranted real-execution smoke tests ─────────────────────────
