@@ -252,8 +252,8 @@ describe('start-here.html — Phase 4a student render', () => {
   it('id-bearing sections are exactly the intended ones (no accidental sections appeared)', () => {
     const sectionIds = [...START.matchAll(/<section\s[^>]*id=["']([^"']+)["']/gi)].map(m => m[1]);
     // Phase 4a added 'where-you-stand'. grade-clarity (2026-05-31) added the
-    // 'how-your-grade' anchor target for the Desk "how grades work" deep-link.
-    // Document order: how-your-grade precedes where-you-stand.
-    expect(sectionIds).toEqual(['how-your-grade', 'where-you-stand']);
+    // 'how-your-grade' anchor. 2026-06-04 added 'on-the-desk' (the click-by-click
+    // study loop). Document order: on-the-desk → how-your-grade → where-you-stand.
+    expect(sectionIds).toEqual(['on-the-desk', 'how-your-grade', 'where-you-stand']);
   });
 });
