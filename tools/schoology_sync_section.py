@@ -50,8 +50,15 @@ _ROOT_SCHEDULE = os.path.join(DATA_DIR, "lesson-schedule.json")
 SCHEDULE_PATH = _ROSTER_SCHEDULE if os.path.exists(_ROSTER_SCHEDULE) else _ROOT_SCHEDULE
 STATE_PATH = os.path.join(SCRIPT_DIR, ".schoology-sync-state.json")
 
+# Fine-grained (component) granularity presence sources. roadmap-data.json gives
+# the authoritative "has a quiz" signal (urls.quiz null for X.1 openers);
+# blooket-lessons.json is the engine's hasBlooket denominator.
+ROADMAP_PATH = os.path.join(REPO_ROOT, "roadmap-data.json")
+BLOOKET_LESSONS_PATH = os.path.join(REPO_ROOT, "roster-server", "data", "blooket-lessons.json")
+
 sys.path.insert(0, SCRIPT_DIR)
 import schoology_sync_lib as lib
+import schoology_components as components
 
 SECTION_TO_COURSE_ID = {
     "PeriodB": "7945275782",
@@ -321,6 +328,49 @@ def build_scope(schedule: dict, section: str) -> list[dict]:
     return items
 
 
+def build_component_scope(
+    schedule: dict,
+    section: str,
+    *,
+    quiz_topics=None,
+    blooket_topics=None,
+    include_undated: bool = False,
+    roadmap_path: str = ROADMAP_PATH,
+    blooket_lessons_path: str = BLOOKET_LESSONS_PATH,
+) -> list[dict]:
+    """Return FINE-GRAINED (per-component) scope items for the given section.
+
+    Each lesson yields up to three columns -- Follow-Along (worksheet),
+    Quiz (if the topic has a quiz), Blooket (if the topic has a Blooket) --
+    instead of one coarse blended column. Combined worksheets share ONE
+    Follow-Along / Blooket column; quizzes stay per-topic. See
+    schoology_components.component_columns for the rules.
+
+    quiz_topics / blooket_topics override the on-disk presence sources (for
+    tests); when None they are loaded from roadmap-data.json + blooket-lessons.json.
+
+    include_undated: include lessons with no date for this section's period
+    (the summer mock forces every column into MP4 regardless of the calendar).
+
+    Items share the SAME shape as build_scope ({key, kind, title, due_date,
+    unit}) plus group_label/topic_keys, so the rest of the pipeline is unchanged.
+    """
+    period_letter = PERIOD_LETTER.get(section, "B")
+    if quiz_topics is None:
+        quiz_topics = components.load_quiz_topics(roadmap_path)
+    if blooket_topics is None:
+        blooket_topics = components.load_blooket_topics(blooket_lessons_path)
+
+    columns = components.component_columns(
+        schedule.get("lessons", {}),
+        period_letter,
+        quiz_topics=quiz_topics,
+        blooket_topics=blooket_topics,
+        include_undated=include_undated,
+    )
+    return columns
+
+
 # ---------------------------------------------------------------------------
 # Assignment-creation helpers
 # ---------------------------------------------------------------------------
@@ -545,6 +595,9 @@ def sync_section(
     schedule_path: str = SCHEDULE_PATH,
     limit: int | None = None,
     force_mp_date: str | None = None,
+    granularity: str = "lesson",
+    quiz_topics=None,
+    blooket_topics=None,
 ) -> dict:
     """Orchestrate one full sync for a single section.
 
@@ -565,7 +618,18 @@ def sync_section(
 
     # -- load schedule + build scope ----------------------------------------
     schedule = load_schedule(schedule_path)
-    scope_items = build_scope(schedule, section)
+    if granularity == "component":
+        # Fine-grained per-component columns. include_undated when a force MP is
+        # in play (summer mock): units 1-5 have null SY26-27 dates but must still
+        # land in MP4, so they can't be date-filtered out.
+        scope_items = build_component_scope(
+            schedule, section,
+            quiz_topics=quiz_topics,
+            blooket_topics=blooket_topics,
+            include_undated=bool(force_mp_date),
+        )
+    else:
+        scope_items = build_scope(schedule, section)
     if limit is not None:
         scope_items = scope_items[:limit]
 
@@ -720,6 +784,17 @@ def _parse_args(argv=None):
         metavar="N",
         help="Cap scope to first N items.  Useful for smoke-testing.",
     )
+    p.add_argument(
+        "--granularity",
+        choices=["lesson", "component"],
+        default="lesson",
+        help=(
+            "lesson (default): one coarse blended column per lesson. "
+            "component: fine-grained Follow-Along / Quiz / Blooket columns "
+            "(data-driven from roadmap-data + blooket-lessons; the full rollout). "
+            "Use the matching --grades-fixture granularity."
+        ),
+    )
     return p.parse_args(argv)
 
 
@@ -777,6 +852,7 @@ def main(argv=None):
         ops=None,  # imported lazily inside sync_section
         limit=args.limit,
         force_mp_date=force_mp_date,
+        granularity=args.granularity,
     )
 
 

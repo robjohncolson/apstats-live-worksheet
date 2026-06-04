@@ -32,6 +32,9 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import schoology_components as components  # noqa: E402
+
 DEFAULT_BASE = "https://roster-production-12c1.up.railway.app"
 
 
@@ -138,7 +141,9 @@ def main(argv=None) -> int:
     p.add_argument("--section", default=None, help="Roster section (omit for all).")
     p.add_argument("--out", default=None, help="Fixture output path (JSON).")
     p.add_argument("--uid-map", default=None, help="JSON {rosterId: schoologyUid} to translate keys.")
-    p.add_argument("--granularity", choices=["lesson", "quarter", "both"], default="lesson")
+    p.add_argument("--granularity", choices=["lesson", "quarter", "both", "component"], default="lesson",
+                   help="component: fine-grained Follow-Along / Quiz / Blooket per lesson "
+                        "(the full rollout; pair with --granularity component on the sync side).")
     p.add_argument("--inspect", action="store_true", help="Print pipeline state, write nothing.")
     args = p.parse_args(argv)
 
@@ -181,7 +186,10 @@ def main(argv=None) -> int:
         with open(args.uid_map, "r", encoding="utf-8") as f:
             uid_map = json.load(f)
 
-    fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity)
+    if args.granularity == "component":
+        fixture = components.component_grades_from_class_doc(doc, uid_map=uid_map)
+    else:
+        fixture = build_fixture(doc, uid_map=uid_map, granularity=args.granularity)
     payload = json.dumps(fixture, indent=2)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:
