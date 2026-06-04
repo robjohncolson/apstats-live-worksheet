@@ -9,10 +9,18 @@ and paste it after the `→`. One Blooket **set per CSV** (combined worksheets s
 **31 sets cover 40 topics.** Paste the filled list back to me and I'll wire the URLs into
 `roadmap-data.json` + regenerate `roster-server/data/blooket-lessons.json` + verify.
 
-## Unit 4 (6 sets)
-- [ ] `u4_l1_l2_blooket.csv` → 4.1, 4.2 → ______________________________
-- [ ] `u4_l3_l4_l5_blooket.csv` → 4.3, 4.4, 4.5 → ______________________________
-- [ ] `u4_lesson6_blooket.csv` → 4.6 → ______________________________
+## ✅ Already backfilled from `curriculum_render/data/units.js` (2026-06-04)
+Mined the teacher's units.js (its `blookets[].url` per topic) — these are now wired into
+`lesson-registry.json` (source) + `roadmap-data.json` + `blooket-lessons.json`:
+- **3.6, 3.7** → `…/set/69612c55f522b6ed3e3233c7` (one set, combined)
+- **4.1, 4.2** → `…/set/696edcfa2761a89ccdaf2fdc`
+- **4.3, 4.4, 4.5** → `…/set/6970461b0b6fcb7e199c7134`
+- **4.6** → `…/set/69719a57390d28db6d7edfa9`
+
+> units.js currently has Blooket URLs through **4.6** only. As you add U4.7+ / U5 / U6 / U7 Blookets
+> to curriculum_render, ping me and I'll re-mine units.js + backfill — no manual list needed.
+
+## Unit 4 — remaining (3 sets, not yet in units.js)
 - [ ] `u4_l7_l8_blooket.csv` → 4.7, 4.8 → ______________________________
 - [ ] `u4_l9_blooket.csv` → 4.9 → ______________________________
 - [ ] `u4_l10_l11_l12_blooket.csv` → 4.10, 4.11, 4.12 → ______________________________
@@ -49,9 +57,6 @@ and paste it after the `→`. One Blooket **set per CSV** (combined worksheets s
 - [ ] `u7_l8_blooket.csv` → 7.8 → ______________________________
 - [ ] `u7_l9_blooket.csv` → 7.9 → ______________________________
 
-## Not backfillable (no Blooket CSV exists)
-- **3.6, 3.7** — `urls.blooket` is null but there is no `u3_l6`/`u3_l7` CSV (experimental-design
-  lessons). Leave null, or make the content first if you want Blookets there.
-
 ---
-_Already complete (no action): U1, U2, U8, U9 all have Blooket URLs._
+_Already complete (no action): U1, U2, U8, U9 (and now 3.6/3.7 + 4.1–4.6) all have Blooket URLs._
+_Remaining to source: **4.7–4.12, all of U5, U6, U7** (34 topics / 27 sets) — these aren't in units.js yet._
