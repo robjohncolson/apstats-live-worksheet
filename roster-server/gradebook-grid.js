@@ -149,36 +149,55 @@ function cellValue(col, lessonsByKey, units) {
 // object (null when that track has nothing due yet).
 export function reconcileQuarter(gradeObj, quarterKey, schoologyTotal, v3Total) {
   var q = (gradeObj && gradeObj.quarters && gradeObj.quarters[quarterKey]) || {};
-  var pc = q.pcAvg != null ? q.pcAvg : null;
-  var work = q.workAvg != null ? q.workAvg : null;
+  // Display values (0..100) shown to the teacher.
+  var pcDisp = q.pcAvg != null ? q.pcAvg : null;
+  var workDisp = q.workAvg != null ? q.workAvg : null;
+  // BRANCH on the UNROUNDED [0,1] fractions the engine actually used (combineV3 /
+  // quarterGradeV3 gate on 0.40), so the explanation can never contradict v3Total
+  // at the floor boundary (a rounded 40.0 is ambiguous). Fall back to the rounded
+  // display value /100 only for an old server that doesn't surface the raw values.
+  var pcF = q.pcAvgRaw != null ? q.pcAvgRaw : (pcDisp != null ? pcDisp / 100 : null);
+  var workF = q.workAvgRaw != null ? q.workAvgRaw : (workDisp != null ? workDisp / 100 : null);
   var delta = (schoologyTotal != null && v3Total != null) ? round1(v3Total - schoologyTotal) : null;
 
   var branch, reason;
-  if (pc == null && work == null) {
-    branch = 'none';
-    reason = 'No graded tracks yet this quarter.';
-  } else if (pc == null) {
+  if (pcF == null && workF == null) {
+    if (v3Total != null) {
+      // A real grade exists but the two-track breakdown doesn't (Phase-6 fallback
+      // or v3 off / schedule failed to load) — don't claim "nothing due yet".
+      branch = 'non-v3';
+      reason = 'The two-track breakdown is unavailable for this quarter (v3 model not active, ' +
+        'or the schedule did not load); the quarter grade shown is ' + round1(v3Total) + '.';
+    } else {
+      branch = 'none';
+      reason = 'No graded tracks yet this quarter.';
+    }
+  } else if (pcF == null) {
     branch = 'work-only';
-    reason = 'Only the Work track is active (no Progress Check due yet), so v3 = Work (' + round1(work) + ').';
-  } else if (work == null) {
+    reason = 'Only the Work track is active (no Progress Check due yet), so v3 = Work (' + round1(workDisp) + ').';
+  } else if (workF == null) {
     branch = 'pc-only';
-    reason = 'Only the PC track is active, so v3 = PC (' + round1(pc) + ').';
-  } else if (pc >= 40 && work >= 40) {
+    reason = 'Only the PC track is active, so v3 = PC (' + round1(pcDisp) + ').';
+  } else if (pcF >= 0.40 && workF >= 0.40) {
     branch = 'max';
-    var which = pc >= work ? ('PC ' + round1(pc)) : ('Work ' + round1(work));
+    var which = pcF >= workF ? ('PC ' + round1(pcDisp)) : ('Work ' + round1(workDisp));
     reason = 'Both tracks clear the 40 floor, so v3 takes the higher (' + which +
       '), while Schoology averages the categories (' + round1(schoologyTotal) + ').';
   } else {
     branch = 'ceiling';
-    var a = 0.7 * pc, b = 0.7 * work, m = (pc + work) / 2;
+    var a = 0.7 * pcF, b = 0.7 * workF, m = (pcF + workF) / 2;
     var top = Math.max(a, b, m);
-    var lbl = top === m ? 'the mean of the two tracks' : (top === a ? '70% of PC' : '70% of Work');
-    reason = 'A track is below the 40 floor, so v3 caps at ' + lbl + ' (' + round1(top) +
+    var EPS = 1e-9;
+    var srcs = [];
+    if (Math.abs(a - top) < EPS) srcs.push('70% of PC');
+    if (Math.abs(b - top) < EPS) srcs.push('70% of Work');
+    if (Math.abs(m - top) < EPS) srcs.push('the mean of the two tracks');
+    reason = 'A track is below the 40 floor, so v3 caps at ' + srcs.join(' = ') + ' (' + round1(top * 100) +
       '); Schoology applies no floor or ceiling.';
   }
 
   return {
-    pcAvg: pc, workAvg: work,
+    pcAvg: pcDisp, workAvg: workDisp,
     schoologyTotal: schoologyTotal != null ? schoologyTotal : null,
     v3Total: v3Total != null ? v3Total : null,
     delta: delta, branch: branch, reason: reason,

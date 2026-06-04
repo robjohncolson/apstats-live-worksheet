@@ -332,6 +332,9 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       // v3 additions (null on the Phase 6 path):
       pcAvg: qResult.pcAvg != null ? qResult.pcAvg : null,
       workAvg: qResult.workAvg != null ? qResult.workAvg : null,
+      // Raw [0,1] track fractions for the reconciliation branch (null on Phase 6).
+      pcAvgRaw: qResult.pcAvgRaw != null ? qResult.pcAvgRaw : null,
+      workAvgRaw: qResult.workAvgRaw != null ? qResult.workAvgRaw : null,
       // Work sub-track breakdown + Blooket make-up surface (v3 only; the "Why so
       // low?" coach reads these). Undefined on the Phase 6 path → client guards.
       workTracks: qResult.workTracks || null,

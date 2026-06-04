@@ -969,6 +969,12 @@ export function computeQuarterV3({
     lessonsTotal,
     pcAvg: to100(pcAvg),
     workAvg: to100(workAvg),
+    // Raw [0,1] track fractions — the EXACT values combineV3/quarterGradeV3 gate on
+    // (the 40% floor is 0.40 here). Surfaced so the gradebook reconciliation can
+    // pick the v3 branch from the same numbers the grade used, instead of the
+    // rounded 0..100 display values (40.0 is ambiguous between 0.3996 and 0.4004).
+    pcAvgRaw: pcAvg,
+    workAvgRaw: workAvg,
     // Work sub-track breakdown (0..100 or null), so the "Why so low?" coach can
     // show what's inside the Work track — esp. the Blooket track, which the
     // student can't otherwise see. null tracks are renormalized away in workAvg.

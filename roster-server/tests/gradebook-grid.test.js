@@ -137,10 +137,38 @@ describe('reconcileQuarter — explains the Schoology vs v3 gap', () => {
     expect(r.delta).toBe(0);
   });
 
-  it('none branch: no tracks', () => {
+  it('none branch: no tracks AND no grade', () => {
     const r = reconcileQuarter({ quarters: { Q1: { pcAvg: null, workAvg: null } } }, 'Q1', null, null);
     expect(r.branch).toBe('none');
     expect(r.delta).toBe(null);
+  });
+
+  it('non-v3 branch: a grade exists but no track breakdown (Phase-6 / v3-off)', () => {
+    const r = reconcileQuarter({ quarters: { Q1: { pcAvg: null, workAvg: null } } }, 'Q1', 80, 75);
+    expect(r.branch).toBe('non-v3'); // NOT 'none' — would self-contradict the shown grade
+    expect(r.reason).toMatch(/unavailable/);
+    expect(r.delta).toBeCloseTo(-5, 1);
+  });
+
+  it('boundary: branches on the UNROUNDED fractions, not the rounded 40.0', () => {
+    // Unrounded pcAvg 0.3996 rounds to exactly 40.0, but the engine used the
+    // ceiling path (0.3996 < 0.40). The reason must match the engine, not say 'max'.
+    const r = reconcileQuarter(
+      { quarters: { Q1: { pcAvg: 40.0, workAvg: 80, pcAvgRaw: 0.3996, workAvgRaw: 0.80 } } },
+      'Q1', 82, 60);
+    expect(r.branch).toBe('ceiling'); // would have been 'max' on the rounded value
+    expect(r.reason).toMatch(/40 floor/);
+    expect(r.reason).not.toMatch(/takes the higher/);
+  });
+
+  it('ceiling tie: lists every cap source that achieved the max', () => {
+    // pc 0.90, work 0.36 -> a=0.63, m=0.63 (tie between 70% of PC and the mean).
+    const r = reconcileQuarter(
+      { quarters: { Q1: { pcAvg: 90, workAvg: 36, pcAvgRaw: 0.90, workAvgRaw: 0.36 } } },
+      'Q1', 70, 63);
+    expect(r.branch).toBe('ceiling');
+    expect(r.reason).toContain('70% of PC');
+    expect(r.reason).toContain('the mean of the two tracks');
   });
 });
 
