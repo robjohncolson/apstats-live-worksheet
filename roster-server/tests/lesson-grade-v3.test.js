@@ -12,6 +12,7 @@ import {
   V3_WORK_WEIGHTS,
   computeQuarterV3,
 } from '../lesson-grade.js';
+import { computeGrade } from '../grade.js';
 
 // ── quarterGradeV3 — the worked-examples table from GRADING_MODEL_V3_BUILD.md ──
 
@@ -463,5 +464,41 @@ describe('computeQuarterV3 — quiz-bearing denominator', () => {
     expect(r.quizDone).toBe(1);
     expect(r.quizTodo).toContain('1.3');
     expect(r.workTracks.quizzes).toBeCloseTo(50, 1); // 100/2 — the skipped quiz = 0
+  });
+});
+
+// Regression: the quiz surface (and Blooket surface) must SURVIVE grade.js's
+// explicit quarters[qKey] serializer into the /grade + /class/grades output, or
+// the dashboard "(n/m taken)" verification line silently never renders.
+describe('computeGrade — quiz/blooket surface threading', () => {
+  const GRADE_CFG = {
+    C: 85,
+    feederWeights: { W: 1, Q: 2 },
+    lessonFeederWeights: { ws: 1, W: 2, Q: 3 },
+    frqBand: { E: 100, P: 70, I: 35 },
+    useV3: true,
+    v3LessonsExcludeQuiz: true,
+    schoolTz: 'America/New_York',
+    gradingWindowStart: null, // no window filter so the past-dated fixture lessons stay in-band
+    quarters: { Q1: { units: [1], start: '2026-01-01', end: '2026-08-31', pcAnchor: { p85: 40, p100: 60 } } },
+  };
+
+  it('quarters[Q].quizDue/quizDone/blooketDue reach the serialized output', () => {
+    const schedule = {
+      '1.1': { unit: 1, worksheetKey: '1', periods: { B: '2026-01-09', E: '2026-01-09' } }, // opener, due
+      '1.2': { unit: 1, worksheetKey: '2', periods: { B: '2026-01-10', E: '2026-01-10' } }, // has a quiz, due
+    };
+    const answerKey = { 'U1-L2-Q01': { answerKey: 'B', unit: '1' } };
+    const rows = [
+      { item_id: 'U1-L2-Q01', source: 'curriculum_quiz', response: 'B', recorded_at: '2026-01-11T00:00:00Z' },
+    ];
+    const out = computeGrade(rows, answerKey, GRADE_CFG, { lessonSchedule: schedule, section: 'PeriodB' });
+    const q1 = out.quarters.Q1;
+    // The #2 fix's verification surface (previously dropped by the serializer):
+    expect(typeof q1.quizDue).toBe('number');
+    expect(q1.quizDone).toBe(1);   // 1.2's quiz was taken + correct
+    expect(q1.quizDue).toBe(1);    // only 1.2 is quiz-bearing (opener 1.1 excluded)
+    // Blooket surface stays threaded too (same serializer slot).
+    expect(typeof q1.blooketDue).toBe('number');
   });
 });

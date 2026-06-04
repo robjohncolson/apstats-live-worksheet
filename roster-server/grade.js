@@ -348,6 +348,12 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
       blooketDue: typeof qResult.blooketDue === 'number' ? qResult.blooketDue : null,
       blooketDone: typeof qResult.blooketDone === 'number' ? qResult.blooketDone : null,
       blooketTodo: Array.isArray(qResult.blooketTodo) ? qResult.blooketTodo : [],
+      // Quiz surface (symmetry with Blooket) — powers the dashboard's
+      // "Quizzes X (n/m taken)" verification line. quarters[qKey] is an explicit
+      // pick, NOT a spread, so these must be threaded or they never reach the client.
+      quizDue: typeof qResult.quizDue === 'number' ? qResult.quizDue : null,
+      quizDone: typeof qResult.quizDone === 'number' ? qResult.quizDone : null,
+      quizTodo: Array.isArray(qResult.quizTodo) ? qResult.quizTodo : [],
     };
   }
 
