@@ -140,6 +140,68 @@ describe('Desk My Gradebook modal', () => {
     expect(doc.getElementById('my-gradebook-body').textContent).toMatch(/could not load/i);
   });
 
+  // ── threshold coloring + date-gating ──────────────────────────────────────
+  function gbWith(columns, cells, extra) {
+    return { weights: { Lesson: 15 }, quarters: { Q1: Object.assign({
+      columns: columns, cells: cells,
+      categoryAverages: {}, schoologyTotal: 80, v3Total: 80, reconciliation: {}
+    }, extra || {}) } };
+  }
+
+  it('_gradeBand maps scores to the grade-rules bands (40 floor / 70 cap)', () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    expect(win._gradeBand(95).fg).toBe('#0a6b2e');   // deep green 90+
+    expect(win._gradeBand(84).fg).toBe('#1f8b3b');   // green 70-89 (clears cap)
+    expect(win._gradeBand(55).fg).toBe('#9a6a00');   // amber 40-69
+    expect(win._gradeBand(30).fg).toBe('#c0392b');   // red < 40 (below floor)
+    expect(win._gradeBand(null)).toBeNull();
+  });
+
+  function scheduleReady() {
+    try { return loaded && Object.keys(win._lessonDateMap()).length > 0; } catch (_) { return false; }
+  }
+
+  it('date-gate: a not-started future lesson is hidden; a started one always shows', () => {
+    if (!scheduleReady()) { expect(true).toBe(true); return; }
+    win.tdy = () => new Date(2024, 0, 1); // before any 2026 lesson date
+    win._activeGradebook = gbWith(
+      [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'] },
+        { key: 'FA:1.5', category: 'Lesson', title: '1.5 Follow-Along', unit: 1, topicKeys: ['1.5'] } ],
+      { 'FA:1.1': 84, 'FA:1.5': null }
+    );
+    win.renderMyGradebook('Q1');
+    var text = doc.getElementById('my-gradebook-body').textContent;
+    expect(text).toContain('1.1 Follow-Along');       // started → shown
+    expect(text).not.toContain('1.5 Follow-Along');   // future + not started → hidden
+  });
+
+  it('date-gate: once a lesson date passes, a not-done lesson shows as "not done yet" + an owe badge', () => {
+    if (!scheduleReady()) { expect(true).toBe(true); return; }
+    win.tdy = () => new Date(2027, 6, 1); // after all 2026 lesson dates
+    win._activeGradebook = gbWith(
+      [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'] },
+        { key: 'FA:1.5', category: 'Lesson', title: '1.5 Follow-Along', unit: 1, topicKeys: ['1.5'] } ],
+      { 'FA:1.1': 84, 'FA:1.5': null }
+    );
+    win.renderMyGradebook('Q1');
+    var text = doc.getElementById('my-gradebook-body').textContent;
+    expect(text).toContain('1.5 Follow-Along');       // due now → shown
+    expect(text).toContain('not done yet');
+    expect(text).toMatch(/due, not done/i);           // the "what you owe" badge
+  });
+
+  it('flags a category sitting below the 40% floor', () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    win.tdy = () => new Date(2024, 0, 1);
+    win._activeGradebook = gbWith(
+      [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'] } ],
+      { 'FA:1.1': 30 },
+      { categoryAverages: { Lesson: 30 }, v3Total: 30, schoologyTotal: 35 }
+    );
+    win.renderMyGradebook('Q1');
+    expect(doc.getElementById('my-gradebook-body').textContent).toMatch(/below the 40% floor/i);
+  });
+
   it('Class Gradebook: _selectClassStudent shows the picked student WITHOUT clobbering the Do Now cache', () => {
     if (!loaded) { expect(true).toBe(true); return; }
     const ownCache = { quarters: {} };           // the teacher's own (empty) cache

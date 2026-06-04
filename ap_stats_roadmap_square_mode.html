@@ -10085,6 +10085,72 @@ function _selectClassStudent(idx) {
     renderMyGradebook(_firstGradebookQuarter(_activeGradebook));
 }
 
+// ── My Gradebook: date-gating + threshold-coloring helpers ────────────────────
+
+// { lessonKey: Date } from the calendar schedule for the CURRENT period (cP).
+// A combined cell ("1.2+1.3") maps each sub-key to that date. Returns {} when the
+// schedule globals aren't available (renderMyGradebook then shows ALL columns —
+// a safe degrade for isolated test sandboxes). Never throws.
+function _lessonDateMap() {
+    var map = {};
+    try {
+        if (typeof S === 'undefined' || !Array.isArray(S)) return map;
+        var colIdx = (typeof cP === 'string' && cP === 'B') ? 3 : 4;
+        for (var i = 0; i < S.length; i++) {
+            var e = S[i];
+            if (!e) continue;
+            var inf = e[colIdx];
+            if (!inf || typeof inf !== 'object' || !inf.t) continue;  // OFF/NC/EX/PO/R tokens
+            var dt = new Date(e[0], e[1], e[2]);
+            var parts = String(inf.t).split('+');
+            for (var p = 0; p < parts.length; p++) {
+                var key = parts[p].trim();
+                if (key && !map[key]) map[key] = dt;
+            }
+        }
+    } catch (_) {}
+    return map;
+}
+
+// The date a gradebook column is "due" by. Lesson columns: the latest date among
+// their topicKeys. PC/Poster (unit-level, empty topicKeys): the unit's EARLIEST
+// lesson date (the unit is "underway" once it starts). null when unknown.
+function _colScheduledDate(col, dateMap) {
+    if (col.topicKeys && col.topicKeys.length) {
+        var latest = null;
+        for (var i = 0; i < col.topicKeys.length; i++) {
+            var d = dateMap[col.topicKeys[i]];
+            if (d && (!latest || d > latest)) latest = d;
+        }
+        return latest;
+    }
+    var earliest = null;
+    for (var key in dateMap) {
+        if (parseInt(key, 10) === col.unit) {
+            var dk = dateMap[key];
+            if (dk && (!earliest || dk < earliest)) earliest = dk;
+        }
+    }
+    return earliest;
+}
+
+// Threshold band for a 0-100 score, tied to the grade rules (40% floor, 70% cap).
+// Returns { fg, bg } or null for not-a-number.
+function _gradeBand(v) {
+    if (typeof v !== 'number' || isNaN(v)) return null;
+    if (v >= 90) return { fg: '#0a6b2e', bg: '#d4efdd' };  // deep green
+    if (v >= 70) return { fg: '#1f8b3b', bg: '#e6f6ec' };  // green — clears the 70% cap
+    if (v >= 40) return { fg: '#9a6a00', bg: '#fbeecb' };  // amber — above floor, below cap
+    return { fg: '#c0392b', bg: '#fbe2de' };               // red — below the 40% floor
+}
+
+// "Jun 4" style short date, reusing the Desk's MN month names when present.
+function _gbDateStr(d) {
+    try { if (typeof MN !== 'undefined' && Array.isArray(MN) && MN[d.getMonth()]) return MN[d.getMonth()] + ' ' + d.getDate(); } catch (_) {}
+    var m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return m[d.getMonth()] + ' ' + d.getDate();
+}
+
 function renderMyGradebook(qk) {
     _myGradebookQuarter = qk;
     var body = document.getElementById('my-gradebook-body');
@@ -10117,6 +10183,40 @@ function renderMyGradebook(qk) {
         return;
     }
 
+    var cells = gq.cells || {};
+    var ca = gq.categoryAverages || {};
+
+    // ── Date-gate: show a column if it's been STARTED, or its calendar date has
+    // arrived (due up to today). Future, not-yet-started work stays hidden. Falls
+    // back to showing everything when the schedule isn't available. ──
+    var dateMap = _lessonDateMap();
+    var hasSchedule = false; for (var _dk in dateMap) { hasSchedule = true; break; }
+    var today = (typeof tdy === 'function') ? tdy() : new Date();
+    function _visible(col) {
+        if (cells[col.key] != null) return true;                 // started → always show
+        if (!hasSchedule) return true;                           // no schedule → show all (safe)
+        var d = _colScheduledDate(col, dateMap);
+        return d != null && d <= today;                          // due by today
+    }
+    var visibleCols = gq.columns.filter(_visible);
+    var oweCount = visibleCols.filter(function (c) { return cells[c.key] == null; }).length;
+
+    // ── As-of caption (makes the date-scoping obvious — nothing "disappeared") ──
+    var cap = document.createElement('div');
+    cap.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px';
+    cap.textContent = hasSchedule
+        ? (qk + ' — showing everything due through ' + _gbDateStr(today) + ', plus anything already started.')
+        : (qk + ' — full gradebook.');
+    body.appendChild(cap);
+
+    // ── "What you owe" badge: due, but not done yet ──
+    if (oweCount > 0) {
+        var owe = document.createElement('div');
+        owe.style.cssText = 'font-size:10px;font-weight:bold;color:#9a6a00;background:#fbeecb;border:1px solid #e3cf8f;border-radius:3px;padding:3px 7px;margin-bottom:8px';
+        owe.textContent = '⚠ ' + oweCount + (oweCount === 1 ? ' thing is' : ' things are') + ' due, not done yet';
+        body.appendChild(owe);
+    }
+
     // ── Totals: live v3 grade + Schoology report-card estimate + the why ──
     var rc = gq.reconciliation || {};
     var totals = document.createElement('div');
@@ -10124,10 +10224,13 @@ function renderMyGradebook(qk) {
     var line1 = document.createElement('div');
     line1.style.cssText = 'margin-bottom:2px';
     var yourLbl = document.createElement('span'); yourLbl.textContent = 'Your grade: '; yourLbl.style.fontWeight = 'bold';
-    var yourVal = document.createElement('span'); yourVal.textContent = _n(gq.v3Total); yourVal.style.cssText = 'font-weight:bold;font-size:14px';
+    var yourVal = document.createElement('span'); yourVal.textContent = _n(gq.v3Total);
+    var ytBand = _gradeBand(gq.v3Total);
+    yourVal.style.cssText = 'font-weight:bold;font-size:14px;' + (ytBand ? 'color:' + ytBand.fg : '');
     line1.appendChild(yourLbl); line1.appendChild(yourVal);
     var sch = document.createElement('span');
-    sch.style.cssText = 'margin-left:10px;color:#555';
+    var scBand = _gradeBand(gq.schoologyTotal);
+    sch.style.cssText = 'margin-left:10px;font-weight:bold;color:' + (scBand ? scBand.fg : '#555');
     sch.textContent = 'Report-card estimate: ' + _n(gq.schoologyTotal);
     line1.appendChild(sch);
     if (rc.delta != null && Math.abs(rc.delta) >= 0.1) {
@@ -10145,33 +10248,60 @@ function renderMyGradebook(qk) {
     }
     body.appendChild(totals);
 
-    // ── Component cells grouped by Schoology category ──
-    var cells = gq.cells || {};
-    var ca = gq.categoryAverages || {};
+    // ── Visible component cells grouped by Schoology category ──
     var byCat = {};
-    gq.columns.forEach(function (c) { (byCat[c.category] || (byCat[c.category] = [])).push(c); });
-    _myGradebookCatOrder().forEach(function (cat) {
+    visibleCols.forEach(function (c) { (byCat[c.category] || (byCat[c.category] = [])).push(c); });
+    // Ordered categories first, then any leftover category so the breakdown always
+    // reconciles (no category silently dropped).
+    var order = _myGradebookCatOrder().slice();
+    Object.keys(byCat).forEach(function (cat) { if (order.indexOf(cat) === -1) order.push(cat); });
+
+    order.forEach(function (cat) {
         var cols = byCat[cat];
-        if (!cols || !cols.length) return;
+        if (!cols || !cols.length) return;          // hide a category with nothing to show
         var sec = document.createElement('div');
         sec.style.cssText = 'margin-bottom:8px';
         var head = document.createElement('div');
-        head.style.cssText = 'font-family:Chicago,monospace;font-size:11px;font-weight:bold;border-bottom:1px solid #ccc;margin-bottom:3px;display:flex;justify-content:space-between';
+        head.style.cssText = 'font-family:Chicago,monospace;font-size:11px;font-weight:bold;border-bottom:1px solid #ccc;margin-bottom:3px;display:flex;justify-content:space-between;align-items:baseline';
         var hl = document.createElement('span');
         hl.textContent = cat + (weights[cat] != null ? ' (' + weights[cat] + '%)' : '');
+        // Flag a category below the 40% floor (the line that caps the grade).
+        if (typeof ca[cat] === 'number' && ca[cat] < 40) {
+            var flag = document.createElement('span');
+            flag.style.cssText = 'color:#c0392b;font-size:9px;font-weight:bold;margin-left:6px';
+            flag.textContent = '⚠ below the 40% floor';
+            hl.appendChild(flag);
+        }
         var hr = document.createElement('span');
-        hr.style.color = '#555';
+        var caBand = _gradeBand(ca[cat]);
+        hr.style.color = (caBand ? caBand.fg : '#999');
         hr.textContent = (ca[cat] != null ? 'avg ' + _n(ca[cat]) : '—');
         head.appendChild(hl); head.appendChild(hr);
         sec.appendChild(head);
+
         cols.forEach(function (c) {
-            var row = document.createElement('div');
-            row.style.cssText = 'display:flex;justify-content:space-between;padding:1px 0';
-            var nm = document.createElement('span'); nm.textContent = c.title;
             var v = cells[c.key];
+            var band = _gradeBand(v);
+            var row = document.createElement('div');
+            row.style.cssText = 'position:relative;display:flex;justify-content:space-between;align-items:center;padding:2px 5px;margin:1px 0;border-radius:2px;overflow:hidden;'
+                + (band ? 'background:#fff;' : 'background:#fdf6e3;');   // amber tint = due, not done
+            // Progress micro-bar: a band-colored fill sized to the score, behind the text.
+            if (band) {
+                var bar = document.createElement('div');
+                bar.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:' + Math.max(0, Math.min(100, v)) + '%;background:' + band.bg + ';pointer-events:none';
+                row.appendChild(bar);
+            }
+            var nm = document.createElement('span');
+            nm.style.cssText = 'position:relative;z-index:1';
+            nm.textContent = c.title;
             var vv = document.createElement('span');
-            vv.style.cssText = 'font-variant-numeric:tabular-nums;' + (v == null ? 'color:#bbb' : 'font-weight:bold');
-            vv.textContent = (v == null ? '·' : _n(v));
+            if (band) {
+                vv.style.cssText = 'position:relative;z-index:1;font-variant-numeric:tabular-nums;font-weight:bold;color:' + band.fg;
+                vv.textContent = _n(v);
+            } else {
+                vv.style.cssText = 'position:relative;z-index:1;font-size:10px;font-style:italic;color:#9a6a00';
+                vv.textContent = 'not done yet';
+            }
             row.appendChild(nm); row.appendChild(vv);
             sec.appendChild(row);
         });
