@@ -4,11 +4,12 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import http from 'http';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { createApp } from '../server.js';
 import { verifyToken } from '../token.js';
 import { parseOpenSections, getOpenSections, isOpenSection } from '../signup-config.js';
 import { createRateLimiter, createLoginThrottle } from '../rate-limit.js';
+import { requireTeacher, getTeacherKey } from '../teacher-auth.js';
 
 // ── Fake in-memory db (honors the mustChangePassword flag) ────────────────────
 
@@ -16,17 +17,18 @@ function createFakeDb() {
   const store = new Map();
   return {
     store,
-    async insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher, mustChangePassword = true }) {
+    async insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher, mustChangePassword = true, role = 'student' }) {
       const key = loginUsername.toLowerCase();
       if (store.has(key)) {
         return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
       }
       const row = {
-        student_id:           `uuid-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        student_id:           randomUUID(),   // real uuid format (the DELETE route validates it)
         login_username:       loginUsername,
         password_hash:        passwordHash,
         password_cipher:      passwordCipher ?? null,
         must_change_password: mustChangePassword,
+        role,
         real_name:            realName,
         section,
         email:                email || null,
@@ -40,6 +42,12 @@ function createFakeDb() {
       const row = store.get(username.toLowerCase());
       if (!row) return { data: null, error: { code: 'PGRST116', message: 'Row not found' } };
       return { data: row, error: null };
+    },
+    async deleteRoster(studentId) {
+      for (const [k, row] of store) {
+        if (row.student_id === studentId) { store.delete(k); return { data: { student_id: studentId }, error: null }; }
+      }
+      return { data: null, error: null }; // not found
     },
     async getRoleByStudentId() { return 'student'; },
     async getSpriteHueByStudentId() { return null; }
@@ -87,6 +95,8 @@ beforeEach(async () => {
   delete process.env.OPEN_SIGNUP_SECTIONS;
   delete process.env.SIGNUP_CLAIM_MAX;
   delete process.env.SIGNUP_CLAIM_WINDOW_MS;
+  delete process.env.TEACHER_KEY;
+  delete process.env.ROSTER_TEACHER_SECRET;
 
   db = createFakeDb();
   srv = new TestServer(createApp(db));
@@ -100,6 +110,8 @@ afterEach(async () => {
   delete process.env.OPEN_SIGNUP_SECTIONS;
   delete process.env.SIGNUP_CLAIM_MAX;
   delete process.env.SIGNUP_CLAIM_WINDOW_MS;
+  delete process.env.TEACHER_KEY;
+  delete process.env.ROSTER_TEACHER_SECRET;
 });
 
 // ── GET /roster/open-sections ─────────────────────────────────────────────────
@@ -271,6 +283,135 @@ describe('POST /roster/verify brute-force lockout', () => {
       await app.stop();
       delete process.env.VERIFY_LOCKOUT_MAX;
     }
+  });
+});
+
+// ── POST /roster/claim — teacher elevation ─────────────────────────────────────
+
+describe('POST /roster/claim teacher elevation', () => {
+  it('creates a teacher account when the correct teacher key is given', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 't_one', teacherKey: 'apstats2627' }) });
+    expect(res.status).toBe(200);
+    expect(res.body.role).toBe('teacher');
+    expect(db.store.get('t_one').role).toBe('teacher');
+  });
+
+  it('rejects a wrong teacher key with 403 and creates no account', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 't_bad', teacherKey: 'nope' }) });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('invalid-teacher-key');
+    expect(db.store.has('t_bad')).toBe(false);
+  });
+
+  it('rejects a non-string teacher key (no elevation via type juggling)', async () => {
+    // String(true) !== getTeacherKey() → 403; never coerces to a teacher.
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 't_type', teacherKey: true }) });
+    expect(res.status).toBe(403);
+    expect(db.store.has('t_type')).toBe(false);
+  });
+
+  it('creates a normal student account when no teacher key is given', async () => {
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 's_one' }) });
+    expect(res.status).toBe(200);
+    expect(res.body.role).toBe('student');
+    expect(db.store.get('s_one').role).toBe('student');
+  });
+
+  it('honors a custom TEACHER_KEY env (default key no longer elevates)', async () => {
+    process.env.TEACHER_KEY = 'secret123';
+    const fresh = new TestServer(createApp(db));
+    await fresh.start();
+    try {
+      const ok = await fresh.request('POST', '/roster/claim', { body: validClaim({ username: 't_env', teacherKey: 'secret123' }) });
+      expect(ok.body.role).toBe('teacher');
+      const bad = await fresh.request('POST', '/roster/claim', { body: validClaim({ username: 't_env2', teacherKey: 'apstats2627' }) });
+      expect(bad.status).toBe(403);
+    } finally {
+      await fresh.stop();
+      delete process.env.TEACHER_KEY;
+    }
+  });
+});
+
+// ── DELETE /roster/:studentId ──────────────────────────────────────────────────
+
+describe('DELETE /roster/:studentId', () => {
+  it('deletes a roster account for an authorized teacher', async () => {
+    const claim = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 'del_me' }) });
+    const sid = claim.body.studentId;
+    const res = await srv.request('DELETE', '/roster/' + sid, { headers: { 'x-teacher-secret': 'apstats2627' } });
+    expect(res.status).toBe(200);
+    expect(res.body.studentId).toBe(sid);
+    expect(db.store.has('del_me')).toBe(false);
+  });
+
+  it('404 for a well-formed but unknown studentId', async () => {
+    const res = await srv.request('DELETE', '/roster/00000000-0000-0000-0000-000000000000', { headers: { 'x-teacher-secret': 'apstats2627' } });
+    expect(res.status).toBe(404);
+  });
+
+  it('400 for a malformed (non-uuid) studentId — not a 500', async () => {
+    const res = await srv.request('DELETE', '/roster/nope-not-a-uuid', { headers: { 'x-teacher-secret': 'apstats2627' } });
+    expect(res.status).toBe(400);
+  });
+
+  it('401 without teacher auth — and the account survives', async () => {
+    const claim = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 'keep_me' }) });
+    const res = await srv.request('DELETE', '/roster/' + claim.body.studentId);
+    expect(res.status).toBe(401);
+    expect(db.store.has('keep_me')).toBe(true);
+  });
+
+  it('500 when the DB delete errors (the error branch is not dead)', async () => {
+    // A db whose deleteRoster returns a non-null error → 500 (a swallowed error
+    // returning 200 would falsely report a deletion that did not happen).
+    const errDb = createFakeDb();
+    errDb.deleteRoster = async () => ({ data: null, error: { code: '08006', message: 'connection failure' } });
+    const errSrv = new TestServer(createApp(errDb));
+    await errSrv.start();
+    try {
+      const res = await errSrv.request('DELETE', '/roster/00000000-0000-0000-0000-000000000001', { headers: { 'x-teacher-secret': 'apstats2627' } });
+      expect(res.status).toBe(500);
+    } finally {
+      await errSrv.stop();
+    }
+  });
+});
+
+// ── teacher-auth: simple key works everywhere ──────────────────────────────────
+
+describe('teacher-auth getTeacherKey / requireTeacher', () => {
+  it('defaults the teacher key to apstats2627', () => {
+    delete process.env.TEACHER_KEY;
+    expect(getTeacherKey()).toBe('apstats2627');
+  });
+
+  it('requireTeacher accepts the simple teacher key as x-teacher-secret', async () => {
+    delete process.env.TEACHER_KEY;
+    const req = { headers: { 'x-teacher-secret': 'apstats2627' }, query: {} };
+    expect(await requireTeacher(req, {})).toBe(true);
+  });
+
+  it('requireTeacher rejects a wrong secret', async () => {
+    delete process.env.TEACHER_KEY;
+    delete process.env.ROSTER_TEACHER_SECRET;
+    const req = { headers: { 'x-teacher-secret': 'definitely-wrong' }, query: {} };
+    expect(await requireTeacher(req, {})).toBe(false);
+  });
+
+  it('requireTeacher does NOT grant when no header and no token are present', async () => {
+    delete process.env.TEACHER_KEY;
+    delete process.env.ROSTER_TEACHER_SECRET;
+    expect(await requireTeacher({ headers: {}, query: {} }, {})).toBe(false);
+    // An empty-string header must not match either (the `provided &&` guard).
+    expect(await requireTeacher({ headers: { 'x-teacher-secret': '' }, query: {} }, {})).toBe(false);
+  });
+
+  it('still accepts the legacy ROSTER_TEACHER_SECRET when configured', async () => {
+    process.env.ROSTER_TEACHER_SECRET = 'legacy-long-secret';
+    const req = { headers: { 'x-teacher-secret': 'legacy-long-secret' }, query: {} };
+    expect(await requireTeacher(req, {})).toBe(true);
+    delete process.env.ROSTER_TEACHER_SECRET;
   });
 });
 

@@ -66,6 +66,50 @@ describe('self-signup — modal markup', () => {
 // 2. Static — boot forces the single hidden "Period X" = E, ignoring ?period=
 // ─────────────────────────────────────────────────────────────────────────────
 
+describe('teacher onboarding + class gradebook (static)', () => {
+  it('signup modal has the "I\'m a teacher" checkbox + teacher-key field', () => {
+    expect(document.getElementById('signup-is-teacher')).not.toBeNull();
+    expect(document.getElementById('signup-teacher-key')).not.toBeNull();
+    const ov = document.getElementById('signup-overlay');
+    expect(ov.innerHTML).toContain('_toggleTeacherKey()');
+  });
+
+  it('the Teacher menu exposes Class Gradebook → openClassGradebook()', () => {
+    const menu = document.getElementById('menu-teacher');
+    expect(menu).not.toBeNull();
+    expect(menu.innerHTML).toContain('openClassGradebook()');
+  });
+
+  it('the My Gradebook modal has the teacher student-picker row', () => {
+    expect(document.getElementById('my-gradebook-student-row')).not.toBeNull();
+    expect(document.getElementById('my-gradebook-student')).not.toBeNull();
+  });
+
+  it('openClassGradebook + _selectClassStudent are defined in source', () => {
+    expect(html).toMatch(/async\s+function\s+openClassGradebook\s*\(/);
+    expect(html).toMatch(/function\s+_selectClassStudent\s*\(/);
+  });
+
+  it('the Do-Now "Class Gradebook" chip is gated behind _deskIsTeacher()', () => {
+    // The chip must be teacher-only (hidden while previewing-as-student): its
+    // creation sits inside an `if (_deskIsTeacher())` block.
+    expect(html).toMatch(/_deskIsTeacher\(\)[\s\S]{0,500}Class Gradebook/);
+  });
+});
+
+describe('self-signup runtime — _toggleTeacherKey', () => {
+  it('shows the teacher-key field only when the box is checked', () => {
+    const d = makeSignup();
+    const row = d.el('signup-teacher-key-row');
+    d.el('signup-is-teacher').checked = true;
+    d.api._toggleTeacherKey();
+    expect(row.style.display).toBe('block');
+    d.el('signup-is-teacher').checked = false;
+    d.api._toggleTeacherKey();
+    expect(row.style.display).toBe('none');
+  });
+});
+
 describe('self-signup — boot collapses B/E to a single hidden X (=E)', () => {
   it("the boot IIFE forces cP='E' and no longer branches on the ?period= param", () => {
     // The boot IIFE used to read ?period and set cP='E' only for period=E.
@@ -143,7 +187,7 @@ function makeSignup({ rosterClient } = {}) {
   runInContext(
     block +
     '\nthis.__api = { _spinUsername, _renderSignupSections, openSignupModal, closeSignupModal, ' +
-    '_switchToSignUp, _switchToSignIn, submitSignUp };',
+    '_switchToSignUp, _switchToSignIn, submitSignUp, _toggleTeacherKey };',
     sandbox
   );
   return { api: sandbox.__api, el, store, calls, created };
@@ -250,6 +294,73 @@ describe('self-signup runtime — submitSignUp', () => {
 
     expect(d.el('signup-error').textContent).toMatch(/real name/i);
     expect(called).toBe(0);
+  });
+
+  it('teacher signup: passes the teacher key to claim when "I am a teacher" is checked', async () => {
+    let claimArgs = null;
+    const client = {
+      claim: async (o) => { claimArgs = o; return { ok: true, username: o.username, realName: o.realName, section: o.section, role: 'teacher' }; },
+      current: () => ({ studentId: 'sid-t', username: claimArgs && claimArgs.username, realName: claimArgs && claimArgs.realName, role: 'teacher' })
+    };
+    const d = makeSignup({ rosterClient: client });
+    d.api._spinUsername();
+    d.el('signup-realname').value = 'Ms. Tea';
+    d.el('signup-pin').value = '1234';
+    d.el('signup-pin2').value = '1234';
+    d.el('signup-is-teacher').checked = true;
+    d.el('signup-teacher-key').value = 'apstats2627';
+
+    await d.api.submitSignUp();
+
+    expect(claimArgs.teacherKey).toBe('apstats2627');
+  });
+
+  it('teacher signup: requires a key when the box is checked (no claim call)', async () => {
+    let called = 0;
+    const d = makeSignup({ rosterClient: { claim: async () => { called++; return { ok: true }; }, current: () => ({}) } });
+    d.api._spinUsername();
+    d.el('signup-realname').value = 'Ms. Tea';
+    d.el('signup-pin').value = '1234';
+    d.el('signup-pin2').value = '1234';
+    d.el('signup-is-teacher').checked = true; // but no key entered
+
+    await d.api.submitSignUp();
+
+    expect(d.el('signup-error').textContent).toMatch(/teacher key/i);
+    expect(called).toBe(0);
+  });
+
+  it('teacher signup: does NOT send a teacher key when the box is unchecked', async () => {
+    let claimArgs = null;
+    const client = {
+      claim: async (o) => { claimArgs = o; return { ok: true, username: o.username, realName: o.realName, section: o.section }; },
+      current: () => ({ studentId: 'sid-s', username: claimArgs && claimArgs.username })
+    };
+    const d = makeSignup({ rosterClient: client });
+    d.api._spinUsername();
+    d.el('signup-realname').value = 'Reg Student';
+    d.el('signup-pin').value = '1234';
+    d.el('signup-pin2').value = '1234';
+    // box left unchecked; a stale key value must be ignored
+    d.el('signup-teacher-key').value = 'apstats2627';
+
+    await d.api.submitSignUp();
+
+    expect(claimArgs.teacherKey).toBeUndefined();
+  });
+
+  it('teacher signup: surfaces invalid-teacher-key from the server', async () => {
+    const d = makeSignup({ rosterClient: { claim: async () => ({ ok: false, code: 'invalid-teacher-key', error: 'invalid-teacher-key' }), current: () => ({}) } });
+    d.api._spinUsername();
+    d.el('signup-realname').value = 'Ms. Tea';
+    d.el('signup-pin').value = '1234';
+    d.el('signup-pin2').value = '1234';
+    d.el('signup-is-teacher').checked = true;
+    d.el('signup-teacher-key').value = 'wrong';
+
+    await d.api.submitSignUp();
+
+    expect(d.el('signup-error').textContent).toMatch(/teacher key isn/i);
   });
 
   it('fail-closed: claim ok but session did NOT persist (localStorage blocked) → error shown, wall NOT dropped', async () => {

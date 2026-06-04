@@ -752,11 +752,43 @@
       nameEl.focus();
     }
 
+    // Delete a student account. DESTRUCTIVE: the server cascade also removes the
+    // student's saved work/grades (item_ledger), so the confirm is explicit.
+    async function deleteRow(tr) {
+      const msg = $('view-msg');
+      const studentId = tr.dataset.studentId;
+      const name = tr.dataset.realName || (tr.querySelector('.uname') ? tr.querySelector('.uname').textContent : '') || 'this student';
+      if (!studentId) { if (msg) setMsg(msg, 'Missing studentId -- reload the roster.', 'err'); return; }
+
+      // Fail CLOSED: a destructive, irreversible, grade-deleting action must not
+      // proceed without an affirmative confirm. If no confirm channel exists, abort.
+      if (typeof window.confirm !== 'function') {
+        if (msg) setMsg(msg, 'Confirmation unavailable — delete cancelled.', 'err');
+        return;
+      }
+      const ok = window.confirm('Permanently delete ' + name + '’s account?\n\nThis removes their login AND all their saved work + grades. This cannot be undone.');
+      if (!ok) return;
+
+      let res;
+      try { res = await api('DELETE', '/roster/' + studentId, { secret: teacherSecret() }); }
+      catch (e) { if (msg) setMsg(msg, 'Network error: ' + (e.message || ''), 'err'); return; }
+
+      if (res.status === 401) { if (msg) setMsg(msg, 'Forbidden — check the teacher secret.', 'err'); return; }
+      if (res.status !== 200 || !res.data || !res.data.ok) {
+        if (msg) setMsg(msg, 'Delete failed: ' + ((res.data && res.data.error) || ('HTTP ' + res.status)), 'err');
+        return;
+      }
+
+      if (tr.parentNode) tr.parentNode.removeChild(tr);
+      if (msg) setMsg(msg, 'Deleted ' + name + '.', 'ok');
+    }
+
     // Expose editing helpers on window for testability.
     window.enterEditMode = enterEditMode;
     window.exitEditMode  = exitEditMode;
     window.saveRow       = saveRow;
     window.duplicateRow  = duplicateRow;
+    window.deleteRow     = deleteRow;
 
     // ── view roster ────────────────────────────────────────────────────────────
     let lastViewRows = [];
@@ -801,10 +833,12 @@
             '<span class="btn-row">' +
               '<button class="btn-sm btn-edit">Edit</button>' +
               '<button class="btn-sm btn-dup">Duplicate</button>' +
+              '<button class="btn-sm btn-del">Delete</button>' +
             '</span>' +
           '</td>';
         tr.querySelector('.btn-edit').addEventListener('click', () => enterEditMode(tr));
         tr.querySelector('.btn-dup').addEventListener('click',  () => duplicateRow(tr));
+        tr.querySelector('.btn-del').addEventListener('click',  () => deleteRow(tr));
         $('view-tbody').appendChild(tr);
         lastViewRows.push([s.realName, s.username, s.section,
           s.currentPassword == null ? '(unavailable)' : s.currentPassword,

@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, updateSpriteHue, updateSchoologyUid, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, updateSpriteHue, updateSchoologyUid, listRoster };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -160,7 +160,7 @@ export function createDb(client) {
   // student as must_change_password (default password handed out at enroll).
   // mustChangePassword defaults TRUE (teacher-issued default password). Student
   // self-signup passes FALSE — they pick their own PIN, so nothing is forced.
-  async function insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher, mustChangePassword = true }) {
+  async function insertRoster({ realName, section, loginUsername, passwordHash, email, passwordCipher, mustChangePassword = true, role = 'student' }) {
     return client
       .from('roster')
       .insert([{
@@ -170,7 +170,8 @@ export function createDb(client) {
         password_hash:        passwordHash,
         email:                email || null,
         password_cipher:      passwordCipher ?? null,
-        must_change_password: mustChangePassword
+        must_change_password: mustChangePassword,
+        role:                 role
       }])
       .select('student_id, login_username, real_name, section')
       .single();
@@ -223,6 +224,20 @@ export function createDb(client) {
     // maybeSingle() returns { data: null, error: null } when no row matched.
     // Treat that as a not-found signal so the route can answer 404.
     return result;
+  }
+
+  // Delete a roster row by student_id. Returns { data, error } — data is the
+  // deleted row ({ student_id }) on success, null when no row matched (404).
+  // The DB FKs are ON DELETE CASCADE, so this ALSO removes the student's
+  // item_ledger (work/grades), remediation_assignment, and roster_alias rows.
+  // Uses maybeSingle() so a 0-row delete is { data:null, error:null }, not an error.
+  async function deleteRoster(studentId) {
+    return client
+      .from('roster')
+      .delete()
+      .eq('student_id', studentId)
+      .select('student_id')
+      .maybeSingle();
   }
 
   // Teacher roster view. Optional section filter. Ordered by section then created.

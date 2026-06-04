@@ -413,3 +413,90 @@ describe('Duplicate -- prefills Add One Student form', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('Delete -- deleteRow', () => {
+  it('the row template wires a Delete button to deleteRow', () => {
+    expect(rawHtml).toContain('btn-del');
+    expect(rawHtml).toContain('window.deleteRow');
+    expect(rawHtml).toMatch(/deleteRow\(tr\)/);
+  });
+
+  it('confirms before deleting and warns that work/grades are removed too', () => {
+    // The cascade also deletes item_ledger, so the confirm must say so.
+    expect(rawHtml).toMatch(/saved work \+ grades|work \+ grades|cannot be undone/i);
+    expect(rawHtml).toMatch(/window\.confirm/);
+  });
+
+  it('calls DELETE /roster/:id and removes the row on success', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ status: 200, json: async () => ({ ok: true, studentId: 'sid-del' }) });
+    const dom = makeWindow(fetchMock);
+    const document = dom.window.document;
+    const window = dom.window;
+    window.confirm = () => true;
+    const tr = appendStudentRow(document, window, { studentId: 'sid-del', realName: 'Grace Hopper', section: 'PeriodX' });
+
+    expect(document.querySelector('#view-tbody tr')).not.toBeNull();
+    await window.deleteRow(tr);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(opts.method).toBe('DELETE');
+    expect(url).toMatch(/\/roster\/sid-del$/);
+    expect(document.querySelector('#view-tbody tr')).toBeNull();
+  });
+
+  it('does nothing when the teacher cancels the confirm', async () => {
+    const fetchMock = vi.fn();
+    const dom = makeWindow(fetchMock);
+    const document = dom.window.document;
+    const window = dom.window;
+    window.confirm = () => false;
+    const tr = appendStudentRow(document, window, { studentId: 'sid-keep', realName: 'Ada', section: 'PeriodX' });
+
+    await window.deleteRow(tr);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(document.querySelector('#view-tbody tr')).not.toBeNull();
+  });
+
+  it('keeps the row when the server rejects the delete', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ status: 500, json: async () => ({ ok: false, error: 'Database error' }) });
+    const dom = makeWindow(fetchMock);
+    const document = dom.window.document;
+    const window = dom.window;
+    window.confirm = () => true;
+    const tr = appendStudentRow(document, window, { studentId: 'sid-fail', realName: 'Edith', section: 'PeriodX' });
+
+    await window.deleteRow(tr);
+
+    expect(document.querySelector('#view-tbody tr')).not.toBeNull();
+  });
+
+  it('keeps the row + shows Forbidden on a 401', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ status: 401, json: async () => ({ ok: false, error: 'forbidden' }) });
+    const dom = makeWindow(fetchMock);
+    const document = dom.window.document;
+    const window = dom.window;
+    window.confirm = () => true;
+    const tr = appendStudentRow(document, window, { studentId: 'sid-401', realName: 'Mae', section: 'PeriodX' });
+
+    await window.deleteRow(tr);
+
+    expect(document.querySelector('#view-tbody tr')).not.toBeNull();
+    expect(document.getElementById('view-msg').textContent).toMatch(/forbidden/i);
+  });
+
+  it('fails CLOSED — aborts (no fetch) when window.confirm is unavailable', async () => {
+    const fetchMock = vi.fn();
+    const dom = makeWindow(fetchMock);
+    const document = dom.window.document;
+    const window = dom.window;
+    window.confirm = undefined; // no confirmation channel
+    const tr = appendStudentRow(document, window, { studentId: 'sid-noconfirm', realName: 'Joan', section: 'PeriodX' });
+
+    await window.deleteRow(tr);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(document.querySelector('#view-tbody tr')).not.toBeNull();
+  });
+});

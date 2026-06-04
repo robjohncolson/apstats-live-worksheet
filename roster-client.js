@@ -222,6 +222,8 @@
         username: opts && opts.username,
         pin:      opts && opts.pin
       };
+      // Optional: elevate to a teacher account when the correct teacher key is given.
+      if (opts && opts.teacherKey) payload.teacherKey = opts.teacherKey;
 
       try {
         var response = await fetch(baseUrl + '/roster/claim', {

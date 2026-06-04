@@ -1463,6 +1463,7 @@
         <div class="menu-dropdown" id="menu-teacher">
             <div class="menu-dd-item disabled" style="font-style:italic;font-size:10px">Teacher tools</div>
             <div class="menu-dd-sep"></div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openClassGradebook==='function')openClassGradebook()">&#128202; Class Gradebook</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-dashboard.html','_blank')">&#128202; Gradebook Dashboard</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-roster-console.html','_blank')">&#128221; Roster Console</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
@@ -1737,6 +1738,14 @@
                     <input type="password" id="signup-pin" class="geneva" inputmode="numeric" maxlength="4" autocomplete="off" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="PIN">
                     <input type="password" id="signup-pin2" class="geneva" inputmode="numeric" maxlength="4" autocomplete="off" onkeydown="if(event.key==='Enter')submitSignUp()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="confirm PIN">
                 </div>
+
+                <div style="margin:6px 0 2px;font-size:10px;border-top:1px solid #ddd;padding-top:6px">
+                    <label style="cursor:pointer"><input type="checkbox" id="signup-is-teacher" onchange="_toggleTeacherKey()" style="vertical-align:middle"> I'm a teacher</label>
+                </div>
+                <div id="signup-teacher-key-row" style="display:none;margin-bottom:4px">
+                    <input type="password" id="signup-teacher-key" class="geneva" autocomplete="off" onkeydown="if(event.key==='Enter')submitSignUp()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="Teacher key">
+                </div>
+
                 <div id="signup-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
             </div>
         </div>
@@ -1807,6 +1816,10 @@
         <div class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
             <span id="my-gradebook-title">My Gradebook</span>
             <span id="my-gradebook-qtabs" style="display:flex;gap:3px"></span>
+        </div>
+        <!-- Teacher-only: pick any student to view their gradebook (populated by openClassGradebook). -->
+        <div id="my-gradebook-student-row" class="geneva" style="display:none;font-size:11px;margin-bottom:8px">
+            <label style="color:#555">Student: <select id="my-gradebook-student" style="font-size:11px"></select></label>
         </div>
         <div id="my-gradebook-body" class="geneva" style="font-size:11px;max-height:62vh;overflow-y:auto"></div>
         <div style="text-align:right;margin-top:10px">
@@ -5915,6 +5928,10 @@ async function openSignupModal() {
   var p1 = document.getElementById('signup-pin'); if (p1) p1.value = '';
   var p2 = document.getElementById('signup-pin2'); if (p2) p2.value = '';
   var err = document.getElementById('signup-error'); if (err) err.textContent = '';
+  // Reset the teacher-key affordance each open.
+  var tcb = document.getElementById('signup-is-teacher'); if (tcb) tcb.checked = false;
+  var tk = document.getElementById('signup-teacher-key'); if (tk) tk.value = '';
+  var tkr = document.getElementById('signup-teacher-key-row'); if (tkr) tkr.style.display = 'none';
   _spinUsername();
   // Render the fallback period field + SHOW the modal instantly — never gate the
   // display on a network fetch (a hanging /open-sections must not hide the modal,
@@ -5947,6 +5964,16 @@ function closeSignupModal() {
   if (ov) ov.style.display = 'none';
 }
 
+// Show/hide the teacher-key field when "I'm a teacher" is toggled.
+function _toggleTeacherKey() {
+  var cb = document.getElementById('signup-is-teacher');
+  var row = document.getElementById('signup-teacher-key-row');
+  if (!row) return;
+  var on = !!(cb && cb.checked);
+  row.style.display = on ? 'block' : 'none';
+  if (on) { var k = document.getElementById('signup-teacher-key'); if (k) k.focus(); }
+}
+
 // Switch between the two modals. Each directly hides the other overlay — moving
 // BETWEEN the two mandatory modals never lands on the bare Desk, so it is safe to
 // bypass the sign-in wall's dismiss guard here.
@@ -5977,10 +6004,14 @@ async function submitSignUp() {
   if (!_signupCandidate) _spinUsername();
   var username = _signupCandidate;
   var section = _signupSectionValue;
+  // Optional teacher elevation (key sent only when the box is checked).
+  var isTeacher = !!((document.getElementById('signup-is-teacher') || {}).checked);
+  var teacherKey = isTeacher ? ((document.getElementById('signup-teacher-key') || {}).value || '') : '';
 
   if (!realName) { if (err) err.textContent = 'Enter your real name.'; return; }
   if (!/^\d{4}$/.test(pin)) { if (err) err.textContent = 'Your PIN must be exactly 4 digits.'; return; }
   if (pin !== pin2) { if (err) err.textContent = 'The two PINs do not match.'; return; }
+  if (isTeacher && !teacherKey) { if (err) err.textContent = 'Enter the teacher key (or uncheck "I’m a teacher").'; return; }
 
   submitSignUp._pending = true;
   var okBtn = document.getElementById('signup-ok');
@@ -5989,7 +6020,7 @@ async function submitSignUp() {
   try {
     var result;
     try {
-      result = await window.rosterClient.claim({ realName: realName, section: section, username: username, pin: pin });
+      result = await window.rosterClient.claim({ realName: realName, section: section, username: username, pin: pin, teacherKey: teacherKey || undefined });
     } catch (e) {
       result = { ok: false, error: (e && e.message) || 'Network error' };
     }
@@ -5998,6 +6029,8 @@ async function submitSignUp() {
         var taken = username;
         _spinUsername();
         if (err) err.textContent = '“' + taken + '” was just taken. Here’s a new one: “' + _signupCandidate + '”. Tap Create account.';
+      } else if (result && (result.code === 'invalid-teacher-key' || result.error === 'invalid-teacher-key')) {
+        if (err) err.textContent = 'That teacher key isn’t right. Check it, or uncheck "I’m a teacher" to sign up as a student.';
       } else {
         if (err) err.textContent = (result && result.error) || 'Signup failed.';
       }
@@ -6513,6 +6546,26 @@ async function renderDoNowGrades(baseUrl, token) {
         };
         host.appendChild(gbChip);
     }
+
+    // Teacher parity: a "Class Gradebook" chip alongside the student's own, so a
+    // teacher reaches the class view the same way students reach their grade.
+    // (Also available under the Teacher menu.) Hidden while previewing-as-student.
+    try {
+        if (typeof _deskIsTeacher === 'function' && _deskIsTeacher()) {
+            var cgChip = document.createElement('span');
+            cgChip.setAttribute('role', 'button');
+            cgChip.setAttribute('tabindex', '0');
+            cgChip.title = 'See any student’s gradebook';
+            cgChip.textContent = '📊 Class Gradebook';
+            cgChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
+            cgChip.onclick = function () { if (typeof openClassGradebook === 'function') openClassGradebook(); };
+            cgChip.onkeydown = function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openClassGradebook === 'function') openClassGradebook(); }
+            };
+            host.appendChild(cgChip);
+        }
+    } catch (_) {}
+
     host.style.display = 'flex';
 
     // "Why so low?" grade coach — render alongside the strip (q is in scope).
@@ -9893,6 +9946,11 @@ function closeGradeHelp() {
 // report-card estimate) + the plain-English why + every component cell grouped by
 // Schoology category. Mirrors the Day Grade modal's open/close + Esc handling.
 var _myGradebookQuarter = null;
+// The gradebook the modal is CURRENTLY showing. For a student it's their own
+// (= _gradeGradebookCache); for the teacher Class Gradebook it's the picked
+// student's. Decoupled from _gradeGradebookCache so the teacher view never
+// clobbers the Do Now cache (which gates the student's own grade chip).
+var _activeGradebook = null;
 var _myGradebookKeyHandler = null;
 
 function _myGradebookCatOrder() {
@@ -9922,11 +9980,9 @@ function closeMyGradebook() {
     if (ov) ov.style.display = 'none';
 }
 
-function openMyGradebook() {
-    var ov = document.getElementById('my-gradebook-overlay');
-    if (!ov) return;
-    // Default to the current quarter (today), else the first quarter with data, else Q1.
-    var gb = _gradeGradebookCache;
+// Pick the quarter to show first: current quarter if it has data, else the first
+// quarter with data, else Q1. Shared by the student + teacher gradebook views.
+function _firstGradebookQuarter(gb) {
     var qs = (gb && gb.quarters) || {};
     function _hasData(qk) {
         var q = qs[qk];
@@ -9936,10 +9992,97 @@ function openMyGradebook() {
     try { if (typeof quarterOfDate === 'function') curN = quarterOfDate(new Date()); } catch (_) {}
     var cur = curN ? ('Q' + curN) : null;
     if (!cur || !_hasData(cur)) cur = ['Q1', 'Q2', 'Q3', 'Q4'].filter(_hasData)[0] || 'Q1';
-    renderMyGradebook(cur);
+    return cur;
+}
+
+function openMyGradebook() {
+    var ov = document.getElementById('my-gradebook-overlay');
+    if (!ov) return;
+    // Student's own view — hide the teacher student-picker, reset the title.
+    var sr = document.getElementById('my-gradebook-student-row'); if (sr) sr.style.display = 'none';
+    var title = document.getElementById('my-gradebook-title'); if (title) title.textContent = 'My Gradebook';
+    _activeGradebook = _gradeGradebookCache;
+    renderMyGradebook(_firstGradebookQuarter(_activeGradebook));
     ov.style.display = 'block';
     _attachMyGradebookKeyHandler();
     try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+}
+
+// ── Teacher: Class Gradebook ──────────────────────────────────────────────────
+// Reuses the My Gradebook modal: pick any student from a dropdown → render that
+// student's gradebook (the EXACT view the student sees). Data = /class/grades
+// (teacher-gated; the teacher's own session token authorizes it).
+var _classGradebookStudents = [];
+
+async function openClassGradebook() {
+    var ov = document.getElementById('my-gradebook-overlay');
+    if (!ov) return;
+    if (!window.rosterClient || typeof window.rosterClient.token !== 'function') return;
+    var token = window.rosterClient.token();
+    var base = window.ROSTER_SERVICE_URL;
+    if (!token || !base) return;
+    var who = (window.rosterClient.current && window.rosterClient.current()) || {};
+    var section = who.section || '';
+
+    var title = document.getElementById('my-gradebook-title'); if (title) title.textContent = 'Class Gradebook';
+    var body = document.getElementById('my-gradebook-body');
+    if (body) { while (body.firstChild) body.removeChild(body.firstChild); var ld = document.createElement('div'); ld.textContent = 'Loading class…'; ld.style.cssText = 'color:#888;padding:6px 0'; body.appendChild(ld); }
+    ov.style.display = 'block';
+    _attachMyGradebookKeyHandler();
+
+    var students = [];
+    var loadFailed = false;
+    try {
+        var res = await fetch(base + '/class/grades?section=' + encodeURIComponent(section), { headers: { Authorization: 'Bearer ' + token } });
+        var data = await res.json();
+        if (data && data.ok && Array.isArray(data.students)) students = data.students;
+        else loadFailed = true; // ok:false / 401 / malformed payload
+    } catch (_) { loadFailed = true; }
+
+    students.sort(function (a, b) { return String((a && a.realName) || '').localeCompare(String((b && b.realName) || '')); });
+    _classGradebookStudents = students;
+
+    var row = document.getElementById('my-gradebook-student-row');
+    var sel = document.getElementById('my-gradebook-student');
+    if (sel) {
+        while (sel.firstChild) sel.removeChild(sel.firstChild);
+        students.forEach(function (s, i) {
+            var o = document.createElement('option');
+            o.value = String(i);
+            o.textContent = (s.realName || s.username || 'Student');
+            sel.appendChild(o);
+        });
+        sel.onchange = function () { _selectClassStudent(Number(sel.value) || 0); };
+    }
+    if (row) row.style.display = students.length ? 'block' : 'none';
+
+    if (!students.length) {
+        if (body) {
+            while (body.firstChild) body.removeChild(body.firstChild);
+            var em = document.createElement('div');
+            em.textContent = loadFailed
+                ? 'Could not load the class — sign in as a teacher again, or check your connection.'
+                : 'No students found for this class yet.';
+            em.style.cssText = 'color:#888;font-style:italic;padding:6px 0';
+            body.appendChild(em);
+        }
+        return;
+    }
+    _selectClassStudent(0);
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+}
+
+// Render the picked student's gradebook into the shared modal. Sets the cache the
+// renderer reads (benign: a teacher account has no own-gradebook to preserve; the
+// next Do Now refresh re-populates it).
+function _selectClassStudent(idx) {
+    var s = _classGradebookStudents[idx];
+    if (!s) return;
+    // Show this student WITHOUT clobbering the Do Now cache (_gradeGradebookCache).
+    _activeGradebook = s.gradebook || null;
+    var title = document.getElementById('my-gradebook-title');
+    if (title) title.textContent = (s.realName || s.username || 'Student') + ' — Gradebook';
+    renderMyGradebook(_firstGradebookQuarter(_activeGradebook));
 }
 
 function renderMyGradebook(qk) {
@@ -9963,7 +10106,7 @@ function renderMyGradebook(qk) {
 
     function _n(x) { return (typeof x === 'number') ? (Math.round(x * 10) / 10).toFixed(1) : '—'; }
 
-    var gb = _gradeGradebookCache;
+    var gb = _activeGradebook;
     var gq = gb && gb.quarters && gb.quarters[qk];
     var weights = (gb && gb.weights) || {};
     if (!gq || !Array.isArray(gq.columns) || !gq.columns.length) {

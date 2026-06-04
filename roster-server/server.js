@@ -27,7 +27,7 @@ import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
-import { requireTeacher } from './teacher-auth.js';
+import { requireTeacher, getTeacherKey } from './teacher-auth.js';
 import { getOpenSections, isOpenSection } from './signup-config.js';
 import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
 import { readFile } from 'fs/promises';
@@ -349,6 +349,18 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       return res.status(400).json({ ok: false, error: 'Your PIN must be exactly 4 digits.' });
     }
 
+    // Optional teacher elevation. A self-signup account becomes role='teacher' iff
+    // the body carries the correct teacher key. Wrong key → reject (don't silently
+    // downgrade to student — the colleague should fix the key and retry).
+    let role = 'student';
+    const teacherKey = body.teacherKey;
+    if (teacherKey != null && String(teacherKey) !== '') {
+      if (String(teacherKey) !== getTeacherKey()) {
+        return res.status(403).json({ ok: false, error: 'invalid-teacher-key' });
+      }
+      role = 'teacher';
+    }
+
     let passwordHash;
     try {
       passwordHash = await bcrypt.hash(pin, 12);
@@ -365,7 +377,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       loginUsername: username,
       passwordHash,
       passwordCipher,
-      mustChangePassword: false
+      mustChangePassword: false,
+      role
     });
 
     if (error) {
@@ -394,7 +407,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       token,
       realName: data.real_name,
       section: data.section,
-      role: 'student',
+      role,
       spriteHue: null,
       mustChangePassword: false
     });
@@ -496,6 +509,39 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
         username:  data.login_username
       }
     });
+  });
+
+  // ── DELETE /roster/:studentId (teacher-gated — remove a student account) ─────
+  // Auth: teacher (simple key / legacy secret / verified teacher token).
+  // DESTRUCTIVE: the roster FKs are ON DELETE CASCADE, so this removes the login
+  // AND the student's item_ledger (work/grades), remediation, and aliases. The
+  // teacher console confirms before calling this.
+  //   → 200 { ok:true, studentId }
+  //   → 400 missing id · 401 auth · 404 not found · 500 DB error
+  app.delete('/roster/:studentId', async (req, res) => {
+    if (!await requireTeacher(req, db)) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+
+    const studentId = req.params.studentId;
+    // student_id is a uuid column; reject a malformed id with 400 up front so a
+    // garbage path doesn't surface as a 22P02 "DB error" 500.
+    if (!studentId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(studentId)) {
+      return res.status(400).json({ ok: false, error: 'Invalid studentId' });
+    }
+
+    const { data, error } = await db.deleteRoster(studentId);
+
+    if (error) {
+      console.error('DELETE /roster/:studentId DB error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    if (!data) {
+      return res.status(404).json({ ok: false, error: 'Student not found' });
+    }
+
+    return res.json({ ok: true, studentId: data.student_id });
   });
 
   // ── PATCH /roster/:studentId/sprite-hue (r3 U1 -- student-own-token auth) ────

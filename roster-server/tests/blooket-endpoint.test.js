@@ -80,6 +80,7 @@ class TestServer {
 async function startServer({ roster = [], ledgerDb } = {}) {
   process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
   process.env.ROSTER_TEACHER_SECRET = TEACHER;
+  delete process.env.TEACHER_KEY;   // keep the simple-key default unset for 'wrong secret → 401'
   process.env.NODE_ENV = 'test';
   const rosterDb = createFakeRosterDb(roster);
   const app = createApp(rosterDb, ledgerDb, fakeLoadManifest, okAnswerKey, okSkillMap, realBkt);
@@ -93,6 +94,7 @@ afterEach(async () => {
   if (srv) { await srv.stop(); srv = null; }
   delete process.env.ROSTER_TOKEN_SECRET;
   delete process.env.ROSTER_TEACHER_SECRET;
+  delete process.env.TEACHER_KEY;
 });
 
 describe('POST /class/blooket -- auth', () => {

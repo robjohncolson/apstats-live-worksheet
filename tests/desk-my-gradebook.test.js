@@ -62,7 +62,11 @@ describe('Desk My Gradebook modal', () => {
       expect(true).toBe(true);
       return;
     }
+    // renderMyGradebook renders the _activeGradebook (decoupled from the Do Now
+    // cache so the teacher Class Gradebook view can't clobber it). openMyGradebook
+    // copies the student's own cache into it; here we set it directly.
     win._gradeGradebookCache = gradebook();
+    win._activeGradebook = gradebook();
     win.renderMyGradebook('Q1');
 
     const body = doc.getElementById('my-gradebook-body');
@@ -87,5 +91,67 @@ describe('Desk My Gradebook modal', () => {
     expect(doc.getElementById('my-gradebook-overlay').style.display).toBe('block');
     win.closeMyGradebook();
     expect(doc.getElementById('my-gradebook-overlay').style.display).toBe('none');
+  });
+
+  it('openClassGradebook fetches /class/grades with the teacher token and populates a sorted picker', async () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    let fetchUrl = null, fetchOpts = null;
+    win.ROSTER_SERVICE_URL = 'https://svc.test';
+    win.rosterClient = { token: () => 'tok123', current: () => ({ section: 'PeriodX' }) };
+    win.fetch = (url, opts) => { fetchUrl = url; fetchOpts = opts; return Promise.resolve({ json: async () => ({ ok: true, students: [
+      { realName: 'Zed Zulu', username: 'zed_owl', gradebook: gradebook() },
+      { realName: 'Ada Lovelace', username: 'ada_fox', gradebook: gradebook() },
+    ] }) }); };
+
+    await win.openClassGradebook();
+
+    expect(fetchUrl).toContain('/class/grades?section=PeriodX');
+    expect(fetchOpts.headers.Authorization).toBe('Bearer tok123');
+    const sel = doc.getElementById('my-gradebook-student');
+    expect(sel.options.length).toBe(2);
+    expect(sel.options[0].textContent).toBe('Ada Lovelace');   // sorted by real name
+    expect(doc.getElementById('my-gradebook-title').textContent).toContain('Ada Lovelace');
+    expect(doc.getElementById('my-gradebook-body').textContent).toContain('91.2');
+    expect(doc.getElementById('my-gradebook-student-row').style.display).toBe('block');
+  });
+
+  it('openClassGradebook with no token returns early — no fetch, modal stays closed', async () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    let called = 0;
+    win.ROSTER_SERVICE_URL = 'https://svc.test';
+    win.rosterClient = { token: () => null, current: () => ({}) };
+    win.fetch = () => { called++; return Promise.resolve({ json: async () => ({}) }); };
+    doc.getElementById('my-gradebook-overlay').style.display = 'none';
+
+    await win.openClassGradebook();
+
+    expect(called).toBe(0);
+    expect(doc.getElementById('my-gradebook-overlay').style.display).toBe('none');
+  });
+
+  it('openClassGradebook shows a distinct load-failure message when the fetch fails', async () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    win.ROSTER_SERVICE_URL = 'https://svc.test';
+    win.rosterClient = { token: () => 'tok', current: () => ({ section: 'PeriodX' }) };
+    win.fetch = () => Promise.reject(new Error('offline'));
+
+    await win.openClassGradebook();
+
+    expect(doc.getElementById('my-gradebook-body').textContent).toMatch(/could not load/i);
+  });
+
+  it('Class Gradebook: _selectClassStudent shows the picked student WITHOUT clobbering the Do Now cache', () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    const ownCache = { quarters: {} };           // the teacher's own (empty) cache
+    win._gradeGradebookCache = ownCache;
+    win._classGradebookStudents = [{ realName: 'Ada Lovelace', username: 'ada_fox', gradebook: gradebook() }];
+
+    win._selectClassStudent(0);
+
+    const body = doc.getElementById('my-gradebook-body');
+    expect(body.textContent).toContain('91.2');  // the STUDENT's v3 total renders
+    expect(doc.getElementById('my-gradebook-title').textContent).toContain('Ada Lovelace');
+    // The Do Now cache (which gates the student's own grade chip) is untouched.
+    expect(win._gradeGradebookCache).toBe(ownCache);
   });
 });

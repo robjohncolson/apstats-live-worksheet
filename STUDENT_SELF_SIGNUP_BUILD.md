@@ -79,6 +79,38 @@ until happy, set a **4-digit PIN**, and claim. **First-come-first-serve** is the
   `openSignupModal` now tested. Verify the Railway proxy depth once live (log `req.ip`); 1 is correct for a
   single edge proxy.
 
+## Teacher-tooling extension (2026-06-04) — onboarding · class gradebook · delete
+
+**Teacher self-signup.** The signup modal gained an **"I'm a teacher"** checkbox → a Teacher-key
+field. `POST /roster/claim` accepts optional `teacherKey`: if `=== getTeacherKey()` (env
+`TEACHER_KEY`, **default `apstats2627`**) the account is created `role='teacher'`; wrong key → 403
+`invalid-teacher-key`; absent → student. `db.insertRoster` gained a `role` param. **`getTeacherKey()`
++ `requireTeacher()` now accept the simple key as `x-teacher-secret` everywhere** (legacy
+`ROSTER_TEACHER_SECRET` still works) — so `apstats2627` is the one teacher key. *Teacher-accepted
+posture: that key unlocks all student data; rotate via `TEACHER_KEY` if it leaks.*
+
+**Class gradebook (in-Desk).** A teacher **Class Gradebook** entry (Teacher menu + a Do-Now chip
+gated on `_deskIsTeacher()`) opens `openClassGradebook()`: fetch `/class/grades?section=<teacher's
+section>` with the teacher's Bearer token → a student `<select>` → `_selectClassStudent(idx)` renders
+that student's gradebook by **reusing the My Gradebook modal**. The displayed gradebook is held in a
+new **`_activeGradebook`** (decoupled from the Do-Now `_gradeGradebookCache`, so the class view never
+clobbers the teacher's own grade chip). Load-failure shows a distinct message vs an empty class.
+
+**Delete student.** `DELETE /roster/:studentId` (teacher-gated) + `db.deleteRoster` (maybeSingle →
+404 vs 500; **400 on a malformed uuid**). The roster FKs are **ON DELETE CASCADE**, so this also
+removes the student's `item_ledger` (work/grades), remediation, aliases. `teacher-roster-console.html`
+got a **Delete** button + `deleteRow()` — confirm **fails CLOSED** (aborts if `window.confirm` is
+unavailable) and warns that work/grades go too.
+
+**Review:** 4-dimension adversarial pass — **0 high/critical**; all confirmed low/medium folded
+(delete fail-closed, uuid-400, load-failure message, cache-decouple, + behavioral tests for
+`openClassGradebook`/`_selectClassStudent`/delete-500/requireTeacher-empty-header/`TEACHER_KEY`
+test isolation). Green: roster-server **811**, desk-my-gradebook 6, roster-console 25, desk-self-signup 41.
+
+**Follow-up (fall-gated):** the class view binds to the teacher's own `section`; when real periods
+replace the single `PeriodX`, add a section `<select>` (or omit the param) so a teacher can see all
+periods — `/class/grades` already authorizes a teacher for any section.
+
 ## Known follow-ups (non-blocking)
 - Section `PeriodX` → `sectionToPeriod` is `null` → grade due-dates use the B/E-**union** fallback,
   while the displayed schedule is E. For brand-new students with no history this is immaterial; if

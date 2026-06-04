@@ -11,6 +11,17 @@
 
 import { verifyToken } from './token.js';
 
+// The simple, shared teacher key. Teacher decision (2026-06-03): deprecate the
+// long random ROSTER_TEACHER_SECRET in favor of one memorable key that BOTH
+// elevates a self-signup account to role='teacher' AND works as the x-teacher-secret
+// for every teacher-gated endpoint. Overridable via env; defaults to 'apstats2627'.
+// SECURITY NOTE (teacher-accepted): this key unlocks all student grades + the bulk
+// endpoints (decrypted passwords). It is intentionally low-friction for onboarding a
+// trusted colleague; rotate via TEACHER_KEY if it leaks.
+export function getTeacherKey() {
+  return process.env.TEACHER_KEY || 'apstats2627';
+}
+
 // Extract a bearer token from Authorization: Bearer <t> or ?token=<t>.
 // Mirrors the pattern in ledger.js GET /ledger/student/:studentId exactly.
 function extractToken(req) {
@@ -31,10 +42,14 @@ function extractToken(req) {
 // Path (B): valid token -> studentId -> role === 'teacher' -> true.
 // Anything else (no match, bad token, DB error, missing role) -> false.
 export async function requireTeacher(req, db) {
-  // Path (A): break-glass secret (unchanged behavior).
+  // Path (A): x-teacher-secret matches EITHER the legacy long secret (if still
+  // configured) OR the simple shared teacher key (getTeacherKey(), default
+  // 'apstats2627'). The simple key is the deprecation path for the long secret.
   const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
   const provided = req.headers['x-teacher-secret'];
-  if (teacherSecret && provided === teacherSecret) return true;
+  if (provided && (provided === getTeacherKey() || (teacherSecret && provided === teacherSecret))) {
+    return true;
+  }
 
   // Path (B): roster token resolved to a teacher role.
   const token = extractToken(req);
