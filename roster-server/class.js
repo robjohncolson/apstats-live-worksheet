@@ -13,6 +13,7 @@ import { PHASE3_CONFIG } from './grade-config.js';
 import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore } from './scoring.js';
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
+import { buildGradebook } from './gradebook-grid.js';
 import { requireTeacher } from './teacher-auth.js';
 
 // Pull all roster rows for the (optional) section, defensively.
@@ -202,7 +203,14 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
       });
       // Merge schoologyUid at the call site so studentMeta stays a pure
       // roster->header map (do NOT touch studentMeta).
-      return { ...studentMeta(roster), schoologyUid: uidMap[roster.student_id] ?? null, ...computed };
+      // gradebook: the in-app "1:1 Schoology gradebook" grid (additive) — the
+      // teacher class grid renders per-student component cells + both totals.
+      return {
+        ...studentMeta(roster),
+        schoologyUid: uidMap[roster.student_id] ?? null,
+        ...computed,
+        gradebook: buildGradebook(computed),
+      };
     });
 
     return res.json({

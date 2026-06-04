@@ -33,6 +33,7 @@ import {
   todayInTz,
   sectionToPeriod,
 } from './lesson-grade.js';
+import { buildGradebook } from './gradebook-grid.js';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -434,6 +435,10 @@ export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSc
       quarters,
       completion,
       lessons,
+      // In-app "1:1 Schoology gradebook" grid (additive). The student self-view
+      // renders this; per-quarter component cells + the Schoology category-weighted
+      // total alongside the v3 total. Clients that don't know the field ignore it.
+      gradebook: buildGradebook({ units, quarters, completion, lessons }),
     });
   });
 }
