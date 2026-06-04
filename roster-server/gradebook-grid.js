@@ -26,6 +26,8 @@
 // 70% ceilings) — which is exactly the divergence the side-by-side v3Total reveals.
 // schoologyWeightedTotal renormalizes over PRESENT categories (Posters has no data
 // source yet, so it's simply absent from today's blend).
+import { sectionToPeriod } from './lesson-grade.js';
+
 export const SCHOOLOGY_CATEGORY_WEIGHTS = {
   Lesson: 15,
   Quizzes: 15,
@@ -61,11 +63,47 @@ function topicNum(topicKey) {
   return m ? Number(m[1]) : 9999;
 }
 
+// The due-date string ("YYYY-MM-DD") a column is gated on, from the lessons map
+// (the same .lessons map the engine indexes by topicKey). Lesson columns: the
+// LATEST date among their topicKeys. PC/Poster (unit-level): the EARLIEST lesson
+// date in that unit ("unit underway"), matching the Desk's My Gradebook gate.
+// null when no date is known. `period` is 'B' | 'E' | null (null → earliest of B/E).
+function _columnDueDate(col, lessons, period) {
+  if (!lessons) return null;
+  function pdate(entry) {
+    const p = entry && entry.periods;
+    if (!p) return null;
+    if (period) return p[period] || null;
+    if (p.B && p.E) return p.B < p.E ? p.B : p.E;
+    return p.B || p.E || null;
+  }
+  if (col.topicKeys && col.topicKeys.length) {
+    let latest = null;
+    for (const tk of col.topicKeys) {
+      const ds = pdate(lessons[tk]);
+      if (ds && (!latest || ds > latest)) latest = ds;
+    }
+    return latest;
+  }
+  let earliest = null;
+  for (const k of Object.keys(lessons)) {
+    const L = lessons[k];
+    if (L && L.unit === col.unit) {
+      const ds = pdate(L);
+      if (ds && (!earliest || ds < earliest)) earliest = ds;
+    }
+  }
+  return earliest;
+}
+
 // ── Column generator (schedule-driven; identical for every student) ────────────
 //
 // gradeObj: a computeGrade() result ({ lessons, units, quarters, ... }).
 // quarterKey: 'Q1'..'Q4'. Columns cover the quarter's unit band.
-export function buildGradebookColumns(gradeObj, quarterKey) {
+// dueOpts (optional): { lessons, section, todayStr } — when given, each column is
+// stamped with a `due` boolean (its calendar date has arrived by todayStr). Omitted
+// → columns carry no `due` field, and date-gating clients show everything (degrade).
+export function buildGradebookColumns(gradeObj, quarterKey, dueOpts) {
   const quarter = gradeObj && gradeObj.quarters && gradeObj.quarters[quarterKey];
   const band = quarter && Array.isArray(quarter.units) ? quarter.units : [];
   const bandSet = new Set(band);
@@ -112,6 +150,17 @@ export function buildGradebookColumns(gradeObj, quarterKey) {
     topicNum(a.topicKeys[0]) - topicNum(b.topicKeys[0]) ||
     (KIND_RANK[a.kind] - KIND_RANK[b.kind])
   ));
+
+  // Stamp `due` only when the schedule + today are supplied. A column with no
+  // resolvable date is left without a `due` field (clients show it).
+  if (dueOpts && dueOpts.todayStr) {
+    const period = sectionToPeriod(dueOpts.section);
+    for (const col of cols) {
+      const ds = _columnDueDate(col, dueOpts.lessons, period);
+      if (ds != null) col.due = ds <= dueOpts.todayStr;
+    }
+  }
+
   return cols;
 }
 
@@ -246,11 +295,14 @@ export function schoologyWeightedTotal(categoryAverages, weights = SCHOOLOGY_CAT
 }
 
 // ── Full per-student gradebook (all quarters) — for /grade + /class/grades ──────
-export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS } = {}) {
+export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS, lessonSchedule = null, section = null, todayStr = null } = {}) {
+  // Date-gating opts are passed to the column builder only when both the schedule
+  // and today are present; otherwise columns carry no `due` field (degrade to all).
+  const dueOpts = (lessonSchedule && todayStr) ? { lessons: lessonSchedule, section, todayStr } : null;
   const quartersOut = {};
   const quarterKeys = Object.keys((gradeObj && gradeObj.quarters) || {});
   for (const qk of quarterKeys) {
-    const columns = buildGradebookColumns(gradeObj, qk);
+    const columns = buildGradebookColumns(gradeObj, qk, dueOpts);
     const row = buildGradebookRow(gradeObj, columns, weights);
     var v3Total = gradeObj.quarters[qk].quarterGrade != null ? gradeObj.quarters[qk].quarterGrade : null;
     quartersOut[qk] = {

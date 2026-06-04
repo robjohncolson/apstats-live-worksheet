@@ -14,6 +14,7 @@ import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore } from './scoring
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
 import { buildGradebook } from './gradebook-grid.js';
+import { todayInTz } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
 
 // Pull all roster rows for the (optional) section, defensively.
@@ -190,26 +191,30 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
       ? await db.getSchoologyUidMap(rows.map(r => r.student_id))
       : {};
 
+    const todayStr = todayInTz((config && config.schoolTz) || 'America/New_York');
+
     const students = fan.map(({ roster, ledgerRows }) => {
       // Phase 6 (Codex MAJOR 1 fold): pass the lesson schedule + per-student
       // section so /class/grades uses the same lesson-weighted, date-driven
       // quarter math as /grade. Without these the teacher dashboard would
       // silently fall back to the Phase 3 unit-mean and disagree with the
       // student's own Desk pill.
+      const section = roster && roster.section ? roster.section : null;
       const computed = computeGrade(ledgerRows, answerKey, config, {
         lessonSchedule,
-        section: roster && roster.section ? roster.section : null,
+        section,
         worksheetBlankCounts,
       });
       // Merge schoologyUid at the call site so studentMeta stays a pure
       // roster->header map (do NOT touch studentMeta).
       // gradebook: the in-app "1:1 Schoology gradebook" grid (additive) — the
       // teacher class grid renders per-student component cells + both totals.
+      // lessonSchedule + section + today stamp each column's `due` for date-gating.
       return {
         ...studentMeta(roster),
         schoologyUid: uidMap[roster.student_id] ?? null,
         ...computed,
-        gradebook: buildGradebook(computed),
+        gradebook: buildGradebook(computed, { lessonSchedule, section, todayStr }),
       };
     });
 

@@ -454,7 +454,12 @@ export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSc
       // In-app "1:1 Schoology gradebook" grid (additive). The student self-view
       // renders this; per-quarter component cells + the Schoology category-weighted
       // total alongside the v3 total. Clients that don't know the field ignore it.
-      gradebook: buildGradebook({ units, quarters, completion, lessons }),
+      // lessonSchedule + section + today stamp each column with `due` so date-gating
+      // clients (teacher dashboard) can hide future, not-yet-started work.
+      gradebook: buildGradebook(
+        { units, quarters, completion, lessons },
+        { lessonSchedule, section, todayStr: todayInTz((config && config.schoolTz) || 'America/New_York') }
+      ),
     });
   });
 }

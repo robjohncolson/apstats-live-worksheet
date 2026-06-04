@@ -520,9 +520,10 @@
         table.gb-table th.gb-col { font-weight:500; font-size:0.72rem; max-width:62px; overflow:hidden; text-overflow:ellipsis; }
         table.gb-table th.gb-tot-h { background:#2a2a35; color:#fff; }
         td.gb-tot { font-weight:700; }
-        td.gb-cell.gb-good, td.gb-tot.gb-good { color:#0a7d33; }
-        td.gb-cell.gb-mid,  td.gb-tot.gb-mid  { color:#a8730a; }
-        td.gb-cell.gb-low,  td.gb-tot.gb-low  { color:#c0282d; }
+        td.gb-cell.gb-top,  td.gb-tot.gb-top  { color:#0a6b2e; }   /* 90+  deep green */
+        td.gb-cell.gb-good, td.gb-tot.gb-good { color:#0a7d33; }   /* 70-89 green (clears 70 cap) */
+        td.gb-cell.gb-mid,  td.gb-tot.gb-mid  { color:#a8730a; }   /* 40-69 amber */
+        td.gb-cell.gb-low,  td.gb-tot.gb-low  { color:#c0282d; font-weight:800; }  /* <40 red — below floor */
         td.gb-cell.gb-null { color:#b9b9c4; }
         .gb-delta { display:block; font-size:0.66rem; font-weight:600; color:#7a5cc0; }
       </style>
@@ -534,6 +535,7 @@
         <button class="gb-qbtn" id="gb-q-Q3" data-q="Q3">Q3 · U6–7</button>
         <button class="gb-qbtn" id="gb-q-Q4" data-q="Q4">Q4 · U8–9</button>
       </div>
+      <div class="hint" id="gb-scope" style="margin:2px 0 6px"></div>
       <div class="table-wrap" id="gb-wrap" style="display:none; max-height:70vh; overflow:auto">
         <table class="grades gb-table">
           <thead id="gb-thead"></thead>
@@ -960,11 +962,14 @@
       return null;
     }
 
-    // grade -> colour bucket (higher = better, opposite of the mastery heatmap).
+    // grade -> colour band, tied to the grade rules (40% floor, 70% cap), matching
+    // the Desk's My Gradebook: deep-green 90+, green 70-89 (clears the cap), amber
+    // 40-69, red <40 (below the floor).
     function gbColor(v) {
       if (v == null) return 'gb-null';
-      if (v >= 80) return 'gb-good';
-      if (v >= 60) return 'gb-mid';
+      if (v >= 90) return 'gb-top';
+      if (v >= 70) return 'gb-good';
+      if (v >= 40) return 'gb-mid';
       return 'gb-low';
     }
 
@@ -1003,12 +1008,32 @@
 
       var weights = gbWeights(students);
 
+      // ── Date-gate: a column shows if its calendar date has arrived (col.due, set
+      // server-side from the schedule) OR any student has started it. Future,
+      // not-yet-started columns are hidden to declutter. Columns with no `due` field
+      // (older server / no schedule) always show — a safe degrade. ──
+      var startedKeys = {};
+      students.forEach(function (s) {
+        var gq = s.gradebook && s.gradebook.quarters && s.gradebook.quarters[qk];
+        var cc = (gq && gq.cells) || {};
+        for (var k in cc) { if (cc[k] != null) startedKeys[k] = true; }
+      });
+      var shownCols = cols.filter(function (c) { return c.due !== false || startedKeys[c.key]; });
+      var hiddenCount = cols.length - shownCols.length;
+      if (shownCols.length === 0) { shownCols = cols; hiddenCount = 0; }   // never blank the grid
+      var scopeEl = $('gb-scope');
+      if (scopeEl) {
+        scopeEl.textContent = hiddenCount > 0
+          ? ('Date-gated: ' + hiddenCount + ' future, not-yet-started column' + (hiddenCount === 1 ? '' : 's') + ' hidden.')
+          : '';
+      }
+
       // Order columns by category (Schoology groups by weighted category), keeping
-      // the within-category column order the server produced.
+      // the within-category column order the server produced. Built over SHOWN cols.
       var orderedCols = [];
       var catCounts = {};
       GB_CAT_ORDER.forEach(function (cat) {
-        cols.forEach(function (c) {
+        shownCols.forEach(function (c) {
           if (c.category === cat) { orderedCols.push(c); catCounts[cat] = (catCounts[cat] || 0) + 1; }
         });
       });

@@ -107,6 +107,44 @@ describe('teacher-dashboard in-app gradebook grid', () => {
     expect(posterCell.textContent.trim()).toBe('·'); // null -> empty middot
   });
 
+  function payloadWithDue() {
+    const columns = [
+      { key: 'FA:1.1', kind: 'followalong', category: 'Lesson', title: '1.1 FA', unit: 1, topicKeys: ['1.1'], due: true },
+      { key: 'FA:1.9', kind: 'followalong', category: 'Lesson', title: '1.9 FA', unit: 1, topicKeys: ['1.9'], due: false },
+      { key: 'POSTER:U1', kind: 'poster', category: 'Posters', title: 'U1 Poster', unit: 1, topicKeys: [], due: false },
+    ];
+    const gradebook = { weights: { Lesson: 15, Posters: 15 }, quarters: { Q1: {
+      columns, cells: { 'FA:1.1': 88, 'FA:1.9': null, 'POSTER:U1': null },
+      categoryAverages: { Lesson: 88 }, schoologyTotal: 88, v3Total: 88, reconciliation: {},
+    } } };
+    return { ok: true, students: [{ studentId: 's1', realName: 'Ana', username: 'a', section: 'PeriodX', gradebook }] };
+  }
+
+  it('date-gates: hides a future, not-started column + notes how many were hidden', () => {
+    win.renderGradebook(payloadWithDue());
+    const titles = Array.from(doc.querySelectorAll('#gb-thead th.gb-col')).map((th) => th.getAttribute('title'));
+    expect(titles).toContain('1.1 FA');        // due → shown
+    expect(titles).not.toContain('1.9 FA');    // future + not started → hidden
+    expect(titles).not.toContain('U1 Poster'); // future + not started → hidden
+    expect(doc.getElementById('gb-scope').textContent).toMatch(/hidden/i);
+  });
+
+  it('date-gates: keeps a future column that some student HAS started', () => {
+    const p = payloadWithDue();
+    p.students[0].gradebook.quarters.Q1.cells['FA:1.9'] = 75; // started despite due:false
+    win.renderGradebook(p);
+    const titles = Array.from(doc.querySelectorAll('#gb-thead th.gb-col')).map((th) => th.getAttribute('title'));
+    expect(titles).toContain('1.9 FA');
+  });
+
+  it('colors cells by the grade-rules bands (90+ deep green, <40 red)', () => {
+    const p = synthPayload();
+    p.students[0].gradebook.quarters.Q1.cells['QUIZ:1.2'] = 30; // below the 40 floor
+    win.renderGradebook(p);
+    expect(doc.querySelector('#gb-tbody td.gb-cell.gb-top')).toBeTruthy(); // BL:1.1 = 95
+    expect(doc.querySelector('#gb-tbody td.gb-cell.gb-low')).toBeTruthy(); // QUIZ:1.2 = 30
+  });
+
   it('shows the empty note when no gradebook data is present', () => {
     win.renderGradebook({ students: [] });
     expect(doc.getElementById('gb-wrap').style.display).toBe('none');

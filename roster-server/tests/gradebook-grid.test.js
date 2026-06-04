@@ -65,6 +65,39 @@ describe('buildGradebookColumns', () => {
   });
 });
 
+describe('buildGradebookColumns — date-gating `due` flag', () => {
+  const schedule = {
+    '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } },
+    '1.2': { unit: 1, periods: { B: '2026-09-15', E: '2026-09-15' } },
+    '1.3': { unit: 1, periods: { B: '2026-10-01', E: '2026-10-01' } },
+    '1.4': { unit: 1, periods: { B: '2026-10-01', E: '2026-10-01' } },
+  };
+
+  it('stamps due true/false from the calendar date when opts are given', () => {
+    const cols = buildGradebookColumns(gradeObj(), 'Q1', { lessons: schedule, section: 'PeriodE', todayStr: '2026-09-20' });
+    const byKey = Object.fromEntries(cols.map((c) => [c.key, c]));
+    expect(byKey['FA:1.1'].due).toBe(true);    // 09-09 <= 09-20
+    expect(byKey['FA:1.2'].due).toBe(true);    // 09-15 <= 09-20
+    expect(byKey['FA:1.3-4'].due).toBe(false); // latest 10-01 > 09-20
+    expect(byKey['QUIZ:1.4'].due).toBe(false); // 10-01 > 09-20
+    expect(byKey['PC:U1'].due).toBe(true);     // unit underway (earliest 09-09)
+    expect(byKey['POSTER:U1'].due).toBe(true);
+  });
+
+  it('omits the due field entirely when no schedule/today is given (degrade to show-all)', () => {
+    const cols = buildGradebookColumns(gradeObj(), 'Q1');
+    expect('due' in cols[0]).toBe(false);
+  });
+
+  it('buildGradebook threads the date-gating opts into every quarter column', () => {
+    const gb = buildGradebook(gradeObj(), { lessonSchedule: schedule, section: 'PeriodE', todayStr: '2026-09-20' });
+    const cols = gb.quarters.Q1.columns;
+    const byKey = Object.fromEntries(cols.map((c) => [c.key, c]));
+    expect(byKey['FA:1.1'].due).toBe(true);
+    expect(byKey['QUIZ:1.4'].due).toBe(false);
+  });
+});
+
 describe('buildGradebookRow', () => {
   const cols = buildGradebookColumns(gradeObj(), 'Q1');
   const row = buildGradebookRow(gradeObj(), cols);
