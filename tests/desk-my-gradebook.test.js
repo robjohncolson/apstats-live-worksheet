@@ -105,7 +105,8 @@ describe('Desk My Gradebook modal', () => {
 
     await win.openClassGradebook();
 
-    expect(fetchUrl).toContain('/class/grades?section=PeriodX');
+    expect(fetchUrl).toContain('/class/grades');
+    expect(fetchUrl).not.toContain('?section=');   // fetches ALL sections; the picker enumerates them
     expect(fetchOpts.headers.Authorization).toBe('Bearer tok123');
     const sel = doc.getElementById('my-gradebook-student');
     expect(sel.options.length).toBe(2);
@@ -113,6 +114,32 @@ describe('Desk My Gradebook modal', () => {
     expect(doc.getElementById('my-gradebook-title').textContent).toContain('Ada Lovelace');
     expect(doc.getElementById('my-gradebook-body').textContent).toContain('91.2');
     expect(doc.getElementById('my-gradebook-student-row').style.display).toBe('block');
+    // Single (here: no) section → the section picker stays hidden.
+    expect(doc.getElementById('my-gradebook-section-row').style.display).toBe('none');
+  });
+
+  it('shows a section picker when students span >1 section, and filters the student list by it', async () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    win.ROSTER_SERVICE_URL = 'https://svc.test';
+    win.rosterClient = { token: () => 't', current: () => ({ section: 'PeriodB' }) };
+    win.fetch = () => Promise.resolve({ json: async () => ({ ok: true, students: [
+      { realName: 'Ana', username: 'a', section: 'PeriodB', gradebook: gradebook() },
+      { realName: 'Zed', username: 'z', section: 'PeriodE', gradebook: gradebook() },
+    ] }) });
+
+    await win.openClassGradebook();
+
+    expect(doc.getElementById('my-gradebook-section-row').style.display).toBe('block');
+    const secSel = doc.getElementById('my-gradebook-section');
+    expect(secSel.options.length).toBe(3);              // All + PeriodB + PeriodE
+    expect(secSel.value).toBe('PeriodB');               // defaults to the teacher's own section
+    expect(doc.getElementById('my-gradebook-student').options.length).toBe(1); // only PeriodB students
+    expect(doc.getElementById('my-gradebook-student').options[0].textContent).toBe('Ana');
+
+    // Switch to "All sections" → both students.
+    secSel.value = '__all__';
+    secSel.onchange();
+    expect(doc.getElementById('my-gradebook-student').options.length).toBe(2);
   });
 
   it('openClassGradebook with no token returns early — no fetch, modal stays closed', async () => {
