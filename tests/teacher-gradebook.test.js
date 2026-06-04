@@ -124,6 +124,6 @@ describe('teacher-dashboard in-app gradebook grid', () => {
     expect(card.textContent).toContain('Schoology');
     expect(card.textContent).toContain('Δ'); // delta shown
     expect(card.textContent.toLowerCase()).toContain('higher'); // max-branch reason
-    expect(card.textContent).toContain('Categories:'); // category averages line
+    expect(card.textContent).toContain('Schoology categories'); // Schoology category averages line
   });
 });

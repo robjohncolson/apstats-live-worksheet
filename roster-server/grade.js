@@ -198,6 +198,12 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
     weights: config.lessonFeederWeights || { ws: 1, W: 2, Q: 3 },
   });
 
+  // Quiz-bearing topics (gradable quizTotal > 0) — the v3 Quiz-track denominator,
+  // so quiz-less openers don't unfairly drag the quiz average down. Computed once
+  // here (it was previously built only for buildLessonsArray below) and reused.
+  const quizTotals = (schedule && answerKey) ? computeQuizTotals(answerKey, schedule) : {};
+  const quizLessons = Object.keys(quizTotals).filter((k) => quizTotals[k] > 0);
+
   // ── Per-unit PC data needed for quarter-level P_quarter ──────────────────
   // Build unitPcData: unitNum → { P }
   const unitPcData = {};
@@ -262,6 +268,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
         unitPcData: unitPcRaw,
         gradingWindowStart: (config && config.gradingWindowStart) || null,
         blooketLessons,
+        quizLessons,
       });
     } else if (schedule) {
       qResult = computeQuarterFromLessons({
@@ -345,7 +352,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   }
 
   // ── Phase 6: build the lessons[] array ────────────────────────────────────
-  const quizTotals = (schedule && answerKey) ? computeQuizTotals(answerKey, schedule) : {};
+  // (quizTotals computed above, reused here.)
   const lessons = schedule
     ? buildLessonsArray(lessonMap, schedule, undefined, (config && config.gradingWindowStart) || null, quizTotals, blooketLessons)
     : [];

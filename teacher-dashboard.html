@@ -1655,7 +1655,30 @@
       var catBits = catOrder.filter(function (c) { return ca[c] != null; })
         .map(function (c) { return c + ' ' + fmt1(ca[c]); });
       if (catBits.length) {
-        html += '<div class="dim" style="font-size:0.8rem">Categories: ' + escHtml(catBits.join(' · ')) + '</div>';
+        html += '<div class="dim" style="font-size:0.8rem">Schoology categories (blank-excluded): ' + escHtml(catBits.join(' · ')) + '</div>';
+      }
+
+      // v3 Work-track sub-breakdown: the ACTUAL v3 inputs (due-denominator, missing
+      // = 0), so you can compare them to the Schoology categories above and see
+      // where v3 is harsher. Shows quiz/blooket "taken/due" so the #2 fix (quiz-
+      // bearing denominator) is verifiable on a real student.
+      var sq = s.quarters && s.quarters[currentQuarter];
+      var wt = sq && sq.workTracks;
+      if (wt) {
+        var wtBits = [];
+        if (wt.lessons != null) wtBits.push('Lessons ' + fmt1(wt.lessons));
+        if (wt.quizzes != null) {
+          wtBits.push('Quizzes ' + fmt1(wt.quizzes) +
+            (sq.quizDue ? ' (' + (sq.quizDone || 0) + '/' + sq.quizDue + ' taken)' : ''));
+        }
+        if (wt.blooket != null) {
+          wtBits.push('Blooket ' + fmt1(wt.blooket) +
+            (sq.blooketDue ? ' (' + (sq.blooketDone || 0) + '/' + sq.blooketDue + ')' : ''));
+        }
+        if (wtBits.length) {
+          html += '<div class="dim" style="font-size:0.8rem">v3 Work track (due-denominator, missing=0): ' +
+            escHtml(wtBits.join(' · ')) + '</div>';
+        }
       }
       el.innerHTML = html;
     }

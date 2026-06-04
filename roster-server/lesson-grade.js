@@ -765,6 +765,7 @@ export function computeQuarterV3({
   gradingWindowStart = null,
   workTracks = null,
   blooketLessons = null,   // [topicKey] that HAVE a Blooket — the Blooket-track denominator
+  quizLessons = null,      // [topicKey] that HAVE a quiz — the Quiz-track denominator
 }) {
   const period = sectionToPeriod(section);
   const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
@@ -823,20 +824,36 @@ export function computeQuarterV3({
   const lessonsDue = dueLessons.length;
 
   // ── Lessons track (worksheet blanks + FRQ; quiz excluded by default) ──
-  // ── Quizzes track (curriculum-quiz correctness) ──
-  // Shared denominator = due lessons (≈ one quiz per topic), un-attempted = 0.
+  // Denominator = ALL due lessons: every lesson has a worksheet, so a null is
+  // genuinely "no work done" = 0 (an ungraded-due lesson legitimately tanks it).
   let lessonSum = 0, lessonGradedCount = 0;
-  let quizSum = 0, quizGradedCount = 0;
   for (const topicKey of dueLessons) {
     const r = lessonMap.get(topicKey);
     const lv = lessonTrackValue(r);
     if (lv != null) { lessonSum += lv; lessonGradedCount += 1; }
-    const q = r && r.Q != null ? r.Q : null;
-    if (q != null) { quizSum += q; quizGradedCount += 1; }
-    // ungraded-due lesson / un-taken quiz contributes 0 (denominator = lessonsDue)
   }
   const lessonsAvg = lessonsDue > 0 ? (lessonSum / lessonsDue) / 100 : null;
-  const quizzesAvg = lessonsDue > 0 ? (quizSum / lessonsDue) / 100 : null;
+
+  // ── Quizzes track (curriculum-quiz correctness) ──
+  // Denominator = due lessons that HAVE a quiz (quizLessons), NOT all due lessons.
+  // Most units have an opener (1.1, 4.1, 6.1...) + combined opener-halves with NO
+  // quiz; counting those quiz-less lessons in the denominator unfairly dragged the
+  // quiz average down — a perfect-quiz student still landed below 100. This mirrors
+  // the Blooket track (blooketDue). An un-taken-but-due quiz on a quiz-BEARING
+  // lesson still counts as 0 (engagement preserved). Back-compat: when quizLessons
+  // is null (older caller / tests), fall back to the all-due-lessons denominator.
+  const quizSet = quizLessons == null ? null : new Set(quizLessons);
+  let quizSum = 0, quizDue = 0, quizDone = 0;
+  const quizTodo = [];
+  for (const topicKey of dueLessons) {
+    if (quizSet != null && !quizSet.has(topicKey)) continue; // quiz-less lesson excluded
+    quizDue += 1;
+    const r = lessonMap.get(topicKey);
+    const q = r && r.Q != null ? r.Q : null;
+    if (q != null) { quizSum += q; quizDone += 1; }
+    else { quizTodo.push(topicKey); } // due quiz-bearing lesson, not taken -> 0
+  }
+  const quizzesAvg = quizDue > 0 ? (quizSum / quizDue) / 100 : null;
 
   // -- Blooket track (BLOOKET_MAKEUP_BUILD.md) -- now a real per-lesson grade:
   // denominator = due lessons that HAVE a Blooket (blooketLessons), and a
@@ -938,8 +955,11 @@ export function computeQuarterV3({
   const lessonsAvgBest = lessonsTotal > 0
     ? (lessonSum + (lessonsTotal - lessonGradedCount) * 100) / lessonsTotal / 100
     : null;
-  const quizzesAvgBest = lessonsTotal > 0
-    ? (quizSum + (lessonsTotal - quizGradedCount) * 100) / lessonsTotal / 100
+  // Quiz best case uses the quiz-BEARING band total (matching the quizzesAvg
+  // denominator), not lessonsTotal — a quiz-less lesson is never a "missing quiz".
+  const quizBandTotal = quizSet == null ? lessonsTotal : bandLessons.filter((tk) => quizSet.has(tk)).length;
+  const quizzesAvgBest = quizBandTotal > 0
+    ? (quizSum + (quizBandTotal - quizDone) * 100) / quizBandTotal / 100
     : null;
   const pcTotal = band.length;
   const pcAvgBest = pcTotal > 0
@@ -989,6 +1009,12 @@ export function computeQuarterV3({
     blooketDue,
     blooketDone,
     blooketTodo,
+    // Quiz surface (symmetry with Blooket): how many quiz-bearing lessons are due,
+    // how many were taken, and the topicKeys still owing a quiz. Lets the grade
+    // coach + gradebook show the Quiz track honestly (quiz-less lessons excluded).
+    quizDue,
+    quizDone,
+    quizTodo,
   };
 }
 

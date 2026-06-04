@@ -409,3 +409,59 @@ describe('computeQuarterV3 — Blooket make-up track', () => {
     expect(r.workAvg).toBeCloseTo(80, 1); // Blooket alone → workAvg = 80
   });
 });
+
+// ── Quiz-bearing denominator (#2 fix) ─────────────────────────────────────────
+// The Quiz track divides by due QUIZ-BEARING lessons, not all due lessons, so a
+// quiz-less opener no longer drags the quiz average down. Only ever RAISES.
+describe('computeQuarterV3 — quiz-bearing denominator', () => {
+  it('quiz-less opener is EXCLUDED from the quiz denominator (raises vs old all-due)', () => {
+    const schedule = {
+      '1.1': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } }, // opener, NO quiz
+      '1.2': { unit: 1, periods: { B: '2026-09-10', E: '2026-09-10' } }, // has a quiz
+      '1.3': { unit: 1, periods: { B: '2026-09-30', E: '2026-09-30' } }, // future → keeps PC not-due, isolating the quiz effect
+    };
+    const lessonMap = lessonMapOf({
+      '1.1': { Cws: 100, W: 100, Q: null, lessonGrade: 100 }, // opener: no quiz score
+      '1.2': { Cws: 100, W: 100, Q: 100, lessonGrade: 100 },  // aced the quiz
+    });
+    const args = {
+      quarterKey: 'Q1', config: CFG, lessonMap, schedule,
+      todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
+    };
+
+    // Fixed: only 1.2 is quiz-bearing → quizzesAvg = 100/1 = 100.
+    const fixed = computeQuarterV3({ ...args, quizLessons: ['1.2'] });
+    expect(fixed.quizDue).toBe(1);
+    expect(fixed.quizDone).toBe(1);
+    expect(fixed.workTracks.quizzes).toBeCloseTo(100, 1);
+    expect(fixed.workAvg).toBeCloseTo(100, 1); // lessons 100 + quizzes 100
+
+    // Old (no quizLessons → back-compat all-due denominator): 100/2 = 50, dragged.
+    const old = computeQuarterV3(args);
+    expect(old.workTracks.quizzes).toBeCloseTo(50, 1);
+    // The fix only RAISES the grade.
+    expect(fixed.quarterGrade).toBeGreaterThanOrEqual(old.quarterGrade);
+    expect(fixed.quarterGrade).toBeCloseTo(100, 1);
+    expect(old.quarterGrade).toBeCloseTo(75, 1);
+  });
+
+  it('an un-taken quiz on a quiz-BEARING due lesson still counts as 0 (engagement preserved)', () => {
+    const schedule = {
+      '1.2': { unit: 1, periods: { B: '2026-09-09', E: '2026-09-09' } },
+      '1.3': { unit: 1, periods: { B: '2026-09-10', E: '2026-09-10' } },
+    };
+    const lessonMap = lessonMapOf({
+      '1.2': { Cws: 100, W: 100, Q: 100, lessonGrade: 100 },  // took the quiz
+      '1.3': { Cws: 100, W: 100, Q: null, lessonGrade: 100 }, // quiz EXISTS, not taken
+    });
+    const r = computeQuarterV3({
+      quarterKey: 'Q1', config: CFG, lessonMap, schedule,
+      todayDateStr: '2026-09-20', section: 'PeriodB', unitPcData: {},
+      quizLessons: ['1.2', '1.3'], // BOTH have a quiz
+    });
+    expect(r.quizDue).toBe(2);
+    expect(r.quizDone).toBe(1);
+    expect(r.quizTodo).toContain('1.3');
+    expect(r.workTracks.quizzes).toBeCloseTo(50, 1); // 100/2 — the skipped quiz = 0
+  });
+});
