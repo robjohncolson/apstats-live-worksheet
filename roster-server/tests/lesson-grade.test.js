@@ -193,6 +193,26 @@ describe('computeLessonGrades — lesson math', () => {
     expect(l.W).toBe(100);
     expect(l.Q).toBe(80);
     expect(l.lessonGrade).toBeCloseTo(88, 1);
+    // lessonGradeNoQuiz (the v3 Lessons-track value / the in-app Follow-Along cell)
+    // EXCLUDES the quiz feeder: W-only (no Cws here) = 100, not the 88 that folds
+    // the quiz in. This is the gap the in-app gradebook reconciliation surfaces.
+    expect(l.lessonGradeNoQuiz).toBe(100);
+  });
+
+  it('lessonGradeNoQuiz === lessonGrade when there is no quiz', () => {
+    const rows = [makeRow('WS-U1L1-r1', { source: 'frq', score: 1 })]; // FRQ-E only
+    const map = computeLessonGrades(rows, FRQ_BAND, {}, SAMPLE_SCHEDULE);
+    const l = map.get('1.1');
+    expect(l.lessonGradeNoQuiz).toBe(100);
+    expect(l.lessonGradeNoQuiz).toBe(l.lessonGrade);
+  });
+
+  it('lessonGradeNoQuiz is null when neither Cws nor W present (quiz-only lesson)', () => {
+    const rows = [makeRow('U1-L1-Q01', { source: 'curriculum_quiz', response: 'B' })];
+    const map = computeLessonGrades(rows, FRQ_BAND, SAMPLE_ANSWER_KEY, SAMPLE_SCHEDULE);
+    const l = map.get('1.1');
+    expect(l.Q).not.toBe(null);
+    expect(l.lessonGradeNoQuiz).toBe(null);
   });
 
   it('FRQ-E only (no quiz) → W=100, Q=null, lessonGrade=100 (W-only renormalized)', () => {

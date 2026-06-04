@@ -403,6 +403,24 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
     acc.W = W != null ? Math.round(W * 10) / 10 : null;
     acc.Q = Q != null ? Math.round(Q * 10) / 10 : null;
     acc.lessonGrade = B != null ? Math.round(B * 10) / 10 : null;
+    // Lessons-track value EXCLUDING the quiz feeder: {Cws, W} weighted (ws:W),
+    // renormalized over present feeders. This is exactly computeQuarterV3's
+    // lessonTrackValue (lessonGradeNoQuiz) — surfaced so the in-app/Schoology
+    // "Follow-Along" cell can be the FULL worksheet grade (blanks + AI-graded
+    // reflections), apples-to-apples with the v3 Lessons track. Additive; the
+    // quarter math still recomputes its own value and is untouched.
+    // Computed from the ROUNDED sibling feeders (acc.Cws/acc.W) — the exact inputs
+    // computeQuarterV3's lessonTrackValue uses — so the in-app Follow-Along cell
+    // equals the v3 Lessons-track value with no rounding-order drift (a stray sub-0.1
+    // gap would otherwise read as a spurious Schoology-vs-v3 divergence).
+    let Bnq = null;
+    {
+      let num = 0, den = 0;
+      if (acc.Cws != null) { num += wsWeight * acc.Cws; den += wsWeight; }
+      if (acc.W   != null) { num += wWeight  * acc.W;   den += wWeight; }
+      if (den > 0) Bnq = num / den;
+    }
+    acc.lessonGradeNoQuiz = Bnq != null ? Math.round(Bnq * 10) / 10 : null;
     // Blooket (0..100): the BETTER of the two efforts — the real game score OR the
     // flashcard score (the timed full deck can legitimately reach 100%, so a strong
     // flashcard run beats a mediocre game, and vice-versa). Either may be null; the
@@ -1043,6 +1061,10 @@ export function buildLessonsArray(lessonMap, schedule, topicNames, gradingWindow
       topicName: (topicNames && topicNames[topicKey]) || null,
       due: { B: periods.B || null, E: periods.E || null },
       lessonGrade: lessonResult ? lessonResult.lessonGrade : null,
+      // v3 Lessons-track value ({Cws, W} blend, quiz excluded) — the apples-to-apples
+      // "Follow-Along" cell for the in-app/Schoology gradebook (worksheet blanks +
+      // AI reflections). null when neither feeder is present.
+      lessonGradeNoQuiz: lessonResult ? (lessonResult.lessonGradeNoQuiz != null ? lessonResult.lessonGradeNoQuiz : null) : null,
       Cws: lessonResult ? (lessonResult.Cws !== undefined ? lessonResult.Cws : null) : null,
       W: lessonResult ? lessonResult.W : null,
       Q: lessonResult ? lessonResult.Q : null,

@@ -157,41 +157,51 @@ class TestComponentColumns(unittest.TestCase):
 
 class TestComponentGradesFromClassDoc(unittest.TestCase):
     def _doc(self):
+        # Follow-Along uses lessonGradeNoQuiz (v3 Lessons-track value), distinct
+        # from Cws so we can tell which the producer emits; falls back to Cws.
         return {"students": [
             {
                 "studentId": "r1",
                 "schoologyUid": "9001",
                 "lessons": [
-                    # opener: Cws + blooket present, NO quiz (quizTotal 0)
+                    # opener: FA + blooket present, NO quiz (quizTotal 0)
                     {"lessonKey": "1.1", "unit": 1, "worksheetKey": "1",
-                     "Cws": 88, "Q": None, "quizTotal": 0, "blooket": 95, "hasBlooket": True},
+                     "Cws": 88, "lessonGradeNoQuiz": 84, "Q": None, "quizTotal": 0, "blooket": 95, "hasBlooket": True},
                     # full lesson
                     {"lessonKey": "1.2", "unit": 1, "worksheetKey": "2",
-                     "Cws": 90, "Q": 78, "quizTotal": 3, "blooket": 100, "hasBlooket": True},
-                    # combined constituents carry the SAME Cws -> one FA value
+                     "Cws": 90, "lessonGradeNoQuiz": 86, "Q": 78, "quizTotal": 3, "blooket": 100, "hasBlooket": True},
+                    # combined constituents carry the SAME FA value -> emitted once
                     {"lessonKey": "6.1", "unit": 6, "worksheetKey": "1-2",
-                     "Cws": 70, "Q": None, "quizTotal": 0, "blooket": None, "hasBlooket": False},
+                     "Cws": 70, "lessonGradeNoQuiz": 66, "Q": None, "quizTotal": 0, "blooket": None, "hasBlooket": False},
                     {"lessonKey": "6.2", "unit": 6, "worksheetKey": "1-2",
-                     "Cws": 70, "Q": 65, "quizTotal": 4, "blooket": None, "hasBlooket": False},
+                     "Cws": 70, "lessonGradeNoQuiz": 66, "Q": 65, "quizTotal": 4, "blooket": None, "hasBlooket": False},
                 ],
             },
         ]}
 
     def test_emits_followalong_quiz_blooket(self):
         out = sc.component_grades_from_class_doc(self._doc())
-        self.assertEqual(out["9001/FA:1.2"], 90)
+        self.assertEqual(out["9001/FA:1.2"], 86)  # lessonGradeNoQuiz, not Cws 90
         self.assertEqual(out["9001/QUIZ:1.2"], 78)
         self.assertEqual(out["9001/BL:1.2"], 100)
 
+    def test_followalong_falls_back_to_cws(self):
+        # A lesson with no lessonGradeNoQuiz (old server) -> FA uses Cws.
+        doc = {"students": [{"studentId": "r1", "schoologyUid": "9001", "lessons": [
+            {"lessonKey": "1.2", "unit": 1, "worksheetKey": "2", "Cws": 90,
+             "Q": None, "quizTotal": 0, "blooket": None, "hasBlooket": False}]}]}
+        out = sc.component_grades_from_class_doc(doc)
+        self.assertEqual(out["9001/FA:1.2"], 90)
+
     def test_opener_quiz_skipped_when_quiztotal_zero(self):
         out = sc.component_grades_from_class_doc(self._doc())
-        self.assertEqual(out["9001/FA:1.1"], 88)
+        self.assertEqual(out["9001/FA:1.1"], 84)
         self.assertEqual(out["9001/BL:1.1"], 95)
         self.assertNotIn("9001/QUIZ:1.1", out)
 
     def test_combined_followalong_emitted_once(self):
         out = sc.component_grades_from_class_doc(self._doc())
-        self.assertEqual(out["9001/FA:6.1-2"], 70)
+        self.assertEqual(out["9001/FA:6.1-2"], 66)
         # only one FA value for the group (not one per constituent)
         fa_keys = [k for k in out if k.endswith("/FA:6.1-2")]
         self.assertEqual(len(fa_keys), 1)

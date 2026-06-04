@@ -639,6 +639,10 @@
           <h3 class="tsc-section-title">Grade Summary</h3>
           <div id="tsc-grade-card" class="tsc-grade-card">Loading...</div>
         </section>
+        <section class="tsc-section" id="tsc-section-reconcile">
+          <h3 class="tsc-section-title">Schoology vs v3 — why they differ</h3>
+          <div id="tsc-reconcile-card" class="tsc-grade-card">&mdash;</div>
+        </section>
         <section class="tsc-section" id="tsc-section-recent">
           <h3 class="tsc-section-title">Recent Submissions</h3>
           <ul id="tsc-recent-list" class="tsc-recent-list"></ul>
@@ -1294,6 +1298,8 @@
       if (b) b.addEventListener('click', function () {
         currentQuarter = q;
         renderGradebook(lastGradesPayload || { students: [] });
+        // Keep an open drawer's reconciliation in sync with the chosen quarter.
+        if (_tscCurrentStudentId) renderTscReconcile(_tscCurrentStudentId);
       });
     });
     $('teacher-secret').addEventListener('keydown', function (e) {
@@ -1610,6 +1616,50 @@
       el.innerHTML = html.join('');
     }
 
+    // Phase 4: per-student "why do Schoology and v3 differ" breakdown. Reads the
+    // reconciliation the deriver already attached to the loaded /class/grades
+    // payload (no extra fetch) for the gradebook's current quarter.
+    function _findStudentInLastPayload(studentId) {
+      var students = (lastGradesPayload && lastGradesPayload.students) || [];
+      for (var i = 0; i < students.length; i++) {
+        if (String(students[i].studentId) === String(studentId)) return students[i];
+      }
+      return null;
+    }
+
+    function renderTscReconcile(studentId) {
+      var el = $('tsc-reconcile-card');
+      if (!el) return;
+      var s = _findStudentInLastPayload(studentId);
+      var gb = s && s.gradebook;
+      var q = gb && gb.quarters && gb.quarters[currentQuarter];
+      if (!q || !q.reconciliation) {
+        el.innerHTML = '<span class="dim">No gradebook data for ' + escHtml(currentQuarter) + '.</span>';
+        return;
+      }
+      var rc = q.reconciliation;
+      var ca = q.categoryAverages || {};
+      function n(x) { return x == null ? '&mdash;' : escHtml(fmt1(x)); }
+
+      var deltaTxt = (rc.delta == null) ? '' : ((rc.delta > 0 ? '+' : '') + fmt1(rc.delta));
+      var deltaCls = (rc.delta == null || Math.abs(rc.delta) < 0.1) ? '' : (rc.delta > 0 ? 'gb-good' : 'gb-low');
+
+      var html = '';
+      html += '<div><strong>' + escHtml(currentQuarter) + '</strong> &nbsp; PC track ' + n(rc.pcAvg) +
+              ' &middot; Work track ' + n(rc.workAvg) + '</div>';
+      html += '<div>v3: <strong>' + n(rc.v3Total) + '</strong> &nbsp; Schoology: <strong>' + n(rc.schoologyTotal) + '</strong>' +
+              (deltaTxt ? ' &nbsp; <span class="' + deltaCls + '">&Delta; ' + escHtml(deltaTxt) + '</span>' : '') + '</div>';
+      html += '<div class="dim" style="font-size:0.82rem">' + escHtml(rc.reason) + '</div>';
+
+      var catOrder = ['Lesson', 'Quizzes', 'Blooket', 'Progress Check', 'Posters'];
+      var catBits = catOrder.filter(function (c) { return ca[c] != null; })
+        .map(function (c) { return c + ' ' + fmt1(ca[c]); });
+      if (catBits.length) {
+        html += '<div class="dim" style="font-size:0.8rem">Categories: ' + escHtml(catBits.join(' · ')) + '</div>';
+      }
+      el.innerHTML = html;
+    }
+
     function renderTscRecent(payload) {
       var el = $('tsc-recent-list');
       el.innerHTML = '';
@@ -1697,6 +1747,8 @@
       // the resolution of the /lesson-unlocks fetch.
       // P7: same pattern for nudges-list.
       $('tsc-grade-card').textContent = 'Loading...';
+      // Reconciliation reads the already-loaded class payload — render it now (sync).
+      renderTscReconcile(_tscCurrentStudentId);
       $('tsc-recent-list').innerHTML = '';
       var unlocksList = $('tsc-unlocks-list');
       if (unlocksList) unlocksList.innerHTML = '';

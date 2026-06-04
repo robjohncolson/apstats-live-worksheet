@@ -32,6 +32,10 @@ function synthPayload() {
         categoryAverages: { Lesson: 89, Quizzes: 78, Blooket: 95, 'Progress Check': 80 },
         schoologyTotal: 82.7,
         v3Total: 91.2,
+        reconciliation: {
+          pcAvg: 90, workAvg: 70, schoologyTotal: 82.7, v3Total: 91.2, delta: 8.5, branch: 'max',
+          reason: 'Both tracks clear the 40 floor, so v3 takes the higher (PC 90), while Schoology averages the categories (82.7).',
+        },
       },
     },
   };
@@ -107,5 +111,19 @@ describe('teacher-dashboard in-app gradebook grid', () => {
     win.renderGradebook({ students: [] });
     expect(doc.getElementById('gb-wrap').style.display).toBe('none');
     expect(doc.getElementById('gb-empty').style.display).toBe('');
+  });
+
+  it('renders the per-student Schoology-vs-v3 reconciliation in the drawer', () => {
+    win.lastGradesPayload = synthPayload();
+    win.currentQuarter = 'Q1';
+    win.renderTscReconcile('s1');
+    const card = doc.getElementById('tsc-reconcile-card');
+    expect(card.textContent).toContain('PC track');
+    expect(card.textContent).toContain('Work track');
+    expect(card.textContent).toContain('v3');
+    expect(card.textContent).toContain('Schoology');
+    expect(card.textContent).toContain('Δ'); // delta shown
+    expect(card.textContent.toLowerCase()).toContain('higher'); // max-branch reason
+    expect(card.textContent).toContain('Categories:'); // category averages line
   });
 });

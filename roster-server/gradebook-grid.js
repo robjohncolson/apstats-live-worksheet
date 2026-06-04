@@ -128,14 +128,61 @@ function cellValue(col, lessonsByKey, units) {
     const L = lessonsByKey[col.topicKeys[0]];
     return L && L.Q != null ? L.Q : null;
   }
-  // followalong (Cws) / blooket — combined constituents share the same value,
-  // so take the first non-null across the group's topics.
-  const field = col.kind === 'blooket' ? 'blooket' : 'Cws';
+  // followalong = the v3 Lessons-track value (lessonGradeNoQuiz: worksheet blanks
+  // + AI-graded reflections), so the cell is apples-to-apples with v3's Lessons
+  // track. Falls back to Cws if the server predates the field. blooket = blooket.
+  // Combined constituents share the same value → first non-null across the group.
+  const primary = col.kind === 'blooket' ? 'blooket' : 'lessonGradeNoQuiz';
+  const fallback = col.kind === 'blooket' ? 'blooket' : 'Cws';
   for (const tk of col.topicKeys) {
     const L = lessonsByKey[tk];
-    if (L && L[field] != null) return L[field];
+    if (!L) continue;
+    if (L[primary] != null) return L[primary];
+    if (L[fallback] != null) return L[fallback];
   }
   return null;
+}
+
+// ── Reconciliation: WHY Schoology and v3 differ for one quarter ─────────────────
+// Both totals are already computed; this explains the gap using the v3 branch
+// logic (quarterGradeV3 + combineV3). pcAvg / workAvg are 0..100 on the quarter
+// object (null when that track has nothing due yet).
+export function reconcileQuarter(gradeObj, quarterKey, schoologyTotal, v3Total) {
+  var q = (gradeObj && gradeObj.quarters && gradeObj.quarters[quarterKey]) || {};
+  var pc = q.pcAvg != null ? q.pcAvg : null;
+  var work = q.workAvg != null ? q.workAvg : null;
+  var delta = (schoologyTotal != null && v3Total != null) ? round1(v3Total - schoologyTotal) : null;
+
+  var branch, reason;
+  if (pc == null && work == null) {
+    branch = 'none';
+    reason = 'No graded tracks yet this quarter.';
+  } else if (pc == null) {
+    branch = 'work-only';
+    reason = 'Only the Work track is active (no Progress Check due yet), so v3 = Work (' + round1(work) + ').';
+  } else if (work == null) {
+    branch = 'pc-only';
+    reason = 'Only the PC track is active, so v3 = PC (' + round1(pc) + ').';
+  } else if (pc >= 40 && work >= 40) {
+    branch = 'max';
+    var which = pc >= work ? ('PC ' + round1(pc)) : ('Work ' + round1(work));
+    reason = 'Both tracks clear the 40 floor, so v3 takes the higher (' + which +
+      '), while Schoology averages the categories (' + round1(schoologyTotal) + ').';
+  } else {
+    branch = 'ceiling';
+    var a = 0.7 * pc, b = 0.7 * work, m = (pc + work) / 2;
+    var top = Math.max(a, b, m);
+    var lbl = top === m ? 'the mean of the two tracks' : (top === a ? '70% of PC' : '70% of Work');
+    reason = 'A track is below the 40 floor, so v3 caps at ' + lbl + ' (' + round1(top) +
+      '); Schoology applies no floor or ceiling.';
+  }
+
+  return {
+    pcAvg: pc, workAvg: work,
+    schoologyTotal: schoologyTotal != null ? schoologyTotal : null,
+    v3Total: v3Total != null ? v3Total : null,
+    delta: delta, branch: branch, reason: reason,
+  };
 }
 
 // ── One student's row for a set of columns ─────────────────────────────────────
@@ -186,12 +233,15 @@ export function buildGradebook(gradeObj, { weights = SCHOOLOGY_CATEGORY_WEIGHTS 
   for (const qk of quarterKeys) {
     const columns = buildGradebookColumns(gradeObj, qk);
     const row = buildGradebookRow(gradeObj, columns, weights);
+    var v3Total = gradeObj.quarters[qk].quarterGrade != null ? gradeObj.quarters[qk].quarterGrade : null;
     quartersOut[qk] = {
       columns,
       cells: row.cells,
       categoryAverages: row.categoryAverages,
       schoologyTotal: row.schoologyTotal,
-      v3Total: gradeObj.quarters[qk].quarterGrade != null ? gradeObj.quarters[qk].quarterGrade : null,
+      v3Total: v3Total,
+      // Why the two totals differ (for the Phase 4 per-student breakdown).
+      reconciliation: reconcileQuarter(gradeObj, qk, row.schoologyTotal, v3Total),
     };
   }
   return { weights, quarters: quartersOut };

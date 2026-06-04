@@ -251,8 +251,9 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None) -> d
     """Map a /class/grades response to {"<uid>/<component_key>": value}.
 
     Per student, per lesson:
-      - Follow-Along <- lesson.Cws      (one per worksheet group; combined
-                        constituents carry an identical Cws, so dedup by group)
+      - Follow-Along <- lesson.lessonGradeNoQuiz (worksheet blanks + AI reflections,
+                        the v3 Lessons-track value; falls back to Cws). One per
+                        worksheet group; combined constituents share it, dedup by group.
       - Quiz         <- lesson.Q        (only when quizTotal > 0, i.e. a quiz
                         exists; an opener like 1.1 has quizTotal 0 -> skipped)
       - Blooket      <- lesson.blooket  (one per group; needs hasBlooket)
@@ -278,9 +279,14 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None) -> d
                 continue
             label = group_label(unit, wk)
 
-            cws = lesson.get("Cws")
-            if cws is not None and label not in emitted_fa:
-                out[f"{uid}/{fa_key(label)}"] = cws
+            # Follow-Along = the v3 Lessons-track value (worksheet blanks + AI
+            # reflections), so the Schoology push matches the in-app grid + v3's
+            # Lessons track. Fall back to Cws if the server predates the field.
+            fa_val = lesson.get("lessonGradeNoQuiz")
+            if fa_val is None:
+                fa_val = lesson.get("Cws")
+            if fa_val is not None and label not in emitted_fa:
+                out[f"{uid}/{fa_key(label)}"] = fa_val
                 emitted_fa.add(label)
 
             q = lesson.get("Q")
