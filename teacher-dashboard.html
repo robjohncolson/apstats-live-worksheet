@@ -499,6 +499,59 @@
       </div>
     </div>
 
+    <!-- In-app 1:1 Schoology gradebook (component grid) -->
+    <div class="section">
+      <style>
+        .gb-quarter-bar { display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+        .gb-qbtn { font-size:0.82rem; padding:4px 12px; background:transparent; color:var(--sg-accent);
+                   border:1px solid var(--sg-accent); cursor:pointer; border-radius:4px; }
+        .gb-qbtn.active { background:var(--sg-accent); color:#fff; font-weight:600; }
+        table.gb-table { border-collapse:collapse; font-size:0.78rem; }
+        table.gb-table th, table.gb-table td { border:1px solid #d7d7e0; padding:3px 6px; text-align:center; white-space:nowrap; }
+        table.gb-table th.gb-name-h, table.gb-table td.gb-name {
+          position:sticky; left:0; z-index:2; background:#fff; text-align:left; min-width:140px; font-weight:600; }
+        table.gb-table thead th { position:sticky; top:0; z-index:1; background:#f3f3f7; }
+        table.gb-table th.gb-cat { font-size:0.74rem; letter-spacing:0.02em; }
+        .gb-cat-lesson   { background:#e8f0fe; } .gb-col.gb-cat-lesson,   td.gb-cat-lesson   { background:#f6f9ff; }
+        .gb-cat-quizzes  { background:#f0e8fe; } .gb-col.gb-cat-quizzes,  td.gb-cat-quizzes  { background:#faf6ff; }
+        .gb-cat-blooket  { background:#fdeede; } .gb-col.gb-cat-blooket,  td.gb-cat-blooket  { background:#fff8f0; }
+        .gb-cat-pc       { background:#e3f6ea; } .gb-col.gb-cat-pc,       td.gb-cat-pc       { background:#f3fbf6; }
+        .gb-cat-posters  { background:#eeeef2; } .gb-col.gb-cat-posters,  td.gb-cat-posters  { background:#f8f8fb; }
+        table.gb-table th.gb-col { font-weight:500; font-size:0.72rem; max-width:62px; overflow:hidden; text-overflow:ellipsis; }
+        table.gb-table th.gb-tot-h { background:#2a2a35; color:#fff; }
+        td.gb-tot { font-weight:700; }
+        td.gb-cell.gb-good, td.gb-tot.gb-good { color:#0a7d33; }
+        td.gb-cell.gb-mid,  td.gb-tot.gb-mid  { color:#a8730a; }
+        td.gb-cell.gb-low,  td.gb-tot.gb-low  { color:#c0282d; }
+        td.gb-cell.gb-null { color:#b9b9c4; }
+        .gb-delta { display:block; font-size:0.66rem; font-weight:600; color:#7a5cc0; }
+      </style>
+      <h2 class="section-title">Gradebook <span class="dim" style="font-size:0.8rem">(1:1 Schoology — component grid)</span></h2>
+      <div class="gb-quarter-bar" id="gb-quarter-bar">
+        <span class="hint" style="margin-right:4px">Quarter:</span>
+        <button class="gb-qbtn" id="gb-q-Q1" data-q="Q1">Q1 · U1–3</button>
+        <button class="gb-qbtn" id="gb-q-Q2" data-q="Q2">Q2 · U4–5</button>
+        <button class="gb-qbtn" id="gb-q-Q3" data-q="Q3">Q3 · U6–7</button>
+        <button class="gb-qbtn" id="gb-q-Q4" data-q="Q4">Q4 · U8–9</button>
+      </div>
+      <div class="table-wrap" id="gb-wrap" style="display:none; max-height:70vh; overflow:auto">
+        <table class="grades gb-table">
+          <thead id="gb-thead"></thead>
+          <tbody id="gb-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-note" id="gb-empty" style="display:none">
+        Load a section to see the component gradebook. (Columns appear once the server returns gradebook data —
+        redeploy must be live.)
+      </div>
+      <div class="hint">
+        Each cell is a component score (Follow-Along / Quiz / Blooket per lesson; Progress Check / Poster per unit),
+        grouped by Schoology category. <b>Schoology</b> = the category-weighted total
+        (PC&nbsp;50 / Lesson&nbsp;15 / Quizzes&nbsp;15 / Posters&nbsp;15 / Blooket&nbsp;5). <b>v3</b> = the app's
+        two-track model. The Δ on v3 flags where the two diverge. Click a row for the student drawer.
+      </div>
+    </div>
+
     <!-- Skill heatmap -->
     <div class="section">
       <h2 class="section-title">Skill Heatmap (class)</h2>
@@ -770,6 +823,11 @@
     var UNITS = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7', 'U8', 'U9'];
     var QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
 
+    // In-app gradebook grid state. The last /class/grades payload is stashed so
+    // switching quarters re-renders without a refetch.
+    var lastGradesPayload = null;
+    var currentQuarter = 'Q1';
+
     function renderGradesTable(payload) {
       var thead = $('grades-thead');
       var tbody = $('grades-tbody');
@@ -861,6 +919,154 @@
       if (!tbody.__tscWired) {
         tbody.__tscWired = true;
         tbody.addEventListener('click', function(e) {
+          var tr = e.target.closest('tr.grades-row-clickable');
+          if (!tr) return;
+          var sid = tr.getAttribute('data-student-id');
+          if (!sid) return;
+          openTscDrawer({
+            studentId: sid,
+            username: tr.getAttribute('data-username') || '',
+            realName: tr.getAttribute('data-real-name') || '',
+            section: tr.getAttribute('data-section') || ''
+          });
+        });
+      }
+    }
+
+    // ===== in-app 1:1 Schoology gradebook (component grid) =====
+    var GB_CAT_ORDER = ['Lesson', 'Quizzes', 'Blooket', 'Progress Check', 'Posters'];
+    var GB_CAT_SLUG = { 'Lesson': 'lesson', 'Quizzes': 'quizzes', 'Blooket': 'blooket', 'Progress Check': 'pc', 'Posters': 'posters' };
+
+    // Columns are schedule-driven (identical across students); take them from the
+    // first student that carries them for this quarter.
+    function gbColumnsFor(students, qk) {
+      for (var i = 0; i < students.length; i++) {
+        var gb = students[i] && students[i].gradebook;
+        var q = gb && gb.quarters && gb.quarters[qk];
+        if (q && Array.isArray(q.columns) && q.columns.length) return q.columns;
+      }
+      return [];
+    }
+
+    function gbWeights(students) {
+      for (var i = 0; i < students.length; i++) {
+        var gb = students[i] && students[i].gradebook;
+        if (gb && gb.weights) return gb.weights;
+      }
+      return null;
+    }
+
+    // grade -> colour bucket (higher = better, opposite of the mastery heatmap).
+    function gbColor(v) {
+      if (v == null) return 'gb-null';
+      if (v >= 80) return 'gb-good';
+      if (v >= 60) return 'gb-mid';
+      return 'gb-low';
+    }
+
+    // Compact header label: the part after the key prefix (FA:1.1 -> "1.1",
+    // QUIZ:1.2 -> "1.2", PC:U1 -> "U1"). Full title lives in the th tooltip.
+    function gbShortTitle(col) {
+      var k = String(col.key || '');
+      var i = k.indexOf(':');
+      return i >= 0 ? k.slice(i + 1) : (col.title || k);
+    }
+
+    function renderGradebook(payload) {
+      var thead = $('gb-thead');
+      var tbody = $('gb-tbody');
+      if (!thead || !tbody) return;
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      var students = (payload && payload.students) || [];
+      var qk = currentQuarter;
+
+      // Reflect the active quarter button.
+      QUARTERS.forEach(function (q) {
+        var b = $('gb-q-' + q);
+        if (b) b.classList.toggle('active', q === qk);
+      });
+
+      var cols = gbColumnsFor(students, qk);
+      if (students.length === 0 || cols.length === 0) {
+        $('gb-wrap').style.display = 'none';
+        $('gb-empty').style.display = '';
+        return;
+      }
+      $('gb-empty').style.display = 'none';
+      $('gb-wrap').style.display = '';
+
+      var weights = gbWeights(students);
+
+      // Order columns by category (Schoology groups by weighted category), keeping
+      // the within-category column order the server produced.
+      var orderedCols = [];
+      var catCounts = {};
+      GB_CAT_ORDER.forEach(function (cat) {
+        cols.forEach(function (c) {
+          if (c.category === cat) { orderedCols.push(c); catCounts[cat] = (catCounts[cat] || 0) + 1; }
+        });
+      });
+
+      // Row 1: category group headers (name spans both header rows).
+      var groupRow = '<tr><th class="gb-name-h" rowspan="2">Name</th>';
+      GB_CAT_ORDER.forEach(function (cat) {
+        if (!catCounts[cat]) return;
+        var w = (weights && weights[cat] != null) ? (' ' + weights[cat] + '%') : '';
+        groupRow += '<th class="gb-cat gb-cat-' + GB_CAT_SLUG[cat] + '" colspan="' + catCounts[cat] + '">' +
+          escHtml(cat) + escHtml(w) + '</th>';
+      });
+      groupRow += '<th class="gb-tot-h" colspan="2">Total</th></tr>';
+
+      // Row 2: per-column titles + the two total headers.
+      var titleRow = '<tr>';
+      orderedCols.forEach(function (c) {
+        titleRow += '<th class="gb-col gb-cat-' + GB_CAT_SLUG[c.category] + '" title="' + escHtml(c.title) + '">' +
+          escHtml(gbShortTitle(c)) + '</th>';
+      });
+      titleRow += '<th class="gb-tot-h">Schoology</th><th class="gb-tot-h">v3</th></tr>';
+      thead.innerHTML = groupRow + titleRow;
+
+      // Body: one row per student, sorted by name.
+      var sorted = students.slice().sort(function (a, b) {
+        var an = String(a.realName || '').toLowerCase();
+        var bn = String(b.realName || '').toLowerCase();
+        return an < bn ? -1 : an > bn ? 1 : 0;
+      });
+
+      var rowsHtml = sorted.map(function (s) {
+        var gq = s.gradebook && s.gradebook.quarters && s.gradebook.quarters[qk];
+        var cells = (gq && gq.cells) || {};
+        var html = '<tr class="grades-row-clickable"' +
+          ' data-student-id="' + escHtml(s.studentId || '') + '"' +
+          ' data-username="' + escHtml(s.username || '') + '"' +
+          ' data-real-name="' + escHtml(s.realName || '') + '"' +
+          ' data-section="' + escHtml(s.section || '') + '">';
+        html += '<td class="gb-name">' + escHtml(s.realName || '') + '</td>';
+        orderedCols.forEach(function (c) {
+          var v = cells[c.key];
+          if (v === undefined) v = null;
+          html += '<td class="gb-cell gb-cat-' + GB_CAT_SLUG[c.category] + ' ' + gbColor(v) + '">' +
+            (v == null ? '<span class="gb-null">·</span>' : escHtml(fmt1(v))) + '</td>';
+        });
+        var st = gq ? gq.schoologyTotal : null;
+        var vt = gq ? gq.v3Total : null;
+        var delta = (st != null && vt != null) ? Math.round((vt - st) * 10) / 10 : null;
+        var deltaHtml = (delta != null && Math.abs(delta) >= 0.1)
+          ? '<span class="gb-delta">&Delta;' + (delta > 0 ? '+' : '') + escHtml(fmt1(delta)) + '</span>'
+          : '';
+        html += '<td class="gb-tot ' + gbColor(st) + '">' + escHtml(fmt1(st)) + '</td>';
+        html += '<td class="gb-tot ' + gbColor(vt) + '">' + escHtml(fmt1(vt)) + deltaHtml + '</td>';
+        html += '</tr>';
+        return html;
+      });
+      tbody.innerHTML = rowsHtml.join('');
+
+      // Rows open the same per-student drawer as the Class Grades table.
+      if (!tbody.__gbWired) {
+        tbody.__gbWired = true;
+        tbody.addEventListener('click', function (e) {
           var tr = e.target.closest('tr.grades-row-clickable');
           if (!tr) return;
           var sid = tr.getAttribute('data-student-id');
@@ -1025,6 +1231,7 @@
           showError('Invalid teacher secret');
           setLoading(false);
           renderGradesTable({ students: [] });
+          renderGradebook({ students: [] });
           renderHeatmap({ heatmap: {} });
           renderTriage({ heatmap: {}, students: [] });
           return;
@@ -1053,6 +1260,8 @@
           ? mRes.data : { heatmap: {}, students: [] };
 
         renderGradesTable(gPayload);
+        lastGradesPayload = gPayload;
+        renderGradebook(gPayload);
         renderHeatmap(mPayload);
         renderTriage(mPayload);
 
@@ -1079,6 +1288,14 @@
     }
 
     $('load-btn').addEventListener('click', loadAll);
+    // Gradebook quarter selector: re-render from the stashed payload (no refetch).
+    QUARTERS.forEach(function (q) {
+      var b = $('gb-q-' + q);
+      if (b) b.addEventListener('click', function () {
+        currentQuarter = q;
+        renderGradebook(lastGradesPayload || { students: [] });
+      });
+    });
     $('teacher-secret').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') loadAll();
     });
