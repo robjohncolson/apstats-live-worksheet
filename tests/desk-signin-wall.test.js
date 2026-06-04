@@ -38,10 +38,12 @@ describe('Desk: no-guest-mode sign-in wall', () => {
     expect(DESK).toBeTypeOf('string');
   });
 
-  it('01: _deskAccessGranted exists and fails OPEN', () => {
+  it('01: _deskAccessGranted gates on the live roster session and fails OPEN', () => {
     expect(DESK).toMatch(/function\s+_deskAccessGranted\s*\(/);
     const body = fnBody(DESK, '_deskAccessGranted');
-    expect(body).toMatch(/getStudentEmail\s*\(/);
+    // Gates on the LIVE roster session (not the legacy localStorage key) so a
+    // cleared session re-walls the Desk instead of leaving a zombie.
+    expect(body).toMatch(/rosterClient\.current\s*\(/);
     expect(body).toMatch(/_deskIsTeacher\s*\(/);
     // catch returns true — a broken check must never hard-lock the Desk.
     expect(body).toMatch(/catch\s*\(_\)\s*\{\s*return true;\s*\}/);
@@ -83,29 +85,29 @@ describe('Desk: no-guest-mode sign-in wall', () => {
   });
 
   // ── _deskAccessGranted real-execution smoke tests ─────────────────────────
-  function makeAccessGranted({ email = null, teacher = false, throwEmail = false } = {}) {
+  // Gates on the LIVE roster session (rosterClient.current()), not the legacy
+  // localStorage key, so a cleared session (e.g. cr sign-out) re-pops the wall.
+  function makeAccessGranted({ signedIn = false, teacher = false, throwIt = false } = {}) {
     const src = fnBody(DESK, '_deskAccessGranted');
-    const getStudentEmail = () => { if (throwEmail) throw new Error('boom'); return email; };
+    const window = { rosterClient: { current: () => { if (throwIt) throw new Error('boom'); return signedIn ? { studentId: 'sid' } : null; } } };
     const _deskIsTeacher = () => teacher;
     // eslint-disable-next-line no-new-func
-    return new Function('getStudentEmail', '_deskIsTeacher', 'return (' + src + ');')(
-      getStudentEmail, _deskIsTeacher
-    );
+    return new Function('window', '_deskIsTeacher', 'return (' + src + ');')(window, _deskIsTeacher);
   }
 
-  it('07: _deskAccessGranted — signed-in student → granted', () => {
-    expect(makeAccessGranted({ email: 'ada@roster.local' })()).toBe(true);
+  it('07: _deskAccessGranted — live roster session → granted', () => {
+    expect(makeAccessGranted({ signedIn: true })()).toBe(true);
   });
 
   it('08: _deskAccessGranted — teacher → granted', () => {
-    expect(makeAccessGranted({ email: null, teacher: true })()).toBe(true);
+    expect(makeAccessGranted({ signedIn: false, teacher: true })()).toBe(true);
   });
 
-  it('09: _deskAccessGranted — neither student nor teacher → NOT granted', () => {
-    expect(makeAccessGranted({ email: null, teacher: false })()).toBe(false);
+  it('09: _deskAccessGranted — no live session and not a teacher → NOT granted (zombie re-walls)', () => {
+    expect(makeAccessGranted({ signedIn: false, teacher: false })()).toBe(false);
   });
 
   it('10: _deskAccessGranted — a thrown error fails OPEN (granted)', () => {
-    expect(makeAccessGranted({ throwEmail: true })()).toBe(true);
+    expect(makeAccessGranted({ throwIt: true })()).toBe(true);
   });
 });

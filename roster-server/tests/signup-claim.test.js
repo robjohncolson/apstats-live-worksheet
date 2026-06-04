@@ -263,6 +263,23 @@ describe('POST /roster/verify brute-force lockout', () => {
     }
   });
 
+  it('does NOT lock a NON-EXISTENT username (unknown-user failures are not counted)', async () => {
+    process.env.VERIFY_LOCKOUT_MAX = '3';
+    const app = new TestServer(createApp(createFakeDb()));
+    await app.start();
+    try {
+      // Far more than the cap, on a username that was never claimed → always 401,
+      // never 429 (so an attacker can't inflate the throttle Map with random names).
+      for (let i = 0; i < 8; i++) {
+        const r = await app.request('POST', '/roster/verify', { body: { username: 'ghost_user', password: '0000' } });
+        expect(r.status).toBe(401);
+      }
+    } finally {
+      await app.stop();
+      delete process.env.VERIFY_LOCKOUT_MAX;
+    }
+  });
+
   it('a correct sign-in clears the failure counter (no premature lock for a fat-fingered student)', async () => {
     process.env.VERIFY_LOCKOUT_MAX = '3';
     const fdb = createFakeDb();

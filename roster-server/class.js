@@ -22,7 +22,12 @@ async function listRoster(db, section) {
   try {
     const { data, error } = await db.listRoster(section || null);
     if (error) return { error };
-    return { rows: Array.isArray(data) ? data : [] };
+    // Exclude TEACHER accounts from the class fan-out. A self-signup teacher has a
+    // real section (PeriodX) but is not a student; without this they'd show up as a
+    // blank-grade "student" in the in-Desk Class Gradebook + teacher dashboard.
+    // (/roster/list uses db.listRoster directly, so the teacher console stays complete.)
+    const rows = (Array.isArray(data) ? data : []).filter(r => r && r.role !== 'teacher');
+    return { rows };
   } catch (err) {
     return { error: err };
   }

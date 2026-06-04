@@ -59,7 +59,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Tunable via env for tests / future tightening. See rate-limit.js.
   const signupClaimLimiter = createRateLimiter({
     windowMs: Number(process.env.SIGNUP_CLAIM_WINDOW_MS) || 15 * 60 * 1000,
-    max:      Number(process.env.SIGNUP_CLAIM_MAX) || 120
+    // 300/15min: comfortably above any single class (and multi-period same-NAT)
+    // onboarding burst, while still bounding abuse. Raise via env for very large
+    // same-day cohorts, or if trust-proxy resolves req.ip to a shared address.
+    max:      Number(process.env.SIGNUP_CLAIM_MAX) || 300
   });
 
   // Per-USERNAME failed-attempt lockout for /roster/verify. A self-signup account's
@@ -176,9 +179,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
 
     const { data, error } = await db.findByUsername(username);
 
-    // Unknown user — same generic message (no user enumeration)
+    // Unknown user — same generic message (no user enumeration). Do NOT count this
+    // as a lockout failure: there is no account to protect, and counting attacker-
+    // supplied non-existent usernames would let a flood inflate the throttle Map.
     if (error || !data) {
-      verifyThrottle.fail(throttleKey);
       return res.status(401).json({ ok: false, error: INVALID_MSG });
     }
 

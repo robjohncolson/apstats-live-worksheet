@@ -5122,7 +5122,15 @@ function _renderPreviewAsStudentUI() {
 // Access to the Desk requires a signed-in student OR a teacher. Fails OPEN:
 // if the check throws, grant access — a bug must never hard-lock the Desk.
 function _deskAccessGranted() {
-  try { return !!getStudentEmail() || _deskIsTeacher(); }
+  // Gate on the LIVE roster session, not the legacy apstats_desk_student_email key:
+  // that key can outlive the roster session (e.g. a sign-out in the sibling
+  // curriculum_render app, which shares apstats_roster.v1), leaving a Desk that
+  // looks signed-in but has no token — every server call then silently no-ops
+  // (Done clicks that never persist). Matches the worksheet wall (rosterClient.current()).
+  try {
+    var live = !!(window.rosterClient && window.rosterClient.current && window.rosterClient.current());
+    return live || _deskIsTeacher();
+  }
   catch (_) { return true; }
 }
 // True while the sign-in modal is up as a mandatory wall (not signed in).
@@ -10235,9 +10243,15 @@ function renderMyGradebook(qk) {
     var today = (typeof tdy === 'function') ? tdy() : new Date();
     function _visible(col) {
         if (cells[col.key] != null) return true;                 // started → always show
+        // Prefer the SERVER-stamped `due` flag (the identical signal the teacher
+        // dashboard gates on, computed from lesson-schedule.json) so the student
+        // self-view, the in-Desk Class Gradebook, and teacher-dashboard.html never
+        // disagree on what's "due". Fall back to the Desk's own calendar only when
+        // the server didn't stamp it (older server / no schedule) — a safe degrade.
+        if (col.due !== undefined) return col.due !== false;
         if (!hasSchedule) return true;                           // no schedule → show all (safe)
         var d = _colScheduledDate(col, dateMap);
-        return d != null && d <= today;                          // due by today
+        return d != null && d <= today;                          // due by today (client fallback)
     }
     var visibleCols = gq.columns.filter(_visible);
     var oweCount = visibleCols.filter(function (c) { return cells[c.key] == null; }).length;

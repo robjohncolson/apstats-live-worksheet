@@ -76,7 +76,16 @@ export function createLoginThrottle({ windowMs, maxFailures }) {
       rec.count += 1;
       if (fails.size > 5000) {
         for (const [k, v] of fails) if (t >= v.resetAt) fails.delete(k);
-        if (fails.size > 20000) fails.clear();
+        // If a flood of distinct keys keeps the Map huge, evict NOT-yet-locked
+        // noise (count below the lock threshold) FIRST — never clear() the whole
+        // Map, which would reset a real account's active lockout (the security
+        // boundary). Callers should also avoid keying this on un-validated input
+        // (e.g. don't fail() for non-existent usernames).
+        if (fails.size > 20000) {
+          for (const [k, v] of fails) {
+            if (v.count < maxFailures) { fails.delete(k); if (fails.size <= 10000) break; }
+          }
+        }
       }
     },
     succeed(key) {

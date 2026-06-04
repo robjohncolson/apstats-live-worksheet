@@ -217,6 +217,20 @@ describe('Desk My Gradebook modal', () => {
     expect(text).toMatch(/due, not done/i);           // the "what you owe" badge
   });
 
+  it('honors the SERVER col.due flag over the client calendar (student↔teacher consistency)', () => {
+    if (!loaded) { expect(true).toBe(true); return; }
+    win.tdy = () => new Date(2099, 0, 1);   // the client calendar would mark everything due
+    win._activeGradebook = gbWith(
+      [ { key: 'FA:1.1', category: 'Lesson', title: '1.1 Follow-Along', unit: 1, topicKeys: ['1.1'], due: false },
+        { key: 'FA:1.2', category: 'Lesson', title: '1.2 Follow-Along', unit: 1, topicKeys: ['1.2'], due: true } ],
+      { 'FA:1.1': null, 'FA:1.2': null }
+    );
+    win.renderMyGradebook('Q1');
+    const text = doc.getElementById('my-gradebook-body').textContent;
+    expect(text).not.toContain('1.1 Follow-Along');  // server due:false wins over the client calendar → hidden
+    expect(text).toContain('1.2 Follow-Along');       // server due:true → shown
+  });
+
   it('flags a category sitting below the 40% floor', () => {
     if (!loaded) { expect(true).toBe(true); return; }
     win.tdy = () => new Date(2024, 0, 1);

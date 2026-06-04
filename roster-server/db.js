@@ -249,7 +249,7 @@ export function createDb(client) {
     // so this addition is invisible to the teacher console (additive, safe).
     let query = client
       .from('roster')
-      .select('student_id, real_name, login_username, section, password_cipher, must_change_password, created_at');
+      .select('student_id, real_name, login_username, section, role, password_cipher, must_change_password, created_at');
 
     if (section) {
       query = query.eq('section', section);

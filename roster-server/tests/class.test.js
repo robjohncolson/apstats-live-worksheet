@@ -174,6 +174,17 @@ describe('GET /class/grades — fan-out', () => {
     expect(r.body.section).toBe('P1');
   });
 
+  it('excludes role=teacher rows from the class fan-out (a self-signup teacher is not a student)', async () => {
+    const roster = [
+      { student_id: 's1', real_name: 'Alice', login_username: 'alpha_fox', section: 'P1' },
+      { student_id: 't1', real_name: 'Ms Teacher', login_username: 'teach_owl', section: 'P1', role: 'teacher' },
+    ];
+    const ctx = await startServer({ roster, ledger: { s1: [], t1: [] } }); srv = ctx.server;
+    const r = await srv.get('/class/grades', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    expect(r.body.students.map(s => s.studentId)).toEqual(['s1']);   // teacher row excluded
+  });
+
   it('per-student ledger throw is tolerated (one bad student does not 500 the class)', async () => {
     const roster = [
       { student_id: 'ok',  real_name: 'OK', login_username: 'a', section: 'P1' },
