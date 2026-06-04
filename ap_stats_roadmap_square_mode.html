@@ -1758,6 +1758,24 @@
     </div>
 </div>
 
+<!-- ═══ My Gradebook Modal (Phase 3, 2026-06-03) ═══
+     The student's own component gradebook, popped from the Do Now strip. Reads
+     data.gradebook from /grade (cached in _gradeGradebookCache). Shows BOTH totals
+     (live v3 grade + Schoology report-card estimate) + the why + every per-component
+     cell grouped by Schoology category. Mirrors the Day Grade modal. -->
+<div id="my-gradebook-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeMyGradebook()">
+    <div class="dialog-box" style="max-width:430px;width:92%;text-align:left;padding:12px 16px">
+        <div class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span id="my-gradebook-title">My Gradebook</span>
+            <span id="my-gradebook-qtabs" style="display:flex;gap:3px"></span>
+        </div>
+        <div id="my-gradebook-body" class="geneva" style="font-size:11px;max-height:62vh;overflow-y:auto"></div>
+        <div style="text-align:right;margin-top:10px">
+            <button class="s7btn s7btn-default" onclick="closeMyGradebook()">OK</button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Blooket Flashcard Quiz (2026-05-20) ═══
      Chain-of-custody verification for Blooket completion. Sources the
      question set from the same _blooket.csv that built the Blooket game.
@@ -6104,6 +6122,7 @@ function quarterOfDate(dt) {
 // Used by openDayGrade to look up per-lesson data without a second fetch.
 var _gradeLessonsCache = null;
 var _gradeQuartersCache = null; // latest /grade quarters{} — read by the "Why so low?" coach
+var _gradeGradebookCache = null; // latest /grade gradebook{} — read by the "My Gradebook" modal (Phase 3)
 
 // Render the compact Q1-Q4 grade outlook strip inside the Do Now card.
 // Fire-and-forget; never throws. Hides the strip on any failure.
@@ -6160,6 +6179,7 @@ async function renderDoNowGrades(baseUrl, token) {
     if (typeof paintLocalDoneCells === 'function') paintLocalDoneCells();
     var quarters = data.quarters || {};
     _gradeQuartersCache = quarters; // cache for the "Why so low?" coach
+    _gradeGradebookCache = data.gradebook || null; // cache for the "My Gradebook" modal
     var order = ['Q1', 'Q2', 'Q3', 'Q4'];
     // Show ONLY the current quarter (the relevant one). Current = the quarter
     // containing today (quarterOfDate); if today is outside all bands (e.g. summer
@@ -6238,6 +6258,23 @@ async function renderDoNowGrades(baseUrl, token) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openGradeHelp === 'function') openGradeHelp(); }
     };
     host.appendChild(help);
+
+    // Phase 3: "My Gradebook" — pops the per-component modal from the Do Now strip
+    // (every score that rolls up to the grade). Only shown once the gradebook field
+    // is present in the cached /grade payload.
+    if (_gradeGradebookCache && _gradeGradebookCache.quarters) {
+        var gbChip = document.createElement('span');
+        gbChip.setAttribute('role', 'button');
+        gbChip.setAttribute('tabindex', '0');
+        gbChip.title = 'See every score that makes up your grade';
+        gbChip.textContent = '📊 My Gradebook';
+        gbChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
+        gbChip.onclick = function () { if (typeof openMyGradebook === 'function') openMyGradebook(); };
+        gbChip.onkeydown = function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openMyGradebook === 'function') openMyGradebook(); }
+        };
+        host.appendChild(gbChip);
+    }
     host.style.display = 'flex';
 
     // "Why so low?" grade coach — render alongside the strip (q is in scope).
@@ -9609,6 +9646,156 @@ function closeGradeHelp() {
     _detachGradeHelpKeyHandler();
     var ov = document.getElementById('grade-help-overlay');
     if (ov) ov.style.display = 'none';
+}
+
+// ── My Gradebook Modal (Phase 3, 2026-06-03) ──────────────────────────────────
+// The student's own component gradebook, popped from the Do Now strip. Reads
+// _gradeGradebookCache (data.gradebook from /grade) — the SAME deriver the teacher
+// grid uses, so the numbers match. Shows both totals (live v3 grade + Schoology
+// report-card estimate) + the plain-English why + every component cell grouped by
+// Schoology category. Mirrors the Day Grade modal's open/close + Esc handling.
+var _myGradebookQuarter = null;
+var _myGradebookKeyHandler = null;
+
+function _myGradebookCatOrder() {
+    // Local (not a top-level const) so the render never depends on top-level eval
+    // order — keeps it self-contained + testable.
+    return ['Lesson', 'Quizzes', 'Blooket', 'Progress Check', 'Posters'];
+}
+
+function _attachMyGradebookKeyHandler() {
+    _detachMyGradebookKeyHandler();
+    _myGradebookKeyHandler = function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeMyGradebook(); }
+    };
+    document.addEventListener('keydown', _myGradebookKeyHandler);
+}
+function _detachMyGradebookKeyHandler() {
+    if (_myGradebookKeyHandler) {
+        document.removeEventListener('keydown', _myGradebookKeyHandler);
+        _myGradebookKeyHandler = null;
+    }
+}
+
+function closeMyGradebook() {
+    _detachMyGradebookKeyHandler();
+    var ov = document.getElementById('my-gradebook-overlay');
+    if (ov) ov.style.display = 'none';
+}
+
+function openMyGradebook() {
+    var ov = document.getElementById('my-gradebook-overlay');
+    if (!ov) return;
+    // Default to the current quarter (today), else the first quarter with data, else Q1.
+    var gb = _gradeGradebookCache;
+    var qs = (gb && gb.quarters) || {};
+    function _hasData(qk) {
+        var q = qs[qk];
+        return !!(q && Array.isArray(q.columns) && q.columns.length);
+    }
+    var curN = null;
+    try { if (typeof quarterOfDate === 'function') curN = quarterOfDate(new Date()); } catch (_) {}
+    var cur = curN ? ('Q' + curN) : null;
+    if (!cur || !_hasData(cur)) cur = ['Q1', 'Q2', 'Q3', 'Q4'].filter(_hasData)[0] || 'Q1';
+    renderMyGradebook(cur);
+    ov.style.display = 'block';
+    _attachMyGradebookKeyHandler();
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+}
+
+function renderMyGradebook(qk) {
+    _myGradebookQuarter = qk;
+    var body = document.getElementById('my-gradebook-body');
+    var tabs = document.getElementById('my-gradebook-qtabs');
+    if (!body || !tabs) return;
+
+    // Quarter tabs.
+    tabs.innerHTML = '';
+    ['Q1', 'Q2', 'Q3', 'Q4'].forEach(function (k) {
+        var b = document.createElement('button');
+        b.className = 's7btn';
+        b.style.cssText = 'font-size:9px;padding:1px 6px' + (k === qk ? ';font-weight:bold;background:#cde' : '');
+        b.textContent = k;
+        b.onclick = function () { renderMyGradebook(k); };
+        tabs.appendChild(b);
+    });
+
+    while (body.firstChild) body.removeChild(body.firstChild);
+
+    function _n(x) { return (typeof x === 'number') ? (Math.round(x * 10) / 10).toFixed(1) : '—'; }
+
+    var gb = _gradeGradebookCache;
+    var gq = gb && gb.quarters && gb.quarters[qk];
+    var weights = (gb && gb.weights) || {};
+    if (!gq || !Array.isArray(gq.columns) || !gq.columns.length) {
+        var empty = document.createElement('div');
+        empty.textContent = 'No gradebook for ' + qk + ' yet — it fills in as you do the work.';
+        empty.style.cssText = 'color:#888;font-style:italic;padding:6px 0';
+        body.appendChild(empty);
+        return;
+    }
+
+    // ── Totals: live v3 grade + Schoology report-card estimate + the why ──
+    var rc = gq.reconciliation || {};
+    var totals = document.createElement('div');
+    totals.style.cssText = 'border:1px solid var(--black);background:#fafafa;padding:6px 8px;margin-bottom:8px';
+    var line1 = document.createElement('div');
+    line1.style.cssText = 'margin-bottom:2px';
+    var yourLbl = document.createElement('span'); yourLbl.textContent = 'Your grade: '; yourLbl.style.fontWeight = 'bold';
+    var yourVal = document.createElement('span'); yourVal.textContent = _n(gq.v3Total); yourVal.style.cssText = 'font-weight:bold;font-size:14px';
+    line1.appendChild(yourLbl); line1.appendChild(yourVal);
+    var sch = document.createElement('span');
+    sch.style.cssText = 'margin-left:10px;color:#555';
+    sch.textContent = 'Report-card estimate: ' + _n(gq.schoologyTotal);
+    line1.appendChild(sch);
+    if (rc.delta != null && Math.abs(rc.delta) >= 0.1) {
+        var d = document.createElement('span');
+        d.style.cssText = 'margin-left:8px;font-size:10px;color:' + (rc.delta > 0 ? '#1f8b3b' : '#c83838');
+        d.textContent = '(Δ ' + (rc.delta > 0 ? '+' : '') + (Math.round(rc.delta * 10) / 10).toFixed(1) + ')';
+        line1.appendChild(d);
+    }
+    totals.appendChild(line1);
+    if (rc.reason) {
+        var why = document.createElement('div');
+        why.style.cssText = 'font-size:10px;color:#555;margin-top:3px;line-height:1.4';
+        why.textContent = rc.reason;
+        totals.appendChild(why);
+    }
+    body.appendChild(totals);
+
+    // ── Component cells grouped by Schoology category ──
+    var cells = gq.cells || {};
+    var ca = gq.categoryAverages || {};
+    var byCat = {};
+    gq.columns.forEach(function (c) { (byCat[c.category] || (byCat[c.category] = [])).push(c); });
+    _myGradebookCatOrder().forEach(function (cat) {
+        var cols = byCat[cat];
+        if (!cols || !cols.length) return;
+        var sec = document.createElement('div');
+        sec.style.cssText = 'margin-bottom:8px';
+        var head = document.createElement('div');
+        head.style.cssText = 'font-family:Chicago,monospace;font-size:11px;font-weight:bold;border-bottom:1px solid #ccc;margin-bottom:3px;display:flex;justify-content:space-between';
+        var hl = document.createElement('span');
+        hl.textContent = cat + (weights[cat] != null ? ' (' + weights[cat] + '%)' : '');
+        var hr = document.createElement('span');
+        hr.style.color = '#555';
+        hr.textContent = (ca[cat] != null ? 'avg ' + _n(ca[cat]) : '—');
+        head.appendChild(hl); head.appendChild(hr);
+        sec.appendChild(head);
+        cols.forEach(function (c) {
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;justify-content:space-between;padding:1px 0';
+            var nm = document.createElement('span'); nm.textContent = c.title;
+            var v = cells[c.key];
+            var vv = document.createElement('span');
+            vv.style.cssText = 'font-variant-numeric:tabular-nums;' + (v == null ? 'color:#bbb' : 'font-weight:bold');
+            vv.textContent = (v == null ? '·' : _n(v));
+            row.appendChild(nm); row.appendChild(vv);
+            sec.appendChild(row);
+        });
+        body.appendChild(sec);
+    });
 }
 
 // openDayGrade(dateStr) — opens the Day Grade modal for a calendar date.
