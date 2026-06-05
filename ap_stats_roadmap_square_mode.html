@@ -13522,7 +13522,22 @@ function setP(p){
     var pu=new URL(window.location);pu.searchParams.set('period',p);history.replaceState(null,'',pu);
     loadSupabaseOverlay(p).then(function(){rCal();rProg();});
 }
-function tdy(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
+function tdy(){
+    // "Today" as a local-midnight Date for the SCHOOL timezone (America/New_York),
+    // matching the server's todayInTz so the student-visible due-set agrees with the
+    // server's. For an Eastern user this equals plain local midnight (a no-op); it
+    // only differs for a student in another timezone near midnight. Falls back to
+    // local time if Intl is unavailable.
+    var n=new Date();
+    try{
+        var p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(n);
+        var y=+(p.find(function(x){return x.type==='year';})||{}).value;
+        var m=+(p.find(function(x){return x.type==='month';})||{}).value;
+        var d=+(p.find(function(x){return x.type==='day';})||{}).value;
+        if(y&&m&&d)return new Date(y,m-1,d);
+    }catch(_){}
+    return new Date(n.getFullYear(),n.getMonth(),n.getDate());
+}
 function eq(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
 function cls(i){
     if(i===OFF)return"cell-off";

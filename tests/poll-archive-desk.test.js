@@ -53,8 +53,11 @@ describe('Desk loads ti84-plot.js', () => {
   });
 
   it('02: ti84-plot.js is loaded near classroom-board.js (within 200 chars)', () => {
-    const cbIdx = DESK.indexOf('classroom-board.js');
-    const plotIdx = DESK.indexOf('ti84-plot.js');
+    // Match the <script> tag strings, not the bare filenames — 'classroom-board.js'
+    // also appears in earlier comments, so indexOf on the bare name would find the
+    // comment (25k chars away) instead of the tag.
+    const cbIdx = DESK.indexOf('src="classroom-board.js"');
+    const plotIdx = DESK.indexOf('src="ti84-plot.js"');
     expect(cbIdx).toBeGreaterThan(-1);
     expect(plotIdx).toBeGreaterThan(-1);
     // They should be adjacent script tags; the gap must be small.

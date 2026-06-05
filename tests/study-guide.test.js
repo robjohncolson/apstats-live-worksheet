@@ -102,8 +102,8 @@ describe('study_guide_diagnostic.html — v3 structure', () => {
 
   it('loads railway, curriculum, units, frameworks, and study-guide prompts', () => {
     const src = readFileSync(HTML_PATH, 'utf8');
-    expect(src).toContain('../railway_config.js');
-    expect(src).toContain('../railway_client.js');
+    expect(src).toContain('./railway_config.js');
+    expect(src).toContain('./railway_client.js');
     expect(src).toContain('../curriculum_render/data/curriculum.js');
     expect(src).toContain('../curriculum_render/data/units.js');
     expect(src).toContain('../curriculum_render/data/frameworks.js');
