@@ -323,6 +323,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   //         (mirrors /roster/verify so the client persists the session and signs in)
   //   → 400 bad field · 403 section not open · 409 username taken · 429 rate-limited · 500 failure
   app.post('/roster/claim', async (req, res) => {
+    // TEMP go-live diagnostic — REMOVE after the req.ip check (CONTINUATION_PROMPT #1).
+    // Verify req.ip is the real per-client address on Railway (not a shared proxy hop).
+    // Hit this from a phone on cellular vs. school Wi-Fi and compare the two log lines.
+    console.log('[GOLIVE] claim req.ip=', req.ip, 'xff=', req.headers['x-forwarded-for']);
     if (!signupClaimLimiter(req.ip || 'unknown')) {
       return res.status(429).json({ ok: false, error: 'Too many sign-up attempts — please wait a few minutes and try again.' });
     }
