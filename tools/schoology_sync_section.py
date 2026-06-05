@@ -55,6 +55,11 @@ STATE_PATH = os.path.join(SCRIPT_DIR, ".schoology-sync-state.json")
 # blooket-lessons.json is the engine's hasBlooket denominator.
 ROADMAP_PATH = os.path.join(REPO_ROOT, "roadmap-data.json")
 BLOOKET_LESSONS_PATH = os.path.join(REPO_ROOT, "roster-server", "data", "blooket-lessons.json")
+# Quiz presence now comes from the ANSWER KEY (engine quizTotal parity), not roadmap
+# urls.quiz -- prefer the roster-server copy the engine reads, fall back to the root.
+_ROSTER_ANSWER_KEY = os.path.join(REPO_ROOT, "roster-server", "data", "answer-key.json")
+_ROOT_ANSWER_KEY = os.path.join(REPO_ROOT, "data", "answer-key.json")
+ANSWER_KEY_PATH = _ROSTER_ANSWER_KEY if os.path.exists(_ROSTER_ANSWER_KEY) else _ROOT_ANSWER_KEY
 
 sys.path.insert(0, SCRIPT_DIR)
 import schoology_sync_lib as lib
@@ -337,6 +342,7 @@ def build_component_scope(
     include_undated: bool = False,
     roadmap_path: str = ROADMAP_PATH,
     blooket_lessons_path: str = BLOOKET_LESSONS_PATH,
+    answer_key_path: str = ANSWER_KEY_PATH,
 ) -> list[dict]:
     """Return FINE-GRAINED (per-component) scope items for the given section.
 
@@ -357,7 +363,7 @@ def build_component_scope(
     """
     period_letter = PERIOD_LETTER.get(section, "B")
     if quiz_topics is None:
-        quiz_topics = components.load_quiz_topics(roadmap_path)
+        quiz_topics = components.load_quiz_topics(answer_key_path)
     if blooket_topics is None:
         blooket_topics = components.load_blooket_topics(blooket_lessons_path)
 

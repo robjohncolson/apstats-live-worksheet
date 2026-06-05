@@ -71,14 +71,19 @@ class TestPresenceLoaders(unittest.TestCase):
             json.dump(doc, f)
         return p
 
-    def test_load_quiz_topics_skips_null_and_nontopic(self):
-        roadmap = self._write("roadmap.json", {"lessons": {
-            "1.1": {"urls": {"quiz": None}},
-            "1.2": {"urls": {"quiz": "https://x/?u=1&l=2"}},
-            "6.review": {"urls": {"quiz": "https://x/?u=6&l=review"}},  # non-topic key, ignored
+    def test_load_quiz_topics_from_answer_key(self):
+        # Quiz presence = gradable ^U#-L#-Q items (mirrors engine computeQuizTotals).
+        # Excludes PC (U#-PC-Q), worksheet blanks (WS-U#L#-Q), and answerKey==null.
+        # Real shape: the item map is nested under a top-level "answerKey" key.
+        ak = self._write("answer-key.json", {"answerKey": {
+            "U1-L1-Q01": {"answerKey": "A"},        # 1.1 has a quiz
+            "U1-L2-Q01": {"answerKey": "B"},        # 1.2 has a quiz
+            "U1-L2-Q02": {"answerKey": "C"},        # same topic (1.2) -> counts once
+            "U5-L6-Q01": {"answerKey": None},       # non-gradable -> excluded (the 5.6 case)
+            "U1-PC-Q01": {"answerKey": "D"},        # PC item -> excluded by shape
+            "WS-U1L3-Q01": {"answerKey": "E"},      # worksheet blank -> excluded by shape
         }})
-        topics = sc.load_quiz_topics(roadmap)
-        self.assertEqual(topics, {"1.2"})
+        self.assertEqual(sc.load_quiz_topics(ak), {"1.1", "1.2"})
 
     def test_load_blooket_topics(self):
         bl = self._write("bl.json", {"topics": ["1.1", "1.2", "8.6"]})
@@ -133,6 +138,18 @@ class TestComponentColumns(unittest.TestCase):
         self.assertEqual(by_key["QUIZ:1.2"]["kind"], "quiz")
         self.assertEqual(by_key["BL:1.2"]["kind"], "blooket")
 
+    def test_pc_and_poster_columns_per_unit(self):
+        # One PC + one Poster per unit that has a (dated) lesson group -- 1 and 6
+        # here; the undated 4.6 is excluded by default so unit 4 gets neither.
+        cols = self._cols()
+        by_key = {c["key"]: c for c in cols}
+        for u in (1, 6):
+            self.assertIn("PC:U%d" % u, by_key)
+            self.assertIn("POSTER:U%d" % u, by_key)
+        self.assertEqual(by_key["PC:U1"]["kind"], "progress_check")
+        self.assertEqual(by_key["POSTER:U1"]["kind"], "poster")
+        self.assertNotIn("PC:U4", by_key)  # 4.6 undated -> unit 4 absent by default
+
     def test_null_date_excluded_by_default(self):
         cols = self._cols(include_undated=False)
         keys = {c["key"] for c in cols}
@@ -184,6 +201,17 @@ class TestComponentGradesFromClassDoc(unittest.TestCase):
         self.assertEqual(out["9001/FA:1.2"], 86)  # lessonGradeNoQuiz, not Cws 90
         self.assertEqual(out["9001/QUIZ:1.2"], 78)
         self.assertEqual(out["9001/BL:1.2"], 100)
+
+    def test_emits_pc_from_units_and_skips_poster(self):
+        # PC <- units[U#].pcRawPct (the unit mastery track). Poster has no data
+        # source yet, so it is never emitted (parity with gradebook-grid.js).
+        doc = {"students": [{"studentId": "r1", "schoologyUid": "9001",
+            "units": {"U1": {"pcRawPct": 82}, "U6": {"pcRawPct": None}},
+            "lessons": []}]}
+        out = sc.component_grades_from_class_doc(doc)
+        self.assertEqual(out["9001/PC:U1"], 82)
+        self.assertNotIn("9001/PC:U6", out)       # null pcRawPct -> skipped
+        self.assertNotIn("9001/POSTER:U1", out)   # poster never emitted
 
     def test_followalong_falls_back_to_cws(self):
         # A lesson with no lessonGradeNoQuiz (old server) -> FA uses Cws.

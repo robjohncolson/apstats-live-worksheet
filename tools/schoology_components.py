@@ -47,9 +47,15 @@ import re
 KIND_FOLLOWALONG = "lesson"
 KIND_QUIZ = "quiz"
 KIND_BLOOKET = "blooket"
+# Unit-level components. The kind strings match schoology_sync_lib.KIND_TO_CATEGORY
+# ('progress_check' -> 'Progress Check', 'poster' -> 'Posters'), NOT node's internal
+# 'pc'/'poster' -- only the COLUMN KEYS (PC:U#, POSTER:U#) must match node.
+KIND_PROGRESS_CHECK = "progress_check"
+KIND_POSTER = "poster"
 
-# Stable order within a lesson so the plan reads FA, Quiz, Blooket.
-_COMP_RANK = {KIND_FOLLOWALONG: 0, KIND_QUIZ: 1, KIND_BLOOKET: 2}
+# Stable order within a unit so the plan reads FA, Quiz, Blooket, then the
+# unit-level Progress Check + Poster (mirrors gradebook-grid.js KIND_RANK).
+_COMP_RANK = {KIND_FOLLOWALONG: 0, KIND_QUIZ: 1, KIND_BLOOKET: 2, KIND_PROGRESS_CHECK: 3, KIND_POSTER: 4}
 
 
 # ---------------------------------------------------------------------------
@@ -89,25 +95,55 @@ def bl_title(label: str) -> str:
     return f"{label} Blooket"
 
 
+# Unit-level component keys/titles. Keys match gradebook-grid.js EXACTLY
+# (PC:U<n> / POSTER:U<n>) so the in-app grid and the Schoology push agree.
+def pc_key(unit) -> str:
+    return f"PC:U{unit}"
+
+
+def pc_title(unit) -> str:
+    return f"Unit {unit} Progress Check"
+
+
+def poster_key(unit) -> str:
+    return f"POSTER:U{unit}"
+
+
+def poster_title(unit) -> str:
+    return f"Unit {unit} Poster"
+
+
 # ---------------------------------------------------------------------------
 # Presence loaders (authoritative data sources)
 # ---------------------------------------------------------------------------
 
-def load_quiz_topics(roadmap_path: str) -> set:
-    """Return the set of topicKeys whose roadmap-data urls.quiz is non-null.
+def load_quiz_topics(answer_key_path: str) -> set:
+    """Return the set of topicKeys that HAVE a gradable curriculum quiz.
 
-    This is the authoritative "has a quiz" signal: every X.1 opener (and combined
-    opener-half) is null there, matching the live engine's quizTotal == 0.
+    Sourced from the ANSWER KEY, mirroring the engine's computeQuizTotals
+    (roster-server/lesson-grade.js): a topic "has a quiz" iff the answer key has a
+    gradable item matching ^U#-L#-Q (case-insensitive). That shape excludes PC items
+    (U#-PC-Q) and worksheet blanks (WS-U#L#-Q), and `answerKey == null` items are
+    skipped as non-gradable. This is the SAME signal the live producer fills grades
+    from (lesson.quizTotal > 0), so a generated Quiz column always gets a grade --
+    unlike roadmap-data urls.quiz, which lists {5.6, 9.3} that have NO gradable quiz
+    items, producing empty columns (the bug this fixes).
     """
-    with open(roadmap_path, "r", encoding="utf-8") as f:
+    with open(answer_key_path, "r", encoding="utf-8") as f:
         doc = json.load(f)
+    # The bundled answer key nests the item map under a top-level "answerKey" key --
+    # the SAME map the engine feeds computeQuizTotals (via answerKeyMapOrNull). Fall
+    # back to treating doc itself as the map if that key is absent.
+    key_map = doc.get("answerKey")
+    if not isinstance(key_map, dict):
+        key_map = doc
     out = set()
-    for topic_key, node in (doc.get("lessons") or {}).items():
-        if not re.match(r"^\d+\.\d+$", str(topic_key)):
-            continue  # skip non-topic keys like "6.review"
-        urls = (node or {}).get("urls") or {}
-        if urls.get("quiz"):
-            out.add(topic_key)
+    for item_id, entry in key_map.items():
+        if not isinstance(entry, dict) or entry.get("answerKey") is None:
+            continue  # gradable items only (answerKey null = an unscorable FRQ entry)
+        m = re.match(r"^U(\d+)-L(\d+)-Q", str(item_id), re.IGNORECASE)
+        if m:
+            out.add(f"{m.group(1)}.{m.group(2)}")  # quizzes are per single-lesson topic
     return out
 
 
@@ -234,10 +270,44 @@ def component_columns(
                 "unit": unit,
             })
 
+    # Per-unit Progress Check + Poster columns -- one of each for every unit that has
+    # at least one (date-filtered) lesson group, UNCONDITIONALLY, mirroring
+    # gradebook-grid.js buildGradebookColumns. The producer fills PC from the unit
+    # mastery track (units[U#].pcRawPct); Poster has no data source yet (rubric TBD),
+    # so its column is a placeholder the Schoology blend renormalizes around. Date =
+    # the EARLIEST lesson date in the unit (the My Gradebook "unit underway" gate),
+    # derived from the groups already filtered by include_undated.
+    unit_dates = {}  # unit -> earliest group date (str) or None
+    for g in groups.values():
+        u = g["unit"]
+        d = g["date"]
+        if u not in unit_dates or (d and (unit_dates[u] is None or d < unit_dates[u])):
+            unit_dates[u] = d
+    for u in sorted(unit_dates):
+        udate = unit_dates[u]
+        columns.append({
+            "key": pc_key(u),
+            "kind": KIND_PROGRESS_CHECK,
+            "title": pc_title(u),
+            "group_label": f"U{u}",
+            "topic_keys": [],
+            "due_date": udate,
+            "unit": u,
+        })
+        columns.append({
+            "key": poster_key(u),
+            "kind": KIND_POSTER,
+            "title": poster_title(u),
+            "group_label": f"U{u}",
+            "topic_keys": [],
+            "due_date": udate,
+            "unit": u,
+        })
+
     columns.sort(key=lambda c: (
         c["due_date"] or "",
         c["unit"],
-        _topic_sort_key(c["topic_keys"][0]),
+        _topic_sort_key(c["topic_keys"][0]) if c["topic_keys"] else (9999, 9999),
         _COMP_RANK.get(c["kind"], 9),
     ))
     return columns
@@ -297,5 +367,18 @@ def component_grades_from_class_doc(doc: dict, uid_map: dict | None = None) -> d
             if blooket is not None and lesson.get("hasBlooket") and label not in emitted_bl:
                 out[f"{uid}/{bl_key(label)}"] = blooket
                 emitted_bl.add(label)
+
+        # Per-unit Progress Check from the unit-level mastery track
+        # (units[U#].pcRawPct) -- the SAME source gradebook-grid.js cellValue uses.
+        # Poster has no data source yet (rubric TBD), so it is intentionally NOT
+        # emitted: the column exists as a placeholder and the Schoology blend
+        # renormalizes over present categories (parity with node).
+        for ukey, u in (s.get("units") or {}).items():
+            if not isinstance(u, dict):
+                continue
+            pc = u.get("pcRawPct")
+            if pc is not None:
+                unit_num = str(ukey).lstrip("Uu") or ukey
+                out[f"{uid}/{pc_key(unit_num)}"] = pc
 
     return out
