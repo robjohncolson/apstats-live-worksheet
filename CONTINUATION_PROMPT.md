@@ -1,113 +1,106 @@
-# CONTINUATION PROMPT — in-app gradebook SHIPPED+LIVE; NEXT = student username self-onboarding (re-roll)
+# CONTINUATION PROMPT — pre-launch lows folded + U5-U7 Blooket backfilled; NEXT = teacher's go-live req.ip glance + the last 3 Blooket sets
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-03 (session 3).
-> follow-alongs HEAD = `5146122` (+ the explainer-copy fix landing with this prompt's commit).
-> Ultracode is on. Repo `apstats-live-worksheet`, branch `master`, GH Pages + `roster-server/` auto-deploy
-> to Railway on push. Teacher tests on the **public GH Pages URL** (SSHes from a work laptop) — commit+push
-> promptly; `file://` is not a valid surface. Style: brainstorm → spec → implement (the user reviews the plan).
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-04 (session 5).
+> follow-alongs HEAD = `9bd9345`. Repo `apstats-live-worksheet`, branch `master`, GH Pages + `roster-server/`
+> auto-deploy to Railway on push. Teacher tests on the **public GH Pages URL** (SSHes from a work laptop) —
+> commit+push promptly; `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews).
 > Memory dir: `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
+> **Real students + a colleague teacher onboard IMMINENTLY.**
 
-## ⏭ NEXT TASK (primary): student username self-onboarding with RE-ROLL
-**Goal (teacher, 2026-06-03):** Students tap a button that **randomly generates a username** (fruit_animal
-style) and can **re-roll until satisfied**, then claim it. **Collisions = first-come-first-serve.** Brainstorm
-the design first (don't auto-build); the teacher wants student *re-roll + pick*, NOT silent auto-assignment.
+## ⏭ NEXT (in priority order)
+1. **LIVE go-live check (teacher-only) — DE-PRIORITIZED.** The teacher decided the per-IP claim cap going
+   global is a non-issue at one-section scale. The temp `[GOLIVE] claim req.ip=` log is **DEPLOYED** (`3bf0e29`,
+   top of `POST /roster/claim`) and passively prints real signups' `req.ip` to Railway logs. ACTION: glance once
+   during first-day onboarding to confirm `req.ip` is distinct per client, then **ask CC to revert the 4
+   `[GOLIVE]`/TEMP lines**. If `req.ip` is shared: bump `app.set('trust proxy', N)` to the real hop depth, OR set
+   env `SIGNUP_CLAIM_MAX=600` (and `VERIFY_IP_MAX` for the new verify limiter). Smoke: `/health`→`{ok:true}`;
+   one real signup → appears in Class Gradebook; teacher signup with **`apstats2627`** → `role=teacher`.
+2. **Finish the Blooket backfill (data; due Q2 = 2026-11-14).** DONE: **3.6/3.7 + 4.1-4.6 + U5.3-U7.9 (26 topics,
+   this session)**. REMAINING: **4.7-4.12, 5.1, 5.2** — no Blooket set authored ANYWHERE yet (not even `lesson_urls`).
+   **⚠ THE LIVE SOURCE IS THE SUPABASE `lesson_urls` TABLE (`blooket_url` column), NOT `units.js`** — the Desk's
+   `loadSupabaseOverlay()` fetches it at runtime; the teacher authors Blooket there via the cr editor. To check
+   coverage, QUERY `lesson_urls.blooket_url` (anon key is baked in the Desk) — do NOT trust static files. As the
+   teacher makes the last 3 sets, re-mine + propagate (recipe below). `BLOOKET_BACKFILL_CHECKLIST.md`.
+3. **Backlog (none blocking):**
+   (a) **username re-roll for EXISTING students** ("change my username", reuse the claim/unique FCFS machinery);
+   (b) **cr orphan-answers ONE-TIME PURGE** — the cascade is now LIVE (future deletes auto-clean cr `answers`),
+       but run this once on Supabase if you deleted any test accounts pre-launch:
+       `DELETE FROM public.answers WHERE username IN (SELECT a.username FROM public.answers a LEFT JOIN public.users u ON a.username=u.username WHERE u.username IS NULL);`
+   (c) Python `tools/schoology_components.py` PC+Poster + quiz-source fix is **DONE** (s5); the 3 stale root tests
+       are **DONE** (s5); the B/E + timezone divergence is **DONE** (s5); 3a/3c were investigated → no change needed.
 
-**What already exists (grounding — verified s3):**
-- `roster-server/username.js` → `generateUsername(attempt)`: `fruit_animal` (attempt<4) → `fruit_animal_vehicle`
-  (<8) → `fruit_animal_<0-9999>` (else). Word lists FRUITS/ANIMALS/VEHICLES are in that file.
-- `roster-server/server.js` `POST /roster/enroll` (**TEACHER-GATED**, ~line 63): auto-generates a username +
-  **retries on DB unique-violation up to 8×** + `db.insertRoster({realName, password, section, loginUsername})`.
-  So the collision-retry + first-come-first-serve pattern ALREADY exists — but it AUTO-assigns and is teacher-only.
-- First-come-first-serve is the **DB UNIQUE constraint on `roster.login_username`** (the atomic insert IS the
-  race winner; there is no in-memory set — see username.js header comment).
-- Other roster endpoints: `POST /roster/verify` (login), `/roster/resolve`, `/roster/change-password`.
-- Sign-in UI: `openSignInModal` in the Desk (`ap_stats_roadmap_square_mode.html`). cr identity is unified onto
-  the roster (shared `apstats_roster.v1` localStorage, same origin). Server = `https://roster-production-12c1.up.railway.app`.
+## ✅ SHIPPED THIS SESSION (2026-06-04, s5) — pre-launch lows + Blooket backfill
+- `3bf0e29` — **TEMP req.ip go-live diagnostic** in `POST /roster/claim` (revert after the check, see NEXT #1).
+- `62e9de6` — **roster-server (auto-deploys):**
+  - **#3d** `sectionToPeriod('PeriodX')→'E'`: the grade engine's due-filter AND the teacher-dashboard `due` flag
+    now read **Period E's** schedule (the Desk forces `cP='E'` for PeriodX) instead of the B∪E union a null period
+    triggered. Only relaxes premature due-zeros → **live PeriodX grades hold steady or tick UP**. +`PeriodX→E` test.
+  - **#3e** `verifyIpLimiter` (createRateLimiter, default 300/15min, env `VERIFY_IP_MAX`/`VERIFY_IP_WINDOW_MS`)
+    applied before bcrypt in `POST /roster/verify` (bcrypt-DoS hardening; unknown usernames already 401 pre-bcrypt,
+    so the vector is a flood of known usernames). +per-IP cap test.
+  - **#3b** `deleteRoster` returns `login_username`; new `db.deletePeerAnswers(username)` deletes the cr `answers`
+    rows (SAME Supabase instance, keyed by username, NOT FK'd) so a deleted student's peer answers don't orphan;
+    best-effort in the DELETE handler (a cleanup failure never fails the already-done delete). +2 cascade tests.
+  - roster-server **820/820**.
+- `38545ee` — **Desk + tests:** `tdy()` now returns "today" in the school timezone (America/New_York) to match
+  the server's `todayInTz` (no-op for Eastern users; fixed a `now`-scope bug in the proposed patch). + repaired the
+  **3 stale structural tests** (study-guide `../`→`./` [the files ARE git-tracked in the repo root; `../` doesn't
+  exist]; grade-pipeline-w4 modal slice 1200→1600 [`lesson.Cws` at offset 1445; code was fine]; poll-archive-desk
+  matches the `<script>` TAG string, not the bare filename [which also appears in a comment 25k chars before the tag]).
+  Full root suite **6916 passing**.
+- `0810362` — **Python Schoology generator** now mirrors `gradebook-grid.js`: quiz presence sourced from the ANSWER
+  KEY (gradable `^U#-L#-Q`, reads the inner `doc.answerKey` map) → the **{5.6, 9.3}** empty-column bug is gone;
+  added per-unit **PC + Poster** columns (kind `progress_check`/`poster`; keys `PC:U#`/`POSTER:U#` match node);
+  producer fills PC from `units[U#].pcRawPct`, Poster intentionally null (no rubric yet). Caller passes
+  `ANSWER_KEY_PATH`; fixed an empty-`topic_keys` sort crash. py **19/19**.
+- `9bd9345` (fa) + `baf16f9` (Agent) — **Blooket backfill U5.3-U7.9** (26 topics: 5.3-5.8, 6.1-6.11, 7.1-7.9):
+  mined the URLs from the live Supabase `lesson_urls` overlay → wrote `urls.blooket` into `roadmap-data.json` +
+  `Agent/state/lesson-registry.json` → regenerated `blooket-lessons.json` (**43→69** topics). **GRADE-AFFECTING:**
+  those topics now have `hasBlooket=true`, so recorded Blooket scores engage the v3 Blooket track (were
+  visible-but-uncounted: students could play them, the engine ignored them).
 
-**The gap / what to build:** there is (almost certainly) **no STUDENT self-signup** today — enroll is
-teacher-gated + auto-assigns. The new flow = a student-facing onboarding that **re-rolls candidates + claims a
-SPECIFIC one**.
+### Decisions folded (no code change)
+- **#3a** signup-vs-signin: **KEEP current** (sign-in for returning devices, signup for brand-new). Both modals
+  already cross-link, so no one is stranded; best for the personal-device deployment.
+- **#3c** My Gradebook category-avg: **VERIFIED NO-OP** — the server average (`gradebook-grid.js`) only counts
+  non-null cells, which are always visible, so it can't fold in hidden columns. No churn added to the 14k-line Desk.
 
-**Design to settle FIRST with the teacher:**
-1. **KEY QUESTION — self-signup vs pre-enrolled?** Does a student create their OWN account from scratch (then we
-   must capture real_name + password + section in the flow), or claim/rename a teacher-pre-enrolled slot?
-   `insertRoster` needs realName + password + section. Where do those come from self-serve? (Section likely via a
-   class code / the teacher's join link.) Resolve this before building.
-2. **Claim model:** student re-rolls (client shows one candidate at a time), "Claim this" → server **atomic insert**
-   with the chosen username; DB unique-violation → "taken, re-roll please" (first-come-first-serve). An advisory
-   `GET /roster/username-available?u=` can make the UX snappy, but the AUTHORITATIVE claim is the insert (a
-   pre-check races — never trust it as the guarantee).
-3. **Endpoints (likely NEW, student-facing / NON-teacher-gated):** e.g. `GET /roster/suggest-username`
-   (server-generated candidate via `generateUsername`, optionally availability-checked) + `POST /roster/claim`
-   (insert the chosen username; reuse the enroll unique-retry shape but with the STUDENT's picked name). Because
-   it's un-authed, guard against abuse (rate-limit and/or a class-code/join-token gate).
-4. **UI:** in `openSignInModal` add a "Create account / 🎲 Generate username" path — show a candidate, a "🎲 Re-roll"
-   button (new candidate), "Claim" → on success store the roster identity (`apstats_roster.v1`) + sign in. Match the
-   System 7 modal aesthetic (`.dialog-overlay`/`.dialog-box`; see `openSignInModal` + the day-grade/my-gradebook modals).
-
-## ✅ SHIPPED THIS SESSION (2026-06-03 s3): the in-app "1:1 Schoology gradebook" arc — LIVE
-Teacher class grid + student modal, both showing the two totals reconciled, + the live v3 quiz fix:
-- `a5c227a` — data-driven fine-grained Schoology **column generator** (`tools/schoology_components.py`: FA/Quiz/
-  Blooket per lesson; X.1 openers auto-skip quiz; combined worksheets dedup). `--granularity component` on
-  `schoology_sync_section.py` + `build_schoology_fixture.py`; `tools/build_periody_mock_fixture.py` (mock + no-rig
-  plan preview = 171 cols). Fixes the "1.1 has no quiz" defect by construction.
-- `aac8472` — `roster-server/gradebook-grid.js` deriver, surfaced ADDITIVELY on `/grade` + `/class/grades` (the
-  `gradebook` field: per-quarter columns/cells/categoryAverages/schoologyTotal/v3Total/reconciliation).
-- `8371f73` — **teacher class grid** in `teacher-dashboard.html` (per-quarter component grid + both totals + Δ).
-- `dbe7b41` — **tightening + Phase 4**: Follow-Along cell + Schoology push value = `lessonGradeNoQuiz` (worksheet
-  blanks + AI reflections = the v3 Lessons-track value; reflections were DROPPED from Schoology before). Engine
-  exposes it additively (quarter math untouched). Phase 4 = per-student "why they differ" reconciliation drawer.
-- `06ce4d7` — `reconcileQuarter` branches on the UNROUNDED [0,1] fractions (surfaced `pcAvgRaw`/`workAvgRaw`) so the
-  "why" can't contradict v3Total at the 40-floor boundary; `non-v3` guard; tie-aware ceiling label.
-- `bbe7419` — **#2 LIVE v3 grade fix (only-RAISES, review-verified monotonic):** the Quiz track now divides by due
-  QUIZ-BEARING lessons (`quizTotal>0`), not all due lessons — quiz-less openers no longer drag the quiz avg down.
-  Drawer gained a "v3 Work track … Quizzes X (n/m taken)" verification line.
-- `7048a02` — thread `quizDue/quizDone/quizTodo` through the `grade.js` quarters serializer (the drawer line was a
-  silent no-op; it builds `quarters[qKey]` by explicit field-pick, not a spread). Display-only.
-- `5146122` — **Phase 3 student "My Gradebook" modal** in the Desk (📊 chip in the Do Now → modal; Q1-Q4 tabs; BOTH
-  totals "Your grade" live-v3 + "Report-card estimate" Schoology + Δ + the why + every cell by category). Teacher
-  chose "both grades, like the teacher view".
-- (this prompt's commit) — "how grades work" explainer copy fixed (was "your live grade IS the Schoology number" →
-  now says they can differ slightly + points to 📊 My Gradebook).
-
-**Schoology category weights (teacher's REAL gradesetup, chosen to replicate v3 linearly):** PC 50 / Lesson 15 /
-Quizzes 15 / Posters 15 / Blooket 5 (= `V3_WORK_WEIGHTS` 3:3:3:1 work split, 50/50 PC/Work). Schoology blends
-LINEARLY; v3 is the max/mean conditional — the Δ + reconciliation surface the gap. **Why v3 reads BELOW Schoology
-early:** v3 counts not-done / structurally-absent components as 0s in its due-denominators; Schoology skips blanks.
-Converges at term-end. Memory: `project_gradebook_inapp_grid`.
-
-## 🔧 OPEN FOLLOW-UPS (fold when convenient — none blocking)
-- **Student-modal polish** (backstop review `wd9beuqe0`, all MINOR/NIT, NO grade impact) — in `renderMyGradebook`
-  (`ap_stats_roadmap_square_mode.html` ~9707-9799): (1) **Posters (15%) renders as an empty section to students**
-  (its cells are always null) → reads like missing points; skip the section when all cells null + no average, OR
-  label it "(not yet graded — not counted)". (2) a category present in columns but absent from `_myGradebookCatOrder()`
-  is silently dropped — append leftover categories so the breakdown always reconciles. (3) the modal title never shows
-  the quarter → set `'My Gradebook — ' + qk`. ⚠ The teacher grid's empty-Posters rendering is INTENTIONAL and pinned
-  by `tests/teacher-gradebook.test.js` — fix the STUDENT modal only.
-- **Python generator pass** (`tools/schoology_components.py`): add **PC + Poster columns** (teacher decided to include
-  them); **fix quiz-source** — the column generator reads roadmap `urls.quiz` while the producer fills from engine
-  `quizTotal`; they diverge on `{5.6, 9.3}` (roadmap has a quiz URL but the answer key has no gradable `U#-L#-Q` items
-  — they use a `-MCQ-` infix the regex misses) → 2 permanently-empty quiz columns. Align the generator to `quizTotal`
-  (gradebook-grid.js already does). Adversarial-confirmed.
-- **U4-7 Blooket backfill (DEFERRED, DUE by Q2 start = 2026-11-14):** roadmap-data `urls.blooket` is null for ALL of
-  units 4-7 (+ 3.6/3.7) → the engine `hasBlooket`, the Desk links, AND the Schoology generator exclude them, even
-  though Blooket CSVs exist. Fix = add the dashboard URLs to `roadmap-data.json` + regenerate
-  `roster-server/data/blooket-lessons.json` via `roster-server/scripts/gen-blooket-lessons.mjs`.
+## 🔁 BLOOKET PIPELINE (for #2)
+**⚠ LIVE SOURCE = Supabase `lesson_urls.blooket_url`** (project `hgvnytaqmuybzbotosyj`; the Desk
+`loadSupabaseOverlay()` fetches `select=topic,worksheet_url,drills_url,quiz_url,blooket_url` at runtime). The
+teacher authors Blooket THERE via the cr editor — NOT only `units.js`, and the STATIC files lag, so the v3 engine
+won't count a Blooket until it's propagated. **Recipe to backfill:** query `lesson_urls` for `blooket_url` per topic
+(anon key in the Desk) → write `urls.blooket` into BOTH `roadmap-data.json` (`.lessons[topic].urls.blooket`;
+`JSON.parse`→set→`JSON.stringify(obj,null,2)` with **NO** trailing newline = exact roundtrip) AND
+`Agent/state/lesson-registry.json` (`[topic].urls.blooket`; `JSON.stringify(obj,null,2)+'\n'` = exact roundtrip)
+→ run `roster-server/scripts/gen-blooket-lessons.mjs` (roadmap-data → `blooket-lessons.json`, the v3 Blooket-track
+denominator) → verify → commit fa (roadmap-data + blooket-lessons) + Agent (lesson-registry). I did TARGETED
+roadmap-data edits (NOT a full `build-roadmap-data.mjs` rebake), so the Desk's static `BAKED_REGISTRY` fallback
+still lags U5-U7 — the runtime overlay covers it, and a future rebake re-syncs it from the registry (the SOURCE).
+`units.js` (cr) tracks only videos+blookets and lags the overlay; it is NOT the engine source.
 
 ## ⚠ GOTCHAS (load-bearing)
-- **USE_V3_GRADING is LIVE** on Railway — grade-engine changes move REAL grades (the #2 fix `bbe7419` only-RAISES,
-  review-verified). `roster-server/` auto-deploys on push.
-- The **Desk** (`ap_stats_roadmap_square_mode.html`, ~13.5k lines) is a SINGLE FILE edited DIRECTLY (NOT wire-driven —
-  the 69 worksheets are). jsdom CAN host it (canvas `getContext` is unimplemented → a load-throw, but hoisted
-  functions stay callable; keep render helpers function-local + `try/catch` the `quarterOfDate`/`MacSFX` calls).
-- **Commit own paths only** — both repos have many unrelated dirty/untracked files (`.ai-tutor-*.result.md`,
-  `tools/_periody_*` throwaways, etc.). Stage explicit paths; never `git add -A`.
-- **`git commit -m @'…'@` here-string LEAKS a stray `@`** → write the message to a temp file + `git commit -F <tmp>`.
-- Green baselines: **roster-server 772**; Desk suite (`tests/desk-*.test.js`) green; python schoology tests green
-  (16 components + 130 sync). Known pre-existing ROOT fails (ignore): `grade-pipeline-w4`, `poll-archive-desk`,
-  `study-guide`. browser-harness can't run on this Windows host (no AF_UNIX).
-- Migrations are USER-RUN on Supabase. The DB UNIQUE on `roster.login_username` is the first-come-first-serve guarantee.
+- **USE_V3_GRADING is LIVE.** Grade-engine/`gradebook-grid.js`/`blooket-lessons.json` changes move REAL grades.
+  This session's **#3d (PeriodX→E)** AND **Blooket backfill** both moved live grades intentionally (both can only
+  raise/hold, not tank). The display date-gate is DISPLAY-ONLY; the server `col.due` flag is ADDITIVE (no opts →
+  no `due` → clients show all = safe degrade).
+- **Blooket live source = Supabase `lesson_urls`, not the static files** (see pipeline). Always query it to check coverage.
+- The **Desk** (`ap_stats_roadmap_square_mode.html`, ~14k lines) is a SINGLE FILE edited directly. jsdom CAN host it
+  (canvas getContext throws → load-throw, hoisted functions stay callable). Keep render helpers function-local +
+  typeof-guard cross-feature calls. For control-char regex patterns use a node script / PowerShell byte-replace, not Edit.
+- **Commit own paths only** — both repos have many unrelated dirty/untracked files (`.ai-tutor-*.result.md`, etc.).
+  Stage explicit paths; never `git add -A`.
+- **`git commit -m @'…'@` here-string LEAKS a stray `@`** → write the message to a temp file + `git commit -F`.
+- **Cross-repo:** this session touched 3 repos — follow-alongs (`master`, GH Pages+Railway), Agent (`master`,
+  lesson-registry source), curriculum_render (`main`, GH Pages + units.js + `curriculum.js` is SACRED — never edit).
+  Both roster-server (follow-alongs) AND cr's `answers`/`users` tables live in the SAME Supabase (`bzqbhtru…`/cr URL).
+- **Bash tool resets cwd between calls + MSYS2 mangles backslashes in heredocs** — use absolute paths + the Write
+  tool for node scripts. **In `node -e`, don't name a var `URL`** (shadows the global `fetch` uses → "URL is not a
+  constructor"). Workflow scripts: NO backticks inside template-literal strings.
+- Green baselines: **roster-server 820**; python schoology **19/19**; full root **6916 passing**. The only remaining
+  root noise is a flaky parallel `localStorage`-leak in `desk-student-dm` / `gradebook-feeder-wiring` (unhandled-error
+  logs, 36/36 + 134/134 assertions PASS in isolation). The 3 previously-failing root tests are now FIXED.
+- Migrations are USER-RUN on Supabase; **NONE new this session**. The DB UNIQUE on `roster.login_username` is the FCFS guarantee.
 
 ---
-_(Older session notes — Task A cross-device greying + Task B Schoology summer mock, both shipped/parked — removed
-2026-06-03 s3. The above is authoritative.)_
+_(Older session notes removed 2026-06-04 s5. The above is authoritative.)_
