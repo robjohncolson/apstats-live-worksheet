@@ -471,6 +471,11 @@ export function todayInTz(tz) {
 // Returns null if it can't be extracted.
 export function sectionToPeriod(section) {
   if (!section) return null;
+  // PeriodX is the live universal section. The Desk shows it on Period E's
+  // schedule (boot forces cP='E'), so the grade engine's due-date filter AND the
+  // teacher-dashboard `due` flag must read E's dates too — NOT the B-OR-E union
+  // that a null period triggers (which marked lessons due early → premature zeros).
+  if (String(section).toUpperCase() === 'PERIODX') return 'E';
   const m = String(section).match(/([BE])$/i);
   return m ? m[1].toUpperCase() : null;
 }

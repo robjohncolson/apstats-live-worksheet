@@ -65,6 +65,17 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     max:      Number(process.env.SIGNUP_CLAIM_MAX) || 300
   });
 
+  // Per-IP request cap for /roster/verify — bcrypt-DoS hardening that complements
+  // the per-username lockout below. Unknown usernames 401 BEFORE bcrypt, so the
+  // costly vector is a flood of KNOWN usernames (publicly listable) from one IP;
+  // this bounds total verify attempts per IP per window regardless of username.
+  // Default is generous (a whole class signs in from one school NAT) — tighten via
+  // env if req.ip resolves per-client. Mirrors signupClaimLimiter. See rate-limit.js.
+  const verifyIpLimiter = createRateLimiter({
+    windowMs: Number(process.env.VERIFY_IP_WINDOW_MS) || 15 * 60 * 1000,
+    max:      Number(process.env.VERIFY_IP_MAX) || 300
+  });
+
   // Per-USERNAME failed-attempt lockout for /roster/verify. A self-signup account's
   // credential is a 4-digit PIN (10k keyspace) and usernames are publicly listable,
   // so without this a classmate's account is brute-forceable. IP throttling can't
@@ -161,6 +172,12 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   //   → 401 { ok:false, error:"Invalid username or password" } (same for unknown user AND bad password)
   //   → 400 missing field
   app.post('/roster/verify', async (req, res) => {
+    // Per-IP DoS hardening (see verifyIpLimiter above). Runs before any DB lookup
+    // or bcrypt.compare. Generic 429 so it doesn't reveal which IPs are throttled.
+    if (!verifyIpLimiter(req.ip || 'unknown')) {
+      return res.status(429).json({ ok: false, error: 'Too many sign-in attempts — please wait a few minutes and try again.' });
+    }
+
     const { username, password } = req.body || {};
 
     if (!username || !password) {
@@ -547,6 +564,20 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
 
     if (!data) {
       return res.status(404).json({ ok: false, error: 'Student not found' });
+    }
+
+    // Also purge this student's curriculum_render peer answers. They live in the cr
+    // `answers` table (same Supabase instance) keyed by login_username — NOT FK'd to
+    // the roster, so the ON DELETE CASCADE above doesn't reach them, and a deleted
+    // student's answers would otherwise keep showing to peers. Best-effort: the
+    // roster row is already gone, so a cleanup hiccup must not turn this into a 500.
+    if (data.login_username && typeof db.deletePeerAnswers === 'function') {
+      try {
+        const cr = await db.deletePeerAnswers(data.login_username);
+        if (cr && cr.error) console.error('cr peer-answers cleanup failed for', data.login_username, cr.error);
+      } catch (e) {
+        console.error('cr peer-answers cleanup threw for', data.login_username, e);
+      }
     }
 
     return res.json({ ok: true, studentId: data.student_id });

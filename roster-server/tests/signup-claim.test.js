@@ -303,6 +303,31 @@ describe('POST /roster/verify brute-force lockout', () => {
   });
 });
 
+// ── POST /roster/verify — per-IP rate limit (bcrypt-DoS hardening) ─────────────
+
+describe('POST /roster/verify per-IP rate limit', () => {
+  it('caps verify attempts per IP regardless of username (429 after the cap)', async () => {
+    process.env.VERIFY_IP_MAX = '3';
+    const app = new TestServer(createApp(createFakeDb()));
+    await app.start();
+    try {
+      // Distinct usernames so the per-USERNAME lockout never fires — the only 429
+      // source here is the per-IP limiter. Unknown users 401; the 4th hits the cap.
+      const a = await app.request('POST', '/roster/verify', { body: { username: 'ip_a', password: '0000' } });
+      const b = await app.request('POST', '/roster/verify', { body: { username: 'ip_b', password: '0000' } });
+      const c = await app.request('POST', '/roster/verify', { body: { username: 'ip_c', password: '0000' } });
+      const d = await app.request('POST', '/roster/verify', { body: { username: 'ip_d', password: '0000' } });
+      expect(a.status).not.toBe(429);
+      expect(b.status).not.toBe(429);
+      expect(c.status).not.toBe(429);
+      expect(d.status).toBe(429);
+    } finally {
+      await app.stop();
+      delete process.env.VERIFY_IP_MAX;
+    }
+  });
+});
+
 // ── POST /roster/claim — teacher elevation ─────────────────────────────────────
 
 describe('POST /roster/claim teacher elevation', () => {
@@ -391,6 +416,37 @@ describe('DELETE /roster/:studentId', () => {
       expect(res.status).toBe(500);
     } finally {
       await errSrv.stop();
+    }
+  });
+
+  it('also purges curriculum_render peer answers for the deleted username (best-effort cascade)', async () => {
+    const fdb = createFakeDb();
+    let purgedFor = null;
+    // The real deleteRoster returns login_username; emulate that + the cr purge hook.
+    fdb.deleteRoster = async (sid) => ({ data: { student_id: sid, login_username: 'cascade_me' }, error: null });
+    fdb.deletePeerAnswers = async (username) => { purgedFor = username; return { data: null, error: null }; };
+    const app = new TestServer(createApp(fdb));
+    await app.start();
+    try {
+      const res = await app.request('DELETE', '/roster/00000000-0000-0000-0000-000000000007', { headers: { 'x-teacher-secret': 'apstats2627' } });
+      expect(res.status).toBe(200);
+      expect(purgedFor).toBe('cascade_me');
+    } finally {
+      await app.stop();
+    }
+  });
+
+  it('still 200 when the cr peer-answers purge throws (roster row is already gone)', async () => {
+    const fdb = createFakeDb();
+    fdb.deleteRoster = async (sid) => ({ data: { student_id: sid, login_username: 'oops' }, error: null });
+    fdb.deletePeerAnswers = async () => { throw new Error('cr unreachable'); };
+    const app = new TestServer(createApp(fdb));
+    await app.start();
+    try {
+      const res = await app.request('DELETE', '/roster/00000000-0000-0000-0000-000000000008', { headers: { 'x-teacher-secret': 'apstats2627' } });
+      expect(res.status).toBe(200);
+    } finally {
+      await app.stop();
     }
   });
 });

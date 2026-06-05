@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, updateSpriteHue, updateSchoologyUid, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -227,17 +227,35 @@ export function createDb(client) {
   }
 
   // Delete a roster row by student_id. Returns { data, error } — data is the
-  // deleted row ({ student_id }) on success, null when no row matched (404).
-  // The DB FKs are ON DELETE CASCADE, so this ALSO removes the student's
-  // item_ledger (work/grades), remediation_assignment, and roster_alias rows.
+  // deleted row ({ student_id, login_username }) on success, null when no row
+  // matched (404). The DB FKs are ON DELETE CASCADE, so this ALSO removes the
+  // student's item_ledger (work/grades), remediation_assignment, and roster_alias
+  // rows. login_username is in the projection so the caller can also purge the
+  // student's curriculum_render peer answers (see deletePeerAnswers — those are
+  // NOT FK'd to the roster, so CASCADE doesn't reach them).
   // Uses maybeSingle() so a 0-row delete is { data:null, error:null }, not an error.
   async function deleteRoster(studentId) {
     return client
       .from('roster')
       .delete()
       .eq('student_id', studentId)
-      .select('student_id')
+      .select('student_id, login_username')
       .maybeSingle();
+  }
+
+  // Best-effort purge of a (deleted) student's curriculum_render peer answers.
+  // cr stores them in the `answers` table keyed by `username` (text, NOT FK'd to
+  // the roster) in the SAME Supabase instance, so this service-role client can
+  // delete them directly. Without this, a deleted student's answers keep showing
+  // to peers. The DELETE /roster handler calls this AFTER the roster row is gone
+  // and swallows failures — a cr-cleanup hiccup must not undo the roster delete.
+  // Returns { data, error } like the others.
+  async function deletePeerAnswers(username) {
+    if (!username) return { data: null, error: null };
+    return client
+      .from('answers')
+      .delete()
+      .eq('username', username);
   }
 
   // Teacher roster view. Optional section filter. Ordered by section then created.

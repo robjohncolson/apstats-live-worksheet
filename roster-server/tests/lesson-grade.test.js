@@ -288,6 +288,7 @@ describe('todayInTz', () => {
 describe('sectionToPeriod', () => {
   it('PeriodB → B', () => expect(sectionToPeriod('PeriodB')).toBe('B'));
   it('PeriodE → E', () => expect(sectionToPeriod('PeriodE')).toBe('E'));
+  it('PeriodX → E (live universal section follows Period E pacing)', () => expect(sectionToPeriod('PeriodX')).toBe('E'));
   it('B → B (bare)', () => expect(sectionToPeriod('B')).toBe('B'));
   it('null → null', () => expect(sectionToPeriod(null)).toBe(null));
   it('unknown string → null', () => expect(sectionToPeriod('Section1')).toBe(null));
