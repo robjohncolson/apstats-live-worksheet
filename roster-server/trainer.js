@@ -38,7 +38,12 @@ function isTrainerStateMissing(e) {
   if (!e) return false;
   const code = String(e.code || '');
   const msg = String(e.message || '').toLowerCase();
-  if (code === '42P01') return true; // undefined_table (migration 0017 not run)
+  if (code === '42P01') return true; // undefined_table (raw Postgres, e.g. RPC paths)
+  // Supabase/PostgREST does NOT pass 42P01 through for a missing table — it
+  // reports a schema-cache miss instead (observed live: PGRST205 "Could not
+  // find the table 'public.trainer_state' in the schema cache").
+  if (code === 'PGRST205') return true;
+  if (msg.includes('trainer_state') && msg.includes('schema cache')) return true;
   return msg.includes('trainer_state') && msg.includes('does not exist');
 }
 

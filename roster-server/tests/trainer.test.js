@@ -664,4 +664,18 @@ describe('42P01 (migration 0017 not run) → 503 on every route', () => {
     expect(status).toBe(503);
     expect(body.error).toBe('trainer_state not provisioned (run migration 0017)');
   });
+
+  // Supabase/PostgREST reports a missing table as a schema-cache miss, NOT
+  // 42P01 — the shape observed live before this was pinned.
+  it('PGRST205 schema-cache miss → same friendly 503', async () => {
+    trainerDb.getLbByStudents = async () => ({
+      data: null,
+      error: { code: 'PGRST205', message: "Could not find the table 'public.trainer_state' in the schema cache" }
+    });
+
+    const { status, body } = await srv.request('GET', `/trainer/leaderboard/${SECTION}/${DECK}`);
+
+    expect(status).toBe(503);
+    expect(body.error).toBe('trainer_state not provisioned (run migration 0017)');
+  });
 });
