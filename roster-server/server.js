@@ -24,6 +24,8 @@ import { mountNudge } from './nudge.js';
 import { createLiveNudgesDb } from './nudge-db.js';
 import { mountLessonUnlock } from './lesson-unlock.js';
 import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
+import { mountTrainer } from './trainer.js';
+import { createLiveTrainerDb } from './trainer-db.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
 import { encryptPassword, decryptPassword } from './crypto.js';
@@ -43,10 +45,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride) {
   const app = express();
   app.use(cors());
-  app.use(express.json());
+  // 600kb (vs Express's 100kb default): the trainer-state kanji payload (~90–120 KB compact SRS tuples) must fit through PUT /trainer/state.
+  app.use(express.json({ limit: '600kb' }));
   // Railway runs behind a SINGLE edge proxy — trust exactly ONE hop so req.ip is
   // the proxy-appended client address. `true` (trust the whole chain) would let a
   // client forge X-Forwarded-For and rotate it to defeat the limiter; a bounded
@@ -905,6 +908,16 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const lessonUnlockDb = (typeof lessonUnlockDbOverride !== 'undefined') ? lessonUnlockDbOverride : createLiveLessonUnlockDb();
   if (lessonUnlockDb && db) {
     mountLessonUnlock(app, { db, lessonUnlockDb });
+  }
+
+  // ── Trainer routes (Desk Roster Alignment §2.2 — tmux-trainer cloud save) ──
+  // Needs trainerDb (data-access wrapper for the new trainer_state table).
+  // Until migrations/0017 is run on Supabase, the DB returns 42P01 and
+  // routes respond 503 "trainer_state not provisioned (run migration 0017)" --
+  // service stays up.
+  const trainerDb = (typeof trainerDbOverride !== 'undefined') ? trainerDbOverride : createLiveTrainerDb();
+  if (trainerDb && db) {
+    mountTrainer(app, { db, trainerDb, verifyToken });
   }
 
   return app;

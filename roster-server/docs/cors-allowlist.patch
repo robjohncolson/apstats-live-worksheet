@@ -1,0 +1,50 @@
+# cors-allowlist.patch — harden roster-server CORS from wildcard-open to an
+# explicit origin allowlist (Desk Roster Alignment spec, teacher decision #5).
+#
+# PREPARED, NOT DEPLOYED. app.use(cors()) is intentionally wildcard-open today;
+# apply this only when convenient. Pushing to master deploys to Railway.
+#
+# HOW TO APPLY (from the repo root, C:/Users/rober/Downloads/Projects/school/follow-alongs):
+#
+#   git apply --check roster-server/docs/cors-allowlist.patch   (dry run, no changes)
+#   git apply         roster-server/docs/cors-allowlist.patch
+#   cd roster-server && npm test                                 (suite must stay green)
+#   git add roster-server/server.js && git commit && git push    (push = Railway deploy)
+#
+# WHAT TO TEST AFTER DEPLOY (each is a different dependent origin — see the
+# "Dependent origins (CORS)" section in CLAUDE.md):
+#
+#   1. The Desk loads and signs in (https://robjohncolson.github.io/apstats-live-worksheet/
+#      ap_stats_roadmap_square_mode.html) — roster verify, Do Now card, gradebook.
+#   2. The Equation Trainer signs in STANDALONE at https://tmux-trainer.vercel.app
+#      (MORE tab → sign in) and its cloud save round-trips (/trainer/state).
+#   3. The quiz app works (https://robjohncolson.github.io/curriculum_render/ —
+#      same github.io origin as the Desk, listed once).
+#
+# If any of those break with a CORS console error, the failing origin is
+# missing from the list below — add it and redeploy; git revert also works.
+#
+--- a/roster-server/server.js
++++ b/roster-server/server.js
+@@ -48,6 +48,20 @@
+ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride) {
+   const app = express();
+-  app.use(cors());
++  // Explicit CORS allowlist -- every dependent origin MUST be listed here.
++  // See "Dependent origins (CORS)" in CLAUDE.md before changing this list.
++  app.use(cors({
++    origin: [
++      'https://robjohncolson.github.io',  // GH Pages: Desk, worksheets, study guide, quiz app
++      'https://tmux-trainer.vercel.app',  // Equation Trainer (external Vercel app)
++      // Local dev origins:
++      'http://localhost:3000',
++      'http://localhost:5173',
++      'http://localhost:8080',
++      'http://127.0.0.1:3000',
++      'http://127.0.0.1:5173',
++      'http://127.0.0.1:8080',
++    ],
++  }));
+   // 600kb (vs Express's 100kb default): the trainer-state kanji payload (~90–120 KB compact SRS tuples) must fit through PUT /trainer/state.
+   app.use(express.json({ limit: '600kb' }));
+   // Railway runs behind a SINGLE edge proxy — trust exactly ONE hop so req.ip is

@@ -165,6 +165,15 @@ Two Railway backends:
 - The teacher tests on the **public URL** (local `file://` is not a valid test surface) — commit + push promptly.
 - Commit new assets (images, sounds, fonts) before referencing them in code.
 
+## Dependent origins (CORS)
+
+roster-server is called cross-origin by these frontends — they MUST keep working after any CORS change:
+
+- `https://robjohncolson.github.io` — GH Pages: the Desk, worksheets, study guide, and the quiz app (`/curriculum_render/`)
+- `https://tmux-trainer.vercel.app` — the Equation Trainer (external Vercel app, also embedded in the Desk)
+
+`app.use(cors())` in `roster-server/server.js` is **intentionally wildcard-open today**. Do not harden it ad hoc — the prepared hardening path is `roster-server/docs/cors-allowlist.patch` (explicit allowlist with both origins above plus localhost dev origins, with apply/verify instructions in the file header). After applying + deploying, verify the Desk loads, the trainer signs in standalone, and the quiz app works.
+
 ## AI Grading Rubric Structure
 
 Each reflection question in `ai-grading-prompts*.js` has:
