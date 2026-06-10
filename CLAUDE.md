@@ -4,67 +4,83 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This directory contains AP Statistics "Video Follow-Along" live worksheets—single-file HTML web apps that students complete while watching instructional videos. Worksheets connect to a Railway backend for real-time class answer aggregation and AI-powered grading.
+A full AP Statistics course platform: 69 video follow-along live worksheets, the "Desk" student home hub, diagnostic study guides, teacher tools, a roster/grading backend, and authoring/dev tooling.
 
-## Files
+- **Repo**: github.com/robjohncolson/apstats-live-worksheet (branch `master`)
+- **Frontend**: GitHub Pages, base `https://robjohncolson.github.io/apstats-live-worksheet/`
+- **Backends**: two Railway services (see Config & External Services)
+- Everything student-facing is single-file HTML with embedded CSS/JS — no build step (exception: `ti84-trainer-v2/` has `build.mjs`).
 
-| File | Purpose |
+## App Surface
+
+### Student apps
+
+| Path | Purpose |
 |------|---------|
-| `u3_lesson6-7_live.html` | Live worksheet for Topics 3.6–3.7 (Experimental Design & Inference) |
-| `u4_lesson1-2_live.html` | Live worksheet for Topics 4.1–4.2 (Random Patterns & Simulation) |
-| `u4_lesson1-2-3_live.html` | Extended worksheet for Topics 4.1–4.3 (adds Introduction to Probability) |
-| `u4_lesson7-8_live.html` | Live worksheet for Topics 4.7–4.8 (Random Variables & Probability Distributions) |
-| `u4_l1_l2_blooket.csv` | Blooket quiz (34 questions) for Unit 4 vocabulary reinforcement |
-| `unit4_schedule_v4.html` | Unit 4 pacing schedule for Periods B & E with lagged quiz system |
-| `ai-grading-prompts.js` | Rubrics for Unit 3 AI grading (keyed by `reflect53`, `exitTicket`, etc.) |
-| `ai-grading-prompts-u4.js` | Rubrics for Unit 4 L1-2 AI grading (keyed by `reflect1`, `reflect2`, `exitTicket`) |
-| `ai-grading-prompts-u4-l3.js` | Rubrics for Unit 4 L1-3 AI grading (adds `reflect3` for probability interpretation) |
-| `ai-grading-prompts-u4-l7-8.js` | Rubrics for Unit 4 L7-8 AI grading (random variables, expected value, standard deviation) |
-| `u5_lesson1-2_live.html` | Live worksheet for Topics 5.1–5.2 (Sampling Distributions & Normal Distribution, Revisited) |
-| `ai-grading-prompts-u5-l1-2.js` | Rubrics for Unit 5 L1-2 AI grading (sampling variability, normal probability, linear combinations) |
-| `u5_l1_l2_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L1-2 conceptual reinforcement |
-| `u5_lesson3_live.html` | Live worksheet for Topic 5.3 (Central Limit Theorem & Randomization Distributions) |
-| `ai-grading-prompts-u5-l3.js` | Rubrics for Unit 5 L3 AI grading (CLT, sampling distributions via simulation, randomization distributions) |
-| `u5_l3_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L3 conceptual reinforcement (CLT, randomization tests) |
-| `u5_lesson8_live.html` | Live worksheet for Topic 5.8 (Sampling Distributions for Differences in Sample Means) |
-| `ai-grading-prompts-u5-l8.js` | Rubrics for Unit 5 L8 AI grading (difference in sample means: parameters, shape, probability) |
-| `u5_l8_blooket.csv` | Blooket quiz (35 questions) for Unit 5 L8 conceptual reinforcement (difference in sample means) |
-| `u6_lesson1-2_live.html` | Live worksheet for Topics 6.1–6.2 (Why Be Normal? & Constructing CI for p) |
-| `ai-grading-prompts-u6-l1-2.js` | Rubrics for Unit 6 L1-2 AI grading (significance testing logic, CI conditions, calculation, sample size) |
-| `u6_l1_l2_blooket.csv` | Blooket quiz (35 questions) for Unit 6 L1-2 conceptual reinforcement (significance testing logic, CI for proportions) |
-| `u6_lesson3_live.html` | Live worksheet for Topic 6.3 (Justifying a Claim Based on a CI for p) |
-| `ai-grading-prompts-u6-l3.js` | Rubrics for Unit 6 L3 AI grading (CI interpretation, confidence level, ME factors, 5-step process) |
-| `u6_l3_blooket.csv` | Blooket quiz (35 questions) for Unit 6 L3 conceptual reinforcement (CI interpretation, justifying claims, ME factors) |
-| `u8_lesson1_live.html` | Live worksheet for Topic 8.1 (Introducing Statistics: Are My Results Unexpected?) |
-| `ai-grading-prompts-u8-l1.js` | Rubrics for Unit 8 L1 AI grading (chi-square statistic, simulation, P-value interpretation) |
-| `u8_l1_blooket.csv` | Blooket quiz for Unit 8 L1 conceptual reinforcement |
-| `u8_lesson2_live.html` | Live worksheet for Topic 8.2 (Chi-Square Distributions & Setting Up a GOF Test) |
-| `ai-grading-prompts-u8-l2.js` | Rubrics for Unit 8 L2 AI grading (chi-square distributions, hypotheses, conditions) |
-| `u8_l2_blooket.csv` | Blooket quiz for Unit 8 L2 conceptual reinforcement |
-| `u8_lesson3_live.html` | Live worksheet for Topic 8.3 (Carrying Out a Chi-Square GOF Test) |
-| `ai-grading-prompts-u8-l3.js` | Rubrics for Unit 8 L3 AI grading (test statistic, P-value, conclusion, contributions) |
-| `u8_l3_blooket.csv` | Blooket quiz for Unit 8 L3 conceptual reinforcement |
-| `u8_lesson4_live.html` | Live worksheet for Topic 8.4 (Chi-Square Test for Homogeneity) |
-| `ai-grading-prompts-u8-l4.js` | Rubrics for Unit 8 L4 AI grading (two-way tables, homogeneity test) |
-| `u8_l4_blooket.csv` | Blooket quiz for Unit 8 L4 conceptual reinforcement |
-| `u8_lesson5_live.html` | Live worksheet for Topic 8.5 (Chi-Square Test for Independence) |
-| `ai-grading-prompts-u8-l5.js` | Rubrics for Unit 8 L5 AI grading (independence test, association) |
-| `u8_l5_blooket.csv` | Blooket quiz for Unit 8 L5 conceptual reinforcement |
-| `u8_lesson6_live.html` | Live worksheet for Topic 8.6 (Chi-Square Tests — Putting It All Together) |
-| `ai-grading-prompts-u8-l6.js` | Rubrics for Unit 8 L6 AI grading (GOF vs homogeneity vs independence) |
-| `u8_l6_blooket.csv` | Blooket quiz for Unit 8 L6 conceptual reinforcement |
-| `live-worksheet.skill` | Claude Code skill (zip archive) for generating new worksheets |
-| `STATE_MACHINES.md` | Detailed state machine documentation for all interactive behaviors |
-| `AI_GRADING_INTEGRATION.md` | Integration guide for AI grading features |
-| `tests/` | Vitest test suite (jsdom environment) |
-| `u4_l1_l2/` | Source materials (transcripts, slides, PDFs) for Unit 4 L1-2 worksheet development |
-| `u4_l7_l8/` | Source materials (transcripts, slides, PDFs) for Unit 4 L7-8 worksheet development |
-| `u5_l1_l2/` | Source materials (transcripts, slides, PDFs) for Unit 5 L1-2 worksheet development |
-| `u5/` | Source materials (transcripts, slides, framework) for Unit 5 worksheet development |
-| `u6/` | Source materials (transcripts, slides, framework) for Unit 6 worksheet development |
-| `u8/` | Source materials (transcripts, slides) for Unit 8 worksheet development |
+| `index.html` | Landing page linking all apps (newly added — repo root previously 404'd) |
+| `u{unit}_lesson{range}_live.html` | The worksheet family: 69 files at root (u1–u9), indexed by `TOC.html` |
+| `ap_stats_roadmap_square_mode.html` | **The Desk** (~14,250 lines): student home hub — roadmap lesson tiles, Do Now card with grade pills, completion calendar, resource panel, Live Classroom, Study Break Tetris, in-app gradebook. `calendar.html` is a 16-line redirect stub into it |
+| `start-here.html` | Orientation + interactive v3 Grade Playground (fully static) |
+| `study_guide_diagnostic.html` | DAG/BKT diagnostic study guide; depends on `lib/` runtime (`bkt.js`, `dag-renderer.js`, `probe-selector.js`, `curriculum-charts.js`) |
+| `ti84-trainer-v2/index.html` | ROM-backed CEmu-wasm TI-84 trainer; `build.mjs` regenerates `generated/` + `standalone.html`. Legacy v1 = `ti84_trainer.html`; QA harness = `ti84-verify.html` |
+| `edgar_u6_conceptual_driller_live.html` | **NOT a follow-along worksheet** — separate track, excluded from worksheet-wide rollouts (hard rule). Pattern-guard rollouts to `^u\d+_lesson.+_live\.html$` |
+| `mit_ocw_6.0001_lec1/2_live.html` | MIT OCW Python worksheets (clubs track, not AP Stats) |
 
-## Architecture
+### In-Desk app windows
+
+The Desk hosts iframe apps via `openApp(id)` — `APP_REGISTRY` near line 12930 of `ap_stats_roadmap_square_mode.html`; documented in `roadmap-apps-spec.md`:
+
+| id | Target |
+|----|--------|
+| `ti84` | `ti84-trainer-v2/standalone.html` (this repo, GH Pages) |
+| `quiz` | `https://robjohncolson.github.io/curriculum_render/` (separate repo) |
+| `formulas` | **Equation Trainer** = `https://tmux-trainer.vercel.app/#deck=ap-stats-formulas` — EXTERNAL Vercel app; source lives at `C:/Users/rober/Downloads/Projects/tmux-trainer`, NOT in this repo |
+
+### Teacher tools
+
+| Path | Purpose |
+|------|---------|
+| `teacher-dashboard.html` | Class grades, skill heatmap, remediation (roster-server backed) |
+| `teacher-classroom.html` | Live Classroom cockpit: presence/poll board, Arm Gate / Green Light controls |
+| `teacher-code-generator.html` | Deterministic unit unlock codes (static) |
+| `teacher-roster-console.html` | **LOCAL-ONLY** (per its own header comment) — bulk enroll, passwords, delete-student, Schoology UIDs. Do NOT link from public pages |
+
+### Backend
+
+| Service | Purpose |
+|---------|---------|
+| `roster-server/` | Node/Express + Supabase, deployed on Railway: `https://roster-production-12c1.up.railway.app`. Roster/login/self-signup, v3 two-track grade engine (`lesson-grade.js`, `computeQuarterV3`), unified ledger, class gradebook, Do Now, Blooket import, remediation, Live Classroom state. Holds the service-role key + bcrypt. **Auto-deploys on push to master** |
+| curriculum render server | Separate repo; `https://curriculumrender-production.up.railway.app`. Worksheet answer sync + AI grading endpoints (see API Endpoints) |
+
+### Dev & authoring tools
+
+| Path | Purpose |
+|------|---------|
+| `tools/level-editor.html` | Live Classroom pico-park level authoring: painter, lint, sim mode |
+| `tools/schoology-sync.py`, `tools/schoology_sync_section.py`, `tools/cdp/edge.py` | Teacher-run CDP grade-write into Schoology; daily dry-run-default scheduled task (`tools/daily_schoology_sync.ps1`) |
+| `tools/build_schoology_fixture.py` | `/class/grades` → Schoology fixture (`--inspect` sanity check) |
+| `scripts/` | Toolbox: `wire-*.mjs` codemods applied across all 69 worksheets, `build-*.mjs` generators, `teacher-roster.mjs`, `import-blooket.mjs` |
+| `video-ingest-whisper.mjs` | Working Whisper transcription CLI (`video-ingest.mjs` = dormant Gemini variant) |
+| `live-worksheet.skill`, `blooket-quiz.skill` | Claude Code skills (zip archives) for generating worksheets / Blooket CSVs |
+| `roster-client-demo.html`, `gradebook-client-demo.html` | Dev smoke harnesses |
+
+### Content & data
+
+| Path | Purpose |
+|------|---------|
+| `ai-grading-prompts*.js` | AI grading rubrics keyed by textarea ID — 73 files: one per worksheet (69) + edgar/MIT/study-guide variants (see Rubric Structure) |
+| `ai-tutor/` | 75 Socratic prompt artifacts (66 lesson + 9 PC), delivered via Desk copy buttons |
+| `u*_blooket.csv` / `*_blooket.csv` | 76 Blooket quiz CSVs at root |
+| `u4_poster/` | Poster job cards + exemplars |
+| `unit4_5_schedule_v12.html` etc. | 16 schedule/calendar pages — superseded by the Desk; v12 is the latest |
+| `u3_random_block_review.html`, `u6-proportion-inference-plan.html`, `code-to-website-workshop.html` | One-off pages |
+| `u1/`–`u3/`, `u5/`–`u9/`, `u4_l*/`, `unit4guide/`, `mit_python_vid2/`, `a2_3-3/` | Source materials (transcripts, slides, PDFs) — not apps (no `u4/` dir; U4 materials live in `u4_l*/` + `unit4guide/`) |
+| `data/` | Generated data: `skill-map.*`, `lesson-schedule.json`, `answer-key.json`, study-guide maps |
+| `state/` | Cross-agent orchestration logs/prompts |
+| `roadmap-data.json` | Baked Desk data — overridden at runtime by Supabase `lesson_urls` (see below) |
+| `*_SPEC.md` / `*_BUILD.md` | Per-feature spec/build contracts at root; `STATE_MACHINES.md`, `AI_GRADING_INTEGRATION.md` |
+
+## Architecture (worksheets)
 
 Each worksheet is self-contained HTML with embedded CSS and JavaScript. Key components:
 
@@ -80,7 +96,7 @@ Each worksheet is self-contained HTML with embedded CSS and JavaScript. Key comp
 
 ### AI Grading Features
 6. **AI Reflection Grading** - `ReflectionGrader` class grades free-response textareas via `/api/ai/grade`
-7. **Calibrated Prompts** - `ai-grading-prompts.js` contains rubrics with lesson context from video transcripts
+7. **Calibrated Prompts** - `ai-grading-prompts*.js` contain rubrics with lesson context from video transcripts
 8. **Appeal System** - Students can appeal P/I scores up to 3 times with reasoning
 9. **Grading State** - `gradingState` Map tracks results, appeal counts, and history
 
@@ -108,26 +124,32 @@ npm run test:coverage
 
 ## Testing
 
-Tests use Vitest with jsdom for DOM simulation:
+Three suites:
 
-| Test File | Coverage |
-|-----------|----------|
-| `tests/grading-prompts.test.js` | Unit 3 rubric structure, prompt building, lesson context |
-| `tests/grading-prompts-u4.test.js` | Unit 4 rubric structure, prompt building, lesson context |
-| `tests/reflection-grader.test.js` | Grading workflow, API calls, appeal system |
-| `tests/ui-components.test.js` | DOM interactions, CSS classes, UI states |
-| `tests/schedule.test.js` | Schedule structure, dates, topics, lagged quiz system, content coverage |
-| `tests/aggregate-drawer.test.js` | Focus-following drawer, escape key, bar chart rendering |
+| Suite | Where | Run |
+|-------|-------|-----|
+| Frontend/worksheets (Vitest + jsdom) | `tests/` (115 files) + colocated `lib/*.test.js` | `npm test` from root |
+| roster-server (Vitest) | `roster-server/tests/` | `cd roster-server && npm test` |
+| Schoology tooling (pytest) | `tests/test_*.py` | `pytest tests/` |
 
-## External Dependencies
+Representative coverage: rubric structure + prompt building (`grading-prompts*.test.js`), grading workflow + appeals (`reflection-grader.test.js`), DOM/UI states (`ui-components.test.js`), aggregate drawer, schedules, Desk features (`desk-*.test.js`).
 
-Worksheets expect sibling files in parent directory:
-- `../railway_config.js` - Sets `window.RAILWAY_SERVER_URL`
-- `../railway_client.js` - Provides `window.railwayClient` with `submitAnswer()` and `getStats()` methods
+## Config & External Services
 
-Default server: `https://curriculumrender-production.up.railway.app`
+Worksheets and apps load config/client scripts from the **repo's own root** (all tracked):
+- `railway_config.js` — sets `window.RAILWAY_SERVER_URL`
+- `railway_client.js` — `window.railwayClient` with `submitAnswer()` / `getStats()`
+- `roster_config.js`, `roster-client.js` — roster-server URL + client
 
-## API Endpoints
+> **Stale-doc trap (fixed):** older docs claimed worksheets expect `../railway_config.js` in the PARENT directory. That 404s on GH Pages. Worksheets also carry hardcoded inline fallbacks (`window.RAILWAY_SERVER_URL` default), so they work even if a config script fails to load.
+
+Two Railway backends:
+- **roster-server** — `https://roster-production-12c1.up.railway.app` (identity, grades, ledger, Live Classroom)
+- **curriculum render server** — `https://curriculumrender-production.up.railway.app` (worksheet answer sync + AI grading; separate repo)
+
+**Runtime data overlay:** the Supabase `lesson_urls` table (project `hgvnytaqmuybzbotosyj`) OVERRIDES the baked `roadmap-data.json` for worksheet/quiz/Blooket URLs in the Desk at runtime. The table is the live source of Blooket URLs (all 77 topics covered as of 2026-06-09). **A file-only URL fix is insufficient — the table wins.**
+
+## API Endpoints (curriculum render server)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -136,9 +158,16 @@ Default server: `https://curriculumrender-production.up.railway.app`
 | `/api/ai/grade` | POST | AI grade reflection responses |
 | `/api/ai/appeal` | POST | Submit appeal with reasoning |
 
+## Deployment
+
+- **GH Pages auto-publishes `master`** — every push goes live at the base URL above.
+- **roster-server/ auto-deploys to Railway on push to master.** Changes there are grade-affecting; flag them explicitly.
+- The teacher tests on the **public URL** (local `file://` is not a valid test surface) — commit + push promptly.
+- Commit new assets (images, sounds, fonts) before referencing them in code.
+
 ## AI Grading Rubric Structure
 
-Each reflection question in `ai-grading-prompts.js` has:
+Each reflection question in `ai-grading-prompts*.js` has:
 ```javascript
 {
   questionText: "The question prompt",
@@ -163,7 +192,7 @@ Use the `live-worksheet.skill` to generate worksheets. The skill expects:
 ## Naming Conventions
 
 - Worksheets: `u{unit}_lesson{lesson-range}_live.html` (e.g., `u3_lesson6-7_live.html`, `u4_lesson1-2_live.html`)
-- Grading prompts: `ai-grading-prompts.js` (U3) and `ai-grading-prompts-u4.js` (U4) contain unit-specific rubrics keyed by textarea ID
+- Grading prompts: `ai-grading-prompts-u{unit}-l{lessons}.js` per worksheet, rubrics keyed by textarea ID (`ai-grading-prompts.js` = U3 original)
 - Question IDs: Auto-assigned as `WS-U{unit}L{lessons}-Q{N}` for server tracking (e.g., `WS-U4L1-2-Q1`)
 
 ## Key State Machines
