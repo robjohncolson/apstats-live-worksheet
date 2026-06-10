@@ -25,18 +25,24 @@ then paste the set URL after the `→`.
 - [ ] `u5_l1_blooket.csv` → 5.1 (Why Is My Sample Not Like Yours?) → ______________________________
 - [ ] `u5_l2_blooket.csv` → 5.2 (The Normal Distribution, Revisited) → ______________________________
 
-**Import steps (per set):**
-1. Download the CSV from the repo (work laptop:
-   `https://robjohncolson.github.io/apstats-live-worksheet/<filename>` or via GitHub).
-2. On `dashboard.blooket.com` → **Create a Set** → name it (e.g. "AP Stats 4.7 — Random Variables")
-   → **Import Questions → Spreadsheet** → upload the CSV (it's in Blooket's own template format).
-3. Save the set and copy its dashboard URL (`https://dashboard.blooket.com/set/<id>`).
-4. Paste the URL into the **cr editor's Blooket field for that topic** — that writes
-   `lesson_urls.blooket_url`, the live source. (Also fine to just fill in the list above.)
-5. Ping CC ("re-mine blookets") → I re-query `lesson_urls`, write `urls.blooket` into
-   `roadmap-data.json` + `Agent/state/lesson-registry.json`, regenerate
+**Import — automated (preferred).** The Agent repo already has a Blooket uploader
+(`Agent/scripts/upload-blooket.mjs`, Playwright-over-CDP using your logged-in Edge session),
+and the 8 new files match its `u{unit}_l{lesson}_blooket.csv` auto-detect naming exactly.
+On the machine where you run lesson-prep (Edge logged into Blooket):
+1. `git pull` in the `apstats-live-worksheet` clone (gets the 8 CSVs).
+2. `scripts/start-edge-debug.cmd` (Edge with remote debugging).
+3. Run, one per set: `node scripts/upload-blooket.mjs --unit 4 --lesson 7` (then `--lesson 8`
+   … `--lesson 12`, and `--unit 5 --lesson 1`, `--unit 5 --lesson 2`). Each creates the set,
+   captures the URL, and records it in `lesson-registry.json` + `state/blooket-uploads.json`.
+4. Ping CC → I upsert the URLs into Supabase `lesson_urls` (the live source the Desk overlays),
+   write `urls.blooket` into `roadmap-data.json`, regenerate
    `roster-server/data/blooket-lessons.json` (69 → 77 topics), verify, and commit both repos.
    Only after that does the v3 engine count these topics' Blooket scores.
+
+**Import — manual fallback:** download the CSV
+(`https://robjohncolson.github.io/apstats-live-worksheet/<filename>`), then on
+`dashboard.blooket.com` → **Create a Set** → **Import Questions → Spreadsheet** → upload →
+save → copy the set URL into the list above and ping CC (same step 4 as above).
 
 **Notes**
 - These per-topic files **supersede the old grouped CSVs** (`u4_l7_l8_blooket.csv`,

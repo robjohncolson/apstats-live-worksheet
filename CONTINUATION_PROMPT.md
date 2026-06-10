@@ -19,8 +19,10 @@
    this session)**. REMAINING: **4.7-4.12, 5.1, 5.2** — no Blooket set authored ANYWHERE yet (not even `lesson_urls`).
    **⚠ THE LIVE SOURCE IS THE SUPABASE `lesson_urls` TABLE (`blooket_url` column), NOT `units.js`** — the Desk's
    `loadSupabaseOverlay()` fetches it at runtime; the teacher authors Blooket there via the cr editor. To check
-   coverage, QUERY `lesson_urls.blooket_url` (anon key is baked in the Desk) — do NOT trust static files. As the
-   teacher makes the last 3 sets, re-mine + propagate (recipe below). `BLOOKET_BACKFILL_CHECKLIST.md`.
+   coverage, QUERY `lesson_urls.blooket_url` (anon key is baked in the Desk) — do NOT trust static files.
+   **s6 (2026-06-09): the 8 per-topic CSVs are BUILT + PUSHED (`ebb3cff`)** — teacher imports via
+   `Agent/scripts/upload-blooket.mjs` (auto-detects the `u{u}_l{l}_blooket.csv` names), then
+   re-mine + propagate (recipe below). `BLOOKET_BACKFILL_CHECKLIST.md` has the exact commands.
 3. **Backlog (none blocking):**
    (a) **username re-roll for EXISTING students** ("change my username", reuse the claim/unique FCFS machinery);
    (b) **cr orphan-answers ONE-TIME PURGE** — the cascade is now LIVE (future deletes auto-clean cr `answers`),
@@ -67,8 +69,10 @@
 
 ## 🔁 BLOOKET PIPELINE (for #2)
 **⚠ LIVE SOURCE = Supabase `lesson_urls.blooket_url`** (project `hgvnytaqmuybzbotosyj`; the Desk
-`loadSupabaseOverlay()` fetches `select=topic,worksheet_url,drills_url,quiz_url,blooket_url` at runtime). The
-teacher authors Blooket THERE via the cr editor — NOT only `units.js`, and the STATIC files lag, so the v3 engine
+`loadSupabaseOverlay()` fetches `select=topic,worksheet_url,drills_url,quiz_url,blooket_url` at runtime). Rows are
+authored by the Agent repo's lesson-prep pipeline (`upload-blooket.mjs` creates the set via CDP on the teacher's
+logged-in Edge; `lesson-prep.mjs`/`sync-schedule-to-supabase.mjs` call `upsertLessonUrls`) — there is NO "cr editor"
+(s6 correction: cr only READS the table). `units.js` is NOT the live source either, and the STATIC files lag, so the v3 engine
 won't count a Blooket until it's propagated. **Recipe to backfill:** query `lesson_urls` for `blooket_url` per topic
 (anon key in the Desk) → write `urls.blooket` into BOTH `roadmap-data.json` (`.lessons[topic].urls.blooket`;
 `JSON.parse`→set→`JSON.stringify(obj,null,2)` with **NO** trailing newline = exact roundtrip) AND
