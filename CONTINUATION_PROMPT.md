@@ -15,14 +15,13 @@
    `[GOLIVE]`/TEMP lines**. If `req.ip` is shared: bump `app.set('trust proxy', N)` to the real hop depth, OR set
    env `SIGNUP_CLAIM_MAX=600` (and `VERIFY_IP_MAX` for the new verify limiter). Smoke: `/health`→`{ok:true}`;
    one real signup → appears in Class Gradebook; teacher signup with **`apstats2627`** → `role=teacher`.
-2. **Finish the Blooket backfill (data; due Q2 = 2026-11-14).** DONE: **3.6/3.7 + 4.1-4.6 + U5.3-U7.9 (26 topics,
-   this session)**. REMAINING: **4.7-4.12, 5.1, 5.2** — no Blooket set authored ANYWHERE yet (not even `lesson_urls`).
-   **⚠ THE LIVE SOURCE IS THE SUPABASE `lesson_urls` TABLE (`blooket_url` column), NOT `units.js`** — the Desk's
-   `loadSupabaseOverlay()` fetches it at runtime; the teacher authors Blooket there via the cr editor. To check
-   coverage, QUERY `lesson_urls.blooket_url` (anon key is baked in the Desk) — do NOT trust static files.
-   **s6 (2026-06-09): the 8 per-topic CSVs are BUILT + PUSHED (`ebb3cff`)** — teacher imports via
-   `Agent/scripts/upload-blooket.mjs` (auto-detects the `u{u}_l{l}_blooket.csv` names), then
-   re-mine + propagate (recipe below). `BLOOKET_BACKFILL_CHECKLIST.md` has the exact commands.
+2. **Blooket backfill — ✅ COMPLETE (s6, 2026-06-09). ALL 77 TOPICS COVERED.** The final 8 (4.7-4.12, 5.1, 5.2):
+   per-topic 35-q CSVs built via hybrid audit + adversarial verify (`ebb3cff`), uploaded END-TO-END by CC with
+   `Agent/scripts/upload-blooket.mjs` (CDP on the home-laptop Edge debug profile — teacher re-logged into Blooket
+   once), upserted to Supabase `lesson_urls` (read-back verified), propagated (roadmap-data + registry +
+   `blooket-lessons.json` 69→77), blooket+v3 tests 64/64. URLs in `BLOOKET_BACKFILL_CHECKLIST.md`.
+   **⚠ THE LIVE SOURCE IS STILL THE SUPABASE `lesson_urls` TABLE** — for any future set, QUERY it, don't trust
+   static files; recipe below stays valid.
 3. **Backlog (none blocking):**
    (a) **username re-roll for EXISTING students** ("change my username", reuse the claim/unique FCFS machinery);
    (b) **cr orphan-answers ONE-TIME PURGE** — the cascade is now LIVE (future deletes auto-clean cr `answers`),
