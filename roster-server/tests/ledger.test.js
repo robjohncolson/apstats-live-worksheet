@@ -315,6 +315,37 @@ describe('POST /ledger/record', () => {
 
     expect(ledgerDb.store.size).toBe(2);
   });
+
+  // ── DB error mapping: pre-migration 503 vs generic 500 ─────────────────────
+
+  it('23514 check_violation → 503 "source not provisioned" (not a silent 500)', async () => {
+    // The source CHECK rejects a value its migration hasn't provisioned yet
+    // (e.g. 'trainer' before 0016). Must surface as a friendly 503 — a generic
+    // 500 is exactly how study_guide_diagnostic died silently for weeks.
+    ledgerDb.insertLedgerRow = async () => ({
+      data: null,
+      error: { code: '23514', message: 'new row for relation "item_ledger" violates check constraint "item_ledger_source_check"' }
+    });
+
+    const { status, body } = await record({ source: 'trainer' });
+
+    expect(status).toBe(503);
+    expect(body.ok).toBe(false);
+    expect(body.error).toBe("source 'trainer' not provisioned (run the latest item_ledger migration)");
+  });
+
+  it('non-23514 db error still → 500 {ok:false, error:"Database error"}', async () => {
+    ledgerDb.insertLedgerRow = async () => ({
+      data: null,
+      error: { code: 'XX000', message: 'internal error' }
+    });
+
+    const { status, body } = await record();
+
+    expect(status).toBe(500);
+    expect(body.ok).toBe(false);
+    expect(body.error).toBe('Database error');
+  });
 });
 
 // ── GET /ledger/student/:studentId ────────────────────────────────────────────

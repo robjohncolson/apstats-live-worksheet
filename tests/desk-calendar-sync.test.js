@@ -118,6 +118,17 @@ describe('_hydrateMarksFromDonow — wiring + key format', () => {
     // so each combined lesson gets its own DESK_DONE itemId.
     expect(DESK).toContain('var um = /^(\\d+)\\.([\\d-]+)$/.exec(topicId');
   });
+
+  it('loads gradebook-client.js, AFTER roster-client.js (the DESK_DONE write needs it)', () => {
+    // Regression: this tag was MISSING from the Desk, so _studentMarkSave's
+    // `window.gradebookClient` guard failed silently and NO DESK_DONE row was
+    // ever written. gradebook-client.js reads window.rosterClient at call time,
+    // so it must load after roster-client.js (same order as the worksheets).
+    const idxRoster = DESK.indexOf('<script src="roster-client.js">');
+    const idxGradebook = DESK.indexOf('<script src="gradebook-client.js">');
+    expect(idxRoster).toBeGreaterThan(-1);
+    expect(idxGradebook).toBeGreaterThan(idxRoster);
+  });
 });
 
 describe('worksheet Done gate — 60% threshold + cross-device', () => {

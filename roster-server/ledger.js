@@ -2,6 +2,20 @@
 // Implements FROZEN CONTRACT 2 exactly.
 // Call mountLedger(app, { db, verifyToken }) from createApp().
 
+// Detect the "source not provisioned" condition: the body's `source` value is
+// not yet in the item_ledger source CHECK because its migration hasn't been
+// run. Mirrors class.js's isBlooketSourceMissing: only this specific
+// pre-migration condition maps to 503; every other DB error is a real 500.
+// Without this, a check_violation surfaces as a generic 500 "Database error"
+// and the writer dies silently (how study_guide_diagnostic was lost for weeks).
+function isSourceNotProvisioned(e) {
+  if (!e) return false;
+  const code = String(e.code || '');
+  const msg = String(e.message || '').toLowerCase();
+  if (code === '23514') return true; // check_violation (the source CHECK rejects the value)
+  return msg.includes('item_ledger_source_check');
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountLedger(app, { db, verifyToken }) {
@@ -17,6 +31,7 @@ export function mountLedger(app, { db, verifyToken }) {
   //   → 200 { ok:true, ledgerId, evidenceTier }
   //   → 400 missing required fields
   //   → 401 bad token
+  //   → 503 source not in the item_ledger CHECK yet (run the latest migration)
   app.post('/ledger/record', async (req, res) => {
     const { token, source, itemId, response, unit, topic, skill, score, attempt } = req.body || {};
 
@@ -57,6 +72,9 @@ export function mountLedger(app, { db, verifyToken }) {
     });
 
     if (error) {
+      if (isSourceNotProvisioned(error)) {
+        return res.status(503).json({ ok: false, error: `source '${source}' not provisioned (run the latest item_ledger migration)` });
+      }
       console.error('Ledger insert error:', error);
       return res.status(500).json({ ok: false, error: 'Database error' });
     }

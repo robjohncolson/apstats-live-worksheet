@@ -5504,7 +5504,15 @@
           saveNow();
           try { if (window.railwayClient && typeof window.railwayClient.submitAnswer === 'function') { const sent = window.railwayClient.submitAnswer({ worksheet:'study_guide_diagnostic', unit, gateId:gateId(unit), answer, grade:result }); if (sent && typeof sent.catch === 'function') sent.catch(() => {}); } } catch {}
           // Phase 5 §6.4: fire-and-forget gradebook ledger write. No-op if not signed into roster (gradebookClient L-D). Never throws.
-          try { if (window.gradebookClient && typeof window.gradebookClient.record === 'function') { const rec = window.gradebookClient.record({ source:'frq_studyguide', itemId:gateId(unit), unit, response:answer, score:result.score, attempt:1 }); if (rec && typeof rec.catch === 'function') rec.catch(() => {}); } } catch {}
+          // source 'pc' — the original 'frq_studyguide' was never in the item_ledger source CHECK, so Postgres rejected every insert.
+          // 'pc' is safe: the gate itemIds (U{n}-PC-FRQ-Q0x) match the engine's PC pattern, but the answer key has zero FRQ entries
+          // (build-answer-key.mjs excludes free-response) and scoreAgainstKey counts key-less items as ungradable — excluded from
+          // the PC% denominator. So these rows are completion-visible but grade-neutral, now and unless the key ever grows FRQ entries.
+          // score: item_ledger.score is numeric — map the E/P/I verdict to 1/0.5/0 like the worksheets do (DN2b convention).
+          // itemId '-SG' suffix: keeps these rows off the (student,source,item,attempt) upsert key a future
+          // proctored PC-FRQ feeder would use (a re-grade here must never overwrite a proctored row).
+          // Still matches the engine's PC pattern and stays key-less, so grade-neutrality is unchanged.
+          try { if (window.gradebookClient && typeof window.gradebookClient.record === 'function') { const rec = window.gradebookClient.record({ source:'pc', itemId:gateId(unit)+'-SG', unit, response:answer, score:({ E:1, P:0.5, I:0 })[result.score] ?? null, attempt:1 }); if (rec && typeof rec.catch === 'function') rec.catch(() => {}); } } catch {}
           showToast(`Unit ${unit} FRQ graded.`);
           await runFocus(unit);
         } catch (error) {

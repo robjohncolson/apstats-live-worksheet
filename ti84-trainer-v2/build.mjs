@@ -108,6 +108,10 @@ ${styleSource}
 </head>
 <body>
   <div id="app"></div>
+  <!-- Roster identity + practice recording (optional — trainer works without them) -->
+  <script src="../roster_config.js"></script>
+  <script src="../roster-client.js"></script>
+  <script src="../gradebook-client.js"></script>
   <script>
 ${escapeInlineScript(generatedProcedures)}
   </script>

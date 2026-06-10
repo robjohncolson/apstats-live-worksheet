@@ -1994,6 +1994,9 @@
 <!-- ═══ Shared roster identity (DN2c) — flat paths, Desk is at repo root (same as roster-client-demo.html). Config before client. ═══ -->
 <script src="roster_config.js"></script>
 <script src="roster-client.js"></script>
+<!-- Gradebook ledger feeder — _studentMarkSave's DESK_DONE write needs it. Reads
+     rosterClient at call time, so it loads after roster-client.js (worksheet order). -->
+<script src="gradebook-client.js"></script>
 <script src="canvas_engine.js"></script>
 <script src="sprite_sheet.js"></script>
 <script src="classroom-board.js"></script>

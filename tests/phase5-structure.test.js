@@ -2,7 +2,7 @@
 // Asserts the Desk AI-tutor copy button is wired, start-here has the new
 // AI-tutor section, study_guide_diagnostic.html loads the §6.4 shared
 // clients and stamps student_id on both /api/ai/grade call sites, and the
-// graded-FRQ path fires a gradebookClient.record('frq_studyguide', ...).
+// graded-FRQ path fires a gradebookClient.record({ source: 'pc', ... }).
 // Also asserts all 75 ai-tutor/u{u}_{l{N},pc}.md artifacts exist.
 //
 // @vitest-environment node
@@ -331,16 +331,24 @@ describe('study_guide_diagnostic.html — Phase 5 §6.4 adoption', () => {
     expect(SG).toMatch(/window\.rosterClient\s*&&\s*typeof\s+window\.rosterClient\.studentId/);
   });
 
-  it('graded-FRQ path fires a fire-and-forget gradebookClient.record({ source: "frq_studyguide", ... })', () => {
+  it('graded-FRQ path fires a fire-and-forget gradebookClient.record({ source: "pc", ... })', () => {
     expect(SG).toMatch(/window\.gradebookClient\s*\.\s*record/);
-    expect(SG).toMatch(/source\s*:\s*['"]frq_studyguide['"]/);
+    // 'pc' is the only enum-legal source for these U{n}-PC-FRQ-Q0x itemIds;
+    // the original 'frq_studyguide' was not in the item_ledger source CHECK,
+    // so Postgres rejected every insert. Grade-neutral: the answer key has no
+    // FRQ entries, so scoreAgainstKey leaves these out of the PC% denominator.
+    expect(SG).toMatch(/source\s*:\s*['"]pc['"]/);
+    expect(SG, 'the rejected frq_studyguide source must not come back').not.toMatch(/source\s*:\s*['"]frq_studyguide['"]/);
+    // item_ledger.score is numeric — the raw E/P/I verdict letter would also be
+    // rejected by Postgres. Pin the worksheet (DN2b) E:1/P:0.5/I:0 mapping.
+    expect(SG, 'record must map the E/P/I verdict to a numeric score').toMatch(/score\s*:\s*\(\{\s*E\s*:\s*1\s*,\s*P\s*:\s*0\.5\s*,\s*I\s*:\s*0\s*\}\)\s*\[\s*result\.score\s*\]/);
   });
 
   it('the new record call is wrapped in try/catch AND chains .catch on the returned promise', () => {
-    // Slice from the source: 'frq_studyguide' marker outward so we test the
-    // exact new call site (not the unrelated railwayClient.submitAnswer block).
-    const sourceIdx = SG.indexOf("source:'frq_studyguide'");
-    const sourceIdxAlt = SG.indexOf('source: "frq_studyguide"');
+    // Slice from the source: 'pc' marker outward so we test the exact new
+    // call site (not the unrelated railwayClient.submitAnswer block).
+    const sourceIdx = SG.indexOf("source:'pc'");
+    const sourceIdxAlt = SG.indexOf('source: "pc"');
     const recordIdx = sourceIdx >= 0 ? sourceIdx : sourceIdxAlt;
     expect(recordIdx, 'gradebookClient.record call site must exist').toBeGreaterThan(0);
     // Look backward up to ~400 chars for the enclosing try { … and forward
@@ -363,8 +371,8 @@ describe('study_guide_diagnostic.html — Phase 5 §6.4 adoption', () => {
     expect(focusBlock).not.toMatch(/gradebookClient\s*\.\s*record/);
   });
 
-  it('gradebookClient.record uses gateId(unit) as itemId (canonical study-guide question id)', () => {
-    expect(SG).toMatch(/itemId\s*:\s*gateId\s*\(\s*unit\s*\)/);
+  it("gradebookClient.record uses gateId(unit)+'-SG' as itemId (suffix keeps study-guide rows off a future proctored PC-FRQ feeder's upsert key)", () => {
+    expect(SG).toMatch(/itemId\s*:\s*gateId\s*\(\s*unit\s*\)\s*\+\s*'-SG'/);
   });
 });
 

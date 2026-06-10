@@ -2160,6 +2160,40 @@
     };
   }
 
+  function recordTrainerAttempt(walkthrough) {
+    if (typeof window.gradebookClient?.record !== 'function') {
+      return;
+    }
+
+    // Signed-out users skip recording entirely. Calling record() without a token
+    // would pop gradebook-client's red "not saved to your grade" nudge — wrong for
+    // a tool that always worked anonymously (and the nudge's sign-in link 404s
+    // from this subdirectory).
+    if (typeof window.rosterClient?.current !== 'function' || !window.rosterClient.current()) {
+      return;
+    }
+
+    const procedure = PROCEDURE_BY_ID[walkthrough.procedureId];
+    const quality = ensureProcedureRecord(walkthrough.procedureId).track2.lastQuality ?? 0;
+
+    // Fire-and-forget roster ledger write; attempt stays 1 so re-practice
+    // upserts the same row (latest state per procedure).
+    window.gradebookClient.record({
+      source: 'trainer',
+      itemId: `TI84-${walkthrough.procedureId.replace(/[^A-Za-z0-9-]/g, '-')}`,
+      unit: Number.isFinite(procedure?.unit) ? `U${procedure.unit}` : undefined,
+      response: {
+        procedureId: walkthrough.procedureId,
+        quality,
+        mode: walkthrough.mode,
+        hints: walkthrough.hints,
+        errors: walkthrough.errors,
+      },
+      score: quality / 5, // SM-2 quality 0–5 normalized to 0..1
+      attempt: 1,
+    });
+  }
+
   function track1QualityForBranches(branchCount) {
     if (branchCount <= 0) {
       return 5;
@@ -2186,6 +2220,7 @@
     resetClutchState();
 
     const track2Summary = applyTrack2Outcome(walkthrough);
+    recordTrainerAttempt(walkthrough);
 
     if (walkthrough.sourceKind === 'branch') {
       applyTrack1Outcome(walkthrough.procedureId, 2);

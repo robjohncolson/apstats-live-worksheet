@@ -151,6 +151,11 @@ function makeOpenCloseSandbox(modalDisplay) {
   };
   createContext(sandbox);
   const code =
+    // The Desk defines _sdmHistoryEpoch at module scope; without it the eval'd
+    // _fetchStudentDmHistory rejects ("_sdmHistoryEpoch is not defined") as an
+    // unhandled rejection that fails the suite's exit code. The fetch-cycle
+    // sandbox further down already defines it.
+    'var _sdmHistoryEpoch = 0;\n' +
     fnBody(html, '_closeStudentDmModal') + '\n' +
     fnBody(html, '_fetchStudentDmHistory') + '\n' +
     fnBody(html, '_buildSdmHistoryLi') + '\n' +
