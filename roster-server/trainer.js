@@ -23,7 +23,7 @@ const DECK_ID_RE = /^[a-z0-9-]{1,64}$/;
 // this, any valid student token could create unlimited ~256 KB rows under
 // arbitrary deckIds on the SHARED grade-pipeline Supabase. Reads stay
 // regex-only — an unknown deck just answers found:false.
-const DECK_ALLOWLIST = String(process.env.TRAINER_DECK_ALLOWLIST || 'ap-stats-formulas,joyo-kanji')
+const DECK_ALLOWLIST = String(process.env.TRAINER_DECK_ALLOWLIST || 'ap-stats-formulas,joyo-kanji,jlpt-n5')
   .split(',').map(s => s.trim()).filter(Boolean);
 
 // 256 KB cap on a serialized state (or delta). The kanji deck's compact SRS

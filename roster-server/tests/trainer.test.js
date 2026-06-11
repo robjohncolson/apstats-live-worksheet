@@ -638,6 +638,14 @@ describe('deck allowlist', () => {
     expect(status).toBe(200);
     expect(body).toEqual({ ok: true, found: false });
   });
+
+  it('PUT to the jlpt-n5 deck is allowlisted → 200 insert with updatedAt', async () => {
+    const { status, body } = await putState({ v: 1, hs: 1 }, { deckId: 'jlpt-n5' });
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(typeof body.updatedAt).toBe('string');
+  });
 });
 
 // ── 42P01 → 503 on every route (migration 0017 not run) ──────────────────────
