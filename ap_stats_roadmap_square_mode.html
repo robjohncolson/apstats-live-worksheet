@@ -1468,6 +1468,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-roster-console.html','_blank')">&#128221; Roster Console</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-classroom.html','_blank')">&#128101; Live Classroom</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('https://robjohncolson.github.io/curriculum_render/verify.html','_blank','noopener')">&#129534; Verify a receipt...</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
         </div>
@@ -1833,6 +1834,20 @@
     </div>
 </div>
 
+<!-- Receipt verification modal. Read-only: displays locally captured desk_receipts_v1
+     records from gradebook-client.js without touching ledger or grade caches. -->
+<div id="my-receipts-overlay" class="dialog-overlay" style="display:none" onclick="if(event.target===this)closeMyReceipts()">
+    <div class="dialog-box" style="max-width:430px;width:92%;text-align:left;padding:12px 16px">
+        <div class="chicago" style="font-size:12px;margin-bottom:8px;border-bottom:1px solid var(--black);padding-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span>My Receipts</span>
+        </div>
+        <div id="my-receipts-body" class="geneva" style="font-size:11px;max-height:62vh;overflow-y:auto"></div>
+        <div style="text-align:right;margin-top:10px">
+            <button class="s7btn s7btn-default" onclick="closeMyReceipts()">OK</button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Blooket Flashcard Quiz (2026-05-20) ═══
      Chain-of-custody verification for Blooket completion. Sources the
      question set from the same _blooket.csv that built the Blooket game.
@@ -1997,6 +2012,7 @@
 <!-- Gradebook ledger feeder — _studentMarkSave's DESK_DONE write needs it. Reads
      rosterClient at call time, so it loads after roster-client.js (worksheet order). -->
 <script src="gradebook-client.js"></script>
+<script src="lib/qrcode.min.js"></script>
 <script src="canvas_engine.js"></script>
 <script src="sprite_sheet.js"></script>
 <script src="classroom-board.js"></script>
@@ -6563,6 +6579,18 @@ async function renderDoNowGrades(baseUrl, token) {
         host.appendChild(gbChip);
     }
 
+    var receiptsChip = document.createElement('span');
+    receiptsChip.setAttribute('role', 'button');
+    receiptsChip.setAttribute('tabindex', '0');
+    receiptsChip.title = 'See receipts captured for your recorded work';
+    receiptsChip.textContent = '🧾 My Receipts';
+    receiptsChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
+    receiptsChip.onclick = function () { if (typeof openMyReceipts === 'function') openMyReceipts(); };
+    receiptsChip.onkeydown = function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openMyReceipts === 'function') openMyReceipts(); }
+    };
+    host.appendChild(receiptsChip);
+
     // Teacher parity: a "Class Gradebook" chip alongside the student's own, so a
     // teacher reaches the class view the same way students reach their grade.
     // (Also available under the Teacher menu.) Hidden while previewing-as-student.
@@ -9961,6 +9989,182 @@ function closeGradeHelp() {
 // grid uses, so the numbers match. Shows both totals (live v3 grade + Schoology
 // report-card estimate) + the plain-English why + every component cell grouped by
 // Schoology category. Mirrors the Day Grade modal's open/close + Esc handling.
+// -- My Receipts Modal ---------------------------------------------------------
+var _myReceiptsKeyHandler = null;
+
+function _attachMyReceiptsKeyHandler() {
+    _detachMyReceiptsKeyHandler();
+    _myReceiptsKeyHandler = function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeMyReceipts(); }
+    };
+    document.addEventListener('keydown', _myReceiptsKeyHandler);
+}
+function _detachMyReceiptsKeyHandler() {
+    if (_myReceiptsKeyHandler) {
+        document.removeEventListener('keydown', _myReceiptsKeyHandler);
+        _myReceiptsKeyHandler = null;
+    }
+}
+
+function _readDeskReceipts() {
+    try {
+        var raw = window.localStorage && window.localStorage.getItem('desk_receipts_v1');
+        var rows = raw ? JSON.parse(raw) : [];
+        return Array.isArray(rows) ? rows.filter(function (r) { return r && r.compact; }) : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function _receiptVerifyUrl(r) {
+    return 'https://robjohncolson.github.io/curriculum_render/verify.html#r=' + encodeURIComponent(r.compact || '');
+}
+
+function _receiptPayload(r) {
+    try {
+        var part = String((r && r.compact) || '').split('.')[0];
+        if (!part) return null;
+        part = part.replace(/-/g, '+').replace(/_/g, '/');
+        while (part.length % 4) part += '=';
+        return JSON.parse(decodeURIComponent(escape(atob(part))));
+    } catch (_) {
+        return null;
+    }
+}
+
+function _receiptSourceIcon(src) {
+    var s = String(src || '').toLowerCase();
+    if (s === 'worksheet') return '📝';
+    if (s === 'frq') return '✍';
+    if (s === 'blooket') return '🎮';
+    if (s === 'trainer') return '🏋';
+    if (s === 'curriculum_quiz' || s === 'quiz_review' || s === 'quiz_exception') return '✓';
+    if (s === 'pc') return '📈';
+    return '🧾';
+}
+
+function _formatReceiptDate(ts) {
+    var n = Number(ts);
+    if (!isFinite(n)) return '';
+    try { return new Date(n).toLocaleString(); } catch (_) { return ''; }
+}
+
+function _isProctoredReceipt(r) {
+    var p = _receiptPayload(r) || {};
+    return String((r && (r.e || r.evidenceTier || r.tier)) || p.e || '').toLowerCase() === 'proctored';
+}
+
+function _renderReceiptQr(slot, url) {
+    if (!slot || slot.getAttribute('data-made') === '1') return;
+    slot.setAttribute('data-made', '1');
+    try {
+        if (typeof QRCode === 'function') {
+            new QRCode(slot, { text: url, width: 96, height: 96, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+        }
+    } catch (_) {}
+}
+
+function _toggleReceiptQr(btn, slot, url) {
+    if (!slot) return;
+    var showing = slot.style.display !== 'none';
+    slot.style.display = showing ? 'none' : 'block';
+    if (btn) btn.textContent = showing ? 'QR' : 'Hide QR';
+    if (!showing) _renderReceiptQr(slot, url);
+}
+
+function renderMyReceipts() {
+    var body = document.getElementById('my-receipts-body');
+    if (!body) return;
+    body.innerHTML = '';
+    var rows = _readDeskReceipts();
+    if (!rows.length) {
+        var empty = document.createElement('div');
+        empty.style.cssText = 'padding:10px 4px;color:#555';
+        empty.textContent = 'No receipts yet — receipts appear as your work is recorded.';
+        body.appendChild(empty);
+        return;
+    }
+    rows.forEach(function (r) {
+        var payload = _receiptPayload(r) || {};
+        var url = _receiptVerifyUrl(r);
+        var row = document.createElement('div');
+        row.style.cssText = 'border:1px solid #777;background:#fff;margin:0 0 6px;padding:6px;box-shadow:1px 1px 0 #aaa';
+
+        var top = document.createElement('div');
+        top.style.cssText = 'display:flex;gap:6px;align-items:flex-start;justify-content:space-between';
+
+        var main = document.createElement('div');
+        main.style.cssText = 'min-width:0;line-height:1.35';
+        var title = document.createElement('div');
+        title.style.cssText = 'font-weight:bold;word-break:break-word';
+        title.textContent = _receiptSourceIcon(r.src || payload.src) + ' ' + (r.i || payload.i || 'Receipt');
+        main.appendChild(title);
+
+        var meta = document.createElement('div');
+        meta.style.cssText = 'color:#444;word-break:break-word';
+        var parts = [];
+        var score = r.sc;
+        if ((score === undefined || score === null || score === '') && payload.sc !== undefined) score = payload.sc;
+        if (score !== undefined && score !== null && score !== '') parts.push('score ' + score);
+        var date = _formatReceiptDate(r.ts || payload.ts);
+        if (date) parts.push(date);
+        if (r.id) parts.push(String(r.id).slice(0, 12));
+        meta.textContent = parts.join(' • ');
+        main.appendChild(meta);
+
+        if (_isProctoredReceipt(r)) {
+            var badge = document.createElement('span');
+            badge.style.cssText = 'display:inline-block;margin-top:4px;padding:1px 5px;border:1px solid #000;background:#ddd;font-size:10px';
+            badge.textContent = 'proctored';
+            main.appendChild(badge);
+        }
+
+        var actions = document.createElement('div');
+        actions.style.cssText = 'white-space:nowrap;text-align:right';
+        var verify = document.createElement('a');
+        verify.href = url;
+        verify.target = '_blank';
+        verify.rel = 'noopener';
+        verify.style.cssText = 'color:#0000cc;text-decoration:underline';
+        verify.textContent = 'Verify ✓';
+        actions.appendChild(verify);
+        actions.appendChild(document.createTextNode(' '));
+        var qrBtn = document.createElement('button');
+        qrBtn.className = 's7btn';
+        qrBtn.type = 'button';
+        qrBtn.style.cssText = 'font-size:10px;padding:1px 5px';
+        qrBtn.textContent = 'QR';
+        actions.appendChild(qrBtn);
+
+        top.appendChild(main);
+        top.appendChild(actions);
+        row.appendChild(top);
+
+        var qr = document.createElement('div');
+        qr.style.cssText = 'display:none;margin-top:6px';
+        row.appendChild(qr);
+        qrBtn.onclick = function () { _toggleReceiptQr(qrBtn, qr, url); };
+
+        body.appendChild(row);
+    });
+}
+
+function openMyReceipts() {
+    var ov = document.getElementById('my-receipts-overlay');
+    if (!ov) return;
+    renderMyReceipts();
+    ov.style.display = 'block';
+    _attachMyReceiptsKeyHandler();
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+}
+
+function closeMyReceipts() {
+    _detachMyReceiptsKeyHandler();
+    var ov = document.getElementById('my-receipts-overlay');
+    if (ov) ov.style.display = 'none';
+}
+
 var _myGradebookQuarter = null;
 // The gradebook the modal is CURRENTLY showing. For a student it's their own
 // (= _gradeGradebookCache); for the teacher Class Gradebook it's the picked

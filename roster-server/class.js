@@ -16,6 +16,7 @@ import { computeMastery } from './mastery.js';
 import { buildGradebook } from './gradebook-grid.js';
 import { todayInTz } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
+import { issueLedgerReceipt } from './receipts.js';
 
 // Pull all roster rows for the (optional) section, defensively.
 async function listRoster(db, section) {
@@ -267,6 +268,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
 
     let recorded = 0;
     let skipped = 0;
+    const receipts = {};
     const errors = [];
 
     for (let i = 0; i < body.entries.length; i++) {
@@ -316,9 +318,21 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
       }
 
       recorded += 1;
+      const receipt = issueLedgerReceipt({
+        studentId,
+        source: 'blooket',
+        itemId,
+        score,
+        attempt: 1,
+        evidenceTier: 'practice',
+        response: { correct, attempted, total }
+      });
+      if (receipt) receipts[`${itemId}:${studentId}`] = receipt;
     }
 
-    return res.json({ ok: true, itemId, recorded, skipped, errors });
+    const bodyOut = { ok: true, itemId, recorded, skipped, errors };
+    if (Object.keys(receipts).length) bodyOut.receipts = receipts;
+    return res.json(bodyOut);
   });
 
   // ── GET /class/mastery?section= ─────────────────────────────────────────────

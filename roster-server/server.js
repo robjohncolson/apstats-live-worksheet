@@ -32,6 +32,7 @@ import { encryptPassword, decryptPassword } from './crypto.js';
 import { requireTeacher, getTeacherKey } from './teacher-auth.js';
 import { getOpenSections, isOpenSection } from './signup-config.js';
 import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
+import { initReceipts, mountReceipts } from './receipts.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -56,6 +57,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // hop count ignores any client-supplied XFF prefix. If Railway's proxy depth
   // changes, log req.ip for a known client and set the smallest matching value.
   app.set('trust proxy', 1);
+  initReceipts();
+  mountReceipts(app);
 
   // Per-IP throttle for the un-authed self-signup claim. Generous on purpose: a
   // whole class shares one school NAT, so a low cap would block real students.

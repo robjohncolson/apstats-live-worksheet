@@ -8,6 +8,8 @@
 // pre-migration condition maps to 503; every other DB error is a real 500.
 // Without this, a check_violation surfaces as a generic 500 "Database error"
 // and the writer dies silently (how study_guide_diagnostic was lost for weeks).
+import { issueLedgerReceipt } from './receipts.js';
+
 function isSourceNotProvisioned(e) {
   if (!e) return false;
   const code = String(e.code || '');
@@ -79,11 +81,23 @@ export function mountLedger(app, { db, verifyToken }) {
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
 
-    return res.json({
+    const body = {
       ok: true,
       ledgerId:     data.ledger_id,
       evidenceTier: data.evidence_tier
+    };
+    const receipt = issueLedgerReceipt({
+      studentId,
+      source,
+      itemId,
+      score,
+      attempt: attempt ?? 1,
+      evidenceTier: data.evidence_tier,
+      response
     });
+    if (receipt) body.receipt = receipt;
+
+    return res.json(body);
   });
 
   // ── GET /ledger/student/:studentId ──────────────────────────────────────────

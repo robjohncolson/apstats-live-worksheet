@@ -1,12 +1,12 @@
-/**
- * Tests for gradebook-client.js (Workstream C — Gradebook Sprint 1)
+﻿/**
+ * Tests for gradebook-client.js (Workstream C â€” Gradebook Sprint 1)
  *
- * Coverage per build doc §3 (WS-C expectations):
- * - no-identity → no-op, NO fetch issued
- * - happy path: posts to ${ROSTER_SERVICE_URL}/ledger/record with token in body → { ok:true, ledgerId }
- * - fetch rejects → { ok:false, reason:'network' } and the call does NOT throw
- * - HTTP 500 / server ok:false → { ok:false, reason:'network' }
- * - missing required args (source/itemId/response) → { ok:false, reason:'bad-args' }
+ * Coverage per build doc Â§3 (WS-C expectations):
+ * - no-identity â†’ no-op, NO fetch issued
+ * - happy path: posts to ${ROSTER_SERVICE_URL}/ledger/record with token in body â†’ { ok:true, ledgerId }
+ * - fetch rejects â†’ { ok:false, reason:'network' } and the call does NOT throw
+ * - HTTP 500 / server ok:false â†’ { ok:false, reason:'network' }
+ * - missing required args (source/itemId/response) â†’ { ok:false, reason:'bad-args' }
  * - reads ROSTER_SERVICE_URL and token at call time (override mid-test)
  * - NO secret literals in gradebook-client.js source
  * - NO 'x-proctor-secret' anywhere in gradebook-client.js source (L-C)
@@ -19,14 +19,14 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
 
-// ─── load source as text (for literal-scan assertions) ───────────────────────
+// â”€â”€â”€ load source as text (for literal-scan assertions) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const REPO_ROOT    = resolve(import.meta.dirname, '..');
 const CLIENT_SRC   = readFileSync(resolve(REPO_ROOT, 'gradebook-client.js'), 'utf8');
 const ROSTER_SRC   = readFileSync(resolve(REPO_ROOT, 'roster-client.js'),    'utf8');
 const CONFIG_SRC   = readFileSync(resolve(REPO_ROOT, 'roster_config.js'),    'utf8');
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const STORAGE_KEY = 'apstats_roster.v1';
 
@@ -88,14 +88,14 @@ function mockFetch(win, responseBody, { ok = true, status = 200 } = {}) {
   return fn;
 }
 
-// ─── tests ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ tests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// ── 1. No-identity → immediate no-op, fetch NEVER called ─────────────────────
+// â”€â”€ 1. No-identity â†’ immediate no-op, fetch NEVER called â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-describe('gradebook-client.js — no-identity (no token)', () => {
+describe('gradebook-client.js â€” no-identity (no token)', () => {
   it('returns { ok:false, reason:"no-identity" } when rosterClient.token() returns null', async () => {
     const { win, gradebookClient } = makeWindow();
-    // No session in localStorage → token() returns null
+    // No session in localStorage â†’ token() returns null
     const fetchFn = vi.fn();
     win.fetch = fetchFn;
 
@@ -159,9 +159,9 @@ describe('gradebook-client.js — no-identity (no token)', () => {
   });
 });
 
-// ── 2. Happy path ─────────────────────────────────────────────────────────────
+// â”€â”€ 2. Happy path â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-describe('gradebook-client.js — happy path', () => {
+describe('gradebook-client.js â€” happy path', () => {
   it('POSTs to ${ROSTER_SERVICE_URL}/ledger/record and returns { ok:true, ledgerId }', async () => {
     const { win, gradebookClient } = makeWindow('https://mock-service.test');
     setToken(win, 'signed.token.abc');
@@ -244,7 +244,7 @@ describe('gradebook-client.js — happy path', () => {
       response: null
     });
 
-    expect(result).toEqual({ ok: true, ledgerId: 'uuid-null' });
+    expect(result).toEqual({ ok: true, ledgerId: 'uuid-null', receipt: null });
 
     const [, options] = fetchFn.mock.calls[0];
     const body = JSON.parse(options.body);
@@ -281,9 +281,9 @@ describe('gradebook-client.js — happy path', () => {
   });
 });
 
-// ── 3. Network / server errors → { ok:false, reason:'network' }, never throw ──
+// â”€â”€ 3. Network / server errors â†’ { ok:false, reason:'network' }, never throw â”€â”€
 
-describe('gradebook-client.js — network and server errors', () => {
+describe('gradebook-client.js â€” network and server errors', () => {
   it('returns { ok:false, reason:"network" } when fetch rejects', async () => {
     const { win, gradebookClient } = makeWindow();
     setToken(win, 'tok');
@@ -359,9 +359,9 @@ describe('gradebook-client.js — network and server errors', () => {
   });
 });
 
-// ── 4. Missing / invalid required args → bad-args ─────────────────────────────
+// â”€â”€ 4. Missing / invalid required args â†’ bad-args â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-describe('gradebook-client.js — argument validation (bad-args)', () => {
+describe('gradebook-client.js â€” argument validation (bad-args)', () => {
   it('returns bad-args when source is missing', async () => {
     const { win, gradebookClient } = makeWindow();
     setToken(win, 'tok');
@@ -423,7 +423,7 @@ describe('gradebook-client.js — argument validation (bad-args)', () => {
     // When args are bad, we should get bad-args regardless of identity state.
     // This test intentionally has no token AND bad args.
     const { win, gradebookClient } = makeWindow();
-    // No session → token() = null, but args are also missing
+    // No session â†’ token() = null, but args are also missing
     const fetchFn = vi.fn();
     win.fetch = fetchFn;
 
@@ -434,9 +434,9 @@ describe('gradebook-client.js — argument validation (bad-args)', () => {
   });
 });
 
-// ── 5. Reads URL and token at call time (not module load) ─────────────────────
+// â”€â”€ 5. Reads URL and token at call time (not module load) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-describe('gradebook-client.js — reads URL and token at call time', () => {
+describe('gradebook-client.js â€” reads URL and token at call time', () => {
   it('uses the ROSTER_SERVICE_URL value present at call time, not at load time', async () => {
     const { win, gradebookClient } = makeWindow('https://original.test');
     setToken(win, 'tok');
@@ -478,7 +478,7 @@ describe('gradebook-client.js — reads URL and token at call time', () => {
     // Clear the session (sign out)
     win.localStorage.removeItem(STORAGE_KEY);
 
-    // Second call — no identity
+    // Second call â€” no identity
     const r2 = await gradebookClient.record({ source: 'worksheet', itemId: 'Q2', response: 'ans2' });
     expect(r2.ok).toBe(false);
     expect(r2.reason).toBe('no-identity');
@@ -487,7 +487,7 @@ describe('gradebook-client.js — reads URL and token at call time', () => {
   });
 });
 
-// ── 6. Security: no secret / x-proctor-secret literals in source ─────────────
+// â”€â”€ 6. Security: no secret / x-proctor-secret literals in source â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Security: no secret literals or x-proctor-secret in gradebook-client.js', () => {
   it('contains no x-proctor-secret string literal', () => {
@@ -513,11 +513,11 @@ describe('Security: no secret literals or x-proctor-secret in gradebook-client.j
   });
 });
 
-// ── 7. fetchPrior — PERSISTENT_ANSWERS_BUILD.md §4 ───────────────────────────
+// â”€â”€ 7. fetchPrior â€” PERSISTENT_ANSWERS_BUILD.md Â§4 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // fetchPrior(prefix) NEVER throws. NEVER rejects. Always resolves to a Map.
 
-describe('gradebook-client.js — fetchPrior (no identity)', () => {
+describe('gradebook-client.js â€” fetchPrior (no identity)', () => {
   it('returns an empty Map when not signed in', async () => {
     const { win, gradebookClient } = makeWindow('https://mock.test');
     const fetchFn = vi.fn();
@@ -560,7 +560,7 @@ describe('gradebook-client.js — fetchPrior (no identity)', () => {
   });
 });
 
-describe('gradebook-client.js — fetchPrior (bad args)', () => {
+describe('gradebook-client.js â€” fetchPrior (bad args)', () => {
   it('returns an empty Map when prefix is missing', async () => {
     const { win, gradebookClient } = makeWindow('https://mock.test');
     setToken(win, 'tok');
@@ -610,7 +610,7 @@ describe('gradebook-client.js — fetchPrior (bad args)', () => {
   });
 });
 
-describe('gradebook-client.js — fetchPrior (network / server errors)', () => {
+describe('gradebook-client.js â€” fetchPrior (network / server errors)', () => {
   it('returns an empty Map when fetch rejects', async () => {
     const { win, gradebookClient } = makeWindow('https://mock.test');
     setToken(win, 'tok');
@@ -643,7 +643,7 @@ describe('gradebook-client.js — fetchPrior (network / server errors)', () => {
   it('returns an empty Map when ROSTER_SERVICE_URL is not set', async () => {
     const { win, gradebookClient } = makeWindow('https://mock.test');
     setToken(win, 'tok');
-    // roster_config.js falls back to a prod URL by default — clear it AFTER load.
+    // roster_config.js falls back to a prod URL by default â€” clear it AFTER load.
     win.ROSTER_SERVICE_URL = null;
     const fetchFn = vi.fn();
     win.fetch = fetchFn;
@@ -685,8 +685,8 @@ describe('gradebook-client.js — fetchPrior (network / server errors)', () => {
   });
 });
 
-describe('gradebook-client.js — fetchPrior (happy path / dedup)', () => {
-  it('returns a Map of itemId → {response, score, source} on success', async () => {
+describe('gradebook-client.js â€” fetchPrior (happy path / dedup)', () => {
+  it('returns a Map of itemId â†’ {response, score, source} on success', async () => {
     const { win, gradebookClient } = makeWindow('https://mock.test');
     setToken(win, 'session.token.abc');
 
@@ -767,7 +767,7 @@ describe('gradebook-client.js — fetchPrior (happy path / dedup)', () => {
     const [url, opts] = fetchFn.mock.calls[0];
     // Prefix is URL-encoded in the query string.
     expect(url).toContain('prefix=WS-U4L1-2');
-    // Token is carried in the Authorization header, verbatim — never the URL.
+    // Token is carried in the Authorization header, verbatim â€” never the URL.
     expect(url).not.toContain('token=');
     expect(opts.headers.Authorization).toBe('Bearer tok+with/special=chars');
   });
@@ -790,7 +790,7 @@ describe('gradebook-client.js — fetchPrior (happy path / dedup)', () => {
   });
 });
 
-describe('gradebook-client.js — fetchPrior (source-level contract)', () => {
+describe('gradebook-client.js â€” fetchPrior (source-level contract)', () => {
   it('source contains a fetchPrior function on window.gradebookClient', () => {
     expect(CLIENT_SRC).toContain('fetchPrior');
     expect(CLIENT_SRC).toContain('function (prefix)');
@@ -812,13 +812,13 @@ describe('gradebook-client.js — fetchPrior (source-level contract)', () => {
   });
 });
 
-// ── 8. No-identity nudge (defense-in-depth backstop) ─────────────────────────
+// â”€â”€ 8. No-identity nudge (defense-in-depth backstop) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // A dropped write must NEVER be silent: when record() can't find an identity,
 // it shows a one-time visible banner so the student knows their work isn't
 // saving (the cause of a worksheet's score "disappearing").
 
-describe('gradebook-client.js — no-identity nudge', () => {
+describe('gradebook-client.js â€” no-identity nudge', () => {
   it('shows a visible nudge banner when a write is dropped for no-identity', async () => {
     const { win, gradebookClient } = makeWindow();
     await gradebookClient.record({ source: 'worksheet', itemId: 'WS-U1L1-Q1', response: 'ans' });
@@ -877,7 +877,7 @@ describe('gradebook-client.js — no-identity nudge', () => {
   });
 });
 
-describe('gradebook-client.js — nudge source contract', () => {
+describe('gradebook-client.js â€” nudge source contract', () => {
   it('defines the nudge helper and keeps record() additive (signature unchanged)', () => {
     expect(CLIENT_SRC).toContain('_showNoIdentityNudge');
     expect(CLIENT_SRC).toContain('record: async function (opts)');
