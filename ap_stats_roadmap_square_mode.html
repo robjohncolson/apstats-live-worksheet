@@ -762,7 +762,12 @@
             display: none;
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             z-index: 250;
-            background: rgba(85, 85, 102, 0.85);
+            /* Non-modal: a transparent, click-through backdrop so app windows
+               float over the schedule instead of covering it — multiple windows
+               can be open and used at once. The window itself re-enables
+               pointer-events; clicks in the gaps fall through to the desktop. */
+            background: transparent;
+            pointer-events: none;
         }
         .app-window {
             position: absolute;
@@ -773,6 +778,7 @@
             height: 80vh;
             max-height: 90vh;
             z-index: 251;
+            pointer-events: auto;
             background: var(--platinum);
             border: 1px solid var(--black);
             box-shadow:
@@ -1442,6 +1448,9 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('ti84')" style="font-weight:bold">&#128290; TI-84 Trainer</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('quiz')" style="font-weight:bold">&#128221; AP Stats Quiz</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openGame==='function')openGame()" style="font-weight:bold">&#127918; Study Break</div>
+            <div class="menu-dd-sep"></div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold">&#128091; My Wallet</div>
             <!-- Driller deprecated — removed 2026-05 -->
             <!-- <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openProgress()" style="font-weight:bold">&#128202; My Progress</div> -->
@@ -13774,6 +13783,89 @@ document.querySelectorAll('.app-overlay').forEach(function(overlay) {
         var tb = dragWin.querySelector('.game-title-bar');
         if (tb) tb.style.cursor = 'grab';
         dragWin = null;
+    });
+})();
+
+
+/* ═══ Desktop multitasking: click-to-focus + icon right-click menu ═══ */
+(function() {
+    // Click-to-focus: clicking anywhere in an app window raises it above the
+    // other open windows (capture phase so it runs even when a child handler
+    // stops propagation). Cross-origin iframes don't bubble mousedown to us, so
+    // raising those is done via their title bar — which is enough.
+    var _appTopZ = 260;
+    document.addEventListener('mousedown', function(e) {
+        var win = (e.target && e.target.closest) ? e.target.closest('.app-window') : null;
+        if (!win) return;
+        var ov = win.closest('.app-overlay');
+        if (ov) ov.style.zIndex = ++_appTopZ;
+    }, true);
+
+    // Right-click an app icon → Open / Open in new tab (iframe apps only).
+    function _deskLaunch(id) {
+        if (id === 'wallet') { if (typeof openWallet === 'function') openWallet(); return; }
+        if (id === 'game')   { if (typeof openGame === 'function') openGame(); return; }
+        if (typeof openApp === 'function') openApp(id);
+    }
+    function _deskAppUrl(id) {
+        try { return (typeof APP_REGISTRY !== 'undefined' && APP_REGISTRY[id]) ? APP_REGISTRY[id].url : null; }
+        catch (_) { return null; }
+    }
+
+    var _iconMenu = null;
+    function _closeIconMenu() {
+        if (_iconMenu) { _iconMenu.remove(); _iconMenu = null; }
+        document.removeEventListener('mousedown', _onDocDown, true);
+        document.removeEventListener('keydown', _onKey, true);
+        window.removeEventListener('scroll', _closeIconMenu, true);
+    }
+    function _onDocDown(e) { if (_iconMenu && !_iconMenu.contains(e.target)) _closeIconMenu(); }
+    function _onKey(e) { if (e.key === 'Escape') _closeIconMenu(); }
+
+    function _showIconMenu(x, y, id) {
+        _closeIconMenu();
+        var labelEl = document.querySelector('.app-icon[data-app="' + id + '"] .icon-label');
+        var label = labelEl ? (labelEl.textContent || '') : '';
+        var url = _deskAppUrl(id);
+
+        var menu = document.createElement('div');
+        menu.className = 'chicago';
+        menu.style.cssText = 'position:fixed;z-index:20000;min-width:160px;background:#fff;'
+            + 'border:1px solid #000;box-shadow:2px 2px 0 rgba(0,0,0,0.4);padding:2px 0;'
+            + 'font-size:12px;cursor:default;user-select:none';
+
+        var items = [{ txt: '🗂 Open' + (label ? ' ' + label : ''), fn: function() { _deskLaunch(id); } }];
+        if (url) items.push({ txt: '↗ Open in new tab', fn: function() { try { window.open(url, '_blank', 'noopener'); } catch (_) {} } });
+
+        items.forEach(function(it) {
+            var d = document.createElement('div');
+            d.textContent = it.txt;
+            d.style.cssText = 'padding:4px 16px;white-space:nowrap';
+            d.onmouseenter = function() { d.style.background = '#000'; d.style.color = '#fff'; };
+            d.onmouseleave = function() { d.style.background = ''; d.style.color = ''; };
+            d.onclick = function() { _closeIconMenu(); it.fn(); };
+            menu.appendChild(d);
+        });
+
+        document.body.appendChild(menu);
+        var r = menu.getBoundingClientRect();
+        menu.style.left = Math.max(4, Math.min(x, window.innerWidth - r.width - 6)) + 'px';
+        menu.style.top = Math.max(4, Math.min(y, window.innerHeight - r.height - 6)) + 'px';
+        _iconMenu = menu;
+        setTimeout(function() {
+            document.addEventListener('mousedown', _onDocDown, true);
+            document.addEventListener('keydown', _onKey, true);
+            window.addEventListener('scroll', _closeIconMenu, true);
+        }, 0);
+    }
+
+    document.querySelectorAll('.app-icon').forEach(function(icon) {
+        icon.addEventListener('contextmenu', function(e) {
+            var id = icon.getAttribute('data-app');
+            if (!id) return;
+            e.preventDefault();
+            _showIconMenu(e.clientX, e.clientY, id);
+        });
     });
 })();
 
