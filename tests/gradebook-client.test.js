@@ -309,7 +309,7 @@ describe('gradebook-client.js â€” network and server errors', () => {
     ).resolves.not.toThrow();
   });
 
-  it('returns { ok:false, reason:"network" } on HTTP 500 (server error body)', async () => {
+  it('returns { ok:false, reason:"server" } on HTTP 500 (server error body)', async () => {
     const { win, gradebookClient } = makeWindow();
     setToken(win, 'tok');
     mockFetch(win, { ok: false, error: 'internal server error' }, { ok: false, status: 500 });
@@ -321,10 +321,10 @@ describe('gradebook-client.js â€” network and server errors', () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.reason).toBe('network');
+    expect(result.reason).toBe('server');
   });
 
-  it('returns { ok:false, reason:"network" } on HTTP 401 (bad token server-side)', async () => {
+  it('returns { ok:false, reason:"auth" } on HTTP 401 (bad token server-side)', async () => {
     const { win, gradebookClient } = makeWindow();
     setToken(win, 'expired-token');
     mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
@@ -336,10 +336,10 @@ describe('gradebook-client.js â€” network and server errors', () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.reason).toBe('network');
+    expect(result.reason).toBe('auth');
   });
 
-  it('returns { ok:false, reason:"network" } when JSON.parse of response throws', async () => {
+  it('returns { ok:false, reason:"server" } when a 200 response has an unparseable body', async () => {
     const { win, gradebookClient } = makeWindow();
     setToken(win, 'tok');
     win.fetch = vi.fn().mockResolvedValue({
@@ -355,7 +355,7 @@ describe('gradebook-client.js â€” network and server errors', () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.reason).toBe('network');
+    expect(result.reason).toBe('server');
   });
 });
 

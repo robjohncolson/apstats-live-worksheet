@@ -242,6 +242,19 @@
 
       // ── STAT > TESTS: chi-square ─────────────────────────────────────
 
+      case 'two-propztest-wizard': {
+        alt = getAlt('p1');
+        result = StatMath.twoPropZTest(int('x1'), int('n1'), int('x2'), int('n2'), alt);
+        resultScreenId = 'two-propztest-result';
+        return { resultScreenId: resultScreenId, computedValues: result, altHypothesis: alt };
+      }
+
+      case 'two-propzint-wizard': {
+        result = StatMath.twoPropZInt(int('x1'), int('n1'), int('x2'), int('n2'), num('C-Level'));
+        resultScreenId = 'two-propzint-result';
+        return { resultScreenId: resultScreenId, computedValues: result, altHypothesis: null };
+      }
+
       case 'chi2gof-wizard': {
         var obs = resolveList('Observed');
         var exp = resolveList('Expected');

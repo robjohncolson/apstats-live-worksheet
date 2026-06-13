@@ -6,7 +6,7 @@
 //
 // Implements FROZEN CONTRACT 3 (GRADEBOOK_PHASE1_BUILD.md):
 //   window.gradebookClient.record({ source, itemId, unit, topic, skill, response, score, attempt })
-//   → { ok:true, ledgerId } | { ok:false, reason:'no-identity'|'network'|'bad-args' }
+//   → { ok:true, ledgerId } | { ok:false, reason:'no-identity'|'network'|'server'|'auth'|'bad-args' }
 //
 // Decision L-D: fire-and-forget, no-ops without identity, NEVER throws/blocks the caller.
 // Decision L-C: No proctor header is ever sent — proctored evidence tier is server-gated only.
@@ -147,16 +147,30 @@
           body:    JSON.stringify(body)
         });
 
-        var data = await res.json();
+        var data = null;
+        try {
+          data = await res.json();
+        } catch (_) {
+          data = null;
+        }
 
         if (data && data.ok) {
           _captureReceipt(data.receipt, source, itemId, opts.score);
           return { ok: true, ledgerId: data.ledgerId, receipt: data.receipt || null };
         }
 
-        // Server returned ok:false (e.g. 400/401) — treat as network failure
+        if (res && (res.status === 401 || res.status === 403)) {
+          console.warn('gradebook-client: auth failed', data);
+          return { ok: false, reason: 'auth' };
+        }
+
+        if (res && !res.ok) {
+          console.warn('gradebook-client: server error', data);
+          return { ok: false, reason: 'server' };
+        }
+
         console.warn('gradebook-client: server returned ok:false', data);
-        return { ok: false, reason: 'network' };
+        return { ok: false, reason: 'server' };
 
       } catch (err) {
         // Catches: fetch rejection, JSON parse error, any other throw

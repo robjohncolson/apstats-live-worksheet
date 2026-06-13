@@ -239,6 +239,31 @@
         inputModes: null
       },
 
+      'two-propztest-wizard': {
+        fields: [
+          { label: 'x1',    type: 'integer' },
+          { label: 'n1',    type: 'integer' },
+          { label: 'x2',    type: 'integer' },
+          { label: 'n2',    type: 'integer' },
+          { label: 'p1',    type: 'choice', options: ['\u2260p2', '<p2', '>p2'] },
+          { label: 'Color:',         type: 'color-selector' },
+          { label: 'Calculate/Draw', type: 'action-selector', options: ['Calculate', 'Draw'] }
+        ],
+        inputModes: null
+      },
+
+      'two-propzint-wizard': {
+        fields: [
+          { label: 'x1',        type: 'integer' },
+          { label: 'n1',        type: 'integer' },
+          { label: 'x2',        type: 'integer' },
+          { label: 'n2',        type: 'integer' },
+          { label: 'C-Level',   type: 'number', default: '.95' },
+          { label: 'Calculate', type: 'action-button' }
+        ],
+        inputModes: null
+      },
+
       'chi2gof-wizard': {
         fields: [
           { label: 'Observed', type: 'list-selector',  default: 'L1' },
@@ -414,6 +439,33 @@
           '({lower}, {upper})',
           'p\u0302 = {pHat}',
           'n = {n}'
+        ],
+        scrollable: false,
+        nextPage: null
+      },
+
+      'two-propztest-result': {
+        lines: [
+          'p1 {alt} p2',
+          'z = {z}',
+          'p = {p}',
+          'p\u03021 = {pHat1}',
+          'p\u03022 = {pHat2}',
+          'p\u0302 = {pHatPooled}',
+          'n1 = {n1}',
+          'n2 = {n2}'
+        ],
+        scrollable: true,
+        nextPage: null
+      },
+
+      'two-propzint-result': {
+        lines: [
+          '({lower}, {upper})',
+          'p\u03021 = {pHat1}',
+          'p\u03022 = {pHat2}',
+          'n1 = {n1}',
+          'n2 = {n2}'
         ],
         scrollable: false,
         nextPage: null

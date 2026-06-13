@@ -1,12 +1,12 @@
 {
   "meta": {
     "description": "Pattern recognition data for TI-84 CE procedural trainer. Includes pattern signatures, confusion matrix, canonical problems, and distractor sets.",
-    "version": "1.0.0",
-    "generated": "2026-04-07",
+    "version": "1.1.0",
+    "generated": "2026-06-12",
     "spec": "ti84-trainer-pattern-recognition-spec.md",
-    "procedureCount": 27,
-    "confusionPairCount": 22,
-    "canonicalProblemCount": 62
+    "procedureCount": 29,
+    "confusionPairCount": 26,
+    "canonicalProblemCount": 68
   },
 
   "patternSignatures": {
@@ -30,6 +30,28 @@
       "keywords": ["proportion", "percent", "%", "out of", "confidence interval", "estimate", "margin of error"],
       "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "test", "claim", "hypothes"],
       "frameworkSkills": ["UNC-4.A", "UNC-4.B", "UNC-4.C", "UNC-4.D"],
+      "unit": 6
+    },
+    "two-propztest": {
+      "dataType": "categorical",
+      "parameterType": "proportion",
+      "questionType": "test",
+      "sampleStructure": "two-sample",
+      "distributionFamily": "normal",
+      "keywords": ["proportion", "percent", "%", "out of", "two groups", "two samples", "difference in proportions", "difference between", "compare"],
+      "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "confidence interval", "estimate"],
+      "frameworkSkills": ["VAR-6.H", "VAR-6.I", "VAR-6.J", "VAR-6.K"],
+      "unit": 6
+    },
+    "two-propzint": {
+      "dataType": "categorical",
+      "parameterType": "proportion",
+      "questionType": "interval",
+      "sampleStructure": "two-sample",
+      "distributionFamily": "normal",
+      "keywords": ["proportion", "percent", "%", "out of", "two groups", "two samples", "confidence interval", "estimate the difference", "margin of error"],
+      "antiKeywords": ["mean", "average", "standard deviation", "slope", "regression", "test", "claim", "hypothes"],
+      "frameworkSkills": ["UNC-4.K", "UNC-4.L", "UNC-4.M", "UNC-4.N"],
       "unit": 6
     },
     "t-test-stats": {
@@ -441,6 +463,30 @@
       "b": "t-test-data",
       "type": "input-mode",
       "contrast": "These run the exact same test. The only difference is input format. Use Stats mode when the problem gives you summary statistics (x-bar, s, n). Use Data mode when the problem gives you a list of raw data values that you have entered into L1. Same test, different starting point."
+    },
+    {
+      "a": "two-propztest",
+      "b": "two-propzint",
+      "type": "test-vs-interval",
+      "contrast": "Your problem asks whether two proportions differ -- a specific claim to evaluate, so run a 2-PropZTest. A 2-PropZInt instead estimates how large the difference between the two proportions might be. 'Is there a difference?' means test. 'Estimate the difference' means interval."
+    },
+    {
+      "a": "one-propztest",
+      "b": "two-propztest",
+      "type": "one-sample-vs-two-sample",
+      "contrast": "Count the groups. A 1-PropZTest compares ONE sample proportion to a claimed value ('the company claims 70%'). A 2-PropZTest compares the proportions from TWO independent samples to each other ('do juniors and seniors differ?'). One group versus a number: 1-prop. Two groups versus each other: 2-prop."
+    },
+    {
+      "a": "one-propzint",
+      "b": "two-propzint",
+      "type": "one-sample-vs-two-sample",
+      "contrast": "A 1-PropZInt estimates a single population proportion from one sample. A 2-PropZInt estimates the DIFFERENCE between two population proportions from two independent samples. Ask: am I estimating one proportion, or the gap between two?"
+    },
+    {
+      "a": "two-propztest",
+      "b": "two-samp-ttest",
+      "type": "proportion-vs-mean",
+      "contrast": "Both compare two groups, but look at the data type. Counts of successes out of totals ('92 of 400 purchased') are categorical -- compare proportions with a 2-PropZTest. Measurements with means and standard deviations are quantitative -- compare means with a two-sample t-test. Proportions use z; means use t."
     }
   ],
 
@@ -482,6 +528,46 @@
         "stem": "A school librarian sampled 50 students from senior English classes, and 35 had read a certain book. Construct a 90% confidence interval for the proportion of all seniors who have read the book.",
         "values": { "x": 35, "n": 50, "cLevel": 0.90 },
         "frameworkSkill": "UNC-4.D",
+        "unit": 6
+      }
+    ],
+    "two-propztest": [
+      {
+        "stem": "A researcher wants to know whether a new flu vaccine formulation is more effective than the standard one. In a random sample of 250 adults who received the new vaccine, 30 developed the flu. In an independent random sample of 240 adults who received the standard vaccine, 45 developed the flu. Is there convincing evidence at alpha = 0.05 that the proportion who develop the flu is lower for the new vaccine?",
+        "values": { "x1": 30, "n1": 250, "x2": 45, "n2": 240, "direction": "<" },
+        "frameworkSkill": "VAR-6.K",
+        "unit": 6
+      },
+      {
+        "stem": "At East High School, 84 of 150 randomly sampled students support a later start time. At West High School, 99 of 180 randomly sampled students support it. Do the data give convincing evidence at alpha = 0.05 of a difference in the proportions of students who support a later start time at the two schools?",
+        "values": { "x1": 84, "n1": 150, "x2": 99, "n2": 180, "direction": "!=" },
+        "frameworkSkill": "VAR-6.H",
+        "unit": 6
+      },
+      {
+        "stem": "A marketing team tests two versions of a website. Of 400 visitors randomly assigned to version A, 92 made a purchase. Of 380 visitors randomly assigned to version B, 64 made a purchase. Is there convincing evidence at alpha = 0.01 that version A has a higher purchase proportion than version B?",
+        "values": { "x1": 92, "n1": 400, "x2": 64, "n2": 380, "direction": ">" },
+        "frameworkSkill": "VAR-6.K",
+        "unit": 6
+      }
+    ],
+    "two-propzint": [
+      {
+        "stem": "In a random sample of 120 seniors at a large high school, 78 have a driver's license. In an independent random sample of 110 juniors, 55 have a driver's license. Construct a 95% confidence interval for the difference in the proportions of seniors and juniors who have a driver's license.",
+        "values": { "x1": 78, "n1": 120, "x2": 55, "n2": 110, "cLevel": 0.95 },
+        "frameworkSkill": "UNC-4.L",
+        "unit": 6
+      },
+      {
+        "stem": "A polling organization surveys voters in two regions. In Region A, 210 of 350 randomly sampled voters favor a ballot measure. In Region B, 162 of 300 randomly sampled voters favor it. Construct a 90% confidence interval for the difference in the proportions of voters who favor the measure.",
+        "values": { "x1": 210, "n1": 350, "x2": 162, "n2": 300, "cLevel": 0.90 },
+        "frameworkSkill": "UNC-4.K",
+        "unit": 6
+      },
+      {
+        "stem": "Researchers compared germination rates of two seed treatments. Of 80 seeds given treatment 1, 68 germinated. Of 75 seeds given treatment 2, 54 germinated. Construct a 99% confidence interval to estimate the difference in germination proportions between the two treatments.",
+        "values": { "x1": 68, "n1": 80, "x2": 54, "n2": 75, "cLevel": 0.99 },
+        "frameworkSkill": "UNC-4.L",
         "unit": 6
       }
     ],
@@ -876,6 +962,8 @@
   "distractorSets": {
     "one-propztest": ["one-propzint", "t-test-stats", "chi-square-gof-test"],
     "one-propzint": ["one-propztest", "t-interval-stats", "chi-square-gof-test"],
+    "two-propztest": ["two-propzint", "one-propztest", "two-samp-ttest"],
+    "two-propzint": ["two-propztest", "one-propzint", "two-samp-tint"],
     "t-test-stats": ["t-interval-stats", "one-propztest", "two-samp-ttest"],
     "t-test-data": ["t-interval-data", "one-var-stats", "two-samp-ttest"],
     "t-interval-stats": ["t-test-stats", "one-propzint", "two-samp-tint"],

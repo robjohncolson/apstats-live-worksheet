@@ -520,6 +520,10 @@
       { key: 'z', label: 'z =' },
       { key: 'p', label: 'p =' },
     ],
+    'two-propztest': [
+      { key: 'z', label: 'z =' },
+      { key: 'p', label: 'p =' },
+    ],
     'chi-square-gof-test': [
       { key: 'chi2', label: '&#967;&sup2; =' },
       { key: 'p', label: 'p =' },
@@ -545,6 +549,10 @@
       { key: 'upper', label: ',' },
     ],
     'one-propzint': [
+      { key: 'lower', label: '(' },
+      { key: 'upper', label: ',' },
+    ],
+    'two-propzint': [
       { key: 'lower', label: '(' },
       { key: 'upper', label: ',' },
     ],
@@ -584,7 +592,7 @@
   function computeExpected(procedureId, problem) {
     // Prefer values the native module already computed during the walkthrough.
     // These are consistent with what the mock LCD showed.
-    const nativeValues = app.backend?.getComputedValues?.();
+    const nativeValues = app.bridge?.getComputedValues?.();
     if (nativeValues && typeof nativeValues === 'object') {
       return nativeValues;
     }
@@ -645,6 +653,10 @@
         return SM.onePropZTest(v.p0, v.x, v.n, v.direction);
       case 'one-propzint':
         return SM.onePropZInt(v.x, v.n, v.cLevel);
+      case 'two-propztest':
+        return SM.twoPropZTest ? SM.twoPropZTest(v.x1, v.n1, v.x2, v.n2, v.direction) : null;
+      case 'two-propzint':
+        return SM.twoPropZInt ? SM.twoPropZInt(v.x1, v.n1, v.x2, v.n2, v.cLevel) : null;
       case 'chi-square-gof-test': {
         const expected = Array.isArray(v.expected)
           ? v.expected
@@ -734,6 +746,45 @@
     }
 
     return window.TI84StatMath?.formatTI?.(value) ?? formatCalculatorValue(value);
+  }
+
+  // Maps the label on a mock result line (e.g. "x̄ = {value}") to the matching
+  // key in computeExpected()'s return object. Result lines identify values by
+  // label, not position, so substitution must resolve by label too.
+  const MOCK_LINE_KEY_ALIASES = {
+    'x̄': 'xbar',
+    'Σx': 'sumX',
+    'Σx²': 'sumX2',
+    'σx': 'sigmaX',
+    'x̄1': 'x1',
+    'x̄2': 'x2',
+    'p̂': 'pHat',
+    'p̂1': 'pHat1',
+    'p̂2': 'pHat2',
+    'χ²': 'chi2',
+    'r²': 'r2',
+    intercept: 'a',
+    slope: 'b',
+  };
+
+  function renderComputedLine(line, expected) {
+    const text = `${line ?? ''}`;
+    if (!expected || typeof expected !== 'object') {
+      return text;
+    }
+
+    const label = text.includes('=') ? text.split('=')[0].trim() : '';
+
+    return text.replace(/\{([^}]+)\}/g, (match, token) => {
+      const key = token === 'value'
+        ? (MOCK_LINE_KEY_ALIASES[label] ?? label)
+        : (MOCK_LINE_KEY_ALIASES[token] ?? token);
+      let value = expected[key];
+      if (typeof value !== 'number' && token === 'value') {
+        value = expected.value;
+      }
+      return typeof value === 'number' && !Number.isNaN(value) ? formatExpectedValue(value) : match;
+    });
   }
 
   let wasMobile = isMobileViewport();
@@ -1111,6 +1162,7 @@
           mode: 'guided',
           lastErrors: 0,
           lastHints: 0,
+          bestScore: 0,
         },
       };
     }
@@ -1291,6 +1343,7 @@
       remainingChoices: shuffle([procedureId, ...distractors]),
       branchCount: 0,
       branchHistory: [],
+      wrongChoices: 0,
     };
   }
 
@@ -1933,7 +1986,16 @@
       return `That does not complete the ${token} field. Use the numeric cluster so the trainer can fill the authored sample value.`;
     }
 
+    if (app.walkthrough?.mode === 'recall') {
+      return 'Not that key.';
+    }
+
     return `Blocked. The next key is [${displayKey(step.key)}].`;
+  }
+
+  function recallNeutralPrompt(walkthrough, totalSteps) {
+    const n = Math.min((walkthrough?.routeState?.routeIndex ?? 0) + 1, totalSteps);
+    return `Step ${n} of ${totalSteps} - what comes next?`;
   }
 
   function flashButton(buttonId, kind) {
@@ -1996,6 +2058,7 @@
       summaryCopy: '',
       answerValues: {},
       answerCheckResults: null,
+      answerFailCounts: {},
       answerVerified: false,
     };
     app.branchIntro = null;
@@ -2162,19 +2225,27 @@
 
   function recordTrainerAttempt(walkthrough) {
     if (typeof window.gradebookClient?.record !== 'function') {
-      return;
+      return false;
     }
 
     // Signed-out users skip recording entirely. Calling record() without a token
-    // would pop gradebook-client's red "not saved to your grade" nudge — wrong for
+    // would pop gradebook-client's red "not saved to your grade" nudge - wrong for
     // a tool that always worked anonymously (and the nudge's sign-in link 404s
     // from this subdirectory).
     if (typeof window.rosterClient?.current !== 'function' || !window.rosterClient.current()) {
-      return;
+      return false;
     }
 
     const procedure = PROCEDURE_BY_ID[walkthrough.procedureId];
-    const quality = ensureProcedureRecord(walkthrough.procedureId).track2.lastQuality ?? 0;
+    const track2 = ensureProcedureRecord(walkthrough.procedureId).track2;
+    const quality = track2.lastQuality ?? 0;
+    const score = Math.max(track2.bestScore ?? 0, quality / 5);
+
+    if (app.persisted.physicalMode && !walkthrough.answerVerified) {
+      return false;
+    }
+
+    track2.bestScore = score;
 
     // Fire-and-forget roster ledger write; attempt stays 1 so re-practice
     // upserts the same row (latest state per procedure).
@@ -2186,24 +2257,47 @@
         procedureId: walkthrough.procedureId,
         quality,
         mode: walkthrough.mode,
+        inputMode: app.persisted.physicalMode ? 'physical' : 'emulator',
         hints: walkthrough.hints,
         errors: walkthrough.errors,
       },
-      score: quality / 5, // SM-2 quality 0–5 normalized to 0..1
+      score,
       attempt: 1,
+    }).then((result) => {
+      if (!app.sessionResult) {
+        return;
+      }
+
+      app.sessionResult.gradebookSave = result?.ok
+        ? 'Saved to your gradebook.'
+        : result?.reason === 'auth'
+          ? 'Not saved - your sign-in expired. Open the Desk and sign in again.'
+          : 'Not saved (connection problem).';
+      render();
+    }).catch(() => {
+      if (!app.sessionResult) {
+        return;
+      }
+
+      app.sessionResult.gradebookSave = 'Not saved (connection problem).';
+      render();
     });
+
+    return true;
   }
 
-  function track1QualityForBranches(branchCount) {
-    if (branchCount <= 0) {
+  function track1QualityForBranches(branchCount, wrongChoices = 0) {
+    const effective = branchCount + Math.max(0, wrongChoices - branchCount);
+
+    if (effective <= 0) {
       return 5;
     }
 
-    if (branchCount === 1) {
+    if (effective === 1) {
       return 3;
     }
 
-    if (branchCount === 2) {
+    if (effective === 2) {
       return 1;
     }
 
@@ -2247,7 +2341,8 @@
     }
 
     const branchCount = walkthrough.sourceQuestion?.branchCount ?? 0;
-    const track1Quality = track1QualityForBranches(branchCount);
+    const wrongChoices = walkthrough.sourceQuestion?.wrongChoices ?? 0;
+    const track1Quality = track1QualityForBranches(branchCount, wrongChoices);
     applyTrack1Outcome(walkthrough.procedureId, track1Quality);
 
     app.question = null;
@@ -2324,11 +2419,17 @@
 
     fields.forEach((field) => {
       const correct = valuesMatch(values[field.key], expected[field.key], field.key);
+      const failCount = correct
+        ? 0
+        : (walkthrough.answerFailCounts?.[field.key] || 0) + 1;
+
+      walkthrough.answerFailCounts[field.key] = failCount;
 
       results[field.key] = {
         actual: values[field.key] ?? '',
         expected: expected[field.key],
         correct,
+        failCount,
       };
 
       if (!correct) {
@@ -2338,9 +2439,12 @@
 
     walkthrough.answerCheckResults = results;
     walkthrough.answerVerified = allCorrect;
+    if (!allCorrect) {
+      walkthrough.errors += 1;
+    }
     app.banner = allCorrect
       ? 'Answer verified. Finish review is unlocked.'
-      : 'Some values do not match yet. Compare the expected values and try again.';
+      : 'Some values do not match yet. Check sign and decimals, then try again.';
     render();
   }
 
@@ -2702,7 +2806,9 @@
           ? '<span class="answer-status"></span>'
           : status.correct
             ? '<span class="answer-status correct">&#10003;</span>'
-            : `<span class="answer-status wrong">&#10007; <span class="answer-hint">Expected: ${escapeHtml(formatExpectedValue(status.expected))}</span></span>`;
+            : status.failCount >= 3
+              ? `<span class="answer-status wrong">&#10007; <span class="answer-hint">Expected: ${escapeHtml(formatExpectedValue(status.expected))}</span></span>`
+              : '<span class="answer-status wrong">&#10007; <span class="answer-hint">Not a match - check sign and decimals.</span></span>';
 
         return `
           <div class="answer-field-row">
@@ -2734,7 +2840,7 @@
           <button type="button" class="mac-button" data-action="check-answer">
             Check
           </button>
-          <button type="button" class="mac-button primary" data-action="finish-review" ${walkthrough.answerVerified ? '' : 'disabled'}>
+          <button type="button" class="mac-button primary" data-action="finish-review" ${walkthrough.answerVerified || !computeExpected(currentProcedure()?.id, walkthrough.problem) ? '' : 'disabled'}>
             Finish review
           </button>
         </div>
@@ -2766,6 +2872,10 @@
       copy = 'The guided procedure is finished. Use the calculator freely to inspect the result.';
       note = 'Result review mode';
       clutchPanel = renderResultReviewPanel();
+    }
+
+    if (phase === 'procedure' && !walkthrough.preparing && walkthrough.mode === 'recall' && step) {
+      copy = recallNeutralPrompt(walkthrough, totalSteps);
     }
 
     return `
@@ -2802,6 +2912,7 @@
         <p class="panel-kicker">Session Update</p>
         <h2>${app.sessionResult.headline}</h2>
         <p class="problem-stem">${app.sessionResult.detail}</p>
+        ${app.sessionResult.gradebookSave ? `<p class="panel-note">${app.sessionResult.gradebookSave}</p>` : ''}
         <div class="button-row">
           <button type="button" class="mac-button primary" data-action="${app.sessionResult.action}">
             ${app.sessionResult.actionLabel}
@@ -3035,6 +3146,7 @@
     }
 
     const keyLabel = physicalKeyLabel(step);
+    const recallPrompt = recallNeutralPrompt(walkthrough, totalSteps).replace('what comes next?', 'do the next step on your calculator.');
     const highlight = step.highlight || '';
     const tips = Array.isArray(step.commonErrors)
       ? step.commonErrors.slice(0, 2).map((entry) => entry?.feedback).filter(Boolean)
@@ -3047,11 +3159,15 @@
           <p class="panel-kicker">Step ${stepNumber} of ${totalSteps}</p>
           <p class="physical-procedure-name">${procedure.name}</p>
         </div>
-        <div class="physical-key-pane">
-          <span class="physical-key-prefix">Press</span>
-          <span class="physical-key-value">${keyLabel}</span>
-        </div>
-        <p class="physical-narration">${step.narration ?? ''}</p>
+        ${walkthrough.mode === 'recall'
+          ? `<p class="physical-narration">${recallPrompt}</p>`
+          : `
+            <div class="physical-key-pane">
+              <span class="physical-key-prefix">Press</span>
+              <span class="physical-key-value">${keyLabel}</span>
+            </div>
+            <p class="physical-narration">${step.narration ?? ''}</p>
+          `}
         ${highlight ? `
           <div class="physical-expect">
             <span class="physical-expect-label">You should see</span>
@@ -3088,6 +3204,11 @@
         </div>
 
         ${renderPhysicalStepCard()}
+
+        <div class="physical-mode-switch">
+          <button type="button" class="mac-button" data-action="toggle-physical-mode">Use the on-screen calculator</button>
+          <button type="button" class="mac-button" data-action="open-options-dialog">Options</button>
+        </div>
       </section>
     `;
   }
@@ -3117,6 +3238,8 @@
     } else if (app.clutch.phase === 'result-review') {
       walkthroughHeadline = 'Result review mode is active.';
       walkthroughDetail = 'Keys go straight to the calculator while you inspect the result.';
+    } else if (walkthrough?.mode === 'recall' && step) {
+      walkthroughHeadline = recallNeutralPrompt(walkthrough, totalSteps);
     }
 
     const firmwareLabel = mobile ? '⚙' : 'Firmware';
@@ -3393,7 +3516,12 @@
       `Screen: ${screen.title || screen.id}`,
     ];
 
-    if (screen.items?.length) {
+    if (screen.lines?.length) {
+      const expected = computeExpected(procedure.id, app.walkthrough?.problem);
+      screen.lines.slice(0, 6).forEach((line) => {
+        lines.push(renderComputedLine(line, expected));
+      });
+    } else if (screen.items?.length) {
       screen.items.slice(0, 4).forEach((item, index) => {
         const prefix = screen.cursor === index ? '>' : ' ';
         lines.push(`${prefix} ${item}`);
@@ -3406,13 +3534,15 @@
       screen.layout.content.slice(0, 4).forEach((line) => {
         lines.push(line.text ?? '');
       });
-    } else if (step) {
+    } else if (step && app.walkthrough?.mode !== 'recall') {
       lines.push(step.narration);
     }
 
     return {
       lines,
-      footer: step ? `Expect ${stepIsParameter(step) ? 'numeric entry' : displayKey(step.key)}` : procedure.description,
+      footer: step && app.walkthrough?.mode !== 'recall'
+        ? `Expect ${stepIsParameter(step) ? 'numeric entry' : displayKey(step.key)}`
+        : procedure.description,
     };
   }
 
@@ -3445,6 +3575,7 @@
       return;
     }
 
+    app.question.wrongChoices = (app.question.wrongChoices || 0) + 1;
     openBranchIntro(procedureId);
   }
 
@@ -3494,14 +3625,18 @@
       case 'check-answer':
         checkAnswerVerification();
         break;
-      case 'finish-review':
-        if (VERIFICATION_FIELDS[currentProcedure()?.id] && !app.walkthrough?.answerVerified) {
+      case 'finish-review': {
+        const finishProcedure = currentProcedure();
+        const needsVerification = VERIFICATION_FIELDS[finishProcedure?.id]
+          && computeExpected(finishProcedure.id, app.walkthrough?.problem);
+        if (needsVerification && !app.walkthrough?.answerVerified) {
           app.banner = 'Check your answer before finishing the review.';
           render();
           break;
         }
         completeWalkthrough();
         break;
+      }
       case 'pause-guidance':
         app.clutch.engaged = false;
         app.banner = 'Guidance paused. Keys go straight to the calculator — fix your entry, then click Resume.';

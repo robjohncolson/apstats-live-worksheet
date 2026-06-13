@@ -1087,8 +1087,15 @@ code {
     gap: 0;
   }
 
+  /* The banner is the only channel for wrong-key coaching, hints, and
+     errors — keep it visible on phones, just compact and sticky. */
   .banner-row {
-    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    line-height: 1.3;
   }
 
   .problem-panel.walkthrough-panel {
@@ -1402,6 +1409,19 @@ code {
   justify-content: flex-end;
   padding-top: 6px;
   border-top: 1px dashed #aaa;
+}
+
+/* Escape hatch out of physical mode — must stay reachable on phones,
+   where the titlebar (and its Options button) is hidden. */
+.physical-mode-switch {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 10px 12px;
+}
+
+.physical-mode-switch .mac-button {
+  font-size: 0.85rem;
 }
 
 .options-row {

@@ -728,6 +728,58 @@
     };
   }
 
+  function twoPropZTest(x1, n1, x2, n2, alternative) {
+    if (!alternative) alternative = '\u2260';
+    var pHat1 = x1 / n1;
+    var pHat2 = x2 / n2;
+    var pHatPooled = (x1 + x2) / (n1 + n2);
+    var se = Math.sqrt(pHatPooled * (1 - pHatPooled) * (1 / n1 + 1 / n2));
+    var z = (pHat1 - pHat2) / se;
+    var p;
+
+    if (alternative === '>' || alternative === '>p\u2082' || alternative === '>pâ‚‚') {
+      p = 1 - phi(z);
+    } else if (alternative === '<' || alternative === '<p\u2082' || alternative === '<pâ‚‚') {
+      p = phi(z);
+    } else {
+      p = 2 * (1 - phi(Math.abs(z)));
+    }
+
+    return {
+      z: z,
+      p: p,
+      pHat1: pHat1,
+      pHat2: pHat2,
+      pHatPooled: pHatPooled,
+      n1: n1,
+      n2: n2
+    };
+  }
+
+  function twoPropZInt(x1, n1, x2, n2, cLevel) {
+    if (cLevel === undefined) cLevel = 0.95;
+    var pHat1 = x1 / n1;
+    var pHat2 = x2 / n2;
+    var alpha = 1 - cLevel;
+    var zStar = phiInv(1 - alpha / 2);
+    var se = Math.sqrt(
+      pHat1 * (1 - pHat1) / n1 +
+      pHat2 * (1 - pHat2) / n2
+    );
+    var ME = zStar * se;
+    var diff = pHat1 - pHat2;
+
+    return {
+      lower: diff - ME,
+      upper: diff + ME,
+      pHat1: pHat1,
+      pHat2: pHat2,
+      n1: n1,
+      n2: n2,
+      ME: ME
+    };
+  }
+
   function chi2GOFTest(observed, expected, df) {
     var chi2 = 0;
     for (var i = 0; i < observed.length; i++) {
@@ -968,6 +1020,8 @@
     // Inference — z (proportions)
     onePropZTest: onePropZTest,
     onePropZInt: onePropZInt,
+    twoPropZTest: twoPropZTest,
+    twoPropZInt: twoPropZInt,
 
     // Chi-square
     chi2GOFTest: chi2GOFTest,

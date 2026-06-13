@@ -1,5 +1,5 @@
 /**
- * Automated verification of all 27 TI-84 procedures against the native module.
+ * Automated verification of all TI-84 procedures against the native module.
  *
  * Walks each procedure's key sequence from ti84-procedures-data.json through
  * TI84Native.pressKey() and verifies the screen state at each step.
@@ -40,13 +40,15 @@ function loadModules() {
 // Load procedures data
 const proceduresPath = resolve(__dirname, '..', '..', '..', 'ti84-procedures-data.json');
 const proceduresData = JSON.parse(readFileSync(proceduresPath, 'utf8'));
+const patternsPath = resolve(__dirname, '..', '..', '..', 'ti84-pattern-recognition-data.json');
+const patternsData = JSON.parse(readFileSync(patternsPath, 'utf8'));
 
 // Parameter step pattern: {token}
 const PARAM_PATTERN = /^\{.+\}$/;
 
 // Sample values for parameter tokens (used during walkthroughs)
 const SAMPLE_VALUES = {
-  'p0': '0.5', 'x': '55', 'n': '100', 'μ0': '50',
+  'p0': '0.5', 'x': '55', 'x1': '30', 'x2': '45', 'n': '100', 'μ0': '50',
   'x̄': '52.3', 'Sx': '4.2', 'C-Level': '.95',
   'lower bound': '-1', 'upper bound': '1',
   'lower': '-1', 'upper': '1',
@@ -237,8 +239,15 @@ describe('Automated procedure verification', () => {
 });
 
 describe('Procedure coverage summary', () => {
-  it('verifies all 27 procedures are tested', () => {
-    expect(proceduresData.procedures.length).toBe(27);
+  it('verifies every procedure has pattern-recognition backing data', () => {
+    const procedureIds = proceduresData.procedures.map(proc => proc.id);
+    expect(procedureIds.length).toBe(Object.keys(patternsData.patternSignatures).length);
+
+    for (const id of procedureIds) {
+      expect(patternsData.patternSignatures).toHaveProperty(id);
+      expect(patternsData.canonicalProblems).toHaveProperty(id);
+      expect(patternsData.distractorSets).toHaveProperty(id);
+    }
   });
 
   it('covers all screen types', () => {

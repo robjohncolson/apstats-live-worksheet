@@ -267,9 +267,11 @@
         1:  't-test-data-wizard',          // 2:T-Test
         3:  'two-samp-ttest-stats-wizard', // 4:2-SampTTest
         4:  'one-propztest-wizard',        // 5:1-PropZTest
+        5:  'two-propztest-wizard',        // 6:2-PropZTest
         7:  't-interval-data-wizard',      // 8:TInterval
         9:  'two-samp-tint-stats-wizard',  // 0:2-SampTInt
         10: 'one-propzint-wizard',         // A:1-PropZInt
+        11: 'two-propzint-wizard',         // B:2-PropZInt
         12: 'chi2test-wizard',             // C:chi2-Test
         13: 'chi2gof-wizard',              // D:chi2GOF-Test
         15: 'linreg-ttest-wizard',         // F:LinRegTTest

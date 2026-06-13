@@ -271,6 +271,36 @@ describe('onePropZInt', () => {
   });
 });
 
+// ─── twoPropZTest ───
+
+describe('twoPropZTest', () => {
+  it('one-sided less: x1=30,n1=250,x2=45,n2=240', () => {
+    const r = SM.twoPropZTest(30, 250, 45, 240, '<');
+    approx(r.z, -2.07, 2);
+    approx(r.p, 0.019, 2);
+    expect(r.pHat1).toBe(0.12);
+    expect(r.pHat2).toBe(0.1875);
+    approx(r.pHatPooled, 75 / 490, 8);
+    expect(r.n1).toBe(250);
+    expect(r.n2).toBe(240);
+  });
+});
+
+// ─── twoPropZInt ───
+
+describe('twoPropZInt', () => {
+  it('95% CI for x1=30,n1=250,x2=45,n2=240', () => {
+    const r = SM.twoPropZInt(30, 250, 45, 240, 0.95);
+    expect(r.pHat1).toBe(0.12);
+    expect(r.pHat2).toBe(0.1875);
+    approx(r.ME, 0.0629, 3);
+    approx(r.lower, -0.1304, 3);
+    approx(r.upper, -0.0046, 3);
+    expect(r.n1).toBe(250);
+    expect(r.n2).toBe(240);
+  });
+});
+
 // ─── chi2GOFTest ───
 
 describe('chi2GOFTest', () => {
