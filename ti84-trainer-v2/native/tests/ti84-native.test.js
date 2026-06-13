@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
+import { nativeScriptFilenames } from '../manifest.mjs';
 
 var __dirname = dirname(fileURLToPath(import.meta.url));
 var nativeDir = resolve(__dirname, '..');
@@ -25,20 +26,8 @@ function loadModules() {
   var win = dom.window;
 
   // Load all modules in order (no canvas needed for state-based testing)
-  var files = [
-    'event-bus.js',
-    'stat-math.js',
-    'menu-tables.js',
-    'field-tables.js',
-    'menu-nav.js',
-    'form-engine.js',
-    'result-formatter.js',
-    'screen-renderer.js',
-    'ti84-native.js'
-  ];
-
-  for (var i = 0; i < files.length; i++) {
-    var src = readFileSync(resolve(nativeDir, files[i]), 'utf8');
+  for (var i = 0; i < nativeScriptFilenames.length; i++) {
+    var src = readFileSync(resolve(nativeDir, nativeScriptFilenames[i]), 'utf8');
     win.eval(src);
   }
 

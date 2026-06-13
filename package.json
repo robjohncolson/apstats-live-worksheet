@@ -4,6 +4,7 @@
   "description": "AP Statistics live worksheet with AI grading and class aggregation",
   "type": "module",
   "scripts": {
+    "build:ti84": "node ti84-trainer-v2/build.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

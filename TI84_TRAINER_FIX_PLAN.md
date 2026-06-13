@@ -14,23 +14,23 @@ Blocking external dependency: **migration 0016 (`'trainer'` source) is USER-RUN 
 
 | Task | Findings | Owner | Status |
 |------|----------|-------|--------|
-| A1 Recall-mode answer-leak gating | #1 | Codex (Task 1 spec) | dispatched |
-| A2 Physical-mode verification-required credit + mode tag + Expected-leak delay + mock-LCD result lines + backend rebind | #2, #12 | Codex (Task 1 spec) | dispatched |
-| A3 Track 1 brute-force penalty (wrongChoices) | #14 | Codex (Task 1 spec) | dispatched |
-| A4 Raise-only recorded score (max) | #30 | Codex (Task 1 spec) | dispatched |
-| A5 Auth-aware record failure surfacing (401 -> 'auth', saved/not-saved line) | #28, #10 | Codex (Task 1 spec) | dispatched |
-| A6 recorded_at refresh on ledger upsert | #29 | Codex (Task 2, roster-server) | pending |
-| A7 2-prop pattern-data authoring (signatures, canonical problems, distractors, confusion pair, meta) | #5, #6 | CC in-session | in progress |
-| A8 Native two-prop support + VERIFICATION_FIELDS/computeExpected + derive test pin + SAMPLE_VALUES x1/x2 | #8, #17, #22 | Codex (Task 4) | pending |
+| A1 Recall-mode answer-leak gating | #1 | Codex (Task 1 spec) | SHIPPED `0f080ad` |
+| A2 Physical-mode verification-required credit + mode tag + Expected-leak delay + mock-LCD result lines + backend rebind | #2, #12 | Codex (Task 1 spec) | SHIPPED `0f080ad` (mock-LCD substitution rewritten label-based by CC) |
+| A3 Track 1 brute-force penalty (wrongChoices) | #14 | Codex (Task 1 spec) | SHIPPED `0f080ad` |
+| A4 Raise-only recorded score (max) | #30 | Codex (Task 1 spec) | SHIPPED `0f080ad` |
+| A5 Auth-aware record failure surfacing (401 -> 'auth', saved/not-saved line) | #28, #10 | Codex (Task 1 spec) | SHIPPED `0f080ad` |
+| A6 recorded_at refresh on ledger upsert | #29 | Codex (Task 2, roster-server) | SHIPPED `28d72c9` (auto-deployed) |
+| A7 2-prop pattern-data authoring (signatures, canonical problems, distractors, confusion pair, meta) | #5, #6 | CC in-session | SHIPPED `0f080ad` |
+| A8 Native two-prop support + VERIFICATION_FIELDS/computeExpected + derive test pin + SAMPLE_VALUES x1/x2 | #8, #17, #22 | Codex (Task 4) + CC app.js bits | SHIPPED `0f080ad` - native suite green 362/362 |
 | A9 Wizard ENTER-commit ROM verification, then data fix across ~10 procedures if confirmed | #7 | CC verify first (ROM check), then Codex data pass | pending |
 | A10 Migration 0016 + live smoke | #10 | USER (run migration), then CC smoke | blocked on user |
 
 ### Bundle B - mobile (CC in-session, frontend)
 
-| Task | Findings |
-|------|----------|
-| B1 Route banner feedback into mobile narration bar / toast | #3 |
-| B2 Mode toggle + Options in physical panel; first-run "Do you have a TI-84 with you?" chooser | #4 |
+| Task | Findings | Status |
+|------|----------|--------|
+| B1 Banner visible on mobile (compact sticky, top) | #3 | SHIPPED `0f080ad` |
+| B2 Physical-panel escape hatch (on-screen calculator + Options buttons); first-run chooser | #4 | SHIPPED `0f080ad` + `e059cc5` |
 
 ### Bundle C - build guard + robustness (Codex, Task 3)
 
@@ -46,14 +46,14 @@ Blocking external dependency: **migration 0016 (`'trainer'` source) is USER-RUN 
 
 ### Bundle D - progress + onboarding
 
-| Task | Findings | Owner |
-|------|----------|-------|
-| D1 First-run onboarding rewrite (student language, rename clutch copy, move Firmware button) | #11 | CC in-session |
-| D2 Due counter mirrors scheduler + caught-up state + promotion sets tomorrow | #13 | CC in-session |
-| D3 "My procedures" progress list (mastery pill, next review, Practice this) | #15 | CC in-session (design) |
-| D4 Teacher trainer:{} summary on /class/grades + dashboard section | #31 | Codex (with Task 2 or separate) |
-| D5 Desk #unit=N deep-link into trainer | #32 | CC in-session |
-| D6 Keyboard input map + aria-live banner (stretch) | #16 | Codex (stretch) |
+| Task | Findings | Owner | Status |
+|------|----------|-------|--------|
+| D1 First-run onboarding rewrite (student language, rename clutch copy, move Firmware button) | #11 | CC in-session | SHIPPED `e059cc5` |
+| D2 Due counter mirrors scheduler + caught-up state + promotion sets tomorrow | #13 | CC in-session | SHIPPED `e059cc5` |
+| D3 "My procedures" progress list (mastery pill, next review, Practice this) | #15 | CC in-session (design) | NOT STARTED |
+| D4 Teacher trainer:{} summary on /class/grades + dashboard section | #31 | Codex (Task 2) | SHIPPED `28d72c9` |
+| D5 #unit=N deep-link | #32 | CC in-session | trainer-side SHIPPED `e059cc5`; Desk-side OPEN (dock call sites are generic - needs lesson-modal context, decide with D3) |
+| D6 Keyboard input map + aria-live banner (stretch) | #16 | Codex (stretch) | NOT STARTED |
 
 ## Sequencing (conflict management)
 

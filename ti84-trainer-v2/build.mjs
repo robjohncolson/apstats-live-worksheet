@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { nativeScriptFilenames } from './native/manifest.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,31 +22,6 @@ const generatedPatternsPath = path.join(generatedDir, 'data-patterns.js');
 const generatedStateMachinePath = path.join(generatedDir, 'state-machine.js');
 const standalonePath = path.join(__dirname, 'standalone.html');
 
-const nativeScriptFilenames = [
-  'event-bus.js',
-  'stat-math.js',
-  'menu-tables.js',
-  'field-tables.js',
-  'menu-nav.js',
-  'form-engine.js',
-  'result-formatter.js',
-  'screen-renderer.js',
-  'ti84-native.js',
-];
-
-fs.mkdirSync(generatedDir, { recursive: true });
-
-const proceduresData = JSON.stringify(JSON.parse(fs.readFileSync(proceduresPath, 'utf8')));
-const patternsData = JSON.stringify(JSON.parse(fs.readFileSync(patternsPath, 'utf8')));
-const stateMachineSource = fs.readFileSync(stateMachinePath, 'utf8');
-const styleSource = fs.readFileSync(stylePath, 'utf8');
-const bridgeSource = fs.readFileSync(bridgePath, 'utf8');
-const appSource = fs.readFileSync(appPath, 'utf8');
-const nativeSources = nativeScriptFilenames.map((filename) => ({
-  filename,
-  source: fs.readFileSync(path.join(nativeDir, filename), 'utf8'),
-}));
-
 function escapeInlineScript(source) {
   return source.replace(/<\/script/gi, '<\\/script');
 }
@@ -65,38 +41,46 @@ function transformStateMachine(source, dataBinding) {
   ].join('\n');
 }
 
-const generatedProcedures = [
-  '(function () {',
-  `window.TI84V2ProceduresData = ${proceduresData};`,
-  '}());',
-  '',
-].join('\n');
+export function buildStandalone() {
+  const proceduresData = JSON.stringify(JSON.parse(fs.readFileSync(proceduresPath, 'utf8')));
+  const patternsData = JSON.stringify(JSON.parse(fs.readFileSync(patternsPath, 'utf8')));
+  const stateMachineSource = fs.readFileSync(stateMachinePath, 'utf8');
+  const styleSource = fs.readFileSync(stylePath, 'utf8');
+  const bridgeSource = fs.readFileSync(bridgePath, 'utf8');
+  const appSource = fs.readFileSync(appPath, 'utf8');
+  const nativeSources = nativeScriptFilenames.map((filename) => ({
+    filename,
+    source: fs.readFileSync(path.join(nativeDir, filename), 'utf8'),
+  }));
 
-const generatedPatterns = [
-  '(function () {',
-  `window.TI84V2PatternsData = ${patternsData};`,
-  '}());',
-  '',
-].join('\n');
+  const generatedProcedures = [
+    '(function () {',
+    `window.TI84V2ProceduresData = ${proceduresData};`,
+    '}());',
+    '',
+  ].join('\n');
 
-const generatedStateMachine = transformStateMachine(
-  stateMachineSource,
-  'const proceduresData = window.TI84V2ProceduresData;',
-);
+  const generatedPatterns = [
+    '(function () {',
+    `window.TI84V2PatternsData = ${patternsData};`,
+    '}());',
+    '',
+  ].join('\n');
 
-const nativeInlineScripts = nativeSources
-  .map(
-    ({ source }) => `  <script>
+  const generatedStateMachine = transformStateMachine(
+    stateMachineSource,
+    'const proceduresData = window.TI84V2ProceduresData;',
+  );
+
+  const nativeInlineScripts = nativeSources
+    .map(
+      ({ source }) => `  <script>
 ${escapeInlineScript(source)}
   </script>`,
-  )
-  .join('\n');
+    )
+    .join('\n');
 
-fs.writeFileSync(generatedProceduresPath, generatedProcedures);
-fs.writeFileSync(generatedPatternsPath, generatedPatterns);
-fs.writeFileSync(generatedStateMachinePath, generatedStateMachine);
-
-const standalone = `<!doctype html>
+  const standalone = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -112,6 +96,7 @@ ${styleSource}
   <script src="../roster_config.js"></script>
   <script src="../roster-client.js"></script>
   <script src="../gradebook-client.js"></script>
+  <script src="./rom-config.js"></script>
   <script>
 ${escapeInlineScript(generatedProcedures)}
   </script>
@@ -132,10 +117,33 @@ ${escapeInlineScript(appSource)}
 </html>
 `;
 
-fs.writeFileSync(standalonePath, standalone);
+  return {
+    standalone,
+    generated: {
+      'data-procedures.js': generatedProcedures,
+      'data-patterns.js': generatedPatterns,
+      'state-machine.js': generatedStateMachine,
+    },
+  };
+}
 
-const bytes = Buffer.byteLength(standalone, 'utf8');
-console.log(`Generated ${path.relative(projectRoot, generatedProceduresPath)}`);
-console.log(`Generated ${path.relative(projectRoot, generatedPatternsPath)}`);
-console.log(`Generated ${path.relative(projectRoot, generatedStateMachinePath)}`);
-console.log(`Generated ${path.relative(projectRoot, standalonePath)} (${(bytes / 1024).toFixed(1)} KB)`);
+function writeStandaloneBuild() {
+  fs.mkdirSync(generatedDir, { recursive: true });
+
+  const build = buildStandalone();
+
+  fs.writeFileSync(generatedProceduresPath, build.generated['data-procedures.js']);
+  fs.writeFileSync(generatedPatternsPath, build.generated['data-patterns.js']);
+  fs.writeFileSync(generatedStateMachinePath, build.generated['state-machine.js']);
+  fs.writeFileSync(standalonePath, build.standalone);
+
+  const bytes = Buffer.byteLength(build.standalone, 'utf8');
+  console.log(`Generated ${path.relative(projectRoot, generatedProceduresPath)}`);
+  console.log(`Generated ${path.relative(projectRoot, generatedPatternsPath)}`);
+  console.log(`Generated ${path.relative(projectRoot, generatedStateMachinePath)}`);
+  console.log(`Generated ${path.relative(projectRoot, standalonePath)} (${(bytes / 1024).toFixed(1)} KB)`);
+}
+
+if (process.argv[1] === __filename) {
+  writeStandaloneBuild();
+}

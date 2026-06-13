@@ -7,12 +7,13 @@
   const DB_NAME = 'ti84-trainer-v2';
   const STORE_NAME = 'assets';
   const ROM_RECORD_ID = 'ce-rom';
+  const providedRomConfig = window.TI84_ROM_CONFIG || {};
   const ROM_CONFIG = {
-    supabaseUrl: 'https://hgvnytaqmuybzbotosyj.supabase.co',
-    bucketPath: 'ti84-trainer-assets/ROM.rom',
-    signedUrl: 'https://hgvnytaqmuybzbotosyj.supabase.co/storage/v1/object/sign/ti84-trainer-assets/ROM.rom?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lZjRlMzIwNC1iNzI2LTQ1MjItOTY1YS0zYzQ3MTEwNzMyMTQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ0aTg0LXRyYWluZXItYXNzZXRzL1JPTS5yb20iLCJpYXQiOjE3NzU3MDc4OTEsImV4cCI6MjA5MTA2Nzg5MX0.MuohjliLBBxkidkqZApHP5sfQH72vos_0nLT9h8T_YE',
-    cacheKey: ROM_RECORD_ID,
-    cacheVersion: '5.8.2.0029',
+    supabaseUrl: providedRomConfig.supabaseUrl || '',
+    bucketPath: providedRomConfig.bucketPath || '',
+    signedUrl: providedRomConfig.signedUrl || '',
+    cacheKey: providedRomConfig.cacheKey || ROM_RECORD_ID,
+    cacheVersion: providedRomConfig.cacheVersion || '5.8.2.0029',
   };
 
   const DEFAULT_HOLD_MS = 72;
@@ -179,7 +180,7 @@
       imageData: null,
       module: null,
       renderHandle: 0,
-      status: { code: 'booting', detail: 'Checking for calculator firmware…', progress: null },
+      status: { code: 'idle', detail: 'Emulator idle in physical calculator mode.', progress: null },
       assetBase: new URL(window.TI84V2_ASSET_BASE || './', window.location.href),
       onStatus: options.onStatus ?? (() => {}),
       romMeta: null,
@@ -423,6 +424,9 @@
 
       if (!response.body || typeof response.body.getReader !== 'function') {
         const bytes = new Uint8Array(await response.arrayBuffer());
+        if (Number.isFinite(totalBytes) && totalBytes > 0 && bytes.length !== totalBytes) {
+          throw new Error(`Firmware download size mismatch: expected ${totalBytes} bytes, received ${bytes.length}.`);
+        }
         return {
           id: ROM_CONFIG.cacheKey,
           name: getRomFilename(),
@@ -467,6 +471,10 @@
           ? `${(receivedBytes / (1024 * 1024)).toFixed(1)} MB downloaded`
           : `${percent}% complete`;
         drawMockFrame();
+      }
+
+      if (Number.isFinite(totalBytes) && totalBytes > 0 && receivedBytes !== totalBytes) {
+        throw new Error(`Firmware download size mismatch: expected ${totalBytes} bytes, received ${receivedBytes}.`);
       }
 
       return {
@@ -564,20 +572,29 @@
           },
         });
 
-        state.module = module;
-        state.usingMock = false;
-        state.romMeta = {
-          name: normalized.name,
-          updatedAt: normalized.updatedAt,
-          version: normalized.version,
-          source: normalized.source,
-        };
+        try {
+          state.module = module;
+          state.usingMock = false;
+          state.romMeta = {
+            name: normalized.name,
+            updatedAt: normalized.updatedAt,
+            version: normalized.version,
+            source: normalized.source,
+          };
 
-        module.FS.writeFile(ROM_FILENAME, normalized.bytes);
+          module.FS.writeFile(ROM_FILENAME, normalized.bytes);
 
-        setStatus('booting', 'Starting the TI-84 Plus CE ROM…');
-        module.callMain([]);
-        startRenderLoop();
+          setStatus('booting', 'Starting the TI-84 Plus CE ROM…');
+          module.callMain([]);
+          startRenderLoop();
+        } catch (error) {
+          try {
+            await deleteRecord(ROM_CONFIG.cacheKey);
+          } catch (deleteError) {
+            console.warn('Failed to clear corrupt calculator firmware cache.', deleteError);
+          }
+          throw error;
+        }
 
         setStatus('ready', `ROM ready: ${normalized.name}`);
         return true;
@@ -599,7 +616,13 @@
     async function init() {
       try {
         setStatus('booting', 'Checking for cached calculator firmware…');
-        const record = await readRecord(ROM_CONFIG.cacheKey);
+        let record = null;
+
+        try {
+          record = await readRecord(ROM_CONFIG.cacheKey);
+        } catch (error) {
+          console.warn('Failed to read calculator firmware cache.', error);
+        }
 
         if (isCacheCurrent(record)) {
           return bootRecord(record);

@@ -9,19 +9,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-
-// Load all native modules in dependency order
-const moduleOrder = [
-  'event-bus.js',
-  'stat-math.js',
-  'menu-tables.js',
-  'field-tables.js',
-  'menu-nav.js',
-  'form-engine.js',
-  'result-formatter.js',
-  'screen-renderer.js',
-  'ti84-native.js',
-];
+import { nativeScriptFilenames } from '../manifest.mjs';
 
 function loadModules() {
   const g = typeof globalThis !== 'undefined' ? globalThis : global;
@@ -31,7 +19,7 @@ function loadModules() {
     createElement: () => ({ getContext: () => null }),
   };
 
-  for (const file of moduleOrder) {
+  for (const file of nativeScriptFilenames) {
     const code = readFileSync(resolve(__dirname, '..', file), 'utf8');
     new Function(code).call(g);
   }

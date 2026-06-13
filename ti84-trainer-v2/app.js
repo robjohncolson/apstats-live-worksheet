@@ -476,7 +476,9 @@
     persisted: loadPersisted(),
     filterUnit: 'all',
     bridge: null,
-    bridgeStatus: { code: 'booting', detail: 'Checking calculator firmware…', romMeta: null, usingMock: false },
+    bridgeInitStarted: false,
+    bridgeInitPromise: null,
+    bridgeStatus: { code: 'idle', detail: 'Emulator idle in physical calculator mode.', romMeta: null, usingMock: true },
     canvasEl: null,
     question: null,
     branchIntro: null,
@@ -789,6 +791,7 @@
 
   let wasMobile = isMobileViewport();
   let resizeRenderTimer = null;
+  let storageWarningShown = false;
 
   app.filterUnit = app.persisted.filterUnit ?? 'all';
   let listMemory = loadListMemory();
@@ -824,7 +827,15 @@
 
   function savePersisted() {
     app.persisted.filterUnit = app.filterUnit;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(app.persisted));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(app.persisted));
+    } catch (error) {
+      if (!storageWarningShown) {
+        storageWarningShown = true;
+        app.banner = "Progress can't be saved in this browser.";
+      }
+      console.warn('Failed to save TI-84 V2 progress.', error);
+    }
   }
 
   function loadListMemory() {
@@ -843,7 +854,15 @@
   }
 
   function saveListMemory() {
-    window.localStorage.setItem(MEMORY_KEY, JSON.stringify(listMemory));
+    try {
+      window.localStorage.setItem(MEMORY_KEY, JSON.stringify(listMemory));
+    } catch (error) {
+      if (!storageWarningShown) {
+        storageWarningShown = true;
+        app.banner = "Progress can't be saved in this browser.";
+      }
+      console.warn('Failed to save TI-84 list memory.', error);
+    }
   }
 
   function cloneDataValue(data) {
@@ -2579,7 +2598,7 @@
     });
   }
 
-  function togglePhysicalMode() {
+  async function togglePhysicalMode() {
     const next = !app.persisted.physicalMode;
     app.persisted.physicalMode = next;
     app.optionsDialogOpen = false;
@@ -2588,6 +2607,10 @@
       ? 'Real calculator mode active. Follow the instructions on your TI-84.'
       : 'On-screen emulator mode active. Press the keys shown on screen.';
     render();
+
+    if (!next) {
+      await ensureBridgeInitStarted();
+    }
   }
 
   function physicalAdvance() {
@@ -3633,6 +3656,9 @@
         app.persisted.physicalMode = action === 'intro-physical';
         app.persisted.introSeen = true;
         savePersisted();
+        if (action === 'intro-emulator') {
+          await ensureBridgeInitStarted();
+        }
         startNextQuestion();
         break;
       }
@@ -3691,7 +3717,7 @@
         await restartWalkthrough();
         break;
       case 'toggle-physical-mode':
-        togglePhysicalMode();
+        await togglePhysicalMode();
         break;
       case 'physical-advance':
         physicalAdvance();
@@ -3708,6 +3734,7 @@
         app.optionsDialogOpen = false;
         app.romDialogOpen = true;
         render();
+        await ensureBridgeInitStarted();
         break;
       case 'close-rom-dialog':
         app.romDialogOpen = false;
@@ -3726,13 +3753,18 @@
         break;
       }
       case 'clear-rom':
-        await app.bridge.clearStoredRom();
-        clearListMemory();
-        app.bridgeStatus = app.bridge.getStatus();
-        app.romDialogOpen = false;
-        app.banner = 'Cached firmware and saved list memory were cleared. Simplified mode is active until firmware is loaded again.';
-        updateMockCanvas();
-        render();
+        try {
+          await app.bridge.clearStoredRom();
+          clearListMemory();
+          app.bridgeStatus = app.bridge.getStatus();
+          app.romDialogOpen = false;
+          app.banner = 'Cached firmware and saved list memory were cleared. Simplified mode is active until firmware is loaded again.';
+          updateMockCanvas();
+          render();
+        } catch (error) {
+          app.banner = `Could not clear cached firmware. ${error.message}`;
+          render();
+        }
         break;
       default:
         break;
@@ -3759,6 +3791,7 @@
       render();
 
       try {
+        await ensureBridgeInitStarted();
         await app.bridge.selectRomFile(file);
         app.bridgeStatus = app.bridge.getStatus();
         app.romDialogOpen = false;
@@ -3824,6 +3857,28 @@
     });
   }
 
+  async function ensureBridgeInitStarted() {
+    if (app.bridgeInitPromise) {
+      return app.bridgeInitPromise;
+    }
+
+    app.bridgeInitStarted = true;
+    app.bridgeInitPromise = app.bridge.init().then(() => {
+      app.bridgeStatus = app.bridge.getStatus();
+      if (app.bridgeStatus.code === 'needs-rom' && app.bridgeStatus.manualSelectionAvailable) {
+        app.romDialogOpen = true;
+        app.banner = 'Firmware auto-download is not configured. Choose a local ROM file to boot CEmu during development.';
+      } else if (bridgeStatusTone() === 'offline') {
+        app.banner = app.bridgeStatus.detail;
+      }
+      updateMockCanvas();
+      render();
+      return app.bridgeStatus;
+    });
+
+    return app.bridgeInitPromise;
+  }
+
   // Honor a '#unit=N' deep link (e.g. from the Desk) for this session only —
   // the persisted unit filter is left untouched.
   function applyUnitHash() {
@@ -3845,14 +3900,13 @@
     bindEvents();
     applyUnitHash();
     render();
-    await app.bridge.init();
-    app.bridgeStatus = app.bridge.getStatus();
-    if (app.bridgeStatus.code === 'needs-rom' && app.bridgeStatus.manualSelectionAvailable) {
-      app.romDialogOpen = true;
-      app.banner = 'Firmware auto-download is not configured. Choose a local ROM file to boot CEmu during development.';
-    } else if (bridgeStatusTone() === 'offline') {
-      app.banner = app.bridgeStatus.detail;
+
+    if (!app.persisted.physicalMode) {
+      await ensureBridgeInitStarted();
+      return;
     }
+
+    app.bridgeStatus = app.bridge.getStatus();
     updateMockCanvas();
     render();
   }
