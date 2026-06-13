@@ -7,6 +7,7 @@ import http from 'http';
 import { randomBytes } from 'crypto';
 import { createApp } from '../server.js';
 import { signToken } from '../token.js';
+import { createLedgerDb } from '../ledger-db.js';
 
 // ── Fake in-memory roster db (minimal — only needed for createApp) ────────────
 
@@ -345,6 +346,50 @@ describe('POST /ledger/record', () => {
     expect(status).toBe(500);
     expect(body.ok).toBe(false);
     expect(body.error).toBe('Database error');
+  });
+});
+
+describe('createLedgerDb', () => {
+  it('includes a fresh recorded_at timestamp in the upsert payload', async () => {
+    let upsertRows = null;
+    let upsertOpts = null;
+    const client = {
+      from(table) {
+        expect(table).toBe('item_ledger');
+        return {
+          upsert(rows, opts) {
+            upsertRows = rows;
+            upsertOpts = opts;
+            return {
+              select(cols) {
+                expect(cols).toBe('ledger_id, evidence_tier');
+                return {
+                  async single() {
+                    return { data: { ledger_id: 'ledger-1', evidence_tier: 'practice' }, error: null };
+                  },
+                };
+              },
+            };
+          },
+        };
+      },
+    };
+
+    const db = createLedgerDb(client);
+    await db.insertLedgerRow({
+      studentId: 'stu-1',
+      source: 'trainer',
+      itemId: 'TI84-linreg',
+      response: 'done',
+      score: 1,
+      evidenceTier: 'practice',
+      attempt: 1,
+    });
+
+    expect(upsertOpts).toEqual({ onConflict: 'student_id,source,item_id,attempt' });
+    expect(upsertRows).toHaveLength(1);
+    expect(upsertRows[0].recorded_at).toEqual(expect.any(String));
+    expect(new Date(upsertRows[0].recorded_at).toISOString()).toBe(upsertRows[0].recorded_at);
   });
 });
 

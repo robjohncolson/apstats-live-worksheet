@@ -203,6 +203,45 @@ describe('GET /class/grades — fan-out', () => {
     expect(r.body.students.find(s => s.studentId === 'bad').units).toEqual({});
   });
 
+  it('adds a trainer summary from already-fetched ledger rows', async () => {
+    const roster = [
+      { student_id: 's1', real_name: 'Alice', login_username: 'alpha_fox', section: 'P1' },
+      { student_id: 's2', real_name: 'Bob', login_username: 'beta_owl', section: 'P1' },
+    ];
+    const ledger = {
+      s1: [
+        makeRow('s1', 'TI84-linreg', 'done', {
+          source: 'trainer',
+          score: 0.5,
+          recorded_at: '2026-06-01T10:00:00.000Z',
+        }),
+        makeRow('s1', 'TI84-linreg', 'done', {
+          source: 'trainer',
+          score: 1,
+          recorded_at: '2026-06-03T10:00:00.000Z',
+        }),
+        makeRow('s1', 'TI84-1varstats', 'done', {
+          source: 'trainer',
+          score: 0.75,
+          recorded_at: '2026-06-02T10:00:00.000Z',
+        }),
+        makeRow('s1', 'U1-L1-Q01', 'B'),
+      ],
+      s2: [makeRow('s2', 'U1-L1-Q01', 'B')],
+    };
+    const ctx = await startServer({ roster, ledger }); srv = ctx.server;
+
+    const r = await srv.get('/class/grades', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    const byId = Object.fromEntries(r.body.students.map(s => [s.studentId, s]));
+    expect(byId.s1.trainer).toEqual({
+      procedures: 2,
+      avgScore: 0.75,
+      lastAt: '2026-06-03T10:00:00.000Z',
+    });
+    expect(byId.s2.trainer).toBeNull();
+  });
+
   it('roster db error → 500', async () => {
     const ctx = await startServer({ roster: [], rosterOpts: { error: { message: 'down' } } });
     srv = ctx.server;

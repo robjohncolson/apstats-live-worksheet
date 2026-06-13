@@ -211,6 +211,28 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         section,
         worksheetBlankCounts,
       });
+      const trainerRows = ledgerRows.filter(row => row && row.source === 'trainer');
+      let trainer = null;
+      if (trainerRows.length) {
+        const procedures = new Set();
+        let scoreSum = 0;
+        let scoreCount = 0;
+        let lastAt = null;
+        for (const row of trainerRows) {
+          if (row.item_id) procedures.add(row.item_id);
+          const score = Number(row.score);
+          if (Number.isFinite(score)) {
+            scoreSum += score;
+            scoreCount += 1;
+          }
+          if (row.recorded_at && (!lastAt || row.recorded_at > lastAt)) lastAt = row.recorded_at;
+        }
+        trainer = {
+          procedures: procedures.size,
+          avgScore: scoreCount ? scoreSum / scoreCount : null,
+          lastAt,
+        };
+      }
       // Merge schoologyUid at the call site so studentMeta stays a pure
       // roster->header map (do NOT touch studentMeta).
       // gradebook: the in-app "1:1 Schoology gradebook" grid (additive) — the
@@ -220,6 +242,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         ...studentMeta(roster),
         schoologyUid: uidMap[roster.student_id] ?? null,
         ...computed,
+        trainer,
         gradebook: buildGradebook(computed, { lessonSchedule, section, todayStr }),
       };
     });

@@ -39,7 +39,8 @@ export function createLedgerDb(client) {
           response:      response,
           score:         score       ?? null,
           evidence_tier: evidenceTier,
-          attempt:       attempt     ?? 1
+          attempt:       attempt     ?? 1,
+          recorded_at:   new Date().toISOString()
         }],
         { onConflict: 'student_id,source,item_id,attempt' }
       )

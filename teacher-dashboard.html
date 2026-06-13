@@ -554,6 +554,27 @@
       </div>
     </div>
 
+    <!-- TI-84 Practice -->
+    <div class="section">
+      <h2 class="section-title">TI-84 Practice</h2>
+      <div class="table-wrap" id="trainer-wrap" style="display:none">
+        <table class="grades">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Procedures</th>
+              <th>Avg score</th>
+              <th>Last practice</th>
+            </tr>
+          </thead>
+          <tbody id="trainer-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-note" id="trainer-empty" style="display:none">
+        No TI-84 trainer practice recorded for this section yet.
+      </div>
+    </div>
+
     <!-- Skill heatmap -->
     <div class="section">
       <h2 class="section-title">Skill Heatmap (class)</h2>
@@ -939,6 +960,42 @@
       }
     }
 
+    function renderTrainerPractice(payload) {
+      var tbody = $('trainer-tbody');
+      tbody.innerHTML = '';
+      var students = ((payload && payload.students) || []).filter(function (s) {
+        return s && s.trainer;
+      });
+      if (students.length === 0) {
+        $('trainer-wrap').style.display = 'none';
+        $('trainer-empty').style.display = '';
+        return;
+      }
+      $('trainer-empty').style.display = 'none';
+      $('trainer-wrap').style.display = '';
+
+      students.sort(function (a, b) {
+        var ar = (a.trainer && a.trainer.lastAt) || '';
+        var br = (b.trainer && b.trainer.lastAt) || '';
+        if (ar < br) return 1;
+        if (ar > br) return -1;
+        return String(a.realName || '').localeCompare(String(b.realName || ''));
+      });
+
+      tbody.innerHTML = students.map(function (s) {
+        var trainer = s.trainer || {};
+        var avg = typeof trainer.avgScore === 'number'
+          ? Math.round(trainer.avgScore * 100) + '%'
+          : '-';
+        return '<tr>' +
+          '<td>' + escHtml(s.realName || s.username || s.studentId || '') + '</td>' +
+          '<td class="num">' + escHtml(String(trainer.procedures || 0)) + '</td>' +
+          '<td class="num">' + escHtml(avg) + '</td>' +
+          '<td class="dim">' + escHtml(fmtDate(trainer.lastAt)) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
     // ===== in-app 1:1 Schoology gradebook (component grid) =====
     var GB_CAT_ORDER = ['Lesson', 'Quizzes', 'Blooket', 'Progress Check', 'Posters'];
     var GB_CAT_SLUG = { 'Lesson': 'lesson', 'Quizzes': 'quizzes', 'Blooket': 'blooket', 'Progress Check': 'pc', 'Posters': 'posters' };
@@ -1219,6 +1276,8 @@
         // Hide previous results while loading so the user sees the loading state.
         $('grades-wrap').style.display = 'none';
         $('grades-empty').style.display = 'none';
+        $('trainer-wrap').style.display = 'none';
+        $('trainer-empty').style.display = 'none';
         $('heatmap-grid').style.display = 'none';
         $('heatmap-empty').style.display = 'none';
         $('triage-list').style.display = 'none';
@@ -1261,6 +1320,7 @@
           setLoading(false);
           renderGradesTable({ students: [] });
           renderGradebook({ students: [] });
+          renderTrainerPractice({ students: [] });
           renderHeatmap({ heatmap: {} });
           renderTriage({ heatmap: {}, students: [] });
           return;
@@ -1291,6 +1351,7 @@
         renderGradesTable(gPayload);
         lastGradesPayload = gPayload;
         renderGradebook(gPayload);
+        renderTrainerPractice(gPayload);
         renderHeatmap(mPayload);
         renderTriage(mPayload);
 
