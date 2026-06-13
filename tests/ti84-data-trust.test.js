@@ -351,6 +351,54 @@ describe('Track 1 brute-force penalty', () => {
   });
 });
 
+describe('onboarding and progress signals', () => {
+  it('shows the first-run chooser and applies the mode choice', async () => {
+    await bootTrainer({ records: {} });
+
+    expect(appHtml()).toContain('Do you have a TI-84 calculator with you?');
+    await click('[data-action="intro-emulator"]');
+
+    expect(persisted().physicalMode).toBe(false);
+    expect(persisted().introSeen).toBe(true);
+    await waitFor(() => appHtml().includes('choose-procedure'), 'the first question');
+  });
+
+  it('counts only scheduler-visible (track1) dues in the Due card', async () => {
+    const record = dueRecord('recall');
+    record.track1.nextReview = '2099-01-01'; // track1 not due; track2 past-due
+    await bootTrainer({ records: { 't-test-stats': record } });
+
+    const dueValue = document.querySelector('.dashboard-card strong').textContent.trim();
+    expect(dueValue).toBe('0');
+  });
+
+  it('a guided completion schedules tomorrow and does not re-enter the Due count', async () => {
+    await bootTrainer({
+      records: { 'matrix-entry': dueRecord('guided') },
+      physicalMode: true,
+    });
+    await startWalkthroughFor('matrix-entry');
+    await physicalAdvanceAll();
+    await flush(50);
+
+    const record = persisted().records['matrix-entry'];
+    expect(record.track2.nextReview).not.toBe(record.track2.lastReview);
+    const dueValue = document.querySelector('.dashboard-card strong').textContent.trim();
+    expect(dueValue).toBe('0');
+  });
+
+  it('honors a #unit=N deep link for the session without persisting it', async () => {
+    window.location.hash = '#unit=4';
+    try {
+      await bootTrainer({ records: {} });
+      expect(document.querySelector('#unit-filter').value).toBe('4');
+      expect(persisted().filterUnit).toBe('all');
+    } finally {
+      window.location.hash = '';
+    }
+  });
+});
+
 describe('gradebook-client failure reasons', () => {
   function bootGradebookClient(fetchImpl) {
     window.ROSTER_SERVICE_URL = 'https://roster.test';

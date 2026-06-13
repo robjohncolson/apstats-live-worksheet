@@ -8741,7 +8741,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     branchIntro: null,
     walkthrough: null,
     sessionResult: null,
-    banner: 'The trainer boots the real calculator firmware when it is cached or configured.',
+    banner: 'Pick a problem, choose the right procedure, and we drill the keys.',
     busy: false,
     flashKeyId: null,
     flashKind: null,
@@ -9058,6 +9058,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       filterUnit: 'all',
       records: {},
       physicalMode: true,
+      introSeen: false,
     };
 
     try {
@@ -9501,9 +9502,11 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
   function sessionSnapshot() {
     const procedures = filteredProcedures();
+    // Mirrors the scheduler (nextQuestionProcedureId), which queues by
+    // track1 only — counting track2 dues here made Due grow on completion.
     const dueCount = procedures.filter((procedure) => {
       const record = getProcedureRecord(procedure.id);
-      return isDue(record?.track1) || isDue(record?.track2);
+      return isDue(record?.track1);
     }).length;
     const newCount = procedures.filter((procedure) => !getProcedureRecord(procedure.id)).length;
     const mastery = procedures.length
@@ -10447,7 +10450,8 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     if (walkthrough.mode === 'guided') {
       track2.guidedPasses += 1;
       track2.lastReview = reviewDate;
-      track2.nextReview = reviewDate;
+      // Tomorrow, not today — finishing an item must visibly clear it.
+      track2.nextReview = formatDate(addDays(startOfDay(new Date()), 1));
       track2.lastQuality = 4;
       track2.mode = 'recall';
       track2.lastErrors = 0;
@@ -11003,7 +11007,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       <div class="clutch-card clutch-card-setup">
         <p class="panel-kicker">Data Setup</p>
         <h3>Load the required data before the walkthrough.</h3>
-        <p class="panel-note clutch-note">The clutch is disengaged, so every key goes straight to the calculator.</p>
+        <p class="panel-note clutch-note">Free play: every key goes straight to the calculator.</p>
         <div class="data-target-list">
           ${names
             .map((name) => {
@@ -11045,7 +11049,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
         <div class="clutch-card clutch-card-review">
           <p class="panel-kicker">Result Review</p>
           <h3>Explore the calculator output before finishing.</h3>
-          <p class="panel-note clutch-note">The clutch is disengaged again, so keys go straight to the calculator while you inspect the result.</p>
+          <p class="panel-note clutch-note">Free play: keys go straight to the calculator while you read the result.</p>
           <div class="button-row">
             <button type="button" class="mac-button primary" data-action="finish-review">
               Finish review
@@ -11092,7 +11096,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       <div class="clutch-card clutch-card-review answer-card${verifiedClass}">
         <p class="panel-kicker">Result Review</p>
         <h3>Check Your Answer</h3>
-        <p class="panel-note clutch-note">The clutch is disengaged again, so keys go straight to the calculator while you inspect the result.</p>
+        <p class="panel-note clutch-note">Free play: keys go straight to the calculator while you read the result.</p>
         <p class="panel-note">Enter the key values from your calculator result.</p>
         ${fieldRows}
         <div class="button-row">
@@ -11182,20 +11186,46 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   function renderStartPanel() {
+    const firstRun = !app.persisted.introSeen && !Object.keys(app.persisted.records).length;
+
+    if (firstRun) {
+      return `
+        <section class="panel problem-panel start-panel">
+          <p class="panel-kicker">Welcome</p>
+          <h2>Learn every TI-84 move AP Stats needs</h2>
+          <p class="problem-stem">
+            1) Read a problem and pick the right calculator procedure.
+            2) We walk you through it key by key.
+            3) Finished items come back for review on a schedule, like flashcards.
+          </p>
+          <p class="panel-note">Do you have a TI-84 calculator with you?</p>
+          <div class="button-row">
+            <button type="button" class="mac-button primary" data-action="intro-physical">
+              Yes, I'll use my TI-84
+            </button>
+            <button type="button" class="mac-button" data-action="intro-emulator">
+              No, use the on-screen calculator
+            </button>
+          </div>
+        </section>
+      `;
+    }
+
+    const snapshot = sessionSnapshot();
+    const caughtUp = snapshot.dueCount === 0 && snapshot.newCount === 0;
+    const headline = caughtUp ? 'You are caught up for today!' : 'TI-84 Trainer';
+    const detail = caughtUp
+      ? 'Nothing is due right now. Extra practice sharpens your weakest procedure — or come back tomorrow.'
+      : 'Pick the right procedure for the problem, then we drill the exact key presses. Reviews come back on a schedule, like flashcards.';
+
     return `
       <section class="panel problem-panel start-panel">
         <p class="panel-kicker">Session Start</p>
-        <h2>TI-84 Trainer V3</h2>
-        <p class="problem-stem">
-          Track 1 asks for the correct procedure. Track 2 validates each key with the native state machine while
-          the calculator panel boots the real TI-84 firmware when it is cached or configured.
-        </p>
+        <h2>${headline}</h2>
+        <p class="problem-stem">${detail}</p>
         <div class="button-row">
           <button type="button" class="mac-button primary" data-action="start-session">
-            Start next item
-          </button>
-          <button type="button" class="mac-button" data-action="open-rom-dialog">
-            Firmware
+            ${caughtUp ? 'Practice anyway' : 'Start next item'}
           </button>
         </div>
       </section>
@@ -11857,6 +11887,14 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     }
 
     switch (action) {
+      case 'intro-physical':
+      case 'intro-emulator': {
+        app.persisted.physicalMode = action === 'intro-physical';
+        app.persisted.introSeen = true;
+        savePersisted();
+        startNextQuestion();
+        break;
+      }
       case 'start-session':
       case 'next-item':
         startNextQuestion();
@@ -12045,9 +12083,26 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     });
   }
 
+  // Honor a '#unit=N' deep link (e.g. from the Desk) for this session only —
+  // the persisted unit filter is left untouched.
+  function applyUnitHash() {
+    const match = /[#&]unit=(\d+)/.exec(window.location.hash ?? '');
+
+    if (!match) {
+      return;
+    }
+
+    const unit = Number(match[1]);
+
+    if (PROCEDURES.some((procedure) => procedure.unit === unit)) {
+      app.filterUnit = String(unit);
+    }
+  }
+
   async function init() {
     attachBridge();
     bindEvents();
+    applyUnitHash();
     render();
     await app.bridge.init();
     app.bridgeStatus = app.bridge.getStatus();
