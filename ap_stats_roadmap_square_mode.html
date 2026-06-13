@@ -2045,6 +2045,7 @@
 <!-- Gradebook ledger feeder — _studentMarkSave's DESK_DONE write needs it. Reads
      rosterClient at call time, so it loads after roster-client.js (worksheet order). -->
 <script src="gradebook-client.js"></script>
+<script src="js/wallet_logic.js"></script>
 <script src="lib/qrcode.min.js"></script>
 <script src="canvas_engine.js"></script>
 <script src="sprite_sheet.js"></script>
@@ -10074,6 +10075,44 @@ function _receiptPayload(r) {
     }
 }
 
+var WALLET_ISSUERS = [
+    { name: 'Quiz Server', pubkey: 'yFByWH5a7OwhF2KOD3SLd1BE4MlHEN_JDtDaMwW-Eg4' },
+    { name: 'The Desk', pubkey: 'DRfEbaWByfatxMq26iHrw4wxt4MIpypZlbB3GeBFSO4' }
+];
+
+function _walletB64UrlBytes(value) {
+    var s = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var raw = atob(s);
+    var bytes = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    return bytes;
+}
+
+async function _walletVerifyReceiptCompact(compact) {
+    try {
+        if (!compact || !window.crypto || !crypto.subtle) return null;
+        var parts = String(compact).split('.');
+        if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
+        var data = _walletB64UrlBytes(parts[0]);
+        var sig = _walletB64UrlBytes(parts[1]);
+        for (var i = 0; i < WALLET_ISSUERS.length; i++) {
+            var issuer = WALLET_ISSUERS[i];
+            var key = await crypto.subtle.importKey(
+                'jwk',
+                { kty: 'OKP', crv: 'Ed25519', x: issuer.pubkey, ext: true },
+                { name: 'Ed25519' },
+                false,
+                ['verify']
+            );
+            if (await crypto.subtle.verify({ name: 'Ed25519' }, key, sig, data)) {
+                return { ok: true, issuer: issuer.name };
+            }
+        }
+    } catch (_) {}
+    return { ok: false, issuer: '' };
+}
+
 function _receiptSourceIcon(src) {
     var s = String(src || '').toLowerCase();
     if (s === 'worksheet') return '📝';
@@ -10217,30 +10256,10 @@ function closeMyReceipts() {
 // Points are completion-based and counted ONCE per distinct item (src|itemId),
 // so the balance is monotonic (only ever rises) and can't be farmed by redoing
 // the same item. Rewards DOING work; correctness lives in the Grade number.
-var WALLET_POINTS = {
-    curriculum_quiz: 10, pc: 10, frq: 5, blooket: 4,
-    worksheet: 3, quiz_review: 2, quiz_exception: 2, trainer: 1
-};
-function _walletPointsFor(src, itemId) {
-    // The flashcard make-up writes source 'worksheet' with a BL-…-DESK_DONE id;
-    // count it as a Blooket-track item, not a worksheet blank.
-    if (itemId && /^BL-.*-DESK_DONE$/i.test(itemId)) return 4;
-    return (WALLET_POINTS[src] != null) ? WALLET_POINTS[src] : 1;
-}
 function _walletComputePoints(receipts) {
-    var seen = {}, total = 0, today = 0;
-    var midnight = new Date(); midnight.setHours(0, 0, 0, 0);
-    var midnightMs = midnight.getTime();
-    for (var k = 0; k < receipts.length; k++) {
-        var r = receipts[k];
-        var key = (r.src || '') + '|' + (r.i || '');
-        if (seen[key]) continue;
-        seen[key] = 1;
-        var p = _walletPointsFor(r.src, r.i);
-        total += p;
-        if (r.ts && r.ts >= midnightMs) today += p;
-    }
-    return { total: total, today: today };
+    return (window.WalletLogic && WalletLogic.computePoints)
+        ? WalletLogic.computePoints(receipts)
+        : { total: 0, today: 0 };
 }
 
 function _walletPct(v) {
@@ -10277,13 +10296,9 @@ async function _walletLoadReceipts() {
             durable = await gradebookClient.fetchReceipts();
         }
     } catch (_) { durable = []; }
-    var byKey = {};
-    function keyOf(r) { return (r && (r.id || r.compact)) || ''; }
-    (durable || []).forEach(function (r) { if (r && r.compact) byKey[keyOf(r)] = r; });
-    (local || []).forEach(function (r) { if (r && r.compact && !byKey[keyOf(r)]) byKey[keyOf(r)] = r; });
-    var merged = Object.keys(byKey).map(function (k) { return byKey[k]; });
-    merged.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-    return merged;
+    return (window.WalletLogic && WalletLogic.mergeReceipts)
+        ? WalletLogic.mergeReceipts(durable, local)
+        : local;
 }
 
 function _walletPaint(host, receipts, loading) {
@@ -10333,7 +10348,8 @@ function _walletPaint(host, receipts, loading) {
     ptsNum.textContent = pts.total.toLocaleString();
     var ptsLbl = document.createElement('span');
     ptsLbl.style.cssText = 'color:#555';
-    ptsLbl.textContent = 'points earned';
+    ptsLbl.title = 'Points reward completing work; your Grade reflects correctness.';
+    ptsLbl.textContent = 'effort points · work recorded';
     ptsRow.appendChild(ptsNum);
     ptsRow.appendChild(ptsLbl);
     if (pts.today > 0) {
@@ -10414,12 +10430,18 @@ function _walletReceiptRow(r) {
 
     var actions = document.createElement('div');
     actions.style.cssText = 'white-space:nowrap;text-align:right;flex-shrink:0';
-    var verify = document.createElement('a');
-    verify.href = url; verify.target = '_blank'; verify.rel = 'noopener';
-    verify.style.cssText = 'color:#0000cc;text-decoration:underline';
+    var verify = document.createElement('button');
+    verify.className = 's7btn'; verify.type = 'button';
+    verify.style.cssText = 'font-size:10px;padding:1px 5px';
     verify.textContent = 'Verify';
     actions.appendChild(verify);
     actions.appendChild(document.createTextNode(' '));
+    var fullVerify = document.createElement('a');
+    fullVerify.href = url; fullVerify.target = '_blank'; fullVerify.rel = 'noopener';
+    fullVerify.style.cssText = 'color:#0000cc;text-decoration:underline;font-size:10px';
+    fullVerify.textContent = 'open full verifier';
+    actions.appendChild(fullVerify);
+    actions.appendChild(document.createElement('br'));
     var qrBtn = document.createElement('button');
     qrBtn.className = 's7btn'; qrBtn.type = 'button';
     qrBtn.style.cssText = 'font-size:10px;padding:1px 5px';
@@ -10444,9 +10466,29 @@ function _walletReceiptRow(r) {
     top.appendChild(actions);
     row.appendChild(top);
 
+    var verifyStatus = document.createElement('div');
+    verifyStatus.style.cssText = 'display:none;margin-top:4px;color:#444';
+    row.appendChild(verifyStatus);
+
     var qr = document.createElement('div');
     qr.style.cssText = 'display:none;margin-top:6px';
     row.appendChild(qr);
+    verify.onclick = function () {
+        verify.disabled = true;
+        verifyStatus.style.display = 'block';
+        verifyStatus.textContent = 'checking...';
+        _walletVerifyReceiptCompact(r.compact).then(function (result) {
+            if (result && result.ok) {
+                verifyStatus.textContent = 'OK - signed by ' + result.issuer;
+            } else {
+                verifyStatus.textContent = 'X - signature not verified';
+            }
+        }, function () {
+            verifyStatus.textContent = 'X - signature not verified';
+        }).finally(function () {
+            verify.disabled = false;
+        });
+    };
     qrBtn.onclick = function () {
         if (typeof _toggleReceiptQr === 'function') _toggleReceiptQr(qrBtn, qr, url);
     };
