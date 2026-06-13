@@ -199,6 +199,16 @@ input[type="file"] {
   letter-spacing: 0.04em;
 }
 
+/* Handheld mastery check — the "prove it on your real TI-84" step. A subtle
+   accent marks it as a distinct mode from the on-screen walkthrough. */
+.handheld-panel {
+  border-left: 4px solid var(--ink);
+}
+
+.handheld-panel .panel-kicker {
+  font-weight: 700;
+}
+
 h2 {
   margin: 0 0 12px;
   font-family: var(--font-ui);
@@ -8767,6 +8777,7 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     branchIntro: null,
     walkthrough: null,
     sessionResult: null,
+    handheldCheck: null,
     banner: 'Pick a problem, choose the right procedure, and we drill the keys.',
     busy: false,
     flashKeyId: null,
@@ -9467,9 +9478,20 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
           lastErrors: 0,
           lastHints: 0,
           bestScore: 0,
+          // Mastery gate: a procedure is only "mastered" once the student has
+          // run a fresh problem on their own physical TI-84 and verified the
+          // result (handheldPassed). awaitingHandheld means a clean emulator
+          // recall pass happened and the handheld check is the next step.
+          handheldPassed: false,
+          awaitingHandheld: false,
         },
       };
     }
+
+    // Backfill new fields for records persisted before the mastery gate shipped.
+    const track2 = app.persisted.records[procedureId].track2;
+    if (track2.handheldPassed === undefined) track2.handheldPassed = false;
+    if (track2.awaitingHandheld === undefined) track2.awaitingHandheld = false;
 
     return app.persisted.records[procedureId];
   }
@@ -9541,7 +9563,12 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   function combinedMastery(record) {
-    return Math.round(((track1Mastery(record) + track2Mastery(record)) / 2) * 100);
+    const raw = (track1Mastery(record) + track2Mastery(record)) / 2;
+    // A procedure isn't fully mastered until it's been proven on a real TI-84,
+    // so cap mastery until the handheld check passes. The remaining headroom is
+    // what the handheld pass unlocks.
+    const capped = record?.track2?.handheldPassed ? raw : Math.min(raw, 0.7);
+    return Math.round(capped * 100);
   }
 
   function sessionSnapshot() {
@@ -9662,10 +9689,19 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       return;
     }
 
+    // A procedure that passed emulator recall but hasn't been proven on a real
+    // TI-84 goes straight to its handheld mastery check.
+    const track2 = ensureProcedureRecord(procedureId).track2;
+    if (track2.awaitingHandheld && !track2.handheldPassed) {
+      startHandheldCheck(procedureId);
+      return;
+    }
+
     app.question = buildQuestion(procedureId);
     app.branchIntro = null;
     app.walkthrough = null;
     app.sessionResult = null;
+    app.handheldCheck = null;
     app.banner = 'Choose the correct procedure before the walkthrough starts.';
     render();
   }
@@ -10524,6 +10560,19 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     }
 
     track2.mode = 'recall';
+
+    // A clean emulator recall pass earns the handheld mastery check: the
+    // student now proves the procedure on their own physical TI-84. Until they
+    // pass it, the procedure is not "mastered".
+    if (!track2.handheldPassed) {
+      track2.awaitingHandheld = true;
+      return {
+        headline: `${PROCEDURE_BY_ID[walkthrough.procedureId].name} — recall passed`,
+        detail: 'Nicely done on the on-screen calculator. One more step to master it: run a fresh problem on your real TI-84.',
+        offerHandheld: true,
+      };
+    }
+
     return {
       headline: `${PROCEDURE_BY_ID[walkthrough.procedureId].name} scheduled`,
       detail: `Recall complete. Next review is ${track2.nextReview}.`,
@@ -10652,11 +10701,29 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     const track1Quality = track1QualityForBranches(branchCount, wrongChoices);
     applyTrack1Outcome(walkthrough.procedureId, track1Quality);
 
+    const procedureId = walkthrough.procedureId;
     app.question = null;
     app.walkthrough = null;
     app.branchIntro = null;
+
+    if (track2Summary.offerHandheld) {
+      app.sessionResult = {
+        headline: track2Summary.headline,
+        detail: track2Summary.detail,
+        actionLabel: 'Do it on my TI-84 →',
+        action: 'start-handheld',
+        handheldProcedureId: procedureId,
+        secondaryLabel: 'Later',
+        secondaryAction: 'next-item',
+      };
+      app.banner = 'Grab your real TI-84 — the next step is a quick handheld check.';
+      savePersisted();
+      render();
+      return;
+    }
+
     app.sessionResult = {
-      headline: `${PROCEDURE_BY_ID[walkthrough.procedureId].name} complete`,
+      headline: `${PROCEDURE_BY_ID[procedureId].name} complete`,
       detail: `${track2Summary.detail} Track 1 quality: ${track1Quality}.`,
       actionLabel: 'Next item',
       action: 'next-item',
@@ -10664,6 +10731,233 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     app.banner = 'The walkthrough finished. Start the next scheduled item when ready.';
     savePersisted();
     render();
+  }
+
+  // ── Handheld mastery check ──────────────────────────────────────────────
+  // After a clean emulator recall pass, the student proves the procedure on
+  // their own physical TI-84 with a fresh problem. Verifiable procedures check
+  // the typed result against the canonical answer (recompute matches the real
+  // TI to <0.001%); graph/utility procedures are a self-attested confirmation.
+
+  function startHandheldCheck(procedureId) {
+    if (!procedureId) {
+      startNextQuestion();
+      return;
+    }
+
+    app.question = null;
+    app.walkthrough = null;
+    app.branchIntro = null;
+    app.sessionResult = null;
+    app.handheldCheck = {
+      procedureId,
+      problem: pickRandom(patternsData.canonicalProblems[procedureId] ?? []),
+      fields: VERIFICATION_FIELDS[procedureId] ?? null,
+      values: {},
+      checkResults: null,
+      failCounts: {},
+      verified: false,
+    };
+    app.banner = 'Handheld check: run this on your own TI-84, then enter the result.';
+    render();
+  }
+
+  function syncHandheldInputsFromDom() {
+    if (!app.handheldCheck) {
+      return;
+    }
+
+    const values = { ...(app.handheldCheck.values ?? {}) };
+    root.querySelectorAll('[data-answer-key]').forEach((input) => {
+      values[input.dataset.answerKey] = input.value;
+    });
+    app.handheldCheck.values = values;
+  }
+
+  function recordHandheldMastery(procedureId) {
+    if (typeof window.gradebookClient?.record !== 'function') {
+      return;
+    }
+
+    if (typeof window.rosterClient?.current !== 'function' || !window.rosterClient.current()) {
+      return;
+    }
+
+    const procedure = PROCEDURE_BY_ID[procedureId];
+    const track2 = ensureProcedureRecord(procedureId).track2;
+    const score = Math.max(track2.bestScore ?? 0, 1); // verified on real hardware
+    track2.bestScore = score;
+
+    window.gradebookClient.record({
+      source: 'trainer',
+      itemId: `TI84-${procedureId.replace(/[^A-Za-z0-9-]/g, '-')}`,
+      unit: Number.isFinite(procedure?.unit) ? `U${procedure.unit}` : undefined,
+      response: {
+        procedureId,
+        event: 'handheld-mastery',
+        inputMode: 'physical',
+        verified: true,
+      },
+      score,
+      attempt: 1,
+    }).then((result) => {
+      if (!app.sessionResult) {
+        return;
+      }
+
+      app.sessionResult.gradebookSave = result?.ok
+        ? 'Saved to your gradebook.'
+        : result?.reason === 'auth'
+          ? 'Not saved - your sign-in expired. Open the Desk and sign in again.'
+          : 'Not saved (connection problem).';
+      render();
+    }).catch(() => {
+      if (!app.sessionResult) {
+        return;
+      }
+
+      app.sessionResult.gradebookSave = 'Not saved (connection problem).';
+      render();
+    });
+  }
+
+  function finishHandheldMastery(procedureId, { recordCredit }) {
+    const track2 = ensureProcedureRecord(procedureId).track2;
+    track2.handheldPassed = true;
+    track2.awaitingHandheld = false;
+
+    app.handheldCheck = null;
+    app.sessionResult = {
+      headline: `${PROCEDURE_BY_ID[procedureId].name} mastered!`,
+      detail: 'You ran it on your own TI-84 and nailed the result. This procedure is now mastered.',
+      actionLabel: 'Next item',
+      action: 'next-item',
+    };
+    app.banner = 'Mastered — proven on a real calculator.';
+    savePersisted();
+    render();
+
+    if (recordCredit) {
+      recordHandheldMastery(procedureId);
+    }
+  }
+
+  function checkHandheld() {
+    const check = app.handheldCheck;
+
+    if (!check || !check.fields?.length) {
+      return;
+    }
+
+    syncHandheldInputsFromDom();
+    const expected = computeExpected(check.procedureId, check.problem);
+
+    if (!expected) {
+      // No reliable reference for this problem — accept as self-attested.
+      finishHandheldMastery(check.procedureId, { recordCredit: false });
+      return;
+    }
+
+    const results = {};
+    let allCorrect = true;
+
+    check.fields.forEach((field) => {
+      const correct = valuesMatch(check.values[field.key], expected[field.key], field.key);
+      const failCount = correct ? 0 : (check.failCounts?.[field.key] || 0) + 1;
+      check.failCounts[field.key] = failCount;
+      results[field.key] = {
+        actual: check.values[field.key] ?? '',
+        expected: expected[field.key],
+        correct,
+        failCount,
+      };
+      if (!correct) {
+        allCorrect = false;
+      }
+    });
+
+    check.checkResults = results;
+    check.verified = allCorrect;
+
+    if (allCorrect) {
+      finishHandheldMastery(check.procedureId, { recordCredit: true });
+      return;
+    }
+
+    app.banner = 'Not a match yet. Re-run it on your TI-84 and check sign and decimals.';
+    render();
+  }
+
+  function confirmHandheld() {
+    const check = app.handheldCheck;
+
+    if (!check) {
+      return;
+    }
+
+    // Graph/utility procedures have no numeric result to verify — self-attested.
+    finishHandheldMastery(check.procedureId, { recordCredit: false });
+  }
+
+  function skipHandheld() {
+    // Defer; awaitingHandheld stays set, so it re-offers next time it's due.
+    app.handheldCheck = null;
+    startNextQuestion();
+  }
+
+  function renderHandheldCheck() {
+    const check = app.handheldCheck;
+    const procedure = PROCEDURE_BY_ID[check.procedureId];
+    const stem = check.problem?.stem ?? 'Run this procedure on your own TI-84.';
+
+    if (!check.fields?.length) {
+      return `
+        <section class="panel problem-panel handheld-panel">
+          <p class="panel-kicker">Handheld Check — ${procedure.name}</p>
+          <h2>Prove it on your real TI-84</h2>
+          <p class="problem-stem">${stem}</p>
+          <p class="panel-note">Do this on your own calculator. When the screen looks right, confirm below.</p>
+          <div class="button-row">
+            <button type="button" class="mac-button primary" data-action="handheld-confirm">I did it on my TI-84</button>
+            <button type="button" class="mac-button" data-action="handheld-skip">Later</button>
+          </div>
+        </section>
+      `;
+    }
+
+    const fieldRows = renderAnswerFieldRows(check.fields, check.values, check.checkResults ?? {});
+    return `
+      <section class="panel problem-panel handheld-panel answer-card${check.verified ? ' verified' : ''}">
+        <p class="panel-kicker">Handheld Check — ${procedure.name}</p>
+        <h2>Prove it on your real TI-84</h2>
+        <p class="problem-stem">${stem}</p>
+        <p class="panel-note">Run this on your own calculator, then type the result it shows.</p>
+        ${fieldRows}
+        <div class="button-row">
+          <button type="button" class="mac-button primary" data-action="check-handheld">Check</button>
+          <button type="button" class="mac-button" data-action="handheld-skip">Later</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderHandheldCalcColumn() {
+    return `
+      <section class="panel calc-panel physical-panel">
+        <div class="calc-top">
+          <div>
+            <p class="panel-kicker">Your Real Calculator</p>
+            <h2>Use your TI-84</h2>
+          </div>
+        </div>
+        <div class="physical-card">
+          <div class="physical-card-header">
+            <p class="physical-procedure-name">Grab your TI-84 Plus CE</p>
+          </div>
+          <p class="physical-narration">Work the problem on your own calculator, then enter the result it displays on the left.</p>
+        </div>
+      </section>
+    `;
   }
 
   function syncAnswerInputsFromDom() {
@@ -11087,32 +11381,13 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     `;
   }
 
-  function renderResultReviewPanel() {
-    const walkthrough = app.walkthrough;
-    const procedure = currentProcedure();
-    const fields = procedure ? VERIFICATION_FIELDS[procedure.id] : null;
-
-    if (!walkthrough || !fields) {
-      return `
-        <div class="clutch-card clutch-card-review">
-          <p class="panel-kicker">Result Review</p>
-          <h3>Explore the calculator output before finishing.</h3>
-          <p class="panel-note clutch-note">Free play: keys go straight to the calculator while you read the result.</p>
-          <div class="button-row">
-            <button type="button" class="mac-button primary" data-action="finish-review">
-              Finish review
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    const results = walkthrough.answerCheckResults ?? {};
-    const verifiedClass = walkthrough.answerVerified ? ' verified' : '';
-    const fieldRows = fields
+  // Shared renderer for the type-the-result answer rows used by both the
+  // emulator result-review panel and the handheld mastery check.
+  function renderAnswerFieldRows(fields, values, results) {
+    return fields
       .map((field) => {
-        const value = walkthrough.answerValues?.[field.key] ?? '';
-        const status = results[field.key];
+        const value = values?.[field.key] ?? '';
+        const status = results?.[field.key];
         const statusMarkup = !status
           ? '<span class="answer-status"></span>'
           : status.correct
@@ -11139,6 +11414,31 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
         `;
       })
       .join('');
+  }
+
+  function renderResultReviewPanel() {
+    const walkthrough = app.walkthrough;
+    const procedure = currentProcedure();
+    const fields = procedure ? VERIFICATION_FIELDS[procedure.id] : null;
+
+    if (!walkthrough || !fields) {
+      return `
+        <div class="clutch-card clutch-card-review">
+          <p class="panel-kicker">Result Review</p>
+          <h3>Explore the calculator output before finishing.</h3>
+          <p class="panel-note clutch-note">Free play: keys go straight to the calculator while you read the result.</p>
+          <div class="button-row">
+            <button type="button" class="mac-button primary" data-action="finish-review">
+              Finish review
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    const results = walkthrough.answerCheckResults ?? {};
+    const verifiedClass = walkthrough.answerVerified ? ' verified' : '';
+    const fieldRows = renderAnswerFieldRows(fields, walkthrough.answerValues, results);
 
     return `
       <div class="clutch-card clutch-card-review answer-card${verifiedClass}">
@@ -11228,6 +11528,11 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
           <button type="button" class="mac-button primary" data-action="${app.sessionResult.action}">
             ${app.sessionResult.actionLabel}
           </button>
+          ${app.sessionResult.secondaryAction ? `
+            <button type="button" class="mac-button" data-action="${app.sessionResult.secondaryAction}">
+              ${app.sessionResult.secondaryLabel}
+            </button>
+          ` : ''}
         </div>
       </section>
     `;
@@ -11281,6 +11586,10 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   function renderProblemColumn() {
+    if (app.handheldCheck) {
+      return renderHandheldCheck();
+    }
+
     if (app.walkthrough) {
       return renderWalkthroughPanel();
     }
@@ -11551,6 +11860,10 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   }
 
   function renderCalculatorColumn() {
+    if (app.handheldCheck) {
+      return renderHandheldCalcColumn();
+    }
+
     if (app.persisted.physicalMode) {
       return renderPhysicalColumn();
     }
@@ -11950,6 +12263,18 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       case 'next-item':
         startNextQuestion();
         break;
+      case 'start-handheld':
+        startHandheldCheck(app.sessionResult?.handheldProcedureId);
+        break;
+      case 'check-handheld':
+        checkHandheld();
+        break;
+      case 'handheld-confirm':
+        confirmHandheld();
+        break;
+      case 'handheld-skip':
+        skipHandheld();
+        break;
       case 'choose-procedure':
         await handleChoice(procedureId);
         break;
@@ -12093,7 +12418,19 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
   function handleInput(event) {
     const answerKey = event.target?.dataset?.answerKey;
 
-    if (!answerKey || !app.walkthrough) {
+    if (!answerKey) {
+      return;
+    }
+
+    if (app.handheldCheck) {
+      app.handheldCheck.values = {
+        ...(app.handheldCheck.values ?? {}),
+        [answerKey]: event.target.value,
+      };
+      return;
+    }
+
+    if (!app.walkthrough) {
       return;
     }
 
@@ -12115,6 +12452,12 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     }
 
     event.preventDefault();
+
+    if (app.handheldCheck) {
+      checkHandheld();
+      return;
+    }
+
     checkAnswerVerification();
   }
 

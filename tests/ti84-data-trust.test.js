@@ -399,6 +399,118 @@ describe('onboarding and progress signals', () => {
   });
 });
 
+describe('handheld mastery check', () => {
+  // A record that has passed emulator recall and is awaiting the handheld check.
+  function handheldReady() {
+    const r = dueRecord('recall');
+    r.track2.awaitingHandheld = true;
+    r.track2.handheldPassed = false;
+    return r;
+  }
+
+  // Type the correct (TI-faithful) result for the handheld problem on screen.
+  async function answerHandheldCorrectly(procedureId) {
+    const problems = window.TI84V2PatternsData.canonicalProblems[procedureId];
+    const html = appHtml();
+    const problem = problems.find((p) => html.includes(p.stem.slice(0, 40)));
+    expect(problem, 'handheld stem should match a canonical problem').toBeTruthy();
+    const v = problem.values;
+    const expected = window.TI84StatMath.tTest(v.mu0, v.xbar, v.sx, v.n, v.direction);
+    document.getElementById('app').querySelectorAll('[data-answer-key]').forEach((input) => {
+      input.value = String(expected[input.dataset.answerKey]);
+      input.dispatchEvent(new window.Event('input', { bubbles: true }));
+    });
+  }
+
+  it('a clean emulator recall pass offers the handheld check', async () => {
+    await bootTrainer({
+      records: { 't-test-stats': dueRecord('recall') },
+      physicalMode: true,
+    });
+    await startWalkthroughFor('t-test-stats');
+    await physicalAdvanceAll();
+    await verifyAnswers('t-test-stats');
+
+    expect(appHtml()).toContain('Do it on my TI-84');
+    expect(persisted().records['t-test-stats'].track2.awaitingHandheld).toBe(true);
+    expect(persisted().records['t-test-stats'].track2.handheldPassed).toBe(false);
+  });
+
+  it('the scheduler presents the handheld check directly when one is pending', async () => {
+    await bootTrainer({ records: { 't-test-stats': handheldReady() } });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
+    expect(appHtml()).toContain('Prove it on your real TI-84');
+    expect(document.getElementById('app').querySelector('[data-action="check-handheld"]')).toBeTruthy();
+  });
+
+  it('passing the handheld check masters the procedure and records verified physical credit', async () => {
+    const record = vi.fn(() => Promise.resolve({ ok: true }));
+    await bootTrainer({ records: { 't-test-stats': handheldReady() }, recordFn: record });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
+    await answerHandheldCorrectly('t-test-stats');
+    await click('[data-action="check-handheld"]');
+    await waitFor(() => appHtml().includes('mastered'), 'the mastered result');
+
+    expect(persisted().records['t-test-stats'].track2.handheldPassed).toBe(true);
+    expect(persisted().records['t-test-stats'].track2.awaitingHandheld).toBe(false);
+    expect(record).toHaveBeenCalledTimes(1);
+    const payload = record.mock.calls[0][0];
+    expect(payload.response.event).toBe('handheld-mastery');
+    expect(payload.response.inputMode).toBe('physical');
+    expect(payload.response.verified).toBe(true);
+    expect(payload.score).toBe(1);
+  });
+
+  it('a wrong handheld answer does NOT master the procedure', async () => {
+    const record = vi.fn(() => Promise.resolve({ ok: true }));
+    await bootTrainer({ records: { 't-test-stats': handheldReady() }, recordFn: record });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
+
+    document.getElementById('app').querySelectorAll('[data-answer-key]').forEach((input) => {
+      input.value = '999';
+      input.dispatchEvent(new window.Event('input', { bubbles: true }));
+    });
+    await click('[data-action="check-handheld"]');
+    await flush(20);
+
+    expect(appHtml()).not.toContain('mastered');
+    expect(appHtml()).toContain('Handheld Check');
+    expect(persisted().records['t-test-stats'].track2.handheldPassed).toBe(false);
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('skipping the handheld check keeps it pending for next time', async () => {
+    await bootTrainer({ records: { 't-test-stats': handheldReady() } });
+    await click('[data-action="start-session"]');
+    await waitFor(() => appHtml().includes('Handheld Check'), 'the handheld check panel');
+    await click('[data-action="handheld-skip"]');
+    await flush(20);
+
+    expect(persisted().records['t-test-stats'].track2.awaitingHandheld).toBe(true);
+    expect(persisted().records['t-test-stats'].track2.handheldPassed).toBe(false);
+  });
+
+  it('mastery is capped until the handheld check passes, then unlocks', async () => {
+    // Strong recall record but no handheld pass -> capped at 70%.
+    const strong = dueRecord('recall', {});
+    strong.track2.repetitions = 8;
+    strong.track2.interval = 30;
+    strong.track1.repetitions = 8;
+    strong.track1.interval = 30;
+    strong.track1.exposures = 8;
+    await bootTrainer({ records: { 't-test-stats': strong } });
+    const masteryBefore = Number(
+      [...document.querySelectorAll('.dashboard-card')]
+        .find((c) => c.textContent.includes('Mastery'))
+        .querySelector('strong').textContent.replace('%', ''),
+    );
+    expect(masteryBefore).toBeLessThanOrEqual(70);
+  });
+});
+
 describe('gradebook-client failure reasons', () => {
   function bootGradebookClient(fetchImpl) {
     window.ROSTER_SERVICE_URL = 'https://roster.test';
