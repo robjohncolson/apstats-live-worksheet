@@ -176,6 +176,54 @@ export function issueLedgerReceipt({
   }
 }
 
+export function issueTranscriptReceipt({
+  sid,
+  u,
+  asOf,
+  asOfDateNY,
+  cnt,
+  root,
+  g,
+  gq,
+  gradeHash,
+  cfgHash,
+  artHash,
+  codeHash
+}) {
+  if (!issuer.enabled) return null;
+  if (!sid || !asOf || !asOfDateNY || !root || !gq || !gradeHash || !cfgHash || !artHash || !codeHash) {
+    return null;
+  }
+
+  try {
+    const payload = {
+      v: 1,
+      t: 'transcript',
+      sid,
+      u: u || undefined,
+      asOf,
+      asOfDateNY,
+      cnt,
+      root,
+      g,
+      gq,
+      gradeHash,
+      cfgHash,
+      artHash,
+      codeHash,
+      iss: 'desk',
+      ts: asOf,
+      n: crypto.randomBytes(4).toString('hex')
+    };
+
+    const { receiptId, compact } = signPayload(issuer.privateKey, payload);
+    return { receiptId, compact };
+  } catch (err) {
+    console.error('Transcript receipt issuance failed:', err.message);
+    return null;
+  }
+}
+
 export function mountReceipts(app) {
   app.get('/receipts/issuer', (_req, res) => {
     res.json(getReceiptIssuer());
