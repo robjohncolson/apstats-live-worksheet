@@ -295,11 +295,14 @@
             align-items: center;
             gap: 4px;
             cursor: default;
-            z-index: 1;
+            /* Above the calendar window (.window-wrap z-3) so desktop icons stay
+               clickable while the schedule is open; still below open app windows
+               (z-251) and the menu bar (z-50). */
+            z-index: 10;
             user-select: none;
             -webkit-user-select: none;
         }
-        .app-icon.dragging, .desktop-icon.dragging { cursor: grabbing; z-index: 2; }
+        .app-icon.dragging, .desktop-icon.dragging { cursor: grabbing; z-index: 11; }
         .app-icon .icon-img {
             width: 48px; height: 48px;
             display: flex;
