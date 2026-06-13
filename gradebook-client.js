@@ -73,8 +73,10 @@
       var list = [];
       try { list = JSON.parse(localStorage.getItem(RECEIPTS_KEY) || '[]'); } catch (_) { list = []; }
       if (!Array.isArray(list)) list = [];
+      var id = receipt.receiptId;
+      list = list.filter(function (row) { return !row || row.id !== id; });
       list.unshift({
-        id: receipt.receiptId,
+        id: id,
         compact: receipt.compact,
         src: source,
         i: itemId,
