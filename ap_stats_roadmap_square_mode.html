@@ -1510,6 +1510,10 @@
     <div class="icon-img" data-emoji="&#127918;"><img src="icons/icon-tetris.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
     <div class="icon-label">Study Break</div>
 </div>
+<div class="app-icon" data-app="wallet" style="top:396px;right:20px;left:auto" ondblclick="openWallet()" onclick="selectAppIcon(this)">
+    <div class="icon-img" data-emoji="&#128091;"><img src="icons/icon-wallet.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
+    <div class="icon-label">My Wallet</div>
+</div>
 <!-- My Progress icon — re-enable for SY26-27
 <div class="app-icon" data-app="progress" style="top:396px;right:20px;left:auto" ondblclick="openProgress()" onclick="selectAppIcon(this)">
     <div class="icon-img" data-emoji="&#128202;"><img src="icons/icon-progress.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
@@ -1999,6 +2003,23 @@
             <div class="collapse-box" onclick="minimizeApp('progress')" title="Minimize"></div>
         </div>
         <div class="app-content" id="progress-content" style="flex-direction:column;overflow:hidden">
+        </div>
+    </div>
+</div>
+
+<!-- ═══ My Wallet ═══ A standalone System 7 window: balance (real v3 grade +
+     an only-up points line) and a feed of signed, verifiable recorded work.
+     Receipts merge durable (server-persisted) + local desk_receipts_v1; the
+     window is read-only w.r.t. grading. WALLET_BUILD.md Task C. -->
+<div class="app-overlay" id="app-wallet-overlay">
+    <div class="app-window" style="width:560px">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="destroyWallet()" title="Close"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">My Wallet</span>
+            <div class="collapse-box" onclick="minimizeApp('wallet')" title="Minimize"></div>
+        </div>
+        <div class="app-content" id="wallet-content" style="flex-direction:column;overflow:auto;padding:12px">
         </div>
     </div>
 </div>
@@ -6579,15 +6600,23 @@ async function renderDoNowGrades(baseUrl, token) {
         host.appendChild(gbChip);
     }
 
+    // Always-visible Wallet entry (the desktop 👛 icon is hidden on ≤700px
+    // screens, so the Do Now strip is the reliable cross-device path). Opens the
+    // Wallet — balance + the full recorded-work receipt feed (superset of the
+    // older My Receipts modal). Falls back to that modal if openWallet is absent.
     var receiptsChip = document.createElement('span');
     receiptsChip.setAttribute('role', 'button');
     receiptsChip.setAttribute('tabindex', '0');
-    receiptsChip.title = 'See receipts captured for your recorded work';
-    receiptsChip.textContent = '🧾 My Receipts';
+    receiptsChip.title = 'Your wallet — grade, points, and verifiable recorded work';
+    receiptsChip.textContent = '👛 My Wallet';
     receiptsChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
-    receiptsChip.onclick = function () { if (typeof openMyReceipts === 'function') openMyReceipts(); };
+    var _openWalletChip = function () {
+        if (typeof openWallet === 'function') openWallet();
+        else if (typeof openMyReceipts === 'function') openMyReceipts();
+    };
+    receiptsChip.onclick = _openWalletChip;
     receiptsChip.onkeydown = function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openMyReceipts === 'function') openMyReceipts(); }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); _openWalletChip(); }
     };
     host.appendChild(receiptsChip);
 
@@ -10163,6 +10192,287 @@ function closeMyReceipts() {
     _detachMyReceiptsKeyHandler();
     var ov = document.getElementById('my-receipts-overlay');
     if (ov) ov.style.display = 'none';
+}
+
+// ── My Wallet ─────────────────────────────────────────────────────────────────
+// Standalone System 7 window. Balance = real v3 quarter grade (from
+// _gradeQuartersCache) + an only-up points line; feed = signed recorded work,
+// merging durable server-persisted receipts with the local desk_receipts_v1
+// cache (deduped). Reuses the My Receipts helpers (_receiptSourceIcon,
+// _formatReceiptDate, _receiptVerifyUrl, _renderReceiptQr, _toggleReceiptQr,
+// _isProctoredReceipt). Read-only w.r.t. grading. WALLET_BUILD.md Task C.
+
+// Points are completion-based and counted ONCE per distinct item (src|itemId),
+// so the balance is monotonic (only ever rises) and can't be farmed by redoing
+// the same item. Rewards DOING work; correctness lives in the Grade number.
+var WALLET_POINTS = {
+    curriculum_quiz: 10, pc: 10, frq: 5, blooket: 4,
+    worksheet: 3, quiz_review: 2, quiz_exception: 2, trainer: 1
+};
+function _walletPointsFor(src, itemId) {
+    // The flashcard make-up writes source 'worksheet' with a BL-…-DESK_DONE id;
+    // count it as a Blooket-track item, not a worksheet blank.
+    if (itemId && /^BL-.*-DESK_DONE$/i.test(itemId)) return 4;
+    return (WALLET_POINTS[src] != null) ? WALLET_POINTS[src] : 1;
+}
+function _walletComputePoints(receipts) {
+    var seen = {}, total = 0, today = 0;
+    var midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+    var midnightMs = midnight.getTime();
+    for (var k = 0; k < receipts.length; k++) {
+        var r = receipts[k];
+        var key = (r.src || '') + '|' + (r.i || '');
+        if (seen[key]) continue;
+        seen[key] = 1;
+        var p = _walletPointsFor(r.src, r.i);
+        total += p;
+        if (r.ts && r.ts >= midnightMs) today += p;
+    }
+    return { total: total, today: today };
+}
+
+function _walletPct(v) {
+    if (typeof v !== 'number') return null;
+    return (v <= 1) ? Math.round(v * 100) : Math.round(v);
+}
+function _walletCurrentGrade() {
+    try {
+        var quarters = _gradeQuartersCache || {};
+        var curN = (typeof quarterOfDate === 'function') ? quarterOfDate(new Date()) : null;
+        var curQ = curN ? ('Q' + curN) : null;
+        var q = (curQ && quarters[curQ]) ? quarters[curQ] : null;
+        if (!q || typeof q.quarterGrade !== 'number') {
+            var order = ['Q1', 'Q2', 'Q3', 'Q4'];
+            for (var i = 0; i < order.length; i++) {
+                if (quarters[order[i]] && typeof quarters[order[i]].quarterGrade === 'number') {
+                    q = quarters[order[i]]; curQ = order[i]; break;
+                }
+            }
+        }
+        if (q && typeof q.quarterGrade === 'number') {
+            return { pct: _walletPct(q.quarterGrade), q: curQ };
+        }
+    } catch (_) {}
+    return { pct: null, q: null };
+}
+
+// Merge durable (server) + local receipts, dedup by id (fallback compact), newest first.
+async function _walletLoadReceipts() {
+    var local = _readDeskReceipts();
+    var durable = [];
+    try {
+        if (window.gradebookClient && typeof gradebookClient.fetchReceipts === 'function') {
+            durable = await gradebookClient.fetchReceipts();
+        }
+    } catch (_) { durable = []; }
+    var byKey = {};
+    function keyOf(r) { return (r && (r.id || r.compact)) || ''; }
+    (durable || []).forEach(function (r) { if (r && r.compact) byKey[keyOf(r)] = r; });
+    (local || []).forEach(function (r) { if (r && r.compact && !byKey[keyOf(r)]) byKey[keyOf(r)] = r; });
+    var merged = Object.keys(byKey).map(function (k) { return byKey[k]; });
+    merged.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    return merged;
+}
+
+function _walletPaint(host, receipts, loading) {
+    if (!host) return;
+    var grade = _walletCurrentGrade();
+    var pts = _walletComputePoints(receipts);
+    host.innerHTML = '';
+
+    // ── Balance card ──
+    var card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--black);background:#fff;'
+        + 'box-shadow:inset 1px 1px 0 0 #fff,inset -1px -1px 0 0 #888,2px 2px 0 0 var(--black);'
+        + 'border-radius:3px;padding:12px 14px;margin-bottom:12px';
+
+    var who = document.createElement('div');
+    who.className = 'geneva';
+    who.style.cssText = 'font-size:10px;color:#555;margin-bottom:6px;display:flex;justify-content:space-between';
+    var name = '';
+    try { if (window.rosterClient && rosterClient.username) { name = rosterClient.username() || ''; } } catch (_) {}
+    who.innerHTML = '<span>' + (name ? _walletEsc(name) : 'Your wallet') + '</span>'
+        + '<span>' + (grade.q ? grade.q : '') + '</span>';
+    card.appendChild(who);
+
+    var gradeRow = document.createElement('div');
+    gradeRow.style.cssText = 'display:flex;align-items:baseline;gap:8px';
+    var gradeBig = document.createElement('span');
+    gradeBig.className = 'chicago';
+    gradeBig.style.cssText = 'font-size:34px;line-height:1';
+    gradeBig.textContent = (grade.pct != null) ? (grade.pct + '%') : '—';
+    var gradeLbl = document.createElement('span');
+    gradeLbl.className = 'geneva';
+    gradeLbl.style.cssText = 'font-size:11px;color:#555';
+    gradeLbl.textContent = 'Grade';
+    gradeRow.appendChild(gradeBig);
+    gradeRow.appendChild(gradeLbl);
+    card.appendChild(gradeRow);
+
+    var sep = document.createElement('div');
+    sep.style.cssText = 'border-top:1px solid #ccc;margin:8px 0';
+    card.appendChild(sep);
+
+    var ptsRow = document.createElement('div');
+    ptsRow.className = 'geneva';
+    ptsRow.style.cssText = 'font-size:13px;display:flex;align-items:baseline;gap:8px';
+    var ptsNum = document.createElement('span');
+    ptsNum.style.cssText = 'font-weight:bold';
+    ptsNum.textContent = pts.total.toLocaleString();
+    var ptsLbl = document.createElement('span');
+    ptsLbl.style.cssText = 'color:#555';
+    ptsLbl.textContent = 'points earned';
+    ptsRow.appendChild(ptsNum);
+    ptsRow.appendChild(ptsLbl);
+    if (pts.today > 0) {
+        var todayTag = document.createElement('span');
+        todayTag.style.cssText = 'margin-left:auto;color:#0a7d28;font-weight:bold';
+        todayTag.textContent = '▲ +' + pts.today + ' today';
+        ptsRow.appendChild(todayTag);
+    }
+    card.appendChild(ptsRow);
+    host.appendChild(card);
+
+    // ── Feed header ──
+    var head = document.createElement('div');
+    head.className = 'chicago';
+    head.style.cssText = 'font-size:11px;border-bottom:1px solid var(--black);padding-bottom:4px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center';
+    head.innerHTML = '<span>Recorded work</span><span class="geneva" style="font-size:9px;color:#777">'
+        + (loading ? 'syncing…' : (receipts.length + ' item' + (receipts.length === 1 ? '' : 's'))) + '</span>';
+    host.appendChild(head);
+
+    // ── Feed ──
+    if (!receipts.length) {
+        var empty = document.createElement('div');
+        empty.className = 'geneva';
+        empty.style.cssText = 'font-size:11px;color:#555;padding:10px 4px';
+        empty.textContent = 'No recorded work yet — items appear here as your work is saved.';
+        host.appendChild(empty);
+        return;
+    }
+    receipts.forEach(function (r) {
+        host.appendChild(_walletReceiptRow(r));
+    });
+}
+
+function _walletEsc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+function _walletReceiptRow(r) {
+    var payload = (typeof _receiptPayload === 'function' ? _receiptPayload(r) : null) || {};
+    var url = (typeof _receiptVerifyUrl === 'function')
+        ? _receiptVerifyUrl(r)
+        : 'https://robjohncolson.github.io/curriculum_render/verify.html#r=' + encodeURIComponent(r.compact || '');
+
+    var row = document.createElement('div');
+    row.className = 'geneva';
+    row.style.cssText = 'border:1px solid #999;background:#fff;margin:0 0 6px;padding:6px;box-shadow:1px 1px 0 #bbb;font-size:11px';
+
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;gap:6px;align-items:flex-start;justify-content:space-between';
+
+    var main = document.createElement('div');
+    main.style.cssText = 'min-width:0;line-height:1.35';
+    var title = document.createElement('div');
+    title.style.cssText = 'font-weight:bold;word-break:break-word';
+    var icon = (typeof _receiptSourceIcon === 'function') ? _receiptSourceIcon(r.src || payload.src) : '🧾';
+    title.textContent = icon + ' ' + (r.i || payload.i || 'Recorded work');
+    main.appendChild(title);
+
+    var meta = document.createElement('div');
+    meta.style.cssText = 'color:#444;word-break:break-word';
+    var parts = ['recorded ✓'];
+    var score = (typeof r.sc === 'number') ? r.sc : payload.sc;
+    if (typeof score === 'number') parts.push('score ' + (score <= 1 ? Math.round(score * 100) + '%' : score));
+    var date = (typeof _formatReceiptDate === 'function') ? _formatReceiptDate(r.ts || payload.ts) : '';
+    if (date) parts.push(date);
+    if (r.id) parts.push(String(r.id).slice(0, 12));
+    meta.textContent = parts.join(' • ');
+    main.appendChild(meta);
+
+    if (typeof _isProctoredReceipt === 'function' && _isProctoredReceipt(r)) {
+        var badge = document.createElement('span');
+        badge.style.cssText = 'display:inline-block;margin-top:4px;padding:1px 5px;border:1px solid #000;background:#ddd;font-size:10px';
+        badge.textContent = 'proctored';
+        main.appendChild(badge);
+    }
+
+    var actions = document.createElement('div');
+    actions.style.cssText = 'white-space:nowrap;text-align:right;flex-shrink:0';
+    var verify = document.createElement('a');
+    verify.href = url; verify.target = '_blank'; verify.rel = 'noopener';
+    verify.style.cssText = 'color:#0000cc;text-decoration:underline';
+    verify.textContent = 'Verify';
+    actions.appendChild(verify);
+    actions.appendChild(document.createTextNode(' '));
+    var qrBtn = document.createElement('button');
+    qrBtn.className = 's7btn'; qrBtn.type = 'button';
+    qrBtn.style.cssText = 'font-size:10px;padding:1px 5px';
+    qrBtn.textContent = 'QR';
+    actions.appendChild(qrBtn);
+    actions.appendChild(document.createTextNode(' '));
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 's7btn'; copyBtn.type = 'button';
+    copyBtn.style.cssText = 'font-size:10px;padding:1px 5px';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = function () {
+        try {
+            var done = function () { copyBtn.textContent = 'Copied'; setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(r.compact || '').then(done, function () {});
+            }
+        } catch (_) {}
+    };
+    actions.appendChild(copyBtn);
+
+    top.appendChild(main);
+    top.appendChild(actions);
+    row.appendChild(top);
+
+    var qr = document.createElement('div');
+    qr.style.cssText = 'display:none;margin-top:6px';
+    row.appendChild(qr);
+    qrBtn.onclick = function () {
+        if (typeof _toggleReceiptQr === 'function') _toggleReceiptQr(qrBtn, qr, url);
+    };
+
+    return row;
+}
+
+async function renderWallet() {
+    var host = document.getElementById('wallet-content');
+    if (!host) return;
+    // Instant paint from the local cache, then merge durable receipts and repaint.
+    _walletPaint(host, _readDeskReceipts(), true);
+    try {
+        var merged = await _walletLoadReceipts();
+        var ov = document.getElementById('app-wallet-overlay');
+        if (ov && ov.style.display !== 'none') _walletPaint(host, merged, false);
+    } catch (_) {}
+}
+
+function openWallet() {
+    try { if (typeof bumpUsage === 'function') bumpUsage('wallet'); } catch (_) {}
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
+    var overlay = document.getElementById('app-wallet-overlay');
+    if (!overlay) return;
+    var win = overlay.querySelector('.app-window');
+    if (win) {
+        win.style.left = '50%'; win.style.top = '50%';
+        win.style.transform = 'translate(-50%, -50%)';
+        win.classList.remove('maximized');
+    }
+    overlay.style.display = 'block';
+    renderWallet();
+}
+
+function destroyWallet() {
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+    var overlay = document.getElementById('app-wallet-overlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 var _myGradebookQuarter = null;

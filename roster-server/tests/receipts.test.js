@@ -33,8 +33,12 @@ function createFakeRosterDb() {
 
 function createFakeLedgerDb() {
   const store = [];
+  let updateMode = 'store';
   return {
     store,
+    setUpdateMode(mode) {
+      updateMode = mode;
+    },
     async insertLedgerRow(args) {
       const row = {
         ledger_id: `ledger-${store.length + 1}`,
@@ -43,6 +47,16 @@ function createFakeLedgerDb() {
       };
       store.push(row);
       return { data: { ledger_id: row.ledger_id, evidence_tier: row.evidence_tier }, error: null };
+    },
+    async updateLedgerReceipt(ledgerId, { receiptId, receiptCompact }) {
+      if (updateMode === '42703') return { error: { code: '42703' } };
+      if (updateMode === 'throw') throw new Error('undefined column');
+      const row = store.find(r => r.ledger_id === ledgerId);
+      if (row) {
+        row.receipt_id = receiptId;
+        row.receipt_compact = receiptCompact;
+      }
+      return { error: null };
     },
     async getLedgerByStudent() {
       return { data: store, error: null };
@@ -148,6 +162,7 @@ describe('roster-server receipt integration', () => {
   let token;
   let studentId;
   let proctorSecret;
+  let ledgerDb;
 
   beforeEach(async () => {
     process.env.NODE_ENV = 'test';
@@ -175,7 +190,8 @@ describe('roster-server receipt integration', () => {
   async function start({ receiptKey } = {}) {
     if (receiptKey) process.env.RECEIPT_ISSUER_PRIVATE_KEY = receiptKey;
     else delete process.env.RECEIPT_ISSUER_PRIVATE_KEY;
-    const app = createApp(createFakeRosterDb(), createFakeLedgerDb());
+    ledgerDb = createFakeLedgerDb();
+    const app = createApp(createFakeRosterDb(), ledgerDb);
     srv = new TestServer(app);
     await srv.start();
   }
@@ -205,6 +221,7 @@ describe('roster-server receipt integration', () => {
       evidenceTier: 'practice'
     });
     expect(getReceiptIssuer()).toEqual({ enabled: false });
+    expect(ledgerDb.store[0].receipt_compact).toBeUndefined();
   });
 
   it('exposes issuer metadata when enabled', async () => {
@@ -239,6 +256,49 @@ describe('roster-server receipt integration', () => {
     expect(body.evidenceTier).toBe('proctored');
     expect(decoded.payload.e).toBe('proctored');
     expect(decoded.payload.a).toBe(2);
+  });
+
+  it('persists issued ledger receipts for later student fetch', async () => {
+    await start({ receiptKey: V11_TEST_PRIVATE_KEY });
+
+    const recorded = await record();
+    const fetched = await srv.request('GET', `/ledger/student/${studentId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    expect(recorded.status).toBe(200);
+    expect(fetched.status).toBe(200);
+    expect(fetched.body.rows).toHaveLength(1);
+    expect(fetched.body.rows[0].receipt_id).toBe(recorded.body.receipt.receiptId);
+    expect(fetched.body.rows[0].receipt_compact).toBe(recorded.body.receipt.compact);
+  });
+
+  it('keeps /ledger/record successful when receipt persistence hits pre-migration 42703', async () => {
+    await start({ receiptKey: V11_TEST_PRIVATE_KEY });
+    ledgerDb.setUpdateMode('42703');
+
+    const { status, body } = await record();
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.ledgerId).toBe('ledger-1');
+    expect(body.evidenceTier).toBe('practice');
+    expect(body.receipt.receiptId).toBeTruthy();
+    expect(body.receipt.compact).toBeTruthy();
+  });
+
+  it('keeps /ledger/record successful when receipt persistence throws', async () => {
+    await start({ receiptKey: V11_TEST_PRIVATE_KEY });
+    ledgerDb.setUpdateMode('throw');
+
+    const { status, body } = await record();
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.ledgerId).toBe('ledger-1');
+    expect(body.evidenceTier).toBe('practice');
+    expect(body.receipt.receiptId).toBeTruthy();
+    expect(body.receipt.compact).toBeTruthy();
   });
 
   it('never lets signing failures break the parent request', async () => {

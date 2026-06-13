@@ -21,7 +21,7 @@ export function createLiveLedgerDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createLedgerDb(client) {
-  return { insertLedgerRow, getLedgerByStudent, getLedgerByItem };
+  return { insertLedgerRow, updateLedgerReceipt, getLedgerByStudent, getLedgerByItem };
 
   // Upsert a ledger row on (student_id, source, item_id, attempt).
   // Returns { data, error } — data has ledger_id and evidence_tier on success.
@@ -46,6 +46,19 @@ export function createLedgerDb(client) {
       )
       .select('ledger_id, evidence_tier')
       .single();
+  }
+
+  // Persist a signed receipt after the grade row is safely recorded.
+  // Returns { error }; callers treat this as best-effort.
+  async function updateLedgerReceipt(ledgerId, { receiptId, receiptCompact }) {
+    const { error } = await client
+      .from('item_ledger')
+      .update({
+        receipt_id: receiptId,
+        receipt_compact: receiptCompact
+      })
+      .eq('ledger_id', ledgerId);
+    return { error };
   }
 
   // Fetch all ledger rows for a student, newest first.

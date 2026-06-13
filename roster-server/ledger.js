@@ -96,6 +96,16 @@ export function mountLedger(app, { db, verifyToken }) {
       response
     });
     if (receipt) body.receipt = receipt;
+    if (receipt && data.ledger_id && db && typeof db.updateLedgerReceipt === 'function') {
+      try {
+        await db.updateLedgerReceipt(data.ledger_id, {
+          receiptId: receipt.receiptId,
+          receiptCompact: receipt.compact
+        });
+      } catch (_err) {
+        // Receipt persistence is best-effort; the in-band receipt is authoritative.
+      }
+    }
 
     return res.json(body);
   });

@@ -316,6 +316,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
       const score = blooketScore(correct, attempted, total);
 
       let error;
+      let data;
       try {
         const result = await ledgerDb.insertLedgerRow({
           studentId,
@@ -327,6 +328,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
           evidenceTier: 'practice', // teacher-imported in-class work; matches other recorded rows (no cap-tier effect)
           attempt: 1,
         });
+        data = result && result.data;
         error = result && result.error;
       } catch (err) {
         error = err;
@@ -350,7 +352,19 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         evidenceTier: 'practice',
         response: { correct, attempted, total }
       });
-      if (receipt) receipts[`${itemId}:${studentId}`] = receipt;
+      if (receipt) {
+        receipts[`${itemId}:${studentId}`] = receipt;
+        if (data && data.ledger_id && ledgerDb && typeof ledgerDb.updateLedgerReceipt === 'function') {
+          try {
+            await ledgerDb.updateLedgerReceipt(data.ledger_id, {
+              receiptId: receipt.receiptId,
+              receiptCompact: receipt.compact
+            });
+          } catch (_err) {
+            // Receipt persistence is best-effort; the in-band receipt is authoritative.
+          }
+        }
+      }
     }
 
     const bodyOut = { ok: true, itemId, recorded, skipped, errors };
