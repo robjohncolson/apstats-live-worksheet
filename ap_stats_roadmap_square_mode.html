@@ -10301,6 +10301,86 @@ async function _walletLoadReceipts() {
         : local;
 }
 
+function _sealedTranscriptNotice(msg) {
+    try {
+        if (typeof _showTrainerToast === 'function') {
+            _showTrainerToast(msg);
+            return;
+        }
+    } catch (_) {}
+    try { alert(msg); } catch (_) {}
+}
+
+function _sealedTranscriptSignInMessage() {
+    _sealedTranscriptNotice("Couldn't reach the server - sign in on the Desk and try again online to get a verifiable sealed transcript.");
+}
+
+function _sealedTranscriptFilename(transcript) {
+    var safe = function (s) { return String(s || '').replace(/[^A-Za-z0-9_-]/g, '_'); };
+    var issued = Date.now();
+    try {
+        if (transcript && transcript.issuedAt) issued = new Date(transcript.issuedAt).getTime();
+    } catch (_) {}
+    if (!isFinite(issued)) issued = Date.now();
+    return 'transcript_'
+        + safe((transcript && transcript.u) || 'student')
+        + '_'
+        + safe((transcript && transcript.quarter) || 'Q')
+        + '_'
+        + new Date(issued).toISOString().slice(0, 10)
+        + '.json';
+}
+
+async function exportSealedTranscript() {
+    try {
+        var base = (window.ROSTER_SERVICE_URL || (typeof ROSTER_SERVICE_URL !== 'undefined' ? ROSTER_SERVICE_URL : null));
+        var token = '';
+        try {
+            token = (window.rosterClient && typeof rosterClient.token === 'function') ? (rosterClient.token() || '') : '';
+        } catch (_) {
+            token = '';
+        }
+        if (!base || !token) {
+            _sealedTranscriptSignInMessage();
+            return;
+        }
+
+        var res = await fetch(base + '/transcript', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res || !res.ok) {
+            _sealedTranscriptSignInMessage();
+            return;
+        }
+        var data = await res.json();
+        var transcript = data && data.transcript;
+        if (!data || data.ok !== true || !transcript) {
+            _sealedTranscriptSignInMessage();
+            return;
+        }
+
+        var blob = new Blob([JSON.stringify(transcript, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        try {
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = _sealedTranscriptFilename(transcript);
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            try { a.remove(); } catch (_) {}
+        } finally {
+            setTimeout(function () {
+                try { URL.revokeObjectURL(url); } catch (_) {}
+            }, 0);
+        }
+        _sealedTranscriptNotice('Sealed transcript exported - ' + transcript.count + ' items. This file contains your grades - only send it to your teacher.');
+    } catch (_) {
+        _sealedTranscriptSignInMessage();
+    }
+}
+
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
     var grade = _walletCurrentGrade();
@@ -10359,6 +10439,20 @@ function _walletPaint(host, receipts, loading) {
         ptsRow.appendChild(todayTag);
     }
     card.appendChild(ptsRow);
+
+    var exportRow = document.createElement('div');
+    exportRow.style.cssText = 'margin-top:10px;display:flex;justify-content:flex-start';
+    var exportBtn = document.createElement('button');
+    exportBtn.className = 's7btn';
+    exportBtn.type = 'button';
+    exportBtn.style.cssText = 'font-size:10px;padding:2px 8px';
+    exportBtn.textContent = 'Export sealed transcript';
+    exportBtn.onclick = function () {
+        try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.25); } catch (_) {}
+        exportSealedTranscript();
+    };
+    exportRow.appendChild(exportBtn);
+    card.appendChild(exportRow);
     host.appendChild(card);
 
     // ── Feed header ──
