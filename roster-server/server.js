@@ -32,7 +32,7 @@ import { encryptPassword, decryptPassword } from './crypto.js';
 import { requireTeacher, getTeacherKey } from './teacher-auth.js';
 import { getOpenSections, isOpenSection } from './signup-config.js';
 import { createRateLimiter, createLoginThrottle } from './rate-limit.js';
-import { initReceipts, mountReceipts } from './receipts.js';
+import { getReceiptHealth, initReceipts, mountReceipts } from './receipts.js';
 import { readFile } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -94,8 +94,18 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // ── GET /health ─────────────────────────────────────────────────────────────
   // FROZEN CONTRACT 2: → 200 { ok:true, service:"roster", time:"<iso>" }
   app.get('/health', (_req, res) => {
-    res.json({ ok: true, service: 'roster', time: new Date().toISOString() });
+    res.json({ ok: true, service: 'roster', time: new Date().toISOString(), receipts: getReceiptHealth() });
   });
+
+  async function resolveReceiptUsername(studentId) {
+    if (!db || typeof db.findByStudentId !== 'function') return undefined;
+    try {
+      const { data } = await db.findByStudentId(studentId);
+      return data && data.login_username ? data.login_username : undefined;
+    } catch (_) {
+      return undefined;
+    }
+  }
 
   // ── POST /roster/enroll (teacher-gated) ─────────────────────────────────────
   // FROZEN CONTRACT 2:
@@ -798,7 +808,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Mounts POST /ledger/record and GET /ledger/student/:studentId.
   // ledgerDb must be passed in (tests inject a fake; production passes createLiveLedgerDb()).
   if (ledgerDb) {
-    mountLedger(app, { db: ledgerDb, verifyToken });
+    mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername });
   }
 
   // ── Do Now routes (Sprint DN1 additive) ──────────────────────────────────────
@@ -848,7 +858,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     const classConfig = configOverrides
       ? { ...PHASE3_CONFIG, ...configOverrides }
       : PHASE3_CONFIG;
-    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null, verifyToken });
+    mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule: lessonSchedule || null, config: classConfig, worksheetBlankCounts: worksheetBlankCounts || null, verifyToken, resolveUsername: resolveReceiptUsername });
   }
 
   // ── Teacher Student Console (Phase 1+2A of TEACHER_STUDENT_CONSOLE_SPEC.md) ─

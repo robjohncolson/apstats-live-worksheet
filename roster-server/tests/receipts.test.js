@@ -23,10 +23,17 @@ function decodeCompact(compact) {
   };
 }
 
-function createFakeRosterDb() {
+function createFakeRosterDb({ usernameByStudentId = {} } = {}) {
   return {
     async insertRoster() { return { data: null, error: null }; },
     async findByUsername() { return { data: null, error: null }; },
+    async findByStudentId(studentId) {
+      const loginUsername = usernameByStudentId[studentId];
+      return {
+        data: loginUsername ? { student_id: studentId, login_username: loginUsername } : null,
+        error: null
+      };
+    },
     async listRoster() { return { data: [], error: null }; }
   };
 }
@@ -50,7 +57,7 @@ function createFakeLedgerDb() {
     },
     async updateLedgerReceipt(ledgerId, { receiptId, receiptCompact }) {
       if (updateMode === '42703') return { error: { code: '42703' } };
-      if (updateMode === 'throw') throw new Error('undefined column');
+      if (updateMode === 'throw') throw new Error('receipt write failed');
       const row = store.find(r => r.ledger_id === ledgerId);
       if (row) {
         row.receipt_id = receiptId;
@@ -187,11 +194,13 @@ describe('roster-server receipt integration', () => {
     initReceipts();
   });
 
-  async function start({ receiptKey } = {}) {
+  async function start({ receiptKey, username } = {}) {
     if (receiptKey) process.env.RECEIPT_ISSUER_PRIVATE_KEY = receiptKey;
     else delete process.env.RECEIPT_ISSUER_PRIVATE_KEY;
     ledgerDb = createFakeLedgerDb();
-    const app = createApp(createFakeRosterDb(), ledgerDb);
+    const app = createApp(createFakeRosterDb({
+      usernameByStudentId: username ? { [studentId]: username } : {}
+    }), ledgerDb);
     srv = new TestServer(app);
     await srv.start();
   }
@@ -247,6 +256,26 @@ describe('roster-server receipt integration', () => {
     expect(decoded.payload.sc).toBe(0.5);
   });
 
+  it('adds the roster username to ledger receipts when the resolver has one', async () => {
+    await start({ receiptKey: V11_TEST_PRIVATE_KEY, username: 'Apple_Monkey' });
+
+    const { status, body } = await record();
+    const decoded = decodeCompact(body.receipt.compact);
+
+    expect(status).toBe(200);
+    expect(decoded.payload.u).toBe('Apple_Monkey');
+  });
+
+  it('omits the roster username from ledger receipts when the resolver has none', async () => {
+    await start({ receiptKey: V11_TEST_PRIVATE_KEY });
+
+    const { status, body } = await record();
+    const decoded = decodeCompact(body.receipt.compact);
+
+    expect(status).toBe(200);
+    expect(decoded.payload.u).toBeUndefined();
+  });
+
   it('issues proctored receipts only from the proctor header', async () => {
     await start({ receiptKey: V11_TEST_PRIVATE_KEY });
 
@@ -299,6 +328,46 @@ describe('roster-server receipt integration', () => {
     expect(body.evidenceTier).toBe('practice');
     expect(body.receipt.receiptId).toBeTruthy();
     expect(body.receipt.compact).toBeTruthy();
+  });
+
+  it('reports receipt health when receipts are enabled', async () => {
+    await start({ receiptKey: V11_TEST_PRIVATE_KEY });
+
+    const { status, body } = await srv.request('GET', '/health');
+
+    expect(status).toBe(200);
+    expect(body.receipts).toEqual({
+      enabled: true,
+      pubkey: V11_TEST_PUBLIC_KEY,
+      persistFailures: 0
+    });
+  });
+
+  it('reports receipt health when receipts are disabled', async () => {
+    await start();
+
+    const { status, body } = await srv.request('GET', '/health');
+
+    expect(status).toBe(200);
+    expect(body.receipts).toEqual({
+      enabled: false,
+      persistFailures: 0
+    });
+  });
+
+  it('counts non-42703 receipt persistence errors but not pre-migration 42703', async () => {
+    await start({ receiptKey: V11_TEST_PRIVATE_KEY });
+    ledgerDb.setUpdateMode('42703');
+    await record();
+
+    let health = await srv.request('GET', '/health');
+    expect(health.body.receipts.persistFailures).toBe(0);
+
+    ledgerDb.setUpdateMode('throw');
+    await record();
+
+    health = await srv.request('GET', '/health');
+    expect(health.body.receipts.persistFailures).toBe(1);
   });
 
   it('never lets signing failures break the parent request', async () => {

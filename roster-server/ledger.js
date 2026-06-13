@@ -8,7 +8,38 @@
 // pre-migration condition maps to 503; every other DB error is a real 500.
 // Without this, a check_violation surfaces as a generic 500 "Database error"
 // and the writer dies silently (how study_guide_diagnostic was lost for weeks).
-import { issueLedgerReceipt } from './receipts.js';
+import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
+
+let receiptPersistenceNotProvisionedLogged = false;
+
+function isReceiptPersistenceNotProvisioned(err) {
+  if (!err) return false;
+  const code = String(err.code || '');
+  const msg = String(err.message || '').toLowerCase();
+  return code === '42703' || msg.includes('undefined_column') || msg.includes('undefined column');
+}
+
+function handleReceiptPersistenceError(err, ledgerId) {
+  if (isReceiptPersistenceNotProvisioned(err)) {
+    if (!receiptPersistenceNotProvisionedLogged) {
+      receiptPersistenceNotProvisionedLogged = true;
+      console.info('receipt persistence not provisioned; continuing without stored receipt columns');
+    }
+    return;
+  }
+  recordReceiptPersistFailure();
+  console.warn('Receipt persistence failed for ledgerId:', ledgerId, err);
+}
+
+async function resolveReceiptUsername(resolveUsername, studentId) {
+  if (typeof resolveUsername !== 'function') return undefined;
+  try {
+    const username = await resolveUsername(studentId);
+    return username || undefined;
+  } catch (_) {
+    return undefined;
+  }
+}
 
 function isSourceNotProvisioned(e) {
   if (!e) return false;
@@ -20,7 +51,7 @@ function isSourceNotProvisioned(e) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountLedger(app, { db, verifyToken }) {
+export function mountLedger(app, { db, verifyToken, resolveUsername }) {
 
   // ── POST /ledger/record ─────────────────────────────────────────────────────
   // FROZEN CONTRACT 2:
@@ -86,8 +117,10 @@ export function mountLedger(app, { db, verifyToken }) {
       ledgerId:     data.ledger_id,
       evidenceTier: data.evidence_tier
     };
+    const username = await resolveReceiptUsername(resolveUsername, studentId);
     const receipt = issueLedgerReceipt({
       studentId,
+      username,
       source,
       itemId,
       score,
@@ -98,12 +131,15 @@ export function mountLedger(app, { db, verifyToken }) {
     if (receipt) body.receipt = receipt;
     if (receipt && data.ledger_id && db && typeof db.updateLedgerReceipt === 'function') {
       try {
-        await db.updateLedgerReceipt(data.ledger_id, {
+        const persistResult = await db.updateLedgerReceipt(data.ledger_id, {
           receiptId: receipt.receiptId,
           receiptCompact: receipt.compact
         });
-      } catch (_err) {
-        // Receipt persistence is best-effort; the in-band receipt is authoritative.
+        if (persistResult && persistResult.error) {
+          handleReceiptPersistenceError(persistResult.error, data.ledger_id);
+        }
+      } catch (err) {
+        handleReceiptPersistenceError(err, data.ledger_id);
       }
     }
 

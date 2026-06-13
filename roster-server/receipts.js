@@ -5,6 +5,7 @@ let issuer = {
   privateKey: null,
   pubkey: null
 };
+let persistFailures = 0;
 
 function stringifyResponse(value) {
   if (typeof value === 'string') return value;
@@ -47,6 +48,7 @@ function createPrivateKey(privateKeyB64) {
 
 export function initReceipts() {
   const privateKeyB64 = process.env.RECEIPT_ISSUER_PRIVATE_KEY;
+  persistFailures = 0;
 
   if (!privateKeyB64) {
     issuer = { enabled: false, privateKey: null, pubkey: null };
@@ -78,6 +80,19 @@ export function getReceiptIssuer() {
     alg: 'Ed25519',
     v: 1,
     pubkey: issuer.pubkey
+  };
+}
+
+export function recordReceiptPersistFailure() {
+  persistFailures += 1;
+}
+
+export function getReceiptHealth() {
+  const info = getReceiptIssuer();
+  return {
+    enabled: !!info.enabled,
+    pubkey: info.pubkey,
+    persistFailures
   };
 }
 

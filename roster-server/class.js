@@ -16,7 +16,38 @@ import { computeMastery } from './mastery.js';
 import { buildGradebook } from './gradebook-grid.js';
 import { todayInTz } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
-import { issueLedgerReceipt } from './receipts.js';
+import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
+
+let receiptPersistenceNotProvisionedLogged = false;
+
+function isReceiptPersistenceNotProvisioned(err) {
+  if (!err) return false;
+  const code = String(err.code || '');
+  const msg = String(err.message || '').toLowerCase();
+  return code === '42703' || msg.includes('undefined_column') || msg.includes('undefined column');
+}
+
+function handleReceiptPersistenceError(err, ledgerId) {
+  if (isReceiptPersistenceNotProvisioned(err)) {
+    if (!receiptPersistenceNotProvisionedLogged) {
+      receiptPersistenceNotProvisionedLogged = true;
+      console.info('receipt persistence not provisioned; continuing without stored receipt columns');
+    }
+    return;
+  }
+  recordReceiptPersistFailure();
+  console.warn('Receipt persistence failed for ledgerId:', ledgerId, err);
+}
+
+async function resolveReceiptUsername(resolveUsername, studentId) {
+  if (typeof resolveUsername !== 'function') return undefined;
+  try {
+    const username = await resolveUsername(studentId);
+    return username || undefined;
+  } catch (_) {
+    return undefined;
+  }
+}
 
 // Pull all roster rows for the (optional) section, defensively.
 async function listRoster(db, section) {
@@ -100,7 +131,7 @@ function friendlyLabel(realName) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken }) {
+export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt, lessonSchedule, config = PHASE3_CONFIG, worksheetBlankCounts = null, verifyToken, resolveUsername }) {
 
   // ── GET /class/blank/:itemId ────────────────────────────────────────────────
   // STUDENT-accessible (NOT teacher-gated). Returns the requester's SECTION's
@@ -343,8 +374,10 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
       }
 
       recorded += 1;
+      const username = await resolveReceiptUsername(resolveUsername, studentId);
       const receipt = issueLedgerReceipt({
         studentId,
+        username,
         source: 'blooket',
         itemId,
         score,
@@ -356,12 +389,15 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         receipts[`${itemId}:${studentId}`] = receipt;
         if (data && data.ledger_id && ledgerDb && typeof ledgerDb.updateLedgerReceipt === 'function') {
           try {
-            await ledgerDb.updateLedgerReceipt(data.ledger_id, {
+            const persistResult = await ledgerDb.updateLedgerReceipt(data.ledger_id, {
               receiptId: receipt.receiptId,
               receiptCompact: receipt.compact
             });
-          } catch (_err) {
-            // Receipt persistence is best-effort; the in-band receipt is authoritative.
+            if (persistResult && persistResult.error) {
+              handleReceiptPersistenceError(persistResult.error, data.ledger_id);
+            }
+          } catch (err) {
+            handleReceiptPersistenceError(err, data.ledger_id);
           }
         }
       }
