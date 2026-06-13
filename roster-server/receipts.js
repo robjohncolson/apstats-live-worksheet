@@ -6,6 +6,7 @@ let issuer = {
   pubkey: null
 };
 let persistFailures = 0;
+const DEFAULT_REVIEW_GRANT_PUBKEY = 'yFByWH5a7OwhF2KOD3SLd1BE4MlHEN_JDtDaMwW-Eg4';
 
 function stringifyResponse(value) {
   if (typeof value === 'string') return value;
@@ -36,6 +37,35 @@ function signPayload(privateKey, payload) {
     sig: b64url(signature),
     compact: `${b64url(bytes)}.${b64url(signature)}`
   };
+}
+
+function reviewGrantPublicKey() {
+  const x = process.env.REVIEW_GRANT_PUBKEY || DEFAULT_REVIEW_GRANT_PUBKEY;
+  return crypto.createPublicKey({
+    key: { kty: 'OKP', crv: 'Ed25519', x },
+    format: 'jwk'
+  });
+}
+
+export function verifyReviewGrant(compact) {
+  if (typeof compact !== 'string') return null;
+
+  try {
+    const parts = compact.split('.');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
+
+    const bytes = Buffer.from(parts[0], 'base64url');
+    const sig = Buffer.from(parts[1], 'base64url');
+    const rawPayload = bytes.toString('utf8');
+    const payload = JSON.parse(rawPayload);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+    if (canonicalize(payload) !== rawPayload) return null;
+
+    const ok = crypto.verify(null, bytes, reviewGrantPublicKey(), sig);
+    return ok ? payload : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 function gradingProvenance(source, itemId) {

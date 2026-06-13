@@ -4,10 +4,11 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import http from 'http';
-import { randomBytes } from 'crypto';
+import { generateKeyPairSync, randomBytes, sign } from 'crypto';
 import { createApp } from '../server.js';
 import { signToken } from '../token.js';
 import { createLedgerDb } from '../ledger-db.js';
+import { verifyReviewGrant } from '../receipts.js';
 
 // ── Fake in-memory roster db (minimal — only needed for createApp) ────────────
 
@@ -103,6 +104,35 @@ function makeSecret(prefix) {
   return `${prefix}-${randomBytes(16).toString('hex')}`;
 }
 
+function b64url(value) {
+  return Buffer.from(value).toString('base64url');
+}
+
+function canonicalize(payload) {
+  const sorted = {};
+  for (const key of Object.keys(payload).sort()) {
+    if (payload[key] !== undefined) sorted[key] = payload[key];
+  }
+  return JSON.stringify(sorted);
+}
+
+function makeReviewGrant(overrides = {}) {
+  const payload = {
+    v: 1,
+    t: 'review-grant',
+    sid: validStudentId,
+    item: 'U4-L3-Q01#rev',
+    credit: 2 / 3,
+    exp: Date.now() + 60_000,
+    ts: Date.now(),
+    n: randomBytes(4).toString('hex'),
+    ...overrides
+  };
+  const bytes = Buffer.from(canonicalize(payload), 'utf8');
+  const sig = sign(null, bytes, reviewGrantPrivateKey);
+  return `${b64url(bytes)}.${b64url(sig)}`;
+}
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 let rosterDb;
@@ -113,6 +143,7 @@ let tokenSecret;
 let proctorSecret;
 let validStudentId;
 let validToken;
+let reviewGrantPrivateKey;
 
 beforeEach(async () => {
   teacherSecret = makeSecret('teacher');
@@ -123,6 +154,10 @@ beforeEach(async () => {
   process.env.ROSTER_TOKEN_SECRET    = tokenSecret;
   process.env.ROSTER_PROCTOR_SECRET  = proctorSecret;
   process.env.NODE_ENV               = 'test';
+
+  const reviewGrantKeys = generateKeyPairSync('ed25519');
+  reviewGrantPrivateKey = reviewGrantKeys.privateKey;
+  process.env.REVIEW_GRANT_PUBKEY = reviewGrantKeys.publicKey.export({ format: 'jwk' }).x;
 
   // A valid studentId + token for use in happy-path tests
   validStudentId = `uuid-student-${randomBytes(8).toString('hex')}`;
@@ -140,6 +175,7 @@ afterEach(async () => {
   delete process.env.ROSTER_TEACHER_SECRET;
   delete process.env.ROSTER_TOKEN_SECRET;
   delete process.env.ROSTER_PROCTOR_SECRET;
+  delete process.env.REVIEW_GRANT_PUBKEY;
 });
 
 // ── POST /ledger/record ───────────────────────────────────────────────────────
@@ -160,6 +196,114 @@ describe('POST /ledger/record', () => {
   }
 
   // ── Happy path ──────────────────────────────────────────────────────────────
+
+  it('verifyReviewGrant accepts a grant signed by the configured quiz public key', () => {
+    const compact = makeReviewGrant();
+    const payload = verifyReviewGrant(compact);
+
+    expect(payload).toMatchObject({
+      v: 1,
+      t: 'review-grant',
+      sid: validStudentId,
+      item: 'U4-L3-Q01#rev',
+      credit: 2 / 3
+    });
+  });
+
+  it('quiz_review requires a valid grant and records the grant credit', async () => {
+    const grant = makeReviewGrant({ credit: 1 / 3 });
+    const { status, body } = await record({
+      source: 'quiz_review',
+      itemId: 'U4-L3-Q01#rev',
+      response: { appeal: 'reviewed' },
+      grant
+    });
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+
+    const rows = [...ledgerDb.store.values()];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].score).toBe(1 / 3);
+  });
+
+  it('quiz_review ignores a client-supplied score when a valid grant is present', async () => {
+    const grant = makeReviewGrant({ credit: 2 / 3 });
+    const { status } = await record({
+      source: 'quiz_review',
+      itemId: 'U4-L3-Q01#rev',
+      response: { appeal: 'reviewed' },
+      score: 1,
+      grant
+    });
+
+    expect(status).toBe(200);
+
+    const rows = [...ledgerDb.store.values()];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].score).toBe(2 / 3);
+  });
+
+  it('quiz_review without a grant returns 400', async () => {
+    const { status, body } = await record({
+      source: 'quiz_review',
+      itemId: 'U4-L3-Q01#rev',
+      response: { appeal: 'reviewed' },
+      score: 1
+    });
+
+    expect(status).toBe(400);
+    expect(body).toEqual({ ok: false, error: 'review grant required' });
+    expect([...ledgerDb.store.values()]).toHaveLength(0);
+  });
+
+  it('quiz_review with an expired grant returns 400', async () => {
+    const grant = makeReviewGrant({ exp: Date.now() - 1 });
+    const { status, body } = await record({
+      source: 'quiz_review',
+      itemId: 'U4-L3-Q01#rev',
+      response: { appeal: 'reviewed' },
+      grant
+    });
+
+    expect(status).toBe(400);
+    expect(body).toEqual({ ok: false, error: 'review grant required' });
+    expect([...ledgerDb.store.values()]).toHaveLength(0);
+  });
+
+  it('quiz_review with sid or item mismatch returns 400', async () => {
+    const sidMismatch = await record({
+      source: 'quiz_review',
+      itemId: 'U4-L3-Q01#rev',
+      response: { appeal: 'reviewed' },
+      grant: makeReviewGrant({ sid: 'other-student' })
+    });
+    const itemMismatch = await record({
+      source: 'quiz_review',
+      itemId: 'U4-L3-Q01#rev',
+      response: { appeal: 'reviewed' },
+      grant: makeReviewGrant({ item: 'U4-L3-Q02#rev' })
+    });
+
+    expect(sidMismatch.status).toBe(400);
+    expect(sidMismatch.body).toEqual({ ok: false, error: 'review grant required' });
+    expect(itemMismatch.status).toBe(400);
+    expect(itemMismatch.body).toEqual({ ok: false, error: 'review grant required' });
+    expect([...ledgerDb.store.values()]).toHaveLength(0);
+  });
+
+  it('quiz_exception also requires a valid review grant', async () => {
+    const { status, body } = await record({
+      source: 'quiz_exception',
+      itemId: 'U4-L3-Q01#exc',
+      response: { exception: true },
+      score: 1
+    });
+
+    expect(status).toBe(400);
+    expect(body).toEqual({ ok: false, error: 'review grant required' });
+    expect([...ledgerDb.store.values()]).toHaveLength(0);
+  });
 
   it('happy path: returns ok:true, a ledgerId string, and default tier "practice"', async () => {
     const { status, body } = await record();

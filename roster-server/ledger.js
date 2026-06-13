@@ -8,7 +8,7 @@
 // pre-migration condition maps to 503; every other DB error is a real 500.
 // Without this, a check_violation surfaces as a generic 500 "Database error"
 // and the writer dies silently (how study_guide_diagnostic was lost for weeks).
-import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
+import { issueLedgerReceipt, recordReceiptPersistFailure, verifyReviewGrant } from './receipts.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
 
@@ -49,6 +49,14 @@ function isSourceNotProvisioned(e) {
   return msg.includes('item_ledger_source_check');
 }
 
+function requiresReviewGrant(source) {
+  return source === 'quiz_review' || source === 'quiz_exception';
+}
+
+function validGrantCredit(credit) {
+  return typeof credit === 'number' && Number.isFinite(credit) && credit >= 0 && credit <= 1;
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
 export function mountLedger(app, { db, verifyToken, resolveUsername }) {
@@ -66,7 +74,7 @@ export function mountLedger(app, { db, verifyToken, resolveUsername }) {
   //   → 401 bad token
   //   → 503 source not in the item_ledger CHECK yet (run the latest migration)
   app.post('/ledger/record', async (req, res) => {
-    const { token, source, itemId, response, unit, topic, skill, score, attempt } = req.body || {};
+    const { token, source, itemId, response, unit, topic, skill, score, attempt, grant } = req.body || {};
 
     // Validate required fields
     if (!token) {
@@ -81,6 +89,23 @@ export function mountLedger(app, { db, verifyToken, resolveUsername }) {
     const studentId = verifyToken(token);
     if (!studentId) {
       return res.status(401).json({ ok: false, error: 'invalid token' });
+    }
+
+    let effectiveScore = score;
+    if (requiresReviewGrant(source)) {
+      const payload = verifyReviewGrant(grant);
+      const validGrant = payload
+        && payload.t === 'review-grant'
+        && payload.sid === studentId
+        && payload.item === itemId
+        && Number(payload.exp) > Date.now()
+        && validGrantCredit(payload.credit);
+
+      if (!validGrant) {
+        return res.status(400).json({ ok: false, error: 'review grant required' });
+      }
+
+      effectiveScore = payload.credit;
     }
 
     // Derive evidence_tier server-side (decision L-C).
@@ -99,7 +124,7 @@ export function mountLedger(app, { db, verifyToken, resolveUsername }) {
       topic,
       skill,
       response,
-      score,
+      score: effectiveScore,
       evidenceTier,
       attempt: attempt ?? 1
     });
@@ -123,7 +148,7 @@ export function mountLedger(app, { db, verifyToken, resolveUsername }) {
       username,
       source,
       itemId,
-      score,
+      score: effectiveScore,
       attempt: attempt ?? 1,
       evidenceTier: data.evidence_tier,
       response
