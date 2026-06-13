@@ -3,6 +3,7 @@
 // server.js calls createLiveLedgerDb() to get the production instance.
 
 import { createClient } from '@supabase/supabase-js';
+import { stableLedgerSort } from './scoring.js';
 
 // ── Real Supabase DB ──────────────────────────────────────────────────────────
 
@@ -76,7 +77,11 @@ export function createLedgerDb(client) {
     if (prefix) {
       q = q.like('item_id', prefix + '%');
     }
-    return q.order('recorded_at', { ascending: false });
+    const result = await q.order('recorded_at', { ascending: false });
+    if (result && Array.isArray(result.data)) {
+      result.data = stableLedgerSort(result.data);
+    }
+    return result;
   }
 
   // Fetch all ledger rows for ONE item_id, newest first. Optional source filter.

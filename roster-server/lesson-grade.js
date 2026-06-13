@@ -446,16 +446,16 @@ export function computeLessonGrades(rows, frqBand, answerKey, schedule, opts) {
 //
 // Returns YYYY-MM-DD string for the current moment in the given IANA timezone.
 // Falls back to UTC if the timezone is unavailable.
-export function todayInTz(tz) {
+export function todayInTz(tz, now) {
+  const instant = now === undefined ? new Date() : new Date(now);
   try {
     // Use Intl.DateTimeFormat to render the current moment in the given timezone.
-    const now = new Date();
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: tz,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-    }).formatToParts(now);
+    }).formatToParts(instant);
     const y = parts.find(p => p.type === 'year')?.value;
     const m = parts.find(p => p.type === 'month')?.value;
     const d = parts.find(p => p.type === 'day')?.value;
@@ -463,7 +463,7 @@ export function todayInTz(tz) {
   } catch (_) {
     // fallthrough to UTC
   }
-  return new Date().toISOString().slice(0, 10);
+  return instant.toISOString().slice(0, 10);
 }
 
 // Extract the single-letter period key from a section string.

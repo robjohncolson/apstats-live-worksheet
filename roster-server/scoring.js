@@ -56,8 +56,27 @@ export function isCorrect(response, answerKey) {
   return r === String(answerKey).trim().toLowerCase();
 }
 
+function rowStableId(row) {
+  return String(row?.ledger_id || row?.receipt_id || '');
+}
+
+// Stable row order for deterministic grading. Same item/attempt/timestamp ties
+// are ordered by ledger_id, falling back to receipt_id for imported rows.
+export function stableLedgerSort(rows) {
+  return [...(Array.isArray(rows) ? rows : [])].sort((a, b) => {
+    const itemCmp = String(a?.item_id || '').localeCompare(String(b?.item_id || ''));
+    if (itemCmp !== 0) return itemCmp;
+    const attemptCmp = (Number(a?.attempt) || 0) - (Number(b?.attempt) || 0);
+    if (attemptCmp !== 0) return attemptCmp;
+    const timeCmp = (Date.parse(a?.recorded_at || '') || 0) - (Date.parse(b?.recorded_at || '') || 0);
+    if (timeCmp !== 0) return timeCmp;
+    return rowStableId(a).localeCompare(rowStableId(b));
+  });
+}
+
 // Keep only the authoritative attempt per item_id: highest `attempt`, tie
-// broken by latest `recorded_at`. Defensive against missing fields.
+// broken by latest `recorded_at`, then lexicographic ledger_id/receipt_id.
+// Defensive against missing fields.
 export function latestPerItem(rows) {
   const best = new Map();
   for (const row of rows) {
@@ -71,7 +90,8 @@ export function latestPerItem(rows) {
     if (a === b) {
       const at = Date.parse(row.recorded_at || '') || 0;
       const bt = Date.parse(cur.recorded_at || '') || 0;
-      if (at >= bt) best.set(id, row);
+      if (at > bt) best.set(id, row);
+      if (at === bt && rowStableId(row) >= rowStableId(cur)) best.set(id, row);
     }
   }
   return [...best.values()];

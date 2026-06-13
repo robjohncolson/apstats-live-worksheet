@@ -181,7 +181,7 @@ export function computeGrade(ledgerRows, answerKey, config = PHASE3_CONFIG, opts
   const schedule = (opts && opts.lessonSchedule) || null;
   const section  = (opts && opts.section) || null;
   const schoolTz = (config && config.schoolTz) || 'America/New_York';
-  const todayStr = todayInTz(schoolTz);
+  const todayStr = todayInTz(schoolTz, opts && opts.asOf);
 
   // Compute per-lesson grades from all ledger rows (latest-per-item already
   // handled inside computeLessonGrades for the sources it cares about).
@@ -458,7 +458,7 @@ export function mountGrade(app, { verifyToken, ledgerDb, loadAnswerKey, lessonSc
       // clients (teacher dashboard) can hide future, not-yet-started work.
       gradebook: buildGradebook(
         { units, quarters, completion, lessons },
-        { lessonSchedule, section, todayStr: todayInTz((config && config.schoolTz) || 'America/New_York') }
+        { lessonSchedule, section, todayStr: todayInTz((config && config.schoolTz) || 'America/New_York', undefined) }
       ),
     });
   });

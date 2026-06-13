@@ -38,6 +38,15 @@ function signPayload(privateKey, payload) {
   };
 }
 
+function gradingProvenance(source, itemId) {
+  const src = String(source || '');
+  const id = String(itemId || '');
+  if (src === 'curriculum_quiz' || src === 'pc' || src === 'worksheet') return 'key';
+  if (src === 'ai' || src === 'ai-graded' || src === 'quiz_review' || src === 'quiz_exception') return 'ai';
+  if (src === 'self-graded' || src === 'frq' || /DESK_DONE/i.test(id)) return 'self';
+  return undefined;
+}
+
 function createPrivateKey(privateKeyB64) {
   return crypto.createPrivateKey({
     key: Buffer.from(privateKeyB64, 'base64'),
@@ -126,6 +135,8 @@ export function issueLedgerReceipt({
     };
 
     if (score !== undefined && score !== null) payload.sc = Number(score);
+    const g = gradingProvenance(source, itemId);
+    if (g) payload.g = g;
 
     const { receiptId, compact } = signPayload(issuer.privateKey, payload);
     return { receiptId, compact };
