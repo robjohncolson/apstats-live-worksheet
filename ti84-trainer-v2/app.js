@@ -2585,6 +2585,7 @@
 
     check.checkResults = results;
     check.verified = allCorrect;
+    logVerifyDiagnostic('handheld', check.procedureId, check.problem, results);
 
     if (allCorrect) {
       finishHandheldMastery(check.procedureId, { recordCredit: true });
@@ -2750,10 +2751,32 @@
     if (!allCorrect) {
       walkthrough.errors += 1;
     }
+    logVerifyDiagnostic('emulator', procedure.id, walkthrough.problem, results);
     app.banner = allCorrect
       ? 'Answer verified. Finish review is unlocked.'
       : 'Some values do not match yet. Check sign and decimals, then try again.';
     render();
+  }
+
+  // Temporary diagnostic (2026-06-14): when a student reports "Check says I'm
+  // wrong" we need the exact typed-vs-expected values to tell apart a one-sided
+  // alternative-hypothesis mismatch, a number-format trap, and a data mismatch.
+  // Open DevTools console, re-run one check, and read the [TI84-VERIFY] line.
+  function logVerifyDiagnostic(label, procedureId, problem, results) {
+    try {
+      console.warn(`[TI84-VERIFY] ${label} ${procedureId}`, {
+        problemValues: problem?.values ?? problem ?? null,
+        fields: Object.fromEntries(
+          Object.entries(results).map(([key, r]) => [key, {
+            typed: r.actual,
+            expected: r.expected,
+            match: r.correct,
+          }]),
+        ),
+      });
+    } catch (_) {
+      /* diagnostics must never break the check */
+    }
   }
 
   async function pressButton(buttonId) {
