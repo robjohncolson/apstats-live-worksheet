@@ -14511,6 +14511,55 @@ document.querySelectorAll('.app-overlay').forEach(function(overlay) {
 })();
 
 
+/* ═══ DESK ROSTER — resolve online usernames to real student names ═══ */
+/* Feeds the "Online Now" list so any avatar is traceable. Teachers get the
+   full roster (/roster/list); students get their section + the universal
+   PeriodX section (reusing the cached _fetchSectionRoster). Unknown auto-
+   generated "Player####" names (the signed-out fallback) are flagged guests. */
+const DeskRoster = {
+    map: {},            // lowercased username -> realName
+    loaded: false,
+    _loading: null,
+    load(force) {
+        if (this._loading) return this._loading;
+        if (this.loaded && !force) return Promise.resolve(this.map);
+        this._loading = (async () => {
+            const m = {};
+            try {
+                const who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
+                const base = (typeof window !== 'undefined' && window.ROSTER_SERVICE_URL) || null;
+                const token = (window.rosterClient && window.rosterClient.token && window.rosterClient.token()) || null;
+                let students = [];
+                if (base && token && who && who.role === 'teacher') {
+                    try {
+                        const res = await fetch(base + '/roster/list', { headers: { 'Authorization': 'Bearer ' + token } });
+                        if (res.ok) { const d = await res.json(); if (d && Array.isArray(d.students)) students = d.students; }
+                    } catch (_) {}
+                }
+                if (students.length === 0 && typeof _fetchSectionRoster === 'function') {
+                    const sections = [];
+                    if (who && who.section) sections.push(who.section);
+                    sections.push('PeriodX');
+                    for (const s of sections) {
+                        try { const arr = await _fetchSectionRoster(s); (arr || []).forEach(x => students.push(x)); } catch (_) {}
+                    }
+                }
+                students.forEach(s => {
+                    if (s && s.username && s.realName) m[String(s.username).trim().toLowerCase()] = String(s.realName).trim();
+                });
+                if (who && who.username && who.realName) m[String(who.username).trim().toLowerCase()] = String(who.realName).trim();
+            } catch (_) {}
+            this.map = m; this.loaded = true; this._loading = null;
+            return m;
+        })();
+        return this._loading;
+    },
+    realName(u) { return this.map[String(u == null ? '' : u).trim().toLowerCase()] || ''; },
+    // Auto-generated signed-out fallback names (DogePresence.getUsername): "Player####".
+    isGuest(u) { return !this.realName(u) && /^player\d+$/i.test(String(u == null ? '' : u).trim()); }
+};
+function _deskEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
 /* ═══ DOGE PRESENCE SYSTEM ═══ */
 const DogePresence = {
     ws: null,
@@ -14553,6 +14602,8 @@ const DogePresence = {
         el.classList.add('doge-active');
         this.renderDropdown();
         document.getElementById('doge-dropdown').classList.add('show');
+        // Resolve real names in the background, then re-render so the list shows identities.
+        DeskRoster.load().then(() => { if (this.dropdownOpen) this.renderDropdown(); });
     },
 
     closeDropdown() {
@@ -14574,7 +14625,16 @@ const DogePresence = {
             html = `<div class="doge-dd-header">Online Now (${this.players.length})</div>`;
             this.players.forEach(p => {
                 const disabled = this.challengePending ? ' style="color:var(--plat-lo)"' : '';
-                html += `<div class="doge-dd-item" onclick="DogePresence.sendChallenge('${p.replace(/'/g, "\\'")}')"${disabled}>${p} &#9656;</div>`;
+                const real = DeskRoster.realName(p);
+                let label;
+                if (real) {
+                    label = `<strong>${_deskEsc(real)}</strong> <span style="opacity:.55;font-size:.85em">${_deskEsc(p)}</span>`;
+                } else if (DeskRoster.isGuest(p)) {
+                    label = `${_deskEsc(p)} <span style="color:#c0392b" title="Not signed in to the roster">&#10067;</span>`;
+                } else {
+                    label = _deskEsc(p);
+                }
+                html += `<div class="doge-dd-item" onclick="DogePresence.sendChallenge('${p.replace(/'/g, "\\'")}')"${disabled}>${label} &#9656;</div>`;
             });
         }
         html += '<div class="doge-dd-sep"></div>';
