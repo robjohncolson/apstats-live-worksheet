@@ -65,6 +65,46 @@ and no tint. All best-effort, never throw, degrade silently if the grade cache i
 Add a one-line legend in the wallet (e.g. a tiny "red → behind · yellow → eligible for
 best-of · green → all caught up" caption under the balance card).
 
+## Summer mode (overlay) — `WalletLogic.summerReadiness(...)`
+
+During the summer (today **before** `firstDayOfSchool`), the fall schedule has nothing
+due, so the fall color is meaningless. A **summer-goal overlay** (`data/summer-schedule.json`)
+drives the color instead — green = on pace for the summer goal (Unit 1 by the first day),
+not "did one lesson." It does NOT touch grades or the fall schedule.
+
+`data/summer-schedule.json`: `{ goal, unit, startDate, targetDate, firstDayOfSchool,
+lessons:[{topic, due}] }` — Unit 1 paced one lesson/week, 1.1 due 2026-06-23 … 1.10 due
+2026-08-25, first day 2026-09-01. Loaded once on Desk init into a global.
+
+```
+summerReadiness(schedule, todayISO, doneCount):
+  // doneCount = # of schedule.lessons the student has completed (the Desk computes it
+  //             via _isLessonComplete(topic) over schedule.lessons).
+  total    = schedule.lessons.length
+  actual   = clamp(doneCount, 0, total)
+  expected = count of schedule.lessons with due <= todayISO        // due by today
+
+  if expected == 0:                       // before the first deadline → not behind
+      state = actual > 0 ? 'ahead' : 'notdue'
+      r     = actual > 0 ? 1 : null       // ahead = green ; nothing due yet = neutral (no color)
+  else:
+      r     = clamp(actual / expected, 0, 1)
+      state = actual >= expected ? 'onpace' : 'behind'
+
+  hue    = (r == null) ? null : 120 * r
+  behind = max(0, expected - actual)
+  return { active:true, r, hue, total, actual, expected, behind,
+           onPace: actual >= expected, state }
+```
+
+Active when `today < schedule.firstDayOfSchool`. When active, the Desk uses
+`summerReadiness`'s hue for ALL FOUR surfaces (window/card/grade-number/icon dot) **instead
+of** the fall `walletReadiness`, and shows a summer banner on the balance card:
+**"☀️ Summer goal: Unit 1 by Sept 1 — `actual`/`total` done · `[Ahead! | On pace ✓ | N behind]`"**,
+plus the next not-done lesson and its due date. Once `today >= firstDayOfSchool`, summer mode
+turns off and the normal fall `walletReadiness` resumes automatically. The icon dot reflects
+summer readiness too (updated on `/grade` load).
+
 ## Tests (`tests/wallet-logic.test.js`, extend)
 
 - `nodue` when `lessonsDue` is 0/null → `state:'nodue'`.
