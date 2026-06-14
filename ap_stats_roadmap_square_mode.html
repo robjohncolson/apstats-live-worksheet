@@ -342,10 +342,10 @@
            container, so it can't fight drag/positioning. Pixel art stays
            crisp: bob/rise/hop are integer translateY; "breathe" is a dot
            box-shadow glow, not a PNG scale. All gated on reduced-motion. */
-        @keyframes icon-bob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(2px)} }
-        @keyframes icon-rise   { 0%{transform:translateY(3px)} 60%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
-        @keyframes icon-attn   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
-        @keyframes icon-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+        @keyframes icon-bob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+        @keyframes icon-rise   { 0%{transform:translateY(5px)} 55%{transform:translateY(-2px)} 100%{transform:translateY(0)} }
+        @keyframes icon-attn   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+        @keyframes icon-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
         @keyframes tool-shimmer{ 0%,100%{opacity:1} 50%{opacity:0.72} }
         @keyframes game-hop    { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-3px)} 60%{transform:translateY(0)} }
         /* Challenge cue: a pulsing glow halo (NOT a scale -- scaling a pixelated
@@ -361,10 +361,10 @@
                                   0 0 0 0 hsl(var(--rdy-hue,120),80%,55%),
                                   inset 1px 1px 0 rgba(255,255,255,0.75); }
             50%     { box-shadow: 0 0 0 1px var(--white),
-                                  0 0 5px 1px hsl(var(--rdy-hue,120),80%,55%),
+                                  0 0 8px 3px hsl(var(--rdy-hue,120),85%,55%),
                                   inset 1px 1px 0 rgba(255,255,255,0.75); }
         }
-        @keyframes dot-sparkle { 0%,92%,100%{filter:none} 96%{filter:brightness(1.85)} }
+        @keyframes dot-sparkle { 0%,90%,100%{filter:none} 95%{filter:brightness(2.1)} }
         /* Wallet readiness state -> gesture */
         .app-icon[data-readiness-state="behind"]     .icon-img { animation: icon-bob 2.6s ease-in-out infinite; }
         .app-icon[data-readiness-state="catchingup"] .icon-img { animation: icon-rise 2.2s ease-in-out infinite; }
@@ -377,10 +377,10 @@
            sparkle alone is too subtle to read next to the quiz's bob. Slower
            duration = calmer/more settled (ready -> resting -> caught up/done). */
         .app-icon[data-readiness-state="eligible"]   .icon-img,
-        .app-icon[data-readiness-state="ready"]      .icon-img { animation: icon-float 2.8s ease-in-out infinite; }
-        .app-icon[data-readiness-state="resting"]    .icon-img { animation: icon-float 4s ease-in-out infinite; }
+        .app-icon[data-readiness-state="ready"]      .icon-img { animation: icon-float 2.2s ease-in-out infinite; }
+        .app-icon[data-readiness-state="resting"]    .icon-img { animation: icon-float 2.8s ease-in-out infinite; }
         .app-icon[data-readiness-state="caughtup"]   .icon-img,
-        .app-icon[data-readiness-state="done"]       .icon-img { animation: icon-float 5s ease-in-out infinite; }
+        .app-icon[data-readiness-state="done"]       .icon-img { animation: icon-float 3.4s ease-in-out infinite; }
         .app-icon.readiness-justdone .icon-img { animation: icon-settle 0.5s ease-out 1; }
         /* Do-Now: the app to open next breathes; tools invite practice when caught up */
         .app-icon.donow-next .icon-img { animation: icon-attn 2.0s ease-in-out infinite; }
