@@ -50,10 +50,25 @@
       return true;
   }
 
-  // Resolve the username to announce for presence. Worksheets don't set
-  // window.currentUsername/consensusUsername, so fall back to the shared
-  // rosterClient identity — this makes a student working on a live worksheet
-  // appear in the "Online Now" presence feed under their roster name.
+  // Stable, persisted "Guest_Fruit_Animal" identity for signed-out students, so
+  // their work is tracked under one readable, migratable name (not a random
+  // Player####). Generated once per device and kept in localStorage.
+  var GUEST_KEY = 'apstats_guest_identity';
+  var GUEST_FRUITS = ['Cherry','Lemon','Mango','Plum','Kiwi','Peach','Apple','Banana','Coconut','Apricot','Date','Fig','Grape','Melon','Olive','Papaya','Guava','Lime'];
+  var GUEST_ANIMALS = ['Tiger','Panda','Fox','Goat','Otter','Hawk','Wolf','Bear','Lynx','Moose','Heron','Bison','Crane','Seal','Newt','Vole','Robin','Koala'];
+  function getGuestIdentity() {
+      try { var ex = localStorage.getItem(GUEST_KEY); if (ex) return ex; } catch (e) {}
+      function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
+      var id = 'Guest_' + pick(GUEST_FRUITS) + '_' + pick(GUEST_ANIMALS);
+      try { localStorage.setItem(GUEST_KEY, id); } catch (e) {}
+      return id;
+  }
+  window.getGuestIdentity = getGuestIdentity;
+
+  // Resolve the username to announce for presence / attribute work to. Falls
+  // through: explicit globals -> shared rosterClient identity -> stable guest
+  // identity. So a signed-out student still appears (tagged Guest_) and their
+  // work is tracked under one migratable name.
   function _presenceUsername() {
       var u = (window.currentUsername || localStorage.getItem('consensusUsername') || '').trim();
       if (u) return u;
@@ -63,7 +78,7 @@
               if (who && who.username) return String(who.username).trim();
           }
       } catch (e) {}
-      return '';
+      return getGuestIdentity();
   }
 
   // Connect to WebSocket for real-time updates
@@ -245,6 +260,8 @@
 
   // Railway-enhanced answer submission
   async function submitAnswerViaRailway(username, questionId, answerValue, timestamp) {
+      // Attribute signed-out work to a stable guest identity so it's tracked + migratable.
+      if (!username) username = getGuestIdentity();
       const fallbackSubmit = typeof window.originalPushAnswer === 'function'
           ? window.originalPushAnswer
           : null;

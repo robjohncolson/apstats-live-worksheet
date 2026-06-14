@@ -14555,10 +14555,65 @@ const DeskRoster = {
         return this._loading;
     },
     realName(u) { return this.map[String(u == null ? '' : u).trim().toLowerCase()] || ''; },
-    // Auto-generated signed-out fallback names (DogePresence.getUsername): "Player####".
-    isGuest(u) { return !this.realName(u) && /^player\d+$/i.test(String(u == null ? '' : u).trim()); }
+    // Signed-out identities: the stable "Guest_…" identity, or legacy "Player####".
+    isGuest(u) { var s = String(u == null ? '' : u).trim(); return !this.realName(u) && (/^guest_/i.test(s) || /^player\d+$/i.test(s)); }
 };
 function _deskEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ═══ GUEST PASS — a signed-out student's identity + QR + work backup ═══ */
+/* Shows the stable Guest_ name, a QR deep-linking the teacher to migrate this
+   guest into the roster (?claimGuest=…), a cloud progress count, and a
+   downloadable backup of their answers. */
+function openGuestPass() {
+    var guest = (typeof window.getGuestIdentity === 'function') ? window.getGuestIdentity() : DogePresence.getUsername();
+    var apiBase = (window.RAILWAY_SERVER_URL || 'https://curriculumrender-production.up.railway.app');
+    var claimUrl = location.origin + location.pathname + '?claimGuest=' + encodeURIComponent(guest);
+    var panel = document.getElementById('guest-pass-overlay');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'guest-pass-overlay';
+        panel.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center';
+        panel.innerHTML = '<div id="guest-pass-card" style="background:#fff;color:#111;max-width:340px;width:90%;border:2px solid #000;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.4);padding:16px;font-family:Geneva,Verdana,sans-serif"></div>';
+        panel.addEventListener('click', function(e){ if (e.target === panel) panel.style.display = 'none'; });
+        document.body.appendChild(panel);
+    }
+    panel.style.display = 'flex';
+    var card = document.getElementById('guest-pass-card');
+    card.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+        + '<strong style="font-size:16px">&#129701; My Guest Pass</strong>'
+        + '<button onclick="document.getElementById(\'guest-pass-overlay\').style.display=\'none\'" aria-label="Close" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">&times;</button></div>'
+        + '<p style="margin:0 0 6px;font-size:13px">You’re working as a guest. Show this to your teacher to save your work to your real account.</p>'
+        + '<div style="text-align:center;font-weight:bold;font-size:15px;margin:6px 0">' + _deskEsc(guest) + '</div>'
+        + '<div id="guest-pass-qr" style="display:flex;justify-content:center;margin:8px 0"></div>'
+        + '<div id="guest-pass-summary" style="text-align:center;font-size:12px;opacity:.75;margin-bottom:10px">Loading your progress…</div>'
+        + '<button id="guest-pass-dl" style="width:100%;padding:8px;font-size:13px;cursor:pointer">⬇ Download my work (backup)</button>';
+    var qrHost = document.getElementById('guest-pass-qr');
+    qrHost.innerHTML = '';
+    if (typeof QRCode === 'function') {
+        new QRCode(qrHost, { text: claimUrl, width: 150, height: 150, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+    } else {
+        qrHost.textContent = guest;
+    }
+    var sumEl = document.getElementById('guest-pass-summary');
+    var dlBtn = document.getElementById('guest-pass-dl');
+    fetch(apiBase + '/api/user-answers/' + encodeURIComponent(guest))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            var n = (d && typeof d.count === 'number') ? d.count : ((d && d.answers) ? d.answers.length : 0);
+            sumEl.textContent = n + ' answer' + (n === 1 ? '' : 's') + ' saved in the cloud';
+            dlBtn.onclick = function(){
+                var blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = guest + '_backup.json';
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+            };
+        })
+        .catch(function(){ sumEl.textContent = 'Could not load progress (offline?)'; dlBtn.disabled = true; });
+}
+window.openGuestPass = openGuestPass;
 
 /* ═══ DOGE PRESENCE SYSTEM ═══ */
 const DogePresence = {
@@ -14575,7 +14630,9 @@ const DogePresence = {
         if (!this.username) {
             this.username = localStorage.getItem('student-name')
                 || localStorage.getItem('username')
-                || 'Player' + Math.floor(Math.random() * 9000 + 1000);
+                || (typeof window.getGuestIdentity === 'function'
+                    ? window.getGuestIdentity()
+                    : 'Guest_Anon_' + Math.floor(Math.random() * 9000 + 1000));
         }
         return this.username;
     },
@@ -14638,6 +14695,9 @@ const DogePresence = {
             });
         }
         html += '<div class="doge-dd-sep"></div>';
+        if (/^guest_/i.test(String(DogePresence.getUsername()))) {
+            html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openGuestPass()">&#129701; My Guest Pass</div>';
+        }
         html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openGame()">&#127918; Study Break</div>';
         dd.innerHTML = html;
     },
