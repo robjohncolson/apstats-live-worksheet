@@ -311,6 +311,7 @@
             font-size: 22px;
             image-rendering: pixelated;
             background: transparent;
+            position: relative;
         }
         .app-icon .icon-img img {
             width: 48px; height: 48px;
@@ -322,6 +323,18 @@
            to the <img>, so a loaded PNG rendered BOTH = two icons. 2026-06-03. */
         .app-icon .icon-img::after { content: attr(data-emoji); }
         .app-icon .icon-img.has-png::after { content: none; }
+        .app-icon[data-app="wallet"] .wallet-readiness-dot {
+            position: absolute;
+            right: -1px;
+            bottom: -1px;
+            width: 11px;
+            height: 11px;
+            border: 1px solid var(--black);
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px var(--white), inset 1px 1px 0 rgba(255,255,255,0.75);
+            display: none;
+            pointer-events: none;
+        }
         .app-icon.selected .icon-img {
             outline: 2px dotted var(--black);
             outline-offset: 1px;
@@ -6476,6 +6489,8 @@ async function renderDoNowGrades(baseUrl, token) {
   // progress). renderWhySoLow below likewise bails when a panel is open.
   var _wslHost = document.getElementById('donow-helper');
   if (_wslHost && !_coachPanelOpen()) _wslHost.innerHTML = '';
+  _gradeQuartersCache = null;
+  if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
   try {
     // P2 view-as rewrite: in view-as mode, swap to /teacher/student/:id/grade
     // with the teacher's token in the Authorization header. _maybeViewAsFetch
@@ -6657,6 +6672,7 @@ async function renderDoNowGrades(baseUrl, token) {
     // "Why so low?" grade coach — render alongside the strip (q is in scope).
     // typeof-guarded so the existing renderDoNowGrades tests don't need it.
     if (typeof renderWhySoLow === 'function') renderWhySoLow(curQ, q);
+    if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
   } catch (_) {
     host.style.display = 'none';
     var _wh = document.getElementById('donow-helper');
@@ -10266,7 +10282,7 @@ function _walletPct(v) {
     if (typeof v !== 'number') return null;
     return (v <= 1) ? Math.round(v * 100) : Math.round(v);
 }
-function _walletCurrentGrade() {
+function _walletCurrentQuarter() {
     try {
         var quarters = _gradeQuartersCache || {};
         var curN = (typeof quarterOfDate === 'function') ? quarterOfDate(new Date()) : null;
@@ -10280,11 +10296,62 @@ function _walletCurrentGrade() {
                 }
             }
         }
-        if (q && typeof q.quarterGrade === 'number') {
-            return { pct: _walletPct(q.quarterGrade), q: curQ };
-        }
+        if (q && typeof q.quarterGrade === 'number') return { quarter: curQ, data: q };
     } catch (_) {}
+    return { quarter: null, data: null };
+}
+function _walletCurrentGrade() {
+    var current = _walletCurrentQuarter();
+    var q = current.data;
+    if (q && typeof q.quarterGrade === 'number') {
+        return { pct: _walletPct(q.quarterGrade), q: current.quarter };
+    }
     return { pct: null, q: null };
+}
+
+function _walletCurrentReadiness() {
+    try {
+        var current = _walletCurrentQuarter();
+        if (!current.data || !window.WalletLogic || typeof WalletLogic.walletReadiness !== 'function') return null;
+        return WalletLogic.walletReadiness(current.data);
+    } catch (_) {}
+    return null;
+}
+
+function _walletApplyWindowReadiness(readiness) {
+    try {
+        var content = document.getElementById('wallet-content');
+        var win = content ? content.closest('.app-window') : null;
+        if (!win || !win.style) return;
+        if (!readiness || readiness.state === 'nodue' || typeof readiness.hue !== 'number') {
+            win.style.backgroundColor = '';
+            return;
+        }
+        win.style.backgroundColor = 'hsl(' + readiness.hue + ',55%,92%)';
+    } catch (_) {}
+}
+
+function updateWalletReadinessIcon() {
+    try {
+        var icon = document.querySelector('.app-icon[data-app="wallet"]');
+        if (!icon) return;
+        var img = icon.querySelector('.icon-img');
+        if (!img) return;
+        var dot = img.querySelector('.wallet-readiness-dot');
+        if (!dot) {
+            dot = document.createElement('span');
+            dot.className = 'wallet-readiness-dot';
+            img.appendChild(dot);
+        }
+        var readiness = _walletCurrentReadiness();
+        if (!readiness || readiness.state === 'nodue' || typeof readiness.hue !== 'number') {
+            dot.style.display = 'none';
+            dot.style.backgroundColor = '#b8b8b8';
+            return;
+        }
+        dot.style.display = 'block';
+        dot.style.backgroundColor = 'hsl(' + readiness.hue + ',70%,45%)';
+    } catch (_) {}
 }
 
 // Merge durable (server) + local receipts, dedup by id (fallback compact), newest first.
@@ -10473,14 +10540,20 @@ async function printSealedSummary() {
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
     var grade = _walletCurrentGrade();
+    var readiness = _walletCurrentReadiness();
     var pts = _walletComputePoints(receipts);
     host.innerHTML = '';
+    _walletApplyWindowReadiness(readiness);
 
     // ── Balance card ──
     var card = document.createElement('div');
     card.style.cssText = 'border:1px solid var(--black);background:#fff;'
         + 'box-shadow:inset 1px 1px 0 0 #fff,inset -1px -1px 0 0 #888,2px 2px 0 0 var(--black);'
         + 'border-radius:3px;padding:12px 14px;margin-bottom:12px';
+    if (readiness && readiness.state !== 'nodue' && typeof readiness.hue === 'number') {
+        card.style.backgroundColor = 'hsl(' + readiness.hue + ',60%,88%)';
+        card.style.borderColor = 'hsl(' + readiness.hue + ',65%,45%)';
+    }
 
     var who = document.createElement('div');
     who.className = 'geneva';
@@ -10496,6 +10569,9 @@ function _walletPaint(host, receipts, loading) {
     var gradeBig = document.createElement('span');
     gradeBig.className = 'chicago';
     gradeBig.style.cssText = 'font-size:34px;line-height:1';
+    if (readiness && readiness.state !== 'nodue' && typeof readiness.hue === 'number') {
+        gradeBig.style.color = 'hsl(' + readiness.hue + ',70%,35%)';
+    }
     gradeBig.textContent = (grade.pct != null) ? (grade.pct + '%') : '—';
     var gradeLbl = document.createElement('span');
     gradeLbl.className = 'geneva';
@@ -10553,6 +10629,12 @@ function _walletPaint(host, receipts, loading) {
     exportRow.appendChild(printBtn);
     card.appendChild(exportRow);
     host.appendChild(card);
+
+    var legend = document.createElement('div');
+    legend.className = 'geneva';
+    legend.style.cssText = 'font-size:9px;color:#555;margin:-6px 2px 12px';
+    legend.textContent = 'red = behind · yellow = eligible for best-of · green = all caught up';
+    host.appendChild(legend);
 
     // ── Feed header ──
     var head = document.createElement('div');

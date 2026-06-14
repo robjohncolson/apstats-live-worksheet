@@ -70,10 +70,43 @@
         return merged;
     }
 
+    function _walletClamp(v, lo, hi) {
+        if (v < lo) return lo;
+        if (v > hi) return hi;
+        return v;
+    }
+
+    function walletReadiness(quarter) {
+        var FLOOR = 0.40;
+        if (!quarter || quarter.lessonsDue == null || quarter.lessonsDue <= 0) {
+            return { state: 'nodue', r: null, hue: null };
+        }
+
+        var tracks = [];
+        if (typeof quarter.pcAvg === 'number') tracks.push(quarter.pcAvg);
+        if (typeof quarter.workAvg === 'number') tracks.push(quarter.workAvg);
+
+        var e = tracks.length === 0 ? 0 : _walletClamp(Math.min.apply(null, tracks) / FLOOR, 0, 1);
+        var eligible = e >= 1;
+        var completion = _walletClamp(quarter.lessonsGraded / quarter.lessonsDue, 0, 1);
+        var r = eligible ? (0.5 + 0.5 * completion) : (0.5 * e);
+        var hue = 120 * r;
+
+        return {
+            state: eligible ? (completion >= 1 ? 'caughtup' : 'eligible') : 'behind',
+            r: r,
+            hue: hue,
+            eligible: eligible,
+            completion: completion,
+            e: e
+        };
+    }
+
     var api = {
         pointsFor: pointsFor,
         computePoints: computePoints,
-        mergeReceipts: mergeReceipts
+        mergeReceipts: mergeReceipts,
+        walletReadiness: walletReadiness
     };
 
     g.WalletLogic = api;

@@ -81,4 +81,106 @@ describe('wallet_logic.js', () => {
       { id: 'local-only', compact: 'local.sig', ts: 100 }
     ]);
   });
+
+  it('reports nodue when nothing is due', () => {
+    expect(WalletLogic.walletReadiness({ lessonsDue: 0 })).toMatchObject({
+      state: 'nodue',
+      r: null,
+      hue: null
+    });
+    expect(WalletLogic.walletReadiness({ lessonsDue: null })).toMatchObject({
+      state: 'nodue',
+      r: null,
+      hue: null
+    });
+  });
+
+  it('marks a below-floor work track as behind', () => {
+    const readiness = WalletLogic.walletReadiness({
+      workAvg: 0.2,
+      pcAvg: null,
+      lessonsDue: 4,
+      lessonsGraded: 2
+    });
+
+    expect(readiness.state).toBe('behind');
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.e).toBeCloseTo(0.5);
+    expect(readiness.r).toBeCloseTo(0.25);
+    expect(readiness.hue).toBeCloseTo(30);
+  });
+
+  it('ignores a null PC track early in a unit', () => {
+    const readiness = WalletLogic.walletReadiness({
+      pcAvg: null,
+      workAvg: 0.5,
+      lessonsDue: 2,
+      lessonsGraded: 2
+    });
+
+    expect(readiness.state).toBe('caughtup');
+    expect(readiness.eligible).toBe(true);
+    expect(readiness.r).toBeCloseTo(1);
+    expect(readiness.hue).toBeCloseTo(120);
+  });
+
+  it('uses completion after eligibility is unlocked', () => {
+    const readiness = WalletLogic.walletReadiness({
+      pcAvg: 0.6,
+      workAvg: 0.5,
+      lessonsDue: 10,
+      lessonsGraded: 6
+    });
+
+    expect(readiness.state).toBe('eligible');
+    expect(readiness.eligible).toBe(true);
+    expect(readiness.completion).toBeCloseTo(0.6);
+    expect(readiness.r).toBeCloseTo(0.8);
+  });
+
+  it('gates below-floor readiness by the minimum present track', () => {
+    const readiness = WalletLogic.walletReadiness({
+      pcAvg: 0.3,
+      workAvg: 0.5,
+      lessonsDue: 4,
+      lessonsGraded: 4
+    });
+
+    expect(readiness.state).toBe('behind');
+    expect(readiness.e).toBeCloseTo(0.75);
+    expect(readiness.r).toBeCloseTo(0.375);
+  });
+
+  it('is green when all due work is graded and tracks are eligible', () => {
+    const readiness = WalletLogic.walletReadiness({
+      pcAvg: 0.4,
+      workAvg: 0.8,
+      lessonsDue: 3,
+      lessonsGraded: 3
+    });
+
+    expect(readiness.state).toBe('caughtup');
+    expect(readiness.r).toBeCloseTo(1);
+    expect(readiness.hue).toBeCloseTo(120);
+  });
+
+  it('clamps track progress and completion into the readiness range', () => {
+    const behind = WalletLogic.walletReadiness({
+      pcAvg: -0.2,
+      workAvg: 0.5,
+      lessonsDue: 4,
+      lessonsGraded: -1
+    });
+    const overComplete = WalletLogic.walletReadiness({
+      pcAvg: 2,
+      workAvg: 0.5,
+      lessonsDue: 4,
+      lessonsGraded: 9
+    });
+
+    expect(behind.r).toBeCloseTo(0);
+    expect(behind.hue).toBeCloseTo(0);
+    expect(overComplete.r).toBeCloseTo(1);
+    expect(overComplete.hue).toBeCloseTo(120);
+  });
 });
