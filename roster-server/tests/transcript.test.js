@@ -206,4 +206,15 @@ describe('GET /transcript', () => {
     expect(body.transcript.receipts).toHaveLength(2);
     expect(ledgerDb.store.every((entry) => entry.receipt_id && entry.receipt_compact)).toBe(true);
   });
+
+  it('backfills a receipt signed with the row recorded_at timestamp', async () => {
+    await start([row({ recorded_at: '2026-05-20T14:30:00.000Z' })]);
+
+    await srv.get('/transcript', {
+      Authorization: `Bearer ${token}`
+    });
+
+    expect(decodeCompact(ledgerDb.store[0].receipt_compact).payload.ts)
+      .toBe(Date.parse('2026-05-20T14:30:00.000Z'));
+  });
 });

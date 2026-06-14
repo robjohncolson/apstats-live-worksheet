@@ -47,7 +47,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // loadManifest is optional; defaults to reading WORK_MANIFEST_PATH (or repo default).
 // Tests inject a fake loadManifest that returns a fixture manifest directly.
 
-export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride) {
+export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey) {
   const app = express();
   app.use(cors());
   // 600kb (vs Express's 100kb default): the trainer-state kanji payload (~90–120 KB compact SRS tuples) must fit through PUT /trainer/state.
@@ -809,7 +809,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Mounts POST /ledger/record and GET /ledger/student/:studentId.
   // ledgerDb must be passed in (tests inject a fake; production passes createLiveLedgerDb()).
   if (ledgerDb) {
-    mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername });
+    mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername, worksheetKey });
   }
 
   // ── Do Now routes (Sprint DN1 additive) ──────────────────────────────────────
@@ -988,6 +988,27 @@ async function loadLiveAnswerKey() {
   return JSON.parse(raw);
 }
 
+function resolveWorksheetKeyPath() {
+  if (process.env.WORKSHEET_KEY_PATH) {
+    return process.env.WORKSHEET_KEY_PATH;
+  }
+  const bundledPath = resolve(__dirname, 'data', 'worksheet-key.json');
+  if (existsSync(bundledPath)) {
+    return bundledPath;
+  }
+  return resolve(__dirname, '..', 'data', 'worksheet-key.json');
+}
+
+function loadLiveWorksheetKey() {
+  try {
+    const raw = readFileSync(resolveWorksheetKeyPath(), 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn('[worksheet-key] unavailable; worksheet scores remain client-reported:', err.message);
+    return null;
+  }
+}
+
 // ── Live skill-map loader (production only) ──────────────────────────────────
 // Same priority + bundled-copy rationale as the answer-key loader.
 // scripts/build-skill-map.mjs writes ./data/skill-map.json byte-identical.
@@ -1125,6 +1146,7 @@ if (process.env.NODE_ENV !== 'test') {
     // W1: worksheet blank counts — synchronous load at boot; fault-tolerant (null
     // = Cws null for all lessons, W/Q renormalize). Same pattern as lesson schedule.
     const worksheetBlankCounts = loadLiveWorksheetBlankCounts();
+    const worksheetKey = loadLiveWorksheetKey();
     const app = createApp(
       db,
       ledgerDb,
@@ -1136,7 +1158,11 @@ if (process.env.NODE_ENV !== 'test') {
       lessonSchedule,
       undefined,          // configOverrides -- not used in production
       worksheetBlankCounts,
-      pollArchiveDb
+      pollArchiveDb,
+      undefined,
+      undefined,
+      undefined,
+      worksheetKey
     );
     const PORT = process.env.PORT || 8090;
     app.listen(PORT, () => {

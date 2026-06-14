@@ -57,9 +57,32 @@ function validGrantCredit(credit) {
   return typeof credit === 'number' && Number.isFinite(credit) && credit >= 0 && credit <= 1;
 }
 
+function normalizeWorksheetAnswer(value) {
+  return String(value || '').toLowerCase().trim().replace(/[^\w\s./-]/g, '');
+}
+
+export function scoreWorksheetAnswer(dataAnswer, response) {
+  const accepted = String(dataAnswer).split('|').map(normalizeWorksheetAnswer);
+  const user = normalizeWorksheetAnswer(response);
+  // An empty answer is never partial credit (every string `.includes('')`), and
+  // the client never records empty blanks — match that: empty → incorrect.
+  if (!user) return 0;
+  if (accepted.includes(user)) return 1;
+  if (accepted.some(answer => user.includes(answer) || answer.includes(user))) return 0.5;
+  return 0;
+}
+
+function findWorksheetAnswer(worksheetKey, itemId) {
+  if (!worksheetKey || typeof worksheetKey !== 'object') return undefined;
+  const values = worksheetKey.worksheetKey && typeof worksheetKey.worksheetKey === 'object'
+    ? worksheetKey.worksheetKey
+    : worksheetKey;
+  return values[itemId] === undefined ? undefined : String(values[itemId]);
+}
+
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountLedger(app, { db, verifyToken, resolveUsername }) {
+export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKey }) {
 
   // ── POST /ledger/record ─────────────────────────────────────────────────────
   // FROZEN CONTRACT 2:
@@ -91,7 +114,13 @@ export function mountLedger(app, { db, verifyToken, resolveUsername }) {
       return res.status(401).json({ ok: false, error: 'invalid token' });
     }
 
-    let effectiveScore = score;
+    const keyedWorksheetAnswer = source === 'worksheet' ? findWorksheetAnswer(worksheetKey, itemId) : undefined;
+    let effectiveScore = keyedWorksheetAnswer === undefined
+      ? score
+      : scoreWorksheetAnswer(keyedWorksheetAnswer, response);
+    let gradingProvenance = source === 'worksheet' ? 'self' : undefined;
+    if (keyedWorksheetAnswer !== undefined) gradingProvenance = 'key';
+
     if (requiresReviewGrant(source)) {
       const payload = verifyReviewGrant(grant);
       const validGrant = payload
@@ -151,7 +180,8 @@ export function mountLedger(app, { db, verifyToken, resolveUsername }) {
       score: effectiveScore,
       attempt: attempt ?? 1,
       evidenceTier: data.evidence_tier,
-      response
+      response,
+      gradingProvenance
     });
     if (receipt) body.receipt = receipt;
     if (receipt && data.ledger_id && db && typeof db.updateLedgerReceipt === 'function') {

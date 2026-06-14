@@ -144,6 +144,7 @@ export function issueLedgerReceipt({
   attempt,
   evidenceTier,
   response,
+  gradingProvenance: provenanceOverride,
   ts = Date.now()
 }) {
   if (!issuer.enabled) return null;
@@ -166,7 +167,7 @@ export function issueLedgerReceipt({
     };
 
     if (score !== undefined && score !== null) payload.sc = Number(score);
-    const g = gradingProvenance(source, itemId);
+    const g = provenanceOverride || gradingProvenance(source, itemId);
     if (g) payload.g = g;
 
     const { receiptId, compact } = signPayload(issuer.privateKey, payload);
