@@ -14839,7 +14839,14 @@ const DogePresence = {
 
     getUsername() {
         if (!this.username) {
-            this.username = localStorage.getItem('student-name')
+            // Prefer the signed-in roster identity so a real student is never
+            // mistaken for a guest (which would surface "My Guest Pass" and make
+            // them appear as Guest_ in presence). Only fall back to the stable
+            // guest identity when genuinely signed out.
+            var roster = null;
+            try { roster = (window.rosterClient && rosterClient.current && rosterClient.current()) || null; } catch (e) {}
+            this.username = (roster && roster.username)
+                || localStorage.getItem('student-name')
                 || localStorage.getItem('username')
                 || (typeof window.getGuestIdentity === 'function'
                     ? window.getGuestIdentity()
