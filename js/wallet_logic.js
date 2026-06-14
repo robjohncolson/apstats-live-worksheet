@@ -386,6 +386,20 @@
         return groups;
     }
 
+    // ICON_MOTION -- which desktop app hosts a Do-Now next task, so the Desk can
+    // breathe that icon ("open me next"). The work manifest only emits
+    // activity in {worksheet, quiz} (+ progress checks), and ALL of them are
+    // done inside the AP Stats Quiz app, so this returns 'quiz' today. This is
+    // the single extensibility seam: add a case here if the manifest ever
+    // introduces a calculator/equation activity and the matching tool icon
+    // (ti84 / formulas) will light up as the next task automatically.
+    function appForNextTask(nextTask) {
+        if (!nextTask || typeof nextTask !== 'object') return null;
+        var a = nextTask.activity;
+        if (a === 'worksheet' || a === 'quiz' || a === 'pc' || a === 'progress_check') return 'quiz';
+        return 'quiz'; // curriculum work lives in the Quiz app
+    }
+
     var api = {
         pointsFor: pointsFor,
         computePoints: computePoints,
@@ -393,7 +407,8 @@
         walletReadiness: walletReadiness,
         daysBetween: daysBetween,
         summerReadiness: summerReadiness,
-        groupReceipts: groupReceipts
+        groupReceipts: groupReceipts,
+        appForNextTask: appForNextTask
     };
 
     g.WalletLogic = api;

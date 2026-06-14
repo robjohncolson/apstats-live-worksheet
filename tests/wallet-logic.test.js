@@ -421,4 +421,29 @@ describe('wallet_logic.js', () => {
     expect(readiness.deadlineExpected).toBe(3);
     expect(readiness.behind).toBe(0);
   });
+
+  // ── appForNextTask (ICON_MOTION) ──────────────────────────────────────────
+  it('maps a worksheet next task to the Quiz app', () => {
+    expect(WalletLogic.appForNextTask({ activity: 'worksheet' })).toBe('quiz');
+  });
+
+  it('maps a quiz next task to the Quiz app', () => {
+    expect(WalletLogic.appForNextTask({ activity: 'quiz' })).toBe('quiz');
+  });
+
+  it('maps a progress-check next task to the Quiz app', () => {
+    expect(WalletLogic.appForNextTask({ activity: 'pc' })).toBe('quiz');
+    expect(WalletLogic.appForNextTask({ activity: 'progress_check' })).toBe('quiz');
+  });
+
+  it('defaults unknown curriculum activities to the Quiz app', () => {
+    expect(WalletLogic.appForNextTask({ activity: 'something-new' })).toBe('quiz');
+    expect(WalletLogic.appForNextTask({})).toBe('quiz');
+  });
+
+  it('returns null when there is no next task', () => {
+    expect(WalletLogic.appForNextTask(null)).toBe(null);
+    expect(WalletLogic.appForNextTask(undefined)).toBe(null);
+    expect(WalletLogic.appForNextTask('quiz')).toBe(null);
+  });
 });

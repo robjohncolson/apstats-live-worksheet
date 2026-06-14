@@ -335,6 +335,54 @@
             display: none;
             pointer-events: none;
         }
+        /* ── Animated desktop icons (ICON_MOTION_SPEC) ──────────────────
+           Calm, state-distinct motion that expresses each app's live state.
+           Motion is on the inner .icon-img (the picture moves; the label
+           stays) and on the wallet dot -- NEVER on the draggable .app-icon
+           container, so it can't fight drag/positioning. Pixel art stays
+           crisp: bob/rise/hop are integer translateY; "breathe" is a dot
+           box-shadow glow, not a PNG scale. All gated on reduced-motion. */
+        @keyframes icon-bob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(2px)} }
+        @keyframes icon-rise   { 0%{transform:translateY(3px)} 60%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
+        @keyframes icon-attn   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+        @keyframes tool-shimmer{ 0%,100%{opacity:1} 50%{opacity:0.72} }
+        @keyframes game-hop    { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-3px)} 60%{transform:translateY(0)} }
+        /* Challenge cue: a pulsing glow halo (NOT a scale -- scaling a pixelated
+           PNG by a fractional factor crawls/shimmers every frame). */
+        @keyframes game-throb  { 0%,100%{box-shadow:0 0 0 0 rgba(255,70,70,0)} 50%{box-shadow:0 0 7px 2px rgba(255,70,70,0.85)} }
+        @keyframes icon-settle { 0%{transform:scale(1.18)} 60%{transform:scale(0.96)} 100%{transform:scale(1)} }
+        /* All three stops keep the SAME 3 box-shadow layers in the SAME order
+           (outline, glow, inset) so each interpolates same-type/same-inset and
+           the glow grows smoothly; the glow is zero-size (invisible) at rest, so
+           it also matches the dot's static base shadow -- no jump when idle. */
+        @keyframes dot-breathe {
+            0%,100% { box-shadow: 0 0 0 1px var(--white),
+                                  0 0 0 0 hsl(var(--rdy-hue,120),80%,55%),
+                                  inset 1px 1px 0 rgba(255,255,255,0.75); }
+            50%     { box-shadow: 0 0 0 1px var(--white),
+                                  0 0 5px 1px hsl(var(--rdy-hue,120),80%,55%),
+                                  inset 1px 1px 0 rgba(255,255,255,0.75); }
+        }
+        @keyframes dot-sparkle { 0%,92%,100%{filter:none} 96%{filter:brightness(1.85)} }
+        /* Wallet readiness state -> gesture */
+        .app-icon[data-readiness-state="behind"]     .icon-img { animation: icon-bob 2.6s ease-in-out infinite; }
+        .app-icon[data-readiness-state="catchingup"] .icon-img { animation: icon-rise 2.2s ease-in-out infinite; }
+        .app-icon[data-readiness-state="eligible"]   .wallet-readiness-dot,
+        .app-icon[data-readiness-state="ready"]      .wallet-readiness-dot { animation: dot-breathe 2.4s ease-in-out infinite; }
+        .app-icon[data-readiness-state="resting"]    .wallet-readiness-dot { animation: dot-breathe 4.5s ease-in-out infinite; }
+        .app-icon[data-readiness-state="caughtup"]   .wallet-readiness-dot,
+        .app-icon[data-readiness-state="done"]       .wallet-readiness-dot { animation: dot-sparkle 9s ease-in-out infinite; }
+        .app-icon.readiness-justdone .icon-img { animation: icon-settle 0.5s ease-out 1; }
+        /* Do-Now: the app to open next breathes; tools invite practice when caught up */
+        .app-icon.donow-next .icon-img { animation: icon-attn 2.0s ease-in-out infinite; }
+        .app-icon.tool-idle  .icon-img { animation: tool-shimmer 3.2s ease-in-out infinite; }
+        /* Game presence (extends doge-wiggle) -- challenge throb beats peer hop */
+        .app-icon[data-app="game"].game-peers     .icon-img { animation: game-hop 1.8s ease-in-out infinite; }
+        .app-icon[data-app="game"].game-challenge .icon-img { animation: game-throb 0.75s ease-in-out infinite; }
+        .app-icon.dragging .icon-img { animation: none !important; }
+        @media (prefers-reduced-motion: reduce) {
+            .app-icon .icon-img, .app-icon .wallet-readiness-dot { animation: none !important; }
+        }
         .app-icon.selected .icon-img {
             outline: 2px dotted var(--black);
             outline-offset: 1px;
@@ -7046,10 +7094,19 @@ async function renderDoNow() {
   var msg = document.getElementById('donow-msg');
   if (!card || !msg) return;
 
+  // ICON_MOTION -- which app icon to breathe for the next task (curriculum work
+  // lives in the Quiz app; appForNextTask refines this if the manifest grows).
+  var _dnNextApp = 'quiz';
+
   function show(text, mode) {
     msg.textContent = text;
     card.className = 'donow-' + (mode || 'signin');
     card.style.display = 'flex';
+    try {
+      if (mode === 'todo') _paintDeskMotionCues(_dnNextApp || 'quiz', false);
+      else if (mode === 'done') _paintDeskMotionCues(null, true);
+      else _paintDeskMotionCues(null, false);
+    } catch (_) {}
   }
 
   // Hide the quarter strip on EVERY entry — only re-show after a successful
@@ -7170,6 +7227,10 @@ async function renderDoNow() {
       : '';
     var where = nt.lesson ? (nt.unit + ' ' + nt.lesson) : nt.unit;
     var act = nt.activity || 'work';
+    try {
+      _dnNextApp = (window.WalletLogic && typeof WalletLogic.appForNextTask === 'function')
+        ? (WalletLogic.appForNextTask(nt) || 'quiz') : 'quiz';
+    } catch (_) { _dnNextApp = 'quiz'; }
     show('Do Now: ' + where + ' — ' + act + prog + '.', 'todo');
   } catch (_) {
     // Absolute last-resort guard — the Desk must never break because of Do Now.
@@ -10405,13 +10466,50 @@ function updateWalletReadinessIcon() {
             img.appendChild(dot);
         }
         var readiness = _walletDisplayReadiness();
-        if (!readiness || readiness.state === 'nodue' || typeof readiness.hue !== 'number') {
+        if (!readiness || readiness.state === 'nodue' || readiness.state === 'notdue' || typeof readiness.hue !== 'number') {
             dot.style.display = 'none';
             dot.style.backgroundColor = '#b8b8b8';
+            icon.removeAttribute('data-readiness-state');
+            icon.style.removeProperty('--rdy-hue');
             return;
         }
         dot.style.display = 'block';
         dot.style.backgroundColor = 'hsl(' + readiness.hue + ',70%,45%)';
+        // ICON_MOTION -- drive the icon's gesture via a state attribute + hue var
+        // (CSS owns state->animation). Only rewrite the attribute when the state
+        // changes so a plain /grade poll never restarts the animation.
+        icon.style.setProperty('--rdy-hue', String(readiness.hue));
+        var prevState = icon.getAttribute('data-readiness-state');
+        if (readiness.state === 'done' && prevState && prevState !== 'done') {
+            // One-shot "settle" celebration on first entering done.
+            icon.classList.remove('readiness-justdone');
+            void icon.offsetWidth; // force reflow so the animation restarts
+            icon.classList.add('readiness-justdone');
+            setTimeout(function () { try { icon.classList.remove('readiness-justdone'); } catch (_) {} }, 600);
+        }
+        if (prevState !== readiness.state) icon.setAttribute('data-readiness-state', readiness.state);
+    } catch (_) {}
+}
+
+// ICON_MOTION -- paint the desktop "next task" / "caught up" cues. Pure DOM
+// class toggles, best-effort, never throws. nextApp = the data-app to breathe
+// (the app to open next), or null. caughtUp = no assigned work left, so the
+// practice tools (Equation Trainer, TI-84) gently invite optional skill work.
+function _paintDeskMotionCues(nextApp, caughtUp) {
+    try {
+        var icons = document.querySelectorAll('.app-icon[data-app]');
+        for (var i = 0; i < icons.length; i++) {
+            var el = icons[i];
+            var app = el.getAttribute('data-app');
+            // The "open me next" breathe never lands on icons that own their own
+            // motion vocabulary (wallet = readiness, game = presence) so it can
+            // never clobber those animations on the same element -- regardless of
+            // how appForNextTask evolves. (tool-idle is temporally exclusive with
+            // donow-next: caughtUp is true only when there is no next task.)
+            el.classList.toggle('donow-next', !!nextApp && app === nextApp && app !== 'wallet' && app !== 'game');
+            var isTool = (app === 'formulas' || app === 'ti84');
+            el.classList.toggle('tool-idle', !!caughtUp && isTool);
+        }
     } catch (_) {}
 }
 
@@ -14626,6 +14724,9 @@ const DogePresence = {
                 }
             }, 1000)
         };
+        // ICON_MOTION -- light up the desktop game icon's challenge throb
+        // (clearIncomingChallenge() already calls updateIcon() to remove it).
+        this.updateIcon();
     },
 
     showChallengePanel() {
@@ -14707,7 +14808,8 @@ const DogePresence = {
     updateIcon() {
         const el = document.getElementById('doge-presence');
         const badge = document.getElementById('doge-badge');
-        if (this.players.length > 0 && this.connected) {
+        const peersOn = this.players.length > 0 && this.connected;
+        if (peersOn) {
             el.classList.remove('doge-dim');
             badge.textContent = this.players.length;
             badge.style.display = '';
@@ -14715,6 +14817,15 @@ const DogePresence = {
             if (!this.incomingChallenge) el.classList.add('doge-dim');
             badge.style.display = 'none';
         }
+        // ICON_MOTION -- mirror presence onto the desktop game icon: a gentle
+        // hop when friends are online, an urgent throb on an incoming challenge.
+        try {
+            const g = document.querySelector('.app-icon[data-app="game"]');
+            if (g) {
+                g.classList.toggle('game-challenge', !!this.incomingChallenge);
+                g.classList.toggle('game-peers', peersOn && !this.incomingChallenge);
+            }
+        } catch (_) {}
     }
 };
 
