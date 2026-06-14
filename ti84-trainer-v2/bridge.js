@@ -16,7 +16,7 @@
     cacheVersion: providedRomConfig.cacheVersion || '5.8.2.0029',
   };
 
-  const DEFAULT_HOLD_MS = 72;
+  const DEFAULT_HOLD_MS = 90;
 
   const KEY_TO_RC = {
     GRAPH: [1, 0],
@@ -749,7 +749,10 @@
       invokeKeypad(row, col, true);
       await wait(holdMs);
       invokeKeypad(row, col, false);
-      await wait(18);
+      // The TI-OS getkey loop waits for the key to be released before it will
+      // accept the next one. Give the released key enough emulated frames to
+      // register, or rapid auto-fill drops keys and corrupts list data.
+      await wait(45);
       return true;
     }
 
@@ -778,8 +781,8 @@
       }
 
       if (options.clearField !== false) {
-        await sendButton('CLEAR', 54);
-        await wait(24);
+        await sendButton('CLEAR', 90);
+        await wait(55);
       }
 
       for (const char of input) {
@@ -793,8 +796,11 @@
           throw new Error(`Cannot type character "${char}" on the virtual keypad.`);
         }
 
-        await sendButton(buttonId, 54);
-        await wait(22);
+        // Hold each digit a few emulated frames, then leave a clear gap so the
+        // key-up registers before the next digit. Under-spacing here is what
+        // dropped digits and corrupted auto-filled list data.
+        await sendButton(buttonId, 90);
+        await wait(55);
       }
 
       return true;

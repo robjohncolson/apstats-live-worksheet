@@ -775,6 +775,23 @@
     return Math.abs(a - expected) <= Math.max(relTol * Math.abs(expected), absTol);
   }
 
+  function problemUsesData(problem) {
+    const v = problem?.values ?? {};
+    return Array.isArray(v.data) || Array.isArray(v.L1)
+      || Array.isArray(v.observed) || Array.isArray(v.matrix);
+  }
+
+  // Typing data into the WASM emulator can drop keystrokes, so the on-screen
+  // numeric check for a data procedure is best-effort: show it, but never let a
+  // flaky emulator entry block a student who navigated the procedure correctly.
+  // The handheld pass (the student's own calculator) is the rigorous numeric
+  // gate. Physical mode and non-data procedures keep the hard check.
+  function emulatorDataLeniency() {
+    return !app.persisted.physicalMode
+      && Boolean(app.bridge?.isRealEmulator?.())
+      && problemUsesData(app.walkthrough?.problem);
+  }
+
   function formatExpectedValue(value) {
     if (typeof value !== 'number' || Number.isNaN(value)) {
       return `${value ?? ''}`;
@@ -1828,8 +1845,8 @@
 
     for (let index = 0; index < values.length; index += 1) {
       await app.bridge.typeValue(String(values[index]));
-      await delay(40);
-      await sendAndWait('ENTER', 70);
+      await delay(70);
+      await sendAndWait('ENTER', 110);
 
       app.clutch.dataProgress[listName] = {
         ...app.clutch.dataProgress[listName],
@@ -2795,18 +2812,21 @@
     logVerifyDiagnostic('emulator', procedure.id, walkthrough.problem, results);
 
     // If this is a data procedure and the result is off by a lot, the most
-    // likely cause is the calculator's list not matching the problem's data —
-    // point the student at reloading it rather than at rounding.
+    // likely cause is the calculator's list not matching the problem's data.
     const pv = walkthrough.problem?.values ?? {};
     const usesData = Array.isArray(pv.data) || Array.isArray(pv.L1) || Array.isArray(pv.observed);
     const wayOff = Object.values(results).some((r) => typeof r.expected === 'number'
       && Math.abs(parseFloat(`${r.actual}`) - r.expected) > Math.max(1, Math.abs(r.expected) * 0.1));
 
-    app.banner = allCorrect
-      ? 'Answer verified. Finish review is unlocked.'
-      : usesData && wayOff
-        ? 'These are far from the expected values — your calculator may not have the exact problem data. Click Restart, then Auto-fill to reload the list, and re-run the procedure.'
-        : 'Some values do not match yet. Check sign and decimals, then try again.';
+    if (allCorrect) {
+      app.banner = 'Answer verified. Finish review is unlocked.';
+    } else if (emulatorDataLeniency()) {
+      app.banner = "Doesn't match — the on-screen calculator's data entry isn't always perfect, so this won't block you. You can Finish review; your real-calculator check is the graded one.";
+    } else if (usesData && wayOff) {
+      app.banner = 'These are far from the expected values — your calculator may not have the exact problem data. Click Restart, then Auto-fill to reload the list, and re-run the procedure.';
+    } else {
+      app.banner = 'Some values do not match yet. Check sign and decimals, then try again.';
+    }
     render();
   }
 
@@ -3237,7 +3257,7 @@
           <button type="button" class="mac-button" data-action="check-answer">
             Check
           </button>
-          <button type="button" class="mac-button primary" data-action="finish-review" ${walkthrough.answerVerified || !computeExpected(currentProcedure()?.id, walkthrough.problem) ? '' : 'disabled'}>
+          <button type="button" class="mac-button primary" data-action="finish-review" ${walkthrough.answerVerified || !computeExpected(currentProcedure()?.id, walkthrough.problem) || emulatorDataLeniency() ? '' : 'disabled'}>
             Finish review
           </button>
         </div>
@@ -4088,7 +4108,7 @@
         const finishProcedure = currentProcedure();
         const needsVerification = VERIFICATION_FIELDS[finishProcedure?.id]
           && computeExpected(finishProcedure.id, app.walkthrough?.problem);
-        if (needsVerification && !app.walkthrough?.answerVerified) {
+        if (needsVerification && !app.walkthrough?.answerVerified && !emulatorDataLeniency()) {
           app.banner = 'Check your answer before finishing the review.';
           render();
           break;
