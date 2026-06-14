@@ -10350,11 +10350,25 @@ function _walletSummerReadiness() {
         if (!todayISO || todayISO >= schedule.firstDayOfSchool) return null;
         if (!window.WalletLogic || typeof WalletLogic.summerReadiness !== 'function') return null;
         var doneCount = 0;
+        var lastTs = 0;
+        var marks = (typeof getStudentMarks === 'function') ? getStudentMarks() : {};
         for (var i = 0; i < schedule.lessons.length; i++) {
             var lesson = schedule.lessons[i] || {};
-            if (typeof _isLessonComplete === 'function' && _isLessonComplete(lesson.topic)) doneCount++;
+            if (typeof _isLessonComplete === 'function' && _isLessonComplete(lesson.topic, marks)) doneCount++;
+            var worksheet = marks[lesson.topic + '|worksheet'];
+            var blooket = marks[lesson.topic + '|blooket'];
+            if (worksheet && typeof worksheet.ts === 'number' && worksheet.ts > lastTs) lastTs = worksheet.ts;
+            if (blooket && typeof blooket.ts === 'number' && blooket.ts > lastTs) lastTs = blooket.ts;
         }
-        var readiness = WalletLogic.summerReadiness(schedule, todayISO, doneCount);
+        var lastCompletionISO = lastTs ? new Date(lastTs).toISOString().slice(0, 10) : null;
+        var readiness = WalletLogic.summerReadiness(
+            schedule,
+            todayISO,
+            doneCount,
+            lastCompletionISO,
+            schedule.restDays || 2
+        );
+        readiness.active = true;
         readiness.schedule = schedule;
         return readiness;
     } catch (_) {}
@@ -10676,6 +10690,23 @@ function _walletPaint(host, receipts, loading) {
         var nextText = next ? (' Next: ' + next.topic + ' due ' + next.due) : ' Unit 1 complete.';
         banner.textContent = 'Summer goal: Unit 1 by Sept 1 - '
             + readiness.actual + '/' + readiness.total + ' done · ' + status + '.' + nextText;
+        if (readiness.state === 'done') {
+            banner.textContent = 'Unit 1 complete! 🎉';
+        } else if (readiness.state === 'behind') {
+            banner.textContent = 'Summer goal: Unit 1 by Sept 1 - '
+                + readiness.actual + '/' + readiness.total + ' · ' + readiness.behind + ' behind'
+                + (next ? (' · lesson ' + next.topic + ' due ' + next.due) : '');
+        } else if (readiness.state === 'notdue') {
+            banner.textContent = 'Summer goal: Unit 1 by Sept 1 - starts '
+                + (next && next.due ? next.due : '');
+        } else if (readiness.state === 'resting') {
+            banner.textContent = 'Nice work - ' + readiness.actual + '/' + readiness.total
+                + " done. Take a breather; next lesson whenever you're ready.";
+        } else if (readiness.state === 'ready') {
+            banner.textContent = readiness.actual + '/' + readiness.total
+                + ' done - ready for lesson ' + (next && next.topic ? next.topic : '?')
+                + '? (due ' + (next && next.due ? next.due : '?') + ')';
+        }
         card.appendChild(banner);
     }
 

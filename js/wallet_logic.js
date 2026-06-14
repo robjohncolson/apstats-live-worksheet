@@ -76,6 +76,10 @@
         return v;
     }
 
+    function daysBetween(aISO, bISO) {
+        return Math.max(0, Math.floor((Date.parse(bISO) - Date.parse(aISO)) / 86400000));
+    }
+
     function walletReadiness(quarter) {
         var FLOOR = 0.40;
         if (!quarter || quarter.lessonsDue == null || quarter.lessonsDue <= 0) {
@@ -102,38 +106,89 @@
         };
     }
 
-    function summerReadiness(schedule, todayISO, doneCount) {
+    function summerReadiness(schedule, todayISO, doneCount, lastCompletionISO, restDays) {
         var lessons = schedule && Array.isArray(schedule.lessons) ? schedule.lessons : [];
         var total = lessons.length;
         var actual = _walletClamp(doneCount, 0, total);
-        var expected = 0;
+        var deadlineExpected = 0;
 
         for (var i = 0; i < lessons.length; i++) {
-            if (lessons[i] && lessons[i].due <= todayISO) expected++;
+            if (lessons[i] && lessons[i].due <= todayISO) deadlineExpected++;
         }
+
+        var behind = Math.max(0, deadlineExpected - actual);
+        restDays = restDays == null ? ((schedule && schedule.restDays) || 2) : restDays;
 
         var r;
-        var state;
-        if (expected === 0) {
-            state = actual > 0 ? 'ahead' : 'notdue';
-            r = actual > 0 ? 1 : null;
-        } else {
-            r = _walletClamp(actual / expected, 0, 1);
-            state = actual >= expected ? 'onpace' : 'behind';
+        if (actual >= total) {
+            return {
+                state: 'done',
+                resting: false,
+                r: 1,
+                hue: 120,
+                total: total,
+                actual: actual,
+                deadlineExpected: deadlineExpected,
+                behind: 0
+            };
         }
 
-        var hue = r == null ? null : 120 * r;
-        var behind = Math.max(0, expected - actual);
+        if (actual < deadlineExpected) {
+            r = deadlineExpected > 0 ? _walletClamp(actual / deadlineExpected, 0, 1) : 0;
+            return {
+                state: 'behind',
+                resting: false,
+                r: r,
+                hue: 120 * r,
+                total: total,
+                actual: actual,
+                deadlineExpected: deadlineExpected,
+                behind: behind,
+                daysSinceLast: null
+            };
+        }
+
+        if (deadlineExpected === 0 && actual === 0 && !lastCompletionISO) {
+            return {
+                state: 'notdue',
+                resting: false,
+                r: null,
+                hue: null,
+                total: total,
+                actual: actual,
+                deadlineExpected: deadlineExpected,
+                behind: 0
+            };
+        }
+
+        var daysSinceLast = lastCompletionISO ? daysBetween(lastCompletionISO, todayISO) : 9999;
+        if (daysSinceLast <= restDays) {
+            return {
+                state: 'resting',
+                resting: true,
+                r: 1,
+                hue: 120,
+                total: total,
+                actual: actual,
+                deadlineExpected: deadlineExpected,
+                behind: 0,
+                daysSinceLast: daysSinceLast,
+                restDays: restDays
+            };
+        }
+
+        r = _walletClamp(1 - 0.5 * ((daysSinceLast - restDays) / 4), 0.5, 1);
         return {
-            active: true,
+            state: 'ready',
+            resting: false,
             r: r,
-            hue: hue,
+            hue: 120 * r,
             total: total,
             actual: actual,
-            expected: expected,
-            behind: behind,
-            onPace: actual >= expected,
-            state: state
+            deadlineExpected: deadlineExpected,
+            behind: 0,
+            daysSinceLast: daysSinceLast,
+            restDays: restDays
         };
     }
 
@@ -142,6 +197,7 @@
         computePoints: computePoints,
         mergeReceipts: mergeReceipts,
         walletReadiness: walletReadiness,
+        daysBetween: daysBetween,
         summerReadiness: summerReadiness
     };
 
