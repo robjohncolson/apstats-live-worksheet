@@ -8,6 +8,13 @@ import { stableLedgerSort } from './scoring.js';
 // ── Real Supabase DB ──────────────────────────────────────────────────────────
 
 export function createLiveLedgerDb() {
+  return createLedgerDb(createServiceClient());
+}
+
+// Raw service-role Supabase client from env. Lets out-of-repo tools (e.g. the
+// scripts/ ingestion job) reuse roster-server's @supabase install instead of
+// importing the dependency from a path where it isn't resolvable.
+export function createServiceClient() {
   const url = process.env.ROSTER_SUPABASE_URL;
   const key = process.env.ROSTER_SUPABASE_SERVICE_KEY;
 
@@ -15,8 +22,7 @@ export function createLiveLedgerDb() {
     throw new Error('ROSTER_SUPABASE_URL and ROSTER_SUPABASE_SERVICE_KEY must be set');
   }
 
-  const client = createClient(url, key);
-  return createLedgerDb(client);
+  return createClient(url, key);
 }
 
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
