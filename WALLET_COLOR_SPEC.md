@@ -95,9 +95,13 @@ summerReadiness(schedule, todayISO, doneCount, lastCompletionISO, restDays=sched
   if actual >= total:                                    // 1. all done
       return { state:'done', resting:false, r:1, hue:120, total, actual, deadlineExpected, behind:0 }
 
-  if actual < deadlineExpected:                          // 2. SAFETY NET — behind the hard deadline → red zone
-      r = deadlineExpected > 0 ? clamp(actual/deadlineExpected, 0, 1) : 0
-      return { state:'behind', resting:false, r, hue:120*r, total, actual, deadlineExpected, behind, daysSinceLast:null }
+  if actual < deadlineExpected:                          // 2. SAFETY NET — behind the hard deadline
+      behindGrace = schedule.behindGraceDays || 1
+      daysSinceLast = lastCompletionISO ? daysBetween(lastCompletionISO, todayISO) : 9999
+      if daysSinceLast <= behindGrace:                   // just made progress while behind → CATCHING-UP (blue, 1-day grace)
+          return { state:'catchingup', resting:true, r:null, hue:210, total, actual, deadlineExpected, behind, daysSinceLast }
+      r = deadlineExpected > 0 ? clamp(actual/deadlineExpected, 0, 1) : 0   // idle while behind → red zone
+      return { state:'behind', resting:false, r, hue:120*r, total, actual, deadlineExpected, behind, daysSinceLast }
 
   if deadlineExpected == 0 and actual == 0 and !lastCompletionISO:   // 3. before any deadline, nothing done → neutral
       return { state:'notdue', resting:false, r:null, hue:null, total, actual, deadlineExpected, behind:0 }
@@ -113,9 +117,14 @@ summerReadiness(schedule, todayISO, doneCount, lastCompletionISO, restDays=sched
 `daysBetween(aISO,bISO) = max(0, floor((Date.parse(bISO) - Date.parse(aISO)) / 86400000))`.
 
 Banner copy by state: `done` → "Unit 1 complete! 🎉"; `behind` → "Summer goal: Unit 1 by
-Sept 1 — A/total · N behind"; `notdue` → "Summer goal: Unit 1 by Sept 1 — starts <first
+Sept 1 — A/total · N behind"; `catchingup` → "Catching up — nice! Still N behind; keep
+going to get back on track."; `notdue` → "Summer goal: Unit 1 by Sept 1 — starts <first
 due>"; `resting` → "Nice work — A/total done. Take a breather; next lesson whenever you're
 ready."; `ready` → "A/total done — ready for lesson <next not-done>? (due <date>)".
+
+State → color (the painters just use `hue`; `hue:null` → neutral grey): `notdue` grey;
+`resting`/`done` green (120); `ready` green→yellow (120→60); `catchingup` **blue (210)** —
+a distinct "behind but actively catching up" state; `behind` red→orange (0→48 by deficit).
 
 Active when `today < schedule.firstDayOfSchool`. When active, the Desk uses
 `summerReadiness`'s hue for ALL FOUR surfaces (window/card/grade-number/icon dot) **instead
