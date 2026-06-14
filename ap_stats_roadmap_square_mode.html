@@ -345,6 +345,7 @@
         @keyframes icon-bob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(2px)} }
         @keyframes icon-rise   { 0%{transform:translateY(3px)} 60%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
         @keyframes icon-attn   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+        @keyframes icon-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
         @keyframes tool-shimmer{ 0%,100%{opacity:1} 50%{opacity:0.72} }
         @keyframes game-hop    { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-3px)} 60%{transform:translateY(0)} }
         /* Challenge cue: a pulsing glow halo (NOT a scale -- scaling a pixelated
@@ -372,6 +373,14 @@
         .app-icon[data-readiness-state="resting"]    .wallet-readiness-dot { animation: dot-breathe 4.5s ease-in-out infinite; }
         .app-icon[data-readiness-state="caughtup"]   .wallet-readiness-dot,
         .app-icon[data-readiness-state="done"]       .wallet-readiness-dot { animation: dot-sparkle 9s ease-in-out infinite; }
+        /* The positive states also gently FLOAT the whole icon -- the dot glow /
+           sparkle alone is too subtle to read next to the quiz's bob. Slower
+           duration = calmer/more settled (ready -> resting -> caught up/done). */
+        .app-icon[data-readiness-state="eligible"]   .icon-img,
+        .app-icon[data-readiness-state="ready"]      .icon-img { animation: icon-float 2.8s ease-in-out infinite; }
+        .app-icon[data-readiness-state="resting"]    .icon-img { animation: icon-float 4s ease-in-out infinite; }
+        .app-icon[data-readiness-state="caughtup"]   .icon-img,
+        .app-icon[data-readiness-state="done"]       .icon-img { animation: icon-float 5s ease-in-out infinite; }
         .app-icon.readiness-justdone .icon-img { animation: icon-settle 0.5s ease-out 1; }
         /* Do-Now: the app to open next breathes; tools invite practice when caught up */
         .app-icon.donow-next .icon-img { animation: icon-attn 2.0s ease-in-out infinite; }
