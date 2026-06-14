@@ -102,11 +102,47 @@
         };
     }
 
+    function summerReadiness(schedule, todayISO, doneCount) {
+        var lessons = schedule && Array.isArray(schedule.lessons) ? schedule.lessons : [];
+        var total = lessons.length;
+        var actual = _walletClamp(doneCount, 0, total);
+        var expected = 0;
+
+        for (var i = 0; i < lessons.length; i++) {
+            if (lessons[i] && lessons[i].due <= todayISO) expected++;
+        }
+
+        var r;
+        var state;
+        if (expected === 0) {
+            state = actual > 0 ? 'ahead' : 'notdue';
+            r = actual > 0 ? 1 : null;
+        } else {
+            r = _walletClamp(actual / expected, 0, 1);
+            state = actual >= expected ? 'onpace' : 'behind';
+        }
+
+        var hue = r == null ? null : 120 * r;
+        var behind = Math.max(0, expected - actual);
+        return {
+            active: true,
+            r: r,
+            hue: hue,
+            total: total,
+            actual: actual,
+            expected: expected,
+            behind: behind,
+            onPace: actual >= expected,
+            state: state
+        };
+    }
+
     var api = {
         pointsFor: pointsFor,
         computePoints: computePoints,
         mergeReceipts: mergeReceipts,
-        walletReadiness: walletReadiness
+        walletReadiness: walletReadiness,
+        summerReadiness: summerReadiness
     };
 
     g.WalletLogic = api;

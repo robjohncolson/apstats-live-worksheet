@@ -6474,6 +6474,25 @@ var _gradeLessonsCache = null;
 var _gradeQuartersCache = null; // latest /grade quarters{} — read by the "Why so low?" coach
 var _gradeGradebookCache = null; // latest /grade gradebook{} — read by the "My Gradebook" modal (Phase 3)
 
+window._summerSchedule = window._summerSchedule || null;
+function _walletLoadSummerSchedule() {
+  try {
+    if (window._summerSchedule || !window.fetch) return;
+    fetch('data/summer-schedule.json')
+      .then(function (res) { return res && res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (data && Array.isArray(data.lessons)) {
+          window._summerSchedule = data;
+          if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
+        }
+      })
+      .catch(function () {});
+  } catch (_) {}
+}
+try {
+  document.addEventListener('DOMContentLoaded', _walletLoadSummerSchedule);
+} catch (_) {}
+
 // Render the compact Q1-Q4 grade outlook strip inside the Do Now card.
 // Fire-and-forget; never throws. Hides the strip on any failure.
 // Phase 6: also caches lessons[] for the per-day click-through modal.
@@ -10318,6 +10337,34 @@ function _walletCurrentReadiness() {
     return null;
 }
 
+function _walletTodayISO() {
+    try { return new Date().toISOString().slice(0, 10); } catch (_) {}
+    return '';
+}
+
+function _walletSummerReadiness() {
+    try {
+        var schedule = window._summerSchedule;
+        if (!schedule || !Array.isArray(schedule.lessons) || !schedule.firstDayOfSchool) return null;
+        var todayISO = _walletTodayISO();
+        if (!todayISO || todayISO >= schedule.firstDayOfSchool) return null;
+        if (!window.WalletLogic || typeof WalletLogic.summerReadiness !== 'function') return null;
+        var doneCount = 0;
+        for (var i = 0; i < schedule.lessons.length; i++) {
+            var lesson = schedule.lessons[i] || {};
+            if (typeof _isLessonComplete === 'function' && _isLessonComplete(lesson.topic)) doneCount++;
+        }
+        var readiness = WalletLogic.summerReadiness(schedule, todayISO, doneCount);
+        readiness.schedule = schedule;
+        return readiness;
+    } catch (_) {}
+    return null;
+}
+
+function _walletDisplayReadiness() {
+    return _walletSummerReadiness() || _walletCurrentReadiness();
+}
+
 function _walletApplyWindowReadiness(readiness) {
     try {
         var content = document.getElementById('wallet-content');
@@ -10343,7 +10390,7 @@ function updateWalletReadinessIcon() {
             dot.className = 'wallet-readiness-dot';
             img.appendChild(dot);
         }
-        var readiness = _walletCurrentReadiness();
+        var readiness = _walletDisplayReadiness();
         if (!readiness || readiness.state === 'nodue' || typeof readiness.hue !== 'number') {
             dot.style.display = 'none';
             dot.style.backgroundColor = '#b8b8b8';
@@ -10540,7 +10587,7 @@ async function printSealedSummary() {
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
     var grade = _walletCurrentGrade();
-    var readiness = _walletCurrentReadiness();
+    var readiness = _walletDisplayReadiness();
     var pts = _walletComputePoints(receipts);
     host.innerHTML = '';
     _walletApplyWindowReadiness(readiness);
@@ -10604,6 +10651,33 @@ function _walletPaint(host, receipts, loading) {
         ptsRow.appendChild(todayTag);
     }
     card.appendChild(ptsRow);
+
+    if (readiness && readiness.active && readiness.schedule) {
+        var banner = document.createElement('div');
+        banner.className = 'geneva';
+        banner.style.cssText = 'font-size:11px;line-height:1.35;margin-top:10px;color:#333';
+        var status = readiness.state === 'ahead'
+            ? 'Ahead!'
+            : readiness.state === 'onpace'
+                ? 'On pace'
+                : readiness.state === 'notdue'
+                    ? 'Not started'
+                    : (readiness.behind + ' behind');
+        var next = null;
+        try {
+            for (var si = 0; si < readiness.schedule.lessons.length; si++) {
+                var lesson = readiness.schedule.lessons[si] || {};
+                if (typeof _isLessonComplete !== 'function' || !_isLessonComplete(lesson.topic)) {
+                    next = lesson;
+                    break;
+                }
+            }
+        } catch (_) {}
+        var nextText = next ? (' Next: ' + next.topic + ' due ' + next.due) : ' Unit 1 complete.';
+        banner.textContent = 'Summer goal: Unit 1 by Sept 1 - '
+            + readiness.actual + '/' + readiness.total + ' done · ' + status + '.' + nextText;
+        card.appendChild(banner);
+    }
 
     var exportRow = document.createElement('div');
     exportRow.style.cssText = 'margin-top:10px;display:flex;justify-content:flex-start;gap:6px;flex-wrap:wrap';

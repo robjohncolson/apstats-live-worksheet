@@ -183,4 +183,112 @@ describe('wallet_logic.js', () => {
     expect(overComplete.r).toBeCloseTo(1);
     expect(overComplete.hue).toBeCloseTo(120);
   });
+
+  it('reports neutral summer readiness when nothing is due or done', () => {
+    const readiness = WalletLogic.summerReadiness({
+      lessons: [
+        { topic: '1.1', due: '2026-06-23' },
+        { topic: '1.2', due: '2026-06-30' }
+      ]
+    }, '2026-06-16', 0);
+
+    expect(readiness).toMatchObject({
+      active: true,
+      state: 'notdue',
+      r: null,
+      hue: null,
+      total: 2,
+      actual: 0,
+      expected: 0,
+      behind: 0,
+      onPace: true
+    });
+  });
+
+  it('marks summer readiness ahead before any deadline when work is done', () => {
+    const readiness = WalletLogic.summerReadiness({
+      lessons: [
+        { topic: '1.1', due: '2026-06-23' },
+        { topic: '1.2', due: '2026-06-30' },
+        { topic: '1.3', due: '2026-07-07' }
+      ]
+    }, '2026-06-16', 2);
+
+    expect(readiness.state).toBe('ahead');
+    expect(readiness.r).toBeCloseTo(1);
+    expect(readiness.hue).toBeCloseTo(120);
+    expect(readiness.actual).toBe(2);
+    expect(readiness.expected).toBe(0);
+  });
+
+  it('marks summer readiness on pace when actual equals expected', () => {
+    const readiness = WalletLogic.summerReadiness({
+      lessons: [
+        { topic: '1.1', due: '2026-06-23' },
+        { topic: '1.2', due: '2026-06-30' },
+        { topic: '1.3', due: '2026-07-07' },
+        { topic: '1.4', due: '2026-07-14' }
+      ]
+    }, '2026-07-07', 3);
+
+    expect(readiness.state).toBe('onpace');
+    expect(readiness.r).toBeCloseTo(1);
+    expect(readiness.actual).toBe(3);
+    expect(readiness.expected).toBe(3);
+    expect(readiness.onPace).toBe(true);
+  });
+
+  it('marks summer readiness behind by the expected completion ratio', () => {
+    const readiness = WalletLogic.summerReadiness({
+      lessons: [
+        { topic: '1.1', due: '2026-06-23' },
+        { topic: '1.2', due: '2026-06-30' },
+        { topic: '1.3', due: '2026-07-07' },
+        { topic: '1.4', due: '2026-07-14' },
+        { topic: '1.5', due: '2026-07-21' }
+      ]
+    }, '2026-07-14', 1);
+
+    expect(readiness.state).toBe('behind');
+    expect(readiness.r).toBeCloseTo(0.25);
+    expect(readiness.hue).toBeCloseTo(30);
+    expect(readiness.expected).toBe(4);
+    expect(readiness.behind).toBe(3);
+    expect(readiness.onPace).toBe(false);
+  });
+
+  it('caps summer readiness when actual exceeds expected and clamps done count', () => {
+    const readiness = WalletLogic.summerReadiness({
+      lessons: [
+        { topic: '1.1', due: '2026-06-23' },
+        { topic: '1.2', due: '2026-06-30' },
+        { topic: '1.3', due: '2026-07-07' }
+      ]
+    }, '2026-06-30', 9);
+
+    expect(readiness.state).toBe('onpace');
+    expect(readiness.r).toBeCloseTo(1);
+    expect(readiness.hue).toBeCloseTo(120);
+    expect(readiness.actual).toBe(3);
+    expect(readiness.expected).toBe(2);
+    expect(readiness.behind).toBe(0);
+  });
+
+  it('reports summer readiness all done', () => {
+    const readiness = WalletLogic.summerReadiness({
+      lessons: [
+        { topic: '1.1', due: '2026-06-23' },
+        { topic: '1.2', due: '2026-06-30' },
+        { topic: '1.3', due: '2026-07-07' }
+      ]
+    }, '2026-08-25', 3);
+
+    expect(readiness.state).toBe('onpace');
+    expect(readiness.r).toBeCloseTo(1);
+    expect(readiness.hue).toBeCloseTo(120);
+    expect(readiness.total).toBe(3);
+    expect(readiness.actual).toBe(3);
+    expect(readiness.expected).toBe(3);
+    expect(readiness.onPace).toBe(true);
+  });
 });
