@@ -50,6 +50,22 @@
       return true;
   }
 
+  // Resolve the username to announce for presence. Worksheets don't set
+  // window.currentUsername/consensusUsername, so fall back to the shared
+  // rosterClient identity — this makes a student working on a live worksheet
+  // appear in the "Online Now" presence feed under their roster name.
+  function _presenceUsername() {
+      var u = (window.currentUsername || localStorage.getItem('consensusUsername') || '').trim();
+      if (u) return u;
+      try {
+          if (window.rosterClient && typeof window.rosterClient.current === 'function') {
+              var who = window.rosterClient.current();
+              if (who && who.username) return String(who.username).trim();
+          }
+      } catch (e) {}
+      return '';
+  }
+
   // Connect to WebSocket for real-time updates
   function connectWebSocket() {
       if (!USE_RAILWAY) return;
@@ -79,7 +95,7 @@
               if (wsPingInterval) clearInterval(wsPingInterval);
               wsPingInterval = setInterval(() => {
                   if (ws.readyState === WebSocket.OPEN) {
-              const username = (window.currentUsername || localStorage.getItem('consensusUsername') || '').trim();
+              const username = _presenceUsername();
               // Regular ping for latency
               ws.send(JSON.stringify({ type: 'ping' }));
               // Presence heartbeat
@@ -90,7 +106,7 @@
               }, 30000);
 
           // Identify with current username as soon as connected
-          const username = (window.currentUsername || localStorage.getItem('consensusUsername') || '').trim();
+          const username = _presenceUsername();
           if (username && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'identify', username }));
           }
