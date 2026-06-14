@@ -267,7 +267,7 @@
     }
 
     var TYPE_GROUPS = {
-        worksheet: { key: 'worksheet', label: 'Worksheets', icon: '📝', order: 0 },
+        worksheet: { key: 'worksheet', label: 'Worksheet questions', icon: '📝', order: 0 },
         curriculum_quiz: { key: 'curriculum_quiz', label: 'Quizzes', icon: '✓', order: 1 },
         frq: { key: 'frq', label: 'Reflections (FRQ)', icon: '✍', order: 2 },
         pc: { key: 'pc', label: 'Progress Checks', icon: '📈', order: 3 },
@@ -306,6 +306,48 @@
         return key;
     }
 
+    function _worksheetSubgroupFor(receipt) {
+        var lessonGroup = _lessonGroupFor(receipt);
+        var m = /^U(\d+)-L(\d+)$/.exec(lessonGroup.key);
+        if (m) {
+            return {
+                key: lessonGroup.key,
+                label: 'Lesson ' + parseInt(m[1], 10) + '.' + parseInt(m[2], 10) + ' worksheet',
+                sortKey: lessonGroup.sortKey
+            };
+        }
+        return { key: 'other', label: 'Other', sortKey: [999999, 999999, 2] };
+    }
+
+    function _addWorksheetTypeSubgroups(groups) {
+        for (var i = 0; i < groups.length; i++) {
+            var group = groups[i];
+            if (!group || group.key !== 'worksheet') continue;
+
+            var map = {};
+            var order = [];
+            var receipts = Array.isArray(group.receipts) ? group.receipts : [];
+            for (var k = 0; k < receipts.length; k++) {
+                var sg = _worksheetSubgroupFor(receipts[k]);
+                _pushReceiptGroup(map, order, sg.key, sg.label, '', sg.sortKey, receipts[k]);
+            }
+
+            var subgroups = order.map(function (key) { return map[key]; });
+            subgroups.sort(function (a, b) {
+                var ak = a._sortKey || [];
+                var bk = b._sortKey || [];
+                for (var j = 0; j < Math.max(ak.length, bk.length); j++) {
+                    var av = ak[j] == null ? 0 : ak[j];
+                    var bv = bk[j] == null ? 0 : bk[j];
+                    if (av !== bv) return av - bv;
+                }
+                return 0;
+            });
+            group.subgroups = _finishGroups(subgroups);
+        }
+        return groups;
+    }
+
     function groupReceipts(receipts, dimension) {
         var rows = Array.isArray(receipts) ? receipts.slice() : [];
         var dim = (dimension === 'type' || dimension === 'day') ? dimension : 'lesson';
@@ -339,7 +381,9 @@
             return 0;
         });
 
-        return _finishGroups(groups);
+        groups = _finishGroups(groups);
+        if (dim === 'type') _addWorksheetTypeSubgroups(groups);
+        return groups;
     }
 
     var api = {

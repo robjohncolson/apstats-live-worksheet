@@ -10605,6 +10605,10 @@ function _walletReceiptGroupId(dim, key) {
     return String(dim || 'lesson') + ':' + String(key || '');
 }
 
+function _walletReceiptSubgroupId(dim, groupKey, subgroupKey) {
+    return _walletReceiptGroupId(dim, String(groupKey || '') + '/' + String(subgroupKey || ''));
+}
+
 function _walletRenderReceiptTabs(host, receipts, loading) {
     var tabs = [
         { dim: 'lesson', label: 'Lessons' },
@@ -10664,9 +10668,37 @@ function _walletRenderGroupedReceipts(host, receipts, loading) {
             host.appendChild(header);
 
             if (open) {
-                (group.receipts || []).forEach(function (r) {
-                    host.appendChild(_walletReceiptRow(r));
-                });
+                if (Array.isArray(group.subgroups) && group.subgroups.length) {
+                    group.subgroups.forEach(function (subgroup) {
+                        var subgroupId = _walletReceiptSubgroupId(_walletReceiptFeedTab, group.key, subgroup.key);
+                        var subgroupOpen = !!_walletReceiptExpandedGroups[subgroupId];
+                        var subHeader = document.createElement('button');
+                        subHeader.type = 'button';
+                        subHeader.className = 'geneva';
+                        subHeader.style.cssText = 'width:calc(100% - 14px);display:flex;align-items:center;gap:6px;text-align:left;border:1px solid #999;background:#f7f7f7;margin:0 0 4px 14px;padding:4px 6px;box-shadow:1px 1px 0 #ccc;font-size:10px';
+                        subHeader.innerHTML = '<span style="width:12px">' + (subgroupOpen ? '▾' : '▸') + '</span>'
+                            + '<span style="font-weight:bold;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
+                            + _walletEsc(subgroup.label || subgroup.key || 'Other') + '</span>'
+                            + '<span style="margin-left:auto;border:1px solid #777;background:#fff;padding:0 5px;font-size:10px">'
+                            + Number(subgroup.count || 0) + '</span>';
+                        subHeader.onclick = function () {
+                            if (_walletReceiptExpandedGroups[subgroupId]) delete _walletReceiptExpandedGroups[subgroupId];
+                            else _walletReceiptExpandedGroups[subgroupId] = true;
+                            _walletPaint(host, receipts, loading);
+                        };
+                        host.appendChild(subHeader);
+
+                        if (subgroupOpen) {
+                            (subgroup.receipts || []).forEach(function (r) {
+                                host.appendChild(_walletReceiptRow(r));
+                            });
+                        }
+                    });
+                } else {
+                    (group.receipts || []).forEach(function (r) {
+                        host.appendChild(_walletReceiptRow(r));
+                    });
+                }
             }
         });
     } catch (_) {

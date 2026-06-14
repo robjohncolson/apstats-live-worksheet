@@ -114,7 +114,9 @@ describe('wallet_logic.js', () => {
   it('groups receipts by type with friendly labels and fixed order', () => {
     const receipts = [
       { src: 'trainer', i: 't', ts: 1 },
-      { src: 'worksheet', i: 'w', ts: 2 },
+      { src: 'worksheet', i: 'WS-U1L1-Q3', ts: 2 },
+      { src: 'worksheet', i: 'WS-U1L1-Q4', ts: 12 },
+      { src: 'worksheet', i: 'WS-U1L2-Q1', ts: 11 },
       { src: 'quiz_exception', i: 'e', ts: 3 },
       { src: 'curriculum_quiz', i: 'q', ts: 4 },
       { src: 'quiz_review', i: 'r', ts: 5 },
@@ -128,7 +130,7 @@ describe('wallet_logic.js', () => {
     const groups = WalletLogic.groupReceipts(receipts, 'type');
 
     expect(groups.map((g) => [g.key, g.label, g.count])).toEqual([
-      ['worksheet', 'Worksheets', 1],
+      ['worksheet', 'Worksheet questions', 3],
       ['curriculum_quiz', 'Quizzes', 1],
       ['frq', 'Reflections (FRQ)', 1],
       ['pc', 'Progress Checks', 1],
@@ -138,6 +140,20 @@ describe('wallet_logic.js', () => {
       ['trainer', 'Calculator trainer', 1],
       ['other', 'Other', 1]
     ]);
+
+    const worksheet = groups.find((g) => g.key === 'worksheet');
+    expect(worksheet.subgroups.map((g) => [g.key, g.label, g.count])).toEqual([
+      ['U1-L1', 'Lesson 1.1 worksheet', 2],
+      ['U1-L2', 'Lesson 1.2 worksheet', 1]
+    ]);
+    expect(worksheet.subgroups[0].receipts.map((r) => r.i)).toEqual([
+      'WS-U1L1-Q4',
+      'WS-U1L1-Q3'
+    ]);
+    expect(worksheet.subgroups.reduce((sum, g) => sum + g.count, 0)).toBe(worksheet.count);
+    groups.filter((g) => g.key !== 'worksheet').forEach((g) => {
+      expect(g.subgroups).toBeUndefined();
+    });
     expect(groups.reduce((sum, g) => sum + g.count, 0)).toBe(receipts.length);
   });
 
