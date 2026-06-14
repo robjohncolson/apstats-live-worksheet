@@ -10224,6 +10224,16 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       return;
     }
 
+    // On the real emulator, syncing only the native sim leaves the ROM's lists
+    // empty/stale, so 1-Var Stats (etc.) runs on the wrong data and the student
+    // reads a wrong result. The ROM can only be loaded via keystrokes, so route
+    // "I'm done" through the auto-fill that actually types the data in. (Mock
+    // mode reads from the native sim, so the plain sync is correct there.)
+    if (!app.persisted.physicalMode && app.bridge?.isRealEmulator?.()) {
+      void autoFillData(app.clutch.dataTarget);
+      return;
+    }
+
     setProgressComplete(app.clutch.dataTarget);
     rememberDataTarget(app.clutch.dataTarget, 'manual-confirm');
     syncDataTargetToNative(app.clutch.dataTarget);
@@ -11076,9 +11086,20 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       walkthrough.errors += 1;
     }
     logVerifyDiagnostic('emulator', procedure.id, walkthrough.problem, results);
+
+    // If this is a data procedure and the result is off by a lot, the most
+    // likely cause is the calculator's list not matching the problem's data —
+    // point the student at reloading it rather than at rounding.
+    const pv = walkthrough.problem?.values ?? {};
+    const usesData = Array.isArray(pv.data) || Array.isArray(pv.L1) || Array.isArray(pv.observed);
+    const wayOff = Object.values(results).some((r) => typeof r.expected === 'number'
+      && Math.abs(parseFloat(`${r.actual}`) - r.expected) > Math.max(1, Math.abs(r.expected) * 0.1));
+
     app.banner = allCorrect
       ? 'Answer verified. Finish review is unlocked.'
-      : 'Some values do not match yet. Check sign and decimals, then try again.';
+      : usesData && wayOff
+        ? 'These are far from the expected values — your calculator may not have the exact problem data. Click Restart, then Auto-fill to reload the list, and re-run the procedure.'
+        : 'Some values do not match yet. Check sign and decimals, then try again.';
     render();
   }
 
@@ -11091,7 +11112,17 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       const summary = Object.entries(results)
         .map(([key, r]) => `${key}: typed=${r.actual} expected=${r.expected} ${r.correct ? 'OK' : 'MISMATCH'}`)
         .join(' | ');
-      console.warn(`[TI84-VERIFY] ${label} ${procedureId} — ${summary}`);
+      // For data procedures, dump the lists so we can tell a wrong calculator
+      // result apart from a wrong read: native L1 is what the trainer THINKS is
+      // loaded; compare against the problem's data.
+      let lists = '';
+      const v = problem?.values ?? {};
+      const expectedData = v.data ?? v.L1 ?? v.observed ?? null;
+      if (Array.isArray(expectedData) && app.bridge?.getList) {
+        lists = ` | L1(native)=[${(app.bridge.getList('L1') ?? []).join(',')}]`
+          + ` | expectedData=[${expectedData.join(',')}]`;
+      }
+      console.warn(`[TI84-VERIFY] ${label} ${procedureId} — ${summary}${lists}`);
     } catch (_) {
       /* diagnostics must never break the check */
     }
