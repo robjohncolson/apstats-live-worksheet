@@ -10942,7 +10942,6 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
 
     check.checkResults = results;
     check.verified = allCorrect;
-    logVerifyDiagnostic('handheld', check.procedureId, check.problem, results);
 
     if (allCorrect) {
       finishHandheldMastery(check.procedureId, { recordCredit: true });
@@ -11108,7 +11107,6 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
     if (!allCorrect) {
       walkthrough.errors += 1;
     }
-    logVerifyDiagnostic('emulator', procedure.id, walkthrough.problem, results);
 
     // If this is a data procedure and the result is off by a lot, the most
     // likely cause is the calculator's list not matching the problem's data.
@@ -11127,31 +11125,6 @@ window.TI84V2Machine = { createState, createRouteState, transition, validKeys };
       app.banner = 'Some values do not match yet. Check sign and decimals, then try again.';
     }
     render();
-  }
-
-  // Temporary diagnostic (2026-06-14): when a student reports "Check says I'm
-  // wrong" we need the exact typed-vs-expected values to tell apart a one-sided
-  // alternative-hypothesis mismatch, a number-format trap, and a data mismatch.
-  // Open DevTools console, re-run one check, and read the [TI84-VERIFY] line.
-  function logVerifyDiagnostic(label, procedureId, problem, results) {
-    try {
-      const summary = Object.entries(results)
-        .map(([key, r]) => `${key}: typed=${r.actual} expected=${r.expected} ${r.correct ? 'OK' : 'MISMATCH'}`)
-        .join(' | ');
-      // For data procedures, dump the lists so we can tell a wrong calculator
-      // result apart from a wrong read: native L1 is what the trainer THINKS is
-      // loaded; compare against the problem's data.
-      let lists = '';
-      const v = problem?.values ?? {};
-      const expectedData = v.data ?? v.L1 ?? v.observed ?? null;
-      if (Array.isArray(expectedData) && app.bridge?.getList) {
-        lists = ` | L1(native)=[${(app.bridge.getList('L1') ?? []).join(',')}]`
-          + ` | expectedData=[${expectedData.join(',')}]`;
-      }
-      console.warn(`[TI84-VERIFY] ${label} ${procedureId} — ${summary}${lists}`);
-    } catch (_) {
-      /* diagnostics must never break the check */
-    }
   }
 
   async function pressButton(buttonId) {
