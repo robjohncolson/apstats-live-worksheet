@@ -226,6 +226,36 @@ export function issueTranscriptReceipt({
   }
 }
 
+// A "commit" in the progress ledger: a signed manifest over a QR-sized chunk of
+// receipts, chained to the previous commit via `prev` (its root). The chain of
+// roots is the proto-git history. Genesis commit has no `prev` (omitted).
+export function issueCommitReceipt({ sid, u, seq, prev, root, cnt, from, to, asOf = Date.now() }) {
+  if (!issuer.enabled) return null;
+  if (!sid || !root || !seq) return null;
+  try {
+    const payload = {
+      v: 1,
+      t: 'commit',
+      sid,
+      u: u || undefined,
+      seq,
+      prev: prev || undefined,
+      root,
+      cnt,
+      from,
+      to,
+      iss: 'desk',
+      ts: asOf,
+      n: crypto.randomBytes(4).toString('hex')
+    };
+    const { receiptId, compact } = signPayload(issuer.privateKey, payload);
+    return { receiptId, compact };
+  } catch (err) {
+    console.error('Commit receipt issuance failed:', err.message);
+    return null;
+  }
+}
+
 export function mountReceipts(app) {
   app.get('/receipts/issuer', (_req, res) => {
     res.json(getReceiptIssuer());
