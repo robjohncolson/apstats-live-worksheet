@@ -722,6 +722,16 @@
     }
   }
 
+  // Decimal places the student actually wrote, ignoring trailing zeros, so
+  // "30.50" and "30.5" read as one place and "9.0" reads as a whole number.
+  function typedDecimalPlaces(normStr) {
+    const dot = normStr.indexOf('.');
+    if (dot === -1) {
+      return 0;
+    }
+    return normStr.slice(dot + 1).replace(/0+$/, '').length;
+  }
+
   function valuesMatch(actual, expected, key) {
     const normalized = `${actual ?? ''}`.trim().replace(/\(-\)/g, '-').replace(/\s+/g, '');
     const a = parseFloat(normalized);
@@ -734,13 +744,34 @@
       return Math.abs(a) < 0.005;
     }
 
-    // AP-appropriate tolerance: match to ~3 decimal places.
-    // TI-84 ROM and stat-math.js use different numerical methods
-    // (especially for distributions), so tight tolerance causes
-    // false negatives.
-    const relTol = 0.005;    // 0.5% relative
-    const absTol = 0.0005;   // absolute for small values
+    // Students read the calculator's value and write it down however they like:
+    // full precision, 3 / 2 / 1 decimals, rounded up, rounded down, or clipped
+    // to a whole number. Accept the answer if it equals ANY valid rounding or
+    // truncation of the exact value at the number of decimal places the student
+    // typed — so 3.6055 is satisfied by 3.6055, 3.61, 3.6, 4, or 3.
+    //
+    // The whole-number leniency only kicks in for values >= 1 in magnitude;
+    // for proportions and p-values (|expected| < 1) a bare integer like "0" or
+    // "1" is meaningless, so those fall through to the numeric tolerance below.
+    const decimals = typedDecimalPlaces(normalized);
+    if (decimals > 0 || Math.abs(expected) >= 1) {
+      const factor = Math.pow(10, decimals);
+      const scaled = expected * factor;
+      const candidates = [
+        Math.round(scaled),
+        Math.floor(scaled),
+        Math.ceil(scaled),
+        Math.trunc(scaled),
+      ];
+      if (candidates.some((c) => Math.abs(a - c / factor) <= 1e-7)) {
+        return true;
+      }
+    }
 
+    // Backstop for full-precision entries and small values: a modest tolerance
+    // (0.5% relative, 0.0005 absolute) covers numerical-method differences.
+    const relTol = 0.005;
+    const absTol = 0.0005;
     return Math.abs(a - expected) <= Math.max(relTol * Math.abs(expected), absTol);
   }
 
@@ -2764,16 +2795,10 @@
   // Open DevTools console, re-run one check, and read the [TI84-VERIFY] line.
   function logVerifyDiagnostic(label, procedureId, problem, results) {
     try {
-      console.warn(`[TI84-VERIFY] ${label} ${procedureId}`, {
-        problemValues: problem?.values ?? problem ?? null,
-        fields: Object.fromEntries(
-          Object.entries(results).map(([key, r]) => [key, {
-            typed: r.actual,
-            expected: r.expected,
-            match: r.correct,
-          }]),
-        ),
-      });
+      const summary = Object.entries(results)
+        .map(([key, r]) => `${key}: typed=${r.actual} expected=${r.expected} ${r.correct ? 'OK' : 'MISMATCH'}`)
+        .join(' | ');
+      console.warn(`[TI84-VERIFY] ${label} ${procedureId} — ${summary}`);
     } catch (_) {
       /* diagnostics must never break the check */
     }

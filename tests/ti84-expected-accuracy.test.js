@@ -78,11 +78,24 @@ function computeExpected(procedureId, v) {
   }
 }
 
-// Mirror of app.js valuesMatch() tolerance.
+// Mirror of app.js valuesMatch() — rounding-resilient matching.
+function typedDecimalPlaces(s) {
+  const dot = s.indexOf('.');
+  if (dot === -1) return 0;
+  return s.slice(dot + 1).replace(/0+$/, '').length;
+}
 function valuesMatch(typed, expected) {
-  const a = parseFloat(`${typed}`.trim().replace(/\(-\)/g, '-').replace(/\s+/g, ''));
+  const normalized = `${typed}`.trim().replace(/\(-\)/g, '-').replace(/\s+/g, '');
+  const a = parseFloat(normalized);
   if (Number.isNaN(a) || typeof expected !== 'number' || Number.isNaN(expected)) return false;
   if (expected === 0) return Math.abs(a) < 0.005;
+  const decimals = typedDecimalPlaces(normalized);
+  if (decimals > 0 || Math.abs(expected) >= 1) {
+    const f = Math.pow(10, decimals);
+    const sc = expected * f;
+    const cands = [Math.round(sc), Math.floor(sc), Math.ceil(sc), Math.trunc(sc)];
+    if (cands.some((c) => Math.abs(a - c / f) <= 1e-7)) return true;
+  }
   return Math.abs(a - expected) <= Math.max(0.005 * Math.abs(expected), 0.0005);
 }
 
@@ -90,6 +103,30 @@ function valuesMatch(typed, expected) {
 function studentReads(value) {
   if (value === 0) return '0';
   return Number(value.toPrecision(4)).toString();
+}
+
+// The ways a student plausibly writes a value down off the calculator screen.
+// For values >= 1 that includes whole-number rounding; for sub-1 values
+// (proportions, p-values) a student keeps enough decimals to retain the value's
+// significant figures — nobody writes "0.0" for p = 0.0152.
+function studentRenderings(value) {
+  const out = new Set([String(value)]);
+  const mag = Math.abs(value);
+  if (mag >= 1) {
+    out.add(value.toFixed(1));
+    out.add(value.toFixed(2));
+    out.add(value.toFixed(3));
+    out.add(String(Math.round(value)));
+    out.add(String(Math.trunc(value)));
+    out.add(String(Math.ceil(value)));
+    out.add(String(Math.floor(value)));
+  } else if (mag > 0) {
+    const base = 2 - Math.floor(Math.log10(mag)); // decimals that keep ~3 sig figs
+    out.add(value.toFixed(base));
+    out.add(value.toFixed(base + 1));
+    out.add(value.toFixed(Math.max(1, base - 1)));
+  }
+  return [...out];
 }
 
 describe('trainer expected answers match the real TI-84', () => {
@@ -137,5 +174,42 @@ describe('trainer expected answers match the real TI-84', () => {
       }
     }
     expect(rejected).toEqual([]);
+  });
+
+  it('ANY reasonable rounding the student writes (1/2/3 decimals, round, truncate, whole) is accepted', () => {
+    const rejected = [];
+    for (const entry of reference) {
+      const problems = patterns.canonicalProblems[entry.procId];
+      const problem = problems[entry.idx];
+      const computed = computeExpected(entry.procId, problem.values);
+      for (const [field, refVal] of Object.entries(entry.ref)) {
+        const ours = computed?.[field];
+        for (const typed of studentRenderings(refVal)) {
+          if (!valuesMatch(typed, ours)) {
+            rejected.push(`${entry.procId}#${entry.idx} [${field}]: typed "${typed}", expected ${ours}`);
+          }
+        }
+      }
+    }
+    expect(rejected).toEqual([]);
+  });
+
+  it('a clearly wrong value (off by a large margin) is still REJECTED', () => {
+    const leaked = [];
+    for (const entry of reference) {
+      const problems = patterns.canonicalProblems[entry.procId];
+      const problem = problems[entry.idx];
+      const computed = computeExpected(entry.procId, problem.values);
+      for (const [field, refVal] of Object.entries(entry.ref)) {
+        const ours = computed?.[field];
+        if (typeof ours !== 'number') continue;
+        // A genuinely different read: off by more than one whole unit and >5%.
+        const wrong = ours + (Math.abs(ours) > 1 ? Math.abs(ours) * 0.5 + 1 : 0.5);
+        if (valuesMatch(wrong.toFixed(4), ours)) {
+          leaked.push(`${entry.procId}#${entry.idx} [${field}]: accepted wrong ${wrong}`);
+        }
+      }
+    }
+    expect(leaked).toEqual([]);
   });
 });
