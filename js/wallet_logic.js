@@ -348,8 +348,68 @@
         return groups;
     }
 
+    // ── Sessions: the primary lens. A session is a time-burst of work (a gap
+    // longer than SESSION_GAP_MS starts a new one); within it, work is grouped
+    // by lesson. This is how students remember their time ("that afternoon I did
+    // Lesson 1.2"), so it is the default wallet view.
+    var SESSION_GAP_MS = 25 * 60 * 1000;
+
+    function _sessionTimeLabel(startTs, endTs) {
+        function t(ms) { try { return new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); } catch (_) { return ''; } }
+        var day = _dayLabel(_localDayKey(startTs));
+        return day + ' · ' + (startTs === endTs ? t(startTs) : t(startTs) + '–' + t(endTs));
+    }
+
+    function _sortBySortKey(groups) {
+        groups.sort(function (a, b) {
+            var ak = a._sortKey || [], bk = b._sortKey || [];
+            for (var j = 0; j < Math.max(ak.length, bk.length); j++) {
+                var av = ak[j] == null ? 0 : ak[j], bv = bk[j] == null ? 0 : bk[j];
+                if (av !== bv) return av - bv;
+            }
+            return 0;
+        });
+        return groups;
+    }
+
+    function _sessionSubgroupsByLesson(receipts) {
+        var map = {}, order = [];
+        for (var k = 0; k < receipts.length; k++) {
+            var lg = _lessonGroupFor(receipts[k]);
+            _pushReceiptGroup(map, order, lg.key, lg.label, lg.icon, lg.sortKey, receipts[k]);
+        }
+        return _finishGroups(_sortBySortKey(order.map(function (key) { return map[key]; })));
+    }
+
+    function _sessionGroups(rows) {
+        var sorted = rows.slice().sort(function (a, b) { return _receiptTs(a) - _receiptTs(b); });
+        var sessions = [], cur = null, lastTs = null;
+        for (var i = 0; i < sorted.length; i++) {
+            var ts = _receiptTs(sorted[i]);
+            if (cur === null || (lastTs !== null && (ts - lastTs) > SESSION_GAP_MS)) {
+                cur = { start: ts, end: ts, receipts: [] };
+                sessions.push(cur);
+            }
+            cur.receipts.push(sorted[i]);
+            cur.end = ts;
+            lastTs = ts;
+        }
+        sessions.reverse(); // newest session first
+        return sessions.map(function (s) {
+            return {
+                key: 'sess-' + s.start,
+                label: _sessionTimeLabel(s.start, s.end),
+                icon: '🕐',
+                count: s.receipts.length,
+                receipts: s.receipts.slice().sort(function (a, b) { return _receiptTs(b) - _receiptTs(a); }),
+                subgroups: _sessionSubgroupsByLesson(s.receipts)
+            };
+        });
+    }
+
     function groupReceipts(receipts, dimension) {
         var rows = Array.isArray(receipts) ? receipts.slice() : [];
+        if (dimension === 'session') return _sessionGroups(rows);
         var dim = (dimension === 'type' || dimension === 'day') ? dimension : 'lesson';
         var map = {};
         var order = [];

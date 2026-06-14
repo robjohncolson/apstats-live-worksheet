@@ -10729,7 +10729,7 @@ async function printSealedSummary() {
     }
 }
 
-var _walletReceiptFeedTab = 'lesson';
+var _walletReceiptFeedTab = 'session';
 var _walletReceiptExpandedGroups = {};
 
 function _walletReceiptGroupId(dim, key) {
@@ -10742,6 +10742,7 @@ function _walletReceiptSubgroupId(dim, groupKey, subgroupKey) {
 
 function _walletRenderReceiptTabs(host, receipts, loading) {
     var tabs = [
+        { dim: 'session', label: 'Sessions' },
         { dim: 'lesson', label: 'Lessons' },
         { dim: 'type', label: 'Types' },
         { dim: 'day', label: 'Days' }
@@ -10978,7 +10979,7 @@ function _walletPaint(host, receipts, loading) {
     sessionsBtn.className = 's7btn';
     sessionsBtn.type = 'button';
     sessionsBtn.style.cssText = 'font-size:10px;padding:2px 8px';
-    sessionsBtn.textContent = '📜 Sessions';
+    sessionsBtn.textContent = '🔐 Sign & QR';
     sessionsBtn.onclick = function () {
         try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.25); } catch (_) {}
         openCommitLedger();
@@ -14723,7 +14724,7 @@ function openCommitLedger() {
     panel.style.display = 'flex';
     var card = document.getElementById('commit-ledger-card');
     card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-        + '<strong style="font-size:15px">📜 My Sessions</strong>'
+        + '<strong style="font-size:15px">🔐 Signed commits</strong>'
         + '<button onclick="document.getElementById(\'commit-ledger-overlay\').style.display=\'none\'" aria-label="Close" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">&times;</button></div>'
         + '<div id="commit-ledger-body" style="font-size:12px">Loading your session history…</div>';
     var body = document.getElementById('commit-ledger-body');
