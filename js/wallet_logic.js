@@ -207,13 +207,149 @@
         };
     }
 
+    function _receiptTs(r) {
+        var n = Number(r && r.ts);
+        return isFinite(n) ? n : 0;
+    }
+
+    function _pushReceiptGroup(map, order, key, label, icon, sortKey, receipt) {
+        if (!map[key]) {
+            map[key] = {
+                key: key,
+                label: label,
+                icon: icon,
+                count: 0,
+                receipts: [],
+                _sortKey: sortKey
+            };
+            order.push(key);
+        }
+        map[key].count++;
+        map[key].receipts.push(receipt);
+    }
+
+    function _finishGroups(groups) {
+        for (var i = 0; i < groups.length; i++) {
+            groups[i].receipts.sort(function (a, b) { return _receiptTs(b) - _receiptTs(a); });
+            delete groups[i]._sortKey;
+        }
+        return groups;
+    }
+
+    function _lessonGroupFor(receipt) {
+        var id = String((receipt && receipt.i) || '');
+        var m = /^WS-U(\d+)L(\d+)/i.exec(id)
+            || /^BL-U(\d+)-L(\d+)/i.exec(id)
+            || /^U(\d+)-L(\d+)/i.exec(id);
+        if (m) {
+            var unit = parseInt(m[1], 10);
+            var lesson = parseInt(m[2], 10);
+            return {
+                key: 'U' + unit + '-L' + lesson,
+                label: 'Unit ' + unit + ' · Lesson ' + unit + '.' + lesson,
+                icon: '📘',
+                sortKey: [unit, lesson, 0]
+            };
+        }
+
+        m = /^U(\d+)-PC/i.exec(id);
+        if (m) {
+            var pcUnit = parseInt(m[1], 10);
+            return {
+                key: 'U' + pcUnit + '-PC',
+                label: 'Unit ' + pcUnit + ' · Progress Check',
+                icon: '📈',
+                sortKey: [pcUnit, 9999, 1]
+            };
+        }
+
+        return { key: 'other', label: 'Other', icon: '🧾', sortKey: [999999, 999999, 2] };
+    }
+
+    var TYPE_GROUPS = {
+        worksheet: { key: 'worksheet', label: 'Worksheets', icon: '📝', order: 0 },
+        curriculum_quiz: { key: 'curriculum_quiz', label: 'Quizzes', icon: '✓', order: 1 },
+        frq: { key: 'frq', label: 'Reflections (FRQ)', icon: '✍', order: 2 },
+        pc: { key: 'pc', label: 'Progress Checks', icon: '📈', order: 3 },
+        blooket: { key: 'blooket', label: 'Blooket', icon: '🎮', order: 4 },
+        quiz_verdict: { key: 'quiz_verdict', label: 'AI grade verdicts', icon: '🧾', order: 5 },
+        quiz_review: { key: 'quiz_review', label: 'Appeals & reviews', icon: '✓', order: 6 },
+        quiz_exception: { key: 'quiz_review', label: 'Appeals & reviews', icon: '✓', order: 6 },
+        trainer: { key: 'trainer', label: 'Calculator trainer', icon: '🏋', order: 7 }
+    };
+
+    function _typeGroupFor(receipt) {
+        var src = String((receipt && receipt.src) || '').toLowerCase();
+        return TYPE_GROUPS[src] || { key: 'other', label: 'Other', icon: '🧾', order: 8 };
+    }
+
+    function _localDayKey(ts) {
+        var d = new Date(ts);
+        if (!isFinite(d.getTime())) return 'unknown';
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1);
+        var day = String(d.getDate());
+        if (m.length < 2) m = '0' + m;
+        if (day.length < 2) day = '0' + day;
+        return y + '-' + m + '-' + day;
+    }
+
+    function _dayLabel(key) {
+        if (key === 'unknown') return 'Other';
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var yesterday = new Date(today.getTime() - 86400000);
+        var d = new Date(key + 'T00:00:00');
+        if (_localDayKey(today.getTime()) === key) return 'Today';
+        if (_localDayKey(yesterday.getTime()) === key) return 'Yesterday';
+        try { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) {}
+        return key;
+    }
+
+    function groupReceipts(receipts, dimension) {
+        var rows = Array.isArray(receipts) ? receipts.slice() : [];
+        var dim = (dimension === 'type' || dimension === 'day') ? dimension : 'lesson';
+        var map = {};
+        var order = [];
+
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i] || {};
+            if (dim === 'type') {
+                var tg = _typeGroupFor(r);
+                _pushReceiptGroup(map, order, tg.key, tg.label, tg.icon, [tg.order], r);
+            } else if (dim === 'day') {
+                var ts = _receiptTs(r);
+                var dayKey = ts ? _localDayKey(ts) : 'unknown';
+                _pushReceiptGroup(map, order, dayKey, _dayLabel(dayKey), '📅', [-ts], r);
+            } else {
+                var lg = _lessonGroupFor(r);
+                _pushReceiptGroup(map, order, lg.key, lg.label, lg.icon, lg.sortKey, r);
+            }
+        }
+
+        var groups = order.map(function (key) { return map[key]; });
+        groups.sort(function (a, b) {
+            var ak = a._sortKey || [];
+            var bk = b._sortKey || [];
+            for (var i = 0; i < Math.max(ak.length, bk.length); i++) {
+                var av = ak[i] == null ? 0 : ak[i];
+                var bv = bk[i] == null ? 0 : bk[i];
+                if (av !== bv) return av - bv;
+            }
+            return 0;
+        });
+
+        return _finishGroups(groups);
+    }
+
     var api = {
         pointsFor: pointsFor,
         computePoints: computePoints,
         mergeReceipts: mergeReceipts,
         walletReadiness: walletReadiness,
         daysBetween: daysBetween,
-        summerReadiness: summerReadiness
+        summerReadiness: summerReadiness,
+        groupReceipts: groupReceipts
     };
 
     g.WalletLogic = api;

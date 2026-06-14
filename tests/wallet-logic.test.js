@@ -82,6 +82,95 @@ describe('wallet_logic.js', () => {
     ]);
   });
 
+  it('groups receipts by lesson from known item id patterns in lesson order', () => {
+    const receipts = [
+      { src: 'worksheet', i: 'junk', ts: 70 },
+      { src: 'pc', i: 'U1-PC-1', ts: 80 },
+      { src: 'curriculum_quiz', i: 'U1-L3-Q01#rev', ts: 40 },
+      { src: 'worksheet', i: 'WS-U1L1-Q3', ts: 10 },
+      { src: 'curriculum_quiz', i: 'U1-L1-Q01', ts: 30 },
+      { src: 'blooket', i: 'BL-U1-L1-DESK_DONE', ts: 20 },
+      { src: 'worksheet', i: 'WS-U2L1-Q1', ts: 90 }
+    ];
+
+    const groups = WalletLogic.groupReceipts(receipts, 'lesson');
+
+    expect(groups.map((g) => g.key)).toEqual(['U1-L1', 'U1-L3', 'U1-PC', 'U2-L1', 'other']);
+    expect(groups.map((g) => g.label)).toEqual([
+      'Unit 1 · Lesson 1.1',
+      'Unit 1 · Lesson 1.3',
+      'Unit 1 · Progress Check',
+      'Unit 2 · Lesson 2.1',
+      'Other'
+    ]);
+    expect(groups[0].receipts.map((r) => r.i)).toEqual([
+      'U1-L1-Q01',
+      'BL-U1-L1-DESK_DONE',
+      'WS-U1L1-Q3'
+    ]);
+    expect(groups.reduce((sum, g) => sum + g.count, 0)).toBe(receipts.length);
+  });
+
+  it('groups receipts by type with friendly labels and fixed order', () => {
+    const receipts = [
+      { src: 'trainer', i: 't', ts: 1 },
+      { src: 'worksheet', i: 'w', ts: 2 },
+      { src: 'quiz_exception', i: 'e', ts: 3 },
+      { src: 'curriculum_quiz', i: 'q', ts: 4 },
+      { src: 'quiz_review', i: 'r', ts: 5 },
+      { src: 'mystery', i: 'x', ts: 6 },
+      { src: 'frq', i: 'f', ts: 7 },
+      { src: 'pc', i: 'p', ts: 8 },
+      { src: 'blooket', i: 'b', ts: 9 },
+      { src: 'quiz_verdict', i: 'v', ts: 10 }
+    ];
+
+    const groups = WalletLogic.groupReceipts(receipts, 'type');
+
+    expect(groups.map((g) => [g.key, g.label, g.count])).toEqual([
+      ['worksheet', 'Worksheets', 1],
+      ['curriculum_quiz', 'Quizzes', 1],
+      ['frq', 'Reflections (FRQ)', 1],
+      ['pc', 'Progress Checks', 1],
+      ['blooket', 'Blooket', 1],
+      ['quiz_verdict', 'AI grade verdicts', 1],
+      ['quiz_review', 'Appeals & reviews', 2],
+      ['trainer', 'Calculator trainer', 1],
+      ['other', 'Other', 1]
+    ]);
+    expect(groups.reduce((sum, g) => sum + g.count, 0)).toBe(receipts.length);
+  });
+
+  it('groups receipts by local day with Today and Yesterday labels newest first', () => {
+    const now = new Date();
+    now.setHours(15, 0, 0, 0);
+    const todayEarly = new Date(now);
+    todayEarly.setHours(9, 0, 0, 0);
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(20, 0, 0, 0);
+    const older = new Date(now);
+    older.setDate(older.getDate() - 3);
+    older.setHours(12, 0, 0, 0);
+
+    const receipts = [
+      { src: 'worksheet', i: 'today-early', ts: todayEarly.getTime() },
+      { src: 'worksheet', i: 'older', ts: older.getTime() },
+      { src: 'worksheet', i: 'yesterday', ts: yesterday.getTime() },
+      { src: 'worksheet', i: 'today-late', ts: now.getTime() }
+    ];
+
+    const groups = WalletLogic.groupReceipts(receipts, 'day');
+
+    expect(groups.map((g) => g.label)).toEqual([
+      'Today',
+      'Yesterday',
+      older.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    ]);
+    expect(groups[0].receipts.map((r) => r.i)).toEqual(['today-late', 'today-early']);
+    expect(groups.reduce((sum, g) => sum + g.count, 0)).toBe(receipts.length);
+  });
+
   it('reports nodue when nothing is due', () => {
     expect(WalletLogic.walletReadiness({ lessonsDue: 0 })).toMatchObject({
       state: 'nodue',
