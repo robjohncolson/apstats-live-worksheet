@@ -10696,6 +10696,9 @@ function _walletPaint(host, receipts, loading) {
             banner.textContent = 'Summer goal: Unit 1 by Sept 1 - '
                 + readiness.actual + '/' + readiness.total + ' · ' + readiness.behind + ' behind'
                 + (next ? (' · lesson ' + next.topic + ' due ' + next.due) : '');
+        } else if (readiness.state === 'catchingup') {
+            banner.textContent = 'Catching up - nice! Still ' + readiness.behind
+                + ' behind; keep going to get back on track.';
         } else if (readiness.state === 'notdue') {
             banner.textContent = 'Summer goal: Unit 1 by Sept 1 - starts '
                 + (next && next.due ? next.due : '');

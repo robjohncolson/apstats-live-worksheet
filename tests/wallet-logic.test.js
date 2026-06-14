@@ -204,8 +204,9 @@ describe('wallet_logic.js', () => {
     });
   });
 
-  it('keeps summer readiness behind the deadline even after a recent completion', () => {
+  it('shows catching up when behind and completed today', () => {
     const readiness = WalletLogic.summerReadiness({
+      behindGraceDays: 1,
       lessons: [
         { topic: '1.1', due: '2026-06-23' },
         { topic: '1.2', due: '2026-06-30' },
@@ -215,13 +216,34 @@ describe('wallet_logic.js', () => {
       ]
     }, '2026-07-14', 1, '2026-07-14', 2);
 
+    expect(readiness.state).toBe('catchingup');
+    expect(readiness.resting).toBe(true);
+    expect(readiness.r).toBe(null);
+    expect(readiness.hue).toBe(210);
+    expect(readiness.deadlineExpected).toBe(4);
+    expect(readiness.behind).toBe(3);
+    expect(readiness.daysSinceLast).toBe(0);
+  });
+
+  it('keeps summer readiness behind when last completion is outside grace', () => {
+    const readiness = WalletLogic.summerReadiness({
+      behindGraceDays: 1,
+      lessons: [
+        { topic: '1.1', due: '2026-06-23' },
+        { topic: '1.2', due: '2026-06-30' },
+        { topic: '1.3', due: '2026-07-07' },
+        { topic: '1.4', due: '2026-07-14' },
+        { topic: '1.5', due: '2026-07-21' }
+      ]
+    }, '2026-07-14', 1, '2026-07-11', 2);
+
     expect(readiness.state).toBe('behind');
     expect(readiness.resting).toBe(false);
     expect(readiness.r).toBeCloseTo(0.25);
     expect(readiness.hue).toBeCloseTo(30);
     expect(readiness.deadlineExpected).toBe(4);
     expect(readiness.behind).toBe(3);
-    expect(readiness.daysSinceLast).toBe(null);
+    expect(readiness.daysSinceLast).toBe(3);
   });
 
   it('rests in green when on pace and completed today', () => {

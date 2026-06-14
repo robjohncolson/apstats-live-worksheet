@@ -134,6 +134,21 @@
         }
 
         if (actual < deadlineExpected) {
+            var behindGrace = (schedule && schedule.behindGraceDays) || 1;
+            var daysSinceLast = lastCompletionISO ? daysBetween(lastCompletionISO, todayISO) : 9999;
+            if (daysSinceLast <= behindGrace) {
+                return {
+                    state: 'catchingup',
+                    resting: true,
+                    r: null,
+                    hue: 210,
+                    total: total,
+                    actual: actual,
+                    deadlineExpected: deadlineExpected,
+                    behind: behind,
+                    daysSinceLast: daysSinceLast
+                };
+            }
             r = deadlineExpected > 0 ? _walletClamp(actual / deadlineExpected, 0, 1) : 0;
             return {
                 state: 'behind',
@@ -144,7 +159,7 @@
                 actual: actual,
                 deadlineExpected: deadlineExpected,
                 behind: behind,
-                daysSinceLast: null
+                daysSinceLast: daysSinceLast
             };
         }
 
