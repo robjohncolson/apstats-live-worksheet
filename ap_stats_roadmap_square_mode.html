@@ -14615,6 +14615,46 @@ function openGuestPass() {
 }
 window.openGuestPass = openGuestPass;
 
+function _isTeacher() {
+    try {
+        var who = (window.rosterClient && rosterClient.current && rosterClient.current()) || null;
+        return !!(who && who.role === 'teacher');
+    } catch (e) { return false; }
+}
+
+/* Teacher-only: show a QR of the mobile guest-reconcile scanner so the teacher
+   can open it on their phone and walk around scanning students' Guest Passes. */
+function openReconcileQR() {
+    var dir = location.pathname.replace(/[^/]*$/, '');
+    var url = location.origin + dir + 'teacher-guest-reconcile.html';
+    var panel = document.getElementById('reconcile-qr-overlay');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'reconcile-qr-overlay';
+        panel.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center';
+        panel.innerHTML = '<div id="reconcile-qr-card" style="background:#fff;color:#111;max-width:340px;width:90%;border:2px solid #000;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.4);padding:16px;font-family:Geneva,Verdana,sans-serif"></div>';
+        panel.addEventListener('click', function(e){ if (e.target === panel) panel.style.display = 'none'; });
+        document.body.appendChild(panel);
+    }
+    panel.style.display = 'flex';
+    var card = document.getElementById('reconcile-qr-card');
+    card.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+        + '<strong style="font-size:16px">&#128241; Guest Reconcile</strong>'
+        + '<button onclick="document.getElementById(\'reconcile-qr-overlay\').style.display=\'none\'" aria-label="Close" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">&times;</button></div>'
+        + '<p style="margin:0 0 8px;font-size:13px">Scan with your phone to open the guest scanner there, then scan students’ Guest Passes to fold their work into the roster.</p>'
+        + '<div id="reconcile-qr" style="display:flex;justify-content:center;margin:8px 0"></div>'
+        + '<div style="text-align:center"><a href="' + _deskEsc(url) + '" target="_blank" rel="noopener" style="font-size:12px">Open on this device →</a></div>';
+    var host = document.getElementById('reconcile-qr');
+    host.innerHTML = '';
+    if (typeof QRCode === 'function') {
+        new QRCode(host, { text: url, width: 170, height: 170, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+    } else {
+        host.textContent = url;
+    }
+}
+window.openReconcileQR = openReconcileQR;
+
 /* ═══ DOGE PRESENCE SYSTEM ═══ */
 const DogePresence = {
     ws: null,
@@ -14697,6 +14737,9 @@ const DogePresence = {
         html += '<div class="doge-dd-sep"></div>';
         if (/^guest_/i.test(String(DogePresence.getUsername()))) {
             html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openGuestPass()">&#129701; My Guest Pass</div>';
+        }
+        if (_isTeacher()) {
+            html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openReconcileQR()">&#128241; Guest Reconcile</div>';
         }
         html += '<div class="doge-dd-footer" onclick="DogePresence.closeDropdown();openGame()">&#127918; Study Break</div>';
         dd.innerHTML = html;
