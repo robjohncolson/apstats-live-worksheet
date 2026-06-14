@@ -143,7 +143,8 @@ export function issueLedgerReceipt({
   score,
   attempt,
   evidenceTier,
-  response
+  response,
+  ts = Date.now()
 }) {
   if (!issuer.enabled) return null;
   if (!studentId || !source || !itemId) return null;
@@ -160,7 +161,7 @@ export function issueLedgerReceipt({
       a: attempt,
       e: evidenceTier,
       ah: crypto.createHash('sha256').update(valueString, 'utf8').digest('hex').slice(0, 16),
-      ts: Date.now(),
+      ts,
       n: crypto.randomBytes(4).toString('hex')
     };
 

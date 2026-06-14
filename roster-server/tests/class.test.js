@@ -6,6 +6,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import http from 'http';
 import { randomBytes } from 'crypto';
 import { createApp } from '../server.js';
+import { initReceipts } from '../receipts.js';
 
 let realBkt;
 beforeAll(async () => {
@@ -14,6 +15,7 @@ beforeAll(async () => {
 });
 
 const TEACHER = 'teacher-secret-fixture';
+const TEST_PRIVATE_KEY = 'MC4CAQAwBQYDK2VwBCIEIIq2JsDpBMHpUzaFF6mPR0vUv1T2gzXGX7k/AQSYjyl0';
 
 const FIXTURE_ANSWER_KEY = {
   generatedFrom: 'curriculum_render/data/curriculum.js (READ-ONLY)',
@@ -67,12 +69,24 @@ function createFakeLedgerDb(rowsByStudent, { error = null, throwForStudentId = n
       if (error) return { data: null, error };
       return { data: store[studentId] || [], error: null };
     },
+    async updateLedgerReceipt(ledgerId, { receiptId, receiptCompact }) {
+      for (const rows of Object.values(store)) {
+        if (!Array.isArray(rows)) continue;
+        const row = rows.find((entry) => entry.ledger_id === ledgerId);
+        if (!row) continue;
+        row.receipt_id = receiptId;
+        row.receipt_compact = receiptCompact;
+        return { error: null };
+      }
+      return { error: null };
+    },
     async insertLedgerRow() { store._written = true; return { data: {}, error: null }; },
   };
 }
 
 function makeRow(studentId, itemId, response, { source = 'curriculum_quiz', score, unit, attempt = 1, recorded_at } = {}) {
   return {
+    ledger_id: `${studentId}-${itemId}-${attempt}`,
     student_id: studentId, source, item_id: itemId, response,
     score: score === undefined ? null : score, unit, attempt,
     recorded_at: recorded_at || new Date().toISOString(),
@@ -97,6 +111,16 @@ class TestServer {
     try { body = await res.json(); } catch { body = null; }
     return { status: res.status, body };
   }
+  async post(path, headers = {}, body = {}) {
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    });
+    let parsed = null;
+    try { parsed = await res.json(); } catch { parsed = null; }
+    return { status: res.status, body: parsed };
+  }
 }
 
 async function startServer({
@@ -106,6 +130,7 @@ async function startServer({
 } = {}) {
   process.env.ROSTER_TOKEN_SECRET = `tok-${randomBytes(16).toString('hex')}`;
   process.env.ROSTER_TEACHER_SECRET = TEACHER;
+  process.env.RECEIPT_ISSUER_PRIVATE_KEY = TEST_PRIVATE_KEY;
   delete process.env.TEACHER_KEY;   // keep the simple-key default unset for 'wrong secret → 401'
   process.env.NODE_ENV = 'test';
   const rosterDb = createFakeRosterDb(roster, rosterOpts);
@@ -121,7 +146,9 @@ afterEach(async () => {
   if (srv) { await srv.stop(); srv = null; }
   delete process.env.ROSTER_TOKEN_SECRET;
   delete process.env.ROSTER_TEACHER_SECRET;
+  delete process.env.RECEIPT_ISSUER_PRIVATE_KEY;
   delete process.env.TEACHER_KEY;
+  initReceipts();
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

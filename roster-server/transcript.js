@@ -5,11 +5,8 @@ import { todayInTz } from './lesson-grade.js';
 import { answerKeyMapOrNull, stableLedgerSort } from './scoring.js';
 import { codeHash } from './code-hash.js';
 import { canonicalizeTranscript, hashTranscriptGradeProjection } from './transcript-canonical.js';
-import {
-  issueLedgerReceipt,
-  issueTranscriptReceipt,
-  recordReceiptPersistFailure
-} from './receipts.js';
+import { issueTranscriptReceipt } from './receipts.js';
+import { backfillStudentReceipts } from './backfill.js';
 
 function extractToken(req) {
   const authHeader =
@@ -43,19 +40,6 @@ function receiptRoot(members) {
   return sha256Hex(ids.sort().join('\n'));
 }
 
-function rowReceiptArgs(row, username) {
-  return {
-    studentId: row.student_id,
-    username,
-    source: row.source,
-    itemId: row.item_id,
-    score: row.score,
-    attempt: row.attempt,
-    evidenceTier: row.evidence_tier,
-    response: row.response
-  };
-}
-
 async function resolveRoster(db, sid) {
   if (!db || typeof db.findByStudentId !== 'function') return { username: undefined, section: null };
   try {
@@ -66,28 +50,6 @@ async function resolveRoster(db, sid) {
     };
   } catch (_) {
     return { username: undefined, section: null };
-  }
-}
-
-async function backfillReceipts(rows, ledgerDb, username) {
-  for (const row of rows) {
-    if (row.receipt_compact && row.receipt_id) continue;
-    const issued = issueLedgerReceipt(rowReceiptArgs(row, username));
-    if (!issued) continue;
-
-    row.receipt_id = issued.receiptId;
-    row.receipt_compact = issued.compact;
-
-    if (!ledgerDb || typeof ledgerDb.updateLedgerReceipt !== 'function' || !row.ledger_id) continue;
-    try {
-      const { error } = await ledgerDb.updateLedgerReceipt(row.ledger_id, {
-        receiptId: issued.receiptId,
-        receiptCompact: issued.compact
-      });
-      if (error && error.code !== '42703') recordReceiptPersistFailure();
-    } catch (_) {
-      recordReceiptPersistFailure();
-    }
   }
 }
 
@@ -128,7 +90,7 @@ export function mountTranscript(app, {
       }
 
       const rows = stableLedgerSort(ledgerResult && Array.isArray(ledgerResult.data) ? ledgerResult.data : []);
-      await backfillReceipts(rows, ledgerDb, roster.username);
+      await backfillStudentReceipts(rows, ledgerDb, roster.username);
 
       const members = rows
         .filter((row) => row.receipt_id && row.receipt_compact)

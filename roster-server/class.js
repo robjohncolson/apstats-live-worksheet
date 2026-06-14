@@ -10,13 +10,14 @@
 // mastery.js — single source of truth, Phase-3 tests pin the math. READ-ONLY.
 
 import { PHASE3_CONFIG } from './grade-config.js';
-import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore } from './scoring.js';
+import { answerKeyMapOrNull, skillMapValidOrNull, blooketScore, stableLedgerSort } from './scoring.js';
 import { computeGrade } from './grade.js';
 import { computeMastery } from './mastery.js';
 import { buildGradebook } from './gradebook-grid.js';
 import { todayInTz } from './lesson-grade.js';
 import { requireTeacher } from './teacher-auth.js';
 import { issueLedgerReceipt, recordReceiptPersistFailure } from './receipts.js';
+import { backfillStudentReceipts } from './backfill.js';
 
 let receiptPersistenceNotProvisionedLogged = false;
 
@@ -406,6 +407,45 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
     const bodyOut = { ok: true, itemId, recorded, skipped, errors };
     if (Object.keys(receipts).length) bodyOut.receipts = receipts;
     return res.json(bodyOut);
+  });
+
+  app.post('/class/backfill-receipts', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+
+    const { rows, error } = await listRoster(db, req.query.section);
+    if (error) {
+      console.error('POST /class/backfill-receipts roster error:', error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+
+    let studentsProcessed = 0;
+    let receiptsBackfilled = 0;
+    const errors = [];
+
+    for (const rosterRow of rows) {
+      const studentId = rosterRow && rosterRow.student_id;
+      if (!studentId) continue;
+
+      studentsProcessed += 1;
+      try {
+        const ledgerResult = await ledgerDb.getLedgerByStudent(studentId);
+        if (ledgerResult && ledgerResult.error) {
+          errors.push({ studentId, error: ledgerResult.error.message || String(ledgerResult.error) });
+          continue;
+        }
+
+        const ledgerRows = stableLedgerSort(
+          ledgerResult && Array.isArray(ledgerResult.data) ? ledgerResult.data : []
+        );
+        const result = await backfillStudentReceipts(ledgerRows, ledgerDb, rosterRow.login_username);
+        receiptsBackfilled += result.receiptsBackfilled;
+        for (const rowError of result.errors) errors.push({ studentId, ...rowError });
+      } catch (err) {
+        errors.push({ studentId, error: err && err.message ? err.message : String(err || 'Backfill failed') });
+      }
+    }
+
+    return res.json({ ok: true, studentsProcessed, receiptsBackfilled, errors });
   });
 
   // ── GET /class/mastery?section= ─────────────────────────────────────────────
