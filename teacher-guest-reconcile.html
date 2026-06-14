@@ -58,11 +58,7 @@
   </div>
   <div id="status"></div>
   <div id="rosterStatus" class="muted" style="margin-top:6px">Loading roster…</div>
-  <details>
-    <summary>Advanced (admin token)</summary>
-    <label for="adminToken">Reconcile admin token (only if your server sets ROSTER_ADMIN_TOKEN)</label>
-    <input id="adminToken" placeholder="(usually leave blank)" />
-  </details>
+  <div class="muted" style="margin-top:4px">No code needed — just scan a Guest Pass and reconcile.</div>
 </div>
 
 <div id="list"></div>
@@ -163,7 +159,16 @@
   async function reconcile(guest, target, id) {
     var s = document.getElementById(id + '_status'), goBtn = document.getElementById(id + '_go');
     if (!target) { s.innerHTML = '<span class="err">Pick or type a student first.</span>'; return; }
-    var adminToken = (document.getElementById('adminToken').value || '').trim();
+    // No field to fumble with in class: reconcile is open by default. A
+    // ?adminToken=… in the URL is remembered, so it still works if you ever
+    // lock the server down with ROSTER_ADMIN_TOKEN.
+    var adminToken = (function () {
+      try {
+        var u = new URLSearchParams(location.search).get('adminToken');
+        if (u) { localStorage.setItem('cr_reconcile_token', u); return u; }
+        return localStorage.getItem('cr_reconcile_token') || '';
+      } catch (e) { return ''; }
+    })();
     goBtn.disabled = true; goBtn.textContent = 'Reconciling…';
     try {
       var res = await fetch(API + '/api/guest/reconcile', {
