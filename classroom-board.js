@@ -4609,10 +4609,16 @@
       // off them; applyPos will overwrite both x/y on the next broadcast.
       if (member.pos && typeof member.pos.x === 'number' && typeof member.pos.y === 'number') {
         // 2026-05-24 fix: server-persisted pos may have been written from a
-        // wider canvas (other client, prior session). Clamp to local bounds
-        // so the spawn lands on-screen + clickable.
+        // wider/taller canvas (other client, prior session). Clamp to local
+        // bounds so the spawn lands on-screen + clickable. Y must clamp too:
+        // a pos.y from a taller canvas (e.g. the teacher cockpit or a dev
+        // playtest) can land BELOW this board's ground line, where the
+        // floor-snap never catches it (it only lands a sprite crossing
+        // groundY from above) and gravity drives it off-screen forever --
+        // the avatar silently vanishes. getSpriteY() is the resting ground
+        // line, so a sprite can never legitimately be lower than it.
         sp.x = clampSpriteX(member.pos.x, sp);
-        sp.y = member.pos.y;
+        sp.y = Math.min(member.pos.y, getSpriteY());
         sp._moved = true;
         // s111 P4 HOTFIX: restore in-doorway state on refresh. The
         // server records member.pos.state ('in-doorway' for absorbed

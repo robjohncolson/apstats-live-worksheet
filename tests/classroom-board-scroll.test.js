@@ -946,3 +946,83 @@ describe('V7.9 mount() camera install + role gating', () => {
     handle.destroy();
   });
 });
+
+// --- stale persisted pos.y clamp (off-screen avatar regression) --------
+//
+// A member's server-persisted pos may have been written on a TALLER canvas
+// (the teacher cockpit, or a dev playtest). Restoring that pos.y raw spawned
+// the sprite BELOW this board's ground line, where the floor-snap never
+// catches it (it only lands a sprite crossing groundY from above) and gravity
+// drove it off-screen forever -- the avatar silently vanished. addSprite now
+// clamps pos.y to getSpriteY() (the resting ground line). Bug surfaced on the
+// teacher's own heavily-used account whose pos carried a cockpit-height Y.
+describe('ClassroomBoard.mount -- stale pos.y clamp', function () {
+  // SPRITE_H * SPRITE_SCALE from classroom-board.js (96 * 0.25). getSpriteY()
+  // = engine.groundY - this, i.e. the y at which a sprite stands on the ground.
+  var SPRITE_FOOT_OFFSET = 96 * 0.25;
+
+  it('clamps a below-ground pos.y to the ground line so the avatar stays on-screen', function () {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // alice rejoins carrying a pos.y from a taller canvas -- far below this
+    // board's ground line. Pre-fix this set sp.y = 9999 (off-screen forever).
+    ws._receive({
+      type: 'classroom_state',
+      section: 'PeriodX',
+      gate: null, poll: null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true,
+          pos: { x: 0, y: 9999 } }
+      ]
+    });
+
+    var engine = m.getEngine();
+    var alice  = engine.entities.get('sprite_alice');
+    expect(alice).toBeDefined();
+    expect(alice).toBeInstanceOf(m.ClassroomBoard._PlayerSprite);
+
+    var groundLine = engine.groundY - SPRITE_FOOT_OFFSET;
+    expect(alice.y).toBe(groundLine);   // clamped to the ground, not 9999
+    expect(alice.y).toBeLessThan(9999); // proves the clamp fired
+
+    handle.destroy();
+  });
+
+  it('preserves a legitimate in-bounds (airborne) pos.y above the ground line', function () {
+    var m = makeMountWithEngine();
+    var handle = m.ClassroomBoard.mount(m.container, {
+      wsUrl: 'wss://test/ws', section: 'PeriodX',
+      username: 'alice', role: 'student'
+    });
+    var ws = m.MockWS.last;
+    ws._open();
+
+    // y=10 is well above the ground line (smaller y = higher up) -- a valid
+    // mid-jump position. The clamp (Math.min) must leave it untouched.
+    ws._receive({
+      type: 'classroom_state',
+      section: 'PeriodX',
+      gate: null, poll: null,
+      members: [
+        { username: 'alice', role: 'student', status: 'present', online: true,
+          pos: { x: 0, y: 10 } }
+      ]
+    });
+
+    var engine = m.getEngine();
+    var alice  = engine.entities.get('sprite_alice');
+    expect(alice).toBeDefined();
+
+    var groundLine = engine.groundY - SPRITE_FOOT_OFFSET;
+    expect(groundLine).toBeGreaterThan(10); // sanity: 10 is above the ground
+    expect(alice.y).toBe(10);               // preserved, not clamped
+
+    handle.destroy();
+  });
+});
