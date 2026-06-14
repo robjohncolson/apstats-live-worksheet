@@ -1523,7 +1523,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openGame==='function')openGame()" style="font-weight:bold">&#127918; Study Break</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold">&#128091; My Wallet</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold">&#128091; My Ledger</div>
             <!-- Driller deprecated — removed 2026-05 -->
             <!-- <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openProgress()" style="font-weight:bold">&#128202; My Progress</div> -->
@@ -1594,7 +1594,7 @@
 </div>
 <div class="app-icon" data-app="wallet" style="top:396px;right:20px;left:auto" ondblclick="openWallet()" onclick="selectAppIcon(this)">
     <div class="icon-img" data-emoji="&#128091;"><img src="icons/icon-wallet.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
-    <div class="icon-label">My Wallet</div>
+    <div class="icon-label">My Ledger</div>
 </div>
 <!-- My Progress icon — re-enable for SY26-27
 <div class="app-icon" data-app="progress" style="top:396px;right:20px;left:auto" ondblclick="openProgress()" onclick="selectAppIcon(this)">
@@ -2089,7 +2089,7 @@
     </div>
 </div>
 
-<!-- ═══ My Wallet ═══ A standalone System 7 window: balance (real v3 grade +
+<!-- ═══ My Ledger ═══ A standalone System 7 window: balance (real v3 grade +
      an only-up points line) and a feed of signed, verifiable recorded work.
      Receipts merge durable (server-persisted) + local desk_receipts_v1; the
      window is read-only w.r.t. grading. WALLET_BUILD.md Task C. -->
@@ -2098,7 +2098,7 @@
         <div class="game-title-bar">
             <div class="close-box" onclick="destroyWallet()" title="Close"></div>
             <div class="title-stripes"></div>
-            <span class="title-text chicago">My Wallet</span>
+            <span class="title-text chicago">My Ledger</span>
             <div class="collapse-box" onclick="minimizeApp('wallet')" title="Minimize"></div>
         </div>
         <div class="app-content" id="wallet-content" style="flex-direction:column;overflow:auto;padding:12px">
@@ -6711,8 +6711,8 @@ async function renderDoNowGrades(baseUrl, token) {
     var receiptsChip = document.createElement('span');
     receiptsChip.setAttribute('role', 'button');
     receiptsChip.setAttribute('tabindex', '0');
-    receiptsChip.title = 'Your wallet — grade, points, and verifiable recorded work';
-    receiptsChip.textContent = '👛 My Wallet';
+    receiptsChip.title = 'Your ledger — grade, points, and verifiable recorded work';
+    receiptsChip.textContent = '👛 My Ledger';
     receiptsChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
     var _openWalletChip = function () {
         if (typeof openWallet === 'function') openWallet();
@@ -10350,7 +10350,7 @@ function closeMyReceipts() {
     if (ov) ov.style.display = 'none';
 }
 
-// ── My Wallet ─────────────────────────────────────────────────────────────────
+// ── My Ledger ─────────────────────────────────────────────────────────────────
 // Standalone System 7 window. Balance = real v3 quarter grade (from
 // _gradeQuartersCache) + an only-up points line; feed = signed recorded work,
 // merging durable server-persisted receipts with the local desk_receipts_v1
@@ -10836,7 +10836,7 @@ function _walletPaint(host, receipts, loading) {
     who.style.cssText = 'font-size:10px;color:#555;margin-bottom:6px;display:flex;justify-content:space-between';
     var name = '';
     try { if (window.rosterClient && rosterClient.username) { name = rosterClient.username() || ''; } } catch (_) {}
-    who.innerHTML = '<span>' + (name ? _walletEsc(name) : 'Your wallet') + '</span>'
+    who.innerHTML = '<span>' + (name ? _walletEsc(name) : 'Your ledger') + '</span>'
         + '<span>' + (grade.q ? grade.q : '') + '</span>';
     card.appendChild(who);
 
