@@ -6,6 +6,7 @@
   "targetDate": "2026-08-25",
   "firstDayOfSchool": "2026-09-01",
   "pace": "even",
+  "restDays": 2,
   "note": "One lesson per week (Tuesdays), June 16 start, finishing Aug 25 — a week before school. Clock starts 6/16; the first two weeks are finals, so early birds get a head start and everyone else has slack.",
   "lessons": [
     { "topic": "1.1", "due": "2026-06-23" },

@@ -76,26 +76,46 @@ not "did one lesson." It does NOT touch grades or the fall schedule.
 lessons:[{topic, due}] }` — Unit 1 paced one lesson/week, 1.1 due 2026-06-23 … 1.10 due
 2026-08-25, first day 2026-09-01. Loaded once on Desk init into a global.
 
-```
-summerReadiness(schedule, todayISO, doneCount):
-  // doneCount = # of schedule.lessons the student has completed (the Desk computes it
-  //             via _isLessonComplete(topic) over schedule.lessons).
-  total    = schedule.lessons.length
-  actual   = clamp(doneCount, 0, total)
-  expected = count of schedule.lessons with due <= todayISO        // due by today
+**Dynamic rest-rhythm model (decided 2026-06-14): a personal cadence with the deadline
+as a hard safety net.** Finishing a lesson buys a 2-day green "breather"; idling past it
+eases toward a soft yellow "ready for the next?"; but falling **behind the fixed Aug 25
+schedule** is always red (resting can never make you miss the goal).
 
-  if expected == 0:                       // before the first deadline → not behind
-      state = actual > 0 ? 'ahead' : 'notdue'
-      r     = actual > 0 ? 1 : null       // ahead = green ; nothing due yet = neutral (no color)
-  else:
-      r     = clamp(actual / expected, 0, 1)
-      state = actual >= expected ? 'onpace' : 'behind'
-
-  hue    = (r == null) ? null : 120 * r
-  behind = max(0, expected - actual)
-  return { active:true, r, hue, total, actual, expected, behind,
-           onPace: actual >= expected, state }
 ```
+summerReadiness(schedule, todayISO, doneCount, lastCompletionISO, restDays=schedule.restDays||2):
+  // doneCount         = # of schedule.lessons complete (Desk: _isLessonComplete(topic)).
+  // lastCompletionISO = YYYY-MM-DD of the student's most recent Unit-1 lesson activity, OR
+  //                     null/'' if none (Desk: max .ts among getStudentMarks() keys
+  //                     '<topic>|worksheet' / '<topic>|blooket' for schedule.lessons).
+  total            = schedule.lessons.length
+  actual           = clamp(doneCount, 0, total)
+  deadlineExpected = count of schedule.lessons with due <= todayISO     // the SAFETY NET line
+  behind           = max(0, deadlineExpected - actual)
+
+  if actual >= total:                                    // 1. all done
+      return { state:'done', resting:false, r:1, hue:120, total, actual, deadlineExpected, behind:0 }
+
+  if actual < deadlineExpected:                          // 2. SAFETY NET — behind the hard deadline → red zone
+      r = deadlineExpected > 0 ? clamp(actual/deadlineExpected, 0, 1) : 0
+      return { state:'behind', resting:false, r, hue:120*r, total, actual, deadlineExpected, behind, daysSinceLast:null }
+
+  if deadlineExpected == 0 and actual == 0 and !lastCompletionISO:   // 3. before any deadline, nothing done → neutral
+      return { state:'notdue', resting:false, r:null, hue:null, total, actual, deadlineExpected, behind:0 }
+
+  // 4. On/ahead of the deadline → personal rest rhythm
+  daysSinceLast = lastCompletionISO ? daysBetween(lastCompletionISO, todayISO) : 9999
+  if daysSinceLast <= restDays:                          // resting → green
+      return { state:'resting', resting:true, r:1, hue:120, total, actual, deadlineExpected, behind:0, daysSinceLast, restDays }
+  // past the rest → ease green(1) → yellow(0.5) over ~4 idle days; NEVER red here (red = deadline only)
+  r = clamp(1 - 0.5 * ((daysSinceLast - restDays) / 4), 0.5, 1)
+  return { state:'ready', resting:false, r, hue:120*r, total, actual, deadlineExpected, behind:0, daysSinceLast, restDays }
+```
+`daysBetween(aISO,bISO) = max(0, floor((Date.parse(bISO) - Date.parse(aISO)) / 86400000))`.
+
+Banner copy by state: `done` → "Unit 1 complete! 🎉"; `behind` → "Summer goal: Unit 1 by
+Sept 1 — A/total · N behind"; `notdue` → "Summer goal: Unit 1 by Sept 1 — starts <first
+due>"; `resting` → "Nice work — A/total done. Take a breather; next lesson whenever you're
+ready."; `ready` → "A/total done — ready for lesson <next not-done>? (due <date>)".
 
 Active when `today < schedule.firstDayOfSchool`. When active, the Desk uses
 `summerReadiness`'s hue for ALL FOUR surfaces (window/card/grade-number/icon dot) **instead
