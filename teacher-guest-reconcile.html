@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guest Reconcile — Teacher</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --muted:#94a3b8; --accent:#22c55e; --accent2:#3b82f6; --danger:#ef4444; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--txt);
+         padding: env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 16px); }
+  header { padding: 14px 2px 8px; }
+  h1 { font-size: 20px; margin: 0; }
+  .sub { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+  .row { display:flex; gap:8px; align-items:center; }
+  button { font-size: 16px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--txt); cursor: pointer; }
+  button.primary { background: var(--accent2); border-color: var(--accent2); color:#fff; font-weight:600; }
+  button.go { background: var(--accent); border-color: var(--accent); color:#06210f; font-weight:700; }
+  button:disabled { opacity:.5; }
+  #reader { width:100%; max-width:420px; margin:10px auto; border-radius:12px; overflow:hidden; background:#000; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin:10px 0; }
+  input, select { width:100%; padding:11px; font-size:16px; border-radius:9px; border:1px solid var(--line); background:#0b1220; color:var(--txt); }
+  label { font-size:12px; color:var(--muted); display:block; margin:8px 0 3px; }
+  .guest-card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin:10px 0; }
+  .guest-name { font-weight:700; font-size:16px; }
+  .pill { font-size:12px; color:var(--muted); }
+  .done { border-color: var(--accent); }
+  .done .status { color: var(--accent); font-weight:600; }
+  .err { color: var(--danger); }
+  details summary { cursor:pointer; color:var(--muted); font-size:13px; padding:6px 0; }
+  .muted { color: var(--muted); font-size:12px; }
+  a { color: var(--accent2); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🪪 Guest Reconcile</h1>
+  <p class="sub">Scan a student's <strong>Guest Pass</strong> QR to fold their work into their roster account.</p>
+</header>
+
+<div class="panel">
+  <div class="row">
+    <button id="scanBtn" class="primary" style="flex:1">📷 Start scanning</button>
+    <button id="stopBtn" style="display:none">Stop</button>
+  </div>
+  <div id="reader"></div>
+  <label for="manualGuest">…or enter a guest name manually</label>
+  <div class="row">
+    <input id="manualGuest" placeholder="Guest_Cherry_Lemon" autocapitalize="words" autocorrect="off" />
+    <button id="addManual">Add</button>
+  </div>
+  <div id="rosterStatus" class="muted" style="margin-top:8px">Loading roster…</div>
+  <details>
+    <summary>Advanced (admin token)</summary>
+    <label for="adminToken">Reconcile admin token (only if your server sets ROSTER_ADMIN_TOKEN)</label>
+    <input id="adminToken" placeholder="(usually leave blank)" />
+  </details>
+</div>
+
+<div id="list"></div>
+
+<p class="muted">Reconcile re-keys the guest's cloud answers onto the chosen student (the student's existing answer wins if both answered the same question). Offline-only guest work isn't in the cloud — import their downloaded backup instead.</p>
+
+<script src="roster_config.js"></script>
+<script src="roster-client.js"></script>
+<script src="railway_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(function () {
+  var API = window.RAILWAY_SERVER_URL || 'https://curriculumrender-production.up.railway.app';
+  var ROSTER = [];
+  var rosterOptionsHtml = '<option value="">— pick a student —</option>';
+  var scanned = {}; // guestName(lower) -> true (dedupe)
+  var html5Qr = null;
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  function attrEsc(s){ return esc(s).replace(/"/g,'&quot;'); }
+
+  function parseGuest(text) {
+    if (!text) return '';
+    text = String(text).trim();
+    try { var u = new URL(text); var g = u.searchParams.get('claimGuest'); if (g) return g; } catch (e) {}
+    var m = text.match(/claimGuest=([^&\s]+)/i);
+    if (m) { try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; } }
+    return text; // raw guest name
+  }
+
+  async function loadRoster() {
+    var base = window.ROSTER_SERVICE_URL;
+    var token = null;
+    try { token = (window.rosterClient && rosterClient.token && rosterClient.token()) || null; } catch (e) {}
+    var students = [];
+    if (base && token) {
+      try {
+        var res = await fetch(base + '/roster/list', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) { var d = await res.json(); if (d && Array.isArray(d.students)) students = d.students; }
+      } catch (e) {}
+    }
+    if (!students.length && base) {
+      try {
+        var r2 = await fetch(base + '/roster/section/PeriodX');
+        if (r2.ok) { var d2 = await r2.json(); if (d2 && Array.isArray(d2.students)) students = d2.students; }
+      } catch (e) {}
+    }
+    ROSTER = (students || []).filter(function (x) { return x && x.username; })
+      .sort(function (a, b) { return (a.realName || '').localeCompare(b.realName || ''); });
+    rosterOptionsHtml = '<option value="">— pick a student —</option>' + ROSTER.map(function (s) {
+      return '<option value="' + attrEsc(s.username) + '">' + esc(s.realName || s.username) + ' (' + esc(s.username) + ')</option>';
+    }).join('');
+    var rs = document.getElementById('rosterStatus');
+    rs.textContent = ROSTER.length
+      ? ('Roster loaded: ' + ROSTER.length + ' students.')
+      : 'Roster empty/unavailable — you can still type a target username into each card.';
+    // refresh any existing selects
+    Array.prototype.forEach.call(document.querySelectorAll('select.roster-sel'), function (sel) {
+      var v = sel.value; sel.innerHTML = rosterOptionsHtml + '<option value="__manual__">Type a username…</option>'; sel.value = v;
+    });
+  }
+
+  async function addGuest(rawText) {
+    var guest = parseGuest(rawText);
+    if (!guest) return;
+    var key = guest.toLowerCase();
+    if (scanned[key]) return; // dedupe
+    scanned[key] = true;
+
+    var id = 'g_' + key.replace(/[^a-z0-9]/g, '_');
+    var card = document.createElement('div');
+    card.className = 'guest-card';
+    card.id = id;
+    card.innerHTML =
+      '<div class="guest-name">' + esc(guest) + '</div>' +
+      '<div class="pill" id="' + id + '_count">Looking up work…</div>' +
+      '<label>Reconcile into</label>' +
+      '<select class="roster-sel" id="' + id + '_sel">' + rosterOptionsHtml + '<option value="__manual__">Type a username…</option></select>' +
+      '<input id="' + id + '_manual" style="display:none;margin-top:6px" placeholder="exact roster username" />' +
+      '<div class="row" style="margin-top:8px">' +
+        '<button class="go" id="' + id + '_go" style="flex:1">Reconcile →</button>' +
+      '</div>' +
+      '<div class="status muted" id="' + id + '_status" style="margin-top:6px"></div>';
+    document.getElementById('list').prepend(card);
+
+    var sel = document.getElementById(id + '_sel');
+    var manual = document.getElementById(id + '_manual');
+    sel.addEventListener('change', function () { manual.style.display = (sel.value === '__manual__') ? 'block' : 'none'; });
+    document.getElementById(id + '_go').addEventListener('click', function () {
+      var target = sel.value === '__manual__' ? (manual.value || '').trim() : sel.value;
+      reconcile(guest, target, id);
+    });
+
+    // fetch work count
+    try {
+      var res = await fetch(API + '/api/user-answers/' + encodeURIComponent(guest));
+      var d = await res.json();
+      var n = (d && typeof d.count === 'number') ? d.count : ((d && d.answers) ? d.answers.length : 0);
+      document.getElementById(id + '_count').textContent = n + ' answer' + (n === 1 ? '' : 's') + ' in the cloud';
+    } catch (e) {
+      document.getElementById(id + '_count').textContent = 'Could not load work count';
+    }
+  }
+
+  async function reconcile(guest, target, id) {
+    var statusEl = document.getElementById(id + '_status');
+    var goBtn = document.getElementById(id + '_go');
+    if (!target) { statusEl.innerHTML = '<span class="err">Pick or type a student first.</span>'; return; }
+    var adminToken = (document.getElementById('adminToken').value || '').trim();
+    goBtn.disabled = true; goBtn.textContent = 'Reconciling…';
+    try {
+      var res = await fetch(API + '/api/guest/reconcile', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guestUsername: guest, targetUsername: target, adminToken: adminToken || undefined })
+      });
+      var d = await res.json();
+      if (!res.ok || !d.success) throw new Error(d.error || ('HTTP ' + res.status));
+      document.getElementById(id).classList.add('done');
+      statusEl.innerHTML = '✓ Moved ' + d.moved + ' answer' + (d.moved === 1 ? '' : 's') +
+        (d.deleted ? (' (' + d.deleted + ' duplicate' + (d.deleted === 1 ? '' : 's') + ' dropped)') : '') +
+        ' → <strong>' + esc(target) + '</strong>';
+      goBtn.textContent = 'Done'; goBtn.classList.remove('go');
+    } catch (e) {
+      statusEl.innerHTML = '<span class="err">Failed: ' + esc(e.message) + '</span>';
+      goBtn.disabled = false; goBtn.textContent = 'Reconcile →';
+    }
+  }
+
+  function onScan(text) {
+    addGuest(text);
+    if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) {} }
+  }
+
+  function startScan() {
+    if (typeof Html5Qrcode === 'undefined') { alert('Scanner library failed to load (need internet).'); return; }
+    html5Qr = new Html5Qrcode('reader');
+    html5Qr.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, onScan)
+      .then(function () {
+        document.getElementById('scanBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'inline-block';
+      })
+      .catch(function (err) { alert('Could not start camera: ' + err); });
+  }
+  function stopScan() {
+    if (html5Qr) { html5Qr.stop().then(function () { html5Qr.clear(); html5Qr = null; }).catch(function () {}); }
+    document.getElementById('scanBtn').style.display = 'inline-block';
+    document.getElementById('stopBtn').style.display = 'none';
+  }
+
+  document.getElementById('scanBtn').addEventListener('click', startScan);
+  document.getElementById('stopBtn').addEventListener('click', stopScan);
+  document.getElementById('addManual').addEventListener('click', function () {
+    var v = (document.getElementById('manualGuest').value || '').trim();
+    if (v) { addGuest(v); document.getElementById('manualGuest').value = ''; }
+  });
+  loadRoster();
+})();
+</script>
+</body>
+</html>
