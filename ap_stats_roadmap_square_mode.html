@@ -1523,7 +1523,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openGame==='function')openGame()" style="font-weight:bold">&#127918; Study Break</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold">&#128091; My Ledger</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold"><img src="icons/icon-ledger.svg" alt="" style="width:14px;height:14px;vertical-align:-3px;margin-right:3px">My Ledger</div>
             <!-- Driller deprecated — removed 2026-05 -->
             <!-- <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openProgress()" style="font-weight:bold">&#128202; My Progress</div> -->
@@ -10800,6 +10800,7 @@ function _walletRenderGroupedReceipts(host, receipts, loading) {
             host.appendChild(header);
 
             if (open) {
+                if (_walletReceiptFeedTab === 'session') _walletAppendSessionQRRow(host, group);
                 if (Array.isArray(group.subgroups) && group.subgroups.length) {
                     group.subgroups.forEach(function (subgroup) {
                         var subgroupId = _walletReceiptSubgroupId(_walletReceiptFeedTab, group.key, subgroup.key);
@@ -14762,6 +14763,68 @@ function openCommitLedger() {
       .catch(function(e){ body.innerHTML = '<p style="color:#c0392b">Could not load sessions: ' + _deskEsc(e.message) + '</p>'; });
 }
 window.openCommitLedger = openCommitLedger;
+
+/* Unify the Sessions tab with the signed-commit chain: each session in the feed
+   can flash the QR(s) of its matching signed commit(s). Feed sessions and server
+   commits use the same 25-min gap, so a commit's receipts are a subset of one
+   session's receipts — that's the match. */
+var _walletCommitsCache = null;
+function _walletLoadCommits() {
+    if (_walletCommitsCache) return _walletCommitsCache;
+    _walletCommitsCache = (async function () {
+        var base = window.ROSTER_SERVICE_URL, token = null;
+        try { token = (window.rosterClient && rosterClient.token && rosterClient.token()) || null; } catch (e) {}
+        if (!base || !token) return [];
+        var res = await fetch(base + '/commits', { headers: { 'Authorization': 'Bearer ' + token } });
+        var d = await res.json();
+        return (d && d.ok && Array.isArray(d.commits)) ? d.commits : [];
+    })().catch(function () { _walletCommitsCache = null; return []; });
+    return _walletCommitsCache;
+}
+async function _walletShowSessionQR(group, host, btn) {
+    if (host.firstChild) { host.innerHTML = ''; return; } // toggle off
+    btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Loading…';
+    try {
+        var commits = await _walletLoadCommits();
+        var inSession = {};
+        (group.receipts || []).forEach(function (r) { if (r && r.compact) inSession[r.compact] = 1; });
+        var matches = commits.filter(function (c) {
+            var rs = c.receipts || [];
+            return rs.length && rs.every(function (x) { return inSession[x]; });
+        });
+        if (!matches.length) {
+            host.innerHTML = '<div style="font-size:10px;color:#a33;padding:2px 0">No signed commit for this session yet (the roster server needs a redeploy to issue commits).</div>';
+            return;
+        }
+        host.innerHTML = matches.map(function (c) {
+            var deep = _ledgerB64url(JSON.stringify({ v: 1, m: c.manifest, r: c.receipts }));
+            var verifyUrl = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + deep;
+            return '<div style="border:1px solid #ddd;border-radius:6px;padding:6px;margin:4px 0">'
+                + '<div style="font-size:10px;color:#555">Commit #' + c.seq + ' · ' + c.cnt + ' item' + (c.cnt === 1 ? '' : 's') + (c.manifest ? '' : ' · <span style="color:#c0392b">unsigned</span>') + '</div>'
+                + '<div style="display:flex;gap:6px;align-items:flex-start;margin-top:4px">'
+                + '<button class="commit-qr-btn" data-deep="' + deep + '" onclick="_commitShowQR(this)" style="font-size:10px;padding:2px 6px;cursor:pointer">Show QR</button>'
+                + '<a href="' + _deskEsc(verifyUrl) + '" target="_blank" rel="noopener" style="font-size:10px">Verify</a>'
+                + '<span class="commit-qr-host" style="margin-left:auto"></span></div></div>';
+        }).join('');
+    } catch (e) {
+        host.innerHTML = '<div style="font-size:10px;color:#a33;padding:2px 0">Could not load: ' + _deskEsc(e.message) + '</div>';
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}
+function _walletAppendSessionQRRow(host, group) {
+    var row = document.createElement('div');
+    row.style.cssText = 'margin:0 0 6px 14px';
+    var btn = document.createElement('button');
+    btn.className = 's7btn'; btn.type = 'button';
+    btn.style.cssText = 'font-size:10px;padding:2px 8px';
+    btn.textContent = '🔐 Verify / QR this session';
+    var qhost = document.createElement('div');
+    qhost.style.cssText = 'margin-top:6px';
+    btn.addEventListener('click', function () { _walletShowSessionQR(group, qhost, btn); });
+    row.appendChild(btn); row.appendChild(qhost);
+    host.appendChild(row);
+}
 
 /* ═══ DOGE PRESENCE SYSTEM ═══ */
 const DogePresence = {
