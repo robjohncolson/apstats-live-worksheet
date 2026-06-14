@@ -1593,7 +1593,7 @@
     <div class="icon-label">Study Break</div>
 </div>
 <div class="app-icon" data-app="wallet" style="top:396px;right:20px;left:auto" ondblclick="openWallet()" onclick="selectAppIcon(this)">
-    <div class="icon-img" data-emoji="&#128091;"><img src="icons/icon-wallet.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
+    <div class="icon-img" data-emoji="&#128272;"><img src="icons/icon-ledger.svg" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
     <div class="icon-label">My Ledger</div>
 </div>
 <!-- My Progress icon — re-enable for SY26-27
@@ -7966,6 +7966,20 @@ document.addEventListener('mousedown', () => { closeMenus(); });
     let jumping = false, jumpTimer = 0;
     let lastTime = 0, paused = false;
 
+    // The menu-bar walker doubles as a "this is YOU" indicator: tint it to the
+    // signed-in student's saved hue -- the SAME shared roster sprite_hue the
+    // Live Classroom board and the cr quiz render. If the walker is your color,
+    // username/hue storage is loading correctly. hue 0 = no rotation = base.
+    let hue = 0, hueTimer = 0;
+    function _readSpriteHue() {
+        try {
+            const rc = (window.rosterClient && typeof window.rosterClient.current === 'function')
+                ? window.rosterClient.current() : null;
+            return (rc && typeof rc.spriteHue === 'number') ? rc.spriteHue : 0;
+        } catch (_) { return 0; }
+    }
+    hue = _readSpriteHue();
+
     function getFrameXY(idx) {
         const col = idx % SHEET_COLS;
         const row = Math.floor(idx / SHEET_COLS);
@@ -7976,7 +7990,12 @@ document.addEventListener('mousedown', () => { closeMenus(); });
         ctx.clearRect(0, 0, DISPLAY_W, DISPLAY_H);
         if (!sheet.complete) return;
         const f = getFrameXY(frameIdx);
+        // Tint to your saved hue (same hue-rotate the board + quiz use). filter
+        // is set right before the draw and cleared right after so clearRect and
+        // the jump transform are unaffected. hue 0 -> 'none' = the base sprite.
+        ctx.filter = hue ? ('hue-rotate(' + hue + 'deg)') : 'none';
         ctx.drawImage(sheet, f.x, f.y, FRAME_W, FRAME_H, 0, 0, DISPLAY_W, DISPLAY_H);
+        ctx.filter = 'none';
     }
 
     function tick(now) {
@@ -7985,6 +8004,11 @@ document.addEventListener('mousedown', () => { closeMenus(); });
         lastTime = now;
 
         if (paused) { requestAnimationFrame(tick); return; }
+
+        // Refresh the hue ~once a second so a sign-in (or hue change) after the
+        // page loaded recolors the walker without a reload -- cheap, throttled.
+        hueTimer += dt;
+        if (hueTimer >= 1) { hueTimer = 0; hue = _readSpriteHue(); }
 
         let frameIdx;
         if (jumping) {
@@ -10950,6 +10974,16 @@ function _walletPaint(host, receipts, loading) {
         printSealedSummary();
     };
     exportRow.appendChild(printBtn);
+    var sessionsBtn = document.createElement('button');
+    sessionsBtn.className = 's7btn';
+    sessionsBtn.type = 'button';
+    sessionsBtn.style.cssText = 'font-size:10px;padding:2px 8px';
+    sessionsBtn.textContent = '📜 Sessions';
+    sessionsBtn.onclick = function () {
+        try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.25); } catch (_) {}
+        openCommitLedger();
+    };
+    exportRow.appendChild(sessionsBtn);
     card.appendChild(exportRow);
     host.appendChild(card);
 
@@ -14654,6 +14688,79 @@ function openReconcileQR() {
     }
 }
 window.openReconcileQR = openReconcileQR;
+
+/* ═══ PROGRESS LEDGER — proto-git sessions/commits view ═══ */
+/* Fetches the signed, prev-chained commit history (GET /commits) and renders it
+   as a session list; each commit can be flashed as a self-contained QR that
+   verify.html#commit= can verify offline. */
+function _ledgerFmtDate(ms){ try { return new Date(ms).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ return ''; } }
+function _ledgerFmtTime(ms){ try { return new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); } catch(e){ return ''; } }
+function _ledgerB64url(str){ try { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); } catch(e){ return ''; } }
+window._commitShowQR = function(btn){
+    var host = btn.parentElement.querySelector('.commit-qr-host');
+    if (!host) return;
+    if (host.firstChild) { host.innerHTML = ''; return; } // toggle off
+    var deep = btn.getAttribute('data-deep') || '';
+    var url = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + deep;
+    if (typeof QRCode === 'function') {
+        try { new QRCode(host, { text: url, width: 140, height: 140, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.L }); }
+        catch (e) { host.textContent = 'QR too large — use Verify link'; }
+    } else { host.textContent = 'QR lib missing'; }
+};
+function openCommitLedger() {
+    var base = window.ROSTER_SERVICE_URL;
+    var token = null;
+    try { token = (window.rosterClient && rosterClient.token && rosterClient.token()) || null; } catch (e) {}
+    var panel = document.getElementById('commit-ledger-overlay');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'commit-ledger-overlay';
+        panel.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center';
+        panel.innerHTML = '<div id="commit-ledger-card" style="background:#fff;color:#111;max-width:380px;width:92%;max-height:82vh;overflow:auto;border:2px solid #000;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.45);padding:14px;font-family:Geneva,Verdana,sans-serif"></div>';
+        panel.addEventListener('click', function(e){ if (e.target === panel) panel.style.display = 'none'; });
+        document.body.appendChild(panel);
+    }
+    panel.style.display = 'flex';
+    var card = document.getElementById('commit-ledger-card');
+    card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+        + '<strong style="font-size:15px">📜 My Sessions</strong>'
+        + '<button onclick="document.getElementById(\'commit-ledger-overlay\').style.display=\'none\'" aria-label="Close" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">&times;</button></div>'
+        + '<div id="commit-ledger-body" style="font-size:12px">Loading your session history…</div>';
+    var body = document.getElementById('commit-ledger-body');
+    if (!base || !token) { body.innerHTML = '<p>Sign in to the roster to see your session history.</p>'; return; }
+    fetch(base + '/commits', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d || !d.ok) throw new Error((d && d.error) || 'Failed to load');
+        var commits = (d.commits || []).slice().reverse(); // newest first
+        if (!commits.length) { body.innerHTML = '<p>No sessions yet — your work appears here as signed commits.</p>'; return; }
+        var html = '<p style="color:#555;margin:0 0 8px">Each session is a signed, chained commit of your work — like git history you can flash as a QR.</p>';
+        var lastSession = null;
+        commits.forEach(function(c){
+          if (c.session !== lastSession) {
+            lastSession = c.session;
+            html += '<div style="font-weight:bold;margin:10px 0 4px;border-top:1px solid #eee;padding-top:6px">Session ' + c.session + ' · ' + _deskEsc(_ledgerFmtDate(c.from)) + '</div>';
+          }
+          var deep = _ledgerB64url(JSON.stringify({ v: 1, m: c.manifest, r: c.receipts }));
+          var verifyUrl = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + deep;
+          html += '<div style="border:1px solid #e3e3e3;border-radius:8px;padding:8px;margin:6px 0">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center">'
+            + '<span><strong>#' + c.seq + '</strong> · ' + c.cnt + ' answer' + (c.cnt === 1 ? '' : 's') + '</span>'
+            + '<span style="font-size:10px;color:#888;font-family:monospace" title="root ' + _deskEsc(String(c.root)) + '">' + _deskEsc(String(c.root).slice(0,8)) + '</span></div>'
+            + '<div style="font-size:10px;color:#777;margin-top:2px">' + _deskEsc(_ledgerFmtTime(c.from)) + '–' + _deskEsc(_ledgerFmtTime(c.to))
+              + (c.prev ? (' · ← ' + _deskEsc(String(c.prev).slice(0,6))) : ' · genesis')
+              + (c.manifest ? '' : ' · <span style="color:#c0392b">unsigned</span>') + '</div>'
+            + '<div style="margin-top:6px;display:flex;gap:8px;align-items:flex-start">'
+            + '<button class="commit-qr-btn" data-deep="' + deep + '" onclick="_commitShowQR(this)" style="font-size:11px;padding:3px 8px;cursor:pointer">Show QR</button>'
+            + '<a href="' + _deskEsc(verifyUrl) + '" target="_blank" rel="noopener" style="font-size:11px">Verify</a>'
+            + '<span class="commit-qr-host" style="margin-left:auto"></span></div>'
+            + '</div>';
+        });
+        body.innerHTML = html;
+      })
+      .catch(function(e){ body.innerHTML = '<p style="color:#c0392b">Could not load sessions: ' + _deskEsc(e.message) + '</p>'; });
+}
+window.openCommitLedger = openCommitLedger;
 
 /* ═══ DOGE PRESENCE SYSTEM ═══ */
 const DogePresence = {
