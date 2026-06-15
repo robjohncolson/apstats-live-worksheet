@@ -1490,23 +1490,42 @@
         }
 
         function restoreSavedUser() {
+            // IDENTITY (clean): the live shared session is AUTHORITATIVE so the
+            // fields never show a PREVIOUS person's name/period/username left on
+            // this device. Roster student wins; else an active guest alias; else
+            // (nobody signed in) the local cache. Mirrors getUsername()'s guest rule.
             try {
-                const saved = JSON.parse(localStorage.getItem(LOCAL_USER_KEY) || '{}');
-                if (saved.username) {
-                    const usernameField = document.getElementById('worksheetUsername');
-                    if (usernameField) usernameField.value = saved.username;
+                var nameEl   = document.getElementById('worksheetName')   || document.getElementById('studentName');
+                var periodEl = document.getElementById('worksheetPeriod') || document.getElementById('studentClass');
+                var userEl   = document.getElementById('worksheetUsername');
+                var roster = null;
+                try { roster = (window.rosterClient && rosterClient.current) ? rosterClient.current() : null; } catch (_) {}
+                if (roster && roster.username) {
+                    if (userEl)   userEl.value   = roster.username;
+                    if (nameEl)   nameEl.value   = roster.realName || roster.username;
+                    if (periodEl && roster.section) periodEl.value = String(roster.section).replace(/^Period\s*/i, '');
+                    if (typeof saveUser === 'function') saveUser();
+                    return;
                 }
-                if (saved.name) {
-                    const nameField = document.getElementById('studentName');
-                    if (nameField) nameField.value = saved.name;
+                var guestActive = false;
+                try { guestActive = localStorage.getItem('apstats_guest_active') === '1'; } catch (_) {}
+                if (guestActive && typeof window.getGuestIdentity === 'function') {
+                    var g = window.getGuestIdentity() || '';
+                    if (userEl) userEl.value = g;
+                    if (nameEl) nameEl.value = g;   // the Guest_ alias is their identity, never a prior person's
+                    if (periodEl) periodEl.value = '';
+                    if (typeof saveUser === 'function') saveUser();
+                    return;
                 }
-                if (saved.klass) {
-                    const classField = document.getElementById('studentClass');
-                    if (classField) classField.value = saved.klass;
+                var anonKey = (typeof LOCAL_USER_KEY !== 'undefined' && LOCAL_USER_KEY) ? LOCAL_USER_KEY : 'worksheet-user';
+                var saved = localStorage.getItem(anonKey);
+                if (saved) {
+                    var user = JSON.parse(saved);
+                    if (user.name && nameEl) nameEl.value = user.name;
+                    if (user.klass && periodEl) periodEl.value = user.klass;
+                    if (user.username && userEl) userEl.value = user.username;
                 }
-            } catch (e) {
-                console.warn('No saved user found', e);
-            }
+            } catch (e) { console.warn('Could not restore user', e); }
         }
 
         // ============ SERVER COMMUNICATION ============
