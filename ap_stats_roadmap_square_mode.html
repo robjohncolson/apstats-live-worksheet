@@ -10661,11 +10661,11 @@ async function printSealedSummary() {
         var verifyUrl = 'https://robjohncolson.github.io/curriculum_render/verify.html#r=' + encodeURIComponent(transcript.manifest || '');
         var qrSrc = '';
         var qrHost = document.createElement('div');
-        qrHost.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:160px;height:160px;overflow:hidden';
+        qrHost.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:220px;height:220px;overflow:hidden';
         document.body.appendChild(qrHost);
         try {
             if (typeof QRCode === 'function') {
-                new QRCode(qrHost, { text: verifyUrl, width: 160, height: 160, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+                new QRCode(qrHost, { text: verifyUrl, width: 220, height: 220, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
                 var qrImg = qrHost.querySelector('img');
                 var qrCanvas = qrHost.querySelector('canvas');
                 if (qrImg && qrImg.src) qrSrc = qrImg.src;
@@ -10695,7 +10695,7 @@ async function printSealedSummary() {
             + 'h1{font-size:26px;margin:0 0 24px;}'
             + 'dl{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:0 auto 28px;text-align:left;max-width:420px;}'
             + 'dt{font-weight:bold;}dd{margin:0;}'
-            + '.qr{display:block;width:160px;height:160px;margin:0 auto 12px;object-fit:contain;}'
+            + '.qr{display:block;width:210px;height:210px;margin:0 auto 12px;object-fit:contain;image-rendering:pixelated;}'
             + '.missing{border:1px solid #999;line-height:160px;font-size:13px;color:#555;}'
             + '.caption{font-size:13px;line-height:1.45;margin:0 auto;max-width:420px;}'
             + '@media print{body{padding:24px;}button{display:none;}main{max-width:none;}a{color:#111;text-decoration:none;}}'
@@ -14739,9 +14739,18 @@ window._commitShowQR = function(btn){
     if (!host) return;
     if (host.firstChild) { host.innerHTML = ''; return; } // toggle off
     var deep = btn.getAttribute('data-deep') || '';
-    var url = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + deep;
+    // The QR carries ONLY the signed manifest — tiny + reliably scannable. The
+    // manifest's signed root already commits to every receipt; the full item-by-
+    // item check is one tap away via the (larger) Verify link.
+    var qrPayload = deep;
+    try {
+        var s = deep.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '=';
+        var obj = JSON.parse(decodeURIComponent(escape(atob(s))));
+        if (obj && obj.m) qrPayload = obj.m; // manifest compact (payload.sig)
+    } catch (e) {}
+    var url = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + qrPayload;
     if (typeof QRCode === 'function') {
-        try { new QRCode(host, { text: url, width: 140, height: 140, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.L }); }
+        try { new QRCode(host, { text: url, width: 150, height: 150, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M }); }
         catch (e) { host.textContent = 'QR too large — use Verify link'; }
     } else { host.textContent = 'QR lib missing'; }
 };
