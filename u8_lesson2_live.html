@@ -941,14 +941,16 @@
         }
 
         function getUsername() {
-            var v = (document.getElementById('worksheetUsername').value || '').trim();
-            if (v) return v;
-            // Signed-out guest: attribute answers to the stable shared Guest_ alias
-            // (recoverable via the Guest Pass QR + /api/guest/reconcile).
+            // Active guest (no roster session): the shared Guest_ alias is authoritative —
+            // ignore any stale autofill (even a previous user's real name) in the field.
             try {
-                if (localStorage.getItem('apstats_guest_active') === '1' && typeof window.getGuestIdentity === 'function') return window.getGuestIdentity();
+                if (localStorage.getItem('apstats_guest_active') === '1'
+                    && !(window.rosterClient && window.rosterClient.current && window.rosterClient.current())
+                    && typeof window.getGuestIdentity === 'function') {
+                    return window.getGuestIdentity();
+                }
             } catch (_) {}
-            return v;
+            return (document.getElementById('worksheetUsername').value || '').trim();
         }
 
         document.getElementById('worksheetUsername').addEventListener('blur', saveUser);

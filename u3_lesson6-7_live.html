@@ -1458,6 +1458,15 @@
 
         // ============ USER MANAGEMENT ============
         function getUsername() {
+            // Active guest (no roster session): the shared Guest_ alias wins over any
+            // stale field autofill (even a previous user's real name).
+            try {
+                if (localStorage.getItem('apstats_guest_active') === '1'
+                    && !(window.rosterClient && window.rosterClient.current && window.rosterClient.current())
+                    && typeof window.getGuestIdentity === 'function') {
+                    return window.getGuestIdentity();
+                }
+            } catch (_) {}
             const usernameField = document.getElementById('worksheetUsername');
             const nameField = document.getElementById('studentName');
             const username = (usernameField?.value || '').trim();

@@ -109,13 +109,30 @@
       document.body.appendChild(bar);
   }
   window._apRenderGuestBanner = _apRenderGuestBanner;
+  // When working as a guest, reflect the alias into the legacy worksheet username
+  // field (overriding any stale autofill left by a previous user on this device,
+  // e.g. a real "date_tiger") and lock it — for a guest the alias is authoritative.
+  function _apReflectGuestField() {
+      try {
+          var uf = document.getElementById('worksheetUsername');
+          if (uf && _apGuestActive() && !_apHasRoster()) {
+              var alias = getGuestIdentity();
+              if (uf.value !== alias) uf.value = alias;
+              uf.readOnly = true; uf.title = 'Working as guest';
+          }
+      } catch (e) {}
+  }
+  function _apGuestRefresh() { try { _apRenderGuestBanner(); } catch (e) {} _apReflectGuestField(); }
   function _apInitGuestBanner() {
-      try { _apRenderGuestBanner(); } catch (e) {}
+      _apGuestRefresh();
+      // Re-run after the worksheet's own restoreSavedUser()/hydration (which fills
+      // the username field from localStorage on load) so the guest alias wins it.
+      try { setTimeout(_apGuestRefresh, 300); } catch (e) {}
       try {
           window.addEventListener('storage', function (e) {
               if (!e || e.key === null || e.key === 'apstats_guest_active'
                   || e.key === 'apstats_roster.v1' || e.key === GUEST_KEY) {
-                  try { _apRenderGuestBanner(); } catch (_) {}
+                  _apGuestRefresh();
               }
           });
       } catch (e) {}
