@@ -31,12 +31,15 @@ const NEW_FN = [
   "                    if (typeof saveUser === 'function') saveUser();",
   "                    return;",
   "                }",
-  "                var guestActive = false;",
+  "                var guestActive = false, guestAlias = '';",
   "                try { guestActive = localStorage.getItem('apstats_guest_active') === '1'; } catch (_) {}",
-  "                if (guestActive && typeof window.getGuestIdentity === 'function') {",
-  "                    var g = window.getGuestIdentity() || '';",
-  "                    if (userEl) userEl.value = g;",
-  "                    if (nameEl) nameEl.value = g;   // the Guest_ alias is their identity, never a prior person's",
+  "                // Read the guest alias straight from localStorage — getGuestIdentity()",
+  "                // lives in railway_client.js, which 404s from a root worksheet's ../ path,",
+  "                // so window.getGuestIdentity is undefined here. The alias is durable in LS.",
+  "                try { var ga = localStorage.getItem('apstats_guest_identity'); if (ga && /^Guest_/i.test(ga)) guestAlias = ga; } catch (_) {}",
+  "                if (guestActive) {",
+  "                    if (userEl) userEl.value = guestAlias;   // the Guest_ alias (or blank) — never a prior person's",
+  "                    if (nameEl) nameEl.value = guestAlias;",
   "                    if (periodEl) periodEl.value = '';",
   "                    if (typeof saveUser === 'function') saveUser();",
   "                    return;",
@@ -67,7 +70,8 @@ const skipped = [];
 
 for (const f of files) {
   const src = readFileSync(f, 'utf8');
-  if (src.includes(MARKER)) { already.push(f); continue; }
+  // Always brace-match + replace restoreSavedUser (idempotent — re-running with
+  // the same body is a no-op). 'already' is reported only when no change results.
   const sig = 'function restoreSavedUser()';
   const at = src.indexOf(sig);
   if (at < 0) { skipped.push(f + ' (no restoreSavedUser)'); continue; }
@@ -81,6 +85,7 @@ for (const f of files) {
   if (end < 0) { skipped.push(f + ' (unbalanced)'); continue; }
   const lineStart = src.lastIndexOf('\n', at) + 1; // capture leading indentation
   const out = src.slice(0, lineStart) + NEW_FN + src.slice(end + 1);
+  if (out === src) { already.push(f); continue; }
   if (!dry) writeFileSync(f, out, 'utf8');
   changed++;
 }

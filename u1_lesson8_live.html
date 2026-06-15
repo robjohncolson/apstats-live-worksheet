@@ -681,12 +681,15 @@
                     if (typeof saveUser === 'function') saveUser();
                     return;
                 }
-                var guestActive = false;
+                var guestActive = false, guestAlias = '';
                 try { guestActive = localStorage.getItem('apstats_guest_active') === '1'; } catch (_) {}
-                if (guestActive && typeof window.getGuestIdentity === 'function') {
-                    var g = window.getGuestIdentity() || '';
-                    if (userEl) userEl.value = g;
-                    if (nameEl) nameEl.value = g;   // the Guest_ alias is their identity, never a prior person's
+                // Read the guest alias straight from localStorage — getGuestIdentity()
+                // lives in railway_client.js, which 404s from a root worksheet's ../ path,
+                // so window.getGuestIdentity is undefined here. The alias is durable in LS.
+                try { var ga = localStorage.getItem('apstats_guest_identity'); if (ga && /^Guest_/i.test(ga)) guestAlias = ga; } catch (_) {}
+                if (guestActive) {
+                    if (userEl) userEl.value = guestAlias;   // the Guest_ alias (or blank) — never a prior person's
+                    if (nameEl) nameEl.value = guestAlias;
                     if (periodEl) periodEl.value = '';
                     if (typeof saveUser === 'function') saveUser();
                     return;

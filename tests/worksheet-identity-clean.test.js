@@ -39,7 +39,10 @@ describe('Worksheet identity — clean (no stale name/period/username)', () => {
     expect(rosterAt).toBeGreaterThan(-1);
     expect(guestAt).toBeGreaterThan(rosterAt);
     expect(cacheAt).toBeGreaterThan(guestAt);
-    expect(fn).toContain('getGuestIdentity');
+    // Guest alias read straight from localStorage — getGuestIdentity()'s file
+    // (railway_client.js) 404s from a root worksheet's ../ path, so don't depend on it.
+    expect(fn).toContain("localStorage.getItem('apstats_guest_identity')");
+    expect(fn).not.toContain('window.getGuestIdentity()');
   });
 
   it('resolves fields by either id set (covers the divergent u3_lesson6-7)', () => {
