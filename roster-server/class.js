@@ -265,6 +265,14 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
           lastAt,
         };
       }
+      // PACING: last activity across ALL sources (max recorded_at) — powers the
+      // teacher pacing overview's "time since last session" + readiness color.
+      // Additive read-only field; does not affect any grade computation.
+      let lastActivityAt = null;
+      for (const row of ledgerRows) {
+        const ts = row && row.recorded_at;
+        if (ts && (!lastActivityAt || ts > lastActivityAt)) lastActivityAt = ts;
+      }
       // Merge schoologyUid at the call site so studentMeta stays a pure
       // roster->header map (do NOT touch studentMeta).
       // gradebook: the in-app "1:1 Schoology gradebook" grid (additive) — the
@@ -275,6 +283,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         schoologyUid: uidMap[roster.student_id] ?? null,
         ...computed,
         trainer,
+        lastActivityAt,
         gradebook: buildGradebook(computed, { lessonSchedule, section, todayStr }),
       };
     });

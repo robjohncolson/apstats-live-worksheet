@@ -479,6 +479,20 @@
       <div class="info-banner" id="info-banner" role="status"></div>
     </div>
 
+    <!-- Pacing overview: each student's readiness color (same as their wallet) -->
+    <div class="section">
+      <h2 class="section-title">Pacing Overview <span class="dim" style="font-size:0.8rem">(student readiness — the same colors they see in My Ledger)</span></h2>
+      <div class="loading-note" id="pacing-loading" style="display:none">Loading…</div>
+      <div class="table-wrap" id="pacing-wrap" style="display:none">
+        <table class="grades">
+          <thead><tr><th>Student</th><th>Status</th><th>Progress</th><th>Last activity</th></tr></thead>
+          <tbody id="pacing-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-note" id="pacing-empty" style="display:none">No students.</div>
+      <div class="hint" id="pacing-legend"></div>
+    </div>
+
     <!-- Class grade table -->
     <div class="section">
       <h2 class="section-title">Class Grades</h2>
@@ -722,6 +736,9 @@
   <script src="roster_config.js"></script>
   <!-- Roster identity client; provides window.rosterClient.token() and .current() -->
   <script src="roster-client.js"></script>
+  <!-- Pure readiness logic shared with the student wallet (My Ledger) so the
+       pacing overview shows the SAME colors each student sees. -->
+  <script src="js/wallet_logic.js"></script>
 
   <script>
     // ===== guardrails =====
@@ -854,6 +871,122 @@
     // switching quarters re-renders without a refetch.
     var lastGradesPayload = null;
     var currentQuarter = 'Q1';
+
+    // ── Pacing overview: per-student readiness color (shared wallet_logic.js) ──
+    var _summerScheduleData = null;
+    (function _loadSummerSchedule() {
+      try {
+        fetch('data/summer-schedule.json')
+          .then(function (r) { return (r && r.ok) ? r.json() : null; })
+          .then(function (d) {
+            if (d && Array.isArray(d.lessons)) {
+              _summerScheduleData = d;
+              if (typeof lastGradesPayload !== 'undefined' && lastGradesPayload) renderPacingOverview(lastGradesPayload);
+            }
+          })
+          .catch(function () {});
+      } catch (_) {}
+    })();
+
+    function _pacingTodayISO() { try { return new Date().toISOString().slice(0, 10); } catch (_) { return ''; } }
+    function _pacingSummerMode(sch) { return !!(sch && sch.firstDayOfSchool && _pacingTodayISO() < sch.firstDayOfSchool); }
+
+    // doneCount over the summer schedule: a lesson is complete when its worksheet
+    // (Cws) >= 60 AND blooket >= 80 — the same gate the Desk's _isLessonComplete uses.
+    function _pacingDoneCount(student, sch) {
+      var done = {};
+      var lessons = (student && Array.isArray(student.lessons)) ? student.lessons : [];
+      for (var i = 0; i < lessons.length; i++) {
+        var L = lessons[i]; if (!L) continue;
+        var key = String(L.lessonKey || L.topicKey || L.topic || '');
+        var cws = (typeof L.Cws === 'number') ? L.Cws : null;
+        var bl = (typeof L.blooket === 'number') ? L.blooket : null;
+        if (key && cws != null && cws >= 60 && bl != null && bl >= 80) done[key] = true;
+      }
+      var count = 0;
+      (sch.lessons || []).forEach(function (sl) { if (sl && done[String(sl.topic)]) count++; });
+      return count;
+    }
+
+    function _pacingReadiness(student, sch) {
+      if (typeof WalletLogic === 'undefined') return null;
+      var today = _pacingTodayISO();
+      if (_pacingSummerMode(sch)) {
+        var doneCount = _pacingDoneCount(student, sch);
+        var lastISO = student.lastActivityAt ? String(student.lastActivityAt).slice(0, 10) : null;
+        return WalletLogic.summerReadiness(sch, today, doneCount, lastISO, sch.restDays);
+      }
+      var quarters = student.quarters || {};
+      var q = quarters[Object.keys(quarters)[0]]; // fall: first quarter (summer is the live mode now)
+      return q ? WalletLogic.walletReadiness(q) : null;
+    }
+
+    var _PACING_LABEL = {
+      done: 'Caught up ✓', caughtup: 'Caught up ✓', resting: 'On pace',
+      ready: 'Ready for next', catchingup: 'Catching up', behind: 'Behind',
+      notdue: 'Not started', nodue: '—', eligible: 'Eligible'
+    };
+    var _PACING_ORDER = { behind: 0, catchingup: 1, ready: 2, resting: 3, eligible: 3, done: 4, caughtup: 4, notdue: 5, nodue: 6 };
+
+    function _pacingRelTime(iso) {
+      if (!iso) return 'never';
+      try {
+        var then = new Date(iso).getTime();
+        if (!isFinite(then)) return '—';
+        var days = Math.floor((Date.now() - then) / 86400000);
+        if (days <= 0) return 'today';
+        if (days === 1) return 'yesterday';
+        return days + 'd ago';
+      } catch (_) { return '—'; }
+    }
+
+    function renderPacingOverview(payload) {
+      var tbody = $('pacing-tbody'), wrap = $('pacing-wrap'), empty = $('pacing-empty'), legend = $('pacing-legend');
+      if (!tbody) return;
+      var sch = _summerScheduleData;
+      var students = (payload && payload.students) || [];
+      if (!students.length) { wrap.style.display = 'none'; empty.style.display = 'block'; empty.textContent = 'No students.'; return; }
+      if (typeof WalletLogic === 'undefined' || !sch) {
+        wrap.style.display = 'none'; empty.style.display = 'block';
+        empty.textContent = 'Pacing colors need wallet_logic.js + data/summer-schedule.json to load.';
+        return;
+      }
+      var totalLessons = (sch.lessons || []).length;
+      var rows = students.map(function (s) { return { s: s, rd: _pacingReadiness(s, sch) }; })
+        .sort(function (a, b) {
+          var oa = a.rd && _PACING_ORDER[a.rd.state] != null ? _PACING_ORDER[a.rd.state] : 9;
+          var ob = b.rd && _PACING_ORDER[b.rd.state] != null ? _PACING_ORDER[b.rd.state] : 9;
+          if (oa !== ob) return oa - ob;
+          return ((a.rd && a.rd.actual) || 0) - ((b.rd && b.rd.actual) || 0);
+        });
+      tbody.innerHTML = '';
+      rows.forEach(function (row) {
+        var s = row.s, rd = row.rd;
+        var hue = (rd && typeof rd.hue === 'number') ? rd.hue : null;
+        var color = (hue == null) ? '#bbb' : ('hsl(' + hue + ',70%,45%)');
+        var state = rd ? (rd.state || '—') : '—';
+        var label = _PACING_LABEL[state] || state;
+        var actual = (rd && typeof rd.actual === 'number') ? rd.actual : 0;
+        var total = (rd && typeof rd.total === 'number') ? rd.total : totalLessons;
+        var tr = document.createElement('tr');
+        var tdName = document.createElement('td');
+        tdName.textContent = s.realName || s.username || s.studentId || '?';
+        tr.appendChild(tdName);
+        var tdStatus = document.createElement('td');
+        var dot = document.createElement('span');
+        dot.style.cssText = 'display:inline-block;width:12px;height:12px;border-radius:50%;background:' + color + ';border:1px solid #888;vertical-align:middle;margin-right:6px';
+        tdStatus.appendChild(dot);
+        tdStatus.appendChild(document.createTextNode(label));
+        tr.appendChild(tdStatus);
+        var tdProg = document.createElement('td'); tdProg.textContent = actual + ' / ' + total + ' lessons'; tr.appendChild(tdProg);
+        var tdTime = document.createElement('td'); tdTime.textContent = _pacingRelTime(s.lastActivityAt); tr.appendChild(tdTime);
+        tbody.appendChild(tr);
+      });
+      wrap.style.display = ''; empty.style.display = 'none';
+      legend.textContent = _pacingSummerMode(sch)
+        ? 'Summer pacing (Unit 1 by Sept 1): red = behind · cyan = catching up · green = caught up / on pace · grey = not started. Most-behind first. Same colors students see in My Ledger.'
+        : 'Readiness by current quarter: red = behind · yellow = eligible · green = caught up.';
+    }
 
     function renderGradesTable(payload) {
       var thead = $('grades-thead');
@@ -1319,6 +1452,7 @@
           showError('Invalid teacher secret');
           setLoading(false);
           renderGradesTable({ students: [] });
+          renderPacingOverview({ students: [] });
           renderGradebook({ students: [] });
           renderTrainerPractice({ students: [] });
           renderHeatmap({ heatmap: {} });
@@ -1350,6 +1484,7 @@
 
         renderGradesTable(gPayload);
         lastGradesPayload = gPayload;
+        renderPacingOverview(gPayload);
         renderGradebook(gPayload);
         renderTrainerPractice(gPayload);
         renderHeatmap(mPayload);
