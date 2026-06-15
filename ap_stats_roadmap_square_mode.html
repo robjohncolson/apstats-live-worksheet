@@ -1550,7 +1550,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-classroom.html','_blank')">&#128101; Live Classroom</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('https://robjohncolson.github.io/curriculum_render/verify.html','_blank','noopener')">&#129534; Verify a receipt...</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('https://robjohncolson.github.io/curriculum_render/teacher-verify.html','_blank','noopener')">&#128269; Verify a record (scan)...</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();openVerifyQR()">&#128269; Verify a record (scan)...</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
         </div>
@@ -14658,6 +14658,42 @@ function openReconcileQR() {
     }
 }
 window.openReconcileQR = openReconcileQR;
+
+/* Teacher-only: show a QR of the cr scan-to-verify tool so the teacher can open
+   it on their PHONE (where the camera scan is natural) and verify a student's
+   printed summary / receipt QR. The phone gets VERIFICATION; the live-gradebook
+   cross-check is teacher-token-gated (sign in on the phone, or use this device)
+   — we deliberately do NOT bridge the teacher token through the QR, since that
+   would leak teacher access to anyone who photographs the code. */
+function openVerifyQR() {
+    var url = 'https://robjohncolson.github.io/curriculum_render/teacher-verify.html';
+    var panel = document.getElementById('verify-qr-overlay');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'verify-qr-overlay';
+        panel.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center';
+        panel.innerHTML = '<div id="verify-qr-card" style="background:#fff;color:#111;max-width:340px;width:90%;border:2px solid #000;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.4);padding:16px;font-family:Geneva,Verdana,sans-serif"></div>';
+        panel.addEventListener('click', function(e){ if (e.target === panel) panel.style.display = 'none'; });
+        document.body.appendChild(panel);
+    }
+    panel.style.display = 'flex';
+    var card = document.getElementById('verify-qr-card');
+    card.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+        + '<strong style="font-size:16px">&#128269; Verify a Record</strong>'
+        + '<button onclick="document.getElementById(\'verify-qr-overlay\').style.display=\'none\'" aria-label="Close" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">&times;</button></div>'
+        + '<p style="margin:0 0 8px;font-size:13px">Scan with your phone to open the verifier there, then point it at a student’s printed summary / receipt QR.</p>'
+        + '<div id="verify-qr" style="display:flex;justify-content:center;margin:8px 0"></div>'
+        + '<div style="text-align:center"><a href="' + _deskEsc(url) + '" target="_blank" rel="noopener" style="font-size:12px">Open on this device →</a></div>';
+    var host = document.getElementById('verify-qr');
+    host.innerHTML = '';
+    if (typeof QRCode === 'function') {
+        new QRCode(host, { text: url, width: 170, height: 170, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+    } else {
+        host.textContent = url;
+    }
+}
+window.openVerifyQR = openVerifyQR;
 
 /* ═══ PROGRESS LEDGER — proto-git sessions/commits view ═══ */
 /* Fetches the signed, prev-chained commit history (GET /commits) and renders it
