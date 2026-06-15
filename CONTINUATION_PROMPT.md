@@ -1,109 +1,124 @@
-# CONTINUATION PROMPT — pre-launch lows folded + U5-U7 Blooket backfilled; NEXT = teacher's go-live req.ip glance + the last 3 Blooket sets
+# CONTINUATION PROMPT — identity layer + guest mode + proto-git ledger + next-year roster; NEXT = 2 Railway deploys + section-case fix
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-04 (session 5).
-> follow-alongs HEAD = `9bd9345`. Repo `apstats-live-worksheet`, branch `master`, GH Pages + `roster-server/`
-> auto-deploy to Railway on push. Teacher tests on the **public GH Pages URL** (SSHes from a work laptop) —
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-15 (session 7).
+> follow-alongs HEAD (last feature commit) = `a703240`. Repo `apstats-live-worksheet`, branch `master`, GH Pages +
+> `roster-server/` auto-deploy to Railway on push. Sibling repo **curriculum_render** = branch `main` (GH Pages +
+> `railway-server/` → `curriculumrender-production.up.railway.app`). Teacher tests on the **public GH Pages URL** —
 > commit+push promptly; `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews).
 > Memory dir: `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
-> **Real students + a colleague teacher onboard IMMINENTLY.**
+> **27 real students enrolled and LIVE (PeriodX). A colleague teacher may onboard.**
 
 ## ⏭ NEXT (in priority order)
-1. **LIVE go-live check (teacher-only) — DE-PRIORITIZED.** The teacher decided the per-IP claim cap going
-   global is a non-issue at one-section scale. The temp `[GOLIVE] claim req.ip=` log is **DEPLOYED** (`3bf0e29`,
-   top of `POST /roster/claim`) and passively prints real signups' `req.ip` to Railway logs. ACTION: glance once
-   during first-day onboarding to confirm `req.ip` is distinct per client, then **ask CC to revert the 4
-   `[GOLIVE]`/TEMP lines**. If `req.ip` is shared: bump `app.set('trust proxy', N)` to the real hop depth, OR set
-   env `SIGNUP_CLAIM_MAX=600` (and `VERIFY_IP_MAX` for the new verify limiter). Smoke: `/health`→`{ok:true}`;
-   one real signup → appears in Class Gradebook; teacher signup with **`apstats2627`** → `role=teacher`.
-2. **Blooket backfill — ✅ COMPLETE (s6, 2026-06-09). ALL 77 TOPICS COVERED.** The final 8 (4.7-4.12, 5.1, 5.2):
-   per-topic 35-q CSVs built via hybrid audit + adversarial verify (`ebb3cff`), uploaded END-TO-END by CC with
-   `Agent/scripts/upload-blooket.mjs` (CDP on the home-laptop Edge debug profile — teacher re-logged into Blooket
-   once), upserted to Supabase `lesson_urls` (read-back verified), propagated (roadmap-data + registry +
-   `blooket-lessons.json` 69→77), blooket+v3 tests 64/64. URLs in `BLOOKET_BACKFILL_CHECKLIST.md`.
-   **⚠ THE LIVE SOURCE IS STILL THE SUPABASE `lesson_urls` TABLE** — for any future set, QUERY it, don't trust
-   static files; recipe below stays valid.
-3. **Backlog (none blocking):**
-   (a) **username re-roll for EXISTING students** ("change my username", reuse the claim/unique FCFS machinery);
-   (b) **cr orphan-answers ONE-TIME PURGE** — the cascade is now LIVE (future deletes auto-clean cr `answers`),
-       but run this once on Supabase if you deleted any test accounts pre-launch:
-       `DELETE FROM public.answers WHERE username IN (SELECT a.username FROM public.answers a LEFT JOIN public.users u ON a.username=u.username WHERE u.username IS NULL);`
-   (c) Python `tools/schoology_components.py` PC+Poster + quiz-source fix is **DONE** (s5); the 3 stale root tests
-       are **DONE** (s5); the B/E + timezone divergence is **DONE** (s5); 3a/3c were investigated → no change needed.
+1. **DEPLOYS — confirm BOTH Railway servers picked up this session's endpoints** (push auto-deploys, but verify):
+   - **roster-server** (follow-alongs): `GET /commits` (signed prev-chained progress ledger). Until live, the wallet
+     **Sessions** per-session QR + the **🔐 Sign & QR** modal show "No signed commit yet." Issuer is enabled
+     (pubkey `DRfEbaWByfat…`).
+   - **cr `railway-server`**: NEW `GET /api/user-answers/:username`, `POST /api/guest/reconcile`,
+     `POST /api/roster/assign`, + username normalization on `/api/submit-answer` & `/api/batch-submit`. Until live,
+     the guest backup count, the teacher QR-scanner reconcile, and the roster panel write all fail. Smoke:
+     `/health` ok; `GET /api/user-answers/Date_Tiger` → count 43.
+2. **SECTION-CASE FIX (one SQL).** The 27 enrolled under **`PERIODX`** (all-caps); canonical is **`PeriodX`** (where
+   `date_tiger`/Robert Colson lives, what `/roster/open-sections` serves, the Desk fallback). Section match is
+   case-sensitive → self-signups + the name-picker would split off. Run on Supabase:
+   `UPDATE roster SET section='PeriodX' WHERE section='PERIODX';`
+3. **SCHOOLOGY UIDs** for the 27 — if not yet run, the `UPDATE roster SET schoology_uid=… WHERE real_name=…` block
+   (keyed by the exact enrolled real names; `/roster/enroll` has no UID field). Verify:
+   `SELECT count(*) FROM roster WHERE schoology_uid IS NOT NULL;`
+4. **(optional) Quiz↔Desk roster parity.** The 27 live in the **roster-server** (powers the *Desk's* real-name panel).
+   The **quiz's** identity panel reads a SEPARATE `users` table in curriculum_render (empty) → it won't show these
+   real names. Fix: push them via `POST /api/roster/assign`, or wire the quiz to read the roster-server.
+5. **(carried, de-prioritized) LIVE go-live req.ip diagnostic** — the temp `[GOLIVE]` log in `POST /roster/claim`
+   (`3bf0e29`) is still deployed; glance once during onboarding, then ask CC to revert the 4 TEMP lines.
 
-## ✅ SHIPPED THIS SESSION (2026-06-04, s5) — pre-launch lows + Blooket backfill
-- `3bf0e29` — **TEMP req.ip go-live diagnostic** in `POST /roster/claim` (revert after the check, see NEXT #1).
-- `62e9de6` — **roster-server (auto-deploys):**
-  - **#3d** `sectionToPeriod('PeriodX')→'E'`: the grade engine's due-filter AND the teacher-dashboard `due` flag
-    now read **Period E's** schedule (the Desk forces `cP='E'` for PeriodX) instead of the B∪E union a null period
-    triggered. Only relaxes premature due-zeros → **live PeriodX grades hold steady or tick UP**. +`PeriodX→E` test.
-  - **#3e** `verifyIpLimiter` (createRateLimiter, default 300/15min, env `VERIFY_IP_MAX`/`VERIFY_IP_WINDOW_MS`)
-    applied before bcrypt in `POST /roster/verify` (bcrypt-DoS hardening; unknown usernames already 401 pre-bcrypt,
-    so the vector is a flood of known usernames). +per-IP cap test.
-  - **#3b** `deleteRoster` returns `login_username`; new `db.deletePeerAnswers(username)` deletes the cr `answers`
-    rows (SAME Supabase instance, keyed by username, NOT FK'd) so a deleted student's peer answers don't orphan;
-    best-effort in the DELETE handler (a cleanup failure never fails the already-done delete). +2 cascade tests.
-  - roster-server **820/820**.
-- `38545ee` — **Desk + tests:** `tdy()` now returns "today" in the school timezone (America/New_York) to match
-  the server's `todayInTz` (no-op for Eastern users; fixed a `now`-scope bug in the proposed patch). + repaired the
-  **3 stale structural tests** (study-guide `../`→`./` [the files ARE git-tracked in the repo root; `../` doesn't
-  exist]; grade-pipeline-w4 modal slice 1200→1600 [`lesson.Cws` at offset 1445; code was fine]; poll-archive-desk
-  matches the `<script>` TAG string, not the bare filename [which also appears in a comment 25k chars before the tag]).
-  Full root suite **6916 passing**.
-- `0810362` — **Python Schoology generator** now mirrors `gradebook-grid.js`: quiz presence sourced from the ANSWER
-  KEY (gradable `^U#-L#-Q`, reads the inner `doc.answerKey` map) → the **{5.6, 9.3}** empty-column bug is gone;
-  added per-unit **PC + Poster** columns (kind `progress_check`/`poster`; keys `PC:U#`/`POSTER:U#` match node);
-  producer fills PC from `units[U#].pcRawPct`, Poster intentionally null (no rubric yet). Caller passes
-  `ANSWER_KEY_PATH`; fixed an empty-`topic_keys` sort crash. py **19/19**.
-- `9bd9345` (fa) + `baf16f9` (Agent) — **Blooket backfill U5.3-U7.9** (26 topics: 5.3-5.8, 6.1-6.11, 7.1-7.9):
-  mined the URLs from the live Supabase `lesson_urls` overlay → wrote `urls.blooket` into `roadmap-data.json` +
-  `Agent/state/lesson-registry.json` → regenerated `blooket-lessons.json` (**43→69** topics). **GRADE-AFFECTING:**
-  those topics now have `hasBlooket=true`, so recorded Blooket scores engage the v3 Blooket track (were
-  visible-but-uncounted: students could play them, the engine ignored them).
+## ✅ SHIPPED THIS SESSION (2026-06-14/15, s7) — identity, guest mode, proto-git ledger, roster, desk cleanup
+Cross-repo: **follow-alongs `master`** (Desk + roster-server) + **curriculum_render `main`** (quiz + railway-server +
+verify.html) + live Supabase data fixes. (A concurrent process committed some Desk edits mid-session — they landed.)
 
-### Decisions folded (no code change)
-- **#3a** signup-vs-signin: **KEEP current** (sign-in for returning devices, signup for brand-new). Both modals
-  already cross-link, so no one is stranded; best for the personal-device deployment.
-- **#3c** My Gradebook category-avg: **VERIFIED NO-OP** — the server average (`gradebook-grid.js`) only counts
-  non-null cells, which are always visible, so it can't fold in hidden columns. No churn added to the 14k-line Desk.
+**Original bug → full identity layer.** `date_tiger` saw none of their work on a new laptop. Root cause = **username
+case-split**: the main app normalizes to Title_Case (`Date_Tiger`) but worksheets wrote raw lowercase (`date_tiger`),
+and cloud restore (`smartSyncWithSupabase`) used case-sensitive `.eq`.
+- **cr `fbce1fe`** — restore now case-insensitive (`ilike`+client filter) + re-runs on turbo-connect (race fix);
+  usernames normalized server-side on every write + in the 3 cr worksheets; **Who's Online identity panel**
+  (`RosterIdentity`) + `POST /api/roster/assign`. cr `7fa7d1e` — worksheets set `currentUsername` so they join presence.
+- Live Supabase: **merged `date_tiger`→`Date_Tiger`** (43 answers), then **bulk-canonicalized 13** case/format-split
+  usernames (e.g. `Valeria Sanchez`→`Valeria_Sanchez`, `apple_monkey`→`Apple_Monkey`).
+- **Desk `40f2cb5`** — doge "Online Now" resolves usernames → **real names** via the roster (`/roster/list` for
+  teachers, `/roster/section`+PeriodX for students) and flags `Guest_`/`player#` as guests. **`dba0dcf`** —
+  `railway_client._presenceUsername` falls back currentUsername → rosterClient → guest, so **live worksheets now
+  join presence**.
 
-## 🔁 BLOOKET PIPELINE (for #2)
-**⚠ LIVE SOURCE = Supabase `lesson_urls.blooket_url`** (project `hgvnytaqmuybzbotosyj`; the Desk
-`loadSupabaseOverlay()` fetches `select=topic,worksheet_url,drills_url,quiz_url,blooket_url` at runtime). Rows are
-authored by the Agent repo's lesson-prep pipeline (`upload-blooket.mjs` creates the set via CDP on the teacher's
-logged-in Edge; `lesson-prep.mjs`/`sync-schedule-to-supabase.mjs` call `upsertLessonUrls`) — there is NO "cr editor"
-(s6 correction: cr only READS the table). `units.js` is NOT the live source either, and the STATIC files lag, so the v3 engine
-won't count a Blooket until it's propagated. **Recipe to backfill:** query `lesson_urls` for `blooket_url` per topic
-(anon key in the Desk) → write `urls.blooket` into BOTH `roadmap-data.json` (`.lessons[topic].urls.blooket`;
-`JSON.parse`→set→`JSON.stringify(obj,null,2)` with **NO** trailing newline = exact roundtrip) AND
-`Agent/state/lesson-registry.json` (`[topic].urls.blooket`; `JSON.stringify(obj,null,2)+'\n'` = exact roundtrip)
-→ run `roster-server/scripts/gen-blooket-lessons.mjs` (roadmap-data → `blooket-lessons.json`, the v3 Blooket-track
-denominator) → verify → commit fa (roadmap-data + blooket-lessons) + Agent (lesson-registry). I did TARGETED
-roadmap-data edits (NOT a full `build-roadmap-data.mjs` rebake), so the Desk's static `BAKED_REGISTRY` fallback
-still lags U5-U7 — the runtime overlay covers it, and a future rebake re-syncs it from the registry (the SOURCE).
-`units.js` (cr) tracks only videos+blookets and lags the overlay; it is NOT the engine source.
+**Guest mode (signed-out resilience).**
+- **`006435e`** — stable persisted **`Guest_Fruit_Animal`** identity (replaces random `Player####`); presence +
+  `submitAnswerViaRailway` fall back to it. **"My Guest Pass"** (doge footer, guest-only): name + QR (`?claimGuest=`)
+  + cloud count + downloadable backup. cr `d08965f` adds `GET /api/user-answers/:username`.
+- **`6662dae`** — fix: `DogePresence.getUsername()` prefers `rosterClient.current().username` so a signed-in student
+  isn't mis-tagged guest (was: missing `student-name`/`username` legacy keys → fell through to guest).
+- **Teacher reconcile:** cr `21aea3a` `POST /api/guest/reconcile` (collision-safe re-key guest→roster student); desk
+  `1b2c99b` **`teacher-guest-reconcile.html`** mobile QR scanner; `7fcb13d` teacher-only "Guest Reconcile" doge entry
+  (QR to open the scanner on a phone); `dac4f7c` robust scanner (explicit back camera + **photo/screenshot fallback**
+  + vendored `lib/html5-qrcode.min.js`); `e0ce643` dropped the admin-token field (open by default; `?adminToken=` opt).
+
+**Proto-git progress ledger** (blob = signed Ed25519 `item_ledger` receipt; commit = signed merkle manifest;
+verify.html = fsck).
+- **roster-server `7ece0db`** — `GET /commits`: **deterministic, signed, prev-chained** commit history computed from
+  the immutable `item_ledger` receipts (**NO table/migration**). Gap-grouped sessions (25-min) → 8-receipt QR chunks
+  → Ed25519 manifests chained by `prev`. `commits.js buildCommits` is order-independent + stable; `issueCommitReceipt`
+  (t:'commit') in `receipts.js`. roster-server **903 tests pass**.
+- **cr verify.html `b7ea669`** — `#commit=` verifier (decode {manifest,receipts} → verify manifest + each receipt +
+  recompute root + show prev). `aa31805` — UI polish (✓/✕ glyph in the seal, fact-row dividers, mobile).
+- **Desk wallet** — `155f0a5` "Sessions" view + **Vault Hex** icon (`icons/icon-ledger.svg`); `aeef2fd` **Sessions =
+  default wallet lens** (session = 25-min time-burst; lesson/type nested under it; Lessons/Types/Days kept secondary —
+  `WalletLogic.groupReceipts(_,'session')`); `532f856` per-session **Verify/QR** in the feed (maps a feed session to
+  its signed commit by receipt-subset) + Vault icon in the menu. (The `🔐 Sign & QR` modal is the full-chain view.)
+
+**Next-year roster.** 27 students enrolled via the **teacher-roster-console "Enroll Class"** (→ `/roster/enroll`, auto
+Fruit_Animal usernames, bcrypt pw `apstats2627` must-change, credentials CSV). Section `PERIODX` (NEXT #2); UID
+backfill SQL provided (NEXT #3).
+
+**Desk cleanup.** `a7847bf` — removed redundant desktop icons (TI-84/Quiz/Equation Trainer/Study Break); apps now live
+in the **Apps menu** (Study Break on the doge); **My Ledger** keeps its desktop icon. Each in-desk app window got an
+**↗ "open in new window"** button (`popOutApp`→`window.open` of `APP_REGISTRY[id].url`); `c3aebed`/`a703240` fixed its
+visibility (z-index over the title stripes) + styled it as a purple button.
 
 ## ⚠ GOTCHAS (load-bearing)
-- **USE_V3_GRADING is LIVE.** Grade-engine/`gradebook-grid.js`/`blooket-lessons.json` changes move REAL grades.
-  This session's **#3d (PeriodX→E)** AND **Blooket backfill** both moved live grades intentionally (both can only
-  raise/hold, not tank). The display date-gate is DISPLAY-ONLY; the server `col.due` flag is ADDITIVE (no opts →
-  no `due` → clients show all = safe degrade).
-- **Blooket live source = Supabase `lesson_urls`, not the static files** (see pipeline). Always query it to check coverage.
-- The **Desk** (`ap_stats_roadmap_square_mode.html`, ~14k lines) is a SINGLE FILE edited directly. jsdom CAN host it
-  (canvas getContext throws → load-throw, hoisted functions stay callable). Keep render helpers function-local +
-  typeof-guard cross-feature calls. For control-char regex patterns use a node script / PowerShell byte-replace, not Edit.
-- **Commit own paths only** — both repos have many unrelated dirty/untracked files (`.ai-tutor-*.result.md`, etc.).
-  Stage explicit paths; never `git add -A`.
-- **`git commit -m @'…'@` here-string LEAKS a stray `@`** → write the message to a temp file + `git commit -F`.
-- **Cross-repo:** this session touched 3 repos — follow-alongs (`master`, GH Pages+Railway), Agent (`master`,
-  lesson-registry source), curriculum_render (`main`, GH Pages + units.js + `curriculum.js` is SACRED — never edit).
-  Both roster-server (follow-alongs) AND cr's `answers`/`users` tables live in the SAME Supabase (`bzqbhtru…`/cr URL).
-- **Bash tool resets cwd between calls + MSYS2 mangles backslashes in heredocs** — use absolute paths + the Write
-  tool for node scripts. **In `node -e`, don't name a var `URL`** (shadows the global `fetch` uses → "URL is not a
-  constructor"). Workflow scripts: NO backticks inside template-literal strings.
-- Green baselines: **roster-server 820**; python schoology **19/19**; full root **6916 passing**. The only remaining
-  root noise is a flaky parallel `localStorage`-leak in `desk-student-dm` / `gradebook-feeder-wiring` (unhandled-error
-  logs, 36/36 + 134/134 assertions PASS in isolation). The 3 previously-failing root tests are now FIXED.
-- Migrations are USER-RUN on Supabase; **NONE new this session**. The DB UNIQUE on `roster.login_username` is the FCFS guarantee.
+- **CASE-SENSITIVITY is the recurring footgun.** Supabase `.eq` is byte-exact for usernames AND `roster.section`.
+  Normalize on write; canonicalize usernames to Title_Case and section to `PeriodX`. (Both the `date_tiger` bug and
+  the `PERIODX` enrollment are this.)
+- **TWO roster stores, SAME Supabase (`bzqbhtru…`).** roster-server's **`roster`** table (real names, sections,
+  `schoology_uid`; powers the **Desk** panel; RLS = service-role only) vs curriculum_render's **`users`** table
+  (powers the **quiz** panel; empty). Different tables — don't conflate.
+- **Guest identity** = persisted `Guest_Fruit_Animal` (localStorage `apstats_guest_identity`), from
+  `railway_client.getGuestIdentity()`; `Guest_` prefix = the flag. Signed-in users MUST resolve via rosterClient
+  first (`6662dae`) or they're mis-tagged.
+- **Commit chain is RECOMPUTED, not stored.** `GET /commits` is deterministic from the ledger; same input → same
+  chain; new work appends at the head. No `student_commits` table (that's Phase 3 if you ever want persistence).
+- **Two Railway servers** both need deploys for this session's endpoints (NEXT #1).
+- **USE_V3_GRADING is LIVE.** Grade-engine / `gradebook-grid.js` / `blooket-lessons.json` changes move REAL grades.
+  Prior live-grade moves (s5, all raise/hold-only): **#3d PeriodX→E** due-filter; Blooket backfill; **#3e
+  verifyIpLimiter** + delete-cascade to cr `answers` are also live.
+- **The Desk** (`ap_stats_roadmap_square_mode.html`, ~14k lines, SINGLE FILE). Title-bar stacking: `.title-stripes`
+  are `position:absolute z-index:1`, `.close-box`/`.collapse-box` `z-index:3` — any new title-bar control needs
+  `z-index:3+` or it's painted over. jsdom can host the file (canvas `getContext` throws on load → hoisted functions
+  stay callable). Keep render helpers function-local + typeof-guard cross-feature calls.
+- **Commit own paths only** — both repos have unrelated dirty/untracked files; stage explicit paths, never `git add -A`.
+  `git commit -m @'…'@` here-strings LEAK a stray `@` → use `git commit -F` a temp file (or the Bash heredoc).
+- **Bash tool resets cwd between calls.** Use absolute paths + the Write tool for node scripts. Syntax-check the
+  Desk's inline JS by regex-extracting `<script>` blocks through `vm.Script`. roster-server uses **bcryptjs** (pw
+  cost 12). In `node -e`, don't name a var `URL`.
+- **Green baselines:** roster-server **903**; wallet-logic **28**; cr railway-server **350**. Migrations are USER-RUN
+  on Supabase; **NONE new this session** (the commit chain deliberately avoids one). `roster.login_username` DB UNIQUE
+  is the FCFS guarantee.
+
+## 🔁 BLOOKET PIPELINE (durable reference — unchanged this session)
+**⚠ LIVE SOURCE = Supabase `lesson_urls.blooket_url`** (project `hgvnytaqmuybzbotosyj`; the Desk
+`loadSupabaseOverlay()` fetches `select=topic,worksheet_url,drills_url,quiz_url,blooket_url` at runtime). All 77
+topics are covered (s6). Rows are authored by the Agent repo's lesson-prep pipeline (`upload-blooket.mjs` creates the
+set via CDP on the teacher's logged-in Edge; `lesson-prep.mjs`/`sync-schedule-to-supabase.mjs` call `upsertLessonUrls`)
+— cr only READS the table; `units.js` is NOT the live source and the STATIC files lag. **Recipe to backfill a topic:**
+query `lesson_urls.blooket_url` → write `urls.blooket` into BOTH `roadmap-data.json` (`.lessons[topic].urls.blooket`;
+`JSON.stringify(obj,null,2)` NO trailing newline) AND `Agent/state/lesson-registry.json` (`+'\n'`) → run
+`roster-server/scripts/gen-blooket-lessons.mjs` (→ `blooket-lessons.json`, the v3 Blooket denominator) → verify →
+commit fa + Agent. A topic isn't COUNTED by the v3 engine until propagated.
 
 ---
-_(Older session notes removed 2026-06-04 s5. The above is authoritative.)_
+_(s5/s6 session narratives pruned 2026-06-15 s7; the above is authoritative. Durable s5 facts folded into GOTCHAS.)_
