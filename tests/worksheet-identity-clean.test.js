@@ -62,3 +62,19 @@ describe('Worksheet identity — clean (no stale name/period/username)', () => {
     }
   });
 });
+
+describe('Worksheet config scripts load same-dir (../ 404s on GH Pages)', () => {
+  it('no worksheet loads ../railway_client.js or ../railway_config.js', () => {
+    const bad = worksheets.filter((f) => {
+      const s = readFileSync(resolve(repo, f), 'utf8');
+      return s.includes('src="../railway_client.js"') || s.includes('src="../railway_config.js"');
+    });
+    expect(bad).toEqual([]);
+  });
+
+  it('worksheets load railway_client.js + railway_config.js same-dir', () => {
+    const s = readFileSync(resolve(repo, worksheets[0]), 'utf8');
+    expect(s).toContain('src="railway_client.js"');
+    expect(s).toContain('src="railway_config.js"');
+  });
+});
