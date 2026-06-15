@@ -1563,6 +1563,11 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openGame()" style="font-weight:bold">&#127918; Study Break...</div>
         </div>
     </span>
+    <span class="menu-item" data-menu="help">Help
+        <div class="menu-dropdown" id="menu-help">
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openGradeHelp==='function')openGradeHelp()">&#9432; How grades work</div>
+        </div>
+    </span>
     <span class="menu-spacer"></span>
     <span id="menu-identity" style="cursor:pointer;font-size:11px;padding:0 8px;white-space:nowrap" title="Your sign-in — click to sign in" onclick="closeMenus();openSignInModal()">Sign in</span>
     <span id="mac-mute" style="cursor:pointer;font-size:12px;padding:0 6px" onclick="MacSFX.init();document.getElementById('mac-mute').textContent=MacSFX.toggleMute()?'🔇':'🔊'">🔊</span>
@@ -6904,6 +6909,44 @@ try {
 // Render the compact Q1-Q4 grade outlook strip inside the Do Now card.
 // Fire-and-forget; never throws. Hides the strip on any failure.
 // Phase 6: also caches lessons[] for the per-day click-through modal.
+// Paint the Do Now card with the SAME readiness color the My Ledger uses
+// (red = behind … green = caught up, cyan = catching up — a combo of how long
+// since the last session and how much work is done vs deadlines), and make the
+// whole card a one-tap entry into My Ledger (its chips were removed). Idempotent.
+function _paintDoNowReadiness() {
+  try {
+    var card = document.getElementById('donow-card');
+    if (!card) return;
+    if (!card._ledgerWired) {
+      card._ledgerWired = true;
+      card.style.cursor = 'pointer';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.title = 'Open My Ledger — your grade, pacing, and recorded work';
+      card.addEventListener('click', function (e) {
+        // Don't hijack clicks on interactive children (pills, the My Gradebook chip).
+        if (e.target && e.target.closest && e.target.closest('a,button,[role="button"],input,select')) return;
+        if (typeof openWallet === 'function') openWallet();
+      });
+      card.addEventListener('keydown', function (e) {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === card) {
+          e.preventDefault();
+          if (typeof openWallet === 'function') openWallet();
+        }
+      });
+    }
+    var rd = (typeof _walletDisplayReadiness === 'function') ? _walletDisplayReadiness() : null;
+    if (rd && rd.state !== 'nodue' && typeof rd.hue === 'number') {
+      card.style.background = 'hsl(' + rd.hue + ',60%,92%)';
+      card.style.borderColor = 'hsl(' + rd.hue + ',65%,45%)';
+    } else {
+      // No active readiness (signed out / nothing due) → let the state class show.
+      card.style.background = '';
+      card.style.borderColor = '';
+    }
+  } catch (_) {}
+}
+
 async function renderDoNowGrades(baseUrl, token) {
   var host = document.getElementById('donow-grades');
   if (!host) return;
@@ -7024,19 +7067,7 @@ async function renderDoNowGrades(baseUrl, token) {
       host.appendChild(_trackChip('Work', workAvg, 'Work-engagement track (worksheets, quizzes, Blooket)'));
     }
 
-    // grade-clarity (2026-05-31): a subtle link to the "how grades work" explainer.
-    var help = document.createElement('span');
-    help.className = 'qhelp';
-    help.setAttribute('role', 'button');
-    help.setAttribute('tabindex', '0');
-    help.title = 'How your quarter grade is calculated';
-    help.textContent = 'ⓘ how grades work';
-    help.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
-    help.onclick = function () { if (typeof openGradeHelp === 'function') openGradeHelp(); };
-    help.onkeydown = function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openGradeHelp === 'function') openGradeHelp(); }
-    };
-    host.appendChild(help);
+    // "how grades work" moved to the Help menu (top bar) — declutter the Do Now.
 
     // Phase 3: "My Gradebook" — pops the per-component modal from the Do Now strip
     // (every score that rolls up to the grade). Only shown once the gradebook field
@@ -7055,44 +7086,10 @@ async function renderDoNowGrades(baseUrl, token) {
         host.appendChild(gbChip);
     }
 
-    // Always-visible Wallet entry (the desktop 👛 icon is hidden on ≤700px
-    // screens, so the Do Now strip is the reliable cross-device path). Opens the
-    // Wallet — balance + the full recorded-work receipt feed (superset of the
-    // older My Receipts modal). Falls back to that modal if openWallet is absent.
-    var receiptsChip = document.createElement('span');
-    receiptsChip.setAttribute('role', 'button');
-    receiptsChip.setAttribute('tabindex', '0');
-    receiptsChip.title = 'Your ledger — grade, points, and verifiable recorded work';
-    receiptsChip.textContent = '👛 My Ledger';
-    receiptsChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
-    var _openWalletChip = function () {
-        if (typeof openWallet === 'function') openWallet();
-        else if (typeof openMyReceipts === 'function') openMyReceipts();
-    };
-    receiptsChip.onclick = _openWalletChip;
-    receiptsChip.onkeydown = function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); _openWalletChip(); }
-    };
-    host.appendChild(receiptsChip);
-
-    // Teacher parity: a "Class Gradebook" chip alongside the student's own, so a
-    // teacher reaches the class view the same way students reach their grade.
-    // (Also available under the Teacher menu.) Hidden while previewing-as-student.
-    try {
-        if (typeof _deskIsTeacher === 'function' && _deskIsTeacher()) {
-            var cgChip = document.createElement('span');
-            cgChip.setAttribute('role', 'button');
-            cgChip.setAttribute('tabindex', '0');
-            cgChip.title = 'See any student’s gradebook';
-            cgChip.textContent = '📊 Class Gradebook';
-            cgChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
-            cgChip.onclick = function () { if (typeof openClassGradebook === 'function') openClassGradebook(); };
-            cgChip.onkeydown = function (e) {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openClassGradebook === 'function') openClassGradebook(); }
-            };
-            host.appendChild(cgChip);
-        }
-    } catch (_) {}
+    // The "My Ledger" chip is gone — the whole Do Now card is now clickable and
+    // opens My Ledger (_paintDoNowReadiness wires it), the reliable path on every
+    // device (the desktop 👛 icon hides on ≤700px screens). The "Class Gradebook"
+    // chip is gone too — redundant with the Teacher menu's Class Gradebook item.
 
     host.style.display = 'flex';
 
@@ -7100,6 +7097,7 @@ async function renderDoNowGrades(baseUrl, token) {
     // typeof-guarded so the existing renderDoNowGrades tests don't need it.
     if (typeof renderWhySoLow === 'function') renderWhySoLow(curQ, q);
     if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
+    if (typeof _paintDoNowReadiness === 'function') _paintDoNowReadiness();
   } catch (_) {
     host.style.display = 'none';
     var _wh = document.getElementById('donow-helper');
