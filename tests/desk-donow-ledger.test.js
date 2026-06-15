@@ -1,7 +1,8 @@
 // desk-donow-ledger.test.js — the Do Now card is now colored by the SAME
 // readiness the My Ledger uses and is itself a one-tap entry into My Ledger; the
-// redundant chips (My Ledger / Class Gradebook) were removed and "how grades
-// work" moved to a Help menu. (My Gradebook stays until it folds into the Ledger.)
+// redundant chips (My Ledger / Class Gradebook / My Gradebook) were removed and
+// "how grades work" moved to a Help menu. "My Gradebook" (score breakdown · vs
+// Schoology) is folded into the My Ledger window as a collapsible section.
 //
 // @vitest-environment node
 
@@ -25,13 +26,24 @@ describe('Do Now card — readiness color + single My Ledger entry', () => {
   it('makes the whole card open My Ledger (openWallet) on click', () => {
     expect(paintFn).toContain('openWallet()');
     expect(paintFn).toContain("card.setAttribute('role', 'button')");
-    // doesn't hijack clicks on interactive children (the My Gradebook chip etc.)
+    // doesn't hijack clicks on interactive children (links/buttons inside the card)
     expect(paintFn).toMatch(/closest\('a,button,\[role="button"\]/);
   });
 
-  it('removed the redundant Do Now chips (My Ledger / Class Gradebook)', () => {
+  it('removed the redundant Do Now chips (My Ledger / Class Gradebook / My Gradebook)', () => {
     expect(DESK).not.toContain('receiptsChip');
     expect(DESK).not.toContain('cgChip');
+    expect(DESK).not.toContain('gbChip');           // My Gradebook chip folded into the Ledger
+  });
+
+  it('folds the score breakdown · vs Schoology into the My Ledger window', () => {
+    // the wallet paint builds the collapsible breakdown and drives the SAME
+    // renderMyGradebook with its own containers (so the modal/teacher reuse stays).
+    const paint = DESK.slice(DESK.indexOf('function _walletPaint'), DESK.indexOf('function _walletReceiptRow'));
+    expect(paint).toMatch(/Score breakdown · vs Schoology/);
+    expect(paint).toContain('renderMyGradebook(_firstGradebookQuarter(_activeGradebook), bdBody, bdTabs)');
+    // renderMyGradebook accepts injectable containers (defaults preserve the modal)
+    expect(DESK).toMatch(/function renderMyGradebook\(qk, bodyEl, tabsEl\)/);
   });
 
   it('moved "how grades work" to a Help menu', () => {

@@ -7069,22 +7069,10 @@ async function renderDoNowGrades(baseUrl, token) {
 
     // "how grades work" moved to the Help menu (top bar) — declutter the Do Now.
 
-    // Phase 3: "My Gradebook" — pops the per-component modal from the Do Now strip
-    // (every score that rolls up to the grade). Only shown once the gradebook field
-    // is present in the cached /grade payload.
-    if (_gradeGradebookCache && _gradeGradebookCache.quarters) {
-        var gbChip = document.createElement('span');
-        gbChip.setAttribute('role', 'button');
-        gbChip.setAttribute('tabindex', '0');
-        gbChip.title = 'See every score that makes up your grade';
-        gbChip.textContent = '📊 My Gradebook';
-        gbChip.style.cssText = 'cursor:pointer;color:#0000cc;font-size:9px;align-self:center;text-decoration:underline;margin-left:8px';
-        gbChip.onclick = function () { if (typeof openMyGradebook === 'function') openMyGradebook(); };
-        gbChip.onkeydown = function (e) {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (typeof openMyGradebook === 'function') openMyGradebook(); }
-        };
-        host.appendChild(gbChip);
-    }
+    // "My Gradebook" (the score-by-score breakdown · vs Schoology) folded into the
+    // My Ledger window's collapsible "Score breakdown" section — reachable by
+    // tapping the Do Now card. No chip here. (openMyGradebook + the modal remain
+    // for the teacher Class Gradebook reuse.)
 
     // The "My Ledger" chip is gone — the whole Do Now card is now clickable and
     // opens My Ledger (_paintDoNowReadiness wires it), the reliable path on every
@@ -11308,6 +11296,44 @@ function _walletPaint(host, receipts, loading) {
     legend.textContent = 'red = behind · yellow = eligible for best-of · green = all caught up';
     host.appendChild(legend);
 
+    // ── Score breakdown · vs Schoology (folded in from the old My Gradebook) ──
+    // Collapsible so the wallet leads with grade + work; expand for the score-by-
+    // score component grid + the Schoology-vs-live comparison. Reuses the
+    // parameterized renderMyGradebook with the wallet's own containers.
+    if (_gradeGradebookCache && _gradeGradebookCache.quarters) {
+        var bd = document.createElement('div');
+        bd.style.cssText = 'border:1px solid var(--black);background:#fff;border-radius:3px;margin-bottom:12px;'
+            + 'box-shadow:inset 1px 1px 0 0 #fff,inset -1px -1px 0 0 #888';
+        var bdHdr = document.createElement('button');
+        bdHdr.type = 'button';
+        bdHdr.className = 'geneva';
+        bdHdr.style.cssText = 'width:100%;display:flex;align-items:center;gap:6px;text-align:left;border:0;background:#eee;padding:6px 8px;cursor:pointer;font-size:11px';
+        bdHdr.innerHTML = '<span class="bd-caret" style="width:12px">▸</span>'
+            + '<span style="font-weight:bold">📊 Score breakdown · vs Schoology</span>';
+        var bdBox = document.createElement('div');
+        bdBox.style.cssText = 'display:none;padding:8px';
+        var bdTabs = document.createElement('div');
+        bdTabs.style.cssText = 'display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap';
+        var bdBody = document.createElement('div');
+        bdBody.className = 'geneva';
+        bdBody.style.cssText = 'font-size:11px';
+        bdBox.appendChild(bdTabs);
+        bdBox.appendChild(bdBody);
+        var bdOpen = false;
+        bdHdr.onclick = function () {
+            bdOpen = !bdOpen;
+            bdBox.style.display = bdOpen ? 'block' : 'none';
+            var caret = bdHdr.querySelector('.bd-caret'); if (caret) caret.textContent = bdOpen ? '▾' : '▸';
+            if (bdOpen && typeof renderMyGradebook === 'function') {
+                _activeGradebook = _gradeGradebookCache;
+                renderMyGradebook(_firstGradebookQuarter(_activeGradebook), bdBody, bdTabs);
+            }
+        };
+        bd.appendChild(bdHdr);
+        bd.appendChild(bdBox);
+        host.appendChild(bd);
+    }
+
     // ── Feed header ──
     var head = document.createElement('div');
     head.className = 'chicago';
@@ -11755,10 +11781,12 @@ function _gbDateStr(d) {
     return m[d.getMonth()] + ' ' + d.getDate();
 }
 
-function renderMyGradebook(qk) {
+function renderMyGradebook(qk, bodyEl, tabsEl) {
     _myGradebookQuarter = qk;
-    var body = document.getElementById('my-gradebook-body');
-    var tabs = document.getElementById('my-gradebook-qtabs');
+    // bodyEl/tabsEl default to the modal's elements; My Ledger passes its OWN
+    // containers so the same breakdown renders inline inside the wallet.
+    var body = bodyEl || document.getElementById('my-gradebook-body');
+    var tabs = tabsEl || document.getElementById('my-gradebook-qtabs');
     if (!body || !tabs) return;
 
     // Quarter tabs.
@@ -11768,7 +11796,7 @@ function renderMyGradebook(qk) {
         b.className = 's7btn';
         b.style.cssText = 'font-size:9px;padding:1px 6px' + (k === qk ? ';font-weight:bold;background:#cde' : '');
         b.textContent = k;
-        b.onclick = function () { renderMyGradebook(k); };
+        b.onclick = function () { renderMyGradebook(k, body, tabs); };
         tabs.appendChild(b);
     });
 
