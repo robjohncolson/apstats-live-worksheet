@@ -1521,7 +1521,6 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('ti84')" style="font-weight:bold">&#128290; TI-84 Trainer</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('quiz')" style="font-weight:bold">&#128221; AP Stats Quiz</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openGame==='function')openGame()" style="font-weight:bold">&#127918; Study Break</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold"><img src="icons/icon-ledger.svg" alt="" style="width:14px;height:14px;vertical-align:-3px;margin-right:3px">My Ledger</div>
             <!-- Driller deprecated — removed 2026-05 -->
@@ -1575,24 +1574,10 @@
 </div>
 
 <!-- ═══ App Desktop Icons ═══ -->
-<div class="app-icon" data-app="ti84" style="top:36px;right:20px;left:auto" ondblclick="openApp('ti84')" onclick="selectAppIcon(this)">
-    <div class="icon-img" data-emoji="&#128290;"><img src="icons/icon-ti84.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
-    <div class="icon-label">TI-84 Trainer</div>
-</div>
-<div class="app-icon" data-app="quiz" style="top:108px;right:20px;left:auto" ondblclick="openApp('quiz')" onclick="selectAppIcon(this)">
-    <div class="icon-img" data-emoji="&#128221;"><img src="icons/icon-quiz.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
-    <div class="icon-label">AP Stats Quiz</div>
-</div>
-<div class="app-icon" data-app="formulas" style="top:180px;right:20px;left:auto" ondblclick="openApp('formulas')" onclick="selectAppIcon(this)">
-    <div class="icon-img" data-emoji="&#9889;"><img src="icons/icon-formulas.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
-    <div class="icon-label">Equation Trainer</div>
-</div>
-<!-- Driller icon deprecated — removed 2026-05 -->
-<div class="app-icon" data-app="game" style="top:324px;right:20px;left:auto" ondblclick="openGame()" onclick="selectAppIcon(this)">
-    <div class="icon-img" data-emoji="&#127918;"><img src="icons/icon-tetris.png" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
-    <div class="icon-label">Study Break</div>
-</div>
-<div class="app-icon" data-app="wallet" style="top:396px;right:20px;left:auto" ondblclick="openWallet()" onclick="selectAppIcon(this)">
+<!-- TI-84 / Quiz / Equation Trainer / Study Break removed from the desktop to cut
+     icon↔menu redundancy — they live in the Apps menu (Study Break is also on the
+     doge icon). My Ledger stays on the desktop. -->
+<div class="app-icon" data-app="wallet" style="top:36px;right:20px;left:auto" ondblclick="openWallet()" onclick="selectAppIcon(this)">
     <div class="icon-img" data-emoji="&#128272;"><img src="icons/icon-ledger.svg" alt="" onload="this.parentElement.classList.add('has-png')" onerror="this.style.display='none'"></div>
     <div class="icon-label">My Ledger</div>
 </div>
@@ -2035,6 +2020,7 @@
             <div class="close-box" onclick="destroyApp('ti84')" title="Close"></div>
             <div class="title-stripes"></div>
             <span class="title-text chicago">TI-84 Trainer</span>
+            <span onclick="popOutApp('ti84')" title="Open in a new window" style="cursor:pointer;font-size:12px;line-height:1;margin:0 6px;user-select:none">&#8599;</span>
             <div class="collapse-box" onclick="minimizeApp('ti84')" title="Minimize"></div>
         </div>
         <div class="app-content">
@@ -2050,6 +2036,7 @@
             <div class="close-box" onclick="destroyApp('quiz')" title="Close"></div>
             <div class="title-stripes"></div>
             <span class="title-text chicago">AP Stats Quiz</span>
+            <span onclick="popOutApp('quiz')" title="Open in a new window" style="cursor:pointer;font-size:12px;line-height:1;margin:0 6px;user-select:none">&#8599;</span>
             <div class="collapse-box" onclick="minimizeApp('quiz')" title="Minimize"></div>
         </div>
         <div class="app-content">
@@ -2065,6 +2052,7 @@
             <div class="close-box" onclick="destroyApp('formulas')" title="Close"></div>
             <div class="title-stripes"></div>
             <span class="title-text chicago">Equation Trainer</span>
+            <span onclick="popOutApp('formulas')" title="Open in a new window" style="cursor:pointer;font-size:12px;line-height:1;margin:0 6px;user-select:none">&#8599;</span>
             <div class="collapse-box" onclick="minimizeApp('formulas')" title="Minimize"></div>
         </div>
         <div class="app-content">
@@ -14167,6 +14155,14 @@ function openApp(id) {
 }
 
 // Close = fully destroy (clear iframe)
+// Open in new window: pop the app out to a real browser tab/window.
+function popOutApp(id) {
+    var app = APP_REGISTRY[id];
+    if (!app) return;
+    try { if (typeof MacSFX !== 'undefined') MacSFX.play('click', 0.3); } catch (e) {}
+    window.open(app.url, '_blank', 'noopener');
+}
+
 function destroyApp(id) {
     if (typeof MacSFX !== 'undefined') MacSFX.play('click', 0.3);
     var overlay = document.getElementById('app-' + id + '-overlay');
