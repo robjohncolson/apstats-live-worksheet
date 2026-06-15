@@ -1774,7 +1774,9 @@
                 </style>
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
-                <div style="margin-top:6px;font-size:10px;border-top:1px solid #ddd;padding-top:6px">New student? <a href="#" id="signin-to-signup" onclick="_switchToSignUp();return false;">&#127922; Create your account</a></div>
+                <!-- "Create your account" intentionally lives ONLY in the name finder's
+                     "not on the list" fallback now (after a student has tried the dial),
+                     so it isn't an upfront shortcut around the pre-enrolled roster. -->
             </div>
         </div>
         <div class="dialog-btns">
@@ -5242,9 +5244,17 @@ function _deskAccessGranted() {
   // (Done clicks that never persist). Matches the worksheet wall (rosterClient.current()).
   try {
     var live = !!(window.rosterClient && window.rosterClient.current && window.rosterClient.current());
-    return live || _deskIsTeacher();
+    return live || _deskIsTeacher() || _deskGuestOk();
   }
   catch (_) { return true; }
+}
+// True once a student has chosen to work as a guest (gated behind the name
+// finder's dial — see _nfGuestSignIn). Lets the stable Guest_ identity past the
+// sign-in wall; the student can sign in to their real account anytime from the
+// menu, which clears this flag.
+function _deskGuestOk() {
+  try { return sessionStorage.getItem('apstats_desk_guest_ok') === '1'; }
+  catch (_) { return false; }
 }
 // True while the sign-in modal is up as a mandatory wall (not signed in).
 // closeSignInModal() refuses to dismiss the modal while this holds.
@@ -5956,6 +5966,7 @@ async function submitSignIn() {
     var who = (window.rosterClient.current && window.rosterClient.current()) || {};
     var legacyKey = who.username || username;
     localStorage.setItem('apstats_desk_student_email', legacyKey);
+    try { sessionStorage.removeItem('apstats_desk_guest_ok'); } catch (_) {}   // real sign-in supersedes guest
     registerStudent(legacyKey);
     // 2026-05-20: remember this username for the sign-in dropdown.
     if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
@@ -5983,20 +5994,27 @@ async function submitSignIn() {
   }
 }
 
-/* ═══ Quaternary Combo-Lock Name Finder ═══════════════════════════════════
-   Onboarding helper: a student finds their name by "turning a dial" — each
-   press splits the alphabetical class roster into up to 4 name-range buckets
-   laid out as a diamond (↑ top / ← left / → right / ↓ bottom), in alphabetical
-   order so left<right reads naturally. ~2–3 presses for ~27 students.
-   It is COSMETIC identity resolution only: it fills #signin-username and hands
-   off to the existing password sign-in (submitSignIn) — the password stays the
-   real gate. Resolves to login_username but DISPLAYS realName, so a student can
-   still find themselves after a username reroll. Roster comes from the same
-   cached _fetchPeriodRoster() the dropdown uses; empty roster (offline) falls
-   back to the plain sign-in modal so a student is never trapped. */
+/* ═══ Quaternary Combo-Lock Name Finder (picker-first sign-in) ═════════════
+   The PRIMARY way a student signs in. Three states render into #nf-content:
+     dial     — a diamond of name-range buckets (↑ top / ← left / → right /
+                ↓ bottom), alphabetical so left<right reads naturally. ~2–3
+                presses for ~27 students (unit-tested: every name, ≤3 presses).
+     password — greet by realName, ask ONLY for the password (no username field
+                to type). Reuses rosterClient.signIn — the password is the gate.
+     notfound — reachable ONLY after the student has turned the dial at least
+                once (the _nfPressed gate); offers "sign in as guest" + "create
+                an account", so neither is an upfront shortcut around the roster.
+   Resolves to login_username but DISPLAYS realName, so a student still finds
+   themselves after a username reroll. Roster from the cached _fetchPeriodRoster();
+   an empty/offline roster falls back to the manual sign-in modal (#signin-overlay,
+   kept for teachers + anyone who'd rather type). The password-success block
+   mirrors submitSignIn() and is kept in sync with it by hand. */
 var _nfRoster = [];        // [{username, realName}] sorted by realName
 var _nfStack = [];         // window history for back-out: [{lo,hi}]
 var _nfLo = 0, _nfHi = -1;
+var _nfState = 'dial';     // 'dial' | 'password' | 'notfound'
+var _nfPicked = null;      // the {username, realName} chosen on the dial
+var _nfPressed = false;    // true after >=1 arrow press (gates the not-listed escape)
 
 function _nfEsc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -6044,11 +6062,11 @@ async function openNameFinder() {
   _nfRoster = _nfRoster.slice().sort(function (a, b) {
     return (a.realName || a.username || '').localeCompare(b.realName || b.username || '');
   });
-  _nfLo = 0; _nfHi = _nfRoster.length - 1; _nfStack = [];
+  _nfLo = 0; _nfHi = _nfRoster.length - 1; _nfStack = []; _nfPressed = false; _nfPicked = null;
   _nfEnsureOverlay();
   document.getElementById('namefinder-overlay').style.display = 'flex';
   if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('sosumi', 0.4);
-  _nfRender();
+  _nfRenderDial();
 }
 window.openNameFinder = openNameFinder;
 
@@ -6067,26 +6085,21 @@ function _nfEnsureOverlay() {
     + '#namefinder-overlay .nf-arrow{font-size:18px;line-height:1}'
     + '#namefinder-overlay .nf-label{font-size:13px;font-weight:bold;margin-top:2px}'
     + '#namefinder-overlay .nf-sub{font-size:9px;color:#666;margin-top:2px}'
+    + '#namefinder-overlay .nf-foot{font-size:10px;color:#555;margin-top:8px}'
+    + '#namefinder-overlay .nf-foot a{color:#555}'
     + '</style>'
     + '<div class="dialog-box chicago" style="max-width:460px;width:94%;text-align:center" onclick="event.stopPropagation()">'
-    + '<div class="dialog-body">'
-    + '<div class="chicago" style="font-size:13px;margin-bottom:2px">&#128274; Find your name</div>'
-    + '<div id="nf-count" class="geneva" aria-live="polite" style="font-size:10px;color:#555;margin-bottom:8px"></div>'
-    + '<div id="nf-dial"></div>'
-    + '<div class="geneva" style="font-size:10px;color:#555;margin-top:8px">press &#8593; &#8592; &#8594; &#8595; &nbsp;&middot;&nbsp; <a href="#" id="nf-back" onclick="_nfBack();return false;">&#9003; back</a> &nbsp;&middot;&nbsp; <a href="#" onclick="_nfGotoSignin();return false;">I know my username &#8594;</a></div>'
-    + '<div class="geneva" style="font-size:10px;color:#888;margin-top:4px"><a href="#" onclick="_nfNotListed();return false;">I\'m not on the list</a></div>'
-    + '</div></div>';
+    + '<div class="dialog-body"><div id="nf-content"></div></div></div>';
   document.body.appendChild(ov);
   document.addEventListener('keydown', _nfKeydown);
 }
 
-function _nfRender() {
-  var dial = document.getElementById('nf-dial');
-  var cnt = document.getElementById('nf-count');
-  if (!dial) return;
+function _nfRenderDial() {
+  _nfState = 'dial';
+  var host = document.getElementById('nf-content');
+  if (!host) return;
   var n = _nfHi - _nfLo + 1;
   if (n <= 1) { _nfSelectName(_nfRoster[_nfLo]); return; }   // singleton: auto-pick, no wasted press
-  if (cnt) cnt.textContent = n + ' classmates left · turn the dial to you';
   var buckets = _nfBuckets(_nfLo, _nfHi);
   var arrows = ['↑', '←', '→', '↓'];     // top, left, right, bottom
   var arrowName = ['up', 'left', 'right', 'down'];
@@ -6109,25 +6122,33 @@ function _nfRender() {
       + (sub ? '<div class="nf-sub">' + sub + '</div>' : '')
       + '</button>';
   }
-  dial.innerHTML =
-    '<div class="nf-diamond">'
+  host.innerHTML =
+    '<div class="chicago" style="font-size:13px;margin-bottom:2px">&#128274; Find your name</div>'
+    + '<div class="geneva" aria-live="polite" style="font-size:10px;color:#555;margin-bottom:8px">' + n + ' classmates left · turn the dial to you</div>'
+    + '<div class="nf-diamond">'
     + '<div class="nf-row">' + tile(buckets[0], 0) + '</div>'
     + '<div class="nf-row">' + tile(buckets[1], 1) + tile(buckets[2], 2) + '</div>'
     + '<div class="nf-row">' + tile(buckets[3], 3) + '</div>'
-    + '</div>';
-  var back = document.getElementById('nf-back');
-  if (back) back.style.visibility = _nfStack.length ? 'visible' : 'hidden';
+    + '</div>'
+    + '<div class="nf-foot geneva">press &#8593; &#8592; &#8594; &#8595;'
+    + (_nfStack.length ? ' &nbsp;&middot;&nbsp; <a href="#" onclick="_nfBack();return false;">&#9003; back</a>' : '')
+    + ' &nbsp;&middot;&nbsp; <a href="#" onclick="_nfGotoSignin();return false;">I know my username &#8594;</a></div>'
+    + (_nfPressed
+        ? '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfRenderNotFound();return false;">I\'m not on the list &#8594;</a></div>'
+        : '');
 }
 
 function _nfPick(i) {
+  if (_nfState !== 'dial') return;
   var buckets = _nfBuckets(_nfLo, _nfHi);
   var b = buckets[i];
   if (!b) return;
+  _nfPressed = true;
   if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3);
   if (b.leaf) { _nfSelectName(_nfRoster[b.lo]); return; }
   _nfStack.push({ lo: _nfLo, hi: _nfHi });
   _nfLo = b.lo; _nfHi = b.hi;
-  _nfRender();
+  _nfRenderDial();
 }
 window._nfPick = _nfPick;
 
@@ -6135,38 +6156,141 @@ function _nfBack() {
   if (!_nfStack.length) return;
   var w = _nfStack.pop();
   _nfLo = w.lo; _nfHi = w.hi;
-  _nfRender();
+  _nfRenderDial();
 }
 window._nfBack = _nfBack;
+
+// Picked a person -> ask ONLY for their password (no username field to type).
+function _nfSelectName(r) { _nfPicked = r || null; _nfRenderPassword(); }
+
+function _nfRenderPassword() {
+  _nfState = 'password';
+  var host = document.getElementById('nf-content');
+  if (!host) return;
+  var r = _nfPicked || {};
+  host.innerHTML =
+    '<div class="chicago" style="font-size:13px;margin-bottom:6px">&#128075; Hi, ' + _nfEsc(_nfFriendly(r)) + '!</div>'
+    + '<div class="geneva" style="font-size:11px;margin-bottom:6px">Enter your password to sign in.</div>'
+    + '<input type="password" id="nf-pw" class="geneva" autocomplete="current-password" style="width:100%;max-width:240px;font-size:14px;padding:6px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">'
+    + '<div id="nf-pw-error" class="geneva" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>'
+    + '<div style="margin-top:8px"><button class="s7btn s7btn-default" id="nf-pw-ok" style="min-width:140px" onclick="_nfSubmitPassword()">Sign in</button></div>'
+    + '<div class="nf-foot geneva" style="color:#888;text-align:center"><a href="#" onclick="_nfBackToDial();return false;">&#8592; that’s not me</a></div>';
+  var pw = document.getElementById('nf-pw');
+  if (pw) { pw.onkeydown = function (e) { if (e.key === 'Enter') _nfSubmitPassword(); }; setTimeout(function () { pw.focus(); }, 60); }
+}
+
+async function _nfSubmitPassword() {
+  if (_nfSubmitPassword._pending) return;
+  var r = _nfPicked || {};
+  var pw = document.getElementById('nf-pw');
+  var err = document.getElementById('nf-pw-error');
+  var okBtn = document.getElementById('nf-pw-ok');
+  var password = (pw && pw.value) || '';     // NOT trimmed — edge whitespace can be valid
+  if (err) err.textContent = '';
+  if (!r.username) { _nfBackToDial(); return; }
+  if (!password) { if (err) err.textContent = 'Enter your password.'; return; }
+  if (!window.rosterClient || !window.rosterClient.signIn) {
+    if (err) err.textContent = 'Sign-in unavailable (offline). Try again on the school network.';
+    return;
+  }
+  _nfSubmitPassword._pending = true;
+  if (okBtn) okBtn.disabled = true;
+  if (err) err.textContent = 'Signing in…';
+  try {
+    var result;
+    try { result = await window.rosterClient.signIn(r.username, password); }
+    catch (e) { result = { ok: false, error: (e && e.message) || 'Network error' }; }
+    if (!result || !result.ok) {
+      if (err) err.textContent = (result && result.error) || 'Sign-in failed. Check your password.';
+      return;
+    }
+    // SUCCESS — mirror submitSignIn()'s post-success block (kept in sync by hand).
+    var who = (window.rosterClient.current && window.rosterClient.current()) || {};
+    var legacyKey = who.username || r.username;
+    try { localStorage.setItem('apstats_desk_student_email', legacyKey); } catch (_) {}
+    try { sessionStorage.removeItem('apstats_desk_guest_ok'); } catch (_) {}   // a real sign-in supersedes guest
+    if (typeof registerStudent === 'function') registerStudent(legacyKey);
+    if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
+    if (typeof updateStudentMenu === 'function') updateStudentMenu();
+    if (typeof updateUserRoleUI === 'function') updateUserRoleUI();
+    closeNameFinder();
+    if (result.mustChangePassword) {
+      if (typeof openPwChangeModal === 'function') openPwChangeModal();
+    } else {
+      if (typeof renderDoNow === 'function') renderDoNow();
+      if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard();
+      if (typeof _fetchPollArchive === 'function') _fetchPollArchive();
+      var roleLabel = '';
+      try { if (localStorage.getItem('apstats_user_role') === 'teacher') roleLabel = ' (teacher mode)'; } catch (_) {}
+      if (typeof showDialog === 'function') showDialog('\u{1F464}', 'Signed in as ' + (who.realName || legacyKey) + roleLabel + '.', 'OK');
+    }
+  } finally {
+    _nfSubmitPassword._pending = false;
+    if (okBtn) okBtn.disabled = false;
+  }
+}
+window._nfSubmitPassword = _nfSubmitPassword;
+
+function _nfBackToDial() { _nfRenderDial(); }
+window._nfBackToDial = _nfBackToDial;
+
+// Reached ONLY after the student has turned the dial (the _nfPressed gate).
+function _nfRenderNotFound() {
+  _nfState = 'notfound';
+  var host = document.getElementById('nf-content');
+  if (!host) return;
+  host.innerHTML =
+    '<div class="chicago" style="font-size:13px;margin-bottom:6px">Can’t find your name?</div>'
+    + '<div class="geneva" style="font-size:11px;margin-bottom:10px">If your name really isn’t on the class list, you can keep working as a guest and have your teacher save your work later — or create your own account.</div>'
+    + '<div style="margin-bottom:8px"><button class="s7btn s7btn-default" style="min-width:210px" onclick="_nfGuestSignIn()">&#129701; Sign in as guest</button></div>'
+    + '<div style="margin-bottom:8px"><button class="s7btn" style="min-width:210px" onclick="_nfCreate()">&#127881; Create an account</button></div>'
+    + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfBackToDial();return false;">&#8592; back to the dial</a></div>';
+}
+
+// Guest off-ramp: grant Desk access as the stable Guest_ identity. The no-guest
+// wall is intentionally softened here, but ONLY reachable after trying the dial.
+function _nfGuestSignIn() {
+  // Session-scoped (sessionStorage): guest access does NOT survive a tab close,
+  // and is cleared on sign-out / real sign-in — so one guest tap can't silently
+  // un-wall a shared machine. Grade-bearing actions stay server-token-gated, so a
+  // guest cannot write grades; this is browse / follow-along access only.
+  try { sessionStorage.setItem('apstats_desk_guest_ok', '1'); } catch (_) {}
+  closeNameFinder();
+  _signinWallActive = false;
+  if (typeof closeSignInModal === 'function') closeSignInModal();
+  try { if (typeof updateStudentMenu === 'function') updateStudentMenu(); } catch (_) {}
+  try { if (typeof renderDoNow === 'function') renderDoNow(); } catch (_) {}
+  try { if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard(); } catch (_) {}
+  if (typeof showDialog === 'function') {
+    showDialog('\u{1F9D1}', "You’re browsing as a guest. Ask your teacher to add you to the class roster so your work can be saved — then sign in with your name.", 'OK');
+  }
+}
+window._nfGuestSignIn = _nfGuestSignIn;
+
+function _nfCreate() {
+  closeNameFinder();
+  if (typeof openSignupModal === 'function') openSignupModal();
+  else if (typeof openSignInModal === 'function') openSignInModal();
+}
+window._nfCreate = _nfCreate;
+
+function _nfGotoSignin() { closeNameFinder(); if (typeof openSignInModal === 'function') openSignInModal(); }
+window._nfGotoSignin = _nfGotoSignin;
+window._nfRenderNotFound = _nfRenderNotFound;
 
 function _nfKeydown(e) {
   var ov = document.getElementById('namefinder-overlay');
   if (!ov || ov.style.display === 'none') return;
+  if (_nfState !== 'dial') {
+    return;   // password/notfound have their own controls (links/buttons); don't
+              // hijack typing/Backspace, and don't discard a typed password on Escape
+  }
   var map = { ArrowUp: 0, ArrowLeft: 1, ArrowRight: 2, ArrowDown: 3 };
   if (e.key in map) { e.preventDefault(); _nfPick(map[e.key]); }
   else if (e.key === 'Backspace') { e.preventDefault(); _nfBack(); }
   else if (e.key === 'Escape') { e.preventDefault(); _nfGotoSignin(); }
 }
 
-// Picked a person: fill the username field, hand off to the password sign-in.
-function _nfSelectName(r) {
-  closeNameFinder();
-  if (typeof openSignInModal === 'function') openSignInModal();
-  var uInp = document.getElementById('signin-username');
-  if (uInp && r) uInp.value = r.username;
-  // Beat openSignInModal's 50ms auto-focus of the username field so the cursor
-  // lands on the password (the only thing left to type).
-  setTimeout(function () { var p = document.getElementById('signin-password'); if (p) p.focus(); }, 120);
-}
-function _nfGotoSignin() { closeNameFinder(); if (typeof openSignInModal === 'function') openSignInModal(); }
-window._nfGotoSignin = _nfGotoSignin;
-// Pre-enrolled roster: students do NOT self-create accounts. Point them at the teacher.
-function _nfNotListed() {
-  if (typeof showDialog === 'function') {
-    showDialog('\u{1F9D1}‍\u{1F3EB}', "If your name isn't on the list, ask your teacher to add you to the class roster.", 'OK');
-  }
-}
-window._nfNotListed = _nfNotListed;
 function closeNameFinder() {
   var ov = document.getElementById('namefinder-overlay');
   if (ov) ov.style.display = 'none';
@@ -6375,6 +6499,7 @@ function _applySignedUpSession(result) {
   }
   var legacyKey = who.username || (result && result.username);
   try { localStorage.setItem('apstats_desk_student_email', legacyKey); } catch (_) {}
+  try { sessionStorage.removeItem('apstats_desk_guest_ok'); } catch (_) {}   // real account supersedes guest
   try { registerStudent(legacyKey); } catch (_) {}
   if (typeof _addKnownUser === 'function') _addKnownUser(legacyKey);
   try { updateStudentMenu(); } catch (_) {}
@@ -6395,6 +6520,9 @@ function _applySignedUpSession(result) {
 function signOutStudent() {
   if (window.rosterClient && window.rosterClient.signOut) window.rosterClient.signOut();
   localStorage.removeItem('apstats_desk_student_email');
+  // Drop guest access on sign-out too — otherwise one earlier guest tap leaves
+  // the sign-in wall down for the next person on a shared machine.
+  try { sessionStorage.removeItem('apstats_desk_guest_ok'); } catch (_) {}
   // 2026-05-20: also clear the teacher role on sign-out so the next
   // student who signs in on the same machine doesn't inherit teacher
   // privileges from the previous session.
@@ -16144,12 +16272,10 @@ setTimeout(function() {
         // who open tomorrow's link land straight on "Create your account".
         try {
           if (!_deskAccessGranted()) {
-            var _firstTime = (typeof _loadKnownUsers === 'function') ? (_loadKnownUsers().length === 0) : false;
-            // Pre-enrolled roster: a fresh device opens the combo-lock NAME FINDER
-            // (find your pre-enrolled name) instead of self-signup. Returning,
-            // signed-out devices go straight to sign-in. The finder falls back to
-            // the sign-in modal if the roster can't be fetched (offline).
-            if (_firstTime && typeof openNameFinder === 'function') openNameFinder();
+            // Pre-enrolled roster: the combo-lock NAME FINDER is the primary
+            // sign-in for everyone (find your name -> password). It falls back to
+            // the manual sign-in modal if the roster can't be fetched (offline).
+            if (typeof openNameFinder === 'function') openNameFinder();
             else openSignInModal();
           }
         } catch (_) {}
