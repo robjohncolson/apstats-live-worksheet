@@ -1,12 +1,12 @@
 # CONTINUATION PROMPT — identity layer + guest mode + proto-git ledger + next-year roster; NEXT = 2 Railway deploys + section-case fix
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-15 (session 7).
-> follow-alongs HEAD (last feature commit) = `a703240`. Repo `apstats-live-worksheet`, branch `master`, GH Pages +
+> follow-alongs HEAD (last feature commit) = `e78d4af`. Repo `apstats-live-worksheet`, branch `master`, GH Pages +
 > `roster-server/` auto-deploy to Railway on push. Sibling repo **curriculum_render** = branch `main` (GH Pages +
 > `railway-server/` → `curriculumrender-production.up.railway.app`). Teacher tests on the **public GH Pages URL** —
 > commit+push promptly; `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews).
 > Memory dir: `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
-> **27 real students enrolled and LIVE (PeriodX). A colleague teacher may onboard.**
+> **27 real students enrolled and LIVE — but under section `PERIODX` (caps); canonicalize to `PeriodX` (NEXT #2). A colleague teacher may onboard.**
 
 ## ⏭ NEXT (in priority order)
 1. **DEPLOYS — confirm BOTH Railway servers picked up this session's endpoints** (push auto-deploys, but verify):
@@ -80,6 +80,19 @@ in the **Apps menu** (Study Break on the doge); **My Ledger** keeps its desktop 
 **↗ "open in new window"** button (`popOutApp`→`window.open` of `APP_REGISTRY[id].url`); `c3aebed`/`a703240` fixed its
 visibility (z-index over the title stripes) + styled it as a purple button.
 
+**Roster enrolled.** 27 next-year students enrolled via teacher-roster-console "Enroll Class" (CSV downloaded;
+usernames auto Fruit_Animal, pw `apstats2627`). Verified live: `/roster/section/PERIODX` → 27. SECTION-CASE BUG: they
+landed in `PERIODX` not the canonical `PeriodX` (NEXT #2). (`date_tiger` resolves to "Robert Colson" in `PeriodX`.)
+
+**QR scannability fix** (cr `e883f7b`/`b0f775b…e883f7b` + fa `4434ec2`,`e78d4af`). Teacher couldn't scan the
+report/commit QRs (only a short plain-URL QR worked). Root cause: payload QRs are ~v19 (~93 modules) rendered at
+~150px = ~1.6px/module = unscannable, and the QR lib draws NO quiet zone. Fixes: (1) commit QR carries ONLY the
+signed manifest (`_commitShowQR` decodes `data-deep`→`obj.m`; ~v15) — verify.html `runCommitDeep` now accepts a bare
+compact manifest (one dot) OR the full `base64url(JSON{m,r})`, and `verifyCommitManifestOnly` verifies the signature
+alone (the signed root already commits to the receipts); (2) `_renderScanQR` wraps every generated QR (commit/guest/
+reconcile) in a WHITE QUIET-ZONE and makes it **tap-to-enlarge** → `_showBigQR` fills the screen (~460px) so it's
+scannable off the student's screen; (3) the printed sealed-transcript QR enlarged to 300px + white padding.
+
 ## ⚠ GOTCHAS (load-bearing)
 - **CASE-SENSITIVITY is the recurring footgun.** Supabase `.eq` is byte-exact for usernames AND `roster.section`.
   Normalize on write; canonicalize usernames to Title_Case and section to `PeriodX`. (Both the `date_tiger` bug and
@@ -93,6 +106,11 @@ visibility (z-index over the title stripes) + styled it as a purple button.
 - **Commit chain is RECOMPUTED, not stored.** `GET /commits` is deterministic from the ledger; same input → same
   chain; new work appends at the head. No `student_commits` table (that's Phase 3 if you ever want persistence).
 - **Two Railway servers** both need deploys for this session's endpoints (NEXT #1).
+- **QR scannability = px-per-module + quiet zone.** `lib/qrcode.min.js` renders at the requested px regardless of
+  version and draws NO quiet zone. Dense payloads (commit/transcript ~v19, ~93 modules) need ~3+px/module AND a white
+  border. So: embed receipts sparingly (commit QR is **manifest-only** — the signed root commits to them), wrap every
+  generated QR in `_renderScanQR` (white quiet-zone + **tap-to-enlarge** via `_showBigQR`), and print big (300px). A
+  short-URL QR (v4) scans anywhere — not a useful baseline. `verify.html#commit=` accepts manifest-only OR full {m,r}.
 - **USE_V3_GRADING is LIVE.** Grade-engine / `gradebook-grid.js` / `blooket-lessons.json` changes move REAL grades.
   Prior live-grade moves (s5, all raise/hold-only): **#3d PeriodX→E** due-filter; Blooket backfill; **#3e
   verifyIpLimiter** + delete-cascade to cr `answers` are also live.
