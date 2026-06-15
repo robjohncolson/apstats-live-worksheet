@@ -10717,6 +10717,8 @@ async function printSealedSummary() {
     }
 }
 
+// The wallet receipt feed is Sessions-only by design — the Lessons/Types/Days
+// tab strip was removed to keep the screen clean, so this is now fixed.
 var _walletReceiptFeedTab = 'session';
 var _walletReceiptExpandedGroups = {};
 
@@ -10728,36 +10730,6 @@ function _walletReceiptSubgroupId(dim, groupKey, subgroupKey) {
     return _walletReceiptGroupId(dim, String(groupKey || '') + '/' + String(subgroupKey || ''));
 }
 
-function _walletRenderReceiptTabs(host, receipts, loading) {
-    var tabs = [
-        { dim: 'session', label: 'Sessions' },
-        { dim: 'lesson', label: 'Lessons' },
-        { dim: 'type', label: 'Types' },
-        { dim: 'day', label: 'Days' }
-    ];
-    var strip = document.createElement('div');
-    strip.className = 'geneva';
-    strip.style.cssText = 'display:flex;gap:0;margin:0 0 8px;border:1px solid #777;background:#ddd;width:max-content;max-width:100%;font-size:10px';
-
-    tabs.forEach(function (tab, idx) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 's7btn';
-        btn.style.cssText = 'border:0;border-right:' + (idx === tabs.length - 1 ? '0' : '1px solid #777')
-            + ';border-radius:0;box-shadow:none;padding:2px 8px;font-size:10px;background:'
-            + (_walletReceiptFeedTab === tab.dim ? '#000' : '#eee')
-            + ';color:' + (_walletReceiptFeedTab === tab.dim ? '#fff' : '#000');
-        btn.textContent = tab.label;
-        btn.onclick = function () {
-            _walletReceiptFeedTab = tab.dim;
-            _walletPaint(host, receipts, loading);
-        };
-        strip.appendChild(btn);
-    });
-
-    host.appendChild(strip);
-}
-
 function _walletRenderGroupedReceipts(host, receipts, loading) {
     try {
         if (!window.WalletLogic || typeof WalletLogic.groupReceipts !== 'function') {
@@ -10765,7 +10737,6 @@ function _walletRenderGroupedReceipts(host, receipts, loading) {
             return;
         }
 
-        _walletRenderReceiptTabs(host, receipts, loading);
         var groups = WalletLogic.groupReceipts(receipts, _walletReceiptFeedTab);
         groups.forEach(function (group) {
             var groupId = _walletReceiptGroupId(_walletReceiptFeedTab, group.key);
