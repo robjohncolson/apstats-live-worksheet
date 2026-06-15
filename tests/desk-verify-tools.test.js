@@ -25,9 +25,12 @@ describe('Desk — verification tools surfaced', () => {
     expect(DESK).toMatch(/new QRCode\(host, \{ text: url/);
   });
 
-  it('does NOT bridge the teacher token through the QR (security)', () => {
-    // the QR encodes only the bare tool URL — no token query param
-    expect(DESK).not.toMatch(/teacher-verify\.html\?[^'"]*token/);
+  it('bridges only the teacher USERNAME (?u=), never a token (security)', () => {
+    // username pre-fill is fine (not a secret); a bearer token in a photographable
+    // QR would leak teacher access, so it must never appear.
+    expect(DESK).toMatch(/url \+= '\?u=' \+ encodeURIComponent/);
+    expect(DESK).not.toMatch(/teacher-verify[^'"]*token/);
+    expect(DESK).not.toMatch(/'\?token='|'&token='/);
   });
 
   it('keeps the existing paste/drag verifier entry too', () => {

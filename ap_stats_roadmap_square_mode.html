@@ -15049,6 +15049,12 @@ window.openReconcileQR = openReconcileQR;
    would leak teacher access to anyone who photographs the code. */
 function openVerifyQR() {
     var url = 'https://robjohncolson.github.io/curriculum_render/teacher-verify.html';
+    // Pre-fill the teacher username on the phone (a username is not a secret; the
+    // teacher token is NEVER bridged). They type their password once on the phone.
+    try {
+        var _vqWho = (window.rosterClient && rosterClient.current) ? rosterClient.current() : null;
+        if (_vqWho && _vqWho.username) url += '?u=' + encodeURIComponent(_vqWho.username);
+    } catch (_) {}
     var panel = document.getElementById('verify-qr-overlay');
     if (!panel) {
         panel = document.createElement('div');
