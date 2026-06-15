@@ -1550,6 +1550,7 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-classroom.html','_blank')">&#128101; Live Classroom</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('https://robjohncolson.github.io/curriculum_render/verify.html','_blank','noopener')">&#129534; Verify a receipt...</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('https://robjohncolson.github.io/curriculum_render/teacher-verify.html','_blank','noopener')">&#128269; Verify a record (scan)...</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
         </div>
@@ -10708,7 +10709,7 @@ async function printSealedSummary() {
             + '<dt>Sealed</dt><dd>' + _walletEsc(issued) + '</dd>'
             + '</dl>'
             + qrHtml
-            + '<p class="caption">Scan to verify this sealed grade. Full item-by-item transcript: use Export sealed transcript.</p>'
+            + '<p class="caption">Scan this QR with any phone to verify — no app or login needed. Full item-by-item transcript: use Export sealed transcript.</p>'
             + '</main><script>setTimeout(function(){try{window.focus();window.print();}catch(e){}},150);<\/script>'
             + '</body></html>');
         printWin.document.close();
