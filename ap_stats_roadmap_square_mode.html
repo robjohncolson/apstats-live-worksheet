@@ -5256,6 +5256,24 @@ function _deskGuestOk() {
   try { return sessionStorage.getItem('apstats_desk_guest_ok') === '1'; }
   catch (_) { return false; }
 }
+// Stable, shared guest alias. Same localStorage key as the quiz's
+// lib/guest-identity.js — same web origin, so a guest is the SAME Guest_ identity
+// across the Desk and the quiz. Work saved under it (quiz/worksheet answers) is
+// recovered into a roster student via the Guest Pass QR (?claimGuest=) + the
+// teacher's /api/guest/reconcile. Idempotent: mints once, then stable forever.
+function getGuestIdentity() {
+  var KEY = 'apstats_guest_identity';
+  try {
+    var v = localStorage.getItem(KEY);
+    if (v && /^Guest_/i.test(v)) return v;
+    var F = ['Apple','Banana','Cherry','Mango','Kiwi','Lemon','Lime','Melon','Peach','Pear','Plum','Berry','Fig','Guava','Papaya','Orange','Apricot','Coconut','Pomelo','Olive','Grape','Lychee','Quince','Date'];
+    var A = ['Koala','Panda','Tiger','Otter','Seal','Fox','Wolf','Bear','Eagle','Hawk','Owl','Swan','Deer','Llama','Sloth','Gecko','Turtle','Frog','Rabbit','Badger','Beaver','Heron','Lynx','Moth'];
+    var g = 'Guest_' + F[Math.floor(Math.random() * F.length)] + '_' + A[Math.floor(Math.random() * A.length)];
+    try { localStorage.setItem(KEY, g); } catch (_) {}
+    return g;
+  } catch (_) { return 'Guest_Anon'; }
+}
+window.getGuestIdentity = getGuestIdentity;
 // True while the sign-in modal is up as a mandatory wall (not signed in).
 // closeSignInModal() refuses to dismiss the modal while this holds.
 var _signinWallActive = false;
@@ -6255,6 +6273,7 @@ function _nfGuestSignIn() {
   // un-wall a shared machine. Grade-bearing actions stay server-token-gated, so a
   // guest cannot write grades; this is browse / follow-along access only.
   try { sessionStorage.setItem('apstats_desk_guest_ok', '1'); } catch (_) {}
+  try { if (typeof getGuestIdentity === 'function') getGuestIdentity(); } catch (_) {}   // mint the stable shared alias now
   closeNameFinder();
   _signinWallActive = false;
   if (typeof closeSignInModal === 'function') closeSignInModal();
