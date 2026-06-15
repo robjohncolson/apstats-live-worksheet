@@ -10258,7 +10258,7 @@ function _renderReceiptQr(slot, url) {
     slot.setAttribute('data-made', '1');
     try {
         if (typeof QRCode === 'function') {
-            new QRCode(slot, { text: url, width: 96, height: 96, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+            new QRCode(slot, { text: url, width: 96, height: 96, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.L });
         }
     } catch (_) {}
 }
@@ -10661,11 +10661,11 @@ async function printSealedSummary() {
         var verifyUrl = 'https://robjohncolson.github.io/curriculum_render/verify.html#r=' + encodeURIComponent(transcript.manifest || '');
         var qrSrc = '';
         var qrHost = document.createElement('div');
-        qrHost.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:340px;height:340px;overflow:hidden';
+        qrHost.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:400px;height:400px;overflow:hidden';
         document.body.appendChild(qrHost);
         try {
             if (typeof QRCode === 'function') {
-                new QRCode(qrHost, { text: verifyUrl, width: 340, height: 340, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+                new QRCode(qrHost, { text: verifyUrl, width: 400, height: 400, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.L });
                 var qrImg = qrHost.querySelector('img');
                 var qrCanvas = qrHost.querySelector('canvas');
                 if (qrImg && qrImg.src) qrSrc = qrImg.src;
@@ -10695,7 +10695,7 @@ async function printSealedSummary() {
             + 'h1{font-size:26px;margin:0 0 24px;}'
             + 'dl{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:0 auto 28px;text-align:left;max-width:420px;}'
             + 'dt{font-weight:bold;}dd{margin:0;}'
-            + '.qr{display:block;width:300px;height:300px;margin:0 auto 12px;padding:14px;background:#fff;object-fit:contain;image-rendering:pixelated;}'
+            + '.qr{display:block;width:400px;height:400px;margin:0 auto 12px;padding:20px;background:#fff;object-fit:contain;image-rendering:pixelated;}'
             + '.missing{border:1px solid #999;line-height:160px;font-size:13px;color:#555;}'
             + '.caption{font-size:13px;line-height:1.45;margin:0 auto;max-width:420px;}'
             + '@media print{body{padding:24px;}button{display:none;}main{max-width:none;}a{color:#111;text-decoration:none;}}'
@@ -14708,7 +14708,7 @@ function openVerifyQR() {
     var host = document.getElementById('verify-qr');
     host.innerHTML = '';
     if (typeof QRCode === 'function') {
-        new QRCode(host, { text: url, width: 170, height: 170, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M });
+        new QRCode(host, { text: url, width: 170, height: 170, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.L });
     } else {
         host.textContent = url;
     }
@@ -14722,9 +14722,11 @@ window.openVerifyQR = openVerifyQR;
 function _ledgerFmtDate(ms){ try { return new Date(ms).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ return ''; } }
 function _ledgerFmtTime(ms){ try { return new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); } catch(e){ return ''; } }
 function _ledgerB64url(str){ try { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); } catch(e){ return ''; } }
-// Dense payload QRs (commit/guest/reconcile) are ~v19 — unscannable at thumbnail
-// size, and the QR lib draws no quiet zone. Render them with a white quiet-zone
-// and make them tap-to-enlarge: the student taps, it fills the screen, you scan.
+// Dense payload QRs (commit/guest/reconcile) are ~v16 at ECC-L — still too tight
+// to scan at thumbnail size, and the QR lib draws no quiet zone. We use ECC-L
+// (correctLevel.L) so the modules are as large as possible for a given payload,
+// render them with a white quiet-zone, and make them tap-to-enlarge: the student
+// taps, it fills the screen, you scan.
 window._showBigQR = function(text){
     var ov = document.getElementById('big-qr-overlay');
     if (!ov) {
@@ -14741,7 +14743,7 @@ window._showBigQR = function(text){
     host.innerHTML = '';
     var px = Math.max(240, Math.min(Math.min(window.innerWidth, window.innerHeight) - 110, 460));
     if (typeof QRCode === 'function') {
-        try { new QRCode(host, { text: text, width: px, height: px, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M }); }
+        try { new QRCode(host, { text: text, width: px, height: px, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.L }); }
         catch (e) { host.textContent = 'This code is too large for a single QR.'; }
     } else { host.textContent = 'QR library missing.'; }
 };
@@ -14754,7 +14756,7 @@ window._renderScanQR = function(host, text){
     box.title = 'Tap to enlarge for scanning';
     host.appendChild(box);
     if (typeof QRCode === 'function') {
-        try { new QRCode(box, { text: text, width: 168, height: 168, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.M }); }
+        try { new QRCode(box, { text: text, width: 168, height: 168, correctLevel: QRCode.CorrectLevel && QRCode.CorrectLevel.L }); }
         catch (e) { box.textContent = 'QR too large'; }
     } else { box.textContent = 'QR library missing'; }
     box.addEventListener('click', function(){ window._showBigQR(text); });
