@@ -6286,6 +6286,11 @@ function _nfRenderNotFound() {
 // Guest off-ramp: grant Desk access as the stable Guest_ identity. The no-guest
 // wall is intentionally softened here, but ONLY reachable after trying the dial.
 function _nfGuestSignIn() {
+  // Becoming a guest drops any lingering roster session so the guest alias isn't
+  // shadowed by a previous sign-in (rosterClient.current() would otherwise win in
+  // the wall + getUsername everywhere).
+  try { if (window.rosterClient && rosterClient.signOut) rosterClient.signOut(); } catch (_) {}
+  try { localStorage.removeItem('apstats_roster.v1'); } catch (_) {}
   // Cross-app guest flag (localStorage 'apstats_guest_active'): shared across the
   // Desk, quiz, and worksheets (same origin) so a guest works everywhere without
   // re-choosing. Cleared on sign-out / real sign-in, and shown in the top bar so a

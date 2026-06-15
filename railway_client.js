@@ -127,7 +127,7 @@
       _apGuestRefresh();
       // Re-run after the worksheet's own restoreSavedUser()/hydration (which fills
       // the username field from localStorage on load) so the guest alias wins it.
-      try { setTimeout(_apGuestRefresh, 300); } catch (e) {}
+      try { setTimeout(_apGuestRefresh, 300); setTimeout(_apGuestRefresh, 1500); } catch (e) {}
       try {
           window.addEventListener('storage', function (e) {
               if (!e || e.key === null || e.key === 'apstats_guest_active'
