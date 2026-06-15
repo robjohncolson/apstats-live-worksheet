@@ -57,13 +57,73 @@
   var GUEST_FRUITS = ['Cherry','Lemon','Mango','Plum','Kiwi','Peach','Apple','Banana','Coconut','Apricot','Date','Fig','Grape','Melon','Olive','Papaya','Guava','Lime'];
   var GUEST_ANIMALS = ['Tiger','Panda','Fox','Goat','Otter','Hawk','Wolf','Bear','Lynx','Moose','Heron','Bison','Crane','Seal','Newt','Vole','Robin','Koala'];
   function getGuestIdentity() {
-      try { var ex = localStorage.getItem(GUEST_KEY); if (ex) return ex; } catch (e) {}
+      // Validate the cached value (must look like a Guest_ alias) so a corrupted /
+      // foreign value can't masquerade as the guest identity — matches the quiz's
+      // lib/guest-identity.js and the Desk inline copy.
+      try { var ex = localStorage.getItem(GUEST_KEY); if (ex && /^Guest_/i.test(ex)) return ex; } catch (e) {}
       function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
       var id = 'Guest_' + pick(GUEST_FRUITS) + '_' + pick(GUEST_ANIMALS);
-      try { localStorage.setItem(GUEST_KEY, id); } catch (e) {}
-      return id;
+      try { localStorage.setItem(GUEST_KEY, id); return id; } catch (e) { return 'Guest_Anon'; }
   }
   window.getGuestIdentity = getGuestIdentity;
+
+  // Cross-app guest indicator (red-team: shared-machine misattribution). When
+  // working as a guest (the shared 'apstats_guest_active' flag is set and there's
+  // no roster session), show a persistent top banner so a DIFFERENT student on a
+  // shared device immediately sees they're using someone else's guest alias (the
+  // worksheet wall + getUsername otherwise lift silently). Re-checks on sign-in /
+  // guest-flag changes from any tab via the storage event. Loaded by every
+  // worksheet (not the Desk, which has its own #menu-identity chip).
+  function _apGuestActive() {
+      try { return localStorage.getItem('apstats_guest_active') === '1'; } catch (e) { return false; }
+  }
+  function _apHasRoster() {
+      try { return !!(window.rosterClient && typeof window.rosterClient.current === 'function' && window.rosterClient.current()); } catch (e) { return false; }
+  }
+  function _apRenderGuestBanner() {
+      var existing = document.getElementById('ap-guest-banner');
+      if (!(_apGuestActive() && !_apHasRoster())) {
+          if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+          return;
+      }
+      if (!document.body) return;
+      var alias = getGuestIdentity();
+      if (existing) {
+          var lbl = existing.querySelector('.ap-guest-alias');
+          if (lbl) lbl.textContent = alias;
+          return;
+      }
+      var bar = document.createElement('div');
+      bar.id = 'ap-guest-banner';
+      bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100000;'
+          + 'background:#fff3cd;color:#5c4400;border-bottom:1px solid #e0c200;'
+          + 'font:12px Geneva,Verdana,sans-serif;padding:5px 12px;text-align:center;';
+      var b = document.createElement('b'); b.className = 'ap-guest-alias'; b.textContent = alias;
+      var a = document.createElement('a');
+      a.href = 'ap_stats_roadmap_square_mode.html'; a.textContent = 'Sign in at the Desk';
+      a.style.cssText = 'color:#5c4400;font-weight:bold';
+      bar.appendChild(document.createTextNode('🧑 Working as guest '));
+      bar.appendChild(b);
+      bar.appendChild(document.createTextNode(' — not you? '));
+      bar.appendChild(a);
+      document.body.appendChild(bar);
+  }
+  window._apRenderGuestBanner = _apRenderGuestBanner;
+  function _apInitGuestBanner() {
+      try { _apRenderGuestBanner(); } catch (e) {}
+      try {
+          window.addEventListener('storage', function (e) {
+              if (!e || e.key === null || e.key === 'apstats_guest_active'
+                  || e.key === 'apstats_roster.v1' || e.key === GUEST_KEY) {
+                  try { _apRenderGuestBanner(); } catch (_) {}
+              }
+          });
+      } catch (e) {}
+  }
+  if (typeof document !== 'undefined') {
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _apInitGuestBanner);
+      else _apInitGuestBanner();
+  }
 
   // Resolve the username to announce for presence / attribute work to. Falls
   // through: explicit globals -> shared rosterClient identity -> stable guest
