@@ -10936,16 +10936,9 @@ function _walletPaint(host, receipts, loading) {
         printSealedSummary();
     };
     exportRow.appendChild(printBtn);
-    var sessionsBtn = document.createElement('button');
-    sessionsBtn.className = 's7btn';
-    sessionsBtn.type = 'button';
-    sessionsBtn.style.cssText = 'font-size:10px;padding:2px 8px';
-    sessionsBtn.textContent = '🔐 Sign & QR';
-    sessionsBtn.onclick = function () {
-        try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.25); } catch (_) {}
-        openCommitLedger();
-    };
-    exportRow.appendChild(sessionsBtn);
+    // (The standalone "Sign & QR" button was removed as redundant — each session
+    // in the feed below already exposes its signed commit + QR inline via its
+    // "Verify / QR this session" row.)
     card.appendChild(exportRow);
     host.appendChild(card);
 
@@ -10978,6 +10971,71 @@ function _walletPaint(host, receipts, loading) {
 function _walletEsc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+// Resolve the material a receipt points at (worksheet / quiz / blooket) from its
+// item id (e.g. "WS-U4-L3-…", "CR-U4L2-…", "BL-U4-L1-…") via the lesson registry,
+// so a student can jump straight to it. Returns a URL, or null (View hidden).
+function _receiptViewUrl(r, payload) {
+    try {
+        var itemId = String((r && r.i) || (payload && payload.i) || '');
+        var m = /^(?:WS|CR|BL)-U(\d+)(?:-?L)(\d+(?:-\d+)?)/i.exec(itemId);
+        if (!m) return null;
+        var unit = m[1], lesson = m[2];                 // lesson "3" or combined "1-2"
+        var topicId = unit + '.' + lesson;              // "4.3" / "4.1-2"
+        var reg = (typeof getRegistryEntry === 'function') ? getRegistryEntry(topicId) : null;
+        var urls = (reg && reg.urls) ? reg.urls : null;
+        var src = String((r && r.src) || (payload && payload.src) || '').toLowerCase();
+        if (urls) {
+            if (/quiz|curriculum/.test(src) && urls.quiz) return urls.quiz;
+            if (/blooket/.test(src) && urls.blooket) return urls.blooket;
+            if (urls.worksheet) return urls.worksheet;  // default to the worksheet
+            if (urls.quiz) return urls.quiz;
+            if (urls.blooket) return urls.blooket;
+        }
+        // Fallback for quiz items with no baked url: the cr quiz by unit/lesson.
+        if (/quiz|curriculum/.test(src)) {
+            return 'https://robjohncolson.github.io/curriculum_render/?u=' + unit + '&l=' + lesson.split('-')[0];
+        }
+        return null;
+    } catch (_) { return null; }
+}
+
+// Verify a receipt TWO ways: (1) Ed25519 signature (genuine + unaltered), and
+// (2) a LIVE gradebook check — re-fetch the server's durable receipts and confirm
+// THIS one is actually saved there (not just a local optimistic entry). The
+// signature proves authenticity; the durable-presence check proves it's recorded.
+function _walletVerifyAndCheck(r, statusEl, btn) {
+    btn.disabled = true;
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'checking…';
+    Promise.resolve(_walletVerifyReceiptCompact(r.compact)).then(function (sig) {
+        var sigOk = !!(sig && sig.ok);
+        var sigMsg = sigOk
+            ? '✅ Signed by ' + _walletEsc(sig.issuer || 'the class server') + ' — genuine &amp; unaltered.'
+            : '❌ Signature NOT verified — altered, or not from the class server.';
+        if (!sigOk) { statusEl.innerHTML = sigMsg; btn.disabled = false; return; }
+        statusEl.innerHTML = sigMsg + '<br>Checking your gradebook…';
+        var fetchP = (window.gradebookClient && typeof gradebookClient.fetchReceipts === 'function')
+            ? gradebookClient.fetchReceipts() : Promise.resolve(null);
+        Promise.resolve(fetchP).then(function (durable) {
+            if (!Array.isArray(durable)) {
+                statusEl.innerHTML = sigMsg + '<br>⚠ Couldn’t reach your gradebook to confirm — sign in and try online.';
+                return;
+            }
+            var found = durable.some(function (d) {
+                return d && ((r.id && d.id === r.id) || (r.compact && d.compact === r.compact));
+            });
+            statusEl.innerHTML = sigMsg + '<br>' + (found
+                ? '✅ Saved in your gradebook on the server.'
+                : '⚠ Not in your live gradebook yet — it may still be syncing. Refresh, or ask your teacher.');
+        }, function () {
+            statusEl.innerHTML = sigMsg + '<br>⚠ Couldn’t reach your gradebook to confirm.';
+        }).finally(function () { btn.disabled = false; });
+    }, function () {
+        statusEl.textContent = '❌ Signature NOT verified';
+        btn.disabled = false;
     });
 }
 
@@ -11021,69 +11079,43 @@ function _walletReceiptRow(r) {
     }
 
     var actions = document.createElement('div');
-    actions.style.cssText = 'white-space:nowrap;text-align:right;flex-shrink:0';
+    actions.style.cssText = 'flex-shrink:0;display:flex;flex-direction:column;gap:3px;align-items:flex-end';
+
+    // View — jump straight to the material this item refers to (worksheet/quiz/
+    // blooket), when the item id resolves to a lesson; hidden otherwise.
+    var viewUrl = _receiptViewUrl(r, payload);
+    if (viewUrl) {
+        var viewBtn = document.createElement('button');
+        viewBtn.className = 's7btn'; viewBtn.type = 'button';
+        viewBtn.style.cssText = 'font-size:10px;padding:1px 6px';
+        viewBtn.textContent = '📂 View';
+        viewBtn.title = 'Open this material';
+        viewBtn.onclick = function () { try { window.open(viewUrl, '_blank', 'noopener'); } catch (_) {} };
+        actions.appendChild(viewBtn);
+    }
+
+    // Verify — signature + live gradebook presence (see _walletVerifyAndCheck).
     var verify = document.createElement('button');
     verify.className = 's7btn'; verify.type = 'button';
-    verify.style.cssText = 'font-size:10px;padding:1px 5px';
-    verify.textContent = 'Verify';
+    verify.style.cssText = 'font-size:10px;padding:1px 6px';
+    verify.textContent = '✓ Verify';
     actions.appendChild(verify);
-    actions.appendChild(document.createTextNode(' '));
-    var fullVerify = document.createElement('a');
-    fullVerify.href = url; fullVerify.target = '_blank'; fullVerify.rel = 'noopener';
-    fullVerify.style.cssText = 'color:#0000cc;text-decoration:underline;font-size:10px';
-    fullVerify.textContent = 'open full verifier';
-    actions.appendChild(fullVerify);
-    actions.appendChild(document.createElement('br'));
-    var qrBtn = document.createElement('button');
-    qrBtn.className = 's7btn'; qrBtn.type = 'button';
-    qrBtn.style.cssText = 'font-size:10px;padding:1px 5px';
-    qrBtn.textContent = 'QR';
-    actions.appendChild(qrBtn);
-    actions.appendChild(document.createTextNode(' '));
-    var copyBtn = document.createElement('button');
-    copyBtn.className = 's7btn'; copyBtn.type = 'button';
-    copyBtn.style.cssText = 'font-size:10px;padding:1px 5px';
-    copyBtn.textContent = 'Copy';
-    copyBtn.onclick = function () {
-        try {
-            var done = function () { copyBtn.textContent = 'Copied'; setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200); };
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(r.compact || '').then(done, function () {});
-            }
-        } catch (_) {}
-    };
-    actions.appendChild(copyBtn);
 
     top.appendChild(main);
     top.appendChild(actions);
     row.appendChild(top);
 
     var verifyStatus = document.createElement('div');
-    verifyStatus.style.cssText = 'display:none;margin-top:4px;color:#444';
+    verifyStatus.style.cssText = 'display:none;margin-top:4px;color:#444;font-size:10px;line-height:1.45';
     row.appendChild(verifyStatus);
 
+    // The QR is ALWAYS shown (no toggle) — scan it to verify on a phone.
     var qr = document.createElement('div');
-    qr.style.cssText = 'display:none;margin-top:6px';
+    qr.style.cssText = 'margin-top:6px;display:flex;justify-content:flex-start';
     row.appendChild(qr);
-    verify.onclick = function () {
-        verify.disabled = true;
-        verifyStatus.style.display = 'block';
-        verifyStatus.textContent = 'checking...';
-        _walletVerifyReceiptCompact(r.compact).then(function (result) {
-            if (result && result.ok) {
-                verifyStatus.textContent = 'OK - signed by ' + result.issuer;
-            } else {
-                verifyStatus.textContent = 'X - signature not verified';
-            }
-        }, function () {
-            verifyStatus.textContent = 'X - signature not verified';
-        }).finally(function () {
-            verify.disabled = false;
-        });
-    };
-    qrBtn.onclick = function () {
-        if (typeof _toggleReceiptQr === 'function') _toggleReceiptQr(qrBtn, qr, url);
-    };
+    if (typeof _renderReceiptQr === 'function') _renderReceiptQr(qr, url);
+
+    verify.onclick = function () { _walletVerifyAndCheck(r, verifyStatus, verify); };
 
     return row;
 }
@@ -14713,60 +14745,11 @@ window._commitShowQR = function(btn){
         catch (e) { host.textContent = 'QR too large — use Verify link'; }
     } else { host.textContent = 'QR lib missing'; }
 };
-function openCommitLedger() {
-    var base = window.ROSTER_SERVICE_URL;
-    var token = null;
-    try { token = (window.rosterClient && rosterClient.token && rosterClient.token()) || null; } catch (e) {}
-    var panel = document.getElementById('commit-ledger-overlay');
-    if (!panel) {
-        panel = document.createElement('div');
-        panel.id = 'commit-ledger-overlay';
-        panel.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center';
-        panel.innerHTML = '<div id="commit-ledger-card" style="background:#fff;color:#111;max-width:380px;width:92%;max-height:82vh;overflow:auto;border:2px solid #000;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.45);padding:14px;font-family:Geneva,Verdana,sans-serif"></div>';
-        panel.addEventListener('click', function(e){ if (e.target === panel) panel.style.display = 'none'; });
-        document.body.appendChild(panel);
-    }
-    panel.style.display = 'flex';
-    var card = document.getElementById('commit-ledger-card');
-    card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-        + '<strong style="font-size:15px">🔐 Signed commits</strong>'
-        + '<button onclick="document.getElementById(\'commit-ledger-overlay\').style.display=\'none\'" aria-label="Close" style="border:none;background:none;font-size:20px;cursor:pointer;line-height:1">&times;</button></div>'
-        + '<div id="commit-ledger-body" style="font-size:12px">Loading your session history…</div>';
-    var body = document.getElementById('commit-ledger-body');
-    if (!base || !token) { body.innerHTML = '<p>Sign in to the roster to see your session history.</p>'; return; }
-    fetch(base + '/commits', { headers: { 'Authorization': 'Bearer ' + token } })
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (!d || !d.ok) throw new Error((d && d.error) || 'Failed to load');
-        var commits = (d.commits || []).slice().reverse(); // newest first
-        if (!commits.length) { body.innerHTML = '<p>No sessions yet — your work appears here as signed commits.</p>'; return; }
-        var html = '<p style="color:#555;margin:0 0 8px">Each session is a signed, chained commit of your work — like git history you can flash as a QR.</p>';
-        var lastSession = null;
-        commits.forEach(function(c){
-          if (c.session !== lastSession) {
-            lastSession = c.session;
-            html += '<div style="font-weight:bold;margin:10px 0 4px;border-top:1px solid #eee;padding-top:6px">Session ' + c.session + ' · ' + _deskEsc(_ledgerFmtDate(c.from)) + '</div>';
-          }
-          var deep = _ledgerB64url(JSON.stringify({ v: 1, m: c.manifest, r: c.receipts }));
-          var verifyUrl = 'https://robjohncolson.github.io/curriculum_render/verify.html#commit=' + deep;
-          html += '<div style="border:1px solid #e3e3e3;border-radius:8px;padding:8px;margin:6px 0">'
-            + '<div style="display:flex;justify-content:space-between;align-items:center">'
-            + '<span><strong>#' + c.seq + '</strong> · ' + c.cnt + ' answer' + (c.cnt === 1 ? '' : 's') + '</span>'
-            + '<span style="font-size:10px;color:#888;font-family:monospace" title="root ' + _deskEsc(String(c.root)) + '">' + _deskEsc(String(c.root).slice(0,8)) + '</span></div>'
-            + '<div style="font-size:10px;color:#777;margin-top:2px">' + _deskEsc(_ledgerFmtTime(c.from)) + '–' + _deskEsc(_ledgerFmtTime(c.to))
-              + (c.prev ? (' · ← ' + _deskEsc(String(c.prev).slice(0,6))) : ' · genesis')
-              + (c.manifest ? '' : ' · <span style="color:#c0392b">unsigned</span>') + '</div>'
-            + '<div style="margin-top:6px;display:flex;gap:8px;align-items:flex-start">'
-            + '<button class="commit-qr-btn" data-deep="' + deep + '" onclick="_commitShowQR(this)" style="font-size:11px;padding:3px 8px;cursor:pointer">Show QR</button>'
-            + '<a href="' + _deskEsc(verifyUrl) + '" target="_blank" rel="noopener" style="font-size:11px">Verify</a>'
-            + '<span class="commit-qr-host" style="margin-left:auto"></span></div>'
-            + '</div>';
-        });
-        body.innerHTML = html;
-      })
-      .catch(function(e){ body.innerHTML = '<p style="color:#c0392b">Could not load sessions: ' + _deskEsc(e.message) + '</p>'; });
-}
-window.openCommitLedger = openCommitLedger;
+/* openCommitLedger (the standalone "Sign & QR" full-commit-history modal) was
+   RETIRED as redundant — the per-session "Verify / QR this session" row in the
+   wallet feed (_walletShowSessionQR) covers the QR flow. Its shared helpers
+   (_commitShowQR, _ledgerB64url, _ledgerFmtDate/Time) remain — that session row
+   still uses them. */
 
 /* Unify the Sessions tab with the signed-commit chain: each session in the feed
    can flash the QR(s) of its matching signed commit(s). Feed sessions and server
