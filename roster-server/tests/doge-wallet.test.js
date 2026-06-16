@@ -85,7 +85,7 @@ describe('DOGE wallet — student GET /wallet', () => {
     expect(r.body.candyEarned).toBeCloseTo(5, 6);
     expect(r.body.candyBalance).toBeCloseTo(5, 6);
     expect(r.body.candyPerDoge).toBeCloseTo(2.444, 2);
-    expect(r.body.minBuyCandy).toBe(25);
+    expect(r.body.minBuyCandy).toBe(5);
   });
   it('401 without a valid token', async () => {
     const r = await req(start(), 'GET', '/wallet', {});
@@ -126,11 +126,11 @@ describe('DOGE wallet — buy DOGE (floating price)', () => {
     expect(r.body.dogeToDeposit).toBeCloseTo(10.227, 2);   // teacher must deposit this
     expect(r.body.candyBalance).toBeCloseTo(27.778 - 25, 2);
   });
-  it('enforces the 25-candy minimum (dust/fee floor)', async () => {
+  it('enforces the 5-candy minimum (deliberate-conversion floor)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(100) } });
-    const r = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 10 } });
+    const r = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 3 } });
     expect(r.status).toBe(400);
-    expect(r.body.error).toMatch(/minimum 25/);
+    expect(r.body.error).toMatch(/minimum 5/);
   });
 });
 

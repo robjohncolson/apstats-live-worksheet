@@ -11370,7 +11370,7 @@ function _dogeWalletRender(box, w, pts) {
         var eatBtn = document.createElement('button'); eatBtn.className = 's7btn'; eatBtn.textContent = '🍬 Eat'; eatBtn.style.cssText = 'font-size:10px;padding:2px 6px';
         var buyBtn = document.createElement('button'); buyBtn.className = 's7btn'; buyBtn.textContent = 'Ɖ Buy DOGE'; buyBtn.style.cssText = 'font-size:10px;padding:2px 6px';
         var msg = document.createElement('span'); msg.className = 'geneva'; msg.style.cssText = 'font-size:9px;color:#a07c1c';
-        msg.textContent = '(min ' + (w.minBuyCandy || 25) + ' to buy)';
+        msg.textContent = '(min ' + (w.minBuyCandy || 5) + ' to buy)';
         var amount = function () { var v = parseFloat(amt.value); return (isFinite(v) && v > 0) ? v : candy; };
         var act = function (path) {
             eatBtn.disabled = buyBtn.disabled = true; msg.textContent = '…';

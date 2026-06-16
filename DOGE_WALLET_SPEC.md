@@ -213,9 +213,12 @@ price chart. Ties into the Start-Here orientation explainer.
 - **App is watch-only** — no private keys anywhere in the web/server. Spending is
   manual, batched, on your laptop.
 - **One-way + effort-only faucet** — no churn, no farming; DOGE only from real work.
-- **Fees/dust:** Dogecoin fees are small but a tiny early conversion (e.g. 1.5 DOGE)
-  pays a few % in fee. **Batch sends** (one tx, many outputs) amortizes it; consider
-  a **minimum buy** (e.g. ≥ 25 candy) so conversions clear the dust threshold.
+- **Fees/dust:** Dogecoin fees are small but a tiny early conversion pays a few %
+  in fee. **Batch sends** (one tx, many outputs) amortize it — the per-recipient
+  marginal fee is ~nothing (the canary's whole-tx fee was 0.0023 DOGE). Because of
+  that, the buy **minimum is just a deliberate-conversion gate, NOT a dust guard**:
+  set to **5 candy (~1 lesson, ~2 DOGE)** as of 2026-06-16 — still ~200× the dust
+  threshold (tuned down from 25 once real accrual showed 25 felt like ~5 lessons).
 - **Volatility framing:** holding is a *bet*; some kids win the price lottery. Teach
   it as uncertainty, and keep the candy path always open so no one must gamble.
 
@@ -225,7 +228,7 @@ price chart. Ties into the Start-Here orientation explainer.
    `dogecoind` watch-only node (fully trustless, heavy).
 2. **Lost-paper-key policy:** keep a sealed teacher backup of keys (recommended) vs
    "you lose it, it's gone" (harsher real-world lesson).
-3. **Minimum conversion** to dodge dust/fees (recommend a floor, e.g. ≥25 candy).
+3. **Minimum conversion** — RESOLVED: **5 candy** (deliberate-conversion gate, not a dust guard; batching handles dust). Tuned down from 25 on real accrual data.
 4. **Funding float:** pre-load the laptop wallet with ~$300 DOGE vs buy-at-send.
 5. **`POINTS_PER_CANDY`** final value — start at 36, retune once real accrual data
    is in, then freeze.

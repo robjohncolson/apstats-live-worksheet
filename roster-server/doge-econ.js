@@ -13,7 +13,7 @@ const EFFORT_POINTS = {
 };
 export const POINTS_PER_CANDY = 36;
 export const CANDY_USD = 0.036;
-export const MIN_CONVERSION_CANDY = 25;   // floor so a DOGE buy clears the dust/fee
+export const MIN_CONVERSION_CANDY = 5;    // small deliberate-conversion floor (~1 lesson); dust/fee handled by the batched send, not per-buy
 
 export function effortPointsFor(source, itemId) {
   if (source === 'quiz_verdict' || source === 'quiz_answer') return 0;

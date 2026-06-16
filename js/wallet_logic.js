@@ -468,7 +468,7 @@
     var DOGE_WALLET = {
         POINTS_PER_CANDY: 36,        // effort points to earn 1 candy
         CANDY_USD: 0.036,            // one candy's USD value ($13 / 360)
-        MIN_CONVERSION_CANDY: 25     // floor so a buy clears Dogecoin's dust/fee
+        MIN_CONVERSION_CANDY: 5      // small deliberate-conversion floor (~1 lesson); dust/fee handled by the batched send
     };
 
     // effort points → candy (the FIXED leg).

@@ -11,10 +11,10 @@ beforeAll(async () => {
 });
 
 describe('DOGE wallet — frozen constants', () => {
-  it('exposes the outset peg (36 pts/candy, $0.036/candy, 25-candy floor)', () => {
+  it('exposes the outset peg (36 pts/candy, $0.036/candy, 5-candy floor)', () => {
     expect(W.DOGE_WALLET.POINTS_PER_CANDY).toBe(36);
     expect(W.DOGE_WALLET.CANDY_USD).toBeCloseTo(0.036, 6);
-    expect(W.DOGE_WALLET.MIN_CONVERSION_CANDY).toBe(25);
+    expect(W.DOGE_WALLET.MIN_CONVERSION_CANDY).toBe(5);
   });
 });
 
