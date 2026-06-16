@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DASH = readFileSync(resolve(repo, 'teacher-dashboard.html'), 'utf8');
 const CLASS = readFileSync(resolve(repo, 'roster-server/class.js'), 'utf8');
+const ECON = readFileSync(resolve(repo, 'roster-server/doge-econ.js'), 'utf8');
 
 describe('Teacher reward disbursement — dashboard', () => {
   it('has a Reward Disbursement section + render function', () => {
@@ -22,34 +23,40 @@ describe('Teacher reward disbursement — dashboard', () => {
     expect(DASH).toContain('renderRewardDisbursement(gPayload)');   // wired into load
   });
 
-  it('uses the server-computed effort + the shared WalletLogic conversions', () => {
-    const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
-    expect(fn).toContain('s.effort');                 // server-computed candy/points
-    expect(fn).toContain('W.usdFromCandy');
-    expect(fn).toContain('W.candyPerDoge');
-    expect(fn).toContain('W.dogeFromCandy');           // candy→DOGE at the live price
+  it('shows the REAL give/deposit from /class/wallets + mark-done + set-address', () => {
+    expect(DASH).toContain('/class/wallets');
+    expect(DASH).toContain("_rewardMark(s.studentId, 'mark-given'");
+    expect(DASH).toContain("_rewardMark(s.studentId, 'mark-sent'");
+    expect(DASH).toContain('_rewardSetAddress');
+    expect(DASH).toContain("postJson('/wallet/' + action");
+    expect(DASH).toContain("'/wallet/address'");
   });
 
-  it('fetches the live DOGE price and shows a class total', () => {
+  it('uses server-computed effort for "candy earned" + the live price', () => {
+    const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
+    expect(fn).toContain('s.effort');
     expect(DASH).toContain('api.coingecko.com');
     expect(DASH).toMatch(/Class total/);
+  });
+
+  it('degrades gracefully before migration 0019 (unprovisioned)', () => {
+    expect(DASH).toContain("'unprovisioned'");
+    expect(DASH).toMatch(/run migration 0019/);
   });
 
   it('excludes teacher/test accounts from disbursement', () => {
     const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
     expect(fn).toMatch(/role !== 'teacher'/);
   });
-
-  it('is honest that the eat/bank split + addresses come next', () => {
-    expect(DASH).toMatch(/per their\s+'\s*\+\s*'choice|next phase/);
-  });
 });
 
 describe('Teacher reward disbursement — server effort field', () => {
   it('/class/grades computes per-student effort → candy from receipt-carrying rows', () => {
-    expect(CLASS).toContain('function computeEffort');
+    expect(CLASS).toContain("import { computeEffort } from './doge-econ.js'");
     expect(CLASS).toContain('effort: computeEffort(ledgerRows)');
-    expect(CLASS).toContain('r.receipt_compact');           // matches the wallet's durable set
-    expect(CLASS).toMatch(/POINTS_PER_CANDY\s*=\s*36/);     // frozen peg, mirrors wallet_logic
+    // the shared math lives in doge-econ.js (mirrors js/wallet_logic.js)
+    expect(ECON).toContain('export function computeEffort');
+    expect(ECON).toContain('r.receipt_compact');            // matches the wallet's durable set
+    expect(ECON).toMatch(/POINTS_PER_CANDY\s*=\s*36/);      // frozen peg
   });
 });

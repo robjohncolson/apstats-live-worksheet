@@ -499,7 +499,7 @@
       <div class="hint" id="reward-rate" style="margin-bottom:6px"></div>
       <div class="table-wrap" id="reward-wrap" style="display:none">
         <table class="grades">
-          <thead><tr><th>Student</th><th>Effort pts</th><th>Candy earned</th><th>= $</th><th>or DOGE today</th></tr></thead>
+          <thead><tr><th>Student</th><th>Candy earned</th><th>To give 🍬</th><th>DOGE to deposit</th><th>Address / actions</th></tr></thead>
           <tbody id="reward-tbody"></tbody>
           <tfoot><tr id="reward-totals" style="font-weight:bold;border-top:2px solid #888"></tr></tfoot>
         </table>
@@ -1040,50 +1040,101 @@
         }).catch(function () { return null; });
     }
 
+    // /class/wallets cache: studentId → account, or 'unprovisioned' (migration
+    // 0019 pending → /wallet routes 503). null = not yet fetched.
+    var _rewardWallets = null;
+    var _rewardRepaint = null;
+    function _fetchRewardWallets() {
+      return fetchJson('/class/wallets', teacherSecret()).then(function (r) {
+        if (r.status === 503) return 'unprovisioned';
+        if (r.status === 200 && r.data && r.data.ok) {
+          var by = {};
+          (r.data.accounts || []).forEach(function (a) { by[a.studentId] = a; });
+          return by;
+        }
+        return 'unprovisioned';
+      }).catch(function () { return 'unprovisioned'; });
+    }
+    function _rewardMark(studentId, action, amount) {
+      postJson('/wallet/' + action, { studentId: studentId, amount: amount }, teacherSecret()).then(function (r) {
+        if (r.status === 200 && r.data && r.data.ok) {
+          _fetchRewardWallets().then(function (w) { _rewardWallets = w; if (_rewardRepaint) _rewardRepaint(); });
+        } else { showError('Disburse failed: ' + ((r.data && r.data.error) || ('HTTP ' + r.status))); }
+      });
+    }
+    function _rewardSetAddress(studentId, current) {
+      var addr = prompt('Dogecoin address for this student (D…), from your paper-wallet sheet:', current || '');
+      if (addr == null) return;
+      postJson('/wallet/address', { studentId: studentId, address: addr.trim() }, teacherSecret()).then(function (r) {
+        if (r.status === 200 && r.data && r.data.ok) {
+          _fetchRewardWallets().then(function (w) { _rewardWallets = w; if (_rewardRepaint) _rewardRepaint(); });
+        } else { showError('Address rejected: ' + ((r.data && r.data.error) || ('HTTP ' + r.status))); }
+      });
+    }
+
     function renderRewardDisbursement(payload) {
       var tbody = $('reward-tbody'), wrap = $('reward-wrap'), empty = $('reward-empty');
       var rateEl = $('reward-rate'), totalsEl = $('reward-totals'), noteEl = $('reward-note');
       if (!tbody) return;
-      // students only (teachers/test rows carry effort too but aren't disbursed to)
       var students = ((payload && payload.students) || []).filter(function (s) { return !s || s.role !== 'teacher'; });
       if (!students.length) { wrap.style.display = 'none'; empty.style.display = 'block'; return; }
       var W = (typeof WalletLogic !== 'undefined') ? WalletLogic : null;
-      // sort most-earned first
       var rows = students.slice().sort(function (a, b) {
         return ((b.effort && b.effort.candy) || 0) - ((a.effort && a.effort.candy) || 0);
       });
+      _rewardRepaint = function () { renderRewardDisbursement(lastGradesPayload || payload); };
 
-      function paint(price) {
+      function btn(label, onclick) {
+        var b = document.createElement('button'); b.className = 's7btn'; b.textContent = label;
+        b.style.cssText = 'font-size:9px;padding:1px 4px;margin-left:4px'; b.onclick = onclick; return b;
+      }
+      function paint(price, wallets) {
+        var prov = wallets && wallets !== 'unprovisioned';
         var cpd = (W && price) ? W.candyPerDoge(price) : null;
-        rateEl.textContent = price
-          ? ('DOGE $' + price.toFixed(4) + ' · 1 DOGE = ' + cpd.toFixed(1) + ' candy today (floats — buy early = cheaper).')
-          : 'DOGE price unavailable — candy + $ still shown.';
+        rateEl.textContent = (price ? ('DOGE $' + price.toFixed(4) + ' · 1 DOGE = ' + cpd.toFixed(1) + ' candy today (floats).') : 'DOGE price unavailable.')
+          + (prov ? '' : ' Rewards not turned on yet — run migration 0019 to track give/deposit.');
         tbody.innerHTML = '';
-        var totCandy = 0, totUsd = 0, totDoge = 0;
+        var totEarned = 0, totGive = 0, totDeposit = 0;
         rows.forEach(function (s) {
-          var candy = (s.effort && s.effort.candy) || 0;
-          var pts = (s.effort && s.effort.points) || 0;
-          var usd = W ? W.usdFromCandy(candy) : candy * 0.036;
-          var doge = (W && price) ? W.dogeFromCandy(candy, price) : null;
-          totCandy += candy; totUsd += usd; if (doge != null) totDoge += doge;
+          var earned = (s.effort && s.effort.candy) || 0;
+          var acc = prov ? (wallets[s.studentId] || null) : null;
+          var give = acc ? acc.candyOwed : 0, deposit = acc ? acc.dogeToDeposit : 0, addr = acc ? acc.dogeAddress : null;
+          totEarned += earned; totGive += give; totDeposit += deposit;
           var tr = document.createElement('tr');
-          var td = function (txt) { var c = document.createElement('td'); c.textContent = txt; tr.appendChild(c); return c; };
-          td(s.realName || s.username || s.studentId || '?');
-          td(String(pts));
-          td('🍬 ' + Math.round(candy));
-          td('$' + usd.toFixed(2));
-          td(doge != null ? ('Ɖ ' + doge.toFixed(1)) : '—');
+          var nameTd = document.createElement('td'); nameTd.textContent = s.realName || s.username || s.studentId || '?'; tr.appendChild(nameTd);
+          var earnedTd = document.createElement('td'); earnedTd.textContent = '🍬 ' + Math.round(earned); tr.appendChild(earnedTd);
+          var giveTd = document.createElement('td');
+          if (!prov) giveTd.textContent = '—';
+          else if (give > 0.01) { giveTd.textContent = '🍬 ' + (Math.round(give * 10) / 10) + ' '; giveTd.appendChild(btn('✓ gave', function () { _rewardMark(s.studentId, 'mark-given', give); })); }
+          else giveTd.textContent = '·';
+          tr.appendChild(giveTd);
+          var depTd = document.createElement('td');
+          if (!prov) depTd.textContent = '—';
+          else if (deposit > 0.0001) { depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' '; depTd.appendChild(btn('✓ sent', function () { _rewardMark(s.studentId, 'mark-sent', deposit); })); }
+          else depTd.textContent = '·';
+          tr.appendChild(depTd);
+          var addrTd = document.createElement('td');
+          if (!prov) addrTd.textContent = '—';
+          else {
+            var span = document.createElement('span'); span.style.cssText = 'font-family:monospace;font-size:0.72rem';
+            span.textContent = addr ? (addr.slice(0, 6) + '…' + addr.slice(-4)) : '(none)';
+            addrTd.appendChild(span);
+            addrTd.appendChild(btn(addr ? 'edit' : 'set', function () { _rewardSetAddress(s.studentId, addr); }));
+          }
+          tr.appendChild(addrTd);
           tbody.appendChild(tr);
         });
-        totalsEl.innerHTML = '<td>Class total</td><td></td><td>🍬 ' + Math.round(totCandy)
-          + '</td><td>$' + totUsd.toFixed(2) + '</td><td>' + (price ? ('Ɖ ' + totDoge.toFixed(0)) : '—') + '</td>';
+        totalsEl.innerHTML = '<td>Class total</td><td>🍬 ' + Math.round(totEarned) + '</td><td>'
+          + (prov ? '🍬 ' + Math.round(totGive) : '—') + '</td><td>'
+          + (prov ? 'Ɖ ' + totDeposit.toFixed(1) : '—') + '</td><td></td>';
         wrap.style.display = ''; empty.style.display = 'none';
       }
 
-      paint(_dashDogeUsd);                    // paint immediately with cached/no price
-      _fetchDashDogePrice().then(paint);      // refine when the live price lands
-      noteEl.textContent = 'Shows what each student has EARNED. Give as candy OR deposit the DOGE-equivalent per their '
-        + 'choice. (Per-session eat/bank split + each kid’s deposit address come in the next phase.)';
+      paint(_dashDogeUsd, _rewardWallets);
+      _fetchDashDogePrice().then(function (p) { paint(p, _rewardWallets); });
+      _fetchRewardWallets().then(function (w) { _rewardWallets = w; paint(_dashDogeUsd, w); });
+      noteEl.textContent = 'To give = candy a student chose to EAT but you haven’t handed out. To deposit = DOGE they '
+        + 'banked but you haven’t sent. Mark ✓ as you disburse. Set each address from your paper-wallet sheet.';
     }
 
     function renderGradesTable(payload) {
