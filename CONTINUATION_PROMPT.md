@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — DOGE Effort Wallet (Phases 1+2+3 SHIPPED, verified) + Desk polish; NEXT = run migration 0019 + restart the node → go live
+# CONTINUATION PROMPT — DOGE Effort Wallet (Phases 1+2+3 + watch-only chain display + hardening SHIPPED) ; NEXT = run migration 0019 + restart the node → go live
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 8).
-> follow-alongs HEAD = `d4fe519`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 9).
+> follow-alongs HEAD = `c84a8e4`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** = branch `main`. Teacher tests on the **public GH Pages URL** — commit+push promptly;
 > `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews). `browser-harness` can't run on
@@ -22,20 +22,25 @@
 3. **GO LIVE:** generate paper wallets (`node tools/doge-wallet-gen.mjs --count 30`), hand them out, register each address
    in the dashboard (set-addr). Then a DRY-RUN of `node tools/doge-send.mjs` (plan only), and the first real `--send` when
    you're ready (CC runs dry-run only; `--send` is your deliberate call, irreversible).
-4. **REMAINING build (optional, post-go-live):** a **watch-only on-chain balance display** — poll a block-explorer API
-   (or the node) for each registered address and show confirmations in the Desk/dashboard so kids see real txs land. Spec §7/§13.
+4. **✅ DONE (session 9, `c84a8e4`): watch-only on-chain balance display.** `roster-server/doge-chain.js` (BlockCypher
+   `doge/main`; testnet has NO provider → explicit error, registration mainnet-locked), `GET /wallet/chain` +
+   `GET /class/wallets/chain`, Desk ⛓ on-chain line + dashboard On-chain Ɖ column. **Two NEW optional activation items:**
+   (a) run migration `0020_doge_chain_cache` (USER-RUN, OPTIONAL — the live read works with just 0019 + a registered
+   address; 0020 only adds durable cache cols read back on an explorer outage); (b) set Railway env `BLOCKCYPHER_TOKEN`
+   (free tier ~100 req/hr; the Desk polls per open wallet every 5 min). Plus item-6 hardening (uuid-404, overspend ⚠,
+   `?section=` scope, address regex → 34 chars). roster-server 944 green; root 7092 green.
 5. **VERIFY the My Ledger ↔ Pacing color fix landed** (`46f5220`): the Desk's summer-schedule fetch could fail silently →
    My Ledger showed fall 'eligible' (yellow) while the dashboard Pacing showed summer (green) for the same person. Fix
    retries the load on `openWallet` + re-paints on success. If it persists, console diag in the Desk:
    `console.log(!!window._summerSchedule, _walletDisplayReadiness())` — null schedule = the fetch is still failing.
-6. **(verification minor backlog — optional hardening, none blocking):** surface (don't silently `Math.max(0,…)`-clamp) a
-   negative candy balance if a ledger row is deleted after spending; validate `studentId` shape on teacher `/wallet/*`
-   (return 404 not a generic 500 on a bad uuid); section-scope `GET /class/wallets`; clamp `mark-given/sent` ≤ owed/deposit.
-   Document the **custodial price-window exposure** (coins priced at buy, deposited later — budget caps candy-dollars, not
-   coin-dollars-at-deposit; deposit promptly or hold a DOGE float).
-7. **(carried from session 7 — STATUS UNKNOWN, verify):** the 27 enrolled may still be under section `PERIODX` (caps) —
-   canonical is `PeriodX` (`UPDATE roster SET section='PeriodX' WHERE section='PERIODX';`); Schoology UIDs for the 27;
-   confirm both Railway servers picked up session-7 endpoints (`/commits`, cr `/api/user-answers/:u` etc.).
+6. **✅ DONE (session 9): the verification minor-backlog hardening** — negative candy now SURFACED (`candyBalanceRaw` +
+   dashboard ⚠ overspend badge, not silently clamped); `studentId` uuid-shape guard → 404 not 500; `GET /class/wallets`
+   (+`/chain`) section-scoped; `mark-given/sent` clamp regression-tested; custodial price-window exposure documented (spec §3).
+7. **(carried from session 7 — RESOLVED session 9):** section naming is **already canonical** — `/roster/section/PeriodX`
+   returns the 27 students, `/roster/section/PERIODX` is empty → **NO `UPDATE` needed** (self-signup writes `PeriodX`; any
+   all-caps would be legacy, and none exist). Both Railway servers are **deployed** (`/commits`→401 auth-gate, cr
+   `/api/user-answers/<u>`→200). **Still open:** Schoology-UID coverage for the 27 — needs the teacher secret:
+   `ROSTER_TEACHER_SECRET=… python tools/build_schoology_fixture.py --section PeriodX --inspect` (read `uid_bridge_covered`).
 
 ## ✅ SHIPPED THIS SESSION (2026-06-15/16, session 8)
 
