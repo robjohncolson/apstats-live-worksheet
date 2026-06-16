@@ -1781,8 +1781,8 @@
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
                 <!-- "Create your account" intentionally lives ONLY in the name finder's
-                     "not on the list" fallback now (after a student has tried the dial),
-                     so it isn't an upfront shortcut around the pre-enrolled roster. -->
+                     "not on the list" fallback, so it isn't an upfront shortcut around
+                     the pre-enrolled roster. -->
             </div>
         </div>
         <div class="dialog-btns">
@@ -6042,20 +6042,21 @@ async function submitSignIn() {
                 presses for ~27 students (unit-tested: every name, ≤3 presses).
      password — greet by realName, ask ONLY for the password (no username field
                 to type). Reuses rosterClient.signIn — the password is the gate.
-     notfound — reachable ONLY after the student has turned the dial at least
-                once (the _nfPressed gate); offers "sign in as guest" + "create
-                an account", so neither is an upfront shortcut around the roster.
+     notfound — the visible escape hatch from the dial ("I'm not on the list"),
+                shown on EVERY dial screen so a student who truly isn't enrolled
+                is never stuck; offers "sign in as guest" + "create an account".
    Resolves to login_username but DISPLAYS realName, so a student still finds
    themselves after a username reroll. Roster from the cached _fetchPeriodRoster();
-   an empty/offline roster falls back to the manual sign-in modal (#signin-overlay,
-   kept for teachers + anyone who'd rather type). The password-success block
-   mirrors submitSignIn() and is kept in sync with it by hand. */
+   an empty/offline roster falls back to the manual sign-in modal (#signin-overlay).
+   Students who'd rather TYPE their username (teachers, returning students) reach
+   that modal with the Escape key — the dial no longer shows an "I know my
+   username" link. The password-success block mirrors submitSignIn() and is kept
+   in sync with it by hand. */
 var _nfRoster = [];        // [{username, realName}] sorted by realName
 var _nfStack = [];         // window history for back-out: [{lo,hi}]
 var _nfLo = 0, _nfHi = -1;
 var _nfState = 'dial';     // 'dial' | 'password' | 'notfound'
 var _nfPicked = null;      // the {username, realName} chosen on the dial
-var _nfPressed = false;    // true after >=1 arrow press (gates the not-listed escape)
 
 function _nfEsc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -6103,7 +6104,7 @@ async function openNameFinder() {
   _nfRoster = _nfRoster.slice().sort(function (a, b) {
     return (a.realName || a.username || '').localeCompare(b.realName || b.username || '');
   });
-  _nfLo = 0; _nfHi = _nfRoster.length - 1; _nfStack = []; _nfPressed = false; _nfPicked = null;
+  _nfLo = 0; _nfHi = _nfRoster.length - 1; _nfStack = []; _nfPicked = null;
   _nfEnsureOverlay();
   document.getElementById('namefinder-overlay').style.display = 'flex';
   if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('sosumi', 0.4);
@@ -6173,10 +6174,10 @@ function _nfRenderDial() {
     + '</div>'
     + '<div class="nf-foot geneva">press &#8593; &#8592; &#8594; &#8595;'
     + (_nfStack.length ? ' &nbsp;&middot;&nbsp; <a href="#" onclick="_nfBack();return false;">&#9003; back</a>' : '')
-    + ' &nbsp;&middot;&nbsp; <a href="#" onclick="_nfGotoSignin();return false;">I know my username &#8594;</a></div>'
-    + (_nfPressed
-        ? '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfRenderNotFound();return false;">I\'m not on the list &#8594;</a></div>'
-        : '');
+    + '</div>'
+    // The "not on the list" escape hatch shows on EVERY dial screen (incl. the
+    // first) so a student who truly isn't on the roster is never stuck spinning.
+    + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfRenderNotFound();return false;">I\'m not on the list &#8594;</a></div>';
 }
 
 function _nfPick(i) {
@@ -6184,7 +6185,6 @@ function _nfPick(i) {
   var buckets = _nfBuckets(_nfLo, _nfHi);
   var b = buckets[i];
   if (!b) return;
-  _nfPressed = true;
   if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3);
   if (b.leaf) { _nfSelectName(_nfRoster[b.lo]); return; }
   _nfStack.push({ lo: _nfLo, hi: _nfHi });
@@ -6275,7 +6275,7 @@ window._nfSubmitPassword = _nfSubmitPassword;
 function _nfBackToDial() { _nfRenderDial(); }
 window._nfBackToDial = _nfBackToDial;
 
-// Reached ONLY after the student has turned the dial (the _nfPressed gate).
+// The "I'm not on the list" escape hatch — linked from every dial screen.
 function _nfRenderNotFound() {
   _nfState = 'notfound';
   var host = document.getElementById('nf-content');
@@ -6284,12 +6284,17 @@ function _nfRenderNotFound() {
     '<div class="chicago" style="font-size:13px;margin-bottom:6px">Can’t find your name?</div>'
     + '<div class="geneva" style="font-size:11px;margin-bottom:10px">If your name really isn’t on the class list, you can keep working as a guest and have your teacher save your work later — or create your own account.</div>'
     + '<div style="margin-bottom:8px"><button class="s7btn s7btn-default" style="min-width:210px" onclick="_nfGuestSignIn()">&#129701; Sign in as guest</button></div>'
+    // Nudge in front of the create-account button only: now that the not-on-list
+    // link shows on the first dial screen, a pre-enrolled student could mint a
+    // duplicate identity before scanning the roster. Guest stays frictionless
+    // (recoverable); creating a real account is the split-grades risk, so steer back.
+    + '<div class="geneva" style="font-size:10px;color:#888;margin:0 auto 6px;max-width:300px">Most students <b>are</b> on the list — your name might be tucked inside a name-range bucket. <a href="#" onclick="_nfBackToDial();return false;">Turn the dial</a> first if you haven&#8217;t.</div>'
     + '<div style="margin-bottom:8px"><button class="s7btn" style="min-width:210px" onclick="_nfCreate()">&#127881; Create an account</button></div>'
     + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfBackToDial();return false;">&#8592; back to the dial</a></div>';
 }
 
 // Guest off-ramp: grant Desk access as the stable Guest_ identity. The no-guest
-// wall is intentionally softened here, but ONLY reachable after trying the dial.
+// wall is intentionally softened here (reached via "I'm not on the list").
 function _nfGuestSignIn() {
   // Becoming a guest drops any lingering roster session so the guest alias isn't
   // shadowed by a previous sign-in (rosterClient.current() would otherwise win in
