@@ -6918,6 +6918,17 @@ try {
 // (red = behind … green = caught up, cyan = catching up — a combo of how long
 // since the last session and how much work is done vs deadlines), and make the
 // whole card a one-tap entry into My Ledger (its chips were removed). Idempotent.
+// A click inside the Do Now card opens My Ledger UNLESS it landed on a genuinely
+// interactive child (a real link / button / grade pill). The card itself is
+// role="button", so closest() would match the CARD too — exclude it, or every
+// click bails here and the card leads nowhere (the regression the s124 structural
+// test missed because it never simulated a click).
+function _donowOpensLedger(target, card) {
+  if (!target || typeof target.closest !== 'function') return true;
+  var hit = target.closest('a,button,[role="button"],input,select');
+  return !hit || hit === card;
+}
+
 function _paintDoNowReadiness() {
   try {
     var card = document.getElementById('donow-card');
@@ -6929,8 +6940,7 @@ function _paintDoNowReadiness() {
       card.setAttribute('tabindex', '0');
       card.title = 'Open My Ledger — your grade, pacing, and recorded work';
       card.addEventListener('click', function (e) {
-        // Don't hijack clicks on interactive children (pills, the My Gradebook chip).
-        if (e.target && e.target.closest && e.target.closest('a,button,[role="button"],input,select')) return;
+        if (!_donowOpensLedger(e.target, card)) return;   // skip real interactive children
         if (typeof openWallet === 'function') openWallet();
       });
       card.addEventListener('keydown', function (e) {
