@@ -51,15 +51,19 @@ async function resolveReceiptUsername(resolveUsername, studentId) {
 }
 
 // Pull all roster rows for the (optional) section, defensively.
-async function listRoster(db, section) {
+// includeStaff=true keeps TEACHER accounts in the fan-out. By default they're
+// excluded: a self-signup teacher has a real section (PeriodX) but is not a
+// student; without this they'd show up as a blank-grade "student" in the in-Desk
+// Class Gradebook + the dashboard's grades/gradebook/trainer tables. The teacher
+// dashboard's Pacing Overview opts back in (includeStaff=1) so a teacher can see
+// their OWN account drive the view before any student has logged in.
+// (/roster/list uses db.listRoster directly, so the teacher console stays complete.)
+async function listRoster(db, section, includeStaff) {
   try {
     const { data, error } = await db.listRoster(section || null);
     if (error) return { error };
-    // Exclude TEACHER accounts from the class fan-out. A self-signup teacher has a
-    // real section (PeriodX) but is not a student; without this they'd show up as a
-    // blank-grade "student" in the in-Desk Class Gradebook + teacher dashboard.
-    // (/roster/list uses db.listRoster directly, so the teacher console stays complete.)
-    const rows = (Array.isArray(data) ? data : []).filter(r => r && r.role !== 'teacher');
+    const all = Array.isArray(data) ? data : [];
+    const rows = includeStaff ? all : all.filter(r => r && r.role !== 'teacher');
     return { rows };
   } catch (err) {
     return { error: err };
@@ -85,7 +89,7 @@ async function fanLedger(ledgerDb, rosterRows) {
 
 // Studentizer: roster columns → the dashboard's per-student header.
 function studentMeta(r) {
-  return { studentId: r.student_id, realName: r.real_name, username: r.login_username, section: r.section };
+  return { studentId: r.student_id, realName: r.real_name, username: r.login_username, section: r.section, role: r.role || 'student' };
 }
 
 // Parse a lessonKey like "1.2", "U1.2", or "4.1-2" into { unit, lessonKey }.
@@ -212,7 +216,9 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
       return res.status(500).json({ ok: false, error: 'Answer key malformed' });
     }
 
-    const { rows, error } = await listRoster(db, req.query.section);
+    // includeStaff=1 keeps teacher accounts in the fan-out (Pacing Overview opt-in).
+    const includeStaff = req.query.includeStaff === '1' || req.query.includeStaff === 'true';
+    const { rows, error } = await listRoster(db, req.query.section, includeStaff);
     if (error) {
       console.error('GET /class/grades roster error:', error);
       return res.status(500).json({ ok: false, error: 'Database error' });

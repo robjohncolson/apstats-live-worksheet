@@ -870,6 +870,7 @@
     // In-app gradebook grid state. The last /class/grades payload is stashed so
     // switching quarters re-renders without a refetch.
     var lastGradesPayload = null;
+    var lastPacingPayload = null;   // /class/grades?includeStaff=1 — pacing includes teacher/test accounts
     var currentQuarter = 'Q1';
 
     // ── Pacing overview: per-student readiness color (shared wallet_logic.js) ──
@@ -881,7 +882,8 @@
           .then(function (d) {
             if (d && Array.isArray(d.lessons)) {
               _summerScheduleData = d;
-              if (typeof lastGradesPayload !== 'undefined' && lastGradesPayload) renderPacingOverview(lastGradesPayload);
+              var _pp = lastPacingPayload || lastGradesPayload;
+              if (_pp) renderPacingOverview(_pp);
             }
           })
           .catch(function () {});
@@ -954,6 +956,11 @@
       var totalLessons = (sch.lessons || []).length;
       var rows = students.map(function (s) { return { s: s, rd: _pacingReadiness(s, sch) }; })
         .sort(function (a, b) {
+          // Teacher/test accounts sink to the bottom so they don't clutter the
+          // most-behind-first class ordering (they're opted in via includeStaff=1).
+          var sa = (a.s && a.s.role === 'teacher') ? 1 : 0;
+          var sb = (b.s && b.s.role === 'teacher') ? 1 : 0;
+          if (sa !== sb) return sa - sb;
           var oa = a.rd && _PACING_ORDER[a.rd.state] != null ? _PACING_ORDER[a.rd.state] : 9;
           var ob = b.rd && _PACING_ORDER[b.rd.state] != null ? _PACING_ORDER[b.rd.state] : 9;
           if (oa !== ob) return oa - ob;
@@ -971,6 +978,12 @@
         var tr = document.createElement('tr');
         var tdName = document.createElement('td');
         tdName.textContent = s.realName || s.username || s.studentId || '?';
+        if (s.role === 'teacher') {
+          var badge = document.createElement('span');
+          badge.textContent = ' 🧪 teacher · test';
+          badge.style.cssText = 'font-size:0.7rem;color:#888;margin-left:4px';
+          tdName.appendChild(badge);
+        }
         tr.appendChild(tdName);
         var tdStatus = document.createElement('td');
         var dot = document.createElement('span');
@@ -983,9 +996,10 @@
         tbody.appendChild(tr);
       });
       wrap.style.display = ''; empty.style.display = 'none';
-      legend.textContent = _pacingSummerMode(sch)
+      legend.textContent = (_pacingSummerMode(sch)
         ? 'Summer pacing (Unit 1 by Sept 1): red = behind · cyan = catching up · green = caught up / on pace · grey = not started. Most-behind first. Same colors students see in My Ledger.'
-        : 'Readiness by current quarter: red = behind · yellow = eligible · green = caught up.';
+        : 'Readiness by current quarter: red = behind · yellow = eligible · green = caught up.')
+        + ' Teacher/test accounts (🧪) sort last. Guests aren’t shown — their work isn’t saved to the roster.';
     }
 
     function renderGradesTable(payload) {
@@ -1443,9 +1457,14 @@
         // through teacherSecret() at fetch-time (no cached value).
         var gradesP = fetchJson('/class/grades' + qs, teacherSecret());
         var masteryP = fetchJson('/class/mastery' + qs, teacherSecret());
-        var results = await Promise.all([gradesP, masteryP]);
+        // Pacing Overview opts into teacher/test accounts (includeStaff=1) so the
+        // teacher can see their OWN account drive the view before students log in.
+        // Separate fetch: the grades/gradebook/trainer tables stay student-only.
+        var pacingP = fetchJson('/class/grades' + (qs ? qs + '&includeStaff=1' : '?includeStaff=1'), teacherSecret());
+        var results = await Promise.all([gradesP, masteryP, pacingP]);
         var gRes = results[0];
         var mRes = results[1];
+        var pRes = results[2];
 
         // 401 from either endpoint => clear, never persisting anything.
         if (gRes.status === 401 || mRes.status === 401) {
@@ -1482,9 +1501,13 @@
         var mPayload = (mRes.status === 200 && mRes.data && mRes.data.ok)
           ? mRes.data : { heatmap: {}, students: [] };
 
+        // Pacing uses the staff-inclusive payload; falls back to the student-only
+        // grades payload if that fetch failed (teachers simply won't appear then).
+        var pPayload = (pRes && pRes.status === 200 && pRes.data && pRes.data.ok) ? pRes.data : gPayload;
         renderGradesTable(gPayload);
         lastGradesPayload = gPayload;
-        renderPacingOverview(gPayload);
+        lastPacingPayload = pPayload;
+        renderPacingOverview(pPayload);
         renderGradebook(gPayload);
         renderTrainerPractice(gPayload);
         renderHeatmap(mPayload);

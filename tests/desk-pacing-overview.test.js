@@ -36,8 +36,27 @@ describe('Teacher pacing overview — dashboard', () => {
   });
 
   it('renders in the load flow and sorts most-behind first', () => {
-    expect(DASH).toContain('renderPacingOverview(gPayload)');
+    expect(DASH).toContain('renderPacingOverview(pPayload)');
     expect(DASH).toMatch(/_PACING_ORDER/);
+  });
+});
+
+describe('Teacher pacing overview — staff/test accounts visible (so the teacher can test the view)', () => {
+  it('fetches /class/grades with includeStaff=1 for pacing ONLY', () => {
+    expect(DASH).toContain("includeStaff=1");
+    // the staff-inclusive payload feeds pacing; the student-only payload still
+    // feeds the grades table + gradebook (those must stay teacher-free).
+    expect(DASH).toContain('renderGradesTable(gPayload)');
+    expect(DASH).toContain('renderGradebook(gPayload)');
+  });
+
+  it('tags teacher/test rows distinctly and sinks them to the bottom', () => {
+    expect(DASH).toMatch(/role === 'teacher'/);
+    expect(DASH).toContain('🧪 teacher · test');
+  });
+
+  it('explains in the legend that guests are not shown', () => {
+    expect(DASH).toMatch(/Guests aren.t shown/);
   });
 });
 
@@ -45,5 +64,14 @@ describe('Teacher pacing overview — server data', () => {
   it('/class/grades exposes an additive per-student lastActivityAt', () => {
     expect(CLASS).toMatch(/lastActivityAt/);
     expect(CLASS).toMatch(/recorded_at/);
+  });
+
+  it('studentMeta carries role (default student) for the pacing badge', () => {
+    expect(CLASS).toMatch(/role:\s*r\.role\s*\|\|\s*'student'/);
+  });
+
+  it('listRoster filters teachers by default but honors includeStaff', () => {
+    expect(CLASS).toMatch(/includeStaff\s*\?\s*all\s*:\s*all\.filter/);
+    expect(CLASS).toMatch(/req\.query\.includeStaff/);
   });
 });
