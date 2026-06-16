@@ -20,7 +20,7 @@ describe('Teacher reward disbursement — dashboard', () => {
     expect(DASH).toMatch(/Reward Disbursement/);
     expect(DASH).toContain('reward-tbody');
     expect(DASH).toContain('function renderRewardDisbursement');
-    expect(DASH).toContain('renderRewardDisbursement(gPayload)');   // wired into load
+    expect(DASH).toContain('renderRewardDisbursement(pPayload)');   // staff-inclusive payload
   });
 
   it('shows the REAL give/deposit from /class/wallets + mark-done + set-address', () => {
@@ -44,9 +44,11 @@ describe('Teacher reward disbursement — dashboard', () => {
     expect(DASH).toMatch(/run migration 0019/);
   });
 
-  it('excludes teacher/test accounts from disbursement', () => {
+  it('includes teacher/test accounts (badged, sorted last) so the teacher can test redemption', () => {
     const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
-    expect(fn).toMatch(/role !== 'teacher'/);
+    expect(fn).toContain('🧪');                       // teacher rows badged
+    expect(fn).toMatch(/role === 'teacher'.*\? 1 : 0/); // teacher rows sort last
+    expect(fn).not.toMatch(/filter\(function \(s\) \{ return !s \|\| s\.role !== 'teacher'/); // no longer filtered out
   });
 });
 

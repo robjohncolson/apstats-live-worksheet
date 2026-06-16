@@ -6923,6 +6923,17 @@ function _walletLoadSummerSchedule() {
           // The first rCal may have run before this fetch resolved — repaint so
           // the summer weeks weave into the grid now that the schedule is in hand.
           if (typeof rCal === 'function') { try { rCal(); } catch (_) {} }
+          // Also refresh the readiness-COLORED surfaces (Do Now card + an open
+          // wallet) so they switch from the fall fallback to SUMMER mode once the
+          // schedule lands. Without this a slow/failed-then-retried load leaves My
+          // Ledger showing fall 'eligible' (yellow) while the dashboard pacing —
+          // which loaded the schedule fine — shows summer (green). That was the
+          // Desk↔dashboard color discrepancy.
+          if (typeof _paintDoNowReadiness === 'function') { try { _paintDoNowReadiness(); } catch (_) {} }
+          try {
+            var _wov = document.getElementById('app-wallet-overlay');
+            if (_wov && _wov.style.display !== 'none' && typeof renderWallet === 'function') renderWallet();
+          } catch (_) {}
         }
       })
       .catch(function () {});
@@ -11717,6 +11728,10 @@ async function renderWallet() {
 }
 
 function openWallet() {
+    // Recover a failed/slow initial summer-schedule load so My Ledger shows the
+    // correct SUMMER readiness (matching the dashboard pacing) rather than the
+    // fall fallback. No-op once loaded (the loader self-guards on _summerSchedule).
+    try { if (typeof _walletLoadSummerSchedule === 'function') _walletLoadSummerSchedule(); } catch (_) {}
     try { if (typeof bumpUsage === 'function') bumpUsage('wallet'); } catch (_) {}
     try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
     var overlay = document.getElementById('app-wallet-overlay');

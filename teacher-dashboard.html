@@ -1072,13 +1072,18 @@
       var tbody = $('reward-tbody'), wrap = $('reward-wrap'), empty = $('reward-empty');
       var rateEl = $('reward-rate'), totalsEl = $('reward-totals'), noteEl = $('reward-note');
       if (!tbody) return;
-      var students = ((payload && payload.students) || []).filter(function (s) { return !s || s.role !== 'teacher'; });
+      // Include teacher/test accounts too (they carry effort/candy) so the
+      // teacher can test redemption with their own account — badged + sorted last.
+      // (Guests are device-local, never on the roster, so they can't appear here.)
+      var students = (payload && payload.students) || [];
       if (!students.length) { wrap.style.display = 'none'; empty.style.display = 'block'; return; }
       var W = (typeof WalletLogic !== 'undefined') ? WalletLogic : null;
       var rows = students.slice().sort(function (a, b) {
+        var sa = (a && a.role === 'teacher') ? 1 : 0, sb = (b && b.role === 'teacher') ? 1 : 0;
+        if (sa !== sb) return sa - sb;     // teacher/test rows last
         return ((b.effort && b.effort.candy) || 0) - ((a.effort && a.effort.candy) || 0);
       });
-      _rewardRepaint = function () { renderRewardDisbursement(lastGradesPayload || payload); };
+      _rewardRepaint = function () { renderRewardDisbursement(lastPacingPayload || payload); };
 
       function btn(label, onclick) {
         var b = document.createElement('button'); b.className = 's7btn'; b.textContent = label;
@@ -1097,7 +1102,9 @@
           var give = acc ? acc.candyOwed : 0, deposit = acc ? acc.dogeToDeposit : 0, addr = acc ? acc.dogeAddress : null;
           totEarned += earned; totGive += give; totDeposit += deposit;
           var tr = document.createElement('tr');
-          var nameTd = document.createElement('td'); nameTd.textContent = s.realName || s.username || s.studentId || '?'; tr.appendChild(nameTd);
+          var nameTd = document.createElement('td'); nameTd.textContent = s.realName || s.username || s.studentId || '?';
+          if (s.role === 'teacher') { var bdg = document.createElement('span'); bdg.textContent = ' 🧪'; bdg.title = 'teacher / test account'; nameTd.appendChild(bdg); }
+          tr.appendChild(nameTd);
           var earnedTd = document.createElement('td'); earnedTd.textContent = '🍬 ' + Math.round(earned); tr.appendChild(earnedTd);
           var giveTd = document.createElement('td');
           if (!prov) giveTd.textContent = '—';
@@ -1640,7 +1647,7 @@
         lastGradesPayload = gPayload;
         lastPacingPayload = pPayload;
         renderPacingOverview(pPayload);
-        renderRewardDisbursement(gPayload);   // 🍬 effort → candy / DOGE
+        renderRewardDisbursement(pPayload);   // 🍬 effort → candy / DOGE (incl. teacher/test accounts for testing)
         renderGradebook(gPayload);
         renderTrainerPractice(gPayload);
         renderHeatmap(mPayload);
