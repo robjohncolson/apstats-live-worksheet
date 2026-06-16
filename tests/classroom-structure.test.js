@@ -606,9 +606,24 @@ describe('KEYBOARD_AVATAR Phase 1 -- player controller wiring', () => {
     expect(BOARD).toMatch(/doc\.addEventListener\(\s*['"]keyup['"]/);
   });
 
-  it('addSprite branches on isLocal student to create a PlayerSprite', () => {
-    expect(BOARD).toMatch(/var\s+isLocal\s*=\s*\(\s*member\.username\s*===\s*username\s*&&\s*role\s*===\s*['"]student['"]\s*\)/);
+  it('addSprite makes the local user (student OR teacher) a PlayerSprite', () => {
+    // The local user gets the interactive PlayerSprite — a teacher counts as local
+    // too now, so the teacher's own avatar can move + doorway-vote (not a stationary observer).
+    expect(BOARD).toMatch(/var\s+isLocal\s*=\s*\(\s*member\.username\s*===\s*username\s*&&\s*\(\s*role\s*===\s*['"]student['"]\s*\|\|\s*role\s*===\s*['"]teacher['"]\s*\)\s*\)/);
     expect(BOARD).toMatch(/new\s+PlayerSprite\s*\(/);
+  });
+
+  it('the scene renders teacher members too (not filtered out)', () => {
+    // The presentStudents filter includes role==='teacher', so the teacher avatar
+    // appears in the scene alongside students (visible to everyone).
+    expect(BOARD).toMatch(/mb\.role\s*===\s*['"]student['"]\s*\|\|\s*mb\.role\s*===\s*['"]teacher['"]/);
+  });
+
+  it('a teacher does not trigger the gate check-in (no checkedIn vanish)', () => {
+    // handlePlayerUp guards the gate check-in on student role — a teacher pressing
+    // Up away from a doorway is a no-op (return;), so they never check in + disappear.
+    // (Distinct from shouldShowCheckinButton's `return false`.)
+    expect(BOARD).toMatch(/role\s*!==\s*['"]student['"]\s*\)\s*\{\s*return;\s*\}/);
   });
 
   it('repositionSprites skips any sprite that has moved (_moved flag)', () => {

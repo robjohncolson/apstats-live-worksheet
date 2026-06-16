@@ -4358,6 +4358,10 @@
           }
         }
       }
+      // Gate check-in is a STUDENT ritual (the teacher runs the gate, not checks
+      // into it). A teacher pressing Up away from a doorway is a no-op — without
+      // this they'd send classroom_checkin and vanish via the 'checkedIn' filter.
+      if (role !== 'student') { return; }
       if (!state.gate || !state.gate.armed) { return; }
       if (!engineReady) { return; }
       var cw     = engine.canvas.width / (root.devicePixelRatio || 1);
@@ -4528,10 +4532,11 @@
       var label  = (nameMap && nameMap[member.username]) ? nameMap[member.username] : member.username;
       var sy     = getSpriteY();
       var hue    = resolveHue(member);
-      // Phase 1 (D1): the local signed-in student gets a PlayerSprite
-      // (keyboard-controlled). All other members -- peers + teacher
-      // observers -- stay an auto-layout BoardSprite.
-      var isLocal = (member.username === username && role === 'student');
+      // Phase 1 (D1): the local signed-in user gets a PlayerSprite (keyboard-
+      // controlled, can walk + doorway-vote). All OTHER members stay an auto-layout
+      // BoardSprite. A teacher counts as local too now, so the teacher's own avatar
+      // is interactive (moves + votes in doorways) — not a stationary observer.
+      var isLocal = (member.username === username && (role === 'student' || role === 'teacher'));
       var baseOpts = {
         x:      0,
         y:      sy,
@@ -5888,11 +5893,14 @@
         hidePollColumns();
       }
 
-      // Determine which students should be present (drawn).
+      // Determine which members should be present (drawn). Teachers render as a
+      // peer avatar too (blend in — username label, hashed/roster hue), so they're
+      // visible in the scene alongside students. (They never reach 'checkedIn' —
+      // teachers don't run the gate check-in — so the status guard is a no-op for them.)
       var presentStudents = {};
       for (var u in members) {
         var mb = members[u];
-        if (mb.role === 'student' && mb.status !== 'checkedIn') {
+        if ((mb.role === 'student' || mb.role === 'teacher') && mb.status !== 'checkedIn') {
           presentStudents[u] = mb;
         }
       }

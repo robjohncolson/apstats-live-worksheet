@@ -1775,7 +1775,7 @@ describe('ClassroomBoard r3 -- render layer engine wiring', function () {
     handle.destroy();
   });
 
-  it('teacher members never get a sprite entity', function () {
+  it('a teacher member now gets a sprite entity (visible in the scene)', function () {
     var m = makeMount();
     var addedIds = [];
 
@@ -1812,7 +1812,9 @@ describe('ClassroomBoard r3 -- render layer engine wiring', function () {
       ]
     });
 
-    expect(addedIds.some(function (id) { return id === 'sprite_carol'; })).toBe(false);
+    // Teachers now render too (blend-in peer avatar). carol is the local user
+    // (role:teacher) so she gets her own sprite; alice (peer student) gets one too.
+    expect(addedIds.some(function (id) { return id === 'sprite_carol'; })).toBe(true);
     expect(addedIds.some(function (id) { return id === 'sprite_alice'; })).toBe(true);
 
     handle.destroy();
