@@ -67,6 +67,14 @@ describe('Teacher reward disbursement — dashboard', () => {
     expect(fn).toMatch(/spent - earned > 0\.05/);     // the reconciliation guard
     expect(fn).toContain('⚠');
   });
+
+  it('after disbursing, confirms "given"/"sent" instead of collapsing to · (no false "never gave")', () => {
+    const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
+    // once owed/deposit is settled, a positive candyGiven/dogeSent shows a green
+    // confirmation, so the teacher sees what they handed out.
+    expect(fn).toMatch(/acc\.candyGiven[^]*given/);
+    expect(fn).toMatch(/acc\.dogeSent[^]*sent/);
+  });
 });
 
 describe('Teacher reward disbursement — server effort field', () => {

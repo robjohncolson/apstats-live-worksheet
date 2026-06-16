@@ -1136,11 +1136,15 @@
           var giveTd = document.createElement('td');
           if (!prov) giveTd.textContent = '—';
           else if (give > 0.01) { giveTd.textContent = '🍬 ' + (Math.round(give * 10) / 10) + ' '; giveTd.appendChild(btn('✓ gave', function () { _rewardMark(s.studentId, 'mark-given', give); })); }
+          // Owed is settled — but if candy WAS handed out, confirm it (don't vanish
+          // to '·', which reads as "never gave" and misleads the teacher).
+          else if (acc && (acc.candyGiven || 0) > 0.01) { giveTd.textContent = '✓ ' + (Math.round(acc.candyGiven * 10) / 10) + ' given'; giveTd.style.color = '#2a7'; }
           else giveTd.textContent = '·';
           tr.appendChild(giveTd);
           var depTd = document.createElement('td');
           if (!prov) depTd.textContent = '—';
           else if (deposit > 0.0001) { depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' '; depTd.appendChild(btn('✓ sent', function () { _rewardMark(s.studentId, 'mark-sent', deposit); })); }
+          else if (acc && (acc.dogeSent || 0) > 0.0001) { depTd.textContent = '✓ Ɖ ' + (Math.round(acc.dogeSent * 10) / 10) + ' sent'; depTd.style.color = '#2a7'; }
           else depTd.textContent = '·';
           tr.appendChild(depTd);
           // On-chain (watch-only) balance — the REAL coins, once deposited.
