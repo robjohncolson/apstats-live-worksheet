@@ -11234,42 +11234,111 @@ function _dogeWalletPreviewOn() {
         return localStorage.getItem('apstats_doge_wallet_preview') === '1';
     } catch (_) { return false; }
 }
+// Interactive wallet: fetch the server's GET /wallet (candy to spend, DOGE held)
+// and offer eat / buy-DOGE. Falls back to a display-only preview (candy from
+// local effort points + live rate) when the backend isn't provisioned (503,
+// migration 0019 pending) or the student is offline.
 function _walletDogePanel(host, pts) {
     if (!host || !_dogeWalletPreviewOn()) return;
+    var box = document.createElement('div');
+    box.style.cssText = 'border:1px solid #c9961f;background:#fff8e6;border-radius:3px;padding:8px 10px;margin-top:10px';
+    box.innerHTML = '<div class="geneva" style="font-size:11px;color:#8a7330">Loading rewards…</div>';
+    host.appendChild(box);
+    _dogeWalletFetch().then(function (w) { _dogeWalletRender(box, w, pts); });
+}
+function _dogeWalletBase() {
+    try {
+        var token = (window.rosterClient && rosterClient.token) ? rosterClient.token() : null;
+        var base = window.ROSTER_SERVICE_URL || null;
+        return (token && base) ? { token: token, base: base } : null;
+    } catch (_) { return null; }
+}
+function _dogeWalletFetch() {
+    var c = _dogeWalletBase();
+    if (!c) return Promise.resolve(null);
+    return fetch(c.base + '/wallet', { headers: { 'Authorization': 'Bearer ' + c.token } })
+        .then(function (r) { if (r.status === 503) return { _notProvisioned: true }; return r.ok ? r.json() : null; })
+        .catch(function () { return null; });
+}
+function _dogeWalletAction(path, candy) {
+    var c = _dogeWalletBase();
+    if (!c) return Promise.resolve({ ok: false, error: 'offline' });
+    return fetch(c.base + path, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + c.token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candy: candy })
+    }).then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .catch(function () { return { ok: false, error: 'network' }; });
+}
+function _dogeWalletRender(box, w, pts) {
+    box.innerHTML = '';
+    if (!w || w._notProvisioned || !w.ok) { _dogeWalletPreviewFallback(box, pts, w && w._notProvisioned); return; }
+    var candy = w.candyBalance || 0, doge = w.dogeBalance || 0;
+    var dogeUsd = (w.dogeUsd && doge) ? (doge * w.dogeUsd) : 0;
+
+    var l1 = document.createElement('div');
+    l1.className = 'geneva'; l1.style.cssText = 'font-size:12px;font-weight:bold;color:#5a4500';
+    l1.textContent = '🍬 ' + candy.toFixed(1) + ' candy to spend  ·  Ɖ ' + doge.toFixed(1) + ' held'
+        + (dogeUsd ? ' ($' + dogeUsd.toFixed(2) + ')' : '');
+    box.appendChild(l1);
+
+    var l2 = document.createElement('div');
+    l2.className = 'geneva'; l2.style.cssText = 'font-size:10px;color:#8a7330;margin-top:2px';
+    l2.textContent = w.candyPerDoge
+        ? ('1 DOGE = ' + w.candyPerDoge.toFixed(1) + ' candy today — buy early, it floats up.')
+        : 'Eat it… or bank it as Dogecoin and let it ride.';
+    box.appendChild(l2);
+
+    if (candy > 0.05) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:4px;align-items:center;margin-top:6px;flex-wrap:wrap';
+        var amt = document.createElement('input');
+        amt.type = 'number'; amt.min = '1'; amt.placeholder = 'all';
+        amt.style.cssText = 'width:52px;font-size:11px;padding:2px;border:1px solid #c9961f';
+        var eatBtn = document.createElement('button'); eatBtn.className = 's7btn'; eatBtn.textContent = '🍬 Eat'; eatBtn.style.cssText = 'font-size:10px;padding:2px 6px';
+        var buyBtn = document.createElement('button'); buyBtn.className = 's7btn'; buyBtn.textContent = 'Ɖ Buy DOGE'; buyBtn.style.cssText = 'font-size:10px;padding:2px 6px';
+        var msg = document.createElement('span'); msg.className = 'geneva'; msg.style.cssText = 'font-size:9px;color:#a07c1c';
+        msg.textContent = '(min ' + (w.minBuyCandy || 25) + ' to buy)';
+        var amount = function () { var v = parseFloat(amt.value); return (isFinite(v) && v > 0) ? v : candy; };
+        var act = function (path) {
+            eatBtn.disabled = buyBtn.disabled = true; msg.textContent = '…';
+            _dogeWalletAction(path, amount()).then(function (res) {
+                if (res && res.ok) { _dogeWalletFetch().then(function (w2) { _dogeWalletRender(box, w2, pts); }); }
+                else { eatBtn.disabled = buyBtn.disabled = false; msg.textContent = (res && res.error) || 'failed'; }
+            });
+        };
+        eatBtn.onclick = function () { act('/wallet/eat'); };
+        buyBtn.onclick = function () { act('/wallet/buy-doge'); };
+        row.appendChild(amt); row.appendChild(eatBtn); row.appendChild(buyBtn); row.appendChild(msg);
+        box.appendChild(row);
+    } else {
+        var none = document.createElement('div');
+        none.className = 'geneva'; none.style.cssText = 'font-size:10px;color:#8a7330;margin-top:4px';
+        none.textContent = doge > 0 ? 'All spent — do more work to earn candy.' : 'Do some work to earn candy.';
+        box.appendChild(none);
+    }
+}
+function _dogeWalletPreviewFallback(box, pts, notProvisioned) {
     if (typeof WalletLogic === 'undefined' || typeof WalletLogic.candyFromPoints !== 'function') return;
     var total = (pts && typeof pts.total === 'number') ? pts.total : 0;
     var candy = WalletLogic.candyFromPoints(total);
     var usd = WalletLogic.usdFromCandy(candy);
-
-    var box = document.createElement('div');
-    box.style.cssText = 'border:1px solid #c9961f;background:#fff8e6;border-radius:3px;padding:8px 10px;margin-top:10px';
-
     var l1 = document.createElement('div');
-    l1.className = 'geneva';
-    l1.style.cssText = 'font-size:12px;font-weight:bold;color:#5a4500';
+    l1.className = 'geneva'; l1.style.cssText = 'font-size:12px;font-weight:bold;color:#5a4500';
     l1.textContent = '🍬 ' + candy.toFixed(0) + ' candy  ·  $' + usd.toFixed(2);
     box.appendChild(l1);
-
     var l2 = document.createElement('div');
-    l2.className = 'geneva';
-    l2.style.cssText = 'font-size:10px;color:#8a7330;margin-top:2px';
-    l2.textContent = 'Eat it… or bank it as Dogecoin and let it ride.';
+    l2.className = 'geneva'; l2.style.cssText = 'font-size:10px;color:#8a7330;margin-top:2px';
+    l2.textContent = notProvisioned ? 'Rewards aren’t turned on yet (preview).' : 'Eat it… or bank it as Dogecoin and let it ride.';
     box.appendChild(l2);
-
     var rate = document.createElement('div');
-    rate.className = 'geneva';
-    rate.style.cssText = 'font-size:11px;color:#5a4500;margin-top:4px';
+    rate.className = 'geneva'; rate.style.cssText = 'font-size:11px;color:#5a4500;margin-top:4px';
     rate.textContent = 'Loading DOGE price…';
     box.appendChild(rate);
-
-    host.appendChild(box);
-
     _fetchDogePrice().then(function (price) {
         if (!price) { rate.textContent = '(DOGE price unavailable right now)'; return; }
-        var cpd = WalletLogic.candyPerDoge(price);
-        var coins = WalletLogic.dogeFromCandy(candy, price);
-        rate.innerHTML = '1 DOGE = <b>' + cpd.toFixed(1) + ' candy</b> today (Ɖ at $' + price.toFixed(4) + ')<br>'
-            + 'Bank it all → <b>Ɖ ' + coins.toFixed(1) + '</b> in your DOGE wallet.';
+        rate.innerHTML = '1 DOGE = <b>' + WalletLogic.candyPerDoge(price).toFixed(1) + ' candy</b> today (Ɖ at $' + price.toFixed(4) + ')<br>'
+            + 'Bank it all → <b>Ɖ ' + WalletLogic.dogeFromCandy(candy, price).toFixed(1) + '</b> in your DOGE wallet.';
     });
 }
 

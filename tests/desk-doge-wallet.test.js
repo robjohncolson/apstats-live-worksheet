@@ -34,14 +34,23 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
     expect(panel).toContain('_dogeWalletPreviewOn()');          // bails when off
   });
 
-  it('renders candy value + the live candy→DOGE rate (no price prediction)', () => {
-    const panel = fnBody('_walletDogePanel');
-    expect(panel).toContain('WalletLogic.candyFromPoints');
-    expect(panel).toContain('WalletLogic.usdFromCandy');
-    expect(panel).toContain('WalletLogic.candyPerDoge');
-    expect(panel).toContain('WalletLogic.dogeFromCandy');
-    expect(panel).toMatch(/candy<\/b> today/);
-    expect(panel).not.toMatch(/If DOGE → \$1|prediction|by June/);   // no speculative projection
+  it('fetches the server wallet (/wallet) and offers eat / buy-DOGE', () => {
+    const fetchFn = fnBody('_dogeWalletFetch');
+    expect(fetchFn).toContain("'/wallet'");
+    const render = fnBody('_dogeWalletRender');
+    expect(render).toContain("act('/wallet/eat')");
+    expect(render).toContain("act('/wallet/buy-doge')");
+    expect(render).toContain('candyBalance');
+    expect(render).toContain('dogeBalance');
+  });
+
+  it('degrades to a display-only preview before migration 0019 (503 / offline)', () => {
+    const render = fnBody('_dogeWalletRender');
+    expect(render).toContain('_dogeWalletPreviewFallback');
+    expect(render).toMatch(/_notProvisioned/);
+    const fb = fnBody('_dogeWalletPreviewFallback');
+    expect(fb).toContain('WalletLogic.candyFromPoints');
+    expect(fb).not.toMatch(/If DOGE → \$1|by June/);     // no speculative projection
   });
 
   it('fetches the live DOGE price (CoinGecko) and caches it', () => {
@@ -55,8 +64,9 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
     expect(DESK).toContain('_walletDogePanel(card, pts)');
   });
 
-  it('is display-only in Phase 1 — no client-side spend/send of real DOGE', () => {
-    const panel = fnBody('_walletDogePanel');
-    expect(panel).not.toMatch(/privateKey|signTransaction|sendTransaction|broadcast/i);
+  it('never touches a private key client-side (POSTs candy amounts, not keys)', () => {
+    for (const fn of ['_walletDogePanel', '_dogeWalletFetch', '_dogeWalletAction', '_dogeWalletRender']) {
+      expect(fnBody(fn)).not.toMatch(/privateKey|signTransaction|sendTransaction|broadcast|wif/i);
+    }
   });
 });
