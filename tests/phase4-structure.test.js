@@ -164,10 +164,13 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
         // method:'POST' — but that's the helper definition, not a call site.
         continue;
       }
-      // Static-literal POST paths must start with /remediation/.
-      // postJson('/remediation/' + act, ...) uses concatenation, so the
-      // literal captured here will be just '/remediation/' — that's fine.
-      expect(t.path.startsWith('/remediation/'), `POST to "${t.path}" violates the /class/* read-only intent`).toBe(true);
+      // Static-literal POST paths must hit an allow-listed write surface:
+      //  - /remediation/  (Phase 4b)
+      //  - /wallet/       (DOGE reward disbursement: mark-given/mark-sent/address —
+      //                    teacher-auth'd, additive; /class/* stays read-only)
+      // Concatenated paths (postJson('/x/' + act, ...)) capture just the prefix.
+      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/');
+      expect(ok, `POST to "${t.path}" violates the /class/* read-only intent`).toBe(true);
     }
   });
 });

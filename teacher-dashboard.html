@@ -1021,21 +1021,17 @@
     // Per-student effort → candy earned ($) + DOGE-equivalent at today's live
     // price. The candy figure is server-computed (/class/grades `effort`) from the
     // SAME ledger the kid's wallet uses, so the numbers agree. candy→DOGE floats.
+    // Module-var cache only (no localStorage — keeps the dashboard's tight
+    // "writes scoped to known keys" security posture; the price re-fetches once
+    // per page load, which is plenty).
     var _dashDogeUsd = null;
     function _fetchDashDogePrice() {
-      try {
-        var c = JSON.parse(localStorage.getItem('apstats_doge_price') || 'null');
-        if (c && c.usd && c.ts && (Date.now() - c.ts) < 600000) { _dashDogeUsd = c.usd; return Promise.resolve(c.usd); }
-      } catch (_) {}
+      if (_dashDogeUsd) return Promise.resolve(_dashDogeUsd);
       return fetch('https://api.coingecko.com/api/v3/simple/price?ids=dogecoin&vs_currencies=usd')
         .then(function (r) { return r && r.ok ? r.json() : null; })
         .then(function (d) {
           var usd = d && d.dogecoin && d.dogecoin.usd;
-          if (typeof usd === 'number' && usd > 0) {
-            _dashDogeUsd = usd;
-            try { localStorage.setItem('apstats_doge_price', JSON.stringify({ usd: usd, ts: Date.now() })); } catch (_) {}
-            return usd;
-          }
+          if (typeof usd === 'number' && usd > 0) { _dashDogeUsd = usd; return usd; }
           return null;
         }).catch(function () { return null; });
     }
