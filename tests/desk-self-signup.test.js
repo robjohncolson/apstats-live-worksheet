@@ -90,10 +90,13 @@ describe('teacher onboarding + class gradebook (static)', () => {
     expect(html).toMatch(/function\s+_selectClassStudent\s*\(/);
   });
 
-  it('the Do-Now "Class Gradebook" chip is gated behind _deskIsTeacher()', () => {
-    // The chip must be teacher-only (hidden while previewing-as-student): its
-    // creation sits inside an `if (_deskIsTeacher())` block.
-    expect(html).toMatch(/_deskIsTeacher\(\)[\s\S]{0,500}Class Gradebook/);
+  it('the redundant Do-Now "Class Gradebook" chip was removed (Teacher menu is the single entry)', () => {
+    // Do-Now declutter (2026-06-15): the Class Gradebook chip was dropped from the
+    // Do Now card — it duplicated the Teacher menu's "Class Gradebook →
+    // openClassGradebook()", which stays the single entry point. The Do-Now grade
+    // strip no longer builds a cgChip.
+    expect(html).not.toContain('cgChip');
+    expect(document.getElementById('menu-teacher').innerHTML).toContain('openClassGradebook()');
   });
 });
 
