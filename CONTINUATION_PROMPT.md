@@ -1,35 +1,29 @@
-# CONTINUATION PROMPT — DOGE Effort Wallet (Phase 1+2 SHIPPED) + Desk polish; NEXT = run migration 0019, fix the spend race, build Phase 3 (real on-chain sends)
+# CONTINUATION PROMPT — DOGE Effort Wallet (Phases 1+2+3 SHIPPED, verified) + Desk polish; NEXT = run migration 0019 + restart the node → go live
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 8).
-> follow-alongs HEAD = `46f5220`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> follow-alongs HEAD = `d4fe519`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** = branch `main`. Teacher tests on the **public GH Pages URL** — commit+push promptly;
 > `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews). `browser-harness` can't run on
 > this Windows host (no AF_UNIX). Memory dir: `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > **Spec for the active project: `DOGE_WALLET_SPEC.md`. Project memory: `project_doge_effort_wallet.md`.**
-> A real **Dogecoin Core node (dogecoin-qt) runs on this Windows box with ~10,000 DOGE** — for Phase 3. RPC was just
-> enabled (`%APPDATA%\Dogecoin\dogecoin.conf` → `server=1`, localhost cookie auth); **the node must be RESTARTED**
-> for it to take effect, then `dogecoin-cli` works. **NEVER broadcast a real send without explicit per-send confirmation.**
+> A real **Dogecoin Core node (dogecoin-qt) runs on this Windows box with ~10,000 DOGE**. RPC creds are written to
+> `%APPDATA%\Dogecoin\dogecoin.conf` (`server=1` + rpcuser/rpcpassword, localhost); **the node must be RESTARTED**
+> for them to apply, then `dogecoin-cli` works. **NEVER broadcast a real send without explicit per-send confirmation.**
 
-## ⏭ NEXT (in priority order)
+## ⏭ NEXT (in priority order) — the build is DONE; these are activation + go-live
 
 1. **RUN MIGRATION 0019** on the roster Supabase (USER-RUN, like 0011/0013/…/0017): `roster-server/migrations/0019_doge_wallet.sql`
-   (creates `doge_account` + `doge_ledger`). Until it runs, every `/wallet*` route **503s** and the Desk wallet shows the
-   display-only preview — harmless. After it runs, the eat/buy/disburse loop goes live.
-2. **RESTART Dogecoin Core** so the new `dogecoin.conf` (RPC `server=1`) applies. Then CC can `dogecoin-cli getbalance` /
-   `validateaddress` (authoritatively confirm the paper-wallet generator's `D…` addresses are network-valid — the
-   "verify before funding" step) and Phase 3 can broadcast.
-3. **FIX THE SPEND RACE before Phase 3 turns on real DOGE** (verification MAJOR). `/wallet/eat` + `/wallet/buy-doge` are
-   read-modify-write with a **full-row** upsert (`rowFor` copies all fields). Two concurrent spends for one student
-   clobber each other → silent balance corruption (kid told both succeeded; one debit vanishes). The realistic
-   double-click vector is ALREADY client-mitigated (the Desk disables the Eat/Buy buttons during submit), but the proper
-   fix is server-side atomic: a Postgres RPC / `UPDATE … SET candy_eaten = candy_eaten + $d WHERE (earned − eaten −
-   cost_basis) >= $candy` (add the function to 0019), or optimistic CAS on `updated_at`. **Do this before any real coin moves.**
-4. **BUILD PHASE 3** (now unblocked by the node): `tools/doge-send.mjs` — the offline grade-sync batch sender. Reads
-   `GET /class/wallets` → for each kid with `dogeToDeposit > 0` + a registered address, broadcasts ONE batched tx (many
-   outputs) from the node to the kids' paper-wallet addresses, then `POST /wallet/mark-sent`. **Spending key stays on the
-   laptop/node; the app stays watch-only.** Add a watch-only on-chain balance display (block-explorer API or the node)
-   to the Desk/dashboard so confirmations show. Spec §10/§13.
+   (creates `doge_account` + `doge_ledger` + the **`doge_spend()` atomic function** + RLS). Until it runs, every `/wallet*`
+   route **503s** and the Desk wallet shows the display-only preview — harmless. After it runs, the eat/buy/disburse loop is live.
+2. **RESTART Dogecoin Core** so `dogecoin.conf` applies. Then CC can `dogecoin-cli getblockchaininfo` (assert mainnet) /
+   `validateaddress` (confirm the generator's `D…` addresses are network-valid — the "verify before funding" step), and the
+   Phase-3 sender's live path works.
+3. **GO LIVE:** generate paper wallets (`node tools/doge-wallet-gen.mjs --count 30`), hand them out, register each address
+   in the dashboard (set-addr). Then a DRY-RUN of `node tools/doge-send.mjs` (plan only), and the first real `--send` when
+   you're ready (CC runs dry-run only; `--send` is your deliberate call, irreversible).
+4. **REMAINING build (optional, post-go-live):** a **watch-only on-chain balance display** — poll a block-explorer API
+   (or the node) for each registered address and show confirmations in the Desk/dashboard so kids see real txs land. Spec §7/§13.
 5. **VERIFY the My Ledger ↔ Pacing color fix landed** (`46f5220`): the Desk's summer-schedule fetch could fail silently →
    My Ledger showed fall 'eligible' (yellow) while the dashboard Pacing showed summer (green) for the same person. Fix
    retries the load on `openWallet` + re-paints on success. If it persists, console diag in the Desk:
@@ -64,8 +58,17 @@ choice, one-way (no sell-back). Teacher confirmed all decisions; teaching goal =
 - **Phase 2 disbursement `c9bb63c`** + `369d25b` + `46f5220` — teacher-dashboard "🍬 Reward Disbursement": per-kid candy
   earned / **to give** (eaten−given) / **to deposit** (balance−sent) / address, with ✓gave/✓sent/set-address; `/class/grades`
   gained a per-student `effort:{points,candy}`. Now **includes teacher/test accounts** (badged 🧪) for testing.
-- **Verified** by a 3-agent adversarial workflow: security CLEAN, integration CLEAN, economics correct single-threaded
-  (the race is the one MAJOR → NEXT #3).
+- **Spend race FIXED `f0d16fa`** — `/wallet/eat`+`/wallet/buy-doge` now use an atomic `doge_spend()` Postgres function
+  (a single guarded UPDATE, folded into 0019) instead of read-modify-write; +tests (eat-then-buy conservation; the real
+  PostgREST row-of-nulls guard).
+- **Phase 3 `4ce2673`+`d4fe519`** — `tools/doge-send.mjs`: OFFLINE batch sender. Reads `/class/wallets`, plans ONE
+  `sendmany` from the node to kids' addresses, broadcasts, then marks sent. DRY-RUN default; mainnet assert + fee buffer +
+  validate-every-address before broadcast; **crash-resilient journal** (refuses `--send` while a prior batch is
+  un-reconciled → no double-send); mark-given/sent clamped at owed/banked. `planSends` unit-tested (11). Spending key
+  never leaves the node (watch-only app).
+- **Verified by TWO 3-agent adversarial workflows:** Phase-2 (security + integration CLEAN; the race was the one MAJOR →
+  now fixed) and Phase-3 (`doge_spend` SQL CLEAN; the sender's crash double-send MAJOR → now fixed; RLS + clamps folded).
+  roster-server suite 919 green; root suites green except the 6 pre-existing onboarding failures.
 
 **DESK POLISH (secondary):** username-wheel login footer declutter (`10e4e04`); Do-Now card restructure + click-opens-My-
 Ledger fix (`50203a1`/`36ec71e`); My Gradebook folded into My Ledger (`ed310a6`); Pacing Overview shows teacher/test rows
