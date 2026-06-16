@@ -366,6 +366,26 @@ describe('TR2 — forced change-password is wired (static)', () => {
   it('init invokes maybeForcePasswordChange (guarded)', () => {
     expect(html).toMatch(/typeof maybeForcePasswordChange === 'function'\) maybeForcePasswordChange\(\)/);
   });
+
+  // Voluntary "Change Password" entry from the User menu (vs the forced flow).
+  it('the User menu exposes a voluntary Change Password item wired to changeMyPassword', () => {
+    expect(html).toContain('id="menu-change-password"');
+    expect(html).toMatch(/changeMyPassword\(\)/);
+    const b = fnBody(html, 'changeMyPassword');
+    expect(b).toMatch(/rosterClient\.current/);     // requires a signed-in session
+    expect(b).toMatch(/openPwChangeModal\(true\)/); // opens the modal in voluntary mode
+  });
+
+  it('openPwChangeModal voluntary mode shows Cancel + generic copy; forced keeps Sign Out', () => {
+    const d = makeDeskTR2({ rosterClient: { current: () => ({ username: 'u', mustChangePassword: false }) } });
+    d.api.openPwChangeModal(true);                  // voluntary
+    expect(d.el('pwchange-leftbtn').textContent).toBe('Cancel');
+    expect(d.el('pwchange-title').textContent).toBe('Change Your Password');
+    expect(d.el('pwchange-overlay').style.display).toBe('flex');
+    d.api.openPwChangeModal();                      // forced (default)
+    expect(d.el('pwchange-leftbtn').textContent).toBe('Sign Out');
+    expect(d.el('pwchange-title').textContent).toBe('Set Your Password');
+  });
 });
 
 /** Sandbox loading submitSignIn + the TR2 helpers with injectable fakes. */

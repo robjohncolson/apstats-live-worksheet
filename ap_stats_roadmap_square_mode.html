@@ -1551,6 +1551,7 @@
             <div class="menu-dd-item disabled" id="menu-student-status">Not signed in</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openSignInModal()">&#128100; Sign In...</div>
+            <div class="menu-dd-item" data-sfx id="menu-change-password" onclick="closeMenus();changeMyPassword()">&#128273; Change Password...</div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();signOutStudent()">&#128100; Sign Out</div>
         </div>
     </span>
@@ -1856,15 +1857,15 @@
         <div class="dialog-body" style="text-align:left">
             <div class="dialog-icon" style="float:left;margin-right:10px">&#128272;</div>
             <div class="dialog-msg geneva" style="font-size:11px">
-                <div class="chicago" style="font-size:12px;margin-bottom:4px">Set Your Password</div>
-                <div style="margin-bottom:8px">Your teacher gave you a temporary password. Choose a new one to continue (at least 6 characters).</div>
+                <div class="chicago" id="pwchange-title" style="font-size:12px;margin-bottom:4px">Set Your Password</div>
+                <div id="pwchange-copy" style="margin-bottom:8px">Your teacher gave you a temporary password. Choose a new one to continue (at least 6 characters).</div>
                 <input type="password" id="pwchange-new" class="geneva" autocomplete="new-password" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box;margin-bottom:5px" placeholder="new password">
                 <input type="password" id="pwchange-confirm" class="geneva" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitPwChange()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="confirm new password">
                 <div id="pwchange-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
             </div>
         </div>
         <div class="dialog-btns">
-            <button class="s7btn" onclick="signOutStudent()">Sign Out</button>
+            <button class="s7btn" id="pwchange-leftbtn" onclick="signOutStudent()">Sign Out</button>
             <button class="s7btn s7btn-default" id="pwchange-ok" onclick="submitPwChange()">Set Password</button>
         </div>
     </div>
@@ -6616,18 +6617,45 @@ function signOutStudent() {
 // ═══ Forced change-password (TR2) ═══
 // Shown after sign-in (or on a returning session) when the roster account still
 // carries a teacher-issued default password. No dismiss path except Sign Out.
-function openPwChangeModal() {
+// voluntary=true → opened from the User menu (Cancel-able, generic copy).
+// voluntary falsy → the forced first-login flow (Sign-Out is the only exit).
+function openPwChangeModal(voluntary) {
   var ov = document.getElementById('pwchange-overlay');
   if (!ov) return;
   var n = document.getElementById('pwchange-new');
   var c = document.getElementById('pwchange-confirm');
   var err = document.getElementById('pwchange-error');
+  var title = document.getElementById('pwchange-title');
+  var copy = document.getElementById('pwchange-copy');
+  var leftBtn = document.getElementById('pwchange-leftbtn');
   if (n) n.value = '';
   if (c) c.value = '';
   if (err) err.textContent = '';
+  if (title) title.textContent = voluntary ? 'Change Your Password' : 'Set Your Password';
+  if (copy) copy.textContent = voluntary
+    ? 'Choose a new password (at least 6 characters).'
+    : 'Your teacher gave you a temporary password. Choose a new one to continue (at least 6 characters).';
+  // typeof-guarded so the function never throws when loaded in a partial sandbox.
+  if (leftBtn) {
+    leftBtn.textContent = voluntary ? 'Cancel' : 'Sign Out';
+    leftBtn.onclick = voluntary
+      ? function () { if (typeof closePwChangeModal === 'function') closePwChangeModal(); }
+      : function () { if (typeof signOutStudent === 'function') signOutStudent(); };
+  }
   ov.style.display = 'flex';
   if (n) n.focus();
 }
+
+// Voluntary password change from the User menu (distinct from the forced modal).
+function changeMyPassword() {
+  var who = (window.rosterClient && rosterClient.current && rosterClient.current()) || null;
+  if (!who || !who.username) {
+    if (typeof showDialog === 'function') showDialog('\u{1F511}', 'Sign in first, then you can change your password.', 'OK');
+    return;
+  }
+  openPwChangeModal(true);
+}
+window.changeMyPassword = changeMyPassword;
 
 function closePwChangeModal() {
   var ov = document.getElementById('pwchange-overlay');
