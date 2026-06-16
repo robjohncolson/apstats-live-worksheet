@@ -460,6 +460,51 @@
         return 'quiz'; // curriculum work lives in the Quiz app
     }
 
+    // ── DOGE Effort Wallet (DOGE_WALLET_SPEC.md) ────────────────────────────
+    // Effort points → CANDY at a fixed, frozen rate (candy is the stable
+    // ≈-dollar unit). Candy → DOGE floats with the live market price, so the
+    // candy-per-DOGE cost rises as DOGE appreciates: buy early = cheaper.
+    // Frozen at outset (§4): 36 pts = 1 candy = $0.036; $13 / 360-pc bag.
+    var DOGE_WALLET = {
+        POINTS_PER_CANDY: 36,        // effort points to earn 1 candy
+        CANDY_USD: 0.036,            // one candy's USD value ($13 / 360)
+        MIN_CONVERSION_CANDY: 25     // floor so a buy clears Dogecoin's dust/fee
+    };
+
+    // effort points → candy (the FIXED leg).
+    function candyFromPoints(points) {
+        var p = Number(points);
+        if (!isFinite(p) || p <= 0) return 0;
+        return p / DOGE_WALLET.POINTS_PER_CANDY;
+    }
+
+    // How many candy it costs to buy 1 DOGE at the given live price (FLOATS).
+    // candyUsd defaults to the frozen CANDY_USD.
+    function candyPerDoge(dogeUsd, candyUsd) {
+        var d = Number(dogeUsd);
+        var c = Number(candyUsd);
+        if (!isFinite(c) || c <= 0) c = DOGE_WALLET.CANDY_USD;
+        if (!isFinite(d) || d <= 0) return 0;
+        return d / c;
+    }
+
+    // Spend `candy` candies → this many DOGE coins, at the live price.
+    function dogeFromCandy(candy, dogeUsd, candyUsd) {
+        var rate = candyPerDoge(dogeUsd, candyUsd);
+        var cn = Number(candy);
+        if (rate <= 0 || !isFinite(cn) || cn <= 0) return 0;
+        return cn / rate;
+    }
+
+    // Candy's plain dollar value (candy is the stable reserve).
+    function usdFromCandy(candy, candyUsd) {
+        var cn = Number(candy);
+        var c = Number(candyUsd);
+        if (!isFinite(c) || c <= 0) c = DOGE_WALLET.CANDY_USD;
+        if (!isFinite(cn) || cn <= 0) return 0;
+        return cn * c;
+    }
+
     var api = {
         pointsFor: pointsFor,
         computePoints: computePoints,
@@ -468,7 +513,12 @@
         daysBetween: daysBetween,
         summerReadiness: summerReadiness,
         groupReceipts: groupReceipts,
-        appForNextTask: appForNextTask
+        appForNextTask: appForNextTask,
+        DOGE_WALLET: DOGE_WALLET,
+        candyFromPoints: candyFromPoints,
+        candyPerDoge: candyPerDoge,
+        dogeFromCandy: dogeFromCandy,
+        usdFromCandy: usdFromCandy
     };
 
     g.WalletLogic = api;

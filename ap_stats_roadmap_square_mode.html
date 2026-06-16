@@ -11197,6 +11197,77 @@ function _walletRenderGroupedReceipts(host, receipts, loading) {
     }
 }
 
+// ── DOGE Effort Wallet (DOGE_WALLET_SPEC.md) — Phase 1 preview panel ─────────
+// Shows the candy value of a student's effort + the live candy→DOGE rate + the
+// appreciation projection. PREVIEW-GATED (localStorage 'apstats_doge_wallet_preview'
+// === '1'), default OFF, so this unfinished feature doesn't surprise students on
+// the live site before the teacher rolls it out. Display-only for now; the real
+// buy/on-chain flow is Phase 2-3. Client-side CoinGecko price is fine for display;
+// real conversions get the server-stamped price (spec §5).
+var _dogePriceUsd = null;
+function _fetchDogePrice() {
+    try {
+        var cached = JSON.parse(localStorage.getItem('apstats_doge_price') || 'null');
+        if (cached && cached.usd && cached.ts && (Date.now() - cached.ts) < 600000) {
+            _dogePriceUsd = cached.usd;
+            return Promise.resolve(cached.usd);
+        }
+    } catch (_) {}
+    return fetch('https://api.coingecko.com/api/v3/simple/price?ids=dogecoin&vs_currencies=usd')
+        .then(function (r) { return r && r.ok ? r.json() : null; })
+        .then(function (d) {
+            var usd = d && d.dogecoin && d.dogecoin.usd;
+            if (typeof usd === 'number' && usd > 0) {
+                _dogePriceUsd = usd;
+                try { localStorage.setItem('apstats_doge_price', JSON.stringify({ usd: usd, ts: Date.now() })); } catch (_) {}
+                return usd;
+            }
+            return null;
+        })
+        .catch(function () { return null; });
+}
+function _dogeWalletPreviewOn() {
+    try { return localStorage.getItem('apstats_doge_wallet_preview') === '1'; } catch (_) { return false; }
+}
+function _walletDogePanel(host, pts) {
+    if (!host || !_dogeWalletPreviewOn()) return;
+    if (typeof WalletLogic === 'undefined' || typeof WalletLogic.candyFromPoints !== 'function') return;
+    var total = (pts && typeof pts.total === 'number') ? pts.total : 0;
+    var candy = WalletLogic.candyFromPoints(total);
+    var usd = WalletLogic.usdFromCandy(candy);
+
+    var box = document.createElement('div');
+    box.style.cssText = 'border:1px solid #c9961f;background:#fff8e6;border-radius:3px;padding:8px 10px;margin-top:10px';
+
+    var l1 = document.createElement('div');
+    l1.className = 'geneva';
+    l1.style.cssText = 'font-size:12px;font-weight:bold;color:#5a4500';
+    l1.textContent = '🍬 ' + candy.toFixed(0) + ' candy  ·  $' + usd.toFixed(2);
+    box.appendChild(l1);
+
+    var l2 = document.createElement('div');
+    l2.className = 'geneva';
+    l2.style.cssText = 'font-size:10px;color:#8a7330;margin-top:2px';
+    l2.textContent = 'Eat it… or bank it as Dogecoin and let it ride.';
+    box.appendChild(l2);
+
+    var rate = document.createElement('div');
+    rate.className = 'geneva';
+    rate.style.cssText = 'font-size:11px;color:#5a4500;margin-top:4px';
+    rate.textContent = 'Loading DOGE price…';
+    box.appendChild(rate);
+
+    host.appendChild(box);
+
+    _fetchDogePrice().then(function (price) {
+        if (!price) { rate.textContent = '(DOGE price unavailable right now)'; return; }
+        var cpd = WalletLogic.candyPerDoge(price);
+        var coins = WalletLogic.dogeFromCandy(candy, price);
+        rate.innerHTML = '1 DOGE = <b>' + cpd.toFixed(1) + ' candy</b> today (Ɖ at $' + price.toFixed(4) + ')<br>'
+            + 'Bank it all → <b>Ɖ ' + coins.toFixed(1) + '</b>. If DOGE → $1 by June: <b>$' + coins.toFixed(2) + '</b> 📈';
+    });
+}
+
 function _walletPaint(host, receipts, loading) {
     if (!host) return;
     var grade = _walletCurrentGrade();
@@ -11264,6 +11335,9 @@ function _walletPaint(host, receipts, loading) {
         ptsRow.appendChild(todayTag);
     }
     card.appendChild(ptsRow);
+
+    // DOGE wallet preview (gated; Phase 1 — see DOGE_WALLET_SPEC.md).
+    if (typeof _walletDogePanel === 'function') { try { _walletDogePanel(card, pts); } catch (_) {} }
 
     if (readiness && readiness.active && readiness.schedule) {
         var banner = document.createElement('div');
