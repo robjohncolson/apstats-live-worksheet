@@ -1,8 +1,11 @@
 // desk-lesson-gate.test.js — the Desk calendar gates lessons sequentially:
-// a lesson is locked until the prior lesson is complete (worksheet + Blooket
-// Done) OR its scheduled date arrives. Teachers and not-signed-in visitors
-// bypass. The video Done button is gone — the video shows a checkmark once
-// the worksheet is done.
+// a lesson is locked until its PREDECESSOR TOPIC is complete (worksheet +
+// Blooket Done). STRICT (§8, 2026-06-16): no date bypass, and the predecessor
+// is the prior topic in sequence (_prevTopicInSequence), not the previous
+// calendar cell — so gating is window-independent and cross-portion (summer
+// 1.1 done → fall 1.2 unlocks). Teachers and not-signed-in visitors bypass.
+// The video Done button is gone — the video shows a checkmark once the
+// worksheet is done.
 //
 // Static parse of the Desk HTML + real-execution smoke tests of the pure
 // gate helpers (LESSON_GATE_BUILD.md).
@@ -51,39 +54,34 @@ describe('Desk: sequential lesson gate', () => {
     expect(body).toMatch(/catch\s*\(_\)\s*\{\s*return true;\s*\}/);
   });
 
-  it('03: _isLessonUnlocked checks all five unlock conditions', () => {
+  it('03: _isLessonUnlocked checks the strict conditions (no date bypass)', () => {
     const body = fnBody(DESK, '_isLessonUnlocked');
     expect(body).toMatch(/signedIn/);              // not signed in → open
     expect(body).toMatch(/_deskIsTeacher\s*\(/);   // teacher → open
     expect(body).toMatch(/prevTopic/);             // first lesson → open
-    expect(body).toMatch(/lessonDate/);            // date passed → open
     expect(body).toMatch(/_isLessonComplete\s*\(/);// prior complete → open
+    // STRICT (§8): the old date bypass (lessonDate <= today → open) is removed.
+    expect(body).not.toMatch(/lessonDate\.getTime\(\)\s*<=\s*today\.getTime\(\)/);
   });
 
-  it('04: rCal applies the gate — _isLessonUnlocked + cell-locked + _prevLessonTopic', () => {
+  it('04: rCal applies the gate via the canonical topic-predecessor', () => {
     const body = fnBody(DESK, 'rCal');
     expect(body).toMatch(/_isLessonUnlocked\s*\(/);
     expect(body).toMatch(/cell-locked/);
-    expect(body).toMatch(/_prevLessonTopic/);
+    // §8: gates on _prevTopicInSequence(inf.t), NOT the buggy walk-order trail.
+    expect(body).toMatch(/_prevTopicInSequence\s*\(\s*inf\.t\s*\)/);
+    expect(body).not.toMatch(/_prevLessonTopic/);
     // Only dot-form topic cells are gated (Review/etc. stay click-through).
     expect(body).toMatch(/\^\\d\+\\\.\\d\+/);
     // The locked branch shows the lock dialog, not the resource panel.
     expect(body).toMatch(/_showLessonLockedDialog\s*\(/);
-    // ORDER: the unlock check must read _prevLessonTopic BEFORE it is
-    // reassigned to the current cell — else a lesson would gate on itself.
-    const checkIdx = body.indexOf('_isLessonUnlocked(');
-    const assignIdx = body.indexOf('_prevLessonTopic = inf.t');
-    expect(checkIdx).toBeGreaterThan(-1);
-    expect(assignIdx).toBeGreaterThan(-1);
-    expect(checkIdx, 'unlock check must run before _prevLessonTopic is reassigned').toBeLessThan(assignIdx);
   });
 
   it('04b: the locked-cell onclick captures per-iteration consts (no closure bug)', () => {
     const body = fnBody(DESK, 'rCal');
-    // The locked onclick must reference captured per-iteration consts, not
-    // the mutating loop variable _prevLessonTopic (classic loop-closure bug).
-    // The three values are captured in one const statement before the onclick.
-    expect(body).toMatch(/const\s+_lockTopic\s*=\s*inf\.t\s*,\s*_lockPrev\s*=\s*_prevLessonTopic\s*,\s*_lockDs\s*=\s*ds/);
+    // The three values are captured in one const statement before the onclick,
+    // using the per-cell _prevTopic (canonical predecessor), not a mutating loop var.
+    expect(body).toMatch(/const\s+_lockTopic\s*=\s*inf\.t\s*,\s*_lockPrev\s*=\s*_prevTopic\s*,\s*_lockDs\s*=\s*ds/);
     expect(body).toMatch(/_showLessonLockedDialog\s*\(\s*_lockTopic\s*,\s*_lockPrev\s*,\s*_lockDs\s*\)/);
   });
 
@@ -173,9 +171,9 @@ describe('Desk: sequential lesson gate', () => {
     expect(fn('1.1', FUTURE, null, TODAY, {}, true)).toBe(true);
   });
 
-  it('16: _isLessonUnlocked — date passed → unlocked even if the prior is incomplete', () => {
+  it('16: _isLessonUnlocked — STRICT: past-due but prior incomplete → LOCKED (no date bypass)', () => {
     const fn = makeIsLessonUnlocked({ complete: false });
-    expect(fn('1.2', PAST, '1.1', TODAY, {}, true)).toBe(true);
+    expect(fn('1.2', PAST, '1.1', TODAY, {}, true)).toBe(false);
   });
 
   it('17: _isLessonUnlocked — future date + prior incomplete → LOCKED', () => {
@@ -208,9 +206,61 @@ describe('Desk: sequential lesson gate', () => {
     expect(fn('none', {})).toBe(true);
   });
 
-  it('21: _isLessonUnlocked — lesson date EQUAL to today → unlocked (today is open)', () => {
-    // Pins the <= compare: the current day's lesson must be open, not locked.
+  it('21: _isLessonUnlocked — STRICT: today\'s lesson is still gated on the prior', () => {
+    // §8: the date no longer unlocks — even the current day's lesson stays
+    // locked until its predecessor is complete.
     const fn = makeIsLessonUnlocked({ complete: false });
-    expect(fn('1.2', TODAY, '1.1', TODAY, {}, true)).toBe(true);
+    expect(fn('1.2', TODAY, '1.1', TODAY, {}, true)).toBe(false);
+  });
+
+  it('22: _prevTopicInSequence — canonical predecessor (deduped), null for the first', () => {
+    const src = fnBody(DESK, '_prevTopicInSequence');
+    // eslint-disable-next-line no-new-func
+    const fn = new Function('_orderedPeriodTopics', 'return (' + src + ');')(
+      () => ['1.1', '1.2', '1.2', '1.3', '1.4']   // 1.2 repeats (a multi-day lesson)
+    );
+    expect(fn('1.1')).toBe(null);   // first → no predecessor (always open)
+    expect(fn('1.2')).toBe('1.1');
+    expect(fn('1.3')).toBe('1.2');  // the duplicate 1.2 is collapsed
+    expect(fn('1.4')).toBe('1.3');
+    expect(fn('9.9')).toBe(null);   // unknown topic → fail open
+  });
+
+  it('23: _prevSummerTopic — summer cells gate on the INDIVIDUAL summer sequence', () => {
+    // The live period-E pacing is COMBINED (1.2+1.3, 1.4+1.5, ...), but summer
+    // cells carry individual topics 1.1..1.10 — they must resolve against the
+    // summer schedule, NOT the combined fall sequence (the blocker the review caught).
+    const src = fnBody(DESK, '_prevSummerTopic');
+    const lessons = ['1.1','1.2','1.3','1.4','1.5','1.6','1.7','1.8','1.9','1.10'].map((t) => ({ topic: t }));
+    // eslint-disable-next-line no-new-func
+    const fn = new Function('window', 'return (' + src + ');')({ _summerSchedule: { lessons } });
+    expect(fn('1.1')).toBe(null);     // first summer lesson → open
+    expect(fn('1.2')).toBe('1.1');
+    expect(fn('1.6')).toBe('1.5');    // NOT '1.4+1.5' — gates on the prior INDIVIDUAL summer lesson
+    expect(fn('1.10')).toBe('1.9');
+    expect(fn('7.3')).toBe(null);     // not a summer lesson → null (caller uses the period sequence)
+  });
+
+  it('24: _prevTopicInSequence — LIVE period-E COMBINED sequence (fall cells)', () => {
+    const src = fnBody(DESK, '_prevTopicInSequence');
+    const E = ['1.1', '1.2+1.3', '1.4+1.5', '1.6', '1.7+1.8', '1.9+1.10', '2.1'];
+    // eslint-disable-next-line no-new-func
+    const fn = new Function('_orderedPeriodTopics', 'return (' + src + ');')(() => E);
+    expect(fn('1.1')).toBe(null);
+    expect(fn('1.2+1.3')).toBe('1.1');      // cross-portion seam: summer 1.1 → fall 1.2+1.3
+    expect(fn('1.6')).toBe('1.4+1.5');
+    expect(fn('2.1')).toBe('1.9+1.10');     // unit boundary: U2 gated on the last U1 cell
+  });
+
+  it('25: _isLessonComplete — a combined "A+B" is complete when BOTH parts are done (bridge)', () => {
+    const src = fnBody(DESK, '_isLessonComplete');
+    const getRegistryEntry = () => ({ urls: { worksheet: 'w' } });   // every topic has a worksheet
+    // eslint-disable-next-line no-new-func
+    const fn = new Function('getRegistryEntry', 'return (' + src + ');')(getRegistryEntry);
+    // summer student's INDIVIDUAL marks satisfy the fall COMBINED cell (cross-portion)
+    expect(fn('1.2+1.3', { '1.2|worksheet': { ts: 1 }, '1.3|worksheet': { ts: 1 } })).toBe(true);
+    expect(fn('1.2+1.3', { '1.2|worksheet': { ts: 1 } })).toBe(false);     // only one part → not complete
+    // a fall student's OWN combined mark still works
+    expect(fn('1.2+1.3', { '1.2+1.3|worksheet': { ts: 1 } })).toBe(true);
   });
 });

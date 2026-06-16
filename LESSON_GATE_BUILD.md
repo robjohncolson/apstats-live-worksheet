@@ -12,6 +12,10 @@
 
 ## §1 — The sequential lesson gate
 
+> ⚠ **§1–§4 below describe the ORIGINAL (session-103) design. §8 (2026-06-16)
+> SUPERSEDES the date condition and the `_prevLessonTopic` walk-trail with a strict
+> topic-sequence gate. Read §8 before re-implementing anything here.**
+
 A lesson (calendar cell with `inf.t`) is **unlocked** iff ANY of:
 - the student is **not signed in** (`getStudentEmail()` falsy) — no
   identity, no progression to track; behave as today (all open);
@@ -160,6 +164,51 @@ Static-parse pins + real-execution smoke tests (extract the helpers via
 - Video render: no `_doneBtn('video')`, no `_visitedTag('video')`;
   `_videoDoneTag` is called in the video loop.
 - `.cell-locked` CSS rule present.
+
+## §8 — Amendment (2026-06-16): strict topic-sequence gate
+
+**Supersedes the §1 "date" condition and the §4 `_prevLessonTopic` walk-trail.**
+
+Why: the walk-order `_prevLessonTopic` keyed each lesson's gate on the previous
+CALENDAR CELL, not its true sequential predecessor. The contract assumed cells
+render in clean topic order, but the two-period / summer-vs-fall layout interleaves
+topics, so the "previous cell" frequently landed on an unrelated (often already-done)
+topic. Observed symptom (a real student account): lessons 1.2 / 1.4 / 1.6 unlocked
+while 1.3 / 1.5 stayed locked — a parity leak letting a student hop ahead.
+
+Changes (pure client, `ap_stats_roadmap_square_mode.html`):
+- New `_prevTopicInSequence(topic)` (near `_orderedPeriodTopics`): the immediately-
+  prior topic in the period's ordered, de-duplicated topic list — the lesson's TRUE
+  predecessor, independent of the visible calendar window. `rCal` and
+  `paintLocalDoneCells` both pass it to `_isLessonUnlocked` instead of trailing
+  `_prevLessonTopic` (now removed). Because completion is topic-keyed, this is
+  cross-portion by construction: finishing topic N anywhere (summer block or fall
+  block) unlocks N+1 in every block.
+- `_isLessonUnlocked`: the **date bypass is removed** (strict sequential). A lesson
+  opens ONLY when its predecessor is complete — a past-due lesson stays locked until
+  you finish the one before it. The not-signed-in / teacher / first-lesson / P5
+  teacher-override bypasses are unchanged. `lessonDate`/`today` stay in the signature
+  (callers + tests still pass them) but no longer affect the verdict.
+- `_showLessonLockedDialog`: drops the "— or it unlocks on <date>" clause.
+
+This makes the summer self-pacer (Unit 1: 1.1→1.10) advance purely by completion,
+solidly, with no nav-window leak and no date escape hatch.
+
+**Granularity (critical — the live config):** the Desk forces period **E**, whose
+pacing is COMBINED (`1.1`, `1.2+1.3`, `1.4+1.5`, `1.6`, `1.7+1.8`, `1.9+1.10`, …),
+while the **summer** schedule (`data/summer-schedule.json`) is INDIVIDUAL
+(`1.1`…`1.10`). So an individual summer topic is not found in the combined
+`_orderedPeriodTopics()` list. The gate dispatches by the cell's own surface:
+- **Summer cells** (`wk._summer` / `dataset.summer`) → `_prevSummerTopic(topic)`,
+  the prior topic in the summer schedule's order (individual → individual marks).
+- **Fall cells** → `_prevTopicInSequence(topic)`, the prior combined cell
+  (combined → combined marks).
+Both render paths (`rCal` + `paintLocalDoneCells`) dispatch identically so they stay
+in sync. A **completion bridge** in `_isLessonComplete` makes a combined `A+B`
+lesson count as done when its own combined artifact is done OR every individual part
+is — so a summer student's individual work satisfies the fall combined cell when
+school starts (full cross-portion). Without this, the gate is a no-op on the live
+summer surface and 1.6 hard-locks — the blocker the §8 adversarial review caught.
 
 ## §7 — Acceptance (GREEN gate)
 

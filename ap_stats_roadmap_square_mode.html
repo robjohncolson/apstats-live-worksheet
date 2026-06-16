@@ -5332,6 +5332,16 @@ var _signinWallActive = false;
 function _isLessonComplete(topic, marks) {
   try {
     if (!topic) return true;
+    // Granularity bridge (cross-portion): a combined "A+B" lesson — the fall
+    // period-E pacing (e.g. "1.2+1.3") — counts as complete when its OWN combined
+    // artifacts are done OR every individual part is. So a summer student's
+    // individual marks (1.2, 1.3) satisfy the fall "1.2+1.3" cell. Parts are always
+    // individual, so this recurses exactly one level.
+    if (String(topic).indexOf('+') >= 0) {
+      var _parts = String(topic).split('+').filter(function (p) { return /^\d+\.\d+/.test(p); });
+      if (_parts.length > 1 && _parts.every(function (p) { return _isLessonComplete(p, marks); })) return true;
+      // else fall through to the combined-key check below (a fall student's own mark)
+    }
     var reg = (typeof getRegistryEntry === 'function') ? getRegistryEntry(topic) : null;
     var urls = (reg && reg.urls) || {};
     var m = marks || {};
@@ -5411,16 +5421,19 @@ function _isLessonUnlocked(topic, lessonDate, prevTopic, today, marks, signedIn)
     // tests that load _isLessonUnlocked alone don't have to inject the
     // unlock helpers).
     if (typeof _isTopicLessonUnlocked === 'function' && _isTopicLessonUnlocked(topic)) return true;
-    if (!prevTopic) return true;         // first lesson in the schedule
-    if (lessonDate && today && lessonDate.getTime() <= today.getTime()) return true;
+    if (!prevTopic) return true;         // first lesson in the sequence
+    // STRICT sequential (2026-06-16, LESSON_GATE_BUILD §8): a lesson opens ONLY
+    // when its predecessor is complete — no date bypass. A past-due lesson stays
+    // locked until you finish the one before it, so summer self-pacing advances by
+    // completion alone. (lessonDate/today kept in the signature for callers/tests.)
     return _isLessonComplete(prevTopic, marks);
   } catch (_) { return true; }
 }
 // Click handler for a locked lesson cell — explains why + how to unlock.
 function _showLessonLockedDialog(topic, prevTopic, dateStr) {
+  // STRICT gate (§8): completion is the ONLY unlock — no "unlocks on <date>".
   var msg = 'Lesson ' + topic + ' is locked. ';
-  msg += prevTopic ? ('Finish Lesson ' + prevTopic + ' first') : 'It is not open yet';
-  if (dateStr) msg += ' — or it unlocks on ' + dateStr;
+  msg += prevTopic ? ('Finish Lesson ' + prevTopic + ' first to unlock it') : 'It is not open yet';
   msg += '.';
   try { showDialog('🔒', msg, 'OK'); } catch (_) {}
 }
@@ -6797,6 +6810,45 @@ function _orderedPeriodTopics() {
   } catch (_) { return []; }
 }
 
+// Predecessor within the SUMMER self-pacer. Summer cells carry INDIVIDUAL topics
+// (1.1..1.10, in due order) while the live period-E pacing is COMBINED ("1.2+1.3"),
+// so a summer topic is NOT found in _orderedPeriodTopics — it resolves here, from
+// the summer schedule's own order. Returns the prior topic, or null (first lesson /
+// unknown / no schedule). Fails OPEN (null). rCal/paintLocalDoneCells dispatch to
+// this for summer cells (wk._summer / dataset.summer) and to _prevTopicInSequence
+// for fall cells, so each surface gates at its own topic granularity.
+function _prevSummerTopic(topic) {
+  try {
+    if (!topic) return null;
+    var sch = window._summerSchedule;
+    var lessons = (sch && Array.isArray(sch.lessons)) ? sch.lessons : [];
+    var seq = lessons.map(function (L) { return L && L.topic; }).filter(Boolean);
+    var idx = seq.indexOf(topic);
+    return idx > 0 ? seq[idx - 1] : null;
+  } catch (_) { return null; }
+}
+
+// The lesson that must be complete before `topic` opens: the immediately-prior
+// topic in the period's ordered sequence (deduped), NOT the previous calendar
+// cell. This makes the gate window-independent AND cross-portion — a topic that
+// appears in both the summer and fall blocks shares one predecessor, so finishing
+// it anywhere unlocks the next everywhere (completion is topic-keyed). null = the
+// first lesson in the sequence (always open). Fails OPEN (null) on any error.
+function _prevTopicInSequence(topic) {
+  try {
+    if (!topic) return null;
+    var ordered = (typeof _orderedPeriodTopics === 'function') ? _orderedPeriodTopics() : [];
+    var seq = [], last = null;
+    for (var i = 0; i < ordered.length; i++) {
+      var t = ordered[i];
+      if (!t || !/^\d+\.\d+/.test(t)) continue;
+      if (t !== last) { seq.push(t); last = t; }   // collapse a multi-day lesson's repeats
+    }
+    var idx = seq.indexOf(topic);
+    return idx > 0 ? seq[idx - 1] : null;
+  } catch (_) { return null; }
+}
+
 // CROSS-DEVICE grey-out repaint (2026-06-03). rCal applies the local-done
 // greyscale + the synthwave next-up cell from localLessonState, but it runs at
 // page load BEFORE the async /grade cache (_gradeLessonsCache) warms — and
@@ -6826,7 +6878,6 @@ function paintLocalDoneCells() {
       ? calNextUpTopic(_orderedPeriodTopics(), marks) : null;
     _calNextUp = nextUp; // keep renderDoNow's message in sync with the highlight
     var cells = document.querySelectorAll('#cg .dc[data-topic]');
-    var prevLessonTopic = null;
     var lockChanged = false;
     for (var i = 0; i < cells.length; i++) {
       var c = cells[i];
@@ -6838,16 +6889,17 @@ function paintLocalDoneCells() {
         if (st) c.classList.add(st === 'done' ? 'dc-localdone' : 'dc-localpartial');
         if (topic === nextUp) c.classList.add('cal-current');
       }
-      // Lock-change detection (mirrors rCal's sequential gate: prevLessonTopic
-      // trails the last dot-form lesson in chronological/DOM order).
+      // Lock-change detection (mirrors rCal's sequential gate: each lesson gates
+      // on its canonical topic-predecessor via _prevTopicInSequence — identical
+      // inputs to rCal, so the two converge after one rebuild).
       var isDotLesson = !!(topic && /^\d+\.\d+/.test(topic));
       if (isDotLesson && signedIn && typeof _isLessonUnlocked === 'function') {
         var dt = new Date(Number(c.dataset.dts));
-        var unlocked = _isLessonUnlocked(topic, dt, prevLessonTopic, today, marks, signedIn);
+        var _pp = (c.dataset.summer === '1') ? _prevSummerTopic(topic) : _prevTopicInSequence(topic);
+        var unlocked = _isLessonUnlocked(topic, dt, _pp, today, marks, signedIn);
         var shownUnlocked = !c.classList.contains('cell-locked');
         if (unlocked !== shownUnlocked) lockChanged = true;
       }
-      if (isDotLesson) prevLessonTopic = topic;
     }
     if (lockChanged && typeof rCal === 'function') rCal();
   } catch (_) { /* repaint must never break the Desk */ }
@@ -16241,8 +16293,9 @@ function rCal(){
         _displayStart = Math.max(0, Math.min(_displayStart, _origLen - CAL_FOCUS_WEEKS));
         W = W.slice(_displayStart, _displayStart + CAL_FOCUS_WEEKS);
     }
-    // Sequential lesson gate state (LESSON_GATE_BUILD.md §4): cells render in
-    // chronological order, so _prevLessonTopic trails the last lesson cell.
+    // Sequential lesson gate state (LESSON_GATE_BUILD.md §4 + §8): each lesson
+    // gates on its canonical topic-predecessor (_prevTopicInSequence), not the
+    // previous calendar cell — window-independent + cross-portion.
     const _gateMarks = getStudentMarks();
     const _gateSignedIn = !!getStudentEmail();
     // CALENDAR_FOCUS -- the one next-up lesson, by the student's local marks.
@@ -16250,7 +16303,6 @@ function rCal(){
     const _nextUpTopic = calNextUpTopic(_orderedPeriodTopics(), _gateMarks);
     // Publish for renderDoNow so the Do Now message tracks the same next-up cell.
     _calNextUp = _nextUpTopic;
-    let _prevLessonTopic = null;
     let _lastQ = 0; // Thread 2 -- the quarter band already emitted
     for(const wk of W){
         const r=document.createElement("div");r.className="wk-row"+(wk._summer?" wk-summer":"");
@@ -16279,6 +16331,7 @@ function rCal(){
             if(dt<t&&!eq(dt,t))c.classList.add("cell-past");
             if (typeof inf === 'object' && inf.t) {
               c.dataset.topic = inf.t; c.dataset.dts = +dt; // DN3b — completion overlay hooks
+              if (wk._summer) c.dataset.summer = '1';        // gate dispatch: summer cells use the individual summer sequence
               const allEntries = getAllRegistryEntries(inf.t);
               if (allEntries.length) {
                 const worst = allEntries.some(e => e.status === 'partial') ? 'partial'
@@ -16341,8 +16394,14 @@ function rCal(){
                 // Sequential lesson gate: only real lesson cells (dot-form
                 // topic) are gated; Review / other cells stay click-through.
                 const _isLessonCell = (typeof inf === 'object' && /^\d+\.\d+/.test(inf.t));
-                if (_isLessonCell && !_isLessonUnlocked(inf.t, dt, _prevLessonTopic, t, _gateMarks, _gateSignedIn)) {
-                    const _lockTopic = inf.t, _lockPrev = _prevLessonTopic, _lockDs = ds;
+                // Gate on the canonical topic-predecessor (window-independent +
+                // cross-portion), NOT the previous calendar cell — see §8. Summer
+                // cells carry individual topics, fall cells combined ("1.2+1.3"),
+                // so each dispatches to its own ordered sequence.
+                const _prevTopic = !_isLessonCell ? null
+                  : (wk._summer ? _prevSummerTopic(inf.t) : _prevTopicInSequence(inf.t));
+                if (_isLessonCell && !_isLessonUnlocked(inf.t, dt, _prevTopic, t, _gateMarks, _gateSignedIn)) {
+                    const _lockTopic = inf.t, _lockPrev = _prevTopic, _lockDs = ds;
                     c.classList.add('cell-locked');
                     c.insertAdjacentHTML('beforeend', '<span class="cell-lock">🔒</span>');
                     c.onclick=()=>{hTip();_showLessonLockedDialog(_lockTopic,_lockPrev,_lockDs);};
@@ -16357,7 +16416,6 @@ function rCal(){
                 } else {
                     c.onclick=()=>{hTip();maybeBumpThenOpen(inf,ds);};
                 }
-                if (_isLessonCell) _prevLessonTopic = inf.t;
                 c.ondblclick=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};
                 c.oncontextmenu=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};
             }
