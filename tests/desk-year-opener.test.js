@@ -1,0 +1,136 @@
+// desk-year-opener.test.js — the SY26-27 school calendar opens with Day-1
+// orientation (not graded) + a Day-2 no-stakes Unit-1 BASELINE (a real early
+// U1 PC attempt, t reuses "U1-PC1" so it opens the same PC and feeds best-of).
+// Runs the REAL schedule generator to prove placement AND that the +2 opener
+// cells don't push tail lessons off the end of the year.
+//
+// @vitest-environment node
+
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
+
+function fnBody(name) {
+  const m = new RegExp('function\\s+' + name + '\\s*\\(').exec(DESK);
+  if (!m) throw new Error('fn not found: ' + name);
+  const i = DESK.indexOf('{', m.index);
+  let depth = 0;
+  for (let j = i; j < DESK.length; j++) {
+    if (DESK[j] === '{') depth++;
+    else if (DESK[j] === '}') { depth--; if (depth === 0) return DESK.slice(m.index, j + 1); }
+  }
+  throw new Error('unbalanced: ' + name);
+}
+function constArray(name) {
+  const at = DESK.indexOf('const ' + name + ' = [');
+  if (at < 0) throw new Error('not found: ' + name);
+  const i = DESK.indexOf('[', at);
+  let depth = 0;
+  for (let j = i; j < DESK.length; j++) {
+    if (DESK[j] === '[') depth++;
+    else if (DESK[j] === ']') { depth--; if (depth === 0) return DESK.slice(at, j + 1); }
+  }
+  throw new Error('unbalanced: ' + name);
+}
+
+// Real generator + pacing, plus the SY26-27 def's stable config (range/periods/
+// daysOff/examDate copied from SCHEDULE_DEFS["SY26-27"]).
+const SRC =
+  'const R="review",OFF="off",EX="exam",PO="post",NC="noclass";\n'
+  + ['d', 'dateFromArr', 'buildOffSet', 'enumWeekdays', 'injectPcPosterEvents', 'generateSchedule'].map(fnBody).join('\n') + '\n'
+  + constArray('SY2627_PACING_B') + ';\n'
+  + constArray('SY2627_PACING_E') + ';\n'
+  + 'const def={range:{start:[2026,8,1],end:[2027,3,15]},examDate:[2027,4,14],'
+  + 'periods:{B:{meetsDays:[1,2,4,5]},E:{meetsDays:[1,3,5],doubleDay:3}},'
+  + 'daysOff:[[[2026,8,7]],[[2026,9,12]],[[2026,10,11]],[[2026,10,25],[2026,10,27]],'
+  + '[[2026,11,23],[2027,0,2]],[[2027,0,18]],[[2027,1,15],[2027,1,19]],[[2027,3,19],[2027,3,23]]],'
+  + 'pacing:{B:injectPcPosterEvents(SY2627_PACING_B),E:injectPcPosterEvents(SY2627_PACING_E)}};\n'
+  + 'return {S: generateSchedule(def), pacingB: def.pacing.B, pacingE: def.pacing.E};';
+
+// eslint-disable-next-line no-new-func
+const { S, pacingB, pacingE } = new Function(SRC)();
+
+// The ordered non-empty cells for a period column (3 = B, 4 = E).
+function cellsFor(col) {
+  const out = [];
+  for (const row of S) {
+    const inf = row[col];
+    if (inf && typeof inf === 'object' && inf.t) out.push(inf);
+  }
+  return out;
+}
+
+describe('SY26-27 year opener — placement', () => {
+  it('period B opens orientation → baseline → 1.1', () => {
+    const b = cellsFor(3);
+    expect(b[0].kind).toBe('orientation');
+    expect(b[1].kind).toBe('baseline');
+    expect(b[1].t).toBe('U1-PC1');          // reuses the PC topic → same PC, feeds best-of
+    expect(b[1].u).toBe(1);
+    expect(b[2].t).toBe('1.1');
+  });
+
+  it('period E opens the same way', () => {
+    const e = cellsFor(4);
+    expect(e[0].kind).toBe('orientation');
+    expect(e[1].kind).toBe('baseline');
+    expect(e[2].t).toBe('1.1');
+  });
+
+  it('the baseline opens the SAME PC as the unit-end U1 PC (same topic id)', () => {
+    // both the day-2 baseline and the auto-injected unit-end PC1 carry t "U1-PC1",
+    // so getRegistryEntry resolves them to one PC → one best-of pool.
+    const b = cellsFor(3);
+    const baseline = b.find((c) => c.kind === 'baseline');
+    const endPc1 = b.find((c) => c.kind === 'pc' && c.t === 'U1-PC1');
+    expect(baseline.t).toBe('U1-PC1');
+    expect(endPc1).toBeTruthy();
+  });
+});
+
+describe('SY26-27 year opener — no tail drop (the +2 cells must not push lessons off the year)', () => {
+  it('every period-B pacing item is placed on the calendar', () => {
+    const placed = new Set(cellsFor(3).map((c) => c.t + '|' + (c.kind || '') + '|' + (c.n || '')));
+    // generateSchedule drops queue items only if it runs out of meeting days. The
+    // LAST pacing item appearing proves the whole queue fit.
+    const last = pacingB[pacingB.length - 1];
+    expect(placed.has(last.t + '|' + (last.kind || '') + '|' + (last.n || ''))).toBe(true);
+    // also: at least as many placed cells as pacing items (no silent truncation)
+    expect(cellsFor(3).length).toBeGreaterThanOrEqual(pacingB.length);
+  });
+
+  it('every period-E pacing item is placed on the calendar', () => {
+    const last = pacingE[pacingE.length - 1];
+    const placed = cellsFor(4).map((c) => c.t + '|' + (c.kind || '') + '|' + (c.n || ''));
+    expect(placed).toContain(last.t + '|' + (last.kind || '') + '|' + (last.n || ''));
+    expect(cellsFor(4).length).toBeGreaterThanOrEqual(pacingE.length);
+  });
+});
+
+describe('SY26-27 year opener — render + click wiring', () => {
+  it('cls/htm handle the orientation + baseline kinds', () => {
+    const cls = fnBody('cls');
+    const htm = fnBody('htm');
+    expect(cls).toContain("i.kind==='orientation')return\"cell-orient\"");
+    expect(cls).toContain("i.kind==='baseline')return\"cell-baseline\"");
+    expect(htm).toContain('Start Here');
+    expect(htm).toContain('Baseline');
+  });
+
+  it('orientation opens the grade-help explainer; styling exists', () => {
+    expect(DESK).toMatch(/inf\.kind === 'orientation'[\s\S]{0,260}openGradeHelp/);
+    expect(DESK).toContain('.cell-orient');
+    expect(DESK).toContain('.cell-baseline');
+  });
+
+  it('baseline opens a no-stakes framing dialog (PCs are taken in AP Classroom, not Desk-launched)', () => {
+    expect(DESK).toMatch(/inf\.kind === 'baseline'[\s\S]{0,400}_openBaselineInfo/);
+    expect(DESK).toContain('function _openBaselineInfo');
+    expect(DESK).toMatch(/Baseline Check — your starting line/);
+    expect(DESK).toMatch(/only your <b>best<\/b> Progress-Check/);
+  });
+});
