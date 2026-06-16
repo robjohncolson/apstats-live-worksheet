@@ -10,8 +10,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "vitest": "^1.2.0",
-    "jsdom": "^23.0.0"
+    "jsdom": "^23.0.0",
+    "qrcode": "^1.5.4",
+    "vitest": "^1.2.0"
   },
   "keywords": [
     "ap-statistics",
