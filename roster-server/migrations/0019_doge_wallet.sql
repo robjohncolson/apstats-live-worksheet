@@ -38,6 +38,12 @@ create table if not exists doge_ledger (
 );
 create index if not exists doge_ledger_student_idx on doge_ledger (student_id, ts desc);
 
+-- Defense-in-depth (matches 0001/0002/0004/0007/0008): RLS ON so a non-service-role
+-- PostgREST key on this SHARED Supabase project can't read/write addresses+balances.
+-- The roster server uses the service-role key (bypasses RLS), so it's unaffected.
+alter table doge_account enable row level security;
+alter table doge_ledger  enable row level security;
+
 -- ── Atomic guarded spend (eat / buy_doge) ────────────────────────────────────
 -- A student's candy balance = earnedCandy (computed from the ledger, passed in as
 -- p_earned) − candy_eaten − doge_cost_basis. The READ-MODIFY-WRITE the JS used
@@ -69,6 +75,8 @@ begin
       where student_id = p_sid
         and (p_earned - candy_eaten - doge_cost_basis) >= p_candy - 1e-9
       returning * into result;
+  else
+    raise exception 'unknown doge_spend kind: %', p_kind using errcode = '22023';
   end if;
   if result.student_id is not null then
     insert into doge_ledger (student_id, kind, candy_delta, doge_delta, doge_price_usd, candy_per_doge)

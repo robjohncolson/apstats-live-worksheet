@@ -180,10 +180,15 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice }) {
     const accRes = await db.getDogeAccount(studentId);
     if (accRes.error) { if (isDogeMissing(accRes.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
     const acc = accRes.data || {};
-    const up = await db.upsertDogeAccount(studentId, rowFor(acc, { [field]: num(acc[field]) + amount }));
+    // Clamp so a teacher fat-finger can't over-mark: candy_given ≤ candy_eaten,
+    // doge_sent ≤ doge_balance. (Also bounds an idempotent double-mark-sent from
+    // the Phase-3 sender after a crash — doge_sent never exceeds what was banked.)
+    const cap = field === 'doge_sent' ? num(acc.doge_balance) : num(acc.candy_eaten);
+    const newVal = Math.min(num(acc[field]) + amount, cap);
+    const up = await db.upsertDogeAccount(studentId, rowFor(acc, { [field]: newVal }));
     if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    try { await db.insertDogeLedger({ student_id: studentId, kind: field === 'candy_given' ? 'give' : 'send', candy_delta: field === 'candy_given' ? -amount : 0, doge_delta: field === 'doge_sent' ? -amount : 0 }); } catch (_) {}
-    return res.json({ ok: true, studentId, [field]: num(acc[field]) + amount });
+    try { await db.insertDogeLedger({ student_id: studentId, kind: field === 'candy_given' ? 'give' : 'send', candy_delta: field === 'candy_given' ? -(newVal - num(acc[field])) : 0, doge_delta: field === 'doge_sent' ? -(newVal - num(acc[field])) : 0 }); } catch (_) {}
+    return res.json({ ok: true, studentId, [field]: newVal });
   }
   app.post('/wallet/mark-given', (req, res) => markEndpoint(req, res, 'candy_given'));
   app.post('/wallet/mark-sent', (req, res) => markEndpoint(req, res, 'doge_sent'));

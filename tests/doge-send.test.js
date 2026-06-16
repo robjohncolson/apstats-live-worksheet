@@ -4,7 +4,12 @@
 // without a registered address are surfaced as skips (never silently dropped).
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { planSends } from '../tools/doge-send.mjs';
+
+const SRC = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../tools/doge-send.mjs'), 'utf8');
 
 const acc = (studentId, dogeToDeposit, dogeAddress = null) => ({ studentId, dogeToDeposit, dogeAddress });
 
@@ -51,5 +56,26 @@ describe('doge-send — planSends', () => {
   it('empty / missing accounts → nothing to send', () => {
     expect(planSends([]).sendable).toEqual([]);
     expect(planSends(undefined).total).toBe(0);
+  });
+});
+
+describe('doge-send — money-safety guards (structural)', () => {
+  it('dry-run by default; only --send broadcasts', () => {
+    expect(SRC).toContain("process.argv.includes('--send')");
+    expect(SRC).toMatch(/DRY RUN — nothing broadcast/);
+  });
+  it('crash-resilient idempotency: journal written after sendmany, refuses --send if one exists', () => {
+    expect(SRC).toContain('.doge-send-journal.json');
+    expect(SRC).toMatch(/UN-RECONCILED prior send/);                 // refuse-if-exists
+    expect(SRC).toMatch(/writeFileSync\(JOURNAL/);                   // journal after sendmany
+    expect(SRC).toMatch(/unlinkSync\(JOURNAL\)/);                    // cleared only when fully reconciled
+  });
+  it('aborts before broadcast on wrong chain / invalid address / low balance', () => {
+    expect(SRC).toMatch(/chain !== 'main'/);                        // mainnet assert
+    expect(SRC).toContain('validateaddress');
+    expect(SRC).toMatch(/plan\.total \+ FEE_BUFFER/);              // fee headroom
+  });
+  it('never handles a private key (sendmany uses the node wallet)', () => {
+    expect(SRC).not.toMatch(/privateKey|dumpprivkey|importprivkey|wif|signrawtransaction/i);
   });
 });

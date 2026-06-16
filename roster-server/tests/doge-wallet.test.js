@@ -15,7 +15,9 @@ const rc = (source, itemId) => ({ source, item_id: itemId, receipt_compact: 'rc'
 // N distinct receipt-carrying quiz rows = N*10 points = N*10/36 candy.
 const quizRows = (n) => Array.from({ length: n }, (_, i) => rc('curriculum_quiz', 'Q-' + i));
 
-function start({ ledgers = {}, accounts = {}, dbMissing = false } = {}) {
+const ROW_OF_NULLS = { student_id: null, candy_eaten: null, candy_given: null, doge_balance: null, doge_sent: null, doge_cost_basis: null, doge_address: null };
+
+function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = false } = {}) {
   const acc = new Map(Object.entries(accounts));
   const dogeLedger = [];
   const miss = { data: null, error: { code: '42P01', message: 'relation "doge_account" does not exist' } };
@@ -32,7 +34,10 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false } = {}) {
       if (dbMissing) return miss;
       var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, doge_address: null };
       var bal = p_earned - Number(a.candy_eaten || 0) - Number(a.doge_cost_basis || 0);
-      if (bal < p_candy - 1e-9) return { data: null, error: null };   // guard failed → insufficient
+      // guard fail: production (a `returns doge_account` fn over PostgREST) returns
+      // a ROW-OF-NULLS, not a bare null — exercise that shape so the load-bearing
+      // `!r.data.student_id` guard in the endpoints is actually pinned.
+      if (bal < p_candy - 1e-9) return { data: rowOfNulls ? { ...ROW_OF_NULLS } : null, error: null };
       if (p_kind === 'eat') a = { ...a, candy_eaten: Number(a.candy_eaten || 0) + p_candy };
       else a = { ...a, doge_balance: Number(a.doge_balance || 0) + (p_doge || 0), doge_cost_basis: Number(a.doge_cost_basis || 0) + p_candy };
       acc.set(p_sid, a);
@@ -138,6 +143,12 @@ describe('DOGE wallet — atomic spend (conservation across operations)', () => 
     const ctx = start({ ledgers: { s1: quizRows(100) }, dbMissing: true });
     const r = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 5 } });
     expect(r.status).toBe(503);
+  });
+  it('rejects an over-spend even when the RPC returns a ROW-OF-NULLS (real PostgREST shape)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(4) }, rowOfNulls: true });   // ~1.1 candy
+    const r = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 99 } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/not enough/);
   });
 });
 
