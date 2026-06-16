@@ -13,9 +13,13 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = readFileSync(resolve(repo, 'ap_stats_roadmap_square_mode.html'), 'utf8');
 
 describe('Desk — verification tools surfaced', () => {
-  it('teacher menu opens the phone QR-bridge for the scan-to-verify tool', () => {
-    expect(DESK).toMatch(/Verify a record \(scan\)/);
-    expect(DESK).toMatch(/onclick="closeMenus\(\);openVerifyQR\(\)"/);
+  it('the Teacher Tools launcher wires the scan-to-verify tool (openVerifyQR)', () => {
+    // The 7-item teacher menu was consolidated into one launcher window
+    // (openTeacherTools); the scan-to-verify tool moved into that launcher.
+    expect(DESK).toMatch(/Teacher Tools/);
+    expect(DESK).toContain('openTeacherTools');
+    expect(DESK).toContain("label: 'Verify (scan)'");
+    expect(DESK).toMatch(/openVerifyQR\(\)/);            // still wired, now inside the launcher
   });
 
   it('openVerifyQR shows a QR of the cr teacher-verify URL (phone bridge)', () => {

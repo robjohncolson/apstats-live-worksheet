@@ -74,10 +74,13 @@ describe('teacher onboarding + class gradebook (static)', () => {
     expect(ov.innerHTML).toContain('_toggleTeacherKey()');
   });
 
-  it('the Teacher menu exposes Class Gradebook → openClassGradebook()', () => {
+  it('the Teacher menu opens the Teacher Tools launcher, which wires Class Gradebook', () => {
+    // The teacher menu was consolidated into one launcher (openTeacherTools);
+    // Class Gradebook is now a tile inside it rather than a flat menu item.
     const menu = document.getElementById('menu-teacher');
     expect(menu).not.toBeNull();
-    expect(menu.innerHTML).toContain('openClassGradebook()');
+    expect(menu.innerHTML).toContain('openTeacherTools()');   // menu → launcher
+    expect(html).toContain('openClassGradebook()');           // launcher tile wires it
   });
 
   it('the My Gradebook modal has the teacher student-picker row', () => {
@@ -90,13 +93,14 @@ describe('teacher onboarding + class gradebook (static)', () => {
     expect(html).toMatch(/function\s+_selectClassStudent\s*\(/);
   });
 
-  it('the redundant Do-Now "Class Gradebook" chip was removed (Teacher menu is the single entry)', () => {
+  it('the redundant Do-Now "Class Gradebook" chip was removed (Teacher Tools is the single entry)', () => {
     // Do-Now declutter (2026-06-15): the Class Gradebook chip was dropped from the
-    // Do Now card — it duplicated the Teacher menu's "Class Gradebook →
-    // openClassGradebook()", which stays the single entry point. The Do-Now grade
-    // strip no longer builds a cgChip.
+    // Do Now card — it duplicated the teacher path to Class Gradebook, which now
+    // lives in the Teacher Tools launcher (openTeacherTools → openClassGradebook).
+    // The Do-Now grade strip no longer builds a cgChip.
     expect(html).not.toContain('cgChip');
-    expect(document.getElementById('menu-teacher').innerHTML).toContain('openClassGradebook()');
+    expect(document.getElementById('menu-teacher').innerHTML).toContain('openTeacherTools()');
+    expect(html).toContain('openClassGradebook()');
   });
 });
 

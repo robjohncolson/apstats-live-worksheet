@@ -1562,13 +1562,7 @@
         <div class="menu-dropdown" id="menu-teacher">
             <div class="menu-dd-item disabled" style="font-style:italic;font-size:10px">Teacher tools</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openClassGradebook==='function')openClassGradebook()">&#128202; Class Gradebook</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-dashboard.html','_blank')">&#128202; Gradebook Dashboard</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-roster-console.html','_blank')">&#128221; Roster Console</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-code-generator.html','_blank')">&#128274; Unlock Code Generator</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('teacher-classroom.html','_blank')">&#128101; Live Classroom</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();window.open('https://robjohncolson.github.io/curriculum_render/verify.html','_blank','noopener')">&#129534; Verify a receipt...</div>
-            <div class="menu-dd-item" data-sfx onclick="closeMenus();openVerifyQR()">&#128269; Verify a record (scan)...</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openTeacherTools==='function')openTeacherTools()" style="font-weight:bold">&#129520; Teacher Tools&#8230;</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
         </div>
@@ -2118,6 +2112,22 @@
             <div class="collapse-box" onclick="minimizeApp('wallet')" title="Minimize"></div>
         </div>
         <div class="app-content" id="wallet-content" style="flex-direction:column;overflow:auto;padding:12px">
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Teacher Tools ═══ One System 7 launcher window that consolidates the
+     teacher tools (was 7 flat menu items). Role-gated like the Teacher menu.
+     Roster Console is intentionally NOT here — it's local-only (CLAUDE.md "do
+     not link from public pages"); the window footer says how to reach it. -->
+<div class="app-overlay" id="app-teachertools-overlay">
+    <div class="app-window" style="width:440px">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="destroyTeacherTools()" title="Close"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">Teacher Tools</span>
+        </div>
+        <div class="app-content" id="teachertools-content" style="flex-direction:column;overflow:auto;padding:14px">
         </div>
     </div>
 </div>
@@ -11801,6 +11811,62 @@ function destroyWallet() {
     try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
     var overlay = document.getElementById('app-wallet-overlay');
     if (overlay) overlay.style.display = 'none';
+}
+
+// ── Teacher Tools launcher ──────────────────────────────────────────────────
+// One window that consolidates the teacher tools (replaced 7 flat menu items).
+// Each tile fires the SAME action the old menu item did. Roster Console is
+// deliberately omitted — it's local-only (CLAUDE.md); the footer says how to
+// reach it. Verify keeps BOTH paths: scan (openVerifyQR → teacher-verify.html
+// phone bridge) and paste (cr verify.html).
+var _TEACHER_TOOLS = [
+    { icon: '📊', label: 'Class Gradebook', sub: 'in-Desk, by student', act: function () { if (typeof openClassGradebook === 'function') openClassGradebook(); } },
+    { icon: '📈', label: 'Gradebook Dashboard', sub: 'full class grid + remediation', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
+    { icon: '🔒', label: 'Unlock Codes', sub: 'unit unlock generator', act: function () { window.open('teacher-code-generator.html', '_blank'); } },
+    { icon: '👥', label: 'Live Classroom', sub: 'presence / polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
+    { icon: '🔍', label: 'Verify (scan)', sub: 'phone QR → teacher-verify', act: function () { if (typeof openVerifyQR === 'function') openVerifyQR(); } },
+    { icon: '🧾', label: 'Verify (paste)', sub: 'paste/drag a receipt', act: function () { window.open('https://robjohncolson.github.io/curriculum_render/verify.html', '_blank', 'noopener'); } },
+];
+function openTeacherTools() {
+    // Defense-in-depth: the Teacher menu is already role-gated, but never open
+    // the launcher for a non-teacher (e.g. a stray console call / preview mode).
+    if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
+    var overlay = document.getElementById('app-teachertools-overlay');
+    if (!overlay) return;
+    var host = document.getElementById('teachertools-content');
+    if (host) _paintTeacherTools(host);
+    var win = overlay.querySelector('.app-window');
+    if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
+    overlay.style.display = 'block';
+    try { if (typeof bumpUsage === 'function') bumpUsage('teachertools'); } catch (_) {}
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
+}
+function destroyTeacherTools() {
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+    var overlay = document.getElementById('app-teachertools-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+function _paintTeacherTools(host) {
+    host.innerHTML = '';
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;justify-content:center';
+    _TEACHER_TOOLS.forEach(function (t) {
+        var b = document.createElement('button');
+        b.className = 's7btn';
+        b.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;width:128px;padding:12px 8px;cursor:pointer;text-align:center';
+        var ic = document.createElement('div'); ic.style.cssText = 'font-size:22px;line-height:1'; ic.textContent = t.icon;
+        var lb = document.createElement('div'); lb.className = 'chicago'; lb.style.cssText = 'font-size:12px'; lb.textContent = t.label;
+        var sb = document.createElement('div'); sb.className = 'geneva'; sb.style.cssText = 'font-size:9px;color:#666'; sb.textContent = t.sub;
+        b.appendChild(ic); b.appendChild(lb); b.appendChild(sb);
+        b.onclick = function () { destroyTeacherTools(); try { t.act(); } catch (_) {} };
+        grid.appendChild(b);
+    });
+    host.appendChild(grid);
+    var note = document.createElement('div');
+    note.className = 'geneva';
+    note.style.cssText = 'font-size:9px;color:#888;margin-top:12px;border-top:1px solid #ccc;padding-top:8px;line-height:1.4';
+    note.textContent = 'Roster Console (bulk enroll · passwords · delete-student) is local-only — open teacher-roster-console.html directly on your machine, not from the public site.';
+    host.appendChild(note);
 }
 
 var _myGradebookQuarter = null;
