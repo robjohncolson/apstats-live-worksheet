@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -274,5 +274,28 @@ export function createDb(client) {
     }
 
     return query.order('section', { ascending: true }).order('created_at', { ascending: true });
+  }
+
+  // ── DOGE Effort Wallet (migration 0019) ───────────────────────────────────
+  async function getDogeAccount(studentId) {
+    return client.from('doge_account').select('*').eq('student_id', studentId).maybeSingle();
+  }
+  async function listDogeAccounts(studentIds) {
+    let q = client.from('doge_account').select('*');
+    if (Array.isArray(studentIds) && studentIds.length) q = q.in('student_id', studentIds);
+    return q;
+  }
+  // Full-row upsert (the caller reads-modifies-writes; numeric fields are totals,
+  // not increments, so the whole row is supplied).
+  async function upsertDogeAccount(studentId, patch) {
+    const payload = { student_id: studentId, ...patch, updated_at: new Date().toISOString() };
+    return client.from('doge_account').upsert([payload], { onConflict: 'student_id' }).select('*').maybeSingle();
+  }
+  async function insertDogeLedger(row) {
+    return client.from('doge_ledger').insert([row]).select('*').single();
+  }
+  async function listDogeLedger(studentId, limit = 50) {
+    return client.from('doge_ledger').select('*').eq('student_id', studentId)
+      .order('ts', { ascending: false }).limit(limit);
   }
 }

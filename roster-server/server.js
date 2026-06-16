@@ -27,6 +27,7 @@ import { createLiveNudgesDb } from './nudge-db.js';
 import { mountLessonUnlock } from './lesson-unlock.js';
 import { createLiveLessonUnlockDb } from './lesson-unlock-db.js';
 import { mountTrainer } from './trainer.js';
+import { mountDogeWallet } from './doge-wallet.js';
 import { createLiveTrainerDb } from './trainer-db.js';
 import { PHASE3_CONFIG } from './grade-config.js';
 import { buildWorksheetBlankCounts } from './lesson-grade.js';
@@ -826,6 +827,13 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // ledgerDb + loadAnswerKey injected; tests pass fakes.
   if (ledgerDb && loadAnswerKey) {
     mountRollup(app, { verifyToken, ledgerDb, loadAnswerKey });
+  }
+
+  // ── DOGE Effort Wallet (DOGE_WALLET_SPEC Phase 2 additive) ───────────────────
+  // /wallet (student eat/buy) + /class/wallets + address/mark-given/mark-sent
+  // (teacher). 503 until migration 0019. Effort comes from the same ledger.
+  if (db && ledgerDb) {
+    mountDogeWallet(app, { db, ledgerDb, verifyToken });
   }
 
   // ── Grade route (Phase 3+6 additive) ─────────────────────────────────────────
