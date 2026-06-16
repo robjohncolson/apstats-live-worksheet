@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeGiftedSince };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -185,7 +185,7 @@ export function createDb(client) {
 
     return client
       .from('roster')
-      .select('student_id, login_username, password_hash, real_name, section, status, must_change_password')
+      .select('student_id, login_username, password_hash, real_name, section, status, role, must_change_password')
       .eq('login_username', normalizedUsername)
       .single();
   }
@@ -312,5 +312,15 @@ export function createDb(client) {
     return client.from('doge_account')
       .update({ ...chain, updated_at: new Date().toISOString() })
       .eq('student_id', studentId).select('*').maybeSingle();
+  }
+  // Atomic kid→kid candy transfer (migration 0021 fn doge_gift). Returns { data, error }
+  // where data = the sender's updated row, or null when the guard fails.
+  async function dogeGift(params) {
+    return client.rpc('doge_gift', params);
+  }
+  // Candy a student has gifted OUT since `sinceIso` (for the rolling daily cap).
+  async function dogeGiftedSince(studentId, sinceIso) {
+    return client.from('doge_ledger').select('candy_delta')
+      .eq('student_id', studentId).eq('kind', 'gift_out').gte('ts', sinceIso);
   }
 }

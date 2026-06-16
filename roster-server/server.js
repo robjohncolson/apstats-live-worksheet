@@ -801,6 +801,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
       username: row.login_username,
       realName: row.real_name,
       section:  row.section,
+      role:     row.role || 'student',   // lets the gift picker drop the teacher account
     }));
     // Send a soft cache hint — the roster doesn't change often.
     res.setHeader('Cache-Control', 'public, max-age=300');

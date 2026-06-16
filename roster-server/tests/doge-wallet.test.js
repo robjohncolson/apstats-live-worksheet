@@ -20,7 +20,7 @@ const quizRows = (n) => Array.from({ length: n }, (_, i) => rc('curriculum_quiz'
 
 const ROW_OF_NULLS = { student_id: null, candy_eaten: null, candy_given: null, doge_balance: null, doge_sent: null, doge_cost_basis: null, doge_address: null };
 
-function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = false, roster = [], chain = {}, chainWriteFails = false } = {}) {
+function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = false, roster = [], chain = {}, chainWriteFails = false, giftMissing = false } = {}) {
   const acc = new Map(Object.entries(accounts));
   const dogeLedger = [];
   const miss = { data: null, error: { code: '42P01', message: 'relation "doge_account" does not exist' } };
@@ -33,12 +33,35 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
     async insertDogeLedger(row) { dogeLedger.push(row); return { data: row, error: null }; },
     async listDogeLedger(sid) { return { data: dogeLedger.filter((r) => r.student_id === sid), error: null }; },
     async getRoleByStudentId() { return 'student'; },
+    async findByStudentId(studentId) { if (dbMissing) return miss; const row = roster.find((r) => r.student_id === studentId); return { data: row ? { student_id: studentId, section: row.section, real_name: row.realName || null } : null, error: null }; },
+    async findByUsername(username) { if (dbMissing) return miss; const u = String(username || '').toLowerCase(); const row = roster.find((r) => (r.username || '').toLowerCase() === u); return { data: row ? { student_id: row.student_id, section: row.section, real_name: row.realName || null, role: row.role || 'student', status: row.status || 'active' } : null, error: row ? null : { code: 'PGRST116', message: 'no rows' } }; },
+    async dogeGiftedSince(studentId, sinceIso) { if (dbMissing) return miss; return { data: dogeLedger.filter((r) => r.student_id === studentId && r.kind === 'gift_out' && (!sinceIso || (r.ts && r.ts >= sinceIso))), error: null }; },
+    // models the atomic doge_gift RPC: guard the SENDER's spendable + the rolling
+    // daily cap, debit out, credit in, log both legs, return the sender row (null on guard fail).
+    async dogeGift({ p_from, p_to, p_candy, p_earned_from, p_cap }) {
+      if (dbMissing || giftMissing) return miss;
+      if (p_from === p_to || p_candy <= 0) return { data: null, error: null };
+      if (p_cap != null) {
+        var since24 = new Date(Date.now() - 86400000).toISOString();
+        var giftedRecent = dogeLedger.filter((r) => r.student_id === p_from && r.kind === 'gift_out' && (!r.ts || r.ts >= since24)).reduce((s, r) => s + Math.abs(r.candy_delta), 0);
+        if (giftedRecent + p_candy > p_cap + 1e-9) return { data: null, error: null };   // over cap → null (race backstop)
+      }
+      var from = acc.get(p_from) || { student_id: p_from, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0 };
+      var spend = p_earned_from - Number(from.candy_eaten || 0) - Number(from.doge_cost_basis || 0) - Number(from.candy_gifted_out || 0) + Number(from.candy_gifted_in || 0);
+      if (spend < p_candy - 1e-9) return { data: rowOfNulls ? { ...ROW_OF_NULLS } : null, error: null };
+      from = { ...from, candy_gifted_out: Number(from.candy_gifted_out || 0) + p_candy }; acc.set(p_from, from);
+      var to = acc.get(p_to) || { student_id: p_to, candy_gifted_in: 0 };
+      to = { ...to, candy_gifted_in: Number(to.candy_gifted_in || 0) + p_candy }; acc.set(p_to, to);
+      dogeLedger.push({ student_id: p_from, kind: 'gift_out', candy_delta: -p_candy, ts: new Date().toISOString() });
+      dogeLedger.push({ student_id: p_to, kind: 'gift_in', candy_delta: p_candy, ts: new Date().toISOString() });
+      return { data: from, error: null };
+    },
     // models the atomic doge_spend RPC: guard balance, debit the right field(s),
     // log, return the row (or null when the guard fails).
     async dogeSpend({ p_sid, p_earned, p_candy, p_kind, p_doge, p_price, p_cpd }) {
       if (dbMissing) return miss;
       var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, doge_address: null };
-      var bal = p_earned - Number(a.candy_eaten || 0) - Number(a.doge_cost_basis || 0);
+      var bal = p_earned - Number(a.candy_eaten || 0) - Number(a.doge_cost_basis || 0) - Number(a.candy_gifted_out || 0) + Number(a.candy_gifted_in || 0);
       // guard fail: production (a `returns doge_account` fn over PostgREST) returns
       // a ROW-OF-NULLS, not a bare null — exercise that shape so the load-bearing
       // `!r.data.student_id` guard in the endpoints is actually pinned.
@@ -344,5 +367,118 @@ describe('DOGE wallet — watch-only chain (item 4)', () => {
     expect(r.body.confirmedDoge).toBe(7);        // served from the 0020 cache
     expect(r.body.source).toBe('cache');
     expect(r.body.stale).toBe(true);
+  });
+});
+
+describe('DOGE wallet — candy gifting (kid → kid)', () => {
+  const B = '00000000-0000-4000-8000-0000000000bb';   // recipient's student_id (resolved from username)
+  // sender token sid 's1' (username sender_one); recipient username recip_bee.
+  const sameSection = [{ student_id: 's1', section: 'PeriodB', username: 'sender_one' }, { student_id: B, section: 'PeriodB', username: 'recip_bee' }];
+
+  it('gifts candy to a classmate — spendable drops, recipient credited', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: sameSection });   // 360 pts = 10 candy
+    const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 4 } });
+    expect(r.status).toBe(200);
+    expect(r.body.candyGiftedOut).toBe(4);
+    expect(r.body.candyBalance).toBeCloseTo(6, 6);      // 10 earned − 4 gifted
+    expect(ctx.acc.get(B).candy_gifted_in).toBe(4);     // recipient credited
+  });
+  it('rejects gifting more candy than spendable', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(7) }, roster: sameSection });    // ~1.9 candy
+    const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 5 } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/not enough/);
+  });
+  it('rejects a non-whole amount', async () => {
+    const r = await req(start({ ledgers: { s1: quizRows(36) }, roster: sameSection }), 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2.5 } });
+    expect(r.status).toBe(400);
+  });
+  it('rejects gifting yourself', async () => {
+    const r = await req(start({ ledgers: { s1: quizRows(36) }, roster: sameSection }), 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'sender_one', candy: 1 } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/yourself/);
+  });
+  it('rejects an unknown classmate username (404)', async () => {
+    const r = await req(start({ ledgers: { s1: quizRows(36) }, roster: sameSection }), 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'ghost_nobody', candy: 2 } });
+    expect(r.status).toBe(404);
+    expect(r.body.error).toMatch(/unknown classmate/);
+  });
+  it('rejects gifting across sections', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodB', username: 'sender_one' }, { student_id: B, section: 'PeriodE', username: 'recip_bee' }] });
+    const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
+    expect(r.status).toBe(404);
+    expect(r.body.error).toMatch(/not in your class/);
+  });
+  it('enforces the rolling daily gift cap (20/day)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(200) }, roster: sameSection });   // plenty of candy
+    expect((await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 20 } })).status).toBe(200);
+    const over = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 1 } });
+    expect(over.status).toBe(429);
+    expect(over.body.error).toMatch(/daily gift limit/);
+  });
+  it('403s when gifting is turned off (teacher kill-switch)', async () => {
+    process.env.GIFTING_ENABLED = 'false';
+    try {
+      const r = await req(start({ ledgers: { s1: quizRows(36) }, roster: sameSection }), 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
+      expect(r.status).toBe(403);
+    } finally { delete process.env.GIFTING_ENABLED; }
+  });
+  it('503s before migration 0021 (doge_gift absent; roster still works)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: sameSection, giftMissing: true });
+    const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
+    expect(r.status).toBe(503);
+  });
+  it('gifted-away candy can no longer be eaten (the patched doge_spend guard sees it)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: sameSection });   // 10 candy
+    expect((await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 7 } })).status).toBe(200);
+    const e = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 5 } });   // only 3 left
+    expect(e.status).toBe(400);
+    expect(e.body.error).toMatch(/not enough/);
+  });
+  it('received candy CAN be spent (recipient eats a gift they did not earn)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: sameSection });   // B earns nothing
+    await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 5 } });
+    const e = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:' + B, body: { candy: 4 } });
+    expect(e.status).toBe(200);
+    expect(e.body.candyEaten).toBe(4);
+  });
+  it('rejects gifting the TEACHER account (same section, role=teacher)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodX', username: 'sender_one' }, { student_id: 't1', section: 'PeriodX', username: 'teach', role: 'teacher' }] });
+    const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'teach', candy: 2 } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/classmate/);
+  });
+  it('rejects gifting an archived student', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodB', username: 'sender_one' }, { student_id: B, section: 'PeriodB', username: 'recip_bee', status: 'archived' }] });
+    const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/classmate/);
+  });
+  it('honors GIFTING_ENABLED falsey spellings (0/off/no), not just "false"', async () => {
+    for (const v of ['0', 'off', 'no', 'FALSE']) {
+      process.env.GIFTING_ENABLED = v;
+      try {
+        const r = await req(start({ ledgers: { s1: quizRows(36) }, roster: sameSection }), 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
+        expect(r.status, 'GIFTING_ENABLED=' + v + ' should disable gifting').toBe(403);
+      } finally { delete process.env.GIFTING_ENABLED; }
+    }
+  });
+  it('excludes gifts older than 24h from the rolling cap', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(200) }, roster: sameSection });
+    // an aged gift_out (25h ago) must NOT count toward today's cap
+    ctx.dogeLedger.push({ student_id: 's1', kind: 'gift_out', candy_delta: -20, ts: new Date(Date.now() - 25 * 3600 * 1000).toISOString() });
+    const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 20 } });
+    expect(r.status).toBe(200);   // would be 429 if the ts window were ignored (lifetime cap)
+  });
+  it('conserves total spendable across a gift (A + B constant — zero-sum)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(36), [B]: quizRows(18) }, roster: sameSection });   // A=10, B=5
+    const a0 = (await req(ctx, 'GET', '/wallet', { token: 'tok:s1' })).body.candyBalance;
+    const b0 = (await req(ctx, 'GET', '/wallet', { token: 'tok:' + B })).body.candyBalance;
+    await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 4 } });
+    const a1 = (await req(ctx, 'GET', '/wallet', { token: 'tok:s1' })).body.candyBalance;
+    const b1 = (await req(ctx, 'GET', '/wallet', { token: 'tok:' + B })).body.candyBalance;
+    expect(a1 + b1).toBeCloseTo(a0 + b0, 6);   // gift moved spendable candy, created none
+    expect(a1).toBeCloseTo(a0 - 4, 6);
+    expect(b1).toBeCloseTo(b0 + 4, 6);
   });
 });

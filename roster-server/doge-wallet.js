@@ -10,7 +10,7 @@
 
 import { requireTeacher } from './teacher-auth.js';
 import {
-  computeEffort, candyPerDoge, dogeFromCandy, MIN_CONVERSION_CANDY,
+  computeEffort, candyPerDoge, dogeFromCandy, MIN_CONVERSION_CANDY, DAILY_GIFT_CAP,
 } from './doge-econ.js';
 import { fetchChainBalance as defaultChainFetch, detectNetwork, DOGE_MAIN_RE } from './doge-chain.js';
 
@@ -114,7 +114,9 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
   }
   function deriveBalances(earned, acc) {
     const a = acc || {};
-    const rawBalance = earned.candy - num(a.candy_eaten) - num(a.doge_cost_basis);
+    const giftedOut = num(a.candy_gifted_out);   // candy gifted to classmates (0 pre-migration-0021)
+    const giftedIn = num(a.candy_gifted_in);     // candy received from classmates
+    const rawBalance = earned.candy - num(a.candy_eaten) - num(a.doge_cost_basis) - giftedOut + giftedIn;
     const candyBalance = Math.max(0, rawBalance);
     return {
       candyEarned: earned.candy,
@@ -127,6 +129,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       candyBalanceRaw: rawBalance,
       candyEaten: num(a.candy_eaten),
       candyGiven: num(a.candy_given),
+      candyGiftedOut: giftedOut,
+      candyGiftedIn: giftedIn,
       candyOwed: Math.max(0, num(a.candy_eaten) - num(a.candy_given)),   // teacher hands out
       dogeBalance: num(a.doge_balance),
       dogeSent: num(a.doge_sent),
@@ -235,6 +239,59 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     return res.json({ ok: true, ...deriveBalances(earned, r.data), boughtCoins: coins, candyPerDoge: cpd, dogeUsd: price });
   });
 
+  // ── POST /wallet/gift ── send candy to a classmate (free in-app ledger move) ──
+  // Custodial within the app, so a transfer is just a guarded debit+credit — no
+  // on-chain tx, no fee. Guardrails: whole candy, same section, not self, rolling
+  // 24h cap, teacher kill-switch. The earned/effort metric is untouched (a gift
+  // moves SPENDABLE candy, not earned credit). DOGE_GIFTING_SPEC.
+  app.post('/wallet/gift', async (req, res) => {
+    // Kill-switch (default ON). Accept the common falsey spellings so an emergency
+    // class-wide disable can't silently fail on GIFTING_ENABLED=0/FALSE/no/off.
+    const giftingOff = ['false', '0', 'no', 'off'].includes(String(process.env.GIFTING_ENABLED || 'true').trim().toLowerCase());
+    if (giftingOff) return res.status(403).json({ ok: false, error: 'gifting is turned off' });
+    const sid = sidOf(req);
+    if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
+    // Recipient is picked by their PUBLIC username (the roster endpoint never
+    // exposes student_ids); resolve it to a student_id + section server-side.
+    const toUsername = String((req.body && req.body.toUsername) || '').trim();
+    const candy = num(req.body && req.body.candy);
+    if (!toUsername) return res.status(400).json({ ok: false, error: 'toUsername required' });
+    if (!Number.isInteger(candy) || candy <= 0) return res.status(400).json({ ok: false, error: 'candy must be a whole number > 0' });
+    const themRes = await db.findByUsername(toUsername);
+    // Split a real DB outage (→ 500 + log) from a genuine no-such-user (→ 404),
+    // instead of reporting an outage as "unknown classmate". (.single() → PGRST116 on no row.)
+    if (themRes && themRes.error && themRes.error.code !== 'PGRST116') {
+      console.error('POST /wallet/gift findByUsername:', themRes.error);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (!themRes || !themRes.data) return res.status(404).json({ ok: false, error: 'unknown classmate' });
+    const toStudentId = themRes.data.student_id;
+    if (toStudentId === sid) return res.status(400).json({ ok: false, error: "can't gift yourself" });
+    // Only an active student is a valid recipient — never the teacher account
+    // (which self-signs into the same section) nor an archived row.
+    if (themRes.data.role === 'teacher' || (themRes.data.status && themRes.data.status !== 'active')) {
+      return res.status(400).json({ ok: false, error: 'can only gift a classmate' });
+    }
+    // Same-section only (a classroom economy, not school-wide).
+    const meRes = await db.findByStudentId(sid);
+    if (!meRes || meRes.error || !meRes.data) return res.status(500).json({ ok: false, error: 'Database error' });
+    if (meRes.data.section !== themRes.data.section) return res.status(404).json({ ok: false, error: 'not in your class' });
+    // Rolling 24h cap on candy gifted OUT (anti-farming/coercion). The JS check
+    // gives a friendly 429 in the common case; the SAME cap is re-enforced inside
+    // doge_gift() under a row lock (p_cap), so a concurrent burst can't exceed it.
+    const since = new Date(Date.now() - 86400000).toISOString();
+    const g = await db.dogeGiftedSince(sid, since);
+    if (g && g.error) { if (isDogeMissing(g.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    const giftedToday = ((g && g.data) || []).reduce((s, r) => s + Math.abs(num(r.candy_delta)), 0);
+    if (giftedToday + candy > DAILY_GIFT_CAP) return res.status(429).json({ ok: false, error: 'daily gift limit (' + DAILY_GIFT_CAP + ' candy/day)' });
+    // Atomic guarded debit+credit (doge_gift RPC) — guards spendable AND the cap.
+    const earned = await earnedCandyOf(sid);
+    const r = await db.dogeGift({ p_from: sid, p_to: toStudentId, p_candy: candy, p_earned_from: earned.candy, p_cap: DAILY_GIFT_CAP });
+    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/gift:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (!r.data || !r.data.student_id) return res.status(400).json({ ok: false, error: 'not enough candy' });
+    return res.json({ ok: true, ...deriveBalances(earned, r.data), giftedTo: themRes.data.real_name || toUsername });
+  });
+
   // ── teacher: register a kid's paper-wallet address ─────────────────────────
   app.post('/wallet/address', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
@@ -292,6 +349,7 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       dogeAddress: a.doge_address || null,
       candyEaten: num(a.candy_eaten), candyGiven: num(a.candy_given),
       candyOwed: Math.max(0, num(a.candy_eaten) - num(a.candy_given)),
+      candyGiftedOut: num(a.candy_gifted_out), candyGiftedIn: num(a.candy_gifted_in),
       dogeBalance: num(a.doge_balance), dogeSent: num(a.doge_sent),
       dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)),
       dogeCostBasis: num(a.doge_cost_basis),

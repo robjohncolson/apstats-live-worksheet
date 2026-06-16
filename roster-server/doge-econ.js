@@ -14,6 +14,7 @@ const EFFORT_POINTS = {
 export const POINTS_PER_CANDY = 36;
 export const CANDY_USD = 0.036;
 export const MIN_CONVERSION_CANDY = 5;    // small deliberate-conversion floor (~1 lesson); dust/fee handled by the batched send, not per-buy
+export const DAILY_GIFT_CAP = 20;         // max candy a kid can gift OUT per rolling 24h (anti-farming/coercion; DOGE_GIFTING_SPEC §8)
 
 export function effortPointsFor(source, itemId) {
   if (source === 'quiz_verdict' || source === 'quiz_answer') return 0;

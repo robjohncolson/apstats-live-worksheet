@@ -11334,6 +11334,54 @@ function _dogeWalletChainArm(lineEl) {
         }
     });
 }
+// 🎁 Gift candy to a classmate — a free in-app transfer (no on-chain tx, no fee).
+// The recipient is picked by their PUBLIC username; the server resolves + guards it.
+function _dogeWalletGiftSend(toUsername, candy) {
+    var c = _dogeWalletBase();
+    if (!c) return Promise.resolve({ ok: false, error: 'offline' });
+    return fetch(c.base + '/wallet/gift', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + c.token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toUsername: toUsername, candy: candy })
+    }).then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .catch(function () { return { ok: false, error: 'network' }; });
+}
+function _dogeWalletGiftForm(wrap, box, w, pts) {
+    wrap.innerHTML = '<div class="geneva" style="font-size:10px;color:#8a7330">Loading classmates…</div>';
+    var maxCandy = Math.floor(w.candyBalance || 0);
+    var period = (typeof cP === 'string') ? cP : 'B';
+    var meUser = '';
+    try { var cur = (window.rosterClient && rosterClient.current) ? rosterClient.current() : null; meUser = cur ? String(cur.username || '').toLowerCase() : ''; } catch (_) {}
+    Promise.resolve((typeof _fetchPeriodRoster === 'function') ? _fetchPeriodRoster(period) : [])
+      .then(function (list) {
+        wrap.innerHTML = '';
+        // Exclude self and the teacher account (role surfaced by /roster/section).
+        list = (list || []).filter(function (p) { return p && p.username && String(p.username).toLowerCase() !== meUser && (p.role || 'student') === 'student'; });
+        if (!list.length) { wrap.innerHTML = '<div class="geneva" style="font-size:10px;color:#a07c1c">No classmates to gift to yet.</div>'; return; }
+        list.sort(function (a, b) { return (a.realName || a.username || '').localeCompare(b.realName || b.username || ''); });
+        var lbl = document.createElement('div'); lbl.className = 'geneva'; lbl.style.cssText = 'font-size:10px;color:#5a4500;margin-bottom:3px';
+        lbl.textContent = '🎁 Gift candy to a classmate (free, no fee — up to ' + maxCandy + '):';
+        var sel = document.createElement('select'); sel.style.cssText = 'font-size:11px;max-width:150px';
+        list.forEach(function (p) { var o = document.createElement('option'); o.value = p.username; o.textContent = p.realName || p.username; sel.appendChild(o); });
+        var amt = document.createElement('input'); amt.type = 'number'; amt.min = '1'; amt.max = String(maxCandy); amt.step = '1'; amt.placeholder = '#';
+        amt.style.cssText = 'width:46px;font-size:11px;padding:2px;border:1px solid #c9961f;margin:0 4px';
+        var sendBtn = document.createElement('button'); sendBtn.className = 's7btn'; sendBtn.textContent = 'Send 🍬'; sendBtn.style.cssText = 'font-size:10px;padding:2px 6px';
+        var msg = document.createElement('span'); msg.className = 'geneva'; msg.style.cssText = 'font-size:9px;color:#a07c1c;margin-left:4px';
+        sendBtn.onclick = function () {
+            var n = parseInt(amt.value, 10);
+            if (!(n >= 1)) { msg.textContent = 'whole number ≥ 1'; return; }
+            if (n > maxCandy) { n = maxCandy; amt.value = String(n); }   // clamp to balance (server also rejects)
+            sendBtn.disabled = true; msg.textContent = '…';
+            _dogeWalletGiftSend(sel.value, n).then(function (res) {
+                if (res && res.ok) { _dogeWalletFetch().then(function (w2) { _dogeWalletRender(box, w2, pts); }); }
+                else { sendBtn.disabled = false; msg.textContent = (res && res.error) || 'failed'; }
+            });
+        };
+        var rowg = document.createElement('div'); rowg.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap';
+        rowg.appendChild(sel); rowg.appendChild(amt); rowg.appendChild(sendBtn); rowg.appendChild(msg);
+        wrap.appendChild(lbl); wrap.appendChild(rowg);
+      });
+}
 function _dogeWalletRender(box, w, pts) {
     box.innerHTML = '';
     if (!w || w._notProvisioned || !w.ok) { _dogeWalletPreviewFallback(box, pts, w && w._notProvisioned); return; }
@@ -11383,6 +11431,17 @@ function _dogeWalletRender(box, w, pts) {
         buyBtn.onclick = function () { act('/wallet/buy-doge'); };
         row.appendChild(amt); row.appendChild(eatBtn); row.appendChild(buyBtn); row.appendChild(msg);
         box.appendChild(row);
+        // 🎁 Gift to a classmate (needs ≥1 whole candy). Toggles an inline picker.
+        if (candy >= 1) {
+            var giftBtn = document.createElement('button'); giftBtn.className = 's7btn'; giftBtn.textContent = '🎁 Gift'; giftBtn.style.cssText = 'font-size:10px;padding:2px 6px';
+            var giftWrap = document.createElement('div'); giftWrap.style.cssText = 'margin-top:4px;display:none';
+            giftBtn.onclick = function () {
+                if (giftWrap.style.display === 'none') { _dogeWalletGiftForm(giftWrap, box, w, pts); giftWrap.style.display = 'block'; }
+                else { giftWrap.style.display = 'none'; }
+            };
+            row.insertBefore(giftBtn, msg);
+            box.appendChild(giftWrap);
+        }
     } else {
         var none = document.createElement('div');
         none.className = 'geneva'; none.style.cssText = 'font-size:10px;color:#8a7330;margin-top:4px';

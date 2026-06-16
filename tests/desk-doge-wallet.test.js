@@ -66,9 +66,22 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
 
   it('never touches a private key client-side (POSTs candy amounts, not keys)', () => {
     for (const fn of ['_walletDogePanel', '_dogeWalletFetch', '_dogeWalletAction', '_dogeWalletRender',
-                      '_dogeWalletChainFetch', '_dogeWalletChainPaint', '_dogeWalletChainArm']) {
+                      '_dogeWalletChainFetch', '_dogeWalletChainPaint', '_dogeWalletChainArm',
+                      '_dogeWalletGiftSend', '_dogeWalletGiftForm']) {
       expect(fnBody(fn)).not.toMatch(/privateKey|signTransaction|sendTransaction|broadcast|wif/i);
     }
+  });
+
+  it('offers 🎁 gift-to-classmate (POST /wallet/gift by username, server-resolved)', () => {
+    const send = fnBody('_dogeWalletGiftSend');
+    expect(send).toContain("'/wallet/gift'");
+    expect(send).toContain('toUsername');                 // recipient by public username
+    const form = fnBody('_dogeWalletGiftForm');
+    expect(form).toContain('_fetchPeriodRoster');         // classmate picker
+    expect(form).toMatch(/role.*===\s*'student'/);        // excludes the teacher account
+    expect(form).toContain('n > maxCandy');               // clamps the amount to the balance
+    const render = fnBody('_dogeWalletRender');
+    expect(render).toContain('_dogeWalletGiftForm');      // wired into the panel
   });
 
   it('shows a watch-only on-chain balance line (GET /wallet/chain), self-refreshing', () => {

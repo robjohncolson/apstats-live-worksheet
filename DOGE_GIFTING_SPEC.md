@@ -98,27 +98,43 @@ end; $$;
 `db.dogeGift(params)` = `client.rpc('doge_gift', params)`. The same row-of-nulls
 guard the endpoints already use applies (`!r.data.student_id` → "not enough candy").
 
+> The shipped function (migration `0021`) also takes a `p_cap` parameter and, after a
+> `SELECT … FOR UPDATE` lock on the sender's row, rejects (returns null) when the
+> rolling-24h `gift_out` sum + this gift would exceed the cap — making the daily cap
+> hard against concurrent bursts. The illustrative SQL above omits that for clarity;
+> the migration file is authoritative.
+
 ## 5. Endpoint — `POST /wallet/gift` (student auth = the sender)
 
 ```
-body: { toStudentId, candy }
+body: { toUsername, candy }
 ```
+The recipient is picked by their **public username** — the roster endpoint never
+exposes `student_id`s, so we resolve username → student_id server-side.
+
 Validations, in order (reuse helpers already in doge-wallet.js):
 1. `sid` from token (else 401).
 2. `candy` is a positive **whole** number (gifts are integer candy — no dust-of-candy, matches "send 5"); else 400.
-3. `badId(toStudentId)` → 404; `toStudentId === sid` → 400 ("can't gift yourself").
-4. **Same section only** — `db.findByStudentId(toStudentId)` must share the sender's
-   section (a classroom economy, not school-wide). Else 404 ("not in your class").
+3. `toUsername` required (else 400); `db.findByUsername(toUsername)` → 404
+   ("unknown classmate") if no such student; then `toStudentId === sid` → 400
+   ("can't gift yourself").
+4. **Same section only** — the resolved recipient must share the sender's section
+   (`db.findByStudentId(sid).section === recipient.section`; a classroom economy, not
+   school-wide). Else 404 ("not in your class").
 5. **Daily cap** — sum of today's `gift_out` for the sender from `doge_ledger`
    ≤ `DAILY_GIFT_CAP` (propose **20 candy/day**). Over → 429 ("daily gift limit").
 6. **Kill-switch** — if `GIFTING_ENABLED` (env, default `true`) is off → 403
    ("gifting is turned off"). Lets the teacher disable class-wide instantly.
 7. `earnedFrom = computeEffort(sender ledger).candy`; call `db.dogeGift({p_from:sid,
-   p_to:toStudentId, p_candy:candy, p_earned_from:earnedFrom})`.
+   p_to:toStudentId, p_candy:candy, p_earned_from:earnedFrom})` (where `toStudentId`
+   is the server-resolved id from step 3).
 8. `!r.data.student_id` → 400 "not enough candy". Else 200 with the sender's new balance.
 
-503-graceful pre-`0021` (reuse `isDogeMissing` + add `42703`/`PGRST204` for the new
-columns, same pattern as the chain cache).
+503-graceful pre-`0021`: the only reachable pre-migration state is the `doge_gift`
+function being absent → PostgREST `PGRST202` / Postgres `42883` (function-not-found),
+which `isDogeMissing` already catches → clean 503. (The new columns are only ever
+read via `select('*')`→`num()`→0, never named in a query, so `42703`/`PGRST204`
+cannot surface on this path — no extra codes needed.)
 
 ## 6. UI — Desk My-Ledger ("🎁 Gift candy")
 
@@ -145,20 +161,34 @@ math is unchanged — gifting doesn't alter physical-candy or DOGE liability.)
 
 | Guard | Value | Defends |
 |---|---|---|
-| Daily cap per sender | 20 candy/day | farming velocity, coercion |
-| Same-section only | enforced | school-wide laundering rings |
+| Daily cap per sender | 20 candy/day, **HARD** | farming velocity, coercion |
+| Recipient must be an active student | enforced (role≠teacher, status=active) | parking candy in the teacher/dead accounts |
+| Same-section only | enforced (latent — see note) | school-wide laundering rings |
 | Whole candy, positive, not-self | enforced | dust, self-deal |
 | Earned/effort metric untouched | by design | effort-laundering of the *grade* |
-| Teacher kill-switch | `GIFTING_ENABLED` env | instant class-wide off |
+| Teacher kill-switch | `GIFTING_ENABLED` env (`false`/`0`/`no`/`off`) | instant class-wide off |
 | Full audit | `doge_ledger` gift_out/in | teacher oversight |
-| Atomic guarded debit | `doge_gift()` | double-spend / overdraft |
+| Atomic guarded debit + cap | `doge_gift()` row-locked | double-spend / overdraft / cap-burst |
+
+> **Daily cap is HARD:** enforced both in the route (friendly 429 fast path) AND
+> inside `doge_gift()` under a `SELECT … FOR UPDATE` row lock (the route passes
+> `p_cap`), so concurrent gifts from one sender serialize and can't burst past the
+> cap. A rare race loses the friendly 429 message (falls to a 400 "not enough candy")
+> but is still rejected.
+>
+> **Same-section is latent today:** every self-signup student is in the single
+> universal section `PeriodX` (signup-config.js `DEFAULT_SECTIONS`; `OPEN_SIGNUP_SECTIONS`
+> unset), so the section check (doge-wallet.js) is a STRUCTURAL guard that only bites
+> once real per-period sections are assigned. Until then the daily cap + the
+> recipient-is-active-student check carry the anti-laundering/anti-coercion load.
 
 ## 9. Tests (when built)
 
 - `doge_gift` conservation: A+B total spendable constant across a gift; overdraft
   rejected; self-gift / non-positive rejected; row-of-nulls guard.
-- Route: 401/404 (bad/non-existent/cross-section/self target), 400 (non-whole,
-  insufficient), 429 (daily cap), 403 (kill-switch off), 200 happy path + balance.
+- Route: 401 (no token), 404 (unknown username / cross-section recipient), 400
+  (missing `toUsername`, non-whole candy, self target, insufficient), 429 (daily
+  cap), 403 (kill-switch off), 200 happy path + balance.
 - Effort purity: a gift does NOT change either kid's `computeEffort` candy.
 - Budget invariant: Σ liability unchanged after a gift+eat.
 - 503 pre-`0021`.
