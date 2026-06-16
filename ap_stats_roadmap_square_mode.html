@@ -16851,7 +16851,18 @@ function _mountClassroomBoard(){
     if (typeof window.ClassroomBoard === 'undefined') return;
     var s = (window.rosterClient && window.rosterClient.current)
       ? window.rosterClient.current() : null;
-    if (!s || !s.username || !s.section) return;
+    if (!s || !s.username || !s.section) {
+      // Guests get a presence avatar too. They join the SAME universal section as
+      // real students (PeriodX) so they appear in the live scene alongside them. No
+      // roster row → pass a null hue and the board hashes their stable Guest_ alias
+      // to a colour (ephemeral, per-device). Only a CHOSEN guest mounts — a plain
+      // signed-out visitor (no apstats_guest_active) still gets no board.
+      var _gActive = false, _gAlias = null;
+      try { _gActive = localStorage.getItem('apstats_guest_active') === '1'; } catch (_) {}
+      if (_gActive && typeof getGuestIdentity === 'function') { try { _gAlias = getGuestIdentity(); } catch (_) {} }
+      if (!_gAlias || !/^Guest_/i.test(_gAlias)) return;
+      s = { username: _gAlias, section: 'PeriodX', spriteHue: null };
+    }
     var mount = document.getElementById('classroom-board-mount');
     if (!mount) return;
     var wsUrl = (window.RAILWAY_SERVER_URL

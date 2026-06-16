@@ -69,6 +69,14 @@ describe('Live Classroom v1a - Desk integration', () => {
     expect(body).not.toMatch(/apstats_user_role/);
   });
 
+  it('D4: a CHOSEN guest also gets a presence avatar (joins PeriodX, hashed hue)', () => {
+    const body = fnBody(DESK, '_mountClassroomBoard');
+    expect(body).toMatch(/apstats_guest_active/);   // only a chosen guest, not any signed-out visitor
+    expect(body).toMatch(/getGuestIdentity/);        // uses the stable Guest_ alias
+    expect(body).toMatch(/Guest_/);                  // gates on the Guest_ pattern
+    expect(body).toMatch(/PeriodX/);                 // joins the universal class section, alongside real students
+  });
+
   it('D5: _periodToSection never returns null, maps bare letters, defaults to PeriodX', () => {
     // Strip line comments first so comment prose cannot trip the code
     // assertions below.
