@@ -718,6 +718,38 @@ describe('gradebook-client.js â€” fetchPrior (happy path / dedup)', () => {
     expect(opts.headers.Authorization).toBe('Bearer session.token.abc');
   });
 
+  it('view-as: window.__VIEW_AS_STUDENT_ID__ overrides the sid but keeps the signed-in (teacher) token', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'teacher.token.xyz');            // signed in as the teacher
+    win.__VIEW_AS_STUDENT_ID__ = 'uuid-target-student';
+
+    const fetchFn = mockFetch(win, {
+      ok: true,
+      rows: [{ item_id: 'WS-U4L1-2-Q1', response: 'student answer', score: 1, source: 'worksheet' }]
+    });
+
+    const out = await gradebookClient.fetchPrior('WS-U4L1-2');
+
+    expect(out.get('WS-U4L1-2-Q1').response).toBe('student answer');
+    const [url, opts] = fetchFn.mock.calls[0];
+    // Reads the TARGET student's ledger, not the teacher's own id.
+    expect(url).toContain('/ledger/student/uuid-target-student');
+    expect(url).not.toContain('uuid-test-student');
+    // The teacher's token rides along so the server can authorize the read.
+    expect(opts.headers.Authorization).toBe('Bearer teacher.token.xyz');
+  });
+
+  it('no view-as global → reads the signed-in student\'s OWN id (unchanged)', async () => {
+    const { win, gradebookClient } = makeWindow('https://mock.test');
+    setToken(win, 'tok');                          // no __VIEW_AS_STUDENT_ID__ set
+
+    const fetchFn = mockFetch(win, { ok: true, rows: [] });
+    await gradebookClient.fetchPrior('WS-U4L1-2');
+
+    const [url] = fetchFn.mock.calls[0];
+    expect(url).toContain('/ledger/student/uuid-test-student');
+  });
+
   it('dedupes by item_id (newest-first wins)', async () => {
     const { win, gradebookClient } = makeWindow('https://mock.test');
     setToken(win, 'tok');

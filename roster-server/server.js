@@ -812,7 +812,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // Mounts POST /ledger/record and GET /ledger/student/:studentId.
   // ledgerDb must be passed in (tests inject a fake; production passes createLiveLedgerDb()).
   if (ledgerDb) {
-    mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername, worksheetKey });
+    mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername, worksheetKey, rosterDb: db });
   }
 
   // ── Do Now routes (Sprint DN1 additive) ──────────────────────────────────────

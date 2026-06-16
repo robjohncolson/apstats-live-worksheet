@@ -435,6 +435,97 @@ describe('view-as -- _applyViewAsReadOnly', () => {
 });
 
 // ============================================================================
+// 7b. _wireViewAsWorksheetLinks — worksheet anchors carry viewAsUserId
+// ============================================================================
+
+function loadWireLinks(viewAsCtx) {
+  const handlers = [];
+  const sandbox = {
+    _viewAsContext: () => viewAsCtx,
+    URL: globalThis.URL,
+    window: {
+      __viewAsLinksWired: undefined,
+      location: { href: 'https://robjohncolson.github.io/apstats-live-worksheet/ap_stats_roadmap_square_mode.html' },
+    },
+    document: {
+      addEventListener: (type, fn, capture) => { handlers.push({ type, fn, capture }); },
+    },
+  };
+  createContext(sandbox);
+  // Use the sandbox's _viewAsContext stub (do NOT pull in the real sessionStorage
+  // reader here) so the test drives active/inactive directly.
+  runInContext(
+    fnBody(html, '_wireViewAsWorksheetLinks') + '\n' +
+    'this.__f = _wireViewAsWorksheetLinks;',
+    sandbox);
+  sandbox.__f();
+  return { handlers, sandbox };
+}
+
+function fakeAnchor(href) {
+  return { getAttribute: () => href, href };
+}
+function fakeEvent(anchor) {
+  return { target: { closest: (sel) => (sel === 'a[href]' ? anchor : null) } };
+}
+
+describe('view-as -- _wireViewAsWorksheetLinks', () => {
+  it('installs nothing when view-as is inactive', () => {
+    const { handlers } = loadWireLinks(null);
+    expect(handlers.length).toBe(0);
+  });
+
+  it('installs capturing click + auxclick listeners when view-as is active', () => {
+    const { handlers } = loadWireLinks({ studentId: 'stu_abc123' });
+    expect(handlers.find(h => h.type === 'click' && h.capture === true)).toBeTruthy();
+    expect(handlers.find(h => h.type === 'auxclick' && h.capture === true)).toBeTruthy();
+  });
+
+  it('appends viewAsUserId to every worksheet-filename variant', () => {
+    const { handlers } = loadWireLinks({ studentId: 'stu_abc123' });
+    const onClick = handlers.find(h => h.type === 'click').fn;
+    const base = 'https://robjohncolson.github.io/apstats-live-worksheet/';
+    for (const f of ['u1_lesson2_live.html', 'u3_lesson6-7_live.html', 'u4_lesson1-2-3_live.html', 'u4_lesson10-12_live.html']) {
+      const a = fakeAnchor(base + f);
+      onClick(fakeEvent(a));
+      expect(a.href).toContain('viewAsUserId=stu_abc123');
+    }
+  });
+
+  it('does NOT touch a non-worksheet link (edgar / quiz / external)', () => {
+    const { handlers } = loadWireLinks({ studentId: 'stu_abc123' });
+    const onClick = handlers.find(h => h.type === 'click').fn;
+    for (const href of [
+      'https://robjohncolson.github.io/apstats-live-worksheet/edgar_u6_conceptual_driller_live.html',
+      'https://robjohncolson.github.io/curriculum_render/?u=4&l=1',
+      'teacher-dashboard.html',
+    ]) {
+      const a = fakeAnchor(href);
+      onClick(fakeEvent(a));
+      expect(a.href).toBe(href);
+      expect(a.href).not.toContain('viewAsUserId');
+    }
+  });
+
+  it('does not double-append if the param is already present', () => {
+    const { handlers } = loadWireLinks({ studentId: 'stu_abc123' });
+    const onClick = handlers.find(h => h.type === 'click').fn;
+    const url = 'https://robjohncolson.github.io/apstats-live-worksheet/u1_lesson2_live.html?viewAsUserId=stu_OTHER';
+    const a = fakeAnchor(url);
+    onClick(fakeEvent(a));
+    // Existing param is preserved (no second viewAsUserId appended).
+    expect(a.href).toBe(url);
+    expect((a.href.match(/viewAsUserId/g) || []).length).toBe(1);
+  });
+
+  it('ignores a click that is not on an anchor', () => {
+    const { handlers } = loadWireLinks({ studentId: 'stu_abc123' });
+    const onClick = handlers.find(h => h.type === 'click').fn;
+    expect(() => onClick({ target: { closest: () => null } })).not.toThrow();
+  });
+});
+
+// ============================================================================
 // 8. teacher-dashboard.html drawer wiring
 // ============================================================================
 

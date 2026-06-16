@@ -69,6 +69,8 @@ beforeEach(() => {
   // Reset state between tests.
   delete window.rosterClient;
   try { localStorage.removeItem('worksheet-user'); } catch (_) {}
+  try { window.history.replaceState(null, '', '/'); } catch (_) {}
+  delete window.__WS_READ_ONLY__;
   document.body.innerHTML = '';
 });
 
@@ -182,6 +184,48 @@ describe('roster-prefill.js — not signed in', () => {
 
     expect(document.getElementById('worksheetName').value).toBe('');
     expect(document.getElementById('roster-prefill-banner')).toBeNull();
+  });
+});
+
+describe('roster-prefill.js — view-as guard (teacher previewing a student)', () => {
+  const teacher = { current: () => ({ username: 'mr_teacher', realName: 'Mr Teacher', section: 'PeriodB', role: 'teacher' }) };
+
+  it('bails when __WS_READ_ONLY__ is set (the module flag): no fields, no banner, no write', async () => {
+    buildStandardShell();
+    window.rosterClient = teacher;
+    window.__WS_READ_ONLY__ = true;
+    loadPrefillScript();
+    await tick();
+
+    expect(document.getElementById('worksheetName').value).toBe('');
+    expect(document.getElementById('worksheetName').readOnly).toBe(false);
+    expect(document.getElementById('roster-prefill-banner')).toBeNull();
+    expect(localStorage.getItem('worksheet-user')).toBeNull();
+  });
+
+  it('bails on ?viewAsUserId + teacher role even WITHOUT the flag (self-contained signal)', async () => {
+    buildStandardShell();
+    window.rosterClient = teacher;
+    window.history.replaceState(null, '', '/u1_lesson2_live.html?viewAsUserId=stu_target');
+    loadPrefillScript();
+    await tick();
+
+    expect(document.getElementById('worksheetName').value).toBe('');
+    expect(document.getElementById('roster-prefill-banner')).toBeNull();
+    expect(localStorage.getItem('worksheet-user')).toBeNull();
+  });
+
+  it('does NOT bail for a STUDENT with a (forged) ?viewAsUserId — they still get their own prefill', async () => {
+    buildStandardShell();
+    window.rosterClient = {
+      current: () => ({ username: 'kid_student', realName: 'Kid Student', section: 'PeriodE', role: 'student' }),
+    };
+    window.history.replaceState(null, '', '/u1_lesson2_live.html?viewAsUserId=stu_someone');
+    loadPrefillScript();
+    await tick();
+
+    expect(document.getElementById('worksheetName').value).toBe('Kid Student');
+    expect(document.getElementById('roster-prefill-banner')).toBeTruthy();
   });
 });
 

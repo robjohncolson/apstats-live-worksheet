@@ -111,6 +111,20 @@
   }
 
   function applyPrefill() {
+    // View-as: a teacher previewing a student's worksheet (?viewAsUserId=<sid>)
+    // must NOT have their OWN identity prefilled or a green "signed in as
+    // <teacher>" banner rendered — the view-as read-only module owns identity
+    // display (it shows the STUDENT). Bail. Two independent signals so this is
+    // race-safe: __WS_READ_ONLY__ is set synchronously by the module at parse
+    // time (before this setTimeout(0) fires), and the URL+role check stands on
+    // its own even if the module never ran.
+    try {
+      if (window.__WS_READ_ONLY__) return;
+      var params = new URLSearchParams(window.location.search);
+      var pre = safeCurrent();
+      if (params.get('viewAsUserId') && pre && pre.role === 'teacher') return;
+    } catch (_) {}
+
     var who = safeCurrent();
     if (!who) return;
 

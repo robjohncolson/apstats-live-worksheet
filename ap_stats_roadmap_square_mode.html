@@ -4651,6 +4651,38 @@ function _applyViewAsReadOnly() {
   } catch (_) {}
 }
 
+// Worksheet links opened from a view-as Desk must carry the impersonation so the
+// worksheet renders the STUDENT's answers READ-ONLY (not the teacher's own). A
+// single capturing listener rewrites every worksheet anchor's href just before
+// navigation — render-site-agnostic, so any current or future link site is
+// covered without touching each render path. No-ops outside view-as.
+function _wireViewAsWorksheetLinks() {
+  var ctx = (typeof _viewAsContext === 'function') ? _viewAsContext() : null;
+  if (!ctx || !ctx.studentId) return;
+  if (window.__viewAsLinksWired) return;
+  window.__viewAsLinksWired = true;
+  function _rewrite(e) {
+    try {
+      var t = e.target;
+      var a = (t && t.closest) ? t.closest('a[href]') : null;
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      // Only the live worksheet family (u<unit>_lesson<range>_live.html). Leaves
+      // edgar/mit and every non-worksheet link untouched.
+      if (!/u\d+_lesson[\w.-]*_live\.html/i.test(href)) return;
+      var u = new URL(a.href, window.location.href);
+      if (!u.searchParams.get('viewAsUserId')) {
+        u.searchParams.set('viewAsUserId', ctx.studentId);
+        a.href = u.toString();
+      }
+    } catch (_) {}
+  }
+  // Capture phase so the href is mutated before the browser follows it. Covers
+  // left-click and middle/ctrl-click (auxclick) "open in new tab".
+  document.addEventListener('click', _rewrite, true);
+  document.addEventListener('auxclick', _rewrite, true);
+}
+
 function _showViewAsToast(msg) {
   try {
     var t = document.createElement('div');
@@ -4824,6 +4856,7 @@ try {
   document.addEventListener('DOMContentLoaded', function () {
     try { _renderViewAsBanner(); } catch (_) {}
     try { _applyViewAsReadOnly(); } catch (_) {}
+    try { _wireViewAsWorksheetLinks(); } catch (_) {}
     try {
       var exitBtn = document.getElementById('view-as-exit');
       if (exitBtn) exitBtn.addEventListener('click', _exitViewAs);

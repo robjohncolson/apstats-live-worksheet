@@ -15,7 +15,13 @@ import { verifyReviewGrant } from '../receipts.js';
 function createFakeRosterDb() {
   return {
     async insertRoster() { return { data: null, error: { message: 'not used in ledger tests' } }; },
-    async findByUsername() { return { data: null, error: { message: 'not used in ledger tests' } }; }
+    async findByUsername() { return { data: null, error: { message: 'not used in ledger tests' } }; },
+    // Powers the teacher view-as path in GET /ledger/student/:id: a sid that
+    // starts with 'uuid-teacher' is a teacher; everyone else is a student.
+    async getRoleByStudentId(studentId) {
+      return (typeof studentId === 'string' && studentId.startsWith('uuid-teacher'))
+        ? 'teacher' : 'student';
+    }
   };
 }
 
@@ -143,6 +149,8 @@ let tokenSecret;
 let proctorSecret;
 let validStudentId;
 let validToken;
+let teacherStudentId;
+let teacherToken;
 let reviewGrantPrivateKey;
 
 beforeEach(async () => {
@@ -162,6 +170,10 @@ beforeEach(async () => {
   // A valid studentId + token for use in happy-path tests
   validStudentId = `uuid-student-${randomBytes(8).toString('hex')}`;
   validToken = signToken(validStudentId);
+
+  // A teacher studentId + token (the fake rosterDb maps 'uuid-teacher*' -> teacher).
+  teacherStudentId = `uuid-teacher-${randomBytes(8).toString('hex')}`;
+  teacherToken = signToken(teacherStudentId);
 
   rosterDb  = createFakeRosterDb();
   ledgerDb  = createFakeLedgerDb();
@@ -653,6 +665,49 @@ describe('GET /ledger/student/:studentId — token auth + prefix filter', () => 
     });
     expect(status).toBe(401);
     expect(body.error).toBe('forbidden');
+  });
+
+  // ── 4b. Teacher token may read ANY student (view-as worksheets) ────────────
+  it('a teacher token reading a DIFFERENT student → 200 with that student\'s rows', async () => {
+    // Seed a row owned by validStudentId.
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U1L2-Q1', response: 'their answer' }
+    });
+    // Teacher (different sid) fetches that student's ledger with their OWN token.
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'Authorization': `Bearer ${teacherToken}` }
+    });
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.rows).toHaveLength(1);
+    expect(body.rows[0].item_id).toBe('WS-U1L2-Q1');
+    expect(body.rows[0].response).toBe('their answer');
+  });
+
+  it('a teacher token honors the prefix filter when reading another student', async () => {
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U1L2-Q1', response: 'a' }
+    });
+    await srv.request('POST', '/ledger/record', {
+      body: { token: validToken, source: 'worksheet', itemId: 'WS-U9L1-Q1', response: 'b' }
+    });
+    const { status, body } = await getStudent(validStudentId, {
+      headers: { 'Authorization': `Bearer ${teacherToken}` },
+      query: 'prefix=WS-U1L2'
+    });
+    expect(status).toBe(200);
+    expect(body.rows).toHaveLength(1);
+    expect(body.rows[0].item_id).toBe('WS-U1L2-Q1');
+  });
+
+  it('a NON-teacher token reading a different student is still 403 (no widening)', async () => {
+    const otherStudentId = `uuid-student-${randomBytes(8).toString('hex')}`;
+    const { status, body } = await getStudent(otherStudentId, {
+      headers: { 'Authorization': `Bearer ${validToken}` }
+    });
+    expect(status).toBe(403);
+    expect(body.ok).toBe(false);
+    expect(body.error).toBe('cross-student');
   });
 
   // ── 5. prefix filter narrows results ───────────────────────────────────────

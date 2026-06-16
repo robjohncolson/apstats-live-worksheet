@@ -201,7 +201,15 @@
           if (window.rosterClient && typeof window.rosterClient.token === 'function') {
             token = window.rosterClient.token();
           }
-          if (window.rosterClient && typeof window.rosterClient.studentId === 'function') {
+          // Teacher "view as student": a worksheet opened from the Desk under
+          // view-as sets window.__VIEW_AS_STUDENT_ID__ so EVERY prior-answer read
+          // targets THAT student instead of the signed-in teacher. The teacher's
+          // own token rides along in the Authorization header — the server allows
+          // a verified teacher to read any student's ledger (read-only). Falls
+          // back to the signed-in student's own id for the normal student flow.
+          if (typeof window !== 'undefined' && window.__VIEW_AS_STUDENT_ID__) {
+            sid = window.__VIEW_AS_STUDENT_ID__;
+          } else if (window.rosterClient && typeof window.rosterClient.studentId === 'function') {
             sid = window.rosterClient.studentId();
           }
         } catch (_) {

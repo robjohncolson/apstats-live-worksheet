@@ -484,7 +484,7 @@
     <div class="controls">
         <button class="btn-check" onclick="checkAnswers()">&#10003; Check Answers</button>
         <button class="btn-ai-recheck" onclick="aiGradeWorksheet({manual:true})" title="Grade everything with AI — accepts blanks that mean the same thing, grades + polishes your written answers, and only ever raises your grade">&#10024; Grade with AI</button>
-        <button class="btn-show" onclick="showAnswers()">&#128065; Show Answers</button>
+        <button class="btn-show" id="btn-show-answers" hidden onclick="showAnswers()">&#128065; Show Answers</button>
         <button class="btn-reset" onclick="resetAnswers()">&#8634; Reset</button>
         <button class="btn-print" onclick="window.print()">&#128424; Print</button>
         <span id="scoreDisplay"></span>
@@ -1539,6 +1539,7 @@
             return out;
         }
         function updateWorksheetCompletion() {
+            if (window.__WS_READ_ONLY__) return;   // view-as: never record completion
             try {
                 var key = _wsCompletionKey();
                 if (!key) return;
@@ -2625,6 +2626,166 @@
                 };
             }
         })();
+    </script>
+    <!-- WS-VIEWAS-MODULE: teacher read-only "view as student" + Show-Answers gate.
+         Injected by scripts/wire-worksheet-viewas.mjs. Do not hand-edit. -->
+    <script>
+    (function () {
+      'use strict';
+
+      // Reveal-gate signal: the roster SESSION role (rosterClient.current().role).
+      // This is a CLIENT value — it lives in localStorage 'apstats_roster.v1' with
+      // no server re-verification — so it is NOT a security boundary; a kid who can
+      // edit localStorage could forge it. We use it anyway because the realistic
+      // threat is a kid clicking an OBVIOUS visible button: shipping the button
+      // hidden closes that. Forging the role (or just reading the data-answer
+      // attributes in the DOM, or calling showAnswers() from the console) grants
+      // nothing the page didn't already expose. We prefer the session role over the
+      // legacy 'apstats_user_role' flag only because it is the cleaner signal.
+      function _wsIsTeacher() {
+        try {
+          var who = (window.rosterClient && typeof window.rosterClient.current === 'function')
+            ? window.rosterClient.current() : null;
+          return !!(who && who.role === 'teacher');
+        } catch (_) { return false; }
+      }
+
+      var _sid = null;
+      try { _sid = new URLSearchParams(location.search).get('viewAsUserId'); } catch (_) { _sid = null; }
+      var _isTeacher = _wsIsTeacher();
+      var _viewAs = !!(_sid && _isTeacher);
+
+      // ── Show-Answers gate (Bug 2): button ships hidden; reveal ONLY for a real
+      //    teacher on their own worksheet (never a student, never view-as). ──
+      function _gateShowAnswers() {
+        try {
+          var btn = document.getElementById('btn-show-answers');
+          if (!btn) return;
+          if (_isTeacher && !_viewAs) { btn.hidden = false; btn.removeAttribute('hidden'); }
+          else { btn.hidden = true; btn.setAttribute('hidden', ''); }
+        } catch (_) {}
+      }
+
+      if (!_viewAs) {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', _gateShowAnswers);
+        } else { _gateShowAnswers(); }
+        // A teacher who signs in AFTER opening the worksheet (via the Desk in
+        // another tab) should see Show Answers without a reload. Re-evaluate the
+        // role + gate on a roster session change. Students are unaffected.
+        try {
+          window.addEventListener('storage', function (e) {
+            if (e && e.key === 'apstats_roster.v1') {
+              _isTeacher = _wsIsTeacher();
+              _gateShowAnswers();
+            }
+          });
+        } catch (_) {}
+        return;
+      }
+
+      // ===== VIEW-AS READ-ONLY MODE (teacher impersonating a student) =====
+
+      // (1) Point EVERY prior-answer read at the target student (hydration + AI floor).
+      window.__VIEW_AS_STUDENT_ID__ = _sid;
+      // (2) Hard read-only: neuter every write sink up front so a stray feeder can
+      //     never write to a grade. Inputs are disabled below too (defense in depth).
+      window.__WS_READ_ONLY__ = true;
+      try {
+        if (window.gradebookClient && typeof window.gradebookClient.record === 'function') {
+          window.gradebookClient.record = function () {
+            return Promise.resolve({ ok: false, reason: 'read-only' });
+          };
+        }
+      } catch (_) {}
+      try {
+        if (window.railwayClient && typeof window.railwayClient.submitAnswer === 'function') {
+          window.railwayClient.submitAnswer = function () { return Promise.resolve(); };
+        }
+      } catch (_) {}
+
+      function _lockFields() {
+        try {
+          var fields = document.querySelectorAll('input, textarea, select');
+          for (var i = 0; i < fields.length; i++) {
+            fields[i].setAttribute('disabled', 'disabled');
+            fields[i].style.cursor = 'not-allowed';
+          }
+          var hide = document.querySelectorAll('.btn-check, .btn-ai-recheck, .btn-show, .btn-reset, .btn-ai, .appeal-btn, .appeal-form, .appeal-section');
+          for (var j = 0; j < hide.length; j++) { hide[j].style.display = 'none'; }
+        } catch (_) {}
+      }
+
+      // Wipe any identity restoreSavedUser() filled (it runs first, with the
+      // TEACHER's session) so the teacher's name never lingers in the header.
+      // _banner() fills the STUDENT's identity on profile success; on a profile
+      // fetch failure the fields stay blank (fail-safe — never the wrong person).
+      function _clearIdentity() {
+        try {
+          ['worksheetName', 'worksheetUsername', 'worksheetPeriod'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+        } catch (_) {}
+      }
+
+      function _banner(profile) {
+        try {
+          if (document.getElementById('ws-view-as-banner')) return;
+          var name = (profile && (profile.realName || profile.real_name || profile.username)) || 'this student';
+          var user = (profile && profile.username) ? ('@' + profile.username) : '';
+          var bar = document.createElement('div');
+          bar.id = 'ws-view-as-banner';
+          bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#f2c94c;color:#3a2c00;font:bold 13px Geneva,Verdana,sans-serif;padding:9px 14px;display:flex;align-items:center;gap:12px;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+          var msg = document.createElement('span');
+          msg.textContent = '\uD83D\uDC41 Viewing ' + name + (user ? ' ' + user : '') + ' \u2014 READ ONLY (their answers)';
+          bar.appendChild(msg);
+          var x = document.createElement('button');
+          x.type = 'button'; x.textContent = 'Close';
+          x.style.cssText = 'background:#3a2c00;color:#fff;border:0;border-radius:4px;padding:3px 10px;cursor:pointer;font:bold 12px Geneva,sans-serif;';
+          x.onclick = function () { try { window.close(); } catch (_) {} try { history.back(); } catch (_) {} };
+          bar.appendChild(x);
+          document.body.appendChild(bar);
+          try { document.body.style.paddingTop = '40px'; } catch (_) {}
+          // Reflect the student's identity in the worksheet header fields.
+          try {
+            var n = document.getElementById('worksheetName');
+            var u = document.getElementById('worksheetUsername');
+            var p = document.getElementById('worksheetPeriod');
+            if (n && profile && (profile.realName || profile.real_name)) n.value = (profile.realName || profile.real_name);
+            if (u && profile && profile.username) u.value = profile.username;
+            if (p && profile && profile.section) p.value = String(profile.section).replace(/^Period\s*/i, '');
+          } catch (_) {}
+        } catch (_) {}
+      }
+
+      async function _profile() {
+        try {
+          var base = window.ROSTER_SERVICE_URL;
+          var token = (window.rosterClient && typeof window.rosterClient.token === 'function')
+            ? window.rosterClient.token() : null;
+          if (!base || !token) return null;
+          var res = await fetch(base + '/teacher/student/' + encodeURIComponent(_sid) + '/profile', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (!res || !res.ok) return null;
+          var data = await res.json();
+          return (data && (data.profile || data.student || data)) || null;
+        } catch (_) { return null; }
+      }
+
+      function _boot() {
+        _lockFields();
+        _clearIdentity();          // wipe the teacher identity restoreSavedUser filled (same tick → no flash)
+        _profile().then(_banner);  // fill the STUDENT's identity (or leave blank on failure)
+        // Re-assert the lock after async hydration paints restored values/colors.
+        setTimeout(_lockFields, 1200);
+        setTimeout(_lockFields, 3000);
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _boot);
+      } else { _boot(); }
+    })();
     </script>
 </body>
 </html>

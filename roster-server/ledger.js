@@ -82,7 +82,7 @@ function findWorksheetAnswer(worksheetKey, itemId) {
 
 // ── Route mounter ─────────────────────────────────────────────────────────────
 
-export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKey }) {
+export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKey, rosterDb }) {
 
   // ── POST /ledger/record ─────────────────────────────────────────────────────
   // FROZEN CONTRACT 2:
@@ -208,14 +208,16 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
   //          Supabase .like() treats _ as a single-char wildcard, so allowing it
   //          would silently widen the filter. Real item_ids only use [A-Za-z0-9-].
   //
-  //   Auth (EITHER):
+  //   Auth (ANY):
   //     - Header  x-teacher-secret == process.env.ROSTER_TEACHER_SECRET, OR
   //     - Header  Authorization: Bearer <token> OR query ?token=<token>
-  //               AND verifyToken(token) === :studentId
+  //               AND verifyToken(token) === :studentId (self-read), OR
+  //     - A token whose sid != :studentId but whose role === 'teacher'
+  //               (teacher view-as: read any student's ledger read-only).
   //
   //   Auth precedence: teacher secret beats token. If teacher header is absent
-  //   AND a token is present but verifyToken(token) !== :studentId → 403
-  //   (clearer signal than 401 for cross-student attempts).
+  //   AND a token is present but verifyToken(token) !== :studentId AND the token
+  //   is NOT a teacher → 403 (clearer signal than 401 for cross-student attempts).
   //
   //   → 200 { ok:true, rows:[ item_ledger rows ] }   newest first
   //   → 400 { ok:false, error:'bad prefix' }          invalid prefix chars
@@ -249,7 +251,24 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
         return res.status(401).json({ ok: false, error: 'forbidden' });
       }
       if (tokenSid !== studentId) {
-        return res.status(403).json({ ok: false, error: 'cross-student' });
+        // A verified teacher may read ANY student's ledger — this powers the
+        // read-only "view as student" worksheet (a teacher's own token, the
+        // target student's :studentId). Role lookup goes through the ROSTER db
+        // (rosterDb), not the ledger db, and degrades to 'student' on any error
+        // or when rosterDb isn't wired, so a DB hiccup never widens access.
+        // Anyone else reading a different student is a genuine cross-student
+        // attempt.
+        let role = 'student';
+        try {
+          if (rosterDb && typeof rosterDb.getRoleByStudentId === 'function') {
+            role = await rosterDb.getRoleByStudentId(tokenSid);
+          }
+        } catch (_) {
+          role = 'student';
+        }
+        if (role !== 'teacher') {
+          return res.status(403).json({ ok: false, error: 'cross-student' });
+        }
       }
     }
 
