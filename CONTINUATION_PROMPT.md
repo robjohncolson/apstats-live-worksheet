@@ -1,142 +1,84 @@
-# CONTINUATION PROMPT — identity layer + guest mode + proto-git ledger + next-year roster; NEXT = 2 Railway deploys + section-case fix
+# CONTINUATION PROMPT — DOGE Effort Wallet (Phase 1+2 SHIPPED) + Desk polish; NEXT = run migration 0019, fix the spend race, build Phase 3 (real on-chain sends)
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-15 (session 7).
-> follow-alongs HEAD (last feature commit) = `e78d4af`. Repo `apstats-live-worksheet`, branch `master`, GH Pages +
-> `roster-server/` auto-deploy to Railway on push. Sibling repo **curriculum_render** = branch `main` (GH Pages +
-> `railway-server/` → `curriculumrender-production.up.railway.app`). Teacher tests on the **public GH Pages URL** —
-> commit+push promptly; `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews).
-> Memory dir: `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
-> **27 real students enrolled and LIVE — but under section `PERIODX` (caps); canonicalize to `PeriodX` (NEXT #2). A colleague teacher may onboard.**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 8).
+> follow-alongs HEAD = `46f5220`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
+> **curriculum_render** = branch `main`. Teacher tests on the **public GH Pages URL** — commit+push promptly;
+> `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews). `browser-harness` can't run on
+> this Windows host (no AF_UNIX). Memory dir: `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
+> **Spec for the active project: `DOGE_WALLET_SPEC.md`. Project memory: `project_doge_effort_wallet.md`.**
+> A real **Dogecoin Core node (dogecoin-qt) runs on this Windows box with ~10,000 DOGE** — for Phase 3. RPC was just
+> enabled (`%APPDATA%\Dogecoin\dogecoin.conf` → `server=1`, localhost cookie auth); **the node must be RESTARTED**
+> for it to take effect, then `dogecoin-cli` works. **NEVER broadcast a real send without explicit per-send confirmation.**
 
 ## ⏭ NEXT (in priority order)
-1. **DEPLOYS — confirm BOTH Railway servers picked up this session's endpoints** (push auto-deploys, but verify):
-   - **roster-server** (follow-alongs): `GET /commits` (signed prev-chained progress ledger). Until live, the wallet
-     **Sessions** per-session QR + the **🔐 Sign & QR** modal show "No signed commit yet." Issuer is enabled
-     (pubkey `DRfEbaWByfat…`).
-   - **cr `railway-server`**: NEW `GET /api/user-answers/:username`, `POST /api/guest/reconcile`,
-     `POST /api/roster/assign`, + username normalization on `/api/submit-answer` & `/api/batch-submit`. Until live,
-     the guest backup count, the teacher QR-scanner reconcile, and the roster panel write all fail. Smoke:
-     `/health` ok; `GET /api/user-answers/Date_Tiger` → count 43.
-2. **SECTION-CASE FIX (one SQL).** The 27 enrolled under **`PERIODX`** (all-caps); canonical is **`PeriodX`** (where
-   `date_tiger`/Robert Colson lives, what `/roster/open-sections` serves, the Desk fallback). Section match is
-   case-sensitive → self-signups + the name-picker would split off. Run on Supabase:
-   `UPDATE roster SET section='PeriodX' WHERE section='PERIODX';`
-3. **SCHOOLOGY UIDs** for the 27 — if not yet run, the `UPDATE roster SET schoology_uid=… WHERE real_name=…` block
-   (keyed by the exact enrolled real names; `/roster/enroll` has no UID field). Verify:
-   `SELECT count(*) FROM roster WHERE schoology_uid IS NOT NULL;`
-4. **(optional) Quiz↔Desk roster parity.** The 27 live in the **roster-server** (powers the *Desk's* real-name panel).
-   The **quiz's** identity panel reads a SEPARATE `users` table in curriculum_render (empty) → it won't show these
-   real names. Fix: push them via `POST /api/roster/assign`, or wire the quiz to read the roster-server.
-5. **(carried, de-prioritized) LIVE go-live req.ip diagnostic** — the temp `[GOLIVE]` log in `POST /roster/claim`
-   (`3bf0e29`) is still deployed; glance once during onboarding, then ask CC to revert the 4 TEMP lines.
 
-## ✅ SHIPPED THIS SESSION (2026-06-14/15, s7) — identity, guest mode, proto-git ledger, roster, desk cleanup
-Cross-repo: **follow-alongs `master`** (Desk + roster-server) + **curriculum_render `main`** (quiz + railway-server +
-verify.html) + live Supabase data fixes. (A concurrent process committed some Desk edits mid-session — they landed.)
+1. **RUN MIGRATION 0019** on the roster Supabase (USER-RUN, like 0011/0013/…/0017): `roster-server/migrations/0019_doge_wallet.sql`
+   (creates `doge_account` + `doge_ledger`). Until it runs, every `/wallet*` route **503s** and the Desk wallet shows the
+   display-only preview — harmless. After it runs, the eat/buy/disburse loop goes live.
+2. **RESTART Dogecoin Core** so the new `dogecoin.conf` (RPC `server=1`) applies. Then CC can `dogecoin-cli getbalance` /
+   `validateaddress` (authoritatively confirm the paper-wallet generator's `D…` addresses are network-valid — the
+   "verify before funding" step) and Phase 3 can broadcast.
+3. **FIX THE SPEND RACE before Phase 3 turns on real DOGE** (verification MAJOR). `/wallet/eat` + `/wallet/buy-doge` are
+   read-modify-write with a **full-row** upsert (`rowFor` copies all fields). Two concurrent spends for one student
+   clobber each other → silent balance corruption (kid told both succeeded; one debit vanishes). The realistic
+   double-click vector is ALREADY client-mitigated (the Desk disables the Eat/Buy buttons during submit), but the proper
+   fix is server-side atomic: a Postgres RPC / `UPDATE … SET candy_eaten = candy_eaten + $d WHERE (earned − eaten −
+   cost_basis) >= $candy` (add the function to 0019), or optimistic CAS on `updated_at`. **Do this before any real coin moves.**
+4. **BUILD PHASE 3** (now unblocked by the node): `tools/doge-send.mjs` — the offline grade-sync batch sender. Reads
+   `GET /class/wallets` → for each kid with `dogeToDeposit > 0` + a registered address, broadcasts ONE batched tx (many
+   outputs) from the node to the kids' paper-wallet addresses, then `POST /wallet/mark-sent`. **Spending key stays on the
+   laptop/node; the app stays watch-only.** Add a watch-only on-chain balance display (block-explorer API or the node)
+   to the Desk/dashboard so confirmations show. Spec §10/§13.
+5. **VERIFY the My Ledger ↔ Pacing color fix landed** (`46f5220`): the Desk's summer-schedule fetch could fail silently →
+   My Ledger showed fall 'eligible' (yellow) while the dashboard Pacing showed summer (green) for the same person. Fix
+   retries the load on `openWallet` + re-paints on success. If it persists, console diag in the Desk:
+   `console.log(!!window._summerSchedule, _walletDisplayReadiness())` — null schedule = the fetch is still failing.
+6. **(verification minor backlog — optional hardening, none blocking):** surface (don't silently `Math.max(0,…)`-clamp) a
+   negative candy balance if a ledger row is deleted after spending; validate `studentId` shape on teacher `/wallet/*`
+   (return 404 not a generic 500 on a bad uuid); section-scope `GET /class/wallets`; clamp `mark-given/sent` ≤ owed/deposit.
+   Document the **custodial price-window exposure** (coins priced at buy, deposited later — budget caps candy-dollars, not
+   coin-dollars-at-deposit; deposit promptly or hold a DOGE float).
+7. **(carried from session 7 — STATUS UNKNOWN, verify):** the 27 enrolled may still be under section `PERIODX` (caps) —
+   canonical is `PeriodX` (`UPDATE roster SET section='PeriodX' WHERE section='PERIODX';`); Schoology UIDs for the 27;
+   confirm both Railway servers picked up session-7 endpoints (`/commits`, cr `/api/user-answers/:u` etc.).
 
-**Original bug → full identity layer.** `date_tiger` saw none of their work on a new laptop. Root cause = **username
-case-split**: the main app normalizes to Title_Case (`Date_Tiger`) but worksheets wrote raw lowercase (`date_tiger`),
-and cloud restore (`smartSyncWithSupabase`) used case-sensitive `.eq`.
-- **cr `fbce1fe`** — restore now case-insensitive (`ilike`+client filter) + re-runs on turbo-connect (race fix);
-  usernames normalized server-side on every write + in the 3 cr worksheets; **Who's Online identity panel**
-  (`RosterIdentity`) + `POST /api/roster/assign`. cr `7fa7d1e` — worksheets set `currentUsername` so they join presence.
-- Live Supabase: **merged `date_tiger`→`Date_Tiger`** (43 answers), then **bulk-canonicalized 13** case/format-split
-  usernames (e.g. `Valeria Sanchez`→`Valeria_Sanchez`, `apple_monkey`→`Apple_Monkey`).
-- **Desk `40f2cb5`** — doge "Online Now" resolves usernames → **real names** via the roster (`/roster/list` for
-  teachers, `/roster/section`+PeriodX for students) and flags `Guest_`/`player#` as guests. **`dba0dcf`** —
-  `railway_client._presenceUsername` falls back currentUsername → rosterClient → guest, so **live worksheets now
-  join presence**.
+## ✅ SHIPPED THIS SESSION (2026-06-15/16, session 8)
 
-**Guest mode (signed-out resilience).**
-- **`006435e`** — stable persisted **`Guest_Fruit_Animal`** identity (replaces random `Player####`); presence +
-  `submitAnswerViaRailway` fall back to it. **"My Guest Pass"** (doge footer, guest-only): name + QR (`?claimGuest=`)
-  + cloud count + downloadable backup. cr `d08965f` adds `GET /api/user-answers/:username`.
-- **`6662dae`** — fix: `DogePresence.getUsername()` prefers `rosterClient.current().username` so a signed-in student
-  isn't mis-tagged guest (was: missing `student-name`/`username` legacy keys → fell through to guest).
-- **Teacher reconcile:** cr `21aea3a` `POST /api/guest/reconcile` (collision-safe re-key guest→roster student); desk
-  `1b2c99b` **`teacher-guest-reconcile.html`** mobile QR scanner; `7fcb13d` teacher-only "Guest Reconcile" doge entry
-  (QR to open the scanner on a phone); `dac4f7c` robust scanner (explicit back camera + **photo/screenshot fallback**
-  + vendored `lib/html5-qrcode.min.js`); `e0ce643` dropped the admin-token field (open by default; `?adminToken=` opt).
+**DOGE EFFORT WALLET — the headline. Spec `DOGE_WALLET_SPEC.md` (v2, `60a6485`); memory `project_doge_effort_wallet.md`.**
+A reward system on top of the existing effort points (`js/wallet_logic.js` WALLET_POINTS): kids earn **candy** (stable
+≈-dollar unit, FIXED 36 pts = 1 candy = $0.036) → **eat it** (consumed) or **buy DOGE** at the **live FLOATING price**
+(buy early = cheaper; "33 candy/DOGE" if it appreciates). Real on-chain **paper wallets**, app **watch-only**. **Broker
+economics**: teacher cost = candy-dollars forgone, capped at the $300 budget, no DOGE price exposure. Forced session-end
+choice, one-way (no sell-back). Teacher confirmed all decisions; teaching goal = work-early + appreciating-asset-vs-consumable.
+- **Phase 1a `f5f1152`** — `wallet_logic.js` conversion math (`candyFromPoints`/`candyPerDoge`/`dogeFromCandy`/`usdFromCandy`)
+  + Desk My-Ledger preview panel. **Gated**: shows for teachers automatically (`_deskIsTeacher`) or `localStorage
+  'apstats_doge_wallet_preview'='1'` for students (default OFF). **NOTE: gated OFF in `apstats_preview_as_student` mode.**
+- **Phase 1b `6d2f366`** — `tools/doge-wallet-gen.mjs`: OFFLINE Dogecoin paper-wallet generator. 100% Node built-in crypto
+  (secp256k1 via createECDH, SHA256+RIPEMD160), hand-rolled base58check self-tested vs the canonical vector each run.
+  Prints HTML sheet (addr+QR / WIF+QR) + sealed addr↔key CSV. mainnet `D…` + `--testnet` `n…`. `qrcode` devDep. 9 tests + live testnet run.
+- **Phase 2 backend `0935f55`** — migration `0019` (USER-RUN), `doge-econ.js` (shared frozen econ + `computeEffort`),
+  `doge-wallet.js` mounted: student `GET /wallet` / `POST /wallet/eat` / `buy-doge` (server-stamped price, 25-candy floor);
+  teacher `POST /wallet/address` / `mark-given` / `mark-sent` / `GET /class/wallets`. db helpers. 503-graceful pre-0019.
+- **Phase 2 Desk wallet `cf0e8f1`** — interactive 🍬 Eat / Ɖ Buy-DOGE in My Ledger (display-only fallback pre-0019).
+- **Phase 2 disbursement `c9bb63c`** + `369d25b` + `46f5220` — teacher-dashboard "🍬 Reward Disbursement": per-kid candy
+  earned / **to give** (eaten−given) / **to deposit** (balance−sent) / address, with ✓gave/✓sent/set-address; `/class/grades`
+  gained a per-student `effort:{points,candy}`. Now **includes teacher/test accounts** (badged 🧪) for testing.
+- **Verified** by a 3-agent adversarial workflow: security CLEAN, integration CLEAN, economics correct single-threaded
+  (the race is the one MAJOR → NEXT #3).
 
-**Proto-git progress ledger** (blob = signed Ed25519 `item_ledger` receipt; commit = signed merkle manifest;
-verify.html = fsck).
-- **roster-server `7ece0db`** — `GET /commits`: **deterministic, signed, prev-chained** commit history computed from
-  the immutable `item_ledger` receipts (**NO table/migration**). Gap-grouped sessions (25-min) → 8-receipt QR chunks
-  → Ed25519 manifests chained by `prev`. `commits.js buildCommits` is order-independent + stable; `issueCommitReceipt`
-  (t:'commit') in `receipts.js`. roster-server **903 tests pass**.
-- **cr verify.html `b7ea669`** — `#commit=` verifier (decode {manifest,receipts} → verify manifest + each receipt +
-  recompute root + show prev). `aa31805` — UI polish (✓/✕ glyph in the seal, fact-row dividers, mobile).
-- **Desk wallet** — `155f0a5` "Sessions" view + **Vault Hex** icon (`icons/icon-ledger.svg`); `aeef2fd` **Sessions =
-  default wallet lens** (session = 25-min time-burst; lesson/type nested under it; Lessons/Types/Days kept secondary —
-  `WalletLogic.groupReceipts(_,'session')`); `532f856` per-session **Verify/QR** in the feed (maps a feed session to
-  its signed commit by receipt-subset) + Vault icon in the menu. (The `🔐 Sign & QR` modal is the full-chain view.)
+**DESK POLISH (secondary):** username-wheel login footer declutter (`10e4e04`); Do-Now card restructure + click-opens-My-
+Ledger fix (`50203a1`/`36ec71e`); My Gradebook folded into My Ledger (`ed310a6`); Pacing Overview shows teacher/test rows
+(`397927d`); **summer schedule woven INTO the calendar grid** as amber weeks (`856d643`→`07881c8`); **school year opens with
+orientation + a no-stakes Unit-1 baseline** (`5d197c3`). All adversarially verified; weekend-anchor calendar bug fixed as a bonus.
 
-**Next-year roster.** 27 students enrolled via the **teacher-roster-console "Enroll Class"** (→ `/roster/enroll`, auto
-Fruit_Animal usernames, bcrypt pw `apstats2627` must-change, credentials CSV). Section `PERIODX` (NEXT #2); UID
-backfill SQL provided (NEXT #3).
-
-**Desk cleanup.** `a7847bf` — removed redundant desktop icons (TI-84/Quiz/Equation Trainer/Study Break); apps now live
-in the **Apps menu** (Study Break on the doge); **My Ledger** keeps its desktop icon. Each in-desk app window got an
-**↗ "open in new window"** button (`popOutApp`→`window.open` of `APP_REGISTRY[id].url`); `c3aebed`/`a703240` fixed its
-visibility (z-index over the title stripes) + styled it as a purple button.
-
-**Roster enrolled.** 27 next-year students enrolled via teacher-roster-console "Enroll Class" (CSV downloaded;
-usernames auto Fruit_Animal, pw `apstats2627`). Verified live: `/roster/section/PERIODX` → 27. SECTION-CASE BUG: they
-landed in `PERIODX` not the canonical `PeriodX` (NEXT #2). (`date_tiger` resolves to "Robert Colson" in `PeriodX`.)
-
-**QR scannability fix** (cr `e883f7b`/`b0f775b…e883f7b` + fa `4434ec2`,`e78d4af`). Teacher couldn't scan the
-report/commit QRs (only a short plain-URL QR worked). Root cause: payload QRs are ~v19 (~93 modules) rendered at
-~150px = ~1.6px/module = unscannable, and the QR lib draws NO quiet zone. Fixes: (1) commit QR carries ONLY the
-signed manifest (`_commitShowQR` decodes `data-deep`→`obj.m`; ~v15) — verify.html `runCommitDeep` now accepts a bare
-compact manifest (one dot) OR the full `base64url(JSON{m,r})`, and `verifyCommitManifestOnly` verifies the signature
-alone (the signed root already commits to the receipts); (2) `_renderScanQR` wraps every generated QR (commit/guest/
-reconcile) in a WHITE QUIET-ZONE and makes it **tap-to-enlarge** → `_showBigQR` fills the screen (~460px) so it's
-scannable off the student's screen; (3) the printed sealed-transcript QR enlarged to 300px + white padding.
-
-## ⚠ GOTCHAS (load-bearing)
-- **CASE-SENSITIVITY is the recurring footgun.** Supabase `.eq` is byte-exact for usernames AND `roster.section`.
-  Normalize on write; canonicalize usernames to Title_Case and section to `PeriodX`. (Both the `date_tiger` bug and
-  the `PERIODX` enrollment are this.)
-- **TWO roster stores, SAME Supabase (`bzqbhtru…`).** roster-server's **`roster`** table (real names, sections,
-  `schoology_uid`; powers the **Desk** panel; RLS = service-role only) vs curriculum_render's **`users`** table
-  (powers the **quiz** panel; empty). Different tables — don't conflate.
-- **Guest identity** = persisted `Guest_Fruit_Animal` (localStorage `apstats_guest_identity`), from
-  `railway_client.getGuestIdentity()`; `Guest_` prefix = the flag. Signed-in users MUST resolve via rosterClient
-  first (`6662dae`) or they're mis-tagged.
-- **Commit chain is RECOMPUTED, not stored.** `GET /commits` is deterministic from the ledger; same input → same
-  chain; new work appends at the head. No `student_commits` table (that's Phase 3 if you ever want persistence).
-- **Two Railway servers** both need deploys for this session's endpoints (NEXT #1).
-- **QR scannability = px-per-module + quiet zone.** `lib/qrcode.min.js` renders at the requested px regardless of
-  version and draws NO quiet zone. Dense payloads (commit/transcript ~v19, ~93 modules) need ~3+px/module AND a white
-  border. So: embed receipts sparingly (commit QR is **manifest-only** — the signed root commits to them), wrap every
-  generated QR in `_renderScanQR` (white quiet-zone + **tap-to-enlarge** via `_showBigQR`), and print big (300px). A
-  short-URL QR (v4) scans anywhere — not a useful baseline. `verify.html#commit=` accepts manifest-only OR full {m,r}.
-- **USE_V3_GRADING is LIVE.** Grade-engine / `gradebook-grid.js` / `blooket-lessons.json` changes move REAL grades.
-  Prior live-grade moves (s5, all raise/hold-only): **#3d PeriodX→E** due-filter; Blooket backfill; **#3e
-  verifyIpLimiter** + delete-cascade to cr `answers` are also live.
-- **The Desk** (`ap_stats_roadmap_square_mode.html`, ~14k lines, SINGLE FILE). Title-bar stacking: `.title-stripes`
-  are `position:absolute z-index:1`, `.close-box`/`.collapse-box` `z-index:3` — any new title-bar control needs
-  `z-index:3+` or it's painted over. jsdom can host the file (canvas `getContext` throws on load → hoisted functions
-  stay callable). Keep render helpers function-local + typeof-guard cross-feature calls.
-- **Commit own paths only** — both repos have unrelated dirty/untracked files; stage explicit paths, never `git add -A`.
-  `git commit -m @'…'@` here-strings LEAK a stray `@` → use `git commit -F` a temp file (or the Bash heredoc).
-- **Bash tool resets cwd between calls.** Use absolute paths + the Write tool for node scripts. Syntax-check the
-  Desk's inline JS by regex-extracting `<script>` blocks through `vm.Script`. roster-server uses **bcryptjs** (pw
-  cost 12). In `node -e`, don't name a var `URL`.
-- **Green baselines:** roster-server **903**; wallet-logic **28**; cr railway-server **350**. Migrations are USER-RUN
-  on Supabase; **NONE new this session** (the commit chain deliberately avoids one). `roster.login_username` DB UNIQUE
-  is the FCFS guarantee.
-
-## 🔁 BLOOKET PIPELINE (durable reference — unchanged this session)
-**⚠ LIVE SOURCE = Supabase `lesson_urls.blooket_url`** (project `hgvnytaqmuybzbotosyj`; the Desk
-`loadSupabaseOverlay()` fetches `select=topic,worksheet_url,drills_url,quiz_url,blooket_url` at runtime). All 77
-topics are covered (s6). Rows are authored by the Agent repo's lesson-prep pipeline (`upload-blooket.mjs` creates the
-set via CDP on the teacher's logged-in Edge; `lesson-prep.mjs`/`sync-schedule-to-supabase.mjs` call `upsertLessonUrls`)
-— cr only READS the table; `units.js` is NOT the live source and the STATIC files lag. **Recipe to backfill a topic:**
-query `lesson_urls.blooket_url` → write `urls.blooket` into BOTH `roadmap-data.json` (`.lessons[topic].urls.blooket`;
-`JSON.stringify(obj,null,2)` NO trailing newline) AND `Agent/state/lesson-registry.json` (`+'\n'`) → run
-`roster-server/scripts/gen-blooket-lessons.mjs` (→ `blooket-lessons.json`, the v3 Blooket denominator) → verify →
-commit fa + Agent. A topic isn't COUNTED by the v3 engine until propagated.
-
----
-_(s5/s6 session narratives pruned 2026-06-15 s7; the above is authoritative. Durable s5 facts folded into GOTCHAS.)_
+## KEY FACTS / GOTCHAS
+- **roster-server is self-contained** — can't import `../js`; the frozen econ is DUPLICATED in `roster-server/doge-econ.js`
+  (mirror of `js/wallet_logic.js`). Keep in sync if the peg ever changes (it shouldn't).
+- **Effort points** = receipt-carrying `item_ledger` rows (with `receipt_compact`), deduped by `source|item_id`, scored by
+  WALLET_POINTS. `computeEffort` is the single source (class.js + wallet routes agree → teacher total = kid's wallet).
+- **Numbers** (tunable, frozen at outset): 36 pts/candy, $0.036/candy ($13 / 360-pc bag), ~30 kids, ~$300 budget ≈ 8,300
+  candy; DOGE ~$0.088 → 1 DOGE ≈ 2.4 candy. `POINTS_PER_CANDY=36` is the one dial — retune once real accrual lands, then freeze.
+- **6 pre-existing root-suite failures** (desk-gating-fixes icon + desk-self-signup/signin-wall/user-role onboarding) are
+  the user's parallel onboarding/icon refactor — NOT this session's; left untouched. Root suite otherwise green (~7080 pass).
+- **Guests can't appear server-side** anywhere (pacing, disbursement) — device-local aliases, never on the roster.
