@@ -50,6 +50,23 @@ describe('Teacher reward disbursement — dashboard', () => {
     expect(fn).toMatch(/role === 'teacher'.*\? 1 : 0/); // teacher rows sort last
     expect(fn).not.toMatch(/filter\(function \(s\) \{ return !s \|\| s\.role !== 'teacher'/); // no longer filtered out
   });
+
+  it('shows a watch-only On-chain Ɖ column fed by /class/wallets/chain (teacher-driven refresh)', () => {
+    expect(DASH).toMatch(/<th>On-chain Ɖ<\/th>/);
+    expect(DASH).toContain("'/class/wallets/chain'");
+    expect(DASH).toContain('function _fetchRewardChain');
+    const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
+    expect(fn).toContain('confirmedDoge');
+    expect(fn).toMatch(/load on-chain balances|on-chain balances/);   // the ↻ button
+  });
+
+  it('flags an overspent student (eaten + cost basis > earned candy) for reconciliation', () => {
+    const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
+    expect(fn).toContain('candyEaten');
+    expect(fn).toContain('dogeCostBasis');
+    expect(fn).toMatch(/spent - earned > 0\.05/);     // the reconciliation guard
+    expect(fn).toContain('⚠');
+  });
 });
 
 describe('Teacher reward disbursement — server effort field', () => {

@@ -11281,6 +11281,49 @@ function _dogeWalletAction(path, candy) {
     }).then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
       .catch(function () { return { ok: false, error: 'network' }; });
 }
+// Watch-only on-chain balance (GET /wallet/chain). The REAL coins, once the
+// teacher sends them — distinct from the app-tracked "Ɖ held" the kid bought.
+function _dogeWalletChainFetch() {
+    var c = _dogeWalletBase();
+    if (!c) return Promise.resolve(null);
+    return fetch(c.base + '/wallet/chain', { headers: { 'Authorization': 'Bearer ' + c.token } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; });
+}
+function _dogeWalletChainPaint(lineEl, ch) {
+    if (!ch || !ch.ok || ch.address == null) { lineEl.style.display = 'none'; return; }
+    lineEl.style.display = '';
+    lineEl.textContent = '';
+    if (ch.error) { lineEl.style.color = '#a07c1c'; lineEl.textContent = '⛓ on-chain: checking… (explorer busy)'; return; }
+    lineEl.style.color = '#5a6b00';
+    var conf = ch.confirmedDoge || 0, pend = ch.unconfirmedDoge || 0;
+    var net = ch.network === 'test' ? ' (testnet)' : '';
+    var txt = '⛓ on-chain: Ɖ ' + conf.toFixed(2) + ' confirmed' + net;
+    if (pend > 1e-7) txt += ' · Ɖ ' + pend.toFixed(2) + ' incoming…';
+    lineEl.appendChild(document.createTextNode(txt + ' '));
+    if (ch.explorerUrl) {
+        var a = document.createElement('a');
+        a.href = ch.explorerUrl; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = 'view ↗'; a.style.cssText = 'color:#6b5400;text-decoration:underline';
+        lineEl.appendChild(a);
+    }
+}
+// Self-refreshing while the wallet window is open; stops once the line is
+// detached (a re-render) or the overlay is hidden (closed).
+function _dogeWalletChainArm(lineEl) {
+    var ov = document.getElementById('app-wallet-overlay');
+    if (!lineEl || !document.contains(lineEl) || !ov || ov.style.display === 'none') return;
+    _dogeWalletChainFetch().then(function (ch) {
+        if (!document.contains(lineEl)) return;
+        _dogeWalletChainPaint(lineEl, ch);
+        var ov2 = document.getElementById('app-wallet-overlay');
+        if (document.contains(lineEl) && ov2 && ov2.style.display !== 'none') {
+            // 5 min: matches the server cache TTL + keeps ~30 open wallets within
+            // BlockCypher's free ceiling (set BLOCKCYPHER_TOKEN for more headroom).
+            setTimeout(function () { _dogeWalletChainArm(lineEl); }, 300000);
+        }
+    });
+}
 function _dogeWalletRender(box, w, pts) {
     box.innerHTML = '';
     if (!w || w._notProvisioned || !w.ok) { _dogeWalletPreviewFallback(box, pts, w && w._notProvisioned); return; }
@@ -11299,6 +11342,14 @@ function _dogeWalletRender(box, w, pts) {
         ? ('1 DOGE = ' + w.candyPerDoge.toFixed(1) + ' candy today — buy early, it floats up.')
         : 'Eat it… or bank it as Dogecoin and let it ride.';
     box.appendChild(l2);
+
+    // Watch-only on-chain line — the real coins landing in the kid's paper wallet.
+    // Hidden until an address is registered + a balance reads; self-refreshes.
+    var chainLine = document.createElement('div');
+    chainLine.className = 'geneva';
+    chainLine.style.cssText = 'font-size:10px;color:#5a6b00;margin-top:3px;display:none';
+    box.appendChild(chainLine);
+    if (w.dogeAddress) _dogeWalletChainArm(chainLine);
 
     if (candy > 0.05) {
         var row = document.createElement('div');

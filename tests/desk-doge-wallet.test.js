@@ -65,8 +65,23 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
   });
 
   it('never touches a private key client-side (POSTs candy amounts, not keys)', () => {
-    for (const fn of ['_walletDogePanel', '_dogeWalletFetch', '_dogeWalletAction', '_dogeWalletRender']) {
+    for (const fn of ['_walletDogePanel', '_dogeWalletFetch', '_dogeWalletAction', '_dogeWalletRender',
+                      '_dogeWalletChainFetch', '_dogeWalletChainPaint', '_dogeWalletChainArm']) {
       expect(fnBody(fn)).not.toMatch(/privateKey|signTransaction|sendTransaction|broadcast|wif/i);
     }
+  });
+
+  it('shows a watch-only on-chain balance line (GET /wallet/chain), self-refreshing', () => {
+    const chainFetch = fnBody('_dogeWalletChainFetch');
+    expect(chainFetch).toContain("'/wallet/chain'");
+    const paint = fnBody('_dogeWalletChainPaint');
+    expect(paint).toContain('confirmedDoge');
+    expect(paint).toContain('explorerUrl');           // "view ↗" deep-link
+    const arm = fnBody('_dogeWalletChainArm');
+    expect(arm).toContain('app-wallet-overlay');       // stops when the window closes
+    expect(arm).toMatch(/setTimeout/);                 // 60s refresh while open
+    const render = fnBody('_dogeWalletRender');
+    expect(render).toContain('_dogeWalletChainArm');   // wired into the panel
+    expect(render).toContain('w.dogeAddress');         // only when an address is registered
   });
 });

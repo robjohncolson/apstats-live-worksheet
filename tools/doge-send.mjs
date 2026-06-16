@@ -34,6 +34,9 @@ const round8 = (n) => Math.round((Number(n) || 0) * 1e8) / 1e8;
 // Each recipient = a kid with dogeToDeposit > 0. Kids without a registered
 // address are surfaced as `skip` (you must set their address first). Outputs are
 // aggregated by address for a single `sendmany`.
+// NOTE (price-window, DOGE_WALLET_SPEC §3): coins were priced at the kid's BUY;
+// this sends them later, so sourcing them costs today's price. Deposit promptly
+// or hold a DOGE float to lock your cost near theirs.
 export function planSends(accounts, { maxPerKid = Infinity } = {}) {
   const recipients = [];
   for (const a of (accounts || [])) {

@@ -11,19 +11,24 @@ import { mountDogeWallet } from '../doge-wallet.js';
 beforeAll(() => { process.env.ROSTER_TEACHER_SECRET = 'TS'; });
 
 const PRICE = 0.088;                 // 1 DOGE = 0.088/0.036 ≈ 2.444 candy
+// Teacher routes now require a uuid-shaped studentId (bad shape → 404, not 500).
+const UID = '00000000-0000-4000-8000-000000000001';
+const UID2 = '00000000-0000-4000-8000-000000000002';
 const rc = (source, itemId) => ({ source, item_id: itemId, receipt_compact: 'rc' });
 // N distinct receipt-carrying quiz rows = N*10 points = N*10/36 candy.
 const quizRows = (n) => Array.from({ length: n }, (_, i) => rc('curriculum_quiz', 'Q-' + i));
 
 const ROW_OF_NULLS = { student_id: null, candy_eaten: null, candy_given: null, doge_balance: null, doge_sent: null, doge_cost_basis: null, doge_address: null };
 
-function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = false } = {}) {
+function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = false, roster = [], chain = {}, chainWriteFails = false } = {}) {
   const acc = new Map(Object.entries(accounts));
   const dogeLedger = [];
   const miss = { data: null, error: { code: '42P01', message: 'relation "doge_account" does not exist' } };
   const db = {
     async getDogeAccount(sid) { return dbMissing ? miss : { data: acc.get(sid) || null, error: null }; },
-    async listDogeAccounts() { return dbMissing ? miss : { data: [...acc.values()], error: null }; },
+    async listDogeAccounts(studentIds) { if (dbMissing) return miss; let rows = [...acc.values()]; if (Array.isArray(studentIds) && studentIds.length) rows = rows.filter((r) => studentIds.includes(r.student_id)); return { data: rows, error: null }; },
+    async listRoster(section) { if (dbMissing) return miss; return { data: roster.filter((r) => !section || r.section === section), error: null }; },
+    async updateDogeChain(sid, patch) { if (dbMissing || chainWriteFails) return miss; const row = { ...(acc.get(sid) || { student_id: sid }), ...patch }; acc.set(sid, row); return { data: row, error: null }; },
     async upsertDogeAccount(sid, patch) { if (dbMissing) return miss; const row = { student_id: sid, ...patch }; acc.set(sid, row); return { data: row, error: null }; },
     async insertDogeLedger(row) { dogeLedger.push(row); return { data: row, error: null }; },
     async listDogeLedger(sid) { return { data: dogeLedger.filter((r) => r.student_id === sid), error: null }; },
@@ -52,6 +57,7 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
     db, ledgerDb,
     verifyToken: (t) => (typeof t === 'string' && t.startsWith('tok:')) ? t.slice(4) : null,
     getPrice: async () => PRICE,
+    fetchChainBalance: async (addr) => (typeof chain === 'function' ? chain(addr) : (chain[addr] || { address: addr, network: 'main', error: 'no fake' })),
   });
   const server = http.createServer(app);
   return { server, db, acc, dogeLedger };
@@ -155,33 +161,188 @@ describe('DOGE wallet — atomic spend (conservation across operations)', () => 
 describe('DOGE wallet — teacher routes', () => {
   it('registers a valid D… address, rejects junk', async () => {
     const ctx = start();
-    const ok = await req(ctx, 'POST', '/wallet/address', { secret: 'TS', body: { studentId: 's1', address: 'DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L' } });
+    const ok = await req(ctx, 'POST', '/wallet/address', { secret: 'TS', body: { studentId: UID, address: 'DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L' } });
     expect(ok.status).toBe(200);
     expect(ok.body.dogeAddress).toBe('DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L');
     const ctx2 = start();
-    const bad = await req(ctx2, 'POST', '/wallet/address', { secret: 'TS', body: { studentId: 's1', address: 'not-an-address' } });
+    const bad = await req(ctx2, 'POST', '/wallet/address', { secret: 'TS', body: { studentId: UID, address: 'not-an-address' } });
     expect(bad.status).toBe(400);
   });
   it('non-teacher is forbidden', async () => {
-    const r = await req(start(), 'POST', '/wallet/address', { body: { studentId: 's1', address: 'D...' } });
+    const r = await req(start(), 'POST', '/wallet/address', { body: { studentId: UID, address: 'D...' } });
     expect(r.status).toBe(401);
   });
   it('GET /class/wallets returns per-kid owed/deposit', async () => {
-    const ctx = start({ accounts: { s1: { student_id: 's1', candy_eaten: 5, candy_given: 2, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12, doge_address: 'Dabc' } } });
+    const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 2, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12, doge_address: 'Dabc' } } });
     const r = await req(ctx, 'GET', '/class/wallets', { secret: 'TS' });
     expect(r.status).toBe(200);
-    const a = r.body.accounts.find((x) => x.studentId === 's1');
+    const a = r.body.accounts.find((x) => x.studentId === UID);
     expect(a.candyOwed).toBe(3);           // 5 eaten − 2 given
     expect(a.dogeToDeposit).toBe(7);       // 7 bought − 0 sent
   });
   it('mark-given / mark-sent reduce the owed/deposit', async () => {
-    const ctx = start({ accounts: { s1: { student_id: 's1', candy_eaten: 5, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } } });
-    const g = await req(ctx, 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: 's1', amount: 5 } });
+    const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } } });
+    const g = await req(ctx, 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: UID, amount: 5 } });
     expect(g.status).toBe(200);
     expect(g.body.candy_given).toBe(5);
-    const ctx2 = start({ accounts: { s1: { student_id: 's1', candy_eaten: 5, candy_given: 5, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } } });
-    const s = await req(ctx2, 'POST', '/wallet/mark-sent', { secret: 'TS', body: { studentId: 's1', amount: 7 } });
+    const ctx2 = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 5, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } } });
+    const s = await req(ctx2, 'POST', '/wallet/mark-sent', { secret: 'TS', body: { studentId: UID, amount: 7 } });
     expect(s.status).toBe(200);
     expect(s.body.doge_sent).toBe(7);
+  });
+});
+
+describe('DOGE wallet — hardening (item 6)', () => {
+  // (b) bad studentId shape → 404, never a leaked 500 from Postgres 22P02.
+  it('404s a malformed (non-uuid) studentId on /wallet/address', async () => {
+    const r = await req(start(), 'POST', '/wallet/address', { secret: 'TS', body: { studentId: 'not-a-uuid', address: 'DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L' } });
+    expect(r.status).toBe(404);
+    expect(r.body.error).toMatch(/unknown student/);
+  });
+  it('404s a malformed studentId on /wallet/mark-given', async () => {
+    const r = await req(start(), 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: 'xyz', amount: 1 } });
+    expect(r.status).toBe(404);
+  });
+  it('404s a malformed studentId on /wallet/mark-sent (shares markEndpoint)', async () => {
+    const r = await req(start(), 'POST', '/wallet/mark-sent', { secret: 'TS', body: { studentId: 'xyz', amount: 1 } });
+    expect(r.status).toBe(404);
+  });
+  // (a) negative balance is SURFACED via candyBalanceRaw, not silently clamped to 0.
+  it('surfaces a negative candyBalanceRaw when spend exceeds (re-derived) earned candy', async () => {
+    // earned = 1 candy (36 pts), but the account already ate 5 → overspent by 4.
+    const ctx = start({ ledgers: { s1: quizRows(4) }, accounts: { s1: { student_id: 's1', candy_eaten: 5, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0 } } });
+    const r = await req(ctx, 'GET', '/wallet', { token: 'tok:s1' });
+    expect(r.status).toBe(200);
+    expect(r.body.candyBalance).toBe(0);              // still clamped for spend-gating
+    expect(r.body.candyBalanceRaw).toBeLessThan(0);   // but the gap is visible
+  });
+  // (c) ?section= scopes /class/wallets to one roster section.
+  it('section-scopes GET /class/wallets', async () => {
+    const ctx = start({
+      accounts: {
+        [UID]: { student_id: UID, candy_eaten: 3, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, doge_address: 'Da' },
+        [UID2]: { student_id: UID2, candy_eaten: 9, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, doge_address: 'Db' },
+      },
+      roster: [{ student_id: UID, section: 'PeriodB' }, { student_id: UID2, section: 'PeriodE' }],
+    });
+    const r = await req(ctx, 'GET', '/class/wallets?section=PeriodB', { secret: 'TS' });
+    expect(r.status).toBe(200);
+    expect(r.body.accounts.length).toBe(1);
+    expect(r.body.accounts[0].studentId).toBe(UID);
+    const all = await req(start({ accounts: { [UID]: { student_id: UID }, [UID2]: { student_id: UID2 } } }), 'GET', '/class/wallets', { secret: 'TS' });
+    expect(all.body.accounts.length).toBe(2);          // no section → all
+  });
+  // (d) mark-given / mark-sent clamp at candy_eaten / doge_balance (over-amount).
+  it('clamps an over-amount mark-given at candy_eaten', async () => {
+    const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 0 } } });
+    const g = await req(ctx, 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: UID, amount: 99 } });
+    expect(g.status).toBe(200);
+    expect(g.body.candy_given).toBe(5);                // clamped to candy_eaten, not 99
+  });
+  it('clamps an over-amount mark-sent at doge_balance', async () => {
+    const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 0, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 0 } } });
+    const s = await req(ctx, 'POST', '/wallet/mark-sent', { secret: 'TS', body: { studentId: UID, amount: 99 } });
+    expect(s.status).toBe(200);
+    expect(s.body.doge_sent).toBe(7);                  // clamped to doge_balance, not 99
+  });
+});
+
+describe('DOGE wallet — watch-only chain (item 4)', () => {
+  it('GET /wallet/chain returns null address when none registered', async () => {
+    const ctx = start({ accounts: { s1: { student_id: 's1' } } });
+    const r = await req(ctx, 'GET', '/wallet/chain', { token: 'tok:s1' });
+    expect(r.status).toBe(200);
+    expect(r.body.address).toBeNull();
+  });
+  it('GET /wallet/chain returns the explorer balance for a registered address', async () => {
+    const ctx = start({
+      accounts: { s1: { student_id: 's1', doge_address: 'Dabc' } },
+      chain: { Dabc: { address: 'Dabc', network: 'main', confirmedDoge: 12.5, unconfirmedDoge: 0, txCount: 2, source: 'blockcypher', syncedAt: '2026-06-16T00:00:00.000Z' } },
+    });
+    const r = await req(ctx, 'GET', '/wallet/chain', { token: 'tok:s1' });
+    expect(r.status).toBe(200);
+    expect(r.body.confirmedDoge).toBe(12.5);
+    expect(r.body.network).toBe('main');
+  });
+  it('401 without a token', async () => {
+    const r = await req(start(), 'GET', '/wallet/chain', {});
+    expect(r.status).toBe(401);
+  });
+  it('503 before migration 0019', async () => {
+    const r = await req(start({ dbMissing: true }), 'GET', '/wallet/chain', { token: 'tok:s1' });
+    expect(r.status).toBe(503);
+  });
+  it('GET /class/wallets/chain batches only addressed accounts', async () => {
+    const ctx = start({
+      accounts: {
+        [UID]: { student_id: UID, doge_address: 'Da' },
+        [UID2]: { student_id: UID2 },          // no address → skipped
+      },
+      chain: { Da: { address: 'Da', network: 'main', confirmedDoge: 3, source: 'blockcypher' } },
+    });
+    const r = await req(ctx, 'GET', '/class/wallets/chain', { secret: 'TS' });
+    expect(r.status).toBe(200);
+    expect(Object.keys(r.body.addresses)).toEqual([UID]);
+    expect(r.body.addresses[UID].confirmedDoge).toBe(3);
+  });
+  it('section-scopes GET /class/wallets/chain', async () => {
+    const ctx = start({
+      accounts: {
+        [UID]: { student_id: UID, doge_address: 'Da' },
+        [UID2]: { student_id: UID2, doge_address: 'Db' },
+      },
+      roster: [{ student_id: UID, section: 'PeriodB' }, { student_id: UID2, section: 'PeriodE' }],
+      chain: { Da: { address: 'Da', network: 'main', confirmedDoge: 3, source: 'blockcypher' }, Db: { address: 'Db', network: 'main', confirmedDoge: 9, source: 'blockcypher' } },
+    });
+    const r = await req(ctx, 'GET', '/class/wallets/chain?section=PeriodB', { secret: 'TS' });
+    expect(r.status).toBe(200);
+    expect(Object.keys(r.body.addresses)).toEqual([UID]);     // only the in-section kid
+    expect(r.body.addresses[UID].confirmedDoge).toBe(3);
+  });
+  it('empty section short-circuits to {} (no listDogeAccounts / no cache write)', async () => {
+    const ctx = start({
+      accounts: { [UID]: { student_id: UID, doge_address: 'Da' } },
+      roster: [{ student_id: UID, section: 'PeriodB' }],
+      chain: { Da: { address: 'Da', network: 'main', confirmedDoge: 3, source: 'blockcypher' } },
+    });
+    const r = await req(ctx, 'GET', '/class/wallets/chain?section=PeriodNONE', { secret: 'TS' });
+    expect(r.status).toBe(200);
+    expect(r.body.addresses).toEqual({});
+    expect(ctx.acc.get(UID).chain_doge).toBeUndefined();      // never reached the write-back
+  });
+  it('writes the migration-0020 cache (chainColumns mapping) on a successful read', async () => {
+    const ctx = start({
+      accounts: { s1: { student_id: 's1', doge_address: 'Dabc' } },
+      chain: { Dabc: { address: 'Dabc', network: 'main', confirmedDoge: 12.5, unconfirmedDoge: 0.5, txCount: 2, source: 'blockcypher', syncedAt: '2026-06-16T00:00:00.000Z' } },
+    });
+    const r = await req(ctx, 'GET', '/wallet/chain', { token: 'tok:s1' });
+    expect(r.status).toBe(200);
+    const row = ctx.acc.get('s1');
+    expect(row.chain_doge).toBe(12.5);
+    expect(row.chain_unconfirmed).toBe(0.5);
+    expect(row.chain_tx_count).toBe(2);
+    expect(row.chain_synced_at).toBe('2026-06-16T00:00:00.000Z');
+  });
+  it('still returns the live read when the 0020 cache write-back errors (columns absent)', async () => {
+    const ctx = start({
+      accounts: { s1: { student_id: 's1', doge_address: 'Dabc' } },
+      chain: { Dabc: { address: 'Dabc', network: 'main', confirmedDoge: 12.5, source: 'blockcypher' } },
+      chainWriteFails: true,
+    });
+    const r = await req(ctx, 'GET', '/wallet/chain', { token: 'tok:s1' });
+    expect(r.status).toBe(200);
+    expect(r.body.confirmedDoge).toBe(12.5);     // live read survives the failed write-back
+  });
+  it('falls back to the stored cache row (stale) when the explorer is down', async () => {
+    const ADDR = 'DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L';
+    const ctx = start({
+      accounts: { s1: { student_id: 's1', doge_address: ADDR, chain_doge: 7, chain_unconfirmed: 0, chain_tx_count: 1, chain_synced_at: '2026-06-15T00:00:00.000Z' } },
+      chain: { [ADDR]: { address: ADDR, network: 'main', error: 'explorer unavailable', stale: true } },
+    });
+    const r = await req(ctx, 'GET', '/wallet/chain', { token: 'tok:s1' });
+    expect(r.status).toBe(200);
+    expect(r.body.confirmedDoge).toBe(7);        // served from the 0020 cache
+    expect(r.body.source).toBe('cache');
+    expect(r.body.stale).toBe(true);
   });
 });

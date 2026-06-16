@@ -64,6 +64,14 @@ wallets, addresses, on-chain confirmation, self-custody, volatility.
   $0.88. DOGE at $1 → same $0.88 buys 0.88 coins, you pay $0.88. The kid's *bet*
   is whether their coins appreciate; your spend never moves.
 - Realistically kids earn a fraction of the ~10k pts/yr, so actual spend < $300.
+- **Custodial price-window exposure (the one gap):** coins are priced at **buy**
+  time but you fund/send them **later** (mark-sent / `doge-send.mjs`). The $300
+  caps candy-**dollars** forgone, *not* the coin-**dollar** cost at deposit — if
+  DOGE rises between a kid's buy and your send, sourcing the banked coins costs
+  more than the candy-dollars debited. **Mitigation:** deposit promptly, or hold a
+  small DOGE float (§13, Funding float) bought near the kids' buy prices so your coin cost is
+  locked when theirs is. (The candy reserve itself never has price risk; only the
+  buy→deposit lag does.)
 
 ## 4. The fixed numbers (frozen at outset)
 
@@ -90,6 +98,19 @@ wallets, addresses, on-chain confirmation, self-custody, volatility.
    (BlockCypher / Dogechain) for each registered address: confirmed balance +
    incoming txs. **No keys, no full node, no blockchain download.** (A self-hosted
    `dogecoind` watch-only node is possible for full trustlessness — §13.)
+   > **SHIPPED (`roster-server/doge-chain.js`):** mainnet `D…` → **BlockCypher**.
+   > **Testnet has NO provider wired** (Blockchair has no `dogecoin/testnet` chain,
+   > BlockCypher none either) → a testnet read returns an explicit error; registration
+   > is mainnet-`D…`-locked anyway (`/wallet/address` validator, exactly 34 chars).
+   > Server-side proxy (browser CORS + rate limits), 5-min cache, last-good-on-failure
+   > (durable across restarts via the 0020 columns). Endpoints `GET /wallet/chain`
+   > (student's own) + `GET /class/wallets/chain` (teacher, batched, optional `?section=`).
+   > Cache columns = **migration `0020` (USER-RUN, OPTIONAL)**; the live read works with
+   > only `0019` + a registered address. **Rate limits:** the teacher dashboard batch is
+   > one-shot, but the Desk polls **per open wallet** every 5 min — BlockCypher's free
+   > tier is ~100 req/hr unauthenticated, so set Railway env **`BLOCKCYPHER_TOKEN`** once
+   > more than a handful of wallets stay open. Widening to testnet needs both a real
+   > DOGE-testnet read API AND the `/wallet/address` validator widened.
 
 ## 6. Student wallet — states & the forced choice
 
@@ -124,8 +145,10 @@ doge_account            (one row per student)
   candy_balance   NUMERIC   -- earned, unspent candy (app truth)
   candy_eaten     NUMERIC   -- lifetime consumed (reconciliation)
   doge_cost_basis NUMERIC   -- total candy spent buying DOGE (avg-price display)
-  chain_doge      NUMERIC   -- last watch-only on-chain balance (cached)
-  chain_synced_at TIMESTAMP
+  chain_doge        NUMERIC   -- last watch-only confirmed on-chain balance (cached, migration 0020)
+  chain_unconfirmed NUMERIC   -- last unconfirmed/mempool balance (cached)
+  chain_tx_count    INTEGER   -- tx count at last sync
+  chain_synced_at   TIMESTAMP -- when the watch-only read last succeeded
 
 effort_ledger           (append-only)
   id, student_id, ts, session_key

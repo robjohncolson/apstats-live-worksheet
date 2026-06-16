@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -303,5 +303,14 @@ export function createDb(client) {
   // (insufficient balance). p_earned is the ledger-derived candy, passed in.
   async function dogeSpend(params) {
     return client.rpc('doge_spend', params);
+  }
+  // Watch-only chain-balance cache write (migration 0020, OPTIONAL). UPDATE-only
+  // (never inserts a row) touching ONLY chain_* columns, so it can never clobber
+  // a concurrent eat/buy spend. No-ops when the student has no row yet, and the
+  // caller ignores the error pre-0020 (columns absent) — see doge-wallet.js.
+  async function updateDogeChain(studentId, chain) {
+    return client.from('doge_account')
+      .update({ ...chain, updated_at: new Date().toISOString() })
+      .eq('student_id', studentId).select('*').maybeSingle();
   }
 }
