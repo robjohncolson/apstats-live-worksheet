@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — DOGE Effort Wallet (Phases 1+2+3 + watch-only chain display + hardening SHIPPED) ; NEXT = run migration 0019 + restart the node → go live
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 9).
-> follow-alongs HEAD = `c84a8e4`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 10).
+> follow-alongs HEAD = `db24a41`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** = branch `main`. Teacher tests on the **public GH Pages URL** — commit+push promptly;
 > `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews). `browser-harness` can't run on
@@ -11,17 +11,23 @@
 > `%APPDATA%\Dogecoin\dogecoin.conf` (`server=1` + rpcuser/rpcpassword, localhost); **the node must be RESTARTED**
 > for them to apply, then `dogecoin-cli` works. **NEVER broadcast a real send without explicit per-send confirmation.**
 
-## ⏭ NEXT (in priority order) — the build is DONE; these are activation + go-live
+## ⏭ NEXT — go-live is mostly DONE; remaining = run 0021 + hand out wallets + enroll Abraham
 
-1. **RUN MIGRATION 0019** on the roster Supabase (USER-RUN, like 0011/0013/…/0017): `roster-server/migrations/0019_doge_wallet.sql`
-   (creates `doge_account` + `doge_ledger` + the **`doge_spend()` atomic function** + RLS). Until it runs, every `/wallet*`
-   route **503s** and the Desk wallet shows the display-only preview — harmless. After it runs, the eat/buy/disburse loop is live.
-2. **RESTART Dogecoin Core** so `dogecoin.conf` applies. Then CC can `dogecoin-cli getblockchaininfo` (assert mainnet) /
-   `validateaddress` (confirm the generator's `D…` addresses are network-valid — the "verify before funding" step), and the
-   Phase-3 sender's live path works.
-3. **GO LIVE:** generate paper wallets (`node tools/doge-wallet-gen.mjs --count 30`), hand them out, register each address
-   in the dashboard (set-addr). Then a DRY-RUN of `node tools/doge-send.mjs` (plan only), and the first real `--send` when
-   you're ready (CC runs dry-run only; `--send` is your deliberate call, irreversible).
+0. **✅ DONE (session 10):** migrations **0019 + 0020 RUN**; **node restarted** (mainnet, synced, 10,273 DOGE, RPC live);
+   **30 paper wallets generated + node-validated** at `C:/Users/rober/doge-wallets/` (OUTSIDE the repo — real keys; print
+   the HTML, seal the `-KEYS.csv` offline, delete the HTML after printing); **canary send VERIFIED end-to-end** (1 DOGE →
+   wallet #1 `DEuXEB47…`, txid `eaa5d3b6…`, 14 confs; `doge-chain.js` read it back `confirmedDoge:1`). The full loop works.
+1. **RUN MIGRATION 0021** (`roster-server/migrations/0021_doge_gifting.sql`, USER-RUN) to turn on **kid→kid candy gifting**
+   (adds `candy_gifted_out/in` + `gift_out/gift_in` ledger kinds + the atomic `doge_gift()` and patches `doge_spend`'s guard).
+   Until it runs, `POST /wallet/gift` **503s** and the 🎁 button shows a "rewards not on yet" error — harmless.
+2. **ENROL ABRAHAM LADNY** (Schoology id `191627`, the one student in the Schoology group but NOT yet on the app roster) via
+   **Teacher ▸ 🧰 Teacher Tools ▸ 📋 Roster Console**, section `PeriodX`, then set his Schoology UID. All other 27 match.
+3. **HAND OUT + REGISTER:** print the wallet sheet, give a card to each kid, register each address in the dashboard
+   (Reward Disbursement → set). Then as kids buy DOGE, a DRY-RUN of `node tools/doge-send.mjs` (plan only) → first real
+   `--send` when ready (CC runs dry-run only; `--send` is your deliberate call, irreversible).
+   - **Optional:** set Railway env `BLOCKCYPHER_TOKEN` (lifts the explorer free-tier ~100 req/hr ceiling; on-chain display works without it).
+   - **Buy minimum is now 5 candy** (~1 lesson, was 25) — budget-neutral, kids can convert sooner.
+   - **PENDING discussion:** guest-workflow hardening (complement the no-guest sign-in wall, don't collide with the in-progress onboarding refactor).
 4. **✅ DONE (session 9, `c84a8e4`): watch-only on-chain balance display.** `roster-server/doge-chain.js` (BlockCypher
    `doge/main`; testnet has NO provider → explicit error, registration mainnet-locked), `GET /wallet/chain` +
    `GET /class/wallets/chain`, Desk ⛓ on-chain line + dashboard On-chain Ɖ column. **Two NEW optional activation items:**
