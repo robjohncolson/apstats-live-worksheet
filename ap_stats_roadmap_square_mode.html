@@ -11227,7 +11227,12 @@ function _fetchDogePrice() {
         .catch(function () { return null; });
 }
 function _dogeWalletPreviewOn() {
-    try { return localStorage.getItem('apstats_doge_wallet_preview') === '1'; } catch (_) { return false; }
+    try {
+        // Teachers always see it (they're the ones testing + rolling it out);
+        // students only see it once the flag is flipped class-wide.
+        if (typeof _deskIsTeacher === 'function' && _deskIsTeacher()) return true;
+        return localStorage.getItem('apstats_doge_wallet_preview') === '1';
+    } catch (_) { return false; }
 }
 function _walletDogePanel(host, pts) {
     if (!host || !_dogeWalletPreviewOn()) return;
@@ -11264,7 +11269,7 @@ function _walletDogePanel(host, pts) {
         var cpd = WalletLogic.candyPerDoge(price);
         var coins = WalletLogic.dogeFromCandy(candy, price);
         rate.innerHTML = '1 DOGE = <b>' + cpd.toFixed(1) + ' candy</b> today (Ɖ at $' + price.toFixed(4) + ')<br>'
-            + 'Bank it all → <b>Ɖ ' + coins.toFixed(1) + '</b>. If DOGE → $1 by June: <b>$' + coins.toFixed(2) + '</b> 📈';
+            + 'Bank it all → <b>Ɖ ' + coins.toFixed(1) + '</b> in your DOGE wallet.';
     });
 }
 

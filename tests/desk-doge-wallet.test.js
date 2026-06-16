@@ -26,20 +26,22 @@ function fnBody(name) {
 }
 
 describe('Desk DOGE wallet — Phase 1 preview panel', () => {
-  it('is preview-gated (off by default) so it does not surprise students', () => {
+  it('is preview-gated: teachers always see it, students only when the flag is set', () => {
     const gate = fnBody('_dogeWalletPreviewOn');
-    expect(gate).toContain("'apstats_doge_wallet_preview'");
+    expect(gate).toContain('_deskIsTeacher()');                 // teachers always
+    expect(gate).toContain("'apstats_doge_wallet_preview'");    // students via flag
     const panel = fnBody('_walletDogePanel');
-    expect(panel).toContain('_dogeWalletPreviewOn()');   // bails when off
+    expect(panel).toContain('_dogeWalletPreviewOn()');          // bails when off
   });
 
-  it('renders candy value + live rate + the "if DOGE → $1" projection', () => {
+  it('renders candy value + the live candy→DOGE rate (no price prediction)', () => {
     const panel = fnBody('_walletDogePanel');
     expect(panel).toContain('WalletLogic.candyFromPoints');
     expect(panel).toContain('WalletLogic.usdFromCandy');
     expect(panel).toContain('WalletLogic.candyPerDoge');
     expect(panel).toContain('WalletLogic.dogeFromCandy');
-    expect(panel).toMatch(/If DOGE → \$1 by June/);
+    expect(panel).toMatch(/candy<\/b> today/);
+    expect(panel).not.toMatch(/If DOGE → \$1|prediction|by June/);   // no speculative projection
   });
 
   it('fetches the live DOGE price (CoinGecko) and caches it', () => {
