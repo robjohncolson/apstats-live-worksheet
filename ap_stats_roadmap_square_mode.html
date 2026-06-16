@@ -651,6 +651,28 @@
             background: var(--black); color: var(--white);
             border-bottom: 1px solid var(--black); letter-spacing: 0.5px;
         }
+        /* ☀️ Summer prep agenda — AMBER/sand palette, deliberately distinct from
+           the blue school-year grid so the two tracks are never confused. */
+        .summer-cal { margin: 0 0 8px; border: 2px solid #c9961f; border-radius: 4px;
+            background: #fff8e6; padding: 6px 8px; }
+        .summer-cal .sc-hdr { font-size: 11px; font-weight: bold; color: #7a5a00;
+            margin-bottom: 6px; }
+        .summer-cal .sc-row { display: grid; grid-template-columns: 22px 78px 1fr auto;
+            align-items: center; gap: 6px; font-size: 11px; padding: 3px 4px; border-radius: 3px; }
+        .summer-cal .sc-row + .sc-row { border-top: 1px solid #f0e2bc; }
+        .summer-cal .sc-ico { text-align: center; }
+        .summer-cal .sc-topic { font-weight: bold; color: #5a4500; }
+        .summer-cal .sc-due { color: #8a7330; }
+        .summer-cal .sc-status { font-size: 9px; color: #a07c1c; letter-spacing: 0.04em;
+            text-transform: uppercase; justify-self: end; }
+        .summer-cal .sc-done { opacity: 0.55; }
+        .summer-cal .sc-done .sc-topic { text-decoration: line-through; }
+        .summer-cal .sc-next { background: #ffe6a0; box-shadow: inset 0 0 0 2px #d99a1c; }
+        .summer-cal .sc-next .sc-status { color: #7a5a00; font-weight: bold; }
+        .summer-cal .sc-overdue .sc-status { color: #c0392b; font-weight: bold; }
+        .summer-cal .sc-today { font-size: 9px; font-weight: bold; color: #c0392b;
+            text-align: center; padding: 2px 0; letter-spacing: 0.06em; }
+        .summer-cal .sc-school { border-top: 2px solid #c9961f; margin-top: 2px; opacity: 0.85; }
         .dbl { position: absolute; bottom: 2px; right: 4px; font-size: 9px; font-weight: bold; }
 
         /* ── Progress ───────────────────────────────── */
@@ -1688,6 +1710,10 @@
                     <button id="cal-prev" class="cal-nav-btn" onclick="calStep(-1)" type="button" aria-label="Previous 2 weeks">&#9664;</button>
                     <button id="cal-next" class="cal-nav-btn" onclick="calStep(1)" type="button" aria-label="Next 2 weeks">&#9654;</button>
                 </div>
+                <!-- ☀️ Summer prep agenda — populated by rSummerCal() only during
+                     summer (today < firstDayOfSchool); amber-shaded, distinct from
+                     the blue school-year grid below. Hidden once school starts. -->
+                <div id="summer-cal" class="summer-cal" style="display:none"></div>
                 <div class="hdr-row">
                     <span>Week of</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
                 </div>
@@ -6902,6 +6928,9 @@ function _walletLoadSummerSchedule() {
         if (data && Array.isArray(data.lessons)) {
           window._summerSchedule = data;
           if (typeof updateWalletReadinessIcon === 'function') updateWalletReadinessIcon();
+          // The first rCal may have run before this fetch resolved — paint the
+          // summer agenda now that the schedule is in hand.
+          if (typeof rSummerCal === 'function') { try { rSummerCal(); } catch (_) {} }
         }
       })
       .catch(function () {});
@@ -15695,7 +15724,96 @@ function calStep(dir) {
   _calPageOffset += dir * 2;
   rCal();
 }
+// ── ☀️ Summer prep agenda ──────────────────────────────────────────────────
+// Renders the summer schedule (data/summer-schedule.json: Unit 1, weekly due
+// dates → Sept 1) into #summer-cal, ABOVE the school-year grid, ONLY while it's
+// still summer (today < firstDayOfSchool). Shows TODAY and the next lesson due
+// so a student knows what to do now. Done-detection + next-up mirror the My
+// Ledger summer readiness (the same _isLessonComplete gate), so the agenda and
+// the wallet color agree. Self-contained: never touches the school-year #cg.
+function _scEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+function _scDateLabel(iso) {
+  if (!iso || typeof iso !== 'string') return '';
+  var p = iso.split('-');
+  if (p.length !== 3) return iso;
+  var mo = parseInt(p[1], 10) - 1, day = parseInt(p[2], 10);
+  if (isNaN(mo) || isNaN(day) || mo < 0 || mo > 11) return iso;
+  return MN[mo] + ' ' + day;
+}
+function _scTodayRow(todayISO) {
+  var row = document.createElement('div');
+  row.className = 'sc-today';
+  row.textContent = '▼ Today · ' + _scDateLabel(todayISO);
+  return row;
+}
+function rSummerCal() {
+  var host = document.getElementById('summer-cal');
+  if (!host) return;
+  host.innerHTML = '';
+  var sch = window._summerSchedule;
+  var todayISO = (typeof _walletTodayISO === 'function') ? _walletTodayISO() : '';
+  // Only during summer prep; once school starts the school-year grid is the view.
+  if (!sch || !Array.isArray(sch.lessons) || !sch.firstDayOfSchool
+      || !todayISO || todayISO >= sch.firstDayOfSchool) {
+    host.style.display = 'none';
+    return;
+  }
+  host.style.display = '';
+  var marks = (typeof getStudentMarks === 'function') ? getStudentMarks() : {};
+  var isDone = function (topic) {
+    return (typeof _isLessonComplete === 'function') && _isLessonComplete(topic, marks);
+  };
+
+  var hdr = document.createElement('div');
+  hdr.className = 'sc-hdr';
+  hdr.textContent = '☀️ Summer prep — ' + (sch.goal || ('finish Unit ' + (sch.unit || 1) + ' before school'));
+  host.appendChild(hdr);
+
+  // The next lesson due = first not-yet-complete lesson (chronological).
+  var nextIdx = -1;
+  for (var n = 0; n < sch.lessons.length; n++) {
+    if (!isDone((sch.lessons[n] || {}).topic)) { nextIdx = n; break; }
+  }
+
+  var todayInserted = false;
+  for (var j = 0; j < sch.lessons.length; j++) {
+    var L = sch.lessons[j] || {};
+    var due = L.due || '';
+    // Drop a TODAY divider right before the first lesson due on/after today.
+    if (!todayInserted && due && due >= todayISO) {
+      host.appendChild(_scTodayRow(todayISO));
+      todayInserted = true;
+    }
+    var done = isDone(L.topic);
+    var overdue = !done && due && due < todayISO;
+    var isNext = (j === nextIdx);
+    var row = document.createElement('div');
+    row.className = 'sc-row' + (done ? ' sc-done' : '') + (isNext ? ' sc-next' : '') + (overdue ? ' sc-overdue' : '');
+    var icon = done ? '✅' : overdue ? '⚠️' : isNext ? '➡️' : '📘';
+    var status = done ? 'done' : isNext ? 'do this next' : overdue ? 'past due' : 'upcoming';
+    row.innerHTML = '<span class="sc-ico">' + icon + '</span>'
+      + '<span class="sc-topic">Unit ' + _scEsc(L.topic) + '</span>'
+      + '<span class="sc-due">due ' + _scEsc(_scDateLabel(due)) + '</span>'
+      + '<span class="sc-status">' + _scEsc(status) + '</span>';
+    host.appendChild(row);
+  }
+  if (!todayInserted) host.appendChild(_scTodayRow(todayISO));   // today after every due date
+
+  var fday = document.createElement('div');
+  fday.className = 'sc-row sc-school';
+  fday.innerHTML = '<span class="sc-ico">🏫</span>'
+    + '<span class="sc-topic">First day of school</span>'
+    + '<span class="sc-due">' + _scEsc(_scDateLabel(sch.firstDayOfSchool)) + '</span>'
+    + '<span class="sc-status"></span>';
+  host.appendChild(fday);
+}
+
 function rCal(){
+    if (typeof rSummerCal === 'function') { try { rSummerCal(); } catch (_) {} }
     const t=tdy(),g=document.getElementById("cg");g.innerHTML="";
     let W=[],cw=[],lm=null;
     for(const e of S){const dt=new Date(e[0],e[1],e[2]),dw=dt.getDay();
