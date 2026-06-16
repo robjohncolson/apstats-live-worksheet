@@ -6219,7 +6219,10 @@ function _nfRenderDial() {
     + '</div>'
     // The "not on the list" escape hatch shows on EVERY dial screen (incl. the
     // first) so a student who truly isn't on the roster is never stuck spinning.
-    + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfRenderNotFound();return false;">I\'m not on the list &#8594;</a></div>';
+    // Goes STRAIGHT to guest (recoverable) — students are teacher-enrolled now, so
+    // self-creating an account here would just split grades. _nfGuestSignIn shows
+    // the "ask your teacher to add you" dialog.
+    + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfGuestSignIn();return false;">I\'m not on the list &#8594;</a></div>';
 }
 
 function _nfPick(i) {

@@ -3,9 +3,9 @@
 // "I'm not on the list" escape hatch shows on EVERY dial screen (incl. the
 // first) instead of being gated behind the first arrow press (_nfPressed).
 // Typing-your-username is still reachable for teachers/returning students via
-// the Escape key, so _nfGotoSignin must stay defined. The not-found screen now
-// nudges a pre-enrolled student back to the dial before "Create an account"
-// (the escape hatch is on screen one now, so guard the duplicate-account path).
+// the Escape key, so _nfGotoSignin must stay defined. "I'm not on the list" now
+// goes STRAIGHT to guest (recoverable) — students are teacher-enrolled, so there
+// is no self-create-an-account path from the dial.
 //
 // @vitest-environment node
 
@@ -31,7 +31,6 @@ function fnBody(src, name) {
 }
 
 const dial = fnBody(DESK, '_nfRenderDial');
-const notfound = fnBody(DESK, '_nfRenderNotFound');
 const keydown = fnBody(DESK, '_nfKeydown');
 
 describe('Name-finder dial footer — polish', () => {
@@ -45,9 +44,11 @@ describe('Name-finder dial footer — polish', () => {
     expect(dial).not.toContain('_nfGotoSignin');   // the link is gone from the dial
   });
 
-  it('shows "I\'m not on the list" on the dial', () => {
+  it('shows "I\'m not on the list" on the dial, wired STRAIGHT to guest', () => {
     expect(dial).toContain("I\\'m not on the list");
-    expect(dial).toContain('_nfRenderNotFound');
+    // No self-signup path from the dial — clicking it goes straight to guest.
+    expect(dial).toContain('_nfGuestSignIn()');
+    expect(dial).not.toContain('_nfRenderNotFound');
   });
 
   it('no longer gates the escape hatch behind the first press', () => {
@@ -65,13 +66,13 @@ describe('Name-finder dial footer — polish', () => {
     expect(keydown).toMatch(/_nfGotoSignin\(\)/);
   });
 
-  it('nudges a pre-enrolled student back to the dial before "Create an account"', () => {
-    // the escape hatch is on screen one now, so the not-found screen steers a
-    // careless pre-enrolled student back to the dial (guards split-grades).
-    expect(notfound).toContain('Turn the dial');
-    // the nudge sits before Create, not before the frictionless guest button.
-    expect(notfound.indexOf('Turn the dial')).toBeLessThan(notfound.indexOf('Create an account'));
-    expect(notfound.indexOf('Sign in as guest')).toBeLessThan(notfound.indexOf('Turn the dial'));
+  it('the dial escape hatch leads to guest, never to self-signup', () => {
+    // Students are teacher-enrolled now, so "I'm not on the list" must not let a
+    // kid mint a duplicate account — it drops straight to the recoverable guest
+    // identity (the teacher reconciles guest work later).
+    expect(dial).toContain('_nfGuestSignIn()');
+    expect(dial).not.toContain('_nfCreate');
+    expect(dial).not.toContain('openSignupModal');
   });
 });
 
@@ -99,7 +100,7 @@ describe('Name-finder dial — escape hatch renders on every screen', () => {
 
   const ROSTER = Array.from({ length: 10 }, (_, i) =>
     ({ realName: 'Name' + String.fromCharCode(65 + i) + ' Last', username: 'user_' + i }));
-  const hatch = /<a [^>]*onclick="_nfRenderNotFound\(\);return false;"[^>]*>/;
+  const hatch = /<a [^>]*onclick="_nfGuestSignIn\(\);return false;"[^>]*>/;
 
   it('first screen (no presses yet) shows the "not on the list" anchor', () => {
     const html = renderDialHTML({ roster: ROSTER, lo: 0, hi: 9, stack: [] });
