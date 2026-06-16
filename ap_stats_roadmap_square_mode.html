@@ -11814,16 +11814,18 @@ function destroyWallet() {
 }
 
 // ── Teacher Tools launcher ──────────────────────────────────────────────────
-// One window that consolidates the teacher tools (replaced 7 flat menu items).
-// Each tile fires the SAME action the old menu item did. Roster Console is
-// deliberately omitted — it's local-only (CLAUDE.md); the footer says how to
-// reach it. Verify keeps BOTH paths: scan (openVerifyQR → teacher-verify.html
-// phone bridge) and paste (cr verify.html).
+// One window that consolidates the teacher tools (replaced the old flat menu).
+// Each tile opens a tool. Roster Console + Dashboard are teacher-secret-gated at
+// runtime (the secret lives only in that page's own sessionStorage — never baked
+// in), so linking them from this role-gated menu adds no attack surface. The
+// in-Desk Class Gradebook tile was dropped — it duplicated the Dashboard's class
+// grid. Verify keeps BOTH paths: scan (openVerifyQR → teacher-verify) and paste
+// (cr verify.html). Ordered enroll-first (the most common teacher task).
 var _TEACHER_TOOLS = [
-    { icon: '📊', label: 'Class Gradebook', sub: 'in-Desk, by student', act: function () { if (typeof openClassGradebook === 'function') openClassGradebook(); } },
-    { icon: '📈', label: 'Gradebook Dashboard', sub: 'full class grid + remediation', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
+    { icon: '📋', label: 'Roster Console', sub: 'enroll · passwords · delete', act: function () { window.open('teacher-roster-console.html', '_blank'); } },
+    { icon: '📈', label: 'Gradebook Dashboard', sub: 'class grid · remediation · rewards', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
+    { icon: '👥', label: 'Live Classroom', sub: 'presence · polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
     { icon: '🔒', label: 'Unlock Codes', sub: 'unit unlock generator', act: function () { window.open('teacher-code-generator.html', '_blank'); } },
-    { icon: '👥', label: 'Live Classroom', sub: 'presence / polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
     { icon: '🔍', label: 'Verify (scan)', sub: 'phone QR → teacher-verify', act: function () { if (typeof openVerifyQR === 'function') openVerifyQR(); } },
     { icon: '🧾', label: 'Verify (paste)', sub: 'paste/drag a receipt', act: function () { window.open('https://robjohncolson.github.io/curriculum_render/verify.html', '_blank', 'noopener'); } },
 ];
@@ -11865,7 +11867,7 @@ function _paintTeacherTools(host) {
     var note = document.createElement('div');
     note.className = 'geneva';
     note.style.cssText = 'font-size:9px;color:#888;margin-top:12px;border-top:1px solid #ccc;padding-top:8px;line-height:1.4';
-    note.textContent = 'Roster Console (bulk enroll · passwords · delete-student) is local-only — open teacher-roster-console.html directly on your machine, not from the public site.';
+    note.textContent = '🔒 Roster Console & Dashboard ask for your teacher key (kept only in this browser session). The Roster Console shows student passwords — open it on your own screen.';
     host.appendChild(note);
 }
 

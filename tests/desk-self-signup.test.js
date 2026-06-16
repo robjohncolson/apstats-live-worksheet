@@ -74,13 +74,14 @@ describe('teacher onboarding + class gradebook (static)', () => {
     expect(ov.innerHTML).toContain('_toggleTeacherKey()');
   });
 
-  it('the Teacher menu opens the Teacher Tools launcher, which wires Class Gradebook', () => {
-    // The teacher menu was consolidated into one launcher (openTeacherTools);
-    // Class Gradebook is now a tile inside it rather than a flat menu item.
+  it('the Teacher menu opens the Teacher Tools launcher, which wires the Roster Console', () => {
+    // The teacher menu was consolidated into one launcher (openTeacherTools). The
+    // in-Desk Class Gradebook tile was dropped (it duplicated the Dashboard); the
+    // Roster Console — the teacher's enroll/passwords tool — is a tile in it.
     const menu = document.getElementById('menu-teacher');
     expect(menu).not.toBeNull();
-    expect(menu.innerHTML).toContain('openTeacherTools()');   // menu → launcher
-    expect(html).toContain('openClassGradebook()');           // launcher tile wires it
+    expect(menu.innerHTML).toContain('openTeacherTools()');     // menu → launcher
+    expect(html).toContain("window.open('teacher-roster-console.html'");   // launcher tile wires it
   });
 
   it('the My Gradebook modal has the teacher student-picker row', () => {

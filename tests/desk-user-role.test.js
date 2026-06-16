@@ -208,14 +208,13 @@ describe('Desk: user-role gating + sign-in teacher checkbox', () => {
     expect(body).toMatch(/updateUserRoleUI\s*\(\s*\)/);
   });
 
-  it('12: Teacher Tools launcher still reaches the right pages (gradebook + codegen); roster console is local-only', () => {
-    // The 7-item teacher menu was consolidated into one launcher (openTeacherTools);
-    // the tool actions live in the _TEACHER_TOOLS array.
+  it('12: Teacher Tools launcher reaches the teacher pages (roster console, dashboard, codegen)', () => {
+    // The flat teacher menu was consolidated into one launcher (openTeacherTools);
+    // the tool actions live in the _TEACHER_TOOLS array. Roster Console is included
+    // (it's teacher-secret-gated at runtime, so the role-gated menu adds no surface)
+    // — the teacher needs it to enroll students.
+    expect(DESK).toMatch(/window\.open\s*\(\s*['"]teacher-roster-console\.html['"]/);
     expect(DESK).toMatch(/window\.open\s*\(\s*['"]teacher-dashboard\.html['"]/);
     expect(DESK).toMatch(/window\.open\s*\(\s*['"]teacher-code-generator\.html['"]/);
-    // Roster Console is intentionally NOT window.open'd from the public Desk
-    // (CLAUDE.md: local-only); it's only named in a footnote telling the teacher
-    // to open it directly on their machine.
-    expect(DESK).not.toMatch(/window\.open\s*\(\s*['"]teacher-roster-console\.html['"]/);
   });
 });
