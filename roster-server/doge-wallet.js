@@ -25,9 +25,11 @@ function isDogeMissing(e) {
   if (!e) return false;
   const code = String(e.code || '');
   const msg = String(e.message || '').toLowerCase();
-  if (code === '42P01' || code === 'PGRST205') return true;
-  return (msg.includes('doge_account') || msg.includes('doge_ledger'))
-    && (msg.includes('schema cache') || msg.includes('does not exist'));
+  // 42P01 undefined_table, 42883 undefined_function (doge_spend pre-0019),
+  // PGRST205 schema-cache miss (table), PGRST202 function-not-found.
+  if (['42P01', '42883', 'PGRST205', 'PGRST202'].includes(code)) return true;
+  return (msg.includes('doge_account') || msg.includes('doge_ledger') || msg.includes('doge_spend'))
+    && (msg.includes('schema cache') || msg.includes('does not exist') || msg.includes('could not find'));
 }
 function notProvisioned(res) {
   return res.status(503).json({ ok: false, error: 'doge_wallet not provisioned (run migration 0019)' });
@@ -114,21 +116,25 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice }) {
     });
   });
 
+  // earned candy from the ledger (no doge_account dependency).
+  async function earnedCandyOf(sid) {
+    let rows = [];
+    try { const r = await ledgerDb.getLedgerByStudent(sid); rows = (r && r.data) || []; } catch (_) {}
+    return computeEffort(rows);
+  }
+
   // ── POST /wallet/eat ── consume candy (teacher hands out the physical candy) ─
   app.post('/wallet/eat', async (req, res) => {
     const sid = sidOf(req);
     if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
     const candy = num(req.body && req.body.candy);
     if (candy <= 0) return res.status(400).json({ ok: false, error: 'candy must be > 0' });
-    const { earned, accRes } = await loadState(sid);
-    if (accRes.error) { if (isDogeMissing(accRes.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    const acc = accRes.data;
-    const bal = deriveBalances(earned, acc);
-    if (candy > bal.candyBalance + 1e-9) return res.status(400).json({ ok: false, error: 'not enough candy' });
-    const up = await db.upsertDogeAccount(sid, rowFor(acc, { candy_eaten: num(acc && acc.candy_eaten) + candy }));
-    if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    try { await db.insertDogeLedger({ student_id: sid, kind: 'eat', candy_delta: -candy, doge_delta: 0 }); } catch (_) {}
-    return res.json({ ok: true, ...deriveBalances(earned, up.data) });
+    const earned = await earnedCandyOf(sid);
+    // ATOMIC guard+debit (doge_spend RPC) — no read-modify-write race.
+    const r = await db.dogeSpend({ p_sid: sid, p_earned: earned.candy, p_candy: candy, p_kind: 'eat' });
+    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/eat:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (!r.data || !r.data.student_id) return res.status(400).json({ ok: false, error: 'not enough candy' });
+    return res.json({ ok: true, ...deriveBalances(earned, r.data) });
   });
 
   // ── POST /wallet/buy-doge ── convert candy → DOGE at the live price ─────────
@@ -137,22 +143,16 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice }) {
     if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
     const candy = num(req.body && req.body.candy);
     if (candy < MIN_CONVERSION_CANDY) return res.status(400).json({ ok: false, error: 'minimum ' + MIN_CONVERSION_CANDY + ' candy' });
-    const { earned, accRes } = await loadState(sid);
-    if (accRes.error) { if (isDogeMissing(accRes.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    const acc = accRes.data;
-    const bal = deriveBalances(earned, acc);
-    if (candy > bal.candyBalance + 1e-9) return res.status(400).json({ ok: false, error: 'not enough candy' });
     const price = await priceFn();
     if (!price) return res.status(503).json({ ok: false, error: 'DOGE price unavailable' });
     const cpd = candyPerDoge(price);
     const coins = dogeFromCandy(candy, price);
-    const up = await db.upsertDogeAccount(sid, rowFor(acc, {
-      doge_balance: num(acc && acc.doge_balance) + coins,
-      doge_cost_basis: num(acc && acc.doge_cost_basis) + candy,
-    }));
-    if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    try { await db.insertDogeLedger({ student_id: sid, kind: 'buy_doge', candy_delta: -candy, doge_delta: coins, doge_price_usd: price, candy_per_doge: cpd }); } catch (_) {}
-    return res.json({ ok: true, ...deriveBalances(earned, up.data), boughtCoins: coins, candyPerDoge: cpd, dogeUsd: price });
+    const earned = await earnedCandyOf(sid);
+    // ATOMIC guard+debit: banks coins + cost_basis in one UPDATE, stamping the price.
+    const r = await db.dogeSpend({ p_sid: sid, p_earned: earned.candy, p_candy: candy, p_kind: 'buy_doge', p_doge: coins, p_price: price, p_cpd: cpd });
+    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/buy-doge:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (!r.data || !r.data.student_id) return res.status(400).json({ ok: false, error: 'not enough candy' });
+    return res.json({ ok: true, ...deriveBalances(earned, r.data), boughtCoins: coins, candyPerDoge: cpd, dogeUsd: price });
   });
 
   // ── teacher: register a kid's paper-wallet address ─────────────────────────

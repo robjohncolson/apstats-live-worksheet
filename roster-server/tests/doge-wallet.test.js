@@ -26,6 +26,19 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false } = {}) {
     async insertDogeLedger(row) { dogeLedger.push(row); return { data: row, error: null }; },
     async listDogeLedger(sid) { return { data: dogeLedger.filter((r) => r.student_id === sid), error: null }; },
     async getRoleByStudentId() { return 'student'; },
+    // models the atomic doge_spend RPC: guard balance, debit the right field(s),
+    // log, return the row (or null when the guard fails).
+    async dogeSpend({ p_sid, p_earned, p_candy, p_kind, p_doge, p_price, p_cpd }) {
+      if (dbMissing) return miss;
+      var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, doge_address: null };
+      var bal = p_earned - Number(a.candy_eaten || 0) - Number(a.doge_cost_basis || 0);
+      if (bal < p_candy - 1e-9) return { data: null, error: null };   // guard failed → insufficient
+      if (p_kind === 'eat') a = { ...a, candy_eaten: Number(a.candy_eaten || 0) + p_candy };
+      else a = { ...a, doge_balance: Number(a.doge_balance || 0) + (p_doge || 0), doge_cost_basis: Number(a.doge_cost_basis || 0) + p_candy };
+      acc.set(p_sid, a);
+      dogeLedger.push({ student_id: p_sid, kind: p_kind, candy_delta: -p_candy, doge_delta: p_doge || 0, doge_price_usd: p_price, candy_per_doge: p_cpd });
+      return { data: a, error: null };
+    },
   };
   const ledgerDb = { async getLedgerByStudent(sid) { return { data: ledgers[sid] || [], error: null }; } };
   const app = express();
@@ -107,6 +120,24 @@ describe('DOGE wallet — buy DOGE (floating price)', () => {
     const r = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 10 } });
     expect(r.status).toBe(400);
     expect(r.body.error).toMatch(/minimum 25/);
+  });
+});
+
+describe('DOGE wallet — atomic spend (conservation across operations)', () => {
+  it('eat then buy can never exceed earned candy (the atomic guard sees the prior eat)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(100) } });   // ~27.78 candy
+    const e = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 25 } });
+    expect(e.status).toBe(200);
+    expect(e.body.candyEaten).toBeCloseTo(25, 6);
+    // ~2.78 candy left → a 25-candy buy must be rejected
+    const b = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 25 } });
+    expect(b.status).toBe(400);
+    expect(b.body.error).toMatch(/not enough/);
+  });
+  it('503s a spend before migration 0019 (table/function absent)', async () => {
+    const ctx = start({ ledgers: { s1: quizRows(100) }, dbMissing: true });
+    const r = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 5 } });
+    expect(r.status).toBe(503);
   });
 });
 

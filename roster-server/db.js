@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -297,5 +297,11 @@ export function createDb(client) {
   async function listDogeLedger(studentId, limit = 50) {
     return client.from('doge_ledger').select('*').eq('student_id', studentId)
       .order('ts', { ascending: false }).limit(limit);
+  }
+  // Atomic guarded spend (migration 0019 fn doge_spend). Returns { data, error }
+  // where data = the updated doge_account row, or null when the guard fails
+  // (insufficient balance). p_earned is the ledger-derived candy, passed in.
+  async function dogeSpend(params) {
+    return client.rpc('doge_spend', params);
   }
 }

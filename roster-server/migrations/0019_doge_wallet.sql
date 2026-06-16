@@ -37,3 +37,43 @@ create table if not exists doge_ledger (
   candy_per_doge numeric
 );
 create index if not exists doge_ledger_student_idx on doge_ledger (student_id, ts desc);
+
+-- ── Atomic guarded spend (eat / buy_doge) ────────────────────────────────────
+-- A student's candy balance = earnedCandy (computed from the ledger, passed in as
+-- p_earned) − candy_eaten − doge_cost_basis. The READ-MODIFY-WRITE the JS used
+-- could lose updates / clobber fields under concurrent spends. This runs the
+-- guard + debit as a SINGLE UPDATE so concurrent spends for one student serialize
+-- on the row: the second spend re-evaluates the guard against the already-debited
+-- row and is rejected if the balance no longer covers it. Returns the updated row,
+-- or NULL when the guard fails (insufficient balance).
+create or replace function doge_spend(
+  p_sid uuid, p_earned numeric, p_candy numeric, p_kind text,
+  p_doge numeric default 0, p_price numeric default null, p_cpd numeric default null
+) returns doge_account
+language plpgsql as $$
+declare
+  result doge_account;
+begin
+  insert into doge_account (student_id) values (p_sid) on conflict (student_id) do nothing;
+  if p_kind = 'eat' then
+    update doge_account
+      set candy_eaten = candy_eaten + p_candy, updated_at = now()
+      where student_id = p_sid
+        and (p_earned - candy_eaten - doge_cost_basis) >= p_candy - 1e-9
+      returning * into result;
+  elsif p_kind = 'buy_doge' then
+    update doge_account
+      set doge_balance = doge_balance + p_doge,
+          doge_cost_basis = doge_cost_basis + p_candy,
+          updated_at = now()
+      where student_id = p_sid
+        and (p_earned - candy_eaten - doge_cost_basis) >= p_candy - 1e-9
+      returning * into result;
+  end if;
+  if result.student_id is not null then
+    insert into doge_ledger (student_id, kind, candy_delta, doge_delta, doge_price_usd, candy_per_doge)
+      values (p_sid, p_kind, -p_candy, coalesce(p_doge, 0), p_price, p_cpd);
+  end if;
+  return result;  -- NULL row → guard failed (insufficient balance)
+end;
+$$;
