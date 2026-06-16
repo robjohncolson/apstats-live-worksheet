@@ -493,6 +493,21 @@
       <div class="hint" id="pacing-legend"></div>
     </div>
 
+    <!-- 🍬 DOGE Reward Disbursement -->
+    <div class="section">
+      <h2 class="section-title">🍬 Reward Disbursement <span class="dim" style="font-size:0.8rem">(effort → candy / Dogecoin)</span></h2>
+      <div class="hint" id="reward-rate" style="margin-bottom:6px"></div>
+      <div class="table-wrap" id="reward-wrap" style="display:none">
+        <table class="grades">
+          <thead><tr><th>Student</th><th>Effort pts</th><th>Candy earned</th><th>= $</th><th>or DOGE today</th></tr></thead>
+          <tbody id="reward-tbody"></tbody>
+          <tfoot><tr id="reward-totals" style="font-weight:bold;border-top:2px solid #888"></tr></tfoot>
+        </table>
+      </div>
+      <div class="empty-note" id="reward-empty" style="display:none">No students.</div>
+      <div class="hint" id="reward-note"></div>
+    </div>
+
     <!-- Class grade table -->
     <div class="section">
       <h2 class="section-title">Class Grades</h2>
@@ -1002,6 +1017,75 @@
         + ' Teacher/test accounts (🧪) sort last. Guests aren’t shown — their work isn’t saved to the roster.';
     }
 
+    // ── 🍬 DOGE Reward Disbursement (DOGE_WALLET_SPEC) ──────────────────────────
+    // Per-student effort → candy earned ($) + DOGE-equivalent at today's live
+    // price. The candy figure is server-computed (/class/grades `effort`) from the
+    // SAME ledger the kid's wallet uses, so the numbers agree. candy→DOGE floats.
+    var _dashDogeUsd = null;
+    function _fetchDashDogePrice() {
+      try {
+        var c = JSON.parse(localStorage.getItem('apstats_doge_price') || 'null');
+        if (c && c.usd && c.ts && (Date.now() - c.ts) < 600000) { _dashDogeUsd = c.usd; return Promise.resolve(c.usd); }
+      } catch (_) {}
+      return fetch('https://api.coingecko.com/api/v3/simple/price?ids=dogecoin&vs_currencies=usd')
+        .then(function (r) { return r && r.ok ? r.json() : null; })
+        .then(function (d) {
+          var usd = d && d.dogecoin && d.dogecoin.usd;
+          if (typeof usd === 'number' && usd > 0) {
+            _dashDogeUsd = usd;
+            try { localStorage.setItem('apstats_doge_price', JSON.stringify({ usd: usd, ts: Date.now() })); } catch (_) {}
+            return usd;
+          }
+          return null;
+        }).catch(function () { return null; });
+    }
+
+    function renderRewardDisbursement(payload) {
+      var tbody = $('reward-tbody'), wrap = $('reward-wrap'), empty = $('reward-empty');
+      var rateEl = $('reward-rate'), totalsEl = $('reward-totals'), noteEl = $('reward-note');
+      if (!tbody) return;
+      // students only (teachers/test rows carry effort too but aren't disbursed to)
+      var students = ((payload && payload.students) || []).filter(function (s) { return !s || s.role !== 'teacher'; });
+      if (!students.length) { wrap.style.display = 'none'; empty.style.display = 'block'; return; }
+      var W = (typeof WalletLogic !== 'undefined') ? WalletLogic : null;
+      // sort most-earned first
+      var rows = students.slice().sort(function (a, b) {
+        return ((b.effort && b.effort.candy) || 0) - ((a.effort && a.effort.candy) || 0);
+      });
+
+      function paint(price) {
+        var cpd = (W && price) ? W.candyPerDoge(price) : null;
+        rateEl.textContent = price
+          ? ('DOGE $' + price.toFixed(4) + ' · 1 DOGE = ' + cpd.toFixed(1) + ' candy today (floats — buy early = cheaper).')
+          : 'DOGE price unavailable — candy + $ still shown.';
+        tbody.innerHTML = '';
+        var totCandy = 0, totUsd = 0, totDoge = 0;
+        rows.forEach(function (s) {
+          var candy = (s.effort && s.effort.candy) || 0;
+          var pts = (s.effort && s.effort.points) || 0;
+          var usd = W ? W.usdFromCandy(candy) : candy * 0.036;
+          var doge = (W && price) ? W.dogeFromCandy(candy, price) : null;
+          totCandy += candy; totUsd += usd; if (doge != null) totDoge += doge;
+          var tr = document.createElement('tr');
+          var td = function (txt) { var c = document.createElement('td'); c.textContent = txt; tr.appendChild(c); return c; };
+          td(s.realName || s.username || s.studentId || '?');
+          td(String(pts));
+          td('🍬 ' + Math.round(candy));
+          td('$' + usd.toFixed(2));
+          td(doge != null ? ('Ɖ ' + doge.toFixed(1)) : '—');
+          tbody.appendChild(tr);
+        });
+        totalsEl.innerHTML = '<td>Class total</td><td></td><td>🍬 ' + Math.round(totCandy)
+          + '</td><td>$' + totUsd.toFixed(2) + '</td><td>' + (price ? ('Ɖ ' + totDoge.toFixed(0)) : '—') + '</td>';
+        wrap.style.display = ''; empty.style.display = 'none';
+      }
+
+      paint(_dashDogeUsd);                    // paint immediately with cached/no price
+      _fetchDashDogePrice().then(paint);      // refine when the live price lands
+      noteEl.textContent = 'Shows what each student has EARNED. Give as candy OR deposit the DOGE-equivalent per their '
+        + 'choice. (Per-session eat/bank split + each kid’s deposit address come in the next phase.)';
+    }
+
     function renderGradesTable(payload) {
       var thead = $('grades-thead');
       var tbody = $('grades-tbody');
@@ -1472,6 +1556,7 @@
           setLoading(false);
           renderGradesTable({ students: [] });
           renderPacingOverview({ students: [] });
+          renderRewardDisbursement({ students: [] });
           renderGradebook({ students: [] });
           renderTrainerPractice({ students: [] });
           renderHeatmap({ heatmap: {} });
@@ -1508,6 +1593,7 @@
         lastGradesPayload = gPayload;
         lastPacingPayload = pPayload;
         renderPacingOverview(pPayload);
+        renderRewardDisbursement(gPayload);   // 🍬 effort → candy / DOGE
         renderGradebook(gPayload);
         renderTrainerPractice(gPayload);
         renderHeatmap(mPayload);

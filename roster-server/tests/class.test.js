@@ -227,6 +227,29 @@ describe('GET /class/grades — fan-out', () => {
     expect(byId.s1.role).toBe('student');
   });
 
+  it('surfaces per-student effort points → candy (DOGE wallet), matching the wallet', async () => {
+    const rc = (row) => ({ ...row, receipt_compact: 'rc' });   // only receipt rows count
+    const roster = [{ student_id: 's1', real_name: 'Alice', login_username: 'a', section: 'P1' }];
+    const ledger = {
+      s1: [
+        rc(makeRow('s1', 'WS-1', 'a', { source: 'worksheet' })),       // 3
+        rc(makeRow('s1', 'BL-1', 'b', { source: 'blooket' })),         // 4
+        rc(makeRow('s1', 'Q-1', 'c', { source: 'curriculum_quiz' })),  // 10
+        rc(makeRow('s1', 'FRQ-1', 'd', { source: 'frq' })),            // 5
+        rc(makeRow('s1', 'PC-1', 'e', { source: 'pc' })),              // 10
+        rc(makeRow('s1', 'BL-X-DESK_DONE', 'f', { source: 'blooket', attempt: 2 })), // 4 (desk-done id)
+        makeRow('s1', 'WS-2', 'g', { source: 'worksheet' }),           // NO receipt → 0
+        rc(makeRow('s1', 'WS-1', 'a', { source: 'worksheet', attempt: 3 })), // dup source|item → 0
+      ],
+    };
+    const ctx = await startServer({ roster, ledger }); srv = ctx.server;
+    const r = await srv.get('/class/grades', { 'x-teacher-secret': TEACHER });
+    expect(r.status).toBe(200);
+    const s1 = r.body.students.find((s) => s.studentId === 's1');
+    expect(s1.effort.points).toBe(36);                 // 3+4+10+5+10+4, dup + no-receipt excluded
+    expect(s1.effort.candy).toBeCloseTo(1, 6);         // 36 / 36 pts-per-candy
+  });
+
   it('per-student ledger throw is tolerated (one bad student does not 500 the class)', async () => {
     const roster = [
       { student_id: 'ok',  real_name: 'OK', login_username: 'a', section: 'P1' },

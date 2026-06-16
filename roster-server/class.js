@@ -92,6 +92,36 @@ function studentMeta(r) {
   return { studentId: r.student_id, realName: r.real_name, username: r.login_username, section: r.section, role: r.role || 'student' };
 }
 
+// ── DOGE Effort Wallet (DOGE_WALLET_SPEC) — per-student EFFORT points → candy ──
+// Mirrors js/wallet_logic.js WALLET_POINTS exactly (roster-server is self-
+// contained and can't import ../js, so these FROZEN constants are duplicated;
+// keep in sync if the peg ever changes). Computed from the SAME receipt-carrying
+// ledger rows the student's wallet sees (fetchReceipts filters on receipt_compact),
+// deduped by source|item_id — so the teacher's total matches the kid's wallet.
+const EFFORT_POINTS = {
+  curriculum_quiz: 10, pc: 10, frq: 5, blooket: 4,
+  worksheet: 3, quiz_review: 2, quiz_exception: 2, trainer: 1,
+};
+const POINTS_PER_CANDY = 36;
+function effortPointsFor(source, itemId) {
+  if (source === 'quiz_verdict' || source === 'quiz_answer') return 0;
+  if (itemId && /^BL-.*-DESK_DONE$/i.test(itemId)) return 4;
+  return EFFORT_POINTS[source] != null ? EFFORT_POINTS[source] : 1;
+}
+function computeEffort(ledgerRows) {
+  const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
+  const seen = new Set();
+  let points = 0;
+  for (const r of rows) {
+    if (!r || !r.receipt_compact) continue;        // match the wallet's durable receipts
+    const key = (r.source || '') + '|' + (r.item_id || '');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    points += effortPointsFor(r.source, r.item_id);
+  }
+  return { points, candy: points / POINTS_PER_CANDY };
+}
+
 // Parse a lessonKey like "1.2", "U1.2", or "4.1-2" into { unit, lessonKey }.
 // Returns null on anything unparseable. The optional leading "U" is tolerated so
 // "U1.2" and "1.2" both resolve to { unit: 1, lessonKey: "2" }.
@@ -290,6 +320,7 @@ export function mountClass(app, { db, ledgerDb, loadAnswerKey, loadSkillMap, bkt
         ...computed,
         trainer,
         lastActivityAt,
+        effort: computeEffort(ledgerRows),   // DOGE wallet: effort points → candy
         gradebook: buildGradebook(computed, { lessonSchedule, section, todayStr }),
       };
     });
