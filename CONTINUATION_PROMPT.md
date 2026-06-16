@@ -1,17 +1,41 @@
-# CONTINUATION PROMPT — DOGE Effort Wallet (Phases 1+2+3 + watch-only chain display + hardening SHIPPED) ; NEXT = run migration 0019 + restart the node → go live
+# CONTINUATION PROMPT — DOGE wallet LIVE-ready + Desk/gating/Live-Classroom polish ; NEXT = run migration 0021 + hand out wallets (Sept)
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 10).
-> follow-alongs HEAD = `db24a41`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 11).
+> follow-alongs HEAD = `7aa5891`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
-> **curriculum_render** = branch `main`. Teacher tests on the **public GH Pages URL** — commit+push promptly;
-> `file://` is not a valid surface. Style: brainstorm → spec → implement (user reviews). `browser-harness` can't run on
-> this Windows host (no AF_UNIX). Memory dir: `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
-> **Spec for the active project: `DOGE_WALLET_SPEC.md`. Project memory: `project_doge_effort_wallet.md`.**
-> A real **Dogecoin Core node (dogecoin-qt) runs on this Windows box with ~10,000 DOGE**. RPC creds are written to
-> `%APPDATA%\Dogecoin\dogecoin.conf` (`server=1` + rpcuser/rpcpassword, localhost); **the node must be RESTARTED**
-> for them to apply, then `dogecoin-cli` works. **NEVER broadcast a real send without explicit per-send confirmation.**
+> **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
+> classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
+> `C:/Users/rober/Downloads/Projects/school/curriculum_render`; ⚠ stage only own paths (it has many unrelated dirty files).
+> Teacher tests on the **public GH Pages URL** — commit+push promptly; `file://` is not a valid surface. Style:
+> brainstorm → spec → implement (user reviews). ultracode ON = workflow-investigate + adversarial-review before pushing.
+> `browser-harness` can't run on this Windows host (no AF_UNIX). Memory dir:
+> `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
+> A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
+> not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
 
-## ⏭ NEXT — go-live is mostly DONE; remaining = run 0021 + hand out wallets + enroll Abraham
+## ⏭ SESSION 11 SHIPPED (2026-06-16) — Desk/gating/Live-Classroom + cr login, all adversarially reviewed
+
+- **STRICT topic-sequence lesson gate** (`0a79f1c`, LESSON_GATE_BUILD §8): the gate keyed on the previous CALENDAR CELL
+  (parity leak: 1.2/1.4/1.6 open, 1.3/1.5 locked) → now gates on the true topic-predecessor (`_prevTopicInSequence`),
+  window-independent + cross-portion (topic-keyed completion). Date bypass REMOVED (strict; fall too — teacher P5 unlock is
+  the escape). **⚠ live config forces period E (combined pacing `1.2+1.3`…) but summer is individual (`1.1`..`1.10`)** → the
+  gate DISPATCHES by cell surface (`_prevSummerTopic` for summer cells, `_prevTopicInSequence` for fall) + a completion
+  bridge (`_isLessonComplete`: combined "A+B" done when its parts are). The review caught this as a BLOCKER (a naive single-
+  sequence gate left summer always-open). Verified vs live cP=E.
+- **Buy-min 25→5** (`d7b0636`) + disbursement **"✓ given/sent"** fix; **Teacher Tools launcher** + **Roster Console restored**
+  (`5bd38cd`, Class Gradebook dropped); **voluntary "Change Password"** in the User menu (`c141867`); **"I'm not on the list"
+  → straight to GUEST** (no self-signup) (`68eb697`).
+- **Kid→kid candy gifting** (`db24a41`, migration `0021` USER-RUN) — `POST /wallet/gift` by username, Desk 🎁, atomic
+  `doge_gift()` w/ HARD daily cap, active-student-only recipient, kill-switch. 15-finding review folded.
+- **Guest + Teacher Live-Classroom AVATARS** (`7a1eb0c` guest; fa `7aa5891` + cr `42b74e3` teacher): guests + the teacher
+  now render as avatars in the scene; the teacher's avatar is movable + can step into doorways (vote VISUAL-ONLY — doesn't
+  steer the class winner; server checkin role-guard). ⚠ KNOWN minor: arrow/Space drive the avatar in the tall teacher
+  cockpit (mouse-wheel scroll still works) — accepted cost.
+- **cr↔Desk login tightened** (cr `6c60965`): 401/expiry surfaced ("sign in again", was silent grade loss); cross-tab
+  `storage` sign-out listener; `roster-client.js` synced to the Desk's. **LEFT (user chose cheap-wins): cr focus-roster-
+  refresh + clear stale peer `classData` on identity change.** Audit detail in `project_cr_identity_unify.md`.
+
+## ⏭ NEXT — DOGE go-live is mostly DONE; remaining = run migration 0021 + hand out wallets (~September). ⚠ ABRAHAM LADNY ENROLLED (s11, `olive_sloth`, PeriodX=29) — set his Schoology UID `191627`.
 
 0. **✅ DONE (session 10):** migrations **0019 + 0020 RUN**; **node restarted** (mainnet, synced, 10,273 DOGE, RPC live);
    **30 paper wallets generated + node-validated** at `C:/Users/rober/doge-wallets/` (OUTSIDE the repo — real keys; print
