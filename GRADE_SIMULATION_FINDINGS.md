@@ -213,3 +213,19 @@ individual 1.2 + 1.3 satisfies the fall "1.2+1.3" cell); access modes (signed-ou
 override) bypass correctly. **No bug — this confirms the LESSON_GATE_BUILD §8 (s11) fix holds.** Note:
 this models the documented logic; a live-code harness (running the real DOM-coupled functions with
 stubs) is a possible follow-on for a true differential check.
+
+## Schoology reconciliation — modeled, NO findings (idempotent + dup-safe)
+
+`tests/test_schoology_reconcile_idempotency.py` adds round-trip/property checks over the PURE
+reconciliation core (`tools/schoology_sync_lib.py`: `plan_assignment_work`, `compute_sync_actions`,
+`should_push`) — the existing `test_schoology_sync_lib.py` covers them by example; this adds the
+**idempotency** invariant the dup-column incident violated. All HOLD: `plan_assignment_work` never
+proposes creating a key that already has a Schoology id (**no duplicate columns**), its create/reuse
+partition is complete + disjoint, and **re-running after applying the plan creates nothing**
+(sync-twice == sync-once). `compute_sync_actions` is likewise idempotent (re-pushing unchanged grades
+is a no-op) with a complete+disjoint push/skip partition; `should_push` skips equal values (within
+tol), pushes first-time, never pushes a None target. **No bug — the pure planner is dup-safe by
+construction (it checks the id before creating).** NOTE: the real dup-column bug lived in the *CDP
+write layer* (a render hiccup resubmitting a create 3×), guarded separately by the find-by-title
+pre-flight in `schoology_ops.py` — out of scope for the pure core, and a candidate for the live-code
+harness follow-on.
