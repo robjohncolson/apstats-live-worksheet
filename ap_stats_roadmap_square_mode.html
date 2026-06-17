@@ -28,6 +28,11 @@
             --rev: #FFFFCC; --rev-t: #000000;
             --exam-bg: #000000; --exam-t: #FFFFFF;
             --off-bg: #FFFFFF; --off-t: #000000;
+            /* Calendar cell dim levels — one place to retune how far each
+               de-emphasized cell recedes (past day / locked lesson / done lesson). */
+            --cell-past-dim: 0.5;
+            --cell-lock-dim: 0.4;
+            --cell-done-dim: 0.6;
         }
         * {
             box-sizing: border-box; margin: 0; padding: 0;
@@ -483,6 +488,37 @@
         .legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; font-size: 10px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .legend-sw { width: 12px; height: 12px; border: 1px solid var(--black); }
+        /* "What the marks mean" — a collapsed key decoding the overlay STATES
+           (today / up-next / done / locked / PC / poster / dots), not just the
+           unit pastels. Reuses the LIVE cell classes as mini-swatches so the key
+           can never drift from the real CSS. System-7 chrome, collapsed by default. */
+        .legend-states { flex: 1 0 100%; font-size: 10px; margin-top: 4px; }
+        .legend-states > summary {
+            cursor: pointer; text-align: center; color: var(--plat-lo);
+            list-style: none; user-select: none; padding: 2px 0;
+        }
+        .legend-states > summary::-webkit-details-marker { display: none; }
+        .legend-states > summary::before { content: '\25B8 '; }   /* ▸ closed */
+        .legend-states[open] > summary::before { content: '\25BE '; } /* ▾ open */
+        .legend-states .legend-states-grid {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 4px 12px; padding: 6px 8px;
+            border: 1px solid var(--black); background: var(--platinum);
+            box-shadow: inset 1px 1px 0 var(--plat-hi);
+        }
+        /* mini state swatch — a tiny .dc-like square the overlay classes paint onto */
+        .legend-st {
+            width: 14px; height: 14px; border: 1px solid var(--black);
+            position: relative; flex: 0 0 auto; background: var(--white);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 10px; line-height: 1; vertical-align: middle; overflow: hidden;
+        }
+        .legend-st-done { filter: grayscale(1); opacity: var(--cell-done-dim); }
+        /* show the next-up MAGENTA / gold-ahead identity in the key WITHOUT the idle pulse */
+        .legend-states .cal-current { animation: none; box-shadow: inset 0 0 0 2px #ff2e97; outline: none; }
+        /* inset-only in the key (the live .dc-ahead's outer glow would bleed past the 14px swatch) */
+        .legend-states .dc-ahead { animation: none; box-shadow: inset 0 0 0 3px #d4af00; }
+        .legend-states .legend-st > * { cursor: inherit; }   /* dots are non-interactive in the key */
         .per-tog { display: flex; justify-content: center; gap: 14px; margin-bottom: 14px; align-items: center; }
 
         /* ── Calendar Grid ──────────────────────────── */
@@ -514,11 +550,17 @@
             user-select: none;
             font-family: inherit;
             outline: none;
+            /* faint platinum bevel at rest; stepped (not eased) so it stays pixel-crisp */
+            box-shadow: inset 1px 1px 0 var(--plat-hi);
+            transition: background-color 50ms steps(2);
         }
         .cal-nav-btn:active,
         .cal-nav-btn.cal-nav-active {
             background: var(--black);
             color: var(--white);
+            /* classic Mac button-sinks-on-press: darker inset + nudge down-right */
+            box-shadow: inset 1px 1px 0 rgba(0,0,0,0.5);
+            transform: translate(1px, 1px);
         }
         /* visibility:hidden -- keeps the corner slot so the other arrow does
            not slide to the middle on edge pages. */
@@ -546,9 +588,20 @@
             position: relative; min-height: 50px;
             display: flex; flex-direction: column; justify-content: flex-start;
             cursor: default; overflow: hidden;
+            /* stepped (pixel-crisp) hover flip — kills the 0ms flicker when sweeping the grid */
+            transition: background-color 60ms steps(2), color 60ms steps(2);
         }
         .dc:hover { background-color: var(--black); color: var(--white); z-index: 2; }
         .dc:hover .tt, .dc:hover .dn { opacity: 1; color: var(--white); }
+        /* press bevel only on PLAIN cells — pressing a state-ring cell (next-up / done /
+           partial / ahead) must NOT replace its ring box-shadow with the grey bevel. */
+        .dc:not(.cal-current):not(.dc-done):not(.dc-localdone):not(.dc-ahead):not(.dc-partial):not(.dc-localpartial):active { box-shadow: inset 1px 1px 0 rgba(0,0,0,0.4); }
+        /* Keyboard focus: the canonical classic-Mac dotted selection rect, drawn
+           INSIDE the cell (negative offset, since .dc is overflow:hidden) and above
+           cal-current's z-index:3. :focus-visible keeps mouse clicks ring-free. */
+        .dc:focus-visible { outline: 2px dotted var(--black); outline-offset: -3px; z-index: 4; }
+        .cell-exam:focus-visible, .cell-pc:focus-visible { outline-color: var(--white); }
+        @media (prefers-reduced-motion: reduce) { .dc, .cal-nav-btn { transition: none; } }
         .dc .dn { font-size: 9px; margin-bottom: 2px; }
         .dc .tl { font-size: 10px; line-height: 1.2; margin-top: 1px; font-weight: bold; }
         .dc .tt { font-size: 9px; line-height: 1.1; margin-top: 2px; }
@@ -601,10 +654,10 @@
             border-left: 1px solid var(--black);
             padding: 1px 3px;
         }
-        .cell-past { opacity: 0.5; }
+        .cell-past { opacity: var(--cell-past-dim); }
         /* Sequential lesson gate (LESSON_GATE_BUILD.md) — a locked lesson is
            dimmed with a small lock badge; still clickable to show the why. */
-        .cell-locked { position: relative; opacity: 0.4; }
+        .cell-locked { position: relative; opacity: var(--cell-lock-dim); }
         .cell-lock {
             position: absolute; top: 2px; right: 3px;
             font-size: 11px; line-height: 1; pointer-events: none;
@@ -628,10 +681,10 @@
            next-up lesson POPS with a synthwave neon glow. Today and the
            next-up cell itself never grey. */
         .dc-done:not(.cell-today):not(.cal-current) {
-            filter: grayscale(1); opacity: 0.6;
+            filter: grayscale(1); opacity: var(--cell-done-dim);
         }
         .dc-localdone:not(.cell-today):not(.cal-current) {
-            filter: grayscale(1); opacity: 0.6;
+            filter: grayscale(1); opacity: var(--cell-done-dim);
         }
         .cal-current {
             z-index: 3;
@@ -986,6 +1039,8 @@
             .wk-lbl { font-size: 8px; padding-right: 4px; }
             .dc { padding: 3px; min-height: 40px; }
             .dc .tl { font-size: 9px; } .dc .tt { display: none; }
+            .poll-dot, .status-dot { width: 5px; height: 5px; }   /* shrink dots on 40px cells */
+            .dbl { display: none; }   /* drop the 2x text — survives in tooltip + aria-label */
             .cd-strip { gap: 6px; }
             .cd-box { padding: 3px 6px; min-width: 60px; } .cd-box .num { font-size: 14px; }
         }
@@ -1203,18 +1258,26 @@
             color: var(--white);
         }
 
-        /* Status dots */
+        /* The two bottom-corner dots are a deliberate pair: SAME 7px scale, but
+           ROUND = your personal resource status (bottom-left), SQUIRCLE = a shared
+           class poll on that day (bottom-right). The shape — not just the color —
+           carries the personal-vs-shared meaning. */
         .status-dot {
           position:absolute; bottom:3px; left:3px;
-          width:6px; height:6px; border-radius:50%;
+          width:7px; height:7px; border-radius:50%;   /* round = personal status */
         }
         .status-ready { background:#4caf50; }
         .status-partial { background:#ff9800; }
         /* Poll archive indicator (v2.1 U4) */
         .poll-dot {
           position:absolute; bottom:3px; right:3px;
-          width:7px; height:7px; border-radius:2px;
+          width:7px; height:7px; border-radius:2px;    /* squircle = shared class poll */
           background:#7c4dff; cursor:pointer; z-index:1;
+        }
+        /* Visually-hidden but screen-reader-readable (for the calendar's aria-live region). */
+        .sr-only {
+          position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+          overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
         }
 
         /* Tooltip enhancements */
@@ -1704,7 +1767,9 @@
                 <div class="hdr-row">
                     <span>Week of</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
                 </div>
-                <div id="cg"></div>
+                <div id="cg" role="group" aria-label="Two-week lesson calendar"></div>
+                <!-- screen-reader announcement for calendar paging (rCal writes a window summary here) -->
+                <div id="cal-sr" class="sr-only" aria-live="polite"></div>
             </div>
             <div class="prog-area">
                 <h3 class="chicago">Unit Progress</h3>
@@ -6826,6 +6891,15 @@ function paintDonowCells() {
         var dts = Number(c.dataset.dts);
         c.classList.add((dts && dts > today) ? 'dc-ahead' : 'dc-done');
       }
+      // a11y: mirror the SERVER done/ahead state into the aria-label too, so a
+      // screen reader hears "completed" even when the done-state comes only from
+      // the /donow feed (not the local marks rCal already suffixed). Idempotent:
+      // skip if rCal already suffixed it (next-up cells are never done).
+      var _al = c.getAttribute('aria-label');
+      if (_al && _al.indexOf('(completed') < 0 && _al.indexOf('(next up)') < 0) {
+        if (c.classList.contains('dc-ahead')) c.setAttribute('aria-label', _al + ' (completed, ahead of schedule)');
+        else if (c.classList.contains('dc-done')) c.setAttribute('aria-label', _al + ' (completed)');
+      }
       // CALENDAR_FOCUS -- .cal-current (the synthwave next-up) is owned by rCal
       // now, driven by LOCAL completion. paintDonowCells no longer touches it:
       // the /donow nextTask lagged a student's Done click and pinned the
@@ -8419,6 +8493,21 @@ function updateLegend(def){
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--rev)"></div>Review</div>';
   h+='<div class="legend-item"><div class="legend-sw" style="background:var(--exam-bg);border:1px solid #999"></div>Exam</div>';
   h+='<div class="legend-item"><div class="legend-sw cell-off" style="border:1px solid #999"></div>No School</div>';
+  // STATE key — decode the OVERLAY signals (today / up-next / done / in-progress /
+  // ahead / locked / PC / poster / dots), not just the unit pastels. Each swatch
+  // reuses the LIVE cell class, so the key can never drift from the real CSS.
+  h+='<details class="legend-states"><summary>What the marks mean</summary><div class="legend-states-grid">'
+    +'<div class="legend-item"><span class="legend-st cell-today"></span>Today</div>'
+    +'<div class="legend-item"><span class="legend-st cal-current"></span>Up next</div>'
+    +'<div class="legend-item"><span class="legend-st cell-u1 legend-st-done"></span>Done</div>'
+    +'<div class="legend-item"><span class="legend-st cell-u1 dc-localpartial"></span>In progress</div>'
+    +'<div class="legend-item"><span class="legend-st cell-u1 dc-ahead"></span>Ahead</div>'
+    +'<div class="legend-item"><span class="legend-st cell-locked">🔒</span>Locked</div>'
+    +'<div class="legend-item"><span class="legend-st cell-pc"></span>Progress Check</div>'
+    +'<div class="legend-item"><span class="legend-st cell-poster"></span>Poster</div>'
+    +'<div class="legend-item"><span class="legend-st cell-u1"><span class="status-dot status-ready"></span></span>Ready</div>'
+    +'<div class="legend-item"><span class="legend-st cell-u1"><span class="poll-dot"></span></span>Class poll</div>'
+    +'</div></details>';
   el.innerHTML=h;
 }
 
@@ -16157,6 +16246,11 @@ function tdy(){
     return new Date(n.getFullYear(),n.getMonth(),n.getDate());
 }
 function eq(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+// cls() / htm() map a day's schedule entry `i` to its CSS class + inner HTML.
+// `i` is either a string SENTINEL — OFF (no school), EX (AP exam), PO (post-exam),
+// NC / falsy (no class that weekday) — or a lesson object from d(): { t, n, u, due, as, db }
+// where i.kind ∈ {pc, poster, orientation, baseline} selects a special tile and
+// i.t===R marks a Review day. Anything else is a normal unit lesson (cell-u{u}).
 function cls(i){
     if(i===OFF)return"cell-off";
     if(i===EX)return"cell-exam";
@@ -16179,8 +16273,34 @@ function htm(i,ds){
     if(i.kind==='orientation')return`<div class="dn">${ds}</div><div class="tl">Start Here</div><div class="tt">How grades &amp; makeups work</div>`;
     if(i.kind==='baseline')return`<div class="dn">${ds}</div><div class="tl">U${i.u} Baseline</div><div class="tt">No stakes — best score kept</div>`;
     if(i.t===R)return`<div class="dn">${ds}</div><div class="tl">Review</div><div class="tt">${i.n}</div>`;
-    let db=i.db?'<span class="dbl">2x</span>':'';
-    return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+db;
+    const doubleBadge=i.db?'<span class="dbl">2x</span>':'';
+    return`<div class="dn">${ds}</div><div class="tl">${i.t}</div><div class="tt">${i.n}</div>`+doubleBadge;
+}
+// cellAria(i, ds) — flat, emoji-free aria-label text for a calendar cell, built
+// from the SAME fields the hover tooltip (sTip) shows, so a screen-reader student
+// gets the date / topic / due-date / status that sighted users get on hover.
+// rCal appends state suffixes (next up / completed / locked) where it knows them.
+function cellAria(i, ds){
+    if(i===OFF) return ds + ', no school';
+    if(i===EX) return ds + ', AP Statistics Exam';
+    if(i===PO) return ds + ', post-exam';
+    if(i===NC || !i) return ds;
+    if(i.kind==='pc') return ds + ', Unit ' + i.u + ' Progress Check ' + (i.admin||1) + ' of 2';
+    if(i.kind==='poster') return ds + ', Unit ' + i.u + ' Poster gallery walk';
+    if(i.kind==='orientation') return ds + ', Start Here — how grades and makeups work';
+    if(i.kind==='baseline') return ds + ', Unit ' + i.u + ' Baseline — no stakes, best score kept';
+    let label = (i.t===R) ? ('Review: ' + (i.n||'')) : (i.t + ' ' + (i.n||''));
+    let parts = [ds, label.trim()];
+    if(i.due) parts.push('due ' + i.due);
+    if(i.db) parts.push('double topic day');
+    // Resource readiness — mirror sTip's status line when the registry has the topic.
+    try {
+        if(typeof getRegistryEntry==='function' && i.t){
+            const re = getRegistryEntry(i.t);
+            if(re && re.status) parts.push('status ' + re.status);
+        }
+    } catch(_) {}
+    return parts.join('. ');
 }
 // Calendar page navigation -- the prev/next arrows above the calendar grid
 // bump _calPageOffset by CAL_FOCUS_WEEKS weeks (2). rCal() applies the
@@ -16270,11 +16390,29 @@ function _openBaselineInfo() {
 
 function rCal(){
     const t=tdy(),g=document.getElementById("cg");g.innerHTML="";
-    let W=[],cw=[],lm=null;
-    for(const e of S){const dt=new Date(e[0],e[1],e[2]),dw=dt.getDay();
-        if(dw===1&&cw.length){W.push({m:lm,d:cw});cw=[];}if(dw===1)lm=dt;
-        if(!lm){const md=new Date(dt);md.setDate(dt.getDate()-((dw+6)%7));lm=md;}cw.push(e);}
-    if(cw.length)W.push({m:lm,d:cw});
+    // ── 1. Build Mon-anchored week rows from the flat schedule S ──
+    // S is chronological day entries [year, month, day, infB, infE]. Group them
+    // into weeks; `weekMonday` is the row's "Week of" label. The first week may
+    // not start on a Monday, so back-compute its Monday from the first weekday.
+    let W = [], currentWeek = [], weekMonday = null;
+    for (const e of S) {
+        const dt = new Date(e[0], e[1], e[2]);
+        const dow = dt.getDay();                          // 0=Sun … 6=Sat
+        if (dow === 1 && currentWeek.length) {            // a new Monday closes the prior week
+            W.push({ m: weekMonday, d: currentWeek });
+            currentWeek = [];
+        }
+        if (dow === 1) weekMonday = dt;
+        if (!weekMonday) {                                // first entry isn't a Monday → derive it
+            const _daysSinceMonday = (dow + 6) % 7;       // Mon→0, Tue→1 … Sun→6
+            const md = new Date(dt);
+            md.setDate(dt.getDate() - _daysSinceMonday);
+            weekMonday = md;
+        }
+        currentWeek.push(e);
+    }
+    if (currentWeek.length) W.push({ m: weekMonday, d: currentWeek });
+    // ── 2. Weave the summer-prep weeks in FRONT of the school-year weeks ──
     // ☀️ Weave the summer-prep weeks in FRONT of the school-year weeks during
     // summer (today < firstDayOfSchool). They're real week rows, so the focus
     // window, nav arrows, today highlight, and completion overlays below all
@@ -16292,6 +16430,7 @@ function rCal(){
     // The nav arrows above the calendar bump _calPageOffset (in weeks);
     // _displayStart is then today's anchor + that offset, clamped absolutely,
     // so the arrows cannot run past either end of the school year.
+    // ── 3. Compact to a 2-week focus window anchored on today ──
     const CAL_FOCUS_WEEKS = 2;
     const _origLen = W.length;
     let _displayStart = 0;
@@ -16332,6 +16471,7 @@ function rCal(){
     // Sequential lesson gate state (LESSON_GATE_BUILD.md §4 + §8): each lesson
     // gates on its canonical topic-predecessor (_prevTopicInSequence), not the
     // previous calendar cell — window-independent + cross-portion.
+    // ── 4. Resolve the lesson gate + the single "next up" cell ──
     const _gateMarks = getStudentMarks();
     const _gateSignedIn = !!getStudentEmail();
     // CALENDAR_FOCUS -- the one next-up lesson, by the student's local marks.
@@ -16340,6 +16480,7 @@ function rCal(){
     // Publish for renderDoNow so the Do Now message tracks the same next-up cell.
     _calNextUp = _nextUpTopic;
     let _lastQ = 0; // Thread 2 -- the quarter band already emitted
+    // ── 5. Render the week rows + day cells ──
     for(const wk of W){
         const r=document.createElement("div");r.className="wk-row"+(wk._summer?" wk-summer":"");
         const l=document.createElement("div");l.className="wk-lbl";
@@ -16399,6 +16540,7 @@ function rCal(){
             // that have archived polls. Click opens the result screen on the
             // classroom board. stopPropagation() prevents opening the resource panel.
             (function(cellDt, cellC) {
+              // YYYY-MM-DD key for the _pollArchive lookup (same shape as _ymdISO).
               var _y = cellDt.getFullYear();
               var _m = String(cellDt.getMonth() + 1).padStart(2, '0');
               var _d = String(cellDt.getDate()).padStart(2, '0');
@@ -16455,6 +16597,22 @@ function rCal(){
                 c.ondblclick=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};
                 c.oncontextmenu=(ev)=>{ev.preventDefault();ev.stopPropagation();hTip();if(typeof openDayGrade==='function')openDayGrade(ds);};
             }
+            // a11y: a flat aria-label (from the same fields the tooltip shows) plus a
+            // state suffix; every interactive cell becomes a keyboard-focusable
+            // role=button that reuses the onclick rCal already assigned (so the lock
+            // and Do-Now guards are honored). Non-interactive cells stay inert.
+            let _aria = cellAria(inf, ds);
+            if (c.classList.contains('cal-current')) { _aria += ' (next up)'; c.setAttribute('aria-current', 'step'); }
+            else if (c.classList.contains('dc-localdone') || c.classList.contains('dc-done')) { _aria += ' (completed)'; }
+            if (c.classList.contains('cell-locked')) { _aria += ' (locked — finish the previous lesson first)'; }
+            c.setAttribute('aria-label', _aria);
+            if (c.onclick) {
+                c.setAttribute('role', 'button');
+                c.tabIndex = 0;
+                c.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') { ev.preventDefault(); c.click(); }
+                });
+            }
             r.appendChild(c);
         }g.appendChild(r);
     }
@@ -16463,10 +16621,18 @@ function rCal(){
     // (set in the compaction block above), so the edges read directly from
     // it. visibility:hidden via .cal-nav-hidden preserves the corner slot so
     // the other arrow stays in place at an edge page.
+    // ── 6. Toggle the prev/next nav arrows at the window edges ──
     const _np = document.getElementById('cal-prev');
     const _nn = document.getElementById('cal-next');
     if (_np) _np.classList.toggle('cal-nav-hidden', _displayStart <= 0);
     if (_nn) _nn.classList.toggle('cal-nav-hidden', _displayStart + CAL_FOCUS_WEEKS >= _origLen);
+    // a11y: announce the visible window to screen readers (also fires on calStep paging).
+    const _sr = document.getElementById('cal-sr');
+    if (_sr && W.length) {
+        const _wf = W[0].m, _wl = W[W.length - 1].m;
+        _sr.textContent = 'Calendar showing ' + MN[_wf.getMonth()] + ' ' + _wf.getDate()
+            + ' to ' + MN[_wl.getMonth()] + ' ' + _wl.getDate();
+    }
     paintDonowCells(); // DN3b — overlay completion state onto the fresh grid
 }
 function rCD(){
