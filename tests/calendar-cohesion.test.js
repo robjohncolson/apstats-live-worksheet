@@ -145,14 +145,18 @@ describe('Item 16 -- one ring per cell (today keeps its 2px frame)', () => {
 });
 
 describe('Item 9 -- up-next style switcher (default unchanged)', () => {
-  it('alternative styles are layered on #cg[data-calcur] AFTER the frozen rule', () => {
-    expect(html).toMatch(/#cg\[data-calcur="tone"\] \.cal-current/);
-    expect(html).toMatch(/#cg\[data-calcur="gold"\] \.cal-current/);
-    expect(html).toMatch(/#cg\[data-calcur="ants"\] \.cal-current/);
+  it('alternative styles are layered on body[data-calcur] AFTER the frozen rule', () => {
+    expect(html).toMatch(/body\[data-calcur="tone"\] \.cal-current/);
+    expect(html).toMatch(/body\[data-calcur="gold"\] \.cal-current/);
+    expect(html).toMatch(/body\[data-calcur="ants"\] \.cal-current/);
     expect(html).toMatch(/@keyframes antsMarch/);
   });
+  it('the style is set on <body> so the legend swatch previews it live', () => {
+    const b = fnBody(html, '_applyCalcurStyle');
+    expect(b).toMatch(/document\.body\.setAttribute\(\s*['"]data-calcur['"]/);
+  });
   it('the alternatives honor reduced-motion', () => {
-    expect(html).toMatch(/prefers-reduced-motion[\s\S]*?#cg\[data-calcur="ants"\] \.cal-current::before\s*\{[^}]*animation:\s*none/);
+    expect(html).toMatch(/prefers-reduced-motion[\s\S]*?body\[data-calcur="ants"\] \.cal-current::before\s*\{[^}]*animation:\s*none/);
   });
   it('setCalcurStyle persists + _applyCalcurStyle reflects the pick onto #cg', () => {
     expect(html).toMatch(/function setCalcurStyle\s*\(/);
@@ -245,6 +249,19 @@ describe('Item 14 -- tooltip is honest (no dead links)', () => {
     const b = fnBody(html, 'sTip');
     expect(b).not.toMatch(/Ready ✓/);             // the Ready/Partial/Pending readiness line is gone
     expect(b).not.toMatch(/double-click for grade/);
+  });
+});
+
+describe('Teacher view -- progress overlay suppressed for a teacher-as-self', () => {
+  it('rCal gates the local progress overlay on _deskIsTeacher', () => {
+    const r = fnBody(html, 'rCal');
+    expect(r).toMatch(/_suppressProgress\s*=\s*\(typeof _deskIsTeacher/);
+    expect(r).toMatch(/_suppressProgress\s*\?\s*''\s*:\s*localLessonState\(/);
+  });
+  it('paintLocalDoneCells also gates the overlay (so it does not come back after the cache warms)', () => {
+    const p = fnBody(html, 'paintLocalDoneCells');
+    expect(p).toMatch(/suppressProgress\s*=\s*\(typeof _deskIsTeacher/);
+    expect(p).toMatch(/suppressProgress\s*\?\s*''\s*:\s*localLessonState\(/);
   });
 });
 

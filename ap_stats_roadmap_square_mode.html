@@ -738,8 +738,8 @@
         }
         /* ── "Up next" style switcher (#9) — alternatives layered AFTER the pinned neon,
            so the DEFAULT (no [data-calcur]) is byte-identical + all 46 frozen tests green.
-           setCalcurStyle() sets #cg[data-calcur] + persists the pick in localStorage. */
-        #cg[data-calcur="tone"] .cal-current {
+           setCalcurStyle() sets body[data-calcur] + persists the pick in localStorage. */
+        body[data-calcur="tone"] .cal-current {
             outline: none;
             box-shadow: inset 0 0 0 3px #ff2e97, 0 0 6px 1px rgba(255,46,151,0.5);
             animation: calCurrentTone 2.2s ease-in-out infinite;
@@ -748,13 +748,13 @@
           0%,100% { box-shadow: inset 0 0 0 3px #ff2e97, 0 0 5px 0 rgba(255,46,151,0.4); }
           50%     { box-shadow: inset 0 0 0 3px #ff2e97, 0 0 9px 2px rgba(255,46,151,0.6); }
         }
-        #cg[data-calcur="gold"] .cal-current {
+        body[data-calcur="gold"] .cal-current {
             outline: none;
             box-shadow: inset 0 0 0 3px #d4af00, 0 0 9px 2px #ffcf33;
             animation: dcAheadPulse 1.8s ease-in-out infinite;
         }
-        #cg[data-calcur="ants"] .cal-current { outline: none; box-shadow: none; animation: none; }
-        #cg[data-calcur="ants"] .cal-current::before {
+        body[data-calcur="ants"] .cal-current { outline: none; box-shadow: none; animation: none; }
+        body[data-calcur="ants"] .cal-current::before {
             content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
             background:
               linear-gradient(90deg, var(--black) 50%, transparent 0) repeat-x,
@@ -767,9 +767,9 @@
         }
         @keyframes antsMarch { to { background-position: 12px 0, -12px 100%, 0 -12px, 100% 12px; } }
         @media (prefers-reduced-motion: reduce) {
-          #cg[data-calcur="tone"] .cal-current,
-          #cg[data-calcur="gold"] .cal-current { animation: none; }
-          #cg[data-calcur="ants"] .cal-current::before { animation: none; }
+          body[data-calcur="tone"] .cal-current,
+          body[data-calcur="gold"] .cal-current { animation: none; }
+          body[data-calcur="ants"] .cal-current::before { animation: none; }
         }
         .cal-qband {
             padding: 3px 8px; font-size: 10px; font-weight: bold;
@@ -7054,6 +7054,9 @@ function paintLocalDoneCells() {
     var marks = (typeof getStudentMarks === 'function') ? getStudentMarks() : {};
     var signedIn = (typeof getStudentEmail === 'function') ? !!getStudentEmail() : false;
     var today = (typeof tdy === 'function') ? tdy() : null;
+    // Mirror rCal: a TEACHER viewing as themselves gets NO progress overlay (their marks
+    // are browsing noise). Preview-as-student + real students keep it.
+    var suppressProgress = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
     var nextUp = (typeof calNextUpTopic === 'function')
       ? calNextUpTopic(_orderedPeriodTopics(), marks) : null;
     _calNextUp = nextUp; // keep renderDoNow's message in sync with the highlight
@@ -7065,7 +7068,7 @@ function paintLocalDoneCells() {
       // Greying + next-up — the flicker-free common path.
       c.classList.remove('dc-localdone', 'dc-localpartial', 'cal-current');
       if (topic) {
-        var st = localLessonState(topic, marks);
+        var st = suppressProgress ? '' : localLessonState(topic, marks);
         if (st) c.classList.add(st === 'done' ? 'dc-localdone' : 'dc-localpartial');
         if (topic === nextUp) c.classList.add('cal-current');
       }
@@ -8594,7 +8597,7 @@ function updateLegend(def){
   if(typeof _applyCalcurStyle==='function') _applyCalcurStyle();
 }
 // "Up next" cell style (#9) — ants (DEFAULT) / neon / tone / gold. Persisted in localStorage,
-// applied as #cg[data-calcur]. The alternatives are layered AFTER the frozen .cal-current
+// applied as body[data-calcur]. The alternatives are layered AFTER the frozen .cal-current
 // (neon) rule; 'neon' has no override rule so it falls through to that frozen rule — which
 // keeps the neon CSS (and the 46 frozen tests) intact even though ants is what renders by default.
 var CALCUR_KEY = 'apstats_calcur_style';
@@ -8607,8 +8610,9 @@ function _applyCalcurStyle(){
   var v=null;
   try{ v = localStorage.getItem(CALCUR_KEY); }catch(_){}
   if(!v) v = CALCUR_DEFAULT;                 // nothing saved → marching ants
-  var cg=document.getElementById('cg');
-  if(cg) cg.setAttribute('data-calcur', v);  // always set (incl 'neon' → no override → frozen neon rule)
+  // set on <body> (not #cg) so the legend's "Up next" swatch previews the pick LIVE too,
+  // not only the next-up cell in the grid. 'neon' has no override rule → frozen neon shows.
+  if(document.body) document.body.setAttribute('data-calcur', v);
   var sel=document.getElementById('calcur-pick');
   if(sel) sel.value=v;
 }
@@ -16576,6 +16580,10 @@ function rCal(){
     // ── 4. Resolve the lesson gate + the single "next up" cell ──
     const _gateMarks = getStudentMarks();
     const _gateSignedIn = !!getStudentEmail();
+    // Suppress the STUDENT progress overlay (greying + ◐/✓ glyph) for a TEACHER viewing as
+    // themselves — their marks come from browsing the lessons, so "in progress" was noise.
+    // Preview-as-student (where _deskIsTeacher() returns false) + real students keep it.
+    const _suppressProgress = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
     // CALENDAR_FOCUS -- the one next-up lesson, by the student's local marks.
     // Computed once over S (chronological); the matching cell gets .cal-current.
     const _nextUpTopic = calNextUpTopic(_orderedPeriodTopics(), _gateMarks);
@@ -16619,7 +16627,7 @@ function rCal(){
               // marks (apstats_desk_marks_, read once into _gateMarks), NOT the
               // REGISTRY readiness above. This reflects the signed-in student --
               // or, in Preview-as-student, the teacher -- so a done lesson greys.
-              const _localState = localLessonState(inf.t, _gateMarks);
+              const _localState = _suppressProgress ? '' : localLessonState(inf.t, _gateMarks);
               if (_localState) {
                 c.classList.add(_localState === 'done' ? 'dc-localdone' : 'dc-localpartial');
               }
