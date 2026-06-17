@@ -252,16 +252,17 @@ describe('Item 14 -- tooltip is honest (no dead links)', () => {
   });
 });
 
-describe('Teacher view -- progress overlay suppressed for a teacher-as-self', () => {
-  it('rCal gates the local progress overlay on _deskIsTeacher', () => {
+describe('Teacher view -- only the "partial" browsing noise is suppressed for a teacher-as-self', () => {
+  it('rCal drops only partial for a teacher, keeping real done', () => {
     const r = fnBody(html, 'rCal');
     expect(r).toMatch(/_suppressProgress\s*=\s*\(typeof _deskIsTeacher/);
-    expect(r).toMatch(/_suppressProgress\s*\?\s*''\s*:\s*localLessonState\(/);
+    expect(r).toMatch(/_suppressProgress\s*&&\s*_localState\s*===\s*'partial'/);
+    expect(r).toMatch(/localLessonState\(\s*inf\.t\s*,\s*_gateMarks\s*\)/);   // still computed (done survives)
   });
-  it('paintLocalDoneCells also gates the overlay (so it does not come back after the cache warms)', () => {
+  it('paintLocalDoneCells does the same (so it does not come back after the cache warms)', () => {
     const p = fnBody(html, 'paintLocalDoneCells');
     expect(p).toMatch(/suppressProgress\s*=\s*\(typeof _deskIsTeacher/);
-    expect(p).toMatch(/suppressProgress\s*\?\s*''\s*:\s*localLessonState\(/);
+    expect(p).toMatch(/suppressProgress\s*&&\s*st\s*===\s*'partial'/);
   });
 });
 

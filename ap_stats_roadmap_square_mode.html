@@ -7072,7 +7072,8 @@ function paintLocalDoneCells() {
       // Greying + next-up — the flicker-free common path.
       c.classList.remove('dc-localdone', 'dc-localpartial', 'cal-current');
       if (topic) {
-        var st = suppressProgress ? '' : localLessonState(topic, marks);
+        var st = localLessonState(topic, marks);
+        if (suppressProgress && st === 'partial') st = '';   // teacher: drop browsing "partial", keep real "done"
         if (st) c.classList.add(st === 'done' ? 'dc-localdone' : 'dc-localpartial');
         if (topic === nextUp) c.classList.add('cal-current');
       }
@@ -16631,7 +16632,11 @@ function rCal(){
               // marks (apstats_desk_marks_, read once into _gateMarks), NOT the
               // REGISTRY readiness above. This reflects the signed-in student --
               // or, in Preview-as-student, the teacher -- so a done lesson greys.
-              const _localState = _suppressProgress ? '' : localLessonState(inf.t, _gateMarks);
+              // For a TEACHER viewing as themselves, drop only the 'partial' (browsing-visit
+              // noise the teacher flagged) — but KEEP 'done': a teacher's REAL completions
+              // should still grey + show ✓ (they finished it). Students keep both.
+              let _localState = localLessonState(inf.t, _gateMarks);
+              if (_suppressProgress && _localState === 'partial') _localState = '';
               if (_localState) {
                 c.classList.add(_localState === 'done' ? 'dc-localdone' : 'dc-localpartial');
               }
