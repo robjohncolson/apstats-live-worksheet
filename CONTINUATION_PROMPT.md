@@ -95,16 +95,19 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
   `storage` sign-out listener; `roster-client.js` synced to the Desk's. **LEFT (user chose cheap-wins): cr focus-roster-
   refresh + clear stale peer `classData` on identity change.** Audit detail in `project_cr_identity_unify.md`.
 
-## ⏭ NEXT — grade-integrity modeling program: ALL 3 TARGETS DONE. Only an optional follow-on remains. DOGE still PAUSED.
+## ⏭ NEXT — grade-integrity modeling program COMPLETE (no open code task). DOGE still PAUSED.
 
-> **GRADE-INTEGRITY MODELING (s13 — the theme).** Model app areas as state machines / property tests over the real logic to FIND
-> or VERIFY integrity bugs. SHIPPED s13 (all pushed): grade engine (Layers A/B/C, 3 fixes + F4 averted), appeal machine (F5/F6 fixed
-> across all 69 worksheets, `3029dae`), lesson gating (modeled → SOUND, `d48bf32`), **Schoology reconciliation (modeled → SOUND,
-> idempotent + dup-safe, `43c3089`).** **No target left.** **Optional follow-on (not started):** a LIVE-CODE harness so the appeal +
-> gating + schoology-CDP models drive the REAL functions (stubbed globals) — they currently model the DOCUMENTED logic, not the live
-> code (Layer A already drives the real engine; these don't yet). The recipe that works: identify/extract the pure logic → fixture +
-> generator → assert invariants (exhaustive when the state space is small, fast-check/seeded-random when large) → pin findings → fix.
-> Findings doc: `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md`. **Do NOT model DOGE (paused/deprecating).**
+> **GRADE-INTEGRITY MODELING (s13 — DONE).** Model app areas as state machines / property tests over the real logic to FIND or
+> VERIFY integrity bugs. SHIPPED s13 (all pushed): grade engine (Layers A/B/C, 3 fixes + F4 averted), appeal machine (F5/F6 fixed
+> across all 69 worksheets, `3029dae`), lesson gating (modeled → SOUND, `d48bf32`), Schoology reconciliation (modeled → SOUND,
+> idempotent + dup-safe, `43c3089`), AND the **LIVE-CODE harnesses** (`21219ff`): `tests/lesson-gating-live.test.js` +
+> `tests/appeal-clamp-live.test.js` extract the REAL Desk/worksheet functions (brace-match + `new Function` with stubbed globals)
+> and run the invariants against the shipping code — the real gate matches the model and the real appeal clamp is verified
+> end-to-end. **No open task in this program.** The reusable recipe: identify/extract the pure logic → fixture + generator → assert
+> invariants (exhaustive when the state space is small, fast-check/seeded-random when large) → pin findings → fix → (optional)
+> live-code harness via the `fnBody` extractor. **Possible NEW targets if reopened:** Live Classroom poll/vote protocol (wants TLA+,
+> not fast-check), or the DOGE wallet conservation math (high-value but the feature is paused). Findings doc:
+> `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md`. **Do NOT model DOGE (paused/deprecating).**
 
 > **DOGE/candy status as of s12:** migration `0021` (gifting) is **RUN**; **Abraham Ladny (`olive_sloth`, PeriodX) + a few other
 > students are ENROLLED**. The teacher is **NOT handing out / registering paper wallets** and is leaning toward **deprecating the whole
