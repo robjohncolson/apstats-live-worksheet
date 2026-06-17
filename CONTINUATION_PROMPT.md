@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — Desk CALENDAR cohesion + a11y + tactility polish SHIPPED ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
+# CONTINUATION PROMPT — Desk CALENDAR polish COMPLETE (rounds 1+2: full proposal queue shipped) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14).
-> follow-alongs HEAD = `0db94a2`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2).
+> follow-alongs HEAD = `10ef5f3`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -43,12 +43,18 @@ onboarding refactor, UNCHANGED — desk-gating-fixes / desk-self-signup / desk-s
   those tests. The **synthwave `.cal-current`** (#ff2e97 + calCurrentPulse + reduced-motion) is a FROZEN tested contract —
   do NOT swap it (reconciliation options are in the proposal doc). `poll-archive-desk.test.js` test 30 does
   `indexOf('.poll-dot {')` so any earlier `.poll-dot {` token breaks it — order such selectors as `.poll-dot, .status-dot {`.
-- **⏭ NEEDS-YOUR-NOD QUEUE (`CALENDAR_POLISH_PROPOSAL.md`, NOT shipped — several are CHOICES):** (8) make hover ADDITIVE
-  instead of full-black-invert [recommended — the biggest felt incoherence]; (9) synthwave reconciliation KEEP/TONE/
-  MARCHING-ANTS/GOLD [a `data-calcur` localStorage preview toggle can ship without your nod]; (10) date-aware corner grammar
-  for the two badge collisions; (11) colorblind shape glyphs; (12) mobile subtitle clamp; (13) honest pace-aware progress
-  label; (14) the DEAD tooltip links (`.tip{pointer-events:none}` — real bug: the Worksheet/Quiz/Blooket anchors can never
-  be clicked); (15) calm today heartbeat [recommend skip]; (16) one-ring priority (keep today 2px).
+- **✅ ROUND 2 (`10ef5f3`) — ALL 9 needs-your-nod items APPROVED + SHIPPED** ("all of it, per your judgement"). My calls:
+  (8) hover → **additive outline ring** (no more full-black invert wiping state cues); (9) synthwave → a **live "Up-next style"
+  switcher** in the legend (Neon default / Toned / Marching-ants / Gold), persisted to localStorage as `#cg[data-calcur]`,
+  alternatives layered AFTER the frozen `.cal-current` so the default is byte-identical + 46 frozen tests green — pick by feel;
+  (10) dropped the redundant ◀TODAY chip (frame signals today) + `2x`→bottom-center; (11) **colorblind glyphs** ✓/◐/▶ via
+  `::after` reusing the tooltip symbols (+white halo, shown on touch); (12) mobile clamps the subtitle (ellipsis) not hides it;
+  (13) **honest progress** — a pure unit-tested `_computePace` (deduped DOT-LESSON universe) drives a pace label + done-fill,
+  fail-open, recomputed when the /grade cache warms; (14) tooltip → honest open-hint (the cursor-following links were dead);
+  (15) today seated forward **statically** (no idle animation); (16) one-ring — today keeps its 2px frame, glyph carries state.
+  A 2nd 3-agent adversarial review (verdict *fix-first*) caught 2 real majors before push — an inflated progress denominator
+  (specials counted as lessons → fixed via `_computePace` + execution test) and a legend swatch that mis-taught ✓ as "Ahead"
+  (Done swatch now uses the real `dc-done`). `tests/calendar-cohesion.test.js` now **42**. **No open calendar task.**
 
 ## ⏭ SESSION 13 SHIPPED (2026-06-16) — grade-policy SIMULATOR + 3 perverse-incentive fixes + appeal/gating state-machine models
 
