@@ -52,7 +52,7 @@ describe('Item 1 -- legend decodes overlay states (not just unit colors)', () =>
     const b = fnBody(html, 'updateLegend');
     expect(b).toMatch(/legend-st cell-today/);
     expect(b).toMatch(/legend-st cal-current/);
-    expect(b).toMatch(/legend-st cell-u1 legend-st-done/);
+    expect(b).toMatch(/legend-st cell-u1 dc-done/);   // real done class → carries the ✓ glyph
     expect(b).toMatch(/legend-st cell-u1 dc-localpartial/);
     expect(b).toMatch(/legend-st cell-u1 dc-ahead/);
     expect(b).toMatch(/legend-st cell-pc/);
@@ -87,7 +87,152 @@ describe('Item 2 -- cells are keyboard-focusable + activatable', () => {
   });
   it('a classic-Mac dotted :focus-visible ring exists, with a light variant for dark cells', () => {
     expect(html).toMatch(/\.dc:focus-visible\s*\{[^}]*outline:[^}]*dotted/);
-    expect(html).toMatch(/\.cell-exam:focus-visible\s*,\s*\.cell-pc:focus-visible\s*\{[^}]*outline-color:\s*var\(--white\)/);
+    // white ring on dark cells, for BOTH keyboard focus and hover
+    expect(html).toMatch(/\.cell-exam:focus-visible[^{}]*\{[^}]*outline-color:\s*var\(--white\)/);
+    expect(html).toMatch(/\.cell-pc:hover[^{}]*\{[^}]*outline-color:\s*var\(--white\)/);
+  });
+});
+
+// ═══ Round 2 (needs-your-nod items #8-#16, user-approved) ═══════════════════
+
+describe('Item 8 -- additive hover (no full-black invert)', () => {
+  it('.dc:hover layers an outline ring instead of inverting to solid black', () => {
+    expect(html).toMatch(/\.dc:hover\s*\{[^}]*outline:\s*2px solid var\(--black\)/);
+    // the old destructive invert is gone
+    expect(html).not.toMatch(/\.dc:hover\s*\{[^}]*background-color:\s*var\(--black\)/);
+  });
+  it('summer hover keeps the amber bg (title stays dark, selector preserved for the summer test)', () => {
+    expect(html).toMatch(/\.wk-row\.wk-summer \.dc:hover \.tl\s*\{[^}]*color:\s*#6b5200/);
+    expect(html).not.toMatch(/\.wk-row\.wk-summer \.dc:hover\s*\{[^}]*background-color:\s*var\(--black\)/);
+  });
+});
+
+describe('Item 10 -- date-aware corner grammar', () => {
+  it('the redundant ◀TODAY corner chip is dropped (the frame signals today)', () => {
+    expect(html).not.toMatch(/\.cell-today::after/);
+    expect(html).not.toMatch(/content:\s*'\\25C0 TODAY'/);   // the chip's glyph is gone
+  });
+  it('today is seated forward (z-index) and keeps its 2px frame', () => {
+    expect(html).toMatch(/\.cell-today\s*\{[^}]*inset 0 0 0 2px var\(--black\)[^}]*z-index:\s*2/);
+  });
+  it('the 2x badge moves to bottom-center, clear of the corner dots', () => {
+    expect(html).toMatch(/\.dbl\s*\{[^}]*left:\s*50%[^}]*translateX\(-50%\)/);
+  });
+});
+
+describe('Item 11 -- colorblind state glyphs (shapes, not just hue)', () => {
+  it('done/in-progress/next-up render shape glyphs reusing the tooltip symbols', () => {
+    expect(html).toMatch(/\.dc-localdone::after,[^{]*\.dc-done::after[^{]*\{\s*content:\s*'\\2713'/); // ✓
+    expect(html).toMatch(/\.dc-localpartial::after,\s*\.dc-partial::after\s*\{\s*content:\s*'\\25D0'/); // ◐
+    expect(html).toMatch(/\.cal-current::after\s*\{\s*content:\s*'\\25B6'/); // ▶
+  });
+  it('glyph precedence is source-ordered so next-up wins over done over in-progress', () => {
+    const iPartial = html.indexOf("'\\25D0'");  // ◐
+    const iDone = html.indexOf("'\\2713'");     // ✓
+    const iNext = html.indexOf("'\\25B6'");     // ▶
+    expect(iPartial).toBeGreaterThan(-1);
+    expect(iDone).toBeGreaterThan(iPartial);
+    expect(iNext).toBeGreaterThan(iDone);
+  });
+});
+
+describe('Item 16 -- one ring per cell (today keeps its 2px frame)', () => {
+  it('a today cell drops the 3px state ring and re-asserts its 2px frame', () => {
+    expect(html).toMatch(/\.dc-done\.cell-today,[\s\S]*?\.dc-localpartial\.cell-today\s*\{[^}]*inset 0 0 0 2px var\(--black\)/);
+  });
+});
+
+describe('Item 9 -- up-next style switcher (default unchanged)', () => {
+  it('alternative styles are layered on #cg[data-calcur] AFTER the frozen rule', () => {
+    expect(html).toMatch(/#cg\[data-calcur="tone"\] \.cal-current/);
+    expect(html).toMatch(/#cg\[data-calcur="gold"\] \.cal-current/);
+    expect(html).toMatch(/#cg\[data-calcur="ants"\] \.cal-current/);
+    expect(html).toMatch(/@keyframes antsMarch/);
+  });
+  it('the alternatives honor reduced-motion', () => {
+    expect(html).toMatch(/prefers-reduced-motion[\s\S]*?#cg\[data-calcur="ants"\] \.cal-current::before\s*\{[^}]*animation:\s*none/);
+  });
+  it('setCalcurStyle persists + _applyCalcurStyle reflects the pick onto #cg', () => {
+    expect(html).toMatch(/function setCalcurStyle\s*\(/);
+    expect(html).toMatch(/function _applyCalcurStyle\s*\(/);
+    const b = fnBody(html, '_applyCalcurStyle');
+    expect(b).toMatch(/setAttribute\(\s*['"]data-calcur['"]/);
+    expect(b).toMatch(/localStorage\.getItem\(\s*CALCUR_KEY/);
+    expect(b).toMatch(/sel\.value\s*=\s*v/);   // re-sync the picker after updateLegend rebuilds it
+    // updateLegend renders the picker + applies the saved pick
+    const u = fnBody(html, 'updateLegend');
+    expect(u).toMatch(/id="calcur-pick"/);
+    expect(u).toMatch(/_applyCalcurStyle\(\)/);
+  });
+});
+
+describe('Item 12 -- mobile clamps the subtitle (does not hide it)', () => {
+  it('the ≤700px rule shows the subtitle clamped to one line + a taller cell', () => {
+    expect(html).toMatch(/\.dc \.tt\s*\{\s*display:\s*block;[^}]*text-overflow:\s*ellipsis/);
+    expect(html).toMatch(/\.dc\s*\{\s*padding:\s*3px;\s*min-height:\s*46px/);
+  });
+});
+
+describe('Item 13 -- honest pace-aware progress', () => {
+  it('rProg delegates to _computePace + draws a done-fill + a pace label', () => {
+    const b = fnBody(html, 'rProg');
+    expect(b).toMatch(/_computePace\(_orderedPeriodTopics\(\)/);
+    expect(b).toMatch(/prog-fill/);
+    expect(b).toMatch(/to catch up/);
+    expect(b).toMatch(/ahead/);
+    expect(b).toMatch(/lessons done/);
+  });
+  it('a .prog-fill CSS rule exists', () => {
+    expect(html).toMatch(/\.prog-fill\s*\{[^}]*position:\s*absolute/);
+  });
+  it('renderDoNowGrades recomputes rProg once the grade cache warms', () => {
+    const b = fnBody(html, 'renderDoNowGrades');
+    expect(b).toMatch(/rProg\(\)/);
+  });
+
+  // EXECUTE _computePace — the denominator must be the DEDUPED DOT-LESSON count, NOT every
+  // schedule cell (PC/poster/Welcome/baseline specials excluded). Regression guard for the
+  // round-2 review major #1 (the bug shipped green under string-only tests).
+  function loadComputePace(doneSet) {
+    const sandbox = {};
+    createContext(sandbox);
+    runInContext(
+      'function localLessonState(t){ return (' + JSON.stringify(doneSet || {}) + ')[t] ? "done" : ""; }\n' +
+      fnBody(html, '_computePace') + '\nthis.__p = _computePace;', sandbox);
+    return sandbox.__p;
+  }
+  it('_computePace counts ONLY deduped dot-lessons (specials + dups excluded from total)', () => {
+    const p = loadComputePace();
+    const topics = ['Welcome', 'U1-PC1', '1.1', '1.2', 'U1-Poster', '1.3', '1.1']; // specials + a dup 1.1
+    const res = p(topics, {}, [], 0, 'E');
+    expect(res.total).toBe(3);   // only 1.1, 1.2, 1.3
+    expect(res.done).toBe(0);
+  });
+  it('_computePace counts done + date-expected lessons over the same universe', () => {
+    const p = loadComputePace({ '1.1': 1, '1.2': 1 });
+    const topics = ['1.1', '1.2', '1.3'];
+    const S = [
+      [2026, 8, 1, null, { t: '1.1', u: 1 }],
+      [2026, 8, 2, null, { t: '1.2', u: 1 }],
+      [2026, 8, 2, null, { t: 'U1-PC1', kind: 'pc', u: 1 }],   // special — excluded from expected
+      [2026, 11, 1, null, { t: '1.3', u: 1 }],                  // future
+    ];
+    const today = +new Date(2026, 8, 15);
+    const res = p(topics, {}, S, today, 'E');
+    expect(res.total).toBe(3);
+    expect(res.done).toBe(2);       // 1.1, 1.2 done
+    expect(res.expected).toBe(2);   // 1.1, 1.2 due by today; 1.3 future; PC excluded
+  });
+});
+
+describe('Item 14 -- tooltip is honest (no dead links)', () => {
+  it('sTip drops the unclickable resource anchors and shows an open-hint instead', () => {
+    const b = fnBody(html, 'sTip');
+    expect(b).not.toMatch(/re\.urls\.worksheet/);
+    expect(b).not.toMatch(/Schoology Folder/);
+    expect(b).toMatch(/Click to open/);
+    // keeps the informative status line
+    expect(b).toMatch(/tt-status/);
   });
 });
 

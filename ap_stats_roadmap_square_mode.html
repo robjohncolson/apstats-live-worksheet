@@ -513,12 +513,13 @@
             display: inline-flex; align-items: center; justify-content: center;
             font-size: 10px; line-height: 1; vertical-align: middle; overflow: hidden;
         }
-        .legend-st-done { filter: grayscale(1); opacity: var(--cell-done-dim); }
         /* show the next-up MAGENTA / gold-ahead identity in the key WITHOUT the idle pulse */
         .legend-states .cal-current { animation: none; box-shadow: inset 0 0 0 2px #ff2e97; outline: none; }
         /* inset-only in the key (the live .dc-ahead's outer glow would bleed past the 14px swatch) */
         .legend-states .dc-ahead { animation: none; box-shadow: inset 0 0 0 3px #d4af00; }
         .legend-states .legend-st > * { cursor: inherit; }   /* dots are non-interactive in the key */
+        .legend-calcur { text-align: center; margin-top: 6px; color: var(--plat-lo); }
+        .legend-calcur select { font-family: inherit; font-size: 10px; vertical-align: middle; }
         .per-tog { display: flex; justify-content: center; gap: 14px; margin-bottom: 14px; align-items: center; }
 
         /* ── Calendar Grid ──────────────────────────── */
@@ -591,8 +592,11 @@
             /* stepped (pixel-crisp) hover flip — kills the 0ms flicker when sweeping the grid */
             transition: background-color 60ms steps(2), color 60ms steps(2);
         }
-        .dc:hover { background-color: var(--black); color: var(--white); z-index: 2; }
-        .dc:hover .tt, .dc:hover .dn { opacity: 1; color: var(--white); }
+        /* Additive hover: a crisp inset outline ring that LAYERS on top — it no longer
+           inverts the whole cell to solid black (which wiped the unit pastel, the done
+           greyscale, and the amber/green/neon rings mid-sweep). Every state cue stays visible. */
+        .dc:hover { outline: 2px solid var(--black); outline-offset: -2px; z-index: 2; }
+        .dc:hover .tt, .dc:hover .dn { opacity: 1; }
         /* press bevel only on PLAIN cells — pressing a state-ring cell (next-up / done /
            partial / ahead) must NOT replace its ring box-shadow with the grey bevel. */
         .dc:not(.cal-current):not(.dc-done):not(.dc-localdone):not(.dc-ahead):not(.dc-partial):not(.dc-localpartial):active { box-shadow: inset 1px 1px 0 rgba(0,0,0,0.4); }
@@ -600,7 +604,9 @@
            INSIDE the cell (negative offset, since .dc is overflow:hidden) and above
            cal-current's z-index:3. :focus-visible keeps mouse clicks ring-free. */
         .dc:focus-visible { outline: 2px dotted var(--black); outline-offset: -3px; z-index: 4; }
-        .cell-exam:focus-visible, .cell-pc:focus-visible { outline-color: var(--white); }
+        /* white ring on the dark cells (exam-black / PC-red / orient-blue / baseline-teal) */
+        .cell-exam:focus-visible, .cell-pc:focus-visible, .cell-orient:focus-visible, .cell-baseline:focus-visible,
+        .cell-exam:hover, .cell-pc:hover, .cell-orient:hover, .cell-baseline:hover { outline-color: var(--white); }
         @media (prefers-reduced-motion: reduce) { .dc, .cal-nav-btn { transition: none; } }
         .dc .dn { font-size: 9px; margin-bottom: 2px; }
         .dc .tl { font-size: 10px; line-height: 1.2; margin-top: 1px; font-weight: bold; }
@@ -644,16 +650,11 @@
         .cell-orient .tl::before { content: '\1F44B '; }   /* waving hand */
         .cell-baseline { background: #16a085; color: #fff; }
         .cell-baseline .tl::before { content: '\1F4CA '; }  /* bar chart */
-        .cell-today { box-shadow: inset 0 0 0 2px var(--black); }
-        .cell-today::after {
-            content: '\25C0 TODAY';
-            position: absolute; top: 0; right: 0;
-            font-size: 8px;
-            background: var(--white); color: var(--black);
-            border-bottom: 1px solid var(--black);
-            border-left: 1px solid var(--black);
-            padding: 1px 3px;
-        }
+        /* Today: a crisp 2px inset frame (thinner than the 3px state rings — a deliberate
+           hierarchy cue) seated slightly forward. The old "◀TODAY" corner chip is dropped:
+           the frame already signals today, the countdown strip names the date, and the
+           top-right corner is now free for the state glyph / lock (date owns top-left). */
+        .cell-today { box-shadow: inset 0 0 0 2px var(--black); z-index: 2; }
         .cell-past { opacity: var(--cell-past-dim); }
         /* Sequential lesson gate (LESSON_GATE_BUILD.md) — a locked lesson is
            dimmed with a small lock badge; still clickable to show the why. */
@@ -686,6 +687,23 @@
         .dc-localdone:not(.cell-today):not(.cal-current) {
             filter: grayscale(1); opacity: var(--cell-done-dim);
         }
+        /* Colorblind-safe STATE GLYPHS — a SHAPE, not just a hue, so done/in-progress/
+           next-up survive the greyscale filter + red-green colorblindness (~8% of boys).
+           Reuses the tooltip's symbols (✓ done · ◐ in progress · ▶ next up). Top-right
+           (the date owns top-left, the dots own the bottom). A locked cell shows 🔒
+           instead. Source-ordered so the higher-priority glyph wins when a cell has
+           several states (in-progress < done < next-up). */
+        .dc-localpartial::after, .dc-partial::after,
+        .dc-localdone::after, .dc-done::after, .dc-ahead::after,
+        .cal-current::after {
+            position: absolute; top: 1px; right: 2px; z-index: 2;   /* above the ants border */
+            font-size: 10px; line-height: 1; font-weight: bold;
+            color: var(--black); pointer-events: none;
+            text-shadow: 0 0 2px var(--white), 0 0 1px var(--white);   /* hue-agnostic halo */
+        }
+        .dc-localpartial::after, .dc-partial::after { content: '\25D0'; }                  /* ◐ in progress */
+        .dc-localdone::after, .dc-done::after, .dc-ahead::after { content: '\2713'; }       /* ✓ done */
+        .cal-current::after { content: '\25B6'; }                                           /* ▶ next up */
         .cal-current {
             z-index: 3;
             outline: 2px solid #0ff0fc; outline-offset: -2px;
@@ -706,6 +724,48 @@
                                 0 0 22px 7px rgba(15, 240, 252, 0.62); }
         }
         @media (prefers-reduced-motion: reduce) { .cal-current { animation: none; } }
+        /* One ring per cell (#16): a TODAY cell keeps its crisp 2px frame and lets the
+           ✓/◐ glyph carry done / in-progress, instead of stacking a 3px state ring on
+           the 2px frame (the muddy double-stroke). cal-current keeps its neon on today. */
+        .dc-done.cell-today, .dc-localdone.cell-today,
+        .dc-partial.cell-today, .dc-localpartial.cell-today {
+            box-shadow: inset 0 0 0 2px var(--black);
+        }
+        /* ── "Up next" style switcher (#9) — alternatives layered AFTER the pinned neon,
+           so the DEFAULT (no [data-calcur]) is byte-identical + all 46 frozen tests green.
+           setCalcurStyle() sets #cg[data-calcur] + persists the pick in localStorage. */
+        #cg[data-calcur="tone"] .cal-current {
+            outline: none;
+            box-shadow: inset 0 0 0 3px #ff2e97, 0 0 6px 1px rgba(255,46,151,0.5);
+            animation: calCurrentTone 2.2s ease-in-out infinite;
+        }
+        @keyframes calCurrentTone {
+          0%,100% { box-shadow: inset 0 0 0 3px #ff2e97, 0 0 5px 0 rgba(255,46,151,0.4); }
+          50%     { box-shadow: inset 0 0 0 3px #ff2e97, 0 0 9px 2px rgba(255,46,151,0.6); }
+        }
+        #cg[data-calcur="gold"] .cal-current {
+            outline: none;
+            box-shadow: inset 0 0 0 3px #d4af00, 0 0 9px 2px #ffcf33;
+            animation: dcAheadPulse 1.8s ease-in-out infinite;
+        }
+        #cg[data-calcur="ants"] .cal-current { outline: none; box-shadow: none; animation: none; }
+        #cg[data-calcur="ants"] .cal-current::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+            background:
+              linear-gradient(90deg, var(--black) 50%, transparent 0) repeat-x,
+              linear-gradient(90deg, var(--black) 50%, transparent 0) repeat-x,
+              linear-gradient(0deg, var(--black) 50%, transparent 0) repeat-y,
+              linear-gradient(0deg, var(--black) 50%, transparent 0) repeat-y;
+            background-size: 6px 2px, 6px 2px, 2px 6px, 2px 6px;
+            background-position: 0 0, 0 100%, 0 0, 100% 0;
+            animation: antsMarch .5s linear infinite;
+        }
+        @keyframes antsMarch { to { background-position: 12px 0, -12px 100%, 0 -12px, 100% 12px; } }
+        @media (prefers-reduced-motion: reduce) {
+          #cg[data-calcur="tone"] .cal-current,
+          #cg[data-calcur="gold"] .cal-current { animation: none; }
+          #cg[data-calcur="ants"] .cal-current::before { animation: none; }
+        }
         .cal-qband {
             padding: 3px 8px; font-size: 10px; font-weight: bold;
             background: var(--black); color: var(--white);
@@ -718,11 +778,11 @@
            hover is preserved explicitly so summer cells still invert on hover. */
         .wk-row.wk-summer .dc { background: #fff3d6; }
         .wk-row.wk-summer .dc.cell-noclass { background: #fbf3df; }
-        .wk-row.wk-summer .dc:hover { background-color: var(--black); }
         .wk-row.wk-summer .dc .tl { color: #6b5200; }
-        .wk-row.wk-summer .dc:hover .tl { color: var(--white); }   /* title readable on the black hover bg */
+        .wk-row.wk-summer .dc:hover .tl { color: #6b5200; }   /* additive hover keeps the amber bg → title stays dark */
         .wk-row.wk-summer .wk-lbl { color: #9a7a1c; font-weight: bold; }
-        .dbl { position: absolute; bottom: 2px; right: 4px; font-size: 9px; font-weight: bold; }
+        /* 2x double-topic badge → bottom-CENTER, clear of the bottom-corner dots */
+        .dbl { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: bold; }
 
         /* ── Progress ───────────────────────────────── */
         .prog-area { padding: 4px 8px 10px; }
@@ -739,6 +799,8 @@
         }
         .prog-seg:last-of-type { border-right: none; }
         .prog-mark { position: absolute; top: -3px; width: 2px; height: 20px; background: var(--black); z-index: 5; }
+        /* actual-completion fill (#13) — a darkening overlay, no new hue, under the pace mark */
+        .prog-fill { position: absolute; top: 0; left: 0; height: 100%; background: rgba(0,0,0,0.16); pointer-events: none; z-index: 1; }
         .prog-lbl { text-align: center; font-size: 10px; margin-top: 6px; }
 
         /* ── Tooltip ────────────────────────────────── */
@@ -1037,8 +1099,11 @@
             .app-icon { display: none !important; }
             .wk-row, .hdr-row { grid-template-columns: 40px repeat(5, 1fr); }
             .wk-lbl { font-size: 8px; padding-right: 4px; }
-            .dc { padding: 3px; min-height: 40px; }
-            .dc .tl { font-size: 9px; } .dc .tt { display: none; }
+            .dc { padding: 3px; min-height: 46px; }   /* taller so title + clamped subtitle + glyph don't clip */
+            .dc .tl { font-size: 9px; }
+            /* clamp the subtitle to one line instead of HIDING it — touch has no hover tooltip,
+               so this is the only place a phone student reads the topic name. */
+            .dc .tt { display: block; font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .poll-dot, .status-dot { width: 5px; height: 5px; }   /* shrink dots on 40px cells */
             .dbl { display: none; }   /* drop the 2x text — survives in tooltip + aria-label */
             .cd-strip { gap: 6px; }
@@ -7246,6 +7311,9 @@ async function renderDoNowGrades(baseUrl, token) {
     // lesson's lock state actually flips (never on a plain poll). typeof-guarded
     // so the existing vm-test of renderDoNowGrades doesn't need the painter.
     if (typeof paintLocalDoneCells === 'function') paintLocalDoneCells();
+    // #13: the Unit-Progress done-fill + pace label read the same synced scores —
+    // recompute now that the /grade cache is warm (first rCal ran before this).
+    if (typeof rProg === 'function') rProg();
     var quarters = data.quarters || {};
     _gradeQuartersCache = quarters; // cache for the "Why so low?" coach
     _gradeGradebookCache = data.gradebook || null; // cache for the "My Gradebook" modal
@@ -8499,7 +8567,7 @@ function updateLegend(def){
   h+='<details class="legend-states"><summary>What the marks mean</summary><div class="legend-states-grid">'
     +'<div class="legend-item"><span class="legend-st cell-today"></span>Today</div>'
     +'<div class="legend-item"><span class="legend-st cal-current"></span>Up next</div>'
-    +'<div class="legend-item"><span class="legend-st cell-u1 legend-st-done"></span>Done</div>'
+    +'<div class="legend-item"><span class="legend-st cell-u1 dc-done"></span>Done</div>'
     +'<div class="legend-item"><span class="legend-st cell-u1 dc-localpartial"></span>In progress</div>'
     +'<div class="legend-item"><span class="legend-st cell-u1 dc-ahead"></span>Ahead</div>'
     +'<div class="legend-item"><span class="legend-st cell-locked">🔒</span>Locked</div>'
@@ -8507,8 +8575,35 @@ function updateLegend(def){
     +'<div class="legend-item"><span class="legend-st cell-poster"></span>Poster</div>'
     +'<div class="legend-item"><span class="legend-st cell-u1"><span class="status-dot status-ready"></span></span>Ready</div>'
     +'<div class="legend-item"><span class="legend-st cell-u1"><span class="poll-dot"></span></span>Class poll</div>'
-    +'</div></details>';
+    +'</div>'
+    // #9 — let the student/teacher choose the "Up next" cell style (the neon is loud;
+    // these alternatives are layered after the frozen rule, default unchanged).
+    +'<div class="legend-calcur">Up-next style: '
+    +'<select id="calcur-pick" onchange="setCalcurStyle(this.value)">'
+    +'<option value="">Neon (default)</option>'
+    +'<option value="tone">Toned neon</option>'
+    +'<option value="ants">Marching ants</option>'
+    +'<option value="gold">Gold</option>'
+    +'</select></div>'
+    +'</details>';
   el.innerHTML=h;
+  if(typeof _applyCalcurStyle==='function') _applyCalcurStyle();
+}
+// "Up next" cell style (#9) — KEEP (default neon) / tone / ants / gold. Persisted in
+// localStorage, applied as #cg[data-calcur]; the alternative CSS is layered AFTER the
+// frozen .cal-current rule so the default (no attribute) is byte-identical + test-green.
+var CALCUR_KEY = 'apstats_calcur_style';
+function setCalcurStyle(v){
+  try{ if(v) localStorage.setItem(CALCUR_KEY, v); else localStorage.removeItem(CALCUR_KEY); }catch(_){}
+  _applyCalcurStyle();
+}
+function _applyCalcurStyle(){
+  var v='';
+  try{ v = localStorage.getItem(CALCUR_KEY) || ''; }catch(_){}
+  var cg=document.getElementById('cg');
+  if(cg){ if(v) cg.setAttribute('data-calcur', v); else cg.removeAttribute('data-calcur'); }
+  var sel=document.getElementById('calcur-pick');
+  if(sel) sel.value=v;
 }
 
 /* ═══ MENU SYSTEM ═══ */
@@ -16648,6 +16743,23 @@ function rCD(){
     const exL=document.querySelector("#cd-exam .lbl"); if(exL) exL.textContent='Exam Day';
     const dL=document.querySelector("#cd-days .lbl"); if(dL) dL.textContent='Days to Exam';
 }
+// Pure pace math (#13) — count DONE vs EXPECTED-by-today over the deduped DOT-LESSON
+// universe ONLY. `topics` (from _orderedPeriodTopics) also carries PC/poster/Welcome/
+// baseline specials, which would inflate the denominator — so dot-filter + dedup both
+// the done set AND the expected set, keeping done/total/expected over one apples-to-apples
+// universe (the real lessons the calendar greys). Pure + side-effect-free → unit-testable.
+function _computePace(topics, marks, sCells, todayTs, period){
+    const isLesson = function(t){ return typeof t === 'string' && /^\d+\.\d+/.test(t); };
+    const seen = {}, lessons = [];
+    for(const tp of (topics||[])){ if(isLesson(tp) && !seen[tp]){ seen[tp]=1; lessons.push(tp); } }
+    let done = 0;
+    for(const tp of lessons){ if(localLessonState(tp, marks)==='done') done++; }
+    const seenE = {}; let expected = 0;
+    for(const e of (sCells||[])){ const inf = period==='B' ? e[3] : e[4];
+        if(inf && typeof inf==='object' && isLesson(inf.t) && !seenE[inf.t]){ seenE[inf.t]=1;
+            if(+new Date(e[0],e[1],e[2]) <= todayTs) expected++; } }
+    return { done: done, total: lessons.length, expected: expected };
+}
 function rProg(){
     const t=tdy(),tk=document.getElementById("pb"),lb=document.getElementById("pl");
     const ut={},ud={};let tt=0,ds=0;
@@ -16662,7 +16774,30 @@ function rProg(){
     let h="";for(const u of uo){const c=ut[u]||0;if(!c)continue;
         h+=`<div class="prog-seg" style="width:${(c/tt*100).toFixed(1)}%;background:${uc[u]};color:${utc[u]}">${u}</div>`;}
     h+=`<div class="prog-mark" style="left:${tt?(ds/tt*100):0}%"></div>`;
-    tk.innerHTML=h;lb.textContent=Math.round(ds/tt*100)+"% Complete \u2014 "+ds+" of "+tt+" sessions";
+    tk.innerHTML=h;
+    // HONEST progress (#13): the prog-mark still shows the PACE line (date-elapsed), but the
+    // label + a done-fill now report ACTUAL completion from the SAME oracle the calendar greys
+    // cells with (localLessonState over the period's lesson topics). Fails OPEN to the old
+    // date-elapsed label when not signed in / not computable, and only says "to catch up" past
+    // a 2-lesson gap so a cold /grade cache (warmed later by renderDoNowGrades) never flashes "behind".
+    let _pace=null;
+    try{
+        if(typeof getStudentEmail==='function'&&getStudentEmail()
+           &&typeof _orderedPeriodTopics==='function'&&typeof localLessonState==='function'){
+            const _marks=(typeof getStudentMarks==='function')?getStudentMarks():{};
+            const _p=_computePace(_orderedPeriodTopics(),_marks,S,+t,cP);
+            if(_p.total)_pace=_p;
+        }
+    }catch(_){_pace=null;}
+    if(_pace){
+        const _f=document.createElement('div');_f.className='prog-fill';
+        _f.style.width=Math.round(_pace.done/_pace.total*100)+'%';tk.appendChild(_f);
+        const _d=_pace.done-_pace.expected;
+        const _word=_d>=2?(_d+' ahead'):_d<=-2?(Math.abs(_d)+' to catch up'):'On pace';
+        lb.textContent=_word+' \u2014 '+_pace.done+' of '+_pace.total+' lessons done';
+    }else{
+        lb.textContent=Math.round(ds/tt*100)+"% Complete \u2014 "+ds+" of "+tt+" sessions";
+    }
 }
 function uClock(){const n=new Date();let h=n.getHours(),m=n.getMinutes(),a=h>=12?"PM":"AM";h=h%12||12;document.getElementById("mclock").textContent=h+":"+(m<10?"0":"")+m+" "+a;}
 
@@ -16678,30 +16813,22 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         if(inf.db)h+='<div class="th">** Double topic day **</div>';
         const re=getRegistryEntry(inf.t);
         if(re){
-            let links='';
-            if(re.urls){
-                if(re.urls.worksheet)links+='<a href="'+re.urls.worksheet+'" target="_blank">📄 Worksheet</a>';
-                // Drills deprecated — removed 2026-05
-                if(re.urls.quiz)links+='<a href="'+re.urls.quiz+'" target="_blank">📝 Quiz</a>';
-                if(re.urls.blooket)links+='<a href="'+re.urls.blooket+'" target="_blank">🟦 Blooket</a>';
-            }
-            if(links)h+='<div class="tt-links">'+links+'</div>';
+            // The tooltip FOLLOWS the cursor (mTip) and is pointer-events:none, so any
+            // embedded link is unclickable. Show how to open the lesson instead of dead
+            // anchors; the real links live on the cell click + the day-grade modal.
+            h+='<div class="th" style="color:#2b6cb0">Click to open · double-click for grade</div>';
             const statusText=re.status==='ready'?'Ready ✓':re.status==='partial'?'Partial ◐':'Pending ○';
             h+='<div class="tt-status '+(re.status||'pending')+'">'+statusText+'</div>';
             var _allE=getAllRegistryEntries(inf.t);
-            var _syncStates=[];var _folderUrl=null;
+            var _syncStates=[];
             for(var _i=0;_i<_allE.length;_i++){var _ep=_allE[_i].periods&&_allE[_i].periods[cP];
                 if(_ep&&_ep.syncStatus)_syncStates.push(_ep.syncStatus);
-                if(_ep&&_ep.schoologyFolder&&!_folderUrl)_folderUrl=_ep.schoologyFolder;
             }
             if(_syncStates.length){
                 var _allPosted=_syncStates.every(function(s){return s==='posted'||s==='taught';});
                 var _somePosted=_syncStates.some(function(s){return s==='posted'||s==='taught';});
                 var _sl2=_allPosted?'Posted':_somePosted?'Partially Posted':'Scheduled';
                 h+='<div class="tt-status" style="color:#3b82f6">Schoology: '+_sl2+'</div>';
-            }
-            if(_folderUrl){
-                h+='<div class="tt-links"><a href="'+_folderUrl+'" target="_blank">📁 Schoology Folder</a></div>';
             }
         }
     }
