@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — Desk CALENDAR polish (rounds 1+2+teacher-feedback) ; ⏳ OPEN: marching-ants invisible (summer schedule not loading in-browser) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
+# CONTINUATION PROMPT — Desk CALENDAR polish COMPLETE (rounds 1+2 + teacher-feedback + dynamic-window/summer-next-up/Today-button) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2 + teacher-feedback 2a/2b/2c).
-> follow-alongs HEAD = `94e208e`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2 + teacher-feedback 2a–2d).
+> follow-alongs HEAD = `7252c99`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -81,20 +81,25 @@ onboarding refactor, UNCHANGED — desk-gating-fixes / desk-self-signup / desk-s
   to the `ants` default (change `CALCUR_DEFAULT` to re-default; un-hide `#legend-bar` to bring the switcher back).
   `tests/calendar-cohesion.test.js` now **47**; full root suite **7211 pass / 6 fail** (the same pre-existing onboarding 6).
 
-> **⏳ OPEN (THE next task) — marching ants is INVISIBLE to the teacher; root cause = the SUMMER SCHEDULE isn't loading in-browser.**
-> Teacher console diag returned `{calcur:"ants", nextUp:0, summerCells:0, today:false}`. The up-next *style* is armed
-> (`calcur:ants`) but there's **no `.cal-current` cell to paint**: summer didn't weave (`summerCells:0`), so today (2026-06-17)
-> falls off the 2-week focus window → the grid clamps to the first FALL weeks (Sept), where the teacher has no marked next-up.
-> The data file is FINE — `curl .../data/summer-schedule.json` → **200, valid**, `firstDayOfSchool:2026-09-01`, lessons 1.1.. with
-> dues — so `window._summerSchedule` is null in the teacher's browser DESPITE the 200. This is the **pre-existing "summer-schedule
-> fetch can fail silently"** issue (item 5 below), surfaced by the next-up/ants work — NOT a regression of the polish.
-> **AWAITING a 2nd console paste** (I gave a force-ants + diagnostic one-liner returning `summerLoaded` / `browserDate` /
-> `nextUpTopic` / `cP` / `cells`). Likely fixes once it lands: (1) make `_walletLoadSummerSchedule` robust / re-trigger + repaint
-> when `_summerSchedule` is still null at rCal time; AND/OR (2) a next-up **FALLBACK** so a focus cell always exists (e.g. today's
-> lesson, or the first not-past lesson) → marching ants always has a cell to render on. The force-ants console line proves the
-> style renders the instant a `.cal-current` cell exists. ⚠ This is the ONLY open calendar item — everything else in rounds
-> 1/2/2a/2b/2c is shipped + green. Loader: `_walletLoadSummerSchedule` (~L7191, fetches `data/summer-schedule.json` on
-> DOMContentLoaded, re-rCal on success); weave: `_summerWeeks()` (~L16448, gated on `_summerSchedule` + `today < firstDayOfSchool`).
+- **✅ ROUND 2d — greying fixed + marching ants now lands on the summer lesson (RESOLVED the prior OPEN item):**
+  (1) **GREYING (`62bc8e6` + `4596b99`, teacher-CONFIRMED):** the teacher's completed 1.1 (worksheet 73% + flashcards 93%)
+  wasn't greying — root = the /grade cache-cold RACE + the over-aggressive teacher-suppression. FIXED: suppress only browsing
+  `'partial'`, KEEP real `'done'`. Diag confirmed `complete_1_1:true, state_1_1:"done"`. Also the flashcards button labelled by
+  100% not the 80 gate → said "Improve (flashcards)" at 93%; now "Flashcards ✓ done — redo to improve" (`4596b99`).
+  (2) **ANTS / SUMMER↔FALL DISCONNECT (`7252c99`):** next-up was computed ONLY over FALL combined topics ("1.2+1.3"), which
+  never match the individual SUMMER cells ("1.1"/"1.2") → no summer cell ever got `cal-current`. (The first diag's `summerCells:0`
+  was a cache RACE; the 2nd showed `summerLoaded:true, nextUpTopic:"1.2+1.3"` — confirming the disconnect, not a load failure.)
+  Shipped the **WINDOW REDESIGN**: new `_orderedSummerTopics()` + summer-aware next-up (rCal + paintLocalDoneCells mark the
+  summer cell; the FALL `inf.t === _nextUpTopic` lines kept VERBATIM, summer is a separate else-if), a **DYNAMIC window**
+  (`CAL_FOCUS_WEEKS` now sized to span today→next-up, clamped [1,4]; AHEAD anchors today, BEHIND anchors the overdue lesson;
+  `_calStepWeeks` pages by the visible width), and a **Today** button (3rd nav child between the arrows, dims at offset 0).
+  Designed via a 4-lens workflow whose critique caught 2 blockers (summer head-start "Sept jump" + paging dead-end) → the
+  REVISED algo avoids both → a 3-agent review re-verified (live case 1.1-done→ants-on-1.2 traces; both blockers confirmed fixed)
+  → its 1 major (paintLocalDoneCells missing rCal's summer-active guard → would clobber the fall next-up OFF-season) folded via
+  a DOM-truth guard (`#cg .dc[data-summer="1"]`). ONE frozen calStep test rewritten (`*2`→`*_calStepWeeks`, authorized); all 46
+  other calendar-polish pins preserved VERBATIM. `tests/calendar-cohesion.test.js` now **57**; full root suite **7221 pass / 6**
+  (the pre-existing onboarding 6). **NO open calendar task.** Key fns: `_orderedSummerTopics()` (~L7015), rCal section 3/3b
+  (next-up-before-sizing + dynamic window), `calToday()`/`_calStepWeeks` (~L16426), `_walletLoadSummerSchedule` (~L7191).
 
 ## ⏭ SESSION 13 SHIPPED (2026-06-16) — grade-policy SIMULATOR + 3 perverse-incentive fixes + appeal/gating state-machine models
 
