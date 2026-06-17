@@ -1,9 +1,9 @@
-# CONTINUATION PROMPT — Desk CALENDAR polish COMPLETE (rounds 1+2 + teacher-feedback + dynamic-window/summer-next-up/Today-button) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
+# CONTINUATION PROMPT — CANDY economy REVIVED (avatar poke + 6-number materialized ledger + DOGE convert/materialize floors, s15) ; calendar initial-load fix ; cr identity #2 ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2 + teacher-feedback 2a–2d).
-> follow-alongs HEAD = `9b895df`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 15 — candy economy revived + rebuilt).
+> follow-alongs HEAD = `040726a`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
-> **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
+> **curriculum_render** (HEAD `6626dc3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
 > `C:/Users/rober/Downloads/Projects/school/curriculum_render`; ⚠ stage only own paths (it has many unrelated dirty files).
 > Teacher tests on the **public GH Pages URL** — commit+push promptly; `file://` is not a valid surface. Style:
@@ -12,6 +12,57 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 15 SHIPPED (2026-06-17) — calendar load-fix + cr identity #2 + CANDY economy REVIVED (poke + 6-number ledger + DOGE floors)
+
+fa HEAD `040726a`; cr HEAD `6626dc3`. **The candy/DOGE feature is REVIVED — the teacher is re-engaged and actively building it**
+(NOT deprecating). Every item below was adversarially reviewed (3-lens workflows) + pushed; the teacher tests on the public URL.
+
+1. **Calendar initial-load crop FIX (fa `e4d77f8`).** The dynamic focus window sized from a COLD `/grade` cache on first
+   paint → next-up resolved to an early/already-done lesson → the window cropped the true next lesson (self-corrected only after
+   the user paged the calendar). FIX: force ONE `rCal()` on the cold→warm `/grade` transition in `renderDoNowGrades`.
+   paintLocalDoneCells's lock-flip rCal escalation CAN'T cover it — it scans only RENDERED cells and the corrected next-up cell
+   is the one cropped out of the DOM. Mirrors the summer-schedule loader's one-time rCal. Calendar suites green.
+
+2. **cr identity cheap-wins #2 (curriculum_render `4314897`, branch `main`).** The two HOLEs left from `6c60965`:
+   **HOLE 4** focus/visibility roster refresh — and EXPOSED `window.refreshRosterStatus` (it was IIFE-local, so the s11 cross-tab
+   `storage` refresh + `_notifyAuthExpired` were silently no-op'ing). **HOLE 5** evict the stale peer cache on a genuine in-session
+   identity switch — clears the IDB **`peerCache` store** (the review caught that `localStorage.removeItem('classData')` ALONE is a
+   no-op on the primary IDB path: peers live in the `peerCache` store read by `rebuildClassDataView`). Gated so a same-user reload
+   keeps its warm cache. cr suite 1415/8 baseline.
+
+3. **CANDY POKE (fa `b077e97` + cr `6626dc3`).** Tap a peer's avatar in the Live Classroom → send 1 candy (Facebook-poke style):
+   optimistic "Sent 1🍬 · Undo" (3s, commit DEFERRED so Undo needs no server reversal) → real `POST /wallet/gift` → COSMETIC
+   `candy_gift_received` relayed over the cr classroom WS so the recipient sees a toast (USERNAME ONLY — no real names; balance is
+   always server-truth so a spoof can't mint candy). Reuses the existing gift backend + the avatar click→username hit-test in
+   `classroom-board.js` + the toast system. Fixed 1 candy; per-recipient ~10min cooldown (armed OPTIMISTICALLY pre-POST to close a
+   double-tap race) on top of the server 20/day cap. cr-server adds a `candy_gift_received` case → `broadcastToClients` (global,
+   like `user_online`; clients filter by `toUsername`). `tests/candy-poke.test.js` (11). Spec: `CANDY_POKE_SPEC.md`.
+
+4. **CANDY LEDGER — "materialized candy" 6-number model (fa `bdb7f8d`; migration `0022` USER-RUN — ✅ TEACHER RAN IT).**
+   `Earned + Received = Gifted + Converted + Materialized + Owed`. **Spendable === Owed** (the un-realized pool IS what's free to
+   gift/convert), so the spend guard subtracts MATERIALIZED (`candy_given`), NOT the retired `candy_eaten`. **NO new columns** —
+   all six map to existing data (Materialized = `candy_given`). **"Eat" RETIRED** (`/wallet/eat`→no-op; `candy_eaten` now vestigial).
+   `mark-given` cap re-based to Owed-eligible (Earned+Received−Gifted−Converted), monotonic-safe. Students see "N earned · M in hand
+   · O still coming" (the wallet is now ON by default for students). Dashboard "Owed 🍬" worklist + 6-number tooltip-on-hover +
+   identity-based overspend ⚠. **`0022_retire_candy_eaten.sql` = CREATE OR REPLACE doge_spend/doge_gift (candy_eaten→candy_given in
+   the 3 spendable guards; no columns) — ALREADY RUN.** Spec: `CANDY_LEDGER_SPEC.md`.
+
+5. **DOGE convert-floor + 5-DOGE materialize threshold (fa `040726a`, NO migration).** Convert floor is now DYNAMIC = 1 DOGE's
+   worth of candy at the live price (`minConvertCandy` = `candyPerDoge` ≈ 2.4; floats with DOGE/USD), replacing the fixed 5-candy
+   min — a kid banks fractional DOGE. New `MIN_MATERIALIZE_DOGE=5`: in-app DOGE only goes ON-CHAIN once UNSENT ≥ 5 (no dust sends);
+   dashboard ✓send arms only at ≥5 (else "needs 5 to send"), `planSends` skips sub-5 (reported, accruing), student sees
+   "(goes on-chain at 5 Ɖ)". `mark-sent` keeps a manual override below 5. Conservation unchanged.
+
+- **TEACHER DECISIONS this session:** **#1 (Live Classroom poll/vote modeling) = DEPRECATED** ("too extra", parked far back).
+  **#2 (cr identity cheap-wins) = SHIPPED** (above). **#3 (Schoology UID coverage) = DEFERRED to ~Sept 1** — it becomes necessary
+  when grades sync to Schoology; the teacher doesn't have `ROSTER_TEACHER_SECRET` and is fine trading that security for smoothness
+  until then. Do it LAST. **CANDY/DOGE = REVIVED**, actively built (poke + materialized ledger) — do NOT treat it as paused.
+  The mental model: **candy is the social/delight currency** (earn → gift via avatar poke → teacher materializes physical candy
+  weekly from the dashboard Owed worklist); **DOGE is the optional appreciating-asset lesson** (convert candy at the 1-DOGE-worth
+  floor → DOGE accrues in-app → materializes on-chain at 5 DOGE).
+- **CANDY LEDGER Phase 2 (OPTIONAL, NOT built):** a weekly "to give THIS WEEK" grouping needs ONE additive column
+  `last_materialized_at timestamptz` (the only further migration). Today the running **Owed** column already serves as the worklist.
 
 ## ⏭ SESSION 14 SHIPPED (2026-06-17) — Desk CALENDAR cohesion + accessibility + tactility polish
 
@@ -188,7 +239,7 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
   `storage` sign-out listener; `roster-client.js` synced to the Desk's. **LEFT (user chose cheap-wins): cr focus-roster-
   refresh + clear stale peer `classData` on identity change.** Audit detail in `project_cr_identity_unify.md`.
 
-## ⏭ NEXT — grade-integrity modeling program COMPLETE (no open code task). DOGE still PAUSED.
+## ⏭ NEXT — candy economy REVIVED + shipped (poke + 6-number ledger + DOGE floors, see s15 ↑). Calendar + grade-integrity COMPLETE.
 
 > **GRADE-INTEGRITY MODELING (s13 — DONE).** Model app areas as state machines / property tests over the real logic to FIND or
 > VERIFY integrity bugs. SHIPPED s13 (all pushed): grade engine (Layers A/B/C, 3 fixes + F4 averted), appeal machine (F5/F6 fixed
@@ -199,15 +250,19 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
 > end-to-end. **No open task in this program.** The reusable recipe: identify/extract the pure logic → fixture + generator → assert
 > invariants (exhaustive when the state space is small, fast-check/seeded-random when large) → pin findings → fix → (optional)
 > live-code harness via the `fnBody` extractor. **Possible NEW targets if reopened:** Live Classroom poll/vote protocol (wants TLA+,
-> not fast-check), or the DOGE wallet conservation math (high-value but the feature is paused). Findings doc:
-> `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md`. **Do NOT model DOGE (paused/deprecating).**
+> not fast-check — but DEPRECATED per s15), or the **candy/DOGE wallet conservation math** — the 6-number identity
+> `Earned+Received=Gifted+Converted+Materialized+Owed` is now LIVE + adversarially reviewed; a live-code differential harness over
+> `deriveBalances`/`doge_spend`/`doge_gift` is a strong target. Findings doc: `GRADE_SIMULATION_FINDINGS.md`; memory:
+> `project_grade_simulator.md`. (DOGE is no longer "paused" — see s15.)
 
-> **DOGE/candy status as of s12:** migration `0021` (gifting) is **RUN**; **Abraham Ladny (`olive_sloth`, PeriodX) + a few other
-> students are ENROLLED**. The teacher is **NOT handing out / registering paper wallets** and is leaning toward **deprecating the whole
-> candy + Dogecoin feature** ("seems too extra"). All the code (watch-only chain, gifting, disbursement, sender) stays in place — it's
-> harmless when nobody registers an address — pending that decision. **Do NOT surface DOGE go-live items unless the teacher reopens it.**
-> If revived, the only remaining steps are: print the wallet sheet → register each address in the dashboard (Reward Disbursement) →
-> DRY-RUN `node tools/doge-send.mjs` (CC plans only; `--send` is the teacher's deliberate, irreversible call).
+> **DOGE/candy status (UPDATED s15 — REVIVED):** migrations `0019` / `0021` / `0022` are **RUN**. The candy economy is the
+> teacher's ACTIVE focus: avatar **poke** gifting + the **6-number materialized ledger** (candy earned → owed → materialized
+> weekly from the dashboard Owed worklist) + **DOGE** as the optional convert/materialize layer (1-DOGE-worth convert floor,
+> 5-DOGE on-chain materialize). The teacher leaned toward deprecating in s12 but REVIVED + rebuilt it in s15 — **do NOT treat it as
+> paused.** Still **NOT physically handing out paper wallets / registering addresses** (the on-chain DOGE go-live stays OPTIONAL),
+> but the in-app candy ledger + poke are LIVE and in use. If on-chain go-live is wanted: print the wallet sheet → register each
+> address (Reward Disbursement) → DRY-RUN `node tools/doge-send.mjs` (CC plans only; `--send` is the teacher's deliberate,
+> irreversible call; now batches at **≥5 DOGE** per the materialize threshold).
 
 The original DOGE go-live checklist is kept below for reference, but items 1–2 are DONE and item 3 is on hold per the note above.
 
