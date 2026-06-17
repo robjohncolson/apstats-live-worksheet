@@ -34,12 +34,15 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
     expect(panel).toContain('_dogeWalletPreviewOn()');          // bails when off
   });
 
-  it('fetches the server wallet (/wallet) and offers eat / buy-DOGE', () => {
+  it('fetches the server wallet (/wallet) and shows the Earned/in-hand/Owed ledger + Buy-DOGE', () => {
     const fetchFn = fnBody('_dogeWalletFetch');
     expect(fetchFn).toContain("'/wallet'");
     const render = fnBody('_dogeWalletRender');
-    expect(render).toContain("act('/wallet/eat')");
     expect(render).toContain("act('/wallet/buy-doge')");
+    expect(render).not.toContain("/wallet/eat");          // eat retired (CANDY_LEDGER_SPEC)
+    expect(render).toContain('candyEarned');              // the 6-number ledger headline
+    expect(render).toContain('candyMaterialized');
+    expect(render).toContain('candyOwed');
     expect(render).toContain('candyBalance');
     expect(render).toContain('dogeBalance');
   });

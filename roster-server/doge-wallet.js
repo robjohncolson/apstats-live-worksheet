@@ -114,28 +114,38 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
   }
   function deriveBalances(earned, acc) {
     const a = acc || {};
-    const giftedOut = num(a.candy_gifted_out);   // candy gifted to classmates (0 pre-migration-0021)
-    const giftedIn = num(a.candy_gifted_in);     // candy received from classmates
-    const rawBalance = earned.candy - num(a.candy_eaten) - num(a.doge_cost_basis) - giftedOut + giftedIn;
+    const giftedOut = num(a.candy_gifted_out);   // Gifted: candy sent to classmates (0 pre-migration-0021)
+    const giftedIn = num(a.candy_gifted_in);     // Received: candy received from classmates
+    const converted = num(a.doge_cost_basis);    // Converted: candy turned into DOGE
+    const materialized = num(a.candy_given);     // Materialized: real candy the teacher handed over
+    // CANDY_LEDGER_SPEC — the 6-number model. The "eat" opt-in is RETIRED: the spendable
+    // pool a student can still gift/convert IS the un-realized (Owed) candy, so spendable
+    // subtracts MATERIALIZED (candy_given), not the old candy_eaten. Hence candyBalance
+    // === candyOwed (you can't gift candy you've already been handed).
+    // Identity: Earned + Received = Gifted + Converted + Materialized + Owed.
+    const rawBalance = earned.candy + giftedIn - giftedOut - converted - materialized;
     const candyBalance = Math.max(0, rawBalance);
     return {
-      candyEarned: earned.candy,
+      candyEarned: earned.candy,                 // Earned (monotonic)
       effortPoints: earned.points,
       candyBalance,
-      // Unclamped balance. Normally === candyBalance, but goes NEGATIVE if a
-      // receipt-carrying ledger row is deleted AFTER the student spent (earned
-      // candy drops below candy_eaten + cost_basis). Surfaced so the wallet/
-      // dashboard can flag the reconciliation gap instead of silently showing 0.
+      // Unclamped balance/owed. Normally === candyBalance, but goes NEGATIVE if a
+      // receipt-carrying ledger row is deleted AFTER spend/materialize (earned candy
+      // drops below gifted+converted+materialized). Surfaced so the wallet/dashboard
+      // can flag the reconciliation gap instead of silently showing 0.
       candyBalanceRaw: rawBalance,
-      candyEaten: num(a.candy_eaten),
-      candyGiven: num(a.candy_given),
+      candyEaten: num(a.candy_eaten),            // vestigial (eat retired); kept for audit/back-compat
+      candyGiven: materialized,
+      candyMaterialized: materialized,           // headline alias for candy_given
       candyGiftedOut: giftedOut,
       candyGiftedIn: giftedIn,
-      candyOwed: Math.max(0, num(a.candy_eaten) - num(a.candy_given)),   // teacher hands out
+      candyReceived: giftedIn,                   // headline alias
+      candyConverted: converted,                 // headline alias for doge_cost_basis (candy units)
+      candyOwed: candyBalance,                    // Earned + Received − Gifted − Converted − Materialized
       dogeBalance: num(a.doge_balance),
       dogeSent: num(a.doge_sent),
       dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)), // teacher deposits
-      dogeCostBasis: num(a.doge_cost_basis),
+      dogeCostBasis: converted,
       dogeAddress: a.doge_address || null,
     };
   }
@@ -202,18 +212,16 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     return computeEffort(rows);
   }
 
-  // ── POST /wallet/eat ── consume candy (teacher hands out the physical candy) ─
+  // ── POST /wallet/eat ── RETIRED (CANDY_LEDGER_SPEC) ─────────────────────────
+  // The "eat" opt-in is gone: candy you don't gift or convert is simply Owed, and the
+  // teacher materializes it (mark-given). Kept as a no-op so a stale client call returns
+  // the wallet instead of erroring; it no longer writes candy_eaten.
   app.post('/wallet/eat', async (req, res) => {
     const sid = sidOf(req);
     if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
-    const candy = num(req.body && req.body.candy);
-    if (candy <= 0) return res.status(400).json({ ok: false, error: 'candy must be > 0' });
-    const earned = await earnedCandyOf(sid);
-    // ATOMIC guard+debit (doge_spend RPC) — no read-modify-write race.
-    const r = await db.dogeSpend({ p_sid: sid, p_earned: earned.candy, p_candy: candy, p_kind: 'eat' });
-    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/eat:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    if (!r.data || !r.data.student_id) return res.status(400).json({ ok: false, error: 'not enough candy' });
-    return res.json({ ok: true, ...deriveBalances(earned, r.data) });
+    const { earned, accRes } = await loadState(sid);
+    if (accRes.error) { if (isDogeMissing(accRes.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    return res.json({ ok: true, deprecated: true, ...deriveBalances(earned, accRes.data) });
   });
 
   // ── POST /wallet/buy-doge ── convert candy → DOGE at the live price ─────────
@@ -319,11 +327,27 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const accRes = await db.getDogeAccount(studentId);
     if (accRes.error) { if (isDogeMissing(accRes.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
     const acc = accRes.data || {};
-    // Clamp so a teacher fat-finger can't over-mark: candy_given ≤ candy_eaten,
-    // doge_sent ≤ doge_balance. (Also bounds an idempotent double-mark-sent from
-    // the Phase-3 sender after a crash — doge_sent never exceeds what was banked.)
-    const cap = field === 'doge_sent' ? num(acc.doge_balance) : num(acc.candy_eaten);
-    const newVal = Math.min(num(acc[field]) + amount, cap);
+    // Clamp so a teacher fat-finger can't over-mark, and so Materialized never exceeds
+    // what's actually owed:
+    //   • doge_sent   ≤ doge_balance (banked coins; also bounds an idempotent
+    //     double-mark-sent from the Phase-3 sender after a crash).
+    //   • candy_given ≤ Owed-eligible = Earned + Received − Gifted − Converted
+    //     (CANDY_LEDGER_SPEC; the "eat" opt-in is retired, so the cap is no longer
+    //     candy_eaten). Needs the live effort total, hence earnedCandyOf here.
+    let cap;
+    if (field === 'doge_sent') {
+      cap = num(acc.doge_balance);
+    } else {
+      // The cap deliberately OMITS candy_given: it's the ceiling that the running
+      // candy_given total is clamped against, and candy_given ≤ cap is exactly the
+      // Owed ≥ 0 invariant (Owed = cap − candy_given). Subtracting candy_given here
+      // would wrongly prevent the teacher from ever fully materializing.
+      const earned = await earnedCandyOf(studentId);
+      cap = earned.candy + num(acc.candy_gifted_in) - num(acc.candy_gifted_out) - num(acc.doge_cost_basis);
+    }
+    // Never reduce a monotonic counter: if cap dips below the current value (e.g. during
+    // the pre-0022 transition), leave it unchanged rather than clawing candy back.
+    const newVal = Math.max(num(acc[field]), Math.min(num(acc[field]) + amount, cap));
     const up = await db.upsertDogeAccount(studentId, rowFor(acc, { [field]: newVal }));
     if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
     try { await db.insertDogeLedger({ student_id: studentId, kind: field === 'candy_given' ? 'give' : 'send', candy_delta: field === 'candy_given' ? -(newVal - num(acc[field])) : 0, doge_delta: field === 'doge_sent' ? -(newVal - num(acc[field])) : 0 }); } catch (_) {}
@@ -344,15 +368,27 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     if (Array.isArray(ids) && !ids.length) return res.json({ ok: true, accounts: [], dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null });
     const r = await db.listDogeAccounts(ids || undefined);
     if (r && r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    const accounts = ((r && r.data) || []).map((a) => ({
-      studentId: a.student_id,
-      dogeAddress: a.doge_address || null,
-      candyEaten: num(a.candy_eaten), candyGiven: num(a.candy_given),
-      candyOwed: Math.max(0, num(a.candy_eaten) - num(a.candy_given)),
-      candyGiftedOut: num(a.candy_gifted_out), candyGiftedIn: num(a.candy_gifted_in),
-      dogeBalance: num(a.doge_balance), dogeSent: num(a.doge_sent),
-      dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)),
-      dogeCostBasis: num(a.doge_cost_basis),
+    // CANDY_LEDGER_SPEC: return the full 6-number ledger so the dashboard has a ready
+    // Owed worklist without a client-side effort join. Earned is recomputed per student
+    // (parallel; this is a cold teacher path) so candyOwed is the true
+    // Earned + Received − Gifted − Converted − Materialized.
+    const accounts = await Promise.all(((r && r.data) || []).map(async (a) => {
+      const earned = await earnedCandyOf(a.student_id);
+      const materialized = num(a.candy_given), giftedOut = num(a.candy_gifted_out);
+      const giftedIn = num(a.candy_gifted_in), converted = num(a.doge_cost_basis);
+      return {
+        studentId: a.student_id,
+        dogeAddress: a.doge_address || null,
+        candyEarned: earned.candy,
+        candyEaten: num(a.candy_eaten),
+        candyGiven: materialized, candyMaterialized: materialized,
+        candyGiftedOut: giftedOut, candyGiftedIn: giftedIn, candyReceived: giftedIn,
+        candyConverted: converted,
+        candyOwed: Math.max(0, earned.candy + giftedIn - giftedOut - converted - materialized),
+        dogeBalance: num(a.doge_balance), dogeSent: num(a.doge_sent),
+        dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)),
+        dogeCostBasis: converted,
+      };
     }));
     return res.json({ ok: true, accounts, dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null });
   });

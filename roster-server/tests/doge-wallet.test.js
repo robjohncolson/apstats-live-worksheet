@@ -47,7 +47,7 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
         if (giftedRecent + p_candy > p_cap + 1e-9) return { data: null, error: null };   // over cap → null (race backstop)
       }
       var from = acc.get(p_from) || { student_id: p_from, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0 };
-      var spend = p_earned_from - Number(from.candy_eaten || 0) - Number(from.doge_cost_basis || 0) - Number(from.candy_gifted_out || 0) + Number(from.candy_gifted_in || 0);
+      var spend = p_earned_from - Number(from.candy_given || 0) - Number(from.doge_cost_basis || 0) - Number(from.candy_gifted_out || 0) + Number(from.candy_gifted_in || 0);   // 0022: subtract Materialized, not eaten
       if (spend < p_candy - 1e-9) return { data: rowOfNulls ? { ...ROW_OF_NULLS } : null, error: null };
       from = { ...from, candy_gifted_out: Number(from.candy_gifted_out || 0) + p_candy }; acc.set(p_from, from);
       var to = acc.get(p_to) || { student_id: p_to, candy_gifted_in: 0 };
@@ -61,7 +61,7 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
     async dogeSpend({ p_sid, p_earned, p_candy, p_kind, p_doge, p_price, p_cpd }) {
       if (dbMissing) return miss;
       var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, doge_address: null };
-      var bal = p_earned - Number(a.candy_eaten || 0) - Number(a.doge_cost_basis || 0) - Number(a.candy_gifted_out || 0) + Number(a.candy_gifted_in || 0);
+      var bal = p_earned - Number(a.candy_given || 0) - Number(a.doge_cost_basis || 0) - Number(a.candy_gifted_out || 0) + Number(a.candy_gifted_in || 0);   // 0022: subtract Materialized, not eaten
       // guard fail: production (a `returns doge_account` fn over PostgREST) returns
       // a ROW-OF-NULLS, not a bare null — exercise that shape so the load-bearing
       // `!r.data.student_id` guard in the endpoints is actually pinned.
@@ -121,20 +121,15 @@ describe('DOGE wallet — student GET /wallet', () => {
   });
 });
 
-describe('DOGE wallet — eat candy', () => {
-  it('eats candy → candyOwed rises, candyBalance falls', async () => {
+describe('DOGE wallet — eat retired (candy is simply Owed, CANDY_LEDGER_SPEC)', () => {
+  it('POST /wallet/eat is now a no-op: candyEaten stays 0, all earned candy is Owed === balance', async () => {
     const ctx = start({ ledgers: { s1: quizRows(18) } }); // 5 candy
     const r = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 3 } });
     expect(r.status).toBe(200);
-    expect(r.body.candyEaten).toBeCloseTo(3, 6);
-    expect(r.body.candyOwed).toBeCloseTo(3, 6);      // teacher owes 3 physical candy
-    expect(r.body.candyBalance).toBeCloseTo(2, 6);
-  });
-  it('rejects eating more candy than earned', async () => {
-    const ctx = start({ ledgers: { s1: quizRows(4) } }); // ~1.1 candy
-    const r = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 99 } });
-    expect(r.status).toBe(400);
-    expect(r.body.error).toMatch(/not enough/);
+    expect(r.body.deprecated).toBe(true);
+    expect(r.body.candyEaten).toBeCloseTo(0, 6);     // eat no longer consumes
+    expect(r.body.candyBalance).toBeCloseTo(5, 6);   // nothing gifted/converted/materialized
+    expect(r.body.candyOwed).toBeCloseTo(5, 6);      // Owed === balance: the teacher owes all 5
   });
 });
 
@@ -158,15 +153,15 @@ describe('DOGE wallet — buy DOGE (floating price)', () => {
 });
 
 describe('DOGE wallet — atomic spend (conservation across operations)', () => {
-  it('eat then buy can never exceed earned candy (the atomic guard sees the prior eat)', async () => {
+  it('buy then buy can never exceed earned candy (the atomic guard sees the prior conversion)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(100) } });   // ~27.78 candy
-    const e = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 25 } });
-    expect(e.status).toBe(200);
-    expect(e.body.candyEaten).toBeCloseTo(25, 6);
-    // ~2.78 candy left → a 25-candy buy must be rejected
-    const b = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 25 } });
-    expect(b.status).toBe(400);
-    expect(b.body.error).toMatch(/not enough/);
+    const b1 = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 25 } });
+    expect(b1.status).toBe(200);
+    expect(b1.body.candyConverted).toBeCloseTo(25, 6);
+    // ~2.78 candy left → a second 25-candy buy must be rejected
+    const b2 = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 25 } });
+    expect(b2.status).toBe(400);
+    expect(b2.body.error).toMatch(/not enough/);
   });
   it('503s a spend before migration 0019 (table/function absent)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(100) }, dbMissing: true });
@@ -175,7 +170,7 @@ describe('DOGE wallet — atomic spend (conservation across operations)', () => 
   });
   it('rejects an over-spend even when the RPC returns a ROW-OF-NULLS (real PostgREST shape)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(4) }, rowOfNulls: true });   // ~1.1 candy
-    const r = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 99 } });
+    const r = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 99 } });
     expect(r.status).toBe(400);
     expect(r.body.error).toMatch(/not enough/);
   });
@@ -195,20 +190,28 @@ describe('DOGE wallet — teacher routes', () => {
     const r = await req(start(), 'POST', '/wallet/address', { body: { studentId: UID, address: 'D...' } });
     expect(r.status).toBe(401);
   });
-  it('GET /class/wallets returns per-kid owed/deposit', async () => {
-    const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 2, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12, doge_address: 'Dabc' } } });
+  it('GET /class/wallets returns per-kid earned/owed/deposit (the 6-number ledger)', async () => {
+    const ctx = start({
+      ledgers: { [UID]: quizRows(72) },   // 720 pts = 20 candy Earned
+      accounts: { [UID]: { student_id: UID, candy_given: 2, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12, doge_address: 'Dabc' } },
+    });
     const r = await req(ctx, 'GET', '/class/wallets', { secret: 'TS' });
     expect(r.status).toBe(200);
     const a = r.body.accounts.find((x) => x.studentId === UID);
-    expect(a.candyOwed).toBe(3);           // 5 eaten − 2 given
-    expect(a.dogeToDeposit).toBe(7);       // 7 bought − 0 sent
+    expect(a.candyEarned).toBeCloseTo(20, 6);
+    expect(a.candyMaterialized).toBe(2);
+    expect(a.candyOwed).toBeCloseTo(6, 6);   // 20 earned − 12 converted − 2 materialized
+    expect(a.dogeToDeposit).toBe(7);         // 7 bought − 0 sent
   });
   it('mark-given / mark-sent reduce the owed/deposit', async () => {
-    const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } } });
+    const ctx = start({
+      ledgers: { [UID]: quizRows(72) },   // 20 candy Earned; owed-eligible = 20 − 12 converted = 8
+      accounts: { [UID]: { student_id: UID, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } },
+    });
     const g = await req(ctx, 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: UID, amount: 5 } });
     expect(g.status).toBe(200);
-    expect(g.body.candy_given).toBe(5);
-    const ctx2 = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 5, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } } });
+    expect(g.body.candy_given).toBe(5);      // 5 ≤ owed-eligible 8
+    const ctx2 = start({ accounts: { [UID]: { student_id: UID, candy_given: 5, doge_balance: 7, doge_sent: 0, doge_cost_basis: 12 } } });
     const s = await req(ctx2, 'POST', '/wallet/mark-sent', { secret: 'TS', body: { studentId: UID, amount: 7 } });
     expect(s.status).toBe(200);
     expect(s.body.doge_sent).toBe(7);
@@ -231,9 +234,10 @@ describe('DOGE wallet — hardening (item 6)', () => {
     expect(r.status).toBe(404);
   });
   // (a) negative balance is SURFACED via candyBalanceRaw, not silently clamped to 0.
-  it('surfaces a negative candyBalanceRaw when spend exceeds (re-derived) earned candy', async () => {
-    // earned = 1 candy (36 pts), but the account already ate 5 → overspent by 4.
-    const ctx = start({ ledgers: { s1: quizRows(4) }, accounts: { s1: { student_id: 's1', candy_eaten: 5, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0 } } });
+  it('surfaces a negative candyBalanceRaw when materialized exceeds (re-derived) earned candy', async () => {
+    // earned ≈ 1.1 candy (36 pts), but the teacher already materialized 5 (a receipt row
+    // was deleted after disbursement) → overspent by ~3.9.
+    const ctx = start({ ledgers: { s1: quizRows(4) }, accounts: { s1: { student_id: 's1', candy_given: 5, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0 } } });
     const r = await req(ctx, 'GET', '/wallet', { token: 'tok:s1' });
     expect(r.status).toBe(200);
     expect(r.body.candyBalance).toBe(0);              // still clamped for spend-gating
@@ -256,11 +260,11 @@ describe('DOGE wallet — hardening (item 6)', () => {
     expect(all.body.accounts.length).toBe(2);          // no section → all
   });
   // (d) mark-given / mark-sent clamp at candy_eaten / doge_balance (over-amount).
-  it('clamps an over-amount mark-given at candy_eaten', async () => {
-    const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 5, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 0 } } });
+  it('clamps an over-amount mark-given at Owed-eligible candy', async () => {
+    const ctx = start({ ledgers: { [UID]: quizRows(18) }, accounts: { [UID]: { student_id: UID, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 0 } } });  // 5 candy earned, nothing gifted/converted
     const g = await req(ctx, 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: UID, amount: 99 } });
     expect(g.status).toBe(200);
-    expect(g.body.candy_given).toBe(5);                // clamped to candy_eaten, not 99
+    expect(g.body.candy_given).toBe(5);                // clamped to Owed-eligible (5 earned), not 99
   });
   it('clamps an over-amount mark-sent at doge_balance', async () => {
     const ctx = start({ accounts: { [UID]: { student_id: UID, candy_eaten: 0, candy_given: 0, doge_balance: 7, doge_sent: 0, doge_cost_basis: 0 } } });
@@ -428,19 +432,19 @@ describe('DOGE wallet — candy gifting (kid → kid)', () => {
     const r = await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 2 } });
     expect(r.status).toBe(503);
   });
-  it('gifted-away candy can no longer be eaten (the patched doge_spend guard sees it)', async () => {
+  it('gifted-away candy can no longer be converted (the patched doge_gift/doge_spend guard sees it)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(36) }, roster: sameSection });   // 10 candy
     expect((await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 7 } })).status).toBe(200);
-    const e = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:s1', body: { candy: 5 } });   // only 3 left
-    expect(e.status).toBe(400);
-    expect(e.body.error).toMatch(/not enough/);
+    const b = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 5 } });   // only 3 left
+    expect(b.status).toBe(400);
+    expect(b.body.error).toMatch(/not enough/);
   });
-  it('received candy CAN be spent (recipient eats a gift they did not earn)', async () => {
+  it('received candy CAN be spent (recipient converts a gift they did not earn)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(36) }, roster: sameSection });   // B earns nothing
-    await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 5 } });
-    const e = await req(ctx, 'POST', '/wallet/eat', { token: 'tok:' + B, body: { candy: 4 } });
-    expect(e.status).toBe(200);
-    expect(e.body.candyEaten).toBe(4);
+    await req(ctx, 'POST', '/wallet/gift', { token: 'tok:s1', body: { toUsername: 'recip_bee', candy: 6 } });
+    const b = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:' + B, body: { candy: 5 } });
+    expect(b.status).toBe(200);
+    expect(b.body.candyConverted).toBeCloseTo(5, 6);
   });
   it('rejects gifting the TEACHER account (same section, role=teacher)', async () => {
     const ctx = start({ ledgers: { s1: quizRows(36) }, roster: [{ student_id: 's1', section: 'PeriodX', username: 'sender_one' }, { student_id: 't1', section: 'PeriodX', username: 'teach', role: 'teacher' }] });

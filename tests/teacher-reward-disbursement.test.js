@@ -60,11 +60,12 @@ describe('Teacher reward disbursement — dashboard', () => {
     expect(fn).toMatch(/load on-chain balances|on-chain balances/);   // the ↻ button
   });
 
-  it('flags an overspent student (eaten + cost basis > earned candy) for reconciliation', () => {
+  it('flags an overspent student (negative raw owed: gifted+converted+materialized > earned+received) for reconciliation', () => {
     const fn = DASH.slice(DASH.indexOf('function renderRewardDisbursement'), DASH.indexOf('function renderGradesTable'));
-    expect(fn).toContain('candyEaten');
-    expect(fn).toContain('dogeCostBasis');
-    expect(fn).toMatch(/spent - earned > 0\.05/);     // the reconciliation guard
+    // CANDY_LEDGER_SPEC: eat is retired; the reconciliation guard is now the 6-number
+    // identity going negative (more disbursed/spent than earned + received).
+    expect(fn).toContain('rawOwed');
+    expect(fn).toMatch(/rawOwed < -0\.05/);
     expect(fn).toContain('⚠');
   });
 

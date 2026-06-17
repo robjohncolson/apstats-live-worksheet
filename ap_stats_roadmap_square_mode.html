@@ -11619,10 +11619,11 @@ function _fetchDogePrice() {
 }
 function _dogeWalletPreviewOn() {
     try {
-        // Teachers always see it (they're the ones testing + rolling it out);
-        // students only see it once the flag is flipped class-wide.
+        // Teachers always see it. CANDY_LEDGER_SPEC decision 2: students now see their
+        // candy ledger (Earned / in hand / still coming) BY DEFAULT — the ledger is the
+        // point. An explicit opt-out ('apstats_doge_wallet_preview' === '0') still hides it.
         if (typeof _deskIsTeacher === 'function' && _deskIsTeacher()) return true;
-        return localStorage.getItem('apstats_doge_wallet_preview') === '1';
+        return localStorage.getItem('apstats_doge_wallet_preview') !== '0';
     } catch (_) { return false; }
 }
 // Interactive wallet: fetch the server's GET /wallet (candy to spend, DOGE held)
@@ -11910,19 +11911,30 @@ function _dogeWalletRender(box, w, pts) {
     box.innerHTML = '';
     if (!w || w._notProvisioned || !w.ok) { _dogeWalletPreviewFallback(box, pts, w && w._notProvisioned); return; }
     var candy = w.candyBalance || 0, doge = w.dogeBalance || 0;
+    var earned = w.candyEarned || 0;
+    var materialized = w.candyMaterialized || 0;
+    var owed = (typeof w.candyOwed === 'number') ? w.candyOwed : candy;   // === candyBalance (spendable)
+    var received = w.candyReceived || 0, gifted = w.candyGiftedOut || 0, converted = w.candyConverted || 0;
     var dogeUsd = (w.dogeUsd && doge) ? (doge * w.dogeUsd) : 0;
 
+    // Headline ledger (CANDY_LEDGER_SPEC): lifetime EARNED (never taken away) · how much has
+    // MATERIALIZED (real candy already in hand) · how much is still OWED (the teacher will
+    // hand it over). earned = gifted + converted + materialized + owed always.
     var l1 = document.createElement('div');
     l1.className = 'geneva'; l1.style.cssText = 'font-size:12px;font-weight:bold;color:#5a4500';
-    l1.textContent = '🍬 ' + candy.toFixed(1) + ' candy to spend  ·  Ɖ ' + doge.toFixed(1) + ' held'
-        + (dogeUsd ? ' ($' + dogeUsd.toFixed(2) + ')' : '');
+    l1.textContent = '🍬 ' + earned.toFixed(0) + ' earned  ·  ' + materialized.toFixed(0) + ' in hand  ·  ' + owed.toFixed(0) + ' still coming';
     box.appendChild(l1);
 
+    // Secondary: what's free to spend/gift (= Owed) + DOGE held + the gift/convert detail.
     var l2 = document.createElement('div');
     l2.className = 'geneva'; l2.style.cssText = 'font-size:10px;color:#8a7330;margin-top:2px';
-    l2.textContent = w.candyPerDoge
-        ? ('1 DOGE = ' + w.candyPerDoge.toFixed(1) + ' candy today — buy early, it floats up.')
-        : 'Eat it… or bank it as Dogecoin and let it ride.';
+    var bits = [owed.toFixed(0) + ' 🍬 to spend or gift'];
+    if (doge > 0) bits.push('Ɖ ' + doge.toFixed(1) + ' held' + (dogeUsd ? ' ($' + dogeUsd.toFixed(2) + ')' : ''));
+    if (received > 0) bits.push('+' + received.toFixed(0) + ' from friends');
+    if (gifted > 0) bits.push('−' + gifted.toFixed(0) + ' gifted');
+    if (converted > 0) bits.push('−' + converted.toFixed(0) + ' → DOGE');
+    if (w.candyPerDoge) bits.push('1 DOGE = ' + w.candyPerDoge.toFixed(1) + ' 🍬 today');
+    l2.textContent = bits.join('  ·  ');
     box.appendChild(l2);
 
     // Watch-only on-chain line — the real coins landing in the kid's paper wallet.
@@ -11939,21 +11951,22 @@ function _dogeWalletRender(box, w, pts) {
         var amt = document.createElement('input');
         amt.type = 'number'; amt.min = '1'; amt.placeholder = 'all';
         amt.style.cssText = 'width:52px;font-size:11px;padding:2px;border:1px solid #c9961f';
-        var eatBtn = document.createElement('button'); eatBtn.className = 's7btn'; eatBtn.textContent = '🍬 Eat'; eatBtn.style.cssText = 'font-size:10px;padding:2px 6px';
         var buyBtn = document.createElement('button'); buyBtn.className = 's7btn'; buyBtn.textContent = 'Ɖ Buy DOGE'; buyBtn.style.cssText = 'font-size:10px;padding:2px 6px';
         var msg = document.createElement('span'); msg.className = 'geneva'; msg.style.cssText = 'font-size:9px;color:#a07c1c';
         msg.textContent = '(min ' + (w.minBuyCandy || 5) + ' to buy)';
         var amount = function () { var v = parseFloat(amt.value); return (isFinite(v) && v > 0) ? v : candy; };
+        // "Eat" is retired (CANDY_LEDGER_SPEC): candy you don't gift or convert is simply
+        // Owed, and the teacher hands it to you (it shows up under "in hand"). The only
+        // spend actions are Buy DOGE + Gift.
         var act = function (path) {
-            eatBtn.disabled = buyBtn.disabled = true; msg.textContent = '…';
+            buyBtn.disabled = true; msg.textContent = '…';
             _dogeWalletAction(path, amount()).then(function (res) {
                 if (res && res.ok) { _dogeWalletFetch().then(function (w2) { _dogeWalletRender(box, w2, pts); }); }
-                else { eatBtn.disabled = buyBtn.disabled = false; msg.textContent = (res && res.error) || 'failed'; }
+                else { buyBtn.disabled = false; msg.textContent = (res && res.error) || 'failed'; }
             });
         };
-        eatBtn.onclick = function () { act('/wallet/eat'); };
         buyBtn.onclick = function () { act('/wallet/buy-doge'); };
-        row.appendChild(amt); row.appendChild(eatBtn); row.appendChild(buyBtn); row.appendChild(msg);
+        row.appendChild(amt); row.appendChild(buyBtn); row.appendChild(msg);
         box.appendChild(row);
         // 🎁 Gift to a classmate (needs ≥1 whole candy). Toggles an inline picker.
         if (candy >= 1) {
@@ -11984,7 +11997,7 @@ function _dogeWalletPreviewFallback(box, pts, notProvisioned) {
     box.appendChild(l1);
     var l2 = document.createElement('div');
     l2.className = 'geneva'; l2.style.cssText = 'font-size:10px;color:#8a7330;margin-top:2px';
-    l2.textContent = notProvisioned ? 'Rewards aren’t turned on yet (preview).' : 'Eat it… or bank it as Dogecoin and let it ride.';
+    l2.textContent = notProvisioned ? 'Rewards aren’t turned on yet (preview).' : 'Earn it, gift it to a friend, or bank it as Dogecoin.';
     box.appendChild(l2);
     var rate = document.createElement('div');
     rate.className = 'geneva'; rate.style.cssText = 'font-size:11px;color:#5a4500;margin-top:4px';

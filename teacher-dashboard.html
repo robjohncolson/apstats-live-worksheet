@@ -499,7 +499,7 @@
       <div class="hint" id="reward-rate" style="margin-bottom:6px"></div>
       <div class="table-wrap" id="reward-wrap" style="display:none">
         <table class="grades">
-          <thead><tr><th>Student</th><th>Candy earned</th><th>To give 🍬</th><th>DOGE to deposit</th><th>On-chain Ɖ</th><th>Address / actions</th></tr></thead>
+          <thead><tr><th>Student</th><th>Candy earned</th><th>Owed 🍬</th><th>DOGE to deposit</th><th>On-chain Ɖ</th><th>Address / actions</th></tr></thead>
           <tbody id="reward-tbody"></tbody>
           <tfoot><tr id="reward-totals" style="font-weight:bold;border-top:2px solid #888"></tr></tfoot>
         </table>
@@ -1121,18 +1121,27 @@
           var tr = document.createElement('tr');
           var nameTd = document.createElement('td'); nameTd.textContent = s.realName || s.username || s.studentId || '?';
           if (s.role === 'teacher') { var bdg = document.createElement('span'); bdg.textContent = ' 🧪'; bdg.title = 'teacher / test account'; nameTd.appendChild(bdg); }
-          // Reconciliation flag: spent (eaten + cost basis) exceeds earned candy —
-          // a graded item was likely deleted AFTER the student spent. Surface it.
+          var received = acc ? (acc.candyReceived || 0) : 0, gifted = acc ? (acc.candyGiftedOut || 0) : 0;
+          var converted = acc ? (acc.candyConverted || acc.dogeCostBasis || 0) : 0, materialized = acc ? (acc.candyMaterialized || acc.candyGiven || 0) : 0;
+          // Reconciliation flag (CANDY_LEDGER_SPEC): the 6-number identity should hold —
+          // Earned + Received = Gifted + Converted + Materialized + Owed. A NEGATIVE raw owed
+          // means more was disbursed/spent than earned+received (a graded item was likely
+          // deleted AFTER the student spent / after you materialized). Surface it.
           if (acc) {
-            var spent = (acc.candyEaten || 0) + (acc.dogeCostBasis || 0);
-            if (spent - earned > 0.05) {
+            // Use the SERVER's earned (same source as acc.candyOwed) so the ⚠ flag never
+            // flickers against the independently-loaded pacing earned.
+            var rawOwed = (acc.candyEarned != null ? acc.candyEarned : earned) + received - gifted - converted - materialized;
+            if (rawOwed < -0.05) {
               var warn = document.createElement('span'); warn.textContent = ' ⚠';
-              warn.title = 'Overspent by ' + (Math.round((spent - earned) * 10) / 10) + ' candy — a graded item was likely deleted after they spent. Reconcile.';
+              warn.title = 'Overspent by ' + (Math.round((-rawOwed) * 10) / 10) + ' candy — a graded item was likely deleted after they spent. Reconcile.';
               warn.style.color = '#b00'; nameTd.appendChild(warn);
             }
           }
           tr.appendChild(nameTd);
-          var earnedTd = document.createElement('td'); earnedTd.textContent = '🍬 ' + Math.round(earned); tr.appendChild(earnedTd);
+          var earnedTd = document.createElement('td'); earnedTd.textContent = '🍬 ' + Math.round(earned);
+          // The full 6-number ledger on hover (no table restructure for Phase 1).
+          if (acc) earnedTd.title = 'Earned ' + Math.round(earned) + ' · Received ' + Math.round(received) + ' · Gifted ' + Math.round(gifted) + ' · →DOGE ' + Math.round(converted) + ' · in hand ' + Math.round(materialized) + ' · still owed ' + Math.round(give);
+          tr.appendChild(earnedTd);
           var giveTd = document.createElement('td');
           if (!prov) giveTd.textContent = '—';
           else if (give > 0.01) { giveTd.textContent = '🍬 ' + (Math.round(give * 10) / 10) + ' '; giveTd.appendChild(btn('✓ gave', function () { _rewardMark(s.studentId, 'mark-given', give); })); }
@@ -1186,8 +1195,9 @@
       // Render via _rewardRepaint (latest closure) not the captured paint, so a
       // re-render mid-fetch doesn't repaint stale rows.
       if (_rewardChain === null) { _fetchRewardChain().then(function (c) { _rewardChain = c || {}; (_rewardRepaint ? _rewardRepaint() : paint(_dashDogeUsd, _rewardWallets)); }); }
-      noteEl.textContent = 'To give = candy a student chose to EAT but you haven’t handed out. To deposit = DOGE they '
-        + 'banked but you haven’t sent. Mark ✓ as you disburse. Set each address from your paper-wallet sheet.';
+      noteEl.textContent = 'Owed 🍬 = candy a student has earned (+ received) but not yet gifted, converted, or been '
+        + 'handed — what you still owe them in real candy (sort by it, work it down weekly). To deposit = DOGE they '
+        + 'banked but you haven’t sent. Mark ✓ as you disburse. Hover a student’s earned for the full ledger.';
     }
 
     function renderGradesTable(payload) {
