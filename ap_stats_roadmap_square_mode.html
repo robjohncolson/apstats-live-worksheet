@@ -11716,6 +11716,160 @@ function _dogeWalletGiftSend(toUsername, candy) {
     }).then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
       .catch(function () { return { ok: false, error: 'network' }; });
 }
+
+// ── Candy "poke" (CANDY_POKE_SPEC.md) ───────────────────────────────────────────────
+// Tap a peer's avatar in the Live Classroom → send them 1 candy, Facebook-poke style.
+// Optimistic: a 3s "Undo" toast, THEN the real POST /wallet/gift commits (so Undo needs
+// no server reversal — we just never fire the POST). On success the sender relays a
+// COSMETIC candy_gift_received over the board WS so the recipient sees a toast; the real
+// balance is always the roster-server's truth. Per-recipient ~10min cooldown + the
+// server's 20/day cap guard spam. Fixed at 1 candy (the poke unit); multi-candy gifts
+// stay in the My-Ledger form.
+var _candyPokeCooldown = {};            // lowercased recipient -> last committed epoch ms
+var _candyPokePending  = {};            // lowercased recipient -> { timer } during the 3s undo window
+var _candySeenGiftIds  = {};            // dedupe inbound candy_gift_received by giftId
+var CANDY_POKE_COOLDOWN_MS = 10 * 60 * 1000;
+function _candyPokeMe() {
+  try { return (window.rosterClient && rosterClient.current) ? (rosterClient.current() || null) : null; } catch (_) { return null; }
+}
+function _candyFirstName(u) { return String(u || '').replace(/_/g, ' ').trim() || 'a classmate'; }
+function _candyToastHost() {
+  var h = document.getElementById('candy-toast-host');
+  if (!h) {
+    h = document.createElement('div');
+    h.id = 'candy-toast-host';
+    h.style.cssText = 'position:fixed;right:12px;bottom:12px;z-index:100000;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none';
+    document.body.appendChild(h);
+  }
+  return h;
+}
+function _candyToast(opts) {
+  // opts: { text, actionLabel?, onAction?, ttlMs? } -> { dismiss }
+  var host = _candyToastHost();
+  var el = document.createElement('div');
+  el.className = 'geneva';
+  el.style.cssText = 'pointer-events:auto;background:#fffdf5;border:2px solid #c9961f;border-radius:8px;box-shadow:2px 2px 0 rgba(0,0,0,.25);padding:8px 10px;font-size:12px;color:#5a4500;max-width:240px;display:flex;align-items:center;gap:8px';
+  var span = document.createElement('span'); span.textContent = opts.text; el.appendChild(span);
+  var timer = null, done = false;
+  function dismiss() { if (done) return; done = true; if (timer) { clearTimeout(timer); } try { host.removeChild(el); } catch (_) {} }
+  if (opts.actionLabel) {
+    var btn = document.createElement('button');
+    btn.className = 's7btn'; btn.textContent = opts.actionLabel;
+    btn.style.cssText = 'font-size:10px;padding:2px 8px;cursor:pointer';
+    btn.onclick = function () { dismiss(); if (typeof opts.onAction === 'function') opts.onAction(); };
+    el.appendChild(btn);
+  }
+  host.appendChild(el);
+  // Bound the stack (anti-flood: many legit pokes at once, or spoofed candy_gift_received spam).
+  while (host.children.length > 4) { try { host.removeChild(host.firstChild); } catch (_) { break; } }
+  if (opts.ttlMs) timer = setTimeout(dismiss, opts.ttlMs);
+  return { dismiss: dismiss };
+}
+function _candyMiniToast(text) { _candyToast({ text: text, ttlMs: 2200 }); }
+function _candyChime() {
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    var ctx = new AC(), o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+    o.start(); o.stop(ctx.currentTime + 0.2);
+    setTimeout(function () { try { ctx.close(); } catch (_) {} }, 400);
+  } catch (_) {}
+}
+function _candyRefreshWalletUI() {
+  try {
+    var ov = document.getElementById('app-wallet-overlay');
+    if (ov && ov.style.display !== 'none' && typeof renderWallet === 'function') renderWallet();
+  } catch (_) {}
+}
+function _candyRelay(to) {
+  try {
+    if (!_classroomBoardHandle || typeof _classroomBoardHandle.sendMessage !== 'function') return;
+    var me = _candyPokeMe();   // re-read NOW (not the poke-time capture) so a reroll/sign-out within the 3s window attributes correctly
+    if (!me || !me.username) return;
+    // Send only the (pseudonymous) username, NOT the real name: this message is broadcast
+    // to every connected client, and students see each other only by Fruit_Animal username —
+    // real names are teacher-only on the board (the roster cutover keeps them so).
+    _classroomBoardHandle.sendMessage({
+      type: 'candy_gift_received',
+      toUsername: to,
+      fromUsername: me.username,
+      candy: 1,
+      giftId: me.username + '|' + to + '|' + Date.now()
+    });
+  } catch (_) {}
+}
+function _candyArmPoke(to, toKey, name) {
+  var t = _candyToast({
+    text: 'Sent 1 🍬 to ' + name,
+    actionLabel: 'Undo',
+    onAction: function () {                                  // Undo within 3s → cancel the commit
+      var p = _candyPokePending[toKey];
+      if (p) { clearTimeout(p.timer); delete _candyPokePending[toKey]; }
+    }
+  });
+  var timer = setTimeout(function () {
+    if (!_candyPokePending[toKey]) return;                   // already undone
+    delete _candyPokePending[toKey];
+    // Arm the cooldown OPTIMISTICALLY, before the POST round-trip — otherwise a rapid second
+    // tap in the ~100-500ms gap before `res` resolves would slip a 2nd poke past the
+    // per-recipient cooldown. Cleared again below if the send actually failed.
+    _candyPokeCooldown[toKey] = Date.now();
+    t.dismiss();
+    _dogeWalletGiftSend(to, 1).then(function (res) {
+      if (res && res.ok) {
+        _candyToast({ text: '✓ Sent 1 🍬 to ' + name, ttlMs: 1800 });
+        _candyRelay(to);
+        _candyRefreshWalletUI();
+      } else {
+        delete _candyPokeCooldown[toKey];                    // failed send → allow an immediate retry
+        _candyToast({ text: 'Couldn’t send to ' + name + ' — ' + ((res && res.error) || 'cap reached?'), ttlMs: 2800 });
+      }
+    });
+  }, 3000);
+  _candyPokePending[toKey] = { timer: timer };
+}
+function _candyPoke(toUsername) {
+  if (!toUsername) return;
+  var to = String(toUsername), toKey = to.toLowerCase();
+  var me = _candyPokeMe();
+  if (!me || !me.username) { _candyMiniToast('Sign in to send candy 🍬'); return; }
+  if (/^Guest_/i.test(me.username)) { _candyMiniToast('Guests can’t send candy 🍬'); return; }
+  if (String(me.username).toLowerCase() === toKey) return;          // never self
+  if (/^Guest_/i.test(to)) { _candyMiniToast('That classmate can’t receive candy yet'); return; }
+  if (_candyPokePending[toKey]) return;                              // already mid-undo for this person
+  if (Date.now() - (_candyPokeCooldown[toKey] || 0) < CANDY_POKE_COOLDOWN_MS) { _candyMiniToast('Already sent ' + _candyFirstName(to) + ' a 🍬 — give it a bit'); return; }
+  // Balance gate (lazy) — don't arm a poke we already know will bounce.
+  _dogeWalletFetch().then(function (w) {
+    if (w && w._notProvisioned) { _candyMiniToast('Candy rewards aren’t turned on yet'); return; }
+    var bal = (w && w.ok) ? Math.floor(w.candyBalance || 0) : 0;
+    if (!(bal >= 1)) { _candyMiniToast('No candy to send yet — earn some first'); return; }
+    if (_candyPokePending[toKey]) return;                            // re-check after the async gap
+    if (Date.now() - (_candyPokeCooldown[toKey] || 0) < CANDY_POKE_COOLDOWN_MS) return;
+    _candyArmPoke(to, toKey, _candyFirstName(to));
+  }).catch(function () { _candyMiniToast('Couldn’t reach your wallet'); });
+}
+function _onCandyGiftReceived(msg) {
+  try {
+    if (!msg || msg.type !== 'candy_gift_received') return;
+    var me = _candyPokeMe();
+    if (!me || !me.username) return;
+    if (String(msg.toUsername || '').toLowerCase() !== String(me.username).toLowerCase()) return;  // not for me
+    var gid = msg.giftId || (msg.fromUsername + '|' + msg.candy);
+    if (_candySeenGiftIds[gid]) return;                              // dedupe (re-broadcast / reconnect)
+    _candySeenGiftIds[gid] = 1;
+    var _seenIds = Object.keys(_candySeenGiftIds);                   // bound the dedupe set over a long session
+    if (_seenIds.length > 300) { delete _candySeenGiftIds[_seenIds[0]]; }
+    var from = _candyFirstName(msg.fromUsername);   // username-derived; real names are not broadcast
+    var n = (typeof msg.candy === 'number' && msg.candy > 0) ? Math.floor(msg.candy) : 1;
+    _candyChime();
+    _candyToast({ text: '🍬 ' + from + ' sent you ' + n + ' candy!', ttlMs: 5000 });
+    _candyRefreshWalletUI();                                          // their balance just went up
+  } catch (_) {}
+}
+
 function _dogeWalletGiftForm(wrap, box, w, pts) {
     wrap.innerHTML = '<div class="geneva" style="font-size:10px;color:#8a7330">Loading classmates…</div>';
     var maxCandy = Math.floor(w.candyBalance || 0);
@@ -17350,6 +17504,16 @@ function _mountClassroomBoard(){
       onClassroomMessage: function(msg) {
         if (msg && msg.type === 'classroom_teacher_nudge' && typeof _showNudgeToast === 'function') {
           try { _showNudgeToast(msg); } catch (_) {}
+        } else if (msg && msg.type === 'candy_gift_received' && typeof _onCandyGiftReceived === 'function') {
+          try { _onCandyGiftReceived(msg); } catch (_) {}
+        }
+      },
+      // Candy "poke" (CANDY_POKE_SPEC.md): tap a peer's avatar in the Live Classroom to
+      // send them 1 candy. hit = { username, selectMode }. _candyPoke guards self / guests /
+      // no-wallet / cooldown, so a stray tap or a teacher/guest viewer is a quiet no-op.
+      onAvatarClick: function(hit) {
+        if (hit && hit.username && typeof _candyPoke === 'function') {
+          try { _candyPoke(hit.username); } catch (_) {}
         }
       }
     });
