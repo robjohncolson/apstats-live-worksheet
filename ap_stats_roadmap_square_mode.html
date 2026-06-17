@@ -9658,7 +9658,13 @@ function showResourcePanel(inf, dateStr) {
                 // quick check caps at 80%, the full timed deck reaches 100%
                 // (FLASHCARD_TIMED_DECK_BUILD.md).
                 var _blScore = (typeof _blooketScoreFor === 'function') ? _blooketScoreFor(_stuTopicId) : null;
-                var _blLabel = (typeof _blScore === 'number') ? (_blScore >= 100 ? 'Flashcards (practice)' : 'Improve (flashcards)') : 'Do flashcards';
+                // Label by the 80% gate, not 100: >=80 already PASSES (done) — say so, and
+                // keep the click as an optional redo. <80 = a make-up; 100 = perfected.
+                var _blLabel = (typeof _blScore === 'number')
+                    ? (_blScore >= 100 ? 'Flashcards ✓ perfected'
+                       : _blScore >= 80 ? 'Flashcards ✓ done — redo to improve'
+                       : 'Improve (flashcards)')
+                    : 'Do flashcards';
                 var _blBtn = _signedIn
                     ? ' <button class="s7btn chicago" style="font-size:9px;padding:1px 4px;margin-left:4px" title="Quick check (caps 80%) or the full timed deck (up to 100%)" onclick="studentMark(this,\'' + _stuTopicId + '\',\'blooket\')">' + _blLabel + '</button>'
                     : '';
