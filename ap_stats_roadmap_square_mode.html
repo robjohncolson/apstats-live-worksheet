@@ -485,6 +485,10 @@
         .cd-box .num { font-size: 16px; margin-bottom: 2px; }
         .cd-box .lbl { font-size: 9px; }
         .cd-box.cd-dark { background: var(--black); color: var(--white); box-shadow: inset 1px 1px 0 #444; }
+        /* Legend hidden for visual cleanliness (s14, teacher request) — the labeled,
+           colored cells + the ✓/◐/▶/🔒 glyphs are self-explanatory. One line, fully
+           reversible; updateLegend still runs (it applies the up-next style default). */
+        #legend-bar { display: none; }
         .legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; font-size: 10px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .legend-sw { width: 12px; height: 12px; border: 1px solid var(--black); }
