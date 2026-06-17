@@ -7331,6 +7331,9 @@ async function renderDoNowGrades(baseUrl, token) {
     var data = await res.json();
     if (!data || !data.ok) return;
     // Cache lessons[] for the per-day click-through (Phase 6).
+    // Capture the cold→warm transition BEFORE reassigning: the FIRST successful warm
+    // must force a calendar window re-size (see the rCal escalation below).
+    var _gradeCacheWasCold = (_gradeLessonsCache === null);
     _gradeLessonsCache = Array.isArray(data.lessons) ? data.lessons : null;
     // Auto-refresh an open resource panel so the quiz Done gate (which reads
     // _quizPerfFor → this cache) reflects a freshly-recorded quiz score without
@@ -7354,7 +7357,21 @@ async function renderDoNowGrades(baseUrl, token) {
     // lands — flicker-free greying, escalating to a single rCal only when a
     // lesson's lock state actually flips (never on a plain poll). typeof-guarded
     // so the existing vm-test of renderDoNowGrades doesn't need the painter.
-    if (typeof paintLocalDoneCells === 'function') paintLocalDoneCells();
+    // FIRST WARM (2026-06-17 fix): the initial rCal sized the calendar window from a
+    // COLD /grade cache, so next-up resolved to an early / already-done lesson and the
+    // dynamic window anchored + sized there — cropping the TRUE next lesson out of view
+    // (it only self-corrected after the user paged the calendar, which re-ran rCal with
+    // warm marks). Force ONE full rCal on the cold→warm transition so the window re-sizes
+    // to REACH the real next-up. paintLocalDoneCells's lock-flip rCal escalation CANNOT
+    // cover this: it scans only RENDERED cells, and the corrected next-up cell is exactly
+    // the one cropped out of the DOM. Subsequent polls keep the flicker-free painter path
+    // (fires once per cold→warm transition; a single extra rCal is indistinguishable from
+    // the 60s-interval rCal, so a rare lessons-less /grade re-arm is harmless).
+    if (_gradeCacheWasCold && _gradeLessonsCache && typeof rCal === 'function') {
+      try { rCal(); } catch (_) {}
+    } else if (typeof paintLocalDoneCells === 'function') {
+      paintLocalDoneCells();
+    }
     // #13: the Unit-Progress done-fill + pace label read the same synced scores —
     // recompute now that the /grade cache is warm (first rCal ran before this).
     if (typeof rProg === 'function') rProg();
