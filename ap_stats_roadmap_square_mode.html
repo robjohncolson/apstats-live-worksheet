@@ -492,11 +492,16 @@
            (today / up-next / done / locked / PC / poster / dots), not just the
            unit pastels. Reuses the LIVE cell classes as mini-swatches so the key
            can never drift from the real CSS. System-7 chrome, collapsed by default. */
-        .legend-states { flex: 1 0 100%; font-size: 10px; margin-top: 4px; }
+        .legend-states { flex: 1 0 100%; font-size: 10px; margin-top: 4px; text-align: center; }
+        /* a clear, clickable System-7 chip (was faint grey text — too easy to miss) */
         .legend-states > summary {
-            cursor: pointer; text-align: center; color: var(--plat-lo);
-            list-style: none; user-select: none; padding: 2px 0;
+            cursor: pointer; color: var(--black);
+            list-style: none; user-select: none;
+            display: inline-block; padding: 2px 10px;
+            border: 1px solid var(--black); background: var(--white);
+            box-shadow: 1px 1px 0 var(--black);
         }
+        .legend-states > summary:active { box-shadow: inset 1px 1px 0 var(--plat-lo); }
         .legend-states > summary::-webkit-details-marker { display: none; }
         .legend-states > summary::before { content: '\25B8 '; }   /* ▸ closed */
         .legend-states[open] > summary::before { content: '\25BE '; } /* ▾ open */
@@ -1323,13 +1328,13 @@
             color: var(--white);
         }
 
-        /* The two bottom-corner dots are a deliberate pair: SAME 7px scale, but
-           ROUND = your personal resource status (bottom-left), SQUIRCLE = a shared
-           class poll on that day (bottom-right). The shape — not just the color —
-           carries the personal-vs-shared meaning. */
+        /* .status-dot — DEPRECATED (s14): the registry "readiness" dot is no longer
+           rendered on cells (it was teacher material-tracking that contradicted the
+           student progress glyphs). Rules retained only so the mobile dot-shrink
+           selector (.poll-dot, .status-dot) stays valid; safe to purge with that rule. */
         .status-dot {
           position:absolute; bottom:3px; left:3px;
-          width:7px; height:7px; border-radius:50%;   /* round = personal status */
+          width:7px; height:7px; border-radius:50%;
         }
         .status-ready { background:#4caf50; }
         .status-partial { background:#ff9800; }
@@ -8573,35 +8578,37 @@ function updateLegend(def){
     +'<div class="legend-item"><span class="legend-st cell-locked">🔒</span>Locked</div>'
     +'<div class="legend-item"><span class="legend-st cell-pc"></span>Progress Check</div>'
     +'<div class="legend-item"><span class="legend-st cell-poster"></span>Poster</div>'
-    +'<div class="legend-item"><span class="legend-st cell-u1"><span class="status-dot status-ready"></span></span>Ready</div>'
     +'<div class="legend-item"><span class="legend-st cell-u1"><span class="poll-dot"></span></span>Class poll</div>'
     +'</div>'
-    // #9 — let the student/teacher choose the "Up next" cell style (the neon is loud;
-    // these alternatives are layered after the frozen rule, default unchanged).
+    // #9 — let the student/teacher choose the "Up next" cell style. Default = marching ants;
+    // alternatives layered after the frozen .cal-current rule so the neon RULE stays test-green.
     +'<div class="legend-calcur">Up-next style: '
     +'<select id="calcur-pick" onchange="setCalcurStyle(this.value)">'
-    +'<option value="">Neon (default)</option>'
+    +'<option value="ants">Marching ants (default)</option>'
+    +'<option value="neon">Neon</option>'
     +'<option value="tone">Toned neon</option>'
-    +'<option value="ants">Marching ants</option>'
     +'<option value="gold">Gold</option>'
     +'</select></div>'
     +'</details>';
   el.innerHTML=h;
   if(typeof _applyCalcurStyle==='function') _applyCalcurStyle();
 }
-// "Up next" cell style (#9) — KEEP (default neon) / tone / ants / gold. Persisted in
-// localStorage, applied as #cg[data-calcur]; the alternative CSS is layered AFTER the
-// frozen .cal-current rule so the default (no attribute) is byte-identical + test-green.
+// "Up next" cell style (#9) — ants (DEFAULT) / neon / tone / gold. Persisted in localStorage,
+// applied as #cg[data-calcur]. The alternatives are layered AFTER the frozen .cal-current
+// (neon) rule; 'neon' has no override rule so it falls through to that frozen rule — which
+// keeps the neon CSS (and the 46 frozen tests) intact even though ants is what renders by default.
 var CALCUR_KEY = 'apstats_calcur_style';
+var CALCUR_DEFAULT = 'ants';
 function setCalcurStyle(v){
   try{ if(v) localStorage.setItem(CALCUR_KEY, v); else localStorage.removeItem(CALCUR_KEY); }catch(_){}
   _applyCalcurStyle();
 }
 function _applyCalcurStyle(){
-  var v='';
-  try{ v = localStorage.getItem(CALCUR_KEY) || ''; }catch(_){}
+  var v=null;
+  try{ v = localStorage.getItem(CALCUR_KEY); }catch(_){}
+  if(!v) v = CALCUR_DEFAULT;                 // nothing saved → marching ants
   var cg=document.getElementById('cg');
-  if(cg){ if(v) cg.setAttribute('data-calcur', v); else cg.removeAttribute('data-calcur'); }
+  if(cg) cg.setAttribute('data-calcur', v);  // always set (incl 'neon' → no override → frozen neon rule)
   var sel=document.getElementById('calcur-pick');
   if(sel) sel.value=v;
 }
@@ -16604,16 +16611,10 @@ function rCal(){
             if (typeof inf === 'object' && inf.t) {
               c.dataset.topic = inf.t; c.dataset.dts = +dt; // DN3b — completion overlay hooks
               if (wk._summer) c.dataset.summer = '1';        // gate dispatch: summer cells use the individual summer sequence
-              const allEntries = getAllRegistryEntries(inf.t);
-              if (allEntries.length) {
-                const worst = allEntries.some(e => e.status === 'partial') ? 'partial'
-                  : allEntries.every(e => e.status === 'ready') ? 'ready' : null;
-                if (worst) {
-                  c.style.position = 'relative';
-                  const dotClass = worst === 'ready' ? 'status-ready' : 'status-partial';
-                  c.insertAdjacentHTML('beforeend', '<span class="status-dot ' + dotClass + '"></span>');
-                }
-              }
+              // (Removed s14: the registry "readiness" status-dot was teacher-facing
+              // material-tracking — it marked most lessons "partial" and now contradicts
+              // the student-facing done / in-progress glyphs. The student progress signal
+              // below (localLessonState) is the single source of truth on a cell.)
               // CALENDAR_FOCUS -- recede colour from the STUDENT's own completion
               // marks (apstats_desk_marks_, read once into _gateMarks), NOT the
               // REGISTRY readiness above. This reflects the signed-in student --
@@ -16814,11 +16815,13 @@ function sTip(ev,dt,inf,ds){if(inf===NC||!inf)return;
         const re=getRegistryEntry(inf.t);
         if(re){
             // The tooltip FOLLOWS the cursor (mTip) and is pointer-events:none, so any
-            // embedded link is unclickable. Show how to open the lesson instead of dead
-            // anchors; the real links live on the cell click + the day-grade modal.
-            h+='<div class="th" style="color:#2b6cb0">Click to open · double-click for grade</div>';
-            const statusText=re.status==='ready'?'Ready ✓':re.status==='partial'?'Partial ◐':'Pending ○';
-            h+='<div class="tt-status '+(re.status||'pending')+'">'+statusText+'</div>';
+            // embedded link is unclickable. Just show how to open the lesson. (The old
+            // grade-on-dblclick hint was dropped: the single click opens the resource
+            // panel first, so the day-grade dblclick rarely lands, and the grade is
+            // already one tap away on the Do-Now card.)
+            h+='<div class="th" style="color:#2b6cb0">Click to open</div>';
+            // (Removed s14: the registry Ready/Partial/Pending "readiness" line — that was
+            // teacher material-tracking and contradicts the student progress glyphs.)
             var _allE=getAllRegistryEntries(inf.t);
             var _syncStates=[];
             for(var _i=0;_i<_allE.length;_i++){var _ep=_allE[_i].periods&&_allE[_i].periods[cP];

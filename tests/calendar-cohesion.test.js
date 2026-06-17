@@ -44,9 +44,11 @@ describe('Item 1 -- legend decodes overlay states (not just unit colors)', () =>
   it('the key labels every overlay signal', () => {
     const b = fnBody(html, 'updateLegend');
     for (const label of ['Today', 'Up next', 'Done', 'In progress', 'Ahead',
-                         'Locked', 'Progress Check', 'Poster', 'Ready', 'Class poll']) {
+                         'Locked', 'Progress Check', 'Poster', 'Class poll']) {
       expect(b).toContain(label);
     }
+    // the deprecated teacher "readiness" entry was removed (it contradicted student progress)
+    expect(b).not.toContain('status-dot status-ready');
   });
   it('swatches reuse the LIVE cell classes so the key cannot drift from the CSS', () => {
     const b = fnBody(html, 'updateLegend');
@@ -159,6 +161,12 @@ describe('Item 9 -- up-next style switcher (default unchanged)', () => {
     expect(b).toMatch(/setAttribute\(\s*['"]data-calcur['"]/);
     expect(b).toMatch(/localStorage\.getItem\(\s*CALCUR_KEY/);
     expect(b).toMatch(/sel\.value\s*=\s*v/);   // re-sync the picker after updateLegend rebuilds it
+    expect(b).toMatch(/CALCUR_DEFAULT/);       // falls back to the default when nothing is saved
+  });
+  it('marching ants is the default up-next style', () => {
+    expect(html).toMatch(/CALCUR_DEFAULT\s*=\s*'ants'/);
+    // the dropdown marks ants as the default option
+    expect(fnBody(html, 'updateLegend')).toMatch(/value="ants">Marching ants \(default\)/);
     // updateLegend renders the picker + applies the saved pick
     const u = fnBody(html, 'updateLegend');
     expect(u).toMatch(/id="calcur-pick"/);
@@ -231,8 +239,12 @@ describe('Item 14 -- tooltip is honest (no dead links)', () => {
     expect(b).not.toMatch(/re\.urls\.worksheet/);
     expect(b).not.toMatch(/Schoology Folder/);
     expect(b).toMatch(/Click to open/);
-    // keeps the informative status line
-    expect(b).toMatch(/tt-status/);
+    expect(b).toMatch(/tt-status/);   // the Schoology Posted/Scheduled status line remains
+  });
+  it('sTip no longer shows the deprecated readiness line or the broken double-click hint', () => {
+    const b = fnBody(html, 'sTip');
+    expect(b).not.toMatch(/Ready ✓/);             // the Ready/Partial/Pending readiness line is gone
+    expect(b).not.toMatch(/double-click for grade/);
   });
 });
 
