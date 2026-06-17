@@ -95,17 +95,16 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
   `storage` sign-out listener; `roster-client.js` synced to the Desk's. **LEFT (user chose cheap-wins): cr focus-roster-
   refresh + clear stale peer `classData` on identity change.** Audit detail in `project_cr_identity_unify.md`.
 
-## ⏭ NEXT — grade-integrity modeling program (one target left: Schoology). DOGE/candy still PAUSED.
+## ⏭ NEXT — grade-integrity modeling program: ALL 3 TARGETS DONE. Only an optional follow-on remains. DOGE still PAUSED.
 
-> **GRADE-INTEGRITY MODELING (s13 — the active theme).** The user wants to keep modeling app areas as state machines / property
-> tests over the real logic, to FIND or VERIFY integrity bugs. SHIPPED s13: grade engine (Layers A/B/C, 3 fixes + F4 averted),
-> appeal machine (F5/F6 fixed across all 69 worksheets), lesson gating (modeled → SOUND, no findings). **OPEN — user picked, NOT
-> started: Schoology reconciliation idempotency** (sync-twice = once, no duplicate columns — a real past bug; model the PURE
-> reconciliation core only, the rest is CDP I/O). **Optional rigor follow-on:** a LIVE-CODE harness for the appeal + gating models
-> (run the real DOM-coupled functions with stubbed globals) — they currently model the DOCUMENTED logic, not the live code (Layer A
-> already drives the real engine; these don't yet). Recipe that works: extract/identify the pure logic → fixture + generator →
-> assert invariants (exhaustive when the state space is small, fast-check when large) → pin findings → fix. Findings doc:
-> `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md`. **Do NOT model DOGE (paused/deprecating).**
+> **GRADE-INTEGRITY MODELING (s13 — the theme).** Model app areas as state machines / property tests over the real logic to FIND
+> or VERIFY integrity bugs. SHIPPED s13 (all pushed): grade engine (Layers A/B/C, 3 fixes + F4 averted), appeal machine (F5/F6 fixed
+> across all 69 worksheets, `3029dae`), lesson gating (modeled → SOUND, `d48bf32`), **Schoology reconciliation (modeled → SOUND,
+> idempotent + dup-safe, `43c3089`).** **No target left.** **Optional follow-on (not started):** a LIVE-CODE harness so the appeal +
+> gating + schoology-CDP models drive the REAL functions (stubbed globals) — they currently model the DOCUMENTED logic, not the live
+> code (Layer A already drives the real engine; these don't yet). The recipe that works: identify/extract the pure logic → fixture +
+> generator → assert invariants (exhaustive when the state space is small, fast-check/seeded-random when large) → pin findings → fix.
+> Findings doc: `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md`. **Do NOT model DOGE (paused/deprecating).**
 
 > **DOGE/candy status as of s12:** migration `0021` (gifting) is **RUN**; **Abraham Ladny (`olive_sloth`, PeriodX) + a few other
 > students are ENROLLED**. The teacher is **NOT handing out / registering paper wallets** and is leaning toward **deprecating the whole
