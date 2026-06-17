@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — grade-policy SIMULATOR + fixed 3 perverse incentives (only-helps caught & rejected) + appeal/gating state-machine models ; DOGE/candy still PAUSED
+# CONTINUATION PROMPT — Desk CALENDAR cohesion + a11y + tactility polish SHIPPED ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 13).
-> follow-alongs HEAD = `d48bf32`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14).
+> follow-alongs HEAD = `0db94a2`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,43 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 14 SHIPPED (2026-06-17) — Desk CALENDAR cohesion + accessibility + tactility polish
+
+HEAD `0db94a2` (one commit since `f13ac7a`, pushed → GH Pages auto-republishes). From "make the calendar more dynamic /
+polished / cohesive + sharpen the code." Ran a 6-lens design workflow (40 proposals → synthesize → adversarial critique →
+finalize) then a 3-agent adversarial review (verdict **SHIP**; 6 minor/nit findings ALL folded). Spec + the unshipped queue:
+`CALENDAR_POLISH_PROPOSAL.md`. Memory: `project_calendar_polish.md`. Edits all in `ap_stats_roadmap_square_mode.html` (the
+Desk) + new `tests/calendar-cohesion.test.js` (24). Full root suite **7188 pass / 6 fail** (the 6 = the user's pre-existing
+onboarding refactor, UNCHANGED — desk-gating-fixes / desk-self-signup / desk-signin-wall / desk-user-role).
+
+- **SHIPPED (7 items, all additive / behavior-preserving / in the System-7 aesthetic):**
+  1. **Legend decodes every overlay STATE** — collapsed `<details class="legend-states">` "What the marks mean" key
+     (today/up-next/done/in-progress/ahead/locked/PC/poster/ready/poll); swatches REUSE the live cell classes so the key
+     can't drift from the CSS. `updateLegend` (NOT test-pinned).
+  2. **Keyboard access** — interactive cells get `role=button`+`tabIndex=0`+Enter/Space→`c.click()` (reuses the existing
+     onclick, honoring the lock + Do-Now guards) + a classic-Mac dotted `:focus-visible` ring (white on dark PC/exam cells).
+  3. **Screen-reader layer** — new `cellAria()` helper, `aria-label`+`aria-current='step'` in rCal, `#cg role=group`, a
+     `.sr-only` `#cal-sr` aria-live region announcing the visible window on paging; `paintDonowCells` mirrors server
+     done/ahead into the label (idempotent).
+  4. **Stepped (pixel-crisp `steps(2)`) hover/press tactility** on `.dc` + `.cal-nav-btn`; reduced-motion disables it; the
+     press bevel is scoped OFF state-ring cells so it never erases the next-up/done ring.
+  5. **Paired the two corner dots** → one 7px scale (round = personal status, squircle = class poll); mobile shrinks both
+     + hides the `.dbl` 2x text.
+  6. **Code sharpening** — reflowed rCal's dense minified week-building loop to readable code + `// ── N. phase ──` banners
+     (a poll-dot date-key DRY onto `_ymdISO` was REVERTED — poll-archive-desk.test.js test 18 pins the inline `getMonth()+1`/`padStart`).
+  7. **Named magic numbers** — `--cell-past-dim/--cell-lock-dim/--cell-done-dim` `:root` vars; documented the cls()/htm() sentinels.
+- **⚠ CALENDAR TEST-CONTRACT GOTCHAS (durable, for future calendar work):** `tests/calendar-polish.test.js` (46) uses
+  `fnBody(html,'rCal')` and pins MANY exact substrings INSIDE rCal → logic CANNOT be extracted into helpers without rewriting
+  those tests. The **synthwave `.cal-current`** (#ff2e97 + calCurrentPulse + reduced-motion) is a FROZEN tested contract —
+  do NOT swap it (reconciliation options are in the proposal doc). `poll-archive-desk.test.js` test 30 does
+  `indexOf('.poll-dot {')` so any earlier `.poll-dot {` token breaks it — order such selectors as `.poll-dot, .status-dot {`.
+- **⏭ NEEDS-YOUR-NOD QUEUE (`CALENDAR_POLISH_PROPOSAL.md`, NOT shipped — several are CHOICES):** (8) make hover ADDITIVE
+  instead of full-black-invert [recommended — the biggest felt incoherence]; (9) synthwave reconciliation KEEP/TONE/
+  MARCHING-ANTS/GOLD [a `data-calcur` localStorage preview toggle can ship without your nod]; (10) date-aware corner grammar
+  for the two badge collisions; (11) colorblind shape glyphs; (12) mobile subtitle clamp; (13) honest pace-aware progress
+  label; (14) the DEAD tooltip links (`.tip{pointer-events:none}` — real bug: the Worksheet/Quiz/Blooket anchors can never
+  be clicked); (15) calm today heartbeat [recommend skip]; (16) one-ring priority (keep today 2px).
 
 ## ⏭ SESSION 13 SHIPPED (2026-06-16) — grade-policy SIMULATOR + 3 perverse-incentive fixes + appeal/gating state-machine models
 
