@@ -200,3 +200,16 @@ the gradebook record, and `upgraded` all from `final`. This makes "AI only ever 
 | F6 | a downgrade appeal lowers the shown score but says "Score maintained" | ✅ fixed (same clamp) |
 
 > Findings F1–F4 are the v3 quarter-grade engine; F5–F6 are the reflection appeal state machine.
+
+## Lesson gating — modeled, NO findings (the s11 strict gate is sound)
+
+`tests/lesson-gating.test.js` exhaustively model-checks the Desk's strict lesson gate
+(`_isLessonUnlocked` / `_isLessonComplete` / `_prevTopicInSequence` / `_prevSummerTopic`) as a
+transition system. All invariants HOLD: reachable completion states are **contiguous prefixes** (the
+historical PARITY LEAK — 1.2/1.4/1.6 open, 1.3/1.5 locked — is structurally impossible under the
+immediate-predecessor gate); unlocks are monotonic (completing never re-locks); no deadlock (the full
+sequence is always reachable); the cross-portion combined-topic bridge works (a summer student's
+individual 1.2 + 1.3 satisfies the fall "1.2+1.3" cell); access modes (signed-out / teacher /
+override) bypass correctly. **No bug — this confirms the LESSON_GATE_BUILD §8 (s11) fix holds.** Note:
+this models the documented logic; a live-code harness (running the real DOM-coupled functions with
+stubs) is a possible follow-on for a true differential check.
