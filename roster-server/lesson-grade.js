@@ -689,14 +689,23 @@ export function computeQuarterFromLessons({
 // only Lessons + Quizzes are present → workAvg = mean(lessons, quizzes).
 export const V3_WORK_WEIGHTS = { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 };
 
+// The two gating constants for quarterGradeV3, default values. `floor` is the
+// 40% both-tracks-cleared threshold that unlocks max(pc, work); `ceiling` is the
+// 0.7-of-a-single-track bound on single-track gaming. Surfaced as a default so a
+// policy sweep / config can retune them WITHOUT editing this file (GRADE_SIMULATION
+// FINDING F2). computeQuarterV3 reads config.v3Gates and passes it through.
+export const V3_GATES = { floor: 0.40, ceiling: 0.70 };
+
 // The core v3 quarter formula. Both args on [0, 1]; returns [0, 1].
-//   both tracks >= 0.40 → max(pc, work)                       (either path → 100%)
-//   otherwise           → max(0.7*pc, 0.7*work, mean(pc, work))
-// The 40% floors gate the max-of-two; the 70%-of-track ceiling bounds
-// single-track gaming. Verbatim from the spec.
-export function quarterGradeV3(pcAvg, workAvg) {
-  if (pcAvg >= 0.40 && workAvg >= 0.40) return Math.max(pcAvg, workAvg);
-  return Math.max(0.7 * pcAvg, 0.7 * workAvg, (pcAvg + workAvg) / 2);
+//   both tracks >= floor → max(pc, work)                          (either path → 100%)
+//   otherwise            → max(ceiling*pc, ceiling*work, mean(pc, work))
+// The floor gates the max-of-two; the ceiling-of-track bounds single-track
+// gaming. Defaults (floor 0.40, ceiling 0.70) are verbatim from the spec.
+export function quarterGradeV3(pcAvg, workAvg, gates = V3_GATES) {
+  const floor = gates && gates.floor != null ? gates.floor : V3_GATES.floor;
+  const ceiling = gates && gates.ceiling != null ? gates.ceiling : V3_GATES.ceiling;
+  if (pcAvg >= floor && workAvg >= floor) return Math.max(pcAvg, workAvg);
+  return Math.max(ceiling * pcAvg, ceiling * workAvg, (pcAvg + workAvg) / 2);
 }
 
 // Weighted blend of the four work tracks, renormalized over present tracks.
@@ -718,23 +727,30 @@ export function workAvgV3(tracks, weights = V3_WORK_WEIGHTS) {
 // tolerating a missing (null) track. A track is null when nothing in it is due
 // yet — we must NOT penalize a student for an un-scheduled track, so the
 // present track alone sets the grade until BOTH tracks have due assignments.
-function combineV3(pcAvg, workAvg) {
+function combineV3(pcAvg, workAvg, gates = V3_GATES) {
   if (pcAvg == null && workAvg == null) return null;
   if (pcAvg == null) return workAvg;
   if (workAvg == null) return pcAvg;
-  return quarterGradeV3(pcAvg, workAvg);
+  return quarterGradeV3(pcAvg, workAvg, gates);
 }
 
 // Per-lesson grade EXCLUDING the curriculum-quiz feeder (v3 splits quizzes into
 // their own track). Weighted blend of {Cws, W} renormalized over present
 // feeders, on 0..100. null when neither feeder is present.
-function lessonGradeNoQuiz(result, weights) {
+function lessonGradeNoQuiz(result, weights, fixCwsReveal = false) {
   if (!result) return null;
   let num = 0, den = 0;
   if (result.Cws != null) { num += weights.ws * result.Cws; den += weights.ws; }
   if (result.W   != null) { num += weights.W  * result.W;   den += weights.W; }
   if (den === 0) return null;
-  return num / den;
+  const blended = num / den;
+  // FINDING F3 fix (flagged off by default): the Cws feeder is null (ignored, W
+  // carries the lesson) until the FIRST blank, then counts the unfilled blanks as
+  // 0 — so doing one of four blanks drops the lesson 100→75. With the fix, doing
+  // blanks can only RAISE the lesson, never fall below its FRQ-only (W) value.
+  // (When W is absent, Cws stands alone unchanged.) See GRADE_FIX_F1_F3_BUILD.md.
+  if (fixCwsReveal && result.W != null) return Math.max(blended, result.W);
+  return blended;
 }
 
 // [0,1] → 0..100 with one-decimal rounding (the 0..100 response surface).
@@ -775,10 +791,20 @@ export function computeQuarterV3({
   const period = sectionToPeriod(section);
   const lessonWeights = (config && config.lessonFeederWeights) || { ws: 1, W: 2, Q: 3 };
   const excludeQuiz = !(config && config.v3LessonsExcludeQuiz === false); // default true
+  // F2: the v3 Work-track weights + the floor/ceiling gates are config-tunable,
+  // defaulting to today's frozen values (behavior-identical when absent).
+  const workWeights = (config && config.v3WorkWeights) || V3_WORK_WEIGHTS;
+  const gates = (config && config.v3Gates) || V3_GATES;
+
+  // Perverse-incentive fixes (GRADE_FIX_F1_F3_BUILD.md), all DEFAULT-OFF so
+  // production grades + pinned tests are unchanged until the teacher opts in.
+  const fixCwsReveal = !!(config && config.v3FixCwsReveal);            // F3
+  const fixQuizZero  = !!(config && config.v3FixQuizZero);             // F1-B
+  const aheadMode    = (config && config.v3AheadOfScheduleLessons) || 'count-all'; // F1-A
 
   // The Lessons-track value for one topic (respects the exclude-quiz flag).
   function lessonTrackValue(r) {
-    if (excludeQuiz) return lessonGradeNoQuiz(r, lessonWeights);
+    if (excludeQuiz) return lessonGradeNoQuiz(r, lessonWeights, fixCwsReveal);
     return r && r.lessonGrade != null ? r.lessonGrade : null;
   }
 
@@ -831,13 +857,45 @@ export function computeQuarterV3({
   // ── Lessons track (worksheet blanks + FRQ; quiz excluded by default) ──
   // Denominator = ALL due lessons: every lesson has a worksheet, so a null is
   // genuinely "no work done" = 0 (an ungraded-due lesson legitimately tanks it).
+  //
+  // FINDING F1-A fix (flagged; default 'count-all' = today): an ahead-of-schedule
+  // lesson (has work but NOT scheduled-due) joining the denominator at a low value
+  // can DRAG the grade down — doing future work poorly hurts you. The lessons the
+  // LESSONS TRACK counts depend on the mode (quiz/blooket/reporting untouched):
+  //   'count-all'     — scheduled-due OR has-work (today's behavior).
+  //   'not-until-due' — scheduled-due only; early work simply waits to count.
+  //   'only-helps'    — scheduled-due always, PLUS early lessons whose value is
+  //                     >= the scheduled-due average (early work can lift, never drag).
+  const scheduledDue = bandLessons.filter(isDue);
+  let lessonTrackKeys = dueLessons;
+  if (aheadMode !== 'count-all' && scheduledDue.length > 0) {
+    if (aheadMode === 'not-until-due') {
+      lessonTrackKeys = scheduledDue;
+    } else if (aheadMode === 'only-helps') {
+      let s = 0;
+      for (const tk of scheduledDue) {
+        const lv = lessonTrackValue(lessonMap.get(tk));
+        s += lv != null ? lv : 0; // a scheduled-due lesson with no work counts as 0
+      }
+      const schedAvg = s / scheduledDue.length;
+      const aheadKept = dueLessons.filter((tk) => {
+        if (isDue(tk)) return false; // scheduled-due handled above
+        const lv = lessonTrackValue(lessonMap.get(tk));
+        return lv != null && lv >= schedAvg; // early work counts only if it lifts
+      });
+      lessonTrackKeys = [...scheduledDue, ...aheadKept];
+    }
+  }
+  // Degenerate (all-early student, no scheduled-due lesson): fall back to
+  // count-all so they still get a grade rather than a null lessons track.
+
   let lessonSum = 0, lessonGradedCount = 0;
-  for (const topicKey of dueLessons) {
+  for (const topicKey of lessonTrackKeys) {
     const r = lessonMap.get(topicKey);
     const lv = lessonTrackValue(r);
     if (lv != null) { lessonSum += lv; lessonGradedCount += 1; }
   }
-  const lessonsAvg = lessonsDue > 0 ? (lessonSum / lessonsDue) / 100 : null;
+  const lessonsAvg = lessonTrackKeys.length > 0 ? (lessonSum / lessonTrackKeys.length) / 100 : null;
 
   // ── Quizzes track (curriculum-quiz correctness) ──
   // Denominator = due lessons that HAVE a quiz (quizLessons), NOT all due lessons.
@@ -850,11 +908,17 @@ export function computeQuarterV3({
   const quizSet = quizLessons == null ? null : new Set(quizLessons);
   let quizSum = 0, quizDue = 0, quizDone = 0;
   const quizTodo = [];
-  for (const topicKey of dueLessons) {
+  // FINDING F1-B fix (flagged; default off): when on, a quiz-bearing lesson counts
+  // only if scheduled-due OR actually attempted — so starting a FUTURE lesson's
+  // worksheet doesn't turn its un-taken quiz into a 0 (mirrors the Blooket track's
+  // `isDue || attempted` guard). Default (off): today's dueLessons (has-work) loop.
+  const quizCandidates = fixQuizZero ? bandLessons : dueLessons;
+  for (const topicKey of quizCandidates) {
     if (quizSet != null && !quizSet.has(topicKey)) continue; // quiz-less lesson excluded
-    quizDue += 1;
     const r = lessonMap.get(topicKey);
     const q = r && r.Q != null ? r.Q : null;
+    if (fixQuizZero && !(isDue(topicKey) || q != null)) continue; // early + un-attempted → not a 0
+    quizDue += 1;
     if (q != null) { quizSum += q; quizDone += 1; }
     else { quizTodo.push(topicKey); } // due quiz-bearing lesson, not taken -> 0
   }
@@ -953,8 +1017,8 @@ export function computeQuarterV3({
     // workTracks channel. null -> renormalized away by workAvgV3.
     blooket: blooketAvg,
   };
-  const workAvg = workAvgV3(tracks);
-  const quarterGrade = to100(combineV3(pcAvg, workAvg));
+  const workAvg = workAvgV3(tracks, workWeights);
+  const quarterGrade = to100(combineV3(pcAvg, workAvg, gates));
 
   // ── Ceiling: best case if every remaining/un-attempted item scores 100 ──
   const lessonsAvgBest = lessonsTotal > 0
@@ -978,9 +1042,9 @@ export function computeQuarterV3({
     // We do NOT assume future blookets score 100 (unlike lessons/quizzes/PC,
     // which have a known remaining count). A missing blooket stays excluded.
     blooket: blooketAvg,
-  });
+  }, workWeights);
   // Ceiling only when the quarter has signal (matches Phase 6: nothing due → null).
-  const ceiling = quarterGrade == null ? null : to100(combineV3(pcAvgBest, workAvgBest));
+  const ceiling = quarterGrade == null ? null : to100(combineV3(pcAvgBest, workAvgBest, gates));
 
   return {
     quarterGrade,

@@ -70,6 +70,31 @@ export const PHASE3_CONFIG = {
   // Lessons too would double-count. Default true (the defensible reading; the
   // spec prose is ambiguous on this one point — see GRADING_MODEL_V3_BUILD.md).
   v3LessonsExcludeQuiz: true,
+
+  // v3 Work-track weights (renormalized over present tracks) — formerly a
+  // hardcoded const in lesson-grade.js (GRADE_SIMULATION FINDING F2). Now a
+  // pilot-tunable knob; these defaults are byte-identical to the old constant.
+  v3WorkWeights: { lessons: 0.30, quizzes: 0.30, posters: 0.30, blooket: 0.10 },
+
+  // v3 quarter-grade gates: `floor` = the both-tracks-cleared threshold that
+  // unlocks max(pc, work); `ceiling` = the single-track gaming bound (0.7·track).
+  // Formerly hardcoded literals in quarterGradeV3; defaults preserve behavior.
+  v3Gates: { floor: 0.40, ceiling: 0.70 },
+
+  // Perverse-incentive fixes the grade simulator found (GRADE_FIX_F1_F3_BUILD.md).
+  // ENABLED 2026-06-16. Each is a real grade change, simulator-verified.
+  // F1-B: an un-taken quiz on a not-scheduled-due lesson stays absent, not 0.
+  v3FixQuizZero: true,
+  // F3: doing some-but-not-all worksheet blanks can't drop a lesson below FRQ-only.
+  v3FixCwsReveal: true,
+  // F1-A: how an ahead-of-schedule (worked, not-yet-due) lesson counts in the
+  // Lessons track — 'count-all' (legacy) | 'not-until-due' | 'only-helps'.
+  // 'not-until-due' chosen: it fully fixes the F1 incentive AND stays monotonic.
+  // 'only-helps' scored marginally higher but the simulator proved it VIOLATES
+  // A3 monotonicity (raising a due lesson can evict an above-avg early lesson and
+  // lower the grade — FINDING F4). Monotonicity wins. (only-helps stays available
+  // for experimentation but must not ship.)
+  v3AheadOfScheduleLessons: 'not-until-due',
 };
 
 // unitNumber("U4") | "4" | 4 → 4 ; anything unparseable → null.
