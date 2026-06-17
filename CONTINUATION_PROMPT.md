@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — Desk CALENDAR polish COMPLETE (rounds 1+2 + teacher-feedback + dynamic-window/summer-next-up/Today-button) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2 + teacher-feedback 2a–2d).
-> follow-alongs HEAD = `7252c99`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> follow-alongs HEAD = `9b895df`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -100,6 +100,11 @@ onboarding refactor, UNCHANGED — desk-gating-fixes / desk-self-signup / desk-s
   other calendar-polish pins preserved VERBATIM. `tests/calendar-cohesion.test.js` now **57**; full root suite **7221 pass / 6**
   (the pre-existing onboarding 6). **NO open calendar task.** Key fns: `_orderedSummerTopics()` (~L7015), rCal section 3/3b
   (next-up-before-sizing + dynamic window), `calToday()`/`_calStepWeeks` (~L16426), `_walletLoadSummerSchedule` (~L7191).
+  **✅ TEACHER-CONFIRMED LIVE (2026-06-17):** all 4 verified on the public URL — (1) 1.1 greyed + "Flashcards ✓ done",
+  (2) next-up dashed box on 1.2, (3) window sizes to reach the next lesson, (4) Today button. NOTE: the next-up box renders
+  STATIC (not marching) for the teacher because **prefers-reduced-motion is on** in their browser/OS — working as designed
+  (we honor reduce-motion; `matchMedia('(prefers-reduced-motion: reduce)').matches` confirms), teacher ACCEPTED the static box.
+  Settled-with-defaults (teacher fine): CAL_MAX_WEEKS=4, up-next default = marching-ants. **The entire CALENDAR program is DONE.**
 
 ## ⏭ SESSION 13 SHIPPED (2026-06-16) — grade-policy SIMULATOR + 3 perverse-incentive fixes + appeal/gating state-machine models
 
