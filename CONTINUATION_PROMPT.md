@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — DOGE wallet LIVE-ready + Desk/gating/Live-Classroom polish ; NEXT = run migration 0021 + hand out wallets (Sept)
+# CONTINUATION PROMPT — grade-policy SIMULATOR + fixed 3 perverse incentives (only-helps caught & rejected) + appeal/gating state-machine models ; DOGE/candy still PAUSED
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 11).
-> follow-alongs HEAD = `7aa5891`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-16 (session 13).
+> follow-alongs HEAD = `d48bf32`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,66 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 13 SHIPPED (2026-06-16) — grade-policy SIMULATOR + 3 perverse-incentive fixes + appeal/gating state-machine models
+
+HEAD `d48bf32` (4 commits since `0780ece`, ALL pushed). `04c5fe6` + `3029dae` touch `roster-server/**` + all 69 worksheets →
+**Railway auto-deploys + GH Pages republishes.** Started from the user's question *"is it smart to model the app as a state
+machine to simulate how student decisions affect outcomes?"* — built it, found real bugs, fixed them, then extended the technique.
+Specs: `GRADE_SIMULATION_SPEC.md`, `GRADE_FIX_F1_F3_BUILD.md`. Findings: `GRADE_SIMULATION_FINDINGS.md`. Memory: `project_grade_simulator.md`.
+
+- **The grade simulator (3 layers), commit `04c5fe6` + Layer C `5e042ca`:**
+  - **Layer A** — `roster-server/tests/grade-sim*.test.js` + `tests/fixtures/sim-world.js`: property-fuzz (`fast-check`, now a
+    roster-server devDep) of synthetic ledger-row trajectories through the **REAL `computeGrade`** (zero drift) — invariants A1–A9 + 5 archetypes.
+  - **Layer B** — `roster-server/tools/grade-sim-sweep.mjs` (sweep config knobs) + `grade-sim-f1a-compare.mjs` (the F1-A comparison that chose the policy from data).
+  - **Layer C** — `formal/grade-model/` PLT **Redex** model of the quarter-grade fold, cross-checked vs JS **PASS 1000/1000**.
+    Run: `node roster-server/tools/grade-model-emit-cases.mjs` then **PowerShell** `racket formal/grade-model/crosscheck.rkt`
+    (racket = scoop `current=9.2`, on `scoop/shims`; **segfaults under MSYS bash → use PowerShell**). Codex draft folded (Redex `number` not `rational`; subscripted-nonterminal pattern vars; flonum gates/rounding to mirror JS IEEE doubles).
+- **4 findings (3 fixed + 1 averted), all simulator-found:**
+  - **F1** ahead-of-schedule work could LOWER your grade (−14): a not-yet-due lesson joined the Lessons denominator on first touch AND its un-taken quiz counted as 0.
+  - **F2** v3 work weights + the 40/70 gates were HARDCODED (despite grade-config's "all knobs here" claim) → now config (`v3WorkWeights`, `v3Gates`), defaults byte-identical.
+  - **F3** your FIRST worksheet blank dropped the lesson 100→75 (Cws flips from absent/ignored to 1-of-4 with the unfilled blanks as 0).
+  - **F4 (headline):** the sim caught that the FIRST proposed F1-A fix `'only-helps'` was itself **NON-MONOTONIC** (raising a due lesson could evict an above-avg early lesson → A3 violation) BEFORE it shipped → shipped the monotonic `'not-until-due'`.
+  - **Shipped flags (`roster-server/grade-config.js`, ENABLED):** `v3FixQuizZero:true`, `v3FixCwsReveal:true`, `v3AheadOfScheduleLessons:'not-until-due'`. **Default-OFF path is byte-identical** (`grade-sim-fixes.test.js` pins the findings under legacy config + verifies the fixes). Adversarial review (Codex, read-only) CLEAN (A2 ceiling, A3 monotonicity, no double-count, flags-off identity). ⚠ **`'only-helps' must NOT ship — it violates A3.**
+- **Appeal state machine — `3029dae`:** `tests/appeal-state-machine.test.js` EXHAUSTIVELY model-checks the reflection appeal machine
+  (tiny space = proof). **F5** "AI only ever raises" was enforced ONLY by the `_aiFrqFloor` overlay monkey-patch (~L2290), NOT the base
+  `recordReflectionToGradebook` (~L1206) → a P→I appeal could write the LOWER grade. **F6** a downgrade appeal lowered the DISPLAYED
+  score while the UI said "Score maintained". **FIXED:** `scripts/wire-appeal-clamp.mjs` injects a clamp (appeal verdict never below
+  previous; marker `APPEAL-CLAMP`) into all **69 worksheets**; `u3_lesson6-7_live.html` (original prototype, different handler) patched directly.
+- **Lesson gating — MODELED, NO findings (`d48bf32`):** `tests/lesson-gating.test.js` exhaustively model-checks the strict gate
+  (`_isLessonUnlocked`/`_isLessonComplete`/`_prevTopicInSequence`/`_prevSummerTopic`) → reachable states are CONTIGUOUS PREFIXES
+  (the historical parity leak 1.2/1.4/1.6-open/1.3/1.5-locked is structurally impossible), monotonic, no deadlock, combined-topic bridge works. **Confirms the s11 LESSON_GATE_BUILD §8 fix holds.**
+- **⚠ Rigor caveat:** Layer A drives the **real** engine; the appeal + gating models are faithful models of the **documented logic**, NOT the live DOM-coupled code. A live-code harness (extract the real functions + stub their globals) would make them true differential checks — an optional follow-on.
+- **Tests:** roster-server **985/985**; root **7139 pass** — the **6 pre-existing failures** (desk-gating-fixes / desk-self-signup / desk-user-role / desk-signin-wall) are the user's parallel onboarding refactor, UNCHANGED. Racket v9.2 + redex installed on this box (scoop).
+
+## ⏭ SESSION 12 SHIPPED (2026-06-16) — "view as student" worksheets show the STUDENT's answers READ-ONLY + Show-Answers cheat closed
+
+HEAD `0780ece` (one commit, 80 files). Touches `roster-server/**` → **Railway auto-deploys**; GH Pages republishes. Both bugs the
+teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded). **TEACHER CONFIRMED IT WORKS LIVE.**
+
+- **BUG 1 — view-as opened a worksheet showing the TEACHER's own past answers; now shows the STUDENT's, READ-ONLY.** Root cause:
+  the Desk's view-as is per-tab `sessionStorage` impersonation that NEVER changes the roster login; worksheets are separate pages
+  that hydrate via `gradebook-client.js fetchPrior` → `GET /ledger/student/:id` keyed on the signed-in identity (= the teacher).
+  - `roster-server/ledger.js` — a verified TEACHER token may now read ANY student's ledger; non-teacher cross-student reads still
+    403. **GOTCHA (folded): the role lookup runs on the ROSTER db, not the ledger db** — `server.js` threads `rosterDb: db` into
+    `mountLedger`; without that every view-as read 403'd.
+  - `gradebook-client.js` — `fetchPrior` honors `window.__VIEW_AS_STUDENT_ID__` (teacher token rides along in the header).
+  - Desk `_wireViewAsWorksheetLinks` — capturing click/auxclick listener appends `?viewAsUserId=<sid>` to worksheet anchor hrefs
+    ONLY under `_viewAsContext()` (worksheet filenames only; skips edgar/mit/quiz/external).
+  - `scripts/wire-worksheet-viewas.mjs` — idempotent, EOL-preserving codemod (marker `WS-VIEWAS-MODULE`) injecting the read-only
+    module across all **69 worksheets**: sets `__VIEW_AS_STUDENT_ID__` + `__WS_READ_ONLY__`, **NEUTERS every server write sink**
+    (`gradebookClient.record` + `railwayClient.submitAnswer` → no-ops — this is what covers the on-load `healLocalAnswersToLedger`
+    path), disables inputs, hides grade/answer buttons, fetches `/teacher/student/:sid/profile` for the banner + identity (fail-safe:
+    blanks the header if the fetch fails — never the wrong person). **⚠ To edit the module: `git checkout -- $(git diff --name-only |
+    grep -E '^u\d+_lesson.*_live\.html$')` to revert the 69 first, then re-run `--apply` — the marker makes a plain re-run a SKIP.**
+  - `roster-prefill.js` — bails in view-as (it was filling the TEACHER's name + a green "signed in as teacher" banner = the review's MAJOR).
+- **BUG 2 — "Show Answers" was a free 100%** (fill key → Check). Button now ships `hidden`; revealed ONLY for a signed teacher on
+  their OWN worksheet (gated on `rosterClient.current().role`, re-gated on a later sign-in). **NOTE (accepted): a casual-cheat speed
+  bump, NOT a boundary** — `data-answer` values + the `showAnswers()` global are in the page; the durable fix is server-side scoring
+  (out of scope). LEFT (noted, out of scope): the pre-existing `?token=` query-string fallback on `GET /ledger/student` (new code is header-only).
+- **Tests:** roster-server **963/963**; new `tests/worksheet-viewas-module.test.js` 11/11 (runs the real injected module in jsdom);
+  `gradebook-client` / `desk-view-as` / `roster-prefill` extended + green; root **7125 pass** — the **6 pre-existing onboarding/icon
+  failures** (desk-gating-fixes / desk-self-signup / desk-user-role / desk-signin-wall) are the user's parallel refactor, UNCHANGED.
 
 ## ⏭ SESSION 11 SHIPPED (2026-06-16) — Desk/gating/Live-Classroom + cr login, all adversarially reviewed
 
@@ -35,20 +95,38 @@
   `storage` sign-out listener; `roster-client.js` synced to the Desk's. **LEFT (user chose cheap-wins): cr focus-roster-
   refresh + clear stale peer `classData` on identity change.** Audit detail in `project_cr_identity_unify.md`.
 
-## ⏭ NEXT — DOGE go-live is mostly DONE; remaining = run migration 0021 + hand out wallets (~September). ⚠ ABRAHAM LADNY ENROLLED (s11, `olive_sloth`, PeriodX=29) — set his Schoology UID `191627`.
+## ⏭ NEXT — grade-integrity modeling program (one target left: Schoology). DOGE/candy still PAUSED.
+
+> **GRADE-INTEGRITY MODELING (s13 — the active theme).** The user wants to keep modeling app areas as state machines / property
+> tests over the real logic, to FIND or VERIFY integrity bugs. SHIPPED s13: grade engine (Layers A/B/C, 3 fixes + F4 averted),
+> appeal machine (F5/F6 fixed across all 69 worksheets), lesson gating (modeled → SOUND, no findings). **OPEN — user picked, NOT
+> started: Schoology reconciliation idempotency** (sync-twice = once, no duplicate columns — a real past bug; model the PURE
+> reconciliation core only, the rest is CDP I/O). **Optional rigor follow-on:** a LIVE-CODE harness for the appeal + gating models
+> (run the real DOM-coupled functions with stubbed globals) — they currently model the DOCUMENTED logic, not the live code (Layer A
+> already drives the real engine; these don't yet). Recipe that works: extract/identify the pure logic → fixture + generator →
+> assert invariants (exhaustive when the state space is small, fast-check when large) → pin findings → fix. Findings doc:
+> `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md`. **Do NOT model DOGE (paused/deprecating).**
+
+> **DOGE/candy status as of s12:** migration `0021` (gifting) is **RUN**; **Abraham Ladny (`olive_sloth`, PeriodX) + a few other
+> students are ENROLLED**. The teacher is **NOT handing out / registering paper wallets** and is leaning toward **deprecating the whole
+> candy + Dogecoin feature** ("seems too extra"). All the code (watch-only chain, gifting, disbursement, sender) stays in place — it's
+> harmless when nobody registers an address — pending that decision. **Do NOT surface DOGE go-live items unless the teacher reopens it.**
+> If revived, the only remaining steps are: print the wallet sheet → register each address in the dashboard (Reward Disbursement) →
+> DRY-RUN `node tools/doge-send.mjs` (CC plans only; `--send` is the teacher's deliberate, irreversible call).
+
+The original DOGE go-live checklist is kept below for reference, but items 1–2 are DONE and item 3 is on hold per the note above.
 
 0. **✅ DONE (session 10):** migrations **0019 + 0020 RUN**; **node restarted** (mainnet, synced, 10,273 DOGE, RPC live);
    **30 paper wallets generated + node-validated** at `C:/Users/rober/doge-wallets/` (OUTSIDE the repo — real keys; print
    the HTML, seal the `-KEYS.csv` offline, delete the HTML after printing); **canary send VERIFIED end-to-end** (1 DOGE →
    wallet #1 `DEuXEB47…`, txid `eaa5d3b6…`, 14 confs; `doge-chain.js` read it back `confirmedDoge:1`). The full loop works.
-1. **RUN MIGRATION 0021** (`roster-server/migrations/0021_doge_gifting.sql`, USER-RUN) to turn on **kid→kid candy gifting**
-   (adds `candy_gifted_out/in` + `gift_out/gift_in` ledger kinds + the atomic `doge_gift()` and patches `doge_spend`'s guard).
-   Until it runs, `POST /wallet/gift` **503s** and the 🎁 button shows a "rewards not on yet" error — harmless.
-2. **ENROL ABRAHAM LADNY** (Schoology id `191627`, the one student in the Schoology group but NOT yet on the app roster) via
-   **Teacher ▸ 🧰 Teacher Tools ▸ 📋 Roster Console**, section `PeriodX`, then set his Schoology UID. All other 27 match.
-3. **HAND OUT + REGISTER:** print the wallet sheet, give a card to each kid, register each address in the dashboard
-   (Reward Disbursement → set). Then as kids buy DOGE, a DRY-RUN of `node tools/doge-send.mjs` (plan only) → first real
-   `--send` when ready (CC runs dry-run only; `--send` is your deliberate call, irreversible).
+1. **✅ DONE (s12): migration `0021` (gifting) RUN.** `POST /wallet/gift` + the 🎁 button are live.
+2. **✅ DONE (s12): Abraham Ladny (`olive_sloth`, PeriodX) + a few other students ENROLLED.** (Still set Abraham's Schoology UID
+   `191627` if not yet done.)
+3. **⏸ ON HOLD (s12): NOT handing out / registering wallets** — the teacher is considering deprecating candy/DOGE (see the status
+   note above). If revived: print the wallet sheet, register each address in the dashboard (Reward Disbursement → set), then a
+   DRY-RUN of `node tools/doge-send.mjs` (plan only) → first real `--send` when ready (CC runs dry-run only; `--send` is your
+   deliberate call, irreversible).
    - **Optional:** set Railway env `BLOCKCYPHER_TOKEN` (lifts the explorer free-tier ~100 req/hr ceiling; on-chain display works without it).
    - **Buy minimum is now 5 candy** (~1 lesson, was 25) — budget-neutral, kids can convert sooner.
    - **PENDING discussion:** guest-workflow hardening (complement the no-guest sign-in wall, don't collide with the in-progress onboarding refactor).
