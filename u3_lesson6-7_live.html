@@ -2657,6 +2657,9 @@ Respond in JSON: {"score": "E/P/I", "feedback": "explanation"}`;
                     state.result
                 );
 
+                // APPEAL-CLAMP (F5/F6): an appeal can never LOWER the recorded/shown grade.
+                if (({ I: 0, P: 1, E: 2 })[result.score] < ({ I: 0, P: 1, E: 2 })[state.result.score]) result.score = state.result.score;
+
                 // Update state
                 state.appealCount++;
                 state.history.push({

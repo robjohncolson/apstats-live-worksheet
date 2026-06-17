@@ -1883,6 +1883,8 @@
 
                 const appealResult = await response.json();
                 const previousScore = state.result.score;
+                // APPEAL-CLAMP (F5/F6): an appeal can never LOWER the recorded/shown grade.
+                if (({ I: 0, P: 1, E: 2 })[appealResult.score] < ({ I: 0, P: 1, E: 2 })[previousScore]) appealResult.score = previousScore;
                 const upgraded = appealResult.score === 'E' ||
                     (previousScore === 'I' && appealResult.score === 'P');
 

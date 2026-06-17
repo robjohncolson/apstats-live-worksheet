@@ -155,6 +155,39 @@ in 40,000 fuzzed trials), and costs almost nothing population-wide. **Monotonici
 score bump.** This is the headline argument *for* having the simulator at all: it caught a perverse
 incentive hidden inside the *fix* for a perverse incentive.
 
+## FINDING F5 — "AI only ever raises" is enforced only by a fragile overlay, not structurally
+
+**Severity:** medium. **Status: ✅ FIXED & SHIPPED 2026-06-16** (`scripts/wire-appeal-clamp.mjs` —
+clamp injected into all 69 worksheets; u3_lesson6-7 patched directly). The exhaustive model pins both
+the bug (base/overlay modes) AND the fix (clamped mode is monotone). Pinned by
+`tests/appeal-state-machine.test.js`.
+
+The reflection APPEAL handler (`submitAppeal`, every worksheet ~L1701) records the appeal's verdict
+via `recordReflectionToGradebook`. The BASE sink (~L1206) records **whatever verdict it is** — no
+"never downgrade" guard. The no-downgrade behavior is added LATER by the AI-overlay monkey-patch
+(~L2290, `_aiFrqFloor`: `if (nr <= floor) return`). So the "AI only ever raises grades" invariant
+holds **only when** the overlay loaded AND its floor was seeded AND the itemId mapping matches. On the
+base path (or any worksheet/timing where the overlay floor isn't seeded), an appeal that returns a
+LOWER verdict (P→I) writes the lower grade. The exhaustive model confirms: overlay mode is monotone;
+base mode has a violating run.
+
+## FINDING F6 — a downgrade appeal LOWERS the displayed score while saying "Score maintained"
+
+**Severity:** low (UX/integrity). **Status: ✅ FIXED & SHIPPED 2026-06-16** (same clamp as F5 — the
+displayed score now also never drops, and the `upgraded` flag is honest). Pinned by
+`tests/appeal-state-machine.test.js`.
+
+`submitAppeal` sets `state.result = appealResult` unconditionally (the displayed score + `gradingState`
+become the raw appeal verdict), and the UI shows "Score maintained" whenever `upgraded === false`. So a
+P→I appeal both drops the shown score to I AND labels it "maintained" — even when the gradebook (under
+the overlay) correctly kept P. The student sees a worse, contradictory result for exercising appeal.
+
+**Proposed fix (one surgical change, structural):** in `submitAppeal`, clamp to the previous verdict
+before storing/recording — `final = rank(appeal) >= rank(prev) ? appeal : prev` — set `state.result`,
+the gradebook record, and `upgraded` all from `final`. This makes "AI only ever raises" structural
+(independent of the overlay) and fixes the display. It is a templated change across all 69 worksheets
+(a `scripts/wire-*.mjs` codemod, like the view-as rollout).
+
 ## Summary
 
 | Finding | What | Status |
@@ -163,5 +196,7 @@ incentive hidden inside the *fix* for a perverse incentive.
 | F2 | v3 weights/gates not config-tunable | ✅ fixed (now in `grade-config.js`) |
 | F3 | first worksheet blank lowers the lesson (Cws reveal) | ✅ fixed (`v3FixCwsReveal`) |
 | F4 | the `only-helps` candidate fix was non-monotonic | ✅ averted pre-ship → shipped `not-until-due` |
+| F5 | appeal "never downgrade" only enforced by an overlay monkey-patch, not the base path | ✅ fixed (clamp in all 69 worksheets) |
+| F6 | a downgrade appeal lowers the shown score but says "Score maintained" | ✅ fixed (same clamp) |
 
-> More findings will be appended as the Layer-C cross-check runs.
+> Findings F1–F4 are the v3 quarter-grade engine; F5–F6 are the reflection appeal state machine.
