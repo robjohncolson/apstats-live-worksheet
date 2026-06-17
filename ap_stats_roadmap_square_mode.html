@@ -11929,7 +11929,12 @@ function _dogeWalletRender(box, w, pts) {
     var l2 = document.createElement('div');
     l2.className = 'geneva'; l2.style.cssText = 'font-size:10px;color:#8a7330;margin-top:2px';
     var bits = [owed.toFixed(0) + ' 🍬 to spend or gift'];
-    if (doge > 0) bits.push('Ɖ ' + doge.toFixed(1) + ' held' + (dogeUsd ? ' ($' + dogeUsd.toFixed(2) + ')' : ''));
+    if (doge > 0) {
+      var _toDep = w.dogeToDeposit || 0, _minMat = w.minMaterializeDoge || 5;
+      var _dbit = 'Ɖ ' + doge.toFixed(1) + ' held' + (dogeUsd ? ' ($' + dogeUsd.toFixed(2) + ')' : '');
+      if (_toDep > 0.0001 && _toDep < _minMat - 1e-9) _dbit += ' (goes on-chain at ' + _minMat + ' Ɖ)';
+      bits.push(_dbit);
+    }
     if (received > 0) bits.push('+' + received.toFixed(0) + ' from friends');
     if (gifted > 0) bits.push('−' + gifted.toFixed(0) + ' gifted');
     if (converted > 0) bits.push('−' + converted.toFixed(0) + ' → DOGE');
@@ -11953,7 +11958,7 @@ function _dogeWalletRender(box, w, pts) {
         amt.style.cssText = 'width:52px;font-size:11px;padding:2px;border:1px solid #c9961f';
         var buyBtn = document.createElement('button'); buyBtn.className = 's7btn'; buyBtn.textContent = 'Ɖ Buy DOGE'; buyBtn.style.cssText = 'font-size:10px;padding:2px 6px';
         var msg = document.createElement('span'); msg.className = 'geneva'; msg.style.cssText = 'font-size:9px;color:#a07c1c';
-        msg.textContent = '(min ' + (w.minBuyCandy || 5) + ' to buy)';
+        msg.textContent = '(min ' + (w.minBuyCandy ? (Math.round(w.minBuyCandy * 10) / 10) : 5) + ' 🍬 to buy)';
         var amount = function () { var v = parseFloat(amt.value); return (isFinite(v) && v > 0) ? v : candy; };
         // "Eat" is retired (CANDY_LEDGER_SPEC): candy you don't gift or convert is simply
         // Owed, and the teacher hands it to you (it shows up under "in hand"). The only

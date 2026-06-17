@@ -10,7 +10,7 @@
 
 import { requireTeacher } from './teacher-auth.js';
 import {
-  computeEffort, candyPerDoge, dogeFromCandy, MIN_CONVERSION_CANDY, DAILY_GIFT_CAP,
+  computeEffort, candyPerDoge, minConvertCandy, dogeFromCandy, MIN_CONVERSION_CANDY, MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP,
 } from './doge-econ.js';
 import { fetchChainBalance as defaultChainFetch, detectNetwork, DOGE_MAIN_RE } from './doge-chain.js';
 
@@ -180,7 +180,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     return res.json({
       ok: true, ...bal,
       dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null,
-      minBuyCandy: MIN_CONVERSION_CANDY, history,
+      minBuyCandy: price ? minConvertCandy(price) : MIN_CONVERSION_CANDY,
+      minMaterializeDoge: MIN_MATERIALIZE_DOGE, history,
     });
   });
 
@@ -234,10 +235,14 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const sid = sidOf(req);
     if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
     const candy = num(req.body && req.body.candy);
-    if (candy < MIN_CONVERSION_CANDY) return res.status(400).json({ ok: false, error: 'minimum ' + MIN_CONVERSION_CANDY + ' candy' });
     const price = await priceFn();
     if (!price) return res.status(503).json({ ok: false, error: 'DOGE price unavailable' });
     const cpd = candyPerDoge(price);
+    // Dynamic convert floor = 1 DOGE's worth of candy at the live price (~2.4 candy at
+    // DOGE≈$0.088); floats with DOGE/USD (user 2026-06-17). Lets a student bank fractional
+    // DOGE toward the 5-DOGE on-chain materialize threshold without a fixed 5-candy gate.
+    const minCandy = minConvertCandy(price);
+    if (candy < minCandy - 1e-9) return res.status(400).json({ ok: false, error: 'minimum ' + Math.max(0.1, Math.round(minCandy * 10) / 10) + ' candy (1 DOGE worth)' });
     const coins = dogeFromCandy(candy, price);
     const earned = await earnedCandyOf(sid);
     // ATOMIC guard+debit: banks coins + cost_basis in one UPDATE, stamping the price.

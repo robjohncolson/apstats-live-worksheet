@@ -468,7 +468,7 @@
     var DOGE_WALLET = {
         POINTS_PER_CANDY: 36,        // effort points to earn 1 candy
         CANDY_USD: 0.036,            // one candy's USD value ($13 / 360)
-        MIN_CONVERSION_CANDY: 5      // small deliberate-conversion floor (~1 lesson); dust/fee handled by the batched send
+        MIN_CONVERSION_CANDY: 5      // FALLBACK only — the live convert floor is server-side minConvertCandy() = 1 DOGE's worth (the UI reads w.minBuyCandy). Materialize floor (5 DOGE) is server-side too (MIN_MATERIALIZE_DOGE).
     };
 
     // effort points → candy (the FIXED leg).

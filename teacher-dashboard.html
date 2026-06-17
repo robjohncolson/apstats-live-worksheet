@@ -1152,7 +1152,10 @@
           tr.appendChild(giveTd);
           var depTd = document.createElement('td');
           if (!prov) depTd.textContent = '—';
-          else if (deposit > 0.0001) { depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' '; depTd.appendChild(btn('✓ sent', function () { _rewardMark(s.studentId, 'mark-sent', deposit); })); }
+          // DOGE only goes ON-CHAIN in batches of ≥ 5 (MIN_MATERIALIZE_DOGE; no dust sends):
+          // below the threshold it accrues in-app and the ✓send button stays disarmed.
+          else if (deposit >= 5 - 1e-9) { depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' '; depTd.appendChild(btn('✓ sent', function () { _rewardMark(s.studentId, 'mark-sent', deposit); })); }
+          else if (deposit > 0.0001) { depTd.textContent = 'Ɖ ' + (Math.round(deposit * 10) / 10) + ' '; var hint = document.createElement('span'); hint.className = 'dim'; hint.style.fontSize = '0.8em'; hint.textContent = ' (needs 5 to send)'; depTd.appendChild(hint); }
           else if (acc && (acc.dogeSent || 0) > 0.0001) { depTd.textContent = '✓ Ɖ ' + (Math.round(acc.dogeSent * 10) / 10) + ' sent'; depTd.style.color = '#2a7'; }
           else depTd.textContent = '·';
           tr.appendChild(depTd);

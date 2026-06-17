@@ -37,11 +37,15 @@ const round8 = (n) => Math.round((Number(n) || 0) * 1e8) / 1e8;
 // NOTE (price-window, DOGE_WALLET_SPEC §3): coins were priced at the kid's BUY;
 // this sends them later, so sourcing them costs today's price. Deposit promptly
 // or hold a DOGE float to lock your cost near theirs.
-export function planSends(accounts, { maxPerKid = Infinity } = {}) {
+// minMaterialize (default 5 = MIN_MATERIALIZE_DOGE): on-chain sends batch — a kid's in-app
+// DOGE only materializes on-chain once their UNSENT balance reaches this floor (no dust sends);
+// below it, the DOGE accrues and is skipped this round.
+export function planSends(accounts, { maxPerKid = Infinity, minMaterialize = 5 } = {}) {
   const recipients = [];
   for (const a of (accounts || [])) {
     const owed = round8(a && a.dogeToDeposit);
     if (owed <= 0) continue;
+    if (owed < minMaterialize - 1e-9) { recipients.push({ studentId: a.studentId, address: a.dogeAddress || null, amount: owed, skip: 'below ' + minMaterialize + '-DOGE materialize threshold' }); continue; }
     if (!a.dogeAddress) { recipients.push({ studentId: a.studentId, address: null, amount: owed, skip: 'no address registered' }); continue; }
     recipients.push({ studentId: a.studentId, address: a.dogeAddress, amount: round8(Math.min(owed, maxPerKid)) });
   }
