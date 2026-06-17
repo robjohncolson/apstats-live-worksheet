@@ -378,3 +378,75 @@ describe('Item 7 -- dim levels are named :root vars', () => {
     expect(b).not.toMatch(/let db\s*=/);
   });
 });
+
+// ═══ Round 3 — window redesign: dynamic sizing + Today button + summer next-up ═══
+
+describe('Window redesign -- dynamic sizing', () => {
+  it('CAL_FOCUS_WEEKS is a let starting at 2, with MIN/MAX bounds', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/let\s+CAL_FOCUS_WEEKS\s*=\s*2/);
+    expect(b).toMatch(/CAL_MIN_WEEKS\s*=\s*1/);
+    expect(b).toMatch(/CAL_MAX_WEEKS\s*=\s*\d+/);
+  });
+  it('rCal sizes toward the next-up week and publishes the step width', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/_nextUpWk/);
+    expect(b).toMatch(/CAL_FOCUS_WEEKS\s*=\s*Math\.min\(\s*CAL_MAX_WEEKS/);
+    expect(b).toMatch(/_calStepWeeks\s*=\s*CAL_FOCUS_WEEKS/);
+  });
+});
+
+describe('Window redesign -- Today button', () => {
+  it('the nav has a Today button wired to calToday()', () => {
+    expect(html).toMatch(/id=["']cal-today["'][^>]*onclick=["']calToday\(\)/);
+  });
+  it('calToday resets paging to today and re-renders', () => {
+    expect(html).toMatch(/function\s+calToday\s*\(\s*\)/);
+    const b = fnBody(html, 'calToday');
+    expect(b).toMatch(/_calPageOffset\s*=\s*0/);
+    expect(b).toMatch(/rCal\(\)/);
+  });
+  it('rCal dims the Today button when already on today (offset 0)', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/cal-today-off['"]\s*,\s*_calPageOffset\s*===\s*0/);
+  });
+  it('the off-state keeps its flex slot (opacity/pointer-events, never display:none)', () => {
+    expect(html).toMatch(/\.cal-today-btn\.cal-today-off\s*\{[^}]*pointer-events:\s*none/);
+    expect(html).not.toMatch(/\.cal-today-btn\.cal-today-off\s*\{[^}]*display:\s*none/);
+  });
+});
+
+describe('Window redesign -- summer-aware next-up', () => {
+  it('rCal computes a summer next-up and marks the summer cell (fall line kept verbatim)', () => {
+    const b = fnBody(html, 'rCal');
+    expect(b).toMatch(/calNextUpTopic\(_orderedSummerTopics\(\)/);
+    expect(b).toMatch(/inf\.t === _nextUpTopic/);   // frozen fall pin still present
+    expect(b).toMatch(/wk\._summer\s*&&\s*_summerNextUp\s*&&\s*inf\.t\s*===\s*_summerNextUp/);
+  });
+  it('paintLocalDoneCells mirrors the summer next-up (survives the post-cache repaint)', () => {
+    const b = fnBody(html, 'paintLocalDoneCells');
+    expect(b).toMatch(/_orderedSummerTopics\(\)/);
+    expect(b).toMatch(/dataset\.summer\s*===\s*'1'\s*&&\s*summerNextUp/);
+  });
+  // behavioral: _orderedSummerTopics + calNextUpTopic over the summer track
+  function loadSummer(scheduleJson) {
+    const sandbox = { window: {} };
+    sandbox.window._summerSchedule = (scheduleJson === undefined) ? null : scheduleJson;
+    createContext(sandbox);
+    runInContext(
+      fnBody(html, '_orderedSummerTopics') + '\n' +
+      fnBody(html, 'localLessonState') + '\n' +
+      fnBody(html, 'calNextUpTopic') + '\n' +
+      'this.__o = _orderedSummerTopics; this.__n = calNextUpTopic;', sandbox);
+    return sandbox;
+  }
+  it('_orderedSummerTopics returns the schedule topics in order; [] when not loaded', () => {
+    const s = loadSummer({ lessons: [{ topic: '1.1' }, { topic: '1.2' }, { topic: '1.3' }] });
+    expect(s.__o()).toEqual(['1.1', '1.2', '1.3']);
+    expect(loadSummer(null).__o()).toEqual([]);
+  });
+  it('summer next-up = first not-done summer lesson (1.1 done -> 1.2)', () => {
+    const s = loadSummer({ lessons: [{ topic: '1.1' }, { topic: '1.2' }, { topic: '1.3' }] });
+    expect(s.__n(s.__o(), { '1.1|worksheet': { ts: 'y' } })).toBe('1.2');
+  });
+});

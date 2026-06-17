@@ -577,6 +577,15 @@
         .cal-nav-btn.cal-nav-hidden {
             visibility: hidden;
         }
+        /* Center "Today" chip — a 3rd flex child between the two arrows, so .cal-nav's
+           space-between pins the arrows to the edges and centers Today. The "off" state
+           (already on today's window) greys + disables it but MUST keep the slot — never
+           display:none, which would collapse the 3-child flex and pull the arrows inward. */
+        .cal-today-btn { font-size: 10px; padding: 1px 10px; letter-spacing: 0.3px; }
+        .cal-today-btn.cal-today-off {
+            opacity: 0.4; pointer-events: none;
+            box-shadow: inset 1px 1px 0 var(--plat-hi);   /* flat, un-pressable */
+        }
         .hdr-row, .wk-row { display: grid; grid-template-columns: 66px repeat(5, 1fr); }
         .hdr-row span, .wk-lbl, .dc {
             border-bottom: 1px solid var(--black);
@@ -1835,8 +1844,9 @@
             </div>
             <div class="cal-outer geneva">
                 <div class="cal-nav">
-                    <button id="cal-prev" class="cal-nav-btn" onclick="calStep(-1)" type="button" aria-label="Previous 2 weeks">&#9664;</button>
-                    <button id="cal-next" class="cal-nav-btn" onclick="calStep(1)" type="button" aria-label="Next 2 weeks">&#9654;</button>
+                    <button id="cal-prev" class="cal-nav-btn" onclick="calStep(-1)" type="button" aria-label="Previous weeks">&#9664;</button>
+                    <button id="cal-today" class="cal-nav-btn cal-today-btn" onclick="calToday()" type="button" aria-label="Jump back to today">Today</button>
+                    <button id="cal-next" class="cal-nav-btn" onclick="calStep(1)" type="button" aria-label="Next weeks">&#9654;</button>
                 </div>
                 <div class="hdr-row">
                     <span>Week of</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
@@ -7012,6 +7022,19 @@ function _prevSummerTopic(topic) {
   } catch (_) { return null; }
 }
 
+// Summer self-pacer topics in DUE order (array order IS due order — same assumption
+// _prevSummerTopic + _summerWeeks make). INDIVIDUAL topics ("1.1".."1.10") so they
+// match a summer cell's inf.t, unlike the COMBINED fall topics ("1.2+1.3"). Lets the
+// next-up highlight land on the next SUMMER lesson during summer. [] when not loaded.
+function _orderedSummerTopics() {
+  try {
+    var sch = window._summerSchedule;
+    var lessons = (sch && Array.isArray(sch.lessons)) ? sch.lessons : [];
+    return lessons.map(function (L) { return L && L.topic; })
+                  .filter(function (x) { return typeof x === 'string' && x; });
+  } catch (_) { return []; }
+}
+
 // The lesson that must be complete before `topic` opens: the immediately-prior
 // topic in the period's ordered sequence (deduped), NOT the previous calendar
 // cell. This makes the gate window-independent AND cross-portion — a topic that
@@ -7063,7 +7086,14 @@ function paintLocalDoneCells() {
     var suppressProgress = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
     var nextUp = (typeof calNextUpTopic === 'function')
       ? calNextUpTopic(_orderedPeriodTopics(), marks) : null;
-    _calNextUp = nextUp; // keep renderDoNow's message in sync with the highlight
+    // Mirror rCal's summer guard: only prefer the summer track WHILE summer is active.
+    // _orderedSummerTopics() has no date check + _summerSchedule is never cleared, so an
+    // unguarded summerNextUp would be non-null year-round and clobber the fall next-up
+    // off-season. DOM truth: a rendered summer cell (set by rCal) == summer is active.
+    var _summerActive = !!document.querySelector('#cg .dc[data-summer="1"]');
+    var summerNextUp = (_summerActive && typeof calNextUpTopic === 'function')
+      ? calNextUpTopic(_orderedSummerTopics(), marks) : null;
+    _calNextUp = summerNextUp || nextUp; // summer next-up wins while summer is active (matches rCal)
     var cells = document.querySelectorAll('#cg .dc[data-topic]');
     var lockChanged = false;
     for (var i = 0; i < cells.length; i++) {
@@ -7076,6 +7106,7 @@ function paintLocalDoneCells() {
         if (suppressProgress && st === 'partial') st = '';   // teacher: drop browsing "partial", keep real "done"
         if (st) c.classList.add(st === 'done' ? 'dc-localdone' : 'dc-localpartial');
         if (topic === nextUp) c.classList.add('cal-current');
+        else if (c.dataset.summer === '1' && summerNextUp && topic === summerNextUp) c.classList.add('cal-current');
       }
       // Lock-change detection (mirrors rCal's sequential gate: each lesson gates
       // on its canonical topic-predecessor via _prevTopicInSequence — identical
@@ -16424,8 +16455,14 @@ function cellAria(i, ds){
 // offset on top of today's anchor and clamps absolutely, so calStep() can
 // never scroll past either edge of the school year. Reloads reset to 0.
 let _calPageOffset = 0;
+let _calStepWeeks = 2;   // last rendered window size; rCal publishes it so paging steps by the visible width
 function calStep(dir) {
-  _calPageOffset += dir * 2;
+  _calPageOffset += dir * _calStepWeeks;
+  rCal();
+}
+// "Today" button: jump the view back to today's window.
+function calToday() {
+  _calPageOffset = 0;
   rCal();
 }
 // ── ☀️ Summer-prep weeks (woven into the calendar grid) ─────────────────────
@@ -16547,8 +16584,34 @@ function rCal(){
     // The nav arrows above the calendar bump _calPageOffset (in weeks);
     // _displayStart is then today's anchor + that offset, clamped absolutely,
     // so the arrows cannot run past either end of the school year.
-    // ── 3. Compact to a 2-week focus window anchored on today ──
-    const CAL_FOCUS_WEEKS = 2;
+    // ── 3. Resolve next-up (fall + summer) BEFORE sizing — the window is sized to REACH it ──
+    const _gateMarks = getStudentMarks();
+    const _nextUpTopic = calNextUpTopic(_orderedPeriodTopics(), _gateMarks);                          // FALL (combined topics)
+    const _summerNextUp = _sumW.length ? calNextUpTopic(_orderedSummerTopics(), _gateMarks) : null;   // SUMMER (individual)
+    // The highlighted cell + the Do Now message track the SUMMER next-up during summer (a
+    // fall combined topic like "1.2+1.3" never matches a summer cell), else the fall next-up.
+    _calNextUp = (_sumW.length && _summerNextUp) ? _summerNextUp : _nextUpTopic;
+    // WINDOW sizing uses the summer track during summer ONLY — a fall next-up must never
+    // yank the summer view forward to September (e.g. after a full summer head-start).
+    const _winNextUp = _sumW.length ? _summerNextUp : _nextUpTopic;
+    function _wkIdxForTopic(topic, wantSummer) {
+        if (!topic) return -1;
+        for (var wi = 0; wi < W.length; wi++) {
+            var _wkr = W[wi];
+            if (!!_wkr._summer !== !!wantSummer) continue;     // only scan the right track
+            for (var di = 0; di < _wkr.d.length; di++) {
+                var inf2 = (cP === 'B') ? _wkr.d[di][3] : _wkr.d[di][4];
+                if (inf2 && typeof inf2 === 'object' && inf2.t === topic) return wi;
+            }
+        }
+        return -1;
+    }
+    const _nextUpWk = _winNextUp ? _wkIdxForTopic(_winNextUp, !!_sumW.length) : -1;
+    // ── 3b. Compact to a DYNAMIC focus window: today's week THROUGH the next-up week,
+    //        clamped [CAL_MIN_WEEKS, CAL_MAX_WEEKS]. Weekly summer cadence → ~1-3 weeks,
+    //        no empty trailing weeks; a next-up beyond the cap stays reachable by the arrows.
+    let CAL_FOCUS_WEEKS = 2;
+    const CAL_MIN_WEEKS = 1, CAL_MAX_WEEKS = 4;
     const _origLen = W.length;
     let _displayStart = 0;
     if (_origLen > CAL_FOCUS_WEEKS) {
@@ -16575,31 +16638,40 @@ function rCal(){
                 if (t >= _wm && t <= _we) { _todayWk = i; break; }
             }
         }
-        // In-school: anchor at today's week (today in row 1, next week in row 2
-        // -- the "what's now + what's coming" view a student needs). Pre/post:
-        // clamp to either end. _calPageOffset (set by the nav arrows) shifts
-        // the window; the Math.max/Math.min guard then snaps the start so the
-        // window always has exactly CAL_FOCUS_WEEKS rows.
-        const _todayAnchor = (_todayWk >= 0) ? _todayWk : ((t < W[0].m) ? 0 : _origLen - CAL_FOCUS_WEEKS);
+        // DYNAMIC SIZE (req 3): grow the window to SPAN today's week through the
+        // next-up week (so the next lesson is always visible), clamped [MIN, MAX].
+        // AHEAD: anchor stays today, size reaches forward (no far re-anchor → paging
+        // never dead-ends; a next-up past MAX is reachable by the arrows). BEHIND
+        // (overdue): anchor on the next-up week and span forward to today.
+        var _anchorWk = (_todayWk >= 0) ? _todayWk : ((t < W[0].m) ? 0 : _origLen - CAL_FOCUS_WEEKS);
+        var _winAnchor = -1;
+        if (_nextUpWk >= 0) {
+            if (_nextUpWk >= _anchorWk) {
+                CAL_FOCUS_WEEKS = Math.min(CAL_MAX_WEEKS, Math.max(CAL_MIN_WEEKS, _nextUpWk - _anchorWk + 1));
+            } else {
+                _winAnchor = _nextUpWk;
+                CAL_FOCUS_WEEKS = Math.min(CAL_MAX_WEEKS, Math.max(CAL_MIN_WEEKS, _anchorWk - _nextUpWk + 1));
+            }
+        }
+        CAL_FOCUS_WEEKS = Math.min(CAL_FOCUS_WEEKS, _origLen);   // never exceed the array
+        // In-school: anchor at today's week (or, when behind, the overdue next-up week).
+        // Pre/post: clamp to either end. _calPageOffset (the nav arrows) shifts the window;
+        // the Math.max/Math.min guard snaps the start so it always has CAL_FOCUS_WEEKS rows.
+        const _todayAnchor = (_winAnchor >= 0) ? _winAnchor : (_todayWk >= 0) ? _todayWk : ((t < W[0].m) ? 0 : _origLen - CAL_FOCUS_WEEKS);
         _displayStart = _todayAnchor + _calPageOffset;
         _displayStart = Math.max(0, Math.min(_displayStart, _origLen - CAL_FOCUS_WEEKS));
         W = W.slice(_displayStart, _displayStart + CAL_FOCUS_WEEKS);
     }
-    // Sequential lesson gate state (LESSON_GATE_BUILD.md §4 + §8): each lesson
-    // gates on its canonical topic-predecessor (_prevTopicInSequence), not the
-    // previous calendar cell — window-independent + cross-portion.
-    // ── 4. Resolve the lesson gate + the single "next up" cell ──
-    const _gateMarks = getStudentMarks();
+    _calStepWeeks = CAL_FOCUS_WEEKS;   // page by the visible width (Part G), published every render
+    // Sequential lesson gate state (LESSON_GATE_BUILD.md §4 + §8): each lesson gates on
+    // its canonical topic-predecessor (_prevTopicInSequence), window-independent +
+    // cross-portion. (_gateMarks + _nextUpTopic + _summerNextUp + _calNextUp are computed
+    // in section 3 above, before sizing, so the window can be sized to reach the next-up.)
     const _gateSignedIn = !!getStudentEmail();
     // Suppress the STUDENT progress overlay (greying + ◐/✓ glyph) for a TEACHER viewing as
     // themselves — their marks come from browsing the lessons, so "in progress" was noise.
     // Preview-as-student (where _deskIsTeacher() returns false) + real students keep it.
     const _suppressProgress = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
-    // CALENDAR_FOCUS -- the one next-up lesson, by the student's local marks.
-    // Computed once over S (chronological); the matching cell gets .cal-current.
-    const _nextUpTopic = calNextUpTopic(_orderedPeriodTopics(), _gateMarks);
-    // Publish for renderDoNow so the Do Now message tracks the same next-up cell.
-    _calNextUp = _nextUpTopic;
     let _lastQ = 0; // Thread 2 -- the quarter band already emitted
     // ── 5. Render the week rows + day cells ──
     for(const wk of W){
@@ -16651,6 +16723,10 @@ function rCal(){
               // off / exam cells excluded). rCal owns .cal-current; paintDonowCells
               // no longer touches it.
               if (inf.t === _nextUpTopic) {
+                c.classList.add('cal-current');
+              } else if (wk._summer && _summerNextUp && inf.t === _summerNextUp) {
+                // SUMMER twin: the next individual summer lesson (the fall _nextUpTopic
+                // is a combined topic that can never === a summer cell's inf.t).
                 c.classList.add('cal-current');
               }
             }
@@ -16745,6 +16821,9 @@ function rCal(){
     const _nn = document.getElementById('cal-next');
     if (_np) _np.classList.toggle('cal-nav-hidden', _displayStart <= 0);
     if (_nn) _nn.classList.toggle('cal-nav-hidden', _displayStart + CAL_FOCUS_WEEKS >= _origLen);
+    // Today button: dim + disable when already on today's window (offset 0).
+    const _nt = document.getElementById('cal-today');
+    if (_nt) _nt.classList.toggle('cal-today-off', _calPageOffset === 0);
     // a11y: announce the visible window to screen readers (also fires on calStep paging).
     const _sr = document.getElementById('cal-sr');
     if (_sr && W.length) {

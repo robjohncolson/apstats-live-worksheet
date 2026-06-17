@@ -373,9 +373,9 @@ describe('Calendar nav -- prev/next arrows page the focus window', () => {
     expect(html).toMatch(/function\s+calStep\s*\(\s*dir\s*\)/);
   });
 
-  it('calStep bumps _calPageOffset by 2 and re-runs rCal', () => {
+  it('calStep pages by the current window size (_calStepWeeks) and re-runs rCal', () => {
     const b = fnBody(html, 'calStep');
-    expect(b).toMatch(/_calPageOffset\s*\+=\s*dir\s*\*\s*2/);
+    expect(b).toMatch(/_calPageOffset\s*\+=\s*dir\s*\*\s*_calStepWeeks/);
     expect(b).toMatch(/rCal\(\)/);
   });
 
