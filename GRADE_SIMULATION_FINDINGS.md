@@ -229,3 +229,20 @@ construction (it checks the id before creating).** NOTE: the real dup-column bug
 write layer* (a render hiccup resubmitting a create 3×), guarded separately by the find-by-title
 pre-flight in `schoology_ops.py` — out of scope for the pure core, and a candidate for the live-code
 harness follow-on.
+
+## Live-code harnesses — the appeal + gating models now run the REAL code (rigor gap closed)
+
+The appeal + gating models above check the *documented logic*. Two harnesses now close that gap by
+extracting the REAL functions from the HTML and executing them against the SAME invariants — true
+differential checks (like Layer A does for the grade engine; Schoology already imports the real
+`schoology_sync_lib.py`):
+- `tests/lesson-gating-live.test.js` — extracts the real `_isLessonComplete` / `_prevTopicInSequence` /
+  `_prevSummerTopic` / `_isLessonUnlocked` from the Desk HTML (brace-matched, instantiated via
+  `new Function` with mutable-state-backed stubs) and re-runs the transition-system invariants:
+  reachable states are contiguous prefixes, monotonic, no deadlock, the combined-topic bridge, and the
+  access-mode bypasses — all HOLD on the shipping code. **The real gate matches the sound model.**
+- `tests/appeal-clamp-live.test.js` — extracts the real `submitAppeal` from a worksheet and drives it
+  with stubbed fetch/DOM/gradebook: a downgrade P→I is CLAMPED (the gradebook records P and the shown
+  score stays P), genuine upgrades record E/P, and the 3-appeal cap holds. **The shipped F5/F6 clamp is
+  verified end-to-end in the live handler.** (Covers the 68 templated worksheets via u1_lesson1; the
+  structurally-different u3_lesson6-7 prototype was hand-patched + marker-verified.)
