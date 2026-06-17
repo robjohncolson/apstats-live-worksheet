@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — Desk CALENDAR polish COMPLETE (rounds 1+2: full proposal queue shipped) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
+# CONTINUATION PROMPT — Desk CALENDAR polish (rounds 1+2+teacher-feedback) ; ⏳ OPEN: marching-ants invisible (summer schedule not loading in-browser) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2).
-> follow-alongs HEAD = `77f7fb3`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2 + teacher-feedback 2a/2b/2c).
+> follow-alongs HEAD = `94e208e`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -62,11 +62,39 @@ onboarding refactor, UNCHANGED — desk-gating-fixes / desk-self-signup / desk-s
   click opens the panel first → dblclick rarely lands; grade is on the Do-Now anyway) → now just
   "Click to open"; (c) **marching ants is now the DEFAULT** up-next style (`CALCUR_DEFAULT='ants'`;
   'neon' falls through to the frozen rule so 46 frozen tests stay green); (d) the "What the marks
-  mean" legend is now a visible System-7 chip (was faint grey text — teacher couldn't find it).
-  `tests/calendar-cohesion.test.js` now **44**. **No open calendar task.** ⚠ `.status-dot` CSS is
+  mean" legend was made a visible System-7 chip (was faint grey text — teacher couldn't find it).
+  **⚠ (c) + "No open task" are SUPERSEDED by ROUND 2c below — the legend was then HIDDEN entirely, and a real open
+  ants/summer task exists.** `tests/calendar-cohesion.test.js` was **44** at 2b. ⚠ `.status-dot` CSS is
   retained-but-deprecated (kept so the mobile `.poll-dot, .status-dot` selector + poll-archive
   `indexOf('.poll-dot {')` test stay valid) — purge both together if desired. The day-grade
   dblclick/right-click handlers are still wired (only the misleading hint was removed).
+- **✅ ROUND 2c — more live teacher feedback (`3936f5b` + `94e208e`):**
+  (a) **Teacher-as-self progress overlay SUPPRESSED** (`3936f5b`) — the ◐ "in progress" markings were the TEACHER's own
+  browsing marks rendered as student progress (inaccurate noise). rCal (`_suppressProgress`) + paintLocalDoneCells
+  (`suppressProgress`) now skip the local progress overlay (greying + ◐/✓) when `_deskIsTeacher()` — gated so
+  preview-as-student + real students KEEP it. cal-current/next-up is kept for teachers.
+  (b) **Up-next style moved `#cg[data-calcur]` → `body[data-calcur]`** (`3936f5b`) so the legend "Up next" swatch previews
+  the chosen style LIVE, not only the grid cell. `_applyCalcurStyle` sets it on `document.body`.
+  (c) **LEGEND HIDDEN** (`94e208e`, SUPERSEDES 2b's "visible chip") — teacher: "the legend isn't necessary, the cells +
+  glyphs are self-explanatory, rid it for cleanliness." `#legend-bar { display:none }` (one CSS line, reversible). updateLegend
+  still runs so the marching-ants default still applies; the switcher UI is now hidden → the up-next style is effectively fixed
+  to the `ants` default (change `CALCUR_DEFAULT` to re-default; un-hide `#legend-bar` to bring the switcher back).
+  `tests/calendar-cohesion.test.js` now **47**; full root suite **7211 pass / 6 fail** (the same pre-existing onboarding 6).
+
+> **⏳ OPEN (THE next task) — marching ants is INVISIBLE to the teacher; root cause = the SUMMER SCHEDULE isn't loading in-browser.**
+> Teacher console diag returned `{calcur:"ants", nextUp:0, summerCells:0, today:false}`. The up-next *style* is armed
+> (`calcur:ants`) but there's **no `.cal-current` cell to paint**: summer didn't weave (`summerCells:0`), so today (2026-06-17)
+> falls off the 2-week focus window → the grid clamps to the first FALL weeks (Sept), where the teacher has no marked next-up.
+> The data file is FINE — `curl .../data/summer-schedule.json` → **200, valid**, `firstDayOfSchool:2026-09-01`, lessons 1.1.. with
+> dues — so `window._summerSchedule` is null in the teacher's browser DESPITE the 200. This is the **pre-existing "summer-schedule
+> fetch can fail silently"** issue (item 5 below), surfaced by the next-up/ants work — NOT a regression of the polish.
+> **AWAITING a 2nd console paste** (I gave a force-ants + diagnostic one-liner returning `summerLoaded` / `browserDate` /
+> `nextUpTopic` / `cP` / `cells`). Likely fixes once it lands: (1) make `_walletLoadSummerSchedule` robust / re-trigger + repaint
+> when `_summerSchedule` is still null at rCal time; AND/OR (2) a next-up **FALLBACK** so a focus cell always exists (e.g. today's
+> lesson, or the first not-past lesson) → marching ants always has a cell to render on. The force-ants console line proves the
+> style renders the instant a `.cal-current` cell exists. ⚠ This is the ONLY open calendar item — everything else in rounds
+> 1/2/2a/2b/2c is shipped + green. Loader: `_walletLoadSummerSchedule` (~L7191, fetches `data/summer-schedule.json` on
+> DOMContentLoaded, re-rCal on success); weave: `_summerWeeks()` (~L16448, gated on `_summerSchedule` + `today < firstDayOfSchool`).
 
 ## ⏭ SESSION 13 SHIPPED (2026-06-16) — grade-policy SIMULATOR + 3 perverse-incentive fixes + appeal/gating state-machine models
 
