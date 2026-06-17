@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — Desk CALENDAR polish COMPLETE (rounds 1+2: full proposal queue shipped) ; grade-integrity modeling COMPLETE ; DOGE/candy PAUSED
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 14, rounds 1+2).
-> follow-alongs HEAD = `10ef5f3`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> follow-alongs HEAD = `77f7fb3`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `42b74e3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -54,7 +54,19 @@ onboarding refactor, UNCHANGED — desk-gating-fixes / desk-self-signup / desk-s
   (15) today seated forward **statically** (no idle animation); (16) one-ring — today keeps its 2px frame, glyph carries state.
   A 2nd 3-agent adversarial review (verdict *fix-first*) caught 2 real majors before push — an inflated progress denominator
   (specials counted as lessons → fixed via `_computePace` + execution test) and a legend swatch that mis-taught ✓ as "Ahead"
-  (Done swatch now uses the real `dc-done`). `tests/calendar-cohesion.test.js` now **42**. **No open calendar task.**
+  (Done swatch now uses the real `dc-done`). `tests/calendar-cohesion.test.js` now **42**.
+- **✅ ROUND 2b — live teacher-feedback fixes (`77f7fb3`):** (a) removed the deprecated registry
+  "readiness" signal from the STUDENT view (cell status-dot + tooltip Ready/Partial/Pending line +
+  legend "Ready" entry) — it marked most lessons "partial" (teacher material-tracking) and
+  contradicted the new student glyphs; (b) tooltip drops the "double-click for grade" hint (single
+  click opens the panel first → dblclick rarely lands; grade is on the Do-Now anyway) → now just
+  "Click to open"; (c) **marching ants is now the DEFAULT** up-next style (`CALCUR_DEFAULT='ants'`;
+  'neon' falls through to the frozen rule so 46 frozen tests stay green); (d) the "What the marks
+  mean" legend is now a visible System-7 chip (was faint grey text — teacher couldn't find it).
+  `tests/calendar-cohesion.test.js` now **44**. **No open calendar task.** ⚠ `.status-dot` CSS is
+  retained-but-deprecated (kept so the mobile `.poll-dot, .status-dot` selector + poll-archive
+  `indexOf('.poll-dot {')` test stay valid) — purge both together if desired. The day-grade
+  dblclick/right-click handlers are still wired (only the misleading hint was removed).
 
 ## ⏭ SESSION 13 SHIPPED (2026-06-16) — grade-policy SIMULATOR + 3 perverse-incentive fixes + appeal/gating state-machine models
 
