@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → My Ledger (s20) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → My Ledger (s20) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 20 — Live Classroom AVATAR MENU: click an avatar → reveal name → 🍬 Send candy / ⚔️ Start a game; SHIPPED + LIVE).
-> follow-alongs HEAD = the s20 avatar self-click commit `95d6e75` (was `1d6ee87`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 21 — keyboard MODAL ESCAPE audit: every Desk content modal is now Escape-dismissable; SHIPPED + LIVE).
+> follow-alongs HEAD = the s21 modal-escape commit `618317b` (was `95d6e75`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,33 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 21 SHIPPED (2026-06-18) — keyboard MODAL ESCAPE audit: every Desk content modal closes with Esc
+
+**Spec `MODAL_ESCAPE_AUDIT.md`. fa HEAD `618317b`.** From the teacher: "make sure all modals can be escaped
+with the keyboard — the day-material modal can't be." The Desk had a global Escape handler for the 6
+`.app-overlay` System-7 windows + most other modals self-registered an Escape handler, but several CONTENT
+modals had none. Added `_escCloseTopModal()` into the existing global Escape handler.
+- **Now Escape-closable (were not):** `resource-overlay` (THE "material for the day" panel — clicking a
+  lesson day), `donow-bump-overlay`, `dialog-overlay` (generic `showDialog`: lesson-locked / baseline /
+  alerts), `bf-overlay` (Blooket flashcards — had nav keys, no Esc), `override-gate-modal` (teacher view-as),
+  + the 4 QR/guest overlays (`guest-pass` / `reconcile-qr` / `verify-qr` / `big-qr`).
+- **Design:** the net closes the TOPMOST visible gap modal via its OWN cleanup-aware close fn (a blanket
+  `display:none` would leak, e.g. the Blooket nav keydown); the QR overlays have no cleanup → a direct hide.
+  `_escVisible()` treats any non-`none` inline display as open (the QR overlays open as **`display:flex`**, not
+  block). A **defer guard** returns early if a self-handled modal (day-grade / grade-help / my-gradebook /
+  my-receipts / student-dm / Study Break) is visible, so a gap modal stacked UNDER one (dblclick a calendar
+  cell → resource panel under the day-grade modal) isn't also closed on the same Esc.
+- **DELIBERATELY left non-dismissable:** the sign-in WALL (`signin`/`signup`/`pwchange` — `closeSignInModal`
+  already refuses while the wall holds; also part of the in-progress onboarding refactor). Do NOT add Esc there.
+- **3-agent completeness audit (workflow):** caught **4 modals the first pass missed** (the flex QR overlays)
+  + the stacking regression — both folded before commit. Confirmed the wall isn't broken + no double-fire.
+- **Tests:** `tests/desk-modal-escape.test.js` (17, runs the real extracted fns). Root **7349 pass / the SAME
+  6 pre-existing onboarding failures**, UNCHANGED. Frontend-only.
+- **⏭ OPEN FOLLOW-UP (offered, not done):** the **worksheet aggregate drawer** (`#aggregateDrawer`) in ALL
+  ~69 `u*_lesson*_live.html` has NO Escape (only its X button / tabbing). **CLAUDE.md's "Escape key closes
+  drawer" claim is STALE.** Fix = a `scripts/wire-*.mjs` codemod scoped to `^u\d+_lesson.+_live\.html$`
+  (exclude `edgar_u6_conceptual_driller_live.html`) adding one Esc listener that removes the drawer's `open` class.
 
 ## ⏭ SESSION 20 SHIPPED (2026-06-18) — Live Classroom AVATAR MENU: click → name → 🍬 candy / ⚔️ game (Desk only)
 
