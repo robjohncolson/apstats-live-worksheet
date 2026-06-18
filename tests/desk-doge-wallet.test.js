@@ -38,13 +38,19 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
     const fetchFn = fnBody('_dogeWalletFetch');
     expect(fetchFn).toContain("'/wallet'");
     const render = fnBody('_dogeWalletRender');
-    expect(render).toContain("act('/wallet/buy-doge')");
+    expect(render).toContain("/wallet/buy-doge");
     expect(render).not.toContain("/wallet/eat");          // eat retired (CANDY_LEDGER_SPEC)
-    expect(render).toContain('candyEarned');              // the 6-number ledger headline
+    expect(render).toContain('candyEarned');              // the 7-number ledger fields
     expect(render).toContain('candyMaterialized');
     expect(render).toContain('candyOwed');
     expect(render).toContain('candyBalance');
     expect(render).toContain('dogeBalance');
+    // Redesign (WALLET_REDESIGN_SPEC): titled "Candy & DOGE" sub-panel + a ▸ Details disclosure,
+    // a candy-to-spend hero, and native .s7btn pills that invert (.s7btn-inv) when active.
+    expect(render).toContain('Candy & DOGE');
+    expect(render).toContain('candy to spend');
+    expect(render).toContain('Details');
+    expect(render).toContain('s7btn-inv');
   });
 
   it('offers Cash-out DOGE → candy (POST /wallet/sell-doge, gated on the overnight-hold sellableDoge)', () => {
@@ -78,7 +84,7 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
 
   it('never touches a private key client-side (POSTs candy amounts, not keys)', () => {
     for (const fn of ['_walletDogePanel', '_dogeWalletFetch', '_dogeWalletAction', '_dogeWalletRender',
-                      '_dogeWalletChainFetch', '_dogeWalletChainPaint', '_dogeWalletChainArm',
+                      '_walletLedgerDetail', '_dogeWalletChainFetch', '_dogeWalletChainPaint', '_dogeWalletChainArm',
                       '_dogeWalletGiftSend', '_dogeWalletGiftForm']) {
       expect(fnBody(fn)).not.toMatch(/privateKey|signTransaction|sendTransaction|broadcast|wif/i);
     }
@@ -105,8 +111,10 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
     const arm = fnBody('_dogeWalletChainArm');
     expect(arm).toContain('app-wallet-overlay');       // stops when the window closes
     expect(arm).toMatch(/setTimeout/);                 // 60s refresh while open
-    const render = fnBody('_dogeWalletRender');
-    expect(render).toContain('_dogeWalletChainArm');   // wired into the panel
-    expect(render).toContain('w.dogeAddress');         // only when an address is registered
+    // Redesign: the on-chain watch line moved into the ▸ Details drawer, so it self-refreshes
+    // ONLY while Details is open (a free reduction in BlockCypher calls).
+    const detail = fnBody('_walletLedgerDetail');
+    expect(detail).toContain('_dogeWalletChainArm');   // armed when Details opens
+    expect(detail).toContain('w.dogeAddress');         // only when an address is registered
   });
 });
