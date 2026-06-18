@@ -18226,7 +18226,9 @@ function _mountClassroomBoard(){
       hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null,
       // AVATAR_MENU: the Desk hides always-on floating names; a click reveals the
       // name, then a candy/challenge menu (handled by onAvatarClick → _avatarMenu).
+      // selfClickable: tapping your OWN avatar opens My Ledger (isSelf branch below).
       hideNameLabels: true,
+      selfClickable: true,
       onStartVideo: _focusTodayLessonVideo,   // v1c: synchronized video start
       onStateChange: function(summary) {
         // V4: stash the latest summary so the capture-phase keydown
@@ -18261,13 +18263,19 @@ function _mountClassroomBoard(){
           try { _onCandyGiftReceived(msg); } catch (_) {}
         }
       },
-      // AVATAR_MENU (AVATAR_MENU_SPEC.md): a tap reveals the classmate's name, then a
-      // popover with 🍬 Send candy + ⚔️ Start a game. hit = { username, selectMode,
-      // clientX, clientY }. The candy action reuses the candy-poke pipeline (guards
-      // self / guests / no-wallet / cooldown); the game action reuses the Tetris
-      // challenge. Supersedes the old instant-poke-on-tap (CANDY_POKE_SPEC.md).
+      // AVATAR_MENU (AVATAR_MENU_SPEC.md): tapping a CLASSMATE reveals their name, then a
+      // popover with 🍬 Send candy + ⚔️ Start a game; tapping YOUR OWN avatar (isSelf)
+      // opens My Ledger directly. hit = { username, selectMode, clientX, clientY, isSelf }.
+      // The candy action reuses the candy-poke pipeline (guards self/guests/no-wallet/
+      // cooldown); the game action reuses the Tetris challenge. Supersedes the old
+      // instant-poke-on-tap (CANDY_POKE_SPEC.md).
       onAvatarClick: function(hit) {
-        if (hit && hit.username && typeof _avatarMenu !== 'undefined' && _avatarMenu) {
+        if (!hit || !hit.username) return;
+        if (hit.isSelf) {
+          if (typeof openWallet === 'function') { try { openWallet(); } catch (_) {} }
+          return;
+        }
+        if (typeof _avatarMenu !== 'undefined' && _avatarMenu) {
           try { _avatarMenu.onAvatarClick(hit); } catch (_) {}
         }
       }

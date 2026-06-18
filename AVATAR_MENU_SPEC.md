@@ -12,6 +12,8 @@ also exposes the two social actions:
 1. **No always-on names.** Avatar names do not float above heads.
 2. **Click an avatar → see the username.** (Two-stage: first tap shows the name.)
 3. **Click again → a small menu:** 🍬 **Send candy** or ⚔️ **Start a game** (Tetris).
+4. **Click your OWN avatar → My Ledger** opens directly (no name reveal — you know who you
+   are; an extra tap would just be friction). Classmate = social menu; self = your wallet.
 
 "Loop it all together" = one interaction surface (a popover anchored at the tapped head)
 carrying the name + both actions.
@@ -38,10 +40,13 @@ keep their labels (different sprite classes); only `BoardSprite` (avatars, and t
   returns `null` when `hideLabel` (skips the engine's name pass). `PlayerSprite` inherits it.
 - `mount()` reads `var hideNameLabels = !!opts.hideNameLabels` and threads it onto every
   avatar via `baseOpts.hideLabel` in `addSprite`.
-- The canvas hit-test now forwards click coords:
-  `onAvatarClick({ username, selectMode, clientX, clientY })` (additive — `selectMode`
+- The canvas hit-test now forwards click coords + a self flag:
+  `onAvatarClick({ username, selectMode, clientX, clientY, isSelf })` (additive — `selectMode`
   stays first-after-username so the cockpit source pin still matches; existing consumers
   ignore the extra fields).
+- `selfClickable` mount opt: when set, the local user's own avatar is hittable and fires
+  `isSelf:true`. The Desk passes it; the cockpit omits it, so self stays unclickable there
+  (a teacher has no wallet panel + must not nudge themselves).
 
 ### `ap_stats_roadmap_square_mode.html` (the Desk)
 - The student board mount passes `hideNameLabels: true`. The cockpit omits it → names float.
@@ -59,8 +64,10 @@ keep their labels (different sprite classes); only `BoardSprite` (avatars, and t
     self / guests / no-wallet / cooldown); **Start a game** → `DogePresence.sendChallenge`
     (the challenge rides the always-on presence socket and auto-opens the match on accept).
     "Start a game" is enabled unless presence positively reports the peer off-Desk.
-- `onAvatarClick` in the mount now routes to `_avatarMenu.onAvatarClick(hit)` —
-  **supersedes the old instant candy-poke-on-tap** (CANDY_POKE_SPEC.md).
+- `onAvatarClick` in the mount routes a self-click (`hit.isSelf`) to `openWallet()` and any
+  other avatar to `_avatarMenu.onAvatarClick(hit)` — **supersedes the old instant
+  candy-poke-on-tap** (CANDY_POKE_SPEC.md). (Clicking your own avatar while a classmate
+  popover is open closes the popover via its outside-click handler and opens the wallet.)
 - CSS: `.avatar-pop` / `.avatar-pop-name` / `.avatar-pop-hint` / `.avatar-pop-acts`,
   reusing the System-7 `.doge-sub-act` buttons.
 

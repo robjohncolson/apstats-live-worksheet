@@ -7014,4 +7014,12 @@ describe('AVATAR_MENU -- avatar name-label suppression', function () {
   it('the canvas hit-test forwards clientX/clientY to onAvatarClick (keeps selectMode first)', function () {
     expect(BOARD_SRC).toMatch(/onAvatarClick\(\{\s*username:\s*hit,\s*selectMode:[\s\S]*?clientX:[\s\S]*?clientY:/);
   });
+
+  it('self is clickable only when opts.selfClickable is set; the payload flags isSelf', function () {
+    expect(BOARD_SRC).toMatch(/selfClickable\s*=\s*!!opts\.selfClickable/);
+    // The skip-self guard is now gated on !selfClickable (cockpit keeps skipping self).
+    expect(BOARD_SRC).toMatch(/u === username && !selfClickable/);
+    // The payload tags a self-click so the Desk can route it to My Ledger.
+    expect(BOARD_SRC).toMatch(/isSelf:\s*\(hit === username\)/);
+  });
 });

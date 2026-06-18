@@ -80,6 +80,12 @@ describe('candy poke — wiring (structural)', () => {
   it('the avatar menu Send-candy action still reaches _candyPoke', () => {
     expect(html).toMatch(/Send candy[\s\S]*?_candyPoke\(target\)/);
   });
+  it('clicking your OWN avatar (isSelf) opens My Ledger, not the social menu', () => {
+    // AVATAR_MENU: the mount opts in via selfClickable, and onAvatarClick routes
+    // a self-click to openWallet() before the classmate _avatarMenu branch.
+    expect(html).toMatch(/selfClickable:\s*true/);
+    expect(html).toMatch(/if\s*\(hit\.isSelf\)\s*\{[\s\S]*?openWallet\(\)/);
+  });
   it('onClassroomMessage routes candy_gift_received -> _onCandyGiftReceived', () => {
     const b = fnBody(html, '_mountClassroomBoard');
     expect(b).toMatch(/msg\.type === 'candy_gift_received'[\s\S]*?_onCandyGiftReceived\(msg\)/);

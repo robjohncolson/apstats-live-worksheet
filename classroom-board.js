@@ -17,13 +17,16 @@
  *   handle.reset()             -- v1b teacher method
  *
  * opts (r3): { wsUrl, section, username, role, nameMap?, onStateChange?,
- *              hue?, onStartVideo?, onAvatarClick?, hideNameLabels? }
+ *              hue?, onStartVideo?, onAvatarClick?, hideNameLabels?, selfClickable? }
  *   hue: integer 0-359 or null.  Sent in classroom_join; used to tint this
  *   user's own avatar on the board.
- *   onAvatarClick: optional function({ username, selectMode, clientX, clientY }).
- *   Fired when a canvas click hit-tests onto an avatar (never self).
+ *   onAvatarClick: optional function({ username, selectMode, clientX, clientY, isSelf }).
+ *   Fired when a canvas click hit-tests onto an avatar.  isSelf is true only when
+ *   the local user clicked their own avatar (requires selfClickable).
  *   hideNameLabels: when true, avatar names do NOT float above heads (the Desk
  *   reveals them on click instead).  Omit it (cockpit) to keep names floating.
+ *   selfClickable: when true, the local user's own avatar is clickable (fires
+ *   isSelf:true).  Omit it (cockpit) to keep self unclickable.
  *   onStartVideo: optional function(videoRef).  Called once per inbound
  *   classroom_greenlight whose startVideo === true.  videoRef is the string
  *   the broadcast carried (or null).
@@ -3945,6 +3948,10 @@
     // Desk can reveal a name (then a candy/challenge menu) on click instead. The
     // teacher cockpit omits this opt, so its real-name labels keep floating.
     var hideNameLabels = !!opts.hideNameLabels;
+    // AVATAR_MENU (DESK ONLY): when true, clicking YOUR OWN avatar fires onAvatarClick
+    // with isSelf:true (the Desk opens My Ledger). The cockpit omits it, so self stays
+    // unclickable there (a teacher has no wallet panel + must not nudge themselves).
+    var selfClickable = !!opts.selfClickable;
 
     // Ensure the container clips the off-screen pull-down panel.
     if (container.style.position !== 'relative' &&
@@ -3985,22 +3992,26 @@
         if (!Object.prototype.hasOwnProperty.call(spriteEntities, u)) continue;
         var sp = spriteEntities[u];
         if (!sp) continue;
-        if (u === username) continue;   // never select self
+        // Self is clickable only when the mount opts in (Desk → open My Ledger);
+        // otherwise skip self exactly as before (cockpit unchanged).
+        if (u === username && !selfClickable) continue;
         var dx = Math.abs(cx - sp.x);
         var dy = Math.abs(cy - sp.y);
         if (dx <= HIT && dy <= HIT) { hit = u; break; }
       }
       if (hit) {
         // AVATAR_MENU: forward the click's viewport coords so a Desk popover can
-        // anchor at the tapped avatar. Additive — existing consumers ignore them,
-        // and `selectMode` stays first-after-username so the cockpit test's
-        // `onAvatarClick({...selectMode...})` source pin still matches.
+        // anchor at the tapped avatar, and flag a self-click (Desk → My Ledger).
+        // Additive — existing consumers ignore them, and `selectMode` stays
+        // first-after-username so the cockpit `onAvatarClick({...selectMode...})`
+        // source pin still matches.
         try {
           onAvatarClick({
             username: hit,
             selectMode: selectModeActive,
             clientX: (ev.clientX != null) ? ev.clientX : (rect.left + cx),
-            clientY: (ev.clientY != null) ? ev.clientY : (rect.top + cy)
+            clientY: (ev.clientY != null) ? ev.clientY : (rect.top + cy),
+            isSelf: (hit === username)
           });
         } catch (_) {}
       }
