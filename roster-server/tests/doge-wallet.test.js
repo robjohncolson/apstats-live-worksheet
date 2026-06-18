@@ -20,7 +20,7 @@ const quizRows = (n) => Array.from({ length: n }, (_, i) => rc('curriculum_quiz'
 
 const ROW_OF_NULLS = { student_id: null, candy_eaten: null, candy_given: null, doge_balance: null, doge_sent: null, doge_cost_basis: null, doge_address: null };
 
-function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = false, roster = [], chain = {}, chainWriteFails = false, giftMissing = false } = {}) {
+function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = false, roster = [], chain = {}, chainWriteFails = false, giftMissing = false, sellMissing = false, price = PRICE } = {}) {
   const acc = new Map(Object.entries(accounts));
   const dogeLedger = [];
   const miss = { data: null, error: { code: '42P01', message: 'relation "doge_account" does not exist' } };
@@ -46,8 +46,8 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
         var giftedRecent = dogeLedger.filter((r) => r.student_id === p_from && r.kind === 'gift_out' && (!r.ts || r.ts >= since24)).reduce((s, r) => s + Math.abs(r.candy_delta), 0);
         if (giftedRecent + p_candy > p_cap + 1e-9) return { data: null, error: null };   // over cap → null (race backstop)
       }
-      var from = acc.get(p_from) || { student_id: p_from, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0 };
-      var spend = p_earned_from - Number(from.candy_given || 0) - Number(from.doge_cost_basis || 0) - Number(from.candy_gifted_out || 0) + Number(from.candy_gifted_in || 0);   // 0022: subtract Materialized, not eaten
+      var from = acc.get(p_from) || { student_id: p_from, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0 };
+      var spend = p_earned_from - Number(from.candy_given || 0) - Number(from.doge_cost_basis || 0) - Number(from.candy_gifted_out || 0) + Number(from.candy_gifted_in || 0) + Number(from.candy_realized || 0);   // 0022: Materialized not eaten; 0023: + realized
       if (spend < p_candy - 1e-9) return { data: rowOfNulls ? { ...ROW_OF_NULLS } : null, error: null };
       from = { ...from, candy_gifted_out: Number(from.candy_gifted_out || 0) + p_candy }; acc.set(p_from, from);
       var to = acc.get(p_to) || { student_id: p_to, candy_gifted_in: 0 };
@@ -60,8 +60,8 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
     // log, return the row (or null when the guard fails).
     async dogeSpend({ p_sid, p_earned, p_candy, p_kind, p_doge, p_price, p_cpd }) {
       if (dbMissing) return miss;
-      var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, doge_address: null };
-      var bal = p_earned - Number(a.candy_given || 0) - Number(a.doge_cost_basis || 0) - Number(a.candy_gifted_out || 0) + Number(a.candy_gifted_in || 0);   // 0022: subtract Materialized, not eaten
+      var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0, doge_address: null };
+      var bal = p_earned - Number(a.candy_given || 0) - Number(a.doge_cost_basis || 0) - Number(a.candy_gifted_out || 0) + Number(a.candy_gifted_in || 0) + Number(a.candy_realized || 0);   // 0022: Materialized not eaten; 0023: + realized
       // guard fail: production (a `returns doge_account` fn over PostgREST) returns
       // a ROW-OF-NULLS, not a bare null — exercise that shape so the load-bearing
       // `!r.data.student_id` guard in the endpoints is actually pinned.
@@ -69,7 +69,37 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
       if (p_kind === 'eat') a = { ...a, candy_eaten: Number(a.candy_eaten || 0) + p_candy };
       else a = { ...a, doge_balance: Number(a.doge_balance || 0) + (p_doge || 0), doge_cost_basis: Number(a.doge_cost_basis || 0) + p_candy };
       acc.set(p_sid, a);
-      dogeLedger.push({ student_id: p_sid, kind: p_kind, candy_delta: -p_candy, doge_delta: p_doge || 0, doge_price_usd: p_price, candy_per_doge: p_cpd });
+      dogeLedger.push({ student_id: p_sid, kind: p_kind, candy_delta: -p_candy, doge_delta: p_doge || 0, doge_price_usd: p_price, candy_per_doge: p_cpd, ts: new Date().toISOString() });
+      return { data: a, error: null };
+    },
+    // buy/sell coin legs (oldest first) for the JS-side FIFO maturity preview.
+    async dogeCoinFlows(sid) {
+      if (dbMissing) return miss;
+      return { data: dogeLedger.filter((r) => r.student_id === sid && (r.kind === 'buy_doge' || r.kind === 'sell_doge')), error: null };
+    },
+    // models the atomic doge_sell RPC (migration 0023): guard in-app + FIFO maturity on the
+    // live row, decrement balance/cost-basis (avg basis), book P&L to candy_realized, log the
+    // sell leg, return the row (or null when a guard fails). Mirrors 0023_doge_sell.sql.
+    async dogeSell({ p_sid, p_doge, p_rate, p_price, p_hold_hours }) {
+      if (dbMissing || sellMissing) return miss;
+      if (!(p_doge > 0) || !(p_rate > 0)) return { data: null, error: null };
+      var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0 };
+      var inApp = Number(a.doge_balance || 0) - Number(a.doge_sent || 0);
+      if (inApp < p_doge - 1e-9) return { data: rowOfNulls ? { ...ROW_OF_NULLS } : null, error: null };   // can't cash sent/on-chain coins
+      var cutoff = Date.now() - (Number(p_hold_hours) || 24) * 3600 * 1000;
+      var maturedBought = 0, sold = 0;
+      for (const r of dogeLedger) {
+        if (r.student_id !== p_sid) continue;
+        if (r.kind === 'buy_doge') { var t = r.ts ? new Date(r.ts).getTime() : NaN; if (t <= cutoff) maturedBought += Number(r.doge_delta || 0); }
+        else if (r.kind === 'sell_doge') sold += Math.abs(Number(r.doge_delta || 0));
+      }
+      var matured = Math.min(inApp, maturedBought - sold - Number(a.doge_sent || 0));
+      if (matured < p_doge - 1e-9) return { data: rowOfNulls ? { ...ROW_OF_NULLS } : null, error: null };   // held < hold window (same null shape as in-app guard)
+      var basis = Number(a.doge_balance || 0) > 0 ? Number(a.doge_cost_basis || 0) * (p_doge / Number(a.doge_balance || 0)) : 0;
+      var ret = p_doge * p_rate;
+      a = { ...a, doge_balance: Number(a.doge_balance || 0) - p_doge, doge_cost_basis: Math.max(0, Number(a.doge_cost_basis || 0) - basis), candy_realized: Number(a.candy_realized || 0) + (ret - basis) };
+      acc.set(p_sid, a);
+      dogeLedger.push({ student_id: p_sid, kind: 'sell_doge', candy_delta: ret, doge_delta: -p_doge, doge_price_usd: p_price, candy_per_doge: p_rate, ts: new Date().toISOString() });
       return { data: a, error: null };
     },
   };
@@ -79,7 +109,7 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
   mountDogeWallet(app, {
     db, ledgerDb,
     verifyToken: (t) => (typeof t === 'string' && t.startsWith('tok:')) ? t.slice(4) : null,
-    getPrice: async () => PRICE,
+    getPrice: async () => price,
     fetchChainBalance: async (addr) => (typeof chain === 'function' ? chain(addr) : (chain[addr] || { address: addr, network: 'main', error: 'no fake' })),
   });
   const server = http.createServer(app);
@@ -488,5 +518,137 @@ describe('DOGE wallet — candy gifting (kid → kid)', () => {
     expect(a1 + b1).toBeCloseTo(a0 + b0, 6);   // gift moved spendable candy, created none
     expect(a1).toBeCloseTo(a0 - 4, 6);
     expect(b1).toBeCloseTo(b0 + 4, 6);
+  });
+});
+
+describe('DOGE wallet — cash out (DOGE → candy, SELL_DOGE_SPEC)', () => {
+  const OLD = () => new Date(Date.now() - 25 * 3600 * 1000).toISOString();   // matured (held > 24h)
+  const NEW = () => new Date(Date.now() - 1 * 3600 * 1000).toISOString();    // just bought (not matured)
+  // Seed a kid who earned E candy and holds `balance` coins bought for `costBasis` candy, `age` ago.
+  function seedHeld({ earned = 54, balance = 4, costBasis = 8, sent = 0, realized = 0, age = OLD, sellMissing = false, price = PRICE, rowOfNulls = false } = {}) {
+    const ctx = start({
+      ledgers: { s1: quizRows(earned) },
+      accounts: { s1: { student_id: 's1', candy_given: 0, candy_gifted_out: 0, candy_gifted_in: 0, doge_balance: balance, doge_sent: sent, doge_cost_basis: costBasis, candy_realized: realized } },
+      sellMissing, price, rowOfNulls,
+    });
+    ctx.dogeLedger.push({ student_id: 's1', kind: 'buy_doge', candy_delta: -costBasis, doge_delta: balance, ts: age() });
+    return ctx;
+  }
+
+  it('cashes matured DOGE → candy at the live rate and books a GAIN (bought cheap)', async () => {
+    // 4 coins, cost basis 8 candy (avg 2/coin ≈ "bought at 1 DOGE = 2 candy"); now 1 DOGE ≈ 2.444.
+    const ctx = seedHeld({ earned: 36, balance: 4, costBasis: 8 });   // 36 quiz rows = 10 candy earned
+    const r = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 4 } });
+    expect(r.status).toBe(200);
+    expect(r.body.soldCoins).toBe(4);
+    expect(r.body.candyReturned).toBeCloseTo(4 * 2.444, 2);         // ≈ 9.78 candy back
+    expect(r.body.dogeBalance).toBeCloseTo(0, 6);
+    expect(r.body.candyConverted).toBeCloseTo(0, 6);               // cost basis fully unwound
+    expect(r.body.candyRealized).toBeCloseTo(4 * 2.444 - 8, 2);     // ≈ +1.78 realized GAIN
+    expect(r.body.candyOwed).toBeCloseTo(10 + (4 * 2.444 - 8), 2);  // earned + realized
+  });
+
+  it('books a LOSS when DOGE fell (honest P&L — gets back less than they put in)', async () => {
+    // 4 coins, cost basis 12 (avg 3/coin ≈ "bought at 1 DOGE = 3 candy"); now only 2.444.
+    const ctx = seedHeld({ earned: 54, balance: 4, costBasis: 12 });   // 54 rows = 15 candy
+    const r = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 4 } });
+    expect(r.status).toBe(200);
+    expect(r.body.candyReturned).toBeCloseTo(4 * 2.444, 2);          // ≈ 9.78
+    expect(r.body.candyRealized).toBeLessThan(0);                    // realized LOSS
+    expect(r.body.candyRealized).toBeCloseTo(4 * 2.444 - 12, 2);     // ≈ -2.22
+  });
+
+  it('a PARTIAL sell prorates the average cost basis to the EXACT hand-computed split', async () => {
+    // 10 candy earned; hold 4 coins bought for 8 candy (avg 2/coin). Sell 3 at 2.4444/coin.
+    // Hand-computed (independent of the fake/SQL formula — the real conservation oracle):
+    //   payout   = 3 × 2.4444            ≈ 7.333
+    //   basis    = 8 × (3/4)             = 6        → converted: 8 → 2
+    //   realized = payout − basis        ≈ 1.333
+    //   owed     = 10 + realized − converted_remaining = 10 + 1.333 − 2 ≈ 9.333
+    const rate = 0.088 / 0.036;
+    const ctx = seedHeld({ earned: 36, balance: 4, costBasis: 8 });
+    const sell = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 3 } });
+    expect(sell.status).toBe(200);
+    expect(sell.body.candyReturned).toBeCloseTo(3 * rate, 4);
+    const w = (await req(ctx, 'GET', '/wallet', { token: 'tok:s1' })).body;
+    expect(w.dogeBalance).toBeCloseTo(1, 6);                 // 4 − 3 sold
+    expect(w.candyConverted).toBeCloseTo(2, 4);              // 8 − (8·3/4) remaining cost basis
+    expect(w.candyRealized).toBeCloseTo(3 * rate - 6, 4);    // payout − prorated basis ≈ +1.333
+    expect(w.candyOwed).toBeCloseTo(10 + (3 * rate - 6) - 2, 4); // earned + realized − remaining converted
+  });
+
+  it('still satisfies the 7-number identity after a partial sell (cross-check)', async () => {
+    const ctx = seedHeld({ earned: 36, balance: 4, costBasis: 8 });
+    await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 3 } });
+    const w = (await req(ctx, 'GET', '/wallet', { token: 'tok:s1' })).body;
+    // Earned + Received + Realized = Gifted + Converted + Materialized + Owed
+    expect(w.candyEarned + w.candyReceived + w.candyRealized)
+      .toBeCloseTo(w.candyGiftedOut + w.candyConverted + w.candyMaterialized + w.candyOwed, 6);
+  });
+
+  it('rejects an un-matured sell even when the RPC returns a ROW-OF-NULLS shape (guard parity)', async () => {
+    // The route's JS maturity gate front-runs the RPC here, so this also pins that the
+    // load-bearing !r.data.student_id check would handle the real PostgREST null shape.
+    const ctx = seedHeld({ earned: 36, balance: 4, costBasis: 8, age: NEW, rowOfNulls: true });
+    const r = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 2 } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/unlock/i);
+  });
+
+  it('blocks coins not yet held overnight (FIFO maturity)', async () => {
+    const ctx = seedHeld({ earned: 36, balance: 4, costBasis: 8, age: NEW });   // bought 1h ago
+    const r = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 2 } });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/unlock/i);
+  });
+
+  it('GET /wallet exposes sellableDoge only once matured', async () => {
+    const matured = seedHeld({ earned: 36, balance: 4, costBasis: 8, age: OLD });
+    expect((await req(matured, 'GET', '/wallet', { token: 'tok:s1' })).body.sellableDoge).toBeCloseTo(4, 6);
+    const fresh = seedHeld({ earned: 36, balance: 4, costBasis: 8, age: NEW });
+    expect((await req(fresh, 'GET', '/wallet', { token: 'tok:s1' })).body.sellableDoge).toBeCloseTo(0, 6);
+  });
+
+  it('cannot cash coins already sent on-chain (clamps to in-app, un-sent)', async () => {
+    // 6 bought, 4 already sent on-chain → only 2 in-app are reclaimable.
+    const ctx = seedHeld({ earned: 72, balance: 6, costBasis: 12, sent: 4 });   // 72 rows = 20 candy
+    const over = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 3 } });
+    expect(over.status).toBe(400);
+    expect(over.body.error).toMatch(/cash out 2/);                  // friendly: only 2 Ɖ ready
+    const ok = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 2 } });
+    expect(ok.status).toBe(200);
+    expect(ok.body.soldCoins).toBe(2);
+  });
+
+  it('honors the BUYBACK_ENABLED kill-switch (default ON)', async () => {
+    process.env.BUYBACK_ENABLED = 'false';
+    try {
+      const r = await req(seedHeld({}), 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 1 } });
+      expect(r.status).toBe(403);
+      expect(r.body.error).toMatch(/turned off/);
+    } finally { delete process.env.BUYBACK_ENABLED; }
+  });
+
+  it('401 without a token', async () => {
+    const r = await req(start(), 'POST', '/wallet/sell-doge', { body: { doge: 1 } });
+    expect(r.status).toBe(401);
+  });
+
+  it('400 on a non-positive amount', async () => {
+    const r = await req(seedHeld({}), 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 0 } });
+    expect(r.status).toBe(400);
+  });
+
+  it('503 when the live price is unavailable', async () => {
+    const r = await req(seedHeld({ price: null }), 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 1 } });
+    expect(r.status).toBe(503);
+    expect(r.body.error).toMatch(/price unavailable/);
+  });
+
+  it('503s before migration 0023 (doge_sell absent; the rest of the wallet still works)', async () => {
+    const ctx = seedHeld({ sellMissing: true });
+    const r = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 1 } });
+    expect(r.status).toBe(503);
+    expect(r.body.error).toMatch(/not provisioned/);
   });
 });

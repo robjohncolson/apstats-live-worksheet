@@ -11652,13 +11652,16 @@ function _dogeWalletFetch() {
         .then(function (r) { if (r.status === 503) return { _notProvisioned: true }; return r.ok ? r.json() : null; })
         .catch(function () { return null; });
 }
-function _dogeWalletAction(path, candy) {
+function _dogeWalletAction(path, candyOrBody) {
     var c = _dogeWalletBase();
     if (!c) return Promise.resolve({ ok: false, error: 'offline' });
+    // Back-compat: a bare number is a candy amount (Buy/Eat); an object is the literal
+    // body (Cash-out posts { doge: n }). The server never trusts a client-supplied price.
+    var body = (candyOrBody && typeof candyOrBody === 'object') ? candyOrBody : { candy: candyOrBody };
     return fetch(c.base + path, {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + c.token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candy: candy })
+        body: JSON.stringify(body)
     }).then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
       .catch(function () { return { ok: false, error: 'network' }; });
 }
@@ -11989,6 +11992,52 @@ function _dogeWalletRender(box, w, pts) {
         none.className = 'geneva'; none.style.cssText = 'font-size:10px;color:#8a7330;margin-top:4px';
         none.textContent = doge > 0 ? 'All spent — do more work to earn candy.' : 'Do some work to earn candy.';
         box.appendChild(none);
+    }
+
+    // ── Cash out DOGE → candy (the REVERSE of Buy; realize an appreciation gain). ──
+    // Shown whenever the kid holds in-app DOGE. The gain line teaches the appreciating-asset
+    // payoff; cash-out is gated on the overnight hold (w.sellableDoge) so it can't be churned.
+    // Value only the CASHABLE (in-app, un-sent) coins — on-chain coins the teacher already
+    // deposited are the kid's real DOGE to keep (shown on the ⛓ line), not convertible to candy.
+    var inApp = Math.max(0, doge - (w.dogeSent || 0));
+    if (inApp > 0.0001 && w.candyPerDoge) {
+        var nowWorth = inApp * w.candyPerDoge;
+        var inAppBasis = (doge > 0) ? converted * (inApp / doge) : 0;   // cost basis of the cashable portion
+        var gainLine = document.createElement('div');
+        gainLine.className = 'geneva'; gainLine.style.cssText = 'font-size:10px;margin-top:6px;color:#5a4500';
+        var gainTxt = 'Your ' + inApp.toFixed(1) + ' Ɖ in hand is worth ' + nowWorth.toFixed(1) + ' 🍬 now';
+        if (inAppBasis > 0.05) {
+            var pct = Math.round(((nowWorth - inAppBasis) / inAppBasis) * 100);
+            gainTxt += ' — you put in ' + inAppBasis.toFixed(0) + ' 🍬 (' + (pct >= 0 ? '▲ up ' + pct + '%' : '▼ down ' + Math.abs(pct) + '%') + ')';
+        }
+        gainLine.textContent = gainTxt;
+        box.appendChild(gainLine);
+
+        var sellable = w.sellableDoge || 0;
+        var srow = document.createElement('div');
+        srow.style.cssText = 'display:flex;gap:4px;align-items:center;margin-top:3px;flex-wrap:wrap';
+        if (sellable > 0.0001) {
+            var samt = document.createElement('input');
+            samt.type = 'number'; samt.min = '0'; samt.step = '0.1'; samt.placeholder = (Math.round(sellable * 10) / 10);
+            samt.style.cssText = 'width:52px;font-size:11px;padding:2px;border:1px solid #c9961f';
+            var sellBtn = document.createElement('button'); sellBtn.className = 's7btn'; sellBtn.textContent = '🍬 Cash out Ɖ'; sellBtn.style.cssText = 'font-size:10px;padding:2px 6px';
+            var smsg = document.createElement('span'); smsg.className = 'geneva'; smsg.style.cssText = 'font-size:9px;color:#a07c1c';
+            smsg.textContent = '(' + (Math.round(sellable * 10) / 10) + ' Ɖ ready · 1 Ɖ = ' + w.candyPerDoge.toFixed(1) + ' 🍬)';
+            var samount = function () { var v = parseFloat(samt.value); return (isFinite(v) && v > 0) ? Math.min(v, sellable) : sellable; };
+            sellBtn.onclick = function () {
+                sellBtn.disabled = true; smsg.textContent = '…';
+                _dogeWalletAction('/wallet/sell-doge', { doge: samount() }).then(function (res) {
+                    if (res && res.ok) { _dogeWalletFetch().then(function (w2) { _dogeWalletRender(box, w2, pts); }); }
+                    else { sellBtn.disabled = false; smsg.textContent = (res && res.error) || 'failed'; }
+                });
+            };
+            srow.appendChild(samt); srow.appendChild(sellBtn); srow.appendChild(smsg);
+        } else {
+            var shint = document.createElement('span'); shint.className = 'geneva'; shint.style.cssText = 'font-size:9px;color:#a07c1c';
+            shint.textContent = 'Ɖ cashes back to 🍬 ~a day after you buy — hold it (it can go up or down).';
+            srow.appendChild(shint);
+        }
+        box.appendChild(srow);
     }
 }
 function _dogeWalletPreviewFallback(box, pts, notProvisioned) {

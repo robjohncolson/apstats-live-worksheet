@@ -10,7 +10,8 @@
 
 import { requireTeacher } from './teacher-auth.js';
 import {
-  computeEffort, candyPerDoge, minConvertCandy, dogeFromCandy, MIN_CONVERSION_CANDY, MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP,
+  computeEffort, candyPerDoge, minConvertCandy, dogeFromCandy, candyFromDoge,
+  MIN_CONVERSION_CANDY, MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP, SELL_HOLD_HOURS,
 } from './doge-econ.js';
 import { fetchChainBalance as defaultChainFetch, detectNetwork, DOGE_MAIN_RE } from './doge-chain.js';
 
@@ -118,12 +119,13 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const giftedIn = num(a.candy_gifted_in);     // Received: candy received from classmates
     const converted = num(a.doge_cost_basis);    // Converted: candy turned into DOGE
     const materialized = num(a.candy_given);     // Materialized: real candy the teacher handed over
-    // CANDY_LEDGER_SPEC — the 6-number model. The "eat" opt-in is RETIRED: the spendable
-    // pool a student can still gift/convert IS the un-realized (Owed) candy, so spendable
-    // subtracts MATERIALIZED (candy_given), not the old candy_eaten. Hence candyBalance
-    // === candyOwed (you can't gift candy you've already been handed).
-    // Identity: Earned + Received = Gifted + Converted + Materialized + Owed.
-    const rawBalance = earned.candy + giftedIn - giftedOut - converted - materialized;
+    const realized = num(a.candy_realized);      // Realized: net P&L from cashing DOGE back to candy (signed; 0 pre-0023)
+    // CANDY_LEDGER_SPEC + SELL_DOGE_SPEC — the (now 7-) number model. The "eat" opt-in is
+    // RETIRED: the spendable pool a student can still gift/convert IS the un-realized (Owed)
+    // candy, so spendable subtracts MATERIALIZED (candy_given), not the old candy_eaten, and
+    // ADDS realized cash-out P&L. Hence candyBalance === candyOwed (you can't gift candy you've
+    // already been handed). Identity: Earned + Received + Realized = Gifted + Converted + Materialized + Owed.
+    const rawBalance = earned.candy + giftedIn - giftedOut - converted - materialized + realized;
     const candyBalance = Math.max(0, rawBalance);
     return {
       candyEarned: earned.candy,                 // Earned (monotonic)
@@ -141,7 +143,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       candyGiftedIn: giftedIn,
       candyReceived: giftedIn,                   // headline alias
       candyConverted: converted,                 // headline alias for doge_cost_basis (candy units)
-      candyOwed: candyBalance,                    // Earned + Received − Gifted − Converted − Materialized
+      candyRealized: realized,                    // net realized P&L from DOGE cash-outs (signed)
+      candyOwed: candyBalance,                    // Earned + Received + Realized − Gifted − Converted − Materialized
       dogeBalance: num(a.doge_balance),
       dogeSent: num(a.doge_sent),
       dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)), // teacher deposits
@@ -177,11 +180,13 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const price = await priceFn();
     let history = [];
     try { const h = await db.listDogeLedger(sid, 50); history = (h && h.data) || []; } catch (_) {}
+    // In-app DOGE the kid can cash back to candy now (matured ≥ overnight; SELL_DOGE_SPEC).
+    const sellableDoge = bal.dogeBalance > 1e-9 ? await maturedSellable(sid, accRes.data) : 0;
     return res.json({
       ok: true, ...bal,
       dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null,
       minBuyCandy: price ? minConvertCandy(price) : MIN_CONVERSION_CANDY,
-      minMaterializeDoge: MIN_MATERIALIZE_DOGE, history,
+      minMaterializeDoge: MIN_MATERIALIZE_DOGE, sellableDoge, history,
     });
   });
 
@@ -211,6 +216,25 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     let rows = [];
     try { const r = await ledgerDb.getLedgerByStudent(sid); rows = (r && r.data) || []; } catch (_) {}
     return computeEffort(rows);
+  }
+
+  // In-app DOGE a student may cash back RIGHT NOW (SELL_DOGE_SPEC). FIFO maturity:
+  // matured-bought (buy legs ≥ SELL_HOLD_HOURS old) − sold-back − sent, capped at the
+  // un-sent in-app balance (doge_balance − doge_sent; on-chain coins can't be reclaimed).
+  // This is the friendly preview/UI figure — doge_sell re-enforces the same gate atomically.
+  async function maturedSellable(sid, acc) {
+    const a = acc || {};
+    const inApp = Math.max(0, num(a.doge_balance) - num(a.doge_sent));
+    if (inApp <= 1e-9) return 0;
+    const cutoff = Date.now() - SELL_HOLD_HOURS * 3600 * 1000;
+    let rows = [];
+    try { const r = await db.dogeCoinFlows(sid); rows = (r && r.data) || []; } catch (e) { console.error('maturedSellable dogeCoinFlows:', e); return 0; }
+    let maturedBought = 0, sold = 0;
+    for (const r of rows) {
+      if (r.kind === 'buy_doge') { if (new Date(r.ts).getTime() <= cutoff) maturedBought += num(r.doge_delta); }
+      else if (r.kind === 'sell_doge') { sold += Math.abs(num(r.doge_delta)); }
+    }
+    return Math.max(0, Math.min(inApp, maturedBought - sold - num(a.doge_sent)));
   }
 
   // ── POST /wallet/eat ── RETIRED (CANDY_LEDGER_SPEC) ─────────────────────────
@@ -250,6 +274,42 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/buy-doge:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
     if (!r.data || !r.data.student_id) return res.status(400).json({ ok: false, error: 'not enough candy' });
     return res.json({ ok: true, ...deriveBalances(earned, r.data), boughtCoins: coins, candyPerDoge: cpd, dogeUsd: price });
+  });
+
+  // ── POST /wallet/sell-doge ── cash IN-APP DOGE back to candy at the live rate ──
+  // The REVERSE of buy-doge (reverses DOGE_WALLET_SPEC #4 ON PURPOSE; SELL_DOGE_SPEC). A
+  // student realizes an appreciation gain: held DOGE is worth more candy than it cost. HONEST
+  // P&L — payout = coins × liveRate regardless of cost basis, so a fallen coin returns less.
+  // Guards: only un-sent, in-app coins held ≥ SELL_HOLD_HOURS are sellable (on-chain coins are
+  // self-custodied and can't be reclaimed; the overnight hold kills 5-min-window churn). UNCAPPED
+  // — backed by the teacher's real node DOGE appreciating in parallel. doge_sell re-enforces both
+  // guards atomically under a row lock; the JS checks here are the friendly-error / preview path.
+  app.post('/wallet/sell-doge', async (req, res) => {
+    // Kill-switch (default ON), same falsey-spelling handling as gifting.
+    const sellOff = ['false', '0', 'no', 'off'].includes(String(process.env.BUYBACK_ENABLED || 'true').trim().toLowerCase());
+    if (sellOff) return res.status(403).json({ ok: false, error: 'cash-out is turned off' });
+    const sid = sidOf(req);
+    if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const doge = num(req.body && req.body.doge);
+    if (!(doge > 0)) return res.status(400).json({ ok: false, error: 'enter how much DOGE to cash out' });
+    const price = await priceFn();
+    if (!price) return res.status(503).json({ ok: false, error: 'DOGE price unavailable' });
+    const rate = candyPerDoge(price);
+    const accRes = await db.getDogeAccount(sid);
+    if (accRes.error) { if (isDogeMissing(accRes.error)) return notProvisioned(res); console.error('POST /wallet/sell-doge load:', accRes.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    // Maturity gate (friendly message). The SQL doge_sell re-checks this on the live row.
+    const sellable = await maturedSellable(sid, accRes.data || {});
+    if (doge > sellable + 1e-9) {
+      return res.status(400).json({ ok: false, error: sellable > 1e-9
+        ? 'you can cash out ' + (Math.round(sellable * 10) / 10) + ' Ɖ right now (the rest unlocks ~a day after you buy)'
+        : 'no DOGE ready to cash out yet — it unlocks ~a day after you buy' });
+    }
+    const earned = await earnedCandyOf(sid);
+    // ATOMIC guard+unwind: un-sent + matured check, decrement balance/cost-basis, book P&L.
+    const r = await db.dogeSell({ p_sid: sid, p_doge: doge, p_rate: rate, p_price: price, p_hold_hours: SELL_HOLD_HOURS });
+    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/sell-doge:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (!r.data || !r.data.student_id) return res.status(400).json({ ok: false, error: 'not enough DOGE' });
+    return res.json({ ok: true, ...deriveBalances(earned, r.data), soldCoins: doge, candyReturned: candyFromDoge(doge, price), candyPerDoge: rate, dogeUsd: price });
   });
 
   // ── POST /wallet/gift ── send candy to a classmate (free in-app ledger move) ──
@@ -348,7 +408,7 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       // Owed ≥ 0 invariant (Owed = cap − candy_given). Subtracting candy_given here
       // would wrongly prevent the teacher from ever fully materializing.
       const earned = await earnedCandyOf(studentId);
-      cap = earned.candy + num(acc.candy_gifted_in) - num(acc.candy_gifted_out) - num(acc.doge_cost_basis);
+      cap = earned.candy + num(acc.candy_gifted_in) - num(acc.candy_gifted_out) - num(acc.doge_cost_basis) + num(acc.candy_realized);
     }
     // Never reduce a monotonic counter: if cap dips below the current value (e.g. during
     // the pre-0022 transition), leave it unchanged rather than clawing candy back.
@@ -381,6 +441,7 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       const earned = await earnedCandyOf(a.student_id);
       const materialized = num(a.candy_given), giftedOut = num(a.candy_gifted_out);
       const giftedIn = num(a.candy_gifted_in), converted = num(a.doge_cost_basis);
+      const realized = num(a.candy_realized);
       return {
         studentId: a.student_id,
         dogeAddress: a.doge_address || null,
@@ -388,8 +449,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
         candyEaten: num(a.candy_eaten),
         candyGiven: materialized, candyMaterialized: materialized,
         candyGiftedOut: giftedOut, candyGiftedIn: giftedIn, candyReceived: giftedIn,
-        candyConverted: converted,
-        candyOwed: Math.max(0, earned.candy + giftedIn - giftedOut - converted - materialized),
+        candyConverted: converted, candyRealized: realized,
+        candyOwed: Math.max(0, earned.candy + giftedIn - giftedOut - converted - materialized + realized),
         dogeBalance: num(a.doge_balance), dogeSent: num(a.doge_sent),
         dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)),
         dogeCostBasis: converted,

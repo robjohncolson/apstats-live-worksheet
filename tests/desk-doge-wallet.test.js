@@ -47,6 +47,15 @@ describe('Desk DOGE wallet — Phase 1 preview panel', () => {
     expect(render).toContain('dogeBalance');
   });
 
+  it('offers Cash-out DOGE → candy (POST /wallet/sell-doge, gated on the overnight-hold sellableDoge)', () => {
+    const render = fnBody('_dogeWalletRender');
+    expect(render).toContain("/wallet/sell-doge");     // the reverse conversion (SELL_DOGE_SPEC)
+    expect(render).toContain('sellableDoge');           // only matured, in-app coins are cashable
+    expect(render).toContain('Cash out');               // the button copy
+    const action = fnBody('_dogeWalletAction');
+    expect(action).toMatch(/doge|candy/);               // posts {doge} for sell, {candy} for buy
+  });
+
   it('degrades to a display-only preview before migration 0019 (503 / offline)', () => {
     const render = fnBody('_dogeWalletRender');
     expect(render).toContain('_dogeWalletPreviewFallback');

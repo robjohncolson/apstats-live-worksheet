@@ -16,6 +16,7 @@ export const CANDY_USD = 0.036;
 export const MIN_CONVERSION_CANDY = 5;    // fallback floor when no live price; the real floor is minConvertCandy() = 1 DOGE's worth
 export const MIN_MATERIALIZE_DOGE = 5;    // in-app DOGE only goes ON-CHAIN once a student has banked ≥ this many (batch sends, no dust)
 export const DAILY_GIFT_CAP = 20;         // max candy a kid can gift OUT per rolling 24h (anti-farming/coercion; DOGE_GIFTING_SPEC §8)
+export const SELL_HOLD_HOURS = 24;        // DOGE → candy cash-out: coins must be held ≥ this many hours (SELL_DOGE_SPEC; anti-churn "overnight hold")
 
 export function effortPointsFor(source, itemId) {
   if (source === 'quiz_verdict' || source === 'quiz_answer') return 0;
@@ -64,6 +65,16 @@ export function dogeFromCandy(candy, dogeUsd) {
   const c = Number(candy);
   if (rate <= 0 || !isFinite(c) || c <= 0) return 0;
   return c / rate;
+}
+
+// Cash `doge` coins back → this many candy, at the live price (the REVERSE of dogeFromCandy;
+// SELL_DOGE_SPEC). Honest P&L: pays the full live rate regardless of cost basis, so an
+// appreciated coin returns more candy than it cost and a depreciated one returns less.
+export function candyFromDoge(doge, dogeUsd) {
+  const rate = candyPerDoge(dogeUsd);
+  const d = Number(doge);
+  if (rate <= 0 || !isFinite(d) || d <= 0) return 0;
+  return d * rate;
 }
 
 // Candy's plain dollar value (candy is the stable reserve).

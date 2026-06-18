@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeGiftedSince };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeSell, dogeCoinFlows, dogeGiftedSince };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -317,6 +317,19 @@ export function createDb(client) {
   // where data = the sender's updated row, or null when the guard fails.
   async function dogeGift(params) {
     return client.rpc('doge_gift', params);
+  }
+  // Atomic DOGE → candy cash-out (migration 0023 fn doge_sell). Returns { data, error }
+  // where data = the updated row, or null when a guard fails (not enough in-app / un-matured DOGE).
+  async function dogeSell(params) {
+    return client.rpc('doge_sell', params);
+  }
+  // The student's buy/sell coin legs (kind + doge_delta + ts), oldest first — for the
+  // JS-side FIFO maturity preview (sellableDoge). The SQL doge_sell re-enforces maturity
+  // atomically; this is the friendly "X Ɖ ready" hint only.
+  async function dogeCoinFlows(studentId) {
+    return client.from('doge_ledger').select('kind, doge_delta, ts')
+      .eq('student_id', studentId).in('kind', ['buy_doge', 'sell_doge'])
+      .order('ts', { ascending: true });
   }
   // Candy a student has gifted OUT since `sinceIso` (for the rolling daily cap).
   async function dogeGiftedSince(studentId, sinceIso) {

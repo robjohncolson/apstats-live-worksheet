@@ -496,6 +496,16 @@
         return cn / rate;
     }
 
+    // Cash `doge` coins back → candy at the live price (the REVERSE of dogeFromCandy;
+    // SELL_DOGE_SPEC). Honest P&L — pays the full live rate, so an appreciated coin
+    // returns more candy than it cost. Server-authoritative; this is preview math only.
+    function candyFromDoge(doge, dogeUsd, candyUsd) {
+        var rate = candyPerDoge(dogeUsd, candyUsd);
+        var d = Number(doge);
+        if (rate <= 0 || !isFinite(d) || d <= 0) return 0;
+        return d * rate;
+    }
+
     // Candy's plain dollar value (candy is the stable reserve).
     function usdFromCandy(candy, candyUsd) {
         var cn = Number(candy);
@@ -518,6 +528,7 @@
         candyFromPoints: candyFromPoints,
         candyPerDoge: candyPerDoge,
         dogeFromCandy: dogeFromCandy,
+        candyFromDoge: candyFromDoge,
         usdFromCandy: usdFromCandy
     };
 

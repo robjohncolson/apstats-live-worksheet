@@ -65,6 +65,31 @@ describe('DOGE wallet — candy → DOGE (FLOATING leg)', () => {
   });
 });
 
+describe('DOGE wallet — DOGE → candy cash-out (REVERSE leg, SELL_DOGE_SPEC)', () => {
+  it('candyFromDoge is the inverse of dogeFromCandy at the same price', () => {
+    expect(W.candyFromDoge(1, 0.088)).toBeCloseTo(2.444, 2);        // 1 DOGE = 2.444 candy today
+    const back = W.candyFromDoge(W.dogeFromCandy(10, 0.088), 0.088);
+    expect(back).toBeCloseTo(10, 6);                                 // round-trip at one price = identity
+  });
+  it('appreciation pays MORE candy than was put in (the lesson)', () => {
+    const coins = W.dogeFromCandy(10, 0.088);   // buy 10 candy of DOGE while cheap
+    const cashed = W.candyFromDoge(coins, 0.132); // DOGE up 50% → cash back
+    expect(cashed).toBeCloseTo(15, 1);                              // 10 candy → ~15 candy
+    expect(cashed).toBeGreaterThan(10);
+  });
+  it('depreciation pays LESS (honest downside)', () => {
+    const coins = W.dogeFromCandy(10, 0.088);
+    const cashed = W.candyFromDoge(coins, 0.044);  // DOGE down 50%
+    expect(cashed).toBeCloseTo(5, 1);
+    expect(cashed).toBeLessThan(10);
+  });
+  it('zero / bad price → 0 candy (no divide-by-zero)', () => {
+    expect(W.candyFromDoge(10, 0)).toBe(0);
+    expect(W.candyFromDoge(0, 0.088)).toBe(0);
+    expect(W.candyFromDoge(-5, 0.088)).toBe(0);
+  });
+});
+
 describe('DOGE wallet — candy is the stable dollar reserve', () => {
   it('usdFromCandy is price-independent (candy ≈ dollars)', () => {
     expect(W.usdFromCandy(100)).toBeCloseTo(3.6, 6);

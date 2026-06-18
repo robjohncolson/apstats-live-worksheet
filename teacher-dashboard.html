@@ -1123,6 +1123,7 @@
           if (s.role === 'teacher') { var bdg = document.createElement('span'); bdg.textContent = ' 🧪'; bdg.title = 'teacher / test account'; nameTd.appendChild(bdg); }
           var received = acc ? (acc.candyReceived || 0) : 0, gifted = acc ? (acc.candyGiftedOut || 0) : 0;
           var converted = acc ? (acc.candyConverted || acc.dogeCostBasis || 0) : 0, materialized = acc ? (acc.candyMaterialized || acc.candyGiven || 0) : 0;
+          var realized = acc ? (acc.candyRealized || 0) : 0;   // net P&L from DOGE cash-outs (SELL_DOGE_SPEC; signed)
           // Reconciliation flag (CANDY_LEDGER_SPEC): the 6-number identity should hold —
           // Earned + Received = Gifted + Converted + Materialized + Owed. A NEGATIVE raw owed
           // means more was disbursed/spent than earned+received (a graded item was likely
@@ -1130,7 +1131,7 @@
           if (acc) {
             // Use the SERVER's earned (same source as acc.candyOwed) so the ⚠ flag never
             // flickers against the independently-loaded pacing earned.
-            var rawOwed = (acc.candyEarned != null ? acc.candyEarned : earned) + received - gifted - converted - materialized;
+            var rawOwed = (acc.candyEarned != null ? acc.candyEarned : earned) + received - gifted - converted - materialized + realized;
             if (rawOwed < -0.05) {
               var warn = document.createElement('span'); warn.textContent = ' ⚠';
               warn.title = 'Overspent by ' + (Math.round((-rawOwed) * 10) / 10) + ' candy — a graded item was likely deleted after they spent. Reconcile.';
@@ -1140,7 +1141,7 @@
           tr.appendChild(nameTd);
           var earnedTd = document.createElement('td'); earnedTd.textContent = '🍬 ' + Math.round(earned);
           // The full 6-number ledger on hover (no table restructure for Phase 1).
-          if (acc) earnedTd.title = 'Earned ' + Math.round(earned) + ' · Received ' + Math.round(received) + ' · Gifted ' + Math.round(gifted) + ' · →DOGE ' + Math.round(converted) + ' · in hand ' + Math.round(materialized) + ' · still owed ' + Math.round(give);
+          if (acc) earnedTd.title = 'Earned ' + Math.round(earned) + ' · Received ' + Math.round(received) + ' · Gifted ' + Math.round(gifted) + ' · →DOGE ' + Math.round(converted) + (Math.abs(realized) > 0.05 ? ' · cash-out P&L ' + (realized >= 0 ? '+' : '') + (Math.round(realized * 10) / 10) : '') + ' · in hand ' + Math.round(materialized) + ' · still owed ' + Math.round(give);
           tr.appendChild(earnedTd);
           var giveTd = document.createElement('td');
           if (!prov) giveTd.textContent = '—';
