@@ -17266,6 +17266,64 @@ document.addEventListener('mousedown', (e) => {
     }
 });
 
+// MODAL_ESCAPE_AUDIT.md: a safety net so every "content" modal is keyboard-
+// dismissable. These overlays previously had NO Escape handler (the day-material
+// resource panel, the Do-Now speed-bump, generic showDialog alerts, the Blooket
+// flashcard deck, the teacher view-as override-gate). Each maps to its OWN
+// cleanup-aware close fn so listeners/timers are torn down (a blanket display:none
+// would leak, e.g. the Blooket nav keydown). Closes only the TOPMOST visible one
+// (highest z-index) so a dialog stacked over another closes first.
+// DELIBERATELY EXCLUDED: the sign-in WALL (signin/signup/pwchange — must stay until
+// the student completes it; closeSignInModal already refuses while the wall holds)
+// and modals that self-handle Escape (day-grade / grade-help / my-gradebook /
+// my-receipts / student-dm / Study Break) — to avoid double-firing their handlers.
+function _escVisible(id) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    var disp = el.style.display;
+    // Open = any non-none inline display. Modals here open as block OR flex
+    // (the QR/guest overlays use flex), so don't hard-code 'block'.
+    if (!disp || disp === 'none') return null;
+    return el;
+}
+function _escHide(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function _escCloseTopModal() {
+    // DEFER if a modal that handles its OWN Escape is visible — its handler owns
+    // this keypress. Without this, a gap modal stacked UNDER a self-handled one
+    // (e.g. dblclick a calendar cell → resource panel opens, then the day-grade
+    // modal opens on top) would also get closed by the net on the same Escape.
+    var selfHandled = ['day-grade-overlay', 'grade-help-overlay', 'my-gradebook-overlay',
+                       'my-receipts-overlay', 'student-dm-modal', 'game-overlay'];
+    for (var s = 0; s < selfHandled.length; s++) {
+        if (_escVisible(selfHandled[s])) return false;
+    }
+    // Gap modals (no own Escape handler). Named close fns run cleanup; the QR/guest
+    // overlays have no cleanup (no listeners/timers) so a direct hide is correct.
+    var closers = {
+        'resource-overlay':     function () { if (typeof closeResourcePanel === 'function')     closeResourcePanel(); },
+        'donow-bump-overlay':   function () { if (typeof closeDoNowBump === 'function')          closeDoNowBump(); },
+        'dialog-overlay':       function () { if (typeof closeDialog === 'function')             closeDialog(); },
+        'bf-overlay':           function () { if (typeof closeBlooketFlashcards === 'function')  closeBlooketFlashcards(); },
+        'override-gate-modal':  function () { if (typeof _hideOverrideGateModal === 'function')  _hideOverrideGateModal(); },
+        'guest-pass-overlay':   function () { _escHide('guest-pass-overlay'); },
+        'reconcile-qr-overlay': function () { _escHide('reconcile-qr-overlay'); },
+        'verify-qr-overlay':    function () { _escHide('verify-qr-overlay'); },
+        'big-qr-overlay':       function () { _escHide('big-qr-overlay'); },
+    };
+    var topId = null, topZ = -Infinity;
+    for (var id in closers) {
+        var el = _escVisible(id);
+        if (!el) continue;
+        var z = 0;
+        try { z = parseInt(window.getComputedStyle(el).zIndex, 10); } catch (_) {}
+        if (isNaN(z)) z = 0;
+        if (z >= topZ) { topZ = z; topId = id; }
+    }
+    if (topId) { try { closers[topId](); } catch (_) {} return true; }
+    return false;
+}
+try { window._escCloseTopModal = _escCloseTopModal; } catch (_) {}
+
 // Close doge dropdown & app overlays on Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -17279,6 +17337,8 @@ document.addEventListener('keydown', (e) => {
                 destroyApp(id);
             }
         });
+        // Content modals that have no dedicated Escape handler (see above).
+        _escCloseTopModal();
     }
 });
 
