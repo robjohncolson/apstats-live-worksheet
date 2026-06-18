@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — DOGE PRESENCE location chips + click→submenu (s18) ; candy↔DOGE CONSERVATION AUDIT DONE + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (7-number ledger, s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — STUDY BREAK STAKES backend + conservation audit (s19, Phase 1) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 18 — doge "Online Now" presence got location chips + a per-peer click→submenu; cr presence now carries a per-connection location).
-> follow-alongs HEAD = the s18 presence commit `6eb8b7c` (was `0b4fae2`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 19 — Study Break STAKES: bet 1 candy on a Tetris match. Backend + conservation audit SHIPPED (Phase 1); client wiring = Phase 2 NEXT).
+> follow-alongs HEAD = the s19 stakes-backend commit `2e12390` (was `c8c88f0`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,45 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 19 SHIPPED (2026-06-18) — STUDY BREAK STAKES: bet 1 candy on a Tetris match (BACKEND + conservation audit, Phase 1)
+
+**Spec `STUDY_BREAK_STAKES_SPEC.md`. Teacher decisions: real candy ALWAYS (consent = accepting the challenge; both
+need ≥1 candy; solo free), NO ante (just the zero-sum bet), best-of-3, Casino Stats lab.** Prereq DONE: the s18
+follow-on (`c8c88f0`) made Study Break use the real roster identity on one socket — the server needs both players'
+real usernames to move candy. fa HEAD `2e12390`.
+- **A bet is a conditional gift in ESCROW** — adds ONE term to the audited candy identity:
+  `Earned + Received + Realized = Gifted + Converted + Materialized + Escrowed + Owed`. open: both Escrow+=stake;
+  settle: winner Escrow−=stake + gifted_in+=stake, loser Escrow−=stake + gifted_out+=stake (winner +1 / loser −1,
+  zero-sum); refund: both Escrow−=stake. Only NEW column is `candy_escrowed`.
+- **Migration `0024_tetris_stakes.sql` USER-RUN** — `candy_escrowed` col + `tetris_bet` table + atomic plpgsql:
+  `tetris_bet_open` (CONSENT JOIN handshake — escrows only when BOTH players POST; each player's earned captured
+  from THEIR OWN authenticated request so neither can forge the other's balance), `tetris_bet_settle`/`refund`,
+  `tetris_bet_resolve` (both-confirm → settle, disagree → refund, atomic under the row lock), **`doge_mark`** (atomic
+  teacher disbursement clamp), + the spendable-guard re-base (subtract `candy_escrowed` in spend/gift/sell/mark). Until
+  it runs, the bet endpoints 503 and `candy_escrowed` reads 0 (rest of the wallet byte-identical).
+- **Endpoints (behind `STAKES_ENABLED` kill-switch, default ON):** `POST /wallet/bet/open` (resolve opponent by
+  username, same-section, active-student) `/bet/resolve` (winner by username), `GET /wallet/casino` + `/class/casino`
+  (win/loss/net), + a 30-min timeout sweep. **roster-server AUTO-DEPLOYS on push** — but no client calls these yet, so
+  nothing is live until 0024 runs AND Phase 2 lands.
+- **Anti-cheat:** the Tetris match is P2P — the server has NO game truth → **both-confirm-or-refund** (a lone "I won"
+  never pays; disconnect = refund, teacher-accepted rage-quit-voids). Idempotent resolution.
+- **Conservation audit (REQUIRED — candy = real money):** `tests/wallet-stakes-conservation.test.js` — Layer A
+  **600** reducer fast-check runs (I1/I3/I8/I9) + Layer B **120 REAL-plpgsql pglite differential** runs (the SQL
+  conserves identically to the reducer — closes the "fake copies the SQL" gap) + lifecycle pins. Reducer/harness
+  extended in `tests/fixtures/wallet-world.js` + `pg-wallet.js`. `tests/wallet-stakes-routes.test.js` (15).
+- **18-agent adversarial review (12 confirmed) folded before push:** ⚠ **MAJOR — mark-given × escrow MINT race**
+  (the JS materialize clamp could miss a concurrent escrow → negative Owed → mint on a loss-settle) → FIXED with the
+  atomic **`doge_mark`** (also closes the prior accepted F1 mark residual); **matchId hijack** (a 3rd party could
+  occupy `player_a`) → FIXED (each joiner must name the recorded opponent); **delete-mid-bet stuck escrow** → FIXED
+  (refund logs only existing players); sweep 10→**30 min**; **opaque 404** info-leak. Nits DEFERRED to Phase 2
+  (matchId fresh-nonce derivation, caller-role guard, gross-pot ledger leg cosmetics) — spec §9.
+- **Tests:** roster-server **1042/1042**. NO follow-alongs root files changed (root suite unaffected).
+- **⏭ PHASE 2 (client) = NEXT:** wire the audited backend into the Tetris flow — eligibility gate (≥1 candy + "1🍬 at
+  stake"), a **fresh-per-attempt nonce `matchId`** derived on both clients at match-start (P2P-exchanged; closes the
+  deferred matchId-guess/void-burn nits), escrow-on-accept (both POST `bet/open`), best-of-3 wrapper, resolve-on-end
+  (both POST `bet/resolve`), live pot indicator, Casino Stats lab (`/wallet/casino`, EV/variance). Spec §10. **Teacher
+  must run migration `0024` before Phase 2 goes live.**
 
 ## ⏭ SESSION 18 SHIPPED (2026-06-18) — DOGE "Online Now" presence: location chips + click→submenu (no auto-challenge)
 
