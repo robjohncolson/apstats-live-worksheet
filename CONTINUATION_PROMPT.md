@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — STUDY BREAK STAKES backend + conservation audit (s19, Phase 1) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 19 — Study Break STAKES: bet 1 candy on a Tetris match. Backend + conservation audit SHIPPED (Phase 1); client wiring = Phase 2 NEXT).
-> follow-alongs HEAD = the s19 stakes-backend commit `2e12390` (was `c8c88f0`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 19 — Study Break STAKES: bet 1 candy on a best-of-3 Tetris match. Backend (Phase 1) + client (Phase 2) both SHIPPED + LIVE; migration 0024 RUN).
+> follow-alongs HEAD = the s19 stakes-client commit `abd6392` (was `2e12390`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -45,12 +45,22 @@ real usernames to move candy. fa HEAD `2e12390`.
   occupy `player_a`) → FIXED (each joiner must name the recorded opponent); **delete-mid-bet stuck escrow** → FIXED
   (refund logs only existing players); sweep 10→**30 min**; **opaque 404** info-leak. Nits DEFERRED to Phase 2
   (matchId fresh-nonce derivation, caller-role guard, gross-pot ledger leg cosmetics) — spec §9.
-- **Tests:** roster-server **1042/1042**. NO follow-alongs root files changed (root suite unaffected).
-- **⏭ PHASE 2 (client) = NEXT:** wire the audited backend into the Tetris flow — eligibility gate (≥1 candy + "1🍬 at
-  stake"), a **fresh-per-attempt nonce `matchId`** derived on both clients at match-start (P2P-exchanged; closes the
-  deferred matchId-guess/void-burn nits), escrow-on-accept (both POST `bet/open`), best-of-3 wrapper, resolve-on-end
-  (both POST `bet/resolve`), live pot indicator, Casino Stats lab (`/wallet/casino`, EV/variance). Spec §10. **Teacher
-  must run migration `0024` before Phase 2 goes live.**
+- **Tests:** roster-server **1042/1042**.
+- **✅ PHASE 2 (client) SHIPPED + LIVE (`abd6392`):** 1v1 Tetris is now **best-of-3** with a candy bet. **matchId = the
+  SERVER-MINTED `roomId`** from `match_start` (shared + unguessable on both clients — this RESOLVED the deferred
+  matchId-nonce concern with no client derivation). Escrow on match start (both POST `bet/open` via `_dogeWalletAction`,
+  FULLY GRACEFUL — guest/off/insufficient → free; existing Tetris never breaks); best-of-3 tracked at the single
+  game-over choke point (`drawGameOverCard → _studyBreakScoreGameOnce`, once-per-game guard) with auto-advance; resolve
+  at series end (`_studyBreakResolveStakes` → `/wallet/bet/resolve`); the game-over card shows the series score + candy
+  outcome; **Casino Stats lab** in the lobby (W-L / net / **EV-per-game** from `/wallet/casino` — the probability
+  lesson). 2-lens review: **NO money-theft/mint path** (candy server-safe). Fixed: forfeit-in-auto-advance-window (now
+  ends the series in `opponentLeft`), post-series phantom restart (`startNewGame` early-returns on `seriesOver`),
+  `close()` timer cleanup. Accepted candy-safe: simultaneous double-topout → refund (rare); rage-quit → refund (agreed).
+  `tests/study-break-stakes.test.js` (18); root **7306 pass** / the same 6 pre-existing onboarding failures.
+- **THE FULL FEATURE IS LIVE:** a staked best-of-3 fires whenever two signed-in classmates with ≥1 candy play 1v1;
+  everyone else plays free. Kill-switch = `STAKES_ENABLED=false` on Railway. **Teacher should smoke-test live:** two
+  students (or two browsers) challenge each other in Study Break → play best-of-3 → the winner's My Ledger candy +1,
+  the loser −1; the lobby shows the Casino Stats line.
 
 ## ⏭ SESSION 18 SHIPPED (2026-06-18) — DOGE "Online Now" presence: location chips + click→submenu (no auto-challenge)
 
