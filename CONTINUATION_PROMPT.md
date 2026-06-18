@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — CANDY economy REVIVED (avatar poke + 6-number materialized ledger + DOGE convert/materialize floors, s15) ; calendar initial-load fix ; cr identity #2 ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — DOGE ⇄ candy BIDIRECTIONAL (cash DOGE back to candy at the live rate, 7-number ledger, s16) ; candy economy REVIVED (poke + materialized ledger, s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 15 — candy economy revived + rebuilt).
-> follow-alongs HEAD = `040726a`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 16 — DOGE ⇄ candy bidirectional cash-out).
+> follow-alongs HEAD = `5c2f3c3`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `6626dc3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,48 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 16 SHIPPED (2026-06-17) — DOGE ⇄ candy BIDIRECTIONAL: cash DOGE back to candy at the live rate (7-number ledger)
+
+fa HEAD `5c2f3c3`. Migration `0023_doge_sell.sql` USER-RUN — ✅ **TEACHER RAN IT.** From the teacher's ask: *"buy candy
+WITH dogecoin — convert into DOGE at one rate, convert back at a new rate; DOGE worth 2 candy today, 3 tomorrow → a way
+students get MORE candy."* This **reverses DOGE_WALLET_SPEC decision #4 ("no sell-back") ON PURPOSE** — it's the
+appreciating-asset payoff lesson. Investigated (7-reader workflow) → 3 teacher decisions → built → 3-lens adversarial
+review (2 minor findings folded; 3 plausible objections DISPROVEN) → pushed. Spec: `SELL_DOGE_SPEC.md`; memory:
+`doge-candy-buyback-decisions.md`.
+
+- **TEACHER'S 3 LOCKED DECISIONS:** (1) **UNCAPPED gains** — kids keep all appreciation; NOT bounded by the $300 candy
+  budget but *hedged* by the teacher's ~10,273 real node DOGE appreciating in parallel (treat node DOGE as the reserve).
+  (2) **OVERNIGHT (~24h) FIFO hold** before cash-out (`SELL_HOLD_HOURS=24`) — this, NOT price freshness, is the
+  anti-arbitrage defense (it dwarfs the 5-min CoinGecko cache window, so there's no risk-free same-window churn). (3)
+  **HONEST P&L** — payout = `coins × liveRate` regardless of cost basis, so a fallen coin returns LESS than it cost (the
+  kid's own risk; hardest to game). The teacher keeps the difference on a loss.
+- **The build:** `POST /wallet/sell-doge` (+ `BUYBACK_ENABLED` env kill-switch, default ON, mirrors gifting's). Migration
+  `0023`: new `candy_realized` column (signed net P&L), widen `doge_ledger.kind` CHECK to add `sell_doge`, atomic
+  `doge_sell()` fn (FOR UPDATE → un-sent-in-app guard `doge_balance−doge_sent` → FIFO-maturity guard → avg-cost unwind →
+  books `(payout−basis)` to `candy_realized`), plus `+ candy_realized` added to the `doge_spend`/`doge_gift` spendable
+  guards (so realized candy is spendable/giftable). **Only un-sent IN-APP coins are reclaimable** — coins the teacher
+  already pushed on-chain are self-custodied in the kid's paper wallet and can NEVER be cashed back. `candyFromDoge`
+  mirrored in `doge-econ.js` + `js/wallet_logic.js`. Desk: a "🍬 Cash out Ɖ" control + a live **gain line** ("Your X Ɖ in
+  hand is worth Y 🍬 now — you put in C, ▲ up Z%"), gated on the matured `sellableDoge` and valuing ONLY the cashable
+  in-app portion. Dashboard `rawOwed` flag + the earned-cell tooltip learn the realized term.
+- **The 6-number ledger is now a 7-NUMBER identity:** `Earned + Received + Realized = Gifted + Converted + Materialized +
+  Owed`. A sell decrements `doge_balance` + `doge_cost_basis` (Converted, AVERAGE cost basis), credits the FULL payout to
+  Owed, and books the gain/loss surplus to Realized — so Owed always rises by exactly the payout and the books close.
+  Enforced in BOTH the SQL guards AND JS `deriveBalances` (the two-place invariant, CANDY_LEDGER_SPEC #2).
+- **Adversarial review (3-lens, per-finding verify) DISPROVED 3 objections** — recorded so they're not re-raised: (a)
+  "materialize-then-sell-at-a-loss leaks candy" → IMPOSSIBLE: a sell always raises the mark-given cap by the full payout
+  (Δcap = +payout ≥ 0; Converted and Realized move from the SAME leg). (b) "FIFO maturity double-subtracts `doge_sent`"
+  (flagged by 2 lenses) → CORRECT FIFO accounting (the two `−doge_sent` terms apply to two DISTINCT quantities — the
+  un-sent ceiling and the matured-pool-after-sends; the proposed "fix" would itself create an over-cashout exploit
+  defeating the hold). (c) "average-cost vs FIFO mints candy" → NO: per-sale candy effect is always `coins×rate`,
+  self-correcting. **2 minor findings FOLDED:** the 7-number conservation test was tautological (Owed routed back through
+  the same formula it checked) → replaced with a hand-computed partial-sell oracle pinning the exact
+  `(dogeBalance, converted, realized, owed)`; and the gain line over-valued sent-on-chain coins → now in-app only.
+- **Tests:** roster-server **995** (wallet suite **59**), root **7238** + the SAME 6 pre-existing onboarding failures
+  (desk-gating-fixes / desk-self-signup / desk-user-role / desk-signin-wall), UNCHANGED. ⚠ KNOWN test-quality gap (review,
+  accepted): the in-memory `dogeSell` fake hand-copies the SQL formula, so a bug copied into BOTH would pass — a live
+  Postgres differential harness over `doge_sell`/`doge_spend`/`doge_gift` is the strong follow-on (see grade-integrity ↓).
 
 ## ⏭ SESSION 15 SHIPPED (2026-06-17) — calendar load-fix + cr identity #2 + CANDY economy REVIVED (poke + 6-number ledger + DOGE floors)
 
@@ -239,7 +281,7 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
   `storage` sign-out listener; `roster-client.js` synced to the Desk's. **LEFT (user chose cheap-wins): cr focus-roster-
   refresh + clear stale peer `classData` on identity change.** Audit detail in `project_cr_identity_unify.md`.
 
-## ⏭ NEXT — candy economy REVIVED + shipped (poke + 6-number ledger + DOGE floors, see s15 ↑). Calendar + grade-integrity COMPLETE.
+## ⏭ NEXT — candy economy REVIVED + BIDIRECTIONAL (poke + 7-number ledger + DOGE cash-out, see s16/s15 ↑). Calendar + grade-integrity COMPLETE.
 
 > **GRADE-INTEGRITY MODELING (s13 — DONE).** Model app areas as state machines / property tests over the real logic to FIND or
 > VERIFY integrity bugs. SHIPPED s13 (all pushed): grade engine (Layers A/B/C, 3 fixes + F4 averted), appeal machine (F5/F6 fixed
@@ -250,16 +292,20 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
 > end-to-end. **No open task in this program.** The reusable recipe: identify/extract the pure logic → fixture + generator → assert
 > invariants (exhaustive when the state space is small, fast-check/seeded-random when large) → pin findings → fix → (optional)
 > live-code harness via the `fnBody` extractor. **Possible NEW targets if reopened:** Live Classroom poll/vote protocol (wants TLA+,
-> not fast-check — but DEPRECATED per s15), or the **candy/DOGE wallet conservation math** — the 6-number identity
-> `Earned+Received=Gifted+Converted+Materialized+Owed` is now LIVE + adversarially reviewed; a live-code differential harness over
-> `deriveBalances`/`doge_spend`/`doge_gift` is a strong target. Findings doc: `GRADE_SIMULATION_FINDINGS.md`; memory:
-> `project_grade_simulator.md`. (DOGE is no longer "paused" — see s15.)
+> not fast-check — but DEPRECATED per s15), or the **candy/DOGE wallet conservation math** — now the 7-number identity
+> `Earned+Received+Realized=Gifted+Converted+Materialized+Owed` (Realized added by the s16 cash-out) is LIVE + adversarially
+> reviewed. A **live-code differential harness over `doge_sell`/`doge_spend`/`doge_gift` (real Postgres) is the strong, still-open
+> target** — the s16 review flagged that the in-memory test fake hand-copies the SQL, so a bug copied into both would slip past.
+> Findings doc: `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md` + `doge-candy-buyback-decisions.md`.
+> (DOGE is no longer "paused" — see s15/s16.)
 
-> **DOGE/candy status (UPDATED s15 — REVIVED):** migrations `0019` / `0021` / `0022` are **RUN**. The candy economy is the
-> teacher's ACTIVE focus: avatar **poke** gifting + the **6-number materialized ledger** (candy earned → owed → materialized
-> weekly from the dashboard Owed worklist) + **DOGE** as the optional convert/materialize layer (1-DOGE-worth convert floor,
-> 5-DOGE on-chain materialize). The teacher leaned toward deprecating in s12 but REVIVED + rebuilt it in s15 — **do NOT treat it as
-> paused.** Still **NOT physically handing out paper wallets / registering addresses** (the on-chain DOGE go-live stays OPTIONAL),
+> **DOGE/candy status (UPDATED s16 — BIDIRECTIONAL):** migrations `0019` / `0021` / `0022` / `0023` are **RUN**. The candy economy
+> is the teacher's ACTIVE focus: avatar **poke** gifting + the **7-number ledger** (candy earned → owed → materialized weekly from
+> the dashboard Owed worklist; **Realized** added by the s16 cash-out) + **DOGE** as a now-BIDIRECTIONAL appreciating-asset layer —
+> candy → DOGE (1-DOGE-worth convert floor, 5-DOGE on-chain materialize) AND **DOGE → candy cash-out at the live rate** (uncapped
+> gains, ~24h FIFO hold, honest P&L; un-sent in-app coins only). The teacher leaned toward deprecating in s12 but REVIVED + rebuilt
+> it in s15 and made it bidirectional in s16 — **do NOT treat it as paused.** Still **NOT physically handing out paper wallets /
+> registering addresses** (the on-chain DOGE go-live stays OPTIONAL),
 > but the in-app candy ledger + poke are LIVE and in use. If on-chain go-live is wanted: print the wallet sheet → register each
 > address (Reward Disbursement) → DRY-RUN `node tools/doge-send.mjs` (CC plans only; `--send` is the teacher's deliberate,
 > irreversible call; now batches at **≥5 DOGE** per the materialize threshold).
