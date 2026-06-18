@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migDir = resolve(__dirname, '..', '..', 'migrations');
-const MIGRATIONS = ['0019_doge_wallet.sql', '0021_doge_gifting.sql', '0022_retire_candy_eaten.sql', '0023_doge_sell.sql'];
+const MIGRATIONS = ['0019_doge_wallet.sql', '0021_doge_gifting.sql', '0022_retire_candy_eaten.sql', '0023_doge_sell.sql', '0024_tetris_stakes.sql'];
 
 // Create the db, a minimal roster (the doge_account/doge_ledger FK target), seed
 // the given student_ids, and run the real wallet migrations in order.
@@ -37,7 +37,7 @@ export async function createWalletDb(sids) {
 
 // Wipe wallet state between trajectories (roster + the plpgsql functions persist).
 export async function resetWallet(db) {
-  await db.exec('truncate doge_account, doge_ledger restart identity');
+  await db.exec('truncate doge_account, doge_ledger, tetris_bet restart identity');
 }
 
 const n = (v) => (v == null ? null : Number(v));
@@ -78,6 +78,33 @@ export async function ageLastBuy(db, sid, ageHours) {
     `update doge_ledger set ts = now() - (($1)::text || ' hours')::interval
        where id = (select max(id) from doge_ledger where student_id = $2 and kind = 'buy_doge')`,
     [ageHours, sid]);
+}
+
+// Call the REAL tetris_bet_open (the join handshake; each caller passes only their OWN earned).
+export async function pgBetOpen(db, { p_match, p_caller, p_opp, p_stake, p_earned_caller }) {
+  const r = await db.query('select tetris_bet_open($1,$2,$3,$4,$5) as s',
+    [p_match, p_caller, p_opp, p_stake, p_earned_caller]);
+  return r.rows[0].s;
+}
+// Call the REAL tetris_bet_resolve (report + settle/refund). Returns the status text.
+export async function pgBetResolve(db, { p_match, p_reporter, p_winner }) {
+  const r = await db.query('select tetris_bet_resolve($1,$2,$3) as s', [p_match, p_reporter, p_winner]);
+  return r.rows[0].s;
+}
+// Call the REAL tetris_bet_refund (the timeout/abort path). Returns the status text.
+export async function pgBetRefund(db, p_match) {
+  const r = await db.query('select tetris_bet_refund($1) as s', [p_match]);
+  return r.rows[0].s;
+}
+// A bet row (status etc.).
+export async function pgBet(db, matchId) {
+  const r = await db.query('select * from tetris_bet where match_id = $1', [matchId]);
+  return r.rows[0] || null;
+}
+// Call the REAL doge_mark (atomic teacher disbursement clamp, 0024). Returns the updated row.
+export async function pgMark(db, { p_sid, p_field, p_amount, p_earned }) {
+  const r = await db.query('select * from doge_mark($1,$2,$3,$4)', [p_sid, p_field, p_amount, p_earned ?? null]);
+  return r.rows[0];
 }
 
 // teacher mark-given / mark-sent are JS (markEndpoint), not plpgsql. The harness

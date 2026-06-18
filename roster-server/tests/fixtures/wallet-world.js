@@ -37,11 +37,12 @@ export function studentIds(k) {
   return Array.from({ length: k }, (_, i) => `00000000-0000-4000-8000-0000000000${(i + 1).toString(16).padStart(2, '0')}`);
 }
 
-// A fresh doge_account row (all the columns 0019+0021+0022+0023 give it).
+// A fresh doge_account row (all the columns 0019+0021+0022+0023+0024 give it).
 function emptyAccount() {
   return {
     candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0,
     doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0,
+    candy_escrowed: 0,
   };
 }
 
@@ -59,7 +60,7 @@ export function initState(initEarned = []) {
     buys.set(sid, []);
     soldBack.set(sid, 0);
   });
-  return { sids, acc, earned, buys, soldBack };
+  return { sids, acc, earned, buys, soldBack, bets: new Map() };  // bets: matchId → { a, b, stake, status }
 }
 
 function cloneState(s) {
@@ -67,16 +68,19 @@ function cloneState(s) {
   for (const [sid, a] of s.acc) acc.set(sid, { ...a });
   const buys = new Map();
   for (const [sid, arr] of s.buys) buys.set(sid, arr.map((b) => ({ ...b })));
+  const bets = new Map();
+  for (const [mid, b] of (s.bets || new Map())) bets.set(mid, { ...b });
   return {
     sids: s.sids,
     acc,
     earned: new Map(s.earned),
     buys,
     soldBack: new Map(s.soldBack),
+    bets,
   };
 }
 
-// The 7 numbers + raw/Owed for one student (the JS `deriveBalances` math).
+// The 8 numbers + raw/Owed for one student (the JS `deriveBalances` math).
 export function deriveNumbers(state, sid) {
   const a = state.acc.get(sid);
   const E = state.earned.get(sid);
@@ -85,10 +89,12 @@ export function deriveNumbers(state, sid) {
   const G = a.candy_gifted_out;
   const C = a.doge_cost_basis;
   const M = a.candy_given;
-  const raw = E + R + Z - G - C - M;           // SQL "spendable"
+  const X = a.candy_escrowed;                  // Escrowed: candy locked in a live bet (0024)
+  const raw = E + R + Z - G - C - M - X;        // SQL "spendable" (now nets escrow)
   return {
-    E, R, Z, G, C, M, raw,
+    E, R, Z, G, C, M, X, raw,
     O: Math.max(0, raw),
+    held: E + R + Z - G - C - M,                // = O + X (spendable + escrowed); the bet-conserved scalar
     dogeBalance: a.doge_balance,
     dogeSent: a.doge_sent,
   };
@@ -168,7 +174,7 @@ export function applyOp(prev, op) {
       if (!(op.amount > 0)) return reject('nonpositive');
       const a = state.acc.get(op.sid);
       const n = deriveNumbers(prev, op.sid);
-      const cap = n.E + n.R - n.G - n.C + n.Z;       // Owed-eligible (markEndpoint cap; = raw + M)
+      const cap = n.E + n.R - n.G - n.C + n.Z - n.X;  // Owed-eligible (doge_mark cap; nets escrow, 0024)
       a.candy_given = Math.max(a.candy_given, Math.min(a.candy_given + op.amount, cap));
       return ok();
     }
@@ -176,6 +182,36 @@ export function applyOp(prev, op) {
       if (!(op.amount > 0)) return reject('nonpositive');
       const a = state.acc.get(op.sid);
       a.doge_sent = Math.max(a.doge_sent, Math.min(a.doge_sent + op.amount, a.doge_balance));
+      return ok();
+    }
+    case 'betOpen': {                                // escrow BOTH stakes (Study Break stakes, 0024)
+      if (op.a === op.b) return reject('self');
+      if (!(op.stake > 0)) return reject('bad-args');
+      if (state.bets.has(op.match)) return reject('exists');           // idempotent: no double-escrow
+      if (spendable(prev, op.a) < op.stake - EPS) return reject('insufficient');
+      if (spendable(prev, op.b) < op.stake - EPS) return reject('insufficient');
+      state.acc.get(op.a).candy_escrowed += op.stake;
+      state.acc.get(op.b).candy_escrowed += op.stake;
+      state.bets.set(op.match, { a: op.a, b: op.b, stake: op.stake, status: 'open' });
+      return ok();
+    }
+    case 'betSettle': {                              // winner takes the pot (loser→winner transfer)
+      const bet = state.bets.get(op.match);
+      if (!bet || bet.status !== 'open') return reject('no-open-bet');
+      if (op.winner !== bet.a && op.winner !== bet.b) return reject('bad-winner');
+      const loser = op.winner === bet.a ? bet.b : bet.a;
+      const w = state.acc.get(op.winner), l = state.acc.get(loser);
+      w.candy_escrowed -= bet.stake; w.candy_gifted_in += bet.stake;    // own stake back + loser's
+      l.candy_escrowed -= bet.stake; l.candy_gifted_out += bet.stake;   // stake consumed → the winner
+      bet.status = 'settled';
+      return ok();
+    }
+    case 'betRefund': {                              // disagreement/timeout → return both stakes
+      const bet = state.bets.get(op.match);
+      if (!bet || bet.status !== 'open') return reject('no-open-bet');
+      state.acc.get(bet.a).candy_escrowed -= bet.stake;
+      state.acc.get(bet.b).candy_escrowed -= bet.stake;
+      bet.status = 'refunded';
       return ok();
     }
     default:
@@ -205,9 +241,10 @@ export function checkStateInvariants(state) {
   const v = [];
   for (const sid of state.sids) {
     const n = deriveNumbers(state, sid);
-    // I1 — the books close (raw form is a definitional identity; this pins the arithmetic).
-    if (!close(n.E + n.R + n.Z, n.G + n.C + n.M + n.raw)) {
-      v.push(`I1 identity broken for ${sid}: ${n.E + n.R + n.Z} != ${n.G + n.C + n.M + n.raw}`);
+    // I1 — the books close: Earned+Received+Realized == Gifted+Converted+Materialized+Escrowed+Owed
+    // (raw form; a definitional identity that pins the arithmetic, now incl. the 0024 escrow term).
+    if (!close(n.E + n.R + n.Z, n.G + n.C + n.M + n.X + n.raw)) {
+      v.push(`I1 identity broken for ${sid}: ${n.E + n.R + n.Z} != ${n.G + n.C + n.M + n.X + n.raw}`);
     }
     // I3 — under the guarded ops, spendable never goes negative (Owed has no phantom debt).
     if (n.raw < -1e-7) v.push(`I3 owed floor: raw=${n.raw} < 0 for ${sid}`);
@@ -217,7 +254,14 @@ export function checkStateInvariants(state) {
     if (n.dogeSent > n.dogeBalance + 1e-7) v.push(`I7 doge_sent ${n.dogeSent} > doge_balance ${n.dogeBalance} for ${sid}`);
     // sanity — cost basis never negative (sell floors at 0).
     if (n.C < -1e-7) v.push(`cost_basis ${n.C} < 0 for ${sid}`);
+    // I9 — escrow never negative (a bet can't make you owe escrow).
+    if (n.X < -1e-7) v.push(`I9 escrow ${n.X} < 0 for ${sid}`);
   }
+  // I9 — escrow is fully backed: Σ candy_escrowed == 2 × Σ(open bet stakes). Every escrowed
+  // candy belongs to exactly one live bet (2 stakes per open bet); none is stranded or phantom.
+  let sumX = 0; for (const sid of state.sids) sumX += deriveNumbers(state, sid).X;
+  let sumOpen = 0; for (const b of (state.bets || new Map()).values()) if (b.status === 'open') sumOpen += 2 * b.stake;
+  if (!close(sumX, sumOpen, 1e-6)) v.push(`I9 escrow not backed: Σescrow ${sumX} != 2·Σopen-stakes ${sumOpen}`);
   return v;
 }
 
@@ -240,6 +284,38 @@ export function checkDeltaInvariants(prev, next, op, accepted) {
     const sumE = (s) => s.sids.reduce((t, sid) => t + s.earned.get(sid), 0);
     if (!close(sumRaw(prev), sumRaw(next), 1e-6)) v.push(`I2 gift not zero-sum: Σraw ${sumRaw(prev)}→${sumRaw(next)}`);
     if (!close(sumE(prev), sumE(next))) v.push(`I2 gift changed Earned: ${sumE(prev)}→${sumE(next)}`);
+  }
+  // I8 — a bet (open/settle/refund) NEVER creates or destroys candy: Σ held (= Σ(E+R+Z−G−C−M)
+  // = Σ(Owed+Escrowed)) and Σ E are unchanged. open moves Owed→Escrow, refund moves it back,
+  // settle is a pure loser→winner transfer — none change the class total.
+  if ((op.op === 'betOpen' || op.op === 'betSettle' || op.op === 'betRefund') && accepted) {
+    const sumHeld = (s) => s.sids.reduce((t, sid) => t + deriveNumbers(s, sid).held, 0);
+    const sumE = (s) => s.sids.reduce((t, sid) => t + s.earned.get(sid), 0);
+    if (!close(sumHeld(prev), sumHeld(next), 1e-6)) v.push(`I8 bet changed class total: Σheld ${sumHeld(prev)}→${sumHeld(next)}`);
+    if (!close(sumE(prev), sumE(next))) v.push(`I8 bet changed Earned: ${sumE(prev)}→${sumE(next)}`);
+  }
+  // I8b — settle is a transfer of exactly `stake` from loser to winner (in held = Owed+Escrow).
+  if (op.op === 'betSettle' && accepted) {
+    const bet = prev.bets.get(op.match);
+    if (bet) {
+      const loser = op.winner === bet.a ? bet.b : bet.a;
+      const dW = deriveNumbers(next, op.winner).held - deriveNumbers(prev, op.winner).held;
+      const dL = deriveNumbers(next, loser).held - deriveNumbers(prev, loser).held;
+      if (!close(dW, bet.stake, 1e-6)) v.push(`I8b winner held Δ ${dW} != +stake ${bet.stake}`);
+      if (!close(dL, -bet.stake, 1e-6)) v.push(`I8b loser held Δ ${dL} != −stake ${bet.stake}`);
+    }
+  }
+  // I8c — open then refund is a perfect no-op: a refund restores each player's held to pre-open.
+  if (op.op === 'betRefund' && accepted) {
+    const bet = prev.bets.get(op.match);
+    if (bet) {
+      for (const sid of [bet.a, bet.b]) {
+        // refund returns the escrowed stake straight to Owed (held unchanged across refund, since
+        // held already counts escrow; the meaningful check is raw rises by exactly stake).
+        const dRaw = deriveNumbers(next, sid).raw - deriveNumbers(prev, sid).raw;
+        if (!close(dRaw, bet.stake, 1e-6)) v.push(`I8c refund ΔOwed ${dRaw} != +stake ${bet.stake} for ${sid}`);
+      }
+    }
   }
   // I6 — a sell: O rises by EXACTLY the payout; Z rises by payout−basis; O stays ≥ 0.
   if (op.op === 'sell' && accepted) {
@@ -279,6 +355,46 @@ export function trajectoryArbitrary(fc, k) {
     initEarned: fc.array(fc.double({ min: 0, max: 80, noNaN: true }), { minLength: k, maxLength: k }),
     ops: fc.array(opArb, { maxLength: 24 }),
   });
+}
+
+// ── Bet-lifecycle trajectories (Study Break stakes, 0024) ─────────────────────
+// A plan of `open`/`resolve` events. The interpreter assigns each open a fresh match
+// id and lets resolves reference a PRIOR open by index, so multiple bets are live
+// (escrow accumulates across players) before being settled/refunded — exercising the
+// I9 escrow-backed invariant + the open→settle/refund conservation. k ≥ 2.
+export function betEventsArbitrary(fc, k) {
+  const idx = fc.nat({ max: k - 1 });
+  const ev = fc.oneof(
+    fc.record({ type: fc.constant('open'), ai: idx, bj: fc.integer({ min: 1, max: Math.max(1, k - 1) }), stake: fc.integer({ min: 1, max: 3 }) }),
+    fc.record({ type: fc.constant('resolve'), ref: fc.nat({ max: 40 }), kind: fc.constantFrom('settle', 'refund'), winner: fc.constantFrom('a', 'b') }),
+  );
+  return fc.record({
+    initEarned: fc.array(fc.double({ min: 0, max: 12, noNaN: true }), { minLength: k, maxLength: k }),
+    events: fc.array(ev, { maxLength: 30 }),
+  });
+}
+
+// Interpret a bet plan into a flat reducer op[] (Layer A and B share this verbatim).
+export function interpretBetEvents(sids, plan) {
+  const k = sids.length;
+  const ops = [];
+  const opened = [];            // { match, a, b } in open order
+  let counter = 0;
+  for (const e of (plan.events || [])) {
+    if (e.type === 'open') {
+      const a = sids[e.ai % k];
+      const b = sids[(e.ai + e.bj) % k];   // bj ∈ [1, k-1] ⇒ b ≠ a
+      const match = 'm' + (counter++);
+      ops.push({ op: 'betOpen', match, a, b, stake: e.stake });
+      opened.push({ match, a, b });
+    } else {
+      if (!opened.length) continue;
+      const m = opened[e.ref % opened.length];
+      if (e.kind === 'settle') ops.push({ op: 'betSettle', match: m.match, winner: e.winner === 'a' ? m.a : m.b });
+      else ops.push({ op: 'betRefund', match: m.match });
+    }
+  }
+  return ops;
 }
 
 // Resolve an index-based op (from the generator) to a sid-based op for the reducer.

@@ -33,6 +33,20 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
     // Narrow single-column write (F1 fix): preserves every OTHER column on the row,
     // so it can't clobber a concurrent spend's doge_balance/doge_cost_basis.
     async updateDogeField(sid, field, value) { if (dbMissing) return miss; const row = { ...(acc.get(sid) || { student_id: sid }), [field]: value }; acc.set(sid, row); return { data: row, error: null }; },
+    // models the atomic doge_mark RPC (migration 0024): recompute the cap from the live row, clamp
+    // candy_given/doge_sent monotonically, log the give/send leg, return the row.
+    async dogeMark({ p_sid, p_field, p_amount, p_earned }) {
+      if (dbMissing) return miss;
+      var a = acc.get(p_sid) || { student_id: p_sid, candy_eaten: 0, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0, candy_escrowed: 0 };
+      if (!(p_amount > 0)) return { data: a, error: null };
+      var oldV = Number(a[p_field] || 0), cap;
+      if (p_field === 'candy_given') cap = Number(p_earned || 0) + Number(a.candy_gifted_in || 0) - Number(a.candy_gifted_out || 0) - Number(a.doge_cost_basis || 0) + Number(a.candy_realized || 0) - Number(a.candy_escrowed || 0);
+      else cap = Number(a.doge_balance || 0);
+      var newV = Math.max(oldV, Math.min(oldV + p_amount, cap));
+      a = { ...a, [p_field]: newV }; acc.set(p_sid, a);
+      if (newV - oldV > 1e-9) dogeLedger.push({ student_id: p_sid, kind: p_field === 'candy_given' ? 'give' : 'send', candy_delta: p_field === 'candy_given' ? -(newV - oldV) : 0, doge_delta: p_field === 'doge_sent' ? -(newV - oldV) : 0, ts: new Date().toISOString() });
+      return { data: a, error: null };
+    },
     async insertDogeLedger(row) { dogeLedger.push(row); return { data: row, error: null }; },
     async listDogeLedger(sid) { return { data: dogeLedger.filter((r) => r.student_id === sid), error: null }; },
     async getRoleByStudentId() { return 'student'; },
@@ -665,19 +679,25 @@ describe('DOGE wallet — teacher disbursement is clobber-safe (conservation aud
   // FINDING F1 (major): markEndpoint USED to read the whole row then upsert it back via
   // rowFor(), so a student buy/sell that committed between the read and the write was lost
   // (its doge_balance/doge_cost_basis clobbered to the stale values → candy minted/destroyed).
-  // The fix is a narrow single-column updateDogeField. This pins it: a concurrent buy that
-  // landed AFTER the teacher's read must SURVIVE the mark-given write.
-  it('F1: mark-given does NOT clobber a buy that committed after the teacher read the account', async () => {
+  // The fix is now the ATOMIC doge_mark (migration 0024): it recomputes the cap from the LIVE
+  // row under a row lock and writes only the one column — so there is no JS read-modify-write
+  // window at all. This pins it: a concurrent buy reflected in the live row SURVIVES mark-given.
+  it('F1: mark-given (atomic doge_mark) does NOT clobber a concurrent buy', async () => {
     const SID = UID;
-    // the REAL persisted row already reflects the student's buy (balance 10, basis 10)…
-    const store = new Map([[SID, { student_id: SID, candy_given: 0, doge_balance: 10, doge_sent: 0, doge_cost_basis: 10, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0 }]]);
-    // …but the teacher's getDogeAccount read happened BEFORE the buy (stale snapshot).
-    const STALE = { student_id: SID, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0 };
+    // the live persisted row already reflects the student's buy (balance 10, basis 10).
+    const store = new Map([[SID, { student_id: SID, candy_given: 0, doge_balance: 10, doge_sent: 0, doge_cost_basis: 10, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0, candy_escrowed: 0 }]]);
     const db = {
-      async getDogeAccount() { return { data: { ...STALE }, error: null }; },
-      async updateDogeField(sid, field, value) { const row = { ...(store.get(sid) || { student_id: sid }), [field]: value }; store.set(sid, row); return { data: row, error: null }; },
-      async upsertDogeAccount(sid, patch) { const row = { student_id: sid, ...patch }; store.set(sid, row); return { data: row, error: null }; },
-      async insertDogeLedger() { return { data: null, error: null }; },
+      // doge_mark reads the LIVE store row (never a stale JS snapshot), clamps, writes one column.
+      async dogeMark({ p_sid, p_field, p_amount, p_earned }) {
+        const a = store.get(p_sid) || { student_id: p_sid, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0, candy_escrowed: 0 };
+        const cap = p_field === 'candy_given'
+          ? Number(p_earned || 0) + Number(a.candy_gifted_in || 0) - Number(a.candy_gifted_out || 0) - Number(a.doge_cost_basis || 0) + Number(a.candy_realized || 0) - Number(a.candy_escrowed || 0)
+          : Number(a.doge_balance || 0);
+        const oldV = Number(a[p_field] || 0);
+        const row = { ...a, [p_field]: Math.max(oldV, Math.min(oldV + p_amount, cap)) };
+        store.set(p_sid, row);
+        return { data: row, error: null };
+      },
     };
     const ledgerDb = { async getLedgerByStudent() { return { data: quizRows(72), error: null }; } };   // 20 candy earned
     const app = express(); app.use(express.json());
@@ -687,8 +707,8 @@ describe('DOGE wallet — teacher disbursement is clobber-safe (conservation aud
     expect(r.status).toBe(200);
     expect(r.body.candy_given).toBe(5);
     const after = store.get(SID);
-    expect(after.doge_balance).toBe(10);       // the concurrent buy SURVIVES (old upsert zeroed it)
-    expect(after.doge_cost_basis).toBe(10);    // …and its cost basis (else 10 candy would be minted into Owed)
+    expect(after.doge_balance).toBe(10);       // the buy SURVIVES (only candy_given was written)
+    expect(after.doge_cost_basis).toBe(10);
     expect(after.candy_given).toBe(5);
   });
 

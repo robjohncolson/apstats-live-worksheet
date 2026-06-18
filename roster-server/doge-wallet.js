@@ -39,6 +39,22 @@ function notProvisioned(res) {
 
 const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
 
+// ── Study Break stakes (STUDY_BREAK_STAKES_SPEC) ─────────────────────────────
+const BET_STAKE = 1;            // 1 candy per player (D1; fixed)
+const BET_TIMEOUT_MIN = 30;     // an un-resolved bet older than this is swept → refund. Comfortably
+                                // exceeds a real best-of-3 (D3) so the sweep can't refund a live match.
+const stakesOff = () => ['false', '0', 'no', 'off'].includes(String(process.env.STAKES_ENABLED || 'true').trim().toLowerCase());
+// Per-student win/loss/net from the settled-bet rows (Casino Stats; EV/variance computed client-side).
+function tallyCasino(bets, sid) {
+  let wins = 0, losses = 0, net = 0;
+  for (const b of bets) {
+    if (b.player_a !== sid && b.player_b !== sid) continue;
+    const stake = num(b.stake);
+    if (b.winner === sid) { wins++; net += stake; } else { losses++; net -= stake; }
+  }
+  return { wins, losses, games: wins + losses, netCandy: net };
+}
+
 // Teacher routes take a studentId from the body. A malformed (non-uuid) id would
 // otherwise reach Postgres and raise 22P02 (not caught by isDogeMissing) → a bare
 // 500. Guard the shape so bad input is a clean 404 instead of a leaked DB error.
@@ -120,12 +136,14 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const converted = num(a.doge_cost_basis);    // Converted: candy turned into DOGE
     const materialized = num(a.candy_given);     // Materialized: real candy the teacher handed over
     const realized = num(a.candy_realized);      // Realized: net P&L from cashing DOGE back to candy (signed; 0 pre-0023)
-    // CANDY_LEDGER_SPEC + SELL_DOGE_SPEC — the (now 7-) number model. The "eat" opt-in is
-    // RETIRED: the spendable pool a student can still gift/convert IS the un-realized (Owed)
-    // candy, so spendable subtracts MATERIALIZED (candy_given), not the old candy_eaten, and
-    // ADDS realized cash-out P&L. Hence candyBalance === candyOwed (you can't gift candy you've
-    // already been handed). Identity: Earned + Received + Realized = Gifted + Converted + Materialized + Owed.
-    const rawBalance = earned.candy + giftedIn - giftedOut - converted - materialized + realized;
+    const escrowed = num(a.candy_escrowed);      // Escrowed: candy locked in a LIVE Tetris bet (0 pre-0024)
+    // CANDY_LEDGER_SPEC + SELL_DOGE_SPEC + STUDY_BREAK_STAKES_SPEC — the (now 8-) number model.
+    // The "eat" opt-in is RETIRED: the spendable pool a student can still gift/convert/bet IS the
+    // un-realized (Owed) candy, so spendable subtracts MATERIALIZED (candy_given) + ESCROWED (candy
+    // locked in a live bet), not the old candy_eaten, and ADDS realized cash-out P&L. Hence
+    // candyBalance === candyOwed. Identity: Earned + Received + Realized = Gifted + Converted +
+    // Materialized + Escrowed + Owed.
+    const rawBalance = earned.candy + giftedIn - giftedOut - converted - materialized + realized - escrowed;
     const candyBalance = Math.max(0, rawBalance);
     return {
       candyEarned: earned.candy,                 // Earned (monotonic)
@@ -144,7 +162,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       candyReceived: giftedIn,                   // headline alias
       candyConverted: converted,                 // headline alias for doge_cost_basis (candy units)
       candyRealized: realized,                    // net realized P&L from DOGE cash-outs (signed)
-      candyOwed: candyBalance,                    // Earned + Received + Realized − Gifted − Converted − Materialized
+      candyEscrowed: escrowed,                    // candy locked in a live Tetris bet (STUDY_BREAK_STAKES_SPEC)
+      candyOwed: candyBalance,                    // Earned + Received + Realized − Gifted − Converted − Materialized − Escrowed
       dogeBalance: num(a.doge_balance),
       dogeSent: num(a.doge_sent),
       dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)), // teacher deposits
@@ -350,6 +369,102 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     return res.json({ ok: true, ...deriveBalances(earned, r.data), giftedTo: themRes.data.real_name || toUsername });
   });
 
+  // ── Study Break stakes (STUDY_BREAK_STAKES_SPEC) ───────────────────────────
+  // Refund/void any bet stuck past the timeout (crash/abandon safety). Best-effort;
+  // called opportunistically from the bet routes so cleanup happens with use.
+  async function sweepStaleBets() {
+    try {
+      const cutoff = new Date(Date.now() - BET_TIMEOUT_MIN * 60000).toISOString();
+      const s = await db.listStaleBets(cutoff);
+      for (const row of (s && s.data) || []) { try { await db.tetrisBetRefund(row.match_id); } catch (_) {} }
+    } catch (_) { /* sweep is best-effort */ }
+  }
+
+  // POST /wallet/bet/open — JOIN a staked match (consent handshake). BOTH players POST this
+  // with the same matchId; the escrow (debit 1 candy each) fires only when both have joined.
+  app.post('/wallet/bet/open', async (req, res) => {
+    if (stakesOff()) return res.status(403).json({ ok: false, error: 'stakes are turned off' });
+    const sid = sidOf(req);
+    if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const matchId = String((req.body && req.body.matchId) || '').trim();
+    const opponentUsername = String((req.body && req.body.opponentUsername) || '').trim();
+    if (!matchId || !opponentUsername) return res.status(400).json({ ok: false, error: 'matchId + opponentUsername required' });
+    const themRes = await db.findByUsername(opponentUsername);
+    if (themRes && themRes.error && themRes.error.code !== 'PGRST116') { console.error('bet/open findByUsername:', themRes.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (!themRes || !themRes.data) return res.status(404).json({ ok: false, error: 'unknown classmate' });
+    const oppId = themRes.data.student_id;
+    if (oppId === sid) return res.status(400).json({ ok: false, error: "can't bet yourself" });
+    if (themRes.data.role === 'teacher' || (themRes.data.status && themRes.data.status !== 'active')) {
+      return res.status(400).json({ ok: false, error: 'can only play a classmate' });
+    }
+    const meRes = await db.findByStudentId(sid);
+    if (!meRes || meRes.error || !meRes.data) return res.status(500).json({ ok: false, error: 'Database error' });
+    if (meRes.data.section !== themRes.data.section) return res.status(404).json({ ok: false, error: 'not in your class' });
+    await sweepStaleBets();
+    // Pass ONLY the caller's own earned (server-computed from THEIR token); the opponent's is
+    // captured when THEY join, so neither client can forge the other's balance (anti-cheat).
+    const ea = await earnedCandyOf(sid);
+    const r = await db.tetrisBetOpen({ p_match: matchId, p_caller: sid, p_opp: oppId, p_stake: BET_STAKE, p_earned_caller: ea.candy });
+    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/bet/open:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    const status = r.data;   // 'waiting' | 'opened' | 'insufficient' | 'bad' | 'not-a-player' | resolved status
+    if (status === 'insufficient') return res.status(400).json({ ok: false, error: 'both players need ' + BET_STAKE + ' candy to play' });
+    // Opaque 404 for not-a-player (a 3rd party guessed/collided a matchId) so it can't be told
+    // apart from a non-existent match — a non-participant learns nothing about others' matches.
+    if (status === 'not-a-player') return res.status(404).json({ ok: false, error: 'no such match' });
+    if (status === 'bad') return res.status(400).json({ ok: false, error: 'bad bet' });
+    const { earned, accRes } = await loadState(sid);
+    return res.json({ ok: true, status, stake: BET_STAKE, matchId, ...(accRes && accRes.data ? deriveBalances(earned, accRes.data) : {}) });
+  });
+
+  // POST /wallet/bet/resolve — report the match winner. When BOTH players report: agree → the
+  // winner takes the pot; disagree → refund both. The server has NO game truth (P2P match), so a
+  // lone report just waits. winnerUsername is one of the two players (yourself or your opponent).
+  app.post('/wallet/bet/resolve', async (req, res) => {
+    if (stakesOff()) return res.status(403).json({ ok: false, error: 'stakes are turned off' });
+    const sid = sidOf(req);
+    if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const matchId = String((req.body && req.body.matchId) || '').trim();
+    const winnerUsername = String((req.body && req.body.winnerUsername) || '').trim();
+    if (!matchId || !winnerUsername) return res.status(400).json({ ok: false, error: 'matchId + winnerUsername required' });
+    const winRes = await db.findByUsername(winnerUsername);
+    if (winRes && winRes.error && winRes.error.code !== 'PGRST116') { console.error('bet/resolve findByUsername:', winRes.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (!winRes || !winRes.data) return res.status(404).json({ ok: false, error: 'unknown winner' });
+    const r = await db.tetrisBetResolve({ p_match: matchId, p_reporter: sid, p_winner: winRes.data.student_id });
+    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/bet/resolve:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    const status = r.data;   // 'pending' | 'settled' | 'refunded' | 'no-bet' | 'not-a-player' | 'bad-winner'
+    // Opaque 404 for both no-bet and not-a-player (don't reveal a match exists to a non-participant).
+    if (status === 'no-bet' || status === 'not-a-player') return res.status(404).json({ ok: false, error: 'no such match' });
+    if (status === 'bad-winner') return res.status(400).json({ ok: false, error: 'winner must be a player' });
+    const { earned, accRes } = await loadState(sid);
+    return res.json({ ok: true, status, ...(accRes && accRes.data ? deriveBalances(earned, accRes.data) : {}) });
+  });
+
+  // GET /wallet/casino — the student's own Tetris-betting record (Casino Stats lab).
+  app.get('/wallet/casino', async (req, res) => {
+    const sid = sidOf(req);
+    if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const r = await db.listSettledBets();
+    if (r && r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('GET /wallet/casino:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    return res.json({ ok: true, stake: BET_STAKE, ...tallyCasino((r && r.data) || [], sid) });
+  });
+
+  // GET /class/casino — every student's betting record (teacher; optional ?section= scope).
+  app.get('/class/casino', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    const section = (req.query.section && String(req.query.section).trim()) || null;
+    const ids = await sectionIds(section);
+    if (ids && ids.error) { if (isDogeMissing(ids.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    const r = await db.listSettledBets();
+    if (r && r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('GET /class/casino:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    const bets = (r && r.data) || [];
+    // The set of students to report: the section filter, or everyone who has a settled bet.
+    const seen = new Set();
+    bets.forEach((b) => { seen.add(b.player_a); seen.add(b.player_b); });
+    const studentIds = ids ? ids.filter((id) => seen.has(id)) : Array.from(seen);
+    const players = studentIds.map((id) => ({ studentId: id, ...tallyCasino(bets, id) }));
+    return res.json({ ok: true, stake: BET_STAKE, players });
+  });
+
   // ── teacher: register a kid's paper-wallet address ─────────────────────────
   app.post('/wallet/address', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
@@ -376,38 +491,17 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const amount = num(req.body && req.body.amount);
     if (!studentId || amount <= 0) return res.status(400).json({ ok: false, error: 'studentId + amount required' });
     if (badId(studentId)) return res.status(404).json({ ok: false, error: 'unknown student' });
-    const accRes = await db.getDogeAccount(studentId);
-    if (accRes.error) { if (isDogeMissing(accRes.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    const acc = accRes.data || {};
-    // Clamp so a teacher fat-finger can't over-mark, and so Materialized never exceeds
-    // what's actually owed:
-    //   • doge_sent   ≤ doge_balance (banked coins; also bounds an idempotent
-    //     double-mark-sent from the Phase-3 sender after a crash).
-    //   • candy_given ≤ Owed-eligible = Earned + Received − Gifted − Converted
-    //     (CANDY_LEDGER_SPEC; the "eat" opt-in is retired, so the cap is no longer
-    //     candy_eaten). Needs the live effort total, hence earnedCandyOf here.
-    let cap;
-    if (field === 'doge_sent') {
-      cap = num(acc.doge_balance);
-    } else {
-      // The cap deliberately OMITS candy_given: it's the ceiling that the running
-      // candy_given total is clamped against, and candy_given ≤ cap is exactly the
-      // Owed ≥ 0 invariant (Owed = cap − candy_given). Subtracting candy_given here
-      // would wrongly prevent the teacher from ever fully materializing.
-      const earned = await earnedCandyOf(studentId);
-      cap = earned.candy + num(acc.candy_gifted_in) - num(acc.candy_gifted_out) - num(acc.doge_cost_basis) + num(acc.candy_realized);
-    }
-    // Never reduce a monotonic counter: if cap dips below the current value (e.g. during
-    // the pre-0022 transition), leave it unchanged rather than clawing candy back.
-    const newVal = Math.max(num(acc[field]), Math.min(num(acc[field]) + amount, cap));
-    // Narrow single-column write (NOT a whole-row upsert): only `field` changes, so a
-    // student's concurrent buy/sell/gift that commits between the read above and this
-    // write is NOT clobbered. The old upsertDogeAccount(rowFor(acc,…)) carried stale
-    // doge_balance/doge_cost_basis back and lost the spend — WALLET_CONSERVATION_FINDINGS F1.
-    const up = await db.updateDogeField(studentId, field, newVal);
-    if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
-    try { await db.insertDogeLedger({ student_id: studentId, kind: field === 'candy_given' ? 'give' : 'send', candy_delta: field === 'candy_given' ? -(newVal - num(acc[field])) : 0, doge_delta: field === 'doge_sent' ? -(newVal - num(acc[field])) : 0 }); } catch (_) {}
-    return res.json({ ok: true, studentId, [field]: newVal });
+    // ATOMIC clamp (migration 0024 doge_mark): the cap is recomputed from the LIVE row under a
+    // row lock, so a student escrow/buy committing between a read and write can't be missed —
+    // closes the mark-given × escrow MINT race (review s19) + the prior F1 mark residual.
+    //   • candy_given ≤ Owed-eligible = Earned + Received + Realized − Gifted − Converted − Escrowed.
+    //   • doge_sent   ≤ doge_balance.
+    // Clamps monotonically (never claws back) and logs the give/send leg, all inside doge_mark.
+    const earned = field === 'candy_given' ? (await earnedCandyOf(studentId)).candy : 0;
+    const r = await db.dogeMark({ p_sid: studentId, p_field: field, p_amount: amount, p_earned: earned });
+    if (r.error) { if (isDogeMissing(r.error)) return notProvisioned(res); console.error('POST /wallet/mark:', r.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
+    if (!r.data || !r.data.student_id) return res.status(500).json({ ok: false, error: 'Database error' });
+    return res.json({ ok: true, studentId, [field]: num(r.data[field]) });
   }
   app.post('/wallet/mark-given', (req, res) => markEndpoint(req, res, 'candy_given'));
   app.post('/wallet/mark-sent', (req, res) => markEndpoint(req, res, 'doge_sent'));
@@ -433,6 +527,7 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       const materialized = num(a.candy_given), giftedOut = num(a.candy_gifted_out);
       const giftedIn = num(a.candy_gifted_in), converted = num(a.doge_cost_basis);
       const realized = num(a.candy_realized);
+      const escrowed = num(a.candy_escrowed);
       return {
         studentId: a.student_id,
         dogeAddress: a.doge_address || null,
@@ -440,8 +535,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
         candyEaten: num(a.candy_eaten),
         candyGiven: materialized, candyMaterialized: materialized,
         candyGiftedOut: giftedOut, candyGiftedIn: giftedIn, candyReceived: giftedIn,
-        candyConverted: converted, candyRealized: realized,
-        candyOwed: Math.max(0, earned.candy + giftedIn - giftedOut - converted - materialized + realized),
+        candyConverted: converted, candyRealized: realized, candyEscrowed: escrowed,
+        candyOwed: Math.max(0, earned.candy + giftedIn - giftedOut - converted - materialized + realized - escrowed),
         dogeBalance: num(a.doge_balance), dogeSent: num(a.doge_sent),
         dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)),
         dogeCostBasis: converted,

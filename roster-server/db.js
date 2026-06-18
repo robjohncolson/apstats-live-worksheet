@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeSell, dogeCoinFlows, dogeGiftedSince };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -335,6 +335,12 @@ export function createDb(client) {
   async function dogeGift(params) {
     return client.rpc('doge_gift', params);
   }
+  // Atomic teacher disbursement clamp (migration 0024 fn doge_mark): recomputes the cap from the
+  // LIVE row under a lock (so a concurrent escrow/buy can't be missed) and clamps candy_given /
+  // doge_sent monotonically. Replaces the old read-modify-write in markEndpoint. data = the row.
+  async function dogeMark(params) {
+    return client.rpc('doge_mark', params);
+  }
   // Atomic DOGE → candy cash-out (migration 0023 fn doge_sell). Returns { data, error }
   // where data = the updated row, or null when a guard fails (not enough in-app / un-matured DOGE).
   async function dogeSell(params) {
@@ -352,5 +358,29 @@ export function createDb(client) {
   async function dogeGiftedSince(studentId, sinceIso) {
     return client.from('doge_ledger').select('candy_delta')
       .eq('student_id', studentId).eq('kind', 'gift_out').gte('ts', sinceIso);
+  }
+  // ── Study Break stakes (migration 0024) ──────────────────────────────────────
+  // Atomic escrow of BOTH players' stakes (both-or-neither). Returns { data, error }
+  // where data = a status text ('opened' | 'exists' | 'insufficient' | 'bad').
+  async function tetrisBetOpen(params) {
+    return client.rpc('tetris_bet_open', params);
+  }
+  // Atomic report-and-resolve: records the reporter's winner; settles on agreement,
+  // refunds on disagreement, both under the bet row lock. data = a status text.
+  async function tetrisBetResolve(params) {
+    return client.rpc('tetris_bet_resolve', params);
+  }
+  // Refund a single open bet (the timeout sweep). data = a status text.
+  async function tetrisBetRefund(matchId) {
+    return client.rpc('tetris_bet_refund', { p_match: matchId });
+  }
+  // Open/pending bets created before `cutoffIso` — the timeout sweep target (refund escrowed
+  // matches, void pending ones that never got a second player).
+  async function listStaleBets(cutoffIso) {
+    return client.from('tetris_bet').select('match_id').in('status', ['open', 'pending']).lt('created_at', cutoffIso);
+  }
+  // Settled bets (for Casino Stats). The (small) caller intersects with a section's students.
+  async function listSettledBets() {
+    return client.from('tetris_bet').select('player_a, player_b, winner, stake, resolved_at').eq('status', 'settled');
   }
 }
