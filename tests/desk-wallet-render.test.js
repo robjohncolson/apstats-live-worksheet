@@ -100,6 +100,23 @@ describe('Candy & DOGE panel — the rounding wart is fixed', () => {
   });
 });
 
+describe('Candy & DOGE panel — on-chain face hint (real deposited DOGE)', () => {
+  it('shows "⛓ Ɖ N in your wallet" at rest when the teacher has deposited coins on-chain', () => {
+    const t = render(mockW({ dogeSent: 3 })).textContent;
+    expect(t).toContain('⛓ Ɖ 3 in your wallet');
+    expect(t).toContain('yours to keep');
+  });
+  it('hides the on-chain hint when nothing has been deposited (dogeSent = 0)', () => {
+    expect(render(mockW({ dogeSent: 0 })).textContent).not.toContain('in your wallet');
+  });
+  it('shows the on-chain hint even when all coins are sent (inApp = 0, no asset line)', () => {
+    // dogeBalance 4.1 fully sent → inApp 0 (no L2 asset line) but real coins are on-chain
+    const t = render(mockW({ dogeSent: 4.1, sellableDoge: 0 })).textContent;
+    expect(t).toContain('⛓ Ɖ 4.1 in your wallet');
+    expect(t).not.toContain('saved');   // L2 asset line suppressed (inApp = 0)
+  });
+});
+
 describe('Candy & DOGE panel — maturity (24h hold) shows on the face', () => {
   it('says "ready in ~a day" when nothing is matured yet', () => {
     expect(render(mockW({ sellableDoge: 0 })).textContent).toContain('ready in ~a day');

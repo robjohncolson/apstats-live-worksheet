@@ -43,6 +43,14 @@ A titled bevelled sub-panel that speaks the app's own dialect:
 6. **Honest name** — "Candy & DOGE" (not "Savings", which would imply safety and miseducate the risk).
    Nothing-yet state shows one friendly line and **no** Details affordance.
 
+## On-chain face hint (follow-on)
+The watch-only on-chain line moved into ▸ Details to cut BlockCypher polling — but a kid then couldn't
+glance at their REAL deposited coins. Added a cheap face hint: `⛓ Ɖ N in your wallet (yours to keep)`
+from `dogeSent` (the teacher's deposit total, already in `/wallet`; **no live poll**), shown at rest
+whenever `dogeSent > 0` (even when `inApp = 0`, i.e. all coins are on-chain). The **live** blockchain
+confirmation + explorer link stay in ▸ Details (self-refreshing only while open). Face = instant glance
+from app data; Details = live verified truth.
+
 ## States
 - **Populated:** hero + asset line + up to 3 pills + Details.
 - **All spent (owed≈0) holding DOGE:** hero "🍬 0 — do more work to earn candy", asset line + Cash-out stay; Buy/Gift drop.

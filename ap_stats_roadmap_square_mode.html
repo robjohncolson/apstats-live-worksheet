@@ -12011,6 +12011,17 @@ function _dogeWalletRender(box, w, pts) {
         box.appendChild(l2);
     }
 
+    // On-chain glance (WALLET_REDESIGN follow-on): the kid's REAL deposited DOGE — a cheap face
+    // hint from doge_sent (already in /wallet; NO live poll). The live blockchain confirmation +
+    // explorer link stay in ▸ Details (which self-refreshes only while open). Shown even when
+    // inApp=0 (all coins already on-chain), so a kid always sees their real coins at a glance.
+    if ((w.dogeSent || 0) > 0.0001) {
+        var ocl = document.createElement('div');
+        ocl.className = 'geneva'; ocl.style.cssText = 'font-size:10px;color:#5a6b00;margin-top:3px';
+        ocl.textContent = '⛓ Ɖ ' + _dogeFmt(w.dogeSent) + ' in your wallet (yours to keep)';
+        box.appendChild(ocl);
+    }
+
     // ── Pill row: only the VALID actions; tapping opens ONE inline form (mutually exclusive) ──
     var pillRow = document.createElement('div');
     pillRow.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:7px';
