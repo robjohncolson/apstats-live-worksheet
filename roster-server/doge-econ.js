@@ -13,7 +13,7 @@ const EFFORT_POINTS = {
 };
 export const POINTS_PER_CANDY = 36;
 export const CANDY_USD = 0.036;
-export const MIN_CONVERSION_CANDY = 5;    // fallback floor when no live price; the real floor is minConvertCandy() = 1 DOGE's worth
+export const MIN_CONVERSION_CANDY = 5;    // legacy — buy-doge no longer enforces a minimum (s16, user); kept to mirror the client DOGE_WALLET const
 export const MIN_MATERIALIZE_DOGE = 5;    // in-app DOGE only goes ON-CHAIN once a student has banked ≥ this many (batch sends, no dust)
 export const DAILY_GIFT_CAP = 20;         // max candy a kid can gift OUT per rolling 24h (anti-farming/coercion; DOGE_GIFTING_SPEC §8)
 export const SELL_HOLD_HOURS = 24;        // DOGE → candy cash-out: coins must be held ≥ this many hours (SELL_DOGE_SPEC; anti-churn "overnight hold")
@@ -47,16 +47,6 @@ export function candyPerDoge(dogeUsd) {
   const d = Number(dogeUsd);
   if (!isFinite(d) || d <= 0) return 0;
   return d / CANDY_USD;
-}
-
-// The minimum candy a student must commit to convert to DOGE = exactly 1 DOGE's worth at
-// the live price (FLOATS with DOGE/USD). So a student with as little as ~2.4 candy (at
-// DOGE≈$0.088) can start banking fractional DOGE; sub-1-DOGE buys are blocked so the in-app
-// balance grows toward the MIN_MATERIALIZE_DOGE on-chain send floor. Falls back to the
-// fixed floor only when there's no live price.
-export function minConvertCandy(dogeUsd) {
-  const cpd = candyPerDoge(dogeUsd);
-  return cpd > 0 ? cpd : MIN_CONVERSION_CANDY;
 }
 
 // Spend `candy` candies → this many DOGE coins, at the live price.

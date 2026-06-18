@@ -138,7 +138,7 @@ describe('DOGE wallet — student GET /wallet', () => {
     expect(r.body.candyEarned).toBeCloseTo(5, 6);
     expect(r.body.candyBalance).toBeCloseTo(5, 6);
     expect(r.body.candyPerDoge).toBeCloseTo(2.444, 2);
-    expect(r.body.minBuyCandy).toBeCloseTo(2.444, 2);   // dynamic floor = 1 DOGE worth at this price
+    expect(r.body.minBuyCandy).toBe(0);                 // no buy minimum (s16): any positive candy converts
     expect(r.body.minMaterializeDoge).toBe(5);
   });
   it('401 without a valid token', async () => {
@@ -175,14 +175,19 @@ describe('DOGE wallet — buy DOGE (floating price)', () => {
     expect(r.body.dogeToDeposit).toBeCloseTo(10.227, 2);   // teacher must deposit this
     expect(r.body.candyBalance).toBeCloseTo(27.778 - 25, 2);
   });
-  it('enforces a dynamic convert floor = 1 DOGE worth (~2.4 candy at this price)', async () => {
-    // candyPerDoge = 0.088/0.036 ≈ 2.44, so 2 candy is below the floor, 3 is above.
-    const lo = await req(start({ ledgers: { s1: quizRows(100) } }), 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 2 } });
-    expect(lo.status).toBe(400);
-    expect(lo.body.error).toMatch(/minimum/);
-    const ok = await req(start({ ledgers: { s1: quizRows(100) } }), 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 3 } });
-    expect(ok.status).toBe(200);
-    expect(ok.body.boughtCoins).toBeCloseTo(3 / 2.444, 2);   // 3 candy → ~1.23 DOGE accrues in-app
+  it('has NO buy minimum — even 1 candy buys a fraction of a DOGE (user 2026-06-17)', async () => {
+    // candyPerDoge = 0.088/0.036 ≈ 2.44, so 1 candy → ~0.41 DOGE. There is no floor anymore.
+    const ctx = start({ ledgers: { s1: quizRows(100) } });
+    const r = await req(ctx, 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 1 } });
+    expect(r.status).toBe(200);
+    expect(r.body.boughtCoins).toBeCloseTo(1 / 2.444, 3);   // 1 candy → ~0.41 DOGE accrues in-app
+    expect(r.body.candyConverted).toBeCloseTo(1, 6);
+  });
+  it('rejects a non-positive buy (candy must be > 0)', async () => {
+    const zero = await req(start({ ledgers: { s1: quizRows(100) } }), 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: 0 } });
+    expect(zero.status).toBe(400);
+    const neg = await req(start({ ledgers: { s1: quizRows(100) } }), 'POST', '/wallet/buy-doge', { token: 'tok:s1', body: { candy: -3 } });
+    expect(neg.status).toBe(400);
   });
 });
 

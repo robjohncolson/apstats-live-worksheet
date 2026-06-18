@@ -37,6 +37,11 @@ review (2 minor findings folded; 3 plausible objections DISPROVEN) → pushed. S
   mirrored in `doge-econ.js` + `js/wallet_logic.js`. Desk: a "🍬 Cash out Ɖ" control + a live **gain line** ("Your X Ɖ in
   hand is worth Y 🍬 now — you put in C, ▲ up Z%"), gated on the matured `sellableDoge` and valuing ONLY the cashable
   in-app portion. Dashboard `rawOwed` flag + the earned-cell tooltip learn the realized term.
+- **NO buy minimum (follow-on, same day, user):** the old "1 DOGE's worth" convert floor (`minConvertCandy`) is REMOVED —
+  even **1 candy** now buys a fraction of a DOGE (only guard is `candy > 0`). On-chain dust is still prevented by the
+  separate 5-DOGE materialize threshold (in-app buys never touch the chain). `GET /wallet` returns `minBuyCandy: 0`; the
+  Desk buy hint reads "(buy any amount → a fraction of Ɖ)". `minConvertCandy` deleted from `doge-econ.js`;
+  `MIN_CONVERSION_CANDY` kept only as the client-mirror const. Tests rewritten (buy floor → "no minimum"); suites green.
 - **The 6-number ledger is now a 7-NUMBER identity:** `Earned + Received + Realized = Gifted + Converted + Materialized +
   Owed`. A sell decrements `doge_balance` + `doge_cost_basis` (Converted, AVERAGE cost basis), credits the FULL payout to
   Owed, and books the gain/loss surplus to Realized — so Owed always rises by exactly the payout and the books close.

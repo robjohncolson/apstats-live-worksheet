@@ -10,8 +10,8 @@
 
 import { requireTeacher } from './teacher-auth.js';
 import {
-  computeEffort, candyPerDoge, minConvertCandy, dogeFromCandy, candyFromDoge,
-  MIN_CONVERSION_CANDY, MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP, SELL_HOLD_HOURS,
+  computeEffort, candyPerDoge, dogeFromCandy, candyFromDoge,
+  MIN_MATERIALIZE_DOGE, DAILY_GIFT_CAP, SELL_HOLD_HOURS,
 } from './doge-econ.js';
 import { fetchChainBalance as defaultChainFetch, detectNetwork, DOGE_MAIN_RE } from './doge-chain.js';
 
@@ -185,7 +185,7 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     return res.json({
       ok: true, ...bal,
       dogeUsd: price, candyPerDoge: price ? candyPerDoge(price) : null,
-      minBuyCandy: price ? minConvertCandy(price) : MIN_CONVERSION_CANDY,
+      minBuyCandy: 0,            // no buy minimum (s16): any positive candy converts to a fraction of a DOGE
       minMaterializeDoge: MIN_MATERIALIZE_DOGE, sellableDoge, history,
     });
   });
@@ -259,14 +259,13 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const sid = sidOf(req);
     if (!sid) return res.status(401).json({ ok: false, error: 'forbidden' });
     const candy = num(req.body && req.body.candy);
+    // NO buy minimum (user 2026-06-17): even 1 candy buys a fraction of a DOGE. The only floor is
+    // candy > 0; the atomic SQL guard caps it at the student's spendable candy. (On-chain dust is
+    // still prevented separately by the 5-DOGE materialize threshold — in-app buys never touch the chain.)
+    if (!(candy > 0)) return res.status(400).json({ ok: false, error: 'enter how much candy to convert' });
     const price = await priceFn();
     if (!price) return res.status(503).json({ ok: false, error: 'DOGE price unavailable' });
     const cpd = candyPerDoge(price);
-    // Dynamic convert floor = 1 DOGE's worth of candy at the live price (~2.4 candy at
-    // DOGE≈$0.088); floats with DOGE/USD (user 2026-06-17). Lets a student bank fractional
-    // DOGE toward the 5-DOGE on-chain materialize threshold without a fixed 5-candy gate.
-    const minCandy = minConvertCandy(price);
-    if (candy < minCandy - 1e-9) return res.status(400).json({ ok: false, error: 'minimum ' + Math.max(0.1, Math.round(minCandy * 10) / 10) + ' candy (1 DOGE worth)' });
     const coins = dogeFromCandy(candy, price);
     const earned = await earnedCandyOf(sid);
     // ATOMIC guard+debit: banks coins + cost_basis in one UPDATE, stamping the price.
