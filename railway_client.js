@@ -158,6 +158,23 @@
       return getGuestIdentity();
   }
 
+  // Which app surface this page is, so the Desk's "Online Now" list can label
+  // WHERE each classmate is (a live worksheet vs the study guide vs ...). This
+  // copy is loaded by worksheets, the edgar driller, the MIT worksheets, and the
+  // study guide. Derived purely from the URL — no per-page global needed.
+  function _presenceSurface() {
+      try {
+          var file = ((location.pathname || '').toLowerCase().split('/').pop()) || '';
+          var m = file.match(/^u(\d+)_lesson([\d.\-]+)_live\.html$/);
+          if (m) return { surface: 'worksheet', lesson: 'U' + m[1] + ' L' + m[2] };
+          if (file === 'edgar_u6_conceptual_driller_live.html') return { surface: 'edgar', lesson: 'U6 driller' };
+          if (/^mit_ocw_/.test(file)) return { surface: 'mit', lesson: 'MIT lecture' };
+          if (file === 'study_guide_diagnostic.html') return { surface: 'study-guide', lesson: null };
+          if (file === 'ap_stats_roadmap_square_mode.html') return { surface: 'desk', lesson: null };
+          return { surface: 'other', lesson: null };
+      } catch (e) { return { surface: 'other', lesson: null }; }
+  }
+
   // Connect to WebSocket for real-time updates
   function connectWebSocket() {
       if (!USE_RAILWAY) return;
@@ -200,7 +217,7 @@
           // Identify with current username as soon as connected
           const username = _presenceUsername();
           if (username && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'identify', username }));
+            ws.send(JSON.stringify({ type: 'identify', username, location: _presenceSurface() }));
           }
           };
 

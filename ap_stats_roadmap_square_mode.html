@@ -1242,18 +1242,61 @@
             border-bottom: 1px solid var(--plat-lo);
         }
         .doge-dd-item {
-            padding: 2px 16px 2px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 10px 2px 12px;
             font-size: 11px;
-            cursor: default;
+            cursor: pointer;
             white-space: nowrap;
-            height: 18px;
-            line-height: 18px;
+            min-height: 18px;
+            line-height: 16px;
             color: var(--black);
         }
         .doge-dd-item:hover {
             background: var(--black);
             color: var(--white);
         }
+        .doge-dd-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
+        .doge-dd-caret { flex: 0 0 auto; opacity: .45; font-size: 10px; }
+        .doge-dd-item.doge-dd-open { background: var(--platinum); color: var(--black); }
+        .doge-dd-item.doge-dd-open:hover { background: var(--platinum); color: var(--black); }
+        /* Location chip: keeps its own bg so it stays legible even on a black hovered row. */
+        .doge-loc {
+            flex: 0 0 auto;
+            font-size: 9px;
+            font-family: Geneva, Arial, sans-serif;
+            color: #4a5b6a;
+            background: var(--platinum);
+            border: 1px solid var(--plat-lo);
+            border-radius: 7px;
+            padding: 0 6px;
+            line-height: 13px;
+        }
+        .doge-loc-desk { color: #0a6b2e; border-color: #0a6b2e; }
+        .doge-loc-unknown { color: var(--plat-lo); background: transparent; border-color: transparent; }
+        .doge-submenu {
+            padding: 5px 12px 7px 20px;
+            background: #f4f4f4;
+            border-bottom: 1px solid var(--plat-lo);
+        }
+        .doge-sub-where { font-size: 10px; color: #555; margin-bottom: 4px; font-family: Geneva, Arial, sans-serif; }
+        .doge-sub-act {
+            display: block;
+            width: 100%;
+            text-align: left;
+            font-family: Chicago, Arial, sans-serif;
+            font-size: 10px;
+            padding: 3px 8px;
+            margin: 3px 0 0;
+            cursor: pointer;
+            background: var(--white);
+            border: 1px solid var(--black);
+            box-shadow: 1px 1px 0 var(--black);
+            color: var(--black);
+        }
+        .doge-sub-act:hover:not(:disabled) { background: var(--black); color: var(--white); }
+        .doge-sub-act:disabled { opacity: .45; cursor: default; box-shadow: none; }
         .doge-dd-sep {
             height: 1px;
             background: var(--plat-lo);
@@ -13827,7 +13870,7 @@ const studyBreak = {
 
         this.mpWs.onopen = () => {
             if (statusEl) statusEl.textContent = 'Connected as ' + this.mpUsername;
-            this.mpWs.send(JSON.stringify({ type: 'identify', username: this.mpUsername }));
+            this.mpWs.send(JSON.stringify({ type: 'identify', username: this.mpUsername, location: { surface: 'desk', lesson: null } }));
         };
 
         this.mpWs.onmessage = (event) => {
@@ -13947,12 +13990,25 @@ const studyBreak = {
             el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--plat-lo);font-size:10px">No other players online</div>';
             return;
         }
-        el.innerHTML = this.mpOnlinePlayers.map((name) =>
-            `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);cursor:pointer" onmouseenter="this.style.background='var(--black)';this.style.color='var(--white)'" onmouseleave="this.style.background='';this.style.color=''" onclick="studyBreak.sendChallenge('${name.replace(/'/g, "\\'")}')">
-                <span class="geneva" style="font-size:11px">${name}</span>
+        // Location gating mirrors the doge dropdown (DOGE_PRESENCE_SUBMENU_SPEC D3): only a peer
+        // who is on the Desk can receive a challenge, so don't offer a doomed one. Locations come
+        // from the auto-connected DogePresence socket (single source of truth, always populated).
+        const locs = (typeof DogePresence !== 'undefined' && DogePresence.locations) ? DogePresence.locations : {};
+        el.innerHTML = this.mpOnlinePlayers.map((name) => {
+            const onDesk = !!(locs[name] && locs[name].onDesk);
+            const nameEsc = _deskEsc(name);   // untrusted (presence WS) \u2014 escape before innerHTML
+            if (onDesk) {
+                // _deskEsc(JSON.stringify(name)) is XSS-safe inside the onclick="" attribute.
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);cursor:pointer" onmouseenter="this.style.background='var(--black)';this.style.color='var(--white)'" onmouseleave="this.style.background='';this.style.color=''" onclick="studyBreak.sendChallenge(${_deskEsc(JSON.stringify(name))})">
+                <span class="geneva" style="font-size:11px">${nameEsc}</span>
                 <span style="font-size:9px">Challenge \u2192</span>
-            </div>`
-        ).join('');
+            </div>`;
+            }
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--platinum);opacity:.5" title="Not on the Desk \u2014 can't be challenged here">
+                <span class="geneva" style="font-size:11px">${nameEsc}</span>
+                <span style="font-size:9px">elsewhere</span>
+            </div>`;
+        }).join('');
     },
 
     sendChallenge(target) {
@@ -16379,11 +16435,15 @@ const DogePresence = {
     ws: null,
     connected: false,
     players: [],
+    locations: {},           // username -> { surface, lesson, onDesk } : where each online peer is
+    expandedRow: null,       // username whose action submenu is open (only one at a time)
     username: null,
     dropdownOpen: false,
     challengePending: null,  // outgoing challenge target
     incomingChallenge: null, // { from, timer, countdown }
     flashTimer: null,
+    _autoPresence: false,    // when true (auto-connected at Desk boot), reconnect on drop so the Desk stays visible
+    _reconnectTimer: null,
 
     getUsername() {
         if (!this.username) {
@@ -16438,6 +16498,7 @@ const DogePresence = {
 
     renderDropdown() {
         const dd = document.getElementById('doge-dropdown');
+        const teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
         let html = '';
         if (!this.connected) {
             html = '<div class="doge-dd-empty">Connecting...</div>';
@@ -16447,7 +16508,6 @@ const DogePresence = {
         } else {
             html = `<div class="doge-dd-header">Online Now (${this.players.length})</div>`;
             this.players.forEach(p => {
-                const disabled = this.challengePending ? ' style="color:var(--plat-lo)"' : '';
                 const real = DeskRoster.realName(p);
                 let label;
                 if (real) {
@@ -16457,7 +16517,23 @@ const DogePresence = {
                 } else {
                     label = _deskEsc(p);
                 }
-                html += `<div class="doge-dd-item" onclick="DogePresence.sendChallenge('${p.replace(/'/g, "\\'")}')"${disabled}>${label} &#9656;</div>`;
+                const loc = this.locations[p] || null;
+                const expanded = (this.expandedRow === p);
+                // XSS-safe username for an onclick="" attribute: usernames come from the
+                // UNAUTHENTICATED presence WS (server only .trim()s them), so they are untrusted.
+                // _deskEsc(JSON.stringify(p)) double-encodes — entity-escaping means a `"`/`<`
+                // can't break out of the attribute, and JSON keeps the JS string literal valid.
+                const pArg = _deskEsc(JSON.stringify(p));
+                // stopPropagation: the dropdown is nested INSIDE #doge-presence whose onclick
+                // is toggle() — without this a row click bubbles up and closes the whole menu.
+                html += `<div class="doge-dd-item${expanded ? ' doge-dd-open' : ''}" onclick="event.stopPropagation();DogePresence.toggleRow(${pArg})">`
+                      + `<span class="doge-dd-name">${label}</span>`
+                      + this._locationChip(loc, teacher)
+                      + `<span class="doge-dd-caret">${expanded ? '&#9662;' : '&#9656;'}</span>`
+                      + `</div>`;
+                // Click a name -> open an inline submenu (NOT an instant challenge). The
+                // submenu lives in the dropdown markup so a presence re-render keeps it open.
+                if (expanded) html += this._submenuHtml(p, loc, pArg);
             });
         }
         html += '<div class="doge-dd-sep"></div>';
@@ -16471,6 +16547,62 @@ const DogePresence = {
         dd.innerHTML = html;
     },
 
+    // Coarse for students (Desk / Worksheet / Quiz / Study guide / Online); the
+    // exact lesson is shown only to the teacher (DOGE_PRESENCE_SUBMENU_SPEC D1).
+    _coarseLabel(surface) {
+        const COARSE = { desk: 'Desk', worksheet: 'Worksheet', quiz: 'Quiz', 'study-guide': 'Study guide', edgar: 'Worksheet', mit: 'Worksheet', other: 'Online' };
+        return COARSE[surface] || 'Online';
+    },
+    _locationChip(loc, teacher) {
+        if (!loc || !loc.surface) return '<span class="doge-loc doge-loc-unknown">&middot;</span>';
+        const coarse = this._coarseLabel(loc.surface);
+        const txt = (teacher && loc.lesson) ? loc.lesson : coarse;
+        const cls = loc.onDesk ? 'doge-loc doge-loc-desk' : 'doge-loc';
+        return `<span class="${cls}" title="${_deskEsc((teacher && loc.lesson) ? loc.lesson : coarse)}">${_deskEsc(txt)}</span>`;
+    },
+    _whereSentence(loc, teacher) {
+        if (!loc || !loc.surface) return 'Whereabouts unknown';
+        const MAP = { desk: 'On the Desk', worksheet: 'On a live worksheet', quiz: 'In the quiz', 'study-guide': 'In the study guide', edgar: 'On a worksheet', mit: 'On a worksheet', other: 'Online' };
+        let s = MAP[loc.surface] || 'Online';
+        if (teacher && loc.lesson) s += ' — ' + loc.lesson;
+        return _deskEsc(s);
+    },
+    // pArg is already _deskEsc(JSON.stringify(username)) — XSS-safe for an onclick="" attribute.
+    _submenuHtml(username, loc, pArg) {
+        const teacher = (typeof _deskIsTeacher === 'function') && _deskIsTeacher();
+        const onDesk = !!(loc && loc.onDesk);
+        // stopPropagation so a click on the submenu (incl. the where-line) doesn't bubble to
+        // #doge-presence's toggle() and close the dropdown.
+        let h = '<div class="doge-submenu" onclick="event.stopPropagation()">';
+        h += `<div class="doge-sub-where">&#128205; ${this._whereSentence(loc, teacher)}</div>`;
+        // Challenge to Study Break only works when they're on the Desk (the game + the
+        // challenge-receiver live there). Elsewhere it's disabled, not a doomed challenge.
+        if (onDesk) {
+            h += `<button class="doge-sub-act" onclick="event.stopPropagation();DogePresence.challengeFromMenu(${pArg})">&#9876;&#65039; Challenge to Study Break</button>`;
+        } else {
+            h += `<button class="doge-sub-act" disabled title="Only works when they're on the Desk">&#9876;&#65039; Challenge (Desk only)</button>`;
+        }
+        // Send candy works wherever they are (server resolves + guards the gift).
+        h += `<button class="doge-sub-act" onclick="event.stopPropagation();DogePresence.candyFromMenu(${pArg})">&#127852; Send candy</button>`;
+        h += '</div>';
+        return h;
+    },
+
+    toggleRow(username) {
+        this.expandedRow = (this.expandedRow === username) ? null : username;
+        this.renderDropdown();
+    },
+    challengeFromMenu(username) {
+        this.expandedRow = null;
+        this.sendChallenge(username); // existing: closes dropdown, sends game_challenge, 30s timeout
+    },
+    candyFromMenu(username) {
+        this.expandedRow = null;
+        this.closeDropdown();
+        // Reuse the candy-poke pipeline (self/guest/cooldown/balance guards + optimistic Undo toast).
+        if (typeof _candyPoke === 'function') _candyPoke(username);
+    },
+
     connect() {
         if (this.ws && this.ws.readyState <= 1) return;
         const serverUrl = (typeof RAILWAY_SERVER_URL !== 'undefined' && RAILWAY_SERVER_URL)
@@ -16480,7 +16612,8 @@ const DogePresence = {
 
         this.ws.onopen = () => {
             this.connected = true;
-            this.ws.send(JSON.stringify({ type: 'identify', username: this.getUsername() }));
+            // location:'desk' — this socket IS the Desk, the only surface that can play Tetris.
+            this.ws.send(JSON.stringify({ type: 'identify', username: this.getUsername(), location: { surface: 'desk', lesson: null } }));
             this.updateIcon();
             if (this.dropdownOpen) this.renderDropdown();
         };
@@ -16493,8 +16626,15 @@ const DogePresence = {
         this.ws.onclose = () => {
             this.connected = false;
             this.players = [];
+            this.locations = {};
+            this.expandedRow = null;
             this.updateIcon();
             if (this.dropdownOpen) this.renderDropdown();
+            // Auto-connected at Desk boot -> reconnect so the Desk stays visible + challengeable (D5).
+            if (this._autoPresence) {
+                clearTimeout(this._reconnectTimer);
+                this._reconnectTimer = setTimeout(() => { try { this.connect(); } catch (_) {} }, 5000);
+            }
         };
 
         this.ws.onerror = () => {
@@ -16507,6 +16647,8 @@ const DogePresence = {
         switch (data.type) {
             case 'presence_snapshot':
                 this.players = (data.users || []).filter(u => u !== this.getUsername());
+                this.locations = data.locations || {};
+                if (this.expandedRow && !this.players.includes(this.expandedRow)) this.expandedRow = null;
                 this.updateIcon();
                 if (this.dropdownOpen) this.renderDropdown();
                 // Also update studyBreak lobby if it's open
@@ -16517,8 +16659,12 @@ const DogePresence = {
                 break;
 
             case 'user_online':
-                if (data.username !== this.getUsername() && !this.players.includes(data.username)) {
-                    this.players.push(data.username);
+                if (data.username !== this.getUsername()) {
+                    // user_online doubles as a location update (the server re-announces when a
+                    // peer's surface changes), so refresh the chip even if already in the list.
+                    if (data.location) this.locations[data.username] = data.location;
+                    else if (data.location === null) delete this.locations[data.username];
+                    if (!this.players.includes(data.username)) this.players.push(data.username);
                     this.updateIcon();
                     if (this.dropdownOpen) this.renderDropdown();
                 }
@@ -16526,6 +16672,8 @@ const DogePresence = {
 
             case 'user_offline':
                 this.players = this.players.filter(u => u !== data.username);
+                delete this.locations[data.username];
+                if (this.expandedRow === data.username) this.expandedRow = null;
                 this.updateIcon();
                 if (this.dropdownOpen) this.renderDropdown();
                 break;
@@ -17771,6 +17919,10 @@ try {
 updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 if(typeof _renderPreviewAsStudentUI==='function')_renderPreviewAsStudentUI();   // Preview-as-student: badge + menu label
 if(typeof _mountClassroomBoard==='function')_mountClassroomBoard();   // Live Classroom v1a
+// Presence (DOGE_PRESENCE_SUBMENU_SPEC D5): auto-connect so every Desk student appears in
+// classmates' "Online Now" list AND can receive a Tetris challenge — without first having to
+// click the doge icon. _autoPresence makes connect() reconnect if the socket drops.
+try { DogePresence._autoPresence = true; DogePresence.connect(); } catch (_) {}
 _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
