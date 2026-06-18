@@ -1429,6 +1429,32 @@
         .avatar-pop-acts .doge-sub-act { margin-top: 4px; }
         .avatar-pop-acts .doge-sub-act:first-child { margin-top: 0; }
 
+        /* AVATAR_SELF_EMOTE: 🍬✨ that puff up from your avatar and fade when you
+           click yourself (the sprite hop is drawn on the canvas by classroom-board.js). */
+        .avatar-emote-particle {
+            position: fixed;
+            z-index: 401;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+            will-change: transform, opacity;
+            animation: avatarEmoteFloat 1.1s ease-out forwards;
+        }
+        @keyframes avatarEmoteFloat {
+            0%   { opacity: 0; transform: translate(-50%, -50%)  scale(.6); }
+            18%  { opacity: 1; transform: translate(-50%, -95%)  scale(1.15); }
+            100% { opacity: 0; transform: translate(-50%, -215%) scale(.9); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            /* No big travel for reduced-motion users — just a gentle fade in place. */
+            .avatar-emote-particle { animation: avatarEmoteFade 0.9s ease-out forwards; }
+            @keyframes avatarEmoteFade {
+                0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; }
+            }
+        }
+
         /* .status-dot — DEPRECATED (s14): the registry "readiness" dot is no longer
            rendered on cells (it was teacher material-tracking that contradicted the
            student progress glyphs). Rules retained only so the mobile dot-shrink
@@ -12162,6 +12188,50 @@ var _avatarMenu = {
 };
 try { window._avatarMenu = _avatarMenu; } catch (_) {}
 
+// AVATAR_SELF_EMOTE (AVATAR_MENU_SPEC.md): clicking your OWN avatar no longer slams
+// open My Ledger (too heavy) — it plays a light "happy bounce": the sprite hops +
+// wiggles (classroom-board.js, no new art) and a 🍬✨ puff floats up from the tap.
+// My Ledger stays one tap away in the Apps menu + the desktop icon. A short cooldown
+// keeps rapid clicks from spamming particles.
+var _selfEmoteUntil = 0;
+function _spawnEmoteParticle(text, x, y, delayMs) {
+  var el = document.createElement('div');
+  el.className = 'avatar-emote-particle';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  if (delayMs) el.style.animationDelay = delayMs + 'ms';
+  document.body.appendChild(el);
+  setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 1300 + (delayMs || 0));
+  return el;
+}
+function _avatarSelfEmote(hit) {
+  if (Date.now() < _selfEmoteUntil) return;          // debounce rapid self-clicks
+  _selfEmoteUntil = Date.now() + 600;
+  var reduce = false;
+  try { reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) {}
+  // Hop + wiggle the canvas sprite (skipped for reduced-motion; the puff still fades in place).
+  if (!reduce) { try { if (_classroomBoardHandle && _classroomBoardHandle.selfEmote) _classroomBoardHandle.selfEmote(); } catch (_) {} }
+  try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.4); } catch (_) {}
+  // 🍬✨ puff at the tapped avatar (hit carries the click's viewport coords).
+  var x = (hit && typeof hit.clientX === 'number') ? hit.clientX : (window.innerWidth  / 2);
+  var y = (hit && typeof hit.clientY === 'number') ? hit.clientY : (window.innerHeight / 2);
+  var candyEl = _spawnEmoteParticle('🍬', x, y, 0);
+  _spawnEmoteParticle('✨', x - 18, y - 4, 80);
+  _spawnEmoteParticle('✨', x + 18, y - 2, 170);
+  // Best-effort: enrich the candy puff with your live balance (cached fetch, non-blocking).
+  try {
+    if (typeof _dogeWalletFetch === 'function') {
+      _dogeWalletFetch().then(function (w) {
+        if (candyEl && candyEl.parentNode && w && w.ok && typeof w.candyBalance === 'number') {
+          candyEl.textContent = '🍬 ' + Math.floor(w.candyBalance);
+        }
+      }).catch(function () {});
+    }
+  } catch (_) {}
+}
+try { window._avatarSelfEmote = _avatarSelfEmote; } catch (_) {}
+
 function _dogeWalletGiftForm(wrap, box, w, pts) {
     wrap.innerHTML = '<div class="geneva" style="font-size:10px;color:#8a7330">Loading classmates…</div>';
     var maxCandy = Math.floor(w.candyBalance || 0);
@@ -18325,14 +18395,14 @@ function _mountClassroomBoard(){
       },
       // AVATAR_MENU (AVATAR_MENU_SPEC.md): tapping a CLASSMATE reveals their name, then a
       // popover with 🍬 Send candy + ⚔️ Start a game; tapping YOUR OWN avatar (isSelf)
-      // opens My Ledger directly. hit = { username, selectMode, clientX, clientY, isSelf }.
-      // The candy action reuses the candy-poke pipeline (guards self/guests/no-wallet/
-      // cooldown); the game action reuses the Tetris challenge. Supersedes the old
-      // instant-poke-on-tap (CANDY_POKE_SPEC.md).
+      // plays a light happy bounce + 🍬✨ puff (My Ledger stays in the Apps menu + icon —
+      // auto-opening it on a self-tap was too heavy). hit = { username, selectMode,
+      // clientX, clientY, isSelf }. The candy action reuses the candy-poke pipeline
+      // (guards self/guests/no-wallet/cooldown); the game action reuses the Tetris challenge.
       onAvatarClick: function(hit) {
         if (!hit || !hit.username) return;
         if (hit.isSelf) {
-          if (typeof openWallet === 'function') { try { openWallet(); } catch (_) {} }
+          if (typeof _avatarSelfEmote === 'function') { try { _avatarSelfEmote(hit); } catch (_) {} }
           return;
         }
         if (typeof _avatarMenu !== 'undefined' && _avatarMenu) {

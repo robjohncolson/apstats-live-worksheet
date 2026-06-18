@@ -7023,3 +7023,48 @@ describe('AVATAR_MENU -- avatar name-label suppression', function () {
     expect(BOARD_SRC).toMatch(/isSelf:\s*\(hit === username\)/);
   });
 });
+
+// =============================================================
+// AVATAR_SELF_EMOTE: clicking your own avatar plays a one-shot happy bounce
+// (no new art) — a render-space hop + sway with an EMOTE_FRAME nano-banana hook.
+// =============================================================
+describe('AVATAR_SELF_EMOTE -- happy bounce on self-click', function () {
+  function makeLocalPlayer() {
+    var m  = makeBoard();
+    var ss = new m.win.SpriteSheet('sprite.png', 80, 96, {});
+    var p  = new m.ClassroomBoard._PlayerSprite(ss, {
+      x: 100, y: 200, scale: 0.25, hue: 0, online: true, label: 'me',
+      input: { left: false, right: false, jump: false, up: false },
+      peers: function () { return {}; },
+      canvasW: function () { return 400; },
+      onPos: function () {},
+      now: function () { return 0; },
+      getMemberCount: function () { return 1; }
+    });
+    return p;
+  }
+
+  it('playEmote sets the one-shot timer; update() ticks it down to 0', function () {
+    var p = makeLocalPlayer();
+    expect(p._emoteMs).toBe(0);
+    p.playEmote();
+    expect(p._emoteMs).toBeGreaterThan(0);
+    var first = p._emoteMs;
+    p.update(0.1);
+    expect(p._emoteMs).toBeLessThan(first);
+    p.update(2.0);              // well past the bounce duration
+    expect(p._emoteMs).toBe(0); // settled
+  });
+
+  it('render applies a hop offset + honors the EMOTE_FRAME nano-banana hook (source)', function () {
+    expect(BOARD_SRC).toMatch(/this\._emoteMs > 0/);
+    expect(BOARD_SRC).toMatch(/EMOTE_HOP_PX/);
+    expect(BOARD_SRC).toMatch(/EMOTE_FRAME != null\) fIndex = this\._directedFrame\(EMOTE_FRAME\)/);
+    // The hook ships OFF (null) so today's bounce uses the existing idle/walk frame.
+    expect(BOARD_SRC).toMatch(/var EMOTE_FRAME\s*=\s*null/);
+  });
+
+  it('the mount handle exposes selfEmote() that bounces the LOCAL avatar (source)', function () {
+    expect(BOARD_SRC).toMatch(/selfEmote: function[\s\S]*?spriteEntities\[username\][\s\S]*?playEmote\(\)/);
+  });
+});

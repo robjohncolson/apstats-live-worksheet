@@ -12,8 +12,10 @@ also exposes the two social actions:
 1. **No always-on names.** Avatar names do not float above heads.
 2. **Click an avatar → see the username.** (Two-stage: first tap shows the name.)
 3. **Click again → a small menu:** 🍬 **Send candy** or ⚔️ **Start a game** (Tetris).
-4. **Click your OWN avatar → My Ledger** opens directly (no name reveal — you know who you
-   are; an extra tap would just be friction). Classmate = social menu; self = your wallet.
+4. **Click your OWN avatar → a light "happy bounce"** — the sprite hops + wiggles and a 🍬✨
+   puff floats up (no window). My Ledger stays one tap away in the Apps menu + the desktop
+   icon. (We tried auto-opening My Ledger on self-tap first; it felt too heavy/intense, so it
+   was replaced with the emote.) Classmate = social menu; self = a moment of delight.
 
 "Loop it all together" = one interaction surface (a popover anchored at the tapped head)
 carrying the name + both actions.
@@ -64,10 +66,23 @@ keep their labels (different sprite classes); only `BoardSprite` (avatars, and t
     self / guests / no-wallet / cooldown); **Start a game** → `DogePresence.sendChallenge`
     (the challenge rides the always-on presence socket and auto-opens the match on accept).
     "Start a game" is enabled unless presence positively reports the peer off-Desk.
-- `onAvatarClick` in the mount routes a self-click (`hit.isSelf`) to `openWallet()` and any
-  other avatar to `_avatarMenu.onAvatarClick(hit)` — **supersedes the old instant
-  candy-poke-on-tap** (CANDY_POKE_SPEC.md). (Clicking your own avatar while a classmate
-  popover is open closes the popover via its outside-click handler and opens the wallet.)
+- `onAvatarClick` in the mount routes a self-click (`hit.isSelf`) to `_avatarSelfEmote(hit)` and
+  any other avatar to `_avatarMenu.onAvatarClick(hit)` — **supersedes the old instant
+  candy-poke-on-tap** (CANDY_POKE_SPEC.md).
+
+### Self-click emote (AVATAR_SELF_EMOTE)
+- **No new sprite art.** The mascot is an armless pink cat-blob (sprite.png, 80×96 frames,
+  11 cols × 2 rows; the board only uses idle/walk/jump). A "wave" is unnatural; a **bounce**
+  reads as happy. `PlayerSprite.playEmote()` sets a one-shot `_emoteMs` timer; `update()` ticks
+  it; `render()` adds a render-space hop (`-|sin|·EMOTE_HOP_PX`) + decaying sway — pure cosmetic
+  offsets, never physics. The board handle exposes `selfEmote()` (bounces `spriteEntities[username]`).
+- **Nano-banana hook:** `EMOTE_FRAME` (default `null` → bounce the normal frame). Set it to an
+  UNUSED sheet column once a "cheer" pose is drawn there (put its left mirror at `EMOTE_FRAME+11`);
+  the emote then poses on it mid-hop. Drop-in: 80×96, transparent, pixel-art, salmon-pink palette,
+  feet on the existing baseline, right-facing.
+- **Desk side:** `_avatarSelfEmote(hit)` calls the board hop (skipped under `prefers-reduced-motion`),
+  plays `MacSFX` `wildEep`, and puffs a 🍬 + two ✨ DOM particles up from the click coords (the 🍬 is
+  enriched with the live candy balance via the cached wallet fetch). A 600 ms debounce stops click-spam.
 - CSS: `.avatar-pop` / `.avatar-pop-name` / `.avatar-pop-hint` / `.avatar-pop-acts`,
   reusing the System-7 `.doge-sub-act` buttons.
 

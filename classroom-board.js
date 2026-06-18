@@ -100,6 +100,17 @@
   var IDLE_FRAMES = [0, 10];   // idle blink
   var WALK_FRAMES = [2, 3, 4, 5]; // walk cycle
 
+  // AVATAR_SELF_EMOTE: a one-shot "happy bounce" played on the LOCAL avatar when
+  // the student clicks their own sprite (no new art — a render-space hop + sway).
+  // EMOTE_FRAME is the nano-banana hook: leave null to bounce the normal idle/walk
+  // frame; set it to an UNUSED sprite-sheet column (e.g. 6) once a "cheer" pose is
+  // drawn there, and put its left-facing mirror at EMOTE_FRAME + 11 (per the sheet's
+  // top=right / bottom=left layout). The emote then poses on that frame mid-hop.
+  var EMOTE_DURATION_MS = 650;  // total bounce length
+  var EMOTE_HOP_PX      = 14;   // peak rise (screen px, pre-scale-independent)
+  var EMOTE_SWAY_PX     = 4;    // horizontal wiggle amplitude
+  var EMOTE_FRAME       = null;
+
   var IDLE_BLINK_SPEED  = 3.0;  // seconds between blinks
   var WALK_FRAME_SPEED  = 0.12; // seconds per walk frame
 
@@ -1121,6 +1132,7 @@
     // render() so the local player sees their press registered. Local-only;
     // the actual physics y never moves, so peers don't see the twitch.
     this._blockedTwitchMs = 0;
+    this._emoteMs         = 0;   // AVATAR_SELF_EMOTE one-shot bounce timer
 
     // Phase 2 -- position broadcast hook + rate-limit clock.
     // onPos -- function({x, y, state, vx}); mount() wires it to safeSend.
@@ -1268,6 +1280,12 @@
     // settles back to its real y.
     if (this._blockedTwitchMs > 0) {
       this._blockedTwitchMs = Math.max(0, this._blockedTwitchMs - dt * 1000);
+    }
+
+    // AVATAR_SELF_EMOTE -- tick down the one-shot happy-bounce timer; render()
+    // reads it for a hop + sway. Purely cosmetic (never touches vx/vy/physics).
+    if (this._emoteMs > 0) {
+      this._emoteMs = Math.max(0, this._emoteMs - dt * 1000);
     }
 
     // Track active motion -- repositionSprites stops auto-laying the player
@@ -1539,6 +1557,16 @@
       var decay = this._blockedTwitchMs / 150;       // 1.0 -> 0 over lifetime
       yOffset = Math.sin(phase * Math.PI * 2) * 3 * decay;
     }
+    // AVATAR_SELF_EMOTE: a happy double-bounce + sway when you click your own
+    // avatar. Pure render offsets (no physics); optionally poses on EMOTE_FRAME.
+    var fIndex = this.frameIndex;
+    var emoteX = 0;
+    if (this._emoteMs > 0) {
+      var ep = 1 - this._emoteMs / EMOTE_DURATION_MS;                   // 0 -> 1
+      yOffset -= Math.abs(Math.sin(ep * Math.PI * 2)) * EMOTE_HOP_PX;   // two hops, up = -y
+      emoteX = Math.sin(ep * Math.PI * 6) * EMOTE_SWAY_PX * (1 - ep);   // decaying wiggle
+      if (EMOTE_FRAME != null) fIndex = this._directedFrame(EMOTE_FRAME);
+    }
     var alpha = this.online ? 1.0 : 0.35;
     // s111 P4 UX rev4: doorway absorption is fade-only (the prior
     // scale-down was indistinguishable in practice; just the alpha
@@ -1548,9 +1576,15 @@
     }
     if (alpha <= 0) { _restoreFromCamera(ctx); return; }
     if (alpha !== 1.0) { ctx.save(); ctx.globalAlpha = alpha; }
-    this.spriteSheet.drawFrame(ctx, this.frameIndex, this.x, this.y + yOffset, this.scale, this.hue);
+    this.spriteSheet.drawFrame(ctx, fIndex, this.x + emoteX, this.y + yOffset, this.scale, this.hue);
     if (alpha !== 1.0) { ctx.restore(); }
     _restoreFromCamera(ctx);
+  };
+
+  // AVATAR_SELF_EMOTE: trigger the one-shot happy bounce (idempotent re-trigger
+  // just restarts it). Cosmetic only — update()/render() handle the animation.
+  PlayerSprite.prototype.playEmote = function () {
+    this._emoteMs = EMOTE_DURATION_MS;
   };
 
   // --- GreenLightOverlay entity -----------------------------------------
@@ -6533,6 +6567,15 @@
         var sp = spriteEntities[uname];
         if (!sp) return null;
         return { x: sp.x, y: sp.y, canvasW: canvas.width, canvasH: canvas.height };
+      },
+
+      // AVATAR_SELF_EMOTE: play the happy bounce on the LOCAL user's own avatar
+      // (the Desk calls this when you click yourself). No-op if the sprite or the
+      // method is missing (e.g. before the scene mounts). Returns whether it ran.
+      selfEmote: function () {
+        var sp = spriteEntities[username];
+        if (sp && typeof sp.playEmote === 'function') { try { sp.playEmote(); return true; } catch (_) {} }
+        return false;
       }
     };
 
