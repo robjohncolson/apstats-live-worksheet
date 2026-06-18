@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — DOGE ⇄ candy BIDIRECTIONAL (cash DOGE back to candy at the live rate, 7-number ledger, s16) ; candy economy REVIVED (poke + materialized ledger, s15) ; grade-integrity + calendar COMPLETE
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 16 — DOGE ⇄ candy bidirectional cash-out + wallet UI declutter).
-> follow-alongs HEAD = `3e477d1`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> follow-alongs HEAD = `664de25`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `6626dc3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,23 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭⏭ NEXT BUILD (SCOPED — ready to fan out FRESH) — candy↔DOGE conservation audit (Redex + property-test + differential)
+
+**Spec: `WALLET_CONSERVATION_AUDIT_SPEC.md` (s16).** Apply the s13 grade-integrity playbook to the now-BIDIRECTIONAL wallet
+economy. **WHY:** the s16 review found the in-memory `dogeSell` test fake HAND-COPIES the SQL `doge_sell` formula → a bug
+copied into BOTH passes every test; there is **no independent oracle running the real SQL** (same latent risk for
+`doge_spend`/`doge_gift`). Verify the 7-number identity `Earned + Received + Realized = Gifted + Converted + Materialized +
+Owed` holds under every real transition. **Three layers — build the shared `roster-server/tests/fixtures/wallet-world.js`
+(trajectory generator + canonical JS reducer + invariants I1–I8) FIRST, THEN fan out A/B/C in parallel:**
+- **A — `fast-check` property-fuzz** of I1–I8 through the real JS reducer + the live route handlers (`fast-check` already a roster-server devDep).
+- **B — real-Postgres differential harness** via **`@electric-sql/pglite`** (in-process WASM Postgres, NO Docker; NEW
+  roster-server devDep) — runs the REAL `doge_spend`/`doge_gift`/`doge_sell` plpgsql from migrations 0019/0021/0022/0023 and
+  diffs vs the JS reducer. **THIS closes the flagged gap.** First build step: confirm pglite runs plpgsql (else testcontainers).
+- **C — PLT Redex** formal model `formal/wallet-model/` mirroring `formal/grade-model/` (model `.rkt` + `crosscheck.rkt` +
+  `roster-server/tools/wallet-model-emit-cases.mjs` → `cases.json`; **PowerShell `racket`, NOT MSYS bash — segfaults**; racket v9.2 + redex installed via scoop).
+Findings → `WALLET_CONSERVATION_FINDINGS.md`, fixes gated (new `0024_*` migration if the bug is in SQL; mirror in
+`deriveBalances` + the reducer — the two-place rule). Full invariants (I1–I9), file manifest, fan-out phases, and gotchas are in the spec.
 
 ## ⏭ SESSION 16 SHIPPED (2026-06-17) — DOGE ⇄ candy BIDIRECTIONAL: cash DOGE back to candy at the live rate (7-number ledger)
 
@@ -312,10 +329,11 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
 > end-to-end. **No open task in this program.** The reusable recipe: identify/extract the pure logic → fixture + generator → assert
 > invariants (exhaustive when the state space is small, fast-check/seeded-random when large) → pin findings → fix → (optional)
 > live-code harness via the `fnBody` extractor. **Possible NEW targets if reopened:** Live Classroom poll/vote protocol (wants TLA+,
-> not fast-check — but DEPRECATED per s15), or the **candy/DOGE wallet conservation math** — now the 7-number identity
-> `Earned+Received+Realized=Gifted+Converted+Materialized+Owed` (Realized added by the s16 cash-out) is LIVE + adversarially
-> reviewed. A **live-code differential harness over `doge_sell`/`doge_spend`/`doge_gift` (real Postgres) is the strong, still-open
-> target** — the s16 review flagged that the in-memory test fake hand-copies the SQL, so a bug copied into both would slip past.
+> not fast-check — but DEPRECATED per s15), or the **candy/DOGE wallet conservation math** — now **SCOPED as the NEXT BUILD**
+> in `WALLET_CONSERVATION_AUDIT_SPEC.md` (see the ⏭⏭ NEXT BUILD block at the top): the 7-number identity
+> `Earned+Received+Realized=Gifted+Converted+Materialized+Owed` (Realized added by the s16 cash-out) gets the full Layer A
+> (fast-check) + Layer B (real-Postgres differential via pglite — closes the "fake hand-copies the SQL" gap) + Layer C (Redex)
+> treatment. NOT yet built — fan it out fresh.
 > Findings doc: `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md` + `doge-candy-buyback-decisions.md`.
 > (DOGE is no longer "paused" — see s15/s16.)
 
