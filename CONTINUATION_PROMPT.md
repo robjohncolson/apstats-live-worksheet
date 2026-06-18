@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — DOGE ⇄ candy BIDIRECTIONAL (cash DOGE back to candy at the live rate, 7-number ledger, s16) ; candy economy REVIVED (poke + materialized ledger, s15) ; grade-integrity + calendar COMPLETE
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 16 — DOGE ⇄ candy bidirectional cash-out + wallet UI declutter).
-> follow-alongs HEAD = `3c8ff13`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> follow-alongs HEAD = `3e477d1`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `6626dc3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -70,8 +70,10 @@ review (2 minor findings folded; 3 plausible objections DISPROVEN) → pushed. S
   "7.0" stray decimal; "0.0 ready" for tiny matured amounts; sub-1% moves swallowed as "even" → now show direction off the raw
   delta; an incoming candy-gift repaint that ate a half-typed form → now skipped while a wallet input is focused). New jsdom
   EXECUTION test `tests/desk-wallet-render.test.js` (14) runs the REAL panel across all states; root suite 7252 pass / the 6
-  pre-existing onboarding failures. Spec: `WALLET_REDESIGN_SPEC.md`. **⚠ Intentional tradeoff:** the on-chain watch line moved
-  INTO ▸ Details (cuts BlockCypher polling to only-while-open) — add a face hint if a glance at real deposited DOGE is wanted.
+  pre-existing onboarding failures. Spec: `WALLET_REDESIGN_SPEC.md`. The live on-chain watch line moved INTO ▸ Details (cuts
+  BlockCypher polling to only-while-open); a cheap **on-chain face hint** (`⛓ Ɖ N in your wallet (yours to keep)`, from
+  `doge_sent`, no poll) was then added at rest (fa `3e477d1`) so a kid still glances at their REAL deposited coins — shown even
+  when inApp=0 (all coins on-chain). The face = instant glance; ▸ Details = the live, explorer-linked blockchain truth.
 
 ## ⏭ SESSION 15 SHIPPED (2026-06-17) — calendar load-fix + cr identity #2 + CANDY economy REVIVED (poke + 6-number ledger + DOGE floors)
 
