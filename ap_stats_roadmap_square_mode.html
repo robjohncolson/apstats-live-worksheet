@@ -2205,7 +2205,8 @@
                 </div>
             </div>
             <div class="game-lobby" id="game-lobby" style="display:none;padding:12px;min-height:240px">
-                <div class="chicago" style="font-size:12px;text-align:center;margin-bottom:8px">Challenge a Classmate</div>
+                <div class="chicago" style="font-size:12px;text-align:center;margin-bottom:4px">Challenge a Classmate</div>
+                <div id="lobby-casino" style="text-align:center;font-size:9px;color:var(--plat-lo);margin-bottom:8px">Best of 3 · winner takes 2 🍬, loser pays 1</div>
                 <div id="lobby-players" style="max-height:180px;overflow-y:auto"></div>
                 <div id="lobby-status" style="text-align:center;font-size:10px;margin-top:8px;color:var(--plat-lo)">Connecting...</div>
                 <div style="text-align:center;margin-top:8px">
@@ -13743,6 +13744,12 @@ const studyBreak = {
 
     close() {
         if (!this.initialized) return;
+        // Clear per-match timers BEFORE nulling mpState (else the cleanup below no-ops on null —
+        // a pre-existing garbageTimer leak; also stop a pending best-of-3 auto-advance).
+        if (this.mpState) {
+            clearTimeout(this.mpState._advanceTimer);
+            if (this.mpState.garbageTimer) { clearTimeout(this.mpState.garbageTimer); this.mpState.garbageTimer = 0; }
+        }
         if (this.mode === '1v1' && this.mpWs && this.mpState && this.mpWs.readyState === 1) {
             this.mpWs.send(JSON.stringify({ type: 'game_leave' }));
             this.mpState = null;
@@ -13750,10 +13757,6 @@ const studyBreak = {
         if (this.mpChallengeTimer) {
             clearInterval(this.mpChallengeTimer);
             this.mpChallengeTimer = null;
-        }
-        if (this.mpState && this.mpState.garbageTimer) {
-            clearTimeout(this.mpState.garbageTimer);
-            this.mpState.garbageTimer = 0;
         }
         // Clean up WebRTC
         if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
@@ -13829,6 +13832,18 @@ const studyBreak = {
     },
 
     startNewGame() {
+        // Best-of-3: advancing to the next game of an unfinished 1v1 series (one shared escrow
+        // spans the series). Solo (no mpState) + the first game (via startMatch) are unaffected.
+        const ms = this.mpState;
+        // After the series is decided, R/Enter/click must NOT start a phantom game on the dead
+        // match (a new match needs a fresh challenge → new roomId). Card says "Esc to exit".
+        if (this.mode === '1v1' && ms && ms.seriesOver) return;
+        if (this.mode === '1v1' && ms && !ms.seriesOver) {
+            clearTimeout(ms._advanceTimer);
+            ms.gameNumber = (ms.gameNumber || 1) + 1;
+            ms.gameScored = false;
+            ms._wonThisGame = false;
+        }
         this.init();
         this.resetBoardState();
         this.state = 'running';
@@ -13849,6 +13864,7 @@ const studyBreak = {
         document.getElementById('game-lobby').style.display = 'block';
         document.getElementById('game-score').style.display = 'none';
         this.updateHud();
+        this._studyBreakCasinoLine();   // Casino Stats: your W-L / net / EV-per-game (the probability lab)
 
         // Connect to Railway WebSocket
         this.connectMultiplayerWS();
@@ -14045,7 +14061,7 @@ const studyBreak = {
     showChallengeDialog(fromUser) {
         SFX.play('sosumi', 0.5);
         const dialog = document.getElementById('challenge-dialog');
-        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break!';
+        document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · winner takes 2 🍬)';
         dialog.style.display = 'block';
 
         let countdown = 30;
@@ -14112,8 +14128,15 @@ const studyBreak = {
             opponentLevel: 1,
             opponentActive: null,
             pendingGarbage: 0,
-            garbageTimer: 0
+            garbageTimer: 0,
+            // STAKES + best-of-3 series (STUDY_BREAK_STAKES_SPEC Phase 2). roomId is the
+            // server-minted, shared, unguessable matchId — used directly for the candy escrow.
+            myWins: 0, oppWins: 0, gameNumber: 1,
+            gameScored: false, _wonThisGame: false, _forfeit: false,
+            seriesOver: false, _resolved: false, staked: false, candyOutcome: null,
         };
+        // Escrow 1 candy for the match (graceful: a guest / stakes-off / pre-migration → free play).
+        this._studyBreakArmStakes();
 
         // Start countdown then game
         this.state = 'countdown';
@@ -14394,6 +14417,7 @@ const studyBreak = {
 
     opponentKO(finalScore) {
         if (!this.mpState) return;
+        this.mpState._wonThisGame = true;   // I won this game of the series
         SFX.play('koWin', 1.0);
         this.state = 'gameover';
         const opponentName = this.mpState.opponent || 'Opponent';
@@ -14405,6 +14429,19 @@ const studyBreak = {
 
     opponentLeft(reason) {
         if (!this.mpState) return;
+        const ms = this.mpState;
+        ms._wonThisGame = true;
+        ms._forfeit = true;
+        // Forfeit ends the series NOW (don't wait for / let the auto-advance fire a ghost game, and
+        // don't let a prior game's gameScored guard swallow this). I win by forfeit; the opponent is
+        // gone and won't confirm → the bet refunds via the server sweep (accepted rage-quit-voids).
+        if (!ms.seriesOver) {
+            clearTimeout(ms._advanceTimer);
+            ms.myWins = Math.max((ms.myWins || 0), (ms.oppWins || 0) + 1);   // ensure I'm the reported winner
+            ms.gameScored = true;
+            ms.seriesOver = true;
+            this._studyBreakResolveStakes();
+        }
         SFX.play('koWin', 1.0);
         this.state = 'gameover';
         const opponentName = this.mpState.opponent || 'Opponent';
@@ -14418,6 +14455,76 @@ const studyBreak = {
         this.submitLeaderboardScore();
         this.updateHud();
         this.draw();
+    },
+
+    // ── STUDY BREAK STAKES (STUDY_BREAK_STAKES_SPEC Phase 2) ────────────────────
+    // Escrow 1 candy for the match. Both clients POST /wallet/bet/open with the SAME
+    // server-minted roomId → the server escrows once both join. Fully GRACEFUL: a guest /
+    // stakes-off / pre-migration / insufficient response just leaves the match unstaked (free).
+    _studyBreakArmStakes() {
+        const ms = this.mpState;
+        if (!ms || !ms.roomId || !ms.opponent || typeof _dogeWalletAction !== 'function') return;
+        _dogeWalletAction('/wallet/bet/open', { matchId: ms.roomId, opponentUsername: ms.opponent }).then((res) => {
+            if (this.mpState !== ms) return;   // match changed / ended
+            ms.staked = !!(res && res.ok && (res.status === 'opened' || res.status === 'waiting'));
+            this.draw();
+        }).catch(() => {});
+    },
+    // Count THIS game's outcome exactly once (guarded), then either end the series + resolve the
+    // candy, or auto-advance to the next game. Called from drawGameOverCard (the single 1v1
+    // game-over choke point). _wonThisGame is set by opponentKO/opponentLeft; default = I topped out.
+    _studyBreakScoreGameOnce() {
+        const ms = this.mpState;
+        if (this.mode !== '1v1' || !ms || ms.gameScored || ms.seriesOver) return;
+        if (this.state !== 'gameover') return;
+        ms.gameScored = true;
+        if (ms._wonThisGame) ms.myWins = (ms.myWins || 0) + 1; else ms.oppWins = (ms.oppWins || 0) + 1;
+        if (ms.myWins >= 2 || ms.oppWins >= 2 || ms._forfeit) {
+            ms.seriesOver = true;
+            this._studyBreakResolveStakes();
+        } else {
+            // series continues → auto-advance both clients to the next game (each detects its own
+            // game-end ~simultaneously). R/Enter still advances immediately; Esc exits (forfeit).
+            clearTimeout(ms._advanceTimer);
+            ms._advanceTimer = setTimeout(() => {
+                if (this.isOpen() && this.mpState === ms && !ms.seriesOver && this.state === 'gameover') this.startNewGame();
+            }, 3000);
+        }
+    },
+    // Report the series winner to the server (both players → settle on agreement, refund on
+    // disagreement/timeout — the server has no game truth). Shows the candy outcome on the card.
+    _studyBreakResolveStakes() {
+        const ms = this.mpState;
+        if (!ms || ms._resolved) return;
+        ms._resolved = true;
+        clearTimeout(ms._advanceTimer);
+        const iWon = (ms.myWins || 0) > (ms.oppWins || 0);
+        const winnerUsername = iWon ? (this.mpUsername || '') : ms.opponent;
+        if (ms.staked) { ms.candyOutcome = 'pending'; this.draw(); }
+        if (typeof _dogeWalletAction !== 'function') return;
+        _dogeWalletAction('/wallet/bet/resolve', { matchId: ms.roomId, winnerUsername: winnerUsername }).then((res) => {
+            if (this.mpState !== ms) return;
+            if (res && res.ok && res.status === 'settled') ms.candyOutcome = iWon ? '+1' : '-1';
+            else if (res && res.ok && res.status === 'refunded') ms.candyOutcome = 'refunded';
+            else ms.candyOutcome = null;   // pending (opponent hasn't reported) / free / error
+            this.draw();
+            if (typeof _candyRefreshWalletUI === 'function') _candyRefreshWalletUI();   // refresh My Ledger
+        }).catch(() => {});
+    },
+    // Casino Stats lab (D4): the student's Tetris-betting record + expected value per game — the
+    // probability lesson. Fetched into the lobby line when the lobby opens. Graceful for guests.
+    _studyBreakCasinoLine() {
+        const el = document.getElementById('lobby-casino');
+        if (!el || typeof _dogeWalletBase !== 'function') return;
+        const c = _dogeWalletBase();
+        if (!c) return;   // guest / signed out → keep the static hint
+        fetch(c.base + '/wallet/casino', { headers: { 'Authorization': 'Bearer ' + c.token } })
+            .then((r) => (r.ok ? r.json() : null)).then((j) => {
+                if (!j || !j.ok || !(j.games > 0)) return;   // no record yet → keep the static hint
+                const ev = j.netCandy / j.games;
+                const sgn = (n) => (n >= 0 ? '+' : '');
+                el.textContent = `Your record: ${j.wins || 0}W–${j.losses || 0}L · ${sgn(j.netCandy)}${j.netCandy} 🍬 · EV ${sgn(ev)}${ev.toFixed(2)}/game`;
+            }).catch(() => {});
     },
 
     togglePause() {
@@ -14579,6 +14686,7 @@ const studyBreak = {
             if (!this.isValid(replacement)) {
                 this.active = null;
                 this.state = 'gameover';
+                if (this.mode === '1v1') this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
                 this.flash('Hold jammed the stack');
                 this.submitLeaderboardScore();
                 this.updateHud();
@@ -15188,47 +15296,57 @@ const studyBreak = {
     },
 
     drawGameOverCard(flashText) {
+        // Count THIS game into the best-of-3 series (once) + maybe resolve the candy bet.
+        this._studyBreakScoreGameOnce();
         const ctx = this.ctx;
+        const ms = this.mpState;
         // Parse flash text: "YOU WIN! You: 1250 | Bob: 980" or "Opponent fled! ..." or "Bob disconnected. ..."
         let title = 'GAME OVER';
         let detail = '';
-        if (flashText.startsWith('YOU WIN!')) {
-            title = 'YOU WIN!';
-            detail = flashText.replace('YOU WIN! ', '');
-        } else if (flashText.includes('fled!')) {
-            title = 'YOU WIN!';
-            detail = flashText.replace(/Opponent fled! You win! ?/, '');
-        } else if (flashText.includes('disconnected')) {
-            title = 'DISCONNECTED';
-            detail = flashText;
-        } else {
-            detail = flashText;
+        if (flashText.startsWith('YOU WIN!')) { title = 'YOU WIN!'; detail = flashText.replace('YOU WIN! ', ''); }
+        else if (flashText.includes('fled!')) { title = 'YOU WIN!'; detail = flashText.replace(/Opponent fled! You win! ?/, ''); }
+        else if (flashText.includes('disconnected')) { title = 'DISCONNECTED'; detail = flashText; }
+        else { detail = flashText; }
+        // Best-of-3 series line + the candy/next-game status (STUDY_BREAK_STAKES_SPEC Phase 2).
+        let seriesLine = '', statusLine = '';
+        if (ms) {
+            seriesLine = `Best of 3 — you ${ms.myWins || 0} : ${ms.oppWins || 0} ${String(ms.opponent || 'opp').slice(0, 10)}`;
+            if (ms.seriesOver) {
+                const won = (ms.myWins || 0) > (ms.oppWins || 0);
+                title = won ? 'SERIES WON!' : 'SERIES LOST';
+                if (ms.candyOutcome === '+1') statusLine = '🍬 +1 candy to your wallet!';
+                else if (ms.candyOutcome === '-1') statusLine = '🍬 −1 candy (you lost the bet)';
+                else if (ms.candyOutcome === 'refunded') statusLine = 'bet refunded — no agreement';
+                else if (ms.candyOutcome === 'pending') statusLine = 'settling the bet…';
+                else statusLine = 'Esc to exit';
+            } else {
+                statusLine = `Game ${ms.gameNumber || 1} — next game soon… (R to skip)`;
+            }
         }
-        const w = 200;
-        const h = 72;
+        const w = 212;
+        const h = ms ? 100 : 72;
         const x = this.BOARD_X + (this.COLS * this.CELL - w) / 2;
         const y = this.BOARD_Y + (this.VISIBLE_ROWS * this.CELL - h) / 2;
-        // Card
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = '#000000';
-        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-        // Title bar
-        ctx.fillStyle = '#dddddd';
-        ctx.fillRect(x + 1, y + 1, w - 2, 14);
-        ctx.fillStyle = '#000000';
-        ctx.font = '10px Chicago, Arial, sans-serif';
-        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#000000'; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        ctx.fillStyle = '#dddddd'; ctx.fillRect(x + 1, y + 1, w - 2, 14);
+        ctx.fillStyle = '#000000'; ctx.font = '10px Chicago, Arial, sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(title, x + w / 2, y + 11);
-        // Score detail
         ctx.font = '10px Geneva, Arial, sans-serif';
-        ctx.fillText(detail, x + w / 2, y + 32);
-        // Instructions
-        ctx.fillStyle = '#666666';
-        ctx.font = '9px Geneva, Arial, sans-serif';
-        ctx.fillText('R to rematch  •  Esc to exit', x + w / 2, y + 48);
-        ctx.fillStyle = '#000000';
-        ctx.fillText(`Score ${this.score}  •  Lines ${this.lines}`, x + w / 2, y + 60);
+        ctx.fillText(detail, x + w / 2, y + 30);
+        if (ms) {
+            ctx.fillStyle = '#333333'; ctx.font = '9px Geneva, Arial, sans-serif';
+            ctx.fillText(seriesLine, x + w / 2, y + 48);
+            ctx.fillStyle = ms.candyOutcome === '+1' ? '#0a6b2e' : (ms.candyOutcome === '-1' ? '#b00000' : '#000000');
+            ctx.font = '10px Chicago, Arial, sans-serif';
+            ctx.fillText(statusLine, x + w / 2, y + 68);
+            ctx.fillStyle = '#666666'; ctx.font = '9px Geneva, Arial, sans-serif';
+            ctx.fillText(`Score ${this.score} · Esc to exit`, x + w / 2, y + 88);
+        } else {
+            ctx.fillStyle = '#666666'; ctx.font = '9px Geneva, Arial, sans-serif';
+            ctx.fillText('R to rematch  •  Esc to exit', x + w / 2, y + 48);
+            ctx.fillStyle = '#000000'; ctx.fillText(`Score ${this.score}  •  Lines ${this.lines}`, x + w / 2, y + 60);
+        }
         ctx.textAlign = 'left';
     },
 

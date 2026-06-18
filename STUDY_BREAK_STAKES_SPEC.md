@@ -147,8 +147,30 @@ A 3-lens adversarial review (18 agents, 12 confirmed) ran on the backend. **Fixe
 - **sweep only fires on bet/open** — DB-wide, so it clears school-wide whenever any bet opens; a low-frequency
   `setInterval` is optional hardening for Phase 2.
 
-## 10. Phase 2 (client) — NEXT
+## 10. Phase 2 (client) — SHIPPED
 
-Wire the audited backend into the Tetris match flow: eligibility gate (≥1 candy + "1🍬 at stake"), a fresh-nonce
-`matchId` derived on both clients at match-start, escrow-on-accept (both POST `bet/open`), the best-of-3 wrapper,
-resolve-on-end (both POST `bet/resolve`), the live pot indicator, and the Casino Stats lab (`/wallet/casino`).
+Wired into the Tetris match flow (all in `studyBreak`, `ap_stats_roadmap_square_mode.html`):
+- **1v1 is now BEST-OF-3** (first to 2 game-wins). One shared escrow spans the series.
+- **matchId = the server-minted `roomId`** from `match_start` (shared + unguessable on both clients) — this
+  *resolves* the deferred §8 matchId-nonce concern: no client-side derivation, the server already mints it.
+- **Escrow on match start** — both clients `POST /wallet/bet/open {matchId: roomId, opponentUsername}`
+  (`_studyBreakArmStakes`). FULLY GRACEFUL: a guest / stakes-off / pre-migration / insufficient response just
+  leaves the match unstaked (free) — the existing Tetris never breaks.
+- **Best-of-3 series tracking** at the single game-over choke point (`drawGameOverCard → _studyBreakScoreGameOnce`,
+  guarded once-per-game): win→myWins++, loss→oppWins++; at 2 wins (or a forfeit) the series ends. Auto-advances
+  between games (`setTimeout startNewGame`).
+- **Resolve on series end** — `_studyBreakResolveStakes` posts the winner to `/wallet/bet/resolve` (both-confirm →
+  settle, disagree/timeout → refund). The game-over card shows the series score + the candy outcome (+1/−1/refunded).
+- **Casino Stats lab** (`_studyBreakCasinoLine`) — the lobby shows W-L / net candy / **EV per game** from
+  `/wallet/casino` (the probability lesson). Challenge dialog shows "best of 3 · winner takes 2 🍬".
+
+**2-lens adversarial review** (no money-theft/mint path found — candy is fully server-safe via both-confirm-or-refund).
+**Fixed before push:** (1) a forfeit landing in the 3s auto-advance window was swallowed → ended the series
+immediately in `opponentLeft` (no ghost game; reports me as the winner); (2) post-series R/Enter started a phantom
+game → `startNewGame` early-returns when `seriesOver`; (3) `close()` now clears the auto-advance timer before nulling
+`mpState`. **Accepted (candy-safe, documented):** simultaneous double-topout → the series refunds (rare); a mid-series
+rage-quit → refund (the agreed disconnect-voids behavior). Tests: `tests/study-break-stakes.test.js` (18) runs the
+real extracted methods + source-pins the hooks; root suite green except the 6 pre-existing onboarding failures.
+
+**Live now** (migration `0024` is run): a staked best-of-3 fires whenever two signed-in classmates with ≥1 candy
+play 1v1; everyone else plays free. `STAKES_ENABLED=false` on Railway is the kill-switch.
