@@ -13856,9 +13856,23 @@ const studyBreak = {
 
     connectMultiplayerWS() {
         const serverUrl = (window.RAILWAY_SERVER_URL || 'https://curriculumrender-production.up.railway.app').replace(/^http/, 'ws');
-        // Get username from localStorage or fallback
-        this.mpUsername = localStorage.getItem('student-name') || localStorage.getItem('username') || ('Player' + Math.floor(Math.random() * 1000));
+        // Identity = the signed-in roster username (NOT a random Player###). DogePresence.getUsername()
+        // checks rosterClient first; the old localStorage 'student-name'/'username' keys are never written
+        // by the Desk, which is why a ghost Player#### used to appear in classmates' Online lists.
+        this.mpUsername = (typeof DogePresence !== 'undefined' && DogePresence.getUsername)
+            ? DogePresence.getUsername()
+            : (localStorage.getItem('student-name') || localStorage.getItem('username') || ('Player' + Math.floor(Math.random() * 1000)));
 
+        // Prefer the Desk's ALWAYS-ON presence socket (DogePresence auto-connects at boot). Reusing it
+        // means ONE connection under the real identity — no ghost, no double-prompt. DogePresence.handleMessage
+        // already routes every game message (challenge/match/opponent/rtc) to studyBreak, so we don't wire
+        // our own onmessage onto the shared socket.
+        if (typeof DogePresence !== 'undefined') {
+            if (!DogePresence.ws || DogePresence.ws.readyState > 1) { try { DogePresence.connect(); } catch (_) {} }
+            if (DogePresence.ws) { this.mpWs = DogePresence.ws; this.updateLobby(); return; }
+        }
+
+        // Fallback (DogePresence somehow unavailable): open our own socket under the real identity.
         if (this.mpWs && this.mpWs.readyState <= 1) {
             this.updateLobby();
             return;
@@ -16588,6 +16602,15 @@ const DogePresence = {
         return h;
     },
 
+    // The Study Break lobby reuses THIS socket (studyBreak no longer opens its own — see
+    // connectMultiplayerWS), so presence changes route through here, not handleMpMessage.
+    // Mirror the live player list into the lobby so it stays current while open.
+    _syncStudyBreakLobby() {
+        if (typeof studyBreak === 'undefined' || studyBreak.mpOnlinePlayers === undefined) return;
+        studyBreak.mpOnlinePlayers = this.players.slice();
+        if (studyBreak.isOpen && studyBreak.isOpen()) studyBreak.updateLobby();
+    },
+
     toggleRow(username) {
         this.expandedRow = (this.expandedRow === username) ? null : username;
         this.renderDropdown();
@@ -16651,11 +16674,7 @@ const DogePresence = {
                 if (this.expandedRow && !this.players.includes(this.expandedRow)) this.expandedRow = null;
                 this.updateIcon();
                 if (this.dropdownOpen) this.renderDropdown();
-                // Also update studyBreak lobby if it's open
-                if (studyBreak.mpOnlinePlayers !== undefined) {
-                    studyBreak.mpOnlinePlayers = this.players.slice();
-                    if (studyBreak.isOpen && studyBreak.isOpen()) studyBreak.updateLobby();
-                }
+                this._syncStudyBreakLobby();
                 break;
 
             case 'user_online':
@@ -16667,6 +16686,7 @@ const DogePresence = {
                     if (!this.players.includes(data.username)) this.players.push(data.username);
                     this.updateIcon();
                     if (this.dropdownOpen) this.renderDropdown();
+                    this._syncStudyBreakLobby();
                 }
                 break;
 
@@ -16676,10 +16696,17 @@ const DogePresence = {
                 if (this.expandedRow === data.username) this.expandedRow = null;
                 this.updateIcon();
                 if (this.dropdownOpen) this.renderDropdown();
+                this._syncStudyBreakLobby();
                 break;
 
             case 'challenge_received':
-                this.onChallengeReceived(data.from);
+                // Single shared socket now: if the Study Break game is open show its in-game modal,
+                // otherwise wiggle the doge icon (mirrors the old studyBreak.handleMpMessage routing).
+                if (typeof studyBreak !== 'undefined' && studyBreak.isOpen && studyBreak.isOpen()) {
+                    studyBreak.showChallengeDialog(data.from);
+                } else {
+                    this.onChallengeReceived(data.from);
+                }
                 break;
 
             case 'challenge_declined':

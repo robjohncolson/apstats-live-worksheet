@@ -161,13 +161,13 @@ describe('C. server sanitizeLocation / aggregateLocation', () => {
 });
 
 // ── D. The live DogePresence object ──────────────────────────────────────────────
-function loadDoge({ teacher = false } = {}) {
+function loadDoge({ teacher = false, gameOpen = false } = {}) {
   // Mirror the REAL nesting: #doge-dropdown lives INSIDE #doge-presence, whose onclick
   // toggles. A row click therefore bubbles to toggle() unless stopPropagation fires.
   document.body.innerHTML =
     '<span id="doge-presence" class="doge-dim"><span id="doge-badge"></span>' +
     '<div id="doge-dropdown"></div></span>';
-  const calls = { poke: [], challenge: [] };
+  const calls = { poke: [], challenge: [], lobbySync: 0, challengeDialog: [] };
   const sandbox = {
     document,
     console,
@@ -179,7 +179,12 @@ function loadDoge({ teacher = false } = {}) {
     _isTeacher: () => false,
     _candyPoke: (u) => { calls.poke.push(u); },
     DeskRoster: { realName: () => null, isGuest: () => false, load: () => Promise.resolve() },
-    studyBreak: { mpOnlinePlayers: [], isOpen: () => false, updateLobby: () => {} },
+    studyBreak: {
+      mpOnlinePlayers: [],
+      isOpen: () => !!gameOpen,
+      updateLobby: () => { calls.lobbySync++; },
+      showChallengeDialog: (from) => { calls.challengeDialog.push(from); },
+    },
     setTimeout: (...a) => globalThis.setTimeout(...a),
     clearTimeout: (...a) => globalThis.clearTimeout(...a),
     JSON, Math, Date, String, Boolean,
@@ -196,7 +201,7 @@ function loadDoge({ teacher = false } = {}) {
   D.connected = true;
   // sendChallenge needs an open ws; stub a minimal one that records sends.
   D.ws = { readyState: 1, send: (m) => { calls.challenge.push(JSON.parse(m)); } };
-  return { D, calls, dd: () => document.getElementById('doge-dropdown').innerHTML };
+  return { D, calls, sb: sandbox.studyBreak, dd: () => document.getElementById('doge-dropdown').innerHTML };
 }
 
 describe('D. DogePresence render — location chips', () => {
@@ -337,6 +342,40 @@ describe('D. DogePresence — XSS: a hostile peer username cannot break out of o
     D.renderDropdown();
     // The innerHTML must not contain a live `"><img` breakout sequence.
     expect(dd()).not.toContain('"><img');
+  });
+});
+
+describe('F. Study Break identity — username inherited from the Desk (no Player### ghost)', () => {
+  it('connectMultiplayerWS uses the roster identity + reuses the Desk socket (source pin)', () => {
+    const m = /connectMultiplayerWS\s*\(\s*\)\s*\{[\s\S]*?\n    \},/.exec(html);
+    expect(m).not.toBeNull();
+    const body = m[0];
+    // mpUsername comes from DogePresence.getUsername() (roster-aware), not a bare random Player###.
+    expect(body).toContain('DogePresence.getUsername()');
+    expect(body).toContain('this.mpWs = DogePresence.ws'); // reuse the always-on socket
+    // The random Player### only survives as a deep fallback, never the primary assignment.
+    expect(body).toMatch(/DogePresence\.getUsername\(\)[\s\S]*Player/); // getUsername precedes the fallback
+  });
+  it('an incoming challenge routes to the in-game modal when Study Break is OPEN', () => {
+    const { D, calls } = loadDoge({ gameOpen: true });
+    D.onChallengeReceived = (from) => { calls.challenge.push(['wiggle', from]); }; // spy
+    D.handleMessage({ type: 'challenge_received', from: 'Ana_Fox' });
+    expect(calls.challengeDialog).toEqual(['Ana_Fox']);                 // in-game modal
+    expect(calls.challenge.find((c) => c[0] === 'wiggle')).toBeUndefined(); // not the wiggle
+  });
+  it('an incoming challenge wiggles the doge icon when Study Break is CLOSED', () => {
+    const { D, calls } = loadDoge({ gameOpen: false });
+    D.onChallengeReceived = (from) => { calls.challenge.push(['wiggle', from]); }; // spy
+    D.handleMessage({ type: 'challenge_received', from: 'Ana_Fox' });
+    expect(calls.challenge).toContainEqual(['wiggle', 'Ana_Fox']);
+    expect(calls.challengeDialog).toEqual([]);
+  });
+  it('presence changes keep the Study Break lobby player list in sync', () => {
+    const { D, sb } = loadDoge({ gameOpen: true });
+    D.handleMessage({ type: 'presence_snapshot', users: ['Ana_Fox', 'Bo_Cat', 'Me_Self'], locations: {} });
+    expect(sb.mpOnlinePlayers).toEqual(['Ana_Fox', 'Bo_Cat']);    // self dropped, mirrored to the lobby
+    D.handleMessage({ type: 'user_offline', username: 'Bo_Cat' });
+    expect(sb.mpOnlinePlayers).toEqual(['Ana_Fox']);             // live update on leave
   });
 });
 

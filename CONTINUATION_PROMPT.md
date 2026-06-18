@@ -52,6 +52,15 @@ dropdown to stop INSTANTLY challenging to Tetris (it made no sense for non-Desk 
   verify live on the public URL:** open the Desk, click the 🐶 icon → each online kid shows a where-chip; clicking a
   name opens the submenu (challenge only for on-Desk kids). ⚠ `wsx.js` (4888 lines, NOT loaded by any HTML) is a stale
   Desk JS extraction — left untouched; do not treat it as live.
+- **s18 follow-on — Study Break username/ghost FIXED:** opening Tetris used to `identify` under a random `Player###`
+  (the Desk never writes the `student-name`/`username` localStorage keys studyBreak read) → a ghost in classmates'
+  doge lists. `studyBreak.connectMultiplayerWS` now uses `DogePresence.getUsername()` (roster identity) and **REUSES
+  the Desk's always-on DogePresence socket** instead of opening a 2nd one (ONE connection, real identity, no ghost,
+  no double challenge-prompt). `DogePresence.handleMessage` now routes a `challenge_received` to the in-game modal
+  when Study Break is open (else the doge wiggle) and mirrors `user_online`/`user_offline` into the lobby via new
+  `_syncStudyBreakLobby()`. The ghost was in the doge dropdown (global presence), NOT a Live Classroom avatar
+  (classroom-board.js reads a separate `classroom_join` feed). Tests +4 (37 in the doge suite). **Prerequisite for
+  the proposed STUDY BREAK STAKES feature — the server needs both players' real roster usernames to move candy.**
 
 ## ⏭ SESSION 17 SHIPPED (2026-06-18) — candy↔DOGE CONSERVATION AUDIT DONE (3 layers) + F1 lost-update race FIXED
 
