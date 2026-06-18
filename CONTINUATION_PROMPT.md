@@ -1,9 +1,9 @@
-# CONTINUATION PROMPT — candy↔DOGE CONSERVATION AUDIT DONE + F1 lost-update race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (7-number ledger, s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — DOGE PRESENCE location chips + click→submenu (s18) ; candy↔DOGE CONSERVATION AUDIT DONE + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (7-number ledger, s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 17 — candy↔DOGE conservation audit DONE: 3-layer harness + F1 teacher-path lost-update race FIXED).
-> follow-alongs HEAD = the s17 audit commit (was `46cb678`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 18 — doge "Online Now" presence got location chips + a per-peer click→submenu; cr presence now carries a per-connection location).
+> follow-alongs HEAD = the s18 presence commit `6eb8b7c` (was `0b4fae2`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
-> **curriculum_render** (HEAD `6626dc3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
+> **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
 > `C:/Users/rober/Downloads/Projects/school/curriculum_render`; ⚠ stage only own paths (it has many unrelated dirty files).
 > Teacher tests on the **public GH Pages URL** — commit+push promptly; `file://` is not a valid surface. Style:
@@ -12,6 +12,46 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 18 SHIPPED (2026-06-18) — DOGE "Online Now" presence: location chips + click→submenu (no auto-challenge)
+
+**Spec `DOGE_PRESENCE_SUBMENU_SPEC.md`.** From the teacher noticing the 🐶 doge "Online Now" list and the Live
+Classroom avatars DISAGREE (a kid shows in the doge list but not as an avatar). Root cause investigated (3 parallel
+readers): there are TWO presence systems on the **cr server** — the avatar scene (`classroom_join`, room-scoped, only
+the Desk mounts it) vs the global doge feed (`identify`→`user_online`, broadcast to ALL, fed by ANY page with
+`railway_client.js` — worksheets + the quiz app + the Desk). So a kid on a worksheet/quiz shows "online" globally but
+has no avatar. Working as designed; the teacher wanted (a) a LABEL of where each online kid is, and (b) the doge
+dropdown to stop INSTANTLY challenging to Tetris (it made no sense for non-Desk kids, who can't even receive it).
+- **Built (two repos, both pushed + live):** the doge dropdown now shows a per-peer **location chip** (students see a
+  COARSE bucket Desk/Worksheet/Quiz/Study-guide; the **teacher** sees the exact lesson, gated on `_deskIsTeacher()`),
+  and clicking a name opens an **inline submenu** instead of an instant challenge: **⚔ Challenge to Study Break**
+  (enabled ONLY when the peer is `onDesk` — the game + challenge-receiver live in the Desk) + **🍬 Send candy**
+  (anywhere; reuses the `_candyPoke` pipeline). Desk students now **auto-connect** presence at boot (`_autoPresence`)
+  so they reliably appear + are challengeable (fixes the old inverted asymmetry where only kids who'd clicked the icon
+  showed up). The Study Break in-game **lobby** was brought to parity (onDesk-gated + escaped).
+- **Protocol (additive/backward-compatible):** `identify` gains optional `location:{surface,lesson}`; `user_online`
+  echoes it; `presence_snapshot` gains a parallel `locations` map (`users` stays a flat string[]). cr server
+  (`railway-server/server.js`): `wsLocation` per-connection Map + `sanitizeLocation` (whitelisted surface, lesson
+  clamped 40 chars) + `aggregateLocation` (**onDesk wins** — the challengeable surface). Surface derived purely from
+  the URL by a `_presenceSurface()` helper in BOTH `railway_client.js` copies (fa = worksheet `U#L#`/edgar/mit/study-guide;
+  cr = quiz `?u=&l=`/worksheet) + the Desk's two inline sockets hardcode `desk`.
+- **Adversarial review (3-lens, per-finding verify; 10 raised → 6 confirmed, 4 refuted):** caught + FIXED a **BLOCKER
+  stored-XSS** — the untrusted peer username (the presence WS is UN-auth'd; the server only `.trim()`s it) was
+  interpolated into a double-quoted `onclick` with only single-quote escaping → a crafted client `"><img onerror=…>`
+  fired in every viewer's Desk origin (incl. the teacher). Fixed across ALL sinks (toggleRow/challenge/candy + the
+  lobby) via `_deskEsc(JSON.stringify(name))` (entities can't break out of the attr; JSON keeps the JS string valid).
+  Also self-caught a **bubbling blocker** (the dropdown is nested in the toggling `#doge-presence` span → a row click
+  bubbled to `toggle()` and closed the menu before the submenu showed; fixed with `stopPropagation`, verified with a
+  jsdom probe). 3 nits documented as accepted gaps in spec §8 (pre-existing dual-socket `Player###` ghost while in
+  Study Break MP; redundant close re-broadcast; reconnect jitter).
+- **Files:** cr `railway-server/server.js` + `railway_client.js` (`80dedc2`); fa `ap_stats_roadmap_square_mode.html` +
+  `railway_client.js` + `DOGE_PRESENCE_SUBMENU_SPEC.md` + new `tests/doge-presence-submenu.test.js` (`6eb8b7c`). Tests:
+  new suite **33/33** (runs the real clients, server location logic, the live DogePresence render/submenu, + XSS
+  no-injection); root **7288 pass / the SAME 6 pre-existing onboarding failures** (desk-gating-fixes / desk-self-signup /
+  desk-user-role / desk-signin-wall), UNCHANGED; cr websocket suite **32/32**. No migration. **⚠ The teacher should
+  verify live on the public URL:** open the Desk, click the 🐶 icon → each online kid shows a where-chip; clicking a
+  name opens the submenu (challenge only for on-Desk kids). ⚠ `wsx.js` (4888 lines, NOT loaded by any HTML) is a stale
+  Desk JS extraction — left untouched; do not treat it as live.
 
 ## ⏭ SESSION 17 SHIPPED (2026-06-18) — candy↔DOGE CONSERVATION AUDIT DONE (3 layers) + F1 lost-update race FIXED
 
