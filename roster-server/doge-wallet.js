@@ -152,20 +152,6 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       dogeAddress: a.doge_address || null,
     };
   }
-  // The whole account row for an upsert (numeric fields are totals, not increments).
-  function rowFor(acc, over) {
-    const a = acc || {};
-    return {
-      doge_address: a.doge_address || null,
-      candy_eaten: num(a.candy_eaten),
-      candy_given: num(a.candy_given),
-      doge_balance: num(a.doge_balance),
-      doge_sent: num(a.doge_sent),
-      doge_cost_basis: num(a.doge_cost_basis),
-      ...over,
-    };
-  }
-
   // ── GET /wallet ── the student's own wallet ────────────────────────────────
   app.get('/wallet', async (req, res) => {
     const sid = sidOf(req);
@@ -376,7 +362,9 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     }
     const accRes = await db.getDogeAccount(studentId);
     if (accRes.error && !isDogeMissing(accRes.error)) return res.status(500).json({ ok: false, error: 'Database error' });
-    const up = await db.upsertDogeAccount(studentId, rowFor(accRes.data, { doge_address: addr || null }));
+    // Narrow single-column write (never the whole row) so registering an address
+    // can't clobber a concurrent spend — see WALLET_CONSERVATION_FINDINGS F1.
+    const up = await db.updateDogeField(studentId, 'doge_address', addr || null);
     if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
     return res.json({ ok: true, studentId, dogeAddress: addr || null });
   });
@@ -412,7 +400,11 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     // Never reduce a monotonic counter: if cap dips below the current value (e.g. during
     // the pre-0022 transition), leave it unchanged rather than clawing candy back.
     const newVal = Math.max(num(acc[field]), Math.min(num(acc[field]) + amount, cap));
-    const up = await db.upsertDogeAccount(studentId, rowFor(acc, { [field]: newVal }));
+    // Narrow single-column write (NOT a whole-row upsert): only `field` changes, so a
+    // student's concurrent buy/sell/gift that commits between the read above and this
+    // write is NOT clobbered. The old upsertDogeAccount(rowFor(acc,…)) carried stale
+    // doge_balance/doge_cost_basis back and lost the spend — WALLET_CONSERVATION_FINDINGS F1.
+    const up = await db.updateDogeField(studentId, field, newVal);
     if (up.error) { if (isDogeMissing(up.error)) return notProvisioned(res); return res.status(500).json({ ok: false, error: 'Database error' }); }
     try { await db.insertDogeLedger({ student_id: studentId, kind: field === 'candy_given' ? 'give' : 'send', candy_delta: field === 'candy_given' ? -(newVal - num(acc[field])) : 0, doge_delta: field === 'doge_sent' ? -(newVal - num(acc[field])) : 0 }); } catch (_) {}
     return res.json({ ok: true, studentId, [field]: newVal });

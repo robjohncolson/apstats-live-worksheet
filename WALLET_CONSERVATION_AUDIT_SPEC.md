@@ -1,6 +1,12 @@
 # WALLET_CONSERVATION_AUDIT_SPEC — Redex / state-machine integrity audit of the candy↔DOGE economy
 
-> **Status:** SPEC (not built). Scoped 2026-06-17 (s16). The candy/DOGE economy is now **bidirectional**
+> **Status: ✅ DONE (s17, 2026-06-18).** All three layers built + green (Layer A 600-run fuzz, Layer B
+> 150-run real-plpgsql differential via pglite, Layer C Redex `PASS 1200/1200`); roster-server 1015/1015.
+> An adversarial review (19 agents, 5 lenses) found **one real bug — F1 (major): a lost-update race in the
+> teacher `markEndpoint` whole-row upsert — now FIXED** (narrow `db.updateDogeField`), plus F2/F3/C1 coverage
+> hardening. Core conservation (buy/sell/gift, I1–I9) is **SOUND**. Findings: `WALLET_CONSERVATION_FINDINGS.md`.
+>
+> Scoped 2026-06-17 (s16). The candy/DOGE economy is now **bidirectional**
 > (s16 `doge_sell` cash-out added the `Realized` term + a brand-new guarded SQL function). The
 > continuation prompt flags a **conservation audit** as "the strong, still-open" integrity target.
 > This applies the **Session-13 grade-integrity playbook** (`formal/grade-model/` Redex + `fast-check`

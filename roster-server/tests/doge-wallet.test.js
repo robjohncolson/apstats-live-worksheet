@@ -30,6 +30,9 @@ function start({ ledgers = {}, accounts = {}, dbMissing = false, rowOfNulls = fa
     async listRoster(section) { if (dbMissing) return miss; return { data: roster.filter((r) => !section || r.section === section), error: null }; },
     async updateDogeChain(sid, patch) { if (dbMissing || chainWriteFails) return miss; const row = { ...(acc.get(sid) || { student_id: sid }), ...patch }; acc.set(sid, row); return { data: row, error: null }; },
     async upsertDogeAccount(sid, patch) { if (dbMissing) return miss; const row = { student_id: sid, ...patch }; acc.set(sid, row); return { data: row, error: null }; },
+    // Narrow single-column write (F1 fix): preserves every OTHER column on the row,
+    // so it can't clobber a concurrent spend's doge_balance/doge_cost_basis.
+    async updateDogeField(sid, field, value) { if (dbMissing) return miss; const row = { ...(acc.get(sid) || { student_id: sid }), [field]: value }; acc.set(sid, row); return { data: row, error: null }; },
     async insertDogeLedger(row) { dogeLedger.push(row); return { data: row, error: null }; },
     async listDogeLedger(sid) { return { data: dogeLedger.filter((r) => r.student_id === sid), error: null }; },
     async getRoleByStudentId() { return 'student'; },
@@ -655,5 +658,50 @@ describe('DOGE wallet — cash out (DOGE → candy, SELL_DOGE_SPEC)', () => {
     const r = await req(ctx, 'POST', '/wallet/sell-doge', { token: 'tok:s1', body: { doge: 1 } });
     expect(r.status).toBe(503);
     expect(r.body.error).toMatch(/not provisioned/);
+  });
+});
+
+describe('DOGE wallet — teacher disbursement is clobber-safe (conservation audit findings)', () => {
+  // FINDING F1 (major): markEndpoint USED to read the whole row then upsert it back via
+  // rowFor(), so a student buy/sell that committed between the read and the write was lost
+  // (its doge_balance/doge_cost_basis clobbered to the stale values → candy minted/destroyed).
+  // The fix is a narrow single-column updateDogeField. This pins it: a concurrent buy that
+  // landed AFTER the teacher's read must SURVIVE the mark-given write.
+  it('F1: mark-given does NOT clobber a buy that committed after the teacher read the account', async () => {
+    const SID = UID;
+    // the REAL persisted row already reflects the student's buy (balance 10, basis 10)…
+    const store = new Map([[SID, { student_id: SID, candy_given: 0, doge_balance: 10, doge_sent: 0, doge_cost_basis: 10, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0 }]]);
+    // …but the teacher's getDogeAccount read happened BEFORE the buy (stale snapshot).
+    const STALE = { student_id: SID, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 0 };
+    const db = {
+      async getDogeAccount() { return { data: { ...STALE }, error: null }; },
+      async updateDogeField(sid, field, value) { const row = { ...(store.get(sid) || { student_id: sid }), [field]: value }; store.set(sid, row); return { data: row, error: null }; },
+      async upsertDogeAccount(sid, patch) { const row = { student_id: sid, ...patch }; store.set(sid, row); return { data: row, error: null }; },
+      async insertDogeLedger() { return { data: null, error: null }; },
+    };
+    const ledgerDb = { async getLedgerByStudent() { return { data: quizRows(72), error: null }; } };   // 20 candy earned
+    const app = express(); app.use(express.json());
+    mountDogeWallet(app, { db, ledgerDb, verifyToken: () => null, getPrice: async () => PRICE });
+    const ctx = { server: http.createServer(app) };
+    const r = await req(ctx, 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: SID, amount: 5 } });
+    expect(r.status).toBe(200);
+    expect(r.body.candy_given).toBe(5);
+    const after = store.get(SID);
+    expect(after.doge_balance).toBe(10);       // the concurrent buy SURVIVES (old upsert zeroed it)
+    expect(after.doge_cost_basis).toBe(10);    // …and its cost basis (else 10 candy would be minted into Owed)
+    expect(after.candy_given).toBe(5);
+  });
+
+  // FINDING F2 (minor): the mark-given cap is Earned + Received − Gifted − Converted + REALIZED.
+  // No prior test set candy_realized != 0, so a regression dropping the +Z term would pass. This
+  // pins it: a kid who cashed DOGE out for a gain can materialize that realized candy.
+  it('F2: mark-given cap INCLUDES candy_realized (+Z) — a cash-out gain is materializable', async () => {
+    const ctx = start({
+      ledgers: { [UID]: quizRows(36) },   // 10 candy earned
+      accounts: { [UID]: { student_id: UID, candy_given: 0, doge_balance: 0, doge_sent: 0, doge_cost_basis: 0, candy_gifted_out: 0, candy_gifted_in: 0, candy_realized: 5 } },
+    });
+    const g = await req(ctx, 'POST', '/wallet/mark-given', { secret: 'TS', body: { studentId: UID, amount: 12 } });
+    expect(g.status).toBe(200);
+    expect(g.body.candy_given).toBe(12);   // cap = 10 earned + 5 realized = 15; WITHOUT +Z it would clamp to 10
   });
 });

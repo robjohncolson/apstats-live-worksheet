@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeSell, dogeCoinFlows, dogeGiftedSince };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeSell, dogeCoinFlows, dogeGiftedSince };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -311,6 +311,23 @@ export function createDb(client) {
   async function updateDogeChain(studentId, chain) {
     return client.from('doge_account')
       .update({ ...chain, updated_at: new Date().toISOString() })
+      .eq('student_id', studentId).select('*').maybeSingle();
+  }
+  // Narrow single-column write for the teacher disbursement path (mark-given /
+  // mark-sent / set-address). Like updateDogeChain, it touches ONLY the named
+  // column, so a concurrent atomic doge_spend/doge_gift/doge_sell on the SAME
+  // student can NEVER be clobbered. This REPLACES the old upsertDogeAccount(rowFor(..))
+  // read-modify-write, which carried doge_balance/doge_cost_basis/candy_given/doge_sent
+  // from a possibly-stale read and lost a concurrent buy/sell (the lost-update race
+  // migration 0019's atomic functions exist to prevent — found by the conservation
+  // audit, WALLET_CONSERVATION_FINDINGS F1). A DO-NOTHING insert ensures the row
+  // exists first (an UPDATE alone no-ops when the student has no account yet).
+  async function updateDogeField(studentId, field, value) {
+    const ALLOWED = new Set(['candy_given', 'doge_sent', 'doge_address']);
+    if (!ALLOWED.has(field)) return { data: null, error: { code: 'BAD_FIELD', message: 'unsupported field' } };
+    await client.from('doge_account').upsert([{ student_id: studentId }], { onConflict: 'student_id', ignoreDuplicates: true });
+    return client.from('doge_account')
+      .update({ [field]: value, updated_at: new Date().toISOString() })
       .eq('student_id', studentId).select('*').maybeSingle();
   }
   // Atomic kid→kid candy transfer (migration 0021 fn doge_gift). Returns { data, error }

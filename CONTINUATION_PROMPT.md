@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — DOGE ⇄ candy BIDIRECTIONAL (cash DOGE back to candy at the live rate, 7-number ledger, s16) ; candy economy REVIVED (poke + materialized ledger, s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — candy↔DOGE CONSERVATION AUDIT DONE + F1 lost-update race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (7-number ledger, s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 16 — DOGE ⇄ candy bidirectional cash-out + wallet UI declutter).
-> follow-alongs HEAD = `664de25`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 17 — candy↔DOGE conservation audit DONE: 3-layer harness + F1 teacher-path lost-update race FIXED).
+> follow-alongs HEAD = the s17 audit commit (was `46cb678`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `6626dc3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -13,22 +13,33 @@
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
 
-## ⏭⏭ NEXT BUILD (SCOPED — ready to fan out FRESH) — candy↔DOGE conservation audit (Redex + property-test + differential)
+## ⏭ SESSION 17 SHIPPED (2026-06-18) — candy↔DOGE CONSERVATION AUDIT DONE (3 layers) + F1 lost-update race FIXED
 
-**Spec: `WALLET_CONSERVATION_AUDIT_SPEC.md` (s16).** Apply the s13 grade-integrity playbook to the now-BIDIRECTIONAL wallet
-economy. **WHY:** the s16 review found the in-memory `dogeSell` test fake HAND-COPIES the SQL `doge_sell` formula → a bug
-copied into BOTH passes every test; there is **no independent oracle running the real SQL** (same latent risk for
-`doge_spend`/`doge_gift`). Verify the 7-number identity `Earned + Received + Realized = Gifted + Converted + Materialized +
-Owed` holds under every real transition. **Three layers — build the shared `roster-server/tests/fixtures/wallet-world.js`
-(trajectory generator + canonical JS reducer + invariants I1–I8) FIRST, THEN fan out A/B/C in parallel:**
-- **A — `fast-check` property-fuzz** of I1–I8 through the real JS reducer + the live route handlers (`fast-check` already a roster-server devDep).
-- **B — real-Postgres differential harness** via **`@electric-sql/pglite`** (in-process WASM Postgres, NO Docker; NEW
-  roster-server devDep) — runs the REAL `doge_spend`/`doge_gift`/`doge_sell` plpgsql from migrations 0019/0021/0022/0023 and
-  diffs vs the JS reducer. **THIS closes the flagged gap.** First build step: confirm pglite runs plpgsql (else testcontainers).
-- **C — PLT Redex** formal model `formal/wallet-model/` mirroring `formal/grade-model/` (model `.rkt` + `crosscheck.rkt` +
-  `roster-server/tools/wallet-model-emit-cases.mjs` → `cases.json`; **PowerShell `racket`, NOT MSYS bash — segfaults**; racket v9.2 + redex installed via scoop).
-Findings → `WALLET_CONSERVATION_FINDINGS.md`, fixes gated (new `0024_*` migration if the bug is in SQL; mirror in
-`deriveBalances` + the reducer — the two-place rule). Full invariants (I1–I9), file manifest, fan-out phases, and gotchas are in the spec.
+**Spec `WALLET_CONSERVATION_AUDIT_SPEC.md` → DONE; findings `WALLET_CONSERVATION_FINDINGS.md`.** Applied the s13 grade-integrity
+playbook to the now-BIDIRECTIONAL wallet. Built the shared foundation then all three layers; ran a 19-agent / 5-lens adversarial
+review of the harness itself (14 raw findings → **4 real, 10 refuted**). **Core conservation (buy/sell/gift, the 7-number identity
+`Earned+Received+Realized=Gifted+Converted+Materialized+Owed`, invariants I1–I9) is SOUND** — but the review caught **one real
+major bug the 3 oracles structurally couldn't reach (F1), now FIXED.**
+- **Foundation `roster-server/tests/fixtures/wallet-world.js`** — canonical JS reducer (mirrors the SQL guards) + I1–I8 checks +
+  the shared `fast-check` trajectory generator. Conversion peg imported from `doge-econ.js` (no third copy).
+- **Layer A `tests/wallet-conservation.test.js`** — 600-run fuzz of I1–I8 + deterministic I4 guards + I6/I8 round-trip + the s16
+  objections pinned as empirical disproofs + a live buy→sell through the REAL routes.
+- **Layer B `tests/wallet-conservation-pg.test.js` + `tests/fixtures/pg-wallet.js`** — the headline: a 150-run **differential of the
+  REAL `doge_spend`/`doge_gift`/`doge_sell` plpgsql** (in **`@electric-sql/pglite`**, WASM Postgres, NO Docker — new roster-server
+  devDep; confirmed it runs plpgsql) vs the reducer. **Closes the s16 "fake hand-copies the SQL" gap.** Plus the C1 rolling-cap pin.
+- **Layer C `formal/wallet-model/` + `roster-server/tools/wallet-model-emit-cases.mjs`** — Redex exact-rational column model,
+  cross-checked vs the JS oracle → `PASS 1200/1200`. Run: `node roster-server/tools/wallet-model-emit-cases.mjs` then **PowerShell**
+  `racket formal/wallet-model/crosscheck.rkt` (racket v9.2 + redex via scoop; **segfaults under MSYS bash → PowerShell**).
+- **FINDING F1 (major, FIXED):** `markEndpoint` (mark-given/mark-sent/address) was a read-modify-write that upserted the WHOLE row
+  via `rowFor()` → a student buy/sell committing between the teacher's read and write was clobbered (candy minted/destroyed). Exactly
+  the lost-update race 0019's atomic fns exist to prevent; `updateDogeChain` already dodges it with a narrow `.update()`. **Fix:** new
+  `db.updateDogeField()` (narrow single-column write), both callers switched, `rowFor` deleted. **No migration** (JS-side bug). Residual
+  clamp-staleness is the already-surfaced `candyBalanceRaw<0` (a future atomic `doge_mark` 0024 would close it; out of scope, NOT a
+  conservation hole). **F2/F3** (mark-given `+candy_realized` term + the clamp had no independent oracle) and **C1** (gift cap modeled
+  lifetime vs SQL rolling-24h) hardened with targeted tests.
+- **Tests:** roster-server **1015/1015**; Layer C **1200/1200**; root **7255 pass / the SAME 6 pre-existing onboarding failures**
+  (desk-gating-fixes / desk-self-signup / desk-user-role / desk-signin-wall), UNCHANGED. The F1 fix is roster-server-only (auto-deploys
+  to Railway on push) — no migration for the teacher to run.
 
 ## ⏭ SESSION 16 SHIPPED (2026-06-17) — DOGE ⇄ candy BIDIRECTIONAL: cash DOGE back to candy at the live rate (7-number ledger)
 
@@ -329,11 +340,10 @@ teacher hit are fixed and 20-agent adversarially reviewed (1 MAJOR + NITs folded
 > end-to-end. **No open task in this program.** The reusable recipe: identify/extract the pure logic → fixture + generator → assert
 > invariants (exhaustive when the state space is small, fast-check/seeded-random when large) → pin findings → fix → (optional)
 > live-code harness via the `fnBody` extractor. **Possible NEW targets if reopened:** Live Classroom poll/vote protocol (wants TLA+,
-> not fast-check — but DEPRECATED per s15), or the **candy/DOGE wallet conservation math** — now **SCOPED as the NEXT BUILD**
-> in `WALLET_CONSERVATION_AUDIT_SPEC.md` (see the ⏭⏭ NEXT BUILD block at the top): the 7-number identity
-> `Earned+Received+Realized=Gifted+Converted+Materialized+Owed` (Realized added by the s16 cash-out) gets the full Layer A
-> (fast-check) + Layer B (real-Postgres differential via pglite — closes the "fake hand-copies the SQL" gap) + Layer C (Redex)
-> treatment. NOT yet built — fan it out fresh.
+> not fast-check — but DEPRECATED per s15), or the **candy/DOGE wallet conservation math** — ✅ **DONE (s17)**: the 7-number
+> identity `Earned+Received+Realized=Gifted+Converted+Materialized+Owed` got the full Layer A (fast-check) + Layer B (real-Postgres
+> differential via pglite — closes the "fake hand-copies the SQL" gap) + Layer C (Redex) treatment, plus a 19-agent adversarial
+> review that caught + FIXED F1 (the teacher-path lost-update race). See the SESSION 17 block at the top + `WALLET_CONSERVATION_FINDINGS.md`.
 > Findings doc: `GRADE_SIMULATION_FINDINGS.md`; memory: `project_grade_simulator.md` + `doge-candy-buyback-decisions.md`.
 > (DOGE is no longer "paused" — see s15/s16.)
 
