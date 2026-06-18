@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — AVATAR MENU: click avatar → name → 🍬 candy / ⚔️ game (s20) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → My Ledger (s20) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 20 — Live Classroom AVATAR MENU: click an avatar → reveal name → 🍬 Send candy / ⚔️ Start a game; SHIPPED + LIVE).
-> follow-alongs HEAD = the s20 avatar-menu commit `1d6ee87` (was `abd6392`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> follow-alongs HEAD = the s20 avatar self-click commit `95d6e75` (was `1d6ee87`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -32,6 +32,11 @@ and its floating real names help monitoring, so it's UNTOUCHED).
   if presence says the peer is off-Desk). Dismiss: outside-click (bubble-phase doc handler with a
   `_handlingClick` guard so the opening click doesn't self-close) or Esc; switching avatars resets to
   the name stage; `_reposition()` nudges the popover into the viewport (flips below the head near the top).
+- **Tap your OWN avatar → My Ledger** (same-session follow-on, `95d6e75`): the hit-test no longer skips
+  self when the new `selfClickable` mount opt is set (Desk passes it; cockpit omits → self stays
+  unclickable, no self-nudge); the payload carries `isSelf` and the Desk's `onAvatarClick` routes it to
+  `openWallet()`. Classmate = social menu, self = wallet. (Clicking self while a classmate popover is open
+  closes the popover via its outside-click handler and opens the wallet.)
 - **SUPERSEDES** the old instant candy-poke-on-tap (CANDY_POKE_SPEC.md) — tapping an avatar now opens
   the menu instead of immediately sending 1 candy.
 - **XSS-safe:** classroom-WS usernames are UN-authenticated/untrusted; the name renders via
@@ -40,11 +45,15 @@ and its floating real names help monitoring, so it's UNTOUCHED).
 - **3-lens adversarial review (interaction/security/integration) + per-finding verify:** all voted
   **ship**; 5 raw → **3 confirmed minor**, 0 uncertain — one root cause (edge-of-viewport clamp) folded
   via `_reposition()`. No correctness/security/regression issues.
-- **Tests:** new `tests/desk-avatar-menu.test.js` (15, runs the real controller), `classroom-board` +4
-  (hideLabel scope + hit-test coords), `candy-poke` rewired. Root **7330 pass / the SAME 6 pre-existing
-  onboarding failures** (desk-gating-fixes / desk-self-signup / desk-user-role / desk-signin-wall),
-  UNCHANGED. Frontend-only (no roster-server change). **Teacher: verify live on the public Desk** — open
-  Live Classroom, tap a classmate's avatar → name → tap again → Send candy / Start a game.
+- **Tests:** new `tests/desk-avatar-menu.test.js` (15, runs the real controller), `classroom-board` +5
+  (hideLabel scope + hit-test coords + self-click), `candy-poke` rewired + self→wallet pin. Root **7331+
+  pass / the SAME 6 pre-existing onboarding failures** (desk-gating-fixes / desk-self-signup /
+  desk-user-role / desk-signin-wall), UNCHANGED — PLUS, since this session, ~1 ADDITIONAL unrelated suite
+  flakes under the full PARALLEL run (rotates: gradebook-feeder-wiring / teacher-student-console-deeplink;
+  both pass 108/108 in isolation — pre-existing jsdom test-isolation fragility, NOT a product regression;
+  the avatar suites are deterministic). Frontend-only (no roster-server change). **Teacher: verify live on
+  the public Desk** — tap a classmate's avatar → name → tap again → Send candy / Start a game; tap your OWN
+  avatar → My Ledger opens.
 
 ## ⏭ SESSION 19 SHIPPED (2026-06-18) — STUDY BREAK STAKES: bet 1 candy on a Tetris match (BACKEND + conservation audit, Phase 1)
 
