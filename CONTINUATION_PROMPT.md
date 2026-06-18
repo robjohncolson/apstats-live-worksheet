@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — AVATAR MENU: click avatar → name → 🍬 candy / ⚔️ game (s20) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 19 — Study Break STAKES: bet 1 candy on a best-of-3 Tetris match. Backend (Phase 1) + client (Phase 2) both SHIPPED + LIVE; migration 0024 RUN).
-> follow-alongs HEAD = the s19 stakes-client commit `abd6392` (was `2e12390`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 20 — Live Classroom AVATAR MENU: click an avatar → reveal name → 🍬 Send candy / ⚔️ Start a game; SHIPPED + LIVE).
+> follow-alongs HEAD = the s20 avatar-menu commit `1d6ee87` (was `abd6392`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,39 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 20 SHIPPED (2026-06-18) — Live Classroom AVATAR MENU: click → name → 🍬 candy / ⚔️ game (Desk only)
+
+**Spec `AVATAR_MENU_SPEC.md`. fa HEAD `1d6ee87`.** From the teacher: the always-on floating
+usernames over avatars are hard to read; make it click-to-reveal AND let a click send candy or
+start a game — "loop it all together." Teacher locked two decisions via the design question: a
+**two-stage reveal** (tap 1 → name chip; tap 2 / tapping the chip → the action menu) and **scope
+= student Desk ONLY** (the teacher cockpit already has its own richer click-popup + Select-Students
+and its floating real names help monitoring, so it's UNTOUCHED).
+- **No floating names on the Desk.** `canvas_engine.js` paints `entity.getLabelSpec().text` every
+  frame; `BoardSprite.hideLabel` (from the new `hideNameLabels` mount opt) makes `getLabelSpec()`
+  return null. Desk mount passes `hideNameLabels:true`; `teacher-classroom.html` omits it → cockpit
+  names still float. PlayerSprite inherits it (your own name is hidden too; you can't click yourself).
+- **`_avatarMenu`** (Desk object literal near `_candyPoke`): the board hit-test now forwards
+  `{username, selectMode, clientX, clientY}`; first tap opens a `position:fixed` `.avatar-pop` name
+  chip, a 2nd tap (or tapping the chip) advances to 🍬 **Send candy** (→ `_candyPoke`, all guards) +
+  ⚔️ **Start a game** (→ `DogePresence.sendChallenge`, auto-opens the match on accept; disabled only
+  if presence says the peer is off-Desk). Dismiss: outside-click (bubble-phase doc handler with a
+  `_handlingClick` guard so the opening click doesn't self-close) or Esc; switching avatars resets to
+  the name stage; `_reposition()` nudges the popover into the viewport (flips below the head near the top).
+- **SUPERSEDES** the old instant candy-poke-on-tap (CANDY_POKE_SPEC.md) — tapping an avatar now opens
+  the menu instead of immediately sending 1 candy.
+- **XSS-safe:** classroom-WS usernames are UN-authenticated/untrusted; the name renders via
+  `textContent` and actions wire via `addEventListener` — no `onclick=""` interpolation sink (the s18
+  doge-submenu bug class). Confirmed by review.
+- **3-lens adversarial review (interaction/security/integration) + per-finding verify:** all voted
+  **ship**; 5 raw → **3 confirmed minor**, 0 uncertain — one root cause (edge-of-viewport clamp) folded
+  via `_reposition()`. No correctness/security/regression issues.
+- **Tests:** new `tests/desk-avatar-menu.test.js` (15, runs the real controller), `classroom-board` +4
+  (hideLabel scope + hit-test coords), `candy-poke` rewired. Root **7330 pass / the SAME 6 pre-existing
+  onboarding failures** (desk-gating-fixes / desk-self-signup / desk-user-role / desk-signin-wall),
+  UNCHANGED. Frontend-only (no roster-server change). **Teacher: verify live on the public Desk** — open
+  Live Classroom, tap a classmate's avatar → name → tap again → Send candy / Start a game.
 
 ## ⏭ SESSION 19 SHIPPED (2026-06-18) — STUDY BREAK STAKES: bet 1 candy on a Tetris match (BACKEND + conservation audit, Phase 1)
 
