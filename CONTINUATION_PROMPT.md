@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — DOGE ⇄ candy BIDIRECTIONAL (cash DOGE back to candy at the live rate, 7-number ledger, s16) ; candy economy REVIVED (poke + materialized ledger, s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 16 — DOGE ⇄ candy bidirectional cash-out).
-> follow-alongs HEAD = `5c2f3c3`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-17 (session 16 — DOGE ⇄ candy bidirectional cash-out + wallet UI declutter).
+> follow-alongs HEAD = `3c8ff13`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `6626dc3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -59,6 +59,19 @@ review (2 minor findings folded; 3 plausible objections DISPROVEN) → pushed. S
   (desk-gating-fixes / desk-self-signup / desk-user-role / desk-signin-wall), UNCHANGED. ⚠ KNOWN test-quality gap (review,
   accepted): the in-memory `dogeSell` fake hand-copies the SQL formula, so a bug copied into BOTH would pass — a live
   Postgres differential harness over `doge_sell`/`doge_spend`/`doge_gift` is the strong follow-on (see grade-integrity ↓).
+- **WALLET UI DECLUTTER (follow-on, fa `3c8ff13`):** teacher: "the candy/DOGE block in My Ledger is cluttered." A 6-lens
+  design panel (System-7-native + info-hierarchy won) → synthesis → critique rebuilt the block as a titled **"Candy & DOGE"**
+  System-7 sub-panel: ONE candy-to-spend hero + ONE DOGE asset line (`Ɖ held · worth · maturity · gain ▲/▼`) + three native
+  `.s7btn` pills (Buy / Cash out / Gift) that open **ONE inline form at a time** (live `→ ≈` preview), with the full 7-number
+  ledger behind a **▸ Details** disclosure (exact values; the face uses `_candyFmt`/`_dogeFmt` glance rounding — fixes the old
+  "0.7 vs 1 / up 0%" wart). Pure display-only refactor of `_dogeWalletRender` (reuses `_dogeWalletAction`/`_dogeWalletGiftForm`/
+  `_dogeWalletChainArm` + endpoints unchanged); new `_walletLedgerDetail`. A 2nd adversarial review of the IMPLEMENTATION caught
+  6 minor issues — ALL folded (hero/footer contradiction on a price outage; "Held Ɖ 0 / Worth 🍬 0" when all coins are on-chain;
+  "7.0" stray decimal; "0.0 ready" for tiny matured amounts; sub-1% moves swallowed as "even" → now show direction off the raw
+  delta; an incoming candy-gift repaint that ate a half-typed form → now skipped while a wallet input is focused). New jsdom
+  EXECUTION test `tests/desk-wallet-render.test.js` (14) runs the REAL panel across all states; root suite 7252 pass / the 6
+  pre-existing onboarding failures. Spec: `WALLET_REDESIGN_SPEC.md`. **⚠ Intentional tradeoff:** the on-chain watch line moved
+  INTO ▸ Details (cuts BlockCypher polling to only-while-open) — add a face hint if a glance at real deposited DOGE is wanted.
 
 ## ⏭ SESSION 15 SHIPPED (2026-06-17) — calendar load-fix + cr identity #2 + CANDY economy REVIVED (poke + 6-number ledger + DOGE floors)
 
