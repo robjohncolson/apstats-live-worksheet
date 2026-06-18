@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → My Ledger (s20) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 21 — keyboard MODAL ESCAPE audit: every Desk content modal is now Escape-dismissable; SHIPPED + LIVE).
-> follow-alongs HEAD = the s21 modal-escape commit `618317b` (was `95d6e75`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 22 — self-click avatar now plays a light happy-bounce emote instead of opening My Ledger; SHIPPED + LIVE).
+> follow-alongs HEAD = the s22 self-emote commit `1afff24` (was `618317b`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,29 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 22 SHIPPED (2026-06-18) — self-click avatar → happy BOUNCE emote (replaces the s20 "open My Ledger")
+
+**fa HEAD `1afff24`. Spec `AVATAR_MENU_SPEC.md` (AVATAR_SELF_EMOTE section).** Teacher: auto-opening My Ledger
+on a self-tap (s20 `95d6e75`) felt "intense." Replaced with a light delight; My Ledger stays in the Apps menu +
+desktop icon. **Picked a bounce, NOT a wave** — the mascot (`sprite.png`, 80×96 frames, 11 cols × 2 rows;
+top row = right-facing, bottom = left mirror) is an **armless pink cat-blob**, so a wave is unnatural and would
+need new art; a hop reads happy with ZERO new frames.
+- **Board (`classroom-board.js`):** `PlayerSprite.playEmote()` sets a one-shot `_emoteMs` timer; `update()` ticks
+  it; `render()` adds a render-space hop (`-|sin|·EMOTE_HOP_PX`) + decaying sway (pure cosmetic offsets, never
+  touches vx/vy/physics). The mount handle exposes `selfEmote()` → bounces `spriteEntities[username]`.
+- **Nano-banana hook:** `var EMOTE_FRAME = null` (top of the IIFE). Leave null → bounce the normal idle frame.
+  To add a custom "cheer" pose later: draw it 80×96 / transparent / pixel-art / salmon-pink / feet on the existing
+  baseline / right-facing, drop it into an UNUSED sheet column (e.g. 6) + its left mirror at col 6+11=17, then set
+  `EMOTE_FRAME = 6`. The emote auto-poses on it mid-hop. (Teacher is experimenting with nano banana for this.)
+- **Desk (`ap_stats_roadmap_square_mode.html`):** `_avatarSelfEmote(hit)` calls the board hop (SKIPPED under
+  `prefers-reduced-motion`), plays `MacSFX` `wildEep`, and puffs a 🍬 (enriched with the live candy balance via the
+  cached wallet fetch) + two ✨ DOM particles (`.avatar-emote-particle`, CSS float-up + reduced-motion fade) from the
+  click coords. 600 ms debounce vs click-spam. `onAvatarClick` `isSelf` now routes here (was `openWallet()`).
+- **Tests:** `tests/desk-self-emote.test.js` (6, real fns in jsdom), `classroom-board` +3 (playEmote/update timer +
+  render/handle source pins), `candy-poke` pin updated (isSelf → `_avatarSelfEmote`). Root **7356 pass / the 6
+  pre-existing onboarding failures** (+ the usual ~1–2 rotating flaky suites that pass in isolation — not this change).
+  Frontend-only.
 
 ## ⏭ SESSION 21 SHIPPED (2026-06-18) — keyboard MODAL ESCAPE audit: every Desk content modal closes with Esc
 
