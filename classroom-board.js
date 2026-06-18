@@ -17,9 +17,13 @@
  *   handle.reset()             -- v1b teacher method
  *
  * opts (r3): { wsUrl, section, username, role, nameMap?, onStateChange?,
- *              hue?, onStartVideo? }
+ *              hue?, onStartVideo?, onAvatarClick?, hideNameLabels? }
  *   hue: integer 0-359 or null.  Sent in classroom_join; used to tint this
  *   user's own avatar on the board.
+ *   onAvatarClick: optional function({ username, selectMode, clientX, clientY }).
+ *   Fired when a canvas click hit-tests onto an avatar (never self).
+ *   hideNameLabels: when true, avatar names do NOT float above heads (the Desk
+ *   reveals them on click instead).  Omit it (cockpit) to keep names floating.
  *   onStartVideo: optional function(videoRef).  Called once per inbound
  *   classroom_greenlight whose startVideo === true.  videoRef is the string
  *   the broadcast carried (or null).
@@ -894,6 +898,11 @@
     this.hue          = opts.hue      || 0;
     this.online       = opts.online   !== false;
     this.labelText    = opts.label    || '';
+    // AVATAR_MENU: when true, getLabelSpec returns null so the engine label
+    // pass skips this avatar's floating name. The Desk student board sets it
+    // (names are revealed on click instead); the teacher cockpit leaves it
+    // false so real names keep floating for at-a-glance monitoring.
+    this.hideLabel    = !!opts.hideLabel;
     this.onDrained    = opts.onDrained || null;
     // V7.3.6: avatars render ON TOP of doorways + coins + goal so the
     // doorway mouse-hole shape doesn't occlude the sprite walking past.
@@ -1046,6 +1055,8 @@
   };
 
   BoardSprite.prototype.getLabelSpec = function () {
+    // AVATAR_MENU: Desk student board hides always-on names (revealed on click).
+    if (this.hideLabel) return null;
     var sw = SPRITE_W * this.scale;
     // V7.9 side-scroll: world sprite -- the engine draws labels in a
     // separate pass with NO camera translate, so project this.x into
@@ -3930,6 +3941,10 @@
     // sprite's username.
     var onAvatarClick = (typeof opts.onAvatarClick === 'function') ? opts.onAvatarClick : null;
     var selectModeActive = false;
+    // AVATAR_MENU (DESK ONLY): suppress the always-on floating name labels so the
+    // Desk can reveal a name (then a candy/challenge menu) on click instead. The
+    // teacher cockpit omits this opt, so its real-name labels keep floating.
+    var hideNameLabels = !!opts.hideNameLabels;
 
     // Ensure the container clips the off-screen pull-down panel.
     if (container.style.position !== 'relative' &&
@@ -3976,7 +3991,18 @@
         if (dx <= HIT && dy <= HIT) { hit = u; break; }
       }
       if (hit) {
-        try { onAvatarClick({ username: hit, selectMode: selectModeActive }); } catch (_) {}
+        // AVATAR_MENU: forward the click's viewport coords so a Desk popover can
+        // anchor at the tapped avatar. Additive — existing consumers ignore them,
+        // and `selectMode` stays first-after-username so the cockpit test's
+        // `onAvatarClick({...selectMode...})` source pin still matches.
+        try {
+          onAvatarClick({
+            username: hit,
+            selectMode: selectModeActive,
+            clientX: (ev.clientX != null) ? ev.clientX : (rect.left + cx),
+            clientY: (ev.clientY != null) ? ev.clientY : (rect.top + cy)
+          });
+        } catch (_) {}
       }
     });
 
@@ -4532,6 +4558,9 @@
       var label  = (nameMap && nameMap[member.username]) ? nameMap[member.username] : member.username;
       var sy     = getSpriteY();
       var hue    = resolveHue(member);
+      // AVATAR_MENU: thread the mount-level name-label suppression onto every
+      // avatar (peers + the local PlayerSprite, which inherits BoardSprite).
+      var hideLabel = hideNameLabels;
       // Phase 1 (D1): the local signed-in user gets a PlayerSprite (keyboard-
       // controlled, can walk + doorway-vote). All OTHER members stay an auto-layout
       // BoardSprite. A teacher counts as local too now, so the teacher's own avatar
@@ -4544,6 +4573,7 @@
         hue:    hue,
         online: member.online !== false,
         label:  label,
+        hideLabel: hideLabel,
         onDrained: (function (uname) {
           return function () {
             // Drain animation completed (present -> checkedIn walk to door).

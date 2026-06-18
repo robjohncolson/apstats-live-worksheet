@@ -6984,3 +6984,34 @@ describe('V7.6 ResultPanel -- in-canvas dot plot + reflection text', () => {
     expect(nonMono).toEqual([]);
   });
 });
+
+// =============================================================
+// AVATAR_MENU (AVATAR_MENU_SPEC.md): hideLabel suppression + hit-test coords.
+// The Desk student board hides always-on avatar names (revealed on click);
+// the teacher cockpit omits hideNameLabels so its real names keep floating.
+// =============================================================
+describe('AVATAR_MENU -- avatar name-label suppression', function () {
+  it('BoardSprite.getLabelSpec returns the name by default, null when hideLabel', function () {
+    var m  = makeBoard();
+    var ss = new m.win.SpriteSheet('sprite.png', 80, 96, {});
+    var shown  = new m.ClassroomBoard._BoardSprite(ss, { x: 100, y: 40, label: 'Papaya_Fox' });
+    expect(shown.getLabelSpec().text).toBe('Papaya_Fox');
+    var hidden = new m.ClassroomBoard._BoardSprite(ss, { x: 100, y: 40, label: 'Papaya_Fox', hideLabel: true });
+    expect(hidden.getLabelSpec()).toBeNull();
+  });
+
+  it('PlayerSprite inherits the same getLabelSpec (so the local avatar is also suppressible)', function () {
+    var m = makeBoard();
+    expect(m.ClassroomBoard._PlayerSprite.prototype.getLabelSpec)
+      .toBe(m.ClassroomBoard._BoardSprite.prototype.getLabelSpec);
+  });
+
+  it('mount threads opts.hideNameLabels onto every avatar via baseOpts.hideLabel', function () {
+    expect(BOARD_SRC).toMatch(/hideNameLabels\s*=\s*!!opts\.hideNameLabels/);
+    expect(BOARD_SRC).toMatch(/hideLabel:\s*hideLabel/);
+  });
+
+  it('the canvas hit-test forwards clientX/clientY to onAvatarClick (keeps selectMode first)', function () {
+    expect(BOARD_SRC).toMatch(/onAvatarClick\(\{\s*username:\s*hit,\s*selectMode:[\s\S]*?clientX:[\s\S]*?clientY:/);
+  });
+});

@@ -1384,6 +1384,51 @@
             color: var(--white);
         }
 
+        /* AVATAR_MENU (AVATAR_MENU_SPEC.md): floating popover over the Live
+           Classroom scene. Click an avatar once -> the name chip; click again
+           (or the chip) -> the candy/challenge actions. position:fixed +
+           appended to <body> so the board mount's overflow:hidden can't clip it. */
+        .avatar-pop {
+            position: fixed;
+            z-index: 400;
+            min-width: 140px;
+            max-width: 220px;
+            background: var(--white);
+            border: 1px solid var(--black);
+            box-shadow: 2px 2px 0 var(--black);
+            font-family: Geneva, Arial, sans-serif;
+            transform: translate(-50%, calc(-100% - 10px)); /* anchor above the tapped head */
+        }
+        .avatar-pop-name {
+            display: block;
+            width: 100%;
+            text-align: left;
+            font-family: Chicago, Arial, sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 5px 10px;
+            background: var(--platinum);
+            border: none;
+            border-bottom: 1px solid var(--plat-lo);
+            color: var(--black);
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .avatar-pop[data-stage="name"] .avatar-pop-name { cursor: pointer; }
+        .avatar-pop[data-stage="name"] .avatar-pop-name:hover { background: var(--black); color: var(--white); }
+        .avatar-pop-hint {
+            display: block;
+            font-size: 9px;
+            color: #555;
+            padding: 3px 10px 4px;
+            font-style: italic;
+        }
+        .avatar-pop-acts { padding: 4px 8px 7px; }
+        .avatar-pop-acts .doge-sub-act { margin-top: 4px; }
+        .avatar-pop-acts .doge-sub-act:first-child { margin-top: 0; }
+
         /* .status-dot — DEPRECATED (s14): the registry "readiness" dot is no longer
            rendered on cells (it was teacher material-tracking that contradicted the
            student progress glyphs). Rules retained only so the mobile dot-shrink
@@ -11924,6 +11969,199 @@ function _onCandyGiftReceived(msg) {
   } catch (_) {}
 }
 
+// AVATAR_MENU (AVATAR_MENU_SPEC.md): Live Classroom avatars no longer float their
+// names. Click an avatar once → a name chip; click again (or the chip) → a small
+// popover with 🍬 Send candy + ⚔️ Start a game. Reuses the proven candy-poke pipeline
+// (_candyPoke) and the Tetris challenge (DogePresence.sendChallenge, which auto-opens
+// the game on accept). The classroom WS is UN-authenticated, so peer usernames are
+// untrusted: names render via textContent and actions are wired with addEventListener
+// — no HTML interpolation, so there is no XSS surface (unlike an onclick="" sink).
+var _avatarMenu = {
+  el: null,               // the floating popover element (appended to <body>) or null
+  username: null,         // the avatar the popover currently targets
+  stage: null,            // 'name' (chip only) | 'menu' (name + actions)
+  _handlingClick: false,  // true during an avatar-hit dispatch → suppresses the outside-close
+  _docClick: null,
+  _escKey: null,
+
+  // Wired as the board's onAvatarClick. hit = { username, selectMode, clientX, clientY }.
+  onAvatarClick: function (hit) {
+    if (!hit || !hit.username) return;
+    // The board's canvas click handler fires this, then the SAME click keeps
+    // bubbling to the document outside-close handler. Flag the dispatch so that
+    // handler doesn't close what we just opened; clear it after the dispatch.
+    this._handlingClick = true;
+    var self = this;
+    setTimeout(function () { self._handlingClick = false; }, 0);
+
+    var u = hit.username;
+    // Re-clicking the same avatar at the name stage → advance to the menu in place.
+    if (this.el && this.username === u && this.stage === 'name') {
+      this.stage = 'menu';
+      this._render();
+      return;
+    }
+    // New target (or a re-click after the menu was shown) → fresh name chip.
+    this.open(u, hit.clientX, hit.clientY);
+  },
+
+  open: function (username, clientX, clientY) {
+    this.close();                     // tear down any prior popover + its handlers
+    this.username = username;
+    this.stage = 'name';
+    var doc = document;
+    var el = doc.createElement('div');
+    el.className = 'avatar-pop';
+    el.setAttribute('role', 'dialog');
+    // Anchor above the tapped head (CSS translate). Store the anchor so
+    // _reposition() (run after each render) can nudge a wide / top-of-screen
+    // popover fully into the viewport — the box is centered on x and drawn
+    // ABOVE y, so a fixed clamp can't account for its rendered size.
+    var vw = (window.innerWidth || 320), vh = (window.innerHeight || 480);
+    this._ax = Math.max(20, Math.min(vw - 20, (typeof clientX === 'number') ? clientX : vw / 2));
+    this._ay = Math.max(20, Math.min(vh - 20, (typeof clientY === 'number') ? clientY : vh / 2));
+    el.style.left = this._ax + 'px';
+    el.style.top  = this._ay + 'px';
+    // A click inside the popover must not bubble to the outside-close handler.
+    el.addEventListener('click', function (e) { e.stopPropagation(); });
+    this.el = el;
+    doc.body.appendChild(el);
+    this._render();
+
+    var self = this;
+    this._docClick = function (e) {
+      if (!self.el) return;
+      if (self.el.contains(e.target)) return;   // click landed inside the popover
+      if (self._handlingClick) return;          // same click hit an avatar (open/advance)
+      self.close();
+    };
+    this._escKey = function (e) {
+      if (e.key === 'Escape' || e.keyCode === 27) self.close();
+    };
+    doc.addEventListener('click', this._docClick, false);   // bubble phase
+    doc.addEventListener('keydown', this._escKey, false);
+  },
+
+  _displayName: function (u) {
+    // Prefer a known real name (teachers carry the roster map; students normally
+    // don't → falls back to the username, which is exactly what we want to reveal).
+    var real = null;
+    try { if (typeof DeskRoster !== 'undefined' && DeskRoster.realName) real = DeskRoster.realName(u); } catch (_) {}
+    return real ? (real + ' · ' + u) : u;
+  },
+
+  _render: function () {
+    var el = this.el;
+    if (!el) return;
+    var u = this.username;
+    var self = this;
+    var doc = document;
+    el.setAttribute('data-stage', this.stage);
+    el.innerHTML = '';
+
+    // Name chip — the headline + (at the name stage) the tap target that advances.
+    var nameBtn = doc.createElement('button');
+    nameBtn.type = 'button';
+    nameBtn.className = 'avatar-pop-name';
+    nameBtn.textContent = this._displayName(u);   // textContent → XSS-safe
+    nameBtn.addEventListener('click', function () {
+      if (self.stage === 'name') { self.stage = 'menu'; self._render(); }
+    });
+    el.appendChild(nameBtn);
+
+    if (this.stage === 'name') {
+      var hint = doc.createElement('span');
+      hint.className = 'avatar-pop-hint';
+      hint.textContent = 'tap again for options';
+      el.appendChild(hint);
+      this._reposition();
+      return;
+    }
+
+    // stage === 'menu' → the two actions.
+    var acts = doc.createElement('div');
+    acts.className = 'avatar-pop-acts';
+
+    var candyBtn = doc.createElement('button');
+    candyBtn.type = 'button';
+    candyBtn.className = 'doge-sub-act';
+    candyBtn.textContent = '🍬 Send candy';
+    candyBtn.addEventListener('click', function () {
+      var target = u;
+      self.close();
+      if (typeof _candyPoke === 'function') { try { _candyPoke(target); } catch (_) {} }
+    });
+    acts.appendChild(candyBtn);
+
+    var gameBtn = doc.createElement('button');
+    gameBtn.type = 'button';
+    gameBtn.className = 'doge-sub-act';
+    gameBtn.textContent = '⚔️ Start a game';
+    // The challenge rides DogePresence's always-on socket and is only deliverable
+    // to a classmate on the Desk. An avatar in THIS scene is on the Desk, so enable
+    // unless presence positively reports them elsewhere.
+    var loc = null;
+    try { loc = (typeof DogePresence !== 'undefined' && DogePresence.locations) ? DogePresence.locations[u] : null; } catch (_) {}
+    if (!loc || loc.onDesk !== false) {
+      gameBtn.addEventListener('click', function () {
+        var target = u;
+        self.close();
+        if (typeof DogePresence !== 'undefined' && DogePresence.sendChallenge) {
+          try { DogePresence.sendChallenge(target); } catch (_) {}
+        }
+      });
+    } else {
+      gameBtn.disabled = true;
+      gameBtn.title = 'They need to be on the Desk to play';
+    }
+    acts.appendChild(gameBtn);
+
+    el.appendChild(acts);
+    this._reposition();
+  },
+
+  // AVATAR_MENU finding-fold (s20 review): nudge the popover fully into the
+  // viewport. The box is centered on _ax and (by default) drawn ABOVE _ay, so a
+  // long name can spill left/right and a top-of-screen avatar can clip the top.
+  // Measure the rendered box and shift it in; flip BELOW the head when there's no
+  // room above. A no-op in jsdom (getBoundingClientRect returns 0s, no layout),
+  // so the controller's unit tests are unaffected.
+  _reposition: function () {
+    var el = this.el;
+    if (!el || typeof el.getBoundingClientRect !== 'function') return;
+    // Reset to the raw anchor + default (above) so re-renders don't accumulate drift.
+    el.style.left = this._ax + 'px';
+    el.style.top  = this._ay + 'px';
+    el.style.transform = 'translate(-50%, calc(-100% - 10px))';
+    var r = el.getBoundingClientRect();
+    if (!r.width && !r.height) return;   // unlaid-out (jsdom) → leave the fallback anchor
+    var vw = (window.innerWidth || 320), vh = (window.innerHeight || 480), pad = 6;
+    if (r.top < pad) {                   // no room above → flip below the head
+      el.style.transform = 'translate(-50%, 10px)';
+      r = el.getBoundingClientRect();
+    }
+    var dx = 0, dy = 0;
+    if (r.left < pad) dx = pad - r.left;
+    else if (r.right > vw - pad) dx = (vw - pad) - r.right;
+    if (r.top < pad) dy = pad - r.top;
+    else if (r.bottom > vh - pad) dy = (vh - pad) - r.bottom;
+    if (dx) el.style.left = (this._ax + dx) + 'px';
+    if (dy) el.style.top  = (this._ay + dy) + 'px';
+  },
+
+  close: function () {
+    if (this.el && this.el.parentNode) { try { this.el.parentNode.removeChild(this.el); } catch (_) {} }
+    if (this._docClick) { try { document.removeEventListener('click', this._docClick, false); } catch (_) {} }
+    if (this._escKey)   { try { document.removeEventListener('keydown', this._escKey, false); } catch (_) {} }
+    this.el = null;
+    this.username = null;
+    this.stage = null;
+    this._docClick = null;
+    this._escKey = null;
+  }
+};
+try { window._avatarMenu = _avatarMenu; } catch (_) {}
+
 function _dogeWalletGiftForm(wrap, box, w, pts) {
     wrap.innerHTML = '<div class="geneva" style="font-size:10px;color:#8a7330">Loading classmates…</div>';
     var maxCandy = Math.floor(w.candyBalance || 0);
@@ -17986,6 +18224,9 @@ function _mountClassroomBoard(){
     _classroomBoardHandle = window.ClassroomBoard.mount(mount, {
       wsUrl: wsUrl, section: s.section, username: s.username, role: 'student',
       hue: (typeof s.spriteHue === 'number') ? s.spriteHue : null,
+      // AVATAR_MENU: the Desk hides always-on floating names; a click reveals the
+      // name, then a candy/challenge menu (handled by onAvatarClick → _avatarMenu).
+      hideNameLabels: true,
       onStartVideo: _focusTodayLessonVideo,   // v1c: synchronized video start
       onStateChange: function(summary) {
         // V4: stash the latest summary so the capture-phase keydown
@@ -18020,12 +18261,14 @@ function _mountClassroomBoard(){
           try { _onCandyGiftReceived(msg); } catch (_) {}
         }
       },
-      // Candy "poke" (CANDY_POKE_SPEC.md): tap a peer's avatar in the Live Classroom to
-      // send them 1 candy. hit = { username, selectMode }. _candyPoke guards self / guests /
-      // no-wallet / cooldown, so a stray tap or a teacher/guest viewer is a quiet no-op.
+      // AVATAR_MENU (AVATAR_MENU_SPEC.md): a tap reveals the classmate's name, then a
+      // popover with 🍬 Send candy + ⚔️ Start a game. hit = { username, selectMode,
+      // clientX, clientY }. The candy action reuses the candy-poke pipeline (guards
+      // self / guests / no-wallet / cooldown); the game action reuses the Tetris
+      // challenge. Supersedes the old instant-poke-on-tap (CANDY_POKE_SPEC.md).
       onAvatarClick: function(hit) {
-        if (hit && hit.username && typeof _candyPoke === 'function') {
-          try { _candyPoke(hit.username); } catch (_) {}
+        if (hit && hit.username && typeof _avatarMenu !== 'undefined' && _avatarMenu) {
+          try { _avatarMenu.onAvatarClick(hit); } catch (_) {}
         }
       }
     });

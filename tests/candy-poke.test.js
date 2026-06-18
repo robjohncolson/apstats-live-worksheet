@@ -72,8 +72,13 @@ function loadCandy(opts = {}) {
 
 // ── 1. Structural pins ──────────────────────────────────────────────────────
 describe('candy poke — wiring (structural)', () => {
-  it('the student board mount passes onAvatarClick -> _candyPoke', () => {
-    expect(html).toMatch(/onAvatarClick:\s*function\(hit\)\s*\{[\s\S]*?_candyPoke\(hit\.username\)/);
+  it('the student board mount routes onAvatarClick -> _avatarMenu (supersedes instant-poke)', () => {
+    // AVATAR_MENU: a tap now opens the name/candy/game popover instead of an
+    // instant candy send. The candy pipeline is reached via the menu's action.
+    expect(html).toMatch(/onAvatarClick:\s*function\(hit\)\s*\{[\s\S]*?_avatarMenu\.onAvatarClick\(hit\)/);
+  });
+  it('the avatar menu Send-candy action still reaches _candyPoke', () => {
+    expect(html).toMatch(/Send candy[\s\S]*?_candyPoke\(target\)/);
   });
   it('onClassroomMessage routes candy_gift_received -> _onCandyGiftReceived', () => {
     const b = fnBody(html, '_mountClassroomBoard');
