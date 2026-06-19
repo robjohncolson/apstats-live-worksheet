@@ -6,7 +6,7 @@
  * extracted helpers (_liveWs, _resetLockTimer) with source pins for the wiring fixes
  * (choke-point routing, match-in-progress guard, roomId stamping, ICE buffering).
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -75,6 +75,78 @@ describe('SB-1(core) — lock-reset cap kills the infinite spin stall', () => {
     fn.call(ctx);
     expect(ctx.lockResets).toBe(0);
     expect(ctx.lockTimer).toBe(0);
+  });
+});
+
+describe('MP-5 — opponent-freeze watchdog + heartbeat', () => {
+  afterEach(() => { vi.useRealTimers(); });
+  function asFn(name) {
+    const b = methodBody(html, name);
+    // eslint-disable-next-line no-eval
+    return eval('(function(){ ' + b.slice(b.indexOf('{') + 1, b.lastIndexOf('}')) + ' })');
+  }
+  function makeCtx(over = {}) {
+    const calls = { sent: 0, left: null };
+    const ctx = {
+      mpState: { roomId: 'r1', seriesOver: false },
+      state: 'running',
+      isOpen: () => true,
+      HEARTBEAT_MS: 2500,
+      OPPONENT_TIMEOUT_MS: 18000,
+      sendGameState() { calls.sent++; },
+      opponentLeft(reason) { calls.left = reason; if (this.mpState) this.mpState.seriesOver = true; },
+      _startHeartbeat: asFn('_startHeartbeat'),
+      _stopHeartbeat: asFn('_stopHeartbeat'),
+      ...over,
+    };
+    return { ctx, calls };
+  }
+
+  it('forfeits via opponentLeft("timeout") after the opponent goes silent while running', () => {
+    vi.useFakeTimers();
+    const { ctx, calls } = makeCtx();
+    ctx._startHeartbeat();
+    vi.advanceTimersByTime(2500 * 4);          // 10s of silence < 18s → no forfeit yet
+    expect(calls.left).toBe(null);
+    expect(calls.sent).toBeGreaterThan(0);      // heartbeats were sent
+    vi.advanceTimersByTime(2500 * 4);          // now past 18s total
+    expect(calls.left).toBe('timeout');
+  });
+
+  it('does NOT forfeit while the opponent keeps stamping alive', () => {
+    vi.useFakeTimers();
+    const { ctx, calls } = makeCtx();
+    ctx._startHeartbeat();
+    for (let i = 0; i < 12; i++) {              // 30s, but refresh "alive" each tick
+      vi.advanceTimersByTime(2500);
+      ctx.mpState.lastOpponentMs = Date.now();
+    }
+    expect(calls.left).toBe(null);
+  });
+
+  it('does NOT forfeit when not running (e.g. countdown / between games)', () => {
+    vi.useFakeTimers();
+    const { ctx, calls } = makeCtx({ state: 'countdown' });
+    ctx._startHeartbeat();
+    vi.advanceTimersByTime(2500 * 10);          // 25s
+    expect(calls.left).toBe(null);              // watchdog only fires while running
+  });
+
+  it('_stopHeartbeat halts the timer', () => {
+    vi.useFakeTimers();
+    const { ctx, calls } = makeCtx();
+    ctx._startHeartbeat();
+    ctx._stopHeartbeat();
+    vi.advanceTimersByTime(2500 * 12);
+    expect(calls.left).toBe(null);
+    expect(calls.sent).toBe(0);
+  });
+
+  it('wiring: startMatch starts it, close stops it, inbound handlers stamp lastOpponentMs', () => {
+    expect(html).toMatch(/_studyBreakArmStakes\(\);\s*\n\s*this\._startHeartbeat\(\)/);
+    expect(methodBody(html, 'close')).toMatch(/this\._stopHeartbeat\(\)/);
+    ['updateOpponentState', 'receiveGarbage', 'opponentKO'].forEach((m) =>
+      expect(methodBody(html, m)).toMatch(/this\.mpState\.lastOpponentMs = Date\.now\(\)/));
   });
 });
 

@@ -13799,6 +13799,8 @@ const studyBreak = {
     CANVAS_H: 302,
     LOCK_DELAY: 500,
     LOCK_RESET_CAP: 15,   // SB-1(core): max move/rotate lock-delay resets per piece (anti-infinite-stall)
+    HEARTBEAT_MS: 2500,         // MP-5: periodic state send so an idle-but-present peer stays "alive"
+    OPPONENT_TIMEOUT_MS: 18000, // MP-5: no opponent traffic this long while running → forfeit (refunds)
     ENTRY_DELAY: 150,
     DAS_DELAY: 135,
     DAS_REPEAT: 48,
@@ -14079,6 +14081,7 @@ const studyBreak = {
 
     close() {
         if (!this.initialized) return;
+        this._stopHeartbeat();   // MP-5: stop the keep-alive/watchdog on teardown
         // Clear per-match timers BEFORE nulling mpState (else the cleanup below no-ops on null —
         // a pre-existing garbageTimer leak; also stop a pending best-of-3 auto-advance).
         if (this.mpState) {
@@ -14501,6 +14504,7 @@ const studyBreak = {
         };
         // Escrow 1 candy for the match (graceful: a guest / stakes-off / pre-migration → free play).
         this._studyBreakArmStakes();
+        this._startHeartbeat();   // MP-5: opponent-freeze watchdog + keep-alive
 
         // Start countdown then game
         this.state = 'countdown';
@@ -14530,7 +14534,7 @@ const studyBreak = {
 
     // Send game state to server after each piece lock
     sendGameState() {
-        if (!this.mpState) return;
+        if (!this.mpState || !this.board) return;   // MP-5: heartbeat can tick pre-resetBoardState (countdown)
         // Compress board: only send non-null cells as [row, col, colorIndex]
         const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
         const compressed = [];
@@ -14564,6 +14568,31 @@ const studyBreak = {
         if (typeof DogePresence !== 'undefined' && DogePresence.ws && DogePresence.ws.readyState === 1) return DogePresence.ws;
         if (this.mpWs && this.mpWs.readyState === 1) return this.mpWs;
         return null;
+    },
+
+    // MP-5: opponent-freeze watchdog + heartbeat. Without this, a peer whose tab freezes /
+    // throttles (no clean close) leaves the match hung — you wait forever for a game_over that
+    // never comes. The heartbeat is a periodic sendGameState() (a message the relay definitely
+    // forwards, unlike a bespoke ping a whitelisting relay might drop), so an idle-but-present
+    // opponent keeps stamping us "alive". If THEIR traffic stops for OPPONENT_TIMEOUT_MS while a
+    // game is running, treat it as opponentLeft('timeout') — you win by forfeit, the bet refunds
+    // via the server (they never confirm), mirroring the accepted rage-quit semantics.
+    _startHeartbeat() {
+        this._stopHeartbeat();
+        if (!this.mpState) return;
+        this.mpState.lastOpponentMs = Date.now();   // grace from match start
+        this.heartbeatTimer = setInterval(() => {
+            const ms = this.mpState;
+            if (!this.isOpen() || !ms || ms.seriesOver) { this._stopHeartbeat(); return; }
+            this.sendGameState();   // heartbeat (also keeps the opponent's board view fresh)
+            if (this.state === 'running' && ms.lastOpponentMs && (Date.now() - ms.lastOpponentMs) > this.OPPONENT_TIMEOUT_MS) {
+                this._stopHeartbeat();
+                this.opponentLeft('timeout');
+            }
+        }, this.HEARTBEAT_MS);
+    },
+    _stopHeartbeat() {
+        if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
     },
 
     sendGameMessage(msg) {
@@ -14672,6 +14701,7 @@ const studyBreak = {
     updateOpponentState(data) {
         if (!this.mpState) return;
         if (data && data.roomId && data.roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game state
+        this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
         const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
         // Decompress board
         const board = Array.from({ length: this.TOTAL_ROWS }, () => Array(this.COLS).fill(null));
@@ -14772,6 +14802,7 @@ const studyBreak = {
     receiveGarbage(lines, roomId) {
         if (!this.mpState) return;
         if (roomId && roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game garbage
+        this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
         SFX.play('logjam', 0.5);
         this.mpState.pendingGarbage += lines;
         // Insert garbage after 1 second delay
@@ -14818,6 +14849,7 @@ const studyBreak = {
     opponentKO(finalScore, roomId) {
         if (!this.mpState) return;
         if (roomId && roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game KO
+        this.mpState.lastOpponentMs = Date.now();   // MP-5: opponent is alive
         this.mpState._wonThisGame = true;   // I won this game of the series
         SFX.play('koWin', 1.0);
         this.state = 'gameover';

@@ -44,9 +44,14 @@ AND on a boot timer, so abandoned escrow refunds even if the class stops betting
 **I. z-order** (SB-3-integration) — `launchMatch` closes any open `_avatarMenu` popover (z400)
 so it doesn't render over the game (z250).
 
-## Deferred (noted, not in this pass)
-- **MP-5** opponent-freeze watchdog + heartbeat ping (half-open/frozen-tab peer) — the most
-  involved; the MP-1 fix + server sweep already cover clean disconnects. Follow-up.
+**G. Opponent-freeze watchdog + heartbeat** (MP-5, shipped as a follow-on) — `_startHeartbeat`
+runs every `HEARTBEAT_MS` (2.5s): it sends a `sendGameState()` keep-alive (a relay-forwarded
+message, NOT a bespoke ping a whitelisting relay might drop) and, while `state==='running'`,
+forfeits via `opponentLeft('timeout')` if no opponent traffic for `OPPONENT_TIMEOUT_MS` (18s).
+`lastOpponentMs` is stamped in updateOpponentState/receiveGarbage/opponentKO; started in
+startMatch, stopped in close(). Forfeit only ever REFUNDS (the vanished peer never confirms /
+a partition → both disagree → refund) — money-safe, mirrors rage-quit. Reviewed: SOLID, no
+money-theft path. `sendGameState` guards `!this.board` (the heartbeat can tick mid-countdown).
 
 ## Verify
 - `tests/study-break-stakes.test.js` (existing) + new pins for `_liveWs`, the garbage choke
