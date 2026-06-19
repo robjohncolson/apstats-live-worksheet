@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
 > **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 24 — Study Break 1v1 Tetris/stakes ROBUSTNESS pass from a 5-lens audit: stale-socket hang, garbage-topout scoring desync, match-guards, ICE buffering, lock-reset cap, escrow sweep timer; SHIPPED + LIVE).
-> follow-alongs HEAD = the s24 tetris-hardening commit `8d9550f` (was `8c28c05`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**; ⚠ this commit touches `roster-server/**` → **Railway auto-deploys** (wallet/stakes sweep timer — additive, guarded).
+> follow-alongs HEAD = the s24 MP-5 heartbeat commit `1ad4d4e` (was `8d9550f`/`8c28c05`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**; ⚠ the earlier s24 commit `8d9550f` touched `roster-server/**` → **Railway auto-deploys** (wallet/stakes sweep timer — additive, guarded). The MP-5 commit is frontend-only.
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -37,8 +37,12 @@ SAFE (no theft, escrow always refunds), but the staked 1v1 multiplayer hung/desy
 - **z-order:** `launchMatch` closes the `_avatarMenu` popover (z400 over game z250).
 - **F2 (roster-server → Railway auto-deploys):** a periodic unref'd `sweepStaleBets` timer (skipped under
   `NODE_ENV==='test'`) + a sweep on `bet/resolve` so abandoned escrow refunds even if betting stops.
-- **⏭ DEFERRED (noted): MP-5** — opponent-freeze watchdog + heartbeat ping (half-open/frozen-tab peer). The
-  heaviest fix; MP-1 + the sweep already cover clean disconnects. Follow-up if wanted.
+- **MP-5 (now SHIPPED, `1ad4d4e`):** opponent-freeze watchdog + heartbeat. `_startHeartbeat` sends a periodic
+  `sendGameState()` keep-alive (a relay-forwarded msg, not a bespoke ping a whitelisting relay might drop) and,
+  while running, forfeits via `opponentLeft('timeout')` after 18s of opponent silence (`lastOpponentMs` stamped
+  on all inbound). Money-safe: forfeit only ever REFUNDS (vanished peer never confirms / partition → disagree →
+  refund). 1-agent adversarial review = SOLID, no theft path. `study-break-hardening` now 18 tests.
+  **NO open Tetris task** — only the live two-student smoke test remains (the teacher's, when rested).
 - **Tests:** `tests/study-break-hardening.test.js` (13, real `_liveWs`/`_resetLockTimer` + wiring pins),
   `study-break-stakes` pin updated. Root **7377 pass / the 6 pre-existing onboarding failures**; roster-server
   green (the lone `signup-claim` brute-force-lockout flake passes in isolation). **Teacher: still smoke-test a
