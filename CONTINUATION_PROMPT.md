@@ -1,7 +1,7 @@
 # CONTINUATION PROMPT — MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 22 — self-click avatar now plays a light happy-bounce emote instead of opening My Ledger; SHIPPED + LIVE).
-> follow-alongs HEAD = the s22 self-emote commit `1afff24` (was `618317b`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 23 — menu-bar sound toggle is now a 1-bit black classic-Mac speaker icon, on/mute; SHIPPED + LIVE).
+> follow-alongs HEAD = the s23 sound-icon commit `8c28c05` (was `1afff24`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,21 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 23 SHIPPED (2026-06-18) — 1-bit black Mac speaker icon for the menu-bar sound toggle
+
+**fa HEAD `8c28c05`.** Teacher: the upper menu-bar sound toggle was a colored 🔊/🔇 emoji — make it a 1-bit
+black classic-Mac speaker so it stands out on the white System-7 bar. `#mac-mute` (line ~1846) now renders an
+inline **black speaker SVG** via `_soundIconSVG(muted)` / `_renderSoundIcon()` / `_toggleSound()` (defined right
+after the `MacSFX` object, ~13714). Two states: **on** = filled cone polygon + two right-opening wave arcs;
+**muted** = cone + an ✕. Keyboard-accessible (role=button, tabindex, Enter/Space) + `aria-pressed`. `MacSFX` is
+still a boolean mute (per-call volumes), so **volume LEVELS are NOT wired** — adding them needs a global volume
+multiplier on `MacSFX` + `SFX` (the synth system) applied to every `play()`, then cycle high/mid/low/mute via
+the wave-count (the artwork already supports it). `tests/desk-sound-icon.test.js` (6). Root **7364 pass / the 6
+pre-existing onboarding failures**. **OPEN (offered):** (a) the Study Break in-game `#mute-btn` (line ~2259, SFX
+system) still uses the 🔊/🔇 emoji — give it the same icon for consistency; (b) volume levels; (c) a truer pixel-art
+1-bit speaker (the current SVG curves anti-alias slightly at 16px). NOTE: SVG can't be rasterized on this host
+(no rsvg/magick/headless) — visual check is on the live URL.
 
 ## ⏭ SESSION 22 SHIPPED (2026-06-18) — self-click avatar → happy BOUNCE emote (replaces the s20 "open My Ledger")
 
