@@ -157,7 +157,7 @@ describe('source pins — the hooks are wired into the match lifecycle', () => {
     expect(html).toMatch(/this\.mpState = \{[\s\S]*?myWins: 0, oppWins: 0[\s\S]*?\};\s*\n\s*\/\/[\s\S]*?this\._studyBreakArmStakes\(\);/);
   });
   it('opponentKO marks the game won; opponentLeft marks a forfeit', () => {
-    expect(html).toMatch(/opponentKO\(finalScore\) \{[\s\S]*?_wonThisGame = true/);
+    expect(html).toMatch(/opponentKO\(finalScore, roomId\) \{[\s\S]*?_wonThisGame = true/);
     expect(html).toMatch(/opponentLeft\(reason\) \{[\s\S]*?_wonThisGame = true[\s\S]*?_forfeit = true/);
   });
   it('drawGameOverCard counts the series (the single choke point)', () => {

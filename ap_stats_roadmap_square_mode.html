@@ -13798,6 +13798,7 @@ const studyBreak = {
     CANVAS_W: 430,
     CANVAS_H: 302,
     LOCK_DELAY: 500,
+    LOCK_RESET_CAP: 15,   // SB-1(core): max move/rotate lock-delay resets per piece (anti-infinite-stall)
     ENTRY_DELAY: 150,
     DAS_DELAY: 135,
     DAS_REPEAT: 48,
@@ -14083,11 +14084,17 @@ const studyBreak = {
         if (this.mpState) {
             clearTimeout(this.mpState._advanceTimer);
             if (this.mpState.garbageTimer) { clearTimeout(this.mpState.garbageTimer); this.mpState.garbageTimer = 0; }
-        }
-        if (this.mode === '1v1' && this.mpWs && this.mpState && this.mpWs.readyState === 1) {
-            this.mpWs.send(JSON.stringify({ type: 'game_leave' }));
+            // MP-4: send game_leave over the LIVE socket (a stale cached mpWs would silently
+            // skip it and the opponent would wait out the server sweep). SB-5: ALWAYS clear
+            // mpState on teardown (was only cleared when the socket happened to be open).
+            if (this.mode === '1v1') {
+                const ws = this._liveWs();
+                if (ws) { try { ws.send(JSON.stringify({ type: 'game_leave', roomId: this.mpState.roomId })); } catch (_) {} }
+            }
             this.mpState = null;
         }
+        // SB-2 (state): the best-of-3 countdown interval was a local var — clear it on teardown.
+        if (this.countdownTimer) { clearInterval(this.countdownTimer); this.countdownTimer = null; }
         if (this.mpChallengeTimer) {
             clearInterval(this.mpChallengeTimer);
             this.mpChallengeTimer = null;
@@ -14096,6 +14103,7 @@ const studyBreak = {
         if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
         if (this.dataChannel) { this.dataChannel = null; }
         this.useP2P = false;
+        this._pendingIce = [];   // MP-3: drop any buffered ICE from the closed match
         if (this.rtcTimeout) { clearTimeout(this.rtcTimeout); this.rtcTimeout = null; }
         this.exitSplitMode();
         document.getElementById('game-split').style.display = 'none';
@@ -14149,6 +14157,7 @@ const studyBreak = {
         this.spawnTimer = 0;
         this.fallTimer = 0;
         this.lockTimer = 0;
+        this.lockResets = 0;   // SB-1(core): per-piece lock-reset budget
         this.score = 0;
         this.lines = 0;
         this.level = 1;
@@ -14305,11 +14314,11 @@ const studyBreak = {
                 break;
 
             case 'garbage_incoming':
-                this.receiveGarbage(data.lines);
+                this.receiveGarbage(data.lines, data.roomId);
                 break;
 
             case 'opponent_ko':
-                this.opponentKO(data.finalScore);
+                this.opponentKO(data.finalScore, data.roomId);
                 break;
 
             case 'opponent_left':
@@ -14322,23 +14331,23 @@ const studyBreak = {
                         .then(() => this.peerConnection.createAnswer())
                         .then(answer => this.peerConnection.setLocalDescription(answer))
                         .then(() => {
-                            if (this.mpWs && this.mpWs.readyState === 1) {
-                                this.mpWs.send(JSON.stringify({ type: 'rtc_answer', sdp: this.peerConnection.localDescription }));
-                            }
-                        });
+                            const ws = this._liveWs();
+                            if (ws && this.peerConnection) ws.send(JSON.stringify({ type: 'rtc_answer', sdp: this.peerConnection.localDescription }));
+                            this._flushIce();   // MP-3: remote desc is set — drain buffered candidates
+                        }).catch(() => {});
                 }
                 break;
 
             case 'rtc_answer':
                 if (this.peerConnection) {
-                    this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                    this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                        .then(() => this._flushIce())
+                        .catch(() => {});
                 }
                 break;
 
             case 'rtc_ice':
-                if (this.peerConnection && data.candidate) {
-                    this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-                }
+                if (data.candidate) this._addIce(data.candidate);   // MP-3: buffers if no remote desc yet
                 break;
 
             case 'leaderboard_data':
@@ -14393,6 +14402,17 @@ const studyBreak = {
     },
 
     showChallengeDialog(fromUser) {
+        // MP-1/SB-1(integration): accept/decline used this.mpWs directly, which is null when
+        // Study Break is open in SOLO (the socket is only cached on lobby-connect) → a throw.
+        // Resolve the live socket once and reuse it for all three replies.
+        const reply = (type) => { const ws = this._liveWs(); if (ws) { try { ws.send(JSON.stringify({ type, from: fromUser })); } catch (_) {} } };
+        // SB-2 (integration): don't pop a challenge over a LIVE match — auto-decline so the
+        // current staked match isn't clobbered and the challenger isn't left hanging.
+        if (this.mode === '1v1' && this.mpState && !this.mpState.seriesOver) {
+            if (this.mpChallengeTimer) clearInterval(this.mpChallengeTimer);
+            reply('challenge_decline');
+            return;
+        }
         SFX.play('sosumi', 0.5);
         const dialog = document.getElementById('challenge-dialog');
         document.getElementById('challenge-msg').textContent = fromUser + ' wants to play Study Break! (best of 3 · winner takes 2 🍬)';
@@ -14405,12 +14425,12 @@ const studyBreak = {
         document.getElementById('challenge-accept-btn').onclick = () => {
             clearInterval(this.mpChallengeTimer);
             dialog.style.display = 'none';
-            this.mpWs.send(JSON.stringify({ type: 'challenge_accept', from: fromUser }));
+            reply('challenge_accept');
         };
         document.getElementById('challenge-decline-btn').onclick = () => {
             clearInterval(this.mpChallengeTimer);
             dialog.style.display = 'none';
-            this.mpWs.send(JSON.stringify({ type: 'challenge_decline', from: fromUser }));
+            reply('challenge_decline');
         };
 
         this.mpChallengeTimer = setInterval(() => {
@@ -14419,12 +14439,22 @@ const studyBreak = {
             if (countdown <= 0) {
                 clearInterval(this.mpChallengeTimer);
                 dialog.style.display = 'none';
-                this.mpWs.send(JSON.stringify({ type: 'challenge_decline', from: fromUser }));
+                reply('challenge_decline');
             }
         }, 1000);
     },
 
     startMatch(data) {
+        // SB-3 / F3: don't clobber a LIVE staked match (a duplicate match_start, or a 2nd
+        // challenge accepted mid-series) — the existing escrow would be orphaned. Ignore the
+        // new start; the both-confirm-or-refund backstop still settles the live one.
+        if (this.mode === '1v1' && this.mpState && !this.mpState.seriesOver) return;
+        // Clear any leftover per-match timers from a prior match before building a fresh mpState.
+        if (this.mpState) {
+            clearTimeout(this.mpState._advanceTimer);
+            if (this.mpState.garbageTimer) { clearTimeout(this.mpState.garbageTimer); this.mpState.garbageTimer = 0; }
+        }
+        if (this.countdownTimer) { clearInterval(this.countdownTimer); this.countdownTimer = null; }
         SFX.play('wildEep', 0.6);
         document.getElementById('challenge-dialog').style.display = 'none';
         document.getElementById('game-lobby').style.display = 'none';
@@ -14478,11 +14508,12 @@ const studyBreak = {
         this.updateHud();
         this.draw();
 
-        const countdownInterval = setInterval(() => {
+        this.countdownTimer = setInterval(() => {
+            if (!this.isOpen() || !this.mpState) { clearInterval(this.countdownTimer); this.countdownTimer = null; return; }
             this.countdownValue--;
             this.draw();
             if (this.countdownValue <= 0) {
-                clearInterval(countdownInterval);
+                clearInterval(this.countdownTimer); this.countdownTimer = null;
                 this.resetBoardState();
                 this.state = 'running';
                 this.hold = this.randomType();
@@ -14525,13 +14556,26 @@ const studyBreak = {
         });
     },
 
+    // TETRIS_HARDENING (MP-1): resolve the LIVE socket on demand. studyBreak reuses the
+    // Desk's always-on DogePresence socket, which auto-reconnects as a NEW object on any
+    // drop — so a cached this.mpWs goes stale (readyState CLOSED) and outbound game traffic
+    // silently dies, hanging the match one-sidedly. Always prefer the live presence socket.
+    _liveWs() {
+        if (typeof DogePresence !== 'undefined' && DogePresence.ws && DogePresence.ws.readyState === 1) return DogePresence.ws;
+        if (this.mpWs && this.mpWs.readyState === 1) return this.mpWs;
+        return null;
+    },
+
     sendGameMessage(msg) {
+        // SB-4: stamp the match id so the peer can drop stale cross-game messages.
+        if (this.mpState && this.mpState.roomId && msg.roomId === undefined) msg.roomId = this.mpState.roomId;
         const json = JSON.stringify(msg);
         if (this.useP2P && this.dataChannel && this.dataChannel.readyState === 'open') {
             this.dataChannel.send(json);
-        } else if (this.mpWs && this.mpWs.readyState === 1) {
-            this.mpWs.send(json);
+            return;
         }
+        const ws = this._liveWs();
+        if (ws) ws.send(json);
     },
 
     submitLeaderboardScore() {
@@ -14547,17 +14591,34 @@ const studyBreak = {
         }
     },
 
+    // MP-3: buffer remote ICE candidates that arrive before setRemoteDescription, then flush.
+    // addIceCandidate before a remote description (or after teardown) rejects — guard + .catch.
+    _addIce(candidate) {
+        const pc = this.peerConnection;
+        if (!pc || !candidate) return;
+        if (pc.remoteDescription && pc.remoteDescription.type) {
+            try { pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {}); } catch (_) {}
+        } else {
+            (this._pendingIce = this._pendingIce || []).push(candidate);
+        }
+    },
+    _flushIce() {
+        const pc = this.peerConnection;
+        if (!pc || !this._pendingIce || !this._pendingIce.length) return;
+        const pend = this._pendingIce; this._pendingIce = [];
+        for (const c of pend) { try { pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}); } catch (_) {} }
+    },
+
     setupWebRTC() {
-        if (!this.mpState || !this.mpWs) return;
+        if (!this.mpState || !this._liveWs()) return;
         this.useP2P = false;
+        this._pendingIce = [];
         this.peerConnection = new RTCPeerConnection({
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
         });
 
         this.peerConnection.onicecandidate = (e) => {
-            if (e.candidate && this.mpWs && this.mpWs.readyState === 1) {
-                this.mpWs.send(JSON.stringify({ type: 'rtc_ice', candidate: e.candidate }));
-            }
+            if (e.candidate) { const ws = this._liveWs(); if (ws) ws.send(JSON.stringify({ type: 'rtc_ice', candidate: e.candidate })); }
         };
 
         // Host (side 0) creates the DataChannel and offer
@@ -14567,10 +14628,9 @@ const studyBreak = {
             this.peerConnection.createOffer().then(offer => {
                 return this.peerConnection.setLocalDescription(offer);
             }).then(() => {
-                if (this.mpWs && this.mpWs.readyState === 1) {
-                    this.mpWs.send(JSON.stringify({ type: 'rtc_offer', sdp: this.peerConnection.localDescription }));
-                }
-            });
+                const ws = this._liveWs();
+                if (ws && this.peerConnection) ws.send(JSON.stringify({ type: 'rtc_offer', sdp: this.peerConnection.localDescription }));
+            }).catch(() => {});
         } else {
             // Guest waits for DataChannel
             this.peerConnection.ondatachannel = (e) => {
@@ -14611,6 +14671,7 @@ const studyBreak = {
 
     updateOpponentState(data) {
         if (!this.mpState) return;
+        if (data && data.roomId && data.roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game state
         const colorPalette = ['#66ccff','#b7b7b7','#ead64d','#57c95f','#ff6b6b','#4f7cff','#d36cff','#d8b44b','#d2d2d2','#7f7f7f'];
         // Decompress board
         const board = Array.from({ length: this.TOTAL_ROWS }, () => Array(this.COLS).fill(null));
@@ -14708,8 +14769,9 @@ const studyBreak = {
         ctx.textAlign = 'left';
     },
 
-    receiveGarbage(lines) {
+    receiveGarbage(lines, roomId) {
         if (!this.mpState) return;
+        if (roomId && roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game garbage
         SFX.play('logjam', 0.5);
         this.mpState.pendingGarbage += lines;
         // Insert garbage after 1 second delay
@@ -14743,14 +14805,19 @@ const studyBreak = {
         if (this.active && !this.isValid(this.active)) {
             this.state = 'gameover';
             SFX.play('monkey', 0.6);
+            // SB-1: set a flash so the 1v1 game-over CARD renders — that card is the single
+            // choke point that scores the game (_studyBreakScoreGameOnce). Without it, a
+            // garbage-burial loss was never counted and the series desynced / escrow stranded.
+            this.flash('Buried!');
             this.sendGameMessage({ type: 'game_over', score: this.score, lines: this.lines });
             this.submitLeaderboardScore();
         }
         this.draw();
     },
 
-    opponentKO(finalScore) {
+    opponentKO(finalScore, roomId) {
         if (!this.mpState) return;
+        if (roomId && roomId !== this.mpState.roomId) return;   // SB-4: stale cross-game KO
         this.mpState._wonThisGame = true;   // I won this game of the series
         SFX.play('koWin', 1.0);
         this.state = 'gameover';
@@ -14961,7 +15028,19 @@ const studyBreak = {
         this.holdLocked = false;
         this.fallTimer = 0;
         this.lockTimer = 0;
+        this.lockResets = 0;   // SB-1(core): fresh lock-reset budget for the new piece
         this.updateHud();
+    },
+
+    // SB-1(core): cap how many times a move/rotate can reset the lock delay WHILE GROUNDED,
+    // so spinning a grounded piece forever can't stall the game. A move that leaves the piece
+    // airborne refreshes the budget (it's falling again).
+    _resetLockTimer() {
+        if (this.active && this.isGrounded(this.active)) {
+            if (this.lockResets < this.LOCK_RESET_CAP) { this.lockTimer = 0; this.lockResets++; }
+        } else {
+            this.lockTimer = 0; this.lockResets = 0;
+        }
     },
 
     getCells(piece, rot = piece.rot, x = piece.x, y = piece.y) {
@@ -14985,7 +15064,7 @@ const studyBreak = {
         if (!this.active || !this.isValid(this.active, dx, dy)) return false;
         this.active.x += dx;
         this.active.y += dy;
-        this.lockTimer = 0;
+        this._resetLockTimer();
         this.updateHud();
         return true;
     },
@@ -15001,7 +15080,7 @@ const studyBreak = {
                 this.active.rot = nextRot;
                 this.active.x += dx;
                 this.active.y += dy;
-                this.lockTimer = 0;
+                this._resetLockTimer();
                 this.updateHud();
                 return true;
             }
@@ -15394,8 +15473,10 @@ const studyBreak = {
         if (this.state === 'idle') this.drawModeSelect();
         if (this.state === 'paused') this.drawCenterCard('PAUSED', 'Press P or click to resume');
         if (this.state === 'gameover') {
-            if (this.mode === '1v1' && this.flashText) {
-                this.drawGameOverCard(this.flashText);
+            // SB-1: route 1v1 game-over through the card (the scoring choke point) whenever a
+            // match is live — NOT gated on flashText, so a flash-less topout can't bypass scoring.
+            if (this.mode === '1v1' && this.mpState) {
+                this.drawGameOverCard(this.flashText || '');
             } else {
                 this.drawCenterCard('GAME OVER', 'Press Enter, R, or click to restart');
             }
@@ -17184,11 +17265,11 @@ const DogePresence = {
                 break;
 
             case 'garbage_incoming':
-                if (studyBreak.mpState) studyBreak.receiveGarbage(data.lines);
+                if (studyBreak.mpState) studyBreak.receiveGarbage(data.lines, data.roomId);
                 break;
 
             case 'opponent_ko':
-                if (studyBreak.mpState) studyBreak.opponentKO(data.finalScore);
+                if (studyBreak.mpState) studyBreak.opponentKO(data.finalScore, data.roomId);
                 break;
 
             case 'opponent_left':
@@ -17296,6 +17377,9 @@ const DogePresence = {
     },
 
     launchMatch(data) {
+        // SB-3(integration): close the avatar popover (z400) so it doesn't render over the
+        // game overlay (z250) when an incoming challenge auto-launches a match.
+        try { if (typeof _avatarMenu !== 'undefined' && _avatarMenu && _avatarMenu.close) _avatarMenu.close(); } catch (_) {}
         // Share the WS connection with studyBreak
         studyBreak.mpWs = this.ws;
         studyBreak.mpUsername = this.getUsername();

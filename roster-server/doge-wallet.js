@@ -379,6 +379,15 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       for (const row of (s && s.data) || []) { try { await db.tetrisBetRefund(row.match_id); } catch (_) {} }
     } catch (_) { /* sweep is best-effort */ }
   }
+  // F2: the opportunistic sweep (from bet/open + bet/resolve) only fires while the class is
+  // actively betting. Add a periodic sweep so an abandoned match's escrow still refunds even if
+  // betting stops entirely. unref'd → never blocks process shutdown/tests; no-op when stakes off.
+  // Skip under test (NODE_ENV==='test') so the suite's many mountDogeWallet() calls don't pile up
+  // idle intervals; in production it's one unref'd timer for the process lifetime.
+  if (typeof setInterval === 'function' && process.env.NODE_ENV !== 'test') {
+    const _sweepTimer = setInterval(() => { if (!stakesOff()) sweepStaleBets(); }, BET_TIMEOUT_MIN * 60000);
+    if (_sweepTimer && _sweepTimer.unref) _sweepTimer.unref();
+  }
 
   // POST /wallet/bet/open — JOIN a staked match (consent handshake). BOTH players POST this
   // with the same matchId; the escrow (debit 1 candy each) fires only when both have joined.
@@ -426,6 +435,7 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const matchId = String((req.body && req.body.matchId) || '').trim();
     const winnerUsername = String((req.body && req.body.winnerUsername) || '').trim();
     if (!matchId || !winnerUsername) return res.status(400).json({ ok: false, error: 'matchId + winnerUsername required' });
+    await sweepStaleBets();   // F2: a match ending is a natural moment to refund other abandoned escrow
     const winRes = await db.findByUsername(winnerUsername);
     if (winRes && winRes.error && winRes.error.code !== 'PGRST116') { console.error('bet/resolve findByUsername:', winRes.error); return res.status(500).json({ ok: false, error: 'Database error' }); }
     if (!winRes || !winRes.data) return res.status(404).json({ ok: false, error: 'unknown winner' });
