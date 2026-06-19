@@ -1843,7 +1843,7 @@
     </span>
     <span class="menu-spacer"></span>
     <span id="menu-identity" style="cursor:pointer;font-size:11px;padding:0 8px;white-space:nowrap" title="Your sign-in — click to sign in" onclick="closeMenus();openSignInModal()">Sign in</span>
-    <span id="mac-mute" style="cursor:pointer;font-size:12px;padding:0 6px" onclick="MacSFX.init();document.getElementById('mac-mute').textContent=MacSFX.toggleMute()?'🔇':'🔊'">🔊</span>
+    <span id="mac-mute" role="button" tabindex="0" aria-label="Toggle sound" title="Sound" style="cursor:pointer;padding:0 6px;display:inline-flex;align-items:center;height:20px" onclick="_toggleSound()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_toggleSound()}"></span>
     <span id="doge-presence" class="doge-dim" onclick="DogePresence.toggle()">
         <img src="Doge-Asset.png" alt="Doge">
         <span class="doge-badge" id="doge-badge" style="display:none"></span>
@@ -13708,11 +13708,37 @@ const MacSFX = {
     }
 };
 
-MacSFX.init();
-if (MacSFX.muted) {
-    const mi = document.getElementById('mac-mute');
-    if (mi) mi.textContent = '\u{1F507}';
+// SOUND_ICON: a 1-bit black, classic-Mac speaker for the menu-bar sound toggle
+// (replaces the old 🔊/🔇 emoji). Pure black so it reads crisp on the white
+// System-7 menu bar. Two states: on = cone + sound waves; muted = cone + ✕.
+function _soundIconSVG(muted) {
+    var cone = '<polygon points="0.5,5.5 4,5.5 8,2.5 8,13.5 4,10.5 0.5,10.5"/>';
+    var marks = muted
+        ? '<g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round">'
+          + '<line x1="10.5" y1="5.5" x2="14.5" y2="10.5"/>'
+          + '<line x1="14.5" y1="5.5" x2="10.5" y2="10.5"/></g>'
+        : '<g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round">'
+          + '<path d="M9.5 5.2 Q11.8 8 9.5 10.8"/>'
+          + '<path d="M11.6 3.3 Q15 8 11.6 12.7"/></g>';
+    return '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display:block">'
+         + '<g fill="#000">' + cone + '</g>' + marks + '</svg>';
 }
+function _renderSoundIcon() {
+    var el = document.getElementById('mac-mute');
+    if (!el) return;
+    var muted = !!(typeof MacSFX !== 'undefined' && MacSFX.muted);
+    el.innerHTML = _soundIconSVG(muted);
+    el.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    el.title = muted ? 'Sound off — click to turn on' : 'Sound on — click to mute';
+}
+function _toggleSound() {
+    try { if (typeof MacSFX !== 'undefined') { MacSFX.init(); MacSFX.toggleMute(); } } catch (_) {}
+    _renderSoundIcon();
+}
+try { window._toggleSound = _toggleSound; window._renderSoundIcon = _renderSoundIcon; window._soundIconSVG = _soundIconSVG; } catch (_) {}
+
+MacSFX.init();
+_renderSoundIcon();
 
 /* ── Boot Chime (preload, plays on click-to-dismiss) ── */
 var _bootChime = null;
