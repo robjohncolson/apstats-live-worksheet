@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 23 — menu-bar sound toggle is now a 1-bit black classic-Mac speaker icon, on/mute; SHIPPED + LIVE).
-> follow-alongs HEAD = the s23 sound-icon commit `8c28c05` (was `1afff24`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-18 (session 24 — Study Break 1v1 Tetris/stakes ROBUSTNESS pass from a 5-lens audit: stale-socket hang, garbage-topout scoring desync, match-guards, ICE buffering, lock-reset cap, escrow sweep timer; SHIPPED + LIVE).
+> follow-alongs HEAD = the s24 tetris-hardening commit `8d9550f` (was `8c28c05`). Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**; ⚠ this commit touches `roster-server/**` → **Railway auto-deploys** (wallet/stakes sweep timer — additive, guarded).
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `80dedc2`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,37 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 24 SHIPPED (2026-06-18) — Study Break 1v1 Tetris + stakes ROBUSTNESS pass (from a 5-lens audit)
+
+**fa HEAD `8d9550f`. Specs `TETRIS_HARDENING_SPEC.md` (fixes) + the audit (`tetris-audit` workflow).** Teacher
+asked "is the Tetris game solid?" → ran a 5-lens adversarial audit (23 agents): **single-player solid, money
+SAFE (no theft, escrow always refunds), but the staked 1v1 multiplayer hung/desynced in imperfect networks.**
+15 confirmed findings; hardened 13 (1 deferred). A 3-lens re-review of the fix diff = **0 blockers**.
+- **MP-1/MP-4 (major):** `studyBreak._liveWs()` resolves the LIVE socket on demand (studyBreak reuses the
+  Desk's DogePresence socket, which auto-reconnects as a NEW object → the cached `mpWs` went stale → outbound
+  game traffic silently died, hanging the match one-sidedly). Used by `sendGameMessage` / `close()`'s
+  `game_leave` / `showChallengeDialog` replies. The HTTP candy-resolve was never affected (money was safe).
+- **SB-1 (major):** a garbage-burial topout set `gameover` with no `flashText`, so the 1v1 game-over CARD (the
+  single scoring choke point `_studyBreakScoreGameOnce`) never rendered → the game wasn't counted, the series
+  desynced, escrow stranded. FIX: `insertGarbage` now `this.flash('Buried!')` AND the draw branch keys on
+  `mpState` not `flashText`.
+- **SB-2/SB-3/F3:** `startMatch` early-returns over a live match (no orphaned escrow); `showChallengeDialog`
+  auto-declines over a live match; `close()` ALWAYS nulls `mpState` + clears `this.countdownTimer`.
+- **SB-4:** `sendGameMessage` stamps `msg.roomId`; `receiveGarbage`/`opponentKO`/`updateOpponentState` drop a
+  mismatched roomId — guarded "present AND mismatched" so it can't break a relay that strips the field.
+- **MP-3:** `_addIce` buffers ICE until `setRemoteDescription`, `_flushIce` drains on offer+answer, `.catch`
+  on every `addIceCandidate`.
+- **SB-1(core):** `LOCK_RESET_CAP=15` via `_resetLockTimer` — kills the classic infinite-spin stall.
+- **z-order:** `launchMatch` closes the `_avatarMenu` popover (z400 over game z250).
+- **F2 (roster-server → Railway auto-deploys):** a periodic unref'd `sweepStaleBets` timer (skipped under
+  `NODE_ENV==='test'`) + a sweep on `bet/resolve` so abandoned escrow refunds even if betting stops.
+- **⏭ DEFERRED (noted): MP-5** — opponent-freeze watchdog + heartbeat ping (half-open/frozen-tab peer). The
+  heaviest fix; MP-1 + the sweep already cover clean disconnects. Follow-up if wanted.
+- **Tests:** `tests/study-break-hardening.test.js` (13, real `_liveWs`/`_resetLockTimer` + wiring pins),
+  `study-break-stakes` pin updated. Root **7377 pass / the 6 pre-existing onboarding failures**; roster-server
+  green (the lone `signup-claim` brute-force-lockout flake passes in isolation). **Teacher: still smoke-test a
+  live staked 1v1** — the audit was static; nothing replaces two real students playing a best-of-3.
 
 ## ⏭ SESSION 23 SHIPPED (2026-06-18) — 1-bit black Mac speaker icon for the menu-bar sound toggle
 
