@@ -3227,15 +3227,546 @@
       "timestamp": "2026-04-19T04:10:49Z",
       "files_changed": [],
       "depth": 0
+    },
+    {
+      "call_id": "69483a055b39",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review Phase 9 (floating avatar popup) of TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1. Three Sonnet ",
+      "status": "completed",
+      "duration_seconds": 517.661,
+      "timestamp": "2026-05-24T17:02:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "d6b0d211cb70",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review Phase 10 (cockpit micro-polish) of TEACHER_STUDENT_CONSOLE_SPEC.md. Single Sonnet wave; all g",
+      "status": "completed",
+      "duration_seconds": 285.875,
+      "timestamp": "2026-05-24T17:25:53Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "394d619bfa3e",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review Phase 11 (popup inline expansions) of TEACHER_STUDENT_CONSOLE_SPEC.md section 4.1. Single Son",
+      "status": "completed",
+      "duration_seconds": 344.477,
+      "timestamp": "2026-05-24T17:54:35Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "8fa3aebebb03",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review Phase 12 (nudge history pagination) of TEACHER_STUDENT_CONSOLE_SPEC.md. Single Sonnet wave, a",
+      "status": "completed",
+      "duration_seconds": 305.578,
+      "timestamp": "2026-05-24T18:15:50Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "4fc69d4744c9",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review Phase 13 (student-initiated DM) of TEACHER_STUDENT_CONSOLE_SPEC.md section 15. Two Sonnet wav",
+      "status": "completed",
+      "duration_seconds": 388.502,
+      "timestamp": "2026-05-24T18:38:31Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "5ce95317e093",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "You are doing a read-only cross-repo code review of LIVE_CLASSROOM V4\n(Activity Engine + Bridge-Mean",
+      "status": "completed",
+      "duration_seconds": 508.958,
+      "timestamp": "2026-05-25T03:31:32Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "64488bbb1d6f",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read-only cross-repo review of LIVE_CLASSROOM V5 (ColorBox-Hue plugin).\n\n## Frozen contract\n\n`C:/Use",
+      "status": "completed",
+      "duration_seconds": 477.168,
+      "timestamp": "2026-05-25T04:03:14Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f9e84cb96e0d",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Read-only cross-repo review of LIVE_CLASSROOM V7 (level engine + first\nlevel \"U1.1 Cola Mystery\"). D",
+      "status": "completed",
+      "duration_seconds": 410.952,
+      "timestamp": "2026-05-25T05:36:40Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "a150b2b8257c",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the V7.3 sprite swap + diagnostic cleanup changes in this repo (uncommitted, on master). Two ",
+      "status": "timeout",
+      "duration_seconds": 180.175,
+      "timestamp": "2026-05-25T21:26:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "20997a249143",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the V7.3 follow-alongs diff below. Do NOT explore other repos / state/cross-agent/* / unrelat",
+      "status": "completed",
+      "duration_seconds": 119.362,
+      "timestamp": "2026-05-25T21:30:54Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "890f9d44a8d3",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review V7.4 cola-blind-test changes. Do NOT explore state/cross-agent/, other repos, or any director",
+      "status": "completed",
+      "duration_seconds": 214.879,
+      "timestamp": "2026-05-25T23:42:22Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "9fa7fdae1b53",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review V7.5 sequential-stages + KEY_HUNT phase + shared key ship. Do NOT explore state/cross-agent/,",
+      "status": "timeout",
+      "duration_seconds": 280.038,
+      "timestamp": "2026-05-26T00:57:57Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0204fb8ae61a",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Tight review of V7.5 cr engine + U1.1 JSON only. Stay out of state/cross-agent and other repos.\n\nDIF",
+      "status": "timeout",
+      "duration_seconds": 200.061,
+      "timestamp": "2026-05-26T01:02:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7076934d0e20",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review V7.6 in-canvas ResultPanel + reflection placeholder substitution. Do NOT explore state/cross-",
+      "status": "timeout",
+      "duration_seconds": 240.033,
+      "timestamp": "2026-05-26T02:27:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3709e469673d",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "V7.7 Live Classroom sprint (Tally actor) -- review the staged diff across both repos and call out BL",
+      "status": "timeout",
+      "duration_seconds": 280.039,
+      "timestamp": "2026-05-26T17:06:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "3a6e1cc3de4f",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "P1 of a new level editor for AP-Stats Live-Classroom levels just shipped. ~5500 lines of new code. P",
+      "status": "timeout",
+      "duration_seconds": 280.027,
+      "timestamp": "2026-05-27T05:09:26Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e4edad23db0b",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "P3 of level editor shipped: tools/level-editor-sim.js (622 lines) + tools/level-editor-ui.js modific",
+      "status": "completed",
+      "duration_seconds": 167.897,
+      "timestamp": "2026-05-27T06:13:46Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "b091e72c0f16",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "Review the P2 Schoology grade-sync implementation for correctness bugs. New/changed files: tools/sch",
+      "status": "blocked",
+      "duration_seconds": 96.307,
+      "timestamp": "2026-05-30T03:34:12Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f07451ef3173",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "TASK: Fix two issues found by a LIVE smoke test of the Schoology create/delete path on 2026-05-30. C",
+      "status": "timeout",
+      "duration_seconds": 300.089,
+      "timestamp": "2026-05-30T19:53:03Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "7743c0a72194",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Task A (roster-server receipt issuance) of RECEIPTS_BUILD.md in the follow-alongs repo. Re",
+      "status": "completed",
+      "duration_seconds": 144.735,
+      "timestamp": "2026-06-12T16:40:12Z",
+      "files_changed": [
+        "roster-server/class.js",
+        "roster-server/ledger.js",
+        "roster-server/receipts.js",
+        "roster-server/server.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "39a459b88275",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Task B (Desk UI receipt-awareness) of RECEIPTS_BUILD.md in the follow-alongs repo. Read RE",
+      "status": "completed",
+      "duration_seconds": 248.755,
+      "timestamp": "2026-06-12T16:42:07Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1c16a448fc6f",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read TI84_TASK1_DATA_TRUST_SPEC.md at the repo root and implement it exactly as written. Edit in pla",
+      "status": "completed_with_notes",
+      "duration_seconds": 360.888,
+      "timestamp": "2026-06-12T23:57:43Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1d0615d67e3a",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read TI84_TASK2_ROSTER_SPEC.md at the repo root and implement it exactly as written. Edit in place, ",
+      "status": "completed",
+      "duration_seconds": 235.27,
+      "timestamp": "2026-06-13T00:01:32Z",
+      "files_changed": [
+        "roster-server/class.js",
+        "roster-server/ledger-db.js",
+        "roster-server/tests/class.test.js",
+        "roster-server/tests/ledger.test.js",
+        "teacher-dashboard.html"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "2f0893c3e1ce",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read TI84_TASK4_NATIVE_TWOPROP_SPEC.md at the repo root and implement it exactly as written. You own",
+      "status": "completed_with_verification_skipped_by_instruction",
+      "duration_seconds": 282.629,
+      "timestamp": "2026-06-13T00:25:33Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e8e863157cd4",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Read TI84_TASK3_ROBUSTNESS_SPEC.md at the repo root and implement it exactly as written. Edit in pla",
+      "status": "completed",
+      "duration_seconds": 324.722,
+      "timestamp": "2026-06-13T00:42:08Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e8ff07f1281d",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Task A (server: durable receipt persistence) of WALLET_BUILD.md in the follow-alongs repo.",
+      "status": "completed",
+      "duration_seconds": 82.77,
+      "timestamp": "2026-06-13T03:16:28Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "443ce7f38851",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Agent FA1 (roster-server hardening) from TIGHTEN_PLAN.md in the follow-alongs repo. Read T",
+      "status": "completed",
+      "duration_seconds": 147.303,
+      "timestamp": "2026-06-13T04:38:20Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f18cea070387",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Agent FA2 (Desk Wallet hardening) from TIGHTEN_PLAN.md in the follow-alongs repo. Read TIG",
+      "status": "completed",
+      "duration_seconds": 296.27,
+      "timestamp": "2026-06-13T04:46:04Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "bb05cc2c8d19",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the determinism hardening (section 2C of the sealed-transcript spec) in the follow-alongs ",
+      "status": "implemented",
+      "duration_seconds": 177.525,
+      "timestamp": "2026-06-13T17:27:58Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "1b392bd40118",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the ROSTER-SERVER half of the quiz_review fix (section 1C 'the review-grant contract') fro",
+      "status": "completed",
+      "duration_seconds": 229.657,
+      "timestamp": "2026-06-13T19:06:54Z",
+      "files_changed": [
+        "roster-server/ledger.js",
+        "roster-server/receipts.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "2b430cb02161",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the Layer 2 sealed-transcript SERVER (sections 2A/2B/2D/2E) from C:/Users/rober/Downloads/",
+      "status": "timeout",
+      "duration_seconds": 11134.348,
+      "timestamp": "2026-06-13T22:19:11Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "aba2662a4564",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the student EXPORT UX (section 2F) in the follow-alongs Desk wallet. Read C:/Users/rober/D",
+      "status": "completed",
+      "duration_seconds": 115.858,
+      "timestamp": "2026-06-13T22:25:28Z",
+      "files_changed": [
+        "ap_stats_roadmap_square_mode.html"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "7f580f960b12",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement backfill tasks A1 + A2 from C:/Users/rober/Downloads/Projects/school/curriculum_render/doc",
+      "status": "completed",
+      "duration_seconds": 276.369,
+      "timestamp": "2026-06-14T00:20:31Z",
+      "files_changed": [
+        "roster-server/backfill.js",
+        "roster-server/class.js",
+        "roster-server/receipts.js",
+        "roster-server/transcript.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "0114211ea60a",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement section 1B (worksheet server-side recompute) from C:/Users/rober/Downloads/Projects/school",
+      "status": "completed",
+      "duration_seconds": 291.916,
+      "timestamp": "2026-06-14T00:28:50Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "278f7219dec2",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Backfill-B as a SAFE DRY-RUN-FIRST ingestion/report tool (SEALED_TRANSCRIPT_SPEC.md sectio",
+      "status": "completed",
+      "duration_seconds": 138.46,
+      "timestamp": "2026-06-14T01:06:00Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "ff4ea18b13df",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Add a 'Print summary' button to the Desk wallet (SEALED_TRANSCRIPT_SPEC.md section 2F, the optional ",
+      "status": "success",
+      "duration_seconds": 107.261,
+      "timestamp": "2026-06-14T01:14:03Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "df986df34842",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the wallet readiness color from WALLET_COLOR_SPEC.md (repo root) in the follow-alongs Desk",
+      "status": "completed",
+      "duration_seconds": 199.39,
+      "timestamp": "2026-06-14T02:23:58Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "0be1612caa43",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement the wallet SUMMER MODE from WALLET_COLOR_SPEC.md section 'Summer mode (overlay)' in the fo",
+      "status": "completed",
+      "duration_seconds": 172.467,
+      "timestamp": "2026-06-14T02:43:47Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "e84a0cf7c456",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Make the wallet summer pacing DYNAMIC (rest-rhythm) per WALLET_COLOR_SPEC.md section 'Summer mode' (",
+      "status": "completed",
+      "duration_seconds": 204.775,
+      "timestamp": "2026-06-14T03:06:28Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "f90d7c53d30c",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Add a 'catching up' state to the wallet summer pacing per WALLET_COLOR_SPEC.md section 'Summer mode'",
+      "status": "success",
+      "duration_seconds": 100.958,
+      "timestamp": "2026-06-14T03:22:32Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "532a90a113c1",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Organize the wallet's receipt feed with tabs + collapsible groups per RECEIPT_TABS_SPEC.md (repo roo",
+      "status": "completed",
+      "duration_seconds": 172.267,
+      "timestamp": "2026-06-14T03:57:04Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "276f96136c45",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Refine the wallet receipt Types tab per the updated RECEIPT_TABS_SPEC.md (repo root): rename the wor",
+      "status": "completed",
+      "duration_seconds": 123.827,
+      "timestamp": "2026-06-14T04:07:51Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "eb320fdd02f3",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "You are implementing the BREADTH of a grade-policy simulator's property suite. A foundation\nalready ",
+      "status": "completed",
+      "duration_seconds": 66.801,
+      "timestamp": "2026-06-17T00:47:50Z",
+      "files_changed": [
+        "roster-server/tests/grade-sim-invariants.test.js"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "ee43d4282f8b",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Layer B of the grade-policy simulator: a deterministic policy-tuning SWEEP CLI. The\nfounda",
+      "status": "completed",
+      "duration_seconds": 100.549,
+      "timestamp": "2026-06-17T01:07:10Z",
+      "files_changed": [
+        "roster-server/tools/grade-sim-sweep.mjs"
+      ],
+      "depth": 0
+    },
+    {
+      "call_id": "56de4ac4edfd",
+      "direction": "cc-to-codex",
+      "task_type": "review",
+      "prompt_summary": "ADVERSARIAL REVIEW of a GRADE-AFFECTING change (auto-deploys to real student grades). Be skeptical;\n",
+      "status": "completed",
+      "duration_seconds": 90.206,
+      "timestamp": "2026-06-17T01:46:48Z",
+      "files_changed": [],
+      "depth": 0
+    },
+    {
+      "call_id": "543280129fbf",
+      "direction": "cc-to-codex",
+      "task_type": "implement",
+      "prompt_summary": "Implement Layer C of the grade-policy simulator: a PLT REDEX formal model of the v3 quarter-grade\nfo",
+      "status": "complete",
+      "duration_seconds": 151.263,
+      "timestamp": "2026-06-17T01:47:52Z",
+      "files_changed": [],
+      "depth": 0
     }
   ],
   "summary": {
-    "total_calls": 274,
-    "cc_to_codex": 274,
+    "total_calls": 320,
+    "cc_to_codex": 320,
     "codex_to_cc": 0,
-    "completed": 208,
-    "failed": 59,
+    "completed": 239,
+    "failed": 67,
     "refused": 0,
-    "avg_duration_seconds": 686.846
+    "avg_duration_seconds": 655.534
   }
 }

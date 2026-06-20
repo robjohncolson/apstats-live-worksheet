@@ -55,3 +55,26 @@ registry-data.js
 # path to them.
 tools/cdp/*
 !tools/cdp/edge.py
+
+# Local agent-orchestration scratch (dispatch briefs, result reports, review
+# prompts, preview/sprite PNGs). Regenerable; never product. Leading-dot
+# convention used by the cross-agent runner + ad-hoc fan-outs.
+.ai-tutor-*.result.md
+.ai-tutor-*-codex-review.md
+.session*
+.batch-*
+.codex-*
+.verify-*
+.bug-*
+.supplement-*
+.phase*
+.deploy-retry.ps1
+.coin-*
+.sprite-*
+.door-*
+.preview-*
+.all-atlases.png
+.tmp-coin/
+.t2tmp/
+__pycache__/
+temp_check.js
