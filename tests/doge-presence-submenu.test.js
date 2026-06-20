@@ -421,3 +421,19 @@ describe('D. DogePresence presence handlers — location plumbing', () => {
     expect(D.expandedRow).toBeNull();
   });
 });
+
+describe('D. DogePresence — presence heartbeat (avatar-vs-list agreement)', () => {
+  // The doge presence TTL is ~45s server-side; the doge socket must heartbeat or
+  // a live-but-backgrounded Desk tab ages out of "Online Now" while its
+  // Live-Classroom avatar (a separately-heartbeated socket) stays — the
+  // avatar-present / list-absent disagreement. connect() arms a periodic
+  // heartbeat and clears it on re-arm/close/error so it can't leak or double-fire.
+  it('connect() arms a periodic presence heartbeat send', () => {
+    expect(html).toMatch(/this\._hbTimer\s*=\s*setInterval/);
+    expect(html).toMatch(/type:\s*'heartbeat'/);
+  });
+  it('the heartbeat is cleared on re-arm + close + error (no leak/double-fire)', () => {
+    const clears = (html.match(/clearInterval\(this\._hbTimer\)/g) || []).length;
+    expect(clears).toBeGreaterThanOrEqual(3); // onopen re-arm + onclose + onerror
+  });
+});

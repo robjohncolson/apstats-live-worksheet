@@ -17363,6 +17363,20 @@ const DogePresence = {
             this.connected = true;
             // location:'desk' — this socket IS the Desk, the only surface that can play Tetris.
             this.ws.send(JSON.stringify({ type: 'identify', username: this.getUsername(), location: { surface: 'desk', lesson: null } }));
+            // Periodic presence heartbeat. The server's doge presence TTL is ~45s, so a
+            // live-but-idle/backgrounded Desk tab would otherwise age out of the global
+            // "Online Now" list while its Live-Classroom avatar (a SEPARATELY heartbeated
+            // socket) stays — the avatar-vs-list disagreement. Refreshing presence.lastSeen
+            // every 20s keeps both feeds in sync. The server 'heartbeat' handler only bumps
+            // lastSeen (no re-broadcast), so this is cheap and silent.
+            clearInterval(this._hbTimer);
+            this._hbTimer = setInterval(() => {
+                try {
+                    if (this.ws && this.ws.readyState === 1) {
+                        this.ws.send(JSON.stringify({ type: 'heartbeat', username: this.getUsername(), location: { surface: 'desk', lesson: null } }));
+                    }
+                } catch (_) {}
+            }, 20000);
             this.updateIcon();
             if (this.dropdownOpen) this.renderDropdown();
         };
@@ -17374,6 +17388,7 @@ const DogePresence = {
 
         this.ws.onclose = () => {
             this.connected = false;
+            clearInterval(this._hbTimer);
             this.players = [];
             this.locations = {};
             this.expandedRow = null;
@@ -17388,6 +17403,7 @@ const DogePresence = {
 
         this.ws.onerror = () => {
             this.connected = false;
+            clearInterval(this._hbTimer);
             this.updateIcon();
         };
     },
