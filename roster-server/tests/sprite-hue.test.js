@@ -428,6 +428,108 @@ describe('POST /roster/verify spriteHue field', () => {
   });
 });
 
+// ── GET /roster/:studentId/sprite-hue (cross-device read) ───────────────────
+
+describe('GET /roster/:studentId/sprite-hue', () => {
+  it('returns the current hue for the student-own token', async () => {
+    const enrolled = await seedStudent();
+    db.store.get(enrolled.studentId).sprite_hue = 145;
+    const session = await signIn(enrolled.username);
+
+    const { status, body } = await srv.request('GET', `/roster/${enrolled.studentId}/sprite-hue`, {
+      headers: bearerHeader(session.token)
+    });
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.spriteHue).toBe(145);
+  });
+
+  it('returns spriteHue: null when no hue is set', async () => {
+    const enrolled = await seedStudent();
+    const session  = await signIn(enrolled.username);
+
+    const { status, body } = await srv.request('GET', `/roster/${enrolled.studentId}/sprite-hue`, {
+      headers: bearerHeader(session.token)
+    });
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.spriteHue).toBeNull();
+  });
+
+  it('honors hue 0 (a valid pick, not "unset")', async () => {
+    const enrolled = await seedStudent();
+    db.store.get(enrolled.studentId).sprite_hue = 0;
+    const session = await signIn(enrolled.username);
+
+    const { status, body } = await srv.request('GET', `/roster/${enrolled.studentId}/sprite-hue`, {
+      headers: bearerHeader(session.token)
+    });
+
+    expect(status).toBe(200);
+    expect(body.spriteHue).toBe(0);
+  });
+
+  it('token via ?token= query param also works', async () => {
+    const enrolled = await seedStudent();
+    db.store.get(enrolled.studentId).sprite_hue = 99;
+    const session = await signIn(enrolled.username);
+
+    const path = `/roster/${enrolled.studentId}/sprite-hue?token=${encodeURIComponent(session.token)}`;
+    const { status, body } = await srv.request('GET', path);
+
+    expect(status).toBe(200);
+    expect(body.spriteHue).toBe(99);
+  });
+
+  it('no token -> 401', async () => {
+    const enrolled = await seedStudent();
+    const { status, body } = await srv.request('GET', `/roster/${enrolled.studentId}/sprite-hue`);
+    expect(status).toBe(401);
+    expect(body.ok).toBe(false);
+  });
+
+  it('invalid token -> 401', async () => {
+    const enrolled = await seedStudent();
+    const { status, body } = await srv.request('GET', `/roster/${enrolled.studentId}/sprite-hue`, {
+      headers: { 'Authorization': 'Bearer not.a.valid.token' }
+    });
+    expect(status).toBe(401);
+    expect(body.ok).toBe(false);
+  });
+
+  it('studentA token cannot read studentB hue -> 403 cross-student', async () => {
+    const enrolledA = await seedStudent('Student A', 'PeriodB');
+    const enrolledB = await seedStudent('Student B', 'PeriodB');
+    db.store.get(enrolledB.studentId).sprite_hue = 222;
+    const sessionA = await signIn(enrolledA.username);
+
+    const { status, body } = await srv.request('GET', `/roster/${enrolledB.studentId}/sprite-hue`, {
+      headers: bearerHeader(sessionA.token)
+    });
+
+    expect(status).toBe(403);
+    expect(body.ok).toBe(false);
+    expect(body.error).toBe('cross-student');
+  });
+
+  it('degrades to spriteHue: null (200, not 500) when the lookup throws', async () => {
+    const enrolled = await seedStudent();
+    const session  = await signIn(enrolled.username);
+
+    db.getSpriteHueByStudentId = async () => { throw new Error('column "sprite_hue" does not exist'); };
+
+    const { status, body } = await srv.request('GET', `/roster/${enrolled.studentId}/sprite-hue`, {
+      headers: bearerHeader(session.token)
+    });
+
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.spriteHue).toBeNull();
+  });
+});
+
 // ── PATCH /roster/:studentId/sprite-hue happy path ──────────────────────────
 
 describe('PATCH /roster/:studentId/sprite-hue happy path', () => {

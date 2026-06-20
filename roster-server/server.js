@@ -602,6 +602,53 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     return res.json({ ok: true, studentId: data.student_id });
   });
 
+  // ── GET /roster/:studentId/sprite-hue (cross-device read -- student-own-token) ─
+  // Reads a student's current avatar hue from the roster DB so a signed-in
+  // surface can reconcile its cached session WITHOUT a re-sign-in (a hue picked
+  // on another device, or changed on the Desk, propagates on the next load).
+  // Auth mirrors the PATCH below: Bearer token (or ?token=), and the token's
+  // studentId MUST equal the :studentId path param.
+  //   Responses:
+  //     200 { ok:true, spriteHue: integer 0-359 | null }
+  //     401 missing / invalid token
+  //     403 { ok:false, error:'cross-student' } token studentId != path id
+  // getSpriteHueByStudentId degrades to null pre-migration / on any DB error,
+  // so this read never 500s on a missing column -- it returns spriteHue:null.
+  app.get('/roster/:studentId/sprite-hue', async (req, res) => {
+    const { studentId } = req.params;
+
+    let token = null;
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (typeof authHeader === 'string' && /^Bearer\s+/i.test(authHeader)) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim() || null;
+    }
+    if (!token && typeof req.query.token === 'string' && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+
+    const tokenSid = verifyToken(token);
+    if (!tokenSid) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+
+    if (tokenSid !== studentId) {
+      return res.status(403).json({ ok: false, error: 'cross-student' });
+    }
+
+    let spriteHue = null;
+    try {
+      spriteHue = await db.getSpriteHueByStudentId(studentId);
+    } catch (_) {
+      spriteHue = null;
+    }
+
+    return res.json({ ok: true, spriteHue });
+  });
+
   // ── PATCH /roster/:studentId/sprite-hue (r3 U1 -- student-own-token auth) ────
   // Persists a student's chosen avatar hue to the roster DB.
   //   Auth: Bearer token (or ?token=) verified by verifyToken. The token's
