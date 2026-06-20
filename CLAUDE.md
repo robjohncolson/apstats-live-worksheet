@@ -18,13 +18,11 @@ A full AP Statistics course platform: 69 video follow-along live worksheets, the
 | Path | Purpose |
 |------|---------|
 | `index.html` | Landing page linking all apps (newly added — repo root previously 404'd) |
-| `u{unit}_lesson{range}_live.html` | The worksheet family: 69 files at root (u1–u9), indexed by `TOC.html` |
+| `u{unit}_lesson{range}_live.html` | The worksheet family: 69 files at root (u1–u9), indexed by `TOC.html`. Worksheet-wide rollouts are pattern-guarded to `^u\d+_lesson.+_live\.html$` |
 | `ap_stats_roadmap_square_mode.html` | **The Desk** (~14,250 lines): student home hub — roadmap lesson tiles, Do Now card with grade pills, completion calendar, resource panel, Live Classroom, Study Break Tetris, in-app gradebook. `calendar.html` is a 16-line redirect stub into it |
 | `start-here.html` | Orientation + interactive v3 Grade Playground (fully static) |
 | `study_guide_diagnostic.html` | DAG/BKT diagnostic study guide; depends on `lib/` runtime (`bkt.js`, `dag-renderer.js`, `probe-selector.js`, `curriculum-charts.js`) |
 | `ti84-trainer-v2/index.html` | ROM-backed CEmu-wasm TI-84 trainer; `build.mjs` regenerates `generated/` + `standalone.html`. Legacy v1 = `ti84_trainer.html`; QA harness = `ti84-verify.html` |
-| `edgar_u6_conceptual_driller_live.html` | **NOT a follow-along worksheet** — separate track, excluded from worksheet-wide rollouts (hard rule). Pattern-guard rollouts to `^u\d+_lesson.+_live\.html$` |
-| `mit_ocw_6.0001_lec1/2_live.html` | MIT OCW Python worksheets (clubs track, not AP Stats) |
 
 ### In-Desk app windows
 

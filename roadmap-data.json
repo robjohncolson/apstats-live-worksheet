@@ -102,31 +102,6 @@
         }
       }
     },
-    "6.review": {
-      "topic": "Unit 6 Review",
-      "urls": {
-        "worksheet": "https://robjohncolson.github.io/apstats-live-worksheet/edgar_u6_conceptual_driller_live.html",
-        "drills": null,
-        "quiz": null,
-        "blooket": null,
-        "videos": []
-      },
-      "status": "partial",
-      "periods": {
-        "B": {
-          "date": "2026-03-17",
-          "schoologyFolder": null,
-          "posted": true,
-          "verified": false
-        },
-        "E": {
-          "date": null,
-          "schoologyFolder": null,
-          "posted": false,
-          "verified": false
-        }
-      }
-    },
     "8.5": {
       "topic": "Topic 8.5",
       "urls": {
