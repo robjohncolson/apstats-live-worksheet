@@ -636,13 +636,22 @@ describe('TR2 runtime — renderDoNow gating', () => {
 
 describe('sign-in dropdown -- PeriodX fallback + bail-on-empty', () => {
   it('exposes a _fetchSectionRoster helper (single-section fetch) for reuse', () => {
-    expect(html).toMatch(/async\s+function\s+_fetchSectionRoster\s*\(\s*section\s*\)/);
+    // (section) or (section, opts) -- opts.fresh lets the name finder bypass the cache.
+    expect(html).toMatch(/async\s+function\s+_fetchSectionRoster\s*\(\s*section\b/);
   });
 
   it('_fetchPeriodRoster falls back to PeriodX when the primary section is empty', () => {
     // Two anchors -- the fallback call + the no-double-fetch guard.
     expect(html).toMatch(/if\s*\(\s*primarySection\s*!==\s*['"]PeriodX['"]\s*\)/);
-    expect(html).toMatch(/_fetchSectionRoster\(\s*['"]PeriodX['"]\s*\)/);
+    expect(html).toMatch(/_fetchSectionRoster\(\s*['"]PeriodX['"]/);  // may carry an opts arg
+  });
+
+  it('the sign-in name finder fetches a FRESH roster (no stale cache hides new sign-ups)', () => {
+    // openNameFinder forces a live read; _fetchSectionRoster honors {fresh} by
+    // skipping the 1-hour localStorage cache + using a no-store fetch.
+    expect(html).toMatch(/_fetchPeriodRoster\(\s*period\s*,\s*\{\s*fresh:\s*true\s*\}/);
+    expect(html).toMatch(/cache:\s*['"]no-store['"]/);
+    expect(html).toMatch(/if\s*\(\s*!fresh\s*\)/);  // cache read guarded by !fresh
   });
 
   it('_openRosterDropdown bails out when _rosterDropdownData is empty', () => {

@@ -6228,11 +6228,15 @@ function _periodToSection(period) {
 // Fetch one specific section's roster (cached). Returns [] on miss/error.
 // Extracted from _fetchPeriodRoster so the period -> section call can fall
 // back to the universal "PeriodX" section.
-async function _fetchSectionRoster(section) {
+async function _fetchSectionRoster(section, opts) {
   if (!section) return [];
+  // The sign-in name finder passes {fresh:true} so a JUST-enrolled student can
+  // find their name immediately — the 1-hour localStorage cache + the server's
+  // 5-min Cache-Control would otherwise hide them. Other callers keep the cache.
+  var fresh = !!(opts && opts.fresh);
   var cacheKey = 'apstats_desk_roster_cache_' + section;
-  // Try cache first.
-  try {
+  // Try cache first (skipped when fresh).
+  if (!fresh) try {
     var raw = localStorage.getItem(cacheKey);
     if (raw) {
       var cached = JSON.parse(raw);
@@ -6245,7 +6249,7 @@ async function _fetchSectionRoster(section) {
   var baseUrl = (typeof window !== 'undefined' && window.ROSTER_SERVICE_URL) || null;
   if (!baseUrl) return [];
   try {
-    var res = await fetch(baseUrl + '/roster/section/' + encodeURIComponent(section));
+    var res = await fetch(baseUrl + '/roster/section/' + encodeURIComponent(section), fresh ? { cache: 'no-store' } : undefined);
     if (!res.ok) return [];
     var data = await res.json();
     var students = (data && data.ok && Array.isArray(data.students)) ? data.students : [];
@@ -6262,16 +6266,16 @@ async function _fetchSectionRoster(section) {
   }
 }
 
-async function _fetchPeriodRoster(period) {
+async function _fetchPeriodRoster(period, opts) {
   var primarySection = _periodToSection(period);
-  var primary = await _fetchSectionRoster(primarySection);
+  var primary = await _fetchSectionRoster(primarySection, opts);
   if (primary.length > 0) return primary;
   // Fallback: PeriodX is the universal section while real periods aren't
   // yet assigned. Without this fallback the sign-in dropdown is empty
   // whenever cP defaults to "B" (yielding section "PeriodB" which has
   // no students), even though every student is registered in PeriodX.
   if (primarySection !== 'PeriodX') {
-    return _fetchSectionRoster('PeriodX');
+    return _fetchSectionRoster('PeriodX', opts);
   }
   return [];
 }
@@ -6566,7 +6570,9 @@ function _nfBuckets(lo, hi) {
 
 async function openNameFinder() {
   var period = (typeof cP === 'string') ? cP : 'B';
-  _nfRoster = (typeof _fetchPeriodRoster === 'function') ? await _fetchPeriodRoster(period) : [];
+  // {fresh:true}: bypass the 1-hour roster cache so a newly-enrolled classmate
+  // shows up in the dial immediately (this was hiding recent sign-ups).
+  _nfRoster = (typeof _fetchPeriodRoster === 'function') ? await _fetchPeriodRoster(period, { fresh: true }) : [];
   if (!_nfRoster || _nfRoster.length === 0) {
     if (typeof openSignInModal === 'function') openSignInModal();   // offline / no roster
     return;
