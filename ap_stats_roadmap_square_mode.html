@@ -1282,6 +1282,23 @@
             background: var(--black);
             color: var(--white);
         }
+        /* The "you" row — same layout as a peer item but non-interactive (no
+           hover/cursor) and a separate class so it stays OUT of the .doge-dd-item
+           peer collection (the candy/challenge wiring + tests select .doge-dd-item). */
+        .doge-dd-self {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 10px 2px 12px;
+            font-size: 11px;
+            cursor: default;
+            white-space: nowrap;
+            min-height: 18px;
+            line-height: 16px;
+            color: var(--black);
+            background: #f4f4f4;
+            opacity: .92;
+        }
         .doge-dd-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
         .doge-dd-caret { flex: 0 0 auto; opacity: .45; font-size: 10px; }
         .doge-dd-item.doge-dd-open { background: var(--platinum); color: var(--black); }
@@ -17248,11 +17265,22 @@ const DogePresence = {
         let html = '';
         if (!this.connected) {
             html = '<div class="doge-dd-empty">Connecting...</div>';
-        } else if (this.players.length === 0) {
-            html = '<div class="doge-dd-header">Online Now (0)</div>';
-            html += '<div class="doge-dd-empty">No classmates online</div>';
         } else {
-            html = `<div class="doge-dd-header">Online Now (${this.players.length})</div>`;
+            // Show EVERYONE online INCLUDING yourself (labeled "you"), so the Desk's
+            // "Online Now" is the complete, authoritative view — a superset of any one
+            // app that hides its own identity (cr / worksheets self-filter). this.players
+            // stays self-filtered: it drives the candy/challenge actions + the Study Break
+            // lobby. The self row here is display-only + non-interactive.
+            const me = this.getUsername();
+            const myReal = DeskRoster.realName(me);
+            const myLabel = myReal
+                ? `<strong>${_deskEsc(myReal)}</strong> <span style="opacity:.55;font-size:.85em">${_deskEsc(me)}</span>`
+                : _deskEsc(me);
+            html = `<div class="doge-dd-header">Online Now (${this.players.length + 1})</div>`;
+            html += `<div class="doge-dd-self">`
+                  + `<span class="doge-dd-name">${myLabel} <span style="opacity:.6;font-style:italic">(you)</span></span>`
+                  + this._locationChip(this.locations[me] || { surface: 'desk', lesson: null, onDesk: true }, teacher)
+                  + `</div>`;
             this.players.forEach(p => {
                 const real = DeskRoster.realName(p);
                 let label;
@@ -17281,6 +17309,7 @@ const DogePresence = {
                 // submenu lives in the dropdown markup so a presence re-render keeps it open.
                 if (expanded) html += this._submenuHtml(p, loc, pArg);
             });
+            if (this.players.length === 0) html += '<div class="doge-dd-empty">No classmates online yet</div>';
         }
         html += '<div class="doge-dd-sep"></div>';
         if (/^guest_/i.test(String(DogePresence.getUsername()))) {

@@ -236,6 +236,32 @@ describe('D. DogePresence render — location chips', () => {
   });
 });
 
+describe('D. DogePresence render — self row (Desk = the complete view)', () => {
+  it('lists YOU (labeled, counted) but NOT as a clickable .doge-dd-item peer', () => {
+    const { D, dd } = loadDoge();   // D.username = 'Me_Self'
+    D.players = ['Ana_Fox'];
+    D.locations = { Ana_Fox: { surface: 'desk', lesson: null, onDesk: true } };
+    D.renderDropdown();
+    const html = dd();
+    expect(html).toContain('(you)');               // self labeled
+    expect(html).toContain('doge-dd-self');         // distinct, non-interactive class
+    expect(html).toContain('Online Now (2)');       // 1 peer + you (the complete set)
+    // The self row is NOT a .doge-dd-item peer (candy/challenge wiring selects those).
+    const peers = document.querySelectorAll('.doge-dd-item');
+    expect(peers.length).toBe(1);
+    expect(peers[0].getAttribute('onclick') || '').toContain('toggleRow("Ana_Fox")');
+  });
+  it('shows YOU even with no classmates online (Desk is never empty for you)', () => {
+    const { D, dd } = loadDoge();
+    D.players = [];
+    D.renderDropdown();
+    const html = dd();
+    expect(html).toContain('(you)');
+    expect(html).toContain('Online Now (1)');
+    expect(html).toContain('No classmates online yet');
+  });
+});
+
 describe('D. DogePresence render — no auto-challenge, submenu on click', () => {
   it('a player row toggles a submenu (NOT sendChallenge) on click', () => {
     const { D } = loadDoge();
