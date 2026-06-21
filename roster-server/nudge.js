@@ -310,15 +310,21 @@ export function mountNudge(app, { db, nudgesDb }) {
   // GET /student/nudge-history-guest?guestUsername=Guest_X&limit=N  (NO auth)
   // Guests have no roster token, so they can't use the token'd endpoint above —
   // this lets a guest READ the teacher's messages by their Guest_ alias. RESTRICTED
-  // to Guest_* aliases (a real roster student MUST use /student/nudge-history); the
-  // teacher stores guest recipients LOWERCASED (presence canonicalization), so we
-  // lowercase the alias to match listConversation's exact filter. Low-sensitivity by
-  // design (teacher->guest notes; the recipient is anonymous + temporary).
+  // to Guest_* aliases (a real roster student MUST use /student/nudge-history).
+  // The guest alias is stored with whatever case live presence used: the Desk
+  // mounts a guest avatar as Title-case Guest_X (getGuestIdentity) and the server
+  // never lowercases recipients, so the stored recipient is Title-case. We match
+  // BOTH the verbatim alias and its lowercase form (listConversationGuest) so the
+  // thread is found regardless of case. Low-sensitivity by design (teacher->guest
+  // notes; the recipient is anonymous + temporary).
   app.get('/student/nudge-history-guest', async (req, res) => {
-    var guestUsername = (typeof req.query.guestUsername === 'string' ? req.query.guestUsername : '').trim().toLowerCase();
-    if (!/^guest_[a-z0-9_-]+$/.test(guestUsername)) {
+    var rawAlias = (typeof req.query.guestUsername === 'string' ? req.query.guestUsername : '').trim();
+    if (!/^guest_[a-z0-9_-]+$/i.test(rawAlias)) {
       return res.status(400).json({ ok: false, error: 'guestUsername must be a Guest_ alias' });
     }
+    // Match both the verbatim alias and its lowercase form (each passes the
+    // PostgREST injection guard). De-duped so an all-lowercase alias is one clause.
+    var aliasVariants = Array.from(new Set([rawAlias, rawAlias.toLowerCase()]));
     var teacher;
     try {
       var { data: tRow, error: tErr } = await db.findTeacherUsername();
@@ -326,7 +332,7 @@ export function mountNudge(app, { db, nudgesDb }) {
         console.error('GET /student/nudge-history-guest findTeacher error:', tErr);
         return res.status(500).json({ ok: false, error: 'Database error' });
       }
-      if (!tRow) return res.json({ ok: true, studentUsername: guestUsername, teacherUsername: null, rows: [] });
+      if (!tRow) return res.json({ ok: true, studentUsername: rawAlias, teacherUsername: null, rows: [] });
       teacher = tRow;
     } catch (err) {
       console.error('GET /student/nudge-history-guest findTeacher throw:', err);
@@ -341,9 +347,9 @@ export function mountNudge(app, { db, nudgesDb }) {
     var offset = Number(req.query.offset);
     if (!Number.isFinite(offset) || offset < 0) offset = 0;
     try {
-      var { data, error } = await nudgesDb.listConversation({
+      var { data, error } = await nudgesDb.listConversationGuest({
         teacherUsername: teacher.login_username,
-        studentUsername: guestUsername,
+        studentUsernames: aliasVariants,
         limit: limit, offset: offset,
       });
       if (error) {
@@ -351,7 +357,7 @@ export function mountNudge(app, { db, nudgesDb }) {
         console.error('GET /student/nudge-history-guest error:', error);
         return res.status(500).json({ ok: false, error: 'Database error' });
       }
-      return res.json({ ok: true, studentUsername: guestUsername, teacherUsername: teacher.login_username, rows: data || [] });
+      return res.json({ ok: true, studentUsername: rawAlias, teacherUsername: teacher.login_username, rows: data || [] });
     } catch (err) {
       console.error('GET /student/nudge-history-guest throw:', err);
       return res.status(500).json({ ok: false, error: 'Database error' });

@@ -98,6 +98,13 @@ function createFakeNudgesDb({
       if (error) return { data: null, error };
       return { data: conversationRows, error: null };
     },
+    async listConversationGuest(args) {
+      listCalledWith = args;
+      if (throwOnList) throw new Error('DAL threw unexpectedly');
+      if (fail42P01) return { data: null, error: { code: '42P01', message: 'table missing' } };
+      if (error) return { data: null, error };
+      return { data: conversationRows, error: null };
+    },
   };
 }
 
@@ -550,8 +557,12 @@ describe('Codex P13 MINOR fold: GET /student/nudge-history surfaces DB errors', 
 });
 
 describe('GET /student/nudge-history-guest (un-authed; a guest reads teacher messages by alias)', () => {
-  it('returns the teacher<->guest thread for a Guest_ alias, queried LOWERCASED', async () => {
-    const rows = [{ direction: 'teacher', sender_username: 'apple-fox', recipient_username: 'guest_mango_turtle', text: 'please sign in', created_at: '2026-06-21T00:00:00Z' }];
+  it('returns the teacher->guest thread, matching BOTH alias case-variants', async () => {
+    // The guest avatar is mounted Title-case (getGuestIdentity) and the server
+    // never lowercases recipients, so the stored recipient is Title-case. The
+    // endpoint queries the verbatim alias AND its lowercase form so either case
+    // is found.
+    const rows = [{ direction: 'teacher', sender_username: 'apple-fox', recipient_username: 'Guest_Mango_Turtle', text: 'please sign in', created_at: '2026-06-21T00:00:00Z' }];
     const nudgesDb = createFakeNudgesDb({ conversationRows: rows });
     const ctx = await startServer({ roster: [FIXTURE_TEACHER_ROW, FIXTURE_STUDENT], nudgesDb });
     srv = ctx.server;
@@ -559,9 +570,17 @@ describe('GET /student/nudge-history-guest (un-authed; a guest reads teacher mes
     expect(r.status).toBe(200);
     expect(r.body.ok).toBe(true);
     expect(r.body.rows).toHaveLength(1);
-    // lowercased alias matches the teacher's lowercased recipient_username.
-    expect(nudgesDb._listCalledWith().studentUsername).toBe('guest_mango_turtle');
-    expect(nudgesDb._listCalledWith().teacherUsername).toBe('apple-fox');
+    expect(r.body.studentUsername).toBe('Guest_Mango_Turtle');  // verbatim echoed back
+    const called = nudgesDb._listCalledWith();
+    expect(called.teacherUsername).toBe('apple-fox');
+    expect(called.studentUsernames).toEqual(['Guest_Mango_Turtle', 'guest_mango_turtle']);
+  });
+  it('an all-lowercase alias collapses to a single de-duped variant', async () => {
+    const nudgesDb = createFakeNudgesDb({ conversationRows: [] });
+    const ctx = await startServer({ roster: [FIXTURE_TEACHER_ROW, FIXTURE_STUDENT], nudgesDb });
+    srv = ctx.server;
+    await srv.get('/student/nudge-history-guest?guestUsername=guest_mango_turtle');
+    expect(nudgesDb._listCalledWith().studentUsernames).toEqual(['guest_mango_turtle']);
   });
   it('rejects a NON-guest username (real students must use the token endpoint)', async () => {
     const ctx = await startServer({ roster: [FIXTURE_TEACHER_ROW, FIXTURE_STUDENT], nudgesDb: createFakeNudgesDb() });

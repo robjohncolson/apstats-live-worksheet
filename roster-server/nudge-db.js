@@ -13,6 +13,7 @@ export function createNudgesDb(client) {
     markDelivered,       // update delivered_at for a (nudge_id, recipient) pair
     findParent,          // Codex BLOCKER fold P3: ownership check for replies
     listConversation,    // P7: dyadic thread for GET /teacher/nudge-history
+    listConversationGuest, // guest-chat: teacher->guest thread, case-variant tolerant
   };
 
   // findParent({ nudgeId, recipientUsername }) -> { data: row|null, error }
@@ -128,6 +129,33 @@ export function createNudgesDb(client) {
         ',' +
         'and(direction.eq.student,sender_username.eq.' + studentUsername + ',recipient_username.eq.' + teacherUsername + ')'
       )
+      .order('created_at', { ascending: false })
+      .range(offset, offset + Math.max(0, limit) - 1);
+  }
+
+  // listConversationGuest({ teacherUsername, studentUsernames, limit, offset })
+  // -> { data: [row, ...], error }
+  //
+  // The guest variant of listConversation. A guest can only RECEIVE messages
+  // (replying is roster-only), so the thread is just the teacher->guest rows.
+  // The guest alias is stored with whatever case live presence used -- today
+  // the Desk mounts a guest avatar as Title-case Guest_X (getGuestIdentity) and
+  // the server never lowercases recipients, so the stored recipient is
+  // Title-case. studentUsernames is an array of accepted case-variants (e.g.
+  // ['Guest_Berry_Sloth','guest_berry_sloth']) so the thread is found
+  // regardless of case, and a future presence canonicalization can't orphan it.
+  //
+  // Caller MUST validate teacherUsername and every studentUsernames entry
+  // against /^[a-zA-Z0-9_-]+$/ before calling this (PostgREST injection guard).
+  async function listConversationGuest({ teacherUsername, studentUsernames, limit = 20, offset = 0 }) {
+    var variants = Array.isArray(studentUsernames) ? studentUsernames : [studentUsernames];
+    var clauses = variants.map(function (su) {
+      return 'and(direction.eq.teacher,sender_username.eq.' + teacherUsername + ',recipient_username.eq.' + su + ')';
+    });
+    return client
+      .from('nudges_log')
+      .select('*')
+      .or(clauses.join(','))
       .order('created_at', { ascending: false })
       .range(offset, offset + Math.max(0, limit) - 1);
   }
