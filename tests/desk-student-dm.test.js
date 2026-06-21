@@ -339,12 +339,21 @@ function makeHistorySandbox({ rows, fetchOk, base, token }) {
       });
     },
   };
+  sandbox.encodeURIComponent = encodeURIComponent;
   createContext(sandbox);
   // Codex P13 MAJOR fold: _fetchStudentDmHistory references the module-scope
   // _sdmHistoryEpoch counter so concurrent fetches can be discriminated.
   // Declare it in the sandbox alongside the function bodies.
+  // Guest-chat fold: _fetchStudentDmHistory now routes through _studentNudgeFetch
+  // (token endpoint OR un-authed guest-alias endpoint), so inject that helper and
+  // its two dependencies. _studentNudgeGuestAlias reads localStorage, which is
+  // absent here -> its try/catch returns null, so these token/no-token tests take
+  // the roster path exactly as before.
   runInContext(
     'var _sdmHistoryEpoch = 0;\n' +
+    fnBody(html, '_studentNudgeToken') + '\n' +
+    fnBody(html, '_studentNudgeGuestAlias') + '\n' +
+    fnBody(html, '_studentNudgeFetch') + '\n' +
     fnBody(html, '_buildSdmHistoryLi') + '\n' +
     fnBody(html, '_fetchStudentDmHistory') + '\n' +
     'this.__f = _fetchStudentDmHistory;\n',

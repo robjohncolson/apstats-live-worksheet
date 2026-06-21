@@ -5559,6 +5559,30 @@ function _studentNudgeToken() {
   }
 }
 
+// The stable Guest_ alias when browsing as a guest (no roster session). Guests have
+// no token, so they read teacher messages by alias via the un-authed endpoint.
+function _studentNudgeGuestAlias() {
+  try {
+    if (localStorage.getItem('apstats_guest_active') !== '1') return null;
+    var a = (typeof window.getGuestIdentity === 'function') ? window.getGuestIdentity() : null;
+    return (a && /^Guest_/i.test(a)) ? a : null;
+  } catch (_) { return null; }
+}
+
+// A fetch() for THIS user's nudge thread, or null if neither a signed-in roster
+// student nor an active guest. Roster -> token'd /student/nudge-history; guest ->
+// the un-authed /student/nudge-history-guest (so guests can READ teacher messages).
+function _studentNudgeFetch(limit) {
+  var base = window.ROSTER_SERVICE_URL;
+  if (!base) return null;
+  var n = limit || 20;
+  var token = _studentNudgeToken();
+  if (token) return fetch(base + '/student/nudge-history?limit=' + n, { headers: { 'Authorization': 'Bearer ' + token } });
+  var alias = _studentNudgeGuestAlias();
+  if (alias) return fetch(base + '/student/nudge-history-guest?guestUsername=' + encodeURIComponent(alias) + '&limit=' + n);
+  return null;
+}
+
 function _studentNudgeCleanUsername(username) {
   return String(username || '').trim().toLowerCase();
 }
@@ -5576,8 +5600,9 @@ function _studentNudgeSelfUsername() {
 
 function _studentNudgeCanPoll() {
   var who = _studentNudgeSession();
-  if (!who || who.role === 'teacher') return false;
-  return !!(window.ROSTER_SERVICE_URL && _studentNudgeToken());
+  if (who && who.role === 'teacher') return false;   // teachers have no student inbox
+  if (!window.ROSTER_SERVICE_URL) return false;
+  return !!(_studentNudgeToken() || _studentNudgeGuestAlias());   // roster student OR active guest
 }
 
 function _studentDmModalOpen() {
@@ -5675,11 +5700,9 @@ async function _pollStudentNudgeHistory(force) {
   }
   _studentNudgePollInFlight = true;
   try {
-    var base = window.ROSTER_SERVICE_URL;
-    var token = _studentNudgeToken();
-    var res = await fetch(base + '/student/nudge-history?limit=20', {
-      headers: { 'Authorization': 'Bearer ' + token },
-    });
+    var p = _studentNudgeFetch(20);
+    if (!p) return null;
+    var res = await p;
     var j = await res.json().catch(function () { return {}; });
     if (!res.ok || !j || !j.ok) return null;
     var rows = Array.isArray(j.rows) ? j.rows : [];
@@ -5773,16 +5796,13 @@ async function _fetchStudentDmHistory() {
   var epoch = ++_sdmHistoryEpoch;
   listEl.innerHTML = '<li class="sdm-history-empty">Loading...</li>';
   try {
-    var base = window.ROSTER_SERVICE_URL;
-    var token = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
-    if (!base || !token) {
+    var p = _studentNudgeFetch(20);
+    if (!p) {
       if (epoch !== _sdmHistoryEpoch) return;
       listEl.innerHTML = '<li class="sdm-history-empty">Not signed in.</li>';
       return [];
     }
-    var res = await fetch(base + '/student/nudge-history?limit=20', {
-      headers: { 'Authorization': 'Bearer ' + token },
-    });
+    var res = await p;
     if (epoch !== _sdmHistoryEpoch) return;  // newer fetch superseded us
     var j = await res.json().catch(function () { return {}; });
     if (epoch !== _sdmHistoryEpoch) return;
@@ -5855,7 +5875,10 @@ async function _sendStudentDm() {
     var token = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
     if (!base || !token) {
       if (statusEl) {
-        statusEl.textContent = 'Not signed in.';
+        // A guest can READ teacher messages but can't reply (no identity to reply AS).
+        statusEl.textContent = _studentNudgeGuestAlias()
+          ? 'Sign in with your name to reply so your teacher knows who you are.'
+          : 'Not signed in.';
         statusEl.classList.add('is-error');
       }
       if (btn) btn.disabled = false;
@@ -19262,7 +19285,7 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 // from APP_BUILD (this running build) we show a dismissible "reload" banner.
 // APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
 // (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
-var APP_BUILD = '2026-06-21-nfjk';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-06-21-xk2r';   // scripts/bump-build.mjs replaces this stamp
 (function _wireUpdateNudge(){
   var nudged = false;
   function showBanner(){

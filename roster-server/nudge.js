@@ -307,6 +307,57 @@ export function mountNudge(app, { db, nudgesDb }) {
     }
   });
 
+  // GET /student/nudge-history-guest?guestUsername=Guest_X&limit=N  (NO auth)
+  // Guests have no roster token, so they can't use the token'd endpoint above —
+  // this lets a guest READ the teacher's messages by their Guest_ alias. RESTRICTED
+  // to Guest_* aliases (a real roster student MUST use /student/nudge-history); the
+  // teacher stores guest recipients LOWERCASED (presence canonicalization), so we
+  // lowercase the alias to match listConversation's exact filter. Low-sensitivity by
+  // design (teacher->guest notes; the recipient is anonymous + temporary).
+  app.get('/student/nudge-history-guest', async (req, res) => {
+    var guestUsername = (typeof req.query.guestUsername === 'string' ? req.query.guestUsername : '').trim().toLowerCase();
+    if (!/^guest_[a-z0-9_-]+$/.test(guestUsername)) {
+      return res.status(400).json({ ok: false, error: 'guestUsername must be a Guest_ alias' });
+    }
+    var teacher;
+    try {
+      var { data: tRow, error: tErr } = await db.findTeacherUsername();
+      if (tErr) {
+        console.error('GET /student/nudge-history-guest findTeacher error:', tErr);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      if (!tRow) return res.json({ ok: true, studentUsername: guestUsername, teacherUsername: null, rows: [] });
+      teacher = tRow;
+    } catch (err) {
+      console.error('GET /student/nudge-history-guest findTeacher throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(teacher.login_username)) {
+      return res.status(400).json({ ok: false, error: 'resolved teacher username has invalid characters' });
+    }
+    var limit = Number(req.query.limit);
+    if (!Number.isFinite(limit) || limit <= 0) limit = 20;
+    if (limit > 100) limit = 100;
+    var offset = Number(req.query.offset);
+    if (!Number.isFinite(offset) || offset < 0) offset = 0;
+    try {
+      var { data, error } = await nudgesDb.listConversation({
+        teacherUsername: teacher.login_username,
+        studentUsername: guestUsername,
+        limit: limit, offset: offset,
+      });
+      if (error) {
+        if (error.code === '42P01') return res.status(503).json({ ok: false, error: 'nudges_log not provisioned -- run migration 0008' });
+        console.error('GET /student/nudge-history-guest error:', error);
+        return res.status(500).json({ ok: false, error: 'Database error' });
+      }
+      return res.json({ ok: true, studentUsername: guestUsername, teacherUsername: teacher.login_username, rows: data || [] });
+    } catch (err) {
+      console.error('GET /student/nudge-history-guest throw:', err);
+      return res.status(500).json({ ok: false, error: 'Database error' });
+    }
+  });
+
   // POST /student/nudge-reply { parentNudgeId, recipientUsername, text, section }
   // Auth: student token (resolves to senderUsername via roster lookup).
   app.post('/student/nudge-reply', async (req, res) => {

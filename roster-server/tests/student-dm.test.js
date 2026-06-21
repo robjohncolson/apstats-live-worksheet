@@ -548,3 +548,37 @@ describe('Codex P13 MINOR fold: GET /student/nudge-history surfaces DB errors', 
     expect(errCheck).toMatch(/status\(500\)/);
   });
 });
+
+describe('GET /student/nudge-history-guest (un-authed; a guest reads teacher messages by alias)', () => {
+  it('returns the teacher<->guest thread for a Guest_ alias, queried LOWERCASED', async () => {
+    const rows = [{ direction: 'teacher', sender_username: 'apple-fox', recipient_username: 'guest_mango_turtle', text: 'please sign in', created_at: '2026-06-21T00:00:00Z' }];
+    const nudgesDb = createFakeNudgesDb({ conversationRows: rows });
+    const ctx = await startServer({ roster: [FIXTURE_TEACHER_ROW, FIXTURE_STUDENT], nudgesDb });
+    srv = ctx.server;
+    const r = await srv.get('/student/nudge-history-guest?guestUsername=Guest_Mango_Turtle');
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(r.body.rows).toHaveLength(1);
+    // lowercased alias matches the teacher's lowercased recipient_username.
+    expect(nudgesDb._listCalledWith().studentUsername).toBe('guest_mango_turtle');
+    expect(nudgesDb._listCalledWith().teacherUsername).toBe('apple-fox');
+  });
+  it('rejects a NON-guest username (real students must use the token endpoint)', async () => {
+    const ctx = await startServer({ roster: [FIXTURE_TEACHER_ROW, FIXTURE_STUDENT], nudgesDb: createFakeNudgesDb() });
+    srv = ctx.server;
+    expect((await srv.get('/student/nudge-history-guest?guestUsername=papaya-otter')).status).toBe(400);
+  });
+  it('rejects a missing guestUsername', async () => {
+    const ctx = await startServer({ roster: [FIXTURE_TEACHER_ROW, FIXTURE_STUDENT], nudgesDb: createFakeNudgesDb() });
+    srv = ctx.server;
+    expect((await srv.get('/student/nudge-history-guest')).status).toBe(400);
+  });
+  it('no teacher -> 200 with an empty thread (graceful)', async () => {
+    const ctx = await startServer({ roster: [FIXTURE_STUDENT], nudgesDb: createFakeNudgesDb() });  // no teacher
+    srv = ctx.server;
+    const r = await srv.get('/student/nudge-history-guest?guestUsername=Guest_Berry_Sloth');
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(r.body.rows).toEqual([]);
+  });
+});
