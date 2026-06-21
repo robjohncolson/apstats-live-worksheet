@@ -1301,6 +1301,14 @@
         }
         .doge-dd-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
         .doge-dd-caret { flex: 0 0 auto; opacity: .45; font-size: 10px; }
+        /* "A new version is available — reload" nudge (stale-tab fix). */
+        #update-nudge {
+            position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+            z-index: 100050; display: flex; align-items: center; gap: 10px;
+            background: #fff7e0; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+            padding: 7px 10px; font-size: 12px; color: #5f4100; max-width: 92vw;
+        }
+        #update-nudge .s7btn { font-size: 11px; padding: 2px 8px; }
         .doge-dd-item.doge-dd-open { background: var(--platinum); color: var(--black); }
         .doge-dd-item.doge-dd-open:hover { background: var(--platinum); color: var(--black); }
         /* Location chip: keeps its own bg so it stays legible even on a black hovered row. */
@@ -18808,6 +18816,44 @@ if(typeof _mountClassroomBoard==='function')_mountClassroomBoard();   // Live Cl
 // click the doge icon. _autoPresence makes connect() reconnect if the socket drops.
 try { DogePresence._autoPresence = true; DogePresence.connect(); } catch (_) {}
 _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
+
+// ── Update nudge (stale-tab fix) ────────────────────────────────────────────
+// A long-open Desk tab can keep running a CACHED old build (this is what made
+// olive_sloth show an avatar but no presence — boot auto-identify was added in a
+// newer build). version.json carries the LATEST deployed build; if it differs
+// from APP_BUILD (this running build) we show a dismissible "reload" banner.
+// APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
+// (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
+var APP_BUILD = '2026-06-21-n87s';   // scripts/bump-build.mjs replaces this stamp
+(function _wireUpdateNudge(){
+  var nudged = false;
+  function showBanner(){
+    if (nudged || document.getElementById('update-nudge')) return;
+    nudged = true;
+    var bar = document.createElement('div');
+    bar.id = 'update-nudge'; bar.className = 'chicago'; bar.setAttribute('role','status');
+    var msg = document.createElement('span'); msg.textContent = '\u{1F504} A new version is available.';
+    var reload = document.createElement('button'); reload.className = 's7btn s7btn-default'; reload.textContent = 'Reload';
+    reload.addEventListener('click', function(){ try { location.reload(); } catch(_) { location.href = location.href; } });
+    var dismiss = document.createElement('button'); dismiss.className = 's7btn'; dismiss.textContent = '×';
+    dismiss.setAttribute('aria-label','Dismiss'); dismiss.addEventListener('click', function(){ bar.remove(); });
+    bar.appendChild(msg); bar.appendChild(reload); bar.appendChild(dismiss);
+    document.body.appendChild(bar);
+  }
+  function check(){
+    if (nudged) return;
+    try {
+      fetch('version.json?_=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(v){ if (v && v.build && v.build !== APP_BUILD) showBanner(); })
+        .catch(function(){});
+    } catch(_) {}
+  }
+  setTimeout(check, 8000);                 // initial, shortly after boot
+  setInterval(check, 5 * 60 * 1000);       // every 5 min
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) check(); });  // on tab refocus
+})();
+
 setInterval(()=>{rCD();rCal();rProg()},6e4);
 
 /* ── Boot Dismissal (click-to-start after progress bar) ── */
