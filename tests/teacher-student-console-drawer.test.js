@@ -75,20 +75,29 @@ describe('TSC drawer DOM presence', () => {
     expect(DASH).toMatch(/data-tsc-close="button"/);
   });
 
-  it('all four action buttons are present; nudge and gate are disabled (P6: remediation is now enabled)', () => {
+  it('all four action buttons present; nudge + remediation enabled, only gate disabled', () => {
     expect(DASH).toMatch(/id="tsc-action-view-as"/);
     expect(DASH).toMatch(/id="tsc-action-nudge"/);
     expect(DASH).toMatch(/id="tsc-action-remediation"/);
     expect(DASH).toMatch(/id="tsc-action-gate"/);
-    // nudge + gate carry disabled. remediation was enabled in P6 Wave C.
-    // The CSS rule .tsc-action-btn[disabled] also contains the text "tsc-action-btn" + "disabled",
-    // so the count is at minimum 3 (CSS rule + nudge + gate).
-    expect((DASH.match(/tsc-action-btn[^>]*disabled|disabled[^>]*tsc-action-btn/g) || []).length)
-      .toBeGreaterThanOrEqual(3);
-    // Remediation button must NOT be disabled (P6 Wave C enables it).
+    // Phase 1 teacher chat enabled the nudge ("Send message") button; remediation
+    // was enabled in P6; only the gate (Phase 5) stays disabled.
+    const nudgeBtn = DASH.match(/id="tsc-action-nudge"[^>]*/);
+    expect(nudgeBtn[0]).not.toMatch(/disabled/);
     const remBtn = DASH.match(/id="tsc-action-remediation"[^>]*/);
-    expect(remBtn).not.toBeNull();
     expect(remBtn[0]).not.toMatch(/disabled/);
+    const gateBtn = DASH.match(/id="tsc-action-gate"[^>]*/);
+    expect(gateBtn[0]).toMatch(/disabled/);
+  });
+
+  it('Phase 1 teacher chat: compose box + send-to-student/whole-class wired to /teacher/nudge', () => {
+    expect(DASH).toMatch(/id="tsc-nudge-compose"/);
+    expect(DASH).toMatch(/id="tsc-nudge-text"/);
+    expect(DASH).toMatch(/id="tsc-nudge-broadcast"/);          // whole-class option
+    expect(DASH).toMatch(/function _tscSendNudge/);
+    expect(DASH).toMatch(/postJson\('\/teacher\/nudge'/);       // posts to the existing backend
+    expect(DASH).toMatch(/recipientUsernames:\s*recipients/);
+    expect(DASH).toMatch(/_tscClassUsernames/);                 // broadcast recipient resolver
   });
 
   it('drawer title placeholder element exists', () => {

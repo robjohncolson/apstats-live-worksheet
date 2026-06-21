@@ -708,10 +708,26 @@
           <ul id="tsc-nudges-list" class="tsc-nudges-list"></ul>
           <button type="button" id="tsc-nudges-older" class="tsc-nudges-older"
                   style="display:none">Load older</button>
+          <!-- Teacher chat compose (Phase 1): send to this student or the whole class. -->
+          <div id="tsc-nudge-compose" style="display:none;margin-top:8px">
+            <textarea id="tsc-nudge-text" maxlength="280" rows="2"
+                      placeholder="Message this student…"
+                      style="width:100%;box-sizing:border-box;font-size:0.85rem;padding:6px;resize:vertical"></textarea>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+              <label style="font-size:0.78rem;display:flex;align-items:center;gap:4px">
+                <input type="checkbox" id="tsc-nudge-broadcast"> whole class
+              </label>
+              <span id="tsc-nudge-count" style="font-size:0.72rem;color:var(--sg-text-dim)">280</span>
+              <span style="flex:1"></span>
+              <button type="button" class="tsc-action-btn" id="tsc-nudge-send">Send</button>
+              <button type="button" class="tsc-action-btn" id="tsc-nudge-cancel">Cancel</button>
+            </div>
+            <div id="tsc-nudge-status" role="status" style="font-size:0.78rem;margin-top:4px;min-height:1em;color:var(--sg-text-dim)"></div>
+          </div>
         </section>
         <nav class="tsc-actions" aria-label="Console actions">
           <button type="button" class="tsc-action-btn" id="tsc-action-view-as" title="Open this student's Desk in a new tab (read-only)">View as student</button>
-          <button type="button" class="tsc-action-btn" id="tsc-action-nudge" disabled title="Phase 3 (Live only)">Send nudge</button>
+          <button type="button" class="tsc-action-btn" id="tsc-action-nudge" title="Message this student — or the whole class">Send message</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-remediation" title="Open the remediation form for this student">Apply remediation</button>
           <button type="button" class="tsc-action-btn" id="tsc-action-gate" disabled title="Phase 5">Override gate</button>
         </nav>
@@ -2418,6 +2434,72 @@
         olderBtn.disabled = false;
       }
     }
+
+    // ── Teacher chat (Phase 1): compose + send a message via POST /teacher/nudge ──
+    // The whole pipeline already exists (persisted; the student sees it in their
+    // "Message teacher…" inbox). This wires the previously-disabled Send button:
+    // to the open student, or — with "whole class" — to every active PeriodX student.
+    function _tscGenNudgeId() {
+      return 'n_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    }
+    function _tscRefreshNudges() {
+      var u = _tscNudgeHistoryStudentUsername;
+      if (!u) return;
+      fetch(svcUrl() + '/teacher/nudge-history?studentUsername=' + encodeURIComponent(u) + '&limit=20', { headers: teacherAuthHeaders() })
+        .then(jsonOrErr).then(function (r) { renderTscNudges(r); }).catch(function () {});
+    }
+    async function _tscClassUsernames() {
+      // Broadcast recipients = every active student in the universal PeriodX section
+      // (minus the teacher). Public, no-auth — same source the sign-in dial uses.
+      try {
+        var res = await fetch(svcUrl() + '/roster/section/PeriodX');
+        var j = await res.json();
+        var list = (j && j.ok && Array.isArray(j.students)) ? j.students : [];
+        return list.filter(function (s) { return (s.role || 'student') !== 'teacher'; })
+                   .map(function (s) { return s.username; }).filter(Boolean);
+      } catch (_) { return []; }
+    }
+    async function _tscSendNudge() {
+      var ta = $('tsc-nudge-text'), statusEl = $('tsc-nudge-status'), sendBtn = $('tsc-nudge-send');
+      var broadcast = !!($('tsc-nudge-broadcast') && $('tsc-nudge-broadcast').checked);
+      var text = ((ta && ta.value) || '').trim();
+      if (statusEl) statusEl.textContent = '';
+      if (!text) { if (statusEl) statusEl.textContent = 'Type a message first.'; return; }
+      var recipients;
+      if (broadcast) {
+        recipients = await _tscClassUsernames();
+        if (!recipients.length) { if (statusEl) statusEl.textContent = 'Could not load the class list.'; return; }
+        if (!window.confirm('Send this message to all ' + recipients.length + ' students?')) { if (statusEl) statusEl.textContent = ''; return; }
+      } else {
+        if (!_tscNudgeHistoryStudentUsername) { if (statusEl) statusEl.textContent = 'Open a student first, or check "whole class".'; return; }
+        recipients = [_tscNudgeHistoryStudentUsername];
+      }
+      if (sendBtn) sendBtn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Sending…';
+      var r = await postJson('/teacher/nudge', { nudgeId: _tscGenNudgeId(), recipientUsernames: recipients, text: text }, teacherSecret());
+      if (sendBtn) sendBtn.disabled = false;
+      if (r.networkError) { if (statusEl) statusEl.textContent = 'Send failed (network).'; return; }
+      if (r.status >= 200 && r.status < 300 && r.data && r.data.ok) {
+        if (ta) ta.value = '';
+        var cnt = $('tsc-nudge-count'); if (cnt) cnt.textContent = '280';
+        if (statusEl) statusEl.textContent = broadcast ? ('Sent to ' + recipients.length + ' students.') : 'Sent.';
+        if (!broadcast) _tscRefreshNudges();   // refresh the open thread
+      } else {
+        if (statusEl) statusEl.textContent = (r.data && r.data.error) || ('Send failed (' + r.status + ').');
+      }
+    }
+    (function _wireTscNudgeCompose() {
+      var btn = $('tsc-action-nudge');
+      if (btn) btn.addEventListener('click', function () {
+        var c = $('tsc-nudge-compose');
+        if (!c) return;
+        c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
+        if (c.style.display === 'block') { var ta = $('tsc-nudge-text'); if (ta) ta.focus(); }
+      });
+      var sendN = $('tsc-nudge-send'); if (sendN) sendN.addEventListener('click', _tscSendNudge);
+      var cancelN = $('tsc-nudge-cancel'); if (cancelN) cancelN.addEventListener('click', function () { var c = $('tsc-nudge-compose'); if (c) c.style.display = 'none'; });
+      var taN = $('tsc-nudge-text'); if (taN) taN.addEventListener('input', function () { var cnt = $('tsc-nudge-count'); if (cnt) cnt.textContent = String(280 - (taN.value || '').length); });
+    })();
 
     // P12: async function to fetch and append the next page of nudge history.
     async function _loadOlderNudges() {
