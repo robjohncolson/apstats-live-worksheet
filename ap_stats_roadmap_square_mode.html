@@ -1703,6 +1703,45 @@
         .sdm-history-list .sdm-history-meta { font-size: 0.74rem; color: #5a5045; }
         .sdm-history-list .sdm-history-text { white-space: pre-wrap; word-wrap: break-word; line-height: 1.35; }
         .sdm-history-list .sdm-history-empty { color: #5a5045; font-style: italic; grid-template-columns: 1fr; }
+        .menu-nudge-badge {
+          display: inline-flex; align-items: center; justify-content: center;
+          min-width: 14px; height: 14px; margin-left: 6px; padding: 0 4px;
+          border: 1px solid #2a2520; border-radius: 7px;
+          background: #d93622; color: #fff; font: bold 10px Geneva, system-ui, sans-serif;
+          line-height: 14px; vertical-align: middle; box-sizing: border-box;
+        }
+        .menu-nudge-badge[hidden] { display: none; }
+        #menu-message-teacher.has-unread { font-weight: bold; }
+        #teacher-nudge-modal { position: fixed; inset: 0; z-index: 12020; display: none; }
+        .tnm-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.42); }
+        .tnm-panel {
+          position: absolute; top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          width: 380px; max-width: 92vw;
+          background: #f7f2e8;
+          border: 2px solid #2a2520; border-radius: 8px;
+          box-shadow: 0 12px 32px rgba(0,0,0,0.32);
+          padding: 16px 18px;
+          font: 13px "Geneva", "Lucida Grande", system-ui, sans-serif;
+          display: flex; flex-direction: column; gap: 8px;
+        }
+        .tnm-panel h3 { margin: 0 0 4px; font: bold 14px "Chicago", system-ui, sans-serif; color: #2a2520; }
+        .tnm-recipient { margin: 0; color: #5a5045; font-size: 0.82rem; }
+        .tnm-panel textarea {
+          font: inherit; padding: 6px 8px;
+          border: 1px solid #5a5045; border-radius: 4px;
+          background: #fff; width: 100%; box-sizing: border-box; resize: vertical;
+        }
+        .tnm-status { min-height: 18px; font-size: 0.82rem; color: #5a5045; }
+        .tnm-status.is-error { color: #b91c1c; }
+        .tnm-status.is-success { color: #15803d; }
+        .tnm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+        .tnm-cancel, .tnm-send {
+          padding: 6px 14px; border: 1px solid #5a5045; border-radius: 4px;
+          font: inherit; cursor: pointer; background: #fff;
+        }
+        .tnm-send { background: #5a5045; color: #fff; }
+        .tnm-send[disabled] { opacity: 0.55; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -1783,6 +1822,21 @@
   </div>
 </div>
 
+<div id="teacher-nudge-modal" style="display:none">
+  <div class="tnm-backdrop" data-tnm-close="backdrop"></div>
+  <div class="tnm-panel" role="dialog" aria-labelledby="tnm-title">
+    <h3 id="tnm-title">Message student</h3>
+    <p class="tnm-recipient" id="tnm-recipient"></p>
+    <label for="tnm-text">Message (280 chars max)</label>
+    <textarea id="tnm-text" maxlength="280" rows="3" placeholder="Type your message..."></textarea>
+    <div class="tnm-status" id="tnm-status"></div>
+    <div class="tnm-actions">
+      <button type="button" class="tnm-cancel" id="tnm-cancel">Cancel</button>
+      <button type="button" class="tnm-send" id="tnm-send">Send</button>
+    </div>
+  </div>
+</div>
+
 <div id="boot-overlay">
   <div class="boot-monitor">
     <div class="boot-sprite"></div>
@@ -1805,7 +1859,7 @@
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="showDialog('&#128190;','This calendar auto-saves to your brain every time you look at it.','OK')">Save to Floppy...</div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" id="menu-message-teacher" onclick="_openStudentDmModal();closeMenus()">Message teacher...</div>
+            <div class="menu-dd-item" id="menu-message-teacher" onclick="_openStudentDmModal();closeMenus()">Message teacher...<span id="menu-message-teacher-badge" class="menu-nudge-badge" hidden>0</span></div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="showDialog('&#9888;&#65039;','You can check out any time you like, but you can never leave. The AP Exam is May 7.','I Accept My Fate','crash')">Quit</div>
         </div>
@@ -5476,6 +5530,206 @@ async function _sendNudgeReply() {
 // is resolved server-side (single-teacher prod). Persists to nudges_log with
 // direction='student' + parent_nudge_id=NULL.
 
+var STUDENT_NUDGE_LAST_SEEN_KEY = 'apstats_nudge_last_seen';
+var STUDENT_NUDGE_POLL_MS = 30 * 1000;
+var _studentNudgePollTimer = null;
+var _studentNudgePollInFlight = false;
+var _studentNudgeUnreadCount = 0;
+var _studentNudgeLatestTeacherAt = '';
+var _seenNudgeNotifyIds = {};
+var _teacherNudgeTargetUsername = '';
+
+function _studentNudgeSession() {
+  try {
+    return (window.rosterClient && typeof window.rosterClient.current === 'function')
+      ? (window.rosterClient.current() || null)
+      : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function _studentNudgeToken() {
+  try {
+    return (window.rosterClient && typeof window.rosterClient.token === 'function')
+      ? (window.rosterClient.token() || null)
+      : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function _studentNudgeCleanUsername(username) {
+  return String(username || '').trim().toLowerCase();
+}
+
+function _studentNudgeSelfUsername() {
+  var who = _studentNudgeSession();
+  if (who && who.username) return _studentNudgeCleanUsername(who.username);
+  try {
+    if (typeof DogePresence !== 'undefined' && DogePresence.getUsername) {
+      return _studentNudgeCleanUsername(DogePresence.getUsername());
+    }
+  } catch (_) {}
+  return '';
+}
+
+function _studentNudgeCanPoll() {
+  var who = _studentNudgeSession();
+  if (!who || who.role === 'teacher') return false;
+  return !!(window.ROSTER_SERVICE_URL && _studentNudgeToken());
+}
+
+function _studentDmModalOpen() {
+  var modal = document.getElementById('student-dm-modal');
+  return !!(modal && modal.style.display && modal.style.display !== 'none');
+}
+
+function _studentNudgeRowMs(row) {
+  var ms = Date.parse((row && row.created_at) || '');
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function _studentNudgeLastSeenMs() {
+  try {
+    var ms = Date.parse(localStorage.getItem(STUDENT_NUDGE_LAST_SEEN_KEY) || '');
+    return Number.isFinite(ms) ? ms : 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
+function _studentNudgeLatestTeacherCreatedAt(rows) {
+  var latestMs = 0;
+  var latestIso = '';
+  (Array.isArray(rows) ? rows : []).forEach(function (row) {
+    if (!row || row.direction !== 'teacher') return;
+    var ms = _studentNudgeRowMs(row);
+    if (ms > latestMs) {
+      latestMs = ms;
+      latestIso = String(row.created_at || '');
+    }
+  });
+  return latestIso;
+}
+
+function _studentNudgeUnreadFromRows(rows) {
+  var lastSeenMs = _studentNudgeLastSeenMs();
+  var count = 0;
+  (Array.isArray(rows) ? rows : []).forEach(function (row) {
+    if (row && row.direction === 'teacher' && _studentNudgeRowMs(row) > lastSeenMs) count++;
+  });
+  return count;
+}
+
+function _studentNudgeSetBadge(count) {
+  _studentNudgeUnreadCount = Math.max(0, Number(count) || 0);
+  var item = document.getElementById('menu-message-teacher');
+  var badge = document.getElementById('menu-message-teacher-badge');
+  if (item) item.classList.toggle('has-unread', _studentNudgeUnreadCount > 0);
+  if (!badge) return;
+  if (_studentNudgeUnreadCount > 0) {
+    badge.hidden = false;
+    badge.textContent = _studentNudgeUnreadCount > 9 ? '9+' : String(_studentNudgeUnreadCount);
+    badge.setAttribute('aria-label', String(_studentNudgeUnreadCount) + ' unread teacher messages');
+  } else {
+    badge.hidden = true;
+    badge.textContent = '0';
+    badge.removeAttribute('aria-label');
+  }
+}
+
+function _studentNudgeMarkSeen(iso) {
+  var nextIso = iso || new Date().toISOString();
+  var nextMs = Date.parse(nextIso);
+  if (!Number.isFinite(nextMs)) {
+    nextIso = new Date().toISOString();
+    nextMs = Date.parse(nextIso);
+  }
+  try {
+    var currentIso = localStorage.getItem(STUDENT_NUDGE_LAST_SEEN_KEY) || '';
+    var currentMs = Date.parse(currentIso);
+    if (Number.isFinite(currentMs) && currentMs > nextMs) nextIso = currentIso;
+    localStorage.setItem(STUDENT_NUDGE_LAST_SEEN_KEY, nextIso);
+  } catch (_) {}
+  _studentNudgeSetBadge(0);
+}
+
+function _studentNudgeRememberRows(rows) {
+  var latest = _studentNudgeLatestTeacherCreatedAt(rows);
+  _studentNudgeLatestTeacherAt = latest || '';
+  if (_studentDmModalOpen()) {
+    _studentNudgeMarkSeen(latest || new Date().toISOString());
+    return { latestTeacherAt: latest, unreadCount: 0 };
+  }
+  var unread = _studentNudgeUnreadFromRows(rows);
+  _studentNudgeSetBadge(unread);
+  return { latestTeacherAt: latest, unreadCount: unread };
+}
+
+async function _pollStudentNudgeHistory(force) {
+  if (!force && _studentNudgePollInFlight) return null;
+  if (!_studentNudgeCanPoll()) {
+    _studentNudgeSetBadge(0);
+    return null;
+  }
+  _studentNudgePollInFlight = true;
+  try {
+    var base = window.ROSTER_SERVICE_URL;
+    var token = _studentNudgeToken();
+    var res = await fetch(base + '/student/nudge-history?limit=20', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    var j = await res.json().catch(function () { return {}; });
+    if (!res.ok || !j || !j.ok) return null;
+    var rows = Array.isArray(j.rows) ? j.rows : [];
+    var modalWasOpen = _studentDmModalOpen();
+    var unreadBeforeRemember = _studentNudgeUnreadFromRows(rows);
+    _studentNudgeRememberRows(rows);
+    if (modalWasOpen && unreadBeforeRemember > 0) {
+      _fetchStudentDmHistory();
+    }
+    return rows;
+  } catch (_) {
+    return null;
+  } finally {
+    _studentNudgePollInFlight = false;
+  }
+}
+
+function _startStudentNudgePolling() {
+  try { if (_studentNudgePollTimer) clearInterval(_studentNudgePollTimer); } catch (_) {}
+  _pollStudentNudgeHistory(true);
+  _studentNudgePollTimer = setInterval(function () {
+    _pollStudentNudgeHistory(false);
+  }, STUDENT_NUDGE_POLL_MS);
+}
+
+function _onNudgeNotify(msg) {
+  try {
+    if (!msg || msg.type !== 'nudge_notify') return;
+    var self = _studentNudgeSelfUsername();
+    if (!self) return;
+    var targets = Array.isArray(msg.toUsernames) ? msg.toUsernames : [];
+    var isForMe = targets.some(function (u) { return _studentNudgeCleanUsername(u) === self; });
+    if (!isForMe) return;
+    var ts = (typeof msg.timestamp === 'number' && isFinite(msg.timestamp)) ? msg.timestamp : Date.now();
+    var key = msg.nudgeId
+      ? String(msg.nudgeId).slice(0, 128)
+      : (_studentNudgeCleanUsername(msg.fromUsername) + '|' + self + '|' + Math.floor(ts / 2000));
+    if (_seenNudgeNotifyIds[key]) return;
+    _seenNudgeNotifyIds[key] = 1;
+    var seenIds = Object.keys(_seenNudgeNotifyIds);
+    if (seenIds.length > 300) delete _seenNudgeNotifyIds[seenIds[0]];
+    if (_studentDmModalOpen()) {
+      _fetchStudentDmHistory();
+      return;
+    }
+    _studentNudgeSetBadge(Math.max(1, _studentNudgeUnreadCount || 0));
+    _pollStudentNudgeHistory(true);
+  } catch (_) {}
+}
+
 function _openStudentDmModal() {
   var modal = document.getElementById('student-dm-modal');
   if (!modal) return;
@@ -5495,6 +5749,9 @@ function _openStudentDmModal() {
     var ta = document.getElementById('sdm-text');
     if (ta) ta.focus();
   }, 30);
+  if (typeof _studentNudgeMarkSeen === 'function') {
+    _studentNudgeMarkSeen(_studentNudgeLatestTeacherAt || new Date().toISOString());
+  }
   _fetchStudentDmHistory();
 }
 
@@ -5521,7 +5778,7 @@ async function _fetchStudentDmHistory() {
     if (!base || !token) {
       if (epoch !== _sdmHistoryEpoch) return;
       listEl.innerHTML = '<li class="sdm-history-empty">Not signed in.</li>';
-      return;
+      return [];
     }
     var res = await fetch(base + '/student/nudge-history?limit=20', {
       headers: { 'Authorization': 'Bearer ' + token },
@@ -5531,21 +5788,24 @@ async function _fetchStudentDmHistory() {
     if (epoch !== _sdmHistoryEpoch) return;
     if (!res.ok || !j || !j.ok) {
       listEl.innerHTML = '<li class="sdm-history-empty">No messages yet.</li>';
-      return;
+      return [];
     }
     var rows = Array.isArray(j.rows) ? j.rows : [];
+    if (typeof _studentNudgeRememberRows === 'function') _studentNudgeRememberRows(rows);
     if (rows.length === 0) {
       listEl.innerHTML = '<li class="sdm-history-empty">No messages yet.</li>';
-      return;
+      return [];
     }
     listEl.innerHTML = '';
     rows.forEach(function (row) {
       listEl.appendChild(_buildSdmHistoryLi(row));
     });
+    return rows;
   } catch (_) {
     if (epoch !== _sdmHistoryEpoch) return;
     var el = document.getElementById('sdm-history-list');
     if (el) el.innerHTML = '<li class="sdm-history-empty">Error loading history.</li>';
+    return [];
   }
 }
 
@@ -5640,6 +5900,141 @@ async function _sendStudentDm() {
   }
 }
 
+function _teacherNudgeUsername(username) {
+  return String(username || '').trim().toLowerCase().slice(0, 64);
+}
+
+function _teacherNudgeCurrentUsername() {
+  var who = null;
+  try {
+    who = (window.rosterClient && typeof window.rosterClient.current === 'function')
+      ? (window.rosterClient.current() || null)
+      : null;
+  } catch (_) {}
+  return _teacherNudgeUsername((who && who.username) || '');
+}
+
+function _teacherNudgeStatus(text, cls) {
+  var statusEl = document.getElementById('tnm-status');
+  if (!statusEl) return;
+  statusEl.textContent = text || '';
+  statusEl.classList.remove('is-error', 'is-success');
+  if (cls) statusEl.classList.add(cls);
+}
+
+function _openTeacherNudgeModal(username) {
+  if (!(typeof _deskIsTeacher === 'function' && _deskIsTeacher())) return;
+  var target = _teacherNudgeUsername(username);
+  if (!target) return;
+  _teacherNudgeTargetUsername = target;
+  var modal = document.getElementById('teacher-nudge-modal');
+  if (!modal) return;
+  var textEl = document.getElementById('tnm-text');
+  if (textEl) textEl.value = '';
+  var sendBtn = document.getElementById('tnm-send');
+  if (sendBtn) sendBtn.disabled = false;
+  var recipientEl = document.getElementById('tnm-recipient');
+  if (recipientEl) {
+    var label = target;
+    try {
+      if (typeof DeskRoster !== 'undefined' && DeskRoster.realName) {
+        var real = DeskRoster.realName(target);
+        if (real) label = real + ' (' + target + ')';
+      }
+    } catch (_) {}
+    recipientEl.textContent = 'To: ' + label;
+  }
+  _teacherNudgeStatus('', '');
+  modal.style.display = 'block';
+  setTimeout(function () {
+    var ta = document.getElementById('tnm-text');
+    if (ta) ta.focus();
+  }, 30);
+}
+
+function _closeTeacherNudgeModal() {
+  var modal = document.getElementById('teacher-nudge-modal');
+  if (modal) modal.style.display = 'none';
+  _teacherNudgeTargetUsername = '';
+}
+
+function _teacherNudgeNotifyRecipients(recipients, nudgeId) {
+  try {
+    var ws = (typeof DogePresence !== 'undefined' && DogePresence.ws && DogePresence.ws.readyState === 1)
+      ? DogePresence.ws
+      : null;
+    if (!ws && typeof DogePresence !== 'undefined' && typeof DogePresence.connect === 'function') {
+      DogePresence.connect();
+      ws = (DogePresence.ws && DogePresence.ws.readyState === 1) ? DogePresence.ws : null;
+    }
+    if (!ws) return false;
+    var toUsernames = (Array.isArray(recipients) ? recipients : [])
+      .map(_teacherNudgeUsername)
+      .filter(Boolean);
+    if (toUsernames.length === 0) return false;
+    ws.send(JSON.stringify({
+      type: 'nudge_notify',
+      toUsernames: toUsernames,
+      fromUsername: _teacherNudgeCurrentUsername(),
+      nudgeId: String(nudgeId || '').slice(0, 128),
+    }));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function _sendTeacherNudgeFromDesk() {
+  var textEl = document.getElementById('tnm-text');
+  var sendBtn = document.getElementById('tnm-send');
+  var text = textEl ? String(textEl.value || '').trim() : '';
+  if (!text) {
+    _teacherNudgeStatus('Type a message first.', 'is-error');
+    return;
+  }
+  if (text.length > 280) text = text.slice(0, 280);
+  var recipient = _teacherNudgeUsername(_teacherNudgeTargetUsername);
+  if (!recipient) {
+    _teacherNudgeStatus('Choose a student first.', 'is-error');
+    return;
+  }
+  var who = null;
+  try {
+    who = (window.rosterClient && typeof window.rosterClient.current === 'function')
+      ? (window.rosterClient.current() || null)
+      : null;
+  } catch (_) {}
+  var token = _studentNudgeToken();
+  var base = window.ROSTER_SERVICE_URL;
+  if (!base || !token || !who || who.role !== 'teacher') {
+    _teacherNudgeStatus('Teacher sign-in required.', 'is-error');
+    return;
+  }
+  var nudgeId = 'n_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  if (sendBtn) sendBtn.disabled = true;
+  _teacherNudgeStatus('Sending...', '');
+  try {
+    var res = await fetch(base + '/teacher/nudge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ nudgeId: nudgeId, recipientUsernames: [recipient], text: text }),
+    });
+    var j = await res.json().catch(function () { return {}; });
+    if (!res.ok || !j || !j.ok) {
+      _teacherNudgeStatus((j && j.error) || ('HTTP ' + res.status), 'is-error');
+      if (sendBtn) sendBtn.disabled = false;
+      return;
+    }
+    _teacherNudgeNotifyRecipients([recipient], nudgeId);
+    _teacherNudgeStatus('Sent.', 'is-success');
+    if (textEl) textEl.value = '';
+    setTimeout(_closeTeacherNudgeModal, 350);
+  } catch (err) {
+    _teacherNudgeStatus('Network error: ' + (err && err.message ? err.message : 'unknown'), 'is-error');
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
 // Wire on DOMContentLoaded. Runs inside try/catch so a missing element never
 // throws and disrupts the rest of the DOMContentLoaded chain.
 try {
@@ -5660,8 +6055,23 @@ try {
           e.stopPropagation();
           _closeStudentDmModal();
         }
+        var t = document.getElementById('teacher-nudge-modal');
+        if (t && t.style.display === 'block') {
+          e.stopPropagation();
+          _closeTeacherNudgeModal();
+        }
       }
     }, true);
+    var tSend = document.getElementById('tnm-send');
+    if (tSend) tSend.addEventListener('click', _sendTeacherNudgeFromDesk);
+    var tCancel = document.getElementById('tnm-cancel');
+    if (tCancel) tCancel.addEventListener('click', _closeTeacherNudgeModal);
+    document.querySelectorAll('#teacher-nudge-modal [data-tnm-close]')
+      .forEach(function (el) { el.addEventListener('click', _closeTeacherNudgeModal); });
+    _startStudentNudgePolling();
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) _pollStudentNudgeHistory(true);
+    });
   });
 } catch (_) {}
 
@@ -12300,6 +12710,21 @@ var _avatarMenu = {
     var acts = doc.createElement('div');
     acts.className = 'avatar-pop-acts';
 
+    if (typeof _deskIsTeacher === 'function' && _deskIsTeacher()) {
+      var messageBtn = doc.createElement('button');
+      messageBtn.type = 'button';
+      messageBtn.className = 'doge-sub-act';
+      messageBtn.textContent = 'Message';
+      messageBtn.addEventListener('click', function () {
+        var target = u;
+        self.close();
+        if (typeof _openTeacherNudgeModal === 'function') {
+          try { _openTeacherNudgeModal(target); } catch (_) {}
+        }
+      });
+      acts.appendChild(messageBtn);
+    }
+
     var candyBtn = doc.createElement('button');
     candyBtn.type = 'button';
     candyBtn.className = 'doge-sub-act';
@@ -17365,6 +17790,9 @@ const DogePresence = {
         } else {
             h += `<button class="doge-sub-act" disabled title="Only works when they're on the Desk">&#9876;&#65039; Challenge (Desk only)</button>`;
         }
+        if (teacher) {
+            h += `<button class="doge-sub-act" onclick="event.stopPropagation();DogePresence.messageFromMenu(${pArg})">&#128172; Message</button>`;
+        }
         // Send candy works wherever they are (server resolves + guards the gift).
         h += `<button class="doge-sub-act" onclick="event.stopPropagation();DogePresence.candyFromMenu(${pArg})">&#127852; Send candy</button>`;
         h += '</div>';
@@ -17393,6 +17821,11 @@ const DogePresence = {
         this.closeDropdown();
         // Reuse the candy-poke pipeline (self/guest/cooldown/balance guards + optimistic Undo toast).
         if (typeof _candyPoke === 'function') _candyPoke(username);
+    },
+    messageFromMenu(username) {
+        this.expandedRow = null;
+        this.closeDropdown();
+        if (typeof _openTeacherNudgeModal === 'function') _openTeacherNudgeModal(username);
     },
 
     connect() {
@@ -17526,6 +17959,10 @@ const DogePresence = {
 
             case 'opponent_left':
                 if (studyBreak.mpState) studyBreak.opponentLeft(data.reason);
+                break;
+
+            case 'nudge_notify':
+                if (typeof _onNudgeNotify === 'function') _onNudgeNotify(data);
                 break;
 
             case 'rtc_offer':
@@ -17725,7 +18162,8 @@ function _escCloseTopModal() {
     // (e.g. dblclick a calendar cell → resource panel opens, then the day-grade
     // modal opens on top) would also get closed by the net on the same Escape.
     var selfHandled = ['day-grade-overlay', 'grade-help-overlay', 'my-gradebook-overlay',
-                       'my-receipts-overlay', 'student-dm-modal', 'game-overlay'];
+                       'my-receipts-overlay', 'student-dm-modal', 'teacher-nudge-modal',
+                       'game-overlay'];
     for (var s = 0; s < selfHandled.length; s++) {
         if (_escVisible(selfHandled[s])) return false;
     }
@@ -18824,7 +19262,7 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 // from APP_BUILD (this running build) we show a dismissible "reload" banner.
 // APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
 // (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
-var APP_BUILD = '2026-06-21-n87s';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-06-21-nfjk';   // scripts/bump-build.mjs replaces this stamp
 (function _wireUpdateNudge(){
   var nudged = false;
   function showBanner(){
