@@ -1861,7 +1861,7 @@
             <div class="menu-dd-item disabled">Close <span class="shortcut">&#8984;W</span></div>
             <div class="menu-dd-item disabled">Save <span class="shortcut">&#8984;S</span></div>
             <div class="menu-dd-sep"></div>
-            <div class="menu-dd-item" data-sfx onclick="showDialog('&#128190;','This calendar auto-saves to your brain every time you look at it.','OK')">Save to Floppy...</div>
+            <div class="menu-dd-item" data-sfx onclick="_pwaInstall()">Install App...</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" id="menu-message-teacher" onclick="_openStudentDmModal();closeMenus()">Message teacher...<span id="menu-message-teacher-badge" class="menu-nudge-badge" hidden>0</span></div>
             <div class="menu-dd-sep"></div>
@@ -14461,6 +14461,28 @@ function showDialog(icon, msg, btnText, sfx) {
 function closeDialog() {
     MacSFX.play('click', 0.3);
     document.getElementById('dialog-overlay').style.display = 'none';
+}
+
+// PWA install (File menu "Install App..."). Triggers the browser's install prompt
+// when available (PNG icons + SW make the Desk installable), else shows manual
+// instructions — covering iOS Safari (no programmatic install) + already-installed.
+function _pwaInstall() {
+    try { closeMenus(); } catch (_) {}
+    try {
+        if (window.PWAInstall && typeof window.PWAInstall.canInstall === 'function' && window.PWAInstall.canInstall()) {
+            window.PWAInstall.install().then(function (r) { if (r === 'unavailable') _pwaInstallHelp(); });
+        } else {
+            _pwaInstallHelp();
+        }
+    } catch (_) { _pwaInstallHelp(); }
+}
+function _pwaInstallHelp() {
+    showDialog('&#128241;',
+        'Install The Desk as an app so it opens full-screen and works offline:<br><br>'
+        + '&bull; <b>Computer (Chrome/Edge):</b> click the install icon at the right of the address bar, or the &#8942; menu &rarr; &ldquo;Install&rdquo;.<br>'
+        + '&bull; <b>iPhone/iPad (Safari):</b> Share &rarr; &ldquo;Add to Home Screen&rdquo;.<br>'
+        + '&bull; Already installed? You&rsquo;re all set.',
+        'OK');
 }
 
 

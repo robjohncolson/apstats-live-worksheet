@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import { createContext, runInContext } from 'vm';
 
@@ -26,13 +26,17 @@ function extractFn(src, name) {
 
 describe('manifest.webmanifest', () => {
   const m = JSON.parse(read('manifest.webmanifest'));
-  it('is valid and installable (name, start_url, standalone, icon)', () => {
+  it('is valid and installable (name, start_url, standalone)', () => {
     expect(m.name).toBeTruthy();
     expect(m.start_url).toBe('ap_stats_roadmap_square_mode.html'); // relative → works on GH Pages subpath + localhost pack
     expect(m.scope).toBe('./');
     expect(m.display).toBe('standalone');
-    expect(Array.isArray(m.icons) && m.icons.length).toBeTruthy();
-    expect(m.icons[0]).toMatchObject({ src: 'icon.svg', type: 'image/svg+xml' });
+  });
+  it('ships raster PNG icons (Chrome installability wants >=192px PNG)', () => {
+    expect(m.icons.some((i) => i.type === 'image/png' && i.sizes === '192x192')).toBe(true);
+    expect(m.icons.some((i) => i.type === 'image/png' && i.sizes === '512x512')).toBe(true);
+    expect(existsSync(resolve(repo, 'icon-192.png'))).toBe(true);
+    expect(existsSync(resolve(repo, 'icon-512.png'))).toBe(true);
   });
 });
 
@@ -118,6 +122,25 @@ describe('pwa-register.js', () => {
     expect(win.gradebookClient.syncOfflineQueue).toHaveBeenCalled();
   });
 
+  it('exposes PWAInstall: captures beforeinstallprompt and install() triggers it', async () => {
+    const { win } = boot();
+    expect(win.PWAInstall.canInstall()).toBe(false);
+    const e = new win.Event('beforeinstallprompt');
+    e.prompt = vi.fn();
+    e.userChoice = Promise.resolve({ outcome: 'accepted' });
+    win.dispatchEvent(e);
+    expect(win.PWAInstall.canInstall()).toBe(true);
+    const outcome = await win.PWAInstall.install();
+    expect(e.prompt).toHaveBeenCalled();
+    expect(outcome).toBe('accepted');
+    expect(win.PWAInstall.canInstall()).toBe(false); // consumed
+  });
+
+  it('install() returns "unavailable" with no captured prompt (iOS/unsupported → caller instructs)', async () => {
+    const { win } = boot();
+    expect(await win.PWAInstall.install()).toBe('unavailable');
+  });
+
   it('ignores unrelated SW messages', () => {
     const { win, listeners } = boot();
     listeners.message({ data: { type: 'something-else' } });
@@ -130,6 +153,12 @@ describe('Desk PWA wiring + build lockstep', () => {
     expect(DESK).toContain('rel="manifest" href="manifest.webmanifest"');
     expect(DESK).toContain('name="theme-color"');
     expect(DESK).toContain('src="pwa-register.js"');
+  });
+  it('the File menu has an Install App item (replacing Save to Floppy) wired to _pwaInstall', () => {
+    expect(DESK).toContain('onclick="_pwaInstall()">Install App...');
+    expect(DESK).not.toContain('Save to Floppy');
+    expect(DESK).toMatch(/function _pwaInstall\s*\(/);
+    expect(DESK).toMatch(/function _pwaInstallHelp\s*\(/); // manual-instructions fallback (iOS/already-installed)
   });
   it('sw BUILD === version.json build === APP_BUILD (no stale-cache drift)', () => {
     const swBuild = (SW.match(/const BUILD = '([^']+)'/) || [])[1];
