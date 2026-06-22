@@ -1,0 +1,14 @@
+{
+  "name": "AP Statistics — The Desk",
+  "short_name": "AP Stats Desk",
+  "description": "Your AP Statistics home hub: lessons, worksheets, study guide, and trainer — works offline.",
+  "start_url": "ap_stats_roadmap_square_mode.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#cfcfcf",
+  "theme_color": "#1d2b53",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

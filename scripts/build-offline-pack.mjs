@@ -34,6 +34,7 @@ const ROOT_FILES = [
   'ap_stats_roadmap_square_mode.html', 'study_guide_diagnostic.html', 'offline.html',
   'roster_config.js', 'roster-client.js', 'offline-queue.js', 'offline-video.js', 'gradebook-client.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json',
+  'sw.js', 'pwa-register.js', 'manifest.webmanifest', 'icon.svg', 'version.json',
 ];
 const DIRS = ['lib', 'data', 'js', 'ai-tutor', 'ti84-trainer-v2'];
 const WORKSHEET_RE = /^u\d+_lesson.+_live\.html$/;

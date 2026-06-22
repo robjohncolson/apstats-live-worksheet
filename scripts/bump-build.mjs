@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const deskPath = resolve(root, 'ap_stats_roadmap_square_mode.html');
 const versionPath = resolve(root, 'version.json');
+const swPath = resolve(root, 'sw.js');
 
 const stamp = new Date().toISOString().slice(0, 10) + '-' + Date.now().toString(36).slice(-4);
 
@@ -30,6 +31,16 @@ desk = desk.replace(re, `$1${stamp}$2`);
 writeFileSync(deskPath, desk);
 writeFileSync(versionPath, JSON.stringify({ build: stamp, ts: Date.now() }) + '\n');
 
-console.log('bumped Desk build -> ' + stamp);
+// Keep the PWA cache version in lockstep so a deploy purges the old SW cache.
+let sw = readFileSync(swPath, 'utf8');
+const swRe = /(const BUILD = ')[^']*(';)/;
+if (!swRe.test(sw)) {
+  console.error('ERROR: BUILD marker not found in ' + swPath);
+  process.exit(1);
+}
+writeFileSync(swPath, sw.replace(swRe, `$1${stamp}$2`));
+
+console.log('bumped build -> ' + stamp);
 console.log('  ' + deskPath);
 console.log('  ' + versionPath);
+console.log('  ' + swPath);
