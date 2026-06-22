@@ -8019,6 +8019,24 @@ function _paintDoNowReadiness() {
   } catch (_) {}
 }
 
+// OFFLINE_MODE_SPEC §4.B — write-through cache of the /grade payload so the Desk
+// still shows progress (Do Now grade pills, calendar greying, My Gradebook) when
+// offline. Keyed by the signed-in studentId; NEVER used in view-as (live-only
+// there). Restore kicks in ONLY when the fetch is unreachable, never on an HTTP error.
+function _gradeCacheKey() {
+  try {
+    if (typeof window !== 'undefined' && window.__VIEW_AS_STUDENT_ID__) return null;
+    var sid = (window.rosterClient && typeof rosterClient.studentId === 'function') ? rosterClient.studentId() : null;
+    return sid ? ('apstats_grade_cache_v1:' + sid) : null;
+  } catch (_) { return null; }
+}
+function _persistGradeCache(data) {
+  try { var k = _gradeCacheKey(); if (k) localStorage.setItem(k, JSON.stringify({ ts: Date.now(), data: data })); } catch (_) { /* best-effort */ }
+}
+function _loadGradeCache() {
+  try { var k = _gradeCacheKey(); if (!k) return null; var o = JSON.parse(localStorage.getItem(k) || 'null'); return (o && o.data) || null; } catch (_) { return null; }
+}
+
 async function renderDoNowGrades(baseUrl, token) {
   var host = document.getElementById('donow-grades');
   if (!host) return;
@@ -8042,12 +8060,20 @@ async function renderDoNowGrades(baseUrl, token) {
     var __va = (typeof _maybeViewAsFetch === 'function')
       ? _maybeViewAsFetch('/grade?token=' + encodeURIComponent(token), {})
       : { endpoint: '/grade?token=' + encodeURIComponent(token), headers: {} };
-    var res = (typeof _roadmapFetch === 'function')
-      ? await _roadmapFetch(baseUrl + __va.endpoint, { headers: __va.headers }, ROADMAP_FETCH_TIMEOUT_MS)
-      : await fetch(baseUrl + __va.endpoint, { headers: __va.headers });
-    if (!res || !res.ok) return;
-    var data = await res.json();
-    if (!data || !data.ok) return;
+    // Offline-resilient (OFFLINE_MODE_SPEC §4.B): write-through to localStorage on a
+    // live read; restore the last payload ONLY when the fetch is unreachable
+    // (network/timeout throw), never on an HTTP error (401/500 behave as before).
+    var data = null, _gradeOffline = false;
+    try {
+      var res = (typeof _roadmapFetch === 'function')
+        ? await _roadmapFetch(baseUrl + __va.endpoint, { headers: __va.headers }, ROADMAP_FETCH_TIMEOUT_MS)
+        : await fetch(baseUrl + __va.endpoint, { headers: __va.headers });
+      if (!res) { _gradeOffline = true; }
+      else if (res.ok) { var _j = await res.json(); if (_j && _j.ok) data = _j; }
+    } catch (_) { _gradeOffline = true; }
+    if (data) { _persistGradeCache(data); }     // write-through (skipped in view-as)
+    else if (_gradeOffline) { data = _loadGradeCache(); } // restore only when offline
+    if (!data) return;
     // Cache lessons[] for the per-day click-through (Phase 6).
     // Capture the cold→warm transition BEFORE reassigning: the FIRST successful warm
     // must force a calendar window re-size (see the rCal escalation below).
