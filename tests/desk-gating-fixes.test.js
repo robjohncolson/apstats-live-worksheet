@@ -67,14 +67,14 @@ describe('app desktop icons: PNG xor emoji (no duplicate)', () => {
     expect(html).toMatch(/\.app-icon \.icon-img::after\s*\{\s*content:\s*attr\(data-emoji\)/);
     expect(html).toMatch(/\.app-icon \.icon-img\.has-png::after\s*\{\s*content:\s*none/);
   });
-  it('every app-icon carries data-emoji + an onload→has-png img (no inline emoji text)', () => {
+  it('every current app-icon template carries data-emoji + an onload→has-png img (no inline emoji text)', () => {
     const dataEmoji = html.match(/class="icon-img" data-emoji="&#\d+;"/g) || [];
-    // ti84, quiz, formulas, game, wallet (+ the commented-out progress block,
-    // which this raw-text match still sees). >=5 like the onload assertion below
-    // so re-enabling progress / adding an app icon doesn't make this brittle.
-    expect(dataEmoji.length).toBeGreaterThanOrEqual(5);
+    // The current Desk intentionally keeps the visible desktop lean: wallet is
+    // active, progress remains as a re-enable template. New app icons should keep
+    // this same PNG-or-emoji fallback contract.
+    expect(dataEmoji.length).toBeGreaterThanOrEqual(2);
     const onload = html.match(/onload="this\.parentElement\.classList\.add\('has-png'\)"/g) || [];
-    expect(onload.length).toBeGreaterThanOrEqual(5);
+    expect(onload.length).toBeGreaterThanOrEqual(dataEmoji.length);
     // the old inline "emoji-after-img" pattern is gone from the app icons
     expect(html).not.toMatch(/icon-XXX/); // sanity: no template leftover
     expect(html).not.toMatch(/dataset\.fallback='1'">&#\d+;<\/div>/);

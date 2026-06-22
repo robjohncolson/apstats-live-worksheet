@@ -2161,9 +2161,10 @@
                 </style>
                 <input type="password" id="signin-password" class="geneva" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitSignIn()" style="width:100%;font-size:11px;padding:3px;border:1px solid var(--black);box-sizing:border-box" placeholder="password">
                 <div id="signin-error" style="color:#cc0000;font-size:10px;margin-top:4px;min-height:12px"></div>
-                <!-- "Create your account" intentionally lives ONLY in the name finder's
-                     "not on the list" fallback, so it isn't an upfront shortcut around
-                     the pre-enrolled roster. -->
+                <div style="font-size:10px;margin-top:4px;color:#555">
+                    Not on the class list?
+                    <a href="#" onclick="_switchToSignUp();return false;">Create your account.</a>
+                </div>
             </div>
         </div>
         <div class="dialog-btns">
@@ -6165,7 +6166,9 @@ function _deskAccessGranted() {
   // (Done clicks that never persist). Matches the worksheet wall (rosterClient.current()).
   try {
     var live = !!(window.rosterClient && window.rosterClient.current && window.rosterClient.current());
-    return live || _deskIsTeacher() || _deskGuestOk();
+    var teacher = (typeof _deskIsTeacher === 'function') ? _deskIsTeacher() : false;
+    var guest = (typeof _deskGuestOk === 'function') ? _deskGuestOk() : false;
+    return live || teacher || guest;
   }
   catch (_) { return true; }
 }
@@ -19258,6 +19261,7 @@ uClock();setInterval(uClock,15e3);
 // Period E button is hidden until periods are assigned — keep btn-b always visible as "Period X"
 if(cP==='E'){var _a=document.getElementById("btn-b"),_b=document.getElementById("btn-e");if(_b)_b.style.display='none';}
 loadRegistry();
+updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 updateStudentMenu();
 // Cross-tab: refresh the top-bar identity chip when sign-in / guest state changes
 // in another tab (red-team: stale-tab guest state).
@@ -19269,7 +19273,6 @@ try {
     }
   });
 } catch (_e) {}
-updateUserRoleUI();   // 2026-05-20: show/hide Teacher menu per persisted role
 if(typeof _renderPreviewAsStudentUI==='function')_renderPreviewAsStudentUI();   // Preview-as-student: badge + menu label
 if(typeof _mountClassroomBoard==='function')_mountClassroomBoard();   // Live Classroom v1a
 // Presence (DOGE_PRESENCE_SUBMENU_SPEC D5): auto-connect so every Desk student appears in
@@ -19335,10 +19338,13 @@ setTimeout(function() {
         // who open tomorrow's link land straight on "Create your account".
         try {
           if (!_deskAccessGranted()) {
+            var _firstTime = (typeof _loadKnownUsers === 'function' && _loadKnownUsers().length === 0);
             // Pre-enrolled roster: the combo-lock NAME FINDER is the primary
-            // sign-in for everyone (find your name -> password). It falls back to
-            // the manual sign-in modal if the roster can't be fetched (offline).
+            // sign-in for everyone (find your name -> password). If that module is
+            // unavailable, first-time devices fall back to signup and returning
+            // devices fall back to manual sign-in.
             if (typeof openNameFinder === 'function') openNameFinder();
+            else if (_firstTime && typeof openSignupModal === 'function') openSignupModal();
             else openSignInModal();
           }
         } catch (_) {}
