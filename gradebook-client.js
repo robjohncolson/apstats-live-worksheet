@@ -6,7 +6,13 @@
 //
 // Implements FROZEN CONTRACT 3 (GRADEBOOK_PHASE1_BUILD.md):
 //   window.gradebookClient.record({ source, itemId, unit, topic, skill, response, score, attempt })
-//   → { ok:true, ledgerId } | { ok:false, reason:'no-identity'|'network'|'server'|'auth'|'bad-args' }
+//   → { ok:true, ledgerId } | { ok:false, reason:'no-identity'|'network'|'server'|'auth'|'bad-args'|'read-only' }
+//
+// OFFLINE_MODE_SPEC §4.A (additive): when a write is captured into
+// window.OfflineQueue, the result carries `queued:true` — offline pack →
+// { ok:true, queued:true }; an intermittent network failure → { ok:false,
+// reason:'network', queued:true }. The `reason` whitelist is unchanged, so
+// callers that switch on `reason` keep working.
 //
 // Decision L-D: fire-and-forget, no-ops without identity, NEVER throws/blocks the caller.
 // Decision L-C: No proctor header is ever sent — proctored evidence tier is server-gated only.
@@ -88,6 +94,92 @@
     } catch (_) { /* receipts are best-effort; never block or throw from record() */ }
   }
 
+  // ── Offline capture (OFFLINE_MODE_SPEC §4.A) ────────────────────────────────
+  // gradebook-client is the GRADE-bearing write path. When there is no server
+  // (a baked OFFLINE_MODE pack, or an intermittent fetch failure) the record is
+  // captured into window.OfflineQueue instead of dropped, then flushed later by
+  // syncOfflineQueue() (auto on 'online', or by the teacher importing the export).
+  // Everything degrades gracefully if offline-queue.js isn't loaded on the page.
+  function _token() {
+    try {
+      if (window.rosterClient && typeof window.rosterClient.token === 'function') {
+        return window.rosterClient.token();
+      }
+    } catch (_) { /* treat as no identity */ }
+    return null;
+  }
+
+  function _hasQueue() {
+    return !!(window.OfflineQueue && typeof window.OfflineQueue.enqueue === 'function');
+  }
+
+  function _isOfflineMode() {
+    try {
+      return !!(window.OfflineQueue && typeof window.OfflineQueue.isOffline === 'function' && window.OfflineQueue.isOffline());
+    } catch (_) { return false; }
+  }
+
+  function _enqueueOffline(opts) {
+    if (!_hasQueue()) return Promise.resolve(false);
+    var sid;
+    try { if (window.rosterClient && typeof window.rosterClient.studentId === 'function') sid = window.rosterClient.studentId(); } catch (_) { /* best-effort */ }
+    try {
+      return Promise.resolve(window.OfflineQueue.enqueue({
+        source: opts.source, itemId: opts.itemId, response: opts.response,
+        score: opts.score, attempt: opts.attempt,
+        unit: opts.unit, topic: opts.topic, skill: opts.skill,
+        studentId: sid || undefined, kind: opts.kind || 'record'
+      })).then(function () { return true; }, function () { return false; });
+    } catch (_) { return Promise.resolve(false); }
+  }
+
+  // Raw POST to /ledger/record. NEVER throws; NEVER enqueues (so it is safe to
+  // call from a drain without re-queuing). Returns { ok, reason?, ledgerId? }.
+  async function _postRecord(opts) {
+    try {
+      var token = _token();
+      if (!token) return { ok: false, reason: 'no-identity' };
+      var baseUrl = window.ROSTER_SERVICE_URL || null;
+      if (!baseUrl) {
+        console.warn('gradebook-client: ROSTER_SERVICE_URL is not configured');
+        return { ok: false, reason: 'network' };
+      }
+
+      var body = {
+        token:    token,
+        source:   opts.source,
+        itemId:   opts.itemId,
+        unit:     opts.unit,
+        topic:    opts.topic,
+        skill:    opts.skill,
+        response: opts.response,
+        score:    opts.score,
+        attempt:  opts.attempt
+      };
+
+      var res = await fetch(baseUrl + '/ledger/record', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body)
+      });
+
+      var data = null;
+      try { data = await res.json(); } catch (_) { data = null; }
+
+      if (data && data.ok) {
+        _captureReceipt(data.receipt, opts.source, opts.itemId, opts.score);
+        return { ok: true, ledgerId: data.ledgerId, receipt: data.receipt || null };
+      }
+      if (res && (res.status === 401 || res.status === 403)) { console.warn('gradebook-client: auth failed', data); return { ok: false, reason: 'auth' }; }
+      if (res && !res.ok) { console.warn('gradebook-client: server error', data); return { ok: false, reason: 'server' }; }
+      console.warn('gradebook-client: server returned ok:false', data);
+      return { ok: false, reason: 'server' };
+    } catch (err) {
+      // fetch rejection / JSON error → treat as offline-ish (queueable)
+      return { ok: false, reason: 'network' };
+    }
+  }
+
   window.gradebookClient = {
 
     // Fire-and-forget ledger write.
@@ -95,7 +187,7 @@
     // Returns a Promise that always resolves to { ok, ... }.
     record: async function (opts) {
       try {
-        // --- Validate required args BEFORE touching the network ---
+        // --- Validate required args BEFORE touching anything ---
         var source   = opts && opts.source;
         var itemId   = opts && opts.itemId;
         var response = opts && opts.response;
@@ -104,80 +196,55 @@
           return { ok: false, reason: 'bad-args' };
         }
 
-        // --- Read token at call time (decision L-D) ---
-        var token = null;
-        try {
-          if (
-            window.rosterClient &&
-            window.rosterClient.token &&
-            typeof window.rosterClient.token === 'function'
-          ) {
-            token = window.rosterClient.token();
-          }
-        } catch (_) {
-          // rosterClient.token() threw — treat as no identity
+        // --- View-as / read-only: never capture or send (defense-in-depth) ---
+        // The worksheet view-as module also neuters record(), but the Desk path
+        // and any future caller rely on this guard so an impersonating teacher's
+        // actions are never queued/attributed to the student. (OFFLINE_MODE_SPEC §4.A)
+        if (typeof window !== 'undefined' && window.__WS_READ_ONLY__) {
+          return { ok: false, reason: 'read-only' };
         }
 
-        if (!token) {
+        // --- Offline pack: capture locally, skip the network entirely ---
+        if (_isOfflineMode()) {
+          await _enqueueOffline(opts); // _isOfflineMode() implies the queue exists
+          return { ok: true, queued: true, ledgerId: null };
+        }
+
+        // --- Online path: must have identity to attribute the write ---
+        if (!_token()) {
           _showNoIdentityNudge(); // surface the dropped write (never silent)
           return { ok: false, reason: 'no-identity' };
         }
 
-        // --- Read service URL at call time ---
-        var baseUrl = window.ROSTER_SERVICE_URL || null;
-        if (!baseUrl) {
-          console.warn('gradebook-client: ROSTER_SERVICE_URL is not configured');
-          return { ok: false, reason: 'network' };
+        var r = await _postRecord(opts);
+        if (r.ok) return r;
+
+        // Reachability failure → capture for later instead of dropping the grade.
+        // reason stays 'network' (the frozen whitelist); the additive `queued`
+        // flag signals the write was captured locally.
+        if (r.reason === 'network' && _hasQueue()) {
+          await _enqueueOffline(opts);
+          return { ok: false, reason: 'network', queued: true };
         }
-
-        // --- POST to /ledger/record — no proctor header (decision L-C) ---
-        var body = {
-          token:    token,
-          source:   source,
-          itemId:   itemId,
-          unit:     opts.unit,
-          topic:    opts.topic,
-          skill:    opts.skill,
-          response: response,
-          score:    opts.score,
-          attempt:  opts.attempt
-        };
-
-        var res = await fetch(baseUrl + '/ledger/record', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify(body)
-        });
-
-        var data = null;
-        try {
-          data = await res.json();
-        } catch (_) {
-          data = null;
-        }
-
-        if (data && data.ok) {
-          _captureReceipt(data.receipt, source, itemId, opts.score);
-          return { ok: true, ledgerId: data.ledgerId, receipt: data.receipt || null };
-        }
-
-        if (res && (res.status === 401 || res.status === 403)) {
-          console.warn('gradebook-client: auth failed', data);
-          return { ok: false, reason: 'auth' };
-        }
-
-        if (res && !res.ok) {
-          console.warn('gradebook-client: server error', data);
-          return { ok: false, reason: 'server' };
-        }
-
-        console.warn('gradebook-client: server returned ok:false', data);
-        return { ok: false, reason: 'server' };
+        if (r.reason === 'no-identity') _showNoIdentityNudge();
+        return r;
 
       } catch (err) {
-        // Catches: fetch rejection, JSON parse error, any other throw
         console.warn('gradebook-client: record failed —', err && err.message);
         return { ok: false, reason: 'network' };
+      }
+    },
+
+    // ── OFFLINE_MODE_SPEC §4.A — flush queued work to the server ────────────────
+    // Replays each queued record via the raw POST; the queue deletes only the
+    // ones that land. Auto-runs on 'online'; also callable from the export page.
+    // NEVER throws; resolves to { sent, failed }.
+    syncOfflineQueue: async function () {
+      try {
+        if (!window.OfflineQueue || typeof window.OfflineQueue.drain !== 'function') return { sent: 0, failed: 0 };
+        return await window.OfflineQueue.drain(function (rec) { return _postRecord(rec); });
+      } catch (_) {
+        return { sent: 0, failed: 0 };
       }
     },
 
@@ -304,5 +371,16 @@
     }
 
   };
+
+  // Auto-flush the offline queue when connectivity returns (intermittent case).
+  // Best-effort; never throws. The export→teacher-import path covers the fully
+  // disconnected case where 'online' never fires.
+  try {
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('online', function () {
+        try { window.gradebookClient.syncOfflineQueue(); } catch (_) { /* best-effort */ }
+      });
+    }
+  } catch (_) { /* best-effort */ }
 
 })();

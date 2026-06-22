@@ -2510,7 +2510,10 @@
 <script src="roster_config.js"></script>
 <script src="roster-client.js"></script>
 <!-- Gradebook ledger feeder — _studentMarkSave's DESK_DONE write needs it. Reads
-     rosterClient at call time, so it loads after roster-client.js (worksheet order). -->
+     rosterClient at call time, so it loads after roster-client.js (worksheet order).
+     offline-queue.js loads first so OFFLINE_MODE packs capture Desk grade writes
+     locally instead of dropping them (OFFLINE_MODE_SPEC §4.A/§4.F). -->
+<script src="offline-queue.js"></script>
 <script src="gradebook-client.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script src="lib/qrcode.min.js"></script>

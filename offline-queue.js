@@ -162,6 +162,12 @@
 
   // Replay each queued record via sender(rec) -> Promise<{ok:boolean}>.
   // Deletes a record only on a clean ok; leaves the rest queued for next time.
+  // Race-safe: a send can take seconds (a network POST), during which the user
+  // may edit the SAME item -> enqueue() replaces the key with a newer record.
+  // We compare-and-delete (only remove if the stored ts still matches what we
+  // sent) so a newer un-sent edit is never dropped; it drains next round
+  // (re-import is idempotent server-side). `sent` is counted only after the
+  // delete actually lands.
   function drain(sender) {
     if (typeof sender !== 'function') return Promise.resolve({ sent: 0, failed: 0, remaining: 0 });
     var s = store();
@@ -171,8 +177,11 @@
       items.forEach(function (it) {
         chain = chain.then(function () {
           return Promise.resolve().then(function () { return sender(it); }).then(function (res) {
-            if (res && res.ok) { sent += 1; return s.del(keyOf(it)); }
-            failed += 1;
+            if (!(res && res.ok)) { failed += 1; return; }
+            return s.get(keyOf(it)).then(function (cur) {
+              if (cur && tsOf(cur) !== tsOf(it)) { failed += 1; return; } // newer edit arrived → keep it queued
+              return s.del(keyOf(it)).then(function () { sent += 1; }, function () { failed += 1; });
+            });
           }).catch(function () { failed += 1; });
         });
       });

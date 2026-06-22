@@ -25,6 +25,7 @@ const REPO_ROOT    = resolve(import.meta.dirname, '..');
 const CLIENT_SRC   = readFileSync(resolve(REPO_ROOT, 'gradebook-client.js'), 'utf8');
 const ROSTER_SRC   = readFileSync(resolve(REPO_ROOT, 'roster-client.js'),    'utf8');
 const CONFIG_SRC   = readFileSync(resolve(REPO_ROOT, 'roster_config.js'),    'utf8');
+const OFFLINE_SRC  = readFileSync(resolve(REPO_ROOT, 'offline-queue.js'),    'utf8');
 
 // â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -913,5 +914,127 @@ describe('gradebook-client.js â€” nudge source contract', () => {
   it('defines the nudge helper and keeps record() additive (signature unchanged)', () => {
     expect(CLIENT_SRC).toContain('_showNoIdentityNudge');
     expect(CLIENT_SRC).toContain('record: async function (opts)');
+  });
+});
+
+// ── 5. Offline capture (OFFLINE_MODE_SPEC §4.A) ───────────────────────────────
+
+// A window with offline-queue.js also loaded (real in-memory queue in jsdom).
+function makeWindowWithQueue(overrideServiceUrl = 'https://mock-service.test') {
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'https://apstats-app.example.com' });
+  const win = dom.window;
+  if (overrideServiceUrl !== null) win.ROSTER_SERVICE_URL = overrideServiceUrl;
+  const ctx = createContext(win);
+  runInContext(CONFIG_SRC, ctx);
+  runInContext(ROSTER_SRC, ctx);
+  runInContext(OFFLINE_SRC, ctx);   // window.OfflineQueue
+  runInContext(CLIENT_SRC, ctx);
+  return { win, rosterClient: win.rosterClient, gradebookClient: win.gradebookClient, OfflineQueue: win.OfflineQueue };
+}
+
+describe('gradebook-client.js — offline capture', () => {
+  it('OFFLINE_MODE: enqueues without touching the network, returns ok+queued', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    win.OFFLINE_MODE = true;
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'mean', score: 1 });
+
+    expect(result).toMatchObject({ ok: true, queued: true });
+    expect(fetchFn).not.toHaveBeenCalled();
+    const q = await OfflineQueue.all();
+    expect(q).toHaveLength(1);
+    expect(q[0].itemId).toBe('Q1');
+    expect(q[0].studentId).toBe('uuid-test-student'); // attributed from rosterClient
+  });
+
+  it('intermittent: a fetch rejection enqueues, keeps reason="network", adds queued:true', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    win.fetch = vi.fn().mockRejectedValue(new Error('Network down'));
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q2', response: 'x', score: 0.5 });
+
+    // reason stays in the frozen whitelist; queued is an additive signal
+    expect(result).toMatchObject({ ok: false, reason: 'network', queued: true });
+    expect(await OfflineQueue.all()).toHaveLength(1);
+  });
+
+  it('read-only/view-as: never enqueues or fetches, returns reason="read-only"', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    win.__WS_READ_ONLY__ = true;
+    win.OFFLINE_MODE = true; // even in offline mode, read-only must win
+    const fetchFn = vi.fn();
+    win.fetch = fetchFn;
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q9', response: 'x', score: 1 });
+
+    expect(result).toMatchObject({ ok: false, reason: 'read-only' });
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(await OfflineQueue.all()).toHaveLength(0);
+  });
+
+  it('does NOT enqueue on an auth failure (bad token is not an offline condition)', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'expired');
+    mockFetch(win, { ok: false, error: 'invalid token' }, { ok: false, status: 401 });
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q3', response: 'x' });
+
+    expect(result.reason).toBe('auth');
+    expect(await OfflineQueue.all()).toHaveLength(0);
+  });
+
+  it('does NOT enqueue on a server 500 (server reachable — surface the error)', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    mockFetch(win, { ok: false }, { ok: false, status: 500 });
+
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q4', response: 'x' });
+
+    expect(result.reason).toBe('server');
+    expect(await OfflineQueue.all()).toHaveLength(0);
+  });
+
+  it('syncOfflineQueue drains queued records via a real POST and clears them on success', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    // queue two via offline mode
+    win.OFFLINE_MODE = true;
+    await gradebookClient.record({ source: 'worksheet', itemId: 'A', response: 'x', score: 1 });
+    await gradebookClient.record({ source: 'worksheet', itemId: 'B', response: 'y', score: 1 });
+    expect(await OfflineQueue.all()).toHaveLength(2);
+
+    // back online: the server accepts everything
+    win.OFFLINE_MODE = false;
+    mockFetch(win, { ok: true, ledgerId: 'L1' });
+
+    const r = await gradebookClient.syncOfflineQueue();
+    expect(r.sent).toBe(2);
+    expect(await OfflineQueue.all()).toHaveLength(0);
+  });
+
+  it('syncOfflineQueue leaves records queued if the server is still down', async () => {
+    const { win, gradebookClient, OfflineQueue } = makeWindowWithQueue();
+    setToken(win, 'tok');
+    win.OFFLINE_MODE = true;
+    await gradebookClient.record({ source: 'worksheet', itemId: 'A', response: 'x' });
+    win.OFFLINE_MODE = false;
+    win.fetch = vi.fn().mockRejectedValue(new Error('still down'));
+
+    const r = await gradebookClient.syncOfflineQueue();
+    expect(r.failed).toBe(1);
+    expect(await OfflineQueue.all()).toHaveLength(1);
+  });
+
+  it('without offline-queue.js loaded, record() behaves exactly as before (graceful)', async () => {
+    const { win, gradebookClient } = makeWindow(); // no OfflineQueue in this context
+    setToken(win, 'tok');
+    win.fetch = vi.fn().mockRejectedValue(new Error('down'));
+    const result = await gradebookClient.record({ source: 'worksheet', itemId: 'Q1', response: 'x' });
+    expect(result).toMatchObject({ ok: false, reason: 'network' }); // not 'queued'
   });
 });

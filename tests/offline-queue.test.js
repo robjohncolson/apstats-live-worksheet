@@ -118,4 +118,21 @@ describe('OfflineQueue durable API (in-memory fallback)', () => {
     await Q.clear();
     expect(await Q.all()).toHaveLength(0);
   });
+
+  it('drain does NOT delete a record a concurrent edit replaced mid-send (no data loss)', async () => {
+    await Q.enqueue(rec({ itemId: 'A', response: 'old', ts: 1000 }));
+    // sender is slow: while it "sends" the old record, the student edits the same
+    // item, enqueuing a newer record for the same key.
+    const sender = async (r) => {
+      if (r.response === 'old') {
+        await Q.enqueue(rec({ itemId: 'A', response: 'new', ts: 2000 }));
+      }
+      return { ok: true };
+    };
+    const result = await Q.drain(sender);
+    const left = await Q.all();
+    expect(left).toHaveLength(1);          // the newer edit survived
+    expect(left[0].response).toBe('new');  // not clobbered by the delete
+    expect(result.sent).toBe(0);           // the stale send did not clear the key
+  });
 });

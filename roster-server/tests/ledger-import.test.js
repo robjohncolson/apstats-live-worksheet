@@ -47,6 +47,13 @@ describe('normalizeImportBody', () => {
     expect(normalizeImportBody({})).toEqual([]);
     expect(normalizeImportBody({ records: 'nope' })).toEqual([]);
   });
+
+  it('an unsigned bundle (student:null) yields unattributed records → rejected on validate', () => {
+    const out = normalizeImportBody({ student: null, records: [{ source: 'worksheet', itemId: 'i1', response: 'x' }] });
+    expect(out).toHaveLength(1);
+    expect(out[0].studentId).toBeFalsy(); // no studentId to attribute to
+    expect(validateImportRecord(out[0]).reason).toMatch(/studentId/); // can't import unattributed work
+  });
 });
 
 describe('validateImportRecord', () => {
