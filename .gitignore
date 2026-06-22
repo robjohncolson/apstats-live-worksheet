@@ -78,3 +78,7 @@ tools/cdp/*
 .t2tmp/
 __pycache__/
 temp_check.js
+
+# Offline pack build artifacts (OFFLINE_MODE_SPEC)
+offline-pack/
+media/
