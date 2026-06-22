@@ -12,6 +12,7 @@ import { createLivePollArchiveDb } from './poll-archive-db.js';
 import { signToken, verifyToken } from './token.js';
 import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
+import { mountLedgerImport } from './ledger-import.js';
 import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
@@ -860,6 +861,8 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // ledgerDb must be passed in (tests inject a fake; production passes createLiveLedgerDb()).
   if (ledgerDb) {
     mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername, worksheetKey, rosterDb: db });
+    // OFFLINE_MODE_SPEC §4.D — teacher-gated batch import of offline-captured work.
+    mountLedgerImport(app, { db, ledgerDb, resolveUsername: resolveReceiptUsername });
   }
 
   // ── Do Now routes (Sprint DN1 additive) ──────────────────────────────────────
