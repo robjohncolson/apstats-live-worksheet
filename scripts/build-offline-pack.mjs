@@ -32,7 +32,7 @@ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ROOT_FILES = [
   'index.html', 'TOC.html', 'calendar.html', 'start-here.html',
   'ap_stats_roadmap_square_mode.html', 'study_guide_diagnostic.html', 'offline.html',
-  'roster_config.js', 'roster-client.js', 'offline-queue.js', 'gradebook-client.js',
+  'roster_config.js', 'roster-client.js', 'offline-queue.js', 'offline-video.js', 'gradebook-client.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json',
 ];
 const DIRS = ['lib', 'data', 'js', 'ai-tutor', 'ti84-trainer-v2'];

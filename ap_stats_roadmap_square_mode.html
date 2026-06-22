@@ -2514,6 +2514,7 @@
      offline-queue.js loads first so OFFLINE_MODE packs capture Desk grade writes
      locally instead of dropping them (OFFLINE_MODE_SPEC §4.A/§4.F). -->
 <script src="offline-queue.js"></script>
+<script src="offline-video.js"></script>
 <script src="gradebook-client.js"></script>
 <script src="js/wallet_logic.js"></script>
 <script src="lib/qrcode.min.js"></script>
@@ -10434,7 +10435,16 @@ function showResourcePanel(inf, dateStr) {
                 var _apAvail = _isApClassroomAvailable();
                 r.videos.forEach((v, i) => {
                     lessonHtml += '<div style="margin:3px 0">';
-                    if (_apAvail) {
+                    // OFFLINE_MODE_SPEC §4.H: in an offline pack, play the bundled
+                    // local copy (resolved from media-manifest.json) instead of the
+                    // network link. Falls through to the normal links when there's no
+                    // local copy. v.url is trusted in-page data; _deskEsc keeps the
+                    // onclick attribute valid.
+                    var _ovFile = (window.OFFLINE_MODE && window.OfflineVideo && typeof OfflineVideo.localFor === 'function')
+                        ? (OfflineVideo.localFor(v.url) || OfflineVideo.localFor(v.altUrl)) : null;
+                    if (_ovFile) {
+                        lessonHtml += '<a href="#" onclick="OfflineVideo.open(' + _deskEsc(JSON.stringify(_ovFile)) + ',' + _deskEsc(JSON.stringify('Video ' + (i + 1))) + ');return false;" style="color:#0000cc;text-decoration:underline">▶ Video ' + (i + 1) + ' (offline)</a>';
+                    } else if (_apAvail) {
                         // Standard render: AP Classroom primary + Drive alt secondary.
                         lessonHtml += '<a href="' + v.url + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline">Video ' + (i + 1) + '</a>';
                         if (v.altUrl) lessonHtml += ' <a href="' + v.altUrl + '" target="_blank" onclick="' + _linkClick('video') + '" style="color:#0000cc;text-decoration:underline;font-size:9px">(alt)</a>';
