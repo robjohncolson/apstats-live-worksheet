@@ -74,5 +74,13 @@ describe('build (real, into a temp dir)', () => {
     if (existsSync(resolve(out, 'ti84-trainer-v2', 'standalone.html'))) {
       expect(readFileSync(resolve(out, 'ti84-trainer-v2', 'standalone.html'), 'utf8')).toContain('src="../offline-config.js"');
     }
-  }, 60000);
+
+    // the quiz app is bundled with OFFLINE_MODE injected + cr's offline-queue.js
+    if (existsSync(resolve(out, 'quiz', 'index.html'))) {
+      const q = readFileSync(resolve(out, 'quiz', 'index.html'), 'utf8');
+      expect(q).toContain('src="../offline-config.js"');   // depth-1 prefix
+      expect(q).toContain('src="offline-queue.js"');         // cr ships the queue + capture wiring
+      expect(existsSync(resolve(out, 'quiz', 'offline-queue.js'))).toBe(true);
+    }
+  }, 90000);
 });

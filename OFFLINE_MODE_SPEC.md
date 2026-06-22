@@ -1,6 +1,6 @@
 # OFFLINE_MODE_SPEC.md — disconnected AP Stats: do all the work offline, email it in
 
-**Status:** rev 2 — **Phase 0, Phase 1, and Phase 1b SHIPPED (2026-06-22).** Remaining: the teacher runs `fetch-offline-videos.mjs` to acquire the real videos, then `build-offline-pack.mjs`; the cr quiz app's own offline grade-capture (separate repo) is deferred. Implementation map:
+**Status:** rev 2 — **Phase 0, Phase 1, and Phase 1b SHIPPED (2026-06-22), incl. the quiz-app offline capture** (cr `2d3d6f3`). Remaining (teacher-run, not code): `fetch-offline-videos.mjs` to acquire the real videos, then `build-offline-pack.mjs`. Optional: PWA auto-sync (Phase 2, §4.G). Implementation map:
 > - **§4.A queue** → `offline-queue.js` (+ wired into `gradebook-client.js`, loaded across 69 worksheets + Desk + study guide). **§4.C export** → `offline.html`. **§4.D import** → `roster-server/ledger-import.js` (`POST /ledger/import`) + `teacher-offline-import.html`. **§4.E pack** → `scripts/build-offline-pack.mjs` + `Start-Offline.cmd`. **§4.B progress cache** → Desk `renderDoNowGrades` write-through. **§4.H video** → `scripts/fetch-offline-videos.mjs` + `offline-video.js` resolver. **§4.G PWA** → not built (Phase 2, optional).
 **Decisions locked (teacher):** (1) **both** — ship a disconnected *pack* first, add a PWA auto-sync layer later; (2) **everything** offline — worksheets + Desk + quiz app + study guide + TI-84 trainer; (3) video = **bundled offline** (full local playback — rev 2, changed from transcripts-only); (4) write this spec before building.
 

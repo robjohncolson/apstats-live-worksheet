@@ -210,7 +210,20 @@ function main() {
   // 4. transcripts, media, quiz app
   for (const rel of transcripts) copyInto(rel);
   if (hasMedia) copyInto('media');
-  if (hasQuiz) { try { cpSync(resolve(REPO, '..', 'curriculum_render'), resolve(out, 'quiz'), { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) }); } catch (e) { console.warn('  quiz app copy skipped:', e.message); } }
+  if (hasQuiz) {
+    try {
+      cpSync(resolve(REPO, '..', 'curriculum_render'), resolve(out, 'quiz'), { recursive: true, filter: (s) => !/[\\/](node_modules|\.git|tests)([\\/]|$)/.test(s) });
+      // OFFLINE_MODE for the quiz app too: inject offline-config.js (depth-aware ../)
+      // into every bundled quiz HTML. cr already ships offline-queue.js + the offline
+      // capture wiring, so its grades queue into the SAME shared-origin queue.
+      const walkQuiz = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, e.name);
+        if (e.isDirectory()) walkQuiz(p);
+        else if (/\.html$/i.test(e.name)) { const rel = relative(out, p); writeFileSync(p, injectOfflineConfig(readFileSync(p, 'utf8'), relPrefixFor(rel)), 'utf8'); }
+      } };
+      walkQuiz(resolve(out, 'quiz'));
+    } catch (e) { console.warn('  quiz app copy skipped:', e.message); }
+  }
 
   // size
   let bytes = 0; const sz = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) { const p = join(dir, e.name); if (e.isDirectory()) sz(p); else try { bytes += statSync(p).size; } catch {} } };
