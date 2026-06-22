@@ -2,34 +2,41 @@
 // fetch-offline-videos.mjs — acquire the lesson videos for the offline pack.
 // OFFLINE_MODE_SPEC §4.H (Phase 1b). TEACHER-RUN, ONLINE, one-time (resumable).
 //
-// Source: every lesson in the Desk's RESOURCES has an `altUrl` pointing at the
-// teacher's own Google-Drive copy of the apclassroom video (~144 unique files),
-// plus 1 YouTube link. This downloads them (the teacher's own files, under the
-// teacher's session) into media/ and writes media-manifest.json mapping BOTH the
-// apclassroom url and the Drive altUrl -> the local file. The future offline
-// playback resolver looks a video up by either URL and plays the local copy.
+// Source: every lesson carries a Google-Drive `altUrl` (the teacher's own / link-
+// shared copy of the apclassroom video). The SAME 144 files are referenced from
+// both the Desk (ap_stats_roadmap_square_mode.html RESOURCES) and the quiz app
+// (../curriculum_render/data/units.js). We download those Drive copies DIRECTLY
+// in pure Node (no yt-dlp needed) into media/ and write media-manifest.json
+// mapping each in-page url + altUrl → the local file, which offline-video.js uses
+// to play the local copy offline.
 //
-// Downloads use yt-dlp (handles Drive confirm-tokens + YouTube + resume). Install
-// once: https://github.com/yt-dlp/yt-dlp/releases (a single yt-dlp.exe on Windows),
-// or `pip install -U yt-dlp` / `winget install yt-dlp` / `scoop install yt-dlp`.
+// Pure-Node Google Drive download handles the large-file "confirm" interstitial
+// (the drive.usercontent.google.com download form). Link-shared / owned files only.
+// (A lesson whose only alt is a YouTube link can't be fetched this way → reported
+// as a gap; it falls back to the transcript.)
+//
+// Resumable: a per-id ledger (media/.downloaded.json) skips finished files; an
+// interrupted file is a .part and is re-fetched cleanly.
 //
 // Usage:
 //   node scripts/fetch-offline-videos.mjs --dry-run        # plan only, no downloads
-//   node scripts/fetch-offline-videos.mjs --limit 3        # smoke test (first 3)
-//   node scripts/fetch-offline-videos.mjs --unit 1         # only Unit 1 (topics 1-*)
+//   node scripts/fetch-offline-videos.mjs --limit 3        # smoke (first 3)
+//   node scripts/fetch-offline-videos.mjs --unit 1         # only Unit 1
 //   node scripts/fetch-offline-videos.mjs                  # full pull (GBs; resumable)
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
-import { resolve, dirname, basename } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, createWriteStream, renameSync, rmSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DESK = resolve(REPO, 'ap_stats_roadmap_square_mode.html');
+const CR_UNITS = resolve(REPO, '..', 'curriculum_render', 'data', 'units.js');
+const UA = 'Mozilla/5.0 (offline-pack builder) AppleWebKit/537.36';
 
 // ── Pure extractor (unit-tested) ──────────────────────────────────────────────
 
-// Brace-match the `const RESOURCES = { ... }` object so we only parse video data.
 function sliceResources(html) {
   const start = html.indexOf('const RESOURCES');
   if (start < 0) return '';
@@ -52,34 +59,86 @@ function classify(altUrl) {
   return { source: 'other', id: null };
 }
 
-// Returns [{ topic, idx, url, altUrl, source, id, key }] in document order.
+// Returns [{ topic, idx, url, altUrl, source, id, key }] from the Desk RESOURCES.
 export function extractVideos(html) {
   const block = sliceResources(html);
   const out = [];
-  // Locate each topic key ("1-1": {) so a video can be attributed to its topic.
   const topics = [];
   const topicRe = /"(\d+(?:-\d+)?(?:\.\w+)?)"\s*:\s*\{/g;
   let tm;
   while ((tm = topicRe.exec(block)) !== null) topics.push({ key: tm[1], at: tm.index });
-  const topicAt = (pos) => {
-    let cur = null;
-    for (const t of topics) { if (t.at <= pos) cur = t.key; else break; }
-    return cur;
-  };
-  const perTopicCount = {};
+  const topicAt = (pos) => { let cur = null; for (const t of topics) { if (t.at <= pos) cur = t.key; else break; } return cur; };
+  const perTopic = {};
   const videoRe = /\{\s*url:\s*"([^"]+)"\s*(?:,\s*altUrl:\s*"([^"]*)")?\s*\}/g;
   let vm;
   while ((vm = videoRe.exec(block)) !== null) {
-    const url = vm[1];
-    const altUrl = vm[2] || '';
-    // Only entries that actually look like lesson videos.
+    const url = vm[1], altUrl = vm[2] || '';
     if (!/apclassroom|drive\.google|youtu/.test(url + ' ' + altUrl)) continue;
     const topic = topicAt(vm.index) || 'unknown';
-    const idx = (perTopicCount[topic] = (perTopicCount[topic] || 0) + 1) - 1;
+    const idx = (perTopic[topic] = (perTopic[topic] || 0) + 1) - 1;
     const c = classify(altUrl);
     out.push({ topic, idx, url, altUrl, source: c.source, id: c.id, key: `${topic}__${idx}__${c.id || 'na'}` });
   }
   return out;
+}
+
+// All unique Drive file IDs in any text (used to union-check the cr quiz app).
+export function extractDriveIds(text) {
+  const ids = new Set();
+  const re = /drive\.google\.com\/(?:file\/d\/|(?:open|uc)\?(?:export=download&)?id=)([A-Za-z0-9_-]{20,})/g;
+  let m; while ((m = re.exec(text)) !== null) ids.add(m[1]);
+  return [...ids];
+}
+
+// ── Pure Google Drive download helpers (unit-tested) ──────────────────────────
+
+function decodeEntities(s) {
+  return String(s).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+}
+
+// From the Drive "can't scan for viruses" interstitial HTML, build the real
+// download URL on drive.usercontent.google.com. Returns a URL string or null.
+export function parseDriveConfirm(html, id) {
+  const actionM = html.match(/action="(https:\/\/drive\.usercontent\.google\.com\/download[^"]*)"/);
+  if (actionM) {
+    const action = decodeEntities(actionM[1]);
+    const params = {};
+    let m;
+    const re1 = /<input[^>]*\btype="hidden"[^>]*\bname="([^"]+)"[^>]*\bvalue="([^"]*)"/g;
+    while ((m = re1.exec(html)) !== null) params[m[1]] = decodeEntities(m[2]);
+    const re2 = /<input[^>]*\bname="([^"]+)"[^>]*\bvalue="([^"]*)"[^>]*\btype="hidden"/g;
+    while ((m = re2.exec(html)) !== null) if (!(m[1] in params)) params[m[1]] = decodeEntities(m[2]);
+    if (!params.id) params.id = id;
+    if (!params.export) params.export = 'download';
+    const qs = Object.keys(params).map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+    return action + '?' + qs;
+  }
+  const tok = html.match(/[?&]confirm=([0-9A-Za-z_-]+)/);
+  if (tok) return `https://drive.usercontent.google.com/download?id=${encodeURIComponent(id)}&export=download&confirm=${tok[1]}`;
+  return null;
+}
+
+function extFromHeaders(res) {
+  const cd = res.headers.get('content-disposition') || '';
+  const fn = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+  if (fn) { const e = (fn[1].match(/\.([A-Za-z0-9]{2,5})$/) || [])[1]; if (e) return '.' + e.toLowerCase(); }
+  const ct = (res.headers.get('content-type') || '').toLowerCase();
+  if (ct.includes('mp4')) return '.mp4';
+  if (ct.includes('webm')) return '.webm';
+  if (ct.includes('matroska')) return '.mkv';
+  if (ct.includes('quicktime')) return '.mov';
+  return '.mp4';
+}
+
+async function driveResponse(id) {
+  let res = await fetch(`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`, { headers: { 'User-Agent': UA }, redirect: 'follow' });
+  const ct = (res.headers.get('content-type') || '').toLowerCase();
+  if (!ct.includes('text/html')) return res; // small file → direct
+  const url2 = parseDriveConfirm(await res.text(), id);
+  if (!url2) throw new Error('private/quota or unparseable confirm page');
+  res = await fetch(url2, { headers: { 'User-Agent': UA }, redirect: 'follow' });
+  if ((res.headers.get('content-type') || '').toLowerCase().includes('text/html')) throw new Error('still HTML after confirm (private/quota?)');
+  return res;
 }
 
 // ── CLI ───────────────────────────────────────────────────────────────────────
@@ -96,86 +155,93 @@ function parseArgs(argv) {
   return a;
 }
 
-function haveYtDlp() {
-  try { return spawnSync('yt-dlp', ['--version'], { encoding: 'utf8' }).status === 0; }
-  catch (_) { return false; }
+function loadLedger(outDir) {
+  const p = resolve(outDir, '.downloaded.json');
+  try { return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {}; } catch (_) { return {}; }
+}
+function saveLedger(outDir, led) {
+  try { writeFileSync(resolve(outDir, '.downloaded.json'), JSON.stringify(led, null, 2)); } catch (_) {}
 }
 
-function findDownloaded(outDir, key) {
-  if (!existsSync(outDir)) return null;
-  const hit = readdirSync(outDir).find((f) => f.startsWith(key + '.') && statSync(resolve(outDir, f)).size > 0);
-  return hit ? `${basename(outDir)}/${hit}` : null;
-}
-
-function downloadUrl(entry, outDir) {
-  // yt-dlp handles Drive confirm-tokens + YouTube; --continue/--no-overwrites = resumable + idempotent.
-  const target = entry.source === 'youtube'
-    ? `https://www.youtube.com/watch?v=${entry.id}`
-    : `https://drive.google.com/file/d/${entry.id}/view`;
-  const r = spawnSync('yt-dlp', [
-    '--no-overwrites', '--continue', '--no-part',
-    '--download-archive', resolve(outDir, '.downloaded.txt'),
-    '-o', resolve(outDir, `${entry.key}.%(ext)s`),
-    target,
-  ], { stdio: 'inherit' });
-  return r.status === 0;
-}
-
-function main() {
+async function main() {
   const args = parseArgs(process.argv.slice(2));
   const outDir = resolve(REPO, args.out);
+
   let entries = extractVideos(readFileSync(DESK, 'utf8'));
-
   if (args.unit) entries = entries.filter((e) => e.topic.split('-')[0] === args.unit);
-  const downloadable = entries.filter((e) => e.source === 'drive' || e.source === 'youtube');
-  const planned = args.limit ? downloadable.slice(0, args.limit) : downloadable;
 
+  // Union-check the quiz app: every cr Drive id should already be in the Desk set.
+  if (existsSync(CR_UNITS)) {
+    const deskIds = new Set(entries.filter((e) => e.source === 'drive').map((e) => e.id));
+    const crOnly = extractDriveIds(readFileSync(CR_UNITS, 'utf8')).filter((id) => !deskIds.has(id));
+    if (crOnly.length && !args.unit) console.log(`Note: ${crOnly.length} Drive id(s) in the quiz app are not in the Desk set (not downloaded here): ${crOnly.slice(0, 3).join(', ')}…`);
+  }
+
+  const drive = entries.filter((e) => e.source === 'drive');
+  const planned = args.limit ? drive.slice(0, args.limit) : drive;
   const bySource = entries.reduce((m, e) => ((m[e.source] = (m[e.source] || 0) + 1), m), {});
   console.log(`Found ${entries.length} video entries:`, bySource);
-  console.log(`Downloadable: ${downloadable.length}; planned this run: ${planned.length}${args.dryRun ? ' (DRY RUN)' : ''}`);
+  console.log(`Drive (downloadable): ${drive.length}; planned this run: ${planned.length}${args.dryRun ? ' (DRY RUN)' : ''}`);
+  const nonDrive = entries.filter((e) => e.source !== 'drive');
+  if (nonDrive.length) console.log(`${nonDrive.length} non-Drive (e.g. YouTube) entr(y/ies) → transcript fallback, not downloaded.`);
 
   const manifest = { schema: 'apstats-offline-media/v1', generatedAt: new Date().toISOString(), byUrl: {}, gaps: [] };
-  const addManifest = (e, file) => {
-    const rec = { topic: e.topic, idx: e.idx, source: e.source, file };
-    manifest.byUrl[e.url] = rec;
-    if (e.altUrl) manifest.byUrl[e.altUrl] = rec;
-  };
+  const addManifest = (e, file) => { const rec = { topic: e.topic, idx: e.idx, source: e.source, file }; manifest.byUrl[e.url] = rec; if (e.altUrl) manifest.byUrl[e.altUrl] = rec; };
 
   if (args.dryRun) {
     for (const e of planned) addManifest(e, null);
-    for (const e of entries.filter((x) => x.source === 'other' || x.source === 'none')) manifest.gaps.push({ topic: e.topic, url: e.url, reason: 'no downloadable source' });
+    for (const e of nonDrive) manifest.gaps.push({ topic: e.topic, url: e.url, altUrl: e.altUrl, reason: 'no Drive alt (transcript fallback)' });
     if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
     writeFileSync(resolve(outDir, 'media-manifest.json'), JSON.stringify(manifest, null, 2));
     console.log(`Wrote plan to ${args.out}/media-manifest.json (no files downloaded).`);
     return;
   }
 
-  if (!haveYtDlp()) {
-    console.error('\nyt-dlp not found on PATH. Install it (one-time), then re-run:');
-    console.error('  Windows: winget install yt-dlp   (or download yt-dlp.exe from the releases page)');
-    console.error('  pip:     pip install -U yt-dlp');
-    process.exit(2);
-  }
   if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+  const ledger = loadLedger(outDir);
 
-  let ok = 0, failed = 0, totalBytes = 0;
-  for (let i = 0; i < planned.length; i += 1) {
-    const e = planned[i];
-    let file = findDownloaded(outDir, e.key);
-    if (file) { console.log(`[${i + 1}/${planned.length}] ${e.key} — already present, skipping`); }
-    else {
-      console.log(`[${i + 1}/${planned.length}] ${e.topic} #${e.idx} (${e.source}) -> ${e.key}`);
-      const success = downloadUrl(e, outDir);
-      file = success ? findDownloaded(outDir, e.key) : null;
+  // download once per unique Drive id; map every url/altUrl that shares it
+  const byId = new Map();
+  for (const e of planned) { if (!byId.has(e.id)) byId.set(e.id, []); byId.get(e.id).push(e); }
+
+  let ok = 0, failed = 0, skipped = 0, bytes = 0;
+  let n = 0; const total = byId.size;
+  for (const [id, group] of byId) {
+    n += 1;
+    const e0 = group[0];
+    const done = ledger[id];
+    if (done && existsSync(resolve(outDir, done))) {
+      group.forEach((e) => addManifest(e, 'media/' + done)); skipped += 1; ok += 1;
+      console.log(`[${n}/${total}] ${e0.key} — already downloaded, skipping`);
+      try { bytes += statSync(resolve(outDir, done)).size; } catch (_) {}
+      continue;
     }
-    if (file) { ok += 1; addManifest(e, file); try { totalBytes += statSync(resolve(REPO, file)).size; } catch (_) {} }
-    else { failed += 1; manifest.gaps.push({ topic: e.topic, url: e.url, altUrl: e.altUrl, reason: 'download failed' }); }
+    process.stdout.write(`[${n}/${total}] ${e0.topic} #${e0.idx} (drive ${id}) … `);
+    try {
+      const res = await driveResponse(id);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const ext = extFromHeaders(res);
+      const name = `${e0.topic}__${e0.idx}__${id}${ext}`;
+      const part = resolve(outDir, name + '.part');
+      await pipeline(Readable.fromWeb(res.body), createWriteStream(part));
+      renameSync(part, resolve(outDir, name));
+      ledger[id] = name; saveLedger(outDir, ledger);
+      group.forEach((e) => addManifest(e, 'media/' + name));
+      const sz = statSync(resolve(outDir, name)).size; bytes += sz; ok += 1;
+      console.log(`ok (${(sz / 1e6).toFixed(1)} MB)`);
+    } catch (err) {
+      failed += 1;
+      group.forEach((e) => manifest.gaps.push({ topic: e.topic, url: e.url, altUrl: e.altUrl, reason: 'download failed: ' + (err && err.message) }));
+      try { rmSync(resolve(outDir, `${e0.topic}__${e0.idx}__${id}${'.mp4'}.part`), { force: true }); } catch (_) {}
+      console.log('FAILED: ' + (err && err.message));
+    }
   }
-
+  for (const e of nonDrive) manifest.gaps.push({ topic: e.topic, url: e.url, altUrl: e.altUrl, reason: 'no Drive alt (transcript fallback)' });
   writeFileSync(resolve(outDir, 'media-manifest.json'), JSON.stringify(manifest, null, 2));
-  const gb = (totalBytes / 1e9).toFixed(2);
-  console.log(`\nDone. ${ok} ok, ${failed} failed/gap. Pack media ~= ${gb} GB. Manifest: ${args.out}/media-manifest.json`);
-  if (failed) console.log('Re-run to retry gaps (already-downloaded files are skipped).');
+
+  console.log(`\nDone. ${ok} ok (${skipped} already present), ${failed} failed. Pack media ~= ${(bytes / 1e9).toFixed(2)} GB.`);
+  console.log(`Manifest: ${args.out}/media-manifest.json`);
+  if (failed) console.log('Re-run to retry failures (finished files are skipped).');
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) main();
