@@ -8033,6 +8033,13 @@ function _paintDoNowReadiness() {
 function _gradeCacheKey() {
   try {
     if (typeof window !== 'undefined' && window.__VIEW_AS_STUDENT_ID__) return null;
+    // Desk view-as (2026-06-25): live-only. Without this guard the cache key falls
+    // back to the TEACHER's studentId, so a slow/offline /teacher/student/:id/grade
+    // fetch would restore the TEACHER's cached grades while the banner says the
+    // student — and the write-through would pollute the teacher's cache with the
+    // student's data. Returning null = no write-through, no restore: grade numbers
+    // stay blank ("—") until the impersonated student's LIVE data loads.
+    if (typeof _viewAsContext === 'function' && _viewAsContext()) return null;
     var sid = (window.rosterClient && typeof rosterClient.studentId === 'function') ? rosterClient.studentId() : null;
     return sid ? ('apstats_grade_cache_v1:' + sid) : null;
   } catch (_) { return null; }
@@ -19351,7 +19358,7 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 // from APP_BUILD (this running build) we show a dismissible "reload" banner.
 // APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
 // (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
-var APP_BUILD = '2026-06-26-5ezz';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-06-26-jsx7';   // scripts/bump-build.mjs replaces this stamp
 (function _wireUpdateNudge(){
   var nudged = false;
   function showBanner(){
