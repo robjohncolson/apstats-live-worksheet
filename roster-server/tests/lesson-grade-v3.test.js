@@ -117,6 +117,7 @@ describe('computeQuarterV3 — aggregation', () => {
     expect(r.quarterGrade).toBeCloseTo(76.7, 1);
     expect(r.lessonsDue).toBe(1);
     expect(r.lessonsTotal).toBe(2);
+    expect(r.pcDue).toBe(false);   // PCs not open yet (the unit's last lesson is future)
   });
 
   it('PC due + both tracks above floor → max-of-two', () => {
@@ -136,6 +137,7 @@ describe('computeQuarterV3 — aggregation', () => {
     expect(r.pcAvg).toBeCloseTo(80.0, 1);
     expect(r.workAvg).toBeCloseTo(75.0, 1);
     expect(r.quarterGrade).toBeCloseTo(80.0, 1);
+    expect(r.pcDue).toBe(true);    // the unit's PCs are due-by-today
   });
 
   it('PC-only gamer (high PC, no work) → 70% ceiling on the grade', () => {

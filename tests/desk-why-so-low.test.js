@@ -270,3 +270,25 @@ describe('Why-so-low coach: Blooket make-up awareness', () => {
     expect(body).toMatch(/Blooket not done/);
   });
 });
+
+describe('Why-so-low coach: PC-not-open + flashcard gate', () => {
+  it('A1: _buildCoachContext threads pcDue (defaults false so a missing field never invents PC work)', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    expect(body).toMatch(/pcDue:\s*!!\(q && q\.pcDue === true\)/);
+  });
+
+  it('A2: _buildCoachContext builds flashcardGate from worksheet-done-but-flashcard-owed lessons', () => {
+    const body = fnBody(DESK, '_buildCoachContext');
+    expect(body).toMatch(/flashcardGate/);
+    expect(body).toMatch(/_fl\.hasBlooket/);          // lesson must actually have flashcards
+    expect(body).toMatch(/_fcws\s*>=\s*60/);          // worksheet done
+    expect(body).toMatch(/_fbl\s*<\s*80/);            // flashcards still owed (same signals as _isLessonComplete)
+  });
+
+  it('A3: _renderCoachPanel surfaces a flashcard-gate line (complete + unlock)', () => {
+    const body = fnBody(DESK, '_renderCoachPanel');
+    expect(body).toMatch(/ctx\.flashcardGate/);
+    expect(body).toMatch(/Flashcards to finish/);
+    expect(body).toMatch(/unlock the next lesson/);
+  });
+});

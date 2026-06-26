@@ -1007,6 +1007,11 @@ export function computeQuarterV3({
     }
   }
   const pcAvg = pcVals.length ? pcVals.reduce((a, b) => a + b, 0) / pcVals.length : null;
+  // pcDue disambiguates pcAvg === null: true once any band unit's PCs are due-by-today
+  // (null + pcDue = "due but unattempted"); false = Progress Checks aren't open yet
+  // (~fall), so the "Why so low?" coach must NOT push PC work that doesn't exist.
+  // Additive — no grade math depends on it.
+  const pcDue = band.some(unitPcDue);
 
   // ── Combine to the quarter grade ──
   const tracks = {
@@ -1058,6 +1063,9 @@ export function computeQuarterV3({
     lessonsTotal,
     pcAvg: to100(pcAvg),
     workAvg: to100(workAvg),
+    // pcDue=false => Progress Checks aren't open yet (~fall); the grade coach must not
+    // treat a null pcAvg as a deficit or tell the student to "do PCs".
+    pcDue,
     // Raw [0,1] track fractions — the EXACT values combineV3/quarterGradeV3 gate on
     // (the 40% floor is 0.40 here). Surfaced so the gradebook reconciliation can
     // pick the v3 branch from the same numbers the grade used, instead of the

@@ -8289,6 +8289,10 @@ function _buildCoachContext(curQ, q) {
     grade: (q && typeof q.quarterGrade === 'number') ? q.quarterGrade : null,
     ceiling: (q && typeof q.ceiling === 'number') ? q.ceiling : null,
     pcAvg: (q && typeof q.pcAvg === 'number') ? q.pcAvg : null,
+    // pcDue=false => Progress Checks aren't open yet (~fall): a null pcAvg is NOT a
+    // deficit, so the coach must not tell the student to "do PCs". Defaults false so a
+    // missing field never invents PC work.
+    pcDue: !!(q && q.pcDue === true),
     workAvg: (q && typeof q.workAvg === 'number') ? q.workAvg : null,
     // Work sub-track breakdown {lessons,quizzes,blooket,posters} so the coach can
     // explain what's INSIDE the Work track (esp. Blooket, otherwise invisible).
@@ -8300,6 +8304,10 @@ function _buildCoachContext(curQ, q) {
     // Blooket make-up summary {track,due,done,todo[]} — set below when any Blooket
     // is due. todo = Blooket-bearing due lessons with no score (flashcard make-ups).
     blooket: null,
+    // Lessons that are worksheet-done but NOT complete because their flashcards
+    // (Blooket) are still < 80 — the real completion/unlock gate. Populated below from
+    // the same per-lesson scores the calendar/Done button use.
+    flashcardGate: [],
     weakLessons: []
   };
   try {
@@ -8312,6 +8320,26 @@ function _buildCoachContext(curQ, q) {
       };
     }
   } catch (_) { /* blooket summary optional */ }
+  try {
+    // Flashcard completion gate: lessons whose worksheet is done (Cws >= 60) but whose
+    // flashcards (Blooket) are still < 80 — exactly what _isLessonComplete requires to
+    // mark a lesson done + unlock the next. This is the gate the teacher cares about and
+    // is otherwise invisible to the coach. (Doing the flashcards completes/unlocks the
+    // lesson; it does NOT change the grade — Blooket isn't a grade component yet.)
+    if (Array.isArray(_gradeLessonsCache)) {
+      var _fg = [];
+      for (var _fi = 0; _fi < _gradeLessonsCache.length; _fi++) {
+        var _fl = _gradeLessonsCache[_fi];
+        if (!_fl || !_fl.hasBlooket) continue;
+        var _fcws = (typeof _fl.Cws === 'number') ? _fl.Cws : null;
+        var _fbl = (typeof _fl.blooket === 'number') ? _fl.blooket : null;
+        if (_fcws != null && _fcws >= 60 && (_fbl == null || _fbl < 80)) {
+          _fg.push({ lesson: _fl.lessonKey, worksheet: _fcws, blooket: _fbl, threshold: 80 });
+        }
+      }
+      ctx.flashcardGate = _fg.slice(0, 3);
+    }
+  } catch (_) { /* flashcardGate is optional */ }
   try {
     if (_donowData && _donowData.nextTask && _donowData.nextTask.unit) {
       var n = _donowData.nextTask;
@@ -8440,6 +8468,17 @@ function _renderCoachPanel(panel, ctx) {
     }
     blk.textContent = bMsg;
     facts.appendChild(blk);
+  }
+
+  // Flashcard completion gate — lessons whose worksheet is done but flashcards
+  // (Blooket >=80) are still owed, which is what blocks completion + the next-lesson
+  // unlock. (Passing flashcards completes/unlocks the lesson; it does not change the
+  // grade — Blooket isn't a grade component yet.)
+  if (Array.isArray(ctx.flashcardGate) && ctx.flashcardGate.length) {
+    var fg = document.createElement('div');
+    var fgTopics = ctx.flashcardGate.slice(0, 3).map(function (g) { return 'Topic ' + g.lesson; }).join(', ');
+    fg.textContent = 'Flashcards to finish: ' + fgTopics + ' — pass each lesson’s flashcards to 80% on the Desk to complete it and unlock the next lesson.';
+    facts.appendChild(fg);
   }
 
   // Only show the earliest-incomplete "start here" when there's no low-scoring
@@ -19358,7 +19397,7 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 // from APP_BUILD (this running build) we show a dismissible "reload" banner.
 // APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
 // (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
-var APP_BUILD = '2026-06-26-jsx7';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-06-26-l9qf';   // scripts/bump-build.mjs replaces this stamp
 (function _wireUpdateNudge(){
   var nudged = false;
   function showBanner(){
