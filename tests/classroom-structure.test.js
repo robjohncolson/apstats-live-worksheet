@@ -69,12 +69,19 @@ describe('Live Classroom v1a - Desk integration', () => {
     expect(body).not.toMatch(/apstats_user_role/);
   });
 
-  it('D4: a CHOSEN guest also gets a presence avatar (joins PeriodX, hashed hue)', () => {
-    const body = fnBody(DESK, '_mountClassroomBoard');
-    expect(body).toMatch(/apstats_guest_active/);   // only a chosen guest, not any signed-out visitor
-    expect(body).toMatch(/getGuestIdentity/);        // uses the stable Guest_ alias
-    expect(body).toMatch(/Guest_/);                  // gates on the Guest_ pattern
-    expect(body).toMatch(/PeriodX/);                 // joins the universal class section, alongside real students
+  it('D4: guests retired — a no-roster-session visitor mounts NO presence avatar', () => {
+    // Strip line comments: the contract is about CODE (a comment legitimately names
+    // the removed guest behavior).
+    const body = fnBody(DESK, '_mountClassroomBoard').replace(/\/\/[^\n]*/g, '');
+    // The chosen-guest resurrect block is gone: no guest flag / alias / Guest_ pattern.
+    expect(body).not.toMatch(/apstats_guest_active/);
+    expect(body).not.toMatch(/getGuestIdentity/);
+    expect(body).not.toMatch(/Guest_/);
+    // The no-session guard returns early (no board) instead of synthesizing a guest.
+    expect(body).toMatch(/if \(!s \|\| !s\.username \|\| !s\.section\)/);
+    // Real students still mount under their own roster section + username.
+    expect(body).toMatch(/section\s*:\s*s\.section/);
+    expect(body).toMatch(/username\s*:\s*s\.username/);
   });
 
   it('D5: _periodToSection never returns null, maps bare letters, defaults to PeriodX', () => {

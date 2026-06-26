@@ -518,6 +518,68 @@
   <script src="./roster-client.js"></script>
   <script src="./offline-queue.js"></script>
   <script src="./gradebook-client.js"></script>
+  <script>
+(function () {
+    // No-guest sign-in wall (2026-06-25): the diagnostic study guide now requires a
+    // signed-in roster session, matching the worksheets + Desk (guests retired). Fails
+    // OPEN — if rosterClient is unavailable, do NOT wall (degrade, never brick).
+    // Teachers (apstats_user_role) pass too.
+    function _sgAccessGranted() {
+        try {
+            if (localStorage.getItem('apstats_user_role') === 'teacher') return true;
+            return !!(window.rosterClient && typeof rosterClient.current === 'function'
+                      && rosterClient.current());
+        } catch (_) { return true; }
+    }
+    function _sgRemoveWall() {
+        var el = document.getElementById('sg-signin-wall');
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
+    function _sgShowWall() {
+        if (document.getElementById('sg-signin-wall')) return;
+        if (!document.body) return;
+        var ov = document.createElement('div');
+        ov.id = 'sg-signin-wall';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:99999;'
+            + 'background:#eceff1;display:flex;align-items:center;'
+            + 'justify-content:center;font-family:Geneva,Verdana,sans-serif;';
+        var box = document.createElement('div');
+        box.style.cssText = 'max-width:380px;margin:16px;padding:22px 26px;'
+            + 'background:#fff;border:1px solid #999;border-radius:8px;'
+            + 'text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.25);';
+        var h = document.createElement('div');
+        h.textContent = '🔒 Sign in to open the study guide';
+        h.style.cssText = 'font-size:15px;font-weight:bold;margin-bottom:10px;';
+        var p = document.createElement('div');
+        p.textContent = 'Sign in at the Desk with your name, then come back to this page.';
+        p.style.cssText = 'font-size:12px;color:#444;margin-bottom:16px;line-height:1.5;';
+        var a = document.createElement('a');
+        a.href = 'ap_stats_roadmap_square_mode.html';
+        a.textContent = 'Open the Desk to sign in';
+        a.style.cssText = 'display:inline-block;padding:7px 16px;background:#0000cc;'
+            + 'color:#fff;text-decoration:none;border-radius:5px;font-size:12px;';
+        box.appendChild(h); box.appendChild(p); box.appendChild(a);
+        ov.appendChild(box);
+        document.body.appendChild(ov);
+    }
+    function _sgCheckWall() {
+        if (_sgAccessGranted()) _sgRemoveWall();
+        else _sgShowWall();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _sgCheckWall);
+    } else {
+        _sgCheckWall();
+    }
+    // Re-check when sign-in state changes (often in another Desk tab).
+    try {
+        window.addEventListener('storage', function (e) {
+            if (e && (e.key === 'apstats_roster.v1'
+                      || e.key === 'apstats_user_role')) _sgCheckWall();
+        });
+    } catch (_) {}
+})();
+</script>
   <!-- MathJax config must appear before the MathJax script -->
   <script>window.MathJax = { tex: { inlineMath: [['\\(','\\)'],['$','$']], displayMath: [['$$','$$'],['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] } };</script>
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>

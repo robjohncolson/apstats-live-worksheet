@@ -50,6 +50,13 @@
       return true;
   }
 
+  // Guests are retired (2026-06-25): evict any stale cross-app guest flag on load so a
+  // device that used guest before this deploy isn't treated as a guest here — no
+  // "Working as guest" banner over the sign-in wall, no guest field-prefill in the
+  // worksheet's restoreSavedUser/getUsername. The Desk boot clears it too; this covers
+  // the worksheets + study guide that load this file.
+  try { localStorage.removeItem('apstats_guest_active'); } catch (e) {}
+
   // Stable, persisted "Guest_Fruit_Animal" identity for signed-out students, so
   // their work is tracked under one readable, migratable name (not a random
   // Player####). Generated once per device and kept in localStorage.
@@ -75,7 +82,7 @@
   // guest-flag changes from any tab via the storage event. Loaded by every
   // worksheet (not the Desk, which has its own #menu-identity chip).
   function _apGuestActive() {
-      try { return localStorage.getItem('apstats_guest_active') === '1'; } catch (e) { return false; }
+      return false;   // guests retired (2026-06-25): the guest banner + field-lock never trigger
   }
   function _apHasRoster() {
       try { return !!(window.rosterClient && typeof window.rosterClient.current === 'function' && window.rosterClient.current()); } catch (e) { return false; }
@@ -148,14 +155,18 @@
   // work is tracked under one migratable name.
   function _presenceUsername() {
       var u = (window.currentUsername || localStorage.getItem('consensusUsername') || '').trim();
-      if (u) return u;
+      // Guests are retired (2026-06-25): never announce a Guest_ alias (e.g. a stale
+      // consensusUsername left by an old guest session) into presence.
+      if (u && !/^Guest_/i.test(u)) return u;
       try {
           if (window.rosterClient && typeof window.rosterClient.current === 'function') {
               var who = window.rosterClient.current();
               if (who && who.username) return String(who.username).trim();
           }
       } catch (e) {}
-      return getGuestIdentity();
+      // No getGuestIdentity fallback — a signed-out visitor gets no presence identity,
+      // so they never appear as Guest_ to the class.
+      return '';
   }
 
   // Which app surface this page is, so the Desk's "Online Now" list can label
@@ -354,8 +365,9 @@
 
   // Railway-enhanced answer submission
   async function submitAnswerViaRailway(username, questionId, answerValue, timestamp) {
-      // Attribute signed-out work to a stable guest identity so it's tracked + migratable.
-      if (!username) username = getGuestIdentity();
+      // Guests are retired (2026-06-25): no guest attribution. A signed-out submission
+      // has no identity to attribute work to, so drop it rather than mint a Guest_ alias.
+      if (!username || /^Guest_/i.test(username)) return false;
       const fallbackSubmit = typeof window.originalPushAnswer === 'function'
           ? window.originalPushAnswer
           : null;

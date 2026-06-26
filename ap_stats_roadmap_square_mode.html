@@ -6176,8 +6176,10 @@ function _deskAccessGranted() {
   try {
     var live = !!(window.rosterClient && window.rosterClient.current && window.rosterClient.current());
     var teacher = (typeof _deskIsTeacher === 'function') ? _deskIsTeacher() : false;
-    var guest = (typeof _deskGuestOk === 'function') ? _deskGuestOk() : false;
-    return live || teacher || guest;
+    // Guests are retired (2026-06-25): the wall admits ONLY a live roster session or
+    // a verified teacher. A stale / cross-app apstats_guest_active flag can no longer
+    // satisfy the wall — off-roster students self-sign-up (real name) instead.
+    return live || teacher;
   }
   catch (_) { return true; }
 }
@@ -6207,6 +6209,22 @@ function getGuestIdentity() {
   } catch (_) { return 'Guest_Anon'; }
 }
 window.getGuestIdentity = getGuestIdentity;
+// Guests are retired (2026-06-25): presence (the 🐶 "Online Now" feed + Live
+// Classroom avatars) admits ONLY a signed-in roster identity. Call this after a
+// real sign-in to (re)join presence under that identity; it resets the cached name
+// so DogePresence.getUsername() re-reads the new roster session. Sign-OUT reloads
+// the page (dropping the socket), so no explicit leave is needed here.
+function _deskPresenceResync() {
+  try {
+    if (typeof DogePresence === 'undefined') return;
+    DogePresence.username = null;
+    if (DogePresence.getUsername()) {
+      DogePresence._autoPresence = true;
+      DogePresence.connect();
+    }
+  } catch (_) {}
+}
+window._deskPresenceResync = _deskPresenceResync;
 // True while the sign-in modal is up as a mandatory wall (not signed in).
 // closeSignInModal() refuses to dismiss the modal while this holds.
 var _signinWallActive = false;
@@ -6968,6 +6986,7 @@ async function submitSignIn() {
     } else {
       if (typeof renderDoNow === 'function') renderDoNow(); // DN3a refresh — guarded so DN2c stays decoupled
       if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard(); // Live Classroom v1a
+      if (typeof _deskPresenceResync === 'function') _deskPresenceResync(); // guests retired: join presence as the real identity
       if (typeof _fetchPollArchive === 'function') _fetchPollArchive(); // v2.1 U4: poll archive (guarded, like its neighbors)
       var roleLabel = '';
       try { if (localStorage.getItem('apstats_user_role') === 'teacher') roleLabel = ' (teacher mode)'; } catch (_) {}
@@ -7123,10 +7142,10 @@ function _nfRenderDial() {
     + '</div>'
     // The "not on the list" escape hatch shows on EVERY dial screen (incl. the
     // first) so a student who truly isn't on the roster is never stuck spinning.
-    // Goes STRAIGHT to guest (recoverable) — students are teacher-enrolled now, so
-    // self-creating an account here would just split grades. _nfGuestSignIn shows
-    // the "ask your teacher to add you" dialog.
-    + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfGuestSignIn();return false;">I\'m not on the list &#8594;</a></div>';
+    // Guests are retired (2026-06-25): this opens self-signup (which requires a real
+    // name) so an off-roster student gets a real, teacher-visible account — never an
+    // anonymous guest.
+    + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfCreate();return false;">I\'m not on the list &#8594;</a></div>';
 }
 
 function _nfPick(i) {
@@ -7209,6 +7228,7 @@ async function _nfSubmitPassword() {
     } else {
       if (typeof renderDoNow === 'function') renderDoNow();
       if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard();
+      if (typeof _deskPresenceResync === 'function') _deskPresenceResync(); // guests retired: join presence as the real identity
       if (typeof _fetchPollArchive === 'function') _fetchPollArchive();
       var roleLabel = '';
       try { if (localStorage.getItem('apstats_user_role') === 'teacher') roleLabel = ' (teacher mode)'; } catch (_) {}
@@ -7231,41 +7251,21 @@ function _nfRenderNotFound() {
   if (!host) return;
   host.innerHTML =
     '<div class="chicago" style="font-size:13px;margin-bottom:6px">Can’t find your name?</div>'
-    + '<div class="geneva" style="font-size:11px;margin-bottom:10px">If your name really isn’t on the class list, you can keep working as a guest and have your teacher save your work later — or create your own account.</div>'
-    + '<div style="margin-bottom:8px"><button class="s7btn s7btn-default" style="min-width:210px" onclick="_nfGuestSignIn()">&#129701; Sign in as guest</button></div>'
-    // Nudge in front of the create-account button only: now that the not-on-list
-    // link shows on the first dial screen, a pre-enrolled student could mint a
-    // duplicate identity before scanning the roster. Guest stays frictionless
-    // (recoverable); creating a real account is the split-grades risk, so steer back.
+    + '<div class="geneva" style="font-size:11px;margin-bottom:10px">If your name really isn’t on the class list, create your own account — your teacher will see you in the roster and your work saves to your grade.</div>'
+    // Steer pre-enrolled students back to the dial first: creating a duplicate
+    // account would split their grades.
     + '<div class="geneva" style="font-size:10px;color:#888;margin:0 auto 6px;max-width:300px">Most students <b>are</b> on the list — your name might be tucked inside a name-range bucket. <a href="#" onclick="_nfBackToDial();return false;">Turn the dial</a> first if you haven&#8217;t.</div>'
-    + '<div style="margin-bottom:8px"><button class="s7btn" style="min-width:210px" onclick="_nfCreate()">&#127881; Create an account</button></div>'
+    + '<div style="margin-bottom:8px"><button class="s7btn s7btn-default" style="min-width:210px" onclick="_nfCreate()">&#127881; Create an account</button></div>'
     + '<div class="nf-foot geneva" style="color:#888"><a href="#" onclick="_nfBackToDial();return false;">&#8592; back to the dial</a></div>';
 }
 
-// Guest off-ramp: grant Desk access as the stable Guest_ identity. The no-guest
-// wall is intentionally softened here (reached via "I'm not on the list").
+// Guests are retired (2026-06-25): the "I'm not on the list" path no longer mints an
+// anonymous Guest_ identity. It routes to self-signup (which captures a real name)
+// instead. Kept as a thin redirect so any lingering caller can't re-enable guest mode.
 function _nfGuestSignIn() {
-  // Becoming a guest drops any lingering roster session so the guest alias isn't
-  // shadowed by a previous sign-in (rosterClient.current() would otherwise win in
-  // the wall + getUsername everywhere).
-  try { if (window.rosterClient && rosterClient.signOut) rosterClient.signOut(); } catch (_) {}
-  try { localStorage.removeItem('apstats_roster.v1'); } catch (_) {}
-  // Cross-app guest flag (localStorage 'apstats_guest_active'): shared across the
-  // Desk, quiz, and worksheets (same origin) so a guest works everywhere without
-  // re-choosing. Cleared on sign-out / real sign-in, and shown in the top bar so a
-  // real student on a shared machine notices and signs in. Grade-bearing actions
-  // stay server-token-gated, so a guest still cannot write grades.
-  try { localStorage.setItem('apstats_guest_active', '1'); } catch (_) {}
-  try { if (typeof getGuestIdentity === 'function') getGuestIdentity(); } catch (_) {}   // mint the stable shared alias now
+  if (typeof _nfCreate === 'function') { _nfCreate(); return; }
   closeNameFinder();
-  _signinWallActive = false;
-  if (typeof closeSignInModal === 'function') closeSignInModal();
-  try { if (typeof updateStudentMenu === 'function') updateStudentMenu(); } catch (_) {}
-  try { if (typeof renderDoNow === 'function') renderDoNow(); } catch (_) {}
-  try { if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard(); } catch (_) {}
-  if (typeof showDialog === 'function') {
-    showDialog('\u{1F9D1}', "You’re browsing as a guest. Ask your teacher to add you to the class roster so your work can be saved — then sign in with your name.", 'OK');
-  }
+  if (typeof openSignupModal === 'function') openSignupModal();
 }
 window._nfGuestSignIn = _nfGuestSignIn;
 
@@ -7512,6 +7512,7 @@ function _applySignedUpSession(result) {
   var so = document.getElementById('signin-overlay'); if (so) so.style.display = 'none';
   if (typeof renderDoNow === 'function') renderDoNow();
   if (typeof _mountClassroomBoard === 'function') _mountClassroomBoard();
+  if (typeof _deskPresenceResync === 'function') _deskPresenceResync(); // guests retired: join presence as the real identity
   if (typeof _fetchPollArchive === 'function') _fetchPollArchive();
   var uname = who.username || (result && result.username) || legacyKey;
   if (typeof showDialog === 'function') {
@@ -17735,18 +17736,16 @@ const DogePresence = {
 
     getUsername() {
         if (!this.username) {
-            // Prefer the signed-in roster identity so a real student is never
-            // mistaken for a guest (which would surface "My Guest Pass" and make
-            // them appear as Guest_ in presence). Only fall back to the stable
-            // guest identity when genuinely signed out.
+            // Guests are retired (2026-06-25): presence is the signed-in roster
+            // identity ONLY. The getGuestIdentity()/Guest_Anon fallback is removed,
+            // so a signed-out visitor gets NO identity and connect() refuses to join
+            // without one — no one ever appears as Guest_ in "Online Now".
             var roster = null;
             try { roster = (window.rosterClient && rosterClient.current && rosterClient.current()) || null; } catch (e) {}
             this.username = (roster && roster.username)
                 || localStorage.getItem('student-name')
                 || localStorage.getItem('username')
-                || (typeof window.getGuestIdentity === 'function'
-                    ? window.getGuestIdentity()
-                    : 'Guest_Anon_' + Math.floor(Math.random() * 9000 + 1000));
+                || null;
         }
         return this.username;
     },
@@ -17922,6 +17921,10 @@ const DogePresence = {
 
     connect() {
         if (this.ws && this.ws.readyState <= 1) return;
+        // Guests are retired (2026-06-25): never join presence without a real roster
+        // identity, so a signed-out / stale-guest Desk can't surface as Guest_ to the
+        // class. _deskPresenceResync() re-invokes connect() right after a real sign-in.
+        if (!this.getUsername()) { this.connected = false; try { this.updateIcon(); } catch (_) {} return; }
         const serverUrl = (typeof RAILWAY_SERVER_URL !== 'undefined' && RAILWAY_SERVER_URL)
             ? RAILWAY_SERVER_URL.replace(/^http/, 'ws')
             : 'wss://curriculumrender-production.up.railway.app';
@@ -19230,16 +19233,10 @@ function _mountClassroomBoard(){
     var s = (window.rosterClient && window.rosterClient.current)
       ? window.rosterClient.current() : null;
     if (!s || !s.username || !s.section) {
-      // Guests get a presence avatar too. They join the SAME universal section as
-      // real students (PeriodX) so they appear in the live scene alongside them. No
-      // roster row → pass a null hue and the board hashes their stable Guest_ alias
-      // to a colour (ephemeral, per-device). Only a CHOSEN guest mounts — a plain
-      // signed-out visitor (no apstats_guest_active) still gets no board.
-      var _gActive = false, _gAlias = null;
-      try { _gActive = localStorage.getItem('apstats_guest_active') === '1'; } catch (_) {}
-      if (_gActive && typeof getGuestIdentity === 'function') { try { _gAlias = getGuestIdentity(); } catch (_) {} }
-      if (!_gAlias || !/^Guest_/i.test(_gAlias)) return;
-      s = { username: _gAlias, section: 'PeriodX', spriteHue: null };
+      // Guests are retired (2026-06-25): no roster session → no Live Classroom avatar.
+      // (A chosen guest used to mount a PeriodX avatar, surfacing a Guest_ sprite in
+      // the live scene — exactly what we no longer want.)
+      return;
     }
     var mount = document.getElementById('classroom-board-mount');
     if (!mount) return;
@@ -19354,7 +19351,7 @@ _fetchPollArchive();   // v2.1 U4: load poll archive for calendar indicators
 // from APP_BUILD (this running build) we show a dismissible "reload" banner.
 // APP_BUILD here and version.json are bumped TOGETHER by scripts/bump-build.mjs
 // (they MUST stay in sync — a test pins build === APP_BUILD — or the nudge loops).
-var APP_BUILD = '2026-06-22-gphg';   // scripts/bump-build.mjs replaces this stamp
+var APP_BUILD = '2026-06-26-5ezz';   // scripts/bump-build.mjs replaces this stamp
 (function _wireUpdateNudge(){
   var nudged = false;
   function showBanner(){
@@ -19403,6 +19400,9 @@ setTimeout(function() {
         // device has no sign-in history (_loadKnownUsers empty), so new students
         // who open tomorrow's link land straight on "Create your account".
         try {
+          // Guests are retired (2026-06-25): evict any stale guest flag so a device
+          // that previously chose "guest" is re-gated to a real sign-in / self-signup.
+          try { localStorage.removeItem('apstats_guest_active'); } catch (_) {}
           if (!_deskAccessGranted()) {
             var _firstTime = (typeof _loadKnownUsers === 'function' && _loadKnownUsers().length === 0);
             // Pre-enrolled roster: the combo-lock NAME FINDER is the primary

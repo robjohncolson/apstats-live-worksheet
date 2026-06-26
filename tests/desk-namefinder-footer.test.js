@@ -3,9 +3,9 @@
 // "I'm not on the list" escape hatch shows on EVERY dial screen (incl. the
 // first) instead of being gated behind the first arrow press (_nfPressed).
 // Typing-your-username is still reachable for teachers/returning students via
-// the Escape key, so _nfGotoSignin must stay defined. "I'm not on the list" now
-// goes STRAIGHT to guest (recoverable) — students are teacher-enrolled, so there
-// is no self-create-an-account path from the dial.
+// the Escape key, so _nfGotoSignin must stay defined. GUESTS ARE RETIRED
+// (2026-06-25): "I'm not on the list" now opens SELF-SIGNUP (_nfCreate, which
+// captures a real name) — never an anonymous guest.
 //
 // @vitest-environment node
 
@@ -44,10 +44,11 @@ describe('Name-finder dial footer — polish', () => {
     expect(dial).not.toContain('_nfGotoSignin');   // the link is gone from the dial
   });
 
-  it('shows "I\'m not on the list" on the dial, wired STRAIGHT to guest', () => {
+  it('shows "I\'m not on the list" on the dial, wired to SELF-SIGNUP (guests retired)', () => {
     expect(dial).toContain("I\\'m not on the list");
-    // No self-signup path from the dial — clicking it goes straight to guest.
-    expect(dial).toContain('_nfGuestSignIn()');
+    // Off-roster students self-sign-up (real name); there is no guest off-ramp.
+    expect(dial).toContain('_nfCreate()');
+    expect(dial).not.toContain('_nfGuestSignIn');
     expect(dial).not.toContain('_nfRenderNotFound');
   });
 
@@ -66,13 +67,12 @@ describe('Name-finder dial footer — polish', () => {
     expect(keydown).toMatch(/_nfGotoSignin\(\)/);
   });
 
-  it('the dial escape hatch leads to guest, never to self-signup', () => {
-    // Students are teacher-enrolled now, so "I'm not on the list" must not let a
-    // kid mint a duplicate account — it drops straight to the recoverable guest
-    // identity (the teacher reconciles guest work later).
-    expect(dial).toContain('_nfGuestSignIn()');
-    expect(dial).not.toContain('_nfCreate');
-    expect(dial).not.toContain('openSignupModal');
+  it('the dial escape hatch leads to self-signup, never to guest (guests retired)', () => {
+    // "I'm not on the list" opens the real-name self-signup modal — no anonymous
+    // Guest_ identity can be minted from the dial anymore.
+    expect(dial).toContain('_nfCreate()');
+    expect(dial).not.toContain('_nfGuestSignIn');
+    expect(dial).not.toContain("setItem('apstats_guest_active'");
   });
 });
 
@@ -100,7 +100,8 @@ describe('Name-finder dial — escape hatch renders on every screen', () => {
 
   const ROSTER = Array.from({ length: 10 }, (_, i) =>
     ({ realName: 'Name' + String.fromCharCode(65 + i) + ' Last', username: 'user_' + i }));
-  const hatch = /<a [^>]*onclick="_nfGuestSignIn\(\);return false;"[^>]*>/;
+  // Guests retired: the hatch now wires to self-signup (_nfCreate), not guest.
+  const hatch = /<a [^>]*onclick="_nfCreate\(\);return false;"[^>]*>/;
 
   it('first screen (no presses yet) shows the "not on the list" anchor', () => {
     const html = renderDialHTML({ roster: ROSTER, lo: 0, hi: 9, stack: [] });

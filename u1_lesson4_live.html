@@ -798,7 +798,6 @@
     function _wallAccessGranted() {
         try {
             if (localStorage.getItem('apstats_user_role') === 'teacher') return true;
-            if (localStorage.getItem('apstats_guest_active') === '1') return true;  // cross-app guest off-ramp
             return !!(window.rosterClient && typeof rosterClient.current === 'function'
                       && rosterClient.current());
         } catch (_) { return true; }
