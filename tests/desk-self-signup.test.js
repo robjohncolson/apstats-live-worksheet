@@ -316,11 +316,11 @@ describe('self-signup runtime — submitSignUp', () => {
     d.el('signup-pin').value = '1234';
     d.el('signup-pin2').value = '1234';
     d.el('signup-is-teacher').checked = true;
-    d.el('signup-teacher-key').value = 'apstats2627';
+    d.el('signup-teacher-key').value = 'apteacher2627';
 
     await d.api.submitSignUp();
 
-    expect(claimArgs.teacherKey).toBe('apstats2627');
+    expect(claimArgs.teacherKey).toBe('apteacher2627');
   });
 
   it('teacher signup: requires a key when the box is checked (no claim call)', async () => {
@@ -350,7 +350,7 @@ describe('self-signup runtime — submitSignUp', () => {
     d.el('signup-pin').value = '1234';
     d.el('signup-pin2').value = '1234';
     // box left unchecked; a stale key value must be ignored
-    d.el('signup-teacher-key').value = 'apstats2627';
+    d.el('signup-teacher-key').value = 'apteacher2627';
 
     await d.api.submitSignUp();
 

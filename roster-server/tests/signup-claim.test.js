@@ -332,7 +332,7 @@ describe('POST /roster/verify per-IP rate limit', () => {
 
 describe('POST /roster/claim teacher elevation', () => {
   it('creates a teacher account when the correct teacher key is given', async () => {
-    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 't_one', teacherKey: 'apstats2627' }) });
+    const res = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 't_one', teacherKey: 'apteacher2627' }) });
     expect(res.status).toBe(200);
     expect(res.body.role).toBe('teacher');
     expect(db.store.get('t_one').role).toBe('teacher');
@@ -366,7 +366,7 @@ describe('POST /roster/claim teacher elevation', () => {
     try {
       const ok = await fresh.request('POST', '/roster/claim', { body: validClaim({ username: 't_env', teacherKey: 'secret123' }) });
       expect(ok.body.role).toBe('teacher');
-      const bad = await fresh.request('POST', '/roster/claim', { body: validClaim({ username: 't_env2', teacherKey: 'apstats2627' }) });
+      const bad = await fresh.request('POST', '/roster/claim', { body: validClaim({ username: 't_env2', teacherKey: 'apteacher2627' }) });
       expect(bad.status).toBe(403);
     } finally {
       await fresh.stop();
@@ -381,19 +381,19 @@ describe('DELETE /roster/:studentId', () => {
   it('deletes a roster account for an authorized teacher', async () => {
     const claim = await srv.request('POST', '/roster/claim', { body: validClaim({ username: 'del_me' }) });
     const sid = claim.body.studentId;
-    const res = await srv.request('DELETE', '/roster/' + sid, { headers: { 'x-teacher-secret': 'apstats2627' } });
+    const res = await srv.request('DELETE', '/roster/' + sid, { headers: { 'x-teacher-secret': 'apteacher2627' } });
     expect(res.status).toBe(200);
     expect(res.body.studentId).toBe(sid);
     expect(db.store.has('del_me')).toBe(false);
   });
 
   it('404 for a well-formed but unknown studentId', async () => {
-    const res = await srv.request('DELETE', '/roster/00000000-0000-0000-0000-000000000000', { headers: { 'x-teacher-secret': 'apstats2627' } });
+    const res = await srv.request('DELETE', '/roster/00000000-0000-0000-0000-000000000000', { headers: { 'x-teacher-secret': 'apteacher2627' } });
     expect(res.status).toBe(404);
   });
 
   it('400 for a malformed (non-uuid) studentId — not a 500', async () => {
-    const res = await srv.request('DELETE', '/roster/nope-not-a-uuid', { headers: { 'x-teacher-secret': 'apstats2627' } });
+    const res = await srv.request('DELETE', '/roster/nope-not-a-uuid', { headers: { 'x-teacher-secret': 'apteacher2627' } });
     expect(res.status).toBe(400);
   });
 
@@ -412,7 +412,7 @@ describe('DELETE /roster/:studentId', () => {
     const errSrv = new TestServer(createApp(errDb));
     await errSrv.start();
     try {
-      const res = await errSrv.request('DELETE', '/roster/00000000-0000-0000-0000-000000000001', { headers: { 'x-teacher-secret': 'apstats2627' } });
+      const res = await errSrv.request('DELETE', '/roster/00000000-0000-0000-0000-000000000001', { headers: { 'x-teacher-secret': 'apteacher2627' } });
       expect(res.status).toBe(500);
     } finally {
       await errSrv.stop();
@@ -428,7 +428,7 @@ describe('DELETE /roster/:studentId', () => {
     const app = new TestServer(createApp(fdb));
     await app.start();
     try {
-      const res = await app.request('DELETE', '/roster/00000000-0000-0000-0000-000000000007', { headers: { 'x-teacher-secret': 'apstats2627' } });
+      const res = await app.request('DELETE', '/roster/00000000-0000-0000-0000-000000000007', { headers: { 'x-teacher-secret': 'apteacher2627' } });
       expect(res.status).toBe(200);
       expect(purgedFor).toBe('cascade_me');
     } finally {
@@ -443,7 +443,7 @@ describe('DELETE /roster/:studentId', () => {
     const app = new TestServer(createApp(fdb));
     await app.start();
     try {
-      const res = await app.request('DELETE', '/roster/00000000-0000-0000-0000-000000000008', { headers: { 'x-teacher-secret': 'apstats2627' } });
+      const res = await app.request('DELETE', '/roster/00000000-0000-0000-0000-000000000008', { headers: { 'x-teacher-secret': 'apteacher2627' } });
       expect(res.status).toBe(200);
     } finally {
       await app.stop();
@@ -454,14 +454,14 @@ describe('DELETE /roster/:studentId', () => {
 // ── teacher-auth: simple key works everywhere ──────────────────────────────────
 
 describe('teacher-auth getTeacherKey / requireTeacher', () => {
-  it('defaults the teacher key to apstats2627', () => {
+  it('defaults the teacher key to apteacher2627', () => {
     delete process.env.TEACHER_KEY;
-    expect(getTeacherKey()).toBe('apstats2627');
+    expect(getTeacherKey()).toBe('apteacher2627');
   });
 
   it('requireTeacher accepts the simple teacher key as x-teacher-secret', async () => {
     delete process.env.TEACHER_KEY;
-    const req = { headers: { 'x-teacher-secret': 'apstats2627' }, query: {} };
+    const req = { headers: { 'x-teacher-secret': 'apteacher2627' }, query: {} };
     expect(await requireTeacher(req, {})).toBe(true);
   });
 

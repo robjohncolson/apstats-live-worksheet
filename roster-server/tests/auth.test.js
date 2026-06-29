@@ -141,7 +141,7 @@ beforeEach(async () => {
   process.env.ROSTER_TOKEN_SECRET   = tokenSecret;
   process.env.ROSTER_PW_ENC_KEY     = 'a'.repeat(64);
   process.env.NODE_ENV              = 'test';
-  // requireTeacher now also accepts the simple key (default 'apstats2627'); these
+  // requireTeacher now also accepts the simple key (default 'apteacher2627'); these
   // 'wrong secret → 401' assertions depend on TEACHER_KEY being unset (so it stays
   // the default and the random/bogus secrets here never accidentally match it).
   delete process.env.TEACHER_KEY;

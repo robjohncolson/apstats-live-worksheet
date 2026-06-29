@@ -14,12 +14,15 @@ import { verifyToken } from './token.js';
 // The simple, shared teacher key. Teacher decision (2026-06-03): deprecate the
 // long random ROSTER_TEACHER_SECRET in favor of one memorable key that BOTH
 // elevates a self-signup account to role='teacher' AND works as the x-teacher-secret
-// for every teacher-gated endpoint. Overridable via env; defaults to 'apstats2627'.
+// for every teacher-gated endpoint. Overridable via env; defaults to 'apteacher2627'.
 // SECURITY NOTE (teacher-accepted): this key unlocks all student grades + the bulk
 // endpoints (decrypted passwords). It is intentionally low-friction for onboarding a
 // trusted colleague; rotate via TEACHER_KEY if it leaks.
+// NOTE: keep this DISTINCT from the default student/enroll password — if they match,
+// anyone who knows the handed-out password also holds the teacher key. (This repo is
+// public, so for real secrecy set TEACHER_KEY as a Railway env var, not this default.)
 export function getTeacherKey() {
-  return process.env.TEACHER_KEY || 'apstats2627';
+  return process.env.TEACHER_KEY || 'apteacher2627';
 }
 
 // Extract a bearer token from Authorization: Bearer <t> or ?token=<t>.
@@ -44,7 +47,7 @@ function extractToken(req) {
 export async function requireTeacher(req, db) {
   // Path (A): x-teacher-secret matches EITHER the legacy long secret (if still
   // configured) OR the simple shared teacher key (getTeacherKey(), default
-  // 'apstats2627'). The simple key is the deprecation path for the long secret.
+  // 'apteacher2627'). The simple key is the deprecation path for the long secret.
   const teacherSecret = process.env.ROSTER_TEACHER_SECRET;
   const provided = req.headers['x-teacher-secret'];
   if (provided && (provided === getTeacherKey() || (teacherSecret && provided === teacherSecret))) {

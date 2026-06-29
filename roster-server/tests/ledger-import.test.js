@@ -122,7 +122,7 @@ class TestServer {
 
 describe('POST /ledger/import', () => {
   let srv, ledgerDb;
-  const TEACHER = { 'x-teacher-secret': 'apstats2627' }; // default getTeacherKey()
+  const TEACHER = { 'x-teacher-secret': 'apteacher2627' }; // default getTeacherKey()
 
   beforeEach(async () => {
     ledgerDb = createFakeLedgerDb();
