@@ -13709,9 +13709,47 @@ function destroyWallet() {
 // in-Desk Class Gradebook tile was dropped — it duplicated the Dashboard's class
 // grid. Verify keeps BOTH paths: scan (openVerifyQR → teacher-verify) and paste
 // (cr verify.html). Ordered enroll-first (the most common teacher task).
+// One-click teacher backup straight from the Desk: pull the signed grade snapshot
+// using the teacher's OWN session token (requireTeacher accepts a teacher-role
+// Bearer — no x-teacher-secret typing), save grade-backup-<date>.json, and verify it.
+// Full download/verify/restore UI lives on the Gradebook Dashboard. See
+// GRADE_LEDGER_DURABILITY_SPEC.md.
+async function _downloadGradeBackup() {
+    if (!window.rosterClient || typeof window.rosterClient.token !== 'function') { alert('Sign in as a teacher first.'); return; }
+    var token = window.rosterClient.token();
+    var base = window.ROSTER_SERVICE_URL;
+    if (!token || !base) { alert('No roster connection — sign in as a teacher first.'); return; }
+    var snap;
+    try {
+        var res = await fetch(base + '/admin/snapshot', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status !== 200) { alert('Backup failed (HTTP ' + res.status + '). Make sure you are signed in as a teacher.'); return; }
+        snap = await res.json();
+    } catch (e) { alert('Backup failed: ' + ((e && e.message) || e)); return; }
+    var date = (snap && snap.asOfDateNY) || new Date().toISOString().slice(0, 10);
+    try {
+        var blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'grade-backup-' + date + '.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    } catch (e) { alert('Could not save the file: ' + ((e && e.message) || e)); return; }
+    var note = 'Saved grade-backup-' + date + '.json';
+    try {
+        var v = await fetch(base + '/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(snap) });
+        var vd = await v.json();
+        if (vd && vd.ok && vd.report) {
+            var t = vd.report.totals || {};
+            note += '\n\n' + (vd.report.ok ? '✓ VERIFIED' : '✗ ' + (vd.report.breaks ? vd.report.breaks.length : '?') + ' break(s)') +
+                ' — ' + (t.students || 0) + ' students, ' + (t.records || 0) + ' records, anchor ' + (vd.report.epochOk ? 'OK' : 'BROKEN');
+        }
+    } catch (_) { /* verify is best-effort */ }
+    alert(note);
+}
+
 var _TEACHER_TOOLS = [
     { icon: '📋', label: 'Roster Console', sub: 'enroll · passwords · delete', act: function () { window.open('teacher-roster-console.html', '_blank'); } },
     { icon: '📈', label: 'Gradebook Dashboard', sub: 'class grid · remediation · rewards', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
+    { icon: '💾', label: 'Download Grade Backup', sub: 'signed · verified · off-Supabase', act: function () { _downloadGradeBackup(); } },
     { icon: '👥', label: 'Live Classroom', sub: 'presence · polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
     { icon: '🔒', label: 'Unlock Codes', sub: 'unit unlock generator', act: function () { window.open('teacher-code-generator.html', '_blank'); } },
     { icon: '🔍', label: 'Verify (scan)', sub: 'phone QR → teacher-verify', act: function () { if (typeof openVerifyQR === 'function') openVerifyQR(); } },
