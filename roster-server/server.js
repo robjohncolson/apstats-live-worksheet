@@ -13,6 +13,7 @@ import { signToken, verifyToken } from './token.js';
 import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
 import { mountLedgerImport } from './ledger-import.js';
+import { mountAdminSnapshot } from './admin-snapshot.js';
 import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
@@ -863,6 +864,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     mountLedger(app, { db: ledgerDb, verifyToken, resolveUsername: resolveReceiptUsername, worksheetKey, rosterDb: db });
     // OFFLINE_MODE_SPEC §4.D — teacher-gated batch import of offline-captured work.
     mountLedgerImport(app, { db, ledgerDb, resolveUsername: resolveReceiptUsername });
+    // GRADE_LEDGER_DURABILITY_SPEC — teacher-gated read-only snapshot of the whole
+    // signed ledger + per-student chain heads + a signed epoch anchor. The off-Supabase
+    // git mirror pulls this so grades survive a Supabase loss.
+    mountAdminSnapshot(app, { db, ledgerDb });
   }
 
   // ── Do Now routes (Sprint DN1 additive) ──────────────────────────────────────

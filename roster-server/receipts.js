@@ -256,6 +256,34 @@ export function issueCommitReceipt({ sid, u, seq, prev, root, cnt, from, to, asO
   }
 }
 
+// An "epoch": a signed, class-level seal over every student's commit-chain `head`
+// for one snapshot day, chained day-over-day via `prev` (yesterday's epoch root).
+// The chain of epoch roots is the *whole class's* daily-sealed history — the
+// off-Supabase durability anchor. Not persisted to Supabase; lives in the git
+// mirror (GRADE_LEDGER_DURABILITY_SPEC.md). Genesis epoch omits `prev`.
+export function issueEpochReceipt({ asOf = Date.now(), asOfDateNY, cnt, root, prev }) {
+  if (!issuer.enabled) return null;
+  if (!asOfDateNY || !root) return null;
+  try {
+    const payload = {
+      v: 1,
+      t: 'epoch',
+      iss: 'desk',
+      d: asOfDateNY,
+      cnt,
+      root,
+      prev: prev || undefined,
+      ts: asOf,
+      n: crypto.randomBytes(4).toString('hex')
+    };
+    const { receiptId, compact } = signPayload(issuer.privateKey, payload);
+    return { receiptId, compact };
+  } catch (err) {
+    console.error('Epoch receipt issuance failed:', err.message);
+    return null;
+  }
+}
+
 export function mountReceipts(app) {
   app.get('/receipts/issuer', (_req, res) => {
     res.json(getReceiptIssuer());
@@ -265,5 +293,8 @@ export function mountReceipts(app) {
 export const receiptInternals = {
   canonicalize,
   createPrivateKey,
-  signPayload
+  signPayload,
+  // Exposed so the snapshot verifier reproduces the exact answer-hash bytes the
+  // issuer signed (`ah`), without re-implementing it — keeps the two in lockstep.
+  stringifyResponse
 };
