@@ -236,9 +236,22 @@ prints the class state. Pure Node, reuses `receiptInternals` from `receipts.js`.
    everyone is."**
 
 **`node tools/verify-ledger.mjs <snapshot.json> --rebuild --roster-url <url> --teacher-secret <s>`**
-- After verification passes, POST each student `bundle` to `/ledger/import`
-  (`{ bundles: [...] }`). Idempotent — safe to run against a half-restored DB. This is
-  the disaster-recovery restore.
+- After verification passes, POST `{ bundles: [...] }` to **`POST /admin/restore`** (NOT
+  `/ledger/import`). Idempotent — safe to run against a half-restored DB.
+
+> **Faithful restore vs. offline import (a recovery-drill finding, now fixed).** The
+> first drill against production showed `/ledger/import` would silently DROP 6/421 rows:
+> the `*-DESK_DONE` lesson-completion rows carry a **0..100** percentage, but
+> `/ledger/import` clamps worksheet scores to **0..1** (correct for *student-submitted
+> offline* bundles, where an unsigned score must not be trusted). Disaster recovery is a
+> different trust model, so `admin-restore.js` (`POST /admin/restore`, teacher-gated)
+> replays **only records bearing a valid signature from this server's issuer key**, and
+> for those writes them **byte-for-byte**: score AS-IS (no clamp — safe, the signature
+> binds it), `evidence_tier` from the signed payload (proctored stays proctored),
+> original `recorded_at` (so recomputed commit heads match the anchor), and the **original
+> receipt preserved** (not re-issued). A tampered or unsigned row is refused, not written.
+> Proven against the live mirror: `/ledger/import` accepts 415/421, `/admin/restore`
+> accepts **421/421** (incl. all 6 out-of-range).
 
 **`--report-only --csv`** → emit a gradebook CSV (quote fields per repo CSV rule) as a
 human-readable secondary backup.

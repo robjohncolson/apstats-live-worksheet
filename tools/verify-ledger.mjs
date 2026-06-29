@@ -53,13 +53,16 @@ async function main() {
     const secret = arg('--teacher-secret');
     if (!rosterUrl || !secret) { console.error('--rebuild needs --roster-url and --teacher-secret'); process.exit(2); }
     const bundles = (snapshot.students || []).map((s) => s.bundle).filter((b) => b && b.records && b.records.length);
-    const r = await fetch(rosterUrl.replace(/\/$/, '') + '/ledger/import', {
+    // Faithful restore: /admin/restore replays issuer-signed rows byte-for-byte (score
+    // AS-IS, original receipt + timestamp) — unlike /ledger/import, which clamps to 0..1
+    // and re-issues (right for offline self-reported work, lossy for disaster recovery).
+    const r = await fetch(rosterUrl.replace(/\/$/, '') + '/admin/restore', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Teacher-Secret': secret },
       body: JSON.stringify({ bundles })
     });
     const j = await r.json().catch(() => ({}));
-    console.log(`rebuild -> ${JSON.stringify(j)}`);
+    console.log(`restore -> ${JSON.stringify(j)}`);
     process.exit(j && j.ok ? 0 : 1);
   }
 

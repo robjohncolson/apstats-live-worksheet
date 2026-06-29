@@ -21,9 +21,11 @@ function publicKeyFromX(x) {
   return crypto.createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x }, format: 'jwk' });
 }
 
+export { publicKeyFromX };
+
 // Verify one compact receipt's canonical form + Ed25519 signature. Returns the
 // decoded payload on success, else null (bad/forged/non-canonical).
-function verifyCompact(compact, pubKey) {
+export function verifyCompact(compact, pubKey) {
   try {
     const [pB64, sB64] = String(compact).split('.');
     if (!pB64 || !sB64) return null;
@@ -50,6 +52,36 @@ function numEq(a, b) {
   return na === nb;
 }
 
+// Verify ONE snapshot/import record against the issuer key: the receipt signature
+// AND that the signed payload actually binds this record (owner/item/source/score,
+// and the answer-hash for primitive responses). The single source of truth for
+// "is this record authentic + intact", reused by verifySnapshot and admin-restore.
+// Returns { ok, payload, unsigned?, breaks:[{kind,...}] }.
+export function verifyRecord(rec, pubKey, sid) {
+  if (!rec || !rec.receipt_compact) {
+    return { ok: false, payload: null, unsigned: true, breaks: [{ kind: 'unsigned', itemId: rec && rec.itemId }] };
+  }
+  const payload = verifyCompact(rec.receipt_compact, pubKey);
+  if (!payload) return { ok: false, payload: null, breaks: [{ kind: 'bad-signature', itemId: rec.itemId }] };
+
+  const breaks = [];
+  const owner = rec.studentId || sid;
+  if (payload.sid !== owner) breaks.push({ kind: 'sid-mismatch', itemId: rec.itemId });
+  if (payload.i !== rec.itemId) breaks.push({ kind: 'item-mismatch', itemId: rec.itemId });
+  if (payload.src !== rec.source) breaks.push({ kind: 'source-mismatch', itemId: rec.itemId });
+  if (!numEq(payload.sc, rec.score)) {
+    breaks.push({ kind: 'score-tampered', itemId: rec.itemId, signed: payload.sc ?? null, record: rec.score ?? null });
+  }
+  // The signed `ah` binds the response. Postgres JSONB can reorder object keys vs.
+  // what was signed, so only assert this for primitive responses (the common
+  // worksheet/quiz case); object responses still ride the signature + score bind.
+  const prim = typeof rec.response === 'string' || typeof rec.response === 'number';
+  if (payload.ah && prim && payload.ah !== answerHash(rec.response)) {
+    breaks.push({ kind: 'response-tampered', itemId: rec.itemId });
+  }
+  return { ok: breaks.length === 0, payload, breaks };
+}
+
 export function verifySnapshot(snapshot, { pubkey } = {}) {
   const breaks = [];
   const x = pubkey || (snapshot && snapshot.issuer && snapshot.issuer.pubkey);
@@ -68,24 +100,9 @@ export function verifySnapshot(snapshot, { pubkey } = {}) {
 
     for (const rec of records) {
       if (!rec.receipt_compact) { unsignedRecords += 1; continue; }
-      const payload = verifyCompact(rec.receipt_compact, pubKey);
-      if (!payload) { sBreaks.push({ kind: 'bad-signature', itemId: rec.itemId }); continue; }
-      verifiedReceipts += 1; // signature itself is valid; the following are binding checks
-
-      const sid = rec.studentId || s.studentId;
-      if (payload.sid !== sid) sBreaks.push({ kind: 'sid-mismatch', itemId: rec.itemId });
-      if (payload.i !== rec.itemId) sBreaks.push({ kind: 'item-mismatch', itemId: rec.itemId });
-      if (payload.src !== rec.source) sBreaks.push({ kind: 'source-mismatch', itemId: rec.itemId });
-      if (!numEq(payload.sc, rec.score)) {
-        sBreaks.push({ kind: 'score-tampered', itemId: rec.itemId, signed: payload.sc ?? null, record: rec.score ?? null });
-      }
-      // The signed `ah` binds the response. Postgres JSONB can reorder object keys
-      // vs. what was signed, so only assert this for primitive responses (the common
-      // worksheet/quiz case); object responses still ride the signature + score bind.
-      const prim = typeof rec.response === 'string' || typeof rec.response === 'number';
-      if (payload.ah && prim && payload.ah !== answerHash(rec.response)) {
-        sBreaks.push({ kind: 'response-tampered', itemId: rec.itemId });
-      }
+      const vr = verifyRecord(rec, pubKey, s.studentId);
+      if (vr.payload) verifiedReceipts += 1; // signature valid; binding breaks (if any) follow
+      for (const b of vr.breaks) sBreaks.push(b);
     }
 
     // Recompute the commit-chain head from the receipt-bearing records.

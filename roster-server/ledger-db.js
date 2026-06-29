@@ -32,7 +32,11 @@ export function createLedgerDb(client) {
 
   // Upsert a ledger row on (student_id, source, item_id, attempt).
   // Returns { data, error } — data has ledger_id and evidence_tier on success.
-  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt }) {
+  // [recordedAt] is OPTIONAL and only set by the faithful restore path
+  // (admin-restore.js), which replays issuer-signed rows byte-for-byte and must
+  // preserve the original timestamp so the recomputed commit-chain heads match.
+  // Every other caller omits it and gets the original now() behavior.
+  async function insertLedgerRow({ studentId, source, itemId, unit, topic, skill, response, score, evidenceTier, attempt, recordedAt }) {
     return client
       .from('item_ledger')
       .upsert(
@@ -47,7 +51,7 @@ export function createLedgerDb(client) {
           score:         score       ?? null,
           evidence_tier: evidenceTier,
           attempt:       attempt     ?? 1,
-          recorded_at:   new Date().toISOString()
+          recorded_at:   recordedAt  || new Date().toISOString()
         }],
         { onConflict: 'student_id,source,item_id,attempt' }
       )

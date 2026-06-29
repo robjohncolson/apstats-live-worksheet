@@ -14,6 +14,7 @@ import { generateUsername } from './username.js';
 import { mountLedger } from './ledger.js';
 import { mountLedgerImport } from './ledger-import.js';
 import { mountAdminSnapshot } from './admin-snapshot.js';
+import { mountAdminRestore } from './admin-restore.js';
 import { mountDonow } from './donow.js';
 import { mountRollup } from './rollup.js';
 import { mountGrade } from './grade.js';
@@ -868,6 +869,10 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
     // signed ledger + per-student chain heads + a signed epoch anchor. The off-Supabase
     // git mirror pulls this so grades survive a Supabase loss.
     mountAdminSnapshot(app, { db, ledgerDb });
+    // GRADE_LEDGER_DURABILITY_SPEC — faithful disaster recovery: replays issuer-signed
+    // rows byte-for-byte (score AS-IS, tier from the signed payload, original recorded_at
+    // + receipt). Only writes what the issuer already signed, so no 0..1 clamp needed.
+    mountAdminRestore(app, { db, ledgerDb });
   }
 
   // ── Do Now routes (Sprint DN1 additive) ──────────────────────────────────────
