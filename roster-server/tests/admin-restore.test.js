@@ -7,7 +7,8 @@ import crypto from 'node:crypto';
 import http from 'http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../server.js';
-import { initReceipts, issueLedgerReceipt } from '../receipts.js';
+import { initReceipts, issueLedgerReceipt, getReceiptIssuer } from '../receipts.js';
+import { buildStudentEntry, buildEpoch } from '../admin-snapshot.js';
 
 const KEY = 'MC4CAQAwBQYDK2VwBCIEIIq2JsDpBMHpUzaFF6mPR0vUv1T2gzXGX7k/AQSYjyl0';
 
@@ -148,5 +149,49 @@ describe('POST /admin/restore (faithful)', () => {
     const { body } = await srv.post('/admin/restore', bundle('sid-1', [good1, good2, bad]), TEACHER);
     expect(body).toMatchObject({ ok: true, total: 3, restored: 2, skipped: 1 });
     expect(ledgerDb.inserted.map((x) => x.score).sort()).toEqual([0.5, 100]);
+  });
+});
+
+describe('POST /admin/verify (read-only, dashboard card)', () => {
+  afterEach(async () => { if (srv) { await srv.stop(); srv = null; } });
+
+  // buildStudentEntry wants DB-shaped (snake_case) rows; rec() is snapshot-shaped.
+  function snakeRow(sid, item, opts) {
+    const r = rec(sid, item, opts);
+    return {
+      student_id: r.studentId, source: r.source, item_id: r.itemId, response: r.response,
+      score: r.score, attempt: r.attempt, evidence_tier: 'practice', recorded_at: r.recorded_at,
+      receipt_id: r.receipt_id, receipt_compact: r.receipt_compact
+    };
+  }
+  function builtSnapshot() {
+    const e = buildStudentEntry({ student_id: 'sid-1', login_username: 'amy', role: 'student' },
+      [snakeRow('sid-1', 'WS-U1L1-Q1'), snakeRow('sid-1', 'BL-U1-L1-DESK_DONE', { score: 100, response: 'done' })]);
+    const students = [e];
+    return { schema: 'apstats-ledger-snapshot/v1', issuer: getReceiptIssuer(), students, epoch: buildEpoch(students, { asOfDateNY: '2026-06-29' }) };
+  }
+
+  it('rejects without the teacher secret', async () => {
+    await start();
+    const { status } = await srv.post('/admin/verify', {}, {});
+    expect(status).toBe(401);
+  });
+
+  it('verifies a good snapshot (incl. an out-of-range score)', async () => {
+    await start();
+    const { status, body } = await srv.post('/admin/verify', builtSnapshot(), TEACHER);
+    expect(status).toBe(200);
+    expect(body.report.ok).toBe(true);
+    expect(body.report.totals.records).toBe(2);
+    expect(body.report.epochOk).toBe(true);
+  });
+
+  it('flags a tampered snapshot', async () => {
+    await start();
+    const snap = builtSnapshot();
+    snap.students[0].bundle.records[0].score = 0.25; // signed at 1
+    const { body } = await srv.post('/admin/verify', snap, TEACHER);
+    expect(body.report.ok).toBe(false);
+    expect(body.report.breaks.some((b) => b.kind === 'score-tampered')).toBe(true);
   });
 });

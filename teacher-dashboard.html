@@ -479,6 +479,30 @@
       <div class="info-banner" id="info-banner" role="status"></div>
     </div>
 
+    <!-- Grade Backup & Recovery: off-Supabase, tamper-evident durability -->
+    <div class="section" id="backup-section">
+      <h2 class="section-title">Grade Backup &amp; Recovery <span class="dim" style="font-size:0.8rem">(signed, tamper-evident — survives a Supabase loss)</span></h2>
+      <div class="btn-row">
+        <button class="btn" id="backup-download-btn">⬇ Download backup</button>
+        <button class="btn" id="backup-verify-btn" style="background:transparent;color:var(--sg-accent);border:1px solid var(--sg-accent)">✓ Verify a backup file…</button>
+        <input id="backup-verify-file" type="file" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="hint" id="backup-status" style="margin-top:8px">Downloads a signed snapshot of every student's ledger and checks it. An automatic daily copy is also kept in the private grade-mirror repo.</div>
+
+      <details style="margin-top:12px">
+        <summary style="cursor:pointer;color:var(--sg-accent)">Restore from a backup file… (overwrites the live ledger)</summary>
+        <div style="margin-top:8px">
+          <div class="hint">Replays only rows bearing a valid signature from this server, byte-for-byte (tampered/unsigned rows are refused). The file is re-verified before anything is written. Type <strong>RESTORE</strong> to enable.</div>
+          <div class="btn-row" style="margin-top:6px;align-items:center">
+            <input id="backup-restore-file" type="file" accept="application/json,.json">
+            <input id="backup-restore-confirm" type="text" placeholder="type RESTORE" spellcheck="false" autocomplete="off" style="width:130px">
+            <button class="btn" id="backup-restore-btn" disabled style="background:#a33;color:#fff">Restore</button>
+          </div>
+          <div class="hint" id="backup-restore-status" style="margin-top:6px"></div>
+        </div>
+      </details>
+    </div>
+
     <!-- Pacing overview: each student's readiness color (same as their wallet) -->
     <div class="section">
       <h2 class="section-title">Pacing Overview <span class="dim" style="font-size:0.8rem">(student readiness — the same colors they see in My Ledger)</span></h2>
@@ -1756,6 +1780,77 @@
     }
 
     $('load-btn').addEventListener('click', loadAll);
+
+    // ===== Grade Backup & Recovery (download / verify / restore) =====
+    function backupStatus(msg, color) { var el = $('backup-status'); if (el) { el.textContent = msg; el.style.color = color || '#5a5045'; } }
+    function restoreStatus(msg, color) { var el = $('backup-restore-status'); if (el) { el.textContent = msg; el.style.color = color || '#5a5045'; } }
+    function fmtReport(rep) {
+      if (!rep) return 'no report';
+      var t = rep.totals || {};
+      var mark = rep.ok ? '✓ VERIFIED' : ('✗ ' + (rep.breaks ? rep.breaks.length : '?') + ' break(s)');
+      return mark + ' — ' + (t.students || 0) + ' students, ' + (t.records || 0) + ' records, ' +
+        (t.verifiedReceipts || 0) + ' signed, anchor ' + (rep.epochOk ? 'OK' : 'BROKEN');
+    }
+    function readFileJson(file) {
+      return new Promise(function (resolve, reject) {
+        var r = new FileReader();
+        r.onload = function () { try { resolve(JSON.parse(r.result)); } catch (e) { reject(e); } };
+        r.onerror = function () { reject(new Error('read error')); };
+        r.readAsText(file);
+      });
+    }
+    async function downloadBackup() {
+      var s = teacherSecret();
+      if (!s) { backupStatus('Enter the teacher secret above first.', '#a33'); return; }
+      backupStatus('Downloading…');
+      var r = await fetchJson('/admin/snapshot', s);
+      if (r.status !== 200 || !r.data) { backupStatus('Download failed (HTTP ' + r.status + '). Check the teacher secret.', '#a33'); return; }
+      var snap = r.data;
+      var date = (snap && snap.asOfDateNY) || new Date().toISOString().slice(0, 10);
+      var blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'grade-backup-' + date + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      backupStatus('Saved grade-backup-' + date + '.json — verifying…');
+      var v = await postJson('/admin/verify', snap, s);
+      if (v.status === 200 && v.data && v.data.report) {
+        backupStatus('Saved grade-backup-' + date + '.json · ' + fmtReport(v.data.report), v.data.report.ok ? '#2a7' : '#a33');
+      } else {
+        backupStatus('Saved grade-backup-' + date + '.json (verify unavailable: HTTP ' + v.status + ')', '#a70');
+      }
+    }
+    async function verifyBackupFile(file) {
+      if (!file) return;
+      backupStatus('Verifying ' + file.name + '…');
+      var snap; try { snap = await readFileJson(file); } catch (e) { backupStatus(file.name + ' is not valid JSON.', '#a33'); return; }
+      var v = await postJson('/admin/verify', snap, teacherSecret());
+      if (v.status === 200 && v.data && v.data.report) backupStatus(file.name + ': ' + fmtReport(v.data.report), v.data.report.ok ? '#2a7' : '#a33');
+      else backupStatus('Verify failed (HTTP ' + v.status + ').' + (v.data && v.data.error ? ' ' + v.data.error : ''), '#a33');
+    }
+    async function restoreFromFile() {
+      var f = $('backup-restore-file').files[0];
+      if (!f) { restoreStatus('Choose a backup file first.', '#a33'); return; }
+      if ($('backup-restore-confirm').value.trim() !== 'RESTORE') { restoreStatus('Type RESTORE to confirm.', '#a33'); return; }
+      restoreStatus('Reading + verifying before any write…');
+      var snap; try { snap = await readFileJson(f); } catch (e) { restoreStatus('Not valid JSON.', '#a33'); return; }
+      var v = await postJson('/admin/verify', snap, teacherSecret());
+      if (!(v.status === 200 && v.data && v.data.report && v.data.report.ok)) {
+        restoreStatus('Refusing: backup did not verify (' + fmtReport(v.data && v.data.report) + ').', '#a33'); return;
+      }
+      if (!window.confirm('Restore ' + ((snap.students || []).length) + ' students into the LIVE ledger? Rows with the same key are overwritten with the signed values.')) { restoreStatus('Cancelled.'); return; }
+      restoreStatus('Restoring…');
+      var bundles = (snap.students || []).map(function (s) { return s.bundle; }).filter(function (b) { return b && b.records && b.records.length; });
+      var r = await postJson('/admin/restore', { bundles: bundles }, teacherSecret());
+      if (r.status === 200 && r.data && r.data.ok) restoreStatus('Restored ' + r.data.restored + ', skipped ' + r.data.skipped + '.', r.data.skipped ? '#a70' : '#2a7');
+      else restoreStatus('Restore failed (HTTP ' + r.status + ').' + (r.data && r.data.error ? ' ' + r.data.error : ''), '#a33');
+    }
+    $('backup-download-btn').addEventListener('click', downloadBackup);
+    $('backup-verify-btn').addEventListener('click', function () { $('backup-verify-file').click(); });
+    $('backup-verify-file').addEventListener('change', function (e) { var f = e.target.files[0]; e.target.value = ''; verifyBackupFile(f); });
+    $('backup-restore-confirm').addEventListener('input', function () { $('backup-restore-btn').disabled = (this.value.trim() !== 'RESTORE'); });
+    $('backup-restore-btn').addEventListener('click', restoreFromFile);
+
     // Gradebook quarter selector: re-render from the stashed payload (no refetch).
     QUARTERS.forEach(function (q) {
       var b = $('gb-q-' + q);

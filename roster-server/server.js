@@ -55,8 +55,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMap, bkt, remediationDb, lessonSchedule, configOverrides, worksheetBlankCounts, pollArchiveDb, nudgesDbOverride, lessonUnlockDbOverride, trainerDbOverride, worksheetKey) {
   const app = express();
   app.use(cors());
-  // 600kb (vs Express's 100kb default): the trainer-state kanji payload (~90–120 KB compact SRS tuples) must fit through PUT /trainer/state.
-  app.use(express.json({ limit: '600kb' }));
+  // 8mb (vs Express's 100kb default): the trainer-state kanji payload (~90–120 KB) must fit
+  // through PUT /trainer/state, and the grade-ledger snapshot a teacher posts to
+  // /admin/verify or /admin/restore grows to a few MB across a full class-year.
+  app.use(express.json({ limit: '8mb' }));
   // Railway runs behind a SINGLE edge proxy — trust exactly ONE hop so req.ip is
   // the proxy-appended client address. `true` (trust the whole chain) would let a
   // client forge X-Forwarded-For and rotate it to defeat the limiter; a bounded

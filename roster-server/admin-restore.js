@@ -14,11 +14,25 @@
 import { requireTeacher } from './teacher-auth.js';
 import { getReceiptIssuer } from './receipts.js';
 import { normalizeImportBody } from './ledger-import.js';
-import { publicKeyFromX, verifyRecord } from './snapshot-verify.js';
+import { publicKeyFromX, verifyRecord, verifySnapshot } from './snapshot-verify.js';
 
 const MAX_RECORDS = 20000; // a full-class restore is larger than one offline import
 
 export function mountAdminRestore(app, { db, ledgerDb }) {
+  // READ-ONLY: verify a snapshot/backup the teacher uploads (or just downloaded).
+  // Recomputes everything from the file's own contents + its embedded issuer pubkey,
+  // so it independently detects a corrupted/truncated/tampered backup. Writes nothing.
+  app.post('/admin/verify', async (req, res) => {
+    if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
+    try {
+      const report = verifySnapshot(req.body || {});
+      return res.json({ ok: true, report });
+    } catch (err) {
+      console.error('POST /admin/verify error:', err);
+      return res.status(400).json({ ok: false, error: 'could not verify (malformed snapshot?)' });
+    }
+  });
+
   app.post('/admin/restore', async (req, res) => {
     if (!await requireTeacher(req, db)) return res.status(401).json({ ok: false, error: 'forbidden' });
 
