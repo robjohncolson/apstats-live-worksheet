@@ -1,7 +1,7 @@
-# CONTINUATION PROMPT — GUESTS RETIRED everywhere + teacher-trust fixes (s28): guests fully disabled on every student surface (Desk/worksheets/study-guide/quiz + cr presence-server `Guest_` reject), off-roster students self-sign-up with a REAL NAME; worksheet "revise anytime" hint on all 69; VIEW-AS grade-cache bug fixed (it was showing the teacher's OWN grades under the student's banner); "Why so low?" AI COACH fixed (stops pushing not-yet-open Progress Checks + surfaces the flashcard completion/unlock gate). ; OFFLINE MODE shipped end-to-end + FEATURE AUDIT closed (s27): every student surface (worksheets/Desk/study-guide/quiz) captures grades offline → export → teacher import (`/ledger/import`); one-click USB pack (build + launcher, 24 GB video pulled local); installable PWA on BOTH repos. Distribution machinery (per-unit/torrent/USB) deliberately NOT built (YAGNI). ; TEACHER CHAT: guests can now READ + get notified of teacher messages (s26) ; cr typed sign-in roster dropdown (Codex s26) ; REPO HYGIENE + PRESENCE FIX: edgar/MIT removal + roadmap resilience + greyed-ghost-avatar ⇄ "Online Now" agreement; grade behavior clarified (s25) ; TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
+# CONTINUATION PROMPT — GRADE-LEDGER DURABILITY + nightly backup/review (s29): survive a Supabase loss — signed off-Supabase snapshot / verify / FAITHFUL restore, teacher dashboard "Grade Backup & Recovery" card, Desk 1-click 💾 Download Grade Backup, a LOCAL nightly backup Task Scheduler job that also writes a per-student REVIEW digest, and the default teacher key changed apstats2627→**apteacher2627** (it collided with the student password). NIGHTLY REVIEW feature (mark-seen + comment + candy + toast, signed) is SPEC'D (NIGHTLY_REVIEW_SPEC.md), not yet built. ; GUESTS RETIRED everywhere + teacher-trust fixes (s28): guests fully disabled on every student surface (Desk/worksheets/study-guide/quiz + cr presence-server `Guest_` reject), off-roster students self-sign-up with a REAL NAME; worksheet "revise anytime" hint on all 69; VIEW-AS grade-cache bug fixed (it was showing the teacher's OWN grades under the student's banner); "Why so low?" AI COACH fixed (stops pushing not-yet-open Progress Checks + surfaces the flashcard completion/unlock gate). ; OFFLINE MODE shipped end-to-end + FEATURE AUDIT closed (s27): every student surface (worksheets/Desk/study-guide/quiz) captures grades offline → export → teacher import (`/ledger/import`); one-click USB pack (build + launcher, 24 GB video pulled local); installable PWA on BOTH repos. Distribution machinery (per-unit/torrent/USB) deliberately NOT built (YAGNI). ; TEACHER CHAT: guests can now READ + get notified of teacher messages (s26) ; cr typed sign-in roster dropdown (Codex s26) ; REPO HYGIENE + PRESENCE FIX: edgar/MIT removal + roadmap resilience + greyed-ghost-avatar ⇄ "Online Now" agreement; grade behavior clarified (s25) ; TETRIS HARDENING: Study Break 1v1 multiplayer + stakes robustness pass (s24) ; MODAL ESCAPE: every Desk content modal now closes with Esc (s21) ; AVATAR MENU: click classmate → name → 🍬 candy / ⚔️ game, click self → 🎉 happy bounce (s20/s22) ; STUDY BREAK STAKES LIVE: bet candy on best-of-3 Tetris (s19, backend+client) ; DOGE PRESENCE chips+submenu (s18) ; candy↔DOGE CONSERVATION AUDIT + F1 race FIXED (s17) ; DOGE ⇄ candy BIDIRECTIONAL (s16) ; candy economy REVIVED (s15) ; grade-integrity + calendar COMPLETE
 
-> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-26 (session 28 — GUESTS RETIRED across every student surface; worksheet revise-hint on all 69; view-as grade-cache fix; "Why so low?" coach PC/flashcard fix). Prior s27 = OFFLINE MODE end-to-end + feature-audit closed.
-> follow-alongs HEAD = `ce0eeeb` (s28 tip; s28 fa `2e79244`→`ce0eeeb`). cr HEAD = `dd165b3` (s28; cr `1d31f14`→`dd165b3`). Earlier s27 anchor was fa `5f19f54` / cr `788b04d`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**; cr `railway-server/**` auto-deploys to the cr Railway server, cr root → cr GH Pages (the quiz app).
+> **AUTHORITATIVE. Supersedes everything below.** Last updated 2026-06-29 (session 29 — GRADE-LEDGER DURABILITY: signed off-Supabase snapshot / verify / faithful restore, teacher dashboard card + Desk 1-click backup, local nightly backup + per-student review digest, teacher key → **apteacher2627**; NIGHTLY REVIEW feature SPEC'D). Prior s28 = guests retired + view-as/worksheet/coach trust fixes.
+> follow-alongs HEAD = `5bdd60c` (s29 CODE tip; s29 fa `0fa51b1`→`5bdd60c`, + this docs commit). cr unchanged this session: HEAD = `dd165b3`. Earlier s27 anchor was fa `5f19f54` / cr `788b04d`. Repo `apstats-live-worksheet`, branch `master`. **GH Pages auto-publishes `master`**; cr `railway-server/**` auto-deploys to the cr Railway server, cr root → cr GH Pages (the quiz app).
 > and **`roster-server/` auto-deploys to Railway on push** (`roster-production-12c1.up.railway.app`). Sibling repo
 > **curriculum_render** (HEAD `dd165b3`, branch `main`) ALSO auto-deploys: GH Pages (the quiz app) + the cr Railway
 > classroom/AI server (`curriculumrender-production.up.railway.app`) when `railway-server/**` changes. cr is local at
@@ -12,6 +12,88 @@
 > `C:/Users/rober/.claude/projects/C--Users-rober-Downloads-Projects-school-follow-alongs/memory/`.
 > A real **Dogecoin Core node runs on this box with ~10,273 DOGE** (RPC LIVE; cli at `C:/Program Files/Dogecoin/daemon/dogecoin-cli.exe`,
 > not on PATH). **NEVER broadcast a real send without explicit per-send confirmation.**
+
+## ⏭ SESSION 29 (2026-06-29) — GRADE-LEDGER DURABILITY (survive a Supabase loss) + nightly backup/review; NIGHTLY REVIEW spec'd
+
+Teacher fear: "Supabase goes offline and takes all the kids' grades." **Key realization:** the
+system ALREADY had the integrity layer (per-answer Ed25519 receipts on `item_ledger` + the
+`/commits` session-chunked, prev-chained commit chain + transcript Merkle roots). What was
+missing was **durability** — the chain is recomputed from a Supabase-only `item_ledger`. So s29
+added off-Supabase **replication + a signed anchor + verify + faithful restore + teacher UI**.
+All SHIPPED + PUSHED + deployed; **roster-server tests 1101/1101**. fa `0fa51b1`→`5bdd60c`.
+
+**⚠ THE TEACHER KEY IS NOW `apteacher2627`** (was `apstats2627`, which collided with the default
+student/enroll password). Use it for the dashboard "Teacher secret" field + teacher-account
+creation. Verified live (apteacher2627→200, apstats2627→401, so `TEACHER_KEY` env is unset = the
+code default applies). Repo is PUBLIC so the default is visible — for real secrecy set `TEACHER_KEY`
+env on Railway (user declined for now). `getTeacherKey()` in `roster-server/teacher-auth.js`.
+
+### A. Server — snapshot + epoch anchor + verify + faithful restore (`ab9679d`, `0aac8dd`, `d6873cf`)
+- **`GET /admin/snapshot`** (teacher-gated, read-only; `admin-snapshot.js`): the WHOLE signed ledger
+  + per-student commit `head` + transcript root, in the `apstats-offline-export/v1` bundle shape
+  (so `/ledger/import`-compatible), + a signed **epoch anchor** (`issueEpochReceipt`, new in
+  `receipts.js`; prev-chained daily class seal).
+- **`POST /admin/verify`** (read-only) + **`snapshot-verify.js`**: zero-trust `verifySnapshot` —
+  every receipt signature, each record's binding (sid/item/source/score + answer-hash), recomputed
+  heads + transcript root, epoch root over re-derived heads. Shared exported `verifyRecord`.
+- **`POST /admin/restore`** (`admin-restore.js`): **FAITHFUL** recovery — replays ONLY records
+  bearing a valid signature from this server's issuer, byte-for-byte (score AS-IS / NO 0..1 clamp,
+  `evidence_tier` from the signed payload, original `recorded_at`, original receipt preserved).
+  Tampered/unsigned refused. `ledger-db.insertLedgerRow` gained optional `recordedAt` (additive).
+  `express.json` 600kb→8mb (full-year snapshots).
+- **Recovery-drill finding (no DB wiped):** `/ledger/import` would DROP 6/421 rows — the
+  `*-DESK_DONE` completion rows carry **0..100** percentages but import clamps worksheet scores to
+  0..1. That's WHY restore is a separate faithful path. Proven: import 415/421, **restore 421/421**.
+
+### B. CLI + off-Supabase git mirror (`ab9679d`)
+- `tools/verify-ledger.mjs` (verify + class report + `--rebuild`→`/admin/restore`),
+  `tools/append-anchor.mjs`, `tools/mirror-ledger.yml` (template).
+- Private mirror repo **`robjohncolson/apstats-grade-mirror`** created; daily Action + secrets
+  (`ROSTER_URL`, `ROSTER_TEACHER_SECRET=apteacher2627`) set; seeded with today's snapshot + ANCHORS.md.
+  **⚠ the scheduled Action WON'T REGISTER on GitHub yet** (new-repo Actions indexing lag; dispatch
+  404s — needs a one-time visit to the repo's **Actions tab** in a browser). The local nightly task
+  (D) is the reliable automation; the manual backfill proved the pull→store→anchor loop.
+
+### C. Teacher UI — Dashboard card + Desk 1-click (`d6873cf`, `5a2044f`)
+- `teacher-dashboard.html` **"Grade Backup & Recovery"** card: Download backup (saves + auto-verifies),
+  Verify a file, Restore (behind a typed `RESTORE` + confirm). Reuses teacher-secret + fetchJson/postJson.
+- Desk **Teacher menu → 💾 Download Grade Backup** tile (`_TEACHER_TOOLS`): one click, NO key typing
+  (uses the teacher's session Bearer token — `requireTeacher` accepts it). Saves + verifies.
+
+### D. Local nightly backup + REVIEW digest (`5bdd60c`)
+- `tools/nightly-backup.mjs` + Windows Task Scheduler job **"APStats Grade Nightly Backup"** (daily
+  10pm; proven `LastTaskResult=0`). Each night: pull → save (`C:\Users\rober\grade-backups\snapshots\<date>.json`
+  + `latest.json`) → verify → **DIFF vs last night** → write `review-<date>.txt` (per-student "what the
+  kids did since the last backup") → append `ANCHORS.md`. Config (rosterUrl/teacherKey/backupDir) is in
+  LOCAL `grade-backups\config.json` (NOT committed). Proven: caught +4 new items / 1 student vs the AM snapshot.
+
+### Proven live
+`/admin/snapshot` (with `apteacher2627`): **31 students / 425 records / all signed / epoch OK / VERIFIED**.
+The teacher's downloaded `grade-backup-2026-06-29.json` re-verifies. Spec: `GRADE_LEDGER_DURABILITY_SPEC.md`.
+
+### E. NIGHTLY REVIEW — **SPEC'D, NOT BUILT** (`NIGHTLY_REVIEW_SPEC.md`)
+Teacher Desk surface to review recent work, mark **SEEN** (item/session/day), **comment**, award **1 candy**
+(1/student/day, idempotent), **toast** the student; student sees **👁 seen + 💬 comment** in *My Ledger*.
+Reviews are **signed** (`t:'review'`) → flow through snapshot/verify/restore + nightly digest. Grounded hooks:
+candy is effort-only today → grant via a `doge_ledger` `review_award` + `candy_given`; notify reuses
+`POST /teacher/nudge`→`_showNudgeToast`; student work shows in *My Ledger* via `/ledger/student`; menu badge
+reuses `menu-nudge-badge`; **key on `ledger_id`**. Includes prioritized queue (FRQ/low-score/appeals first),
+editable comment templates, unseen-count menu badge, "not reviewed in N days" flag, accountability trail.
+**4 phases** (server → teacher Desk → student wallet → durability). **NEXT: Phase 1** = migration `review_marks`
++ `issueReviewReceipt` + `GET /class/review-queue` + `POST /class/review` (seen+comment+signed+candy+notify) +
+augment `/ledger/student` + tests.
+
+### s29 remaining / next
+- **Build NIGHTLY REVIEW** (Phase 1 server first — self-contained, testable).
+- **Destructive recovery drill** against a STAGING Supabase (the durability spec's "done bar"; never run —
+  needs the user to provision staging; the dashboard/CLI make every step one action).
+- **Mirror Action registration** (one-time GitHub Actions-tab visit) OR just rely on the local nightly task (working).
+
+### s29 artifacts
+`GRADE_LEDGER_DURABILITY_SPEC.md`, `NIGHTLY_REVIEW_SPEC.md`; `roster-server/{admin-snapshot,admin-restore,
+snapshot-verify}.js`, `receipts.js`(+`issueEpochReceipt`,+`stringifyResponse` export), `ledger-db.js`(+`recordedAt`),
+`server.js`(+mounts,8mb); `tools/{verify-ledger,append-anchor,nightly-backup,mirror-ledger}`; mirror repo
+`apstats-grade-mirror`; local `C:\Users\rober\grade-backups\` + scheduled task "APStats Grade Nightly Backup".
 
 ## ⏭ SESSION 28 (2026-06-25/26) — GUESTS RETIRED everywhere + teacher-trust fixes (view-as, worksheet revise, AI coach)
 
