@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -382,5 +382,41 @@ export function createDb(client) {
   // Settled bets (for Casino Stats). The (small) caller intersects with a section's students.
   async function listSettledBets() {
     return client.from('tetris_bet').select('player_a, player_b, winner, stake, resolved_at').eq('status', 'settled');
+  }
+
+  // ── Nightly Review (migration 0025) ───────────────────────────────────────────
+  // Upsert one review mark (keyed on ledger_id). Re-marking the same work item updates
+  // seen_at/comment/teacher in place (unique (ledger_id) → onConflict). The signed receipt
+  // + candy_awarded are written by the same call so the row is self-describing.
+  async function upsertReviewMark({ ledgerId, studentId, teacherUsername, seenAt, comment, candyAwarded, receiptId, receiptCompact }) {
+    const nowIso = new Date().toISOString();
+    return client.from('review_marks').upsert([{
+      ledger_id:        ledgerId,
+      student_id:       studentId,
+      teacher_username: teacherUsername,
+      seen_at:          seenAt || nowIso,
+      comment:          comment ?? null,
+      candy_awarded:    candyAwarded ?? 0,
+      receipt_id:       receiptId ?? null,
+      receipt_compact:  receiptCompact ?? null,
+      updated_at:       nowIso
+    }], { onConflict: 'ledger_id' }).select('*').maybeSingle();
+  }
+
+  // Review marks for a SET of students (the queue fan-out). Empty input → no query.
+  async function listReviewMarksByStudents(studentIds) {
+    if (!Array.isArray(studentIds) || !studentIds.length) return { data: [], error: null };
+    return client.from('review_marks').select('*').in('student_id', studentIds);
+  }
+
+  // Review marks for ONE student (powers the /ledger/student "seen + comment" join).
+  async function listReviewMarksByStudent(studentId) {
+    return client.from('review_marks').select('*').eq('student_id', studentId);
+  }
+
+  // Atomic, idempotent review-candy mint (migration 0025 fn review_award). Returns
+  // { data, error } where data is 1 (minted this call) or 0 (already minted today).
+  async function reviewAward(studentId, nyDate) {
+    return client.rpc('review_award', { p_sid: studentId, p_date: nyDate });
   }
 }

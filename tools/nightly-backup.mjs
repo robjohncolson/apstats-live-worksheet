@@ -86,7 +86,8 @@ async function main() {
   const out = [];
   out.push('NIGHTLY GRADE REVIEW — ' + date);
   out.push('Verify: ' + (rep.ok ? '✓ VERIFIED' : '✗ ' + (rep.breaks ? rep.breaks.length : '?') + ' BREAK(S)') +
-    '  (' + (t.students || 0) + ' students, ' + (t.records || 0) + ' records, ' + (t.verifiedReceipts || 0) + ' signed, anchor ' + (rep.epochOk ? 'OK' : 'BROKEN') + ')');
+    '  (' + (t.students || 0) + ' students, ' + (t.records || 0) + ' records, ' + (t.verifiedReceipts || 0) + ' signed, ' +
+    (t.reviews || 0) + ' reviews/' + (t.verifiedReviews || 0) + ' signed, anchor ' + (rep.epochOk ? 'OK' : 'BROKEN') + ')');
   if (!rep.ok) { out.push('!!! VERIFICATION FAILED — do NOT trust this backup until investigated:'); for (const b of (rep.breaks || []).slice(0, 25)) out.push('   - ' + JSON.stringify(b)); }
   out.push('');
   if (!prev) {
@@ -106,6 +107,30 @@ async function main() {
     }
     if (!active.length) out.push('(no new work since the last backup)');
   }
+
+  // ── Review coverage (NIGHTLY_REVIEW_SPEC §8) — the offline mirror of the Desk surface.
+  // Flags students who DID work but the teacher hasn't reviewed in N days (or ever).
+  const N_DAYS = 5;
+  const reviewedTotal = (snap.students || []).reduce((n, x) => n + (((x.bundle && x.bundle.reviews) || []).length), 0);
+  const lastReviewMs = (st) => {
+    let m = 0;
+    for (const r of ((st.bundle && st.bundle.reviews) || [])) { const ts = Date.parse(r.seenAt) || 0; if (ts > m) m = ts; }
+    return m;
+  };
+  const nowMs = Date.now();
+  const stale = (snap.students || []).map((st) => {
+    const recs = ((st.bundle && st.bundle.records) || []).length;
+    const lr = lastReviewMs(st);
+    return { name: st.realName || st.username || st.studentId, recs, days: lr ? Math.floor((nowMs - lr) / 86400000) : null };
+  }).filter((s) => s.recs > 0 && (s.days === null || s.days >= N_DAYS))
+    .sort((a, b) => (b.days === null ? 1e9 : b.days) - (a.days === null ? 1e9 : a.days));
+  out.push('');
+  out.push('REVIEW COVERAGE — ' + reviewedTotal + ' item(s) reviewed all-time; ' + stale.length + ' student(s) not reviewed in ' + N_DAYS + '+ days');
+  for (const s of stale.slice(0, 40)) {
+    out.push('    ⚠ ' + pad(s.name, 28) + (s.days === null ? 'never reviewed' : s.days + ' days ago'));
+  }
+  if (!stale.length) out.push('    (everyone with work has been reviewed within ' + N_DAYS + ' days)');
+
   const review = out.join('\n');
   const reviewPath = path.join(cfg.backupDir, 'review-' + date + '.txt');
   fs.writeFileSync(reviewPath, review);

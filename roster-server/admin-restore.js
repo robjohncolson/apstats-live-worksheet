@@ -14,9 +14,30 @@
 import { requireTeacher } from './teacher-auth.js';
 import { getReceiptIssuer } from './receipts.js';
 import { normalizeImportBody } from './ledger-import.js';
-import { publicKeyFromX, verifyRecord, verifySnapshot } from './snapshot-verify.js';
+import { publicKeyFromX, verifyRecord, verifyReviewMark, verifySnapshot } from './snapshot-verify.js';
 
 const MAX_RECORDS = 20000; // a full-class restore is larger than one offline import
+
+// Collect review records (NIGHTLY_REVIEW_SPEC §8) from the snapshot/bundle body shapes,
+// mirroring normalizeImportBody. A review inherits its bundle's studentId if it lacks one.
+export function normalizeReviews(body) {
+  const out = [];
+  const pushBundle = (b) => {
+    if (!b || typeof b !== 'object') return;
+    const sid = b.student && b.student.studentId;
+    for (const r of (Array.isArray(b.reviews) ? b.reviews : [])) {
+      if (r && typeof r === 'object') out.push({ ...r, studentId: r.studentId || sid });
+    }
+  };
+  if (Array.isArray(body && body.students)) {
+    for (const s of body.students) pushBundle(s.bundle);   // a full /admin/snapshot document
+  } else if (body && Array.isArray(body.bundles)) {
+    for (const b of body.bundles) pushBundle(b);
+  } else if (body && Array.isArray(body.reviews)) {
+    pushBundle(body);
+  }
+  return out;
+}
 
 export function mountAdminRestore(app, { db, ledgerDb }) {
   // READ-ONLY: verify a snapshot/backup the teacher uploads (or just downloaded).
@@ -102,6 +123,37 @@ export function mountAdminRestore(app, { db, ledgerDb }) {
       }
     }
 
-    return res.json({ ok: true, total: records.length, restored, skipped, errors });
+    // ── Reviews (NIGHTLY_REVIEW_SPEC §8) ──────────────────────────────────────
+    // Replay ONLY validly-signed review marks, byte-for-byte (seen_at / comment /
+    // receipt preserved; candy is NOT re-minted — restore is a faithful replay, not a
+    // re-award). KNOWN LIMITATION: review_marks key on ledger_id, which the ledger upsert
+    // REGENERATES on a from-scratch restore (its conflict key is student/source/item/attempt).
+    // So a review only re-attaches when its ledger row still carries the original ledger_id
+    // (a partial restore / re-import onto a live DB); on a total wipe it skips (FK miss) —
+    // the signed review in the backup file still verifies regardless. Best-effort throughout.
+    let reviewsRestored = 0;
+    let reviewsSkipped = 0;
+    if (db && typeof db.upsertReviewMark === 'function') {
+      const reviews = normalizeReviews(req.body);
+      for (const rec of reviews) {
+        const vr = verifyReviewMark(rec, pubKey, rec.studentId);
+        if (!vr.ok || !rec.ledgerId) { reviewsSkipped += 1; continue; }
+        try {
+          const up = await db.upsertReviewMark({
+            ledgerId: rec.ledgerId,
+            studentId: rec.studentId,
+            teacherUsername: rec.teacher || vr.payload.by || 'teacher',
+            seenAt: rec.seenAt,
+            comment: rec.comment ?? null,
+            candyAwarded: rec.candyAwarded ?? 0,
+            receiptId: rec.receipt_id || null,
+            receiptCompact: rec.receipt_compact || null,
+          });
+          if (up && up.error) reviewsSkipped += 1; else reviewsRestored += 1;
+        } catch (_) { reviewsSkipped += 1; }
+      }
+    }
+
+    return res.json({ ok: true, total: records.length, restored, skipped, errors, reviewsRestored, reviewsSkipped });
   });
 }

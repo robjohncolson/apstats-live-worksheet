@@ -82,6 +82,28 @@ export function verifyRecord(rec, pubKey, sid) {
   return { ok: breaks.length === 0, payload, breaks };
 }
 
+// Verify ONE review record against the issuer key: the t:'review' receipt signature AND
+// that the signed payload binds this review (ledgerId/owner, and the comment-hash `ch` for
+// a commented review). Mirrors verifyRecord. Returns { ok, payload, unsigned?, breaks }.
+export function verifyReviewMark(rec, pubKey, sid) {
+  if (!rec || !rec.receipt_compact) {
+    return { ok: false, payload: null, unsigned: true, breaks: [{ kind: 'review-unsigned', ledgerId: rec && rec.ledgerId }] };
+  }
+  const payload = verifyCompact(rec.receipt_compact, pubKey);
+  if (!payload) return { ok: false, payload: null, breaks: [{ kind: 'review-bad-signature', ledgerId: rec.ledgerId }] };
+
+  const breaks = [];
+  const owner = rec.studentId || sid;
+  if (payload.t !== 'review') breaks.push({ kind: 'review-wrong-type', ledgerId: rec.ledgerId });
+  if (payload.lid !== rec.ledgerId) breaks.push({ kind: 'review-ledger-mismatch', ledgerId: rec.ledgerId });
+  if (payload.sid !== owner) breaks.push({ kind: 'review-sid-mismatch', ledgerId: rec.ledgerId });
+  // `ch` binds the comment: a commented review must hash-match; an empty signed `ch`
+  // with a stored comment (or vice-versa) is tampering.
+  const ch = rec.comment ? answerHash(rec.comment) : undefined;
+  if ((payload.ch || undefined) !== ch) breaks.push({ kind: 'review-comment-tampered', ledgerId: rec.ledgerId });
+  return { ok: breaks.length === 0, payload, breaks };
+}
+
 export function verifySnapshot(snapshot, { pubkey } = {}) {
   const breaks = [];
   const x = pubkey || (snapshot && snapshot.issuer && snapshot.issuer.pubkey);
@@ -91,6 +113,9 @@ export function verifySnapshot(snapshot, { pubkey } = {}) {
   let totalRecords = 0;
   let verifiedReceipts = 0;
   let unsignedRecords = 0;
+  let totalReviews = 0;
+  let verifiedReviews = 0;
+  let unsignedReviews = 0;
   const students = [];
 
   for (const s of (snapshot.students || [])) {
@@ -102,6 +127,16 @@ export function verifySnapshot(snapshot, { pubkey } = {}) {
       if (!rec.receipt_compact) { unsignedRecords += 1; continue; }
       const vr = verifyRecord(rec, pubKey, s.studentId);
       if (vr.payload) verifiedReceipts += 1; // signature valid; binding breaks (if any) follow
+      for (const b of vr.breaks) sBreaks.push(b);
+    }
+
+    // Reviews (t:'review') ride the same verification (NIGHTLY_REVIEW_SPEC §8).
+    const reviews = (s.bundle && s.bundle.reviews) || [];
+    totalReviews += reviews.length;
+    for (const rec of reviews) {
+      if (!rec.receipt_compact) { unsignedReviews += 1; continue; }
+      const vr = verifyReviewMark(rec, pubKey, s.studentId);
+      if (vr.payload) verifiedReviews += 1;
       for (const b of vr.breaks) sBreaks.push(b);
     }
 
@@ -155,7 +190,7 @@ export function verifySnapshot(snapshot, { pubkey } = {}) {
 
   return {
     ok: breaks.length === 0,
-    totals: { students: students.length, records: totalRecords, verifiedReceipts, unsignedRecords },
+    totals: { students: students.length, records: totalRecords, verifiedReceipts, unsignedRecords, reviews: totalReviews, verifiedReviews, unsignedReviews },
     epochOk,
     students,
     breaks

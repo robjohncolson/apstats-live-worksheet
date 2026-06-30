@@ -284,6 +284,32 @@ export function issueEpochReceipt({ asOf = Date.now(), asOfDateNY, cnt, root, pr
   }
 }
 
+// A "review": a teacher marking one work item (item_ledger row, by ledger_id) SEEN,
+// optionally with a comment bound by hash (`ch`, like `ah`) so a tampered stored comment
+// is detectable while the payload stays small. Signed so reviews ride the same durability
+// rails as grades (snapshot/verify/restore). See NIGHTLY_REVIEW_SPEC.md.
+export function issueReviewReceipt({ ledgerId, studentId, teacher, seenAt = Date.now(), comment }) {
+  if (!issuer.enabled || !ledgerId || !studentId) return null;
+  try {
+    const payload = {
+      v: 1,
+      t: 'review',
+      iss: 'desk',
+      lid: ledgerId,
+      sid: studentId,
+      by: teacher || undefined,
+      ts: seenAt,
+      ch: comment ? crypto.createHash('sha256').update(stringifyResponse(comment), 'utf8').digest('hex').slice(0, 16) : undefined,
+      n: crypto.randomBytes(4).toString('hex')
+    };
+    const { receiptId, compact } = signPayload(issuer.privateKey, payload);
+    return { receiptId, compact };
+  } catch (err) {
+    console.error('Review receipt issuance failed:', err.message);
+    return null;
+  }
+}
+
 export function mountReceipts(app) {
   app.get('/receipts/issuer', (_req, res) => {
     res.json(getReceiptIssuer());

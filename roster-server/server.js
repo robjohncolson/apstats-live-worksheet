@@ -22,6 +22,7 @@ import { mountTranscript } from './transcript.js';
 import { mountCommits } from './commits.js';
 import { mountMastery } from './mastery.js';
 import { mountClass } from './class.js';
+import { mountReview } from './review.js';
 import { mountTeacherStudent } from './teacher.js';
 import { mountRemediation } from './remediation.js';
 import { mountPollArchive } from './poll-archive.js';
@@ -986,6 +987,21 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   const nudgesDb = (typeof nudgesDbOverride !== 'undefined') ? nudgesDbOverride : createLiveNudgesDb();
   if (nudgesDb && db) {
     mountNudge(app, { db, nudgesDb });
+  }
+
+  // ── Nightly Review routes (NIGHTLY_REVIEW_SPEC.md) ────────────────────────
+  // GET /class/review-queue + POST /class/review. Teacher reviews recent work,
+  // marks it seen (+ optional comment), mints 1 bonus candy/student/review-day, and
+  // (on a comment) drops a teacher→student message via nudgesDb. Reviews are signed.
+  // Until migration 0025 runs, both routes respond 503 "nightly review not provisioned".
+  if (db && ledgerDb) {
+    mountReview(app, {
+      db, ledgerDb, nudgesDb,
+      loadAnswerKey: loadAnswerKey || null,
+      lessonSchedule: lessonSchedule || null,
+      config: configOverrides ? { ...PHASE3_CONFIG, ...configOverrides } : PHASE3_CONFIG,
+      worksheetBlankCounts: worksheetBlankCounts || null,
+    });
   }
 
   // ── Lesson-unlock routes (Phase 5 of TEACHER_STUDENT_CONSOLE_SPEC.md) ─────

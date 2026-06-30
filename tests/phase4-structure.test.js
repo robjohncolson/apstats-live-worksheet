@@ -170,8 +170,10 @@ describe('teacher-dashboard.html — Phase 4a structure', () => {
       //                    teacher-auth'd, additive; /class/* stays read-only)
       //  - /teacher/nudge (Phase 1 teacher chat: send a message to a student/class —
       //                    teacher-auth'd, additive; /class/* stays read-only)
+      //  - /admin/        (s29 Grade Backup & Recovery card: verify a backup + faithful
+      //                    restore — teacher-auth'd, additive; /class/* stays read-only)
       // Concatenated paths (postJson('/x/' + act, ...)) capture just the prefix.
-      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge');
+      const ok = t.path.startsWith('/remediation/') || t.path.startsWith('/wallet/') || t.path.startsWith('/teacher/nudge') || t.path.startsWith('/admin/');
       expect(ok, `POST to "${t.path}" violates the /class/* read-only intent`).toBe(true);
     }
   });

@@ -289,6 +289,27 @@ export function mountLedger(app, { db, verifyToken, resolveUsername, worksheetKe
       return res.status(500).json({ ok: false, error: 'Database error' });
     }
 
-    return res.json({ ok: true, rows: data || [] });
+    const rows = data || [];
+    // Nightly Review augment (NIGHTLY_REVIEW_SPEC.md §4): attach each row's review state
+    // (LEFT JOIN review_marks by ledger_id) so the student's "My Ledger" can render the
+    // "👁 seen / 💬 comment" badges. Best-effort + degrades silently pre-migration-0025:
+    // a missing table / DB hiccup just leaves rows without a `review` field.
+    if (rosterDb && typeof rosterDb.listReviewMarksByStudent === 'function') {
+      try {
+        const mr = await rosterDb.listReviewMarksByStudent(studentId);
+        if (mr && !mr.error && Array.isArray(mr.data)) {
+          const byLedger = {};
+          for (const m of mr.data) byLedger[m.ledger_id] = m;
+          for (const row of rows) {
+            const mark = byLedger[row.ledger_id];
+            row.review = mark
+              ? { seenAt: mark.seen_at, teacher: mark.teacher_username, comment: mark.comment ?? null }
+              : null;
+          }
+        }
+      } catch (_) { /* pre-migration / DB hiccup → no review field, students still see their work */ }
+    }
+
+    return res.json({ ok: true, rows });
   });
 }

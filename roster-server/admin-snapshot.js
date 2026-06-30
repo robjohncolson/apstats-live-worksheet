@@ -65,12 +65,30 @@ function commitInputs(rows) {
     }));
 }
 
+// One review_marks DB row (snake_case) → a self-verifying snapshot record (carries its
+// ORIGINAL signed receipt so the mirror verifies + restores reviews on its own).
+export function reviewToRecord(mark) {
+  return {
+    ledgerId: mark.ledger_id,
+    studentId: mark.student_id,
+    teacher: mark.teacher_username ?? undefined,
+    seenAt: mark.seen_at,
+    comment: mark.comment ?? null,
+    candyAwarded: mark.candy_awarded ?? 0,
+    receipt_id: mark.receipt_id || undefined,
+    receipt_compact: mark.receipt_compact || undefined
+  };
+}
+
 // Build one student's snapshot entry (pure): roster row + their ledger rows in.
-export function buildStudentEntry(rosterRow, ledgerRows) {
+// reviewMarks (optional) are the student's review_marks rows — carried so reviews
+// are backed up + restorable (NIGHTLY_REVIEW_SPEC §8); absent → an empty reviews list.
+export function buildStudentEntry(rosterRow, ledgerRows, reviewMarks) {
   const sid = rosterRow.student_id;
   const username = rosterRow.login_username || undefined;
   const rows = Array.isArray(ledgerRows) ? ledgerRows : [];
   const records = rows.map((r) => rowToRecord(r, sid));
+  const reviews = (Array.isArray(reviewMarks) ? reviewMarks : []).map(reviewToRecord);
   const { head } = buildCommits(commitInputs(rows), { sid, u: username });
   const transcriptRoot = receiptRootOf(rows.filter((r) => r.receipt_id).map((r) => r.receipt_id));
   let lastActivityAt = null;
@@ -83,13 +101,15 @@ export function buildStudentEntry(rosterRow, ledgerRows) {
     realName: rosterRow.real_name ?? null,
     section: rosterRow.section ?? null,
     recordCount: records.length,
+    reviewCount: reviews.length,
     lastActivityAt,
     commitsHead: head || null,
     transcriptRoot,
     bundle: {
       schema: BUNDLE_SCHEMA,
       student: { studentId: sid, username },
-      records
+      records,
+      reviews
     }
   };
 }
@@ -140,7 +160,16 @@ export function mountAdminSnapshot(app, { db, ledgerDb, schoolTz = 'America/New_
           const { data, error } = await ledgerDb.getLedgerByStudent(r.student_id);
           ledgerRows = error ? [] : (Array.isArray(data) ? data : []);
         } catch (_) { ledgerRows = []; }
-        students.push(buildStudentEntry(r, ledgerRows));
+        // Reviews ride the same backup (NIGHTLY_REVIEW_SPEC §8). Best-effort: a missing
+        // review_marks table (pre-migration-0025) or a DB hiccup just yields no reviews.
+        let reviewMarks = [];
+        try {
+          if (db && typeof db.listReviewMarksByStudent === 'function') {
+            const { data, error } = await db.listReviewMarksByStudent(r.student_id);
+            reviewMarks = error ? [] : (Array.isArray(data) ? data : []);
+          }
+        } catch (_) { reviewMarks = []; }
+        students.push(buildStudentEntry(r, ledgerRows, reviewMarks));
       }
 
       const asOf = Date.now();

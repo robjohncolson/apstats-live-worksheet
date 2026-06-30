@@ -1932,6 +1932,7 @@
             <div class="menu-dd-item disabled" style="font-style:italic;font-size:10px">Teacher tools</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openTeacherTools==='function')openTeacherTools()" style="font-weight:bold">&#129520; Teacher Tools&#8230;</div>
+            <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openNightlyReview==='function')openNightlyReview()">&#127769; Nightly Review&#8230;<span id="menu-review-badge" class="menu-nudge-badge" hidden>0</span></div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx id="menu-preview-as-student" onclick="closeMenus();_togglePreviewAsStudent()">&#128065; Preview as student</div>
         </div>
@@ -2503,6 +2504,23 @@
             <span class="title-text chicago">Teacher Tools</span>
         </div>
         <div class="app-content" id="teachertools-content" style="flex-direction:column;overflow:auto;padding:14px">
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Nightly Review ═══ A System 7 window where the teacher reviews recent
+     student work: priority-sorted, mark SEEN (item / session / day), comment with
+     editable templates, and a "not reviewed in N days" flag. Marking seen mints 1
+     candy/student/day + (on a comment) toasts the student. Reviews are signed
+     receipts (durable). Role-gated like the Teacher menu. See NIGHTLY_REVIEW_SPEC.md. -->
+<div class="app-overlay" id="app-nightlyreview-overlay">
+    <div class="app-window" style="width:560px;max-width:94vw">
+        <div class="game-title-bar">
+            <div class="close-box" onclick="closeNightlyReview()" title="Close"></div>
+            <div class="title-stripes"></div>
+            <span class="title-text chicago">🌙 Nightly Review</span>
+        </div>
+        <div class="app-content" id="nightlyreview-content" style="flex-direction:column;overflow:auto;padding:12px;max-height:78vh">
         </div>
     </div>
 </div>
@@ -6863,6 +6881,8 @@ function updateUserRoleUI() {
   } catch (_) {}
   if (!teacherMenu) return;
   teacherMenu.style.display = isTeacher ? '' : 'none';
+  // Light up the Teacher-menu "Nightly Review" unseen badge (best-effort, teacher only).
+  try { if (isTeacher && typeof _reviewBadgePoll === 'function') _reviewBadgePoll(); } catch (_) {}
 }
 
 function openSignInModal() {
@@ -12167,9 +12187,34 @@ async function _walletLoadReceipts() {
             durable = await gradebookClient.fetchReceipts();
         }
     } catch (_) { durable = []; }
+    try { await _loadReviewMarksForSelf(); } catch (_) {}   // Nightly Review badges (best-effort)
     return (window.WalletLogic && WalletLogic.mergeReceipts)
         ? WalletLogic.mergeReceipts(durable, local)
         : local;
+}
+
+// Nightly Review (NIGHTLY_REVIEW_SPEC §7): load THIS student's review marks (keyed by
+// item_id, newest per item) so My Ledger rows can show "👁 Seen / 💬 comment". Students
+// only — skipped for a teacher / view-as (where the badge would be ambiguous).
+var _reviewByItem = {};
+async function _loadReviewMarksForSelf() {
+    _reviewByItem = {};
+    try {
+        var who = (window.rosterClient && window.rosterClient.current && window.rosterClient.current()) || null;
+        var token = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+        var base = window.ROSTER_SERVICE_URL;
+        var sid = who && who.studentId;
+        if (!who || who.role === 'teacher' || !token || !base || !sid) return;
+        var res = await fetch(base + '/ledger/student/' + encodeURIComponent(sid), { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status !== 200) return;
+        var data = await res.json();
+        (data && data.rows || []).forEach(function (r) {
+            if (!r || !r.review || !r.item_id) return;
+            var k = String(r.item_id);
+            var prev = _reviewByItem[k];
+            if (!prev || (r.review.seenAt || '') > (prev.seenAt || '')) _reviewByItem[k] = r.review;
+        });
+    } catch (_) { _reviewByItem = {}; }
 }
 
 function _sealedTranscriptNotice(msg) {
@@ -13622,6 +13667,16 @@ function _walletReceiptRow(r) {
         main.appendChild(badge);
     }
 
+    // Nightly Review badge (NIGHTLY_REVIEW_SPEC §7): the teacher saw this item + any comment.
+    var _rv = _reviewByItem && _reviewByItem[String(r.i || payload.i || '')];
+    if (_rv) {
+        var rvLine = document.createElement('div');
+        rvLine.style.cssText = 'margin-top:4px;font-size:10px;color:#06782f;word-break:break-word';
+        var rvDate = (typeof _formatReceiptDate === 'function' && _rv.seenAt) ? _formatReceiptDate(Date.parse(_rv.seenAt)) : '';
+        rvLine.textContent = '👁 Seen by teacher' + (rvDate ? ' ' + rvDate : '') + (_rv.comment ? ' · 💬 ' + _rv.comment : '');
+        main.appendChild(rvLine);
+    }
+
     var actions = document.createElement('div');
     actions.style.cssText = 'flex-shrink:0;display:flex;flex-direction:column;gap:3px;align-items:flex-end';
 
@@ -13749,6 +13804,7 @@ async function _downloadGradeBackup() {
 var _TEACHER_TOOLS = [
     { icon: '📋', label: 'Roster Console', sub: 'enroll · passwords · delete', act: function () { window.open('teacher-roster-console.html', '_blank'); } },
     { icon: '📈', label: 'Gradebook Dashboard', sub: 'class grid · remediation · rewards', act: function () { window.open('teacher-dashboard.html', '_blank'); } },
+    { icon: '🌙', label: 'Nightly Review', sub: 'mark seen · comment · reward', act: function () { if (typeof openNightlyReview === 'function') openNightlyReview(); } },
     { icon: '💾', label: 'Download Grade Backup', sub: 'signed · verified · off-Supabase', act: function () { _downloadGradeBackup(); } },
     { icon: '👥', label: 'Live Classroom', sub: 'presence · polls', act: function () { window.open('teacher-classroom.html', '_blank'); } },
     { icon: '🔒', label: 'Unlock Codes', sub: 'unit unlock generator', act: function () { window.open('teacher-code-generator.html', '_blank'); } },
@@ -13795,6 +13851,213 @@ function _paintTeacherTools(host) {
     note.style.cssText = 'font-size:9px;color:#888;margin-top:12px;border-top:1px solid #ccc;padding-top:8px;line-height:1.4';
     note.textContent = '🔒 Roster Console & Dashboard ask for your teacher key (kept only in this browser session). The Roster Console shows student passwords — open it on your own screen.';
     host.appendChild(note);
+}
+
+// ── Nightly Review (NIGHTLY_REVIEW_SPEC.md) — teacher surface ────────────────
+// Review recent student work: priority-sorted, mark SEEN (item / session / all),
+// comment with editable templates, "not reviewed in N days" flag. Marking seen mints
+// 1 candy/student/day and (with a comment) toasts the student via the existing nudge
+// path; reviews are signed receipts. Teacher session token auths every call.
+var _REVIEW_TEMPLATES_KEY = 'desk_review_templates_v1';
+var _REVIEW_DEFAULT_TEMPLATES = ['Nice work!', 'Show your steps', 'See me', 'Great improvement'];
+var _reviewBusy = false;
+
+function _reviewCfg() {
+    var token = (window.rosterClient && typeof window.rosterClient.token === 'function') ? window.rosterClient.token() : null;
+    return { token: token, base: window.ROSTER_SERVICE_URL };
+}
+function _reviewTemplates() {
+    try { var v = JSON.parse(localStorage.getItem(_REVIEW_TEMPLATES_KEY)); if (Array.isArray(v) && v.length) return v; } catch (_) {}
+    return _REVIEW_DEFAULT_TEMPLATES.slice();
+}
+function _saveReviewTemplates(arr) {
+    try { localStorage.setItem(_REVIEW_TEMPLATES_KEY, JSON.stringify(arr.filter(function (s) { return s && s.trim(); }).slice(0, 12))); } catch (_) {}
+}
+function _reviewSetBadge(n) {
+    var b = document.getElementById('menu-review-badge');
+    if (!b) return;
+    if (n > 0) { b.textContent = n > 99 ? '99+' : String(n); b.hidden = false; }
+    else { b.hidden = true; }
+}
+async function _reviewFetchQueue() {
+    var cfg = _reviewCfg();
+    if (!cfg.token || !cfg.base) return { error: 'signin' };
+    try {
+        var res = await fetch(cfg.base + '/class/review-queue', { headers: { Authorization: 'Bearer ' + cfg.token } });
+        if (res.status === 503) return { error: '503' };
+        if (res.status === 401) return { error: 'signin' };
+        if (res.status !== 200) return { error: 'http' + res.status };
+        return await res.json();
+    } catch (e) { return { error: 'network' }; }
+}
+async function _reviewBadgePoll() {
+    if (!(typeof _deskIsTeacher === 'function' && _deskIsTeacher())) { _reviewSetBadge(0); return; }
+    var data = await _reviewFetchQueue();
+    if (data && data.ok) _reviewSetBadge(Number(data.unseenTotal) || 0);
+}
+function openNightlyReview() {
+    if (typeof _deskIsTeacher === 'function' && !_deskIsTeacher()) return;
+    var overlay = document.getElementById('app-nightlyreview-overlay');
+    if (!overlay) return;
+    var win = overlay.querySelector('.app-window');
+    if (win) { win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.classList.remove('maximized'); }
+    overlay.style.display = 'block';
+    try { if (typeof bumpUsage === 'function') bumpUsage('nightlyreview'); } catch (_) {}
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('wildEep', 0.5); } catch (_) {}
+    _reviewRefresh();
+}
+function closeNightlyReview() {
+    try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play('click', 0.3); } catch (_) {}
+    var overlay = document.getElementById('app-nightlyreview-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+async function _reviewRefresh() {
+    var host = document.getElementById('nightlyreview-content');
+    if (!host) return;
+    host.innerHTML = '<div class="geneva" style="font-size:11px;color:#555;padding:12px">Loading review queue…</div>';
+    var data = await _reviewFetchQueue();
+    if (!data || data.error) {
+        var msg = (data && data.error === '503') ? 'Nightly Review isn\'t turned on yet — run migration 0025 on the roster database.'
+            : (data && data.error === 'signin') ? 'Sign in as a teacher first.'
+            : 'Couldn\'t load the review queue (' + ((data && data.error) || 'error') + ').';
+        host.innerHTML = '<div class="geneva" style="font-size:11px;color:#900;padding:12px">' + _deskEsc(msg) + '</div>';
+        return;
+    }
+    _reviewSetBadge(Number(data.unseenTotal) || 0);
+    _paintReviewQueue(host, data);
+}
+function _reviewEditTemplates() {
+    var next = prompt('Edit comment templates (one per line):', _reviewTemplates().join('\n'));
+    if (next === null) return;
+    _saveReviewTemplates(next.split('\n').map(function (s) { return s.trim(); }).filter(Boolean));
+    _reviewRefresh();
+}
+function _reviewItemRow(it) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid #eee;font-size:11px';
+    var main = document.createElement('div'); main.className = 'geneva'; main.style.cssText = 'min-width:0;flex:1;line-height:1.3';
+    var prio = it.priority >= 100 ? '📝 ' : (it.priority >= 80 ? '⚠ ' : '');
+    var score = (it.score == null) ? '' : ' · ' + (it.score <= 1 ? Math.round(it.score * 100) + '%' : it.score);
+    main.innerHTML = '<b>' + _deskEsc(prio + (it.source || '')) + '</b> <span style="color:#888">' + _deskEsc(it.itemId || '') + '</span>' + _deskEsc(score);
+    if (it.responseSnippet) {
+        var snip = document.createElement('div'); snip.style.cssText = 'color:#555;word-break:break-word'; snip.textContent = it.responseSnippet; main.appendChild(snip);
+    }
+    if (it.seen) {
+        var seen = document.createElement('div'); seen.style.cssText = 'color:#070;font-size:10px';
+        seen.textContent = '👁 seen' + (it.comment ? ' · 💬 ' + it.comment : '');
+        main.appendChild(seen);
+    }
+    row.appendChild(main);
+    if (!it.seen) {
+        var b = document.createElement('button'); b.className = 's7btn'; b.style.cssText = 'font-size:10px;padding:1px 7px;flex-shrink:0';
+        b.textContent = 'Seen';
+        b.onclick = function () {
+            var det = row.parentNode; while (det && det.tagName !== 'DETAILS') det = det.parentNode;
+            var ta = det ? det.querySelector('textarea') : null;
+            _reviewMark({ ledgerIds: [it.ledgerId], comment: ta ? ta.value : '' });
+        };
+        row.appendChild(b);
+    }
+    return row;
+}
+function _paintReviewQueue(host, data) {
+    host.innerHTML = '';
+    var students = data.students || [];
+    var withWork = students.filter(function (s) { return (s.items || []).length; });
+
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--black);padding-bottom:6px;margin-bottom:8px';
+    var h = document.createElement('div'); h.className = 'chicago'; h.style.cssText = 'font-size:12px';
+    h.innerHTML = '<b>' + (Number(data.unseenTotal) || 0) + '</b> unseen · ' + withWork.length + ' student' + (withWork.length === 1 ? '' : 's');
+    hdr.appendChild(h);
+    var spacer = document.createElement('div'); spacer.style.flex = '1'; hdr.appendChild(spacer);
+    var tplBtn = document.createElement('button'); tplBtn.className = 's7btn'; tplBtn.style.cssText = 'font-size:10px;padding:2px 7px'; tplBtn.textContent = '✎ Templates'; tplBtn.onclick = _reviewEditTemplates;
+    var rBtn = document.createElement('button'); rBtn.className = 's7btn'; rBtn.style.cssText = 'font-size:10px;padding:2px 7px'; rBtn.textContent = '↻ Refresh'; rBtn.onclick = function () { _reviewRefresh(); };
+    hdr.appendChild(tplBtn); hdr.appendChild(rBtn);
+    host.appendChild(hdr);
+
+    if (!withWork.length) {
+        var empty = document.createElement('div'); empty.className = 'geneva'; empty.style.cssText = 'font-size:11px;color:#555;padding:10px';
+        empty.textContent = 'No recent work to review — you\'re all caught up. 🌙';
+        host.appendChild(empty); return;
+    }
+
+    students.forEach(function (s) {
+        var items = s.items || [];
+        if (!items.length) return;
+        var det = document.createElement('details');
+        det.style.cssText = 'border:1px solid #999;background:#fff;margin:0 0 6px;box-shadow:1px 1px 0 #bbb';
+        if (s.unseen > 0 && withWork.indexOf(s) < 3) det.open = true;   // auto-open the top few with unseen work
+        var sum = document.createElement('summary'); sum.className = 'geneva';
+        sum.style.cssText = 'font-size:11px;padding:6px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+        var grade = (s.currentGrade == null) ? '—' : (s.currentGrade + '%');
+        var stale = s.stale ? ' <span style="color:#a00">⚠ ' + s.daysSinceReview + 'd</span>' : '';
+        sum.innerHTML = '<b>' + _deskEsc(s.realName || s.username || 'Student') + '</b>'
+            + '<span style="color:#666">grade ' + _deskEsc(grade) + '</span>'
+            + (s.unseen > 0 ? '<span style="margin-left:auto;border:1px solid #777;background:#ffe;padding:0 6px">' + s.unseen + ' unseen</span>'
+                : '<span style="margin-left:auto;color:#070">✓ all seen</span>') + stale;
+        det.appendChild(sum);
+
+        var body = document.createElement('div'); body.style.cssText = 'padding:4px 8px 8px';
+        items.forEach(function (it) { body.appendChild(_reviewItemRow(it)); });
+
+        var cWrap = document.createElement('div'); cWrap.style.cssText = 'margin-top:6px;border-top:1px dashed #ccc;padding-top:6px';
+        var chips = document.createElement('div'); chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
+        var ta = document.createElement('textarea'); ta.className = 'geneva';
+        ta.style.cssText = 'width:100%;box-sizing:border-box;font-size:11px;height:42px;border:1px solid #999;padding:4px'; ta.maxLength = 500;
+        ta.placeholder = 'Comment (optional) — sent to the student as a message if filled';
+        _reviewTemplates().forEach(function (t) {
+            var chip = document.createElement('button'); chip.type = 'button'; chip.className = 's7btn';
+            chip.style.cssText = 'font-size:9px;padding:1px 6px'; chip.textContent = t;
+            chip.onclick = function () { ta.value = ta.value ? (ta.value.replace(/\s*$/, '') + ' ' + t) : t; ta.focus(); };
+            chips.appendChild(chip);
+        });
+        cWrap.appendChild(chips); cWrap.appendChild(ta);
+
+        var btns = document.createElement('div'); btns.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-top:5px';
+        var unseenIds = items.filter(function (i) { return !i.seen; }).map(function (i) { return i.ledgerId; });
+        if (unseenIds.length) {
+            var allBtn = document.createElement('button'); allBtn.className = 's7btn'; allBtn.style.cssText = 'font-size:10px;padding:2px 8px;font-weight:bold';
+            allBtn.textContent = '✓ Mark all ' + unseenIds.length + ' seen';
+            allBtn.onclick = function () { _reviewMark({ ledgerIds: unseenIds, comment: ta.value }); };
+            btns.appendChild(allBtn);
+            var bySession = {};
+            items.forEach(function (i) { if (i.seen) return; var k = (i.sessionId == null ? '?' : i.sessionId); (bySession[k] = bySession[k] || []).push(i.ledgerId); });
+            var sessions = Object.keys(bySession);
+            if (sessions.length > 1) {
+                sessions.forEach(function (k) {
+                    var sBtn = document.createElement('button'); sBtn.className = 's7btn'; sBtn.style.cssText = 'font-size:10px;padding:2px 8px';
+                    sBtn.textContent = 'Session ' + (isNaN(Number(k)) ? k : (Number(k) + 1)) + ' (' + bySession[k].length + ')';
+                    sBtn.onclick = function () { _reviewMark({ ledgerIds: bySession[k], comment: ta.value }); };
+                    btns.appendChild(sBtn);
+                });
+            }
+        }
+        cWrap.appendChild(btns);
+        body.appendChild(cWrap);
+        det.appendChild(body);
+        host.appendChild(det);
+    });
+}
+async function _reviewMark(body) {
+    if (_reviewBusy) return; _reviewBusy = true;
+    var cfg = _reviewCfg();
+    if (!cfg.token || !cfg.base) { _reviewBusy = false; alert('Sign in as a teacher first.'); return; }
+    try {
+        var res = await fetch(cfg.base + '/class/review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + cfg.token },
+            body: JSON.stringify(body)
+        });
+        var data = await res.json().catch(function () { return null; });
+        if (res.status === 503) { alert('Nightly Review isn\'t turned on yet — run migration 0025 first.'); }
+        else if (!res.ok || !data || !data.ok) { alert('Mark failed' + (data && data.error ? ': ' + data.error : ' (HTTP ' + res.status + ')')); }
+        else {
+            try { if (typeof MacSFX !== 'undefined' && MacSFX.play) MacSFX.play((data.candyAwarded > 0) ? 'wildEep' : 'click', 0.4); } catch (_) {}
+        }
+    } catch (e) { alert('Mark failed: ' + ((e && e.message) || e)); }
+    _reviewBusy = false;
+    _reviewRefresh();
 }
 
 var _myGradebookQuarter = null;

@@ -28,7 +28,7 @@ export function createServiceClient() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createLedgerDb(client) {
-  return { insertLedgerRow, updateLedgerReceipt, getLedgerByStudent, getLedgerByItem };
+  return { insertLedgerRow, updateLedgerReceipt, getLedgerByStudent, getLedgerByItem, getRowsByLedgerIds };
 
   // Upsert a ledger row on (student_id, source, item_id, attempt).
   // Returns { data, error } — data has ledger_id and evidence_tier on success.
@@ -107,5 +107,14 @@ export function createLedgerDb(client) {
       q = q.eq('source', source);
     }
     return q.order('recorded_at', { ascending: false });
+  }
+
+  // Fetch full ledger rows for an explicit set of ledger_ids. Used by the Nightly
+  // Review mark endpoint to resolve each target's student_id + binding fields (so a
+  // teacher can mark items by id without trusting the client's student attribution).
+  // Empty input → no query. Returns { data, error } — rows in no particular order.
+  async function getRowsByLedgerIds(ledgerIds) {
+    if (!Array.isArray(ledgerIds) || !ledgerIds.length) return { data: [], error: null };
+    return client.from('item_ledger').select('*').in('ledger_id', ledgerIds);
   }
 }

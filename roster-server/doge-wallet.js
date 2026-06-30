@@ -137,13 +137,14 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
     const materialized = num(a.candy_given);     // Materialized: real candy the teacher handed over
     const realized = num(a.candy_realized);      // Realized: net P&L from cashing DOGE back to candy (signed; 0 pre-0023)
     const escrowed = num(a.candy_escrowed);      // Escrowed: candy locked in a LIVE Tetris bet (0 pre-0024)
-    // CANDY_LEDGER_SPEC + SELL_DOGE_SPEC + STUDY_BREAK_STAKES_SPEC — the (now 8-) number model.
-    // The "eat" opt-in is RETIRED: the spendable pool a student can still gift/convert/bet IS the
-    // un-realized (Owed) candy, so spendable subtracts MATERIALIZED (candy_given) + ESCROWED (candy
-    // locked in a live bet), not the old candy_eaten, and ADDS realized cash-out P&L. Hence
-    // candyBalance === candyOwed. Identity: Earned + Received + Realized = Gifted + Converted +
+    const bonus = num(a.candy_bonus);            // Bonus: review-reward candy MINTED by the teacher (0 pre-0025)
+    // CANDY_LEDGER_SPEC + SELL_DOGE_SPEC + STUDY_BREAK_STAKES_SPEC + NIGHTLY_REVIEW_SPEC — the (now 9-)
+    // number model. The "eat" opt-in is RETIRED: the spendable pool a student can still gift/convert/bet
+    // IS the un-realized (Owed) candy, so spendable subtracts MATERIALIZED (candy_given) + ESCROWED (candy
+    // locked in a live bet), ADDS realized cash-out P&L, and ADDS review BONUS (a mint). Hence
+    // candyBalance === candyOwed. Identity: Earned + Received + Realized + Bonus = Gifted + Converted +
     // Materialized + Escrowed + Owed.
-    const rawBalance = earned.candy + giftedIn - giftedOut - converted - materialized + realized - escrowed;
+    const rawBalance = earned.candy + giftedIn - giftedOut - converted - materialized + realized - escrowed + bonus;
     const candyBalance = Math.max(0, rawBalance);
     return {
       candyEarned: earned.candy,                 // Earned (monotonic)
@@ -163,7 +164,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       candyConverted: converted,                 // headline alias for doge_cost_basis (candy units)
       candyRealized: realized,                    // net realized P&L from DOGE cash-outs (signed)
       candyEscrowed: escrowed,                    // candy locked in a live Tetris bet (STUDY_BREAK_STAKES_SPEC)
-      candyOwed: candyBalance,                    // Earned + Received + Realized − Gifted − Converted − Materialized − Escrowed
+      candyBonus: bonus,                          // review-reward candy minted by the teacher (NIGHTLY_REVIEW_SPEC)
+      candyOwed: candyBalance,                    // Earned + Received + Realized + Bonus − Gifted − Converted − Materialized − Escrowed
       dogeBalance: num(a.doge_balance),
       dogeSent: num(a.doge_sent),
       dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)), // teacher deposits
@@ -538,6 +540,7 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
       const giftedIn = num(a.candy_gifted_in), converted = num(a.doge_cost_basis);
       const realized = num(a.candy_realized);
       const escrowed = num(a.candy_escrowed);
+      const bonus = num(a.candy_bonus);
       return {
         studentId: a.student_id,
         dogeAddress: a.doge_address || null,
@@ -545,8 +548,8 @@ export function mountDogeWallet(app, { db, ledgerDb, verifyToken, getPrice, fetc
         candyEaten: num(a.candy_eaten),
         candyGiven: materialized, candyMaterialized: materialized,
         candyGiftedOut: giftedOut, candyGiftedIn: giftedIn, candyReceived: giftedIn,
-        candyConverted: converted, candyRealized: realized, candyEscrowed: escrowed,
-        candyOwed: Math.max(0, earned.candy + giftedIn - giftedOut - converted - materialized + realized - escrowed),
+        candyConverted: converted, candyRealized: realized, candyEscrowed: escrowed, candyBonus: bonus,
+        candyOwed: Math.max(0, earned.candy + giftedIn - giftedOut - converted - materialized + realized - escrowed + bonus),
         dogeBalance: num(a.doge_balance), dogeSent: num(a.doge_sent),
         dogeToDeposit: Math.max(0, num(a.doge_balance) - num(a.doge_sent)),
         dogeCostBasis: converted,
