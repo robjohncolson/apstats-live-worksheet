@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Nearby Connections (P2P_CLUSTER) needs Bluetooth, BLE, and Wi-Fi Direct.
+         These permissions merge into the host app's manifest. Pre-Android-12 uses
+         the legacy BLUETOOTH* + location perms; Android 12+ uses the granular
+         BLUETOOTH_SCAN/ADVERTISE/CONNECT; Android 13+ adds NEARBY_WIFI_DEVICES. -->
+
+    <!-- Legacy Bluetooth (<= Android 11) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+
+    <!-- Android 12+ granular Bluetooth -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Wi-Fi (Nearby uses Wi-Fi Direct / hotspot for bulk transfer) -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+
+    <!-- Location: required for Nearby discovery on Android <= 12 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="32" />
+
+</manifest>

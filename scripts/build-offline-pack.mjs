@@ -36,6 +36,8 @@ const ROOT_FILES = [
   // ANDROID Phase 2 — on-device ledger merge: the verifier, the shared grade engine
   // bundle, and the local signed-ledger store (offline grade re-derivation).
   'receipt-verify.js', 'grade-engine.bundle.js', 'ledger-store.js',
+  // ANDROID Phase 3 — P2P gossip: the anti-entropy engine + the native transport bridge.
+  'ledger-gossip.js', 'nearby-transport.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json',
   'sw.js', 'pwa-register.js', 'manifest.webmanifest', 'icon.svg', 'version.json',
 ];

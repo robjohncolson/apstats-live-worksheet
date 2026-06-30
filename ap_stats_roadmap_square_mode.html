@@ -1909,6 +1909,9 @@
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openApp('formulas')" style="font-weight:bold">&#9889; Equation Trainer</div>
             <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();if(typeof openWallet==='function')openWallet()" style="font-weight:bold"><img src="icons/icon-ledger.svg" alt="" style="width:14px;height:14px;vertical-align:-3px;margin-right:3px">My Ledger</div>
+            <!-- ANDROID Phase 3: P2P ledger gossip. Hidden until the native Nearby
+                 transport registers (APK only); revealed by _phase3RevealSyncMenu(). -->
+            <div class="menu-dd-item" id="menu-sync-nearby" data-sfx onclick="if(typeof _phase3SyncNearbyClick==='function')_phase3SyncNearbyClick()" style="font-weight:bold;display:none">&#128225; Sync Nearby</div>
             <!-- Driller deprecated — removed 2026-05 -->
             <!-- <div class="menu-dd-sep"></div>
             <div class="menu-dd-item" data-sfx onclick="closeMenus();openProgress()" style="font-weight:bold">&#128202; My Progress</div> -->
@@ -2544,6 +2547,11 @@
 <script src="receipt-verify.js"></script>
 <script src="grade-engine.bundle.js"></script>
 <script src="ledger-store.js"></script>
+<!-- ANDROID Phase 3 (P2P gossip): the transport-agnostic anti-entropy engine, and
+     the native Nearby-Connections transport bridge (registers window.GossipTransport
+     ONLY inside the APK; inert on the web Desk). -->
+<script src="ledger-gossip.js"></script>
+<script src="nearby-transport.js"></script>
 <script src="offline-video.js"></script>
 <script src="gradebook-client.js"></script>
 <script src="pwa-register.js"></script>
@@ -8155,6 +8163,85 @@ function _phase2RefreshVerifySummary(onDone) {
     }).catch(function () {});
   } catch (_) {}
 }
+
+// ── ANDROID Phase 3 — P2P gossip (ANDROID_PHASE3_GOSSIP_SPEC) ────────────────────
+// Drive LedgerGossip over whatever transport registered window.GossipTransport (the
+// native Nearby-Connections plugin in the APK; nothing on the web Desk). A row is
+// only accepted after its Ed25519 receipt verifies, so a peer can never inject a
+// fake grade. One session per peer; epidemic union across everyone in range.
+function _phase3GossipReady() {
+  return !!(window.GossipTransport && window.LedgerGossip && window.LedgerStore && window.ReceiptVerify
+    && typeof LedgerStore.all === 'function' && _phase2InputsKey() != null);
+}
+function _phase3VerifyRow(row) {
+  try {
+    if (!row || !row.receipt_compact) return Promise.resolve(false);
+    return Promise.resolve(ReceiptVerify.verifyReceipt(row.receipt_compact))
+      .then(function (r) { return !!(r && r.ok); })
+      .catch(function () { return false; });
+  } catch (_) { return Promise.resolve(false); }
+}
+// Run a time-boxed gossip round. Returns a Promise<{available, peers, received}>.
+function _phase3SyncNearby(opts) {
+  opts = opts || {};
+  if (!_phase3GossipReady()) return Promise.resolve({ available: false });
+  var sessions = {}, peers = 0, received = 0;
+  function ensureSession(peerId) {
+    if (sessions[peerId]) return sessions[peerId];
+    peers += 1;
+    var sess = LedgerGossip.createSession({
+      getRows: function () { return LedgerStore.all(); },
+      verify: _phase3VerifyRow,
+      store: LedgerStore,
+      send: function (m) { try { GossipTransport.send(peerId, m); } catch (_) {} }
+    });
+    sess.done.then(function (res) { received += (res && res.received) || 0; }).catch(function () {});
+    sessions[peerId] = sess;
+    return sess;
+  }
+  function onPeer(peerId) { if (peerId) { ensureSession(peerId).initiate(); } }
+  function onMessage(peerId, msg) { if (peerId) ensureSession(peerId).handle(msg); }
+  function onLost(peerId) { if (peerId) delete sessions[peerId]; }
+  try { GossipTransport.start({ onPeer: onPeer, onMessage: onMessage, onLost: onLost }); } catch (_) {}
+  return new Promise(function (resolve) {
+    var ms = (typeof opts.durationMs === 'number') ? opts.durationMs : 15000;
+    setTimeout(function () {
+      try { GossipTransport.stop(); } catch (_) {}
+      // A successful round may have brought new signed rows → refresh the verify chip.
+      try { if (typeof _phase2RefreshVerifySummary === 'function') _phase2RefreshVerifySummary(); } catch (_) {}
+      resolve({ available: true, peers: peers, received: received });
+    }, ms);
+  });
+}
+// Menu entry handler: run a round and toast the result. No-op (with a gentle note)
+// when there's no transport — i.e. anywhere but the APK.
+function _phase3SyncNearbyClick() {
+  try { if (typeof closeMenus === 'function') closeMenus(); } catch (_) {}
+  if (!_phase3GossipReady()) {
+    if (typeof _showNudgeToast === 'function') _showNudgeToast('Nearby sync is only available in the AP Stats app.');
+    return;
+  }
+  if (typeof _showNudgeToast === 'function') _showNudgeToast('📡 Syncing with nearby devices…');
+  _phase3SyncNearby({}).then(function (r) {
+    if (!r || !r.available) return;
+    var msg = r.peers ? ('✅ Synced with ' + r.peers + ' device' + (r.peers === 1 ? '' : 's')
+      + ' · +' + r.received + ' record' + (r.received === 1 ? '' : 's')) : 'No nearby devices found.';
+    if (typeof _showNudgeToast === 'function') _showNudgeToast(msg);
+  }).catch(function () {});
+}
+// Reveal the Apps-menu "Sync Nearby" item only when a transport is registered (APK).
+function _phase3RevealSyncMenu() {
+  try {
+    var el = document.getElementById('menu-sync-nearby');
+    if (el && window.GossipTransport) el.style.display = '';
+  } catch (_) {}
+}
+try {
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _phase3RevealSyncMenu);
+    else _phase3RevealSyncMenu();
+  }
+} catch (_) {}
 // Unsynced offline submissions (OfflineQueue) → ledger-row shape, so just-finished
 // offline work counts in the re-derivation before it syncs.
 function _phase2QueueRows() {

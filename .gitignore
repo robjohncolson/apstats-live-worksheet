@@ -91,3 +91,5 @@ android-app/www/
 android-app/android/
 android-app/.gradle/
 android-app/*.keystore
+android-app/plugins/**/node_modules/
+android-app/plugins/**/build/

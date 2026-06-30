@@ -1,0 +1,47 @@
+// gossip-nearby — Capacitor Android plugin: P2P ledger gossip over Nearby
+// Connections (ANDROID Phase 3). Discovered by `cap sync` via the package.json
+// `capacitor.android.src` field and included as a gradle subproject of the app;
+// it reads the app root's ext.* SDK versions (android-app/android/variables.gradle).
+ext {
+    nearbyVersion = project.hasProperty('nearbyVersion') ? rootProject.ext.nearbyVersion : '18.7.0'
+}
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.1'
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace "com.robcolson.apstats.nearby"
+    compileSdk rootProject.ext.has('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 35
+    defaultConfig {
+        minSdkVersion rootProject.ext.has('minSdkVersion') ? rootProject.ext.minSdkVersion : 24
+        targetSdkVersion rootProject.ext.has('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 35
+        versionCode 1
+        versionName "1.0"
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lintOptions {
+        abortOnError false
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':capacitor-android')
+    implementation "com.google.android.gms:play-services-nearby:$nearbyVersion"
+}

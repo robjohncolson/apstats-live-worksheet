@@ -1,0 +1,20 @@
+{
+  "name": "gossip-nearby",
+  "version": "1.0.0",
+  "description": "Capacitor plugin: P2P ledger gossip transport over Google Nearby Connections (ANDROID Phase 3). Implements the GossipTransport contract for ledger-gossip.js.",
+  "main": "src/index.js",
+  "private": true,
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "files": [
+    "src/",
+    "android/"
+  ],
+  "devDependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  }
+}
