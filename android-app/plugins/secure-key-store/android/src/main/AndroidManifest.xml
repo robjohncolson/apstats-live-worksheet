@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Biometric prompt to gate access to the wrapped signing key. Install-time
+         normal permission (no runtime request). Merges into the host app manifest. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Fingerprint hardware is optional: devices without it fall back to device
+         credential (PIN/pattern/password) via BIOMETRIC_STRONG | DEVICE_CREDENTIAL. -->
+    <uses-feature android:name="android.hardware.fingerprint" android:required="false" />
+
+</manifest>

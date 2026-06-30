@@ -10,7 +10,8 @@
   "dependencies": {
     "@capacitor/android": "^6.2.0",
     "@capacitor/core": "^6.2.0",
-    "gossip-nearby": "file:plugins/gossip-nearby"
+    "gossip-nearby": "file:plugins/gossip-nearby",
+    "secure-key-store": "file:plugins/secure-key-store"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0"

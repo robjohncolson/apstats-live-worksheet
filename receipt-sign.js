@@ -109,6 +109,52 @@
     });
   }
 
+  // EXACTLY roster-server/receipts.js::stringifyResponse.
+  function stringifyResponse(value) {
+    if (typeof value === 'string') return value;
+    var s = JSON.stringify(value);
+    return s === undefined ? String(value) : s;
+  }
+
+  function sha256HexStr(str) {
+    return subtle().digest('SHA-256', utf8(str)).then(function (buf) { return hex(buf); });
+  }
+
+  // answerHash matches snapshot-verify.js: sha256(stringifyResponse(response)).slice(0,16).
+  function answerHash(response) {
+    return sha256HexStr(stringifyResponse(response)).then(function (h) { return h.slice(0, 16); });
+  }
+
+  function randomNonce() {
+    var c = root.crypto || (typeof globalThis !== 'undefined' && globalThis.crypto);
+    var bytes = new Uint8Array(4);
+    c.getRandomValues(bytes);
+    return hex(bytes);
+  }
+
+  // Build + sign a ledger receipt matching receipts.js::issueLedgerReceipt's payload
+  // ({v:1,t:'ledger',sid,u?,src,i,a,e,ah,ts,n,sc?,g?}). A teacher FRQ grade is an
+  // 'frq' receipt with the student's response (for `ah`) + a score + an incremented
+  // attempt (latest-wins supersedes). The signed record then passes verifyRecord.
+  // fields: { sid, u?, src, i, a(attempt), e(evidenceTier), response, sc?, g?, ts?, n? }
+  function signLedgerReceipt(privateKey, fields) {
+    fields = fields || {};
+    return answerHash(fields.response).then(function (ah) {
+      var payload = {
+        v: 1, t: 'ledger', sid: fields.sid, src: fields.src, i: fields.i,
+        a: (fields.a == null ? 1 : fields.a), e: fields.e || 'practice', ah: ah,
+        ts: (fields.ts != null ? fields.ts : Date.now()),
+        n: (fields.n != null ? fields.n : randomNonce())
+      };
+      if (fields.u !== undefined) payload.u = fields.u;
+      if (fields.sc !== undefined && fields.sc !== null) payload.sc = Number(fields.sc);
+      if (fields.g !== undefined) payload.g = fields.g;
+      return signPayload(privateKey, payload).then(function (r) {
+        return { receiptId: r.receiptId, compact: r.compact, payload: payload };
+      });
+    });
+  }
+
   root.ReceiptSign = {
     canonicalize: canonicalize,
     generateKey: generateKey,
@@ -116,6 +162,9 @@
     importPrivateKey: importPrivateKey,
     publicKeyXFromPrivate: publicKeyXFromPrivate,
     signPayload: signPayload,
+    stringifyResponse: stringifyResponse,
+    answerHash: answerHash,
+    signLedgerReceipt: signLedgerReceipt,
     _bytesToB64url: bytesToB64url
   };
 

@@ -1,0 +1,20 @@
+{
+  "name": "secure-key-store",
+  "version": "1.0.0",
+  "description": "Capacitor plugin: biometric-gated, hardware-wrapped storage for the teacher's Ed25519 signing-key JWK (ANDROID Phase 4 §3B). Stores/returns the JWK; Ed25519 signing stays in JS (receipt-sign.js).",
+  "main": "src/index.js",
+  "private": true,
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "files": [
+    "src/",
+    "android/"
+  ],
+  "devDependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  }
+}

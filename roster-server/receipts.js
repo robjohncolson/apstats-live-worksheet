@@ -124,11 +124,33 @@ function parseRetiredPubkeys() {
   return raw.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
+// Persisted trust set (migration 0026 trusted_issuers): device keys a teacher
+// registered via POST /receipts/trusted-issuers — seeded at boot, refreshed on add.
+// Held as a plain in-process cache so getTrustedIssuerPubkeys stays sync + DB-free.
+let extraTrusted = [];
+export function setPersistedTrustedPubkeys(list) {
+  extraTrusted = Array.isArray(list) ? list.filter((x) => typeof x === 'string' && x) : [];
+}
+
 export function getTrustedIssuerPubkeys() {
   const out = [];
   if (issuer.enabled && issuer.pubkey) out.push(issuer.pubkey);
   for (const k of parseRetiredPubkeys()) if (!out.includes(k)) out.push(k);
+  for (const k of extraTrusted) if (!out.includes(k)) out.push(k);
   return out;
+}
+
+// Validate an Ed25519 public-key `x` (base64url, 32-byte raw → 43 chars). True only
+// if it round-trips into a real Ed25519 public key — so a garbage/forged value
+// never enters the trust set.
+export function isValidIssuerPubkey(x) {
+  if (typeof x !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(x)) return false;
+  try {
+    crypto.createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x }, format: 'jwk' });
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 export function getReceiptIssuer() {
@@ -330,9 +352,84 @@ export function issueReviewReceipt({ ledgerId, studentId, teacher, seenAt = Date
   }
 }
 
-export function mountReceipts(app) {
+function isMissingTrustedIssuers(error) {
+  const code = error && error.code;
+  const msg = (error && error.message) || '';
+  return code === '42P01' || code === 'PGRST205'
+    || /relation .*trusted_issuers.* does not exist/i.test(msg)
+    || /could not find the table/i.test(msg);
+}
+
+export function mountReceipts(app, { db, requireTeacher } = {}) {
   app.get('/receipts/issuer', (_req, res) => {
     res.json(getReceiptIssuer());
+  });
+
+  // Seed the persisted trust set at boot (best-effort; silent pre-migration-0026).
+  if (db && typeof db.listTrustedIssuers === 'function') {
+    Promise.resolve().then(async () => {
+      try {
+        const { data, error } = await db.listTrustedIssuers();
+        if (!error && Array.isArray(data)) setPersistedTrustedPubkeys(data.map((r) => r.pubkey).filter(Boolean));
+      } catch (_) { /* table absent → no persisted keys yet */ }
+    });
+  }
+
+  // POST /receipts/trusted-issuers — teacher-gated. Register a device's Ed25519
+  // PUBLIC key into the issuer trust set (Phase 4 §3B) so receipts that device signs
+  // verify everywhere. Persisted (survives restart) + reaches all clients via GET
+  // /receipts/issuer. Body: { pubkey (base64url x), label? }.
+  app.post('/receipts/trusted-issuers', async (req, res) => {
+    if (typeof requireTeacher !== 'function' || !(await requireTeacher(req, db))) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+    const pubkey = req.body && req.body.pubkey;
+    const label = (req.body && typeof req.body.label === 'string') ? req.body.label.slice(0, 100) : null;
+    if (!isValidIssuerPubkey(pubkey)) return res.status(400).json({ ok: false, error: 'invalid Ed25519 pubkey' });
+    if (!db || typeof db.addTrustedIssuer !== 'function') {
+      return res.status(503).json({ ok: false, error: 'trusted_issuers not provisioned (run migration 0026)' });
+    }
+    try {
+      const { error } = await db.addTrustedIssuer({ pubkey, label });
+      if (error) {
+        if (isMissingTrustedIssuers(error)) return res.status(503).json({ ok: false, error: 'trusted_issuers not provisioned (run migration 0026)' });
+        throw error;
+      }
+      // Refresh the in-process cache so the new key is trusted immediately.
+      const { data } = await db.listTrustedIssuers();
+      if (Array.isArray(data)) setPersistedTrustedPubkeys(data.map((r) => r.pubkey).filter(Boolean));
+      return res.json({ ok: true, pubkeys: getTrustedIssuerPubkeys() });
+    } catch (e) {
+      console.error('POST /receipts/trusted-issuers error:', e);
+      return res.status(500).json({ ok: false, error: 'could not register issuer' });
+    }
+  });
+
+  // POST /receipts/trusted-issuers/revoke — teacher-gated. Revoke a device key
+  // (lost/stolen phone) and evict it from the LIVE trust set IMMEDIATELY — not just
+  // at the next restart — by re-listing + refreshing the cache (security review fix).
+  app.post('/receipts/trusted-issuers/revoke', async (req, res) => {
+    if (typeof requireTeacher !== 'function' || !(await requireTeacher(req, db))) {
+      return res.status(401).json({ ok: false, error: 'forbidden' });
+    }
+    const pubkey = req.body && req.body.pubkey;
+    if (typeof pubkey !== 'string' || !pubkey) return res.status(400).json({ ok: false, error: 'pubkey required' });
+    if (!db || typeof db.revokeTrustedIssuer !== 'function') {
+      return res.status(503).json({ ok: false, error: 'trusted_issuers not provisioned (run migration 0026)' });
+    }
+    try {
+      const { error } = await db.revokeTrustedIssuer({ pubkey });
+      if (error) {
+        if (isMissingTrustedIssuers(error)) return res.status(503).json({ ok: false, error: 'trusted_issuers not provisioned (run migration 0026)' });
+        throw error;
+      }
+      const { data } = await db.listTrustedIssuers();
+      if (Array.isArray(data)) setPersistedTrustedPubkeys(data.map((r) => r.pubkey).filter(Boolean));
+      return res.json({ ok: true, pubkeys: getTrustedIssuerPubkeys() });
+    } catch (e) {
+      console.error('POST /receipts/trusted-issuers/revoke error:', e);
+      return res.status(500).json({ ok: false, error: 'could not revoke issuer' });
+    }
   });
 }
 

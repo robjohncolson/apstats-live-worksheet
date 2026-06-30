@@ -21,7 +21,7 @@ export function createLiveDb() {
 // ── Thin wrapper (accepts any Supabase-compatible client) ─────────────────────
 
 export function createDb(client) {
-  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward };
+  return { insertRoster, findByUsername, findByStudentId, findTeacherUsername, getRoleByStudentId, getSpriteHueByStudentId, getSchoologyUidMap, updatePassword, updateStudent, deleteRoster, deletePeerAnswers, updateSpriteHue, updateSchoologyUid, listRoster, getDogeAccount, listDogeAccounts, upsertDogeAccount, updateDogeField, insertDogeLedger, listDogeLedger, dogeSpend, updateDogeChain, dogeGift, dogeMark, dogeSell, dogeCoinFlows, dogeGiftedSince, tetrisBetOpen, tetrisBetResolve, tetrisBetRefund, listStaleBets, listSettledBets, upsertReviewMark, listReviewMarksByStudents, listReviewMarksByStudent, reviewAward, addTrustedIssuer, listTrustedIssuers, revokeTrustedIssuer };
 
   // Phase 6: look up a single roster row by student_id -- used by /grade to
   // resolve the student's section, and by the Console routes (P3 nudges,
@@ -418,5 +418,27 @@ export function createDb(client) {
   // { data, error } where data is 1 (minted this call) or 0 (already minted today).
   async function reviewAward(studentId, nyDate) {
     return client.rpc('review_award', { p_sid: studentId, p_date: nyDate });
+  }
+
+  // ── Trusted issuers (migration 0026) ──────────────────────────────────────────
+  // A teacher device's registered Ed25519 public key (Phase 4 §3B). Upsert is
+  // idempotent on pubkey (re-registering the same key just refreshes the label).
+  async function addTrustedIssuer({ pubkey, label }) {
+    return client.from('trusted_issuers').upsert([{
+      pubkey,
+      label: label ?? null,
+      revoked: false
+    }], { onConflict: 'pubkey' }).select('*').maybeSingle();
+  }
+
+  // The non-revoked trust set, seeded into receipts.js's cache at boot + on add.
+  async function listTrustedIssuers() {
+    return client.from('trusted_issuers').select('pubkey').eq('revoked', false);
+  }
+
+  // Revoke a device key (lost/stolen phone). The revoke endpoint re-lists + refreshes
+  // the in-process cache so the key loses authority IMMEDIATELY, not just at restart.
+  async function revokeTrustedIssuer({ pubkey }) {
+    return client.from('trusted_issuers').update({ revoked: true }).eq('pubkey', pubkey).select('*').maybeSingle();
   }
 }

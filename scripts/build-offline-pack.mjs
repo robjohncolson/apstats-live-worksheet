@@ -38,6 +38,8 @@ const ROOT_FILES = [
   'receipt-verify.js', 'grade-engine.bundle.js', 'ledger-store.js',
   // ANDROID Phase 3 — P2P gossip: the anti-entropy engine + the native transport bridge.
   'ledger-gossip.js', 'nearby-transport.js',
+  // ANDROID Phase 4 — on-device teacher app: signing + epoch seal + the key-store bridge.
+  'teacher-app.html', 'receipt-sign.js', 'ledger-seal.js', 'secure-key.js',
   'railway_client.js', 'railway_config.js', 'roadmap-data.json',
   'sw.js', 'pwa-register.js', 'manifest.webmanifest', 'icon.svg', 'version.json',
 ];

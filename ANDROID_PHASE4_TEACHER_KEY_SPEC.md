@@ -111,6 +111,19 @@ APK) that, using the chosen key:
 3. **[gated]** Teacher grading-loop UI (import → grade → sign → seal → push).
 4. Rotation runbook + `KEY_MANAGEMENT_RUNBOOK.md` update.
 
+## 5b. Security review (adversarial, 20-agent — find → refute)
+
+15 candidate findings raised, **12 refuted, 0 confirmed, 3 survived (PLAUSIBLE).** Notably refuted:
+a claimed concurrent-FRQ-overwrite (student FRQ writes hardcode `attempt:1`), and all 5
+XSS / prototype-pollution candidates in `teacher-app.html` (every interpolated value is `esc()`'d
+or a Number; studentIds are server UUIDs).
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | **No live revocation** — revoking a `trusted_issuers` row only took effect at restart. | **FIXED** — added `db.revokeTrustedIssuer` + teacher-gated `POST /receipts/trusted-issuers/revoke` that re-lists + refreshes the cache so a lost-device key loses authority immediately. |
+| 2 | Teacher secret persisted in cleartext `localStorage`. | **ACCEPTED / documented** — the secret is a SHARED, public-default (`apteacher2627`) classroom bearer password by design; `teacher-dashboard.html` already persists it identically; the secure store's purpose (protect the *device* Ed25519 key) is intact. Out of the stated threat model. |
+| 3 | Object/array FRQ responses skip the `ah` answer-hash bind in `verifyRecord` (`snapshot-verify.js:83`). | **PRE-EXISTING (s29), deferred** — not a Phase 4 regression; Phase 4's FRQ path uses string responses (bound). The safe fix is a coordinated canonical-`ah` receipt-format change (deep-sort object keys on BOTH sign + verify) that would otherwise break existing object receipts → a dedicated migration, not bundled here. Quiz/PC responses are letter strings (primitive → already bound). |
+
 ## 6. Out of scope
 Per-student keypairs / non-repudiation (v2), Play Store (Phase 5), changing the
 clear-text privacy posture (decided, §9 of the packet spec).

@@ -68,7 +68,7 @@ export function createApp(db, ledgerDb, loadManifest, loadAnswerKey, loadSkillMa
   // changes, log req.ip for a known client and set the smallest matching value.
   app.set('trust proxy', 1);
   initReceipts();
-  mountReceipts(app);
+  mountReceipts(app, { db, requireTeacher });
 
   // Per-IP throttle for the un-authed self-signup claim. Generous on purpose: a
   // whole class shares one school NAT, so a low cap would block real students.

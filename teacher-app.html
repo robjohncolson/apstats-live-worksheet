@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AP Stats — Teacher</title>
+<!-- ANDROID Phase 4 §4 — the on-device TEACHER app: manage the device signing key
+     (generate → hardware-wrap → register its pubkey), grade pending FRQs into
+     device-SIGNED receipts, push them faithfully, and seal the daily epoch. Mobile
+     shell cloned from mobile-home.html; teacher dual-auth (x-teacher-secret + Bearer)
+     from teacher-dashboard.html. Ed25519 signing is in JS (receipt-sign.js); the key
+     lives biometric-gated + hardware-wrapped via the SecureKeyStore plugin. -->
+<style>
+  :root { --blue:#0b5cad; --ink:#1a1a1a; --bg:#f2f4f7; --card:#fff; --line:#dfe3e8; --good:#2a7a2a; --warn:#a33; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; }
+  body { font-family:-apple-system,Roboto,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; background:var(--blue); color:#fff; z-index:5;
+           padding:calc(12px + env(safe-area-inset-top,0)) 16px 12px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  header h1 { margin:0; font-size:18px; font-weight:700; }
+  header .who { font-size:12px; opacity:.9; margin-top:3px; }
+  header a.back { color:#fff; opacity:.85; font-size:12px; text-decoration:none; }
+  main { padding:10px 12px 60px; max-width:680px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin:0 0 12px; }
+  .card h2 { margin:0 0 8px; font-size:15px; }
+  .muted { color:#667; font-size:12px; }
+  label { display:block; font-size:12px; color:#445; margin:8px 0 4px; }
+  input[type=text], input[type=password], input[type=number] {
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:15px; background:#fff; }
+  .btn { display:inline-block; padding:11px 14px; border-radius:9px; border:1px solid var(--line);
+         background:#eef3f9; font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; }
+  .btn:active { background:#e2e9f2; }
+  .btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .btn.danger { background:#fbeaea; border-color:#e9b8b8; color:#a33; }
+  .btn[disabled] { opacity:.45; pointer-events:none; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .status { font-size:13px; margin:6px 0; }
+  .ok { color:var(--good); } .bad { color:var(--warn); }
+  .pill { display:inline-block; font-size:11px; padding:2px 7px; border-radius:10px; background:#eef; border:1px solid #ccd; }
+  .frq { border:1px solid var(--line); border-radius:9px; padding:10px; margin:8px 0; background:#fafbfc; }
+  .frq .meta { font-size:12px; color:#556; }
+  .frq .resp { font-size:13px; margin:6px 0; white-space:pre-wrap; word-break:break-word; }
+  .grade-btns .g { padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; }
+  .grade-btns .g.sel { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .mono { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; word-break:break-all; color:#445; }
+  #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#222; color:#fff;
+           padding:10px 16px; border-radius:10px; font-size:13px; max-width:90%; text-align:center; opacity:0;
+           transition:opacity .2s; pointer-events:none; z-index:60; }
+  #toast.show { opacity:.95; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="mobile-home.html">‹ Lessons</a>
+  <h1>🔑 Teacher</h1>
+  <div class="who" id="who">On-device grading &amp; signing</div>
+</header>
+<main id="main">
+
+  <!-- 1. Access -->
+  <section class="card" id="auth-card">
+    <h2>Teacher access</h2>
+    <div class="muted">Enter the teacher secret (or sign in as a teacher in a worksheet). Stored only on this device.</div>
+    <label for="secret">Teacher secret</label>
+    <input type="password" id="secret" autocomplete="off" placeholder="teacher secret">
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="btn-connect">Connect</button>
+      <span class="status" id="auth-status"></span>
+    </div>
+  </section>
+
+  <!-- 2. Signing key -->
+  <section class="card hidden" id="key-card">
+    <h2>Device signing key</h2>
+    <div class="status" id="key-status">Checking…</div>
+    <div class="muted" id="biometric-note"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btn-generate">Generate signing key</button>
+      <button class="btn" id="btn-unlock">Unlock</button>
+      <button class="btn" id="btn-register">Register pubkey</button>
+      <button class="btn danger" id="btn-removekey">Remove</button>
+    </div>
+    <div class="mono" id="pubkey-line" style="margin-top:8px"></div>
+  </section>
+
+  <!-- 3. Grade pending FRQs -->
+  <section class="card hidden" id="grade-card">
+    <h2>Grade pending FRQs</h2>
+    <div class="row">
+      <button class="btn" id="btn-import">Import class work</button>
+      <span class="status" id="import-status"></span>
+    </div>
+    <div id="frq-list"></div>
+    <div class="row hidden" id="push-row" style="margin-top:10px">
+      <button class="btn primary" id="btn-push">Sign &amp; push grades</button>
+      <span class="status" id="push-status"></span>
+    </div>
+  </section>
+
+  <!-- 4. Seal epoch -->
+  <section class="card hidden" id="seal-card">
+    <h2>Seal today</h2>
+    <div class="muted">Compute every student's head and sign the daily epoch anchor (the O(1)/day class seal).</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btn-seal">Seal &amp; verify epoch</button>
+      <span class="status" id="seal-status"></span>
+    </div>
+    <div class="mono" id="seal-line" style="margin-top:8px"></div>
+  </section>
+
+</main>
+<div id="toast"></div>
+
+<script src="roster_config.js" onerror=""></script>
+<script src="roster-client.js" onerror=""></script>
+<script src="receipt-verify.js" onerror=""></script>
+<script src="receipt-sign.js" onerror=""></script>
+<script src="ledger-seal.js" onerror=""></script>
+<script src="secure-key.js" onerror=""></script>
+<script>
+(function () {
+  'use strict';
+
+  var KEY_NAME = 'apstats_teacher_signing_v1';
+  var PUBKEY_LS = 'apstats_teacher_pubkey';
+  var SECRET_LS = 'apstats_teacher_secret';
+
+  // In-memory unlocked private key (cleared on lock / reload). The JWK is never held;
+  // only the imported CryptoKey, recovered via a biometric unlock.
+  var _signingKey = null;
+  var _snapshot = null;
+  var _pending = [];        // [{studentId, username, itemId, response, attempt}]
+  var _grades = {};         // key(studentId|itemId) -> grade letter
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2600); }
+
+  function svcUrl() {
+    var u = (typeof window.ROSTER_SERVICE_URL === 'string' && window.ROSTER_SERVICE_URL)
+      || (typeof window.RAILWAY_ROSTER_URL === 'string' && window.RAILWAY_ROSTER_URL)
+      || (typeof window.ROSTER_SERVER_URL === 'string' && window.ROSTER_SERVER_URL) || '';
+    return String(u).replace(/\/$/, '');
+  }
+  function teacherSecret() {
+    var v = $('secret') && $('secret').value;
+    return (v && v.trim()) || (function () { try { return localStorage.getItem(SECRET_LS) || ''; } catch (_) { return ''; } })();
+  }
+  function authHeaders() {
+    var h = { 'Content-Type': 'application/json' };
+    var s = teacherSecret(); if (s) h['x-teacher-secret'] = s;
+    try { var t = window.rosterClient && rosterClient.token && rosterClient.token(); if (t) h['Authorization'] = 'Bearer ' + t; } catch (_) {}
+    return h;
+  }
+  function fetchJson(path) {
+    return fetch(svcUrl() + path, { headers: authHeaders() }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    });
+  }
+  function postJson(path, body) {
+    return fetch(svcUrl() + path, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    });
+  }
+
+  // ── Pure logic (unit-tested in tests/teacher-app.test.js) ─────────────────────
+
+  function _itemKey(studentId, itemId) { return String(studentId) + '|' + String(itemId); }
+
+  // Latest-attempt frq rows with a null score, across all students = the grading queue.
+  function _findPendingFrqs(snapshot) {
+    var out = [];
+    var students = (snapshot && snapshot.students) || [];
+    students.forEach(function (s) {
+      var recs = (s.bundle && s.bundle.records) || [];
+      var latest = {}; // itemId -> the highest-attempt frq row
+      recs.forEach(function (r) {
+        if (r.source !== 'frq') return;
+        var prev = latest[r.itemId];
+        var a = Number(r.attempt) || 1;
+        if (!prev || a >= (Number(prev.attempt) || 1)) latest[r.itemId] = r;
+      });
+      Object.keys(latest).forEach(function (itemId) {
+        var r = latest[itemId];
+        if (r.score === null || r.score === undefined) {
+          out.push({ studentId: s.studentId, username: s.username, itemId: itemId, response: r.response, attempt: Number(r.attempt) || 1 });
+        }
+      });
+    });
+    return out;
+  }
+
+  // E/P/I → 1/0.5/0; a 0..1 number passes through; anything else → null (ungraded).
+  function _scoreFromGrade(g) {
+    if (g === 'E') return 1;
+    if (g === 'P') return 0.5;
+    if (g === 'I') return 0;
+    // null/undefined/empty = ungraded (NOT 0) — guard before Number() (Number(null)===0
+    // would otherwise push a toggled-off FRQ as a 0/Incorrect).
+    if (g === null || g === undefined || g === '') return null;
+    var n = Number(g);
+    return (isFinite(n) && n >= 0 && n <= 1) ? n : null;
+  }
+
+  // Build the /admin/restore record from a pending item + score + the signed receipt.
+  function _buildGradeRecord(pending, score, signed) {
+    return {
+      studentId: pending.studentId,
+      source: 'frq',
+      itemId: pending.itemId,
+      response: pending.response,
+      score: score,
+      attempt: pending.attempt + 1,           // supersede via a new attempt (latest-wins)
+      recorded_at: new Date(signed.payload.ts).toISOString(),
+      receipt_id: signed.receiptId,
+      receipt_compact: signed.compact
+    };
+  }
+
+  // Receipt-bearing rows per student, shaped for LedgerSeal.buildHead.
+  function _rowsForHead(records) {
+    return (records || [])
+      .filter(function (r) { return r.receipt_id && r.receipt_compact; })
+      .map(function (r) { return { id: r.receipt_id, ts: Date.parse(r.recorded_at) || 0 }; });
+  }
+
+  // ── Key management ─────────────────────────────────────────────────────────
+
+  function setSection(id, show) { var el = $(id); if (el) el.classList[show ? 'remove' : 'add']('hidden'); }
+
+  function refreshKeyStatus() {
+    var has = window.SecureKeyStore ? SecureKeyStore.hasKey(KEY_NAME) : Promise.resolve(false);
+    return has.then(function (exists) {
+      var pub = '';
+      try { pub = localStorage.getItem(PUBKEY_LS) || ''; } catch (_) {}
+      $('key-status').innerHTML = exists
+        ? '<span class="ok">✓ Signing key present on this device.</span> ' + (_signingKey ? '<span class="pill">unlocked</span>' : '<span class="pill">locked</span>')
+        : '<span class="bad">No signing key yet — generate one.</span>';
+      $('pubkey-line').textContent = pub ? ('pubkey: ' + pub) : '';
+      $('btn-generate').disabled = exists;
+      $('btn-unlock').disabled = !exists;
+      $('btn-register').disabled = !pub;
+      $('btn-removekey').disabled = !exists;
+    }).then(function () {
+      if (window.SecureKeyStore) return SecureKeyStore.isBiometricAvailable().then(function (ok) {
+        $('biometric-note').textContent = ok ? 'Biometric / device-credential unlock available.' : 'No biometric/PIN enrolled — set a screen lock to protect the key.';
+      });
+    }).catch(function () {});
+  }
+
+  function generateKey() {
+    if (!window.ReceiptSign || !window.SecureKeyStore || !SecureKeyStore.available) { toast('Signing is only available in the app.'); return; }
+    toast('Generating key…');
+    ReceiptSign.generateKey().then(function (k) {
+      return ReceiptSign.exportPrivateJwk(k.privateKey).then(function (jwk) {
+        return SecureKeyStore.setKey(KEY_NAME, JSON.stringify(jwk)).then(function () {
+          try { localStorage.setItem(PUBKEY_LS, k.publicKeyX); } catch (_) {}
+          _signingKey = k.privateKey;
+          toast('Key generated + stored. Now register its pubkey.');
+          return refreshKeyStatus();
+        });
+      });
+    }).catch(function (e) { toast('Generate failed: ' + (e && e.message || e)); });
+  }
+
+  function unlockKey() {
+    if (!window.SecureKeyStore || !SecureKeyStore.available) { toast('Unlock is only available in the app.'); return Promise.reject(); }
+    return SecureKeyStore.getKey(KEY_NAME).then(function (jwkStr) {
+      if (!jwkStr) { toast('No key stored.'); return Promise.reject(); }
+      return ReceiptSign.importPrivateKey(JSON.parse(jwkStr)).then(function (key) {
+        _signingKey = key; toast('Unlocked.'); return refreshKeyStatus();
+      });
+    }).catch(function (e) { if (e) toast('Unlock failed: ' + (e && e.message || e)); return Promise.reject(e); });
+  }
+
+  function ensureUnlocked() { return _signingKey ? Promise.resolve(_signingKey) : unlockKey().then(function () { return _signingKey; }); }
+
+  function registerKey() {
+    var pub = ''; try { pub = localStorage.getItem(PUBKEY_LS) || ''; } catch (_) {}
+    if (!pub) { toast('Generate a key first.'); return; }
+    toast('Registering pubkey…');
+    postJson('/receipts/trusted-issuers', { pubkey: pub, label: 'Teacher device' }).then(function (r) {
+      if (r.status === 200 && r.body && r.body.ok) toast('✓ Pubkey registered — device receipts are now trusted.');
+      else if (r.status === 401) toast('Register failed: check the teacher secret.');
+      else if (r.status === 503) toast('Register failed: run migration 0026 on the server.');
+      else toast('Register failed: ' + (r.body && r.body.error || r.status));
+    }).catch(function (e) { toast('Register failed: ' + (e && e.message || e)); });
+  }
+
+  function removeKey() {
+    if (!window.SecureKeyStore) return;
+    SecureKeyStore.removeKey(KEY_NAME).then(function () { _signingKey = null; try { localStorage.removeItem(PUBKEY_LS); } catch (_) {} toast('Key removed.'); return refreshKeyStatus(); });
+  }
+
+  // ── Grading ────────────────────────────────────────────────────────────────
+
+  function importWork() {
+    $('import-status').textContent = 'Importing…';
+    fetchJson('/admin/snapshot').then(function (r) {
+      if (r.status !== 200 || !r.body) { $('import-status').innerHTML = '<span class="bad">' + (r.status === 401 ? 'Check teacher secret.' : 'Import failed (' + r.status + ').') + '</span>'; return; }
+      _snapshot = r.body;
+      _pending = _findPendingFrqs(_snapshot);
+      _grades = {};
+      $('import-status').innerHTML = '<span class="ok">' + _pending.length + ' pending FRQ' + (_pending.length === 1 ? '' : 's') + '.</span>';
+      renderPending();
+    }).catch(function (e) { $('import-status').innerHTML = '<span class="bad">Import failed: ' + esc(e && e.message || e) + '</span>'; });
+  }
+
+  function renderPending() {
+    var host = $('frq-list'); host.innerHTML = '';
+    if (!_pending.length) { setSection('push-row', false); return; }
+    _pending.forEach(function (p) {
+      var key = _itemKey(p.studentId, p.itemId);
+      var div = document.createElement('div'); div.className = 'frq';
+      div.innerHTML = '<div class="meta">' + esc(p.username || p.studentId) + ' · <b>' + esc(p.itemId) + '</b></div>'
+        + '<div class="resp">' + esc(typeof p.response === 'string' ? p.response : JSON.stringify(p.response)) + '</div>';
+      var gb = document.createElement('div'); gb.className = 'grade-btns row';
+      ['E', 'P', 'I'].forEach(function (g) {
+        var b = document.createElement('button'); b.className = 'g' + (_grades[key] === g ? ' sel' : ''); b.textContent = g;
+        b.onclick = function () { _grades[key] = (_grades[key] === g ? null : g); renderPending(); };
+        gb.appendChild(b);
+      });
+      div.appendChild(gb);
+      host.appendChild(div);
+    });
+    var anyGraded = Object.keys(_grades).some(function (k) { return _scoreFromGrade(_grades[k]) != null; });
+    setSection('push-row', anyGraded);
+  }
+
+  function pushGrades() {
+    var toGrade = _pending.filter(function (p) { return _scoreFromGrade(_grades[_itemKey(p.studentId, p.itemId)]) != null; });
+    if (!toGrade.length) { toast('Grade at least one FRQ first.'); return; }
+    $('push-status').textContent = 'Unlocking…';
+    ensureUnlocked().then(function (key) {
+      $('push-status').textContent = 'Signing ' + toGrade.length + '…';
+      // Sign sequentially (one in-memory key; deterministic order).
+      var records = [];
+      return toGrade.reduce(function (chain, p) {
+        return chain.then(function () {
+          var score = _scoreFromGrade(_grades[_itemKey(p.studentId, p.itemId)]);
+          return ReceiptSign.signLedgerReceipt(key, { sid: p.studentId, src: 'frq', i: p.itemId, a: p.attempt + 1, e: 'practice', response: p.response, sc: score, g: 'self' })
+            .then(function (signed) { records.push(_buildGradeRecord(p, score, signed)); });
+        });
+      }, Promise.resolve()).then(function () {
+        $('push-status').textContent = 'Pushing…';
+        return postJson('/admin/restore', { records: records });
+      }).then(function (r) {
+        if (r.status === 200 && r.body && r.body.ok) {
+          $('push-status').innerHTML = '<span class="ok">✓ Restored ' + r.body.restored + ', skipped ' + r.body.skipped + '.</span>';
+          toast('Pushed ' + r.body.restored + ' graded FRQ' + (r.body.restored === 1 ? '' : 's') + '.');
+          importWork(); // refresh the queue
+        } else {
+          $('push-status').innerHTML = '<span class="bad">Push failed (' + r.status + ').</span>';
+        }
+      });
+    }).catch(function (e) { if (e) $('push-status').innerHTML = '<span class="bad">' + esc(e && e.message || 'unlock/sign failed') + '</span>'; });
+  }
+
+  // ── Seal epoch ─────────────────────────────────────────────────────────────
+
+  function todayNY() {
+    // America/New_York date string YYYY-MM-DD (matches admin-snapshot todayInTz).
+    try {
+      var parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      return parts; // en-CA → YYYY-MM-DD
+    } catch (_) { return new Date().toISOString().slice(0, 10); }
+  }
+
+  function sealEpoch() {
+    if (!_snapshot) { toast('Import class work first.'); return; }
+    $('seal-status').textContent = 'Unlocking…';
+    ensureUnlocked().then(function (key) {
+      $('seal-status').textContent = 'Computing heads…';
+      var students = _snapshot.students || [];
+      // head per student from their receipt-bearing records.
+      return students.reduce(function (chain, s) {
+        return chain.then(function (heads) {
+          var rows = _rowsForHead((s.bundle && s.bundle.records) || []);
+          return LedgerSeal.buildHead(rows).then(function (head) { heads[s.studentId] = head || null; return heads; });
+        });
+      }, Promise.resolve({})).then(function (heads) {
+        $('seal-status').textContent = 'Signing epoch…';
+        return LedgerSeal.sealEpoch({ heads: heads, asOfDateNY: todayNY(), privateKey: key });
+      }).then(function (sealed) {
+        // The seal is signed by THIS device's key (its pubkey is in the server trust
+        // set once registered), so the server's verifySnapshot accepts it. Show the root.
+        $('seal-status').innerHTML = '<span class="ok">✓ Epoch sealed for ' + esc(sealed.epoch.d) + ' (' + sealed.epoch.cnt + ' students).</span>';
+        $('seal-line').textContent = 'root: ' + sealed.root;
+        toast('Epoch sealed.');
+      });
+    }).catch(function (e) { if (e) $('seal-status').innerHTML = '<span class="bad">' + esc(e && e.message || 'seal failed') + '</span>'; });
+  }
+
+  // ── Wire up ────────────────────────────────────────────────────────────────
+
+  function connect() {
+    var s = $('secret').value.trim();
+    if (s) { try { localStorage.setItem(SECRET_LS, s); } catch (_) {} }
+    // Reveal the working sections; a 401 later tells the teacher if the secret is wrong.
+    setSection('key-card', true); setSection('grade-card', true); setSection('seal-card', true);
+    $('auth-status').innerHTML = '<span class="ok">Connected.</span>';
+    refreshKeyStatus();
+  }
+
+  function init() {
+    try { var saved = localStorage.getItem(SECRET_LS); if (saved && $('secret')) $('secret').value = saved; } catch (_) {}
+    $('btn-connect').onclick = connect;
+    $('btn-generate').onclick = generateKey;
+    $('btn-unlock').onclick = function () { unlockKey().catch(function () {}); };
+    $('btn-register').onclick = registerKey;
+    $('btn-removekey').onclick = removeKey;
+    $('btn-import').onclick = importWork;
+    $('btn-push').onclick = pushGrades;
+    $('btn-seal').onclick = sealEpoch;
+    if (!window.SecureKeyStore || !SecureKeyStore.available) {
+      $('who').textContent = 'Open this in the AP Stats app to manage the signing key.';
+    }
+  }
+
+  // Expose the pure helpers for tests.
+  window.__teacherApp = {
+    _findPendingFrqs: _findPendingFrqs,
+    _scoreFromGrade: _scoreFromGrade,
+    _buildGradeRecord: _buildGradeRecord,
+    _rowsForHead: _rowsForHead,
+    _itemKey: _itemKey
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body>
+</html>
