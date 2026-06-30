@@ -34,7 +34,15 @@ function videosFor(topicId) {
     .map((v) => v.file);
 }
 const relWS = (url) => (typeof url === 'string' && url.startsWith(WS_BASE)) ? url.slice(WS_BASE.length) : (url || null);
-const quizLocal = (url) => (typeof url === 'string' && url.startsWith(CR_BASE)) ? 'quiz/' + url.slice(CR_BASE.length) : (url || null);
+// Link the EXPLICIT quiz file, not the directory: the Capacitor WebView server doesn't resolve
+// a bare `quiz/?…` to `quiz/index.html` (it falls back to the root index.html → the launcher's
+// own "could not load" error). `quiz/index.html?u=&l=` is an unambiguous file the server serves,
+// and the cr quiz reads ?u/&l from location.search regardless of the path.
+function quizLocal(url) {
+  if (typeof url !== 'string' || !url.startsWith(CR_BASE)) return url || null;
+  const rest = url.slice(CR_BASE.length);                       // "?u=8&l=2" | "page.html?x" | "" | "#h"
+  return (rest === '' || rest[0] === '?' || rest[0] === '#') ? 'quiz/index.html' + rest : 'quiz/' + rest;
+}
 const lessonNum = (id) => parseInt(String(id).split('.')[1], 10) || 0;
 
 const out = [];

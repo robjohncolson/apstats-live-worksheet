@@ -30,7 +30,7 @@ function run(cmd, cwd) {
 }
 
 console.log(`\n── 1/3  offline pack → android-app/www  ${noMedia ? '(no video)' : '(with media-compressed video)'}`);
-run(`node scripts/build-offline-pack.mjs --out android-app/www${noMedia ? ' --no-media' : ''}`, REPO);
+run(`node scripts/build-offline-pack.mjs --out android-app/www --app-nav --keep-media${noMedia ? ' --no-media' : ''}`, REPO);
 
 // Mobile launcher (ANDROID_PACKET_APP_SPEC §2): the phone home is the lessons list, NOT the Desk.
 // Generate the per-lesson index from the bundled video set, drop in mobile-home.html, and make it

@@ -54,6 +54,21 @@ export function injectOfflineConfig(html, relPrefix) {
   return tag + '\n' + html;
 }
 
+// App-only: a floating "‹ Lessons" pill that returns to the mobile launcher (index.html),
+// injected into worksheets + the quiz so the WebView (no browser chrome) always has a way back.
+// relPrefix makes the link depth-correct (root worksheet → index.html; quiz/ → ../index.html).
+// Enabled by build-offline-pack --app-nav (so the live web worksheets are unaffected).
+export function injectAppNav(html, relPrefix) {
+  if (html.includes('id="__app-lessons"')) return html; // idempotent
+  const bar = '<a id="__app-lessons" href="' + relPrefix + 'index.html" aria-label="Back to lessons" '
+    + 'style="position:fixed;top:0;left:0;z-index:2147483646;'
+    + 'margin:max(6px,env(safe-area-inset-top,0)) 0 0 6px;padding:7px 13px;'
+    + 'background:rgba(11,92,173,.93);color:#fff;font:600 13px -apple-system,Roboto,sans-serif;'
+    + 'text-decoration:none;border-radius:18px;box-shadow:0 1px 5px rgba(0,0,0,.35)">‹ Lessons</a>';
+  if (/<body[^>]*>/i.test(html)) return html.replace(/(<body[^>]*>)/i, '$1\n' + bar);
+  return bar + '\n' + html;
+}
+
 export function genOfflineConfig(identity, opts = {}) {
   const now = opts.now || 0;
   const session = identity ? {
@@ -148,6 +163,15 @@ function relPrefixFor(relPath) {
 function main() {
   const argv = process.argv.slice(2);
   const dryRun = argv.includes('--dry-run');
+  const appNav = argv.includes('--app-nav');       // inject the "‹ Lessons" back pill (app build)
+  const keepMedia = argv.includes('--keep-media');  // skip re-copying media/ if already present (fast UI rebuilds)
+  // Prepare a bundled HTML file: offline-config (+ the app back-pill when --app-nav).
+  const prepHtml = (html, rel) => {
+    const pfx = relPrefixFor(rel);
+    let h = injectOfflineConfig(html, pfx);
+    if (appNav) h = injectAppNav(h, pfx);
+    return h;
+  };
   const outArg = argv.indexOf('--out');
   const out = resolve(REPO, outArg >= 0 ? argv[outArg + 1] : 'offline-pack');
   const idArg = argv.indexOf('--identity');
@@ -201,7 +225,7 @@ function main() {
   // 2. files (inject offline-config.js into every HTML)
   for (const rel of files) {
     const dst = copyInto(rel);
-    if (/\.html$/i.test(rel)) writeFileSync(dst, injectOfflineConfig(readFileSync(dst, 'utf8'), relPrefixFor(rel)), 'utf8');
+    if (/\.html$/i.test(rel)) writeFileSync(dst, prepHtml(readFileSync(dst, 'utf8'), rel), 'utf8');
   }
   // 3. dirs (inject into any HTML inside, e.g. ti84-trainer-v2/standalone.html)
   for (const d of dirs) {
@@ -209,7 +233,7 @@ function main() {
     const walk = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) {
       const p = join(dir, e.name);
       if (e.isDirectory()) walk(p);
-      else if (/\.html$/i.test(e.name)) { const rel = relative(out, p); writeFileSync(p, injectOfflineConfig(readFileSync(p, 'utf8'), relPrefixFor(rel)), 'utf8'); }
+      else if (/\.html$/i.test(e.name)) { const rel = relative(out, p); writeFileSync(p, prepHtml(readFileSync(p, 'utf8'), rel), 'utf8'); }
     } };
     walk(resolve(out, d));
   }
@@ -217,7 +241,7 @@ function main() {
   for (const rel of transcripts) copyInto(rel);
   // Copy the chosen media source (media-compressed/ or media/) INTO the pack as media/ so the
   // bundled media-manifest.json + offline-video.js resolve unchanged.
-  if (hasMedia) cpSync(resolve(REPO, mediaSrc), resolve(out, 'media'), { recursive: true });
+  if (hasMedia && !(keepMedia && existsSync(resolve(out, 'media')))) cpSync(resolve(REPO, mediaSrc), resolve(out, 'media'), { recursive: true });
   if (hasQuiz) {
     try {
       cpSync(resolve(REPO, '..', 'curriculum_render'), resolve(out, 'quiz'), { recursive: true, filter: (s) => !/[\\/](node_modules|\.git|tests)([\\/]|$)/.test(s) });
@@ -227,7 +251,7 @@ function main() {
       const walkQuiz = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) {
         const p = join(dir, e.name);
         if (e.isDirectory()) walkQuiz(p);
-        else if (/\.html$/i.test(e.name)) { const rel = relative(out, p); writeFileSync(p, injectOfflineConfig(readFileSync(p, 'utf8'), relPrefixFor(rel)), 'utf8'); }
+        else if (/\.html$/i.test(e.name)) { const rel = relative(out, p); writeFileSync(p, prepHtml(readFileSync(p, 'utf8'), rel), 'utf8'); }
       } };
       walkQuiz(resolve(out, 'quiz'));
     } catch (e) { console.warn('  quiz app copy skipped:', e.message); }
