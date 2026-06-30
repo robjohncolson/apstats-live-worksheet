@@ -112,13 +112,33 @@ export function initReceipts() {
   return issuer;
 }
 
+// Issuer-key history (ANDROID_PHASE4_TEACHER_KEY_SPEC §2): verification trusts a SET
+// of pubkeys — the current signer plus any retired/additional ones from env
+// RETIRED_ISSUER_PUBKEYS (comma-separated base64url Ed25519 `x`). Signing always uses
+// the current key; this only widens VERIFICATION so a rotated or added key never
+// invalidates already-signed receipts. Used by /receipts/issuer (client trust set)
+// and verify-ledger / snapshot verification.
+function parseRetiredPubkeys() {
+  const raw = process.env.RETIRED_ISSUER_PUBKEYS;
+  if (!raw || typeof raw !== 'string') return [];
+  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+export function getTrustedIssuerPubkeys() {
+  const out = [];
+  if (issuer.enabled && issuer.pubkey) out.push(issuer.pubkey);
+  for (const k of parseRetiredPubkeys()) if (!out.includes(k)) out.push(k);
+  return out;
+}
+
 export function getReceiptIssuer() {
   if (!issuer.enabled) return { enabled: false };
   return {
     enabled: true,
     alg: 'Ed25519',
     v: 1,
-    pubkey: issuer.pubkey
+    pubkey: issuer.pubkey,                 // current signer (back-compat)
+    pubkeys: getTrustedIssuerPubkeys()     // full trust set (current + retired)
   };
 }
 

@@ -24,8 +24,10 @@ function publicKeyFromX(x) {
 export { publicKeyFromX };
 
 // Verify one compact receipt's canonical form + Ed25519 signature. Returns the
-// decoded payload on success, else null (bad/forged/non-canonical).
-export function verifyCompact(compact, pubKey) {
+// decoded payload on success, else null (bad/forged/non-canonical). Accepts a single
+// public key OR an array of trusted keys (issuer-key history, Phase 4 §2) — verifies
+// if ANY trusted key signed these exact bytes.
+export function verifyCompact(compact, pubKeyOrKeys) {
   try {
     const [pB64, sB64] = String(compact).split('.');
     if (!pB64 || !sB64) return null;
@@ -34,8 +36,11 @@ export function verifyCompact(compact, pubKey) {
     const raw = bytes.toString('utf8');
     const payload = JSON.parse(raw);
     if (canonicalize(payload) !== raw) return null; // reject non-canonical (malleable) bytes
-    if (!crypto.verify(null, bytes, pubKey, sig)) return null;
-    return payload;
+    const keys = Array.isArray(pubKeyOrKeys) ? pubKeyOrKeys : [pubKeyOrKeys];
+    for (const k of keys) {
+      if (k && crypto.verify(null, bytes, k, sig)) return payload;
+    }
+    return null;
   } catch (_) {
     return null;
   }
@@ -104,11 +109,22 @@ export function verifyReviewMark(rec, pubKey, sid) {
   return { ok: breaks.length === 0, payload, breaks };
 }
 
-export function verifySnapshot(snapshot, { pubkey } = {}) {
+export function verifySnapshot(snapshot, { pubkey, pubkeys } = {}) {
   const breaks = [];
-  const x = pubkey || (snapshot && snapshot.issuer && snapshot.issuer.pubkey);
-  if (!x) return { ok: false, error: 'no issuer pubkey (pass pubkey or include snapshot.issuer)', breaks: [] };
-  const pubKey = publicKeyFromX(x);
+  // Trust the union of: explicit pubkeys[], explicit pubkey, and whatever the
+  // snapshot embeds (issuer.pubkey + issuer.pubkeys). Issuer-key history (Phase 4
+  // §2) — a receipt verifies if ANY trusted key signed it. Single-key callers
+  // (legacy { pubkey }) are unchanged: the list is just [that key].
+  const xs = [];
+  const add = (x) => { if (x && !xs.includes(x)) xs.push(x); };
+  (Array.isArray(pubkeys) ? pubkeys : []).forEach(add);
+  add(pubkey);
+  if (snapshot && snapshot.issuer) {
+    add(snapshot.issuer.pubkey);
+    (Array.isArray(snapshot.issuer.pubkeys) ? snapshot.issuer.pubkeys : []).forEach(add);
+  }
+  if (!xs.length) return { ok: false, error: 'no issuer pubkey (pass pubkey/pubkeys or include snapshot.issuer)', breaks: [] };
+  const pubKey = xs.map(publicKeyFromX);
 
   let totalRecords = 0;
   let verifiedReceipts = 0;

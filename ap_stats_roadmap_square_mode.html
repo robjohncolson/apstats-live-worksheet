@@ -8141,10 +8141,17 @@ function _phase2RegisterIssuer(baseUrl) {
     fetch(baseUrl + '/receipts/issuer')
       .then(function (r) { return r && r.ok ? r.json() : null; })
       .then(function (j) {
-        if (!j || !j.enabled || !j.pubkey) return;
-        var have = ReceiptVerify.ISSUERS.some(function (i) { return i.pubkey === j.pubkey; });
-        if (!have) ReceiptVerify.ISSUERS.push({ name: 'Roster', pubkey: j.pubkey, kind: 'roster' });
-        _phase2IssuerRegistered = true;
+        if (!j || !j.enabled) return;
+        // Issuer-key history (Phase 4 §2): register the WHOLE trust set so receipts
+        // signed by a retired/rotated key still verify. Falls back to the single
+        // current pubkey for an older server.
+        var keys = (j.pubkeys && j.pubkeys.length) ? j.pubkeys : (j.pubkey ? [j.pubkey] : []);
+        keys.forEach(function (pk) {
+          if (!pk) return;
+          var have = ReceiptVerify.ISSUERS.some(function (i) { return i.pubkey === pk; });
+          if (!have) ReceiptVerify.ISSUERS.push({ name: 'Roster', pubkey: pk, kind: 'roster' });
+        });
+        if (keys.length) _phase2IssuerRegistered = true;
       })
       .catch(function () {});
   } catch (_) {}

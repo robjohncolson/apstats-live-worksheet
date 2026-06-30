@@ -239,7 +239,8 @@ describe('roster-server receipt integration', () => {
     const { status, body } = await srv.request('GET', '/receipts/issuer');
 
     expect(status).toBe(200);
-    expect(body).toEqual({ enabled: true, alg: 'Ed25519', v: 1, pubkey: V11_TEST_PUBLIC_KEY });
+    // pubkeys = the issuer-key trust set (Phase 4 §2); just the current key with no retired env.
+    expect(body).toEqual({ enabled: true, alg: 'Ed25519', v: 1, pubkey: V11_TEST_PUBLIC_KEY, pubkeys: [V11_TEST_PUBLIC_KEY] });
   });
 
   it('issues practice ledger receipts with server-known sid, tier, and attempt', async () => {

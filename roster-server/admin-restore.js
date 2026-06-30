@@ -12,7 +12,7 @@
 // See GRADE_LEDGER_DURABILITY_SPEC.md.
 
 import { requireTeacher } from './teacher-auth.js';
-import { getReceiptIssuer } from './receipts.js';
+import { getReceiptIssuer, getTrustedIssuerPubkeys } from './receipts.js';
 import { normalizeImportBody } from './ledger-import.js';
 import { publicKeyFromX, verifyRecord, verifyReviewMark, verifySnapshot } from './snapshot-verify.js';
 
@@ -61,7 +61,9 @@ export function mountAdminRestore(app, { db, ledgerDb }) {
     if (!issuer || !issuer.enabled || !issuer.pubkey) {
       return res.status(503).json({ ok: false, error: 'receipt issuer not enabled; cannot verify for restore' });
     }
-    const pubKey = publicKeyFromX(issuer.pubkey);
+    // Trust the full issuer-key history (Phase 4 §2): a record signed by a retired
+    // key is still authentic and should restore faithfully.
+    const pubKey = getTrustedIssuerPubkeys().map(publicKeyFromX);
 
     const records = normalizeImportBody(req.body);
     if (!records.length) return res.status(400).json({ ok: false, error: 'no records to restore' });
