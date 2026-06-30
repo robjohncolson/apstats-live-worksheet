@@ -60,6 +60,10 @@
 
 <script src="roster_config.js" onerror=""></script>
 <script src="roster-client.js" onerror=""></script>
+<!-- ANDROID Phase 5 — Google Play on-demand video (inert unless window.PLAY_BUILD,
+     which offline-config.js sets for a --play build). -->
+<script src="video-ondemand.js" onerror=""></script>
+<script src="video-store.js" onerror=""></script>
 <script>
 (function () {
   var main = document.getElementById('main');
@@ -90,6 +94,44 @@
   };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeVideo(); });
 
+  // ANDROID Phase 5 — Play build: video isn't bundled; resolve via VideoOnDemand and
+  // download-on-demand the first time. Sideload build (no PLAY_BUILD) plays the bundled
+  // file directly, unchanged.
+  var _dlbar = null;
+  function dlMsg(msg) {
+    if (!_dlbar) {
+      _dlbar = document.createElement('div');
+      _dlbar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#0b5cad;color:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0));font-size:13px;text-align:center;z-index:55';
+      document.body.appendChild(_dlbar);
+    }
+    _dlbar.textContent = msg; _dlbar.style.display = 'block';
+  }
+  function dlHide() { if (_dlbar) _dlbar.style.display = 'none'; }
+
+  function playVideo(ref, label) {
+    if (!window.PLAY_BUILD || !window.VideoOnDemand) { openVideo(ref, label); return; }
+    window.VideoOnDemand.resolve(ref).then(function (r) {
+      if (r && r.playUri) { openVideo(r.playUri, label); return; }
+      if (r && r.state === 'remote') {
+        if (!r.downloadUrl) { dlMsg('Video host not set yet — worksheets + quiz still work.'); setTimeout(dlHide, 2500); return; }
+        var mb = r.bytes ? ' (' + Math.round(r.bytes / 1e6) + ' MB)' : '';
+        dlMsg('⬇ Downloading ' + (label || 'video') + mb + '…');
+        window.VideoOnDemand.download(ref, function (loaded, total) {
+          if (total) dlMsg('⬇ ' + (label || 'video') + ' — ' + Math.round(100 * loaded / total) + '%');
+        }).then(function (uri) { dlHide(); openVideo(uri, label); })
+          .catch(function (e) { dlMsg('Download failed: ' + (e && e.message || e)); setTimeout(dlHide, 3000); });
+        return;
+      }
+      dlMsg('Video not available.'); setTimeout(dlHide, 2000);
+    }).catch(function () { openVideo(ref, label); });
+  }
+
+  // Load the on-demand catalog (Play build only; inert otherwise).
+  if (window.PLAY_BUILD && window.VideoOnDemand) {
+    try { window.VideoOnDemand.loadCatalog('video-catalog.json'); } catch (e) {}
+    try { var w = document.getElementById('who'); if (w) w.textContent = 'Videos download on first tap. Worksheets + quiz work offline.'; } catch (e) {}
+  }
+
   function render(lessons) {
     if (!lessons || !lessons.length) { main.innerHTML = '<div class="empty">No lessons found.</div>'; return; }
     var byUnit = {};
@@ -109,7 +151,7 @@
         (l.videos || []).forEach(function (file, i) {
           var b = document.createElement('button'); b.className = 'btn video';
           b.textContent = (l.videos.length > 1 ? '▶ Video ' + (i + 1) : '▶ Video');
-          b.onclick = function () { openVideo(file, l.label); };
+          b.onclick = function () { playVideo(file, l.label); };
           btns.appendChild(b);
         });
         var w = document.createElement('a'); w.className = 'btn ws'; w.textContent = '✍ Worksheet';
