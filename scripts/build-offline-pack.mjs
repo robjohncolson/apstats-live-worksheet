@@ -60,13 +60,16 @@ export function injectOfflineConfig(html, relPrefix) {
 // Enabled by build-offline-pack --app-nav (so the live web worksheets are unaffected).
 export function injectAppNav(html, relPrefix) {
   if (html.includes('id="__app-lessons"')) return html; // idempotent
+  // App-only chrome: hide the bundled apps' own "Install app" PWA prompts (redundant inside the
+  // native app — it IS the app). cr's #pwa-install-fab + the worksheets'/Desk's install buttons.
+  const style = '<style id="__app-style">#pwa-install-fab,.pwa-install-btn,#install-app-btn{display:none!important}</style>';
   const bar = '<a id="__app-lessons" href="' + relPrefix + 'index.html" aria-label="Back to lessons" '
     + 'style="position:fixed;top:0;left:0;z-index:2147483646;'
     + 'margin:max(6px,env(safe-area-inset-top,0)) 0 0 6px;padding:7px 13px;'
     + 'background:rgba(11,92,173,.93);color:#fff;font:600 13px -apple-system,Roboto,sans-serif;'
     + 'text-decoration:none;border-radius:18px;box-shadow:0 1px 5px rgba(0,0,0,.35)">‹ Lessons</a>';
-  if (/<body[^>]*>/i.test(html)) return html.replace(/(<body[^>]*>)/i, '$1\n' + bar);
-  return bar + '\n' + html;
+  if (/<body[^>]*>/i.test(html)) return html.replace(/(<body[^>]*>)/i, '$1\n' + style + '\n' + bar);
+  return style + '\n' + bar + '\n' + html;
 }
 
 export function genOfflineConfig(identity, opts = {}) {
